@@ -1,51 +1,41 @@
-# What Flux syncs for the staging cluster. `flux bootstrap --path=deploy/clusters/staging` points
-# its own Kustomization here, and adds a generated `flux-system/` alongside these files — that
-# directory is machine-written, ~2 MB, and must never be hand-edited.
-#
-# Order here is presentational only: Kustomize applies these as one set, and what orders the
-# installs is `dependsOn` inside the HelmReleases — cert-manager, the webhook, then the application.
-#
-# **A FILE NOT NAMED IN `resources:` NEVER REACHES THE CLUSTER.** It still renders, still lints and
-# still merges, so the omission is silent. That applies to every entry below and is not repeated.
+# What Flux syncs for the staging cluster. `flux bootstrap --path=deploy/clusters/staging` points here
+# and adds a generated `flux-system/` that must never be hand-edited. Order is presentational;
+# `dependsOn` inside the HelmReleases orders the installs. **A FILE NOT NAMED IN `resources:` NEVER
+# REACHES THE CLUSTER** — it still renders and lints, so the omission is silent.
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
-  # Listing flux-system/ is what makes the cluster self-managing, and the entry the rule above is
-  # easiest to forget: a Flux Kustomization pointing at a directory with no kustomization.yaml walks
-  # it recursively and picks flux-system/ up for free, so writing an explicit list is what takes it
-  # away. Omit it and Flux's own Kustomization is reconciled by nothing but a `flux bootstrap`
-  # re-run — which is how #416's `decryption` patch merged without ever reaching the cluster.
+  # Listing flux-system/ is what makes the cluster self-managing, and the easiest entry to forget: a
+  # Flux Kustomization with no kustomization.yaml walks the directory recursively, so writing an explicit
+  # list is what takes it away — which is how #416's `decryption` patch merged without reaching the cluster.
   - flux-system
-  # The five namespaces, the cert-manager and OpenObserve chart repositories, PostgreSQL metrics and
-  # the two collectors — identical on both clusters, so `../base` holds them and this reference is
-  # what applies them here (#953, #1080). The rule above covers the reference itself: drop this line
-  # and seventeen objects leave the cluster at once. `base/kustomization.yaml` says what is admitted there.
+  # The five namespaces, the chart repositories, PostgreSQL metrics and the two collectors — identical
+  # on both clusters, so `../base` holds them (#953, #1080). Drop this line and seventeen objects leave
+  # the cluster at once.
   - ../base
-  # SOPS-encrypted, decrypted by kustomize-controller with the `sops-age` key (#416,
-  # docs/ops/SECRETS.md). Flux applies by kind, so the namespace exists before the Secret lands.
+  # SOPS-encrypted, decrypted by kustomize-controller with the `sops-age` key (#416). Flux applies by
+  # kind, so the namespace exists before the Secret lands.
   - secrets/events-db.yaml
   - helm-repository-hetzner.yaml
   - cert-manager.yaml
   - cert-manager-webhook.yaml
   - openobserve.yaml
-  # Default-deny plus one named allowance per conversation, for the two namespaces that had none
-  # (#662). `observability-netpol.yaml` keeps its `openobserve-egress` object under the name
-  # `openobserve-netpol.yaml` used, so the containment for `ZO_SKIP_SSRF_CHECKS` is updated in place
-  # rather than recreated — there is no window in which that flag is set and unbounded. Omission is
-  # worst here: an absent policy leaves a namespace that looks hardened and is not.
+  # Default-deny plus one named allowance per conversation (#662). `observability-netpol.yaml` keeps
+  # its `openobserve-egress` object under the old name, so the containment for `ZO_SKIP_SSRF_CHECKS` is
+  # updated in place with no window in which the flag is set and unbounded. An absent policy leaves a
+  # namespace that looks hardened and is not.
   - observability-netpol.yaml
   - cert-manager-netpol.yaml
-  # Not in `../base`, though both clusters want it: that rolls both at once and staging goes first.
+  # Not in `../base`, though both clusters want it: that rolls both at once, and staging goes first.
   - traefik-host-ports.yaml
-  # The Signal bridge (#271, item 2 for the collector, which is in `../base`).
+  # The Signal bridge (#271).
   - signal-bridge.yaml
   - oci-repository.yaml
   - helm-release.yaml
   - notification.yaml
 
-# The one field `../base/collector.yaml` leaves for each cluster to set (#953). `replace` rather
-# than `add` on purpose: the path has to already exist, so removing the key from the base fails
-# this build loudly instead of shipping an untagged collector.
+# The one field `../base/collector.yaml` leaves for each cluster (#953). `replace` rather than `add`:
+# the path has to exist, so removing the key from the base fails this build loudly.
 patches:
   - target:
       kind: HelmRelease
@@ -54,8 +44,7 @@ patches:
       - op: replace
         path: /spec/values/k8sCluster
         value: staging
-  # The nodes whose patch state the gateway scrapes (#419): node_exporter on each private address.
-  # `replace`, like `k8sCluster`, so the base's `unset` placeholder has to exist to be overwritten.
+  # The nodes whose patch state the gateway scrapes (#419). `replace`, like `k8sCluster`.
   - target:
       kind: HelmRelease
       name: openobserve-collector
@@ -64,8 +53,7 @@ patches:
         path: /spec/values/gateway/receivers/prometheus~1nodes/config/scrape_configs/0/static_configs/0/targets
         value:
           - 10.1.1.10:9100
-  # Twice, because the agent is its own release since #709. One patch with a name regex would also
-  # work and would hide a third release; two literal targets fail loudly when either is renamed.
+  # Twice, because the agent is its own release (#709); two literal targets fail loudly when either is renamed.
   - target:
       kind: HelmRelease
       name: openobserve-collector-agent

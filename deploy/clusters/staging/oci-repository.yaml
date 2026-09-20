@@ -1,24 +1,16 @@
 # comment-lint: allow-file 21 lines of OCIRepository, of which one field failed silently twice.
-# The chart source for staging. #264 publishes it here on every push to `main`.
+# The chart source for staging; #264 publishes it on every push to `main`. THE ONE FIELD THIS FILE
+# EXISTS FOR IS `semver`, AND IT FAILS SILENTLY — twice, for independent reasons.
 #
-# THE ONE FIELD THIS FILE EXISTS FOR IS `semver`, AND IT IS THE ONE THAT FAILS SILENTLY — twice, for
-# two independent reasons, neither of which produced an error message.
+# **One: the range has to admit prereleases.** Masterminds skips prereleases unless the range says
+# otherwise, so `">=0.0.0"` matches nothing, reports Ready, and staging stops moving until somebody
+# notices the site is a fortnight old. The `-0` is the entire mechanism.
 #
-# **One: the range has to admit prereleases.** Staging runs snapshots, and Helm's constraint syntax
-# (Masterminds) skips prereleases unless the range says otherwise — so `">=0.0.0"` matches nothing:
-# the OCIRepository reconciles happily, reports Ready, and resolves the last release or nothing at
-# all. Nothing is logged; staging simply stops moving until somebody notices the site is a fortnight
-# old. The `-0` is what admits them. Two characters, and the entire mechanism.
-#
-# **Two: the versions have to order.** A correct range ranks nothing useful if what it ranks is
-# unordered. SemVer compares alphanumeric prerelease identifiers **lexically** and a short sha is
-# effectively random, so `0.1.0-snapshot.g<sha>` meant "whichever sha sorts highest in ASCII" — once
-# resolving the sixth-oldest of ten, three days stale, with every chance of moving backwards (#455).
-# Snapshots are now `0.1.1-snapshot.<utc-timestamp>.g<sha>`: a digits-only identifier compares
-# **numerically**, so the timestamp orders and the sha is a tie-break. The base version had to move
-# 0.1.0 -> 0.1.1 at the same time, a numeric identifier ranking BELOW an alphanumeric one, and
-# `scripts/version-test.sh` asserts the ordering against Helm's own solver. Production needs neither
-# fix: `>=0.1.0` with a numeric-triple filter, and release versions order correctly.
+# **Two: the versions have to order.** SemVer compares alphanumeric prerelease identifiers lexically,
+# so `0.1.0-snapshot.g<sha>` meant "whichever sha sorts highest in ASCII" — once the sixth-oldest of
+# ten, three days stale (#455). Snapshots are `0.1.1-snapshot.<utc-timestamp>.g<sha>`: a digits-only
+# identifier compares numerically. The base moved 0.1.0 → 0.1.1 at the same time, a numeric
+# identifier ranking BELOW an alphanumeric one; `scripts/version-test.sh` asserts the ordering.
 apiVersion: source.toolkit.fluxcd.io/v1
 kind: OCIRepository
 metadata:
@@ -28,29 +20,22 @@ metadata:
     kubernetes.io/description: >-
       The event-junkie Helm chart, pulled from GHCR. Tracks every snapshot published from main.
 spec:
-  # 1m rather than the tighter number a laptop reflex picks. Flux's own guidance is not to poll below
-  # 30s without webhooks, and we cannot use webhooks: a Receiver is an *inbound* endpoint and §8's
-  # firewall design exists to have nothing inbound. So a deploy lands within about a minute of the
-  # publish, and that latency is a consequence of the security posture rather than a tuning oversight.
+  # 1m rather than a laptop reflex's tighter number: Flux's guidance is not to poll below 30s without
+  # webhooks, and a Receiver is an inbound endpoint §8's firewall design exists to forbid. A deploy
+  # lands within about a minute of the publish.
   interval: 1m
   url: oci://ghcr.io/enorm-labs/charts/event-junkie
   ref:
     semver: ">=0.0.0-0"
-  # Set explicitly rather than left to the default "first layer found". A Helm chart pushed by
-  # `helm push` carries this media type; relying on layer ordering works until an artifact grows a
-  # second layer (a provenance or SBOM attestation, both of which #443 proposes adding).
+  # Set explicitly rather than "first layer found", which works until an artifact grows a second layer.
   layerSelector:
     mediaType: application/vnd.cncf.helm.chart.content.v1.tar+gzip
     operation: copy
-  # No secretRef: the GHCR packages are public and pull anonymously, which is why the chart's
-  # `image.pullSecrets` is empty too. Making them private would put a classic PAT in this cluster,
-  # unscopable to one package, GitHub Packages not supporting fine-grained tokens (PLATFORM_SETUP §3).
-  # Refuses a chart not signed by our own release workflow (#1425). source-controller looks up the
-  # cosign signature next to the artifact on GHCR — a Sigstore bundle, stored as an OCI referrer by
-  # cosign v3 — and checks the Fulcio certificate inside it against these two regexes. The subject is
-  # the workflow's identity, read from the first signed publish rather than guessed: a snapshot runs
-  # at `refs/heads/main`, a release at `refs/tags/vX.Y.Z`. A chart pushed by hand with `helm push`
-  # carries no signature and never reconciles, however valid its contents.
+  # No secretRef: the packages are public, and making them private would put a classic PAT in this
+  # cluster, unscopable to one package. Refuses a chart not signed by our own release workflow (#1425):
+  # source-controller checks the cosign Fulcio certificate against these two regexes — a snapshot runs
+  # at `refs/heads/main`, a release at `refs/tags/vX.Y.Z`. A chart pushed by hand carries no signature
+  # and never reconciles.
   verify:
     provider: cosign
     matchOIDCIdentity:

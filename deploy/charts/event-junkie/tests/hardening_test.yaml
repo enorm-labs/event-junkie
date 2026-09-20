@@ -1,15 +1,7 @@
-# Workload hardening — PLATFORM_SETUP §8 items 5, 6, 7 and 12, and the pod-level half of the Pod
-# Security Standards `restricted` profile.
-#
-# Positive assertions, unlike invariants_test.yaml, and therefore scoped: `documentSelector` with
-# `matchMany: true` applies each one to every Deployment while the other kinds render in the same
-# suite. That scoping is what makes "every container" mean every container rather than every
-# container that happens to be listed — a new Deployment is inside these without being named, and
-# the failure output names each document an assertion covered, so there is nothing to infer.
-#
-# The container-level fields are quantified with `containers[*]`, which is the wildcard doing the
-# work the script's yq `.containers[] | select(...)` did: it applies the assertion to every
-# container, not to the first one.
+# Workload hardening — the pod-level half of the Pod Security Standards `restricted` profile.
+# Positive assertions, therefore scoped: `documentSelector` with `matchMany: true` applies each to
+# every Deployment, so a new Deployment is inside these without being named. Container-level fields
+# are quantified with `containers[*]`, every container rather than the first.
 suite: workload hardening
 
 templates:
@@ -39,9 +31,8 @@ tests:
           value: false
 
       # --- Container level ---------------------------------------------------------------------
-      #
-      # Requests and limits are a security control on a single node, not a tuning preference: one
-      # workload without a memory limit can evict the other two.
+      # Requests and limits are a security control on a single node: one workload without a memory limit
+      # can evict the other two.
       - exists:
           path: spec.template.spec.containers[*].resources.limits.memory
       - exists:
@@ -57,17 +48,10 @@ tests:
           value: ALL
 
       # --- Volume types --------------------------------------------------------------------------
-      #
       # `restricted` permits configMap, csi, downwardAPI, emptyDir, ephemeral, persistentVolumeClaim,
-      # projected and secret — and nothing else. The script expressed that as an allow-list, in one
-      # yq query over the keys of each volume; helm-unittest has no way to ask for a map's keys, so
-      # this is the complement written out: every other volume source the Kubernetes API defines.
-      #
-      # Exhaustive as of Kubernetes 1.34, which makes the residual gap a precise one — a volume type
-      # Kubernetes adds after this was written escapes it, where the allow-list would have caught it.
-      # If you are here because a new type appeared, add it. `hostPath` is the one that matters most
-      # and it is also asserted chart-wide in invariants_test.yaml: it is a mount of the node's
-      # filesystem, and it is how a pod escapes being a pod.
+      # projected and secret — and nothing else. helm-unittest cannot ask for a map's keys, so this is the
+      # complement written out, exhaustive as of Kubernetes 1.34; a volume type added later escapes it, so
+      # add it here when one appears. `hostPath` is also asserted chart-wide in invariants_test.yaml.
       - notExists:
           path: spec.template.spec.volumes[*].awsElasticBlockStore
       - notExists:
@@ -122,9 +106,8 @@ tests:
       matchMany: true
     asserts: *hardening
 
-  # `runAsUser` has to match the UID the images actually run as (#426). A mismatch is a pod that
-  # cannot read its own files, which does not look like a values problem — so the value is asserted
-  # rather than merely its presence.
+  # `runAsUser` has to match the UID the images run as; a mismatch is a pod that cannot read its own
+  # files, so the value is asserted, not its presence.
   - it: every pod runs as the UID the images are built with
     set:
       database.host: "10.0.1.2"

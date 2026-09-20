@@ -1,23 +1,11 @@
-# The Signal alert bridge — OpenObserve's webhook destination, and the inner half of #271's
-# two-layer alerting.
-#
-# **Signal rather than Telegram, and the reason is not convenience** (PLATFORM_SETUP §5a): alert
-# bodies carry venue names, error strings, query fragments and possibly IP addresses, and Signal is
-# end-to-end encrypted so the carrier cannot read any of it. Telegram's Bot API is plaintext to
-# Telegram's servers — the same effort for a materially worse posture, in a project that spent #412
-# removing a company that *could* read request data.
-#
-# **This layer cannot report the node being dead.** If the cluster is gone, OpenObserve and this pod
-# are gone with it and the silence reads as health. That is what `site-probe.yml` and healthchecks.io
-# are for, off Hetzner, and it is why §5a calls the second layer "not optional".
-#
-# **Registration is a manual step, once, and losing it is silent.**
-# Nothing here registers the number — that needs a real prepaid SIM and an SMS code. Until it is
-# done, the pod runs and answers health checks and **sends nothing**, which is exactly the failure
-# mode the dead-man's switch exists to catch. docs/ops/SECRETS.md has the procedure.
-#
-# The registration state lives on the PVC below. **Lose the PVC and alerting stops without saying
-# so** — §5a caveat 3, and the second reason the external layer is not optional.
+# The Signal alert bridge — OpenObserve's webhook destination, the inner half of #271's two-layer
+# alerting. **Signal rather than Telegram** (PLATFORM_SETUP §5a): alert bodies carry venue names,
+# error strings and possibly IP addresses, and Signal is end-to-end encrypted where Telegram's Bot API
+# is plaintext to Telegram. **This layer cannot report the node being dead** — that is what
+# `site-probe.yml` and healthchecks.io are for, off Hetzner. **Registration is a manual step, once,
+# and losing it is silent**: until a real SIM and an SMS code register the number, the pod answers
+# health checks and sends nothing (docs/ops/SECRETS.md). The registration state lives on the PVC
+# below; lose the PVC and alerting stops without saying so.
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -31,8 +19,7 @@ spec:
     - ReadWriteOnce
   resources:
     requests:
-      # Registration state is kilobytes. This is the smallest the storage class will honour, and
-      # sizing it larger would only reserve node disk the database wants.
+      # Registration state is kilobytes; the smallest the storage class honours.
       storage: 1Gi
 ---
 apiVersion: apps/v1
@@ -44,14 +31,11 @@ metadata:
     kubernetes.io/description: >-
       signal-cli-rest-api, the thing OpenObserve posts alerts to. One replica, deliberately — two would race for the same registration state on one PVC.
 spec:
-  # One, and not for capacity reasons: the registration state is a single-writer thing and a second
-  # replica would fight the first for it. The same ADR-008 argument the importer's replica count
-  # rests on.
+  # One, and not for capacity: the registration state is single-writer, the ADR-008 argument.
   replicas: 1
   strategy:
-    # The PVC is ReadWriteOnce, so a rolling update would deadlock: the new pod cannot mount the
-    # volume until the old one lets go, and the old one is not terminated until the new one is
-    # ready. Recreate makes the brief gap explicit instead of a stuck rollout.
+    # The PVC is ReadWriteOnce, so a rolling update deadlocks: the new pod cannot mount until the old one
+    # lets go. Recreate makes the gap explicit.
     type: Recreate
   selector:
     matchLabels:
@@ -61,8 +45,7 @@ spec:
       labels:
         app.kubernetes.io/name: signal-cli
     spec:
-      # Nothing here talks to the Kubernetes API, so the token would be a credential sitting in the
-      # container for no reason — #416 item 4.
+      # Nothing here talks to the Kubernetes API, so the token would be a credential for no reason.
       automountServiceAccountToken: false
       securityContext:
         runAsNonRoot: true
@@ -73,32 +56,19 @@ spec:
           type: RuntimeDefault
       containers:
         - name: signal-cli
-          # The `-rootless` variant, chosen for #416's `restricted` Pod Security Admission: the
-          # default image expects to start as root and drop privileges, which that profile forbids.
-          # Pinned by tag *and* digest like every other image here — a tag is a pointer its owner can
-          # move.
+          # The `-rootless` variant, for `restricted` Pod Security Admission: the default image starts as root
+          # and drops privileges. Pinned by tag and digest.
           image: bbernhard/signal-cli-rest-api:0.100-rootless@sha256:7f80cec95fc36408fae6bdc6b4534764d825d5bd02c5772db8740842bdd257f0
           imagePullPolicy: IfNotPresent
-          # **Bypassing the image's s6-overlay init, deliberately.** The entrypoint is `/init`, and
-          # s6-overlay-suexec demands CAP_SETGID before it does anything else, then CHOWN and FOWNER
-          # to fix up `/run`. Satisfying it means handing four capabilities back to a pod that
-          # otherwise needs none — measured one at a time against the real image, each failure
-          # naming the next.
-          #
-          # s6 is a supervisor. Kubernetes is already the supervisor here, so what it buys inside the
-          # container is a restart policy we do not want and a privilege requirement we do not need.
-          # Running the binary directly starts clean as UID 1000 with `drop: [ALL]` and answers
-          # /v1/health with 204.
-          #
-          # **The one thing this gives up:** s6 also starts a `signal-json-rpc` service. `MODE=normal`
-          # does not use it — the API shells out to signal-cli per request — but **switching MODE to
-          # `json-rpc` would need that daemon and therefore this decision revisited**, not just the
-          # environment variable changed.
+          # **Bypassing the image's s6-overlay init, deliberately.** `/init` demands CAP_SETGID, then CHOWN and
+          # FOWNER to fix up `/run` — four capabilities for a pod that otherwise needs none, measured one at a
+          # time against the real image. Kubernetes is already the supervisor. Running the binary directly
+          # starts clean as UID 1000 with `drop: [ALL]`. **What this gives up**: s6 also starts a
+          # `signal-json-rpc` daemon, so switching MODE to `json-rpc` means revisiting this decision.
           command: ["/usr/bin/signal-cli-rest-api"]
           env:
-            # `normal` is the JVM mode and the ~150-250 MB §5a budgeted for. **`native` is the lever
-            # if the node gets tight** — GraalVM, materially smaller — and it is a behaviour change
-            # rather than a tuning knob, so it is a decision rather than a default to drift into.
+            # `normal` is the JVM mode §5a budgeted for. `native` (GraalVM) is the lever if the node gets tight —
+            # a behaviour change, not a tuning knob.
             - name: MODE
               value: "normal"
           ports:
@@ -112,22 +82,17 @@ spec:
               memory: "128Mi"
               cpu: "50m"
             limits:
-              # 320Mi against §5a's "~150-250 MB, because signal-cli is a JVM". Set above the
-              # expected range rather than at it: a JVM that OOMs while delivering an alert is a
-              # failure of the thing that reports failures, which is the worst place to be tight.
+              # 320Mi against §5a's ~150–250 MB, above the range: a JVM that OOMs while delivering an alert is a
+              # failure of the thing that reports failures.
               memory: "320Mi"
               cpu: "500m"
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:
               drop: [ALL]
-            # NOT read-only, and this is the exception rather than an oversight: signal-cli writes
-            # its registration and session state under the mount below, and other scratch inside the
-            # image. Narrowing this needs the paths verified against a running container rather than
-            # guessed, and a wrong guess here breaks alerting rather than a build.
-            #
-            # Worth retrying now that s6 is out of the picture — it was s6's `/run` fix-up that made
-            # this hardest to reason about, and the binary alone may need far less.
+            # NOT read-only, the exception: signal-cli writes registration and session state under the mount and
+            # scratch inside the image, and a wrong guess at the paths breaks alerting rather than a build. Worth
+            # retrying now that s6 is out of the picture.
             readOnlyRootFilesystem: false
           livenessProbe:
             httpGet:

@@ -1,14 +1,8 @@
-# GitHub deployments for production — what is running here, and since when (#565).
-#
-# **There is deliberately no `github` commit-status Provider here (#567).** "Why is there no commit
-# status?" is the obvious question and the answer is not: notification-controller's `parseRevision`
-# needs a git hash, while a HelmRelease event reports the *chart version*. The mechanism that solves
-# this — `originRevision`, derived from `org.opencontainers.image.revision` — exists only in
-# **kustomize-controller**; helm-controller has no equivalent, so no annotation on the chart can fix
-# it. See §4a.
+# GitHub deployments for production — what is running here, and since when (#565). **Deliberately no
+# `github` commit-status Provider** (#567): `parseRevision` needs a git hash and a HelmRelease event
+# reports the *chart version*; the `originRevision` mechanism exists only in kustomize-controller.
 ---
-# A deployment is per-environment and produces a timeline, which is the question worth answering:
-# "what is on production right now, and since when" has no single commit to ask about.
+# A deployment is per environment and answers "what is on production right now, and since when".
 apiVersion: notification.toolkit.fluxcd.io/v1beta3
 kind: Provider
 metadata:
@@ -21,16 +15,11 @@ metadata:
 spec:
   type: githubdispatch
   address: https://github.com/enorm-labs/event-junkie
-  # THE ONLY CREDENTIAL THIS CLUSTER HOLDS FOR GITHUB'S SAKE. `repository_dispatch` needs
-  # **contents: write** — a strong scope, which is why it is per-cluster rather than shared.
-  #
-  # Fine-grained, scoped to this repository, and DIFFERENT FROM STAGING'S: one credential across two
+  # THE ONLY CREDENTIAL THIS CLUSTER HOLDS FOR GITHUB'S SAKE. `repository_dispatch` needs **contents:
+  # write**, which is why it is per-cluster and DIFFERENT FROM STAGING'S: one credential across two
   # clusters means revoking it takes both down. **Hand-made rather than SOPS-encrypted**
-  # (docs/ops/SECRETS.md) — encrypting a `contents: write` token into a public repository publishes
-  # its ciphertext for good.
-  #
-  # So nothing in this repository creates it, and this Provider is inert twice over until production
-  # is bootstrapped (#560) and the Secret is typed against it by hand — CLUSTER_BOOTSTRAP.md §8.
+  # (docs/ops/SECRETS.md): encrypting a `contents: write` token into a public repository publishes its
+  # ciphertext for good. Nothing in this repository creates it; typed by hand — CLUSTER_BOOTSTRAP.md §8.
   secretRef:
     name: github-dispatch
 ---
@@ -43,25 +32,21 @@ spec:
   providerRef:
     name: github-dispatch
   eventSeverity: info
-  # The HelmRelease only. A chart arriving in the registry is not a deployment — it is what a
-  # deployment later consumes — and recording it as one would put two entries on the timeline for a
-  # single rollout. The OCIRepository has its own Alert below, for its failures alone.
+  # The HelmRelease only: a chart arriving in the registry is not a deployment. The OCIRepository has
+  # its own Alert below.
   eventSources:
     - kind: HelmRelease
       name: event-junkie
       namespace: flux-system
-  # These two are the workflow's whole input beyond the revision: `env` picks the GitHub environment
-  # and `cluster` is recorded on the deployment. An unrecognised `env` fails the run rather than
-  # defaulting, so a typo here is loud instead of filing staging under production.
+  # The workflow's whole input beyond the revision. An unrecognised `env` fails the run rather than
+  # filing production under staging.
   eventMetadata:
     env: production
     cluster: production
 ---
-# The source's failures, and nothing else (#1454). A chart that fails cosign verification (#1425), or
-# a registry that cannot be reached, keeps the last good artifact installed. The HelmRelease turns
-# not-Ready with the source's message but emits no event, so the Alert above never hears of it. `error` rather than `info`: at `info` every chart arrival — every
-# merge, on staging — would spend a `contents: write` call on a dispatch nothing records.
-# `flux-source-failure.yml` receives these and goes red, which is what makes the event visible.
+# The source's failures, and nothing else (#1454): a chart that fails cosign verification or an
+# unreachable registry keeps the last good artifact, and the HelmRelease emits no event. `error`
+# rather than `info`. `flux-source-failure.yml` receives these and goes red.
 apiVersion: notification.toolkit.fluxcd.io/v1beta3
 kind: Alert
 metadata:

@@ -1,11 +1,7 @@
-# The body half of `ingress.noindex` (#286): a disallow-all `robots.txt` and an empty sitemap,
-# mounted over the ones the frontend build bakes into the image.
-#
-# Every assertion here exists because the failure mode is silent. A `subPath` that does not name a
-# ConfigMap key, a volume naming a ConfigMap that is not the one rendered, a mount without `subPath`
-# at all — each renders, installs, and reports healthy. What you get is an environment that looks
-# noindexed in the manifest and serves the image's allow-all copy, or in the last case a blank site.
-# None of that is visible in a diff, so it is pinned here instead.
+# The body half of `ingress.noindex` (#286): a disallow-all `robots.txt` and an empty sitemap mounted
+# over the ones baked into the image. Every assertion exists because the failure is silent: a
+# `subPath` naming no ConfigMap key, a volume naming the wrong ConfigMap, a mount without `subPath` —
+# each renders and reports healthy, and serves the image's allow-all copy or a blank site.
 suite: robots.txt and sitemap overrides outside production
 
 templates:
@@ -36,8 +32,7 @@ tests:
     templates:
       - frontend-deployment.yaml
     asserts:
-      # /tmp and nothing else — the state #262 established by running the real image with
-      # `--read-only --tmpfs /tmp`.
+      # /tmp and nothing else — the state established by running the real image `--read-only --tmpfs /tmp`.
       - lengthEqual:
           path: spec.template.spec.containers[0].volumeMounts
           count: 1
@@ -70,8 +65,7 @@ tests:
       - matchRegex:
           path: data["robots.txt"]
           pattern: "User-agent: \\*"
-      # The directive itself, anchored: `Disallow:` with an empty value means *allow everything*,
-      # which is the one-character version of this whole issue.
+      # Anchored: `Disallow:` with an empty value means *allow everything*.
       - matchRegex:
           path: data["robots.txt"]
           pattern: "(?m)^Disallow: /$"
@@ -101,8 +95,8 @@ tests:
     templates:
       - frontend-seo-configmap.yaml
     asserts:
-      # The point of the file is that it names no production URL. Asserting the absence of `<loc>`
-      # says that in the form that stays true if the empty-urlset spelling ever changes.
+      # The file's point is that it names no production URL; asserting the absence of `<loc>` stays true if
+      # the empty-urlset spelling changes.
       - notMatchRegex:
           path: data["sitemap.xml"]
           pattern: "<loc>"
@@ -127,9 +121,8 @@ tests:
       - lengthEqual:
           path: spec.template.spec.containers[0].volumeMounts
           count: 3
-      # `subPath` is the load-bearing field. Without it this mounts as a directory over
-      # /usr/share/nginx/html and hides index.html and every hashed asset with it — a blank site,
-      # not a bad robots.txt.
+      # `subPath` is the load-bearing field: without it this mounts as a directory over
+      # /usr/share/nginx/html and hides index.html — a blank site, not a bad robots.txt.
       - equal:
           path: spec.template.spec.containers[0].volumeMounts[1]
           value:
@@ -154,8 +147,8 @@ tests:
     templates:
       - frontend-deployment.yaml
     asserts:
-      # The literal must equal `metadata.name` asserted on the ConfigMap above. A volume naming a
-      # ConfigMap that does not exist leaves the pod Pending with the reason three `describe`s away.
+      # The literal must equal the ConfigMap's `metadata.name` above; a volume naming a missing ConfigMap
+      # leaves the pod Pending with the reason three `describe`s away.
       - equal:
           path: spec.template.spec.volumes[1].configMap.name
           value: RELEASE-NAME-event-junkie-seo
@@ -169,8 +162,8 @@ tests:
     templates:
       - frontend-deployment.yaml
     asserts:
-      # A subPath mount is a point-in-time copy the kubelet never refreshes, so without this the
-      # ConfigMap changes and the served bytes do not — indefinitely.
+      # A subPath mount is a point-in-time copy the kubelet never refreshes; without this the ConfigMap
+      # changes and the served bytes do not.
       - exists:
           path: spec.template.metadata.annotations["checksum/seo"]
 
