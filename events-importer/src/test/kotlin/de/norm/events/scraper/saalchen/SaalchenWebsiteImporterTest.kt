@@ -45,9 +45,9 @@ class SaalchenWebsiteImporterTest {
         runTest {
             val result = importer.importEvents(sourceUrl)
             result.shouldBeInstanceOf<ImportResult.Success>()
-            result.events shouldHaveSize 8
+            result.events shouldHaveSize 9
             result.events.first().eventDate shouldBe LocalDate.of(2026, 8, 14)
-            result.events.last().eventDate shouldBe LocalDate.of(2026, 11, 27)
+            result.events.last().eventDate shouldBe LocalDate.of(2026, 9, 19) // the appended festival row (#1584)
         }
 
     @Test
