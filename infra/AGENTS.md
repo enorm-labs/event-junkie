@@ -1,357 +1,162 @@
 # AGENTS.md — `infra/`
 
-OpenTofu for the Hetzner platform. The nearest `AGENTS.md` wins, so this file overrides the repository root's for anything under `infra/`. Read
-[`README.md`](README.md) next to it — that one is written for a human at a terminal, this one for an agent about to change something.
+OpenTofu for the Hetzner platform. The nearest `AGENTS.md` wins, so this file overrides the repository root's for anything under `infra/`.
+[`README.md`](README.md) next to it is written for a human at a terminal — layout, first apply, the tunnel, what surprises a newcomer. This one is for an agent
+about to change something, and repeats none of it.
 
 ## The one rule that matters
 
 **Never run `tofu plan`, `tofu apply`, `tofu destroy`, or `tofu import` on your own initiative.** They reach real infrastructure, they spend money, and two of
 them change things people depend on. If a task appears to require one, stop and say so — do not go looking for a token.
 
-**On an explicit, specific instruction — "apply staging", "destroy the staging stack" — you may.** The rule is against acting unasked, not against being
-useful. Two conditions, though, and they are not optional:
+**On an explicit, specific instruction — "apply staging", "destroy the staging stack" — you may**, under two conditions:
 
 - **Show the plan first and check it against what you expect.** `tofu plan -destroy` before a destroy, `plan` before an apply. State the resource count you
   expect _before_ running it, and stop if it differs. A destroy that touches `bootstrap/` or names a DNS zone is wrong no matter who asked for it.
 - **Never widen the instruction.** "Destroy staging" is not permission to destroy production, and an instruction given once does not carry to the next
   environment or the next session.
 
-Everything below is safe and needs no credentials:
+Everything below is safe, needs no credentials, and is what `validate-infra.yml` runs:
 
 ```sh
 tofu fmt -recursive -check -diff infra
-export TF_DATA_DIR="$(mktemp -d)"                  # not optional on a checkout you have used — see below
+export TF_DATA_DIR="$(mktemp -d)"                  # not optional on a checkout you have used
 tofu -chdir=infra/<stack> init -backend=false      # -backend=false is not optional either
 tofu -chdir=infra/<stack> validate
 unset TF_DATA_DIR
 shellcheck -x infra/modules/environment/cloud-init/*.sh
+python3 infra/check_user_data.py                   # after any edit under cloud-init/
 ```
 
-`<stack>` is one of `bootstrap`, `environments/production`, `environments/staging`. Run all three: they share a module, so a change to it can break one and not
-the others. CI runs exactly these commands in `.github/workflows/validate-infra.yml`, without the `TF_DATA_DIR` line.
+`<stack>` is `bootstrap`, `environments/production` or `environments/staging`; run all three, they share a module.
 
-**`init -backend=false` still reads `.terraform/terraform.tfstate`, which is why `TF_DATA_DIR` is there.** That file is the backend-config record an earlier
-credentialed `init` left behind. OpenTofu reads it before it honours `-backend=false`, so on any checkout that has been initialized the command reaches the
-state bucket and fails. `-reconfigure` does not help. A scratch `TF_DATA_DIR` gives OpenTofu a clean data directory and leaves the real `.terraform` untouched.
-CI never meets this, because a fresh checkout has no `.terraform` — measured 2026-09-04 on all three stacks.
-
-**`-chdir` works above because none of those commands needs a credential.** Do not extend the pattern to anything that reaches the state backend. `.envrc` is
-loaded by direnv **on entering `infra/`**, and `-chdir` moves OpenTofu's working directory without moving the shell's — so direnv never fires and the
-environment holds no keys.
-
-What that looks like is not an empty-credential message. It is:
-
-```
-Error: error loading state: operation error S3: ListObjectsV2, https response error StatusCode: 403 ...
-api error InvalidAccessKeyId: UnknownError
-```
-
-**`InvalidAccessKeyId` here means no key, not a wrong one**, and it reads like a rotated secret. So a command that reaches the backend has to put the shell
-inside `infra/`. **The same error has a second cause that is not about the shell at all** — `init -backend=false` against a stale `.terraform`, above. The
-message is identical, so check which one you are looking at before suspecting the key. When handing one to a person, write it that way:
-
-```sh
-cd infra/environments/production && tofu plan     # direnv loads on entry, unloads on leaving
-direnv exec infra tofu -chdir=infra/environments/production plan   # equivalent, one shot
-```
-
-**`validate` does not evaluate variable `validation` blocks either** (measured 2026-08-20). A `default` that breaks its own rule — a bucket name of
-`Bad_Name-` against a regex that forbids it — passes `validate` cleanly. The rules still fire, but at plan time, which is the one command nobody may run
-unasked. **So a `validation` block is documentation until somebody applies the stack**, and it cannot be treated as a gate CI enforces: `validate-infra.yml`
-will go green on a value the variable itself rejects.
-
-**`validate` does not render `templatefile`.** A change to `cloud-init/node.yaml.tftpl` or to any of the `.sh` files can pass `validate` and still produce
-cloud-init that does not parse, or one that Hetzner refuses for its size. `python3 infra/check_user_data.py` is the check for both — it renders the template
-with sample data, parses the result, proves the scripts round-trip and measures each role against the cap (§ `user_data` forces replacement, below). It has
-caught real breakage; do not skip it after touching the templating.
+- **`init -backend=false` still reads `.terraform/terraform.tfstate`**, the record an earlier credentialed `init` left, and reaches the state bucket before it
+  honours the flag. `-reconfigure` does not help; a scratch `TF_DATA_DIR` does. CI never meets this because a fresh checkout has no `.terraform`.
+- **`-chdir` works for these because none needs a credential.** direnv loads `.envrc` on _entering_ `infra/`, and `-chdir` does not move the shell, so a
+  command that reaches the backend has to be `cd infra/environments/production && tofu plan` or `direnv exec infra tofu -chdir=… plan`. The failure is
+  `api error InvalidAccessKeyId: UnknownError` — **no key, not a wrong one**, and the stale-`.terraform` case above prints the identical message. Check which
+  before suspecting the key.
+- **`validate` does not evaluate variable `validation` blocks** — a `default` that breaks its own rule passes, and the rule fires at plan time. A `validation`
+  block is documentation until somebody applies the stack; CI goes green on a value the variable rejects.
+- **`validate` does not render `templatefile`.** `check_user_data.py` is the check: it renders both roles, parses the result with `yq`, proves each gzipped
+  script round-trips, and fails at 30 KiB against Hetzner's 32 KiB `user_data` cap (#1482 — the scripts passed the cap with everything green). Run it; do not
+  estimate.
 
 ## Looking a provider or module up
 
-**Use the `opentofu` MCP server, not your memory and not a web search.** It is declared in [`.mcp.json`](../.mcp.json) at the repository root, so it is
-configured for everyone who clones this repository; Claude Code asks each person to approve it once, on first use in the project. It is the hosted service at
-`https://mcp.opentofu.org/mcp`, it needs no API key, and it reaches only the OpenTofu registry.
-
-It answers five things: search the registry, provider details, module details, resource docs, data-source docs. Reach for it before writing a `resource` block
-against a provider version you have not read the docs for — an argument that was renamed or removed is the failure `validate` catches late and `plan` catches
-only when somebody is allowed to run it.
-
-**It matches what this code actually resolves.** Every `.terraform.lock.hcl` under `infra/` pins providers from `registry.opentofu.org`, so a Terraform-registry
-answer can describe a version that was never published to the registry these stacks use. Where the two agree, either is fine; where they differ, this one is
-the one that is true here.
-
-**The Terraform MCP plugin was enabled here and is not any more, on that reasoning** (2026-08-27). It answered from `registry.terraform.io`, and it wanted a
-`TFE_TOKEN` for a Terraform Cloud account this project does not have — the state backend is S3 on Hetzner's Ceph, in `backend.tf`. Re-adding it needs an
-argument for why a second registry is worth a second answer, not just the observation that the two registries usually agree.
+**Use the `opentofu` MCP server** ([`.mcp.json`](../.mcp.json); hosted at `https://mcp.opentofu.org/mcp`, no key, one approval per person), not memory and not a
+web search. It answers registry search, provider and module details, resource and data-source docs — and it answers from `registry.opentofu.org`, which is
+what every `.terraform.lock.hcl` here pins. A Terraform-registry answer can describe a version never published there. The Terraform MCP plugin was removed for
+that reason and because it wanted a `TFE_TOKEN` for a Terraform Cloud this project does not have; re-adding it needs an argument, not the observation that
+the two registries usually agree.
 
 ## What state this code is in
 
-**`bootstrap/` is applied and real, as of 2026-08-10.** Both DNS zones and their eight records exist on Hetzner and serve correctly; the SSH key is imported
-and managed. The S3 backend on Hetzner's Ceph works, including through a partial failure — that was the design's largest unknown and it is now closed.
+All three stacks are applied and live. `bootstrap/` holds both DNS zones, the SSH key and the S3 backend on Hetzner's Ceph. Staging is one `cx33` in `nbg1`,
+all-in-one, with no DNS records. Production is a `cx33` k3s node and a `cx23` PostgreSQL node, x86 because `cax*` cannot be bought in `eu-central`. Both have
+a PGDATA volume, and a node replacement has been proven to bring the database back with zero rows lost (#460). **Production is dark**: `publish_dns` is
+`false`, one throwaway `prod-check` record points at the node, and flipping it is the launch — [GO_LIVE_CHECKLIST.md](../docs/ops/GO_LIVE_CHECKLIST.md) first.
 
-**`environments/staging` is applied and real, as of 2026-08-13.** One `cpx22` in `nbg1` — x86, not ARM, and that is forced rather than chosen; `main.tf`
-explains it. The firewall rules, the k3s flags, WireGuard and the PGDG install have now executed on a real machine and worked on the first boot: k3s `Ready`,
-Traefik up, PostgreSQL listening on the private address, tunnel established with the declared peer.
-
-> **The config and the running node disagree right now (2026-08-20), and a `tofu apply` on staging REBUILDS THE NODE.** Two independent reasons, and confusing
-> them is easy:
+> **`user_data` has drifted on staging and on both production nodes, and an apply REBUILDS THEM.** `servers.tf` forces replacement on it, and `cloud-init/`
+> has changed since the last apply. Any apply made for an unrelated reason rebuilds the nodes too, and looks like the unrelated change's doing. The volume,
+> the Primary IPs, the network and the firewall survive; the k3s cluster does not.
 >
-> - `main.tf` declares `cx33` — 4 vCPU / 8 GB, cheaper than the `cpx22` it replaces — after the node ran out of memory under the observability stack (#271).
->   This one is harmless on its own: `server_type` is an in-place attribute within an architecture.
-> - **`user_data` has drifted since the 2026-08-17 apply**, and `servers.tf` forces replacement on it. Four commits changed `cloud-init/` on 18–19 August: WAL
->   streaming, the restore-drill corrections, the dead-man's-switch warning, and the privacy logging work.
->
-> **The second is what rebuilds the node, and it has been armed since 2026-08-18** — so an apply made for any unrelated reason would have rebuilt it too, and
-> looked like the unrelated change's doing. Measured: reverting `server_type` to `cpx22` and re-planning gives a byte-identical `2 to add, 0 to change, 2 to
-destroy`.
->
-> `hcloud_volume.postgres` does not appear in that plan, nor do the Primary IPs, the network or the firewall — so the database, the public address and the
-> WireGuard endpoint all survive. The k3s cluster does not.
+> **There is no targeted way out.** `hcloud_volume_attachment.postgres` names both servers in one ternary, so `-target` pulls the k3s node in. The address
+> records are the exception (#883): they read the Primary IPs, so `-target=hcloud_zone_rrset.address` — the go-live flip — touches DNS alone. Fixes reach the
+> running nodes by hand, [CLUSTER_BOOTSTRAP.md](../docs/ops/CLUSTER_BOOTSTRAP.md) § Applying a `cloud-init` fix without rebuilding.
 
-**The PGDATA volume is applied and proven on staging, as of 2026-08-17 (#460).** The node was replaced and the database came back: a sentinel row written at
-20:11:27 was read back on a machine that booted at 20:14:41, and every table matched a dump taken beforehand exactly — zero rows lost. `postgres.sh` logged
-`adopting the existing cluster on the volume`, and `hcloud_volume.postgres` did not appear in the plan at all, which is the check that matters. A subsequent
-reboot confirmed the fstab entry and the `RequiresMountsFor` drop-in hold when the script does not run. Production has its own volume, and a reboot of that node
-remounted it and brought PostgreSQL back on the private address.
+Two things a rebuild teaches: **the database survives, its credential does not** — the `events` role's password lived only in a Secret that dies with the
+cluster, so a rebuild needs `ALTER ROLE events PASSWORD …`, not `CREATE ROLE`; and **the `hetzner` Secret holds the same token this stack authenticates
+with**, so revoking it breaks `tofu apply` and DNS-01 together.
 
-**One thing it is still fair to call unproven**, so do not describe it as verified: the destroy/apply cycle has not been run. The 2026-08-17 rebuild was a server
-_replacement_, which is a different thing and does not tick #424's box — a `destroy` would take the volume with it, which is exactly what a replacement does not.
+**Still unproven, so do not describe as verified:** the destroy/apply cycle — a replacement is not a destroy, and a destroy takes the volume. The
+`user_data` delivery of `backups.sh` is proven: production booted with it and takes nightly backups nobody installed (BACKUPS.md).
 
-**Staging was rebuilt from scratch on 2026-08-17 and is fully back**: `admin_cidrs` is `[]` again, Flux is reconciling, cert-manager has issued, and the
-workloads serve the database that survived the node. Two things about that bring-up are worth carrying forward:
+## Layout and conventions
 
-- **The database survived; its credential did not.** The `events` role came through on the volume, but the password lived only in the `events-db` Secret, which
-  died with the cluster — and a SCRAM hash is not reversible. So a rebuild needs `ALTER ROLE events PASSWORD …` and a fresh Secret, not `CREATE ROLE`. §8 of
-  `docs/ops/CLUSTER_BOOTSTRAP.md` reads as though the database step is all-or-nothing; after a rebuild it is half redundant and half mandatory.
-- **The `hetzner` Secret now holds the same token this stack authenticates with**, chosen deliberately on 2026-08-17 over minting a second one. Hetzner tokens
-  are project-scoped with no finer grain, so it is the same power either way — but revoking that token now breaks `tofu apply` _and_ DNS-01 together, which is
-  the cost of the choice and the thing to remember when rotating.
+`bootstrap/` (DNS zones, SSH keys — long-lived) · `modules/environment/` (servers, network, firewall, volume, cloud-init) · `environments/{production,staging}`.
+The split is **by lifetime, not by environment**: a DNS zone caught in a routine `destroy` gets a new DNSSEC key, the DS record at INWX stops matching, and the
+domain becomes _unresolvable_. **Never move a `hcloud_zone` into an environment stack**; environments read it with `data "hcloud_zone"`.
 
-**`environments/production` is applied and real.** One `cx33` k3s node and one `cx23` PostgreSQL node in
-`nbg1`, both x86 because `cax21` cannot be bought anywhere in `eu-central`. The network, the firewall,
-four Primary IPs and the PGDATA volume all exist. Flux reconciles it, cert-manager has issued a real
-Let's Encrypt certificate, and the workloads serve.
-
-**It is dark rather than public.** `publish_dns` is `false`, so the apex and `www` resolve to nothing
-and one throwaway `prod-check` record points at the node. Flipping that variable is the launch, and
-[docs/ops/GO_LIVE_CHECKLIST.md](../docs/ops/GO_LIVE_CHECKLIST.md) is what to read first.
-
-> **`user_data` has drifted on both production nodes, and an apply REPLACES THEM.** The same trap
-> staging carries, now armed here. `private-net.sh` differs on both nodes, and `postgres.sh` differs on
-> the database node.
->
-> **There is no targeted way out of a rebuild.** `hcloud_volume_attachment.postgres` names both servers
-> in one ternary, so OpenTofu's graph makes it depend on both and `-target` pulls the k3s node in.
->
-> **The address records no longer share that problem** (#883). `k3s_ipv4`, `k3s_ipv6` and
-> `k3s_ipv6_network` read the Primary IPs, so `-target=hcloud_zone_rrset.address` — the go-live flip —
-> touches DNS alone. They read `hcloud_server.k3s` attributes before, which made the flip replace both
-> nodes on any pending `user_data` drift.
->
-> The #813 fix therefore reached the running database node by hand, through
-> `CLUSTER_BOOTSTRAP.md` § Applying a `cloud-init` fix without rebuilding. The script in this
-> repository is correct, so a future rebuild converges.
-
-## Layout, and why it is not by environment
-
-```
-bootstrap/            DNS zones · SSH keys        — long-lived, outside every destroy
-modules/environment/  servers · network · firewall · PGDATA volume · cloud-init
-environments/
-  production/         CX33 k3s + CX23 PostgreSQL · public · address records
-  staging/            one CX33, all-in-one · not on the public internet
-```
-
-The split is **by lifetime, not by environment**, and it is load-bearing. `tofu destroy` on an environment is meant to be routine; a DNS zone caught in that
-blast radius is not. Delegation would survive — Hetzner's nameservers are fixed — but DNSSEC would not: a re-created zone has a new key, the DS record at INWX
-stops matching, and the domain becomes _unresolvable_ rather than merely wrong.
-
-**So: never move a `hcloud_zone` into an environment stack**, and never manage the zone from anywhere but `bootstrap/`. Environments read it with
-`data "hcloud_zone"` and own only their own address records.
-
-## Conventions
-
-Beyond `tofu fmt`, this follows [terraform-best-practices.com](https://www.terraform-best-practices.com/):
-
-- **`_` in Terraform identifiers, `-` in values** that a human or a cloud API sees (`"${var.environment}-k3s"`).
-- **Never repeat the resource type in the resource name.** `hcloud_zone_rrset "defaults"`, not `"zone_defaults"`.
-- **`count` / `for_each` first in the block**, followed by a blank line.
-- **`labels` last among real arguments**, then a blank line, then blocks, `depends_on`, `lifecycle`.
-- **Plural variable names for `list`/`map` types**; singular resource names even when `for_each` makes several.
-- **Variable block order**: `description`, `type`, `default`, `nullable`, `validation`. Every variable has a description and `nullable = false` unless `null`
-  carries meaning — it does for exactly one, `postgres_server_type`, where `null` means "co-locate PostgreSQL on the k3s node".
-- **Every output has a description**, including the thin pass-through outputs in the environment stacks.
-- **Prefer a boolean in a `count` condition** over `length(...)`.
-
-Two deliberate deviations, so nobody "fixes" them: single resources are named `main` rather than `this`, because `main` reads better in a config this small; and
-outputs use short names (`k3s_ipv4`) rather than the book's `{name}_{type}_{attribute}`, which is a convention for public registry modules and pure noise here.
-
-## Comments
+Beyond `tofu fmt`, [terraform-best-practices.com](https://www.terraform-best-practices.com/): `_` in identifiers, `-` in values a cloud API sees; never repeat
+the resource type in the name (`hcloud_zone_rrset "defaults"`); `count`/`for_each` first, `labels` last among arguments, then blocks, `depends_on`,
+`lifecycle`; plural names for lists and maps; variable blocks ordered `description`, `type`, `default`, `nullable`, `validation`, every one described and
+`nullable = false` unless `null` carries meaning (only `postgres_server_type`: `null` co-locates PostgreSQL); every output described; a boolean in `count`
+over `length(...)`. Two deliberate deviations: single resources are `main`, not `this`, and outputs use short names (`k3s_ipv4`).
 
 Comments explain **why**, and specifically why an obvious alternative was not taken — `firewall.tf` opens on why Hetzner firewalls cannot secure the private
-network, `servers.tf` on why Primary IPs are separate resources. Match that. Do not add comments that restate the HCL.
-
-Cross-references point at `docs/ops/PLATFORM_SETUP.md` sections (`§4a`, `§8a`) and ADR numbers. Keep them; they are how a reader gets from a line of config to the
-argument behind it. If you contradict one of those documents, change the document too, or say plainly that you have not.
+network. Cross-references point at `docs/ops/PLATFORM_SETUP.md` sections and ADR numbers; if you contradict one, change the document too.
 
 ## Things that will bite
 
-- **A `k3s_version` bump is not automatically a rebuild.** The plan says replace the server, because
-  `user_data` is force-new — but k3s upgrades in place through the installer the node booted with, and
-  that keeps the cluster, Flux, the Secrets and the backup credential. Take
-  [`docs/ops/K3S_UPGRADE.md`](../docs/ops/K3S_UPGRADE.md) and bump the pin in the same change. The
-  same shape applies to `walg_version`, in `docs/ops/BACKUPS.md` §8.
-- **`user_data` forces replacement.** Any edit under `cloud-init/` rebuilds the node, production included. It is also capped at **32 KiB**, and the
-  scripts alone passed that in September 2026 without anything going red (#1482): a rebuild of staging would have failed at the API after a clean plan.
-  Two things follow from it:
-
-    - **The scripts travel `gz+b64`.** `node.yaml.tftpl` writes every `.sh` as `base64gzip(...)` with `encoding: gz+b64`; cloud-init decodes it, and the node
-      gets the script byte for byte, comments included. The small config files stay plain. The plain scripts measured 33.9 KiB; encoded, 20.5 KiB.
-    - **`python3 infra/check_user_data.py` is the measurement**, and `validate-infra.yml` runs it. It renders both roles with sample values, parses each
-      with `yq`, proves each gzipped script decodes back to its source, and fails at 30 KiB — 2 KiB under the cap, so a change that spends the margin is one
-      to read. It mirrors the template and the two file lists in `cloudinit.tf` rather than calling OpenTofu, because the module's locals read state; the
-      mirror asserts the three template lines it depends on and that every `.sh` under `cloud-init/` is shipped by some role. Run it after any edit under
-      `cloud-init/`; do not estimate. On this tree it reports 23.0 KiB (72%) for the co-located staging node and 17.9 KiB (56%) for production's database node.
-
-    `postgres.sh` and `backups.sh` are still not shipped to a k3s node that has a database next door — that conditional in `cloudinit.tf` is what keeps
-    production's k3s node smallest of the three, for two files nothing on it runs.
-
-- **"In-place" is a property of an attribute, never a prediction about an apply.** `server_type` updates in place within an architecture — and staging's
-  2026-08-20 plan still replaced the node, because `user_data` had drifted and that forces replacement. The two are independent, and the field-level fact says
-  nothing about the outcome. **Read the plan; do not reason from the schema.**
-- **`server_type` cannot cross architectures, and `tofu plan` will not warn you.** Within one architecture it is an in-place resize; between `cpx*` (x86) and
-  `cax*` (ARM) Hetzner refuses — [their FAQ](https://docs.hetzner.com/cloud/servers/faq/) lists rescale alongside snapshots and ISOs as places where "it is not
-  possible to work with two different architecture types". The plan renders a tidy in-place update and the **apply** fails against the API partway through. So
-  an architecture change is a _rebuild_, not a variable change: see [docs/ops/CLUSTER_BOOTSTRAP.md](../docs/ops/CLUSTER_BOOTSTRAP.md) §Rebuilding a node. Staging is on
-  `cpx22` only because ARM could not be bought (#424), so this is a live concern rather than a hypothetical.
-- **Rebuilding a node keeps its database; destroying an environment does not.** `PGDATA` is on an `hcloud_volume` mounted at `/var/lib/postgresql` (#460), and
-  the volume is declared standalone — `location`, never `server_id` — so nothing about it references a server and no server edit can plan to replace it.
-  Replacing the node therefore leaves the data alone, and `postgres.sh` adopts the cluster already on the volume. **`tofu destroy` still takes it**, because
-  `delete_protection` does not stop OpenTofu (see below). Off-server backups are `backups.sh` — see § Backups, and note that they are declared but not yet
-  proven by a restore.
-- **`postgres.sh` contains no `mkfs`, and must not grow one.** The volume is formatted once by the provider at creation (`format = "ext4"` in `volume.tf`).
-  That is deliberate: the script runs on every boot against a volume that already holds a cluster, so the one genuinely destructive command is kept out of the
-  file rather than wrapped in a condition somebody can get wrong later. Its seed step copies only into a volume with no cluster on it, and a cluster of an
-  unexpected major version aborts the boot instead of being worked around.
-- **Volumes are location-bound, like the Primary IPs.** Moving an environment to another location means dealing with the volume — and the data on it — first.
-  `location` on the volume does not migrate anything.
-- **`delete_protection` does not stop OpenTofu** — the provider lifts its own locks before destroying. Only `lifecycle { prevent_destroy = true }` does, and it
-  is used in exactly one place, on the DNS zones. Do not describe any other resource as protected from `destroy`.
-- **`ssh_keys` on a server is ignored after creation** (`lifecycle.ignore_changes`), because changing it would rebuild the node and the keys only ever reach
-  root, whose login harden.sh disables. Adding an admin key to a _running_ node is a manual step, not a config change.
-- **Secrets never enter state.** The WireGuard server keypair is generated on the node at first boot; the Hetzner token and S3 credentials come from the
-  environment via direnv (`.envrc.example`). If a change would put a private key, password or token into a variable or an output, it is the wrong change —
-  find another way.
-- **Never read, print or `cat` `.envrc`, `.env` or `terraform.tfvars`.** The committed `.example` files carry everything needed to understand the shape; the
-  real ones are gitignored because of what they may contain. Edit `.envrc.example` if the _set_ of variables changes, never the copy in use.
-- **Never echo a credential variable, not even to check it is set.** This one has already gone wrong once, on 2026-08-10, and cost a full rotation of the
-  Hetzner token and both S3 keys. `${VAR:+set}${VAR:-EMPTY}` looks like a boolean and is not — the second expansion prints the value whenever the first says
-  `set`. The only safe form prints a marker and never the variable:
-
-    ```sh
-    direnv exec infra bash -c 'echo "HCLOUD_TOKEN: ${HCLOUD_TOKEN:+set}"'
-    ```
-
-    A length is also safe (`${#VAR}`); a default-value expansion never is. If a check needs the value to be _correct_ rather than merely present, use it — pass
-    it to a command — do not display it.
-
-- **`admin_cidrs` is a bootstrap value**, not an allowlist to maintain. Its steady state is `[]`. See §8a.
-- **Staging has no DNS records on purpose.** It is unreachable from the internet, not merely password-protected, which is also why its TLS needs DNS-01. Adding
-  an `A` record for it would quietly undo that.
-- **`.tftpl` is not HCL.** `tofu fmt` rejects the extension; the pre-commit hook excludes it for that reason.
-- **The cost boundary is the network zone, not the location.** Traffic inside `eu-central` is free, so `fsn1`/`nbg1`/`hel1` are interchangeable and the
-  Object Storage buckets — which live in `fsn1` and cannot be moved — do not pin the servers. `region` in `backend.tf` names the _bucket's_ location; never
-  change it to follow a server move. Do **not** derive `location` from live capacity: it forces replacement on servers and Primary IPs, so a stock change
-  elsewhere would plan a rebuild during an unrelated apply. Decide with `check-capacity.sh`, then edit the one line.
-- **Locking is off.** `use_lockfile` is unverified on Hetzner's Ceph, so it sits commented out in all three `backend.tf` files. Do not turn it on speculatively
-  — test it, then write the answer into `README.md`.
-- **`.terraform.lock.hcl` is committed and Dependabot maintains it** (`opentofu` ecosystem, all four directories grouped into one PR). Do not delete a lock
-  file, and do not hand-edit one — regenerate with `tofu providers lock -platform=linux_amd64 -platform=linux_arm64 -platform=darwin_arm64` so CI, the ARM
-  nodes and an arm64 laptop all stay covered.
-
-- **A green CI run on a provider bump means the configuration still parses, and nothing more.** `validate-infra.yml` runs `init -backend=false` and `validate`,
-  which reaches no API, renders no `templatefile`, and does not evaluate variable `validation` blocks. **None of the three gates in this repository can tell you
-  a new provider version still works against Hetzner.** So review an `opentofu` Dependabot PR on this basis rather than on its checks:
-
-    1. **Read the lock diff.** Not every provider is signed — `aminueza/minio` is not, and `init` says so: _"Signature validation was skipped due to the registry
-       not containing GPG keys for this provider"_. Each bump is therefore another trust-on-first-use download, and the recorded hashes are the only control.
-       A lock diff that changes hashes without changing the version is the one to stop on.
-    2. **`tofu -chdir=bootstrap plan` and expect _no changes_.** A version bump against an unmodified configuration should be a no-op. **A diff on a
-       configuration nobody edited is the finding** — it means the provider now reads or writes something differently, and that is exactly what a minor release
-       is allowed to do and CI cannot see. This needs credentials and is a deliberate act; see the rule at the top of this file.
-    3. **`aminueza/minio` carries a specific risk the others do not.** It is a MinIO provider pointed at Hetzner's Ceph, which is why `s3_compat_mode` is set at
-       all — features it expects are not all implemented there. Hetzner is one of its tested backends, so this is not a gamble, but the compatibility surface is
-       the thing a minor release can move, and step 2 is the only place it would show.
+- **A `k3s_version` bump is not a rebuild.** The plan says replace (`user_data` is force-new), but k3s upgrades in place through the installer the node booted
+  with: [K3S_UPGRADE.md](../docs/ops/K3S_UPGRADE.md), bump the pin in the same change. Same shape for `walg_version`, BACKUPS.md §8.
+- **`user_data` forces replacement and is capped at 32 KiB.** Every `.sh` travels `gz+b64` through `node.yaml.tftpl`; `check_user_data.py` mirrors the
+  template and the two file lists in `cloudinit.tf` and asserts every `.sh` under `cloud-init/` is shipped by some role. `postgres.sh` and `backups.sh` are not
+  shipped to a k3s node with a database next door — that conditional keeps production's k3s node smallest.
+- **"In-place" is a property of an attribute, never a prediction about an apply.** `server_type` updates in place within an architecture, and the plan still
+  replaced the node because `user_data` had drifted. **Read the plan; do not reason from the schema.**
+- **`server_type` cannot cross architectures, and `plan` will not warn you.** Between `cpx*`/`cx*` (x86) and `cax*` (ARM) Hetzner refuses at **apply**,
+  partway through. An architecture change is a rebuild: CLUSTER_BOOTSTRAP.md § Rebuilding a node.
+- **Rebuilding a node keeps its database; destroying an environment does not.** PGDATA is an `hcloud_volume` declared standalone (`location`, never
+  `server_id`), so no server edit can plan to replace it and `postgres.sh` adopts the cluster on it. `tofu destroy` still takes it — `delete_protection` does
+  not stop OpenTofu; only `lifecycle { prevent_destroy }` does, and only the DNS zones carry it. Volumes are location-bound, like the Primary IPs.
+- **`postgres.sh` contains no `mkfs`, and must not grow one.** The provider formats the volume once (`format = "ext4"`); the script runs on every boot against
+  a volume that already holds a cluster. Its seed step copies only into an empty volume, and an unexpected major version aborts the boot.
+- **`ssh_keys` on a server is ignored after creation** (`ignore_changes`): a change would rebuild the node and the keys only reach root, which `harden.sh`
+  disables. Adding an admin key to a running node is a manual step.
+- **Secrets never enter state.** The WireGuard keypair is generated on the node; the Hetzner token and S3 keys come from direnv (`.envrc.example`). A change
+  that puts a key, password or token into a variable or output is the wrong change.
+- **Never read, print or `cat` `.envrc`, `.env` or `terraform.tfvars`**; the `.example` files carry the shape. **Never echo a credential variable, not even to
+  check it is set** — `${VAR:+set}${VAR:-EMPTY}` prints the value, and this cost a rotation of the Hetzner token and both S3 keys. The safe forms:
+  `direnv exec infra bash -c 'echo "HCLOUD_TOKEN: ${HCLOUD_TOKEN:+set}"'` or `${#VAR}`. To check a value is _correct_, pass it to a command; do not display it.
+- **`admin_cidrs` is a bootstrap value**, steady state `[]` (PLATFORM_SETUP.md §8a). **Staging has no DNS records on purpose** — unreachable, not
+  password-protected, which is why its TLS needs DNS-01; an `A` record would undo that.
+- **`.tftpl` is not HCL**; `tofu fmt` rejects it and the pre-commit hook excludes it.
+- **The cost boundary is the network zone.** `fsn1`/`nbg1`/`hel1` are interchangeable inside `eu-central`; the buckets live in `fsn1` and `region` in
+  `backend.tf` names the _bucket's_ location — never change it to follow a server move. Never derive `location` from live capacity: it forces replacement on
+  servers and Primary IPs. Decide with `check-capacity.sh`, then edit the one line.
+- **Locking is off**: `use_lockfile` is unverified on Hetzner's Ceph and sits commented out in every `backend.tf`. Test it before turning it on; write the
+  answer into `README.md`.
+- **`.terraform.lock.hcl` is committed and Dependabot maintains it** (all four directories in one PR). Never hand-edit or delete one; regenerate with
+  `tofu providers lock -platform=linux_amd64 -platform=linux_arm64 -platform=darwin_arm64`.
+- **A green CI run on a provider bump means the configuration still parses, and nothing more.** No gate here reaches Hetzner. Review an `opentofu` Dependabot
+  PR by: (1) the lock diff — `aminueza/minio` is unsigned, so each bump is trust-on-first-use and a hash change without a version change is the stop; (2)
+  `tofu -chdir=bootstrap plan` expecting **no changes** — a diff on an unedited configuration is the finding, and this needs a credential and an instruction;
+  (3) `aminueza/minio` points at Hetzner's Ceph through `s3_compat_mode`, and a minor release can move that surface, which only step 2 shows.
 
 ## Backups
 
-`backups.sh` is commented far more thinly than anything else here, because it is rendered into a `user_data` that is 92% full. The operational picture — what
-each layer survives, retention, costs, how `wal-g` is kept current — is [docs/ops/BACKUPS.md](../docs/ops/BACKUPS.md), and restoring is
-[docs/ops/RESTORE_RUNBOOK.md](../docs/ops/RESTORE_RUNBOOK.md). What follows is what an agent about to change `backups.sh` needs, and nothing else.
+`backups.sh` is commented thinly because it rides in a `user_data` near its cap. The operational picture is [BACKUPS.md](../docs/ops/BACKUPS.md), restoring
+is [RESTORE_RUNBOOK.md](../docs/ops/RESTORE_RUNBOOK.md). What an agent about to change `backups.sh` needs:
 
-**The credential is not in this configuration and must not be put there.** wal-g needs an S3 access key and secret; they would reach the node through
-`user_data`, which is state. So the split is: the machine installs the mechanism, the operator writes `/etc/wal-g/credentials.env` by hand
-(`docs/ops/CLUSTER_BOOTSTRAP.md` §8b). The honest cost is that **a rebuilt node comes back with the timers and no credential** — the same shape as the `events`
-role's password, which already dies with a rebuild. That is not mitigated by care; it is mitigated by `walg check`, below.
-
-**`walg check` is the point, not the backups themselves.** A backup job that exits 0 having uploaded nothing is the failure mode this whole issue exists to
-catch, so success is defined as _a base backup exists and is younger than 26 hours_, not _the last run did not error_. Only then does it ping healthchecks.io,
-for the reason `PLATFORM_SETUP.md` §11 gives about the site monitor: an unconditional heartbeat proves only that the heartbeat ran. It also asserts
-`/var/lib/postgresql` is under 85% full, because a stalled `archive_command` does not merely stop backups — it fills `pg_wal`, and on a 10 GB volume that stops
-the database.
-
-**`FIND_FULL` in the retention sweep is not optional.** `wal-g delete before <time>` without it will remove a base backup that a later delta still depends on,
-leaving a chain that lists perfectly and cannot be restored.
-
-**Retention is enforced twice, and that is deliberate.** The nightly sweep only runs while the node is healthy, and `backup_retention_days` is a number the
-privacy notice has to state (#277) — so a lifecycle rule on the bucket backs it up, and the window cannot quietly become "forever" because a machine was down.
-Changing the number means changing the notice.
-
-**One bucket, two environments, separated by a prefix** derived from `environment` in `cloudinit.tf` rather than typed anywhere. It is load-bearing: staging
-pointed at production's prefix would delete real backups on its next sweep.
-
-**The binary comes from GitHub, and github.com publishes no AAAA record** (checked 2026-08-18). A node with no public IPv4 cannot install wal-g, which is why
-production sets `postgres_public_ipv4 = true` and why `backups.sh` stops the boot rather than coming up without backups. `apt.postgresql.org` _does_ answer on
-IPv6, so the older worry in `PLATFORM_SETUP.md` §1 resolves the other way.
-
-**A backup nobody has restored is a belief about a backup.** The drill is `docs/ops/RESTORE_RUNBOOK.md` §4 and §5, it restores into a scratch cluster on port 5433
-and never into live `PGDATA`, and it is not optional before go-live.
-
-**Changing `backups.sh` or `postgres.sh` now opens a drill issue by itself** — `.github/workflows/restore-drill-reminder.yml` watches both paths on `main`, so
-this is a gate rather than the note it used to be. The quarterly reminder comes from the same workflow. A **PostgreSQL major version** bump is the one that is
-still only a note: `var.postgres_version` lives in a file that moves for unrelated reasons, so it is on you to run the drill after one.
-
-**It has run twice, most recently on 2026-09-09, on staging, both halves passed.** 4,201 events and 5,275 artists came back from the bucket alone, including a
-marker row written _after_ the base backup was taken — which is what proves WAL archiving rather than file copying — and a PITR restore recovered a table
-dropped afterwards. **Restore to serving: ~12 seconds on a 40 MB cluster.** That number does not extrapolate; re-measure when the database is meaningfully
-larger.
-
-**What is still unproven, so do not describe it as verified: the cloud-init delivery path.** `backups.sh` was installed and run by hand on the live staging node
-rather than through a node replacement, deliberately — the alternative takes k3s, Flux and both secrets with it, and none of that was needed to prove a restore.
-So the script is proven; `user_data` carrying it to a fresh node is not, and the first real rebuild is what will settle that.
+- **The credential is not in this configuration and must not be put there** — `user_data` is state. The operator writes `/etc/wal-g/credentials.env` by hand
+  (CLUSTER_BOOTSTRAP.md §8b), so **a rebuilt node comes back with the timers and no credential**. `walg check` is the mitigation, not care.
+- **`walg check` is the point.** Success is _a base backup exists and is younger than 26 hours_, not _the last run did not error_; only then does it ping
+  healthchecks.io. It also asserts `/var/lib/postgresql` is under 85% full, because a stalled `archive_command` fills `pg_wal` and stops the database.
+- **`FIND_FULL` in the retention sweep is not optional** — without it `wal-g delete before` removes a base backup a later delta depends on, leaving a chain that
+  lists and cannot restore.
+- **Retention is enforced twice, deliberately**: the nightly sweep and a bucket lifecycle rule, because `backup_retention_days` is a number the privacy notice
+  states (#277). Changing the number means changing the notice.
+- **One bucket, two environments, separated by a prefix** derived from `environment` in `cloudinit.tf`, never typed. Staging on production's prefix would
+  delete real backups on its next sweep.
+- **github.com publishes no AAAA record**, so a node with no public IPv4 cannot install wal-g: that is why production sets `postgres_public_ipv4 = true` and why
+  `backups.sh` stops the boot rather than coming up without backups.
+- **Changing `backups.sh` or `postgres.sh` opens a drill issue by itself** (`restore-drill-reminder.yml` watches both on `main`). A PostgreSQL major bump does
+  not; run the drill yourself after one. The drill (RESTORE_RUNBOOK.md §4–§5) restores into a scratch cluster on port 5433, never live `PGDATA`, and has
+  passed on staging, both halves. Restore to serving was ~12 seconds on a 40 MB cluster; re-measure when the database is larger.
 
 ## If the PostgreSQL node's IPv6-only egress fails
 
-The fallback is a NAT gateway, and the reference is Hetzner's
-[Private Network with NAT Gateway and Load Balancer using OpenTofu](https://community.hetzner.com/tutorials/private-network-nat-lb-hetzner-opentofu/). Read it
-for the mechanism, not as a template — the cheaper fix is still `postgres_public_ipv4 = true`, and a NAT gateway is only worth building if keeping the node
-without a public address matters more than the ~€0.50/month.
-
-The mechanism is one `hcloud_network_route` (`destination = "0.0.0.0/0"`, `gateway` = the k3s node's private address) plus `MASQUERADE` on the k3s node. No
-separate NAT server: the k3s node already has both a public IPv4 and a private address, and `wireguard.sh` already enables IP forwarding.
-
-**Four things in that tutorial must not be copied here:**
-
-- **Its VPC is `10.42.0.0/16`, which is k3s's default pod CIDR.** Ours are `10.0.0.0/16` and `10.1.0.0/16` for exactly this reason. Copying its CIDR would
-  overlap the cluster network with the private network, and the symptom would be intermittent pod-to-database failures, not an obvious error.
-- It uses `network_id` in the server `network` block **while having two subnets** — the case the provider docs call unpredictable. Use `subnet_id`.
-- It omits `alias_ips = []`, so it detaches and reattaches the network on every apply.
-- Its Load Balancer half does not apply at all: k3s's bundled ServiceLB binds the node IP, which is why PLATFORM_SETUP.md §1 does not order one.
+The cheaper fix is `postgres_public_ipv4 = true` (~€0.50/month). A NAT gateway is one `hcloud_network_route` (`destination = "0.0.0.0/0"`, `gateway` = the
+k3s node's private address) plus `MASQUERADE` on the k3s node, which already has a public IPv4 and IP forwarding from `wireguard.sh`. Hetzner's
+[tutorial](https://community.hetzner.com/tutorials/private-network-nat-lb-hetzner-opentofu/) has the mechanism; **four things in it must not be copied**: its
+VPC is `10.42.0.0/16`, k3s's pod CIDR (ours are `10.0.0.0/16` and `10.1.0.0/16`, and the symptom of overlap is intermittent pod-to-database failure); it uses
+`network_id` with two subnets — use `subnet_id`; it omits `alias_ips = []`, so it reattaches the network on every apply; and its Load Balancer half does not
+apply, because k3s's ServiceLB binds the node IP.
 
 ## Two gaps, named rather than hidden
 
-**No `plan` in CI, and therefore no drift detection.** Both need a credential, and §4 of PLATFORM_SETUP.md says nothing outside the cluster holds one. That is a
-deliberate trade, not an oversight: the cost is that drift and plan review are manual, and that cost was accepted in exchange for CI holding no key to the
-infrastructure. If this ever changes, it needs an ADR, not a workflow edit.
-
-**No automated tests.** OpenTofu supports `.tftest.hcl`, but the meaningful assertions here are all about a running machine, and the unit-testable parts are
-thin. The rendering check described above is the substitute.
+**No `plan` in CI, and therefore no drift detection.** Both need a credential, and nothing outside the cluster holds one (PLATFORM_SETUP.md §4). A deliberate
+trade; changing it needs an ADR, not a workflow edit. **No automated tests.** The meaningful assertions are about a running machine; `check_user_data.py` is the
+substitute.

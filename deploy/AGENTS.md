@@ -1,352 +1,182 @@
 # AGENTS.md — `deploy/`
 
-The Helm chart for the Hetzner platform. The nearest `AGENTS.md` wins, so this file overrides the repository root's for anything under `deploy/`. Read
-[`charts/event-junkie/README.md`](charts/event-junkie/README.md) next to it — that one is written for a human deciding how to install the chart, this one for an
-agent about to change it.
-
-`infra/AGENTS.md` is the sibling document and the two are not interchangeable: the hazards there are the opposite of the ones here, which is why the rules were
-not merged into one file.
+The Helm chart for the Hetzner platform and the Flux resources that deploy it. The nearest `AGENTS.md` wins, so this file overrides the repository root's for
+anything under `deploy/`. [`charts/event-junkie/README.md`](charts/event-junkie/README.md) is written for a human deciding how to install the chart; this one
+is for an agent about to change it. `infra/AGENTS.md` is the sibling, and its hazards are the opposite of these.
 
 ## The one rule that matters
 
 **Everything that renders the chart is safe. Everything that installs it is not.**
 
-**The pre-commit `helm lint` and CI's run the same Helm.** Local hooks run whatever `helm` is installed — currently v4 — and `validate-chart.yml` pins
-**v4.2.4**, the SDK helm-controller embeds. Keep them matched: a client difference here is invisible until it lets something through, and `--strict` is where
-the versions diverge most (Helm 4 rejects an unknown `Chart.yaml` key, Helm 3 does not).
-
-**Trust the local failure when a hook and a check disagree.** That rule is older than the matching pins and outlives them.
-
-`helm lint`, `helm template` and `flux schema validate` are pure functions of the working tree. They reach no cluster, need no kubeconfig, and cannot break anything —
-run them as often as you like:
+Safe — pure functions of the working tree, no cluster, no kubeconfig, run them as often as you like:
 
 ```sh
 helm lint --strict deploy/charts/event-junkie --values deploy/charts/event-junkie/values-k3d.yaml
 helm template t deploy/charts/event-junkie --values deploy/charts/event-junkie/values-k3d.yaml
-helm unittest --strict deploy/charts/event-junkie
-scripts/cluster-assertions.sh
+helm unittest --strict deploy/charts/event-junkie     # renders in-process; a plugin, not a cluster call
+scripts/cluster-assertions.sh                         # the same suites against every HelmRelease's spec.values
 ```
 
-**`helm unittest` belongs in that safe list and needs saying explicitly**, because a plugin that runs under a `helm` subcommand looks like it might reach a
-cluster and does not: it renders the chart in-process and asserts on the result. No kubeconfig, no context, nothing to get wrong. It is not installed by
-default:
+- `helm unittest` is not installed by default: `helm plugin install https://github.com/helm-unittest/helm-unittest --version <HELM_UNITTEST_VERSION> --verify=false`.
+  Pin what `validate-chart.yml` pins, for the plugin and for Helm itself (`HELM_VERSION`); a version that floats is a gate whose verdict floats, and
+  `--strict` is where Helm 3 and 4 diverge most. **Trust the local failure when a hook and a check disagree.**
+- The base `values.yaml` cannot render alone — `database.host` and `database.existingSecret` are `required`. Add
+  `--set database.host=10.0.1.2 --set database.existingSecret=events-db` when rendering without an environment values file.
 
-```sh
-helm plugin install https://github.com/helm-unittest/helm-unittest --version v1.1.2 --verify=false
-```
+**Never run `helm install`, `helm upgrade`, `helm uninstall`, `helm rollback` or `helm test` on your own initiative.** They reach a real cluster; if a task
+appears to require one, stop and say so. **`helm install --dry-run` is not safe either** — it resolves the current kubeconfig context and talks to that API
+server. `--dry-run=client` does not; use it only when you need `NOTES.txt`, which `template` does not render.
 
-`--verify=false` is Helm 4's doing — it refuses an unverifiable plugin source without it, and the local binary is v4. CI pins Helm 3 and installs the same
-version without the flag. Pin whatever `HELM_UNITTEST_VERSION` in `.github/workflows/validate-chart.yml` pins; a plugin whose version floats is a gate whose
-verdict floats.
-
-The base `values.yaml` cannot render on its own — `database.host` and `database.existingSecret` have no safe default and the helpers `required` them. Add
-`--set database.host=10.0.1.2 --set database.existingSecret=events-db` when rendering without an environment values file.
-
-**Never run `helm install`, `helm upgrade`, `helm uninstall`, `helm rollback` or `helm test` on your own initiative.** They reach a real cluster. If a task
-appears to require one, stop and say so.
-
-**`helm install --dry-run` is not in the safe list**, and this is the trap in that list: it resolves the current kubeconfig context and talks to that cluster's
-API server for capability discovery. `--dry-run=client` does not, and `helm template` does not. Prefer `helm template`; reach for `--dry-run=client` only when
-you specifically need `NOTES.txt` rendered, which `template` does not do.
-
-**On an explicit, specific instruction you may install — but only against k3d.** Check the context first (`kubectl config current-context`) and stop if it is not
-a `k3d-*` one. An instruction to install locally is not permission to touch staging, and an instruction given once does not carry to the next session.
-
-**Checking once is not enough — pass the context explicitly on every command**, including read-only ones:
+**On an explicit, specific instruction you may install — but only against k3d**, and an instruction given once does not carry to the next session. Check
+`kubectl config current-context`, stop if it is not `k3d-*`, and then **pass the context explicitly on every command, read-only ones included**:
 
 ```sh
 helm --kube-context k3d-event-junkie install …
 kubectl --context k3d-event-junkie get pods
-flux --context k3d-event-junkie install
+flux --context k3d-event-junkie install      # flux resolves the current context too; a bare `flux check --pre` once reached an unrelated cluster
 ```
 
-**`flux` belongs in that list and it is easy to forget**, because most of its subcommands read rather than write. It resolves the current kubeconfig context
-exactly like `helm install --dry-run` does — running a bare `flux check --pre` while writing #414 reached an unrelated cluster and failed against it, which is the
-harmless version of the same mistake.
-
-This is not hypothetical. During #263 the active context on the developer machine belonged to an unrelated project, and several other clusters — production ones
-among them — were in the same kubeconfig. Assume that is the normal case rather than an unlucky one. `k3d cluster create` also switches the active context as a
-side effect, so a bare `kubectl` inherits whatever is current at that moment rather than whatever you checked earlier.
-
-**And never write a context name you did not create into anything published.** Not into a commit message, an issue, a pull request, a code comment or a
-document. A kubeconfig on a working machine is a list of somebody's other clients and employers, and the cluster names in it are theirs, not this project's —
-`kubectl config get-contexts`, `current-context` and `cluster-info` all print them, and they read as harmless context until they are on a public repository. This
-rule exists because #263 put four of them in a commit message and they had to be rewritten out of the branch afterwards. Refer to "an unrelated context" and move
-on; the only names that belong here are `k3d-*` ones this project created.
+The developer kubeconfig holds other people's clusters, production ones among them, and `k3d cluster create` switches the active context as a side effect.
+**Never write a context name you did not create into anything published** — commit message, issue, PR, comment, document. Those names belong to somebody's
+other clients; #263 put four of them in a commit message that had to be rewritten. Say "an unrelated context"; only `k3d-*` names this project created belong here.
 
 ## What state this is in
 
-**Installed and exercised on k3d as of 2026-08-12 (#263); never on a real cluster.** The chart was installed, upgraded across a version bump, `helm test`-ed and
-uninstalled on a local k3d cluster with **arm64** nodes — the same architecture the Hetzner nodes will run. The full stack came up, the ingress split routed
-correctly, and a real scrape reached `/api/events` through Traefik.
-
-**Flux was added to that on 2026-08-12 (#414)** — the published chart reconciled from GHCR on k3d, `helm test` run in-cluster, and a deliberately broken release
-rolled back.
-
-**Deployed to the real staging cluster on 2026-08-13 (#424, #265).** `flux bootstrap` has now run against Hetzner: the Flux manifests are committed to
-`deploy/clusters/staging/flux-system/`, cert-manager and the DNS-01 webhook installed ahead of the application through `dependsOn`, all three workloads came up,
-Flyway applied its migrations against PostgreSQL over the private network, and the chart's `helm test` hook passed in-cluster. The runbook is
-[docs/ops/CLUSTER_BOOTSTRAP.md](../docs/ops/CLUSTER_BOOTSTRAP.md).
-
-**Most of the k3d gap is now closed — but say which parts.** TLS, cert-manager, DNS, git-sync, a real private-network database and genuine resource pressure are
-all exercised on staging. **Production now runs the chart too**, dark: it serves a rehearsal hostname over a real Let's Encrypt certificate while `publish_dns`
-keeps the domain unresolvable. Both environments are x86, because `cax21` cannot be bought in `eu-central` (#424).
-
-**Staging follows `main` again as of #455**, having been pinned to a fixed tag while snapshot versions were unordered. The `OCIRepository` is back on
-`semver: ">=0.0.0-0"`. That it _does_ move is the part still to be confirmed on the cluster after the first post-#455 merge publishes a chart — the ordering
-itself is asserted in CI by `scripts/version-test.sh`.
-
-So: the chart may now be described as **deployed to production**. What is still unproven is the chart under real traffic, and "installed and exercised locally" remains the accurate
-phrase for anything that has only met k3d.
-
-The runbook for re-running the rehearsal is in `docs/DEVELOPMENT.md`. Two things it will not let you skip: the rehearsal uses its **own database**
-(`event_junkie_k3d`), never the local development one, because installing the chart runs Flyway; and every cluster command carries an explicit
-`--kube-context k3d-…` (below).
+The chart is deployed to staging and production through Flux, and exercised locally on k3d by `scripts/k3d-rehearsal.sh`. Staging follows `main` through
+snapshot versions; production takes releases only, and serves a rehearsal hostname over a real certificate while `publish_dns` keeps the domain dark. What
+has only met k3d is "installed and exercised locally", and what is unproven is the chart under real traffic. The rehearsal uses its **own database**
+(`event_junkie_k3d`), never the development one, because installing the chart runs Flyway; [docs/DEVELOPMENT.md](../docs/DEVELOPMENT.md) is the runbook.
 
 ## Layout
 
 ```
 deploy/
 ├── charts/event-junkie/
-│   ├── Chart.yaml            apiVersion v2 — see below
-│   ├── values.yaml           production-shaped; cannot render alone
-│   ├── values-k3d.yaml       #263 · locally built images; two of its blind guesses were wrong
-│   ├── values-k3d-images.yaml  the image path, on top of the file above · K3D_IMAGES=1 only
-│   ├── values.schema.json    required keys, enums, and the importer's replica pin
-│   └── templates/            flat, one resource per file, kind in the filename
-├── clusters/                 #414 · what Flux reconciles, one directory per cluster
-│   ├── base/                 #953 · what staging and production both apply, via `- ../base`
-│   │                         admission rule: zero config differences between the two copies
-│   ├── staging/              the `flux bootstrap --path` target · snapshots · prereleases ADMITTED
-│   │                         + cert-manager and the Hetzner DNS-01 webhook (#265)
-│   ├── production/           releases only · SUSPENDED until #424 provisions a cluster
-│   │                         + cert-manager, HTTP-01, no webhook and no Hetzner token
-│   └── k3d/                  the rehearsal target · applied with `kubectl apply -k`, never bootstrapped
-│                             no cert-manager: `tls.enabled: false`, so nothing references an issuer
-└── charts/event-junkie/tests/   #430 · helm-unittest suites — the only gate that catches a chart
-                                 doing the wrong thing quietly. `/tests/`, anchored, in .helmignore
+│   ├── Chart.yaml              apiVersion v2 — nothing needs v3, and whether Flux installs one is unverified; do not raise it to find out
+│   ├── values.yaml             production-shaped; cannot render alone
+│   ├── values-k3d.yaml         locally built images, drives k3d-rehearsal.sh up · values-k3d-images.yaml on top, K3D_IMAGES=1 only
+│   ├── values.schema.json      required keys, enums, the importer's replica pin, `not: {required: [password]}`
+│   ├── templates/              flat, one resource per file, kind in the filename
+│   └── tests/                  helm-unittest suites — the only gate that catches a well-formed, schema-valid, wrong chart
+└── clusters/                   what Flux reconciles, one directory per cluster
+    ├── base/                   what staging and production both apply via `- ../base`; zero config differences between the two copies
+    ├── staging/                the `flux bootstrap --path` target · prereleases admitted · cert-manager + Hetzner DNS-01 webhook
+    ├── production/             releases only · cert-manager, HTTP-01, no webhook and no Hetzner token
+    └── k3d/                    the rehearsal target with the *published* chart · `kubectl apply -k`, never bootstrapped · no cert-manager
 ```
 
-There is no `deploy/scripts/` any more. `render-assertions.sh` became the suites above in #430, and the two things it checked that a chart test suite
-structurally cannot — relationships between the files under `clusters/`, and rendering the chart with each `HelmRelease`'s `spec.values` — moved to
-`scripts/cluster-assertions.sh` at the repository root.
+**There is no `values-staging.yaml`, deliberately.** A `HelmRelease` cannot read a file from this repository, so each environment's configuration lives once,
+under `spec.values` in its `helm-release.yaml`. `scripts/cluster-assertions.sh` extracts that and re-runs the chart's invariant suites against it, so the
+assertions gate what Flux deploys. It follows that every assertion in `invariants_test.yaml`, `hardening_test.yaml`, `ingress_test.yaml` and
+`importer_test.yaml` must hold under _any_ values file — one that names a host, a port or a database belongs in a test with its own `values:`.
 
-`deploy/` rather than a top-level `charts/` because the chart and the Flux resources that deploy it belong next to each other. The GHCR path
-(`oci://ghcr.io/enorm-labs/charts/event-junkie`, #264) is independent of the repository path.
-
-**There is no `values-staging.yaml`, and that is deliberate (#414).** A `HelmRelease` cannot read a file from this repository, so staging's configuration lives
-in `deploy/clusters/staging/helm-release.yaml` under `spec.values` — the single place it exists. Keeping a values file _as well_ would mean two copies that must
-agree with nothing checking that they do, which is how an environment drifts. `scripts/cluster-assertions.sh` extracts `spec.values` from every HelmRelease and
-re-runs the chart's invariant suites against it, so the assertions gate exactly what Flux deploys rather than a file nothing deploys. It is why every assertion
-in `invariants_test.yaml`, `hardening_test.yaml`, `ingress_test.yaml` and `importer_test.yaml` must hold under _any_ values file — an assertion that hardcodes a
-host or a port belongs in a test that names its own values, not in those four.
-
-`values-k3d.yaml` survives because it is not a duplicate of anything: it drives `k3d-rehearsal.sh up`, which installs the _working tree's_ chart with images
-built seconds ago. `deploy/clusters/k3d/` answers a different question with the _published_ chart and images. Both are worth having; neither substitutes for the
-other.
-
-**One chart, not three.** The three workloads share an ingress, a hostname, a database and a release lifecycle; subcharts would buy independent versioning
-nobody wants. And three explicit Deployment templates rather than one generic loop over a `components` map: the frontend has no database and no JVM, the
-importer has no ingress and a different strategy, so the generic template would be three-quarters conditionals.
+**One chart, not three**, and three explicit Deployment templates rather than a loop over a `components` map: the frontend has no database and no JVM, the
+importer has no ingress and a different strategy, so a generic template would be three-quarters conditionals.
 
 ## Conventions
 
-Beyond the [Helm chart best practices guide](https://helm.sh/docs/chart_best_practices/), which is followed throughout:
+Beyond the [Helm chart best practices guide](https://helm.sh/docs/chart_best_practices/): flat `templates/` with the kind in a dashed filename
+(`bff-deployment.yaml`), one resource per file; namespaced template names (`event-junkie.fullname`); per-workload templates take a dict
+(`include "event-junkie.labels" (dict "ctx" $ "component" "bff")`, where `component` is both the label value and the key under `.Values`); whitespace inside
+the braces, two-space indent, chomp aggressively; camelCase values, no hyphens, strings quoted, maps over arrays where `--set` might reach; per-component
+nesting (`bff.*`, `importer.*`, `frontend.*`) under the guide's own exception. A property gets a comment when it has something to say — a constraint, a
+trade-off, a failure it avoids — never `requests.cpu is what the scheduler reserves` (#713). Comments explain why an obvious alternative was not taken, and
+cross-references point at `docs/ops/PLATFORM_SETUP.md` sections and ADR numbers.
 
-- **Flat `templates/` with the kind in a dashed filename** — `bff-deployment.yaml`, `ingress.yaml`. One resource per file. A reviewer expects to find
-  `ingress.yaml` by name.
-- **Namespaced template names** — `event-junkie.fullname`, never a bare `fullname`.
-- **Per-workload templates take a dict**, not the root context: `include "event-junkie.labels" (dict "ctx" $ "component" "bff")`. `component` is both the label
-  value and the key under `.Values` holding that workload's settings.
-- **Whitespace inside the braces** (`{{ .Values.x }}`), two-space indent, chomp aggressively.
-- **camelCase values, no hyphens, strings quoted.** Maps rather than arrays wherever `--set` might touch a value. **A property gets a comment when it has
-  something to say** — a constraint, a trade-off, a failure it avoids — and not otherwise. A blanket "every property carries one" buys nine lines of
-  `nodeSelector constrains scheduling` and six of `requests.cpu is what the scheduler reserves`: restatement mandated by convention, which is the exact thing
-  the next bullet forbids (#713). Where a comment could be read against more than one key, name the one it applies to.
-- **Per-component nesting** (`bff.*`, `importer.*`, `frontend.*`) rather than the guide's preference for flat, under its own stated exception for "a large
-  number of related variables, at least one non-optional".
-- **Comments explain why**, and specifically why an obvious alternative was not taken — why `/api` is not a Traefik middleware, why the ClusterIssuer is off by
-  default, why there is no `crds/` directory. Match that. Do not add comments that restate the YAML.
-- Cross-references point at `docs/ops/PLATFORM_SETUP.md` sections and ADR numbers, as in `infra/`. Keep them.
-
-## Kubernetes' own good practices, audited
-
-**Moved to a path-scoped rule: [.github/instructions/kubernetes.instructions.md](../.github/instructions/kubernetes.instructions.md).** The audited API
-versions, the annotation that survives rendering, the YAML boolean trap, the two deliberate deviations and the `restricted` Pod Security Standards position
-load with any `.yaml` under `deploy/`, and reach Copilot on their own rather than through this file.
+The audited API versions, the YAML boolean trap and the `restricted` Pod Security Standards position are a path-scoped rule,
+[kubernetes.instructions.md](../.github/instructions/kubernetes.instructions.md), loaded with any `.yaml` under `deploy/`.
 
 ## Things that will bite
 
-- **`apiVersion: v2` in `Chart.yaml` is not a leftover**, but the reason changed with #1006. It used to be that helm-controller embedded the Helm **3** SDK
-  and could not install a v3 chart. It embeds Helm 4, so that is no longer the argument. Keep v2 because **nothing here needs a v3 feature**, and because
-  whether Flux installs a v3 chart is now unverified rather than known-false. Do not raise it to find out.
-- **Selector labels are the immutable subset.** `spec.selector` is immutable after creation, and `helm.sh/chart` and `app.kubernetes.io/version` change on every
-  release. Use `event-junkie.selectorLabels` for any selector and `event-junkie.labels` only for `metadata.labels`. Mixing them installs perfectly and then
-  fails every subsequent upgrade — a failure nobody sees until the _second_ release, which is why an assertion exists for it rather than a comment.
-  `app.kubernetes.io/component` **is** in the selector and must stay: without it all three Deployments select each other's pods.
-- **`SPRING_FLYWAY_USER`, not `SPRING_FLYWAY_USERNAME`.** The Spring property is `spring.flyway.user`. The wrong spelling binds to nothing and fails silently.
-- **The importer holds two connection configurations for one database** — R2DBC for the application, JDBC for Flyway. Locally Spring Boot's Docker Compose
-  support supplies both and nothing in `application.yaml` sets a URL, so this is invisible until there is no compose file. Forgetting the JDBC half means
-  migrations never run; it is not a startup error.
-- **`/api` lives in the BFF's controllers, not in the ingress and not in `spring.webflux.base-path`.** There is no rewrite anywhere in the chart, and nothing
-  sets that property. Do not add a Traefik `Middleware` doing
-  `stripPrefix` — ADR-012's portability argument is that the application is a Docker image plus a Postgres URL, and a rewrite in one controller's CRD is the
-  first crack in it.
-- **Actuator is private because it is on its own port**, not because an ingress rule excludes it. Never add an ingress path for `/actuator`, never route the
-  `management` port, and never change the importer's Service to `NodePort` or `LoadBalancer` — its admin API has no authentication of its own, and what keeps
-  it private is that nothing outside the cluster can address it.
-- **The probes are one template and two meanings, and `_helpers.tpl` cannot show you which.** `event-junkie.jvmProbes` renders identically for the BFF and the
-  importer; what `/actuator/health/readiness` _contains_ is decided in each service's `application.yaml`. The BFF's readiness group includes `r2dbc` and
-  `eventsSchema` so a pod that cannot reach the database or its schema leaves the Service; the importer's does not, because nothing routes to it and taking its
-  admin API away during a database incident removes the tool an operator needs. ADR-018 argues both. Two things follow for anyone editing this file: the
-  readiness probe's `periodSeconds: 10, failureThreshold: 3` is the **blip tolerance** that decision depends on and is not a default to tune, and **liveness
-  must never gain a database indicator** — the `startupProbe` watches the liveness path, so a database-dependent liveness group turns a first install into a
-  crash-loop at 30 × 5s.
-- **`readOnlyRootFilesystem: true` needs writable mounts.** The JVM services need `/tmp`; nginx needs `/var/cache/nginx` and `/var/run` and fails at _startup_
-  without them. Adding a workload means adding its mounts.
-- **`importer.replicaCount: 1` is an ADR-008 correctness constraint, not a cost one**, and so is `strategy: Recreate`. Two schedulers means two concurrent
-  imports of the same source; the `RUNNING` check is a read-then-write with no lock. `values.schema.json` pins the replica count with `const: 1`. Raising it
-  needs `SELECT … FOR UPDATE SKIP LOCKED` first, which is an ADR change rather than a values change.
-- **No `namespace:` in any template's metadata.** Flux's `HelmRelease` sets `targetNamespace` and a hardcoded namespace would silently win over it.
-  `.Release.Namespace` in a _reference_ — the Traefik middleware annotation needs one — is fine and follows `targetNamespace` correctly.
-- **The chart ships no `crds/` directory and must not gain one.** Helm has no story for upgrading or deleting CRDs a chart installed, so owning cert-manager's
-  or Traefik's is how a chart acquires a resource it can never safely change. The chart renders only _instances_ of their types, and `helm install` failing on
-  an unknown kind when cert-manager is absent is the correct behaviour, not a bug to work around.
-- **`security.runAsUser` must match the UID the images actually run as, and `scripts/uid-consistency.sh` is what makes that a gate rather than a comment.** It
-  is **10001** since #448 — above 10000, so it cannot collide with an account in the host's own user range; a distroless `nonroot` base would be 65532, which
-  also clears the bar. A mismatch is a pod that cannot read its own files, which does not look like a values problem. The check reads the `USER` line out of
-  all three Dockerfiles and compares it with what the chart resolves per component, including a `<component>.runAsUser` override; `helm unittest` can only see
-  the chart, so it catches the chart drifting from itself and never the image moving underneath it.
-- **No floating tags, anywhere.** `image.tag` defaults to `""` and falls back to `.Chart.AppVersion`. The assertions reject `latest`, `head`, `canary`, `main`
-  and `edge`, and an image with no tag at all.
+- **Selector labels are the immutable subset.** `helm.sh/chart` and `app.kubernetes.io/version` change every release; `spec.selector` cannot. Use
+  `event-junkie.selectorLabels` for any selector and `event-junkie.labels` only for `metadata.labels`. Mixing them installs and fails the _second_ release;
+  asserted for that reason. `app.kubernetes.io/component` **is** in the selector and must stay, or all three Deployments select each other's pods.
+- **`SPRING_FLYWAY_USER`, not `SPRING_FLYWAY_USERNAME`** — the wrong spelling binds to nothing, silently. The importer holds R2DBC for the application and
+  JDBC for Flyway; locally Docker Compose support supplies both, so forgetting the JDBC half in the chart means migrations never run, not a startup error.
+- **`/api` lives in the BFF's controllers**, not in the ingress and not in `spring.webflux.base-path`. No Traefik `stripPrefix` middleware: ADR-012's
+  portability argument is an image plus a Postgres URL, and a rewrite in a CRD is the first crack in it.
+- **Actuator is private because it is on its own port.** Never add an ingress path for `/actuator`, never route the `management` port, never make the
+  importer's Service `NodePort` or `LoadBalancer` — its admin API has no authentication; unroutability is what protects it.
+- **The probes are one template and two meanings.** `event-junkie.jvmProbes` renders the same for both JVMs; each `application.yaml` decides what readiness
+  contains (the BFF's includes `r2dbc` and `eventsSchema`, the importer's does not — ADR-018). Readiness `periodSeconds: 10, failureThreshold: 3` is the
+  blip tolerance that decision rests on, not a default to tune, and **liveness must never gain a database indicator**: `startupProbe` watches the liveness
+  path, so a first install would crash-loop at 30 × 5s.
+- **`readOnlyRootFilesystem: true` needs writable mounts** — `/tmp` for the JVMs, `/var/cache/nginx` and `/var/run` for nginx, which fails at startup without them.
+- **`importer.replicaCount: 1` and `strategy: Recreate` are ADR-008 correctness constraints.** Two schedulers means two concurrent imports of one source;
+  the `RUNNING` check has no lock. The schema pins `const: 1`; raising it needs `SELECT … FOR UPDATE SKIP LOCKED` first, an ADR change.
+- **No `namespace:` in any template's metadata** — it would silently win over Flux's `targetNamespace`. `.Release.Namespace` in a _reference_ is fine.
+- **No `crds/` directory, ever.** Helm cannot upgrade or delete a CRD it installed. The chart renders _instances_ of cert-manager's and Traefik's kinds, and
+  failing on an unknown kind when cert-manager is absent is correct.
+- **`security.runAsUser` is 10001 and must match the images' `USER`**; `scripts/uid-consistency.sh` reads all three Dockerfiles against what the chart
+  resolves per component, because `helm unittest` sees only the chart. A mismatch is a pod that cannot read its own files.
+- **No floating tags, anywhere.** `image.tag` defaults to `""` and falls back to `.Chart.AppVersion`; the assertions reject `latest`, `head`, `canary`,
+  `main`, `edge` and an untagged image.
 
-## Flux: what the k3d rehearsal proved, and the two traps it found
+## Flux
 
-The decision and its consequences are [ADR-016](../docs/adr/ADR-016_GITOPS_DELIVERY.md); the end-to-end path is [docs/ops/RELEASING.md](../docs/ops/RELEASING.md). What
-follows is only what bites when changing these files.
+The decision is [ADR-016](../docs/adr/ADR-016_GITOPS_DELIVERY.md), the path is [RELEASING.md](../docs/ops/RELEASING.md), the bring-up order is
+[CLUSTER_BOOTSTRAP.md](../docs/ops/CLUSTER_BOOTSTRAP.md). What bites when changing these files:
 
-**Exercised on k3d as of 2026-08-12 (#414)** — `flux install`, the real chart pulled from GHCR, all three workloads on published images, `helm test` green, and a
-deliberately broken release rolled back.
-
-**`flux bootstrap` ran for real on 2026-08-13**, against staging, and added a `flux-system/` directory to `deploy/clusters/staging/` — machine-written, ~2 MB,
-never hand-edited. Three things it taught that no amount of reading would have: the org must have **deploy keys enabled** (a policy, not a token scope, and it
-fails at `422`); bootstrap **pushes directly to `main`**, which the branch ruleset forbids, so the ruleset has to be off for two pushes and back on immediately
-after; and the whole flow wants the database and both secrets to exist **first**, or the first reconcile installs a crash-looping importer.
-[docs/ops/CLUSTER_BOOTSTRAP.md](../docs/ops/CLUSTER_BOOTSTRAP.md) has the order.
-
-**That directory is now machine-_updated_ as well as machine-written.** Renovate watches
-`gotk-components.yaml` and opens a pull request when Flux releases (#384, ADR-024). **This is safe
-only because of where customisations live:** the SOPS `decryption` patch (#416) and the Pod Security
-Admission labels (#604) are kustomize patches in `flux-system/kustomization.yaml`, never edits to the
-generated file — which is exactly what both patches say in their own comments. **Keep it that way.**
-A customisation written into `gotk-components.yaml` now has two ways to vanish silently: a
-`flux bootstrap` re-run, and any Renovate upgrade.
-
-**Renovate edits the version strings. It does not regenerate the file** (#1075, measured). So a
-release that changes anything besides a version leaves this manifest structurally behind while every
-label says otherwise. `docs/ops/CLUSTER_BOOTSTRAP.md` §9b carries the one-line `flux install --export`
-diff that proves a bump complete, and it runs before the PSA re-check rather than after.
-
-**The version range lives on the `OCIRepository`, not the `HelmRelease`.** With `chartRef` the release carries no version at all — `spec.ref.semver` on the source
-decides everything. Staging uses `>=0.0.0-0`; the `-0` is what admits prereleases, and without it the range matches no snapshot at all. Observed rather than
-assumed: removing it gives `no match found for semver: >=0.0.0`. Production uses `semverFilter: '^[0-9]+\.[0-9]+\.[0-9]+$'` as well as a range, because excluding
-snapshots _by omission_ is one careless `-0` away from being wrong.
-
-**The signature check lives on the `OCIRepository` too** (#1425). `spec.verify` matches the Fulcio certificate cosign stored next to the chart against the
-release workflow's identity, `…/.github/workflows/release.yml@refs/heads/main` or `@refs/tags/vX.Y.Z`. A chart pushed by any other path never reconciles: the source reports
-`failed to verify the signature using provider 'cosign keyless': no signatures found` and keeps the last verified artifact, observed on k3d and on staging. All three
-clusters carry the same block; production got it last, once `v0.16.1` — the first release cut after signing — was what its range resolved. k3d copies staging's
-block verbatim for the same reason it copies the range.
-
-**And the range only means "newest" if the versions order** (#455). The `-0` picks the candidates; the version scheme picks the winner. Snapshots are
-`0.1.1-snapshot.<utc-timestamp>.g<sha>` because SemVer compares a digits-only identifier numerically and a letter-bearing one lexically in ASCII — the previous
-`g<sha>` scheme sorted by short sha, so staging silently ran whichever sha sorted highest for three days while reporting `Ready`. Do not "simplify" the timestamp
-out. `scripts/version-test.sh` fails if you do.
-
-**`remediateLastFailure` defaults to false, so a bad deploy is retried and then left broken.** Remediation runs _between_ attempts and never after the final one —
-exhaust the retries and the cluster keeps running the release that failed. Every `HelmRelease` here sets `remediateLastFailure: true` on `upgrade` for that reason.
-It is deliberately **not** set on `install`, where remediation is an uninstall and there is no previous version to return to: leaving a failed first install in
-place is what lets somebody look at why it failed. This was found by breaking a release on purpose and watching the workload stay broken — no amount of reading
-the manifest would have shown it.
-
-**Receivers are ruled out permanently**, so reconciliation is polled rather than pushed. A `Receiver` is an inbound HTTP endpoint and §8's firewall design exists
-to have nothing inbound. Deploys therefore land within about one `interval`, and Flux's own guidance is not to poll below 30s without webhooks — hence 1m on
-staging's source, 10m on production's.
-
-**The repository is now the control plane.** `kustomize-controller` and `helm-controller` are bound to `cluster-admin`, so anyone who can push to
-`deploy/clusters/**` on `main` can have the cluster apply anything. What Flux removes is CI holding a _credential_; it does not remove the power, it relocates it.
-Branch protection is the control that replaces the kubeconfig — see #443.
+- **`flux-system/` is machine-written and machine-updated; never hand-edit it.** `flux bootstrap` writes `gotk-components.yaml` (~2 MB) and Renovate bumps
+  its version strings without regenerating it (#1075), so every customisation — the SOPS `decryption` patch (#416), the Pod Security Admission labels (#604)
+  — is a kustomize patch in `flux-system/kustomization.yaml`. Anything written into the generated file vanishes on the next bootstrap or bump.
+  CLUSTER_BOOTSTRAP.md §9b has the `flux install --export` diff that proves a bump complete.
+- **Bootstrap needs the org's deploy keys enabled** (fails at `422` otherwise), **pushes directly to `main`** (the ruleset goes off for two pushes), and wants
+  the database and both Secrets to exist **first**, or the first reconcile installs a crash-looping importer.
+- **The version range and the signature check live on the `OCIRepository`, not the `HelmRelease`.** With `chartRef` the release carries no version. Staging
+  is `>=0.0.0-0` — the `-0` admits prereleases, and without it `no match found for semver: >=0.0.0`. Production adds
+  `semverFilter: '^[0-9]+\.[0-9]+\.[0-9]+$'`, because excluding snapshots by omission is one careless `-0` from wrong. `spec.verify` (#1425) matches cosign's
+  Fulcio certificate against `release.yml@refs/heads/main` or `@refs/tags/vX.Y.Z`; a chart pushed any other way reports
+  `no signatures found` and the source keeps the last verified artifact. k3d copies staging's block verbatim.
+- **The range only means "newest" if the versions order** (#455). Snapshots are `0.1.1-snapshot.<utc-timestamp>.g<sha>` because SemVer compares digits-only
+  identifiers numerically and letter-bearing ones as ASCII; the old `g<sha>` scheme ran whichever sha sorted highest for three days while reporting `Ready`.
+  `scripts/version-test.sh` fails if the timestamp goes.
+- **`remediateLastFailure: true` on `upgrade`, deliberately not on `install`.** The default retries and then leaves the failed release running. On `install`
+  remediation is an uninstall, and a failed first install left in place is what lets somebody read why.
+- **No `Receiver`, permanently** — §8's firewall design has nothing inbound. Deploys land within one `interval`: 1m on staging's source, 10m on production's.
+- **The repository is the control plane.** Both controllers are `cluster-admin`, so a push to `deploy/clusters/**` on `main` applies anything. Branch protection
+  replaces the kubeconfig (#443).
 
 ## Third-party HelmReleases (#265)
 
-Since #265 the cluster directories carry components this repository does not build: cert-manager on both clusters, and Hetzner's DNS-01 webhook on staging. Four
-rules, all of them things that fail quietly rather than loudly.
+cert-manager on both clusters, Hetzner's DNS-01 webhook and OpenObserve besides. Four rules, all of which fail quietly:
 
-- **Pin the version exactly; never a range.** `>=1.21 <1.22` lets an upstream release reach the cluster with no diff, no review and no commit — the property
-  GitOps exists to remove. `scripts/cluster-assertions.sh` rejects anything that is not `X.Y.Z` or `vX.Y.Z`.
-- **A release that renders a ClusterIssuer must declare `dependsOn`.** The chart's ClusterIssuer is a `cert-manager.io/v1` kind and the API server rejects
-  unknown kinds, so without cert-manager the _whole_ application release fails — workloads included, on the first bootstrap of a new cluster, looking exactly
-  like a bug in our chart. Asserted, so it cannot be dropped silently.
-- **Use Hetzner's own DNS webhook, never a community fork.** The old `dns.hetzner.com` API was shut down in May 2026 and the forks still speak it; they install
-  cleanly, report Ready, and fail at challenge time. Official chart: `cert-manager-webhook-hetzner` from `charts.hetzner.cloud`, `groupName`
-  `acme.hetzner.com`, solver config `tokenSecretKeyRef`.
-- **Bump staging before production, and expect to edit two files.** cert-manager's `HelmRelease` still exists once per cluster, because the two copies differ
-  in what they do. Its `HelmRepository` does not: `base/helm-repository-jetstack.yaml` is shared, and one edit moves both (#953). OpenObserve has the same
-  shape — two releases, one `base/helm-repository-openobserve.yaml` (#1080).
+- **Pin the version exactly; never a range.** `scripts/cluster-assertions.sh` rejects anything but `X.Y.Z` or `vX.Y.Z`.
+- **A release that renders a ClusterIssuer declares `dependsOn` cert-manager**, or the whole application release fails on a fresh cluster looking like a chart
+  bug. Asserted.
+- **Hetzner's own webhook (`cert-manager-webhook-hetzner` from `charts.hetzner.cloud`, `groupName` `acme.hetzner.com`, `tokenSecretKeyRef`), never a fork.**
+  The old `dns.hetzner.com` API is gone; forks install, report Ready and fail at challenge time.
+- **Bump staging before production, and expect to edit two files**: the `HelmRelease` exists per cluster, its `HelmRepository` is shared in `base/` (#953, #1080).
 
-**The hcloud token DNS-01 needs is project-wide** — it cannot be scoped to a zone, so it could delete the servers. It exists on staging only, and production
-must not acquire one to gain a wildcard certificate.
+**The hcloud token DNS-01 needs is project-wide** — it could delete the servers. Staging only; production must not acquire one for a wildcard certificate.
 
-## Never hand-edit the chart version, and never pin an image tag
+## Never hand-edit the chart version, never pin an image tag or digest
 
-`Chart.yaml`'s `version` and `appVersion` are **placeholders**, both `0.0.0`. `.github/workflows/release.yml` computes one number from the release tags and the
-commits since the last one (ADR-032) and stamps it into both before packaging, so bumping them by hand decides nothing about what gets published. A local
-`helm install` from a checkout installs `0.0.0`, which is the honest number for an unstamped chart. No change needs a new version written anywhere: a `feat`
-in a product scope earns the minor by itself.
+`Chart.yaml`'s `version` and `appVersion` are placeholders, both `0.0.0`. `release.yml` computes one number from the release tags and the commits since the
+last one (ADR-032) and stamps it into both, so a hand bump decides nothing; a local `helm install` from a checkout installs `0.0.0`, the honest number for an
+unstamped chart. No change needs a version written anywhere — a `feat` in a product scope earns the minor by itself.
 
-**And no published values file may set `<component>.image.tag`.** The default `""` falls back to `.Chart.AppVersion`, and that fallback is the whole mechanism
-keeping the chart and the images in step (#264). Pinning a tag opts one component out of it, and the render looks _more_ correct afterwards, not less — every
-image carries a plausible tag, one of them just isn't the one this build produced. `values-k3d.yaml` is the sole exception (`dev`, never leaves a laptop);
-`tests/invariants_test.yaml` enforces the chart's own default and `scripts/cluster-assertions.sh` enforces every HelmRelease.
-
-**The same holds for `<component>.image.digest`, one field over** (#1473). `release.yml` stamps each image's digest into the chart it packages, from the
-push it just made, so a published chart names its images `repo:tag@sha256:…` — the node pulls the digest, a tag repointed on GHCR changes nothing, and the tag
-stays in every pod listing. A digest in a values file pins a workload to an image nobody chose, the same way a tag does. `flux-verify` on k3d asserts every
-image of ours carries one.
+**No published values file may set `<component>.image.tag` or `.digest`.** The `""` default falls back to `.Chart.AppVersion`, and `release.yml` stamps each
+image's digest into the chart it packages (#264, #1473) — that fallback is what keeps chart and images in step, and a pinned tag makes the render look _more_
+correct while one image is not the one this build produced. `values-k3d.yaml` (`dev`) is the sole exception; `invariants_test.yaml` and
+`cluster-assertions.sh` enforce it.
 
 ## Never put a credential in a values file
 
-Not in `values.yaml`, not in an environment overlay, not guarded behind a conditional, not "temporarily". **There is no inline-password path in this chart and
-adding one is the change to refuse in review** — a values key that _can_ hold a password is a key that eventually does, in a file that gets committed.
-
-`database.existingSecret` names a Secret created out of band. SOPS-managed Secrets arrive in #416. `values.schema.json` carries a `not: {required: [password]}`
-on the `database` object so the wrong shape fails at install time rather than in review.
-
-The same applies to the Hetzner DNS token the DNS-01 solver needs: the chart names the Secret and never creates it.
+Not in `values.yaml`, not in an overlay, not behind a conditional, not "temporarily". **There is no inline-password path in this chart and adding one is the
+change to refuse in review.** `database.existingSecret` names a Secret created out of band; `values.schema.json` carries `not: {required: [password]}` on
+`database` so the wrong shape fails at install. The Hetzner DNS token is the same: the chart names the Secret and never creates it.
 
 ## The assertions are the point
 
-`charts/event-junkie/tests/` catches what `helm lint` and `flux schema validate` structurally cannot: a chart that is well-formed, schema-valid and wrong. It runs
-in `.github/workflows/validate-chart.yml` and under `/verify` on any diff touching `deploy/`. Five suites, twenty-three tests, five renders. They were
-`deploy/scripts/render-assertions.sh` until #430.
+`charts/event-junkie/tests/` catches a chart that is well-formed, schema-valid and wrong; `validate-chart.yml` and `/verify` run it. **Add an assertion
+whenever you fix a bug in a template** — the failures worth guarding surface on the second release, or as absent data rather than an error.
 
-**Add an assertion whenever you fix a bug in a template.** The failures worth guarding here mostly do not appear on first install — the selector-label trap
-surfaces on the second release, a missing Flyway URL surfaces as absent data rather than an error.
-
-**Four things to know before writing one**, all of which cost time to find:
-
-- **`checksum/config` breaks a suite that does not list the ConfigMap.** `bff-deployment.yaml` and `importer-deployment.yaml` both do
-  `include (print $.Template.BasePath "/configmap.yaml")`, and helm-unittest renders _only_ the templates a suite lists. Omit it and you get
-  `no template "…/configmap.yaml" associated with template "gotpl"`, which points nowhere useful.
-- **An assertion applies to every document from every listed template**, so anything per-resource needs `documentSelector` or a per-test `templates:` — and a
-  per-test `templates:` must be a subset of the suite's. A `template:` key _inside_ an assert is not a scoping mechanism and is silently ignored; that one
-  looked like it worked twice.
-- **`failedTemplate` needs no `templates:` at all.** Helm attributes a `required` failure to whichever template it reached first, so a scoped suite asserts on
-  where Helm happened to blame rather than on whether the chart refused. `required_values_test.yaml` deliberately has no `templates:` key anywhere.
-- **Positive assertions over `**/*.yaml` fail on every document that legitimately lacks the path.** That is why `invariants_test.yaml` is entirely negative, and
-  why it ends in a block of scoped positive controls. Negatives pass when their path expression breaks — the controls are what notice. Do not delete one, and
-  add one alongside any new negative. Where a JSONPath filter will do the job (`env[?(@.name=="…")]`) prefer it: a filter that matches nothing is reported as an
-  unknown path rather than as a pass, which is the vacuity problem solved rather than guarded against.
-
-**And the suites in `charts/event-junkie/tests/` must hold under every values file**, because `scripts/cluster-assertions.sh` re-runs four of the five against
-each cluster's `spec.values`. An assertion that names a host, a port or a database name belongs in a test that supplies its own `values:`.
+- **`checksum/config` breaks a suite that does not list the ConfigMap.** The deployments `include (print $.Template.BasePath "/configmap.yaml")` and
+  helm-unittest renders only what a suite lists: `no template "…/configmap.yaml" associated with template "gotpl"`.
+- **An assertion applies to every document from every listed template.** Per-resource needs `documentSelector` or a per-test `templates:` (a subset of the
+  suite's). A `template:` key _inside_ an assert is silently ignored.
+- **`failedTemplate` needs no `templates:`** — Helm blames whichever template it reached first, so `required_values_test.yaml` has none.
+- **Positive assertions over `**/*.yaml` fail on every document that legitimately lacks the path**, so `invariants_test.yaml` is negative and ends in scoped
+  positive controls — negatives pass when their path expression breaks, and the controls notice. Add a control beside every new negative. Prefer a JSONPath
+  filter (`env[?(@.name=="…")]`): one that matches nothing reports an unknown path, not a pass.
