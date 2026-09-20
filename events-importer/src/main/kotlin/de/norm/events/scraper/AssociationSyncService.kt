@@ -8,6 +8,7 @@ import de.norm.events.event.EventArtistRepository
 import de.norm.events.event.EventEntity
 import de.norm.events.event.EventPromoterEntity
 import de.norm.events.event.EventPromoterRepository
+import de.norm.events.event.EventType
 import de.norm.events.genretag.EventGenreTagEntity
 import de.norm.events.genretag.EventGenreTagRepository
 import de.norm.events.genretag.GenreTagEntity
@@ -101,9 +102,14 @@ class AssociationSyncService(
 
     /**
      * The scraped artists that can be stored: a name that slugs to nothing has escaped
-     * [isNonArtistName], and would take the empty slug every later one collides with (#1553).
+     * [isNonArtistName], and would take the empty slug every later one collides with (#1553). A
+     * headliner read off a title the boundary resolves to a festival is the festival's name, not
+     * an act (`ELLE & L's Festival` → `Elle`, #300): undone here, once, while a published line-up stays.
      */
-    private fun ScrapedEvent.storableArtists(): List<ScrapedArtist> = artists.filterNot { isSlugless(it.name) }
+    private fun ScrapedEvent.storableArtists(): List<ScrapedArtist> {
+        val festival = resolvedEventType() == EventType.FESTIVAL
+        return artists.filterNot { isSlugless(it.name) || (festival && it.titleDerived) }
+    }
 
     /** Resolves an artist by name from [artistCache], or auto-creates one. See [resolveOrCreate]. */
     private suspend fun resolveOrCreateArtist(

@@ -211,6 +211,27 @@ class AssociationSyncDuplicateNamesIntegrationTest : BaseControllerTest() {
         }
     }
 
+    // A title that resolves to a festival at the boundary keeps its line-up and loses the headliner
+    // the scraper read off the title before the type was final (#300).
+    @Test
+    fun `a festival title drops its title-derived headliner and keeps the published line-up`() {
+        runBlocking {
+            val sourceId = "festival-title:1"
+            val event = persistEvent(sourceId)
+
+            associationSyncService.resolveAndSyncAssociations(
+                listOf(event),
+                listOf(
+                    scraped(sourceId, artists = listOf(ScrapedArtist(name = "Elle", titleDerived = true), ScrapedArtist(name = "Real Band")))
+                        .copy(title = "ELLE & L's Festival")
+                )
+            )
+
+            val stored = artistRepository.findAll().toList().map { it.name }
+            stored shouldBe listOf("Real Band")
+        }
+    }
+
     // The flag is written on insert and rewritten on resync, which is what backfills rows stored
     // before the column existed once their source is imported again (#1145).
     @Test

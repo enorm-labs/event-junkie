@@ -89,6 +89,13 @@ data class ScrapedEvent(
     val promoterWebsites: Map<String, String> = emptyMap()
 ) {
     /**
+     * The type the event is stored with — the source's own, or the festival/format override
+     * [resolveEventType] applies at the boundary. Scrapers build their artists before this is
+     * known; [AssociationSyncService] reads it to drop a headliner minted from a festival title (#300).
+     */
+    fun resolvedEventType(): EventType = resolveEventType(eventType, stripTitleStatusMarker(title), genre)
+
+    /**
      * Converts this scraped event into an [EventEntity]; pure, no I/O. The slug is regenerated from
      * the event date, venue slug and title, plus [slugDiscriminator]. On updates [existing]'s `id`,
      * `sourceId` and `createdAt` are preserved.
@@ -161,7 +168,7 @@ data class ScrapedEvent(
             // OTHER, not CONCERT, when the source provided no category; then promote an under-classified
             // festival title to FESTIVAL, or recover a reading/exhibition/screening filed under the genre
             // field.
-            eventType = resolveEventType(eventType, storedTitle, genre).name,
+            eventType = resolvedEventType().name,
             status = storedStatus,
             relocatedTo = relocatedTo,
             slug = SlugGenerator.slugify(listOfNotNull(eventDate, venueSlug, storedTitle, slugDiscriminator).joinToString("-")),
