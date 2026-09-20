@@ -247,8 +247,13 @@ class HeimathafenApiScraperTest {
     }
 
     @Test
-    fun `leaves genre null - the venue's tag vocabulary mixes genres with formats`() {
-        page.events.all { it.genre == null } shouldBe true
+    fun `reads the genres among the tag slugs and leaves the formats and rooms out`() {
+        // `events_tag-rb, -konzert, -soul, -blues`: the lossy `rb` is R&B by hand, `konzert` is a format (#313).
+        page.events.first { it.title.startsWith("EB DAVIS") }.genre shouldBe "R&B, soul, blues"
+        // `-konzert, -pop, -deutschrap, -rap-pop`
+        page.events.first { it.title == "BAC" }.genre shouldBe "pop, deutschrap, rap pop"
+        // `-comedy` alone is a format, not a genre.
+        page.events.first { it.title == "PATRICK SPICER" }.genre shouldBe null
     }
 
     @Test

@@ -80,7 +80,6 @@ says so.
 | `HAVANNA`             | `EVENT_DATE`       | the venue publishes no dated programme: its three resident nights carry only a weekday, so occurrences are generated from the weekly schedule    | —     |
 | `HEIDEGLUEHEN`        | `PER_EVENT_PAGE`   | the site has no per-event pages and no archive; one rich-text block lists the month's Saturdays and is replaced wholesale                        | —     |
 | `HEIDEGLUEHEN`        | `PRICE`            | the club sells at the door and prints no figure on its programme                                                                                 | —     |
-| `HEIMATHAFEN`         | `GENRE`            | its `events_tag` vocabulary mixes genres with formats across 560 terms, the payload carries only term ids, and the inlined slugs are lossy       | —     |
 | `HUMBOLDTHAIN`        | `PER_EVENT_PAGE`   | the calendar widget exposes no per-event URLs                                                                                                    | —     |
 | `HUMBOLDTHAIN`        | `PRICE`            | prices appear only in the prose, in too many spellings to parse                                                                                  | —     |
 | `HUMBOLDTHAIN`        | `SOLD_OUT`         | nothing in the payload marks a night sold out                                                                                                    | —     |
@@ -204,4 +203,4 @@ says so.
 
 These publish everything the model stores, as of the last review:
 
-`ALTE_KANTINE`, `ASTRA`, `BERGHAIN`, `COLUMBIA_THEATER`, `GRETCHEN`, `HOLE44`, `JUNCTION_BAR`, `LIDO`, `MADAME_CLAUDE`, `MATRIX`, `MAX_SCHMELING_HALLE`, `METROPOL`, `MIKROPOL`, `MODUS`, `PRIVATCLUB`, `QUASIMODO`, `SCHOKOLADEN`, `TEMPODROM`, `THEATER_IM_DELPHI`, `UBER_ARENA`, `UBER_EATS_MUSIC_HALL`, `UFO_IM_VELODROM`, `URANIA`, `VELODROM`, `ZITADELLE`
+`ALTE_KANTINE`, `ASTRA`, `BERGHAIN`, `COLUMBIA_THEATER`, `GRETCHEN`, `HEIMATHAFEN`, `HOLE44`, `JUNCTION_BAR`, `LIDO`, `MADAME_CLAUDE`, `MATRIX`, `MAX_SCHMELING_HALLE`, `METROPOL`, `MIKROPOL`, `MODUS`, `PRIVATCLUB`, `QUASIMODO`, `SCHOKOLADEN`, `TEMPODROM`, `THEATER_IM_DELPHI`, `UBER_ARENA`, `UBER_EATS_MUSIC_HALL`, `UFO_IM_VELODROM`, `URANIA`, `VELODROM`, `ZITADELLE`

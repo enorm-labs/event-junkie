@@ -2,6 +2,7 @@ package de.norm.events.scraper.heimathafen
 
 import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
+import de.norm.events.genretag.isGenreLabel
 import de.norm.events.scraper.BERLIN
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
@@ -113,6 +114,7 @@ class HeimathafenApiScraper(
         val acf = post.path("acf")
         val classes = post.path("class_list").mapNotNull { it.asString(null) }
         val eventType = resolveEventType(classes, title)
+        val genre = resolveGenre(classes)
         val subtitle = htmlToText(post.path("excerpt").path("rendered").asString(""))
         val (presale, boxOffice, priceNote) = parsePrices(acf.path("event_prices"))
 
@@ -127,6 +129,7 @@ class HeimathafenApiScraper(
                 pricePresale = presale,
                 priceBoxOffice = boxOffice,
                 priceNote = priceNote,
+                genre = genre,
                 artists = buildArtistsForEventType(title, subtitle, eventType),
                 promoters = parsePromoters(acf.path("event_organiser").asString(""))
             )
@@ -163,6 +166,7 @@ class HeimathafenApiScraper(
             pricePresale = shared.pricePresale,
             priceBoxOffice = shared.priceBoxOffice,
             priceNote = shared.priceNote,
+            genre = shared.genre,
             soldOut = status == SOLD_OUT_STATUS,
             free = status == FREE_ENTRY_STATUS,
             status = mapPerformanceStatus(status),
@@ -227,6 +231,24 @@ class HeimathafenApiScraper(
     }
 
     /**
+     * The genres among the venue's `events_tag-*` slugs, which `class_list` inlines beside the
+     * category (#313). The vocabulary mixes genres with formats, rooms and access notes
+     * (`konzert`, `saal`, `gebaerdensprache`), so a slug counts only when [isGenreLabel] knows
+     * it — 48 of the venue's 562 terms. The slug is lossy once: `rb` for R&B, mapped by
+     * hand. Resolving the taxonomy itself would give the names but not the decision, and would
+     * cost a request per import for the same 48 words.
+     */
+    private fun resolveGenre(classes: List<String>): String? =
+        classes
+            .filter { it.startsWith(TAG_CLASS_PREFIX) }
+            .map { it.removePrefix(TAG_CLASS_PREFIX) }
+            .map { slug -> LOSSY_TAG_SLUGS[slug] ?: slug.replace('-', ' ') }
+            .filter(::isGenreLabel)
+            .distinct()
+            .joinToString(", ")
+            .ifBlank { null }
+
+    /**
      * Maps the venue's own `events_cat-*` taxonomy slug — inlined on every post by `class_list`, so
      * no second taxonomy request is needed — onto an [EventType], falling back to the title when a
      * post carries no category.
@@ -267,11 +289,18 @@ class HeimathafenApiScraper(
         val pricePresale: BigDecimal?,
         val priceBoxOffice: BigDecimal?,
         val priceNote: String?,
+        val genre: String?,
         val artists: List<ScrapedArtist>,
         val promoters: List<String>
     )
 
     private companion object {
+        /** `class_list` prefix carrying the venue's own tag slugs (`events_tag-soul`). */
+        const val TAG_CLASS_PREFIX = "events_tag-"
+
+        /** Tag slugs WordPress flattened past recognition; the tag's name, by hand. */
+        val LOSSY_TAG_SLUGS = mapOf("rb" to "R&B", "rnb" to "R&B", "singer-songwriterin" to "Singer-Songwriter")
+
         /** `class_list` prefix carrying the venue's own category slug (`events_cat-musik`). */
         const val CATEGORY_CLASS_PREFIX = "events_cat-"
 
