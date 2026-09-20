@@ -102,5 +102,6 @@ val HEIDEGLUEHEN_LIMITATIONS =
         AcceptedLimitation(
             LimitedAspect.PER_EVENT_PAGE,
             "the site has no per-event pages and no archive; one rich-text block lists the month's Saturdays and is replaced wholesale"
-        )
+        ),
+        AcceptedLimitation(LimitedAspect.PRICE, "the club sells at the door and prints no figure on its programme")
     )

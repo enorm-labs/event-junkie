@@ -71,5 +71,9 @@ class RitterButzkeWebsiteImporter(
 val RITTER_BUTZKE_LIMITATIONS =
     VenueLimitations(
         EventSource.RITTER_BUTZKE,
-        AcceptedLimitation(LimitedAspect.EVENT_TYPE, "the club publishes no categories; every night is a DJ programme")
+        AcceptedLimitation(LimitedAspect.EVENT_TYPE, "the club publishes no categories; every night is a DJ programme"),
+        AcceptedLimitation(
+            LimitedAspect.PRICE,
+            "the club sells through a third party and prints no figure; a night is flagged free only when its title says so"
+        )
     )

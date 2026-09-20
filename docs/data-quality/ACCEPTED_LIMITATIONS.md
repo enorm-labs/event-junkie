@@ -76,8 +76,10 @@ says so.
 | `GARTN`               | `EVENT_TYPE`       | the venue states no category; every night here is a DJ party                                                                                     | —     |
 | `GOLDEN_GATE`         | `EVENT_TYPE`       | the club emits no category at all and programmes nothing but DJ nights, so the type is fixed rather than inferred                                | —     |
 | `GOLDEN_GATE`         | `PER_EVENT_PAGE`   | there is no custom `event` post type in the WordPress REST API and no structured data; the single rendered page is the source                    | —     |
+| `GOLDEN_GATE`         | `PRICE`            | the club sells at the door and prints no figure on its programme                                                                                 | —     |
 | `HAVANNA`             | `EVENT_DATE`       | the venue publishes no dated programme: its three resident nights carry only a weekday, so occurrences are generated from the weekly schedule    | —     |
 | `HEIDEGLUEHEN`        | `PER_EVENT_PAGE`   | the site has no per-event pages and no archive; one rich-text block lists the month's Saturdays and is replaced wholesale                        | —     |
+| `HEIDEGLUEHEN`        | `PRICE`            | the club sells at the door and prints no figure on its programme                                                                                 | —     |
 | `HEIMATHAFEN`         | `GENRE`            | its `events_tag` vocabulary mixes genres with formats across 560 terms, the payload carries only term ids, and the inlined slugs are lossy       | —     |
 | `HUMBOLDTHAIN`        | `PER_EVENT_PAGE`   | the calendar widget exposes no per-event URLs                                                                                                    | —     |
 | `HUMBOLDTHAIN`        | `PRICE`            | prices appear only in the prose, in too many spellings to parse                                                                                  | —     |
@@ -92,12 +94,14 @@ says so.
 | `INSEL`               | `ARTISTS`          | a support act billed without a colon reads as prose, so only a colon or a line-leading support marker is followed                                | —     |
 | `KATER`               | `EVENT_TYPE`       | the club has no category field; only an unambiguous title keyword overrides the party default                                                    | —     |
 | `KATER`               | `PER_EVENT_PAGE`   | the per-event page carries nothing the homepage listing lacks                                                                                    | —     |
+| `KATER`               | `PRICE`            | the club sells at the door and prints no figure; a night is flagged free only when its title or blurb says so                                    | —     |
 | `KLUNKERKRANICH`      | `EVENT_TYPE`       | the venue publishes no category, so every night is stored as a party — which mislabels the occasional concert                                    | —     |
 | `KLUNKERKRANICH`      | `DOORS_TIME`       | the venue states when the roof opens, not when a show starts                                                                                     | —     |
 | `KLUNKERKRANICH`      | `GENRE`            | nothing on the site names a genre                                                                                                                | —     |
 | `KLUNKERKRANICH`      | `TICKET_URL`       | entry is paid at the door; an occasional advance-RSVP link is written into a blurb rather than published as a field                              | —     |
 | `KLUNKERKRANICH`      | `SOLD_OUT`         | nothing flags a night sold out                                                                                                                   | —     |
 | `KLUNKERKRANICH`      | `CANCELLATION`     | nothing flags a night cancelled                                                                                                                  | —     |
+| `KLUNKERKRANICH`      | `PRICE`            | entry is a time-banded range (`5-9€`) the model has no field for, so the wording is kept verbatim as the note and only a lone figure is stored   | —     |
 | `LARK`                | `START_TIME`       | the venue renders its one time as Doors and publishes no separate start time                                                                     | —     |
 | `LOGE`                | `EVENT_TYPE`       | the venue has no category field; a live-music venue, so an unmarked title defaults to a concert                                                  | —     |
 | `LOGE`                | `ARTISTS`          | a title without a + separator can be a band or an event name, so no act is derived from one                                                      | —     |
@@ -141,7 +145,9 @@ says so.
 | `PETER_EDEL`          | `PER_EVENT_PAGE`   | the title links straight to the ticket shop                                                                                                      | —     |
 | `RENATE`              | `EVENT_TYPE`       | the club states no category; its `.cat-btn` names the spaces in use, not a kind of event                                                         | —     |
 | `RENATE`              | `PER_EVENT_PAGE`   | every night points at the programme page                                                                                                         | —     |
+| `RENATE`              | `PRICE`            | the club sells through Resident Advisor and prints no figure; a night is flagged free only when its blurb says so                                | —     |
 | `RITTER_BUTZKE`       | `EVENT_TYPE`       | the club publishes no categories; every night is a DJ programme                                                                                  | —     |
+| `RITTER_BUTZKE`       | `PRICE`            | the club sells through a third party and prints no figure; a night is flagged free only when its title says so                                   | —     |
 | `ROADRUNNER`          | `PER_EVENT_PAGE`   | the whole programme lives on one hand-coded page                                                                                                 | —     |
 | `ROADRUNNER`          | `EVENT_TYPE`       | the retro programme carries no category field; a live-music venue, so an unmarked title defaults to a concert                                    | —     |
 | `ROSA`                | `SUBTITLE`         | the site states one title per night and no second line                                                                                           | —     |
@@ -156,6 +162,7 @@ says so.
 | `SAALCHEN`            | `GENRE`            | the venue publishes no genre field of its own                                                                                                    | —     |
 | `SILENT_GREEN`        | `PRICE`            | the venue names no prices anywhere — an event either links out to a ticket shop or says nothing                                                  | —     |
 | `SILENT_GREEN`        | `GENRE`            | the venue publishes no genre                                                                                                                     | —     |
+| `SILENT_GREEN`        | `PROMOTERS`        | the venue credits itself as the organiser on its own nights, so the stored promoter is the venue                                                 | —     |
 | `SISYPHOS`            | `EVENT_TYPE`       | the shop files every night as a ticket product with no category; each is stored as a party                                                       | —     |
 | `SISYPHOS`            | `DOORS_TIME`       | a ticket product names a day and never a time                                                                                                    | —     |
 | `SISYPHOS`            | `START_TIME`       | a ticket product names a day and never a time                                                                                                    | —     |
@@ -175,6 +182,8 @@ says so.
 | `SUPAMOLLY`           | `TICKET_URL`       | the venue runs no ticket shop                                                                                                                    | —     |
 | `TRESOR`              | `DOORS_TIME`       | the venue states no doors or start time; the night's opening set is the only clock it gives, and that is stored as the start                     | —     |
 | `TRESOR`              | `EVENT_TYPE`       | the club states no category; every listing is a club night                                                                                       | —     |
+| `TRESOR`              | `PRICE`            | the club sells at the door and prints no figure on its programme                                                                                 | —     |
+| `URBAN_SPREE`         | `PROMOTERS`        | the venue credits itself as the organiser on its own nights, so the stored promoter is the venue                                                 | —     |
 | `VOID_CLUB`           | `START_TIME`       | the venue publishes no times; every night stores a bare date                                                                                     | —     |
 | `VOID_CLUB`           | `DOORS_TIME`       | the venue publishes no times; every night stores a bare date                                                                                     | —     |
 | `VOID_CLUB`           | `PRICE`            | the venue publishes no prices                                                                                                                    | —     |
@@ -194,4 +203,4 @@ says so.
 
 These publish everything the model stores, as of the last review:
 
-`ALTE_KANTINE`, `ASTRA`, `BERGHAIN`, `COLUMBIA_THEATER`, `GRETCHEN`, `HOLE44`, `JUNCTION_BAR`, `LIDO`, `MADAME_CLAUDE`, `MATRIX`, `MAX_SCHMELING_HALLE`, `METROPOL`, `MIKROPOL`, `MODUS`, `PRIVATCLUB`, `QUASIMODO`, `SCHOKOLADEN`, `TEMPODROM`, `THEATER_IM_DELPHI`, `UBER_ARENA`, `UBER_EATS_MUSIC_HALL`, `UFO_IM_VELODROM`, `URANIA`, `URBAN_SPREE`, `VELODROM`, `ZITADELLE`
+`ALTE_KANTINE`, `ASTRA`, `BERGHAIN`, `COLUMBIA_THEATER`, `GRETCHEN`, `HOLE44`, `JUNCTION_BAR`, `LIDO`, `MADAME_CLAUDE`, `MATRIX`, `MAX_SCHMELING_HALLE`, `METROPOL`, `MIKROPOL`, `MODUS`, `PRIVATCLUB`, `QUASIMODO`, `SCHOKOLADEN`, `TEMPODROM`, `THEATER_IM_DELPHI`, `UBER_ARENA`, `UBER_EATS_MUSIC_HALL`, `UFO_IM_VELODROM`, `URANIA`, `VELODROM`, `ZITADELLE`

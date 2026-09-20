@@ -127,5 +127,6 @@ val SILENT_GREEN_LIMITATIONS =
     VenueLimitations(
         EventSource.SILENT_GREEN,
         AcceptedLimitation(LimitedAspect.PRICE, "the venue names no prices anywhere — an event either links out to a ticket shop or says nothing"),
-        AcceptedLimitation(LimitedAspect.GENRE, "the venue publishes no genre")
+        AcceptedLimitation(LimitedAspect.GENRE, "the venue publishes no genre"),
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue credits itself as the organiser on its own nights, so the stored promoter is the venue")
     )
