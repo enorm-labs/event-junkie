@@ -1,10 +1,6 @@
 # The ingress must not reach anything private, and the noindex mechanism must not render half of
-# itself.
-#
-# The importer's /api/admin/** and every /actuator/** endpoint are unreachable from outside the
-# cluster by construction: the importer has no Ingress backend at all, and actuator lives on its own
-# port that no Ingress rule names. Both properties are one careless path entry away from being
-# false, and neither failure is visible in a diff.
+# itself. The importer has no Ingress backend and actuator lives on a port no rule names; both are
+# one careless path entry from false, and neither failure is visible in a diff.
 suite: ingress routing, noindex and rate limiting
 
 templates:
@@ -25,24 +21,21 @@ tests:
       value: Ingress
       matchMany: true
     asserts:
-      # Positive and exhaustive rather than a list of things that must be absent. The script had to
-      # phrase this as three greps for `-importer$`, `actuator` and `management|9001`; naming the
-      # two paths that may exist covers those and everything nobody has thought of yet, and it
-      # cannot pass vacuously.
+      # Positive and exhaustive rather than a list of absences: naming the two paths that may exist covers
+      # everything nobody has thought of yet, and cannot pass vacuously.
       - equal:
           path: "$..http.paths[*].pathType"
           value: Prefix
       - matchRegex:
           path: "$..http.paths[*].path"
           pattern: "^(/api|/)$"
-      # No backend names the importer. The frontend is the only backend on the redirect Ingress and
-      # the BFF and frontend are the only two on the main one.
+      # No backend names the importer.
       - matchRegex:
           path: "$..backend.service.name"
           pattern: "^RELEASE-NAME-event-junkie-(bff|frontend)$"
-      # Actuator is private because it is on its own port, not because a rule excludes it. Every
-      # backend names the `http` port; `management` is never named, and because backends here name
-      # ports rather than numbering them, the port number 9001 cannot appear either.
+      # Actuator is private because it is on its own port. Every backend names the `http` port;
+      # `management` is never named, and because backends name ports rather than numbering them, 9001
+      # cannot appear either.
       - equal:
           path: "$..backend.service.port.name"
           value: http
@@ -68,16 +61,10 @@ tests:
           value: http
 
   # --- the redirect hosts -----------------------------------------------------------------------
-  #
   # `redirectHosts` is a list that behaves like a scalar — production lists three names, staging and
-  # k3d none — so the `range` in both the Ingress and the certificate's SAN list needs a multi-entry
-  # case to be exercised at all (#634). One of the three is `www.event-junkie.de`, which infra
-  # publishes while stating that Traefik redirects it.
-  #
-  # **Named hosts are set here rather than taken from values.** `scripts/cluster-assertions.sh`
-  # re-runs this suite against every cluster's `spec.values`, where staging and k3d both set
-  # `redirectHosts: []` — an assertion about which names production happens to list would fail there
-  # for the wrong reason. What is asserted is the template's behaviour given a list.
+  # k3d none — so the `range` needs a multi-entry case to be exercised at all (#634). **Named hosts are
+  # set here rather than taken from values**: `cluster-assertions.sh` re-runs this against every
+  # cluster, where staging and k3d set `redirectHosts: []`.
   - it: gives every redirect host a rule and a SAN on one certificate of its own
     set:
       database.host: "10.0.1.2"
@@ -98,10 +85,8 @@ tests:
       - lengthEqual:
           path: spec.tls[0].hosts
           count: 3
-      # One certificate covering all of them, and **not** the primary's Secret. The template's
-      # comment claims a redirect domain failing validation cannot take the main certificate down
-      # with it; that claim is only true while these are two Secrets, so it is asserted rather than
-      # trusted.
+      # One certificate covering all of them, and **not** the primary's Secret: a redirect domain failing
+      # validation cannot take the main certificate down only while these are two Secrets.
       - lengthEqual:
           path: spec.tls
           count: 1
@@ -121,9 +106,8 @@ tests:
         - "second.example"
     template: redirect-middleware.yaml
     asserts:
-      # One Middleware for the whole list, because the regex matches any host. A per-host
-      # replacement would be the bug this guards: a name 301ing to itself is an infinite loop that
-      # renders perfectly and only fails in a browser.
+      # One Middleware for the whole list, because the regex matches any host. A per-host replacement is
+      # the bug this guards: a name 301ing to itself renders perfectly and only fails in a browser.
       - hasDocuments:
           count: 1
       - equal:
@@ -134,15 +118,10 @@ tests:
           value: true
 
   # --- noindex is a two-part mechanism, and half of it is silent -------------------------------
-  #
-  # The header needs both a Middleware and an Ingress annotation naming it. Render only the
-  # Middleware and every response is missing the header while the manifest looks entirely correct;
-  # render only the annotation and Traefik drops the route with a middleware-not-found error. The
-  # first failure mode is the dangerous one — a staging environment that believes it is noindexed.
-  #
-  # The script asserted this as an equality between two counts, because that was the only way to
-  # make one yq pass check both directions. Two tests say it directly: production renders neither
-  # half, and that is as much the invariant as staging rendering both.
+  # The header needs a Middleware and an Ingress annotation naming it. Only the Middleware: every
+  # response lacks the header while the manifest looks correct — a staging environment that believes
+  # it is noindexed. Only the annotation: Traefik drops the route. Production renders neither half, and
+  # that is as much the invariant as staging rendering both.
   - it: renders neither half of noindex when it is off, as production has it
     set:
       database.host: "10.0.1.2"
@@ -182,16 +161,13 @@ tests:
       - equal:
           path: metadata.name
           value: RELEASE-NAME-event-junkie-noindex
-      # Never an empty header: a Middleware that sets `X-Robots-Tag: ""` renders, installs, reports
-      # healthy and indexes the environment.
+      # Never an empty header: `X-Robots-Tag: ""` renders, installs, reports healthy and indexes the environment.
       - equal:
           path: spec.headers.customResponseHeaders["X-Robots-Tag"]
           value: "noindex, nofollow"
 
-  # The annotation is a comma-separated string with no schema behind it, so a stray comma or an
-  # empty element is not a render error — it is a Traefik router that silently drops **every**
-  # middleware in the list. These three cases pin the whole list rather than checking that each name
-  # appears somewhere in it, which is what makes a malformed join fail here (#416).
+  # The annotation is a comma-separated string with no schema, so a stray comma is not a render error —
+  # it is a router that silently drops **every** middleware in the list. These pin the whole list (#416).
   - it: names all three middlewares on the ingress when noindex is on, in one well-formed list
     set:
       database.host: "10.0.1.2"
@@ -201,8 +177,7 @@ tests:
     templates:
       - ingress.yaml
     asserts:
-      # The rate limit sits after the header middlewares deliberately: a 429 travels back out
-      # through them, so a rejected request still carries HSTS and the rest (#268).
+      # The rate limit sits after the header middlewares: a 429 travels back out through them (#268).
       - equal:
           path: metadata.annotations["traefik.ingress.kubernetes.io/router.middlewares"]
           value: >-
@@ -222,8 +197,7 @@ tests:
           value: >-
             NAMESPACE-RELEASE-NAME-event-junkie-security-headers@kubernetescrd,NAMESPACE-RELEASE-NAME-event-junkie-in-flight-req@kubernetescrd,NAMESPACE-RELEASE-NAME-event-junkie-rate-limit@kubernetescrd
 
-  # With all three off the annotation must be absent rather than empty. An empty one is the failure
-  # this whole list-building exercise exists to avoid, and it is invisible in a rendered manifest.
+  # With all three off the annotation must be absent rather than empty.
   - it: omits the annotation entirely when no middleware applies
     set:
       database.host: "10.0.1.2"
@@ -239,17 +213,12 @@ tests:
           path: metadata.annotations["traefik.ingress.kubernetes.io/router.middlewares"]
 
   # --- the rate limit, which is two limits and therefore two objects ---------------------------
-  #
-  # `inFlightReq` bounds concurrency, grouped by request host, so it works whatever address reaches
-  # the edge. `rateLimit` groups by the client address, which the Traefik hostPort preserves since
-  # #1013. Both ship on.
-  #
-  # **ONE TYPE PER OBJECT IS THE INVARIANT HERE, AND IT IS NOT A STYLE RULE.** Traefik refuses a
-  # Middleware carrying two types — `multi-types middleware not supported` — and drops every router
-  # that names it, so the whole site answers its 404. Nothing rejects the render: the CRD models the
-  # types as optional siblings, so `helm template`, `helm unittest` and `flux schema validate` all
-  # pass on the manifest that takes the site down. It took staging down once, and the count
-  # assertions below are the only thing standing between that and a repeat.
+  # `inFlightReq` bounds concurrency by request host; `rateLimit` groups by client address, which the
+  # hostPort preserves since #1013. **ONE TYPE PER OBJECT IS THE INVARIANT, AND IT IS NOT A STYLE
+  # RULE**: Traefik refuses a Middleware carrying two types (`multi-types middleware not supported`) and
+  # drops every router naming it, so the whole site answers 404 — and `helm template`, `helm unittest`
+  # and `flux schema validate` all pass the manifest, because the CRD models the types as optional
+  # siblings. It took staging down once.
   - it: renders the two limits as two objects, because one object cannot carry both
     set:
       database.host: "10.0.1.2"
@@ -260,8 +229,7 @@ tests:
     asserts:
       - hasDocuments:
           count: 2
-      # Each document declares exactly one of the two keys. `notExists` on the sibling is the whole
-      # assertion — a merge back into one object satisfies every other check in this file.
+      # Each document declares exactly one of the two keys; `notExists` on the sibling is the assertion.
       - notExists:
           path: spec.rateLimit
         documentIndex: 0
@@ -272,15 +240,13 @@ tests:
       - notExists:
           path: spec.inFlightReq
         documentIndex: 1
-      # Pinned rather than merely present. These are the numbers a first-time visitor's whole page
-      # load has to fit inside — assets, fonts and venue images, not just queries — so a well-meant
-      # reduction is the failure this case exists to catch. `values.yaml` carries the arithmetic.
+      # Pinned rather than present: a first-time visitor's whole page load has to fit inside these, so a
+      # well-meant reduction is the failure this catches. `values.yaml` carries the arithmetic.
       - equal:
           path: spec.rateLimit.average
           value: 50
         documentIndex: 1
-      # Traefik's own default burst is 1, which nobody means. A burst near the average rejects an
-      # ordinary page load, because one view fires several requests together.
+      # Traefik's default burst is 1, which nobody means: one view fires several requests together.
       - equal:
           path: spec.rateLimit.burst
           value: 250
@@ -290,9 +256,8 @@ tests:
           value: "1s"
         documentIndex: 1
 
-  # The escape hatch, and the reason the two halves did not collapse into one flag: an environment
-  # whose client address is masqueraded again — a k3d rehearsal, or a cluster that regains a load
-  # balancer — wants concurrency bounded and the per-source budget gone, not both off.
+  # The escape hatch: an environment whose client address is masqueraded again wants concurrency
+  # bounded and the per-source budget gone, not both off.
   - it: drops the per-source object and keeps concurrency when it is turned off
     set:
       database.host: "10.0.1.2"
@@ -310,8 +275,7 @@ tests:
       - notExists:
           path: spec.rateLimit
 
-  # The other half of that: an Ingress may not name a Middleware that was not rendered. Traefik
-  # answers a missing reference exactly as it answers a rejected object — it drops the router.
+  # An Ingress may not name a Middleware that was not rendered: Traefik drops the router.
   - it: names no per-source middleware on the ingress when the object is not rendered
     set:
       database.host: "10.0.1.2"
