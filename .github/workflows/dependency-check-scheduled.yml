@@ -1,27 +1,18 @@
-# Authoritative OWASP Dependency-Check.
-#
-# This is the enforced dependency vulnerability scan. It runs on a nightly schedule
-# (and on demand) against main rather than on every PR, for two reasons:
-#
-#   1. It owns the shared NVD database cache. Caches saved here on main are restorable
-#      from PR branches, so the informational PR scan in build-backend.yml stays fast
-#      and is not exposed to NVD API outages.
-#   2. The NVD API is frequently rate-limited or returns 503s. A nightly cadence means a
-#      transient outage just retries the next night instead of blocking anyone's PR.
-#
-# Use the "Run workflow" button (workflow_dispatch) to seed the cache on demand — e.g.
-# the first time, or after an NVD outage clears.
+# The enforced OWASP Dependency-Check, nightly on main rather than per pull request: it owns the NVD
+# cache the informational PR scan in build-backend.yml restores, and the NVD API is often rate-limited
+# or 503s, so a transient outage retries the next night instead of blocking a PR. `workflow_dispatch`
+# seeds the cache on demand.
 name: Scheduled OWASP Dependency-Check
 
 on:
   schedule:
-    # 03:17 UTC daily. Off-the-hour to avoid the cron stampede on shared runners.
+    # 03:17 UTC daily, off-the-hour.
     - cron: '17 3 * * *'
   workflow_dispatch:
 
 permissions:
   contents: read
-  # Required for uploading SARIF to GitHub Code Scanning
+  # For the SARIF upload to Code Scanning.
   security-events: write
 
 jobs:
@@ -44,8 +35,7 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6.3.0
 
-      # Restore the most recent NVD cache so we only apply a small incremental update
-      # instead of re-downloading the whole database every night.
+      # The most recent NVD cache, so only a small incremental update runs.
       - name: Restore NVD database cache
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
@@ -54,18 +44,15 @@ jobs:
           restore-keys: |
             dependency-check-data-
 
-      # Blocking on purpose: this is the enforced scan. A failure here (real CVE or NVD
-      # outage) marks the scheduled run red so it gets attention and retried.
-      # --no-configuration-cache: the Dependency-Check plugin's Aggregate task reaches for
-      # `project` at execution time and so cannot be used with the configuration cache
-      # (enabled in gradle.properties). Upstream PR #478, open at 13.0.0, would remove the need.
+      # Blocking on purpose: a failure here (a real CVE or an NVD outage) marks the run red.
+      # `--no-configuration-cache`: the Aggregate task reaches for `project` at execution time (upstream
+      # #478 would remove the need).
       - name: Run OWASP Dependency-Check
         run: ./gradlew dependencyCheckAggregate --no-configuration-cache
         env:
           NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
 
-      # Save only on success so a partially-written/corrupted H2 store from a failed run
-      # is never persisted and restored by later runs (here or in the PR job).
+      # Save only on success, so a corrupted H2 store from a failed run is never persisted.
       - name: Save NVD database cache
         if: success()
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
@@ -73,20 +60,14 @@ jobs:
           path: ~/.gradle/dependency-check-data
           key: dependency-check-data-${{ github.run_id }}
 
-      # **Zero findings is only good news if something was examined.** `failBuildOnCVSS` passes
-      # trivially over an empty dependency set, which is what a misconfigured `scanProjects` did here
-      # for months while every build went green. Trivy gained this floor in image-scan-scheduled.yml;
-      # Dependency-Check, the tool it actually happened to, did not until #1087. A floor of zero
-      # rather than a number, because the count moves with every dependency change and a number would
-      # rot until somebody lowered it.
+      # **Zero findings is only good news if something was examined.** `failBuildOnCVSS` passes trivially
+      # over an empty dependency set, which a misconfigured `scanProjects` produced for months (#1087). A
+      # floor of zero, because the count moves with every dependency change.
       - name: Assert the scan examined something
         run: scripts/scan-coverage.sh owasp build/reports/dependency-check/dependency-check-report.json
 
-      # NOTE: the `hashFiles` guards below fail *silently* — if these paths ever stop
-      # matching where the plugin writes, the uploads are skipped and the job still goes
-      # green while findings quietly stop reaching Code Scanning. Dependency-Check 13.0.0
-      # moved the default output directory to build/reports/dependency-check/, so re-check
-      # these paths whenever the plugin is upgraded.
+      # The `hashFiles` guards fail *silently*: if the plugin moves its output directory again (13.0.0
+      # did), uploads stop and the job stays green. Re-check on every plugin upgrade.
       - name: Upload SARIF to GitHub Code Scanning
         if: (success() || failure()) && hashFiles('build/reports/dependency-check/dependency-check-report.sarif') != ''
         uses: github/codeql-action/upload-sarif@b96794f015dfd88f77b49b1c93e0fa7110f94c63 # v4.38.0

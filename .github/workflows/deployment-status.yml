@@ -1,47 +1,30 @@
 # Turns a Flux reconcile into a GitHub deployment, so the Environments tab says what is running.
+# Nothing in Actions deploys — `release.yml` pushes to GHCR and stops, Flux pulls — so GitHub had no
+# idea what was running anywhere. A `githubdispatch` Provider in each cluster fires a
+# `repository_dispatch` when the HelmRelease reconciles, and this turns it into a deployment (#565).
 #
-# Nothing in Actions deploys — since #414 `release.yml` builds, scans, attests and pushes to GHCR and
-# stops, and Flux pulls on its own schedule. That is the property #443 calls out as a supply-chain
-# strength (CI holds no cluster credential), and it is also why GitHub has no idea what is running
-# anywhere: `/deployments` was empty and the Environments section never rendered.
+# NOT CREATED IN `release.yml`, because that would record "published" where the tab says "running on
+# production"; a wrong answer displayed confidently is worse than a blank tab.
 #
-# The cluster tells us instead. A `githubdispatch` Provider in each cluster fires a
-# `repository_dispatch` when the HelmRelease reconciles, and this workflow turns that into a
-# deployment on an environment of the same name (#565).
-#
-# WHY NOT CREATE THE DEPLOYMENT IN `release.yml`, which would be four lines in a job that already
-# runs: because it would record "the artifact was published" while the Environments tab presents it
-# as "this is running on production". Flux may not have pulled it yet, may fail to, or may be pinned
-# elsewhere. A wrong answer displayed confidently in the one place people look for the truth is worse
-# than the blank tab this replaces.
-#
-# THIS WORKFLOW CANNOT BE TESTED FROM A PULL REQUEST. `repository_dispatch` only runs workflows from
-# the default branch, so this lands on `main` unexercised — the same trap `release.yml`'s `on:` block
-# documents about itself. Everything below therefore fails loudly on a payload it does not recognise
-# rather than defaulting, because a silent default here writes a plausible lie into a permanent
-# timeline and nothing would contradict it.
+# THIS WORKFLOW CANNOT BE TESTED FROM A PULL REQUEST: `repository_dispatch` runs workflows from the
+# default branch only. Everything below fails loudly on a payload it does not recognise, because a
+# silent default writes a plausible lie into a permanent timeline.
 name: Deployment Status
 
 on:
-  # The event type is Flux's own format, `{Kind}/{Name}.{Namespace}` — not a name we chose, and it
-  # must match the involved object exactly or the dispatch arrives and matches no workflow.
-  #
-  # Only the HelmRelease: a chart appearing in the registry is not a deployment, it is the thing a
-  # deployment later consumes, and recording both would put two entries on the timeline for one
-  # rollout, the earlier of which is exactly the "published, not running" claim the header rejects.
-  # The OCIRepository's failures go to `flux-source-failure.yml` through their own Alert (#1454).
+  # The event type is Flux's own `{Kind}/{Name}.{Namespace}`, and must match the involved object
+  # exactly. Only the HelmRelease: a chart in the registry is not a deployment. The OCIRepository's
+  # failures go to `flux-source-failure.yml` (#1454).
   repository_dispatch:
     types: [ HelmRelease/event-junkie.flux-system ]
 
 permissions:
-  # To resolve a release version to the commit its tag points at. Read-only: this workflow never
-  # checks anything out and has no reason to.
+  # To resolve a release version to the commit its tag points at. Read-only; no checkout.
   contents: read
   deployments: write
 
-# Per environment, and queued rather than cancelled. Two events for the same rollout — `Progressing`
-# then `UpgradeSucceeded` — must land in that order onto the same deployment; cancelling the first
-# would drop the in-progress status and leave a rollout that looks like it never started.
+# Per environment, queued: `Progressing` then `UpgradeSucceeded` must land in order on one deployment,
+# and cancelling the first would leave a rollout that looks like it never started.
 concurrency:
   group: deployment-status-${{ github.event.client_payload.metadata.env }}
   cancel-in-progress: false
@@ -53,9 +36,7 @@ jobs:
     timeout-minutes: 5
 
     steps:
-      # No `actions/checkout`, and none should be added: everything here comes from the event payload
-      # and the REST API. A checkout would mean holding repository contents to write a deployment,
-      # which is the shape `label-pr.yml`'s header warns about for the same reason.
+      # No `actions/checkout`, and none should be added: everything comes from the payload and the API.
       - name: Record the deployment and its status
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         with:
@@ -66,23 +47,15 @@ jobs:
               return;
             }
 
-            // Flux strips the involved object's API-group prefix before a Provider sees the event
-            // (`combineEventMetadata` in notification-controller), so these keys arrive bare:
-            // `revision` rather than `helm.toolkit.fluxcd.io/revision`. `env` and `cluster` come
-            // from the Alert's `.spec.eventMetadata`, which is merged in with its keys unchanged.
+            // Flux strips the API-group prefix before a Provider sees the event, so these keys arrive bare
+            // (`revision`, not `helm.toolkit.fluxcd.io/revision`). `env` and `cluster` come from the Alert's
+            // `.spec.eventMetadata`.
             const metadata = event.metadata ?? {};
 
-            // `production` earns the environment its badge on the repository front page; `url` becomes
-            // the "View deployment" link on each entry. An unknown env is a failure and not a default:
-            // defaulting would file a staging reconcile under production.
-            //
-            // **Staging has no url on purpose.** `staging.event-junkie.de` has no public DNS record at
-            // all and answers only through the WireGuard tunnel (PLATFORM_SETUP §4a), so a link there
-            // would resolve for nobody — including the person most likely to click it, who would read
-            // the failure as the deploy being broken. Absent beats broken.
-            //
-            // Production's is the chart's `ingress.host`, not `event-junkie.com`, which exists only as
-            // a 301 redirect.
+            // `production` earns the badge on the front page; `url` is the "View deployment" link. An unknown env
+            // is a failure, not a default. **Staging has no url on purpose**: it answers only through the tunnel,
+            // and a link that resolves for nobody reads as a broken deploy. Production's is the chart's
+            // `ingress.host`; `event-junkie.com` is only a 301.
             const ENVIRONMENTS = {
               staging: { production: false, url: null },
               production: { production: true, url: 'https://event-junkie.de' },
@@ -97,36 +70,20 @@ jobs:
             }
 
             // --- The revision is a chart version, not a commit ------------------------------------
-            //
-            // The chart is published with a plain `helm push` and carries no
-            // `org.opencontainers.image.revision`, so what Flux reports for a HelmRelease is the
-            // chart version. The Deployments API wants a ref. Both shapes `scripts/version.sh`
-            // produces already encode the commit, so no annotation and no change to `release.yml` is
-            // needed to get from one to the other:
-            //
-            //   staging     0.1.1-snapshot.20260814122042.g1a2b3c4   the g-prefixed short sha
-            //   production  0.1.1                                    the tag v0.1.1
-            //
-            // Both go through `repos.getCommit`, which accepts a short sha or a tag and returns the
-            // full commit either way — and dereferences an annotated tag, which `git/ref` would not.
+            // The chart carries no `org.opencontainers.image.revision`, so Flux reports the chart version, and
+            // the Deployments API wants a ref. Both shapes `scripts/version.sh` produces encode the commit —
+            // `0.1.1-snapshot.20260814122042.g1a2b3c4` (the short sha) and `0.1.1` (the tag `v0.1.1`) — and
+            // `repos.getCommit` accepts either and dereferences an annotated tag, which `git/ref` would not.
             const revision = metadata.revision;
             if (typeof revision !== 'string' || revision === '') {
               core.setFailed('client_payload.metadata.revision is missing — cannot place a deployment without a commit.');
               return;
             }
 
-            // WHAT ARRIVES IS NOT WHAT `scripts/version.sh` PRODUCES, and the first real dispatch is
-            // what proved it: helm-controller appends the chart's OCI digest as SemVer **build
-            // metadata**, so the version reaches us as
-            //
-            //   0.1.1-snapshot.20260819153524.g3b1c09e+97ec754320b5
-            //                                         ^^^^^^^^^^^^^ helm-controller, not us
-            //
-            // It is there so two charts with the same version but different content are
-            // distinguishable, which is a property worth having and not something to strip upstream.
-            // Split it off before matching rather than tolerating `+…` inside each pattern: the
-            // release branch builds a tag from this string, and `v0.1.1+97ec754320b5` is not a tag
-            // that exists.
+            // WHAT ARRIVES IS NOT WHAT `scripts/version.sh` PRODUCES: helm-controller appends the chart's OCI
+            // digest as SemVer build metadata — `…g3b1c09e+97ec754320b5` — so two charts with one version and
+            // different content are distinguishable. Split it off before matching: the release branch builds a
+            // tag from this string, and `v0.1.1+97ec754320b5` is not a tag that exists.
             const version = revision.split('+')[0];
 
             const SNAPSHOT = /^\d+\.\d+\.\d+-snapshot\.\d{14}\.g([0-9a-f]{7})$/;
@@ -156,22 +113,17 @@ jobs:
             }
 
             // --- What the reconcile actually did --------------------------------------------------
-            //
-            // `severity: error` is authoritative for failure. Success is matched on the reason
-            // suffix rather than a list, because helm-controller has several — InstallSucceeded,
-            // UpgradeSucceeded, RollbackSucceeded, TestSucceeded, ReconciliationSucceeded — and a
-            // list would silently degrade the day it gains another. Anything else is a rollout in
-            // flight (Progressing, ChartPullSucceeded), which is `in_progress` and not a guess.
+            // `severity: error` is authoritative for failure. Success is matched on the reason suffix, because
+            // helm-controller has several (`InstallSucceeded`, `UpgradeSucceeded`, `RollbackSucceeded`, …) and a
+            // list would silently degrade the day it gains another. Anything else is `in_progress`.
             const reason = typeof event.reason === 'string' ? event.reason : '';
             const state = event.severity === 'error' ? 'failure'
               : /Succeeded$/.test(reason) ? 'success'
                 : 'in_progress';
 
             // --- One deployment per (environment, commit) -----------------------------------------
-            //
-            // Reused rather than re-created, so a rollout that emits Progressing and then
-            // UpgradeSucceeded is one entry with two statuses instead of two entries that each look
-            // like a separate deploy. The timeline is the product here; duplicates ruin it.
+            // Reused rather than re-created, so Progressing then UpgradeSucceeded is one entry with two statuses.
+            // The timeline is the product; duplicates ruin it.
             const existing = await github.rest.repos.listDeployments({
               ...context.repo, environment, sha, per_page: 1,
             });
@@ -181,9 +133,8 @@ jobs:
               deploymentId = existing.data[0].id;
               core.info(`Reusing deployment ${deploymentId} for ${environment} at ${sha.slice(0, 7)}.`);
             } else {
-              // `required_contexts: []` is load-bearing and not tidying. Left unset, GitHub refuses
-              // to create a deployment while any check on the ref is pending or missing — which,
-              // for a commit Flux reached minutes after CI, is most of the time.
+              // `required_contexts: []` is load-bearing: left unset, GitHub refuses a deployment while any check on
+              // the ref is pending, which for a commit Flux reached minutes after CI is most of the time.
               const created = await github.rest.repos.createDeployment({
                 ...context.repo,
                 ref: sha,
@@ -208,13 +159,11 @@ jobs:
               deployment_id: deploymentId,
               state,
               environment,
-              // 140 characters is the API's limit; a Flux message can exceed it and the call would
-              // be rejected rather than truncated for us.
+              // 140 characters is the API's limit; a Flux message can exceed it and the call is rejected, not truncated.
               description: `${reason}: ${event.message ?? ''}`.slice(0, 140),
               log_url: `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
-              // Omitted entirely rather than sent as null when the environment has no public address —
-              // the API treats an explicit empty string as "clear the link", which is the same result
-              // by a route that reads like an accident in six months.
+              // Omitted rather than null when there is no public address: an explicit empty string means "clear the
+              // link", the same result by a route that reads like an accident.
               ...(ENVIRONMENTS[environment].url ? { environment_url: ENVIRONMENTS[environment].url } : {}),
             });
 

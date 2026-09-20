@@ -1,38 +1,22 @@
-# Opens an issue when a node pin falls behind upstream, and never opens a pull request.
+# Opens an issue when a node pin falls behind upstream, and never opens a pull request. `k3s_version`
+# and `walg_version` are `default =` strings in `infra/modules/environment/variables.tf`: no manifest
+# declares them, Renovate's allow-list excludes them (ADR-024), and k3s is not apt-managed, so a k3s
+# security release went unnoticed by every mechanism (#1068).
 #
-# `k3s_version` and `walg_version` are `default =` strings in `infra/modules/environment/variables.tf`.
-# No manifest declares them, so Dependabot's `opentofu` ecosystem cannot see them and Renovate's
-# allow-list deliberately excludes them (#384, ADR-024). k3s is not apt-managed either, so
-# `unattended-upgrades` never meets it: a k3s security release went unnoticed by every mechanism this
-# repository had. That is the gap #1068 closes.
+# **A reminder rather than a bot** because both values feed `user_data`, which is force-new: a
+# routine-looking patch pull request that means "rebuild production" is worse than the drift. For
+# wal-g, `walg_checksums` must move with the version or `backups.sh` aborts the boot, and no updater
+# can compute it — such a pull request would be green and break the next rebuild.
 #
-# **Why a reminder rather than a bot.** Both values feed cloud-init and `user_data` is force-new, so a
-# bump destroys and recreates the server. A routine-looking patch pull request that quietly means
-# "rebuild production" is a worse failure than the drift it fixes. For wal-g it is worse still:
-# `walg_checksums` has to move with `walg_version` or `backups.sh` aborts the boot on a failed
-# `sha256sum -c`, and no updater can compute those two values. Such a pull request would be green,
-# mergeable, and would break the next rebuild.
-#
-# So this is the third of the same shape as `restore-drill-reminder.yml` and
-# `credential-expiry-reminder.yml`: a scheduled job that opens one assigned issue and touches nothing.
-#
-# **The comparison is `scripts/upstream-node-pins.sh`, not logic here.** It reads both pins out of the
-# Terraform file, asks `update.k3s.io` for the stable channel and GitHub for wal-g's newest release,
-# and computes the two replacement checksums. A person can run it, which is what makes it a step of
-# the rebuild runbook as well as the engine of this workflow.
-#
-# **It must be idempotent.** A dispatch, a re-run and a late schedule all converge on one issue per
-# pin — hence the list-before-create below, keyed on the exact title.
+# **The comparison is `scripts/upstream-node-pins.sh`**, which a person can run during a rebuild.
+# **Idempotent**: one issue per pin, keyed on the exact title.
 name: Node Pin Reminder
 
 on:
   schedule:
-    # Weekly, Mondays, off-the-hour because the top of the hour is a stampede on shared runners. The
-    # k3s stable channel moves about monthly, so a daily run would ask the same question thirty times
-    # per answer.
+    # Weekly, Mondays, off-the-hour; the k3s stable channel moves about monthly.
     - cron: '52 6 * * 1'
-  # The only way to see it work without waiting for a Monday, and the only way to produce the first
-  # issue: GitHub offers a manual trigger only for workflows already on the default branch.
+  # The only way to see it work without waiting for a Monday, and to produce the first issue.
   workflow_dispatch:
 
 permissions:
@@ -40,8 +24,7 @@ permissions:
   # Creating the issue, and listing to find one that already exists.
   issues: write
 
-# A dispatch racing the schedule must not produce two issues. `cancel-in-progress: false` because the
-# second run still has to check whether the first one created it.
+# A dispatch racing the schedule must not produce two issues; the second still checks.
 concurrency:
   group: node-pin-reminder
   cancel-in-progress: false
@@ -58,14 +41,13 @@ jobs:
         with:
           persist-credentials: false
 
-      # Exit 1 is "something is behind" and is the expected answer here. Anything above it is "the
-      # check could not be made", which fails the job rather than reporting nothing to do — a run
-      # that cannot reach `update.k3s.io` and stays green is the failure this workflow exists about.
+      # Exit 1 is "something is behind" and expected. Anything above it is "the check could not be made",
+      # which fails the job — a run that cannot reach `update.k3s.io` and stays green is the failure this
+      # exists about.
       - name: Compare the pins with upstream
         id: check
         env:
-          # Lifts api.github.com's 60-per-hour anonymous limit, which a shared runner address reaches
-          # on its own.
+          # Lifts api.github.com's 60-per-hour anonymous limit, which a shared runner address reaches alone.
           GITHUB_TOKEN: ${{ github.token }}
         run: |
           rc=0
@@ -80,8 +62,7 @@ jobs:
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
           PINS: ${{ steps.check.outputs.pins }}
-          # An assignee rather than a mention, for the reason restore-drill-reminder.yml gives: an
-          # unassigned issue on a board is nobody's.
+          # An assignee rather than a mention: an unassigned issue on a board is nobody's.
           PIN_OWNER: enorm
         with:
           script: |
@@ -92,9 +73,8 @@ jobs:
             const blob = `https://github.com/${owner}/${repo}/blob/main`;
             const variables = 'infra/modules/environment/variables.tf';
 
-            // WHAT MERGING MEANS, said the same way in every body this opens. It is the one fact
-            // that separates these issues from a dependency bump, and the reason no bot proposes
-            // them: `user_data` is force-new, so either edit destroys and recreates the server.
+            // WHAT MERGING MEANS, in every body this opens: `user_data` is force-new, so either edit destroys and
+            // recreates the server.
             const rebuild = [
               '## Not a routine version bump',
               '',
@@ -107,12 +87,8 @@ jobs:
                 'or the next rebuild silently downgrades the node. A rebuild that is happening anyway is the free moment for both.',
             ];
 
-            // The title carries the *pinned* version and never the target. A target in the title
-            // would open a fresh issue every time upstream moved, so a pin left behind for a quarter
-            // would accumulate a pile of them; the pinned version only changes when the work is done.
-            // Crossing a minor gets its own title, so the escalation is visible on the board rather
-            // than buried in a body nobody re-reads — the same trick credential-expiry-reminder.yml
-            // uses for an expiry that has passed.
+            // The title carries the *pinned* version, never the target, so upstream moving cannot pile up issues;
+            // crossing a minor gets its own title, so the escalation is visible on the board.
             const candidates = [];
 
             if (pins.k3s.status === 'behind') {
@@ -199,10 +175,8 @@ jobs:
               });
             }
 
-            // Listing rather than the search API, and deliberately so: search is an index and the
-            // index is eventually consistent, so an issue created seconds ago can be absent from it.
-            // `listForRepo` returns pull requests too, since they are issues to the API, and a
-            // same-titled pull request would otherwise suppress the reminder entirely.
+            // Listing, not search: the search index is eventually consistent. `listForRepo` returns pull requests
+            // too, and a same-titled one would suppress the reminder.
             const open = await github.paginate(github.rest.issues.listForRepo, {
               owner, repo, state: 'open', per_page: 100,
             });
@@ -231,20 +205,16 @@ jobs:
                 repo,
                 title: candidate.title,
                 body,
-                // Intrinsic properties of the work, which is what labels carry here. Status and
-                // Priority are project fields and are set on the board.
+                // Intrinsic properties of the work; Status and Priority are board fields.
                 labels: ['area:infra', 'area:security', candidate.size],
                 assignees: [process.env.PIN_OWNER],
-                // No milestone, deliberately: milestones here are release gates, and a recurring
-                // operational obligation outlives all of them and belongs to none.
+                // No milestone: a recurring operational obligation outlives every release gate.
                 type: 'Task',
               });
 
-              // The board cannot be written from here — `GITHUB_TOKEN` cannot write to an
-              // *organisation* project, and a token that could rewrite the whole board is more than
-              // a reminder is worth holding. The board's own "Auto-add to project" workflow is
-              // enabled to cover that and misses items at roughly 4% (#1092), so check the card
-              // after a run. This workflow's first two issues, #1090 and #1091, were both missed.
+              // The board cannot be written from here (`GITHUB_TOKEN` cannot write to an organisation project), and
+              // "Auto-add to project" misses items at roughly 4% (#1092) — this workflow's first two issues were
+              // both missed. Check the card after a run.
               core.notice(`Opened #${issue.number} — ${candidate.title}`);
               opened.push(`[#${issue.number}](${issue.html_url}) — ${candidate.title}`);
             }

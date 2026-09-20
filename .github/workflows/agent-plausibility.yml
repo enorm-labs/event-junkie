@@ -1,32 +1,19 @@
-# Claude driven by this repository's own /plausibility-check prompt. It reads the public site's
-# API for the next days, checks each row for what cannot be right, compares a sample against the
-# venues' own pages, and writes a report. It opens nothing, files nothing and edits nothing —
-# which is the whole safety argument, and the reason there is no `dry_run` input: every run is one.
-# A second job, without the agent, comments the report on a monthly issue so it is read (#1499).
-# The shared shape is documented once in ci-cd.instructions.md; three lines below are the traps.
+# Claude driven by /plausibility-check: reads the public site's API for the next days, checks each
+# row, compares a sample against the venues' pages, writes a report. Opens, files and edits nothing,
+# which is the safety argument and why there is no `dry_run` — every run is one. A second job comments
+# the report on a monthly issue so it is read (#1499). ci-cd.instructions.md has the shared shape.
 #
-# **It scrapes venue websites from a GitHub runner.** The prompt carries ADR-007's politeness
-# rules — the importer's identifying User-Agent, one request per event, a second between requests
-# to a host — and `sample` is the ceiling on the venues' side, which is the only cost this can incur.
-#
-# **`SITE_URL` is the variable `site-probe.yml` reads, with the same fallback.** Before go-live it
-# names the rehearsal host. Deleting it on launch day (GO_LIVE_CHECKLIST.md § 0, change 3) points
-# this workflow at the apex without an edit here.
-#
-# **There is no `github_token:` input**, and no `issues: write` — see agent-security.yml for the
-# first, and the prompt's unattended section for why the second is deliberate. `display_report:
-# true` and the empty `inputs` context on a schedule are the same traps as the rest of the family.
-#
-# **`Bash` stays in `--allowedTools`, and the pages it fetches are attacker-controlled text.** The
-# prompt reads the API and the venues' pages with curl, so the shell is the job. The token that
-# shell holds is the Claude App's, with `contents: write`, which is why merge-gate.yml exists
-# (#1424): an instruction smuggled in on a venue page can open a pull request and cannot land
-# one, because the required check refuses a pull request this App authored.
+# **It scrapes venue websites from a runner**: the prompt carries ADR-007's politeness rules, and
+# `sample` is the ceiling on the venues' side. **`SITE_URL` is site-probe.yml's variable with the
+# same fallback**, so deleting it at go-live retargets this without an edit. **No `github_token:`,
+# no `issues: write`** (agent-security.yml and the prompt say why). **`Bash` stays in
+# `--allowedTools`, and the pages it fetches are attacker-controlled text**: the shell holds the
+# Claude App's `contents: write`, which is why merge-gate.yml exists (#1424) — a smuggled instruction
+# can open a pull request and cannot land one.
 name: Agent — Plausibility Check
 
 on:
-  # Nightly, off-the-hour for the reason every other schedule here gives, and in the gap between
-  # the refactor and comment workloads so a night stays a queue rather than five runners at once.
+  # Nightly, off-the-hour, in the gap between the refactor and comment workloads.
   schedule:
     - cron: '17 5 * * *'
   workflow_dispatch:
@@ -66,8 +53,8 @@ jobs:
       contents: read
       # The OIDC exchange for the Claude App's token.
       id-token: write
-    # The fetches are rationed by `sample` and throttled by the prompt, so the wall clock is the
-    # comparison rather than the network. `--max-turns` below is the cost ceiling.
+    # The fetches are rationed and throttled, so the wall clock is the comparison. `--max-turns` is the
+    # cost ceiling.
     timeout-minutes: 45
     env:
       SITE_URL: ${{ inputs.site || vars.SITE_URL || 'https://event-junkie.de' }}
@@ -78,9 +65,8 @@ jobs:
         with:
           persist-credentials: false
 
-      # The prompt is `.claude/skills/plausibility-check.md`, a one-line `@` pointer into
-      # `.github/prompts/`, so checkout above is what makes it resolvable at all. No JDK and no
-      # Node: the run needs curl, jq and python3, all of which the runner image carries.
+      # The prompt is a one-line `@` pointer into `.github/prompts/`, so the checkout is what resolves it.
+      # No JDK, no Node: curl, jq and python3 are on the runner.
       - name: Run /plausibility-check
         id: claude
         uses: anthropics/claude-code-action@7b0b255830a1fab6e602658672acad11c12d841d # v1
@@ -93,10 +79,8 @@ jobs:
             --max-turns 100
             --allowedTools "Bash,Read,Glob,Grep,Write,TodoWrite"
 
-      # Reporting steps, last and guarded, per the rule in ci-cd.instructions.md. The step summary
-      # `display_report` writes has no REST API, so a scheduled report would exist only as a browser
-      # page. This extracts the same final report and nothing else — the execution file also holds
-      # every tool result, which is what must never be uploaded from a public repository.
+      # Reporting steps last and guarded. The step summary has no REST API, so the final report is
+      # extracted to an artifact — the report alone, never the execution file with every tool result.
       - name: Extract the report
         if: success() || failure()
         env:
@@ -119,11 +103,9 @@ jobs:
           name: agent-report
           path: agent-report.md
 
-      # **A run that produced no report is a failed run, whatever its exit code.** The agent's turn
-      # ends when it stops calling tools, so a closing line like "I'll write the report once the
-      # last page arrives" reports success and delivers a sentence. This runs after the upload on
-      # purpose: the stub is preserved for diagnosis, then the job goes red. Guarded on the agent
-      # step succeeding, because a failure above is already red for a better reason.
+      # **A run that produced no report is a failed run, whatever its exit code.** A closing line like "I'll
+      # write the report once the last page arrives" reports success and delivers a sentence. After the
+      # upload, so the stub is preserved; guarded on the agent step succeeding.
       - name: Fail if the report is a stub
         if: steps.claude.outcome == 'success'
         run: |
@@ -136,9 +118,8 @@ jobs:
             exit 1
           fi
 
-  # The report reaches a person by email, which a job summary and an artifact never do (#1499).
-  # Its own job, so `issues: write` never exists in the job the agent runs in — the agent's shell
-  # holds its job's token, and a report is text read from venue pages it does not control.
+  # The report reaches a person by email, which a summary and an artifact never do (#1499). Its own job,
+  # so `issues: write` never exists where the agent runs — its shell holds text from venue pages.
   notify:
     name: Post the report on the rolling issue
     needs: check

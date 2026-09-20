@@ -1,38 +1,21 @@
 name: Role Mailbox Probe
 
-# Proves `hello@` and `security@` still receive, and alerts when they stop (#637).
+# Proves `hello@` and `security@` still receive, and alerts when they stop (#637). **A mailbox that
+# stops receiving looks exactly like a quiet week**, and these two are the only route for Art. 15–21
+# requests, Code of Conduct reports, security disclosure and Let's Encrypt's expiry notices.
 #
-# **A mailbox that stops receiving looks exactly like a quiet week.** These two addresses are the
-# only route for Art. 15–21 requests, Code of Conduct reports, security disclosure and Let's
-# Encrypt's expiry notices, and the statutory clock on a data-subject request starts when it is
-# sent rather than when it is read (docs/ops/EMAIL.md § Monitoring).
-#
-# **It runs on GitHub because the mail does not run on our node.** The mailboxes live on Hetzner
-# Webhosting, independent of k3s, so a CronJob in the cluster would report cluster death as mail
-# death — the argument HEALTHCHECKS.md opens with, applied to a service that is not even on the
-# node.
-#
-# **A conditional ping, never a heartbeat** (#271). `scripts/mail-probe.py` sends, waits for that
-# exact message to arrive over IMAP, deletes it, and only then pings. A bare login would pass while
-# the MX pointed nowhere, which is half the failures this is for.
-#
-# **Two mailboxes and two checks, probed in one job.** An alias would not have this property. Both
-# are probed even when the first fails, because the second is worth testing precisely then — the
-# step collects the exit codes rather than returning the first.
-#
-# **Arming it is four repository secrets and no change to this file.** Without them the job says so
-# in its summary rather than passing quietly — a silent skip is the failure mode this repository has
-# been bitten by twice.
+# **On GitHub, because the mail does not run on our node** (Hetzner Webhosting) — a CronJob in the
+# cluster would report cluster death as mail death. **A conditional ping, never a heartbeat** (#271):
+# `scripts/mail-probe.py` sends, waits for that message over IMAP, deletes it, then pings; a bare
+# login would pass while the MX pointed nowhere. **Both mailboxes probed in one job, both even when
+# the first fails.** **Arming it is four repository secrets**; without them the job says so in its
+# summary rather than passing quietly.
 
 on:
   schedule:
-    # **Daily, and derived from measurement rather than from wishful thinking.** GitHub honours the
-    # daily schedules here (site-probe.yml records the numbers: a median gap near 24h, a worst near
-    # 34h) and refuses fast ones. The checks that receive these pings therefore want a 24-hour
-    # period and a 24-hour grace, which leaves headroom over that worst gap.
-    #
-    # 06:23 keeps it clear of the site probe at 05:37 and of the two nightly scans, and off the top
-    # of the hour, where shared runners stampede.
+    # **Daily, derived from measurement**: GitHub honours the daily schedules (site-probe.yml has the
+    # numbers) and refuses fast ones, so the receiving checks want a 24-hour period and grace. 06:23 is
+    # clear of the site probe and the nightly scans, and off the top of the hour.
     - cron: '23 6 * * *'
   workflow_dispatch:
 
@@ -40,8 +23,8 @@ permissions:
   contents: read
 
 concurrency:
-  # Not `cancel-in-progress`: a cancelled run is a probe that never asserted anything, and its
-  # check would then go late for a reason that has nothing to do with the mailbox.
+  # Not `cancel-in-progress`: a cancelled run is a probe that asserted nothing, and its check goes late
+  # for a reason unrelated to the mailbox.
   group: mail-probe
   cancel-in-progress: false
 
@@ -52,8 +35,8 @@ jobs:
     timeout-minutes: 10
 
     steps:
-      # `sparse-checkout` because one script is all this needs. Nothing else in the tree is read,
-      # and a narrower checkout is a smaller blast radius for a workflow that holds a mail password.
+      # `sparse-checkout`: one script is all this needs, and a narrower checkout is a smaller blast radius
+      # for a workflow holding a mail password.
       - name: Check out the probe
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -61,15 +44,11 @@ jobs:
           sparse-checkout-cone-mode: false
           persist-credentials: false
 
-      # **One job with both mailboxes named, rather than a matrix over secret names.**
-      # `secrets[matrix.name]` reads the secrets context dynamically, and GitHub answers that by
-      # injecting *every* organisation and repository secret into the runner — zizmor's
-      # `overprovisioned-secrets` and CodeQL both refuse it. Naming the four here is the fix.
-      #
-      # The obvious alternative, `${{ cond && secrets.A || secrets.B }}`, is a trap: the `||` arm
-      # also wins when `secrets.A` is merely empty, so an unset password would send the other
-      # mailbox's credential. A wrong password costs about 25 minutes of Hetzner blocking the port
-      # for this address (docs/ops/EMAIL.md § Monitoring, step 2a).
+      # **One job naming both mailboxes, not a matrix over secret names**: `secrets[matrix.name]` makes
+      # GitHub inject *every* secret into the runner, which zizmor and CodeQL refuse. And `${{ cond &&
+      # secrets.A || secrets.B }}` is a trap: the `||` arm wins when `secrets.A` is merely empty, sending
+      # the other mailbox's credential — and a wrong password costs ~25 minutes of Hetzner blocking the
+      # port (docs/ops/EMAIL.md § Monitoring).
       - name: Send, wait for delivery, then ping
         env:
           HELLO_PASSWORD: ${{ secrets.MAIL_PROBE_HELLO_PASSWORD }}
@@ -79,9 +58,8 @@ jobs:
         run: |
           set -uo pipefail
 
-          # Both mailboxes are probed in one job, and one failing must not skip the other: they have
-          # different audiences and different failure modes, and the second is worth testing
-          # precisely on the day the first is broken. So the exit code is collected, not returned.
+          # One failing must not skip the other: different audiences, different failure modes, and the second
+          # is worth testing precisely on the day the first is broken. The exit code is collected, not returned.
           overall=0
 
           probe() {
