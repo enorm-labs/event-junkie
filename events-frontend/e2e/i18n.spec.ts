@@ -1,13 +1,10 @@
 import { expect, test } from '@playwright/test'
 
 /**
- * Locale routing and the content that is genuinely locale-specific.
- *
- * The other suites are pinned to `/en` deliberately (AGENTS.md §Testing — locale strategy): they are
- * behaviour tests that happen to use English accessible names as stable handles, and re-running
- * them in German would double the matrix to re-assert the same behaviour. This file carries what
- * only exists in a second language — the URL contract, the redirects, the switcher, date formats,
- * and the four long-form pages that have a separate component per language.
+ * Locale routing and the content that is locale-specific. The other suites are pinned to `/en`
+ * (AGENTS.md §Testing, locale strategy); this file carries what only exists in a second language:
+ * the URL contract, the redirects, the switcher, date formats, and the pages with a separate
+ * component per language.
  */
 
 test('the bare root redirects to a locale', async ({ page }) => {
@@ -42,9 +39,8 @@ test('html lang matches the locale in the URL', async ({ page }) => {
 })
 
 test('switching language keeps the filters', async ({ page }) => {
-  // Found by walking the flows (#1249): the switcher swapped the locale segment and kept the hash,
-  // but dropped the query, so a filtered list answered in the other language with the whole
-  // catalogue. A visitor who has narrowed a list has done work that survives a language change.
+  // Found by walking the flows (#1249): the switcher kept the hash and dropped the query, so a
+  // filtered list answered in the other language with the whole catalogue.
   await page.goto('/en/events?q=Tresor&type=PARTY')
 
   await page.getByRole('link', { name: 'Deutsch' }).first().click()
@@ -54,8 +50,8 @@ test('switching language keeps the filters', async ({ page }) => {
 })
 
 test('an unknown path under a published locale does not loop', async ({ page }) => {
-  // The catch-all prefixes unprefixed paths. Without a guard, an unmatched *prefixed* path would
-  // be prefixed again — `/en/en/nonsense` — and redirect forever. It lands on the locale home.
+  // The catch-all prefixes unprefixed paths; without a guard an unmatched prefixed path becomes
+  // `/en/en/nonsense` and redirects forever.
   const errors: string[] = []
   page.on('pageerror', (error) => errors.push(error.message))
 
@@ -67,9 +63,8 @@ test('an unknown path under a published locale does not loop', async ({ page }) 
 })
 
 test('an unpublished locale is treated as an unknown path, not as a locale', async ({ page }) => {
-  // French is not in LOCALES, so `/fr/events` must not resolve — a route that renders another
-  // language under a French URL is worse than no French URL at all. It is prefixed as an ordinary
-  // unknown path, matches nothing, and settles on the locale home. Two hops, no loop.
+  // French is not in LOCALES, so `/fr/events` must not resolve: it is prefixed as an unknown path
+  // and settles on the locale home. Two hops, no loop.
   await page.goto('/fr/events')
 
   await expect(page).toHaveURL(/\/en$/)
@@ -94,8 +89,7 @@ test('a German URL renders German', async ({ page }) => {
 })
 
 test('the locale switcher keeps you on the same page', async ({ page }) => {
-  // Switching language on the venues list must not dump you on the home page — the whole reason
-  // the switcher rewrites only the locale segment.
+  // Switching language on the venues list must not dump you on the home page.
   await page.goto('/en/venues')
 
   await page
@@ -161,8 +155,7 @@ test('the header carries a compact locale switcher', async ({ page }) => {
 
 test('the header switcher adds no second Language landmark', async ({ page }) => {
   // Two navigation landmarks with the same accessible name are indistinguishable in a screen
-  // reader's landmark list — and ambiguous to any selector addressing them by name. The compact
-  // switcher lives inside the header's own nav instead.
+  // reader's landmark list; the compact switcher lives inside the header's own nav.
   await page.goto('/en')
 
   await expect(page.getByRole('navigation', { name: 'Language' })).toHaveCount(1)
@@ -174,9 +167,8 @@ test('the header switcher adds no second Language landmark', async ({ page }) =>
 test('both switchers mark the active language', async ({ page }) => {
   await page.goto('/de/about')
 
-  // "Hauptnavigation", not "Main": the landmark's accessible name is itself translated, so a German
-  // reader hears a German landmark list. Selectors addressing landmarks by name are
-  // locale-dependent — which is why the other suites are pinned to /en.
+  // "Hauptnavigation", not "Main": the landmark's name is translated, which is why the other
+  // suites are pinned to /en.
   const header = page.getByRole('navigation', { name: 'Hauptnavigation' })
   await expect(header.getByRole('link', { name: 'Deutsch' })).toHaveAttribute(
     'aria-current',
@@ -189,10 +181,8 @@ test('both switchers mark the active language', async ({ page }) => {
 })
 
 /**
- * The long-form pages — About and the three legal ones — are a separate component per language
- * rather than translated strings (src/views/localisedView.ts). That makes one failure mode
- * possible that the message catalogue's key-parity test cannot see: the route resolving to the
- * wrong language version, or to none. These are the tests that would catch it.
+ * The long-form pages are a separate component per language (src/views/localisedView.ts), so the
+ * route can resolve to the wrong version or none, which the key-parity test cannot see.
  */
 
 test('the German imprint is German, not the English page under a German URL', async ({ page }) => {
@@ -207,8 +197,8 @@ test('the German imprint is German, not the English page under a German URL', as
 })
 
 test('the German privacy notice carries the Art. 13 elements in German form', async ({ page }) => {
-  // Not a re-run of the unit checklist — this proves the *route* serves the German document, with
-  // its German citations, in a real browser. `Art. 6 (1) (f) GDPR` here would mean the fallback.
+  // Proves the route serves the German document in a real browser; `Art. 6 (1) (f) GDPR` here
+  // would mean the fallback.
   await page.goto('/de/legal/privacy')
   const main = page.getByRole('main')
 
@@ -227,8 +217,8 @@ test('both language versions name the German one as authoritative', async ({ pag
 })
 
 test('the About page and its beta anchor are German under /de', async ({ page }) => {
-  // The header's beta badge links to `#beta` in whichever locale you are in, so the anchor id has
-  // to survive translation even though every heading around it changes.
+  // The header's beta badge links to `#beta` in either locale, so the anchor id must survive
+  // translation.
   await page.goto('/de/about#beta')
 
   await expect(page.getByRole('heading', { level: 1, name: 'Über uns' })).toBeVisible()
@@ -245,8 +235,8 @@ test('the notices page counts components in German too', async ({ page }) => {
 })
 
 test('the venue opt-out page is German under /de, route and all', async ({ page }) => {
-  // The audience is a Berlin venue operator, so the German version is the one that actually gets
-  // read — and a silent fallback would hand them the opt-out route in the wrong language.
+  // The audience is a Berlin venue operator, so a silent fallback hands them the opt-out route in
+  // the wrong language.
   await page.goto('/de/legal/for-venues')
   const main = page.getByRole('main')
 
@@ -257,8 +247,7 @@ test('the venue opt-out page is German under /de, route and all', async ({ page 
 })
 
 test('switching language on a legal page stays on that page', async ({ page }) => {
-  // The case the switcher most needs to get right: someone reading the privacy notice in the wrong
-  // language should land on the *notice*, not on the home page.
+  // Someone reading the privacy notice in the wrong language should land on the notice.
   await page.goto('/en/legal/privacy')
 
   await page
@@ -285,12 +274,9 @@ test('sets a German document title for each legal route', async ({ page }) => {
 })
 
 /**
- * Detail-view chrome, which localisation Phase 2 missed.
- *
- * The entity label, the empty-feed copy and the not-found copy were English literals passed as
- * props, so a German visitor met English on three pages. They are catalogue-backed now; these are
- * the tests that would notice if one drifted back, which is easy because the strings live in the
- * *calling* view rather than in the shared component that renders them.
+ * Detail-view chrome that localisation Phase 2 missed: the entity label, the empty-feed and
+ * not-found copy were English literals passed as props. Easy to drift back, because the strings
+ * live in the calling view rather than the shared component.
  */
 
 test('a German venue page says it is not found, in German', async ({ page }) => {
@@ -300,8 +286,8 @@ test('a German venue page says it is not found, in German', async ({ page }) => 
 
   await page.goto('/de/venues/nope')
 
-  // "Location nicht gefunden" — the negation comes last in German, which is why the heading is one
-  // interpolated message rather than a label concatenated with "not found".
+  // The negation comes last in German, so the heading is one interpolated message, not a label
+  // concatenated with "not found".
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Location nicht gefunden')
   await expect(page.getByRole('main')).toContainText('kleinen schwarzen Buch')
 })
@@ -344,14 +330,8 @@ test('German detail pages label the entity kind in German', async ({ page }) => 
 })
 
 /**
- * The list pages' result count and pagination were hardcoded English — including an
- * English plural rule (`n === 1 ? 'event' : 'events'`) that no other language shares.
- * Both are message keys now, so this checks the German side, which is the half a
- * pinned-to-`/en` suite can never see.
- *
- * The counts are deliberately 1 and 2: one exercises the singular form of the plural
- * message, the other the plural, and getting them from the same mock keeps the two
- * assertions honest about which branch rendered.
+ * The result count and pagination were hardcoded English, with an English plural rule. The
+ * counts are 1 and 2 so both branches of the plural message render from the same mock.
  */
 const listPage = (content: unknown[], totalElements: number, totalPages: number) =>
   JSON.stringify({ content, page: 0, size: 20, totalElements, totalPages })
@@ -366,7 +346,7 @@ test('the events list counts its results in German, singular and plural', async 
   )
   await page.goto('/de/events')
   // Exact, not `toContainText`: an unpluralised render is the literal message with both branches
-  // ("1 Event gefunden | 1 Events gefunden"), which *contains* the singular and would pass.
+  // ("1 Event gefunden | 1 Events gefunden"), which contains the singular.
   await expect(page.getByText('1 Event gefunden', { exact: true })).toBeVisible()
 
   await page.route('**/api/events?*', (route) =>

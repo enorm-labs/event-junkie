@@ -12,16 +12,10 @@ import { DEFAULT_LOCALE, type Locale } from '@/i18n/locales'
 import { i18n } from '@/i18n'
 
 /**
- * The mandatory-element checklists, run against **each language version separately**.
- *
- * That separation is the point. The two versions are separate documents (see
- * `views/localisedView.ts`), which buys reviewability at the cost of drift — and the drift that
- * matters is not a clumsy sentence, it is a section that exists in one language and not the other.
- * Checking only English would leave a German notice missing its Widerspruchsrecht entirely green.
- *
- * What these tests cannot do is tell you the two say the *same* thing. Nothing automated can. They
- * pin the elements the law names, and `@/lib/legal` holds the facts that would otherwise be typed
- * twice.
+ * The mandatory-element checklists, run against each language version separately: the two are
+ * separate documents (`views/localisedView.ts`), and the drift that matters is a section present
+ * in one language and not the other. These pin the elements the law names; nothing automated can
+ * tell you the two say the same thing.
  */
 
 const stubs = {
@@ -29,11 +23,8 @@ const stubs = {
 }
 
 /**
- * Rendered text with runs of whitespace collapsed.
- *
- * Templates wrap prose across source lines, so a sentence that reads as one phrase on the page is
- * broken by newlines and indentation in `textContent`. Without this, an assertion passes or fails
- * depending on where Prettier happened to wrap the paragraph.
+ * Rendered text with whitespace collapsed, so an assertion does not depend on where the
+ * formatter wrapped the paragraph.
  */
 function textOf(component: unknown, locale: Locale): string {
   i18n.global.locale.value = locale
@@ -85,8 +76,8 @@ const IMPRINT_ELEMENTS: Element[] = [
   },
 ]
 
-// Art. 13 has twelve mandatory elements (docs/LEGAL.md §7.2); omitting one is the
-// usual defect, and it is invisible without a checklist. This is that checklist, in both languages.
+// Art. 13 has twelve mandatory elements (docs/LEGAL.md §7.2); omitting one is invisible without
+// a checklist. This is that checklist, in both languages.
 const PRIVACY_ELEMENTS: Element[] = [
   {
     what: 'absence of a DPO',
@@ -103,97 +94,83 @@ const PRIVACY_ELEMENTS: Element[] = [
     en: /legitimate interest is operating/i,
     de: /berechtigtes Interesse ist der Betrieb/i,
   },
-  // Two Art. 28 processors since #1233: Hetzner hosts, and the translation engine receives event
-  // descriptions. Both are named because Art. 13 (1) (e) asks for the recipients, and a processor
-  // that runs while the notice names only the other one is exactly what #1233 found.
+  // Two Art. 28 processors since #1233: Hetzner hosts, the translation engine receives event
+  // descriptions. Art. 13 (1) (e) asks for the recipients, and a processor the notice does not name
+  // is what #1233 found.
   { what: 'recipients', en: /Hetzner/, de: /Hetzner/ },
   { what: 'the translation processor', en: /Anthropic/, de: /Anthropic/ },
-  // The transfer basis, because the second processor is in a third country. Art. 13 (1) (f) wants
-  // the mechanism named rather than the fact of a transfer alone.
+  // The transfer basis, since the second processor is in a third country (Art. 13 (1) (f)).
   {
     what: 'the transfer mechanism for the third country',
     en: /standard contractual clauses/i,
     de: /Standardvertragsklauseln/,
   },
-  // The absence is asserted deliberately: a CDN reappearing in front of the site is a new recipient
-  // and a new third country, and it must not be able to arrive without this failing.
+  // Asserted as an absence: a CDN reappearing is a new recipient in a new third country.
   {
     what: 'no edge provider in front of the origin',
     en: /no content delivery network/i,
     de: /kein Content-Delivery-Netzwerk/i,
   },
-  // The reproduction is a *separate* act from displaying a URL, and only §4 can carry its legal
-  // basis and its retention. ADR-019 chose it knowing it gives up the embedding position under
-  // § 16 UrhG, so a notice that describes the storage is the price of that decision.
+  // The reproduction is a separate act from displaying a URL, and only §4 carries its legal basis
+  // and retention; ADR-019 gave up the § 16 UrhG embedding position knowing that.
   {
     what: 'that images are downloaded and stored, not only linked',
     en: /downloads both kinds and stores a copy/i,
     de: /lädt\s+beides herunter und speichert eine Kopie/i,
   },
-  // 43 of the 86 venue images come from Wikimedia Commons or Flickr (#1275). The venue neither took
-  // nor published them, so a notice naming only the venue as the source is wrong about half of
-  // them, and wrong about who a removal request comes from.
+  // 43 of the 86 venue images come from Wikimedia Commons or Flickr (#1275), so a notice naming
+  // only the venue as the source is wrong about half of them.
   {
     what: 'that venue photographs also come from open archives',
     en: /open archives such as Wikimedia Commons and Flickr/i,
     de: /offenen Archiven wie Wikimedia Commons\s+und Flickr/i,
   },
-  // The inverse of #792's item, which this replaces. That one pinned the disclosure that images
-  // were fetched from venue servers, and said to delete it once `images.serving.enabled` was on in
-  // production. It has been since 2026-08-30, so the disclosure had become a warning about a
-  // request the browser cannot make — and the notice led with it. **This pins the claim that costs
-  // something**: turning serving back off makes the page false, and fails here first.
+  // The inverse of #792's item: that one pinned the disclosure that images were fetched from venue
+  // servers, deleted once `images.serving.enabled` was on in production (since 2026-08-30). This
+  // pins the claim that costs something: turning serving off makes the page false, and fails here.
   {
     what: 'that no image request reaches a third party',
     en: /contacts\s+no venue, promoter or ticket seller/i,
     de: /keine Location, keinen Veranstalter und keinen Ticketanbieter an/i,
   },
-  // GitHub, not a processor: the notice still has to address a third country, because choosing to
-  // open an issue rather than write an email sends data to a US company.
+  // GitHub, not a processor: opening an issue rather than writing an email sends data to a US
+  // company, so the notice still addresses a third country.
   { what: 'third-country transfer — GitHub only', en: /US company/, de: /US-Unternehmen/ },
-  // #278. The notice claimed "seven days" until 2026-09-02 — a period enforced by nothing, which
-  // LEGAL.md §7.5 calls worse than an honest longer one. The real bound is **14 days**:
-  // `ZO_COMPACT_DATA_RETENTION_DAYS` in both clusters' `openobserve.yaml`, whose own comment says
-  // this notice must state whatever it says. The node's kubelet rotation is a second, usually
-  // shorter bound on volume, which §2 describes but does not lead with.
-  //
-  // **The number is the assertion.** It is a published claim under Art. 13 (2) (a), so changing the
-  // Helm value without changing the notice is the failure this pins — and it fails here in both
-  // languages, which is also what keeps the two files in step.
+  // #278. The real bound is 14 days, `ZO_COMPACT_DATA_RETENTION_DAYS` in both clusters'
+  // `openobserve.yaml`, whose own comment says this notice must state whatever it says; the
+  // kubelet rotation is a second, usually shorter, bound on volume. The number is the assertion:
+  // a published claim under Art. 13 (2) (a), so changing the Helm value without the notice fails
+  // here in both languages.
   {
     what: 'log retention, as the 14 days actually configured',
     en: /14 days/,
     de: /14 Tage/,
   },
   // One match anywhere satisfies an item, so the log period above stood in for the one §4 lacked.
-  // This pins §4's own phrasing: §6's Art. 21 heading would survive §4's sentence being deleted.
+  // This pins §4's own phrasing.
   {
     what: 'event-data retention, as a criterion, tied to the Art. 21 route',
     en: /no automatic deletion by age.*object to the processing\s+under Art\. 21 GDPR/s,
     de: /automatische Löschung nach Alter findet nicht statt.*Verarbeitung nach Art\. 21 DSGVO widersprichst/s,
   },
-  // Backup retention is a *separate* period from log retention and the notice has to carry both
-  // (#277). The numbers are `backup_retention_days` in infra/modules/environment and
-  // `backup_retention_backstop_days` in infra/bootstrap, whose own comments record that they exist
-  // to be stated here — so these assertions are what couple them: change a variable and this fails
-  // until the notice follows.
+  // Backup retention is a separate period from log retention (#277). The numbers are
+  // `backup_retention_days` in infra/modules/environment and `backup_retention_backstop_days` in
+  // infra/bootstrap; these assertions couple them to the notice.
   {
     what: 'backup retention period, as a number',
     en: /normally kept for\s+30 days/i,
     de: /im\s+Regelfall\s+30 Tage/i,
   },
-  // **Both numbers, because only the second one is a promise (#586).** 30 is what the nightly sweep
-  // on the node achieves; 35 is the bucket lifecycle rule, and it is the only figure that still
-  // holds while the node is down. A notice stating 30 alone was true only on a healthy schedule,
-  // which is the defect LEGAL.md §7.5 names — a period nothing enforces is worse than a longer
-  // honest one. Dropping this assertion would let the notice quietly go back to promising 30.
+  // Both numbers, because only the second is a promise (#586): 30 is what the nightly sweep
+  // achieves, 35 the bucket lifecycle rule that holds while the node is down. A period nothing
+  // enforces is worse than a longer honest one (LEGAL.md §7.5).
   {
     what: 'backup retention ceiling, which is the enforced one',
     en: /within\s+35 days/i,
     de: /spätestens nach\s+35 Tagen/i,
   },
   // The interaction, not just the number: a deletion request and a restore have to be reconciled
-  // somewhere, and leaving it implicit is the defect #277 was filed for.
+  // somewhere (#277).
   {
     what: 'erasure reconciled with backups',
     en: /re-apply the erasure/i,
@@ -229,10 +206,8 @@ const PRIVACY_ELEMENTS: Element[] = [
     en: /§ 25 \(2\) 2 TDDDG/,
     de: /§ 25 Abs\. 2 Nr\. 2 TDDDG/,
   },
-  // §3 said "exactly one value" in both languages while the site wrote two — `theme` from
-  // `App.vue` and `locale` from `i18n/locales.ts`. The checklist above could not catch it: every
-  // item asserts that an element is present, never that a sentence is true. Naming both keys is
-  // what makes a third one arriving fail here rather than in a complaint.
+  // §3 said "exactly one value" while the site wrote two, `theme` and `locale`; the checklist
+  // above asserts presence, never truth. Naming both keys makes a third one fail here.
   {
     what: 'stored keys, both of them by name',
     en: /\btheme\b[\s\S]*\blocale\b/,
@@ -251,9 +226,8 @@ const PRIVACY_ELEMENTS: Element[] = [
   },
 ]
 
-// docs/SCRAPING_POSITION.md §5 is four steps and a deadline, and this page is where that
-// commitment gets published — an operator who cannot find it has not been made one. So the steps
-// are pinned the same way the statutory elements above are, per language.
+// docs/SCRAPING_POSITION.md §5 is four steps and a deadline, published here; the steps are pinned
+// per language like the statutory elements.
 const FOR_VENUES_ELEMENTS: Element[] = [
   {
     what: 'that the source is switched off',
@@ -271,24 +245,21 @@ const FOR_VENUES_ELEMENTS: Element[] = [
     de: /innerhalb von sieben Tagen/i,
   },
   {
-    // The narrower remedy #283 made possible: a per-field prohibition on the source. Before it, the
-    // only lever was disabling the whole source, so a venue objecting to its photographs alone had
-    // to lose its listing. The page has to offer what the system can actually do.
+    // The narrower remedy #283 made possible: a per-field prohibition on the source, so a venue
+    // objecting to its photographs alone need not lose its listing.
     what: 'that only the images or only the descriptions can be removed',
     en: /only the images you mind, or\s+only the description texts/i,
     de: /nur die Bilder stören oder nur die\s+Beschreibungstexte/i,
   },
   {
-    // #807 decided that PROHIBITED stops storage and not only display. This page promised removal
-    // before that was true, so the assertion pins the half that costs something: the material is
-    // deleted from the database, not hidden behind a gate.
+    // #807 decided that PROHIBITED stops storage, not only display: the material is deleted, not
+    // hidden behind a gate.
     what: 'that the objected-to material is deleted rather than hidden',
     en: /delete\s+the material you objected to from our database/i,
     de: /löschen das beanstandete Material aus der Datenbank/i,
   },
-  // PR 6 built the route that makes this true (`DELETE /api/admin/images/venues/{slug}`). Under
-  // hotlinking a takedown propagated by itself; now a stored object outlives it unless something
-  // deletes it, so the page may only promise this while that endpoint exists.
+  // `DELETE /api/admin/images/venues/{slug}` makes this true: a stored object outlives a takedown
+  // unless something deletes it, so the page may only promise this while the endpoint exists.
   {
     what: "that the stored copies of a venue's images are deleted too",
     en: /delete the stored copies of your images/i,
@@ -299,8 +270,8 @@ const FOR_VENUES_ELEMENTS: Element[] = [
     en: /do not ask for a reason/i,
     de: /fragen nicht nach einem Grund/i,
   },
-  // The second route, and the cheaper one for both sides: it costs the operator no message and us
-  // no inbox. Dropping it would leave the page describing only the slow half of §5.
+  // The second route, cheaper for both sides. Dropping it leaves the page describing only the slow
+  // half of §5.
   {
     what: 'a robots.txt rule as the route that needs no message',
     en: /needs no message/i,
@@ -363,8 +334,8 @@ for (const locale of ['en', 'de'] as const) {
     }
 
     it('does not describe processing that does not happen', () => {
-      // A notice claiming cookie consent, analytics or ad partners we do not have is as inaccurate
-      // as one omitting processing we do — and generators produce exactly that (§7.8).
+      // A notice claiming cookie consent, analytics or ad partners we do not have is as inaccurate as
+      // one omitting processing we do, and generators produce exactly that (§7.8).
       expect(textOf(PRIVACY[locale], locale)).not.toMatch(
         /Google Analytics|advertising partners|Werbepartner|withdraw your cookie consent|Cookie-Einwilligung/i,
       )
@@ -374,9 +345,8 @@ for (const locale of ['en', 'de'] as const) {
 
 describe('across both language versions', () => {
   it('states which version prevails, on every page that has two', () => {
-    // Two language versions with no stated precedence is worse than one language: it invites the
-    // reader to pick whichever suits them. Three pages, both languages — six places to forget it,
-    // which is why LegalPage takes it as a prop rather than each page typing the sentence.
+    // Two language versions with no stated precedence invite the reader to pick whichever suits
+    // them. Six places to forget it, which is why LegalPage takes it as a prop.
     expect(textOf(IMPRINT.en, 'en')).toMatch(/the German version prevails/)
     expect(textOf(PRIVACY.en, 'en')).toMatch(/the German version prevails/)
     expect(textOf(FOR_VENUES.en, 'en')).toMatch(/the German version prevails/)
@@ -386,8 +356,8 @@ describe('across both language versions', () => {
   })
 
   it('carries one controller address across all four documents', () => {
-    // §8.3: these must never disagree about the address, and now there are four of them. They
-    // share one module; this asserts the sharing actually reaches the rendered output.
+    // §8.3: these must never disagree about the address. They share one module; this asserts the
+    // sharing reaches the rendered output.
     for (const [component, locale] of [
       [IMPRINT.en, 'en'],
       [IMPRINT.de, 'de'],
@@ -401,17 +371,10 @@ describe('across both language versions', () => {
     }
   })
 
-  // This has inverted twice, and both flips were the tripwire working rather than failing: first
-  // when the rented address cleared CONTACT_DETAILS_ARE_PROVISIONAL, then when production was
-  // deployed (#285) and the notice re-read against it (#278), clearing the last of the three.
-  //
-  // **All three flags are false, which is the go-live state ProvisionalNotice.vue describes**, so
-  // this asserts the banner's *absence*. A page still calling itself provisional after the facts
-  // became real is wrong in the direction a reader acts on — the same failure as the
-  // placeholder-address case below, pointing the other way.
-  //
-  // A flag legitimately re-armed — a new processor, an edge provider, an undescribed environment —
-  // means inverting this again, deliberately, alongside re-reading the notice.
+  // All three flags are false, the go-live state ProvisionalNotice.vue describes, so this asserts
+  // the banner's absence: a page still calling itself provisional after the facts became real is
+  // wrong in the direction a reader acts on. A flag legitimately re-armed means inverting this
+  // again, deliberately, alongside re-reading the notice.
   it('no longer calls the pages provisional, now that all three flags are settled', () => {
     for (const [component, locale] of [
       [IMPRINT.en, 'en'],
@@ -425,9 +388,8 @@ describe('across both language versions', () => {
     }
   })
 
-  // The direction that now matters more. A page calling a real rented address a placeholder is
-  // worse than one that called a fake address a placeholder: the first is wrong about a fact a
-  // reader would act on, and § 5 DDG asks for an address a reader can rely on.
+  // A page calling a real rented address a placeholder is wrong about a fact a reader would act
+  // on (§ 5 DDG).
   it('no longer calls the contact details placeholders, now that they are real', () => {
     for (const [component, locale] of [
       [IMPRINT.en, 'en'],

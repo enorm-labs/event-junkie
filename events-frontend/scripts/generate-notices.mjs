@@ -1,34 +1,23 @@
 #!/usr/bin/env node
 /**
- * Merges the backend and frontend dependency licence data into one `src/assets/notices.json`,
- * which `/legal/notices` renders. See docs/LEGAL.md §9.
+ * Merges the backend and frontend dependency licence data into `src/assets/notices.json`, which
+ * `/legal/notices` renders (docs/LEGAL.md §9).
  *
- * Run:
- *   scripts/notices-parity.sh                                  # from the repository root — runs both
+ * Run `scripts/notices-parity.sh` from the repository root, or the two halves in this order:
  *
- * or the two halves by hand, in this order:
+ * ./gradlew generateLicenseReport --no-configuration-cache   # from the repository root
+ * npm run generate:notices                                   # from events-frontend
  *
- *   ./gradlew generateLicenseReport --no-configuration-cache   # from the repository root
- *   npm run generate:notices                                   # from events-frontend
+ * This script merges whatever Gradle report is on disk and cannot tell whether it is current: on
+ * #1073 a month-old report produced 312 components where the answer was 368, and exited 0 (#1084).
+ * Gradle skips the task as UP-TO-DATE when the dependency set is unchanged, so the report's age
+ * proves nothing; the script says what it merged instead. Read that line.
  *
- * **This script merges whatever Gradle report is on disk and cannot tell whether it is current.**
- * Running the npm half alone with an old report writes a file that looks entirely correct and is
- * not — on #1073 a report from a month earlier produced 312 components where the answer was 368,
- * and exited 0 (#1084). There is a guard for a *missing* report and there can be no useful guard
- * for a stale one: Gradle skips the task as UP-TO-DATE when the dependency set is unchanged, so the
- * report's age is not evidence of anything. What this script does instead is **say what it merged**,
- * so a month-old backend half is visible in the output rather than silent. Read that line.
+ * The output is committed: the frontend is not a Gradle subproject, so its build must not invoke
+ * Gradle, the page works in `npm run dev`, and attribution changes show up in review.
  *
- * The output is **committed**. The frontend is not a Gradle subproject (see AGENTS.md), so its
- * build must not have to invoke Gradle; committing the merged file also means the page works in
- * `npm run dev` with nothing else run first, and changes to attribution show up in review as a
- * readable diff.
- *
- * SCOPE, stated honestly because the page says so too:
- * - Runtime/production dependencies only — build and test tooling never reaches a user.
- * - Records each component's name, version, licence and home page. It does **not** reproduce full
- *   licence texts or per-package NOTICE files; those ship with each package, and doing it properly
- *   is the ORT ("Stage 2") upgrade in §9.1.
+ * Scope: runtime dependencies only, with name, version, licence and home page. Full licence texts
+ * and per-package NOTICE files are the ORT ("Stage 2") upgrade in §9.1.
  */
 
 import { execFileSync } from 'node:child_process'
@@ -94,8 +83,8 @@ function readBackendComponents() {
   }
 
   return JSON.parse(raw).dependencies.map((dependency) => {
-    // A module can list several licences (dual licensing). Keep them all: which one we rely on is
-    // a legal choice, and silently picking the first would misattribute.
+    // A module can list several licences (dual licensing). Keep them all: which one we rely on is a
+    // legal choice, and picking the first would misattribute.
     const licences = (dependency.moduleLicenses ?? [])
       .map((entry) => entry.moduleLicense)
       .filter(Boolean)
@@ -112,41 +101,24 @@ function readBackendComponents() {
 }
 
 /**
- * Platform-specific optional binaries, which are installed only for the host that runs `npm ci`.
+ * Platform-specific optional binaries, installed only for the host that runs `npm ci`, excluded
+ * for determinism: `license-checker` walks the installed tree, so `@esbuild/darwin-arm64` on a Mac
+ * and `@esbuild/linux-x64` on CI would make a regenerate-and-diff check fail every run. None is
+ * shipped to a browser, so none needs attributing; `esbuild` itself stays listed.
  *
- * They must be excluded, and the reason is not tidiness — it is **determinism**. `license-checker`
- * walks the *installed* tree, so leaving them in makes the generated file depend on the machine
- * that generated it: `@esbuild/darwin-arm64` on a Mac, `@esbuild/linux-x64` on CI. That breaks this
- * script's own contract (unchanged dependencies produce an identical file) and, more importantly,
- * makes a "regenerate and fail on a non-empty diff" CI check impossible — it would fail every run
- * for a reason that has nothing to do with attribution.
- *
- * Dropping them is also the honest answer for a notices page: these are build-time binaries for one
- * CPU architecture. None of them is shipped to a browser, so none of them is distributed, so none
- * of them needs attributing here. The cross-platform package that pulls them in (`esbuild` itself)
- * stays listed.
- *
- * **The name pattern below is necessary and not sufficient**, which cost a day to find out. It
- * matches packages whose *name* carries a platform, like `@esbuild/darwin-arm64`. It cannot match
- * `fsevents` — a macOS-only native binding with an ordinary name, declaring its restriction in the
- * `os` field of its own package.json instead. So a Mac generated a file with one extra component
- * and CI rejected it, which is exactly the non-determinism this guard exists to prevent, arriving
- * through the door it did not cover. `excludedByOs` below closes that, using the field rather than
- * the name so the next such package needs no new pattern.
+ * The name pattern is necessary and not sufficient: `fsevents` is a macOS-only native binding
+ * with an ordinary name, declaring its restriction in the `os` field of its package.json, and a
+ * Mac generated a file with one extra component that CI rejected. `excludedByOs` below closes
+ * that by the field rather than the name.
  */
 const PLATFORM_SPECIFIC =
   /[-/](darwin|linux|win32|freebsd|openbsd|android|sunos)-(x64|arm64|arm|ia32|ppc64|ppc64le|s390x|riscv64|loong64)(-(gnu|musl|msvc|eabi|eabihf))?@/
 
 /**
- * True when a package declares an `os` that excludes the platform we deploy on.
- *
- * `linux` is not a preference here: both images are Linux, on amd64 and arm64, so a package npm
- * would refuse to install there cannot reach a user by any route. `cpu` is deliberately *not*
- * checked — we publish both architectures, so an arch-restricted package does ship on one of them.
- *
- * Reads the installed package.json via the `path` license-checker reports. A package that cannot be
- * read is kept: over-reporting a notice is a smaller error than dropping one, and this is a legal
- * document. See docs/LEGAL.md §9.
+ * True when a package declares an `os` that excludes the platform we deploy on. Both images are
+ * Linux on amd64 and arm64, so a package npm would refuse to install there cannot reach a user;
+ * `cpu` is not checked because an arch-restricted package does ship on one of them. A package
+ * that cannot be read is kept: over-reporting a notice is the smaller error in a legal document.
  */
 function excludedByOs(info) {
   if (!info?.path) return false
@@ -162,9 +134,8 @@ function excludedByOs(info) {
 }
 
 function readFrontendComponents() {
-  // `--production` drops devDependencies; `--excludePrivatePackages` drops this app itself.
-  // `--nopeer` stops the walk following `peerDependencies`: `vue-router` names `vite` as a peer
-  // and `vue` names `typescript`, which is how the build tool and the compiler and their trees
+  // `--production` drops devDependencies; `--excludePrivatePackages` drops this app itself;
+  // `--nopeer` stops the walk following `peerDependencies`, which is how `vite` and `typescript`
   // reached a page about what we distribute (#1112). check-licenses.mjs passes the same flags.
   const stdout = execFileSync(
     'npx',
@@ -202,8 +173,7 @@ const components = [...readBackendComponents(), ...readFrontendComponents()].sor
   a.name.localeCompare(b.name),
 )
 
-// Group by the licence label so the page shows each licence once with its components beneath.
-// A dual-licensed component appears under each of its licences — that is accurate, not a bug.
+// Group by licence label; a dual-licensed component appears under each of its licences.
 const groups = new Map()
 for (const component of components) {
   const licences = component.licenses.length > 0 ? component.licenses : ['Unknown']
@@ -219,8 +189,7 @@ for (const component of components) {
 }
 
 const notices = {
-  // Deliberately no `generatedAt`: a timestamp would make every regeneration a diff even when the
-  // dependency set is unchanged, which is noise in review and a false signal of movement.
+  // Deliberately no `generatedAt`: a timestamp makes every regeneration a diff.
   componentCount: components.length,
   licenses: [...groups.entries()]
     .map(([license, comps]) => ({
@@ -239,10 +208,8 @@ writeFileSync(OUTPUT, `${JSON.stringify(notices, null, 2)}\n`)
 const unknown = notices.licenses.find((group) => group.license === 'Unknown')
 const backendCount = components.filter((component) => component.ecosystem === 'backend').length
 
-// **Naming the Gradle report and its date is the point of this line**, not decoration. The backend
-// half comes from a file this script did not produce and cannot validate, so the one defence against
-// merging a stale one is showing which file was read and when it was written. A count that drops by
-// fifty is obvious here and invisible in the JSON.
+// Naming the Gradle report and its date is the point: the backend half comes from a file this
+// script cannot validate, and a count that drops by fifty is obvious here and invisible in the JSON.
 console.log(
   `Wrote ${OUTPUT}\n` +
     `  ${notices.componentCount} components (${backendCount} backend, ` +

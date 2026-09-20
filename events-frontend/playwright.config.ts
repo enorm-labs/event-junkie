@@ -1,58 +1,29 @@
 import process from 'node:process'
 import { defineConfig, devices } from '@playwright/test'
 
-/**
- * Read environment variables from file.
- * https://github.com/motdotla/dotenv
- */
-// require('dotenv').config();
-
-/**
- * See https://playwright.dev/docs/test-configuration.
- */
 export default defineConfig({
   testDir: './e2e',
-  /* Maximum time one test can run for. */
   timeout: 30 * 1000,
   expect: {
-    /**
-     * Maximum time expect() should wait for the condition to be met.
-     * For example in `await expect(locator).toHaveText();`
-     */
     timeout: 5000,
   },
-  /* Fail the build on CI if you accidentally left test.only in the source code. */
   forbidOnly: !!process.env.CI,
-  /* Retry on CI only */
   retries: process.env.CI ? 2 : 0,
   /**
-   * Two workers on CI: one browser per pair of the runner's four vCPUs.
-   *
-   * Nothing in the suite needs serialising — every data-driven test mocks the BFF through its own
-   * `page.route`, so two tests share nothing but the preview server. Measured on the runner, all
-   * 1,075 tests: 628s on one worker, 454s on four (with a flake), **334s on two**. Four
-   * oversubscribes the machine; two is the setting that wins there, whatever a laptop reports.
-   *
-   * A local run keeps Playwright's own default of half the cores.
+   * Two workers on CI, one browser per pair of the runner's four vCPUs. Nothing needs serialising
+   * (every data-driven test mocks the BFF through its own `page.route`), and measured on the runner
+   * over all 1,075 tests: 628s on one worker, 454s on four with a flake, 334s on two. A local run
+   * keeps Playwright's default of half the cores.
    */
   workers: process.env.CI ? 2 : undefined,
-  /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: 'html',
-  /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
-    /* Maximum time each action such as `click()` can take. Defaults to 0 (no limit). */
     actionTimeout: 0,
-    /* Base URL to use in actions like `await page.goto('/')`. */
     baseURL: process.env.CI ? 'http://localhost:4173' : 'http://localhost:5173',
-
-    /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'on-first-retry',
-
-    /* Only on CI systems run the tests headless */
     headless: !!process.env.CI,
   },
 
-  /* Configure projects for major browsers */
   projects: [
     {
       name: 'chromium',
@@ -73,7 +44,6 @@ export default defineConfig({
       },
     },
 
-    /* Test against mobile viewports. */
     {
       name: 'Mobile Chrome',
       use: {
@@ -86,31 +56,12 @@ export default defineConfig({
         ...devices['iPhone 12'],
       },
     },
-
-    /* Test against branded browsers. */
-    // {
-    //   name: 'Microsoft Edge',
-    //   use: {
-    //     channel: 'msedge',
-    //   },
-    // },
-    // {
-    //   name: 'Google Chrome',
-    //   use: {
-    //     channel: 'chrome',
-    //   },
-    // },
   ],
 
-  /* Folder for test artifacts such as screenshots, videos, traces, etc. */
-  // outputDir: 'test-results/',
-
-  /* Run your local dev server before starting the tests */
   webServer: {
     /**
-     * Use the dev server by default for faster feedback loop.
-     * Use the preview server on CI for more realistic testing.
-     * Playwright will re-use the local server if there is already a dev-server running.
+     * Dev server locally for the feedback loop, preview server on CI; an already running dev server
+     * is reused.
      */
     command: process.env.CI ? 'npm run preview' : 'npm run dev',
     port: process.env.CI ? 4173 : 5173,
