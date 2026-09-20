@@ -62,6 +62,10 @@ val RENATE_LIMITATIONS =
         AcceptedLimitation(LimitedAspect.EVENT_TYPE, "the club states no category; its `.cat-btn` names the spaces in use, not a kind of event"),
         AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "every night points at the programme page"),
         AcceptedLimitation(
+            LimitedAspect.START_TIME,
+            "the club prints a time for its GARDEN and GREEN rooms inside the floor heading and none for a CLUB-only night"
+        ),
+        AcceptedLimitation(
             LimitedAspect.PRICE,
             "the club sells through Resident Advisor and prints no figure; a night is flagged free only when its blurb says so"
         )

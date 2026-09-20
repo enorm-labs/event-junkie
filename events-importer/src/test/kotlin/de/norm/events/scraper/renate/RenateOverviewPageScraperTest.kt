@@ -52,7 +52,7 @@ class RenateOverviewPageScraperTest {
     @Test
     fun `extracts every event row, excluding the trailing blog post`() {
         // The page ends with a `.prog-row.blog-row` news item that carries no date.
-        events shouldHaveSize 13
+        events shouldHaveSize 14
     }
 
     @Test
@@ -88,7 +88,7 @@ class RenateOverviewPageScraperTest {
         // "Garten für alle!" is a <strong> heading on five nights, and the garden floor is spelled
         // GARDEN — so the German spelling must not open a stage.
         events.flatMap { it.artists }.map { it.stage }.distinct().forEach { stage ->
-            (stage in setOf("GARDEN", "GREEN", "BLACK", "RED", "SECRET", "TOP SECRET")) shouldBe true
+            (stage in setOf("GARDEN", "GREEN", "BLACK", "RED", "SECRET", "TOP SECRET", "CLUB")) shouldBe true
         }
     }
 
@@ -139,6 +139,30 @@ class RenateOverviewPageScraperTest {
     }
 
     @Test
+    fun `reads a bare line-up under a single space badge, and leaves prose under one alone`() {
+        // SENSUS names no floor: the CLUB badge is the stage and every line is a DJ (#1582).
+        val sensus = event(LocalDate.of(2026, 9, 18), "SENSUS")
+        sensus.artists.map { it.stage }.distinct() shouldContainExactly listOf("CLUB")
+        stageOf(sensus, "CLUB") shouldContainExactly
+            listOf(
+                "DJ Fuckoff",
+                "DJ Fucks Himself",
+                "P.Vanillaboy",
+                "Penglord",
+                "PAU",
+                "Perra Inmunda",
+                "FORTUNATA",
+                "DJ Buona Sara",
+                "Katta Lana",
+                "Brauer",
+                "Lenny Fuck",
+                "Josi Miller",
+                "Carl Hang",
+                "MC Chorizo y Gringo"
+            )
+    }
+
+    @Test
     fun `reads the birthday night's secret floor`() {
         val birthday = event(LocalDate.of(2026, 9, 11), "19 Years Renate")
         stageOf(birthday, "SECRET") shouldContainExactly listOf("Johnny Knüppel Takeover")
@@ -150,7 +174,7 @@ class RenateOverviewPageScraperTest {
     fun `infers the year from the weekday and keeps the listing chronological`() {
         events.map { it.eventDate } shouldBe events.map { it.eventDate }.sorted()
         events.first().eventDate shouldBe LocalDate.of(2026, 8, 1)
-        events.last().eventDate shouldBe LocalDate.of(2026, 9, 11)
+        events.last().eventDate shouldBe LocalDate.of(2026, 9, 18)
     }
 
     @Test
