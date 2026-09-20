@@ -103,9 +103,12 @@ jobs:
       ORG_GRADLE_PROJECT_warningsAsErrors: 'true'
 
     steps:
+      # The whole history and every tag, because the image label below reads the version from them
+      # (ADR-032).
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          fetch-depth: 0
           persist-credentials: false
 
       - name: Set up Java 25 (Temurin)
@@ -217,11 +220,11 @@ jobs:
         if: github.event_name == 'pull_request'
         run: ./gradlew :events-bff:bootJarLayers :events-importer:bootJarLayers --parallel
 
-      # `scripts/version.sh` is the single place that knows what version a commit is, and it derives
-      # everything from `gradle.properties` — what `bootBuildInfo` stamps into build-info.properties
-      # and serves at /actuator/info. Taking the number from anywhere else would let the image label
-      # and the running instance disagree. On a pull request this yields the same snapshot string
-      # release.yml would compute, so the label matches what merging would publish.
+      # `scripts/version.sh` is the single place that knows what version a commit is: the last
+      # release tag and the commits since it (ADR-032). On a pull request this yields the same
+      # snapshot string release.yml would compute, so the label matches what merging would publish.
+      # The jar itself carries the `0.0.0` placeholder here, because this build passes no
+      # `-Pversion`; release.yml does, and its image is the one that ships.
       - name: Read the project version
         id: version
         if: github.event_name == 'pull_request'

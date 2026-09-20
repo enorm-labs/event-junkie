@@ -182,14 +182,14 @@ helm plugin install https://github.com/helm-unittest/helm-unittest --version v1.
 `--verify=false` is a Helm 4 requirement — the local binary is v4 and refuses an unverifiable plugin source without it. CI pins Helm 3 and does not need the
 flag. Pin the same version CI pins (`HELM_UNITTEST_VERSION` in `.github/workflows/validate-chart.yml`).
 
-Also when the diff touches `scripts/version.sh`, `gradle.properties` or either `Chart.yaml` version field:
+Also when the diff touches `scripts/version.sh`:
 
 ```bash
-scripts/version.sh check        # the four files agree
-scripts/version-test.sh         # snapshot versions still ORDER
+scripts/version-deserved-test.sh   # the rule, and what compute names a commit, against fabricated histories
+scripts/version-test.sh            # snapshot versions still ORDER
 ```
 
-`version-test.sh` is the ordering gate, and it is a different question from `check` (#455). It resolves fabricated version sets through Helm's own Masterminds
+`version-test.sh` is the ordering gate, and it is a different question from the rule (#455). It resolves fabricated version sets through Helm's own Masterminds
 constraint solver and asserts the newest wins — because a snapshot version that parses, lints and publishes can still leave staging pinned to last week's chart,
 silently, which is exactly what happened.
 

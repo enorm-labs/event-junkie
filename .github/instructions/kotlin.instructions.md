@@ -12,12 +12,11 @@ paths:
 
 How code here is written, and where its versions and thresholds live. Comments have their own file, and so does Markdown.
 
-- **Application version**: lives in `version` in the root `gradle.properties` — the single source of truth. Gradle applies it to every project, so
-  `build.gradle.kts` must **not** assign `version` in its `subprojects` block; a leftover assignment silently wins while the build stays green.
-  `events-frontend/package.json` mirrors it **by hand**, deliberately without the `-SNAPSHOT` suffix (npm SemVer has no such convention), so the two files are
-  intentionally not byte-identical — both move in one commit. A release build overrides the version from the tag (`-Pversion=0.1.1`) rather than editing the
-  file. The version the site displays always comes from `GET /meta`, which is stamped from the build — never from `package.json`. See
-  [docs/LEGAL.md](../../docs/LEGAL.md) §4.
+- **Application version**: no file carries it (ADR-032). `scripts/version.sh compute` reads it from the release tags and the commits since the last one,
+  and every CI build passes it as `-Pversion=…`, which Gradle applies to every project. `version` in the root `gradle.properties` is a `0.0.0-SNAPSHOT`
+  placeholder, `events-frontend/package.json` holds `0.0.0`, and `build.gradle.kts` must **not** assign `version` in its `subprojects` block; a leftover
+  assignment silently wins over the flag while the build stays green. The version the site displays always comes from `GET /meta`, which is stamped from
+  the build — never from `package.json`. See [docs/LEGAL.md](../../docs/LEGAL.md) §4.
 - **Package structure**: `de.norm.events.<module-name>` — organize by feature/domain, not layer.
 - **Kotlin DSL** for all Gradle build scripts (`build.gradle.kts`).
 - **Kotlin 2.4.10** with **Spring Boot 4.1.0**; plugin versions pinned in `settings.gradle.kts` `pluginManagement`.

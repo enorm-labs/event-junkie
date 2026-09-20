@@ -1,20 +1,15 @@
 name: Cut release
 
-# Publish a GitHub Release from `gradle.properties`, then open the pull request that moves `main` on
-# to the next snapshot. This does not build anything: creating the release fires `release.yml`,
-# which is what produces the four artifacts (#868).
+# Publish a GitHub Release for the number the commits since the last one deserve. This does not
+# build anything: creating the release fires `release.yml`, which is what produces the four
+# artifacts (#868).
 #
-# **The version is never typed, and never chosen either.** It comes from `scripts/version.sh base`,
-# so the tag cannot claim a number the tree has not been bumped to. And the tree has to carry what
-# `scripts/version.sh deserved` reads off the Conventional Commits since the last release: a `feat`
-# earns a minor, a breaking change a major (a minor before 1.0.0), the rest a patch. A tree that
-# says less is not cut. The run opens the pull request that raises it, and stops. The same script
-# writes the four files either way, so a workflow and a person at a terminal edit them the same way.
-#
-# **The second step is the one that matters.** Until `main` carries the next snapshot, staging stops
-# following it: snapshots of the just-released version sort *below* the release, so the
-# `>=0.0.0-0` range keeps resolving the release itself and nothing reports it (#455). Doing both
-# halves in one run is the whole point.
+# **The version is never typed, and never chosen either.** No file in the tree carries it (ADR-032).
+# `scripts/version.sh deserved` reads it off the Conventional Commits since the last release: a
+# `feat` earns a minor, a breaking change a major (a minor before 1.0.0), the rest a patch. The tag
+# is that number, and `release.yml` computes the same number from the same commits when it builds
+# the tag, so the two cannot disagree. Nothing moves `main` afterwards: the next commit's snapshot
+# is named after the next patch by the same script, and a `feat` moves it to the minor on its own.
 #
 # **The notes open with a summary, written for a visitor to the site.** Claude, driven by this
 # repository's own `/release-highlights` prompt, reads the commits since the last tag and names the
@@ -22,8 +17,7 @@ name: Cut release
 # `.github/release.yml` groups everything into. Three sources, in order: the `highlights` input,
 # which is how the text a dry run printed is shipped unchanged; otherwise the model; otherwise
 # `scripts/release-highlights.sh`, which names the commits' subjects verbatim, so an outage at the
-# model delays no release. `.github/release.yml` also drops this project's own version bumps from
-# the notes, by author: they are bookkeeping, and there is one in every release cycle.
+# model delays no release.
 #
 # **The model step cannot be tried from a branch.** The action runs only a workflow file that is
 # byte-identical to the copy on `main`, and reports success when it is not (ci-cd.instructions.md
@@ -86,7 +80,7 @@ permissions:
 
 jobs:
   cut:
-    name: Cut the release and open the bump
+    name: Cut the release
     runs-on: ubuntu-latest
     # Ten before the model wrote the highlights; its step alone is allowed five.
     timeout-minutes: 20
@@ -100,20 +94,12 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
-      # The gate that makes everything after it safe. A tree whose four files disagree would publish
-      # a chart whose appVersion names image tags that were never built.
-      - name: Check that every file agrees about the version
-        run: scripts/version.sh check
-
-      # `raise` is the branch the rest of the run takes: the tree says less than the commits since
-      # the last release deserve, so there is no release to cut and a pull request to open instead.
-      # The reasoning goes to the summary either way, so a dry run answers "what would this be".
+      # The reasoning goes to the summary, so a dry run answers "what would this be".
       - name: Resolve the version
         id: version
         env:
           AT_LEAST: ${{ inputs.at_least }}
         run: |
-          base="$(scripts/version.sh base)"
           last="$(scripts/version.sh last)"
           if [ "$AT_LEAST" = auto ]; then
             deserved="$(scripts/version.sh deserved 2>"$RUNNER_TEMP/deserved.txt")"
@@ -127,29 +113,21 @@ jobs:
             cat "$RUNNER_TEMP/deserved.txt"
             echo '```'
           } >>"$GITHUB_STEP_SUMMARY"
-          raise=false
-          if [ "$base" != "$deserved" ]; then
-            raise=true
-            echo "::warning::The tree says $base-SNAPSHOT and the commits since v$last deserve $deserved. No release is cut from this run."
-          fi
           {
             echo "last=$last"
             echo "version=$deserved"
-            echo "raise=$raise"
-            echo "next=$(scripts/version.sh next patch)"
           } >>"$GITHUB_OUTPUT"
 
       # **Not `GITHUB_TOKEN`, and this is the whole design risk.** GitHub suppresses the events its
       # own token triggers, so a release created with it fires no `release: published` — `release.yml`
       # would never run, no images and no chart would be published, and every job here would report
-      # green. The same rule stops a pull request it opens from running any check, which would leave
-      # the bump unmergeable. A GitHub App installation token is a different identity, so both fire.
+      # green. A GitHub App installation token is a different identity, so the event fires.
       #
       # It is minted per run and expires in an hour. The App holds `contents: write` and
-      # `pull-requests: write` on this repository alone (docs/CREDENTIALS.md §2, #25).
-      # Minted on a dry run too, and deliberately: it creates nothing, and it is the only thing that
-      # proves the App can authenticate before a run that publishes. `generate-notes` below is the
-      # cheapest call that exercises it.
+      # `pull-requests: write` on this repository alone (docs/CREDENTIALS.md §2, #25); the token is
+      # narrowed to the one this job uses. Minted on a dry run too, and deliberately: it creates
+      # nothing, and it is the only thing that proves the App can authenticate before a run that
+      # publishes. `generate-notes` below is the cheapest call that exercises it.
       - name: Mint an App installation token
         id: app-token
         uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
@@ -159,11 +137,9 @@ jobs:
           # same field, and GitHub mints the JWT from either. The variable keeps the id it holds.
           client-id: ${{ vars.RELEASE_APP_ID }}
           private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
-          # Narrowed to the two the job uses. Without these the token inherits everything the
-          # installation holds, which today is the same two — and would silently widen the moment
-          # anybody granted the App a third.
+          # Narrowed to the one the job uses. Without it the token inherits everything the
+          # installation holds — and would silently widen the moment anybody granted the App more.
           permission-contents: write
-          permission-pull-requests: write
 
       - name: Refuse a tag that already exists
         env:
@@ -171,7 +147,7 @@ jobs:
           VERSION: ${{ steps.version.outputs.version }}
         run: |
           if gh release view "v$VERSION" >/dev/null 2>&1; then
-            echo "::error::v$VERSION is already released. Bump gradle.properties first."
+            echo "::error::v$VERSION is already released, and the commits since it deserve nothing new."
             exit 1
           fi
           echo "v$VERSION is free"
@@ -180,7 +156,6 @@ jobs:
       # nothing about a base image that moved since. No run at all is refused too — the publish
       # takes minutes, and a cut in that window would race it.
       - name: Refuse a commit whose snapshot publish is not green
-        if: ${{ steps.version.outputs.raise != 'true' }}
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -203,7 +178,7 @@ jobs:
 
       # The few changes worth naming, above the buckets `.github/release.yml` groups everything into,
       # in the words of a visitor to the site. Skipped when the operator pasted them in. Written
-      # outside the working tree, like the notes below, so it cannot be swept into the bump commit.
+      # outside the working tree, like the notes below.
       #
       # `continue-on-error`, because the release must not wait on the model: the step below falls
       # back to the script. `--allowedTools` is load-bearing, as in every agent workload — the prompt
@@ -211,7 +186,7 @@ jobs:
       # `github_token`, for the reason agent-security.yml records. `display_report` puts the agent's
       # final message in the job summary, which is where its reason for writing nothing would be.
       - name: Ask the model for the highlights
-        if: ${{ steps.version.outputs.raise != 'true' && inputs.highlights == '' }}
+        if: ${{ inputs.highlights == '' }}
         id: claude
         continue-on-error: true
         timeout-minutes: 5
@@ -230,7 +205,6 @@ jobs:
       # so the file is what is checked, not the outcome: a file that opens with the heading is the
       # model's answer, anything else is the script's turn.
       - name: Settle the highlights
-        if: ${{ steps.version.outputs.raise != 'true' }}
         id: highlights
         env:
           HIGHLIGHTS: ${{ inputs.highlights }}
@@ -269,7 +243,7 @@ jobs:
       # **It needs the App token, not `github.token`.** The endpoint is a POST and asks for
       # `contents: write`, which this workflow does not grant its own token and should not.
       - name: Preview the release notes
-        if: ${{ inputs.dry_run && steps.version.outputs.raise != 'true' }}
+        if: ${{ inputs.dry_run }}
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
           VERSION: ${{ steps.version.outputs.version }}
@@ -284,11 +258,10 @@ jobs:
               -f tag_name="v$VERSION" -f target_commitish=main --jq .body
           } >>"$GITHUB_STEP_SUMMARY"
 
-      # Written outside the working tree, so it cannot be swept into the bump commit below. The
-      # summary comes first, then the dispatch's own paragraph, then the generated categories —
+      # The summary comes first, then the dispatch's own paragraph, then the generated categories —
       # `--notes-file` is prepended to what `--generate-notes` produces.
       - name: Create the release
-        if: ${{ !inputs.dry_run && steps.version.outputs.raise != 'true' }}
+        if: ${{ !inputs.dry_run }}
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
           VERSION: ${{ steps.version.outputs.version }}
@@ -312,77 +285,16 @@ jobs:
             gh release create "v$VERSION" --target main --generate-notes
           fi
 
-      # One step for the two pull requests this run can open, which differ only in the number and
-      # the sentence. After a release, `main` moves to the next patch snapshot. On `raise`, it moves
-      # to the number the commits deserve, and the release is cut on the next dispatch.
-      #
-      # A branch, not a push to main: main is protected, and the bump has to run the checks like any
-      # other change.
-      #
-      # The committer is the App's own bot account, and the address needs that account's numeric id
-      # rather than the App id — the two differ, and a wrong one leaves the commit attributed to
-      # nobody. `gh api` is the only place the id is available.
-      - name: Open the version pull request
-        if: ${{ !inputs.dry_run }}
-        env:
-          GH_TOKEN: ${{ steps.app-token.outputs.token }}
-          SLUG: ${{ steps.app-token.outputs.app-slug }}
-          RAISE: ${{ steps.version.outputs.raise }}
-          LAST: ${{ steps.version.outputs.last }}
-          VERSION: ${{ steps.version.outputs.version }}
-          NEXT: ${{ steps.version.outputs.next }}
-        run: |
-          if [ "$RAISE" = true ]; then
-            target="$VERSION"
-            title="chore(release): raise the coming release to $target-SNAPSHOT"
-            cat >"$RUNNER_TEMP/pr-body.md" <<BODY
-          The commits since v$LAST deserve $target (docs/ops/RELEASING.md § What a release deserves),
-          and the tree says less. Merge this, wait for the snapshot publish, and dispatch
-          \`cut-release.yml\` again.
-
-          $(sed 's/^/    /' "$RUNNER_TEMP/deserved.txt")
-
-          Opened by \`cut-release.yml\`.
-          BODY
-          else
-            target="$NEXT"
-            title="chore(release): open the next development version at $target-SNAPSHOT"
-            cat >"$RUNNER_TEMP/pr-body.md" <<BODY
-          v$VERSION is published, so \`main\` moves on to the next number. All four files together,
-          because \`scripts/version.sh check\` accepts nothing else.
-
-          Opened by \`cut-release.yml\` (#868).
-          BODY
-          fi
-
-          branch="chore/version-${target//./-}-snapshot"
-          bot_id="$(gh api "/users/${SLUG}[bot]" --jq .id)"
-          git config user.name "${SLUG}[bot]"
-          git config user.email "${bot_id}+${SLUG}[bot]@users.noreply.github.com"
-
-          git switch -c "$branch"
-          scripts/version.sh set "$target"
-          git commit -am "$title"
-          # Pushed to an explicit URL rather than through the remote, so the token is never written
-          # into `.git/config` — the same reason every checkout here sets `persist-credentials: false`.
-          git push "https://x-access-token:$GH_TOKEN@github.com/$GITHUB_REPOSITORY.git" "$branch"
-
-          gh pr create --base main --head "$branch" --title "$title" --body-file "$RUNNER_TEMP/pr-body.md"
-
       - name: Summary
         env:
           LAST: ${{ steps.version.outputs.last }}
           VERSION: ${{ steps.version.outputs.version }}
-          NEXT: ${{ steps.version.outputs.next }}
-          RAISE: ${{ steps.version.outputs.raise }}
           AT_LEAST: ${{ inputs.at_least }}
           DRY_RUN: ${{ inputs.dry_run }}
           HIGHLIGHTS_SOURCE: ${{ steps.highlights.outputs.source }}
         run: |
           {
-            if [ "$RAISE" = true ]; then
-              echo "### Not cut — the tree has to be raised to $VERSION first"
-            elif [ "$DRY_RUN" = "true" ]; then
+            if [ "$DRY_RUN" = "true" ]; then
               echo "### Dry run — nothing was created"
             else
               echo "### Cut v$VERSION"
@@ -392,22 +304,6 @@ jobs:
             echo "| --- | --- |"
             echo "| Last release | \`v$LAST\` |"
             echo "| Deserves | \`$VERSION\` (at least: $AT_LEAST) |"
-            if [ "$RAISE" = true ]; then
-              echo "| Next | merge the raise pull request, wait for the snapshot publish, dispatch again |"
-            else
-              echo "| Release | \`v$VERSION\` |"
-              echo "| Highlights | from $HIGHLIGHTS_SOURCE |"
-              echo "| Bump | \`$NEXT-SNAPSHOT\` |"
-            fi
+            echo "| Release | \`v$VERSION\` |"
+            echo "| Highlights | from $HIGHLIGHTS_SOURCE |"
           } >>"$GITHUB_STEP_SUMMARY"
-
-      # Red, because a release was asked for and none was cut. Last, so the summary and the pull
-      # request exist before the run says why it stopped.
-      - name: Stop when the tree says less than the commits deserve
-        if: ${{ steps.version.outputs.raise == 'true' }}
-        env:
-          LAST: ${{ steps.version.outputs.last }}
-          VERSION: ${{ steps.version.outputs.version }}
-        run: |
-          echo "::error::The commits since v$LAST deserve $VERSION and the tree says less. Merge the raise pull request, then dispatch again."
-          exit 1

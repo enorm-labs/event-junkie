@@ -94,20 +94,17 @@ jobs:
     timeout-minutes: 10
 
     steps:
+      # The whole history and every tag, because `version-test.sh` below computes real snapshot
+      # versions from them (ADR-032); a shallow clone would compute `0.0.0-local`.
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          fetch-depth: 0
           persist-credentials: false
 
-      # First, because it is the cheapest gate here and the one whose failure invalidates the rest:
-      # a chart whose `appVersion` disagrees with `gradle.properties` renders and lints perfectly
-      # while naming image tags the release build will never produce (#264).
-      - name: Check the version is consistent across all four files
-        run: scripts/version.sh check
-
-      # The same shape of question as the step above, about a different number in four files.
-      # `security.runAsUser` carries the comment "must match the UID the images actually run as", and
-      # a comment is not a gate: nothing compared it with the `USER` line in the three Dockerfiles.
+      # A number written in four files, and a comment is not a gate: `security.runAsUser` carries
+      # "must match the UID the images actually run as", and nothing compared it with the `USER`
+      # line in the three Dockerfiles.
       # The `helm unittest` suite asserts the chart renders a specific number, which catches the
       # chart drifting from itself and cannot see a Dockerfile at all. A mismatch does not look like
       # a values problem: the pod starts, the UID being non-root either way, and then the JVM cannot

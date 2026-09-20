@@ -299,10 +299,10 @@ must not acquire one to gain a wildcard certificate.
 
 ## Never hand-edit the chart version, and never pin an image tag
 
-`Chart.yaml`'s `version` and `appVersion` are **placeholders**. `.github/workflows/release.yml` computes one number from `gradle.properties` and stamps it into
-both before packaging, so bumping them by hand does not decide what gets published — it only creates drift, and `scripts/version.sh check` fails the build when
-it does. Both must equal the base version `gradle.properties` declares (`0.3.1-SNAPSHOT` → `0.3.1`). If a change genuinely needs a new version, the bump belongs
-in `gradle.properties`, `events-frontend/package.json` and both chart fields together.
+`Chart.yaml`'s `version` and `appVersion` are **placeholders**, both `0.0.0`. `.github/workflows/release.yml` computes one number from the release tags and the
+commits since the last one (ADR-032) and stamps it into both before packaging, so bumping them by hand decides nothing about what gets published. A local
+`helm install` from a checkout installs `0.0.0`, which is the honest number for an unstamped chart. No change needs a new version written anywhere: a `feat`
+in a product scope earns the minor by itself.
 
 **And no published values file may set `<component>.image.tag`.** The default `""` falls back to `.Chart.AppVersion`, and that fallback is the whole mechanism
 keeping the chart and the images in step (#264). Pinning a tag opts one component out of it, and the render looks _more_ correct afterwards, not less — every

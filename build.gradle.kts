@@ -96,10 +96,10 @@ val warningsAsErrors: Provider<Boolean> =
 
 subprojects {
     group = "de.norm"
-    // `version` is deliberately NOT assigned here: it comes from `version` in gradle.properties,
-    // which Gradle applies to every project. Re-adding an assignment would silently override that
-    // single source of truth, and the build would stay green while the footer showed a stale
-    // number. See docs/LEGAL.md §4.2.
+    // `version` is deliberately NOT assigned here: CI passes it as `-Pversion=…`, computed by
+    // `scripts/version.sh` from the release tags (ADR-032), and Gradle applies it to every project.
+    // Re-adding an assignment would silently override the flag, and the build would stay green
+    // while the footer showed a stale number. See docs/LEGAL.md §4.2.
 
     apply(plugin = "org.jlleitschuh.gradle.ktlint") // Version should be inherited from parent
     apply(plugin = "dev.detekt")

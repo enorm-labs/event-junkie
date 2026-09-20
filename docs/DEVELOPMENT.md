@@ -44,7 +44,7 @@ scripts/format-markdown.sh                # any .md change
 | [Quality checks](#quality-checks)                                                 | ktlint, detekt, Kover, Markdown, OWASP  |
 | [Infrastructure (OpenTofu)](#infrastructure-opentofu) · [Helm chart](#helm-chart) | The safe commands, and the gates        |
 | [Container images](#container-images) · [k3d](#running-the-whole-stack-on-k3d)    | Building and running the stack locally  |
-| [Versions and cutting a release](#versions-and-cutting-a-release)                 | One number, four files                  |
+| [Versions and cutting a release](#versions-and-cutting-a-release)                 | One number, read from the tags          |
 | [Performance tests](#performance-tests) · [Dependencies](#dependencies)           | k6, and keeping things current          |
 
 ## Prerequisites
@@ -98,18 +98,17 @@ gitleaks detect --source . --verbose      # the entire history (needs: brew inst
 The other hooks are all `local`. They use the `tofu`, `shellcheck` and `helm` already on your machine, or a script from this
 repository. Third-party hook repositories would each need their own pinning.
 
-| Hook                  | Runs on                                                                                                                      |
-| --------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| `tofu-fmt`            | any `.tf` / `.tfvars` file. It rewrites in place, so a failure means "re-stage and commit again", not "go and fix something" |
-| `shellcheck-scripts`  | any `.sh` under `infra/` or `scripts/`                                                                                       |
-| `version-consistency` | any of the four files that carry the version; `scripts/version.sh check`                                                     |
-| `skill-parity`        | anything under `.claude/skills/`, `.claude/commands/`, `.github/prompts/`, or `AGENTS.md`                                    |
-| `rules-parity`        | anything under `.claude/rules/`, `.github/instructions/`, or `AGENTS.md`                                                     |
-| `index-parity`        | anything under `scripts/`. The index in `scripts/README.md`, and every script's `--help`                                     |
-| `ruff-check`          | any `.py` file, with the root `ruff.toml`. The `ruff` on your `$PATH`; `validate-python.yml` pins the one that decides       |
-| `ruff-format`         | any `.py` file. Rewrites in place, like `format-markdown`                                                                    |
-| `format-markdown`     | any `.md` file. Also rewrites in place, so the same "re-stage and commit again" applies                                      |
-| `helm-lint`           | anything under `deploy/charts/`. Lints the chart directory, so it takes no filenames                                         |
+| Hook                 | Runs on                                                                                                                      |
+| -------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `tofu-fmt`           | any `.tf` / `.tfvars` file. It rewrites in place, so a failure means "re-stage and commit again", not "go and fix something" |
+| `shellcheck-scripts` | any `.sh` under `infra/` or `scripts/`                                                                                       |
+| `skill-parity`       | anything under `.claude/skills/`, `.claude/commands/`, `.github/prompts/`, or `AGENTS.md`                                    |
+| `rules-parity`       | anything under `.claude/rules/`, `.github/instructions/`, or `AGENTS.md`                                                     |
+| `index-parity`       | anything under `scripts/`. The index in `scripts/README.md`, and every script's `--help`                                     |
+| `ruff-check`         | any `.py` file, with the root `ruff.toml`. The `ruff` on your `$PATH`; `validate-python.yml` pins the one that decides       |
+| `ruff-format`        | any `.py` file. Rewrites in place, like `format-markdown`                                                                    |
+| `format-markdown`    | any `.md` file. Also rewrites in place, so the same "re-stage and commit again" applies                                      |
+| `helm-lint`          | anything under `deploy/charts/`. Lints the chart directory, so it takes no filenames                                         |
 
 All of them are also CI's job, in `validate-infra.yml`, `validate-chart.yml`, `validate-scripts.yml`, `validate-python.yml`
 and `validate-docs.yml`. The hooks move the deterministic half of that feedback before the push. Without the tools
@@ -602,25 +601,34 @@ values file.
 > The **end-to-end** picture — build, scan, publish, and how Flux reconciles it onto a cluster, with a diagram — is [RELEASING.md](ops/RELEASING.md). This section is
 > the version scheme and the local commands.
 
-**One number reaches four artifacts, and only one file decides it.** [`gradle.properties`](../gradle.properties)
-carries `version=X.Y.Z-SNAPSHOT`, and everything else derives from it. Three other files repeat the number, and none
-is authoritative:
+**One number reaches four artifacts, and no file decides it** ([ADR-032](adr/ADR-032_VERSION_FROM_TAGS.md)). A commit's
+version is read from the history: the newest release tag reachable from it, and the Conventional Commits since that
+tag. The rule is [RELEASING.md § What a release deserves](ops/RELEASING.md#what-a-release-deserves). Three files
+still name a version, and each one is a placeholder the build stamps over:
 
-| File                           | Holds            | Why it is not the source                                                       |
-| ------------------------------ | ---------------- | ------------------------------------------------------------------------------ |
-| `gradle.properties`            | `0.3.1-SNAPSHOT` | **The source of truth.** `bootBuildInfo` stamps it, `/actuator/info` serves it |
-| `events-frontend/package.json` | `0.3.1`          | npm has no `-SNAPSHOT` convention, so it mirrors the bare number               |
-| `Chart.yaml` `version`         | `0.3.1`          | A placeholder — the release workflow stamps the computed version over it       |
-| `Chart.yaml` `appVersion`      | `0.3.1`          | The same placeholder, and also the default image tag for all three components  |
+| File                           | Holds            | Why it is a placeholder                                                          |
+| ------------------------------ | ---------------- | -------------------------------------------------------------------------------- |
+| `gradle.properties`            | `0.0.0-SNAPSHOT` | CI passes `-Pversion=…`; `bootBuildInfo` stamps that, `/actuator/info` serves it |
+| `events-frontend/package.json` | `0.0.0`          | The site reads its version from `GET /meta`, never from this file (LEGAL.md §4)  |
+| `Chart.yaml` `version`         | `0.0.0`          | `release.yml` stamps the computed version over it before packaging               |
+| `Chart.yaml` `appVersion`      | `0.0.0`          | The same placeholder, and the default image tag for all three components         |
+
+A local build shows `0.0.0`, and a `helm install` from a checkout installs `0.0.0`. That is the honest number for an
+unstamped artifact, and nothing in the deploy path consumes one.
 
 [`scripts/version.sh`](../scripts/version.sh) is the only thing that knows the rules, so CI and a laptop always agree:
 
 ```bash
-scripts/version.sh base       # 0.3.1 — the released number this tree is heading for
+scripts/version.sh last       # 0.3.0 — the newest release tag reachable from HEAD
+scripts/version.sh base       # 0.3.1 — the number the commits since it earn (a patch when nothing landed)
 scripts/version.sh compute    # 0.3.1-snapshot.20260814122042.g33fd32g on a branch; 0.3.1 from the tag v0.3.1
-scripts/version.sh check      # fails if the four files disagree — also a pre-commit hook
+scripts/version.sh deserved   # 0.4.0, with the commits that decided it on stderr; refuses a tree with nothing to release
 scripts/version-test.sh       # fails if snapshot versions stop ordering — needs helm
+scripts/version-deserved-test.sh   # asserts the rule, and what compute names a commit, against fabricated histories
 ```
+
+**Every build that computes a version needs the tags.** `release.yml`, `build-backend.yml` and `build-frontend.yml` check
+out with `fetch-depth: 0`. A clone with no release tag in reach builds as `0.0.0-local`.
 
 **Snapshots are prereleases _of the coming release_, not of the last one.** SemVer sorts
 `0.3.1-snapshot.20260814122042.g33fd32g` _before_ `0.3.1`. Naming a snapshot after the released version would have it
@@ -690,38 +698,30 @@ gh workflow run cut-release.yml -f dry_run=true
 gh workflow run cut-release.yml -f dry_run=false -f highlights="$(cat highlights.md)"
 ```
 
-[`cut-release.yml`](../.github/workflows/cut-release.yml) reads the version from `gradle.properties`. It does both
-halves. First it publishes the release. Then it opens the pull request that moves `main` to the next snapshot. **The
-version is never typed**, so the tag cannot claim a number the tree does not carry. **And it is never chosen.** The
-tree has to carry what the commits since the last release deserve. The rule is in
-[RELEASING.md § What a release deserves](ops/RELEASING.md#what-a-release-deserves). A tree that says less is not cut.
-The run opens the pull request that raises it, and stops.
+[`cut-release.yml`](../.github/workflows/cut-release.yml) reads the version from the commits and publishes the release.
+**The version is never typed.** `release.yml` computes the same number from the same commits when it builds the tag,
+and refuses a tag that claims another one. **And it is never chosen.** The rule is in
+[RELEASING.md § What a release deserves](ops/RELEASING.md#what-a-release-deserves), and `at_least=major` on the
+dispatch is how `1.0.0` is cut.
 
-The second half is the one that matters, and it was the step a person could skip without noticing. Until `main` carries
-the next snapshot, staging stops following it. Snapshots of the just-released version sort _below_ the release, so the
-`>=0.0.0-0` range keeps resolving the release itself, and nothing reports it
-([#455](https://github.com/enorm-labs/event-junkie/issues/455)).
-
-The bump after a release is always a patch, because it assumes least. A snapshot is a prerelease of the coming release,
-and right after a release nobody knows what the next one holds. The tree is raised later, when a `feat` or a breaking
-change lands, and `at_least=major` on the dispatch is how `1.0.0` is cut.
+Nothing moves `main` after a cut. The next commit's snapshot is named after the next patch by the same script, and a
+`feat` moves it to the minor on its own. So staging follows `main` again the moment something merges, and the number
+in `helm list` on staging moves without a release. That is expected.
 
 By hand, if the workflow is unavailable:
 
 ```bash
-scripts/version.sh check
-scripts/version.sh deserved        # must print what `scripts/version.sh base` prints, or raise the tree first
+scripts/version.sh deserved        # 0.3.1, and the commits that decided it
 gh release create v0.3.1 --target main --generate-notes
-scripts/version.sh bump patch      # writes all four files; commit them on a branch
 ```
 
 A release version is **never committed** — `release.yml` passes `-Pversion=` from the tag, so the tag and the built artifacts cannot disagree. Tagging `v0.4.0`
-on a tree that still says `0.3.1-SNAPSHOT` fails immediately in `scripts/version.sh compute`, before anything is built.
+on commits that deserve `0.3.1` fails immediately in `scripts/version.sh compute`, before anything is built.
 
 Triggering on `published` rather than on the tag has two consequences. A **draft** release creates no tag and
 publishes nothing until you publish it, which makes drafting notes safe. And a release cut from a tag that already
 exists still triggers, which a tag-push trigger would not. **Pre-releases are not supported** by the version scheme.
-`v0.1.0-rc1` fails the match against `gradle.properties`, and snapshots already fill that role.
+`v0.1.0-rc1` is not a release tag to `scripts/version.sh`, and snapshots already fill that role.
 
 **`latest` is publish-only.** It is a human pointer at the newest release, and nothing in the deploy path may consume
 it. With `imagePullPolicy: IfNotPresent`, a mutable tag lets two nodes run different code and neither is wrong. The

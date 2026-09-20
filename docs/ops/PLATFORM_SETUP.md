@@ -368,8 +368,8 @@ Five decisions in it are worth not re-deriving:
 
 **Images are multi-arch**: same chart, same tags, digests per platform. That is what keeps the door open to ARM whenever it becomes buyable again (§10).
 
-The versioning scheme — one number derived from `gradle.properties`, snapshots as prereleases _of the coming release_, `latest` published but never consumed —
-is in [DEVELOPMENT.md](../DEVELOPMENT.md#versions-and-cutting-a-release).
+The versioning scheme is in [DEVELOPMENT.md](../DEVELOPMENT.md#versions-and-cutting-a-release). One number is read from the release tags and the commits
+(ADR-032). Snapshots are prereleases _of the coming release_, and `latest` is published but never consumed.
 
 ---
 

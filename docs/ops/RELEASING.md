@@ -17,7 +17,7 @@ flux --context event-junkie-staging get helmreleases -A          # did it land?
 flux --context event-junkie-staging reconcile helmrelease event-junkie -n flux-system --with-source   # impatient
 gh api repos/enorm-labs/event-junkie/deployments --jq '.[0] | {environment, ref, created_at}'         # what GitHub thinks
 
-# Cut a release: one dispatch. It publishes the release and opens the bump PR.
+# Cut a release: one dispatch. It publishes the release; nothing in the tree moves (ADR-032).
 scripts/version.sh deserved                                                # what the commits since the last tag earn
 gh run list --workflow=release.yml --branch main --limit 1                 # green? the cut refuses a red one
 gh workflow run cut-release.yml -f dry_run=false
@@ -109,9 +109,8 @@ Publishing is decided by an **allowlist** (`push`, `release`, or a dispatch that
 keeps the Releases page the single record of what shipped.
 
 **[`cut-release.yml`](../../.github/workflows/cut-release.yml) is what publishes that release**, on a `workflow_dispatch` with `dry_run` on by default. It reads
-the version from `gradle.properties`, checks it against what the commits deserve (§What a release deserves), and refuses a tag that already exists. Then it
-creates the release, and opens the pull request that moves `main` to the next snapshot. Both halves in one run, because the second is the one a person skips
-without noticing (#868).
+the version from the commits (§What a release deserves), refuses a tag that already exists, and creates the release. Nothing in the tree carries the version
+([ADR-032](../adr/ADR-032_VERSION_FROM_TAGS.md)), so no pull request follows. The next commit's snapshot is named after the next number by the same script.
 
 **The notes open with a summary, written for a visitor to the site.** Claude writes it, driven by
 [`/release-highlights`](../../.github/prompts/release-highlights.prompt.md). It reads the Conventional Commits since the last release and keeps the ones
@@ -131,23 +130,22 @@ scripts/release-highlights.sh            # the fallback, since the last release 
 scripts/release-highlights.sh v0.13.0    # since a named tag
 ```
 
-**The App's own version bumps are not in the notes.** They are excluded by author in `.github/release.yml`, because there is one in every release cycle and it
-is bookkeeping.
-
 **It cannot use `GITHUB_TOKEN`.** GitHub suppresses the events its own token raises. A release created with it fires no `release: published`, so `release.yml`
-never runs, nothing reaches GHCR, and every job reports green. The same rule leaves a pull request it opens with no checks, so the bump could never merge. The
-workflow mints a GitHub App installation token instead, narrowed to `contents: write` and `pull requests: write` and valid for an hour
-([CREDENTIALS.md](../CREDENTIALS.md) §2, #25).
+never runs, nothing reaches GHCR, and every job reports green. The workflow mints a GitHub App installation token instead, narrowed to `contents: write` and
+valid for an hour ([CREDENTIALS.md](../CREDENTIALS.md) §2, #25).
 
 ## One version, four artifacts
 
-`gradle.properties` is the source of truth. Everything derives from it via [`scripts/version.sh`](../../scripts/version.sh).
+No file carries the version ([ADR-032](../adr/ADR-032_VERSION_FROM_TAGS.md)). [`scripts/version.sh`](../../scripts/version.sh) reads it from the newest
+release tag reachable from the commit and the Conventional Commits since it. Every build stamps that number over the `0.0.0` placeholders in
+`gradle.properties`, `package.json` and `Chart.yaml`.
 
 ```
-gradle.properties  0.3.1-SNAPSHOT
+tags + commits since v0.3.0
         │
         └── scripts/version.sh compute ──► 0.3.1-snapshot.20260814122042.gdf18a02
                      │
+                     ├── ./gradlew -Pversion=0.3.1-snapshot.… ──► build-info.properties, GET /meta
                      ├── docker build -t ghcr.io/…/bff:0.3.1-snapshot.20260814122042.gdf18a02
                      ├── docker build -t ghcr.io/…/importer:…
                      ├── docker build -t ghcr.io/…/frontend:…
@@ -266,22 +264,19 @@ nothing.
 ```bash
 scripts/version.sh deserved                                      # 0.4.0, with the commits that decided it on stderr
 gh workflow run cut-release.yml -f dry_run=true                  # resolves the version and previews the notes
-gh workflow run cut-release.yml -f dry_run=false                 # publishes, then opens the bump PR
+gh workflow run cut-release.yml -f dry_run=false                 # publishes; nothing in the tree moves
 gh workflow run cut-release.yml -f dry_run=false -f at_least=major   # the 1.0.0 release, once
 ```
 
-The workflow refuses four things. The four version files disagree. The tree says less than the commits deserve. The tag already exists. The commit's snapshot
-publish on `main` is not green. The last one is the release gate seen early. A release rebuilds what the snapshot built, so it fails the same way. It then
-leaves a tag with nothing behind it. The by-hand fallback and the reasoning are in
-[DEVELOPMENT.md § Cutting a release](../DEVELOPMENT.md#cutting-a-release).
+The workflow refuses three things. Nothing landed since the last release. The tag already exists. The commit's snapshot publish on `main` is not green.
+The last one is the release gate seen early. A release rebuilds what the snapshot built, so it fails the same way. It then leaves a tag with nothing
+behind it. The by-hand fallback and the reasoning are in [DEVELOPMENT.md § Cutting a release](../DEVELOPMENT.md#cutting-a-release).
 
-**The second refusal is the usual one, and the run does the work for you.** After a release, `main` moves to the next patch snapshot, because nothing is known
-about the next release yet. When a `feat` lands during the cycle the tree says `0.3.13-SNAPSHOT` and the commits deserve `0.4.0`. The run then opens the
-pull request that raises the four files and ends red. The commits that decided it are in the summary and in the pull request. Merge it, wait for its
-snapshot publish, and dispatch again. A dry run reports the same verdict and opens nothing.
+**Nothing moves `main` after a cut.** The next commit publishes as the next patch snapshot, and a `feat` during the cycle moves the snapshot number to
+the minor on its own. `helm list` on staging shows `0.3.13-snapshot.…` become `0.4.0-snapshot.…` without a release. That is expected.
 
-A release version is **never committed**: `release.yml` passes `-Pversion=` from the tag, so the tag and the artifacts cannot disagree. Tagging `v0.4.0` on a tree
-that says `0.3.1-SNAPSHOT` fails before anything is built.
+A release version is **never committed**: `release.yml` passes `-Pversion=` from the tag, so the tag and the artifacts cannot disagree. Tagging `v0.4.0` on
+commits that deserve `0.3.13` fails before anything is built.
 
 ## Rehearsing the whole thing locally
 

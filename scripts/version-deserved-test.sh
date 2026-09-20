@@ -195,6 +195,54 @@ git -C "$repo" init -q -b main
 git -C "$repo" -c user.name=t -c user.email=t@example.invalid -c commit.gpgsign=false commit -q --allow-empty -m "fix: untagged"
 assert_refuses "a history with no release tag is refused" "$repo" "no release tag"
 
+# --- What compute names a commit, without a file to read ------------------------------------------
+
+compute() {
+  local dir="$1"
+  shift
+  VERSION_GIT_ROOT="$dir" "$VERSION_SH" compute "$@" 2>/dev/null
+}
+
+assert_compute() {
+  local description="$1" expected="$2" dir="$3"
+  shift 3
+  local actual
+  if ! actual="$(compute "$dir" "$@")"; then
+    fail "$description" "compute failed instead of printing $expected"
+    return
+  fi
+  if [[ "$actual" == "$expected" ]]; then
+    pass "$description"
+  else
+    fail "$description" "expected: $expected
+actual:   $actual"
+  fi
+}
+
+printf '\n'
+repo="$(fresh_repo v0.3.12)"
+assert_compute "at the tagged commit a snapshot is named after the next patch" \
+  0.3.13-snapshot.20260814120000.gabc1234 "$repo" refs/heads/main abc1234cafe 20260814120000
+assert_compute "the tag on HEAD computes its own number" 0.3.12 "$repo" refs/tags/v0.3.12 abc1234cafe
+commit "$repo" "fix: one fix"
+assert_compute "a fix after the tag is a patch snapshot" \
+  0.3.13-snapshot.20260814120000.gabc1234 "$repo" refs/heads/main abc1234cafe 20260814120000
+commit "$repo" "feat(events): one feature"
+assert_compute "a product feat moves the snapshot to the minor, with no file to raise" \
+  0.4.0-snapshot.20260814120000.gabc1234 "$repo" refs/heads/main abc1234cafe 20260814120000
+git -C "$repo" tag v0.4.0
+assert_compute "the tag cut from those commits computes the bare number" 0.4.0 "$repo" refs/tags/v0.4.0 abc1234cafe
+if output="$(compute "$repo" refs/tags/v0.4.1 abc1234cafe 2>&1)"; then
+  fail "a tag that claims another number must be refused" "printed '$output'"
+else
+  pass "a tag that claims another number is refused"
+fi
+
+repo="$(mktemp -d "$WORK/repo.XXXXXX")"
+git -C "$repo" init -q -b main
+git -C "$repo" -c user.name=t -c user.email=t@example.invalid -c commit.gpgsign=false commit -q --allow-empty -m "fix: untagged"
+assert_compute "a history with no release tag builds as 0.0.0-local" 0.0.0-local "$repo" refs/heads/main abc1234cafe 20260814120000
+
 # ---------------------------------------------------------------------------------------------------
 
 if ((failures != 0)); then

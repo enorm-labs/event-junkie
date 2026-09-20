@@ -176,7 +176,7 @@ tests:
     asserts:
       # No version number in the pattern: it asserts the `.Chart.AppVersion` fallback produced a
       # SemVer tag, which is what breaks if a published values file ever pins `image.tag`. The
-      # number itself is `scripts/version.sh check`'s business.
+      # number itself is `scripts/version.sh compute`'s business (ADR-032).
       #
       # The prerelease and build-metadata tail is not optional padding. `release.yml` stamps
       # `Chart.yaml` before it packages, and a snapshot build stamps

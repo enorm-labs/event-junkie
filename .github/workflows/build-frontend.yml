@@ -92,9 +92,12 @@ jobs:
     timeout-minutes: 30
 
     steps:
+      # The whole history and every tag, because the image label below reads the version from them
+      # (ADR-032).
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          fetch-depth: 0
           persist-credentials: false
 
       - name: Set up Node.js
@@ -190,8 +193,7 @@ jobs:
       # to `main`, so building it here too would be twice the work for the same answer.
       #
       # The version comes from `scripts/version.sh` rather than package.json, so the label matches
-      # the tag release.yml would publish — package.json's number is a mirror of `gradle.properties`,
-      # not a source (the check that keeps them equal is `scripts/version.sh check`).
+      # the tag release.yml would publish — package.json's number is a `0.0.0` placeholder (ADR-032).
       - name: Read the version
         id: version
         if: github.event_name == 'pull_request'

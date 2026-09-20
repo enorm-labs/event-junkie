@@ -48,17 +48,6 @@ repos:
         files: \.py$
         pass_filenames: true
 
-      # One version reaches four files and only one of them is authoritative, so the drift this
-      # catches is the kind nobody notices: bump `gradle.properties` alone and everything still
-      # builds, lints and renders — the release just publishes a chart whose `appVersion` names image
-      # tags that were never pushed. Cheapest possible check, and the earliest place to run it.
-      - id: version-consistency
-        name: version consistency
-        entry: scripts/version.sh check
-        language: system
-        files: ^(gradle\.properties|events-frontend/package\.json|deploy/charts/event-junkie/Chart\.yaml)$
-        pass_filenames: false
-
       # `.claude/skills/` and `.claude/commands/` are parallel trees of `@` pointers and nothing
       # joins them, so a skill added to one and not the other is silently absent from the other —
       # no error, the command simply is not there. Runs on any of the three copies moving.

@@ -7,10 +7,10 @@
 # ==============================================================================================
 #
 # Bot pull requests are the one class that arrives with no milestone: `dependabot.yml` has no key
-# for one, Renovate has no concept of milestones at all, and the release App's raise and bump pull
-# requests (`cut-release.yml`, #868, #1163) are opened by `gh pr create` with no `--milestone` on
-# purpose, so that the "oldest open milestone" rule lives here and nowhere else. This sets it, and
-# never overwrites a milestone already there.
+# for one, and Renovate has no concept of milestones at all. The release App opens none since
+# ADR-032, and stays in `BOTS` so that one it ever opens again is covered. The "oldest open
+# milestone" rule lives here and nowhere else. This sets it, and never overwrites a milestone
+# already there.
 #
 # **`BOTS` is matched by login, so a new bot is invisible here until it is added** — and invisibly:
 # the skip below is logged as normal operation, not as a warning. `renovate[bot]` joined in #384 and

@@ -23,10 +23,9 @@ changelog:
   exclude:
     labels:
       - ignore-for-release
-    # This project's own version bumps. `cut-release.yml` opens one after every release, and one
-    # more whenever the tree has to be raised before a release can be cut — bookkeeping that says
-    # nothing to a reader of the Releases page, and the only pull requests this App ever opens.
-    # Keyed on the author rather than the `chore` label, which real chores share.
+    # The release App opens no pull request since ADR-032 took the version out of the tree. Kept so
+    # that one it ever opens again stays out of the notes: it would be bookkeeping, keyed on the
+    # author rather than the `chore` label, which real chores share.
     authors:
       - event-junkie-release[bot]
 
