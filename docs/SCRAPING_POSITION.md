@@ -122,8 +122,7 @@ decides most of the corpus.
 the gap a shape, an owner per source, and a same-day remedy (§5). Until a source is reviewed we display a text we
 cannot justify displaying for that source.
 
-**What we do about it now:** §5 remains the answer for a venue that objects, and it is finer than it was. A venue that
-minds only its photographs no longer has to lose its whole listing.
+**What we do about it:** §5 is the answer for a venue that objects, and it is per field. A venue that minds only its photographs keeps its listing.
 
 **We machine-translate a description wherever we display it, and that is the weakest thing in this document.** A
 translation is an adaptation under § 23 UrhG, which needs the author's consent, and no statutory exception covers

@@ -333,11 +333,10 @@ reflects the database's current size, rather than the day it was first small.
 - **No alerting yet.** §6 — [#518](https://github.com/enorm-labs/event-junkie/issues/518).
 - **The drill recurs, and the count is two.** §9 — the reminder workflow exists and is idempotent. What it cannot prove is that a quarter's issue gets
   worked rather than closed. That is what the open-issue-on-the-board visibility is for.
-- **Production runs all of this.** The gap that used to sit here is closed. `walg check` passes on its database node. Base backups run nightly on the timer,
-  not by hand. The dead-man's switch points at a URL that fired in a drill.
-- **The cloud-init delivery path is proven, on production.** This was a gap because `backups.sh` reached the staging node by hand rather than through
-  `user_data`. Production booted with the script in `user_data`, and takes nightly backups that nobody installed. The gap closed quietly, which is why it stays
-  written down rather than deleted.
+- **Production runs all of this.** `walg check` passes on its database node. Base backups run nightly on the timer. The dead-man's switch points at a
+  URL that fired in a drill.
+- **The cloud-init delivery path is proven, on production.** The node booted with `backups.sh` in `user_data` and takes nightly backups nobody installed.
+  Staging's copy reached the node by hand, so production is the proof.
 - **Nobody ever performed a full in-place restore**, only restores into a scratch cluster. RESTORE_RUNBOOK.md §6 says so at the point where it matters.
 - **Nothing survives losing the Hetzner account.** §2.
 

@@ -176,7 +176,7 @@ printf "CREATE ROLE events WITH LOGIN PASSWORD '%s';\nCREATE DATABASE events OWN
 # files apart.
 kubectl --context event-junkie-staging create namespace event-junkie
 
-# The observability stack's namespace, on both clusters since #880. Created here because the two
+# The observability stack's namespace, on both clusters (#880). Created here because the two
 # Secrets below land in it before Flux exists to declare it — the declaration in the cluster's
 # kustomization.yaml then adopts it, labels and all.
 kubectl --context event-junkie-staging create namespace observability
@@ -796,12 +796,9 @@ tofu plan -target=module.environment.hcloud_volume_attachment.postgres \
 Dropping the attachment from the target list does not help. The volume detaches when its server is
 deleted, and the replacement boots with no data device.
 
-**The address records used to depend on the k3s node as well, and no longer do** (#883). `k3s_ipv4`,
-`k3s_ipv6` and `k3s_ipv6_network` read `hcloud_server.k3s` attributes before, so
-`-target=hcloud_zone_rrset.address` — the go-live flip — replaced the nodes too. `servers.tf` says the
-Primary IPs exist so that a rebuilt server keeps its address and DNS never churns. The addresses did
-survive. The **dependency** did not. Those three outputs now read the Primary IPs, so the flip is a
-DNS-only apply. **Read the plan and confirm that before you trust it.**
+**The address records read the Primary IPs, not the k3s node** (#883), so `-target=hcloud_zone_rrset.address` —
+the go-live flip — is a DNS-only apply. An output that read a `hcloud_server.k3s` attribute instead would pull the
+node into that plan. **Read the plan and confirm that before you trust it.**
 
 #### So patch the running node instead
 
@@ -884,16 +881,11 @@ cd deploy/alerts     && ./apply.sh --diff
 **Both scripts default to staging's node, so a production rebuild needs `EJ_NODE=ops@10.10.0.1` in front of each of the four.** Without it every command
 succeeds, reports that the push landed, and writes to the cluster you were not rebuilding.
 
-**All fourteen dashboard queries should return data. A `NO DATA` is a finding.** That is worth
-stating, because it was not always true. The `enqueue_failed` half of _Metrics dropped before
-storage_ returned nothing on a healthy cluster. A collector exports that series only after something
-fails to enqueue. Anyone rebuilding a cluster had to know which blank was expected.
-
-It is now `receiver_refused`, which exists from start-up
-([#969](https://github.com/enorm-labs/event-junkie/issues/969)). There is no longer a blank to
-memorise. [`deploy/alerts/README.md`](../../deploy/alerts/README.md) records the same trap for
-`ej-ingest-shedding`. There, a rule summing two counters could not fire during the normal operation
-it watched. **One query per always-present series** is the rule both landed on.
+**All fourteen dashboard queries return data on a healthy cluster. A `NO DATA` is a finding.** A collector exports
+some series only after a failure (`enqueue_failed`). A query on such a series is blank on a healthy cluster. The
+dashboard reads `receiver_refused` instead, which exists from start-up
+([#969](https://github.com/enorm-labs/event-junkie/issues/969)). [`deploy/alerts/README.md`](../../deploy/alerts/README.md)
+records the same trap for `ej-ingest-shedding`. **One query per always-present series.**
 
 `apply.sh` also runs `lint_dashboard.py` before it reaches the network. A dashboard that would render
 blank or quarter-width fails there, rather than on the screen you rebuilt it for.

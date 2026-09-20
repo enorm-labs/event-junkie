@@ -41,15 +41,11 @@ resolve:
 2. **The feedback loop is open.** The curation signal already exists: the `Dropping non-genre token '…'` logs
    (`GenreNormalizer.kt`), artist-less concerts, `OTHER`-typed events. Nothing routes it back to a human. The curation
    queue is invisible, so the curated lists only grow when someone happens to notice a bad row.
-3. ~~**There is no measurement and no gate.**~~ **Half-resolved 2026-08-19.** Pillar 1 shipped as
-   `de.norm.events.dataquality`. The numbers exist per source, with a `data_quality_snapshot` history, so a trend is
-   visible. **The gate half is still open.** Nothing fails when a change regresses a metric, so quality is now
-   _observed_ but still not _enforced_.
+3. **There is measurement and no gate.** `de.norm.events.dataquality` holds the numbers per source, with a `data_quality_snapshot` history. A trend is
+   visible. Nothing fails when a change regresses a metric. Quality is _observed_, not _enforced_.
 
-~~The single largest _fix_ opportunity is already identified: **~40% of `CONCERT` events carry no artist**~~ — **superseded by measurement, 2026-08-21.**
-
-Counted against staging's 3,409 events, the number is **3.5%**: 74 artist-less concerts out of 2,128, with 119 events typed `OTHER`. Title-as-headliner
-extraction is now used by 49 scrapers rather than being disabled at the three venues this paragraph named.
+Measured against staging's 3,409 events, **3.5%** of concerts carry no artist (74 of 2,128). 119 events are typed `OTHER`. Title-as-headliner extraction
+runs in 49 scrapers.
 
 **The order-of-magnitude gap between the estimate and the measurement is the point of §1.3**, not a footnote to it.
 This document asserted ~40% in prose, that figure survived unchallenged into planning, and the first thing an actual
