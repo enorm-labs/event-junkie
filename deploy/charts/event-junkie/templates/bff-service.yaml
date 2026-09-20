@@ -14,10 +14,9 @@ spec:
     - name: http
       port: {{ .Values.bff.service.port }}
       targetPort: http
-    {{- /* Published so `kubectl port-forward` over the WireGuard tunnel can reach actuator
-           (PLATFORM_SETUP §8a). Publishing it on the Service does not expose it: nothing routes to
-           this port from outside the cluster, and the render assertions fail the build if an
-           Ingress ever names it. */}}
+    {{- /* Published so `kubectl port-forward` over WireGuard can reach actuator (PLATFORM_SETUP §8a).
+       Nothing routes to this port from outside the cluster, and the render assertions fail the
+       build if an Ingress ever names it. */}}
     - name: management
       port: {{ .Values.bff.service.managementPort }}
       targetPort: management

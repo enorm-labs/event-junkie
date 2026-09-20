@@ -12,15 +12,13 @@ metadata:
       301s the redirect domains to ingress.host. Separate from the main Ingress so a redirect domain
       failing certificate validation cannot take the primary certificate down with it.
     {{- if .Values.ingress.tls.enabled }}
-    {{- /* Its own certificate, listing the redirect hosts explicitly rather than a wildcard: a
-           wildcard would cover names nobody has decided to serve, and DNS-01 is the only challenge
-           that can issue one. Separate from the main Ingress's certificate so that a redirect
-           domain failing validation cannot take the primary certificate down with it. */}}
+    {{- /* Its own certificate, listing the redirect hosts explicitly: a wildcard would cover names
+       nobody decided to serve, and only DNS-01 can issue one. Separate from the main certificate
+       so a redirect domain failing validation cannot take the primary down with it. */}}
     cert-manager.io/cluster-issuer: {{ .Values.certManager.clusterIssuer.name | quote }}
     {{- end }}
-    {{- /* `<namespace>-<name>@kubernetescrd` is Traefik's cross-namespace reference format. The
-           namespace comes from `.Release.Namespace`, never from a hardcoded `metadata.namespace` —
-           Flux's HelmRelease sets `targetNamespace`, and this follows it. */}}
+    {{- /* `<namespace>-<name>@kubernetescrd` is Traefik's cross-namespace reference format; the
+       namespace is `.Release.Namespace` because Flux's HelmRelease sets `targetNamespace`. */}}
     traefik.ingress.kubernetes.io/router.middlewares: {{ printf "%s-%s-redirect@kubernetescrd" .Release.Namespace (include "event-junkie.fullname" $) | quote }}
     {{- with .Values.ingress.annotations }}
     {{- toYaml . | nindent 4 }}
@@ -40,10 +38,9 @@ spec:
     - host: {{ . | quote }}
       http:
         paths:
-          {{- /* A backend is required by the Ingress schema even though the middleware answers every
-                 request before it is reached. The frontend is the least surprising thing to name:
-                 if the middleware is ever removed, this degrades to serving the site on the second
-                 domain rather than to a 502. */}}
+          {{- /* A backend is required by the Ingress schema although the middleware answers first. The
+             frontend is the least surprising: without the middleware this degrades to serving the site
+             on the second domain rather than to a 502. */}}
           - path: /
             pathType: Prefix
             backend:

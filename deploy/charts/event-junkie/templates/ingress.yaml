@@ -12,39 +12,31 @@ metadata:
     kubernetes.io/description: >-
       The only route into the release. /api reaches the BFF, / reaches the frontend, and nothing reaches the importer or actuator.
     {{- if .Values.ingress.tls.enabled }}
-    {{- /* cert-manager's ingress-shim watches this annotation and creates the Certificate itself, so
-           the chart owns no Certificate resource. cert-manager must already be installed: the API
-           server rejects an unknown kind, so `helm install` fails outright rather than racing. */}}
+    {{- /* cert-manager's ingress-shim watches this annotation and creates the Certificate, so the chart
+       owns none. cert-manager must already be installed: the API server rejects an unknown kind,
+       so `helm install` fails outright rather than racing. */}}
     cert-manager.io/cluster-issuer: {{ .Values.certManager.clusterIssuer.name | quote }}
     {{- end }}
-    {{- /* `<namespace>-<name>@kubernetescrd` is Traefik's cross-namespace reference format, and the
-           namespace comes from `.Release.Namespace` rather than a hardcoded value because Flux sets
-           `targetNamespace` — the same rule the redirect Ingress follows.
+    {{- /* `<namespace>-<name>@kubernetescrd` is Traefik's cross-namespace reference format; the
+       namespace is `.Release.Namespace` because Flux sets `targetNamespace`, as the redirect
+       Ingress does.
 
-           BUILT AS A LIST IN ONE PLACE, which the earlier single-middleware version warned about
-           before there was a second one: *"a second middleware reference would have to be
-           comma-joined with the redirect's, which is a list this chart would then have to build
-           correctly in two places"*. #416 added that second one. The annotation is a
-           comma-separated string with no schema behind it, so a stray comma or an empty element is
-           not a render error — it is a Traefik router that silently drops every middleware in the
-           list, which looks exactly like a working deployment.
+       Built as a list in one place (#416): the annotation is a comma-separated string with no
+       schema, so a stray comma or an empty element is not a render error but a router that
+       silently drops every middleware, which looks like a working deployment. Order matters: the
+       rate limit comes after the header middlewares so a 429 still carries the security headers.
 
-           Order matters here, unlike for the header middlewares: the rate limit is listed after them
-           so a rejected request still carries the security headers on its 429.
-
-           Deliberately only on this Ingress and not on the redirect one. The redirect answers every
-           request with a 301 to the canonical host, so a crawler or a browser that arrives there is
-           sent to the page that carries the headers anyway. The one exception worth knowing: a
-           301 from the redirect host carries no HSTS, so `event-junkie.com` is not pinned to HTTPS
-           by this — only `event-junkie.de` is. Pinning a host we merely redirect from would be
-           making a long-lived promise about a name we do not serve. */}}
+       Only on this Ingress, not the redirect one, which answers every request with a 301 to the
+       host that carries the headers. The exception: a 301 carries no HSTS, so `event-junkie.com`
+       is not pinned to HTTPS, only `event-junkie.de` is. Pinning a host we merely redirect from
+       would be a long-lived promise about a name we do not serve. */}}
     {{- $middlewares := list }}
     {{- if .Values.ingress.securityHeaders.enabled }}
     {{- $middlewares = append $middlewares (printf "%s-%s-security-headers@kubernetescrd" .Release.Namespace (include "event-junkie.fullname" $)) }}
     {{- end }}
-    {{- /* Two names, because Traefik permits one type per Middleware and the limit is two types.
-           The second is conditional on `perSource.enabled` for the same reason the object is: a
-           name in this list that resolves to nothing drops every middleware AND the router. */}}
+    {{- /* Two names, because Traefik permits one type per Middleware and the limit is two types. The
+       second is conditional on `perSource.enabled` because a name that resolves to nothing drops
+       every middleware AND the router. */}}
     {{- if .Values.ingress.rateLimit.enabled }}
     {{- $middlewares = append $middlewares (printf "%s-%s-in-flight-req@kubernetescrd" .Release.Namespace (include "event-junkie.fullname" $)) }}
     {{- if .Values.ingress.rateLimit.perSource.enabled }}
@@ -72,15 +64,13 @@ spec:
     - host: {{ .Values.ingress.host | quote }}
       http:
         paths:
-          {{- /* Two rules and no rewrite anywhere: the BFF's controllers are mapped under /api
-                 themselves, so the routing rule and the application agree on the path. Traefik prioritises the longer prefix, so /api wins over / regardless of the
-                 order here — but they are written most-specific-first anyway, because relying on a
-                 controller's tie-breaking is how this breaks on a different one.
+          {{- /* Two rules and no rewrite: the BFF's controllers are mapped under /api themselves. Traefik
+             prioritises the longer prefix, but the rules are most-specific-first anyway, because relying
+             on a controller's tie-breaking breaks on a different one.
 
-                 What is NOT here is as important: no path routes to the importer, and no path names
-                 the management port. /api/admin/** and /actuator/** are unreachable from outside
-                 the cluster because nothing addresses them, not because a rule excludes them.
-                 `tests/ingress_test.yaml` fails the build if that stops being true. */}}
+             What is NOT here matters: no path routes to the importer or names the management port, so
+             /api/admin/** and /actuator/** are unreachable because nothing addresses them, not because a
+             rule excludes them. `tests/ingress_test.yaml` fails the build if that stops being true. */}}
           - path: {{ .Values.bff.basePath | quote }}
             pathType: Prefix
             backend:

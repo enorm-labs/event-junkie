@@ -9,9 +9,8 @@ metadata:
   labels:
     {{- include "event-junkie.labels" $args | nindent 4 }}
 spec:
-  {{- /* ClusterIP, and there is no `type` value to change it. The importer's admin API has no
-         authentication of its own; what keeps it private is that nothing outside the cluster can
-         address it. A NodePort or LoadBalancer here would undo that in one word. */}}
+  {{- /* ClusterIP with no `type` value: the admin API has no authentication of its own, and a
+     NodePort or LoadBalancer here would expose it in one word. */}}
   type: ClusterIP
   ports:
     - name: http
