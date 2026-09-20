@@ -41,9 +41,9 @@ import java.time.format.DateTimeParseException
  * Each `.views-row` embeds an **AddToCalendar** widget whose `<var class="atc_*">` values are the
  * machine-readable part. `atc_date_start` is a **UTC** timestamp, converted here to
  * `Europe/Berlin`. Its `atc_description` holds a hand-typed `Datum / Einlass / Beginn / Ende /
- * Eintritt / Tickets` block followed by the event's prose — the source for the times, the price
- * and the description. The row's `.body-content` renders the same prose in full where
- * `atc_description` holds only its first paragraph; a festival names its acts there, in one
+ * Eintritt / Tickets` block followed by the event's prose — the source for the times and the
+ * price. The row's `.body-content` renders the same prose in full where `atc_description` holds
+ * only its first paragraph, so the description comes from there; a festival names its acts there, in one
  * sentence ending in `mit: <acts>.` (`Das diesjährige Line-up verspricht musikalische Vielfalt
  * mit: Catch The Young, Bongjeingan, kimseungjoo und Chang Kiha.`), which is read as the line-up (#1584).
  *
@@ -181,16 +181,32 @@ class SaalchenOverviewPageScraper {
             }.toMap()
 
     /**
-     * Reads the event's own prose — every line of the AddToCalendar description that is *not* one
-     * of the [NOTICE_LABELS] metadata lines. Returns `null` when the venue wrote none, which is
-     * currently the case for every Säälchen event.
+     * Reads the event's own prose — every line of the row's rendered `.body-content` that is *not*
+     * one of the [NOTICE_LABELS] metadata lines (#1647). The AddToCalendar description holds the
+     * same text cut to its first paragraph and is the fallback for a row with no body.
      */
     private fun parseDescription(row: Element): String? =
-        noticeLines(row)
+        (bodyLines(row).ifEmpty { noticeLines(row) })
             .filterNot { it.substringBefore(':', "").trim().lowercase() in NOTICE_LABELS }
             .joinToString("\n\n")
             .trim()
             .takeIf { it.isNotBlank() }
+
+    /**
+     * The rendered `.body-content` split into lines, the same way [noticeLines] splits the escaped
+     * copy. The widget and the ticket button sit inside the same div in the served markup, so they
+     * are cut from a copy first — their `<var>` values would otherwise read as prose.
+     */
+    private fun bodyLines(row: Element): List<String> =
+        row
+            .selectFirst(".body-content")
+            ?.clone()
+            ?.also { it.select(".service-links, .addtocalendar, var, a.link-ticket").remove() }
+            ?.html()
+            ?.split(LINE_BREAK_PATTERN)
+            ?.map { Jsoup.parse(it).text().trim() }
+            ?.filter { it.isNotBlank() }
+            .orEmpty()
 
     /**
      * Splits the AddToCalendar description into its rendered lines.
