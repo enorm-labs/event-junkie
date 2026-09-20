@@ -1,13 +1,8 @@
 name: Validate Comments
 
-# The CI half of `scripts/comment-lint.sh` (#713). It fails when the tree carries any comment-lint
-# violation at all. There is no baseline and no per-area ceiling: both were removed once it became
-# clear the volume budget was failing builds over comment lines rather than over comments.
-#
-# **No `paths:` filter, deliberately.** Both checks are repository-wide, so a filter would be a hole
-# rather than an optimisation, and the job takes under a second. It is also not on the `main`
-# ruleset's required list — if it is ever added there, no filter has to be removed first, which is
-# the trap validate-docs.yml and validate-scripts.yml both warn about.
+# The CI half of `scripts/comment-lint.sh` (#713): any violation at all fails, no baseline. **No
+# `paths:` filter**: both checks are repository-wide, the job takes under a second, and if it is ever
+# made required no filter has to be removed first.
 
 on:
   push:
@@ -34,15 +29,12 @@ jobs:
       - name: Check comment rules for Terraform, shell, YAML and Python
         run: scripts/comment-lint.sh check
 
-      # Runs after the check rather than before it, so a real violation is the first thing in the
-      # log. This asserts what the linter counts — a rule that silently starts measuring something
-      # else still reports zero findings, which is how the block cap spent months charging a comment
-      # for its own paragraph breaks (#750).
+      # After the check, so a real violation is first in the log. This asserts what the linter counts — a
+      # rule that silently starts measuring something else still reports zero (#750).
       - name: Assert what comment-lint.sh counts
         run: scripts/comment-lint-test.sh
 
-      # comment-density.sh no longer gates anything, but /compact-comments and /code-review both
-      # steer by its report, and a miscount there sends a sweep at the wrong files.
+      # comment-density.sh gates nothing, but /compact-comments and /code-review steer by its report.
       - name: Assert what comment-density.sh counts
         run: scripts/comment-density-test.sh
 

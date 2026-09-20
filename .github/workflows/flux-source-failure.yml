@@ -1,19 +1,12 @@
-# Makes a failing Flux source visible on GitHub (#1454). Each cluster's `source-failure` Alert in
-# `deploy/clusters/<cluster>/notification.yaml` fires a `repository_dispatch` when the OCIRepository
-# reports an error — a chart that fails cosign verification (#1425), a registry that cannot be
-# reached, a range that matches nothing. source-controller keeps the last good artifact in every one
-# of those cases; the HelmRelease turns not-Ready with the source's message but emits no event, so
-# `deployment-status.yml` records nothing.
+# Makes a failing Flux source visible on GitHub (#1454). Each cluster's `source-failure` Alert fires a
+# `repository_dispatch` when the OCIRepository reports an error — a chart failing cosign verification
+# (#1425), an unreachable registry, a range matching nothing. source-controller keeps the last good
+# artifact and the HelmRelease emits no event, so `deployment-status.yml` records nothing.
 #
-# THIS JOB IS RED BY CONSTRUCTION. The Alert is `eventSeverity: error`, so every dispatch that reaches
-# it is a failure, and a failed run is the only shape GitHub notifies anyone about: the actor of a
-# `repository_dispatch` is the owner of the `github-dispatch` PAT, and GitHub mails the actor of a
-# failed run. A green run that prints the failure would be one more silent record.
-#
-# The dispatch type is Flux's own `{Kind}/{Name}.{Namespace}`. An unmatched `repository_dispatch`
-# leaves no trace on GitHub at all, which is why this workflow exists instead of the Alert alone.
-# Like `deployment-status.yml` it cannot be tested from a pull request; the proof on #1454 is the
-# first exercise.
+# THIS JOB IS RED BY CONSTRUCTION: every dispatch that reaches it is a failure, and a failed run is the
+# one shape GitHub mails anyone about — the actor is the `github-dispatch` PAT's owner. The dispatch
+# type is Flux's own `{Kind}/{Name}.{Namespace}`; an unmatched dispatch leaves no trace on GitHub,
+# which is why this exists instead of the Alert alone. Cannot be tested from a pull request.
 name: Flux Source Failure
 
 on:
@@ -35,9 +28,8 @@ jobs:
     timeout-minutes: 2
 
     steps:
-      # No checkout: the payload is the whole input. The keys arrive bare — notification-controller
-      # strips the involved object's API-group prefix — and `env`/`cluster` come from the Alert's
-      # `.spec.eventMetadata`.
+      # No checkout: the payload is the whole input. The keys arrive bare (notification-controller strips
+      # the API-group prefix); `env`/`cluster` come from the Alert's `.spec.eventMetadata`.
       - name: Fail with the source's own message
         env:
           CLUSTER: ${{ github.event.client_payload.metadata.cluster }}

@@ -1,36 +1,28 @@
 # ==============================================================================================
 #  NEVER ADD `actions/checkout` — OR ANY STEP THAT RUNS PULL-REQUEST CODE — TO THIS FILE.
-#
 #  `pull_request_target` runs with the BASE repository's writable token against a pull request
-#  that may come from anyone. Safe here for one reason only: nothing fetches or runs the
-#  contributor's code. A checkout makes it an arbitrary-code-execution path (#479, #443).
+#  from anyone; safe only because nothing fetches or runs the contributor's code (#479, #443).
 # ==============================================================================================
 #
-# Bot pull requests are the one class that arrives with no milestone: `dependabot.yml` has no key
-# for one, and Renovate has no concept of milestones at all. The release App opens none since
-# ADR-032, and stays in `BOTS` so that one it ever opens again is covered. The "oldest open
-# milestone" rule lives here and nowhere else. This sets it, and never overwrites a milestone
-# already there.
+# Bot pull requests are the one class that arrives with no milestone: `dependabot.yml` has no key for
+# one and Renovate has no concept of them. The release App opens none since ADR-032 and stays in
+# `BOTS` for one it ever opens again. The "oldest open milestone" rule lives here and nowhere else;
+# a milestone already set is never overwritten.
 #
-# **`BOTS` is matched by login, so a new bot is invisible here until it is added** — and invisibly:
-# the skip below is logged as normal operation, not as a warning. `renovate[bot]` joined in #384 and
-# `event-junkie-release[bot]` in #1172, after two releases' pull requests had been milestoned by
-# hand. The App's login is its slug plus `[bot]`, so renaming the App re-opens the gap silently.
-# The filename stays `milestone-dependabot.yml` because renaming it breaks every link into it for
-# no gain.
+# **`BOTS` is matched by login, so a new bot is invisible here until added** — and invisibly: the skip
+# is logged as normal operation. The App's login is its slug plus `[bot]`, so renaming the App
+# re-opens the gap silently. The filename stays because renaming it breaks every link into it.
 name: Milestone bot PRs
 
 on:
   # comment-lint: allow a dated suppression, per the reason in zizmor.yml
 # zizmor: ignore[dangerous-triggers]
-  # 2026-08-25 — safe only while this file has no checkout, the property to re-check before adding
-  # any step. Required rather than preferred, too: a `pull_request` run raised by Dependabot gets a
-  # read-only token and could not write a milestone at all.
+  # 2026-08-25 — safe only while this file has no checkout, the property to re-check before adding any
+  # step. Required, too: a `pull_request` run raised by Dependabot gets a read-only token.
   pull_request_target:
     types: [ opened, reopened ]
 
-  # Sweeps open bot pull requests that have none, covering the ones predating this workflow.
-  # GitHub offers the button only for workflows on the default branch, so not until this merges.
+  # Sweeps open bot pull requests that have none. The button exists once this file is on the default branch.
   workflow_dispatch:
     inputs:
       milestone:
@@ -40,9 +32,8 @@ on:
 
 permissions:
   contents: read
-  # Which scope governs a milestone on a pull request is not clearly documented. Both are granted:
-  # the cost is one scope on a workflow that cannot run PR code, and guessing wrong is a 403 on the
-  # first real run — which reads as milestones quietly not appearing, not as a failure.
+  # Which scope governs a milestone on a pull request is not clearly documented, so both are granted;
+  # guessing wrong is a 403 that reads as milestones quietly not appearing.
   issues: write
   pull-requests: write
 
@@ -64,9 +55,8 @@ jobs:
             const BOTS = new Set(['dependabot[bot]', 'dependabot-preview[bot]', 'renovate[bot]', 'event-junkie-release[bot]']);
             const { owner, repo } = context.repo;
 
-            // No milestone here carries a due date, so "the next one due" cannot be asked for. The
-            // oldest open one is the release being worked toward; when it closes the next wins by
-            // itself, so there is no string in this file to keep current.
+            // No milestone here carries a due date, so the oldest open one is the release being worked toward,
+            // and when it closes the next wins by itself.
             const milestones = await github.paginate(github.rest.issues.listMilestones, {
               owner, repo, state: 'open', per_page: 100,
             });
@@ -75,14 +65,13 @@ jobs:
               return;
             }
 
-            // `core.getInput` reads this step's own `with:` block, not the workflow dispatch inputs.
+            // `core.getInput` reads this step's own `with:` block, not the dispatch inputs.
             const wanted = context.payload.inputs?.milestone;
             const target = wanted
               ? milestones.find((m) => m.title === wanted)
               : milestones.reduce((a, b) => (a.number <= b.number ? a : b));
 
-            // Open milestones only, so an unknown title fails loudly instead of falling back — the
-            // blind spot that leaves a bulk `gh pr edit --milestone` silently half done.
+            // Open milestones only, so an unknown title fails loudly instead of falling back.
             if (!target) {
               core.setFailed(`No open milestone titled "${wanted}". Open: ${milestones.map((m) => m.title).join(', ')}`);
               return;
@@ -107,8 +96,8 @@ jobs:
               return;
             }
 
-            // `listForRepo` is the issues endpoint, so it returns pull requests too and carries the
-            // milestone field the pulls endpoint omits.
+            // `listForRepo` is the issues endpoint, so it returns pull requests too and carries the milestone
+            // field the pulls endpoint omits.
             const open = await github.paginate(github.rest.issues.listForRepo, {
               owner, repo, state: 'open', per_page: 100,
             });

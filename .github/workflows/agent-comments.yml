@@ -1,34 +1,20 @@
-# Claude driven by this repository's own /compact-comments prompt, opening a pull request and never
-# pushing to main. Third of #387's four workloads. The shared shape is documented once in
-# ci-cd.instructions.md; three lines below are what fails silently if edited here.
+# Claude driven by /compact-comments, opening a pull request and never pushing to main. The shared
+# shape is in ci-cd.instructions.md; what fails silently if edited here:
 #
-# **This is the workload #387 calls the dangerous one, and the model choice is part of the answer.**
-# A large share of the comments here exist to carry reasoning, and every one of them reads as
-# removable to something optimising for brevity. `--unattended` limits the run to DELETE, RENAME and
-# EXTRACT — the buckets a reviewer can check in seconds. RELOCATE and KEEP are reported, never
-# applied, because rewriting load-bearing prose looks like an improvement whatever it deleted.
-#
-# **The default model is not the default elsewhere.** Opus 4.8 is measurably less verbose at comment
-# work than Opus 5, which is the whole quality being asked for. The input exists so 4.6 and 4.8 can
-# be compared on the same prompt rather than argued about.
-#
-# **There is no `github_token:` input.** See agent-security.yml.
-#
-# **`display_report: true` is what makes the run readable**, and is not interchangeable with
-# `show_full_output`. ci-cd.instructions.md has the difference and why it matters here.
-#
-# **The `inputs` context is empty on a `schedule` trigger**, so every input below carries an explicit
-# fallback. Without them a scheduled run passes `--model` with no value, and goes live by accident
-# rather than by decision. ci-cd.instructions.md has the rest.
+# **The dangerous workload, and the model choice is part of the answer.** Comments here carry
+# reasoning, and every one reads as removable to something optimising for brevity: `--unattended`
+# limits the run to DELETE, RENAME and EXTRACT; RELOCATE and KEEP are reported, never applied. **The
+# default model is Opus 4.8**, measurably less verbose at comment work than Opus 5; the input exists
+# so the two can be compared on one prompt. **No `github_token:`** (agent-security.yml).
+# **`display_report: true`, never `show_full_output`.** **The `inputs` context is empty on a
+# schedule**, so every input carries a fallback or a scheduled run goes live by accident.
 name: Agent — Compact Comments
 
 on:
-  # Nightly, off-the-hour like every other schedule here, and **`--all` rather than
-  # `--worst N`**: ranking by comment lines times ratio selects for files that are dense on purpose,
-  # where the least is removable. Boilerplate is a few lines each across many files and ranks
-  # nowhere, so only a whole-tree walk reaches it. The prompt caps the pull request at twelve files
-  # and reports the rest, so a sweep converges over several runs instead of arriving unreviewable —
-  # nightly rather than weekly is what makes "several runs" a week rather than a month.
+  # Nightly, off-the-hour, and **`--all` rather than `--worst N`**: ranking by lines × ratio selects the
+  # files that are dense on purpose; boilerplate is a few lines across many files and only a whole-tree
+  # walk reaches it. The prompt caps the pull request at twelve files, so a sweep converges over a
+  # week of nightly runs.
   schedule:
     - cron: '14 6 * * *'
   workflow_dispatch:
@@ -62,8 +48,7 @@ jobs:
   compact:
     name: Compact comments (agent)
     runs-on: ubuntu-latest
-    # Longer than the others: the proof obligation is a full Gradle build, and a comment-only change
-    # that turns a test red is the signal this job exists to produce.
+    # Longer than the others: the proof obligation is a full Gradle build.
     timeout-minutes: 60
 
     steps:
@@ -72,8 +57,8 @@ jobs:
         with:
           persist-credentials: false
 
-      # The agent runs `./gradlew detekt` and `build` itself, so the toolchain has to be here rather
-      # than left to it — a missing JDK reads to a model as "the build is broken".
+      # The agent runs `./gradlew detekt` and `build` itself; a missing JDK reads to a model as "the build
+      # is broken".
       - name: Set up Java 25 (Temurin)
         uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
         with:
@@ -95,10 +80,8 @@ jobs:
             --max-turns 80
             --allowedTools "Bash,Read,Glob,Grep,Edit,Write,TodoWrite"
 
-      # Reporting steps, last and guarded, per the rule in ci-cd.instructions.md. The step summary
-      # `display_report` writes has no REST API, so a scheduled report would exist only as a browser
-      # page. This extracts the same final report and nothing else — the execution file also holds
-      # every tool result, which is what must never be uploaded from a public repository.
+      # Reporting steps last and guarded. The step summary has no REST API, so the final report is
+      # extracted to an artifact — the report alone, never the execution file with every tool result.
       - name: Extract the report
         if: success() || failure()
         env:
@@ -121,12 +104,9 @@ jobs:
           name: agent-report
           path: agent-report.md
 
-      # **A run that produced no report is a failed run, whatever its exit code.** The agent's turn
-      # ends when it stops calling tools, so a closing line like "I'll compile the report once the
-      # checks finish" reports success and delivers a sentence. That has happened once already.
-      # This runs after the upload on purpose: the stub is preserved for diagnosis, then the job goes
-      # red. Guarded on the agent step succeeding, because a failure above is already red for a
-      # better reason.
+      # **A run that produced no report is a failed run, whatever its exit code.** "I'll compile the report
+      # once the checks finish" reports success and delivers a sentence, and has. After the upload, so the
+      # stub is preserved; guarded on the agent step succeeding.
       - name: Fail if the report is a stub
         if: steps.claude.outcome == 'success'
         run: |

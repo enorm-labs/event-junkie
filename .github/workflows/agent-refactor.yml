@@ -1,27 +1,17 @@
-# Claude driven by this repository's own /refactor prompt, opening a pull request and never pushing
-# to main. Fourth of #387's four workloads, and the one whose prompt was written for it (#389). The
-# shared shape is documented once in ci-cd.instructions.md; two lines below are the traps here.
+# Claude driven by /refactor (#389), opening a pull request and never pushing to main. The shared
+# shape is in ci-cd.instructions.md; the traps here:
 #
-# **`--unattended` fences the run away from shared normalization, and that fence is the whole
-# safety argument.** Slug generation, genre normalization, artist-name mapping and price parsing are
-# called by every importer. A change there compiles, passes the whole suite, and still changes the
-# rows that land in the database — the only check that catches it is a `--full` re-seed, which needs
-# a database and a live scrape. The runner has neither, so findings in that code are reported.
-#
-# **There is no `github_token:` input.** See agent-security.yml.
-#
-# **`display_report: true` is what makes the run readable**, and is not interchangeable with
-# `show_full_output`. ci-cd.instructions.md has the difference and why it matters here.
-#
-# **The `inputs` context is empty on a `schedule` trigger**, so every input below carries an explicit
-# fallback. Without them a scheduled run passes `--model` with no value, and goes live by accident
-# rather than by decision. ci-cd.instructions.md has the rest.
+# **`--unattended` fences the run away from shared normalization, and that fence is the whole safety
+# argument.** Slug generation, genre normalization, artist-name mapping and price parsing are called
+# by every importer; a change there compiles, passes the suite, and still changes the rows that land
+# in the database — only a `--full` re-seed catches it, and the runner has no database. Findings in
+# that code are reported. **No `github_token:`** (agent-security.yml). **`display_report: true`,
+# never `show_full_output`.** **The `inputs` context is empty on a schedule**, so every input carries
+# a fallback or a scheduled run goes live by accident.
 name: Agent — Refactor
 
 on:
-  # Nightly, off-the-hour for the reason every other schedule here gives: the top of the hour is
-  # a stampede on shared runners. The five agent workloads keep the staggered start times they
-  # had as one-per-weekday, so a night is a queue rather than five runners at once.
+  # Nightly, off-the-hour; the agent workloads keep staggered start times so a night is a queue.
   schedule:
     - cron: '41 4 * * *'
   workflow_dispatch:
@@ -55,8 +45,7 @@ jobs:
   refactor:
     name: Refactor (agent)
     runs-on: ubuntu-latest
-    # The longest of the four. The prompt requires the suite after every concern, not once at the
-    # end, so the wall clock is several builds rather than one.
+    # The longest of the family: the prompt requires the suite after every concern, so several builds.
     timeout-minutes: 90
 
     steps:
@@ -74,8 +63,8 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6.3.0
 
-      # Kover is the before-and-after number the prompt reports, and a refactor that quietly drops
-      # coverage is one that deleted a tested branch.
+      # Kover is the before-and-after number the prompt reports; a refactor that drops coverage deleted a
+      # tested branch.
       - name: Run /refactor
         id: claude
         uses: anthropics/claude-code-action@7b0b255830a1fab6e602658672acad11c12d841d # v1
@@ -88,10 +77,8 @@ jobs:
             --max-turns 120
             --allowedTools "Bash,Read,Glob,Grep,Edit,Write,TodoWrite"
 
-      # Reporting steps, last and guarded, per the rule in ci-cd.instructions.md. The step summary
-      # `display_report` writes has no REST API, so a scheduled report would exist only as a browser
-      # page. This extracts the same final report and nothing else — the execution file also holds
-      # every tool result, which is what must never be uploaded from a public repository.
+      # Reporting steps last and guarded. The step summary has no REST API, so the final report is
+      # extracted to an artifact — the report alone, never the execution file with every tool result.
       - name: Extract the report
         if: success() || failure()
         env:
@@ -114,12 +101,9 @@ jobs:
           name: agent-report
           path: agent-report.md
 
-      # **A run that produced no report is a failed run, whatever its exit code.** The agent's turn
-      # ends when it stops calling tools, so a closing line like "I'll compile the report once the
-      # checks finish" reports success and delivers a sentence. That has happened once already.
-      # This runs after the upload on purpose: the stub is preserved for diagnosis, then the job goes
-      # red. Guarded on the agent step succeeding, because a failure above is already red for a
-      # better reason.
+      # **A run that produced no report is a failed run, whatever its exit code.** A closing line like "I'll
+      # compile the report once the checks finish" reports success and delivers a sentence, and has. After
+      # the upload, so the stub is preserved; guarded on the agent step succeeding.
       - name: Fail if the report is a stub
         if: steps.claude.outcome == 'success'
         run: |

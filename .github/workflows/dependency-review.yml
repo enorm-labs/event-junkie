@@ -1,8 +1,6 @@
-# Scans pull requests for newly introduced dependency vulnerabilities and license issues.
-# Complements OWASP Dependency-Check (which scans the full tree) by diffing only the
-# changes between the PR head and base, giving fast, targeted feedback at review time.
-# Requires the dependency graph to be populated (see dependency-submission.yml).
-# source: https://github.com/actions/dependency-review-action
+# Newly introduced dependency vulnerabilities and licence issues, diffed between PR head and base —
+# the fast gate at review time beside OWASP Dependency-Check's full-tree scan. Needs the dependency
+# graph (dependency-submission.yml). source: https://github.com/actions/dependency-review-action
 name: Dependency Review
 
 on: [ pull_request ]
@@ -24,26 +22,15 @@ jobs:
       - name: Dependency Review
         uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
         with:
-          # Fail on high+ severity to match the OWASP Dependency-Check threshold (CVSS ≥ 7)
+          # High+ severity, matching Dependency-Check's CVSS ≥ 7.
           fail-on-severity: high
 
-          # Licence policy (docs/LEGAL.md §9.2). A deny-list rather than an
-          # allow-list: an allow-list fails on every unrecognised-but-fine SPDX spelling
-          # (`BSD-3-Clause` vs `BSD 3-Clause`, dual licences, `NOASSERTION`), which trains people
-          # to bypass the gate. This names the licences that are genuinely incompatible with
-          # shipping a public network service whose source is Apache-2.0, and lets the generated
-          # notices page (Phase 5) surface everything else for review.
-          #
-          # - AGPL: § 13 fires on *network interaction*, not distribution — this project is the
-          #   exact trigger case, and it would relicense the combined work.
-          # - GPL-2.0-only is outright incompatible with Apache-2.0; GPL-3.0 is compatible only in
-          #   the direction that makes the whole work GPL-3.0.
-          # - SSPL / BUSL / Elastic-2.0 / Commons Clause are not OSI open source and restrict
-          #   exactly the "offer this as a service" case.
-          #
-          # This checks *newly introduced* dependencies only, by design — it is the fast gate at
-          # review time, not a full-tree audit. Elasticsearch is the one to watch on this list; if
-          # the search backend lands, prefer OpenSearch (Apache-2.0).
+          # Licence policy (docs/LEGAL.md §9.2). A deny-list rather than an allow-list: an allow-list fails on
+          # every unrecognised-but-fine SPDX spelling and trains people to bypass the gate. Named here are the
+          # licences incompatible with shipping a public network service under Apache-2.0: AGPL (§ 13 fires on
+          # network interaction — this project is the exact case), GPL-2.0-only, GPL-3.0 (compatible only in
+          # the direction that makes the whole work GPL), SSPL / BUSL / Elastic-2.0 / Commons Clause (restrict
+          # "offer this as a service"). Newly introduced dependencies only; the notices page surfaces the rest.
           deny-licenses: >-
             AGPL-1.0-only, AGPL-1.0-or-later, AGPL-3.0-only, AGPL-3.0-or-later,
             GPL-2.0-only, GPL-2.0-or-later, GPL-3.0-only, GPL-3.0-or-later,

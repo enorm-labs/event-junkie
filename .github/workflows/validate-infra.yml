@@ -1,12 +1,8 @@
 name: Validate Infrastructure
 
-# `tofu fmt` and `tofu validate` are the only checks that can run against `infra/` without
-# credentials — `plan` needs a Hetzner token and CI does not have one, deliberately (see
-# docs/ops/PLATFORM_SETUP.md §4: nothing outside the cluster holds a credential for it).
-#
-# That makes this a syntax and type gate, not a correctness one. It catches the failure mode that
-# actually happens to infrastructure code in a repository where nobody runs it daily: a config that
-# stopped parsing months ago and nobody noticed until the afternoon it was needed.
+# `tofu fmt` and `tofu validate` are the only checks that run against `infra/` without credentials —
+# `plan` needs a Hetzner token and CI holds none, deliberately. A syntax and type gate, not a
+# correctness one: it catches a config that stopped parsing months ago.
 
 on:
   push:
@@ -16,24 +12,16 @@ on:
       - '.github/workflows/validate-infra.yml'
   pull_request:
     branches: [ main ]
-    # No `paths:` here, deliberately, since #443. These checks are **required** on the `main`
-    # ruleset, and a required check that never runs stays Pending forever — GitHub's own words:
-    # "A pull request that requires those checks to be successful will be blocked from merging."
-    # So a filter here would deadlock every pull request that happens not to touch these paths.
-    # Affordable because the whole workflow is seconds: `tofu fmt`/`validate`, the cloud-init
-    # ShellCheck and the user_data size check.
-    # The `push:` filter above keeps its paths — nothing requires those runs.
+    # No `paths:` here (#443): these checks are **required**, and a required check that never runs stays
+    # Pending forever. Affordable because the whole workflow is seconds. The `push:` filter keeps its paths.
   workflow_dispatch:
 
 permissions:
   contents: read
 
 env:
-  # Pinned for the reason validate-scripts.yml sets out at length: `ubuntu-latest` preinstalls an
-  # older ShellCheck than a current local install, old enough to disagree about SC2015. **This pin
-  # appears in three workflows** — here, validate-chart.yml and validate-scripts.yml — and they must
-  # move together, the same rule HELM_VERSION carries. Three pins that can drift are a weaker
-  # version of the problem pinning was meant to remove.
+  # `ubuntu-latest` preinstalls a ShellCheck old enough to disagree about SC2015 (validate-scripts.yml).
+  # **This pin appears in three workflows** and they move together.
   SHELLCHECK_VERSION: v0.11.0
 
 jobs:
@@ -66,7 +54,7 @@ jobs:
       - name: Check formatting
         run: tofu fmt -recursive -check -diff infra
 
-      # -backend=false so no state bucket, no credentials, and no lock is touched.
+      # `-backend=false`: no state bucket, no credentials, no lock.
       - name: Initialise ${{ matrix.stack }}
         run: tofu -chdir=${{ matrix.stack }} init -backend=false -input=false
 
@@ -74,10 +62,9 @@ jobs:
         run: tofu -chdir=${{ matrix.stack }} validate
 
   shellcheck:
-    # NAME IS LOAD-BEARING — "ShellCheck cloud-init" is a required status check on the `main`
-    # ruleset (#443). Renaming this job retires that context and creates a new one, and the required
-    # check then sits Pending forever on every pull request. So the name stays even though the job
-    # now covers more than cloud-init; the scope is described here instead.
+    # NAME IS LOAD-BEARING — "ShellCheck cloud-init" is a required status check on the `main` ruleset
+    # (#443). Renaming it retires the context and the check sits Pending forever; the job covers more
+    # than cloud-init now, and the name stays.
     name: ShellCheck cloud-init
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -88,27 +75,18 @@ jobs:
         with:
           persist-credentials: false
 
-      # The cloud-init scripts run once, unattended, on a node nobody can log into until they
-      # succeed. A typo there is not a failed build, it is a server that boots into an unreachable
-      # state.
-      #
-      # `infra/*.sh` was added in #424: the top-level scripts sit directly in `infra/` and so matched
-      # neither this glob nor the pre-commit hook's pattern, which both wanted a directory prefix.
-      # `check-capacity.sh` had been linted by nothing since it was written.
-      #
-      # Runs from the pinned image rather than the runner's preinstalled binary. It matters more here
-      # than anywhere else: these scripts run once, unattended, on a host nobody can log into, so the
-      # analyser that clears them should be the one the author ran, not whatever the runner image
-      # happened to ship that month.
+      # The cloud-init scripts run once, unattended, on a node nobody can log into until they succeed: a
+      # typo is a server that boots unreachable. `infra/*.sh` because the top-level scripts matched neither
+      # this glob nor the hook's (#424). From the pinned image: the analyser that clears these should be the
+      # one the author ran.
       - name: Run ShellCheck
         run: |
           docker run --rm -v "$PWD:/mnt" -w /mnt \
             "koalaman/shellcheck:${SHELLCHECK_VERSION}" \
             -x infra/*.sh infra/modules/environment/cloud-init/*.sh
 
-      # `tofu validate` never renders `templatefile`, so the size of what `cloudinit.tf` assembles
-      # was seen by nobody until staging's render passed Hetzner's 32 KiB `user_data` cap (#1482).
-      # The script mirrors the template with sample values, parses each document with the runner's
-      # `yq`, proves every gzipped script decodes back to its source, and fails 2 KiB under the cap.
+      # `tofu validate` never renders `templatefile`, so nobody saw the size of what `cloudinit.tf`
+      # assembles until it passed Hetzner's 32 KiB `user_data` cap (#1482). The script renders with sample
+      # values, parses each document, proves every gzipped script round-trips, and fails 2 KiB under the cap.
       - name: Measure the rendered cloud-init against the user_data cap
         run: python3 infra/check_user_data.py
