@@ -2,11 +2,9 @@
 #
 # issue-board.sh — read and set an issue's Status and Priority on the Event Junkie project board.
 #
-# Status and Priority are project *fields*, not labels — a deliberate split (AGENTS.md § The
-# Backlog). The cost of it is that `gh issue edit` cannot touch either: setting one means resolving
-# the project id, the field id, the option id and the item id, then calling `gh project item-edit`.
-# Hence this script. Nothing is hardcoded; every id is resolved at run time, so renaming an option
-# in the UI does not silently break it, and an issue not yet on the board is added.
+# Status and Priority are project *fields*, not labels (AGENTS.md § The Backlog), so `gh issue edit`
+# cannot touch them: setting one means resolving the project, field, option and item ids, then
+# `gh project item-edit`. Every id is resolved at run time, and an issue not yet on the board is added.
 #
 # Usage:
 #   scripts/issue-board.sh show <issue>
@@ -14,38 +12,28 @@
 #   scripts/issue-board.sh priority <issue> <P0|P1|P2>
 #   scripts/issue-board.sh batch [file]      # many issues at once; reads stdin when no file
 #
-# **`status <n> Done` closes the issue.** The project's `Auto-close issue` workflow closes on Done
-# and `Item closed` sets Done on close, so either end reaches the same place. Do not use it to tidy
-# the board for something meant to stay open — and if a card fails to move after a merge, those
-# workflow settings are the first place to look, not this script.
+# **`status <n> Done` closes the issue** — the project's `Auto-close issue` workflow closes on Done and
+# `Item closed` sets Done on close. If a card fails to move after a merge, those settings are the
+# first place to look.
 #
-# **`batch` exists because the single-issue path re-resolves everything on every call.** It resolves
-# the project and both fields once for the run, then issues at most two mutations per issue.
+# **`batch` resolves the project and both fields once**, then at most two mutations per issue.
 #
-# **Every lookup here is a targeted query, and that is not a style preference (#1040).** GitHub
-# prices a GraphQL request by the nodes it could return, against 5,000 points per hour per user. The
-# obvious `gh project` subcommands are enormous at that scale — `item-list --limit 500` costs 405
-# points to find one id, and `field-list --limit 50` costs 102 to read two fields — so one board
-# update cost 512 points and nine of them exhausted the hourly budget for every other `gh` command
-# too. The two queries below cost 1 point each. **Do not replace them with `gh project item-list` or
-# `gh project field-list` for readability.**
+# **Every lookup is a targeted query (#1040).** GitHub prices GraphQL by the nodes a request could
+# return, 5,000 points per hour per user: `gh project item-list --limit 500` costs 405 points to find
+# one id and `field-list --limit 50` costs 102, so nine board updates exhausted the hour. The queries
+# below cost 1 point each. **Do not replace them with `gh project item-list` or `field-list`.**
+# **`gh api rate_limit` lies about GraphQL** — it reported `remaining=5000/5000` while writes were
+# refused; the truth is `X-Ratelimit-Used` on `gh api graphql --include`.
 #
-# **`gh api rate_limit` lies about GraphQL**, which is what made this hard to see: it reported
-# `remaining=5000/5000, used=0` while writes were being refused, so the failures read as GitHub's
-# secondary limiter and were treated as one for most of a day. The truth is in the response headers
-# of a real GraphQL call — `X-Ratelimit-Used` on `gh api graphql --include`. There is no secondary
-# limit involved here; measure with the header, never with `rate_limit`.
-#
-# Batch input is one issue per line, `<issue> [status] [priority]`. A status may contain spaces ("In
-# progress"), so the priority is recognised **by shape from the end of the line** rather than by
-# position. `-` leaves a field untouched, `#` starts a comment, blank lines are skipped:
+# Batch input is one issue per line, `<issue> [status] [priority]`. A status may contain spaces, so
+# the priority is recognised **by shape from the end of the line**. `-` leaves a field untouched, `#`
+# starts a comment:
 #
 #   474 Blocked P2
-#   476 In progress        # status only — priority left as it is
+#   476 In progress        # status only
 #   480 - P2               # priority only
 #
-# Every line is validated **before anything is written**, so a typo on the last line does not leave
-# the first thirty applied and the rest not.
+# Every line is validated **before anything is written**.
 set -euo pipefail
 
 case "${1:-}" in
@@ -65,17 +53,14 @@ need() { command -v "$1" >/dev/null 2>&1 || die "'$1' is required but not instal
 need gh
 need jq
 
-# The project id and every single-select field with its options, in one 1-point query. `first: 20`
-# is a real ceiling rather than a large number chosen for safety: the board has three fields, and a
-# query that could return 500 of anything is what made the old path cost 405 points.
-#
-# The shape is `{fields: [{id, name, options: [{id, name}]}]}`, which is what the `*_of` helpers
-# below expect: they take one payload and print from it, so every caller pays for a single query.
+# The project id and every single-select field with its options, in one 1-point query. `first: 20` is
+# a real ceiling: a query that could return 500 of anything is what cost 405 points. The `*_of`
+# helpers below take this one payload and print from it.
 PROJECT_PAYLOAD=""
 project_payload() {
     [[ -n "$PROJECT_PAYLOAD" ]] && { printf '%s' "$PROJECT_PAYLOAD"; return 0; }
     # shellcheck disable=SC2016
-    # `$org` and `$number` are GraphQL variables bound by the `-F` flags below, not shell ones.
+    # `$org` and `$number` are GraphQL variables bound by `-F`, not shell ones.
     PROJECT_PAYLOAD="$(gh api graphql -f query='
       query($org:String!,$number:Int!){
         organization(login:$org){
@@ -96,18 +81,13 @@ project_payload() {
 project_id() { project_payload | jq -r '.id'; }
 fields() { project_payload; }
 
-# One issue's board item, with the field values already on it, in one 1-point query. It replaces a
-# 405-point `item-list --limit 500` and it is what makes `show` cheap as well as the writes.
-#
-# It emits the item object or nothing, so callers test for empty rather than for an exit code —
-# an issue that is not on the board is a normal result here, not an error.
-#
-# `projectItems(first: 20)` because an issue can sit on several boards; the filter picks ours by
-# number rather than trusting the order.
+# One issue's board item with its field values, in one 1-point query. Emits the item or nothing, so
+# callers test for empty: an issue not on the board is a normal result. `projectItems(first: 20)`
+# because an issue can sit on several boards; the filter picks ours by number.
 item_lookup() {
     local number="$1"
     # shellcheck disable=SC2016
-    # GraphQL variables again — bound by `-F`, and single quotes are what keep the shell out of them.
+    # GraphQL variables again, bound by `-F`; single quotes keep the shell out.
     gh api graphql -f query='
       query($owner:String!,$repo:String!,$number:Int!){
         repository(owner:$owner,name:$repo){
@@ -133,9 +113,8 @@ item_lookup() {
               | select(.project.number == $PROJECT_NUMBER)" 2>/dev/null || true
 }
 
-# The board item for an issue, adding the issue to the board if it is not there yet. `item-add`
-# is idempotent on the API side, but calling it unconditionally would churn the item's updatedAt
-# on every status change, so it only runs when the lookup misses.
+# The board item, adding the issue on a miss. `item-add` is idempotent on the API side but churns
+# `updatedAt`, so it runs only when the lookup misses.
 item_id() {
     local number="$1" id
     id="$(item_lookup "$number" | jq -r '.id // empty')"
@@ -146,10 +125,8 @@ item_id() {
     printf '%s' "$id"
 }
 
-# Field and option lookups against an already-fetched `fields` payload. Deliberately pure
-# printers that emit nothing when there is no match, rather than calling `die` themselves: they
-# are used inside command substitutions, where an `exit` would only leave the subshell and the
-# failure would pass silently. Validation therefore stays in the caller's own scope.
+# Pure printers that emit nothing on no match, rather than calling `die`: inside a command
+# substitution an `exit` would only leave the subshell. Validation stays in the caller's scope.
 field_id_of() { # field_id_of <fields-json> <field-name>
     jq -r --arg f "$2" '.fields[] | select(.name==$f) | .id' <<<"$1"
 }
@@ -177,8 +154,7 @@ set_field() {
     printf '#%s %s -> %s\n' "$number" "$field_name" "$option_name"
 }
 
-# The manifest carries the short code; the board's option labels carry their meaning. Keeping the
-# mapping here means a reworded option is a one-line change in one place.
+# The manifest carries the short code; the board's option labels carry their meaning.
 priority_option() {
     case "$1" in
         P0 | p0) printf 'P0 — now' ;;
@@ -190,30 +166,22 @@ priority_option() {
 
 # --- batch -------------------------------------------------------------------------------------
 #
-# The item list is fetched once into BATCH_ITEMS and then treated as a local index. An issue that
-# is not on the board is added, and the new id is folded back into the index so a second line for
-# the same issue is a lookup rather than another `item-add`.
+# An issue not on the board is added, and the new id is folded back into BATCH_ITEMS so a second
+# line for the same issue is a lookup.
 BATCH_ITEMS='{"items":[]}'
 
-# The field separator for a parsed row. It must NOT be a tab: tab is IFS *whitespace*, so `read`
-# collapses runs of it and discards empty fields — which silently shifts every column after an
-# omitted one, and a row like "480 - P0" ends up writing the priority's option id into the Status
-# field. A unit separator is not IFS whitespace, so empty fields survive, and it cannot occur in
-# an option label.
+# The field separator must NOT be a tab: tab is IFS *whitespace*, so `read` collapses runs and
+# discards empty fields, and "480 - P0" would write the priority's option id into Status. A unit
+# separator is not IFS whitespace and cannot occur in an option label.
 US=$'\037'
 
-# Resolves an issue's board item into BATCH_ITEM_ID, adding it to the board on a miss.
-#
-# It *assigns* rather than prints, which looks like the awkward choice and is the load-bearing
-# one: the caller would have to write `item="$(batch_item_id …)"`, and a command substitution runs
-# in a subshell, so the BATCH_ITEMS update below would be thrown away with it. Every repeated
-# issue would then `item-add` again — the exact per-issue round trip this mode exists to avoid.
+# Resolves an issue's board item into BATCH_ITEM_ID, adding it on a miss. It *assigns* rather than
+# prints, because a command substitution runs in a subshell and the BATCH_ITEMS update would be
+# thrown away with it.
 BATCH_ITEM_ID=""
 batch_item_id() {
     local number="$1"
-    # The cache is consulted first and holds only ids this run added, so a repeated issue costs
-    # nothing. A lookup miss on a board of any size is one point, which is why there is no longer a
-    # pre-fetched index to consult.
+    # The cache holds only ids this run added; a lookup miss on a board of any size is one point.
     BATCH_ITEM_ID="$(jq -r --argjson n "$number" \
         'first(.items[] | select(.content.number == $n) | .id) // empty' <<<"$BATCH_ITEMS")"
     [[ -n "$BATCH_ITEM_ID" ]] || BATCH_ITEM_ID="$(item_lookup "$number" | jq -r '.id // empty')"
@@ -225,12 +193,8 @@ batch_item_id() {
     fi
 }
 
-# One input line into the b_* globals. Returns 1 when the line holds nothing (blank, or a comment
-# only) so the caller skips it without treating it as an error.
-#
-# The parse reads the priority off the *end* rather than by field position, because a status can
-# be two words: "476 In progress P1" has to split as (476, "In progress", P1), which no
-# whitespace-column scheme gets right.
+# One input line into the b_* globals; returns 1 on a blank or comment-only line. The priority is read
+# off the *end*, because a status can be two words.
 parse_batch_line() {
     local line="$1" rest last
     b_number=""
@@ -270,7 +234,7 @@ batch() {
     priority_field="$(field_id_of "$all" "Priority")"
     [[ -n "$priority_field" ]] || die "no 'Priority' field on the project"
 
-    # Pass 1 — parse and validate everything. No writes, so a bad line costs nothing.
+    # Pass 1 — parse and validate everything. No writes.
     local -a rows=()
     local line lineno=0 status_option priority_option_id priority_label
     while IFS= read -r line || [[ -n "$line" ]]; do
@@ -303,7 +267,7 @@ batch() {
 
     [[ ${#rows[@]} -gt 0 ]] || die "no issues in the input"
 
-    # Pass 2 — apply. Two ids resolved for the whole run, two mutations per issue at most.
+    # Pass 2 — apply. Two ids resolved for the run, two mutations per issue at most.
     pid="$(project_id)"
 
     local row number s_opt p_opt s_label p_label item
@@ -338,7 +302,7 @@ show() {
   milestone \(.milestone.title // "—")
   labels    \([.labels[].name] | join(", "))
   assignee  \([.assignees[].login] | join(", ") | if . == "" then "—" else . end)"'
-    # The same 1-point query the writes use. This printed two lines for 405 points before #1040.
+    # The same 1-point query the writes use.
     item_lookup "$number" | jq -r '
         (.fieldValues.nodes | map(select(.field.name) | {key: .field.name, value: .name}) | from_entries) as $v |
         "  status    \($v.Status // "—")\n  priority  \($v.Priority // "—")"'
@@ -349,8 +313,7 @@ main() {
     [[ -n "$cmd" ]] ||
         die "usage: issue-board.sh <show|status|priority> <issue> [value] | issue-board.sh batch [file]"
 
-    # `batch` takes a file rather than an issue number, so it is dispatched before the
-    # issue-number check the other three share.
+    # `batch` takes a file rather than an issue number, so it is dispatched before the issue-number check.
     case "$cmd" in
         batch | --batch)
             shift

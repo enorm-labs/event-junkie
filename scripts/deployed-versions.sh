@@ -2,10 +2,9 @@
 #
 # deployed-versions.sh — which published chart version each cluster would resolve, right now.
 #
-# It answers "what is running", deliberately not "what does `main` build" — those diverge the moment a
-# base image is rebuilt. Nothing here reaches a cluster: under pull-based delivery (ADR-016) a cluster
-# holds no inbound endpoint and CI holds no cluster credential, so the honest way to ask is to make
-# the same selection Flux makes, from the same inputs.
+# "What is running", not "what does `main` build" — the two diverge the moment a base image is
+# rebuilt. Nothing here reaches a cluster (ADR-016): the honest way to ask is to make the selection
+# Flux makes, from the same inputs.
 #
 # Usage:
 #   scripts/deployed-versions.sh            # every cluster under deploy/clusters/
@@ -20,24 +19,13 @@
 #
 # Requires: curl, yq, helm. Reaches the registry, and writes only under a temp dir it removes.
 #
-# **The range comes out of `deploy/clusters/*/oci-repository.yaml`**, not from a constant here. That
-# is the whole point: a scan that hardcoded ">=0.0.0-0" would keep passing while somebody narrowed
-# staging's range, and would silently be measuring a version nothing runs. Read the file the cluster
-# reads and the two cannot drift.
-#
-# **The tag list comes from the registry over the anonymous Docker v2 API.** The GHCR packages are
-# public — as `oci-repository.yaml` already relies on — so this needs no credential, on CI or a laptop.
-#
-# **The selection is made by Helm's own solver**, through a fabricated repository index, exactly as
-# `scripts/version-test.sh` does. Flux's source-controller and Helm share the Masterminds constraint
-# implementation, so this reproduces the selection rather than approximating it. Reimplementing SemVer
-# prerelease ordering in bash is the mistake #455 was: `0.1.0-snapshot.g<sha>` looked ordered and was
-# not, and ten published charts resolved to the sixth-oldest.
-#
-# `semverFilter` is applied first, as a plain regex, because it is a Flux concept that Helm knows
-# nothing about — production uses it to state "release versions only" positively rather than relying
-# on Masterminds' prerelease omission. Skipping it here would report production as running a snapshot
-# it would never pull.
+# **The range comes out of `deploy/clusters/*/oci-repository.yaml`**, so a narrowed range cannot leave
+# this measuring a version nothing runs. **The tag list comes from the anonymous Docker v2 API** —
+# the packages are public. **The selection is made by Helm's own solver** through a fabricated
+# repository index, as `scripts/version-test.sh` does; source-controller and Helm share the
+# Masterminds constraint library, and reimplementing prerelease ordering in bash is the mistake #455
+# was. `semverFilter` is applied first, as a plain regex: a Flux concept Helm knows nothing about,
+# and production uses it to say "release versions only".
 
 set -euo pipefail
 
@@ -62,24 +50,16 @@ trap 'rm -rf "$WORK"' EXIT
 
 # list_tags <registry> <repository>
 #
-# Every tag published for an OCI repository, one per line.
+# Every tag published for an OCI repository, one per line. The token endpoint is not optional even
+# for a public package: GHCR answers 401 and hands out a pull-scoped anonymous token. `--fail` on every
+# call, so a registry outage is an error rather than an empty list that reads as "nothing published".
 #
-# The token endpoint is not optional even for a public package: GHCR's v2 API answers 401 to an
-# unauthenticated request and hands out a pull-scoped anonymous token for the asking. `--fail` on
-# every call so a registry outage is an error rather than an empty tag list — an empty list would
-# otherwise read as "nothing is published", which is the failure mode where a scan goes green having
-# looked at nothing.
-#
-# **The tag list is paginated, and one page is not the answer.** GHCR caps a page at 100 tags and
-# hands back the rest through a `Link: <…>; rel="next"` header. Reading only the first page is the
-# same class of mistake as #455 and fails the same silent way: the newest tag on page one looks like
-# the newest tag, so the caller resolves a real, published, months-old chart and reports it without
-# any sign of truncation. When #1027 found it, 369 tags were published and 100 were read: the nightly
-# image scan had been scanning a fortnight-old snapshot, and production — whose releases all sat past
-# page one — was reported as having nothing to scan at all.
-#
-# `n=100` on the *first* request is load-bearing beyond page size: GHCR echoes the parameter into
-# every `rel="next"` link it builds, so a first request without it yields a chain carrying `n=0`.
+# **The tag list is paginated, and one page is not the answer.** GHCR caps a page at 100 and hands
+# back the rest through a `Link: <…>; rel="next"` header. Reading one page fails the way #455 did:
+# the newest tag on page one looks newest, and #1027 found 369 tags published, 100 read, the nightly
+# scan on a fortnight-old snapshot and production reported as unscannable. `n=100` on the *first*
+# request is load-bearing beyond page size: GHCR echoes it into every `rel="next"` link, so a first
+# request without it yields a chain carrying `n=0`.
 list_tags() {
   local registry="$1" repository="$2" token url next body page=0
 
@@ -92,8 +72,7 @@ list_tags() {
 
   while [[ -n "$url" ]]; do
     page=$((page + 1))
-    # A registry that keeps offering a next page forever would otherwise hang the caller. 50 pages
-    # is 5000 tags — far past anything this project publishes, and still a bound.
+    # A bound, so a registry offering a next page forever cannot hang the caller.
     ((page <= 50)) || die "${registry}/${repository}: more than 50 pages of tags — refusing to loop"
 
     body="$(
@@ -102,8 +81,8 @@ list_tags() {
 
     printf '%s' "$body" | yq -p json -N '.tags // [] | .[]'
 
-    # Case-insensitive because the header name is, and `tr -d` because the value arrives CRLF
-    # terminated. GHCR returns a path rather than an absolute URL; the spec permits either.
+    # Case-insensitive because the header name is; `tr -d` because the value arrives CRLF terminated.
+    # GHCR returns a path rather than an absolute URL.
     next="$(
       sed -n 's/^[Ll]ink:[[:space:]]*<\([^>]*\)>;[[:space:]]*rel="next".*/\1/p' "$WORK/tags-headers" |
         tr -d '\r' | tail -1
@@ -118,16 +97,10 @@ list_tags() {
 
 # resolve <range> <version>...
 #
-# The version Helm's constraint solver selects from the given set, or empty.
-#
-# `helm search repo` reads its index straight out of the repository cache, so pointing
-# HELM_REPOSITORY_CONFIG and HELM_REPOSITORY_CACHE at a temp dir hands Helm an arbitrary set of
-# versions. The URL on the entry is unreachable on purpose — nothing is ever downloaded, and a
-# resolvable one would mean this could succeed or fail for network reasons.
-#
-# Lifted from `scripts/version-test.sh`, which asserts this technique against known-ordered
-# publications. Kept as a copy rather than sourced: that file is a test with its own `main`, and
-# making it a library would put an assertion harness on this script's path for no gain.
+# The version Helm's constraint solver selects from the set, or empty. `helm search repo` reads its
+# index from the repository cache, so pointing HELM_REPOSITORY_CONFIG and HELM_REPOSITORY_CACHE at a
+# temp dir hands Helm an arbitrary set; the URL on the entry is unreachable on purpose. A copy of
+# `scripts/version-test.sh`'s function rather than sourced: that file is a test with its own `main`.
 resolve() {
   local range="$1" version out
   shift
@@ -161,9 +134,8 @@ resolve() {
 wanted="${1:-}"
 [[ -d "$CLUSTERS_DIR" ]] || die "no such directory: $CLUSTERS_DIR"
 
-# The tag list is fetched once per chart URL and reused. All three clusters point at the same chart
-# today, and asking the registry three times for the same answer is the kind of thing that quietly
-# becomes a rate limit later.
+# Fetched once per chart URL; all three clusters point at the same chart, and asking three times is
+# what becomes a rate limit later.
 declare -A TAG_CACHE=()
 
 found=0
@@ -194,8 +166,7 @@ for source_file in "$CLUSTERS_DIR"/*/oci-repository.yaml; do
   [[ -n "$tags" ]] || die "$cluster: $reference has no published tags at all"
 
   if [[ -n "$filter" && "$filter" != "null" ]]; then
-    # `|| true` because grep exits 1 on no match, which is a result here — reported below as
-    # "resolves nothing", with the range and filter named, rather than as a bare exit code.
+    # `|| true`: grep exits 1 on no match, which is a result reported below, not an error.
     tags="$(printf '%s\n' "$tags" | grep -E "$filter" || true)"
   fi
 
@@ -206,19 +177,12 @@ for source_file in "$CLUSTERS_DIR"/*/oci-repository.yaml; do
     version="$(resolve "$range" $tags)"
   fi
 
-  # `(none)` rather than an error, and the distinction is the whole reason this branch is commented.
-  # A range that admits nothing published is a result: failing here would paint the caller red every
-  # night for a correct state, which is how a check gets switched off.
-  #
-  # It said so with production as the example until #1027 — "release versions only, and there has
-  # never been a release". That was true when it was written and had stopped being true by `0.3.0`,
-  # but the truncated tag list kept producing the output the sentence predicted, so the comment went
-  # on explaining a wrong answer as a right one. **A branch this rarely taken is worth re-deriving
-  # rather than reading.** No cluster resolves nothing today.
-  #
-  # A registry that will not answer, a chart URL with no tags at all, or a malformed source file are
-  # different — those die above, loudly, because each of them is the shape of a scan that looks at
-  # nothing while reporting success.
+  # `(none)` rather than an error: a range that admits nothing published is a result, and failing here
+  # would paint the caller red every night for a correct state. This branch once explained production
+  # as the example — "there has never been a release" — for months after that stopped being true,
+  # because the truncated tag list kept producing the output the sentence predicted (#1027). **A branch
+  # this rarely taken is worth re-deriving rather than reading.** A registry that will not answer, a
+  # chart with no tags at all, or a malformed source file die above, loudly.
   if [[ -z "$version" ]]; then
     printf 'deployed-versions.sh: %s resolves nothing — semver %s, filter %s\n' \
       "$cluster" "$range" "${filter:-<none>}" >&2

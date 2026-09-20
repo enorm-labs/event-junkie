@@ -2,11 +2,9 @@
 #
 # k3d-rehearsal.sh — run the whole stack on a local Kubernetes and prove it works end to end.
 #
-# Deterministic mechanics behind the /k3d-rehearsal skill, in the spirit of dev-env.sh: nobody
-# re-derives the k3d, helm and kubectl incantations, and teardown is one command that always works.
-#
-# Per ADR-012 this is not an approximation of the production path — the chart and images that run
-# here are the ones that run on Hetzner k3s, which is what makes it worth doing at all.
+# Deterministic mechanics behind the /k3d-rehearsal skill: nobody re-derives the k3d, helm and kubectl
+# incantations, and teardown is one command. Per ADR-012 the chart and images that run here are the
+# ones that run on Hetzner k3s.
 #
 # Usage: scripts/k3d-rehearsal.sh <command>
 #   up            Build images, create the cluster, install the chart, wait for it to converge
@@ -24,20 +22,16 @@
 #   flux-break    Break the release on purpose and watch it roll back
 #   flux-all      flux-up → flux-verify → flux-trap → flux-break → down
 #
-# `all` and `flux-all` answer different questions and must not share a cluster. `all` installs the
-# working tree's chart with images built seconds ago — "does my change work?". `flux-all` installs
-# the chart already published in GHCR, through the controllers that run on Hetzner — "does the
-# delivery mechanism work?".
+# `all` and `flux-all` answer different questions and must not share a cluster: `all` installs the
+# working tree's chart with images built seconds ago ("does my change work?"); `flux-all` installs
+# the chart published in GHCR through the controllers that run on Hetzner ("does the delivery work?").
 #
-# THE SAFETY RULE, because this is the one script here that talks to a Kubernetes cluster:
-# every kubectl and helm call passes --context/--kube-context explicitly, and the value is a
-# constant defined below. `k3d cluster create` switches the *active* context as a side effect, and a
-# developer machine usually has other clusters — production ones among them — in the same
-# kubeconfig. This script never relies on whatever happens to be current, and `down` puts it back.
+# THE SAFETY RULE: every kubectl and helm call passes --context/--kube-context explicitly, from a
+# constant below. `k3d cluster create` switches the *active* context, and a developer kubeconfig
+# usually holds other clusters — production ones among them. `down` puts the context back.
 #
-# Requires: k3d, kubectl, helm, docker, yq, and a JDK + Node for the image builds.
-# The opt-in airgap preload (K3D_PRELOAD_IMAGES=1) additionally wants jq, and `crane` if it can
-# have it — see preload_images for why `docker save` is no longer trusted to build that tarball.
+# Requires: k3d, kubectl, helm, docker, yq, and a JDK + Node for the image builds. The opt-in airgap
+# preload (K3D_PRELOAD_IMAGES=1) wants jq, and `crane` if it can have it.
 
 set -euo pipefail
 
@@ -47,13 +41,11 @@ RELEASE=event-junkie
 CHART=deploy/charts/event-junkie
 VALUES="${CHART}/values-k3d.yaml"
 # Applied on top of VALUES when K3D_IMAGES=1. Off by default: it needs the compose stack's MinIO and
-# two Secrets, and the plain rehearsal must keep working on a machine that has neither.
+# two Secrets.
 IMAGES_VALUES="${CHART}/values-k3d-images.yaml"
 IMAGES="${K3D_IMAGES:-0}"
-# The rehearsal gets a database of its own. Never the development one: installing the chart runs the
-# importer's Flyway migrations, and pointing that at `event_junkie` would have the in-cluster
-# importer competing with a local `bootRun` over one schema — with ~86 sources and thousands of
-# scraped rows behind it that ADR-007 says nobody should re-scrape casually.
+# The rehearsal gets a database of its own, never the development one: installing the chart runs
+# Flyway, and the in-cluster importer would compete with a local `bootRun` over one schema.
 DB=event_junkie_k3d
 PG_CONTAINER=event-junkie-postgres-1
 # The Flux half (#414): the CRs applied to the cluster, and the namespace the HelmRelease targets.
@@ -67,10 +59,8 @@ log()  { printf '\n\033[1m== %s\033[0m\n' "$*"; }
 info() { printf '   %s\n' "$*"; }
 ok()   { printf '   \033[32mok\033[0m   %s\n' "$*"; }
 bad()  { printf '   \033[31mFAIL\033[0m %s\n' "$*" >&2; FAILURES=$((FAILURES + 1)); }
-# A third outcome, for an assertion that could not be made rather than one that failed. The script
-# had only pass and fail, which is why `cmd_chain` had nowhere to put "the importer persisted
-# nothing, so there is nothing to measure" and called it a failure of the stack (#693). Deliberately
-# not counted into FAILURES: it is not a defect, and `all` must be able to exit 0 through it.
+# A third outcome, for an assertion that could not be made rather than one that failed (#693): "the
+# importer persisted nothing, so there is nothing to measure". Not counted into FAILURES.
 skip() { printf '   \033[33mSKIP\033[0m %s\n' "$*"; }
 die()  { printf '\033[31m%s\033[0m\n' "$*" >&2; exit 1; }
 
@@ -80,7 +70,7 @@ require() {
   for t in "$@"; do command -v "$t" >/dev/null || die "$t is not installed"; done
 }
 
-# Refuses to go near a cluster this script did not create. Cheap, and the one check that matters.
+# Refuses to go near a cluster this script did not create.
 guard_context() {
   case "$CONTEXT" in
     k3d-*) ;;
@@ -92,31 +82,17 @@ guard_context() {
 
 k()  { kubectl --context "$CONTEXT" "$@"; }
 h()  { helm --kube-context "$CONTEXT" "$@"; }
-# `flux` resolves the current kubeconfig context exactly like `helm install --dry-run` does — running
-# `flux check --pre` with somebody else's context current is how that was noticed. Same rule as the
-# other two: never rely on what happens to be active.
+# `flux` resolves the current kubeconfig context exactly like `helm install --dry-run` does.
 f()  { flux --context "$CONTEXT" "$@"; }
 psql_() { docker exec "$PG_CONTAINER" psql -U admin "$@"; }
 
-# Assert that an image tarball actually carries the images it claims to, and that any images named
-# as extra arguments are among them.
-#
-# `docker save` can exit 0 having written a manifest and a config with no layer blobs at all.
-# Measured here on Docker 29.7.2 with the containerd image store (#533): two of k3s's eight images
-# came out as 12 KB of metadata each, `docker save` reported success, k3s's import reported success
-# ("Imported images ... in 879ms"), and only `ctr -n k8s.io images check` on the node disagreed.
-# The pods that could not start then failed with the same x509 error a node that cannot pull
-# produces — which is the failure this whole escape hatch exists for — so the evidence pointed
-# squarely at the network and the real cause stayed invisible. Three full runs went into that.
-#
-# The check is format-agnostic on purpose. Both writers put a `manifest.json` at the archive root
-# whose `Config` and `Layers` entries are member paths — `blobs/sha256/...` from `docker save`,
-# `<digest>.tar.gz` from `crane pull` — so "every path it names is in the archive" verifies either
-# one. It proves presence, not integrity: a truncated blob would still pass. Absence is the failure
-# that actually happens.
-#
-# Returns rather than dying, because the two callers want different things from a failure: a cached
-# tarball gets rebuilt, a freshly fetched one is a hard stop.
+# Assert that an image tarball carries the images it claims to, and that any images named as extra
+# arguments are among them. `docker save` can exit 0 having written a manifest and config with no
+# layer blobs (#533, Docker 29.7.2 with the containerd store); k3s's import reports success on such a
+# tarball, and the pods then fail with the same x509 error a node that cannot pull produces, so the
+# evidence points at the network. Format-agnostic: both writers put a `manifest.json` at the root
+# whose `Config` and `Layers` entries are member paths. Proves presence, not integrity. Returns rather
+# than dying: a cached tarball is rebuilt, a freshly fetched one is a hard stop.
 verify_airgap_tar() {
   local tar="$1"
   shift
@@ -147,10 +123,8 @@ EOF
     incomplete=1
   fi
 
-  # Every blob being present says nothing about coverage: a tarball of seven complete images passes
-  # the check above and still leaves the eighth for the node to pull. The two writers disagree about
-  # the registry prefix — `docker save` strips `docker.io/` from RepoTags and `crane pull` keeps it —
-  # so both sides are normalised before they are compared.
+  # Every blob present says nothing about coverage: seven complete images pass and leave the eighth to
+  # pull. The two writers disagree about the `docker.io/` prefix, so both sides are normalised.
   tags="$(printf '%s\n' "$manifest" | jq -r '.[].RepoTags[]? | sub("^(index\\.)?docker\\.io/"; "")')"
   for want in "$@"; do
     printf '%s\n' "$tags" | grep -qxF "$(printf '%s' "$want" | sed -E 's#^(index\.)?docker\.io/##')" \
@@ -160,53 +134,33 @@ EOF
   [ "$incomplete" = 0 ]
 }
 
-# Pull k3s's own system images on the HOST and hand them to the node as an airgap tarball, which
-# k3s imports at startup from /var/lib/rancher/k3s/agent/images.
+# Pull k3s's own system images on the HOST and hand them to the node as an airgap tarball, which k3s
+# imports at startup from /var/lib/rancher/k3s/agent/images. Opt-in: for a node that cannot reach
+# docker.io while the host can — a TLS-inspecting network, where the host trusts the interception CA
+# and the node's containerd does not, and every pod sits in ContainerCreating with an x509 error on
+# the *pause sandbox* image. An airgap escape hatch, not a workaround for one network; it does NOT
+# install anyone's CA and must not grow into doing so.
 #
-# Off by default and deliberately opt-in: it costs a fetch-and-verify on a cold cache and nobody
-# whose node can reach docker.io needs it. What it is for is a node that cannot while the host can —
-# the shape a TLS-inspecting network produces, because the host trusts the interception CA and the
-# k3d node's containerd does not. That failure is hard to read from the inside: the images build
-# fine, `k3d cluster create` succeeds, and every pod then sits in ContainerCreating forever with an
-# x509 error four `describe`s down, on the *pause sandbox* image rather than anything this project
-# owns.
-#
-# An offline/airgap escape hatch, not a workaround for one network: it fixes any node that cannot
-# pull, a genuinely offline laptop included. It does NOT install anyone's CA anywhere and must not
-# grow into doing so — a shared script that injects a corporate trust root is a worse problem than
-# the one it solves.
-#
-# WHAT A CORRECT PRELOAD LOOKS LIKE, because there are two failure modes here and #533 is what made
-# them distinguishable. On success this ends with
-#
-#     8 images verified in build/k3d-rehearsal/airgap/k3s-airgap.tar
-#
-# and the word to look for is *verified*: the tarball has been read back and every layer blob its
-# own manifest names is in it. Anything less fails here, loudly, naming the images — so if the
-# cluster then comes up and pods still sit in ContainerCreating with an x509 error, the tarball was
-# sound and the node genuinely cannot pull (#526), rather than a preload that quietly did nothing.
+# A correct preload ends with `8 images verified in …/k3s-airgap.tar`, and *verified* is the word:
+# the tarball has been read back and every layer blob is in it (#533). If pods still sit in
+# ContainerCreating after that, the node genuinely cannot pull (#526).
 preload_images() {
   [ "${K3D_PRELOAD_IMAGES:-0}" = "1" ] || return 0
-  # Scoped to the opt-in path rather than added to `require` at the top: the preload is the only
-  # thing here that needs jq, and hard-requiring a tool for everyone to serve an escape hatch most
-  # runs never touch is a poor trade.
+  # Scoped to the opt-in path: the preload is the only thing here that needs jq.
   require jq
 
   local dir="$STATE_DIR/airgap" ver url tar
   tar="$dir/k3s-airgap.tar"
   mkdir -p "$dir"
 
-  # Ask k3d which k3s it will actually run rather than pinning a version here — the two must agree,
-  # and k3d's default moves with its own releases.
+  # Ask k3d which k3s it will run rather than pinning one; k3d's default moves with its releases.
   ver="$(k3d version --output json | yq -p json '.k3s')"
   [ -n "$ver" ] && [ "$ver" != "null" ] || die "could not determine the k3s version k3d will use"
 
   if [ -f "$tar" ] && [ "$(cat "$dir/version" 2>/dev/null)" = "$ver" ]; then
-    # Verified again rather than trusted. The marker is only written after a successful check, so a
-    # matching marker does mean this tarball verified once — but tarballs written before #533 have a
-    # marker with no check behind them, and re-reading the archive costs about a second. Failure
-    # rebuilds rather than dies: the cache is keyed on the k3s version alone, which before #533 made
-    # a bad tarball permanent, with `rm -rf` the only way out and nothing anywhere saying so.
+    # Verified again rather than trusted: tarballs written before #533 carry a marker with no check
+    # behind them, and re-reading costs a second. Failure rebuilds rather than dies — the cache is keyed
+    # on the k3s version alone, which once made a bad tarball permanent.
     if verify_airgap_tar "$tar"; then
       info "airgap images already prepared for $ver"
       return 0
@@ -215,8 +169,8 @@ preload_images() {
     rm -f "$tar" "$dir/version"
   fi
 
-  # The release publishes the canonical list; deriving it by guessing image names is how one gets
-  # missed and the cluster stalls on exactly that one. `+` must be percent-encoded in the URL.
+  # The release publishes the canonical list; guessing image names is how one gets missed. `+` must be
+  # percent-encoded in the URL.
   url="https://github.com/k3s-io/k3s/releases/download/${ver//-k3s1/%2Bk3s1}/k3s-images.txt"
   log "Preloading k3s system images for $ver (K3D_PRELOAD_IMAGES=1)"
   local images=()
@@ -227,20 +181,15 @@ preload_images() {
 
   [ "${#images[@]}" -gt 0 ] || die "the k3s image list was empty"
 
-  # The node runs on this host's Docker, so the daemon's platform is the node's platform. `docker
-  # save` picked it implicitly; `crane` has to be told.
+  # The node runs on this host's Docker, so the daemon's platform is the node's; `crane` has to be told.
   local plat
   plat="$(docker version --format '{{.Server.Os}}/{{.Server.Arch}}')" || plat=""
   [ -n "$plat" ] || die "could not determine the platform the k3d node will run on"
 
-  # `crane` is preferred and `docker save` is only the fallback, which is the opposite of how this
-  # started. `docker save` is the component that was writing empty images (#533) and it fetches
-  # nothing anyway — it re-exports the daemon's own store, which is what was behaving unexpectedly.
-  # `crane` reads the registry directly and never goes near that store. Being a static Go binary it
-  # resolves TLS through the system trust store exactly as `docker pull` does, so it keeps working
-  # on the interception-CA network this escape hatch exists for — which a containerised crane, with
-  # its own CA bundle, would not. The fallback stays because the preload is opt-in and `docker save`
-  # is fine on plenty of daemons; it is now verified either way rather than believed.
+  # `crane` is preferred and `docker save` the fallback: `docker save` is what wrote empty images
+  # (#533) and it fetches nothing anyway, while `crane` reads the registry directly and, as a static Go
+  # binary, resolves TLS through the system trust store — so it works on the interception-CA network
+  # this exists for, which a containerised crane would not. Verified either way.
   if command -v crane >/dev/null; then
     info "fetching ${#images[@]} images with crane ($plat)"
     crane pull --platform "$plat" "${images[@]}" "$tar" \
@@ -255,8 +204,8 @@ preload_images() {
     docker save "${images[@]}" -o "$tar" || die "could not save the airgap tarball"
   fi
 
-  # Discarded on failure so the next run refetches instead of finding a plausible-looking file, and
-  # the version marker is written only past this point so a bad tarball can never become a cached one.
+  # Discarded on failure so the next run refetches, and the version marker is written only past this
+  # point so a bad tarball can never become a cached one.
   verify_airgap_tar "$tar" "${images[@]}" || {
     rm -f "$tar"
     die "the airgap tarball is incomplete — the images named above are missing content, and it has been discarded. If docker save wrote it, 'brew install crane' and run again."
@@ -266,71 +215,48 @@ preload_images() {
   info "${#images[@]} images verified in $tar"
 }
 
-# Shared by `up` and `flux-up`, which need the same cluster and the same database but install the
-# chart in completely different ways — one from the working tree with locally built images, the other
-# from GHCR through Flux.
+# Shared by `up` and `flux-up`: the same cluster and database, the chart installed two different ways.
 create_cluster() {
   mkdir -p "$STATE_DIR"
   # Saved before k3d switches it, so `down` can put it back exactly.
   kubectl config current-context > "$STATE_DIR/previous-context" 2>/dev/null || true
 
   log "Creating the cluster"
-  # 8080:80 publishes Traefik, which is what makes the ingress testable from the host at all.
+  # 8080:80 publishes Traefik, which is what makes the ingress testable from the host.
   preload_images
-  # k3s imports any tarball it finds in this directory before it starts pulling, so the mount has to
-  # exist at creation time — it cannot be added to a running node.
+  # k3s imports any tarball in this directory before it pulls, so the mount has to exist at creation time.
   local airgap=()
-  # `@server:0;agent:0` is not optional decoration. Without a node filter k3d warns "No node filter
-  # specified" and the mount does not land where k3s looks, so the tarball is silently ignored and
-  # every pod sits in ContainerCreating exactly as it did without the preload — the failure is
-  # identical to the one this is meant to fix, which is the worst way for it to break.
+  # `@server:0;agent:0` is not decoration: without a node filter the mount does not land where k3s
+  # looks, the tarball is silently ignored, and the failure is identical to the one this fixes.
   [ "${K3D_PRELOAD_IMAGES:-0}" = "1" ] && airgap=(--volume "$PWD/$STATE_DIR/airgap:/var/lib/rancher/k3s/agent/images@server:0;agent:0")
-  # ${arr[@]+"${arr[@]}"} rather than "${arr[@]}": an empty array under `set -u` is only safe from
-  # bash 4.4 on, and /bin/bash on macOS is still 3.2.
-  # `|| die` is not belt-and-braces over `set -e`, for the reason `cmd_up` states at length: this
-  # runs on the left of an `&&` chain in `main`, which exempts the whole function from errexit
-  # recursively. Without it a failed creation was reported as success and the run carried on into the
-  # CoreDNS wait, the CRD wait and the chart install against a cluster that does not exist (#692).
-  # Only stdout is redirected, so k3d's own ERRO/FATA lines still reach the terminal; this message
-  # adds the part k3d does not say.
+  # ${arr[@]+"${arr[@]}"} rather than "${arr[@]}": an empty array under `set -u` is only safe from bash
+  # 4.4, and macOS ships 3.2. `|| die` because this runs on the left of an `&&` chain in `main`, which
+  # exempts the whole function from errexit (see `main`); without it a failed creation was reported as
+  # success (#692). Only stdout is redirected, so k3d's own ERRO/FATA lines still show.
   k3d cluster create "$CLUSTER" --port "8080:80@loadbalancer" --agents 1 ${airgap[@]+"${airgap[@]}"} >/dev/null \
     || die "k3d could not create the cluster — its own ERRO/FATA lines are above.
 The usual cause here is something already listening on 8080, which is what the BFF binds under 'bootRun':
   lsof -nP -iTCP:8080 -sTCP:LISTEN
 k3d rolls its own changes back, so there is nothing left to clean up."
 
-  # Read into a variable and asserted rather than interpolated straight into the message. #541's
-  # lesson was that a printed line is not an assertion, and this was the same shape: it printed
-  # `cluster up ()` — an empty architecture from a `kubectl` that had just said "context was not
+  # Read into a variable and asserted rather than interpolated: a printed line is not an assertion, and
+  # `cluster up ()` — an empty architecture from a `kubectl` that had just said "context was not found"
+  # — is how a cluster that was never created looked like one that was (#541).
   # found" — which is what made a cluster that was never created look like one that was.
   local arch
   arch="$(k get nodes -o jsonpath='{.items[0].status.nodeInfo.architecture}' 2>/dev/null)" || arch=""
   [ -n "$arch" ] || die "the cluster reports no nodes — k3d returned 0 but context '$CONTEXT' has nothing in it"
   info "cluster up ($arch)"
 
-  # k3d writes `host.k3d.internal` into the CoreDNS ConfigMap **after `k3d cluster create` returns**,
-  # not while it runs. Measured on this machine (#541): the entry appeared **11 seconds** after create
-  # returned on a bare cluster, and **7 seconds** on the rehearsal's own. Until it lands, every pod
-  # resolving the database host gets `java.net.UnknownHostException: host.k3d.internal`.
+  # k3d writes `host.k3d.internal` into the CoreDNS ConfigMap **after `k3d cluster create` returns** —
+  # measured 7–11 seconds later (#541). Until it lands, every pod resolving the database host gets
+  # `UnknownHostException`. The importer shows it (Flyway connects eagerly at startup and crash-loops);
+  # the BFF's R2DBC pool connects lazily and never notices, so it presents as "the importer is flaky".
   #
-  # The importer is the one that shows it, and that is not luck: Flyway opens its JDBC connection
-  # eagerly during context startup, so an unresolvable host fails the context and the pod
-  # crash-loops. The BFF's R2DBC pool connects lazily and never notices — which is why this presents
-  # as "the importer is flaky" rather than as a DNS problem.
-  #
-  # **Wait for the write, then restart to load it. Both halves are needed, in that order.** A
-  # restart cannot load a write that has not happened: restart first and CoreDNS comes back Ready on
-  # the old file, and this script reports "resolvable" seconds before it is.
-  #
-  # The entry lands in the ConfigMap's `NodeHosts` key — not `Corefile` — which CoreDNS reads through
-  # a volume mount at /etc/coredns and watches with the *hosts* plugin's own `reload 15s`. So the
-  # self-heal was kubelet's ConfigMap volume sync plus that 15s, which is long enough to produce
-  # several restarts and then look like it never happened.
-  #
-  # It self-heals, which is worse than failing: the install still succeeds and the only evidence is a
-  # restart count nobody reads. #438's rehearsal passed only because the Traefik CRD wait below
-  # happened to take 15s and absorbed the gap; the run where the CRDs were ready in 0s crash-looped
-  # four times.
+  # **Wait for the write, then restart to load it, in that order.** The entry lands in the `NodeHosts`
+  # key, read through a volume mount and the hosts plugin's own `reload 15s`, so the self-heal takes
+  # long enough to produce several restarts and then look like it never happened. It self-heals, which
+  # is worse than failing: the install succeeds and the only evidence is a restart count.
   local dns_waited=0
   until k -n kube-system get configmap coredns -o yaml 2>/dev/null | grep -q 'host\.k3d\.internal'; do
     [ "$dns_waited" -ge 120 ] && die "k3d never wrote host.k3d.internal into the CoreDNS ConfigMap (waited ${dns_waited}s).
@@ -340,29 +266,20 @@ Every pod resolving the database host would fail. Check 'kubectl -n kube-system 
   done
   info "host.k3d.internal written to the CoreDNS ConfigMap after ${dns_waited}s"
 
-  # Now the restart means something: a new pod mounts the ConfigMap as it is, so it comes up already
-  # holding the entry rather than waiting on the volume sync and the plugin's own reload.
-  # The `rollout status` below carries a `|| die` and this did not, so a restart that never happened
-  # was waited on rather than reported (#692, same class as the create above).
+  # Now the restart means something: a new pod mounts the ConfigMap as it is. `|| die`, because a
+  # restart that never happened was once waited on rather than reported (#692).
   k -n kube-system rollout restart deployment coredns >/dev/null \
     || die "could not restart CoreDNS — it would come back on the config without host.k3d.internal"
   k -n kube-system rollout status deployment coredns --timeout=120s >/dev/null \
     || die "CoreDNS did not roll out — every pod resolving host.k3d.internal will fail"
   info "CoreDNS restarted onto it"
 
-  # k3s installs its bundled Traefik through a HelmChart CR that the helm-controller reconciles
-  # asynchronously, so `k3d cluster create` returns BEFORE `traefik.io/v1alpha1` is a kind the API
-  # server knows. Install inside that window and Helm fails the whole release with
-  # "no matches for kind Middleware" — not just the middleware: nothing is installed at all.
-  #
-  # Nothing hit this until #286, and the reason is worth keeping. The chart renders exactly two
-  # Traefik CRD objects: the redirect Middleware, gated on `redirectHosts`, and the noindex one,
-  # gated on `ingress.noindex`. k3d had `redirectHosts: []` and no `noindex`, so it had never
-  # rendered a Traefik kind at all and never needed the CRDs to exist. Turning noindex on for the
-  # rehearsal is what made this reachable — the race was always there.
-  #
-  # Waiting on the CRD rather than on the Job because the CRD is the thing Helm actually needs, and
-  # `kubectl wait` cannot wait for a resource that does not exist yet — hence the poll.
+  # k3s installs its bundled Traefik through a HelmChart CR reconciled asynchronously, so `k3d cluster
+  # create` returns BEFORE `traefik.io/v1alpha1` is a kind the API server knows. Install inside that
+  # window and Helm fails the whole release with "no matches for kind Middleware" — nothing is
+  # installed at all. Reachable since #286 turned `noindex` on for the rehearsal, which is the first
+  # Traefik kind the chart rendered here. Polled, because `kubectl wait` cannot wait for a resource that
+  # does not exist yet.
   log "Waiting for Traefik's CRDs — the chart renders Middleware objects and Helm resolves kinds up front"
   local waited=0
   until k get crd middlewares.traefik.io >/dev/null 2>&1; do
@@ -372,60 +289,43 @@ A pod stuck in ContainerCreating on an image pull is the usual cause — check
     sleep 5
     waited=$((waited + 5))
   done
-  # Polled rather than waited on with `kubectl wait`, and that is not a style choice — **both** of
-  # its `--for` forms fail instantly here rather than waiting (#696).
-  #
-  # `--for=condition=established` is the form to avoid. The poll above returns the moment the
-  # *object* exists, which can be before the API server has populated the status
-  # subresource, and at that instant `.status.conditions` is present and explicitly **null**. On that
-  # shape `--for=condition` exits 1 immediately with
-  #
-  #     error: .status.conditions accessor error: <nil> is of the type <nil>, expected []interface{}
-  #
-  # so the 60s were never spent. Measured on kubectl 1.36.4: an explicit `conditions: null` fails in
-  # ~1s, while a status that merely *lacks* conditions waits correctly — which is why this is
-  # intermittent and why four rehearsals the same day printed "ready after 0s" without noticing.
-  #
-  # `--for='jsonpath={...}=True'` is the usual advice for that bug and **does not work either**: on
-  # the same object it exits 1 in 0s with `<nil> is not array or slice and cannot be filtered`. Both
-  # were measured against a resource patched to `status: {conditions: null}` on purpose; do not swap
-  # this back for either of them.
-  #
-  # `kubectl get -o jsonpath` fails the same way on that shape, but here it is harmless: a failed
-  # read is empty, empty is not True, and the loop simply goes round again. Errors go to /dev/null so
-  # a transient one cannot leave a misleading explanation on screen next to the die below.
+  # Polled rather than `kubectl wait`, because **both** of its `--for` forms fail instantly here (#696).
+  # The poll above returns the moment the *object* exists, which can be before the status subresource
+  # is populated, and at that instant `.status.conditions` is explicitly **null**: `--for=condition`
+  # exits 1 with `accessor error: <nil> is of the type <nil>`, and `--for='jsonpath={...}=True'` exits
+  # 1 with `<nil> is not array or slice`. Both measured on kubectl 1.36.4 against a resource patched to
+  # `conditions: null`; do not swap this back for either. `kubectl get -o jsonpath` fails the same way
+  # and here it is harmless: a failed read is empty, empty is not True, the loop goes round again.
   local jsonpath='{.status.conditions[?(@.type=="Established")].status}' established=0
   until [ "$(k get crd middlewares.traefik.io -o jsonpath="$jsonpath" 2>/dev/null)" = "True" ]; do
-    # The elapsed total is in the message, so this can never again describe a wait that did not happen.
+    # The elapsed total is in the message, so this can never describe a wait that did not happen.
     [ "$established" -ge 60 ] && die "the Middleware CRD exists but was still not Established ${established}s later (${waited}s into the wait).
 'kubectl get crd middlewares.traefik.io -o yaml' shows its status; a null .status.conditions means the API server never finished registering it."
     sleep 1
     established=$((established + 1))
   done
-  # Both stages, because the CRD is not ready until the second one says so — reporting only the
-  # existence poll would print "ready after 0s" for a wait that spent seconds becoming Established.
+  # Both stages: reporting only the existence poll would print "ready after 0s" for a wait that spent
+  # seconds becoming Established.
   info "Traefik CRDs ready after $((waited + established))s"
 }
 
-# Creates the rehearsal's own empty database and the credentials Secret. `namespace` decides where
-# the Secret lands: the helm path installs into `default`, the Flux path into the release's target
-# namespace, and a Secret in the wrong namespace fails the release for a reason that looks like Flux.
+# Creates the rehearsal's own empty database and the credentials Secret. `namespace` decides where the
+# Secret lands, and a Secret in the wrong namespace fails the release for a reason that looks like Flux.
 prepare_database() {
   local namespace="${1:-default}"
   log "Database and secret"
   docker compose up -d >/dev/null 2>&1
-  # `docker compose up -d` returns when the container is *started*, not when PostgreSQL is accepting
-  # connections — and the gap is long enough that the very next psql call fails with a socket error
-  # that reads like a misconfiguration. dev-env.sh has the same wait for the same reason.
+  # `docker compose up -d` returns when the container is *started*, not when PostgreSQL accepts
+  # connections; the very next psql call fails with a socket error that reads like a misconfiguration.
   local i
   for i in $(seq 1 30); do
     if docker exec "$PG_CONTAINER" pg_isready -U admin -d postgres >/dev/null 2>&1; then break; fi
     [ "$i" = 30 ] && die "PostgreSQL did not become ready within 30s"
     sleep 1
   done
-  # On an empty volume — every CI runner — the image initialises with a throwaway server that
-  # answers `pg_isready`, then stops it and starts the real one. A statement sent in between dies
-  # with `terminating connection due to administrator command`, so the statement retries.
+  # On an empty volume the image initialises with a throwaway server that answers `pg_isready`, then
+  # restarts; a statement sent in between dies with `terminating connection due to administrator
+  # command`, so it retries.
   for i in $(seq 1 15); do
     if psql_ -d postgres -c "DROP DATABASE IF EXISTS $DB;" -c "CREATE DATABASE $DB OWNER admin;" >/dev/null 2>&1; then break; fi
     [ "$i" = 15 ] && die "could not create $DB within 30s of PostgreSQL reporting ready"
@@ -437,16 +337,14 @@ prepare_database() {
   info "database $DB created empty; secret events-db created in namespace $namespace"
 
   [ "$IMAGES" = 1 ] || return 0
-  # The two Secrets the image path needs. Both are created out of band in every real environment
-  # (SECRETS.md), which is exactly why the chart has no path that invents them and why they have to
-  # exist before the install rather than after it — `secretKeyRef` is not optional, so values that
-  # land ahead of a Secret leave the pod in CreateContainerConfigError.
+  # The two Secrets the image path needs, created out of band in every real environment (SECRETS.md).
+  # `secretKeyRef` is not optional, so values that land ahead of a Secret leave the pod in
+  # CreateContainerConfigError.
   k -n "$namespace" create secret generic event-junkie-images \
     --from-literal=IMAGE_STORAGE_ACCESS_KEY=minioadmin \
     --from-literal=IMAGE_STORAGE_SECRET_KEY=minioadmin >/dev/null
-  # A shared secret between two containers rather than a credential to anything, so a value fixed
-  # here costs nothing. It is still 64 hex characters, because imgproxy parses it as hex and a
-  # shorter one would fail in a way this rehearsal is not trying to discover.
+  # A shared secret between two containers, not a credential to anything; still 64 hex characters,
+  # because imgproxy parses it as hex.
   local key salt
   key="$(printf '61%.0s' $(seq 1 32))"
   salt="$(printf '62%.0s' $(seq 1 32))"
@@ -458,16 +356,11 @@ prepare_database() {
 cmd_up() {
   require k3d kubectl helm docker yq
 
-  # EVERY FALLIBLE STEP BELOW CARRIES AN EXPLICIT `|| die`, AND THAT IS NOT BELT-AND-BRACES OVER
-  # `set -euo pipefail` — it is the only thing standing in for it here. `main` runs this function on
-  # the left of an `&&` chain, and a command in an AND-list is exempt from errexit for the whole
-  # function, recursively. So without these the build could fail, the cluster could fail, the release
-  # could fail to install, and this function would still run to its last line and return that line's
-  # status. It did exactly that (#525): a release that installed nothing was reported as success and
-  # the run carried on into four assertions that measured an empty cluster.
-  #
-  # `up` builds a precondition, so it fails fast. `verify` measures, so it accumulates into FAILURES
-  # and reports at the end — those are different jobs and deliberately behave differently.
+  # EVERY FALLIBLE STEP BELOW CARRIES AN EXPLICIT `|| die`, AND THAT IS NOT BELT-AND-BRACES: `main`
+  # runs this on the left of an `&&` chain, and a command in an AND-list is exempt from errexit for the
+  # whole function, recursively. Without these a release that installed nothing was reported as success
+  # and four assertions measured an empty cluster (#525). `up` builds a precondition and fails fast;
+  # `verify` measures and accumulates into FAILURES.
   log "Building the four images"
   ./gradlew -q :events-bff:bootJarLayers :events-importer:bootJarLayers \
     || die "the Gradle build failed — there is no jar to put in an image"
@@ -486,7 +379,7 @@ cmd_up() {
     -t localhost/event-junkie/frontend:dev --load --quiet >/dev/null \
     || die "could not build the frontend image"
   info "built localhost/event-junkie/frontend:dev"
-  # The meta-injection sidecar (#287), from the same `npm run build` — `dist-injector/` sits beside `dist/`.
+  # The meta-injection sidecar (#287), from the same `npm run build`.
   docker buildx build events-frontend -f events-frontend/Dockerfile.injector \
     --build-arg "VERSION=$ver" --build-arg "REVISION=$rev" \
     -t localhost/event-junkie/injector:dev --load --quiet >/dev/null \
@@ -502,9 +395,8 @@ cmd_up() {
 
   prepare_database default
 
-  # THE ONE THAT MATTERS. Helm resolves every kind up front, so an unknown one fails the entire
-  # release rather than a single object — nothing is installed at all, and the message says so in a
-  # sentence that scrolls away behind whatever ran next.
+  # THE ONE THAT MATTERS. Helm resolves every kind up front, so an unknown one fails the entire release
+  # — nothing is installed — in a sentence that scrolls away behind whatever ran next.
   log "Installing the chart"
   local values_args=(--values "$VALUES")
   if [ "$IMAGES" = 1 ]; then
@@ -513,24 +405,15 @@ cmd_up() {
   fi
   h install "$RELEASE" "$CHART" "${values_args[@]}" --wait --timeout 5m >/dev/null \
     || die "the release did not install — nothing below this point would be measuring the chart"
-  # Informational, and deliberately before the assertion below: it succeeds whether or not anything
-  # is running, so its status must never be what this function returns. Every step above exits on
-  # failure, so by the time control reaches here the install has genuinely succeeded.
+  # Informational, and before the assertion below, because it succeeds whether or not anything is
+  # running and its status must never be what this function returns.
   k get pods -l "app.kubernetes.io/instance=$RELEASE" --no-headers | sed 's/^/   /'
 
-  # `--wait` establishes Ready, and Ready is not the bar. /k3d-rehearsal asks for Ready **and no
-  # restarts**, because a pod that recovered after crashing is a different result from one that
-  # started — and until #544 nothing checked it. That is how #541 survived two rehearsals: the
-  # importer restarted four times on a DNS race and both runs were reported clean, because the only
-  # evidence was a column in a table printed for a human to read.
-  #
-  # `bad` rather than `die`, deliberately. Every other step in this function is a precondition and
-  # fails fast; a restart count is a *measurement*. The stack is up and the rest of the rehearsal is
-  # still worth running, so this accumulates into FAILURES and fails the run at the end — the same
-  # contract cmd_verify has.
-  #
-  # Summed across containers rather than read from the first, so a workload that gains a sidecar does
-  # not quietly stop being covered.
+  # `--wait` establishes Ready, and Ready is not the bar: the rehearsal asks for Ready **and no
+  # restarts**, because a pod that recovered after crashing is a different result — #541 survived two
+  # rehearsals with four importer restarts because the only evidence was a column printed for a human.
+  # `bad` rather than `die`: a restart count is a measurement, so the rest of the rehearsal still runs.
+  # Summed across containers, so a workload that gains a sidecar stays covered.
   local restarted
   restarted="$(k get pods -l "app.kubernetes.io/instance=$RELEASE" \
     -o jsonpath='{range .items[*]}{.metadata.name}{" "}{.status.containerStatuses[*].restartCount}{"\n"}{end}' \
@@ -538,9 +421,8 @@ cmd_up() {
   if [ -z "$restarted" ]; then
     ok "all pods Ready with no restarts"
   else
-    # A here-string, NOT a pipe. `while read` on the right of a pipe runs in a subshell, and every
-    # FAILURES increment inside it would be discarded when that subshell exits — an assertion that
-    # prints FAIL and does not fail the run.
+    # A here-string, NOT a pipe: `while read` on the right of a pipe runs in a subshell, and every
+    # FAILURES increment inside it would be discarded.
     local pod count
     while read -r pod count; do
       bad "$pod restarted ${count}x before becoming Ready — Ready is not the bar (#544). 'kubectl logs --previous' will say why"
@@ -548,10 +430,9 @@ cmd_up() {
   fi
 }
 
-# Every negative assertion here checks the CONTENT TYPE, not the status code, and that is the whole
-# point of the function. nginx serves the SPA for any unmatched path, so `/actuator/health` through
-# the ingress returns 200 — a status-only test passes for entirely the wrong reason and would keep
-# passing if actuator were genuinely exposed.
+# Every negative assertion here checks the CONTENT TYPE, not the status code: nginx serves the SPA for
+# any unmatched path, so `/actuator/health` through the ingress returns 200 and a status-only test
+# would keep passing if actuator were genuinely exposed.
 cmd_verify() {
   guard_context
   local code type
@@ -560,18 +441,10 @@ cmd_verify() {
     type="$(curl -s -o /dev/null -w '%{content_type}' -H "$HOST_HEADER" --max-time 10 "$BASE$1")"
   }
 
-  # The header below promises the negatives prove nothing if the positives fail, and until #544
-  # nothing enforced it. The verdict was never wrong — `FAILURES` still fails the run — but the
-  # transcript carried green ticks the script itself calls meaningless, and a transcript is what
-  # somebody reads at 23:00 to decide whether to ship.
-  #
-  # The shape of the false green: with the ingress misrouting, `/actuator/health` answers Traefik's
-  # own HTML error page (`ok`, "it is the SPA fallback") and `/api/admin/sources` answers 404 because
-  # nothing is routed at all (`ok`, "it does not reach the importer"). Both are true statements about
-  # a broken cluster and neither says anything about the security property they are named for.
-  #
-  # `unproven` deliberately does NOT touch FAILURES: the positive that failed already counted the
-  # outage, and counting it again would make the summary claim three things broke when one did.
+  # The negatives prove nothing if the positives fail, and until #544 nothing enforced it: with the
+  # ingress misrouting, `/actuator/health` answers Traefik's error page and `/api/admin/sources` answers
+  # 404, both "ok" and neither about the security property they are named for. `unproven` does NOT
+  # touch FAILURES: the positive that failed already counted the outage.
   local positives=ok
   unproven() { printf '   \033[33m----\033[0m %s — unproven, the positive routing above failed\n' "$*"; }
   ok_if_routed() { if [ "$positives" = ok ]; then ok "$@"; else unproven "$@"; fi; }
@@ -608,25 +481,16 @@ cmd_verify() {
     bad "/api/admin/sources -> $code, expected 404"
   fi
 
-  # The one thing no render assertion can establish (#286). The chart mounts a ConfigMap over the
-  # `robots.txt` and `sitemap.xml` that the frontend build bakes into the image, using `subPath` —
-  # and a `subPath` naming a key the ConfigMap does not have mounts an EMPTY DIRECTORY over the file
-  # rather than failing. The pod stays Ready either way and the manifest looks identical, so the
-  # only evidence that the override reached nginx is the bytes it hands back.
+  # The one thing no render assertion can establish (#286): the chart mounts a ConfigMap over the
+  # `robots.txt` and `sitemap.xml` baked into the image with `subPath`, and a `subPath` naming a key the
+  # ConfigMap lacks mounts an EMPTY DIRECTORY over the file rather than failing. The pod stays Ready, so
+  # the only evidence is the bytes nginx hands back: the image's copy says `Allow: /` and names a
+  # production `Sitemap:`, the mounted one says `Disallow: /`.
   #
-  # Which is why these assert on the body and not on the status: both files return 200 whichever
-  # copy is served. The two are told apart by content — the image's says `Allow: /` and carries a
-  # `Sitemap:` line naming production; the mounted one says `Disallow: /` and carries none.
-  # EVERY ASSERTION BELOW IS PHRASED AS AN ABSENCE, AND AN ABSENCE IS TRUE OF NOTHING AT ALL.
-  # The first version of this block reported "names no sitemap" and "lists nothing" as passes during
-  # a run where the release had failed to install and the ingress was answering 000 — both were
-  # trivially true of an empty string. So each fetch establishes that it got a real response first,
-  # and only then asserts on what is missing from it. An assertion that cannot fail is worse than no
-  # assertion, because it is counted.
-  # These are NOT gated on `positives`, and the exemption is deliberate rather than an oversight:
-  # `fetched` below establishes its own precondition — a 200 with a non-empty body — which is a
-  # stronger statement than "the ingress routes /", not a weaker one. Gating them as well would turn
-  # real evidence about the mount into `unproven` on the strength of an unrelated failure.
+  # EVERY ASSERTION BELOW IS PHRASED AS AN ABSENCE, AND AN ABSENCE IS TRUE OF NOTHING AT ALL — the first
+  # version reported passes against an ingress answering 000. Each fetch establishes a real 200 with a
+  # body first. Not gated on `positives`: `fetched` establishes a stronger precondition than "the
+  # ingress routes /".
   log "The noindex body half — proves the subPath mount reached nginx, not just the manifest"
   fetched() { # fetched <path> -> sets body; false if there was no real response to judge
     body="$(curl -s -H "$HOST_HEADER" --max-time 10 "$BASE$1")"
@@ -640,8 +504,7 @@ cmd_verify() {
 
   local body
   if fetched /robots.txt; then
-    # The image's copy says `Allow: /` and carries a `Sitemap:` line naming production; the mounted
-    # one says `Disallow: /` and carries none. That is how the two are told apart — both are 200.
+    # The image's copy says `Allow: /` and carries a `Sitemap:` line; the mounted one says `Disallow: /`.
     if printf '%s' "$body" | grep -qE '^Disallow: /$'; then
       ok "/robots.txt is the mounted disallow-all, not the image's copy"
     else
@@ -671,12 +534,9 @@ cmd_verify() {
 
 cmd_import() {
   guard_context
-  # One import of one venue, once — ADR-007, whichever venue that is.
-  #
-  # AMT by default: a small club, and the one the rehearsal has always used. Under K3D_IMAGES it is
-  # Cassiopeia instead, because AMT frequently publishes nothing upcoming — which is a fine result
-  # for the chain (#693 says so) and useless for the image path, since an event that is never
-  # persisted has no `image_url` to cache. The image rehearsal needs a venue that reliably has both.
+  # One import of one venue, once (ADR-007). AMT by default; under K3D_IMAGES it is Cassiopeia, because
+  # AMT often publishes nothing upcoming — fine for the chain (#693), useless for the image path, which
+  # needs a persisted event with an `image_url`.
   local slug name venue_url source_url source_type
   if [ "$IMAGES" = 1 ]; then
     slug="${1:-cassiopeia}"
@@ -696,14 +556,8 @@ cmd_import() {
   trap "kill $pf 2>/dev/null || true" RETURN
   local api=localhost:18081/api/admin
 
-  # A fixed sleep is the same class of defect as #541 — a timer standing in for a poll — at much
-  # lower stakes, because this one fails loudly through `die "venue POST failed"` rather than passing
-  # wrongly. It is still four seconds that are only ever "usually enough", and the reader of the
-  # resulting failure has no way to tell a slow port-forward from a broken importer.
-  #
-  # Any HTTP status at all is the evidence wanted here: it proves the tunnel is open and something is
-  # listening behind it. curl reports 000 for a refused connection or a timeout, which is the only
-  # value that means "not yet".
+  # A poll, not a fixed sleep (#541's class of defect, at lower stakes). Any HTTP status is the evidence
+  # wanted: it proves the tunnel is open; curl's 000 is the only value that means "not yet".
   local waited=0
   until [ "$(curl -s -o /dev/null -w '%{http_code}' --max-time 2 "$api/venues")" != 000 ]; do
     kill -0 "$pf" 2>/dev/null || die "the port-forward to ${RELEASE}-importer died after ${waited}s — 'kubectl port-forward' would have said why on stderr, which this discards"
@@ -713,8 +567,7 @@ cmd_import() {
   done
   info "importer answering on :18081 after ${waited}s"
 
-  # The address is the venue's own and is not what is under test; the slug the importer derives from
-  # `name` is, because every later call addresses the source by it.
+  # The venue's address is not under test; the slug the importer derives from `name` is.
   local vid
   vid="$(curl -sS -X POST "$api/venues" -H 'Content-Type: application/json' -d "{
     \"name\":\"$name\",\"city\":\"Berlin\",\"websiteUrl\":\"$venue_url\"}" | yq -p json '.id')"
@@ -740,39 +593,33 @@ cmd_import() {
 }
 
 # The single acceptance criterion for the whole rehearsal: importer → PostgreSQL → BFF → Traefik →
-# here. Every other check in this script can pass with the pieces working only in isolation.
+# here. Every other check can pass with the pieces working only in isolation.
 cmd_chain() {
   guard_context
   log "The chain: a scraped event coming back out through the ingress"
   local sources rows reported titles
-  # Read from the database rather than the admin API: `chain` owns no port-forward, and going
-  # through psql keeps it working standalone as well as inside `all`. Summed rather than looked up by
-  # slug so it does not need `cmd_import`'s venue argument threaded through.
+  # Read from the database, not the admin API: `chain` owns no port-forward. Summed rather than looked
+  # up by slug.
   sources="$(psql_ -d "$DB" -tAc 'select count(*) from events.event_source' | tr -d ' ')"
   rows="$(psql_ -d "$DB" -tAc 'select count(*) from events.event' | tr -d ' ')"
   reported="$(psql_ -d "$DB" -tAc 'select coalesce(sum(last_event_count), 0) from events.event_source' | tr -d ' ')"
 
-  # Three outcomes, and only one of them is a defect in the stack. Before #693 all three printed
-  # "no rows … run 'import' first", which was wrong in two of them: inside `all` the import had run
-  # seconds earlier and returned SUCCESS, so the remedy named a step that had already succeeded.
+  # Three outcomes, and only one is a defect in the stack; before #693 all three printed "no rows … run
+  # 'import' first", wrong in two of them.
   if [ "${sources:-0}" -eq 0 ]; then
-    # The one case where the old message was right: nothing has been seeded in this database.
+    # Nothing has been seeded in this database.
     bad "no event sources in $DB — run '$0 import' first"
     return 1
   elif [ "${rows:-0}" -gt 0 ]; then
     ok "$rows event rows written by the in-cluster importer"
   elif [ "${reported:-0}" -gt 0 ]; then
-    # The importer says it persisted events and the database has none. This is the chain breaking
-    # between the importer and PostgreSQL, and it is the failure this assertion exists to catch.
+    # The importer says it persisted events and the database has none: the chain breaking between them.
     bad "the importer reported $reported event(s) persisted and $DB has none — the chain is broken between the importer and PostgreSQL"
     return 1
   else
-    # Nothing was persisted, so there is nothing downstream to measure. `EventUpsertService`
-    # partitions on `!eventDate.isBefore(today)` and drops the past side, so a venue whose next month
-    # is unpublished produces exactly this: a SUCCESS that writes nothing. Not a failure of the
-    # stack — and deliberately not an `ok` either, because a scraper that has genuinely stopped
-    # finding anything lands here too and this script cannot tell the two apart. `last_event_count`
-    # counts what survived the drop; the number dropped exists only in the importer's log.
+    # Nothing was persisted, so nothing downstream to measure. `EventUpsertService` drops the past side,
+    # so a venue whose next month is unpublished produces a SUCCESS that writes nothing. Not a failure —
+    # and not an `ok` either, because a scraper that has genuinely stopped finding anything lands here too.
     skip "the importer persisted no events, so the chain was not exercised"
     info "expected when the seeded venue has nothing upcoming — that is what a SUCCESS writing nothing means (#693)"
     info "a scraper that has stopped finding anything looks identical here; 'Dropped N past event(s)' in the importer's log is what tells them apart"
@@ -789,12 +636,9 @@ cmd_chain() {
     | yq -p json '.content[] | "     - " + .title' 2>/dev/null || true
 }
 
-# The image path, end to end: the importer fetches a venue's poster, stores it in MinIO, asks the
-# imgproxy sidecar for each width and format, and the BFF serves one back through Traefik.
-#
-# **This is the step the three staging defects would each have failed** — a sidecar that would not
-# start, a sidecar nothing called, and an invariant that had never rendered a second container.
-# `helm template` passed for all three, which is the whole argument for running the thing.
+# The image path, end to end: poster fetched, stored in MinIO, each width and format from the imgproxy
+# sidecar, one served back through Traefik. **The step the three staging defects would each have
+# failed** — `helm template` passed for all three.
 cmd_images() {
   guard_context
   if [ "$IMAGES" != 1 ]; then
@@ -803,9 +647,7 @@ cmd_images() {
   fi
   log "The image path: fetch, store, derive, serve"
 
-  # The importer's pass is on a five-minute tick and the import above only just seeded the events it
-  # reads, so the first pass with anything to do is up to that far away. Polled rather than slept:
-  # a fixed wait is either wrong or wasteful, and this prints what it is waiting for.
+  # The importer's pass is on a five-minute tick, so polled rather than slept.
   local i variants=0
   for i in $(seq 1 40); do
     variants="$(psql_ -d "$DB" -tAc 'select count(*) from events.cached_image_variant' | tr -d ' ')"
@@ -826,8 +668,8 @@ cmd_images() {
   fi
   ok "$variants derivative(s) generated by the imgproxy sidecar"
 
-  # Every format, not just the count. A run that produced only JPEG means imgproxy answered and the
-  # formats this design exists for did not arrive.
+  # Every format, not just the count: JPEG alone means imgproxy answered and the formats this design
+  # exists for did not arrive.
   local formats
   formats="$(psql_ -d "$DB" -tAc "select string_agg(distinct format, ',' order by format) from events.cached_image_variant" | tr -d ' ')"
   case "$formats" in
@@ -835,7 +677,7 @@ cmd_images() {
     *) bad "only $formats generated — imgproxy answered but produced no AVIF, which is what ADR-020 chose it for" ;;
   esac
 
-  # And the other end: one of those objects, served from our own origin through a real Traefik.
+  # The other end: one of those objects, served from our own origin through a real Traefik.
   local hash width type
   hash="$(psql_ -d "$DB" -tAc "select c.content_hash from events.cached_image c join events.cached_image_variant v on v.cached_image_id = c.id where v.format = 'jpg' limit 1" | tr -d ' ')"
   width="$(psql_ -d "$DB" -tAc "select v.width from events.cached_image c join events.cached_image_variant v on v.cached_image_id = c.id where v.format = 'jpg' and c.content_hash = '$hash' order by v.width limit 1" | tr -d ' ')"
@@ -846,8 +688,7 @@ cmd_images() {
     bad "GET /api/images/$hash/$width.jpg returned '$type' rather than image/jpeg — the serving path is broken"
   fi
 
-  # The substitution, which is what actually stops the browser contacting the venue. A URL still
-  # pointing at a venue here means the BFF found no derivative and reported the source instead.
+  # The substitution, which is what stops the browser contacting the venue.
   local served
   served="$(curl -s -H "$HOST_HEADER" "$BASE/api/events?size=20" | yq -p json '[.content[] | select(.imageUrl == "/api/images/*")] | length')"
   if [ "${served:-0}" -gt 0 ]; then
@@ -857,10 +698,8 @@ cmd_images() {
   fi
 }
 
-# The output is piped, so `pipefail` carries helm's exit status out of this function and errexit
-# stops the run at the `&&` in `main` — correctly, and until #544 completely silently: the reader saw
-# the previous step's `ok`, then teardown, with no line naming the step that ended it. Capture first,
-# then judge, so the transcript says which step failed and with what.
+# Piped, so `pipefail` carries helm's status out and errexit stops the run at the `&&` in `main` —
+# correctly, and until #544 silently. Capture first, then judge, so the transcript names the step.
 cmd_test() {
   guard_context
   log "helm test"
@@ -876,32 +715,23 @@ cmd_test() {
 
 # --- The Flux half (#414) ------------------------------------------------------------------------
 #
-# A different question from `up`'s. That one installs the working tree's chart with images built
-# thirty seconds ago and answers "does my change work?". This installs the chart that is *published*
-# in GHCR, with the images that chart names, through the same controllers that will run on Hetzner —
-# and answers "does the delivery mechanism work?". Neither substitutes for the other.
-#
-# Deliberately NOT `flux bootstrap`: that commits Flux's manifests to this repository and creates a
-# deploy key on it, which is an outward-facing side effect in exchange for exercising git-sync — the
-# one part of Flux that genuinely needs a real cluster anyway. `flux install` gives the controllers;
-# the CRs are applied straight from the working tree.
+# `up` installs the working tree's chart ("does my change work?"); this installs the chart *published*
+# in GHCR through the controllers that run on Hetzner ("does the delivery mechanism work?"). NOT
+# `flux bootstrap`: that commits manifests and a deploy key to this repository. `flux install` gives
+# the controllers; the CRs are applied from the working tree.
 cmd_flux_up() {
   require k3d kubectl flux docker yq
   create_cluster
   prepare_database "$FLUX_NS"
 
-  # EVERY FALLIBLE STEP BELOW CARRIES AN EXPLICIT `|| die`, FOR THE REASON `cmd_up` STATES AT LENGTH:
-  # this function runs on the left of an `&&` chain in `main`, and a command in an AND-list is exempt
-  # from errexit for the whole function, recursively. #525 applied that lesson to the helm half only
-  # (#544), so `f install` and `k apply` could both fail here and the run would carry on to report
-  # "OCIRepository never became Ready" — sending the reader to investigate a registry or semver-range
-  # problem that does not exist.
+  # EVERY FALLIBLE STEP BELOW CARRIES AN EXPLICIT `|| die`, for the reason `cmd_up` states: an AND-list
+  # exempts the function from errexit. #525's lesson reached the helm half only (#544), so `f install`
+  # and `k apply` could fail and the run would report "OCIRepository never became Ready".
   log "Installing the Flux controllers"
   f install >/dev/null \
     || die "flux install failed — there are no controllers, and every failure after this point would be a symptom of that rather than of the chart"
-  # A count printed as a fact is how #533 and #541 both hid: `0 controllers installed` prints as
-  # calmly as `6`. Naming the two this rehearsal cannot work without beats counting them — a merely
-  # non-zero count still passes with the wrong set installed, and what `flux install` deploys moves
+  # A count printed as a fact is how #533 and #541 hid: `0 controllers installed` prints as calmly as
+  # `6`. Naming the two this rehearsal cannot work without beats counting them.
   # between versions, so an exact number would be brittle for no gain.
   for c in source-controller helm-controller; do
     k -n flux-system get "deploy/$c" >/dev/null 2>&1 \
@@ -912,9 +742,8 @@ cmd_flux_up() {
   log "Applying deploy/clusters/k3d"
   k apply -k "$FLUX_DIR" >/dev/null \
     || die "kubectl apply -k $FLUX_DIR failed — the OCIRepository and HelmRelease were never created, so waiting on them below would time out on resources that do not exist"
-  # Bounded, and separately, so a failure names which half broke. A source that never becomes Ready
-  # is a registry or a semver-range problem; a release that never becomes Ready is a chart or a
-  # values problem, and they need entirely different investigations.
+  # Bounded and separate, so a failure names which half broke: a source that never becomes Ready is a
+  # registry or range problem, a release is a chart or values problem.
   if k -n flux-system wait ocirepository/event-junkie --for=condition=Ready --timeout=2m >/dev/null 2>&1; then
     ok "OCIRepository resolved $(k -n flux-system get ocirepository event-junkie -o jsonpath='{.status.artifact.revision}')"
   else
@@ -938,9 +767,8 @@ cmd_flux_verify() {
 
   local revision
   revision="$(k -n flux-system get ocirepository event-junkie -o jsonpath='{.status.artifact.revision}')"
-  # The whole point of the `-0` in the semver range. A snapshot is a SemVer prerelease, and a range
-  # without a prerelease comparator skips it silently — so resolving one is the evidence, and
-  # `flux-trap` below shows the failure mode by removing it.
+  # The whole point of the `-0` in the semver range: a snapshot is a SemVer prerelease, and a range
+  # without a prerelease comparator skips it silently. `flux-trap` shows the failure mode.
   case "$revision" in
     *snapshot*) ok "resolved a snapshot: $revision" ;;
     "")         bad "no artifact resolved at all" ;;
@@ -956,10 +784,8 @@ cmd_flux_verify() {
     bad "expected ghcr.io images, got: $images"
   fi
 
-  # Every image tag must equal the chart's appVersion, which is what #264's fallback promises. If
-  # that fallback ever breaks, this is where it shows up as three tags that disagree. The digest
-  # behind the tag is stripped first: since #1473 a published chart names each image
-  # `repo:tag@sha256:…`, and four digests are four different strings by design.
+  # Every image tag must equal the chart's appVersion (#264's fallback). The digest behind the tag is
+  # stripped first: since #1473 a published chart names each image `repo:tag@sha256:…`.
   local distinct
   distinct="$(printf '%s\n' "$images" | sed -e 's/@sha256:[0-9a-f]*$//' -e 's/.*://' | sort -u | wc -l | tr -d ' ')"
   if [ "$distinct" = 1 ]; then
@@ -968,9 +794,8 @@ cmd_flux_verify() {
     bad "$distinct distinct image tags; the chart and the images have drifted"
   fi
 
-  # And every one of ours carries that digest, so a repointed tag on GHCR changes nothing a node
-  # pulls (#1473). A chart built locally has none; this is the Flux path and its chart came from
-  # release.yml, which stamps or fails.
+  # And every one of ours carries that digest (#1473). A chart built locally has none; this one came
+  # from release.yml, which stamps or fails.
   local ours undigested
   ours="$(printf '%s\n' "$images" | tr ' ' '\n' | grep '^ghcr.io/enorm-labs/event-junkie/' || true)"
   undigested="$(printf '%s\n' "$ours" | grep -vc '@sha256:[0-9a-f]\{64\}$' || true)"
@@ -980,8 +805,8 @@ cmd_flux_verify() {
     bad "$undigested image(s) of ours carry no digest: the stamp in release.yml did not reach the chart"
   fi
 
-  # Flux runs the chart's own `helm test` hook as part of reconciliation and records the result as a
-  # condition. This is the in-cluster smoke test that replaces the external one CI cannot run (§4a).
+  # Flux runs the chart's own `helm test` hook and records the result as a condition — the in-cluster
+  # smoke test that replaces the external one CI cannot run.
   if [ "$(k -n flux-system get helmrelease event-junkie -o jsonpath='{.status.conditions[?(@.type=="TestSuccess")].status}')" = "True" ]; then
     ok "helm test ran in-cluster and passed"
   else
@@ -989,8 +814,8 @@ cmd_flux_verify() {
   fi
 }
 
-# Removes the `-0` and watches the range stop matching. The trap this issue exists to avoid is
-# silent, so the only way to trust the range is to see both states — matching, and not.
+# Removes the `-0` and watches the range stop matching. The trap is silent, so the only way to trust
+# the range is to see both states.
 cmd_flux_trap() {
   guard_context
   log "The prerelease trap, observed rather than trusted"
@@ -1011,10 +836,8 @@ cmd_flux_trap() {
   k -n flux-system patch ocirepository event-junkie --type=merge \
     -p '{"spec":{"ref":{"semver":">=0.0.0-0"}}}' >/dev/null
   f reconcile source oci event-junkie >/dev/null 2>&1 || true
-  # `wait && ok` with no else was a silent stop (#544): a failed restore returned non-zero, `main`'s
-  # AND-chain halted, and the reader saw the previous step's `ok` followed by teardown with nothing
-  # naming the step that ended the run. It also leaves the cluster in the broken state this function
-  # created on purpose, which the next step would then measure.
+  # `wait && ok` with no else was a silent stop (#544), and it left the cluster in the broken state this
+  # function created on purpose.
   if k -n flux-system wait ocirepository/event-junkie --for=condition=Ready --timeout=2m >/dev/null 2>&1; then
     ok "range restored, artifact resolves again"
   else
@@ -1024,31 +847,25 @@ cmd_flux_trap() {
   fi
 }
 
-# Breaks a release on purpose and watches the rollback. This is the single most valuable thing to see
-# outside an incident, and #263's rehearsal had no equivalent — it could prove the stack came up, but
-# never that a bad deploy is survivable.
+# Breaks a release on purpose and watches the rollback — the single most valuable thing to see
+# outside an incident, and #263's rehearsal had no equivalent.
 cmd_flux_break() {
   guard_context
   log "Breaking the release on purpose"
-  # The Deployment is NAMED, not taken as `.items[0]` (#544). Sorted order made that the bff by
-  # accident — `…-bff` sorts before `…-frontend` and `…-importer` — and the patch below breaks the
-  # *bff* tag specifically. Anything sorting earlier, or a rename, would leave this comparing an
-  # image nobody touched, which passes every time and proves nothing.
+  # The Deployment is NAMED, not `.items[0]` (#544): sorted order made that the bff by accident, and a
+  # rename would leave this comparing an image nobody touched.
   local deploy="deploy/${RELEASE}-bff"
   local before
   before="$(k -n "$FLUX_NS" get "$deploy" -o jsonpath='{.spec.template.spec.containers[0].image}' 2>/dev/null)"
-  # An equality of two empty strings is true. Establish there is a real image to compare before
-  # comparing it, or the rollback assertion below passes on an empty namespace and a failed kubectl
-  # alike — the trap cmd_verify spells out in capitals and this function had never learned.
+  # An equality of two empty strings is true. Establish there is a real image before comparing it.
   if [ -z "$before" ]; then
     bad "$deploy has no image to read — there is nothing for the rollback assertion to be about"
     return 1
   fi
   info "currently running $before"
 
-  # `timeout` and `retries: 0` are what keep this to about a minute. Left at the file's own values a
-  # failing upgrade would take 5m per attempt plus a retry, and a rehearsal nobody waits for is a
-  # rehearsal nobody runs.
+  # `timeout` and `retries: 0` keep this to about a minute; at the file's own values a failing upgrade
+  # takes 5m per attempt, and a rehearsal nobody waits for is one nobody runs.
   k -n flux-system patch helmrelease event-junkie --type=merge -p '{
     "spec": {"timeout": "60s",
              "upgrade": {"remediation": {"retries": 0}},
@@ -1067,7 +884,7 @@ cmd_flux_break() {
     bad "the release still reports Ready after a deliberately broken upgrade"
   fi
 
-  # The property that actually matters: the site kept serving the last good version throughout.
+  # The property that matters: the site kept serving the last good version throughout.
   local after
   after="$(k -n "$FLUX_NS" get "$deploy" -o jsonpath='{.spec.template.spec.containers[0].image}' 2>/dev/null)"
   if [ -z "$after" ]; then
@@ -1127,29 +944,19 @@ main() {
     flux-trap)   cmd_flux_trap ;;
     flux-break)  cmd_flux_break ;;
     all)
-      # `down` runs even when something above fails, because a half-torn-down rehearsal leaves a
-      # k3d context behind that somebody later mistakes for a live cluster.
+      # `down` runs even when something above fails: a half-torn-down rehearsal leaves a k3d context
+      # somebody later mistakes for a live cluster.
       trap cmd_down EXIT
-      # READ THIS BEFORE ADDING A STEP. `set -euo pipefail` at the top of this file does NOT apply
-      # inside any function on the left of this chain: a command in an AND-list is exempt from
-      # errexit, and the exemption is inherited into functions and even into subshells that set -e
-      # again. So every step here runs to completion on failure unless it guards itself, and the
-      # chain only short-circuits on what the function happens to RETURN — which is the status of
-      # its last line.
-      #
-      # That combination is what #525 was: cmd_up's last line was an informational `kubectl get
-      # pods`, so a release that installed nothing returned 0 and cmd_verify then measured an empty
-      # cluster. cmd_up now carries an explicit `|| die` on every fallible step.
-      #
-      # Keep the chain rather than plain sequencing, because the two kinds of step are not alike:
-      # `up` builds a precondition and must stop the run, while `verify` and friends measure and are
-      # MEANT to keep going and report at the end through FAILURES. Real errexit here would abort
-      # `verify` on its first failed curl, which is the opposite of what it is for.
+      # READ THIS BEFORE ADDING A STEP. `set -euo pipefail` does NOT apply inside any function on the left
+      # of this chain: a command in an AND-list is exempt from errexit, inherited into functions and even
+      # into subshells that set -e again. Every step runs to completion on failure unless it guards itself,
+      # and the chain short-circuits only on what the function RETURNS — the status of its last line, which
+      # is how a release that installed nothing returned 0 (#525). Keep the chain: `up` builds a
+      # precondition and must stop the run; `verify` and friends measure and are MEANT to keep going.
       cmd_up && cmd_verify && cmd_import && cmd_chain && cmd_images && cmd_test
       ;;
-    # The Flux path is its own `all`, and must not share a cluster with the one above: both install a
-    # release called event-junkie against the same database, so running them together would put two
-    # importers on one schema — the exact ADR-008 failure the chart pins replicas to prevent.
+    # The Flux path is its own `all` and must not share a cluster: both install a release called
+    # event-junkie against the same database, and two importers on one schema is the ADR-008 failure.
     flux-all)
       trap cmd_down EXIT
       cmd_flux_up && cmd_flux_verify && cmd_flux_trap && cmd_flux_break

@@ -9,37 +9,18 @@
 # Reaches the network — both generators resolve dependencies — and writes only the notices file and
 # the Gradle report under build/.
 #
-# `events-frontend/src/assets/notices.json` is generated, committed, and rendered at /legal/notices.
-# Nothing joined the file to its inputs, and it drifted: #1034 regenerated it while moving two
-# packages and picked up 51 components that should already have been there — 50 JVM and one npm.
-# Nobody was looking, because looking was not anybody's job.
+# `events-frontend/src/assets/notices.json` is generated, committed and rendered at /legal/notices;
+# nothing joined it to its inputs and it drifted by 51 components (#1034). **A stale notices file
+# understates what we distribute** (docs/LEGAL.md §9.2). The check is a plain diff because
+# generate-notices.mjs writes no timestamp, so an unchanged dependency set regenerates byte-identically.
+# Both ecosystems in one job, which is why this is its own workflow: the generator merges the Gradle
+# licence report with npm's and needs a JDK and Node together.
 #
-# **A stale notices file understates what we distribute**, which is the direction that matters (see
-# docs/LEGAL.md §9.2). AGENTS.md already says to regenerate whenever dependencies change on either
-# side; this is the thing that notices when that did not happen.
-#
-# **The check works because the generator was built for it.** generate-notices.mjs deliberately
-# writes no timestamp, so an unchanged dependency set produces a byte-identical file and this is a
-# plain diff rather than a semantic comparison. Verified rather than assumed — regenerating twice
-# over the same inputs leaves an empty `git diff`.
-#
-# **Both ecosystems, in one job, and that is why this is not folded into an existing workflow.** The
-# generator reads the Gradle licence report off disk and merges it with npm's, so a full
-# regeneration needs a JDK and Node together. No other pull-request workflow has both.
-#
-# `check` restores the committed file before exiting, whatever happened, so a failing run leaves the
-# tree exactly as it found it. That is the difference from the bare form, and it is the same split
-# `format-markdown.sh` and `ste-lint.sh` use.
-#
-# **The output must not depend on the machine that produces it**, which is what makes a diff a
-# signal at all. `license-checker` walks `node_modules`, where optional dependencies differ by
-# operating system, so the generator drops both the platform-named binaries and any package whose
-# `os` field excludes Linux — `fsevents` being the one that has an ordinary name and declares the
-# restriction in the field (#1043). A laptop and CI produce byte-identical files.
-#
-# One asymmetry is unguarded: a package restricted to Linux would be absent from a macOS install
-# entirely, so a Mac would omit what CI lists. Nothing in the tree is Linux-only — its three
-# `os`-restricted packages are all `darwin`. **CI is the authority** if the two ever disagree.
+# `check` restores the committed file before exiting, whatever happened — the split
+# `format-markdown.sh` and `ste-lint.sh` use. **The output must not depend on the machine**: optional
+# dependencies differ by OS, so the generator drops platform-named binaries and any package whose `os`
+# excludes Linux (#1043). A package restricted to Linux would be absent from a macOS install; nothing
+# in the tree is, and **CI is the authority** if the two ever disagree.
 
 set -euo pipefail
 
@@ -66,8 +47,7 @@ esac
     exit 1
 }
 
-# The Gradle half is not configuration-cache compatible — the licence-report plugin is not, and
-# gradle.properties says so. Passing the flag here rather than relying on the caller is what makes
+# The licence-report plugin is not configuration-cache compatible; passing the flag here is what makes
 # this runnable from a clean checkout.
 regenerate() {
     ./gradlew generateLicenseReport --no-configuration-cache -q
@@ -81,15 +61,12 @@ fi
 
 BEFORE="$(mktemp)"
 cp "$NOTICES" "$BEFORE"
-# Unconditional, so an interrupted or failing regeneration does not leave a half-written legal
-# document in the tree. It must stay unconditional: the stale path below ends in `exit 1`, which
-# fires this same trap, so making the restore depend on success is what would leave a regenerated
-# file behind on exactly the run that matters.
+# Unconditional, so an interrupted regeneration does not leave a half-written legal document. It must
+# stay unconditional: the stale path below ends in `exit 1`, which fires this same trap.
 trap 'cp "$BEFORE" "$NOTICES"; rm -f "$BEFORE"' EXIT
 
-# `regenerate` is two generators, and a failure in either is not a staleness result. Unguarded, the
-# second one failing after the first succeeds surfaces as that command's own error, which a reader
-# cannot tell apart from the report below.
+# Two generators, and a failure in either is not a staleness result; unguarded, the second failing
+# surfaces as its own error, indistinguishable from the report below.
 if ! regenerate >/dev/null; then
     printf 'notices-parity.sh: could not regenerate the notices — the Gradle or npm generator failed.\n' >&2
     printf 'This is not a staleness result. %s is unchanged.\n' "$NOTICES" >&2
@@ -110,14 +87,10 @@ removed="$(comm -23 \
     <(jq -r '[.. | objects | select(.name and .version) | "\(.name)@\(.version)"] | .[]' "$NOTICES" | sort -u) |
     wc -l | tr -d ' ')"
 
-# The counts rather than the diff, because the diff is four thousand lines of generated JSON and
-# says nothing a reader can act on. What matters is whether components appeared or disappeared.
-#
-# **Keyed on `name@version`, not `name`.** A dependency that only moves version is present on both
-# sides under a bare name, so the counts come out "0 missing, 0 no longer resolve" for a file that
-# has genuinely drifted — a staleness message naming nothing. The versioned key costs one count on
-# each side per upgrade, which is why the wording below says "entries" rather than "components":
-# `foo 1.0 -> 1.1` is one line gone and one arrived, not two components.
+# The counts rather than the diff: four thousand lines of generated JSON say nothing actionable.
+# **Keyed on `name@version`, not `name`**: a dependency that only moves version is present on both
+# sides under a bare name, and the counts would read "0 missing" for a file that has drifted. The
+# wording says "entries": `foo 1.0 -> 1.1` is one line gone and one arrived.
 cat >&2 <<EOF
 notices-parity.sh: $NOTICES is stale.
 

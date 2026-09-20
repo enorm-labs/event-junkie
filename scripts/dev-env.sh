@@ -2,10 +2,8 @@
 #
 # dev-env.sh — local dev environment control for the importer, BFF and frontend.
 #
-# Deterministic mechanics behind the /importer-smoke and /next-importer skills:
-# start/stop the dev stack, seed sources, trigger imports, and query the resulting
-# data. Everything here is scripted on purpose so the agent does not re-derive
-# docker/psql/curl incantations on every loop iteration.
+# Deterministic mechanics behind the /importer-smoke and /next-importer skills, so the agent does not
+# re-derive docker/psql/curl incantations on every loop.
 #
 # Usage: scripts/dev-env.sh <command> [args]
 #   db-reset                     Drop the Postgres volume and start a fresh database
@@ -124,11 +122,8 @@ start_service() {
     fi
 
     mkdir -p "$RUN_DIR"
-    # Unlink rather than truncate. A previous launcher that is still exiting holds an open
-    # descriptor on the old log at its own write offset, so `>` would leave it appending
-    # into the file this run is about to read — and its "BUILD FAILED" would be attributed
-    # to this run. Removing the path leaves that writer on the now-unreachable inode and
-    # gives this run a private file.
+    # Unlink rather than truncate: a previous launcher still exiting holds the old log open at its own
+    # offset, and `>` would leave its "BUILD FAILED" appending into the file this run reads.
     rm -f "$log_file"
     if [[ "$svc" == "frontend" ]]; then
         need npm
@@ -169,11 +164,8 @@ start_service() {
             return 0
         fi
         if grep -qE "$pattern" "$log_file" 2>/dev/null; then
-            # A failure line is only fatal if the service is not actually serving. `bootRun`
-            # reports BUILD FAILED when its JVM is signalled, which happens to a process that
-            # started perfectly well if something tears it down moments later — so the build
-            # fails while a healthy, launcher-orphaned app keeps answering. Re-check before
-            # giving up, otherwise `up` reports failure for a service that is plainly running.
+            # A failure line is only fatal if the service is not actually serving: `bootRun` reports BUILD FAILED
+            # when its JVM is signalled, which happens to a healthy, launcher-orphaned app. Re-check first.
             if svc_healthy "$svc"; then
                 warn "$svc is serving at $host but its launcher reported a failure — see $log_file"
                 warn "It is running detached; 'down $svc' still stops it, but prefer a clean restart."
@@ -206,12 +198,9 @@ stop_service() {
     # shellcheck disable=SC2086
     [[ -n "$pids" ]] && kill $pids 2>/dev/null || true
 
-    # Wait for the launcher to exit *and* the port to be released. `kill` only *requests*
-    # termination: the JVM still runs its shutdown hooks, and the Gradle launcher then takes
-    # a moment to report the task's exit. Returning early lets a following `up` race that
-    # teardown, and the launcher is still holding an open descriptor on the shared log — so
-    # its parting "BUILD FAILED … exit value 143" lands in the *new* run's log and makes a
-    # perfectly healthy start look like a failure.
+    # Wait for the launcher to exit *and* the port to be released. `kill` only requests termination; a
+    # following `up` would race the teardown, and the launcher's parting "BUILD FAILED … exit value 143"
+    # would land in the *new* run's log.
     local waited=0
     while port_in_use "$port" || pid_alive "$launcher"; do
         if [[ "$waited" -ge "$STOP_TIMEOUT_SECONDS" ]]; then
@@ -228,9 +217,8 @@ stop_service() {
     log "$svc stopped"
 }
 
-# Parses a service list shared by `up` and `down`. Word-splitting is safe here because
-# service names never contain spaces, and a plain string avoids expanding an empty array
-# under `set -u` (still bash 3.2 on stock macOS).
+# Parses a service list shared by `up` and `down`. Word-splitting is safe (no spaces in names), and a
+# plain string avoids expanding an empty array under `set -u` on bash 3.2.
 parse_services() {
     local services="" arg
     for arg in "$@"; do

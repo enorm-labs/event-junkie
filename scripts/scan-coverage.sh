@@ -2,10 +2,8 @@
 #
 # scan-coverage.sh — how much did the scanner look at, not just what did it find.
 #
-# A scanner gate asserts an exit code. Without a denominator a tool that quietly covers less passes
-# just as cleanly, and the gate goes on looking green over less ground (#1087). Two ways that
-# happens: a version bump narrows a rule set, or a configuration change narrows the input. Neither
-# produces a red tick.
+# A scanner gate asserts an exit code; without a denominator a tool that quietly covers less passes
+# just as cleanly (#1087) — a version bump narrows a rule set, a configuration change narrows the input.
 #
 # Usage:
 #   scan-coverage.sh baseline <key> <file>   # a denominator against the committed floor
@@ -16,27 +14,17 @@
 #
 # Exit 0 the scanner covered what it should, 1 it covered less, 2 the question could not be asked.
 #
-# **The output formats are known here and nowhere else.** A `grep -o` in six workflow `run:` blocks
-# is six places to update and six places to get it silently wrong. An extraction that matches nothing
-# is an error rather than a pass, which is what makes a tool changing its output loud.
-#
-# **A floor rather than an exact match, which is what #1087 asks for.** A rise is normal — the tree
-# grows — so only a drop fails. The cost is honest and worth stating: this floor is only ever as tight
-# as its last update, so deleting manifests after a stale baseline goes unnoticed. Raise it whenever
-# a change adds coverage, which the notice below asks for on every run that finds more.
-#
-# **Trivy and OWASP get a floor of zero instead of a baseline**, and that is a decision rather than an
-# omission. Their counts move with an upstream advisory database and with image contents, so a number
-# would rot and get lowered until it meant nothing — `image-scan-scheduled.yml` argues the same case
-# for the same reason. Zero cannot rot: it separates "found nothing" from "looked at nothing", which
-# is the failure this repository has already had, when OWASP reported `Dependencies Scanned: 0` and
-# passed its CVSS gate trivially.
+# **The output formats are known here and nowhere else**, and an extraction that matches nothing is
+# an error rather than a pass. **A floor rather than an exact match**: a rise is normal, only a drop
+# fails; the floor is only as tight as its last update, so raise it whenever a change adds coverage.
+# **Trivy and OWASP get a floor of zero**: their counts move with an upstream advisory database and
+# would be lowered until they meant nothing, while zero still separates "found nothing" from "looked
+# at nothing" — the `Dependencies Scanned: 0` incident.
 
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-# The override exists for scan-coverage-test.sh, which must assert against fixed numbers rather
-# than against a file the next manifest moves.
+# The override exists for scan-coverage-test.sh, which asserts against fixed numbers.
 BASELINE="${SCAN_COVERAGE_BASELINE:-$REPO_ROOT/scripts/scan-coverage-baseline.txt}"
 
 die() {
@@ -54,19 +42,15 @@ usage() {
     awk '/^# Usage:/ { p = 1 } p && !/^#./ { exit } p { sub(/^# ?/, ""); print }' "${BASH_SOURCE[0]}"
 }
 
-# count <pattern> <file> — the number in front of a word, from the last line that carries one.
-#
-# zizmor writes the pair two ways, and both have to work: `No findings to report. Good job! (11
-# ignored, 64 suppressed)` when it is clean, and `75 findings (4 ignored, 10 suppressed, 8 unsafe
-# fixes): …` when it is not.
+# count <pattern> <file> — the number in front of a word, from the last line that carries one. zizmor
+# writes the pair two ways: `No findings to report. Good job! (11 ignored, 64 suppressed)` and
+# `75 findings (4 ignored, 10 suppressed, …)`.
 count() {
     grep -oE "[0-9]+ $1" "$2" | tail -1 | grep -oE '^[0-9]+' || true
 }
 
-# The two ZAP denominators (#1421), read from a scan script's stdout. `Total of N URLs` is what the
-# spider reached — a Traefik that never came up or a spider behind a 429 wall shows here as a drop.
-# The last line is the per-rule tally, `FAIL-NEW: 0\tFAIL-INPROG: 0\tWARN-NEW: 3\t…\tPASS: 55`, and
-# its sum is how many rules the pinned image ran; a rule set that shrinks on a bump shows here.
+# The two ZAP denominators (#1421): `Total of N URLs` is what the spider reached — a Traefik that
+# never came up shows as a drop — and the per-rule tally's sum is how many rules the pinned image ran.
 zap_urls() {
     sed -nE 's/^Total of ([0-9]+) URLs$/\1/p' "$1" | tail -1
 }
@@ -75,9 +59,8 @@ zap_rules() {
     grep -E '^FAIL-NEW: [0-9]+' "$1" | tail -1 | grep -oE '[0-9]+' | awk '{ s += $1 } END { if (NR) print s }' || true
 }
 
-# Nuclei's denominator (#1423): how many templates the tag, severity and type filters admitted
-# from the pinned release. A templates bump that retires templates, or a filter that stopped
-# matching, shows here. Read from the log, where the line carries an `[INF]` prefix.
+# Nuclei's denominator (#1423): how many templates the filters admitted from the pinned release. Read
+# from the log, where the line carries an `[INF]` prefix.
 nuclei_templates() {
     grep -oE 'Templates loaded for current scan: [0-9]+' "$1" | tail -1 | grep -oE '[0-9]+$' || true
 }
@@ -115,9 +98,8 @@ cmd_baseline() {
     if ((actual < floor)); then
         fail "$key dropped from $floor to $actual. Something was scanned before and is not now. If that is meant, take it in this commit: scripts/scan-coverage.sh update $key $file"
     fi
-    # A spider's URL count moves from run to run, and Nuclei's template count sits over a floor set
-    # with headroom on purpose; a rise there is the normal case, not a floor to raise
-    # (scan-coverage-baseline.txt says why).
+    # A spider's URL count moves from run to run, and Nuclei's floor has headroom on purpose; a rise
+    # there is not a floor to raise.
     if ((actual > floor)) && [[ "$key" != zap-*-urls && "$key" != nuclei-*-templates ]]; then
         printf '%s: %s rose from %s to %s — raise the floor: scripts/scan-coverage.sh update %s %s\n' \
             "$(basename "$BASELINE")" "$key" "$floor" "$actual" "$key" "$file"
@@ -127,11 +109,9 @@ cmd_baseline() {
     printf '%-26s %s (floor %s)\n' "$key" "$actual" "$floor"
 }
 
-# A property rather than a number, so it needs no floor and cannot rot: every rendered resource is
-# checked, and none is skipped.
-#
-# `Skipped: 0` says nothing on its own, which is what #691 was — an empty stream reports it too. So
-# the resource count has to be positive for the rest to mean anything.
+# A property rather than a number, so no floor and nothing to rot: every rendered resource checked,
+# none skipped. `Skipped: 0` says nothing on its own (#691) — an empty stream reports it too — so the
+# count has to be positive.
 cmd_render() {
     local file="${1:?file}" found valid invalid skipped summary
     [[ -f "$file" ]] || die "$file does not exist"
@@ -154,8 +134,7 @@ cmd_render() {
     printf 'render: %s resources, all valid, none skipped\n' "$found"
 }
 
-# The floor that the `Dependencies Scanned: 0` incident asked for, on the tool it happened to. Trivy
-# gained one in image-scan-scheduled.yml; Dependency-Check never did.
+# The floor the `Dependencies Scanned: 0` incident asked for, on the tool it happened to.
 cmd_owasp() {
     local file="${1:?file}" deps
     command -v jq >/dev/null || die 'jq is required but not on PATH'
