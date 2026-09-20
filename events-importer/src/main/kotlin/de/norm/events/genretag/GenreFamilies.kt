@@ -208,6 +208,7 @@ private val GENRE_FAMILIES: Map<String, GenreFamily> =
         "swana" to LATIN_WORLD,
         "poncha" to LATIN_WORLD,
         // Classical & Chamber
+        "classical" to CLASSICAL,
         "kammermusik" to CLASSICAL,
         // Charts & Decades — chart hits and decade floors, the labels a party night bills itself with
         "top40" to CHARTS,

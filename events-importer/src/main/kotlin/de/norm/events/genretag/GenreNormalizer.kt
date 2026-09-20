@@ -93,6 +93,7 @@ internal val GENRE_SYNONYMS: Map<String, String> =
         "synthesizerinstrumental&melodicelectronica" to "Electronic",
         "techno" to "Techno",
         "house" to "House",
+        "ambient" to "Ambient",
         "afrohouse" to "House",
         "latinhouse" to "House",
         // Drum & Bass (delimiter-embedding name; see DRUM_AND_BASS_REGEX pre-pass)
@@ -151,10 +152,15 @@ internal val GENRE_SYNONYMS: Map<String, String> =
         "reggaeton" to "Latin",
         "merengue" to "Latin",
         "bachata" to "Latin",
+        "samba" to "Latin",
+        "bossanova" to "Latin",
         // Afrobeats
         "afro" to "Afrobeats",
         "afrobeat" to "Afrobeats",
         "afrobeats" to "Afrobeats",
+        // Classical — the venues' German label and the English one fold together.
+        "klassik" to "Classical",
+        "classical" to "Classical",
         // World Music
         "world" to "World Music",
         "worldmusic" to "World Music",
@@ -269,6 +275,16 @@ private val NON_GENRE_TOKENS: Set<String> =
         "core",
         "betonarme"
     )
+
+/**
+ * True when [label] is a genre the vocabulary knows — as a whole (`R&B`) or by one of its words
+ * (`Psychedelic Rock`). For a source whose tags mix genres with formats and rooms (Heimathafen's
+ * `events_tag`, #313): a tag that resolves is a genre, one that does not is a format, so the
+ * fall-through that keeps an unknown short token is not offered here.
+ */
+fun isGenreLabel(label: String): Boolean = lookupKey(label) in GENRE_SYNONYMS || label.split(WHITESPACE_RUN).any { lookupKey(it) in GENRE_SYNONYMS }
+
+private val WHITESPACE_RUN = Regex("""\s+""")
 
 /**
  * Normalizes a raw genre token to a [GENRE_SYNONYMS] lookup key.

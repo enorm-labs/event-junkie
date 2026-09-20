@@ -1,11 +1,9 @@
 package de.norm.events.scraper.heimathafen
 
-import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.ApiClient
 import de.norm.events.scraper.EventImporter
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ImportResult
-import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.VenueLimitations
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -30,8 +28,8 @@ import org.springframework.stereotype.Component
  * No conditional request is used: `etag` / `lastModified` are ignored and every import returns
  * [ImportResult.Success], which is safe because persistence upserts idempotently by `sourceId`.
  *
- * Resolving the `events_tag` taxonomy once per import is what would unblock the genre field —
- * see #313 and [HEIMATHAFEN_LIMITATIONS].
+ * The genre comes from the `events_tag-*` slugs `class_list` inlines, filtered to the ones the
+ * genre vocabulary knows (#313) — no taxonomy request.
  *
  * @see HeimathafenApiScraper for the JSON parsing logic.
  */
@@ -98,11 +96,5 @@ class HeimathafenWebsiteImporter(
     }
 }
 
-val HEIMATHAFEN_LIMITATIONS =
-    VenueLimitations(
-        EventSource.HEIMATHAFEN,
-        AcceptedLimitation(
-            LimitedAspect.GENRE,
-            "its `events_tag` vocabulary mixes genres with formats across 560 terms, the payload carries only term ids, and the inlined slugs are lossy"
-        )
-    )
+/** Nothing this source withholds needs declaring (#715). */
+val HEIMATHAFEN_LIMITATIONS = VenueLimitations(EventSource.HEIMATHAFEN)
