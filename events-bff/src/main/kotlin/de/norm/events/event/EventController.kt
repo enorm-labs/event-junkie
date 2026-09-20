@@ -20,11 +20,9 @@ import java.time.Clock
 import java.time.LocalDate
 
 /**
- * Public read API for events: filtered search, today's events, calendar range, and detail by slug.
- *
- * Every endpoint here reads through [ResponseCache]. The cache sits at this layer rather than inside
- * [EventService] because a service calling its own cached method would bypass the `@Transactional`
- * proxy, and because caching is a property of the request rather than of the query (#269).
+ * Public read API for events. Every endpoint reads through [ResponseCache], at this layer
+ * because a service calling its own cached method would bypass the `@Transactional` proxy, and
+ * caching is a property of the request (#269).
  */
 @RestController
 @RequestMapping("/api/events")
@@ -56,8 +54,7 @@ class EventController(
     ): PageResponse<EventSummaryResponse> {
         SEARCH_PARAMS.rejectUnknownIn(exchange)
         val filter = filters.toFilter(from = from, to = to)
-        // The meter counts what is handed out, so it stays outside the cache: a served response is
-        // served whether or not this process had to ask the database for it.
+        // The meter counts what is handed out, so it stays outside the cache.
         return cache.get(SearchKey(filter, pageable)) { eventService.search(filter, pageable) }.also {
             metrics.recordServed(BffMetrics.ENDPOINT_SEARCH, it.content.size)
         }
@@ -67,8 +64,7 @@ class EventController(
     @Operation(summary = "Get today's events")
     suspend fun today(exchange: ServerWebExchange): List<EventSummaryResponse> {
         NO_PARAMS.rejectUnknownIn(exchange)
-        // Keyed on the date rather than left to the TTL, so the answer changes at midnight instead
-        // of up to a TTL later. This is the one endpoint whose correctness depends on the calendar.
+        // Keyed on the date rather than left to the TTL, so the answer changes at midnight.
         return cache
             .get(TodayKey(LocalDate.now(clock))) { eventService.today() }
             .also { metrics.recordServed(BffMetrics.ENDPOINT_TODAY, it.size) }
@@ -128,10 +124,8 @@ class EventController(
 }
 
 /**
- * The cache keys this controller owns, one per endpoint.
- *
- * Declared as separate types rather than as one key carrying an endpoint name: a data class is equal
- * only to its own type, so two endpoints cannot collide even when their arguments match.
+ * The cache keys this controller owns, separate types rather than one key carrying an endpoint
+ * name: a data class is equal only to its own type.
  */
 private data class SearchKey(
     val filter: EventFilter,

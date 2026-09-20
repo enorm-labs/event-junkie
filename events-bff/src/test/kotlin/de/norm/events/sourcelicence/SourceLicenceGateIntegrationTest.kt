@@ -8,11 +8,9 @@ import org.springframework.r2dbc.core.awaitSingle
 import java.time.LocalDate
 
 /**
- * Proves the gate over HTTP rather than over a data class.
- *
- * [SourceLicencesTest] pins the rule. This pins the wiring: that both read paths apply it, that the
- * two fields are answered independently, and that an event whose source was deleted still displays.
- * The detail endpoint is the one that renders a description in full, so it is the one that matters.
+ * Proves the gate over HTTP. [SourceLicencesTest] pins the rule; this pins the wiring: both
+ * read paths apply it, the two fields are answered independently, and an event whose source was
+ * deleted still displays.
  */
 class SourceLicenceGateIntegrationTest : BaseControllerTest() {
     @Test
@@ -38,16 +36,15 @@ class SourceLicenceGateIntegrationTest : BaseControllerTest() {
                 // Facts are never gated. They are the part SCRAPING_POSITION.md §3.1 calls safe.
                 .jsonPath("$.title")
                 .isEqualTo("Gated Event")
-                // Why it is absent, because `null` alone cannot say. A note keyed on the null would
-                // be right 56 times and wrong 1,072 on a seeded database (#811).
+                // Why it is absent, because `null` alone cannot say: a note keyed on the null would be right 56
+                // times and wrong 1,072 (#811).
                 .jsonPath("$.descriptionWithheld")
                 .isEqualTo(true)
                 .jsonPath("$.imageWithheld")
                 .isEqualTo(false)
         }
 
-    // A prohibition over a field the venue never filled removed nothing, so there is nothing to
-    // explain — and a note would point a reader at a page with no more to show.
+    // A prohibition over a field the venue never filled removed nothing.
     @Test
     @DisplayName("a prohibition over an empty description is not reported as withheld")
     fun `reports nothing withheld when there was nothing to withhold`(): Unit =
@@ -150,8 +147,7 @@ class SourceLicenceGateIntegrationTest : BaseControllerTest() {
                 .expectStatus()
                 .isOk
                 .expectBody()
-                // Indexed rather than filtered: a JSONPath filter yields [null] for an absent
-                // property, which reads as present. This test has exactly one event.
+                // Indexed rather than filtered: a JSONPath filter yields [null] for an absent property.
                 .jsonPath("$.content[0].slug")
                 .isEqualTo("list-event")
                 .jsonPath("$.content[0].imageWithheld")

@@ -10,16 +10,11 @@ import org.springframework.web.server.WebFilterChain
 import reactor.core.publisher.Mono
 
 /**
- * Answers `400` to any request whose path or query carries a NUL byte, before a handler sees it.
- *
- * PostgreSQL rejects U+0000 in every text value with `22021 invalid byte sequence`, and R2DBC
- * surfaces that as a `BadSqlGrammarException`, so `?q=%00` on any list endpoint and `%00` in any
- * slug answered `500` and logged the whole statement at ERROR (#1441). No legitimate request
- * carries a NUL, and rejecting it here needs no database and no per-parameter code.
- *
- * The body is a constant RFC 9457 problem and echoes nothing from the request, so it needs no
- * serializer. A filter cannot throw into `GlobalExceptionHandler`, which only sees handler
- * exceptions. A parameter without `=` — `?-s` — arrives as a `null` value, which is not a NUL
+ * Answers `400` to any request whose path or query carries a NUL byte. PostgreSQL rejects U+0000
+ * with `22021 invalid byte sequence`, which R2DBC surfaces as a `BadSqlGrammarException`, so
+ * `?q=%00` answered `500` and logged the whole statement at ERROR (#1441). The body is a
+ * constant RFC 9457 problem and echoes nothing; a filter cannot throw into
+ * `GlobalExceptionHandler`. A parameter without `=` (`?-s`) arrives as a `null` value, not a NUL
  * (#1465).
  */
 @Component

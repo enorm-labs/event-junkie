@@ -18,9 +18,8 @@ class VenueService(
     private val cachedImageGate: CachedImageGate
 ) {
     /**
-     * Lists venues with pagination, optionally filtered by a case-insensitive name [query]
-     * and/or an exact [district] slug. The two filters combine independently, so any
-     * of the four presence combinations selects the matching repository query.
+     * Lists venues, optionally filtered by a case-insensitive name [query] and/or an exact
+     * [district] slug; the two combine independently.
      */
     @Transactional(readOnly = true)
     suspend fun list(
@@ -74,15 +73,9 @@ class VenueService(
 
     companion object {
         /**
-         * What the site draws one of these at, in CSS pixels.
-         *
-         * A venue card draws its poster at the card's own width, about 474 px in the two-column
-         * `max-w-5xl` grid, so the gate offers 512 and 768. `BaseDetailView` leads with the picture
-         * at the full width of a `max-w-3xl` column, 704 px after padding, and its `sizes` attribute
-         * states the same number.
-         *
-         * **CSS pixels, not file widths.** The device pixel ratio is the browser's to know, and it
-         * picks from the `srcset` this produces.
+         * What the site draws one of these at, in CSS pixels: a venue card at about 474 px in the
+         * two-column grid, so 512 and 768; `BaseDetailView` at 704 px, which its `sizes` states. CSS
+         * pixels, not file widths: the device pixel ratio is the browser's to apply.
          */
         private const val POSTER_WIDTH = 480
         private const val DETAIL_WIDTH = 704

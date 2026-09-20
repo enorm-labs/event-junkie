@@ -10,12 +10,9 @@ import org.springframework.util.unit.DataSize
 import java.util.concurrent.atomic.AtomicInteger
 
 /**
- * What the cache promises the serving route.
- *
- * **That Caffeine evicts is not asserted here.** It is Caffeine's documented contract, and a test
- * that inserts until something disappears asserts a schedule rather than a rule. What is asserted is
- * the half this code owns: which outcomes are kept, and that a ceiling too small to hold anything
- * still returns the right bytes.
+ * What the cache promises the serving route. That Caffeine evicts is not asserted: a test that
+ * inserts until something disappears asserts a schedule. Asserted is which outcomes are kept,
+ * and that a ceiling too small to hold anything still returns the right bytes.
  */
 class ImageObjectCacheTest {
     @Test
@@ -52,8 +49,8 @@ class ImageObjectCacheTest {
             other.shouldBeInstanceOf<ImageObject.Found>().bytes shouldBe OTHER_BYTES
         }
 
-    // A row promising an object that is not there can be fixed by a re-import, and a store we cannot
-    // reach comes back. Keeping either would outlast the fault that produced it.
+    // A missing object can be fixed by a re-import, and an unreachable store comes back; keeping
+    // either would outlast the fault.
     @Test
     @DisplayName("a missing object is asked about again")
     fun `does not keep a missing object`() =
@@ -78,8 +75,7 @@ class ImageObjectCacheTest {
             loads.get() shouldBe 2
         }
 
-    // The issue's own requirement: it is a cache and not a store, so a ceiling that holds nothing
-    // must leave the route correct and only slower.
+    // A cache and not a store: a ceiling that holds nothing leaves the route correct and only slower.
     @Test
     @DisplayName("a ceiling too small to hold anything still serves the bytes")
     fun `stays correct when nothing can be retained`() =
@@ -92,8 +88,7 @@ class ImageObjectCacheTest {
             second.shouldBeInstanceOf<ImageObject.Found>().bytes shouldBe BYTES
         }
 
-    // The meters are how the default size stops being an estimate. A binding that silently stopped
-    // registering would leave the number unarguable again.
+    // The meters are how the default size stops being an estimate.
     @Test
     fun `registers its meters under the images cache`() =
         runTest {

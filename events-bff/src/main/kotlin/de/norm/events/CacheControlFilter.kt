@@ -12,25 +12,17 @@ import reactor.core.publisher.Mono
 import java.time.Duration
 
 /**
- * Puts a `Cache-Control` header on every read response that does not already carry one.
+ * Puts a `Cache-Control` header on every read response that does not carry one: a response
+ * served from a browser's own cache never reaches the cluster, the half of the caching work
+ * [de.norm.events.common.ResponseCache] cannot do (#269). The two share
+ * `app.api.cache.ttl-seconds`, so one number bounds staleness end to end, at twice its value in
+ * the worst case.
  *
- * A response served from a browser's own cache is a request that never reaches the cluster, which is
- * the half of the caching work [de.norm.events.common.ResponseCache] cannot do (#269). The two share
- * `app.api.cache.ttl-seconds` deliberately: one number bounds staleness end to end, at twice its
- * value in the worst case, where a browser stores a response that was already a full TTL old.
- *
- * **`beforeCommit` rather than a header set up front**, so a handler that has its own answer keeps
- * it. The image route serves content named by a hash of its own bytes and marks it `immutable` for
- * a year; overwriting that with a minute would be a real regression, and setting the header early
- * would do exactly that.
- *
- * **A non-success answer gets `no-store`.** Without a header a shared cache may apply a heuristic
- * freshness lifetime, and `404` is the status that matters here: an event published a minute ago
- * would keep being reported as missing by whatever cached the answer.
- *
- * Actuator responses are left alone, for the same reason [RequestLoggingFilter] ignores them: they
- * are for the platform rather than for a reader, and the base path is read from the property so the
- * two follow it together.
+ * `beforeCommit` rather than a header set up front, so a handler with its own answer keeps it:
+ * the image route marks content named by its own hash `immutable` for a year. A non-success
+ * answer gets `no-store`, since a shared cache may apply a heuristic lifetime, and an event
+ * published a minute ago would keep being reported missing. Actuator responses are left alone,
+ * as [RequestLoggingFilter] leaves them, with the base path read from the property.
  */
 @Component
 class CacheControlFilter(

@@ -54,10 +54,8 @@ class PromoterService(
 
     companion object {
         /**
-         * What the site draws the detail picture at, in CSS pixels: `BaseDetailView` leads with it
-         * at the full width of a `max-w-3xl` column, 704 px after padding, and its `sizes`
-         * attribute states the same number. The device pixel ratio is the browser's to know, and
-         * it picks from the `srcset` this produces.
+         * What the site draws the detail picture at, in CSS pixels: `BaseDetailView` at 704 px, which
+         * its `sizes` states. The device pixel ratio is the browser's to apply.
          */
         private const val DETAIL_WIDTH = 704
 

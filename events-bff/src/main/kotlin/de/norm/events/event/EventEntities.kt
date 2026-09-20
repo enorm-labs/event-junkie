@@ -8,18 +8,16 @@ import java.time.LocalDate
 import java.time.LocalTime
 
 /**
- * Read-only R2DBC entity mapped to the `event` table.
- *
- * Lean projection for the BFF's read paths — the table is owned and written by the importer.
- * Artist, promoter, and genre tag associations are loaded via the join-table entities below.
+ * Read-only R2DBC entity mapped to the `event` table; the importer owns it. Associations load via
+ * the join-table entities below.
  */
 @Table("event")
 data class EventEntity(
     @Id val id: Long? = null,
     val venueId: Long,
     /**
-     * The source that produced this event, or `null` where that source has since been deleted
-     * (`ON DELETE SET NULL`). Read only to resolve the per-source licence gate (#283).
+     * The source that produced this event, or `null` where it has been deleted (`ON DELETE SET
+     * NULL`). Read only for the per-source licence gate (#283).
      */
     val eventSourceId: Long? = null,
     val title: String,

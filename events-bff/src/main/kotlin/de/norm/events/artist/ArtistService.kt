@@ -55,15 +55,9 @@ class ArtistService(
 
     companion object {
         /**
-         * What the site draws one of these at, in CSS pixels.
-         *
-         * `BaseDetailView` leads with the picture at the full width of a `max-w-3xl` column, 704 px
-         * after padding, and its `sizes` attribute states the same number. The list renders no image
-         * today, so [CARD_WIDTH] is the thumbnail width `EventService` already uses for the same
-         * kind of slot, ready for a card that arrives later.
-         *
-         * **CSS pixels, not file widths.** The device pixel ratio is the browser's to know, and it
-         * picks from the `srcset` this produces.
+         * What the site draws one of these at, in CSS pixels: `BaseDetailView` at 704 px, which its
+         * `sizes` states. The list renders no image today, so [CARD_WIDTH] is the thumbnail width
+         * `EventService` uses for the same slot. CSS pixels, not file widths.
          */
         private const val CARD_WIDTH = 96
         private const val DETAIL_WIDTH = 704

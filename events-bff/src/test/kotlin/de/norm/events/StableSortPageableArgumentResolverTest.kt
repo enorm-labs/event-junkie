@@ -11,15 +11,9 @@ import org.springframework.mock.web.server.MockServerWebExchange
 import org.springframework.web.reactive.BindingContext
 
 /**
- * Unit tests for [StableSortPageableArgumentResolver].
- *
- * Asserts the tiebreaker is appended for both the `@PageableDefault` path and an explicit
- * client `sort` — the latter being the one the SPA actually uses, and the one a
- * default-only fix would have missed.
- *
- * It also asserts the page-size cap, which this class is the only place that can apply (#268).
- *
- * The importer carries the same resolver and an equivalent test.
+ * Asserts the tiebreaker is appended for both the `@PageableDefault` path and an explicit `sort`,
+ * the one the SPA uses and a default-only fix would miss, and the page-size cap (#268). The
+ * importer carries the same resolver and test.
  */
 class StableSortPageableArgumentResolverTest {
     private val resolver = StableSortPageableArgumentResolver(MAX_PAGE_SIZE)
@@ -45,8 +39,7 @@ class StableSortPageableArgumentResolverTest {
 
     @Test
     fun `appends id to an explicit client sort`() {
-        // The SPA sends `sort`, which replaces @PageableDefault entirely — so this is the
-        // path that actually has to be stabilised.
+        // The SPA sends `sort`, which replaces @PageableDefault entirely.
         resolve("?sort=name,asc").sort shouldBe Sort.by(Sort.Direction.ASC, "name").and(Sort.by("id"))
     }
 
@@ -77,8 +70,8 @@ class StableSortPageableArgumentResolverTest {
 
     @Test
     fun `clamps a page size above the cap instead of rejecting it`() {
-        // Spring Data's own default is 2000, and it applies whenever nothing sets a cap. The
-        // request still succeeds, which is the right failure for a public read API.
+        // Spring Data's own default is 2000. The request still succeeds, the right failure for a public
+        // read API.
         resolve("?size=5000").pageSize shouldBe MAX_PAGE_SIZE
         resolve("?size=2000").pageSize shouldBe MAX_PAGE_SIZE
     }

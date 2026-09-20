@@ -6,12 +6,9 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
 /**
- * `bff.events.served`.
- *
- * The names and tag values are asserted as literal strings on purpose: the dashboards in
- * `docs/ops/PLATFORM_SETUP.md` §7 are written against them and nothing checks the two agree, so a
- * rename that looks like a tidy-up is a silently dead panel. Referring to the constants would make
- * this pass through exactly the change it exists to catch.
+ * `bff.events.served`. Names and tag values are asserted as literal strings: the dashboards in
+ * `docs/ops/PLATFORM_SETUP.md` §7 are written against them, and referring to the constants would
+ * pass through the rename this exists to catch.
  */
 class BffMetricsTest {
     private lateinit var registry: SimpleMeterRegistry
@@ -49,15 +46,14 @@ class BffMetricsTest {
         metrics.recordServed(BffMetrics.ENDPOINT_SEARCH, 20)
         metrics.recordServed(BffMetrics.ENDPOINT_SEARCH, 3)
 
-        // 43, not 3: `http.server.requests` already counts requests for free, and duplicating it here
-        // would add nothing. What no free meter can say is how much data went out.
+        // 43, not 3: `http.server.requests` already counts requests; what no free meter says is how much
+        // data went out.
         served("search") shouldBe 43.0
     }
 
     /**
-     * Zero is the interesting value on this meter — an endpoint being called and returning nothing is
-     * exactly the state worth alerting on — so the series has to exist rather than be skipped, or
-     * "returning nothing" would be indistinguishable from "nobody is calling it".
+     * Zero is the interesting value on this meter, so the series has to exist, or "returning
+     * nothing" would be indistinguishable from "nobody is calling it".
      */
     @Test
     fun `an empty response still creates the series`() {

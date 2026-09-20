@@ -14,15 +14,10 @@ import java.net.URI
 private val logger = KotlinLogging.logger {}
 
 /**
- * Builds the S3 client the serving route reads through, or does not.
- *
- * **A null bean rather than a conditional one**, mirroring the importer's [ImageStorageConfig] twin:
- * without credentials there is nothing to build, and a context that refused to start would make
- * running the BFF locally depend on having bucket access. The route answers 503 while the client is
- * null, which is the truth — the images exist and this instance cannot reach them.
- *
- * `@EnableConfigurationProperties` rather than a scan, because this is the only binding class the
- * BFF has and a scan would be a wider change than one module needs.
+ * Builds the S3 client the serving route reads through, or does not: a null bean rather than a
+ * conditional one, mirroring the importer's [ImageStorageConfig], so running the BFF locally does
+ * not depend on bucket access. The route answers 503 while the client is null.
+ * `@EnableConfigurationProperties` rather than a scan, because this is the only binding class.
  */
 @Configuration
 @EnableConfigurationProperties(ImageServingProperties::class)
@@ -43,9 +38,8 @@ class ImageStorageConfig {
                     AwsBasicCredentials.create(properties.storage.accessKey, properties.storage.secretKey)
                 )
             )
-            // Path style, because Hetzner's endpoint does not serve virtual-host buckets. The SDK
-            // defaults to `bucket.endpoint`, which resolves to nothing here and fails as a DNS error
-            // rather than as a configuration one.
+            // Path style, because Hetzner's endpoint does not serve virtual-host buckets; the default
+            // `bucket.endpoint` fails as a DNS error rather than a configuration one.
             .serviceConfiguration(S3Configuration.builder().pathStyleAccessEnabled(true).build())
             .build()
     }
