@@ -1,12 +1,8 @@
-# Production's release of the event-junkie chart.
-#
-# **Live, and deliberately dark.** The apex and `www` resolve to nothing while `publish_dns` is
-# `false` in `infra/environments/production/variables.tf`; only the throwaway `prod-check` name
-# points at this cluster. The three `ingress` overrides below are what make that state serveable
-# rather than merely reachable, and all three revert together at go-live (#284).
-#
-# `oci-repository.yaml` admits release tags only, so this resolves nothing at all until a version
-# like `0.3.0` is published.
+# Production's release of the event-junkie chart. **Live, and deliberately dark**: the apex and `www`
+# resolve to nothing while `publish_dns` is `false` in `infra/environments/production/variables.tf`,
+# and only the throwaway `prod-check` name points here. The three `ingress` overrides below make that
+# state serveable, and all three revert together at go-live (#284). `oci-repository.yaml` admits
+# release tags only.
 apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
@@ -18,10 +14,9 @@ metadata:
 spec:
   releaseName: event-junkie
   targetNamespace: event-junkie
-  # This release renders a ClusterIssuer, a `cert-manager.io/v1` kind, so it cannot install onto a
-  # cluster without cert-manager: the API server rejects the unknown kind and the whole release
-  # fails. Production names cert-manager directly, where staging names the DNS-01 webhook — there is
-  # no webhook here, because HTTP-01 works against an address the internet can reach.
+  # This release renders a ClusterIssuer, so without cert-manager the whole release fails at an unknown
+  # kind. Production names cert-manager directly where staging names the DNS-01 webhook: HTTP-01 works
+  # against an address the internet can reach.
   dependsOn:
     - name: cert-manager
   interval: 10m
@@ -37,9 +32,8 @@ spec:
     remediation:
       retries: 2
       strategy: rollback
-      # Without this a bad deploy is retried and then simply left broken: `remediateLastFailure`
-      # defaults to false, so remediation runs *between* attempts and never after the final one.
-      # Found by the k3d rehearsal breaking a release on purpose (#414).
+      # Without this a bad deploy is retried and then left broken: `remediateLastFailure` defaults to
+      # false, so remediation runs between attempts and never after the final one (#414).
       remediateLastFailure: true
     cleanupOnFail: true
   test:
@@ -48,93 +42,75 @@ spec:
   rollback:
     cleanupOnFail: true
     timeout: 5m
-  # `enabled` rather than staging's `warn`. On production a manual `kubectl edit` is an incident, not
-  # an experiment, and reverting it to what the chart says is the correct response. Staging is where
-  # you find out what that feels like first.
+  # `enabled` rather than staging's `warn`: on production a manual `kubectl edit` is an incident, and
+  # reverting it is the correct response.
   driftDetection:
     mode: enabled
   values:
     networkPolicy:
-      # The database node's private address in CIDR form. **Two settings for one address is the
-      # unavoidable cost of the feature** — NetworkPolicy speaks CIDRs and cannot resolve a name —
-      # and this is the pairing most likely to be left half-done.
-      # `scripts/cluster-assertions.sh` fails the build on a real host beside a placeholder CIDR,
-      # which is the one combination that is silently wrong.
-      #
-      # **A wrong value does NOT fail the render.** It is a string, so it templates perfectly and is
-      # then rejected by the API server as an invalid `ipBlock.cidr` — failing the release and
-      # rolling it back, several steps from anything that mentions a CIDR.
+      # The database node's private address in CIDR form — NetworkPolicy cannot resolve a name, so two
+      # settings for one address, the pairing most likely to be left half-done.
+      # `scripts/cluster-assertions.sh` fails on a real host beside a placeholder CIDR. **A wrong value does
+      # NOT fail the render**: it templates and the API server rejects it, rolling the release back several
+      # steps from anything mentioning a CIDR.
       databaseCidr: "10.0.1.20/32"
     database:
-      # The dedicated PostgreSQL node, on the private network. Reachable from this cluster and
-      # from nowhere else: that node carries no inbound firewall rule of any kind, and its public
-      # address exists so it can reach out rather than so anything can reach back.
+      # The dedicated PostgreSQL node, on the private network, reachable from this cluster and from nowhere
+      # else: it carries no inbound firewall rule, and its public address exists so it can reach out.
       host: "10.0.1.20"
       # Committed encrypted and decrypted by Flux with the `sops-age` key (docs/ops/SECRETS.md).
       existingSecret: "events-db"
-    # Cached venue images (ADR-019). Serving is on: the backfill finished, and 2,284 of the 2,336
-    # distinct images the events reference are cached and derived. The rest are images we are not
-    # allowed to hold -- one venue's CDN publishes `Disallow: /` -- so those cards show no image
-    # rather than a hotlink, which is the point (#843).
-    # `serving.enabled` is a published claim: §5 of the privacy notice says no image request
-    # reaches a third party, and that is only true while this is on (LEGAL.md §7.3a).
+    # Cached venue images (ADR-019). Serving is on: the backfill finished, and the images not cached are
+    # ones we may not hold (one venue's CDN publishes `Disallow: /`), so those cards show no image rather
+    # than a hotlink (#843). **`serving.enabled` is a published claim**: §5 of the privacy notice says no
+    # image request reaches a third party, true only while this is on (LEGAL.md §7.3a).
     importer:
-      # **On here translates.** A source also needs a PERMITTED `translation_licence`, and 84 of the
-      # 86 hold one since ADR-027. The Secret is hand-made — docs/ops/SECRETS.md §The decision.
-      # Off for the two days the importer re-bought the catalogue nightly (#1301); back on with the
-      # release that keeps a translation across re-import. One catch-up pass, then only new text.
+      # **On here translates.** A source also needs a PERMITTED `translation_licence` (ADR-027). The Secret
+      # is hand-made (docs/ops/SECRETS.md). Off for the two days the importer re-bought the catalogue
+      # nightly (#1301); back on with the release that keeps a translation across re-import.
       translation:
         engine: anthropic
-        # Per source, per pass — not per night. The nightly import adds more than the chart's 50 to a
-        # handful of sources — 92 on Uber Arena, measured — and a pass that stops at the cap leaves a
-        # tail no later pass clears. 250 covers the largest night seen so far, with room. Across the
-        # 84 granted sources it bounds a night at 21,000, so it is not what stops a runaway (#1432).
+        # Per source, per pass — not per night. A nightly import adds more than the chart's 50 to some
+        # sources (92 on Uber Arena, measured), and a pass that stops at the cap leaves a tail no later pass
+        # clears. 250 covers the largest night seen; across 84 sources it bounds a night at 21,000 (#1432).
         maxPerRun: 250
     images:
       enabled: true
       serving:
         enabled: true
-      # The orphan sweep, on in both environments now (#843). Reporting mode found 3 unreferenced
-      # images and 26 objects: two full sets of thirteen, an original and twelve derivatives, plus
-      # one row that owns nothing -- no content hash, or a hash a live row still shares, and
-      # `discard` skips both. No stray. A small number is what makes this safe to move; a large one
-      # would mean the reference query is wrong.
+      # The orphan sweep, on in both environments (#843). Reporting mode found 3 unreferenced images and no
+      # stray; a large number would mean the reference query is wrong.
       sweep:
         enabled: true
       storage:
-        # Required by the chart, and the only thing separating these objects from staging's -- one
-        # bucket, content-addressed keys, so a shared prefix would let one environment's sweep
-        # delete objects the other still serves.
+        # Required by the chart, and the only thing separating these objects from staging's in one
+        # content-addressed bucket: a shared prefix would let one environment's sweep delete the other's.
         prefix: "production"
-        # Out of band in this namespace, scoped to the images bucket alone and never the
-        # project-wide keypair (docs/ops/SECRETS.md §event-junkie-images).
+        # Out of band in this namespace, scoped to the images bucket alone (docs/ops/SECRETS.md).
         existingSecret: "event-junkie-images"
       imgproxy:
         enabled: true
-    # No replica counts and no resources: `values.yaml`'s defaults are already production-shaped by
-    # design, so repeating them here would create a second place to look with nothing to say. The
-    # ingress below is the one exception, and only for as long as the domain stays dark.
-    # Dark-mode ingress. All three revert at go-live, together and in one commit — half of this is a
-    # site holding a certificate for a name nobody resolves (#284 §0).
+    # No replica counts and no resources: `values.yaml`'s defaults are production-shaped by design, so
+    # repeating them here would be a second place to look with nothing to say. The ingress below is the
+    # exception, only while the domain stays dark.
+    #
+    # Dark-mode ingress. All three revert at go-live, together and in one commit (#284 §0).
     ingress:
-      # The apex does not resolve while `publish_dns` is false, and production solves **HTTP-01**,
-      # which needs Let's Encrypt to reach the host BY NAME. Pointing at `event-junkie.de` now would
-      # leave the Certificate pending for ever and Traefik serving its own default cert — #634's
-      # shape. `prod-check` is the one name that does resolve, so it is the one that can be certified.
+      # The apex does not resolve while `publish_dns` is false, and production solves **HTTP-01**, which
+      # needs Let's Encrypt to reach the host BY NAME; pointing at `event-junkie.de` now would leave the
+      # Certificate pending for ever with Traefik serving its default cert (#634). `prod-check` is the one
+      # name that resolves.
       host: "prod-check.event-junkie.de"
-      # Emptied for the same reason, not as a simplification. Every redirect host gets its OWN
-      # certificate, and none of `www.event-junkie.de`, `event-junkie.com` or `www.event-junkie.com`
-      # resolves yet — so each would stall its own issuance while looking configured.
+      # Emptied for the same reason: every redirect host gets its OWN certificate, and none of them resolves
+      # yet, so each would stall its own issuance while looking configured.
       redirectHosts: []
-      # `X-Robots-Tag: noindex, nofollow` plus a robots.txt override. **This is the control, not
-      # decoration:** a real Let's Encrypt certificate puts `prod-check.event-junkie.de` into the
-      # public Certificate Transparency logs within minutes, so the name is discoverable and crawlers
-      # will find it. Keeping an unfinished site out of the index is the whole job here.
+      # `X-Robots-Tag: noindex, nofollow` plus a robots.txt override. **This is the control, not decoration**:
+      # a real certificate puts `prod-check.event-junkie.de` into Certificate Transparency within minutes,
+      # so crawlers will find it.
       noindex: true
-      # The Content-Security-Policy is enforced here, not report-only (#854). Staging went first and
-      # was loaded again under enforcement: 52 page loads, every route family, both locales, both
-      # themes, zero violations and zero console errors. Production's report-only header had the
-      # same pass before this flip. The chart default stays report-only for any new environment.
+      # The Content-Security-Policy is enforced here, not report-only (#854): staging went first, and
+      # production's report-only header had the same pass — every route family, both locales, both themes,
+      # zero violations. The chart default stays report-only.
       securityHeaders:
         contentSecurityPolicy:
           reportOnly: false
@@ -143,11 +119,9 @@ spec:
         create: true
         name: "letsencrypt-production"
         email: "hello@event-junkie.de"
-        # HTTP-01 works here, unlike staging: production has a public address for Let's Encrypt to
-        # reach, so there is no need for the DNS-01 webhook and its API token.
+        # HTTP-01 works here, unlike staging: production has a public address, so no DNS-01 webhook and no token.
         solver: "http01"
-        # The real ACME endpoint, and the only place in this repository where it appears. 50
-        # certificates per registered domain per week, 5 duplicates — and `event-junkie.de` is the
-        # same registered domain staging uses, which is why staging stays on the ACME staging
-        # endpoint rather than "just testing" against this one.
+        # The real ACME endpoint, the only place in this repository it appears. 50 certificates per
+        # registered domain per week, and `event-junkie.de` is the same registered domain staging uses —
+        # which is why staging stays on the ACME staging endpoint.
         server: "https://acme-v02.api.letsencrypt.org/directory"

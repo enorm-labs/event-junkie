@@ -1,10 +1,7 @@
 # The importer's two ADR-008 constraints, and the JDBC half of its database configuration.
-#
-# `configmap.yaml` is in `templates:` and is not optional. `importer-deployment.yaml` computes its
-# `checksum/config` annotation with `include (print $.Template.BasePath "/configmap.yaml")`, and
-# helm-unittest renders *only* the templates a suite lists — omit it and the suite fails with
-# `no template "…/configmap.yaml" associated with template "gotpl"`, which points nowhere useful.
-# The same applies to any future suite touching bff-deployment.yaml.
+# `configmap.yaml` is in `templates:` and is not optional: `importer-deployment.yaml` includes it for
+# its `checksum/config` annotation, and helm-unittest renders only what a suite lists — omit it and
+# the suite fails with `no template "…/configmap.yaml" associated with template "gotpl"`.
 suite: importer
 
 templates:
@@ -14,10 +11,8 @@ templates:
 
 tests:
   # --- The single replica is a correctness constraint, not a cost one -------------------------
-  #
-  # Two schedulers means two concurrent imports of the same source; the 60-second tick's RUNNING
-  # check is a read-then-write with no lock. A rolling update briefly runs two pods, which is the
-  # same failure by a different route — hence Recreate.
+  # Two schedulers means two concurrent imports of one source; the RUNNING check has no lock. A rolling
+  # update briefly runs two pods, the same failure by another route — hence Recreate.
   - it: runs exactly one replica and replaces rather than rolls
     set:
       database.host: "10.0.1.2"
@@ -49,19 +44,11 @@ tests:
           value: Recreate
 
   # --- Flyway's JDBC connection ---------------------------------------------------------------
-  #
-  # The apps are R2DBC and Flyway is JDBC, so the importer needs two connection configurations for
-  # one database. Forgetting the JDBC half fails silently: migrations simply never run, and nothing
-  # reports an error.
-  #
-  # Each path filters `env` by variable name — `env[?(@.name=="…")]` — rather than indexing into the
-  # list, which is what makes these hold under every values file and still fail loudly: a filter
-  # that matches nothing is reported as an unknown path, not as a pass. That is the vacuity the
-  # script's hand-rolled `assert_nonempty` guards existed to approximate.
-  #
-  # This is also the control for invariants_test.yaml's `$..env[*].name` assertion, which is a
-  # negative and would pass if that path expression ever stopped resolving. It lives here because
-  # the frontend has no `env` at all, so the positive form cannot be quantified over every workload.
+  # The apps are R2DBC and Flyway is JDBC, so the importer needs two connection configurations for one
+  # database; forgetting the JDBC half means migrations never run, silently. Each path filters `env` by
+  # name — `env[?(@.name=="…")]` — so a filter matching nothing is an unknown path, not a pass. Also the
+  # control for invariants_test.yaml's negative on `$..env[*].name`, which lives here because the
+  # frontend has no `env`.
   - it: carries the JDBC connection Flyway needs, spelled the way Spring binds it
     set:
       database.host: "10.0.1.2"
@@ -74,13 +61,9 @@ tests:
       - matchRegex:
           path: 'spec.template.spec.containers[0].env[?(@.name=="SPRING_FLYWAY_URL")].value'
           pattern: '^jdbc:postgresql://[^:/]+:[0-9]+/[^/]+$'
-      # `SPRING_FLYWAY_USER`, not `_USERNAME`: the Spring property is `spring.flyway.user` and the
-      # wrong spelling binds to nothing. invariants_test.yaml rejects the wrong spelling anywhere in
-      # the chart; this is the half that says the right one is present.
-      #
-      # The credential comes from the Secret named by `database.existingSecret` — there is no
-      # inline-password path in this chart, which is why the assertion is on `valueFrom` and there
-      # is deliberately no assertion anywhere on a literal `value` for either credential.
+      # `SPRING_FLYWAY_USER`, not `_USERNAME`; invariants_test.yaml rejects the wrong spelling anywhere, this
+      # says the right one is present. The credential comes from `database.existingSecret`, so the
+      # assertion is on `valueFrom`, and there is deliberately none on a literal `value`.
       - exists:
           path: 'spec.template.spec.containers[0].env[?(@.name=="SPRING_FLYWAY_USER")].valueFrom.secretKeyRef.name'
       - equal:
@@ -89,8 +72,7 @@ tests:
       - equal:
           path: 'spec.template.spec.containers[0].env[?(@.name=="SPRING_FLYWAY_PASSWORD")].valueFrom.secretKeyRef.key'
           value: password
-      # The R2DBC half, asserted alongside it: the failure this guards against is having one of the
-      # two connection styles, not having neither.
+      # The R2DBC half alongside it: the failure guarded against is having one of the two, not neither.
       - matchRegex:
           path: 'spec.template.spec.containers[0].env[?(@.name=="SPRING_R2DBC_URL")].value'
           pattern: '^r2dbc:postgresql://[^:/]+:[0-9]+/[^/]+$'
@@ -104,10 +86,8 @@ tests:
     asserts: *flyway
 
   # --- Nothing outside the cluster can address the importer ------------------------------------
-  #
-  # Its /api/admin/** has no authentication of its own; what keeps it private is that no Ingress
-  # names its Service and its own Service is ClusterIP. ingress_test.yaml asserts the first half
-  # from the Ingress side.
+  # Its /api/admin/** has no authentication of its own; no Ingress names its Service and the Service is
+  # ClusterIP. ingress_test.yaml asserts the first half from the Ingress side.
   - it: exposes itself only inside the cluster
     set:
       database.host: "10.0.1.2"
@@ -121,14 +101,9 @@ tests:
           value: ClusterIP
 
   # --- Cached venue images (ADR-019) ------------------------------------------------------------
-  #
-  # Off has to mean the importer carries no storage configuration at all, rather than empty values
-  # it might act on.
-  #
-  # **`images.enabled: false` is set explicitly, and leaving it to the default was a real bug.**
-  # `cluster-assertions.sh` re-runs this suite against every cluster's `spec.values`, so a test that
-  # relies on a chart default fails the moment an environment legitimately overrides it — which is
-  # what deploy/AGENTS.md means by an assertion here having to hold under any values file.
+  # Off has to mean the importer carries no storage configuration at all. **`images.enabled: false` is
+  # set explicitly**: `cluster-assertions.sh` re-runs this suite against every cluster's values, and a
+  # test relying on a chart default fails the moment an environment overrides it.
   - it: passes no image storage configuration while images are disabled
     set:
       database.host: "10.0.1.2"
@@ -156,7 +131,7 @@ tests:
       path: kind
       value: Deployment
     asserts:
-      # The chart never templates a credential, here as anywhere else.
+      # The chart never templates a credential.
       - contains:
           path: spec.template.spec.containers[0].env
           content:
@@ -171,9 +146,8 @@ tests:
             name: IMAGE_STORAGE_PREFIX
             value: "staging"
 
-  # The sweep is what stops this bucket growing forever, and the only code path here that deletes
-  # anything. Off has to reach the container as a value rather than as an absent variable, because
-  # absent binds to the same default and the two are then indistinguishable in a running pod.
+  # The sweep is the only code path here that deletes anything. Off has to reach the container as a
+  # value rather than an absent variable, or the two are indistinguishable in a running pod.
   - it: passes the sweep switch through as a value, off as well as on
     set:
       database.host: "10.0.1.2"
@@ -210,30 +184,26 @@ tests:
             name: APP_IMAGES_SWEEP_ENABLED
             value: "true"
 
-  # One bucket serves both environments and the keys are content addressed, so a missing prefix
-  # would let one environment's sweep delete objects the other still serves (#270, ADR-019 §2.8).
-  # Failing the render is the only place that can be caught before it happens.
+  # One bucket serves both environments with content-addressed keys, so a missing prefix would let one
+  # environment's sweep delete the other's objects (ADR-019 §2.8). Failing the render is the only
+  # place that is caught in time.
   - it: refuses to render with images enabled and no environment prefix
-    # Scoped to one template: `failedTemplate` is asserted against every template the suite lists,
-    # and the configmap and service render perfectly well without a prefix.
+    # Scoped to one template: `failedTemplate` is asserted against every template the suite lists.
     template: importer-deployment.yaml
     set:
       database.host: "10.0.1.2"
       networkPolicy.databaseCidr: "10.0.1.2/32"
       database.existingSecret: "events-db"
       images.enabled: true
-      # Empty explicitly, for the same reason the test above sets `enabled` explicitly: an
-      # environment that supplies a prefix would otherwise make this render succeed and the
-      # assertion fail, in a suite that has to hold under every cluster's values.
+      # Empty explicitly, for the reason `enabled` is: an environment supplying a prefix would make this
+      # render succeed.
       images.storage.prefix: ""
     asserts:
       - failedTemplate:
           errorMessage: "images.storage.prefix is required when images.enabled — it is what separates this environment's objects from the other's."
 
   # --- The imgproxy sidecar (ADR-020) -----------------------------------------------------------
-  #
-  # Explicit values throughout, for the reason the two tests above learned the hard way: this suite
-  # is re-run against every cluster's spec.values by scripts/cluster-assertions.sh.
+  # Explicit values throughout: this suite is re-run against every cluster's spec.values.
   - it: runs no sidecar until imgproxy is enabled
     set:
       database.host: "10.0.1.2"
@@ -262,32 +232,31 @@ tests:
       path: kind
       value: Deployment
     asserts:
-      # Nothing outside the pod may reach it. NetworkPolicy cannot express this — a policy selects
-      # pods and a sidecar shares the pod's network namespace — so the bind address is the control.
+      # Nothing outside the pod may reach it. NetworkPolicy cannot express this — a sidecar shares the
+      # pod's network namespace — so the bind address is the control.
       - contains:
           path: spec.template.spec.containers[1].env
           content:
             name: IMGPROXY_BIND
             value: "127.0.0.1:8080"
-      # And imgproxy may reach the bucket and nothing else. Letting it pull a venue URL would go
-      # around robots.txt, the throttle and the SSRF checks, all of which live in our own fetcher.
+      # imgproxy may reach the bucket and nothing else; a venue URL would go around robots.txt, the
+      # throttle and the SSRF checks in our own fetcher.
       - contains:
           path: spec.template.spec.containers[1].env
           content:
             name: IMGPROXY_ALLOWED_SOURCES
             value: "s3://event-junkie-images/"
-      # EXIF can carry GPS coordinates and a camera serial. Stated rather than left to the default,
-      # because it is a legal step (LEGAL.md §7.3a) and not housekeeping.
+      # EXIF can carry GPS coordinates and a camera serial: a legal step (LEGAL.md §7.3a), stated rather
+      # than left to the default.
       - contains:
           path: spec.template.spec.containers[1].env
           content:
             name: IMGPROXY_STRIP_METADATA
             value: "true"
 
-  # **The sidecar and the client that calls it are two halves, and only one of them was asserted.**
-  # PR 4a wired the container and never wired the JVM, so staging ran a sidecar nothing ever called:
-  # every probe passed, no error appeared anywhere, and no derivative was generated. These assert
-  # `containers[0]`, which had no imgproxy assertion of any kind before.
+  # **The sidecar and the client that calls it are two halves.** One PR wired the container and never
+  # the JVM, so staging ran a sidecar nothing called with every probe passing. These assert
+  # `containers[0]`.
   - it: tells the importer to call the sidecar, and how to sign for it
     set:
       database.host: "10.0.1.2"
@@ -305,14 +274,14 @@ tests:
           content:
             name: APP_IMAGES_IMGPROXY_ENABLED
             value: "true"
-      # The other end of the sidecar's IMGPROXY_BIND. A pair that has to agree.
+      # The other end of the sidecar's IMGPROXY_BIND; a pair that has to agree.
       - contains:
           path: spec.template.spec.containers[0].env
           content:
             name: IMGPROXY_BASE_URL
             value: "http://127.0.0.1:8080"
-      # Without the same key and salt the sidecar checks, the JVM signs nothing and every request
-      # comes back 403 — which reads as a broken sidecar rather than as a missing secret.
+      # Without the same key and salt the JVM signs nothing and every request is 403, which reads as a
+      # broken sidecar rather than a missing secret.
       - contains:
           path: spec.template.spec.containers[0].env
           content:
@@ -353,23 +322,20 @@ tests:
       path: kind
       value: Deployment
     asserts:
-      # A third-party image we cannot rebuild when a finding has no fix, so the version is a
-      # decision rather than a tag that moves under us (ADR-017's argument, one image over).
+      # A third-party image we cannot rebuild, so the version is a decision, not a tag that moves (ADR-017).
       - matchRegex:
           path: spec.template.spec.containers[1].image
           pattern: "^ghcr\\.io/imgproxy/imgproxy@sha256:[0-9a-f]{64}$"
-      # The decode bounds live here now, because ADR-020 moved decoding out of the JVM. Two limits,
-      # because a decompression bomb is small on the wire and enormous once decoded.
+      # The decode bounds, here because ADR-020 moved decoding out of the JVM: a bomb is small on the wire
+      # and enormous decoded.
       - contains:
           path: spec.template.spec.containers[1].env
           content:
             name: IMGPROXY_MAX_SRC_RESOLUTION
             value: "50"
-      # **Asserted as a rendered value, not as a present key**, and that distinction is the whole
-      # test: this one shipped as "8.388608e+06" because Helm parses a values number as float64, and
-      # imgproxy exits on `strconv.Atoi: parsing "8.388608e+06": invalid syntax`. The sidecar
-      # crash-looped and Flux rolled the release back. The assertion above passed throughout, because
-      # 50 is small enough to render without an exponent.
+      # **Asserted as a rendered value, not a present key**: this shipped as "8.388608e+06" because Helm
+      # parses a values number as float64, and imgproxy exits on `strconv.Atoi: parsing "8.388608e+06"`. The
+      # sidecar crash-looped; the presence assertion passed throughout, because 50 renders without an exponent.
       - contains:
           path: spec.template.spec.containers[1].env
           content:
@@ -384,16 +350,14 @@ tests:
 
 
   # --- Translation: two switches, and the chart owns only the first ---------------------------
-  #
-  # A missing Secret must not be a broken cluster. Every environment starts with the engine off, so
-  # the deployment names no Secret at all and a cluster that never creates one is healthy (ADR-026).
+  # A missing Secret must not be a broken cluster: with the engine off the deployment names no Secret
+  # at all (ADR-026).
   - it: names no translation secret while the engine is off
     set:
       database.host: "10.0.1.2"
       networkPolicy.databaseCidr: "10.0.1.2/32"
       database.existingSecret: "events-db"
-      # Forced, because `cluster-assertions.sh` re-runs this suite under each cluster's own values
-      # and production sets `anthropic`. Without it the case asserts the cluster, not the default.
+      # Forced: production sets `anthropic`, and this case asserts the default.
       importer.translation.engine: "none"
     documentSelector:
       path: kind

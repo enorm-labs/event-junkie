@@ -1,22 +1,15 @@
 # The metrics and logs collector — #271 item 2.
 #
 # **Two charts, and the order is not a preference.** The collector chart renders
-# `OpenTelemetryCollector` and `Instrumentation` custom resources, and **Helm resolves kinds up
-# front**, so installing it before the operator's CRDs exist fails with `ensure CRDs are installed
-# first` rather than waiting. Same shape as the Traefik CRD wait `scripts/k3d-rehearsal.sh` already
-# performs for the application chart. `dependsOn` below makes that ordering a property of the config
-# rather than of whoever applies it.
+# `OpenTelemetryCollector` and `Instrumentation` CRs, and Helm resolves kinds up front, so installing
+# it before the operator's CRDs exist fails with `ensure CRDs are installed first`. `dependsOn` makes
+# the ordering a property of the config.
 #
-# What the rehearsal established:
-# - **The agent does not scrape the app pods; the gateway does.** The agent's metrics pipeline is
-#   `kubeletstats` and `hostmetrics` only. The `prometheus` receiver with the autodiscovery job lives
-#   in the gateway, so a pod is scraped from wherever the gateway runs — which is what made the
-#   NetworkPolicy in #591 necessary.
-# - **Discovery is by `prometheus.io/*` annotation and nothing else.** A pod without them is invisible
-#   to collection while looking perfectly healthy.
-# - **Footprint, measured:** 938Mi for the whole path — this plus OpenObserve — against ADR-015's
-#   ~1.5 GB ceiling. That was k3d on arm64, so **it is an expectation to check against this node, not
-#   a number to trust**. If it lands materially higher, criterion 2 is the thing to re-judge.
+# From the rehearsal: **the agent does not scrape the app pods; the gateway does** (`kubeletstats`
+# and `hostmetrics` only on the agent, the `prometheus` receiver on the gateway — why #591's
+# NetworkPolicy exists). **Discovery is by `prometheus.io/*` annotation and nothing else.**
+# **Footprint measured at 938Mi** for the whole path on k3d/arm64, against ADR-015's ~1.5 GB ceiling
+# — an expectation to check against this node, not a number to trust.
 apiVersion: source.toolkit.fluxcd.io/v1
 kind: HelmRepository
 metadata:
@@ -62,29 +55,22 @@ spec:
   values:
     admissionWebhooks:
       certManager:
-        # cert-manager IS installed here, but pointing the operator at it couples this release to a
-        # ClusterIssuer and a DNS-01 token for a certificate nothing outside the cluster ever sees.
-        # A self-signed webhook cert is the smaller dependency for an internal admission endpoint.
+        # cert-manager is installed here, but a ClusterIssuer and a DNS-01 token for a certificate nothing
+        # outside the cluster sees is the larger dependency; a self-signed webhook cert is the smaller one.
         enabled: false
       autoGenerateCert:
         enabled: true
     manager:
-      # **No `collectorImage`, because it can do nothing.** It supplies a default for collectors that
-      # name no image, and the OpenObserve chart pins `spec.image` on both — so both pods run
-      # `opentelemetry-collector-contrib:0.138.0`. `kubectl -n observability get pod -o
-      # jsonpath='{.spec.containers[0].image}'` answers it.
-      #
-      # **The smaller `-k8s` distribution is the chart's `image.repository`, and it fails today.**
-      # The gateway's `traces` pipeline uses the contrib-only `servicegraph` connector, and `-k8s`
-      # refuses to start on an unknown component. Nothing sends traces there — the NetworkPolicy
-      # opens no ingress for 4317/4318 — so retiring that pipeline unblocks it. Its own change.
+      # **No `collectorImage`, because it can do nothing**: the OpenObserve chart pins `spec.image` on both
+      # collectors. **The smaller `-k8s` distribution fails today**: the gateway's `traces` pipeline uses
+      # the contrib-only `servicegraph` connector, and nothing sends traces there. Retiring that pipeline
+      # is its own change.
       resources:
         requests:
           memory: "64Mi"
           cpu: "50m"
         limits:
-          # Measured at 35Mi in the rehearsal. The operator only reconciles CRs; it is not on the
-          # data path.
+          # Measured at 35Mi in the rehearsal; the operator only reconciles CRs.
           memory: "128Mi"
           cpu: "200m"
 ---
@@ -102,9 +88,8 @@ spec:
   targetNamespace: observability
   storageNamespace: observability
   interval: 1h
-  # Both, and for different reasons. The operator provides the CRDs this chart's resources are
-  # instances of — without it the install fails outright rather than waiting. OpenObserve is the
-  # destination; starting the collector first would only produce export errors until it appeared.
+  # Both, for different reasons: the operator provides the CRDs (without it the install fails
+  # outright), OpenObserve is the destination (without it, export errors until it appears).
   dependsOn:
     - name: otel-operator
     - name: openobserve
@@ -126,12 +111,9 @@ spec:
       interval: 1h
 
   # The collector authenticates to OpenObserve as the root user, from the same hand-made Secret the
-  # server reads. Injected rather than written here for the reason #598 gives: a credential under
-  # `spec.values` is a credential in a public repository.
-  #
-  # The header is `Basic <base64 of email:password>`, which is why it is a separate key rather than
-  # composed from the two the server uses — building it here would mean the two halves passing
-  # through Helm values in the clear.
+  # server reads — injected, because a credential under `spec.values` is a credential in a public
+  # repository (#598). The `Basic <base64 of email:password>` header is a separate key so the two
+  # halves never pass through Helm values in the clear.
   valuesFrom:
     - kind: Secret
       name: openobserve-credentials
@@ -142,81 +124,55 @@ spec:
       valuesKey: O2_BASIC_AUTH_HEADER
       targetPath: exporters.otlphttp/openobserve_k8s_events.headers.Authorization
 
-  # **Giving the agent somewhere to remember how far it read (#950).** `filelog` has
-
   values:
-    # **The only field either cluster patches** (#880, #953). It tags every metric, log and trace
-    # with the cluster it came from. Separate stores keep the environments apart, so this is what
-    # makes an exported panel say which cluster you were looking at, not what divides them.
-    #
-    # **No overlay may leave `unset` in place.** A cluster added without the patch then tags its
-    # data `unset` rather than claiming to be an environment it is not.
+    # **The only field either cluster patches** (#880, #953): it tags every metric, log and trace with
+    # its cluster, which is what makes an exported panel say which one you were looking at. **No overlay
+    # may leave `unset` in place.**
     k8sCluster: unset
-    # The operator is installed above, as its own release. Leaving this true would make the chart
-    # try to install a second copy as a subchart.
+    # The operator is installed above as its own release; `true` here installs a second copy as a subchart.
     opentelemetry-operator:
       enabled: false
     exporters:
       otlphttp/openobserve:
-        # In-cluster, so plain HTTP over the pod network rather than through the ingress — which does
-        # not route OpenObserve at all, deliberately.
+        # In-cluster, plain HTTP over the pod network; the ingress does not route OpenObserve, deliberately.
         endpoint: http://openobserve-openobserve-standalone.observability.svc.cluster.local:5080/api/default/
       otlphttp/openobserve_k8s_events:
         endpoint: http://openobserve-openobserve-standalone.observability.svc.cluster.local:5080/api/default/
         headers:
           stream-name: k8s_events
 
-    # **Stripping the identity attributes that churn — metrics only.** Every metric arrives with
-    # ~29 resource attributes, a dozen of which change when a pod is replaced, and a new value in any
-    # one is a NEW TIME SERIES. A pod restart starting one is defensible; **a deploy starting one is
-    # not**: `container.image.tag` is a snapshot version, so every push to main multiplies the series
-    # count for every metric that pod emits until retention expires it. On staging a bare `db_events`
-    # returned **six series in one hour** for what is logically two, and an *instant* PromQL query at
-    # `now` returned **nothing** — the newest series not yet written inside the lookback window, so a
-    # silently empty panel.
+    # **Stripping the identity attributes that churn — metrics only.** Every metric arrives with ~29
+    # resource attributes, a dozen of which change when a pod is replaced, and a new value in any one is
+    # a NEW TIME SERIES. `container.image.tag` is a snapshot version, so every push to main multiplied
+    # the series count until retention expired it: on staging a bare `db_events` returned six series in
+    # an hour for what is logically two, and an instant query at `now` returned nothing.
     #
-    # **`k8s.pod.name` is deliberately KEPT.** Dropping it merges two replicas of one deployment into
-    # a single series, which for a counter is not a tidier graph but a wrong one. Everything deleted
-    # below is per-deploy churn or a duplicate of something kept.
-    #
-    # **Metrics only, not logs or traces** — a pod name in a log line is how you find the log, so
-    # this is a separate processor rather than a narrower `k8sattributes.extract.metadata` list,
-    # which all three pipelines share. **The agent is unaffected**: it is the only one holding
-    # `kubeletstats`, whose `k8s_pod_*` metrics need their pod names, the pod being the subject.
-    #
-    # **Nested under `gateway:`, unlike `exporters:` above.** The chart shares `exporters` between
-    # both collectors; `processors` and `service` exist once per collector, and the same keys at the
-    # top level are ignored silently. `helm template` plus a `yq` query is what catches that.
+    # **`k8s.pod.name` is deliberately KEPT**: dropping it merges two replicas into one series, which for a
+    # counter is wrong, not tidier. **Metrics only** — a pod name in a log line is how you find the log.
+    # **The agent is unaffected**: its `kubeletstats` metrics need their pod names. **Nested under
+    # `gateway:`**: `exporters` is shared, `processors` and `service` exist once per collector, and the
+    # same keys at the top level are ignored silently.
 
-    # **Both collectors ship with `resources: {}`, and that is how a node dies** — not scheduled
-    # against, not capped, free to take the node with them. The gateway measures **928Mi**, which is
-    # the global OOM in #271 where the kernel killed OpenObserve while the API server flapped.
-    #
-    # **The limits are not a guess: they are the limiter's own worst case.** Both collectors run a
-    # `memory_limiter` processor that refuses data at `limit_mib` and forces GC above it — the
-    # graceful, *countable* form of shedding. The container limit has to sit **above** `limit_mib +
-    # spike_limit_mib` so the limiter always bites first; below it the kernel wins the race and the
-    # pod dies with everything in flight, reporting nothing:
+    # **Both collectors ship with `resources: {}`, and that is how a node dies** — the gateway measured
+    # 928Mi in #271's global OOM. **The limits are the limiter's own worst case**: each collector's
+    # `memory_limiter` refuses data at `limit_mib` and forces GC above it, the countable form of shedding,
+    # and the container limit has to sit above `limit_mib + spike_limit_mib` so the limiter bites before
+    # the kernel does:
     #
     #     agent     memory_limiter 512 + 128 spike  ->  limits.memory 640Mi
     #     gateway   memory_limiter 1024 + 256 spike ->  limits.memory 1280Mi
     #
-    # **Requests are steady state, not the ceiling** — what the scheduler needs, and what a "floor
-    # before observability" sum misses entirely, an unrequested pod being invisible to it.
+    # Requests are steady state — what the scheduler needs, which an unrequested pod is invisible to.
 
-    # **The agent is not rendered by this release** (#709). The chart puts both collectors into one
-    # namespace, and the agent's hostPath mounts hold whatever namespace it lands in at `privileged`.
-    # So the agent is the second HelmRelease below, in `observability-agent`, and this one keeps the
-    # gateway, the kube-state-metrics subchart and the Instrumentation CRs — which is why the memory
-    # table above still names both.
+    # **The agent is not rendered by this release** (#709): the chart puts both collectors into one
+    # namespace, and the agent's hostPath mounts hold whatever namespace it lands in at `privileged`. So
+    # the agent is the second HelmRelease below, in `observability-agent`.
     agent:
       enabled: false
 
     gateway:
-      # **What `restricted` asks of a pod that needs no privilege** (#709). The image already runs as
-      # UID 10001; these four fields say so in a form Pod Security Admission can check. The agent
-      # cannot make the same promise — its release carries why — so it is this pod, OpenObserve and
-      # the namespace label that together make `observability` enforce.
+      # **What `restricted` asks of a pod that needs no privilege** (#709): the image runs as UID 10001, and
+      # these four fields say so in a form Pod Security Admission can check.
       securityContext:
         allowPrivilegeEscalation: false
         runAsNonRoot: true
@@ -228,34 +184,23 @@ spec:
           type: RuntimeDefault
       resources:
         requests:
-          # **256Mi, and the first draft of this line said 512Mi.** The gateway measured 928Mi while
-          # #625 was open, and that was not a working set — it was 1,000 queued batches waiting on
-          # writes OpenObserve was rejecting. Five minutes after the fix reconciled the same pod sat
-          # at **221Mi**, which is what this now requests against.
-          #
-          # Worth keeping as a caution rather than tidying away: a resource request taken during an
-          # incident encodes the incident. The number to size against is the one after the thing is
-          # working.
+          # **256Mi, and the first draft said 512Mi.** The 928Mi measured during #625 was 1,000 queued batches
+          # waiting on writes OpenObserve was rejecting; five minutes after the fix the same pod sat at 221Mi.
+          # A resource request taken during an incident encodes the incident.
           memory: "256Mi"
           cpu: "100m"
         limits:
           memory: "1280Mi"
           cpu: "1"
 
-      # **The two nodes' patch state, scraped from node_exporter on their private addresses**
-      # (#419). A second `prometheus` receiver rather than a job added to the chart's: the chart's
-      # `scrape_configs` is a list, Helm replaces lists, and restating nine jobs to add one is how a
-      # scrape job goes missing silently. `targets` is the one field each cluster patches, with the
-      # same `unset` rule `k8sCluster` has — staging has one node, production two, and a base that
-      # ships `unset` scrapes a hostname that does not resolve rather than the wrong cluster's node.
-      # Every 60s: the metrics are ages that change by the minute, and the alerts read hours.
+      # **The two nodes' patch state, scraped from node_exporter on their private addresses** (#419). A
+      # second `prometheus` receiver rather than a job in the chart's: `scrape_configs` is a list, Helm
+      # replaces lists, and restating nine jobs to add one is how one goes missing. `targets` is the field
+      # each cluster patches, with the same `unset` rule as `k8sCluster`. Every 60s; the metrics are ages.
       #
-      # **`node` is the label that tells the two production nodes apart, and `instance` is not.**
-      # The receiver puts `instance` into `service.instance.id`, which
-      # `resource/strip_metric_identity` below deletes on purpose — so without the relabel both
-      # nodes' samples land in ONE series, the alert still fires but cannot say which node, and a
-      # node whose exporter is down is invisible behind the other's samples. A metric label
-      # survives the strip; a resource attribute does not.
+      # **`node` is the label that tells the two production nodes apart, and `instance` is not**: the
+      # receiver puts `instance` into `service.instance.id`, which `resource/strip_metric_identity` deletes
+      # on purpose, so without the relabel both nodes land in ONE series. A metric label survives the strip.
       receivers:
         prometheus/nodes:
           config:
@@ -272,8 +217,7 @@ spec:
       processors:
         # comment-lint: allow the six-line measurement is what every drop rule below is argued from.
         # **Dropping the metrics nothing here will ever query.** The k3s API server's
-        # `apiserver_request_duration_seconds` histogram alone is 47% of every row stored and 38% of
-        # the bytes — 385,752 rows, 278 MB, cardinality verb x resource x scope x bucket on a cluster
+        # `apiserver_request_duration_seconds` histogram alone is 47% of rows and 38% of bytes on a cluster
         # doing almost nothing. Measured across 983 streams / 822,942 rows / 729 MB:
         #
         #     apiserver_*            51.5% of rows, 41.9% of bytes   (10 streams)
@@ -283,65 +227,32 @@ spec:
         #     workqueue_*             2.9%           4.2%
         #     process_* rest_client_* 1.0%           1.3%   <- process_ deliberately NOT dropped
         #
-        # The application's own meters are never the volume: `importer_source_last_success`, the one
-        # the whole project cares about, is 0.7% of rows. **What goes is runtime internals of
-        # software we do not operate, and histograms of it** — `go_*` describes the garbage collector
-        # of controllers Kubernetes already restarts when they fail. **`apiserver_request_total` is
-        # deliberately KEPT** while its duration histogram goes: the count carries "is the API server
-        # erroring", which is what mattered during the OOM in #271, and `_count`/`_sum` survive
-        # elsewhere, so a mean is available where a percentile is not. **Our own meters are
-        # untouched**, verified per family against live data rather than assumed from the prefix —
-        # which is how the `process_` trap below was caught — as are `pg_*`, `k8s_*`, `system_*`,
-        # `container_*`, `certmanager_*`, `traefik_*`, `jvm_*` and `kube_*`.
+        # What goes is runtime internals of software we do not operate. **`apiserver_request_total` is
+        # KEPT** while its histogram goes: the count carries "is the API server erroring", and `_count`/`_sum`
+        # give a mean. **Our own meters are untouched**, verified per family against live data — `pg_*`,
+        # `k8s_*`, `system_*`, `container_*`, `certmanager_*`, `traefik_*`, `jvm_*`, `kube_*`.
         #
-        # **Filtered by BASE NAME, not by the `_bucket` suffix**, which is the trap. OpenObserve shows
-        # `apiserver_request_duration_seconds_bucket` as a stream, but that name does not exist here:
-        # the Prometheus receiver rebuilds the histogram into one OTLP metric named
-        # `apiserver_request_duration_seconds`, which OpenObserve re-expands at ingest. A rule
-        # matching `_bucket$` matches nothing and looks like it worked; the give-away is the bare
-        # stream at `docs=0` beside the three suffixed ones.
+        # **Filtered by BASE NAME, not the `_bucket` suffix**: the Prometheus receiver rebuilds a histogram
+        # into one OTLP metric named `apiserver_request_duration_seconds`, which OpenObserve re-expands at
+        # ingest. A rule matching `_bucket$` matches nothing and looks like it worked.
         filter/drop_infrastructure_noise:
-          # A condition that fails to evaluate skips rather than tearing down the pipeline. OTTL is
-          # parsed at startup, so a syntax error still fails fast and visibly.
+          # A condition that fails to evaluate skips rather than tearing down the pipeline; OTTL is parsed at
+          # startup, so a syntax error still fails fast.
           error_mode: ignore
           metrics:
             # A metric is DROPPED when any condition here is true.
             metric:
-              # Go runtime and Kubernetes client-library internals, whole families.
-              #
-              # **`process_` is NOT in this list, and that is a correction rather than an
-              # oversight.** It was, and it silently took five of our own metrics with it:
-              # `process_` is a mixed namespace. The Go Prometheus client publishes
-              # `process_cpu_seconds_total`, `process_resident_memory_bytes`, `process_open_fds`
-              # and friends — cert-manager, coredns — while **Micrometer publishes
-              # `process_cpu_usage`, `process_uptime_seconds`, `process_cpu_time_ns_total` and
-              # `process_files_*` from the BFF and the importer.** A prefix cannot tell them apart.
-              #
-              # The whole `process_` family is ~0.7% of rows and ~1.0% of bytes, so there is nothing
-              # here worth the risk of dropping application metrics to save. Left in.
+              # Go runtime and Kubernetes client-library internals, whole families. **`process_` is NOT in this
+              # list**: it is a mixed namespace — the Go client's `process_cpu_seconds_total` beside Micrometer's
+              # `process_cpu_usage` and `process_uptime_seconds` from the BFF and importer — and it once silently
+              # took five of our own metrics. ~0.7% of rows; left in.
               - 'IsMatch(name, "^(go|rest_client|workqueue)_")'
-              # **`postgres-exporter` is 60% of everything ingested, for one metric anybody
-              # queries.** Measured from the bucket itself, over objects written after every
-              # earlier filter was live:
-              #
-              #     pg_*         1810     <- this
-              #     kube_*        440
-              #     otelcol_*     195
-              #     jvm_*         125
-              #
-              # 362 distinct `pg_*` streams, and `deploy/dashboards/` queries exactly one. **It is
-              # stream COUNT that hurts, not row count**: OpenObserve holds arrow batches per stream
-              # inside the memtable, so near-idle streams cost far more than the row figures suggest.
-              #
-              # **The 503s are not this, though.** That ceiling is a separate 25%-of-cgroup memtable
-              # limit the default rotation threshold sits above and can never reach; #625 has the
-              # arithmetic and `openobserve.yaml`'s `ZO_MAX_FILE_SIZE_IN_MEMORY` is the fix. Cutting
-              # the stream count lengthens the interval between overflows, but it treats a symptom.
-              #
-              # The allowlist keeps what a single-node database is worth watching: is it up, how big,
-              # how many connections, is it committing, is it deadlocking, and did the exporter fail.
-              # Everything else is reversible — the exporter still produces it; this decides only
-              # what is stored.
+              # **`postgres-exporter` is 60% of everything ingested, for one metric anybody queries.** Measured from
+              # the bucket: `pg_*` 1810 streams, `kube_*` 440, `otelcol_*` 195, `jvm_*` 125 — and
+              # `deploy/dashboards/` queries exactly one. **It is stream COUNT that hurts**: OpenObserve holds
+              # arrow batches per stream in the memtable. The 503s are a separate memtable limit (#625,
+              # `ZO_MAX_FILE_SIZE_IN_MEMORY` in `openobserve.yaml`); this treats the symptom. The allowlist keeps
+              # what a single-node database is worth watching; the exporter still produces the rest.
               - 'IsMatch(name, "^pg_") and not IsMatch(name, "^pg_(up|database_size_bytes|database_connection_limit|locks_count|exporter_last_scrape_error|stat_database_(numbackends|xact_commit|xact_rollback|deadlocks|blks_hit|blks_read))$")'
               # The single biggest stream in the system.
               - 'name == "apiserver_request_duration_seconds"'
@@ -387,10 +298,8 @@ spec:
       service:
         pipelines:
           # comment-lint: allow the five-line count is what says which kinds are worth watching.
-          # **Twenty-seven object kinds, six of which anybody would look at.** The chart's
-          # `logs/k8s_events` pipeline watches **every** workload, RBAC and networking kind in the
-          # cluster: 40,981 log records over 48 hours, counted from the gateway's own receiver
-          # metrics, of which
+          # **Twenty-seven object kinds, six of which anybody would look at.** The chart's `logs/k8s_events`
+          # pipeline watches every workload, RBAC and networking kind: 40,981 records over 48 hours, of which
           #
           #     crds     33,408  <- 81.5%, a 5-minute PULL of every CRD
           #     events    4,726
@@ -398,25 +307,13 @@ spec:
           #     nodes       571
           #     the rest  1,379  across 23 kinds, 14 of them at zero
           #
-          # **`crds` is not a watch, it is a `mode: pull` every five minutes** of the full spec and
-          # status of every CustomResourceDefinition — on a cluster running Flux, cert-manager and
-          # the OTel operator, a great deal of YAML nobody will query. The chart's
-          # `transform/strip_crd_spec` processor exists only to make that receiver survivable, so it
-          # comes out below too: **re-adding `k8sobjects/crds` means re-adding it.** Each kind is
-          # also a client-go informer holding its object set in the gateway's heap, so 21 fewer of
-          # them is the other half of why that pod sat at 928Mi.
-          #
-          # **What is kept:** `events` (OOMKilled, FailedScheduling, ImagePullBackOff — the stream
-          # read after an incident); `pods`, for the phase *transition* and its timestamp, which
-          # `kube_pod_*` cannot give because it is a gauge of current state; `nodes`, for conditions
-          # like MemoryPressure that nothing else watches; `deployments` for the three application
-          # workloads; `statefulsets` for OpenObserve and this gateway, which are what break; and
-          # `daemonsets` for the agent, at zero records, which is what healthy looks like.
-          # **`jobs` and `cronjobs` are dropped and deliberately named**, the reason being "nothing
-          # here is one yet" rather than "they do not matter" — the importer is a Deployment with its
-          # own scheduler and the backups are systemd timers. **This does not shrink the
-          # ClusterRole**: the chart grants get/list/watch on all of these statically, so the
-          # permission survives the watch.
+          # `crds` is a `mode: pull` every five minutes of every CRD's full spec; the chart's
+          # `transform/strip_crd_spec` exists only to make it survivable, so it comes out too — **re-adding
+          # `k8sobjects/crds` means re-adding it.** Each kind is also an informer holding its objects in the
+          # gateway's heap. **Kept**: `events` (the stream read after an incident), `pods` (the phase
+          # transition, which `kube_pod_*` gauges cannot give), `nodes` (MemoryPressure), `deployments`,
+          # `statefulsets`, `daemonsets`. `jobs` and `cronjobs` are dropped because nothing here is one yet.
+          # The ClusterRole is unchanged.
           logs/k8s_events:
             receivers:
               - k8sobjects/events
@@ -425,8 +322,7 @@ spec:
               - k8sobjects/deployments
               - k8sobjects/statefulsets
               - k8sobjects/daemonsets
-            # Restated for the same reason the metrics list below is — Helm replaces lists — and
-            # minus `transform/strip_crd_spec`, whose only receiver is gone.
+            # Restated because Helm replaces lists, minus `transform/strip_crd_spec`, whose only receiver is gone.
             processors:
               - memory_limiter
               - resourcedetection
@@ -440,15 +336,12 @@ spec:
               - servicegraph
               - prometheus
               - prometheus/nodes
-            # **Restated in full because Helm replaces lists rather than merging them**, so naming
-            # only the new processor here would drop the other five. Order matters: this has to run
-            # after `k8sattributes`, which is what adds most of the attributes being deleted, and
-            # before `batch`.
+            # **Restated in full because Helm replaces lists**; naming only the new processor would drop the
+            # other five. After `k8sattributes`, which adds most of what is deleted, and before `batch`.
             processors:
               - memory_limiter
-              # **First, immediately after the limiter**, because two thirds of what arrives is
-              # about to be thrown away and there is no reason to enrich it first. `k8sattributes`
-              # in particular does pod lookups per resource.
+              # First, immediately after the limiter: two thirds of what arrives is about to be thrown away, and
+              # `k8sattributes` does pod lookups per resource.
               - filter/drop_infrastructure_noise
               - resourcedetection
               - attributes
@@ -466,12 +359,10 @@ metadata:
       The collector agent DaemonSet, alone in `observability-agent`: reads every container log and the node's own meters, and ships them to OpenObserve. The
       same chart as the gateway's release, with the gateway switched off (#709).
 spec:
-  # **A second release of the same chart, not a patch that relocates one object.** Pod Security
-  # Admission is a namespace label with no per-workload exemption, and the chart renders both
-  # collectors into `.Release.Namespace`. Two releases is the only shape in which the agent's
-  # hostPath mounts govern a namespace holding nothing else (#709). `o2c-agent` rather than `o2c`
-  # because the chart names its ClusterRole and ClusterRoleBinding after the release: the same name
-  # twice, and Helm refuses the second as owned by the first.
+  # **A second release of the same chart, not a patch.** Pod Security Admission is a namespace label
+  # with no per-workload exemption, and the chart renders both collectors into `.Release.Namespace`;
+  # two releases is the only shape in which the agent's hostPath mounts govern a namespace holding
+  # nothing else (#709). `o2c-agent` because the chart names its ClusterRole after the release.
   releaseName: o2c-agent
   targetNamespace: observability-agent
   storageNamespace: observability-agent
@@ -496,9 +387,8 @@ spec:
         namespace: flux-system
       interval: 1h
 
-  # The same credential, injected the same way and for the same reason as above (#598). Both
-  # exporters, although the agent's pipelines use only the first: the chart hands every collector
-  # the whole `exporters` map, and an exporter no pipeline names is configured and idle.
+  # The same credential, injected the same way (#598). Both exporters, although the agent uses only the
+  # first: the chart hands every collector the whole `exporters` map.
   valuesFrom:
     - kind: Secret
       name: openobserve-credentials
@@ -509,26 +399,17 @@ spec:
       valuesKey: O2_BASIC_AUTH_HEADER
       targetPath: exporters.otlphttp/openobserve_k8s_events.headers.Authorization
 
-  # older than 24h is refused by OpenObserve in bursts, and the part newer is ingested twice.
-  # Measured across a restart without it: **617 of 2,066 rows duplicated, 29.9%**.
-  #
-  # **Measured again on staging with it, both go to zero** — 10 rejection batches per restart to 0,
-  # 29.9% to 0.0%, and the row rate matched baseline (249 against ~258), so the zero is real rather
-  # than an outage. Only the first restart after the extension arrives still re-reads everything.
+  # **Giving the agent somewhere to remember how far it read (#950).** Without it, `filelog` re-reads
+  # every container log from line one on a restart: the part older than 24h is refused by OpenObserve
+  # in bursts and the part newer is ingested twice — 617 of 2,066 rows duplicated, 29.9%. With it,
+  # both go to zero on staging at the baseline row rate.
   #
   # The chart hardcodes the agent's volumes, so the mount arrives by patch on the rendered
-  # `OpenTelemetryCollector` and the operator propagates it to the DaemonSet.
-  #
-  # **JSON 6902 `add` rather than a strategic merge, and that is the trap.** kustomize has no schema
-  # for a custom resource, so a merge patch REPLACES a list rather than appending. Tested both ways:
-  # the form below yields `hostfs, varlog, varlibdockercontainers, otelcol-state`, the merge form
-  # yields `otelcol-state` alone — dropping /var/log, so the agent stops reading logs and looks
-  # healthy doing it. `openobserve.yaml` uses a strategic merge for the opposite reason: its
-  # target is a StatefulSet, which kustomize does have a schema for.
-  #
-  # **The initContainer is what keeps the collector unprivileged.** A hostPath is created
-  # root-owned, the image runs as UID 10001, and `fsGroup` does not apply to hostPath. Running the
-  # agent as root is the one-line alternative; #709 moved it here instead, and kept UID 10001.
+  # `OpenTelemetryCollector`. **JSON 6902 `add`, not a strategic merge**: kustomize has no schema for a
+  # custom resource, so a merge REPLACES the list — tested, the merge form yields `otelcol-state` alone,
+  # dropping /var/log while the agent looks healthy. `openobserve.yaml` merges for the opposite reason:
+  # a StatefulSet has a schema. **The initContainer keeps the collector unprivileged**: a hostPath is
+  # created root-owned, `fsGroup` does not apply to it, and #709 chose this over running as root.
   postRenderers:
     - kustomize:
         patches:
@@ -564,60 +445,43 @@ spec:
                         mountPath: /var/lib/otelcol
 
   values:
-    # Patched per cluster exactly as the gateway's is, and the same rule: no overlay may leave
-    # `unset` in place. `kustomization.yaml` in each cluster carries the second patch.
+    # Patched per cluster as the gateway's is, same rule: no overlay may leave `unset` in place.
     k8sCluster: unset
     opentelemetry-operator:
       enabled: false
-    # **Off, because the other release already renders them and both carry fixed names.** The
-    # subchart's Deployment is `kube-state-metrics` in `kube-system`; the five Instrumentation CRs
-    # are `openobserve-java` and so on. A second copy of either is a Helm ownership conflict, and
-    # the gateway is where the pods that would be instrumented are scraped from anyway.
+    # **Off, because the other release already renders them with fixed names**: `kube-state-metrics` in
+    # `kube-system` and the five Instrumentation CRs. A second copy is a Helm ownership conflict.
     kube-state-metrics:
       enabled: false
     autoinstrumentation:
       enabled: false
-    # The gateway's release renders the gateway. The agent's `k8sattributes` still needs cluster
-    # RBAC, so `serviceAccount.create` stays at the chart's default and the release brings its own.
+    # The agent's `k8sattributes` still needs cluster RBAC, so the release brings its own ServiceAccount.
     gateway:
       enabled: false
     exporters:
       otlphttp/openobserve:
-        # Fully qualified, so the namespace move changed nothing here; plain HTTP over the pod network
-        # rather than through the ingress — which does not route OpenObserve at all, deliberately.
+        # Fully qualified; plain HTTP over the pod network, not through the ingress.
         endpoint: http://openobserve-openobserve-standalone.observability.svc.cluster.local:5080/api/default/
       otlphttp/openobserve_k8s_events:
         endpoint: http://openobserve-openobserve-standalone.observability.svc.cluster.local:5080/api/default/
         headers:
           stream-name: k8s_events
-    # **The agent, unchanged by the move.** Everything below is what sat under the gateway's release
-    # until #709; the memory table there still covers its 640Mi limit. What differs is the namespace
-    # it runs in and the release that owns it.
+    # **The agent, unchanged by the move** (#709); the memory table above still covers its 640Mi limit.
     agent:
-      # The offsets themselves. `directory` is the mount added by the postRenderer above, not a path
-      # the chart knows about — the two halves are useless apart.
+      # The offsets. `directory` is the mount added by the postRenderer above; the two halves are useless apart.
       extensions:
         file_storage:
           directory: /var/lib/otelcol
 
-      # **OpenObserve indexing its own indexer, and the biggest log producer in the cluster.** The
-      # chart excludes `openobserve-ingester`, which is the container name in the clustered
-      # deployment. This runs `ZO_LOCAL_MODE`, where the container is `openobserve-standalone`, so
-      # the exclusion misses it: every `generated tantivy index file` line the pod writes about a
-      # Parquet file is shipped back, indexed, and written to another Parquet file. Measured on
-      # staging, which runs the same standalone mode: **102,974 of ~104,200 log lines in one hour,
-      # 99%** — against 820 from the BFF and 685 from the frontend, which is why the application's
-      # own logs read as absent while being present the whole time.
-      #
-      # Same shape as the `pg_*` streams in #624, and it lands on #625's memtable: ~2.5M rows a day
-      # of a pod describing writes nobody will read.
-      #
-      # **Restated in full because Helm replaces lists rather than merging them** — the same trap the
-      # gateway's pipelines carry below. The first three are the chart's own, and dropping any of
-      # them re-opens a collector-logs-about-collector loop in its place.
+      # **OpenObserve indexing its own indexer, the biggest log producer in the cluster.** The chart
+      # excludes `openobserve-ingester`, the clustered container name; `ZO_LOCAL_MODE` runs
+      # `openobserve-standalone`, so the exclusion misses it and every `generated tantivy index file` line
+      # is shipped back, indexed and written to another Parquet file: 102,974 of ~104,200 log lines in an
+      # hour on staging, 99%, against 820 from the BFF. **Restated in full because Helm replaces lists**;
+      # the first three are the chart's own, and dropping any re-opens a collector-logs-about-collector loop.
       receivers:
         filelog/std:
-          # What makes `start_at: beginning` mean "from where I stopped" instead of "from line one".
+          # What makes `start_at: beginning` mean "from where I stopped".
           storage: file_storage
           exclude:
             - /var/log/pods/*/otel-collector/*.log
@@ -627,52 +491,33 @@ spec:
             - /var/log/pods/*/openobserve-standalone/*.log
 
       # comment-lint: allow the allowlist argument and the two silent-failure traps are the whole reason this processor is not three lines.
-      # **Lifting the application's JSON into fields, which is the half that is not obvious.** The
-      # apps now emit ECS JSON (the chart's ConfigMap sets `LOGGING_STRUCTURED_FORMAT_CONSOLE`), and
-      # that on its own changes nothing here: `filelog` moves the container line into `body` as a
-      # **string** and neither it nor OpenObserve looks inside. The proof was already in the cluster
-      # before this change — Flux logs JSON by default, and its rows carry a `body` of perfect
-      # unparsed JSON with `severity` still 0. So JSON at the source is necessary and not sufficient;
-      # something has to parse it, and this is that something.
-      #
-      # **An allowlist, not a flatten**, and #624 is why. A blind merge of arbitrary JSON into
-      # attributes gives every key any container ever logs its own column, which is precisely the
-      # unbounded-stream problem that took staging down. Named fields cost nothing and cannot run
-      # away. Adding one is a line here.
-      #
-      # **`error_mode: ignore` and the `where` guards are both load-bearing.** Every container's logs
-      # pass through this, most of them plain text: without the guards each one is a failed
-      # statement, and without `ignore` a failed statement takes the whole pipeline with it — the
-      # agent is the only thing shipping logs, so that is a total outage of them.
+      # **Lifting the application's JSON into fields.** The apps emit ECS JSON, and that alone changes
+      # nothing: `filelog` moves the container line into `body` as a string and nothing looks inside — Flux's
+      # rows carried perfect unparsed JSON with `severity` 0. **An allowlist, not a flatten** (#624): a
+      # blind merge gives every key any container logs its own column, the unbounded-stream problem that
+      # took staging down; adding a field is a line here. **`error_mode: ignore` and the `where` guards are
+      # both load-bearing**: most containers log plain text, and without them a failed statement takes the
+      # whole pipeline — the only thing shipping logs — with it.
       processors:
         # **What is left of the log volume once the application stops logging its own health checks
-        # (#959).** Both are a control loop reporting that it did nothing, on a timer. Measured on
-        # production over an hour against a ~406-row baseline: **198 from coredns**, 100% of that
-        # container's output, and **88 from flux** of 132 — about 70% of what remains.
-        #
-        # **Matched on the body alone, so this rule's position is not load-bearing.** Scoping by
-        # `k8s.container.name` would be more precise and would silently stop matching if the
-        # processor were moved ahead of `k8sattributes`, which sets it. Both strings below are
-        # unmistakable on their own, so the attribute buys nothing and costs a failure mode. A
-        # pattern that matches nothing still looks identical to one that works (#615), so check a
-        # new rule against the store rather than trusting it.
+        # (#959).** Both are a control loop reporting that it did nothing, on a timer: 198 an hour from
+        # coredns (100% of its output), 88 of 132 from flux, against a ~406-row baseline on production.
+        # **Matched on the body alone**, so this rule's position is not load-bearing; scoping by
+        # `k8s.container.name` would silently stop matching if moved ahead of `k8sattributes`. A pattern that
+        # matches nothing looks identical to one that works (#615): check a new rule against the store.
         filter/drop_log_noise:
-          # A condition that fails to evaluate skips rather than tearing down the pipeline. The
-          # agent is the only thing shipping logs, so a torn-down pipeline is a total outage of them.
+          # A condition that fails to evaluate skips rather than tearing down the pipeline, which would be a
+          # total outage of logs.
           error_mode: ignore
           logs:
             # A log record is DROPPED when any condition here is true.
             log_record:
-              # CoreDNS looking for the optional custom-config directory that k3s never creates, at
-              # startup and on every config reload. Two alternating lines, 198 an hour, and the
-              # container has produced nothing else in any window sampled. Scoped to the message
-              # rather than the container so a real CoreDNS error still arrives.
+              # CoreDNS looking for the optional custom-config directory k3s never creates, on every reload. Scoped
+              # to the message, so a real CoreDNS error still arrives.
               - 'IsString(log.body) and IsMatch(log.body, "No files matching import glob pattern")'
-              # Flux saying the cluster already matches git. `no changes since last reconciliation`
-              # is the bulk of it at 57 an hour, and the other four are the same statement made by
-              # the other controllers. **`server-side apply completed`, `garbage collected N
-              # artifacts` and the HelmChart lines are deliberately absent** — those record work
-              # actually done, and they are what a failed reconcile is diagnosed against.
+              # Flux saying the cluster already matches git. **`server-side apply completed`, `garbage collected N
+              # artifacts` and the HelmChart lines are deliberately absent**: those record work done, and a failed
+              # reconcile is diagnosed against them.
               - 'IsString(log.body) and IsMatch(log.body, "\"msg\":\"no changes since last reconciliation")'
               - 'IsString(log.body) and IsMatch(log.body, "\"msg\":\"release in-sync with desired state\"")'
               - 'IsString(log.body) and IsMatch(log.body, "\"msg\":\"all dependencies are ready\"")'
@@ -684,16 +529,13 @@ spec:
           log_statements:
             - context: log
               statements:
-                # **A JSON key is not a shape, hence `IsMap` on every nested read.** Flux logs
-                # `{"level":"error","error":"…"}` — `error` as a STRING — and indexing it threw `type
-                # Str does not support string indexing` until the guard existed; `error_mode: ignore`
-                # held that to a warning, not lost data. OTTL's `and` short-circuits, so the guard
-                # runs first. The `log.` prefixes are the other half: bare paths work and are
-                # rewritten with a warning. Both traps were reported by the agent, by no CI check.
+                # **A JSON key is not a shape, hence `IsMap` on every nested read.** Flux logs `error` as a STRING,
+                # and indexing it threw `type Str does not support string indexing` until the guard existed. OTTL's
+                # `and` short-circuits, so the guard runs first. The `log.` prefixes are the other half: bare paths
+                # work and are rewritten with a warning.
                 - set(log.cache, ParseJSON(log.body)) where IsMatch(log.body, "^\\{")
-                # The level, as both an OTLP severity and a plain field. `severity_text` is what
-                # OpenObserve shows; `severity_number` is what its level filter sorts on, and it is
-                # 0 (UNSPECIFIED) on every row today.
+                # The level, as both an OTLP severity and a plain field: `severity_text` is what OpenObserve shows,
+                # `severity_number` is what its level filter sorts on.
                 - set(log.severity_text, log.cache["log"]["level"]) where IsMap(log.cache["log"]) and log.cache["log"]["level"] != nil
                 - set(log.severity_number, SEVERITY_NUMBER_TRACE) where log.severity_text == "TRACE"
                 - set(log.severity_number, SEVERITY_NUMBER_DEBUG) where log.severity_text == "DEBUG"
@@ -702,60 +544,47 @@ spec:
                 - set(log.severity_number, SEVERITY_NUMBER_ERROR) where log.severity_text == "ERROR"
                 # The logger, so a noisy class can be excluded without excluding its pod.
                 - set(log.attributes["logger"], log.cache["log"]["logger"]) where IsMap(log.cache["log"]) and log.cache["log"]["logger"] != nil
-                # The MDC fields — what #380 is for. Spring copies every MDC entry to the top level
-                # of the ECS object, so these arrive as siblings of `message` rather than nested.
-                # Flat reads, so no `IsMap` guard applies.
+                # The MDC fields (#380). Spring copies every MDC entry to the top level of the ECS object, so flat reads.
                 - set(log.attributes["sourceSlug"], log.cache["sourceSlug"]) where log.cache["sourceSlug"] != nil
                 - set(log.attributes["importRunId"], log.cache["importRunId"]) where log.cache["importRunId"] != nil
                 - set(log.attributes["requestId"], log.cache["requestId"]) where log.cache["requestId"] != nil
-                # The payload fields — #945. Written at a call site rather than carried by the run,
-                # but the same position in the JSON, so the same flat read works. **A name absent
-                # here is silently absent from the column**: match `LogFields` and the BFF's
-                # `LogContextConfiguration`, which nothing else checks.
+                # The payload fields (#945), the same flat read. **A name absent here is silently absent from the
+                # column**: match `LogFields` and the BFF's `LogContextConfiguration`, which `collector-parity.sh` checks.
                 - set(log.attributes["url"], log.cache["url"]) where log.cache["url"] != nil
                 - set(log.attributes["eventId"], log.cache["eventId"]) where log.cache["eventId"] != nil
                 - set(log.attributes["eventSourceId"], log.cache["eventSourceId"]) where log.cache["eventSourceId"] != nil
                 - set(log.attributes["httpMethod"], log.cache["httpMethod"]) where log.cache["httpMethod"] != nil
                 - set(log.attributes["path"], log.cache["path"]) where log.cache["path"] != nil
-                # **One name, both directions**: a venue's status to us, and ours to a browser.
-                # `httpstatus = 500` matches both; `service_name` is what separates them.
+                # **One name, both directions**: a venue's status to us, and ours to a browser; `service_name` separates them.
                 - set(log.attributes["httpStatus"], log.cache["httpStatus"]) where log.cache["httpStatus"] != nil
-                # High cardinality, and safe only because the two lines that write it are rare (#980).
+                # High cardinality, safe only because the two lines that write it are rare (#980).
                 - set(log.attributes["storageKey"], log.cache["storageKey"]) where log.cache["storageKey"] != nil
-                # The stack trace as one field rather than forty unparented lines, which is the
-                # other thing a text log cannot give. `IsMap` here is the fix described above.
+                # The stack trace as one field rather than forty unparented lines.
                 - set(log.attributes["errorType"], log.cache["error"]["type"]) where IsMap(log.cache["error"]) and log.cache["error"]["type"] != nil
                 - set(log.attributes["stackTrace"], log.cache["error"]["stack_trace"]) where IsMap(log.cache["error"]) and log.cache["error"]["stack_trace"] != nil
-                # Last: replace the JSON blob with the human-readable message. After this the `body`
-                # column reads like a log again and the structure lives in the fields beside it.
+                # Last: replace the JSON blob with the human-readable message.
                 - set(log.body, log.cache["message"]) where log.cache["message"] != nil
 
       service:
-        # **One `service:` key.** A second under `agent:` is a duplicate YAML mapping key: the later
-        # wins and the earlier is dropped without a warning. This file produced that once — `helm
-        # template` showed `extensions` back at the chart's two while the rest looked right.
-        #
-        # Restated because Helm replaces lists. The first two are the chart's; without them the
-        # health probe has no endpoint and the pod never goes Ready.
+        # **One `service:` key.** A second under `agent:` is a duplicate YAML mapping key: the later wins
+        # silently — `helm template` once showed `extensions` back at the chart's two. Restated because Helm
+        # replaces lists; without the chart's first two the health probe has no endpoint.
         extensions:
           - health_check
           - zpages
           - file_storage
         pipelines:
           logs:
-            # Restated because Helm replaces lists rather than merging them — the same trap the
-            # gateway's pipelines carry below, and the reason `receivers` and `exporters` are absent
-            # here: those are maps' worth of defaults this does not change.
+            # Restated because Helm replaces lists; `receivers` and `exporters` are absent because those are
+            # maps this does not change.
             processors:
               - memory_limiter
-              # Before the enrichers, so a dropped or malformed line is not enriched first, and
-              # before `batch` because everything must be.
+              # Before the enrichers, so a dropped line is not enriched first, and before `batch`.
               - transform/parse_structured_logs
               - resourcedetection
               - attributes
               - k8sattributes
-              # After `k8sattributes` rather than before, so the dropped records are the only thing
-              # this ordering costs. Before `batch`, so a dropped record never occupies a slot in one.
+              # After `k8sattributes`, so the dropped records are the only thing this ordering costs; before `batch`.
               - filter/drop_log_noise
               - batch
       resources:
@@ -763,14 +592,9 @@ spec:
           memory: "128Mi"
           cpu: "50m"
         limits:
-          # Measured at 98Mi steady on staging. 640Mi is the limiter's ceiling plus its spike
-          # allowance, not headroom for growth — if the agent ever needs this much, the limiter has
-          # been refusing data for some time and that is the thing to look at.
-          #
-          # **The measurement is staging's and production is busier**: 86 live sources on
-          # production against a mostly idle importer on staging (#876). The limiter is what makes
-          # one number safe for both — it sheds countably instead of letting the kernel decide — but
-          # `otelcol_processor_refused_*` is the series to look at after a few production import
-          # cycles, and the number to revise if it is non-zero.
+          # Measured at 98Mi steady on staging; 640Mi is the limiter's ceiling plus spike, not headroom. The
+          # measurement is staging's and production is busier (86 live sources, #876); the limiter is what
+          # makes one number safe for both, and `otelcol_processor_refused_*` is the series to read after a few
+          # production import cycles.
           memory: "640Mi"
           cpu: "500m"

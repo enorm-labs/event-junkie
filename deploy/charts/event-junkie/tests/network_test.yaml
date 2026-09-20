@@ -1,14 +1,9 @@
-# What may talk to what, and the headers that come back — PLATFORM_SETUP §8 items 1 and 11 (#416).
-#
-# **These assert the shape of the policy set rather than its effect**, and the distinction is worth
-# being honest about: no rendered manifest can prove a packet was dropped. What a render *can* prove
-# is that the default-deny exists, that it selects every pod rather than only ours, that each
-# allowance names the ports it claims to, and — the one most likely to rot — that nothing quietly
-# grew a rule reaching the importer or a management port. The effect is proved on k3d, where the
-# pods either become Ready and import a venue or they do not.
-#
-# The negative assertions carry the weight here, and they are phrased against the whole document set
-# rather than against a named policy, so a *new* policy that opens one of these paths fails too.
+# What may talk to what, and the headers that come back (#416). **These assert the shape of the
+# policy set, not its effect**: no render can prove a packet was dropped. What it can prove is that
+# the default-deny exists and selects every pod, that each allowance names the ports it claims, and
+# that nothing quietly grew a rule reaching the importer or a management port. The effect is proved
+# on k3d. The negatives are phrased against the whole document set, so a *new* policy that opens one
+# of these paths fails too.
 suite: network policy and response headers
 
 templates:
@@ -26,8 +21,7 @@ tests:
     asserts:
       - isKind:
           of: NetworkPolicy
-      # An empty podSelector is what makes this cover a pod the chart never created — a debug pod
-      # somebody kubectl-runs would otherwise keep unrestricted egress, which is most of the hole.
+      # An empty podSelector is what covers a debug pod somebody kubectl-runs.
       - equal:
           path: spec.podSelector
           value: {}
@@ -37,30 +31,23 @@ tests:
       - contains:
           path: spec.policyTypes
           content: Egress
-      # A deny policy with an `ingress:` or `egress:` list is not a deny policy. This is the single
-      # most consequential assertion in the file: adding one rule here would silently turn the
-      # foundation of the whole set into an allowance.
+      # A deny policy with an `ingress:` or `egress:` list is not a deny policy. The single most
+      # consequential assertion in the file.
       - notExists:
           path: spec.ingress
       - notExists:
           path: spec.egress
 
   - it: the ACME HTTP-01 solver is reachable from the ingress controller
-    # Regression guard. cert-manager creates the solver pod itself, carrying only its own labels, so
-    # the default-deny policy caught it and every HTTP-01 challenge failed with `wrong status code
-    # '502', expected '200'` — a symptom several steps from anything that mentions a NetworkPolicy.
-    # Nothing caught it earlier because production is the only environment that solves HTTP-01:
-    # staging uses DNS-01 and k3d runs with tls.enabled false.
-    #
-    # This governs renewal as much as issuance, so deleting the policy breaks nothing for sixty days
-    # and then stops the certificate renewing.
+    # Regression guard. cert-manager creates the solver pod itself, so the default-deny caught it and
+    # every HTTP-01 challenge failed with `wrong status code '502'` — several steps from anything
+    # mentioning a NetworkPolicy, and only production solves HTTP-01. This governs renewal as much as
+    # issuance: deleting the policy breaks nothing for sixty days.
     set:
       database.host: "10.0.1.2"
       networkPolicy.databaseCidr: "10.0.1.2/32"
       database.existingSecret: "events-db"
-      # Forced rather than assumed. `cluster-assertions.sh` re-runs this suite against every
-      # cluster's spec.values, and k3d turns TLS off — so without these two the policy would not
-      # render there and the assertion would fail on a configuration it was never about.
+      # Forced: `cluster-assertions.sh` re-runs this against every cluster's values, and k3d turns TLS off.
       ingress.enabled: true
       ingress.tls.enabled: true
     documentSelector:
@@ -69,13 +56,11 @@ tests:
     asserts:
       - isKind:
           of: NetworkPolicy
-      # cert-manager's own label on the pod it creates. Selecting anything of ours would match
-      # nothing, which is exactly the bug this replaces.
+      # cert-manager's own label on the pod it creates; selecting anything of ours would match nothing.
       - equal:
           path: spec.podSelector.matchLabels["acme.cert-manager.io/http01-solver"]
           value: "true"
-      # 8089 is cert-manager's solver port and the target of the Ingress it creates. Not ours to
-      # configure, so it is asserted as the constant it is.
+      # 8089 is cert-manager's solver port, not ours to configure.
       - contains:
           path: spec.ingress[0].ports
           content:
@@ -96,8 +81,7 @@ tests:
           content:
             protocol: TCP
             port: 8080
-      # 9001 is the management port. It is already unroutable because no Ingress path names it;
-      # this is the half that makes it unreachable rather than merely unrouted (§3.2).
+      # 9001 is the management port, already unroutable; this is the half that makes it unreachable.
       - notContains:
           path: spec.ingress[0].ports
           content:
@@ -115,8 +99,8 @@ tests:
     asserts:
       - isKind:
           of: NetworkPolicy
-      # Both halves in one object, as the test-hook policy does it: the frontend's egress and the
-      # BFF's ingress from it. One without the other is a policy that renders and blocks.
+      # Both halves in one object: the frontend's egress and the BFF's ingress from it. One without the
+      # other renders and blocks.
       - contains:
           path: spec.policyTypes
           content: Ingress
@@ -129,8 +113,7 @@ tests:
       - equal:
           path: spec.ingress[0].from[0].podSelector.matchLabels["app.kubernetes.io/component"]
           value: frontend
-      # The service port alone, asserted as the whole list: the management port must not quietly
-      # join it, and 8080 is the only port the sidecar has any business on.
+      # The service port alone, as the whole list: the management port must not quietly join it.
       - equal:
           path: spec.egress[0].ports
           value:
@@ -161,10 +144,9 @@ tests:
       database.host: "10.0.1.2"
       networkPolicy.databaseCidr: "10.0.1.2/32"
       database.existingSecret: "events-db"
-      # Pinned explicitly because `scripts/cluster-assertions.sh` replays this suite against each
-      # cluster's own spec.values, and k3d's PostgreSQL is on a mapped port (56298). Without this the
-      # assertion below would be about whichever environment ran last rather than about the rule
-      # following `database.port` — and it failed exactly that way the first time.
+      # Pinned explicitly because `cluster-assertions.sh` replays this against each cluster, and k3d's
+      # PostgreSQL is on a mapped port (56298); without it the assertion is about whichever environment ran
+      # last. It failed exactly that way once.
       database.port: 5432
     documentSelector:
       path: metadata.name
@@ -176,8 +158,7 @@ tests:
       - equal:
           path: spec.egress[0].ports[0].port
           value: 5432
-      # The frontend is a static bundle. If it ever appears here, something has been added to it
-      # that this chart's whole shape assumes does not exist.
+      # The frontend is a static bundle; if it ever appears here, this chart's whole shape is wrong.
       - notContains:
           path: spec.podSelector.matchExpressions[0].values
           content: frontend
@@ -194,9 +175,9 @@ tests:
       - equal:
           path: spec.egress[0].to[0].ipBlock.cidr
           value: "0.0.0.0/0"
-      # The sharpest exclusion, asserted by itself: 169.254.0.0/16 is where a cloud metadata service
-      # lives, and this is the one workload that fetches attacker-influenced URLs. Losing this line
-      # turns a scraper into an SSRF-to-credentials path and nothing else would notice.
+      # The sharpest exclusion, asserted by itself: 169.254.0.0/16 is where a cloud metadata service lives,
+      # and this is the one workload that fetches attacker-influenced URLs. Losing it turns a scraper into
+      # an SSRF-to-credentials path silently.
       - contains:
           path: spec.egress[0].to[0].ipBlock.except
           content: "169.254.0.0/16"
@@ -208,10 +189,8 @@ tests:
           value: importer
 
   # --- The BFF's route off the cluster (ADR-019) -------------------------------------------------
-  #
-  # Explicit values throughout, because `cluster-assertions.sh` re-runs this suite against every
-  # cluster's `spec.values` — a case relying on a chart default fails the moment an environment
-  # legitimately overrides it.
+  # Explicit values throughout: a case relying on a chart default fails the moment an environment
+  # overrides it.
   - it: the BFF has no route off the cluster until it serves images
     set:
       database.host: "10.0.1.2"
@@ -249,8 +228,7 @@ tests:
       - contains:
           path: spec.egress[0].to[0].ipBlock.except
           content: "169.254.0.0/16"
-      # 443 alone, and asserted as the whole list rather than as a member: the importer needs 80 as
-      # well and this must not quietly acquire it.
+      # 443 alone, as the whole list: the importer needs 80 as well and this must not acquire it.
       - equal:
           path: spec.egress[0].ports
           value:
@@ -267,9 +245,8 @@ tests:
       value: NetworkPolicy
       matchMany: true
     asserts:
-      # Phrased against every policy rather than a named one, so a new policy that opens this path
-      # fails here too. The importer's admin API is the thing in this release with no business being
-      # reachable by anything — not Traefik, not the frontend, not the BFF.
+      # Against every policy rather than a named one. The importer's admin API has no business being
+      # reachable by anything.
       - notMatchRegex:
           path: "$..ingress[*].from[*].podSelector.matchLabels['app.kubernetes.io/component']"
           pattern: "^importer$"
@@ -277,9 +254,8 @@ tests:
           path: "$..ingress[*].from[*].podSelector.matchExpressions[*].values[*]"
           pattern: "^importer$"
 
-  # Scoped by template rather than by documentSelector: a selector that matches nothing reports
-  # "document not found" instead of a count of zero, which is an error rather than the assertion
-  # this case is making.
+  # Scoped by template rather than documentSelector: a selector matching nothing reports "document not
+  # found", an error rather than the count of zero this case asserts.
   - it: turning the policies off removes every one of them
     set:
       database.host: "10.0.1.2"
@@ -310,13 +286,13 @@ tests:
       - equal:
           path: spec.headers.stsIncludeSubdomains
           value: true
-      # Preload is a promise that takes months to withdraw, and submitting the domain is a step
-      # outside this chart. Off by default is the decision, and this is where it is held.
+      # Preload takes months to withdraw and needs a submission outside this chart; off by default is the
+      # decision, held here.
       - equal:
           path: spec.headers.stsPreload
           value: false
-      # Traefik would send HSTS over plaintext with this on. Browsers ignore it there, so it buys
-      # nothing — and it is actively wrong on the ACME http-01 challenge path.
+      # Traefik would send HSTS over plaintext with this on; browsers ignore it there, and it is wrong on
+      # the ACME http-01 path.
       - equal:
           path: spec.headers.forceSTSHeader
           value: false
@@ -329,42 +305,38 @@ tests:
       - equal:
           path: spec.headers.referrerPolicy
           value: strict-origin-when-cross-origin
-      # The two the first ZAP baseline found missing (#1442). Traefik has a field for the first and
-      # none for the second, which is why they are asserted at different paths.
+      # The two the first ZAP baseline found missing (#1442); Traefik has a field for one and none for the
+      # other.
       - equal:
           path: spec.headers.permissionsPolicy
           value: camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()
       - equal:
           path: spec.headers.customResponseHeaders["Cross-Origin-Resource-Policy"]
           value: same-origin
-      # The other two of ZAP's site-isolation trio (#1464). `credentialless` and not `require-corp`,
-      # because with image serving off every image is a venue's URL and carries no CORP header.
+      # The other two of ZAP's site-isolation trio (#1464). `credentialless`, because with image serving
+      # off every image is a venue's URL without a CORP header.
       - equal:
           path: spec.headers.customResponseHeaders["Cross-Origin-Embedder-Policy"]
           value: credentialless
       - equal:
           path: spec.headers.customResponseHeaders["Cross-Origin-Opener-Policy"]
           value: same-origin
-      # X-XSS-Protection is removed from every current browser and its last implementations
-      # introduced vulnerabilities of their own. Setting it is cargo cult, and this says so in a
-      # place that fails rather than in a comment that does not.
+      # X-XSS-Protection is removed from every current browser and its last implementations introduced
+      # vulnerabilities; this says so in a place that fails.
       - notExists:
           path: spec.headers.browserXssFilter
 
-  # The policy is report-only by default, and `img-src` is derived rather than configured (#846).
-  # Both halves are here because both are ways to blank a live site: an enforced policy nobody has
-  # watched in a browser, and a strict `img-src` on a deployment that still hands out venue URLs.
+  # The policy is report-only by default, and `img-src` is derived (#846). Both are ways to blank a live
+  # site: an enforced policy nobody watched in a browser, and a strict `img-src` on a deployment still
+  # handing out venue URLs.
   - it: the content security policy reports rather than blocks, and permits venue images while serving is off
     set:
       database.host: "10.0.1.2"
       networkPolicy.databaseCidr: "10.0.1.2/32"
       database.existingSecret: "events-db"
-      # Forced, because cluster-assertions.sh re-runs this suite against each cluster's own values
-      # and staging now serves cached images. Without it this case asserts the serving-off policy
-      # against a serving-on render, and fails for being right about the wrong environment.
+      # Forced: staging serves cached images, and this case asserts the serving-off policy.
       images.serving.enabled: false
-      # Forced for the same reason: staging enforces the policy since #854, and this case is about
-      # the report-only header.
+      # Forced: staging enforces the policy since #854, and this case is about the report-only header.
       ingress.securityHeaders.contentSecurityPolicy.reportOnly: true
     documentSelector:
       path: metadata.name
@@ -375,8 +347,8 @@ tests:
       - matchRegex:
           path: spec.headers.contentSecurityPolicyReportOnly
           pattern: "img-src 'self' https:$"
-      # The hash allows the theme script in events-frontend/index.html. A policy that lost it stays
-      # valid, renders, and drops the site to a light-mode flash on every load.
+      # The hash allows the theme script in events-frontend/index.html; a policy that lost it renders and
+      # drops the site to a light-mode flash on every load.
       - matchRegex:
           path: spec.headers.contentSecurityPolicyReportOnly
           pattern: "script-src 'self' 'sha256-[A-Za-z0-9+/]+='"
@@ -384,10 +356,8 @@ tests:
           path: spec.headers.contentSecurityPolicyReportOnly
           pattern: "^default-src 'self';"
 
-  # The other half of the same switch. `serving.enabled` swaps where images come from, and the policy
-  # has to follow it in the same render -- a policy still naming `https:` would keep permitting the
-  # venues' servers after we stopped using them, which is the disclosure ADR-019 removes. `https:`
-  # must be absent rather than merely unused.
+  # The other half of the switch: `serving.enabled` swaps where images come from, and a policy still
+  # naming `https:` would keep permitting the venues' servers — the disclosure ADR-019 removes.
   - it: the content security policy stops permitting venue images once serving is on
     set:
       database.host: "10.0.1.2"
@@ -396,7 +366,7 @@ tests:
       images.enabled: true
       images.storage.prefix: "test"
       images.serving.enabled: true
-      # Forced: the case is about `img-src`, not about which of the two headers carries it.
+      # Forced: the case is about `img-src`, not which header carries it.
       ingress.securityHeaders.contentSecurityPolicy.reportOnly: true
     documentSelector:
       path: metadata.name
@@ -423,8 +393,8 @@ tests:
           path: spec.headers.contentSecurityPolicy
           pattern: "img-src 'self'$"
 
-  # The rest of the middleware has to survive it, because the policy is the one header here that a
-  # deployment might reasonably switch off in a hurry.
+  # The rest of the middleware has to survive it, because the policy is the one header a deployment
+  # might switch off in a hurry.
   - it: turning the policy off leaves the other headers alone
     set:
       database.host: "10.0.1.2"
@@ -444,9 +414,8 @@ tests:
           value: true
 
   # --- Metrics scraping (#271) --------------------------------------------------------------------
-  #
-  # The rule that makes the meters reachable. Its absence is silent in a way worth testing against:
-  # the pods stay healthy, the collector finds them by annotation, and every scrape is refused.
+  # The rule that makes the meters reachable. Its absence is silent: the pods stay healthy, the
+  # collector finds them, every scrape is refused.
   - it: allows the collector namespace to reach the management ports
     set:
       database.host: "10.0.1.2"
@@ -464,17 +433,15 @@ tests:
       - equal:
           path: spec.ingress[0].from[0].namespaceSelector.matchLabels["kubernetes.io/metadata.name"]
           value: observability
-      # Both management ports and nothing else. A collector has no business on the application
-      # ports, which the Ingress rule already covers.
+      # Both management ports and nothing else.
       - equal:
           path: spec.ingress[0].ports[0].port
           value: 9001
       - notExists:
           path: spec.ingress[0].from[0].ipBlock
 
-  # The escape hatch, asserted so it cannot rot unnoticed — it exists for the cross-node case a
-  # single-node cluster never exercises, which is precisely the kind of code that quietly stops
-  # rendering.
+  # The escape hatch, asserted so it cannot rot: it exists for the cross-node case a single-node
+  # cluster never exercises.
   - it: switches to an ipBlock when the mode says so
     set:
       database.host: "10.0.1.2"

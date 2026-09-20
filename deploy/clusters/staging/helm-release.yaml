@@ -1,11 +1,7 @@
-# Staging's release of the event-junkie chart.
-#
-# `spec.values` IS THE STAGING CONFIGURATION — there is no `values-staging.yaml` (#414). A
-# HelmRelease cannot read a file from the repository, so keeping both would mean two copies that must
-# agree with nothing checking they do. `scripts/cluster-assertions.sh` extracts these values and
-# re-runs the chart's helm-unittest invariant suites against them, so the assertions gate what Flux
-# deploys rather than a file nothing deploys. The chart's `values.yaml` holds every default; only
-# overrides live here.
+# Staging's release of the event-junkie chart. `spec.values` IS THE STAGING CONFIGURATION — there is no
+# `values-staging.yaml` (#414): a HelmRelease cannot read a file, and two copies would drift.
+# `scripts/cluster-assertions.sh` re-runs the chart's invariant suites against these values, so the
+# assertions gate what Flux deploys. Only overrides live here.
 apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
@@ -16,22 +12,17 @@ metadata:
       The BFF, importer and frontend on the staging cluster, upgraded automatically to every
       snapshot published from main.
 spec:
-  # Named explicitly. Left to Flux the release would be called `event-junkie-event-junkie`
-  # (targetNamespace + name), and the chart's fullname helper puts the release name into every
-  # resource — so this is what keeps object names readable and matching the k3d rehearsal's.
+  # Named explicitly: left to Flux the release is `event-junkie-event-junkie`, and the fullname helper
+  # puts that into every resource.
   releaseName: event-junkie
   targetNamespace: event-junkie
-  # This release renders a ClusterIssuer, which is a `cert-manager.io/v1` kind, so it cannot install
-  # onto a cluster that has no cert-manager — the API server rejects an unknown kind and the whole
-  # release fails, not just the issuer. Naming the webhook rather than cert-manager itself gets both,
-  # since the webhook already depends on cert-manager; and it is the webhook that has to be answering
-  # before the DNS-01 solver below means anything.
+  # This release renders a ClusterIssuer, a `cert-manager.io/v1` kind, so without cert-manager the
+  # whole release fails at an unknown kind. Naming the webhook gets both, and the webhook is what has
+  # to answer before the DNS-01 solver means anything.
   dependsOn:
     - name: cert-manager-webhook-hetzner
-  # Not the same clock as the OCIRepository's. That one asks "is there a new chart?"; this one asks
-  # "does the cluster still match the chart?" — the drift check, which is cheap and does not need to
-  # be fast. A new snapshot still triggers an immediate reconcile through the source, so this
-  # interval is not the deploy latency.
+  # Not the OCIRepository's clock: that one asks "is there a new chart?", this one "does the cluster
+  # still match?" — the drift check. A new snapshot still reconciles immediately through the source.
   interval: 10m
   chartRef:
     kind: OCIRepository
@@ -41,90 +32,71 @@ spec:
     createNamespace: true
     remediation:
       retries: 2
-      # Deliberately NOT `remediateLastFailure` here, unlike the upgrade below. Install remediation
-      # is an *uninstall*, and there is no previous version to return to — so leaving the failed
-      # release in place is what lets somebody look at why it failed. Rolling back to nothing is not
-      # a safer state, it is just an emptier one.
+      # Deliberately NOT `remediateLastFailure` here: install remediation is an *uninstall*, and leaving
+      # the failed release in place is what lets somebody look at why.
   upgrade:
     remediation:
       retries: 2
-      # Roll back rather than uninstall. `uninstall` on a failed upgrade would take the site down to
-      # fix a deploy that was merely bad, which is strictly worse than continuing to serve the last
-      # version that worked.
+      # Roll back rather than uninstall: `uninstall` on a failed upgrade takes the site down to fix a
+      # deploy that was merely bad.
       strategy: rollback
-      # WITHOUT THIS, A BAD DEPLOY IS NEVER ROLLED BACK — it is only retried. `remediateLastFailure`
-      # defaults to **false**, so remediation happens *between* attempts and not after the final one:
-      # exhaust the retries and the broken release is simply left running. The k3d rehearsal found
-      # this by breaking a release on purpose and watching the workload stay broken, which is a
-      # failure mode no amount of reading the manifest would have shown.
+      # WITHOUT THIS, A BAD DEPLOY IS NEVER ROLLED BACK — only retried. `remediateLastFailure` defaults to
+      # **false**, so remediation happens between attempts and not after the final one. Found by breaking a
+      # release on purpose on k3d and watching the workload stay broken.
       remediateLastFailure: true
     # Delete anything the failed upgrade created before rolling back, so a retry starts clean.
     cleanupOnFail: true
   # The chart's own `templates/tests/connection-test.yaml`, run in-cluster after every install and
-  # upgrade. This is the whole reason the test hook exists: CI cannot reach this cluster (§4a), so a
-  # smoke test has to run where the workloads do. `ignoreFailures` stays false — a failing test must
-  # trigger the remediation above, or the hook is decoration.
+  # upgrade — CI cannot reach this cluster. `ignoreFailures` stays false, or the hook is decoration.
   test:
     enable: true
     timeout: 3m
   rollback:
     cleanupOnFail: true
     timeout: 5m
-  # Correct a manual `kubectl edit` back to what the chart says. `warn` rather than `enabled` to
-  # begin with: on a cluster nobody has operated yet, being told what drifts is more useful than
-  # having it silently reverted mid-investigation. Worth raising to `enabled` once staging is boring.
+  # Correct a manual `kubectl edit` back to what the chart says. `warn` for now: being told what drifts
+  # beats a silent revert mid-investigation. Raise to `enabled` once staging is boring.
   driftDetection:
     mode: warn
   values:
     networkPolicy:
-      # The /32 of `database.host` below. Two settings for one address is the unavoidable cost of the
-      # feature — NetworkPolicy speaks CIDRs and cannot resolve a name — and the pairing most likely
-      # to be half-done, so `scripts/cluster-assertions.sh` fails the build on a real host with a
-      # placeholder CIDR. **A placeholder does NOT fail the render**, which is why that check exists:
-      # the value is a string, so `REPLACE-ME…/32` templates perfectly and is then rejected by the
-      # API server as an invalid `ipBlock.cidr`, rolling the release back several steps from anything
-      # that mentions a CIDR. Confirm with `tofu -chdir=infra/environments/staging output postgres_ip`.
+      # The /32 of `database.host` below — NetworkPolicy cannot resolve a name, so two settings for one
+      # address, and `scripts/cluster-assertions.sh` fails on a real host with a placeholder CIDR. **A
+      # placeholder does NOT fail the render**: `REPLACE-ME…/32` templates and the API server rejects it,
+      # rolling the release back several steps from anything mentioning a CIDR. Confirm with
+      # `tofu -chdir=infra/environments/staging output postgres_ip`.
       databaseCidr: "10.1.1.10/32"
     database:
-      # The k3s node's own private address — PostgreSQL is co-located on staging
-      # (`postgres_server_type = null`) but still reached over the network, so the connection path
-      # has production's shape. Matches `k3s_private_ip` in infra/environments/staging/main.tf.
+      # The k3s node's own private address — PostgreSQL is co-located on staging but reached over the
+      # network, so the path has production's shape. Matches `k3s_private_ip` in the staging stack.
       host: "10.1.1.10"
-      # Created out of band before the first reconcile, in the TARGET namespace (`event-junkie`),
-      # not in flux-system where this object lives:
-      #   kubectl create secret generic events-db -n event-junkie \
-      #     --from-literal=username=events --from-literal=password=…
-      # SOPS-managed Secrets arrive in #416.
+      # Created out of band before the first reconcile, in the TARGET namespace (`event-junkie`), not
+      # flux-system: `kubectl create secret generic events-db -n event-junkie --from-literal=username=events
+      # --from-literal=password=…`.
       existingSecret: "events-db"
-    # Cached venue images (ADR-019). `serving.enabled` is on here first and not on production: it is
-    # the switch a visitor sees, it also tightens `img-src` in the CSP, and staging is off the public
-    # internet. Backfill finished before it moved — silent passes are an empty backlog (#843).
+    # Cached venue images (ADR-019). `serving.enabled` is on here first: it is the switch a visitor sees,
+    # it tightens `img-src`, and staging is off the public internet.
     images:
       enabled: true
       serving:
         enabled: true
-      # The orphan sweep. Reporting mode showed 5 unreferenced images and 65 objects -- 13 each, an
-      # original and twelve derivatives -- and no stray. A small number is what made it safe to move;
-      # a large one would mean the reference query is wrong (#902).
+      # The orphan sweep. Reporting mode showed 5 unreferenced images and no stray; a large number would
+      # mean the reference query is wrong (#902).
       sweep:
         enabled: true
       storage:
-        # The only thing keeping staging's objects away from production's — the bucket is shared and
-        # the keys are content addressed. The chart refuses to render without it.
+        # The only thing keeping staging's objects away from production's in a shared bucket. The chart
+        # refuses to render without it.
         prefix: "staging"
-        # Out of band in the target namespace, scoped to this bucket and never the project-wide
-        # keypair (docs/ops/SECRETS.md §event-junkie-images).
+        # Out of band in the target namespace, scoped to this bucket (docs/ops/SECRETS.md).
         existingSecret: "event-junkie-images"
-      # The sidecar that generates the derivatives (ADR-020). `event-junkie-imgproxy` has to exist
-      # here first — the key and salt are a `secretKeyRef` with no `optional`, so values ahead of the
-      # Secret leave the pod in CreateContainerConfigError (SECRETS.md §event-junkie-imgproxy).
+      # The sidecar that generates the derivatives (ADR-020). `event-junkie-imgproxy` has to exist first —
+      # a `secretKeyRef` with no `optional` leaves the pod in CreateContainerConfigError.
       imgproxy:
         enabled: true
-    # Both stateless services drop to a single replica. This is the one place staging is not
-    # production-shaped, and it is a capacity fact rather than a preference: the node is a cx33 like
-    # production's, but it also carries PostgreSQL, which production keeps on a cx23 of its own.
-    # Measured at 51% of memory. Flux costs ~300 MB of it — worth remembering if anything starts
-    # getting OOM-killed.
+    # Both stateless services drop to one replica — the one place staging is not production-shaped, and
+    # a capacity fact: the node also carries PostgreSQL, which production keeps on a cx23 of its own.
+    # Measured at 51% of memory, ~300 MB of it Flux.
     bff:
       replicaCount: 1
       resources:
@@ -135,8 +107,8 @@ spec:
           cpu: "1000m"
           memory: "640Mi"
     importer:
-      # **Off here: production translates.** Running both billed the same 84 sources twice for a copy
-      # nobody reads. Off keeps what is stored; `translation_licence` stays PERMITTED (ADR-026, -027).
+      # **Off here: production translates.** Running both billed the same sources twice for a copy nobody
+      # reads. `translation_licence` stays PERMITTED.
       translation:
         engine: none
       resources:
@@ -149,23 +121,18 @@ spec:
     frontend:
       replicaCount: 1
     ingress:
-      # Does not resolve on the public internet, and that is the design rather than an omission
-      # (PLATFORM_SETUP §4a): resolution happens over the WireGuard tunnel.
+      # Does not resolve on the public internet, by design (PLATFORM_SETUP §4a): resolution happens over
+      # the WireGuard tunnel.
       host: "staging.event-junkie.de"
       # No redirect domain on staging — the .com 301 is a production concern.
       redirectHosts: []
-      # `X-Robots-Tag: noindex, nofollow` on every response (#286). Defence in depth only: the real
-      # control is that this host has no public address record at all, so no crawler can reach it.
-      # This is what covers the afternoon somebody adds one to check something.
-      #
-      # It costs staging the property that an empty `redirectHosts` leaves nothing Traefik-specific
-      # rendered — the header needs a Traefik Middleware, because the Ingress API cannot express a
-      # response header. Production keeps that property; staging trades it for not being indexed.
+      # `X-Robots-Tag: noindex, nofollow` on every response (#286). Defence in depth: the real control is
+      # that this host has no public address record. It costs the property that an empty `redirectHosts`
+      # leaves nothing Traefik-specific rendered; production keeps that property.
       noindex: true
-      # The Content-Security-Policy is enforced here, not report-only (#854). Before the flip the
-      # report-only header was loaded in a browser: 52 page loads, every route family, both locales,
-      # both themes, zero violations. The chart default stays report-only, so a new environment
-      # starts with the warning and not the blank page.
+      # The Content-Security-Policy is enforced here, not report-only (#854): the report-only header was
+      # loaded in a browser first — every route family, both locales, both themes, zero violations. The
+      # chart default stays report-only.
       securityHeaders:
         contentSecurityPolicy:
           reportOnly: false
@@ -174,31 +141,20 @@ spec:
         secretName: "event-junkie-staging-tls"
     certManager:
       clusterIssuer:
-        # Created here because staging is its own cluster with exactly one release on it, so the
-        # singleton problem that keeps `create` false by default does not arise.
+        # Created here because staging is its own cluster with exactly one release, so the singleton problem
+        # does not arise.
         create: true
         name: "letsencrypt-staging-dns"
         # A role mailbox, not a person (docs/LEGAL.md §6).
         email: "hello@event-junkie.de"
-        # Not a preference: HTTP-01 needs Let's Encrypt to reach the host, and this environment
-        # exists to stop that. The TXT record is public; the A record never exists.
-        #
-        # The webhook answering it is `cert-manager-webhook.yaml`, and the chart's defaults for
-        # `dns01.tokenSecret` and `dns01.webhookGroupName` already match it. The token is the one
-        # thing NOT automated, created once per cluster:
-        #
-        #   kubectl create secret generic hetzner -n cert-manager \
-        #     --from-literal=token=<an hcloud API token with read+write>
-        #
-        # In `cert-manager`, not `event-junkie`: a ClusterIssuer resolves secret references against
-        # cert-manager's own namespace, so a token next to the workloads is simply never found and
-        # the challenge fails with a message about the token rather than about the namespace.
-        # SOPS-managed Secrets in #416 remove this step.
+        # Not a preference: HTTP-01 needs Let's Encrypt to reach the host, and this environment exists to
+        # stop that. The TXT record is public; the A record never exists. The webhook answering it is
+        # `cert-manager-webhook.yaml`. The token is the one thing NOT automated, created once per cluster in
+        # `cert-manager` — not `event-junkie`, because a ClusterIssuer resolves secret references against
+        # cert-manager's namespace: `kubectl create secret generic hetzner -n cert-manager
+        # --from-literal=token=<hcloud token, read+write>`.
         solver: "dns01"
-        # The ACME *staging* endpoint, and it stays there (#265). Production's rate limits are per
-        # registered domain and `event-junkie.de` is the same registered domain here, so burning the
-        # limit from this environment would lock out the real one. The counter-argument — that
-        # switching rehearses the production ACME path — does not hold: production issues over
-        # HTTP-01, so all this endpoint has left to prove is account registration, against a browser
-        # warning nobody outside the tunnel can see.
+        # The ACME *staging* endpoint, and it stays there (#265): rate limits are per registered domain and
+        # `event-junkie.de` is the same one here, so burning the limit would lock out production. Production
+        # issues over HTTP-01, so this endpoint has nothing left to rehearse but account registration.
         server: "https://acme-staging-v02.api.letsencrypt.org/directory"

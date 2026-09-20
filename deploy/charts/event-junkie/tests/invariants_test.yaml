@@ -1,27 +1,18 @@
-# Whole-chart invariants — the ones that must hold for every document the chart renders, under
-# every values file it is rendered with.
-#
-# `templates: ["**/*.yaml"]` is the point of this suite and not a shortcut. It covers all 16
-# templates including the nested `templates/tests/connection-test.yaml`, so a template added
-# tomorrow is inside these assertions without anyone remembering to list it. That was the property
-# `render-assertions.sh` had by grepping the whole rendered manifest, and losing it was the main
-# risk in the port (#430).
-#
-# Every assertion here is phrased as a negative — "no document does X" — for the same reason the
-# script phrased its queries to return nothing when the chart is correct: a positive assertion over
-# `**/*.yaml` fails on every document that legitimately lacks the path. The cost is the same too: a
-# negative passes when the path expression is broken by a rename. That is what the control tests at
-# the bottom are for, and they must not be deleted.
+# Whole-chart invariants: what must hold for every document the chart renders, under every values
+# file. `templates: ["**/*.yaml"]` is the point: a template added tomorrow is inside these assertions
+# without anyone listing it (#430). Every assertion is a negative — "no document does X" — because a
+# positive over `**/*.yaml` fails on every document that legitimately lacks the path. The cost: a
+# negative passes when a rename breaks its path expression, which is what the controls at the bottom
+# are for. They must not be deleted.
 suite: whole-chart invariants
 
 templates:
   - "**/*.yaml"
 
 tests:
-  # The two value sets the chart can be rendered from on its own. The three that matter as much —
-  # k3d, staging and production's `spec.values` — live in each cluster's HelmRelease and cannot be
-  # named here, because a HelmRelease is not a values document. `scripts/cluster-assertions.sh`
-  # extracts them and re-runs this suite against each; the matrix is five renders, not two.
+  # The two value sets the chart renders from on its own. k3d, staging and production's `spec.values`
+  # cannot be named here; `scripts/cluster-assertions.sh` re-runs this suite against each, so the matrix
+  # is five renders.
   - it: holds under the default values
     set:
       database.host: "10.0.1.2"
@@ -29,23 +20,15 @@ tests:
       database.existingSecret: "events-db"
     asserts: &invariants
       # --- Namespaces belong to whoever installs the chart -----------------------------------
-      #
-      # Flux's HelmRelease sets targetNamespace, and a hardcoded metadata.namespace would silently
-      # win over it (#414).
+      # Flux's HelmRelease sets targetNamespace, and a hardcoded metadata.namespace silently wins over it.
       - notExists:
           path: metadata.namespace
 
       # --- Selector labels must be the immutable subset ---------------------------------------
-      #
-      # spec.selector is immutable after creation, and helm.sh/chart and app.kubernetes.io/version
-      # both change on every release. A chart that mixes them installs perfectly and then fails
-      # every subsequent upgrade — a failure that does not appear until the *second* release, which
-      # is why nothing but this assertion would catch it before staging.
-      #
-      # Two paths because the two shapes differ: a Deployment selects through
-      # `spec.selector.matchLabels`, a Service through `spec.selector` directly. Recursive descent
-      # rather than a kind filter, so a StatefulSet or DaemonSet added later is covered by the same
-      # two lines.
+      # spec.selector is immutable after creation, and `helm.sh/chart` and `app.kubernetes.io/version`
+      # change every release; a chart that mixes them installs and then fails the *second* release. Two
+      # paths because a Deployment selects through `spec.selector.matchLabels` and a Service through
+      # `spec.selector`; recursive descent, so a StatefulSet added later is covered.
       - notExists:
           path: '$..matchLabels["helm.sh/chart"]'
       - notExists:
@@ -56,24 +39,18 @@ tests:
           path: '$..selector["app.kubernetes.io/version"]'
 
       # --- Images ------------------------------------------------------------------------------
-      #
-      # `image.tag` defaults to "" and falls back to `.Chart.AppVersion`, which is what keeps the
-      # chart and the images in step (#264).
+      # `image.tag` falls back to `.Chart.AppVersion`, which keeps chart and images in step (#264).
       - notMatchRegex:
           path: "$..image"
           pattern: ":(latest|head|canary|main|edge)$"
-      # "carries an explicit tag", as a negative: an untagged reference is one whose last path
-      # segment holds no colon. `ghcr.io/x/y:0.1.1` does; `ghcr.io/x/y` and `nginx` do not.
+      # "carries an explicit tag", as a negative: an untagged reference is one whose last path segment
+      # holds no colon.
       - notMatchRegex:
           path: "$..image"
           pattern: "(^|/)[^/:]+$"
 
       # --- Pod Security Standards, `restricted` profile ----------------------------------------
-      #
-      # The chart already satisfies every field of the profile, and these are what keep that true
-      # rather than incidental. #416 adds the namespace label that *enforces* it; until then nothing
-      # rejects a violation at admission.
-      #
+      # The chart satisfies every field of the profile, and these keep that true rather than incidental.
       # https://kubernetes.io/docs/concepts/security/pod-security-standards/
       - notExists:
           path: "$..hostNetwork"
@@ -86,36 +63,23 @@ tests:
       - notExists:
           path: "$..privileged"
 
-      # hostPath is a mount of the node's filesystem, and it is how a pod escapes being a pod — so
-      # it is asserted here, chart-wide and recursively, rather than only over Deployments.
-      # hardening_test.yaml carries the rest of the `restricted` volume rule as an explicit list of
-      # every non-permitted type; this is the one worth also having where nothing can escape it.
+      # hostPath is how a pod escapes being a pod, so it is asserted chart-wide and recursively;
+      # hardening_test.yaml carries the rest of the volume rule as an explicit list.
       - notExists:
           path: "$..hostPath"
 
       # --- Flyway's JDBC connection -------------------------------------------------------------
-      #
-      # The Spring property is `spring.flyway.user`. The `_USERNAME` spelling binds to nothing and
-      # fails silently — migrations simply never run. Chart-wide rather than importer-only, because
-      # the wrong spelling is just as silent wherever it appears.
-      #
-      # Its control lives in importer_test.yaml rather than here: the frontend has no `env` at
-      # all, so a positive assertion on this path over every Deployment fails on it.
+      # The Spring property is `spring.flyway.user`; the `_USERNAME` spelling binds to nothing and
+      # migrations never run. Chart-wide, because the wrong spelling is as silent anywhere. Its control
+      # lives in importer_test.yaml: the frontend has no `env` at all.
       - notMatchRegex:
           path: "$..env[*].name"
           pattern: "^SPRING_FLYWAY_USERNAME$"
 
       # --- The chart does not decide what actuator exposes ---------------------------------------
-      #
-      # A ConfigMap key here becomes an environment variable through envFrom, which outranks both
-      # modules' application.yaml — so a chart-set exposure list silently wins over the application's
-      # and 404s every endpoint it omits, in every cluster, while passing every other test (#538).
-      # The list belongs to the application; nothing in the chart may set it.
-      #
-      # Two paths because there are two ways back in: a ConfigMap `data` key, and a plain `env`
-      # entry on a Deployment. The second is the same shape as the SPRING_FLYWAY_USERNAME assertion
-      # above, and is here for the same reason — the wrong thing is just as silent wherever it
-      # appears.
+      # A ConfigMap key becomes an environment variable through envFrom, which outranks application.yaml —
+      # so a chart-set exposure list silently 404s every endpoint it omits, in every cluster, while passing
+      # every other test (#538). Two paths, because a plain `env` entry is the second way back in.
       - notExists:
           path: "$..MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE"
       - notMatchRegex:
@@ -128,14 +92,9 @@ tests:
     asserts: *invariants
 
   # --- The controls ---------------------------------------------------------------------------
-  #
-  # Every assertion above passes when its path expression matches nothing, so a rename that broke
-  # one would look like a green build. These are the positive counterparts: they name the same paths
-  # and fail if the documents stop being reachable. Scoped with `documentSelector`, because a
-  # positive assertion over `**/*.yaml` fails against every document that legitimately lacks the
-  # path.
-  #
-  # Delete one of these and the invariant above it silently stops being an invariant.
+  # Every assertion above passes when its path expression matches nothing. These are the positive
+  # counterparts, scoped with `documentSelector`, and they fail if the documents stop being reachable.
+  # Delete one and the invariant above it silently stops being an invariant.
   - it: control — the selector paths above reach all three Deployments
     set:
       database.host: "10.0.1.2"
@@ -174,25 +133,13 @@ tests:
       value: Deployment
       matchMany: true
     asserts:
-      # No version number in the pattern: it asserts the `.Chart.AppVersion` fallback produced a
-      # SemVer tag, which is what breaks if a published values file ever pins `image.tag`. The
-      # number itself is `scripts/version.sh compute`'s business (ADR-032).
-      #
-      # The prerelease and build-metadata tail is not optional padding. `release.yml` stamps
-      # `Chart.yaml` before it packages, and a snapshot build stamps
-      # `0.1.1-snapshot.<utc-timestamp>.g<sha>` (#455) — so a pattern anchored at the patch digit
-      # passes every pull request and fails only in the release job, which is the worst place to
-      # find out.
-      #
-      # `injector` is the fourth image this chart builds (#287), a sidecar in the frontend pod, and
-      # it follows the first rule: a SemVer tag from the same release as the frontend it serves.
-      #
-      # **The imgproxy sidecar is the one image this chart does not build**, and it is the second
-      # alternative rather than an escape hatch: ours carry a SemVer tag, and a digest behind it once
-      # release.yml has stamped one (#1473); it carries a digest and never a tag (ADR-017, ADR-020).
-      # Renders with the sidecar off match only the first half, which is why `images.imgproxy.enabled`
-      # is set explicitly below — staging turned it on and this assertion had never seen a second
-      # container.
+      # No version number in the pattern: it asserts the `.Chart.AppVersion` fallback produced a SemVer
+      # tag, which breaks if a published values file pins `image.tag`. The prerelease tail is not padding:
+      # a snapshot build stamps `0.1.1-snapshot.<utc-timestamp>.g<sha>` (#455), so a pattern anchored at
+      # the patch digit passes every pull request and fails only in the release job. `injector` (#287)
+      # follows the first rule. **The imgproxy sidecar is the one image this chart does not build**: it
+      # carries a digest and never a tag (ADR-017, ADR-020), so `images.imgproxy.enabled` is set explicitly
+      # below — staging turned it on and this assertion had never seen a second container.
       - matchRegex:
           path: "$..image"
           pattern: '^(ghcr\.io/enorm-labs/event-junkie/(bff|importer|frontend|injector):[0-9]+\.[0-9]+\.[0-9]+([-+][0-9A-Za-z.-]+)?(@sha256:[0-9a-f]{64})?|ghcr\.io/imgproxy/imgproxy@sha256:[0-9a-f]{64})$'
@@ -212,8 +159,8 @@ tests:
       value: Deployment
       matchMany: true
     asserts:
-      # Four containers, four digests, each behind a SemVer tag: `repo:tag@sha256:…`. A digest with
-      # no tag would pass a node and lose the version from every pod listing.
+      # Four containers, four digests, each behind a SemVer tag: `repo:tag@sha256:…`. A digest with no tag
+      # would lose the version from every pod listing.
       - matchRegex:
           path: "$..image"
           pattern: '^ghcr\.io/enorm-labs/event-junkie/(bff|importer|frontend|injector):[0-9]+\.[0-9]+\.[0-9]+([-+][0-9A-Za-z.-]+)?@sha256:(1{64}|2{64}|3{64}|4{64})$'
@@ -244,8 +191,7 @@ tests:
       path: metadata.labels["app.kubernetes.io/component"]
       value: config
     asserts:
-      # A sibling key that must stay, asserted positively. Without this the `notExists` above would
-      # keep passing if the ConfigMap were renamed, restructured, or dropped — the failure mode the
-      # header warns about, and the one that let #538 exist in the first place.
+      # A sibling key that must stay, asserted positively; without it the `notExists` above would keep
+      # passing if the ConfigMap were renamed — the failure that let #538 exist.
       - exists:
           path: data.MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED

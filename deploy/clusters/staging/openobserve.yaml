@@ -1,11 +1,8 @@
 # comment-lint: allow-file 89 lines of config, of which two upstream defaults silently drop data (#625).
-# OpenObserve on staging — ADR-015's trial, which cannot start until this runs somewhere real.
-#
-# **The `openobserve-standalone` chart, NOT `openobserve`.** The plain chart deploys microservices —
-# ingester, querier, router, scheduler, compactor and `o2ai` at two replicas — nothing like the
-# footprint ADR-015 compared, and it would not fit a node already running two JVMs. Standalone is one
-# StatefulSet and one PVC, and every measured number in ADR-015 is standalone's, so **picking the
-# wrong one silently invalidates criterion 2**, which the whole decision turned on.
+# OpenObserve on staging — ADR-015's trial. **The `openobserve-standalone` chart, NOT `openobserve`**:
+# the plain chart deploys microservices at two replicas, nothing like the footprint ADR-015 compared,
+# and every measured number there is standalone's, so picking the wrong one silently invalidates
+# criterion 2.
 apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
@@ -18,16 +15,13 @@ metadata:
 spec:
   releaseName: openobserve
   targetNamespace: observability
-  # Where Helm keeps its release secret (cert-manager.yaml gives the same reasoning): left alone,
-  # Flux stores it in flux-system while the objects live elsewhere, so `helm list -n observability`
-  # disagrees with reality for anyone debugging.
+  # Where Helm keeps its release secret: left alone, Flux stores it in flux-system while the objects
+  # live elsewhere, and `helm list -n observability` disagrees with reality.
   storageNamespace: observability
   interval: 1h
-  # **How long Helm waits for the rollout, and it has to exceed the startup window below** (#924).
-  # The default is five minutes. A pod that needs longer than that to answer is marked `Failed`,
-  # remediation rolls the release back to the template that caused the problem, and the release
-  # stalls — which is exactly what happened on staging: the fix could not deploy because deploying
-  # it required the pod it fixes to already be healthy.
+  # **How long Helm waits for the rollout, and it has to exceed the startup window below** (#924): at
+  # the five-minute default a pod that needs longer is marked `Failed`, remediation rolls back to the
+  # template that caused the problem, and the fix cannot deploy because it needs the pod it fixes.
   timeout: 10m
   install:
     createNamespace: true
@@ -35,14 +29,14 @@ spec:
       retries: 3
   upgrade:
     remediation:
-      # Explicit because the default is the trap #414's flux-break rehearsal found: without it a
-      # failed upgrade is retried and then left running, rather than rolled back.
+      # Explicit because the default is the trap #414's flux-break rehearsal found: a failed upgrade is
+      # retried and then left running.
       remediateLastFailure: true
   chart:
     spec:
       chart: openobserve-standalone
-      # Pinned, not a range. A major lands here a night before production: v1.0.0 migrates the
-      # metadata sqlite forward on start, and a rollback across that is untested (#1571).
+      # Pinned, not a range. A major lands here a night before production: v1.0.0 migrates the metadata
+      # sqlite forward on start, and a rollback across that is untested (#1571).
       version: "1.0.1"
       sourceRef:
         kind: HelmRepository
@@ -50,14 +44,10 @@ spec:
         namespace: flux-system
       interval: 1h
 
-  # **The whole reason `valuesFrom` is used at all.** The chart takes `auth.ZO_S3_ACCESS_KEY` and
-  # `auth.ZO_S3_SECRET_KEY` as plain values, so putting them under `spec.values` would put live
-  # Object Storage credentials in a public repository in plaintext. `existingRootUserSecret` covers
-  # the root user and nothing else, so Flux merges these two in at reconcile time instead.
-  #
-  # Nothing here creates the Secret (docs/ops/SECRETS.md). Until it exists this release reconciles
-  # into a failed state, which is intended: a missing credential should stop the deploy, not produce
-  # a running server nobody can log into.
+  # **The whole reason `valuesFrom` is used.** The chart takes `auth.ZO_S3_ACCESS_KEY` and
+  # `auth.ZO_S3_SECRET_KEY` as plain values, which under `spec.values` would be plaintext credentials in
+  # a public repository. Nothing here creates the Secret (docs/ops/SECRETS.md); until it exists this
+  # release reconciles into a failed state, as intended.
   valuesFrom:
     - kind: Secret
       name: openobserve-credentials
@@ -69,13 +59,10 @@ spec:
       targetPath: auth.ZO_S3_SECRET_KEY
 
   values:
-    # **What `restricted` asks of a pod that needs no privilege** (#709). The chart already runs the
-    # server as UID 10000 with `runAsNonRoot`; these are the three fields it leaves empty, and the
-    # dry run in `namespace-observability.yaml` named exactly them. `podSecurityContext` merges with
-    # the chart's map, so `fsGroup`, `runAsUser` and `runAsGroup` keep their defaults. Object storage
-    # is reached over HTTPS and 5080 is unprivileged, so dropping every capability costs nothing.
-    # `OnRootMismatch` skips the kubelet's chown of every inode on the data volume at each start
-    # (#1519): 13 GB and 1.26 million files on production, four minutes per pod start.
+    # **What `restricted` asks of a pod that needs no privilege** (#709): the chart runs the server as
+    # UID 10000 with `runAsNonRoot`, and these are the three fields it leaves empty. `podSecurityContext`
+    # merges with the chart's map. `OnRootMismatch` skips the kubelet's chown of every inode on the data
+    # volume at each start (#1519): 13 GB and 1.26 million files on production, four minutes per start.
     securityContext:
       allowPrivilegeEscalation: false
       capabilities:
@@ -87,198 +74,121 @@ spec:
       fsGroupChangePolicy: OnRootMismatch
 
     auth:
-      # Root credentials from the same hand-made Secret. The chart reads the two keys named here
-      # directly, so they never pass through Helm values at all.
+      # Root credentials from the same hand-made Secret; the chart reads the two keys directly.
       existingRootUserSecret:
         name: openobserve-credentials
         emailKey: ZO_ROOT_USER_EMAIL
         passwordKey: ZO_ROOT_USER_PASSWORD
 
     config:
-      # Object storage rather than local disk, which is the point of the bucket: ADR-015 wants log
-      # retention to stop competing with the node's disk, and LEGAL.md §7.5 needs that retention to
-      # be a policy something enforces rather than an intent.
-      #
-      # **`ZO_LOCAL_MODE` stays `true`, and the storage switch is the line below it.** The flag
-      # chooses *single-node versus cluster*, not disk versus S3 — set it `false` and the pod
-      # crash-loops on `Meta store only supports postgres in cluster mode`, cluster mode requiring a
-      # Postgres meta store where this uses the sqlite default. `ZO_LOCAL_MODE_STORAGE` is what
-      # actually moves the data off the disk, and it works in the mode we want.
+      # Object storage rather than local disk: ADR-015 wants log retention to stop competing with the
+      # node's disk, and LEGAL.md §7.5 needs that retention enforced. **`ZO_LOCAL_MODE` stays `true`** — it
+      # chooses single-node versus cluster, not disk versus S3, and `false` crash-loops on `Meta store only
+      # supports postgres in cluster mode`. `ZO_LOCAL_MODE_STORAGE` is what moves the data off the disk.
       ZO_LOCAL_MODE: "true"
       ZO_LOCAL_MODE_STORAGE: "s3"
       ZO_S3_PROVIDER: "s3"
       ZO_S3_SERVER_URL: "https://fsn1.your-objectstorage.com"
-      # Hetzner enforces the region in the request signature and rejects a mismatch — the same trap
-      # infra/bootstrap/versions.tf documents for the MinIO provider. The chart's default is
-      # `us-east-2`, which is never right here.
+      # Hetzner enforces the region in the request signature; the chart's default is `us-east-2`.
       ZO_S3_REGION_NAME: "fsn1"
       ZO_S3_BUCKET_NAME: "event-junkie-o2"
 
-      # **One bucket, two environments, and this line is what keeps them apart.** The same
-      # separation `s3://event-junkie-backups/<environment>/` and the images bucket's
-      # `storage.prefix` already make, rather than a third bucket needing its own lifecycle rule to
-      # keep LEGAL.md §7.5 true.
-      #
-      # **Staging held the bucket root until this landed, because nobody had answered whether the
-      # file list stores keys absolute or relative to the prefix.** It stores them **relative**, and
-      # production is the proof: it runs `ZO_S3_BUCKET_PREFIX: "production/"` and still records
-      # `files/default/metrics/<name>/…` internally, identical in form to what this instance
-      # recorded with no prefix at all. The prefix is applied at the S3 client, below the file list.
-      #
-      # **So this line cannot be changed on its own.** Adding it points every entry already in the
-      # list at a key that does not exist: the corpus goes unreadable in one reconcile while new
-      # ingest carries on normally, so it fails while looking healthy. It was landed together with a
-      # wipe of the PVC that holds the file list — docs/ops/OPENOBSERVE.md §Changing the prefix has
-      # the sequence. **Never edit it without that.**
-      #
-      # **In `config:` rather than `extraEnv`, unlike the flags below** — the chart drops an unknown
-      # key without a word, and `helm show values openobserve-standalone --version 0.92.2` lists
-      # this one directly under `ZO_S3_BUCKET_NAME`. **Verify the objects, not this comment**:
-      # nothing new should appear at the root after the first ingest.
+      # **One bucket, two environments, and this line is what keeps them apart** — the same separation the
+      # backups and images buckets make. The file list stores keys **relative** to the prefix (production
+      # proves it: `files/default/metrics/…` under `ZO_S3_BUCKET_PREFIX: "production/"`), so the prefix is
+      # applied at the S3 client. **This line cannot be changed on its own**: adding it points every entry
+      # already in the list at a key that does not exist, and the corpus goes unreadable while new ingest
+      # carries on. It landed together with a wipe of the file-list PVC — docs/ops/OPENOBSERVE.md
+      # §Changing the prefix has the sequence. In `config:` rather than `extraEnv` because the chart lists
+      # this key; **verify the objects, not this comment**.
       ZO_S3_BUCKET_PREFIX: "staging/"
-      # Path style, not virtual-hosted. Hetzner's endpoint serves `<endpoint>/<bucket>`, which is
-      # exactly what `bucket_domain_name` came back as on the import.
+      # Path style, not virtual-hosted: Hetzner's endpoint serves `<endpoint>/<bucket>`.
       ZO_S3_FEATURE_FORCE_HOSTED_STYLE: "false"
 
-      # **Retention, and this is the number LEGAL.md §7.5 depends on** (#271 item 1). The default is
-      # `3650` — ten years — which expires nothing and leaves §7.5's claim resting on a control that
-      # does not exist.
-      #
-      # **OpenObserve's own compactor, not an S3 lifecycle rule, is the mechanism**: it deletes the
-      # Parquet *and* its entry in the file list, where a bucket rule alone would delete objects out
-      # from under that list and leave queries referencing files that are gone — corruption rather
-      # than expiry. `infra/bootstrap/storage.tf`'s lifecycle rule is a **backstop set deliberately
-      # longer than this**, for the case where the compactor stops running (the argument #586 makes
-      # about a sweep that only runs while its node does).
-      #
-      # **14 days is a starting position.** It leaves room to investigate an incident a week old
-      # while staying short of a log archive. **#278 writes the privacy notice and must state
-      # whatever this says**, so changing it here changes a published claim.
-      #
-      # **The catch:** it applies to metrics as well as logs, and #271 item 7 wants an availability
-      # figure that survives a year — which needs per-stream retention configured in the application,
-      # not here. **Set short and lose metrics history; set long and over-retain personal data.**
-      # This errs toward the recoverable mistake.
+      # **Retention, the number LEGAL.md §7.5 depends on** (#271 item 1). The default is `3650`, ten years.
+      # **OpenObserve's own compactor is the mechanism, not an S3 lifecycle rule**: it deletes the Parquet
+      # *and* its file-list entry, where a bucket rule would leave queries referencing files that are gone.
+      # `infra/bootstrap/storage.tf`'s lifecycle rule is a backstop set deliberately longer, for the case
+      # where the compactor stops. **14 days is a starting position** — room to investigate an incident a
+      # week old, short of an archive — and #278's privacy notice must state whatever this says. It applies
+      # to metrics too; an availability figure that survives a year needs per-stream retention in the
+      # application. This errs toward the recoverable mistake.
       ZO_COMPACT_DATA_RETENTION_DAYS: "14"
 
-      # **The memtable never rotates on size, because the default cannot be reached (#625).** Two
-      # thresholds decide whether ingestion works and, out of the box, the smaller one is the wrong
-      # one. In `v0.92.2`: `writer.rs:68` rejects a write with `MemoryTableOverflowError` once the
-      # **global** gauge `zo_ingest_memtable_arrow_bytes` reaches `ZO_MEM_TABLE_MAX_SIZE`, which
-      # `config.rs:3612` derives when unset as `mem_total / 4` in local mode — 25%, not 50%, of the
-      # **cgroup** limit, so 256 MiB against the `limits.memory: 1Gi` below. But `writer.rs:706`
-      # rotates a memtable — the thing that actually drains it — only when **that one table** passes
-      # `ZO_MAX_FILE_SIZE_IN_MEMORY`, which defaults to **512 MB**.
+      # **The memtable never rotates on size, because the default cannot be reached (#625).** In `v0.92.2`,
+      # `writer.rs:68` rejects a write with `MemoryTableOverflowError` once the **global** gauge
+      # `zo_ingest_memtable_arrow_bytes` reaches `ZO_MEM_TABLE_MAX_SIZE`, derived when unset as
+      # `mem_total / 4` of the **cgroup** limit — 256 MiB against `limits.memory: 1Gi`. But `writer.rs:706`
+      # rotates a memtable only when **that one table** passes `ZO_MAX_FILE_SIZE_IN_MEMORY`, default
+      # **512 MB**. One table cannot reach 512 MB while all of them may not exceed 256 MiB, so the only
+      # rotation is the 600s age check: the pod accumulates ten minutes of batches, hits the ceiling and
+      # returns 503 until the timer fires. Over 48 hours that lost ~51% of post-filter metric points and
+      # 74% of k8s event logs.
       #
-      # **One table has to reach 512 MB while all of them together may not exceed 256 MiB**, so
-      # size-triggered rotation is unreachable by construction and the only thing that ever rotates a
-      # memtable is the age check in `check_wal_threshold` (`ZO_MAX_FILE_RETENTION_TIME`, 600s). The
-      # pod accumulates ten minutes of arrow batches, hits the ceiling and returns HTTP 503 to the
-      # collector until the timer fires. Over 48 hours that **lost ~51% of all post-filter metric
-      # points** — 4.44M rejected outright, 8.45M never queued — and **74% of k8s event logs**.
-      #
-      # **32 MB, not something closer to the ceiling.** Writers are one per `(bucket, org,
-      # stream_type)` (`writer.rs:718`), so with `ZO_MEM_TABLE_BUCKET_NUM` at its default of 1 there
-      # are a handful — `default` and `_meta` x logs/metrics/traces. Six full tables at 32 MB is
-      # 192 MB against a 256 MiB ceiling; at 64 MB the worst case is over it, the same bug with a
-      # larger constant. **Raising the memory limit does not work**: `1536Mi` gives a 384 MiB
-      # ceiling, still under the rotation threshold, and reaching the default by sizing alone needs
-      # 4 GiB — more than ADR-015 budgets. **The cost is more, smaller Parquet files**, which the
-      # compactor merges on its 10s interval; file count is its problem and it has a mechanism for
-      # it, while a rejected write is data that no longer exists.
+      # **32 MB, not something closer to the ceiling.** Writers are one per `(bucket, org, stream_type)`,
+      # a handful; six full tables at 32 MB is 192 MB against 256 MiB, at 64 MB the worst case is over it.
+      # Raising the memory limit does not work — reaching the default by sizing alone needs 4 GiB. The cost
+      # is more, smaller Parquet files, which the compactor merges every 10s; a rejected write is data that
+      # no longer exists.
       ZO_MAX_FILE_SIZE_IN_MEMORY: "32"
 
-      # **The disk cache sizes itself from the node's disk, not from the claim (#1521).** With
-      # `ZO_DISK_CACHE_MAX_SIZE` unset, `check_disk_cache_config` in `v0.92.2`'s `config.rs` takes
-      # half of the free space on the disk the data directory sits on — `local-path` puts that on
-      # the node's root disk and enforces nothing — so the cache grew to 13 GB on a `5Gi` claim,
-      # half of a node's headroom with PostgreSQL beside it on staging. 3072 MB leaves room inside
-      # the claim for `db/`, `wal/` and the two 10% caches derived from this. The corpus is in the
-      # bucket, same region; a miss reads it.
+      # **The disk cache sizes itself from the node's disk, not from the claim (#1521).** Unset,
+      # `check_disk_cache_config` takes half the free space on the disk the data directory sits on —
+      # `local-path` puts that on the node's root disk — so the cache grew to 13 GB on a `5Gi` claim. 3072 MB
+      # leaves room inside the claim for `db/`, `wal/` and the two 10% caches derived from this.
       ZO_DISK_CACHE_MAX_SIZE: "3072"
-      # **The chart pauses the cache's own GC** — it ships `"0"`, and `spawn_pausable_job!` treats
-      # `<= 0` as paused — so nothing above the cap is released until a write forces it. 60 is
-      # the application's default: 100 MB (`ZO_DISK_CACHE_GC_SIZE`) a minute while over the cap.
+      # **The chart pauses the cache's own GC** (`"0"` means paused), so nothing above the cap is released
+      # until a write forces it. 60 is the application's default.
       ZO_DISK_CACHE_GC_INTERVAL: "60"
 
-      # **Let it report its own pressure — the chart turns this off, the app defaults it on.**
-      # `config.rs:1447` has `ZO_PROMETHEUS_ENABLED` defaulting to **true**; the chart sets it to
-      # `false`, so `/metrics` answers 200 with an empty body and **the store that holds every metric
-      # exports none of its own**. `zo_ingest_memtable_arrow_bytes` is the exact gauge the overflow
-      # check reads, and until now it existed nowhere — the outage in #625 had to be diagnosed from
-      # log lines, which is why it was mis-attributed to the container's RSS.
-      #
-      # Paired with the scrape annotations below, this is what makes the fix above checkable rather
-      # than asserted, and what would make the next occurrence visible while it is happening rather
-      # than after the data is gone.
+      # **Let it report its own pressure — the chart turns this off, the app defaults it on.** With
+      # `ZO_PROMETHEUS_ENABLED: false`, `/metrics` answers 200 with an empty body and the store that holds
+      # every metric exports none of its own; `zo_ingest_memtable_arrow_bytes` is the exact gauge the
+      # overflow check reads, and #625 had to be diagnosed from log lines. Paired with the scrape
+      # annotations below.
       ZO_PROMETHEUS_ENABLED: "true"
 
-      # **An outbound flow nobody decided on.**
-      # `ZO_TELEMETRY` defaults to **true** and posts to `https://e1.zinclabs.dev` every 30
-      # minutes. It was found while working out what this pod is allowed to connect to, which
-      # is the only reason it surfaced at all — nothing here had ever named it.
-      #
-      # Turned off rather than allowed, on the same principle as the egress policy: an
-      # outbound flow that nobody chose is not one to keep because it happens to be small.
-      # It also does not survive scrutiny under LEGAL.md — this is the component holding
-      # every log line and metric in the system, and what its heartbeat contains is
-      # documented nowhere we control.
+      # **An outbound flow nobody decided on.** `ZO_TELEMETRY` defaults to **true** and posts to
+      # `https://e1.zinclabs.dev` every 30 minutes; found while working out what this pod may connect to.
+      # Off, on the same principle as the egress policy: this component holds every log line and metric in
+      # the system, and what its heartbeat contains is documented nowhere we control.
       ZO_TELEMETRY: "false"
 
-      # **An alert has to have a destination, and every in-cluster URL is refused.** #271's alert
-      # rules cannot be created without one — `POST /api/v2/{org}/alerts` returns `Alert destination
-      # or workflows is required`, with or without `creates_incident` — and every destination inside
-      # the cluster is rejected by an SSRF guard:
-      #
-      #     openobserve-…svc.cluster.local  -> 400 Destination URL blocked by SSRF guard
-      #     signal-cli.observability.svc…   -> 400 Destination URL blocked by SSRF guard
-      #
-      # The second is #271 item 4's entire architecture — an OpenObserve webhook into
-      # `signal-cli-rest-api` — blocked for reasons unrelated to the missing phone number.
-      #
-      # `config.rs:1177` offers two ways out and they are not equivalent: `ZO_SSRF_ALLOW_LOOPBACK`
-      # lets the process notify **itself** and nothing else, `ZO_SKIP_SSRF_CHECKS` removes the check
-      # for every destination. **Both are set** — the first for the interim destination the rules use
-      # (a POST into this pod's own ingest API, so a firing becomes a row in `alert_history`), the
-      # second only because `openobserve-netpol.yaml` in this directory now contains it.
-      #
-      # **That moves the control from the application to the network, which is the stronger place.**
-      # A URL allowlist inside a process constrains the feature, not the process; an egress policy
-      # constrains anything the pod can be made to do. This pod may reach CoreDNS, the public
-      # internet on 443 and the Signal bridge — PostgreSQL, the Kubernetes API, the kubelet and every
-      # other pod are unreachable, so a destination aimed at them fails at the network rather than at
-      # a check somebody can turn off. **What it does not fix:** a destination may still be any
-      # *public* address, so the root credential can exfiltrate alert bodies — inherent to having a
-      # webhook at all, and that credential already reads every metric and log in the system.
+      # **An alert has to have a destination, and every in-cluster URL is refused.** `POST /api/v2/{org}/alerts`
+      # returns `Alert destination or workflows is required`, and every destination inside the cluster —
+      # the pod's own Service, `signal-cli.observability.svc` — gets `400 Destination URL blocked by SSRF
+      # guard`. `config.rs:1177` offers two ways out: `ZO_SSRF_ALLOW_LOOPBACK` lets the process notify
+      # itself and nothing else, `ZO_SKIP_SSRF_CHECKS` removes the check for every destination. **Both are
+      # set** — the first for the interim destination (a POST into this pod's own ingest API, so a firing
+      # becomes a row in `alert_history`), the second only because `openobserve-netpol.yaml` now constrains
+      # the pod: the control moved from the application to the network, which is the stronger place. What
+      # it does not fix: a destination may still be any *public* address, inherent to having a webhook.
 
-      # **NOT in the `config:` block above, and that is not a style choice.** The chart renders its
-      # ConfigMap from the 226 keys it knows about and **silently drops anything else** — no error,
-      # no warning, and a `helm template` that looks correct. `extraEnv` is the escape hatch for a
-      # key it has never heard of, and it lands as a plain environment variable anyway.
+      # **NOT in the `config:` block above.** The chart renders its ConfigMap from the keys it knows and
+      # silently drops anything else, with a `helm template` that looks correct. `extraEnv` lands as a
+      # plain environment variable anyway.
 
     extraEnv:
-      # Kept alongside the skip below rather than removed by it: revert the wider flag and the
-      # loopback destination recording firings into `alert_history` keeps working.
+      # Kept alongside the skip below: revert the wider flag and the loopback destination keeps working.
       - name: ZO_SSRF_ALLOW_LOOPBACK
         value: "true"
-      # Files older than this are read from the bucket rather than cached (#1521); the dashboards
-      # query hours. Not in `config:` — the chart does not know the key and would drop it.
+      # Files older than this are read from the bucket rather than cached (#1521); the dashboards query
+      # hours. Not in `config:` — the chart would drop the key.
       - name: ZO_DISK_CACHE_MAX_AGE_DAYS
         value: "3"
       - name: ZO_SKIP_SSRF_CHECKS
         value: "true"
 
-    # The gateway's `prometheus-autodiscovery` job keys on these, as postgres-exporter.yaml does.
-    # Without them the setting above exposes metrics nothing collects.
+    # The gateway's `prometheus-autodiscovery` job keys on these; without them the setting above exposes
+    # metrics nothing collects.
     podAnnotations:
       prometheus.io/scrape: "true"
       prometheus.io/port: "5080"
       prometheus.io/path: "/metrics"
 
     persistence:
-      # Small on purpose: with S3 as the store this is the write-ahead and cache directory, not the
-      # corpus. The corpus is in the bucket. `local-path` does not enforce the size; what bounds the
-      # directory is `ZO_DISK_CACHE_MAX_SIZE` above.
+      # Small on purpose: with S3 as the store this is the write-ahead and cache directory. `local-path`
+      # does not enforce the size; `ZO_DISK_CACHE_MAX_SIZE` above bounds it.
       enabled: true
       size: 5Gi
 
@@ -287,50 +197,27 @@ spec:
         memory: "512Mi"
         cpu: "100m"
       limits:
-        # **1Gi became 1536Mi, and this is the recorded number.** A k3d rehearsal put
-        # standalone at 634Mi and the whole metrics path at 938Mi, so 1Gi was set deliberately under
-        # ADR-015's ~1.5 GB ceiling: criterion 2 is a real test only if a breach is observable, and
-        # an OOMKill says so immediately. The breach arrived — six OOMKills in twenty minutes, each
-        # about three minutes after start, every one of them mid-compaction.
+        # **1Gi became 1536Mi.** 1Gi was set deliberately under ADR-015's ~1.5 GB ceiling so a breach would
+        # be observable, and the breach arrived: six OOMKills in twenty minutes, each mid-compaction, on a
+        # backlog #924's crash-loop had built — a pod that never stays up long enough to compact turns the
+        # `ZO_MAX_FILE_SIZE_IN_MEMORY: 32` trade into a debt it cannot pay off inside 1Gi.
         #
-        # **The backlog came from #924.** Its one-second probe timeout crash-looped this pod for
-        # eight days. `ZO_MAX_FILE_SIZE_IN_MEMORY: 32` above trades many small Parquet files for
-        # never rejecting a write, on the argument that the compactor merges them every 10s — and a
-        # pod that never stays up long enough to compact turns that trade into a debt it then cannot
-        # pay off inside 1Gi.
-        #
-        # **This number is not only a limit — it sizes two things inside the process**, which cost
-        # #625 a wrong diagnosis. The memtable ceiling is a quarter of it (`config.rs:3612`), so
-        # 1536Mi means 384 MiB against a worst case of six writers at 32 MB: #625's fix survives the
-        # raise with room to spare. `config.rs:3060` caps worker threads at one core per GiB floored
-        # at two (`cpu_num = min(real_cpu, mem_total / 1GiB)`), and `cpu: "1"` below pins that at two
-        # whatever this says — so the compactor does not get more parallel. That is what makes the
-        # raise safe, and why it was still not the fix for #625: rejected writes were bounded by the
-        # 256 MiB ceiling rather than by the cgroup.
-        #
-        # **Production followed**, after one OOMKill at the 1Gi it had kept as the live test of the
-        # tighter number; its file records the day and the two causes.
+        # **This number sizes two things inside the process.** The memtable ceiling is a quarter of it
+        # (`config.rs:3612`), so 1536Mi means 384 MiB against six writers at 32 MB. `config.rs:3060` caps worker
+        # threads at one core per GiB floored at two, and `cpu: "1"` pins that at two, so the compactor does
+        # not get more parallel — which is what makes the raise safe, and why it was not the fix for #625.
         memory: "1536Mi"
         cpu: "1"
 
-  # **The chart cannot express this, and the default kills the pod** (#924). Its `probes:` block
-  # offers `enabled`, `initialDelaySeconds`, `failureThreshold` and `path` — and no
-  # `timeoutSeconds` — so both probes render with Kubernetes' default of **one second**. This
-  # process compacts Parquet on its own schedule, `/healthz` occasionally answers slower than that
-  # while it does, and three in a row are a SIGKILL: staging restarted 124 times in 8 days, roughly
-  # every half hour, with no error in any log and every restart reported as `Exit Code: 137`.
-  #
-  # **Raising `failureThreshold` was available and is not the fix.** It multiplies a wrong timeout
-  # rather than correcting it, and it would trade a kill every half hour for a kill every hour.
-  #
-  # **Readiness is patched as well as liveness, and that half is what broke tooling rather than the
-  # pod.** A failing readiness probe takes this pod out of its Service, so `deploy/alerts/apply.sh`
-  # reached nothing and reported all eleven rules as returning no data — a dead server reading
-  # exactly like a metrics problem.
-  #
-  # 5s against a 10s period, keeping `failureThreshold: 3`: the pod is killed after 30 seconds of a
-  # genuinely unresponsive process, which is what liveness is for. A strategic merge patch rather
-  # than JSON 6902, so the container is matched by name and not by index.
+  # **The chart cannot express this, and the default kills the pod** (#924). Its `probes:` block has no
+  # `timeoutSeconds`, so both probes render with Kubernetes' one-second default; the process compacts
+  # Parquet on its own schedule, `/healthz` occasionally answers slower than that, and three in a row
+  # are a SIGKILL — 124 restarts in 8 days, every one `Exit Code: 137` with no error in any log. Raising
+  # `failureThreshold` multiplies a wrong timeout rather than correcting it. Readiness is patched too:
+  # a failing readiness probe takes the pod out of its Service, so `deploy/alerts/apply.sh` reported all
+  # eleven rules as returning no data — a dead server reading like a metrics problem. 5s against a 10s
+  # period, `failureThreshold: 3`: killed after 30 seconds of a genuinely unresponsive process. A
+  # strategic merge patch, so the container is matched by name.
   postRenderers:
     - kustomize:
         patches:
@@ -351,17 +238,11 @@ spec:
                           timeoutSeconds: 5
                         readinessProbe:
                           timeoutSeconds: 5
-                        # **Neither of the two above runs until this one succeeds**, which is the
-                        # whole point. On start the process replays its write-ahead log and merges
-                        # whatever small Parquet files it left behind, and until that work lets it
-                        # answer, a liveness probe measures the backlog rather than the health.
-                        # Staging turned that into a spiral: every kill left more to catch up on,
-                        # so the next start was slower and the kills moved from every half hour to
-                        # every sixty seconds — 146 restarts and counting.
-                        #
-                        # 30 x 10s is five minutes to become responsive, against a release timeout
-                        # of ten. A process that cannot answer inside five minutes is genuinely
-                        # wedged, which is when a restart is the right answer rather than the cause.
+                        # **Neither of the two above runs until this one succeeds.** On start the process replays its
+                        # write-ahead log and merges the small Parquet files it left behind, and until then a liveness probe
+                        # measures the backlog, not the health — staging spiralled from a kill every half hour to every sixty
+                        # seconds, 146 restarts. 30 × 10s is five minutes to become responsive, against a release timeout of
+                        # ten; a process that cannot answer inside five minutes is genuinely wedged.
                         startupProbe:
                           httpGet:
                             path: /healthz

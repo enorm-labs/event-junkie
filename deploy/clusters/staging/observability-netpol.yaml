@@ -1,16 +1,9 @@
 # comment-lint: allow 18 of these lines are the arrow inventory, and the rest are silent-failure traps
 # Default-deny for the `observability` namespace, plus one named allowance per real conversation
-# (#662). This replaces `openobserve-netpol.yaml`, whose egress rules are folded in below.
-#
-# This namespace holds the pod with every log line and metric in the system, the Signal bridge that
-# will hold a registered account, and a Postgres exporter carrying database credentials — any of
-# which could otherwise reach the private-network database, the Kubernetes API, each other, or the node.
-#
-# The shape is the chart's (`templates/networkpolicy.yaml`): **one deny-all plus one narrow allowance
-# per conversation, the only ordering that produces a reviewable list.** With allow-only policies the
-# absence of a rule is invisible — `flux-system` ships three `allow-*` policies and no deny, so they
-# document intent and enforce nothing. Read the allowances as the architecture: **an arrow not written
-# down does not happen**, and every one was read off the pinned charts rather than guessed.
+# (#662). This namespace holds the pod with every log line and metric in the system, the Signal
+# bridge that will hold a registered account, and a Postgres exporter carrying database credentials.
+# **The arrows below are the whole of what staging allows** — an arrow not written down does not
+# happen, and every one was read off the pinned charts:
 #
 #     agent            -> OpenObserve:5080          otlphttp export, from `observability-agent` (#709)
 #     gateway          -> OpenObserve:5080          otlphttp export
@@ -32,56 +25,34 @@
 #     everything       -> CoreDNS:53
 #
 # **Two selector hazards, both silent.** The operator labels both collector pods
-# `app.kubernetes.io/name: openobserve-collector` — the *chart* name — so `name` cannot tell agent
-# from gateway. The discriminator is `app.kubernetes.io/instance`, set to `<namespace>.<collector>`,
-# which embeds **both the namespace and the Helm release name (`o2c`)**: renaming the release
-# invalidates these selectors without erroring — a `podSelector` matching nothing just leaves the
-# pod under the deny-all, and a collector that cannot reach OpenObserve queues, retries and drops,
-# which is what #625 looked like for days. #709 moved the agent to `observability-agent`, so its
-# selector reads `observability-agent.o2c-agent-…` and lives in `observability-agent-netpol.yaml`;
-# **the two arrows that cross that boundary are written twice**, an egress in one file and the
-# matching ingress in the other, each naming the other namespace by `kubernetes.io/metadata.name`
-# beside the pod labels — a `podSelector` alone never matches a pod in another namespace.
-# Verify with `kubectl -n observability get pods --show-labels`, not by reading this file. Second:
-# **the node is reached by port, not address** — its address is public here and changed once when
-# #271 resized it, so `ipBlock: 0.0.0.0/0` bounded by port names no host and survives a rebuild.
+# `app.kubernetes.io/name: openobserve-collector`, so the discriminator is
+# `app.kubernetes.io/instance`, `<namespace>.<collector>` — it embeds the Helm release name (`o2c`),
+# so renaming the release leaves a `podSelector` matching nothing and a collector under the deny-all,
+# queueing and dropping, which is what #625 looked like. The agent lives in `observability-agent`
+# (#709), so **the two arrows that cross that boundary are written twice**, an egress in one file and
+# the matching ingress in the other, each naming the other namespace by `kubernetes.io/metadata.name`
+# — a `podSelector` alone never matches across namespaces. Verify with `kubectl -n observability get
+# pods --show-labels`. Second: **the node is reached by port, not address** — its address is public
+# and has changed once — so `ipBlock: 0.0.0.0/0` bounded by port survives a rebuild.
 #
-# **The API server is reached on the NODE's address and port 6443, never on `10.43.0.1:443`.**
-# `kubernetes.default` is a ClusterIP with no pods behind it, kube-proxy DNATs it to the API server's
-# real endpoint, and a policy is evaluated after that translation. The service-address form matches
-# nothing, and the pod that tries it reports `connection refused` — which reads like a dead API
-# server rather than a blocked one. It cost the whole observability rollout on production, because
-# **every pod in this namespace on staging predates these policies** and keeps its API connection
-# through conntrack, so the set had never once been exercised from a cold start.
+# **The API server is reached on the NODE's address and port 6443, never `10.43.0.1:443`.**
+# `kubernetes.default` is a ClusterIP with no pods behind it; kube-proxy DNATs it and a policy is
+# evaluated after that translation, so the service-address form matches nothing and the pod reports
+# `connection refused`, which reads like a dead API server. It cost the whole rollout on production:
+# every pod on staging predated these policies and kept its connection through conntrack, so
+# **a policy never exercised from a cold start has not been tested**. The same trap found the Traefik
+# and `flux-system` scrape rules below: staging read `up=1` on connections conntrack had already
+# established, production read `up=0`, and production was the one telling the truth.
 #
-# **Deliberately absent.** No ingress for the API server reaching the otel-operator webhook on 9443,
-# nor for kubelet probes: both originate on the node, and node-to-pod traffic is not subject to
-# NetworkPolicy in k3s — the chart records the same, and `kubectl port-forward` arrives that way,
-# which is how anyone reaches the OpenObserve UI. Were that wrong, probes would fail and pods never
-# go Ready, which is loud. No ingress for the gateway's `otlp` receiver on 4317/4318, because nothing
-# sends to it today. And `prometheus-autodiscovery` is bounded to the namespaces named below rather
-# than to the cluster: something annotated anywhere else will go red, and widening is a deliberate
-# decision naming the namespace, like every arrow above.
+# **Deliberately absent**: ingress for the API server reaching the operator webhook on 9443 and for
+# kubelet probes (node-originated traffic is not subject to NetworkPolicy in k3s — `kubectl
+# port-forward` arrives that way too); ingress for the gateway's `otlp` receiver on 4317/4318, since
+# nothing sends to it. `prometheus-autodiscovery` is bounded to the namespaces named below; something
+# annotated elsewhere goes red, and widening is a decision naming the namespace.
 #
-# **Traefik and the four `flux-system` controllers were red for that reason, and the two rules below
-# are the decision that admits them.** Both were annotated and scraped all along; only the egress
-# half was missing, so every attempt was refused at the network — 300 warnings per thirty minutes in
-# the gateway's log, which was 97% of what that log contained.
-#
-# **What found it was staging reading `up=1` where production read `up=0`, and production being the
-# correct one.** The two policy sets were identical; staging's gateway pod predated them (started
-# 08-23, policies created 08-24) and went on scraping over connections conntrack had already
-# established. So staging was serving `traefik_*` and `controller_runtime_*` that this file did not
-# allow, and would have lost them silently at its next restart. That is the conntrack trap the
-# API-server paragraph above describes, arriving a second time: **a policy never exercised from a
-# cold start has not been tested**, and the environment that looks worse is the one telling the truth.
-#
-# **`kube-state-metrics` was in that list and should not have been** (#926). The claim was that the
-# collector chart references it without installing it, so there was nothing to reach. The chart ships
-# it as a subchart and it runs in `kube-system` on both clusters. The allowance below is therefore a
-# correction rather than a widening: without it every `kube_*` metric is dropped at the network, and
-# `ej-site-down` — the rule #271 asked for first — cannot even be created, because OpenObserve
-# refuses an alert naming a stream that has never received a row.
+# **`kube-state-metrics`** (#926): the collector chart ships it as a subchart in `kube-system`, and
+# without the allowance every `kube_*` metric is dropped at the network and `ej-site-down` cannot
+# even be created — OpenObserve refuses an alert naming a stream with no rows.
 ---
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -92,9 +63,8 @@ metadata:
     kubernetes.io/description: >-
       Denies all ingress and egress in this namespace. Every allowance is a separate, named policy — so an arrow that is not written down does not exist.
 spec:
-  # An empty podSelector selects every pod in the namespace, including ones no manifest here
-  # creates. That is intended: a policy covering only the known workloads would leave a debug pod
-  # someone kubectl-runs with unrestricted egress, which is the exact hole this closes.
+  # An empty podSelector selects every pod in the namespace, including a debug pod someone
+  # kubectl-runs; a policy covering only the known workloads would leave that one unrestricted.
   podSelector: {}
   policyTypes:
     - Ingress
@@ -149,8 +119,8 @@ spec:
         - protocol: TCP
           port: 5080
 
-    # The Kubernetes API, for every `k8sobjects/*` receiver. A /32 on the service address rather
-    # than a port-bounded internet rule: this one has a stable address and naming it is stricter.
+    # The Kubernetes API, for every `k8sobjects/*` receiver. A /32 on the service address: this one has a
+    # stable address and naming it is stricter.
     - to:
         - ipBlock:
             cidr: 10.43.0.1/32
@@ -159,9 +129,8 @@ spec:
           port: 443
 
     # The scrape jobs that target the node: `cadvisor` through the kubelet, and k3s's in-process
-    # apiserver, scheduler and controller-manager on their metrics ports. 9100 is node_exporter
-    # (#419), bound to each node's private address — the same unbounded-address, bounded-port rule
-    # reaches the database node on production, which has no other way to be scraped.
+    # apiserver, scheduler and controller-manager. 9100 is node_exporter (#419), and the same
+    # unbounded-address, bounded-port rule reaches the database node.
     - to:
         - ipBlock:
             cidr: 0.0.0.0/0
@@ -177,7 +146,7 @@ spec:
         - protocol: TCP
           port: 9100
 
-    # The `coredns` scrape job — its metrics port, not its DNS port, which the DNS policy covers.
+    # The `coredns` scrape job — its metrics port; the DNS policy covers 53.
     - to:
         - namespaceSelector:
             matchLabels:
@@ -189,11 +158,9 @@ spec:
         - protocol: TCP
           port: 9153
 
-    # `prometheus-autodiscovery` reaching the application's meters. The other half of this arrow is
-    # the chart's own `-allow-metrics-scrape` ingress policy, which #271 added for exactly this and
-    # which is why the scrape works today; without the rule here it would stop working the moment
-    # the deny-all above lands. 9001 is both workloads' management port, and the only port the
-    # chart opens to a collector.
+    # `prometheus-autodiscovery` reaching the application's meters. The other half is the chart's own
+    # `-allow-metrics-scrape` ingress policy (#271); without this rule the scrape stops the moment the
+    # deny-all lands. 9001 is both workloads' management port.
     - to:
         - namespaceSelector:
             matchLabels:
@@ -202,11 +169,9 @@ spec:
         - protocol: TCP
           port: 9001
 
-    # cert-manager's meters, on the annotated port its three upstream pods expose. **This is what
-    # feeds `ej-certificate-expiry`** — the rule reads
-    # `certmanager_certificate_expiration_timestamp_seconds`, which arrives only through this
-    # scrape. Its matching half is `cert-manager-allow-metrics-scrape`; the two are required
-    # together, and removing either disables an alert rather than a panel.
+    # cert-manager's meters. **This feeds `ej-certificate-expiry`**
+    # (`certmanager_certificate_expiration_timestamp_seconds`); its matching half is
+    # `cert-manager-allow-metrics-scrape`, and removing either disables an alert.
     - to:
         - namespaceSelector:
             matchLabels:
@@ -215,9 +180,9 @@ spec:
         - protocol: TCP
           port: 9402
 
-    # The database's meters, and the collectors' own — this pod's, and the agent's one namespace
-    # over. The agent peer needs both selectors: without the `namespaceSelector` it is a rule about
-    # this namespace, matches nothing, and the agent's target reads `up=0` with no error anywhere.
+    # The database's meters, and the collectors' own — this pod's, and the agent's one namespace over.
+    # The agent peer needs both selectors: without the `namespaceSelector` the rule matches nothing and
+    # the target reads `up=0` with no error anywhere.
     - to:
         - podSelector:
             matchLabels:
@@ -239,11 +204,9 @@ spec:
         - protocol: TCP
           port: 8888
 
-    # `kube-state-metrics`, the collector chart's own subchart, in `kube-system` rather than here.
-    # **This is what `ej-site-down` runs on**: `kube_deployment_status_replicas_available` arrives
-    # through this scrape and nowhere else, so the rule is not merely blind without it — it cannot be
-    # created at all. Selected by name rather than by the `o2c` release instance, so renaming the
-    # release does not silently take the alert with it.
+    # `kube-state-metrics`, the collector chart's subchart in `kube-system`. **`ej-site-down` runs on
+    # this**: `kube_deployment_status_replicas_available` arrives through this scrape and nowhere else.
+    # Selected by name, so renaming the release does not silently take the alert with it.
     - to:
         - namespaceSelector:
             matchLabels:
@@ -255,16 +218,10 @@ spec:
         - protocol: TCP
           port: 8080
 
-    # The four `flux-system` controllers. `gotk_*` and `controller_runtime_*` — how far behind
-    # a reconcile is, and whether a source has stopped fetching — which is the one part of the
-    # delivery path nothing else here measures. Selected by `part-of: flux` rather than by the four
-    # controller names, so a controller a later Flux version adds arrives already allowed.
-    #
-    # **Only this half was missing.** `flux-system` ships `allow-scraping`, which already admits any
-    # namespace on 8080, so the refusals were all outbound. The collector's own
-    # `filter/drop_infrastructure_noise` still drops `controller_runtime_reconcile_time_seconds` and
-    # `gotk_reconcile_duration_seconds` (#615) — so this widens the network without giving the
-    # memtable back the two histograms that put those rules there.
+    # The four `flux-system` controllers: `gotk_*` and `controller_runtime_*`, the one part of the
+    # delivery path nothing else measures. Selected by `part-of: flux`, so a controller a later Flux adds
+    # arrives allowed. `flux-system` ships `allow-scraping`, so only this egress half was missing. The
+    # collector still drops the two reconcile histograms (#615).
     - to:
         - namespaceSelector:
             matchLabels:
@@ -276,15 +233,10 @@ spec:
         - protocol: TCP
           port: 8080
 
-    # Traefik's meters, on 9100 — the `metrics` container port. **Not 8080**, which on this
-    # pod is the dashboard and API and is a different conversation entirely: the annotation says 9100
-    # and this rule has to agree with it, or the scrape stays red while the policy reads correct.
-    # `traefik_entrypoint_*` and `traefik_service_*` are the request counts and latencies as the edge
-    # sees them — before routing, so they count what the application never receives, which is exactly
-    # what the application's own meters on 9001 cannot tell you.
-    #
-    # `kube-system` runs no NetworkPolicy of its own, so as with `kube-state-metrics` above this rule
-    # is the whole of the arrow rather than half of it.
+    # Traefik's meters on 9100, the `metrics` container port — **not 8080**, the dashboard and API; the
+    # annotation says 9100 and this rule has to agree, or the scrape stays red while the policy reads
+    # correct. `traefik_entrypoint_*` counts what the application never receives. `kube-system` runs no
+    # NetworkPolicy of its own, so this rule is the whole arrow.
     - to:
         - namespaceSelector:
             matchLabels:
@@ -310,16 +262,11 @@ spec:
   policyTypes:
     - Egress
   egress:
-    # **The service address is not what a policy sees, and this rule alone is why the operator could
-    # not start on production.** `kubernetes.default` is a ClusterIP with no pods behind it: kube-proxy
-    # DNATs it to the API server's real endpoint, which here is the node's own public address on
-    # **6443**, and NetworkPolicy is evaluated after that translation. So an allowance naming
-    # `10.43.0.1:443` matches nothing the kernel ever sees. The pod fails with `dial tcp 10.43.0.1:443:
-    # connect: connection refused` — a rejection, not a timeout, which reads like a dead API server
-    # rather than a policy.
-    #
-    # **Both forms are kept.** The rule below is what carries the traffic; this one costs nothing and
-    # stays correct on a cluster whose API server has an in-cluster endpoint.
+    # **The service address is not what a policy sees, and this rule alone is why the operator could not
+    # start on production.** `kubernetes.default` is DNATed to the node's public address on **6443**
+    # before the policy is evaluated, so `10.43.0.1:443` matches nothing and the pod fails with
+    # `dial tcp 10.43.0.1:443: connect: connection refused`. Both forms are kept: the rule below carries
+    # the traffic, this one stays correct on a cluster with an in-cluster API endpoint.
     - to:
         - ipBlock:
             cidr: 10.43.0.1/32
@@ -327,8 +274,8 @@ spec:
         - protocol: TCP
           port: 443
 
-    # By port rather than by address, exactly as the agent reaches the kubelet and the gateway reaches
-    # the control plane: the node's address is public here and has already changed once.
+    # By port rather than address, as the agent reaches the kubelet: the node's address is public and has
+    # already changed once.
     - to:
         - ipBlock:
             cidr: 0.0.0.0/0
@@ -351,8 +298,7 @@ spec:
   policyTypes:
     - Egress
   egress:
-    # The same address the application's own policy uses, and the same duplication: NetworkPolicy
-    # speaks CIDRs and cannot resolve a name (#416). Kept in step with `database.host` by hand here,
+    # The same address the application's own policy uses, kept in step with `database.host` by hand here,
     # because this namespace is not templated by the chart that asserts the pairing.
     - to:
         - ipBlock:
@@ -377,20 +323,14 @@ spec:
   policyTypes:
     - Egress
   egress:
-    # **What this replaces, kept from #661 because the reasoning still holds.** OpenObserve refuses alert destinations that resolve inside the cluster, which is a sensible
-    # default and also blocks #271 item 4's architecture — a webhook into `signal-cli-rest-api`. The
-    # only switch that unblocks it, `ZO_SKIP_SSRF_CHECKS`, removes the check for **every**
-    # destination. That guard exists because an authenticated user can point a "destination" at an
-    # arbitrary URL and make the server fetch it. Removing it moves the control from the application
-    # to the network, which is where it belongs: **a URL allowlist inside a process is advisory, an
-    # egress policy is not.**
+    # **What this replaces** (#661): OpenObserve refuses alert destinations that resolve inside the
+    # cluster, and the only switch that unblocks it, `ZO_SKIP_SSRF_CHECKS`, removes the check for every
+    # destination — so the control moved from the application to the network. **A URL allowlist inside a
+    # process is advisory, an egress policy is not.**
     #
-    # Hetzner Object Storage — `fsn1.your-objectstorage.com`, the store this deployment is backed by
-    # (ADR-015). **By exclusion rather than by address**, because the endpoint is a CDN name whose
-    # addresses change and a policy pinned to today's IP would fail silently on the day they do.
-    # What is excluded is every RFC1918 range — the pod CIDR, the service CIDR and the private
-    # network carrying PostgreSQL, in one rule — plus link-local, which is where cloud metadata
-    # services live and therefore the first thing an SSRF attempt reaches for.
+    # Hetzner Object Storage, `fsn1.your-objectstorage.com` (ADR-015). **By exclusion rather than by
+    # address**: the endpoint is a CDN name whose addresses change. Excluded is every RFC1918 range and
+    # link-local, where cloud metadata services live.
     - to:
         - ipBlock:
             cidr: 0.0.0.0/0
@@ -403,8 +343,8 @@ spec:
         - protocol: TCP
           port: 443
 
-    # The alert route, and the only in-cluster destination this pod may reach. Dormant until the
-    # bridge has a number (#271 item 4).
+    # The alert route, and the only in-cluster destination this pod may reach. Dormant until the bridge
+    # has a number (#271 item 4).
     - to:
         - podSelector:
             matchLabels:
@@ -454,9 +394,9 @@ spec:
   policyTypes:
     - Ingress
   ingress:
-    # The gateway here, and the agent from `observability-agent` (#709). The second peer is the
-    # ingress half of `observability-agent-allow-agent-egress`; drop it and every log line in the
-    # cluster queues in the agent until it is dropped, which is what #625 looked like.
+    # The gateway here, and the agent from `observability-agent` (#709) — the ingress half of
+    # `observability-agent-allow-agent-egress`; drop it and every log line queues in the agent until
+    # dropped, which is what #625 looked like.
     - from:
         - podSelector:
             matchLabels:
