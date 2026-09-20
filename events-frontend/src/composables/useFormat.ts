@@ -21,10 +21,8 @@ type EventTimes = {
 }
 
 /**
- * Locale-aware wrappers around the pure helpers in `lib/format.ts`.
- *
- * The helpers stay pure and take the locale as an argument so they remain unit-testable without an
- * app; this composable is the thin layer that supplies it from the active i18n instance.
+ * Locale-aware wrappers around the pure helpers in `lib/format.ts`, which take the locale as an
+ * argument so the unit tests need no app.
  */
 export function useFormat() {
   const { locale, t, te } = useI18n()
@@ -32,8 +30,7 @@ export function useFormat() {
 
   /**
    * The end, in the words that fit how far away it is (ADR-029): `06:00` for the next morning,
-   * `Mon 10:00` when it is further, and `23:30` on the same day. Null when the venue stated none.
-   * Never derived: a guessed end beside a `~` start would be a second kind of guess on one line.
+   * `Mon 10:00` further out, `23:30` on the same day. Null when the venue stated none; never derived.
    */
   const endLabel = (event: EventTimes): { text: string; farAway: boolean } | null => {
     if (!event.endTime || !event.endDate || !event.eventDate) return null
@@ -47,10 +44,8 @@ export function useFormat() {
 
   return {
     /**
-     * `formatDate` bound to the active locale — "Fri, 12 Jun 2026" / "Fr., 12. Juni 2026".
-     *
-     * Maps the UI locale to a formatting tag first: bare `en` means US conventions to `Intl`, and
-     * would render the month first (see {@link INTL_LOCALES}).
+     * `formatDate` bound to the active locale, mapped to a formatting tag first: bare `en` means US
+     * conventions to `Intl` ({@link INTL_LOCALES}).
      */
     formatDate: (isoDate?: string | null) =>
       formatDate(isoDate, isLocale(locale.value) ? INTL_LOCALES[locale.value] : 'en-GB'),
@@ -63,14 +58,11 @@ export function useFormat() {
       formatShortDate(isoDate, isLocale(locale.value) ? INTL_LOCALES[locale.value] : 'en-GB'),
 
     /**
-     * The time a card, row or detail header shows: the start when the venue published one, else
-     * the doors labelled as doors, else the BFF's guess marked as one (`~23:00`), else a note that
-     * no time was announced (#1383, #1384).
-     *
-     * Doors is labelled because it is a different fact — `19:00` beside a 21:00 concert reads as
-     * our mistake. The guess is marked because the list sorts by it and a reader should see the
-     * same number, but never take it for the venue's word; `eventTimeHint` says so in words. The
-     * note is the last resort, for a BFF that does not send the guess yet.
+     * The time a card, row or detail header shows: the start when the venue published one, else the
+     * doors labelled as doors, else the BFF's guess marked as one (`~23:00`), else a note that no
+     * time was announced (#1383, #1384). Doors is labelled because `19:00` beside a 21:00 concert
+     * reads as our mistake; the guess is marked because the list sorts by it, and `eventTimeHint`
+     * says so in words.
      */
     formatEventTime: (event: EventTimes) => {
       const end = endLabel(event)
@@ -89,9 +81,8 @@ export function useFormat() {
     },
 
     /**
-     * The date line: one day, or `Fri, 12 Jun 2026 – Mon, 15 Jun 2026` for a run the venue gave an
-     * end date but no end time (an exhibition on for weeks). A span with a time keeps one date here
-     * and says the rest in `formatEventTime`.
+     * The date line: one day, or `Fri, 12 Jun 2026 – Mon, 15 Jun 2026` for a run with an end date
+     * and no end time. A span with a time keeps one date here and says the rest in `formatEventTime`.
      */
     formatEventDates: (event: EventTimes) => {
       const start = formatDate(event.eventDate, intlLocale())
@@ -107,13 +98,9 @@ export function useFormat() {
         : null,
 
     /**
-     * The display label for an event type.
-     *
-     * Looks the enum value up in the `eventType.*` catalogue, and falls back to sentence-casing
-     * the constant when the BFF sends a value the frontend has not been taught yet. That fallback
-     * matters: `EventType` lives in `events-core` and can gain a value in a backend release that
-     * ships before the frontend does — "Silent disco" reads acceptably in the meantime, whereas
-     * `SILENT_DISCO` or an empty label does not.
+     * The display label for an event type, from the `eventType.*` catalogue, sentence-casing the
+     * constant when the BFF sends a value the frontend has not been taught: `EventType` lives in
+     * `events-core` and can gain a value in a backend release that ships first.
      */
     formatEventType: (eventType?: string | null) => {
       if (!eventType) return ''
@@ -122,11 +109,9 @@ export function useFormat() {
     },
 
     /**
-     * The one word for a status that changes whether the reader goes, and `''` for `SCHEDULED`,
-     * which is every other event and says nothing. A relocated event that knows where it went says
-     * so ("Moved to Hole44") — that is the fact a ticket holder needs. Same guard as
-     * `formatEventType`: `EventStatus` lives in `events-core`, and a value the catalogue lacks reads
-     * as its sentence-cased constant.
+     * The one word for a status that changes whether the reader goes, `''` for `SCHEDULED`. A
+     * relocated event that knows where it went says so ("Moved to Hole44"). Same fallback as
+     * `formatEventType`.
      */
     formatEventStatus: (status?: string | null, relocatedTo?: string | null) => {
       if (!status || status === 'SCHEDULED') return ''

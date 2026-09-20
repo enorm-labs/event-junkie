@@ -3,25 +3,21 @@ import { type MaybeRefOrGetter, ref, toValue, watchEffect } from 'vue'
 import { HOME_TITLE, type PageMeta } from '@/lib/pageMeta'
 
 /**
- * Writes the current page's title, description and image into the document head.
- *
- * *What* the tags say is decided by `lib/pageMeta.ts`; this only puts them in the DOM. The split
- * is deliberate — the planned meta injector (ADR-014 §Decision 3) needs the former and has no use
- * for the latter, and keeping the composition free of Vue and the DOM is what lets it be shared.
+ * Writes the current page's title, description and image into the document head. What the tags
+ * say is `lib/pageMeta.ts`, free of Vue and the DOM so the meta injector (ADR-014 §Decision 3)
+ * shares it.
  */
 
 /**
- * The full document title for the current view. Single source of truth shared by the browser tab,
- * the Open Graph tags, and the screen-reader route announcer (see App.vue).
+ * The full document title, shared by the browser tab, the Open Graph tags and the route
+ * announcer (App.vue).
  */
 export const pageTitle = ref(HOME_TITLE)
 
 /**
- * The site-level values `index.html` ships with, captured once before anything overwrites them.
- *
- * Without this, a page with no description of its own would keep the *previous* page's — so
- * opening an event and then the imprint would describe the imprint as a club night. Restoring a
- * remembered default is the only way a per-page tag can be un-set again.
+ * The site-level values `index.html` ships with, captured before anything overwrites them:
+ * restoring a remembered default is the only way a per-page tag can be un-set, or the imprint
+ * would keep describing itself as the club night before it.
  */
 const SITE_DEFAULTS = new Map<string, string>()
 
@@ -41,10 +37,9 @@ function rememberDefault(selector: string): string {
   const existing = SITE_DEFAULTS.get(selector)
   if (existing !== undefined) return existing
 
-  // On a detail page the served HTML already carries that page's values — the meta injector wrote
-  // them (ADR-014 §Decision 3) and left the shipped value in `data-site-default`. Reading `content`
-  // there would remember an event's description as the site's, and a later page with none of its
-  // own would restore the wrong one.
+  // On a detail page the served HTML already carries that page's values, written by the meta
+  // injector, which left the shipped value in `data-site-default`. Reading `content` would remember
+  // an event's description as the site's.
   const element = document.head.querySelector<HTMLMetaElement>(selector)
   const content = element?.dataset.siteDefault ?? element?.content ?? ''
   SITE_DEFAULTS.set(selector, content)
@@ -60,11 +55,8 @@ function setMeta(selector: string, content: string | undefined): void {
 }
 
 /**
- * Applies a page's meta, replacing whatever the previous page left behind.
- *
- * Every tag is written on every call — including back to its default — because the failure mode
- * of a partial update is a page describing itself as the last one you visited, which is worse
- * than a page with no description at all.
+ * Applies a page's meta. Every tag is written on every call, including back to its default,
+ * because a partial update leaves a page describing the last one you visited.
  */
 export function applyPageMeta(meta: PageMeta): void {
   pageTitle.value = meta.title
@@ -72,9 +64,8 @@ export function applyPageMeta(meta: PageMeta): void {
   for (const selector of TITLE_SELECTORS) setMeta(selector, meta.title)
   for (const selector of DESCRIPTION_SELECTORS) setMeta(selector, meta.description)
 
-  // Images are created and removed rather than reset: `index.html` carries no site-level image,
-  // so there is no default to fall back to, and leaving an event poster on the imprint would be
-  // an outright wrong preview rather than a vague one.
+  // Images are created and removed rather than reset: `index.html` carries no site-level image, and
+  // an event poster left on the imprint is an outright wrong preview.
   for (const [attribute, name] of IMAGE_TAGS) {
     const selector = `meta[${attribute}="${name}"]`
     const existing = document.head.querySelector<HTMLMetaElement>(selector)
@@ -95,10 +86,8 @@ export function applyPageMeta(meta: PageMeta): void {
 }
 
 /**
- * Keeps the head in sync with a reactive per-view meta.
- *
- * Pass a getter: detail views mount before their entity arrives, so the meta is a placeholder
- * first and the real thing once the fetch resolves.
+ * Keeps the head in sync with a reactive per-view meta. A getter, because detail views mount
+ * before their entity arrives.
  */
 export function usePageMeta(meta: MaybeRefOrGetter<PageMeta>): void {
   watchEffect(() => applyPageMeta(toValue(meta)))

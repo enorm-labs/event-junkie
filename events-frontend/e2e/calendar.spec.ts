@@ -1,19 +1,15 @@
 import { expect, type Page, type Route, test } from '@playwright/test'
 
 /**
- * Calendar view e2e tests with a mocked BFF.
+ * Calendar view e2e tests with a mocked BFF. The calendar refetches
+ * `GET /api/events/calendar?from=&to=` whenever the visible range changes, so the mock keys its
+ * response off the requested `from`, and a deterministic event lands in the window whatever the
+ * clock says. The feed matcher and the detail matcher (`/events/calendar-gig`) cannot collide.
  *
- * The calendar refetches `GET /api/events/calendar?from=&to=` whenever FullCalendar's visible range
- * changes, so the mock keys its response off the requested `from` — a deterministic event then
- * lands in the visible window whatever the machine's clock says. The feed matcher
- * (`/events/calendar?…`) and the detail matcher (`/events/calendar-gig`) cannot collide.
- *
- * What the assertions lean on: FullCalendar renders events carrying a URL as `<a>` links and the
- * view intercepts the click to navigate through vue-router, `eventDidMount` puts the full
- * "<title> @ <venue>" label on the link's native `title` (the cell clips the visible text), and the
- * toolbar controls are plain buttons — prev/next/today by aria-label, month/week/list by text. The
- * filter bar is covered on the list page (events-filters.spec.ts); here it is only asserted to
- * reach the feed and survive range navigation, since the calendar refetches on two triggers.
+ * FullCalendar renders events carrying a URL as `<a>` links, `eventDidMount` puts the full
+ * "<title> @ <venue>" label on the link's native `title`, and the toolbar controls are plain
+ * buttons. The filter bar is covered in events-filters.spec.ts; here it is only asserted to reach
+ * the feed and survive range navigation.
  */
 
 function collectPageErrors(page: Page): string[] {
@@ -64,9 +60,8 @@ test.beforeEach(async ({ page }) => {
     json(route, [{ slug: 'techno', name: 'Techno', family: 'electronic' }]),
   )
 
-  // Place a single event on the first visible day of whatever range is requested, so it
-  // renders in every view (month/week/list) without depending on the current date. The
-  // title is keyed off the venue filter, so a rendered event proves which query was sent.
+  // One event on the first visible day of whatever range is requested, so it renders in every view;
+  // the title is keyed off the venue filter, so a rendered event proves which query was sent.
   await page.route(calendarFeed, (route) => {
     const query = new URL(route.request().url()).searchParams
     const from = query.get('from') ?? '2026-07-01'
@@ -83,8 +78,8 @@ const todayInBerlin = () =>
   new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Berlin' }).format(new Date())
 
 test("marks today's events as live and last month's as past", async ({ page }) => {
-  // One event on today, one on the first visible day; the two are the same shape otherwise, so
-  // the class and the label are proven to come from the date alone.
+  // One event on today, one on the first visible day, otherwise the same shape, so the class and
+  // the label are proven to come from the date alone.
   await page.route(calendarFeed, (route) => {
     const from = new URL(route.request().url()).searchParams.get('from') ?? '2026-07-01'
     return json(route, [
@@ -95,8 +90,8 @@ test("marks today's events as live and last month's as past", async ({ page }) =
 
   await page.goto('/calendar')
 
-  // The pulse is CSS on a FullCalendar-internal dot; what the DOM has to offer is the class the
-  // view sets and the screen-reader text `eventDidMount` appends, which is the same as EventCard's.
+  // The pulse is CSS on a FullCalendar-internal dot; the DOM offers the class the view sets and the
+  // screen-reader text `eventDidMount` appends, the same as EventCard's.
   const live = page.getByRole('link', { name: /Tonight Gig/ })
   await expect(live).toHaveClass(/\bfc-event-live\b/)
   await expect(live).toHaveAccessibleName(/Live tonight/)
@@ -149,8 +144,7 @@ test('refetches when switching the calendar view', async ({ page }) => {
 
   const initialCount = froms.length
 
-  // FullCalendar 7 renders the view switcher as a tablist, not a button group, so these are
-  // role="tab" with an accessible name of "<View> view" — not role="button" named "list".
+  // FullCalendar 7 renders the view switcher as a tablist: role="tab" named "<View> view".
   await page.getByRole('tab', { name: 'List view' }).click()
 
   await expect.poll(() => froms.length).toBeGreaterThan(initialCount)
@@ -233,8 +227,8 @@ test('shows an error state when the calendar feed fails', async ({ page }) => {
 test("marks today's day number in the month grid and the week header", async ({ page }) => {
   await page.goto('/calendar')
 
-  // The class is set from FullCalendar's own `isToday` (EventCalendar.vue), so the number that
-  // carries it is Berlin's day, whatever the runner's clock says.
+  // The class comes from FullCalendar's own `isToday` (EventCalendar.vue), so the number carrying it
+  // is Berlin's day.
   const todayNumber = String(Number(todayInBerlin().slice(8)))
   await expect(page.locator('.fc-today-number', { hasText: todayNumber })).toBeVisible()
 
@@ -260,8 +254,7 @@ test('folds a crowded day into a "+N more" popover instead of a timetable', asyn
   await page.goto('/calendar')
   await page.getByRole('tab', { name: 'Week view' }).click()
 
-  // Not every gig fits the cell; the rest sit behind the link, and the popover shows them all.
-  // Sorted by title, "Gig 9" is the last of the twelve and never fits the cell.
+  // The rest sit behind the link; sorted by title, "Gig 9" is the last of the twelve and never fits.
   const last = page.getByRole('link', { name: /Gig 9/ })
   // A narrow cell (the mobile projects) shortens the link to the bare `+N`.
   const more = page.getByRole('button', { name: /^\+\d+( more)?$/ })

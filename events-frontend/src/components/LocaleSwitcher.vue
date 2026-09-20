@@ -1,14 +1,8 @@
 <script lang="ts" setup>
 /**
- * Switches between the published locales.
- *
- * Renders links rather than a `<select>` or a button: the locale lives in the URL (ADR-013
- * §Decision 2), so each option genuinely *is* a different address. That means middle-click and
- * "copy link" work, and a crawler can follow them — a JavaScript-only switcher would be invisible
- * to both.
- *
- * The current page is preserved across the switch, so changing language on the venues list keeps
- * you on the venues list rather than dumping you on the home page.
+ * Switches between the published locales. Links rather than a `<select>`: the locale lives in the
+ * URL (ADR-013 §Decision 2), so each option is a different address that middle-click, "copy link"
+ * and a crawler can follow. The current page is preserved across the switch.
  */
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
@@ -18,23 +12,18 @@ import { DEFAULT_LOCALE, isLocale, type Locale, LOCALES, stripLocale } from '@/i
 const props = withDefaults(
   defineProps<{
     /**
-     * Renders `EN · DE` instead of `English · Deutsch`, and **without a `nav` landmark**.
-     *
-     * Both matter for the header. The full names do not fit a ~390px viewport, which the header
-     * has already been reworked for once (see the overflow guard in e2e/smoke.spec.ts). And a
-     * second landmark named "Language" would collide with the footer's — identically-named
-     * landmarks are indistinguishable in a screen reader's landmark list, and ambiguous to any
-     * selector addressing them by name. The compact form lives *inside* the header's existing
-     * "Main" navigation instead, where it needs no landmark of its own.
+     * Renders `EN · DE` instead of `English · Deutsch`, without a `nav` landmark: the full names do
+     * not fit a ~390px viewport (the overflow guard in e2e/smoke.spec.ts), and a second landmark
+     * named "Language" would collide with the footer's. The compact form lives inside the header's
+     * own navigation.
      */
     compact?: boolean
   }>(),
   { compact: false },
 )
 
-// `useRoute()` yields undefined when no router is installed — component tests mount the footer
-// without one. Degrading to the default locale keeps those tests router-free, the same way
-// `useLocalePath` does; in the app a route is always present.
+// `useRoute()` yields undefined when no router is installed, as in component tests; degrading to
+// the default locale keeps them router-free, as `useLocalePath` does.
 const route = useRoute() as ReturnType<typeof useRoute> | undefined
 
 /** Native language names — a German speaker looks for "Deutsch", not "German". */
@@ -44,9 +33,8 @@ const LOCALE_NAMES: Record<Locale, string> = {
 }
 
 /**
- * The compact label. `EN`/`DE` is the conventional shorthand and stays legible at `text-xs`, but
- * it is a poor *accessible* name on its own — so the link keeps the full native name as its
- * `aria-label` and `title`, the same pattern the header's icon controls use.
+ * `EN`/`DE` stays legible at `text-xs` but is a poor accessible name, so the link keeps the full
+ * native name as `aria-label` and `title`, as the header's icon controls do.
  */
 const shortName = (locale: Locale) => locale.toUpperCase()
 
@@ -56,11 +44,8 @@ const current = computed<Locale>(() => {
 })
 
 /**
- * The current path with its locale segment swapped, so the switch stays on this page.
- *
- * The query goes with it. Without it, switching language on a filtered list dropped every filter
- * and returned an unfiltered page (#1249) — the visitor had asked a question in one language and
- * got the whole catalogue back in the other.
+ * The current path with its locale segment swapped, query included: without it a filtered list
+ * came back unfiltered in the other language (#1249).
  */
 function pathIn(locale: Locale): string {
   const rest = stripLocale(route?.path ?? '/')

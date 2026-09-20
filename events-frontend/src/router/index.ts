@@ -22,16 +22,15 @@ import HomeView from '../views/HomeView.vue'
 
 declare module 'vue-router' {
   interface RouteMeta {
-    // Per-view page title and description, as message keys. Detail views set both from loaded
-    // data instead (see usePageMeta), so theirs are intentionally unset.
+    // Per-view title and description as message keys; detail views set both from loaded data
+    // (usePageMeta).
     titleKey?: string
     descriptionKey?: string
   }
 }
 
 /**
- * Pass-through parent for the `/:locale` segment. It renders only its child, so the locale lives
- * in the URL without adding a layout level — the app shell is still App.vue.
+ * Pass-through parent for the `/:locale` segment; the app shell is still App.vue.
  */
 const LocaleShell = { render: () => h(RouterView) }
 
@@ -45,11 +44,9 @@ const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
-      // Path-prefixed locales rather than a stored preference: a locale kept only in storage makes
-      // every shared link a coin flip for whoever receives it, and is invisible to crawlers.
-      // See docs/adr/ADR-013_LOCALISATION.md §Decision 2.
-      // The matcher is built from LOCALES so a locale can never be routable without being
-      // published — a `/de` route that renders English would be worse than no `/de` at all.
+      // Path-prefixed locales rather than a stored preference (ADR-013 §Decision 2): a locale only in
+      // storage makes every shared link a coin flip and is invisible to crawlers. Built from LOCALES so
+      // a locale can never be routable without being published.
       path: `/:locale(${LOCALES.join('|')})`,
       component: LocaleShell,
       children: [
@@ -63,7 +60,7 @@ const router = createRouter({
           path: 'calendar',
           name: 'calendar',
           meta: { titleKey: 'pageTitle.calendar', descriptionKey: 'pageDescription.calendar' },
-          // Lazy-loaded so FullCalendar's weight does not affect first paint elsewhere (see ADR-011).
+          // Lazy-loaded so FullCalendar's weight does not affect first paint elsewhere (ADR-011).
           component: () => import('../views/CalendarView.vue'),
         },
         {
@@ -104,24 +101,18 @@ const router = createRouter({
           name: 'promoter',
           component: () => import('../views/PromoterDetailView.vue'),
         },
-        // The five long-form pages have one component per language rather than one component
-        // reading translated prose — see views/localisedView.ts for why, and note that this is the
-        // exception to the rule that user-facing text lives in the message catalogue.
+        // The five long-form pages have one component per language (views/localisedView.ts), the
+        // exception to user-facing text living in the message catalogue.
         {
           path: 'about',
           name: 'about',
           meta: { titleKey: 'pageTitle.about', descriptionKey: 'pageDescription.about' },
-          // route level code-splitting
-          // this generates a separate chunk (About.[hash].js) for this route
-          // which is lazy-loaded when the route is visited.
           component: localisedView({
             en: () => import('../views/AboutView.en.vue'),
             de: () => import('../views/AboutView.de.vue'),
           }),
         },
-        // Legal pages, nested under /legal/* so later additions (accessibility statement, data
-        // sources) have an obvious home. Lazy-loaded like every other non-home route: they are read
-        // rarely and should not weigh on first paint.
+        // Legal pages under /legal/*, so later additions have a home. Lazy-loaded: read rarely.
         {
           path: 'legal/imprint',
           name: 'imprint',
@@ -149,9 +140,8 @@ const router = createRouter({
             de: () => import('../views/legal/NoticesView.de.vue'),
           }),
         },
-        // Venue-facing rather than visitor-facing: it publishes the opt-out route that
-        // docs/SCRAPING_POSITION.md §5 defines, and a commitment an operator cannot find is not
-        // one. Under /legal/* because that is where the site's promises live, not in Project.
+        // Venue-facing: publishes the opt-out route docs/SCRAPING_POSITION.md §5 defines. Under /legal/*
+        // because that is where the site's promises live.
         {
           path: 'legal/for-venues',
           name: 'forVenues',
@@ -164,19 +154,15 @@ const router = createRouter({
       ],
     },
     {
-      // Anything without a locale prefix — including `/` — gets one and is redirected.
-      //
-      // The guard against `already` matters: without it, a path that is prefixed but matches no
-      // route (`/en/nonsense`) would fall through to here and be prefixed again, producing
-      // `/en/en/nonsense` and then looping. Sending it to that locale's home is a deliberate
-      // choice for now; a real 404 view is tracked separately.
+      // Anything without a locale prefix, `/` included, gets one and is redirected. The `already` guard
+      // matters: without it `/en/nonsense` would become `/en/en/nonsense` and loop. The locale home
+      // stands in for a 404 view for now.
       path: '/:pathMatch(.*)*',
       redirect: (to) => {
         const [first] = to.path.split('/').filter(Boolean)
         const already = isLocale(first)
         const locale = already ? first : resolveLocale()
-        // `to.path` is `/` for the bare root, which would make `/en/` — a second URL for the same
-        // page as `/en`, which is what every in-app link produces. Normalise to the shorter form.
+        // `to.path` is `/` for the bare root, which would make `/en/`, a second URL for `/en`.
         const rest = to.path === '/' ? '' : to.path
         return {
           path: already ? `/${locale}` : `/${locale}${rest}`,
@@ -186,28 +172,25 @@ const router = createRouter({
       },
     },
   ],
-  // Legal pages are linked from the footer, so they are always reached from the bottom of a
-  // scrolled page; without this the browser keeps the old offset and the imprint opens mid-document.
-  // A history traversal (back gesture, back button) instead returns to where the visitor left the
-  // page: defining a scrollBehavior switches the browser's own restoration off, and the views
-  // repaint from useAsync's cache in the same tick, so the document has its height (#1111).
+  // Legal pages are reached from the footer of a scrolled page; without this the imprint opens
+  // mid-document. A history traversal returns to where the visitor left: a scrollBehavior switches
+  // the browser's restoration off, and the views repaint from useAsync's cache in the same tick, so
+  // the document has its height (#1111).
   scrollBehavior(to, _from, savedPosition) {
     if (savedPosition) return savedPosition
     return to.hash ? { el: to.hash, behavior: 'smooth' } : { top: 0 }
   },
 })
 
-// Apply the URL's locale before the view renders, so the first paint is already in the right
-// language rather than flipping after mount.
+// Apply the URL's locale before the view renders, so the first paint is in the right language.
 router.beforeEach((to) => {
   const locale = localeOf(to)
   setI18nLocale(locale)
   rememberLocale(locale)
 })
 
-// Static views get their title and description from route meta. Detail views have neither key and
-// supply their own from the loaded entity (see usePageMeta) — which happens after this, so their
-// component overwrites what is applied here rather than racing it.
+// Static views get their title and description from route meta; detail views supply their own
+// from the loaded entity after this, so they overwrite rather than race.
 router.afterEach((to) => {
   applyPageMeta(
     staticPageMeta(
@@ -215,9 +198,8 @@ router.afterEach((to) => {
       to.meta.descriptionKey ? i18n.global.t(to.meta.descriptionKey) : null,
     ),
   )
-  // Canonical, hreflang and og:locale follow the resolved route rather than the requested one, so
-  // a redirect (`/venues` → `/en/venues`) annotates the destination and never the URL that was
-  // typed. `to.path` excludes the query on purpose — see updateSeoTags.
+  // Canonical, hreflang and og:locale follow the resolved route, so a redirect annotates the
+  // destination. `to.path` excludes the query on purpose (updateSeoTags).
   updateSeoTags(localeOf(to), stripLocale(to.path))
 })
 

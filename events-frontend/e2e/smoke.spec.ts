@@ -1,25 +1,17 @@
 import { expect, type Page, test } from '@playwright/test'
 
 /**
- * Resilient smoke suite.
- *
- * Deliberately shallow: it verifies the app boots, the router mounts each static view, and the
- * shared chrome renders — the cross-cutting breakage unit tests miss (blank screen, broken
- * lazy-loaded chunk, dead route). It asserts nothing about data-driven content, so it survives UI
- * churn while the frontend is still in flux. Detail routes (/events/:slug, /venues/:slug, …) are
- * omitted for the same reason and covered by detail-routes.spec.ts, which mocks the BFF.
- *
- * The BFF is not running during e2e, so `onMounted` API calls fail and log console and network
- * errors by design; the views render their error state. Assertions are therefore on uncaught
- * exceptions (`pageerror`) only — the true "the app broke" signal — rather than console output.
+ * Resilient smoke suite, deliberately shallow: the app boots, the router mounts each static view,
+ * the shared chrome renders. Nothing about data-driven content, so it survives UI churn; detail
+ * routes are covered by detail-routes.spec.ts, which mocks the BFF. The BFF is not running, so
+ * `onMounted` API calls fail by design and the views render their error state; assertions are on
+ * uncaught exceptions (`pageerror`) only, the true "the app broke" signal.
  */
 
 /** Static routes and the stable <h1> each is expected to mount. */
-// `path` is what a visitor types (unprefixed paths redirect); `url` is where they end up, since
-// routes are locale-prefixed (ADR-013 §Decision 2) and home is the locale root itself — `/en`, not
-// `/en/`. This suite is pinned to English deliberately: it tests behaviour, and English is simply
-// the stable handle for it (see AGENTS.md §Testing — locale strategy).
-// Listed in the order the header renders them, so the nav walk below also reads left to right.
+// `path` is what a visitor types, `url` where they end up: routes are locale-prefixed (ADR-013
+// §Decision 2) and home is `/en`, not `/en/`. Pinned to English as the stable handle (AGENTS.md
+// §Testing, locale strategy). Listed in header order, so the nav walk reads left to right.
 const staticRoutes = [
   // `nav` is the accessible name of the nav link — home's is the brand logo, not "Home".
   { path: '/', url: '/en', name: 'home', nav: 'Event Junkie', heading: 'Event Junkie' },
@@ -82,18 +74,16 @@ test('navigates between static routes via the nav bar', async ({ page }) => {
 })
 
 test('header nav lists the sections in the intended order', async ({ page }) => {
-  // The order is a product decision, not an accident: Events and Calendar are two views of the
-  // same event data and belong together, Venues is a different entity, About is meta. Without this
-  // assertion the sequence is invisible to every other test — they all address links by name — so
-  // an edit could reshuffle it silently.
+  // The order is a product decision: Events and Calendar are two views of the same data, Venues a
+  // different entity, About is meta. Every other test addresses links by name, so without this an
+  // edit could reshuffle it silently.
   await page.goto('/about')
 
   const nav = page.getByRole('navigation', { name: 'Main' })
   const labels = await nav.getByRole('link').allInnerTexts()
 
-  // Filtered to the section links rather than compared whole: the header also carries the brand,
-  // the beta badge, the locale links and an icon-only GitHub button, and pinning those here would
-  // make this test fail for reasons that have nothing to do with the section order.
+  // Filtered to the section links: the header also carries the brand, the beta badge, the locale
+  // links and an icon-only GitHub button.
   const sections = ['Events', 'Calendar', 'Venues', 'Promoters', 'About']
   const rendered = labels.map((label) => label.trim()).filter((label) => sections.includes(label))
 
@@ -101,14 +91,10 @@ test('header nav lists the sections in the intended order', async ({ page }) => 
 })
 
 test('header nav fits its viewport without overflowing', async ({ page }) => {
-  // The header packs a brand lockup, a beta badge, four nav links and two icon controls in; on a
-  // ~390px screen one row overflowed and pushed the controls off-screen, so the nav wraps below
-  // `sm`. Runs on every project — the two mobile ones are what this actually guards. The badge is
-  // the most recent addition and the reason this check is not merely historical.
-  //
-  // Scoped to the nav rather than the whole document because this runs without a BFF, so the
-  // data-driven routes render their error state. The document-level check lives in
-  // home-feeds.spec.ts, where the feeds are mocked and real cards exist to overflow.
+  // On a ~390px screen one row overflowed and pushed the controls off-screen, so the nav wraps
+  // below `sm`; the two mobile projects are what this guards. Scoped to the nav because this runs
+  // without a BFF; the document-level check lives in home-feeds.spec.ts, where real cards exist to
+  // overflow.
   await page.goto('/about')
 
   const nav = page.getByRole('navigation', { name: 'Main' })
