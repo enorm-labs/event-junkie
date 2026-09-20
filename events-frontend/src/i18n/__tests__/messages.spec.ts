@@ -6,22 +6,17 @@ import { describe, expect, it } from 'vitest'
 import { DEFAULT_LOCALE, LOCALES } from '@/i18n/locales'
 
 /**
- * Guards the message catalogues against the failures that ship silently.
+ * Guards the message catalogues against the failures that ship silently: a missing key falls
+ * back to the default locale, so a half-translated language looks fine until a German reader
+ * hits an English sentence, and an extra key is dead weight.
  *
- * A missing key falls back to the default locale rather than erroring, so a half-translated
- * language looks fine in review and fine in the browser — until a German reader hits an English
- * sentence. An *extra* key is a translation of something that no longer exists, which is how a
- * catalogue quietly grows dead weight.
- *
- * **Reads the JSON from disk rather than importing it.** `@intlify/unplugin-vue-i18n` precompiles
- * any message containing an interpolation into an AST, and that AST's shape follows the sentence —
- * German word order produces different nodes from English. Importing the catalogues therefore
- * compares build artefacts and reports dozens of phantom differences with names like
- * `errors.connection.body.items.0.value`. Reading the files tests what a translator actually edits.
+ * Reads the JSON from disk rather than importing it: `@intlify/unplugin-vue-i18n` precompiles
+ * any interpolated message into an AST whose shape follows the sentence, so importing compares
+ * build artefacts and reports phantom differences like `errors.connection.body.items.0.value`.
  */
 
-// `process.cwd()` rather than `import.meta.url`: under vitest's jsdom transform `import.meta.url`
-// is an http: URL, not a file: one. Vitest sets `root` to this project, so cwd is stable.
+// `process.cwd()` rather than `import.meta.url`, which is an http: URL under vitest's jsdom
+// transform.
 const MESSAGES_DIR = resolve(process.cwd(), 'src/i18n/messages')
 
 /** The authored catalogue for `locale`, merged from its namespace files. */
@@ -54,8 +49,8 @@ const catalogues = Object.fromEntries(LOCALES.map((locale) => [locale, catalogue
 
 describe('message catalogues', () => {
   it('has a catalogue for every published locale', () => {
-    // The one that actually bites: adding a locale to LOCALES makes its URLs routable
-    // immediately, so a catalogue that does not exist yet renders the fallback under a foreign URL.
+    // The one that bites: adding a locale to LOCALES makes its URLs routable immediately, so a
+    // missing catalogue renders the fallback under a foreign URL.
     for (const locale of LOCALES) {
       expect(Object.keys(catalogues[locale] ?? {}), `no catalogue for "${locale}"`).not.toEqual([])
     }
@@ -103,8 +98,7 @@ describe('message catalogues', () => {
   })
 
   it('keeps named interpolations consistent across locales', () => {
-    // `{subject}` in one language and `{thing}` in another renders the literal placeholder to the
-    // user. Compare the placeholder sets rather than the prose.
+    // `{subject}` in one language and `{thing}` in another renders the literal placeholder.
     const placeholders = (messages: object, path: string) => {
       const value = valueAt(messages, path)
       return typeof value === 'string'
@@ -122,9 +116,8 @@ describe('message catalogues', () => {
   })
 
   it('does not leave a locale untranslated by copying the fallback verbatim', () => {
-    // A catalogue made by copying `en/` and forgetting to translate would pass every check above.
-    // Proper nouns and loanwords legitimately match ("Facebook", "Festival", "beta", "Tickets"),
-    // so this asserts on the proportion rather than on any single string.
+    // A catalogue copied from `en/` and left untranslated would pass every check above. Proper
+    // nouns and loanwords legitimately match, so this asserts on the proportion.
     const reference = catalogues[DEFAULT_LOCALE]!
     const paths = keyPaths(reference)
 

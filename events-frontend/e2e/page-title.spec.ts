@@ -1,16 +1,10 @@
 import { expect, type Route, test } from '@playwright/test'
 
 /**
- * Page-title e2e tests.
- *
- * Every view sets `document.title` as `<page> · Event Junkie`, except the home
- * view, which shows the bare brand name. Static views take their title from the
- * router (route meta + an afterEach guard); detail views override it reactively
- * once their entity loads, falling back to a generic label and a "… not found"
- * title on a 404.
- *
- * Static titles need no backend. Detail titles depend on data, so the BFF is
- * mocked with Playwright request routing — the same approach as detail-routes.spec.ts.
+ * Page titles: every view sets `document.title` as `<page> · Event Junkie`, except home, which
+ * shows the bare brand. Static views take it from route meta; detail views override it once
+ * their entity loads, with a "… not found" title on a 404, so the BFF is mocked as in
+ * detail-routes.spec.ts.
  */
 
 const APP_NAME = 'Event Junkie'
@@ -56,8 +50,8 @@ test('updates the title when navigating between static routes', async ({ page })
 test('announces route changes in an aria-live region for screen readers', async ({ page }) => {
   await page.goto('/')
 
-  // The live region exists but stays silent on the initial load (assistive tech reads the
-  // document itself then). role="status" is an implicit aria-live="polite" region.
+  // The live region stays silent on the initial load; role="status" is an implicit
+  // aria-live="polite" region.
   const announcer = page.getByRole('status')
   await expect(announcer).toHaveText('')
 
@@ -128,8 +122,7 @@ const detailRoutes = [
 
 test.describe('detail page titles', () => {
   test.beforeEach(async ({ page }) => {
-    // Venue/artist/promoter pages also load an upcoming-events feed; stub it empty so the
-    // page settles deterministically. Harmless for the event page, which never hits it.
+    // Venue/artist/promoter pages also load an upcoming-events feed; stub it empty.
     await page.route(eventsFeed, (route) => json(route, emptyEventPage))
   })
 

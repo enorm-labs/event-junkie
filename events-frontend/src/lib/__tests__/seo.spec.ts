@@ -13,10 +13,9 @@ import { DEFAULT_LOCALE, LOCALES } from '@/i18n/locales'
 import router from '@/router'
 
 /**
- * The sitemap is generated at build time, so it cannot go stale against `INDEXABLE_PATHS` — but
- * `INDEXABLE_PATHS` can go stale against the **router**, and nothing about adding a route makes
- * anyone think about the sitemap. That drift is the failure these tests exist for; the rest check
- * the annotations are the shape a crawler will accept.
+ * The sitemap is generated at build time from `INDEXABLE_PATHS`, but `INDEXABLE_PATHS` can go
+ * stale against the router, and nothing about adding a route makes anyone think about the
+ * sitemap. That drift is what these tests exist for.
  */
 
 const XHTML = 'http://www.w3.org/1999/xhtml'
@@ -41,8 +40,8 @@ describe('the indexable path list', () => {
   )
 
   it('accounts for every static route the router publishes', () => {
-    // Adding a page without deciding whether it belongs in the sitemap fails here rather than
-    // leaving it silently unlisted. Deliberate omissions go in NON_INDEXABLE_PATHS.
+    // Adding a page without deciding whether it belongs in the sitemap fails here; deliberate
+    // omissions go in NON_INDEXABLE_PATHS.
     const accounted = new Set<string>([...INDEXABLE_PATHS, ...NON_INDEXABLE_PATHS])
     expect([...routerStaticPaths].filter((path) => !accounted.has(path))).toEqual([])
   })
@@ -80,9 +79,8 @@ describe('the sitemap', () => {
   })
 
   it('gives every entry the full alternate set, including a self-reference', () => {
-    // A one-way hreflang annotation is ignored outright: each language version has to point at
-    // every version *including itself*. This is the single most common way hreflang silently
-    // does nothing.
+    // A one-way hreflang annotation is ignored outright: each version has to point at every version
+    // including itself.
     for (const url of parsedSitemap().getElementsByTagName('url')) {
       const location = url.getElementsByTagName('loc')[0]?.textContent
       const alternates = [...url.getElementsByTagNameNS(XHTML, 'link')].map((link) => ({
@@ -99,8 +97,8 @@ describe('the sitemap', () => {
   })
 
   it('points x-default at the default locale rather than at a redirect', () => {
-    // The unprefixed path negotiates Accept-Language, but it does so in JavaScript — and Google
-    // asks that hreflang name canonical, indexable URLs. See alternatesFor().
+    // The unprefixed path negotiates Accept-Language in JavaScript, and Google asks that hreflang
+    // name indexable URLs (alternatesFor()).
     for (const alternate of alternatesFor('/events')) {
       if (alternate.hreflang !== 'x-default') continue
       expect(alternate.href).toBe(canonicalUrl(DEFAULT_LOCALE, '/events'))
@@ -116,16 +114,16 @@ describe('the sitemap', () => {
   })
 
   it('claims no lastmod, changefreq or priority', () => {
-    // Google ignores the latter two, and a build-stamped lastmod on every page is worse than none:
-    // it is a confident claim that happens to be false.
+    // Google ignores the latter two, and a build-stamped lastmod on every page is a confident claim
+    // that happens to be false.
     expect(sitemapXml()).not.toMatch(/<(lastmod|changefreq|priority)>/)
   })
 })
 
 describe('robots.txt', () => {
   it('announces the sitemap at an absolute URL', () => {
-    // A relative Sitemap: line is invalid — this is the only place the sitemap gets discovered
-    // without someone submitting it by hand.
+    // A relative Sitemap: line is invalid, and this is the only place the sitemap gets discovered
+    // without a hand submission.
     expect(robotsTxt()).toContain(`Sitemap: ${SITE_URL}/sitemap.xml`)
   })
 

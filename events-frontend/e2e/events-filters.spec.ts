@@ -1,18 +1,11 @@
 import { expect, type Page, type Route, test } from '@playwright/test'
 
 /**
- * Events list-page filtering e2e tests with a mocked BFF.
- *
- * The Events view keeps every filter in the URL query and re-fetches
- * `GET /api/events?…` whenever the query changes. We mock that endpoint with a
- * handler that keys its response off the incoming query params: asserting both
- * the rendered result and the resulting URL therefore proves the frontend
- * serialized and sent the right filter, end to end, without a real backend.
- *
- * Results render as an event title per card, so tests assert on those headings; the empty state
- * and pagination controls are asserted by their copy. The level is `h2` here — `EventCard` titles
- * itself `h3` by default, but this page has no section heading between its `h1` and the grid, so
- * it overrides the level to keep the outline from skipping one (see `EventCard`'s `as`).
+ * Events list-page filtering with a mocked BFF. The view keeps every filter in the URL query and
+ * re-fetches `GET /api/events?…` on change; the mock keys its response off the query params, so
+ * asserting the rendered result and the URL proves the frontend sent the right filter. Results
+ * render as an event title per card, `h2` here because this page has no section heading between
+ * its `h1` and the grid (`EventCard`'s `as`).
  */
 
 function collectPageErrors(page: Page): string[] {
@@ -33,10 +26,9 @@ const todayInBerlin = () =>
 
 /** An ISO date offset from today, for ranges that have to stay relative to the clock. */
 function isoDaysFromNow(days: number): string {
-  // Anchored on Berlin's calendar date rather than the runner's, because that is what the app
-  // computes from (`todayIso` in lib/format). The two agree until the runner is on UTC and Berlin
-  // has already turned over — between 22:00 and midnight UTC — and then every assertion built on
-  // this is a day out. The arithmetic runs on a midnight-UTC instant so no DST hour can move it.
+  // Anchored on Berlin's calendar date, which the app computes from (`todayIso` in lib/format):
+  // between 22:00 and midnight UTC the runner's date is a day behind. Midnight-UTC arithmetic so no
+  // DST hour can move it.
   const date = new Date(`${todayInBerlin()}T00:00:00Z`)
   date.setUTCDate(date.getUTCDate() + days)
   return date.toISOString().slice(0, 10)
@@ -57,9 +49,8 @@ function eventPage(
 }
 
 /**
- * Response keyed off the search query params. Each filter maps to a distinct
- * result, so a rendered title uniquely identifies which filter reached the BFF.
- * The unfiltered default spans two pages so pagination can be exercised.
+ * Response keyed off the query params: each filter maps to a distinct result, so a rendered
+ * title identifies which filter reached the BFF. The default spans two pages for pagination.
  */
 function eventsResponseFor(sp: URLSearchParams) {
   if (sp.get('q') === 'nothing') return eventPage([])
@@ -78,8 +69,8 @@ function eventsResponseFor(sp: URLSearchParams) {
   if (sp.get('from')) return eventPage(['Gig From Date'])
 
   const page = Number(sp.get('page') ?? '0')
-  // Past the last page the BFF answers with no content and the real totals, which is what makes an
-  // out-of-range page distinguishable from an empty result (#1267).
+  // Past the last page the BFF answers with no content and the real totals, which distinguishes
+  // an out-of-range page from an empty result (#1267).
   if (page >= 2) return eventPage([], { page, totalPages: 2, totalElements: 21 })
   return page >= 1
     ? eventPage(['Second Page Event'], { page: 1, totalPages: 2, totalElements: 21 })
@@ -340,8 +331,7 @@ test('shows the empty state when no events match', async ({ page }) => {
 })
 
 test('the empty state offers a way out of the filters', async ({ page }) => {
-  // The message alone was a dead end: under a filter bar six rows tall on a phone, the visitor had
-  // to work out which of eight inputs to undo (#1266).
+  // The message alone was a dead end under a filter bar six rows tall on a phone (#1266).
   await page.goto('/events?q=nothing')
   await expect(page.getByText(/nothing matches/i)).toBeVisible()
 
@@ -353,9 +343,8 @@ test('the empty state offers a way out of the filters', async ({ page }) => {
 })
 
 test('a page past the last one lands on the last page, not on an empty state', async ({ page }) => {
-  // The list shortens every night as events pass, so a shared link or a crawler's `?page=` can
-  // outlive its own range. Saying "nothing matches those filters" names a cause that is not the
-  // cause, and leaves no pager to step back with (#1267).
+  // The list shortens every night, so a shared link or a crawler's `?page=` can outlive its own
+  // range; "nothing matches those filters" names the wrong cause and leaves no pager (#1267).
   await page.goto('/events?page=99999')
 
   await expect(page).toHaveURL(/[?&]page=1(&|$)/)
@@ -367,8 +356,7 @@ test('paginates through results, preserving no filter', async ({ page }) => {
   const errors = collectPageErrors(page)
   await page.goto('/events')
 
-  // `name` is a substring match by default, which would also catch the "Next 7 days" date
-  // preset — so the pagination control has to be pinned by its exact accessible name.
+  // `name` is a substring match by default, which would also catch the "Next 7 days" preset.
   const nextButton = page.getByRole('button', { name: 'Next', exact: true })
 
   await expect(eventHeading(page, 'Default Event A')).toBeVisible()
@@ -384,10 +372,9 @@ test('paginates through results, preserving no filter', async ({ page }) => {
 })
 
 test('counts the results, with the plural agreeing with the count', async ({ page }) => {
-  // Exact matches throughout: an unpluralised message renders both branches separated by a pipe
-  // ("1 event found | 1 events found"), which contains the singular and would pass a substring
-  // assertion. The German side of the same two keys is covered in i18n.spec.ts.
-  // The unfiltered feed reports 21 across two pages; the `jazz` query returns exactly one.
+  // Exact matches: an unpluralised message renders both branches ("1 event found | 1 events
+  // found"), which contains the singular. The German side is in i18n.spec.ts. The unfiltered
+  // feed reports 21 across two pages; `jazz` returns one.
   await page.goto('/events')
   await expect(page.getByText('21 events found', { exact: true })).toBeVisible()
 

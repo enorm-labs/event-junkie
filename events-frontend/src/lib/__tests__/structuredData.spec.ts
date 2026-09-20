@@ -12,10 +12,9 @@ import {
 import { SITE_URL } from '@/lib/seo'
 
 /**
- * Structured data fails in a way ordinary code does not: silently, and only in Google's index.
- * Nothing in the app renders it, no user sees it, and a missing required property means the rich
- * result simply never appears — with no error anywhere. These tests are the only feedback loop
- * short of the Rich Results Test.
+ * Structured data fails silently and only in Google's index: a missing required property means
+ * the rich result never appears. These tests are the only feedback loop short of the Rich
+ * Results Test.
  */
 
 const event: EventDetail = {
@@ -44,8 +43,7 @@ describe('eventStartDate', () => {
   })
 
   it('carries the winter offset for a winter date', () => {
-    // The bug a hardcoded offset would ship: every winter event an hour out, which reads as a typo
-    // rather than as a fault, and is enough to miss the support act.
+    // The bug a hardcoded offset would ship: every winter event an hour out.
     expect(eventStartDate({ ...event, eventDate: '2026-01-12' })).toBe('2026-01-12T20:00:00+01:00')
   })
 
@@ -54,8 +52,8 @@ describe('eventStartDate', () => {
   })
 
   it('emits a bare date rather than guessing a time', () => {
-    // A wrong start time is the most damaging thing this module could publish; a date-only value
-    // is valid ISO 8601 and Google accepts it.
+    // A wrong start time is the most damaging thing this module could publish; a date-only value is
+    // valid ISO 8601.
     expect(eventStartDate({ ...event, startTime: null, doorsTime: null })).toBe('2026-06-12')
   })
 
@@ -97,8 +95,7 @@ describe('eventJsonLd', () => {
     })
   })
 
-  // Partial structured data is not partially useful — it is rejected outright, and it costs a
-  // crawl to discover that. Returning null keeps a broken document off the page entirely.
+  // Partial structured data is rejected outright, and it costs a crawl to discover that.
   const required: [string, EventDetail][] = [
     ['a title', { ...event, title: undefined }],
     ['a date', { ...event, eventDate: undefined }],
@@ -126,8 +123,7 @@ describe('eventJsonLd', () => {
     expect(eventJsonLd({ ...event, status: 'POSTPONED' }, 'en')!.eventStatus).toBe(
       'https://schema.org/EventPostponed',
     )
-    // RELOCATED has no schema.org counterpart. Undefined reads as EventScheduled, which is true —
-    // a relocated event is still going ahead.
+    // RELOCATED has no schema.org counterpart; undefined reads as EventScheduled, which is true.
     expect(eventJsonLd({ ...event, status: 'RELOCATED' }, 'en')!.eventStatus).toBeUndefined()
   })
 
@@ -146,8 +142,7 @@ describe('eventJsonLd', () => {
   })
 
   it('omits offers entirely when no price is known', () => {
-    // Inventing a price would contradict the imprint's "alle Angaben ohne Gewähr" in a format
-    // built for machines to believe.
+    // Inventing a price would contradict the imprint's "alle Angaben ohne Gewähr" machine-readably.
     const priceless = { ...event, pricePresale: null, priceBoxOffice: null, free: false }
     expect(eventJsonLd(priceless, 'en')!.offers).toBeUndefined()
   })
@@ -157,8 +152,8 @@ describe('eventJsonLd', () => {
   })
 
   it('drops offers once the event is past, because the page drops the ticket link', () => {
-    // Rule 1 of this file: never describe anything the page does not show, and a past event's
-    // page shows no "Buy tickets".
+    // Rule 1: never describe anything the page does not show, and a past event's page shows no
+    // "Buy tickets".
     vi.setSystemTime(new Date('2026-06-13T12:00:00Z'))
 
     const document = eventJsonLd(event, 'en')!
@@ -169,8 +164,8 @@ describe('eventJsonLd', () => {
   })
 
   it('describes performers without claiming they are natural persons', () => {
-    // §7.3 treats artist names as personal data because some artists are individuals. Of the two
-    // types Google accepts for `performer`, only one asserts personhood — so use the other.
+    // §7.3 treats artist names as personal data; of the two types Google accepts for `performer`,
+    // only one asserts personhood.
     expect(eventJsonLd(event, 'en')!.performer).toEqual([
       { '@type': 'PerformingGroup', name: 'Test Act' },
     ])
@@ -186,8 +181,8 @@ describe('eventJsonLd', () => {
     expect(eventJsonLd(event, 'de')!.url).toBe(`${SITE_URL}/de/events/${event.slug}`)
   })
 
-  // A cached image is a path on our own origin (ADR-019), and Google fetches the `image` field
-  // without a page to resolve it against.
+  // A cached image is a path on our origin (ADR-019), and Google fetches `image` with no page to
+  // resolve it against.
   it('makes a cached image absolute', () => {
     const cached = { ...event, imageUrl: '/api/images/abc/768.jpg' }
 
@@ -267,8 +262,8 @@ describe('breadcrumbJsonLd', () => {
   })
 })
 
-// The description a page shows carries its own language, which is often not the page's. Claiming
-// the locale for a German text on /en/ is a misrepresentation in a format built for machines.
+// The description carries its own language, often not the page's; claiming the locale for a
+// German text on /en/ is a misrepresentation.
 describe('eventJsonLd inLanguage', () => {
   it('declares the language of the text it emitted', () => {
     const german = { ...event, description: 'Ein Abend mit Aussicht', descriptionLanguage: 'de' }
@@ -300,8 +295,7 @@ describe('eventJsonLd inLanguage', () => {
 
 describe('websiteJsonLd', () => {
   it('claims a WebSite and not an Organization', () => {
-    // The imprint states this is run by a private individual and not a company. An Organization
-    // claim would contradict our own legal page, machine-readably.
+    // The imprint states a private individual runs this; an Organization claim would contradict it.
     const document = websiteJsonLd('de')
     expect(document['@type']).toBe('WebSite')
     expect(JSON.stringify(document)).not.toContain('Organization')

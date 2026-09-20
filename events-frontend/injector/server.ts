@@ -5,18 +5,13 @@ import { rewriteHead } from './rewrite.ts'
 import { matchDetailRoute } from './routes.ts'
 
 /**
- * The meta-injection sidecar — ADR-014 §Decision 3's transport.
- *
- * nginx proxies the four detail route families here. Each request fetches the shell from nginx on
- * loopback and the entity from the BFF, rewrites the head, and answers. **Any failure is a 502 and
- * nothing else**: nginx's `error_page` then serves the plain shell, so a slow or absent BFF costs a
- * generic preview and never a blank page. Every branch below that is not the happy path ends in
- * `fail()` for that reason.
- *
- * Nothing about the visitor reaches the BFF — the request it makes carries no header from the
- * incoming one — and nothing is logged per request; nginx already has the access line. Two small
- * in-process caches bound the BFF load: the shell changes only on deploy, and a link shared into a
- * busy group is fetched by every scraper at once and should cost one lookup, not one per scraper.
+ * The meta-injection sidecar, ADR-014 §Decision 3's transport. nginx proxies the four detail
+ * route families here; each request fetches the shell from nginx on loopback and the entity from
+ * the BFF, rewrites the head, and answers. Any failure is a 502 and nothing else: nginx's
+ * `error_page` then serves the plain shell, so every branch that is not the happy path ends in
+ * `fail()`. Nothing about the visitor reaches the BFF, and nothing is logged per request. Two
+ * in-process caches bound the BFF load: the shell changes only on deploy, and a link shared into
+ * a busy group is fetched by every scraper at once.
  */
 
 const PORT = Number(process.env.INJECTOR_PORT ?? 3000)
@@ -102,14 +97,13 @@ async function handle(request: IncomingMessage, response: ServerResponse): Promi
     response
       .writeHead(200, {
         'content-type': 'text/html; charset=utf-8',
-        // The shell's own rule, kept on the rewritten copy: it names the hashed bundles, and a
-        // cached one pins a browser to files a deploy has deleted.
+        // The shell's own rule, kept on the rewritten copy: a cached one pins a browser to files a
+        // deploy has deleted.
         'cache-control': 'no-cache',
       })
       .end(body)
   } catch (error) {
-    // A 404 from the BFF is an unknown slug, which the SPA renders as its own not-found page once
-    // nginx serves it the shell. Everything else is a failure worth a log line.
+    // A 404 from the BFF is an unknown slug, which the SPA renders as its own not-found page.
     const status = error instanceof Fail && error.status === 404 ? 404 : 502
     fail(response, status, `${route.kind}/${route.slug}: ${(error as Error).message}`)
   }
