@@ -21,9 +21,12 @@ candidate and the row is `ambiguous`. There is no country to tie-break on and no
 result; both need `/artists/{id}`, one more request per candidate, which the spike does not spend.
 The head pass for dashed or coloned names is the same as MusicBrainz's.
 
-Discogs throttles by address: 25 requests a minute unauthenticated, 60 with a personal token
-(`DISCOGS_TOKEN`, from Settings > Developers on any account), and wants a User-Agent. A 429 is
-slept off. Standard library only; every row is flushed and `--resume` skips the names already done.
+Discogs throttles by address in a rolling minute: 25 requests unauthenticated, 60 with a personal
+token (`DISCOGS_TOKEN`, from Settings > Developers on any account), and wants a User-Agent. The
+pause alone is not enough -- a head pass is a second request in the same second, and the first run
+spent most of its time in 429 sleeps -- so the script also reads `X-Discogs-Ratelimit-Remaining`
+and waits when the window is nearly spent. Standard library only; every row is flushed and
+`--resume` skips the names already done.
 """
 
 import argparse
@@ -41,8 +44,10 @@ import urllib.request
 SEARCH = "https://api.discogs.com/database/search"
 USER_AGENT = "event-junkie-spike/0.1 +https://github.com/enorm-labs/event-junkie"
 TOKEN = os.environ.get("DISCOGS_TOKEN", "")
-PAUSE_SECONDS = 1.05 if TOKEN else 2.5
-RATE_LIMITED_SLEEP = 65
+PAUSE_SECONDS = 1.1 if TOKEN else 2.7
+NEAR_LIMIT_REMAINING = 2
+NEAR_LIMIT_SLEEP = 20
+RATE_LIMITED_SLEEP = 20
 MAX_ATTEMPTS = 6
 PAGE_SIZE = 100
 MAX_PAGES = 200
@@ -90,7 +95,11 @@ def get_json(url):
         headers["Authorization"] = f"Discogs token={TOKEN}"
     request = urllib.request.Request(url, headers=headers)
     with urllib.request.urlopen(request, timeout=30) as response:
-        return json.load(response)
+        remaining = response.headers.get("X-Discogs-Ratelimit-Remaining")
+        body = json.load(response)
+    if remaining is not None and int(remaining) <= NEAR_LIMIT_REMAINING:
+        time.sleep(NEAR_LIMIT_SLEEP)
+    return body
 
 
 def search(name):
