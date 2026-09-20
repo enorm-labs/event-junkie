@@ -20,16 +20,10 @@ import javax.imageio.ImageIO
 import javax.imageio.stream.MemoryCacheImageInputStream
 
 /**
- * Downloads one venue image and describes it, without keeping the bytes.
- *
- * **Uses the scraper's throttled client** ([SCRAPER_WEB_CLIENT]), so an image fetch obeys
- * `robots.txt` and shares the venue's per-host politeness timer with the page fetches. Image
- * fetching is a new class of outbound request and ADR-007 applies to it unchanged — a second client
- * would give the same host two independent timers.
- *
- * **It returns a description, not a file.** PR 3 records what an image is; PR 4 brings the storage
- * client. The hash is computed here so that two events sharing one poster converge on one object
- * later.
+ * Downloads one venue image and describes it, without keeping the bytes. Uses the scraper's
+ * throttled client ([SCRAPER_WEB_CLIENT]), so an image fetch obeys `robots.txt` and shares the
+ * venue's per-host timer (ADR-007). Returns a description, not a file; the hash is computed here
+ * so two events sharing one poster converge on one object.
  */
 @Component
 class ImageFetcher(
@@ -51,12 +45,9 @@ class ImageFetcher(
         return try {
             webClient
                 .get()
-                // A pre-built URI, so WebClient uses the already percent-encoded URL verbatim.
-                // Passing a String treats it as a URI template and re-encodes '%', which turns
-                // `%3A` into `%253A`. [HtmlFetcher] carries the same note for the same reason, and
-                // this class reintroduced the bug: 22 of Frannz Club's images are proxied through
-                // `images.copilot.events/resize?url=…`, where the whole target is percent-encoded
-                // in a query parameter, and every one of them came back 400.
+                // A pre-built URI, so WebClient uses the percent-encoded URL verbatim; a String is re-encoded,
+                // turning `%3A` into `%253A`. This class reintroduced the bug: 22 of Frannz Club's images are
+                // proxied through `images.copilot.events/resize?url=…`, and every one came back 400.
                 .uri(URI.create(target))
                 .apply {
                     etag?.let { header(HttpHeaders.IF_NONE_MATCH, it) }
@@ -71,9 +62,8 @@ class ImageFetcher(
                             ImageFetchResult.Rejected("HTTP ${response.statusCode().value()}")
                         }
 
-                        // Declared too large: refuse before reading a byte. The header can be absent
-                        // or wrong, so `describe` still measures what actually arrives — this only
-                        // saves the download in the honest case.
+                        // Declared too large: refuse before reading a byte. The header can be wrong, so `describe` still
+                        // measures what arrives.
                         response.headers().contentLength().orElse(0) > properties.maxBytes -> {
                             ImageFetchResult.Rejected("declared larger than ${properties.maxBytes} bytes")
                         }
@@ -88,18 +78,15 @@ class ImageFetcher(
                     }
                 }
         } catch (
-            // Deliberately every transport fault. A connect reset, a DNS failure and a read timeout
-            // all mean the same thing to the caller, and enumerating them would only add ways to
-            // miss one. Nothing is rethrown, so one dead URL cannot stop the pass.
+            // Every transport fault, deliberately: a reset, a DNS failure and a read timeout mean the same
+            // to the caller. Nothing is rethrown, so one dead URL cannot stop the pass.
             @Suppress("TooGenericExceptionCaught")
             e: Exception
         ) {
-            // The reason is logged, and never reaches a metric tag: a tag fed by an exception
-            // message is unbounded cardinality.
+            // The reason is logged and never reaches a metric tag: unbounded cardinality.
             logger.debug(e) { "Image fetch failed for $target" }
-            // The codec's own limit fires before `describe` ever sees the bytes, so without this an
-            // oversized image is recorded as a transport fault. It is a size refusal and has to read
-            // as one, or an operator debugging a missing image chases the network instead.
+            // The codec's own limit fires before `describe` sees the bytes, so without this an oversized
+            // image is recorded as a transport fault, and an operator chases the network.
             if (e.isBufferLimit()) {
                 ImageFetchResult.Rejected("larger than the ${properties.maxBytes} byte buffer limit")
             } else {
@@ -109,10 +96,8 @@ class ImageFetcher(
     }
 
     /**
-     * Applies the size, type and pixel limits, and measures what survives them.
-     *
-     * One guard clause per limit, which is why it exceeds the return-count rule. Nesting them would
-     * bury which check refused a file, and each refusal reason is stored and read by an operator.
+     * Applies the size, type and pixel limits. One guard clause per limit, over the return-count
+     * rule, so each refusal reason stays legible to the operator who reads it.
      */
     @Suppress("ReturnCount")
     private suspend fun describe(
@@ -125,8 +110,8 @@ class ImageFetcher(
         val contentType = sniff(bytes) ?: return ImageFetchResult.Rejected("not an allowed image type")
 
         val dimensions = withContext(ioDispatcher) { readDimensions(bytes) }
-        // A type this JVM can read, that it then cannot read, is a corrupt file. A type it has no
-        // reader for tells us nothing, so it is not evidence of anything and must not refuse.
+        // A type this JVM can read, that it then cannot read, is a corrupt file. A type it has no reader
+        // for is not evidence of anything.
         if (dimensions == null && contentType in MEASURABLE_TYPES) return ImageFetchResult.Rejected("unreadable image header")
         if (dimensions != null && dimensions.first.toLong() * dimensions.second > properties.maxPixels) {
             return ImageFetchResult.Rejected("larger than ${properties.maxPixels} pixels")
@@ -145,15 +130,10 @@ class ImageFetcher(
     }
 
     /**
-     * Identifies the file from its own first bytes.
-     *
-     * **Never from the `Content-Type` header**, which the venue's server controls. An SVG served
-     * from our origin executes script in our origin, so what a file *is* has to decide, not what it
-     * claims (ADR-019 §4). Anything not on this list is refused, SVG included.
-     *
-     * **This list is the control, and imgproxy is not.** imgproxy reads SVG as a source quite
-     * happily, so nothing downstream would stop one. It reads all five of these as sources too,
-     * which is why WebP and AVIF belong here even though this JVM cannot measure them.
+     * Identifies the file from its own first bytes, never from `Content-Type`, which the venue
+     * controls: an SVG served from our origin executes script in our origin (ADR-019 §4). Anything
+     * not on this list is refused, SVG included. This list is the control, not imgproxy, which reads
+     * SVG as a source; it reads all five of these too, which is why WebP and AVIF belong here.
      */
     private fun sniff(bytes: ByteArray): String? =
         when {
@@ -166,15 +146,10 @@ class ImageFetcher(
         }
 
     /**
-     * Width and height from the file header, without decoding the pixels.
-     *
-     * `getWidth` reads only as far as the header, so a decompression bomb is measured rather than
-     * allocated for. Decoding proper is imgproxy's job from PR 4a, outside this JVM.
-     *
-     * **Null for WebP and AVIF, and that is not a failure.** A stock JDK ships readers for JPEG,
-     * PNG, GIF, BMP, TIFF and WBMP, and for nothing else. Adding one would mean a library that
-     * decodes untrusted bytes inside this process, which is the thing ADR-020 moved out of it.
-     * imgproxy reports the real dimensions when it generates the derivatives.
+     * Width and height from the file header, without decoding: `getWidth` reads only as far as the
+     * header, so a decompression bomb is measured rather than allocated for. Null for WebP and AVIF,
+     * not a failure: a stock JDK has no reader, and adding one would decode untrusted bytes inside
+     * this process, which ADR-020 moved out. imgproxy reports the real dimensions.
      */
     private fun readDimensions(bytes: ByteArray): Pair<Int, Int>? =
         MemoryCacheImageInputStream(ByteArrayInputStream(bytes)).use { stream ->
@@ -192,16 +167,10 @@ class ImageFetcher(
     private fun sha256(bytes: ByteArray): String = HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(bytes))
 
     /**
-     * Percent-encodes literal spaces, and nothing else.
-     *
-     * **A space is never legal in a URI**, so encoding one cannot double-encode anything that was
-     * already escaped — which is the failure the `URI.create` above exists to avoid. Nineteen Wild
-     * at Heart images are filenames like `R1783504681V8 Wankers.jpeg`; a browser encodes the space
-     * and fetches them, while `URI` rejects the raw string and we recorded them as malformed.
-     *
-     * Deliberately only the space. Other characters a URI forbids — `[`, `]`, `|`, `<`, `>` — have
-     * not been seen in this corpus, and a general re-encoder is the thing that would undo an
-     * already-escaped URL.
+     * Percent-encodes literal spaces, and nothing else. A space is never legal in a URI, so encoding
+     * one cannot double-encode: nineteen Wild at Heart images are `R1783504681V8 Wankers.jpeg`,
+     * which a browser fetches and `URI` rejects. Other forbidden characters have not been seen in
+     * this corpus, and a general re-encoder would undo an already-escaped URL.
      */
     private fun String.encodeLiteralSpaces(): String = replace(" ", "%20")
 
@@ -209,22 +178,16 @@ class ImageFetcher(
     private fun Throwable.isBufferLimit(): Boolean = generateSequence(this) { it.cause.takeIf { cause -> cause !== it } }.any { it is DataBufferLimitException }
 
     /**
-     * Whether these bytes open with [prefix], compared as unsigned values.
-     *
-     * The parentheses around `and` are for the reader rather than the compiler. Kotlin binds a named
-     * infix function **tighter** than `==`, which is the opposite of Java's `&`, so the unbracketed
-     * form is already correct and reads as though it is not.
+     * Whether these bytes open with [prefix], as unsigned values. The parentheses around `and` are
+     * for the reader: Kotlin binds a named infix function tighter than `==`, the opposite of Java.
      */
     private fun ByteArray.startsWith(prefix: IntArray): Boolean =
         size >= prefix.size &&
             prefix.withIndex().all { (i, expected) -> (this[i].toInt() and BYTE_MASK) == expected }
 
     /**
-     * Whether a four-byte container tag and a four-byte brand sit where the format puts them.
-     *
-     * RIFF names itself at offset 0 and its form at offset 8, so `RIFF….WEBP` is a WebP. ISO base
-     * media files carry `ftyp` at offset 4 and the brand at offset 8, so `….ftypavif` is an AVIF.
-     * Both land on the same two offsets, which is why one function reads both.
+     * Whether a four-byte container tag and brand sit where the format puts them: RIFF at 0 and
+     * `WEBP` at 8, `ftyp` at 4 and `avif` at 8. The same two offsets, so one function reads both.
      */
     private fun ByteArray.isContainer(
         container: String,
@@ -245,10 +208,8 @@ class ImageFetcher(
         const val BYTE_MASK = 0xFF
 
         /**
-         * Types this JVM has a reader for, so a null measurement means the file is broken.
-         *
-         * WebP and AVIF are deliberately absent: no reader exists for them, so refusing on an
-         * unreadable header would refuse every one of them (#819 review).
+         * Types this JVM has a reader for, so a null measurement means the file is broken. WebP and
+         * AVIF absent: no reader, so refusing on an unreadable header would refuse every one (#819).
          */
         val MEASURABLE_TYPES = setOf("image/jpeg", "image/png", "image/gif")
 
@@ -264,18 +225,15 @@ sealed interface ImageFetchResult {
     data object NotModified : ImageFetchResult
 
     /**
-     * The URL produced no image we may store, and the reason goes into the negative cache.
-     *
-     * One case for a refusal and a failure alike, because the caller does the same thing with both:
-     * record it and stop asking for a while.
+     * The URL produced no image we may store; one case for a refusal and a failure alike, because
+     * the caller records both and stops asking for a while.
      */
     data class Rejected(
         val reason: String
     ) : ImageFetchResult
 
     /**
-     * A plain class rather than a `data` one: it carries the bytes, and an array in a data class
-     * gives it an `equals` that compares references. Nothing here is compared by value.
+     * A plain class: an array in a data class gives it an `equals` that compares references.
      */
     @Suppress("LongParameterList") // A value carrier for one fetched image: every parameter is a field of it.
     class Success(

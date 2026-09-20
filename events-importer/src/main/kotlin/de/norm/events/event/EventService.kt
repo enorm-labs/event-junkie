@@ -20,12 +20,8 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
 /**
- * Service encapsulating event business logic.
- *
- * Events are the core entity linking venues, artists, and promoters.
- * Create and update operations are transactional because they span multiple
- * tables (`event`, `event_artist`, `event_promoter`). Slugs are auto-generated
- * from the event date and title using [SlugGenerator] when not provided.
+ * Event business logic. Create and update are transactional because they span `event`,
+ * `event_artist` and `event_promoter`; slugs come from [SlugGenerator] when not provided.
  */
 @Service
 @Suppress("LongParameterList") // Constructor injection: one parameter per collaborator; splitting the service hides the wiring.
@@ -42,16 +38,9 @@ class EventService(
     private val logger = KotlinLogging.logger {}
 
     /**
-     * Lists events with their artist, promoter, and genre tag associations, applying pagination and sorting.
-     *
-     * Pagination and sorting are controlled by the [pageable] parameter, which Spring
-     * resolves from `page`, `size`, and `sort` query parameters
-     * (e.g. `?page=0&size=20&sort=eventDate,desc`).
-     *
-     * Uses batch loading to avoid N+1 queries: fetches the current page of events first,
-     * then bulk-fetches all artist, promoter, and genre tag associations for that page in
-     * 3 additional queries. This results in exactly 4 queries per page regardless
-     * of the number of events.
+     * Lists events with their associations, paged and sorted by [pageable]. Batch loading: the page
+     * of events first, then artists, promoters and genre tags in three more queries, four per page
+     * regardless of size.
      */
     @Transactional(readOnly = true)
     suspend fun findAll(pageable: Pageable): PageResponse<EventResponse> {
@@ -102,11 +91,8 @@ class EventService(
     }
 
     /**
-     * Creates a new event with its artist and promoter associations.
-     *
-     * Validates that the referenced venue, artists, and promoters exist before
-     * persisting. Slug is auto-generated from date and title if not provided
-     * (e.g. `"2026-06-12-the-adicts"`).
+     * Creates a new event with its associations, validating that the venue, artists and promoters
+     * exist. Slug auto-generated from date and title if not provided.
      *
      * @throws VenueNotFoundException if the referenced venue does not exist.
      * @throws ArtistNotFoundException if any referenced artist does not exist.
@@ -117,8 +103,7 @@ class EventService(
         // Validate that referenced venue exists and retrieve its slug for event slug generation
         val venue = venueRepository.findById(request.venueId) ?: throw VenueNotFoundException(request.venueId)
 
-        // Include venue slug in event slug to ensure cross-venue uniqueness for events
-        // with the same title on the same date (e.g. "Open Decks" at two different venues).
+        // The venue slug in the event slug, for "Open Decks" at two venues on one date.
         val slug = SlugGenerator.slugify("${request.eventDate}-${venue.slug}-${request.title}")
         val saved = eventRepository.save(request.toEventEntity(slug))
         val eventId = requireNotNull(saved.id) { "Persisted event must have an ID" }
@@ -132,18 +117,15 @@ class EventService(
     }
 
     /**
-     * Classifies the language of every stored description that carries none, and returns the counts.
-     *
-     * A one-off for the rows that predate detection. Every later row is classified at import, and a
-     * text the classifier cannot call keeps a null language, which is the honest answer (ADR-026).
-     * Running it twice is harmless: the second run finds only what the first could not call.
+     * Classifies the language of every stored description that carries none. A one-off for rows
+     * that predate detection; a text the classifier cannot call keeps a null language (ADR-026).
+     * Idempotent.
      */
     @Transactional
     suspend fun classifyStoredDescriptions(): DescriptionLanguageBackfill {
-        // **Read the whole page before writing any of it.** A `save` issued from inside `collect`
-        // runs on the connection the open cursor is holding, and the two wait on each other until
-        // the request times out — no error, no query, nothing in the log. Materialising first is
-        // what the translation pass does for the same reason.
+        // Read the whole page before writing any of it: a `save` issued from inside `collect` runs on
+        // the connection the open cursor holds, and the two wait on each other until the request times
+        // out with nothing in the log. The translation pass materialises first for the same reason.
         val unclassified = eventRepository.findWithUnclassifiedDescription().toList()
         val detections = unclassified.map { it to DescriptionLanguage.detect(it.description) }
 
@@ -163,10 +145,8 @@ class EventService(
     }
 
     /**
-     * Replaces all fields and associations of an existing event.
-     *
-     * Artist and promoter associations are replaced using a delete-and-reinsert
-     * strategy within the same transaction.
+     * Replaces all fields and associations of an existing event, delete-and-reinsert within one
+     * transaction.
      *
      * @throws EventNotFoundException if no event with the given [id] exists.
      * @throws VenueNotFoundException if the referenced venue does not exist.
@@ -182,8 +162,8 @@ class EventService(
         val venue = venueRepository.findById(request.venueId) ?: throw VenueNotFoundException(request.venueId)
 
         val slug = SlugGenerator.slugify("${request.eventDate}-${venue.slug}-${request.title}")
-        // Remap all request fields via the shared factory, then carry over the identity and
-        // audit fields the request never owns (primary key, import source, creation timestamp).
+        // Remap via the shared factory, then carry over the identity and audit fields the request never
+        // owns.
         val updated =
             request.toEventEntity(slug).copy(
                 id = existing.id,
@@ -216,18 +196,14 @@ class EventService(
     @Transactional
     suspend fun delete(id: Long) {
         if (!eventRepository.existsById(id)) throw EventNotFoundException(id)
-        // Join table rows (event_artist, event_promoter, event_genre_tag) are cascade-deleted
-        // by the database FK constraints (ON DELETE CASCADE).
+        // Join table rows are cascade-deleted by the FK constraints.
         eventRepository.deleteById(id)
         logger.info { "Deleted event with id $id" }
     }
 
     /**
-     * Validates that all referenced artists exist, persists the associations,
-     * and returns the corresponding [EventArtistResponse] list for the caller.
-     *
-     * Uses batch validation via [findAllById] to check all artist IDs in a single query
-     * instead of validating each one sequentially.
+     * Validates that all referenced artists exist in one [findAllById] query, persists the
+     * associations, and returns the [EventArtistResponse] list.
      */
     private suspend fun saveArtistAssociations(
         eventId: Long,
@@ -265,11 +241,8 @@ class EventService(
     }
 
     /**
-     * Validates that all referenced promoters exist, persists the associations,
-     * and returns the promoter IDs for the caller.
-     *
-     * Uses batch validation via [findAllById] to check all promoter IDs in a single query
-     * instead of validating each one sequentially.
+     * Validates that all referenced promoters exist in one [findAllById] query, persists the
+     * associations, and returns the promoter IDs.
      */
     private suspend fun savePromoterAssociations(
         eventId: Long,
@@ -299,13 +272,10 @@ class EventService(
     }
 
     /**
-     * Normalizes the raw genre string into canonical genre tags, resolves or creates
-     * the tags in the database, and persists the join-table associations.
+     * Normalizes the raw genre string into canonical tags with the scraper pipeline's
+     * [normalizeGenre], resolves or creates them, and persists the associations.
      *
-     * Uses the same [normalizeGenre] function as the scraper pipeline to ensure
-     * consistent genre normalization between manual creation and imports.
-     *
-     * @return the list of canonical genre tag names for the response.
+     * @return the canonical genre tag names for the response.
      */
     private suspend fun saveGenreTagAssociations(
         eventId: Long,
@@ -314,9 +284,8 @@ class EventService(
         val genreNames = normalizeGenre(rawGenre)
         if (genreNames.isEmpty()) return emptyList()
 
-        // Resolves each genre tag individually (N+1) — deliberately simpler than the batch-fetch
-        // + cache strategy in AssociationSyncService, since the admin API handles single-event
-        // operations with very few genre tags (typically 1–5).
+        // Resolves each genre tag individually (N+1), deliberately simpler than
+        // AssociationSyncService's batch strategy: the admin API handles one event with 1–5 tags.
         val entities =
             genreNames.map { name ->
                 val slug = SlugGenerator.slugify(name)
@@ -336,11 +305,9 @@ class EventService(
     }
 
     /**
-     * Resolves an [EventEntity]'s artist, promoter, and genre tag associations and delegates
-     * to [EventResponse.fromEntity] for the actual mapping.
-     *
-     * When [artistResponses], [promoterIds], and [genreTagNames] are provided (e.g. after
-     * create/update), they are used directly to avoid re-querying within the same transaction.
+     * Resolves an [EventEntity]'s associations and delegates to [EventResponse.fromEntity]. When
+     * [artistResponses], [promoterIds] and [genreTagNames] are provided, they avoid re-querying
+     * within the same transaction.
      */
     private suspend fun toResponse(
         entity: EventEntity,
@@ -368,12 +335,9 @@ class EventService(
 }
 
 /**
- * Maps an [EventRequest] and pre-computed [slug] onto a new [EventEntity].
- *
- * Single source of truth for the request → entity field mapping, shared by
- * [EventService.create] (persists the result directly) and [EventService.update]
- * (copies the identity and audit fields from the existing row onto the result).
- * Monetary values are normalized to scale 2 at this boundary.
+ * Maps an [EventRequest] and pre-computed [slug] onto a new [EventEntity]: the one request-to-
+ * entity mapping, shared by [EventService.create] and [EventService.update]. Monetary values
+ * are normalized to scale 2 here.
  */
 private fun EventRequest.toEventEntity(slug: String): EventEntity {
     val detected = DescriptionLanguage.detect(description)

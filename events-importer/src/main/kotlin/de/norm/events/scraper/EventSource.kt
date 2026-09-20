@@ -1,16 +1,10 @@
 package de.norm.events.scraper
 
 /**
- * Enumeration of known event import sources.
- *
- * Each value corresponds to a venue-specific [EventImporter] implementation
- * that knows how to fetch and parse events from that venue's website.
- * Using an enum instead of a String key provides compile-time safety —
- * every registered source must have a matching importer bean.
- *
- * The entries below describe only the **venue**. How its programme is published, which pages or
- * APIs are read, and every parsing quirk and accepted limitation are documented on that venue's
- * importer and scrapers in `scraper/<venue>/`, next to the code they govern.
+ * Known event import sources, one per venue-specific [EventImporter]; an enum so every
+ * registered source must have a matching importer bean. The entries describe only the venue:
+ * how its programme is published and every parsing quirk lives on that venue's importer and
+ * scrapers in `scraper/<venue>/`.
  */
 enum class EventSource {
     /** ÆDEN Berlin – a techno club on the Spree in Kreuzberg with two floors and a garden. */
@@ -286,10 +280,7 @@ enum class EventSource {
     ZITADELLE;
 
     /**
-     * Prefix for `sourceId` values, derived from the enum name in lowercase.
-     *
-     * Used by scrapers to build sourceId strings (e.g. `"cassiopeia:some-event-slug"`).
-     * This avoids hard-coding the prefix string in scraper classes.
+     * Prefix for `sourceId` values, the enum name in lowercase (`"cassiopeia:some-event-slug"`).
      */
     val sourceIdPrefix: String get() = "${name.lowercase()}:"
 }

@@ -25,17 +25,9 @@ import org.springframework.stereotype.Service
 import java.net.URI
 
 /**
- * Resolves artists, promoters, and genre tags by slug (auto-creating unknown ones) and
- * synchronizes many-to-many join-table associations for upserted events.
- *
- * Uses a diff strategy to minimize write churn: only inserts new associations,
- * updates changed ones (artist role/billing order), and deletes stale ones.
- * Entity resolution handles concurrent creation gracefully via unique-constraint
- * violation fallback.
- *
- * Extracted from [EventUpsertService] to separate association management from
- * event-level persistence concerns. Called within the same transactional boundary
- * managed by the upstream caller.
+ * Resolves artists, promoters and genre tags by slug, auto-creating unknown ones, and
+ * synchronizes the join-table associations for upserted events by diff: insert new, update
+ * changed (artist role/billing order), delete stale. Called within the caller's transaction.
  */
 @Service
 @Suppress("TooManyFunctions") // Logically cohesive — groups artist, promoter, and genre tag association management
@@ -50,22 +42,13 @@ class AssociationSyncService(
     private val logger = KotlinLogging.logger {}
 
     /**
-     * Resolves all referenced artists and promoters, then synchronizes their
-     * join-table associations for the given saved events.
+     * The single entry point [EventUpsertService] calls after upserting: resolve artists, diff-sync
+     * their associations, the same for promoters, then normalized genre tags.
      *
-     * This is the single entry point called by [EventUpsertService] after events
-     * have been upserted. The full pipeline:
-     * 1. Batch-fetch known artists by slug, auto-create unknown ones.
-     * 2. Diff-sync artist associations (insert/update/delete).
-     * 3. Batch-fetch known promoters by slug, auto-create unknown ones.
-     * 4. Diff-sync promoter associations (insert/delete).
-     * 5. Normalize genre strings, batch-fetch known genre tags, auto-create unknown ones.
-     * 6. Diff-sync genre tag associations (insert/delete).
-     *
-     * @param savedEvents the persisted event entities (must have non-null IDs).
-     * @param scrapedEvents the raw scraped events (source of artist/promoter/genre data).
-     * @return the ids of every artist row this run billed, new or existing — what the MusicBrainz
-     *   sweep looks up after the commit (#1567).
+     * @param savedEvents the persisted event entities (non-null IDs).
+     * @param scrapedEvents the raw scraped events.
+     * @return the ids of every artist row this run billed, new or existing, for the MusicBrainz
+     * sweep after the commit (#1567).
      */
     suspend fun resolveAndSyncAssociations(
         savedEvents: List<EventEntity>,
@@ -85,17 +68,14 @@ class AssociationSyncService(
     // -- Artist resolution --
 
     /**
-     * Batch-fetches all known artists by slug and auto-creates any unknown artists.
+     * Batch-fetches known artists by slug and auto-creates the rest.
      *
-     * @return a cache mapping artist slug → persisted [ArtistEntity], covering all
-     *   artists referenced by the scraped events.
+     * @return artist slug to persisted [ArtistEntity] for every artist the scraped events reference.
      */
     private suspend fun resolveAllArtists(scrapedEvents: List<ScrapedEvent>): Map<String, ArtistEntity> {
-        // Canonicalize *before* slugging, as the promoter path does. De-shouting alone never
-        // changes the slug (it is casing-only, and slugs are case-insensitive), but a curated
-        // NAME_CORRECTIONS entry can — "OXO86" resolves to "Oxo 86", i.e. slug `oxo-86` rather
-        // than `oxo86`. Slugging the raw name here would then look up a different row than
-        // resolveOrCreateArtist creates, and the two spellings would stay fragmented.
+        // Canonicalize before slugging, as the promoter path does: a curated NAME_CORRECTIONS entry can
+        // change the slug ("OXO86" resolves to "Oxo 86", `oxo-86`), and slugging the raw name would look
+        // up a different row than resolveOrCreateArtist creates.
         scrapedEvents.forEach { event ->
             event.artists
                 .filter { isSlugless(it.name) }
@@ -110,9 +90,8 @@ class AssociationSyncService(
                 .associateBy { it.slug }
                 .toMutableMap()
 
-        // Auto-create only the artists not already in the database. The stored display name is
-        // canonicalized first (see canonicalArtistName): de-shouting so an act isn't frozen
-        // SHOUTING by whichever venue imported it first, plus any curated spelling correction.
+        // Auto-create only the artists not in the database, with the display name canonicalized first so
+        // an act is not frozen SHOUTING by whichever venue imported it first.
         scrapedArtists
             .distinctBy { SlugGenerator.slugify(canonicalArtistName(it.name)) }
             .forEach { resolveOrCreateArtist(canonicalArtistName(it.name), artistCache) }
@@ -121,9 +100,8 @@ class AssociationSyncService(
     }
 
     /**
-     * The scraped artists that can be stored. A name that slugs to nothing has escaped
-     * [isNonArtistName], and inserting it would take the empty slug that every later one
-     * collides with (#1553), so it is dropped rather than saved.
+     * The scraped artists that can be stored: a name that slugs to nothing has escaped
+     * [isNonArtistName], and would take the empty slug every later one collides with (#1553).
      */
     private fun ScrapedEvent.storableArtists(): List<ScrapedArtist> = artists.filterNot { isSlugless(it.name) }
 
@@ -142,17 +120,9 @@ class AssociationSyncService(
     // -- Artist association syncing --
 
     /**
-     * Synchronizes artist associations for the given saved events using a diff strategy.
-     *
-     * Instead of deleting and re-creating all associations on every import (which wastes
-     * auto-increment IDs and causes unnecessary write churn), this method compares
-     * existing associations against the desired state and only:
-     * - **Inserts** truly new associations (artist added to event).
-     * - **Updates** associations where role or billing order changed.
-     * - **Deletes** associations for artists no longer linked to the event.
-     * - **Skips** associations that are already correct (no-op).
-     *
-     * Associations are matched by the composite key `(eventId, artistId)`.
+     * Synchronizes artist associations by diff, matched on `(eventId, artistId)`: inserts new,
+     * updates changed role or billing order, deletes removed, skips the rest. Deleting and
+     * re-creating on every import wastes auto-increment IDs.
      */
     private suspend fun syncArtistAssociations(
         savedEvents: List<EventEntity>,
@@ -182,13 +152,10 @@ class AssociationSyncService(
                 val slug = SlugGenerator.slugify(canonicalArtistName(scrapedArtist.name))
                 val artistId = requireNotNull(artistCache[slug]?.id) { "Artist '$slug' must be resolved before syncing associations" }
 
-                // `add` returns false when this artist is already desired for this event, which
-                // happens whenever a lineup names one act twice or two spellings canonicalise
-                // together. The billing shown is the first mention's, and skipping is what keeps the
-                // pair out of `toInsert` twice — `existingByArtistId` reflects the database and
-                // stays null across both passes, so it cannot catch a duplicate on its own. The
-                // table's UNIQUE (event_id, artist_id) then rejects the batch and the whole run
-                // rolls back (#798).
+                // `add` returns false when this artist is already desired for this event, as when a lineup
+                // names one act twice or two spellings canonicalise together. `existingByArtistId` reflects the
+                // database and cannot catch that; the table's UNIQUE (event_id, artist_id) would reject the
+                // batch and roll back the whole run (#798).
                 if (!desiredArtistIds.add(artistId)) continue
 
                 val desired = scrapedArtist.toEventArtistEntity(eventId, artistId, billingOrder = index)
@@ -222,15 +189,13 @@ class AssociationSyncService(
     // -- Promoter resolution --
 
     /**
-     * Batch-fetches all known promoters by slug and auto-creates any unknown promoters.
+     * Batch-fetches known promoters by slug and auto-creates the rest.
      *
-     * @return a cache mapping promoter slug → persisted [PromoterEntity], covering all
-     *   promoters referenced by the scraped events.
+     * @return promoter slug to persisted [PromoterEntity].
      */
     private suspend fun resolveAllPromoters(scrapedEvents: List<ScrapedEvent>): Map<String, PromoterEntity> {
-        // Drop bare generic labels ("Event.") first, then canonicalize so variants of the
-        // same promoter ("LOFT", "Loft Concerts GmbH") resolve to one entity — see
-        // isNonPromoterName / canonicalPromoterName.
+        // Drop bare generic labels ("Event.") first, then canonicalize so "LOFT" and "Loft Concerts
+        // GmbH" resolve to one entity (isNonPromoterName / canonicalPromoterName).
         val canonicalNames =
             scrapedEvents
                 .flatMap { it.promoters }
@@ -257,10 +222,9 @@ class AssociationSyncService(
 
     /**
      * Writes the website a venue links a promoter credit to onto a promoter row that has none.
-     *
-     * Fill-if-empty, never replace: the venue's link is as often the promoter's ticket shop as its
-     * site, and a reviewed `website_url` (docs/promoters/REVIEWED.tsv) must not lose to it (#1319).
-     * A link back onto the venue's own host is the event page, not the promoter's site (#1362).
+     * Fill-if-empty, never replace: the venue's link is as often the promoter's ticket shop, and a
+     * reviewed `website_url` (docs/promoters/REVIEWED.tsv) must not lose to it (#1319). A link back
+     * onto the venue's own host is the event page (#1362).
      */
     private suspend fun fillPromoterWebsites(
         scrapedEvents: List<ScrapedEvent>,
@@ -280,8 +244,8 @@ class AssociationSyncService(
     }
 
     /**
-     * Resolves a promoter by its already-canonicalized [name] from [promoterCache], or auto-creates
-     * one storing that canonical name. See [resolveOrCreate].
+     * Resolves a promoter by its canonicalized [name] from [promoterCache], or auto-creates one. See
+     * [resolveOrCreate].
      */
     private suspend fun resolveOrCreatePromoter(
         name: String,
@@ -297,10 +261,7 @@ class AssociationSyncService(
     // -- Promoter association syncing --
 
     /**
-     * Synchronizes promoter associations for the given saved events using a diff strategy.
-     *
-     * Unlike artists, promoter associations have no role or ordering — they are simple
-     * many-to-many links. The diff only inserts new and deletes removed associations.
+     * Synchronizes promoter associations by diff: simple many-to-many links, so insert and delete only.
      */
     private suspend fun syncPromoterAssociations(
         savedEvents: List<EventEntity>,
@@ -314,9 +275,8 @@ class AssociationSyncService(
                 EventPromoterEntity::eventId
             ) ?: return
 
-        // Build the desired associations from scraped data, dropping bare generic labels and
-        // canonicalizing names so the slug lookup matches the (canonical) keys used when the
-        // cache was populated (must mirror resolveAllPromoters' filtering exactly).
+        // The desired associations from scraped data, filtered and canonicalized exactly as
+        // resolveAllPromoters populated the cache.
         val promotersBySourceId =
             scrapedEvents.associate { event ->
                 event.sourceId to
@@ -341,9 +301,8 @@ class AssociationSyncService(
                         "Promoter '$slug' must be resolved before syncing associations"
                     }
 
-                // `add` first, and its result is the duplicate guard — see the same shape in
-                // [syncArtistAssociations]. This is the one that was actually observed: a full seed
-                // failed `frannz-club` outright, losing every event in the run (#798).
+                // `add` first, and its result is the duplicate guard, as in [syncArtistAssociations]. This is the
+                // one observed: a full seed failed `frannz-club` outright (#798).
                 if (desiredPromoterIds.add(promoterId) && existingByPromoterId[promoterId] == null) {
                     toInsert.add(EventPromoterEntity(eventId = eventId, promoterId = promoterId))
                 }
@@ -366,11 +325,10 @@ class AssociationSyncService(
     // -- Genre tag resolution --
 
     /**
-     * Normalizes genre strings from all scraped events into canonical genre tags,
-     * batch-fetches known tags by slug, and auto-creates any unknown tags.
+     * Normalizes genre strings into canonical tags, batch-fetches known tags by slug and
+     * auto-creates the rest.
      *
-     * @return a cache mapping genre tag slug → persisted [GenreTagEntity], covering
-     *   all genre tags referenced by the scraped events.
+     * @return genre tag slug to persisted [GenreTagEntity].
      */
     private suspend fun resolveAllGenreTags(scrapedEvents: List<ScrapedEvent>): Map<String, GenreTagEntity> {
         val allGenreNames = scrapedEvents.flatMap { normalizeGenre(it.genre) }.distinct()
@@ -407,10 +365,7 @@ class AssociationSyncService(
     // -- Genre tag association syncing --
 
     /**
-     * Synchronizes genre tag associations for the given saved events using a diff strategy.
-     *
-     * Genre tag associations are simple many-to-many links (like promoters — no role or
-     * ordering). The diff only inserts new and deletes removed associations.
+     * Synchronizes genre tag associations by diff: simple links, insert and delete only.
      */
     private suspend fun syncGenreTagAssociations(
         savedEvents: List<EventEntity>,
@@ -465,13 +420,10 @@ class AssociationSyncService(
     // -- Shared helpers for association syncing --
 
     /**
-     * Pre-computed per-event context for diff-based association syncing.
+     * Pre-computed per-event context for diff syncing, shared by the artist and promoter methods;
+     * supports destructuring.
      *
-     * Avoids duplicating the eventId extraction + existing-association lookup
-     * pattern across artist and promoter sync methods. Supports destructuring
-     * via `val (eventId, existingByKey, existing) = ...`.
-     *
-     * @param T the association entity type (e.g. [EventArtistEntity], [EventPromoterEntity]).
+     * @param T the association entity type.
      */
     private data class EventAssociationContext<T>(
         val eventId: Long,
@@ -480,13 +432,9 @@ class AssociationSyncService(
     )
 
     /**
-     * Batch-fetches existing associations for all saved events and groups them by event ID.
+     * Batch-fetches existing associations for all saved events, grouped by event ID.
      *
-     * Centralizes the savedEventIds extraction + early-return guard + batch-fetch pattern
-     * shared by [syncArtistAssociations] and [syncPromoterAssociations].
-     *
-     * @return grouped associations, or `null` if no saved events have IDs (caller should
-     *   early-return in that case).
+     * @return grouped associations, or `null` if no saved events have IDs.
      */
     private suspend fun <T> fetchExistingAssociationsByEventId(
         savedEvents: List<EventEntity>,
@@ -499,8 +447,7 @@ class AssociationSyncService(
     }
 
     /**
-     * Builds the per-event association context for diff-based syncing: extracts the
-     * event ID, retrieves existing associations, and indexes them by foreign key.
+     * The per-event association context: event ID, existing associations, indexed by foreign key.
      */
     private fun <T> eventAssociationContext(
         saved: EventEntity,
@@ -519,27 +466,19 @@ class AssociationSyncService(
     // -- Generic resolve-or-create for slug-based entities --
 
     /**
-     * Generic resolve-or-create logic for slug-based entities (artists, promoters, genre tags).
-     *
-     * Checks the [cache] first, then issues a conflict-tolerant `INSERT … ON CONFLICT DO NOTHING`
-     * via [insertIfAbsent] and reads the row back via [findBySlug]. The resolved entity is always
-     * added to [cache] for batch reuse.
-     *
-     * **Why not try-`save`-then-catch-and-reselect:** these resolutions run inside the caller's
-     * single import transaction, and imports run concurrently (`EventImportService.importConcurrently`)
-     * racing to insert the same shared slug (a common genre, a co-billed artist). In PostgreSQL a
-     * failed statement aborts the *whole* transaction, so catching the unique-violation and then
-     * re-querying in the same transaction fails with "current transaction is aborted". `ON CONFLICT
-     * DO NOTHING` never raises, so the transaction stays valid: a lost race becomes a brief
-     * index-lock wait and a `0`-row no-op, after which [findBySlug] returns the winner's row.
-     *
-     * The entity-type label for the log line is taken from the resolved entity's class name.
+     * Generic resolve-or-create for slug-based entities: [cache] first, then a conflict-tolerant
+     * `INSERT … ON CONFLICT DO NOTHING` via [insertIfAbsent] and [findBySlug]. Not
+     * save-then-catch: these run inside the caller's import transaction, imports run concurrently
+     * and race to insert the same shared slug, and in PostgreSQL a failed statement aborts the whole
+     * transaction, so re-querying after a unique violation fails with "current transaction is
+     * aborted". `ON CONFLICT DO NOTHING` never raises; a lost race is a `0`-row no-op and
+     * [findBySlug] returns the winner's row.
      *
      * @param T the entity type.
      * @param name the human-readable name to slugify and resolve.
-     * @param cache mutable slug → entity map shared across the batch.
-     * @param insertIfAbsent conflict-tolerant insert; returns rows inserted (`1` created, `0` already present).
-     * @param findBySlug fetches the entity by slug (always present after [insertIfAbsent]).
+     * @param cache mutable slug to entity map shared across the batch.
+     * @param insertIfAbsent conflict-tolerant insert; returns rows inserted.
+     * @param findBySlug fetches the entity by slug, always present after [insertIfAbsent].
      */
     private suspend fun <T : Any> resolveOrCreate(
         name: String,

@@ -40,12 +40,8 @@ import java.time.ZoneOffset
 import java.util.concurrent.atomic.AtomicInteger
 
 /**
- * Unit tests for [EventImportService].
- *
- * Tests the import pipeline logic (upsert, deduplication, stale event cleanup,
- * artist auto-creation, error handling) in isolation with mocked dependencies.
- * Persistence is delegated to a real [EventUpsertService] backed by a real
- * [AssociationSyncService] with mocked repositories.
+ * Unit tests for [EventImportService] with mocked dependencies; persistence goes through a real
+ * [EventUpsertService] and [AssociationSyncService] over mocked repositories.
  */
 class EventImportServiceTest {
     private val eventSourceRepository: EventSourceRepository = mockk(relaxed = true)
@@ -69,8 +65,7 @@ class EventImportServiceTest {
             coEvery { eventSource } returns EventSource.CASSIOPEIA
         }
 
-    // TransactionalOperator that just executes the callback directly (no real transaction).
-    // Mocks the underlying execute() method which executeAndAwait delegates to.
+    // TransactionalOperator that executes the callback directly.
     private val transactionalOperator: TransactionalOperator =
         mockk {
             coEvery { execute(any<org.springframework.transaction.reactive.TransactionCallback<Any>>()) } answers {
@@ -86,21 +81,16 @@ class EventImportServiceTest {
     private lateinit var service: EventImportService
 
     /**
-     * Initialised here rather than in `setUp`: JUnit builds a fresh test instance per method, so a
-     * field initialiser gives each test its own empty registry exactly as a `@BeforeEach` would —
-     * and `setUp` is already at detekt's length limit.
-     *
-     * A real registry rather than a mock, because these tests assert on the meters that come out and
-     * a relaxed mock would happily accept a name no dashboard matches.
+     * A field initialiser rather than `setUp`, which is at detekt's length limit; JUnit builds a
+     * fresh instance per method. A real registry, because a relaxed mock would accept a name no
+     * dashboard matches.
      */
     private val registry = SimpleMeterRegistry()
     private val metrics = ImporterMetrics(registry)
 
     /**
-     * Relaxed, because #472's coverage recording is a *measurement* hanging off a successful run and
-     * none of the assertions in this file are about it — `FieldCoverageServiceTest` owns that rule.
-     * What this file does still assert about it is the property that matters here: a coverage
-     * failure must not fail an import (see the `measurement` test below).
+     * Relaxed: #472's coverage recording is a measurement, owned by `FieldCoverageServiceTest`.
+     * What this file asserts is that a coverage failure must not fail an import.
      */
     private val fieldCoverageService: FieldCoverageService = mockk(relaxed = true)
 
@@ -111,8 +101,7 @@ class EventImportServiceTest {
     private val musicBrainzLookupService: MusicBrainzLookupService = mockk(relaxed = true)
 
     /**
-     * Stubbed rather than real: the cache would reach the network for a `robots.txt`, and what these
-     * tests assert is the import pipeline. [RobotsRulesCacheTest] covers the cache itself.
+     * Stubbed: the cache would reach the network for a `robots.txt`. [RobotsRulesCacheTest] covers it.
      */
     private val robotsRulesCache: RobotsRulesCache =
         mockk<RobotsRulesCache>().also {
@@ -131,8 +120,7 @@ class EventImportServiceTest {
         etag: String? = null,
         lastModified: String? = null,
         lastEventCount: Int? = null,
-        // A persisted source always carries a version (the column is NOT NULL DEFAULT 0), and
-        // the import claim is gated on it, so the default mirrors a freshly inserted row.
+        // A persisted source always carries a version (NOT NULL DEFAULT 0), and the claim is gated on it.
         version: Long? = 0L
     ) = EventSourceEntity(
         id = id,
@@ -210,8 +198,7 @@ class EventImportServiceTest {
     }
 
     private fun stubDefaults() {
-        // The import claim succeeds by default, so every test below runs the full pipeline.
-        // The relaxed mock would otherwise answer 0 and skip the import as already-claimed.
+        // The claim succeeds by default; the relaxed mock would answer 0 and skip every import.
         coEvery { eventSourceRepository.claimForImport(any(), any(), any()) } returns 1
 
         // Default stubs: empty collections, save returns input with ID
@@ -241,10 +228,8 @@ class EventImportServiceTest {
         }
         // Artist resolution uses a conflict-tolerant insert + read-back (not save()).
         coEvery { artistRepository.insertIfAbsent(any(), any()) } returns 1
-        // One id per distinct slug, because that is what a real repository gives. A constant here
-        // modelled two different artists sharing one id, which `UNIQUE (event_id, artist_id)` makes
-        // impossible — and it is what hid #798: the duplicate rows the old sync built looked correct
-        // against this stub and failed against Postgres.
+        // One id per distinct slug, as a real repository gives. A constant modelled two artists sharing
+        // one id, which `UNIQUE (event_id, artist_id)` makes impossible, and hid #798.
         artistIdsBySlug.clear()
         coEvery { artistRepository.findBySlug(any()) } answers {
             val slug = firstArg<String>()
@@ -395,9 +380,7 @@ class EventImportServiceTest {
 
                 service.importFromSource(src)
 
-                // The RUNNING transition is a conditional UPDATE, not a read-modify-write save,
-                // so that two callers cannot both claim the same source. It is gated on the
-                // version that was read, making the claim a compare-and-swap on that exact row.
+                // The RUNNING transition is a conditional UPDATE gated on the version read, a compare-and-swap.
                 coVerify { eventSourceRepository.claimForImport(1L, 0L, any()) }
             }
 
@@ -421,11 +404,8 @@ class EventImportServiceTest {
         @Test
         fun `skips the import when the source was imported after this run read it`() =
             runTest {
-                // A scheduler tick reads a source while it is still IDLE, then waits on the
-                // import semaphore. A manual trigger imports the source in the meantime, so by
-                // the time this run claims, the row is back at SUCCESS — a status-only guard
-                // would let it re-scrape the venue. The version it read has moved on, so the
-                // conditional UPDATE matches no row.
+                // A tick reads a source while IDLE, waits on the semaphore, and a manual trigger imports it
+                // meanwhile: the row is back at SUCCESS, the version has moved, and the UPDATE matches no row.
                 val staleSource = source(version = 0L)
                 coEvery { eventSourceRepository.claimForImport(1L, 0L, any()) } returns 0
 
@@ -441,9 +421,8 @@ class EventImportServiceTest {
         @Test
         fun `closes the import at the version the claim wrote`() =
             runTest {
-                // The claim increments the version, and it only succeeds when the row still
-                // matched the version that was read — so the closing save can carry that exact
-                // value instead of guessing, and no longer trips optimistic locking.
+                // The claim increments the version only when the row still matched, so the closing save carries
+                // that exact value.
                 val src = source(version = 7L)
                 coEvery { cassiopeiaImporter.importEvents(any(), any(), any()) } returns
                     ImportResult.Success(events = emptyList(), etag = null, lastModified = null)
@@ -505,14 +484,10 @@ class EventImportServiceTest {
     }
 
     /**
-     * The meters the pipeline emits (#415).
-     *
-     * These matter more than they look. A scraper does not fail loudly: when a venue redesigns its
-     * site the importer keeps running, reports success, and silently writes zero events — and the
-     * only thing that ever notices is one of these series. So the tests assert **which outcome each
-     * path produces**, because the states that are easiest to merge by accident are exactly the ones
-     * that mean different things: not-modified, skipped-because-claimed and misconfigured all return
-     * `imported=false, eventCount=0`.
+     * The meters the pipeline emits (#415): a scraper does not fail loudly, and one of these series
+     * is the only thing that notices. The tests assert which outcome each path produces, because
+     * not-modified, skipped-because-claimed and misconfigured all return `imported=false,
+     * eventCount=0`.
      */
     @Nested
     inner class Metrics {
@@ -554,9 +529,8 @@ class EventImportServiceTest {
             }
 
         /**
-         * The column and the in-memory gauge have to agree, because the gauge has two feeds — this
-         * one, immediate, and [MetricsRefreshService], which republishes from the column every
-         * minute. A disagreement would make the value jump once a minute and read as clock skew.
+         * The column and the in-memory gauge have to agree: [MetricsRefreshService] republishes from
+         * the column every minute, and a disagreement would read as clock skew.
          */
         @Test
         fun `a successful run stamps last_success_at, and the gauge agrees with it`() =
@@ -582,10 +556,8 @@ class EventImportServiceTest {
             }
 
         /**
-         * The other half of the same argument (#659). A 304 is a working scraper, so it must not
-         * write the number an emptied one would write. `loge` reported `lastEventCount = 0` on a
-         * run that succeeded, and the listing had six events on it the whole time — the run simply
-         * never read it.
+         * The other half of #659: a 304 must not write the number an emptied source would. `loge`
+         * reported `lastEventCount = 0` on a run that succeeded with six events on the listing.
          */
         @Test
         fun `a 304 carries the previous event count forward instead of zeroing it`() =
@@ -598,8 +570,8 @@ class EventImportServiceTest {
             }
 
         /**
-         * The asymmetry that makes the column worth having: `last_import_at` moves on a failure and
-         * `last_success_at` must not, or the staleness alert can never fire.
+         * `last_import_at` moves on a failure and `last_success_at` must not, or the staleness alert
+         * can never fire.
          */
         @Test
         fun `a failed run moves last_import_at and leaves last_success_at where it was`() =
@@ -657,22 +629,16 @@ class EventImportServiceTest {
             }
 
         /**
-         * The distinction the `operation` tag exists for. `skipped` here is change detection
-         * reporting that it worked — a source returning only skips for days is either genuinely
-         * static or silently broken, and this is half of what tells those apart.
+         * The distinction the `operation` tag exists for: `skipped` is change detection reporting that
+         * it worked.
          */
         @Test
         fun `writes are split into inserted, updated and skipped`() =
             runTest {
-                // One row already in the database byte-identical to what the scraper returns, and one
-                // whose title has moved. Built by hand in the same shape as
-                // `skips saving unchanged events…` above, because change detection compares the whole
-                // entity — deriving the "unchanged" row from the scraped event would compare it with
-                // itself and prove nothing.
-                // The three titles differ deliberately: deduplication keys on date + title + start
-                // time, so three same-titled events on one date would collapse into one before any of
-                // this is reached — which is how the first attempt at this test silently measured a
-                // single insert.
+                // One row byte-identical to what the scraper returns, and one whose title has moved, built by
+                // hand because deriving the "unchanged" row from the scraped event would compare it with itself.
+                // The three titles differ deliberately: deduplication keys on date + title + start time, which
+                // is how the first attempt at this test silently measured a single insert.
                 val unchangedRow =
                     EventEntity(
                         id = 42L,
@@ -1217,8 +1183,7 @@ class EventImportServiceTest {
                 coEvery { cassiopeiaImporter.importEvents(any(), any(), any()) } returns
                     ImportResult.Success(events = listOf(scrapedEvent()), etag = null, lastModified = null)
 
-                // The RUNNING claim is an UPDATE, not a save — so markSuccess is the first save.
-                // It throws once, and the retry (the second save) succeeds.
+                // The claim is an UPDATE, so markSuccess is the first save; it throws once and the retry succeeds.
                 var saveCallCount = 0
                 coEvery { eventSourceRepository.save(any()) } answers {
                     saveCallCount++
@@ -1246,8 +1211,7 @@ class EventImportServiceTest {
                 coEvery { cassiopeiaImporter.importEvents(any(), any(), any()) } throws
                     RuntimeException("Network timeout")
 
-                // The RUNNING claim is an UPDATE, not a save — so markFailed is the first save.
-                // It throws once, and the retry (the second save) succeeds.
+                // The claim is an UPDATE, so markFailed is the first save; it throws once and the retry succeeds.
                 var saveCallCount = 0
                 coEvery { eventSourceRepository.save(any()) } answers {
                     saveCallCount++
@@ -1270,10 +1234,8 @@ class EventImportServiceTest {
     @Nested
     inner class GlobalConcurrencyBound {
         /**
-         * The concurrency limit must be *global*, not per-batch: a scheduled batch
-         * ([EventImportService.importConcurrently]) running at the same time as a manual
-         * fire-and-forget trigger ([EventImportService.importFromSource], as used by
-         * `ImportJobLauncher`) must together never exceed `maxConcurrency` in-flight imports.
+         * The concurrency limit must be global: a scheduled batch and a manual fire-and-forget trigger
+         * together must never exceed `maxConcurrency`.
          */
         @Test
         fun `scheduled batch and manual trigger together never exceed maxConcurrency`() =
@@ -1318,10 +1280,8 @@ class EventImportServiceTest {
 }
 
 /**
- * Test [EventImporter] that records the peak number of concurrent [importEvents] calls,
- * used to assert the global concurrency bound in [EventImportServiceTest.GlobalConcurrencyBound].
- * It suspends (via [delay]) while "in flight" so overlapping imports are observable under
- * `runTest`'s virtual time.
+ * Test [EventImporter] recording the peak number of concurrent [importEvents] calls, suspending
+ * via [delay] so overlaps are observable under `runTest`'s virtual time.
  */
 private class ConcurrencyTrackingImporter(
     private val active: AtomicInteger,

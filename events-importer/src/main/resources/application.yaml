@@ -6,61 +6,49 @@ spring:
     name: events-importer
   http:
     codecs:
-      # Max response body size buffered in memory (guards against OOM from huge pages during scraping).
-      # Raised from 2MB for Kulturhaus Insel Berlin, whose Gatsby static-query artefact ships the venue's
-      # whole event archive in one 2.2MB response; at the configured import concurrency of 4 the worst
-      # case is 32MB in flight.
+      # Max response body buffered in memory. Raised from 2MB for Kulturhaus Insel Berlin, whose
+      # Gatsby artefact ships the whole archive in one 2.2MB response; at concurrency 4 the worst case
+      # is 32MB in flight.
       max-in-memory-size: 8MB
   flyway:
     schemas: events
   r2dbc:
     pool:
-      # Sized above app.import.max-concurrency so every in-flight import can hold a connection
-      # for its upsert transaction while leaving headroom for the out-of-transaction status
-      # writes (markRunning/markSuccess/markFailed) and the scheduler's own queries.
+      # Above app.import.max-concurrency, so every in-flight import can hold a connection for its
+      # upsert while the out-of-transaction status writes and the scheduler still get one.
       initial-size: 5
       max-size: 12
     properties:
       schema: events
 
-# `info` joins the default `health` so an operator can ask a running importer which build it is —
-# the same rationale as the BFF (docs/LEGAL.md §4.4). The importer has no public
-# surface and no `/meta` endpoint: nothing user-facing reads its version.
+# `info` joins the default `health` so an operator can ask which build this is (docs/LEGAL.md
+# §4.4). The importer has no public surface and no `/meta`.
 management:
   endpoints:
     web:
       exposure:
-        # `prometheus` joins health and info here, and this is safe *because of where the endpoint
-        # lives, not because of what it contains*: the chart moves the whole management port off the
-        # application port (bff.service.managementPort) and no Ingress routes it, so /actuator/** —
-        # including this — is unreachable from outside the cluster. See PLATFORM_SETUP.md §7.
+        # `prometheus` joins health and info, safe because the chart moves the management port off the
+        # application port and no Ingress routes it (PLATFORM_SETUP.md §7).
         include: health,info,prometheus
-  # **No readiness group here, deliberately — this is the importer's answer to #438, not an
-  # oversight.** The BFF puts `r2dbc` and `eventsSchema` in its readiness group so that Kubernetes
-  # stops routing to a pod that cannot serve. The importer has nothing to route: its Service is
-  # ClusterIP with no Ingress backend anywhere in the chart, it runs one replica under `Recreate`,
-  # and its work is a scheduler tick rather than a request. Readiness gates no traffic, so making it
-  # database-dependent would buy nothing and would take the admin API away during a blip — which is
-  # the one thing an operator needs *during* a database incident. ADR-018 §"And the importer" argues
-  # this at length. Leaving readiness at Spring's `readinessState` default is the decision.
+  # No readiness group, deliberately, the importer's answer to #438: it has nothing to route (a
+  # ClusterIP Service with no Ingress backend, one replica under `Recreate`, work driven by a
+  # scheduler tick), so a database-dependent readiness would buy nothing and take the admin API
+  # away during a blip, the one thing an operator needs during a database incident (ADR-018
+  # §"And the importer").
   info:
     build:
       enabled: true
     git:
-      # No git.properties is generated anywhere in this build, by design — see the BFF's
-      # application.yaml and LEGAL.md §4.3.
+      # No git.properties is generated anywhere in this build, by design (LEGAL.md §4.3).
       enabled: false
 
 # Application configuration for import pipeline, scraping, and scheduling
 app:
   api:
     # The largest page any admin list returns. `@PageableDefault` sets a default and never a
-    # maximum, and `spring.data.web.pageable.max-page-size` is servlet-only — see
-    # StableSortPageableArgumentResolver, which is the only place this can be applied.
-    #
-    # 100 is what the three scripts under `scripts/` already ask for, and the largest table an
-    # operator reads whole (86 event sources) fits inside it. Since #810 a clamped response says so,
-    # because the listing reports `totalElements`.
+    # maximum, and `spring.data.web.pageable.max-page-size` is servlet-only, so
+    # StableSortPageableArgumentResolver applies this. 100 is what the scripts ask for, and the
+    # largest table an operator reads whole (86 sources) fits; since #810 a clamped response says so.
     max-page-size: 100
   import:
     # Maximum number of event sources imported concurrently (bounded by coroutine Semaphore)
@@ -68,48 +56,42 @@ app:
   scraper:
     response-timeout: 30s
     polite-delay-millis: 200
-    # A full import of every source found nothing disallowed, so this costs nothing and fails loudly
-    # the day a venue adds a rule (#795).
+    # A full import found nothing disallowed, so this costs nothing and fails loudly the day a venue
+    # adds a rule (#795).
     robots-enforced: true
     robots-cache-ttl: 24h
   translation:
-    # `none` or `anthropic`. Off everywhere until an operator chooses both an engine and a key —
-    # translating sends a venue's text to a third party and is billed per character (ADR-026).
-    #
-    # Switching it on is not the whole gate: a source also needs `translation_licence` set to
-    # PERMITTED. Since ADR-027 that verdict follows the display rule, so an operator sets it wherever
-    # a venue has not prohibited the description, and the #808 mail is what turns silence into a
-    # real grant.
+    # `none` or `anthropic`. Off until an operator chooses both an engine and a key: translating
+    # sends a venue's text to a third party and is billed per character (ADR-026). A source also
+    # needs `translation_licence` PERMITTED, which since ADR-027 follows the display rule; the #808
+    # mail turns silence into a real grant.
     engine: none
     api-key: ${APP_TRANSLATION_API_KEY:}
     model: claude-haiku-4-5
     timeout: 60s
     max-retries: 2
-    # A source that grants translation and publishes 300 events spreads over several runs rather
-    # than spending the whole budget at once. The remainder stays a candidate.
+    # A source that grants translation and publishes 300 events spreads over several runs.
     max-per-run: 50
   musicbrainz:
-    # After each import, every artist it billed is looked up in MusicBrainz and the verdict stored;
-    # nothing else is read or written from it in this step (ADR-031). Only the stage name is sent.
+    # After each import, every artist it billed is looked up in MusicBrainz and the verdict stored
+    # (ADR-031). Only the stage name is sent.
     enabled: ${APP_MUSICBRAINZ_ENABLED:true}
     base-url: https://musicbrainz.org/ws/2/
-    # MusicBrainz allows one request a second per address, and the limit is shared by every process
-    # behind that address. A little slower than the limit, because a 503 costs a five-second pause.
+    # MusicBrainz allows one request a second per address, shared by every process behind it. A
+    # little slower, because a 503 costs a five-second pause.
     polite-delay-millis: 1100
     timeout: 30s
     # A 503 burst outlasts one pause: three retries at 5s, 15s and 45s before a row is given up on.
     backoff: 5s
     retries: 3
-    # The backfill's slice: the rows nobody has looked at yet, drained this many per import. About
-    # nine minutes at the pace above, inside the sweep and without a separate job.
+    # The backfill's slice, drained this many per import: about nine minutes at the pace above.
     max-per-run: 500
   scheduling:
     # Reset sources stuck in RUNNING longer than this to FAILED (Duration format, e.g. 30m, 1h)
     staleness-timeout: 30m
   images:
-    # Off means nothing is fetched and nothing is stored. This is not the hotlink-versus-cache
-    # switch: that one is `app.images.serving.enabled` in the BFF, and this has to be on first —
-    # there is nothing to serve until something has fetched it (ADR-019 §2.10).
+    # Off means nothing is fetched or stored. Not the hotlink-versus-cache switch, which is
+    # `app.images.serving.enabled` in the BFF; this has to be on first (ADR-019 §2.10).
     fetch-enabled: false
     tick-millis: 300000
     # Security limits, not tuning. The URL comes out of scraped HTML and the bytes are untrusted.
@@ -119,55 +101,45 @@ app:
     retry-failed-after: 7d
     batch-size: 200
     sweep:
-      # Off means the pass runs every query and logs what it would delete, and deletes nothing. A
-      # deletion rule is watched before it is trusted; the takedown route deletes either way.
+      # Off means the pass logs what it would delete and deletes nothing: a deletion rule is watched
+      # before it is trusted. The takedown route deletes either way.
       enabled: ${APP_IMAGES_SWEEP_ENABLED:false}
       tick-millis: 21600000
       # An object is stored before its row is written, so it is briefly unreferenced by design.
       grace-period: 1d
       max-deletes: 500
     storage:
-      # Hetzner Object Storage is S3-compatible. The region is enforced in the request signature and
-      # a mismatch fails as though the credentials were wrong, so it matches infra/bootstrap.
+      # The region is enforced in the request signature and a mismatch fails as though the
+      # credentials were wrong, so it matches infra/bootstrap.
       endpoint: ${IMAGE_STORAGE_ENDPOINT:https://fsn1.your-objectstorage.com}
       region: ${IMAGE_STORAGE_REGION:fsn1}
       bucket: ${IMAGE_STORAGE_BUCKET:event-junkie-images}
-      # One bucket serves both environments, so this is the only thing keeping their objects apart.
-      # Keys are content addressed: staging computes the same key as production for the same image.
+      # One bucket serves both environments, and keys are content addressed, so this prefix is the
+      # only thing keeping their objects apart.
       prefix: ${IMAGE_STORAGE_PREFIX:local}
-      # Empty by default. Without credentials no client is built, images are recorded and not
-      # stored, and a local run needs no bucket access.
+      # Empty by default: without credentials no client is built and images are recorded, not stored.
       access-key: ${IMAGE_STORAGE_ACCESS_KEY:}
       secret-key: ${IMAGE_STORAGE_SECRET_KEY:}
     imgproxy:
-      # The sidecar that generates derivatives (ADR-020). Off means originals are stored and nothing
-      # is derived, which is what a local run without the sidecar needs.
+      # The sidecar that generates derivatives (ADR-020). Off means originals only, for a local run.
       enabled: ${APP_IMAGES_IMGPROXY_ENABLED:false}
       # Loopback: the sidecar shares this pod's network namespace and nothing outside reaches it.
       base-url: ${IMGPROXY_BASE_URL:http://127.0.0.1:8080}
-      # Hex, as imgproxy requires. Signing with the ASCII of the hex string fails as a 403 that
-      # reads like a wrong key rather than a wrong encoding.
+      # Hex, as imgproxy requires; signing with the ASCII of the hex string fails as a 403 that reads
+      # like a wrong key.
       key: ${IMGPROXY_KEY:}
       salt: ${IMGPROXY_SALT:}
-      # 192 and 288 cover the 80 px and 96 px cards at 2x and 3x. 512 is the poster card in the
-      # two-column grid (#1245). 768 covers EventDetailView's full-width image in a max-w-3xl
-      # column, and 1536 covers it at 2x (#804).
+      # 192 and 288 cover the 80 px and 96 px cards at 2x and 3x; 512 the poster card (#1245); 768 and
+      # 1536 EventDetailView's full-width image at 1x and 2x (#804).
       widths: 192,288,512,768,1536
       formats: avif,webp,jpg
 
 ---
-# Local development only — activate with `--spring.profiles.active=local` (IntelliJ: run
-# configuration → "Active profiles: local"). Mirrors the console output to a file so an
-# import run can be grepped after the fact, which the IDE console alone does not allow.
-#
-# Deliberately profile-gated rather than global: on a container platform the log belongs on
-# stdout, and a file appender there would write into the container's in-memory filesystem.
-#
-# The path is relative to the working directory (the module directory under `bootRun`), so
-# it lands in `events-importer/build/dev-env/`. `build` is gitignored at any depth, and
-# Logback creates the parent directories. `scripts/dev-env.sh up` does not use this profile —
-# it redirects the process's stdout to `build/dev-env/importer.log` at the repository root
-# instead, so the two never write to the same file.
+# Local development only (`--spring.profiles.active=local`): mirrors console output to a file so
+# an import run can be grepped. Profile-gated because on a container platform the log belongs on
+# stdout. The path is relative to the module directory under `bootRun`, so it lands in
+# `events-importer/build/dev-env/`; `scripts/dev-env.sh up` redirects stdout to
+# `build/dev-env/importer.log` at the repository root instead, so the two never share a file.
 spring:
   config:
     activate:

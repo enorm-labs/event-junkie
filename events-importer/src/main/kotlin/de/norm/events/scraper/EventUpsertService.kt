@@ -13,49 +13,38 @@ import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
 /**
- * Handles the persistence pipeline for scraped events: deduplication, upsert, and
- * stale event cleanup.
- *
- * Association management (artist/promoter resolution and join-table syncing) is
- * delegated to [AssociationSyncService] to keep this service focused on event-level
- * persistence concerns. Called within a transactional boundary managed by the caller —
- * it does not manage its own transactions.
+ * The persistence pipeline for scraped events: deduplication, upsert, stale cleanup.
+ * Association management is [AssociationSyncService]'s. Called within a transactional boundary
+ * managed by the caller.
  */
 @Service
 class EventUpsertService(
     private val eventRepository: EventRepository,
     private val associationSyncService: AssociationSyncService,
     /**
-     * Injected clock for deterministic time in tests. Berlin in production: the containers run in
-     * UTC, and a UTC "today" dropped last night one or two hours late and out of step with the BFF (#299).
+     * Injected clock; Berlin in production, because a UTC "today" dropped last night one or two
+     * hours late and out of step with the BFF (#299).
      */
     private val clock: Clock = Clock.system(BERLIN)
 ) {
     private val logger = KotlinLogging.logger {}
 
     /**
-     * Deduplicates, upserts, and cleans up stale events for a single event source. Call it within a
-     * transactional boundary so partial failures roll back cleanly. The pipeline:
-     * 1. Drop scraped events dated before today (see [dropPastEvents]).
-     * 2. Deduplicate scraped events by generated slug (date + title).
-     * 3. Remove stale future events no longer listed on the source website.
-     * 4. Upsert events into the database (insert new, update existing by `sourceId`).
-     * 5. Resolve and sync artist/promoter associations (delegated to [AssociationSyncService]).
+     * Deduplicates, upserts and cleans up stale events for one source, within the caller's
+     * transaction: drop events dated before today ([dropPastEvents]), deduplicate by generated slug,
+     * remove stale future events, upsert by `sourceId`, sync associations
+     * ([AssociationSyncService]).
      *
-     * **Steps 3 and 4 are in this order deliberately, and swapping them breaks whole imports.**
-     * `event.slug` is `UNIQUE` and derived from date + venue + title, *not* from `sourceId`, so a
-     * stale row can be sitting on the slug an incoming row needs. That happens whenever a venue
-     * re-publishes an event under a new id: SO36 listed its two-day festival's combi ticket
-     * (`so36:90006`) on the opening date, then added a day-one ticket (`so36:93090`) with the same
-     * title and date. Step 2 keeps the first by page order, step 3 recognises the other as stale —
-     * but with the upsert first, the `INSERT` hits the old row's slug and the `executeMany` batch
-     * fails, taking **all 111 SO36 events** with it rather than the one row. Deleting first frees the
-     * slug; both steps are inside the caller's transaction, so a later failure still rolls the
-     * deletion back.
+     * Cleanup before upsert, deliberately: `event.slug` is `UNIQUE` and derived from date + venue +
+     * title, not `sourceId`, so a stale row can sit on the slug an incoming row needs. SO36 listed a
+     * festival combi ticket (`so36:90006`) then a day-one ticket (`so36:93090`) with the same title
+     * and date; with the upsert first, the `INSERT` hit the old row's slug and the `executeMany`
+     * batch failed, taking all 111 SO36 events with it. Deleting first frees the slug, inside the
+     * same transaction.
      *
      * @param scrapedEvents the raw events from the scraper; may contain duplicates.
      * @return what the upsert did, split by operation. [UpsertOutcome.total] is what the source's
-     *   `lastEventCount` records.
+     * `lastEventCount` records.
      */
     suspend fun upsertAndCleanup(
         scrapedEvents: List<ScrapedEvent>,
@@ -66,11 +55,11 @@ class EventUpsertService(
     ): UpsertOutcome {
         val upcomingEvents = dropPastEvents(scrapedEvents, eventSourceId)
         val uniqueEvents = deduplicateScrapedEvents(upcomingEvents)
-        // Cleanup runs BEFORE the upsert, and the order is load-bearing — see the KDoc note.
+        // Cleanup BEFORE the upsert; the order is load-bearing (KDoc).
         removeStaleEvents(uniqueEvents, eventSourceId)
         return upsertEvents(uniqueEvents, venueId, venueSlug, eventSourceId, licences)
-            // Counted here rather than incremented where they are dropped, because the tag needs the
-            // source *slug* and this service only holds the numeric id (#982). The caller has both.
+            // Counted here rather than where they are dropped, because the tag needs the source slug and
+            // this service holds only the numeric id (#982).
             .copy(
                 droppedPast = scrapedEvents.size - upcomingEvents.size,
                 droppedDuplicate = upcomingEvents.size - uniqueEvents.size
@@ -78,24 +67,13 @@ class EventUpsertService(
     }
 
     /**
-     * Drops scraped events dated before today, keeping today onward.
-     *
-     * Calendar-style sources publish the venue's whole standing programme — including
-     * shows that have already happened (a widget returning the full calendar, or a CMS
-     * page that leaves recently-passed nights listed). Because [removeStaleEvents] never
-     * prunes past-dated rows (it preserves them for historical records), re-importing such
-     * a source would otherwise resurrect stale events on every run. Filtering here — the
-     * single funnel every source flows through — stops that universally.
-     *
-     * This is the ingestion-side dual of [removeStaleEvents]'s cutoff: that method keeps
-     * the future as the live window on cleanup; this one does the same on intake. Same-day
-     * events are kept (the show may still be running), matching the `tomorrow` lower bound
-     * used for cleanup. Existing past-dated rows are untouched — they are simply not
-     * re-upserted, so nothing is lost for a source scraped regularly (events age into the
-     * past only after they were first imported while still upcoming).
+     * Drops scraped events dated before today. Calendar-style sources publish the whole standing
+     * programme, and [removeStaleEvents] never prunes past-dated rows, so re-importing would
+     * resurrect them every run. Same-day events are kept, matching the `tomorrow` lower bound used
+     * for cleanup. Existing past rows are untouched, simply not re-upserted.
      *
      * @param scrapedEvents the raw events from the scraper.
-     * @param eventSourceId the database ID of the [EventSourceEntity] that owns these events, used for logging.
+     * @param eventSourceId the owning [EventSourceEntity]'s id, for logging.
      * @return the scraped events dated today or later.
      */
     private fun dropPastEvents(
@@ -107,18 +85,12 @@ class EventUpsertService(
         }
 
     /**
-     * Upserts pre-deduplicated scraped events into the database.
+     * Upserts pre-deduplicated scraped events. An event whose `sourceId` exists is saved only when
+     * business-relevant fields changed, avoiding UPDATEs and inflated `updated_at`; new events are
+     * inserted. Associations are [AssociationSyncService]'s.
      *
-     * For each event, checks if an event with the same `sourceId` already
-     * exists. If so, compares the built entity against the existing row and
-     * only saves it when business-relevant fields have changed — unchanged
-     * events are skipped to avoid unnecessary UPDATE statements and inflated
-     * `updated_at` timestamps. New events are always inserted. Artist and
-     * promoter associations are resolved and synced by [AssociationSyncService].
-     *
-     * @return what happened, split into inserted / updated / skipped. The split is not extra work:
-     *   the insert-vs-update distinction was already being computed for the debug log below, and
-     *   `skipped` is exactly the `unchanged` partition change detection already produces (#415).
+     * @return inserted / updated / skipped. Not extra work: the split was already computed for the
+     * debug log, and `skipped` is the `unchanged` partition change detection produces (#415).
      */
     private suspend fun upsertEvents(
         scrapedEvents: List<ScrapedEvent>,
@@ -155,8 +127,7 @@ class EventUpsertService(
 
         val touchedArtistIds = associationSyncService.resolveAndSyncAssociations(savedEvents, scrapedEvents)
 
-        // Only changed/new events are logged here — unchanged ones already are, in partitionByChanged.
-        // Count the same distinction for `importer.events.written{operation}` while it is in hand.
+        // Only changed/new events are logged here; unchanged ones already are, in partitionByChanged.
         var inserted = 0
         changed.forEach { saved ->
             val existed = existingBySourceId.containsKey(saved.sourceId)
@@ -175,29 +146,18 @@ class EventUpsertService(
     }
 
     /**
-     * Removes duplicate events from the scraped list — but keeps a second *sitting*.
+     * Removes duplicate events from the scraped list, keeping a second sitting. Keyed on date +
+     * title + start time (the venue is the same within one import). The start time separates the
+     * same event published twice (SO36's combi ticket beside its day-one ticket, 19:30 both, first
+     * wins) from two sittings of one production (Theater im Delphi's Schwanensee at 15:00 and
+     * 20:00, both kept, [slugDiscriminators] giving each its own slug). No start time collapses to
+     * one.
      *
-     * Duplicates are keyed on date + title + **start time**. Within one import every event belongs to
-     * the same venue, so the venue slug is deliberately omitted from the key.
-     *
-     * The start time separates the two shapes that look identical on date and title:
-     *  - **The same event, published twice.** SO36 sells a festival combi ticket beside its day-one
-     *    ticket — same title, date and 19:30 start. Only one night happens, so the first wins.
-     *  - **Two sittings of one production.** A matinee and an evening show genuinely are two events:
-     *    Theater im Delphi bills *Schwanensee* at 15:00 and 20:00 on one day. Both are kept, and
-     *    [slugDiscriminators] gives each its own slug.
-     *
-     * An event with no start time cannot be a distinguishable sitting, so a group of those collapses
-     * to one — the conservative direction for a venue that publishes no times at all.
-     *
-     * **A repeated `sourceId` collapses too, whatever the times say.** `event.source_id` is `UNIQUE`,
-     * so two scraped events sharing one are one row by identity. Several scrapers key on the show and
-     * date rather than the session (Admiralspalast: `admiralspalast:mamma-mia-…-2027-09-18`), so their
-     * sittings arrive under one id. Without this guard both entities get the same database id and
-     * `saveAll` issues two UPDATEs to one row: no error, last write wins, slug flips every import.
-     *
-     * Recovering those sittings is a per-scraper change — the session time in the `sourceId` — which
-     * re-keys that venue's whole history. See #333.
+     * A repeated `sourceId` collapses too, whatever the times say: `event.source_id` is `UNIQUE`,
+     * and several scrapers key on the show and date rather than the session (Admiralspalast:
+     * `admiralspalast:mamma-mia-…-2027-09-18`). Without this guard `saveAll` issues two UPDATEs to
+     * one row, last write wins, and the slug flips every import. Recovering those sittings re-keys
+     * that venue's whole history (#333).
      */
     private fun deduplicateScrapedEvents(events: List<ScrapedEvent>): List<ScrapedEvent> {
         val seenIds = mutableSetOf<String>()
@@ -219,18 +179,12 @@ class EventUpsertService(
         SlugGenerator.slugify("${event.eventDate}-${event.title}") + "@" + event.startTime?.format(SLUG_TIME).orEmpty()
 
     /**
-     * The slug discriminator each event needs, keyed by `sourceId`; absent for events that need none.
-     *
-     * `event.slug` is `UNIQUE` and built from date + venue + title, so two sittings of one
-     * production on one day collide on insert without one. Only the full scrape can see that a
-     * collision exists, which is why this is computed
-     * here and handed to [ScrapedEvent.toEventEntity] rather than being decided at the boundary.
-     *
-     * **Every member of a colliding group is suffixed, including the first.** Suffixing only the
-     * later ones would leave a matinee at `…/schwanensee` and its evening show at
-     * `…/schwanensee-2000`, which reads as if one were the real event; and which of the two got
-     * the bare slug would then depend on page order, so a venue reordering its listing would
-     * silently swap two public URLs. Slugs outside a colliding group are untouched.
+     * The slug discriminator each event needs, keyed by `sourceId`; absent for events that need
+     * none. `event.slug` is `UNIQUE` and built from date + venue + title, so two sittings collide on
+     * insert; only the full scrape can see the collision, so it is computed here and handed to
+     * [ScrapedEvent.toEventEntity]. Every member of a colliding group is suffixed, including the
+     * first: suffixing only the later ones would read as if one were the real event, and which got
+     * the bare slug would depend on page order, so a reordered listing would swap two public URLs.
      */
     private fun slugDiscriminators(events: List<ScrapedEvent>): Map<String, String> =
         events
@@ -242,26 +196,14 @@ class EventUpsertService(
             .toMap()
 
     /**
-     * Removes future events that were previously imported from this source but are
-     * no longer listed on the venue's website (e.g. cancelled or removed events).
+     * Removes future events previously imported from this source that are no longer listed. Only
+     * tomorrow up to the latest scraped date is considered, so events on pages we did not fetch
+     * survive, and past events are always preserved. Tomorrow, not today: many venues stop listing
+     * an event once the day begins, so `today` would delete same-day events that are happening. A
+     * genuinely cancelled today-event stays for at most a few hours until it is past.
      *
-     * Only events from tomorrow up to the latest scraped date are considered — this
-     * prevents deleting events on pages we didn't fetch (e.g. when only page 1 of a
-     * paginated listing is scraped). Past events are always preserved for historical
-     * records regardless of whether they still appear on the source website.
-     *
-     * **Why tomorrow, not today?** Many venue websites naturally stop listing events
-     * once the day begins (showing only "upcoming" events from tomorrow onward). Using
-     * `today` as the lower bound would incorrectly delete same-day events that are
-     * actually happening but simply no longer appear in the listing. Starting from
-     * tomorrow avoids these false deletions. The trade-off is that a genuinely
-     * cancelled today-event stays in the DB for at most a few hours until it becomes
-     * a past event — which we preserve for historical records anyway.
-     *
-     * @param scrapedEvents the events from the current scrape (used to determine
-     *   the date range and the set of known sourceIds).
-     * @param eventSourceId the database ID of the [EventSourceEntity] that owns these events,
-     *   used to query by FK instead of text-pattern matching.
+     * @param scrapedEvents the current scrape, for the date range and the set of known sourceIds.
+     * @param eventSourceId the owning [EventSourceEntity]'s id, to query by FK.
      */
     private suspend fun removeStaleEvents(
         scrapedEvents: List<ScrapedEvent>,
@@ -273,9 +215,7 @@ class EventUpsertService(
         val maxScrapedDate = scrapedEvents.maxOf { it.eventDate }
         val scrapedSourceIds = scrapedEvents.map { it.sourceId }.toSet()
 
-        // Find all events from this source within the cleanup window via FK.
-        // Starts from tomorrow to avoid deleting same-day events that venues
-        // may have simply stopped listing — see KDoc for rationale.
+        // All events from this source within the cleanup window, from tomorrow (KDoc).
         val existingEvents =
             eventRepository
                 .findByEventSourceIdAndEventDateBetween(
@@ -300,9 +240,8 @@ class EventUpsertService(
     }
 
     /**
-     * Partitions built entities into those that actually changed (or are new) vs. those identical
-     * to their existing database row. Only changed/new entities need to be saved, avoiding
-     * unnecessary UPDATE statements and inflated `updated_at` timestamps.
+     * Partitions built entities into changed-or-new and identical to their database row, so only the
+     * former are saved.
      *
      * @return a pair of (changed/new entities, unchanged entities).
      */
@@ -331,16 +270,10 @@ class EventUpsertService(
     }
 
     /**
-     * Checks whether this entity has the same business-relevant content as [other].
-     *
-     * Normalizes audit fields (`id`, `createdAt`, `updatedAt`) before comparing via
-     * the data class `equals()`, so only actual data changes are detected. Because
-     * `equals()` covers all constructor properties, newly added fields are automatically
-     * included without manual maintenance.
-     *
-     * This extension lives in the scraper module (not on [EventEntity] itself) because
-     * content-based change detection is a scraper concern. Overriding `equals()`/`hashCode()`
-     * on the entity would break Spring Data R2DBC identity semantics and collection behavior.
+     * Whether this entity has the same business-relevant content as [other]: audit fields (`id`,
+     * `createdAt`, `updatedAt`) normalised, then data class `equals()`, so new fields are covered
+     * automatically. An extension in the scraper module rather than an override on [EventEntity],
+     * which would break Spring Data R2DBC identity semantics.
      */
     private fun EventEntity.contentEquals(other: EventEntity): Boolean = copy(id = other.id, createdAt = other.createdAt, updatedAt = other.updatedAt) == other
 
@@ -351,13 +284,10 @@ class EventUpsertService(
 }
 
 /**
- * What one source's upsert did to the database, split the way `importer.events.written` is tagged.
- *
- * It exists because the count alone cannot answer the question the metric is for. "42 events" is the
- * same number whether the venue published a fresh programme or nothing changed at all — and telling
- * those apart is the difference between a working importer and one that has been silently scraping a
- * redesigned page for a fortnight (#415, ADR-015). `skipped` is therefore a *result*, not noise: it
- * is change detection reporting that it worked.
+ * What one source's upsert did, split the way `importer.events.written` is tagged. "42 events"
+ * is the same number whether the venue published a fresh programme or nothing changed, and
+ * telling those apart is the difference between a working importer and one silently scraping a
+ * redesigned page (#415, ADR-015). `skipped` is change detection reporting that it worked.
  */
 data class UpsertOutcome(
     /** Events that did not exist and were written. */
@@ -367,40 +297,26 @@ data class UpsertOutcome(
     /** Events that existed and were byte-identical, so no UPDATE was issued. */
     val skipped: Int,
     /**
-     * Scraped events discarded as already past (#982).
-     *
-     * **Carried out rather than counted in place**, because `importer.events.dropped` is tagged by
-     * source slug and this service is given only the numeric id. `EventImportService` holds both and
-     * records all three counters together, which is the idiom `inserted`/`updated`/`skipped` already
-     * established.
+     * Scraped events discarded as already past (#982). Carried out because `importer.events.dropped`
+     * is tagged by source slug, which `EventImportService` holds.
      */
     val droppedPast: Int = 0,
     /** Scraped events discarded as duplicates within one scrape (#982). */
     val droppedDuplicate: Int = 0,
     /**
-     * The artist rows this run billed, whether it created them or found them.
-     *
-     * Carried out for the same reason [droppedPast] is: the MusicBrainz sweep runs after the commit
-     * and only over what the import touched, and `EventImportService` is where "after the commit"
-     * happens (#1567).
+     * The artist rows this run billed, created or found, for the MusicBrainz sweep that runs after
+     * the commit over what the import touched (#1567).
      */
     val touchedArtistIds: Set<Long> = emptySet()
 ) {
     /**
-     * Every event the run touched.
-     *
-     * This is what `upsertAndCleanup` returned before the split, and it is what still reaches
-     * `event_source.last_event_count` — so the source's recorded count means exactly what it always
-     * did.
+     * Every event the run touched, what still reaches `event_source.last_event_count`.
      */
     val total: Int get() = inserted + updated + skipped
 
     /**
-     * Everything the run threw away before writing.
-     *
-     * Deliberately **not** added to [total]: `total` feeds `event_source.last_event_count`, which
-     * means "events this source holds". A dropped event holds nothing, and folding it in would move
-     * a number every dashboard already reads.
+     * Everything the run threw away before writing. Not added to [total], which feeds
+     * `event_source.last_event_count`: a dropped event holds nothing.
      */
     val dropped: Int get() = droppedPast + droppedDuplicate
 }

@@ -8,11 +8,8 @@ import org.springframework.data.relational.core.mapping.Table
 import java.time.Instant
 
 /**
- * R2DBC entity mapped to the `event_source` table.
- *
- * Tracks per-venue import configuration and metadata: which URL to scrape,
- * which [EventImporter] implementation to use, cached conditional-request headers,
- * and the result of the last import run.
+ * R2DBC entity for the `event_source` table: which URL to scrape, which [EventImporter] to use,
+ * cached conditional-request headers, and the result of the last run.
  */
 @Table("event_source")
 data class EventSourceEntity(
@@ -42,11 +39,9 @@ data class EventSourceEntity(
     /** Timestamp of the last completed import (successful or failed). */
     val lastImportAt: Instant? = null,
     /**
-     * When this source's host last had its `robots.txt` read, or `null` while it never has.
-     *
-     * The three `robots*` columns are the per-source evidence behind `docs/SCRAPING_POSITION.md`
-     * §3.3. Null is a meaningful value: an unchecked source has to be visible as unchecked, which is
-     * why none of them carries a default (#790).
+     * When this source's host last had its `robots.txt` read, or `null` while never. The three
+     * `robots*` columns are the per-source evidence behind `docs/SCRAPING_POSITION.md` §3.3, and
+     * none carries a default: an unchecked source has to be visible as unchecked (#790).
      */
     val robotsCheckedAt: Instant? = null,
     /** Whether [url] itself is permitted by those rules. `null` until the first check. */
@@ -54,30 +49,22 @@ data class EventSourceEntity(
     /** The `robots.txt` that answered, or `null` where the host serves none or could not be reached. */
     val robotsTxtUrl: String? = null,
     /**
-     * What is known about republishing this source's event descriptions, or `null` while nobody has
-     * reviewed it.
-     *
-     * Stored as text rather than as the enum so an unrecognised value stays readable in the row
-     * instead of failing the mapping. `SourceLicence.parseOrProhibited` is what reads it, and a
-     * CHECK constraint keeps hand-edited rows to the vocabulary (#283).
+     * What is known about republishing this source's descriptions, or `null` while unreviewed. Text
+     * rather than the enum so an unrecognised value stays readable; `SourceLicence.parseOrProhibited`
+     * reads it, and a CHECK constraint keeps hand-edited rows to the vocabulary (#283).
      */
     val descriptionLicence: String? = null,
     /** The same question for this source's images, answered separately. Agency photographs are common. */
     val imageLicence: String? = null,
     /**
-     * Whether this source grants us the right to translate its descriptions, or `null` while nobody
-     * has asked.
-     *
-     * A third answer rather than a reading of [descriptionLicence]: a translation is an adaptation
-     * under § 23 UrhG, and only `PERMITTED` allows it (ADR-026). #808 is how a source gets here.
+     * Whether this source grants us the right to translate its descriptions, or `null` while
+     * unasked. A third answer rather than a reading of [descriptionLicence]: a translation is an
+     * adaptation under § 23 UrhG, and only `PERMITTED` allows it (ADR-026, #808).
      */
     val translationLicence: String? = null,
     /**
-     * When the two columns above were last reviewed, or `null` while they never were.
-     *
-     * Null here and null in both status columns say the same thing today. They stop agreeing the
-     * moment a review is redone, which is why the timestamp is its own column — V005 §robots made
-     * the same split for the same reason.
+     * When the two columns above were last reviewed, or `null`. Its own column because null here
+     * and null in both status columns stop agreeing once a review is redone, as V005 §robots split.
      */
     val licenceReviewedAt: Instant? = null,
     /** The page the reviewer read. Recorded even for `UNCLEAR`, so nobody repeats the search. */
@@ -85,25 +72,15 @@ data class EventSourceEntity(
     /** The sentence that decided it, in the reviewer's words. */
     val licenceNote: String? = null,
     /**
-     * Timestamp of the last import that **succeeded**, which [lastImportAt] is not.
-     *
-     * The two differ exactly when they matter most: `lastImportAt` is written on failure as well, so
-     * a source that has been broken for a week reports a fresh timestamp there. This column is the
-     * one `importer.source.last_success` publishes, and the one an alert on
-     * `time() - last_success > 3 * interval` can be written against (#415).
-     *
-     * A 304 counts as a success — the source was reachable and answered, which is what the metric
-     * asserts — and [EventImportService] treats it that way for `status` already.
+     * Timestamp of the last import that succeeded, which [lastImportAt] is not: that one is written
+     * on failure too, so a source broken for a week reports a fresh timestamp there. This is the
+     * column `importer.source.last_success` publishes (#415). A 304 counts as a success.
      */
     val lastSuccessAt: Instant? = null,
     /**
      * Number of events the source last published, as counted by the run that last read its listing.
-     *
-     * **A 304 carries this forward rather than resetting it (#659).** "Not modified" means the
-     * listing still holds what it held, so zeroing the column would report an emptied source on the
-     * one answer that proves it is unchanged — `loge` read `lastEventCount = 0` on a successful run
-     * while the page had six events on it. This is the column an operator reaches for first, and
-     * ADR-015 criterion 1 is the alert written against exactly this class of silence.
+     * A 304 carries this forward rather than resetting it (#659): `loge` read `lastEventCount = 0`
+     * on a successful run while the page had six events. The column an operator reaches for first.
      */
     val lastEventCount: Int? = null,
     /** Error message from the last failed import, `null` if the last run succeeded. */
@@ -112,13 +89,9 @@ data class EventSourceEntity(
     val status: String = ImportStatus.IDLE.name,
     /**
      * When a run last found materially less of some field than this source normally publishes
-     * (#472), or `null` once a later run looked normal again.
-     *
-     * **Deliberately independent of [status].** A flagged source is one whose every run *succeeds* —
-     * that is the entire failure being caught: the importer keeps working, reports success, writes
-     * the usual number of events, and the data quietly gets worse. Folding this into `FAILED` would
-     * make the scheduler back it off, which is precisely the wrong response to a venue that is
-     * answering perfectly.
+     * (#472), or `null` once a later run looked normal. Independent of [status]: a flagged source is
+     * one whose every run succeeds while the data quietly gets worse, and folding it into `FAILED`
+     * would make the scheduler back off a venue that is answering perfectly.
      */
     val flaggedAt: Instant? = null,
     /** Which fields dropped and by how much, in the shape a human reads without another query. */
@@ -138,11 +111,8 @@ data class EventSourceEntity(
 }
 
 /**
- * Import source lifecycle status.
- *
- * The [S_IDLE], [S_RUNNING], etc. compile-time constants mirror the enum names
- * for use in `@Query` SQL strings where `ImportStatus.RUNNING.name` cannot be used
- * (annotation values require compile-time constants, and `.name` is a runtime property).
+ * Import source lifecycle status. The [S_IDLE], [S_RUNNING] constants mirror the enum names for
+ * `@Query` SQL strings, where `.name` is not a compile-time constant.
  */
 enum class ImportStatus {
     /** No import running, initial state. */
@@ -158,15 +128,13 @@ enum class ImportStatus {
     FAILED,
 
     /**
-     * Source has a configuration error that will never self-resolve on retry
-     * (e.g. unknown source type, no importer registered). Requires manual intervention.
-     * The scheduler skips misconfigured sources entirely — they do not consume retry budget.
+     * A configuration error that never self-resolves; the scheduler skips these and they consume no
+     * retry budget.
      */
     MISCONFIGURED;
 
     companion object {
-        // Compile-time constants for use in @Query SQL annotations.
-        // Keep in sync with enum values — verified by ImportStatusConstantsTest.
+        // Compile-time constants for @Query SQL; ImportStatusConstantsTest keeps them in sync.
         const val S_IDLE = "IDLE"
         const val S_RUNNING = "RUNNING"
         const val S_SUCCESS = "SUCCESS"

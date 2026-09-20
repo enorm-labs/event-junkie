@@ -13,29 +13,15 @@ import java.time.Instant
 import kotlin.math.pow
 
 /**
- * Periodic scheduler for event imports.
+ * Periodic scheduler: a tick every 60 seconds finds due sources and delegates each to
+ * [EventImportService.importFromSource]. Per-source `importIntervalMinutes`; retry with capped
+ * exponential backoff, never exceeding six hours, and a source past its budget returns to its
+ * normal interval rather than leaving the schedule; sources stuck RUNNING for >30 min reset to
+ * FAILED; RUNNING and MISCONFIGURED sources are skipped.
  *
- * Runs a tick every 60 seconds to find event sources that are due and delegates
- * each to [EventImportService.importFromSource]. This is a thin orchestration layer
- * on top of the existing import infrastructure — it adds:
- *
- * - **Per-source scheduling**: each source has its own `importIntervalMinutes`.
- * - **Retry with capped exponential backoff**: failed sources are retried up to `maxRetries`
- *   times, with the interval doubling on each consecutive failure but never exceeding six
- *   hours. A source that spends its retry budget returns to its normal interval — it is never
- *   dropped from the schedule.
- * - **Staleness detection**: sources stuck in RUNNING for >30 min are reset to FAILED.
- * - **Overlap prevention**: sources with status = RUNNING are skipped.
- * - **Misconfiguration detection**: sources with status = MISCONFIGURED are skipped entirely
- *   (they have a permanent config error that requires manual intervention).
- *
- * Scheduling can be disabled via `app.scheduling.enabled=false` (e.g. in tests). The `@ConditionalOnProperty`
- * below is belt and braces: [de.norm.events.SchedulingConfiguration] carries the same condition and stops the
- * scheduler itself, so this bean would never tick even if it existed. It stays because removing the bean is
- * also what keeps a test from reaching it by accident.
- *
- * @see EventSourceEntity for scheduling fields
- * @see EventImportService for the import pipeline
+ * `app.scheduling.enabled=false` disables it. The `@ConditionalOnProperty` below is belt and
+ * braces beside [de.norm.events.SchedulingConfiguration]; it stays because removing the bean is
+ * what keeps a test from reaching it by accident.
  */
 @Service
 @ConditionalOnProperty(name = ["app.scheduling.enabled"], havingValue = "true", matchIfMissing = true)
@@ -50,14 +36,8 @@ class ScheduledImportService(
     private val logger = KotlinLogging.logger {}
 
     /**
-     * Main scheduler tick — runs every 60 seconds.
-     *
-     * Spring Boot 4 (Spring Framework 7) natively supports Kotlin `suspend` functions
-     * in `@Scheduled` methods, so no `runBlocking` bridge is needed. Spring dispatches
-     * the coroutine on an appropriate scheduler, keeping the Netty event loop free.
-     *
-     * Note: `$$"..."` uses Kotlin multi-dollar raw string to pass Spring property placeholder
-     * without interpolation — `$$` raises the interpolation threshold so `${...}` is literal.
+     * Main tick, every 60 seconds. Spring Framework 7 supports `suspend` in `@Scheduled`, so no
+     * `runBlocking`. `$$"..."` raises the interpolation threshold so `${...}` is literal.
      */
     @Scheduled(fixedDelayString = $$"${app.scheduling.tick-interval:60000}")
     suspend fun tick() {
@@ -66,14 +46,11 @@ class ScheduledImportService(
     }
 
     /**
-     * Finds and imports all sources that are due based on their individual schedule.
-     *
-     * A source is due when its `lastImportAt` + `importIntervalMinutes` is in the past.
-     * Failed sources use exponential backoff: `importIntervalMinutes × 2^retryCount`.
+     * Imports all sources that are due: `lastImportAt` + `importIntervalMinutes` in the past, with
+     * exponential backoff for failed ones.
      */
     private suspend fun importDueSources() {
-        // Capture a single timestamp for the entire tick to ensure consistent
-        // due-date evaluation across all sources (avoids clock drift within a tick).
+        // One timestamp for the whole tick, so every source is evaluated against the same moment.
         val now = Instant.now(clock)
         val candidates = eventSourceRepository.findDueForImport(now).toList()
 
@@ -84,32 +61,24 @@ class ScheduledImportService(
 
         logger.info { "Scheduler tick: ${dueSources.size} source(s) due for import" }
 
-        // Concurrent execution is safe — per-host politeness is enforced by PerHostThrottlingFilter,
-        // the artist cache is local to each importFromSource call, and each source runs in its own transaction.
+        // Concurrent execution is safe: per-host politeness is PerHostThrottlingFilter's, the artist
+        // cache is per call, each source has its own transaction.
         eventImportService.importConcurrently(dueSources)
     }
 
     /**
-     * Checks if a source is due for import based on its schedule and retry backoff.
+     * Whether a source is due: never imported, or the interval has passed since the last. A
+     * retrying source uses [retryInterval]; one whose budget is spent falls back to its plain
+     * interval, which keeps it on the schedule (#659).
      *
-     * A source is due when:
-     * - It has never been imported, OR
-     * - Enough time has passed since the last import to satisfy the interval.
-     *
-     * A source that is retrying uses [retryInterval] instead of its own interval; one whose
-     * retry budget is spent falls back to the plain interval, which is what keeps it on the
-     * schedule rather than off it (#659).
-     *
-     * @param now the reference timestamp for the current tick (captured once per tick
-     *   for consistency across all sources).
+     * @param now the tick's reference timestamp.
      */
     internal fun isDue(
         source: EventSourceEntity,
         now: Instant
     ): Boolean {
-        // Sources with no import history or in IDLE status (e.g. after manual retry) are always due.
-        // IDLE check allows retry() to trigger immediate pickup without clearing lastImportAt,
-        // preserving the historical record of when the last import ran.
+        // No history or IDLE (after a manual retry) is always due, so retry() triggers immediate pickup
+        // without clearing lastImportAt.
         val lastImport = source.lastImportAt
         if (lastImport == null || source.status == ImportStatus.IDLE.name) return true
 
@@ -124,20 +93,11 @@ class ScheduledImportService(
     }
 
     /**
-     * How long to wait before the next attempt at a source that is retrying.
-     *
-     * The interval doubles per consecutive failure — and is then capped at [MAX_RETRY_INTERVAL],
-     * which is the part [#659](https://github.com/enorm-labs/event-junkie/issues/659) added.
-     *
-     * **Doubling alone assumes a base interval measured in minutes.** Applied to the daily
-     * default it produces a "retry" that waits *longer* than the healthy cadence — 1440 min
-     * doubles to 48 h, then 96 h, then 192 h — so a failed source is attempted less often than
-     * a working one, which inverts what a retry is for: a daily source that failed went 47 hours
-     * before its next attempt.
-     *
-     * The cap makes the guarantee interval-independent: whatever a source's own schedule, a
-     * failure is retried within [MAX_RETRY_INTERVAL]. Sub-cap intervals keep their backoff
-     * unchanged — an hourly source still waits 2 h, then 4 h.
+     * How long a retrying source waits: doubling per consecutive failure, capped at
+     * [MAX_RETRY_INTERVAL] (#659). Doubling alone assumes a base interval in minutes; on the daily
+     * default it waits longer than the healthy cadence (48 h, 96 h, 192 h), and a daily source that
+     * failed went 47 hours before its next attempt. The cap makes the guarantee
+     * interval-independent; sub-cap intervals keep their backoff.
      */
     private fun retryInterval(
         baseInterval: Duration,
@@ -148,12 +108,9 @@ class ScheduledImportService(
     }
 
     /**
-     * Resets sources stuck in RUNNING status to FAILED.
-     *
-     * This guards against imports that never completed (e.g. due to application crash
-     * or network timeout without proper error handling). Sources stuck for longer than
-     * [stalenessTimeout] (configurable via `app.scheduling.staleness-timeout`, default: 30m)
-     * are considered stale.
+     * Resets sources stuck in RUNNING to FAILED, for imports that never completed (a crash, a
+     * timeout without handling). Stale past [stalenessTimeout]
+     * (`app.scheduling.staleness-timeout`, default 30m).
      */
     private suspend fun resetStuckSources() {
         val stalenessCutoff = Instant.now(clock).minus(stalenessTimeout)
@@ -170,8 +127,7 @@ class ScheduledImportService(
                     )
                 )
             } catch (e: OptimisticLockingFailureException) {
-                // The source was concurrently updated (e.g. the import just finished),
-                // so it's no longer stuck — safe to skip. The next tick will re-evaluate.
+                // Concurrently updated, so no longer stuck; the next tick re-evaluates.
                 logger.info(e) { "Skipping stuck-source reset for '${source.slug}': version conflict indicates concurrent update" }
             }
         }
@@ -179,18 +135,14 @@ class ScheduledImportService(
 
     companion object {
         /**
-         * Longest a retrying source may wait before its next attempt, whatever its own interval.
-         *
-         * Six hours fits all three of a daily source's retries inside the day it failed —
-         * +6 h, +12 h, +18 h — so recovery happens within the cycle rather than across the
-         * following week. See [retryInterval].
+         * Longest a retrying source may wait. Six hours fits all three of a daily source's retries inside
+         * the day it failed (+6 h, +12 h, +18 h). See [retryInterval].
          */
         private val MAX_RETRY_INTERVAL: Duration = Duration.ofHours(6)
 
         /**
-         * Maximum exponent for backoff, so `2^retryCount` cannot overflow a [Duration] before
-         * [MAX_RETRY_INTERVAL] gets to cap it. `maxRetries` is operator-configurable, so this
-         * is not bounded by the default of 3.
+         * Maximum exponent, so `2^retryCount` cannot overflow a [Duration] before the cap applies;
+         * `maxRetries` is operator-configurable.
          */
         private const val MAX_BACKOFF_EXPONENT = 6
 
