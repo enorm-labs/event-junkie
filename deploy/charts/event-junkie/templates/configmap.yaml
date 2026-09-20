@@ -8,63 +8,32 @@ metadata:
       Settings that belong to running in a cluster rather than to the application, so they are here and not in each module's application.yaml.
   labels:
     {{- include "event-junkie.labels" $args | nindent 4 }}
-{{- /* Settings that belong to *running in a cluster* rather than to the application, which is why
-       they live here and not in each module's application.yaml: local development and the existing
-       tests keep their current single-port behaviour untouched.
-
-       Consumed with `envFrom`, so Spring's relaxed binding maps each key onto the property of the
-       same name. `MANAGEMENT_SERVER_PORT` is deliberately NOT here — it is per-component in values,
-       and setting it here as well would make two sources of truth for one number. */}}
+{{- /* Settings that belong to running in a cluster, not to the application, so each module's
+   application.yaml and the tests keep their single-port behaviour. Consumed with `envFrom`, so
+   relaxed binding maps each key onto the property of the same name. `MANAGEMENT_SERVER_PORT` is
+   per-component in values and deliberately not here: one source of truth per number. */}}
 data:
   # Spring Boot enables the liveness/readiness health groups on its own once it detects Kubernetes.
   # Set explicitly because a probe path that exists only by autodetection is a probe path that
   # disappears the day the detection stops working.
   MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED: "true"
-  {{- /* MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE is deliberately absent, and #538 is why it is
-         worth a comment rather than a blank line. It used to be set here to `health,info`, restated
-         from each module's application.yaml "so that moving the management endpoints to their own
-         port does not silently widen what they expose".
-
-         That rationale did not describe a real mechanism: `management.server.port` and
-         `management.endpoints.web.exposure.include` are orthogonal, and moving the port changes
-         nothing about which endpoints exist. What the restatement did do is win, because envFrom
-         becomes an environment variable and an environment variable outranks application.yaml. So
-         when #535 added `prometheus` to both modules, the chart quietly kept the endpoint at 404 in
-         every cluster while it worked perfectly in every test.
-
-         It also broke the rule stated two lines above about MANAGEMENT_SERVER_PORT — two sources of
-         truth for one value — and it fails this ConfigMap's own admission criterion: which endpoints
-         are exposed is a property of the application, not of running in a cluster.
-
-         Nothing is lost by its absence. The management port is unroutable: `ingress_test.yaml`
-         asserts positively that /api and / are the only routed paths and `http` the only named port,
-         so the exposure list cannot widen the public surface whatever it says (PLATFORM_SETUP.md §7).
-         `invariants_test.yaml` fails the build if this key comes back.
-
-         Verified on k3d 2026-08-18: /actuator/prometheus answers 200 on both JVM services' management
-         ports, 213 and 266 lines, and the importer's exposition carries the business meters #535
-         added — `importer_events_written_total{operation="inserted",source="amt"} 2.0` after a real
-         in-cluster import. Before this change both were a 404. */}}
+  {{- /* MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE is deliberately absent (#538). It used to restate
+     `health,info` from application.yaml, and because envFrom becomes an environment variable that
+     outranks application.yaml, adding `prometheus` in #535 left the endpoint at 404 in every cluster
+     while every test passed. Which endpoints exist is a property of the application, not of the
+     cluster, and the management port is unroutable anyway (`ingress_test.yaml`, PLATFORM_SETUP.md §7).
+     `invariants_test.yaml` fails the build if this key comes back. */}}
   # The banner is six lines of ASCII art at the top of every container log, repeated on every
   # restart. Harmless locally, pure noise in an aggregated log.
   SPRING_MAIN_BANNER_MODE: "off"
-  {{- /* Structured logs, and this ConfigMap rather than application.yaml because it is the
-         definition of a setting that belongs to running in a cluster: a terminal wants Spring's
-         console layout, an aggregated log store wants fields. There is no `container` profile to
-         hang it on, and there does not need to be — envFrom becomes an environment variable, which
-         outranks application.yaml, so setting it here is container-only by construction. That same
-         precedence is what silently kept /actuator/prometheus at 404 in #538; here it is the
-         mechanism being used on purpose rather than the one that bit.
+  {{- /* Structured logs, and here rather than application.yaml because a terminal wants Spring's console
+     layout and an aggregated log store wants fields: envFrom outranks application.yaml, so this is
+     container-only by construction, the same precedence that bit in #538 used on purpose. ECS because
+     Spring Boot copies every MDC entry into the JSON object, which makes `sourceSlug` and
+     `importRunId` filterable (#380).
 
-         ECS because Spring Boot copies every MDC entry into the JSON object it writes, which is what
-         makes `sourceSlug` and `importRunId` filterable rather than merely present (#380). The other
-         two formats Boot ships, logstash and gelf, would do as well; ECS is the one #380 settled on.
-
-         DELIBERATELY NOT SET: logging.structured.ecs.service.version. `service_version` already
-         arrives on every log row from the collector's k8sattributes processor, read off the pod's
-         own `app.kubernetes.io/version` label — verified on production, where an importer line
-         carries `"service_version":"0.3.7"`. Setting it here would put a second writer on one field
-         and the winner would depend on parser order. The pod label is also the better source during
-         a rollout, which is the case #380 cares about: it is per-pod, so the two versions running
-         at once are distinguishable, and it cannot drift from what was actually deployed. */}}
+     DELIBERATELY NOT SET: logging.structured.ecs.service.version. `service_version` already arrives
+     on every row from the collector's k8sattributes processor, read off the pod's
+     `app.kubernetes.io/version` label; a second writer on one field would make the winner depend on
+     parser order, and the label is per-pod, so the two versions in a rollout stay distinguishable. */}}
   LOGGING_STRUCTURED_FORMAT_CONSOLE: "ecs"

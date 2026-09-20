@@ -2,14 +2,11 @@
 {{- $args := dict "ctx" $ "component" "test" }}
 {{- $bff := include "event-junkie.componentName" (dict "ctx" $ "component" "bff") }}
 {{- $frontend := include "event-junkie.componentName" (dict "ctx" $ "component" "frontend") }}
-{{- /* `helm test` only. It reaches the two public workloads through their Services, which is the
-       cheapest thing that distinguishes "the pods are Running" from "the release actually serves".
-       #414 wires Flux's `test.enable` and its rollback behaviour to this hook; the chart's job is
-       to provide something worth calling.
-
-       Deliberately does NOT touch the importer: it has no readiness contract worth asserting from
-       outside, and a test pod that can reach /api/admin/** is a test pod that has just demonstrated
-       the admin API is reachable from an unprivileged pod. */}}
+{{- /* `helm test` only: reaching the two public workloads through their Services is the cheapest
+   thing that distinguishes "the pods are Running" from "the release serves". #414 wires Flux's
+   `test.enable` and rollback to this hook. Deliberately does NOT touch the importer: a test pod
+   that can reach /api/admin/** has just demonstrated the admin API is reachable from an
+   unprivileged pod. */}}
 apiVersion: v1
 kind: Pod
 metadata:
@@ -19,16 +16,14 @@ metadata:
   annotations:
     helm.sh/hook: test
     {{- /* Deleted before the next test run rather than after this one, so a failed test leaves its
-           pod behind for `kubectl logs`. A test whose evidence is deleted on failure is a test that
-           tells you only that something went wrong. */}}
+       pod behind for `kubectl logs`. */}}
     helm.sh/hook-delete-policy: before-hook-creation
 spec:
   restartPolicy: Never
   automountServiceAccountToken: false
-  {{- /* Taken from `security.runAsUser` rather than written out, even though this pod runs a curl
-         image and not one of ours. Two literals here would be a fourth place the UID can drift, and
-         the one place nothing checks — `scripts/uid-consistency.sh` compares the chart against the
-         three Dockerfiles, and a test pod has no Dockerfile in this repository to compare with. */}}
+  {{- /* Taken from `security.runAsUser` even though this pod runs a curl image: two literals here
+     would be a fourth place the UID can drift, and the one place `scripts/uid-consistency.sh`
+     cannot check, since a test pod has no Dockerfile to compare with. */}}
   securityContext:
     runAsNonRoot: true
     runAsUser: {{ .Values.security.runAsUser }}

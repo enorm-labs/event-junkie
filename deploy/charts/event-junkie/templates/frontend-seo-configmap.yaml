@@ -1,23 +1,18 @@
 {{- if .Values.ingress.noindex }}
 {{- $args := dict "ctx" $ "component" "frontend-seo" }}
-{{- /* `robots.txt` and `sitemap.xml` for an environment that is not production.
+{{- /* `robots.txt` and `sitemap.xml` for an environment that is not production: the body half of
+   `ingress.noindex` (#286). The Middleware next door adds `X-Robots-Tag`, and a header cannot
+   rewrite a response body, so the image's allow-all `robots.txt` with its production `Sitemap:`
+   line would still be served.
 
-       THE BODY HALF OF `ingress.noindex` (#286). The Middleware next door adds `X-Robots-Tag` to
-       every response, and a header is all a header can do: it cannot rewrite a response *body*, so
-       the allow-all `robots.txt` in the image is still served and its `Sitemap:` line still points
-       a crawler at production. That is a different mechanism, which is why it is a different file.
+   It cannot be fixed in the build: `events-frontend/scripts/seoFiles.ts` emits both files from
+   the hard-coded `SITE_URL` in `src/lib/seo.ts`, because a canonical URL exists to name ONE
+   address, and deriving it from the request host would make staging and every preview declare
+   themselves canonical. One image serves every environment, so the override belongs here.
 
-       WHY THIS CANNOT BE FIXED IN THE BUILD. `events-frontend/scripts/seoFiles.ts` emits both files
-       at `generateBundle` from `SITE_URL` in `src/lib/seo.ts`, and that constant is hard-coded on
-       purpose: canonical URLs exist to name ONE address for a page, so deriving the origin from the
-       request host would make staging, the apex and every preview each declare themselves
-       canonical — the duplicate-content problem the tag exists to prevent. One image, one output,
-       served by every environment. So the override belongs here, in the deployment, by
-       construction rather than by preference.
-
-       A ConfigMap mounted over the built files, rather than a second nginx server block: the chart
-       would then own a copy of `events-frontend/docker/nginx.conf` and the two would drift, and the
-       image's copy is the one carrying the unprivileged-safe properties #262 established. */}}
+   A ConfigMap mounted over the built files rather than a second nginx server block, which would
+   make the chart own a copy of `events-frontend/docker/nginx.conf` that drifts from the one
+   carrying the unprivileged-safe properties #262 established. */}}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -28,20 +23,17 @@ metadata:
   labels:
     {{- include "event-junkie.labels" $args | nindent 4 }}
 data:
-  {{- /* KEYS ARE FILENAMES HERE, and that is load-bearing rather than tidy: the frontend Deployment
-         mounts each one with `subPath`, and a `subPath` that does not name an existing key mounts an
-         empty directory over the file instead of failing. nginx then serves a directory as a file
-         and the environment quietly keeps the image's allow-all copy. The render assertions check
-         the two lists against each other for exactly that reason. */}}
+  {{- /* Keys are filenames, load-bearing: the frontend Deployment mounts each with `subPath`, and a
+     `subPath` naming a missing key mounts an empty directory over the file instead of failing, so
+     the environment quietly keeps the image's allow-all copy. The render assertions check the two
+     lists against each other. */}}
   robots.txt: |
     # This host is not the Event Junkie site. Nothing here should be indexed.
     # This file and the X-Robots-Tag header are the control, so do not weaken either.
     User-agent: *
     Disallow: /
-  {{- /* No `Sitemap:` line, deliberately. The image's copy has one and it names production, which
-         is the second half of what #286 is about: a non-production environment that invites
-         indexing AND points the crawler at the real site while doing it. Omitting the line is not
-         an oversight to be tidied up later. */}}
+  {{- /* No `Sitemap:` line, deliberately: the image's copy names production, which is the second half
+     of #286, a non-production environment pointing the crawler at the real site. */}}
   sitemap.xml: |
     <?xml version="1.0" encoding="UTF-8"?>
     <!-- Deliberately empty. A ConfigMap can replace a file's contents but cannot make it 404, and

@@ -4,44 +4,29 @@
 {{- $bffSelector := include "event-junkie.selectorLabels" (dict "ctx" $ "component" "bff") }}
 {{- $testSelector := include "event-junkie.selectorLabels" (dict "ctx" $ "component" "test") }}
 {{- /* PLATFORM_SETUP §8 item 1 (#416): **NetworkPolicy enforcement being on means nothing while
-       every pod may talk to every pod.** k3s ships the enforcement; the policies are ours.
+   every pod may talk to every pod.** A NetworkPolicy selects pods in its own namespace only, and
+   this chart owns exactly one, so this is default-deny for the release namespace; kube-system,
+   cert-manager and flux-system are the cluster's business. One deny-all plus one narrow allowance
+   per real conversation — the only shape that produces a reviewable list. READ THE ALLOWANCES AS
+   THE ARCHITECTURE: if a conversation is not below, it does not happen.
 
-       WHAT "PER NAMESPACE" MEANS HERE, precisely, because the issue's phrasing is broader than a
-       chart can honour: a NetworkPolicy only selects pods in its own namespace, and this chart owns
-       exactly one. So this is default-deny for the release namespace. Other namespaces —
-       kube-system, cert-manager, flux-system — are the cluster's business and not the chart's; a
-       chart that wrote policies into them would be a chart that breaks a cluster it does not own.
+     Traefik  -> frontend:8080    the SPA
+     Traefik  -> bff:8080         /api
+     frontend -> bff:8080         the meta-injection sidecar, one lookup per detail page
+     bff      -> PostgreSQL:5432
+     importer -> PostgreSQL:5432
+     importer -> the internet     scraping venue sites, which is the product
+     bff      -> the internet:443 reading cached images out of the bucket, while serving them
+     all      -> CoreDNS:53
+     test pod -> bff, frontend    the helm test hook, only while tests are enabled
 
-       THE SHAPE. One deny-all policy plus one narrow allowance per real conversation, which is the
-       only ordering that produces a reviewable list: with allow-only policies the absence of a rule
-       is invisible, whereas here every arrow in the system is a named object.
-
-       READ THE ALLOWANCES AS THE ARCHITECTURE, because that is what they are — if a conversation is
-       not below, it does not happen:
-
-         Traefik  -> frontend:8080    the SPA
-         Traefik  -> bff:8080         /api
-         frontend -> bff:8080         the meta-injection sidecar, one lookup per detail page
-         bff      -> PostgreSQL:5432
-         importer -> PostgreSQL:5432
-         importer -> the internet     scraping venue sites, which is the product
-         bff      -> the internet:443 reading cached images out of the bucket, while serving them
-         all      -> CoreDNS:53
-         test pod -> bff, frontend    the helm test hook, only while tests are enabled
-
-       AND WHAT IS ABSENT IS THE POINT. Nothing reaches the importer — not Traefik, not the
-       frontend, not the BFF. Its admin API was already unroutable because no Ingress path names it
-       (§3.2); now it is unreachable from inside the namespace as well, which is the half an Ingress
-       rule could never give. Nothing reaches either management port except the kubelet and the test
-       hook. The frontend's only egress beyond DNS is the BFF's service port, for the sidecar that
-       fills the head of a detail page (ADR-014); the static bundle itself still has nowhere to go.
-
-       THE KUBELET IS NOT LISTED, and that is deliberate rather than an omission: liveness and
-       readiness probes originate on the node, and traffic from a node to a pod on that node is not
-       subject to NetworkPolicy in k3s's implementation. That is a property worth *testing* rather
-       than believing — if it were wrong, every pod would fail its probes and `helm install --wait`
-       would time out, which is the loudest possible failure and exactly what the k3d rehearsal
-       exercises. `kubectl port-forward` arrives the same way. */}}
+   WHAT IS ABSENT IS THE POINT. Nothing reaches the importer — not Traefik, not the frontend, not
+   the BFF: its admin API was unroutable, now it is unreachable from inside the namespace too.
+   Nothing reaches either management port except the kubelet and the test hook. THE KUBELET IS NOT
+   LISTED, deliberately: probes originate on the node, and node-to-pod traffic is not subject to
+   NetworkPolicy in k3s — a property tested rather than believed, because if it were wrong every
+   pod would fail its probes and the k3d rehearsal would say so. `kubectl port-forward` arrives
+   the same way. */}}
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -52,10 +37,8 @@ metadata:
     kubernetes.io/description: >-
       Denies all ingress and egress in this namespace. Every allowance is a separate, named policy — so an arrow that is not written down does not exist.
 spec:
-  {{- /* An empty podSelector selects every pod in the namespace, including ones this chart does not
-         create. That is intended: a policy that only covered our three workloads would leave a
-         debug pod someone kubectl-runs with unrestricted egress, which is the exact shape of the
-         hole this closes. */}}
+  {{- /* An empty podSelector selects every pod in the namespace, including a debug pod someone
+     kubectl-runs — the exact shape of the hole this closes. */}}
   podSelector: {}
   policyTypes:
     - Ingress
@@ -80,9 +63,8 @@ spec:
             matchLabels:
               {{- toYaml $np.dns.namespaceSelector | nindent 14 }}
       ports:
-        {{- /* Both protocols. UDP carries almost every query and TCP carries the ones that do not
-               fit — a UDP-only rule works until the first response over 512 bytes, and then fails
-               intermittently in a way that reads as a flaky network rather than as a missing rule. */}}
+        {{- /* Both protocols: UDP carries almost every query, TCP the responses over 512 bytes, and a
+           UDP-only rule fails intermittently in a way that reads as a flaky network. */}}
         - protocol: UDP
           port: 53
         - protocol: TCP
@@ -116,10 +98,8 @@ spec:
             matchLabels:
               {{- toYaml $np.ingressController.podSelector | nindent 14 }}
       ports:
-        {{- /* The service ports only. The management port is deliberately not here: `/actuator/**`
-               is already unroutable because no Ingress path names it, and this makes it
-               unreachable from the controller at all — a network guarantee rather than an ingress
-               rule that has to stay correct forever (§3.2). */}}
+        {{- /* The service ports only. The management port is unroutable already; this makes it unreachable
+           from the controller at all — a network guarantee rather than an ingress rule. */}}
         - protocol: TCP
           port: {{ .Values.bff.service.port }}
         - protocol: TCP
@@ -137,13 +117,9 @@ metadata:
     kubernetes.io/description: >-
       The meta-injection sidecar in the frontend pod reads one entity per detail page from the BFF. Rendered only while the sidecar is.
 spec:
-  {{- /* Both directions in one object, as the test-hook policy does: the frontend pod needs egress
-         and the BFF needs ingress from it, and a policy that carried only one half would be
-         silently useless once the other was deleted. The service port only — the BFF's management
-         port stays unreachable from the frontend, sidecar or not.
-
-         Gated on the sidecar, because without it nothing in the frontend pod has any business
-         talking to the BFF, and the arrow should disappear with the process that used it. */}}
+  {{- /* Both directions in one object, as the test-hook policy does: a policy carrying one half would be
+     silently useless once the other was deleted. The service port only. Gated on the sidecar, so
+     the arrow disappears with the process that used it. */}}
   podSelector:
     matchExpressions:
       - key: app.kubernetes.io/component
@@ -183,17 +159,10 @@ metadata:
     kubernetes.io/description: >-
       Lets the ingress controller reach cert-manager's HTTP-01 solver pod. Without it the default-deny policy blocks the challenge and no certificate can issue or renew.
 spec:
-  {{- /* cert-manager creates this pod itself, in the release namespace, carrying only its own
-         labels — so it matches none of the component selectors above and the default-deny policy
-         catches it. The symptom is a challenge stuck on `wrong status code '502', expected '200'`,
-         several steps from anything that mentions a NetworkPolicy.
-
-         **Only an HTTP-01 cluster has this pod at all**, which is why nothing caught it earlier:
-         staging solves DNS-01 and k3d runs with `tls.enabled: false`. Production is the first
-         environment where the ingress controller has to reach into this namespace for ACME.
-
-         This governs RENEWAL as much as issuance. Removing it does not break anything for sixty
-         days, and then the certificate quietly fails to renew. */}}
+  {{- /* cert-manager creates this pod itself, carrying only its own labels, so the default-deny catches
+     it and the challenge sticks on `wrong status code '502', expected '200'`. Only an HTTP-01 cluster
+     has this pod at all — staging solves DNS-01, k3d runs `tls.enabled: false`. This governs RENEWAL
+     as much as issuance: removing it breaks nothing for sixty days. */}}
   podSelector:
     matchLabels:
       acme.cert-manager.io/http01-solver: "true"
@@ -208,8 +177,7 @@ spec:
             matchLabels:
               {{- toYaml $np.ingressController.podSelector | nindent 14 }}
       ports:
-        {{- /* cert-manager's solver listens on 8089 and the Ingress it creates targets that port.
-               Not a value: it is cert-manager's own constant, not ours to configure. */}}
+        {{- /* cert-manager's solver listens on 8089; its own constant, not ours to configure. */}}
         - protocol: TCP
           port: 8089
 {{- end }}
@@ -235,14 +203,10 @@ spec:
     - Egress
   egress:
     - to:
-        {{- /* A CIDR and not `database.host`, because **NetworkPolicy cannot resolve a name**. The
-               two are therefore two settings that have to agree, which is a cost worth stating: set
-               `database.host` and forget this, and the pods start, resolve the name, and hang on
-               connect — a failure that looks like the database being down. The `required` below is
-               what turns that into a render error instead.
-
-               PostgreSQL is off-cluster on a private address (ADR-012), so this is an ipBlock rather
-               than a pod selector. */}}
+        {{- /* A CIDR and not `database.host`, because **NetworkPolicy cannot resolve a name**: set the host and
+           forget this, and the pods resolve the name and hang on connect, which looks like the database
+           being down. The `required` below turns that into a render error. PostgreSQL is off-cluster on a
+           private address, so an ipBlock rather than a pod selector. */}}
         - ipBlock:
             cidr: {{ required "networkPolicy.databaseCidr is required when networkPolicy.enabled — NetworkPolicy speaks CIDRs and cannot resolve database.host. Use the /32 of `postgres_ip` from the matching infra stack." $np.databaseCidr | quote }}
       ports:
@@ -269,13 +233,10 @@ spec:
     - to:
         - ipBlock:
             cidr: 0.0.0.0/0
-            {{- /* The private ranges are carved out, so "the internet" means the internet. Without
-                   these the rule would also grant the importer the cluster network, the node
-                   network and any peered network — which is most of what default-deny was for, given
-                   the importer is the workload that parses untrusted HTML from thirty-odd sites.
-                   169.254.0.0/16 is the sharpest of them: it is where a cloud metadata service
-                   lives, and reaching it from a process that fetches attacker-influenced URLs is the
-                   classic SSRF-to-credentials path. */}}
+            {{- /* The private ranges are carved out, so "the internet" means the internet: without these the
+               importer — the workload that parses untrusted HTML — would also reach the cluster, the node and
+               any peered network. 169.254.0.0/16 is the sharpest: a cloud metadata service lives there, the
+               classic SSRF-to-credentials path. */}}
             except:
               {{- toYaml $np.scrapeEgress.exceptCidrs | nindent 14 }}
       ports:
@@ -304,11 +265,9 @@ spec:
     - Egress
   egress:
     - to:
-        {{- /* Hetzner publishes no stable address range for Object Storage, and NetworkPolicy cannot
-               resolve `fsn1.your-objectstorage.com` — so this is the internet minus the private
-               ranges, the same shape as `-allow-scraping` above and for the same reason. Narrower in
-               two ways: 443 only, and the BFF never fetches a URL a venue chose. Every key it asks
-               for comes out of a row the importer wrote. */}}
+        {{- /* Hetzner publishes no stable address range for Object Storage, so this is the internet minus the
+           private ranges, as `-allow-scraping` is. Narrower in two ways: 443 only, and the BFF never fetches
+           a URL a venue chose. */}}
         - ipBlock:
             cidr: 0.0.0.0/0
             except:
@@ -331,14 +290,9 @@ metadata:
     kubernetes.io/description: >-
       The helm test hook reaches the BFF's readiness endpoint and the frontend's index. Rendered only while tests are enabled.
 spec:
-  {{- /* Both directions in one object: the hook needs egress, and its two targets need ingress from
-         it. Splitting them across two policies would let one be deleted without the other, and the
-         surviving half would be silently useless.
-
-         This is the only allowance that names the *management* port, and it is why the port is
-         reachable in-cluster and unroutable from outside — the asymmetry the test hook exists to
-         prove (§3.2). Gated on `tests.enabled`, so disabling tests removes the reachability too
-         rather than leaving a hole open for a pod that is no longer rendered. */}}
+  {{- /* Both directions in one object, so one half cannot be deleted without the other. The only
+     allowance naming the *management* port — reachable in-cluster, unroutable from outside, the
+     asymmetry the hook proves. Gated on `tests.enabled`, so disabling tests removes the reachability. */}}
   podSelector:
     matchExpressions:
       - key: app.kubernetes.io/component
@@ -415,8 +369,8 @@ spec:
   ingress:
     - from:
         {{- if eq $np.metricsScrape.mode "ipBlock" }}
-        {{- /* Opens the management port to every pod in the cluster. Only for the cross-node case
-               described in values.yaml — a selector cannot match SNAT'd traffic. */}}
+        {{- /* Opens the management port to every pod in the cluster, only for the cross-node case values.yaml
+           describes: a selector cannot match SNAT'd traffic. */}}
         - ipBlock:
             cidr: {{ $np.metricsScrape.cidr | required "networkPolicy.metricsScrape.cidr is required when mode is ipBlock" }}
         {{- else }}
@@ -425,8 +379,7 @@ spec:
               kubernetes.io/metadata.name: {{ $np.metricsScrape.namespace }}
         {{- end }}
       ports:
-        {{- /* The management port only. The application ports are reached through the Ingress and
-               have their own rule; a collector has no business on them. */}}
+        {{- /* The management port only; a collector has no business on the application ports. */}}
         - protocol: TCP
           port: {{ .Values.bff.service.managementPort }}
         - protocol: TCP

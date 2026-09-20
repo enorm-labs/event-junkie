@@ -9,17 +9,13 @@ metadata:
   labels:
     {{- include "event-junkie.labels" $args | nindent 4 }}
 spec:
-  {{- /* One replica, and it is a correctness constraint from ADR-008 rather than a cost one: two
-         schedulers means two concurrent imports of the same source. The 60-second tick skips
-         sources already marked RUNNING, but that check is a read-then-write with no lock, so it
-         does not survive a second scheduler. `SELECT … FOR UPDATE SKIP LOCKED` is the prerequisite
-         for ever raising this, and values.schema.json pins it to 1 so the constraint fails at
-         install time rather than in a review comment. */}}
+  {{- /* One replica, a correctness constraint from ADR-008: two schedulers means two concurrent imports
+     of one source, and the RUNNING check has no lock. `SELECT … FOR UPDATE SKIP LOCKED` is the
+     prerequisite for raising this; values.schema.json pins it so the constraint fails at install time. */}}
   replicas: {{ .Values.importer.replicaCount }}
   strategy:
-    {{- /* Recreate for the same reason: a rolling update briefly runs the old and new pods together,
-           which is two schedulers by another route. The cost is a gap in imports during a deploy,
-           which is invisible on a 60-second tick. */}}
+    {{- /* Recreate for the same reason: a rolling update briefly runs two pods, two schedulers by another
+       route. The gap in imports during a deploy is invisible on a 60-second tick. */}}
     type: Recreate
   selector:
     matchLabels:
@@ -49,9 +45,8 @@ spec:
           securityContext:
             {{- include "event-junkie.containerSecurityContext" $args | nindent 12 }}
           ports:
-            {{- /* Serves /api/admin/** and nothing else public-facing. No Ingress in this chart has
-                   a backend pointing here, and the render assertions fail the build if one ever
-                   does — the access path is `kubectl port-forward` over WireGuard (§8a). */}}
+            {{- /* Serves /api/admin/** and nothing else public-facing. No Ingress here points at it, the assertions
+               fail the build if one ever does, and the access path is `kubectl port-forward` over WireGuard. */}}
             - name: http
               containerPort: {{ .Values.importer.service.port }}
             - name: management
@@ -67,11 +62,9 @@ spec:
             - name: JAVA_TOOL_OPTIONS
               value: "-XX:MaxRAMPercentage={{ .Values.importer.maxRamPercentage }}"
             {{- include "event-junkie.databaseEnv" $ | nindent 12 }}
-            {{- /* The importer owns the schema (ADR-005), and Flyway has no reactive driver — so
-                   this one workload holds two connection configurations for one database. Locally
-                   Spring Boot's Docker Compose support supplies both and nothing in application.yaml
-                   sets a URL; in a cluster there is no compose file, and the JDBC half is the one
-                   that gets forgotten. Its failure mode is a migration that never runs. */}}
+            {{- /* The importer owns the schema (ADR-005), and Flyway has no reactive driver, so this one workload
+               holds two connection configurations. Locally Docker Compose support supplies both; in a cluster
+               the JDBC half is the one forgotten, and its failure is a migration that never runs. */}}
             {{- include "event-junkie.flywayEnv" $ | nindent 12 }}
             {{- if .Values.images.enabled }}
             - name: APP_IMAGES_FETCH_ENABLED
@@ -84,16 +77,13 @@ spec:
               value: {{ .Values.images.storage.region | quote }}
             - name: IMAGE_STORAGE_BUCKET
               value: {{ .Values.images.storage.bucket | quote }}
-            {{- /* One bucket serves both environments and the keys are content addressed, so this
-                   prefix is the only thing keeping their objects apart. Required rather than
-                   defaulted: a shared prefix lets one environment's orphan sweep delete an object
-                   the other still serves, which is #270's shape one bucket over. */}}
+            {{- /* One bucket serves both environments with content-addressed keys, so this prefix is the only thing
+               keeping their objects apart. Required: a shared prefix lets one environment's orphan sweep delete
+               an object the other still serves. */}}
             - name: IMAGE_STORAGE_PREFIX
               value: {{ required "images.storage.prefix is required when images.enabled — it is what separates this environment's objects from the other's." .Values.images.storage.prefix | quote }}
-            {{- /* A keypair scoped to this bucket alone, never the project-wide one. The importer
-                   fetches URLs taken out of scraped HTML, so a credential reaching -backups or
-                   -tfstate would turn an SSRF into an infrastructure compromise (SECRETS.md
-                   §event-junkie-images). */}}
+            {{- /* A keypair scoped to this bucket alone: the importer fetches URLs taken out of scraped HTML, so a
+               credential reaching -backups or -tfstate would turn an SSRF into an infrastructure compromise. */}}
             - name: IMAGE_STORAGE_ACCESS_KEY
               valueFrom:
                 secretKeyRef:
@@ -106,20 +96,16 @@ spec:
                   key: IMAGE_STORAGE_SECRET_KEY
             {{- end }}
             {{- if eq .Values.importer.translation.engine "anthropic" }}
-            {{- /* Two independent switches stand between here and a byte leaving the platform: this
-                   one, and a per-source `translation_licence` of PERMITTED. Since ADR-027 that
-                   verdict follows the display rule, so an operator sets it wherever a venue has not
-                   prohibited the description. Setting the engine alone still translates nothing. */}}
+            {{- /* Two switches stand between here and a byte leaving the platform: this one, and a per-source
+               `translation_licence` of PERMITTED, which follows the display rule since ADR-027. */}}
             - name: APP_TRANSLATION_ENGINE
               value: "anthropic"
             - name: APP_TRANSLATION_MODEL
               value: {{ .Values.importer.translation.model | quote }}
             - name: APP_TRANSLATION_MAX_PER_RUN
               value: {{ .Values.importer.translation.maxPerRun | quote }}
-            {{- /* Hand-made, never SOPS: the ciphertext in a public repository is permanent, and
-                   this key is usable by anyone who holds it, from anywhere, with no network
-                   precondition (docs/ops/SECRETS.md §The decision). Regenerating it is a Console
-                   click, so encrypting it buys nothing a rebuild needs. */}}
+            {{- /* Hand-made, never SOPS: the ciphertext in a public repository is permanent, and this key is usable
+               by anyone who holds it (docs/ops/SECRETS.md). Regenerating it is a Console click. */}}
             - name: APP_TRANSLATION_API_KEY
               valueFrom:
                 secretKeyRef:
@@ -127,19 +113,15 @@ spec:
                   key: APP_TRANSLATION_API_KEY
             {{- end }}
             {{- if and .Values.images.enabled .Values.images.imgproxy.enabled }}
-            {{- /* **The client half of the sidecar, and it is easy to leave out.** The container
-                   below runs imgproxy; this is what makes the JVM call it. Without these the
-                   sidecar starts, passes every probe, is never asked for anything, and no
-                   derivative is ever generated — a failure with no error in it anywhere. */}}
+            {{- /* **The client half of the sidecar, and it is easy to leave out.** Without these the sidecar starts,
+               passes every probe, is never asked for anything, and no derivative is generated — no error anywhere. */}}
             - name: APP_IMAGES_IMGPROXY_ENABLED
               value: "true"
-            {{- /* The other end of IMGPROXY_BIND below. Two values that have to agree, so they are
-                   written next to each other rather than left to two defaults. */}}
+            {{- /* The other end of IMGPROXY_BIND below; two values that have to agree, written next to each other. */}}
             - name: IMGPROXY_BASE_URL
               value: "http://127.0.0.1:8080"
-            {{- /* The same key and salt the sidecar checks. A JVM without them signs nothing, and
-                   the sidecar answers 403 to every request — which reads as a broken sidecar
-                   rather than as a missing secret. */}}
+            {{- /* The same key and salt the sidecar checks. A JVM without them signs nothing and gets 403 on every
+               request, which reads as a broken sidecar rather than a missing secret. */}}
             - name: IMGPROXY_KEY
               valueFrom:
                 secretKeyRef:
@@ -158,45 +140,35 @@ spec:
             - name: tmp
               mountPath: /tmp
         {{- if and .Values.images.enabled .Values.images.imgproxy.enabled }}
-        {{- /* imgproxy generates the derivatives, at import time and never for a visitor (ADR-020).
-               A sidecar rather than a fourth Deployment: it is idle outside import windows, and the
-               importer is the only thing that may call it.
-
-               **NetworkPolicy cannot constrain it separately.** A policy selects pods, and a sidecar
-               shares this pod's network namespace — so it inherits the importer's egress, including
-               the open internet that `allow-scraping` grants. What actually keeps imgproxy off venue
-               URLs is IMGPROXY_ALLOWED_SOURCES below, which is configuration rather than network. */}}
+        {{- /* imgproxy generates the derivatives at import time and never for a visitor (ADR-020). A sidecar
+           rather than a Deployment: idle outside import windows, and only the importer may call it.
+           **NetworkPolicy cannot constrain it separately** — a sidecar shares the pod's network namespace
+           and inherits the importer's open-internet egress — so IMGPROXY_ALLOWED_SOURCES below is what keeps
+           it off venue URLs. */}}
         - name: imgproxy
           image: "{{ .Values.images.imgproxy.image.repository }}@{{ .Values.images.imgproxy.image.digest }}"
           imagePullPolicy: {{ .Values.images.imgproxy.image.pullPolicy }}
           securityContext:
             {{- toYaml .Values.images.imgproxy.securityContext | nindent 12 }}
           env:
-            {{- /* Loopback only. Nothing outside this pod can reach the sidecar, which is the first
-                   half of "imgproxy never serves a visitor" — URL signing is the second. */}}
+            {{- /* Loopback only: nothing outside this pod can reach the sidecar, the first half of "imgproxy never
+               serves a visitor"; URL signing is the second. */}}
             - name: IMGPROXY_BIND
               value: "127.0.0.1:8080"
-            {{- /* The bounds that kill a decompression bomb, set explicitly rather than by default.
-                   This is where the decode limits live now: ADR-020 moved decoding out of the JVM,
-                   so hostile bytes land in a Go process with a memory limit instead.
-
-                   `| int64` is load-bearing, exactly as it is on the middleware's `stsSeconds`.
-                   Helm parses a values number as float64, so 8388608 quoted straight renders as
-                   "8.388608e+06" — which imgproxy refuses with
-                   `strconv.Atoi: parsing "8.388608e+06": invalid syntax` and exits, so the sidecar
-                   crash-loops and Flux rolls the release back. */}}
+            {{- /* The bounds that kill a decompression bomb, set explicitly: ADR-020 moved decoding out of the JVM
+               into a Go process with a memory limit. `| int64` is load-bearing: Helm parses a values number as
+               float64, and 8388608 quoted straight renders as "8.388608e+06", which imgproxy refuses with
+               `strconv.Atoi: parsing "8.388608e+06": invalid syntax` and crash-loops. */}}
             - name: IMGPROXY_MAX_SRC_RESOLUTION
               value: {{ .Values.images.imgproxy.maxSrcResolutionMp | int64 | quote }}
             - name: IMGPROXY_MAX_SRC_FILE_SIZE
               value: {{ .Values.images.imgproxy.maxSrcFileSizeBytes | int64 | quote }}
-            {{- /* Stated, not assumed. EXIF can carry GPS coordinates and a camera serial number,
-                   which for photographs of venues and artists is personal data (LEGAL.md §7.3a), so
-                   stripping it is a legal step rather than housekeeping. */}}
+            {{- /* Stated, not assumed: EXIF can carry GPS coordinates and a camera serial, personal data for
+               photographs of venues and artists (LEGAL.md §7.3a). */}}
             - name: IMGPROXY_STRIP_METADATA
               value: "true"
-            {{- /* The bucket, and nothing else. This is what stops the sidecar being pointed at a
-                   venue: our fetcher owns robots.txt, throttling and the SSRF checks, and imgproxy
-                   pulling directly would go around all three (ADR-007). */}}
+            {{- /* The bucket, and nothing else: our fetcher owns robots.txt, throttling and the SSRF checks, and
+               imgproxy pulling directly would go around all three (ADR-007). */}}
             - name: IMGPROXY_ALLOWED_SOURCES
               value: "s3://{{ .Values.images.storage.bucket }}/"
             - name: IMGPROXY_USE_S3

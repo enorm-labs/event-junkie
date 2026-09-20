@@ -1,14 +1,11 @@
 {{- if and .Values.ingress.enabled .Values.ingress.redirectHosts }}
 {{- $args := dict "ctx" $ "component" "redirect" }}
-{{- /* The first Traefik-specific object in the chart, and it is here because there is no portable
-       alternative: the Ingress API has no way to express a redirect, so every controller does it
-       through its own extension. The /api routing deliberately avoided a Traefik Middleware (§3.1)
-       because that rewrite *could* live in the application and therefore travel with the image; a
-       redirect from a domain the application never sees cannot. Gateway API's RequestRedirect filter
-       is the portable successor and is not enabled on k3s's bundled Traefik.
-
-       Isolated in its own file and gated on `ingress.redirectHosts` so that emptying that list
-       leaves a chart with nothing Traefik-specific in it at all. */}}
+{{- /* The first Traefik-specific object in the chart, because there is no portable alternative: the
+   Ingress API cannot express a redirect. The /api routing avoided a Middleware (§3.1) because
+   that rewrite could live in the application; a redirect from a domain the application never
+   sees cannot. Gateway API's RequestRedirect is the portable successor and is not enabled on
+   k3s's bundled Traefik. Gated on `ingress.redirectHosts`, so emptying that list leaves nothing
+   Traefik-specific in the chart. */}}
 apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:

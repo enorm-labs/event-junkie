@@ -1,45 +1,27 @@
 {{- if and .Values.ingress.enabled .Values.ingress.rateLimit.enabled }}
 {{- $args := dict "ctx" $ "component" "rate-limit" }}
-{{- /* Abuse control at the edge, PLATFORM_SETUP §8 item 9 (#268). The fourth Traefik-specific
-       object in the chart, and here for the same reason as the other three: the Ingress API has no
-       vocabulary for a limit.
+{{- /* Abuse control at the edge (#268, PLATFORM_SETUP §8 item 9), Traefik-specific because the
+   Ingress API has no vocabulary for a limit.
 
-       TWO LIMITS THAT ANSWER DIFFERENT QUESTIONS, and only one of them works on this cluster.
+   Two limits that answer different questions. **`inFlightReq` bounds concurrency** per
+   `requestHost`, so it holds whatever address Traefik sees; it protects the resource that runs
+   out, ten R2DBC connections per BFF replica, with a 429 instead of a queue. **`rateLimit` bounds
+   a request rate per remote address**, which only became the visitor's in #1013: k3s exposed
+   Traefik through ServiceLB, whose klipper-lb masquerades unconditionally, and
+   `externalTrafficPolicy: Local` did not help. A **hostPort** on Traefik with the Service at
+   `ClusterIP` removed ServiceLB from the path (each cluster's `traefik-host-ports.yaml`).
 
-       - **`inFlightReq` bounds concurrency**, and its `sourceCriterion` defaults to `requestHost`.
-         That makes it source-independent, so it holds regardless of what address Traefik sees. It
-         is the one that protects the resource that actually runs out: each BFF replica has ten
-         R2DBC connections, and a request past the cap is a 429 rather than a growing queue behind
-         them.
+   The numbers are large because this middleware sits on the Ingress that carries the whole site:
+   a first visit costs about 30 requests and a second costs two, so the limit is sized for
+   first-time visitors behind a carrier NAT (`values.yaml` carries the arithmetic).
 
-       - **`rateLimit` bounds a request rate per source**, and its `sourceCriterion` defaults to the
-         remote address. That address only became the visitor's in #1013, which is why this half
-         spent a milestone rendered and disabled.
+   Deliberately absent: `sourceCriterion.requestHost` on `rateLimit`, which would hand one client
+   the whole site's budget.
 
-       WHAT TURNED IT ON, because the obvious answer was tried and was wrong. k3s exposed Traefik
-       through ServiceLB, whose klipper-lb container installs an unconditional
-       `iptables -t nat -I POSTROUTING -j MASQUERADE`. `externalTrafficPolicy: Local` is the
-       documented fix and did not work: the controller aimed klipper-lb at the node, and klipper-lb
-       masqueraded anyway. A **hostPort** on Traefik with the Service at `ClusterIP` is what removed
-       ServiceLB from the path — each cluster's `traefik-host-ports.yaml`, measured on staging.
-
-       WHY THE NUMBERS ARE LARGE. This middleware is on the one Ingress that carries the whole site,
-       so a page view spends the budget on its assets, its fonts and its venue images as well as its
-       queries. `values.yaml` carries the arithmetic; the short version is that a first visit costs
-       about 30 requests and a second costs two, so the limit is sized for first-time visitors
-       sharing a carrier NAT rather than for the API alone.
-
-       DELIBERATELY ABSENT: `sourceCriterion.requestHost` on `rateLimit`. It would make one budget
-       for the whole site, which hands any single client the ability to spend everybody's. A limit
-       that turns one abuser into an outage is not a limit.
-
-       TWO OBJECTS, AND THAT IS NOT A STYLE CHOICE. Traefik permits exactly one type per Middleware:
-       a second key makes the whole object `multi-types middleware not supported`, and every router
-       that names it is then dropped rather than degraded. The site answers Traefik's own 404 on
-       every path, including `/`. Nothing renders differently and no schema rejects it, because the
-       CRD models the types as optional siblings. It cost staging an outage (#268), and it stayed
-       invisible until then only because `rateLimit` was gated off — one key rendered, so one type
-       was declared. */}}
+   Two objects, not a style choice: Traefik permits one type per Middleware, and a second key makes
+   the whole object `multi-types middleware not supported`, dropping every router that names it.
+   The site then answers Traefik's own 404 on every path. No schema rejects it, because the CRD
+   models the types as optional siblings; it cost staging an outage (#268). */}}
 apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
@@ -51,9 +33,8 @@ metadata:
       Bounds concurrent requests, grouped by request host, so it holds whatever address Traefik sees.
 spec:
   inFlightReq:
-    {{- /* `| int64` is load-bearing here for the same reason it is on `stsSeconds`: Helm parses a
-           values number as float64, and the CRD's `format=int64` rejects the scientific notation
-           that produces, after `helm template` has shown it without complaint. */}}
+    {{- /* `| int64` is load-bearing, as on `stsSeconds`: Helm parses a values number as float64, and the
+       CRD's `format=int64` rejects the scientific notation `helm template` shows without complaint. */}}
     amount: {{ required "ingress.rateLimit.inFlightRequests is required when rateLimit is enabled" .Values.ingress.rateLimit.inFlightRequests | int64 }}
 {{- with .Values.ingress.rateLimit.perSource }}
 {{- if .enabled }}
