@@ -1,12 +1,8 @@
 /**
- * The credit a venue, artist or promoter image has to carry (#1275).
- *
- * These images come from Wikimedia Commons and comparable archives, where CC BY and CC BY-SA both
- * require the author, the licence and a link to the original beside the picture. The API returns
- * the three fields together, so a partial credit means a row that should not have been accepted.
- *
- * Resizing is a format change under CC 4.0 § 2(a)(4) and does not produce Adapted Material, so a
- * derivative carries the original's credit unchanged and share-alike never reaches the site.
+ * The credit a venue, artist or promoter image has to carry (#1275): CC BY and CC BY-SA require
+ * the author, the licence and a link to the original beside the picture, and the API returns the
+ * three together. Resizing is a format change under CC 4.0 § 2(a)(4), not Adapted Material, so a
+ * derivative carries the original's credit and share-alike never reaches the site.
  */
 
 /** A row that may carry an attributed image. Every field is optional — the BFF marks none required. */
@@ -26,16 +22,11 @@ export interface ImageCredit {
 }
 
 /**
- * Deed URL and display label per SPDX identifier.
- *
- * Listed rather than derived from the identifier. A pattern over `CC-BY-…` would also produce a URL
- * for an identifier Creative Commons does not publish, and a wrong licence link is worse than none.
- * It is the same reason the `-DE` ports are spelled out: they are separate licences with their own
- * deeds, not a suffix on the international ones.
- *
- * **Every identifier `SPDX` in `scripts/venue-images.py` can write appears here.** A file
- * whose licence resolves there but not here still credits its author and shows the identifier, with
- * no deed to click -- correct, and it reads as a raw code rather than a licence.
+ * Deed URL and display label per SPDX identifier, listed rather than derived: a pattern would
+ * also produce a URL for an identifier Creative Commons does not publish, and the `-DE` ports are
+ * separate licences with their own deeds. Every identifier `SPDX` in `scripts/venue-images.py`
+ * can write appears here; an unknown one still credits its author and shows the identifier, with
+ * no deed to click.
  */
 const LICENCES: Record<string, { label: string; url: string | null }> = {
   'CC0-1.0': { label: 'CC0 1.0', url: 'https://creativecommons.org/publicdomain/zero/1.0/' },
@@ -58,9 +49,8 @@ const LICENCES: Record<string, { label: string; url: string | null }> = {
   'CC-BY-SA-4.0': { label: 'CC BY-SA 4.0', url: 'https://creativecommons.org/licenses/by-sa/4.0/' },
   PD: { label: 'Public domain', url: null },
   'LAL-1.3': { label: 'Free Art License 1.3', url: 'https://artlibre.org/licence/lal/en/' },
-  // The licence statement is the Commons template itself, which is why the link goes there rather
-  // than to a deed. No deed exists: the template is a grant an uploader wrote, not a published
-  // licence (#1281).
+  // The licence statement is the Commons template itself, a grant an uploader wrote with no deed
+  // to link (#1281).
   'LicenseRef-Commons-Attribution': {
     label: 'Attribution only',
     url: 'https://commons.wikimedia.org/wiki/Template:Attribution',
@@ -68,11 +58,8 @@ const LICENCES: Record<string, { label: string; url: string | null }> = {
 }
 
 /**
- * The credit for [row], or `null` where there is no image or no complete credit.
- *
- * An incomplete credit returns `null` rather than a partial line, because the caller then renders
- * nothing and the missing half is visible as an absent caption rather than as a dangling label.
- * An unknown identifier still credits the author and shows the identifier as it stands.
+ * The credit for [row], or `null` where there is no image or no complete credit, so the missing
+ * half is visible as an absent caption rather than a dangling label.
  */
 export function imageCredit(row: AttributedImage | null | undefined): ImageCredit | null {
   if (!row?.imageUrl || !row.imageAttribution || !row.imageLicenceId || !row.imageSourceUrl) {

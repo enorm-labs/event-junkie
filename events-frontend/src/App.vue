@@ -14,10 +14,9 @@ import { useCompactView } from '@/composables/useCompactView'
 import { REPOSITORY_URL } from '@/lib/links'
 import { useLocalePath } from '@/composables/useLocalePath'
 
-// Screen-reader route announcer. Client-side navigations don't move focus or re-read the
-// page, so a changed document title goes unheard. Mirror the title into an aria-live region
-// on each change. The initial load is skipped (via router.isReady) because assistive tech
-// already announces the document then; announcing it again would be duplicate noise.
+// Screen-reader route announcer: client-side navigations do not move focus or re-read the page,
+// so the title is mirrored into an aria-live region on each change. The initial load is skipped
+// (router.isReady) because assistive tech already announces the document then.
 const { t } = useI18n()
 
 const announcement = ref('')
@@ -30,9 +29,8 @@ watch(pageTitle, (title) => {
   if (ready) announcement.value = title
 })
 
-// Dark-mode toggle lives in the app shell so the choice persists across route navigation.
-// The preference is stored in localStorage and applied before paint by an inline script in
-// index.html; here we mirror that initial state so the toggle icon/label start out correct.
+// The theme toggle lives in the app shell so the choice persists across routes. The preference
+// is applied before paint by an inline script in index.html; this mirrors that initial state.
 const THEME_KEY = 'theme'
 const isDark = ref<boolean>(document.documentElement.classList.contains('dark'))
 
@@ -51,16 +49,16 @@ const themeToggleLabel = computed(() =>
   isDark.value ? t('common.nav.toLightMode') : t('common.nav.toDarkMode'),
 )
 
-// The compact view is a second display preference, next to the theme and for the same reasons:
-// it persists, it is global, and it is applied before paint. See `useCompactView`.
+// The compact view is a second display preference, persisted, global, applied before paint
+// (`useCompactView`).
 const { compact, toggle: toggleCompact } = useCompactView()
 
 const compactToggleLabel = computed(() =>
   compact.value ? t('common.nav.toPosterView') : t('common.nav.toCompactView'),
 )
 
-// Same rule for the beta badge: one string behind both the tooltip and the accessible name.
-// "beta" alone would be a useless link name for a screen-reader user reading links out of context.
+// One string behind the beta badge's tooltip and accessible name: "beta" alone is a useless
+// link name out of context.
 const betaLabel = computed(() => t('common.nav.betaLabel'))
 
 const localePath = useLocalePath()
@@ -73,11 +71,8 @@ const localePath = useLocalePath()
       {{ announcement }}
     </div>
 
-    <!-- WCAG 2.4.1 Bypass Blocks: the header repeats on every route, so a keyboard or switch user
-         would otherwise tab through the brand, four nav links and two icon controls before
-         reaching content — on every navigation. Hidden until focused, and the first focusable
-         element in the document. It targets the wrapper below rather than each view's own <main>
-         so there is one target instead of seven to keep in sync. -->
+    <!-- WCAG 2.4.1 Bypass Blocks: hidden until focused, the first focusable element, targeting the
+         wrapper below rather than each view's <main> so there is one target to keep in sync. -->
     <a
       class="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:rounded-md focus:bg-background focus:px-4 focus:py-2 focus:text-foreground focus:ring-3 focus:ring-ring/50"
       href="#main-content"
@@ -86,13 +81,10 @@ const localePath = useLocalePath()
     </a>
 
     <header class="border-b border-border">
-      <!-- Below `sm` the row wraps: brand, beta badge and controls stay on the first line and the
-           links drop to a second one. All of them in a single row overflow a ~390px viewport — see
-           the header-overflow guard in e2e/smoke.spec.ts, which is what keeps this honest as items
-           are added. -->
-      <!-- Named because the footer contributes a second navigation landmark: with more than one,
-           each needs a distinguishable accessible name so screen-reader users can tell the
-           landmark list apart. e2e selectors address it by this name. -->
+      <!-- Below `sm` the links drop to a second line: one row overflows a ~390px viewport, and the
+           guard in e2e/smoke.spec.ts keeps this honest as items are added. -->
+      <!-- Named because the footer contributes a second navigation landmark; e2e selectors address
+           it by this name. -->
       <nav
         :aria-label="t('common.nav.label')"
         class="mx-auto flex max-w-5xl flex-wrap items-center gap-x-4 gap-y-3 p-4 text-sm font-medium sm:flex-nowrap sm:gap-6"
@@ -101,9 +93,8 @@ const localePath = useLocalePath()
           <BrandLogo />
         </RouterLink>
 
-        <!-- A link rather than a tooltip-only marker: a `title` is invisible on touch devices and
-             is not reliably announced, so the explanation has to be reachable by clicking. Targets
-             the About page's #beta section; the router's scrollBehavior handles the anchor. -->
+        <!-- A link rather than a tooltip-only marker: a `title` is invisible on touch devices.
+             Targets the About page's #beta section. -->
         <RouterLink
           :aria-label="betaLabel"
           :title="betaLabel"
@@ -112,12 +103,9 @@ const localePath = useLocalePath()
         >
           <BaseBadge variant="outline">{{ t('common.nav.beta') }}</BaseBadge>
         </RouterLink>
-        <!-- Order is deliberate: /events and /calendar are two views of the same thing (a list and
-             a month grid over the same events), so they sit next to each other; /venues and
-             /promoters are the two other entities and follow them; /about is meta and goes last.
-             e2e/smoke.spec.ts pins this order so it cannot drift back unnoticed. -->
-        <!-- Five links wrap below `sm` once the German labels are in, so the row wraps too, and each
-             label stays whole rather than breaking "Über uns" across two lines. -->
+        <!-- Order is deliberate: /events and /calendar are two views of the same data, /venues and
+             /promoters the other entities, /about is meta. e2e/smoke.spec.ts pins it. -->
+        <!-- The row wraps below `sm` so "Über uns" never breaks across two lines. -->
         <div
           class="order-last flex w-full flex-wrap items-center gap-x-4 gap-y-1 sm:order-none sm:w-auto sm:flex-nowrap sm:gap-6"
         >
@@ -155,8 +143,7 @@ const localePath = useLocalePath()
         <div class="ml-auto flex items-center gap-2">
           <!-- Compact, and inside this nav rather than its own landmark — see LocaleSwitcher. -->
           <LocaleSwitcher class="mr-1" compact />
-          <!-- `title` is the hover tooltip only; `aria-label` still supplies the accessible name
-               (it wins over `title`), so the two stay in sync deliberately. -->
+          <!-- `title` is the hover tooltip only; `aria-label` wins for the accessible name. -->
           <Button
             :aria-label="t('common.nav.sourceOnGitHub')"
             :href="REPOSITORY_URL"
@@ -169,8 +156,7 @@ const localePath = useLocalePath()
           >
             <GitHubMark />
           </Button>
-          <!-- `aria-pressed` rather than two buttons: one control, whose state a screen reader
-               reads out. The label says what pressing it does, as the theme toggle's does. -->
+          <!-- `aria-pressed` rather than two buttons: one control whose state a screen reader reads. -->
           <Button
             :aria-label="compactToggleLabel"
             :aria-pressed="compact"

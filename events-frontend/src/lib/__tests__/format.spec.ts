@@ -15,9 +15,8 @@ import {
 
 describe('formatDate locale handling', () => {
   it('uses day-before-month for English, not US ordering', () => {
-    // Regression guard. Phase 1 made formatDate locale-aware and passed the bare UI locale `en`,
-    // which Intl resolves to US conventions — "Jun 12, 2026". A Berlin audience reads
-    // "12 Jun 2026". The UI locale is mapped to a formatting tag (INTL_LOCALES) to prevent this.
+    // Regression guard: a bare UI locale `en` resolves to US conventions in Intl ("Jun 12, 2026");
+    // INTL_LOCALES maps it to a formatting tag.
     expect(formatDate('2026-06-12', 'en-GB')).toBe('Fri, 12 Jun 2026')
   })
 
@@ -105,8 +104,7 @@ describe('date helpers', () => {
   })
 
   it('advances by one calendar day across the spring DST shift', () => {
-    // Europe/Berlin springs forward on 2026-03-29; adding a day to the calendar date
-    // (not 24h to a timestamp) must still land on the 29th.
+    // Europe/Berlin springs forward on 2026-03-29; adding a calendar day must still land on the 29th.
     vi.useFakeTimers()
     vi.setSystemTime(new Date('2026-03-28T12:00:00Z'))
 

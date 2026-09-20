@@ -1,9 +1,8 @@
 import { expect, test } from '@playwright/test'
 
 /**
- * The legal pages have to be *reachable*, not merely present: German practice expects the imprint
- * within a couple of clicks from any page, which for this site means the footer on every route.
- * See docs/LEGAL.md §6.
+ * The legal pages have to be reachable: German practice expects the imprint within a couple of
+ * clicks from any page, which means the footer on every route (docs/LEGAL.md §6).
  */
 
 test('reaches the imprint in one click from the footer, on any route', async ({ page }) => {
@@ -27,8 +26,8 @@ test('reaches the privacy notice in one click from the footer', async ({ page })
 test('reaches the venue opt-out route in one click from the footer, on any route', async ({
   page,
 }) => {
-  // docs/SCRAPING_POSITION.md §5 is only a commitment if the operator can find it, and the page
-  // they arrive on has to carry the route rather than merely mention that one exists (#789).
+  // docs/SCRAPING_POSITION.md §5 is only a commitment if the operator can find it, so the page they
+  // arrive on has to carry the route (#789).
   await page.goto('/events')
 
   await page.getByRole('contentinfo').getByRole('link', { name: 'For venues' }).click()
@@ -44,11 +43,10 @@ test('reaches the venue opt-out route in one click from the footer, on any route
 })
 
 test('scrolls to the top when opening a legal page from a scrolled position', async ({ page }) => {
-  // Without a scrollBehavior the router keeps the previous offset, so a footer link opens the
-  // imprint somewhere in its middle — which reads as a broken page.
+  // Without a scrollBehavior a footer link opens the imprint somewhere in its middle.
   await page.goto('/about')
-  // `window.scrollTo` rather than `mouse.wheel`: the latter is a no-op on touch-emulating projects
-  // (Mobile Safari), so the page was never scrolled and the test passed vacuously there.
+  // `window.scrollTo` rather than `mouse.wheel`, which is a no-op on touch-emulating projects, so
+  // the test passed vacuously there.
   await page.evaluate(() => window.scrollTo(0, 2000))
   await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(100)
 
@@ -81,11 +79,8 @@ test('the privacy notice states its legal basis, rights and supervisory authorit
   await expect(main).toContainText('§ 25 (2) 2 TDDDG')
 })
 
-// Inverted with #278, when the last of the three provisional flags cleared: the address was rented,
-// the AVV concluded, and the notice re-read against a running production deployment. The banner now
-// renders nothing, so this asserts its absence — a page still calling itself provisional after the
-// facts became real is wrong in the direction a reader acts on. The unit test in
-// `views/legal/__tests__/legalViews.spec.ts` guards the same thing one layer down.
+// Inverted with #278, when the last provisional flag cleared: the banner renders nothing, so this
+// asserts its absence. `views/legal/__tests__/legalViews.spec.ts` guards the same one layer down.
 test('legal pages no longer call themselves provisional', async ({ page }) => {
   for (const path of ['/legal/imprint', '/legal/privacy']) {
     await page.goto(path)
@@ -94,8 +89,8 @@ test('legal pages no longer call themselves provisional', async ({ page }) => {
   }
 })
 
-// The address is only useful if it renders whole. The c/o line carries the customer number that
-// routes the post, so an imprint showing the street without it is undeliverable while looking fine.
+// The c/o line carries the customer number that routes the post; an imprint without it is
+// undeliverable while looking fine.
 test('the imprint renders the full rented address, c/o line included', async ({ page }) => {
   await page.goto('/legal/imprint')
   const main = page.getByRole('main')
@@ -129,8 +124,7 @@ test('reaches the open-source notices from the footer and lists real components'
   await expect(page).toHaveURL(/\/legal\/notices$/)
   await expect(page.getByRole('heading', { level: 1, name: 'Open-source notices' })).toBeVisible()
 
-  // MIT is by far the largest group, so it is the stable one to assert on. The em dash keeps this
-  // off "MIT-0", which is its own group.
+  // MIT is by far the largest group; the em dash keeps this off "MIT-0".
   await expect(page.locator('summary').filter({ hasText: /^\s*MIT\s+—/ })).toBeVisible()
 })
 
@@ -151,8 +145,8 @@ test('expands a licence group to reveal its components', async ({ page }) => {
 })
 
 test('states what the notices list does and does not cover', async ({ page }) => {
-  // The list is generated from the dependency graph, which is broader than the shipped bundle and
-  // does not reproduce full licence texts. Claiming otherwise would be the inaccuracy to avoid.
+  // The list is generated from the dependency graph, broader than the shipped bundle, and does not
+  // reproduce full licence texts. Claiming otherwise would be the inaccuracy to avoid.
   await page.goto('/legal/notices')
 
   await expect(page.getByRole('main')).toContainText('broader than what is served to your browser')

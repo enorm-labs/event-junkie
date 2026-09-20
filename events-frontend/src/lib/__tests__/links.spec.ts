@@ -3,17 +3,12 @@ import { describe, expect, it } from 'vitest'
 import { isReleaseVersion, releaseTagUrl, RELEASES_URL } from '@/lib/links'
 
 /**
- * Version strings this project actually produces, rather than plausible-looking inventions.
+ * Version strings this project produces, not plausible inventions (#502): the footer used to
+ * reject snapshots by testing `version.includes('-SNAPSHOT')`, proven against a string that never
+ * reaches a browser, so the guard passed its test and failed in production. These come from
+ * `scripts/version.sh compute` and the tags published to GHCR:
  *
- * That distinction is the whole point of #502. The footer used to reject snapshots by testing
- * `version.includes('-SNAPSHOT')`, and its test proved it worked — against `'0.1.0-SNAPSHOT'`, a
- * string that lives only in `gradle.properties` and never reaches a browser. Every deployed build
- * reports something else entirely, so the guard passed its test and failed in production.
- *
- * So these come from `scripts/version.sh compute` and from the tags published to GHCR, not from
- * imagination. Regenerate with:
- *
- *   scripts/version.sh compute refs/heads/main <sha>
+ * scripts/version.sh compute refs/heads/main <sha>
  */
 const DEPLOYED_SNAPSHOT = '0.1.1-snapshot.20260817180146.g787d7d0' // on staging, 2026-08-17
 const LEGACY_SNAPSHOT = '0.1.0-snapshot.gf6407e3' // pre-#455 scheme, still in GHCR
@@ -32,8 +27,8 @@ describe('isReleaseVersion', () => {
     expect(isReleaseVersion(version)).toBe(false)
   })
 
-  // `v0.1.0-rc1` is explicitly unsupported by the version scheme (docs/DEVELOPMENT.md §Versions),
-  // but the predicate should not depend on that staying true.
+  // `v0.1.0-rc1` is unsupported by the version scheme (docs/DEVELOPMENT.md §Versions), but the
+  // predicate should not depend on that.
   it.each(['0.1.0-rc1', '0.1.0+build.5', '0.1', '0.1.0.1', 'v0.1.0', ''])(
     'rejects %s',
     (version) => {
@@ -47,9 +42,8 @@ describe('isReleaseVersion', () => {
   })
 
   it('agrees with the semverFilter production uses to decide the same question', () => {
-    // deploy/clusters/production/oci-repository.yaml — the cluster's definition of "a release".
-    // Two definitions of one concept drift; this asserts they have not. Compared as a map so a
-    // failure names the version rather than an index.
+    // deploy/clusters/production/oci-repository.yaml is the cluster's definition of "a release";
+    // this asserts the two have not drifted. A map, so a failure names the version.
     const semverFilter = /^[0-9]+\.[0-9]+\.[0-9]+$/
     const versions = ['0.1.0', '1.2.3', ...NOT_RELEASES]
 
@@ -65,8 +59,7 @@ describe('releaseTagUrl', () => {
     expect(releaseTagUrl('0.1.0')).toBe(`${RELEASES_URL}/tag/v0.1.0`)
   })
 
-  // The regression. Each of these previously produced a link the Releases page has no entry for:
-  // snapshots are published to GHCR and never tagged in git.
+  // The regression: each of these produced a link the Releases page has no entry for.
   it.each(NOT_RELEASES)('returns null for %s rather than a URL that 404s', (version) => {
     expect(releaseTagUrl(version)).toBeNull()
   })

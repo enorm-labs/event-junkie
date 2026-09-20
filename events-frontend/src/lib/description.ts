@@ -1,16 +1,11 @@
 import type { Locale } from '@/i18n/locales'
 
 /**
- * Which description to show, and what language to declare for it.
- *
- * The chrome is localised and the venue's prose is not. A German text under English chrome is not
- * a defect we can fix — it is what the venue published — but claiming it is English is. So the
- * page shows the visitor's locale where a text exists in it, and marks the language either way
- * (ADR-026).
- *
- * **This has to be one function shared by the view, the page meta and the structured data**, and
- * through those by the injector sidecar. `injector/__tests__/parity.spec.ts` asserts that the two
- * heads agree, and a second copy of this rule is how they stop agreeing.
+ * Which description to show, and what language to declare for it. A German text under English
+ * chrome is what the venue published; claiming it is English is the defect. So the page shows the
+ * visitor's locale where a text exists in it and marks the language either way (ADR-026). One
+ * function shared by the view, the page meta, the structured data and, through those, the
+ * injector; `injector/__tests__/parity.spec.ts` asserts the two heads agree.
  */
 export interface ChosenDescription {
   /** The text to render. */
@@ -22,12 +17,10 @@ export interface ChosenDescription {
 }
 
 /**
- * Anything that carries a description in up to two languages.
- *
- * An event, a venue and a promoter all do, and their rule is the same one, so this is structural
- * rather than a union of the response types. `descriptionAltOrigin` is optional because only event
- * text can be machine-made: a venue or promoter description is our own prose in both languages
- * (#1210, #328), so a missing origin reads as "not a machine", which is exactly right.
+ * Anything that carries a description in up to two languages: an event, a venue and a promoter,
+ * one rule, so this is structural. `descriptionAltOrigin` is optional because only event text can
+ * be machine-made; a venue or promoter description is our own prose in both languages (#1210,
+ * #328).
  */
 export interface Described {
   description?: string | null
@@ -41,10 +34,8 @@ const isLocale = (value: string | null | undefined): value is Locale =>
   value === 'de' || value === 'en'
 
 /**
- * The description for [locale], or null when there is none.
- *
- * The locale's own text wins. Failing that the original is shown in its own language, because a
- * description a visitor cannot read still says who is playing and what kind of night it is.
+ * The description for [locale], or null. The locale's own text wins; failing that the original in
+ * its own language, which still says who is playing.
  */
 export function descriptionFor(subject: Described, locale: Locale): ChosenDescription | null {
   const original = subject.description

@@ -1,25 +1,20 @@
-# events-frontend — the meta-injection sidecar (ADR-014 §Decision 3), a second container in the
-# frontend pod that fills the head of `index.html` per detail page for the scrapers that run no
-# JavaScript. See injector/server.ts for what it does and what it refuses to do.
+# events-frontend: the meta-injection sidecar (ADR-014 §Decision 3), a second container in the
+# frontend pod that fills the head of `index.html` per detail page for scrapers that run no
+# JavaScript (injector/server.ts).
 #
-# Same rules as the frontend Dockerfile beside it, and for the same reasons: no builder stage and
-# no `RUN` that does build work, so one runner emits both platforms. `npm run build` produces
-# `dist-injector/injector.mjs` — one file, every import inlined — and this copies it:
+# Same rules as the frontend Dockerfile: no builder stage and no `RUN` that does build work, so
+# one runner emits both platforms. `npm run build` produces `dist-injector/injector.mjs`, one
+# file with every import inlined:
 #
 #     npm --prefix events-frontend ci && npm --prefix events-frontend run build
 #     docker buildx build events-frontend -f events-frontend/Dockerfile.injector \
 #       --platform linux/amd64,linux/arm64 --build-arg VERSION=… --build-arg REVISION=…
 #
-# Pinned by tag *and* digest, like every base image here; Dependabot's `docker` ecosystem updates
-# both. `24-alpine` because Node 24 is the engine `package.json` declares, and the bundle targets
-# it. Alpine for the same reason nginx is on it: fewer packages in the scan.
-#
-# **Verify the package, never the digest** (#770). What this pin has to satisfy is
-# `libssl3 >= 3.5.8-r0`, checked with
-# `docker run --rm --entrypoint sh <ref> -c 'apk list --installed | grep -E "^libssl3"'` **on
-# `--platform linux/amd64`**, which is the architecture the gate scans. This digest carries it, so
-# no `apk upgrade` layer belongs here: an upgrade kept past its purpose hides that the base has
-# caught up and quietly becomes the thing choosing the version.
+# Pinned by tag and digest; `24-alpine` because Node 24 is the engine `package.json` declares.
+# Verify the package, never the digest (#770): this pin has to satisfy `libssl3 >= 3.5.8-r0`,
+# checked with `docker run --rm --entrypoint sh <ref> -c 'apk list --installed | grep -E
+# "^libssl3"'` on `--platform linux/amd64`, the architecture the gate scans. No `apk upgrade`
+# layer: kept past its purpose it hides that the base has caught up.
 FROM node:24-alpine@sha256:ebfe2f90462722a7a4de65e91990e97fe0d401c70e0e762c5b53302f905ec1c1
 
 ARG VERSION=unspecified
@@ -34,18 +29,16 @@ LABEL org.opencontainers.image.source="https://github.com/enorm-labs/event-junki
 
 ENV NODE_ENV=production
 
-# **The base ships npm, and npm ships three fixable HIGH advisories this process never runs.** The
-# first publish gate on this image failed on `brace-expansion`, `ip-address` and `tar` under
-# /usr/local/lib/node_modules/npm — a package manager the container has no use for, since the
-# bundle below has every import inlined and nothing is ever installed. Removing npm, npx, corepack
-# and yarn deletes the findings rather than waiving them, and takes about 30 MB of surface with it.
+# The base ships npm, and npm ships fixable HIGH advisories this process never runs
+# (`brace-expansion`, `ip-address`, `tar` under /usr/local/lib/node_modules/npm). Removing npm,
+# npx, corepack and yarn deletes the findings rather than waiving them, and ~30 MB of surface.
 RUN rm -rf /usr/local/lib/node_modules /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack /opt/yarn*
 
 WORKDIR /app
 COPY dist-injector/injector.mjs /app/injector.mjs
 
-# The UID the chart's `security.runAsUser` names, shared by every workload; `scripts/uid-consistency.sh`
-# asserts they agree. The process writes nothing, so a read-only root filesystem needs no /tmp.
+# The UID the chart's `security.runAsUser` names (`scripts/uid-consistency.sh`). The process
+# writes nothing, so a read-only root needs no /tmp.
 USER 10001:10001
 
 # Documentation only; the chart's `frontend.injector.port` is what binds. Above 1024, non-root.

@@ -4,17 +4,12 @@ import { alternatesFor, canonicalUrl, OG_LOCALES } from '../src/lib/seo.ts'
 import type { ImageSize } from './meta.ts'
 
 /**
- * Rewrites the head of the built `index.html` for one detail page. Pure: a string in, a string out.
- *
- * **It writes exactly what the client writes after boot**, tag for tag — `usePageMeta.ts`'s set and
- * `seoTags.ts`'s set — and `__tests__/parity.spec.ts` holds the two writers together. Two
- * conventions make the second writer's job possible: every tag rewritten here keeps its shipped
- * value in `data-site-default`, so the client can still fall back to the *site's* description on a
- * page without one; and every tag added here carries `data-seo`, the marker `seoTags.ts` replaces
- * rather than duplicates.
- *
- * String surgery rather than a DOM: the shell is a few kilobytes of markup this project controls,
- * and the container ships one file with no parser in it.
+ * Rewrites the head of the built `index.html` for one detail page. Pure: a string in, a string
+ * out. It writes exactly what the client writes after boot, `usePageMeta.ts`'s set and
+ * `seoTags.ts`'s set, and `__tests__/parity.spec.ts` holds the two writers together. Every tag
+ * rewritten here keeps its shipped value in `data-site-default`, so the client can fall back to
+ * the site's description; every tag added carries `data-seo`, the marker `seoTags.ts` replaces.
+ * String surgery rather than a DOM: the container ships one file with no parser in it.
  */
 
 export interface RewriteInput {
@@ -44,11 +39,10 @@ function metaTag(key: string): RegExp {
 }
 
 /**
- * Rewrites `content` on one `<meta>` element, remembering what it said. Leaves a missing tag missing.
- *
- * Every `replace` in this file takes a function, never a string built from a value. A string
- * replacement is scanned for `$&`, `` $` ``, `$'` and `$n` — so a title ending in `$'` would splice
- * the rest of the document into the tag (#1426). A function's return is inserted as it is.
+ * Rewrites `content` on one `<meta>`, remembering what it said; leaves a missing tag missing.
+ * Every `replace` here takes a function, never a string built from a value: a string replacement
+ * is scanned for `$&`, `` $` ``, `$'` and `$n`, so a title ending in `$'` would splice the rest of
+ * the document into the tag (#1426).
  */
 function setContent(html: string, key: string, value: string): string {
   return html.replace(metaTag(key), (tag) => {
@@ -92,17 +86,16 @@ export function rewriteHead(shell: string, input: RewriteInput): string {
   html = setContent(html, 'og:title', meta.title)
   html = setContent(html, 'twitter:title', meta.title)
 
-  // The client restores the site description on a page without one, and so does this — by not
-  // touching the tags, which then still say what `index.html` shipped.
+  // The client restores the site description on a page without one, and so does this, by not
+  // touching the tags.
   if (meta.description) {
     for (const key of ['description', 'og:description', 'twitter:description']) {
       html = setContent(html, key, meta.description)
     }
   }
 
-  // Mirrors `applyPageMeta`: an image replaces the site card, no image removes it, and the width,
-  // height and alt that describe the site card go with it either way — they are the card's, not
-  // the poster's.
+  // Mirrors `applyPageMeta`: an image replaces the site card, no image removes it, and the site
+  // card's width, height and alt go with it either way.
   for (const key of ['og:image:width', 'og:image:height', 'og:image:alt']) html = removeTag(html, key)
   if (meta.image) {
     html = setContent(html, 'og:image', meta.image)

@@ -15,12 +15,10 @@ const props = withDefaults(
   defineProps<{
     event: EventSummary
     /**
-     * Heading level for the card's title. The card is a heading in its own right wherever it
-     * appears, but *which* level is a property of the page, not of the card: on the home page and
-     * the detail pages a `SectionLabel` `h2` sits above the grid, so `h3` is correct; on `/events`
-     * the cards hang directly off the page `h1`, so anything below `h2` skips a level and trips
-     * axe's `heading-order`. Named `as` to match `SectionLabel`, but narrowed to the levels a
-     * card can legitimately take — note that it sets the *heading* element, not the card's root.
+     * Heading level for the card's title: which level is a property of the page, not the card. On
+     * the home and detail pages a `SectionLabel` `h2` sits above the grid, so `h3`; on `/events` the
+     * cards hang off the page `h1`, so `h2`, or axe's `heading-order` trips. Sets the heading
+     * element, not the card's root.
      */
     as?: 'h2' | 'h3' | 'h4'
   }>(),
@@ -39,8 +37,7 @@ const {
 // Set only when the time shown is the BFF's guess (#1384); the card carries it as a title.
 const timeHint = computed(() => eventTimeHint(props.event))
 
-// `OTHER` is the importers' catch-all — it tells a reader nothing the card doesn't already say,
-// so it's dropped rather than spending a pill on it. Every other type earns its place.
+// `OTHER` is the importers' catch-all and tells a reader nothing, so it earns no pill.
 const eventType = computed(() =>
   props.event.eventType && props.event.eventType !== 'OTHER'
     ? formatEventType(props.event.eventType)
@@ -51,9 +48,8 @@ const isPast = computed(() => isPastEvent(props.event))
 // A weekender in its second night: started, not over (ADR-029).
 const isRunning = computed(() => isRunningEvent(props.event))
 
-// An event on today gets a pulsing "live" dot — it stands out in the Upcoming feed and on
-// venue/artist pages, and reinforces liveness in the Tonight feed. Self-contained, so any caller
-// gets it for free. A running weekender is on today too; a cancelled or moved one is not live here.
+// An event on today gets a pulsing "live" dot, self-contained so any caller gets it. A running
+// weekender is on today too; a cancelled or moved one is not live.
 const status = computed(() => formatEventStatus(props.event.status, props.event.relocatedTo))
 const isLive = computed(
   () =>
@@ -62,13 +58,10 @@ const isLive = computed(
 )
 
 /**
- * The one word on a card that changes what the reader does next, and the only coloured thing in the
- * meta line. Past wins the slot: "Sold out" on last month's gig is stale, not informative. A
- * cancelled, postponed or relocated night comes next — it is not running and it is not for sale,
- * whatever else the row says (#1550) — then running, because "since Friday" is what a reader of a
- * Sunday listing needs to know first.
- *
- * The colour is emphasis on top of the word, never instead of it (WCAG 1.4.1).
+ * The one word on a card that changes what the reader does next, and the only coloured thing in
+ * the meta line. Past wins the slot ("Sold out" on last month's gig is stale); a cancelled,
+ * postponed or relocated night next (#1550); then running, because "since Friday" is what a
+ * Sunday reader needs first. Colour is emphasis on top of the word, never instead (WCAG 1.4.1).
  */
 const state = computed(() => {
   if (isPast.value) return { label: t('events.card.past'), class: 'text-muted-foreground' }
@@ -83,8 +76,8 @@ const state = computed(() => {
   return null
 })
 
-// Type and genre are different taxonomies — one kind of night, many kinds of music — but both are
-// filter values in the query string, so they read as one list rather than two rows of pills (#1248).
+// Type and genre are different taxonomies, but both are filter values in the query string, so
+// they read as one list (#1248).
 const taxonomy = computed(() => [eventType.value, ...(props.event.genreTags ?? [])].filter(Boolean))
 
 const localePath = useLocalePath()
@@ -98,11 +91,8 @@ const { el: posterEl, focused: posterFocused } = useViewportFocus()
 <template>
   <RouterLink :to="localePath(`/events/${event.slug}`)" :class="CARD_CLASS">
     <div ref="posterEl" :data-focus="posterFocused || undefined" :class="CARD_POSTER_CLASS">
-      <!--
-        `sizes` describes the real slot: a `max-w-5xl` grid is one column below `sm` and two above
-        it, so a card is the whole viewport, then about 474 px. A wrong value silently downloads the
-        wrong file.
-      -->
+      <!-- `sizes` describes the real slot: the whole viewport below `sm`, about 474 px in the
+           two-column grid above. A wrong value silently downloads the wrong file. -->
       <CachedImage
         v-if="event.imageUrl"
         :src="event.imageUrl"
@@ -124,11 +114,8 @@ const { el: posterEl, focused: posterFocused } = useViewportFocus()
           <span class="sr-only">{{ t('events.card.liveTonight') }}</span>
         </span>
         <!--
-            Both lines are `truncate`d, so a long one is cut off with no way to read the rest.
-            The native `title` tooltip spells each out on hover — the same affordance the
-            calendar cells got, sharing `eventLabel` so the two can't drift. Scoped to the
-            clipped elements rather than the whole card, so hovering the card doesn't pop a
-            tooltip over information that is already fully visible.
+            Both lines are `truncate`d, so the native `title` spells each out on hover, sharing
+            `eventLabel` with the calendar cells. Scoped to the clipped elements, not the card.
           -->
         <component
           :is="as"

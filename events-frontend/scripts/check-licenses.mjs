@@ -1,17 +1,13 @@
 #!/usr/bin/env node
 /**
  * Fails if any production npm dependency carries a licence outside
- * `config/allowed-licenses-npm.json`.
+ * `config/allowed-licenses-npm.json`: the counterpart to `./gradlew checkLicense`, which never
+ * sees the frontend, where dependency-review.yml's deny-list only looks at newly introduced
+ * dependencies.
  *
- * This is the frontend counterpart to `./gradlew checkLicense`, which only ever sees the JVM tree
- * — the frontend is not a Gradle subproject. Without it, npm licences were audited only at PR time
- * by the deny-list in dependency-review.yml, which sees *newly introduced* dependencies and so
- * never looked at the several hundred already in the tree.
- *
- * Not `license-checker-rseidelsohn --onlyAllow`: that matches against the whole licence field as a
- * string, so a dual licence like "(MIT OR CC0-1.0)" has to be allow-listed verbatim, and its
- * failure output does not say which package is at fault. Reimplementing the comparison is ~30
- * lines and lets a package pass on ANY of its licences, matching the Gradle plugin's semantics.
+ * Not `license-checker-rseidelsohn --onlyAllow`: it matches the whole licence field as a string,
+ * so "(MIT OR CC0-1.0)" has to be allow-listed verbatim, and its failure does not name the
+ * package. This lets a package pass on ANY of its licences, the Gradle plugin's semantics.
  *
  * Run: npm run check:licenses
  */
@@ -50,8 +46,8 @@ function licensesOf(info) {
 const violations = []
 for (const [id, info] of Object.entries(packages)) {
   const licenses = licensesOf(info)
-  // No metadata at all is a violation, not a pass: an unknown licence is the case most worth
-  // stopping for (docs/LEGAL.md §9.2).
+  // No metadata at all is a violation: an unknown licence is the case most worth stopping for
+  // (docs/LEGAL.md §9.2).
   if (licenses.length === 0) {
     violations.push({ id, licenses: ['<none declared>'] })
   } else if (!licenses.some((license) => allowed.has(license))) {

@@ -16,13 +16,10 @@ import { useLocalePath } from '@/composables/useLocalePath'
 import { useI18n } from 'vue-i18n'
 
 /**
- * Presentational shell shared by the artist, venue, and promoter detail pages. Owns the
- * loading / not-found / error scaffold, the hero header (image + kind label + name), and both
- * event feeds, so each view only wires its data and fills the entity-specific slots.
- *
- * Slots:
- * - `meta` — entity-specific header metadata rendered under the name (links, address, …).
- * - default — optional content between the header and the events feed (e.g. a description).
+ * Presentational shell shared by the artist, venue and promoter detail pages: the loading /
+ * not-found / error scaffold, the hero header and both event feeds. Slots: `meta` for
+ * entity-specific header metadata under the name, default for content between the header and
+ * the events feed.
  */
 defineProps<{
   /** Entity kind label, e.g. "Artist" — shown above the name and in the not-found heading. */
@@ -50,15 +47,14 @@ defineProps<{
   /** Copy shown when the events feed is empty. */
   emptyText: string
   /**
-   * The past-events feed. No loading or error state: the section appears only once it has events,
-   * so a slow or failed archive is absent rather than noisy.
+   * The past-events feed, with no loading or error state: the section appears only once it has
+   * events.
    */
   pastEvents?: EventPage | null
 }>()
 
-// The document title is *not* set here. Each detail view owns its own page meta, because the
-// description and image come from its entity and this component only ever sees a name — see
-// lib/pageMeta.ts and the `usePageMeta` call in each view.
+// The document title is not set here: each detail view owns its page meta, because the
+// description and image come from its entity (lib/pageMeta.ts, `usePageMeta` in each view).
 
 const localePath = useLocalePath()
 
@@ -87,22 +83,13 @@ const { compact } = useCompactView()
 
     <template v-else-if="ready">
       <!--
-        The same three lengths as the event poster, because this is the same column: `max-w-3xl`
-        less `sm:p-8` is 704 px, and the viewport less its padding below that. They are what turn
-        `srcset`'s widths into a choice, so they track the `<main>` classes above.
-
-        The wrapper carries the border and positions the credit, because `CachedImage` renders a
-        `display: contents` <picture> with no box of its own. The border moves here so the scrim
-        stops at it rather than over it, and the image is `block` so no inline descender opens a
-        gap between the picture and the credit sitting on it.
-
-        `eager` because this is the largest element above the fold, and a lazy LCP is the defect
-        #1207 reports on the event card.
-
-        `max-h-[35rem]` is what makes the `object-cover` beside it do anything: without a height to
-        crop against, the box takes the picture's own ratio and a portrait one fills the screen.
-        560 px sits above the tallest landscape image of the 43, so 39 of them render unchanged and
-        the 4 taller ones crop to the same weight as the rest.
+        The same three lengths as the event poster, the same column: 704 px in `max-w-3xl` less
+        `sm:p-8`, the viewport less its padding below that; `sizes` tracks the `<main>` classes. The
+        wrapper carries the border and positions the credit, because `CachedImage` renders a
+        `display: contents` <picture>; the image is `block` so no inline descender opens a gap under
+        it. `eager` because this is the LCP element (#1207). `max-h-[35rem]` is what makes
+        `object-cover` do anything: 560 px sits above the tallest landscape image of the 43, so 39
+        render unchanged and the 4 taller ones crop to the same weight.
       -->
       <div v-if="imageUrl" class="relative border border-border">
         <CachedImage
@@ -118,11 +105,8 @@ const { compact } = useCompactView()
         <ImageCreditLine v-if="credit" :credit="credit" overlay />
       </div>
 
-      <!--
-        No picture, no placeholder. #811 draws one on a card, where a hole in a grid reads as
-        broken, and that reasoning does not reach a detail page: the name is the content, and a
-        full-width 3:2 void would push it off the screen for the venues that have no photograph.
-      -->
+      <!-- No picture, no placeholder: here the name is the content, and a full-width 3:2 void
+           would push it off the screen (#811 draws one on a card). -->
       <header class="space-y-2">
         <SectionLabel as="p">{{ kind }}</SectionLabel>
         <h1 class="text-page font-bold tracking-tight">{{ name }}</h1>

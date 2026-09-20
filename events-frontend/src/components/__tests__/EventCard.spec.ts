@@ -25,8 +25,7 @@ const stubs = {
 }
 
 describe('EventCard', () => {
-  // The card reads its date against the clock, so the fixture needs a fixed one — otherwise the
-  // suite starts failing on the day `eventDate` becomes history.
+  // The card reads its date against the clock, so the fixture needs a fixed one.
   beforeEach(() => {
     vi.useFakeTimers()
     vi.setSystemTime(new Date('2026-06-15T12:00:00Z'))
@@ -43,8 +42,8 @@ describe('EventCard', () => {
   })
 
   it('offers the cached formats the API returned for the poster', () => {
-    // The wiring is what breaks silently: a card that dropped `imageSources` still renders a
-    // perfectly good <img>, and every visitor quietly downloads JPEG instead of AVIF (ADR-019).
+    // The wiring is what breaks silently: a card that dropped `imageSources` still renders a good
+    // <img>, and every visitor downloads JPEG instead of AVIF (ADR-019).
     const wrapper = mount(EventCard, {
       props: {
         event: {
@@ -57,18 +56,15 @@ describe('EventCard', () => {
     })
 
     expect(wrapper.get('source').attributes('type')).toBe('image/avif')
-    // The slot the card actually draws: the whole viewport below `sm`, where the poster bleeds
-    // through the page shell's padding, and about 474 px in the two-column grid above it. Without
-    // this the browser reads the srcset widths against the wrong number.
+    // The slot the card draws: the whole viewport below `sm`, about 474 px in the two-column grid
+    // above it. Without this the browser reads the srcset widths against the wrong number.
     expect(wrapper.get('source').attributes('sizes')).toBe('(min-width: 640px) 474px, 100vw')
-    // The box is reserved before the bytes arrive, so a portrait flyer landing in a 3:2 slot does
-    // not push the text below it (#1245).
+    // The box is reserved before the bytes arrive, so a portrait flyer does not push the text (#1245).
     expect(wrapper.get('picture').classes()).toContain('aspect-[3/2]')
   })
 
   it('draws the title as the poster when the event has no image', () => {
-    // Not an edge case: one upcoming event in nine has no flyer, so this is a normal card rather
-    // than a fallback nobody sees.
+    // One upcoming event in nine has no flyer, so this is a normal card, not a fallback.
     const wrapper = mount(EventCard, {
       props: { event: { ...event, imageUrl: null, imageSources: [] } },
       global: { stubs },
@@ -85,8 +81,8 @@ describe('EventCard', () => {
   })
 
   it('titles the card h3 by default and honours an overridden level', () => {
-    // h3 suits a grid sitting under a section h2 (home, detail pages); /events has no section
-    // heading, so it asks for h2 to keep the outline from skipping a level (axe `heading-order`).
+    // h3 suits a grid under a section h2; /events has no section heading, so it asks for h2 (axe
+    // `heading-order`).
     const byDefault = mount(EventCard, { props: { event }, global: { stubs } })
     expect(byDefault.get('h3').text()).toBe('Tonight Show')
 
@@ -230,8 +226,7 @@ describe('EventCard', () => {
 
   it('bleeds the poster to both edges below sm, and keeps the text inset', () => {
     // The page shell is `p-4 sm:p-8`, so `-mx-4` reaches the viewport edge on a phone and does
-    // nothing from `sm` up, where the grid has two columns. Only the poster box moves: the card's
-    // own text keeps the shell's inset.
+    // nothing from `sm` up. Only the poster box moves.
     const wrapper = mount(EventCard, {
       props: { event: { ...event, imageUrl: '/api/images/abc/192.jpg' } },
       global: { stubs },
@@ -245,8 +240,8 @@ describe('EventCard', () => {
   })
 
   it('bleeds a title poster the same way, and hands it the reveal group', () => {
-    // One upcoming event in nine has no flyer, so a title poster is a normal card rather than a
-    // fallback: it gets the same edge, and the same scroll reveal on its hairline and title.
+    // A title poster is a normal card: the same edge, and the same scroll reveal on its hairline and
+    // title.
     const wrapper = mount(EventCard, { props: { event }, global: { stubs } })
 
     const poster = wrapper.get('[aria-hidden="true"]').element.parentElement?.parentElement
@@ -255,9 +250,8 @@ describe('EventCard', () => {
     expect(poster?.className).toContain('sm:mx-0')
   })
 
-  // One event in ten has no start time on staging, and most of those venues never publish one.
-  // The slot still says something: doors when they exist, labelled, and otherwise that nothing
-  // was announced — an empty slot reads as our bug (#1383).
+  // One event in ten has no start time on staging. The slot still says something: doors when they
+  // exist, labelled, otherwise that nothing was announced; an empty slot reads as our bug (#1383).
   it('shows the doors time, labelled, when there is no start time', () => {
     const wrapper = mount(EventCard, {
       props: { event: { ...event, startTime: null, doorsTime: '19:00:00' } },
@@ -283,8 +277,8 @@ describe('EventCard', () => {
     expect(wrapper.text()).not.toContain('Doors')
   })
 
-  // The BFF sends its own guess when the venue published nothing; the card shows the number the
-  // list sorted by, marked as a guess, and says so in words for a screen reader (#1384).
+  // The BFF's guess when the venue published nothing: the number the list sorted by, marked as a
+  // guess, said in words for a screen reader (#1384).
   it('marks an assumed start as a guess and explains it', () => {
     const wrapper = mount(EventCard, {
       props: {

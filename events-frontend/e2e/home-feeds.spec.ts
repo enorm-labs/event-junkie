@@ -1,15 +1,10 @@
 import { expect, type Page, type Route, test } from '@playwright/test'
 
 /**
- * Home page feed e2e tests with a mocked BFF.
- *
- * The home page loads two independent feeds on mount:
- *   Tonight  → GET /api/events/today        (an EventSummary[] array)
- *   Upcoming → GET /api/events?from=&size=12 (an EventPage; the view reads .content)
- *
- * Each feed has its own loading / error / empty / list state, so the tests exercise
- * them independently. The two matchers are non-overlapping (`/events/today` vs
- * `/events?…`) so route registration order does not matter.
+ * Home page feeds with a mocked BFF. Two independent feeds on mount:
+ * Tonight   GET /api/events/today        (an EventSummary[] array)
+ * Upcoming  GET /api/events?from=&size=12 (an EventPage; the view reads .content)
+ * Each has its own loading / error / empty / list state. The matchers do not overlap.
  */
 
 function collectPageErrors(page: Page): string[] {
@@ -67,8 +62,7 @@ test('renders the tonight and upcoming feeds', async ({ page }) => {
 test('the hero leads to the events list first, with the calendar beside it', async ({ page }) => {
   await page.goto('/')
 
-  // The primary way in is the list (#366): the feeds below are already a list, and the filters
-  // are what a visitor who wants more of it needs. The calendar stays as the second button.
+  // The primary way in is the list (#366); the calendar stays as the second button.
   const hero = page.getByRole('main')
   await expect(hero.getByRole('link', { name: 'Browse events' })).toHaveAttribute(
     'href',
@@ -127,10 +121,9 @@ test('navigates to an event detail from a feed card', async ({ page }) => {
 
 test('long titles truncate inside the feed instead of widening the page', async ({ page }) => {
   // The feed grid had no explicit `grid-cols-1`, so below `sm` its single track sized to
-  // min-content — and the card's `truncate` heading is `white-space: nowrap`, whose min-content
-  // is the whole untruncated string. One long title stretched the track to ~1600px and the
-  // entire page scrolled sideways. Numbered `grid-cols-*` resolve to `minmax(0, 1fr)`, which
-  // caps the track at the container. Needs real cards, hence the mocked feeds in this file.
+  // min-content, and a `truncate` heading's min-content is the whole untruncated string: one long
+  // title stretched the track to ~1600px. Numbered `grid-cols-*` resolve to `minmax(0, 1fr)`.
+  // Needs real cards, hence the mocked feeds.
   const longTitle = 'An Extraordinarily Long Event Title That Should Truncate Rather Than Expand'
   await page.route(todayFeed, (route) =>
     json(route, [
