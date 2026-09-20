@@ -39,7 +39,7 @@ class SaalchenOverviewPageScraperTest {
     @Test
     fun `keeps only the rows staged at this venue`() {
         // The calendar carries 13 rows across Säälchen, Holzmarkt 25 and the Marktplatz.
-        events shouldHaveSize 8
+        events shouldHaveSize 9
         events.any { it.title == "Jimmy Sax" } shouldBe true
         events.none { it.title.contains("FLOHMARKT") } shouldBe true
         events.none { it.title.contains("BREAKFAST") } shouldBe true
@@ -116,10 +116,25 @@ class SaalchenOverviewPageScraperTest {
     }
 
     @Test
-    fun `stores no description because the venue writes none for this room`() {
-        // The AddToCalendar payload is metadata-only for every Säälchen event; the Holzmarkt 25
+    fun `stores no description when the venue writes none, which is most rows`() {
+        // The AddToCalendar payload is metadata-only for most Säälchen events; the Holzmarkt 25
         // market rows do carry prose, but those are filtered out.
-        events.forEach { it.description.shouldBeNull() }
+        events.filterNot { it.sourceId.contains("k-indie") }.forEach { it.description.shouldBeNull() }
+    }
+
+    @Test
+    fun `reads the festival's end time, day price and line-up sentence`() {
+        // One `<p>` block states `Ende: 22:00` and `Eintritt: Tagesticket: 13 € / 2-Tagesticket: 20 €`,
+        // and the prose names the four acts after `mit:` (#1584).
+        val festival = events.single { it.sourceId.contains("k-indie") }
+        festival.doorsTime shouldBe LocalTime.of(18, 0)
+        festival.startTime shouldBe LocalTime.of(19, 0)
+        festival.endTime shouldBe LocalTime.of(22, 0)
+        festival.endDate shouldBe festival.eventDate
+        festival.pricePresale shouldBe BigDecimal("13")
+        festival.priceNote shouldBe "Tagesticket: 13 € / 2-Tagesticket: 20 €"
+        festival.artists.map { it.name } shouldBe listOf("Catch The Young", "Bongjeingan", "kimseungjoo", "Chang Kiha")
+        festival.description!! shouldContain "Musik verbindet"
     }
 
     @Test

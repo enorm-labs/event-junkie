@@ -2,17 +2,21 @@ package de.norm.events.scraper.saalchen
 
 import de.norm.events.scraper.BERLIN
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.attrAt
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.cleanEventTitle
+import de.norm.events.scraper.endOn
 import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.imgSrcAt
 import de.norm.events.scraper.inferConcertVenueType
+import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.mapEventType
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.resolveUrl
+import de.norm.events.scraper.splitSupportActs
 import de.norm.events.scraper.textAt
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.Jsoup
@@ -38,7 +42,10 @@ import java.time.format.DateTimeParseException
  * machine-readable part. `atc_date_start` is a **UTC** timestamp, converted here to
  * `Europe/Berlin`. Its `atc_description` holds a hand-typed `Datum / Einlass / Beginn / Ende /
  * Eintritt / Tickets` block followed by the event's prose — the source for the times, the price
- * and the description.
+ * and the description. The row's `.body-content` renders the same prose in full where
+ * `atc_description` holds only its first paragraph; a festival names its acts there, in one
+ * sentence ending in `mit: <acts>.` (`Das diesjährige Line-up verspricht musikalische Vielfalt
+ * mit: Catch The Young, Bongjeingan, kimseungjoo und Chang Kiha.`), which is read as the line-up (#1584).
  *
  * @see SaalchenWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://www.holzmarkt.com/kalender">Holzmarkt calendar</a>
@@ -99,16 +106,21 @@ class SaalchenOverviewPageScraper {
         val category = row.textAt(".event-category")
         val eventType = mapEventType(category) ?: inferConcertVenueType(title)
         val entrance = notice[ENTRANCE_LABEL]
+        val description = parseDescription(row)
+        val startTime = parseNoticeTime(notice[START_LABEL])
+        val endTime = parseNoticeTime(notice[END_LABEL])
 
         return ScrapedEvent(
             title = title,
-            description = parseDescription(row),
+            description = description,
             eventType = eventType,
             eventDate = eventDate,
             // The labelled prose wins: the venue's single `.doors` CMS field is filled
             // inconsistently, holding the Einlass on some nights and the Beginn on others.
             doorsTime = parseNoticeTime(notice[DOORS_LABEL]) ?: parseTime(row.textAt(".doors")?.substringBefore(" Uhr")),
-            startTime = parseNoticeTime(notice[START_LABEL]),
+            startTime = startTime,
+            endTime = endTime,
+            endDate = endTime?.let { endOn(eventDate, startTime, it) },
             // Drupal serves the poster as a site-relative path, which imgSrcAt rejects as non-absolute.
             imageUrl = row.imgSrcAt(".image img") ?: row.attrAt(".image img", "src")?.let { resolveUrl(baseUrl, it) },
             sourceUrl = sourceUrl,
@@ -121,9 +133,22 @@ class SaalchenOverviewPageScraper {
             // The Eintritt line is free-form (tiered prices, "+ fees", a bare "30,00"), so the
             // venue's own wording is kept whenever it names one.
             priceNote = entrance,
-            artists = buildArtistsForEventType(title, subtitle = null, eventType = eventType)
+            artists =
+                (buildArtistsForEventType(title, subtitle = null, eventType = eventType) + parseLineupSentence(row))
+                    .distinctBy { it.name.lowercase() }
         )
     }
+
+    /** The acts a `… mit: A, B und C.` sentence in the row's rendered prose names, as headliners. */
+    private fun parseLineupSentence(row: Element): List<ScrapedArtist> =
+        LINEUP_SENTENCE
+            .find(row.textAt(".body-content").orEmpty())
+            ?.groupValues
+            ?.get(1)
+            ?.let(::splitSupportActs)
+            .orEmpty()
+            .filterNot(::isNonArtistName)
+            .map { ScrapedArtist(name = it, role = "HEADLINER") }
 
     /**
      * Converts the AddToCalendar `atc_date_start` UTC timestamp (`2026-11-14 19:00:00`) to the
@@ -203,10 +228,12 @@ private fun parseNoticeTime(text: String?): LocalTime? =
 
 /**
  * Converts the free-form `Eintritt:` line to a number, but **only when it names exactly one
- * amount**. `"17,00 €"`, `"€40 + fees"`, `"30,00"` and `"36,95€"` all resolve; the venue's
- * three-tier `"15€ ermäßigt … 25€ Normalpreis … 35€ Förderticket"` deliberately does not, because
- * picking the first of three would store the concession price as the ticket price. The raw line is
- * kept in [ScrapedEvent.priceNote] either way.
+ * amount** — or labels one as the day ticket. `"17,00 €"`, `"€40 + fees"`, `"30,00"` and
+ * `"36,95€"` all resolve, and so does `"Tagesticket: 13 € / 2-Tagesticket: 20 €"`, where the
+ * `Tagesticket` figure is what one day costs (#1584). The venue's three-tier `"15€ ermäßigt … 25€
+ * Normalpreis … 35€ Förderticket"` deliberately does not, because picking the first of three would
+ * store the concession price as the ticket price. The raw line is kept in
+ * [ScrapedEvent.priceNote] either way.
  */
 private fun parseSinglePrice(text: String?): BigDecimal? {
     val value = text?.trim().orEmpty()
@@ -215,8 +242,11 @@ private fun parseSinglePrice(text: String?): BigDecimal? {
             .findAll(value)
             .map { match -> match.groupValues.drop(1).first { it.isNotEmpty() } }
             .toList()
-    val single = euroAmounts.singleOrNull() ?: BARE_AMOUNT_PATTERN.matchEntire(value)?.groupValues?.get(1) ?: return null
-    return single.replace(',', '.').toBigDecimalOrNull()
+    val amount =
+        DAY_TICKET_PATTERN.find(value)?.groupValues?.get(1)
+            ?: euroAmounts.singleOrNull()
+            ?: BARE_AMOUNT_PATTERN.matchEntire(value)?.groupValues?.get(1)
+    return amount?.replace(',', '.')?.toBigDecimalOrNull()
 }
 
 /** The `.location` value identifying this venue among the Holzmarkt site's shared calendar rows. */
@@ -228,14 +258,23 @@ private const val DOORS_LABEL = "einlass"
 /** Notice label for the start time. */
 private const val START_LABEL = "beginn"
 
+/** Notice label for the end time. */
+private const val END_LABEL = "ende"
+
 /** Notice label for the admission price. */
 private const val ENTRANCE_LABEL = "eintritt"
+
+/** The `Tagesticket: 13 €` figure of a tiered festival tariff — the day's own price, not a concession. */
+private val DAY_TICKET_PATTERN = Regex("""(?<!\d-)\btagesticket:?\s*(\d+(?:[.,]\d{1,2})?)\s*€""", RegexOption.IGNORE_CASE)
+
+/** The prose sentence that names a festival's line-up, up to its full stop. */
+private val LINEUP_SENTENCE = Regex("""line-?up\b[^.:]*\bmit:\s*([^.]+)\.""", RegexOption.IGNORE_CASE)
 
 /**
  * Every label the venue uses in its AddToCalendar metadata block. A line starting with one of
  * these is metadata; anything else is the event's own prose.
  */
-private val NOTICE_LABELS = setOf("datum", DOORS_LABEL, START_LABEL, "ende", ENTRANCE_LABEL, "tickets")
+private val NOTICE_LABELS = setOf("datum", DOORS_LABEL, START_LABEL, END_LABEL, ENTRANCE_LABEL, "tickets")
 
 /** Splits the description on `<br>` and on paragraph boundaries. */
 private val LINE_BREAK_PATTERN = Regex("""<br\s*/?>|</p>\s*<p[^>]*>""", RegexOption.IGNORE_CASE)
