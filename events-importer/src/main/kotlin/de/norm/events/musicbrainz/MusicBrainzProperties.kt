@@ -20,8 +20,10 @@ data class MusicBrainzProperties(
     val politeDelayMillis: Long = DEFAULT_POLITE_DELAY_MILLIS,
     /** How long one request may take before it is abandoned. */
     val timeout: Duration = Duration.ofSeconds(DEFAULT_TIMEOUT_SECONDS),
-    /** The pause after a 503 before the one retry. The limit is enforced in whole seconds, so a short one buys nothing. */
+    /** The pause after the first 503; each further retry waits three times the last. Whole seconds, because the limit is enforced in them. */
     val backoff: Duration = Duration.ofSeconds(DEFAULT_BACKOFF_SECONDS),
+    /** How many times one request is retried after a 503 before the row is given up on. */
+    val retries: Int = DEFAULT_RETRIES,
     /** How many rows one sweep looks up at most — the backfill's slice, ~9 minutes at the polite pace. */
     val maxPerRun: Int = DEFAULT_MAX_PER_RUN
 ) {
@@ -29,6 +31,7 @@ data class MusicBrainzProperties(
         private const val DEFAULT_POLITE_DELAY_MILLIS = 1_100L
         private const val DEFAULT_TIMEOUT_SECONDS = 30L
         private const val DEFAULT_BACKOFF_SECONDS = 5L
+        private const val DEFAULT_RETRIES = 3
         private const val DEFAULT_MAX_PER_RUN = 500
     }
 }

@@ -97,7 +97,9 @@ app:
     # behind that address. A little slower than the limit, because a 503 costs a five-second pause.
     polite-delay-millis: 1100
     timeout: 30s
+    # A 503 burst outlasts one pause: three retries at 5s, 15s and 45s before a row is given up on.
     backoff: 5s
+    retries: 3
     # The backfill's slice: the rows nobody has looked at yet, drained this many per import. About
     # nine minutes at the pace above, inside the sweep and without a separate job.
     max-per-run: 500

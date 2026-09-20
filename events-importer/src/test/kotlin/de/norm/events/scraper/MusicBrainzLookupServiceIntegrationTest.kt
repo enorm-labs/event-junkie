@@ -13,6 +13,7 @@ import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
@@ -180,17 +181,49 @@ class MusicBrainzLookupServiceIntegrationTest : BaseControllerTest() {
     }
 
     @Test
-    fun `MusicBrainz being unavailable stores nothing, throws nothing, and counts once`() {
+    fun `a row MusicBrainz will not answer for is counted and skipped, and the rows after it are stored`() {
         runBlocking {
             val first = artist("First")
             val second = artist("Second")
-            coEvery { client.search(any()) } throws MusicBrainzUnavailableException("503 twice")
+            val third = artist("Third")
+            coEvery { client.search("First") } throws MusicBrainzUnavailableException("503 four times")
+            coEvery { client.search("Second") } returns emptyList()
+            coEvery { client.search("Third") } returns emptyList()
 
-            service().lookupFor(source(), setOfNotNull(first.id, second.id)) shouldBe 0
+            service().lookupFor(source(), setOfNotNull(first.id, second.id, third.id)) shouldBe 2
 
             matchOf(requireNotNull(first.id)) shouldBe MusicBrainzMatch.UNCHECKED.name
-            matchOf(requireNotNull(second.id)) shouldBe MusicBrainzMatch.UNCHECKED.name
+            matchOf(requireNotNull(second.id)) shouldBe MusicBrainzMatch.NONE.name
+            matchOf(requireNotNull(third.id)) shouldBe MusicBrainzMatch.NONE.name
             lookups("error") shouldBe 1.0
+        }
+    }
+
+    @Test
+    fun `three unanswered rows in a row end the run, and the rest wait for the next one`() {
+        runBlocking {
+            val ids = listOf("A", "B", "C", "D").map { requireNotNull(artist(it).id) }
+            coEvery { client.search(any()) } throws MusicBrainzUnavailableException("503 four times")
+
+            service().lookupFor(source(), ids.toSet()) shouldBe 0
+
+            ids.forEach { matchOf(it) shouldBe MusicBrainzMatch.UNCHECKED.name }
+            lookups("error") shouldBe 3.0
+            coVerify(exactly = 3) { client.search(any()) }
+        }
+    }
+
+    @Test
+    fun `a burst during the head pass costs the head, never the verdict`() {
+        runBlocking {
+            val id = requireNotNull(artist("Current 93 - Sonic Morgue").id)
+            coEvery { client.search("Current 93 - Sonic Morgue") } returns emptyList()
+            coEvery { client.search("Current 93") } throws MusicBrainzUnavailableException("503 four times")
+
+            service().lookupFor(source(), setOf(id)) shouldBe 1
+
+            matchOf(id) shouldBe MusicBrainzMatch.NONE.name
+            lookups("error") shouldBe 0.0
         }
     }
 

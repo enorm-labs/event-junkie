@@ -31,8 +31,9 @@ class MusicBrainzUnavailableException(
  * **One request at a time, [MusicBrainzProperties.politeDelayMillis] apart, process-wide.** The
  * limit is one a second per source address, shared by every process behind it, so two sweeps
  * running for two sources queue on the one mutex rather than each keeping a timer. A 503 is
- * retried once after a longer pause; a second one, or any transport failure, is
- * [MusicBrainzUnavailableException] for the caller to count and stop on.
+ * retried [MusicBrainzProperties.retries] times behind a pause that triples each time, because
+ * MusicBrainz's bursts outlast one pause (#1610); when they are spent, or on any transport
+ * failure, [MusicBrainzUnavailableException] is the caller's to count.
  */
 @Component
 class MusicBrainzClient(
@@ -47,7 +48,7 @@ class MusicBrainzClient(
     suspend fun search(name: String): List<MusicBrainzCandidate> {
         val query = "artist:\"${escapeLucene(name)}\""
         return try {
-            fetchWithOneRetry(query, name)
+            fetchWithRetries(query, name)
         } catch (e: IOException) {
             throw MusicBrainzUnavailableException("MusicBrainz did not answer for '$name'", e)
         } catch (e: WebClientException) {
@@ -55,15 +56,20 @@ class MusicBrainzClient(
         }
     }
 
-    /** A 503 is the rate limit or an outage; one pause and one more try tells which. */
-    private suspend fun fetchWithOneRetry(
+    /** A 503 is the rate limit or an outage; a few growing pauses tell which. */
+    private suspend fun fetchWithRetries(
         query: String,
         name: String
-    ): List<MusicBrainzCandidate> =
-        fetch(query) ?: run {
-            delay(properties.backoff.toMillis())
-            fetch(query) ?: throw MusicBrainzUnavailableException("MusicBrainz answered 503 twice for '$name'")
+    ): List<MusicBrainzCandidate> {
+        var pause = properties.backoff.toMillis()
+        repeat(properties.retries) {
+            fetch(query)?.let { candidates -> return candidates }
+            logger.info { "MusicBrainz answered 503; backing off ${pause}ms" }
+            delay(pause)
+            pause *= BACKOFF_GROWTH
         }
+        return fetch(query) ?: throw MusicBrainzUnavailableException("MusicBrainz answered 503 ${properties.retries + 1} times for '$name'")
+    }
 
     /** One paced request. Null on 503, so the caller decides whether to try again. */
     private suspend fun fetch(query: String): List<MusicBrainzCandidate>? =
@@ -81,7 +87,6 @@ class MusicBrainzClient(
                 }.awaitExchangeOrNull { response ->
                     when {
                         response.statusCode() == HttpStatus.SERVICE_UNAVAILABLE -> {
-                            logger.info { "MusicBrainz answered 503; backing off ${properties.backoff.toMillis()}ms" }
                             null
                         }
 
@@ -105,6 +110,7 @@ class MusicBrainzClient(
 
     companion object {
         private const val CANDIDATES = 10
+        private const val BACKOFF_GROWTH = 3
 
         /** A backslash and a double quote are the two characters that end a Lucene phrase early. */
         fun escapeLucene(name: String): String = name.replace("\\", "\\\\").replace("\"", "\\\"")

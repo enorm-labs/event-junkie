@@ -90,17 +90,17 @@ class MusicBrainzClientTest {
         }
 
     @Test
-    fun `one 503 is retried, and a second one is unavailable`() =
+    fun `a 503 is retried three times, and a fourth one is unavailable`() =
         runTest {
-            server.enqueue(MockResponse.Builder().code(503).build())
+            repeat(3) { server.enqueue(MockResponse.Builder().code(503).build()) }
             server.enqueue(json("""{"artists":[{"id":"x","name":"Pici Mazzei"}]}"""))
 
             client().search("Pici") shouldHaveSize 1
-            server.requestCount shouldBe 2
+            server.requestCount shouldBe 4
 
-            server.enqueue(MockResponse.Builder().code(503).build())
-            server.enqueue(MockResponse.Builder().code(503).build())
-            shouldThrow<MusicBrainzUnavailableException> { client().search("Pici") }
+            repeat(4) { server.enqueue(MockResponse.Builder().code(503).build()) }
+            shouldThrow<MusicBrainzUnavailableException> { client().search("Pici") }.message shouldContain "4 times"
+            server.requestCount shouldBe 8
         }
 
     @Test
