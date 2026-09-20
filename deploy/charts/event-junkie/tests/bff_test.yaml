@@ -1,13 +1,7 @@
-# What the BFF is given, and what it is not given until the release asks for it.
-#
-# `configmap.yaml` is in `templates:` and is not optional. `bff-deployment.yaml` computes its
-# `checksum/config` annotation with `include (print $.Template.BasePath "/configmap.yaml")`, and
-# helm-unittest renders *only* the templates a suite lists — omit it and the suite fails with
-# `no template "…/configmap.yaml" associated with template "gotpl"`, which points nowhere useful.
-#
-# Explicit values throughout: `scripts/cluster-assertions.sh` re-runs this suite against every
-# cluster's `spec.values`, so a case relying on a chart default fails the moment an environment
-# legitimately overrides it.
+# What the BFF is given, and what it is not given until the release asks. `configmap.yaml` is in
+# `templates:` and not optional: `bff-deployment.yaml` includes it for `checksum/config`, and
+# helm-unittest renders only what a suite lists. Explicit values throughout: this suite is re-run
+# against every cluster's `spec.values`.
 suite: bff
 
 templates:
@@ -16,9 +10,7 @@ templates:
 
 tests:
   # --- Serving cached venue images (ADR-019) -----------------------------------------------------
-  #
-  # The switch a visitor sees. Off, the API hands out the venue's own URL and the browser fetches
-  # from the venue; on, it hands out a path on our own origin (#792).
+  # The switch a visitor sees: off, the API hands out the venue's URL; on, a path on our own origin (#792).
   - it: passes no storage configuration while it is not serving images
     set:
       database.host: "10.0.1.2"
@@ -31,8 +23,8 @@ tests:
       path: kind
       value: Deployment
     asserts:
-      # A bucket credential in the pod that is reachable from the internet, for a feature the
-      # release has not turned on, would be reach nothing is asking for.
+      # A bucket credential in an internet-reachable pod, for a feature not turned on, is reach nothing
+      # is asking for.
       - notContains:
           path: spec.template.spec.containers[0].env
           content:
@@ -42,8 +34,7 @@ tests:
           path: "$.spec.template.spec.containers[0].env[*].name"
           pattern: "^IMAGE_STORAGE_"
 
-  # Serving needs the importer half as well: there is nothing to hand out until something has
-  # fetched and derived it.
+  # Serving needs the importer half as well: nothing to hand out until something has fetched it.
   - it: serves nothing while the importer is not caching
     set:
       database.host: "10.0.1.2"
@@ -73,7 +64,7 @@ tests:
       path: kind
       value: Deployment
     asserts:
-      # The chart never templates a credential, here as anywhere else.
+      # The chart never templates a credential.
       - contains:
           path: spec.template.spec.containers[0].env
           content:
@@ -87,14 +78,13 @@ tests:
           content:
             name: APP_IMAGES_SERVING_ENABLED
             value: "true"
-      # No prefix, and that is not an omission: a served key is read from the row that recorded it,
-      # so this workload never builds a key and cannot build one for the wrong environment.
+      # No prefix, and not an omission: a served key is read from the row that recorded it, so this
+      # workload never builds a key.
       - notMatchRegex:
           path: "$.spec.template.spec.containers[0].env[*].name"
           pattern: "^IMAGE_STORAGE_PREFIX$"
-      # The read-through cache in front of the bucket (#847). The name is one word on both sides:
-      # Boot maps a dashed property by removing the dash, so `max-size` would need
-      # APP_IMAGES_CACHE_MAXSIZE and the obvious spelling would bind to nothing.
+      # The read-through cache in front of the bucket (#847). One word on both sides: Boot maps a dashed
+      # property by removing the dash, so `max-size` would bind to nothing.
       - contains:
           path: spec.template.spec.containers[0].env
           content:

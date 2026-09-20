@@ -1,18 +1,9 @@
-# The chart source for production — the exact inverse of staging's policy.
-#
-# Staging follows every snapshot; production must follow only what was deliberately released, which
-# means a published GitHub Release and the tag it creates (#264).
-#
-# TWO GUARDS, AND THE SECOND ONE IS THE POINT.
-#
-# `>=0.1.0` already excludes prereleases, because Masterminds' constraint syntax skips them unless a
-# range says otherwise — so on its own this is *correct*. But it is correct by omission: it excludes
-# `0.2.0-snapshot.gabc1234` only because nobody wrote `-0`, and the person most likely to add `-0`
-# here is the one who just spent an afternoon debugging why staging was not moving. That edit would
-# put unreviewed snapshots onto production and nothing would object.
-#
-# `semverFilter` states the intent positively instead. A tag has to look like a release to be
-# considered at all, so the omission stops being load-bearing.
+# The chart source for production — the inverse of staging's policy: only what was deliberately
+# released, a published GitHub Release and its tag (#264). TWO GUARDS, AND THE SECOND IS THE POINT.
+# `>=0.1.0` already excludes prereleases, but by omission — it excludes `0.2.0-snapshot.gabc1234` only
+# because nobody wrote `-0`, and the person most likely to add it is the one who just debugged why
+# staging was not moving. `semverFilter` states the intent positively, so the omission stops being
+# load-bearing.
 apiVersion: source.toolkit.fluxcd.io/v1
 kind: OCIRepository
 metadata:
@@ -22,8 +13,7 @@ metadata:
     kubernetes.io/description: >-
       The event-junkie Helm chart, pulled from GHCR. Release versions only — no snapshot can match.
 spec:
-  # Slower than staging on purpose. Production changes only when a human publishes a release, so
-  # polling every minute asks a registry 1,440 times a day about something that moves monthly.
+  # Slower than staging on purpose: production moves when a human publishes a release, monthly.
   interval: 10m
   url: oci://ghcr.io/enorm-labs/charts/event-junkie
   ref:
@@ -32,9 +22,9 @@ spec:
   layerSelector:
     mediaType: application/vnd.cncf.helm.chart.content.v1.tar+gzip
     operation: copy
-  # Refuses a chart not signed by our own release workflow (#1425) — staging's block, the same two
-  # regexes: a release runs `release.yml` at `refs/tags/vX.Y.Z`, which the subject admits. A chart
-  # pushed by hand carries no signature and never reconciles; the last verified artifact stays.
+  # Refuses a chart not signed by our own release workflow (#1425), staging's block: a release runs
+  # `release.yml` at `refs/tags/vX.Y.Z`. A chart pushed by hand never reconciles; the last verified
+  # artifact stays.
   verify:
     provider: cosign
     matchOIDCIdentity:

@@ -1,7 +1,5 @@
-# Default-deny for the `observability-agent` namespace, plus one named allowance per real conversation
-# (#709). The agent's arrows, lifted out of `observability-netpol.yaml` when the agent moved, and the
-# same shape as that file: one deny-all, then a narrow policy per conversation, so an arrow not
-# written down does not happen.
+# Default-deny for the `observability-agent` namespace, plus one named allowance per conversation
+# (#709) — the agent's arrows, lifted out of `observability-netpol.yaml` when the agent moved:
 #
 #     agent            -> OpenObserve:5080          otlphttp export, now across a namespace boundary
 #     agent            -> kubelet:10250             the kubeletstats receiver
@@ -9,24 +7,15 @@
 #     gateway          -> agent:8888                the agent's own meters, scraped by prometheus-autodiscovery
 #     everything       -> CoreDNS:53
 #
-# **Every cross-namespace arrow is two policies, and a `podSelector` alone is the wrong half.** A
-# peer written as `podSelector` only matches pods in the policy's own namespace; the same pod one
-# namespace over is silently not matched, and the traffic falls under the deny-all with no error
-# anywhere. So each arrow into or out of this namespace names the other namespace by
+# **Every cross-namespace arrow is two policies, and a `podSelector` alone is the wrong half**: it
+# matches only pods in the policy's own namespace, silently. Each arrow names the other namespace by
 # `kubernetes.io/metadata.name` beside the pod labels, here and in `observability-netpol.yaml`, and
-# both halves are required: the egress here and the ingress there, or the reverse.
-#
-# **The agent's `instance` label embeds this namespace and the release name.** The operator sets it
-# to `<namespace>.<collector>`, so the selector below reads `observability-agent.o2c-agent-…`; renaming
-# either invalidates it without erroring. `kubectl -n observability-agent get pods --show-labels`
-# is the check, not this file.
-#
-# **The node is reached by port, not address**, and the API server on the node's 6443 rather than
-# `10.43.0.1:443` — both for the reasons the header of `observability-netpol.yaml` gives, and both
-# were exercised from a cold start there before being copied here.
-#
-# **Deliberately absent.** No ingress for kubelet probes or the operator's reconcile: both originate
-# on the node, and node-to-pod traffic is not subject to NetworkPolicy in k3s.
+# both halves are required. **The agent's `instance` label embeds this namespace and the release
+# name** (`observability-agent.o2c-agent-…`); renaming either invalidates the selector without
+# erroring — `kubectl -n observability-agent get pods --show-labels` is the check. **The node is
+# reached by port, not address**, and the API server on the node's 6443 rather than `10.43.0.1:443`,
+# for the reasons `observability-netpol.yaml` gives. **Deliberately absent**: ingress for kubelet
+# probes or the operator's reconcile, both node-originated.
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -79,13 +68,13 @@ metadata:
 spec:
   podSelector:
     matchLabels:
-      # NOT app.kubernetes.io/name — that label is the chart name and the gateway shares it.
+      # NOT app.kubernetes.io/name — that is the chart name and the gateway shares it.
       app.kubernetes.io/instance: observability-agent.o2c-agent-openobserve-collector-agent
   policyTypes:
     - Egress
   egress:
-    # OpenObserve, one namespace over. The matching ingress is `observability-allow-ingest` in
-    # `observability-netpol.yaml`, which names this namespace the same way.
+    # OpenObserve, one namespace over; the matching ingress is `observability-allow-ingest` in
+    # `observability-netpol.yaml`.
     - to:
         - namespaceSelector:
             matchLabels:
@@ -97,10 +86,8 @@ spec:
         - protocol: TCP
           port: 5080
 
-    # The `kubeletstats` receiver on 10250, and the API server on 6443 for `k8sattributes` — the
-    # processor that names the pod every log line came from. By port rather than by address, because
-    # the node's is public and has already changed once, and because 6443 is where the `kubernetes`
-    # service DNATs to; an allowance on the service address matches nothing.
+    # The `kubeletstats` receiver on 10250, and the API server on 6443 for `k8sattributes`. By port, not
+    # address: the node's is public and has changed once, and 6443 is where the `kubernetes` service DNATs to.
     - to:
         - ipBlock:
             cidr: 0.0.0.0/0

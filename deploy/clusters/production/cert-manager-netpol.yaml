@@ -1,49 +1,27 @@
-# Default-deny for the `cert-manager` namespace, plus one named allowance per conversation (#920).
-#
-# Same shape as `observability-netpol.yaml` and the chart's own policy: one deny-all, then one narrow
-# allowance per real arrow, so an arrow not written down does not happen.
+# Default-deny for the `cert-manager` namespace, plus one named allowance per conversation (#920):
 #     controller  -> apiserver:6443       watching Certificates, leader election
 #     controller  -> the internet:443     ACME — Let's Encrypt's directory and orders
 #     cainjector  -> apiserver:6443       injecting CA bundles into webhook configs
 #     webhook     -> apiserver:6443       SubjectAccessReview on every admission call
 #     everything  -> CoreDNS:53
 #     gateway     -> the three pods:9402  the metrics, and see below
+# **Staging's file with arrows removed, not added.** This cluster issues over HTTP-01 against the real
+# ACME endpoint, so staging's DNS-01 self-check (`controller -> the internet:53`) and its Hetzner
+# webhook describe conversations that cannot happen here. **The HTTP-01 solver is not this file's to
+# allow**: cert-manager creates the solver Pod in the Ingress's namespace, `event-junkie`, and the
+# arrow is `allow-acme-solver` in the chart's `templates/networkpolicy.yaml`.
 #
-# **This is staging's file with arrows removed, not added.** Staging issues over DNS-01 through
-# `cert-manager-webhook-hetzner`; this cluster issues over HTTP-01 against the real ACME endpoint. So
-# two of staging's allowances describe conversations that cannot happen here, and carrying them over
-# would widen the policy for no reason:
+# **The API server is reached on the NODE's address and port 6443, never `10.43.0.1:443`**: kube-proxy
+# DNATs `kubernetes.default` before the policy is evaluated, so the service-address form matches
+# nothing and the pod reports `connection refused` (#923, #940).
 #
-#     controller      -> the internet:53      the DNS-01 self-check. HTTP-01 has no TXT record to verify.
-#     hetzner webhook -> the Hetzner DNS API  that webhook is not installed on this cluster at all.
+# **The scrape is not optional, and losing it is silent.** `ej-certificate-expiry` reads
+# `certmanager_certificate_expiration_timestamp_seconds` from 9402; without the ingress allowance the
+# rule keeps evaluating against a series that stopped arriving. **Its matching half is the gateway's
+# egress in `observability-netpol.yaml`** — change them together.
 #
-# **The HTTP-01 solver is not this file's to allow, and knowing that is what keeps it short.**
-# cert-manager creates the solver Pod in the namespace of the Ingress being solved — `event-junkie`,
-# not here — and a NetworkPolicy only selects pods in its own namespace. The arrow is
-# `allow-acme-solver` in the chart's `templates/networkpolicy.yaml`, asserted by
-# `tests/network_test.yaml`. Adding a solver rule here would look like cover and be none.
-#
-# **The API server is reached on the NODE's address and port 6443, never on `10.43.0.1:443`.**
-# `kubernetes.default` is a ClusterIP with no pods behind it, kube-proxy DNATs it to the real
-# endpoint, and a policy is evaluated after that translation — so the service-address form matches
-# nothing and the pod reports `connection refused`, which reads like a dead API server rather than a
-# blocked one. It cost the whole observability rollout here (#923). **Staging's copy of this file
-# still has the wrong form** and has never been exercised from a cold start, its pods predating the
-# policy by three days; #940 carries that.
-#
-# **The scrape is not optional, and losing it would be silent.** All three pods carry
-# `prometheus.io/scrape: true` on 9402, and `ej-certificate-expiry` reads
-# `certmanager_certificate_expiration_timestamp_seconds` from it. A default-deny without the ingress
-# allowance below does not lose a dashboard panel; it disables the alert that exists because
-# certificate expiry is the failure nobody notices until the site is down — quietly, the rule still
-# evaluating against a series that has stopped arriving. **Its matching half is the gateway's egress
-# in `observability-netpol.yaml`**, which already names this namespace and has been waiting for this
-# file. Change them together.
-#
-# **Deliberately absent**: no ingress for the API server reaching the webhook, and none for kubelet
-# probes. Both originate on the node, and node-to-pod traffic is not subject to NetworkPolicy in k3s
-# — the property the chart's policy also relies on. Were that wrong, probes would fail and pods would
-# never go Ready, which is loud rather than silent.
+# **Deliberately absent**: ingress for the API server reaching the webhook and for kubelet probes;
+# both originate on the node, and node-to-pod traffic is not subject to NetworkPolicy in k3s.
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -93,15 +71,14 @@ metadata:
       All three pods talk to the API server — the controller watches Certificates and takes a lease, cainjector patches webhook configurations, and the
       webhook is an admission server that must authorise its callers. Named by port on the node, never by the service address.
 spec:
-  # All three, deliberately: the alternative is three near-identical policies whose only difference
-  # is a selector, and a list of arrows is only reviewable while it is short.
+  # All three, deliberately: three near-identical policies differing only in selector is a list nobody
+  # reviews.
   podSelector: {}
   policyTypes:
     - Egress
   egress:
-    # By port rather than by address, matching `observability-netpol.yaml`. The node's address is
-    # public here and changed once already when #271 resized it, so a rule pinned to it survives
-    # exactly until the next rebuild.
+    # By port rather than address, matching `observability-netpol.yaml`: the node's address is public and
+    # changed once already.
     - to:
         - ipBlock:
             cidr: 0.0.0.0/0
@@ -124,11 +101,9 @@ spec:
   policyTypes:
     - Egress
   egress:
-    # By exclusion rather than by address, for the reason the object-storage rule in
-    # `observability-netpol.yaml` gives: the endpoint is a CDN name whose addresses change, and a
-    # policy pinned to today's fails on the day they do. The excluded ranges cover the pod CIDR, the
-    # service CIDR, the private network carrying PostgreSQL, and link-local — where a cloud metadata
-    # service lives. This is the real ACME endpoint, so a mistake here costs a live certificate.
+    # By exclusion rather than address: a CDN name whose addresses change. The excluded ranges cover the
+    # pod and service CIDRs, the private network, and link-local. This is the real ACME endpoint, so a
+    # mistake here costs a live certificate.
     - to:
         - ipBlock:
             cidr: 0.0.0.0/0
@@ -151,8 +126,8 @@ metadata:
       Lets the collector gateway reach the three annotated pods on 9402. This is what keeps ej-certificate-expiry fed; without it the rule keeps evaluating
       against a series that has stopped arriving.
 spec:
-  # Three values rather than one, because cert-manager labels each component with its own name.
-  # Verified with `kubectl -n cert-manager get pods --show-labels`, not read off staging.
+  # Three values, because cert-manager labels each component with its own name. Verified with
+  # `kubectl -n cert-manager get pods --show-labels`.
   podSelector:
     matchExpressions:
       - key: app.kubernetes.io/name

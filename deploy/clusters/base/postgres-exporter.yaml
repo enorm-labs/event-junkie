@@ -1,19 +1,9 @@
-# PostgreSQL metrics — #271 item 2's remaining third, and ADR-015's "connection count, slow queries,
-# disk usage" row.
-#
-# **It runs in the cluster and connects over the private network**, rather than on the database host.
-# That is not a compromise: staging co-locates PostgreSQL on the k3s node while production gives it a
-# dedicated one, and the *connection path is the same shape either way* — which is the same reason
-# the application's own `database.host` is an address rather than `localhost`. One manifest works
-# on both topologies.
-#
-# **What this does NOT cover, so it is not assumed later.**
-# **Disk usage on a dedicated database node.** The collector's agent already scrapes `filesystem` and
-# `disk` hostmetrics from every node it runs on, so on staging — where PostgreSQL sits on the k3s
-# node — the disk-filling alert is already covered without this. **On production the database node is
-# outside the cluster, so no agent runs there and nothing reports its free space.** This exporter
-# reports database *size*, which grows for reasons unrelated to the disk filling. Closing that gap is
-# a separate piece of work and it belongs to whoever provisions the dedicated node.
+# PostgreSQL metrics — ADR-015's "connection count, slow queries, disk usage" row. **In the cluster,
+# over the private network**, not on the database host: staging co-locates PostgreSQL and production
+# dedicates a node, and the connection path is the same shape either way. **What this does NOT
+# cover**: disk usage on a dedicated database node. The agent's `filesystem` hostmetrics cover the
+# staging node; on production the database node is outside the cluster and nothing reports its free
+# space. Database *size* grows for reasons unrelated to the disk filling.
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -32,8 +22,7 @@ spec:
       labels:
         app.kubernetes.io/name: postgres-exporter
       annotations:
-        # The same discovery mechanism the application pods use (#590). Without these the collector
-        # cannot find it, and the failure is silence rather than an error.
+        # The same discovery mechanism the application pods use (#590); without these the failure is silence.
         prometheus.io/scrape: "true"
         prometheus.io/path: "/metrics"
         prometheus.io/port: "9187"
@@ -50,8 +39,7 @@ spec:
           image: prometheuscommunity/postgres-exporter:v0.20.1@sha256:ac5ec343104fae0e2d84a27bb8d69b38430a11910c5382cad85d478d2bab713e
           imagePullPolicy: IfNotPresent
           env:
-            # The whole connection string is the credential, so it comes from the Secret as one
-            # value rather than being assembled from parts here.
+            # The whole connection string is the credential, so it comes from the Secret as one value.
             - name: DATA_SOURCE_NAME
               valueFrom:
                 secretKeyRef:
@@ -65,16 +53,14 @@ spec:
               memory: "32Mi"
               cpu: "10m"
             limits:
-              # It queries `pg_stat_*` on an interval and holds nothing. Tight on purpose: this is
-              # the smallest thing in the observability namespace and should stay that way.
+              # It queries `pg_stat_*` on an interval and holds nothing. The smallest thing in the namespace.
               memory: "128Mi"
               cpu: "200m"
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:
               drop: [ALL]
-            # It reads no files and writes none. Unlike signal-cli, this one can be locked down
-            # fully — and it was checked rather than assumed.
+            # It reads no files and writes none; checked rather than assumed.
             readOnlyRootFilesystem: true
           livenessProbe:
             httpGet:

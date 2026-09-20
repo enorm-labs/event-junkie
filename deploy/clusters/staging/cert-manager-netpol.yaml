@@ -1,7 +1,5 @@
-# Default-deny for the `cert-manager` namespace, plus one named allowance per conversation (#662).
-#
-# Same shape as `observability-netpol.yaml` and the chart's own policy: one deny-all, then one narrow
-# allowance per real arrow, so an arrow not written down does not happen.
+# Default-deny for the `cert-manager` namespace, plus one named allowance per conversation (#662) —
+# the same shape as `observability-netpol.yaml`, and an arrow not written down does not happen:
 #     controller       -> apiserver:443            watching Certificates, leader election
 #     controller       -> the internet:443         ACME — Let's Encrypt's directory and orders
 #     controller       -> the internet:53          the DNS-01 self-check, see below
@@ -11,33 +9,21 @@
 #     hetzner webhook  -> the internet:443         the Hetzner DNS API, where the TXT record goes
 #     everything       -> CoreDNS:53
 #     gateway          -> all three cert-manager pods:9402   the metrics, and see below
-# **The scrape is not optional, and losing it would be silent.** All three cert-manager pods carry
-# `prometheus.io/scrape: true` on 9402, and `ej-certificate-expiry` — one of #271's five alert rules
-# — reads `certmanager_certificate_expiration_timestamp_seconds` from it. A default-deny without the
-# ingress allowance below does not lose a dashboard panel; it disables the alert that exists because
-# certificate expiry is the failure nobody notices until the site is down, and disables it exactly as
-# that alert was written to prevent: quietly, the rule still evaluating against a series that has
-# stopped arriving. **Its matching half is the gateway's egress policy in `observability-netpol.yaml`**
-# — change them together; an ingress allowance whose counterpart is missing is an unreachable target.
+# **The scrape is not optional, and losing it is silent.** `ej-certificate-expiry` reads
+# `certmanager_certificate_expiration_timestamp_seconds` from 9402; without the ingress allowance the
+# rule keeps evaluating against a series that stopped arriving. **Its matching half is the gateway's
+# egress in `observability-netpol.yaml`** — change them together.
 #
-# **The DNS-01 self-check needs the public internet on port 53.** Before asking Let's Encrypt to
-# validate, cert-manager verifies the TXT record by querying nameservers **directly**, not through
-# the cluster resolver, using its built-in defaults (no `--dns01-recursive-nameservers`).
-# Without that egress the challenge sits `pending`, no order is finalised, and the certificate never
-# issues — silently, which for a renewal means finding out sixty days later. It is the rule most
-# likely to be missed: 53 looks covered by the CoreDNS allowance, but that one names the CoreDNS pod
-# and this one is the open internet.
+# **The DNS-01 self-check needs the public internet on port 53.** cert-manager verifies the TXT record
+# against nameservers directly, not through CoreDNS; without that egress the challenge sits `pending`
+# and a renewal fails sixty days later. The rule most likely to be missed: 53 looks covered by the
+# CoreDNS allowance, which names the CoreDNS pod.
 #
-# **The Hetzner webhook does not use `app.kubernetes.io/name`.** Its chart labels it `app` and
-# `release`, while the three upstream pods use `app.kubernetes.io/name` with three *different*
-# values. A policy assuming one consistent scheme selects some pods and not others, and one it fails
-# to select keeps the deny-all with no allowances. Verified with `kubectl get pods --show-labels`.
-#
-# **Deliberately absent**: no ingress rule for the API server reaching either webhook — it runs on
-# the node, and node-to-pod traffic is not subject to NetworkPolicy in k3s, the property the chart's
-# policy also relies on for kubelet probes. And no allowance for HTTP-01 solver pods, this cluster
-# issuing over DNS-01: if HTTP-01 is ever used they land under the deny-all and the challenge hangs,
-# so add the allowance in the change that adds the solver.
+# **The Hetzner webhook does not use `app.kubernetes.io/name`** — its chart labels `app` and
+# `release`, and the three upstream pods use three different `name` values. Verified with `kubectl
+# get pods --show-labels`. **Deliberately absent**: ingress for the API server reaching either webhook
+# (node-to-pod traffic is not subject to NetworkPolicy in k3s), and any HTTP-01 solver allowance —
+# this cluster issues over DNS-01, so add it in the change that adds the solver.
 ---
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -88,17 +74,15 @@ metadata:
       Every pod here talks to the API server — the controller watches Certificates and takes a lease, cainjector patches webhook configurations, and both
       webhooks are admission or extension servers that must authorise their callers. Named by port on the node, never by the service address.
 spec:
-  # All four, deliberately: the alternative is four near-identical policies whose only difference is
-  # a selector, and a list of arrows is only reviewable while it is short.
+  # All four, deliberately: four near-identical policies differing only in selector is a list nobody
+  # reviews.
   podSelector: {}
   policyTypes:
     - Egress
   egress:
-    # **Was `10.43.0.1/32:443`, which matched nothing** (#940). `kubernetes.default` is a ClusterIP
-    # with no pods behind it, kube-proxy DNATs it to the real endpoint, and a policy is evaluated
-    # after that translation. Nothing failed because these pods predate the policy by three days and
-    # hold their connections through conntrack — so the set had never been exercised from a cold
-    # start, exactly as #923 found for the observability namespace.
+    # **Was `10.43.0.1/32:443`, which matched nothing** (#940): kube-proxy DNATs `kubernetes.default` before
+    # the policy is evaluated. Nothing failed because these pods predate the policy and hold their
+    # connections through conntrack — never exercised from a cold start (#923).
     - to:
         - ipBlock:
             cidr: 0.0.0.0/0
@@ -121,11 +105,8 @@ spec:
   policyTypes:
     - Egress
   egress:
-    # Let's Encrypt. By exclusion rather than by address, for the reason the object-storage rule in
-    # `observability-netpol.yaml` gives: the endpoint is a CDN name whose addresses change, and a
-    # policy pinned to today's would fail on the day they do. The excluded ranges cover the pod
-    # CIDR, the service CIDR, the private network carrying PostgreSQL, and link-local — where a
-    # cloud metadata service lives.
+    # Let's Encrypt, by exclusion rather than address: a CDN name whose addresses change. The excluded
+    # ranges cover the pod and service CIDRs, the private network, and link-local.
     - to:
         - ipBlock:
             cidr: 0.0.0.0/0
@@ -138,9 +119,7 @@ spec:
         - protocol: TCP
           port: 443
 
-    # The DNS-01 self-check, which queries authoritative nameservers directly rather than through
-    # CoreDNS. Without this a challenge stays pending and the certificate never issues — see the
-    # header. UDP first, TCP for truncated answers.
+    # The DNS-01 self-check, against authoritative nameservers directly. UDP first, TCP for truncated answers.
     - to:
         - ipBlock:
             cidr: 0.0.0.0/0
@@ -167,8 +146,7 @@ metadata:
 spec:
   podSelector:
     matchLabels:
-      # Not `app.kubernetes.io/name` — this chart labels differently from cert-manager's own. See
-      # the header; verified against the running pods.
+      # Not `app.kubernetes.io/name` — this chart labels differently; verified against the running pods.
       app: cert-manager-webhook-hetzner
   policyTypes:
     - Egress
@@ -195,9 +173,8 @@ metadata:
       Lets the collector gateway reach the three annotated pods on 9402. This is what keeps ej-certificate-expiry fed; without it the rule keeps evaluating
       against a series that has stopped arriving.
 spec:
-  # The three upstream pods carry `prometheus.io/scrape: true`; the Hetzner webhook does not, so it
-  # is not named here. Three values rather than one, because cert-manager labels each component with
-  # its own name.
+  # The three upstream pods carry `prometheus.io/scrape: true`; the Hetzner webhook does not. Three
+  # values, because cert-manager labels each component with its own name.
   podSelector:
     matchExpressions:
       - key: app.kubernetes.io/name

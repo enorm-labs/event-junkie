@@ -1,16 +1,9 @@
-# The DNS-01 solver for Hetzner DNS.
-#
-# WHICH WEBHOOK THIS IS MATTERS MORE THAN ANY VALUE IN IT. Hetzner shut down the old
-# `dns.hetzner.com` API and console in May 2026, and every token the old console issued stopped
-# working with it. Roughly half a dozen community webhooks — vadimkim, mecodia, fionera and their
-# forks — still rank top in a search and all speak that dead API. They will install cleanly, report
-# Ready, and fail at challenge time.
-#
-# This is Hetzner's own: `hetzner/cert-manager-webhook-hetzner`, published to charts.hetzner.cloud,
-# speaking the Cloud API with an ordinary hcloud token — the same kind of credential `infra/`
-# authenticates with. `groupName` is `acme.hetzner.com`; the community ones use `.cloud`.
-#
-# Staging only. Production reaches Let's Encrypt over HTTP-01 and needs none of this.
+# The DNS-01 solver for Hetzner DNS. WHICH WEBHOOK THIS IS MATTERS MORE THAN ANY VALUE IN IT: Hetzner
+# shut down the old `dns.hetzner.com` API in May 2026, and the community webhooks that rank top in a
+# search all speak it — they install, report Ready, and fail at challenge time. This is Hetzner's own,
+# `hetzner/cert-manager-webhook-hetzner` from charts.hetzner.cloud, speaking the Cloud API with an
+# ordinary hcloud token; `groupName` is `acme.hetzner.com`, the forks use `.cloud`. Staging only;
+# production solves HTTP-01.
 apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
@@ -22,16 +15,14 @@ metadata:
       The TXT record is public; staging's A record never exists.
 spec:
   releaseName: cert-manager-webhook-hetzner
-  # Into cert-manager's namespace rather than one of its own: the chart defaults `certManager.namespace`
-  # and `certManager.serviceAccountName` to `cert-manager`, and its RBAC grants that service account
-  # permission to call this webhook's API group.
+  # Into cert-manager's namespace: the chart defaults `certManager.namespace` and
+  # `serviceAccountName` to `cert-manager`, and its RBAC grants that account this API group.
   targetNamespace: cert-manager
   storageNamespace: cert-manager
   interval: 1h
-  # NOT OPTIONAL, AND NOT MERELY ORDERING PREFERENCE. This chart renders `cert-manager.io/v1`
-  # Certificate and Issuer objects for its own serving certificate, so it cannot even be *rendered*
-  # onto a cluster whose CRDs are absent. Without this the first reconcile fails on an unknown kind
-  # and recovers only on a later retry, which looks like flakiness rather than a missing dependency.
+  # NOT OPTIONAL: this chart renders `cert-manager.io/v1` objects for its own serving certificate, so
+  # without this the first reconcile fails on an unknown kind and recovers on a later retry, which looks
+  # like flakiness.
   dependsOn:
     - name: cert-manager
   install:
@@ -53,9 +44,8 @@ spec:
         namespace: flux-system
       interval: 1h
   values:
-    # Must match `certManager.clusterIssuer.dns01.webhookGroupName` in the application HelmRelease —
-    # cert-manager routes a challenge to a webhook by this group name, and a mismatch is not an error
-    # anywhere, it is a challenge that is never delivered and a certificate that never issues.
+    # Must match `certManager.clusterIssuer.dns01.webhookGroupName` in the application HelmRelease: a
+    # mismatch is not an error, it is a challenge never delivered.
     groupName: "acme.hetzner.com"
     replicaCount: 1
     resources:

@@ -1,19 +1,8 @@
-# The chart's three mandatory values, and the one its schema pins.
-#
-# **New coverage, not a port.** `render-assertions.sh` could not test these at all: it asserted on
-# renders that succeeded, and the whole point of these three is that the render must *fail*. They
-# were verified by hand once, when the helpers were written, and nothing has re-checked them since —
-# so the `required` messages, which are the chart's actual interface for `database.host` and
-# `database.existingSecret`, could rot silently.
-#
-# The message is asserted, not just the failure. A `required` that fires with an unhelpful string is
-# barely better than a nil-pointer render: the person hitting it is installing the chart for the
-# first time and has no other source for what to put there.
-#
-# No `templates:` key anywhere in this suite, and that is deliberate. `failedTemplate` matches the
-# error against each template in scope, and Helm attributes a `required` failure to whichever
-# template it reached first — scope the suite and the assertion passes or fails on where Helm
-# happened to blame rather than on whether the chart refused.
+# The chart's three mandatory values, and the one its schema pins. The render must *fail*, and the
+# message is asserted, not just the failure: `required` messages are the chart's interface for a
+# first-time installer. **No `templates:` key anywhere in this suite**: Helm attributes a `required`
+# failure to whichever template it reached first, so a scoped suite asserts on where Helm blamed
+# rather than on whether the chart refused.
 suite: required values
 
 tests:
@@ -24,18 +13,15 @@ tests:
     asserts:
       - failedTemplate:
           errorPattern: "database\\.existingSecret is required — create the Secret out of band"
-      # There is no inline-password path in this chart, and the message is where that is stated to
-      # the person who would otherwise go looking for one.
+      # There is no inline-password path in this chart, and the message says so to the person looking.
       - failedTemplate:
           errorPattern: "This chart never templates a password"
 
   - it: refuses to render without database.host, and says where to find it
     set:
       database.existingSecret: "events-db"
-      # Turned off so this case is about `database.host` alone. With policies on, whichever of the
-      # two `required` calls Helm reaches first wins, and the assertion below would then be about
-      # render order rather than about the chart refusing — the same trap the suite header warns
-      # about for `templates:`.
+      # Turned off so this case is about `database.host` alone; with policies on, whichever `required` Helm
+      # reaches first wins.
       networkPolicy.enabled: false
     asserts:
       - failedTemplate:
@@ -43,11 +29,9 @@ tests:
       - failedTemplate:
           errorPattern: "postgres_ip.*infra/environments"
 
-  # The third mandatory value, and the one most likely to be missed because `database.host` looks
-  # like it should cover it (#416). NetworkPolicy speaks CIDRs and cannot resolve a name, so the two
-  # are separate settings that must agree — and getting only one of them right produces pods that
-  # start, resolve the host, and hang on connect, which reads as the database being down. The
-  # `required` is what turns that into a render error, and the message is what says why there are two.
+  # The third mandatory value, and the one most likely to be missed (#416): NetworkPolicy cannot
+  # resolve a name, so the CIDR is separate from `database.host`, and getting only one right produces
+  # pods that hang on connect. The `required` turns that into a render error.
   - it: refuses to render with policies on and no database CIDR, and says why it is not database.host
     set:
       database.host: "10.0.1.2"
@@ -58,8 +42,8 @@ tests:
       - failedTemplate:
           errorPattern: "cannot resolve database\\.host"
 
-  # And the escape hatch works: policies off, no CIDR needed. Without this the `required` above
-  # could be unconditional and nothing here would notice.
+  # The escape hatch works: policies off, no CIDR needed. Without this the `required` could be
+  # unconditional and nothing would notice.
   - it: needs no CIDR when the policies are turned off
     set:
       database.host: "10.0.1.2"
@@ -69,12 +53,9 @@ tests:
       - notFailedTemplate: {}
 
   # --- The importer's replica count is pinned by the schema ------------------------------------
-  #
-  # ADR-008: two schedulers means two concurrent imports of the same source, and the 60-second
-  # tick's RUNNING check is a read-then-write with no lock. `values.schema.json` gives it
-  # `const: 1`, so raising it fails at install time rather than in a review comment — and this is
-  # what proves the schema is still wired in at all. Delete the `const` and every other assertion in
-  # this directory still passes.
+  # ADR-008: two schedulers means two concurrent imports of one source. `values.schema.json` gives it
+  # `const: 1`, and this is what proves the schema is wired in at all: delete the `const` and every
+  # other assertion in this directory still passes.
   - it: the schema rejects a second importer replica
     set:
       database.host: "10.0.1.2"
@@ -85,8 +66,8 @@ tests:
       - failedTemplate:
           errorPattern: "importer.*replicaCount"
 
-  # The counterpart, so the three above cannot pass because the chart fails to render for some
-  # unrelated reason: with both values supplied and the replica count left alone, it renders.
+  # The counterpart, so the three above cannot pass because the chart failed to render for an
+  # unrelated reason.
   - it: renders once both are supplied
     set:
       database.host: "10.0.1.2"

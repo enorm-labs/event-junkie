@@ -1,34 +1,25 @@
 # comment-lint: allow-file 33 overrides, each of which is a deviation from production that needs its reason.
-# k3d overrides for the local rehearsal (#263): k3d with `--port "8080:80@loadbalancer"`, images
-# side-loaded with `k3d image import`, PostgreSQL on the host in the repository's compose stack. The
-# full loop is in docs/DEVELOPMENT.md. **The database port and name cannot be checked by rendering
-# the chart** — both are valid whatever they are, and nothing in the chart knows what is listening,
-# so compare the rendered URL against `compose.yaml` before installing.
+# k3d overrides for the local rehearsal (#263): `--port "8080:80@loadbalancer"`, images side-loaded
+# with `k3d image import`, PostgreSQL on the host in the compose stack. **The database port and name
+# cannot be checked by rendering** — compare the rendered URL against `compose.yaml` before installing.
 
 image:
-  # Images are side-loaded with `k3d image import`, so there is no registry to pull from. The
-  # `localhost/` prefix is **not** the thing to suspect on an ImagePullBackOff here: with
-  # `IfNotPresent` the kubelet finds the imported image and never resolves the prefix at all.
+  # Side-loaded with `k3d image import`, so no registry. The `localhost/` prefix is not the thing to
+  # suspect on an ImagePullBackOff: with `IfNotPresent` the kubelet never resolves it.
   registry: "localhost"
-  # IfNotPresent is what makes a side-loaded image win. `Always` would send k3d to a registry that
-  # does not have it and fail with ImagePullBackOff.
+  # IfNotPresent is what makes a side-loaded image win; `Always` would ask a registry that lacks it.
   pullPolicy: "IfNotPresent"
 
 database:
-  # `host.k3d.internal` is k3d's built-in name for the host from inside the cluster, injected into
-  # CoreDNS at cluster-create time.
+  # k3d's built-in name for the host from inside the cluster, injected into CoreDNS at cluster-create time.
   host: "host.k3d.internal"
-  # The container listens on 5432; compose publishes it on the *host* as 56298, and the host is what
-  # `host.k3d.internal` resolves to.
+  # The container listens on 5432; compose publishes it on the *host* as 56298.
   port: 56298
-  # A database of its own, NOT the `event_junkie` that `bootRun` and `scripts/dev-env.sh` use:
-  # installing this chart runs the importer's Flyway migrations, so pointing it at the development
-  # database would have two importers competing for one schema, over thousands of scraped rows
-  # nobody wants to re-scrape (ADR-007 on politeness). `events` is the *schema* inside it, set by
-  # each app via `spring.r2dbc.properties.schema` — a different thing from `database.name`, the
-  # database, which is created once with:
+  # A database of its own, NOT the `event_junkie` that `bootRun` uses: installing this chart runs
+  # Flyway, and two importers on one schema is the ADR-008 failure. `events` is the *schema* inside
+  # it. Created once:
   #
-  #     docker exec event-junkie-postgres-1 psql -U admin -d postgres -c 'CREATE DATABASE event_junkie_k3d OWNER admin' 
+  #     docker exec event-junkie-postgres-1 psql -U admin -d postgres -c 'CREATE DATABASE event_junkie_k3d OWNER admin'
   name: "event_junkie_k3d"
   # Created before the first install:
   #   kubectl create secret generic events-db \
@@ -39,9 +30,8 @@ bff:
   replicaCount: 1
   image:
     repository: "event-junkie/bff"
-    # Not `.Chart.AppVersion`, a locally-built image having no release version, and not `latest`:
-    # the render assertions reject floating tags, and `latest` is how a laptop spends an afternoon
-    # debugging yesterday's build.
+    # Not `.Chart.AppVersion` (a local build has no release version) and not `latest` (the assertions
+    # reject a floating tag, and `latest` is how a laptop debugs yesterday's build).
     tag: "dev"
 
 importer:
@@ -60,32 +50,27 @@ frontend:
       tag: "dev"
 
 ingress:
-  # k3d ships the same Traefik k3s does, so the ingress path is genuinely exercised. `.localhost`
-  # resolves to 127.0.0.1 without a hosts entry on every current browser and OS.
+  # k3d ships the same Traefik k3s does, so the ingress path is exercised. `.localhost` resolves to
+  # 127.0.0.1 without a hosts entry.
   host: "event-junkie.localhost"
   redirectHosts: []
-  # Non-production configuration, and the point rather than a formality: it makes /k3d-rehearsal
-  # fetch the overridden `robots.txt` and `sitemap.xml` over a real Traefik route, the only place
-  # #286's `subPath` mount can be proven outside the tunnel. A render assertion cannot tell you
-  # nginx served the mounted file rather than the one baked into the image.
+  # Non-production configuration, and the point: it makes /k3d-rehearsal fetch the overridden
+  # `robots.txt` and `sitemap.xml` over a real Traefik route — the only place #286's `subPath` mount
+  # can be proven outside the tunnel.
   noindex: true
   tls:
-    # No TLS, therefore no cert-manager: the rehearsal is about whether the workloads start, reach
-    # the database and route to each other, where issuance would mean installing cert-manager into
-    # k3d and debugging ACME against a name that does not exist.
+    # No TLS, therefore no cert-manager: the rehearsal is about whether the workloads start and route,
+    # not about ACME against a name that does not exist.
     enabled: false
 
 certManager:
   clusterIssuer:
-    # Nothing to create: with `tls.enabled: false` no annotation references an issuer, and k3d has
-    # no cert-manager installed — a ClusterIssuer here would fail the install on an unknown kind.
+    # Nothing to create: with `tls.enabled: false` no annotation references an issuer, and a
+    # ClusterIssuer would fail the install on an unknown kind.
     create: false
 
-# The rehearsal's PostgreSQL runs in a Docker container on the host, reached through
-# `host.k3d.internal` — an address k3d assigns at cluster-create time, so it is not knowable when
-# this file is written. `0.0.0.0/0` stands in for it, and the rule still constrains the **port**: the
-# two JVM services may open 5432 anywhere and nothing else. That is weaker than the /32 the real
-# environments set and the one policy the rehearsal cannot prove tight; everything else in the set is
-# exercised exactly as deployed.
+# The rehearsal's PostgreSQL is on the host, reached through `host.k3d.internal` — an address k3d
+# assigns at cluster-create time, so `0.0.0.0/0` stands in and the rule still constrains the **port**.
+# Weaker than the /32 the real environments set, and the one policy the rehearsal cannot prove tight.
 networkPolicy:
   databaseCidr: "0.0.0.0/0"
