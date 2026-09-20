@@ -86,11 +86,11 @@ fun silentGreenArtists(
  * Strips the label or series hosting a night from the front of its title, so what remains is the
  * act(s) billed after it.
  *
- * Two forms, and only the first is unconditional. `"<host> pres. <acts>"` says in words that the
- * name in front is the host and the ones after it are the programme — `"Unguarded pres.
- * Jungstötter + Blurrydog"`, `"hub pres. Doorman + Franco Franco"` — so the prefix always goes.
- * The trade is `"Burnt Friedman pres. Secret Rhythms"`, where the host *is* an artist and only
- * his project name survives; that is the rarer case and still yields a real act.
+ * Two forms. A spelled-out `"<host> presents <acts>"` credit and the venue's own `"silent green
+ * pres. <programme>"` always lose the host. An abbreviated `"<host> pres. <acts>"` by anyone else
+ * is left to `headlinersFromTitle`, which reads the shape of the right side: `"hub pres. Doorman +
+ * Franco Franco"` is a host and its programme, `"Burnt Friedman pres. Secret Rhythms"` an act and
+ * its project (#1581).
  *
  * A bare `"<series>: <acts>"` colon is far weaker — `"The I in the Mirror: Reflection"` is a
  * title, not a series and a support act — so it is stripped **only when the remainder still bills
@@ -164,9 +164,9 @@ private val PRESENTER_LINE = Regex("""^(.+?)\s+präsentier(?:t|en)$""", RegexOpt
 /** Separates co-presenters. Comma and ampersand only — see [silentGreenPresenters]. */
 private val PRESENTER_SEPARATOR = Regex("""\s*[,&]\s*""")
 
-/** A `"<host> pres./presents/präsentiert "` lead-in, up to a name's worth of text long. */
+/** A `"<host> presents/präsentiert "` lead-in, or the venue presenting its own programme. */
 private val PRESENTED_BY_PREFIX =
-    Regex("""^.{2,60}?\s+(?:pres\.|presents|präsentiert)\s+""", RegexOption.IGNORE_CASE)
+    Regex("""^(?:silent\s+green\s+pres\.|.{2,60}?\s+(?:presents|präsentiert))\s+""", RegexOption.IGNORE_CASE)
 
 /** A `"<series>: "` lead-in — no colon or `+` inside it, so only the outermost one is taken. */
 private val SERIES_PREFIX = Regex("""^[^:+]{2,60}:\s+""")

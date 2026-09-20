@@ -147,6 +147,11 @@ class SilentGreenMonthPageScraperTest {
     fun `scrape strips the host and series that lead a title from the derived artists only`() {
         val hosted = september.first { it.title == "hub pres. Doorman + Franco Franco" }
         hosted.artists.map { it.name } shouldContainExactly listOf("Doorman", "Franco Franco")
+        // An act presenting its own project keeps the act; the venue presenting a programme keeps the programme (#1581).
+        september.first { it.title == "Burnt Friedman pres. Secret Rhythms" }.artists.map { it.name } shouldContainExactly
+            listOf("Burnt Friedman")
+        august.first { it.title == "silent green pres. Mutant Radio Sessions" }.artists.map { it.name } shouldContainExactly
+            listOf("Mutant Radio Sessions")
 
         val series = september.first { it.title.startsWith("15 YEARS zweikommasieben") }
         series.artists.map { it.name } shouldContainExactly listOf("Anna Homler", "Steven Warwick", "zweikommasieben DJs")

@@ -95,7 +95,8 @@ class MorphineDetailPageScraperTest {
         event.artists shouldBe
             listOf(
                 ScrapedArtist("ALL ABOUT BIRDS", "HEADLINER", titleDerived = true),
-                ScrapedArtist("JON ROSE: HINTERLAND!", "HEADLINER", titleDerived = true)
+                // The project after the colon is the work, not the act (#1585).
+                ScrapedArtist("JON ROSE", "HEADLINER", titleDerived = true)
             )
         event.doorsTime shouldBe LocalTime.of(19, 30)
         event.startTime shouldBe LocalTime.of(20, 0)

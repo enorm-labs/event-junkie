@@ -186,7 +186,9 @@ fun isNonArtistEvent(name: String): Boolean {
  * ("Nachholtermin vom <date>", "Hochverlegung"), a "singt <repertoire>" tribute framing, and an
  * "<Album/EP/…> Release" or "Release Party" promo tag, and a record title spelled out letter by
  * letter after a dash (`KAT FRANKIE - B O D I E S`), which no act is called and which the
- * shouted-tail rule below cannot reach because its head is shouted too (#1533).
+ * shouted-tail rule below cannot reach because its head is shouted too (#1533). From #1580: the
+ * act's own backing (`Lacrimosa mit Orchester`), which the conjunction split keeps attached and
+ * this takes off, and a dash tail ending in `!`, which is billing prose and never a name.
  *
  * **The boundaries are what keep real names intact**, and each guards a specific collision:
  * - Hyphen tails need a `<space>-<space>` boundary and a recognised marker, so an undecorated
@@ -195,10 +197,8 @@ fun isNonArtistEvent(name: String): Boolean {
  *   "Front 242") is untouched.
  * - "Live" needs a preceding whitespace boundary, so the band named Live is never matched.
  * - The bare "Release" tag needs a format word before it or a "Party"/"Show" tail, so a band named
- *   just "Release" survives.
- * - The parenthetical is keyed on the format word, so an alias in parentheses is kept.
- * - The relocation marker is word-anchored with an optional leading dash, so "… -Nachholtermin" and
- *   "… Nachholtermin" are both caught.
+ *   just "Release" survives; the parenthetical is keyed on the format word, so an alias in
+ *   parentheses is kept; the relocation marker is word-anchored with an optional leading dash.
  */
 private val ARTIST_SUFFIX_PATTERN =
     Regex(
@@ -206,13 +206,15 @@ private val ARTIST_SUFFIX_PATTERN =
             """|\s+[-–—]\s+\S.*\b(?:19|20)\d{2}\s*$""" +
             """|\s+[-–—]\s*release\s?show\s*$""" +
             """|\s+live(?:\s+in\s+\S.*)?$""" +
-            """|\s*\((?:dj[\s-]?set|live|acoustic|akustik|unplugged|solo)\)\s*$""" +
+            """|\s*\((?:dj[\s-]?set|live|acoustic|akustik|unplugged|solo|konzert|concert)\)\s*$""" +
             """|\s+dj[\s-]?set$""" +
             """|\s+[-–—(]*\s*(?:nachholtermin|hochverlegung|verschoben)\b.*$""" +
             """|\s+singt\s+\S.*$""" +
             """|\s+(?:album|ep|single|mixtape|record|tape)\s+release(?:\s+(?:party|show|special))?$""" +
             """|\s+release\s+(?:party|show)$""" +
-            """|\s+[-–—]\s+(?:\p{L}\s+){2,}\p{L}\s*$""",
+            """|\s+[-–—]\s+(?:\p{L}\s+){2,}\p{L}\s*$""" +
+            """|\s+(?:mit|with)\s+(?:orchester|orchestra|band|ensemble|chor|choir|streichern?|strings)\s*$""" +
+            """|\s+[-–—]\s+\S.*!\s*$""",
         RegexOption.IGNORE_CASE
     )
 
@@ -225,8 +227,67 @@ private val ARTIST_SUFFIX_PATTERN =
  * [ARTIST_SUFFIX_PATTERN] has the boundaries and what each one protects.
  */
 fun stripArtistSuffix(name: String): String {
-    val stripped = name.trim().replace(ARTIST_SUFFIX_PATTERN, "").trim()
-    return stripShoutedTourTail(stripped.ifBlank { name.trim() })
+    // One suffix can hide another (`Lacrimosa mit Orchester - … in Europa!`), so strip until stable.
+    var stripped = name.trim()
+    repeat(MAX_SUFFIX_PASSES) {
+        val next = stripped.replace(ARTIST_SUFFIX_PATTERN, "").trim()
+        if (next == stripped || next.isBlank()) return@repeat
+        stripped = next
+    }
+    return stripTrailingSeparator(stripWorkTitle(stripShoutedTourTail(stripped)))
+}
+
+/** Suffixes nest at most a few deep; a bound keeps a pathological title from looping. */
+private const val MAX_SUFFIX_PASSES = 4
+
+/** A separator a split left behind at the end of a name — `Stevie Cox -` (#1585). */
+private val TRAILING_SEPARATOR = Regex("""\s*[-–—:|]+\s*$""")
+
+/** Drops a trailing bare separator, keeping the input when nothing else is left. */
+private fun stripTrailingSeparator(name: String): String = name.replace(TRAILING_SEPARATOR, "").trim().ifBlank { name }
+
+/** Minimum words in a mixed-case tail before it reads as a work title rather than part of the name. */
+private const val MIN_WORK_TITLE_WORDS = 3
+
+/** Words a work title leaves lowercase without ceasing to be one (`The Opening of the Cerebral Gate`). */
+private val TITLE_CASE_SMALL_WORDS: Set<String> =
+    setOf("a", "an", "the", "of", "in", "on", "at", "to", "for", "and", "or", "der", "die", "das", "des", "dem", "von", "und", "im", "am", "für", "zu")
+
+/** A `: ` boundary between an act and the work it presents (`Jon Rose: Hinterland!`). `9:3` has no space and is untouched. */
+private val COLON_SEPARATOR = Regex("""\S:\s+""")
+
+/** A head that presents the tail rather than being an act: `<label> presents: <act>` keeps its right side. */
+private val PRESENTING_HEAD = Regex("""\b(?:pres|presents|pr(?:ä|ae)sentiert)[.:]?$""", RegexOption.IGNORE_CASE)
+
+/**
+ * Strips a work title glued to an act with ` - ` or `: ` — the album played live, the project, the
+ * show — so the performer remains (#1585): `Transllusion - The Opening of the Cerebral Gate` →
+ * `Transllusion`, `Jon Rose: Hinterland!` → `Jon Rose`.
+ *
+ * A tail counts as a work title when it ends in `!` or runs to [MIN_WORK_TITLE_WORDS] words in
+ * title case (every word capitalised bar the [TITLE_CASE_SMALL_WORDS]). The head must be an act,
+ * not a label presenting one ([PRESENTING_HEAD]), and must carry a lowercase letter, so an all-caps
+ * name a venue wrote with a dash (`DZ - DEATHRAY`) is left to [stripShoutedTourTail]'s fences. A
+ * two-word tail (`BAD COMPANY LEGACY - Dave Colwell`, `Drone Art Show: Harry Potter`) is not
+ * enough to call, and stays. Set-length and format suffixes are #301's decision, not this rule's.
+ */
+private fun stripWorkTitle(name: String): String {
+    val dash = DASH_SEPARATOR.findAll(name).lastOrNull()
+    val boundary = dash ?: COLON_SEPARATOR.find(name) ?: return name
+    val head = name.substring(0, if (dash == null) boundary.range.first + 1 else boundary.range.first).trim()
+    val tail = name.substring(boundary.range.last + 1).trim()
+    // The lowercase fence guards the dash only: `DZ - DEATHRAY` is a name, `JON ROSE: HINTERLAND!` is not.
+    val headIsAct = head.isNotBlank() && !PRESENTING_HEAD.containsMatchIn(head) && (dash == null || head.any { it.isLowerCase() })
+    return if (headIsAct && readsAsWorkTitle(tail)) head else name
+}
+
+private fun readsAsWorkTitle(tail: String): Boolean {
+    val words = tail.split(WHITESPACE).filter { it.isNotBlank() }
+    val titleCased =
+        words.size >= MIN_WORK_TITLE_WORDS &&
+            words.first().first().isUpperCase() &&
+            words.all { word -> word.first().isUpperCase() || word.lowercase() in TITLE_CASE_SMALL_WORDS }
+    return words.isNotEmpty() && (tail.endsWith('!') || titleCased)
 }
 
 /** Minimum words in a shouted tail before it reads as a tour/album name rather than an act. */
@@ -307,16 +368,24 @@ private val NON_ARTIST_NAMES: Set<String> =
         // Bare event-format words a co-billed title splits off as if they were acts — Säälchen's
         // `10 Jahre "The Big Brassers" – Jubiläumskonzert & Party` yields both of these.
         "party",
-        "jubiläumskonzert"
+        "jubiläumskonzert",
+        // Genre words a co-billed format title splits off — Monarch's `POETRY & HIP HOP (KONZERT)` (#1580).
+        "poetry",
+        "hip hop",
+        "hip-hop",
+        // Series billed under their own name with the acts on the page body only (#1581).
+        "berlin beat invasion",
+        "urban spree klubnacht",
+        "methods of dance"
     )
 
 /**
  * A trailing edition number on a recurring event title, ignored when matching
- * [NON_ARTIST_NAMES]. Covers both the plain `… 5` form and the `… N°141` form
- * (optional `n°`/`nº` before the digits), so every edition of a series folds onto
- * one denylist entry.
+ * [NON_ARTIST_NAMES]. Covers the plain `… 5` form, the `… N°141` and `… No 8` forms
+ * (optional `n°`/`nº`/`no.` before the digits) and a roman numeral (`Methods of Dance II`),
+ * so every edition of a series folds onto one denylist entry.
  */
-private val TRAILING_EDITION = Regex("""\s+(?:n[°º]\s*)?\d+$""", RegexOption.IGNORE_CASE)
+private val TRAILING_EDITION = Regex("""\s+(?:n[°º]\s*|no\.?\s*)?(?:\d+|[ivx]{1,5})$""", RegexOption.IGNORE_CASE)
 
 /**
  * A trailing `Berlin` locality on a recurring-series title (`GrooveJet Berlin`,
@@ -598,6 +667,13 @@ private val PLUS_ONLY_TITLE_SEPARATOR = Regex("""\s+\+\s+""")
 private val CONJUNCTION_SEPARATOR = Regex("""\s+(?:&|and|und)\s+|(?<=\S{2})\s+e\s+(?=\S{2})""", RegexOption.IGNORE_CASE)
 
 /**
+ * A segment that ends like a sentence and carries a function word is billing prose (`Einzige und
+ * Exklusive Orchester-Show in Europa!`); no conjunction inside it delimits acts. Both halves are
+ * needed: `ALL ABOUT BIRDS & JON ROSE: HINTERLAND!` ends in `!` and is still a co-bill.
+ */
+private val PROSE_END = Regex("""\s(?:in|im|mit|für|von|of|the|for|to|at|on|aus|bei)\s.*[!?]\s*$""", RegexOption.IGNORE_CASE)
+
+/**
  * True when [name] is a [KNOWN_SINGLE_ACTS] entry — an act whose own name contains a
  * conjunction. The name's conjunctions are normalized to `&` first, so an `"… and …"`
  * source spelling still matches the `&`-spelled denylist.
@@ -629,6 +705,8 @@ private fun isKnownSingleAct(name: String): Boolean = name.trim().replace(CONJUN
 fun splitSegmentOnConjunctions(segment: String): List<String> {
     if (isKnownSingleAct(segment)) return listOf(segment)
     if (segment.contains(',')) return listOf(segment)
+    // `Einzige und Exklusive Orchester-Show in Europa!` is billing prose, not two acts (#1580).
+    if (PROSE_END.containsMatchIn(segment)) return listOf(segment)
 
     val cuts =
         CONJUNCTION_SEPARATOR
@@ -866,7 +944,7 @@ fun headlinersFromTitle(
     // Same conclusion, reached structurally: the subtitle credits the label and the title repeats it.
     if (isPresenterOwnEventTitle(title, subtitle)) return emptyList()
     if (unpackWithFrame) withFrameActs(title)?.let { return it }
-    return splitHeadlinerTitle(stripSeriesPrefix(title), splitOnSlash)
+    return splitHeadlinerTitle(stripSeriesPrefix(billedSideOfPres(title, splitOnSlash)), splitOnSlash)
         .map { segment ->
             // The role is decided from the *raw* segment, before its label is stripped: a title
             // that bills "… + Support: A.A. Williams" names a support act, not a second headliner.
@@ -874,6 +952,28 @@ fun headlinersFromTitle(
             stripFramingPrefix(stripArtistPrefix(stripArtistSuffix(segment))) to role
         }.filterNot { (name, _) -> isNonArtistName(name) }
         .map { (name, role) -> ScrapedArtist(name = name, role = role, titleDerived = true) }
+}
+
+/** `<X> pres. <Y>` / `<X> pres: <Y>` — the abbreviated presenter marker, with what stands on either side. */
+private val PRES_MARKER = Regex("""^(.+?)\s+pres[.:]\s+(.+)$""", RegexOption.IGNORE_CASE)
+
+/**
+ * The side of a `pres.` / `pres:` title that bills the acts (#1581).
+ *
+ * The marker reads two ways. `hub pres. Doorman + Franco Franco` and `Unguarded pres. Jungstötter +
+ * Blurrydog` name a host and its programme, so the acts are on the right; `Burnt Friedman pres:
+ * Secret Rhythms` names an act and its project, so the act is on the left. What separates them is
+ * the right side: a co-bill is a programme, a single name is a work. The spelled-out `presents` is
+ * not handled here — a venue that bills that way splits it itself (Gretchen), and the shared rule
+ * that reads a `presents` credit is [isPresenterOwnEventTitle].
+ */
+private fun billedSideOfPres(
+    title: String,
+    splitOnSlash: Boolean
+): String {
+    val match = PRES_MARKER.find(title.trim()) ?: return title
+    val (host, programme) = match.destructured
+    return if (splitHeadlinerTitle(programme, splitOnSlash).size > 1) programme else host
 }
 
 /**
