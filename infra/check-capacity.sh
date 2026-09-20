@@ -31,14 +31,14 @@ readonly API=https://api.hetzner.cloud/v1
 # What each environment REQUIRES, as `<name>=<location>:<type>[,<type>…]`; these decide the exit
 # code. KEEP IN STEP WITH infra/environments/*/main.tf, which is the truth and this a copy; when
 # they drift this answers a question nobody is asking and says nothing about it (#460).
-export ENVIRONMENTS="staging=nbg1:cx33;production=fsn1:cx33,cx23"
+export ENVIRONMENTS="staging=nbg1:cx33;production=nbg1:cx33,cx23"
 
 # Types worth being told about but nothing depends on. Reported, never counted: a watch entry
 # that turns the script red makes the `until` loop above permanently false, as the old `cx43`
 # entry did. staging: cx43 (16 GB, €19.03) is supported in nbg1 and out of stock there, orderable
 # in fsn1 where the location-bound Primary IPs and volume make it useless (#460). production: the
 # ARM pair, if it became buyable and still cheaper.
-export WATCH="staging=nbg1:cx43;production=fsn1:cax21,cax11"
+export WATCH="staging=nbg1:cx43;production=nbg1:cax21,cax11"
 
 export NETWORK_ZONE=eu-central
 
