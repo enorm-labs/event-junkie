@@ -4,9 +4,12 @@ import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedEvent
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
+import io.kotest.matchers.ints.shouldBeGreaterThan
 import io.kotest.matchers.nulls.shouldBeNull
+import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
+import io.kotest.matchers.string.shouldNotContain
 import io.kotest.matchers.string.shouldStartWith
 import org.jsoup.Jsoup
 import org.junit.jupiter.api.Test
@@ -116,10 +119,13 @@ class SaalchenOverviewPageScraperTest {
     }
 
     @Test
-    fun `stores no description when the venue writes none, which is most rows`() {
-        // The AddToCalendar payload is metadata-only for most Säälchen events; the Holzmarkt 25
-        // market rows do carry prose, but those are filtered out.
-        events.filterNot { it.sourceId.contains("k-indie") }.forEach { it.description.shouldBeNull() }
+    fun `reads the description from the rendered body, without the metadata lines`() {
+        // Every row renders its prose in `.body-content`; the AddToCalendar copy is cut short (#1647).
+        events.forEach { it.description.shouldNotBeNull() }
+        val prose = event("saalchen:frytz-tour-2026").description.shouldNotBeNull()
+        prose shouldNotContain "Einlass:"
+        prose shouldNotContain "Eintritt:"
+        prose.length shouldBeGreaterThan 200
     }
 
     @Test
