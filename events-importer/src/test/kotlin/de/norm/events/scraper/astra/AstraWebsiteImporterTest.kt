@@ -10,6 +10,7 @@ import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
 import org.jsoup.Jsoup
@@ -70,17 +71,7 @@ class AstraWebsiteImporterTest {
 
         // The featured teaser has no date on the overview (UNRESOLVED_EVENT_DATE sentinel);
         // its detail page supplies the real date, which the merge must adopt.
-        coEvery { htmlFetcher.fetchDocument(teaserUrl) } returns
-            Jsoup.parse(
-                """
-                <html><body><main class="page-content"><article><header class="event">
-                <div class="event__left-col"><div class="event__date event__date--full">13.06.26</div></div>
-                <div class="event__middle-col"><div class="event__kind"><div class="event__label">Festival</div></div>
-                <h1 class="event__title"><a class="event__title-link" href="/events/2026-06-13-berlin-breakout--2026">BERLIN BREAKOUT! 2026</a></h1>
-                </div></header></article></main></body></html>
-                """.trimIndent(),
-                teaserUrl
-            )
+        coEvery { htmlFetcher.fetchDocument(teaserUrl) } returns Jsoup.parse(TEASER_DETAIL, teaserUrl)
 
         // Other detail pages (plain concert) — return empty so the importer
         // degrades to overview data.
@@ -117,6 +108,23 @@ class AstraWebsiteImporterTest {
             // The teaser has no date on the overview (sentinel); the detail page supplies it.
             val teaser = events(importer.importEvents(sourceUrl)).first { it.title == "BERLIN BREAKOUT! 2026" }
             teaser.eventDate shouldBe LocalDate.of(2026, 6, 13)
+        }
+
+    @Test
+    fun `fetches a dateless teaser's detail page a second time before giving it up`() =
+        runTest {
+            // One refused fetch used to drop the teaser for the whole run (#312); a row that has no
+            // date without its detail page gets one retry, and a dated row does not.
+            coEvery { htmlFetcher.fetchDocument(teaserUrl) } throws IllegalStateException("503") andThenAnswer {
+                Jsoup.parse(TEASER_DETAIL, teaserUrl)
+            }
+            coEvery { htmlFetcher.fetchDocument("https://www.astra-berlin.de/events/2026-12-09-chapo102") } throws IllegalStateException("503")
+
+            val events = events(importer.importEvents(sourceUrl))
+
+            events.first { it.title == "BERLIN BREAKOUT! 2026" }.eventDate shouldBe LocalDate.of(2026, 6, 13)
+            coVerify(exactly = 2) { htmlFetcher.fetchDocument(teaserUrl) }
+            coVerify(exactly = 1) { htmlFetcher.fetchDocument("https://www.astra-berlin.de/events/2026-12-09-chapo102") }
         }
 
     @Test
@@ -176,5 +184,14 @@ class AstraWebsiteImporterTest {
 
     private companion object {
         private const val EMPTY_DETAIL = "<html><body><main class=\"page-content\"></main></body></html>"
+
+        private val TEASER_DETAIL =
+            """
+            <html><body><main class="page-content"><article><header class="event">
+            <div class="event__left-col"><div class="event__date event__date--full">13.06.26</div></div>
+            <div class="event__middle-col"><div class="event__kind"><div class="event__label">Festival</div></div>
+            <h1 class="event__title"><a class="event__title-link" href="/events/2026-06-13-berlin-breakout--2026">BERLIN BREAKOUT! 2026</a></h1>
+            </div></header></article></main></body></html>
+            """.trimIndent()
     }
 }
