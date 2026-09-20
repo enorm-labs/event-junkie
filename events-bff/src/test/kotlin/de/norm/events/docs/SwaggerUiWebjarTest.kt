@@ -7,21 +7,12 @@ import org.junit.jupiter.api.Test
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver
 
 /**
- * The BFF's half of the swagger-ui pin (#491).
- *
- * **A deliberate twin of `events-importer`'s `SwaggerUiWebjarTest` — change both or neither.** The
- * constraint that holds `org.webjars:swagger-ui` ahead of springdoc lives in each module's
- * `build.gradle.kts` separately, because each module resolves its own runtime classpath. So a change
- * that dropped it from one and not the other would leave that module shipping a bundle with
- * DOMPurify 3.4.12 — GHSA-55q2-fjhq-7xh7 — while the other module's test went on passing. A
- * module-scoped defect needs a module-scoped test.
- *
- * This one is deliberately the **cheap** half: it reads the classpath and nothing else. The
- * importer's twin additionally boots a context and fetches `/webjars/swagger-ui/index.html`, because
- * springdoc resolves the webjar's versioned resource path and that is the one thing moving the
- * version could break — proving it once is enough, and both modules use the same springdoc starter.
- *
- * See `gradle.properties` for why the pin exists and what removes it.
+ * The BFF's half of the swagger-ui pin (#491), a twin of `events-importer`'s
+ * `SwaggerUiWebjarTest`: change both or neither. The constraint lives in each module's
+ * `build.gradle.kts` separately, so dropping it from one would ship DOMPurify 3.4.12
+ * (GHSA-55q2-fjhq-7xh7) while the other module's test passed. This is the cheap half, reading
+ * the classpath only; the importer's twin also boots a context and fetches
+ * `/webjars/swagger-ui/index.html`. `gradle.properties` has why the pin exists and what removes it.
  */
 class SwaggerUiWebjarTest {
     @Test

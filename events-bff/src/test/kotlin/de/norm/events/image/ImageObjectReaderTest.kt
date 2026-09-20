@@ -28,16 +28,10 @@ import java.io.IOException
 import java.util.concurrent.CompletableFuture
 
 /**
- * What the two storage warnings carry, asserted on the **ECS JSON** rather than on the log event
- * (#980).
- *
- * The position is the point. A value welded into the sentence reads exactly like one beside it, so
- * only an assertion at the top level of the serialised object separates a field the log store can
- * filter on from prose that merely looks structured.
- *
- * **A fake client rather than MinIO.** [CachedImageServingTest] uses a real S3 API because what it
- * proves is that this application's own configuration reads back a key the importer wrote. Nothing
- * here needs a bucket: both assertions are about a call that failed.
+ * What the two storage warnings carry, asserted on the ECS JSON rather than the log event (#980):
+ * a value welded into the sentence reads like one beside it, and only the top level of the
+ * serialised object separates a filterable field from prose. A fake client rather than MinIO:
+ * both assertions are about a call that failed.
  */
 class ImageObjectReaderTest {
     private lateinit var appender: ListAppender<ILoggingEvent>
@@ -76,8 +70,7 @@ class ImageObjectReaderTest {
             loggedJson().get(LogContextConfiguration.STORAGE_KEY).stringValue() shouldBe KEY
         }
 
-    // The failure mode is not an absent field. It is a field that is *also* in the sentence, which
-    // reads as working and leaves the prose free to drift out of step with it.
+    // The failure mode is a field that is also in the sentence, which leaves the prose free to drift.
     @Test
     fun `leaves the key out of the message text`() =
         runTest {
@@ -89,12 +82,9 @@ class ImageObjectReaderTest {
         }
 
     /**
-     * The regression this change could introduce silently.
-     *
-     * `logger.warn(e) { … }` put the throwable on the event without anyone having to think about it.
-     * The payload form needs `cause = e` written out, and omitting it costs `errorType` and
-     * `stackTrace` — two separate columns the collector lifts from `error`, on the one line where a
-     * stack trace is the reason to be reading at all.
+     * The regression this could introduce silently: `logger.warn(e) { … }` put the throwable on the
+     * event; the payload form needs `cause = e`, and omitting it costs `errorType` and `stackTrace`
+     * on the one line where a stack trace is the reason to read.
      */
     @Test
     fun `still carries the throwable, which is a column of its own`() =
@@ -111,10 +101,8 @@ class ImageObjectReaderTest {
     }
 
     /**
-     * The single line captured, serialised exactly as the pod writes it.
-     *
-     * `StructuredLogEncoder` in `ecs` mode is what the chart's `LOGGING_STRUCTURED_FORMAT_CONSOLE`
-     * selects, so this is the closest thing to the shipped line a unit test can hold.
+     * The single line captured as the pod writes it: `StructuredLogEncoder` in `ecs` mode is what
+     * the chart's `LOGGING_STRUCTURED_FORMAT_CONSOLE` selects.
      */
     private fun loggedJson(): tools.jackson.databind.JsonNode {
         val context = LoggerContext().apply { putObject(Environment::class.java.name, MockEnvironment()) }
@@ -129,9 +117,7 @@ class ImageObjectReaderTest {
     }
 
     /**
-     * Fails every read, which is all either warning needs.
-     *
-     * Every method on `S3AsyncClient` is a default, so overriding the one call site reaches plus the
+     * Fails every read. Every method on `S3AsyncClient` is a default, so the one call site plus the
      * two `SdkClient` requires is the whole implementation.
      */
     private class FailingS3Client(

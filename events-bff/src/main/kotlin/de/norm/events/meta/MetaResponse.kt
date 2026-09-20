@@ -4,12 +4,10 @@ import io.swagger.v3.oas.annotations.media.Schema
 import org.springframework.boot.info.BuildProperties
 
 /**
- * Which build is answering this request.
- *
- * Curated rather than reusing `/actuator/info`: that payload is framework-shaped, leaks the Maven
- * `group`/`artifact`/`name`, is not part of the OpenAPI spec the frontend generates its client
- * from, and would require routing the actuator path through the public ingress.
- * See docs/LEGAL.md §4.4.
+ * Which build is answering this request. Curated rather than `/actuator/info`, which is
+ * framework-shaped, leaks the Maven coordinates, is outside the OpenAPI spec the frontend
+ * generates its client from, and would need the actuator routed through the ingress
+ * (docs/LEGAL.md §4.4).
  */
 @Schema(description = "Version and commit of the running backend, for the frontend footer")
 data class MetaResponse(
@@ -47,9 +45,8 @@ data class MetaResponse(
         private const val UNKNOWN_COMMIT = "unknown"
 
         /**
-         * [buildProperties] is null when `META-INF/build-info.properties` is absent from the
-         * classpath — which is the normal case in the IDE and under `bootRun`, since only a
-         * packaged build runs the `bootBuildInfo` task.
+         * [buildProperties] is null when `META-INF/build-info.properties` is absent, the normal case in
+         * the IDE and under `bootRun`.
          */
         fun from(buildProperties: BuildProperties?): MetaResponse {
             val commit = buildProperties?.get("commit")?.takeUnless { it.isBlank() || it == UNKNOWN_COMMIT }

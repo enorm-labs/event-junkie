@@ -7,18 +7,11 @@ import org.springframework.boot.env.YamlPropertySourceLoader
 import org.springframework.core.io.FileSystemResource
 
 /**
- * Asserts what `/actuator/health/readiness` is composed of, by reading the configuration files.
- *
- * This is the same shape as [de.norm.events.event.MetricsExposureConfigTest] and exists for the same
- * reason: `src/test/resources/application.yaml` **shadows** the main file rather than merging with
- * it, so an integration test hitting the readiness endpoint proves the group works *as configured for
- * tests* and proves nothing about the group that ships. Deleting the readiness group from the main
- * file leaves every other test green while the deployed BFF goes back to reporting Ready before it
- * can serve — which is [#438](https://github.com/enorm-labs/event-junkie/issues/438) reopening itself
- * silently.
- *
- * The files are read through [YamlPropertySourceLoader], Spring's own loader, so this cannot disagree
- * with runtime parsing the way line-matching would.
+ * Asserts what `/actuator/health/readiness` is composed of, by reading the configuration files,
+ * as [de.norm.events.event.MetricsExposureConfigTest] does: the test `application.yaml` shadows
+ * the main one, so deleting the readiness group from the main file leaves every other test green
+ * while the deployed BFF reports Ready before it can serve, #438 reopening silently. Read through
+ * [YamlPropertySourceLoader], so this cannot disagree with runtime parsing.
  */
 class ReadinessGroupConfigTest {
     @Test

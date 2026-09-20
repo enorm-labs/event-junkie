@@ -11,12 +11,9 @@ import java.math.BigDecimal
 import java.time.LocalDate
 
 /**
- * Pins the rejection of unknown query parameters (#815).
- *
- * The defect these guard against is not a crash but a *wider* result set: WebFlux dropped a
- * parameter it did not recognise and answered `200` with the unfiltered collection. So the
- * assertion that matters most is the one comparing a misspelt filter against the correct one — a
- * test that only checked for `400` would still pass if the filter silently stopped being applied.
+ * Pins the rejection of unknown query parameters (#815). The defect is a wider result set, not a
+ * crash, so the assertion that matters compares a misspelt filter against the correct one; a
+ * test checking only for `400` would pass if the filter silently stopped being applied.
  */
 class UnknownQueryParameterTest : BaseControllerTest() {
     @ParameterizedTest
@@ -56,8 +53,7 @@ class UnknownQueryParameterTest : BaseControllerTest() {
             .isEqualTo(400)
             .jsonPath("$.unknown[0]")
             .isEqualTo("venueSlug")
-            // `venue` is the real parameter and `venueSlug` the plausible guess that caused #815,
-            // so the error has to make the right name discoverable.
+            // `venue` is the real parameter and `venueSlug` the plausible guess that caused #815.
             .jsonPath("$.accepted")
             .value<List<String>> { accepted -> assert("venue" in accepted) { "should name the real filter, was $accepted" } }
             .jsonPath("$.accepted")
@@ -77,10 +73,9 @@ class UnknownQueryParameterTest : BaseControllerTest() {
     }
 
     /**
-     * Derived from the data class rather than listed here, so a filter added to [EventFilterParams]
-     * is covered by this test the moment it exists — and a filter that stops being bindable fails
-     * it. Values are chosen per property type: a filter rejected for its *value* would look
-     * identical to one rejected for its name.
+     * Derived from the data class, so a filter added to [EventFilterParams] is covered the moment it
+     * exists. Values are chosen per property type: a filter rejected for its value would look like
+     * one rejected for its name.
      */
     @Test
     fun `every bindable filter on EventFilterParams is accepted`() {

@@ -5,19 +5,12 @@ import java.math.BigDecimal
 import java.time.LocalDate
 
 /**
- * The date-independent filter criteria shared by `GET /events` and `GET /events/calendar`.
- *
- * Bound from the query string as a model attribute; `@ParameterObject` on the method parameter
- * tells springdoc to flatten it back into individual query parameters, so the OpenAPI contract is
- * unchanged from declaring them one by one. Both endpoints offer the same filters — the list and
- * the calendar are two renderings of one search — and sharing this object keeps them from drifting.
- *
- * `from`/`to` deliberately stay on the controller methods: they are optional on the search endpoint
- * but required and range-checked on the calendar, so they are not part of the shared contract.
- *
- * **A name that is not here is a `400`, not a silently ignored parameter** (#815). The endpoints
- * derive their accepted set from this class, so adding a filter needs no second edit — see
- * [de.norm.events.common.QueryParameters] for why rejecting is worth its cost.
+ * The date-independent filter criteria shared by `GET /events` and `GET /events/calendar`, two
+ * renderings of one search. Bound as a model attribute; `@ParameterObject` tells springdoc to
+ * flatten it back into query parameters. `from`/`to` stay on the controller methods: optional on
+ * the search, required and range-checked on the calendar. A name that is not here is a `400`
+ * (#815); the endpoints derive their accepted set from this class
+ * ([de.norm.events.common.QueryParameters]).
  */
 @Suppress("LongParameterList")
 data class EventFilterParams(

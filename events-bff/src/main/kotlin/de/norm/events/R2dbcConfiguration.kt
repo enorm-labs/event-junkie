@@ -6,33 +6,19 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.data.relational.core.mapping.NamingStrategy
 
 /**
- * Spring Data R2DBC configuration for the BFF.
- *
- * Provides a custom [NamingStrategy] that applies the configured database schema globally,
- * so individual `@Table` annotations don't need to repeat it. The schema is [EVENTS_SCHEMA],
- * and `spring.r2dbc.properties.schema` is checked against it rather than being its source (#540).
- *
- * Unlike the importer, the BFF does **not** enable `@EnableR2dbcAuditing`: it is a read-only
- * service and never populates `@CreatedDate`/`@LastModifiedDate`.
+ * Spring Data R2DBC configuration: a [NamingStrategy] that applies [EVENTS_SCHEMA] globally, with
+ * `spring.r2dbc.properties.schema` checked against it rather than being its source (#540). No
+ * `@EnableR2dbcAuditing`: a read-only service.
  */
 @Configuration
 class R2dbcConfiguration {
     /**
-     * Overrides the default [NamingStrategy] to qualify all generated SQL with [EVENTS_SCHEMA]
-     * (e.g. `events.venue` instead of just `"venue"`).
-     *
-     * Without this, Spring Data R2DBC generates unqualified table references for derived query
-     * methods, which fail because the tables live in a dedicated schema rather than `public`.
-     *
-     * **The schema comes from the constant, not from the property, and the property is checked
-     * against it (#540).** A property that moves derived queries while every hand-written statement
-     * keeps its literal `events.` prefix half-migrates the application and still starts cleanly. The
-     * property stays, because it is what sets the connection's `search_path` and no Kotlin constant
-     * can do that — as a declaration that must agree, not as the source.
-     *
-     * `require` rather than a log line, deliberately: a warning about a schema mismatch is a warning
-     * nobody reads until `/api/events` is already failing, and this is exactly the state #438's
-     * readiness probe cannot see.
+     * Qualifies all generated SQL with [EVENTS_SCHEMA] (`events.venue`); without it derived queries
+     * reference `public`. The schema comes from the constant and the property is checked against it
+     * (#540): a property that moved derived queries while every hand-written statement kept its
+     * literal `events.` prefix would half-migrate the application and still start. The property
+     * stays because it sets the connection's `search_path`. `require` rather than a log line: a
+     * warning nobody reads until `/api/events` is failing, in the state #438's probe cannot see.
      */
     @Bean
     fun namingStrategy(

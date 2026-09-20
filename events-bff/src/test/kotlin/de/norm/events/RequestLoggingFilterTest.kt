@@ -15,12 +15,9 @@ import org.springframework.mock.web.server.MockServerWebExchange
 import reactor.core.publisher.Mono
 
 /**
- * That the filter stays quiet about actuator traffic, which is the whole reason it takes a base
- * path at all.
- *
- * The suppression is worth testing rather than eyeballing because **its failure mode is silence in
- * the other direction**: get the match wrong and a real route stops being logged, which nothing
- * reports and nobody notices until they go looking for a request that was served months ago.
+ * That the filter stays quiet about actuator traffic. Worth testing because the failure mode is
+ * silence in the other direction: get the match wrong and a real route stops being logged, which
+ * nobody notices until they look for a request served months ago.
  */
 class RequestLoggingFilterTest {
     private lateinit var appender: ListAppender<ILoggingEvent>
@@ -47,11 +44,8 @@ class RequestLoggingFilterTest {
         .block()
 
     /**
-     * The `path` field of every line captured, which is what this filter's suppression decides.
-     *
-     * Read from `keyValuePairs` rather than from the rendered message (#945). The values moved out
-     * of the sentence and into fields, and an assertion on the text would now be asserting the
-     * wording — which is how a wording change breaks a test about routing.
+     * The `path` field of every line captured, read from `keyValuePairs` rather than the rendered
+     * message (#945), so a wording change cannot break a test about routing.
      */
     private fun loggedPaths() =
         appender.list.mapNotNull { event ->
@@ -82,9 +76,8 @@ class RequestLoggingFilterTest {
     }
 
     /**
-     * The prefix trap. `/actuatorial` shares five-sixths of its name with the base path and is an
-     * ordinary route this application could add tomorrow — a `startsWith` on the bare base path
-     * would swallow it without a word.
+     * The prefix trap: `/actuatorial` is an ordinary route this application could add tomorrow, and a
+     * `startsWith` on the bare base path would swallow it.
      */
     @Test
     fun `logs a path that merely begins like the base path`() {
@@ -98,8 +91,8 @@ class RequestLoggingFilterTest {
         get("/manage/health", basePath = "/manage")
         get("/actuator/health", basePath = "/manage")
 
-        // The second call is not an actuator request under this configuration, so it is logged and
-        // the first is not — which is the assertion that the property is read at all.
+        // The second call is not an actuator request under this configuration, so it is logged and the
+        // first is not: the assertion that the property is read at all.
         loggedPaths() shouldBe listOf("/actuator/health")
     }
 

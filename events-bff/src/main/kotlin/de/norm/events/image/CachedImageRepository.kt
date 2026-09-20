@@ -7,21 +7,15 @@ import org.springframework.data.repository.kotlin.CoroutineCrudRepository
 import org.springframework.stereotype.Repository
 
 /**
- * The two questions serving asks of the database.
- *
- * Raw SQL over tables another module owns, schema-prefixed with the interpolated constant rather
- * than a literal (ADR-004, #540). Both queries filter `deleted_at IS NULL`, and that is the takedown
- * route working: setting one timestamp stops the image being served everywhere at once, without
- * waiting for the object itself to be swept.
+ * The two questions serving asks of the database: raw SQL over tables another module owns,
+ * schema-prefixed with the constant (ADR-004, #540). Both filter `deleted_at IS NULL`, which is
+ * the takedown route: one timestamp stops the image being served everywhere at once.
  */
 @Repository
 interface CachedImageRepository : CoroutineCrudRepository<CachedImageVariantEntity, Long> {
     /**
-     * Every derivative available for the given venue image URLs, in one query for a whole page.
-     *
-     * A join rather than two round trips, because the caller needs both halves of the answer: the
-     * hash addresses our URL, and the width set decides which of them it may point at. A page of
-     * twenty events returns at most twenty times the generated width count.
+     * Every derivative for the given venue image URLs, one query for a whole page: a join, because
+     * the hash addresses our URL and the width set decides which of them it may point at.
      */
     @Query(
         """
@@ -36,19 +30,12 @@ interface CachedImageRepository : CoroutineCrudRepository<CachedImageVariantEnti
     fun findServableBySourceUrlIn(sourceUrls: Collection<String>): Flow<ServableVariant>
 
     /**
-     * The object key behind one served URL, or null if there is nothing to serve.
-     *
-     * **This is the allow-list, and it is why the route needs no path sanitising.** The key comes
-     * out of a row the importer wrote, so a request can only ever name an object we generated — it
-     * cannot reach the `originals/` prefix, another environment's prefix, or anything outside the
-     * bucket, whatever the path variables contain.
-     *
-     * **`DISTINCT`, because `content_hash` is not unique.** A row is keyed by `source_url` and the
-     * objects are content addressed, so byte-identical files published under two URLs get two live
-     * rows on one hash, each with its own variants — 24 of production's 1118 images. The key is
-     * `derivativeKey(hash, width, format)` and carries no row id, so those rows name one object and
-     * `DISTINCT` collapses them. Two rows that disagreed on the key would still fail here, which is
-     * the case worth failing on.
+     * The object key behind one served URL, or null. This is the allow-list, and why the route needs
+     * no path sanitising: the key comes out of a row the importer wrote, so a request cannot reach
+     * `originals/` or another environment's prefix. `DISTINCT` because `content_hash` is not
+     * unique: byte-identical files under two URLs get two rows on one hash, 24 of production's 1118,
+     * naming one object since the key carries no row id. Two rows that disagreed on the key would
+     * still fail here, the case worth failing on.
      */
     @Query(
         """
