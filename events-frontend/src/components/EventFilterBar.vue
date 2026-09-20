@@ -1,12 +1,9 @@
 <script lang="ts" setup>
 /**
- * The shared event filter bar, used by both the events list and the calendar.
- *
- * Every control writes straight to the URL query via `useEventFilters`, and reads its current
- * value back from there — so the component holds no filter state of its own and the two views
- * stay in sync with the address bar without prop or event plumbing. The only local state is the
- * two free-text drafts (search box, price range) that are applied on submit rather than on every
- * keystroke; selects and checkboxes apply immediately.
+ * The shared event filter bar for the events list and the calendar. Every control writes
+ * straight to the URL query via `useEventFilters` and reads its value back from there, so the
+ * component holds no filter state; the only local state is the two free-text drafts (search,
+ * price range), applied on submit.
  */
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
@@ -44,9 +41,8 @@ const route = useRoute()
 const { queryString, applyFilters } = useEventFilters()
 
 /**
- * Opens the browser's calendar on a click anywhere in the field. Without this, Chrome only
- * opens it from the calendar icon and a click on the text just moves between date segments.
- * `showPicker` is absent on older browsers, where the icon still works — hence the optional call.
+ * Opens the browser's calendar on a click anywhere in the field; Chrome otherwise opens it from
+ * the icon only. `showPicker` is absent on older browsers, hence the optional call.
  */
 function openDatePicker(event: MouseEvent) {
   const input = event.currentTarget as HTMLInputElement & { showPicker?: () => void }
@@ -54,9 +50,8 @@ function openDatePicker(event: MouseEvent) {
 }
 
 /**
- * A preset is just the two date bounds, so it stays in the URL like every other filter and a
- * preset link is shareable. Clicking the active one clears the range again, which is the only
- * way back to "any date" without emptying both inputs by hand.
+ * A preset is the two date bounds, so it stays in the URL and is shareable. Clicking the active
+ * one clears the range, the only way back to "any date" without emptying both inputs.
  */
 function togglePreset(range: DateRange) {
   const active = isPresetActive(range)
@@ -72,9 +67,8 @@ const genres = useGenres()
 const venues = useAllVenues()
 
 /**
- * The family the bar shows as chosen: the URL's, or — for a link from before families existed,
- * which carries only `genre=` — the family of that style, so the two selects still say what the
- * results are filtered by.
+ * The family the bar shows as chosen: the URL's, or, for a link from before families existed
+ * carrying only `genre=`, the family of that style.
  */
 const activeFamily = computed(() => {
   const family = queryString('family')
@@ -84,9 +78,8 @@ const activeFamily = computed(() => {
 })
 
 /**
- * The styles inside the chosen family — the second level of the genre filter (#363). Empty when
- * no family is chosen, which is what hides the select; a tag without a family belongs to no list
- * and so is offered nowhere, deliberately.
+ * The styles inside the chosen family, the second level of the genre filter (#363). Empty when
+ * no family is chosen, which hides the select; a tag without a family is offered nowhere.
  */
 const stylesInFamily = computed(() => {
   if (!activeFamily.value) return []
@@ -98,8 +91,7 @@ function applyFamily(family: string) {
   applyFilters({ family, genre: '' })
 }
 
-// Drafts are seeded from the URL and re-synced whenever it changes elsewhere (back/forward,
-// a link with filters, another control resetting the query).
+// Drafts are seeded from the URL and re-synced whenever it changes elsewhere.
 const search = ref(queryString('q'))
 watch(
   () => route.query.q,
@@ -139,13 +131,10 @@ const { t } = useI18n()
     </form>
 
     <!--
-      Two native date inputs rather than a range-picker component: the browser supplies the
-      calendar, the value is already the ISO `YYYY-MM-DD` the BFF wants, and `min`/`max` express
-      "to cannot precede from" without any code. They apply on change like the selects, so the bar
-      keeps a single Apply button (the price range's). Neither bound is floored at today: past
-      dates are the archive, and the BFF still defaults to upcoming when no range is sent at all.
-      The browser's own calendar follows our dark mode via the `color-scheme` declared on
-      `:root`/`.dark` in main.css, which covers every native control rather than just these two.
+      Two native date inputs rather than a range picker: the value is already the ISO date the BFF
+      wants, and `min`/`max` express "to cannot precede from". Neither bound is floored at today:
+      past dates are the archive. The browser's calendar follows dark mode via the `color-scheme`
+      on `:root`/`.dark` in main.css.
     -->
     <div v-if="showDateRange" class="flex flex-wrap items-center gap-2">
       <BaseInput
@@ -166,10 +155,7 @@ const { t } = useI18n()
         @click="openDatePicker"
       />
 
-      <!--
-        Shortcuts for the ranges people actually ask for. They only set the same from/to the
-        inputs do, so the two stay consistent and a preset is as shareable as any other filter.
-      -->
+      <!-- Shortcuts that set the same from/to the inputs do, so a preset is as shareable. -->
       <Button
         v-for="preset in DATE_PRESETS"
         :key="preset.key"
@@ -184,11 +170,9 @@ const { t } = useI18n()
     </div>
 
     <!--
-      The bar reads as a funnel: when (above), then what, then where, then how much. Each pair is
-      grouped so it wraps as one — with real venue names the type select used to trail the date row
-      while the venue select opened the next. Type and genre both ask what kind of night; venue and
-      district both ask where. "Free only" is the price axis at zero, so it stays with the price
-      range, and the availability toggle closes the bar.
+      A funnel: when, then what, then where, then how much. Each pair wraps as one, since with real
+      venue names the type select used to trail the date row. "Free only" is the price axis at
+      zero, so it stays with the price range.
     -->
     <div class="flex flex-wrap gap-3">
       <BaseSelect
@@ -197,11 +181,7 @@ const { t } = useI18n()
         @change="applyFilters({ eventType: ($event.target as HTMLSelectElement).value })"
       >
         <option value="">{{ t('events.filters.allTypes') }}</option>
-        <!--
-        The option value stays the raw enum the BFF filters on; only the label is humanised,
-        through the same helper the event cards use — so picking "Club night" here and reading
-        it off a card are the same words.
-      -->
+        <!-- The value stays the raw enum; the label comes from the helper the cards use. -->
         <option v-for="type in EVENT_TYPES" :key="type" :value="type">
           {{ formatEventType(type) }}
         </option>
@@ -209,9 +189,8 @@ const { t } = useI18n()
 
       <!--
         Genre is two levels: thirteen families, then the styles of the chosen one. The family list
-        is the constant rather than what /api/genres happens to hold, so it is complete before the
-        tags load and a family link never lands on an empty select. Style options carry the tag
-        slug, so `genre=` in the URL means what it always did and older links keep working.
+        is the constant, so a family link never lands on an empty select; style options carry the
+        tag slug, so older `genre=` links keep working.
       -->
       <BaseSelect
         :aria-label="t('events.filters.byGenre')"

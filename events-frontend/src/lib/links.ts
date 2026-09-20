@@ -1,9 +1,6 @@
 /**
- * Outbound links to the project's GitHub repository.
- *
- * One module so the header, the footer and (from Phase 3) the version line cannot drift onto
- * different URLs — the header previously carried its own `REPOSITORY_URL` constant.
- * See docs/LEGAL.md §3.
+ * Outbound links to the project's GitHub repository, in one module so the header, the footer and
+ * the version line cannot drift onto different URLs (docs/LEGAL.md §3).
  */
 
 export const REPOSITORY_URL = 'https://github.com/enorm-labs/event-junkie'
@@ -15,8 +12,7 @@ export const LICENSE_URL = `${REPOSITORY_URL}/blob/main/LICENSE`
 export const ISSUES_URL = `${REPOSITORY_URL}/issues`
 
 /**
- * The new-issue chooser rather than a blank form, so it presents the issue templates once they
- * exist (Phase 6). Until then GitHub falls back to the blank form, which still works.
+ * The new-issue chooser rather than a blank form, so it presents the issue templates.
  */
 export const NEW_ISSUE_URL = `${REPOSITORY_URL}/issues/new/choose`
 
@@ -27,19 +23,13 @@ export const RELEASES_URL = `${REPOSITORY_URL}/releases`
 export const CONTRIBUTING_URL = `${REPOSITORY_URL}/blob/main/CONTRIBUTING.md`
 
 /**
- * A released version: a plain `major.minor.patch` triple and nothing else.
- *
- * **Stated positively on purpose (#502).** The footer used to ask the opposite question — "is this
- * a snapshot?" — by testing `version.includes('-SNAPSHOT')`, and that spelling never reaches a
- * browser. `gradle.properties` carries `0.1.1-SNAPSHOT`, but `release.yml` builds every artifact
- * with `-Pversion=` set to what `scripts/version.sh compute` produces, so a deployed build reports
- * `0.1.1-snapshot.20260817180146.g787d7d0` — lowercase, dot-separated, and no match. The guard was
- * exercised only by a local `bootRun`, and every deployed build linked to a tag that 404s.
- *
- * The same shape as production's `semverFilter` in `deploy/clusters/production/oci-repository.yaml`,
- * and deliberately so: that regex is already this project's definition of "a release", and two
- * definitions would drift. A release tag is the only thing `RELEASES_URL` has a page for — snapshots
- * are published to GHCR and never tagged in git.
+ * A released version: a plain `major.minor.patch` triple and nothing else. Stated positively
+ * (#502): the footer used to test `version.includes('-SNAPSHOT')`, and that spelling never
+ * reaches a browser, since `release.yml` builds every artifact with what `scripts/version.sh
+ * compute` produces, `0.1.1-snapshot.20260817180146.g787d7d0`, lowercase and dot-separated. Every
+ * deployed build linked to a tag that 404s. The same regex as production's `semverFilter` in
+ * `deploy/clusters/production/oci-repository.yaml`, deliberately: two definitions of "a release"
+ * would drift.
  */
 const RELEASE_VERSION = /^\d+\.\d+\.\d+$/
 
@@ -48,10 +38,8 @@ export function isReleaseVersion(version: string | null | undefined): boolean {
 }
 
 /**
- * Permalink to a single release, or `null` when this version was never released.
- *
- * Returning `null` rather than an unusable URL keeps the decision here, next to the rule that
- * defines it, instead of in the template.
+ * Permalink to a single release, or `null` when this version was never released, so the
+ * decision sits next to the rule that defines it rather than in the template.
  */
 export function releaseTagUrl(version: string | null | undefined): string | null {
   return isReleaseVersion(version) ? `${RELEASES_URL}/tag/v${version}` : null

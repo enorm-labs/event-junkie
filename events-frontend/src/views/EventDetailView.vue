@@ -28,11 +28,9 @@ const lineup = computed(() =>
 )
 
 /**
- * Whether the lineup's role labels carry information.
- *
- * An importer that reads a co-bill like `Alibi + Onyon + Tense` bills every act `HEADLINER`, because
- * the venue named no order. Three "Headliner" tags say nothing the list does not, so an all-headliner
- * lineup drops them. An all-DJ night keeps its tags: `DJ` says the acts play records, not live.
+ * Whether the lineup's role labels carry information: a co-bill like `Alibi + Onyon + Tense`
+ * bills every act `HEADLINER`, and three "Headliner" tags say nothing the list does not. An
+ * all-DJ night keeps its tags: `DJ` says the acts play records, not live.
  */
 const showRoles = computed(() => lineup.value.some((entry) => entry.role !== 'HEADLINER'))
 
@@ -50,32 +48,26 @@ const timeHint = computed(() => (event.value ? eventTimeHint(event.value) : null
 
 const { t, te, locale } = useI18n()
 
-// The text for this locale, its language, and whether a machine wrote it. Shared with the page
-// meta, the structured data and the injector — see lib/description.ts. Below `useI18n()` for the
-// same reason `usePageMeta` is.
+// The text for this locale, its language, and whether a machine wrote it, shared with the page
+// meta, the structured data and the injector (lib/description.ts). Below `useI18n()` as
+// `usePageMeta` is.
 const description = computed(() =>
   event.value ? descriptionFor(event.value, locale.value as Locale) : null,
 )
 
 /**
- * A backend enum's label, falling back to the raw value.
- *
- * `ArtistRole` lives in `events-core`, so the BFF can gain a value in a release that ships before
- * the frontend — the same reason `formatEventStatus` and `formatEventType` guard their lookups.
- * Showing `HEADLINER` is poor; showing `events.role.HEADLINER` is a bug report, and that is what
- * an unguarded lookup renders.
+ * A backend enum's label, falling back to the raw value: `ArtistRole` lives in `events-core` and
+ * can gain a value in a release that ships first. `HEADLINER` is poor; `events.role.HEADLINER` is
+ * a bug report.
  */
 function enumLabel(namespace: string, value: string): string {
   const key = `${namespace}.${value}`
   return te(key) ? t(key) : value
 }
 
-// Title, description and image for this page. The description leads with the date and venue
-// rather than the promotional blurb, because that is what someone deciding whether to open a link
-// in a group chat actually wants — see lib/pageMeta.ts.
-//
-// Below `useI18n()` on purpose: `watchEffect` runs its effect immediately, so a getter reading
-// `locale` from above this line would hit the temporal dead zone at setup rather than at render.
+// Title, description and image for this page; the description leads with the date and venue
+// (lib/pageMeta.ts). Below `useI18n()` on purpose: `watchEffect` runs immediately, so a getter
+// reading `locale` from above this line would hit the temporal dead zone.
 usePageMeta(() =>
   event.value
     ? eventPageMeta(event.value, locale.value as Locale)
@@ -86,9 +78,8 @@ usePageMeta(() =>
       ),
 )
 
-// The rich-result payload: an Event document plus the breadcrumb trail Search renders instead of a
-// bare URL. `eventJsonLd` returns null when Google's required fields are missing, which is why
-// this filters rather than assuming. See lib/structuredData.ts.
+// The rich-result payload: an Event document plus the breadcrumb trail. `eventJsonLd` returns
+// null when Google's required fields are missing, hence the filter (lib/structuredData.ts).
 useStructuredData((): JsonLd[] => {
   const current = event.value
   if (!current?.slug || !current.title) return []
@@ -134,10 +125,7 @@ useStructuredData((): JsonLd[] => {
           <span>· {{ formatEventTime(event) }}</span>
           <span v-if="timeHint">· {{ timeHint }}</span>
           <span v-if="event.venue?.name">· {{ event.venue.name }}</span>
-          <!--
-            The status pill is the exception the rest of #1248 flattened: a cancelled event is the
-            one thing on this page that must not read as another word in a grey row.
-          -->
+          <!-- The one exception #1248 left: a cancelled event must not read as a word in a grey row. -->
           <BaseBadge
             v-if="formatEventStatus(event.status, event.relocatedTo)"
             variant="destructive"
@@ -156,10 +144,9 @@ useStructuredData((): JsonLd[] => {
           </span>
         </div>
         <!--
-          A past event is where a search engine sends people, and it kept ranking for the act's name
-          long after the night. Saying only that it is over left the venue's own site as the nearest
-          onward link (#1268), so the sentence carries one that stays here — the venue if we know
-          it, since the visitor has already shown interest in it, and the list otherwise.
+          A past event is where a search engine sends people; saying only that it is over left the
+          venue's own site as the nearest onward link (#1268), so the sentence carries one that stays
+          here: the venue if we know it, the list otherwise.
         -->
         <p v-if="isPast" class="text-sm text-muted-foreground">
           {{ t('events.detail.hasTakenPlace') }}
@@ -179,17 +166,11 @@ useStructuredData((): JsonLd[] => {
       </header>
 
       <!--
-        The widest image on the site, drawn across a `max-w-3xl` column: 704 px once `sm:p-8` is
-        subtracted, and the viewport minus its padding below that. Those three lengths are what turn
-        `srcset`'s pixel widths into a choice, so they track the `<main>` classes above.
-
-        The wrapper is the spacing. `space-y-8` puts its margin on the child that precedes the gap,
-        and `CachedImage` renders a `display: contents` <picture>, which has no box to carry one.
-
-        No poster, no placeholder. #811 draws one on a card, where a hole in a grid reads as broken.
-        Here the title is the content, and a full-width 3:2 void would push it off the screen.
-
-        `eager` because the poster is the LCP element on this page, which is what #1207 reports.
+        The widest image on the site: 704 px in a `max-w-3xl` column once `sm:p-8` is subtracted,
+        the viewport minus padding below that; `sizes` tracks the `<main>` classes above. The wrapper
+        is the spacing: `CachedImage` renders a `display: contents` <picture> with no box to carry a
+        `space-y-8` margin. No poster, no placeholder: here the title is the content, and a 3:2 void
+        would push it off the screen. `eager` because the poster is the LCP element (#1207).
       -->
       <div v-if="event.imageUrl">
         <CachedImage
@@ -205,9 +186,8 @@ useStructuredData((): JsonLd[] => {
       </div>
 
       <!--
-        `lang` marks the text, not the page. A German description on /en/ is what the venue wrote,
-        and declaring it lets a screen reader pronounce it and a browser offer to translate it.
-        Absent when the importer could not tell, which is the honest answer (ADR-026).
+        `lang` marks the text, not the page, so a screen reader pronounces a German description on
+        /en/ and a browser offers to translate it. Absent when the importer could not tell (ADR-026).
       -->
       <p
         v-if="description"
@@ -229,13 +209,10 @@ useStructuredData((): JsonLd[] => {
         >
       </p>
       <!--
-        Only where a licence removed a description, never where the venue wrote none. On a seeded
-        database that is 56 events against 1,072, so a note keyed on `description` being null would
-        be wrong twenty times more often than right — which is why the API reports the reason (#811).
-
-        It says where the text is and nothing about what the venue wants. Both prohibitions were
-        read off an Impressum rather than sent to us (#809), so "at the venue's request" would be a
-        position we invented for them.
+        Only where a licence removed a description, never where the venue wrote none: 56 events
+        against 1,072 on a seeded database, which is why the API reports the reason (#811). It says
+        where the text is and nothing about what the venue wants: both prohibitions were read off an
+        Impressum, not sent to us (#809).
       -->
       <p v-if="!description && event.descriptionWithheld" class="text-sm text-muted-foreground">
         {{ t('events.detail.descriptionElsewhere') }}

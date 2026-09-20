@@ -1,19 +1,15 @@
 import { expect, type Page, type Route, test } from '@playwright/test'
 
 /**
- * Detail-route e2e tests with a fully mocked BFF.
+ * Detail-route e2e tests with a fully mocked BFF: Playwright's request routing intercepts it, so
+ * the happy and the not-found path run with no backend. Endpoints per page:
+ * /events/:slug     GET /api/events/:slug
+ * /venues/:slug     GET /api/venues/:slug   + GET /api/events?venue=… (feed)
+ * /artists/:slug    GET /api/artists/:slug  + GET /api/events?artist=… (feed)
+ * /promoters/:slug  GET /api/promoters/:slug + GET /api/events?promoter=… (feed)
  *
- * The smoke suite skips these routes because they need real data; Playwright's request routing
- * intercepts the BFF instead, so both the happy and the not-found path run with no backend.
- *
- * Endpoints per page:
- *   /events/:slug     → GET /api/events/:slug
- *   /venues/:slug     → GET /api/venues/:slug   + GET /api/events?venue=… (feed)
- *   /artists/:slug    → GET /api/artists/:slug  + GET /api/events?artist=… (feed)
- *   /promoters/:slug  → GET /api/promoters/:slug + GET /api/events?promoter=… (feed)
- *
- * Regexes rather than globs, because the search URL carries a query string that glob wildcards
- * handle awkwardly. The detail and search matchers do not overlap, so registration order is free.
+ * Regexes rather than globs, because the search URL carries a query string. The detail and
+ * search matchers do not overlap, so registration order is free.
  */
 
 /** Collect uncaught exceptions — the "the app broke" signal, as in the smoke suite. */
@@ -37,10 +33,9 @@ const todayInBerlin = () =>
   new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Berlin' }).format(new Date())
 
 function isoDaysFromNow(days: number): string {
-  // Anchored on Berlin's calendar date rather than the runner's, because that is what the app
-  // computes from (`todayIso` in lib/format). The two agree until the runner is on UTC and Berlin
-  // has already turned over — between 22:00 and midnight UTC — and then every assertion built on
-  // this is a day out. The arithmetic runs on a midnight-UTC instant so no DST hour can move it.
+  // Anchored on Berlin's calendar date, which the app computes from (`todayIso` in lib/format):
+  // between 22:00 and midnight UTC the runner's date is a day behind. Midnight-UTC arithmetic so no
+  // DST hour can move it.
   const date = new Date(`${todayInBerlin()}T00:00:00Z`)
   date.setUTCDate(date.getUTCDate() + days)
   return date.toISOString().slice(0, 10)
@@ -108,9 +103,8 @@ const detailRoutes = [
 ] as const
 
 test.beforeEach(async ({ page }) => {
-  // Venue/artist/promoter pages also load an upcoming-events feed; stub it empty so tests
-  // are deterministic and never fall through to the network. Harmless for the event page,
-  // which never hits this endpoint.
+  // Venue/artist/promoter pages also load an upcoming-events feed; stub it empty so nothing falls
+  // through to the network.
   await page.route(eventsFeed, (route) => json(route, emptyEventPage))
 })
 
@@ -141,9 +135,8 @@ for (const detail of detailRoutes) {
 
       await page.goto(detail.path)
 
-      // A 500 is the `error` branch (not `notFound`): the view renders the describeError
-      // message, which always opens with "Couldn't load …", not a heading. Asserting that
-      // copy distinguishes the error state from both success and the 404 empty state.
+      // A 500 is the `error` branch, not `notFound`: the describeError message opens with
+      // "Couldn't load …", which distinguishes it from success and the 404 empty state.
       await expect(page.getByText(/couldn't load/i)).toBeVisible()
       await expect(page.getByRole('heading', { level: 1, name: detail.heading })).toHaveCount(0)
       await expect(
@@ -156,8 +149,8 @@ for (const detail of detailRoutes) {
 test.describe('a past event', () => {
   const pastEventBody = { ...eventBody, eventDate: isoDaysFromNow(-30) }
 
-  // Links shared in a group chat outlive the event. This is what stops a deletion policy
-  // (#350) turning them into 404s without failing a test first.
+  // Links shared in a group chat outlive the event; this stops a deletion policy (#350) turning
+  // them into 404s without failing a test first.
   test('still resolves rather than 404-ing', async ({ page }) => {
     const errors = collectPageErrors(page)
     await page.route(/\/api\/events\/[^/?]+/, (route) => json(route, pastEventBody))
@@ -179,8 +172,8 @@ test.describe('a past event', () => {
   })
 
   test('points at what is coming up at the venue', async ({ page }) => {
-    // A search engine keeps sending people here after the night has passed (#293), and the page
-    // used to offer the venue's own site as its nearest onward link (#1268).
+    // A search engine keeps sending people here after the night (#293), and the page offers the
+    // venue's own site as the onward link (#1268).
     await page.route(/\/api\/events\/[^/?]+/, (route) => json(route, pastEventBody))
 
     await page.goto('/events/mock-event')
@@ -211,8 +204,8 @@ test.describe('a past event', () => {
   })
 
   test('an all-headliner co-bill lists its acts without role labels', async ({ page }) => {
-    // A venue that bills `A + B + C` names no order, and the importer stores every act as a
-    // headliner. Three "Headliner" tags would only repeat the list.
+    // A venue that bills `A + B + C` names no order, so three "Headliner" tags would only repeat
+    // the list.
     const coBill = {
       ...eventBody,
       lineup: [
@@ -245,8 +238,8 @@ test.describe('a past event', () => {
   })
 
   test('keeps a gap between the poster and the description', async ({ page }) => {
-    // `space-y-8` puts its margin on the element before the gap, and the cached-image <picture>
-    // is `display: contents`, so without a wrapper the poster sat flush against the description.
+    // `space-y-8` puts its margin on the element before the gap, and the cached-image <picture> is
+    // `display: contents`, so without a wrapper the poster sat flush against the description.
     const withPoster = {
       ...eventBody,
       description: 'Doors at eight.',
@@ -270,8 +263,8 @@ test.describe('a past event', () => {
   })
 
   test('marks the language of a description the page locale does not match', async ({ page }) => {
-    // A German text under English chrome is what the venue wrote. Telling a screen reader and a
-    // crawler that it is English is the part we can get wrong, so the attribute is asserted.
+    // A German text under English chrome is what the venue wrote; the `lang` attribute is the part
+    // we can get wrong.
     const german = {
       ...eventBody,
       description: 'Ein Abend mit Aussicht.',
@@ -324,8 +317,8 @@ test.describe('a past event', () => {
 })
 
 test('serves the venue description in the page language', async ({ page }) => {
-  // Our own prose in both languages (#1210), so both are shown as written and neither is
-  // disclosed as machine-made. The `lang` attribute is what a screen reader reads it with.
+  // Our own prose in both languages (#1210), neither disclosed as machine-made; `lang` is what a
+  // screen reader reads it with.
   const bilingual = {
     ...venueBody,
     description: 'A former cinema on the canal.',
