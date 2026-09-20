@@ -21,511 +21,227 @@ Skip the Gradle build for Markdown-only or frontend-only changes. `/verify` runs
 | [Agent Instructions](#agent-instructions)                                         | Always. Git, formatting, ADR numbering, what never to run             |
 | [Privacy & GDPR](#privacy--gdpr--re-check-when-infrastructure-or-features-change) | Any change to infrastructure, third-party requests, or what is logged |
 | [Project Overview](#project-overview)                                             | The module split, and which project owns what                         |
-| [Build & Dev Commands](#build--dev-commands)                                      | Running anything locally                                              |
+| [Build & Dev Commands](#build--dev-commands)                                      | Running anything locally, and the local traps                         |
 | [Project skills](#project-skills)                                                 | Which slash command does what                                         |
 | [Automating GitHub with `gh`](#automating-github-with-gh)                         | Scripting issues, pull requests or the board                          |
 | [The Backlog](#the-backlog--github-issues)                                        | Filing, claiming or closing an issue                                  |
-| [Key Files](#key-files)                                                           | "Where does X live?"                                                  |
+| [Key Files](#key-files)                                                           | The files that carry a rule, and the documents that carry a runbook   |
 
 **The rest is path-scoped and loads itself.** The detail that only matters for one kind of file lives in [`.github/instructions/`](.github/instructions), one
 file per topic, each declaring the paths it applies to. Claude Code reads them through [`.claude/rules/`](.claude/rules) and GitHub Copilot reads them
-directly; both pull a file into context when you touch a file it matches, so nothing here has to be loaded on the chance it is relevant. An agent that reads
-only this file should follow the links.
+directly; both pull a file into context when you touch a file it matches. An agent that reads only this file should follow the links.
 
-| Rule file                                                           | Loads when you touch                                                    | Covers                                                                          |
-| ------------------------------------------------------------------- | ----------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
-| [architecture](.github/instructions/architecture.instructions.md)   | `events-core/`, `events-bff/`, `events-importer/`                       | The reactive stack, the schema, migrations, DTOs, metrics                       |
-| [kotlin](.github/instructions/kotlin.instructions.md)               | `*.kt`, `*.kts`, `gradle.properties`, `detekt.yml`                      | Idioms, where versions live, ktlint · detekt · Kover                            |
-| [logging](.github/instructions/logging.instructions.md)             | `events-core/`, `events-bff/`, `events-importer/`                       | Levels, exception as argument, MDC vs payload, the three places a field lives   |
-| [python](.github/instructions/python.instructions.md)               | `*.py`, `ruff.toml`                                                     | Standard library only, ruff, and tests that are plain scripts                   |
-| [comments](.github/instructions/comments.instructions.md)           | Every source language                                                   | Few, short, about _why_ — and what lint already enforces                        |
-| [documentation](.github/instructions/documentation.instructions.md) | `docs/**/*.md`                                                          | Simplified Technical English: how the sentences are written                     |
-| [markdown](.github/instructions/markdown.instructions.md)           | `*.md`                                                                  | oxfmt, its pinned scope, and why it runs twice                                  |
-| [vue](.github/instructions/vue.instructions.md)                     | `events-frontend/` `*.vue`, `*.css`                                     | SFC structure, Tailwind v4 + shadcn-vue, accessibility                          |
-| [design](.github/instructions/design.instructions.md)               | `events-frontend/src/`                                                  | The tokens, the type scale, the spacing, and the forbidden list                 |
-| [testing](.github/instructions/testing.instructions.md)             | backend `src/test/`, frontend `e2e/`, `__tests__/`                      | JUnit + Testcontainers, and Vitest + Playwright                                 |
-| [kubernetes](.github/instructions/kubernetes.instructions.md)       | `deploy/**/*.yaml`                                                      | Audited API versions, the YAML boolean trap, PSS `restricted`                   |
-| [ci-cd](.github/instructions/ci-cd.instructions.md)                 | `.github/workflows/`, `dependabot.yml`, `renovate.json5`, `release.yml` | Every workflow, the required checks, the Dependabot/Renovate boundary, fork PRs |
-
-Each rule file carries two glob lists for the same paths: an `applyTo:` line, which Copilot reads from `.github/instructions/` directly, and a `paths:`
-list, which Claude Code reads through `.claude/rules/` — one symlink per topic onto the same file. One copy serves both agents, and
-`scripts/rules-parity.sh` fails when the two lists drift apart, when either names a glob that matches no tracked file, or when a rule is missing from the
-table above. **A rule body has to be inline.** An `@` pointer inside a rule file is expanded at launch whatever its `paths:` says, so a pointer-style rule
-loads its target into every session and the scoping buys nothing — silently, because the content is there, merely always there.
+| Rule file                                                                                                                                                      | Loads when you touch                                                    | Covers                                                                          |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| [architecture](.github/instructions/architecture.instructions.md)                                                                                              | `events-core/`, `events-bff/`, `events-importer/`                       | The reactive stack, the schema, migrations, DTOs, metrics                       |
+| [kotlin](.github/instructions/kotlin.instructions.md)                                                                                                          | `*.kt`, `*.kts`, `gradle.properties`, `detekt.yml`                      | Idioms, where versions live, ktlint · detekt · Kover                            |
+| [logging](.github/instructions/logging.instructions.md)                                                                                                        | `events-core/`, `events-bff/`, `events-importer/`                       | Levels, exception as argument, MDC vs payload, the three places a field lives   |
+| [python](.github/instructions/python.instructions.md)                                                                                                          | `*.py`, `ruff.toml`                                                     | Standard library only, ruff, and tests that are plain scripts                   |
+| [comments](.github/instructions/comments.instructions.md)                                                                                                      | Every source language                                                   | Few, short, about _why_ — and what lint already enforces                        |
+| [documentation](.github/instructions/documentation.instructions.md)                                                                                            | `docs/**/*.md`                                                          | Simplified Technical English: how the sentences are written                     |
+| [markdown](.github/instructions/markdown.instructions.md)                                                                                                      | `*.md`                                                                  | oxfmt, its pinned scope, and why it runs twice                                  |
+| [vue](.github/instructions/vue.instructions.md)                                                                                                                | `events-frontend/` `*.vue`, `*.css`                                     | SFC structure, Tailwind v4 + shadcn-vue, accessibility                          |
+| [design](.github/instructions/design.instructions.md)                                                                                                          | `events-frontend/src/`                                                  | The tokens, the type scale, the spacing, and the forbidden list                 |
+| [testing](.github/instructions/testing.instructions.md)                                                                                                        | backend `src/test/`, frontend `e2e/`, `__tests__/`                      | JUnit + Testcontainers, and Vitest + Playwright                                 |
+| [kubernetes](.github/instructions/kubernetes.instructions.md)                                                                                                  | `deploy/**/*.yaml`                                                      | Audited API versions, the YAML boolean trap, PSS `restricted`                   |
+| [ci-cd](.github/instructions/ci-cd.instructions.md)                                                                                                            | `.github/workflows/`, `dependabot.yml`, `renovate.json5`, `release.yml` | Every workflow, the required checks, the Dependabot/Renovate boundary, fork PRs |
+| Each rule file carries the same globs twice — `applyTo:` for Copilot and `paths:` for Claude Code, which reads it through a `.claude/rules/` symlink —         |
+| and `scripts/rules-parity.sh` fails when they drift, when a glob matches no tracked file, or when a rule is missing from the table above. **A rule body has to |
+| be inline**: an `@` pointer inside a rule file is expanded at launch whatever `paths:` says, so the scoping silently buys nothing.                             |
 
 **Sibling files, none of them optional in their own subtree:** [`infra/AGENTS.md`](infra/AGENTS.md) opens with the OpenTofu commands that must never be run ·
 [`deploy/AGENTS.md`](deploy/AGENTS.md) with the difference between rendering the chart and installing it · [`events-frontend/AGENTS.md`](events-frontend/AGENTS.md)
 covers the SPA. A subtree's `AGENTS.md` loads when an agent reads a file under it, so guidance that only matters to one module goes next to the module.
 
-**There is no `CLAUDE.md` in this repository, on purpose.** Claude Code 2.1.277 and later reads `AGENTS.md` as the project instructions when no `CLAUDE.md`
-exists, so this file is the one copy every agent reads. Do not commit a `CLAUDE.md` or a `CLAUDE.local.md`: either one stops Claude Code from reading
-`AGENTS.md` at all unless the **Project instructions** setting in `/config` is `claude-md-and-agents-md`. `.gitignore` covers both names, so a session that
-cannot read `AGENTS.md` directly (Bedrock, Vertex, `disableAllHooks`, the first session after an upgrade) can keep a local `CLAUDE.md` holding just
-`@AGENTS.md` without anyone else seeing it.
+**There is no `CLAUDE.md` here, on purpose.** Claude Code 2.1.277 and later reads `AGENTS.md` as the project instructions when no `CLAUDE.md` exists. Do not
+commit a `CLAUDE.md` or a `CLAUDE.local.md`: either one stops Claude Code reading `AGENTS.md` unless **Project instructions** in `/config` is
+`claude-md-and-agents-md`. `.gitignore` covers both names, so a session that cannot read `AGENTS.md` directly (Bedrock, Vertex, `disableAllHooks`) can keep a
+local `CLAUDE.md` holding just `@AGENTS.md`.
 
 ## Agent Instructions
 
-- **Git non-interactive mode**: Always run git commands with the pager disabled to prevent the agent from hanging on interactive output. Use
-  `git --no-pager <command>` or set the environment variable `GIT_PAGER=cat`. This applies to all git commands that may produce paged output (`log`, `diff`,
-  `show`, `branch`, etc.). See [git docs](https://git-scm.com/docs/git#Documentation/git.txt---no-pager).
-- **ktlint auto-format first**: When ktlint reports formatting issues, always run `./gradlew ktlintFormat` first to auto-correct them. Only edit files manually
-  for issues that ktlint cannot auto-fix.
-- **Reformatting is intentional — keep it**: Files in the working tree are routinely reformatted on purpose (IDE reformat-on-save, `./gradlew ktlintFormat`,
-  `npm run format`). Treat that as deliberate and leave it in place. Never revert, re-fetch, re-download, or otherwise "restore" a file to an earlier shape
-  because its indentation, tabs/spaces, line wrapping, attribute order, or trailing whitespace changed — and don't reformat _back_ to a previous style either.
-  Review the content instead: `git --no-pager diff -w` (or `-b`) hides whitespace-only churn. Whitespace-only changes need no report, no explanation, and no
-  action; they are not a signal that something went wrong.
-    - This includes **test fixtures**, notably the scraper HTML snapshots under `events-importer/src/test/resources/scraper/`. A reformatted snapshot is still a
-      valid fixture — Jsoup ignores indentation and attribute order — so a reformat is never on its own a reason to re-capture a page from the live site.
-    - The one real caveat: in HTML, whitespace _between inline elements_ affects the text Jsoup returns (`<b>a</b><b>b</b>` yields `ab`, but with a newline
-      between them it yields `a b`). So if a reformat makes a scraper test fail, that is a genuine finding — **raise it with the user**. Do not silently revert
-      the file, and do not loosen the assertion to make it pass.
-- **Build verification**: Always run `./gradlew clean build` after finishing an implementation to verify that all modules compile, tests pass, ktlint and detekt
-  checks succeed, and Kover coverage thresholds are met. **Skip this step** when only Markdown documentation (`.md` files) or frontend files
-  (`events-frontend/`) were changed — the Gradle build covers the backend modules only. A Markdown-only change is not check-free, though: run
-  `scripts/format-markdown.sh` (see [.github/instructions/markdown.instructions.md](.github/instructions/markdown.instructions.md)), which the commit hook
-  runs anyway.
-- **Write a plan to `temp/`, which `.gitignore` covers.** Always a Markdown file, never the terminal alone and never a path outside the repository. The same
-  goes for an audit, a draft release note, or anything else produced for a person to read rather than for the repository to keep. Use another location only
-  when the user names one.
-    - **Two reasons, and the second is the one that bites.** A plan committed to the tree becomes documentation nobody updates, and this repository already
-      spends effort deleting those. A plan that exists only in the terminal is gone at the next compaction, and the reasoning behind it goes with it.
-    - **Name it for what it is about**, so the next session finds one plan without reading all of `temp/`: `temp/<issue>-<slug>.md` for issue work,
-      `temp/<topic>.md` otherwise. **No example here names a real file, and that is deliberate.** The rule below deletes a plan once its work lands, so any
-      filename cited here becomes a dead reference within the week. Both of the ones that used to be here did.
-    - **Format it: `scripts/format-markdown.sh temp/<file>.md`.** The formatter's default scope is the tracked tree, so a file under `temp/` is never reached
-      by the commit hook, by CI, or by a bare `scripts/format-markdown.sh` — **it has to be named on the command line.** Skipping it costs nothing today and
-      everything the moment a plan is pasted into an issue, a PR body or a document, which is where most of them end up: unformatted tables are the tell, and
-      reformatting prose after the fact re-wraps every line it touches.
-    - **Delete it when the work lands.** A finished plan is spent: its decisions belong in the code, the docs, or an issue. `temp/` is a workbench, not an
-      archive.
-- **No unsolicited git commits/pushes**: Never run `git commit`, `git push`, or `git rebase` (squash) unless explicitly asked to by the user.
-- **Amend by default on a feature branch, and land one commit.** Once the branch carries a commit of yours, the next change **amends it** —
-  `git commit --amend` — rather than adding a second. Push the result with `git push --force-with-lease`, never a bare `--force`. This matters more here than
-  in most repositories: `main` allows only **Rebase and merge**, so every commit on the branch replays onto `main` exactly as written. Three "fix the lint"
-  commits are three commits on `main` for good, and the branch's scratch history becomes the project's.
-    - **A pull request normally lands as one commit.** When a branch does end up with several — a review round, a correction that could not be folded in —
-      squash before merging. [`/squash-commit-message`](.github/prompts/squash-commit-message.prompt.md) writes the message for it.
-    - **Amending changes what the commit contains, so rewrite the message with it.** A subject that describes the first version of a change is wrong once the
-      change has grown, and it is the version that reaches `main`. The **PR title and description** are the same fact in two more places. Update all three
-      together, or the pull request stops describing its own diff.
-    - It is a default, not a prohibition. Keep commits separate when the user asks for that, or when a reviewer has already commented on one — rewriting a
-      commit under review throws away the thread's anchor.
-- **Documentation describes the current state. Replace, never append.** A document says what is true today, in the present tense. When something changes,
-  **rewrite the affected passage** — do not add an "Update:" note, a dated banner, or a new section beside the old one. Two passages describing successive
-  states of the same thing is a defect, not thoroughness: the reader cannot tell which one is live, and the older one is the one they will act on. This is the
-  _Comments_ rule in [.github/instructions/comments.instructions.md](.github/instructions/comments.instructions.md) applied to Markdown, and for the same
-  reason — prose that has to be maintained has to earn its keep.
-    - **No intermediate states.** Delete completed phases, finished migrations and settled decisions. "Phase B started", "done for staging on 2026-08-19",
-      "this table listed the first four until…" are facts about the past; git, the PR and the issue already hold them. **A plan whose phases have all shipped is
-      deleted, not marked done.**
-    - **Reasoning goes below the instructions**, in a final `## Background and history` section, or into an ADR, or nowhere. Never between the reader and the
-      thing they came for. What survives a closed item is at most one sentence: an abandoned approach that is a live trap someone will re-introduce, named
-      rather than retold. [docs/ops/PLATFORM_SETUP.md](docs/ops/PLATFORM_SETUP.md) is the worked example.
-    - **Every document over ~150 lines opens with `## The short version`** — the commands, one short comment each, and the two or three rules that catch most
-      changes. No prose. [docs/ops/CLUSTER_ACCESS.md](docs/ops/CLUSTER_ACCESS.md) and [docs/ops/DAILY_COMMANDS.md](docs/ops/DAILY_COMMANDS.md) are the models.
-    - **A status banner is a liability with one exception.** It earns its place only while it warns of something _currently_ untrue or unfinished —
-      [docs/LEGAL.md](docs/LEGAL.md)'s "not signed off" — and it is deleted the moment that stops being so. A banner describing progress ("applied, not yet
-      proven") is the shape that goes stale silently, because nothing fails when it does.
-    - **A blocker outlives the thing that blocked it.** When you close an item on a list of open questions, **delete the item**; do not annotate it as done.
-      LEGAL.md §14 carried an item whose stated reason had been false for days, twice, and it is the specific way such a section rots.
-    - **An issue or ADR reference is a pointer, not a summary**, exactly as in code. `see #540`, and stop.
-- **Documentation under `docs/` is written in Simplified Technical English.** The rules on this page say what a document may contain. [ASD-STE100](https://www.asd-ste100.org/)
-  says how the sentences are built: one idea each, 25 words at most, active voice, no semicolons, no phrasal verbs. The whole rule, the exemptions and the
-  `asd-ste100` skill that applies it are in [.github/instructions/documentation.instructions.md](.github/instructions/documentation.instructions.md), which
-  loads itself when you touch a file under `docs/`. The same discipline already governs code comments
-  ([.github/instructions/comments.instructions.md](.github/instructions/comments.instructions.md) § How to write the sentences). **Keep every hedge at its
-  original strength** — the one way an STE rewrite goes wrong is by shortening _may have failed_ into _failed_. See #733.
-- **A red `release.yml` on `main` blocks every release, and the cause is usually not the change that landed.** The image scan gates on fixable findings
-  in the base images, so an Alpine advisory turns `main` red with nothing in the diff to show for it. Look at the latest run before cutting; `cut-release.yml`
-  refuses a red one. The levers, and the amd64 trap, are in [docs/ops/RELEASING.md § Publishing is blocked](docs/ops/RELEASING.md#publishing-is-blocked).
+- **Git without a pager**: `git --no-pager <command>` or `GIT_PAGER=cat`, on every command that may page (`log`, `diff`, `show`, `branch`).
+- **ktlint auto-format first**: on a ktlint finding run `./gradlew ktlintFormat`; edit by hand only what it cannot fix.
+- **Reformatting is intentional — keep it.** Files are reformatted on purpose (IDE reformat-on-save, `ktlintFormat`, `npm run format`). Never revert,
+  re-fetch or "restore" a file because its whitespace, wrapping or attribute order changed, and never reformat back. Review the content with
+  `git --no-pager diff -w`; whitespace-only churn needs no report. This includes the scraper HTML fixtures under `events-importer/src/test/resources/scraper/`:
+  Jsoup ignores indentation, so a reformatted snapshot is still valid and never on its own a reason to re-capture. The one caveat: whitespace _between inline
+  elements_ changes the text Jsoup returns (`<b>a</b><b>b</b>` is `ab`; with a newline, `a b`). If a reformat fails a scraper test, that is a finding —
+  **raise it with the user**; do not revert the file or loosen the assertion.
+- **Build verification**: `./gradlew clean build` after a backend change. Skip it when only `.md` or `events-frontend/` files changed; a Markdown change still
+  runs `scripts/format-markdown.sh` ([markdown.instructions.md](.github/instructions/markdown.instructions.md)).
+- **Write a plan to `temp/`** (gitignored), as Markdown, named `temp/<issue>-<slug>.md` or `temp/<topic>.md`. The same for an audit or a draft anyone will read.
+  A plan in the tree becomes documentation nobody updates; a plan only in the terminal is gone at the next compaction. Format it by name —
+  `scripts/format-markdown.sh temp/<file>.md` — because nothing else reaches `temp/`, and a plan pasted unformatted into an issue is the usual tell.
+  **Delete it when the work lands.**
+- **No unsolicited git commits, pushes or rebases.** Only when the user asks.
+- **Amend by default on a feature branch, and land one commit.** Once the branch carries a commit of yours, the next change amends it; push with
+  `git push --force-with-lease`, never bare `--force`. `main` allows only **Rebase and merge**, so every branch commit lands on `main` as written. A branch
+  that ends up with several commits is squashed before merging — [`/squash-commit-message`](.github/prompts/squash-commit-message.prompt.md) writes the
+  message. **Amending changes the diff, so rewrite the message, the PR title and the PR body with it.** Keep commits separate when the user asks, or when a
+  reviewer has already commented on one.
+- **Documentation describes the current state. Replace, never append.** Present tense; rewrite the passage, no "Update:" notes, no dated banners, no new
+  section beside the old one — two passages for successive states is a defect. Delete completed phases and settled decisions; git and the issue hold them.
+  Reasoning goes below the instructions, in a final `## Background and history`, or into an ADR, or nowhere. **Every document over ~150 lines opens with
+  `## The short version`** — commands and the two or three rules that catch most changes, no prose. A status banner stays only while it warns of something
+  _currently_ untrue ([docs/LEGAL.md](docs/LEGAL.md)'s "not signed off") and goes the moment that stops. A closed item on a list of open questions is deleted,
+  not annotated. An issue or ADR reference is a pointer, not a summary: `see #540`, and stop.
+- **Documentation under `docs/` is written in Simplified Technical English.** One idea per sentence, 25 words at most, active voice, no semicolons; the whole
+  rule and the `asd-ste100` skill are in [documentation.instructions.md](.github/instructions/documentation.instructions.md). **Keep every hedge at its
+  original strength** — an STE rewrite goes wrong by shortening _may have failed_ into _failed_ (#733).
+- **A red `release.yml` on `main` blocks every release, and the cause is usually not the change that landed** — the image scan gates on base-image findings.
+  Look at the latest run before cutting; `cut-release.yml` refuses a red one. [RELEASING.md § Publishing is blocked](docs/ops/RELEASING.md#publishing-is-blocked).
 - **Logging is part of the change.** Before calling a backend change done, ask what someone on the cluster with one `sourceslug` or one `requestid` would
-  need to see: a new caught-and-continued path gets a `WARN` with the exception as the argument, a new call out of the process gets its outcome, a new
-  scheduled pass gets its start, result and failure, and a line that has lost its reader is deleted. Level, MDC versus payload, and the three places a new
-  field name has to be written are in [.github/instructions/logging.instructions.md](.github/instructions/logging.instructions.md), which loads itself when
-  you touch a backend module. A change to _what_ is logged is also a privacy change — see [Privacy & GDPR](#privacy--gdpr--re-check-when-infrastructure-or-features-change).
-- **Correct the docs in the same change that makes them wrong.** A behaviour change that leaves a document describing the old behaviour is incomplete work, not
-  a follow-up — and the document to fix is the one a reader would reach for, which is usually not the one you were editing.
-- **ADR numbers are claimed by writing the ADR, never by planning one.** A document that says _"needs ADR-0NN"_ for an ADR nobody has written yet is a
-  reservation the numbering scheme does not honour: the next ADR actually written takes that number, and the reference silently starts pointing at an unrelated
-  decision. This has already happened twice to the same planned ADR. **Refer to a future ADR by its title only** — _"needs an ADR: AI-Assisted Data Quality"_ —
-  and assign the next free number from `docs/adr/` at the moment you create the file.
-- **GitHub CLI (`gh`)**: `gh` is a prerequisite, not an optional convenience — install it with `brew install gh` and authenticate with `gh auth login`; it is
-  set up for GitHub.com and enterprise instances. Use it for GitHub interactions such as creating/viewing PRs, managing issues, checking CI status, and browsing
-  repositories. **How to drive it is a skill**, vendored into [`.claude/skills/gh/`](.claude/skills/gh/SKILL.md) from
-  [`cli/cli`](https://github.com/cli/cli/tree/trunk/skills/gh); read [its `VENDORED.md`](.claude/skills/gh/VENDORED.md) before editing anything in that
-  directory, and [Automating GitHub with `gh`](#automating-github-with-gh) for what the skill does not know about this repository.
-  See also [GitHub CLI quickstart](https://docs.github.com/en/github-cli/github-cli/quickstart) and
-  [CLI reference](https://docs.github.com/en/github-cli/github-cli/github-cli-reference).
-- **Library docs: ask `context7` first, and read the release notes on a bump.** The `context7` MCP server is wired into this repository and returns the
-  documentation for a library as it is now — ask it before answering from memory, even for Vue, Spring Boot or Tailwind, because the pinned versions here
-  (Tailwind 4, Vue Router 5, TypeScript 6, Spring Boot 4) postdate most of what a model remembers, and a v2-era Tailwind answer writes `tailwind.config.js`
-  into a project that has none. What changed _between_ versions is the other half: [`docs/LINKS.md` § 10](docs/LINKS.md#10-stack-reference-documentation)
-  pairs every framework with its release notes, and [`/update-dependencies`](.github/prompts/update-dependencies.prompt.md) reads them per bump and reports
-  what the release gives this repository.
+  need to see: a caught-and-continued path gets a `WARN` with the exception as the argument, a call out of the process gets its outcome, a scheduled pass
+  gets start, result and failure. [logging.instructions.md](.github/instructions/logging.instructions.md) has the levels and the three places a field name
+  lives. A change to _what_ is logged is also a privacy change — see [Privacy & GDPR](#privacy--gdpr--re-check-when-infrastructure-or-features-change).
+- **Correct the docs in the same change that makes them wrong.** The document to fix is the one a reader would reach for, which is usually not the one you
+  were editing.
+- **ADR numbers are claimed by writing the ADR, never by planning one.** A "needs ADR-0NN" reservation is not honoured: the next ADR written takes that
+  number and the reference silently points elsewhere — it happened twice. Refer to a future ADR by title only and take the next free number from `docs/adr/`
+  at the moment you create the file.
+- **`gh` is a prerequisite** (`brew install gh`, `gh auth login`). How to drive it is a vendored skill, [`.claude/skills/gh/`](.claude/skills/gh/SKILL.md);
+  what it cannot know about this repository is in [Automating GitHub with `gh`](#automating-github-with-gh).
+- **Library docs: ask `context7` first, and read the release notes on a bump.** The pinned versions (Tailwind 4, Vue Router 5, TypeScript 6, Spring Boot 4)
+  postdate most of what a model remembers — a v2-era Tailwind answer writes `tailwind.config.js` into a project that has none.
+  [`docs/LINKS.md` § 10](docs/LINKS.md#10-stack-reference-documentation) pairs every framework with its release notes.
 
 ## Privacy & GDPR — re-check when infrastructure or features change
 
-The public privacy notice (`/legal/privacy`) and the imprint describe **what this system actually does**. Each exists as **two documents** —
-`PrivacyView.en.vue` and `PrivacyView.de.vue` under `events-frontend/src/views/legal/`, with the German one authoritative — so updating one and not the other
-leaves the site stating two different things. They are only correct as long as that description matches reality, and the changes that break them do not look
-like privacy work. **Before merging, check whether your change falls into any category below — and if it does, say so explicitly in the PR description and
-update
-[docs/LEGAL.md](docs/LEGAL.md) §7 plus the privacy page in the same PR.**
+The privacy notice (`/legal/privacy`) and the imprint describe **what this system actually does**, in two documents each — `PrivacyView.en.vue` and
+`PrivacyView.de.vue` under `events-frontend/src/views/legal/`, German authoritative — and they stay correct only while reality matches. The changes that
+break them do not look like privacy work. **If your change is in a category below, say so in the PR description and update [docs/LEGAL.md](docs/LEGAL.md) §7
+plus the privacy page in the same PR.**
 
 **Infrastructure and operations**
 
-- Choosing or changing a hosting provider, CDN, WAF, DNS, mail, backup, or object-storage provider — each is a processor that must be _named_, needs an Art. 28
-  DPA in place, and, if it is outside the EU/EEA, a transfer mechanism. [ADR-012](docs/adr/ADR-012_CLOUD_PLATFORM.md) leaves **one processor, Hetzner**, and the
-  notice says so. `INFRASTRUCTURE_IS_PROPOSED` stays `true` until §5 of both notices has been checked against what actually runs — the platform existing is not
-  the moment that changes, the check is (docs/LEGAL.md §14).
-- Changing log content, log retention, or IP handling (truncation/anonymisation) — the notice states a retention period; it must be the real one.
-- Adding monitoring, error tracking, uptime checks, APM, or a metrics backend that receives request or user data.
-- Adding a staging or preview environment reachable from the internet. **Note the SEO hazard alongside the privacy one:** the build emits a `robots.txt` that
-  allows all crawlers and a `sitemap.xml` naming the production origin, so any environment serving that build invites indexing. Override both per environment.
+- A new or changed hosting, CDN, WAF, DNS, mail, backup or object-storage provider — each is a processor that must be _named_, needs an Art. 28 DPA, and a
+  transfer mechanism outside the EU/EEA. [ADR-012](docs/adr/ADR-012_CLOUD_PLATFORM.md) leaves **one processor, Hetzner**. `INFRASTRUCTURE_IS_PROPOSED` stays
+  `true` until §5 of both notices has been checked against what runs (docs/LEGAL.md §14).
+- Log content, log retention or IP handling — the notice states a retention period; it must be the real one.
+- Monitoring, error tracking, uptime checks, APM or a metrics backend that receives request or user data.
+- A staging or preview environment reachable from the internet. The build's `robots.txt` allows all crawlers and its `sitemap.xml` names production, so
+  override both per environment.
 
 **Features**
 
-- **Anything stored on the visitor's device** — a cookie, `localStorage`, `sessionStorage`, IndexedDB, or the Cache API. § 25 TDDDG covers _storage on terminal
-  equipment_, not cookies specifically. Today every stored item is strictly necessary, so **no consent banner is required** — that is a property worth
-  protecting deliberately. The first non-essential item (analytics ID, A/B bucket, recommendation history) makes a consent banner mandatory and is a product
-  decision, not an implementation detail. **Escalate rather than implement.**
-- **Any third-party resource loaded by the browser** — a font, script, iframe, map, embed, social widget, or image hotlinked from another host. Each one
-  transmits the visitor's IP address to that host. Fonts are self-hosted (`@fontsource-variable/geist`) for exactly this reason; keep it that way.
-- **Any outbound call made from the frontend** to a domain we do not operate. The GitHub API is the tempting one — see LEGAL.md §4.1 for why the footer's
-  version does not come from it.
-- **Accounts, login, sessions, newsletter, contact form, comments, favourites, or notifications** — each introduces user data we do not process at all today,
-  and needs its own legal basis, retention period and deletion route.
-- **New personal data in the domain model.** Artist names are already personal data (§7.3 of the plan, and §4 of the privacy notice). Adding contact details,
-  social handles, photographs of identifiable people, or user-submitted content extends that materially.
-- **Either of the two above also changes what the processor contract has to cover**, and that is the half nobody remembers. `LEGAL.md` §7.3a records the exact
-  categories of personal data and of data subject declared in the Hetzner AVV — **a category not on that list is outside the agreement**, however carefully the
-  privacy notice is updated. An email address or a phone number stored anywhere is the clearest example: it introduces a category the current contract was not
-  written against. Update §7.3a and re-check the AVV in the same change, not afterwards.
-- **Analytics of any kind**, including self-hosted and "cookieless" tools. Self-hosted and cookieless is a better posture, but it is still processing and still
-  needs a legal basis and a notice entry.
+- **Anything stored on the visitor's device** — cookie, `localStorage`, `sessionStorage`, IndexedDB, Cache API. § 25 TDDDG covers _storage on terminal
+  equipment_. Today every stored item is strictly necessary, so **no consent banner is required**; the first non-essential item makes one mandatory and is a
+  product decision. **Escalate rather than implement.**
+- **Any third-party resource loaded by the browser** — font, script, iframe, map, embed, hotlinked image. Each transmits the visitor's IP. Fonts are
+  self-hosted (`@fontsource-variable/geist`) for this reason.
+- **Any outbound call from the frontend** to a domain we do not operate. LEGAL.md §4.1 says why the footer's version does not come from the GitHub API.
+- **Accounts, login, sessions, newsletter, contact form, comments, favourites, notifications** — each needs its own legal basis, retention and deletion route.
+- **New personal data in the domain model.** Artist names are already personal data (LEGAL.md §7.3). Contact details, social handles, photographs of
+  identifiable people or user content extend that materially — and `LEGAL.md` §7.3a lists the categories the Hetzner AVV covers; **a category not on that
+  list is outside the agreement**. Update §7.3a and re-check the AVV in the same change.
+- **Analytics of any kind**, self-hosted and cookieless included — still processing, still needs a basis and a notice entry.
 
-**Commercial changes** — ads, affiliate links, sponsorships, donations, or paid features also change the § 5 DDG imprint analysis, not just the privacy notice.
+**Commercial changes** — ads, affiliate links, sponsorships, donations, paid features — also change the § 5 DDG imprint analysis.
 
-When in doubt, flag it in the PR rather than deciding silently. The cost of raising it is a sentence; the cost of missing it is a legal defect on a public site.
+When in doubt, flag it in the PR. Raising it costs a sentence; missing it is a legal defect on a public site.
 
 ## Project Overview
 
-Event Junkie is a multi-module Kotlin/Spring Boot application for discovering music events in Berlin. It uses a **Gradle multi-project build** with three
-application subprojects and one build-tooling subproject sharing a root `settings.gradle.kts`, plus a standalone frontend project:
+Event Junkie discovers music events in Berlin. A **Gradle multi-project build** (root `settings.gradle.kts`) plus a standalone frontend:
 
-- **`events-core`** – Shared domain model library (no Boot app); consumed via `project(":events-core")` dependency. Applies `java-library`, `maven-publish`, and
-  `java-test-fixtures` plugins (add fixtures under `src/testFixtures/`). Uses `api()` scope for `spring-modulith-starter-core` so it's transitively available to
-  consumers. Contains domain data classes organized by feature: `artist/`, `event/`, `promoter/`, `venue/`. Also defines enums (`EventType`,
-  `EventStatus`, `ArtistRole`) and the `LineupEntry` value object in `event/Event.kt`.
-- **`events-bff`** – Backend-for-Frontend REST API (Spring Boot 4 + WebFlux + R2DBC). Runs on default port `8080`.
-- **`events-importer`** – Imports events from external sources into the database (Spring Boot 4 + WebFlux + R2DBC + Flyway). Runs on port `8081`. Owns all
-  Flyway migrations under `src/main/resources/db/migration/`.
-- **`detekt-rules`** – This repository's own detekt rules (currently `LongComment`), loaded onto every module's `detektPlugins` classpath by the root build and
-  configured under the `event-junkie` key in `detekt.yml`. Compiles against the detekt version the plugin itself resolves, so there is no version to keep in
-  step. Build tooling: nothing it contains ships, so it is left out of the Kover aggregate, the licence report
-  and the OWASP scan — each exclusion sits next to its reason in the root `build.gradle.kts`.
-- **`events-frontend`** – Vue 3 SPA (Vite 8, TypeScript 6, Vue Router). Uses oxlint/oxfmt for linting/formatting. Not a Gradle subproject — managed separately
-  via npm. Requires Node `>=24.15.0` (see `engines` in `package.json`) — a **patch** floor, because jsdom 30's supported range excludes 24.0–24.14. The floor
-  has moved twice and each move was forced by a dependency rather than chosen; `events-frontend/AGENTS.md` records both, and ADR-013 covers the earlier one.
+- **`events-core`** — shared domain model, no Boot app; `java-library` + `java-test-fixtures` (`src/testFixtures/`); `api()` scope on
+  `spring-modulith-starter-core`. Domain classes by feature: `artist/`, `event/`, `promoter/`, `venue/`; enums and `LineupEntry` in `event/Event.kt`.
+- **`events-bff`** — the public read API (Spring Boot 4 + WebFlux + R2DBC), port `8080`.
+- **`events-importer`** — imports events from venue sites (Boot 4 + WebFlux + R2DBC + Flyway), port `8081`. Owns every migration under
+  `src/main/resources/db/migration/`.
+- **`detekt-rules`** — this repository's own detekt rules, on every module's `detektPlugins` classpath, configured under the `event-junkie` key in
+  `detekt.yml`. Ships nothing, so it is out of Kover, the licence report and the OWASP scan; each exclusion sits next to its reason in `build.gradle.kts`.
+- **`events-frontend`** — Vue 3 SPA (Vite 8, TypeScript 6, Vue Router), managed by npm, not Gradle. Node `>=24.15.0`: a **patch** floor forced by jsdom 30;
+  `events-frontend/AGENTS.md` records both moves.
 
 ## Build & Dev Commands
 
 ```bash
-./gradlew clean build          # Full build (all modules, tests, ktlint)
-./gradlew :events-bff:bootRun  # Run BFF (auto-starts Postgres via compose.yaml)
-./gradlew :events-importer:bootRun  # Run importer
-./gradlew ktlintCheck          # Lint all modules
-./gradlew ktlintFormat         # Auto-fix formatting
-./gradlew detekt               # Static analysis, syntax-tree rules only (all modules)
-./gradlew detektMain           # Static analysis with type resolution over main — a different rule set
-./gradlew detektTest           # The same over test sources; CI runs all three
-./gradlew koverLog             # Print test coverage summary per module
-./gradlew koverHtmlReport      # Generate HTML coverage reports
-./gradlew dependencyUpdates    # Check for newer dependency versions
-./gradlew dependencyCheckAggregate --no-configuration-cache  # OWASP Dependency-Check (CVE scan)
-./gradlew httpTest                  # Run .http files via IntelliJ HTTP Client CLI (requires ijhttp + running importer)
+./gradlew clean build          # all modules: tests, ktlint, detekt, Kover
+./gradlew :events-bff:bootRun  # Postgres starts via compose.yaml; :events-importer:bootRun likewise
+./gradlew ktlintFormat         # then ktlintCheck
+./gradlew detekt detektMain detektTest   # CI runs all three; only the first is syntax-only
+./gradlew koverLog             # coverage per module
+./gradlew dependencyCheckAggregate --no-configuration-cache   # OWASP; the plugin forbids the cache, so skip the futile attempt
+scripts/dev-env.sh             # the local stack; no arguments prints every command
 ```
 
-Performance tests against the BFF's read API ([k6](https://k6.io); `brew install k6`, and the BFF has to be running):
+Java comes from SDKMAN (`.sdkmanrc`, `sdk env`); target **Java 25**. Infra, chart, k3d, container images, k6 and the frontend commands are in
+[docs/DEVELOPMENT.md](docs/DEVELOPMENT.md); the safe-versus-never lists are in [infra/AGENTS.md](infra/AGENTS.md) and [deploy/AGENTS.md](deploy/AGENTS.md).
+`scripts/k3d-rehearsal.sh` is the only thing here that talks to a Kubernetes cluster, and it passes `--context k3d-event-junkie` on every call.
 
-```bash
-k6 run perf/smoke.js           # every endpoint once — safe to run anywhere, ~1s, tolerates an empty DB
-k6 run perf/load.js            # sustained realistic load — watch whether p95 climbs with the VU count
-k6 run perf/spike.js           # a sudden surge — the finding is whether it recovers, not the peak
-```
+**The local stack, as an agent meets it** (`/importer-smoke` and `/next-importer` drive it):
 
-See [perf/README.md](perf/README.md) for what each answers, the thresholds and how to re-baseline them, and why there is deliberately no CI workflow yet.
-
-Infrastructure ([`infra/`](infra), OpenTofu). **Read [infra/AGENTS.md](infra/AGENTS.md) before touching any of it** — it opens with the commands that must
-never be run there. These are the safe ones, need no credentials, and are what `validate-infra.yml` runs:
-
-```bash
-tofu fmt -recursive -check -diff infra
-export TF_DATA_DIR="$(mktemp -d)"               # a used checkout makes init reach the state bucket
-tofu -chdir=infra/<stack> init -backend=false   # bootstrap · environments/production · environments/staging
-tofu -chdir=infra/<stack> validate
-unset TF_DATA_DIR
-shellcheck -x infra/modules/environment/cloud-init/*.sh
-```
-
-The `TF_DATA_DIR` line is not decoration, and `infra/AGENTS.md` says what it works around.
-
-`tofu plan` and `tofu apply` are **not** on that list: they need a Hetzner API token and they spend money. Both environments are applied and live —
-changing `infra/` changes running servers.
-
-Helm chart ([`deploy/`](deploy)). **Read [deploy/AGENTS.md](deploy/AGENTS.md) before touching it.** Everything that renders the chart is safe — it reaches no
-cluster and needs no kubeconfig — and these are what `validate-chart.yml` runs:
-
-```bash
-helm lint --strict deploy/charts/event-junkie --values deploy/charts/event-junkie/values-k3d.yaml
-helm template t deploy/charts/event-junkie --values deploy/charts/event-junkie/values-k3d.yaml
-helm unittest --strict deploy/charts/event-junkie   # asserts on the rendered chart; the gate that matters
-scripts/cluster-assertions.sh                      # and on what each cluster's HelmRelease deploys
-```
-
-`helm install`, `upgrade`, `uninstall` and `rollback` are **not** on that list — and neither is `helm install --dry-run`, which resolves the current kubeconfig
-context and talks to that cluster. Use `helm template`, or `--dry-run=client` when you specifically need `NOTES.txt`. The chart has never been installed
-anywhere: #263 is the first time it runs.
-
-The whole stack on a local Kubernetes — the runtime counterpart to everything above, since `helm template` passing is not evidence that a pod starts:
-
-```bash
-scripts/k3d-rehearsal.sh all      # build, install on k3d, assert routing, run a real import, tear down
-```
-
-The chart and the images have to agree about which UID they run as, and that is a gate rather than a comment (#448). It reads the `USER` line out of all three
-Dockerfiles and compares it with what the chart resolves per component, so a Dockerfile-only change cannot drift away from `values.yaml` silently — which
-`helm unittest` cannot catch, because it can only see the chart. It also enforces the **>10000** floor (Trivy KSV-0020/KSV-0021). `validate-chart.yml` runs it:
-
-```bash
-scripts/uid-consistency.sh
-```
-
-Driven by [`/k3d-rehearsal`](.github/prompts/k3d-rehearsal.prompt.md). It is the only thing here that talks to a Kubernetes cluster, and it passes
-`--context k3d-event-junkie` on every call rather than trusting the active one — read `deploy/AGENTS.md` before changing that.
-
-Container images (`events-bff/Dockerfile`, `events-importer/Dockerfile`). The build context is each module's `build/docker`, not the module directory — it is
-exactly the extracted layers, which is why neither needs a `.dockerignore`:
-
-```bash
-./gradlew :events-bff:bootJarLayers                 # explode the fat jar into build/docker/
-docker buildx build -f events-bff/Dockerfile events-bff/build/docker \
-  --platform linux/amd64,linux/arm64 --output type=cacheonly          # both arches, no push
-docker buildx build -f events-bff/Dockerfile events-bff/build/docker -t event-junkie/bff:dev --load
-```
-
-Three rules these files exist under, each of which something else depends on:
-
-- **No builder stage, and no `RUN` that does build work.** Build work in a `RUN` executes target-architecture code and produces architecture-specific output,
-  which is what would force a runner per architecture. With the layer extraction in Gradle rather than in the Dockerfile, unlike Spring Boot's reference
-  example, one runner emits both platforms — and that is also why the **AOT cache** Spring Boot recommends for Java 25+ is deliberately not used: its output
-  is architecture-specific. **The one `RUN` allowed is a named `apk upgrade`** for a base-image CVE the base has not been rebuilt with (#964, #770): it runs
-  for arm64 under the emulation the runner already carries, and `events-bff/Dockerfile` states the rule for such a layer and its deletion condition.
-- **`USER 10001:10001`, numeric and above 10000.** A named user would need `RUN useradd`. It must match `security.runAsUser` in the chart's `values.yaml`,
-  and `scripts/uid-consistency.sh` is what enforces that — a mismatch is a pod that cannot read its own files, which does not look like a values problem from
-  the logs. Above 10000 since #448: a UID inside the host's own user range lands as a real account if a container ever escapes its namespace, and nothing maps
-  to 10001. Trivy's KSV-0020/KSV-0021 check exactly this.
-- **Nothing about the runtime is baked in.** Ports and `JAVA_TOOL_OPTIONS` come from the chart via `SERVER_PORT`, `MANAGEMENT_SERVER_PORT` and the environment.
-  A value fixed in the image either gets overridden confusingly or silently wins.
-
-The **frontend** image follows the same shape with a different artefact — `npm run build` produces `dist/`, and the image is nginx plus that directory:
-
-```bash
-npm --prefix events-frontend run build
-docker buildx build events-frontend -t event-junkie/frontend:dev --load
-```
-
-Three things about it that are decisions rather than defaults:
-
-- **`nginxinc/nginx-unprivileged`, not `nginx`.** It listens on 8080 (a non-root process cannot bind 80) and its `nginx.conf` already relocates the pid file
-  and every `*_temp_path` into `/tmp`, which is why the container needs exactly one writable path. Replace `conf.d/default.conf` only — rewriting the image's
-  `nginx.conf` is how those properties get lost.
-- **No `/api` proxy.** The ingress routes `/api` to the BFF and `/` here, so nginx never sees an API request. Running the image standalone therefore gives a
-  working site whose API calls 404, and that is expected.
-- **`index.html` is `no-cache`, `/assets/` is `immutable`, and a missing asset must 404** rather than fall back to `index.html` — otherwise a stale page asking
-  for a deleted bundle gets HTML with a 200 and fails to parse as JavaScript.
-
-**Verify a change by running the image the way the chart will**, which is the check that catches what `docker build` cannot:
-
-```bash
-docker run --rm --read-only --tmpfs /tmp -e … event-junkie/bff:dev
-docker run --rm --read-only --tmpfs /tmp -p 8080:8080 event-junkie/frontend:dev
-```
-
-Local dev environment (used by `/importer-smoke` and `/next-importer`; run with no arguments for the full command list):
-
-```bash
-scripts/dev-env.sh status                 # Is the database / importer / bff / frontend up?
-scripts/dev-env.sh db-reset               # docker compose down --volumes + fresh Postgres
-scripts/dev-env.sh up [service…]          # Start in the background, wait until it answers
-scripts/dev-env.sh down [service…] [--db] # Stop service(s) (and optionally the database)
-scripts/dev-env.sh seed-all               # Run http/importer/dev-seed.http via ijhttp — scrapes every venue
-scripts/dev-env.sh seed-one v.json s.json # Register a single venue + event source, print its slug
-scripts/dev-env.sh import <slug>          # Trigger one source's import and poll until it settles
-scripts/dev-env.sh snapshot [file]        # Per-source event counts (regression baseline)
-scripts/dev-env.sh diff-snapshot a b      # Which sources gained or lost events between two snapshots
-scripts/dev-env.sh check <slug>           # Data-quality report for one source
-```
-
-`service` is one or more of `importer` (default) · `bff` · `frontend` · `all`, so bare `up` / `down [--db]` behave exactly as before. `up all` brings up the
-whole stack; the frontend proxies `/api` to the BFF (`events-frontend/vite.config.ts`), so on its own it renders but every request 502s. The frontend is pinned
-with `--strictPort` — a busy port fails loudly instead of Vite quietly moving to the next one.
-
-`up` starts the importer with `app.scheduling.enabled=false` so a smoke test scrapes only the source under test rather than every source whose 24h interval
-happens to be due. Pass `--scheduling` to leave it on (that is the configuration in which the scheduler races manual triggers — see ADR-009 on the import
-claim). Neither `bootRun` nor this script hot-reloads Kotlin — restart (`down` then `up`) after changing code, or the smoke test runs the previous build. Vite
-_does_ hot-reload, so the frontend needs no restart. Runtime artefacts land in `build/dev-env/` (gitignored): `<service>.log`, `<service>.pid`, snapshots.
-
-When launching these from an agent shell, redirect the command's own output (`> file 2>&1 < /dev/null`) — the detached `bootRun`/`vite` process inherits the
-tool's stdout pipe and keeps the call hanging long after the script itself has exited.
-
-**Never run Gradle while an import is in flight.** The "does not hot-reload" note above is about _picking up_ your changes; it is not the same as nothing
-happening. Both Boot modules carry `spring-boot-devtools` (`developmentOnly`), which watches the classpath — so **any** task that writes classes
-(`compileKotlin`, `classes`, `build`, even a single `--tests` run) restarts the running service and **kills every import mid-flight**. Those sources are then
-stuck in `RUNNING` forever, because the 30-minute staleness guard only runs under the scheduler and `dev-env.sh up` disables it. The tell in the log is
-`restartedMain` next to a suspiciously short `Started EventsImporterApplicationKt in 1.0 seconds (process running for 117.3)`. There is no reset endpoint;
-recovery is manual:
-
-```bash
-scripts/dev-env.sh psql "UPDATE events.event_source SET status='IDLE', retry_count=0, version=version+1 WHERE status='RUNNING'"
-```
-
-then re-trigger those slugs. On a long job — a `--full` re-seed, a before/after diff — compile everything first, restart once, _then_ import, and leave the
-build alone until every source has left `RUNNING`.
-
-**A parser fix at a venue whose page has not changed is a 304 forever.** The importer sends the cached `ETag` / `Last-Modified`, and a `Not modified` answer
-skips the import on the schedule and on a manual trigger alike, so the fixed parser never runs until the venue edits its page. Do not clear the columns with
-`psql`; trigger the one source with `POST /api/admin/event-sources/<slug>/import?force=true` (#1159). The log says
-`Fetching source page unconditionally (forced)`, and the run stores the fresh validators, so the next run is conditional again.
-
-**Re-keying a live source collides with its own today-dated rows.** Changing how a scraper builds its `sourceId` — adding the session start time, the occurrence
-date, anything — gives every event a new id, so the old rows go stale and the new ones insert. But `EventUpsertService.removeStaleEvents`
-deliberately spares **today**: a today-dated row therefore keeps its old id _and_ its slug while its replacement tries to take the same slug, and the insert
-collides. **Re-key on a day the venue's programme is dark, or clear that source's rows first** — and check which it is before importing rather than after.
-Admiralspalast (2026-08-08) got away with it by luck; Velomax (2026-08-09) was checked and was genuinely dark three weeks out.
-
-**Do not truncate `<service>.log` while the service is running.** `: > build/dev-env/importer.log` looks like the obvious way to get a clean log before a test
-import, and it silently breaks every later `grep`: the process keeps its file descriptor at the old offset, so new writes land far into the file and everything
-before them is NUL padding. `grep` then treats the file as binary and prints `Binary file … matches`, or **nothing at all with `-c`** — which reads exactly like
-"no matches" and is how a real finding gets reported as a clean result. Get a clean log by restarting the service instead (`down` then `up`, which reopens the
-file); if one has already been truncated, `grep -a` reads it. **A zero count from a log you truncated is not evidence.**
-
-**Working in a git worktree** (a session started with `claude --worktree`, or any `git worktree add` checkout — see
-[docs/WORKTREES.md](docs/WORKTREES.md)). Files and Gradle output are isolated; the local runtime is not.
-
-- **Export `COMPOSE_PROJECT_NAME=event-junkie` before any `bootRun` or `scripts/dev-env.sh up` in a worktree.** Docker Compose names the project after the
-  directory containing the `compose.yaml` it is given, and both paths pass the worktree's copy — so without the override the worktree starts a _second_
-  Postgres on a new empty volume, which collides with the main checkout on host port `56298` and makes `diff-snapshot` report every existing source as `GONE`.
-  With it, the running `event-junkie-postgres-1` container and its seeded data are reused.
-- **One stack at a time.** Ports `8081` / `8080` / `5173` are fixed in `application.yaml` and `dev-env.sh`; `IMPORTER_HOST` / `BFF_HOST` only change the URL the
-  script polls, not the port the JVM binds. Run `scripts/dev-env.sh down` in the other checkout before `up` here, and remember `bootRun` does not hot-reload —
-  whichever worktree started the JVM is the code under test.
-- **Never trigger an import while another worktree is importing.** `snapshot` / `diff-snapshot` are per-source counts over the whole shared database, so the
-  other session's events land in this session's regression diff.
-- **Expect conflicts in the files every importer PR touches**: the count table and moved row in `docs/EVENT_DATA_SOURCES.md` (recount after rebasing rather than
-  trusting either side), the alphabetical header list and venue block in `http/importer/dev-seed.http` (a "keep both" resolution silently fuses two blocks —
-  rebuild by hand) and the new `EventSource.kt` enum entry. Rebase onto `main`; never merge `main` in. The backlog snapshot is generated into `build/` and is
-  not committed, so it never appears in a diff at all.
-
-The **configuration cache** is enabled (`org.gradle.configuration-cache=true` in `gradle.properties`), so repeat builds skip the configuration phase. Every task
-above benefits except `dependencyCheckAggregate` — the OWASP plugin's `Aggregate` task reaches for `project.rootProject` / `project.subprojects` at execution
-time, which the configuration cache forbids. That task still runs correctly without the flag, but the cache entry is discarded on every invocation and the build
-prints a problems report, so pass `--no-configuration-cache` to skip the futile attempt. Both CI workflows that run it already do. Still the case on **13.0.0**;
-the upstream fix ([dependency-check-gradle#478](https://github.com/dependency-check/dependency-check-gradle/pull/478)) is still open, so recheck when it lands.
-
-Frontend (`events-frontend/`):
-
-```bash
-npm run dev        # Vite dev server
-npm run build      # Type-check + production build
-npm run test:unit  # Vitest unit tests
-npm run test:e2e   # Playwright end-to-end tests
-npm run lint       # oxlint + eslint (auto-fix)
-npm run format     # oxfmt formatter
-```
-
-Java version is managed via SDKMAN (`.sdkmanrc` pins `java=25.0.2-tem`; run `sdk env` to activate). Toolchain target: **Java 25**.
+- `scripts/dev-env.sh up` starts the importer with `app.scheduling.enabled=false`, so a smoke test scrapes only the source under test; `--scheduling` leaves it
+  on. Neither `bootRun` nor the script hot-reloads Kotlin — `down` then `up` after a code change, or the test runs the previous build. Vite does hot-reload.
+  Runtime artefacts land in `build/dev-env/` (gitignored). The frontend alone renders but every request 502s; `up all` for the whole stack.
+- **Redirect a detached launch** (`> file 2>&1 < /dev/null`): `bootRun` and `vite` inherit the tool's stdout pipe and keep the call hanging after the script exits.
+- **Never run Gradle while an import is in flight.** Both Boot modules carry `spring-boot-devtools`, which restarts the service on any task that writes classes
+  — `compileKotlin`, a single `--tests` run — and **kills every import mid-flight**. Those sources stay `RUNNING` forever, because the staleness guard only runs
+  under the scheduler. The tell is `restartedMain` beside `Started EventsImporterApplicationKt in 1.0 seconds (process running for 117.3)`. Recovery:
+  `scripts/dev-env.sh psql "UPDATE events.event_source SET status='IDLE', retry_count=0, version=version+1 WHERE status='RUNNING'"`, then re-trigger.
+  On a long job compile first, restart once, then import.
+- **A parser fix at a venue whose page has not changed is a 304 forever.** The cached `ETag` / `Last-Modified` skip the import on schedule and manual trigger
+  alike. Do not clear the columns; `POST /api/admin/event-sources/<slug>/import?force=true` (#1159) fetches unconditionally and stores fresh validators.
+- **Re-keying a live source collides with its own today-dated rows.** A new `sourceId` shape stales every old row, but `removeStaleEvents` spares **today**,
+  so a today-dated row keeps its slug while its replacement claims the same one. Re-key on a day the venue is dark, or clear that source's rows first —
+  and check which before importing.
+- **Do not truncate `<service>.log` while the service runs.** The process keeps its offset, so later writes land behind NUL padding, `grep` calls the file
+  binary and `grep -c` prints nothing — which reads as a clean result. Restart to get a clean log; `grep -a` reads a truncated one. **A zero count from a log
+  you truncated is not evidence.**
+- **In a worktree** ([docs/WORKTREES.md](docs/WORKTREES.md)): files and Gradle output are isolated, the runtime is not. `export COMPOSE_PROJECT_NAME=event-junkie`
+  before any `bootRun` or `dev-env.sh up`, or the worktree starts a second empty Postgres and `diff-snapshot` reports every source as `GONE`. Ports `8081` /
+  `8080` / `5173` are fixed: `down` in the other checkout first, and the worktree that started the JVM is the code under test. Never import while another
+  worktree is importing — `snapshot` counts the whole shared database. Every importer PR conflicts in `docs/EVENT_DATA_SOURCES.md` (recount after rebasing),
+  `http/importer/dev-seed.http` (a "keep both" resolution fuses two blocks — rebuild by hand) and the `EventSource.kt` enum. Rebase onto `main`; never merge it in.
 
 ## Project skills
 
-Slash commands available under `.claude/skills/`, each a one-line `@` pointer into `.github/prompts/`:
+Slash commands under `.claude/skills/`, each a one-line `@` pointer into `.github/prompts/`:
 
 - `/code-review` — review the current diff
-- `/codebase-audit` — comprehensive whole-repo review of code + architecture (size, duplication, conventions, simplification)
-- `/commit-message` — generate a commit message from staged changes
-- `/compact-comments` — pay down comment volume: classify each block DELETE → RENAME → EXTRACT → RELOCATE → KEEP, apply in that order, and measure the drop
-- `/data-quality-audit` — read-only audit of the whole `events` database for data-quality issues
-- `/importer-smoke` — runtime smoke test of a single importer: seed, import, inspect the rows, check for regressions
-- `/k3d-rehearsal` — run the chart and all three images on a local k3d cluster and prove the stack works end to end, then tear it down
+- `/codebase-audit` — whole-repo review: size, duplication, conventions, simplification
+- `/commit-message` — a commit message from the staged changes
+- `/compact-comments` — classify each comment block DELETE → RENAME → EXTRACT → RELOCATE → KEEP, apply in that order, measure the drop
+- `/data-quality-audit` — read-only audit of the whole `events` database
+- `/importer-smoke` — seed, import, inspect the rows and check for regressions, for one importer
+- `/k3d-rehearsal` — the chart and all three images on a local k3d cluster, end to end, then torn down
 - `/improve-test-coverage` — find and fill coverage gaps
-- `/milestone-plan` — take a whole milestone from a list of open issues to a plan: correct the stale ones, decide what belongs in it, and order the rest
-- `/new-issue` — draft and file an issue on the tracker (duplicate check first, then the right form, labels, milestone and board fields)
-- `/next-importer` — take one venue from 🔨 Ready in `docs/EVENT_DATA_SOURCES.md` to an open PR (scaffold → smoke-test → fix → ship); repeat, or run under
-  `/loop`, to work through the backlog
-- `/next-issue` — recommend what to work on next, and say why
-- `/open-pr` — branch, commit (Conventional Commits), push, and open a PR in one flow
-- `/owasp-top-10` — walk the OWASP Top 10:2025 against the tree as deployed, diff-first over the last week, one line per category; files nothing, and
-  `agent-owasp.yml` runs it weekly
-- `/plausibility-check` — read the next days' events from the public site, check each row for what cannot be right, compare a sample against the venue's
-  own page, and report; files nothing, and `agent-plausibility.yml` runs it nightly
-- `/refactor` — change the shape of the code without changing what it does; the acting counterpart to `/codebase-audit`
-- `/release-highlights` — write the summary that opens a release's notes, for a visitor to the site rather than a maintainer; `cut-release.yml` runs it
-  before every cut, and falls back to `scripts/release-highlights.sh` when it writes nothing
-- `/start-issue <n>` — pick up an issue: claim it, move the board, cut the branch, read its dependencies, and plan before writing code
-- `/scaffold-importer` — scaffold a new venue event importer (scraper) end to end
-- `/security-report` — read-only report on the latest OWASP Dependency-Check findings and GitHub Dependabot alerts, reconciled and triaged
-- `/security-triage` — work the Security tab down to zero: fix what is cheap, file what is not, dismiss what does not apply (Dependabot + code scanning). The
-  mutating counterpart to `/security-report`
-- `/squash-commit-message` — write a squash commit message for the current branch
+- `/milestone-plan` — a milestone from a list of open issues to an ordered plan
+- `/new-issue` — file an issue: duplicate check, the right form, labels, milestone, board fields
+- `/next-importer` — one venue from 🔨 Ready in `docs/EVENT_DATA_SOURCES.md` to an open PR; repeat, or run under `/loop`
+- `/next-issue` — what to work on next, and why
+- `/open-pr` — branch, commit (Conventional Commits), push, open a PR
+- `/owasp-top-10` — OWASP Top 10:2025 against the deployed tree, one line per category; `agent-owasp.yml` runs it weekly
+- `/plausibility-check` — the next days' events on the public site against the venues' pages; `agent-plausibility.yml` runs it nightly
+- `/refactor` — change the shape of the code, not what it does; the acting counterpart to `/codebase-audit`
+- `/release-highlights` — the visitor-facing summary that opens a release's notes; `cut-release.yml` runs it before every cut
+- `/start-issue <n>` — claim an issue, move the board, cut the branch, read its dependencies, plan
+- `/scaffold-importer` — a new venue importer end to end
+- `/security-report` — read-only: Dependency-Check findings and Dependabot alerts, reconciled and triaged
+- `/security-triage` — work the Security tab to zero: fix, file or dismiss; the mutating counterpart to `/security-report`
+- `/squash-commit-message` — a squash commit message for the current branch
 - `/update-dependencies` — bump backend and frontend dependencies safely
-- `/update-docs` — find documentation that has stopped being true and correct, delete or leave it, with the check that proves each one
-- `/verify` — run the full pre-PR sequence: backend `ktlintCheck detekt build koverLog` + frontend `type-check`, `lint`, `test:unit`, `test:e2e` (chromium),
-  `scripts/comment-lint.sh check` + `scripts/skill-parity.sh` + `scripts/rules-parity.sh` + `scripts/collector-parity.sh` + `scripts/scope-parity.sh` + `scripts/index-parity.sh` always, `scripts/csp-parity.sh` when the diff touches the chart or the frontend's `index.html` or `scripts/csp.ts`, `scripts/notices-parity.sh check` when it touches either ecosystem's dependency declarations, `scripts/dashboard-parity.sh check` when it touches `docs/LINKS.md`, `docs/ops/DAILY_COMMANDS.md` or `docs/ops/dashboard/`, `ruff check` + `ruff format --check` at the pinned version when it touches any `.py` file, `scripts/format-markdown.sh check` +
-  `scripts/ste-lint.sh check` when the diff touches any `.md`, and `tofu fmt`/`validate` + ShellCheck when it touches `infra/`, and `helm lint` +
-  `helm unittest` + `scripts/cluster-assertions.sh` when it touches `deploy/`
-- `/write-adr` — turn a decision that has been made into the record of why; claims the next ADR number by writing the file
+- `/update-docs` — find documentation that stopped being true; correct, delete or leave it, with the proving check
+- `/verify` — the full pre-PR sequence; the prompt is the check list, and it runs every gate the diff touches
+- `/write-adr` — the record of a decision already made; claims the next ADR number by writing the file
+  `scripts/skill-parity.sh` fails when this list, `.claude/skills/` and `.claude/commands/` disagree; it greps for the bullet shape above.
 
-`scripts/skill-parity.sh` fails when this list, `.claude/skills/` and `.claude/commands/` disagree; it greps for the bullet shape above, so keep it.
-
-**Two skills in `.claude/skills/` are not slash commands and are not in that list.** They are third-party directories, vendored so they are present for every
-contributor rather than only whoever installed them globally, and invoked by name instead of typed:
-
-- [`asd-ste100`](.claude/skills/asd-ste100/SKILL.md) — Simplified Technical English; `/compact-comments` and `/update-docs` call it by name.
-- [`gh`](.claude/skills/gh/SKILL.md) — how to drive the GitHub CLI from an agent, from
-  [`cli/cli`](https://github.com/cli/cli/tree/trunk/skills/gh). It assumes `gh` is installed (`brew install gh`) and authenticated (`gh auth login`).
-
-Each directory has a `VENDORED.md` recording its upstream commit and the command that refreshes it. **Do not edit anything else inside them** — an edit is
-silently reverted by the next update, and repository-specific `gh` findings belong in
-[Automating GitHub with `gh`](#automating-github-with-gh) instead.
-
-**[`.github/skills/`](.github/skills) holds one directory symlink per vendored skill**, which is
-[Copilot's own documented skill path](https://docs.github.com/en/copilot/how-tos/copilot-on-github/customize-copilot/customize-cloud-agent/add-skills) for its
-cloud agent. Copilot reads `.claude/skills/` too, so the symlinks are belt and braces rather than a requirement — they put the skills where a Copilot user
-looks for them, and make `.github/` say out loud which skills this repository ships, without a second copy to drift. Same trick as `.claude/rules/`, pointing
-the other way. `skill-parity.sh` asserts every directory skill has one, that it is a symlink and not a copy, and that it resolves to the right target.
+**Two directory skills are not slash commands**, vendored so every contributor has them and invoked by name: [`asd-ste100`](.claude/skills/asd-ste100/SKILL.md)
+(Simplified Technical English; `/compact-comments` and `/update-docs` call it) and [`gh`](.claude/skills/gh/SKILL.md) (from
+[`cli/cli`](https://github.com/cli/cli/tree/trunk/skills/gh)). Each has a `VENDORED.md` with its upstream commit and refresh command; **edit nothing else inside
+them** — the next update reverts it. [`.github/skills/`](.github/skills) holds one symlink per directory skill, Copilot's documented path; `skill-parity.sh`
+asserts each is a symlink onto the right target.
 
 ## Automating GitHub with `gh`
 
-**The mechanics of the tool are somebody else's document.** `--json` and `--jq`, the limits that truncate a list silently, `-R`, search versus list, when to
-drop to `gh api` — all of that is GitHub's own agent skill, vendored into [`.claude/skills/gh/`](.claude/skills/gh/SKILL.md) from
-[`cli/cli`](https://github.com/cli/cli/tree/trunk/skills/gh) so it is present for every contributor rather than only whoever installed it globally. It assumes
-`gh` is installed and authenticated. Keeping it current, and the rule that nothing repository-specific may be written into it, are in
-[`.claude/skills/gh/VENDORED.md`](.claude/skills/gh/VENDORED.md). [`.github/skills/gh`](.github/skills) is a symlink onto the same directory, so Copilot's
-cloud agent finds it at its own documented path without a second copy.
+The mechanics — `--json`/`--jq`, silent list limits, `-R`, search versus list, when to drop to `gh api` — are the vendored [`gh` skill](.claude/skills/gh/SKILL.md).
+What follows is what upstream cannot know: this repository's board, rulesets and bulk edits. The workflow-file half — fork PRs, required checks, what CI may
+write to — is in [ci-cd.instructions.md](.github/instructions/ci-cd.instructions.md).
 
-**What follows is the half upstream cannot know**: findings from this repository's own board, rulesets and bulk edits. Each looks like a bug in your script the
-first time you hit it. The workflow-file counterparts — fork pull requests, required checks, what CI may write to — are in
-[.github/instructions/ci-cd.instructions.md](.github/instructions/ci-cd.instructions.md).
-
-- **A pull request's `mergeable_state` goes stale after a ruleset change, and polling never refreshes it** (2026-08-19). After the `main` ruleset was edited to
-  drop a rule that had been blocking #579, the API kept answering `"blocked"` across five polls over three minutes — with every required context green. The
-  merge then went through from the web UI, and since `bypass_actors` is `[]` and `current_user_can_bypass` is `"never"`, it cannot have been an override: the
-  rules had been satisfied the whole time and only the cached verdict was wrong. GitHub recomputes mergeability lazily, on a pull-request event or a UI view,
-  and `gh api …/pulls/<n>` reads the cache rather than triggering the recomputation.
-
-    **So do not diagnose a stale `blocked` as a live rule.** Compare the required contexts against what actually reported first — that is a two-line check and
-    it is conclusive:
+- **A pull request's `mergeable_state` goes stale after a ruleset change, and polling never refreshes it.** GitHub recomputes mergeability lazily, on a PR event
+  or a UI view; `gh api …/pulls/<n>` reads the cache. Do not diagnose a stale `blocked` as a live rule — compare the required contexts against what reported:
 
     ```sh
     gh api repos/OWNER/REPO/rulesets/<id> --jq '.rules[] | select(.type=="required_status_checks") | .parameters.required_status_checks[].context' | sort > /tmp/req
@@ -533,51 +249,32 @@ first time you hit it. The workflow-file counterparts — fork pull requests, re
     comm -23 /tmp/req /tmp/got     # empty means nothing required is missing
     ```
 
-    If that comes back empty, open the pull request in a browser or attempt the merge rather than hunting for a rule that is no longer there.
+    Empty: open the PR in a browser or attempt the merge instead of hunting for a rule that is gone.
 
-- **Pace bulk mutations.** GitHub's _secondary_ rate limit bites long before the documented hourly one. A `sleep 0.45` between calls carried 255 PR edits and
-  146 issue creations with zero failures; without it, a few hundred back-to-back writes reliably trip it.
-- **No `--label` on `gh pr create`.** `.github/workflows/label-pr.yml` sets a pull request's labels itself — the type from the title, `importer` from an
-  added `*Importer.kt`, `breaking-change` from the `!` or footer — and removes a managed label set by hand. `importer` is an area label _on issues_; on a
-  pull request it means one thing, a new venue, and `.github/release.yml` files it under "New Event Sources" ahead of every other category (#1546).
-- **`gh issue create` and `gh issue edit` do not share a label flag.** Create takes `--label`; edit takes `--add-label` / `--remove-label`. One argument list
-  for both works perfectly on creates and dies on the first update — invisible until something already exists. And an update must reconcile labels in _both_
-  directions: `--add-label` alone lets a removed label survive forever with nothing reporting the drift.
-- **Project view grouping and sorting cannot be set through the API.** `ProjectV2ViewConfigurationInput` exposes only `visibleFieldIds`. Names, layouts and
-  filters are scriptable; the arrangement is a manual UI step. (Still outstanding for the Event Junkie board.)
-- **gitleaks fires on `key:` with a high-entropy value.** A YAML front-matter field named `key` tripped the `generic-api-key` rule on 1 file out of 146 —
-  intermittent by nature, since it depends on the value's entropy. Prefer `slug`, `id` or `name` for identifier fields. The existing `.gitleaks.toml` allowlist
-  is for the scraper fixture tree, and widening it costs real scanning coverage.
-- **A cautious first run pays for itself.** `--limit 5`, inspect, then continue. That is what turned the `gh issue edit` bug into a five-issue problem instead
-  of a 146-issue one.
+- **Pace bulk mutations**: `sleep 0.45` between calls. The _secondary_ rate limit bites long before the hourly one.
+- **No `--label` on `gh pr create`.** `label-pr.yml` sets a PR's labels from the title, an added `*Importer.kt` and the `!`/footer, and removes a managed label
+  set by hand. On a PR `importer` means one thing, a new venue, and `release.yml` files it under "New Event Sources" (#1546).
+- **`gh issue create` takes `--label`; `gh issue edit` takes `--add-label` / `--remove-label`**, and an update must reconcile both directions.
+- **Project view grouping and sorting cannot be set through the API** (`ProjectV2ViewConfigurationInput` exposes only `visibleFieldIds`). Manual UI step.
+- **gitleaks fires on `key:` with a high-entropy value.** Prefer `slug`, `id` or `name` for identifier fields; widening `.gitleaks.toml` costs coverage.
+- **A cautious first run pays for itself**: `--limit 5`, inspect, then continue.
 
 ## The Backlog — GitHub Issues
 
-**The backlog is [GitHub Issues](https://github.com/enorm-labs/event-junkie/issues), not a file.** `TODO.md` no longer exists.
-
-**Read a generated snapshot; write through `gh`.** `scripts/generate-backlog-snapshot.sh` renders every open issue into `build/BACKLOG.md` — grouped by
-milestone, with type, area, size and blocking state per row. Consulting it is then a local file read: cheap, grep-able, no network round trip per question.
-
-**Regenerate it before you rely on it**, and never edit it. It is written into `build/`, which is gitignored, so it is never committed and never appears in a
-diff — it is exactly as current as the last time someone ran the script, and its header carries the timestamp so you can tell.
+**The backlog is [GitHub Issues](https://github.com/enorm-labs/event-junkie/issues), not a file.** Read a generated snapshot; write through `gh`:
 
 ```sh
-scripts/generate-backlog-snapshot.sh                # refresh it first — one gh call
+scripts/generate-backlog-snapshot.sh                # renders every open issue into build/BACKLOG.md — refresh before relying on it
 grep -i 'heimathafen' build/BACKLOG.md              # is this already tracked?
-gh issue list --label importer --state open         # when you need live state
+gh issue list --label importer --state open         # live state
 gh issue view 313                                   # the full body, including its Links footer
 ```
 
-_(This was briefly a committed file refreshed by a workflow. That cannot work here: the `main` ruleset requires every change to arrive by pull request, only an
-OrganizationAdmin may bypass it, and GitHub refuses the Actions bot as a bypass actor. The workflow failed on its first run and the committed copy went stale
-within the hour — so the file moved to `build/` and the workflow was deleted.)_
+The snapshot lives in `build/` (gitignored) because the `main` ruleset lets nothing land without a PR and refuses the Actions bot as a bypass actor; its header
+carries the timestamp.
 
-**Filing something.** Use `/new-issue`, which checks for a duplicate first and picks the right form. By hand,
-`.github/ISSUE_TEMPLATE/` has 🛠 Task, ✨ Feature, 🔍 Importer / data defect, ⚖️ Decision and 🧭 Epic. The importer-defect form is the one to reach for after a
-smoke test or a data-quality audit — it asks the questions those findings need, including **whether the fix requires a `--full` re-seed**, which is usually the
-difference between a one-hour change and a one-day one.
-
-**Where a finding goes** — the same rule as before, with a new destination:
+**Filing.** `/new-issue` checks for a duplicate and picks the form: 🛠 Task, ✨ Feature, 🔍 Importer / data defect, ⚖️ Decision, 🧭 Epic. The importer-defect
+form asks **whether the fix needs a `--full` re-seed** — usually the difference between an hour and a day.
 
 | Finding                                                                                           | Goes to                                                 |
 | ------------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
@@ -585,150 +282,55 @@ difference between a one-hour change and a one-day one.
 | An accepted limitation — the venue never publishes it, or the parser makes a deliberate trade-off | **That scraper's KDoc**, next to the code it constrains |
 | A choice that must be made before work can start                                                  | **An issue** (⚖️ Decision), labelled `needs-decision`   |
 
-**The label and field split.** Intrinsic properties of the work are **labels** — `area:*`, `size:*`, plus `importer` and `documentation`. Planning state lives
-in the **[project board](https://github.com/orgs/enorm-labs/projects/1)** as Status and Priority fields, because priority churns and label churn is noise. Issue
-_type_ is a GitHub issue type (Task / Bug / Feature), not a label — do not add a `type:` label.
+**Labels and fields.** Intrinsic properties are **labels** — `area:*`, `size:*`, `importer`, `documentation`. Planning state is Status and Priority on the
+[project board](https://github.com/orgs/enorm-labs/projects/1). Issue _type_ is a GitHub issue type, not a label. Three labels say _why_ something cannot
+start: `blocked`, `needs-decision`, `needs-deployment` — the last is work that cannot exist yet, not neglect.
 
-Three labels name _why_ something cannot start: `blocked` (another issue), `needs-decision` (a choice), `needs-deployment` (a live origin). **The last is not
-neglected work** — it is work that cannot exist yet, and it is labelled so it stops reading as neglect.
+**Milestones.** `v0.2 — Deployable` → `v0.3 — Launch-ready` → `v1.0 — Go-live` lead to launch; `Phase 2/3/4` are post-launch buckets. No milestone means
+unscheduled. Reasoning in [docs/VISION_ROADMAP_IDEAS.md](docs/VISION_ROADMAP_IDEAS.md).
 
-**Milestones.** `v0.2 — Deployable` → `v0.3 — Launch-ready` → `v1.0 — Go-live` are the path to launch; `Phase 2/3/4` are post-launch buckets with no due date.
-No milestone means unscheduled. Direction and the reasoning behind the phases stay in [docs/VISION_ROADMAP_IDEAS.md](docs/VISION_ROADMAP_IDEAS.md).
-
-**Closing.** Put `Closes #NNN` in the **PR body**, on its own line. This repo allows only **Rebase and merge** — squash and merge commits are both disabled — so
-commit messages are replayed onto `main` as written, and a closing keyword in one of them would work too. The PR body is still the right home: it is one line to
-fix when the issue number changes, whereas the same line in a commit means rewriting history, and it survives the amending and rebasing a branch goes through
-during review. Use `Closes` rather than `Fixes`/`Resolves`, one line per issue.
-
-Give the PR the issue's milestone as well. Every closed PR here carries one — the 255 that predate the tracker were backfilled into `Phase 0 — Foundation` — and
-a PR without one is the exception that makes the milestone view stop meaning anything.
+**Closing.** `Closes #NNN` in the **PR body**, one line per issue, `Closes` not `Fixes`. A commit message would work too under rebase-merge, but the body
+survives amending and is one line to fix. Give the PR the issue's milestone; every closed PR here carries one.
 
 ## Key Files
 
-| Purpose                                     | Path                                                                                                                              |
-| ------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| Root build config & shared versions         | `build.gradle.kts`                                                                                                                |
-| Plugin versions & module includes           | `settings.gradle.kts`                                                                                                             |
-| Gradle daemon JVM args                      | `gradle.properties`                                                                                                               |
-| Dev database (Postgres)                     | `compose.yaml`                                                                                                                    |
-| Detekt rule overrides                       | `detekt.yml`                                                                                                                      |
-| OWASP CVE false-positive suppressions       | `owasp-suppressions.xml`                                                                                                          |
-| CI: backend build & test                    | `.github/workflows/build-backend.yml`                                                                                             |
-| CI: frontend build & test                   | `.github/workflows/build-frontend.yml`                                                                                            |
-| CI: dependency review (PR)                  | `.github/workflows/dependency-review.yml`                                                                                         |
-| CI: dependency graph submission             | `.github/workflows/dependency-submission.yml`                                                                                     |
-| CI: nightly OWASP scan                      | `.github/workflows/dependency-check-scheduled.yml`                                                                                |
-| CI: nightly scan of deployed images         | `.github/workflows/image-scan-scheduled.yml` — a published tag, both arches; thresholds match release.yml                         |
-| CI: DAST, ZAP and Nuclei, k3d and the site  | `.github/workflows/dast.yml` — active nightly on an ephemeral k3d, passive and Nuclei weekly on the site; `.zap/`, `.nuclei/`     |
-| CI: quarterly restore-drill reminder        | `.github/workflows/restore-drill-reminder.yml` — opens the drill as an assigned issue                                             |
-| CI: blocker issue for a red publish         | `.github/workflows/publish-failure-issue.yml` — one issue per red streak on `main`, closed by the next green publish              |
-| CI: credential expiry reminder              | `.github/workflows/credential-expiry-reminder.yml` — dates live in the workflow, mirrored in docs/CREDENTIALS.md §2               |
-| CI: PR labelling                            | `.github/workflows/label-pr.yml`                                                                                                  |
-| CI: OpenTofu fmt/validate + ShellCheck      | `.github/workflows/validate-infra.yml`                                                                                            |
-| CI: workflow lint + security audit          | `.github/workflows/validate-workflows.yml`; suppressions in `zizmor.yml`                                                          |
-| CI: Helm lint/render/assertions             | `.github/workflows/validate-chart.yml`                                                                                            |
-| CI: Markdown formatting                     | `.github/workflows/validate-docs.yml`                                                                                             |
-| CI: build, scan and publish to GHCR         | `.github/workflows/release.yml` — the only workflow that pushes anything; it does not deploy                                      |
-| CI: deployment records from Flux            | `.github/workflows/deployment-status.yml` — writes the GitHub deployment; the cluster triggers it, not a merge                    |
-| CI: a failing Flux source, made visible     | `.github/workflows/flux-source-failure.yml` — red by construction; the cluster's `source-failure` Alert triggers it (#1454)       |
-| Every script, and the `--help` rule         | `scripts/README.md` — gates, tools, and ops; `scripts/index-parity.sh` fails when the directory, the index, or the tree disagrees |
-| Markdown formatting                         | `scripts/format-markdown.sh` + `.oxfmtrc.json` — Markdown only, and the scope is load-bearing                                     |
-| README screenshots, and when they rot       | `docs/screenshots/` — dated, because nothing else signals staleness; retake on design changes, never on data changes              |
-| Trivy waivers                               | `.trivyignore` — empty on purpose; an entry needs a reason and a date                                                             |
-| Infrastructure as code (OpenTofu)           | `infra/` — read `infra/AGENTS.md` first; `bootstrap/` is applied, `environments/` is not                                          |
-| Shared MCP servers                          | `.mcp.json` — `opentofu`, the hosted registry lookup; no key, one approval per contributor                                        |
-| Cloud-init for the Hetzner nodes            | `infra/modules/environment/cloud-init/`                                                                                           |
-| Helm chart (bff · importer · frontend)      | `deploy/charts/event-junkie/` — read `deploy/AGENTS.md` first; exercised on k3d, never on a real cluster                          |
-| Backend container images                    | `events-bff/Dockerfile`, `events-importer/Dockerfile` — no build-work `RUN`, context is each module's `build/docker`              |
-| Frontend container image                    | `events-frontend/Dockerfile` + `events-frontend/docker/nginx.conf` — nginx on 8080, context is the module                         |
-| Chart assertions                            | `deploy/charts/event-junkie/tests/*_test.yaml` (helm-unittest) + `scripts/cluster-assertions.sh`                                  |
-| Release notes categories                    | `.github/release.yml`                                                                                                             |
-| Dependabot config                           | `.github/dependabot.yml` — six ecosystems; read it with `renovate.json5` before calling anything unwatched                        |
-| Renovate config                             | `.github/renovate.json5` — Flux, cluster images, pre-commit, Gradle wrapper. An allow-list, so it cannot collide with Dependabot  |
-| The dependency-update boundary              | `docs/adr/ADR-024_DEPENDENCY_UPDATE_BOUNDARY.md` — which mechanism owns what, and what nothing may propose                        |
-| Commit message prompt                       | `.github/prompts/commit-message.prompt.md`                                                                                        |
-| Squash commit message prompt                | `.github/prompts/squash-commit-message.prompt.md`                                                                                 |
-| Open PR prompt                              | `.github/prompts/open-pr.prompt.md`                                                                                               |
-| Compact comments prompt                     | `.github/prompts/compact-comments.prompt.md`                                                                                      |
-| Vendored Simplified Technical English skill | `.claude/skills/asd-ste100/`                                                                                                      |
-| Vendored GitHub CLI skill                   | `.claude/skills/gh/` — upstream `cli/cli`; see its `VENDORED.md` before touching it                                               |
-| Copilot's view of both vendored skills      | `.github/skills/` — one directory symlink each into `.claude/skills/`; never a copy                                               |
-| Code review prompt                          | `.github/prompts/code-review.prompt.md`                                                                                           |
-| Security report prompt                      | `.github/prompts/security-report.prompt.md`                                                                                       |
-| Security triage prompt                      | `.github/prompts/security-triage.prompt.md` — its `--unattended` section is what `agent-security.yml` runs                        |
-| Agentic workflow (security)                 | `.github/workflows/agent-security.yml` — nightly and on a red publish, opens a PR, dismisses nothing                              |
-| Agentic workflow (refactor)                 | `.github/workflows/agent-refactor.yml` — fenced away from shared normalization                                                    |
-| Agentic workflow (comments)                 | `.github/workflows/agent-comments.yml` — whole tree nightly, capped at twelve files per PR                                        |
-| Plausibility check prompt                   | `.github/prompts/plausibility-check.prompt.md` — the site against the venues' pages, read-only                                    |
-| Agentic workflow (plausibility)             | `.github/workflows/agent-plausibility.yml` — nightly report, opens nothing; commented on a monthly issue (#1499)                  |
-| Agentic workflow (OWASP Top 10)             | `.github/workflows/agent-owasp.yml` — weekly report, one line per category, opens nothing; commented on a monthly issue (#1499)   |
-| Refactor prompt                             | `.github/prompts/refactor.prompt.md`                                                                                              |
-| Documentation currency prompt               | `.github/prompts/update-docs.prompt.md`                                                                                           |
-| Agentic workflow (documentation)            | `.github/workflows/agent-docs.yml` — corrects facts, rewrites no argument, never touches an ADR                                   |
-| ADR-authoring prompt                        | `.github/prompts/write-adr.prompt.md`                                                                                             |
-| Shared domain module marker                 | `events-core/src/.../EventsCoreModule.kt`                                                                                         |
-| Domain data classes                         | `events-core/src/.../artist/`, `event/`, `genretag/`, `promoter/`, `venue/`                                                       |
-| Price normalization utility                 | `events-core/src/.../event/MoneyExtensions.kt`                                                                                    |
-| Initial DB migration                        | `events-importer/src/main/resources/db/migration/V001__create_initial_schema.sql`                                                 |
-| Global exception handler                    | `events-importer/src/.../GlobalExceptionHandler.kt`                                                                               |
-| Slug generator utility                      | `events-importer/src/.../slug/SlugGenerator.kt`                                                                                   |
-| Genre normalizer utility                    | `events-importer/src/.../genretag/GenreNormalizer.kt`                                                                             |
-| Shared scraping utilities                   | `events-importer/src/.../scraper/ScrapingExtensions.kt`                                                                           |
-| Shared date/time parsing                    | `events-importer/src/.../scraper/DateParsingExtensions.kt`                                                                        |
-| Event-type classification                   | `events-importer/src/.../scraper/EventTypeMapping.kt`                                                                             |
-| Artist-name resolution                      | `events-importer/src/.../scraper/ArtistNameMapping.kt`                                                                            |
-| Event field-level mapping                   | `events-importer/src/.../scraper/EventFieldMapping.kt`                                                                            |
-| WebFlux Pageable resolver config            | `events-importer/src/.../WebFluxConfiguration.kt`                                                                                 |
-| Stable-sort Pageable resolver               | `events-importer/src/.../StableSortPageableArgumentResolver.kt` (duplicated in `events-bff`)                                      |
-| Base integration test class                 | `events-importer/src/test/.../BaseControllerTest.kt`                                                                              |
-| Full lifecycle integration test             | `events-importer/src/test/.../event/FullLifecycleIntegrationTest.kt`                                                              |
-| Testcontainers setup (BFF)                  | `events-bff/src/test/.../PostgresTestcontainersConfiguration.kt`                                                                  |
-| Testcontainers setup (importer)             | `events-importer/src/test/.../PostgresTestcontainersConfiguration.kt`                                                             |
-| Modularity verification (BFF)               | `events-bff/src/test/.../ModularityTests.kt`                                                                                      |
-| Modularity verification (importer)          | `events-importer/src/test/.../ModularityTests.kt`                                                                                 |
-| Modularity verification (core)              | `events-core/src/test/.../ModularityTests.kt`                                                                                     |
-| ADR: Reactive stack                         | `docs/adr/ADR-001_REACTIVE_STACK.md`                                                                                              |
-| ADR: R2DBC query derivation limits          | `docs/adr/ADR-002_R2DBC_QUERY_DERIVATION.md`                                                                                      |
-| ADR: Entity/domain separation               | `docs/adr/ADR-003_ENTITY_DOMAIN_SEPARATION.md`                                                                                    |
-| ADR: Dedicated database schema              | `docs/adr/ADR-004_DEDICATED_DATABASE_SCHEMA.md`                                                                                   |
-| ADR: Migrations owned by importer           | `docs/adr/ADR-005_MIGRATIONS_OWNED_BY_IMPORTER.md`                                                                                |
-| ADR: Spring Modulith                        | `docs/adr/ADR-006_SPRING_MODULITH.md`                                                                                             |
-| ADR: Web scraping strategy                  | `docs/adr/ADR-007_WEB_SCRAPING_STRATEGY.md`                                                                                       |
-| ADR: Import job scheduling                  | `docs/adr/ADR-008_IMPORT_JOB_SCHEDULING.md`                                                                                       |
-| ADR: Optimistic locking (event src)         | `docs/adr/ADR-009_OPTIMISTIC_LOCKING_EVENT_SOURCE.md`                                                                             |
-| ADR: Frontend styling framework             | `docs/adr/ADR-010_FRONTEND_STYLING_FRAMEWORK.md`                                                                                  |
-| ADR: Event-calendar library                 | `docs/adr/ADR-011_CALENDAR_LIBRARY.md`                                                                                            |
-| ADR: Cloud platform & hosting               | `docs/adr/ADR-012_CLOUD_PLATFORM.md`                                                                                              |
-| ADR: Localisation (English + German)        | `docs/adr/ADR-013_LOCALISATION.md`                                                                                                |
-| ADR: Rendering strategy (SPA/SSG/SSR)       | `docs/adr/ADR-014_RENDERING_STRATEGY.md`                                                                                          |
-| ADR: Observability stack                    | `docs/adr/ADR-015_OBSERVABILITY_STACK.md`                                                                                         |
-| ADR: GitOps delivery (Flux, pull)           | `docs/adr/ADR-016_GITOPS_DELIVERY.md`                                                                                             |
-| ADR: JRE base image (Liberica/Alpine)       | `docs/adr/ADR-017_JRE_BASE_IMAGE.md`                                                                                              |
-| ADR: Probe semantics (readiness/liveness)   | `docs/adr/ADR-018_PROBE_SEMANTICS.md`                                                                                             |
-| ADR: Venue image delivery (cached)          | `docs/adr/ADR-019_VENUE_IMAGE_DELIVERY.md` — cache in a bucket, not hotlink. Not implemented, #283 blocks it                      |
-| ADR: Image processing (imgproxy)            | `docs/adr/ADR-020_IMAGE_PROCESSING.md` — derivatives at import time, never on the request path                                    |
-| ADR: Public site monitoring                 | `docs/adr/ADR-021_PUBLIC_SITE_MONITORING.md` — a Better Stack monitor polls every three minutes, from outside the cluster         |
-| ADR: Shared cluster base                    | `docs/adr/ADR-022_SHARED_CLUSTER_BASE.md` — `deploy/clusters/base/` holds what does not differ; each cluster patches one field    |
-| ADR: Operator authentication                | `docs/adr/ADR-023_OPERATOR_AUTHENTICATION.md` — the admin API stays unroutable. A Traefik middleware when a surface is deployed   |
-| ADR: Dependency update boundary             | `docs/adr/ADR-024_DEPENDENCY_UPDATE_BOUNDARY.md` — three mechanisms, and which one owns what. Read before adding a fourth         |
-| ADR: Release number from the commits        | `docs/adr/ADR-025_RELEASE_VERSION_FROM_COMMITS.md` — a `feat` is a minor, a break a major. The cut refuses less                   |
-| ADR: Multilingual event text                | `docs/adr/ADR-026_MULTILINGUAL_EVENT_TEXT.md` — the publisher's words per language, and the case against translating              |
-| ADR: Translation follows the display rule   | `docs/adr/ADR-027_TRANSLATION_FOLLOWS_THE_DISPLAY_RULE.md` — supersedes ADR-026 rule 3. Only PROHIBITED withholds                 |
-| ADR: Our own photographs' hosting           | `docs/adr/ADR-028_OWN_PHOTOGRAPH_HOSTING.md` — a second public bucket for own work, credited on the About page                    |
-| ADR: An event's optional end                | `docs/adr/ADR-029_EVENT_END.md` — `end_date` + `end_time`, stored only when the venue states them. Listed until the end           |
-| ADR: `RELOCATED` marks the origin           | `docs/adr/ADR-030_RELOCATED_IS_THE_ORIGIN.md` — a `verlegt` row is the house the show left; `relocated_to` names where to         |
-| ADR: MusicBrainz is the artist identity hub | `docs/adr/ADR-031_ARTIST_IDENTITY_HUB.md` — every artist row is looked up, the verdict stored, the name never rewritten           |
-| ADR: The version comes from the tags        | `docs/adr/ADR-032_VERSION_FROM_TAGS.md` — no file carries the version, so no bump or raise pull request                           |
-| Plan: Hetzner + k3s setup, go-live          | `docs/ops/PLATFORM_SETUP.md`                                                                                                      |
-| Releasing & deploying, end to end           | `docs/ops/RELEASING.md` — the diagram; ADR-016 has the reasoning                                                                  |
-| Bootstrapping a cluster, once               | `docs/ops/CLUSTER_BOOTSTRAP.md` — ordered runbook, first run 2026-08-13; traps table at the bottom                                |
-| Connecting to a running cluster             | `docs/ops/CLUSTER_ACCESS.md` — tunnel, kubeconfig, contexts, k9s. Read-only; nothing in it changes anything                       |
-| Upgrading k3s on a running node             | `docs/ops/K3S_UPGRADE.md` — in place, not a rebuild; the Traefik check is the one that matters                                    |
-| Alerting from outside the cluster           | `docs/ops/HEALTHCHECKS.md` — healthchecks.io dead-man's switches. Ping URLs are credentials and live only on the node             |
-| Secrets, and the SOPS plan                  | `docs/ops/SECRETS.md` — three hand-made objects today; the age private key never enters this repository                           |
-| Threat model (STRIDE per boundary)          | `docs/security/THREAT_MODEL.md` — every _mitigated_ row names its file; an _open_ row is an issue. Reread on a new boundary       |
-| Flux resources (one dir per cluster)        | `deploy/clusters/` — read `deploy/AGENTS.md` first; the semver range is on the OCIRepository                                      |
-| Plan: footer, legal pages, versioning       | `docs/LEGAL.md`                                                                                                                   |
-| Frontend entry point                        | `events-frontend/src/main.ts`                                                                                                     |
-| IntelliJ HTTP Client requests               | `http/importer/` (admin) and `http/bff/` (public read) `.http` files + shared `http/http-client.env.json`                         |
-| Performance tests (k6)                      | `perf/` — `smoke.js` · `load.js` · `spike.js`, endpoints in `perf/lib/api.js`                                                     |
+The rows here carry a rule or a trap; a plain "where does X live" is one `grep` away and is not listed. ADRs are under `docs/adr/`, named for what they decide;
+ADR-032 is the one to know unprompted — no file carries the version, it is computed from the tags and the commits.
+
+| Purpose                                 | Path                                                                                                                                      |
+| --------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| Every script, and the `--help` rule     | `scripts/README.md` — gates, tools, and ops; `scripts/index-parity.sh` fails when the directory, the index, or the tree disagrees         |
+| Markdown formatting                     | `scripts/format-markdown.sh` + `.oxfmtrc.json` — Markdown only, and the scope is load-bearing                                             |
+| README screenshots, and when they rot   | `docs/screenshots/` — dated, because nothing else signals staleness; retake on design changes, never on data changes                      |
+| Trivy waivers                           | `.trivyignore` — empty on purpose; an entry needs a reason and a date                                                                     |
+| OWASP CVE false-positive suppressions   | `owasp-suppressions.xml`                                                                                                                  |
+| Shared MCP servers                      | `.mcp.json` — `opentofu`, the hosted registry lookup; no key, one approval per contributor                                                |
+| Infrastructure as code (OpenTofu)       | `infra/` — read `infra/AGENTS.md` first; `bootstrap/` is applied, `environments/` is not                                                  |
+| Helm chart (bff · importer · frontend)  | `deploy/charts/event-junkie/` — read `deploy/AGENTS.md` first; exercised on k3d, never on a real cluster                                  |
+| Flux resources (one dir per cluster)    | `deploy/clusters/` — read `deploy/AGENTS.md` first; the semver range is on the OCIRepository                                              |
+| Backend container images                | `events-bff/Dockerfile`, `events-importer/Dockerfile` — no build-work `RUN`, context is each module's `build/docker`                      |
+| Frontend container image                | `events-frontend/Dockerfile` + `events-frontend/docker/nginx.conf` — nginx on 8080, context is the module                                 |
+| Chart ↔ image UID                       | `scripts/uid-consistency.sh` — the `USER` line of all three Dockerfiles against what the chart resolves; floor >10000 (#448)              |
+| CI: build, scan and publish to GHCR     | `.github/workflows/release.yml` — the only workflow that pushes anything; it does not deploy                                              |
+| CI: deployment records from Flux        | `.github/workflows/deployment-status.yml` — the cluster triggers it, not a merge                                                          |
+| CI: a failing Flux source, made visible | `.github/workflows/flux-source-failure.yml` — red by construction; the cluster's `source-failure` Alert triggers it (#1454)               |
+| CI: blocker issue for a red publish     | `.github/workflows/publish-failure-issue.yml` — one issue per red streak on `main`, closed by the next green publish                      |
+| CI: credential expiry reminder          | `.github/workflows/credential-expiry-reminder.yml` — dates live in the workflow, mirrored in docs/CREDENTIALS.md §2                       |
+| CI: nightly scan of deployed images     | `.github/workflows/image-scan-scheduled.yml` — a published tag, both arches; thresholds match release.yml                                 |
+| CI: DAST, ZAP and Nuclei                | `.github/workflows/dast.yml` — active nightly on an ephemeral k3d, passive and Nuclei weekly on the site; `.zap/`, `.nuclei/`             |
+| CI: workflow lint + security audit      | `.github/workflows/validate-workflows.yml`; suppressions in `zizmor.yml`                                                                  |
+| Agentic workflows                       | `.github/workflows/agent-*.yml` — security opens a PR and dismisses nothing; comments caps twelve files per PR; docs never touches an ADR |
+| Release notes categories                | `.github/release.yml`                                                                                                                     |
+| Dependabot · Renovate · the boundary    | `.github/dependabot.yml`, `.github/renovate.json5`, ADR-024 — which mechanism owns what; read before adding a fourth                      |
+| Releasing & deploying, end to end       | `docs/ops/RELEASING.md` — the diagram; ADR-016 has the reasoning                                                                          |
+| Bootstrapping a cluster, once           | `docs/ops/CLUSTER_BOOTSTRAP.md` — ordered runbook; traps table at the bottom                                                              |
+| Connecting to a running cluster         | `docs/ops/CLUSTER_ACCESS.md` — tunnel, kubeconfig, contexts, k9s. Read-only; nothing in it changes anything                               |
+| Upgrading k3s on a running node         | `docs/ops/K3S_UPGRADE.md` — in place, not a rebuild; the Traefik check is the one that matters                                            |
+| Alerting from outside the cluster       | `docs/ops/HEALTHCHECKS.md` — healthchecks.io dead-man's switches. Ping URLs are credentials and live only on the node                     |
+| Secrets, and the SOPS plan              | `docs/ops/SECRETS.md` — three hand-made objects today; the age private key never enters this repository                                   |
+| Threat model (STRIDE per boundary)      | `docs/security/THREAT_MODEL.md` — every _mitigated_ row names its file; an _open_ row is an issue. Reread on a new boundary               |
+| Platform setup, go-live                 | `docs/ops/PLATFORM_SETUP.md`                                                                                                              |
+| Footer, legal pages, versioning         | `docs/LEGAL.md`                                                                                                                           |
+| IntelliJ HTTP Client requests           | `http/importer/` (admin) and `http/bff/` (public read) + shared `http/http-client.env.json`                                               |
+| Performance tests (k6)                  | `perf/` — `smoke.js` · `load.js` · `spike.js`; `perf/README.md` says what each answers                                                    |
+| Stable-sort Pageable resolver           | `events-importer/src/.../StableSortPageableArgumentResolver.kt` — duplicated in `events-bff`                                              |
