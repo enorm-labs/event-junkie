@@ -134,7 +134,7 @@ scripts/release-highlights.sh v0.13.0    # since a named tag
 never runs, nothing reaches GHCR, and every job reports green. The workflow mints a GitHub App installation token instead, narrowed to `contents: write` and
 valid for an hour ([CREDENTIALS.md](../CREDENTIALS.md) §2, #25).
 
-## One version, four artifacts
+## One version, five artifacts
 
 No file carries the version ([ADR-032](../adr/ADR-032_VERSION_FROM_TAGS.md)). [`scripts/version.sh`](../../scripts/version.sh) reads it from the newest
 release tag reachable from the commit and the Conventional Commits since it. Every build stamps that number over the `0.0.0` placeholders in
@@ -149,6 +149,7 @@ tags + commits since v0.3.0
                      ├── docker build -t ghcr.io/…/bff:0.3.1-snapshot.20260814122042.gdf18a02
                      ├── docker build -t ghcr.io/…/importer:…
                      ├── docker build -t ghcr.io/…/frontend:…
+                     ├── docker build -t ghcr.io/…/injector:…
                      └── Chart.yaml  version: … / appVersion: …
                                              │
                                              └── every image.tag falls back to .Chart.AppVersion
