@@ -30,6 +30,7 @@ Data quality is enforced by **deterministic, curated-list normalizers applied at
 | De-shouting         | `deshoutWord` and the `ACRONYMS` it keeps in capitals, shared by both of the above      | `common/NameCasing.kt`           |
 | Non-artist titles   | `isNonArtistName` (`NON_ARTIST_NAMES` denylist), `stripArtistSuffix`                    | `scraper/ArtistNameMapping.kt`   |
 | Act name at sync    | `stripArtistSuffix` + `isNonArtistName` once more on every line-up entry (#301)         | `scraper/AssociationSyncService` |
+| Series tail at sync | `unglueSeriesTails` — the head, when it is already an `EXACT` MusicBrainz row (#302)    | `scraper/AssociationSyncService` |
 | Title-as-headliner  | `buildArtistsForEventType` / `buildArtistList`                                          | `scraper/ArtistNameMapping.kt`   |
 | Genre tags          | `GenreNormalizer` — synonym map + `NON_GENRE_TOKENS` stop-list + `looksLikeGenre` gate  | `genretag/GenreNormalizer.kt`    |
 
