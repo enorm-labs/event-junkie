@@ -10,6 +10,7 @@ import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.inferYearForWeekday
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.resolveUrl
+import de.norm.events.scraper.stripArtistSuffix
 import de.norm.events.scraper.textAt
 import de.norm.events.slug.SlugGenerator
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -217,12 +218,15 @@ class VoidClubOverviewPageScraper(
      * The venue closes an unfinished billing with a continuation phrase rather than a name
      * ("… Lepido and more", "… DaSoMaZo — more to be announced"), and states a whole unannounced
      * lineup as "TBA" or "To be announced" — [UNANNOUNCED_TAIL] cuts all of those off, leaving
-     * nothing behind when the segment was only the placeholder.
+     * nothing behind when the segment was only the placeholder. Each act then goes through
+     * [stripArtistSuffix] for the spellings the shared rule knows and this one does not: the live
+     * page closed a billing with `Seimen Dexter — more TBA` and the placeholder rode along in the
+     * name (#1564).
      */
     private fun splitActs(segment: String): List<String> {
         val act = segment.replace(UNANNOUNCED_TAIL, "").trim()
         return (if ('(' in act) listOf(act) else act.split(B2B_SEPARATOR))
-            .map { it.trim() }
+            .map { stripArtistSuffix(it) }
             .filter { it.isNotBlank() && !isNonArtistName(it) }
     }
 
