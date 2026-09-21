@@ -181,7 +181,7 @@ cd deploy/alerts
 EJ_NODE=ops@10.10.0.1 ./apply.sh            # the same, against production
 ```
 
-**The rules are one file applied twice, so both clusters run the same eleven.** Nothing reconciles them: a rule edited here reaches a cluster when somebody
+**The rules are one file applied twice, so both clusters run the same set.** Nothing reconciles them: a rule edited here reaches a cluster when somebody
 runs this, and `--diff` is the only thing that reports the gap ([#702](https://github.com/enorm-labs/event-junkie/issues/702)). Run it against both.
 
 `alerts.json` is **generated** by `gen_alerts.py`, exactly like the dashboard. `--check` answers the question the UI cannot: whether a rule's query matches any
@@ -190,7 +190,7 @@ un-fireable whenever either counter was quiet.
 
 **Firings go into the `alert_history` stream, not to a person yet.** Two separate reasons, and only one of them is the phone number:
 
-- [#271](https://github.com/enorm-labs/event-junkie/issues/271) item 4's Signal bridge is unregistered, and
+- the Signal bridge is unregistered ([#877](https://github.com/enorm-labs/event-junkie/issues/877)), and
 - **OpenObserve's SSRF guard rejects an alert destination inside the cluster**, including
   `signal-cli.observability.svc.cluster.local`. On staging `ZO_SKIP_SSRF_CHECKS` is therefore set, **and paired with an egress NetworkPolicy**
   (`deploy/clusters/staging/observability-netpol.yaml`). That policy lets this pod reach CoreDNS, the public internet on 443 and the Signal bridge. Nothing
@@ -296,9 +296,9 @@ A healthy system writes into the current hour. Hours that trail off are a backlo
 
 ## What it does not do yet
 
-- **A firing reaches no person.** Eleven rules evaluate, and each one posts into the `alert_history` stream instead of to somebody
-  ([#271](https://github.com/enorm-labs/event-junkie/issues/271) item 4). So a firing is a row you must go and look at. That is a worse guarantee than it
+- **A firing reaches no person.** Every rule evaluates, and each one posts into the `alert_history` stream instead of to somebody
+  ([#877](https://github.com/enorm-labs/event-junkie/issues/877)). So a firing is a row you must go and look at. That is a worse guarantee than it
   sounds, and it is the shape of the eight hours in #813. The Signal route waits only on a registered number now. The SSRF guard that also blocked it is
   gone, traded for the egress policy in `observability-netpol.yaml`.
-- **The two instances are copies, not one source.** Eleven rules, one dashboard and two collector filter lists exist twice, kept in step by hand. `--diff`
+- **The two instances are copies, not one source.** The rules, one dashboard and two collector filter lists exist twice, kept in step by hand. `--diff`
   catches a cluster that drifts from the repository. Nothing catches the two clusters drifting from each other.

@@ -87,7 +87,7 @@ flowchart LR
 | `main`                         | What lands there is what runs on the cluster, after `release.yml` and Flux                                                                 | GitHub, ruleset `main`                                         |
 | The published chart and images | Flux pulls them by semver range, anonymously, and runs what it gets                                                                        | `ghcr.io/enorm-labs/`                                          |
 | The database                   | Every event, venue and artist. A `--full` re-seed rebuilds it from the venues, [RESTORE_RUNBOOK.md](../ops/RESTORE_RUNBOOK.md) restores it | PostgreSQL on the private network, backups in Object Storage   |
-| The eight cluster secrets      | Each has its own exposure cost, listed in [SECRETS.md](../ops/SECRETS.md)                                                                  | Per cluster. `events-db` in git under SOPS, the rest hand-made |
+| The nine cluster secrets       | Each has its own exposure cost, listed in [SECRETS.md](../ops/SECRETS.md)                                                                  | Per cluster. `events-db` in git under SOPS, the rest hand-made |
 | The Hetzner token              | Read and write on every server, volume and firewall in the project                                                                         | Staging's `cert-manager` namespace, the operator's Keychain    |
 | `github-dispatch`              | `contents: write` on this repository. The one secret that cannot be regenerated                                                            | `flux-system` on each cluster                                  |
 | The domain and its certificate | `event-junkie.de`, HSTS pinned for a year                                                                                                  | Hetzner DNS, cert-manager                                      |
@@ -203,25 +203,28 @@ The importer is the one workload that talks to the open internet. Everything it 
 
 ### B8 · Cluster → GitHub and alerting
 
-| Threat                                                        | STRIDE | Likelihood | Impact | Status                                                                                                                               |
-| ------------------------------------------------------------- | ------ | ---------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------ |
-| A node compromise yields `github-dispatch`, `contents: write` | E      | low        | high   | Accepted. `repository_dispatch` needs that scope. The token is hand-made, per cluster, and the ruleset still requires a pull request |
-| A node compromise on staging yields the Hetzner token         | E      | low        | high   | Accepted. DNS-01 needs it and Hetzner tokens are project-wide. `infra/AGENTS.md` records the choice. Staging is tunnel-only          |
-| Alerting dies with the node it watches                        | D      | low        | medium | Mitigated. healthchecks.io and Better Stack run outside. Silence is the alarm ([HEALTHCHECKS.md](../ops/HEALTHCHECKS.md))            |
-| A ping URL leaks and silences an alarm                        | S      | low        | medium | Mitigated. Ping URLs live on the node only, never in git                                                                             |
+| Threat                                                        | STRIDE | Likelihood | Impact | Status                                                                                                                                                                             |
+| ------------------------------------------------------------- | ------ | ---------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| A node compromise yields `github-dispatch`, `contents: write` | E      | low        | high   | Accepted. `repository_dispatch` needs that scope. The token is hand-made, per cluster, and the ruleset still requires a pull request                                               |
+| A node compromise on staging yields the Hetzner token         | E      | low        | high   | Accepted. DNS-01 needs it and Hetzner tokens are project-wide. `infra/AGENTS.md` records the choice. Staging is tunnel-only                                                        |
+| Alerting dies with the node it watches                        | D      | low        | medium | Mitigated. healthchecks.io and Better Stack run outside. Silence is the alarm ([HEALTHCHECKS.md](../ops/HEALTHCHECKS.md))                                                          |
+| A ping URL leaks and silences an alarm                        | S      | low        | medium | Mitigated. Ping URLs live on the node only, never in git                                                                                                                           |
+| An in-cluster rule fires and nobody is told                   | D      | medium     | medium | Accepted until #877. Every rule in `deploy/alerts/alerts.json` routes to `record-only`, a row in `alert_history`, not a person. The external layer above is what reaches one today |
 
 ### B9 · Agent workflows → repository
 
 Five `agent-*.yml` workflows run Claude with a shell. The action replaces `GITHUB_TOKEN` in the process with the `claude` App's installation token.
-That App holds `contents`, `pull_requests`, `workflows` and `actions` at `write`.
+That App holds `contents`, `pull_requests`, `workflows` and `actions` at `write`. `agent-owasp.yml` and `agent-plausibility.yml` carry a second
+job, `notify`, with `issues: write` (#1499). The agent never runs in that job.
 
-| Threat                                                                   | STRIDE | Likelihood | Impact | Status                                                                                                                                          |
-| ------------------------------------------------------------------------ | ------ | ---------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------- |
-| A venue page instructs the plausibility agent, which holds a write token | E      | medium     | medium | Mitigated. The token can push a branch and open a pull request. `Merge gate` fails it until the operator reads it and approves the head (#1424) |
-| The same token pushes onto a person's open branch with auto-merge armed  | T      | low        | high   | Accepted. A required check cannot see who pushed. The window is one armed pull request at a time, and the push shows in its commit list         |
-| An agent dismisses a security alert                                      | T      | low        | medium | Mitigated. `agent-security.yml` grants `security-events: read` and `--unattended` files nothing                                                 |
-| An agent commits as `GITHUB_TOKEN` and no check runs                     | D      | low        | low    | Mitigated. No `github_token:` input, on purpose. `agent-security.yml` header                                                                    |
-| The Claude OAuth token leaks from a run                                  | I      | low        | medium | Mitigated. A repository secret, masked in logs, revocable in one click                                                                          |
+| Threat                                                                   | STRIDE | Likelihood | Impact | Status                                                                                                                                                                                                                      |
+| ------------------------------------------------------------------------ | ------ | ---------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| A venue page instructs the plausibility agent, which holds a write token | E      | medium     | medium | Mitigated. The token can push a branch and open a pull request. `Merge gate` fails it until the operator reads it and approves the head (#1424)                                                                             |
+| The same token pushes onto a person's open branch with auto-merge armed  | T      | low        | high   | Accepted. A required check cannot see who pushed. The window is one armed pull request at a time, and the push shows in its commit list                                                                                     |
+| An agent dismisses a security alert                                      | T      | low        | medium | Mitigated. `agent-security.yml` grants `security-events: read` and `--unattended` files nothing                                                                                                                             |
+| An agent commits as `GITHUB_TOKEN` and no check runs                     | D      | low        | low    | Mitigated. No `github_token:` input, on purpose. `agent-security.yml` header                                                                                                                                                |
+| The Claude OAuth token leaks from a run                                  | I      | low        | medium | Mitigated. A repository secret, masked in logs, revocable in one click                                                                                                                                                      |
+| An agent's report reaches the tracker through a job with a write token   | T      | low        | low    | Mitigated. `issues: write` is on the `notify` job only; the agent's shell holds its own job's token. `report-to-issue` passes every input by `env` and reads the report from disk, so no report text becomes script (#1499) |
 
 ### B10 · Object Storage and imgproxy → visitors
 
@@ -278,7 +281,7 @@ Change this document in the same pull request as any of these:
 
 - a new path on the Ingress, or a new Ingress
 - a new secret, or a wider scope on an existing one
-- a new `agent-*.yml`, or a wider `--allowedTools`
+- a new `agent-*.yml`, a new job in one that holds a write scope, or a wider `--allowedTools`
 - a new outbound connection from any pod
 - a new namespace, or a Pod Security level below `restricted`
 - a login, a session or a form that accepts input

@@ -17,7 +17,7 @@ after editing `gen_alerts.py` is the normal workflow.
 **The destination posts back into OpenObserve**, as JSON into an `alert_history`
 stream. A firing therefore becomes a queryable row rather than a message nobody
 receives, which is what makes these rules exercised rather than hypothetical
-while #271 item 4 waits on a phone number.
+while #877 waits on a phone number.
 
 **Switching to the Signal bridge now needs only a registered number.** It once
 also needed a way past OpenObserve's SSRF guard, which rejected any destination
@@ -29,7 +29,7 @@ resolving inside the cluster:
 That is gone. `ZO_SKIP_SSRF_CHECKS` is set in the HelmRelease, and the control
 moved to the network: `observability-netpol.yaml` permits this pod to reach
 CoreDNS, the internet on 443 and the Signal bridge, and nothing else. So the
-remaining work for #271 item 4 is to point DESTINATION_NAME at
+remaining work for #877 is to point DESTINATION_NAME at
 `http://signal-cli.observability.svc.cluster.local:8080/v2/send` once the
 number exists.
 """
