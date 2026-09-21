@@ -35,11 +35,18 @@ const { data: pastEvents, run: loadPastEvents } = useEventSearch(() => ({
 
 const links = computed(() =>
   [
-    // The social labels are brand names and stay as they are; only "Website" is a word.
+    // The brand labels stay as they are; only "Website" is a word. The MusicBrainz link is the
+    // correction path ADR-031 chose: a wrong match is fixed there, not here.
     { label: t('common.actions.website'), url: artist.value?.websiteUrl },
-    { label: 'Facebook', url: artist.value?.facebookUrl },
-    { label: 'Instagram', url: artist.value?.instagramUrl },
+    { label: 'Bandcamp', url: artist.value?.bandcampUrl },
+    { label: 'SoundCloud', url: artist.value?.soundcloudUrl },
+    { label: 'Spotify', url: artist.value?.spotifyUrl },
     { label: 'YouTube', url: artist.value?.youtubeUrl },
+    { label: 'Instagram', url: artist.value?.instagramUrl },
+    { label: 'Facebook', url: artist.value?.facebookUrl },
+    { label: 'Discogs', url: artist.value?.discogsUrl },
+    { label: 'Resident Advisor', url: artist.value?.residentAdvisorUrl },
+    { label: 'MusicBrainz', url: artist.value?.musicbrainzUrl },
   ].filter((link): link is { label: string; url: string } => Boolean(link.url)),
 )
 
