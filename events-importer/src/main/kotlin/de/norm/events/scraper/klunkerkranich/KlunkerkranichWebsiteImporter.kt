@@ -14,30 +14,28 @@ import org.springframework.stereotype.Component
 import java.time.Clock
 
 /**
- * Website importer for Klunkerkranich, the rooftop culture garden above the Neukölln Arcaden, on
- * WordPress.
+ * Website importer for Klunkerkranich, the rooftop culture garden above the Neukölln Arcaden,
+ * on WordPress.
  *
- * The pipeline is listing → event page, but not the merge
+ * Listing → event page, but not the merge
  * [de.norm.events.scraper.AbstractTwoPageWebsiteImporter] performs:
- * 1. Fetch the `/events/` programme via [HtmlFetcher] with conditional-request support
- *    (ETag / Last-Modified).
- * 2. Parse every `article.o-card` via [KlunkerkranichOverviewPageScraper], which supplies the
- *    title, date, start time, thumbnail and billed acts.
- * 3. Fetch each night's `/events/<slug>` page for the three fields the listing omits — the blurb,
- *    the entry charge and the full-size poster ([KlunkerkranichDetailPageScraper]).
+ * 1. [HtmlFetcher] fetches `/events/` conditionally (ETag / Last-Modified).
+ * 2. [KlunkerkranichOverviewPageScraper] parses every `article.o-card` — title, date, start
+ * time, thumbnail and billed acts.
+ * 3. Each night's `/events/<slug>` page for the three fields the listing omits — blurb, entry
+ * charge, full-size poster ([KlunkerkranichDetailPageScraper]).
  *
  * Step 3 is why this class implements [EventImporter] directly: the event page restates the
- * listing's own fields and adds only those three, so it is not the primary source the abstract base
- * class's detail scraper is expected to be. An event page that cannot be fetched or parsed is not
- * fatal — that night keeps its listing data, losing only the blurb, the price and the larger image.
+ * listing and adds only those three, so it is not the primary source the base class's detail
+ * scraper must be. An unfetchable or unparseable event page is not fatal — the night keeps its
+ * listing data, losing only blurb, price and larger image.
  *
  * **What the source does not carry** is declared in [KLUNKERKRANICH_LIMITATIONS].
  *
- * **The programme is a short rolling horizon.** The venue publishes about ten days ahead and its
- * listing pagination is a no-op — `/events/page/2/` serves the same nights as page 1 — so one fetch
- * is the whole published programme, and an import stores far fewer events than a venue that
- * announces a season. That is the source being truthful about what it has announced, not a gap in
- * the parsing; OHM's importer has the same shape.
+ * **The programme is a short rolling horizon.** About ten days ahead, and listing pagination
+ * is a no-op — `/events/page/2/` serves the same nights as page 1 — so one fetch is the whole
+ * published programme and an import stores far fewer events than a venue announcing a season.
+ * The source is truthful about what it has announced, not a parsing gap; OHM has the same shape.
  *
  * @see KlunkerkranichOverviewPageScraper for the listing parsing logic.
  * @see KlunkerkranichDetailPageScraper for the blurb, price and poster.
@@ -46,7 +44,7 @@ import java.time.Clock
 @Component
 class KlunkerkranichWebsiteImporter(
     private val htmlFetcher: HtmlFetcher,
-    /** Clock for the listing scraper's year inference. Defaults to the system clock; override in tests. */
+    /** Clock for the listing scraper's year inference; override in tests. */
     clock: Clock = Clock.systemDefaultZone()
 ) : EventImporter {
     private val logger = KotlinLogging.logger {}
@@ -79,8 +77,8 @@ class KlunkerkranichWebsiteImporter(
         }
 
     /**
-     * Fetches one event page for its blurb, price and full-size poster, degrading to the listing
-     * data so a broken page costs only those three fields.
+     * Fetches one event page for blurb, price and full-size poster, degrading to the listing data
+     * so a broken page costs only those three fields.
      */
     @Suppress("TooGenericExceptionCaught") // Intentional: a broken event page must not fail the whole import
     private suspend fun addEventPageFields(event: ScrapedEvent): ScrapedEvent =

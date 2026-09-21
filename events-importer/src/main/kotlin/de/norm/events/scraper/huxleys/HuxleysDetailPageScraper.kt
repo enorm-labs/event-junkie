@@ -22,19 +22,18 @@ import java.math.BigDecimal
 /**
  * Pure HTML parser for Huxleys Neue Welt event detail pages (`/event/YYYY-MM-DD-<slug>`).
  *
- * Each page renders one `article.event` holding a `.tourtitel` tour name, an optional
- * `.canceledsoldout` badge, an `.event-info` box (the poster, a labelled `Datum` / `Beginn` /
- * `Einlass` block and the Eventim link) and the prose blurb in `.event-content`.
+ * One `article.event`: a `.tourtitel` tour name, an optional `.canceledsoldout` badge, an
+ * `.event-info` box (poster, a labelled `Datum` / `Beginn` / `Einlass` block, the Eventim link)
+ * and the `.event-content` blurb.
  *
- * Two things live only here. The **taxonomies** are slugs on the `article` element itself —
- * `event-tags-*` are real music genres (`electronic`, `indietronica`, unlike the mixed vocabularies
- * other venues tag with) and `promoters-*` names the booking agency — so both are read from the
- * class list rather than costing a second request. The promoter is taken from the hero's visible
- * `<promoter> presents` credit first, because the slug loses what the site's editor left out of it
- * (`promoters-schoneberg` for "Konzertbüro Schoneberg", #1139). And the page carries **no heading of its own**:
- * the act's name appears only in the document title with a site suffix, so the overview's
- * `.eventname` stays authoritative and this scraper derives a title only to stand on its own
- * (see [HuxleysWebsiteImporter.fillGapsFromOverview]).
+ * Two things live only here. The **taxonomies** are slugs on the `article` element —
+ * `event-tags-*` are real music genres (`electronic`, `indietronica`, unlike other venues' mixed
+ * vocabularies) and `promoters-*` the booking agency — read from the class list at no extra
+ * request. The promoter comes from the hero's visible `<promoter> presents` credit first, since
+ * the slug loses what the editor left out (`promoters-schoneberg` for "Konzertbüro Schoneberg",
+ * #1139). And the page has **no heading of its own**: the act's name is only in the document
+ * title with a site suffix, so the overview's `.eventname` stays authoritative and this scraper
+ * derives a title only to stand alone (see [HuxleysWebsiteImporter.fillGapsFromOverview]).
  *
  * @see HuxleysOverviewPageScraper for overview parsing (discovery, date, times, status, fallback).
  * @see HuxleysWebsiteImporter for the HTTP fetch orchestrator.
@@ -44,11 +43,9 @@ class HuxleysDetailPageScraper {
     private val logger = KotlinLogging.logger {}
 
     /**
-     * Parses an event detail page into a [ScrapedEvent], or `null` when the page carries no event
-     * article or no derivable title.
+     * Parses a detail page into a [ScrapedEvent], or `null` without an event article or derivable title.
      *
-     * @param sourceUrl the event's URL, used as [ScrapedEvent.sourceUrl] and to derive its date and
-     *   [ScrapedEvent.sourceId].
+     * @param sourceUrl the event's URL: [ScrapedEvent.sourceUrl], its date and [ScrapedEvent.sourceId].
      */
     @Suppress("ReturnCount") // Guard clauses for the missing article / title are clearer than nesting
     fun scrape(
@@ -98,8 +95,7 @@ class HuxleysDetailPageScraper {
 
     /**
      * The promoter as the hero credits it — `Konzertbüro Schoneberg presents`, minus the verb —
-     * falling back to the `promoters-*` taxonomy slug when the page shows no credit. The hero sits
-     * above the article, so the credit is read off the document.
+     * else the `promoters-*` taxonomy slug. The hero sits above the article, so read off the document.
      */
     private fun parsePromoters(
         document: Document,
@@ -114,12 +110,10 @@ class HuxleysDetailPageScraper {
             ?: parseTaxonomy(article, PROMOTER_CLASS_PREFIX)
 
     /**
-     * The presale/box-office price, when the page states one at all.
-     *
-     * Most shows are sold through Eventim and print no price — one of eleven sampled pages carried
-     * one — but when they do it is a labelled line of its own inside the `Details` box
-     * ("VVK: 28 € (zzgl. Gebühr)"). The whole line is kept as the note whenever it carries a
-     * booking-fee qualifier, which the bare amount cannot express.
+     * The presale/box-office price, when stated at all. Most shows sell through Eventim and print
+     * none — one of eleven sampled pages did — as a labelled line in the `Details` box ("VVK: 28 €
+     * (zzgl. Gebühr)"). The whole line is the note whenever it carries a booking-fee qualifier,
+     * which the bare amount cannot express.
      */
     private fun parsePrices(article: Element): Triple<BigDecimal?, BigDecimal?, String?> {
         val line =
@@ -135,9 +129,8 @@ class HuxleysDetailPageScraper {
     }
 
     /**
-     * The act's name, taken from the page's `og:title` with the site suffix stripped — the detail
-     * page renders no heading element at all. Only used when this page stands alone; a successful
-     * merge keeps the overview's cleaner `.eventname`.
+     * The act's name from `og:title` with the site suffix stripped — the page renders no heading.
+     * Only when this page stands alone; a successful merge keeps the overview's cleaner `.eventname`.
      */
     private fun parseTitle(document: Document): String? {
         val raw =
@@ -152,12 +145,10 @@ class HuxleysDetailPageScraper {
     }
 
     /**
-     * Reads a WordPress taxonomy off the `article` class list, de-slugifying each term
-     * (`event-tags-indietronica` → `Indietronica`, `promoters-trinity-music` → `Trinity Music`).
-     *
-     * The theme emits every term the post carries as a class, so this costs no extra request. Terms
-     * come back title-cased word by word, which is the display form the pipeline's own name and
-     * genre normalizers expect.
+     * A WordPress taxonomy off the `article` class list, de-slugified (`event-tags-indietronica` →
+     * `Indietronica`, `promoters-trinity-music` → `Trinity Music`). The theme emits every term as a
+     * class, so no extra request. Title-cased word by word, the display form the pipeline's name
+     * and genre normalizers expect.
      */
     private fun parseTaxonomy(
         article: Element,
@@ -175,10 +166,9 @@ class HuxleysDetailPageScraper {
         const val GENRE_CLASS_PREFIX = "event-tags-"
 
         /**
-         * The `article` class prefix carrying the booking agency. The sibling `presenters-*`
-         * taxonomy (media partners such as `laut-de`, `radio-eins`) is deliberately **not** read:
-         * de-slugifying a domain-shaped term yields a mangled name (`laut-de` → "Laut De"), and the
-         * agency is the one a user would recognise.
+         * The `article` class prefix carrying the booking agency. The sibling `presenters-*` taxonomy
+         * (media partners such as `laut-de`, `radio-eins`) is deliberately **not** read: de-slugifying
+         * a domain-shaped term mangles it (`laut-de` → "Laut De"), and the agency is what a user recognises.
          */
         const val PROMOTER_CLASS_PREFIX = "promoters-"
 

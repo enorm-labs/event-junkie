@@ -15,23 +15,20 @@ import org.jsoup.nodes.Element
 /**
  * Pure HTML parser for Morphine Raum's `/events` listing (overview) page.
  *
- * The listing is a single `div.list-events` holding one `<li>` per upcoming night, each an
- * `a.link-overlay` to the event's `/events/<slug>` detail page wrapping exactly two `<span>`s:
- * the `DD.MM.YY` date and the event title. There are no month headings, no pagination and no
- * status badges — the whole upcoming programme is on this one page, and a night that has passed
- * simply leaves it.
+ * One `div.list-events` with one `<li>` per upcoming night, each an `a.link-overlay` to the
+ * `/events/<slug>` detail page wrapping exactly two `<span>`s: the `DD.MM.YY` date and the
+ * title. No month headings, pagination or status badges — the whole programme is on this page,
+ * and a night that has passed simply leaves it.
  *
- * The last `<li>` is **not an event**: it links to the venue's `/events/ARCHIVE` page of past
- * nights and renders an empty date span. A dateless row is therefore skipped outright rather than
- * carried forward as an
- * [UNRESOLVED_EVENT_DATE][de.norm.events.scraper.UNRESOLVED_EVENT_DATE] — it is a navigation link,
- * so fetching its (very large) page only to drop the result after the merge would be wasted work.
+ * The last `<li>` is **not an event**: it links to `/events/ARCHIVE` and renders an empty date
+ * span. A dateless row is skipped outright rather than carried as an
+ * [UNRESOLVED_EVENT_DATE][de.norm.events.scraper.UNRESOLVED_EVENT_DATE] — a navigation link,
+ * so fetching its (very large) page only to drop the result after the merge is wasted work.
  *
- * The overview carries the discovery list, date and title; everything else — door and start
- * times, lineup, description, image and pricing — lives on the detail page. Because
- * [MorphineWebsiteImporter] falls back to this data when a detail page fails to fetch, headliner
- * artists are still derived from the title here, with the venue's "Live Recording" framing
- * stripped off the derived name ([stripLiveRecordingSuffix]).
+ * The overview carries discovery list, date and title; door and start times, lineup,
+ * description, image and pricing live on the detail page. [MorphineWebsiteImporter] falls back
+ * to this data when a detail page fails, so headliners are still derived from the title here,
+ * with the "Live Recording" framing stripped off the derived name ([stripLiveRecordingSuffix]).
  *
  * @see MorphineDetailPageScraper for the detail-page data source (times, lineup, prices, image).
  * @see MorphineWebsiteImporter for the HTTP fetch orchestrator.
@@ -41,10 +38,9 @@ class MorphineOverviewPageScraper {
     private val logger = KotlinLogging.logger {}
 
     /**
-     * Parses all event rows from the overview page document.
+     * Parses all event rows from the overview page.
      *
-     * @param baseUrl the URL the document was fetched from, used to resolve detail links and
-     *   build `sourceId` values.
+     * @param baseUrl the URL the document was fetched from, for detail links and `sourceId` values.
      */
     fun scrape(
         document: Document,
@@ -65,8 +61,8 @@ class MorphineOverviewPageScraper {
     }
 
     /**
-     * Parses a single listing row into a [ScrapedEvent], or `null` when it is not an event — the
-     * dateless `ARCHIVE` navigation row, or a row missing its title.
+     * Parses one listing row into a [ScrapedEvent], or `null` when it is not an event — the
+     * dateless `ARCHIVE` row, or a row missing its title.
      */
     @Suppress("ReturnCount") // Guard clauses for the non-event and malformed rows are clearer than nesting
     private fun parseRow(

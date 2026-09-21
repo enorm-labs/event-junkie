@@ -18,23 +18,20 @@ import java.net.URI
 import java.time.LocalTime
 
 /**
- * Pure HTML parser for Bar jeder Vernunft's Neos-CMS calendar page
- * (`/de/programm/kalender.html`).
+ * Pure HTML parser for Bar jeder Vernunft's Neos-CMS calendar page (`/de/programm/kalender.html`).
  *
- * The calendar lists one `.card-type-calendar` per **performance date**, so a show
- * running a residency appears once per night — no multi-day range has to be expanded
- * here. Each card is immediately followed by its own
- * `<script type="application/ld+json">` schema.org `Event`, which is the **primary
- * source** for every structured field (`startDate`, `image`, `url`, `performer`,
- * `offers.availability`). The card markup supplies only what the JSON-LD does not
- * carry: the show's sub-line and the ticket-shop link.
+ * One `.card-type-calendar` per **performance date**, so a residency appears once per night —
+ * no range to expand. Each card is immediately followed by its own
+ * `<script type="application/ld+json">` schema.org `Event`, the **primary source** for every
+ * structured field (`startDate`, `image`, `url`, `performer`, `offers.availability`). The card
+ * markup supplies only the show's sub-line and the ticket-shop link.
  *
- * A card **without** a JSON-LD sibling is skipped: the rendered date block is
- * year-less ("Fr 31.7.") and the start time is a German "20 Uhr" label, so there is no
- * dependable fallback — guessing a year is worse than reporting nothing.
+ * A card **without** a JSON-LD sibling is skipped: the rendered date is year-less ("Fr 31.7.")
+ * and the start time a German "20 Uhr" label, so no dependable fallback — guessing a year is
+ * worse than reporting nothing.
  *
- * `genre`, prices and the untruncated description live on the show page and are merged
- * in afterwards; see [BarJederVernunftShow].
+ * `genre`, prices and the untruncated description live on the show page and are merged in
+ * afterwards; see [BarJederVernunftShow].
  *
  * @see BarJederVernunftWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://www.bar-jeder-vernunft.de/de/programm/kalender.html">Bar jeder Vernunft calendar</a>
@@ -45,13 +42,11 @@ class BarJederVernunftOverviewPageScraper {
     private val jsonMapper: JsonMapper = JsonMapper.builder().build()
 
     /**
-     * Parses every dated performance from the calendar page.
+     * Parses every dated performance from the calendar page. Takes no base URL, unlike the other
+     * overview scrapers: every link (the show URL from the JSON-LD, the ticket-shop link on the
+     * card) is already absolute.
      *
-     * Takes no base URL, unlike the other overview scrapers: every link this page yields
-     * (the show URL from the JSON-LD, the ticket-shop link on the card) is already
-     * absolute, so there is nothing to resolve.
-     *
-     * @return one [ScrapedEvent] per calendar card that carries parseable structured data.
+     * @return one [ScrapedEvent] per calendar card with parseable structured data.
      */
     fun scrape(document: Document): List<ScrapedEvent> {
         val cards = document.select(CARD_SELECTOR)
@@ -69,13 +64,12 @@ class BarJederVernunftOverviewPageScraper {
     }
 
     /**
-     * Parses one calendar card plus its JSON-LD sibling into a [ScrapedEvent], or `null`
-     * when the structured data is missing or incomplete.
+     * Parses one card plus its JSON-LD sibling into a [ScrapedEvent], or `null` when the
+     * structured data is missing or incomplete.
      *
-     * Title and subtitle follow the page's own split: the `performer` (`.event-artist`)
-     * names the act or the show, and `.event-title` carries its sub-line — which is
-     * exactly how the JSON-LD `name` is assembled ("`<performer> - <sub-line>`"), so the
-     * two are kept apart rather than re-splitting the concatenation.
+     * Title and subtitle follow the page's own split: the `performer` (`.event-artist`) names the
+     * act or show, `.event-title` its sub-line — exactly how the JSON-LD `name` is assembled
+     * ("`<performer> - <sub-line>`"), so the two are kept apart rather than re-split.
      */
     @Suppress("ReturnCount") // Guard clauses per missing required field are clearer than nesting
     private fun parseCard(card: Element): ScrapedEvent? {
@@ -103,9 +97,9 @@ class BarJederVernunftOverviewPageScraper {
         return ScrapedEvent(
             title = title,
             subtitle = card.textAt(".event-title"),
-            // Truncated teaser — the show page supplies the full text and overwrites this.
-            // The CMS stores the blurb HTML-escaped, and script content is raw text (no
-            // entity decoding by Jsoup), so "&amp;" survives into the JSON string.
+            // Truncated teaser — the show page supplies the full text and overwrites this. The CMS stores
+            // the blurb HTML-escaped and script content is raw text (no entity decoding by Jsoup), so
+            // "&amp;" survives into the JSON string.
             description = eventNode.stringOrNull("description")?.let { Parser.unescapeEntities(it, false) },
             eventDate = eventDate,
             startTime = parseOffsetTime(startDate),
@@ -118,12 +112,9 @@ class BarJederVernunftOverviewPageScraper {
     }
 
     /**
-     * Parses the JSON-LD block that follows [card] and returns its schema.org `Event`
-     * node, or `null` when the card has no such sibling or the block is unparseable.
-     *
-     * Only the **immediate** next sibling is considered: scanning further (as a venue
-     * with one script per card allows) would let a card missing its own block silently
-     * adopt the next card's date and title.
+     * The schema.org `Event` node from the JSON-LD block following [card], or `null` without such
+     * a sibling or when unparseable. Only the **immediate** next sibling: scanning further would
+     * let a card missing its block silently adopt the next card's date and title.
      */
     @Suppress(
         "TooGenericExceptionCaught", // A malformed block must degrade to null, never abort the import
@@ -152,23 +143,19 @@ class BarJederVernunftOverviewPageScraper {
     }
 
     /**
-     * Reads the wall-clock start time from the site's `startDate`
-     * (`"2026-07-31T20:00:00+0200"`).
+     * The wall-clock start time from the site's `startDate` (`"2026-07-31T20:00:00+0200"`).
      *
-     * Not [de.norm.events.scraper.parseIsoTime]: Neos emits a **colon-less** UTC offset,
-     * which neither an `HH:mm` parse nor `OffsetDateTime.parse` accepts. The venue is in
-     * Berlin and the offset always states local time, so the leading `HH:mm` is taken
-     * verbatim.
+     * Not [de.norm.events.scraper.parseIsoTime]: Neos emits a **colon-less** UTC offset, which
+     * neither an `HH:mm` parse nor `OffsetDateTime.parse` accepts. The venue is in Berlin and the
+     * offset always states local time, so the leading `HH:mm` is taken verbatim.
      */
     private fun parseOffsetTime(dateTimeStr: String): LocalTime? = parseTime(dateTimeStr.substringAfter('T', "").take(HH_MM_LENGTH))
 
     /**
-     * The show's stable identity, taken from the last path segment of its canonical URL
+     * The show's stable identity, the last path segment of its canonical URL
      * (`…/programmuebersicht/oh-what-a-night-frankie-valli-show.html` →
-     * `oh-what-a-night-frankie-valli-show`).
-     *
-     * Combined with the date it forms the `sourceId`, because the URL alone is shared by
-     * every night of a run.
+     * `oh-what-a-night-frankie-valli-show`). Combined with the date for the `sourceId`, because
+     * the URL alone is shared by every night of a run.
      */
     private fun showSlug(url: String): String =
         URI(url)
@@ -178,9 +165,9 @@ class BarJederVernunftOverviewPageScraper {
 
     private companion object {
         /**
-         * One calendar entry. `card-type-calendar` is the calendar page's own card
-         * variant — the show pages render their date lists as `card-type-date` — so the
-         * selector cannot pick up a card from elsewhere on the site.
+         * One calendar entry. `card-type-calendar` is the calendar page's own card variant — show
+         * pages render their date lists as `card-type-date` — so the selector cannot pick up a card
+         * from elsewhere on the site.
          */
         const val CARD_SELECTOR = ".card-type-event.card-type-calendar"
 

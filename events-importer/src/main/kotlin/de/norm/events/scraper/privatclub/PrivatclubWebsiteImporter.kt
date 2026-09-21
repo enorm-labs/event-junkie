@@ -10,16 +10,12 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
 
 /**
- * Website importer for Privatclub Berlin's WordPress-based event listing.
+ * Website importer for Privatclub Berlin's WordPress event listing.
  *
- * Privatclub renders all upcoming events on a single page with full details
- * expanded inline (descriptions, prices, ticket links, promoters). Unlike
- * Cassiopeia, no separate detail page fetching is needed — the pipeline is:
- * 1. Fetch the overview page (`/`) via [HtmlFetcher] with conditional
- *    request support (ETag / Last-Modified).
- * 2. Parse all events from the single page via [PrivatclubOverviewPageScraper].
- *
- * This keeps the importer simple: one HTTP request per import cycle.
+ * One page holds every upcoming event with its details inline, so unlike Cassiopeia
+ * there is no detail-page fetch: [HtmlFetcher] fetches `/` conditionally
+ * (ETag / Last-Modified), [PrivatclubOverviewPageScraper] parses it. One HTTP
+ * request per import cycle.
  *
  * @see PrivatclubOverviewPageScraper for the HTML parsing logic.
  * @see <a href="https://privatclub-berlin.de/">Privatclub Berlin</a>

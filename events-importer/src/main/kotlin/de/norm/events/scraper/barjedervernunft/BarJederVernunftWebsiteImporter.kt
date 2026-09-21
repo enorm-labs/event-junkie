@@ -13,29 +13,27 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
 
 /**
- * Website importer for Bar jeder Vernunft, the Wilmersdorf Spiegelzelt (cabaret /
- * variety theatre), on Neos CMS 8.3.
+ * Website importer for Bar jeder Vernunft, the Wilmersdorf Spiegelzelt (cabaret / variety
+ * theatre), on Neos CMS 8.3.
  *
- * The pipeline is overview → show page, but **not** the per-event detail fetch
+ * Overview → show page, but **not** the per-event detail fetch
  * [de.norm.events.scraper.AbstractTwoPageWebsiteImporter] performs:
- * 1. Fetch the `/de/programm/kalender.html` calendar via [HtmlFetcher] with
- *    conditional-request support (ETag / Last-Modified).
- * 2. Parse one event per performance date via [BarJederVernunftOverviewPageScraper].
- * 3. Fetch each **distinct** `/programmuebersicht/<show>.html` page once and apply its
- *    genre, prices and description to every date of that show
- *    ([BarJederVernunftShow.applyTo]).
+ * 1. [HtmlFetcher] fetches `/de/programm/kalender.html` conditionally (ETag / Last-Modified).
+ * 2. [BarJederVernunftOverviewPageScraper] parses one event per performance date.
+ * 3. Each **distinct** `/programmuebersicht/<show>.html` page once, applying genre, prices and
+ * description to every date of that show ([BarJederVernunftShow.applyTo]).
  *
- * Step 3 is why this class implements [EventImporter] directly. The venue programmes
- * runs, not one-off gigs, so a single production owns most of the calendar — at the time
- * of writing 28 calendar cards resolve to 2 show pages. Fetching per event would re-request
- * the same page 20+ times per import, which the per-host politeness throttle would (rightly)
- * serialise into a slow, pointless crawl.
+ * Step 3 is why this class implements [EventImporter] directly. The venue programmes runs, not
+ * one-off gigs, so one production owns most of the calendar — at the time of writing 28
+ * calendar cards resolve to 2 show pages. Per-event fetching would re-request the same page
+ * 20+ times per import, which the per-host politeness throttle would (rightly) serialise into
+ * a slow, pointless crawl.
  *
  * A show page that cannot be fetched or parsed is not fatal: those dates keep the calendar
- * data alone, losing only the genre, price and full blurb.
+ * data, losing only genre, price and full blurb.
  *
- * The venue also publishes an iCal feed, which would be the cleaner source — but `robots.txt`
- * disallows `/de/ical/`, so it is not fetched.
+ * The venue also publishes an iCal feed, the cleaner source — but `robots.txt` disallows
+ * `/de/ical/`, so it is not fetched.
  *
  * @see BarJederVernunftOverviewPageScraper for the calendar parsing logic.
  * @see BarJederVernunftShowPageScraper for the show-page parsing logic.
@@ -75,10 +73,8 @@ class BarJederVernunftWebsiteImporter(
         }
 
     /**
-     * Fetches each distinct show page once and applies it to every date of that show.
-     *
-     * The de-duplication is the point: `sourceUrl` is the show's page, shared by all its
-     * performance dates.
+     * Fetches each distinct show page once and applies it to every date of that show. The
+     * de-duplication is the point: `sourceUrl` is the show's page, shared by all its dates.
      */
     private suspend fun enrichFromShowPages(events: List<ScrapedEvent>): List<ScrapedEvent> {
         val showUrls = events.map { it.sourceUrl }.distinct()

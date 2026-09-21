@@ -27,24 +27,19 @@ import java.time.LocalTime
 /**
  * Pure HTML parser for Astra Kulturhaus' event listing (overview) page.
  *
- * Astra runs on the shared "Kulturhäuser" platform (same as Lido). Upcoming
- * events are listed on the homepage (`/`) as a series of `article.event`
- * blocks — the `/events` path is the past-events archive, not the program.
+ * Astra runs on the shared "Kulturhäuser" platform (same as Lido). Upcoming events are
+ * `article.event` blocks on the homepage (`/`) — `/events` is the past-events archive.
  *
- * The overview page serves two purposes:
- * 1. **Discovery** — identifies all event detail URLs for enrichment.
- * 2. **Authoritative source for the event type** — the `kind` label ("Concert",
- *    "Festival", …) can appear on both pages, but only the overview applies the
- *    festival-day normalization (see [normalizeFestivalDays]), so its type wins
- *    in the merge. The detail page is the primary source for everything else
- *    (promoter, prices, ticket URL, description). The `sold out` badge may render
- *    on either page; the merge ORs the flag, so it is captured wherever it
- *    appears. Merging is handled by [AstraWebsiteImporter].
+ * The overview is the discovery list and the **authoritative source for the event type**: the
+ * `kind` label ("Concert", "Festival", …) appears on both pages, but only the overview applies
+ * the festival-day normalization ([normalizeFestivalDays]), so its type wins in the merge. The
+ * detail page is primary for everything else (promoter, prices, ticket URL, description). The
+ * `sold out` badge may render on either page; the merge ORs the flag. Merging is
+ * [AstraWebsiteImporter]'s job.
  *
- * Most fields are parsed from the `.event__*` markup shared with the detail
- * page (see [parseAstraEventBlock]); artist extraction is done here because it
- * needs both the subtitle (support acts) and the `kind`-derived event type,
- * which only coincide on the overview page.
+ * Most fields come from the `.event__*` markup shared with the detail page
+ * ([parseAstraEventBlock]); artists are extracted here because that needs both the subtitle
+ * (support acts) and the `kind`-derived type, which only coincide on the overview.
  *
  * @see AstraDetailPageScraper for the primary per-event data source.
  * @see AstraWebsiteImporter for the HTTP fetch orchestrator.
@@ -54,10 +49,9 @@ class AstraOverviewPageScraper {
     private val logger = KotlinLogging.logger {}
 
     /**
-     * Parses all event articles from the overview page document.
+     * Parses all event articles from the overview page.
      *
-     * @param baseUrl the URL the document was fetched from, used for resolving
-     *   relative detail links and building `sourceId` values.
+     * @param baseUrl the URL the document was fetched from, for relative detail links and `sourceId` values.
      */
     fun scrape(
         document: Document,
@@ -82,16 +76,13 @@ class AstraOverviewPageScraper {
     /**
      * Repairs Astra's occasional per-day mislabeling of multi-day festivals.
      *
-     * Astra lists each festival day as its own article sharing one title (e.g.
-     * "OUT OF LINE WEEKENDER 2027" / "Day 1…3"), but the `kind` label is entered
-     * per day and sometimes wrong — one day can read "Concert" while its siblings
-     * read "Festival". When at least one event with a given title is a confident
-     * [FESTIVAL][EventType.FESTIVAL], the siblings tagged otherwise are corrected
-     * to `FESTIVAL`, and the title-as-headliner artist that [buildArtistsForEventType] added
-     * for the bogus `CONCERT` is dropped (real festival days carry no artists).
-     *
-     * Only acts when a correctly-labeled festival sibling exists on the same page,
-     * so a standalone concert is never reclassified.
+     * Each festival day is its own article sharing one title ("OUT OF LINE WEEKENDER 2027" /
+     * "Day 1…3"), but `kind` is entered per day and sometimes wrong — one day "Concert", its
+     * siblings "Festival". When at least one event with a title is a confident
+     * [FESTIVAL][EventType.FESTIVAL], the siblings tagged otherwise become `FESTIVAL`, and the
+     * title-as-headliner artist [buildArtistsForEventType] added for the bogus `CONCERT` is dropped
+     * (real festival days carry no artists). Only with a correctly-labeled sibling on the same
+     * page, so a standalone concert is never reclassified.
      */
     private fun normalizeFestivalDays(events: List<ScrapedEvent>): List<ScrapedEvent> {
         val festivalTitles =
@@ -110,11 +101,10 @@ class AstraOverviewPageScraper {
     }
 
     /**
-     * Parses a single `article.event` block into a [ScrapedEvent].
+     * Parses one `article.event` block into a [ScrapedEvent].
      *
-     * The featured "teaser" article at the top of the page has no date in its
-     * markup; such events fall back to the [UNRESOLVED_EVENT_DATE] sentinel so they
-     * are still discovered. The detail page (the primary source) then supplies the
+     * The featured "teaser" article at the top has no date in its markup; it gets the
+     * [UNRESOLVED_EVENT_DATE] sentinel so it is still discovered, and the detail page supplies the
      * real date via [AstraWebsiteImporter.fillGapsFromOverview].
      */
     private fun parseArticle(
@@ -123,16 +113,15 @@ class AstraOverviewPageScraper {
     ): ScrapedEvent? {
         val block = parseAstraEventBlock(article, baseUrl) ?: return null
 
-        // Astra omits the `kind` label for some events and dumps others in its
-        // generic "Other" kind; refine both from the title here (not in the shared
-        // block parser) so the authoritative overview type is set while the detail
-        // scraper still leaves the type to the overview. See refineConcertVenueType.
+        // Astra omits `kind` for some events and dumps others in its generic "Other"; refine both from
+        // the title here (not in the shared block parser) so the authoritative overview type is set
+        // while the detail scraper leaves the type to the overview. See refineConcertVenueType.
         val eventType = refineConcertVenueType(block.eventType, block.title)
 
         return ScrapedEvent(
             title = block.title,
             subtitle = block.subtitle,
-            // The overview has no prose of its own; a banner is the only thing to store.
+            // The overview has no prose; a banner is the only thing to store.
             description = block.notice,
             eventType = eventType,
             // Sentinel for the dateless teaser; the detail page fills the real date in.
@@ -144,8 +133,8 @@ class AstraOverviewPageScraper {
             sourceId = "${EventSource.ASTRA.sourceIdPrefix}${extractEventSlug(block.sourceUrl)}",
             soldOut = block.soldOut,
             status = block.status,
-            // Isolate the subtitle's "Support:" line so a note appended on a later
-            // <br> line (e.g. a cancellation notice) can't be mistaken for a support act.
+            // Isolate the subtitle's "Support:" line so a note on a later <br> line (e.g. a cancellation
+            // notice) is not taken for a support act.
             artists =
                 buildArtistsForEventType(
                     block.title,
@@ -157,8 +146,7 @@ class AstraOverviewPageScraper {
 }
 
 /**
- * Common fields parsed from the shared `.event__*` markup that both the
- * overview articles and the detail page header use.
+ * Common fields from the `.event__*` markup shared by overview articles and the detail header.
  */
 internal data class AstraEventBlock(
     val title: String,
@@ -167,10 +155,10 @@ internal data class AstraEventBlock(
     val eventDate: LocalDate?,
     val doorsTime: LocalTime?,
     val startTime: LocalTime?,
-    /** Mapped event type, or `null` when no `kind` label is present. */
+    /** Mapped event type, or `null` without a `kind` label. */
     val eventType: String?,
     val subtitle: String?,
-    /** A shouted notice the venue appends below the subtitle — a relocation, a sold-out warning — or `null`. */
+    /** A shouted notice below the subtitle — a relocation, a sold-out warning — or `null`. */
     val notice: String?,
     val imageUrl: String?,
     val soldOut: Boolean,
@@ -178,12 +166,9 @@ internal data class AstraEventBlock(
 )
 
 /**
- * Parses the `.event__*` markup shared by overview articles and the detail
- * page header into an [AstraEventBlock].
- *
- * [root] is the element scoping a single event — an `article.event` on the
- * overview page, or the `main.page-content` container on a detail page (which
- * holds exactly one event). Returns `null` when no title link is present.
+ * Parses the shared `.event__*` markup into an [AstraEventBlock]. [root] scopes one event — an
+ * `article.event` on the overview, `main.page-content` on a detail page (exactly one event).
+ * `null` without a title link.
  */
 @Suppress("ReturnCount") // Guard clause for the required title is clearer than nesting
 internal fun parseAstraEventBlock(
@@ -201,9 +186,8 @@ internal fun parseAstraEventBlock(
     return AstraEventBlock(
         title = title,
         sourceUrl = sourceUrl,
-        // Prefer the machine-readable `data-realdate` (full 4-digit year, no pivot
-        // ambiguity); fall back to the human `DD.MM.YY` text where it is absent
-        // (e.g. on detail pages, which carry no `data-realdate`).
+        // Prefer the machine-readable `data-realdate` (four-digit year, no pivot ambiguity); fall back
+        // to the human `DD.MM.YY` where absent (detail pages carry no `data-realdate`).
         eventDate = parseRealDate(root.attr("data-realdate")) ?: parseGermanShortDate(root.textAt(".event__date--full")),
         doorsTime = parseTime(root.textAt(".event__time--doors .event__time-value")),
         startTime = parseTime(root.textAt(".event__time--start .event__time-value")),
@@ -219,13 +203,12 @@ internal fun parseAstraEventBlock(
 /**
  * Separates the subtitle proper from the notice the venue appends below it.
  *
- * The `.event__subtitle` block is the tour name and a `+ Support:` line, and then, after a blank
- * `<br><br>` line, a shouted banner — `VERLEGT INS LIDO. BEREITS GEKAUFTE TICKETS BEHALTEN IHRE
- * GÜLTIGKEIT!`, `MATINEE SHOW!`. Joined as one text the banner ran into the subtitle with no
- * separator, and the support act read as "Gym Tonic Verlegt Ins Lido" (#1138). A line counts as a
- * notice when it follows a blank line **and** is shouted; a festival's lower-case lineup after the
- * same blank stays part of the subtitle. Returns the subtitle and the notice, each `null` when
- * empty.
+ * `.event__subtitle` is the tour name and a `+ Support:` line, then after a blank `<br><br>` a
+ * shouted banner — `VERLEGT INS LIDO. BEREITS GEKAUFTE TICKETS BEHALTEN IHRE GÜLTIGKEIT!`,
+ * `MATINEE SHOW!`. Joined as one text the banner ran into the subtitle and the support act read
+ * as "Gym Tonic Verlegt Ins Lido" (#1138). A line is a notice when it follows a blank line
+ * **and** is shouted; a festival's lower-case lineup after the same blank stays subtitle.
+ * Returns subtitle and notice, each `null` when empty.
  */
 internal fun splitSubtitleNotice(lines: List<String>): Pair<String?, String?> {
     val firstBlank = lines.indexOfFirst { it.isBlank() }.takeIf { it >= 0 } ?: lines.size
@@ -233,5 +216,5 @@ internal fun splitSubtitleNotice(lines: List<String>): Pair<String?, String?> {
     return subtitle.joinToString(" ").ifBlank { null } to notice.joinToString(" ").ifBlank { null }
 }
 
-/** True for a line written in capitals only — the venue's style for a notice, never for a tour name or an act. */
+/** True for a capitals-only line — the venue's style for a notice, never a tour name or act. */
 private fun String.isShouted(): Boolean = any { it.isLetter() } && none { it.isLowerCase() }

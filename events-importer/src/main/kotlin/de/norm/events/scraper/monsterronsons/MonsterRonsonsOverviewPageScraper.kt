@@ -23,32 +23,28 @@ import java.time.MonthDay
 /**
  * Pure HTML parser for Monster Ronson's Webflow event listing (`/events`).
  *
- * The page renders a Webflow CMS collection: one `.grid-item` card per calendar day, covering a
- * rolling window of roughly twelve days from today. Every card carries the whole summary — host
- * title, weekday, day + month, start time, teaser line and poster — so this scraper produces
- * complete events on its own, and the detail page only adds description, price and ticket link.
+ * A Webflow CMS collection: one `.grid-item` card per calendar day over a rolling window of
+ * roughly twelve days. Every card carries the whole summary — host title, weekday, day + month,
+ * start time, teaser line, poster — so this scraper produces complete events; the detail page
+ * only adds description, price and ticket link.
  *
- * Two venue-specific traps are handled here:
+ * 1. **Year-less dates.** Cards state `Thu` / `6 Aug`. The year is inferred from the weekday
+ * ([inferYearForWeekday]) rather than assumed current — the rule Arcanoa, gART.n and VOID Club
+ * follow. Month names are English here, unlike those three.
+ * 2. **Closure cards.** Dark days are cards titled `CLOSED`, with an empty time and "Sorry, we
+ * are closed" as the teaser. Dropped here, before the detail fetch, so no request is spent.
  *
- *  1. **Year-less dates.** Cards state `Thu` / `6 Aug`, never a year. The year is inferred from the
- *     stated weekday ([inferYearForWeekday]) rather than assumed to be the current one — the same
- *     rule Arcanoa, gART.n and VOID Club follow. Month names are English here, unlike those three.
- *  2. **Closure cards.** The venue publishes its dark days as cards titled `CLOSED`, with an empty
- *     time and "Sorry, we are closed" as the teaser. Those are not events and are dropped here,
- *     before the detail fetch, so no request is spent on them either.
- *
- * The CMS recycles its entries: a card's URL slug (`/posts/sing-with-fauxpas-2`) frequently no
- * longer matches the host it currently advertises, and the same slug reappears on later dates as
- * the rotation comes round. `sourceId` therefore combines the date with the slug
- * (`monster_ronsons:<date>-<slug>`) rather than using the slug alone, which would make every
- * night of a rotation upsert onto the same row — the same reasoning as Bar jeder Vernunft's
- * per-performance identity (ADR-007 §"Shared Detail Pages").
+ * The CMS recycles entries: a card's slug (`/posts/sing-with-fauxpas-2`) often no longer matches
+ * the host it advertises, and the same slug reappears on later dates as the rotation comes
+ * round. `sourceId` therefore combines date and slug (`monster_ronsons:<date>-<slug>`); the slug
+ * alone would upsert every night of a rotation onto one row — Bar jeder Vernunft's
+ * per-performance identity reasoning (ADR-007 §"Shared Detail Pages").
  *
  * @see MonsterRonsonsDetailPageScraper for the per-event description, price and ticket link.
  * @see <a href="https://www.karaokemonster.de/events">Monster Ronson's events page</a>
  */
 class MonsterRonsonsOverviewPageScraper(
-    /** Clock for year inference and the past-event cutoff. Defaults to the system clock; override in tests for determinism. */
+    /** Clock for year inference and the past-event cutoff; override in tests. */
     private val clock: Clock = Clock.systemDefaultZone()
 ) {
     private val logger = KotlinLogging.logger {}
@@ -56,7 +52,7 @@ class MonsterRonsonsOverviewPageScraper(
     /**
      * Parses every event card on the listing.
      *
-     * @param sourceUrl the URL the document was fetched from, used to resolve relative card links.
+     * @param sourceUrl the URL the document was fetched from, for resolving relative card links.
      * @return the upcoming karaoke nights (today onward); closure cards and past dates are dropped.
      */
     fun scrape(
@@ -77,16 +73,14 @@ class MonsterRonsonsOverviewPageScraper(
                 }
             }
 
-        // The listing window starts at today, so this normally drops nothing; it guards a card
-        // that lingers past midnight.
+        // The window starts today, so this normally drops nothing; it guards a card lingering past midnight.
         return events.dropPastEvents(clock) { dropped ->
             logger.info { "Dropped $dropped past event(s) from Monster Ronson's listing" }
         }
     }
 
     /**
-     * Parses one `.grid-item` card into a [ScrapedEvent], or null when the card is a closure notice
-     * or carries no usable date.
+     * Parses one `.grid-item` card into a [ScrapedEvent], or null for a closure notice or no usable date.
      */
     @Suppress("ReturnCount") // Early exits for a closure card and an unparseable date are clearer than nested lets
     private fun parseCard(
@@ -99,8 +93,8 @@ class MonsterRonsonsOverviewPageScraper(
             return null
         }
 
-        // The card links relatively (`/posts/<slug>`), so the raw attribute is read and resolved
-        // here rather than through `hrefAt`, which only returns already-absolute URLs.
+        // The card links relatively (`/posts/<slug>`), so the raw attribute is read and resolved here;
+        // `hrefAt` only returns already-absolute URLs.
         val href = card.attrAt(CARD_LINK_SELECTOR, "href") ?: error("No card link found")
         val eventDate =
             parseCardDate(card) ?: run {
@@ -113,11 +107,11 @@ class MonsterRonsonsOverviewPageScraper(
 
         return ScrapedEvent(
             title = title,
-            // The teaser line ("Sing on stage!") is a standing call to action rather than a
-            // description of the night; it reads as a subtitle and the detail page supplies the prose.
+            // The teaser ("Sing on stage!") is a standing call to action, not a description: it reads as
+            // a subtitle and the detail page supplies the prose.
             subtitle = card.textAt(TEASER_SELECTOR),
-            // Every night here is a hosted karaoke night — the venue programmes nothing else — so the
-            // type is asserted rather than inferred from a title that never says "karaoke".
+            // Every night is a hosted karaoke night — the venue programmes nothing else — so the type is
+            // asserted, not inferred from a title that never says "karaoke".
             eventType = EventType.PARTY.name,
             eventDate = eventDate,
             startTime = parseTime(card.textAt(TIME_SELECTOR)),
@@ -129,11 +123,9 @@ class MonsterRonsonsOverviewPageScraper(
     }
 
     /**
-     * Resolves the card's `Thu` / `6 Aug` pair into a full date.
-     *
-     * The weekday narrows the year: only a year whose `6 Aug` actually falls on a Thursday is
-     * eligible, and the nearest such year to today wins. A card whose weekday is missing or
-     * unrecognised still resolves — [inferYearForWeekday] then simply takes the nearest occurrence.
+     * Resolves `Thu` / `6 Aug` into a full date: only a year whose `6 Aug` falls on a Thursday is
+     * eligible, nearest to today wins. A missing or unrecognised weekday still resolves —
+     * [inferYearForWeekday] then takes the nearest occurrence.
      */
     private fun parseCardDate(card: Element): LocalDate? {
         val monthDay = parseMonthDay(card.textAt(DATE_SELECTOR)) ?: return null
@@ -141,7 +133,7 @@ class MonsterRonsonsOverviewPageScraper(
         return inferYearForWeekday(monthDay, weekday, clock)
     }
 
-    /** Parses the card's `6 Aug` / `16 Aug` day-and-month text into a [MonthDay]. */
+    /** Parses the card's `6 Aug` / `16 Aug` text into a [MonthDay]. */
     @Suppress("ReturnCount") // Null-safe early exits per date component are clearer than a let-chain
     private fun parseMonthDay(text: String?): MonthDay? {
         val match = DAY_MONTH_PATTERN.find(text?.trim().orEmpty()) ?: return null
@@ -151,12 +143,10 @@ class MonsterRonsonsOverviewPageScraper(
     }
 
     /**
-     * Extracts the night's host(s) from a `SING WITH <HOST>` title.
-     *
-     * The hosts are the only named performers the source publishes, and the title is where it
-     * publishes them. Titles that don't follow the pattern (`BOXHOPPING!`) name a format rather
-     * than a person and contribute no artists. Hosts are billed as [de.norm.events.event.ArtistRole.DJ]
-     * because they run the night from the booth rather than performing a set of their own.
+     * The night's host(s) from a `SING WITH <HOST>` title — the only named performers the source
+     * publishes. A title off the pattern (`BOXHOPPING!`) names a format, not a person, and yields
+     * no artists. Hosts are [de.norm.events.event.ArtistRole.DJ]: they run the night from the
+     * booth rather than performing a set.
      */
     private fun hostsFromTitle(title: String): List<ScrapedArtist> {
         val hosts = HOST_TITLE_PATTERN.find(title)?.groupValues?.get(1) ?: return emptyList()
@@ -178,8 +168,8 @@ class MonsterRonsonsOverviewPageScraper(
         private const val TITLE_SELECTOR = ".event-overview-hp-head"
 
         /**
-         * The card's link to its detail page; the poster and the "More" button share the same href.
-         * The value is quoted because Jsoup's attribute-prefix syntax needs it for a value containing `/`.
+         * The card's detail link; poster and "More" button share the href. Quoted because Jsoup's
+         * attribute-prefix syntax needs it for a value containing `/`.
          */
         private const val CARD_LINK_SELECTOR = """a[href^="/posts/"]"""
 
@@ -207,7 +197,7 @@ class MonsterRonsonsOverviewPageScraper(
         /** Matches the card's `6 Aug` day-and-month text. */
         private val DAY_MONTH_PATTERN = Regex("""(\d{1,2})\s+([A-Za-z]{3,})""")
 
-        /** Captures the host part of a `SING WITH <HOST>` title, including the `SING ON STAGE WITH` variant. */
+        /** The host part of a `SING WITH <HOST>` title, including the `SING ON STAGE WITH` variant. */
         private val HOST_TITLE_PATTERN = Regex("""^SING\s+(?:ON\s+STAGE\s+)?WITH\s+(.+)$""", RegexOption.IGNORE_CASE)
 
         /** Splits a co-hosted night's `A & B` host list. */
@@ -215,8 +205,8 @@ class MonsterRonsonsOverviewPageScraper(
 
         /**
          * English month abbreviations. The shared [de.norm.events.scraper.parseGermanMonthAbbreviation]
-         * covers the German spellings every other venue uses; this venue writes English throughout,
-         * and the two disagree on Mar/Mär, May/Mai, Oct/Okt and Dec/Dez.
+         * covers the German spellings every other venue uses; this venue writes English, and the two
+         * disagree on Mar/Mär, May/Mai, Oct/Okt and Dec/Dez.
          */
         private val ENGLISH_MONTH_ABBREVIATIONS: Map<String, Month> =
             mapOf(

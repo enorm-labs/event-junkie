@@ -21,19 +21,16 @@ import java.time.MonthDay
 /**
  * Pure HTML parser for Soda Club Berlin's `/events` listing (overview) page.
  *
- * The page groups the upcoming programme under German month headings, rendering every
- * night as a `.event-snippet` card: the flyer (`.thumbnail img`), a title link to the
- * `/de/events/<slug>` detail page (`h4.title a`), an optional `#tickets` button, and a
- * three-part calendar block (`.event-date-cal-weekday` / `-day` / `-month`) holding the
- * German weekday, the day of month, and the **abbreviated** month — but no year.
+ * Upcoming nights sit under German month headings as `.event-snippet` cards: flyer
+ * (`.thumbnail img`), title link to `/de/events/<slug>` (`h4.title a`), optional `#tickets`
+ * button, and a calendar block (`.event-date-cal-weekday` / `-day` / `-month`) with German
+ * weekday, day of month and **abbreviated** month — no year.
  *
- * The overview is the discovery list; [SodaDetailPageScraper] is the primary source for
- * every field (it carries a schema.org `MusicEvent` block with the full start date).
- * Each card is nonetheless parsed as completely as the listing allows, because
- * [SodaWebsiteImporter] falls back to this data whenever a detail page fails to fetch.
- * The missing year is inferred from the stated weekday via [inferYearForWeekday] — the
- * same approach the retro single-page scrapers use, and more robust than reading the
- * date out of the slug, which the venue spells inconsistently (`…-15-08-2026` on most
+ * The overview is the discovery list; [SodaDetailPageScraper] is primary for every field (its
+ * schema.org `MusicEvent` block has the full date). Each card is still parsed as completely as
+ * possible because [SodaWebsiteImporter] falls back to it when a detail page fails. The year is
+ * inferred from the weekday via [inferYearForWeekday] — as the retro single-page scrapers do,
+ * and more robust than the slug, which the venue spells inconsistently (`…-15-08-2026` on most
  * events, `…-150826` on others).
  *
  * @see SodaDetailPageScraper for the primary per-event data source.
@@ -41,16 +38,15 @@ import java.time.MonthDay
  * @see <a href="https://www.soda-berlin.de/events">Soda Club event listing</a>
  */
 class SodaOverviewPageScraper(
-    /** Clock for weekday-based year inference. Defaults to the system clock; override in tests for determinism. */
+    /** Clock for weekday-based year inference; override in tests. */
     private val clock: Clock = Clock.systemDefaultZone()
 ) {
     private val logger = KotlinLogging.logger {}
 
     /**
-     * Parses all event cards from the overview page document.
+     * Parses all event cards from the overview page.
      *
-     * @param baseUrl the URL the document was fetched from, used to resolve the relative
-     *   detail links and build `sourceId` values.
+     * @param baseUrl the URL the document was fetched from, for detail links and `sourceId` values.
      */
     fun scrape(
         document: Document,
@@ -71,9 +67,9 @@ class SodaOverviewPageScraper(
     }
 
     /**
-     * Parses a single `.event-snippet` card into a [ScrapedEvent], or `null` when it
-     * carries no title link or no resolvable date (the two fields the listing must supply
-     * for the event to stand on its own if its detail page is unavailable).
+     * Parses one `.event-snippet` card into a [ScrapedEvent], or `null` without a title link or
+     * resolvable date — the two fields the listing must supply for the event to stand alone
+     * without its detail page.
      */
     @Suppress("ReturnCount") // Guard clauses for the required link/title/date are clearer than nesting
     private fun parseSnippet(
@@ -99,9 +95,8 @@ class SodaOverviewPageScraper(
     }
 
     /**
-     * Assembles the date from the card's year-less calendar block — German weekday, day of
-     * month, and abbreviated month — inferring the year from the weekday via
-     * [inferYearForWeekday]. Returns `null` when the day or month cannot be read.
+     * The date from the year-less calendar block — German weekday, day, abbreviated month — with
+     * the year from the weekday via [inferYearForWeekday]. `null` when day or month is unreadable.
      */
     private fun parseCalendarDate(snippet: Element): LocalDate? {
         val day = snippet.textAt(".event-date-cal-day")?.toIntOrNull()
@@ -113,13 +108,10 @@ class SodaOverviewPageScraper(
 }
 
 /**
- * Extracts the event slug — the last path segment of a `/de/events/<slug>` detail URL —
- * used to build a stable [ScrapedEvent.sourceId].
- *
- * Read as the last segment rather than by stripping a fixed `/de/events/` prefix so the
- * same identity is produced no matter which language prefix the configured entry URL
- * leads to (`/de/events/…`, `/en/events/…`). The slug itself is the venue's stable key;
- * its embedded date is spelled inconsistently (`…-15-08-2026` vs `…-150826`) and is
- * therefore never parsed. Shared by the overview and detail scrapers.
+ * The event slug — last path segment of a `/de/events/<slug>` URL — for a stable
+ * [ScrapedEvent.sourceId]. Last segment rather than a stripped `/de/events/` prefix, so the
+ * identity is the same under any language prefix (`/de/events/…`, `/en/events/…`). The slug is
+ * the venue's stable key; its embedded date is spelled inconsistently (`…-15-08-2026` vs
+ * `…-150826`) and never parsed. Shared by both scrapers.
  */
 internal fun sodaEventSlug(url: String): String = URI(url).path.trimEnd('/').substringAfterLast('/')

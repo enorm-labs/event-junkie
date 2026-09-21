@@ -15,30 +15,28 @@ import java.net.URI
 import java.time.Clock
 
 /**
- * Shared fetch orchestration for the three rooms that Club der Visionäre lists on one
- * programme page (see [ClubDerVisionaereRoom]).
+ * Shared fetch orchestration for the three rooms Club der Visionäre lists on one programme
+ * page (see [ClubDerVisionaereRoom]).
  *
- * The pipeline is two requests per cycle: fetch the programme page via [HtmlFetcher] and
- * hand it to [ClubDerVisionaereProgrammePageScraper], which returns only the nights
- * belonging to this importer's [room]; then fetch the site's homepage, whose NEXT box is
- * the one place the venue prints a start time, and join those times onto the nights by
- * WordPress post id via [ClubDerVisionaereHomePageScraper]. There are no detail pages —
- * the listing is the whole programme. A homepage that cannot be fetched costs the nights
- * their time, not the import.
+ * Two requests per cycle: [HtmlFetcher] fetches the programme page and
+ * [ClubDerVisionaereProgrammePageScraper] returns only this importer's [room]; then the
+ * homepage, whose NEXT box is the one place the venue prints a start time, joined onto the
+ * nights by WordPress post id via [ClubDerVisionaereHomePageScraper]. No detail pages — the
+ * listing is the whole programme. An unfetchable homepage costs the nights their time, not the
+ * import.
  *
- * The WordPress REST API is not an option despite ADR-007's JSON-first preference: upcoming
- * nights are `future`-status posts, which `/wp-json/wp/v2/posts` omits from its listing and
- * 401s when asked for by id. The rendered page is the only source.
+ * The WordPress REST API is no option despite ADR-007's JSON-first preference: upcoming nights
+ * are `future`-status posts, which `/wp-json/wp/v2/posts` omits and 401s by id. The rendered
+ * page is the only source.
  *
- * Each room is a **separate bean and [EventSource]** rather than one importer serving
- * three source rows, because the rows cannot be told apart by URL: both hosts serve the
- * identical page, and the room lives only in a CSS class on the title. Keeping them
- * separate gives each venue its own `event_source` row, its own `sourceId` prefix and
- * its own import status, all from one parser.
+ * Each room is a **separate bean and [EventSource]**, not one importer serving three rows,
+ * because the rows cannot be told apart by URL: both hosts serve the identical page and the room
+ * lives only in a CSS class on the title. Separate rooms give each venue its own `event_source`
+ * row, `sourceId` prefix and import status, from one parser.
  *
- * Conditional requests are passed through as usual for the programme page, but the server
- * currently sends neither ETag nor Last-Modified, so every cycle is a full fetch; the
- * idempotent `sourceId` upsert absorbs that. The homepage is fetched unconditionally.
+ * Conditional requests pass through for the programme page, but the server sends neither ETag
+ * nor Last-Modified, so every cycle is a full fetch; the idempotent `sourceId` upsert absorbs
+ * that. The homepage is fetched unconditionally.
  *
  * @see ClubDerVisionaereProgrammePageScraper for the HTML parsing logic.
  * @see <a href="https://clubdervisionaere.com/programm/">Club der Visionäre programme</a>
@@ -80,9 +78,9 @@ abstract class AbstractClubDerVisionaereRoomImporter(
         }
 
     /**
-     * Joins the homepage's start times onto [events] by post id. A night the homepage does
-     * not list keeps no time — never a guess — and an unreachable homepage leaves every
-     * night without one, logged as a warning, since the programme itself imported fine.
+     * Joins the homepage's start times onto [events] by post id. A night the homepage does not
+     * list keeps no time — never a guess; an unreachable homepage leaves every night without one,
+     * logged as a warning, since the programme imported fine.
      */
     @Suppress("TooGenericExceptionCaught") // Intentional: the homepage is the clock, not the listing; degrade rather than fail.
     private suspend fun withStartTimes(
@@ -103,37 +101,34 @@ abstract class AbstractClubDerVisionaereRoomImporter(
 }
 
 /**
- * Website importer for Club der Visionäre itself — the `.cdvRed` nights on the shared
- * programme page. The open-air club runs in summer; in winter the page carries the boat's
- * programme instead and this source legitimately imports nothing.
+ * Club der Visionäre itself — the `.cdvRed` nights. The open-air club runs in summer; in winter
+ * the page carries the boat's programme and this source legitimately imports nothing.
  */
 @Component
 class ClubDerVisionaereWebsiteImporter(
     htmlFetcher: HtmlFetcher,
-    /** Clock for the parser's weekday-based year inference. Defaults to the system clock; override in tests. */
+    /** Clock for weekday-based year inference; override in tests. */
     clock: Clock = Clock.systemDefaultZone()
 ) : AbstractClubDerVisionaereRoomImporter(htmlFetcher, ClubDerVisionaereRoom.CLUB, clock)
 
 /**
- * Website importer for the Sonnenraum concert space — the `.sonnenraumYellow` nights on
- * the shared Club der Visionäre programme page.
+ * The Sonnenraum concert space — the `.sonnenraumYellow` nights on the shared page.
  */
 @Component
 class SonnenraumWebsiteImporter(
     htmlFetcher: HtmlFetcher,
-    /** Clock for the parser's weekday-based year inference. Defaults to the system clock; override in tests. */
+    /** Clock for weekday-based year inference; override in tests. */
     clock: Clock = Clock.systemDefaultZone()
 ) : AbstractClubDerVisionaereRoomImporter(htmlFetcher, ClubDerVisionaereRoom.SONNENRAUM, clock)
 
 /**
- * Website importer for the MS Hoppetosse boat — the `.hoppetosseYellow` nights on the
- * shared Club der Visionäre programme page (`hoppetosse.berlin/program/` serves the same
- * listing). The boat is the winter location, so this source imports nothing in summer.
+ * The MS Hoppetosse boat — the `.hoppetosseYellow` nights (`hoppetosse.berlin/program/` serves
+ * the same listing). The winter location, so this source imports nothing in summer.
  */
 @Component
 class MsHoppetosseWebsiteImporter(
     htmlFetcher: HtmlFetcher,
-    /** Clock for the parser's weekday-based year inference. Defaults to the system clock; override in tests. */
+    /** Clock for weekday-based year inference; override in tests. */
     clock: Clock = Clock.systemDefaultZone()
 ) : AbstractClubDerVisionaereRoomImporter(htmlFetcher, ClubDerVisionaereRoom.MS_HOPPETOSSE, clock)
 

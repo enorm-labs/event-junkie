@@ -7,26 +7,25 @@ import org.jsoup.nodes.Element
 import java.time.LocalTime
 
 /**
- * Pure HTML parser for the Club der Visionäre **homepage**, which is where the venue prints
- * the start time of each night — the programme page that [ClubDerVisionaereProgrammePageScraper]
- * reads prints the date alone.
+ * Pure HTML parser for the Club der Visionäre **homepage**, where the venue prints each night's
+ * start time — the programme page [ClubDerVisionaereProgrammePageScraper] reads prints the date
+ * alone.
  *
- * The homepage's `div#next` box repeats the upcoming nights as `div.theID[id^=post-]` blocks
- * carrying the same WordPress post id as their programme block, each with a `div#nextDate`
- * cell of the form `So. 13.9.   11:00 p.m.` — a twelve-hour clock with `a.m.` / `p.m.`. The
- * post id is the join key; the date is not read here because the programme already has it.
+ * The `div#next` box repeats the upcoming nights as `div.theID[id^=post-]` blocks with the same
+ * WordPress post id as their programme block, each with a `div#nextDate` cell like
+ * `So. 13.9.   11:00 p.m.` — twelve-hour clock with `a.m.` / `p.m.`. The post id is the join
+ * key; the date is not read because the programme already has it.
  *
- * The `div#today` box is deliberately skipped: it names the current night by title alone, with
- * no post id to join on, and that night carried its time while it stood in `#next` on the
- * previous cycles. The `#next` box showed ten nights when checked; nights further out than
- * that carry no time until they move into it.
+ * `div#today` is skipped: it names the current night by title alone, no post id, and that night
+ * carried its time while it stood in `#next` on earlier cycles. `#next` showed ten nights when
+ * checked; nights further out carry no time until they move into it.
  *
  * @see AbstractClubDerVisionaereRoomImporter for the join onto the programme's events.
  */
 class ClubDerVisionaereHomePageScraper {
     private val logger = KotlinLogging.logger {}
 
-    /** Reads the `#next` box into a map of post id (without the `post-` prefix) to start time. */
+    /** Reads the `#next` box into a map of post id (without `post-`) to start time. */
     fun scrape(document: Document): Map<String, LocalTime> {
         val blocks = document.select(NEXT_BLOCK_SELECTOR)
         val times =
@@ -44,7 +43,7 @@ class ClubDerVisionaereHomePageScraper {
         return time?.let { postId to it }
     }
 
-    /** `11:00 p.m.` → 23:00, `12:30 a.m.` → 00:30, `12:00 p.m.` → 12:00; null when the pattern is absent. */
+    /** `11:00 p.m.` → 23:00, `12:30 a.m.` → 00:30, `12:00 p.m.` → 12:00; null when absent. */
     private fun parseTwelveHourTime(text: String): LocalTime? {
         val match = TWELVE_HOUR_PATTERN.find(text) ?: return null
         val (hourText, minuteText, meridiem) = match.destructured

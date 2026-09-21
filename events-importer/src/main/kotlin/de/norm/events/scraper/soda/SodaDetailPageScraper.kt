@@ -26,22 +26,20 @@ import java.math.BigDecimal
 /**
  * Pure HTML parser for Soda Club Berlin event detail pages (`/de/events/<slug>`).
  *
- * Each page carries a `<script type="application/ld+json">` schema.org `MusicEvent`
- * block — the most stable source on the page (ADR-007 §"Selector Strategy" priority 1) —
- * supplying the start date and time, the flyer, the canonical URL, the event status, and
- * the online ticket offer. The rendered markup adds what the JSON-LD omits or truncates:
- * the clean `h1` title (the JSON-LD `name` appends the date and venue), the untruncated
- * prose blurb (`p.event-details`), and the labelled info boxes.
+ * Each page carries a `<script type="application/ld+json">` schema.org `MusicEvent` block —
+ * the most stable source (ADR-007 §"Selector Strategy" priority 1) — with start date and time,
+ * flyer, canonical URL, status and the online ticket offer. The markup adds what JSON-LD omits
+ * or truncates: the clean `h1` title (the JSON-LD `name` appends date and venue), the full
+ * blurb (`p.event-details`), and the labelled info boxes.
  *
- * Three quirks drive the parser:
- *  - the `Einlass` info box is an **age limit** ("Ab 18"), not a doors time — the venue
- *    publishes no doors time at all, so [ScrapedEvent.doorsTime] is always null;
- *  - the `Eintritt` box is the venue's admission price, which is a box-office price only when
- *    the page also shows the "Abendkasse verfügbar" badge; the JSON-LD offer is the shop's
- *    fee-inclusive figure and never a price column (see [parsePrices]);
- *  - the JSON-LD `performer` is always the placeholder `"Unbekannt"` and the `organizer`
- *    is the venue itself, so neither is read — every night is typed
- *    [PARTY][EventType.PARTY] and carries no artists or promoters.
+ * Three quirks:
+ * - the `Einlass` box is an **age limit** ("Ab 18"), not a doors time — the venue publishes
+ * none, so [ScrapedEvent.doorsTime] is always null;
+ * - the `Eintritt` box is the admission price, a box-office price only when the page also
+ * shows the "Abendkasse verfügbar" badge; the JSON-LD offer is the shop's fee-inclusive figure
+ * and never a price column (see [parsePrices]);
+ * - the JSON-LD `performer` is always `"Unbekannt"` and the `organizer` the venue itself, so
+ * neither is read — every night is [PARTY][EventType.PARTY] with no artists or promoters.
  *
  * @see SodaOverviewPageScraper for overview parsing (discovery, year-less date fallback).
  * @see SodaWebsiteImporter for the HTTP fetch orchestrator.
@@ -53,11 +51,9 @@ class SodaDetailPageScraper {
     private val jsonMapper: JsonMapper = JsonMapper.builder().build()
 
     /**
-     * Parses an event detail page into a [ScrapedEvent], or `null` when the page has no
-     * event title (an unexpected structure).
+     * Parses a detail page into a [ScrapedEvent], or `null` without an event title.
      *
-     * @param sourceUrl the event's URL, used as [ScrapedEvent.sourceUrl] and to derive the
-     *   [ScrapedEvent.sourceId].
+     * @param sourceUrl the event's URL: [ScrapedEvent.sourceUrl] and the [ScrapedEvent.sourceId].
      */
     @Suppress("ReturnCount") // Guard clause for the missing title is clearer than nesting
     fun scrape(
@@ -88,7 +84,7 @@ class SodaDetailPageScraper {
             // Soda is a discotheque: every listing is a resident club night, never a billed act.
             eventType = EventType.PARTY.name,
             eventDate = startDate?.let { parseIsoDate(it) } ?: UNRESOLVED_EVENT_DATE,
-            // The venue publishes no doors time — the "Einlass" box states an age limit.
+            // No doors time — the "Einlass" box states an age limit.
             startTime = startDate?.let { parseIsoTime(it) } ?: parseTime(infoBoxValue(content, "Beginn")?.take(HH_MM_LENGTH)),
             imageUrl = jsonLd?.stringOrNull("image") ?: content.imgSrcAt("img.event-preview-image"),
             sourceUrl = sourceUrl,
@@ -98,11 +94,11 @@ class SodaDetailPageScraper {
             priceBoxOffice = prices.boxOffice,
             priceNote = prices.note,
             soldOut = isSoldOut(offers),
-            // A €0 admission is the venue's free-entry marker; keep it explicit so it survives
-            // even when the price itself is not stored as a box-office price.
+            // A €0 admission is the free-entry marker; keep it explicit even when the price is not
+            // stored as a box-office price.
             free = prices.admission?.signum() == 0,
-            // The schema.org URL uses `EventScheduled` / `EventCancelled` / `EventPostponed`,
-            // whose keywords parseEventStatus already recognizes.
+            // The schema.org URL uses `EventScheduled` / `EventCancelled` / `EventPostponed`, whose
+            // keywords parseEventStatus already recognizes.
             status = parseEventStatus(jsonLd?.stringOrNull("eventStatus").orEmpty())
         )
     }
@@ -110,21 +106,19 @@ class SodaDetailPageScraper {
     /**
      * Splits the page's pricing into presale, box office, a note, and the raw admission.
      *
-     * The `Eintritt` info box states the venue's **admission** price and is the only price
-     * the venue itself names, so it fills both price columns. The "Abendkasse verfügbar"
-     * badge states whether it can be paid at the door: the admission becomes the box-office
-     * price only when that badge is present — an open air that sells online only (no badge)
-     * would otherwise be recorded as having a door price it does not offer. It becomes the
-     * presale price when the page sells online, or when it names no other price at all.
+     * The `Eintritt` box is the **admission** price, the only price the venue names, so it fills
+     * both columns. The "Abendkasse verfügbar" badge says whether the door takes it: admission is
+     * the box-office price only with that badge — an online-only open air would otherwise get a
+     * door price it does not offer. It is the presale price when the page sells online, or when
+     * it names no other price.
      *
-     * The JSON-LD offer carries the shop's price, which includes the booking fee and so
-     * sits above the admission by a margin the shop sets (15,43 € vs. "15 €", 27,17 € vs.
-     * "25 €"). Stored as the presale price it told a visitor that buying ahead costs more
-     * than the door (#1583), so it is kept out of the price columns and named in the note
-     * instead, where the detail page shows it under the two prices.
+     * The JSON-LD offer is the shop's price with booking fee, above the admission by a margin the
+     * shop sets (15,43 € vs. "15 €", 27,17 € vs. "25 €"). Stored as presale it told a visitor that
+     * buying ahead costs more than the door (#1583), so it stays out of the price columns and goes
+     * in the note, where the detail page shows it under the two prices.
      *
-     * The raw admission price is returned alongside so the caller can read a €0 admission
-     * as the free-entry marker it is, independently of which slot it landed in.
+     * The raw admission is returned too so the caller can read a €0 admission as the free-entry
+     * marker, independently of which slot it landed in.
      */
     private fun parsePrices(
         content: Element,
@@ -145,7 +139,7 @@ class SodaDetailPageScraper {
         )
     }
 
-    /** The page's prices, split by where each one belongs on the stored row. */
+    /** The page's prices, split by where each belongs on the stored row. */
     private data class Prices(
         val presale: BigDecimal?,
         val boxOffice: BigDecimal?,
@@ -154,18 +148,17 @@ class SodaDetailPageScraper {
     )
 
     /**
-     * Whether every ticket the page offers is marked `schema.org/SoldOut`. An event with no
-     * offers at all is never sold out — it simply sells no tickets online (the free resident
-     * nights), so an empty list must not collapse to `all { … } == true`.
+     * Whether every offered ticket is `schema.org/SoldOut`. An event with no offers is never sold
+     * out — it sells nothing online (the free resident nights), so an empty list must not collapse
+     * to `all { … } == true`.
      */
     private fun isSoldOut(offers: List<JsonNode>): Boolean =
         offers.isNotEmpty() &&
             offers.all { it.stringOrNull("availability")?.contains("soldout", ignoreCase = true) == true }
 
     /**
-     * Reads the value of the info box carrying [label] (e.g. `"Beginn"` → `"22:00 Uhr"`,
-     * `"Eintritt"` → `"15 €"`), or `null` when the page shows no such box. Each box pairs a
-     * `h4.title` value with a `p.description` label.
+     * The value of the info box carrying [label] (`"Beginn"` → `"22:00 Uhr"`, `"Eintritt"` →
+     * `"15 €"`), or `null`. Each box pairs a `h4.title` value with a `p.description` label.
      */
     private fun infoBoxValue(
         content: Element,
@@ -177,10 +170,9 @@ class SodaDetailPageScraper {
             ?.textAt("h4.title")
 
     /**
-     * Extracts the event blurb from `p.event-details`, keeping its `<br>`-delimited lines as
-     * separate lines instead of the whitespace-flattened `.text()`. Returns `null` when the
-     * page carries no blurb, letting the caller fall back to the (truncated) JSON-LD
-     * description.
+     * The blurb from `p.event-details`, keeping its `<br>`-delimited lines instead of the
+     * flattened `.text()`. `null` without a blurb, so the caller falls back to the truncated
+     * JSON-LD description.
      */
     private fun parseDescription(content: Element): String? =
         content
@@ -189,9 +181,8 @@ class SodaDetailPageScraper {
             .takeIf { it.isNotBlank() }
 
     /**
-     * Parses the page's JSON-LD blocks and returns the schema.org `MusicEvent` object node,
-     * or `null` when there is none or none can be parsed. Soda wraps the block in an array,
-     * so array elements are unwrapped before matching on the decoded `@type`.
+     * The schema.org `MusicEvent` object node from the page's JSON-LD, or `null`. Soda wraps the
+     * block in an array, unwrapped before matching on the decoded `@type`.
      */
     @Suppress("TooGenericExceptionCaught") // A malformed block must degrade to null, never abort the import
     private fun parseMusicEventNode(document: Document): JsonNode? =
@@ -213,17 +204,17 @@ class SodaDetailPageScraper {
         /** The schema.org `@type` Soda uses for every event. */
         private const val MUSIC_EVENT_TYPE = "MusicEvent"
 
-        /** Renders `15.43` as the German `15,43 €` the venue's own pages print. */
+        /** Renders `15.43` as the German `15,43 €` the venue's pages print. */
         private fun formatEuro(amount: BigDecimal): String = "${amount.setScale(2).toPlainString().replace('.', ',')} €"
     }
 }
 
 /**
- * Strips the `" - <D. Month YYYY> - <venue>"` tail the JSON-LD `name` appends to the event
- * title ("Halloween in der Kulturbrauerei - Samstag - 31. Oktober 2026 - Soda Club Berlin"
- * → "Halloween in der Kulturbrauerei - Samstag"). Anchored on the German date, so a title
- * that legitimately contains " - " keeps it. Only used as the fallback when the page has no
- * `h1`; returns the input unchanged when the tail is absent or stripping would leave nothing.
+ * Strips the `" - <D. Month YYYY> - <venue>"` tail the JSON-LD `name` appends ("Halloween in
+ * der Kulturbrauerei - Samstag - 31. Oktober 2026 - Soda Club Berlin" → "Halloween in der
+ * Kulturbrauerei - Samstag"). Anchored on the German date, so a title containing " - " keeps
+ * it. Fallback when the page has no `h1`; unchanged when the tail is absent or stripping
+ * would leave nothing.
  */
 private fun stripNameSuffix(name: String): String {
     val stripped = name.replace(NAME_DATE_SUFFIX, "").trim()
