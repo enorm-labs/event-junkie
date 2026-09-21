@@ -61,6 +61,20 @@ internal object ScrapeFailureReason {
  * `event_source.last_error`, which is where you look once an alert has told you where to look.
  */
 internal fun scrapeFailureReason(error: Throwable): String =
+    causeChain(error).map(::classify).firstOrNull { it != ScrapeFailureReason.OTHER } ?: ScrapeFailureReason.OTHER
+
+/**
+ * [error] first, then each cause, bounded and cycle-safe. `WebClient` wraps every transport failure
+ * in a `WebClientRequestException`, which is none of the classes below: a name that did not resolve
+ * reached the `when` as that wrapper and was counted as `other`, and the `dns` branch never fired
+ * on the cluster — found by pointing a source at a host that cannot exist (#708).
+ */
+private fun causeChain(error: Throwable): Sequence<Throwable> {
+    val seen = mutableSetOf<Throwable>()
+    return generateSequence(error) { it.cause }.takeWhile { seen.add(it) }.take(MAX_CAUSE_DEPTH)
+}
+
+private fun classify(error: Throwable): String =
     when (error) {
         // Its own reason for the same purpose as `http_forbidden`: a policy answer, not a parse
         // failure, and no amount of scraper work fixes it. Merging the two hides the one case where
@@ -92,7 +106,9 @@ internal fun scrapeFailureReason(error: Throwable): String =
             ScrapeFailureReason.DNS
         }
 
-        is TimeoutException -> {
+        // Netty's timeouts are not `java.util.concurrent.TimeoutException`; a read timeout on a
+        // venue's socket is the same outcome and the same reason.
+        is TimeoutException, is io.netty.handler.timeout.TimeoutException -> {
             ScrapeFailureReason.TIMEOUT
         }
 
@@ -112,6 +128,7 @@ internal fun scrapeFailureReason(error: Throwable): String =
         }
     }
 
+private const val MAX_CAUSE_DEPTH = 8
 private const val HTTP_FORBIDDEN = 403
 private const val HTTP_TOO_MANY_REQUESTS = 429
 private val CLIENT_ERRORS = 400..499

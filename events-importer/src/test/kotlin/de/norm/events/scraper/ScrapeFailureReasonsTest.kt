@@ -68,6 +68,34 @@ class ScrapeFailureReasonsTest {
             scrapeFailureReason(IOException("connection reset")) shouldBe "network"
             scrapeFailureReason(UnknownHostException("venue.example")) shouldBe "dns"
         }
+
+        /**
+         * What the import pipeline actually catches: `WebClient` wraps the transport failure, so the
+         * cause is where the class lives. Staging counted a host that cannot exist as `other` (#708).
+         */
+        @Test
+        fun `a transport failure wrapped by WebClient is classified by its cause`() {
+            scrapeFailureReason(wrapped(UnknownHostException("Failed to resolve 'venue.example' [A(1)]"))) shouldBe "dns"
+            scrapeFailureReason(wrapped(java.net.ConnectException("Connection refused"))) shouldBe "network"
+            scrapeFailureReason(wrapped(io.netty.handler.timeout.ReadTimeoutException.INSTANCE)) shouldBe "timeout"
+            scrapeFailureReason(wrapped(RuntimeException("nothing known"))) shouldBe "other"
+        }
+
+        @Test
+        fun `a cause chain that loops still terminates`() {
+            val a = RuntimeException("a")
+            val b = RuntimeException("b", a)
+            a.initCause(b)
+            scrapeFailureReason(a) shouldBe "other"
+        }
+
+        private fun wrapped(cause: Throwable) =
+            org.springframework.web.reactive.function.client.WebClientRequestException(
+                cause,
+                org.springframework.http.HttpMethod.GET,
+                java.net.URI.create("https://venue.example/events"),
+                org.springframework.http.HttpHeaders.EMPTY
+            )
     }
 
     @Nested
