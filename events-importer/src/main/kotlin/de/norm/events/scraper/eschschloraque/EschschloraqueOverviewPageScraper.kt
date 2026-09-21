@@ -129,7 +129,7 @@ class EschschloraqueOverviewPageScraper {
     /**
      * The doors and the start, from the one structured time and the prose (#318). The date field
      * carries one time; where a night has two, only the description says so — `Einlass: 19:00 /
-     * Beginn: 19:30`, `Doors: / Starts:`, `DJs ab 21 Uhr, Showtime ab 22 Uhr`. **Prose fills, it
+     * Beginn: 19:30`, `Doors: / Starts:`, `DJs ab 21 Uhr, Showtime ab 22 Uhr`, `ab 21uhr SHOWTIME 22uhr`. **Prose fills, it
      * never overrides**: the structured time keeps its value, and a labelled pair that names it
      * decides which of the two it is, the other value filling the empty slot. A pair naming neither
      * leaves the structured time as the start and fills the doors only from before it. One time
@@ -139,8 +139,9 @@ class EschschloraqueOverviewPageScraper {
         structured: LocalTime,
         prose: String
     ): Pair<LocalTime?, LocalTime?> {
-        val proseDoors = proseTime(prose, DOORS_LABELS)
         val proseStart = proseTime(prose, START_LABELS)
+        // A bare `ab 21uhr` beside a labelled show start is the doors; alone it is the one time the venue announces.
+        val proseDoors = proseTime(prose, DOORS_LABELS) ?: proseStart?.let { proseTime(prose, BARE_AB) }
         return when {
             proseDoors == null && proseStart == null -> null to structured
             proseDoors == structured -> structured to (proseStart ?: structured)
@@ -275,6 +276,9 @@ class EschschloraqueOverviewPageScraper {
 
         /** The doors as the prose labels them, in both of the venue's languages. */
         val DOORS_LABELS = Regex("""\b(?:einlass|doors?|djs)$CLOCK""", RegexOption.IGNORE_CASE)
+
+        /** The unlabelled `ab HH Uhr` the venue writes before a `SHOWTIME`; read only beside a labelled start. */
+        val BARE_AB = Regex("""\bab$CLOCK""", RegexOption.IGNORE_CASE)
 
         /** The start as the prose labels it; `Showtime` is the venue's word for a show's start after the DJs. */
         val START_LABELS = Regex("""\b(?:beginn|starts?|start|showtime)$CLOCK""", RegexOption.IGNORE_CASE)
