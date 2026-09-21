@@ -14,12 +14,9 @@ import org.springframework.stereotype.Component
 /**
  * Website importer for Frannz Club Berlin's WordPress homepage event listing.
  *
- * Frannz renders all upcoming events server-side on a single page with full
- * details inline (times, prices, promoter, image, description) — no separate
- * detail-page fetching is needed. The pipeline is:
- * 1. Fetch the overview page (`/`) via [HtmlFetcher] with conditional request
- *    support (ETag / Last-Modified).
- * 2. Parse all events from the single page via [FrannzOverviewPageScraper].
+ * All upcoming events render server-side on one page with full details inline (times, prices,
+ * promoter, image, description) — no detail-page fetch: [HtmlFetcher] fetches `/`
+ * conditionally (ETag / Last-Modified), [FrannzOverviewPageScraper] parses it.
  *
  * @see FrannzOverviewPageScraper for the HTML parsing logic.
  * @see <a href="https://frannz.eu/">Frannz Club Berlin</a>

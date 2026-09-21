@@ -15,15 +15,14 @@ import java.time.Clock
 /**
  * Website importer for Arcanoa Berlin's 1990s `veranst.htm` programme page.
  *
- * The venue's whole programme — currently three months — lives on that one hand-coded page
- * with no per-event detail pages, so the pipeline is a single fetch:
- * 1. Fetch `veranst.htm` via [HtmlFetcher] with conditional-request support. The host is one
- *    of the few that still serves a strong `ETag` *and* a `Last-Modified`, and the page only
- *    changes when the programme is edited, so 304s are both reliable and frequent here.
- * 2. Parse every dated programme line via [ArcanoaOverviewPageScraper].
+ * The whole programme — currently three months — is one hand-coded page with no detail pages,
+ * so a single fetch: [HtmlFetcher] fetches `veranst.htm` conditionally — the host is one of the
+ * few still serving a strong `ETag` *and* a `Last-Modified`, and the page changes only when
+ * the programme is edited, so 304s are reliable and frequent — and
+ * [ArcanoaOverviewPageScraper] parses every dated line.
  *
- * The configured source URL must point at `veranst.htm`; the site's `index.htm` is a frameset
- * landing page carrying no event data.
+ * The configured source URL must point at `veranst.htm`; `index.htm` is a frameset landing
+ * page with no event data.
  *
  * @see ArcanoaOverviewPageScraper for the HTML parsing logic.
  * @see <a href="https://www.ssi-media.com/arcanoa/veranst.htm">Arcanoa programme</a>
@@ -31,7 +30,7 @@ import java.time.Clock
 @Component
 class ArcanoaWebsiteImporter(
     private val htmlFetcher: HtmlFetcher,
-    /** Clock for the scraper's weekday-based year inference. Defaults to the system clock; override in tests. */
+    /** Clock for the scraper's weekday-based year inference; override in tests. */
     clock: Clock = Clock.systemDefaultZone()
 ) : EventImporter {
     private val logger = KotlinLogging.logger {}

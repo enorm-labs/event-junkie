@@ -22,21 +22,18 @@ import org.jsoup.nodes.Element
  * Pure HTML parser for the Citadel Music Festival's `/events` listing — the programme of the
  * open-air concert series in the Zitadelle Spandau.
  *
- * The site is WordPress with the Events Manager plugin, but the grid is a hand-written child-theme
- * template rather than the plugin's own markup, so each event is one `article.cmf-card` carrying
- * everything the listing needs: an `h3.cmf-title`, a machine-readable `time[datetime]`, a
- * `.cmf-time` start, a `data-status` badge, and a link to `/event/<YYYY-MM-DD-slug>`. The
- * programme is a summer season — under a dozen dates — and is rendered in full with no pagination.
+ * WordPress with the Events Manager plugin, but the grid is a hand-written child-theme template,
+ * so each event is one `article.cmf-card` with everything the listing needs: an `h3.cmf-title`,
+ * a machine-readable `time[datetime]`, a `.cmf-time` start, a `data-status` badge, and a link to
+ * `/event/<YYYY-MM-DD-slug>`. A summer season — under a dozen dates — rendered in full, no pagination.
  *
- * The plugin's `event` post type is **not** exposed through the WordPress REST API (only `post`,
- * `page` and `attachment` are), so despite the JSON-first preference of ADR-007 there is no API to
- * read and this parses the HTML.
+ * The plugin's `event` post type is **not** on the WordPress REST API (only `post`, `page` and
+ * `attachment` are), so despite ADR-007's JSON-first preference there is no API and this parses HTML.
  *
- * Two details are worth knowing. Each card's `aria-label` ends "– Ausverkauft" **on every event
- * regardless of its actual state**, a broken template string; the `data-status` attribute is the
- * one that tracks reality and is what this reads. And the poster is set as a CSS custom property
- * (`style="--bg: url('…')"`) rather than an `<img>`, so it has to be read out of the inline style —
- * a presentational source used only because the listing offers no other.
+ * Each card's `aria-label` ends "– Ausverkauft" **on every event regardless of state**, a broken
+ * template string; `data-status` tracks reality and is what this reads. The poster is a CSS
+ * custom property (`style="--bg: url('…')"`) rather than an `<img>`, read out of the inline
+ * style — a presentational source used only because the listing offers no other.
  *
  * @see ZitadelleDetailPageScraper for the detail pages (doors, description, tickets, presenters).
  * @see ZitadelleWebsiteImporter for the HTTP fetch orchestrator.
@@ -47,7 +44,7 @@ class ZitadelleOverviewPageScraper {
     /**
      * Parses every card on the listing page.
      *
-     * @param baseUrl the URL the document was fetched from, used to resolve detail links.
+     * @param baseUrl the URL the document was fetched from, for resolving detail links.
      */
     fun scrape(
         document: Document,
@@ -67,7 +64,7 @@ class ZitadelleOverviewPageScraper {
         }
     }
 
-    /** Parses a single card into a [ScrapedEvent], or `null` when it has no link or title. */
+    /** Parses one card into a [ScrapedEvent], or `null` without a link or title. */
     @Suppress("ReturnCount") // Guard clauses for the required href/title are clearer than nesting
     private fun parseCard(
         card: Element,
@@ -100,12 +97,10 @@ class ZitadelleOverviewPageScraper {
     }
 
     /**
-     * The card's scheduling status.
-     *
-     * A relocated show carries **both** the `Abgesagt` badge and a separate `.status` marker
-     * reading `Verlegt`; the marker is the more specific of the two and wins, because the show is
-     * not off — it moved house. The detail page states the same thing more fully and overrides this
-     * at the merge.
+     * The card's scheduling status. A relocated show carries **both** the `Abgesagt` badge and a
+     * separate `.status` marker reading `Verlegt`; the marker is more specific and wins, because
+     * the show is not off — it moved house. The detail page states it more fully and overrides at
+     * the merge.
      */
     private fun parseCardStatus(
         card: Element,
@@ -119,12 +114,12 @@ class ZitadelleOverviewPageScraper {
 }
 
 /**
- * Reads the poster URL out of an inline `style="--bg: url('…')"` custom property, the only place
- * the listing carries one. Returns `null` when the attribute is absent or holds no `url(…)`.
+ * The poster URL out of an inline `style="--bg: url('…')"` custom property, the only place the
+ * listing carries one. `null` when absent or without a `url(…)`.
  */
 internal fun parseBackgroundImageUrl(style: String?): String? = BACKGROUND_URL_PATTERN.find(style.orEmpty())?.groupValues?.get(1)
 
-/** Matches the URL inside a CSS `url('…')` value, with or without quotes. */
+/** The URL inside a CSS `url('…')` value, with or without quotes. */
 private val BACKGROUND_URL_PATTERN = Regex("""url\(\s*['"]?([^'")]+)['"]?\s*\)""")
 
 /** The `data-status` badge marking a sold-out date; captured as the flag, not as a status. */

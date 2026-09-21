@@ -19,14 +19,13 @@ import java.time.LocalTime
 /**
  * Pure HTML parser for a Urania `/event/<slug>/` page.
  *
- * The page restates everything the calendar shows and adds the three things it cannot: the poster,
- * the full prose, and the admission line at the foot of that prose
- * (`"Eintritt: 8 €, ermäßigt: 5 €, Mitglieder: 3 €"`, or `"Eintritt frei"`).
+ * Restates everything the calendar shows and adds what it cannot: the poster, the full prose,
+ * and the admission line at the foot of that prose (`"Eintritt: 8 €, ermäßigt: 5 €,
+ * Mitglieder: 3 €"`, or `"Eintritt frei"`).
  *
- * Two details are specific to this template. The poster is **lazy-loaded**, so its URL is in
- * `data-src` and never in `src` — reading `src` yields nothing. And the page opens with an `h2`
- * intro summarising the evening, which is not repeated in the body, so it is kept at the head of
- * the description rather than dropped.
+ * The poster is **lazy-loaded**, so its URL is in `data-src` and never `src`. The page opens
+ * with an `h2` intro summarising the evening, not repeated in the body, so it is kept at the
+ * head of the description rather than dropped.
  *
  * @see UraniaCalendarPageScraper for the calendar (discovery, date, start time).
  * @see UraniaWebsiteImporter for the HTTP fetch orchestrator.
@@ -35,10 +34,10 @@ class UraniaEventPageScraper {
     private val logger = KotlinLogging.logger {}
 
     /**
-     * Parses an event page into a [ScrapedEvent], or `null` when it carries no heading — the marker
-     * that the request did not return a real event page.
+     * Parses an event page into a [ScrapedEvent], or `null` without a heading — the marker that
+     * the request did not return a real event page.
      *
-     * @param sourceUrl the event's URL, used as [ScrapedEvent.sourceUrl] and for its `sourceId`.
+     * @param sourceUrl the event's URL: [ScrapedEvent.sourceUrl] and its `sourceId`.
      */
     @Suppress("ReturnCount") // A guard clause for the missing heading is clearer than nesting
     fun scrape(
@@ -75,18 +74,16 @@ class UraniaEventPageScraper {
         )
     }
 
-    /** Reads the date out of the page's `"Do, 03.09.2026 | 19:30 Uhr"` line. */
+    /** The date out of the page's `"Do, 03.09.2026 | 19:30 Uhr"` line. */
     private fun parseDateLine(line: String?): LocalDate? = parseGermanDate(DOTTED_DATE.find(line.orEmpty())?.value)
 
-    /** Reads the clock out of the same line. */
+    /** The clock out of the same line. */
     private fun parseTimeLine(line: String?): LocalTime? = parseTime(CLOCK.find(line.orEmpty())?.value)
 }
 
 /**
- * The venue's admission line, taken from the foot of the prose where it states one.
- *
- * The line is matched on the `Eintritt` label rather than on a euro sign, so `"Eintritt frei"` —
- * which carries no figure — is captured too and can drive the free-entry flag.
+ * The admission line from the foot of the prose, matched on the `Eintritt` label rather than a
+ * euro sign, so `"Eintritt frei"` — no figure — is captured too and can drive the free-entry flag.
  */
 internal fun admissionLineOf(body: String?): String? =
     ADMISSION_LINE

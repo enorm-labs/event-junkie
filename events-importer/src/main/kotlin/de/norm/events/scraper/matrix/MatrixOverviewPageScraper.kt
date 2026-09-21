@@ -23,25 +23,25 @@ import java.time.format.DateTimeParseException
 /**
  * Pure HTML parser for a single Matrix `/party-in-berlin/` month page.
  *
- * Every night of the month is one `div.toggled-item` whose `id` is a machine-readable `DD-MM-YYYY`
- * date — both the event date and the in-page anchor. The block's `.toggle-review` half (the expanded
+ * Every night is one `div.toggled-item` whose `id` is a machine-readable `DD-MM-YYYY` date —
+ * both the event date and the in-page anchor. The `.toggle-review` half (the expanded
  * "Details" view, rendered server-side even while collapsed) carries the full record; the
- * `.toggle-preview` half only repeats it with a CSS-truncated blurb and is therefore ignored:
- * - `p.text-sm` — `"Samstag 01.08.2026 | 22:00Uhr"`, read for the start time only (the date comes
- *   from the `id`);
+ * `.toggle-preview` half repeats it with a CSS-truncated blurb and is ignored:
+ * - `p.text-sm` — `"Samstag 01.08.2026 | 22:00Uhr"`, read for the start time only (the date
+ * comes from the `id`);
  * - `p.text-lg strong` — the title, always the resident night's name (`"Matrix - Saturday"`);
  * - `li:has(i.fa-music) > span.d-block` — the `•`-separated genre list, rejoined with commas so
- *   `GenreNormalizer` (which does not treat `•` as a delimiter) can tokenize it;
+ * `GenreNormalizer` (which does not treat `•` as a delimiter) can tokenize it;
  * - `li:has(i.fa-star) > span.d-block` — an optional starred promo line, stored as the subtitle;
- * - the first unlabelled `<p>` — the prose blurb, read as its `<br>`-delimited lines so the
- *   `► Entry :` price block below can be found by line rather than in one flattened run of text;
+ * - the first unlabelled `<p>` — the blurb, read as `<br>`-delimited lines so the `► Entry :`
+ * price block below can be found by line rather than in one flattened run;
  * - `DJs:` and `Specials:` — labelled lists holding the lineup.
  *
- * Every event is typed [EventType.PARTY]: Matrix runs a DJ dance night daily, so the title is the
- * night's name and is never minted as an artist — the performers come from the `DJs:`/`Specials:`
- * lists instead. The `Floors:` list is deliberately not read: it names the rooms open that night but
- * the markup never says which DJ plays which floor (the orders do not correspond), so there is
- * nothing to put in [ScrapedArtist.stage] without guessing.
+ * Every event is [EventType.PARTY]: Matrix runs a DJ dance night daily, so the title is the
+ * night's name and never an artist — performers come from the `DJs:`/`Specials:` lists. The
+ * `Floors:` list is not read: it names the rooms open that night but the markup never says
+ * which DJ plays which floor (the orders do not correspond), so nothing goes in
+ * [ScrapedArtist.stage] without guessing.
  *
  * @see MatrixWebsiteImporter for the fetch orchestration (entry page → next month → …).
  */
@@ -51,11 +51,11 @@ class MatrixOverviewPageScraper {
     /**
      * Parses all nights from one month page.
      *
-     * @param baseUrl the URL the document was fetched from, used to rebuild each event's canonical
-     *   month-page URL (see [monthPageUrl]).
+     * @param baseUrl the URL the document was fetched from, for rebuilding each event's canonical
+     * month-page URL (see [monthPageUrl]).
      * @return one [ScrapedEvent] per night with a parseable date and title. The current-month page
-     *   lists only the days still to come, so no past-date filtering is needed here; anything that
-     *   does slip through is dropped centrally at persistence time (`EventUpsertService`).
+     * lists only the days still to come, so no past-date filtering here; anything slipping through
+     * is dropped centrally at persistence (`EventUpsertService`).
      */
     fun scrape(
         document: Document,
@@ -117,7 +117,7 @@ class MatrixOverviewPageScraper {
         )
     }
 
-    /** Parses the block's `DD-MM-YYYY` `id`, returning null when it is absent or not a date. */
+    /** Parses the block's `DD-MM-YYYY` `id`, null when absent or not a date. */
     private fun parseAnchorDate(anchor: String?): LocalDate? {
         if (anchor.isNullOrBlank()) return null
         return try {
@@ -127,14 +127,13 @@ class MatrixOverviewPageScraper {
         }
     }
 
-    /** Reads the `HH:mm` out of the `"Samstag 01.08.2026 | 22:00Uhr"` header line. */
+    /** The `HH:mm` out of the `"Samstag 01.08.2026 | 22:00Uhr"` header line. */
     private fun parseStartTime(headerLine: String?): LocalTime? = parseTime(headerLine?.let { TIME_PATTERN.find(it)?.value })
 
     /**
-     * The `•`-separated genre list rejoined with commas.
-     *
-     * `GenreNormalizer` splits on commas and slashes but not on the bullet the venue renders, so
-     * handing it the raw run would produce one giant "afrobeats • house • top40" tag instead of three.
+     * The `•`-separated genre list rejoined with commas. `GenreNormalizer` splits on commas and
+     * slashes but not the venue's bullet, so the raw run would be one giant "afrobeats • house •
+     * top40" tag instead of three.
      */
     private fun parseGenre(review: Element): String? =
         review
@@ -146,10 +145,9 @@ class MatrixOverviewPageScraper {
             ?.joinToString(", ")
 
     /**
-     * The night's lineup: the `DJs:` list as [DJ][de.norm.events.event.ArtistRole.DJ] entries, then
-     * the `Specials:` list (an MC or guest billed on top of the residents) as
-     * [SUPPORT][de.norm.events.event.ArtistRole.SUPPORT]. Duplicates across the two lists collapse to
-     * the first billing.
+     * The lineup: the `DJs:` list as [DJ][de.norm.events.event.ArtistRole.DJ], then `Specials:` (an
+     * MC or guest billed on top of the residents) as [SUPPORT][de.norm.events.event.ArtistRole.SUPPORT].
+     * Duplicates across the two lists collapse to the first billing.
      */
     private fun parseLineup(review: Element): List<ScrapedArtist> {
         val djs = performerNames(review, DJS_LABEL).map { ScrapedArtist(name = it, role = "DJ") }
@@ -158,11 +156,9 @@ class MatrixOverviewPageScraper {
     }
 
     /**
-     * Reads the act names out of the `<ul>` that follows the `<p><strong>[label]:</strong></p>`
-     * heading.
-     *
-     * Each `<li>` reads as `"<name> <small>(<label/affiliation>)</small> • <genre> • <genre>"`, so the
-     * parenthesized `<small>` and the trailing genre run are dropped before the remainder is split
+     * The act names out of the `<ul>` following the `<p><strong>[label]:</strong></p>` heading.
+     * Each `<li>` reads `"<name> <small>(<label/affiliation>)</small> • <genre> • <genre>"`, so the
+     * parenthesized `<small>` and the trailing genre run are dropped before the remainder splits
      * into acts — `"DJ JC & DJ GUS"` is two residents, while an alias in round brackets
      * (`"KORE (Eg0 B2B Kopolookoo)"`) survives as one.
      */
@@ -193,20 +189,20 @@ class MatrixOverviewPageScraper {
     }
 
     /**
-     * Reads the door prices out of the blurb's `► Entry :` block: a bare `Entry`/`Eintritt` heading
-     * line followed by one priced line per admission tier (`"10,00 € Ladies"`, `"12,00 € Gents"`).
+     * The door prices from the blurb's `► Entry :` block: a bare `Entry`/`Eintritt` heading line,
+     * then one priced line per admission tier (`"10,00 € Ladies"`, `"12,00 € Gents"`).
      *
-     * The venue prices by tier rather than by sales channel, so the tiers are kept verbatim in the
-     * price note and the **lowest** of them becomes the box-office price — the "from" figure. There
-     * is no presale: Matrix sells no advance tickets, only table reservations.
+     * The venue prices by tier, not sales channel, so the tiers stay verbatim in the price note and
+     * the **lowest** becomes the box-office price — the "from" figure. No presale: Matrix sells no
+     * advance tickets, only table reservations.
      *
-     * The starred promo line ("Nur 5€ Eintritt für Ladies & Studenten bis 0 Uhr!") is deliberately
-     * *not* part of the note. It is a conditional discount, not the admission price, and routing
-     * "Freier Eintritt für Ladies bis 0 Uhr!" through `priceNote` would have `detectFree` mark a
-     * 15 € night as free entry; it is stored as the subtitle instead.
+     * The starred promo line ("Nur 5€ Eintritt für Ladies & Studenten bis 0 Uhr!") is *not* part
+     * of the note: a conditional discount, not the admission price, and routing "Freier Eintritt
+     * für Ladies bis 0 Uhr!" through `priceNote` would have `detectFree` mark a 15 € night as free;
+     * it is the subtitle instead.
      *
-     * @return the lowest tier price and the tier breakdown, or `(null, null)` when the blurb carries
-     *   no entry block (a handful of nights publish none).
+     * @return the lowest tier price and the tier breakdown, or `(null, null)` when the blurb has
+     * no entry block (a handful of nights publish none).
      */
     private fun parseEntryPrices(descriptionLines: List<String>): Pair<BigDecimal?, String?> {
         val headingIndex = descriptionLines.indexOfFirst { ENTRY_HEADING.matches(it) }
@@ -227,13 +223,11 @@ class MatrixOverviewPageScraper {
     }
 
     /**
-     * The canonical month-page URL for [date], rebuilt from the site root rather than reused verbatim
-     * from [baseUrl].
-     *
-     * The current month is served both from the bare `/party-in-berlin/` entry URL and from its
-     * explicit `?get_month=…&get_year=…` form; pinning every event to the explicit form keeps a
-     * night's `sourceUrl` identical before and after the month rolls over, instead of rewriting ~30
-     * rows on the first of each month.
+     * The canonical month-page URL for [date], rebuilt from the site root rather than reused from
+     * [baseUrl]. The current month is served both from the bare `/party-in-berlin/` entry URL and
+     * its explicit `?get_month=…&get_year=…` form; pinning every event to the explicit form keeps a
+     * night's `sourceUrl` identical before and after the month rolls over, instead of rewriting
+     * ~30 rows on the first of each month.
      */
     private fun monthPageUrl(
         baseUrl: String,
@@ -248,9 +242,8 @@ class MatrixOverviewPageScraper {
         private val TIME_PATTERN = Regex("""\d{1,2}:\d{2}""")
 
         /**
-         * The blurb: the first `<p>` that carries neither a class (excluding the `p.text-sm` /
-         * `p.text-lg` header lines) nor a `<strong>` section label (excluding `Floors:` / `DJs:` /
-         * `Specials:`).
+         * The blurb: the first `<p>` with neither a class (excluding the `p.text-sm` / `p.text-lg`
+         * header lines) nor a `<strong>` section label (excluding `Floors:` / `DJs:` / `Specials:`).
          */
         private const val DESCRIPTION_QUERY = "p:not([class]):not(:has(strong))"
 
@@ -263,7 +256,7 @@ class MatrixOverviewPageScraper {
         /** The bare `► Entry :` / `Eintritt:` heading line that opens the door-price block. */
         private val ENTRY_HEADING = Regex("""[►>\s]*(?:entry|eintritt)\s*:?\s*""", RegexOption.IGNORE_CASE)
 
-        /** A single monetary value on an admission-tier line, accepting a German or dot decimal separator. */
+        /** A single monetary value on an admission-tier line, German or dot decimal separator. */
         private val PRICE_VALUE = Regex("""(\d+(?:[.,]\d{1,2})?)\s*€""")
     }
 }

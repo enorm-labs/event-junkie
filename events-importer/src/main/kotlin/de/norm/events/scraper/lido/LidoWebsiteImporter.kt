@@ -13,14 +13,12 @@ import org.springframework.stereotype.Component
 /**
  * Website importer for Lido Berlin's Kulturhäuser-platform event listing.
  *
- * Lido runs on the same platform as Astra Kulturhaus but a different theme, so it
- * shares the pipeline shape rather than the selectors:
- * 1. Fetches the overview page (the homepage `/`) via [HtmlFetcher] with
- *    conditional request support (ETag / Last-Modified).
- * 2. Parses event articles via [LidoOverviewPageScraper] — the source for the
- *    date, event type, sold-out flag, status, presenters, and artist roster.
- * 3. For each event, fetches and parses its detail page via [LidoDetailPageScraper]
- *    — the source for the description, prices, ticket URL, and image.
+ * Same platform as Astra Kulturhaus, different theme, so it shares the pipeline shape, not
+ * the selectors:
+ * 1. [HtmlFetcher] fetches the overview (the homepage `/`) conditionally (ETag / Last-Modified).
+ * 2. [LidoOverviewPageScraper] parses the articles — date, event type, sold-out flag, status,
+ * presenters and artist roster.
+ * 3. Each detail page via [LidoDetailPageScraper] — description, prices, ticket URL and image.
  *
  * @see LidoOverviewPageScraper for overview parsing (date, type, status, artists).
  * @see LidoDetailPageScraper for detail parsing (description, prices, ticket, image).
@@ -46,13 +44,10 @@ class LidoWebsiteImporter(
     ): ScrapedEvent? = detailPageScraper.scrape(document, url)
 
     /**
-     * Merges detail-page data ([primary]) with overview-page data ([fallback]).
-     *
-     * The detail page is authoritative for the description, prices, ticket URL,
-     * and image (which the overview lacks). The overview page supplies the date,
-     * sold-out flag, status, and artist roster, which the detail header omits.
-     * Fields the two pages share (title, subtitle, type, times, presenters) prefer
-     * the detail value and fall back to the overview.
+     * Merges detail-page data ([primary]) with overview data ([fallback]). The detail page is
+     * authoritative for description, prices, ticket URL and image; the overview supplies date,
+     * sold-out flag, status and artist roster, which the detail header omits. Shared fields
+     * (title, subtitle, type, times, presenters) prefer the detail value and fall back.
      */
     override fun fillGapsFromOverview(
         primary: ScrapedEvent,
@@ -70,7 +65,7 @@ class LidoWebsiteImporter(
             status = primary.status.takeIf { it != EventStatus.SCHEDULED.name } ?: fallback.status,
             promoters = primary.promoters.ifEmpty { fallback.promoters },
             promoterWebsites = primary.promoterWebsites.ifEmpty { fallback.promoterWebsites },
-            // Artists are only extracted on the overview page (needs subtitle + type).
+            // Artists come from the overview only (needs subtitle + type).
             artists = primary.artists.ifEmpty { fallback.artists }
         )
 }

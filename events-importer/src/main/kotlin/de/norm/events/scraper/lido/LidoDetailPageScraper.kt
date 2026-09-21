@@ -14,17 +14,14 @@ import org.jsoup.nodes.Element
 /**
  * Pure HTML parser for Lido Berlin event detail pages.
  *
- * The detail page reuses the same `event-ticket__*` header markup as the overview
- * (parsed via [parseLidoEventBlock]) and adds the fields the overview lacks:
- * - description / artist bio (`.gig__description`, `.event-description__text`)
- * - presale / box-office prices (`.event-purchase__prices .price`, classified by
- *   [parsePresaleAndBoxOfficePrices], the per-`.price` parser shared with Astra)
- * - ticket shop URL (`.purchase-option__button`)
- * - event/artist image (`img.gig__preview`)
+ * Reuses the overview's `event-ticket__*` header markup ([parseLidoEventBlock]) and adds what
+ * the overview lacks: description / artist bio (`.gig__description`,
+ * `.event-description__text`), presale / box-office prices (`.event-purchase__prices .price`,
+ * classified by [parsePresaleAndBoxOfficePrices], the per-`.price` parser shared with Astra),
+ * ticket shop URL (`.purchase-option__button`), event/artist image (`img.gig__preview`).
  *
- * The detail header carries no `data-realdate` and no status badge, so the date,
- * sold-out flag, status, and the artist roster are supplied by the overview page
- * via [LidoWebsiteImporter.fillGapsFromOverview].
+ * The detail header carries no `data-realdate` and no status badge, so date, sold-out flag,
+ * status and the artist roster come from the overview via [LidoWebsiteImporter.fillGapsFromOverview].
  *
  * @see LidoOverviewPageScraper for overview parsing (date, type, status, artists).
  * @see LidoWebsiteImporter for the HTTP fetch orchestrator.
@@ -34,13 +31,9 @@ class LidoDetailPageScraper {
     private val logger = KotlinLogging.logger {}
 
     /**
-     * Parses an event detail page into a [ScrapedEvent].
+     * Parses a detail page into a [ScrapedEvent], or `null` when the event header/title is missing.
      *
-     * Returns `null` if the event header/title is missing (an unexpected page
-     * structure).
-     *
-     * @param sourceUrl the event's URL, used as [ScrapedEvent.sourceUrl] and to
-     *   derive the [ScrapedEvent.sourceId].
+     * @param sourceUrl the event's URL: [ScrapedEvent.sourceUrl] and the [ScrapedEvent.sourceId].
      */
     fun scrape(
         document: Document,
@@ -78,11 +71,8 @@ class LidoDetailPageScraper {
     }
 
     /**
-     * Extracts the event description from the artist bio and event-blurb sections.
-     *
-     * Paragraphs are gathered from `.gig__description` (per-artist bios) and
-     * `.event-description__text` (event blurb), deduplicated while preserving
-     * order. Returns `null` when no prose exists.
+     * The description from `.gig__description` (per-artist bios) and `.event-description__text`
+     * (event blurb), deduplicated in order. `null` without prose.
      */
     private fun parseDescription(content: Element): String? =
         content

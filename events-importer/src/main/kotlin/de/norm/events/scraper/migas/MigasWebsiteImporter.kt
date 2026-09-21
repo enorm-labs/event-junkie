@@ -14,28 +14,28 @@ import org.springframework.stereotype.Component
  * Website importer for migas, a listening bar in Wedding, whose custom WordPress theme renders
  * the whole upcoming programme onto one page (`/program/`).
  *
- * Every event's full record — title, category, ISO start datetime, poster, permalink and blurb —
- * is already in that page's markup, inside a per-event modal, so one request per import is enough
- * and there are no detail pages to follow. All parsing lives in [MigasOverviewPageScraper].
+ * Every event's full record — title, category, ISO start datetime, poster, permalink, blurb —
+ * is in that page's markup inside a per-event modal, so one request per import and no detail
+ * pages. All parsing lives in [MigasOverviewPageScraper].
  *
- * **Conditional requests are deliberately disabled.** The page advertises a `Last-Modified` and the
- * server honours `If-Modified-Since` against it, but the header tracks when the page was last
- * *edited* while the listing is filtered server-side to upcoming events and rolls forward on its own
- * — so a stored value returns 304 for as long as nobody edits the page, freezing the programme in
- * both directions. [etag] and [lastModified] are accepted to satisfy [EventImporter] and ignored:
- * every run re-fetches and relies on idempotent `sourceId` upserts, returning `null` cache headers so
- * there is nothing to replay (and no [ImportResult.NotModified] path). Havanna's derived weekly
- * occurrences are disabled for the same reason.
+ * **Conditional requests are deliberately disabled.** The page advertises a `Last-Modified` and
+ * the server honours `If-Modified-Since`, but the header tracks when the page was last *edited*
+ * while the listing is filtered server-side to upcoming events and rolls forward on its own —
+ * a stored value returns 304 for as long as nobody edits the page, freezing the programme in
+ * both directions. [etag] and [lastModified] are accepted to satisfy [EventImporter] and
+ * ignored: every run re-fetches and relies on idempotent `sourceId` upserts, returning `null`
+ * cache headers so there is nothing to replay (and no [ImportResult.NotModified] path).
+ * Havanna's derived weekly occurrences are disabled for the same reason.
  *
- * **Only the first page is imported**, per ADR-007 §"Pagination — First Page Only": the rest sits
- * behind a button that POSTs to `wp-admin/admin-ajax.php`, which the shared [HtmlFetcher] has no
- * transport for. The cost is bounded and self-correcting — the page always holds the *next* ten
- * upcoming events, so a later night moves onto it as each one passes, and a daily import catches
- * every event well before it happens. Stale-event cleanup is scoped to the scraped date range, so
- * the untouched tail is never mistaken for a deletion.
+ * **Only the first page is imported**, per ADR-007 §"Pagination — First Page Only": the rest
+ * sits behind a button that POSTs to `wp-admin/admin-ajax.php`, which the shared [HtmlFetcher]
+ * has no transport for. Bounded and self-correcting — the page always holds the *next* ten
+ * upcoming events, so a later night moves onto it as each one passes, and a daily import
+ * catches every event well before it happens. Stale-event cleanup is scoped to the scraped date
+ * range, so the untouched tail is never mistaken for a deletion.
  *
- * @see MigasOverviewPageScraper for the page shape, the lazy-loaded image trap, and what the source
- *   does not publish.
+ * @see MigasOverviewPageScraper for the page shape, the lazy-loaded image trap, and what the
+ * source does not publish.
  * @see <a href="https://migas.berlin/program/">migas programme</a>
  */
 @Component

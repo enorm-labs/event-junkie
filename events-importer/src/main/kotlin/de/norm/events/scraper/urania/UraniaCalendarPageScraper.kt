@@ -15,28 +15,24 @@ import org.jsoup.nodes.Element
 import java.time.LocalDate
 
 /**
- * Pure HTML parser for the Urania's `/kalender/` page — the house's whole upcoming programme,
- * server-rendered in one page with no pagination.
+ * Pure HTML parser for the Urania's `/kalender/` page — the whole upcoming programme,
+ * server-rendered in one page, no pagination.
  *
- * The calendar groups events under `div.c-event-calendar_day[data-day]`, whose attribute states the
- * full date in one machine-readable token (`03-do-09-2026` — day, weekday, month, year). That is
- * read directly rather than combining a month heading with a day cell, and a day may hold more than
- * one event.
+ * Events group under `div.c-event-calendar_day[data-day]`, whose attribute states the full date
+ * in one machine-readable token (`03-do-09-2026` — day, weekday, month, year), read directly
+ * rather than combining a month heading with a day cell; a day may hold more than one event.
+ * Each `div.c-event-calendar-item` carries a clock, the programme strand (`h5`), the title
+ * (`h3`), the format (`h6`), the billed speakers, a Reservix ticket link, and the link to its
+ * own `/event/<slug>/` page.
  *
- * Each `div.c-event-calendar-item` carries a clock, the programme strand it belongs to (`h5`), the
- * title (`h3`), the format (`h6`), the billed speakers and a Reservix ticket link, plus the link to
- * its own `/event/<slug>/` page.
- *
- * The site's own `/wp-json/reservixapi/v1/events` endpoint was evaluated and rejected despite
- * ADR-007's preference for JSON: it returns the same 17 events but carries no urania.de event URL —
- * only the external ticket link — and omits the format label and the concession prices, offering a
- * bare `minPrice` instead. The rendered pages are the richer source and the only one that states
- * the events' canonical URLs.
+ * The site's `/wp-json/reservixapi/v1/events` endpoint was evaluated and rejected despite
+ * ADR-007's JSON preference: the same 17 events, but no urania.de event URL — only the external
+ * ticket link — and no format label or concession prices, a bare `minPrice` instead. The
+ * rendered pages are richer and the only source stating the canonical URLs.
  *
  * **No source states which hall an event is in.** Neither the calendar, the event pages, the
  * Reservix shop nor that API name the Humboldtsaal or the Kleistsaal, so events are imported
- * against the house rather than split between its halls, which is exactly what all four of those
- * sources describe.
+ * against the house — exactly what all four sources describe.
  *
  * @see UraniaEventPageScraper for the event pages (description, price, poster).
  * @see UraniaWebsiteImporter for the HTTP fetch orchestrator.
@@ -47,7 +43,7 @@ class UraniaCalendarPageScraper {
     /**
      * Parses every event on the calendar page.
      *
-     * @param baseUrl the URL the document was fetched from, used to resolve event links.
+     * @param baseUrl the URL the document was fetched from, for resolving event links.
      */
     fun scrape(
         document: Document,
@@ -75,7 +71,7 @@ class UraniaCalendarPageScraper {
         return events
     }
 
-    /** Parses one calendar item into a [ScrapedEvent], or `null` when it has no link or title. */
+    /** Parses one calendar item into a [ScrapedEvent], or `null` without a link or title. */
     @Suppress("ReturnCount") // Guard clauses for the required href/title are clearer than nesting
     private fun parseItem(
         item: Element,
@@ -96,7 +92,7 @@ class UraniaCalendarPageScraper {
         return ScrapedEvent(
             title = title,
             subtitle = uraniaSubtitle(series = item.textAt("h5.o-h6"), format = format),
-            // The calendar carries no prose at all; its one text block is the speaker billing.
+            // The calendar carries no prose; its one text block is the speaker billing.
             eventType = uraniaEventType(format),
             eventDate = date,
             startTime = parseTime(item.textAt(".c-event-calendar-item_time")?.substringBefore(CLOCK_SUFFIX)?.trim()),
@@ -108,9 +104,9 @@ class UraniaCalendarPageScraper {
     }
 
     /**
-     * Reads the full date out of a `data-day` token (`"03-do-09-2026"`): day, weekday abbreviation,
-     * month and year. Returns `null` when the token is not one, so a future markup change drops the
-     * day rather than minting events on a wrong date.
+     * The full date from a `data-day` token (`"03-do-09-2026"`): day, weekday abbreviation, month,
+     * year. `null` when the token is not one, so a markup change drops the day rather than minting
+     * events on a wrong date.
      */
     private fun parseDayToken(token: String): LocalDate? {
         val match = DAY_TOKEN.find(token.trim()) ?: return null
@@ -120,11 +116,9 @@ class UraniaCalendarPageScraper {
 }
 
 /**
- * Joins the programme strand and the format into one subtitle
- * (`"bzw.:BEZIEHUNGSWESEN · Podiumsgespräch"`).
- *
- * The strand is the series a talk belongs to and the format is what kind of evening it is; neither
- * is a musical genre, so neither is stored as one. Either may be absent.
+ * The programme strand and the format as one subtitle (`"bzw.:BEZIEHUNGSWESEN ·
+ * Podiumsgespräch"`). The strand is the series a talk belongs to, the format what kind of
+ * evening it is; neither is a musical genre, so neither is stored as one. Either may be absent.
  */
 internal fun uraniaSubtitle(
     series: String?,

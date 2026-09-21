@@ -30,44 +30,40 @@ import java.util.Locale
 /**
  * Pure HTML parser for Frannz Club Berlin's WordPress homepage event listing.
  *
- * Frannz renders every upcoming event server-side on the homepage inside `<article class="events">`
- * blocks with a rich, semantic `event-*` class vocabulary, and a hidden `.entry-content` per article
+ * Every upcoming event renders server-side on the homepage inside `<article class="events">`
+ * blocks with a semantic `event-*` class vocabulary, and a hidden `.entry-content` per article
  * carrying the poster, a structured price breakdown, an optional ticket link and the description.
  *
- * Two Frannz-specific quirks drive the design:
- * - **No year in the rendered date** — only day number plus full German month name (`11` + `Juli`).
- *   The year is inferred as the nearest future occurrence, mirroring
- *   [de.norm.events.scraper.privatclub.PrivatclubOverviewPageScraper].
- * - **No structured status markers.** The *description* is deliberately not read for one: words like
- *   "ausverkauft" turn up in ordinary prose there ("ihrer restlos *ausverkauften* Tour"), so a status
- *   derived from it would be a false positive. The **title** is different — the venue appends the
- *   note deliberately and tersely ("MAD TSAI -verlegt ins Gretchen-"), so the status is read from the
- *   raw title via [parseEventStatus] before [cleanEventTitle] strips that same note, the way Metropol
- *   reads its `"Verlegt ins <venue> –"` prefix. A show that moved *out* of the house is therefore
- *   stored `RELOCATED` rather than silently `SCHEDULED` at a venue it will not play.
+ * - **No year in the rendered date** — day number plus full German month name (`11` + `Juli`).
+ * The year is the nearest future occurrence, as in
+ * [de.norm.events.scraper.privatclub.PrivatclubOverviewPageScraper].
+ * - **No structured status markers.** The *description* is deliberately not read for one:
+ * "ausverkauft" turns up in ordinary prose ("ihrer restlos *ausverkauften* Tour"), a false
+ * positive. The **title** is different — the venue appends the note tersely ("MAD TSAI -verlegt
+ * ins Gretchen-"), so the status is read from the raw title via [parseEventStatus] before
+ * [cleanEventTitle] strips that note, the way Metropol reads its `"Verlegt ins <venue> –"`
+ * prefix. A show that moved *out* is stored `RELOCATED` rather than `SCHEDULED` at a venue it
+ * will not play.
  *
- * The stable per-event identity is the WordPress post id (`<article id="post-9874">`), used for both
- * the `sourceId` and a `#post-<id>` deep-link `sourceUrl` back into the listing.
+ * The stable identity is the WordPress post id (`<article id="post-9874">`), used for the
+ * `sourceId` and a `#post-<id>` deep-link `sourceUrl` back into the listing.
  *
  * @see FRANNZ_LIMITATIONS for what the venue does not publish.
  * @see FrannzWebsiteImporter for the HTTP fetch orchestrator.
  */
 @Suppress("TooManyFunctions")
 class FrannzOverviewPageScraper(
-    /** Clock used for year-rollover date inference. Defaults to the system clock; override in tests for determinism. */
+    /** Clock for year-rollover date inference; override in tests. */
     private val clock: Clock = Clock.systemDefaultZone()
 ) {
     private val logger = KotlinLogging.logger {}
 
     /**
-     * Parses all events from the Frannz homepage document.
+     * Parses all events from the Frannz homepage: each `<article class="events">` in the main
+     * listing. The highlight carousel of `article.events.highlight` teaser cards (a subset without
+     * full data) is excluded via `:not(.highlight)`.
      *
-     * Each event is an `<article class="events">` in the main listing. The
-     * homepage also renders a highlight carousel of `article.events.highlight`
-     * teaser cards (a subset of the same events, without full data); those are
-     * excluded via `:not(.highlight)`.
-     *
-     * @param baseUrl the URL the document was fetched from, used for resolving relative links.
+     * @param baseUrl the URL the document was fetched from, for resolving relative links.
      */
     fun scrape(
         document: Document,
@@ -88,10 +84,8 @@ class FrannzOverviewPageScraper(
     }
 
     /**
-     * Parses a single `<article class="events">` element into a [ScrapedEvent].
-     *
-     * Skips (returns `null`) when the two required fields — title and a parseable
-     * date — cannot be resolved, so malformed articles never reach persistence.
+     * Parses one `<article class="events">` into a [ScrapedEvent], or `null` when title or a
+     * parseable date cannot be resolved, so malformed articles never reach persistence.
      */
     @Suppress("ReturnCount") // Guard clauses for the required title/date/id fields are clearer than nesting
     private fun parseArticle(
@@ -103,8 +97,8 @@ class FrannzOverviewPageScraper(
             logger.warn { "Frannz event article has no title, skipping" }
             return null
         }
-        // Read the status off the *raw* title first — cleanEventTitle strips the very note it is
-        // derived from ("… -verlegt ins Gretchen-", "… Nachholtermin vom …").
+        // Read the status off the *raw* title first — cleanEventTitle strips the very note it comes
+        // from ("… -verlegt ins Gretchen-", "… Nachholtermin vom …").
         val status = parseEventStatus(rawTitle)
         val statusNote = rawTitle
         // Strip a trailing "Nachholtermin vom …" reschedule note the venue appends to moved shows.
@@ -141,7 +135,7 @@ class FrannzOverviewPageScraper(
             doorsTime = doorsTime,
             startTime = startTime,
             imageUrl = article.imgSrcAt(".sidebar-element-wrap.image img"),
-            // Frannz has no per-event pages; deep-link into the listing via the post-id anchor.
+            // No per-event pages; deep-link into the listing via the post-id anchor.
             sourceUrl = resolveUrl(baseUrl, "#post-$postId"),
             sourceId = "${EventSource.FRANNZ.sourceIdPrefix}$postId",
             ticketUrl = parseTicketUrl(article, lines),
@@ -155,13 +149,10 @@ class FrannzOverviewPageScraper(
     }
 
     /**
-     * Parses the event date from the `.event-day` (day number) and `.event-month`
-     * (full German month name) cells.
-     *
-     * Frannz renders no year, so the day/month is combined into a [MonthDay] and
-     * resolved to its nearest future occurrence: the current year, or the next
-     * year when that date has already passed. The listing is chronological and
-     * wraps December → January, which this rollover handles.
+     * The event date from `.event-day` (day number) and `.event-month` (full German month name).
+     * No year is rendered, so the [MonthDay] resolves to its nearest future occurrence: this year,
+     * or next when the date has passed. The listing is chronological and wraps December → January,
+     * which the rollover handles.
      */
     @Suppress("ReturnCount") // Null-safe early exits per date component are clearer than nested let-chains
     private fun parseEventDate(article: Element): LocalDate? {
@@ -181,14 +172,11 @@ class FrannzOverviewPageScraper(
     }
 
     /**
-     * Maps the event type from the article's `event_typ-<token>` taxonomy class.
-     *
-     * The `event_typ-*` classes are a controlled WordPress taxonomy — more stable
-     * than the human `.event-typ` label text. `event_typ-highlight` is a carousel
-     * flag, not a type, so it is ignored. Frannz-specific tokens (`ballroomparty`,
-     * `kinotv`) are supplied as synonyms; `konzert` / `party` resolve via the base
-     * table. An unrecognized or absent token yields `null`; the caller then falls
-     * back to title-based inference ([refineConcertVenueType]).
+     * The event type from the article's `event_typ-<token>` taxonomy class — a controlled
+     * WordPress taxonomy, more stable than the `.event-typ` label text. `event_typ-highlight` is a
+     * carousel flag, not a type, and ignored. Frannz tokens (`ballroomparty`, `kinotv`) are
+     * synonyms; `konzert` / `party` resolve via the base table. Unrecognized or absent yields
+     * `null`; the caller falls back to title inference ([refineConcertVenueType]).
      */
     private fun parseEventType(article: Element): String? {
         val token =
@@ -200,12 +188,9 @@ class FrannzOverviewPageScraper(
     }
 
     /**
-     * Parses presale and box-office prices from the structured `li.event-vvk`
-     * items in the info list.
-     *
-     * Each item pairs a `.value` (e.g. "10,00 €") with a `.key` label; a label
-     * containing "Abendkasse" maps to the box-office price, everything else
-     * (Vorverkauf / "VVK …") to presale. The first value per category wins.
+     * Presale and box-office prices from the structured `li.event-vvk` items. Each pairs a
+     * `.value` ("10,00 €") with a `.key` label; a label containing "Abendkasse" is box office,
+     * everything else (Vorverkauf / "VVK …") presale. First value per category wins.
      */
     private fun parsePrices(article: Element): Pair<BigDecimal?, BigDecimal?> {
         var presale: BigDecimal? = null
@@ -226,9 +211,9 @@ class FrannzOverviewPageScraper(
 
     /**
      * The ticket link: the venue's own shop first. A show sold through Eventim has no such anchor
-     * and names the seller in its "Tickets im VVK gibt es bei …" line instead (#1496) — the event's
-     * own Eventim page when the CMS linked it, else the seller's front page when the line only
-     * spells the host. Less than a per-event link, but the venue's own pointer rather than nothing.
+     * and names the seller in its "Tickets im VVK gibt es bei …" line (#1496) — the event's own
+     * Eventim page when the CMS linked it, else the seller's front page when the line only spells
+     * the host. Less than a per-event link, but the venue's own pointer rather than nothing.
      */
     private fun parseTicketUrl(
         article: Element,
@@ -239,12 +224,10 @@ class FrannzOverviewPageScraper(
             ?: lines.firstOrNull { TICKET_PROMO_LINE.containsMatchIn(it) && it.contains(EVENTIM_HOST, ignoreCase = true) }?.let { EVENTIM_URL }
 
     /**
-     * The cleaned `<br>`-delimited lines of the hidden `.entry-content` body.
-     *
-     * The content element mixes the `.sidebar` (image + info/price facts) with the
-     * free-text blurb as `<br>`-separated sibling text nodes. The sidebar subtree
-     * is skipped, each line is [cleaned][cleanDescriptionLine], and blank or bullet-only
-     * residue is dropped.
+     * The cleaned `<br>`-delimited lines of the hidden `.entry-content` body. The element mixes the
+     * `.sidebar` (image + info/price facts) with the blurb as `<br>`-separated sibling text nodes;
+     * the sidebar subtree is skipped, each line [cleaned][cleanDescriptionLine], blank or
+     * bullet-only residue dropped.
      */
     private fun descriptionLines(article: Element): List<String> {
         val content = article.selectFirst(".entry-content-wrap > .content") ?: return emptyList()
@@ -280,9 +263,9 @@ class FrannzOverviewPageScraper(
     }
 
     /**
-     * The description: the [lines][descriptionLines] without the "Tickets im VVK gibt es bei …"
-     * promo line — a markdown-link artifact Frannz renders raw, read for the ticket link by
-     * [parseTicketUrl] before it goes. Returns `null` when no prose remains.
+     * The description: the [lines][descriptionLines] minus the "Tickets im VVK gibt es bei …"
+     * promo line — a markdown-link artifact rendered raw, read for the ticket link by
+     * [parseTicketUrl] before it goes. `null` when no prose remains.
      */
     private fun parseDescription(lines: List<String>): String? =
         lines
@@ -291,13 +274,11 @@ class FrannzOverviewPageScraper(
             .takeIf { it.isNotBlank() }
 
     /**
-     * Cleans one `<br>`-delimited description line of the raw Markdown the copilot.events CMS emits.
-     *
-     * Frannz renders the CMS's Markdown literally, so a line arrives as e.g.
-     * `-Tickets im VVK gibt es bei [www.eventim.de](www.eventim.de) -`. This strips a leading/trailing
-     * list-item bullet and unwraps inline `[label](url)` links to their visible label (dropping the URL),
-     * so `[www.eventim.de](www.eventim.de)` becomes `www.eventim.de`. Callers still drop the resulting
-     * "Tickets im VVK …" promo line and bullet-only residue.
+     * Cleans one `<br>`-delimited line of the raw Markdown the copilot.events CMS emits. Frannz
+     * renders it literally, so a line arrives as `-Tickets im VVK gibt es bei
+     * [www.eventim.de](www.eventim.de) -`. Strips a leading/trailing list bullet and unwraps inline
+     * `[label](url)` links to their label (URL dropped), so `[www.eventim.de](www.eventim.de)`
+     * becomes `www.eventim.de`. Callers still drop the "Tickets im VVK …" line and bullet residue.
      */
     private fun cleanDescriptionLine(raw: String): String =
         raw
@@ -307,13 +288,10 @@ class FrannzOverviewPageScraper(
             .trim()
 
     /**
-     * Extracts promoter names from an `.event-otitle` presenter line.
-     *
-     * Frannz over-titles carry the promoter as "<names> präsentiert:" /
-     * "<names> präsentieren:" (e.g. "Loft & Flux FM präsentieren:"). The captured
-     * names are split on comma / `&` / `/` / "und" into individual promoters. An
-     * over-title without a presenter marker (e.g. "Live im Frannz Biergarten:") is
-     * not a promoter and yields an empty list.
+     * Promoter names from an `.event-otitle` presenter line: "<names> präsentiert:" / "<names>
+     * präsentieren:" ("Loft & Flux FM präsentieren:"), split on comma / `&` / `/` / "und". An
+     * over-title without a presenter marker ("Live im Frannz Biergarten:") is not a promoter and
+     * yields an empty list.
      */
     private fun parsePromoters(otitle: String?): List<String> {
         val names = otitle?.let { PRESENTER_PATTERN.find(it)?.groupValues?.get(1) } ?: return emptyList()
@@ -328,11 +306,10 @@ class FrannzOverviewPageScraper(
         private const val HIGHLIGHT_CLASS = "event_typ-highlight"
 
         /**
-         * A ticket-shop promo line, read for the seller and then dropped. The connector word varies
-         * across events ("… gibt es bei / unter / hier: <shop>"), so the match keys only on the stable
-         * opening — a line starting with "Tickets" immediately followed by "im VVK" or "gibt es". That
-         * anchoring keeps a genuine sentence that happens to mention tickets ("Tickets **für den** …
-         * behalten ihre Gültigkeit, …"), whose second word is not "im"/"gibt".
+         * A ticket-shop promo line, read for the seller and then dropped. The connector varies ("… gibt
+         * es bei / unter / hier: <shop>"), so the match keys only on the stable opening — "Tickets"
+         * immediately followed by "im VVK" or "gibt es". That keeps a genuine sentence mentioning
+         * tickets ("Tickets **für den** … behalten ihre Gültigkeit, …"), whose second word is neither.
          */
         private val TICKET_PROMO_LINE =
             Regex("""^Tickets\s+(?:im\s+VVK|gibt\s+es)\b""", RegexOption.IGNORE_CASE)
@@ -363,9 +340,7 @@ class FrannzOverviewPageScraper(
             )
 
         /**
-         * Formatter for "day. FullGermanMonth" (e.g. "11. Juli" → July 11).
-         *
-         * Case-insensitive with [Locale.GERMAN] month names (Januar … Dezember).
+         * "day. FullGermanMonth" ("11. Juli" → July 11), case-insensitive [Locale.GERMAN] month names.
          */
         private val GERMAN_DATE_FORMATTER: DateTimeFormatter =
             DateTimeFormatterBuilder()

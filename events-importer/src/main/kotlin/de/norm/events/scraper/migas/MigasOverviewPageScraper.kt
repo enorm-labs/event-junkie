@@ -22,31 +22,29 @@ import java.time.OffsetDateTime
 /**
  * Parses migas' WordPress programme page (`/program/`) into [ScrapedEvent]s.
  *
- * The custom `migas` theme renders every upcoming event **twice** into `.events-list`: a summary
- * anchor (`a.event-item`) whose `href` is `#`, followed by a sibling modal (`div.event-popup`)
- * holding the full record. The two are joined by the anchor's `data-target` — the modal's
- * `#popup-<wp-post-id>` selector — rather than by document order, so a template that reorders or
- * nests them still parses.
+ * The custom `migas` theme renders every upcoming event **twice** into `.events-list`: a
+ * summary anchor (`a.event-item`) whose `href` is `#`, then a sibling modal (`div.event-popup`)
+ * with the full record. They are joined by the anchor's `data-target` — the modal's
+ * `#popup-<wp-post-id>` selector — not document order, so a reordered or nested template still parses.
  *
- * The modal is the richer half and supplies every field except the category, which is read from the
- * anchor. Two of its button attributes carry the fields nothing else states: `data-start-date` on the
- * add-to-calendar button is a full ISO-8601 offset datetime, and the only place the year appears —
- * every human rendering is year-less (`we · 05.08 · 20:00`) — so no [inferYearForWeekday] is needed
- * here; `data-url` on the share button is the canonical permalink, supplying `sourceUrl` and the
- * stable `sourceId` slug.
+ * The modal supplies every field except the category, read from the anchor. Two of its button
+ * attributes carry what nothing else states: `data-start-date` on the add-to-calendar button
+ * is a full ISO-8601 offset datetime and the only place the year appears — every human
+ * rendering is year-less (`we · 05.08 · 20:00`) — so no [inferYearForWeekday] here; `data-url`
+ * on the share button is the canonical permalink, supplying `sourceUrl` and the `sourceId` slug.
  *
- * **Images are lazy-loaded**: every `<img>`'s `src` is an inline SVG placeholder and the real file is
- * in `data-src`, so the shared [imgSrcAt][de.norm.events.scraper.imgSrcAt] helper would store a
- * base64 placeholder as every poster.
+ * **Images are lazy-loaded**: every `<img>`'s `src` is an inline SVG placeholder and the real
+ * file is in `data-src`, so the shared [imgSrcAt][de.norm.events.scraper.imgSrcAt] would store
+ * a base64 placeholder as every poster.
  *
  * **An event without a share permalink is skipped, not re-keyed.** `sourceId` is the identity
- * idempotent upserts turn on, so falling back to a second scheme — the WordPress post id, say —
- * would re-key the *whole* programme at once, inserting duplicates and letting stale-cleanup delete
- * the originals. Dropping the event with a warning is the safer failure.
+ * idempotent upserts turn on; a second scheme — the WordPress post id, say — would re-key the
+ * *whole* programme, inserting duplicates and letting stale-cleanup delete the originals.
+ * Dropping with a warning is the safer failure.
  *
- * There is one time per event, taken as `startTime`. The genre stays empty even though the venue
- * writes real genre prose ("Somali funk, Ethio-jazz, Sudanese pop") into its descriptions: its two
- * categories are *formats*, and mining prose for a genre is not something this parser guesses at.
+ * One time per event, taken as `startTime`. The genre stays empty though the venue writes real
+ * genre prose ("Somali funk, Ethio-jazz, Sudanese pop") into descriptions: its two categories
+ * are *formats*, and mining prose for a genre is not something this parser guesses at.
  *
  * @see MigasWebsiteImporter for the fetch side, including why conditional requests are disabled.
  */
@@ -54,11 +52,9 @@ class MigasOverviewPageScraper {
     private val logger = KotlinLogging.logger {}
 
     /**
-     * Parses every event in [document]'s programme list.
-     *
-     * Per-event parsing is wrapped so one malformed entry cannot abort the import; events
-     * without a resolvable date or permalink are skipped with a warning rather than persisted
-     * half-formed.
+     * Parses every event in [document]'s programme list. Per-event parsing is wrapped so one
+     * malformed entry cannot abort the import; events without a resolvable date or permalink are
+     * skipped with a warning rather than persisted half-formed.
      */
     fun scrape(document: Document): List<ScrapedEvent> =
         document.select(EVENT_ITEM_SELECTOR).mapNotNull { item ->
@@ -120,22 +116,19 @@ class MigasOverviewPageScraper {
             ?.let { document.selectFirst(it) }
 
     /**
-     * Reads the real poster URL from the first matching `<img>`'s `data-src`.
-     *
-     * The theme's lazy-loader keeps an inline SVG placeholder in `src` until the image scrolls
-     * into view, so `data-src` is the only attribute holding a fetchable URL.
+     * The real poster URL from the first matching `<img>`'s `data-src`. The lazy-loader keeps an
+     * inline SVG placeholder in `src` until the image scrolls into view.
      */
     private fun Element.lazyImage(cssQuery: String): String? =
         attrAt(cssQuery, LAZY_IMAGE_ATTRIBUTE)
             ?.takeIf { it.startsWith("http") }
 
     /**
-     * Splits the calendar button's ISO-8601 offset datetime into a date and a local time.
-     *
-     * The observed spelling carries an offset (`2026-08-05T20:00:00+02:00`), which the shared
-     * [parseIsoTime] cannot read — its `HH:mm` formatter rejects both the seconds and the
-     * trailing offset — so [OffsetDateTime] is tried first. The shared helpers remain the
-     * fallback so a future offset-less or date-only spelling still yields a date.
+     * Splits the calendar button's ISO-8601 offset datetime into date and local time. The observed
+     * spelling carries an offset (`2026-08-05T20:00:00+02:00`), which the shared [parseIsoTime]
+     * cannot read — its `HH:mm` formatter rejects the seconds and the offset — so
+     * [OffsetDateTime] is tried first; the shared helpers remain the fallback so an offset-less or
+     * date-only spelling still yields a date.
      */
     private fun parseStart(value: String?): Pair<LocalDate, LocalTime?>? {
         if (value.isNullOrBlank()) return null
@@ -145,13 +138,10 @@ class MigasOverviewPageScraper {
     }
 
     /**
-     * Builds the lineup from the event title, which is the booked selector's name
-     * ("vip client", "eric.a & llupe" — co-bills are split by [headlinersFromTitle]).
-     *
-     * Everyone migas books plays records rather than performing live, so the role is always
-     * `DJ`. An album-playback night ([isAlbumPlayback]) yields **no** artists: its title names
-     * the record being played, and minting "Kyuss" as an artist on it would assert that the
-     * band appears at the venue.
+     * The lineup from the title, the booked selector's name ("vip client", "eric.a & llupe" —
+     * co-bills split by [headlinersFromTitle]). Everyone migas books plays records, so the role
+     * is always `DJ`. An album-playback night ([isAlbumPlayback]) yields **no** artists: its
+     * title names the record, and minting "Kyuss" would assert the band appears at the venue.
      */
     private fun artistsFor(title: String): List<ScrapedArtist> =
         if (isAlbumPlayback(title)) {
@@ -161,7 +151,7 @@ class MigasOverviewPageScraper {
         }
 
     private companion object {
-        /** The summary anchors; the class is exact-token matched, so `.event-item-date` and friends don't collide. */
+        /** The summary anchors; exact-token matched, so `.event-item-date` and friends don't collide. */
         const val EVENT_ITEM_SELECTOR = ".events-list a.event-item"
 
         const val TITLE_SELECTOR = ".event-item-title"
@@ -186,26 +176,23 @@ class MigasOverviewPageScraper {
         const val ARTIST_ROLE_DJ = "DJ"
 
         /**
-         * migas' own two programme categories. Neither maps onto an existing [EventType]
-         * synonym, and both describe the *format* of the night:
-         *  - `playing` — a booked selector plays a record set, the closest thing this model
-         *    has to [EventType.CLUB_NIGHT]. Deliberately not `PARTY`, which would describe a
-         *    seated listening bar as a dance floor: what a visitor comes here for is the act
-         *    on the decks, which is exactly the distinction `CLUB_NIGHT` draws
-         *    (EVENT_SCOPE.md §2).
-         *  - `listening session` — a guest session or a full-album playback, neither a concert
-         *    (nobody performs) nor a club night, so it stays [EventType.OTHER].
+         * migas' two programme categories, both describing the *format* of the night, neither an
+         * existing [EventType] synonym:
+         * - `playing` — a booked selector plays a record set, the closest to [EventType.CLUB_NIGHT].
+         * Deliberately not `PARTY`, which would describe a seated listening bar as a dance floor:
+         * a visitor comes for the act on the decks, exactly the distinction `CLUB_NIGHT` draws
+         * (EVENT_SCOPE.md §2).
+         * - `listening session` — a guest session or full-album playback, neither a concert (nobody
+         * performs) nor a club night, so [EventType.OTHER].
          *
-         * **This choice costs no lineup either way, contrary to what this KDoc used to claim.**
-         * It said `PARTY` would make
-         * [buildArtistsForEventType][de.norm.events.scraper.buildArtistsForEventType] drop the
-         * artists — true of that function, but [artistsFor] never calls it; it goes straight to
-         * [headlinersFromTitle][de.norm.events.scraper.headlinersFromTitle], which ignores the
-         * event type. That early return is the only place in the importer where a type
-         * suppresses a lineup, so retyping these nights would leave their artists untouched.
-         * Measured while establishing what that rule actually costs; recorded here
-         * because a right decision resting on a wrong reason is one re-reading away from being
-         * reversed for the wrong reason too.
+         * **This choice costs no lineup either way, contrary to what this KDoc used to claim.** It
+         * said `PARTY` would make [buildArtistsForEventType][de.norm.events.scraper.buildArtistsForEventType]
+         * drop the artists — true of that function, but [artistsFor] never calls it; it goes straight
+         * to [headlinersFromTitle][de.norm.events.scraper.headlinersFromTitle], which ignores the type.
+         * That early return is the only place in the importer where a type suppresses a lineup, so
+         * retyping these nights would leave their artists untouched. Measured while establishing what
+         * that rule costs; recorded because a right decision on a wrong reason is one re-reading away
+         * from being reversed for the wrong reason too.
          */
         val EVENT_TYPE_SYNONYMS =
             mapOf(
@@ -214,14 +201,11 @@ class MigasOverviewPageScraper {
             )
 
         /**
-         * A full-album playback title: an act/album separator followed by a trailing
-         * release parenthetical carrying a four-digit year — `"SBTRKT – SBTRKT (Young, 2011 •
-         * 43 min • vinyl)"`, `"Kyuss – Blues for the Red Sun (Elektra/Asylum Records, 1992 •
-         * 52 min • vinyl)"`.
-         *
-         * Requiring *both* halves keeps it off an ordinary booked act whose name merely
-         * contains a dash, and off a title that happens to end in a parenthetical without a
-         * year.
+         * A full-album playback title: an act/album separator followed by a trailing release
+         * parenthetical with a four-digit year — `"SBTRKT – SBTRKT (Young, 2011 • 43 min • vinyl)"`,
+         * `"Kyuss – Blues for the Red Sun (Elektra/Asylum Records, 1992 • 52 min • vinyl)"`. Requiring
+         * *both* halves keeps it off a booked act whose name contains a dash, and off a title ending
+         * in a parenthetical without a year.
          */
         val ALBUM_PLAYBACK_PATTERN =
             Regex("""\s[–—-]\s.*\([^()]*\b(?:19|20)\d{2}\b[^()]*\)\s*$""")

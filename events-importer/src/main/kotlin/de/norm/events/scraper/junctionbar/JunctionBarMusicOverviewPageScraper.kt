@@ -21,19 +21,19 @@ import java.time.LocalTime
  * Pure HTML parser for a single Junction Bar monthly live-music program page
  * (e.g. `program/07_2026/07_26.html`).
  *
- * The page is retro hand-coded HTML with a **flat** layout: inside `div.gridContainer`,
- * an event starts at a *date bar* — a `<div>` holding a `<table>` whose `<td>` carries a
- * `strong.datum` with a German `DD.MM.` date (plus the weekday and, in a `strong.musikstil`,
- * either the genre or a "two/three acts tonight" marker). Everything between one date bar and
- * the next belongs to that night: one or more band blocks, each a `.Stil1222` name, a
- * `p.text` bio, artist links, a band photo, and a shared `junction-bar-shop.de` ticket link.
- * A night with no real band (only a "PRIVAT PARTY" placeholder) is skipped.
+ * Retro hand-coded HTML with a **flat** layout: inside `div.gridContainer`, an event starts at
+ * a *date bar* — a `<div>` holding a `<table>` whose `<td>` carries a `strong.datum` with a
+ * German `DD.MM.` date (plus the weekday and, in a `strong.musikstil`, either the genre or a
+ * "two/three acts tonight" marker). Everything between one date bar and the next belongs to
+ * that night: one or more band blocks, each a `.Stil1222` name, a `p.text` bio, artist links, a
+ * band photo, and a shared `junction-bar-shop.de` ticket link. A night with no real band (only
+ * a "PRIVAT PARTY" placeholder) is skipped.
  *
- * Dates render year-less, but the four-digit year is taken from the page URL's month folder
- * (`.../07_2026/...`), so no weekday inference is needed. Default show times follow the venue's
- * SHOWTIMES rule (Fri & Sat 22:00, otherwise 21:00) unless the date bar carries an explicit
- * `HH:mm`. The venue leaves recently-passed nights on the page; those are dropped centrally at
- * persistence time (`EventUpsertService`), so this parser returns every dated night as-is.
+ * Dates render year-less, but the four-digit year comes from the URL's month folder
+ * (`.../07_2026/...`), so no weekday inference. Default show times follow the venue's SHOWTIMES
+ * rule (Fri & Sat 22:00, otherwise 21:00) unless the date bar carries an explicit `HH:mm`.
+ * Recently-passed nights stay on the page and are dropped centrally at persistence
+ * (`EventUpsertService`), so this parser returns every dated night as-is.
  *
  * @see JunctionBarMusicWebsiteImporter for the fetch orchestration (listing → monthly pages).
  */
@@ -44,9 +44,9 @@ class JunctionBarMusicOverviewPageScraper {
     /**
      * Parses all live-music events from one monthly program page.
      *
-     * @param baseUrl the URL the document was fetched from, used to derive the year, resolve
-     *   relative image paths, and as each event's `sourceUrl`.
-     * @return one [ScrapedEvent] per dated night that lists at least one real band.
+     * @param baseUrl the URL the document was fetched from: the year, relative image paths, and
+     * each event's `sourceUrl`.
+     * @return one [ScrapedEvent] per dated night listing at least one real band.
      */
     @Suppress("ReturnCount") // Guard clauses for a missing year and a missing container are clearer than nesting.
     fun scrape(
@@ -119,7 +119,7 @@ class JunctionBarMusicOverviewPageScraper {
         )
     }
 
-    /** The `DD.MM.` date from the date bar, combined with the [year] taken from the page URL. */
+    /** The `DD.MM.` date from the date bar, combined with the [year] from the page URL. */
     private fun parseDate(
         dateBar: Element,
         year: Int
@@ -134,9 +134,9 @@ class JunctionBarMusicOverviewPageScraper {
     }
 
     /**
-     * Band name(s) for the night. Each `.Stil1222` element holds one act name; the nested
-     * `.two_bands_musikstil` genre span is removed first, and empty shells (a genre-only
-     * wrapper span) and "PRIVAT PARTY" placeholders are dropped.
+     * Band name(s) for the night. Each `.Stil1222` holds one act name; the nested
+     * `.two_bands_musikstil` genre span is removed first, and empty shells (a genre-only wrapper
+     * span) and "PRIVAT PARTY" placeholders are dropped.
      */
     private fun parseBands(content: Elements): List<String> =
         content
@@ -160,8 +160,8 @@ class JunctionBarMusicOverviewPageScraper {
             .takeIf { it.isNotBlank() }
 
     /**
-     * The show time: an explicit `HH:mm` in the date bar wins; otherwise the venue's default
-     * (Fri & Sat 22:00, every other day 21:00), derived from the resolved date's weekday.
+     * The show time: an explicit `HH:mm` in the date bar wins; otherwise the venue's default (Fri
+     * & Sat 22:00, every other day 21:00) from the resolved date's weekday.
      */
     private fun parseStartTime(
         dateBar: Element,
@@ -189,8 +189,8 @@ class JunctionBarMusicOverviewPageScraper {
             ?.let { resolveUrl(baseUrl, it) }
 
     /**
-     * The event genre: the date bar's `strong.musikstil` when it names a style (not a
-     * "two/three acts tonight" marker), otherwise the first band's `.two_bands_musikstil` tag.
+     * The event genre: the date bar's `strong.musikstil` when it names a style (not a "two/three
+     * acts tonight" marker), otherwise the first band's `.two_bands_musikstil` tag.
      */
     private fun parseGenre(
         dateBar: Element,
@@ -206,8 +206,8 @@ class JunctionBarMusicOverviewPageScraper {
     }
 
     /**
-     * A stable `sourceId`: the ticket-shop page slug (the event's canonical identity, e.g.
-     * `funkverband`), falling back to date + slugified title when a night has no ticket link.
+     * A stable `sourceId`: the ticket-shop page slug (the canonical identity, e.g. `funkverband`),
+     * falling back to date + slugified title when a night has no ticket link.
      */
     private fun buildSourceId(
         ticketUrl: String?,
@@ -249,10 +249,8 @@ class JunctionBarMusicOverviewPageScraper {
 
 /**
  * Splits the flat program into nights: each date bar starts a new group, and the children
- * following it (until the next date bar) are that night's content.
- *
- * The venue lays both programme pages out flat — the nights are siblings, not containers — so
- * [isDateBar] is what tells one apart, and it differs per page.
+ * following it (until the next date bar) are that night's content. Both programme pages are
+ * flat — nights are siblings, not containers — so [isDateBar] tells them apart, and differs per page.
  */
 internal fun segmentIntoNights(
     container: Element,

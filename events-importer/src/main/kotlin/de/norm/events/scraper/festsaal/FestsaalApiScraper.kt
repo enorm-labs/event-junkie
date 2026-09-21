@@ -31,20 +31,18 @@ private const val FESTSAAL_PUBLIC_HOST = "festsaal-kreuzberg.de"
 private const val FESTSAAL_PROGRAMM_BASE = "https://$FESTSAAL_PUBLIC_HOST/de/programm/"
 
 /**
- * Pure parser for Festsaal Kreuzberg's event data, sourced from its Wagtail
- * headless-CMS JSON REST API (`/api/v2/pages/?type=home.EventPage`).
+ * Pure parser for Festsaal Kreuzberg's event data from its Wagtail headless-CMS JSON REST API
+ * (`/api/v2/pages/?type=home.EventPage`).
  *
- * The public site is a Nuxt.js SPA that renders no event data server-side, so
- * scraping the HTML is impossible without a headless browser. The Wagtail API
- * behind it, however, exposes every upcoming event as clean structured JSON —
- * the most stable possible source (ADR-007 §"Selector Strategy" priority 1).
- * [FestsaalWebsiteImporter] fetches the response body; this class parses it.
+ * The public site is a Nuxt.js SPA rendering no event data server-side, so HTML scraping
+ * needs a headless browser. The Wagtail API behind it exposes every upcoming event as clean
+ * JSON — the most stable source possible (ADR-007 §"Selector Strategy" priority 1).
+ * [FestsaalWebsiteImporter] fetches the body; this class parses it.
  *
- * Each `items[]` entry carries `title`, `sub_title`, `date`, `doors`, `start`, `ticket`, `price`,
- * a nested `genre.title` and `preview_image.download_url`, a `support` act line, and a `status`
- * code (`sold_out`, `moved_date`, `transferred`, `custom`, or absent). Festsaal has no
- * event-category field, so the type is inferred from the title/subtitle like Bi Nuu (see
- * [inferEventType]).
+ * Each `items[]` entry carries `title`, `sub_title`, `date`, `doors`, `start`, `ticket`,
+ * `price`, a nested `genre.title` and `preview_image.download_url`, a `support` act line, and
+ * a `status` code (`sold_out`, `moved_date`, `transferred`, `custom`, or absent). No
+ * event-category field, so the type is inferred from title/subtitle like Bi Nuu ([inferEventType]).
  *
  * @see FestsaalWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://festsaal-kreuzberg.de/de/programm/">Festsaal Kreuzberg programme</a>
@@ -52,8 +50,8 @@ private const val FESTSAAL_PROGRAMM_BASE = "https://$FESTSAAL_PUBLIC_HOST/de/pro
 class FestsaalApiScraper {
     private val logger = KotlinLogging.logger {}
 
-    // Maps the API's snake_case fields onto camelCase DTO properties, so the DTOs need no
-    // per-field @JsonProperty annotations. Unknown fields are ignored (Jackson 3 default).
+    // Maps the API's snake_case fields onto camelCase DTO properties, so no per-field
+    // @JsonProperty. Unknown fields are ignored (Jackson 3 default).
     private val jsonMapper: JsonMapper =
         JsonMapper
             .builder()
@@ -65,8 +63,7 @@ class FestsaalApiScraper {
      * Parses every event from the Wagtail API listing response [json].
      *
      * @param json the raw JSON body of the `/api/v2/pages/?type=home.EventPage` response.
-     * @return a list of [ScrapedEvent] instances, one per listed event; empty if the
-     *   payload is absent, unparseable, or carries no `items`.
+     * @return one [ScrapedEvent] per listed event; empty if absent, unparseable or without `items`.
      */
     fun scrape(json: String): List<ScrapedEvent> {
         val items = parseItems(json) ?: return emptyList()
@@ -83,7 +80,7 @@ class FestsaalApiScraper {
         }
     }
 
-    /** Parses the response body and returns its `items` array, or null if the body is unparseable or has no array. */
+    /** The response body's `items` array, or null if unparseable or without an array. */
     @Suppress(
         "TooGenericExceptionCaught", // A malformed payload must degrade to null, never abort the import.
         "ReturnCount" // Guard clauses for the unparseable body and missing array are clearer than nesting.
@@ -121,8 +118,8 @@ class FestsaalApiScraper {
         val statusCode = node.status.blankToNull()
         val postponed = statusCode == STATUS_MOVED_DATE
 
-        // A postponed event moves to its `changed_*` date/times — the moment it now actually
-        // happens — so those win when present; otherwise the original values stand.
+        // A postponed event moves to its `changed_*` date/times — when it now actually happens — so
+        // those win when present; otherwise the originals stand.
         fun effective(
             changed: String?,
             base: String?
@@ -164,14 +161,12 @@ class FestsaalApiScraper {
     }
 
     /**
-     * Maps Festsaal's `status` code to a domain [EventStatus][de.norm.events.event.EventStatus] name.
-     *
-     * Observed codes: `moved_date` (postponed to `changed_date`), `transferred` (relocated
-     * to another venue), `sold_out` (captured separately as the `soldOut` flag, so it stays
-     * `SCHEDULED` here) and `custom` (a free-text `changed_text` note we cannot classify —
-     * treated as `SCHEDULED`). A `cancelled`-family code is mapped defensively even though
-     * none appears in the current data; any other non-blank code is logged and defaults to
-     * `SCHEDULED` so a newly-introduced code surfaces rather than being silently mismapped.
+     * Maps the `status` code to a domain [EventStatus][de.norm.events.event.EventStatus] name.
+     * Observed: `moved_date` (postponed to `changed_date`), `transferred` (relocated), `sold_out`
+     * (captured separately as the `soldOut` flag, so `SCHEDULED` here) and `custom` (a free-text
+     * `changed_text` note we cannot classify — `SCHEDULED`). A `cancelled`-family code is mapped
+     * defensively though none appears in current data; any other non-blank code is logged and
+     * defaults to `SCHEDULED` so a new code surfaces rather than being silently mismapped.
      */
     private fun mapStatus(code: String?): String =
         when (val normalized = code?.trim()?.lowercase()) {
@@ -198,21 +193,20 @@ class FestsaalApiScraper {
         }
 
     /**
-     * Infers the event type from the title/subtitle, since Festsaal exposes no
-     * category field (`genre` is a *musical* genre, not an event kind).
+     * Infers the event type from title/subtitle, since Festsaal exposes no category field
+     * (`genre` is a *musical* genre, not an event kind).
      *
-     * Festsaal is a live-music venue, so the default is `CONCERT`; only unambiguous
-     * signals flip it — a quiz keyword → `QUIZ`, a wrestling show → `SHOW`, a market or
-     * open-air event series → `OTHER`, a festival title → `FESTIVAL`, and a party/DJ-night
-     * keyword (including a Brazilian "festa") → `PARTY`. Flipping away from `CONCERT` also
-     * stops a non-artist title being minted as a headliner ([buildArtists]). Mirrors Bi
-     * Nuu's `inferBinuuEventType`; like every curated heuristic it is reactive — a new
-     * non-concert series reads as a `CONCERT` until a keyword catches it.
+     * A live-music venue, so the default is `CONCERT`; only unambiguous signals flip it — a quiz
+     * keyword → `QUIZ`, a wrestling show → `SHOW`, a market or open-air series → `OTHER`, a
+     * festival title → `FESTIVAL`, a party/DJ-night keyword (including a Brazilian "festa") →
+     * `PARTY`. Flipping away from `CONCERT` also stops a non-artist title being minted as a
+     * headliner ([buildArtists]). Mirrors Bi Nuu's `inferBinuuEventType`; reactive like every
+     * curated heuristic — a new non-concert series reads as `CONCERT` until a keyword catches it.
      *
-     * The event-name markers (`wrestling` and [NON_CONCERT_EVENT_KEYWORDS]) are matched against
-     * the **title only** — they identify an event whose *name* is the show/market/open-air, not an
-     * act. The same marker in the *subtitle* is just a format note on a real concert (e.g. an act
-     * billed "¡Wepa! Bunny" playing an open air), so it must not strip the headliner.
+     * The event-name markers (`wrestling` and [NON_CONCERT_EVENT_KEYWORDS]) match the **title
+     * only** — they identify an event whose *name* is the show/market/open-air, not an act. The
+     * same marker in the *subtitle* is a format note on a real concert (an act billed "¡Wepa!
+     * Bunny" playing an open air) and must not strip the headliner.
      */
     private fun inferEventType(
         title: String,
@@ -231,13 +225,11 @@ class FestsaalApiScraper {
     }
 
     /**
-     * Builds the lineup for an event: for concerts the title carries the headliner(s)
-     * (co-bills split out via [headlinersFromTitle]) followed by the acts on the
-     * structured `support` line; other types (parties, festivals, quizzes) name an event,
-     * not an artist, so no artists are extracted. Support acts come from the API's dedicated
-     * `support` field (the authoritative source), split on the usual separators via
-     * [splitSupportActs]. Non-artist noise (placeholders, role labels, festival labels) is
-     * filtered by the shared [isNonArtistName].
+     * The lineup: for concerts the title carries the headliner(s) (co-bills via
+     * [headlinersFromTitle]) followed by the acts on the structured `support` line — the API's
+     * dedicated field, the authoritative source, split via [splitSupportActs]; other types
+     * (parties, festivals, quizzes) name an event, not an artist, so none. Non-artist noise
+     * (placeholders, role labels, festival labels) is filtered by the shared [isNonArtistName].
      */
     private fun buildArtists(
         title: String,
@@ -260,7 +252,7 @@ class FestsaalApiScraper {
         slug: String
     ): String = htmlUrl?.replace(FESTSAAL_ADMIN_HOST, FESTSAAL_PUBLIC_HOST) ?: "$FESTSAAL_PROGRAMM_BASE$slug/"
 
-    /** Parses an ISO `yyyy-MM-dd` date, returning null instead of throwing. */
+    /** Parses an ISO `yyyy-MM-dd` date, null instead of throwing. */
     private fun parseDate(raw: String?): LocalDate? {
         if (raw.isNullOrBlank()) return null
         return try {
@@ -271,8 +263,8 @@ class FestsaalApiScraper {
     }
 
     /**
-     * Parses Festsaal's plain decimal price string (e.g. `"51,80"`, German comma separator,
-     * no currency symbol) into a positive [BigDecimal], or null when absent/unparseable.
+     * Parses the plain decimal price string (`"51,80"`, German comma, no currency symbol) into a
+     * positive [BigDecimal], or null when absent/unparseable.
      */
     private fun parsePrice(raw: String?): BigDecimal? {
         val cleaned = raw?.trim()?.replace(",", ".")?.takeIf { it.isNotBlank() } ?: return null
@@ -291,7 +283,7 @@ class FestsaalApiScraper {
 
         /**
          * Party/DJ-night phrases that, in a title or subtitle, mark a non-concert night at this
-         * concert-leaning venue. Includes the Brazilian `festa` (e.g. "Festa Junina"), a party.
+         * concert-leaning venue. Includes the Brazilian `festa` ("Festa Junina"), a party.
          */
         val PARTY_KEYWORDS =
             listOf(
@@ -310,23 +302,19 @@ class FestsaalApiScraper {
 
         /**
          * Title markers for non-music, non-party events whose **title** names the event, not an
-         * artist: a market ("24. Japanmarkt") or an open-air event series ("Berlin Indie Open Air").
-         * Matched against the title only (see [inferEventType]) so a subtitle "Open Air" format note
-         * on a real concert doesn't strip its headliner. Mapped to `OTHER` so no headliner is minted.
-         * Curated/reactive, like the venue's other heuristics.
+         * artist: a market ("24. Japanmarkt") or an open-air series ("Berlin Indie Open Air"). Title
+         * only (see [inferEventType]) so a subtitle "Open Air" note on a real concert keeps its
+         * headliner. Mapped to `OTHER` so no headliner is minted. Curated/reactive.
          */
         val NON_CONCERT_EVENT_KEYWORDS = listOf("markt", "open air")
     }
 }
 
 /**
- * One event in the Wagtail listing (`items[]`), mapped from its JSON by Jackson.
- *
- * Only the fields Festsaal actually populates are declared; the mapper's
- * `SNAKE_CASE` strategy maps snake_case JSON keys (`sub_title`, `changed_date`,
- * `preview_image`) onto these camelCase properties, and unknown keys are ignored.
- * Every field is nullable/defaulted so a partial or evolving payload deserializes
- * cleanly and is validated in [FestsaalApiScraper.parseEvent] instead.
+ * One event in the Wagtail listing (`items[]`), mapped by Jackson. Only the fields Festsaal
+ * populates are declared; `SNAKE_CASE` maps `sub_title`, `changed_date`, `preview_image` onto
+ * these camelCase properties, unknown keys ignored. Every field is nullable/defaulted so a
+ * partial or evolving payload deserializes and is validated in [FestsaalApiScraper.parseEvent].
  */
 private data class FestsaalEventNode(
     val id: Long? = null,

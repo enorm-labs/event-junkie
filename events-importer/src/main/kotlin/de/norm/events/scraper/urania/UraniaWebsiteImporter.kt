@@ -12,15 +12,13 @@ import org.springframework.stereotype.Component
 /**
  * Website importer for the Urania Berlin, the Schöneberg science and culture house.
  *
- * Reads the `/kalender/` page — the whole upcoming programme, server-rendered with no pagination —
- * then follows each item to its `/event/<slug>/` page for the poster, the prose and the admission
- * line.
+ * Reads `/kalender/` — the whole upcoming programme, server-rendered, no pagination — then
+ * follows each item to its `/event/<slug>/` page for poster, prose and admission line.
  *
- * The house has two halls, the **Humboldtsaal** and the **Kleistsaal**, and no source states which
- * one an event is in: not the calendar, not the event pages, not the Reservix shop, not the site's
- * own Reservix API. Events are therefore imported against the house, which is what every one of
- * those sources actually describes; splitting the programme would mean either guessing or storing
- * every event twice.
+ * Two halls, the **Humboldtsaal** and the **Kleistsaal**, and no source states which one an
+ * event is in: not the calendar, the event pages, the Reservix shop, nor the site's own Reservix
+ * API. Events are imported against the house, which is what every source describes; splitting
+ * would mean guessing or storing every event twice.
  *
  * @see UraniaCalendarPageScraper for the calendar parsing.
  * @see UraniaEventPageScraper for the event-page parsing.
@@ -46,12 +44,10 @@ class UraniaWebsiteImporter(
     ): ScrapedEvent? = eventPageScraper.scrape(document, url)
 
     /**
-     * Merges event-page data ([primary]) with calendar data ([fallback]).
-     *
-     * The event page is the richer source and wins wherever it states something — it is the only
-     * one carrying the poster, the prose and the price. The **calendar owns the date and clock**:
-     * it states them as a machine-readable `data-day` token where the page renders German prose,
-     * and its value is used whenever the page's own line fails to parse.
+     * Merges event-page data ([primary]) with calendar data ([fallback]). The event page is richer
+     * and wins wherever it states something — the only one carrying poster, prose and price. The
+     * **calendar owns the date and clock**: a machine-readable `data-day` token where the page
+     * renders German prose, used whenever the page's own line fails to parse.
      */
     override fun fillGapsFromOverview(
         primary: ScrapedEvent,
