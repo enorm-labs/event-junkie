@@ -45,6 +45,21 @@ class MorphineFieldMappingTest {
 
     // --- parseDayLineDate ---
 
+    // #1674 — the four shapes the venue writes on a set line beside a bare name.
+    @Test
+    fun `reads the acts off a set line that carries a frame, an instrument, a dash list or a member list`() {
+        val framed = "Uncanny Valley presents: Gareth Psaltis Live - Temple Rat Live - Jacob Stoy"
+        morphineSetLineActs(framed, "Gareth Psaltis - Temple Rat - Jacob Stoy") shouldBe listOf("Gareth Psaltis", "Temple Rat", "Jacob Stoy")
+        morphineSetLineActs("Jakob Vasak performs with the Kobophon", "Jakob Vasak - Live Recording") shouldBe listOf("Jakob Vasak")
+        morphineSetLineActs("Le Révélateur Ciné-Concert - Réka Csiszér", "Le Révélateur Ciné-Concert") shouldBe listOf("Réka Csiszér")
+        morphineSetLineActs("PICI - Clémence Manachère & Polina Pohozha", "PICI") shouldBe listOf("PICI")
+        // A plain name, a co-bill and a work title behave as before; the co-bill split is the caller's.
+        morphineSetLineActs("Sardy Fardy", "Sardy Fardy - Live Recording") shouldBe listOf("Sardy Fardy")
+        morphineSetLineActs("ALL ABOUT BIRDS & JON ROSE: HINTERLAND!", "All About Birds") shouldBe listOf("ALL ABOUT BIRDS & JON ROSE")
+        // A pair of names stays glued: the sync-time head rule (#302) knows whether `Alister Spence` is an act.
+        morphineSetLineActs("Alister Spence – Within Without", "Alister Spence – Within Without") shouldBe listOf("Alister Spence – Within Without")
+    }
+
     @Test
     fun `reads the date out of the day header line`() {
         parseDayLineDate("Friday, 07.08.26, door  20:00") shouldBe LocalDate.of(2026, 8, 7)

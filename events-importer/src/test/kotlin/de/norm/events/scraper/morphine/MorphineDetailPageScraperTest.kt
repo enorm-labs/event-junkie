@@ -102,6 +102,20 @@ class MorphineDetailPageScraperTest {
         event.startTime shouldBe LocalTime.of(20, 0)
     }
 
+    // #1674 — a guest promoter's bill on the set line: the frame comes off, the dash list splits.
+    @Test
+    fun `bills every act of a presented dash list and none of the frame`() {
+        val url = "http://www.morphinerecords.com/events/gareth-psaltis-temple-rat-jacob-stoy"
+        val event = parse("morphine-detail-presented.html", url).shouldNotBeNull()
+
+        event.artists shouldBe
+            listOf(
+                ScrapedArtist("Gareth Psaltis", "HEADLINER", titleDerived = true),
+                ScrapedArtist("Temple Rat", "HEADLINER", titleDerived = true),
+                ScrapedArtist("Jacob Stoy", "HEADLINER", titleDerived = true)
+            )
+    }
+
     @Test
     fun `joins several paragraph blocks and keeps their line breaks`() {
         val url = "http://www.morphinerecords.com/events/all-about-birds-jon-rose-hinterland"

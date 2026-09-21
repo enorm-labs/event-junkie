@@ -96,7 +96,8 @@ class MorphineDetailPageScraper {
                 readPerformers(overlay).ifEmpty {
                     lineup
                         .filter { it.name.isNotBlank() }
-                        .flatMap { headlinersFromTitle(stripLiveRecordingSuffix(it.name)) }
+                        .flatMap { morphineSetLineActs(stripLiveRecordingSuffix(it.name), title) }
+                        .flatMap { headlinersFromTitle(it) }
                         .distinctBy { it.name.lowercase() }
                 }
         )
