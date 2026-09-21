@@ -312,7 +312,7 @@ venue's HTML structure is different.
 
 **Source registration is runtime**: `EventSourceController` provides a `POST /event-sources` endpoint to create new event sources and a
 `DELETE /event-sources/{slug}` endpoint to remove them. This avoids using Flyway for data seeding (Flyway is reserved for schema-only DDL changes). Sources can
-also be seeded via the IntelliJ HTTP Client scripts in `http/event-sources.http` for local development.
+also be seeded via the IntelliJ HTTP Client scripts in `http/importer/event-sources.http` for local development.
 
 **Operational changes are runtime**: `EventSourceController` also exposes endpoints that need no redeployment. They
 enable and disable a source, adjust import intervals, change retry limits, trigger a manual import, and reset a failed
@@ -496,7 +496,7 @@ cohesive responsibility, keeping the codebase organized as the number of utiliti
 
 | Extension / Function                   | Purpose                                                                             |
 | -------------------------------------- | ----------------------------------------------------------------------------------- |
-| `mapGermanCategory(category)`          | Maps German category labels ("Konzert", "Party", "Sonstiges") to `EventType` values |
+| `mapEventType(label)`                  | Maps German category labels ("Konzert", "Party", "Sonstiges") to `EventType` values |
 | `isPlaceholderName(name)`              | Detects placeholder artist names ("TBA", "N.N.") that should not be persisted       |
 | `buildArtistList(title, supportNames)` | Constructs headliner + support artist list from the common title/subtitle pattern   |
 | `parseEventStatus(statusText)`         | German/English status badge → `EventStatus` (sold-out stays a flag, not a status)   |
