@@ -20,27 +20,20 @@ import java.time.LocalTime
 /**
  * Pure HTML parser for a single Gärten der Welt `…/detail/<stamp>/<slug>/` page.
  *
- * **The prose block is where the structured fields hide.** The park has no CMS fields for them, so
- * its editors write them as bold-labelled paragraphs among the description — `Einlass: ab 17:30 Uhr`,
- * `Tickets: ab 60,00 €` with `Abendkasse: ab 65 €` beneath, `Veranstalter*in: Loft Concert GmbH`,
- * `Support: Peter Gregson`. Each recognised label ([FIELD_LABELS]) is lifted out and then excluded
- * from the stored description, so the blurb reads as prose rather than repeating the metadata beside
- * it. The support billing is appended to the subtitle in the shared `"Support: A & B"` form, where
- * [buildArtistsForEventType][de.norm.events.scraper.buildArtistsForEventType] looks for it.
+ * The prose block is where the structured fields hide: the park has no CMS fields, so editors
+ * write bold-labelled paragraphs among the description (`Einlass: ab 17:30 Uhr`, `Tickets: ab
+ * 60,00 €` with `Abendkasse: ab 65 €` beneath, `Veranstalter*in: Loft Concert GmbH`, `Support:
+ * Peter Gregson`). Each recognised label ([FIELD_LABELS]) is lifted out and excluded from the
+ * stored description; the support billing is appended to the subtitle in the shared `"Support:
+ * A & B"` form for [buildArtistsForEventType][de.norm.events.scraper.buildArtistsForEventType].
+ * There is no house style, so the parsing follows the variation: `Tickets:` or `Kosten:`, doors
+ * with or without minutes and with or without trailing entrance directions.
  *
- * There is no house style behind those paragraphs — they are prose an editor typed — so the parsing
- * is written to the variation rather than to one spelling: the price is `Tickets:` on some pages and
- * `Kosten:` on others, and the doors time comes with or without minutes and with or without a
- * sentence of entrance directions trailing it.
- *
- * The `h2` date line is **not** parsed: it renders weekday and day-month without a year ("Samstag,
- * 08.08."), and a multi-day run as a range, where the URL stamp
- * [the overview reads][GaertenDerWeltOverviewPageScraper] gives an unambiguous start. This scraper
- * leaves the date as [UNRESOLVED_EVENT_DATE] and the importer's merge always takes the overview's.
- *
- * `.venuesList` names where inside the grounds an event happens (the Arena, the Saal der Empfänge,
- * the Japanischer Garten) and is left unread: an event belongs to one venue and has no room or stage
- * field, and folding it into a text field it does not belong in would be worse than losing it.
+ * The `h2` date line is not parsed: it renders weekday and day-month without a year ("Samstag,
+ * 08.08.") and a multi-day run as a range, where the URL stamp
+ * [the overview reads][GaertenDerWeltOverviewPageScraper] gives the start. The date stays
+ * [UNRESOLVED_EVENT_DATE] and the merge takes the overview's. `.venuesList` (the Arena, the
+ * Saal der Empfänge, the Japanischer Garten) is left unread: an event has no room field.
  *
  * @see GaertenDerWeltOverviewPageScraper for discovery, identity and the authoritative date.
  * @see GaertenDerWeltWebsiteImporter for the fetch orchestrator and the merge.
@@ -50,8 +43,7 @@ class GaertenDerWeltDetailPageScraper {
 
     /**
      * Parses one detail page into a [ScrapedEvent], or `null` when the page carries no single-view
-     * block, no title, or no URL stamp to key it on — the importer then keeps the listing row's
-     * own data rather than persisting a half-parsed event.
+     * block, no title or no URL stamp; the importer then keeps the listing row's own data.
      *
      * @param sourceUrl the URL the document was fetched from; also the `sourceId` source.
      */
@@ -99,13 +91,10 @@ class GaertenDerWeltDetailPageScraper {
     }
 
     /**
-     * Indexes the bold-labelled prose paragraphs by their lowercased label, keeping each
-     * paragraph's `<br>`-separated lines with the label itself stripped off the first one.
-     *
-     * The lines matter: a single `Tickets:` paragraph carries the presale price on its first line
-     * and `Abendkasse: …` on its second, so flattening it with `.text()` would run two prices
-     * together. A label appearing twice keeps its first paragraph, matching how the shared price
-     * parsing resolves duplicates.
+     * Indexes the bold-labelled prose paragraphs by lowercased label, keeping each paragraph's
+     * `<br>`-separated lines with the label stripped off the first. The lines matter: one `Tickets:`
+     * paragraph carries the presale price on its first line and `Abendkasse: …` on its second. A
+     * label appearing twice keeps its first paragraph.
      */
     private fun Element.labelledParagraphs(): Map<String, List<String>> =
         select(PROSE_SELECTOR)
@@ -118,18 +107,15 @@ class GaertenDerWeltDetailPageScraper {
             .toMap()
 
     /**
-     * Strips what follows a matched label off the value: the gender-inclusive ending the park
-     * writes on its `Veranstalter*in:` label (also spelled `_in` and `:in`), then the colon and
-     * surrounding space. Matched as a whole word so a value that simply starts with "in" is left
+     * Strips what follows a matched label: the gender-inclusive ending on `Veranstalter*in:` (also
+     * `_in` and `:in`), then the colon and space. Whole-word, so a value starting with "in" is left
      * alone.
      */
     private fun String.stripLabelTail(): String = replaceFirst(GENDER_INCLUSIVE_SUFFIX, "").trim(':', ' ')
 
     /**
-     * The teaser above the description, with the page's support billing appended in the shared
-     * `"Support: …"` form so the acts reach
-     * [buildArtistsForEventType][de.norm.events.scraper.buildArtistsForEventType]. Either half may
-     * be absent — a concert page often carries the billing and an empty `p.lead`.
+     * The teaser above the description, with the support billing appended in the shared
+     * `"Support: …"` form. Either half may be absent; a concert page often has an empty `p.lead`.
      */
     private fun Element.subtitle(fields: Map<String, List<String>>): String? {
         val support = fields[SUPPORT_LABEL]?.firstOrNull()?.let { "Support: $it" }
@@ -137,8 +123,8 @@ class GaertenDerWeltDetailPageScraper {
     }
 
     /**
-     * The description: every prose paragraph that is *not* one of the labelled metadata lines,
-     * joined by blank lines. Returns `null` when the page carries only metadata.
+     * The description: every prose paragraph that is not a labelled metadata line; `null` when the
+     * page carries only metadata.
      */
     private fun Element.prose(): String? =
         select(PROSE_SELECTOR)
@@ -148,12 +134,10 @@ class GaertenDerWeltDetailPageScraper {
             .takeIf { it.isNotBlank() }
 
     /**
-     * Reads the doors time out of the `Einlass:` line, which the park writes as free prose around
-     * it — with an optional "ab", with or without minutes, and sometimes trailing a whole sentence
-     * of entrance directions ("ab 17:30 Uhr", "18 Uhr", "15:30 Uhr, ausschließlich über den
-     * Haupteingang"). The clock time is therefore matched *inside* the line, and the first match
-     * wins: a second time on the same line is the show's own start ("… Beginn: 17:00 Uhr"), which
-     * the URL stamp already supplies.
+     * Reads the doors time out of the `Einlass:` line, free prose with an optional "ab", with or
+     * without minutes, sometimes trailing entrance directions ("ab 17:30 Uhr", "18 Uhr", "15:30 Uhr,
+     * ausschließlich über den Haupteingang"). Matched inside the line, first match wins: a second
+     * time is the show's own start ("… Beginn: 17:00 Uhr"), which the URL stamp supplies.
      */
     private fun Map<String, List<String>>.doorsTime(): LocalTime? =
         this[DOORS_LABEL]
@@ -162,10 +146,9 @@ class GaertenDerWeltDetailPageScraper {
             ?.let { (hour, minute) -> runCatching { LocalTime.of(hour.toInt(), minute.ifBlank { "0" }.toInt()) }.getOrNull() }
 
     /**
-     * Splits the pricing paragraph into presale and box-office prices. Its first line is the
-     * presale price ("ab 60,00 €", "Tickets ab 47,00€"); an `Abendkasse:` line — below it or in a
-     * paragraph of its own — is the box-office one. Either may be absent; plenty of events name no
-     * price at all, and an absent price is unknown rather than free.
+     * Splits the pricing paragraph: its first line is the presale price ("ab 60,00 €", "Tickets ab
+     * 47,00€"); an `Abendkasse:` line, below it or in its own paragraph, is the box-office one.
+     * Either may be absent, and an absent price is unknown rather than free.
      */
     private fun Map<String, List<String>>.prices(): Pair<BigDecimal?, BigDecimal?> {
         val (inlineBoxOffice, presale) = this[TICKETS_LABEL].orEmpty().partition { it.startsWith(BOX_OFFICE_LABEL, ignoreCase = true) }
@@ -174,8 +157,8 @@ class GaertenDerWeltDetailPageScraper {
     }
 
     /**
-     * Reads the promoter out of the `Veranstalter*in:` line, dropping the contact address the park
-     * appends after a comma ("Loft Concert GmbH, tickets(at)loft.de").
+     * Reads the promoter out of the `Veranstalter*in:` line, dropping the contact address after a
+     * comma ("Loft Concert GmbH, tickets(at)loft.de").
      */
     private fun Map<String, List<String>>.promoter(): String? =
         this[PROMOTER_LABEL]
@@ -198,12 +181,10 @@ class GaertenDerWeltDetailPageScraper {
         private const val SUPPORT_LABEL = "support"
 
         /**
-         * The paragraph labels the park writes, mapped onto the field each is lifted into. The
-         * park has no house style, so one field arrives under several labels: the price is
-         * `Tickets:` on the pages its own box office sells and `Kosten:` on the ones an external
-         * promoter does. `veranstalter` is a prefix of both spellings it uses (`Veranstalter:` and
-         * the gender-inclusive `Veranstalter*in:`), and `abendkasse` is listed in its own right
-         * for the pages that give it a paragraph rather than a line under the price.
+         * The paragraph labels the park writes, mapped onto fields. One field arrives under several
+         * labels: `Tickets:` where its own box office sells, `Kosten:` where an external promoter does.
+         * `veranstalter` is a prefix of both `Veranstalter:` and `Veranstalter*in:`; `abendkasse` is
+         * listed for the pages that give it a paragraph.
          */
         private val FIELD_LABELS =
             mapOf(
@@ -216,9 +197,8 @@ class GaertenDerWeltDetailPageScraper {
             )
 
         /**
-         * The labels kept out of the stored description: everything lifted into a field of its
-         * own, plus the `Kontakt:` line, which is a booking mailbox rather than prose about the
-         * event and which the model has no field for.
+         * The labels kept out of the stored description: everything lifted into a field, plus the
+         * `Kontakt:` booking mailbox, which the model has no field for.
          */
         private val EXCLUDED_LABELS = FIELD_LABELS.keys + "kontakt"
 

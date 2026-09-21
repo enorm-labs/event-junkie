@@ -18,25 +18,11 @@ import java.time.LocalDate
 import java.time.LocalTime
 
 /**
- * Pure HTML parser for Cassiopeia's Webflow-based event listing (overview) page.
- *
- * Extracts event data from `.event-item` elements on the `/club` page.
- *
- * The listing page serves two purposes:
- * 1. **Discovery** — identifies all event URLs for detail page fetching.
- * 2. **Fallback data** — extracts core event fields (title, date, times,
- *    category, genre, image, status) so that events remain importable
- *    even when their detail page cannot be fetched.
- *
- * **Important**: The listing page is paginated (Webflow CMS pagination).
- * Only the first page of events is scraped. The site uses Finsweet
- * CMS Load to load additional pages via JavaScript, which is not
- * available to server-side scraping.
- *
- * The listing can carry recently-passed events. Persistence drops past-dated events
- * centrally (`EventUpsertService`), but this scraper also filters them here — after
- * dedup, before the detail-page fetch — purely as an optimization, so no HTTP is
- * wasted fetching detail pages for events that would be discarded anyway.
+ * Pure HTML parser for Cassiopeia's Webflow `/club` listing, `.event-item` elements. Discovery
+ * of every detail URL, plus fallback fields (title, date, times, category, genre, image,
+ * status) so an event survives a failed detail fetch. Paginated by Finsweet CMS Load via
+ * JavaScript, so only the first page is scraped. Recently-passed events are dropped here, after
+ * dedup and before the detail fetch, purely to save HTTP; persistence applies the same cutoff.
  *
  * @see CassiopeiaDetailPageScraper for the primary per-event data source.
  * @see <a href="https://cassiopeia-berlin.de/club">Cassiopeia Club page</a>
@@ -48,20 +34,12 @@ class CassiopeiaOverviewPageScraper(
     private val logger = KotlinLogging.logger {}
 
     /**
-     * Parses all event items from the overview page document.
+     * Parses all event items, then deduplicates by date + title: Webflow CMS occasionally lists one
+     * event twice, `/event/doll` (legacy) and `/event/doell-111601080` (canonical, with the CMS
+     * numeric ID), and the numeric-suffixed entry is preferred as the stable URL.
      *
-     * After parsing, duplicate events (same date + title) are deduplicated.
-     * Webflow CMS occasionally lists the same event twice with different
-     * URL slugs — e.g. `/event/doll` (legacy) and `/event/doell-111601080`
-     * (canonical with CMS numeric ID). When duplicates are found, the entry
-     * with a Webflow CMS numeric ID suffix is preferred because it is the
-     * stable, canonical URL.
-     *
-     * @param sourceUrl the URL the document was fetched from, used for
-     *   resolving relative links and building `sourceId` values.
-     * @return a list of upcoming [ScrapedEvent] instances (today onward) extracted from
-     *   the page; recently-passed events are dropped here to avoid wasted detail-page
-     *   fetches — persistence enforces the same cutoff regardless.
+     * @param sourceUrl the URL the document was fetched from, for relative links and `sourceId`s.
+     * @return upcoming [ScrapedEvent]s (today onward).
      */
     fun scrape(
         document: Document,
@@ -87,15 +65,8 @@ class CassiopeiaOverviewPageScraper(
     }
 
     /**
-     * Removes duplicate events (same date + title), preferring entries
-     * whose URL slug contains a Webflow CMS numeric ID suffix.
-     *
-     * Webflow CMS can create duplicate listings when an event is re-created
-     * or when both a legacy slug and a canonical slug exist simultaneously.
-     * The canonical URL pattern includes a numeric CMS item ID at the end
-     * (e.g. `doell-111601080`), while legacy slugs are plain text (`doll`).
-     * The numeric-suffixed URL is preferred because it is globally unique
-     * within the CMS and stable across renames.
+     * Removes duplicates (same date + title), preferring a slug with a Webflow CMS numeric ID suffix
+     * (`doell-111601080` over `doll`), which is unique within the CMS and stable across renames.
      */
     private fun deduplicateEvents(events: List<ScrapedEvent>): List<ScrapedEvent> {
         // Group by date + normalized title to find duplicates
@@ -120,11 +91,8 @@ class CassiopeiaOverviewPageScraper(
     }
 
     /**
-     * Checks whether a sourceId contains a Webflow CMS numeric ID suffix.
-     *
-     * Canonical Webflow slugs end with a hyphen followed by a numeric CMS
-     * item ID (e.g. `cassiopeia:doell-111601080`). Legacy or manually created
-     * slugs lack this suffix (e.g. `cassiopeia:doll`).
+     * Whether a sourceId ends in a Webflow CMS numeric ID (`cassiopeia:doell-111601080`, not
+     * `cassiopeia:doll`).
      */
     private fun hasCmsNumericId(sourceId: String): Boolean {
         val slug = sourceId.substringAfter(":")
@@ -132,17 +100,10 @@ class CassiopeiaOverviewPageScraper(
     }
 
     /**
-     * Parses a single `.event-item` element into a [ScrapedEvent].
-     *
-     * The Webflow CMS structure uses two layouts — desktop and mobile —
-     * within the same element. We primarily use the mobile layout's
-     * `.event-details` elements because they contain the most structured
-     * data (doors time, start time, category, genre as separate elements).
-     *
-     * Where possible, selectors prefer semantic attributes (e.g. Finsweet's
-     * `fs-cmsfilter-field`) and label text over positional CSS classes,
-     * because semantic identifiers are less likely to change during a
-     * Webflow redesign.
+     * Parses one `.event-item`. The element carries a desktop and a mobile layout; the mobile
+     * `.event-details` elements hold the most structured data (doors, start, category, genre
+     * separately). Selectors prefer semantic attributes (Finsweet's `fs-cmsfilter-field`) and label
+     * text over positional classes, which a Webflow redesign renumbers.
      */
     private fun parseEventItem(
         item: Element,
@@ -165,9 +126,7 @@ class CassiopeiaOverviewPageScraper(
                 logger.warn { "Could not parse event date for '$title', skipping event" }
                 return null
             }
-        // Use label text ("Einlass"/"Beginn") to locate times rather than positional CSS classes,
-        // because label text is semantic content unlikely to change, while numbered classes
-        // (e.g. `._5`, `._8`) are positional and fragile across layout changes.
+        // Times by label text ("Einlass"/"Beginn") rather than the positional `._5`, `._8` classes.
         val doorsTime = parseTimeByLabel(item, DOORS_LABEL)
         val startTime = parseTimeByLabel(item, START_LABEL)
         // Prefer Finsweet CMS filter attributes for category and genre
@@ -191,21 +150,15 @@ class CassiopeiaOverviewPageScraper(
             sourceId = "${EventSource.CASSIOPEIA.sourceIdPrefix}$eventSlug",
             soldOut = isSoldOut,
             status = if (isCancelled) "CANCELLED" else "SCHEDULED",
-            // For concerts the title is the headliner — extracted here as a fallback
-            // for when the detail-page fetch fails. Support acts (and richer detail
-            // artists) come from the detail page and win in the importer merge.
+            // For concerts the title is the headliner, a fallback for a failed detail fetch; support acts
+            // come from the detail page and win in the merge.
             artists = if (eventType == "CONCERT") headlinersFromTitle(title) else emptyList()
         )
     }
 
     /**
-     * Parses the event date from the structured date elements.
-     *
-     * The `.event-date-wrapper` contains `h2.event-date` elements for
-     * day, dots, month, and a hidden "faker" with month name + year.
-     * Calling `text()` on the wrapper yields e.g. `"14 . 05 . Mai 2026"`.
-     * We extract all numeric parts — day (14), month (05), year (2026) —
-     * via regex, which also naturally skips the German month name.
+     * The date from `.event-date-wrapper`, whose `h2.event-date` children and a hidden "faker" read
+     * as `"14 . 05 . Mai 2026"`; the numeric parts are extracted by regex, skipping the month name.
      */
     @Suppress("ReturnCount") // Null-safe early exits for each date component are clearer than nested let-chains
     private fun parseEventDate(item: Element): LocalDate? {
@@ -225,12 +178,8 @@ class CassiopeiaOverviewPageScraper(
     }
 
     /**
-     * Parses a time value from the mobile detail section by locating the label text.
-     *
-     * Finds the `.event-details` element whose text matches the [label]
-     * (e.g. "Einlass", "Beginn") and reads the time from the next sibling.
-     * Falls back to positional CSS classes (`._5`, `._8`) if the label
-     * is not found, for backwards compatibility with older page layouts.
+     * A time from the mobile section by label: the `.event-details` element matching [label] and
+     * its next sibling, falling back to the positional `._5`, `._8` classes for older layouts.
      */
     private fun parseTimeByLabel(
         item: Element,
@@ -253,12 +202,8 @@ class CassiopeiaOverviewPageScraper(
     }
 
     /**
-     * Extracts the event image URL from the background-image CSS property.
-     *
-     * Webflow renders event images as `background-image: url(...)` on
-     * the `.event-image-wrapper` div rather than as `<img>` elements.
-     * Falls back to an `<img>` child element if the background-image
-     * style is absent or empty — in case the Webflow template changes.
+     * The image from `background-image: url(...)` on `.event-image-wrapper`, which Webflow uses
+     * instead of `<img>`; falls back to an `<img>` child.
      */
     private fun parseImageUrl(item: Element): String? {
         val wrapper = item.selectFirst(".event-image-wrapper") ?: return null

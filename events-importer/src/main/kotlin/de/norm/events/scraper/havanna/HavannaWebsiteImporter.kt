@@ -13,30 +13,16 @@ import org.springframework.stereotype.Component
 import java.time.Clock
 
 /**
- * Website importer for Havanna Berlin — a Squarespace Latin dance club that publishes **no dated
- * programme at all**.
- *
- * Every other scraped venue announces individual dated events; Havanna instead asserts a standing
- * weekly schedule. Its `/events` page is a static three-column teaser linking to three undated pages
- * (`/wednesday`, `/friday`, `/saturday`), each describing a resident night that runs every week: the
- * dancefloor genres, the start time, the door price. The pipeline is therefore discovery → describe →
- * **expand**:
- * 1. Fetch `/events` and read the night links via [HavannaOverviewPageScraper].
- * 2. Fetch each night page and parse it into an undated [HavannaWeeklyNight] via [HavannaDetailPageScraper].
- * 3. Expand each night into one dated event per week over a rolling horizon
- *    ([HavannaWeeklyNight.OCCURRENCE_WEEKS]).
- *
- * Because the events are derived rather than announced, two things follow. Conditional requests are
- * intentionally **not** used: these pages have not changed since 2016, so a 304 would freeze the
- * horizon and the calendar would stop advancing — every run re-fetches and relies on idempotent
- * `sourceId` upserts, returning [ImportResult.Success] with `null` cache headers (there is no
- * `NotModified` path). And a closure notice on a night page ("… AB DEM 01.07.2026 IN DER
- * SOMMERPAUSE!") suppresses that night's occurrences from the announced date on, so the derived
- * schedule doesn't keep asserting parties the venue has called off. The notice is read per page: the
- * venue posts it on the night it affects, and nothing on the site says a break extends to the others.
- *
- * A night page that fails to fetch or parse is skipped with a warning rather than failing the whole
- * import, so one broken page doesn't cost the other two nights.
+ * Website importer for Havanna Berlin, a Squarespace Latin dance club that publishes no dated
+ * programme: `/events` links to three undated pages (`/wednesday`, `/friday`, `/saturday`),
+ * each a resident night that runs every week. So discovery ([HavannaOverviewPageScraper]),
+ * describe ([HavannaDetailPageScraper] into an undated [HavannaWeeklyNight]), then expand into
+ * one dated event per week over [HavannaWeeklyNight.OCCURRENCE_WEEKS]. Conditional requests are
+ * not used: the pages have not changed since 2016, and a 304 would freeze the horizon, so every
+ * run re-fetches and returns [ImportResult.Success] with `null` cache headers. A closure notice
+ * ("… AB DEM 01.07.2026 IN DER SOMMERPAUSE!") suppresses that night's occurrences from the date
+ * on, read per page since nothing says a break extends to the other nights. A failed night page
+ * is skipped with a warning.
  *
  * @see HavannaWeeklyNight for the recurrence expansion.
  * @see <a href="https://www.havanna-berlin.de/events">Havanna events page</a>

@@ -10,17 +10,9 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
 
 /**
- * Website importer for Gretchen Berlin's retro hand-coded event listing.
- *
- * Gretchen renders all upcoming events on a single homepage (`/`) as `.gig`
- * blocks with full details inline (date, times, genre, lineup, prices,
- * promoter, image). Like Privatclub and Frannz, no separate detail-page fetch
- * is needed — the pipeline is:
- * 1. Fetch the overview page (`/`) via [HtmlFetcher] with conditional request
- *    support (ETag / Last-Modified).
- * 2. Parse all events from the single page via [GretchenOverviewPageScraper].
- *
- * This keeps the importer simple: one HTTP request per import cycle.
+ * Website importer for Gretchen Berlin's hand-coded listing: all upcoming events on one
+ * homepage (`/`) as `.gig` blocks with full details inline, so, like Privatclub and Frannz, one
+ * conditional fetch via [HtmlFetcher] and one parse via [GretchenOverviewPageScraper].
  *
  * @see GretchenOverviewPageScraper for the HTML parsing logic.
  * @see <a href="https://www.gretchen-club.de/">Gretchen Berlin</a>

@@ -16,30 +16,18 @@ import org.jsoup.nodes.Document
 import org.springframework.stereotype.Component
 
 /**
- * Website importer for silent green — the Wedding cultural quarter in a 1911 crematorium, whose
- * TYPO3 (`tx_news`) programme is published one calendar month at a time (`/programm` for the current
- * month, `/programm/<yyyy>/<m>` for the rest).
- *
- * Two shapes of the site drive this class, and both are why it implements [EventImporter] directly
- * rather than extending [de.norm.events.scraper.AbstractTwoPageWebsiteImporter]:
- *
- * 1. **The month walk.** The entry URL serves the current month and this importer follows the page's
- *    own next-month link forward. Unlike Matrix, the venue *never* drops that link — it renders an
- *    empty calendar for any month you ask for, arbitrarily far ahead — so the walk stops at the
- *    first month with no entries, the only end-of-programme signal the site gives.
- *    [MAX_MONTH_PAGES] caps it regardless.
- * 2. **Shared detail pages, and runs.** A run is listed once per day it is open, so many rows resolve to one
- *    `/programm/detail/<slug>` page — 92 rows over five months for 55 distinct pages, one exhibition
- *    alone accounting for 23. Each distinct page is fetched once and applied to every day of that
- *    run ([SilentGreenEventDetails.applyTo]); a per-event fetch would re-request the same page 20+
- *    times and be serialised by the per-host politeness throttle. An exhibition's days then fold
- *    into one event spanning the page's date block ([collapseExhibitionRuns], ADR-029, #337) — the
- *    23 rows are one row. A festival's days stay apart: each has its own lineup.
- *
- * A detail page that cannot be fetched or parsed is not fatal: those days keep their calendar data,
- * losing only the doors time, poster and blurb. Conditional requests are intentionally **not** used
- * — the site answers `Cache-Control: private, no-store` with neither validator, and a 304 on the
- * entry page would say nothing about the later months.
+ * Website importer for silent green, the Wedding cultural quarter in a 1911 crematorium, whose
+ * TYPO3 (`tx_news`) programme is published one month at a time. Implements [EventImporter]
+ * directly rather than [de.norm.events.scraper.AbstractTwoPageWebsiteImporter] for two reasons.
+ * The month walk: the importer follows the page's own next-month link, and unlike Matrix the
+ * venue never drops it, rendering an empty calendar arbitrarily far ahead, so the walk stops at
+ * the first month with no entries, capped by [MAX_MONTH_PAGES]. Shared detail pages: a run is
+ * listed once per open day, 92 rows over five months for 55 distinct pages, one exhibition
+ * alone 23, so each page is fetched once and applied to every day ([SilentGreenEventDetails.applyTo]),
+ * where a per-event fetch would be serialised by the politeness throttle; an exhibition's days
+ * then fold into one event ([collapseExhibitionRuns], ADR-029, #337), a festival's stay apart.
+ * A failed detail page is not fatal. Conditional requests are not used: `Cache-Control: private,
+ * no-store` with neither validator, and a 304 on the entry page says nothing about later months.
  *
  * @see SilentGreenMonthPageScraper for the per-month calendar parsing.
  * @see SilentGreenDetailPageScraper for the run-level detail parsing.
@@ -90,10 +78,8 @@ class SilentGreenWebsiteImporter(
     ): String? = document.attrAt(".arrow-next a", "href")?.let { resolveUrl(pageUrl, it.substringBefore('#')) }
 
     /**
-     * Fetches each distinct detail page once and applies it to every day of that run.
-     *
-     * The de-duplication is the point: `sourceUrl` is the run's page, shared by all the days the
-     * calendar lists it on.
+     * Fetches each distinct detail page once and applies it to every day of that run; `sourceUrl`
+     * is the run's page.
      */
     private suspend fun enrichFromDetailPages(events: List<ScrapedEvent>): List<ScrapedEvent> {
         val detailUrls = events.map { it.sourceUrl }.distinct()
@@ -115,9 +101,8 @@ class SilentGreenWebsiteImporter(
 
     private companion object {
         /**
-         * Upper bound on the month pages walked in one run. silent green announces roughly four
-         * months ahead, so this is a runaway guard rather than a horizon — it only bites if a month
-         * ever renders entries without a working next-month link.
+         * Upper bound on the month walk: roughly four months announced ahead, so a runaway guard that
+         * bites only if a month renders entries without a working next-month link.
          */
         const val MAX_MONTH_PAGES = 12
     }

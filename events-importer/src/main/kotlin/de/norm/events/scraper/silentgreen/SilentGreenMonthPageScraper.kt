@@ -18,23 +18,15 @@ import java.time.LocalDate
 import java.time.YearMonth
 
 /**
- * Pure HTML parser for one month of silent green's TYPO3 (`tx_news`) calendar — `/programm` for
- * the current month, `/programm/<yyyy>/<m>` for any other.
- *
- * The page renders each open day as an `.eventList-day` block of `.eventList-event` rows, and a
- * **run appears once per day it is open**: the August page holds 53 rows for 19 events, 23 of them
- * one exhibition. Every row is emitted as its own dated event — that is what the venue publishes
- * for that day. [SilentGreenWebsiteImporter] fetches each detail page once and folds an
- * exhibition's days into one run dated by the page's span (ADR-029, #337); a festival's days keep
- * their own dates, since each has its own lineup.
- *
- * The rendered date is year-less (`"Sa 01.08."`), so the row supplies the day and month and the
- * page's own `.current-month` heading (`"August 2026"`) supplies the year. A page whose heading
- * cannot be read yields nothing rather than a guessed year.
- *
- * The venue publishes **no prices** anywhere — every event either links out to a ticket shop or
- * says nothing — and no genre. Doors, the poster and the full blurb live on the detail page; see
- * [SilentGreenEventDetails].
+ * Pure HTML parser for one month of silent green's TYPO3 (`tx_news`) calendar (`/programm`,
+ * `/programm/<yyyy>/<m>`): `.eventList-day` blocks of `.eventList-event` rows, a run appearing
+ * once per open day (the August page holds 53 rows for 19 events, 23 of them one exhibition).
+ * Every row is emitted as its own dated event; [SilentGreenWebsiteImporter] fetches each detail
+ * page once and folds an exhibition's days into one run (ADR-029, #337), while a festival's days
+ * keep their own lineups. The rendered date is year-less (`"Sa 01.08."`); the `.current-month`
+ * heading (`"August 2026"`) supplies the year, and an unreadable heading yields nothing rather
+ * than a guess. The venue publishes no prices and no genre; doors, poster and blurb are on the
+ * detail page ([SilentGreenEventDetails]).
  *
  * @see SilentGreenWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://www.silent-green.net/programm">silent green calendar</a>
@@ -45,9 +37,9 @@ class SilentGreenMonthPageScraper {
     /**
      * Parses every listed day of one month page.
      *
-     * @param baseUrl the URL the page was fetched from, for resolving the relative detail links.
-     * @return one [ScrapedEvent] per calendar row, in page order; empty for a month with no
-     *   programme (which is how [SilentGreenWebsiteImporter] knows to stop walking).
+     * @param baseUrl the URL the page was fetched from, for the relative detail links.
+     * @return one [ScrapedEvent] per row, in page order; empty for a month with no programme,
+     * which is how [SilentGreenWebsiteImporter] knows to stop.
      */
     fun scrape(
         document: Document,
@@ -74,12 +66,9 @@ class SilentGreenMonthPageScraper {
     }
 
     /**
-     * Parses one `.eventList-event` row into a [ScrapedEvent], or `null` when a required field
-     * (detail link, title, date) is missing.
-     *
-     * The raw title is read twice on purpose: [parseEventStatus] and the sold-out check need the
-     * venue's annotations (`"… – ausverkauft"`), while [cleanEventTitle] removes them from what is
-     * stored and from what becomes an artist name.
+     * Parses one `.eventList-event` row, or `null` when the detail link, title or date is missing.
+     * The raw title is read twice: [parseEventStatus] and the sold-out check need the annotations
+     * (`"… – ausverkauft"`), [cleanEventTitle] removes them from what is stored.
      */
     @Suppress("ReturnCount") // Guard clauses per missing required field are clearer than nesting
     private fun parseRow(
@@ -92,8 +81,8 @@ class SilentGreenMonthPageScraper {
             logger.warn { "Calendar row has no detail link, skipping" }
             return null
         }
-        // The href carries the calendar's own tx_news day/month/year and cHash parameters; the
-        // bare path serves the same page and is the run's stable identity, so the query is dropped.
+        // The href carries the calendar's tx_news day/month/year and cHash parameters; the bare path
+        // serves the same page and is the run's identity, so the query is dropped.
         val sourceUrl = resolveUrl(baseUrl, detailHref.substringBefore('?'))
 
         val rawTitle = row.textAt("$TITLE_SELECTOR h3")
@@ -136,9 +125,7 @@ class SilentGreenMonthPageScraper {
     }
 
     /**
-     * Builds the row's date from the day and month it renders (`"Sa 01.08."`) and the year of the
-     * page it sits on. The row is authoritative for day and month — the page supplies only the
-     * year it omits.
+     * The row's date from the day and month it renders (`"Sa 01.08."`) and the page's year.
      */
     private fun parseRowDate(
         row: Element,
@@ -150,11 +137,8 @@ class SilentGreenMonthPageScraper {
     }
 
     /**
-     * Reads the month the page shows from its calendar heading (`"August 2026"`).
-     *
-     * The month name is matched on its first three letters via
-     * [parseGermanMonthAbbreviation] — every German month name but March abbreviates to exactly
-     * that, and `"Mär"` is one of the spellings that table already accepts.
+     * The month from the calendar heading (`"August 2026"`), matched on its first three letters via
+     * [parseGermanMonthAbbreviation]; `"Mär"` is a spelling that table accepts.
      */
     private fun parseMonthHeading(document: Document): YearMonth? {
         val heading = document.textAt(MONTH_HEADING_SELECTOR)?.split(' ').orEmpty()
@@ -165,11 +149,9 @@ class SilentGreenMonthPageScraper {
     }
 
     /**
-     * The event's stable identity, taken from the last path segment of its detail URL
-     * (`/programm/detail/htrk` → `htrk`).
-     *
-     * Combined with the date it forms the `sourceId`, because the URL alone is shared by every day
-     * of a multi-day run.
+     * The stable identity from the last path segment of the detail URL (`/programm/detail/htrk` to
+     * `htrk`), combined with the date for the `sourceId`, since the URL is shared by every day of a
+     * run.
      */
     private fun detailSlug(url: String): String = silentGreenDetailSlug(url)
 

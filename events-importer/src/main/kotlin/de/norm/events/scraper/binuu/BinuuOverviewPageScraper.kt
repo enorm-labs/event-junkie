@@ -9,16 +9,11 @@ import org.jsoup.nodes.Document
 import tools.jackson.databind.JsonNode
 
 /**
- * Pure parser for Bi Nuu's event listing (overview) page (`/de/events`).
- *
- * Bi Nuu is a SvelteKit/PocketBase site whose listing embeds every event as a
- * JS object literal under `data.events[]` in the page bootstrap script (see
- * [BinuuSvelteKitPayload]). This overview payload is used for **discovery** —
- * each entry yields the event id (hence the detail URL and stable `sourceId`)
- * plus enough fields (title, date, image, sold-out, status) to serve as a
- * fallback when a detail page cannot be fetched. The richer per-event data
- * (doors, description, tickets, promoters, performers) comes from the detail
- * page via [BinuuDetailPageScraper].
+ * Pure parser for Bi Nuu's `/de/events` listing, a SvelteKit/PocketBase site embedding every
+ * event as a JS object literal under `data.events[]` in the bootstrap script
+ * ([BinuuSvelteKitPayload]). Discovery: each entry yields the id (hence the detail URL and
+ * `sourceId`) plus title, date, image, sold-out and status as fallback; doors, description,
+ * tickets, promoters and performers come from [BinuuDetailPageScraper].
  *
  * @see BinuuDetailPageScraper for the primary per-event data source.
  * @see BinuuWebsiteImporter for the HTTP fetch orchestrator.
@@ -28,11 +23,10 @@ class BinuuOverviewPageScraper {
     private val logger = KotlinLogging.logger {}
 
     /**
-     * Parses all events from the overview page's embedded `data.events[]` payload.
+     * Parses all events from the embedded `data.events[]`.
      *
-     * @param baseUrl the URL the document was fetched from, used to build per-event
-     *   detail URLs.
-     * @return a list of discovery [ScrapedEvent] instances, one per listed event.
+     * @param baseUrl the URL the document was fetched from, to build detail URLs.
+     * @return one discovery [ScrapedEvent] per listed event.
      */
     fun scrape(
         document: Document,
@@ -77,12 +71,10 @@ class BinuuOverviewPageScraper {
         return ScrapedEvent(
             title = title,
             subtitle = subtitle,
-            // Type is inferred (Bi Nuu has no category field). The overview carries
-            // only title/subtitle — no blurb — so this is a signal-poor fallback used
-            // when a detail page can't be fetched; the detail scraper's richer text wins.
+            // Type inferred (no category field) from title/subtitle only, a signal-poor fallback; the detail
+            // scraper's richer text wins.
             eventType = inferBinuuEventType(title, subtitle),
-            // Fall back to the sentinel if a listing entry ever lacks a date; the
-            // detail page then supplies it via BinuuWebsiteImporter.fillGapsFromOverview.
+            // The sentinel if a listing entry lacks a date; the detail page supplies it.
             eventDate = parseBinuuDate(start) ?: UNRESOLVED_EVENT_DATE,
             startTime = parseBinuuTime(start),
             imageUrl = node.binuuImageUrl(),
@@ -95,10 +87,8 @@ class BinuuOverviewPageScraper {
 }
 
 /**
- * Builds the canonical detail-page URL for an event id relative to the listing
- * [baseUrl] (e.g. `https://binuu.de/de/events` + `zf0kroyf2cjolyl` →
- * `https://binuu.de/de/events/zf0kroyf2cjolyl`), matching the site's own
- * `…/de/events/<id>` links.
+ * The detail URL for an id relative to [baseUrl] (`https://binuu.de/de/events` +
+ * `zf0kroyf2cjolyl`), matching the site's `…/de/events/<id>` links.
  */
 private fun binuuDetailUrl(
     baseUrl: String,

@@ -13,11 +13,9 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 
 /**
- * Pure HTML parser for one page of the Gärten der Welt `/events/veranstaltungen/` listing.
- *
- * The park runs TYPO3 with the `events2` extension, which server-renders the programme into a
- * `.tx-events2 .list` of `.eventWrapper` rows, **five to a page**, ascending by date. Each row is
- * self-describing:
+ * Pure HTML parser for one page of the Gärten der Welt `/events/veranstaltungen/` listing. TYPO3
+ * with the `events2` extension server-renders a `.tx-events2 .list` of `.eventWrapper` rows, five
+ * to a page, ascending by date:
  *
  * | Field       | Source                                                                     |
  * |-------------|----------------------------------------------------------------------------|
@@ -29,15 +27,11 @@ import org.jsoup.nodes.Element
  * | ticket shop | `a.ticket` — an absolute bookingkit / Eventim / Ticketfritz link, when sold |
  * | detail page | the `href` to `detail/<stamp>/<slug>/`                                      |
  *
- * The rendered `.date` and `.time` cells are deliberately **not** parsed: the stamp in the href
- * carries both, and carries them better — `.date` renders a multi-day run as a range
- * (`01.09.2026 - 01.11.2026`) and `.time` as a span (`17.30 – 21 Uhr`), neither of which the
- * single-date, single-start-time event model can hold. A row whose href has no stamp is skipped
- * with a warning rather than half-parsed: the stamp is also the row's identity, so without it
- * there is no stable `sourceId` either.
- *
- * Rows the park files under one of its participation formats are dropped here, before the importer
- * spends a detail-page fetch on them — see [isProgrammeCategory].
+ * The rendered `.date` and `.time` cells are not parsed: the stamp carries both, and `.date`
+ * renders a multi-day run as a range (`01.09.2026 - 01.11.2026`), `.time` as a span (`17.30 – 21
+ * Uhr`). A row whose href has no stamp is skipped with a warning: the stamp is also its identity.
+ * Rows filed under a participation format are dropped before a detail fetch
+ * ([isProgrammeCategory]).
  *
  * @see GaertenDerWeltDetailPageScraper for the description, prices, doors time and promoter.
  * @see GaertenDerWeltWebsiteImporter for the paginated fetch orchestrator.
@@ -46,13 +40,10 @@ class GaertenDerWeltOverviewPageScraper {
     private val logger = KotlinLogging.logger {}
 
     /**
-     * Parses the in-scope event rows on one listing page, in page order.
+     * Parses the in-scope rows on one listing page, in page order; a row that is out of scope,
+     * unstamped or untitled is dropped, and one malformed row never aborts the page.
      *
-     * A row that is out of scope, unstamped or untitled is dropped, and a single malformed row
-     * never aborts the page.
-     *
-     * @param baseUrl the URL the document was fetched from, used to resolve the page's
-     *   root-relative detail and image links.
+     * @param baseUrl the URL the document was fetched from, to resolve root-relative links.
      */
     fun scrape(
         document: Document,
@@ -73,13 +64,10 @@ class GaertenDerWeltOverviewPageScraper {
     }
 
     /**
-     * Reads the listing's own "nächste" link, or `null` on the last page — the signal
-     * [GaertenDerWeltWebsiteImporter] paginates on.
-     *
-     * Following the link the paginator renders is what makes the walk terminate: TYPO3 **clamps**
-     * an out-of-range page number to the last page rather than erroring, so a walk that counted
-     * pages itself would keep re-fetching the final page's rows until it hit its own cap. The last
-     * page renders no `li.next` at all.
+     * The listing's own "nächste" link, or `null` on the last page, the signal
+     * [GaertenDerWeltWebsiteImporter] paginates on. Following the rendered link is what makes the
+     * walk terminate: TYPO3 clamps an out-of-range page number to the last page, so a counting walk
+     * would re-fetch the final page until its own cap. The last page renders no `li.next`.
      */
     fun nextPageUrl(
         document: Document,

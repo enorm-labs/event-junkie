@@ -12,14 +12,9 @@ import java.time.LocalTime
 import java.time.temporal.TemporalAdjusters
 
 /**
- * A single **undated, weekly recurring** Havanna club night, as described by one of the venue's
- * `/wednesday`, `/friday`, `/saturday` pages.
- *
- * Havanna is the one scraped venue that publishes no dated programme at all: it runs the same three
- * resident nights every week and its pages carry only a weekday, never a calendar date. This class is
- * therefore the intermediate representation the detail scraper produces — everything a night needs
- * *except* a date — and [toScrapedEvents] turns it into the concrete dated [ScrapedEvent]s the rest of
- * the pipeline expects, one per week over a rolling horizon.
+ * A single undated, weekly recurring Havanna club night, as one of the venue's `/wednesday`,
+ * `/friday`, `/saturday` pages describes it: everything a night needs except a date, which
+ * [toScrapedEvents] supplies one per week over a rolling horizon.
  *
  * @see HavannaDetailPageScraper for the parsing that produces this.
  */
@@ -45,24 +40,19 @@ data class HavannaWeeklyNight(
     /** The night page's URL — every generated occurrence points back at it. */
     val sourceUrl: String,
     /**
-     * First day of an announced closure ("WIR SIND AB DEM 01.07.2026 IN DER SOMMERPAUSE!"), or `null`
-     * when the page announces none. Occurrences on or after this date are not generated.
+     * First day of an announced closure ("WIR SIND AB DEM 01.07.2026 IN DER SOMMERPAUSE!"), or
+     * `null`; occurrences on or after it are not generated.
      */
     val pauseFrom: LocalDate? = null
 ) {
     /**
-     * Expands this weekly night into one dated [ScrapedEvent] per week, starting with the next
-     * occurrence of [dayOfWeek] on or after today and running for [weeks] weeks.
+     * Expands this night into one dated [ScrapedEvent] per week from the next [dayOfWeek] on or
+     * after today, for [weeks] weeks. Every import regenerates the same rolling window, idempotent
+     * through the stable `sourceId` (`havanna:<date>-<slug>`); occurrences that roll out are
+     * cleaned up as stale by `EventUpsertService`. Occurrences on or after [pauseFrom] are omitted,
+     * the venue giving no resume date.
      *
-     * The horizon exists because the venue asserts a standing weekly programme rather than publishing
-     * dates: every import regenerates the same rolling window, and the stable `sourceId`
-     * (`havanna:<date>-<slug>`) makes that idempotent — occurrences that roll out of the window are
-     * cleaned up as stale by `EventUpsertService`, which also drops anything past-dated.
-     *
-     * Occurrences on or after [pauseFrom] are omitted: during an announced break the night does not
-     * happen, and the venue gives no end date to resume from.
-     *
-     * @param clock clock supplying "today"; override in tests for determinism.
+     * @param clock clock supplying "today"; override in tests.
      * @param weeks how many weekly occurrences to generate.
      */
     fun toScrapedEvents(
@@ -91,19 +81,15 @@ data class HavannaWeeklyNight(
             genre = genre,
             // The door price is the only price the venue quotes — there is no presale.
             priceBoxOffice = priceBoxOffice
-            // priceNote is deliberately left null: the venue's only pricing aside is the
-            // "(Ladies von 22:00 – 23:00 for free!)" line, and `detectFree` scans priceNote for a
-            // standalone "free" token — putting it there would flag the whole night as free entry.
-            // The line is preserved in `description` instead.
+            // priceNote stays null: the only pricing aside is "(Ladies von 22:00 – 23:00 for free!)", and
+            // `detectFree` would read the "free" token as free entry for the whole night. It lives in
+            // `description`.
         )
 
     companion object {
         /**
-         * How many weekly occurrences each import generates per night (~2 months of calendar).
-         *
-         * Deep enough that Havanna shows up in a month-ahead view, shallow enough that the programme
-         * stays a plausible assertion — the venue never publishes dates, so every generated occurrence
-         * is derived from its standing weekly schedule rather than an announcement.
+         * Weekly occurrences per night, ~2 months: deep enough for a month-ahead view, shallow enough
+         * to stay a plausible assertion derived from a standing schedule.
          */
         const val OCCURRENCE_WEEKS: Int = 8
     }
@@ -122,9 +108,8 @@ private val WEEKDAY_PATHS: Map<String, DayOfWeek> =
     )
 
 /**
- * The last path segment of a Havanna night URL — `https://www.havanna-berlin.de/friday` → `friday`.
- *
- * This is the night's stable identity: the page path never changes, whereas the headline on it does.
+ * The last path segment of a night URL (`https://www.havanna-berlin.de/friday` to `friday`),
+ * the night's stable identity; the headline on the page changes.
  */
 internal fun havannaNightSlug(url: String): String =
     URI(url)
@@ -134,18 +119,14 @@ internal fun havannaNightSlug(url: String): String =
         .lowercase()
 
 /**
- * The weekday a Havanna night page describes, read from its URL path, or `null` when the path names no
- * weekday (e.g. the `/events` overview or the "‹ Back to Events" link).
- *
- * The path is the only machine-readable weekday on these pages — the heading that repeats it
- * ("Friday") is editorial copy — and it doubles as the filter that tells night links apart from the
- * site's other buttons.
+ * The weekday a night page describes, from its URL path, or `null` when the path names none
+ * (the `/events` overview, the "‹ Back to Events" link). The only machine-readable weekday, and
+ * the filter that tells night links from the site's other buttons.
  */
 internal fun havannaWeekdayFromUrl(url: String): DayOfWeek? = WEEKDAY_PATHS[havannaNightSlug(url)]
 
 /**
- * The weekday an English day name refers to ("Saturday" → [DayOfWeek.SATURDAY]), or `null` when it
- * names none. Used to read the footer's opening-hours lines, which are keyed by the same day names as
- * the night page paths.
+ * The weekday an English day name refers to ("Saturday" to [DayOfWeek.SATURDAY]), for the
+ * footer's opening-hours lines.
  */
 internal fun havannaWeekdayFromName(name: String): DayOfWeek? = WEEKDAY_PATHS[name.trim().lowercase()]

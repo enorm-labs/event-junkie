@@ -13,16 +13,10 @@ import org.springframework.stereotype.Component
 import java.time.Clock
 
 /**
- * Website importer for Cassiopeia Berlin's Webflow-based event listing.
- *
- * Orchestrates the full fetch → parse pipeline for Cassiopeia:
- * 1. Fetches the overview page (`/club`) via [HtmlFetcher] with conditional
- *    request support (ETag / Last-Modified).
- * 2. Parses event listings from the overview page via [CassiopeiaOverviewPageScraper].
- * 3. For each event, fetches its detail page via [HtmlFetcher].
- * 4. Parses the detail page via [CassiopeiaDetailPageScraper] — this is the
- *    **primary** data source. The overview page provides discovery and fallback
- *    data for fields the detail page cannot supply.
+ * Website importer for Cassiopeia Berlin's Webflow listing: fetch `/club` via [HtmlFetcher]
+ * with conditional headers, parse via [CassiopeiaOverviewPageScraper], fetch each detail page,
+ * parse via [CassiopeiaDetailPageScraper], the primary source; the overview supplies discovery
+ * and fallback.
  *
  * @see CassiopeiaOverviewPageScraper for overview page parsing (discovery + fallback)
  * @see CassiopeiaDetailPageScraper for detail page parsing (primary data source)
@@ -50,12 +44,9 @@ class CassiopeiaWebsiteImporter(
     ): ScrapedEvent? = detailPageScraper.scrape(document, url)
 
     /**
-     * Fills missing fields in the [primary] (detail page) event with values
-     * from the [fallback] (overview page) event.
-     *
-     * The detail page is authoritative for every field it provides. The
-     * overview page only contributes values where the detail page returned
-     * null or a default sentinel (e.g. missing genre or "OTHER" event type).
+     * Fills missing fields in the [primary] detail event from the [fallback] overview event. The
+     * detail page is authoritative where it provides a value; the overview contributes on null or a
+     * default sentinel (missing genre, "OTHER" type).
      */
     override fun fillGapsFromOverview(
         primary: ScrapedEvent,
@@ -64,8 +55,7 @@ class CassiopeiaWebsiteImporter(
         primary.copy(
             doorsTime = primary.doorsTime ?: fallback.doorsTime,
             startTime = primary.startTime ?: fallback.startTime,
-            // Treat the detail page's "OTHER" as a weak signal: a more specific overview
-            // type wins over it, but a specific detail type still takes precedence.
+            // The detail page's "OTHER" is a weak signal: a more specific overview type wins over it.
             eventType = primary.eventType?.takeIf { it != EventType.OTHER.name } ?: fallback.eventType,
             genre = primary.genre ?: fallback.genre,
             imageUrl = primary.imageUrl ?: fallback.imageUrl,
@@ -73,8 +63,7 @@ class CassiopeiaWebsiteImporter(
             status = primary.status.takeIf { it != "SCHEDULED" } ?: fallback.status,
             description = primary.description ?: fallback.description,
             ticketUrl = primary.ticketUrl ?: fallback.ticketUrl,
-            // Detail page artists include support acts from description paragraphs;
-            // overview page only has the headliner. Prefer detail when available.
+            // Detail artists include support acts; the overview has only the headliner.
             artists = primary.artists.ifEmpty { fallback.artists }
         )
 }

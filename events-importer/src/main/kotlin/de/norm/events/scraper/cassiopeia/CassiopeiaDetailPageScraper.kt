@@ -20,22 +20,15 @@ import java.time.LocalDate
 import java.time.LocalTime
 
 /**
- * Pure HTML parser for Cassiopeia event detail pages.
- *
- * The detail page is the **primary data source**: it carries the description, the ticket URL and
- * clean `<img>` posters where the listing renders CSS `background-image`. What
- * [CassiopeiaOverviewPageScraper] parses is the fallback, and [CassiopeiaWebsiteImporter] merges the
- * two.
- *
- * Parsing is scoped to the `.modul-section.events` container, which holds every event field on the
- * page — that keeps navigation, footer and scripts out of the parse tree, so the selectors below can
- * be simple without matching chrome. The Webflow template gives the genre no class of its own: it is
- * the sibling *after* the `.subheading.invert.gap` category, which is the one positional read here
- * and the reason the category selector has to stay exact.
- *
- * **Artists are taken for concerts only.** Where the category is "Konzert" the title is the
- * headliner, and support acts are description paragraphs prefixed `"Support: "`. A party's title is
- * an event name, so nothing is minted from it.
+ * Pure HTML parser for Cassiopeia event detail pages, the primary data source: the description,
+ * the ticket URL and clean `<img>` posters where the listing renders CSS `background-image`.
+ * [CassiopeiaOverviewPageScraper] is the fallback, [CassiopeiaWebsiteImporter] merges. Parsing
+ * is scoped to `.modul-section.events`, which holds every field, keeping chrome out of the
+ * tree. The Webflow template gives the genre no class of its own: it is the sibling after the
+ * `.subheading.invert.gap` category, the one positional read and why the category selector must
+ * stay exact. Artists for concerts only: where the category is "Konzert" the title is the
+ * headliner and support acts are description paragraphs prefixed `"Support: "`; a party's title
+ * is an event name.
  *
  * @see CassiopeiaOverviewPageScraper for the listing and the fallback fields.
  * @see CassiopeiaWebsiteImporter for the HTTP fetch orchestrator and the merge.
@@ -45,34 +38,22 @@ class CassiopeiaDetailPageScraper {
     private val logger = KotlinLogging.logger {}
 
     /**
-     * Parses event data from a detail page document.
+     * Parses a detail page, scoped to `.modul-section.events`; `null` if the container or a title
+     * is missing. Only the fields this page yields are set; the importer merges the rest. The
+     * `sourceId` is derived from the [sourceUrl] path
+     * (`https://cassiopeia-berlin.de/event/some-slug` to `cassiopeia:some-slug`), as the overview
+     * does.
      *
-     * Scopes all parsing to the `.modul-section.events` container, which
-     * holds all event content on the detail page. Returns `null` if the
-     * container is missing (unexpected page structure) or the page lacks
-     * a title.
-     *
-     * Returns a [ScrapedEvent] containing only the fields that could be
-     * extracted from this page. Fields that cannot be parsed are left at
-     * their default values. The caller (typically [CassiopeiaWebsiteImporter])
-     * is responsible for merging this with overview page data.
-     *
-     * The `sourceId` is derived from the [sourceUrl] path (e.g.
-     * `https://cassiopeia-berlin.de/event/some-slug` → `cassiopeia:some-slug`),
-     * matching the convention used by [CassiopeiaOverviewPageScraper].
-     *
-     * @param sourceUrl the event's URL, used as [ScrapedEvent.sourceUrl]
-     *   and to derive the [ScrapedEvent.sourceId].
-     * @return the parsed event data, or `null` if the page lacks the expected
-     *   content container or a title (indicating an unexpected page structure).
+     * @param sourceUrl the event's URL, [ScrapedEvent.sourceUrl] and the [ScrapedEvent.sourceId]
+     * source.
+     * @return the parsed event, or `null` on an unexpected page structure.
      */
     @Suppress("ReturnCount") // Guard clauses for missing container and missing title are clearer than nesting
     fun scrape(
         document: Document,
         sourceUrl: String
     ): ScrapedEvent? {
-        // Scope to the main event content container — all event data lives here.
-        // This excludes navigation, footer, scripts, and other page chrome.
+        // Scope to the event content container; navigation, footer and scripts are outside it.
         val content = document.selectFirst(CONTENT_CONTAINER)
         if (content == null) {
             logger.warn { "Detail page has no '$CONTENT_CONTAINER' container, skipping" }
@@ -123,13 +104,9 @@ class CassiopeiaDetailPageScraper {
     }
 
     /**
-     * Parses the event date from the detail page's date wrapper.
-     *
-     * The desktop date layout renders as `"16 . 05 . 2026"` when read via
-     * [Element.text]. Stripping spaces yields `"16.05.2026"`, which we parse via
-     * the shared [parseGermanDate][de.norm.events.scraper.parseGermanDate]. Time
-     * wrappers (e.g. `"Einlass 19:00"`) won't match the format and return `null`,
-     * so they are skipped automatically.
+     * The date from the date wrapper: the desktop layout reads as `"16 . 05 . 2026"`, spaces
+     * stripped to `"16.05.2026"` for [parseGermanDate][de.norm.events.scraper.parseGermanDate].
+     * Time wrappers (`"Einlass 19:00"`) fail the format and return `null`, so they are skipped.
      */
     private fun parseEventDate(content: Element): LocalDate? =
         content.select(".date-wrapper").firstNotNullOfOrNull { wrapper ->
@@ -137,12 +114,8 @@ class CassiopeiaDetailPageScraper {
         }
 
     /**
-     * Parses a time value by locating the label text within a `.date-wrapper`.
-     *
-     * The detail page structures times as label + value pairs inside
-     * `.date-wrapper` elements. When read via [Element.text], this renders
-     * as `"Einlass 19:00"` or `"Beginn 20:00"`. We check if the combined
-     * text starts with the [label] and parse the remainder as a time.
+     * A time by its label inside a `.date-wrapper`, which reads as `"Einlass 19:00"` or `"Beginn
+     * 20:00"`; the remainder after [label] is parsed.
      */
     private fun parseTimeByLabel(
         content: Element,
@@ -156,9 +129,7 @@ class CassiopeiaDetailPageScraper {
         }
 
     /**
-     * Extracts the genre from the element adjacent to the category.
-     *
-     * On the detail page, category and genre are siblings:
+     * The genre from the sibling after the category:
      * ```html
      * <div class="subheading invert gap">Konzert</div>
      * <div class="subheading invert event-mobile line-clamp">Noise</div>
@@ -174,10 +145,7 @@ class CassiopeiaDetailPageScraper {
     }
 
     /**
-     * Extracts the event description from the detail page.
-     *
-     * The description is spread across multiple `.paragraph.events` divs
-     * inside `.paragraph-wrapper`. Paragraphs are joined with newlines.
+     * The description: the `.paragraph.events` divs inside `.paragraph-wrapper`, joined by newlines.
      */
     private fun parseDescription(content: Element): String? {
         val paragraphs =
@@ -189,18 +157,10 @@ class CassiopeiaDetailPageScraper {
     }
 
     /**
-     * Extracts the ticket shop URL from the detail page.
-     *
-     * Uses multiple strategies in order of reliability:
-     * 1. Look for an `a.faq-link-wrapper` containing "Tickets" text — this is the
-     *    semantic pattern used by the Webflow CMS template.
-     * 2. Fall back to any link pointing to Cassiopeia's Stager ticket shop domain.
-     * 3. Fall back to the original `a.faq-link-wrapper.margin-bottom` selector
-     *    for backwards compatibility.
-     *
-     * This layered approach avoids breaking when Webflow layout classes change
-     * (e.g. `margin-bottom` being removed/renamed) while still matching the
-     * correct element.
+     * The ticket URL, by reliability: an `a.faq-link-wrapper` containing "Tickets", the Webflow
+     * template's semantic pattern; any link to Cassiopeia's Stager domain; the original
+     * `a.faq-link-wrapper.margin-bottom` selector. Layered so a renamed layout class
+     * (`margin-bottom`) does not break it.
      */
     private fun parseTicketUrl(content: Element): String? {
         // Primary: semantic match — link with "Tickets" text inside `.faq-link-wrapper`
@@ -221,17 +181,10 @@ class CassiopeiaDetailPageScraper {
     }
 
     /**
-     * Extracts artists from a concert event's title and description paragraphs.
-     *
-     * For a `CONCERT`, the [title] is the headliner (co-bills split out), added
-     * unconditionally — Cassiopeia titles are almost always the act. Genuine
-     * event-name titles (e.g. "Grey City Fest Opener") are filtered structurally
-     * by [isNonArtistName], and placeholders like "TBA" are dropped too. Support
-     * acts come from description paragraphs prefixed "Support: " (e.g.
-     * `"Support: Aska"`), following the headliner in listing order.
-     *
-     * Non-concert events (parties, etc.) never extract artists — their titles are
-     * event names, not artist names.
+     * Artists from a concert's title and description. For a `CONCERT` the [title] is the headliner,
+     * co-bills split, added unconditionally; event-name titles ("Grey City Fest Opener") and
+     * placeholders are filtered by [isNonArtistName]. Support acts are paragraphs prefixed
+     * "Support: " (`"Support: Aska"`), after the headliner. Non-concert events extract nothing.
      */
     private fun parseArtists(
         title: String,

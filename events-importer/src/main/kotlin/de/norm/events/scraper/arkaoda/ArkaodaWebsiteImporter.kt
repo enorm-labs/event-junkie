@@ -12,28 +12,14 @@ import org.jsoup.nodes.Document
 import org.springframework.stereotype.Component
 
 /**
- * Website importer for arkaoda Berlin's hand-coded PHP programme.
- *
- * Follows the overview → detail pattern:
- * 1. Fetch the `?/default/program` listing via [HtmlFetcher] and discover every
- *    upcoming event via [ArkaodaOverviewPageScraper] — date, category-derived type,
- *    title, flyer, promoter and artists, plus the `?/default/detail/id=<n>` link.
- * 2. For each event, fetch that detail page and parse it via
- *    [ArkaodaDetailPageScraper], whose one addition is the **untruncated
- *    description**; the listing body is cut off mid-sentence.
- *
- * Fetching a detail page for a single extra field is worth it here where it would not
- * be on a large listing: arkaoda shows only its *upcoming* events, so the listing is a
- * handful of blocks rather than a full season, and the description is the only place
- * the venue names its lineup, door price or set times in any form.
- *
- * The configured source URL must point at `?/default/program` — the site root renders
- * the same theme but no event blocks.
- *
- * Conditional requests are a no-op against this server: it sends neither ETag nor
- * Last-Modified and answers `Cache-Control: no-store, no-cache`, so nothing is ever
- * cached to send back and every run is an unconditional GET. Re-imports stay cheap
- * because the listing is short and idempotent `sourceId` upserts skip unchanged rows.
+ * Website importer for arkaoda Berlin's hand-coded PHP programme: fetch `?/default/program` via
+ * [HtmlFetcher], discover every upcoming event via [ArkaodaOverviewPageScraper], then fetch
+ * each `?/default/detail/id=<n>` page via [ArkaodaDetailPageScraper] for the one thing it adds,
+ * the untruncated description. Worth a fetch per event here: the listing is a handful of
+ * upcoming blocks, and the description is the only place the venue names its lineup, door
+ * price or set times. The source URL must point at `?/default/program`; the site root renders
+ * no event blocks. Conditional requests are a no-op: neither ETag nor Last-Modified, and
+ * `Cache-Control: no-store, no-cache`, so every run is an unconditional GET.
  *
  * @see ArkaodaOverviewPageScraper for discovery + the venue's published fields.
  * @see ArkaodaDetailPageScraper for the untruncated description.
@@ -60,13 +46,9 @@ class ArkaodaWebsiteImporter(
     ): ScrapedEvent? = detailPageScraper.scrape(document, url)
 
     /**
-     * Merges detail-page data ([primary]) with listing data ([fallback]).
-     *
-     * The two pages render the same event block, so this is a plain fallback chain
-     * rather than a per-field authority split: the detail page wins on everything it
-     * parsed — it is the newer read and the only one with the full description — and
-     * the listing fills whatever it left empty. Only the date needs the sentinel check,
-     * since [UNRESOLVED_EVENT_DATE] is a value rather than a null.
+     * Merges detail-page data ([primary]) with listing data ([fallback]). The two pages render the
+     * same block, so the detail page wins on everything it parsed and the listing fills what it left
+     * empty; only the date needs the sentinel check, [UNRESOLVED_EVENT_DATE] being a value.
      */
     override fun fillGapsFromOverview(
         primary: ScrapedEvent,

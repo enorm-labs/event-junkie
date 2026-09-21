@@ -17,15 +17,11 @@ data class HavannaNightLink(
 )
 
 /**
- * Pure HTML parser for Havanna Berlin's `/events` overview page.
- *
- * The page is a static Squarespace three-column row — no dates, no titles, no event text. Each column
- * holds a poster image block and a "More" button linking to one of the venue's three undated weekly
- * night pages (`/wednesday`, `/friday`, `/saturday`). So the overview is purely a discovery step: it
- * yields the night URLs and their posters, and [HavannaDetailPageScraper] reads the actual programme.
- *
- * Links are kept only when their path names a weekday, which filters out the site's other buttons
- * (the footer's "Subscribe", a night page's "‹ Back to Events") without depending on the button text.
+ * Pure HTML parser for Havanna Berlin's `/events` overview, a static Squarespace three-column
+ * row with no dates, titles or text: a poster and a "More" button per column linking to
+ * `/wednesday`, `/friday`, `/saturday`. Purely discovery; [HavannaDetailPageScraper] reads the
+ * programme. Links are kept only when their path names a weekday, which filters the footer's
+ * "Subscribe" and a night page's "‹ Back to Events".
  *
  * @see HavannaWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://www.havanna-berlin.de/events">Havanna events page</a>
@@ -34,10 +30,10 @@ class HavannaOverviewPageScraper {
     private val logger = KotlinLogging.logger {}
 
     /**
-     * Parses the night links from the overview page.
+     * Parses the night links from the overview.
      *
-     * @param baseUrl the URL the document was fetched from, used to resolve the relative night links.
-     * @return one [HavannaNightLink] per weekly night, in page order and de-duplicated by URL.
+     * @param baseUrl the URL the document was fetched from, to resolve the relative links.
+     * @return one [HavannaNightLink] per weekly night, in page order, de-duplicated by URL.
      */
     fun scrape(
         document: Document,

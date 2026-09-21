@@ -18,20 +18,13 @@ import java.time.format.DateTimeParseException
 internal const val BINUU_IMAGE_BASE_URL = "https://pb.binuu.de/api/files/"
 
 /**
- * Extracts the SvelteKit SSR data payload embedded in Bi Nuu pages.
- *
- * Bi Nuu runs on SvelteKit backed by PocketBase. Every page inlines its route
- * data as a JavaScript object literal inside the `kit.start(...)` bootstrap
- * `<script>` — the listing carries `…data:{events:[…]}` and a detail page
- * `…data:{item:{…}}`. This embedded payload is the most stable source on the
- * site: it is structured, machine-readable, survives visual redesigns, and —
- * unlike the rendered DOM — carries full ISO dates *with the year* (the visible
- * cards only show `Sa 11.07.`).
- *
- * The literal uses **unquoted property names**, so it is parsed with a lenient
- * Jackson mapper rather than strict JSON. Braces routinely appear inside string
- * values (blurhash previews like `"KPIi{^Av…"`), so the object boundary is found
- * with a string-aware brace scan, never a naive `}` search.
+ * Extracts the SvelteKit SSR payload embedded in Bi Nuu pages: every page inlines its route
+ * data as a JS object literal inside the `kit.start(...)` `<script>`, `…data:{events:[…]}` on
+ * the listing and `…data:{item:{…}}` on a detail page. The most stable source on the site,
+ * carrying full ISO dates with the year where the cards show only `Sa 11.07.`. The literal uses
+ * unquoted property names, so a lenient Jackson mapper parses it, and braces appear inside
+ * string values (blurhash previews like `"KPIi{^Av…"`), so the object boundary is found with a
+ * string-aware brace scan.
  */
 internal object BinuuSvelteKitPayload {
     private val logger = KotlinLogging.logger {}
@@ -45,18 +38,13 @@ internal object BinuuSvelteKitPayload {
             .build()
 
     /**
-     * Parses the object literal wrapping the `key: openBracket` property from the
-     * page's SvelteKit bootstrap script and returns the node at [key], or `null` if
-     * it is absent or unparseable.
+     * Parses the object literal wrapping the `key: openBracket` property and returns the node at
+     * [key], or `null`. Matched whitespace-tolerantly (`key\s*:\s*openBracket`), since the site
+     * emits both `events:[` and `events: [`.
      *
-     * The marker is matched whitespace-tolerantly (`key\s*:\s*openBracket`), since
-     * the site emits the literal both minified (`events:[`) and pretty-printed
-     * (`events: [`).
-     *
-     * @param key the property that opens the wrapping object and is returned from it
-     *   (`"events"` for the listing, `"item"` for a detail page).
-     * @param openBracket the bracket opening that property's value (`'['` / `'{'`),
-     *   used to disambiguate the marker from other mentions of the key.
+     * @param key the property that opens the wrapping object (`"events"` for the listing, `"item"`
+     * for a detail page).
+     * @param openBracket the bracket opening its value (`'['` / `'{'`), disambiguating the marker.
      */
     @Suppress(
         "TooGenericExceptionCaught", // A malformed/absent payload must degrade to null, never abort the import
@@ -97,9 +85,8 @@ internal object BinuuSvelteKitPayload {
     }
 
     /**
-     * Returns the index of the `}` closing the `{` at [start], skipping any braces
-     * that appear inside double-quoted strings (blurhash previews embed literal `{`).
-     * Returns -1 if the object is never closed.
+     * The index of the `}` closing the `{` at [start], skipping braces inside double-quoted strings;
+     * -1 if never closed.
      */
     private fun matchClosingBrace(
         text: String,
@@ -148,9 +135,8 @@ internal fun JsonNode.stringList(field: String): List<String> =
     }
 
 /**
- * Builds the absolute image URL for an event/promoter node from its nested
- * `image.url`, prefixing the PocketBase file base for relative paths and passing
- * already-absolute URLs through unchanged. Returns `null` when no image is present.
+ * The absolute image URL from the nested `image.url`, prefixing the PocketBase file base for a
+ * relative path. `null` without an image.
  */
 internal fun JsonNode.binuuImageUrl(): String? {
     val url = path("image").stringOrNull("url") ?: return null
@@ -158,12 +144,8 @@ internal fun JsonNode.binuuImageUrl(): String? {
 }
 
 /**
- * Parses the date from a Bi Nuu timestamp like `"2026-07-19 19:00:00.000Z"`.
- *
- * The trailing `Z` is spurious — the values are local Berlin wall-clock times
- * (a 19:00 concert is stored as `19:00…Z`, not converted to UTC), so only the
- * leading `yyyy-MM-dd` is read and no timezone shift is applied. Returns `null`
- * for missing or unparseable input.
+ * The date from a timestamp like `"2026-07-19 19:00:00.000Z"`. The `Z` is spurious: the values
+ * are Berlin wall-clock times, so only `yyyy-MM-dd` is read with no shift.
  */
 internal fun parseBinuuDate(raw: String?): LocalDate? {
     if (raw.isNullOrBlank() || raw.length < DATE_LENGTH) return null
@@ -175,9 +157,8 @@ internal fun parseBinuuDate(raw: String?): LocalDate? {
 }
 
 /**
- * Parses the `HH:mm` time from a Bi Nuu timestamp like `"2026-07-19 19:00:00.000Z"`,
- * reading the wall-clock time after the space (see [parseBinuuDate] on the spurious
- * `Z`). Returns `null` when there is no time component or it is unparseable.
+ * The `HH:mm` after the space in `"2026-07-19 19:00:00.000Z"` ([parseBinuuDate] on the spurious
+ * `Z`). `null` without a time component.
  */
 internal fun parseBinuuTime(raw: String?): LocalTime? {
     val timePart = raw?.trim()?.substringAfter(' ', "")?.take(HH_MM_LENGTH)
@@ -185,12 +166,9 @@ internal fun parseBinuuTime(raw: String?): LocalTime? {
 }
 
 /**
- * Maps Bi Nuu's single-letter `eventStatus` code to a domain status name.
- *
- * Observed codes: `"r"` (Verlegt / relocated, carries `locationNew`) and `"p"`
- * (Verschoben / postponed, carries the original date in `startOld`). Any other
- * non-blank code is logged and treated as [SCHEDULED][de.norm.events.event.EventStatus.SCHEDULED]
- * so a new code surfaces in the logs rather than being silently mismapped.
+ * Maps the single-letter `eventStatus` code: `"r"` (Verlegt, carries `locationNew`), `"p"`
+ * (Verschoben, carries the original date in `startOld`). Any other non-blank code is logged and
+ * treated as [SCHEDULED][de.norm.events.event.EventStatus.SCHEDULED].
  */
 internal fun mapBinuuStatus(code: String?): String {
     val logger = KotlinLogging.logger("de.norm.events.scraper.binuu.BinuuStatus")
@@ -215,27 +193,14 @@ internal fun mapBinuuStatus(code: String?): String {
 }
 
 /**
- * Best-effort inference of an event's [EventType][de.norm.events.event.EventType]
- * from its title/subtitle, since Bi Nuu exposes **no category field anywhere** in
- * the SvelteKit payload — nor anywhere else on the site. Bi Nuu is a live-music venue, so
- * the default is `CONCERT`; only pub quizzes and club/party nights are flipped.
- *
- * Signals, in priority order:
- * 1. `quiz` in the title/subtitle → `QUIZ`.
- * 2. The title is a **known recurring party/DJ series** ([BINUU_PARTY_SERIES]) → `PARTY`.
- *    These series (GrooveJet, Ultra Night, Boheme Sauvage) list *their own name* as the
- *    title and sole performer, so there is no band and no reliable keyword — only the
- *    curated name identifies them. The trailing edition number (`N°141`, `… 5`) is
- *    ignored so every edition matches, mirroring the artist denylist.
- * 3. A party/DJ-night keyword in the title/subtitle (`party`, `karaoke`, `dj set`,
- *    `club night`, `rave`) → `PARTY`.
- *
- * Deliberately does **not** sniff the free-text description for genre words: at this
- * metal/rock-leaning venue, words like `dancefloor`/`disco` show up in band tour and
- * album names (e.g. Gutalax's "Shit On The Dancefloor" tour is a death-metal gig, not
- * a club night), so a description scan mislabels concerts. Like every curated heuristic
- * this is reactive: a newly-seen series is a `CONCERT` until added to [BINUU_PARTY_SERIES].
- * Consistent with Badehaus's `inferEventType` and the artist `NON_ARTIST_NAMES` denylist.
+ * Best-effort [EventType][de.norm.events.event.EventType] from title/subtitle, since Bi Nuu has
+ * no category field anywhere. A live-music venue, so `CONCERT` by default; in priority order,
+ * `quiz` to `QUIZ`; a known recurring party series ([BINUU_PARTY_SERIES]: GrooveJet, Ultra Night,
+ * Boheme Sauvage, which list their own name as title and sole performer, edition number
+ * ignored) to `PARTY`; a keyword (`party`, `karaoke`, `dj set`, `club night`, `rave`) to
+ * `PARTY`. The description is not sniffed: at this metal/rock-leaning venue `dancefloor`/`disco`
+ * show up in tour names (Gutalax's "Shit On The Dancefloor" tour is a death-metal gig). Reactive,
+ * consistent with Badehaus's `inferEventType` and `NON_ARTIST_NAMES`.
  */
 internal fun inferBinuuEventType(
     title: String,
@@ -251,10 +216,8 @@ internal fun inferBinuuEventType(
 }
 
 /**
- * Recurring Bi Nuu party/DJ series that name themselves as the event and its sole
- * performer. Lowercase, whitespace-collapsed, trailing edition number stripped. These
- * are also on the artist `NON_ARTIST_NAMES` denylist (so the name isn't minted as an
- * act); keep the two in sync when a new series surfaces.
+ * Recurring party series that name themselves as the event and sole performer; lowercase,
+ * whitespace-collapsed, edition number stripped. Also on `NON_ARTIST_NAMES`; keep the two in sync.
  */
 private val BINUU_PARTY_SERIES = setOf("groovejet berlin", "ultra night", "boheme sauvage")
 
