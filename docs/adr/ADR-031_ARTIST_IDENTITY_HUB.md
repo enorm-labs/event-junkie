@@ -124,6 +124,13 @@ The match rule, which the sweep implements and the spike script documents:
    The head verdict is reported beside the whole-name verdict and decides nothing on its own.
 4. The stored `name` is never changed by any verdict. A casing or diacritic disagreement is a row in the review queue.
 
+Amended 2026-09-21 ([#302](https://github.com/enorm-labs/event-junkie/issues/302)): rule 3 gains one case where a head
+decides. Rule 4 stays whole. At sync, a billed name with a dash or colon is stored as its head. The condition: the
+catalogue already holds the head as an `EXACT` row. The glued name must have no `EXACT` row of its own. The evidence is
+a verified row, not the head pass's own verdict. No stored name is rewritten: the link goes to the row that exists. A
+head whose row is absent, `UNCHECKED`, `AMBIGUOUS` or `NONE` still decides nothing, and the glued name stays for the
+queue. No list of series names is kept anywhere. MusicBrainz is the vocabulary.
+
 What is stored per artist in step B: `musicbrainz_id` (nullable), `musicbrainz_match` (`EXACT`, `AMBIGUOUS`, `NONE`,
 `UNCHECKED`), `musicbrainz_checked_at`. Nothing else.
 

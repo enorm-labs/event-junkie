@@ -2,6 +2,7 @@ package de.norm.events.scraper
 
 import de.norm.events.BaseControllerTest
 import de.norm.events.artist.ArtistRepository
+import de.norm.events.artist.MusicBrainzMatch
 import de.norm.events.event.EventArtistRepository
 import de.norm.events.event.EventEntity
 import de.norm.events.event.EventPromoterRepository
@@ -9,6 +10,7 @@ import de.norm.events.event.EventRepository
 import de.norm.events.promoter.PromoterRepository
 import de.norm.events.venue.VenueEntity
 import de.norm.events.venue.VenueRepository
+import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.toList
@@ -194,6 +196,43 @@ class AssociationSyncDuplicateNamesIntegrationTest : BaseControllerTest() {
             artistRepository.findBySlug("regis")?.name shouldBe "Regis"
             artistRepository.findBySlug("c3d-e-live") shouldBe null
             eventArtistRepository.findByEventIdIn(listOf(requireNotNull(event.id))).toList().size shouldBe 3
+        }
+    }
+
+    // #302: a series or album glued to an act with a dash comes off when the catalogue already holds
+    // the bare act as a MusicBrainz EXACT row. MusicBrainz is the vocabulary; nothing else is listed.
+    @Test
+    fun `a dashed name links to its head when the head is a verified row, and stays glued otherwise`() {
+        runBlocking {
+            val sourceId = "series-tail:1"
+            val event = persistEvent(sourceId)
+            artistRepository.insertIfAbsent("Xmal Deutschland", "xmal-deutschland")
+            val xmal = requireNotNull(artistRepository.findBySlug("xmal-deutschland"))
+            artistRepository.storeMusicBrainzVerdict(requireNotNull(xmal.id), MusicBrainzMatch.EXACT.name, "8f9a5b9c-0000-0000-0000-000000000000")
+            // Known, but never verified: the head decides nothing.
+            artistRepository.insertIfAbsent("Alister Spence", "alister-spence")
+
+            associationSyncService.resolveAndSyncAssociations(
+                listOf(event),
+                listOf(
+                    scraped(
+                        sourceId,
+                        artists =
+                            listOf(
+                                ScrapedArtist(name = "Xmal Deutschland – Sonic Morgue"),
+                                ScrapedArtist(name = "Alister Spence – Within Without"),
+                                ScrapedArtist(name = "Current 93 – Sonic Morgue")
+                            )
+                    )
+                )
+            )
+
+            val linked = eventArtistRepository.findByEventIdIn(listOf(requireNotNull(event.id))).toList().map { it.artistId }
+            linked shouldContain requireNotNull(xmal.id)
+            artistRepository.findBySlug("xmal-deutschland-sonic-morgue") shouldBe null
+            artistRepository.findBySlug("alister-spence-within-without")?.name shouldBe "Alister Spence – Within Without"
+            artistRepository.findBySlug("current-93-sonic-morgue")?.name shouldBe "Current 93 – Sonic Morgue"
+            linked.size shouldBe 3
         }
     }
 

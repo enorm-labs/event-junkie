@@ -2,6 +2,7 @@ package de.norm.events.scraper
 
 import de.norm.events.artist.ArtistEntity
 import de.norm.events.artist.ArtistRepository
+import de.norm.events.artist.MusicBrainzMatch
 import de.norm.events.artist.canonicalArtistName
 import de.norm.events.event.EventArtistEntity
 import de.norm.events.event.EventArtistRepository
@@ -15,6 +16,7 @@ import de.norm.events.genretag.GenreTagEntity
 import de.norm.events.genretag.GenreTagRepository
 import de.norm.events.genretag.genreFamily
 import de.norm.events.genretag.normalizeGenre
+import de.norm.events.musicbrainz.MusicBrainzMatcher
 import de.norm.events.promoter.PromoterEntity
 import de.norm.events.promoter.PromoterRepository
 import de.norm.events.promoter.canonicalPromoterName
@@ -55,8 +57,9 @@ class AssociationSyncService(
         savedEvents: List<EventEntity>,
         scrapedEvents: List<ScrapedEvent>
     ): Set<Long> {
-        val artistCache = resolveAllArtists(scrapedEvents)
-        syncArtistAssociations(savedEvents, scrapedEvents, artistCache)
+        val billed = billedArtists(scrapedEvents)
+        val artistCache = resolveAllArtists(billed.values.flatten())
+        syncArtistAssociations(savedEvents, billed, artistCache)
 
         val promoterCache = resolveAllPromoters(scrapedEvents)
         syncPromoterAssociations(savedEvents, scrapedEvents, promoterCache)
@@ -73,16 +76,10 @@ class AssociationSyncService(
      *
      * @return artist slug to persisted [ArtistEntity] for every artist the scraped events reference.
      */
-    private suspend fun resolveAllArtists(scrapedEvents: List<ScrapedEvent>): Map<String, ArtistEntity> {
+    private suspend fun resolveAllArtists(scrapedArtists: List<ScrapedArtist>): Map<String, ArtistEntity> {
         // Canonicalize before slugging, as the promoter path does: a curated NAME_CORRECTIONS entry can
         // change the slug ("OXO86" resolves to "Oxo 86", `oxo-86`), and slugging the raw name would look
         // up a different row than resolveOrCreateArtist creates.
-        scrapedEvents.forEach { event ->
-            event.artists
-                .filter { isSlugless(it.name) }
-                .forEach { logger.warn { "Dropping artist '${it.name}' of '${event.sourceId}': its name slugs to nothing" } }
-        }
-        val scrapedArtists = scrapedEvents.flatMap { it.storableArtists() }
         val allArtistSlugs = scrapedArtists.map { SlugGenerator.slugify(canonicalArtistName(it.name)) }.toSet()
         val artistCache =
             artistRepository
@@ -101,21 +98,74 @@ class AssociationSyncService(
     }
 
     /**
-     * The scraped artists that can be stored, with the suffix an act does not own taken off its
-     * name once, here, for every source: `C3D-E (live)`, `Avangelic (DJ-Set)` and `Regis Live & DJ
-     * set` are the same rows as `C3D-E`, `Avangelic` and `Regis` imported from anywhere else, and
-     * sixteen line-up scrapers never called [stripArtistSuffix] (#301). The model keeps no format,
-     * so nothing is lost that could have been stored. A name that slugs to nothing has escaped
-     * [isNonArtistName], and would take the empty slug every later one collides with (#1553). A
-     * headliner read off a title the boundary resolves to a festival is the festival's name, not
-     * an act (`ELLE & L's Festival` → `Elle`, #300): undone here, once, while a published line-up stays.
+     * The artists each event bills, by `sourceId`, as they will be stored — computed once so the
+     * resolution and the association diff cannot disagree about a name.
+     *
+     * The suffix an act does not own comes off here, for every source: `C3D-E (live)`, `Avangelic
+     * (DJ-Set)` and `Regis Live & DJ set` are the same rows as `C3D-E`, `Avangelic` and `Regis`
+     * imported from anywhere else, and sixteen line-up scrapers never called [stripArtistSuffix]
+     * (#301). The model keeps no format, so nothing is lost that could have been stored. A name that
+     * slugs to nothing has escaped [isNonArtistName], and would take the empty slug every later one
+     * collides with (#1553). A headliner read off a title the boundary resolves to a festival is the
+     * festival's name, not an act (`ELLE & L's Festival` → `Elle`, #300): undone here, once, while a
+     * published line-up stays. Then [unglueSeriesTails].
      */
-    private fun ScrapedEvent.storableArtists(): List<ScrapedArtist> {
-        val festival = resolvedEventType() == EventType.FESTIVAL
-        return artists
-            .map { it.copy(name = stripArtistSuffix(it.name)) }
-            .filterNot { isSlugless(it.name) || isNonArtistName(it.name) || (festival && it.titleDerived) }
+    private suspend fun billedArtists(scrapedEvents: List<ScrapedEvent>): Map<String, List<ScrapedArtist>> {
+        scrapedEvents.forEach { event ->
+            event.artists
+                .filter { isSlugless(it.name) }
+                .forEach { logger.warn { "Dropping artist '${it.name}' of '${event.sourceId}': its name slugs to nothing" } }
+        }
+        val stripped =
+            scrapedEvents.associate { event ->
+                val festival = event.resolvedEventType() == EventType.FESTIVAL
+                event.sourceId to
+                    event.artists
+                        .map { it.copy(name = stripArtistSuffix(it.name)) }
+                        .filterNot { isSlugless(it.name) || isNonArtistName(it.name) || (festival && it.titleDerived) }
+            }
+        return unglueSeriesTails(stripped)
     }
+
+    /**
+     * `Xmal Deutschland – Sonic Morgue` is `Xmal Deutschland` when the catalogue already holds
+     * `Xmal Deutschland` as a MusicBrainz `EXACT` row and holds no such row for the glued name
+     * (#302). The series names themselves are never listed: MusicBrainz is the vocabulary, and the
+     * verified row is the evidence — a head whose row is absent, `UNCHECKED`, `AMBIGUOUS` or `NONE`
+     * decides nothing, as ADR-031 rule 3 requires, and the glued name stays for the review queue. The
+     * head is [MusicBrainzMatcher.headOf]'s: the part before ` - ` or `: `, never digits only. One
+     * batched slug fetch for every dashed name in the run.
+     */
+    private suspend fun unglueSeriesTails(billed: Map<String, List<ScrapedArtist>>): Map<String, List<ScrapedArtist>> {
+        val headByName =
+            billed.values
+                .flatten()
+                .map { it.name }
+                .distinct()
+                .mapNotNull { name -> MusicBrainzMatcher.headOf(name)?.let { head -> name to head } }
+                .toMap()
+        val replacement = if (headByName.isEmpty()) emptyMap() else verifiedHeads(headByName)
+        replacement.forEach { (glued, act) -> logger.info { "Storing '$glued' as '$act': the head is a verified MusicBrainz row" } }
+        return billed.mapValues { (_, artists) -> artists.map { a -> replacement[a.name]?.let { a.copy(name = it) } ?: a } }
+    }
+
+    /** Glued name to the stored name of its head, for every head that is an `EXACT` row while the glued name is not. */
+    private suspend fun verifiedHeads(headByName: Map<String, String>): Map<String, String> {
+        val slugsToRead = headByName.flatMap { (name, head) -> listOf(slugOf(name), slugOf(head)) }.toSet()
+        val exactBySlug =
+            artistRepository
+                .findBySlugIn(slugsToRead)
+                .toList()
+                .filter { it.musicbrainzMatch == MusicBrainzMatch.EXACT.name }
+                .associateBy { it.slug }
+        return headByName
+            .mapNotNull { (name, head) ->
+                val headRow = exactBySlug[slugOf(head)]
+                if (headRow != null && exactBySlug[slugOf(name)] == null) name to headRow.name else null
+            }.toMap()
+    }
+
+    private fun slugOf(name: String) = SlugGenerator.slugify(canonicalArtistName(name))
 
     /** Resolves an artist by name from [artistCache], or auto-creates one. See [resolveOrCreate]. */
     private suspend fun resolveOrCreateArtist(
@@ -138,7 +188,7 @@ class AssociationSyncService(
      */
     private suspend fun syncArtistAssociations(
         savedEvents: List<EventEntity>,
-        scrapedEvents: List<ScrapedEvent>,
+        artistsBySourceId: Map<String, List<ScrapedArtist>>,
         artistCache: Map<String, ArtistEntity>
     ) {
         val existingByEventId =
@@ -148,7 +198,6 @@ class AssociationSyncService(
                 EventArtistEntity::eventId
             ) ?: return
 
-        val artistsBySourceId = scrapedEvents.associate { it.sourceId to it.storableArtists() }
         val toInsert = mutableListOf<EventArtistEntity>()
         val toUpdate = mutableListOf<EventArtistEntity>()
         val toDeleteIds = mutableListOf<Long>()
