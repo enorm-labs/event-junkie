@@ -2,6 +2,7 @@ package de.norm.events.scraper.morphine
 
 import de.norm.events.scraper.parseGermanShortDate
 import de.norm.events.scraper.parseTime
+import de.norm.events.scraper.stripArtistSuffix
 import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.LocalTime
@@ -34,6 +35,60 @@ fun stripLiveRecordingSuffix(name: String): String {
     val stripped = name.trim().replace(LIVE_RECORDING_SUFFIX, "").trim()
     return stripped.ifBlank { name.trim() }
 }
+
+/**
+ * The billed names on a `ul.lineup` set line, for the four shapes the venue writes beside a bare
+ * name (#1674): a `<promoter> presents:` frame comes off the front, a `performs with <instrument>`
+ * tail off the back, a ` - ` list is split when every segment is short enough to be an act (each
+ * may carry a `Live`) and there are three or more of them, a pair whose one segment equals the
+ * event [title] is a film or a work beside its performer, and a ` - ` tail that lists members
+ * (`PICI - A & B`) keeps the head. A pair of names (`Alister Spence – Within Without`) stays glued
+ * for the sync-time head rule of #302, which knows whether the head is an act. Each name then goes
+ * through [stripArtistSuffix]; the caller bills it through `headlinersFromTitle`, whose co-bill
+ * split is what a member list must not reach.
+ */
+fun morphineSetLineActs(
+    line: String,
+    title: String
+): List<String> {
+    val framed = line.replace(PRESENTS_FRAME, "").replace(PERFORMS_WITH_TAIL, "").trim()
+    val segments = framed.split(DASH).map { it.trim() }.filter { it.isNotBlank() }
+    val names =
+        when {
+            segments.size == 2 && isMemberList(segments[0], segments[1]) -> segments.take(1)
+            segments.size == 2 && segments.any { it.equals(title, ignoreCase = true) } -> segments
+            segments.size >= MIN_DASH_LIST && segments.all { it.split(WHITESPACE).size <= MAX_ACT_WORDS } -> segments
+            else -> listOf(framed)
+        }
+    // The title is a film or a work only beside another name; a night titled after its one act keeps it.
+    return names
+        .filterNot { names.size > 1 && it.equals(title, ignoreCase = true) }
+        .map { stripArtistSuffix(it) }
+        .filter { it.isNotBlank() }
+        .distinctBy { it.lowercase() }
+}
+
+/** `PICI - Clémence Manachère & Polina Pohozha`: a one-token head and a conjunction in the tail. */
+private fun isMemberList(
+    head: String,
+    tail: String
+): Boolean = !head.contains(WHITESPACE) && MEMBER_JOIN.containsMatchIn(tail)
+
+/** `Uncanny Valley presents:` — the frame the venue puts before a guest promoter's bill. */
+private val PRESENTS_FRAME = Regex("""^.{2,60}?\s+(?:presents|präsentiert|pres\.?)\s*:?\s+""", RegexOption.IGNORE_CASE)
+
+/** `Jakob Vasak performs with the Kobophon` — the instrument is not a co-act. */
+private val PERFORMS_WITH_TAIL = Regex("""\s+performs\s+(?:with|on)\s+.*$""", RegexOption.IGNORE_CASE)
+
+private val DASH = Regex("""\s+[-–—]\s+""")
+private val WHITESPACE = Regex("""\s+""")
+private val MEMBER_JOIN = Regex("""\s*(?:&|,|\band\b|\bund\b)\s*""", RegexOption.IGNORE_CASE)
+
+/** An act billed on a set line is a name, not a sentence: four words plus a `Live`. */
+private const val MAX_ACT_WORDS = 5
+
+/** A dash list of acts has at least three; a pair is an act and its work until #302's rule says otherwise. */
+private const val MIN_DASH_LIST = 3
 
 /**
  * The `DD.MM.YY` date inside the `.block.day` header (`"Friday, 07.08.26, door  20:00"`). The
