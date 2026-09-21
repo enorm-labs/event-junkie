@@ -91,6 +91,10 @@ class EschschloraqueOverviewPageScraperTest {
         val jubilee = events.first { it.title == "20 Jahre MissVergnügen!" }
         jubilee.doorsTime shouldBe LocalTime.of(21, 0)
         jubilee.startTime shouldBe LocalTime.of(22, 0)
+        // `ab 21uhr / SHOWTIME 22uhr`: the bare `ab` beside a labelled start is the doors.
+        val resitant = events.first { it.title == "MissVergnügen presents RESITANT – live" }
+        resitant.doorsTime shouldBe LocalTime.of(21, 0)
+        resitant.startTime shouldBe LocalTime.of(22, 0)
     }
 
     @Test
