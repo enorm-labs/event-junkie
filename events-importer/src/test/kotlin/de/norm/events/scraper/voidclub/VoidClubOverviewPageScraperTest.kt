@@ -112,20 +112,27 @@ class VoidClubOverviewPageScraperTest {
     @Test
     fun `keeps an act whose own name contains a conjunction whole`() {
         // "Skulder & Mully" is billed as one comma segment here and as the left side of a b2b slot
-        // on 17 October — splitting on "&" would invent a "Mully" that plays neither night.
+        // on 17 October — splitting on "&" would invent a "Mully" that plays neither night. The
+        // `(NL)` origin tags come off with the shared suffix rule (#1653).
         event("STOIC MUSIC X BREAKOUT DNB").artists.map { it.name } shouldContainExactly
-            listOf("Ipkiss (NL)", "Defect (NL)", "Phasebound", "Skulder & Mully", "Anton Quasi", "Initia")
+            listOf("Ipkiss", "Defect", "Phasebound", "Skulder & Mully", "Anton Quasi", "Initia")
         event("STOIC MUSIC PRES. OVERVIEW BERLIN").artists.map { it.name } shouldContainExactly
             listOf("Klinical", "Rizzle", "Ewol", "Ambion", "Sub-Antics", "Skulder & Mully", "Armenez", "Initia", "Azur")
     }
 
     @Test
     fun `drops the venue's unannounced-lineup placeholders`() {
-        // Three spellings across the programme: a whole lineup that is only a placeholder, a
-        // trailing "and more", and a trailing em-dashed "more to be announced".
+        // Four spellings across the programme: a whole lineup that is only a placeholder, a
+        // trailing "and more", an em-dashed "more to be announced", and the em-dashed "more TBA" the
+        // shared suffix rule handles (#1564).
         event("SEAZED: BOUNCE X TRANCE RAVE").artists.shouldBeEmpty()
         event("5 YEARS ANIMARUM").artists.shouldBeEmpty()
         event("KINDER DER NACHT").artists.map { it.name }.last() shouldBe "Lepido"
+        events
+            .first { it.title.startsWith("KINDER DER NACHT & DEXIT") }
+            .artists
+            .map { it.name }
+            .last() shouldBe "Seimen Dexter"
         event("DIONYS: HARDTECHNO X TRANCE/BOUNCE RAVE").artists.map { it.name } shouldContainExactly listOf("Brizze", "DaSoMaZo")
         event("THERAPY SESSIONS XVII").artists.map { it.name }.last() shouldBe "Unknown"
         events.flatMap { it.artists }.none { it.name.contains("more", ignoreCase = true) } shouldBe true
