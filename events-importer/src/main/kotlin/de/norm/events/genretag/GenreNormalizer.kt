@@ -4,30 +4,15 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 
 private val logger = KotlinLogging.logger {}
 
-// Genre normalization utilities shared between the admin API (event module)
-// and the scraper pipeline (scraper module).
-//
-// Parses free-text genre strings scraped from venue websites into canonical
-// genre tag names suitable for structured filtering. The raw genre text is
-// preserved on the event for display; these normalized tags power the
-// frontend's genre filter.
+// Genre normalization shared by the admin API and the scraper pipeline: free-text genre strings
+// become canonical tag names for the frontend's filter, while the raw text stays on the event.
 
 /**
- * Synonym mapping from a normalized lookup key to canonical genre tag names.
- *
- * Keys are *normalized* via [lookupKey] — lowercased with all separators
- * (spaces, hyphens, slashes, etc.) stripped — so a single entry covers every
- * spelling and spacing of the same label. For example the one key `"hiphop"`
- * matches "Hip Hop", "hip-hop", and "HIPHOP" alike; there is no need to list
- * each variant separately. Keep new keys in normalized form.
- *
- * The map therefore encodes only *semantic* knowledge — deliberate merges that
- * string normalization can't derive (e.g. "rap"/"urban" → Hip Hop, "boogaloo"
- * → Funk, "cumbia"/"salsa" → Latin). Canonical names use title case for
- * consistent display (e.g. "Hip Hop", not "hip hop" or "HIP HOP").
- *
- * When adding new venues, extend this map with any new semantic synonyms
- * encountered in their genre labelling.
+ * Synonym mapping from a normalized lookup key to canonical tag names. Keys go through
+ * [lookupKey], lowercased with every separator stripped, so `"hiphop"` matches "Hip Hop",
+ * "hip-hop" and "HIPHOP"; keep new keys normalized. The map encodes only semantic merges string
+ * normalization cannot derive ("rap"/"urban" to Hip Hop, "boogaloo" to Funk, "cumbia"/"salsa"
+ * to Latin). Canonical names are title case.
  */
 internal val GENRE_SYNONYMS: Map<String, String> =
     mapOf(
@@ -60,9 +45,8 @@ internal val GENRE_SYNONYMS: Map<String, String> =
         "shoegaze" to "Shoegaze",
         // Pop family
         "pop" to "Pop",
-        // Huxleys emits its genres as de-slugified CSS classes, so the stylised spelling arrives
-        // punctuation-free as "Kpop" while another venue writes "K-Pop". [lookupKey] strips the
-        // hyphen, so both share this key and resolve to the one tag.
+        // Huxleys emits de-slugified CSS classes, so "Kpop" arrives punctuation-free while another venue
+        // writes "K-Pop"; [lookupKey] strips the hyphen, so both share this key.
         "kpop" to "K-Pop",
         "deutschpop" to "Pop",
         "altpop" to "Pop",
@@ -126,17 +110,15 @@ internal val GENRE_SYNONYMS: Map<String, String> =
         "americana" to "Americana",
         "singersongwriter" to "Singer-Songwriter",
         "singersongwriterin" to "Singer-Songwriter",
-        // "Liedermaching" is the German Liedermacher scene. The hyphenated label one venue writes,
-        // "Acoustic-Guitar-Hasen-Liedermaching", is a single token, so word-level matching never
-        // sees the word alone and the whole-token key is needed beside it.
+        // "Liedermaching" is the German Liedermacher scene. "Acoustic-Guitar-Hasen-Liedermaching" is a
+        // single token, so word-level matching never sees the word alone.
         "liedermaching" to "Singer-Songwriter",
         "acousticguitarhasenliedermaching" to "Singer-Songwriter",
         // Reggae
         "reggae" to "Reggae",
         "reggea" to "Reggae",
-        // Neue Deutsche Welle / Härte — German new-wave & industrial-metal. Multi-word, so
-        // they need an explicit synonym: the ≤2-word looksLikeGenre gate otherwise drops them.
-        // (lookupKey drops the ä in "Härte", yielding the "neuedeutschehrte" key.)
+        // Neue Deutsche Welle / Härte, German new-wave and industrial-metal. Multi-word, so the ≤2-word
+        // looksLikeGenre gate would drop them. (lookupKey drops the ä, hence "neuedeutschehrte".)
         "ndw" to "NDW",
         "neuedeutschewelle" to "NDW",
         "neuedeutschehrte" to "Neue Deutsche Härte",
@@ -184,18 +166,13 @@ internal val GENRE_SYNONYMS: Map<String, String> =
     )
 
 /**
- * Non-genre tokens that some venues push into the genre field — event-format
- * labels, series names, and freeform fragments — which must never become a
- * genre tag. Cassiopeia in particular reuses the genre field for arbitrary
- * event labels ("Immersive Ausstellung", "… Special", "Karaoke"-style labels).
- *
- * Entries are stored as [lookupKey]-normalized keys and matched per word (see
- * [looksLikeGenre]), so a single entry drops the word wherever it appears —
- * "Immersive Ausstellung" and "Ausstellung" both fall out via `ausstellung`.
- * A word here only vetoes a token that has *no* recognised genre in it: a mixed
- * label like "Retro Pop" still resolves to Pop via word-level synonym matching,
- * which runs first. Keep deliberately tight so real genres aren't suppressed;
- * extend it as new non-genre labels surface in the `Dropping non-genre …` logs.
+ * Non-genre tokens some venues push into the genre field, event-format labels and series names,
+ * which must never become a tag; Cassiopeia reuses the field for arbitrary labels ("Immersive
+ * Ausstellung", "… Special"). Stored as [lookupKey] keys and matched per word
+ * ([looksLikeGenre]), so `ausstellung` drops "Immersive Ausstellung" and "Ausstellung" alike. A
+ * word here only vetoes a token with no recognised genre in it: "Retro Pop" still resolves to
+ * Pop via the word-level match, which runs first. Keep tight; extend from the `Dropping
+ * non-genre …` logs.
  */
 private val NON_GENRE_TOKENS: Set<String> =
     setOf(
@@ -227,25 +204,22 @@ private val NON_GENRE_TOKENS: Set<String> =
         "wave",
         "retro",
         "nontango",
-        // Descriptors/section labels a venue lists alongside real genres — not genres
-        // themselves ("Funk, Soul, Groove"; "Dub, Grime, Bass, Dirt"; "Jazz, Progressive,
-        // Fusion"). A compound like "Groove Metal" / "Progressive Rock" still resolves via
-        // the word-level synonym match, which runs before this stop-list.
+        // Descriptors a venue lists alongside real genres ("Funk, Soul, Groove"; "Dub, Grime, Bass,
+        // Dirt"; "Jazz, Progressive, Fusion"). "Groove Metal" / "Progressive Rock" still resolve via the
+        // word-level match.
         "dirt",
         "groove",
         "progressive",
         "kickass",
-        // Audience / theme / series labels Gretchen pushes into the genre field.
-        // Keys are [lookupKey]-normalized: it strips non-ASCII letters, so
-        // "Männerparty" → "mnnerparty" (the ä is dropped) and "FLINTA*" → "flinta".
+        // Audience / theme / series labels Gretchen pushes into the genre field. [lookupKey] strips
+        // non-ASCII letters: "Männerparty" is "mnnerparty", "FLINTA*" is "flinta".
         "flinta",
         "mnnerparty",
         "fetish",
         "berbenautika",
-        // Staging formats and framings venues file in a genre field. `show`/`konzert`/`lesung`
-        // above only veto the standalone word, so the hyphenated compounds need their own keys
-        // ([lookupKey] strips the hyphen: "Musik-Show" → "musikshow"). A mixed label that also
-        // names a real style still resolves via the word-level synonym match, which runs first.
+        // Staging formats venues file in a genre field. `show`/`konzert`/`lesung` above veto only the
+        // standalone word, so the hyphenated compounds need their own keys ("Musik-Show" is
+        // "musikshow"). A mixed label naming a real style still resolves first.
         "musikshow",
         "musikkabarett",
         "kabarett",
@@ -260,9 +234,8 @@ private val NON_GENRE_TOKENS: Set<String> =
         "berlin",
         // A medium whose soundtrack spans every style.
         "anime",
-        // Formats and labels that reached genre_tag on staging as genres (#1309). Whole-token keys:
-        // "Jam Session" is `jamsession`, and a compound like "Metalcore" resolves as a whole token
-        // via the synonym map before `core` could veto it.
+        // Formats that reached genre_tag on staging (#1309). Whole-token keys: "Jam Session" is
+        // `jamsession`, and "Metalcore" resolves via the synonym map before `core` could veto it.
         "pingpong",
         "tattoo",
         "market",
@@ -277,7 +250,7 @@ private val NON_GENRE_TOKENS: Set<String> =
     )
 
 /**
- * True when [label] is a genre the vocabulary knows — as a whole (`R&B`) or by one of its words
+ * True when [label] is a genre the vocabulary knows, as a whole (`R&B`) or by one of its words
  * (`Psychedelic Rock`). For a source whose tags mix genres with formats and rooms (Heimathafen's
  * `events_tag`, #313): a tag that resolves is a genre, one that does not is a format, so the
  * fall-through that keeps an unknown short token is not offered here.
@@ -287,37 +260,24 @@ fun isGenreLabel(label: String): Boolean = lookupKey(label) in GENRE_SYNONYMS ||
 private val WHITESPACE_RUN = Regex("""\s+""")
 
 /**
- * Normalizes a raw genre token to a [GENRE_SYNONYMS] lookup key.
- *
- * Lowercases and strips every character that isn't `a-z`, `0-9`, or `&`, so all
- * spelling/spacing variations of one label collapse to a single key
- * (e.g. "Hip Hop", "hip-hop", "HIPHOP" → "hiphop"). `&` is kept so "R&B"/"rnb"
- * keys stay meaningful.
+ * Normalizes a raw token to a [GENRE_SYNONYMS] key: lowercased, everything but `a-z`, `0-9` and
+ * `&` stripped ("Hip Hop", "hip-hop", "HIPHOP" to "hiphop"). `&` stays so "R&B"/"rnb" differ.
  */
 private fun lookupKey(raw: String): String = raw.lowercase().replace(Regex("[^a-z0-9&]"), "")
 
 /**
- * Delimiters used to split raw genre strings into individual genre tokens.
- *
- * Handles the variety of separators observed in venue data:
- * - `, ` — most common (e.g. "Pop, Rock, Indie")
- * - `/` — slash-separated alternatives, spaced or not (e.g. "Alternative / Indie",
- *   "Hip-Hop/Rap", "80s Floor // Hip Hop Floor")
- * - `&` — compound genres (e.g. "80s, Disco & Hip Hop")
- * - ` or ` / ` oder ` / ` vs ` — freeform alternatives (e.g. "Tango or NonTango")
- *
- * Note: `/` always splits (no genre name embeds a bare slash, whereas venues write
- * unspaced alternatives like "Hip-Hop/Rap" that must be torn apart). `&` and the word
- * separators *can* appear inside genre names (e.g. "R&B"), so those split only when
- * surrounded by spaces to avoid false splits. Separators are matched case-insensitively.
+ * Delimiters splitting a raw genre string: `, ` ("Pop, Rock, Indie"); `/`, spaced or not
+ * ("Alternative / Indie", "Hip-Hop/Rap", "80s Floor // Hip Hop Floor"); `&` ("80s, Disco & Hip
+ * Hop"); ` or ` / ` oder ` / ` vs ` ("Tango or NonTango"). `/` always splits, since no genre
+ * embeds a bare slash; `&` and the word separators can ("R&B"), so they split only when
+ * surrounded by spaces. Case-insensitive.
  */
 private val GENRE_DELIMITERS = Regex("""[,/]|\s(?:&|or|oder|vs)\s""", RegexOption.IGNORE_CASE)
 
 /**
- * Genre names whose canonical spelling embeds a [GENRE_DELIMITERS] character (the
- * " & " in "Drum & Bass", the "'n'" in "Drum'n'Bass") and would otherwise be torn
- * into "Drum" + "Bass". Collapsed to a single delimiter-free token *before* the
- * split so the whole name survives and resolves via [GENRE_SYNONYMS] ("drumnbass").
+ * Genre names whose canonical spelling embeds a [GENRE_DELIMITERS] character (" & " in "Drum &
+ * Bass", "'n'" in "Drum'n'Bass"), collapsed to one delimiter-free token before the split so they
+ * resolve via [GENRE_SYNONYMS] ("drumnbass").
  */
 private val DRUM_AND_BASS_REGEX =
     Regex(
@@ -326,11 +286,9 @@ private val DRUM_AND_BASS_REGEX =
     )
 
 /**
- * "Singer-Songwriter" is frequently written with a slash ("Singer-/Songwriter",
- * "Singer/Songwriter"), and `/` is a hard [GENRE_DELIMITERS] separator — so the name
- * would be torn into the junk fragments "Singer-" + "Songwriter". Collapsed to the
- * hyphen-only spelling (which contains no delimiter) *before* the split so the whole
- * name survives and resolves via [GENRE_SYNONYMS] ("singersongwriter").
+ * "Singer-Songwriter" is often written "Singer-/Songwriter" or "Singer/Songwriter", and `/` is
+ * a hard delimiter, so it would become "Singer-" + "Songwriter". Collapsed to the hyphen-only
+ * spelling before the split ("singersongwriter").
  */
 private val SINGER_SONGWRITER_REGEX = Regex("""\bsinger[\s/-]*songwriter(in)?\b""", RegexOption.IGNORE_CASE)
 
@@ -341,23 +299,17 @@ private fun preNormalize(rawGenre: String): String =
         .replace(SINGER_SONGWRITER_REGEX, "Singer-Songwriter")
 
 /**
- * Suffixes commonly appended to genre names in venue listings that should
- * be stripped before normalization (e.g. "Hip Hop Floor", "Pop Disco Floor").
- *
- * Order matters: longer/more-specific suffixes must come first so
- * "Pop Disco Floor" strips to "Pop", not "Pop Disco".
+ * Suffixes appended to genre names in listings ("Hip Hop Floor", "Pop Disco Floor"), stripped
+ * before normalization. Longer suffixes first, so "Pop Disco Floor" strips to "Pop".
  */
 private val NOISE_SUFFIXES = listOf("disco floor", "floor")
 
 /**
- * Parses a raw genre string into a deduplicated list of canonical genre tag names.
+ * Parses a raw genre string into a deduplicated list of canonical tag names: split on the
+ * delimiters, noise suffixes stripped, looked up case-insensitively. A token matching nothing is
+ * kept in title case, so an unseen genre is captured without a map change.
  *
- * Tokens are split on the common delimiters (`, `, `//`, ` & `, ` / `), stripped of their noise
- * suffixes and looked up in the synonym map case-insensitively. A token matching nothing is kept
- * as-is in title case, so a genre nobody has seen before is captured without a synonym-map change —
- * the map exists only to merge known spellings of the same genre.
- *
- * @param rawGenre the free-text genre string from the scraped event, or null.
+ * @param rawGenre the free-text genre string, or null.
  * @return canonical genre tag names, empty when the input is null or blank.
  *
  * ```
@@ -385,10 +337,8 @@ fun normalizeGenre(rawGenre: String?): List<String> {
 }
 
 /**
- * Strips noise suffixes and common filler words from a genre token.
- *
- * Handles patterns like "Hip Hop & Urban Disco Floor" → "Hip Hop & Urban"
- * and trailing "etc." from venue listings.
+ * Strips noise suffixes and filler words: "Hip Hop & Urban Disco Floor" to "Hip Hop & Urban",
+ * trailing "etc.".
  */
 private fun stripNoise(token: String): String {
     var cleaned =
@@ -407,17 +357,10 @@ private fun stripNoise(token: String): String {
 }
 
 /**
- * Resolves a single cleaned genre token to a list of canonical genre names.
- *
- * Resolution strategy (in order):
- * 1. Direct synonym lookup (case-insensitive) — returns a single canonical name.
- * 2. Word-level synonym matching — splits the token into words and returns **all**
- *    matched genres. This handles compound freeform labels like "Superheavy Funky
- *    Soul & Boogaloo" → ["Funk", "Soul"] instead of silently discarding matches.
- * 3. No match — kept as a new genre only if it [looksLikeGenre]; otherwise dropped.
- *
- * Tokens that are clearly not genre names (too short, "from …" prefixes, or that
- * fail the [looksLikeGenre] gate) are filtered out by returning an empty list.
+ * Resolves one cleaned token to canonical names, in order: direct synonym lookup; word-level
+ * matching returning all matched genres ("Superheavy Funky Soul & Boogaloo" to ["Funk",
+ * "Soul"]); else kept as a new genre only if it [looksLikeGenre]. Tokens that are clearly not
+ * genres return an empty list.
  */
 @Suppress("ReturnCount") // Multiple early returns improve readability for this cascading lookup
 private fun resolveGenre(token: String): List<String> {
@@ -449,9 +392,8 @@ private fun resolveGenre(token: String): List<String> {
     val matched = words.mapNotNull { GENRE_SYNONYMS[lookupKey(it)] }.distinct()
     if (matched.isNotEmpty()) return matched
 
-    // No synonym match. Keep the token as a new genre only if it plausibly names
-    // one; otherwise drop it so event-format labels and freeform fragments never
-    // leak into genre_tag (the raw genre text is preserved on the event).
+    // No synonym match: keep as a new genre only if it plausibly names one, so format labels never
+    // leak into genre_tag.
     if (!looksLikeGenre(token)) {
         logger.info { "Dropping non-genre token '$token'" }
         return emptyList()
@@ -465,20 +407,11 @@ private fun resolveGenre(token: String): List<String> {
 }
 
 /**
- * Heuristic gate for the [resolveGenre] fall-through: whether an unmatched token
- * plausibly names a genre and may be kept as-is, rather than being dropped as a
- * non-genre label.
- *
- * A token qualifies when it:
- * - contains at least one letter (rejects bare punctuation/numbers), and
- * - is at most [MAX_GENRE_WORDS] words long (real genres are short — "Noise",
- *   "Trip-Hop", "New Wave" — whereas leaked labels like "Twenty One Pilots
- *   Special" run long), and
- * - contains no [NON_GENRE_TOKENS] word (drops "Immersive Ausstellung" and the
- *   like even when short), and
- * - does not itself *normalize* to a [NON_GENRE_TOKENS] entry (drops the two-word
- *   spellings of a listed label — "Open Air" → `openair`, "Release Party" →
- *   `releaseparty` — that survive the per-word check because no single word is listed).
+ * Heuristic gate for the [resolveGenre] fall-through. A token qualifies when it contains a
+ * letter; is at most [MAX_GENRE_WORDS] words ("Noise", "Trip-Hop", "New Wave", where "Twenty
+ * One Pilots Special" runs long); contains no [NON_GENRE_TOKENS] word; and does not itself
+ * normalize to a [NON_GENRE_TOKENS] entry ("Open Air" to `openair`, "Release Party" to
+ * `releaseparty`), which the per-word check misses.
  */
 private fun looksLikeGenre(token: String): Boolean {
     val words = token.trim().split(Regex("""\s+""")).filter { it.isNotBlank() }
