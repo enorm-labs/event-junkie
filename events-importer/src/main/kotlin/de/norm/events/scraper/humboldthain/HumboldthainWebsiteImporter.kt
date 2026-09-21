@@ -15,24 +15,23 @@ import java.time.Clock
  * Website importer for Humboldthain Club Berlin.
  *
  * The WordPress site (`humboldthain.com`) publishes its programme only through an embedded
- * Elfsight "Event Calendar" widget, which renders client-side — the served HTML contains no
- * events at all. The widget's public boot API, however, returns the venue's whole calendar as
- * clean structured JSON: the most stable possible source (ADR-007 §"Selector Strategy" —
- * structured data is priority 1), reachable without a headless browser. This importer:
- * 1. Fetches the widget boot JSON via [ApiClient.fetchJson] (shared politeness throttle and
- *    identifying User-Agent). The configured `url` is the boot endpoint carrying the widget id
- *    (`core.service.elfsight.com/p/boot/?w=<widgetId>`) and is used verbatim — all events come
- *    back in the single response (ADR-007 first-page-only).
- * 2. Parses it into [de.norm.events.scraper.ScrapedEvent]s via [HumboldthainApiScraper],
- *    expanding the venue's weekly resident night into one event per occurrence.
+ * Elfsight "Event Calendar" widget rendering client-side — the served HTML has no events. The
+ * widget's public boot API returns the whole calendar as clean JSON: the most stable source
+ * (ADR-007 §"Selector Strategy" — structured data is priority 1), no headless browser needed.
+ * 1. [ApiClient.fetchJson] fetches the boot JSON (shared politeness throttle and User-Agent).
+ * The configured `url` is the boot endpoint with the widget id
+ * (`core.service.elfsight.com/p/boot/?w=<widgetId>`), used verbatim — all events come back in
+ * one response (ADR-007 first-page-only).
+ * 2. [HumboldthainApiScraper] parses it into [de.norm.events.scraper.ScrapedEvent]s, expanding
+ * the weekly resident night into one event per occurrence.
  *
- * Conditional requests are deliberately unused, for two independent reasons. The Elfsight boot
- * API sends an ETag, but honouring it would freeze the recurrence horizon: the resident night's
- * occurrences are derived from "today", so a 304 on an unchanged calendar would stop that window
- * advancing (the same reason [de.norm.events.scraper.havanna.HavannaWebsiteImporter] re-fetches
- * every run). The `etag` / `lastModified` parameters are therefore ignored and every import
- * returns [ImportResult.Success] with `null` cache headers — never [ImportResult.NotModified].
- * Re-imports stay cheap and safe because persistence upserts idempotently by `sourceId`.
+ * Conditional requests are deliberately unused. The boot API sends an ETag, but honouring it
+ * would freeze the recurrence horizon: the resident night's occurrences derive from "today", so
+ * a 304 on an unchanged calendar would stop that window advancing (the reason
+ * [de.norm.events.scraper.havanna.HavannaWebsiteImporter] re-fetches every run). `etag` /
+ * `lastModified` are ignored and every import returns [ImportResult.Success] with `null` cache
+ * headers — never [ImportResult.NotModified]. Re-imports stay cheap and safe because
+ * persistence upserts idempotently by `sourceId`.
  *
  * @see HumboldthainApiScraper for the JSON parsing and recurrence expansion.
  * @see <a href="https://www.humboldthain.com/">Humboldthain Club</a>
@@ -40,7 +39,7 @@ import java.time.Clock
 @Component
 class HumboldthainWebsiteImporter(
     private val apiClient: ApiClient,
-    /** Clock anchoring the rolling recurrence horizon. Defaults to the system clock; override in tests. */
+    /** Clock anchoring the rolling recurrence horizon; override in tests. */
     clock: Clock = Clock.systemDefaultZone()
 ) : EventImporter {
     private val logger = KotlinLogging.logger {}
@@ -58,8 +57,8 @@ class HumboldthainWebsiteImporter(
         val events = apiScraper.scrape(json)
         logger.info { "Scraped ${events.size} event(s) from Humboldthain Club" }
 
-        // Conditional requests would freeze the recurrence horizon, so there is no NotModified
-        // path; ETag / Last-Modified are always null and change detection relies on idempotent upserts.
+        // Conditional requests would freeze the recurrence horizon, so no NotModified path; ETag /
+        // Last-Modified are always null and change detection relies on idempotent upserts.
         return ImportResult.Success(events = events, etag = null, lastModified = null)
     }
 }

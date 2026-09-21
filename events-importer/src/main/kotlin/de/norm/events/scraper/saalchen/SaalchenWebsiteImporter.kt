@@ -14,14 +14,11 @@ import org.springframework.stereotype.Component
 /**
  * Website importer for Säälchen's programme on the Holzmarkt site's shared calendar.
  *
- * The whole programme sits on one `/kalender` page — its month tabs are in-page anchors, not
- * extra requests — and every field the model wants is already on it, so the pipeline is a single
- * fetch:
- * 1. Fetch `/kalender` via [HtmlFetcher] with conditional-request support (ETag / Last-Modified).
- * 2. Filter the calendar to the venue and parse it via [SaalchenOverviewPageScraper].
- *
- * The `/veranstaltung/<slug>` detail pages are deliberately not fetched: the listing's embedded
- * AddToCalendar payload already carries the event's own prose, times and price.
+ * The whole programme is one `/kalender` page — month tabs are in-page anchors — and every
+ * field is on it, so a single fetch: [HtmlFetcher] fetches it conditionally (ETag /
+ * Last-Modified), [SaalchenOverviewPageScraper] filters to the venue and parses. The
+ * `/veranstaltung/<slug>` detail pages are not fetched: the embedded AddToCalendar payload
+ * already carries the prose, times and price.
  *
  * @see SaalchenOverviewPageScraper for the HTML parsing logic.
  * @see <a href="https://www.holzmarkt.com/kalender">Holzmarkt calendar</a>

@@ -14,14 +14,12 @@ import org.springframework.stereotype.Component
 /**
  * Website importer for gART.n's single-page Carrd programme.
  *
- * The venue's whole web presence is one Carrd page — no CMS behind it, no REST API, no feed, no
- * embedded structured data, and a `sitemap.xml` listing only that page and the separate Impressum
- * card. Its "UPCOMING" block carries the entire programme inline, including every lineup and
- * ticket link, so the homepage is the source and the pipeline is a single fetch:
- * 1. Fetch the page via [HtmlFetcher] with conditional-request support. Carrd's Apache serves both
- *    a strong `ETag` and a `Last-Modified`, and the page changes only when the programme is
- *    edited, so 304s are reliable and frequent here.
- * 2. Parse every dated event block via [GartnOverviewPageScraper].
+ * The whole web presence is one Carrd page — no CMS, REST API, feed or structured data, and a
+ * `sitemap.xml` listing only that page and the separate Impressum card. Its "UPCOMING" block
+ * carries the entire programme inline with every lineup and ticket link, so a single fetch:
+ * [HtmlFetcher] fetches it conditionally — Carrd's Apache serves a strong `ETag` and a
+ * `Last-Modified`, and the page changes only when the programme is edited, so 304s are
+ * reliable and frequent — and [GartnOverviewPageScraper] parses every dated block.
  *
  * @see GartnOverviewPageScraper for the HTML parsing logic.
  * @see <a href="https://www.gartn.xyz/">gART.n Berlin</a>

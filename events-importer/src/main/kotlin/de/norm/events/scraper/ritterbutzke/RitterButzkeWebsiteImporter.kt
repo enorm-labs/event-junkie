@@ -14,17 +14,12 @@ import org.springframework.stereotype.Component
 /**
  * Website importer for Ritter Butzke's programme.
  *
- * Orchestrates the fetch → parse pipeline:
- * 1. Fetch the unpaginated `/events` listing via [HtmlFetcher] with conditional request support
- *    (ETag / Last-Modified).
- * 2. Discover every grid card via [RitterButzkeOverviewPageScraper] — title, rendered date and
- *    poster.
- * 3. For each event, fetch its `/event/DDMMYY-<Name>` page and parse it via
- *    [RitterButzkeDetailPageScraper] — the only source for the start time, ticket shop and DJ
- *    lineup.
+ * 1. [HtmlFetcher] fetches the unpaginated `/events` listing conditionally (ETag / Last-Modified).
+ * 2. [RitterButzkeOverviewPageScraper] discovers every grid card — title, rendered date and poster.
+ * 3. Each `/event/DDMMYY-<Name>` page via [RitterButzkeDetailPageScraper] — the only source for
+ * start time, ticket shop and DJ lineup.
  *
- * The `/calendarfile/<id>` links beside each date are `Disallow`ed by the venue's robots.txt and
- * are never fetched.
+ * The `/calendarfile/<id>` links beside each date are `Disallow`ed by robots.txt and never fetched.
  *
  * @see RitterButzkeOverviewPageScraper for listing parsing (discovery, date, poster).
  * @see RitterButzkeDetailPageScraper for detail parsing (start time, ticket, lineup).
@@ -50,11 +45,9 @@ class RitterButzkeWebsiteImporter(
     ): ScrapedEvent? = detailPageScraper.scrape(document, url)
 
     /**
-     * Merges detail-page data ([primary]) with listing data ([fallback]).
-     *
-     * Both pages render the same rendered-date-wins title and date, so the detail page simply wins
-     * and the listing backstops it — including the poster, which the listing serves at the same
-     * URL.
+     * Merges detail-page data ([primary]) with listing data ([fallback]). Both render the same
+     * rendered-date-wins title and date, so the detail page wins and the listing backstops it —
+     * including the poster, served at the same URL.
      */
     override fun fillGapsFromOverview(
         primary: ScrapedEvent,

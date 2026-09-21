@@ -27,32 +27,33 @@ import java.time.LocalTime
 /**
  * Pure HTML parser for Der Weiße Hase's Contao event listing.
  *
- * Every upcoming night is one `.event50` block wrapping a single `a.eventlistlink` — the club sells
- * through RA and has no per-event page, so the anchor points off-site and the night renders inline:
+ * Every upcoming night is one `.event50` block wrapping a single `a.eventlistlink` — the club
+ * sells through RA and has no per-event page, so the anchor points off-site and the night
+ * renders inline:
  *
  * ```
  * <p class="dater">Donnerstag 06.08.2026 23:00</p>   ← weekday, dotted date, start time
  * <h1>straff / thursday techno</h1>                   ← the night's name
  * <p class="text">                                    ← optional note, then the roster
- *   <p>free entry until midnight*</p>
- *   <h4>LINE UP</h4>
- *   <p>Fran-Cee, Fabian Fischbach, DAV3 + Surprise DJ</p>
+ * <p>free entry until midnight*</p>
+ * <h4>LINE UP</h4>
+ * <p>Fran-Cee, Fabian Fischbach, DAV3 + Surprise DJ</p>
  * ```
  *
- * **`p.text` is not a usable container.** The CMS nests `<h4>` and `<p>` inside a `<p>`, which no HTML
- * parser accepts: Jsoup closes `p.text` at the first `<h4>`, leaving it empty and hoisting the note,
- * heading and roster to be siblings of `h1` inside `.eventrahm`. This parser walks `.eventrahm`'s
- * children as one ordered stream and keys off content — the roster is the element after the
- * [LINE_UP_HEADING] heading, and everything between the title and it is the night's note.
+ * **`p.text` is not a usable container.** The CMS nests `<h4>` and `<p>` inside a `<p>`, which
+ * no HTML parser accepts: Jsoup closes `p.text` at the first `<h4>`, leaving it empty and
+ * hoisting note, heading and roster to siblings of `h1` inside `.eventrahm`. This parser walks
+ * `.eventrahm`'s children as one ordered stream keyed off content — the roster is the element
+ * after the [LINE_UP_HEADING], and everything between the title and it is the note.
  *
- * The roster splits on commas, `+` and `<br>` only, never on `&` ([LINEUP_SEPARATOR]): the club writes
- * back-to-back billings as separate entries but uses `&` *inside* act names ("Drauf & Dran DJ Team").
- * An unbooked slot ("+ Residents") is dropped on a fully anchored match
- * ([UNANNOUNCED_SLOT_PATTERN]), so a real act is never caught, and only a Resident Advisor *event*
- * link becomes the ticket URL ([RA_EVENT_URL]) — a night whose RA page is not up links to the club's
- * profile or a bare `#`. A note line is stored as the description rather than as a `priceNote`, which
- * would trip `detectFree` and flag a paid night free for its whole run when entry is free for the
- * first hour only. Every act carries the `DJ` role, the club billing no headliner.
+ * The roster splits on commas, `+` and `<br>` only, never `&` ([LINEUP_SEPARATOR]): the club
+ * writes back-to-back billings as separate entries but uses `&` *inside* act names ("Drauf &
+ * Dran DJ Team"). An unbooked slot ("+ Residents") is dropped on a fully anchored match
+ * ([UNANNOUNCED_SLOT_PATTERN]), so a real act is never caught, and only a Resident Advisor
+ * *event* link becomes the ticket URL ([RA_EVENT_URL]) — a night whose RA page is not up links
+ * to the club's profile or a bare `#`. A note line is stored as the description, not a
+ * `priceNote`, which would trip `detectFree` and flag a paid night free for its whole run when
+ * entry is free for the first hour only. Every act is a `DJ`, the club billing no headliner.
  *
  * @see DER_WEISSE_HASE_LIMITATIONS for what the club does not publish.
  * @see DerWeisseHaseWebsiteImporter for the HTTP fetch orchestrator.
@@ -62,11 +63,10 @@ class DerWeisseHaseOverviewPageScraper {
     private val logger = KotlinLogging.logger {}
 
     /**
-     * Parses all announced nights from the event listing document.
+     * Parses all announced nights from the event listing, in listing order.
      *
      * @param baseUrl the URL the document was fetched from, stored as each event's
-     *   [ScrapedEvent.sourceUrl] — the venue publishes no per-event page.
-     * @return a list of [ScrapedEvent] instances, in listing order.
+     * [ScrapedEvent.sourceUrl] — no per-event page.
      */
     fun scrape(
         document: Document,
@@ -86,7 +86,7 @@ class DerWeisseHaseOverviewPageScraper {
         }
     }
 
-    /** Parses one `.event50` block into a [ScrapedEvent], or `null` when it has no title or usable date. */
+    /** Parses one `.event50` block into a [ScrapedEvent], or `null` without a title or usable date. */
     @Suppress("ReturnCount") // Guard clauses for the required title/date are clearer than nesting
     private fun parseBlock(
         block: Element,
@@ -110,17 +110,16 @@ class DerWeisseHaseOverviewPageScraper {
         return ScrapedEvent(
             title = title,
             description = noteBefore(content, lineupHeading),
-            // The club programmes nothing but DJ nights and states no category anywhere, so the
-            // type is fixed rather than inferred from the night's name.
+            // The club programmes nothing but DJ nights and states no category, so the type is fixed, not
+            // inferred from the night's name.
             eventType = EventType.PARTY.name,
             eventDate = eventDate,
             startTime = parseStartTime(dateLine),
             // The flyer is served from a root-relative path, so it needs resolving against the listing URL.
             imageUrl = block.attrAt(".stpic img", "src")?.let { runCatching { resolveUrl(baseUrl, it) }.getOrNull() },
-            // No per-event page exists, so every night points at the listing and takes its identity
-            // from the date plus the slugified title. Both are needed: a recurring night reuses its
-            // title across weeks, and two different nights can share one date (a daytime rave and
-            // its evening aftershow).
+            // No per-event page, so every night points at the listing and takes its identity from date
+            // plus slugified title. Both are needed: a recurring night reuses its title across weeks, and
+            // two nights can share one date (a daytime rave and its evening aftershow).
             sourceUrl = baseUrl,
             sourceId = "${EventSource.DER_WEISSE_HASE.sourceIdPrefix}$eventDate-${SlugGenerator.slugify(title)}",
             ticketUrl = block.selectFirst("a.eventlistlink")?.absUrl("href")?.takeIf { RA_EVENT_URL.matches(it) },
@@ -138,12 +137,10 @@ class DerWeisseHaseOverviewPageScraper {
     private fun isLineUpHeading(element: Element): Boolean = LINE_UP_HEADING.matches(element.text().trim())
 
     /**
-     * The night's note — the club's own lines between the title and the `LINE UP` heading, joined
-     * by a newline, or `null` when there are none.
-     *
-     * The club writes these as either a `<p>` ("free entry until midnight*") or another `<h4>`
-     * ("Women & FLINTA free until 1 AM"), so the note is taken by position rather than by tag. The
-     * `&nbsp;` spacer paragraph the CMS emits after every title reads as blank and is dropped.
+     * The night's note — the club's lines between the title and the `LINE UP` heading, joined by
+     * a newline, or `null`. Written as a `<p>` ("free entry until midnight*") or another `<h4>`
+     * ("Women & FLINTA free until 1 AM"), so taken by position rather than tag. The `&nbsp;` spacer
+     * paragraph the CMS emits after every title reads as blank and is dropped.
      */
     private fun noteBefore(
         content: Element,
@@ -162,11 +159,9 @@ class DerWeisseHaseOverviewPageScraper {
     }
 
     /**
-     * The DJs billed for the night, in listing order.
-     *
-     * The roster is one element whose names are separated by `<br>` or by [LINEUP_SEPARATOR]
-     * punctuation. Placeholders ([isNonArtistName]) and unbooked slots ([UNANNOUNCED_SLOT_PATTERN])
-     * are dropped rather than minted as artists.
+     * The DJs billed for the night, in listing order: one element whose names are separated by
+     * `<br>` or [LINEUP_SEPARATOR] punctuation. Placeholders ([isNonArtistName]) and unbooked slots
+     * ([UNANNOUNCED_SLOT_PATTERN]) are dropped rather than minted.
      */
     private fun parseLineup(lineup: Element?): List<ScrapedArtist> =
         lineup
@@ -183,9 +178,9 @@ class DerWeisseHaseOverviewPageScraper {
 
     private companion object {
         /**
-         * A Der Weiße Hase date line — `"Donnerstag 06.08.2026 23:00"`. Captures the dotted date
-         * (group 1) and the time (group 2). Anchored at the weekday so a line that merely mentions a
-         * date in prose cannot be read as one.
+         * A date line — `"Donnerstag 06.08.2026 23:00"` — capturing the dotted date (group 1) and the
+         * time (group 2). Anchored at the weekday so a line merely mentioning a date in prose cannot
+         * be read as one.
          */
         private val DATE_LINE_PATTERN = Regex("""^\s*\p{L}+\s+(\d{1,2}\.\d{1,2}\.\d{4})(?:\s+(\d{1,2}:\d{2}))?""")
 
@@ -193,25 +188,24 @@ class DerWeisseHaseOverviewPageScraper {
         private val LINE_UP_HEADING = Regex("""line\s*-?\s*up:?""", RegexOption.IGNORE_CASE)
 
         /**
-         * Separators inside a roster line: comma and `+`. Deliberately **not** `&` — the club writes
-         * act names that contain one ("Drauf & Dran DJ Team") — and deliberately not `/`, which it
-         * has never used to separate two DJs.
+         * Separators inside a roster line: comma and `+`. Deliberately **not** `&` — act names
+         * contain one ("Drauf & Dran DJ Team") — and not `/`, never used to separate two DJs.
          */
         private val LINEUP_SEPARATOR = Regex("""\s*[,+]\s*""")
 
         /**
-         * An unbooked billing slot the club prints in place of a name: its own residents
-         * ("Residents", "Resident DJs"), an unannounced guest ("Surprise DJ", "surprise Act") or a
-         * yet-undecided DJ-contest slot ("Contest Winner"). Anchored, so a real act whose name merely
-         * contains one of these words — including the band The Residents — is untouched.
+         * An unbooked billing slot printed in place of a name: the residents ("Residents", "Resident
+         * DJs"), an unannounced guest ("Surprise DJ", "surprise Act") or an undecided DJ-contest slot
+         * ("Contest Winner"). Anchored, so a real act merely containing one of these words — the band
+         * The Residents included — is untouched.
          */
         private val UNANNOUNCED_SLOT_PATTERN =
             Regex("""residents?(?:\s+djs?)?|surprise\s+(?:dj|act|guest)s?|contest\s+winners?""", RegexOption.IGNORE_CASE)
 
         /**
-         * A Resident Advisor **event** page. The club links every night's tickets there; a night whose
-         * RA page is not published yet links to the club's RA profile (`ra.co/clubs/…`) or to a bare
-         * `#` on the listing itself, and neither is a ticket URL.
+         * A Resident Advisor **event** page. Every night's tickets link there; a night whose RA page
+         * is not published yet links to the club's RA profile (`ra.co/clubs/…`) or a bare `#` on the
+         * listing, neither a ticket URL.
          */
         private val RA_EVENT_URL = Regex("""https?://(?:[\w-]+\.)?ra\.co/events/\d+/?""", RegexOption.IGNORE_CASE)
     }

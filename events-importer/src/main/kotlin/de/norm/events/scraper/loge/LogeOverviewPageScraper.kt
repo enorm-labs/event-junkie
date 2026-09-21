@@ -17,16 +17,13 @@ import tools.jackson.databind.JsonNode
 /**
  * Pure parser for Loge's Wix Events listing (`/event-list`) page.
  *
- * Reads every event from the embedded `wix-warmup-data` JSON (see
- * [WixEventsWarmupData]). This overview payload serves two purposes:
- * 1. **Discovery** — each entry's `slug` yields the `/event-details/<slug>`
- *    detail URL (and the stable `sourceId`) that
- *    [LogeWebsiteImporter] fetches for the ticket price.
- * 2. **Authoritative source for the core fields** — title, Berlin-local date and
- *    start time, poster image, and the artist roster (parsed from the `+`-joined
- *    title). The detail page (schema.org JSON-LD) only adds the price and
- *    confirms the status, so everything here except the price survives even when
- *    a detail page cannot be fetched.
+ * Reads every event from the embedded `wix-warmup-data` JSON (see [WixEventsWarmupData]). The
+ * payload is the discovery list — each entry's `slug` yields the `/event-details/<slug>` URL
+ * (and the stable `sourceId`) [LogeWebsiteImporter] fetches for the price — and the
+ * **authoritative source for the core fields**: title, Berlin-local date and start time,
+ * poster, and the artist roster (from the `+`-joined title). The detail page (schema.org
+ * JSON-LD) only adds the price and confirms the status, so everything here except the price
+ * survives a failed detail fetch.
  *
  * @see LogeDetailPageScraper for the per-event price/status enrichment.
  * @see LogeWebsiteImporter for the HTTP fetch orchestrator.
@@ -36,11 +33,9 @@ class LogeOverviewPageScraper {
     private val logger = KotlinLogging.logger {}
 
     /**
-     * Parses all events from the overview page's embedded Wix warmup payload.
+     * Parses all events from the overview page's embedded Wix warmup payload, one per listed event.
      *
-     * @param baseUrl the URL the document was fetched from, used to resolve
-     *   per-event `/event-details/<slug>` detail URLs.
-     * @return a list of [ScrapedEvent] instances, one per listed event.
+     * @param baseUrl the URL the document was fetched from, for resolving `/event-details/<slug>` URLs.
      */
     fun scrape(
         document: Document,
@@ -82,12 +77,12 @@ class LogeOverviewPageScraper {
         val schedule = parseWixSchedule(node.path("scheduling").path("config"))
         return ScrapedEvent(
             title = title,
-            // Loge is a live-music venue with no category field; default to CONCERT so events aren't
-            // filed as OTHER. A festival title (e.g. "… Soli-Festival") is still promoted to FESTIVAL
-            // at the persistence boundary (see ScrapedEvent.resolveEventType).
+            // A live-music venue with no category field; default to CONCERT so events aren't filed as
+            // OTHER. A festival title ("… Soli-Festival") is still promoted to FESTIVAL at the persistence
+            // boundary (see ScrapedEvent.resolveEventType).
             eventType = EventType.CONCERT.name,
-            // Fall back to the sentinel for a rare to-be-decided date; the detail page (schema.org
-            // startDate) then supplies it via LogeWebsiteImporter.fillGapsFromOverview.
+            // Sentinel for a rare to-be-decided date; the detail page (schema.org startDate) supplies it
+            // via LogeWebsiteImporter.fillGapsFromOverview.
             eventDate = schedule.date ?: UNRESOLVED_EVENT_DATE,
             startTime = schedule.startTime,
             endDate = schedule.endDate,
@@ -100,13 +95,12 @@ class LogeOverviewPageScraper {
     }
 
     /**
-     * Builds the artist roster from the `+`-joined title, Loge's support-act
-     * convention (e.g. `"ESTAMOE + DALOY! + FURIE"` → headliner ESTAMOE, support
-     * DALOY! and FURIE). The first `+`-segment is the headliner(s), the rest are
-     * support acts; [buildArtistList] drops placeholder/role names (a trailing
-     * `"+ Support"` collapses to no support act). Titles without a `+` yield no
-     * artists — a single segment can be a band or an event name ("MENTAL RIOT
-     * (Soli-Festival)"), so extracting one would be unreliable.
+     * The artist roster from the `+`-joined title, Loge's support-act convention (`"ESTAMOE +
+     * DALOY! + FURIE"` → headliner ESTAMOE, support DALOY! and FURIE). The first segment is the
+     * headliner(s), the rest support; [buildArtistList] drops placeholder/role names (a trailing
+     * `"+ Support"` collapses to no support act). Titles without a `+` yield no artists — a single
+     * segment can be a band or an event name ("MENTAL RIOT (Soli-Festival)"), so extracting one
+     * would be unreliable.
      */
     private fun parseArtists(title: String): List<ScrapedArtist> {
         val segments = title.split(TITLE_SUPPORT_SEPARATOR)

@@ -16,19 +16,17 @@ import java.time.Clock
  * Website importer for MAAYA Berlin, the Afro-diasporic cultural venue and open-air pool on the
  * RAW-Gelände.
  *
- * The venue's whole published programme is the **NEXT DATES** section of its WordPress home page,
- * with no per-event pages, so the pipeline is a single request per cycle:
- * 1. Fetch the home page via [HtmlFetcher] with conditional-request support (ETag / Last-Modified).
- * 2. Parse the NEXT DATES section via [MaayaOverviewPageScraper].
+ * The whole published programme is the **NEXT DATES** section of its WordPress home page, no
+ * per-event pages, so one request per cycle: [HtmlFetcher] fetches it conditionally (ETag /
+ * Last-Modified), [MaayaOverviewPageScraper] parses the section.
  *
- * Cloudflare fronts the site and answers some non-browser clients with a 403 challenge page — curl
- * is blocked outright — but it serves the JVM HTTP stack this importer runs on normally. A sudden
- * run of `HTTP 403` failures on this source therefore means the bot rules tightened, not that the
- * page moved.
+ * Cloudflare fronts the site and answers some non-browser clients with a 403 challenge — curl
+ * is blocked outright — but serves the JVM HTTP stack normally. A sudden run of `HTTP 403`
+ * failures here means the bot rules tightened, not that the page moved.
  *
- * The listing is short by nature: it runs about two weeks ahead, so an import returns a dozen or so
- * events. That is the venue's real horizon rather than a parsing limit — it announces the rest
- * through its newsletter and Instagram, as the section's own footnote says.
+ * The listing is short by nature: about two weeks ahead, a dozen or so events. The venue's
+ * real horizon, not a parsing limit — the rest goes through its newsletter and Instagram, as
+ * the section's own footnote says.
  *
  * @see MaayaOverviewPageScraper for the HTML parsing logic.
  * @see <a href="https://maaya.de/">MAAYA Berlin</a>
@@ -36,7 +34,7 @@ import java.time.Clock
 @Component
 class MaayaWebsiteImporter(
     private val htmlFetcher: HtmlFetcher,
-    /** Clock for the scraper's year inference on a year-less date. Defaults to the system clock; override in tests. */
+    /** Clock for the scraper's year inference on a year-less date; override in tests. */
     clock: Clock = Clock.systemDefaultZone()
 ) : EventImporter {
     private val logger = KotlinLogging.logger {}

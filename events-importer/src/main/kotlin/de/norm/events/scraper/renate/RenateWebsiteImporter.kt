@@ -14,11 +14,10 @@ import org.springframework.stereotype.Component
 /**
  * Website importer for Renate's homepage programme.
  *
- * Renate runs WordPress but registers no `event` post type in its REST API (only the stock types
- * plus `blog_post`), and the theme embeds no schema.org data, so the homepage — which carries the
- * whole programme inline, including the per-floor lineups — is the source. The pipeline is:
- * 1. Fetch the homepage via [HtmlFetcher] with conditional-request support.
- * 2. Parse every `.prog-row` via [RenateOverviewPageScraper].
+ * WordPress with no `event` post type in its REST API (only stock types plus `blog_post`) and
+ * no schema.org data, so the homepage — the whole programme inline, per-floor lineups included
+ * — is the source: [HtmlFetcher] fetches it conditionally, [RenateOverviewPageScraper] parses
+ * every `.prog-row`.
  *
  * @see RenateOverviewPageScraper for the HTML parsing logic.
  * @see <a href="https://www.renate.cc/">Renate Berlin</a>

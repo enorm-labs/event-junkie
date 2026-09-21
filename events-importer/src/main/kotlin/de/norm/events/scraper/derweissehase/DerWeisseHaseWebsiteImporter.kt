@@ -14,18 +14,16 @@ import org.springframework.stereotype.Component
 /**
  * Website importer for Der Weiße Hase's Contao event listing.
  *
- * The club renders its whole upcoming programme on `/events` — one server-rendered block per night,
- * with the date, the start time and the full DJ roster inline. There is no per-event page to follow
- * (the listing links out to Resident Advisor), no pagination, and no JSON or JSON-LD source to prefer
- * over the markup: the page's only `ld+json` graph declares the flyer images and nothing else. Past
- * nights move to a separate `/events-archiv` page, which is not imported. So the pipeline is a single
- * request per cycle:
- * 1. Fetch `/events` via [HtmlFetcher] with conditional-request support (ETag / Last-Modified).
- * 2. Parse every night from that one page via [DerWeisseHaseOverviewPageScraper].
+ * The whole upcoming programme renders on `/events` — one server-rendered block per night with
+ * date, start time and full DJ roster inline. No per-event page (the listing links out to
+ * Resident Advisor), no pagination, no JSON or JSON-LD to prefer: the page's only `ld+json`
+ * graph declares the flyer images and nothing else. Past nights move to `/events-archiv`, not
+ * imported. One request per cycle: [HtmlFetcher] fetches `/events` conditionally (ETag /
+ * Last-Modified), [DerWeisseHaseOverviewPageScraper] parses every night.
  *
- * The server sends `Cache-Control: no-store` and neither validator header, so the conditional request
- * never actually saves a fetch here. The [FetchResult.NotModified] branch is kept regardless — it
- * costs nothing and covers the server growing an `ETag` later.
+ * The server sends `Cache-Control: no-store` and neither validator header, so the conditional
+ * request never saves a fetch. The [FetchResult.NotModified] branch stays — it costs nothing
+ * and covers the server growing an `ETag` later.
  *
  * @see DerWeisseHaseOverviewPageScraper for the HTML parsing logic and the source's limitations.
  * @see <a href="https://derweissehase.club/events">Der Weiße Hase Berlin</a>

@@ -22,16 +22,14 @@ import tools.jackson.databind.json.JsonMapper
 /**
  * Pure HTML parser for Hole 44 Berlin event detail pages (`/event/<date-slug>/`).
  *
- * Each detail page carries a `<script type="application/ld+json">` schema.org
- * `Event` block — the most stable source on the page (ADR-007 §"Selector Strategy"
- * priority 1) — used for the description and image. The `single_event_header`
- * markup adds the fields the overview lacks: the promoter (`.event-promoter`), the
- * doors time (`Einlass` in the `.details` list), the support line
- * (`.single-event-support`), the ticket-shop button and the on-page image.
+ * Each page carries a `<script type="application/ld+json">` schema.org `Event` block — the most
+ * stable source (ADR-007 §"Selector Strategy" priority 1) — used for description and image. The
+ * `single_event_header` markup adds what the overview lacks: promoter (`.event-promoter`),
+ * doors time (`Einlass` in the `.details` list), support line (`.single-event-support`), the
+ * ticket-shop button and the on-page image.
  *
- * The date, start time, genre, and status are all present here too and are read
- * directly, so a successful detail fetch yields a complete event; the overview
- * only fills gaps (and stands in entirely when the detail fetch fails) via
+ * Date, start time, genre and status are here too and read directly, so a successful fetch is
+ * a complete event; the overview fills gaps (or stands in entirely when the fetch fails) via
  * [Hole44WebsiteImporter.fillGapsFromOverview].
  *
  * @see Hole44OverviewPageScraper for overview parsing (discovery, date, fallback).
@@ -44,11 +42,9 @@ class Hole44DetailPageScraper {
     private val jsonMapper: JsonMapper = JsonMapper.builder().build()
 
     /**
-     * Parses an event detail page into a [ScrapedEvent], or `null` when the page has
-     * no event title (an unexpected structure).
+     * Parses a detail page into a [ScrapedEvent], or `null` without an event title.
      *
-     * @param sourceUrl the event's URL, used as [ScrapedEvent.sourceUrl] and to derive
-     *   the [ScrapedEvent.sourceId].
+     * @param sourceUrl the event's URL: [ScrapedEvent.sourceUrl] and the [ScrapedEvent.sourceId].
      */
     @Suppress("ReturnCount") // Guard clause for the missing title is clearer than nesting
     fun scrape(
@@ -94,10 +90,9 @@ class Hole44DetailPageScraper {
     }
 
     /**
-     * Parses the JSON-LD blocks and returns the schema.org `Event` object node, or
-     * `null` if there is no such block or none can be parsed. Each block is parsed and
-     * matched on its **decoded** `@type` (not a raw-string search), so the Yoast SEO
-     * `@graph` block is skipped and detection is robust to the JSON's whitespace/format.
+     * The schema.org `Event` object node from the page's JSON-LD blocks, or `null`. Each block is
+     * parsed and matched on its **decoded** `@type` (not a raw-string search), so the Yoast SEO
+     * `@graph` block is skipped and detection survives the JSON's whitespace/format.
      */
     @Suppress("TooGenericExceptionCaught") // A malformed block must degrade to null, never abort the import
     private fun parseEventNode(document: Document): JsonNode? =
@@ -115,10 +110,9 @@ class Hole44DetailPageScraper {
 }
 
 /**
- * Reads the `<span>` value of the `.details` list row whose label text contains
- * [label] (e.g. `"Einlass"` → `"19:00"`, `"Datum"` → `"02.08.2026"`), or `null`
- * when no such row exists. The label is the list item's own text; the value is its
- * trailing `<span>`.
+ * The `<span>` value of the `.details` row whose label contains [label] (`"Einlass"` →
+ * `"19:00"`, `"Datum"` → `"02.08.2026"`), or `null`. The label is the list item's own text; the
+ * value its trailing `<span>`.
  */
 private fun detailValue(
     content: Element,
@@ -133,9 +127,8 @@ private fun detailValue(
 private val PROMOTER_CREDIT_SUFFIX = Regex("""\s*(?:presents?|präsentiert|pres\.)\s*$""", RegexOption.IGNORE_CASE)
 
 /**
- * Extracts the promoter from the `.event-promoter` label (e.g. "Trinity Music
- * presents" → "Trinity Music"), or an empty list when none is shown. The trailing
- * "presents"/"präsentiert" credit is stripped.
+ * The promoter from the `.event-promoter` label ("Trinity Music presents" → "Trinity Music"),
+ * or empty when none is shown; the trailing "presents"/"präsentiert" credit is stripped.
  */
 private fun parsePromoter(content: Element): List<String> {
     val raw = content.textAt(".event-promoter") ?: return emptyList()

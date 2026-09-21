@@ -31,27 +31,28 @@ import java.time.temporal.TemporalAdjusters
 private const val HUMBOLDTHAIN_URL = "https://www.humboldthain.com/"
 
 /**
- * Pure parser for Humboldthain Club's programme, sourced from the JSON boot response of the Elfsight
+ * Pure parser for Humboldthain Club's programme, from the JSON boot response of the Elfsight
  * "Event Calendar" widget embedded on its WordPress landing page.
  *
- * The widget renders client-side, so the page carries no events; its boot API returns the calendar as
- * JSON (ADR-007 §"Selector Strategy" priority 1). The payload shape and its readers are shared with
- * the other Elfsight venue — see [de.norm.events.scraper.elfsight.ElfsightEventNode].
+ * The widget renders client-side, so the page carries no events; its boot API returns the
+ * calendar as JSON (ADR-007 §"Selector Strategy" priority 1). The payload shape and readers are
+ * shared with the other Elfsight venue — see [de.norm.events.scraper.elfsight.ElfsightEventNode].
  *
- * **Recurrences are expanded.** The resident night is a *single* entry carrying a weekly repeat rule
- * the widget expands in the browser, so reading only `start.date` would import it once at the series'
- * long-past opening date and lose every upcoming occurrence. Weekly rules become one event per
- * occurrence over a rolling [OCCURRENCE_HORIZON_WEEKS] horizon, bounded further by the rule's own end
- * date or count, which is why `sourceId` combines the widget id with the occurrence date. Elfsight's
- * `nthDayInMonth` month rules are not expanded; the venue uses none.
+ * **Recurrences are expanded.** The resident night is a *single* entry with a weekly repeat
+ * rule the widget expands in the browser, so reading only `start.date` would import it once at
+ * the series' long-past opening date and lose every upcoming occurrence. Weekly rules become one
+ * event per occurrence over a rolling [OCCURRENCE_HORIZON_WEEKS] horizon, bounded further by the
+ * rule's own end date or count, which is why `sourceId` combines the widget id with the
+ * occurrence date. Elfsight's `nthDayInMonth` month rules are not expanded; the venue uses none.
  *
  * **Artists come from the description's links, not its prose.** The roster is `ra.co/dj/<slug>`
- * anchors whose link text is the DJ's name; the prose around them varies night to night
- * ("Lineup/Musik", "Line-up Live:") and its other lines are door policy and awareness notes.
+ * anchors whose text is the DJ's name; the prose around them varies ("Lineup/Musik", "Line-up
+ * Live:") and its other lines are door policy and awareness notes.
  *
- * **Every night is a party** unless the title opens with the venue's one category marker, `KONZERT:`,
- * which is stripped and makes the remainder the headliner. The widget's own `eventType` vocabulary is
- * ignored: the venue has filled it with weekday labels ("Samstag, 14:00") that contradict `start.time`.
+ * **Every night is a party** unless the title opens with the one category marker, `KONZERT:`,
+ * which is stripped and makes the remainder the headliner. The widget's `eventType` vocabulary
+ * is ignored: the venue filled it with weekday labels ("Samstag, 14:00") that contradict
+ * `start.time`.
  *
  * @see HUMBOLDTHAIN_LIMITATIONS for what the source does not publish.
  * @see HumboldthainWebsiteImporter for the HTTP fetch orchestrator.
@@ -68,8 +69,7 @@ class HumboldthainApiScraper(
      * recurrences into one event per occurrence.
      *
      * @param json the raw JSON body of the `p/boot/?w=<widgetId>` response.
-     * @return a list of [ScrapedEvent] instances; empty if the payload is absent, unparseable,
-     *   or carries no events.
+     * @return the [ScrapedEvent]s; empty if absent, unparseable or without events.
      */
     fun scrape(json: String): List<ScrapedEvent> {
         val eventNodes = parseElfsightEventNodes(jsonMapper, json, VENUE_NAME) ?: return emptyList()
@@ -143,13 +143,11 @@ class HumboldthainApiScraper(
     }
 
     /**
-     * The dates this entry happens on: its own start date when it does not repeat, otherwise
-     * every occurrence of its weekly rule from today over the rolling horizon.
-     *
-     * Only weekly rules are expanded, because they are the only kind the venue uses. Elfsight
-     * files a monthly rule as `repeatFrequency: "daily"`/`"monthly"` with a `nthDayInMonth`
-     * period, and guessing at its "second Wednesday" semantics would invent dates the venue
-     * never announced — such an entry keeps its start date alone and is logged.
+     * The dates this entry happens on: its own start date when it does not repeat, otherwise every
+     * occurrence of its weekly rule from today over the rolling horizon. Only weekly rules, the
+     * only kind the venue uses. Elfsight files a monthly rule as `repeatFrequency: "daily"`/
+     * `"monthly"` with a `nthDayInMonth` period, and guessing at its "second Wednesday" semantics
+     * would invent dates the venue never announced — such an entry keeps its start date and is logged.
      */
     @Suppress("ReturnCount") // Guard clauses for the non-repeating and non-weekly cases are clearer than nesting.
     private fun occurrenceDates(
@@ -183,8 +181,8 @@ class HumboldthainApiScraper(
                 .takeWhile { it <= limit }
                 .flatMap { weekStart -> weekdays.asSequence().map { weekStart.plusDays(it.value - 1L) } }
                 .filter { it in seriesStart..limit }
-        // An "after <n> occurrences" rule counts slots from the series start — so the cap applies
-        // to the raw schedule, before a cancelled date is removed and the past is dropped.
+        // An "after <n> occurrences" rule counts slots from the series start — the cap applies to the
+        // raw schedule, before a cancelled date is removed and the past is dropped.
         val capped =
             if (node.repeatEnds.equals(ENDS_AFTER_OCCURRENCES, ignoreCase = true)) {
                 occurrences.take(node.repeatEndsOccurrences.coerceAtLeast(1))
@@ -197,8 +195,8 @@ class HumboldthainApiScraper(
     /**
      * The DJs billed on a night: the link text of every `ra.co/dj/<slug>` anchor in the
      * description, in document order, de-duplicated case-insensitively and filtered through the
-     * shared [isNonArtistName] guard. Resident Advisor *event* links in the same prose are ticket
-     * shops, not performers, and are matched by [ticketUrl] instead.
+     * shared [isNonArtistName]. Resident Advisor *event* links in the same prose are ticket shops,
+     * not performers, matched by [ticketUrl] instead.
      */
     private fun djArtists(description: Document?): List<ScrapedArtist> =
         description
@@ -210,10 +208,9 @@ class HumboldthainApiScraper(
             .orEmpty()
 
     /**
-     * The night's ticket-shop link: the widget's own "Presale Tickets" action when there is one,
-     * otherwise a shop link the venue only wrote into the prose (a Resident Advisor event page or
-     * an Eventim listing). A `ra.co/dj/` link is an artist profile and is excluded by requiring
-     * the URL to match [TICKET_URL_PATTERN].
+     * The night's ticket-shop link: the widget's own "Presale Tickets" action when present,
+     * otherwise a shop link written into the prose (a Resident Advisor event page or an Eventim
+     * listing). A `ra.co/dj/` link is an artist profile, excluded by requiring [TICKET_URL_PATTERN].
      */
     private fun ticketUrl(
         actions: List<ElfsightAction>,
@@ -228,8 +225,7 @@ class HumboldthainApiScraper(
     /**
      * The date a recurrence exception skips. Elfsight leaves `exceptions` empty on every entry
      * this venue publishes, so both plausible spellings are accepted — a bare ISO date string, or
-     * the `{date, time}` object every other moment in the payload uses — rather than betting the
-     * import on one.
+     * the `{date, time}` object every other moment uses — rather than betting the import on one.
      */
     private fun exceptionDate(node: JsonNode): LocalDate? = parseElfsightDate(if (node.isString) node.asString("") else node.path("date").asString(""))
 
@@ -238,13 +234,11 @@ class HumboldthainApiScraper(
         private const val VENUE_NAME = "Humboldthain"
 
         /**
-         * How far ahead an open-ended weekly rule is expanded (~6 months of calendar).
-         *
-         * Deep enough that the club's resident night shows up in any month-ahead view, shallow
-         * enough that the derived occurrences stay a plausible reading of the venue's own rule.
-         * Every import regenerates the same rolling window; the stable `sourceId`
-         * (`humboldthain:<id>-<date>`) makes that idempotent, and occurrences that roll out of the
-         * window are cleaned up as stale by `EventUpsertService`.
+         * How far ahead an open-ended weekly rule is expanded (~6 months). Deep enough that the
+         * resident night shows up in any month-ahead view, shallow enough that the derived occurrences
+         * stay a plausible reading of the venue's rule. Every import regenerates the same rolling
+         * window; the stable `sourceId` (`humboldthain:<id>-<date>`) makes that idempotent, and
+         * occurrences rolling out of the window are cleaned up as stale by `EventUpsertService`.
          */
         const val OCCURRENCE_HORIZON_WEEKS: Long = 26
 

@@ -14,16 +14,14 @@ import org.springframework.stereotype.Component
 /**
  * Website importer for Supamolly Berlin's retro hand-coded PHP programme.
  *
- * The venue's whole programme is one server-rendered page (`?p=programm`, identical
- * to the homepage), so the pipeline is a single request per cycle:
- * 1. Fetch the programme page via [HtmlFetcher] with conditional request support
- *    (ETag / Last-Modified — the server currently sends neither, so every cycle is a
- *    full fetch; the idempotent `sourceId` upsert absorbs that).
- * 2. Parse all events from that page via [SupamollyOverviewPageScraper].
+ * The whole programme is one server-rendered page (`?p=programm`, identical to the homepage),
+ * so one request per cycle: [HtmlFetcher] fetches it conditionally (ETag / Last-Modified — the
+ * server sends neither, so every cycle is a full fetch; the idempotent `sourceId` upsert
+ * absorbs that), [SupamollyOverviewPageScraper] parses it.
  *
- * There are no detail pages to follow: `index.php?programm=<stamp>` serves the
- * full-size flyer JPEG rather than HTML, and the advertised `rss.php` feed is
- * unusable (its item titles render the date as `"Mi 9.2026..09."`, dropping the day of month).
+ * No detail pages: `index.php?programm=<stamp>` serves the full-size flyer JPEG, not HTML, and
+ * the advertised `rss.php` feed is unusable (item titles render the date as `"Mi 9.2026..09."`,
+ * dropping the day of month).
  *
  * @see SupamollyOverviewPageScraper for the HTML parsing logic.
  * @see <a href="https://www.supamolly.de/?p=programm">Supamolly Berlin</a>

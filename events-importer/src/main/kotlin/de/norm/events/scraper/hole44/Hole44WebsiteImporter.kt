@@ -13,14 +13,11 @@ import org.springframework.stereotype.Component
 /**
  * Website importer for Hole 44 Berlin's Events-Manager concert listing.
  *
- * Hole 44 is a WordPress/Events-Manager site whose Events-Manager REST API is not
- * exposed for anonymous reads, so it is scraped as two HTML pages:
- * 1. Fetches the `/events/` overview page via [HtmlFetcher] with conditional-request
- *    support (ETag / Last-Modified).
- * 2. Parses the event items via [Hole44OverviewPageScraper] — the source for the
- *    discovery list, date, start time, genre, status, and headliner/support artists.
- * 3. For each event, fetches and parses its detail page via [Hole44DetailPageScraper]
- *    — the source for the description, image, promoter, and doors time.
+ * WordPress/Events-Manager whose REST API is not exposed for anonymous reads, so two HTML pages:
+ * 1. [HtmlFetcher] fetches `/events/` conditionally (ETag / Last-Modified).
+ * 2. [Hole44OverviewPageScraper] parses the items — discovery list, date, start time, genre,
+ * status, and headliner/support artists.
+ * 3. Each detail page via [Hole44DetailPageScraper] — description, image, promoter and doors time.
  *
  * @see Hole44OverviewPageScraper for overview parsing (date, status, artists, fallback).
  * @see Hole44DetailPageScraper for detail parsing (description, image, promoter, doors).
@@ -46,13 +43,10 @@ class Hole44WebsiteImporter(
     ): ScrapedEvent? = detailPageScraper.scrape(document, url)
 
     /**
-     * Merges detail-page data ([primary]) with overview-page data ([fallback]).
-     *
-     * The detail page is authoritative and carries the fields the overview lacks
-     * (description, image, promoter, doors time). The fields both pages share (date,
-     * start time, genre, status, artists) prefer the detail value and fall back to
-     * the overview — so if a specific field is missing on the detail page, the
-     * overview still supplies it.
+     * Merges detail-page data ([primary]) with overview data ([fallback]). The detail page is
+     * authoritative and carries what the overview lacks (description, image, promoter, doors
+     * time); shared fields (date, start time, genre, status, artists) prefer the detail value and
+     * fall back to the overview.
      */
     override fun fillGapsFromOverview(
         primary: ScrapedEvent,

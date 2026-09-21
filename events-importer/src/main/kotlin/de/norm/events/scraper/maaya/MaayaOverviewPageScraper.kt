@@ -22,57 +22,54 @@ import java.time.MonthDay
 /**
  * Pure HTML parser for MAAYA Berlin's home-page **NEXT DATES** programme.
  *
- * The venue runs WordPress with Elementor and no events plugin at all — `/wp-json/wp/v2/types` lists
- * no event post type — so this one hand-built section is the whole source. It is anchored on the
- * `#events` id rather than Elementor's generated `elementor-element-<hash>` classes, which change on
- * every re-save.
+ * WordPress with Elementor and no events plugin — `/wp-json/wp/v2/types` lists no event post
+ * type — so this one hand-built section is the whole source. Anchored on the `#events` id, not
+ * Elementor's generated `elementor-element-<hash>` classes, which change on every re-save.
  *
- * Four things about it shape the parser:
- * 1. **The date may or may not carry a year.** The page of 2026 wrote "Thu. 05.08.2026"; the rebuild
- *    of September 2026 writes "Sat. 19.09" and, for a two-day festival, "Sat. & Sun. 10/11.10"
- *    (#1517). A year-less date takes the occurrence nearest to today, and a card with no date at all
- *    is the venue's standing opening hours ("Tue. to Sat. from 12:00 pm to 5:00 pm"), not an event.
- * 2. **The clock mixes 24-hour readings with a real meridiem, and glues `pm` onto both.** "06:00pm"
- *    is 18:00 (the shop page agrees) and "2:00 p.m." is 14:00, whereas "16:00pm" and "23:00pm" are
- *    already 24-hour and the suffix says nothing. So the meridiem counts up to twelve and is ignored
- *    above it — except where the stated end exposes it as decoration: "11:00pm – 17:00pm" is a
- *    daytime event, because a start after its own end is not a night. The venue writes an overnight
- *    run as "until late", never as a time, so the rule has no overnight case to get wrong.
- * 3. **The weekday label is unreliable**, so it is not read: the venue writes "Thu. 05.08.2026" for a
- *    Wednesday. A year-less date therefore takes the nearest occurrence outright, not the nearest
- *    on the stated weekday, which is [inferYearForWeekday] with no weekday.
- * 4. **The button is both the ticket link and the entry note** — out to Xceed or Eventim where an
- *    event is ticketed, the venue's own wording otherwise ("FREE ENTRY"); see [entryNoteOf]. It is
- *    taken as stated, mistakes included: both halves of a two-part night can share a shop page.
+ * 1. **The date may or may not carry a year.** The page of 2026 wrote "Thu. 05.08.2026"; the
+ * rebuild of September 2026 writes "Sat. 19.09" and, for a two-day festival, "Sat. & Sun.
+ * 10/11.10" (#1517). A year-less date takes the occurrence nearest to today; a card with no
+ * date is the standing opening hours ("Tue. to Sat. from 12:00 pm to 5:00 pm"), not an event.
+ * 2. **The clock mixes 24-hour readings with a real meridiem, and glues `pm` onto both.**
+ * "06:00pm" is 18:00 (the shop page agrees) and "2:00 p.m." is 14:00, whereas "16:00pm" and
+ * "23:00pm" are already 24-hour. So the meridiem counts up to twelve and is ignored above it —
+ * except where the stated end exposes it as decoration: "11:00pm – 17:00pm" is a daytime
+ * event, because a start after its own end is not a night. An overnight run is written "until
+ * late", never as a time, so the rule has no overnight case to get wrong.
+ * 3. **The weekday label is unreliable** and not read: the venue writes "Thu. 05.08.2026" for
+ * a Wednesday. A year-less date takes the nearest occurrence outright, not the nearest on the
+ * stated weekday — [inferYearForWeekday] with no weekday.
+ * 4. **The button is both the ticket link and the entry note** — out to Xceed or Eventim where
+ * ticketed, the venue's own wording otherwise ("FREE ENTRY"); see [entryNoteOf]. Taken as
+ * stated, mistakes included: both halves of a two-part night can share a shop page.
  *
- * **No artists are minted.** The titles are series and party names ("SUPAFLY", "RIPPLES W/ AMINE K")
- * rather than acts, so a derived headliner would file party names in the artist table. For the same
- * reason the type falls back to `OTHER` via [inferUnmarkedTitleType] rather than `PARTY`: MAAYA is a
- * multi-format house — gallery, garden, pool and market — so a cue-less title is genuinely unknown
- * rather than presumed a club night the way Crack Bellmer's is.
+ * **No artists are minted.** Titles are series and party names ("SUPAFLY", "RIPPLES W/ AMINE
+ * K"), not acts, so a derived headliner would file party names as artists. For the same reason
+ * the type falls back to `OTHER` via [inferUnmarkedTitleType] rather than `PARTY`: a
+ * multi-format house — gallery, garden, pool and market — so a cue-less title is genuinely
+ * unknown, not presumed a club night the way Crack Bellmer's is.
  *
  * @see MAAYA_LIMITATIONS for what the venue does not publish.
  * @see MaayaWebsiteImporter for the HTTP fetch orchestrator.
  */
 @Suppress("LongComment") // 30 lines, and the four numbered traps are four real ones — the missing year, the half-real `pm`, the weekday, the button.
 class MaayaOverviewPageScraper(
-    /** Clock for the year a year-less date is given. Defaults to the system clock; override in tests for determinism. */
+    /** Clock for the year a year-less date is given; override in tests. */
     private val clock: Clock = Clock.systemDefaultZone()
 ) {
     private val logger = KotlinLogging.logger {}
 
     /**
-     * Parses every dated event out of the home page's **NEXT DATES** section.
+     * Parses every dated event out of the home page's **NEXT DATES** section, in listing order.
      *
-     * @param baseUrl the URL the document was fetched from; stored as every event's `sourceUrl`,
-     *   since the venue publishes no per-event pages.
-     * @return a list of [ScrapedEvent] instances in listing order.
-     * @throws IllegalStateException when the page has no programme section at all, or when its
-     *   cards state schedules and none yields a date. Either is a redesign, not an empty programme
-     *   — a venue with nothing on still renders the section, with no timed line in it — and the run
-     *   fails so the source reads as failing rather than as quiet. It read as quiet for a year on
-     *   the missing section (#1498), then on the year-less dates (#1517). A page holding only the
-     *   standing opening hours fails the same way, on purpose: that is a source worth a look too.
+     * @param baseUrl the URL the document was fetched from; every event's `sourceUrl`, since no
+     * per-event pages exist.
+     * @throws IllegalStateException when the page has no programme section, or when its cards
+     * state schedules and none yields a date. Either is a redesign, not an empty programme — a
+     * venue with nothing on still renders the section, with no timed line — and the run fails so
+     * the source reads as failing rather than quiet. It read as quiet for a year on the missing
+     * section (#1498), then on the year-less dates (#1517). A page holding only the standing
+     * opening hours fails the same way, on purpose: a source worth a look too.
      */
     fun scrape(
         document: Document,
@@ -105,10 +102,9 @@ class MaayaOverviewPageScraper(
     }
 
     /**
-     * Parses one programme card into a [ScrapedEvent], or `null` when it has no title or no date.
-     *
-     * A dateless card is the venue's standing opening hours rather than a malformed event, so it is
-     * dropped quietly — logging a warning per import for the two permanent ones would be noise.
+     * Parses one programme card into a [ScrapedEvent], or `null` without a title or date. A
+     * dateless card is the standing opening hours, not a malformed event, so dropped quietly — a
+     * warning per import for the two permanent ones would be noise.
      */
     @Suppress("ReturnCount") // Guard clauses for the required title/date are clearer than nesting
     private fun parseCard(
@@ -133,30 +129,28 @@ class MaayaOverviewPageScraper(
             startTime = startTime,
             endTime = endTime,
             imageUrl = card.imgSrcAt(POSTER),
-            // No per-event pages exist, so the listing itself is the canonical URL.
+            // No per-event pages, so the listing itself is the canonical URL.
             sourceUrl = baseUrl,
             sourceId = "${EventSource.MAAYA.sourceIdPrefix}$eventDate-${SlugGenerator.slugify(title)}",
             ticketUrl = card.hrefAt(BUTTON),
-            // A bare "FREE ENTRY" is fully carried by the free flag, so storing it again as a note
-            // would only repeat it; a qualified one is not, and is kept verbatim.
+            // A bare "FREE ENTRY" is fully carried by the free flag, so storing it as a note would repeat
+            // it; a qualified one is not, and is kept verbatim.
             priceNote = entryNote?.takeUnless { it.equals(FREE_ENTRY_LABEL, ignoreCase = true) },
             free = detectFree(priceNote = entryNote, title = title)
         )
     }
 
     /**
-     * The venue's own entry wording, or `null` when the button says nothing about it.
-     *
-     * The same button serves both roles, so its label is only an entry note when it is not a bare
-     * call to action: "TICKETS" and "RESERVATIONS" name the link, whereas "FREE ENTRY WITH 10€
-     * VOUCHER" and "TICKETS AT THE DOOR" state the terms. The label is stored as written — the
-     * venue's phrasing is the most precise thing available, since it publishes no numeric prices —
-     * and the shared [detectFree] reads the free flag off it.
+     * The venue's own entry wording, or `null` when the button says nothing about it. The same
+     * button serves both roles, so its label is an entry note only when not a bare call to action:
+     * "TICKETS" and "RESERVATIONS" name the link, "FREE ENTRY WITH 10€ VOUCHER" and "TICKETS AT
+     * THE DOOR" state the terms. Stored as written — the most precise thing available, since no
+     * numeric prices are published — and the shared [detectFree] reads the free flag off it.
      */
     private fun entryNoteOf(card: Element): String? = card.textAt(BUTTON_LABEL)?.takeUnless { it.uppercase() in CALL_TO_ACTION_LABELS }
 
     /**
-     * Reads the card's date and, for a `10/11.10` two-day span, its last day; `null` when the line
+     * The card's date and, for a `10/11.10` two-day span, its last day; `null` when the line
      * states no date (a standing offer). A year-less date takes the occurrence nearest to today —
      * see the class KDoc for why the weekday label is not the tiebreaker.
      */
@@ -172,9 +166,9 @@ class MaayaOverviewPageScraper(
     private fun MatchResult.digits(group: String): Int = checkNotNull(groups[group]).value.toInt()
 
     /**
-     * Reads the start and, when one is stated after `to`/`–`/`until`, the end of the schedule line.
-     * The end is kept only when it follows the start on the same day; a start that lands after its
-     * own end had a decorative meridiem (see the class KDoc) and is re-read without it.
+     * The start and, when stated after `to`/`–`/`until`, the end of the schedule line. The end is
+     * kept only when it follows the start on the same day; a start after its own end had a
+     * decorative meridiem (see the class KDoc) and is re-read without it.
      */
     private fun parseTimes(schedule: String): Pair<LocalTime?, LocalTime?> {
         val start = TIME_PATTERN.find(schedule) ?: return null to null
@@ -227,8 +221,8 @@ class MaayaOverviewPageScraper(
         const val FREE_ENTRY_LABEL = "FREE ENTRY"
 
         /**
-         * The venue's dotted date: `05.08.2026`, `19.09`, or a two-day `10/11.10`; the span's last
-         * day and the year are optional.
+         * The venue's dotted date: `05.08.2026`, `19.09`, or a two-day `10/11.10`; the span's last day
+         * and the year are optional.
          */
         val DATE_PATTERN = Regex("""(?<day>\d{1,2})(?:/(?<lastDay>\d{1,2}))?\.(?<month>\d{1,2})(?:\.(?<year>\d{4}))?""")
 
