@@ -64,6 +64,7 @@ class MetricsRefreshService(
             )
             metrics.updateSourcesRunning(eventSourceRepository.countByStatus(ImportStatus.RUNNING.name))
             metrics.updateMusicBrainzUnchecked(artistRepository.countUncheckedByMusicBrainz())
+            metrics.updateMusicBrainzUnenriched(artistRepository.countUnenrichedByMusicBrainz())
             republishSourceState()
             republishFailedSources()
         } catch (e: Exception) {

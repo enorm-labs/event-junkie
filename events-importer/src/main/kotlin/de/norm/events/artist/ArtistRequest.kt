@@ -50,5 +50,23 @@ data class ArtistRequest(
     val instagramUrl: String? = null,
     @field:Size(max = 2048, message = "YouTube URL must not exceed 2048 characters")
     @Schema(description = "URL of the artist's YouTube channel", example = "https://www.youtube.com/@theadictsofficial")
-    val youtubeUrl: String? = null
+    val youtubeUrl: String? = null,
+    @field:Size(max = 2048, message = "Bandcamp URL must not exceed 2048 characters")
+    @Schema(description = "URL of the artist's Bandcamp page", example = "https://theadicts.bandcamp.com/")
+    val bandcampUrl: String? = null,
+    @field:Size(max = 2048, message = "SoundCloud URL must not exceed 2048 characters")
+    @Schema(description = "URL of the artist's SoundCloud profile", example = "https://soundcloud.com/theadicts")
+    val soundcloudUrl: String? = null,
+    @field:Size(max = 2048, message = "Discogs URL must not exceed 2048 characters")
+    @Schema(description = "URL of the artist's Discogs page", example = "https://www.discogs.com/artist/252143")
+    val discogsUrl: String? = null,
+    @field:Size(max = 2048, message = "Wikidata URL must not exceed 2048 characters")
+    @Schema(description = "URL of the artist's Wikidata item", example = "https://www.wikidata.org/wiki/Q1414437")
+    val wikidataUrl: String? = null,
+    @field:Size(max = 2048, message = "Resident Advisor URL must not exceed 2048 characters")
+    @Schema(description = "URL of the artist's Resident Advisor page", example = "https://ra.co/dj/theadicts")
+    val residentAdvisorUrl: String? = null,
+    @field:Size(max = 2048, message = "Spotify URL must not exceed 2048 characters")
+    @Schema(description = "URL of the artist's Spotify page", example = "https://open.spotify.com/artist/5dqOB8KIVGgFxbELxDfJcz")
+    val spotifyUrl: String? = null
 ) : AttributableImage

@@ -159,8 +159,9 @@ const { t } = useI18n()
         bereitstehen.
       </p>
       <p>
-        Künstlerprofile werden mit MusicBrainz abgeglichen, einer offenen Musikdatenbank. Übermittelt
-        wird nur der Künstlername.
+        Künstlerprofile werden mit MusicBrainz abgeglichen, einer offenen Musikdatenbank. Wo sie
+        übereinstimmen, stammen die offiziellen Links und das Bild von dort und aus Wikidata.
+        Übermittelt wird nur der Künstlername.
       </p>
       <p>
         <strong>Zweck:</strong> Information der Öffentlichkeit über öffentlich angekündigte

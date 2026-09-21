@@ -10,6 +10,7 @@ import org.springframework.modulith.ApplicationModule
  * `artist` only for [de.norm.events.artist.MusicBrainzMatch], the vocabulary of the verdict, and
  * paces its own requests rather than through [de.norm.events.scraper.PerHostThrottlingFilter],
  * because depending on `scraper` from here while `scraper` calls the client would be a cycle.
+ * `common` lends the `User-Agent` it shares with `wikimedia`.
  */
-@ApplicationModule(allowedDependencies = ["artist"])
+@ApplicationModule(allowedDependencies = ["artist", "common"])
 class MusicBrainzModule

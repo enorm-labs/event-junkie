@@ -56,6 +56,36 @@ interface ArtistRepository : CoroutineCrudRepository<ArtistEntity, Long> {
     suspend fun countUncheckedByMusicBrainz(): Long
 
     /**
+     * The EXACT rows among [ids] whose entity step C still owes a read: never read, or matched
+     * again since (`musicbrainz_checked_at` moves on a fresh verdict, `musicbrainz_enriched_at` on
+     * a read, and the enrichment's own write sets both to one instant).
+     */
+    @Query(
+        """
+        SELECT * FROM $EVENTS_SCHEMA.artist
+        WHERE id IN (:ids)
+          AND musicbrainz_match = 'EXACT'
+          AND (musicbrainz_enriched_at IS NULL OR musicbrainz_checked_at > musicbrainz_enriched_at)
+        ORDER BY id
+        """
+    )
+    fun findNeedingMusicBrainzEnrichment(ids: Collection<Long>): Flow<ArtistEntity>
+
+    /** The oldest EXACT rows never read by step C: the enrichment backfill's slice. */
+    @Query(
+        """
+        SELECT * FROM $EVENTS_SCHEMA.artist
+        WHERE musicbrainz_match = 'EXACT' AND musicbrainz_enriched_at IS NULL
+        ORDER BY id LIMIT :limit
+        """
+    )
+    fun findUnenrichedByMusicBrainz(limit: Int): Flow<ArtistEntity>
+
+    /** How many EXACT rows step C has not read; the gauge that shows its backfill draining. */
+    @Query("SELECT count(*) FROM $EVENTS_SCHEMA.artist WHERE musicbrainz_match = 'EXACT' AND musicbrainz_enriched_at IS NULL")
+    suspend fun countUnenrichedByMusicBrainz(): Long
+
+    /**
      * Stores one verdict and touches nothing else.
      *
      * Not a `save`, on purpose: `save` writes every column, and the name is never rewritten from a

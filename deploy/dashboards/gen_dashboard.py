@@ -296,7 +296,27 @@ panels = [
         ],
         x=0,
         y=28,
-        w=192,
+        w=96,
+        h=12,
+        decimals=0,
+    ),
+    panel(
+        "p_musicbrainz_enriched",
+        "EXACT artists awaiting their entity read, and fields filled per hour",
+        "Step C of ADR-031 (#1568): an `EXACT` row's MusicBrainz entity is read once for its links, its type "
+        "and, through Wikidata, its Commons picture, and only an empty column is filled. The gauge is that "
+        "backlog, drained 100 per import; the rates say what the reads bring — `image` is the one to watch, "
+        "and `error` is MusicBrainz or Wikimedia not answering. A picture Commons offers under a licence or a "
+        "credit the importer does not accept is counted in `importer_musicbrainz_image_refused_total`, by reason.",
+        "line",
+        [
+            "max(importer_musicbrainz_unenriched)",
+            "sum by (field) (rate(importer_musicbrainz_enriched_total[1h])) * 3600",
+            "sum by (reason) (rate(importer_musicbrainz_image_refused_total[1h])) * 3600",
+        ],
+        x=96,
+        y=28,
+        w=96,
         h=12,
         decimals=0,
     ),

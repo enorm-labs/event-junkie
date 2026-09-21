@@ -1,0 +1,281 @@
+{
+    "life-span": {
+        "begin": "1972",
+        "ended": false,
+        "end": null
+    },
+    "gender": "Male",
+    "relations": [
+        {
+            "direction": "forward",
+            "target-type": "url",
+            "url": {
+                "id": "fd0e353b-4eed-41f9-b238-2e25f2d76c1b",
+                "resource": "https://benklock.bandcamp.com/"
+            },
+            "attributes": [],
+            "target-credit": "",
+            "attribute-values": {},
+            "type-id": "c550166e-0548-4a18-b1d4-e2ae423a3e88",
+            "source-credit": "",
+            "begin": null,
+            "type": "bandcamp",
+            "attribute-ids": {},
+            "end": null,
+            "ended": false
+        },
+        {
+            "attribute-values": {},
+            "target-credit": "",
+            "attributes": [],
+            "type-id": "04a5b104-a4c2-4bac-99a1-7b837c37d9e4",
+            "source-credit": "",
+            "direction": "forward",
+            "target-type": "url",
+            "url": {
+                "id": "7c7d2cd6-ebc1-41bf-82f3-bb0247c8f7ab",
+                "resource": "https://www.discogs.com/artist/77025"
+            },
+            "attribute-ids": {},
+            "ended": false,
+            "end": null,
+            "type": "discogs",
+            "begin": null
+        },
+        {
+            "ended": false,
+            "end": null,
+            "attribute-ids": {},
+            "type": "free streaming",
+            "begin": null,
+            "source-credit": "",
+            "type-id": "769085a1-c2f7-4c24-a532-2375a77693bd",
+            "attribute-values": {},
+            "target-credit": "",
+            "attributes": [],
+            "url": {
+                "resource": "https://open.spotify.com/artist/1vJHfCreWAS46V8RZ67ojo",
+                "id": "a9bc2903-8ecc-44db-90d7-873f3dc657db"
+            },
+            "target-type": "url",
+            "direction": "forward"
+        },
+        {
+            "begin": null,
+            "type": "free streaming",
+            "attribute-ids": {},
+            "ended": false,
+            "end": null,
+            "direction": "forward",
+            "target-type": "url",
+            "url": {
+                "id": "a3e63140-eaec-42f2-b4d1-415f01523506",
+                "resource": "https://www.deezer.com/artist/178264"
+            },
+            "target-credit": "",
+            "attribute-values": {},
+            "attributes": [],
+            "type-id": "769085a1-c2f7-4c24-a532-2375a77693bd",
+            "source-credit": ""
+        },
+        {
+            "begin": null,
+            "type": "image",
+            "end": null,
+            "ended": false,
+            "attribute-ids": {},
+            "target-type": "url",
+            "direction": "forward",
+            "url": {
+                "resource": "https://lastfm.freetls.fastly.net/i/u/770x0/c3f66f530d5642558be556af0e5a993f.jpg#c3f66f530d5642558be556af0e5a993f",
+                "id": "9fc3aacd-c68e-4255-b665-4d4883846657"
+            },
+            "attribute-values": {},
+            "target-credit": "",
+            "attributes": [],
+            "source-credit": "",
+            "type-id": "221132e9-e30e-43f2-a741-15afc4c5fa7c"
+        },
+        {
+            "url": {
+                "id": "bf07b324-e778-42a0-b0ac-0740566ffcae",
+                "resource": "https://www.last.fm/music/Ben+Klock"
+            },
+            "direction": "forward",
+            "target-type": "url",
+            "type-id": "08db8098-c0df-4b78-82c3-c8697b4bba7f",
+            "source-credit": "",
+            "target-credit": "",
+            "attributes": [],
+            "attribute-values": {},
+            "type": "last.fm",
+            "begin": null,
+            "attribute-ids": {},
+            "ended": false,
+            "end": null
+        },
+        {
+            "end": null,
+            "ended": false,
+            "attribute-ids": {},
+            "type": "myspace",
+            "begin": null,
+            "target-credit": "",
+            "attribute-values": {},
+            "attributes": [],
+            "source-credit": "",
+            "type-id": "bac47923-ecde-4b59-822e-d08f0cd10156",
+            "target-type": "url",
+            "direction": "forward",
+            "url": {
+                "resource": "https://myspace.com/benklock",
+                "id": "4ff6348c-e126-45ee-93a2-5f53b21c5591"
+            }
+        },
+        {
+            "source-credit": "",
+            "type-id": "d94fb61c-fa20-4e3c-a19a-71a949fb2c55",
+            "attribute-values": {},
+            "target-credit": "",
+            "attributes": [],
+            "url": {
+                "resource": "https://ra.co/dj/benklock",
+                "id": "1a917697-b827-4cdf-89dc-5e220ecc1ab0"
+            },
+            "target-type": "url",
+            "direction": "forward",
+            "end": null,
+            "ended": false,
+            "attribute-ids": {},
+            "type": "other databases",
+            "begin": null
+        },
+        {
+            "attribute-ids": {},
+            "ended": false,
+            "end": null,
+            "begin": null,
+            "type": "other databases",
+            "type-id": "d94fb61c-fa20-4e3c-a19a-71a949fb2c55",
+            "source-credit": "",
+            "attributes": [],
+            "target-credit": "",
+            "attribute-values": {},
+            "url": {
+                "id": "6d43c38d-36c3-43ec-a767-5cb5b9567010",
+                "resource": "https://rateyourmusic.com/artist/ben_klock"
+            },
+            "direction": "forward",
+            "target-type": "url"
+        },
+        {
+            "type": "social network",
+            "begin": null,
+            "ended": false,
+            "end": null,
+            "attribute-ids": {},
+            "target-type": "url",
+            "direction": "forward",
+            "url": {
+                "id": "ad33d585-3da6-4100-a5e3-e9b079c1f15c",
+                "resource": "https://www.facebook.com/pages/Ben-Klock/60928281674"
+            },
+            "target-credit": "",
+            "attribute-values": {},
+            "attributes": [],
+            "source-credit": "",
+            "type-id": "99429741-f3f6-484b-84f8-23af51991770"
+        },
+        {
+            "target-credit": "",
+            "attributes": [],
+            "attribute-values": {},
+            "source-credit": "",
+            "type-id": "99429741-f3f6-484b-84f8-23af51991770",
+            "target-type": "url",
+            "direction": "forward",
+            "url": {
+                "id": "db233ed8-7ad5-42f0-bbfd-4d866e26f8d4",
+                "resource": "https://www.instagram.com/ben_klock/"
+            },
+            "end": null,
+            "ended": false,
+            "attribute-ids": {},
+            "type": "social network",
+            "begin": null
+        },
+        {
+            "target-type": "url",
+            "direction": "forward",
+            "url": {
+                "id": "7db8e42e-1aac-4a17-88b2-0d0166bbb7cb",
+                "resource": "https://soundcloud.com/ben-klock"
+            },
+            "attributes": [],
+            "target-credit": "",
+            "attribute-values": {},
+            "source-credit": "",
+            "type-id": "89e4a949-0976-440d-bda1-5f772c1e5710",
+            "type": "soundcloud",
+            "begin": null,
+            "end": null,
+            "ended": false,
+            "attribute-ids": {}
+        },
+        {
+            "type": "wikidata",
+            "begin": null,
+            "attribute-ids": {},
+            "ended": false,
+            "end": null,
+            "direction": "forward",
+            "target-type": "url",
+            "url": {
+                "resource": "https://www.wikidata.org/wiki/Q816535",
+                "id": "00bf5f45-4cac-4562-8d8f-efc293d39fd3"
+            },
+            "target-credit": "",
+            "attributes": [],
+            "attribute-values": {},
+            "type-id": "689870a4-a1e4-4912-b17f-7b2664215698",
+            "source-credit": ""
+        }
+    ],
+    "area": {
+        "type": null,
+        "id": "85752fda-13c4-31a3-bee5-0e5cb1f51dad",
+        "disambiguation": "",
+        "name": "Germany",
+        "sort-name": "Germany",
+        "iso-3166-1-codes": [
+            "DE"
+        ],
+        "type-id": null
+    },
+    "gender-id": "36d3d30a-839d-3eda-8cb3-29be4384e4a9",
+    "type": "Person",
+    "end-area": null,
+    "id": "c5af0c3f-e401-43ed-a096-b504606a05cb",
+    "name": "Ben Klock",
+    "sort-name": "Klock, Ben",
+    "country": "DE",
+    "type-id": "b6e035f4-3ce9-331c-97df-83397230b0df",
+    "ipis": [
+        "00429886208"
+    ],
+    "isnis": [
+        "0000000372610310"
+    ],
+    "begin-area": {
+        "disambiguation": "",
+        "iso-3166-2-codes": [
+            "DE-BE"
+        ],
+        "type": null,
+        "id": "c9ac1239-e832-41bc-9930-e252a1fd1105",
+        "sort-name": "Berlin",
+        "name": "Berlin",
+        "type-id": null
+    },
+    "disambiguation": "German techno producer"
+}

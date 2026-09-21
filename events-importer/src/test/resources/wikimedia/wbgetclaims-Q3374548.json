@@ -1,0 +1,45 @@
+{
+    "claims": {
+        "P18": [
+            {
+                "mainsnak": {
+                    "snaktype": "value",
+                    "property": "P18",
+                    "hash": "6934d71fde0be940edb50c0f4206e42fe78cfd14",
+                    "datavalue": {
+                        "value": "Anna von Hausswolff, 2022.jpg",
+                        "type": "string"
+                    },
+                    "datatype": "commonsMedia"
+                },
+                "type": "statement",
+                "qualifiers": {
+                    "P585": [
+                        {
+                            "snaktype": "value",
+                            "property": "P585",
+                            "hash": "2158d4b68f82b8f36f47c98bd3609a99913faa59",
+                            "datavalue": {
+                                "value": {
+                                    "time": "+2022-00-00T00:00:00Z",
+                                    "timezone": 0,
+                                    "before": 0,
+                                    "after": 0,
+                                    "precision": 9,
+                                    "calendarmodel": "http://www.wikidata.org/entity/Q1985727"
+                                },
+                                "type": "time"
+                            },
+                            "datatype": "time"
+                        }
+                    ]
+                },
+                "qualifiers-order": [
+                    "P585"
+                ],
+                "id": "Q3374548$BC2C896E-37C8-4FFD-ADB1-10D406AD23E5",
+                "rank": "normal"
+            }
+        ]
+    }
+}

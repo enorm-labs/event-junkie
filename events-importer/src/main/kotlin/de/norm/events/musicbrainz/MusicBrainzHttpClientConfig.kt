@@ -1,5 +1,6 @@
 package de.norm.events.musicbrainz
 
+import de.norm.events.common.ApiUserAgent
 import org.springframework.beans.factory.ObjectProvider
 import org.springframework.boot.info.BuildProperties
 import org.springframework.context.annotation.Bean
@@ -18,7 +19,8 @@ const val MUSICBRAINZ_WEB_CLIENT = "musicBrainzWebClient"
  * 200 ms per-host throttle; WS/2 is an API with published terms and a one-a-second limit, so it
  * gets a slower pace ([MusicBrainzClient] keeps it) and no robots check. The `User-Agent` is the
  * form MusicBrainz asks for — product, version and a contact URL — and it is not optional: a
- * request without a contact earns 503s (ADR-031).
+ * request without a contact earns 503s (ADR-031). Redirects are followed because a merged MBID
+ * answers 301 to its survivor, and an EXACT verdict can be a year old by the time step C reads it.
  */
 @Configuration
 class MusicBrainzHttpClientConfig {
@@ -35,14 +37,10 @@ class MusicBrainzHttpClientConfig {
                     HttpClient
                         .create()
                         .compress(true)
+                        .followRedirect(true)
                         .responseTimeout(properties.timeout)
                 )
-            ).defaultHeader("User-Agent", userAgent(buildProperties.ifAvailable?.version))
+            ).defaultHeader("User-Agent", ApiUserAgent.of(buildProperties.ifAvailable?.version))
             .defaultHeader("Accept", "application/json")
             .build()
-
-    companion object {
-        /** `event-junkie/<version> ( https://github.com/enorm-labs/event-junkie )`, `dev` when no build stamped one. */
-        fun userAgent(version: String?): String = "event-junkie/${version ?: "dev"} ( https://github.com/enorm-labs/event-junkie )"
-    }
 }

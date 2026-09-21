@@ -86,6 +86,20 @@ app:
     retries: 3
     # The backfill's slice, drained this many per import: about nine minutes at the pace above.
     max-per-run: 500
+    # Step C reads the entity of an EXACT row for its links, type and picture: this many per
+    # import, one request here and up to two at Wikimedia each.
+    enrich-max-per-run: 100
+  wikimedia:
+    # The picture of an EXACT artist: the Wikidata item's P18 claim, then the file's licence and
+    # credit from Commons (ADR-031, step C). Only the Wikidata id is sent.
+    enabled: ${APP_WIKIMEDIA_ENABLED:true}
+    wikidata-base-url: https://www.wikidata.org/w/api.php
+    commons-base-url: https://commons.wikimedia.org/w/api.php
+    polite-delay-millis: 250
+    timeout: 30s
+    thumb-width: 1600
+    # `images.fetch.max-bytes`: a larger original is refused here rather than by the fetcher later.
+    max-bytes: 8388608
   scheduling:
     # Reset sources stuck in RUNNING longer than this to FAILED (Duration format, e.g. 30m, 1h)
     staleness-timeout: 30m

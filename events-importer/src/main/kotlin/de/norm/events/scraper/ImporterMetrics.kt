@@ -69,6 +69,9 @@ class ImporterMetrics(
     /** Backs [MUSICBRAINZ_UNCHECKED]: artist rows the MusicBrainz sweep has not looked at yet (#1567). */
     private val musicBrainzUnchecked = AtomicLong(0)
 
+    /** Backs [MUSICBRAINZ_UNENRICHED]: EXACT rows whose entity step C has not read yet (#1568). */
+    private val musicBrainzUnenriched = AtomicLong(0)
+
     /** Sources currently `FAILED`, per reason, backing the `sources.failed` gauge (#708); keyed by reason. */
     private val failedSources = ConcurrentHashMap<String, AtomicLong>()
 
@@ -77,6 +80,7 @@ class ImporterMetrics(
         registry.gauge(DB_EVENTS, Tags.of(TAG_HORIZON, HORIZON_ALL), eventsTotal) { it.get().toDouble() }
         registry.gauge(DB_EVENTS, Tags.of(TAG_HORIZON, HORIZON_FUTURE), eventsFuture) { it.get().toDouble() }
         registry.gauge(MUSICBRAINZ_UNCHECKED, musicBrainzUnchecked) { it.get().toDouble() }
+        registry.gauge(MUSICBRAINZ_UNENRICHED, musicBrainzUnenriched) { it.get().toDouble() }
     }
 
     /**
@@ -185,6 +189,24 @@ class ImporterMetrics(
 
     /** Publishes how many artist rows are still `UNCHECKED`; refreshed by [MetricsRefreshService]. */
     fun updateMusicBrainzUnchecked(count: Long) = musicBrainzUnchecked.set(count)
+
+    /** Counts one column family the enrichment filled: `website`, `bandcamp`, `type`, `image`, … (ADR-031, step C). */
+    fun recordMusicBrainzEnriched(field: String) {
+        registry.counter(MUSICBRAINZ_ENRICHED, TAG_FIELD, field).increment()
+    }
+
+    /** Counts one Commons picture the enrichment refused, by `licence`, `author`, `source`, `mime` or `size`. */
+    fun recordMusicBrainzImageRefused(reason: String) {
+        registry.counter(MUSICBRAINZ_IMAGE_REFUSED, TAG_REASON, reason).increment()
+    }
+
+    /** Counts one entity read that could not complete: MusicBrainz or Wikimedia unavailable. */
+    fun recordMusicBrainzEnrichmentError() {
+        registry.counter(MUSICBRAINZ_ENRICHED, TAG_FIELD, FIELD_ERROR).increment()
+    }
+
+    /** Publishes how many EXACT rows still await their entity read; refreshed by [MetricsRefreshService]. */
+    fun updateMusicBrainzUnenriched(count: Long) = musicBrainzUnenriched.set(count)
 
     /**
      * Publishes [epochSeconds] as the source's last success. A timestamp, not an age, the
@@ -406,6 +428,17 @@ class ImporterMetrics(
 
         /** `importer.musicbrainz.unchecked` — rows still awaiting a verdict; the backfill draining. */
         const val MUSICBRAINZ_UNCHECKED = "importer.musicbrainz.unchecked"
+
+        /** `importer.musicbrainz.enriched{field}` — one per column family step C filled, `error` for a read that failed. */
+        const val MUSICBRAINZ_ENRICHED = "importer.musicbrainz.enriched"
+
+        /** `importer.musicbrainz.image_refused{reason}` — a Commons picture step C would not store. */
+        const val MUSICBRAINZ_IMAGE_REFUSED = "importer.musicbrainz.image_refused"
+
+        /** `importer.musicbrainz.unenriched` — EXACT rows awaiting their entity read; step C's backfill draining. */
+        const val MUSICBRAINZ_UNENRICHED = "importer.musicbrainz.unenriched"
+
+        const val FIELD_ERROR = "error"
 
         const val TAG_STATE = "state"
 
