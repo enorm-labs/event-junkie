@@ -16,28 +16,20 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
 
 /**
- * Website importer for Gärten der Welt Berlin — the Marzahn landscape park whose Arena stages
- * open-air concerts, running on TYPO3 with the `events2` extension.
+ * Website importer for Gärten der Welt Berlin, the Marzahn landscape park whose Arena stages
+ * open-air concerts, on TYPO3 with the `events2` extension. The listing is paginated five rows
+ * to a page, the escape hatch ADR-007 §"Pagination — First Page Only" leaves open: the programme
+ * runs eight to nine pages ahead, so page one alone would yield a fortnight. The importer walks
+ * the paginator's own "nächste" link until the last page renders none, bounded by [MAX_PAGES];
+ * counting `/pageN/` URLs would not terminate, since TYPO3 clamps an out-of-range page to the
+ * last one and answers `200`.
  *
- * The listing is server-rendered but **paginated five rows to a page**, which puts it in the escape
- * hatch ADR-007 §"Pagination — First Page Only" leaves open: the programme runs eight to nine pages
- * ahead, ascending by date, so importing the first page would yield the next fortnight and nothing
- * else. The importer walks the paginator's own "nächste" link until the last page renders none,
- * bounded by [MAX_PAGES]. **Following the rendered link, rather than counting `/pageN/` URLs, is what
- * makes the walk terminate:** TYPO3 clamps an out-of-range page number to the last page and answers
- * `200` with its rows repeated, so a counting walk would run to its own cap on every import.
- *
- * Each surviving row is enriched from its detail page, which is where the park writes the
- * description, prices, doors time and promoter; one that fails degrades to the row's own data rather
- * than failing the import. Conditional requests are intentionally **not** used — the entry page's
- * `ETag` covers page 1 alone, so a `304` there would freeze the eight pages behind it.
- *
- * **The park's participation formats are deliberately not imported** — see [isProgrammeCategory].
- *
- * **An exhibition is one run.** The park lists it once per open day, each day under its own
- * `YYYY-MM-DD_HHmm` stamp and all under one slug; the days fold into one event from the first listed
- * day to the last ([collapseExhibitionRuns], ADR-029, #337). A drone show over three nights, or any
- * other multi-night booking, keeps its nights: only `EXHIBITION` rows fold.
+ * Each row is enriched from its detail page (description, prices, doors, promoter); a failure
+ * degrades to the row's own data. Conditional requests are not used: the entry page's `ETag`
+ * covers page 1 alone, and a `304` would freeze the pages behind it. The park's participation
+ * formats are not imported ([isProgrammeCategory]). An exhibition is one run: listed once per
+ * open day under one slug, folded from first day to last ([collapseExhibitionRuns], ADR-029,
+ * #337); a drone show over three nights keeps its nights, since only `EXHIBITION` rows fold.
  *
  * @see GAERTEN_DER_WELT_LIMITATIONS for what the park does not publish.
  * @see GaertenDerWeltOverviewPageScraper for listing-page parsing, identity, date and pagination.
@@ -59,8 +51,7 @@ class GaertenDerWeltWebsiteImporter(
         etag: String?,
         lastModified: String?
     ): ImportResult {
-        // An exhibition is listed once per open day under one slug; folded first, so its page is
-        // fetched once and the run is one row (ADR-029, #337).
+        // An exhibition is folded first, so its page is fetched once (ADR-029, #337).
         val rows =
             collectListingRows(url).collapseExhibitionRuns { row ->
                 parseEventPath(row.sourceUrl)?.let { "${EventSource.GAERTEN_DER_WELT.sourceIdPrefix}${it.slug}" }
@@ -71,9 +62,8 @@ class GaertenDerWeltWebsiteImporter(
     }
 
     /**
-     * Walks the listing from [entryUrl], following each page's "nächste" link, and returns every
-     * in-scope row it found. The [MAX_PAGES] bound is a runaway guard rather than an expected
-     * limit — hitting it means the paginator stopped ending, and is logged as a warning.
+     * Walks the listing from [entryUrl], following each page's "nächste" link. [MAX_PAGES] is a
+     * runaway guard; hitting it means the paginator stopped ending, logged as a warning.
      */
     private suspend fun collectListingRows(entryUrl: String): List<ScrapedEvent> {
         val collected = mutableListOf<ScrapedEvent>()
@@ -94,9 +84,8 @@ class GaertenDerWeltWebsiteImporter(
     }
 
     /**
-     * Fetches and parses the row's detail page, merging it over the row's own data. Any failure —
-     * an unreachable page, a redesigned template — degrades to the row alone, which already
-     * carries a title, date, start time, category, teaser, poster and ticket link.
+     * Fetches and parses the row's detail page, merging it over the row. Any failure degrades to the
+     * row alone, which carries title, date, start time, category, teaser, poster and ticket link.
      */
     @Suppress("TooGenericExceptionCaught") // Intentional: degrade to listing data if the detail page is unavailable
     private suspend fun enrichFromDetailPage(row: ScrapedEvent): ScrapedEvent =
@@ -109,17 +98,11 @@ class GaertenDerWeltWebsiteImporter(
         }
 
     /**
-     * Merges a parsed [detail] page over its listing [row].
-     *
-     * The detail page is the primary source — it owns the description, the prices, the doors time,
-     * the promoter and the full-size poster. The row wins on the two things the detail page cannot
-     * express (ADR-007 §"Selector Strategy"):
-     *  - **date and start time**, read from the URL stamp, where the detail page renders a
-     *    year-less "Samstag, 08.08." and a multi-day run as a range; and
-     *  - **event type**, from the `.category` label, which the single view does not repeat.
-     *
-     * Artists are built last, because the type is what decides whether the title names an act at
-     * all: a concert's title is its headliner, a park festival's is not.
+     * Merges a parsed [detail] page over its listing [row]. The detail page owns the description,
+     * prices, doors time, promoter and full-size poster; the row wins on date and start time (the
+     * URL stamp, where the detail page renders a year-less "Samstag, 08.08.") and on event type (the
+     * `.category` label the single view does not repeat) (ADR-007 §"Selector Strategy"). Artists
+     * are built last, because the type decides whether the title names an act.
      */
     private fun merge(
         detail: ScrapedEvent,
@@ -141,9 +124,8 @@ class GaertenDerWeltWebsiteImporter(
 
     private companion object {
         /**
-         * Upper bound on the pagination walk. The park publishes roughly nine pages of five rows
-         * at a time, so this leaves ample headroom for a busier season while keeping a runaway
-         * loop impossible if the paginator ever stops ending. Hitting it is logged as a warning.
+         * Upper bound on the pagination walk: roughly nine pages of five rows today, with headroom.
+         * Hitting it is logged as a warning.
          */
         private const val MAX_PAGES = 40
     }

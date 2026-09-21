@@ -10,24 +10,18 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 
 /**
- * Pure HTML parser for arkaoda Berlin's `?/default/detail/id=<n>` event pages.
+ * Pure HTML parser for arkaoda Berlin's `?/default/detail/id=<n>` pages. The page re-renders the
+ * same event block as the listing (the `<b>` header run, an `h6.heading` title, the body `<p>`)
+ * with one difference that is the reason it is fetched: the body is untruncated, where the
+ * listing cuts it at a `••• weiterlesen…` marker. Everything else duplicates the listing and
+ * serves as fallback ([ArkaodaWebsiteImporter] merges the two).
  *
- * The detail page re-renders the **same** event block as the listing — the `<b>`
- * header run, an `h6.heading` title (here without the link) and the body `<p>` — with
- * one difference that is the entire reason it is fetched: the body is **untruncated**,
- * where the listing cuts it off with a `••• weiterlesen…` marker. Everything else
- * (date, category, title, flyer) is a duplicate of the listing and serves only as a
- * fallback, so [ArkaodaWebsiteImporter] merges the two.
- *
- * The venue has no structured field for times, prices, sold-out state or genre — when
- * it mentions a door price or a set time at all it is inside the prose ("€10 Entry on
- * the door", "Live set at 22:00"), which has no reliable delimiter, so those stay null.
- * The one prose value that *is* unambiguous is a labelled ticket link
- * ([arkaodaTicketUrl]). The page's `og:` block is unused — its `og:image` is built with
- * the router's `?/` prefix and 404s.
- *
- * Returns `null` when the page carries no title, which is what an unpublished or
- * deleted id renders (an empty block); the importer then degrades to the listing data.
+ * The venue has no structured field for times, prices, sold-out state or genre; a door price
+ * or set time appears only inside the prose ("€10 Entry on the door", "Live set at 22:00") with
+ * no reliable delimiter, so those stay null. The one unambiguous prose value is a labelled
+ * ticket link ([arkaodaTicketUrl]). The `og:` block is unused: its `og:image` carries the
+ * router's `?/` prefix and 404s. Returns `null` when the page has no title, what an unpublished
+ * or deleted id renders; the importer then degrades to the listing.
  *
  * @see ArkaodaFieldMapping for the header/title/type/artist rules shared with the listing.
  * @see ArkaodaOverviewPageScraper for discovery.
@@ -37,11 +31,10 @@ class ArkaodaDetailPageScraper {
     private val logger = KotlinLogging.logger {}
 
     /**
-     * Parses an event detail page into a [ScrapedEvent], or `null` when the event
-     * block or its title is missing.
+     * Parses a detail page into a [ScrapedEvent], or `null` when the block or its title is missing.
      *
-     * @param sourceUrl the event's URL, used as [ScrapedEvent.sourceUrl], to derive
-     *   the [ScrapedEvent.sourceId], and to resolve the relative flyer link.
+     * @param sourceUrl the event's URL: [ScrapedEvent.sourceUrl], the [ScrapedEvent.sourceId]
+     * source, and the base for the relative flyer link.
      */
     @Suppress("ReturnCount") // Guard clauses for the missing block/title/id are clearer than nesting
     fun scrape(
@@ -70,8 +63,7 @@ class ArkaodaDetailPageScraper {
             title = title,
             description = descriptionLines.joinToString("\n").takeIf { it.isNotBlank() },
             eventType = eventType,
-            // The listing carries the same date; the sentinel defers to it via
-            // ArkaodaWebsiteImporter.fillGapsFromOverview when this page omits it.
+            // The listing carries the same date; the sentinel defers to it via fillGapsFromOverview.
             eventDate = header.eventDate ?: UNRESOLVED_EVENT_DATE,
             imageUrl = parseImageUrl(document, sourceUrl),
             sourceUrl = sourceUrl,
@@ -83,11 +75,9 @@ class ArkaodaDetailPageScraper {
     }
 
     /**
-     * Reads the body `<p>` as its `<br>`-delimited lines, so the venue's paragraph
-     * breaks survive instead of being flattened into one run of text by `.text()`.
-     * Keeping the lines (rather than joining immediately) is what lets
-     * [arkaodaTicketUrl] see the `Tickets:` label on the line above its link. The
-     * site's leaked PHP escapes are undone as in the title.
+     * Reads the body `<p>` as its `<br>`-delimited lines, so the venue's paragraph breaks survive
+     * and [arkaodaTicketUrl] can see the `Tickets:` label on the line above its link. Leaked PHP
+     * escapes are undone as in the title.
      */
     private fun parseDescriptionLines(excerpt: Element): List<String> =
         excerpt

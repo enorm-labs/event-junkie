@@ -16,31 +16,16 @@ import org.springframework.stereotype.Component
 import tools.jackson.databind.json.JsonMapper
 
 /**
- * Website importer for Kulturhaus Insel Berlin.
- *
- * The venue's homepage is its programme, rendered by a Gatsby front end over a DatoCMS backend. The
- * served HTML is a React shell, but Gatsby publishes every GraphQL query's result as a static JSON
- * artefact, so the whole programme is structured data with no CSS selectors (ADR-007 §"Selector
- * Strategy" priority 1).
- *
- * **The events are in a shared *static* query, not in the page's own `page-data.json`.** Gatsby keys
- * a static query's artefact by a hash of the query text (`/page-data/sq/d/3497155224.json`), which is
- * neither guessable nor stable across a query edit — so the hash is discovered rather than
- * configured: fetch the page's own `page-data.json`, whose `staticQueryHashes` array lists every
- * static query it depends on ([gatsbyPageDataUrl]), then hand each candidate to [InselApiScraper] until
- * one *is* the events query. The scraper returns `null` for any other, so a sibling query publishing
- * the same collection projected down to bare dates is skipped rather than parsed into title-less
- * events. That costs one extra request plus however many candidates precede the events one — two of
- * six at capture — which a daily import can afford, where pinning the hash in configuration would
- * break silently on the venue's next content-model change.
- *
- * The **programme page** is what the event source stores, not an artefact URL: it is the venue's
- * real, user-facing entry point and doubles as the events' `sourceUrl`, and the
- * `/page-data/<path>/page-data.json` layout it maps onto is a fixed Gatsby convention rather than a
- * per-venue detail (ADR-007: entry-point URL in config, derivation in code).
- *
- * No conditional request is used: the artefacts are regenerated on every site rebuild, so their
- * validators track the build rather than the programme.
+ * Website importer for Kulturhaus Insel Berlin, a Gatsby front end over DatoCMS whose homepage
+ * is the programme (ADR-007 §"Selector Strategy" priority 1). The events are in a shared static
+ * query, not the page's own `page-data.json`: Gatsby keys its artefact by a hash of the query
+ * text (`/page-data/sq/d/3497155224.json`), neither guessable nor stable across a query edit, so
+ * the hash is discovered: fetch the page's `page-data.json`, whose `staticQueryHashes` lists
+ * every static query ([gatsbyPageDataUrl]), then hand each candidate to [InselApiScraper] until
+ * one is the events query. That costs one extra request plus the candidates before the events
+ * one (two of six at capture), where a pinned hash would break silently on the next
+ * content-model change. The programme page is what the source stores and the events'
+ * `sourceUrl` (ADR-007). No conditional request: the artefacts are regenerated on every rebuild.
  *
  * @see InselApiScraper for the JSON parsing logic.
  * @see <a href="https://www.inselberlin.de/">Kulturhaus Insel Berlin</a>
@@ -65,14 +50,14 @@ class InselWebsiteImporter(
         val events = fetchEvents(url)
         logger.info { "Scraped ${events.size} event(s) from Kulturhaus Insel Berlin" }
 
-        // Gatsby's artefacts are rebuilt whenever the site is, so their ETag / Last-Modified track
-        // the build rather than the programme; change detection relies on idempotent upserts.
+        // The artefacts' ETag / Last-Modified track the build; change detection relies on idempotent
+        // upserts.
         return ImportResult.Success(events = events, etag = null, lastModified = null)
     }
 
     /**
      * Walks the page's static-query candidates and returns the events from the first artefact that
-     * is the programme query, or an empty list when none of them is.
+     * is the programme query, or an empty list.
      */
     @Suppress("ReturnCount") // The early exits for "no candidates" and "found it" are clearer than nesting.
     private suspend fun fetchEvents(url: String): List<ScrapedEvent> {

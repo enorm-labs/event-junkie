@@ -12,20 +12,11 @@ import org.jsoup.nodes.Document
 import org.springframework.stereotype.Component
 
 /**
- * Website importer for Bi Nuu's SvelteKit/PocketBase event listing.
- *
- * Orchestrates the fetch → parse pipeline for Bi Nuu:
- * 1. Fetches the listing page (`/de/events`) via [HtmlFetcher] with conditional
- *    request support (ETag / Last-Modified).
- * 2. Discovers events from the embedded `data.events[]` payload via
- *    [BinuuOverviewPageScraper].
- * 3. For each event, fetches its detail page and parses the richer `data.item`
- *    payload via [BinuuDetailPageScraper] — the primary source for doors,
- *    description, ticket URL, promoters, and the artist roster.
- *
- * The detail payload is a superset of the overview entry, so the merge simply
- * prefers detail data and uses the overview only as a safety net when a detail
- * page cannot be fetched.
+ * Website importer for Bi Nuu's SvelteKit/PocketBase listing: fetch `/de/events` via
+ * [HtmlFetcher] with conditional headers, discover events from `data.events[]` via
+ * [BinuuOverviewPageScraper], then fetch each detail page and parse `data.item` via
+ * [BinuuDetailPageScraper], a superset of the overview entry, so the merge prefers it and uses
+ * the overview as a safety net.
  *
  * @see BinuuOverviewPageScraper for overview parsing (discovery, fallback)
  * @see BinuuDetailPageScraper for detail parsing (doors, description, tickets, promoters, artists)
@@ -51,12 +42,9 @@ class BinuuWebsiteImporter(
     ): ScrapedEvent? = detailPageScraper.scrape(document, url)
 
     /**
-     * Merges detail-page data ([primary]) with overview-page data ([fallback]).
-     *
-     * The detail payload already carries everything the overview does plus more,
-     * so it wins for every field; the overview only backstops the date, image,
-     * subtitle, and start time if a detail page ever omits them, and the sold-out
-     * flag is OR-ed so it counts wherever it appears.
+     * Merges detail data ([primary]) over overview data ([fallback]): the detail payload wins for
+     * every field; the overview backstops date, image, subtitle and start time, and the sold-out
+     * flag is OR-ed.
      */
     override fun fillGapsFromOverview(
         primary: ScrapedEvent,

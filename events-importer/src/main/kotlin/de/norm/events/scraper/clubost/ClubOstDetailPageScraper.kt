@@ -13,25 +13,18 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 
 /**
- * Pure HTML parser for a Club OST event detail page (`/event/<id>/`).
+ * Pure HTML parser for a Club OST detail page (`/event/<id>/`), a stub by design: the club
+ * publishes on Resident Advisor and every page prints the same three placeholder sentences for
+ * description, further information and flyer. Of its four fields the date and start repeat the
+ * listing and the description is a placeholder; the end time is the one fact the listing lacks.
  *
- * The page is a **stub by design**: the club publishes its programme on Resident Advisor and uses its
- * own site as a shopfront, so every detail page prints the same three placeholder sentences where a
- * description, a further-information note and a flyer would go. Of the four fields it states — date,
- * start time, end time, description — the first two only repeat the listing and the description is
- * always a placeholder. The end time is the one fact the listing lacks.
- *
- * It was first fetched for one reason, and still is: the **title's real casing**. The listing template upper-cases
- * every title (`RAVE THE PLANET TRUCK`), which is presentation, not the name the venue typed; this
- * page prints it as entered (`Rave The Planet Truck`), and storing the shouted form would be storing
- * a CSS decision as data. The cost is one extra request per event against a programme of well under
- * a dozen, so a two-page fetch is cheap here in a way it would not be for a venue listing hundreds.
- *
- * The end time the page states is often the following morning, `11 p.m.` → `8 a.m.`, and the page
- * names no end date. [endOn] resolves it: an end at or before the start is the next day (ADR-029).
- *
- * There are no CMS classes to key on: the title is the content column's `h1`, the four fields are
- * `p` rows introduced by a `<strong>` label, and the ticket link is `a.button-link.ticket`.
+ * Fetched for the title's real casing: the listing template upper-cases every title (`RAVE THE
+ * PLANET TRUCK`), and storing that stores a CSS decision as data; this page prints `Rave The
+ * Planet Truck`. One extra request per event against a programme of under a dozen. The end is
+ * often the following morning, `11 p.m.` to `8 a.m.`, with no end date; [endOn] resolves an end
+ * at or before the start as the next day (ADR-029). No CMS classes: the title is the content
+ * column's `h1`, the fields are `p` rows introduced by a `<strong>` label, the ticket link is
+ * `a.button-link.ticket`.
  *
  * @see ClubOstOverviewPageScraper for discovery and the fallback data this merges over.
  */
@@ -39,24 +32,20 @@ class ClubOstDetailPageScraper {
     private val logger = KotlinLogging.logger {}
 
     /**
-     * Parses the event on a detail page.
+     * Parses the event on a detail page, or `null` without a content container, title or parseable
+     * date; the importer then keeps the card's data, which differs only in casing.
      *
-     * Returns `null` when the page has no content container, no title or no parseable date —
-     * the importer then keeps the overview card's data instead, which states the same date and
-     * time and differs only in the title's casing.
-     *
-     * @param sourceUrl the URL the page was fetched from, used as
-     *   [ScrapedEvent.sourceUrl][de.norm.events.scraper.ScrapedEvent.sourceUrl] and to derive
-     *   the `sourceId`.
+     * @param sourceUrl the URL the page was fetched from,
+     * [ScrapedEvent.sourceUrl][de.norm.events.scraper.ScrapedEvent.sourceUrl] and the `sourceId`
+     * source.
      */
     @Suppress("ReturnCount") // Guard clauses per missing required field read better than a nested let-chain
     fun scrape(
         document: Document,
         sourceUrl: String
     ): ScrapedEvent? {
-        // The block carries no class of its own, so it is identified by the "back to homepage"
-        // control unique to it. Scoping here keeps the bare `h1` and `p` selectors below from
-        // matching the site header and footer, which use the same tags.
+        // The block has no class, so it is identified by its unique "back to homepage" control; scoping
+        // keeps the bare `h1` and `p` selectors off the header and footer.
         val content = document.selectFirst(CONTENT_CONTAINER)
         if (content == null) {
             logger.warn { "Club OST detail page has no content container, skipping" }
@@ -99,12 +88,8 @@ class ClubOstDetailPageScraper {
     }
 
     /**
-     * Reads the value of the `<p><strong>Label:</strong> value</p>` row carrying [label].
-     *
-     * Matching on the label text rather than on the paragraph's position keeps the parser
-     * working when the venue adds or reorders a row, and is the only semantic handle the page
-     * offers — the rows share no classes. Returns `null` when no row carries the label or the
-     * remainder is blank.
+     * The value of the `<p><strong>Label:</strong> value</p>` row carrying [label], matched on the
+     * label text since the rows share no classes; `null` when absent or blank.
      */
     private fun Element.valueForLabel(label: String): String? {
         val row =

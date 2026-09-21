@@ -13,17 +13,13 @@ import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 
 /**
- * Pure HTML parser for a silent green **detail page** (`/programm/detail/<slug>`).
- *
- * A detail page describes a *run*, not one night: the calendar links every open day of an
- * exhibition to the same page, and the page's own date block states the run's span
- * (`"Fr. 17.07.2026 – So. 23.08.2026"`). So it is read for the three fields the calendar row
- * omits — the doors time, the poster and the full blurb — and never for the date, which
- * [SilentGreenMonthPageScraper] takes per day from the calendar.
- *
- * The poster comes from `og:image` rather than the header carousel: the carousel serves a
- * responsive `<picture>` with ten relative sources per slide, while the meta tag names one
- * absolute URL for the same image.
+ * Pure HTML parser for a silent green detail page (`/programm/detail/<slug>`), which describes a
+ * run, not one night: the calendar links every open day of an exhibition to the same page,
+ * whose date block states the span (`"Fr. 17.07.2026 – So. 23.08.2026"`). Read for the three
+ * fields the calendar row omits (doors time, poster, full blurb), never for the date, which
+ * [SilentGreenMonthPageScraper] takes per day. The poster comes from `og:image`: the header
+ * carousel serves a responsive `<picture>` with ten relative sources per slide, the meta tag
+ * one absolute URL.
  *
  * @see SilentGreenWebsiteImporter for the HTTP fetch orchestrator.
  */
@@ -31,8 +27,8 @@ class SilentGreenDetailPageScraper {
     private val logger = KotlinLogging.logger {}
 
     /**
-     * Parses the run-level fields of a detail page, or `null` when the page carries none of them
-     * (e.g. a redirect or an error page served with a 200).
+     * Parses the run-level fields, or `null` when the page carries none (a redirect or error page
+     * served with a 200).
      */
     fun scrape(document: Document): SilentGreenEventDetails? {
         val details =
@@ -53,8 +49,8 @@ class SilentGreenDetailPageScraper {
     }
 
     /**
-     * Reads the `HH:mm` that opens a time cell, ignoring the label the venue appends to it —
-     * `"19:00 Einlass"`, `"19:45 Beginn"`, and the `"14:00 -"` of an event stated as a span.
+     * The `HH:mm` that opens a time cell, ignoring the appended label (`"19:00 Einlass"`, `"19:45
+     * Beginn"`, the `"14:00 -"` of a span).
      */
     private fun parseLeadingTime(
         document: Document,
@@ -62,8 +58,8 @@ class SilentGreenDetailPageScraper {
     ): LocalTime? = parseTime(document.textAt(cssQuery)?.take(HH_MM_LENGTH))
 
     /**
-     * Reads the `DD.MM.YYYY` out of one half of the date block — `"Fr. 17.07.2026 -"` or
-     * `"So. 23.08.2026"` — whose weekday and trailing dash are the venue's typography, not data.
+     * The `DD.MM.YYYY` in one half of the date block (`"Fr. 17.07.2026 -"`, `"So. 23.08.2026"`);
+     * weekday and trailing dash are typography.
      */
     private fun parseBlockDate(
         document: Document,
@@ -74,11 +70,8 @@ class SilentGreenDetailPageScraper {
         }
 
     /**
-     * Joins the prose paragraphs of the detail body into the description.
-     *
-     * The venue opens most bodies with the same `"… präsentiert"` credit line the calendar prints
-     * under the title; it is already captured as the event's promoters, so it is dropped here
-     * rather than repeated as the first sentence of the blurb.
+     * Joins the prose paragraphs into the description, dropping the `"… präsentiert"` credit line
+     * most bodies open with, since it is already the promoters.
      */
     private fun parseDescription(document: Document): String? =
         document
@@ -99,11 +92,8 @@ class SilentGreenDetailPageScraper {
 }
 
 /**
- * The run-level fields shared by every day of one silent green programme entry.
- *
- * Applied to each calendar occurrence by [applyTo]. Every field is a **fallback**: the calendar
- * row is the per-day truth, so a start time it already carries is kept, and the detail page only
- * fills what the row left empty.
+ * The run-level fields shared by every day of one entry, applied by [applyTo]. Every field is a
+ * fallback: the calendar row is the per-day truth.
  */
 data class SilentGreenEventDetails(
     /** Time the doors open ("Einlass"), which the calendar never shows. */
@@ -120,11 +110,9 @@ data class SilentGreenEventDetails(
     val imageUrl: String? = null
 ) {
     /**
-     * Returns [event] with the fields the calendar row could not supply filled in from this run's page.
-     *
-     * An exhibition also takes the page's span: the calendar lists only the days inside the scraped
-     * months, and a run that opened before them opened all the same. The days then fold into one
-     * event in [collapseExhibitionRuns]; a festival's days keep their own dates.
+     * Returns [event] with the fields the calendar row could not supply filled from this page. An
+     * exhibition also takes the page's span: the calendar lists only the days inside the scraped
+     * months. The days then fold in [collapseExhibitionRuns]; a festival's days keep their dates.
      */
     fun applyTo(event: ScrapedEvent): ScrapedEvent {
         val run = event.eventType == EventType.EXHIBITION.name && runStart != null && runEnd != null && runEnd > runStart

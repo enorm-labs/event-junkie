@@ -6,12 +6,9 @@ import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
 
 /**
- * The `<b>` run heading an arkaoda event block: the event date and the venue's
- * optional category label.
- *
- * The listing and the detail page render this run identically, so both scrapers read
- * it through [parseArkaodaHeader]. The remaining field rules they share live in
- * [ArkaodaFieldMapping.kt][arkaodaEventType].
+ * The `<b>` run heading an arkaoda event block: the date and the optional category label,
+ * rendered identically on both pages and read through [parseArkaodaHeader]. The other shared
+ * rules are in [ArkaodaFieldMapping.kt][arkaodaEventType].
  */
 data class ArkaodaHeader(
     /** The `DD / MM / YYYY` date, or `null` when the block carries none (a placeholder/unpublished event). */
@@ -21,14 +18,11 @@ data class ArkaodaHeader(
 )
 
 /**
- * Reads the [ArkaodaHeader] from an event block's `.excerpt` container.
- *
- * The header is a run of sibling `<b>` elements — date, German weekday, and an
- * optional `// <category>` — with no per-field markup to select on, so each label is
- * classified by its own content rather than its position: the one that parses as a
- * date is the date, the one opening with `//` is the category, and the weekday is
- * ignored (the date already carries a four-digit year, so it needs no
- * disambiguation). A block that gained or lost a label therefore still parses.
+ * Reads the [ArkaodaHeader] from a block's `.excerpt`: a run of sibling `<b>` elements (date,
+ * German weekday, optional `// <category>`) with no per-field markup, so each label is
+ * classified by content: the one that parses as a date is the date, the one opening with `//`
+ * the category, and the weekday is ignored (the date carries a four-digit year). A block that
+ * gained or lost a label still parses.
  */
 fun parseArkaodaHeader(excerpt: Element): ArkaodaHeader {
     val labels = excerpt.select("b").map { it.text().trim() }
@@ -39,11 +33,8 @@ fun parseArkaodaHeader(excerpt: Element): ArkaodaHeader {
 }
 
 /**
- * Parses arkaoda's spaced `DD / MM / YYYY` date (e.g. `"30 / 07 / 2026"`).
- *
- * Whitespace is removed before parsing, so the venue's padded rendering and a
- * hypothetical unpadded one both work. Returns `null` for any label that is not a
- * date (the weekday and category labels run through here too) rather than throwing.
+ * Parses arkaoda's spaced `DD / MM / YYYY` date (`"30 / 07 / 2026"`), whitespace removed first.
+ * `null` for any label that is not a date, since the weekday and category run through here too.
  */
 fun parseArkaodaDate(text: String?): LocalDate? {
     if (text.isNullOrBlank()) return null

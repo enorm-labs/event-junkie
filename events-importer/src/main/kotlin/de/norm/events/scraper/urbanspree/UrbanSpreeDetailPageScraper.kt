@@ -18,25 +18,19 @@ import java.time.format.DateTimeParseException
 import java.util.Locale
 
 /**
- * Pure HTML parser for a single Urban Spree `/program/<category>/<slug>.html` detail page.
+ * Pure HTML parser for a single Urban Spree `/program/<category>/<slug>.html` page. The page
+ * opens with a `#pseudo-card` hero: category (`.parent-name`), the untruncated `h1.title`, the
+ * poster, a `.ct-dates` row with the date and start time as English prose ("Dec 12, 2026",
+ * "20:00") plus the price ("25.00€" or "Free entry"), and a `.ct-btns` "Buy tickets" link
+ * rendered with an empty `href` when there is no shop. Below, a `.ct-info` label/value list
+ * carries the promoter and a Facebook link, and `.rte.tv-content` the description.
  *
- * The page opens with a `#pseudo-card` hero — category (`.parent-name`), the untruncated
- * `h1.title`, the poster, a `.ct-dates` row rendering the date and start time as English
- * prose ("Dec 12, 2026", "20:00") plus the price ("25.00€" or "Free entry"), and a
- * `.ct-btns` "Buy tickets" link (present but with an empty `href` when there is no ticket
- * shop). Below it, a label/value `.ct-info` list carries the promoter and a Facebook event
- * link, and a `.rte.tv-content` block holds the prose description.
- *
- * Everything is read **scoped to `#pseudo-card`** (or to the `.ct-info` / `.rte` blocks),
- * because the same page also renders an "upcoming events" slider built from the very same
- * card markup the overview parses — an unscoped `li.infos` or `li.price` would pick up a
- * neighbouring event's date and price.
- *
- * The page's own date is parsed for completeness, but [UrbanSpreeWebsiteImporter] prefers
- * the overview card's machine-readable `data-dateStart` over this English rendering
- * (ADR-007 §"Selector Strategy": a data attribute outranks formatted text). Doors time is
- * deliberately **not** extracted: it appears only inside the free-form description, where
- * an "Einlass: …" line may just as well belong to another show mentioned in the blurb.
+ * Everything is read scoped to `#pseudo-card`, `.ct-info` or `.rte`, because the page also
+ * renders an "upcoming events" slider from the same card markup the overview parses, and an
+ * unscoped `li.infos` or `li.price` would pick up a neighbour's date and price. The page's own
+ * date is parsed, but [UrbanSpreeWebsiteImporter] prefers the card's `data-dateStart` (ADR-007
+ * §"Selector Strategy"). Doors time is not extracted: it appears only inside the description,
+ * where an "Einlass: …" line may belong to another show mentioned in the blurb.
  *
  * @see UrbanSpreeOverviewPageScraper for discovery and the authoritative date.
  * @see UrbanSpreeWebsiteImporter for the fetch orchestrator and the merge.
@@ -45,9 +39,8 @@ class UrbanSpreeDetailPageScraper {
     private val logger = KotlinLogging.logger {}
 
     /**
-     * Parses one detail page into a [ScrapedEvent], or `null` when the page carries no
-     * event hero at all (a 404 body or a redesigned template) — the importer then keeps
-     * the overview card's data rather than persisting a half-parsed event.
+     * Parses one detail page into a [ScrapedEvent], or `null` when the page carries no event hero
+     * (a 404 body, a redesigned template); the importer then keeps the card's data.
      *
      * @param sourceUrl the URL the document was fetched from; also the `sourceId` source.
      */
@@ -68,8 +61,8 @@ class UrbanSpreeDetailPageScraper {
             return null
         }
 
-        // Peel off a "… | Special Guest: X" billing note before cleaning, so the support acts
-        // become their own artists instead of being glued onto the headliner's name.
+        // Peel off a "… | Special Guest: X" note before cleaning, so the support acts become their own
+        // artists.
         val (headline, supportNote) = splitUrbanSpreeBilling(rawTitle)
         val title = cleanUrbanSpreeTitle(headline)
         val eventType = mapEventType(hero.textAt(".parent-name"), URBAN_SPREE_CATEGORY_SYNONYMS)
@@ -97,18 +90,13 @@ class UrbanSpreeDetailPageScraper {
     }
 
     /**
-     * Reads an absolute URL from [attributeKey] of the first element matching [cssQuery],
-     * or `null` when the element, the attribute or the resolved URL is missing.
-     *
-     * Uses Jsoup's `absUrl` rather than the shared
-     * [hrefAt][de.norm.events.scraper.hrefAt]/[imgSrcAt][de.norm.events.scraper.imgSrcAt]
-     * helpers because every URL on the page is relative (`/assets/…`) and resolved against
-     * the page's `<base href="https://www.urbanspree.com/">` tag, which Jsoup honours —
-     * the raw attribute those helpers read would be rejected as non-absolute.
-     *
-     * The raw attribute is checked for emptiness **before** resolving: the venue always
-     * renders its "Buy tickets" anchor, leaving `href=""` when no shop is linked, and
-     * `absUrl` would happily resolve that empty value to the site root.
+     * Reads an absolute URL from [attributeKey] of the first element matching [cssQuery], or `null`.
+     * Jsoup's `absUrl` rather than [hrefAt][de.norm.events.scraper.hrefAt] /
+     * [imgSrcAt][de.norm.events.scraper.imgSrcAt]: every URL on the page is relative (`/assets/…`)
+     * against a `<base href="https://www.urbanspree.com/">` tag, which Jsoup honours, and the raw
+     * attribute would be rejected as non-absolute. The raw attribute is checked for emptiness first:
+     * the "Buy tickets" anchor is always rendered with `href=""` when no shop is linked, and `absUrl`
+     * would resolve that to the site root.
      */
     private fun Element.absUrlAt(
         cssQuery: String,
@@ -131,9 +119,8 @@ class UrbanSpreeDetailPageScraper {
     }
 
     /**
-     * Reads the [index]-th cell of the hero's date row — `0` is the date ("Dec 12, 2026"),
-     * `1` the start time ("20:00"). Scoped to `.ct-dates` so the "upcoming events" slider's
-     * identical `li.infos` cells cannot be read instead.
+     * The [index]-th cell of the hero's date row, `0` the date ("Dec 12, 2026"), `1` the start time
+     * ("20:00"), scoped to `.ct-dates` so the slider's identical `li.infos` cells cannot be read.
      */
     private fun Element.dateInfo(index: Int): String? =
         select(".ct-dates li.infos")
@@ -143,8 +130,7 @@ class UrbanSpreeDetailPageScraper {
             ?.takeIf { it.isNotBlank() }
 
     /**
-     * Reads the value of the `.ct-info` label/value pair whose label is [label] (e.g.
-     * "Promoter"), or `null` when the page does not carry that row.
+     * The value of the `.ct-info` pair whose label is [label] ("Promoter"), or `null`.
      */
     private fun infoValue(
         document: Document,
@@ -163,14 +149,13 @@ class UrbanSpreeDetailPageScraper {
         private const val PROMOTER_LABEL = "Promoter"
 
         /**
-         * What the venue joins two promoters with ("Positive Transmitter & Crunch Tapes"). Only
-         * "&": the label "Aufnahme + wiedergabe" carries its "+" in its own name (#328).
+         * What the venue joins two promoters with ("Positive Transmitter & Crunch Tapes"). Only "&":
+         * "Aufnahme + wiedergabe" carries its "+" in its own name (#328).
          */
         private val CO_PROMOTER_SEPARATOR = Regex("""\s*&\s*""")
 
         /**
-         * Credits the split must leave whole: one name that carries the same "&" the venue joins
-         * two promoters with (#1356). Compared case-insensitively.
+         * Credits the split must leave whole: a name carrying the same "&" (#1356), case-insensitive.
          */
         private val SINGLE_NAMES_WITH_AMPERSAND = setOf("pure obsessions & red nights")
 

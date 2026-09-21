@@ -6,28 +6,20 @@ import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.inferUnmarkedTitleType
 import de.norm.events.scraper.mapEventType
 
-// Field mapping for silent green's own vocabulary — its category labels, its "… präsentiert"
-// credit line, and the host prefixes it puts in front of a billed act. Kept in one file beside
-// the two scrapers because the calendar is where all of it is read.
+// Field mapping for silent green's vocabulary: category labels, the "… präsentiert" credit
+// line, and the host prefixes in front of a billed act.
 
 /**
- * The event type, from the venue's own category label(s) — `Konzert`, `Ausstellung`,
- * `Filmvorführung`, `Panel, Lesung, Festival, Konzert`.
- *
- * The label is a **comma-separated list of every format an evening contains**, so a single type
- * has to be chosen out of it, and the order the venue writes them in is not that choice: the
- * Pop-Kultur Festival is tagged `Panel, Lesung, Festival, Konzert` and is a festival, and the
- * `Islands of Time` opening is tagged `Konzert, Ausstellung` and is an exhibition with live sets.
- * So the labels are ranked by [CATEGORY_PRECEDENCE] and the strongest wins — festival first, then
- * the non-musical formats, then the concert that most of these evenings also are. Beyond naming
- * the evening correctly, that ranking is what keeps an exhibition or film title out of the artist
- * table: only a `CONCERT` mints headliners from the title (see [silentGreenArtists]).
- *
- * An event with **no** category at all (the Sommerfest, the historic guided tours, the label
- * market) falls back to [inferUnmarkedTitleType]: a keyword in the title if there is an
- * unambiguous one, otherwise `OTHER`. Deliberately not the concert-venue default — this house
- * programmes exhibitions, talks and festivals as readily as gigs, so an unlabelled entry is not
- * presumed to be a concert.
+ * The event type from the venue's category label(s): `Konzert`, `Ausstellung`, `Filmvorführung`,
+ * `Panel, Lesung, Festival, Konzert`. The label is a comma-separated list of every format an
+ * evening contains, and the venue's order is not the choice: the Pop-Kultur Festival is tagged
+ * `Panel, Lesung, Festival, Konzert` and is a festival, the `Islands of Time` opening `Konzert,
+ * Ausstellung` and is an exhibition with live sets. So the labels are ranked by
+ * [CATEGORY_PRECEDENCE], which also keeps an exhibition or film title out of the artist table:
+ * only a `CONCERT` mints headliners ([silentGreenArtists]). No category at all (the Sommerfest,
+ * the guided tours, the label market) falls back to [inferUnmarkedTitleType], not the
+ * concert-venue default: this house programmes exhibitions, talks and festivals as readily as
+ * gigs.
  */
 fun silentGreenEventType(
     categories: String?,
@@ -40,14 +32,12 @@ fun silentGreenEventType(
         ?: inferUnmarkedTitleType(title)
 
 /**
- * The promoters of an event, from the credit line the calendar prints under its title —
- * `"silent green präsentiert"`, `"Berlin Atonal & silent green präsentieren"`,
- * `"silent green, Mansions and Millions & Puschen präsentieren"`.
- *
- * Names are split on commas and ampersands only, never on `and`/`und`: `Mansions and Millions` is
- * one label, and the shared [de.norm.events.scraper.splitSupportActs] would cut it in two. Returns
- * an empty list for any other sub-line — the venue also uses that slot for a genuine sub-title
- * (`"Zukunft. Sicher. Gestalten."`), which [silentGreenSubtitle] keeps instead.
+ * The promoters from the credit line under the title (`"silent green präsentiert"`, `"Berlin
+ * Atonal & silent green präsentieren"`, `"silent green, Mansions and Millions & Puschen
+ * präsentieren"`). Split on commas and ampersands only, never `and`/`und`: `Mansions and
+ * Millions` is one label, and [de.norm.events.scraper.splitSupportActs] would cut it. Empty for
+ * any other sub-line, which may be a genuine sub-title (`"Zukunft. Sicher. Gestalten."`) that
+ * [silentGreenSubtitle] keeps.
  */
 fun silentGreenPresenters(subLine: String?): List<String> =
     presenterNames(subLine)
@@ -60,19 +50,11 @@ fun silentGreenPresenters(subLine: String?): List<String> =
 fun silentGreenSubtitle(subLine: String?): String? = subLine?.takeIf { presenterNames(it) == null }
 
 /**
- * The billed acts of an event, as [ScrapedArtist] entries placed in the [hall] the evening
- * runs in.
- *
- * Delegates to the shared [buildArtistsForEventType], so only a `CONCERT` turns its title into
- * headliners — an exhibition, a talk, a screening or a festival mints nothing, which is what the
- * [silentGreenEventType] ranking exists to guarantee. The title is passed through
- * [stripHostPrefix] first so the label or series hosting the night does not become part of the
- * act's name.
- *
- * The [hall] is carried on the lineup entries because `stage` is the only place the model has for
- * a room, the same way the multi-floor clubs use it. An evening with no lineup — every exhibition
- * and talk here — therefore records no hall at all; the venue publishes one for those too, but
- * there is no event-level field to put it in.
+ * The billed acts as [ScrapedArtist] entries in the [hall] the evening runs in, via
+ * [buildArtistsForEventType], so only a `CONCERT` turns its title into headliners; the title
+ * passes through [stripHostPrefix] first. The [hall] rides on the lineup entries because `stage`
+ * is the model's only room field, as the multi-floor clubs use it; an evening with no lineup
+ * records no hall.
  */
 fun silentGreenArtists(
     title: String,
@@ -83,24 +65,15 @@ fun silentGreenArtists(
         .map { it.copy(stage = hall) }
 
 /**
- * Strips the label or series hosting a night from the front of its title, so what remains is the
- * act(s) billed after it.
- *
- * Two forms. A spelled-out `"<host> presents <acts>"` credit and the venue's own `"silent green
- * pres. <programme>"` always lose the host. An abbreviated `"<host> pres. <acts>"` by anyone else
- * is left to `headlinersFromTitle`, which reads the shape of the right side: `"hub pres. Doorman +
- * Franco Franco"` is a host and its programme, `"Burnt Friedman pres. Secret Rhythms"` an act and
- * its project (#1581).
- *
- * A bare `"<series>: <acts>"` colon is far weaker — `"The I in the Mirror: Reflection"` is a
- * title, not a series and a support act — so it is stripped **only when the remainder still bills
- * more than one act**. A title that lists several acts after a colon has named the series in front
- * of it (`"Psychic Liberation Night: Niloofar Asghary + Júlia Koffler"`, `"15 YEARS
- * zweikommasieben: Anna Homler + Steven Warwick + zweikommasieben DJs"`); a title with a single
- * name after the colon has not.
- *
- * Only the derived artist names are affected — the stored event title keeps the venue's billing
- * verbatim.
+ * Strips the label or series hosting a night from the front of its title. A spelled-out
+ * `"<host> presents <acts>"` and the venue's own `"silent green pres. <programme>"` always lose
+ * the host; an abbreviated `"<host> pres. <acts>"` by anyone else is left to
+ * `headlinersFromTitle`, which reads the right side: `"hub pres. Doorman + Franco Franco"` is a
+ * host and its programme, `"Burnt Friedman pres. Secret Rhythms"` an act and its project (#1581).
+ * A bare `"<series>: <acts>"` colon is far weaker (`"The I in the Mirror: Reflection"` is a
+ * title), so it is stripped only when the remainder still bills more than one act (`"Psychic
+ * Liberation Night: Niloofar Asghary + Júlia Koffler"`, `"15 YEARS zweikommasieben: Anna Homler
+ * + Steven Warwick + zweikommasieben DJs"`). Only the derived artist names are affected.
  */
 private fun stripHostPrefix(title: String): String {
     val withoutHost =
@@ -123,10 +96,9 @@ private fun presenterNames(subLine: String?): String? =
         ?.takeIf { it.isNotBlank() }
 
 /**
- * Category labels the shared table does not carry, for the formats this house programmes beside
- * concerts. `Konferenz` has no nearer type than `OTHER`; the spoken-word formats it invents
- * freely (`Panel`, `Vortrag`, `Artist-Talk`, `Buchpremiere`) map to `READING`, the model's
- * spoken-word bucket, for the same reason the Urania's do.
+ * Category labels the shared table lacks: `Konferenz` has no nearer type than `OTHER`; the
+ * spoken-word formats (`Panel`, `Vortrag`, `Artist-Talk`, `Buchpremiere`) map to `READING`, as
+ * the Urania's do.
  */
 private val SILENT_GREEN_CATEGORIES =
     mapOf(
@@ -141,11 +113,10 @@ private val SILENT_GREEN_CATEGORIES =
     )
 
 /**
- * How strongly a category label claims the evening, strongest first, when the venue tags one with
- * several. A festival subsumes everything inside it; the non-musical formats come next, because
- * they are what a title alone would not reveal and what must not be read as a lineup; `CONCERT`
- * ranks last of the real formats because nearly every evening here contains music. Anything
- * unranked (the shared table's `PARTY`, `QUIZ`, …) sorts after all of them.
+ * How strongly a label claims the evening when several are tagged: a festival subsumes
+ * everything; the non-musical formats next, since they must not be read as a lineup; `CONCERT`
+ * last of the real formats, because nearly every evening here contains music; unranked labels
+ * after all.
  */
 private val CATEGORY_PRECEDENCE: Map<String, Int> =
     listOf(

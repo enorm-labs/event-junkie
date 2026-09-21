@@ -12,20 +12,15 @@ import java.time.LocalDate
 import java.time.LocalTime
 
 /**
- * Pure HTML parser for one of Havanna Berlin's three undated weekly night pages
- * (`/wednesday`, `/friday`, `/saturday`).
- *
- * Each page is a single Squarespace rich-text block laid out the same way: a heading repeating the
+ * Pure HTML parser for one of Havanna Berlin's three undated weekly night pages (`/wednesday`,
+ * `/friday`, `/saturday`): a single Squarespace rich-text block with a heading repeating the
  * weekday ("Friday"), a bold tagline, a heading naming the night ("Saturdays @ HAVANNA"), one
- * paragraph per dancefloor ("1st floor 22:00" + its genres), and closing paragraphs with the start
- * time, door price, and dance-lesson note. There is no date anywhere and no per-event markup — the
- * whole programme is editorial prose — so parsing works paragraph-by-paragraph off that layout, and
- * the weekday comes from the URL path rather than the heading that repeats it.
- *
- * A separate rich-text block above the programme may carry a closure notice ("WIR SIND AB DEM
- * 01.07.2026 IN DER SOMMERPAUSE!"); its date is captured so the importer can suppress occurrences
- * during the break. The programme block is identified by containing paragraphs, so notice text never
- * affects which block is read as the programme.
+ * paragraph per dancefloor ("1st floor 22:00" + its genres), and closing paragraphs with the
+ * start time, door price and dance-lesson note. No date and no per-event markup, so parsing
+ * works paragraph by paragraph, and the weekday comes from the URL path. A separate block above
+ * may carry a closure notice ("WIR SIND AB DEM 01.07.2026 IN DER SOMMERPAUSE!"), whose date is
+ * captured so occurrences during the break are suppressed; the programme block is identified by
+ * containing paragraphs, so notice text never affects which block is read.
  *
  * @see HavannaWeeklyNight for the undated model this produces and its expansion into dated events.
  * @see <a href="https://www.havanna-berlin.de/friday">Havanna Friday</a>
@@ -35,11 +30,11 @@ class HavannaDetailPageScraper {
     private val logger = KotlinLogging.logger {}
 
     /**
-     * Parses a night page into its undated [HavannaWeeklyNight] description.
+     * Parses a night page into its undated [HavannaWeeklyNight].
      *
-     * @param url the URL the document was fetched from — the source of the night's weekday and slug.
-     * @return the parsed night, or `null` when the URL names no weekday or the page carries no
-     *   programme block (both logged as warnings).
+     * @param url the URL the document was fetched from, the source of the weekday and slug.
+     * @return the parsed night, or `null` when the URL names no weekday or the page has no
+     * programme block.
      */
     @Suppress("ReturnCount") // Guard clauses for the required weekday/programme block are clearer than nesting.
     fun scrape(
@@ -66,8 +61,8 @@ class HavannaDetailPageScraper {
             }
 
         val children = programme.children()
-        // Two headings: the first repeats the weekday, the second names the night. Fall back to the
-        // first when a page ever carries only one.
+        // Two headings: the first repeats the weekday, the second names the night; fall back to the
+        // first.
         val headings = children.indices.filter { children[it].tagName() in HEADING_TAGS }
         val titleIndex =
             (headings.getOrNull(1) ?: headings.firstOrNull()) ?: run {
@@ -87,8 +82,8 @@ class HavannaDetailPageScraper {
             slug = havannaNightSlug(url),
             title = title,
             subtitle = parseSubtitle(children.take(titleIndex)),
-            // Keep the venue's own prose intact, one source paragraph per line — it is where the
-            // floor breakdown, the dance-lesson note, and the ladies' free-entry window live.
+            // The venue's own prose, one source paragraph per line: the floor breakdown, the dance-lesson
+            // note, the ladies' free-entry window.
             description = body.joinToString("\n").takeIf { it.isNotBlank() },
             genre = parseGenre(body),
             startTime = parseStartTime(body, dayOfWeek, document),
@@ -107,17 +102,13 @@ class HavannaDetailPageScraper {
             ?.trim()
 
     /**
-     * The night's genres, read off its dancefloor paragraphs and joined into one raw genre string for
-     * `GenreNormalizer` to tokenize.
-     *
-     * A floor paragraph leads with a "1st floor" label, optionally carrying that floor's own start
-     * time ("3rd floor 23:00"); the genres are whatever follows. When the venue put them in the *next*
-     * paragraph instead ("4th floor 00:30" then "Charts, Top40, Discotunes"), that paragraph is used —
-     * unless it is itself another floor or a price/time line, which is how a floor with no listed
-     * genres ("2nd floor") correctly yields nothing.
-     *
-     * Parentheses are dropped because the normalizer splits on commas and `&` but not brackets, so
-     * "(Reggaeton & Latin-Pop)" would otherwise leave a stray ")" welded to the last tag.
+     * The night's genres from its dancefloor paragraphs, joined into one raw string for
+     * `GenreNormalizer`. A floor paragraph leads with "1st floor", optionally with its own start
+     * ("3rd floor 23:00"), then the genres; when the venue put them in the next paragraph ("4th
+     * floor 00:30" then "Charts, Top40, Discotunes") that one is used, unless it is another floor
+     * or a price/time line, which is how a floor with no genres ("2nd floor") yields nothing.
+     * Parentheses are dropped because the normalizer would leave a stray ")" welded to the last tag
+     * of "(Reggaeton & Latin-Pop)".
      */
     private fun parseGenre(body: List<String>): String? {
         val genres =
@@ -139,9 +130,8 @@ class HavannaDetailPageScraper {
             CLOCK_TIME_PATTERN.containsMatchIn(line)
 
     /**
-     * When the party starts: an explicit "Start:" / "Party:" line where the page states one, otherwise
-     * the weekday's opening time from the site-wide footer hours ("Saturday 22:00 – open end"), which
-     * every page carries.
+     * When the party starts: an explicit "Start:" / "Party:" line, otherwise the weekday's opening
+     * time from the site-wide footer hours ("Saturday 22:00 – open end").
      */
     private fun parseStartTime(
         body: List<String>,
@@ -156,10 +146,8 @@ class HavannaDetailPageScraper {
         } ?: parseOpeningHours(document)[dayOfWeek]
 
     /**
-     * The venue's opening hours from the footer, as a weekday → opening-time map.
-     *
-     * The footer repeats "Wednesday 20:00 – open end / Friday 22:00 – open end / Saturday 22:00 – open
-     * end" on every page, which is the only start time some nights state at all.
+     * The opening hours from the footer as a weekday-to-time map: "Wednesday 20:00 – open end /
+     * Friday 22:00 – open end / Saturday 22:00 – open end", the only start time some nights state.
      */
     private fun parseOpeningHours(document: Document): Map<DayOfWeek, LocalTime> {
         val footer = document.selectFirst("#footer")?.text() ?: return emptyMap()
@@ -179,11 +167,9 @@ class HavannaDetailPageScraper {
             ?.let { parsePriceValue(it) }
 
     /**
-     * The first day of an announced closure, from a notice block outside the programme.
-     *
-     * A notice without a parseable date is logged rather than acted on: with no start date there is
-     * nothing to suppress from, and treating a bare "Pause" as an open-ended shutdown would silently
-     * erase the venue from the calendar.
+     * The first day of an announced closure, from a notice block outside the programme. A notice
+     * without a parseable date is logged, not acted on: a bare "Pause" as an open-ended shutdown
+     * would erase the venue from the calendar.
      */
     private fun parseClosureDate(
         noticeBlocks: List<Element>,

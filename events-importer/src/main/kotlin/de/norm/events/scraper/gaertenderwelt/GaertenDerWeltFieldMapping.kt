@@ -12,20 +12,16 @@ import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 
-// Field mapping shared by the Gärten der Welt overview and detail scrapers: the park's own
-// category vocabulary and the breadth filter built on it, the status/sold-out badges it writes
-// into titles, and the identity, date and start time all read out of the detail URL. Every case
-// is asserted in GaertenDerWeltFieldMappingTest, which is where the examples live.
+// Field mapping shared by the Gärten der Welt scrapers: the park's category vocabulary and the
+// breadth filter on it, the badges it writes into titles, and the identity, date and start time
+// read out of the detail URL. Every case is asserted in GaertenDerWeltFieldMappingTest.
 
 /**
- * The park's category labels, passed to [mapEventType][de.norm.events.scraper.mapEventType] as
- * venue-specific synonyms. Every label is plural or compound where the shared singular table is
- * not ("Konzerte", "Ausstellungen", "Open-Air Kino"), and the labels the filter checkboxes offer
- * differ in spelling from the ones the listing renders ("Sport & Tanz" vs. "Sport/Tanz"), so both
- * spellings are covered.
- *
- * "Unser Tipp" is the park's editorial highlight tag rather than a format, so it is deliberately
- * absent and falls through to the title-based inference in the scrapers.
+ * The park's category labels, passed to [mapEventType][de.norm.events.scraper.mapEventType].
+ * Every label is plural or compound where the shared table is singular ("Konzerte",
+ * "Ausstellungen", "Open-Air Kino"), and the filter checkboxes spell them differently from the
+ * listing ("Sport & Tanz" vs. "Sport/Tanz"), so both are covered. "Unser Tipp" is an editorial
+ * highlight, not a format, and falls through to title-based inference.
  */
 val GAERTEN_DER_WELT_CATEGORY_SYNONYMS: Map<String, String> =
     mapOf(
@@ -38,22 +34,15 @@ val GAERTEN_DER_WELT_CATEGORY_SYNONYMS: Map<String, String> =
     )
 
 /**
- * The park-activity formats this importer deliberately leaves out, matched as substrings of the
- * raw category text so a row carrying several categories is excluded on any one of them.
- *
- * **This is the breadth decision the source inventory left open, and the one line to change to
- * revisit it.** `/events/veranstaltungen/` is the programme of a *park*, not of a stage: of 41
- * upcoming rows at the time of writing, 28 were guided tours through the themed gardens, craft
- * workshops, yoga and qigong sessions, environmental-education slots and drop-in handicraft
- * afternoons — recurring park activities that would swamp the venue's actual programme and
- * present Gärten der Welt as a tour operator. What remains is what the park *stages*: the Arena
- * concerts, the open-air cinema, the park festivals, the exhibitions and the evening formats it
- * files under no category at all.
- *
- * Following the venue's own labels is the same rule Bar jeder Vernunft set — the house decides
- * what kind of night it is — applied here to decide whether a row is programme at all. A row with
- * no category is kept: the park uses the empty category for one-off evening events (its games
- * night, its quiz show), and dropping uncategorised rows would lose them.
+ * The park-activity formats this importer leaves out, matched as substrings of the raw category
+ * text so a row with several categories is excluded on any one. The breadth decision the source
+ * inventory left open: `/events/veranstaltungen/` is the programme of a park, and of 41 upcoming
+ * rows 28 were guided tours, craft workshops, yoga and qigong, environmental education and
+ * drop-in handicraft afternoons, which would present Gärten der Welt as a tour operator. What
+ * remains is what the park stages: Arena concerts, open-air cinema, park festivals, exhibitions
+ * and the evening formats it files under no category. The house decides what kind of night it
+ * is, the rule Bar jeder Vernunft set. A row with no category is kept: the park uses the empty
+ * category for its games night and quiz show.
  */
 private val PARK_ACTIVITY_PATTERN =
     Regex(
@@ -62,17 +51,15 @@ private val PARK_ACTIVITY_PATTERN =
     )
 
 /**
- * Whether a listing row's raw [category] text is part of the park's staged programme rather than
- * one of its participation formats (see [PARK_ACTIVITY_PATTERN]). A blank or absent category is
- * in scope.
+ * Whether a row's raw [category] text is staged programme rather than a participation format
+ * ([PARK_ACTIVITY_PATTERN]). A blank category is in scope.
  */
 fun isProgrammeCategory(category: String?): Boolean = category.isNullOrBlank() || !PARK_ACTIVITY_PATTERN.containsMatchIn(category)
 
 /**
- * A leading badge the park writes into the event title itself, having no status field of its own:
- * `AUSGEBUCHT:` for a fully booked event, `ABGESAGT:` for a cancelled one, and `NEUER TERMIN!`
- * for one that has already been moved to the date it is now listed under. Word-anchored to the
- * title start with the badge captured, so an act whose name merely contains one of these words is
+ * A leading badge the park writes into the title, having no status field: `AUSGEBUCHT:` for
+ * fully booked, `ABGESAGT:` for cancelled, `NEUER TERMIN!` for one already moved to the listed
+ * date. Word-anchored to the title start, so an act whose name contains one of these is
  * untouched.
  */
 private val TITLE_BADGE_PATTERN =
@@ -93,18 +80,16 @@ private fun titleBadge(title: String): String? =
 fun isSoldOutTitle(title: String): Boolean = titleBadge(title) in SOLD_OUT_BADGES
 
 /**
- * Reads the [EventStatus] a title badge announces, defaulting to [EventStatus.SCHEDULED].
- *
- * A sold-out badge is a flag, not a status (the shared [parseEventStatus] contract), and
- * `NEUER TERMIN!` announces a move that has *already happened* — the event is listed under its
- * new date — so neither changes the status.
+ * Reads the [EventStatus] a title badge announces, defaulting to [EventStatus.SCHEDULED]. A
+ * sold-out badge is a flag, not a status ([parseEventStatus]), and `NEUER TERMIN!` announces a
+ * move that has already happened, so neither changes the status.
  */
 fun gaertenDerWeltStatus(title: String): String = titleBadge(title)?.let { parseEventStatus(it) } ?: EventStatus.SCHEDULED.name
 
 /**
- * Strips the leading [TITLE_BADGE_PATTERN] badge and applies the shared [cleanEventTitle] tidy-up,
- * so the stored title — and the headliner derived from it — is the act's name alone. A title that
- * is nothing but a badge is returned unchanged rather than emptied.
+ * Strips the leading [TITLE_BADGE_PATTERN] and applies [cleanEventTitle], so the stored title
+ * and the headliner derived from it is the act alone. A title that is nothing but a badge is
+ * returned unchanged.
  */
 fun cleanGaertenDerWeltTitle(title: String): String {
     val stripped = title.replaceFirst(TITLE_BADGE_PATTERN, "").trim().ifBlank { title.trim() }
@@ -112,7 +97,7 @@ fun cleanGaertenDerWeltTitle(title: String): String {
 }
 
 /**
- * The date, start time and stable identity a Gärten der Welt detail URL carries in its path.
+ * The date, start time and stable identity a detail URL carries in its path.
  *
  * @property date the day the event starts.
  * @property startTime the time it starts.
@@ -127,25 +112,19 @@ data class GaertenDerWeltEventPath(
 )
 
 /**
- * Reads the date, start time and identity out of a detail URL such as
- * `…/events/veranstaltungen/detail/2026-08-15_1900/agnes-obel/`, or `null` when the path does not
- * carry the stamp (a redesigned routing scheme), leaving the caller to fall back to the listing's
- * German date rendering.
+ * Reads date, start time and identity out of a detail URL such as
+ * `…/events/veranstaltungen/detail/2026-08-15_1900/agnes-obel/`, or `null` when the path has no
+ * stamp, leaving the caller the listing's German date. TYPO3's `events2` routes every event
+ * under a `YYYY-MM-DD_HHmm` stamp from its own start, the most machine-readable date the source
+ * publishes (ADR-007 §"Selector Strategy"): the listing's `08.08.2026` omits the time, the
+ * detail page's `Samstag, 08.08.` the year, and a multi-day run renders as a range
+ * (`01.09.2026 - 01.11.2026`).
  *
- * TYPO3's `events2` extension routes every event under a `YYYY-MM-DD_HHmm` stamp generated from
- * the event's own start, which makes the URL the most machine-readable date and time the source
- * publishes (ADR-007 §"Selector Strategy"). It beats both renderings on the page: the listing's
- * `08.08.2026` omits the time, the detail page's `Samstag, 08.08.` omits the year, and a
- * multi-day run renders as a range (`01.09.2026 - 01.11.2026`) where the stamp gives the start
- * outright.
- *
- * The slug alone is *not* the identity: the park reuses one slug across every date of a recurring
- * event (`fuehrung-durch-die-gaerten-der-welt` runs monthly), so the stamp is what separates them.
- * The one exception is an exhibition, which the park also lists once per open day under one slug
- * and which is one run, not thirteen openings — [collapseExhibitionRuns] folds those on the slug.
- * The flip side is that a rescheduled event changes stamp and therefore `sourceId` — the old row
- * is cleaned up as stale and the new date inserted, which is the correct outcome for what is
- * genuinely a different date.
+ * The slug alone is not the identity: the park reuses one slug across every date of a recurring
+ * event (`fuehrung-durch-die-gaerten-der-welt` runs monthly). The exception is an exhibition,
+ * listed once per open day under one slug and folded by [collapseExhibitionRuns]. A rescheduled
+ * event changes stamp and therefore `sourceId`: the old row is cleaned up as stale, the correct
+ * outcome for a different date.
  */
 fun parseEventPath(sourceUrl: String): GaertenDerWeltEventPath? =
     EVENT_PATH_PATTERN.find(URI(sourceUrl).path)?.destructured?.let { (stamp, time, slug) ->

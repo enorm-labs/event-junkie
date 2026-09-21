@@ -8,23 +8,13 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 
 /**
- * Pure HTML parser for arkaoda Berlin's `?/default/program` listing page.
- *
- * The site is hand-coded PHP whose router lives in the query string, so the whole
- * programme is one server-rendered page of `div.box` blocks — one per **upcoming**
- * event, past events dropping off, which makes the listing short (often only a
- * handful of blocks). Each block holds a flyer thumbnail, a `.excerpt` container with
- * the `<b>` header run (date, weekday, optional `// Konser`), the title in
- * `h6 > a.heading` linking to `?/default/detail/id=<n>`, and a CSS-truncated body.
- *
- * The overview is the **discovery** page: it identifies every event and its detail
- * URL, and supplies every field the venue publishes except the description. Its body
- * text is deliberately *not* read — it is cut off mid-sentence with a `•••
- * weiterlesen…` marker, so storing it would put visibly broken prose in front of
- * users; the untruncated description comes from [ArkaodaDetailPageScraper] instead.
- *
- * There is no pagination: the page has no next-page link and no query parameter that
- * yields more events, so ADR-007's "first page only" rule is satisfied trivially.
+ * Pure HTML parser for arkaoda Berlin's `?/default/program` listing. Hand-coded PHP with the
+ * router in the query string; one server-rendered page of `div.box` blocks, one per upcoming
+ * event, often only a handful. Each block holds a flyer thumbnail, a `.excerpt` with the `<b>`
+ * header run (date, weekday, optional `// Konser`), the title in `h6 > a.heading` linking to
+ * `?/default/detail/id=<n>`, and a CSS-truncated body. The overview is the discovery page and
+ * supplies every field but the description: its body is cut mid-sentence at `•••
+ * weiterlesen…`, so the description comes from [ArkaodaDetailPageScraper]. No pagination.
  *
  * @see ArkaodaFieldMapping for the header/title/type/artist rules shared with the detail page.
  * @see ArkaodaWebsiteImporter for the HTTP fetch orchestrator.
@@ -34,17 +24,17 @@ class ArkaodaOverviewPageScraper {
     private val logger = KotlinLogging.logger {}
 
     /**
-     * Parses all event blocks from the programme listing document.
+     * Parses all event blocks from the listing.
      *
-     * @param baseUrl the URL the document was fetched from, used to resolve the relative detail and flyer links.
-     * @return a list of [ScrapedEvent] instances, one per block.
+     * @param baseUrl the URL the document was fetched from, to resolve relative links.
+     * @return one [ScrapedEvent] per block.
      */
     fun scrape(
         document: Document,
         baseUrl: String
     ): List<ScrapedEvent> {
-        // An event block is a `.box` that actually carries a titled detail link — the
-        // `:has()` guard skips the layout `.box` wrappers the theme also renders.
+        // A `.box` that carries a titled detail link; the `:has()` guard skips the theme's layout `.box`
+        // wrappers.
         val blocks = document.select("#posts-list .box:has(.excerpt h6 a.heading)")
         logger.info { "Found ${blocks.size} event block(s) on the arkaoda programme listing" }
 
@@ -60,14 +50,11 @@ class ArkaodaOverviewPageScraper {
     }
 
     /**
-     * Parses one listing block into a [ScrapedEvent], or `null` when a required field
-     * is missing — a blank title, an unresolvable detail id, or an unparseable date.
-     *
-     * The date is required here rather than deferred to the detail page: the two pages
-     * render the *same* header markup, so a listing block with no date has none on its
-     * detail page either, and letting it through would only be dropped later by
-     * [AbstractTwoPageWebsiteImporter][de.norm.events.scraper.AbstractTwoPageWebsiteImporter]
-     * after a wasted fetch.
+     * Parses one block, or `null` on a blank title, an unresolvable detail id or an unparseable
+     * date. The date is required here: both pages render the same header, so a block with no date
+     * has none on its detail page either, and would only be dropped by
+     * [AbstractTwoPageWebsiteImporter][de.norm.events.scraper.AbstractTwoPageWebsiteImporter] after
+     * a wasted fetch.
      */
     @Suppress("ReturnCount") // Guard clauses for the required title/id/date are clearer than nesting
     private fun parseBlock(
@@ -128,9 +115,8 @@ class ArkaodaOverviewPageScraper {
 
     private companion object {
         /**
-         * The numeric event id in a `?/default/detail/id=<n>` link — the site's own
-         * primary key and the only stable identity an event has (titles and dates are
-         * both edited in place), so it is the basis for [ScrapedEvent.sourceId].
+         * The numeric id in a `?/default/detail/id=<n>` link, the site's primary key and the only stable
+         * identity (titles and dates are edited in place), the basis for [ScrapedEvent.sourceId].
          */
         private val EVENT_ID_PATTERN = Regex("""\bid=(\d+)""")
 

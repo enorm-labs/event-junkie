@@ -14,10 +14,8 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeParseException
 
 /**
- * Pure HTML parser for one page of Urban Spree's `/program/` listing.
- *
- * The listing is server-rendered by MODX (pdoTools' `pdoPage`) into a `#pdopage` grid of
- * `a.card` anchors, nine per page. Each card is self-describing:
+ * Pure HTML parser for one page of Urban Spree's `/program/` listing, server-rendered by MODX
+ * (pdoTools' `pdoPage`) into a `#pdopage` grid of `a.card` anchors, nine per page:
  *
  * | Field       | Source                                                          |
  * |-------------|-----------------------------------------------------------------|
@@ -28,17 +26,12 @@ import java.time.format.DateTimeParseException
  * | image       | `data-imgfeat` — the original upload, not a thumbnail           |
  * | detail page | `href` to `/program/<category>/<slug>.html`                     |
  *
- * The card title is cut off with an ellipsis, so the overview cannot be the primary
- * source: [UrbanSpreeDetailPageScraper] supplies the untouched title, the promoter and
- * the description, and [UrbanSpreeWebsiteImporter] merges the two. What the overview owns
- * outright is the **machine-readable date** (the detail page renders it only as English
- * prose) and the full-size poster path.
- *
- * URLs are read through Jsoup's `abs:` prefix rather than the shared
- * [resolveUrl][de.norm.events.scraper.resolveUrl]: the page's hrefs are relative
- * (`program/concerts/…`) and rely on a `<base href="https://www.urbanspree.com/">` tag,
- * which Jsoup honours when resolving `abs:`. Resolving them against the fetched page URL
- * instead would double the `program/` segment on every page past the first.
+ * The card title is cut with an ellipsis, so [UrbanSpreeDetailPageScraper] supplies the title,
+ * promoter and description; the overview owns the machine-readable date and the full-size
+ * poster path. URLs go through Jsoup's `abs:` rather than
+ * [resolveUrl][de.norm.events.scraper.resolveUrl]: the hrefs are relative
+ * (`program/concerts/…`) against a `<base href="https://www.urbanspree.com/">` tag, and resolving
+ * against the page URL would double the `program/` segment past page one.
  *
  * @see UrbanSpreeDetailPageScraper for the primary per-event data source.
  * @see UrbanSpreeWebsiteImporter for the paginated fetch orchestrator.
@@ -47,15 +40,12 @@ class UrbanSpreeOverviewPageScraper {
     private val logger = KotlinLogging.logger {}
 
     /**
-     * Parses every event card on one listing page, in page order (the venue sorts
-     * **descending** by date, which [UrbanSpreeWebsiteImporter] relies on to know when to
-     * stop paginating).
+     * Parses every card on one listing page, in page order; the venue sorts descending by date,
+     * which [UrbanSpreeWebsiteImporter] relies on to stop. Cards without a parseable
+     * `data-dateStart` or detail link are skipped with a warning.
      *
-     * Cards without a parseable `data-dateStart` or detail link are skipped with a
-     * warning rather than persisted, and a single malformed card never aborts the page.
-     *
-     * @param baseUrl the URL the document was fetched from, used only for logging — link
-     *   resolution goes through the page's own `<base>` tag.
+     * @param baseUrl the URL the document was fetched from, for logging only; links resolve
+     * through the page's `<base>`.
      * @return one [ScrapedEvent] per parseable card.
      */
     fun scrape(
@@ -95,8 +85,8 @@ class UrbanSpreeOverviewPageScraper {
 
         val priceText = card.textAt("li.price")
         val price = parsePriceValue(priceText)
-        // Same billing-note split the detail page applies, so the fallback title stays clean
-        // when a detail fetch fails. It rarely fires here — the ellipsis usually cuts the note off.
+        // The same billing-note split as the detail page, so the fallback title stays clean; the
+        // ellipsis usually cuts the note off.
         val (headline, supportNote) = splitUrbanSpreeBilling(rawTitle)
         return ScrapedEvent(
             // The card title is CSS-truncated ("… + Nico Amara…"); the detail page overrides it.
@@ -116,9 +106,8 @@ class UrbanSpreeOverviewPageScraper {
     }
 
     /**
-     * Parses the card's `YYYY-MM-DD HH:mm:ss` start stamp — an ISO local date-time with a
-     * space instead of the `T` separator. Returns `null` for a blank or malformed value so
-     * the caller can skip the card.
+     * Parses the card's `YYYY-MM-DD HH:mm:ss` stamp, ISO with a space for the `T`. `null` when
+     * blank or malformed.
      */
     private fun parseCardDateTime(raw: String): LocalDateTime? {
         if (raw.isBlank()) return null
@@ -131,9 +120,7 @@ class UrbanSpreeOverviewPageScraper {
 
     private companion object {
         /**
-         * The event cards inside the `pdoPage` results wrapper. Scoped to `#pdopage` so the
-         * selector cannot also match the "upcoming events" slider that the venue renders with
-         * identical card markup elsewhere on the site.
+         * The cards inside `#pdopage`, so the "upcoming events" slider's identical markup is not matched.
          */
         private const val EVENT_CARD_SELECTOR = "#pdopage a.card[data-dateStart]"
 
@@ -146,12 +133,10 @@ class UrbanSpreeOverviewPageScraper {
 }
 
 /**
- * Derives the stable per-event identity from the detail URL's path — the category and slug MODX
- * assigns the resource, e.g.
- * `…/program/concerts/twin-noir-hinfort-urban-spree,-berlin.html` → `concerts/twin-noir-hinfort-urban-spree,-berlin`.
- *
- * Taken from the canonical URL rather than the (truncated, editable) title, so the `sourceId`
- * survives a title edit. Both pages build the identity, and they must agree on it.
+ * The stable identity from the detail URL's path, the category and slug MODX assigns:
+ * `…/program/concerts/twin-noir-hinfort-urban-spree,-berlin.html` to
+ * `concerts/twin-noir-hinfort-urban-spree,-berlin`. From the URL rather than the truncated,
+ * editable title, so the `sourceId` survives an edit; both pages must agree on it.
  */
 internal fun urbanSpreeEventSlug(sourceUrl: String): String =
     URI(sourceUrl)

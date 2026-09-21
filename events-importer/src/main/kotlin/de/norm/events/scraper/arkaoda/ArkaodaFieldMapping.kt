@@ -9,43 +9,31 @@ import de.norm.events.scraper.mapEventType
 import de.norm.events.scraper.splitSegmentOnConjunctions
 import de.norm.events.scraper.stripArtistSuffix
 
-// Field mapping shared by the two arkaoda scrapers. The listing and the detail page
-// render the *same* event block markup (a `<b>` header run, an `<h6>` title and a
-// `<p>` body), so every rule below is used by both — keeping them here is what stops
-// ArkaodaOverviewPageScraper and ArkaodaDetailPageScraper from drifting apart. The
-// header run itself is parsed in ArkaodaHeader.kt. Every case is asserted in
-// ArkaodaFieldMappingTest, which is where the examples live.
+// Field mapping shared by the two arkaoda scrapers, which render the same event block markup (a
+// `<b>` header run, an `<h6>` title, a `<p>` body); keeping the rules here stops the two
+// drifting. The header run is parsed in ArkaodaHeader.kt. Every case is asserted in
+// ArkaodaFieldMappingTest.
 
 /**
- * Cleans a raw arkaoda title for storage: undoes the site's leaked PHP escapes
- * ([unescapeAddslashes]) and strips the shared trailing title noise
- * ([cleanEventTitle]).
+ * Cleans a raw title for storage: [unescapeAddslashes], then [cleanEventTitle].
  */
 fun arkaodaTitle(rawTitle: String): String = cleanEventTitle(unescapeAddslashes(rawTitle))
 
 /**
- * Undoes PHP `addslashes` escaping that leaks into arkaoda's rendered markup —
- * `Post Clients & Friends: 7\" Vinyl Release Party` is stored escaped and echoed
- * into the page verbatim, so the backslashes reach the scraper and would otherwise
- * be persisted as part of the title.
- *
- * Only the three sequences `addslashes` produces are undone (`\'`, `\"`, `\\`), so a
- * backslash that is genuinely part of a name is left alone.
+ * Undoes PHP `addslashes` escaping that leaks into the markup: `Post Clients & Friends: 7\"
+ * Vinyl Release Party` is echoed escaped. Only `\'`, `\"` and `\\` are undone, so a backslash
+ * that is part of a name is left alone.
  */
 fun unescapeAddslashes(text: String): String = text.replace(ADDSLASHES_ESCAPE, "$1")
 
 /**
- * Resolves the event type from the venue's own [category] label, falling back to the
- * [title] when there is none.
- *
- * `Konser` (Turkish for concert — arkaoda is the Berlin outpost of the Istanbul
- * venue) is the **only** label the site ever emits, so its absence is itself a
- * signal: an unlabelled night is a DJ/club night, a vinyl market, a supper club or a
- * release party, never a plain concert. The fallback is therefore
- * [inferUnmarkedTitleType] — a keyword type or `OTHER` — and deliberately *not*
- * [inferConcertVenueType][de.norm.events.scraper.inferConcertVenueType]: defaulting
- * an unlabelled night to `CONCERT` would both mislabel it and mint its event name as
- * a headliner (see [arkaodaArtists]).
+ * Resolves the event type from the venue's [category] label, falling back to the [title].
+ * `Konser` (Turkish for concert; arkaoda is the Berlin outpost of the Istanbul venue) is the
+ * only label the site emits, so its absence is a signal: an unlabelled night is a DJ night, a
+ * vinyl market, a supper club or a release party, never a plain concert. Hence
+ * [inferUnmarkedTitleType], a keyword type or `OTHER`, and not
+ * [inferConcertVenueType][de.norm.events.scraper.inferConcertVenueType], which would mint the
+ * event name as a headliner ([arkaodaArtists]).
  */
 fun arkaodaEventType(
     category: String?,
@@ -53,13 +41,10 @@ fun arkaodaEventType(
 ): String = mapEventType(category, KONSER_SYNONYM) ?: inferUnmarkedTitleType(title)
 
 /**
- * Extracts the promoter from a `"<promoter> pres./presents[:|-] <event>"` title —
- * the one structured party the venue names anywhere in its markup (`"pre:sense pres.
- * Volpe (Live)"` → `pre:sense`, `"MILK ME presents: Laura Krieg + Schulverweis"` →
- * `MILK ME`).
- *
- * Returns an empty list when the title carries no such prefix. Applied to every
- * event regardless of type: the label books both concerts and club nights.
+ * Extracts the promoter from a `"<promoter> pres./presents[:|-] <event>"` title, the one
+ * structured party the venue names (`"pre:sense pres. Volpe (Live)"` to `pre:sense`, `"MILK ME
+ * presents: Laura Krieg + Schulverweis"` to `MILK ME`). Empty without such a prefix; applied to
+ * every type, since the label books concerts and club nights alike.
  */
 fun arkaodaPromoters(title: String): List<String> =
     listOfNotNull(
@@ -72,25 +57,17 @@ fun arkaodaPromoters(title: String): List<String> =
     )
 
 /**
- * Extracts the ticket-shop link from an event's description [lines].
- *
- * The venue runs no ticket integration: when a show sells advance tickets it pastes
- * the shop URL — in practice a Resident Advisor event link — into the prose under a
- * `Tickets:` label:
+ * Extracts the ticket-shop link from the description [lines]. The venue pastes the shop URL, in
+ * practice a Resident Advisor link, into the prose under a `Tickets:` label:
  * ```
  * Tickets:
  * https://ra.co/events/2448980
  * Door: Limited Tickets at Door
  * ```
- * A URL is unambiguous once labelled, so the first absolute link whose own line or
- * immediately preceding line mentions "ticket" is taken. Requiring the label is what
- * keeps an artist's Bandcamp, Instagram or press link — which descriptions also carry —
- * out of the ticket field; a link the venue pasted without one is skipped rather than
- * guessed at.
- *
- * Prices are deliberately *not* read from the same prose ("€10 Entry on the door",
- * "Door: Limited Tickets at Door"): unlike a URL they have no reliable delimiter and a
- * mis-parse would show users the wrong price, so those fields stay null.
+ * The first absolute link whose own line or the preceding line mentions "ticket" is taken;
+ * requiring the label keeps an artist's Bandcamp, Instagram or press link out, and an unlabelled
+ * link is skipped. Prices are not read from the same prose ("€10 Entry on the door", "Door:
+ * Limited Tickets at Door"): no reliable delimiter, and a mis-parse shows the wrong price.
  */
 fun arkaodaTicketUrl(lines: List<String>): String? =
     lines
@@ -104,30 +81,24 @@ fun arkaodaTicketUrl(lines: List<String>): String? =
         }?.trimEnd('.', ',', ')')
 
 /**
- * Derives the billed acts from a `Konser`-labelled event's [title], the only artist source on the
- * site — there is no lineup markup, no JSON-LD and no `og:` act field anywhere.
+ * Derives the billed acts from a `Konser`-labelled event's [title], the only artist source on
+ * the site. Narrow, because titles are dominated by series, label and collaboration names
+ * (`"Osàre! Editions x arkaoda"`, `"Alonas FFS Fundraiser"`) and a wrongly minted artist is a
+ * permanent row:
+ * 1. Only `CONCERT` events qualify; an unlabelled night's title is an event name
+ * ([arkaodaEventType]).
+ * 2. The framing comes off first: a `"<promoter> pres."` prefix ([PRESENTS_PREFIX]), a
+ * `"<series>: "` prefix ([SERIES_PREFIX]), a trailing `" at Arkaoda"`.
+ * 3. A title that still reads as a compound event label yields nothing
+ * ([isCompoundEventLabel]): a spaced dash, an ` x ` collaboration marker, or a format word
+ * (`release`, `takeover`, `fundraiser`). This drops the real acts out of `"Grumpy Pieces
+ * release; Harmonious Thelonious (Live)"` rather than risk minting `"Remise Takeover"`.
+ * 4. The rest splits on commas and space-padded `+` / `/` ([ACT_SEPARATOR], the padding keeping
+ * `"(PL/USA)"` intact), then per conjunction boundary via [splitSegmentOnConjunctions].
  *
- * The rule is deliberately narrow, because arkaoda titles are dominated by series, label and
- * collaboration names rather than billings (`"Osàre! Editions x arkaoda"`, `"Alonas FFS Fundraiser"`),
- * and a wrongly-minted artist becomes a permanent row in the artist table:
- * 1. **Only `CONCERT` events qualify.** The venue's own `Konser` label is what confirms the title
- *    bills live acts; an unlabelled night's title is an event name ([arkaodaEventType]).
- * 2. **The framing is removed first** — a `"<promoter> pres."` prefix ([PRESENTS_PREFIX]; the
- *    promoter is captured separately by [arkaodaPromoters]), a `"<series>: "` prefix
- *    ([SERIES_PREFIX]), and a trailing `" at Arkaoda"` venue tail.
- * 3. **A title that still reads as a compound event label yields nothing**
- *    ([isCompoundEventLabel]) — a spaced dash, an ` x ` collaboration marker, or a format word
- *    (`release`, `takeover`, `fundraiser`). This is the conservative half of the rule: it drops the
- *    real acts out of `"Grumpy Pieces release; Harmonious Thelonious (Live)"` rather than risk
- *    minting `"Remise Takeover"` as a band.
- * 4. **What remains is split into acts** on commas and space-padded `+` / `/` ([ACT_SEPARATOR] — the
- *    padding keeps a `"(PL/USA)"` country tag intact), then per conjunction boundary via the shared
- *    [splitSegmentOnConjunctions], so a backing-band tail stays attached to its act.
- *
- * Each act is then stripped of a trailing country tag ([COUNTRY_TAG_SUFFIX]) and the shared
- * tour/live/format tails ([stripArtistSuffix]), and dropped if it is not a performer
- * ([isNonArtistName]). All survivors are billed `HEADLINER` in title order: arkaoda publishes no
- * billing hierarchy, so promoting the first would invent one.
+ * Each act loses a trailing country tag ([COUNTRY_TAG_SUFFIX]) and the shared tails
+ * ([stripArtistSuffix]), and is dropped if [isNonArtistName]. All survivors are `HEADLINER` in
+ * title order: arkaoda publishes no billing hierarchy.
  */
 @Suppress("ReturnCount") // Guard clauses for the non-concert and compound-label cases are clearer than nesting
 fun arkaodaArtists(
@@ -155,8 +126,7 @@ private fun stripBillingFraming(title: String): String =
         .trim()
 
 /**
- * True when a title still reads as a compound *event* label rather than a clean act
- * billing — see [arkaodaArtists] step 3 for why this rejects rather than salvages.
+ * True when a title still reads as a compound event label ([arkaodaArtists] step 3).
  */
 private fun isCompoundEventLabel(billing: String): Boolean =
     RESIDUAL_DASH.containsMatchIn(billing) ||
@@ -170,23 +140,17 @@ private val KONSER_SYNONYM: Map<String, String> = mapOf("konser" to EventType.CO
 private val ADDSLASHES_ESCAPE = Regex("""\\([\\'"])""")
 
 /**
- * A leading `"<promoter> pres./presents/präsentiert[:|-] "` prefix, capturing the
- * promoter. The marker accepts the abbreviated `pres.` spelling the venue favours and
- * the German `präsentiert`, and an optional `:` / dash before the event name.
- *
- * The trailing `\s+` is what keeps it safe: a name merely *starting* with those
- * letters ("… Presley Tribute") has no whitespace after the marker and cannot match,
- * and the `\s+` before it means the marker must be its own word.
+ * A leading `"<promoter> pres./presents/präsentiert[:|-] "` prefix, capturing the promoter. The
+ * trailing `\s+` is the guard: "… Presley Tribute" has no whitespace after the marker, and the
+ * `\s+` before it makes the marker its own word.
  */
 private val PRESENTS_PREFIX =
     Regex("""^(\S.*?)\s+pr[eä]s(?:ent(?:s|ed|iert|ieren)?)?\.?\s*[-–—:]?\s+(?=\S)""", RegexOption.IGNORE_CASE)
 
 /**
- * A leading `"<series>: "` prefix, whose remainder is the billing
- * (`"Signal To Noise: Vicente Yáñez, …"`, `"Miaan Nights: 10or Møsaic"`).
- *
- * The required whitespace after the colon is the guard that protects a colon *inside*
- * a name — `"pre:sense"` has none, so it is never cut down to `"sense"`.
+ * A leading `"<series>: "` prefix whose remainder is the billing (`"Signal To Noise: Vicente
+ * Yáñez, …"`, `"Miaan Nights: 10or Møsaic"`). The required whitespace after the colon protects a
+ * colon inside a name: `"pre:sense"` is never cut to `"sense"`.
  */
 private val SERIES_PREFIX = Regex("""^[^:]*\S:\s+""")
 
@@ -210,16 +174,13 @@ private val EVENT_FORMAT_WORD =
     Regex("""\b(?:release|takeover|fundraiser|market)\b""", RegexOption.IGNORE_CASE)
 
 /**
- * Act separators in a billing: a comma (which the venue writes unpadded) and a
- * **space-padded** `+` or `/`. The padding requirement is what keeps a country tag
- * intact — the `/` in `"Marta Warelis (PL/USA)"` is not a separator.
+ * Act separators: an unpadded comma and a space-padded `+` or `/`; the padding keeps the `/`
+ * in `"Marta Warelis (PL/USA)"` from splitting.
  */
 private val ACT_SEPARATOR = Regex("""\s*,\s*|\s+[+/]\s+""")
 
 /**
- * A trailing origin tag of uppercase country/region codes — `"(PL/USA)"`,
- * `"(PL/DE)"`. Anchored to two- and three-letter all-caps codes, so a parenthesized
- * alias (`"Sickboyrari (Black Kray)"`) or a format note (`"(Thailand- Live)"`) is
- * left untouched.
+ * A trailing origin tag of uppercase codes (`"(PL/USA)"`, `"(PL/DE)"`), anchored to two- and
+ * three-letter all-caps, so `"Sickboyrari (Black Kray)"` and `"(Thailand- Live)"` are untouched.
  */
 private val COUNTRY_TAG_SUFFIX = Regex("""\s*\([A-Z]{2,3}(?:\s*[/,]\s*[A-Z]{2,3})*\)\s*$""")

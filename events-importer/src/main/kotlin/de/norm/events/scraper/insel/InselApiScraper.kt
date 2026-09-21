@@ -24,49 +24,40 @@ import java.time.ZonedDateTime
 import java.time.format.DateTimeParseException
 
 /**
- * Pure parser for Kulturhaus Insel Berlin's programme, sourced from a Gatsby **static-query**
- * artefact backed by DatoCMS.
+ * Pure parser for Kulturhaus Insel Berlin's programme from a Gatsby static-query artefact
+ * backed by DatoCMS. Unlike Zenner the events are not in the page's own `page-data.json` but
+ * under `/page-data/sq/d/<queryHash>.json`; the hash is not guessable, so [InselWebsiteImporter]
+ * reads the candidates from the page's `staticQueryHashes` and hands each here, and [scrape]
+ * returns `null` for one that is not the events artefact.
  *
- * The homepage *is* the programme, but unlike Zenner its events are not in its own `page-data.json`
- * — they come from a shared static query under `/page-data/sq/d/<queryHash>.json`. The hash is not
- * guessable, so [InselWebsiteImporter] reads the candidates from the page's `staticQueryHashes` and
- * hands each artefact here; [scrape] returns `null` for one that is not the events artefact.
+ * Each node carries a `name`, an offset-stamped `time`, a `wholeDay` flag, an HTML `description`
+ * and a DatoCMS image. Three properties shape the parsing: the artefact holds the whole archive,
+ * so past dates are dropped here; the CMS `eventType` field is not a category (every current
+ * event has its own name copied into it), so it is read only for the closed-function marker
+ * ([isClosedFunction]); and `time` is the first time of the evening, the doors time where the
+ * description bills both, so `Einlass:` / `Beginn:` win and `time` supplies the start only when
+ * neither is written ([parseTimes]).
  *
- * Each node carries a `name`, an offset-stamped `time`, a `wholeDay` flag, an HTML `description` and
- * a DatoCMS image. Three properties of that payload shape the parsing:
- *  1. **The artefact holds the venue's whole archive** — hundreds of past events for a few dozen
- *     upcoming — so past dates are dropped here rather than minting throwaways on every run.
- *  2. **The CMS `eventType` field is not a category.** It once held one ("Konzert"); every current
- *     event has the event's own name copied into it, so it is read only for the closed-function
- *     marker ([isClosedFunction]) and never mapped to an [EventType].
- *  3. **`time` is the first time of the evening, not reliably the start** — the *doors* time where
- *     the description bills both. So `Einlass:` / `Beginn:` win, and `time` supplies the start only
- *     when neither is written ([parseTimes]).
+ * The description is the venue's data sheet, mined for those times, the promoter, the support
+ * billing and free entry. Its ticket link is identified by anchor text (`>> TICKETS GIBT ES HIER
+ * <<`) rather than host, keeping the embedded YouTube and Bandcamp links out of
+ * [ScrapedEvent.ticketUrl]. Those lines are dropped from the stored description
+ * ([METADATA_LINE_PATTERNS]), also because the date among them is sometimes months off, which
+ * is why the date is only taken from `time`.
  *
- * **The description is the venue's real data sheet**, mined for four things the JSON has no field
- * for: those times, the promoter, the support billing and free entry. Its ticket link is identified
- * by **anchor text** rather than host — the venue writes `>> TICKETS GIBT ES HIER <<` — which keeps
- * the YouTube and Bandcamp links it also embeds out of [ScrapedEvent.ticketUrl]. Those lines are then
- * dropped from the stored description ([METADATA_LINE_PATTERNS]), both to avoid duplicating the
- * fields and because the date among them is sometimes months off the real one — which is why the
- * date is only ever taken from `time`.
- *
- * **The title is trusted as the act**: a concert house whose titles are usually just the artist's
- * name, so the type defaults to `CONCERT` and the title is minted as the headliner. Two frames are
- * unpacked first so an event *name* is not stored as a performer — `… w/ <acts>` yields the acts
- * after the marker, a `•`-separated title its first segment. A trailing origin tag ("pinkpool (Bln)")
- * is stripped from the act ([ORIGIN_TAG_PATTERN]): it is provenance, and leaving it on would stop the
- * act resolving onto another venue's booking of the same artist, though the stored *title* keeps the
- * venue's spelling. A closed private function is imported so the calendar shows the venue shut, but
- * typed `OTHER` with no artists. A sold-out show is marked only in prose — a `!!SOLD OUT!!` prefix or
- * an "AUSVERKAUFT" line — and the prefix is stripped so it stays out of the `sourceId` and the row
- * survives the venue removing it.
+ * The title is trusted as the act: a concert house whose titles are usually the artist's name,
+ * so `CONCERT` by default and the title minted as headliner. Two frames are unpacked first: `…
+ * w/ <acts>` yields the acts after the marker, a `•`-separated title its first segment. A
+ * trailing origin tag ("pinkpool (Bln)") is stripped from the act ([ORIGIN_TAG_PATTERN]) so it
+ * resolves onto another venue's booking; the stored title keeps the venue's spelling. A closed
+ * private function is imported as `OTHER` with no artists, so the calendar shows the venue shut.
+ * Sold out is prose only, a `!!SOLD OUT!!` prefix or an "AUSVERKAUFT" line, and the prefix is
+ * stripped so it stays out of the `sourceId`.
  *
  * The venue writes "+ support pinkpool" beside "Support: Alles Karo", so only a colon or a
- * line-leading `support` marker separates a billing from prose reliably. A handful of titles are
- * event names the `CONCERT` default then mints as artists — a club night, a themed programme, a city
- * tail the suffix rules miss. None carries a structural cue distinguishing it from the titles that
- * really are act names, so the default is kept rather than suppressing the whole programme's lineup.
+ * line-leading `support` separates a billing from prose. A handful of titles are event names the
+ * `CONCERT` default mints as artists (a club night, a themed programme, a city tail); none
+ * carries a structural cue, so the default is kept.
  *
  * @see INSEL_LIMITATIONS for what the venue does not publish.
  * @see InselWebsiteImporter for the HTTP fetch orchestrator and the artefact discovery.
@@ -79,8 +70,7 @@ class InselApiScraper(
 ) {
     private val logger = KotlinLogging.logger {}
 
-    // Unknown fields are ignored (Jackson 3 default), so the payload's presentation-only extras
-    // (srcSets, aspect ratios, galleries) deserialize away silently.
+    // Unknown fields are ignored, so srcSets, aspect ratios and galleries deserialize away.
     private val jsonMapper: JsonMapper =
         JsonMapper
             .builder()
@@ -88,14 +78,13 @@ class InselApiScraper(
             .build()
 
     /**
-     * Parses every upcoming event from a Gatsby static-query artefact.
+     * Parses every upcoming event from a static-query artefact.
      *
-     * @param json the raw JSON body of one `/page-data/sq/d/<hash>.json` artefact.
-     * @param sourceUrl the venue's programme page, stored on every event — Insel has no per-event
-     *   pages, so this is the canonical link back to the source.
-     * @return upcoming [ScrapedEvent]s (today onward) in listing order; an empty list when this
-     *   *is* the events artefact but nothing is upcoming; and **`null` when it is a different
-     *   static query altogether**, so the caller knows to try the next candidate.
+     * @param json the raw body of one `/page-data/sq/d/<hash>.json` artefact.
+     * @param sourceUrl the programme page, stored on every event; Insel has no per-event pages.
+     * @return upcoming [ScrapedEvent]s in listing order; empty when this is the events artefact
+     * with nothing upcoming; `null` when it is a different static query, so the caller tries the
+     * next candidate.
      */
     @Suppress("ReturnCount") // Guard clauses for the unparseable body and the wrong artefact are clearer than nesting.
     fun scrape(
@@ -122,12 +111,9 @@ class InselApiScraper(
     }
 
     /**
-     * The artefact's `data.allDatoCmsEvent.edges` array, or `null` when this is a different static
-     * query.
-     *
-     * A sibling query publishes the *same* `allDatoCmsEvent` collection projected down to a bare
-     * date and category, so the presence of the collection alone is not enough: the array is only
-     * accepted once its first node carries a `name`, which is the field this parser is built on.
+     * The artefact's `data.allDatoCmsEvent.edges`, or `null` when this is a different query. A
+     * sibling query publishes the same collection projected to a bare date and category, so the
+     * array is accepted only once its first node carries a `name`.
      */
     @Suppress(
         "TooGenericExceptionCaught", // A malformed payload must degrade to null, never abort the import.
@@ -195,12 +181,9 @@ class InselApiScraper(
     }
 
     /**
-     * The event's doors and start times.
-     *
-     * The description's own labels win: `Einlass` is the doors time and `Beginn` the start, in
-     * either the `19.00 Uhr` or the `19 Uhr` spelling the venue alternates between. When it bills
-     * neither, the node's [fallbackStart] — the wall-clock time of the `time` instant — is the
-     * start. An all-day entry has no meaningful time at all and gets none.
+     * Doors and start: the description's `Einlass` and `Beginn` win, in the `19.00 Uhr` or `19 Uhr`
+     * spelling; otherwise [fallbackStart], the wall-clock time of `time`, is the start. An all-day
+     * entry gets none.
      */
     private fun parseTimes(
         lines: List<String>,
@@ -214,10 +197,8 @@ class InselApiScraper(
     }
 
     /**
-     * The event's lineup, keyed off its resolved type.
-     *
-     * A concert's title is the act (see the class KDoc's title frames); everything else — a
-     * closed function, a poetry slam — bills no performer this parser can trust, so it gets none.
+     * The lineup by resolved type: a concert's title is the act; a closed function or a poetry slam
+     * bills no performer this parser can trust.
      */
     private fun buildArtists(
         title: String,
@@ -234,15 +215,11 @@ class InselApiScraper(
     }
 
     /**
-     * The headliners billed by a concert title, after unpacking the `•`-separated title frame
-     * whose first segment is the act. Origin tags are stripped and non-artists dropped.
-     *
-     * The venue's other frame — a `… w/ <acts>` guest billing — used to be unpacked here too.
-     * The rule now lives in the shared [headlinersFromTitle] and is requested with
-     * `unpackWithFrame`; it is opt-in because `w/` joins collaborators at some venues rather than
-     * framing a guest (see that parameter's KDoc). Insel is unambiguous — its `w/` titles always
-     * name the night first — so it asks for the unpacking. The bullet split stays local and runs
-     * first: `w/` never appears after a bullet in this feed.
+     * The headliners of a concert title, after unpacking the `•`-separated frame whose first segment
+     * is the act; origin tags stripped, non-artists dropped. The `… w/ <acts>` frame now lives in the
+     * shared [headlinersFromTitle] and is requested with `unpackWithFrame`, opt-in because `w/` joins
+     * collaborators at some venues; Insel's `w/` titles always name the night first. The bullet split
+     * runs first: `w/` never appears after a bullet in this feed.
      */
     private fun headliners(title: String): List<ScrapedArtist> =
         headlinersFromTitle(title.substringBefore(BULLET_SEPARATOR).trim(), unpackWithFrame = true)
@@ -283,8 +260,8 @@ private const val MAX_METADATA_LINE = 80
 private const val PROMOTER_LINE_LIMIT = 3
 
 /**
- * The description's prose, with the lines whose contents are stored in dedicated fields removed
- * — including the bare act line, which most announcements repeat verbatim from the title.
+ * The description's prose minus the lines stored in dedicated fields, including the bare act line
+ * most announcements repeat from the title.
  */
 private fun prose(
     lines: List<String>,
@@ -316,12 +293,9 @@ private fun promoter(lines: List<String>): String? =
         ?.takeIf { it.isNotBlank() }
 
 /**
- * Splits an event's HTML description into trimmed, non-blank text lines.
- *
- * The CMS stores whatever the venue pasted in — Facebook's `<div class="xdj266r …">` soup for some
- * events, plain `<p>`/`<br>` for others — so the block and break tags are turned into line breaks
- * before the tags are dropped. Working line by line is what lets a one-line billing ("Einlass 19.00
- * Uhr") be told apart from the prose around it.
+ * Splits an HTML description into trimmed, non-blank lines. The CMS holds whatever the venue
+ * pasted, Facebook's `<div class="xdj266r …">` soup or plain `<p>`/`<br>`, so block and break tags
+ * become line breaks first. Line by line is what tells "Einlass 19.00 Uhr" from the prose.
  */
 private fun descriptionLines(html: String?): List<String> {
     val source = html.blankToNull() ?: return emptyList()
@@ -356,9 +330,9 @@ private fun toLocalTime(match: MatchResult): LocalTime? =
     runCatching { LocalTime.of(match.groupValues[1].toInt(), match.groupValues[2].ifBlank { "0" }.toInt()) }.getOrNull()
 
 /**
- * The support billing and the acts after it — `Support: Alles Karo`, `+ support: Karwendel`, and the
- * run-together `Marlin BeachSupport: Mellow Ma`. The colon is required: the venue also writes
- * "+ support pinkpool" without one, but a bare `support` mid-prose is far too common to key on.
+ * The support billing and the acts after it: `Support: Alles Karo`, `+ support: Karwendel`, the
+ * run-together `Marlin BeachSupport: Mellow Ma`. The colon is required: a bare `support`
+ * mid-prose is too common.
  */
 private val SUPPORT_PATTERN = Regex("""\+?\s*supports?\s*:\s*(.+)$""", RegexOption.IGNORE_CASE)
 
@@ -366,19 +340,18 @@ private val SUPPORT_PATTERN = Regex("""\+?\s*supports?\s*:\s*(.+)$""", RegexOpti
 private val SUPPORT_SEPARATOR = Regex("""\s*[,+&]\s*|\s+und\s+""", RegexOption.IGNORE_CASE)
 
 /**
- * The promoter credit opening a description — `ATOK prs.`, `All Rooms prs.`, `Kunst&Krawall prs.`,
- * `Das forgotten female* composers e.V. präsentiert:`. The name is captured non-greedily and may not
- * span a line, so a run-together `Kulturalarm prs.Sameen Qasim` still yields just the promoter.
+ * The promoter credit opening a description: `ATOK prs.`, `All Rooms prs.`, `Kunst&Krawall
+ * prs.`, `Das forgotten female* composers e.V. präsentiert:`. Captured non-greedily within one
+ * line, so `Kulturalarm prs.Sameen Qasim` yields just the promoter.
  */
 private val PROMOTER_PATTERN =
     Regex("""^(.{2,60}?)\s*(?:prs\.|pres\.|präsentiert)\s*:?(?:\s|$)""", RegexOption.IGNORE_CASE)
 
 /**
- * A trailing provenance tag on an act name — a two-or-three-letter country code or the venue's
- * `(Bln)` shorthand for Berlin. It marks where an act is from, not what it is called, so leaving it
- * on would keep "Internal Bleeding (US)" from resolving to the same artist row as another venue's
- * "Internal Bleeding". Anchored to the end and limited to short, letter-only tags, so a
- * parenthesised alias ("Sickboyrari (Black Kray)") survives.
+ * A trailing provenance tag on an act, a two-or-three-letter country code or the venue's `(Bln)`
+ * for Berlin; leaving it on would keep "Internal Bleeding (US)" from resolving to another
+ * venue's "Internal Bleeding". Anchored to the end and limited to short letter-only tags, so
+ * "Sickboyrari (Black Kray)" survives.
  */
 private val ORIGIN_TAG_PATTERN = Regex("""\s*\(\s*(?:\p{L}{2,3}|Bln)\s*\)\s*$""", RegexOption.IGNORE_CASE)
 
@@ -393,9 +366,8 @@ private val CLOSED_FUNCTION_PATTERN =
     Regex("""geschlossene\s+(?:gesellschaft|veranstaltung)|firmen-?event""", RegexOption.IGNORE_CASE)
 
 /**
- * True when this entry marks a day the venue is closed for a private function rather than a public
- * event. Checked against both the title and the CMS `eventType` field, because the venue writes the
- * marker in one or the other.
+ * True when this entry marks a day closed for a private function, checked against both the title
+ * and the CMS `eventType` field.
  */
 private fun isClosedFunction(
     title: String,
@@ -403,10 +375,9 @@ private fun isClosedFunction(
 ): Boolean = CLOSED_FUNCTION_PATTERN.containsMatchIn(title) || cmsType?.let { CLOSED_FUNCTION_PATTERN.containsMatchIn(it) } == true
 
 /**
- * Description lines whose content is stored in a dedicated field and would only be duplicated in the
- * description: the promoter credit, the doors and start times, the free-entry notice, the support
- * billing, the ticket call to action, and the German weekday-and-date line — which is not merely
- * redundant but occasionally *stale*, printing a date months away from the event's real one.
+ * Description lines stored in a dedicated field: the promoter credit, the doors and start times,
+ * the free-entry notice, the support billing, the ticket call to action, and the German
+ * weekday-and-date line, which is occasionally stale by months.
  */
 private val METADATA_LINE_PATTERNS =
     listOf(
@@ -420,11 +391,10 @@ private val METADATA_LINE_PATTERNS =
     )
 
 /**
- * The ticket-shop link in an event's description, identified by its **anchor text** rather than its
- * host: the venue writes `>> TICKETS GIBT ES HIER <<` or `🎟️ TICKETS IM VORVERKAUF 🎟️`, and sells
- * through a different shop nearly every time (Eventim, DICE, Eventbrite, Tickettailor, rausgegangen,
- * a record shop). The YouTube and Bandcamp links it embeds beside them render as bare URLs and carry
- * no such text, so they are never mistaken for a ticket link.
+ * The ticket link, identified by anchor text (`>> TICKETS GIBT ES HIER <<`, `🎟️ TICKETS IM
+ * VORVERKAUF 🎟️`) rather than host, since the venue sells through a different shop nearly every
+ * time (Eventim, DICE, Eventbrite, Tickettailor, rausgegangen, a record shop). The embedded
+ * YouTube and Bandcamp links render as bare URLs.
  */
 private fun ticketUrl(html: String?): String? {
     val source = html.blankToNull() ?: return null
@@ -438,11 +408,8 @@ private fun ticketUrl(html: String?): String? {
 }
 
 /**
- * One event in the `allDatoCmsEvent.edges[].node` array, mapped from its JSON by Jackson.
- *
- * Only the fields the venue populates are declared; unknown keys (galleries, cover-image crops,
- * responsive srcSets) are ignored. Every field is nullable so a partial or evolving payload
- * deserializes cleanly and is validated in [InselApiScraper] instead.
+ * One event in `allDatoCmsEvent.edges[].node`, mapped by Jackson; only the populated fields,
+ * every one nullable, validated in [InselApiScraper].
  */
 private data class InselEventNode(
     val name: String? = null,

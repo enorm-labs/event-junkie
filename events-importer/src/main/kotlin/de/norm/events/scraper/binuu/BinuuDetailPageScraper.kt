@@ -12,18 +12,12 @@ import org.jsoup.nodes.Document
 import tools.jackson.databind.JsonNode
 
 /**
- * Pure parser for Bi Nuu event detail pages (`/de/events/<id>`).
- *
- * The detail page is the **primary data source** for each event: its embedded
- * `data.item` payload (see [BinuuSvelteKitPayload]) is a superset of the overview
- * entry, adding doors time, description (`text`), ticket URL, promoters, and the
- * `performers` roster on top of the shared title/date/image/sold-out/status fields.
- *
- * Artist roles are derived from the site's own structured data rather than by
- * guessing the title: every name in `performers` is kept, and a performer is
- * tagged `SUPPORT` when it appears in the `subtitle_2` support/guest line
- * (otherwise `HEADLINER`). If `subtitle_2` marks every performer as support, the
- * first performer is promoted to headliner so an event with a roster always has one.
+ * Pure parser for Bi Nuu detail pages (`/de/events/<id>`), the primary data source: the
+ * embedded `data.item` payload ([BinuuSvelteKitPayload]) is a superset of the overview entry,
+ * adding doors time, description (`text`), ticket URL, promoters and the `performers` roster.
+ * Roles come from the structured data: every performer is kept, tagged `SUPPORT` when it appears
+ * in the `subtitle_2` support/guest line, else `HEADLINER`; if every performer is support, the
+ * first is promoted.
  *
  * @see BinuuOverviewPageScraper for overview parsing (discovery, fallback).
  * @see BinuuWebsiteImporter for the HTTP fetch orchestrator.
@@ -33,11 +27,11 @@ class BinuuDetailPageScraper {
     private val logger = KotlinLogging.logger {}
 
     /**
-     * Parses an event detail page into a [ScrapedEvent], or `null` when the page
-     * carries no parseable `item` payload or is missing the required id/title.
+     * Parses a detail page into a [ScrapedEvent], or `null` without a parseable `item` payload or
+     * the required id/title.
      *
-     * @param sourceUrl the event's URL, used as [ScrapedEvent.sourceUrl] and to
-     *   confirm the [ScrapedEvent.sourceId].
+     * @param sourceUrl the event's URL, [ScrapedEvent.sourceUrl] and the [ScrapedEvent.sourceId]
+     * confirmation.
      */
     @Suppress("ReturnCount") // Guard clauses for missing payload, id, and title are clearer than nesting
     fun scrape(
@@ -67,11 +61,9 @@ class BinuuDetailPageScraper {
             title = title,
             subtitle = subtitle,
             description = description,
-            // Bi Nuu carries no category field, so the type is inferred from the
-            // title/subtitle (see inferBinuuEventType).
+            // No category field, so the type is inferred from title/subtitle (inferBinuuEventType).
             eventType = inferBinuuEventType(title, subtitle),
-            // Detail pages carry the real date; sentinel only if absent, then the
-            // overview value is adopted via BinuuWebsiteImporter.fillGapsFromOverview.
+            // Detail pages carry the real date; the sentinel only if absent, then fillGapsFromOverview.
             eventDate = parseBinuuDate(start) ?: UNRESOLVED_EVENT_DATE,
             doorsTime = parseBinuuTime(item.stringOrNull("doors")),
             startTime = parseBinuuTime(start),
@@ -88,9 +80,8 @@ class BinuuDetailPageScraper {
     }
 
     /**
-     * Cleans the HTML `text` blurb into plain text: paragraphs are joined with
-     * newlines, falling back to the flattened text when no `<p>` is present.
-     * Returns `null` for missing or empty prose.
+     * The HTML `text` blurb as plain text, paragraphs joined by newlines, falling back to flattened
+     * text without `<p>`. `null` when empty.
      */
     private fun parseDescription(html: String?): String? {
         if (html.isNullOrBlank()) return null
@@ -105,10 +96,8 @@ class BinuuDetailPageScraper {
     }
 
     /**
-     * Returns the first ticket-shop URL from the `tickets[]` array, stripping any
-     * stray whitespace the CMS leaves in the value (e.g. a rogue space after `?`).
-     * Returns `null` when no absolute ticket URL is present (some events sell only
-     * via a link buried in the description).
+     * The first ticket URL from `tickets[]`, stray whitespace stripped (a rogue space after `?`).
+     * `null` without an absolute URL; some events sell only via a link in the description.
      */
     private fun parseTicketUrl(item: JsonNode): String? =
         item.path("tickets").firstNotNullOfOrNull { ticket ->
@@ -133,11 +122,8 @@ class BinuuDetailPageScraper {
             }.toMap()
 
     /**
-     * Builds the artist roster from the structured `performers` list, tagging a
-     * performer `SUPPORT` when its name appears in the `subtitle_2` support/guest
-     * line and `HEADLINER` otherwise. Non-artist names (placeholders, festival
-     * labels, …) are dropped. If every performer was tagged support, the first is
-     * promoted to headliner so a roster always has a headliner.
+     * The roster from `performers`, `SUPPORT` when the name appears in `subtitle_2`, else
+     * `HEADLINER`; non-artist names dropped; the first promoted if every one was support.
      */
     private fun parseArtists(item: JsonNode): List<ScrapedArtist> {
         val performers = item.stringList("performers").filterNot { isNonArtistName(it) }
