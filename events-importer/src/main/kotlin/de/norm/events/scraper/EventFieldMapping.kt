@@ -5,18 +5,13 @@ import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.LocalTime
 
-// Field-level mapping for scraped events: status badges, doors/start ordering,
-// title cleanup, and free-entry detection. Event-type and artist-name mapping live
-// in EventTypeMapping.kt and ArtistNameMapping.kt.
+// Field-level mapping for scraped events: status badges, doors/start ordering, title cleanup,
+// free-entry detection.
 
 /**
- * Maps a venue status-badge text (German or English) to an [EventStatus] name.
- *
- * Matching is case-insensitive. "sold out" / "ausverkauft" is intentionally
- * **not** a status — venues capture it separately as the `soldOut` flag, leaving
- * the status [SCHEDULED][EventStatus.SCHEDULED]. Shared across Kulturhäuser-platform
- * scrapers (Astra, Lido) whose badges use these conventional labels. A move is also
- * "new venue" / "neuer Ort" — the badge Lido and Gretchen print beside the note.
+ * Maps a venue status-badge text, German or English, to an [EventStatus] name, case-insensitive.
+ * "sold out" / "ausverkauft" is not a status: venues capture it as `soldOut`. A move is also "new
+ * venue" / "neuer Ort", the badge Lido and Gretchen print beside the note.
  */
 fun parseEventStatus(statusText: String): String {
     val text = statusText.lowercase()
@@ -29,23 +24,22 @@ fun parseEventStatus(statusText: String): String {
 }
 
 /**
- * "auf den 30.05.2027 verlegt" moves the date, not the house: a postponement the venue wrote with
- * the relocation verb (Hole 44). Only a date after "auf" counts; "verlegt ins" stays a move.
+ * "auf den 30.05.2027 verlegt" moves the date, not the house: a postponement written with the
+ * relocation verb (Hole 44). Only a date after "auf" counts; "verlegt ins" stays a move.
  */
 private val VERLEGT_AUF_DATUM = Regex("""verlegt\s+auf\s+(?:den\s+)?\d|auf\s+(?:den\s+)?\d[\d.]*\s+verlegt""")
 
 /**
- * A cancellation in a badge: `abgesagt`, `Absage` (#1560), `cancel…`, and "fällt aus" / "fällt leider
- * aus" / "entfällt" with or without the umlaut — Wild at Heart types `faellt`.
+ * A cancellation in a badge: `abgesagt`, `Absage` (#1560), `cancel…`, "fällt aus" / "fällt
+ * leider aus" / "entfällt" with or without the umlaut (Wild at Heart types `faellt`).
  */
 private val CANCELLED_TEXT = Regex("""abgesagt|absage|cancel|\b(?:f(?:ä|ae)llt\s+(?:\w+\s+)?aus|entf(?:ä|ae)llt)\b""")
 
 /**
- * A status word a venue writes into the event title itself, where it has no badge to put it in:
- * Kantine am Berghain's `Olga Myko - Abgesagt`, Wild at Heart's `Da Konzert von Scarfold und Los
- * Mierda faellt leider aus!`, Uber Eats Music Hall's `ABSAGE: …` (#1560). Word-anchored, and the
- * bare "cancel" of [parseEventStatus] is not accepted here — a title is prose, and "Cancel Culture"
- * is a film, not a cancellation.
+ * A status word a venue writes into the title itself: Kantine am Berghain's `Olga Myko -
+ * Abgesagt`, Wild at Heart's `Da Konzert von Scarfold und Los Mierda faellt leider aus!`, Uber
+ * Eats Music Hall's `ABSAGE: …` (#1560). Word-anchored, and the bare "cancel" of
+ * [parseEventStatus] is not accepted: "Cancel Culture" is a film.
  */
 private val TITLE_STATUS_PATTERN =
     Regex(
@@ -54,17 +48,16 @@ private val TITLE_STATUS_PATTERN =
     )
 
 /**
- * The status a [title] carries in its own words ([TITLE_STATUS_PATTERN]), or `null` when it
- * carries none. Applied at the [ScrapedEvent.toEventEntity] persistence boundary to a row whose
- * scraper found no badge, so every venue that publishes the notice as prose is covered once (#1493).
+ * The status a [title] carries in its own words ([TITLE_STATUS_PATTERN]), or `null`. Applied at
+ * [ScrapedEvent.toEventEntity] to a row whose scraper found no badge (#1493).
  */
 fun parseTitleStatus(title: String): String? = TITLE_STATUS_PATTERN.find(title)?.let { parseEventStatus(it.value) }
 
 /**
- * A cancellation marker glued to the front or the end of a title — `Olga Myko - Abgesagt`,
- * `(cancelled) The Act`, `The Act [ABGESAGT!]` — together with its separator and brackets. A
- * "verschoben"/"verlegt" tail is [cleanEventTitle]'s, and a sentence that *is* the notice
- * (Wild at Heart) has no marker to strip: it stays the title, with the status read from it.
+ * A cancellation marker glued to the front or end of a title (`Olga Myko - Abgesagt`,
+ * `(cancelled) The Act`, `The Act [ABGESAGT!]`) with its separator and brackets. A
+ * "verschoben"/"verlegt" tail is [cleanEventTitle]'s, and a sentence that is the notice (Wild
+ * at Heart) stays the title.
  */
 private val TITLE_STATUS_MARKER =
     Regex(
@@ -74,8 +67,8 @@ private val TITLE_STATUS_MARKER =
     )
 
 /**
- * Strips a leading or trailing [TITLE_STATUS_MARKER] from a title, keeping the input unchanged
- * when there is none or when stripping would leave nothing.
+ * Strips a leading or trailing [TITLE_STATUS_MARKER]; unchanged when none or when stripping
+ * would leave nothing.
  */
 fun stripTitleStatusMarker(title: String): String {
     val stripped = title.replace(TITLE_STATUS_MARKER, "").trim()
@@ -83,17 +76,10 @@ fun stripTitleStatusMarker(title: String): String {
 }
 
 /**
- * Maps a schema.org `eventStatus` URL onto an [EventStatus] name.
- *
- * The vocabulary is an explicit machine-readable contract — `EventScheduled`, `EventCancelled`,
- * `EventPostponed`, `EventRescheduled`, `EventMovedOnline` — so a venue that publishes it is
- * matched on the term rather than on the German prose [parseEventStatus] has to read. Both the
- * `http://` and `https://` spellings occur in the wild, and some sites emit the bare term, so only
- * the trailing term is compared. Anything unrecognized (or absent) is
- * [SCHEDULED][EventStatus.SCHEDULED].
- *
- * `EventMovedOnline` maps to [RELOCATED][EventStatus.RELOCATED]: the show still happens, just not
- * where it was billed — the closest the model has to "moved".
+ * Maps a schema.org `eventStatus` URL onto an [EventStatus] name, on the trailing term, since
+ * `http://`, `https://` and the bare term all occur. Unrecognized or absent is
+ * [SCHEDULED][EventStatus.SCHEDULED]. `EventMovedOnline` maps to
+ * [RELOCATED][EventStatus.RELOCATED], the closest the model has to "moved".
  */
 fun parseSchemaEventStatus(status: String?): String {
     val term = status?.substringAfterLast('/').orEmpty()
@@ -106,15 +92,9 @@ fun parseSchemaEventStatus(status: String?): String {
 }
 
 /**
- * Returns the (doors, start) pair with doors never later than start.
- *
- * Doors open no later than the show begins, so when a source lists the two in the
- * wrong order — e.g. SO36's `"Einlass: 19:30, Beginn: 19:00"` — the labels were
- * transposed at the source; swapping them recovers the intended times. Only
- * reorders when **both** times are present and doors is strictly after start; a
- * single time, equal times, or an already-valid pair is returned unchanged. Applied
- * once at the [ScrapedEvent.toEventEntity] persistence boundary, so every venue is
- * covered without each scraper repeating the check.
+ * Returns (doors, start) with doors never later than start: SO36's `"Einlass: 19:30, Beginn:
+ * 19:00"` transposed the labels. Reorders only when both are present and doors is strictly
+ * after start. Applied once at [ScrapedEvent.toEventEntity].
  */
 fun orderDoorsBeforeStart(
     doors: LocalTime?,
@@ -122,11 +102,10 @@ fun orderDoorsBeforeStart(
 ): Pair<LocalTime?, LocalTime?> = if (doors != null && start != null && doors > start) start to doors else doors to start
 
 /**
- * Whether [presale] is dearer than [boxOffice]. Advance sale is never priced above the door,
- * so the shape is always a scraper reading the wrong number: a shop's fee-inclusive figure
- * (Soda, #1583) or a zero the page meant as "no door sale". Checked once at the
- * [ScrapedEvent.toEventEntity] boundary, which reports and stores the row as scraped —
- * the right correction differs per source, so it belongs in that source's parser.
+ * Whether [presale] is dearer than [boxOffice]. Advance sale is never priced above the door, so
+ * this is a scraper reading the wrong number: a shop's fee-inclusive figure (Soda, #1583) or a
+ * zero meant as "no door sale". Reported at [ScrapedEvent.toEventEntity] and stored as scraped;
+ * the correction belongs in that source's parser.
  */
 fun presaleAboveDoor(
     presale: BigDecimal?,
@@ -134,10 +113,9 @@ fun presaleAboveDoor(
 ): Boolean = presale != null && boxOffice != null && presale > boxOffice
 
 /**
- * The day an event that starts at [start] on [eventDate] ends, given only the end [time] the venue
- * printed beside it (ADR-029). A club's `23:00 – 06:00` ends the next morning, so an end at or
- * before the start rolls to the following day. `22:00 – 23:30` stays on the day. A venue that
- * prints the end's own date does not need this: it sets `endDate` directly.
+ * The day an event starting at [start] on [eventDate] ends, given only the end [time] the venue
+ * printed (ADR-029): `23:00 – 06:00` rolls to the next morning, `22:00 – 23:30` stays. A venue
+ * that prints the end's date sets `endDate` directly.
  */
 fun endOn(
     eventDate: LocalDate,
@@ -146,21 +124,18 @@ fun endOn(
 ): LocalDate = if (start != null && time <= start) eventDate.plusDays(1) else eventDate
 
 /**
- * A leading "verlegt in den <venue> –" relocation note a venue prepends to a moved show's
- * title (Mikropol's `"-verlegt in den Frannz Club – CULTURE WARS"`, Metropol's
- * `"Verlegt ins Bi Nuu – BRKN"`). Such venues encode the relocation in the title prose rather
- * than a status class, so the note is stripped to recover the real act name for both the stored
- * title and the derived headliner; the `RELOCATED` status is set separately from the same
- * "verlegt" keyword via [parseEventStatus]. An optional leading dash and the trailing dash
- * separator (`-`/`–`/`—`) are consumed. Both German contractions of the preposition are
- * accepted — Mikropol writes "verlegt **in** den Frannz Club", Metropol "Verlegt **ins** Bi Nuu".
+ * A leading "verlegt in den <venue> –" relocation note (Mikropol's `"-verlegt in den Frannz Club
+ * – CULTURE WARS"`, Metropol's `"Verlegt ins Bi Nuu – BRKN"`), stripped to recover the act name
+ * for the title and the headliner; the `RELOCATED` status comes from [parseEventStatus]. An
+ * optional leading dash and the trailing `-`/`–`/`—` are consumed; both "in den" and "ins" are
+ * accepted.
  */
 private val RELOCATION_PREFIX_PATTERN =
     Regex("""^\s*[-–—]?\s*verlegt\s+ins?\s+.+?\s*[-–—]\s*""", RegexOption.IGNORE_CASE)
 
 /**
- * Strips a leading [RELOCATION_PREFIX_PATTERN] from a title, keeping the input unchanged
- * when there is no such prefix or when stripping would leave nothing.
+ * Strips a leading [RELOCATION_PREFIX_PATTERN]; unchanged when none or when stripping would
+ * leave nothing.
  */
 fun stripRelocationPrefix(title: String): String {
     val stripped = title.replaceFirst(RELOCATION_PREFIX_PATTERN, "").trim()
@@ -168,23 +143,14 @@ fun stripRelocationPrefix(title: String): String {
 }
 
 /**
- * Trailing noise venues append to an *event title* that must not become part of the stored
- * title (nor of a title-derived headliner artist):
- * - a "Nachholtermin vom <date>" / "(verschoben aus <year>)" reschedule note or a
- *   "Hochverlegung" relocation note — the note itself is still read as the event's `POSTPONED`
- *   status, from the *raw* title, before the title is cleaned,
- * - a "-verlegt ins <venue>-" moved-house note (Frannz spells the relocation as a *suffix* where
- *   Metropol uses the "Verlegt ins <venue> –" prefix [stripRelocationPrefix] handles) — likewise
- *   read as the event's `RELOCATED` status from the raw title first. Anchored on the following
- *   "ins"/"nach" so a title merely containing the word is never truncated,
- * - a "(ausverkauft)" / "ausverkauft" sold-out annotation — a status, not a name; Frannz in
- *   particular never derives sold-out from prose, so it is pure noise here, and stripping it
- *   keeps "… (ausverkauft)" and its non-sold-out twin from splitting into two artists,
- * - any stray trailing dash.
- *
- * Each alternative is word-/end-anchored, so mid-title text (e.g. an "ausverkauften" mention
- * that only ever reaches descriptions) is never touched. This is the title-level counterpart
- * of the tail [ARTIST_SUFFIX_PATTERN] strips off an artist name.
+ * Trailing noise venues append to a title that must not reach the stored title or a
+ * title-derived headliner: a "Nachholtermin vom <date>" / "(verschoben aus <year>)" /
+ * "Hochverlegung" note (read as `POSTPONED` from the raw title first); a "-verlegt ins <venue>-"
+ * suffix (Frannz's spelling of Metropol's prefix; read as `RELOCATED` first), anchored on the
+ * following "ins"/"nach"; a "(ausverkauft)" annotation, which Frannz never derives sold-out from
+ * and which would split "… (ausverkauft)" and its twin into two artists; any stray trailing
+ * dash. Each alternative is word- or end-anchored, so "ausverkauften" mid-title is never
+ * touched. The title-level counterpart of [ARTIST_SUFFIX_PATTERN].
  */
 private val TITLE_NOISE_PATTERN =
     Regex(
@@ -195,19 +161,13 @@ private val TITLE_NOISE_PATTERN =
     )
 
 /**
- * Strips a trailing rescheduled-show note and stray trailing dash from an event title
- * so the stored, user-visible title stays clean — "Iggi Kelly Nachholtermin vom
- * 28.04.26-" → "Iggi Kelly". Returns the input unchanged when there is no such tail, or
- * when stripping would leave nothing.
- *
- * Zero-width characters are removed and runs of whitespace collapsed to a single space first.
- * A venue's own markup decides how much space lands between two words — a line break inside the
- * heading, a stray double space in the CMS — and that is presentation, not part of the name
- * ("Adventurous Juan (DJ-Set)", "Lucas Lauriente – Stand Up 2026"). Collapsing before the tail
- * patterns run also keeps those patterns keyed on a single space, and normalizes the title a
- * headliner is derived from. A [ZERO_WIDTH] character is invisible by definition, so it is never
- * part of a name either — it reaches a title when an editor pastes one in (MAAYA's "HOMECOMING DJ
- * WORKSHOP") — and it is dropped rather than collapsed, since `\s` does not match it.
+ * Strips a trailing rescheduled-show note and stray dash: "Iggi Kelly Nachholtermin vom
+ * 28.04.26-" to "Iggi Kelly". Unchanged when there is no tail or stripping would leave nothing.
+ * Zero-width characters are removed and whitespace runs collapsed first: a line break inside
+ * the heading or a double space in the CMS is presentation, not the name ("Adventurous Juan
+ * (DJ-Set)", "Lucas Lauriente – Stand Up 2026"), and the tail patterns key on a single space. A
+ * [ZERO_WIDTH] character reaches a title when an editor pastes one (MAAYA's "HOMECOMING DJ
+ * WORKSHOP"); `\s` does not match it, so it is dropped.
  */
 fun cleanEventTitle(title: String): String {
     val collapsed = title.replace(ZERO_WIDTH, "").trim().replace(WHITESPACE_RUN, " ")
@@ -216,25 +176,22 @@ fun cleanEventTitle(title: String): String {
 }
 
 /**
- * A run of whitespace (including a line break) inside a title, collapsed to one space.
- *
- * The two non-breaking spaces are listed explicitly because Java's `\s` matches ASCII whitespace
- * only, while a CMS editor produces them without meaning to — Colosseum's "JOSH. Solo - Wer\u00A0singt
- * dann Lieder für dich?" is one such pasted title. They render as an ordinary space, so a title
- * that keeps them looks right while no longer matching a search for the words around them.
+ * A run of whitespace inside a title, collapsed to one space. The two non-breaking spaces are
+ * listed because Java's `\s` matches ASCII whitespace only, and a CMS editor produces them
+ * (Colosseum's "JOSH. Solo - Wer singt dann Lieder für dich?"); a title that keeps them
+ * looks right and no longer matches a search.
  */
 private val WHITESPACE_RUN = Regex("""[\s\u00A0\u202F]+""")
 
 /**
- * Invisible formatting characters that carry no meaning in an event title: the zero-width
- * space, non-joiner, joiner and the byte-order mark. None is whitespace to `\s`, so each would
- * otherwise survive both the trim and the collapse and end up in the stored title.
+ * Invisible formatting characters: zero-width space, non-joiner, joiner, byte-order mark. None
+ * is whitespace to `\s`, so each would survive the trim and the collapse.
  */
 private val ZERO_WIDTH = Regex("""[\u200B-\u200D\uFEFF]""")
 
 /**
- * Free-entry phrases unambiguous enough to detect from any text field (title or
- * price note). Multi-word, so they won't collide with band or festival names.
+ * Free-entry phrases unambiguous enough for any text field; multi-word, so they cannot collide
+ * with a band or festival name.
  */
 private val FREE_PHRASES =
     listOf(
@@ -246,9 +203,9 @@ private val FREE_PHRASES =
     )
 
 /**
- * Single-word free markers, only scanned within the pricing-scoped [ScrapedEvent.priceNote]
- * (never the title/subtitle) to avoid false positives from names like "Freedom Festival"
- * or "Freikörperkultur". Word-boundary matched, so "free" won't match "freestyle".
+ * Single-word free markers, scanned only within [ScrapedEvent.priceNote], never the title, to
+ * avoid "Freedom Festival" or "Freikörperkultur". Word-boundary matched, so "free" is not
+ * "freestyle".
  */
 private val FREE_TOKENS = listOf("free", "frei", "gratis", "kostenlos", "umsonst")
 
@@ -259,14 +216,9 @@ private val FREE_TOKEN_PATTERN =
     Regex("""\b(${FREE_TOKENS.joinToString("|") { Regex.escape(it) }})\b""", RegexOption.IGNORE_CASE)
 
 /**
- * Detects whether an event is free to attend, from its prices and text.
- *
- * A *positive* signal is required — an absent price means the price is **unknown**,
- * not free — so this returns `true` only for:
- * - an explicit €0 presale or box-office price, or
- * - an unambiguous free-entry phrase ([FREE_PHRASES]) in the title or price note, or
- * - a single-word free marker ([FREE_TOKENS]) in the price note (pricing-scoped, so
- *   an artist name in the title can't trigger it).
+ * Whether an event is free. A positive signal is required, since an absent price is unknown,
+ * not free: an explicit €0 price, a [FREE_PHRASES] match in the title or price note, or a
+ * [FREE_TOKENS] match in the price note.
  */
 fun detectFree(
     pricePresale: BigDecimal? = null,
