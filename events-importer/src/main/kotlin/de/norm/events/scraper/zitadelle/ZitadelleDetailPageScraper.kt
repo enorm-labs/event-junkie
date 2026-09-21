@@ -21,29 +21,29 @@ import java.time.LocalTime
 /**
  * Pure HTML parser for a Citadel Music Festival `/event/<YYYY-MM-DD-slug>` detail page.
  *
- * The page adds what a listing card cannot: the `Einlass` doors time, the tour title, the prose
- * description, the ticket-shop link, the presenting media partners, and the fuller account of a
- * changed date. Its facts sit in a `ul.details-list` of `<li><span>Label</span>value` rows.
+ * Adds what a card cannot: the `Einlass` doors time, tour title, prose description, ticket-shop
+ * link, presenting media partners, and the fuller account of a changed date. Its facts sit in a
+ * `ul.details-list` of `<li><span>Label</span>value` rows.
  *
- * It deliberately supplies **no date**: the page renders it only as long German prose
- * ("Samstag, 15. August 2026") where the listing already carries a machine-readable
- * `time[datetime]`, so the date is left to [ZitadelleWebsiteImporter.fillGapsFromOverview].
+ * Deliberately supplies **no date**: the page renders it only as long German prose ("Samstag,
+ * 15. August 2026") where the listing carries a machine-readable `time[datetime]`, so the date
+ * is left to [ZitadelleWebsiteImporter.fillGapsFromOverview].
  *
- * Three things are specific to this venue:
- *  - **A changed date is stated twice.** An `.abgesagtausverkauft` badge reads `Abgesagt`, and a
- *    separate `.aenderungen` line explains what actually happened ("Wird in die Columbiahalle
- *    verlegt. Tickets behalten ihre Gültigkeit!"). Where that line says the show was *verlegt*, the
- *    truthful status is [EventStatus.RELOCATED], not cancelled — and the line itself is kept at the
- *    head of the description, since the status alone does not say where the show went.
- *  - **The doors time may be `tba`.** A date announced a year ahead states its `Einlass` as "tba";
- *    that must stay `null` rather than becoming a time.
- *  - **The category is a WordPress taxonomy class** on the `<article>` (`event-categories-konzerte`)
- *    rather than rendered text, and only some events carry one. Everything on this site is a
- *    concert, so an event without the class is typed as one anyway.
+ * Three venue specifics:
+ * - **A changed date is stated twice.** An `.abgesagtausverkauft` badge reads `Abgesagt`, and a
+ * separate `.aenderungen` line explains what happened ("Wird in die Columbiahalle verlegt.
+ * Tickets behalten ihre Gültigkeit!"). Where that line says *verlegt*, the truthful status is
+ * [EventStatus.RELOCATED], not cancelled — and the line is kept at the head of the description,
+ * since the status alone does not say where the show went.
+ * - **The doors time may be `tba`.** A date announced a year ahead states `Einlass` as "tba";
+ * that must stay `null`, not become a time.
+ * - **The category is a WordPress taxonomy class** on the `<article>`
+ * (`event-categories-konzerte`), not rendered text, and only some events carry one. Everything
+ * here is a concert, so an event without the class is typed as one anyway.
  *
  * The promoter is likewise only a taxonomy **slug** (`promoters-landstreicher`) with no display
- * name anywhere on the page, so it is left alone; the presenters ("präsentiert von: Flux FM,
- * tip Berlin") are rendered names and are stored instead, as at the Columbia Theater.
+ * name anywhere, so it is left alone; the presenters ("präsentiert von: Flux FM, tip Berlin")
+ * are rendered names and stored instead, as at the Columbia Theater.
  *
  * @see ZitadelleOverviewPageScraper for the listing parser (discovery, title, date, start time).
  * @see ZitadelleWebsiteImporter for the HTTP fetch orchestrator.
@@ -52,11 +52,10 @@ class ZitadelleDetailPageScraper {
     private val logger = KotlinLogging.logger {}
 
     /**
-     * Parses an event detail page into a [ScrapedEvent], or `null` when the page carries no event
-     * heading — the marker that the request did not return a real event page.
+     * Parses a detail page into a [ScrapedEvent], or `null` without an event heading — the marker
+     * that the request did not return a real event page.
      *
-     * @param sourceUrl the event's URL, used as [ScrapedEvent.sourceUrl] and to derive the
-     *   [ScrapedEvent.sourceId].
+     * @param sourceUrl the event's URL: [ScrapedEvent.sourceUrl] and the [ScrapedEvent.sourceId].
      */
     @Suppress("ReturnCount") // A guard clause for the missing heading is clearer than nesting
     fun scrape(
@@ -94,9 +93,9 @@ class ZitadelleDetailPageScraper {
     }
 
     /**
-     * The event's type, taken from the `event-categories-<slug>` class the WordPress taxonomy puts
-     * on the `<article>`. Events without one are still concerts — this site programmes nothing else
-     * — so [EventType.CONCERT] is the fallback rather than an unstated type.
+     * The event's type from the `event-categories-<slug>` taxonomy class on the `<article>`.
+     * Events without one are still concerts — this site programmes nothing else — so
+     * [EventType.CONCERT] is the fallback rather than an unstated type.
      */
     private fun parseCategory(document: Document): String {
         val category =
@@ -109,8 +108,8 @@ class ZitadelleDetailPageScraper {
     }
 
     /**
-     * The scheduling status. A `.aenderungen` line saying the show was *verlegt* outranks the
-     * badge above it, which reads `Abgesagt` for both a cancellation and a move.
+     * The scheduling status. A `.aenderungen` line saying *verlegt* outranks the badge above it,
+     * which reads `Abgesagt` for both a cancellation and a move.
      */
     private fun parseDetailStatus(
         document: Document,
@@ -123,8 +122,8 @@ class ZitadelleDetailPageScraper {
         }
 
     /**
-     * Reads the `HH:mm` value of a `ul.details-list` row by its German label, or `null` when the
-     * row is absent or states something other than a time (an unannounced doors time reads `tba`).
+     * The `HH:mm` value of a `ul.details-list` row by its German label, or `null` when absent or
+     * not a time (an unannounced doors time reads `tba`).
      */
     private fun detailsRowTime(
         document: Document,
@@ -139,7 +138,7 @@ class ZitadelleDetailPageScraper {
 }
 
 /**
- * Puts the venue's change notice ahead of the event prose, so a relocated show says where it went.
+ * Puts the change notice ahead of the event prose, so a relocated show says where it went.
  * Returns whichever part exists when the other does not.
  */
 private fun joinChangeNoteAndDescription(

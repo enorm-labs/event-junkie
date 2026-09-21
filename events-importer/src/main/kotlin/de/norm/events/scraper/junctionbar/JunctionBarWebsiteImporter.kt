@@ -18,17 +18,17 @@ import java.time.Clock
  * programs (ADR-007 §"Single Entry URL": one venue, two internally-fetched page structures).
  *
  * The homepage (the configured entry URL) links to two independent programs, merged here:
- * 1. **Live music** — a `music_html/music.html` listing that links to per-month program pages
- *    (`program/MM_YYYY/MM_YY.html`), each parsed by [JunctionBarMusicOverviewPageScraper].
+ * 1. **Live music** — a `music_html/music.html` listing linking to per-month program pages
+ * (`program/MM_YYYY/MM_YY.html`), each parsed by [JunctionBarMusicOverviewPageScraper].
  * 2. **DJ program** — a single `DJ_html/DJ.html` page parsed by [JunctionBarDjOverviewPageScraper].
  *
  * Both program URLs are discovered from the homepage's navigation (falling back to their
  * conventional relative paths), then fetched internally. Conditional requests are intentionally
- * **not** used: the entry/listing ETags only change when a new month is added, not when a band is
- * added to an existing month, so relying on them would miss mid-month edits. Every run re-fetches
- * the pages and relies on idempotent `sourceId` upserts — [ImportResult.Success] is returned with
- * `null` cache headers (no `NotModified` path). Past-dated nights are dropped centrally at
- * persistence time (`EventUpsertService`).
+ * **not** used: the entry/listing ETags change only when a new month is added, not when a band
+ * is added to an existing month, so relying on them would miss mid-month edits. Every run
+ * re-fetches and relies on idempotent `sourceId` upserts — [ImportResult.Success] with `null`
+ * cache headers (no `NotModified` path). Past-dated nights are dropped centrally at persistence
+ * (`EventUpsertService`).
  *
  * @see JunctionBarMusicOverviewPageScraper for live-music parsing.
  * @see JunctionBarDjOverviewPageScraper for DJ parsing.
@@ -37,7 +37,7 @@ import java.time.Clock
 @Component
 class JunctionBarWebsiteImporter(
     private val htmlFetcher: HtmlFetcher,
-    /** Clock for the DJ scraper's weekday-based year inference. Defaults to the system clock; override in tests. */
+    /** Clock for the DJ scraper's weekday-based year inference; override in tests. */
     clock: Clock = Clock.systemDefaultZone()
 ) : EventImporter {
     private val logger = KotlinLogging.logger {}
@@ -92,8 +92,8 @@ class JunctionBarWebsiteImporter(
     }
 
     /**
-     * Resolves a program page URL from the homepage nav (an `<a>` whose href contains [linkMarker]),
-     * falling back to the program's conventional relative [fallbackPath] when the link is absent.
+     * Resolves a program page URL from the homepage nav (an `<a>` whose href contains
+     * [linkMarker]), falling back to the program's conventional relative [fallbackPath].
      */
     private fun resolveProgramUrl(
         homepage: Document,

@@ -13,22 +13,18 @@ import org.springframework.stereotype.Component
 /**
  * Website importer for Festsaal Kreuzberg Berlin.
  *
- * The public site (`festsaal-kreuzberg.de`) is a Nuxt.js SPA that renders no event
- * data server-side, but it is backed by a Wagtail headless CMS whose public JSON
- * REST API exposes every upcoming event as clean structured data. Importing from
- * that API is both possible without a headless browser and far more stable than any
- * HTML scrape (ADR-007 §"Selector Strategy" — structured data is priority 1), so
- * this importer:
- * 1. Builds the CMS query URL from the configured API base ([buildRequestUrl]) —
- *    all upcoming `EventPage`s ordered by date, in one request (ADR-007 first-page-only).
- * 2. Fetches the JSON body via [ApiClient.fetchJson] (shared politeness throttle
- *    and identifying User-Agent).
- * 3. Parses it into [de.norm.events.scraper.ScrapedEvent]s via [FestsaalApiScraper].
+ * The public site (`festsaal-kreuzberg.de`) is a Nuxt.js SPA rendering no event data
+ * server-side, but its Wagtail headless CMS exposes every upcoming event over a public JSON
+ * REST API — possible without a headless browser and far more stable than any HTML scrape
+ * (ADR-007 §"Selector Strategy" — structured data is priority 1):
+ * 1. Build the CMS query from the configured API base ([buildRequestUrl]) — all upcoming
+ * `EventPage`s ordered by date, one request (ADR-007 first-page-only).
+ * 2. Fetch the JSON body via [ApiClient.fetchJson] (shared politeness throttle and User-Agent).
+ * 3. Parse it into [de.norm.events.scraper.ScrapedEvent]s via [FestsaalApiScraper].
  *
- * The Wagtail API sends no ETag / Last-Modified, so conditional requests do not apply:
- * the `etag` / `lastModified` parameters are ignored and every import returns
- * [ImportResult.Success] (never [ImportResult.NotModified]). Re-imports stay cheap and
- * safe because persistence upserts idempotently by `sourceId`.
+ * The API sends no ETag / Last-Modified, so `etag` / `lastModified` are ignored and every
+ * import returns [ImportResult.Success] (never [ImportResult.NotModified]). Re-imports stay
+ * cheap and safe because persistence upserts idempotently by `sourceId`.
  *
  * @see FestsaalApiScraper for the JSON parsing logic.
  * @see <a href="https://festsaal-kreuzberg.de/de/programm/">Festsaal Kreuzberg programme</a>
@@ -53,17 +49,15 @@ class FestsaalWebsiteImporter(
         val events = apiScraper.scrape(json)
         logger.info { "Scraped ${events.size} event(s) from Festsaal Kreuzberg" }
 
-        // The Wagtail API has no conditional-request support, so there is no NotModified path;
-        // ETag / Last-Modified are always null and change detection relies on idempotent upserts.
+        // No conditional-request support, so no NotModified path; ETag / Last-Modified are always
+        // null and change detection relies on idempotent upserts.
         return ImportResult.Success(events = events, etag = null, lastModified = null)
     }
 
     /**
-     * Builds the Wagtail EventPage query from the configured API base [baseUrl].
-     *
-     * The field set, page-type filter, locale, ordering, and page size are parsing
-     * concerns and live in code (ADR-007: parsing logic in code, entry-point URL in
-     * config). The base is stored on the event source, e.g.
+     * The Wagtail EventPage query from the configured API base [baseUrl]. Field set, page-type
+     * filter, locale, ordering and page size are parsing concerns and live in code (ADR-007:
+     * parsing logic in code, entry-point URL in config). The base is on the event source, e.g.
      * `https://admin.festsaal-kreuzberg.de/api/v2/pages/`.
      */
     private fun buildRequestUrl(baseUrl: String): String {
@@ -76,7 +70,7 @@ class FestsaalWebsiteImporter(
         const val FIELDS =
             "title,sub_title,date,doors,start,changed_date,changed_doors,changed_start,status,ticket,price,genre(title),preview_image,support"
 
-        /** Upper bound on events fetched in the single request; comfortably above the venue's ~80 upcoming shows. */
+        /** Upper bound on events fetched in the single request; comfortably above ~80 upcoming shows. */
         const val LIMIT = 100
     }
 }

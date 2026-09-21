@@ -25,24 +25,21 @@ import java.time.LocalTime
 /**
  * Pure HTML parser for Lido Berlin's event listing (overview) page.
  *
- * Lido runs on the same "Kulturhäuser" platform as Astra Kulturhaus, but with a
- * different theme: its event markup uses `article.event-ticket` / `event-ticket__*`
- * blocks rather than Astra's `article.event` / `event__*`. The platform-shared
- * parts (the `data-realdate` attribute, `/events/<date-slug>` URLs, the German
- * status labels, and — on detail pages — `.price`/`.gig__description`/
- * `.purchase-option__button` markup) are parsed with the shared scraper helpers,
- * while the theme-specific selectors live in [parseLidoEventBlock].
+ * Lido runs on the same "Kulturhäuser" platform as Astra Kulturhaus, with a different theme:
+ * `article.event-ticket` / `event-ticket__*` blocks rather than Astra's `article.event` /
+ * `event__*`. The platform-shared parts (`data-realdate`, `/events/<date-slug>` URLs, the
+ * German status labels, and on detail pages `.price`/`.gig__description`/
+ * `.purchase-option__button`) use the shared scraper helpers; the theme-specific selectors live
+ * in [parseLidoEventBlock].
  *
- * Upcoming events are listed on the homepage (`/`) as a series of
- * `article.event-ticket` blocks — the `/events` path is the (broken-dated) past
- * archive, not the program, so the event source points at the homepage. The
- * `teaser__next-events` block above the list is read too, for the day's own event the
- * list can leave out ([parseTeaser], #1530).
+ * Upcoming events are on the homepage (`/`) as `article.event-ticket` blocks — `/events` is the
+ * (broken-dated) past archive, so the event source points at the homepage. The
+ * `teaser__next-events` block above the list is read too, for the day's own event the list can
+ * leave out ([parseTeaser], #1530).
  *
- * The overview page is the source for the event type, sold-out flag, status,
- * date, and the artist roster (which needs both the subtitle and the type). The
- * detail page (the merge's primary side) adds the description, prices, ticket
- * URL, and image. Merging is handled by [LidoWebsiteImporter].
+ * The overview is the source for event type, sold-out flag, status, date, and the artist roster
+ * (which needs both subtitle and type). The detail page (the merge's primary side) adds
+ * description, prices, ticket URL and image. [LidoWebsiteImporter] merges.
  *
  * @see LidoDetailPageScraper for the detail-page data source.
  * @see LidoWebsiteImporter for the HTTP fetch orchestrator.
@@ -52,10 +49,9 @@ class LidoOverviewPageScraper {
     private val logger = KotlinLogging.logger {}
 
     /**
-     * Parses all event articles from the overview page document.
+     * Parses all event articles from the overview page.
      *
-     * @param baseUrl the URL the document was fetched from, used for resolving
-     *   relative detail links and building `sourceId` values.
+     * @param baseUrl the URL the document was fetched from, for relative detail links and `sourceId` values.
      */
     fun scrape(
         document: Document,
@@ -79,13 +75,13 @@ class LidoOverviewPageScraper {
     }
 
     /**
-     * The `teaser__next-events` block at the top of the home page, as a second source of events
-     * (#1530). On a Lido night it read `Today / 19:00 / VTOROI KA` while the article list began two
-     * days later, so the night's own event was on the page and not in the block this scraper reads.
-     * A teaser entry that the list also carries is dropped by the caller; one it does not carry
+     * The `teaser__next-events` block at the top of the home page as a second source of events
+     * (#1530). On a Lido night it read `Today / 19:00 / VTOROI KA` while the article list began
+     * two days later, so the night's own event was on the page and not in the block this scraper
+     * reads. A teaser entry the list also carries is dropped by the caller; one it does not carry
      * becomes an event with the date from its `/events/<yyyy-MM-dd-…>` slug, the teaser's time as
-     * the doors (the venue prints doors there — 19:00 for a 20:00 start) and the board lines as the
-     * title. The detail page fills in the rest, as for every other event.
+     * the doors (the venue prints doors there — 19:00 for a 20:00 start) and the board lines as
+     * the title. The detail page fills in the rest.
      */
     private fun parseTeaser(
         document: Document,
@@ -115,7 +111,7 @@ class LidoOverviewPageScraper {
             )
         }
 
-    /** Parses a single `article.event-ticket` block into a [ScrapedEvent]. */
+    /** Parses one `article.event-ticket` block into a [ScrapedEvent]. */
     private fun parseArticle(
         article: Element,
         baseUrl: String
@@ -136,9 +132,8 @@ class LidoOverviewPageScraper {
             status = block.status,
             promoters = block.promoters,
             promoterWebsites = block.promoterWebsites,
-            // Extract support only from the subtitle line that carries the "Support:" marker,
-            // so an appended note on a later <br> line (e.g. a cancellation notice) can't be
-            // mistaken for a support act.
+            // Extract support only from the subtitle line carrying the "Support:" marker, so a note on a
+            // later <br> line (e.g. a cancellation notice) is not taken for a support act.
             artists =
                 buildArtistsForEventType(
                     block.title,
@@ -150,9 +145,8 @@ class LidoOverviewPageScraper {
 }
 
 /**
- * Common fields parsed from the `event-ticket__*` markup that both the overview
- * articles (`article.event-ticket`) and the detail-page header
- * (`header.event-ticket`) share.
+ * Common fields from the `event-ticket__*` markup shared by overview articles
+ * (`article.event-ticket`) and the detail-page header (`header.event-ticket`).
  */
 internal data class LidoEventBlock(
     val title: String,
@@ -161,7 +155,7 @@ internal data class LidoEventBlock(
     val eventDate: LocalDate?,
     val doorsTime: LocalTime?,
     val startTime: LocalTime?,
-    /** Mapped event type, or `null` when no type label is present. */
+    /** Mapped event type, or `null` without a type label. */
     val eventType: String?,
     val subtitle: String?,
     val soldOut: Boolean,
@@ -172,12 +166,9 @@ internal data class LidoEventBlock(
 )
 
 /**
- * Parses the `event-ticket__*` markup shared by overview articles and the detail
- * page header into a [LidoEventBlock].
- *
- * [root] is the element scoping a single event — an `article.event-ticket` on the
- * overview page, or the `header.event-ticket` container on a detail page. Returns
- * `null` when no title link is present.
+ * Parses the shared `event-ticket__*` markup into a [LidoEventBlock]. [root] scopes one event —
+ * `article.event-ticket` on the overview, `header.event-ticket` on a detail page. `null`
+ * without a title link.
  */
 @Suppress("ReturnCount") // Guard clauses for the required title/href are clearer than nesting
 internal fun parseLidoEventBlock(
@@ -208,10 +199,8 @@ internal fun parseLidoEventBlock(
 }
 
 /**
- * Extracts the doors (Einlass) and start (Start/Beginn) times.
- *
- * The meta block is rendered twice (desktop + mobile layouts), each carrying both
- * times, so the first value seen per label wins to collapse the duplicates.
+ * Doors (Einlass) and start (Start/Beginn) times. The meta block renders twice (desktop +
+ * mobile), each with both times, so the first value per label wins.
  */
 private fun parseLidoTimes(root: Element): Pair<LocalTime?, LocalTime?> {
     var doors: LocalTime? = null
@@ -233,11 +222,9 @@ private fun parseLidoTimes(root: Element): Pair<LocalTime?, LocalTime?> {
 }
 
 /**
- * Extracts the presenter(s) from the `event-ticket__meta__presenter` block.
- *
- * The presenter name is the anchor text (e.g. "Puschen"); when no link is
- * present, it falls back to the block's text with the trailing "präsentiert"
- * removed. Returns an empty list when no presenter is shown.
+ * The presenter(s) from the `event-ticket__meta__presenter` block: the anchor text
+ * ("Puschen"), or without a link the block's text minus the trailing "präsentiert". Empty
+ * when none is shown.
  */
 private fun parseLidoPresenters(root: Element): List<String> {
     val presenter = root.selectFirst(".event-ticket__meta__presenter") ?: return emptyList()

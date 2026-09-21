@@ -22,10 +22,9 @@ import java.time.MonthDay
 /**
  * Pure HTML parser for Arcanoa Berlin's 1990s `veranst.htm` programme page.
  *
- * The page is nested `<font>`/`<table>` soup with no classes, ids or per-event URLs, so
- * there is nothing per-event to select. What *is* stable is the page's month rhythm: a
- * `font.gesperrt` heading naming the month ("Juli"), followed by one `<p>` that holds
- * that month's entire programme as a single run of `<br>`-separated lines:
+ * Nested `<font>`/`<table>` soup with no classes, ids or per-event URLs, so nothing per-event
+ * to select. What *is* stable is the month rhythm: a `font.gesperrt` heading naming the month
+ * ("Juli"), then one `<p>` holding that month's entire programme as `<br>`-separated lines:
  *
  * ```
  * Live Musik:
@@ -33,39 +32,35 @@ import java.time.MonthDay
  * Do 23.07.Live: Lobitos - AfroLatinFolkJazzEthnoBluesSession
  * ```
  *
- * The parser therefore selects the month heading, takes the "Live Musik" paragraph from
- * the surrounding `<td>`, and splits its **flat text** on the `Mo 22.07.Live:` entry
- * marker — an entry runs from one marker to the next. Anchoring on the date marker rather
- * than on `<br>` positions is what makes the multi-line entries (a wrapped style tail)
- * fall out for free.
+ * The parser selects the month heading, takes the "Live Musik" paragraph from the surrounding
+ * `<td>`, and splits its **flat text** on the `Mo 22.07.Live:` entry marker — an entry runs
+ * from one marker to the next. Anchoring on the date marker rather than `<br>` positions makes
+ * multi-line entries (a wrapped style tail) fall out for free.
  *
- * Two other blocks inside the same month cell are deliberately skipped by that scoping:
- * the undated weekly-programme boxes above the listing (the dated listing already carries
- * every occurrence, so expanding them per ADR-007's "Undated Recurring Programmes" rule
- * would only duplicate) and the "Mittelaltertreffen immer Mittwoch" recap below it, which
- * repeats Wednesdays already listed.
+ * Two other blocks in the same month cell are skipped by that scoping: the undated
+ * weekly-programme boxes above the listing (the dated listing already carries every occurrence,
+ * so expanding them per ADR-007's "Undated Recurring Programmes" rule would only duplicate) and
+ * the "Mittelaltertreffen immer Mittwoch" recap below it, repeating Wednesdays already listed.
  *
- * Dates carry a German weekday but no year, so the year is inferred from the weekday via
- * [inferYearForWeekday]. The venue leaves passed events on the page; those are dropped
- * centrally at persistence time (`EventUpsertService`), so this parser returns every dated
- * entry as-is.
+ * Dates carry a German weekday but no year, so the year comes from the weekday via
+ * [inferYearForWeekday]. Passed events stay on the page; they are dropped centrally at
+ * persistence (`EventUpsertService`), so this parser returns every dated entry as-is.
  *
  * @see ArcanoaWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://www.ssi-media.com/arcanoa/veranst.htm">Arcanoa programme</a>
  */
 @Suppress("LongComment", "TooManyFunctions") // 5 KDoc lines are the 1990s markup itself, which needs many small extractors to parse.
 class ArcanoaOverviewPageScraper(
-    /** Clock for weekday-based year inference. Defaults to the system clock; override in tests for determinism. */
+    /** Clock for weekday-based year inference; override in tests. */
     private val clock: Clock = Clock.systemDefaultZone()
 ) {
     private val logger = KotlinLogging.logger {}
 
     /**
-     * Parses all events from the programme page document.
+     * Parses all events from the programme page, one per dated line.
      *
-     * @param baseUrl the URL the document was fetched from; used as every event's
-     *   `sourceUrl`, since the site has no per-event pages.
-     * @return a list of [ScrapedEvent] instances, one per dated programme line.
+     * @param baseUrl the URL the document was fetched from; every event's `sourceUrl`, since the
+     * site has no per-event pages.
      */
     fun scrape(
         document: Document,
@@ -89,8 +84,8 @@ class ArcanoaOverviewPageScraper(
             return emptyList()
         }
 
-        // The page states one start time per month ("Veranstaltungsbeginn: 20 Uhr"); it is the
-        // only time it publishes, and it sits outside the programme paragraph.
+        // The page states one start time per month ("Veranstaltungsbeginn: 20 Uhr"); the only time it
+        // publishes, sitting outside the programme paragraph.
         val startTime = parseStartTime(programme)
 
         @Suppress("TooGenericExceptionCaught") // Intentional: skip individual malformed entries without aborting the import
@@ -105,11 +100,9 @@ class ArcanoaOverviewPageScraper(
     }
 
     /**
-     * Splits a month paragraph's flat text into entries at each `Mo 22.07.Live:` marker.
-     *
-     * An entry's body runs from the end of its own marker to the start of the next one, so
-     * a wrapped style tail stays with the entry it belongs to. Text before the first marker
-     * (the "Live Musik:" caption) belongs to no entry and is dropped.
+     * Splits a month paragraph's flat text into entries at each `Mo 22.07.Live:` marker. A body
+     * runs from the end of its own marker to the start of the next, so a wrapped style tail stays
+     * with its entry. Text before the first marker (the "Live Musik:" caption) is dropped.
      */
     private fun splitIntoEntries(text: String): List<ProgrammeEntry> {
         val markers = ENTRY_PATTERN.findAll(text).toList()
@@ -125,7 +118,7 @@ class ArcanoaOverviewPageScraper(
         }
     }
 
-    /** Maps one programme entry onto a [ScrapedEvent], or `null` when it carries no importable event. */
+    /** Maps one programme entry onto a [ScrapedEvent], or `null` without an importable event. */
     @Suppress("ReturnCount") // Guard clauses for the unparseable/private-function cases are clearer than nesting
     private fun parseEntry(
         entry: ProgrammeEntry,
@@ -138,9 +131,9 @@ class ArcanoaOverviewPageScraper(
                 return null
             }
 
-        // A "geschlossene Gesellschaft" is a private booking, not a public event — the venue
-        // lists it only to mark the night as taken. Tested on the whole body: the marker also
-        // arrives as `-- geschlossene Gesellschaft --` and behind a name (#1553).
+        // A "geschlossene Gesellschaft" is a private booking, not a public event — listed only to mark
+        // the night as taken. Tested on the whole body: the marker also arrives as
+        // `-- geschlossene Gesellschaft --` and behind a name (#1553).
         if (PRIVATE_FUNCTION_PATTERN.containsMatchIn(entry.body)) {
             logger.debug { "Arcanoa night on $eventDate is a private function ('${entry.body}'), skipping" }
             return null
@@ -158,8 +151,8 @@ class ArcanoaOverviewPageScraper(
 
         return ScrapedEvent(
             title = title,
-            // The style tail ("HellCountryBlues", "Rock mit Sounds von Jazz u. Funk") is display
-            // prose, not a normalizable genre — kept as a subtitle so it never seeds junk tags.
+            // The style tail ("HellCountryBlues", "Rock mit Sounds von Jazz u. Funk") is display prose,
+            // not a normalizable genre — kept as a subtitle so it never seeds junk tags.
             subtitle = subtitle,
             eventType = eventType,
             eventDate = eventDate,
@@ -172,17 +165,15 @@ class ArcanoaOverviewPageScraper(
     }
 
     /**
-     * Splits an entry body into its title and the style/description tail that follows it.
+     * Splits an entry body into title and the style/description tail.
      *
-     * The venue writes `"<act> - <style>"` but is inconsistent about the spacing around the
-     * dash, so the separator is picked in two tiers: a fully spaced `" - "` first, and only
-     * if there is none, a dash with whitespace on a single side (`"Klonn -dadaistische
-     * KlangWelten"`). The two tiers matter — taking the first half-spaced dash would cut
-     * `"ARCANOA- Open Stage - SingerSongwriter"` after "ARCANOA". A dash with no whitespace
-     * at all is never a separator, keeping hyphenated names such as "Mittelalter-Irish Folk"
-     * whole. A colon wins over the dash when it comes first, so a labelled programme line
-     * ("JAM für Alle: 19-21 Uhr: Songwriting workshop …") is titled by its label rather than
-     * by the whole blurb.
+     * The venue writes `"<act> - <style>"` with inconsistent spacing around the dash, so the
+     * separator is picked in two tiers: a fully spaced `" - "` first, else a dash with whitespace
+     * on one side (`"Klonn -dadaistische KlangWelten"`). The tiers matter — the first half-spaced
+     * dash would cut `"ARCANOA- Open Stage - SingerSongwriter"` after "ARCANOA". A dash with no
+     * whitespace is never a separator, keeping "Mittelalter-Irish Folk" whole. A colon wins over
+     * the dash when it comes first, so a labelled line ("JAM für Alle: 19-21 Uhr: Songwriting
+     * workshop …") is titled by its label, not the whole blurb.
      */
     private fun splitTitleAndSubtitle(body: String): Pair<String, String?> {
         val dash = SPACED_DASH_PATTERN.find(body) ?: HALF_SPACED_DASH_PATTERN.find(body)
@@ -192,13 +183,11 @@ class ArcanoaOverviewPageScraper(
     }
 
     /**
-     * The headline act(s) named by the [title], or none for the venue's recurring formats.
-     *
-     * The title is the only artist signal the page offers, and for a live-music venue that is
-     * usually right ("Mojo Substrat", "Jesse Cotton Stone"). But roughly half of Arcanoa's
-     * nights are standing formats whose "act" is the format itself — the Monday open stage,
-     * the Wednesday medieval session, the Tuesday jam — and those must not be minted as
-     * artists, so [RECURRING_FORMAT_PATTERN] drops them.
+     * The headline act(s) named by the [title], or none for the venue's recurring formats. The
+     * title is the only artist signal, and for a live-music venue usually right ("Mojo Substrat",
+     * "Jesse Cotton Stone"). But roughly half the nights are standing formats whose "act" is the
+     * format — the Monday open stage, the Wednesday medieval session, the Tuesday jam — which must
+     * not be minted as artists, so [RECURRING_FORMAT_PATTERN] drops them.
      */
     private fun parseArtists(
         title: String,
@@ -209,10 +198,8 @@ class ArcanoaOverviewPageScraper(
             .filterNot { RECURRING_FORMAT_PATTERN.containsMatchIn(it.name) }
 
     /**
-     * The month block's shared "Veranstaltungsbeginn: 20 Uhr" start time, or `null` when absent.
-     *
-     * The line sits outside the [programme] paragraph but inside the same month cell, so the
-     * search widens to that cell.
+     * The month block's shared "Veranstaltungsbeginn: 20 Uhr" start time, or `null`. The line sits
+     * outside the [programme] paragraph but inside the same month cell, so the search widens to that cell.
      */
     private fun parseStartTime(programme: Element): LocalTime? {
         val match = START_TIME_PATTERN.find((programme.closest("td") ?: programme).text()) ?: return null
@@ -227,7 +214,7 @@ class ArcanoaOverviewPageScraper(
         val month: Int,
         val body: String
     ) {
-        /** The entry's date, with the year inferred from its weekday; `null` when day/month are invalid. */
+        /** The entry's date, year inferred from its weekday; `null` when day/month are invalid. */
         fun toEventDate(): LocalDate? {
             val monthDay =
                 try {
@@ -246,10 +233,9 @@ class ArcanoaOverviewPageScraper(
         private fun normalizeText(text: String): String = text.replace(WHITESPACE_RUN, " ").trim()
 
         /**
-         * Pads a dash that already has whitespace on at least one side out to `" - "`, so the
-         * venue's `"Klonn -dadaistische"` and `"ARCANOA- Open Stage"` spellings read the same.
-         * A dash with no surrounding whitespace is part of a name ("Mittelalter-Irish Folk")
-         * and is left untouched.
+         * Pads a dash with whitespace on at least one side out to `" - "`, so `"Klonn -dadaistische"`
+         * and `"ARCANOA- Open Stage"` read the same. A dash with no surrounding whitespace is part of
+         * a name ("Mittelalter-Irish Folk") and untouched.
          */
         private val UNEVEN_DASH = Regex("""\s+-\s*|\s*-\s+""")
 
@@ -276,9 +262,9 @@ class ArcanoaOverviewPageScraper(
         private val PROGRAMME_HEADING_PATTERN = Regex("""Live\s*Musik""", RegexOption.IGNORE_CASE)
 
         /**
-         * Opens a programme entry: a German weekday abbreviation, a `DD.MM.` date, and the
-         * venue's redundant "Live:" label — e.g. `"Mi 22.07.Live: "`. The label is optional
-         * because the venue omits it on the occasional line.
+         * Opens a programme entry: a German weekday abbreviation, a `DD.MM.` date, and the venue's
+         * redundant "Live:" label — `"Mi 22.07.Live: "`. The label is optional; the venue omits it on
+         * the occasional line.
          */
         private val ENTRY_PATTERN =
             Regex("""\b(Mo|Di|Mi|Do|Fr|Sa|So)\s+(\d{1,2})\.(\d{1,2})\.\s*(?:Live\s*:)?\s*""")
@@ -287,25 +273,24 @@ class ArcanoaOverviewPageScraper(
         private val START_TIME_PATTERN =
             Regex("""Veranstaltungsbeginn:\s*(\d{1,2})(?:[.:](\d{2}))?\s*Uhr""", RegexOption.IGNORE_CASE)
 
-        /** A dash with whitespace on both sides — the venue's cleanest title/style separator. */
+        /** A dash with whitespace on both sides — the cleanest title/style separator. */
         private val SPACED_DASH_PATTERN = Regex("""\s+-\s+""")
 
         /** A dash with whitespace on exactly one side — the fallback separator. */
         private val HALF_SPACED_DASH_PATTERN = Regex("""\s-|-\s""")
 
-        /** A night the venue is booked for a private party, which is not a public event. */
+        /** A night the venue is booked for a private party, not a public event. */
         private val PRIVATE_FUNCTION_PATTERN = Regex("""geschlossene\s+Gesellschaft""", RegexOption.IGNORE_CASE)
 
         /**
-         * Arcanoa's standing weekly formats, whose names are programmes rather than performers:
-         * the Monday/Tuesday open stage and jam, the Wednesday `SpielleuteSession` medieval
-         * night, the Liedermacher festival, and the venue's own name leading its house nights.
-         * Kept venue-local rather than in the shared `ArtistNameMapping` denylist — every entry
-         * is specific to this programme. Matched as a substring on an already-split act name, so
-         * a co-billed real act on the same line survives. The `jam session` alternative looks
-         * redundant beside `\bjam\b` but is not: the venue also writes the night run-together as
-         * "JamSession", where the trailing word boundary `\bjam\b` needs is absent — and widening
-         * that to a bare `\bjam` prefix would swallow a real act like "Jamiroquai".
+         * Arcanoa's standing weekly formats, programmes rather than performers: the Monday/Tuesday
+         * open stage and jam, the Wednesday `SpielleuteSession` medieval night, the Liedermacher
+         * festival, and the venue's own name leading its house nights. Venue-local rather than in the
+         * shared `ArtistNameMapping` denylist — every entry is specific to this programme. Matched as a
+         * substring on an already-split act name, so a co-billed real act survives. `jam session`
+         * beside `\bjam\b` is not redundant: the venue also writes "JamSession" run-together, where
+         * the trailing boundary `\bjam\b` needs is absent — and a bare `\bjam` prefix would swallow
+         * "Jamiroquai".
          */
         private val RECURRING_FORMAT_PATTERN =
             Regex(

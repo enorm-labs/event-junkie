@@ -17,17 +17,16 @@ import org.springframework.stereotype.Component
  * Website importer for Heideglühen, the open-air techno party in a former nursery off
  * Beusselstraße.
  *
- * The venue publishes two pages and no per-event pages at all:
- * 1. `/monatsvorschau/` — the current month's Saturdays, four or five at a time, replaced wholesale
- *    each month. This is the programme, and it is fetched with conditional-request support.
- * 2. `/aktuell/` — the imminent party only, and the one place a DJ lineup ever appears. It is
- *    fetched unconditionally after the month page and its lineup applied to the matching date.
+ * Two pages, no per-event pages:
+ * 1. `/monatsvorschau/` — the current month's Saturdays, four or five, replaced wholesale each
+ * month. The programme, fetched with conditional-request support.
+ * 2. `/aktuell/` — the imminent party only, the one place a DJ lineup appears. Fetched
+ * unconditionally after the month page, its lineup applied to the matching date.
  *
- * The second fetch is why this implements [EventImporter] directly rather than using the per-event
- * detail pattern: there is one week page for the whole programme, not one page per event, and on
- * most days it adds nothing — the venue posts each lineup only a few days ahead. A week page that
- * fails, names another month's date, or has no lineup yet is not an error; those events simply keep
- * the month page's data.
+ * The second fetch is why this implements [EventImporter] directly rather than the per-event
+ * detail pattern: one week page for the whole programme, not one per event, and on most days
+ * it adds nothing — each lineup is posted a few days ahead. A week page that fails, names
+ * another month's date, or has no lineup yet is no error; those events keep the month page's data.
  *
  * @see HeidegluehenMonthPageScraper for the programme parsing.
  * @see HeidegluehenWeekPageScraper for the lineup parsing.
@@ -67,10 +66,9 @@ class HeidegluehenWebsiteImporter(
         }
 
     /**
-     * Applies the week page's lineup to the party it belongs to.
-     *
-     * A lineup that matches none of the month's dates is dropped rather than guessed at: at a
-     * month boundary the week page can already show a party the month page no longer lists.
+     * Applies the week page's lineup to the party it belongs to. A lineup matching none of the
+     * month's dates is dropped rather than guessed: at a month boundary the week page can already
+     * show a party the month page no longer lists.
      */
     private suspend fun applyLineup(
         events: List<ScrapedEvent>,

@@ -12,15 +12,14 @@ import java.net.URI
 import java.time.LocalTime
 
 /**
- * Pure HTML parser for the AEG venues' event detail pages
- * (`/events/detail/<slug>/<YYYY-MM-DD-HHMM>`).
+ * Pure HTML parser for the AEG venues' event detail pages (`/events/detail/<slug>/<YYYY-MM-DD-HHMM>`).
  *
- * The page adds the three things a listing row cannot carry: the `Einlass` doors time, the prose
+ * Adds the three things a listing row cannot carry: the `Einlass` doors time, the prose
  * description, and the external ticket-shop link.
  *
- * It deliberately supplies **no date and no usable title**. Its `h1.summary` appends the venue
- * ("JONY **live in der Uber Eats Music Hall**"), so the listing's cleaner act name is kept; and the
- * listing already assembled the date from its own span group. Both are left to
+ * Deliberately supplies **no date and no usable title**: `h1.summary` appends the venue ("JONY
+ * **live in der Uber Eats Music Hall**"), so the listing's cleaner act name is kept, and the
+ * listing already assembled the date from its span group. Both are left to
  * [AbstractAegVenueImporter.fillGapsFromOverview].
  *
  * @see AegOverviewPageScraper for the listing parser (title, date, category, price).
@@ -30,12 +29,11 @@ class AegDetailPageScraper {
     private val logger = KotlinLogging.logger {}
 
     /**
-     * Parses an event detail page into a [ScrapedEvent], or `null` when the page carries no event
-     * heading — the marker that the request did not return a real event page.
+     * Parses a detail page into a [ScrapedEvent], or `null` without an event heading — the marker
+     * that the request did not return a real event page.
      *
-     * @param sourceUrl the event's URL, used as [ScrapedEvent.sourceUrl] and to derive the
-     *   [ScrapedEvent.sourceId].
-     * @param eventSource the venue whose page this is, used for the `sourceId` prefix.
+     * @param sourceUrl the event's URL: [ScrapedEvent.sourceUrl] and the [ScrapedEvent.sourceId].
+     * @param eventSource the venue whose page this is, for the `sourceId` prefix.
      */
     @Suppress("ReturnCount") // A guard clause for the missing heading is clearer than nesting
     fun scrape(
@@ -64,11 +62,10 @@ class AegDetailPageScraper {
     }
 
     /**
-     * Reads the external ticket-shop link (AXS for both venues) from the `#tickets` block.
-     *
-     * The music hall renders a **self-link before** the shop link with identical classes, so
-     * taking the first `a.btn-tix` would store the event's own URL as its ticket link. Only a link
-     * pointing off the venue's own host qualifies.
+     * The external ticket-shop link (AXS for both venues) from the `#tickets` block. The music
+     * hall renders a **self-link before** the shop link with identical classes, so the first
+     * `a.btn-tix` would store the event's own URL as its ticket link. Only a link off the venue's
+     * own host qualifies.
      */
     private fun parseTicketUrl(
         document: Document,
@@ -84,11 +81,11 @@ class AegDetailPageScraper {
     }
 
     /**
-     * Parses the doors time from the venue's `", Einlass 18:30 Uhr"` line, the only place a doors
-     * time appears at all. Returns `null` when the page states none.
+     * The doors time from the `", Einlass 18:30 Uhr"` line, the only place one appears. `null`
+     * when the page states none.
      */
     private fun parseDoorsTime(text: String?): LocalTime? = parseTime(DOORS_PATTERN.find(text.orEmpty())?.groupValues?.get(1))
 }
 
-/** Matches the venues' `"Einlass HH:mm Uhr"` doors line. */
+/** The venues' `"Einlass HH:mm Uhr"` doors line. */
 private val DOORS_PATTERN = Regex("""Einlass\s+(\d{1,2}:\d{2})""", RegexOption.IGNORE_CASE)

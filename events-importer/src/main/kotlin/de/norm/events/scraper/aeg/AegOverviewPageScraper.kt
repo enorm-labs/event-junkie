@@ -22,31 +22,30 @@ import org.jsoup.nodes.Element
 import java.time.LocalDate
 
 /**
- * Pure HTML parser for the `/events/all` listing both Berlin AEG venues render — Uber Arena and the
- * Uber Eats Music Hall, which run one Carbonhouse tenant.
+ * Pure HTML parser for the `/events/all` listing both Berlin AEG venues render — Uber Arena and
+ * the Uber Eats Music Hall, one Carbonhouse tenant.
  *
  * Each venue publishes its whole programme server-side and unpaginated as `div[data-category]`
- * rows; the month buttons beside the list filter it client-side rather than paging the server. A
- * row carries the platform's category, a `.m-date__*` span group (day, month, year and an
- * `HH:mm Uhr` start), an `h3.event-title`, an optional `ab NN,NN €` from-price, a thumbnail, and a
- * link to `/events/detail/<slug>/<YYYY-MM-DD-HHMM>` — whose trailing segment makes the `sourceId`
+ * rows; the month buttons filter client-side. A row carries the platform's category, a
+ * `.m-date__*` span group (day, month, year and an `HH:mm Uhr` start), an `h3.event-title`, an
+ * optional `ab NN,NN €` from-price, a thumbnail, and a link to
+ * `/events/detail/<slug>/<YYYY-MM-DD-HHMM>` — whose trailing segment makes the `sourceId`
  * unique per performance, since a run reuses one slug across many dates.
  *
- * Two things differ between the tenants and are handled here rather than in two near-identical
- * parsers:
- *  - the arena writes its month numerically (`08.`) while the music hall abbreviates it
- *    (`Sep. `, `Mär `), so both spellings are accepted;
- *  - the arena labels its category in `data-categoryname` while the music hall emits only the
- *    numeric `data-category`, so the name wins where present and the platform's numeric taxonomy
- *    ([AEG_CATEGORY_IDS], decoded from the arena, which publishes both) is the fallback.
+ * Two tenant differences are handled here rather than in two near-identical parsers:
+ * - the arena writes its month numerically (`08.`), the music hall abbreviates (`Sep. `,
+ * `Mär `), so both are accepted;
+ * - the arena labels its category in `data-categoryname`, the music hall emits only the numeric
+ * `data-category`, so the name wins where present and the platform's numeric taxonomy
+ * ([AEG_CATEGORY_IDS], decoded from the arena, which publishes both) is the fallback.
  *
- * A cancelled date keeps its row and is prefixed `ABGESAGT:` in the title — the only place either
- * venue states a status — so that prefix becomes the status and is stripped from the stored name.
+ * A cancelled date keeps its row, prefixed `ABGESAGT:` in the title — the only place either
+ * venue states a status — so that prefix becomes the status and is stripped from the name.
  *
- * **Sport rows are dropped** rather than stored as `OTHER`: the arena is home to ALBA Berlin and the
- * Eisbären, and filed as `OTHER` those fixtures would bury the concerts, shows and comedy nights
- * they sit among — the same call the Velomax halls make. They are also the only rows carrying a
- * `00:00 Uhr` placeholder start, so the filter removes that noise too.
+ * **Sport rows are dropped** rather than `OTHER`: the arena is home to ALBA Berlin and the
+ * Eisbären, and as `OTHER` those fixtures would bury the concerts, shows and comedy nights among
+ * them — the Velomax halls' call. They are also the only rows with a `00:00 Uhr` placeholder
+ * start, so the filter removes that noise too.
  *
  * @see AegDetailPageScraper for the detail-page data (doors, description, ticket link).
  * @see AbstractAegVenueImporter for the HTTP fetch orchestrator.
@@ -57,8 +56,8 @@ class AegOverviewPageScraper {
     /**
      * Parses every non-sport row from a venue's listing page.
      *
-     * @param baseUrl the URL the document was fetched from, used to resolve detail links.
-     * @param eventSource the venue whose page this is, used for the `sourceId` prefix and logging.
+     * @param baseUrl the URL the document was fetched from, for resolving detail links.
+     * @param eventSource the venue whose page this is, for the `sourceId` prefix and logging.
      */
     fun scrape(
         document: Document,
@@ -80,7 +79,7 @@ class AegOverviewPageScraper {
         }
     }
 
-    /** Parses a single listing row into a [ScrapedEvent], or `null` when it has no link or title. */
+    /** Parses one listing row into a [ScrapedEvent], or `null` without a link or title. */
     @Suppress("ReturnCount") // Guard clauses for the required href/title are clearer than nesting
     private fun parseRow(
         row: Element,
@@ -119,8 +118,8 @@ class AegOverviewPageScraper {
 
     /**
      * The row's category label. The arena states it outright; the music hall emits only the
-     * platform's numeric id, decoded through [AEG_CATEGORY_IDS]. Returns `null` when the venue
-     * filed the event under no category at all (id `0` — the music hall's one job fair).
+     * numeric id, decoded through [AEG_CATEGORY_IDS]. `null` when filed under no category (id
+     * `0` — the music hall's one job fair).
      */
     private fun categoryOf(row: Element): String? =
         row.attr("data-categoryname").takeIf { it.isNotBlank() }
@@ -133,9 +132,9 @@ class AegOverviewPageScraper {
     }
 
     /**
-     * Assembles the date from the row's `.m-date__day` / `.m-date__month` / `.m-date__year` spans,
-     * each carrying its own punctuation (`21.`, `08.` or `Sep. `, `2026,`). Returns `null` when a
-     * part is missing or the combination is not a real date.
+     * The date from the `.m-date__day` / `.m-date__month` / `.m-date__year` spans, each with its
+     * own punctuation (`21.`, `08.` or `Sep. `, `2026,`). `null` when a part is missing or the
+     * combination is not a real date.
      */
     private fun parseRenderedDate(row: Element): LocalDate? {
         val day = row.textAt(".m-date__day")?.trim('.', ' ')?.toIntOrNull()
@@ -148,7 +147,7 @@ class AegOverviewPageScraper {
         }
     }
 
-    /** Reads the month either numerically (the arena) or as a German abbreviation (the music hall). */
+    /** The month numerically (the arena) or as a German abbreviation (the music hall). */
     private fun parseMonth(text: String?): Int? {
         val trimmed = text?.trim('.', ' ') ?: return null
         return trimmed.toIntOrNull() ?: parseGermanMonthAbbreviation(trimmed)?.value
@@ -156,7 +155,7 @@ class AegOverviewPageScraper {
 }
 
 /**
- * The platform's numeric category taxonomy, decoded from Uber Arena — the tenant that publishes
+ * The platform's numeric category taxonomy, decoded from Uber Arena — the tenant publishing
  * both `data-category` and `data-categoryname`. The music hall emits only the id, and its
  * programme corroborates the mapping (comedians under `4`, ballet under `5`, bands under `3`).
  */
@@ -171,10 +170,10 @@ private val AEG_CATEGORY_IDS =
     )
 
 /**
- * The categories dropped rather than imported. The arena is home to ALBA Berlin and the Eisbären,
- * so roughly a third of its listing is sport; filed as `OTHER` those would bury the concerts and
- * shows they sit among — the same decision as the Velomax halls. The music hall has no resident
- * team and so no such rows, but shares the filter.
+ * The categories dropped rather than imported. The arena is home to ALBA Berlin and the
+ * Eisbären, so roughly a third of its listing is sport; as `OTHER` those would bury the
+ * concerts and shows among them — the Velomax halls' decision. The music hall has no resident
+ * team and no such rows, but shares the filter.
  */
 private val SPORT_CATEGORIES = setOf("eishockey", "basketball", "sport")
 
@@ -182,8 +181,8 @@ private val SPORT_CATEGORIES = setOf("eishockey", "basketball", "sport")
 private val EXTRA_CATEGORY_SYNONYMS = mapOf("comedy" to EventType.SHOW.name)
 
 /**
- * The cancellation marker the platform prefixes to a title (`ABGESAGT: Ryan Adams`). It is read
- * for the status and then removed, so the stored name stays the act's.
+ * The cancellation marker prefixed to a title (`ABGESAGT: Ryan Adams`), read for the status
+ * and removed so the stored name stays the act's.
  */
 private val CANCELLED_PREFIX = Regex("""^\s*ABGESAGT\s*[:.\-]?\s*""", RegexOption.IGNORE_CASE)
 

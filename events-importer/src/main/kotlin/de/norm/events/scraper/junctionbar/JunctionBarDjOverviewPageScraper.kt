@@ -20,24 +20,24 @@ import java.time.MonthDay
 /**
  * Pure HTML parser for Junction Bar Berlin's single-page DJ program (`DJ_html/DJ.html`).
  *
- * The page is retro hand-coded HTML sharing the live-music page's flat layout: inside
- * `div.gridContainer`, each club night starts at a *date bar* — a `<div>` holding a `<table>`
- * whose cell carries a `strong.Datum`/`.Datum-DJ` with a German `DD.MM.` date, an English
- * weekday abbreviation, and a start time. The `p.djane` lines that follow (until the next date
- * bar) hold the night's theme ("black music & classics with") and the DJ name ("DJane B.B.").
- * A "PRIVAT PARTY" night carries no public act and is skipped.
+ * Retro hand-coded HTML sharing the live-music page's flat layout: inside `div.gridContainer`,
+ * each club night starts at a *date bar* — a `<div>` holding a `<table>` whose cell carries a
+ * `strong.Datum`/`.Datum-DJ` with a German `DD.MM.` date, an English weekday abbreviation, and
+ * a start time. The `p.djane` lines that follow (until the next date bar) hold the theme
+ * ("black music & classics with") and the DJ name ("DJane B.B."). A "PRIVAT PARTY" night
+ * carries no public act and is skipped.
  *
- * Every night is a DJ dance party, so all events are typed [EventType.PARTY]. Dates render
- * year-less; the year is inferred from the weekday abbreviation via [inferYearForWeekday]. The
- * venue leaves recently-passed nights on the page; those are dropped centrally at persistence
- * time (`EventUpsertService`), so this parser returns every dated night as-is.
+ * Every night is a DJ dance party, so all events are [EventType.PARTY]. Dates render year-less;
+ * the year comes from the weekday abbreviation via [inferYearForWeekday]. Recently-passed nights
+ * stay on the page and are dropped centrally at persistence (`EventUpsertService`), so this
+ * parser returns every dated night as-is.
  *
  * @see JunctionBarDjWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://www.junction-bar.de/DJ_html/DJ.html">Junction Bar DJ program</a>
  */
 @Suppress("TooManyFunctions") // Cohesive single-responsibility parser; the inline markup needs several small field extractors.
 class JunctionBarDjOverviewPageScraper(
-    /** Clock for weekday-based year inference. Defaults to the system clock; override in tests for determinism. */
+    /** Clock for weekday-based year inference; override in tests. */
     private val clock: Clock = Clock.systemDefaultZone()
 ) {
     private val logger = KotlinLogging.logger {}
@@ -45,8 +45,8 @@ class JunctionBarDjOverviewPageScraper(
     /**
      * Parses all DJ nights from the program page.
      *
-     * @param baseUrl the URL the document was fetched from, used as each event's `sourceUrl`.
-     * @return one [ScrapedEvent] per dated night that names a public DJ act.
+     * @param baseUrl the URL the document was fetched from, each event's `sourceUrl`.
+     * @return one [ScrapedEvent] per dated night naming a public DJ act.
      */
     fun scrape(
         document: Document,
@@ -98,8 +98,8 @@ class JunctionBarDjOverviewPageScraper(
 
         return ScrapedEvent(
             title = title,
-            // The theme line ("black music & classics") is display prose, not a normalizable genre —
-            // keep it as a subtitle so it never seeds bogus genre tags.
+            // The theme line ("black music & classics") is display prose, not a normalizable genre — kept
+            // as a subtitle so it never seeds bogus genre tags.
             subtitle = theme,
             eventType = EventType.PARTY.name,
             eventDate = eventDate,
@@ -116,8 +116,8 @@ class JunctionBarDjOverviewPageScraper(
     }
 
     /**
-     * The `DD.MM.` date, with the year inferred from the English weekday abbreviation via
-     * [inferYearForWeekday]. Returns `null` when the date cannot be parsed.
+     * The `DD.MM.` date, year from the English weekday abbreviation via [inferYearForWeekday].
+     * `null` when the date cannot be parsed.
      */
     @Suppress("ReturnCount") // Null-safe early exits per date component are clearer than nested let-chains.
     private fun parseDate(dateBar: Element): LocalDate? {

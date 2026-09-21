@@ -14,15 +14,13 @@ import org.springframework.stereotype.Component
 /**
  * Website importer for Eschschloraque Rümschrümp's Drupal 7 home page.
  *
- * The venue's whole upcoming programme is rendered on the home page as full nodes, so the pipeline
- * is a single fetch:
- * 1. Fetch the home page via [HtmlFetcher] with conditional-request support (ETag / Last-Modified).
- * 2. Parse every `.node-veranstaltung` via [EschschloraqueOverviewPageScraper].
+ * The whole upcoming programme renders on the home page as full nodes, so a single fetch:
+ * [HtmlFetcher] fetches it conditionally (ETag / Last-Modified),
+ * [EschschloraqueOverviewPageScraper] parses every `.node-veranstaltung`.
  *
- * The `/kalender/monat` calendar linked from the same navigation is deliberately not crawled. It
- * lists the *current* month — including nights that have already passed — and its `?/YYYY-MM`
- * variants are empty beyond it, so it adds no upcoming event the home page does not already carry.
- * The `/archiv` page holds only past events.
+ * The `/kalender/monat` calendar in the same navigation is deliberately not crawled: it lists
+ * the *current* month — passed nights included — and its `?/YYYY-MM` variants are empty beyond
+ * it, so it adds no upcoming event the home page lacks. `/archiv` holds only past events.
  *
  * @see EschschloraqueOverviewPageScraper for the HTML parsing logic.
  * @see <a href="https://www.eschschloraque.de/">Eschschloraque Rümschrümp</a>

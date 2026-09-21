@@ -14,24 +14,23 @@ import org.jsoup.nodes.Document
 import org.springframework.stereotype.Component
 
 /**
- * Website importer for Matrix Club Berlin — a WordPress club running a resident night every day of
- * the year, whose `/party-in-berlin/` programme is paginated one calendar month at a time
+ * Website importer for Matrix Club Berlin — a WordPress club running a resident night every day
+ * of the year, whose `/party-in-berlin/` programme is paginated one calendar month at a time
  * (`?get_month=<m>&get_year=<yyyy>`).
  *
- * The entry URL serves the **current** month, listing only the days still to come; this importer
- * then follows the page's own next-month link forward until the venue stops offering one — the month
- * after the last announced night renders "Bisher keine Events eingetragen" and drops the link, which
- * terminates the walk on the venue's own signal rather than on a guessed horizon.
- * [MAX_MONTH_PAGES] caps the walk regardless, so a markup change that made the link self-referential
- * cannot spin.
+ * The entry URL serves the **current** month, listing only the days still to come; the importer
+ * follows the page's own next-month link until the venue stops offering one — the month after
+ * the last announced night renders "Bisher keine Events eingetragen" and drops the link, so the
+ * walk ends on the venue's own signal, not a guessed horizon. [MAX_MONTH_PAGES] caps it
+ * regardless, so a self-referential link cannot spin.
  *
- * The venue also publishes per-event `/parties/<date>-matrix-<weekday>/` pages, but they carry
- * nothing the month view lacks — so walking ~4 month pages replaces ~90 detail fetches per run.
+ * Per-event `/parties/<date>-matrix-<weekday>/` pages exist but carry nothing the month view
+ * lacks — walking ~4 month pages replaces ~90 detail fetches per run.
  *
- * Conditional requests are intentionally **not** used: the site sends neither ETag nor Last-Modified,
- * and even if it did, a 304 on the entry page would say nothing about the later months. Every run
- * re-fetches and relies on idempotent `sourceId` upserts — [ImportResult.Success] is returned with
- * `null` cache headers (there is no `NotModified` path).
+ * Conditional requests are intentionally **not** used: the site sends neither ETag nor
+ * Last-Modified, and a 304 on the entry page would say nothing about the later months. Every
+ * run re-fetches and relies on idempotent `sourceId` upserts — [ImportResult.Success] with
+ * `null` cache headers (no `NotModified` path).
  *
  * @see MatrixOverviewPageScraper for the per-month parsing.
  * @see <a href="https://www.matrix-berlin.de/party-in-berlin/">Matrix programme page</a>
@@ -67,8 +66,8 @@ class MatrixWebsiteImporter(
     }
 
     /**
-     * Resolves the next-month link — the right-hand chevron in the month switcher — or null on the
-     * first month the venue has no programme for, which is where the walk stops.
+     * The next-month link — the right-hand chevron in the month switcher — or null on the first
+     * month with no programme, where the walk stops.
      */
     private fun nextMonthUrl(
         document: Document,
@@ -77,9 +76,8 @@ class MatrixWebsiteImporter(
 
     private companion object {
         /**
-         * Upper bound on the month pages walked in one run. Matrix announces roughly three months
-         * ahead, so this is a runaway guard rather than a horizon — it only bites if the venue's
-         * next-month links ever stop terminating.
+         * Upper bound on month pages per run. Matrix announces roughly three months ahead, so a
+         * runaway guard rather than a horizon — it bites only if next-month links stop terminating.
          */
         private const val MAX_MONTH_PAGES = 12
     }

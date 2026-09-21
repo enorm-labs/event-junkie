@@ -17,23 +17,20 @@ import java.time.temporal.TemporalAdjusters
 
 /**
  * Pure HTML parser for Heideglühen's `/monatsvorschau/` page — the open-air's whole published
- * programme, which is **one month at a time**.
+ * programme, **one month at a time**.
  *
- * The site has no per-event pages and no archive: a single WordPress (Beaver Builder) rich-text
- * block lists the month's Saturdays as `<p>` paragraphs separated by `~~~`, and is replaced
- * wholesale at the end of each month. Four or five dates is therefore the venue's entire output,
- * not a truncated import.
+ * No per-event pages, no archive: a single WordPress (Beaver Builder) rich-text block lists the
+ * month's Saturdays as `<p>` paragraphs separated by `~~~`, replaced wholesale each month. Four
+ * or five dates is the venue's entire output, not a truncated import.
  *
- * Each event paragraph mixes two kinds of line in **no fixed order**: a German prose date
- * ("Samstag, 1. August 2026, 12 Uhr (bis Sonntag, 6 Uhr)") and one or more highlighted `<mark>`
- * names. A plain week reads date-then-name; the anniversary weekend reads name-then-date-then-name.
- * Lines are therefore classified by what they are rather than by where they sit: the one that
- * parses as a date is the date, the first `<mark>` is the title and any later `<mark>` is the
- * subtitle ("34-Stunden-Weekender").
+ * Each paragraph mixes two kinds of line in **no fixed order**: a German prose date ("Samstag,
+ * 1. August 2026, 12 Uhr (bis Sonntag, 6 Uhr)") and one or more highlighted `<mark>` names. A
+ * plain week reads date-then-name; the anniversary weekend name-then-date-then-name. Lines are
+ * classified by what they are, not where they sit: the one parsing as a date is the date, the
+ * first `<mark>` the title, any later `<mark>` the subtitle ("34-Stunden-Weekender").
  *
- * The party runs overnight: the paragraph's `(bis Sonntag, 6 Uhr)` tail is the end, and it names
- * the weekday rather than the date, so the end date is the first day from the start that falls
- * on it (ADR-029).
+ * The party runs overnight: the `(bis Sonntag, 6 Uhr)` tail is the end, naming the weekday
+ * rather than the date, so the end date is the first day from the start falling on it (ADR-029).
  *
  * @see HeidegluehenWeekPageScraper for the imminent event's DJ lineup.
  * @see HeidegluehenWebsiteImporter for the HTTP fetch orchestrator.
@@ -44,16 +41,16 @@ class HeidegluehenMonthPageScraper {
     /**
      * Parses every event paragraph on the month page.
      *
-     * @param sourceUrl the URL the document was fetched from, stored as every event's `sourceUrl` —
-     *   the venue publishes no per-event page to link to.
+     * @param sourceUrl the URL the document was fetched from, every event's `sourceUrl` — no
+     * per-event page to link to.
      */
     fun scrape(
         document: Document,
         sourceUrl: String
     ): List<ScrapedEvent> {
-        // The month's artwork covers all of its dates. The selector has to be this specific: the
-        // page also carries the site logo (outside the content column) and a close button (inside
-        // it, but right-aligned), and only the artwork is a centred photo within `#pagecontent`.
+        // The month's artwork covers all its dates. The selector has to be this specific: the page
+        // also carries the site logo (outside the content column) and a close button (inside it,
+        // right-aligned), and only the artwork is a centred photo within `#pagecontent`.
         val monthImageUrl = document.imgSrcAt(MONTH_ARTWORK)
 
         @Suppress("TooGenericExceptionCaught") // Intentional: skip individual malformed paragraphs without aborting the import
@@ -71,9 +68,9 @@ class HeidegluehenMonthPageScraper {
     }
 
     /**
-     * Parses one paragraph into a [ScrapedEvent], or `null` when it holds no date — the separator
-     * paragraphs, the month's shared "Unter anderem mit" name-drop and the footer notes all fail
-     * that test, which is what keeps them out of the programme.
+     * Parses one paragraph into a [ScrapedEvent], or `null` without a date — the separator
+     * paragraphs, the month's "Unter anderem mit" name-drop and the footer notes all fail that
+     * test, which keeps them out of the programme.
      */
     @Suppress("ReturnCount") // Guard clauses for the required date and title are clearer than nesting
     private fun parseParagraph(
@@ -101,7 +98,7 @@ class HeidegluehenMonthPageScraper {
             endTime = schedule.endTime,
             imageUrl = monthImageUrl,
             sourceUrl = sourceUrl,
-            // There is one party per date and no per-event page, so the date is the identity.
+            // One party per date and no per-event page, so the date is the identity.
             sourceId = "${EventSource.HEIDEGLUEHEN.sourceIdPrefix}${schedule.date}"
         )
     }
@@ -123,10 +120,8 @@ internal data class HeidegluehenSchedule(
 )
 
 /**
- * Parses one of the venue's prose date lines, or `null` when the line is not one.
- *
- * Both spellings the site uses are accepted: the month page's
- * `"Samstag, 1. August 2026, 12 Uhr (bis Sonntag, 6 Uhr)"` and the week page's
+ * Parses one of the venue's prose date lines, or `null`. Both spellings are accepted: the
+ * month page's `"Samstag, 1. August 2026, 12 Uhr (bis Sonntag, 6 Uhr)"` and the week page's
  * `"Samstag, 6. Juni 2026, 12 Uhr,"` with its closing time on the following line.
  */
 internal fun parseSchedule(line: String): HeidegluehenSchedule? {
@@ -151,7 +146,7 @@ internal fun parseSchedule(line: String): HeidegluehenSchedule? {
     }
 }
 
-/** Reads the venue's whole-hour opening time, accepting the `24 Uhr` it writes for midnight. */
+/** The venue's whole-hour opening time, accepting the `24 Uhr` it writes for midnight. */
 private fun parseHour(text: String): LocalTime? =
     text
         .toIntOrNull()

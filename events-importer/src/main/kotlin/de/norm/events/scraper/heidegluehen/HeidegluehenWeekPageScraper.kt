@@ -12,9 +12,9 @@ import java.time.LocalDate
 /**
  * The DJ lineup for one party, read from Heideglühen's `/aktuell/` ("Diese Woche") page.
  *
- * @property date the party this lineup belongs to, so it can be matched to the month page.
- * @property artists the announced DJs, in the order the venue lists them.
- * @property imageUrl this party's own flyer, which supersedes the month page's shared artwork.
+ * @property date the party this lineup belongs to, matched to the month page.
+ * @property artists the announced DJs, in the venue's order.
+ * @property imageUrl this party's own flyer, superseding the month page's shared artwork.
  */
 data class HeidegluehenLineup(
     val date: LocalDate,
@@ -30,20 +30,18 @@ data class HeidegluehenLineup(
 }
 
 /**
- * Pure HTML parser for Heideglühen's `/aktuell/` page, which carries **one** party — the imminent
- * one — and is the only place the venue publishes a lineup.
+ * Pure HTML parser for Heideglühen's `/aktuell/` page, which carries **one** party — the
+ * imminent one — and is the only place the venue publishes a lineup.
  *
- * The page shares the month page's markup, so the date and title parse the same way. What it adds
- * is a `Das Programm:` block naming the DJs one per line as `"Antal // Rush Hour, NL"` — the name,
- * then the label or city it is billed under — followed by `~~~` and a running order
- * (`"12:00-16:00 Forsberg"`). Only the names are stored: the model has no field for a set time, and
- * the running order repeats names the billing already listed.
+ * Same markup as the month page, so date and title parse the same way. It adds a
+ * `Das Programm:` block naming the DJs one per line as `"Antal // Rush Hour, NL"` — name, then
+ * the label or city billed under — followed by `~~~` and a running order (`"12:00-16:00
+ * Forsberg"`). Only the names are stored: no field for a set time, and the running order
+ * repeats names the billing listed. It also carries that party's own flyer where the month page
+ * has one graphic for the month, so the image comes along with the lineup.
  *
- * It also carries that party's own flyer where the month page has only one graphic for the month,
- * so the image comes along with the lineup.
- *
- * The lineup appears a few days before each party ("Das Programm folgt am Dienstag…" until then),
- * so on most days this page adds nothing and the event keeps the month page's data alone.
+ * The lineup appears a few days before each party ("Das Programm folgt am Dienstag…" until
+ * then), so on most days this page adds nothing and the event keeps the month page's data.
  *
  * @see HeidegluehenMonthPageScraper for the programme itself.
  * @see HeidegluehenWebsiteImporter for the HTTP fetch orchestrator.
@@ -75,8 +73,8 @@ class HeidegluehenWeekPageScraper {
                 null
             }
 
-            // Where the month page carries one graphic for the whole month, this page carries the
-            // party's own flyer, in the same slot.
+            // Where the month page carries one graphic for the whole month, this page carries the party's
+            // own flyer, in the same slot.
             else -> {
                 HeidegluehenLineup(date = date, artists = artists, imageUrl = document.imgSrcAt(MONTH_ARTWORK))
             }
@@ -84,10 +82,9 @@ class HeidegluehenWeekPageScraper {
     }
 
     /**
-     * Reads a DJ name off a `"Antal // Rush Hour, NL"` billing line, or `null` for any other line.
-     *
-     * The `//` is what marks a billing: every other line on the page — the date, the title, the
-     * poem the venue opens with, the running order, the closing note — carries none.
+     * A DJ name off a `"Antal // Rush Hour, NL"` billing line, or `null` for any other line. The
+     * `//` marks a billing: every other line — date, title, the poem the venue opens with, running
+     * order, closing note — carries none.
      */
     private fun parseBillingLine(line: String): String? =
         line
