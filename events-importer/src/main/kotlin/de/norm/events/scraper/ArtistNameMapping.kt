@@ -181,6 +181,7 @@ private val ARTIST_SUFFIX_PATTERN =
             """|\s+release\s+(?:party|show)$""" +
             """|\s+[-–—]\s+(?:\p{L}\s+){2,}\p{L}\s*$""" +
             """|\s+(?:mit|with)\s+(?:orchester|orchestra|band|ensemble|chor|choir|streichern?|strings)\s*$""" +
+            """|^(?:nachholtermin|hochverlegung|verschoben|verlegt)\b\s*[-–—:]*\s*(?=\S)""" +
             """|\s+[-–—]\s+\S.*!\s*$""",
         RegexOption.IGNORE_CASE
     )
@@ -371,7 +372,13 @@ private val NON_ARTIST_NAMES: Set<String> =
         // Series billed under their own name with the acts on the page body only (#1581).
         "berlin beat invasion",
         "urban spree klubnacht",
-        "methods of dance"
+        "methods of dance",
+        // What a split leaves of a note, a format word or a guest tail (#301): `verschoben – Black
+        // River Delta`, `PANEL: …`, the `Friends` of `Emorine, Bandidas & Friends`. A whole `Feo &
+        // Friends` billing stays one act (Supamolly); only the split-off word is dropped.
+        "verschoben",
+        "panel",
+        "friends"
     )
 
 /**
@@ -570,7 +577,8 @@ private val KNOWN_SINGLE_ACTS: Set<String> =
         "matt & kim",
         "blood & sun",
         "pure obsessions & red nights",
-        "scala & kolacny brothers"
+        "scala & kolacny brothers",
+        "chase & status"
     )
 
 /**
