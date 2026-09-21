@@ -21,21 +21,20 @@ import java.math.BigDecimal
 /**
  * Pure parser for Tempodrom's programme, read from the schema.org JSON-LD its listing page embeds.
  *
- * `/programm-und-tickets/` carries the venue's **entire** programme as one
+ * `/programm-und-tickets/` carries the **entire** programme as one
  * `<script type="application/ld+json">` array of `Event` objects — 145 at the time of writing —
- * each with `startDate`, `doorTime`, `image`, `description`, `eventStatus` and an `offers` block.
- * The rendered cards add nothing the JSON-LD lacks, so the structured data is the source and the
- * markup is never selected against (ADR-007 §"Selector Strategy" priority 1).
+ * each with `startDate`, `doorTime`, `image`, `description`, `eventStatus` and an `offers`
+ * block. The rendered cards add nothing, so the structured data is the source and the markup is
+ * never selected against (ADR-007 §"Selector Strategy" priority 1).
  *
- * Two of the venue's own fields are deliberately not taken at face value. `performer.name` is
- * always a copy of the event `name` rather than an act, so it is ignored and artists are derived
- * from the title as for any other concert hall. And `location.name` is always "Tempodrom Berlin",
- * so the house's Große / Kleine Arena split — which appears nowhere in the listing — is not
- * represented.
+ * Two fields are not taken at face value. `performer.name` is always a copy of the event `name`,
+ * not an act, so it is ignored and artists derive from the title as for any concert hall. And
+ * `location.name` is always "Tempodrom Berlin", so the Große / Kleine Arena split — nowhere in
+ * the listing — is not represented.
  *
- * The JSON-LD strings are HTML-escaped and script content is not decoded by Jsoup, so `name` and
- * `description` are run through [decodeHtmlEntities] before anything else touches them — see that function
- * for why decoding late would be too late.
+ * The JSON-LD strings are HTML-escaped and script content is not decoded by Jsoup, so `name`
+ * and `description` go through [decodeHtmlEntities] before anything touches them — see that
+ * function for why decoding late would be too late.
  *
  * @see TempodromWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://www.tempodrom.de/programm-und-tickets/">Tempodrom programme</a>
@@ -46,10 +45,8 @@ class TempodromOverviewPageScraper {
     private val jsonMapper: JsonMapper = JsonMapper.builder().addModule(kotlinModule()).build()
 
     /**
-     * Parses every event from the listing page's JSON-LD.
-     *
-     * @return a list of [ScrapedEvent] instances; empty when the page carries no parseable
-     *   schema.org `Event` data.
+     * Parses every event from the listing page's JSON-LD; empty when the page carries no
+     * parseable schema.org `Event` data.
      */
     fun scrape(document: Document): List<ScrapedEvent> {
         val nodes = document.select("script[type=application/ld+json]").flatMap { parseEvents(it.data()) }
@@ -66,7 +63,7 @@ class TempodromOverviewPageScraper {
         }
     }
 
-    /** Reads the `Event` objects out of one JSON-LD block, which may hold a single object or an array. */
+    /** The `Event` objects out of one JSON-LD block, which may hold a single object or an array. */
     @Suppress("TooGenericExceptionCaught") // Intentional: a malformed block degrades to "no events", never a failed import
     private fun parseEvents(json: String): List<JsonNode> =
         try {
@@ -77,7 +74,7 @@ class TempodromOverviewPageScraper {
             emptyList()
         }
 
-    /** Maps one schema.org `Event` object onto a [ScrapedEvent], or `null` when it has no name or date. */
+    /** Maps one schema.org `Event` onto a [ScrapedEvent], or `null` without a name or date. */
     @Suppress("ReturnCount") // Guard clauses for the required name/date are clearer than nesting
     private fun parseEvent(event: JsonNode): ScrapedEvent? {
         val title =
@@ -89,8 +86,8 @@ class TempodromOverviewPageScraper {
                 ?.let(::cleanEventTitle) ?: return null
         val startedAt = event.path("startDate").asString("").takeIf { it.isNotBlank() } ?: return null
         val eventDate = parseIsoDate(startedAt) ?: return null
-        // Every event carries an `endDate`, and 140 of 145 repeat the start date without a time —
-        // a same-day, date-only end says nothing. The five that differ are the runs: a circus over
+        // Every event carries an `endDate`, and 140 of 145 repeat the start date without a time — a
+        // same-day, date-only end says nothing. The five that differ are the runs: a circus over
         // Christmas, a snooker week, Holiday on Ice (ADR-029).
         val endedAt = event.path("endDate").asString("")
         val endDate = parseIsoDate(endedAt)?.takeIf { it > eventDate || endedAt.contains('T') }
@@ -108,8 +105,8 @@ class TempodromOverviewPageScraper {
 
         return ScrapedEvent(
             title = title,
-            // The venue's `description` is the tour or edition name ("The Ca$ino Tour", "Jungle
-            // Vibes Edition"), not a blurb — it belongs in the subtitle.
+            // The venue's `description` is the tour or edition name ("The Ca$ino Tour", "Jungle Vibes
+            // Edition"), not a blurb — it belongs in the subtitle.
             subtitle = subtitle,
             eventType = eventType,
             eventDate = eventDate,
@@ -137,12 +134,10 @@ class TempodromOverviewPageScraper {
     }
 
     /**
-     * Reads the cheapest ticket price and, when the offer spans a range, a note recording it.
-     *
-     * `offers` publishes `price` and `lowPrice` identically (the cheapest tier) plus a `highPrice`;
-     * 68 of the 86 priced events span a range, so storing the low price alone would understate what
-     * most seats cost — the range is kept verbatim in the note. An event with no `offers` at all,
-     * or with only an availability, yields neither.
+     * The cheapest ticket price and, when the offer spans a range, a note recording it. `offers`
+     * publishes `price` and `lowPrice` identically (the cheapest tier) plus a `highPrice`; 68 of
+     * the 86 priced events span a range, so the low price alone would understate what most seats
+     * cost — the range is kept verbatim in the note. No `offers`, or only an availability, yields neither.
      */
     private fun parsePrices(offers: JsonNode): Pair<BigDecimal?, String?> {
         val low = parseDecimal(offers.path("lowPrice").asString(null) ?: offers.path("price").asString(null))
@@ -153,20 +148,17 @@ class TempodromOverviewPageScraper {
     }
 
     /**
-     * Parses a JSON-LD money value such as `"65.00"`.
-     *
-     * Deliberately not [parsePriceValue][de.norm.events.scraper.parsePriceValue]: that reads a
-     * *rendered* price off a page and requires the `€` sign this machine-readable field does not
-     * carry.
+     * Parses a JSON-LD money value such as `"65.00"`. Not
+     * [parsePriceValue][de.norm.events.scraper.parsePriceValue]: that reads a *rendered* price and
+     * requires the `€` sign this machine-readable field does not carry.
      */
     private fun parseDecimal(value: String?): BigDecimal? = value?.trim()?.takeIf { it.isNotBlank() }?.let { runCatching { BigDecimal(it) }.getOrNull() }
 
     /**
-     * Reads the clock part of a JSON-LD timestamp such as `2026-09-01T20:30:00`.
-     *
-     * Deliberately not [parseIsoTime][de.norm.events.scraper.parseIsoTime]: that expects the bare
-     * `HH:mm` most venues render, and returns null for the seconds this field carries. A date-only
-     * value (which a multi-day run publishes) yields no time at all.
+     * The clock part of a JSON-LD timestamp such as `2026-09-01T20:30:00`. Not
+     * [parseIsoTime][de.norm.events.scraper.parseIsoTime]: that expects the bare `HH:mm` most
+     * venues render and returns null for the seconds here. A date-only value (a multi-day run)
+     * yields no time.
      */
     private fun parseClockTime(timestamp: String): java.time.LocalTime? =
         parseTime(timestamp.substringAfter('T', "").takeIf { it.isNotBlank() }?.take(HH_MM_LENGTH))

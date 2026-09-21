@@ -23,18 +23,16 @@ import java.time.LocalTime
 /**
  * Pure HTML parser for Clash Berlin's WordPress homepage event listing.
  *
- * Clash renders all upcoming events inline in the homepage `#events` section as a
- * flat list of `.gigs-container .item` blocks — there is no per-event detail page
- * (the `event` custom post type is not exposed via the WP REST API, and the numeric
- * `/events/<id>/` permalinks 404). Each block carries a full `DD.MM.YY` date in a
- * `.dateTwo` span, a title, an optional lineup subtitle, a start time, a poster
- * image, and — for ticketed shows — a Stager ticket-shop link.
+ * All upcoming events render inline in the homepage `#events` section as a flat list of
+ * `.gigs-container .item` blocks — no per-event page (the `event` post type is not on the WP
+ * REST API, and the numeric `/events/<id>/` permalinks 404). Each block carries a full
+ * `DD.MM.YY` date in a `.dateTwo` span, a title, an optional lineup subtitle, a start time, a
+ * poster, and for ticketed shows a Stager ticket-shop link.
  *
- * The venue is a live-music (punk/ska) club that also hosts quiz, party and festival
- * nights, so the event type is inferred from the title
- * ([inferConcertVenueType] — CONCERT by default). Performing acts are read from the
- * lineup subtitle (see [parseArtists]); the rest of the data is sparse — no doors time,
- * prices, genre, or promoters — so those fields are left unset.
+ * A live-music (punk/ska) club that also hosts quiz, party and festival nights, so the type is
+ * inferred from the title ([inferConcertVenueType] — CONCERT by default). Acts come from the
+ * lineup subtitle (see [parseArtists]); the rest is sparse — no doors time, prices, genre or
+ * promoters — so those fields stay unset.
  *
  * @see ClashWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://clash-berlin.de/">Clash Berlin</a>
@@ -43,9 +41,9 @@ class ClashOverviewPageScraper {
     private val logger = KotlinLogging.logger {}
 
     /**
-     * Parses all events from the Clash homepage document.
+     * Parses all events from the Clash homepage.
      *
-     * @param baseUrl the URL the document was fetched from, used for resolving the per-event anchor link.
+     * @param baseUrl the URL the document was fetched from, for resolving the per-event anchor link.
      */
     fun scrape(
         document: Document,
@@ -66,8 +64,7 @@ class ClashOverviewPageScraper {
     }
 
     /**
-     * Parses a single `.item` block into a [ScrapedEvent], or `null` when the
-     * required title or date is missing/unparseable.
+     * Parses one `.item` block into a [ScrapedEvent], or `null` when title or date is missing/unparseable.
      */
     @Suppress("ReturnCount") // Null-safe early exits for the required title/date fields are clearer than nesting
     private fun parseItem(
@@ -80,16 +77,16 @@ class ClashOverviewPageScraper {
             return null
         }
 
-        // Prefer the full `DD.MM.YY` date in the collapsed detail (carries the year);
-        // the `.date-label` above it only shows day + English month abbreviation.
+        // Prefer the full `DD.MM.YY` date in the collapsed detail (carries the year); the
+        // `.date-label` above shows only day + English month abbreviation.
         val eventDate = parseGermanShortDate(item.textAt(".dateTwo"))
         if (eventDate == null) {
             logger.warn { "Could not parse event date for '$title', skipping" }
             return null
         }
 
-        // The collapse panel id encodes DDMMYYYY + WordPress post id (e.g. "2906202619490");
-        // it is stable per event and doubles as the homepage deep-link anchor.
+        // The collapse panel id encodes DDMMYYYY + WordPress post id (e.g. "2906202619490"); stable per
+        // event and doubles as the homepage deep-link anchor.
         val collapseId = item.selectFirst(".collapse.infofull")?.id()?.takeIf { it.isNotBlank() }
         val slug = collapseId ?: "$eventDate-${SlugGenerator.slugify(title)}"
 
@@ -97,11 +94,11 @@ class ClashOverviewPageScraper {
         val startTime = parseTime(item.textAt(".meta .time"))
         val imageUrl = item.imgSrcAt(".flyer img")
         // The per-event ticket link points at the Stager shop's `/events/<id>` page; the bare
-        // `/shop/tickets/` shop link in the section header is not inside an `.item`.
+        // `/shop/tickets/` link in the section header is not inside an `.item`.
         val ticketUrl = item.hrefAt("a[href*=stager.co/shop/tickets/events]")
 
-        // No category field on the site; infer from the title (concert by default for this
-        // live-music venue, quiz/party/etc. recovered by keyword). See inferConcertVenueType.
+        // No category field; infer from the title (concert by default for this live-music venue,
+        // quiz/party/etc. by keyword). See inferConcertVenueType.
         val eventType = inferConcertVenueType(title)
 
         return ScrapedEvent(
@@ -120,20 +117,17 @@ class ClashOverviewPageScraper {
     }
 
     /**
-     * Extracts the performing acts from a concert's lineup subtitle.
+     * The performing acts from a concert's lineup subtitle. The `h4.sub-title` lists
+     * slash-separated acts, sometimes behind a "Live:" / "DJ:" label (`"Live: Cheb Balowski /
+     * Cuatro Pesos de Propina"`, `"Popperklopper / Hausvabot / Ad Nauseam"`). The first act is the
+     * headliner, the rest support.
      *
-     * Clash lists the lineup in the `h4.sub-title` as slash-separated acts, sometimes behind a
-     * "Live:" / "DJ:" label (e.g. `"Live: Cheb Balowski / Cuatro Pesos de Propina"`,
-     * `"Popperklopper / Hausvabot / Ad Nauseam"`). The first act is treated as the headliner and
-     * the rest as support.
-     *
-     * Only a subtitle that actually *looks* like a lineup is used — one carrying a "Live:"/"DJ:"
-     * label or an act separator (`/`, `+`). A plain-prose subtitle (a tagline like "Last Show
-     * Ever in Berlin") has neither and yields no artists, so taglines are never minted as bogus
-     * acts. Restricted to CONCERT-typed events (quiz/party/other nights carry no performer
-     * lineup); the title is deliberately not used as an artist source because Clash titles are
-     * frequently event names ("Kneipenquiz", festival days). Non-performers (placeholders,
-     * festival/segment labels) are dropped via [isNonArtistName].
+     * Only a subtitle that *looks* like a lineup is used — a "Live:"/"DJ:" label or an act
+     * separator (`/`, `+`). A plain-prose tagline ("Last Show Ever in Berlin") has neither and
+     * yields no artists. Restricted to CONCERT-typed events (quiz/party/other carry no lineup);
+     * the title is deliberately not an artist source because Clash titles are frequently event
+     * names ("Kneipenquiz", festival days). Non-performers (placeholders, festival/segment
+     * labels) are dropped via [isNonArtistName].
      */
     private fun parseArtists(
         subtitle: String?,
@@ -157,10 +151,9 @@ class ClashOverviewPageScraper {
     private fun looksLikeLineup(subtitle: String): Boolean = LINEUP_LABEL_PREFIX.containsMatchIn(subtitle) || subtitle.contains('/') || subtitle.contains('+')
 
     /**
-     * Parses the start time from the meta line (e.g. "Fri 20:00", "Mon 0:00").
-     *
-     * The hour may be a single digit ("0:00"), which the strict `HH:mm` parser rejects,
-     * so the `H:mm`/`HH:mm` value is extracted with a regex and built directly.
+     * The start time from the meta line ("Fri 20:00", "Mon 0:00"). The hour may be a single digit
+     * ("0:00"), which the strict `HH:mm` parser rejects, so the `H:mm`/`HH:mm` value is extracted
+     * by regex and built directly.
      */
     private fun parseTime(text: String?): LocalTime? {
         val match = text?.let { TIME_PATTERN.find(it) } ?: return null
@@ -172,7 +165,7 @@ class ClashOverviewPageScraper {
     }
 
     companion object {
-        /** Extracts an `H:mm` / `HH:mm` clock time from the meta line's "<weekday> <time>" text. */
+        /** An `H:mm` / `HH:mm` clock time from the meta line's "<weekday> <time>" text. */
         private val TIME_PATTERN = Regex("""(\d{1,2}):(\d{2})""")
 
         /** Leading lineup label on a subtitle ("Live:", "DJ:", "DJs:", "Line-up:"), stripped before splitting acts. */

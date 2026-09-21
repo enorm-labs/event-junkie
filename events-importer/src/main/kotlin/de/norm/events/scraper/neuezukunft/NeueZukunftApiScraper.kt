@@ -20,27 +20,25 @@ import tools.jackson.databind.json.JsonMapper
 private const val NEUE_ZUKUNFT_URL = "https://neue-zukunft.org/"
 
 /**
- * Pure parser for Neue Zukunft's concert programme, sourced from the JSON boot
- * response of the Elfsight "Event Calendar" widget embedded on its landing page
+ * Pure parser for Neue Zukunft's concert programme, from the JSON boot response of the
+ * Elfsight "Event Calendar" widget on its landing page
  * (`core.service.elfsight.com/p/boot/?w=<widgetId>`).
  *
- * The public page (`neue-zukunft.org`) is a static landing page: the concert
- * programme is otherwise published only as an image-based monthly PDF poster, and
- * the widget renders client-side, so neither is scrapeable as HTML. The widget's
- * boot API, however, returns every event as clean structured JSON — the most stable
- * possible source (ADR-007 §"Selector Strategy" priority 1). [NeueZukunftWebsiteImporter]
- * fetches the response body; this class parses it.
+ * The public page (`neue-zukunft.org`) is a static landing page: the programme is otherwise
+ * published only as an image-based monthly PDF poster, and the widget renders client-side, so
+ * neither is scrapeable as HTML. The boot API returns every event as clean JSON — the most
+ * stable source possible (ADR-007 §"Selector Strategy" priority 1).
+ * [NeueZukunftWebsiteImporter] fetches the body; this class parses it.
  *
- * The payload shape and its readers are shared with the other Elfsight venue — see
+ * The payload shape and readers are shared with the other Elfsight venue — see
  * [de.norm.events.scraper.elfsight.ElfsightEventNode]. Each event carries an `id`, `name`, a
- * `start.{date,time}`, an HTML `description`, a `coverImage.url`, and `actions[]` (a "Get Tickets"
- * link, or a "Sold Out!" marker with an empty link). Neue Zukunft is a live-music venue with no
- * event-category field, so the type defaults to `CONCERT`, flipping to `FESTIVAL` only for an
+ * `start.{date,time}`, an HTML `description`, a `coverImage.url`, and `actions[]` (a "Get
+ * Tickets" link, or a "Sold Out!" marker with an empty link). A live-music venue with no
+ * category field, so the type defaults to `CONCERT`, flipping to `FESTIVAL` only for an
  * unambiguous festival title ([isFestivalTitle]).
  *
- * The widget returns the venue's **whole calendar**, including shows that have already
- * happened; those past-dated events are dropped centrally at persistence time
- * (`EventUpsertService`), so this parser returns every calendar entry as-is.
+ * The widget returns the **whole calendar**, past shows included; those are dropped centrally
+ * at persistence (`EventUpsertService`), so every entry is returned as-is.
  *
  * @see NeueZukunftWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://neue-zukunft.org/">Neue Zukunft</a>
@@ -54,8 +52,7 @@ class NeueZukunftApiScraper {
      * Parses every event from the Elfsight widget boot response [json].
      *
      * @param json the raw JSON body of the `p/boot/?w=<widgetId>` response.
-     * @return a list of [ScrapedEvent] instances, one per calendar entry; empty if the
-     *   payload is absent, unparseable, or carries no events.
+     * @return one [ScrapedEvent] per calendar entry; empty if absent, unparseable or without events.
      */
     fun scrape(json: String): List<ScrapedEvent> {
         val eventNodes = parseElfsightEventNodes(jsonMapper, json, VENUE_NAME) ?: return emptyList()

@@ -10,18 +10,17 @@ import java.time.LocalDate
 import java.time.format.DateTimeParseException
 
 // Shared reader for the Elfsight "Event Calendar" widget, embedded by Humboldthain and Neue
-// Zukunft. Both widgets render client-side, so neither landing page carries any event markup;
-// the widget's boot API (`core.service.elfsight.com/p/boot/?w=<widgetId>`) returns the whole
-// calendar as JSON instead (ADR-007 §"Prefer a JSON / API Source"). The payload shape and its
-// readers live here; each venue keeps its own typing, artist and recurrence rules.
+// Zukunft. Both widgets render client-side, so neither landing page carries event markup; the
+// widget's boot API (`core.service.elfsight.com/p/boot/?w=<widgetId>`) returns the whole
+// calendar as JSON (ADR-007 §"Prefer a JSON / API Source"). The payload shape and its readers
+// live here; each venue keeps its own typing, artist and recurrence rules.
 
 private val logger = KotlinLogging.logger {}
 
 /**
- * The mapper every Elfsight payload is read with.
- *
- * Elfsight uses camelCase JSON keys (`coverImage`, `isAllDay`), so the default naming applies,
- * and unknown fields are ignored (Jackson 3 default).
+ * The mapper every Elfsight payload is read with. Elfsight uses camelCase JSON keys
+ * (`coverImage`, `isAllDay`), so the default naming applies, and unknown fields are ignored
+ * (Jackson 3 default).
  */
 internal fun elfsightJsonMapper(): JsonMapper =
     JsonMapper
@@ -30,12 +29,11 @@ internal fun elfsightJsonMapper(): JsonMapper =
         .build()
 
 /**
- * Walks the boot payload and returns the `events` nodes of every embedded widget that exposes
- * an event calendar, or `null` when the body is unparseable or carries no widgets.
- *
- * The widget id keying `data.widgets` is not hard-coded — each widget node is inspected and only
- * those with a `settings.events` array (the `event-calendar` app) contribute events. [venue]
- * names the venue in the warnings.
+ * Walks the boot payload and returns the `events` nodes of every embedded widget exposing an
+ * event calendar, or `null` when unparseable or without widgets. The widget id keying
+ * `data.widgets` is not hard-coded — each widget node is inspected and only those with a
+ * `settings.events` array (the `event-calendar` app) contribute. [venue] names the venue in
+ * the warnings.
  */
 @Suppress(
     "TooGenericExceptionCaught", // A malformed payload must degrade to null, never abort the import.
@@ -65,7 +63,7 @@ internal fun parseElfsightEventNodes(
     }
 }
 
-/** Parses an ISO `yyyy-MM-dd` date from the payload, returning `null` instead of throwing. */
+/** Parses an ISO `yyyy-MM-dd` date from the payload, `null` instead of throwing. */
 internal fun parseElfsightDate(raw: String?): LocalDate? {
     val cleaned = raw.blankToNull() ?: return null
     return try {
@@ -76,10 +74,9 @@ internal fun parseElfsightDate(raw: String?): LocalDate? {
 }
 
 /**
- * Flattens the widget's HTML `description` into plain text, preserving paragraph breaks.
- *
- * `<br>` and closing block tags become newlines before the remaining tags are stripped, then
- * blank lines are collapsed. Returns `null` for a missing or empty body.
+ * Flattens the widget's HTML `description` into plain text, preserving paragraph breaks: `<br>`
+ * and closing block tags become newlines before the remaining tags are stripped, then blank
+ * lines are collapsed. `null` for a missing or empty body.
  */
 internal fun elfsightDescriptionText(html: String?): String? {
     val raw = html.blankToNull() ?: return null
@@ -96,7 +93,6 @@ internal fun elfsightDescriptionText(html: String?): String? {
 
 /**
  * The first action link that is an absolute HTTP(S) URL — the widget's own ticket-shop button.
- *
  * A non-linking marker ("Sold Out!") carries an empty link and is skipped.
  */
 internal fun elfsightActionUrl(actions: List<ElfsightAction>): String? =
@@ -108,11 +104,10 @@ internal fun elfsightActionUrl(actions: List<ElfsightAction>): String? =
 private val BLOCK_BREAK_PATTERN = Regex("""(?i)<br\s*/?>|</div>|</p>""")
 
 /**
- * One entry in the widget's `settings.events[]`, mapped from its JSON by Jackson.
- *
- * Only the fields the scraped venues populate are declared; unknown keys (styling, the empty
- * `location`/`host` lists) are ignored. Every field is nullable or defaulted so a partial or
- * evolving payload deserializes cleanly and is validated by the venue's parser instead.
+ * One entry in the widget's `settings.events[]`, mapped by Jackson. Only the fields the
+ * scraped venues populate are declared; unknown keys (styling, the empty `location`/`host`
+ * lists) are ignored. Every field is nullable or defaulted so a partial or evolving payload
+ * deserializes and is validated by the venue's parser instead.
  */
 internal data class ElfsightEventNode(
     val id: String? = null,

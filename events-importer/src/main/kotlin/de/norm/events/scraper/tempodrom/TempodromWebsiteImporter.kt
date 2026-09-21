@@ -12,12 +12,11 @@ import org.springframework.stereotype.Component
 /**
  * Website importer for Tempodrom's programme.
  *
- * The venue's `/programm-und-tickets/` page embeds its whole programme as schema.org `Event`
- * JSON-LD, so this is an HTML fetch whose *payload* is structured data — the markup is never
- * selected against, and no detail page is needed. The pipeline is:
- * 1. Fetch the listing via [HtmlFetcher] with conditional-request support; the server sends
- *    `Last-Modified`, so an unchanged programme costs one 304.
- * 2. Parse the JSON-LD via [TempodromOverviewPageScraper].
+ * `/programm-und-tickets/` embeds the whole programme as schema.org `Event` JSON-LD, so an
+ * HTML fetch whose *payload* is structured data — the markup is never selected against, no
+ * detail page needed. [HtmlFetcher] fetches the listing conditionally (the server sends
+ * `Last-Modified`, so an unchanged programme costs one 304), [TempodromOverviewPageScraper]
+ * parses the JSON-LD.
  *
  * @see TempodromOverviewPageScraper for the JSON-LD parsing logic.
  * @see <a href="https://www.tempodrom.de/programm-und-tickets/">Tempodrom programme</a>

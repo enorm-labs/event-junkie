@@ -14,20 +14,20 @@ import org.jsoup.nodes.Document
 import org.springframework.stereotype.Component
 
 /**
- * Website importer for ÆDEN Berlin — a WordPress techno club whose `/events` entry page holds no
- * events at all, only one `a.month-button` per upcoming month. Each button links to a fully
- * server-rendered `/month/?month=YYYY-MM` page; this importer discovers those links from the entry
- * page, fetches each month, and parses its nights via [AedenOverviewPageScraper].
+ * Website importer for ÆDEN Berlin — a WordPress techno club whose `/events` entry page holds
+ * no events, only one `a.month-button` per upcoming month. Each links to a server-rendered
+ * `/month/?month=YYYY-MM` page; this importer discovers those links, fetches each month, and
+ * parses its nights via [AedenOverviewPageScraper].
  *
- * Conditional requests are intentionally **not** used: the entry page changes only when a month is
- * added or drops off, never when a night inside an existing month is edited, so its ETag would mask
- * mid-month edits. Every run re-fetches the entry and month pages and relies on idempotent `sourceId`
- * upserts — [ImportResult.Success] is returned with `null` cache headers (there is no `NotModified`
- * path). Nights that have already passed but are still listed on the current month's page are dropped
- * centrally at persistence time (`EventUpsertService`).
+ * Conditional requests are intentionally **not** used: the entry page changes only when a
+ * month is added or drops off, never when a night inside a month is edited, so its ETag would
+ * mask mid-month edits. Every run re-fetches entry and month pages and relies on idempotent
+ * `sourceId` upserts — [ImportResult.Success] with `null` cache headers (no `NotModified`
+ * path). Passed nights still listed on the current month's page are dropped centrally at
+ * persistence (`EventUpsertService`).
  *
- * Only the club programme is imported: the venue's other spaces live in the `aeve` / `oel` post
- * types, which never appear on the month pages.
+ * Only the club programme is imported: the venue's other spaces live in the `aeve` / `oel`
+ * post types, which never appear on the month pages.
  *
  * @see AedenOverviewPageScraper for the per-month parsing.
  * @see <a href="https://aedenberlin.com/events/">ÆDEN events page</a>

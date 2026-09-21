@@ -14,21 +14,16 @@ import org.springframework.stereotype.Component
 /**
  * Website importer for MAXXIM's Wix Events programme.
  *
- * The whole programme — including prices and sold-out flags — is carried by the
- * `wix-warmup-data` payload of the single `/partys` page, so the pipeline is one
- * HTTP request per import cycle:
- * 1. Fetch `/partys` via [HtmlFetcher] with conditional request support
- *    (Wix serves a weak `ETag`).
- * 2. Parse every night out of the embedded JSON via [MaxximOverviewPageScraper].
+ * The whole programme — prices and sold-out flags included — is in the `wix-warmup-data`
+ * payload of the single `/partys` page, so one HTTP request per cycle: [HtmlFetcher] fetches
+ * `/partys` conditionally (Wix serves a weak `ETag`), [MaxximOverviewPageScraper] parses the
+ * embedded JSON. No `/event-details/<slug>` page is fetched — unlike Loge, whose price appears
+ * only there.
  *
- * No `/event-details/<slug>` page is fetched — unlike Loge, whose price only
- * appears there.
- *
- * The widget ships the upcoming window only (~18 nights) and reports `hasMore: true`; loading the
- * rest needs the authenticated widget API, whose `_api/wix-one-events-server/…` paths 404 for an
- * anonymous client. The 1,700-entry `event-pages-sitemap.xml` is overwhelmingly the archive, so it
- * is deliberately not crawled as a workaround — a small imported count here is the venue's window,
- * not a truncated import.
+ * The widget ships the upcoming window only (~18 nights) and reports `hasMore: true`; the rest
+ * needs the authenticated widget API, whose `_api/wix-one-events-server/…` paths 404 for an
+ * anonymous client. The 1,700-entry `event-pages-sitemap.xml` is overwhelmingly the archive, so
+ * not crawled as a workaround — a small imported count is the venue's window, not a truncated import.
  *
  * @see MaxximOverviewPageScraper for the parsing logic.
  * @see <a href="https://www.maxxim-berlin.de/partys">MAXXIM programme</a>

@@ -15,14 +15,10 @@ import java.time.Clock
 /**
  * Website importer for OHM Berlin's home-page programme.
  *
- * The venue's whole upcoming programme lives on one page with no per-event detail pages, so the
- * pipeline is a single fetch:
- * 1. Fetch the home page via [HtmlFetcher] with conditional-request support (ETag /
- *    Last-Modified).
- * 2. Parse every `li.event-item` via [OhmOverviewPageScraper].
- *
- * The `/archives` page linked from the same section is deliberately not crawled — it holds only
- * events that have already happened.
+ * The whole programme is one page with no detail pages, so a single fetch: [HtmlFetcher]
+ * fetches the home page conditionally (ETag / Last-Modified), [OhmOverviewPageScraper] parses
+ * every `li.event-item`. The `/archives` page in the same section is not crawled — it holds
+ * only past events.
  *
  * @see OhmOverviewPageScraper for the HTML parsing logic.
  * @see <a href="https://ohmberlin.com/">OHM Berlin</a>
@@ -30,7 +26,7 @@ import java.time.Clock
 @Component
 class OhmWebsiteImporter(
     private val htmlFetcher: HtmlFetcher,
-    /** Clock for the scraper's year inference. Defaults to the system clock; override in tests. */
+    /** Clock for the scraper's year inference; override in tests. */
     clock: Clock = Clock.systemDefaultZone()
 ) : EventImporter {
     private val logger = KotlinLogging.logger {}

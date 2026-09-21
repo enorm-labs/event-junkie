@@ -14,12 +14,11 @@ import org.springframework.stereotype.Component
 /**
  * Website importer for Panke Culture, the club, café and gallery on the Panke in Wedding.
  *
- * The venue renders its whole programme on one WordPress page with no per-event pages, so the
- * pipeline is a single request per cycle:
- * 1. Fetch `/programme/` via [HtmlFetcher] with conditional-request support (ETag / Last-Modified).
- * 2. Parse the page's **UPCOMING EVENTS** list via [PankeProgrammePageScraper].
+ * The whole programme renders on one WordPress page with no per-event pages, so one request
+ * per cycle: [HtmlFetcher] fetches `/programme/` conditionally (ETag / Last-Modified),
+ * [PankeProgrammePageScraper] parses the **UPCOMING EVENTS** list.
  *
- * The venue published nothing scrapable until 2026 — its programme lived on social media and in a
+ * Nothing scrapable was published until 2026 — the programme lived on social media and in a
  * newsletter, which is why it sat in the Blocked list until the 3 August 2026 re-check.
  *
  * @see PankeProgrammePageScraper for the HTML parsing logic.

@@ -17,25 +17,24 @@ import java.time.LocalTime
 
 /**
  * Pure HTML parser for Panke Culture's `/programme/` page — the Wedding club and gallery's whole
- * published programme, server-rendered in one WordPress (Divi) page.
+ * programme, server-rendered in one WordPress (Divi) page.
  *
- * The page renders two lists from the same template, headed **UPCOMING EVENTS** and **PAST
- * EVENTS**. Only the first is read: the venue's own division is the authoritative one, and parsing
- * the twenty-odd past entries every run only to have the persistence boundary drop them is waste.
+ * Two lists from the same template, headed **UPCOMING EVENTS** and **PAST EVENTS**. Only the
+ * first is read: the venue's own division is authoritative, and parsing the twenty-odd past
+ * entries every run only for the persistence boundary to drop them is waste.
  *
- * Each event is an `<article>` whose WordPress post id identifies it — the venue publishes no
- * per-event page at all, expanding the full text inline instead, so every event's `sourceUrl` is
- * the programme page itself. The date is an ISO `data-date` attribute; the clock is stated in prose
- * ("The event takes place on the 5th of August starting at 19:00."), sometimes with seconds.
+ * Each event is an `<article>` identified by its WordPress post id — no per-event page, the full
+ * text expands inline, so every event's `sourceUrl` is the programme page. The date is an ISO
+ * `data-date` attribute; the clock is prose ("The event takes place on the 5th of August
+ * starting at 19:00."), sometimes with seconds.
  *
- * **The lineup is read only from Resident Advisor links.** The bodies are free prose with no shared
- * convention — one event lists its DJs one per paragraph under a `LINE UP:` heading, the next packs
+ * **The lineup is read only from Resident Advisor links.** The bodies are free prose with no
+ * convention — one event lists DJs one per paragraph under a `LINE UP:` heading, the next packs
  * them into a sentence beside a timetable — so the only unambiguous artist marker is an anchor
- * pointing at an `ra.co/dj/…` profile. An event without one stores no artists rather than a guess.
+ * to an `ra.co/dj/…` profile. An event without one stores no artists rather than a guess.
  *
- * Those same links also type the event: the venue publishes no category, and its titles are series
- * names rather than formats, so a billed DJ lineup is the best evidence that a night is a club
- * night. See [eventTypeOf].
+ * Those links also type the event: no category is published, and titles are series names
+ * rather than formats, so a billed DJ lineup is the best evidence of a club night. See [eventTypeOf].
  *
  * @see PankeWebsiteImporter for the HTTP fetch orchestrator.
  */
@@ -67,7 +66,7 @@ class PankeProgrammePageScraper {
         return events
     }
 
-    /** Parses one article into a [ScrapedEvent], or `null` when it has no date or title. */
+    /** Parses one article into a [ScrapedEvent], or `null` without a date or title. */
     @Suppress("ReturnCount") // Guard clauses for the required id/date/title are clearer than nesting
     private fun parseArticle(
         article: Element,
@@ -94,20 +93,18 @@ class PankeProgrammePageScraper {
             startTime = parseStartTime(article.textAt(".eventInfo")),
             imageUrl = parseBackgroundImageUrl(article.attr("style")),
             sourceUrl = sourceUrl,
-            // The venue publishes no per-event page, so its WordPress post id is the identity.
+            // No per-event page, so the WordPress post id is the identity.
             sourceId = "${EventSource.PANKE.sourceIdPrefix}$postId",
             artists = lineup
         )
     }
 
     /**
-     * The event's type. The venue states none, so two signals decide it.
-     *
-     * An unmistakable title keyword wins first — a market is not a club night, a rave is. Where the
-     * title says nothing, **an event that bills DJs on Resident Advisor is a club night**: the
-     * venue links a profile only for the acts playing its floor, so the presence of a lineup is a
-     * far better signal than the event's name, which is a series title rather than a format.
-     * Anything with neither stays `OTHER` rather than being guessed a concert.
+     * The event's type; the venue states none, so two signals decide. An unmistakable title
+     * keyword wins first — a market is not a club night, a rave is. Where the title says nothing,
+     * **an event that bills DJs on Resident Advisor is a club night**: the venue links a profile
+     * only for the acts on its floor, a far better signal than the name, a series title rather
+     * than a format. Neither stays `OTHER` rather than being guessed a concert.
      */
     private fun eventTypeOf(
         title: String,
@@ -118,19 +115,17 @@ class PankeProgrammePageScraper {
     }
 
     /**
-     * The event's text: the full body the "Show more" button reveals, falling back to the teaser
-     * shown on the card. The full block repeats the date and clock in its own first column, so only
-     * the second is taken.
+     * The event's text: the full body the "Show more" button reveals, else the card's teaser. The
+     * full block repeats date and clock in its first column, so only the second is taken.
      */
     private fun descriptionOf(article: Element): String? =
         article.textAt(".post-content-full .et_pb_column_3_4")
             ?: article.textAt(".post-content-excerpt")
 
     /**
-     * The DJs an event links to on Resident Advisor, in the order the venue lists them.
-     *
-     * Deduplicated on the profile URL: a night that bills the same DJ twice — once in the lineup
-     * and once in a timetable — must not store them twice.
+     * The DJs an event links to on Resident Advisor, in the venue's order. Deduplicated on the
+     * profile URL: a night billing the same DJ twice — in the lineup and in a timetable — must
+     * not store them twice.
      */
     private fun residentAdvisorLineup(article: Element): List<ScrapedArtist> =
         article
@@ -141,15 +136,15 @@ class PankeProgrammePageScraper {
             .map { ScrapedArtist(name = it, role = DJ_ROLE) }
 
     /**
-     * Reads the clock out of the venue's prose line, which states it either as `HH:mm` or with
-     * seconds it never means (`23:00:00`). Returns `null` when the line names no time.
+     * The clock out of the prose line, stated as `HH:mm` or with seconds it never means
+     * (`23:00:00`). `null` when the line names no time.
      */
     private fun parseStartTime(info: String?): LocalTime? = parseTime(START_TIME.find(info.orEmpty())?.groupValues?.get(1))
 }
 
 /**
- * Reads the poster out of an article's inline `background-image: url(…)`, the only place the
- * listing carries one — the template renders no `<img>` for an event at all.
+ * The poster out of an article's inline `background-image: url(…)`, the only place the listing
+ * carries one — the template renders no `<img>` for an event.
  */
 internal fun parseBackgroundImageUrl(style: String?): String? =
     BACKGROUND_URL_PATTERN
@@ -167,7 +162,7 @@ private val START_TIME = Regex("""starting\s+at\s+(\d{1,2}:\d{2})(?::\d{2})?""",
 /** A Resident Advisor artist profile, the page's one unambiguous artist marker. */
 private val RESIDENT_ADVISOR_PROFILE = Regex("""^https?://(?:www\.)?ra\.co/(?:dj|artist)/""", RegexOption.IGNORE_CASE)
 
-/** Matches the URL inside a CSS `url(…)` value, with or without quotes. */
+/** The URL inside a CSS `url(…)` value, with or without quotes. */
 private val BACKGROUND_URL_PATTERN = Regex("""url\(\s*['"]?([^'")]+)['"]?\s*\)""")
 
 /** Every act the venue links on Resident Advisor is billed there as a DJ. */
