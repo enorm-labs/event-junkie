@@ -1105,7 +1105,29 @@ class ArtistNameMappingTest {
     fun `stripArtistSuffix drops a more-to-come tail`() {
         stripArtistSuffix("DaSoMaZo — more TBA") shouldBe "DaSoMaZo"
         stripArtistSuffix("Peggy Gou + many more") shouldBe "Peggy Gou"
+        stripArtistSuffix("Lepido and more") shouldBe "Lepido"
+        stripArtistSuffix("Ben Klock more TBA") shouldBe "Ben Klock"
         stripArtistSuffix("Moretti") shouldBe "Moretti"
+        // A bare `more` or `mehr` with no dash, conjunction or placeholder is part of the name (#301).
+        stripArtistSuffix("Juli N More") shouldBe "Juli N More"
+        stripArtistSuffix("Mehr Is Mehr") shouldBe "Mehr Is Mehr"
+    }
+
+    // #301 — the performance-format suffixes a line-up carries, in the spellings staging held.
+    @Test
+    fun `stripArtistSuffix drops every spelling of a performance-format suffix`() {
+        stripArtistSuffix("Schatz (Live)") shouldBe "Schatz"
+        stripArtistSuffix("Joplyn live") shouldBe "Joplyn"
+        stripArtistSuffix("Ninsa hybrid live") shouldBe "Ninsa"
+        stripArtistSuffix("Cee (hybrid live)") shouldBe "Cee"
+        stripArtistSuffix("Oliver Ho Hybrid") shouldBe "Oliver Ho"
+        stripArtistSuffix("Pés de Barro (live Band)") shouldBe "Pés de Barro"
+        stripArtistSuffix("Regis Live & DJ set") shouldBe "Regis"
+        stripArtistSuffix("Tweaken – live –") shouldBe "Tweaken"
+        stripArtistSuffix("Sylk (DE) (Malör Records, Surge)") shouldBe "Sylk"
+        // A parenthetical that names a project or a practice is not a format word.
+        stripArtistSuffix("Gwenan (Phase Space Live)") shouldBe "Gwenan (Phase Space Live)"
+        stripArtistSuffix("Teo Clavero (Live Painting)") shouldBe "Teo Clavero (Live Painting)"
     }
 
     // #339 — the DJ a night is named for, when the venue publishes no line-up.

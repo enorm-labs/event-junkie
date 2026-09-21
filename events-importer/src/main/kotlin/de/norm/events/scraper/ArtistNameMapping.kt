@@ -168,11 +168,13 @@ private val ARTIST_SUFFIX_PATTERN =
         """\s+[-–—]\s+(?:\S.*\btour\b|\d+\s+(?:years?|jahre|sets?)\b).*$""" +
             """|\s+[-–—]\s+\S.*\b(?:19|20)\d{2}\s*$""" +
             """|(?<=\S):\s+\S.*\b(?:19|20)\d{2}\s*$""" +
-            """|(?:\s*[-–—]\s*|(?<!many|viele)\s+(?:(?:[&+]|and|und)\s+)?)(?:many\s+|viele\s+)?(?:more|mehr)\b(?:\s+(?:tba|tbc|tbd))?\.*$""" +
+            """|(?:\s*[-–—]\s*|\s+(?:[&+]|and|und)\s+)(?:many\s+|viele\s+)?(?:more|mehr)\b(?:\s+(?:tba|tbc|tbd))?\.*$""" +
+            """|\s+(?:many|viele)\s+(?:more|mehr)\b(?:\s+(?:tba|tbc|tbd))?\.*$""" +
+            """|\s+(?:more|mehr)\s+(?:tba|tbc|tbd)\.*$""" +
             """|\s+[-–—]\s*release\s?show\s*$""" +
-            """|\s+live(?:\s+in\s+\S.*)?$""" +
-            """|\s*\((?:dj[\s-]?set|live|acoustic|akustik|unplugged|solo|konzert|concert)\)\s*$""" +
-            """|\s+dj[\s-]?set$""" +
+            """|\s+(?:hybrid\s+)?live(?:\s+(?:set|band))?(?:\s*&\s*dj[\s-]?set)?(?:\s+in\s+\S.*)?$""" +
+            """|\s*\((?:dj[\s-]?set|(?:hybrid\s+)?live(?:\s+(?:set|band))?|hybrid|acoustic|akustik|unplugged|solo|konzert|concert)\)\s*$""" +
+            """|\s+(?:dj[\s-]?set|hybrid)$""" +
             """|\s+[-–—(]*\s*(?:nachholtermin|hochverlegung|verschoben)\b.*$""" +
             """|\s+singt\s+\S.*$""" +
             """|\s+(?:album|ep|single|mixtape|record|tape)\s+release(?:\s+(?:party|show|special))?$""" +
@@ -190,7 +192,9 @@ private val ARTIST_SUFFIX_PATTERN =
  */
 fun stripArtistSuffix(name: String): String {
     // One suffix can hide another (`Lacrimosa mit Orchester - … in Europa!`), so strip until stable.
-    var stripped = name.trim()
+    // The separator comes off first as well as last: `Tweaken – live –` hides its format word
+    // behind a dash (#301).
+    var stripped = stripTrailingSeparator(name.trim())
     repeat(MAX_SUFFIX_PASSES) {
         val next = stripped.replace(ARTIST_SUFFIX_PATTERN, "").trim()
         if (next == stripped || next.isBlank()) return@repeat
@@ -219,9 +223,17 @@ private val ORIGIN_TAG =
  */
 private val AFFILIATION_TAG = Regex("""\s*\((?:ex-[^()]*|[^(),]+,[^()]*)\)\s*$""", RegexOption.IGNORE_CASE)
 
-/** Drops an [ORIGIN_TAG] or an [AFFILIATION_TAG] from the end of a name, keeping the input when nothing else is left. */
+/**
+ * Drops an [ORIGIN_TAG] or an [AFFILIATION_TAG] from the end of a name, keeping the input when
+ * nothing else is left. Repeated, because one can hide the other (`Sylk (DE) (Malör Records, Surge)`).
+ */
 private fun stripTrailingParenthetical(name: String): String {
-    val stripped = name.replace(ORIGIN_TAG, "").replace(AFFILIATION_TAG, "").trim()
+    var stripped = name
+    repeat(MAX_SUFFIX_PASSES) {
+        val next = stripped.replace(ORIGIN_TAG, "").replace(AFFILIATION_TAG, "").trim()
+        if (next == stripped || next.isBlank()) return@repeat
+        stripped = next
+    }
     return stripped.ifBlank { name }
 }
 
