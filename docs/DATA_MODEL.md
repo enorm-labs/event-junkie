@@ -116,6 +116,9 @@ classDiagram
         QUIZ
         CLUB_NIGHT
         SHOW
+        SCREENING
+        EXHIBITION
+        READING
         OTHER
     }
 
