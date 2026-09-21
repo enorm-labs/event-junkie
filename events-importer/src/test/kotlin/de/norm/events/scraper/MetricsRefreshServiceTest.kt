@@ -5,6 +5,7 @@ import de.norm.events.event.EventRepository
 import de.norm.events.event.SourceFutureEventsRow
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldNotBe
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -46,6 +47,7 @@ class MetricsRefreshServiceTest {
         coEvery { eventSourceRepository.countByStatus(any()) } returns 0
         coEvery { eventSourceRepository.findByEnabledTrue() } returns emptyFlow()
         coEvery { artistRepository.countUncheckedByMusicBrainz() } returns 0
+        coEvery { eventSourceRepository.countFailedPerReason() } returns emptyFlow()
     }
 
     @Test
@@ -57,6 +59,45 @@ class MetricsRefreshServiceTest {
 
             registry.get(ImporterMetrics.MUSICBRAINZ_UNCHECKED).gauge().value() shouldBe 5730.0
         }
+
+    /**
+     * The #618 property on the per-reason gauge (#708): the query returns a row per reason in use, and
+     * the rule on `reason="dns"` needs a series at 0 during a quiet week, not an absence.
+     */
+    @Test
+    fun `every failure reason publishes how many sources sit on it, zero included`() =
+        runTest {
+            coEvery { eventSourceRepository.countFailedPerReason() } returns
+                listOf(FailedSourcesRow(reason = "dns", sources = 12), FailedSourcesRow(reason = "parse", sources = 1)).asFlow()
+
+            service.refreshGauges()
+
+            failedSources("dns") shouldBe 12.0
+            failedSources("parse") shouldBe 1.0
+            failedSources("http_forbidden") shouldBe 0.0
+            ScrapeFailureReason.ALL.forEach { reason -> registry.find(ImporterMetrics.SOURCES_FAILED).tag("reason", reason).gauge() shouldNotBe null }
+        }
+
+    @Test
+    fun `a reason whose last source recovers falls back to zero on the next tick`() =
+        runTest {
+            coEvery { eventSourceRepository.countFailedPerReason() } returns
+                listOf(FailedSourcesRow(reason = "dns", sources = 3)).asFlow()
+            service.refreshGauges()
+            failedSources("dns") shouldBe 3.0
+
+            coEvery { eventSourceRepository.countFailedPerReason() } returns emptyFlow()
+            service.refreshGauges()
+
+            failedSources("dns") shouldBe 0.0
+        }
+
+    private fun failedSources(reason: String) =
+        registry
+            .find(ImporterMetrics.SOURCES_FAILED)
+            .tag("reason", reason)
+            .gauge()!!
+            .value()
 
     private fun source(
         slug: String,

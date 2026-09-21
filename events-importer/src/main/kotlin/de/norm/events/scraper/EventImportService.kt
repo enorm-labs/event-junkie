@@ -232,16 +232,27 @@ class EventImportService(
                 }
             }
         } catch (e: Exception) {
-            val error = e.message ?: "Unknown error during import"
-            // The streak, because one broken venue writes this line once per attempt. Not "of maxRetries": a
-            // source past its budget keeps running on its plain interval (#659). `retryCount` is the value
-            // before `markFailed` adds this failure.
-            logger.error(e) { "Import failed for source '${runningSource.slug}' (consecutive failures: ${runningSource.retryCount + 1}): $error" }
-            metrics.recordScrapeFailure(runningSource.slug, scrapeFailureReason(e))
-            markFailed(runningSource, error)
-            ImportResultResponse(sourceSlug = runningSource.slug, imported = false, eventCount = 0, error = error) to
-                ImporterMetrics.RunOutcome.FAILED
+            recordFailure(runningSource, e)
         }
+    }
+
+    /**
+     * The streak in the log line, because one broken venue writes it once per attempt. Not "of
+     * maxRetries": a source past its budget keeps running on its plain interval (#659). `retryCount`
+     * is the value before [markFailed] adds this failure. The reason goes to the counter and to the
+     * row alike (#708).
+     */
+    private suspend fun recordFailure(
+        runningSource: EventSourceEntity,
+        e: Exception
+    ): Pair<ImportResultResponse, ImporterMetrics.RunOutcome> {
+        val error = e.message ?: "Unknown error during import"
+        logger.error(e) { "Import failed for source '${runningSource.slug}' (consecutive failures: ${runningSource.retryCount + 1}): $error" }
+        val reason = scrapeFailureReason(e)
+        metrics.recordScrapeFailure(runningSource.slug, reason)
+        markFailed(runningSource, error, reason)
+        return ImportResultResponse(sourceSlug = runningSource.slug, imported = false, eventCount = 0, error = error) to
+            ImporterMetrics.RunOutcome.FAILED
     }
 
     // -- Event source status management --
@@ -336,6 +347,7 @@ class EventImportService(
                     lastSuccessAt = now,
                     lastEventCount = eventCount,
                     lastError = null,
+                    lastFailureReason = null,
                     etag = newEtag,
                     lastModified = newLastModified,
                     retryCount = 0
@@ -343,9 +355,15 @@ class EventImportService(
         }
     }
 
+    /**
+     * [reason] is the same constant the counter gets, kept on the row because the counter does not
+     * survive a deploy and the row does (#708): the question "did the other sources fail the same way
+     * in the same minute" is a `GROUP BY` over this column, and a log line cannot answer it.
+     */
     private suspend fun markFailed(
         source: EventSourceEntity,
-        error: String
+        error: String,
+        reason: String
     ): EventSourceEntity {
         // Recorded on failure too: a source blocked by robots.txt fails every run, and the columns say
         // which of the two it is.
@@ -356,6 +374,7 @@ class EventImportService(
                     status = ImportStatus.FAILED.name,
                     lastImportAt = Instant.now(clock),
                     lastError = error.take(MAX_ERROR_LENGTH),
+                    lastFailureReason = reason,
                     retryCount = it.retryCount + 1
                 ).withRobots(robots)
         }

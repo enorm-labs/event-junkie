@@ -5,6 +5,43 @@ import java.net.UnknownHostException
 import java.util.concurrent.TimeoutException
 
 /**
+ * The closed set of `reason` values, in one place so the counter, the `event_source.last_failure_reason`
+ * column and the `importer.sources.failed{reason}` gauge cannot disagree about it (#708). The gauge
+ * publishes every entry of [ALL] on every tick, zero included: a reason absent from the exposition is
+ * indistinguishable from one at zero, and a rule written on it then reads health (#618).
+ */
+internal object ScrapeFailureReason {
+    const val ROBOTS_UNREADABLE = "robots_unreadable"
+    const val ROBOTS_DISALLOWED = "robots_disallowed"
+    const val HTTP_RATE_LIMITED = "http_rate_limited"
+    const val HTTP_FORBIDDEN = "http_forbidden"
+    const val HTTP_4XX = "http_4xx"
+    const val HTTP_5XX = "http_5xx"
+    const val HTTP_OTHER = "http_other"
+    const val DNS = "dns"
+    const val TIMEOUT = "timeout"
+    const val NETWORK = "network"
+    const val PARSE = "parse"
+    const val OTHER = "other"
+
+    val ALL: List<String> =
+        listOf(
+            ROBOTS_UNREADABLE,
+            ROBOTS_DISALLOWED,
+            HTTP_RATE_LIMITED,
+            HTTP_FORBIDDEN,
+            HTTP_4XX,
+            HTTP_5XX,
+            HTTP_OTHER,
+            DNS,
+            TIMEOUT,
+            NETWORK,
+            PARSE,
+            OTHER
+        )
+}
+
+/**
  * Classifies a failed import into the `reason` tag of `importer.scrape.failures`.
  *
  * **A 403 is not a parse failure**, and that distinction is the reason the tag exists at all
@@ -32,41 +69,46 @@ internal fun scrapeFailureReason(error: Throwable): String =
         // decision somebody has to take; an unreadable robots.txt is a venue outage that fixes
         // itself. One alert for both fires on every bad day a venue has, and gets muted.
         is RobotsDisallowedException -> {
-            if (error.unreadableStatus != null) "robots_unreadable" else "robots_disallowed"
+            if (error.unreadableStatus != null) {
+                ScrapeFailureReason.ROBOTS_UNREADABLE
+            } else {
+                ScrapeFailureReason.ROBOTS_DISALLOWED
+            }
         }
 
         is HttpFetchException -> {
             when (error.statusCode) {
-                HTTP_TOO_MANY_REQUESTS -> "http_rate_limited"
-                in CLIENT_ERRORS -> if (error.statusCode == HTTP_FORBIDDEN) "http_forbidden" else "http_4xx"
-                in SERVER_ERRORS -> "http_5xx"
-                else -> "http_other"
+                HTTP_TOO_MANY_REQUESTS -> ScrapeFailureReason.HTTP_RATE_LIMITED
+                HTTP_FORBIDDEN -> ScrapeFailureReason.HTTP_FORBIDDEN
+                in CLIENT_ERRORS -> ScrapeFailureReason.HTTP_4XX
+                in SERVER_ERRORS -> ScrapeFailureReason.HTTP_5XX
+                else -> ScrapeFailureReason.HTTP_OTHER
             }
         }
 
         // Ordered before IOException: both of these are IOExceptions, and a `when` takes the first
         // branch that matches.
         is UnknownHostException -> {
-            "dns"
+            ScrapeFailureReason.DNS
         }
 
         is TimeoutException -> {
-            "timeout"
+            ScrapeFailureReason.TIMEOUT
         }
 
         is IOException -> {
-            "network"
+            ScrapeFailureReason.NETWORK
         }
 
         // Everything the parsers throw when a page is not shaped the way the scraper expects —
         // a missing element, an unparseable date, a JSON field that changed type. This is the bucket
         // that means "the venue redesigned its site".
         is IllegalStateException, is IllegalArgumentException, is NullPointerException, is IndexOutOfBoundsException -> {
-            "parse"
+            ScrapeFailureReason.PARSE
         }
 
         else -> {
-            "other"
+            ScrapeFailureReason.OTHER
         }
     }
 

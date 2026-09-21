@@ -85,6 +85,12 @@ data class EventSourceEntity(
     val lastEventCount: Int? = null,
     /** Error message from the last failed import, `null` if the last run succeeded. */
     val lastError: String? = null,
+    /**
+     * The class of the last failure, one of [ScrapeFailureReason]'s constants, or `null` when the
+     * last run succeeded (#708). [lastError] says what went wrong for one source; this is the column
+     * that can be counted across all of them, which is the difference between a venue's DNS and ours.
+     */
+    val lastFailureReason: String? = null,
     /** Current import status: IDLE, RUNNING, SUCCESS, FAILED, MISCONFIGURED. */
     val status: String = ImportStatus.IDLE.name,
     /**

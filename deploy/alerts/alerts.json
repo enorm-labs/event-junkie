@@ -406,6 +406,35 @@
     ]
   },
   {
+    "name": "ej-dns-fanout",
+    "org_id": "default",
+    "stream_type": "metrics",
+    "stream_name": "importer_sources_failed",
+    "is_real_time": false,
+    "enabled": true,
+    "description": "Three or more sources are FAILED on a name lookup at the same time. One venue failing to resolve is that venue's DNS and needs nobody; several at once is the cluster's resolver, and every import is failing the same way. Which ones: `SELECT slug, last_import_at, last_error FROM event_source WHERE status = 'FAILED' AND last_failure_reason = 'dns'`.",
+    "query_condition": {
+      "type": "promql",
+      "promql": "max(importer_sources_failed{reason=\"dns\"})",
+      "promql_condition": {
+        "column": "value",
+        "operator": ">",
+        "value": 2
+      }
+    },
+    "trigger_condition": {
+      "period": 15,
+      "frequency": 15,
+      "frequency_type": "minutes",
+      "operator": ">=",
+      "threshold": 1,
+      "silence": 360
+    },
+    "destinations": [
+      "record-only"
+    ]
+  },
+  {
     "name": "ej-reboot-pending",
     "org_id": "default",
     "stream_type": "metrics",

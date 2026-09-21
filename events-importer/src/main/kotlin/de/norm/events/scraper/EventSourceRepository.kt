@@ -25,6 +25,25 @@ interface EventSourceRepository : CoroutineCrudRepository<EventSourceEntity, Lon
     suspend fun countByStatus(status: String): Long
 
     /**
+     * How many enabled sources are `FAILED` right now, per [EventSourceEntity.lastFailureReason]; the
+     * `importer.sources.failed{reason}` gauge (#708). Current state rather than a window: a source
+     * stays `FAILED` until its next attempt, so a fan-out remains readable for hours, and the
+     * discriminator the issue names — one venue or many at once — is this count. A reason with no
+     * failed source returns no row; [MetricsRefreshService] publishes the zero.
+     */
+    @Query(
+        """
+        SELECT last_failure_reason AS reason, COUNT(*) AS sources
+        FROM $EVENTS_SCHEMA.event_source
+        WHERE enabled = true
+          AND status = '${ImportStatus.S_FAILED}'
+          AND last_failure_reason IS NOT NULL
+        GROUP BY last_failure_reason
+        """
+    )
+    fun countFailedPerReason(): Flow<FailedSourcesRow>
+
+    /**
      * Finds enabled sources that are candidates for import: the coarse SQL half, excluding disabled,
      * RUNNING and MISCONFIGURED, with `last_import_at < :now` deliberately broad so
      * [ScheduledImportService.isDue] can apply per-source interval and backoff in Kotlin. Raw SQL
@@ -109,7 +128,8 @@ interface EventSourceRepository : CoroutineCrudRepository<EventSourceEntity, Lon
     @Query(
         """
         UPDATE $EVENTS_SCHEMA.event_source
-        SET status = '${ImportStatus.S_RUNNING}', last_error = NULL, last_import_at = :startedAt, version = version + 1
+        SET status = '${ImportStatus.S_RUNNING}', last_error = NULL, last_failure_reason = NULL, last_import_at = :startedAt,
+            version = version + 1
         WHERE id = :id AND version = :expectedVersion AND status <> '${ImportStatus.S_RUNNING}'
         """
     )
@@ -130,9 +150,15 @@ interface EventSourceRepository : CoroutineCrudRepository<EventSourceEntity, Lon
     @Query(
         """
         UPDATE $EVENTS_SCHEMA.event_source
-        SET status = '${ImportStatus.S_IDLE}', retry_count = 0, last_error = NULL, version = version + 1
+        SET status = '${ImportStatus.S_IDLE}', retry_count = 0, last_error = NULL, last_failure_reason = NULL, version = version + 1
         WHERE enabled = true AND status IN ('${ImportStatus.S_FAILED}', '${ImportStatus.S_MISCONFIGURED}')
         """
     )
     suspend fun resetAllFailedToIdle(): Int
 }
+
+/** One row of [EventSourceRepository.countFailedPerReason]: a reason and how many sources sit `FAILED` on it. */
+data class FailedSourcesRow(
+    val reason: String,
+    val sources: Long
+)

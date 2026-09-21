@@ -171,7 +171,8 @@ class EventSourceService(
             source.copy(
                 status = ImportStatus.IDLE.name,
                 retryCount = 0,
-                lastError = null
+                lastError = null,
+                lastFailureReason = null
             )
         val saved = eventSourceRepository.save(reset)
         logger.info { "Reset event source '${saved.name}' (id=${saved.id}) for retry" }
