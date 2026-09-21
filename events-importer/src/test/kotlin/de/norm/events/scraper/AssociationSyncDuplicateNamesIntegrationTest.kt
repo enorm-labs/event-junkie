@@ -165,6 +165,38 @@ class AssociationSyncDuplicateNamesIntegrationTest : BaseControllerTest() {
         }
     }
 
+    // #301: the format suffix comes off every line-up entry here, so an act billed `(live)` by one
+    // venue and bare by another is one row, and a line-up that bills both spellings is one link.
+    @Test
+    fun `a performance-format suffix is stripped at sync, for every source`() {
+        runBlocking {
+            val sourceId = "format-suffix:1"
+            val event = persistEvent(sourceId)
+
+            associationSyncService.resolveAndSyncAssociations(
+                listOf(event),
+                listOf(
+                    scraped(
+                        sourceId,
+                        artists =
+                            listOf(
+                                ScrapedArtist(name = "C3D-E (live)", role = "DJ"),
+                                ScrapedArtist(name = "Avangelic (DJ-Set)", role = "DJ"),
+                                ScrapedArtist(name = "Avangelic", role = "DJ"),
+                                ScrapedArtist(name = "Regis Live & DJ set", role = "DJ")
+                            )
+                    )
+                )
+            )
+
+            artistRepository.findBySlug("c3d-e")?.name shouldBe "C3D-E"
+            artistRepository.findBySlug("avangelic")?.name shouldBe "Avangelic"
+            artistRepository.findBySlug("regis")?.name shouldBe "Regis"
+            artistRepository.findBySlug("c3d-e-live") shouldBe null
+            eventArtistRepository.findByEventIdIn(listOf(requireNotNull(event.id))).toList().size shouldBe 3
+        }
+    }
+
     // #1553: a name that slugs to nothing would take the empty slug, and the next one would collide.
     @Test
     fun `an artist whose name slugs to nothing is dropped, and the rest of the lineup is kept`() {

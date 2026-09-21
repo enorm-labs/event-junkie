@@ -29,6 +29,7 @@ Data quality is enforced by **deterministic, curated-list normalizers applied at
 | Promoter identity   | `canonicalPromoterName` — strip trailing descriptors, fold typos via `NAME_CORRECTIONS` | `promoter/PromoterNormalizer.kt` |
 | De-shouting         | `deshoutWord` and the `ACRONYMS` it keeps in capitals, shared by both of the above      | `common/NameCasing.kt`           |
 | Non-artist titles   | `isNonArtistName` (`NON_ARTIST_NAMES` denylist), `stripArtistSuffix`                    | `scraper/ArtistNameMapping.kt`   |
+| Act name at sync    | `stripArtistSuffix` + `isNonArtistName` once more on every line-up entry (#301)         | `scraper/AssociationSyncService` |
 | Title-as-headliner  | `buildArtistsForEventType` / `buildArtistList`                                          | `scraper/ArtistNameMapping.kt`   |
 | Genre tags          | `GenreNormalizer` — synonym map + `NON_GENRE_TOKENS` stop-list + `looksLikeGenre` gate  | `genretag/GenreNormalizer.kt`    |
 

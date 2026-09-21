@@ -101,14 +101,20 @@ class AssociationSyncService(
     }
 
     /**
-     * The scraped artists that can be stored: a name that slugs to nothing has escaped
+     * The scraped artists that can be stored, with the suffix an act does not own taken off its
+     * name once, here, for every source: `C3D-E (live)`, `Avangelic (DJ-Set)` and `Regis Live & DJ
+     * set` are the same rows as `C3D-E`, `Avangelic` and `Regis` imported from anywhere else, and
+     * sixteen line-up scrapers never called [stripArtistSuffix] (#301). The model keeps no format,
+     * so nothing is lost that could have been stored. A name that slugs to nothing has escaped
      * [isNonArtistName], and would take the empty slug every later one collides with (#1553). A
      * headliner read off a title the boundary resolves to a festival is the festival's name, not
      * an act (`ELLE & L's Festival` → `Elle`, #300): undone here, once, while a published line-up stays.
      */
     private fun ScrapedEvent.storableArtists(): List<ScrapedArtist> {
         val festival = resolvedEventType() == EventType.FESTIVAL
-        return artists.filterNot { isSlugless(it.name) || (festival && it.titleDerived) }
+        return artists
+            .map { it.copy(name = stripArtistSuffix(it.name)) }
+            .filterNot { isSlugless(it.name) || isNonArtistName(it.name) || (festival && it.titleDerived) }
     }
 
     /** Resolves an artist by name from [artistCache], or auto-creates one. See [resolveOrCreate]. */
