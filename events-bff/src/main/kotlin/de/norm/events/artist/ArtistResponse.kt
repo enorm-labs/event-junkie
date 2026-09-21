@@ -95,6 +95,23 @@ data class ArtistDetailResponse(
     val instagramUrl: String?,
     @Schema(description = "URL of the artist's YouTube channel")
     val youtubeUrl: String?,
+    @Schema(description = "URL of the artist's Bandcamp page")
+    val bandcampUrl: String?,
+    @Schema(description = "URL of the artist's SoundCloud profile")
+    val soundcloudUrl: String?,
+    @Schema(description = "URL of the artist's Discogs page")
+    val discogsUrl: String?,
+    @Schema(description = "URL of the artist's Resident Advisor page")
+    val residentAdvisorUrl: String?,
+    @Schema(description = "URL of the artist's Spotify page")
+    val spotifyUrl: String?,
+    @Schema(
+        description = "The artist's MusicBrainz page, the correction path for a wrong match; set exactly when `musicbrainzMatch` is `EXACT`",
+        example = "https://musicbrainz.org/artist/41f4d85a-0bd7-4602-a3e3-8c47f36efb0a"
+    )
+    val musicbrainzUrl: String?,
+    @Schema(description = "What kind of act this is, as MusicBrainz types it; null until read", example = "GROUP")
+    val artistType: ArtistType?,
     @Schema(description = "MusicBrainz artist id (MBID), set exactly when `musicbrainzMatch` is `EXACT`", example = "41f4d85a-0bd7-4602-a3e3-8c47f36efb0a")
     val musicbrainzId: String?,
     @Schema(description = "What the MusicBrainz lookup decided about the name (ADR-031)", example = "EXACT")
@@ -103,6 +120,8 @@ data class ArtistDetailResponse(
     val musicbrainzCheckedAt: Instant?
 ) {
     companion object {
+        private const val MUSICBRAINZ_ARTIST_PAGE = "https://musicbrainz.org/artist/"
+
         fun fromEntity(
             entity: ArtistEntity,
             image: ServedImage
@@ -123,6 +142,13 @@ data class ArtistDetailResponse(
                 facebookUrl = entity.facebookUrl,
                 instagramUrl = entity.instagramUrl,
                 youtubeUrl = entity.youtubeUrl,
+                bandcampUrl = entity.bandcampUrl,
+                soundcloudUrl = entity.soundcloudUrl,
+                discogsUrl = entity.discogsUrl,
+                residentAdvisorUrl = entity.residentAdvisorUrl,
+                spotifyUrl = entity.spotifyUrl,
+                musicbrainzUrl = entity.musicbrainzId?.let { "$MUSICBRAINZ_ARTIST_PAGE$it" },
+                artistType = entity.artistType?.let { ArtistType.valueOf(it) },
                 musicbrainzId = entity.musicbrainzId,
                 musicbrainzMatch = MusicBrainzMatch.valueOf(entity.musicbrainzMatch),
                 musicbrainzCheckedAt = entity.musicbrainzCheckedAt

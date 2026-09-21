@@ -61,7 +61,13 @@ const ONE_PIXEL_PNG = Buffer.from(
   'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=',
   'base64',
 )
-const artistBody = { slug: 'mock-artist', name: 'Mock Artist' }
+const artistBody = {
+  slug: 'mock-artist',
+  name: 'Mock Artist',
+  bandcampUrl: 'https://mock-artist.bandcamp.com/',
+  residentAdvisorUrl: 'https://ra.co/dj/mock-artist',
+  musicbrainzUrl: 'https://musicbrainz.org/artist/41f4d85a-0bd7-4602-a3e3-8c47f36efb0a',
+}
 const promoterBody = { slug: 'mock-promoter', name: 'Mock Promoter' }
 
 /** Matches the events search feed (`/api/events?…` or bare `/api/events`), not `/api/events/:slug`. */
@@ -358,6 +364,30 @@ test('a venue with only past events shows them as an archive', async ({ page }) 
   await page.getByText('Past events').click()
   await expect(page.getByRole('link', { name: /Past Night/ })).toBeVisible()
   await expect(page.getByText(/archive starts when we started watching/i)).toBeVisible()
+})
+
+test('an artist page links the profiles MusicBrainz filled, and MusicBrainz itself', async ({
+  page,
+}) => {
+  await page.route(/\/api\/artists\//, (route) => json(route, artistBody))
+
+  await page.goto('/artists/mock-artist')
+
+  await expect(page.getByRole('link', { name: 'Bandcamp' })).toHaveAttribute(
+    'href',
+    'https://mock-artist.bandcamp.com/',
+  )
+  await expect(page.getByRole('link', { name: 'Resident Advisor' })).toHaveAttribute(
+    'href',
+    'https://ra.co/dj/mock-artist',
+  )
+  // The correction path (ADR-031): a wrong match is fixed at MusicBrainz, and a visitor can see it.
+  await expect(page.getByRole('link', { name: 'MusicBrainz' })).toHaveAttribute(
+    'href',
+    'https://musicbrainz.org/artist/41f4d85a-0bd7-4602-a3e3-8c47f36efb0a',
+  )
+  // A column the enrichment did not fill draws no link.
+  await expect(page.getByRole('link', { name: 'Spotify' })).toHaveCount(0)
 })
 
 test('links nested entities and navigates from an event to its venue', async ({ page }) => {
