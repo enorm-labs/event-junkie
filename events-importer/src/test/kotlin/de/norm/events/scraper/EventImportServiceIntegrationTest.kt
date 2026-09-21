@@ -454,7 +454,33 @@ class EventImportServiceIntegrationTest : BaseControllerTest() {
                 val updatedSource = eventSourceRepository.findBySlug("test-source")!!
                 updatedSource.status shouldBe ImportStatus.FAILED.name
                 updatedSource.lastError shouldBe "Network timeout"
+                updatedSource.lastFailureReason shouldBe "other"
                 updatedSource.retryCount shouldBe 1
+            }
+        }
+
+        /**
+         * The column #708 adds is the durable half of the counter: the class of the failure outlives the
+         * process, and it is cleared by the next success so the per-reason count reads the present.
+         */
+        @Test
+        fun `keeps the class of a dns failure on the row until the next success clears it`() {
+            runBlocking {
+                coEvery { mockImporter.importEvents(any(), any(), any()) } throws
+                    java.net.UnknownHostException("www.loge-berlin.org: Name or service not known")
+
+                eventImportService.importFromSource(eventSourceRepository.findBySlug("test-source")!!)
+
+                val failed = eventSourceRepository.findBySlug("test-source")!!
+                failed.status shouldBe ImportStatus.FAILED.name
+                failed.lastFailureReason shouldBe "dns"
+                eventSourceRepository.countFailedPerReason().toList() shouldBe listOf(FailedSourcesRow(reason = "dns", sources = 1))
+
+                coEvery { mockImporter.importEvents(any(), any(), any()) } returns ImportResult.Success(events = emptyList(), etag = null, lastModified = null)
+                eventImportService.importFromSource(eventSourceRepository.findBySlug("test-source")!!)
+
+                eventSourceRepository.findBySlug("test-source")!!.lastFailureReason.shouldBeNull()
+                eventSourceRepository.countFailedPerReason().toList() shouldBe emptyList()
             }
         }
 

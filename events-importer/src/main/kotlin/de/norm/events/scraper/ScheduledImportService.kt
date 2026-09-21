@@ -123,6 +123,8 @@ class ScheduledImportService(
                     source.copy(
                         status = ImportStatus.FAILED.name,
                         lastError = "Import timed out (stuck in RUNNING for >${stalenessTimeout.toMinutes()} minutes)",
+                        // No exception to classify: a stuck row is a crash or a rollout, not a venue's answer (#708).
+                        lastFailureReason = null,
                         retryCount = source.retryCount + 1
                     )
                 )

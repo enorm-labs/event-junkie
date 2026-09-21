@@ -74,6 +74,11 @@ data class EventSourceResponse(
     @Schema(description = "Error message from the last failed import")
     val lastError: String?,
     @Schema(
+        description = "The class of the last failure (dns, timeout, http_forbidden, parse, …), null after a success",
+        example = "dns"
+    )
+    val lastFailureReason: String?,
+    @Schema(
         description =
             "When a run last found materially less of some field than this source normally " +
                 "publishes (#472), or null. Independent of status: a flagged source is one whose " +
@@ -115,6 +120,7 @@ data class EventSourceResponse(
                 licenceNote = entity.licenceNote,
                 lastEventCount = entity.lastEventCount,
                 lastError = entity.lastError,
+                lastFailureReason = entity.lastFailureReason,
                 flaggedAt = entity.flaggedAt,
                 flagReason = entity.flagReason,
                 retryCount = entity.retryCount,

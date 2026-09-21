@@ -19,7 +19,7 @@ import java.time.temporal.ChronoUnit
  * everywhere else in this codebase. The values are therefore refreshed on a schedule into the
  * atomics [ImporterMetrics] holds, and each gauge only reads a number.
  *
- * **The cost, stated so nobody reads one of these as live:** all six are as stale as
+ * **The cost, stated so nobody reads one of these as live:** every gauge here is as stale as
  * `app.metrics.refresh-interval-ms` (default 60s). For counts that move on an import cycle measured
  * in hours that is irrelevant; it would matter for anything driving a synchronous decision, and
  * nothing here does.
@@ -65,6 +65,7 @@ class MetricsRefreshService(
             metrics.updateSourcesRunning(eventSourceRepository.countByStatus(ImportStatus.RUNNING.name))
             metrics.updateMusicBrainzUnchecked(artistRepository.countUncheckedByMusicBrainz())
             republishSourceState()
+            republishFailedSources()
         } catch (e: Exception) {
             logger.warn(e) { "Could not refresh the metric gauges; they keep their previous values" }
         }
@@ -126,5 +127,16 @@ class MetricsRefreshService(
                     knownQuiet = source.slug in KNOWN_QUIET_SOURCES
                 )
             }
+    }
+
+    /**
+     * Publishes `importer.sources.failed{reason}` for **every** reason the classifier can produce,
+     * zero for the ones no source sits on (#708). The query returns a row per reason in use only, so
+     * the loop runs over [ScrapeFailureReason.ALL] for the #618 reason: a rule on `reason="dns"` must
+     * find a series at 0, not nothing, or a quiet week and an ingest gap read the same.
+     */
+    private suspend fun republishFailedSources() {
+        val byReason = eventSourceRepository.countFailedPerReason().toList().associate { it.reason to it.sources }
+        ScrapeFailureReason.ALL.forEach { reason -> metrics.publishFailedSources(reason, byReason[reason] ?: 0L) }
     }
 }

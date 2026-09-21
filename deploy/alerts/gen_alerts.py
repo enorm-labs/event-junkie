@@ -19,6 +19,7 @@ it produces an alert that never fires rather than an error.
     translation failing open       -> ej-translations-failing      (#1301)
     a node waiting for a reboot    -> ej-reboot-pending            (#419)
     a node not being patched       -> ej-patching-stalled          (#419)
+    many sources failing on DNS    -> ej-dns-fanout                 (#708)
 
 **The zero-events failure is two rules, not one, and they see different things.**
 ADR-015's criterion 1 is per-source: a venue whose scraper still returns 200 while
@@ -543,6 +544,41 @@ rule(
     period_minutes=60,
     frequency_minutes=15,
     silence_minutes=24 * 60,
+)
+
+# --- Whose DNS broke, ours or the venue's ----------------------------------------
+#
+# #708: `loge` failed to resolve its host one morning, the logs of that morning
+# were lost to #625, and the one question left — did the others fail the same way
+# in the same minute — had no answer. `importer_scrape_failures_total{reason="dns"}`
+# is per source and per process, so it can say a failure happened and not how many
+# sources are in it. `importer_sources_failed{reason}` is the count of sources
+# currently FAILED on each reason, read from `event_source.last_failure_reason`
+# every tick, so it survives a deploy and reads the fleet at once.
+#
+# **The fleet-wide reading is the one this rule claims.** One venue whose domain
+# lapsed is that venue's outage, the retry cadence handles it, and a rule on it would
+# fire weekly and be muted by the time the cluster's resolver fails. Three at once
+# is the cluster: the scheduled imports are staggered over about four hours, so a
+# resolver outage of ten minutes catches a handful, and the retry cadence keeps
+# them FAILED until their next attempt, so the count holds for hours rather than
+# for one scrape interval.
+#
+# `max`, not `sum`: there is one series per reason, and a restart briefly exposes
+# two instances of it.
+rule(
+    "ej-dns-fanout",
+    "Three or more sources are FAILED on a name lookup at the same time. One venue failing to "
+    "resolve is that venue's DNS and needs nobody; several at once is the cluster's resolver, "
+    "and every import is failing the same way. Which ones: `SELECT slug, last_import_at, "
+    "last_error FROM event_source WHERE status = 'FAILED' AND last_failure_reason = 'dns'`.",
+    'max(importer_sources_failed{reason="dns"})',
+    ">",
+    2,
+    stream_name="importer_sources_failed",
+    period_minutes=15,
+    frequency_minutes=15,
+    silence_minutes=6 * 60,
 )
 
 # --- The patching a person has to finish -----------------------------------------

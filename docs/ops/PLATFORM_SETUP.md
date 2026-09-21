@@ -750,6 +750,7 @@ Free from the framework: JVM memory and GC, HTTP server request rate/latency/sta
 | `importer.source.last_success`                 | Gauge, tagged `source`                | Age of the last good run; alert past ~3× its schedule                              |
 | `importer.source.has_succeeded`                | Gauge, tagged `source`                | 1/0 — **exists for a source that has never worked**, which the row above does not  |
 | `importer.source.running`                      | Gauge                                 | Catches the ADR-008 `RUNNING`-forever state a restart can strand                   |
+| `importer.sources.failed{reason}`              | Gauge                                 | Sources currently FAILED, per reason, read from the row — one venue's DNS or ours  |
 | `importer.source.events_future{source}`        | Gauge                                 | Future events held per source — **the silently-broken-scraper alarm** (#700)       |
 | `importer.source.days_since_future_event`      | Gauge, tagged `source`, `known_quiet` | How long a source has held no future event; a floor, with the known venues marked  |
 | `importer.source.field_coverage{source,field}` | Gauge                                 | The partial-failure alarm — alert on a **drop against history**, not a floor       |
@@ -809,6 +810,11 @@ Free from the framework: JVM memory and GC, HTTP server request rate/latency/sta
   part of `http_forbidden`. The rule fires on `> 0` over an hour, then stays quiet for a day, because every later run re-trips the same decision.
   **The notification cannot name the venue.** The template's substitutions are `{alert_name}`, `{stream_name}`, `{org_name}` and `{value}`, and none of them
   is a label. One query gives the answer: `SELECT name, robots_txt_url, last_error FROM event_source WHERE robots_allowed = false`.
+- **A `dns` failure is counted across sources, not per source, because the count is the diagnosis** (#708).
+  `scrape.failures{reason="dns"}` says a lookup failed, and it lives in the process. `event_source.last_failure_reason` keeps the same
+  classification on the row. `importer.sources.failed{reason}` counts the rows currently `FAILED` on each reason every tick, zero included.
+  One source is that venue's DNS and needs nobody. `ej-dns-fanout` fires at three, which is the cluster's resolver seen from the importer.
+  `deploy/alerts/README.md` carries both readings as SQL.
 - **`robots_unreadable` deliberately has no rule.** That is a decision, not an omission. RFC 9309 §2.3.1.4 makes an unreadable `robots.txt` a complete
   disallow. So a venue whose host has a bad day refuses us exactly like one that forbade us, which is why #887 split the tags. But the case worth waking
   someone for is the persistent one. A source stuck there stops advancing `source.last_success` and lands in `ej-importer-stale` by construction — Zenner sat

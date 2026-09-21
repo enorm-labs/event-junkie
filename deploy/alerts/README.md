@@ -116,6 +116,7 @@ loses its silence window and can fire again immediately.
 | `ej-certificate-expiry`     | the soonest certificate is inside 14 days                                                                                                    | certificate expiry |
 | `ej-ingest-shedding`        | OpenObserve is rejecting writes ([#625](https://github.com/enorm-labs/event-junkie/issues/625))                                              | —                  |
 | `ej-ingest-queue-saturated` | the collector's export queue is over 80% full                                                                                                | —                  |
+| `ej-dns-fanout`             | three or more sources are FAILED on a name lookup at once ([#708](https://github.com/enorm-labs/event-junkie/issues/708))                    | importer failing   |
 
 **The zero-events failure is two rules, and keeping both is deliberate.** ADR-015's criterion 1 is per-source — a venue whose scraper still returns 200 while
 writing nothing — and `ej-source-emptied` is that rule at last, on the `importer_source_events_future` gauge
@@ -191,6 +192,41 @@ rehearsal to prove none of them break. That is [#662](https://github.com/enorm-l
 
 A destination is mandatory, incidentally: `POST /api/v2/{org}/alerts` with `destinations: []` returns `Alert destination or workflows is required`, with or
 without `creates_incident`. So "rules now, delivery later" needs _a_ destination, which is why the loopback one exists.
+
+## `ej-dns-fanout` claims the fleet-wide reading, not the single venue
+
+A `dns` failure has two causes with opposite responses, and the row for one source cannot tell them apart
+([#708](https://github.com/enorm-labs/event-junkie/issues/708)). A venue whose domain lapsed or whose records moved is that venue's outage; the retry cadence
+absorbs it and nobody needs to hear. The cluster's resolver failing is ours, and it shows as every import that ran during the outage failing the same way —
+which, read one row at a time, looks like a dozen unrelated venue problems. `loge` on 2026-08-21 is the worked example: the logs of that morning were lost to
+[#625](https://github.com/enorm-labs/event-junkie/issues/625), `event_source.last_error` survived, and the one question that mattered — did the others fail
+too — had nothing to be read from.
+
+**The durable record is the row, not the counter.** `importer_scrape_failures_total{source,reason}` is a Micrometer counter: per process, reset by every
+deploy, and absent until it first increments. The importer now also writes the same classification to `event_source.last_failure_reason` on every failed
+run and clears it on the next success, and `importer_sources_failed{reason}` is the count of enabled sources currently `FAILED` on each reason, refreshed
+from the database every tick and published for every reason the classifier knows, zero included — the [#618](https://github.com/enorm-labs/event-junkie/issues/618)
+property, so a quiet week and an ingest gap do not read the same.
+
+**The rule detects the fleet-wide case only.** `max(importer_sources_failed{reason="dns"}) > 2`: three sources FAILED on a name lookup at the same time. The
+scheduled imports are staggered over about four hours, so a resolver outage of ten minutes catches a handful, and a source stays FAILED until its next
+attempt, so the count holds for hours rather than for one scrape interval. A single source failing is deliberately not a rule — it would fire on every
+venue that mismanages its DNS and be muted before the day it is needed. The single-source reading is a query, and both readings are:
+
+```sql
+-- which sources, and when they last tried
+SELECT slug, last_import_at, last_error
+FROM event_source
+WHERE status = 'FAILED' AND last_failure_reason = 'dns';
+
+-- how many distinct sources failed on a name lookup in the last hour
+SELECT count(*)
+FROM event_source
+WHERE last_failure_reason = 'dns' AND last_import_at > now() - interval '1 hour';
+```
+
+`last_import_at` is the time of the last attempt, which for a `FAILED` row is the failure. A row reset from a stuck `RUNNING` carries no reason: there was no
+exception to classify.
 
 ## This is where GitOps stops, again
 

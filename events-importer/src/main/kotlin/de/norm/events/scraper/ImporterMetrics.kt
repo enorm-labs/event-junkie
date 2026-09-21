@@ -69,6 +69,9 @@ class ImporterMetrics(
     /** Backs [MUSICBRAINZ_UNCHECKED]: artist rows the MusicBrainz sweep has not looked at yet (#1567). */
     private val musicBrainzUnchecked = AtomicLong(0)
 
+    /** Sources currently `FAILED`, per reason, backing the `sources.failed` gauge (#708); keyed by reason. */
+    private val failedSources = ConcurrentHashMap<String, AtomicLong>()
+
     init {
         registry.gauge(SOURCE_RUNNING, sourcesRunning) { it.get().toDouble() }
         registry.gauge(DB_EVENTS, Tags.of(TAG_HORIZON, HORIZON_ALL), eventsTotal) { it.get().toDouble() }
@@ -294,6 +297,20 @@ class ImporterMetrics(
     /** Called by [MetricsRefreshService]; see the class KDoc for why a scheduler rather than a supplier. */
     fun updateSourcesRunning(count: Long) = sourcesRunning.set(count)
 
+    /**
+     * `importer.sources.failed{reason}`: how many enabled sources sit `FAILED` on this reason now,
+     * from `event_source.last_failure_reason` (#708). The counter `importer.scrape.failures` says a
+     * failure happened; this says how many sources are in it at once, which is the difference between
+     * one venue's DNS and the cluster's. Refreshed from the database, so a deploy does not blank it,
+     * and published for every reason so a zero is a zero and not an absence.
+     */
+    fun publishFailedSources(
+        reason: String,
+        count: Long
+    ) {
+        failedSources.publishPerSource(reason, SOURCES_FAILED, count, Tags.of(TAG_REASON, reason))
+    }
+
     /** Called by [MetricsRefreshService]. */
     fun updateEventCounts(
         total: Long,
@@ -411,6 +428,9 @@ class ImporterMetrics(
         const val SOURCE_DAYS_SINCE_FUTURE_EVENT = "importer.source.days_since_future_event"
         const val TAG_KNOWN_QUIET = "known_quiet"
         const val SOURCE_RUNNING = "importer.source.running"
+
+        /** `importer.sources.failed{reason}` (#708). See [publishFailedSources]. */
+        const val SOURCES_FAILED = "importer.sources.failed"
 
         /**
          * `importer.source.field_coverage{source,field}` (#472). The series to alert on is a drop
