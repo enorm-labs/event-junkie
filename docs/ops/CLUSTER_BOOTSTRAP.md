@@ -727,7 +727,7 @@ the `wireguard_peers` entry stay valid.
 
 ```sh
 cd infra/environments/staging
-./check-capacity.sh --probe staging   # ordering is the only real test — see the script's header
+../../check-capacity.sh --probe staging   # ordering is the only real test — see the script's header
 
 # 1. Edit main.tf if the point is to change hardware. Any edit under cloud-init/ already forces
 #    replacement on its own; if nothing has drifted and you want one anyway, that is what
