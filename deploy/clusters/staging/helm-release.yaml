@@ -46,8 +46,8 @@ spec:
       remediateLastFailure: true
     # Delete anything the failed upgrade created before rolling back, so a retry starts clean.
     cleanupOnFail: true
-  # The chart's own `templates/tests/connection-test.yaml`, run in-cluster after every install and
-  # upgrade — CI cannot reach this cluster. `ignoreFailures` stays false, or the hook is decoration.
+  # The chart's own hooks under `templates/tests/`, run in-cluster after every install and upgrade —
+  # CI cannot reach this cluster (ADR-033). `ignoreFailures` stays false, or the hooks are decoration.
   test:
     enable: true
     timeout: 3m
@@ -158,3 +158,9 @@ spec:
         # `event-junkie.de` is the same one here, so burning the limit would lock out production. Production
         # issues over HTTP-01, so this endpoint has nothing left to rehearse but account registration.
         server: "https://acme-staging-v02.api.letsencrypt.org/directory"
+    tests:
+      smoke:
+        # The k6 hook (#1697), first here: a week without a false rollback is what production waits for.
+        enabled: true
+        # The certificate above is from the ACME staging CA, which nothing trusts on purpose.
+        verifyTls: false
