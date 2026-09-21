@@ -69,6 +69,8 @@ Only the values worth a decision are listed. Every property is documented in
 | `certManager.clusterIssuer.solver`           | `http01`                | `dns01` for staging, which has no public address for HTTP-01 to reach                                                |
 | `certManager.clusterIssuer.dns01.*`          | official webhook        | `groupName: acme.hetzner.com` and a `tokenSecretKeyRef` — see below, the community forks differ on both              |
 | `ingress.noindex`                            | `false`                 | Marks an environment as not-production: the header, plus a disallow-all `robots.txt` and empty sitemap               |
+| `tests.smoke.enabled`                        | `false`                 | The post-deploy k6 smoke through the Ingress (#1697). On per cluster, after `verifyTls` is right for its certificate |
+| `tests.smoke.verifyTls`                      | `true`                  | `false` on staging only: Let's Encrypt's staging CA is untrusted on purpose. Production verifies                     |
 
 **Two values files ship with the chart, and the environments are not among them.** `values.yaml` is
 production-shaped and cannot render on its own — the two required keys have no safe default.
@@ -334,14 +336,15 @@ and it is the cheaper mistake.
 `networkPolicy.enabled` renders a default-deny for the release namespace plus one named allowance per real conversation. **Read the allowances as the
 architecture** — if an arrow is not written down in `templates/networkpolicy.yaml`, it does not happen:
 
-| From          | To               | Why                                             |
-| ------------- | ---------------- | ----------------------------------------------- |
-| Traefik       | frontend :8080   | the SPA                                         |
-| Traefik       | bff :8080        | `/api`                                          |
-| bff, importer | PostgreSQL :5432 | `networkPolicy.databaseCidr`, off-cluster       |
-| importer      | the internet     | scraping venue sites, minus every private range |
-| every pod     | CoreDNS :53      | UDP and TCP, or the rest is unusable            |
-| the test hook | bff, frontend    | only while `tests.enabled`                      |
+| From          | To                  | Why                                                           |
+| ------------- | ------------------- | ------------------------------------------------------------- |
+| Traefik       | frontend :8080      | the SPA                                                       |
+| Traefik       | bff :8080           | `/api`                                                        |
+| bff, importer | PostgreSQL :5432    | `networkPolicy.databaseCidr`, off-cluster                     |
+| importer      | the internet        | scraping venue sites, minus every private range               |
+| every pod     | CoreDNS :53         | UDP and TCP, or the rest is unusable                          |
+| the test hook | bff, frontend       | only while `tests.enabled`                                    |
+| the test hook | Traefik :8000/:8443 | only while `tests.smoke.enabled`; the visitor's route (#1697) |
 
 **What is absent is the point.** Nothing reaches the importer — not Traefik, not the frontend, not the BFF. Its admin API was already unroutable because no
 Ingress path names it; this makes it unreachable from inside the namespace too, which is the half an Ingress rule could never give. The frontend gets no egress

@@ -217,7 +217,9 @@ printf '\nChart acceptance\n'
 lint_stamped() {
   local version="$1" chart="$WORK/chart"
   rm -rf "$chart"
-  cp -R "$CHART_DIR" "$chart"
+  # `-L`: `files/perf/` holds relative symlinks into `perf/` (#1697), which dangle in a copy placed
+  # elsewhere, and a dangling symlink fails `helm lint` for a reason that has nothing to do with the version.
+  cp -RL "$CHART_DIR" "$chart"
   VERSION="$version" yq -i '.version = strenv(VERSION) | .appVersion = strenv(VERSION)' "$chart/Chart.yaml"
   helm lint --strict "$chart" "${BASE_OVERRIDES[@]}" >/dev/null 2>&1
 }

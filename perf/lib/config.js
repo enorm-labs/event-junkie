@@ -14,7 +14,29 @@
  * it once here keeps `BFF_HOST` meaning what it means for `scripts/dev-env.sh`, which probes the
  * actuator at the root, and stops the two uses of one variable name from needing different values.
  */
-export const BASE_URL = `${(__ENV.BFF_HOST || 'http://localhost:8080').replace(/\/$/, '')}/api`
+export const ORIGIN = (__ENV.BFF_HOST || 'http://localhost:8080').replace(/\/$/, '')
+export const BASE_URL = `${ORIGIN}/api`
+
+/**
+ * `RESOLVE` is `host:address`, for reaching an environment whose name does not resolve where the
+ * script runs, and `address` may carry a port: `staging.event-junkie.de:10.10.1.1` over the tunnel,
+ * `staging.event-junkie.de:10.43.0.5:8443` from inside the cluster, where the ingress is a Service.
+ *
+ * Staging has no public DNS record (PLATFORM_SETUP §6), so without this the script fails at DNS and
+ * looks like an outage. Split on the **first** colon: the host never contains one, the address may.
+ */
+export function hostsOption() {
+    if (!__ENV.RESOLVE) return {}
+    const separator = __ENV.RESOLVE.indexOf(':')
+    return {[__ENV.RESOLVE.slice(0, separator)]: __ENV.RESOLVE.slice(separator + 1)}
+}
+
+/**
+ * `INSECURE=true` skips certificate verification. It goes with `RESOLVE` on staging, whose
+ * certificate comes from Let's Encrypt's *staging* CA, which is deliberately not publicly trusted.
+ * Never for production: an unissued certificate there is exactly what a smoke run should catch.
+ */
+export const INSECURE = __ENV.INSECURE === 'true'
 
 /**
  * Latency budgets, in milliseconds, for a **local** run against a laptop.

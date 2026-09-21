@@ -10,18 +10,30 @@
  * endpoints are skipped with a warning. A brand-new environment should get a useful answer rather
  * than a setup error.
  *
+ * It is also the chart's post-deploy check (#1697): the `helm test` hook runs this file from a
+ * `grafana/k6` pod after every install and upgrade, through the Ingress, on staging and production.
+ * There the latency budgets are widened to "catastrophically slow" and the status and shape checks
+ * are the gate, because Flux rolls the release back when the hook fails. Keep it cheap and keep it
+ * deterministic: a flaky assertion here rolls back a deploy that was fine.
+ *
  *   k6 run perf/smoke.js
  *   k6 run -e BFF_HOST=https://staging.example.com perf/smoke.js
+ *   k6 run -e BFF_HOST=https://staging.event-junkie.de \
+ *          -e RESOLVE=staging.event-junkie.de:10.10.1.1 -e INSECURE=true -e SITE=true perf/smoke.js
  */
-import {sleep} from 'k6'
+import http from 'k6/http'
+import {check, sleep} from 'k6'
 
-import {baseThresholds} from './lib/config.js'
+import {INSECURE, ORIGIN, baseThresholds, hostsOption} from './lib/config.js'
 import {api, checkOk, checkPage, discover, pick} from './lib/api.js'
 
 export const options = {
     vus: 1,
     iterations: 1,
     thresholds: baseThresholds(),
+    // `RESOLVE` and `INSECURE` are what reach staging over the tunnel; `lib/config.js` says how.
+    hosts: hostsOption(),
+    insecureSkipTLSVerify: INSECURE,
 }
 
 export function setup() {
@@ -60,6 +72,16 @@ export default function (data) {
 
     const promoter = pick(data.promoters)
     if (promoter) checkOk(api.promoter(promoter), 'GET /promoters/{slug}')
+
+    // The site itself, opt-in: against a deployment `BFF_HOST` is the Ingress, and the one thing the
+    // API checks above cannot say is whether the frontend's route is still wired. Off by default
+    // because a local `dev-env.sh up bff` serves no SPA at all.
+    if (__ENV.SITE === 'true') {
+        check(http.get(`${ORIGIN}/`, {tags: {group: 'detail', name: '/'}}), {
+            'GET /: status is 200': (r) => r.status === 200,
+            'GET /: body is HTML': (r) => (r.headers['Content-Type'] || '').includes('text/html'),
+        })
+    }
 
     sleep(1)
 }

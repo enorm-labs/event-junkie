@@ -11,7 +11,7 @@
 #   verify        Assert the ingress split from outside the cluster (routing + the negative cases)
 #   import [slug] Seed one venue and source through the admin API and run a real import
 #   chain         The end-to-end assertion: a scraped event comes back out of /api/events
-#   test          `helm test` — the chart's own connection-test hook
+#   test          `helm test` — the chart's two hooks: the connection test and the k6 smoke
 #   status        What exists right now: cluster, pods, release
 #   down          Uninstall, delete the cluster, drop the database, restore the kube context
 #   all           up → verify → import → chain → test → down, stopping at the first failure
@@ -805,8 +805,9 @@ cmd_flux_verify() {
     bad "$undigested image(s) of ours carry no digest: the stamp in release.yml did not reach the chart"
   fi
 
-  # Flux runs the chart's own `helm test` hook and records the result as a condition — the in-cluster
-  # smoke test that replaces the external one CI cannot run.
+  # Flux runs the chart's own `helm test` hooks and records the result as a condition — the in-cluster
+  # smoke tests that replace the external one CI cannot run. Both, since the k3d values enable the
+  # k6 hook (#1697).
   if [ "$(k -n flux-system get helmrelease event-junkie -o jsonpath='{.status.conditions[?(@.type=="TestSuccess")].status}')" = "True" ]; then
     ok "helm test ran in-cluster and passed"
   else

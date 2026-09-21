@@ -211,9 +211,6 @@
             }
           }
         },
-        "image": {
-          "$ref": "#/definitions/componentImage"
-        },
         "service": {
           "type": "object",
           "required": [
@@ -315,15 +312,26 @@
             },
             "crossOriginResourcePolicy": {
               "type": "string",
-              "enum": ["same-origin", "same-site", "cross-origin"]
+              "enum": [
+                "same-origin",
+                "same-site",
+                "cross-origin"
+              ]
             },
             "crossOriginEmbedderPolicy": {
               "type": "string",
-              "enum": ["require-corp", "credentialless"]
+              "enum": [
+                "require-corp",
+                "credentialless"
+              ]
             },
             "crossOriginOpenerPolicy": {
               "type": "string",
-              "enum": ["same-origin", "same-origin-allow-popups", "unsafe-none"]
+              "enum": [
+                "same-origin",
+                "same-origin-allow-popups",
+                "unsafe-none"
+              ]
             },
             "hsts": {
               "type": "object",
@@ -471,6 +479,35 @@
       "properties": {
         "enabled": {
           "type": "boolean"
+        },
+        "smoke": {
+          "description": "The second `helm test` hook (#1697): perf/smoke.js from a k6 pod, through the Ingress. Off by default; each cluster switches it on once its own values are right.",
+          "type": "object",
+          "required": [
+            "enabled",
+            "verifyTls",
+            "latencyBudgetMs",
+            "ingressService"
+          ],
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "verifyTls": {
+              "description": "False on staging only, whose certificate is from Let's Encrypt's staging CA.",
+              "type": "boolean"
+            },
+            "latencyBudgetMs": {
+              "description": "One p95 budget for every endpoint group. A gate on catastrophically slow, not on latency: a failed hook is a rollback.",
+              "type": "integer",
+              "minimum": 1000
+            },
+            "ingressService": {
+              "description": "The ingress controller's Service, resolved in the pod because the Ingress host does not resolve to something the egress policy admits.",
+              "type": "string",
+              "minLength": 1
+            }
+          }
         }
       }
     },
@@ -508,7 +545,8 @@
           "type": "object",
           "required": [
             "namespaceSelector",
-            "podSelector"
+            "podSelector",
+            "podPorts"
           ],
           "properties": {
             "namespaceSelector": {
@@ -518,6 +556,26 @@
             "podSelector": {
               "type": "object",
               "minProperties": 1
+            },
+            "podPorts": {
+              "description": "Traefik's container ports, which the smoke hook's egress policy names; a policy is evaluated after the Service DNAT.",
+              "type": "object",
+              "required": [
+                "web",
+                "websecure"
+              ],
+              "properties": {
+                "web": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 65535
+                },
+                "websecure": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 65535
+                }
+              }
             }
           }
         },

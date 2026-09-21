@@ -74,3 +74,9 @@ certManager:
 # Weaker than the /32 the real environments set, and the one policy the rehearsal cannot prove tight.
 networkPolicy:
   databaseCidr: "0.0.0.0/0"
+# The smoke hook (#1697) is off in the chart and on here, so `k3d-rehearsal.sh test` proves the
+# route — the test pod, through Traefik's container port, to the BFF and the SPA — before a cluster
+# that rolls back on a failed hook ever runs it. Plain HTTP, since TLS is off above.
+tests:
+  smoke:
+    enabled: true

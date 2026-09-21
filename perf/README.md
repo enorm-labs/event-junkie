@@ -70,8 +70,9 @@ Everything is an environment variable with a working default:
 | `DURATION`              | `2m`                    | `load.js` — how long to hold the peak                                                                                                                                  |
 | `PEAK`                  | `100`                   | `spike.js` — peak virtual users                                                                                                                                        |
 | `STRICT`                | unset                   | `spike.js` — apply the standard thresholds                                                                                                                             |
-| `RESOLVE`               | unset                   | `ratelimit.js` — `host:ip`, for an environment whose name does not resolve publicly                                                                                    |
-| `INSECURE`              | unset                   | `ratelimit.js` — accept a certificate from a CA that is not publicly trusted                                                                                           |
+| `RESOLVE`               | unset                   | `smoke.js`, `ratelimit.js` — `host:address`, for an environment whose name does not resolve where the script runs; the address may carry a port                        |
+| `INSECURE`              | unset                   | `smoke.js`, `ratelimit.js` — accept a certificate from a CA that is not publicly trusted                                                                               |
+| `SITE`                  | unset                   | `smoke.js` — also fetch `/` and expect HTML: `BFF_HOST` is an Ingress, and the SPA's route is part of what is checked                                                  |
 | `VISITS`                | `4`                     | `ratelimit.js` — first-time page loads the browsing scenario performs                                                                                                  |
 | `ABUSE_STREAMS`         | `10`                    | `ratelimit.js` — concurrent streams in the abuse scenario; must stay under `inFlightRequests`                                                                          |
 | `THRESHOLD_DETAIL_MS`   | `300`                   | p95 budget for single-row lookups                                                                                                                                      |
@@ -145,13 +146,34 @@ What the numbers say, and what was done with each:
 
 **Run it again after the flip (#939) on the apex**, mobile and desktop, and add a row here. The number to watch is CLS, then LCP on mobile.
 
+## The in-cluster smoke
+
+`smoke.js` is also the chart's second `helm test` hook (#1697): `deploy/charts/event-junkie/templates/tests/smoke-test.yaml` runs it from a `grafana/k6` pod
+after every install and upgrade on staging and production, and Flux rolls the release back when it fails. The chart carries no copy of the script.
+`deploy/charts/event-junkie/files/perf/` holds symlinks into this directory, so a change here is a change to the hook, and the hook is the reason to keep this
+script cheap and deterministic.
+
+Three things differ from a run on a laptop, and each is a value in the chart:
+
+- **It goes through the Ingress, not to the BFF's Service.** `BFF_HOST` is the visitor's origin, and `RESOLVE` sends that name to Traefik's Service inside
+  `kube-system`, because staging's name does not resolve in-cluster and production's resolves to the node. `SITE=true` adds `GET /`.
+- **Status and shape are the gate, latency is not.** `tests.smoke.latencyBudgetMs` (10 s) replaces all three `THRESHOLD_*_MS` values. A cold JVM after a
+  rollout must not roll a release back, and a slow endpoint is a trend to read, not a deploy to refuse.
+- **Staging does not verify the certificate.** Let's Encrypt's staging CA is untrusted on purpose, so `tests.smoke.verifyTls` is false there. Production
+  verifies, because an unissued certificate is exactly what a post-deploy check should catch.
+
+The pod prints the summary export on one line after the run. The collector ships every container's stdout, so each reconcile leaves one JSON row in
+OpenObserve under `k8s_container_name = 'smoke-test'`. That is the trend store for this suite until #298 step 2 lands. ADR-033 says why the hook runs in
+the cluster and not from Actions.
+
 ## Why there is no CI workflow (yet)
 
-Considered, and deliberately not added. Three reasons, each of which is also the condition under which the answer changes:
+Considered, and deliberately not added, for the two suites that measure. Three reasons, each of which is also the condition under which the answer changes:
 
-1. **There is nothing representative to run it against.** Nothing is deployed. Numbers from a shared GitHub runner — noisy neighbours, no dedicated CPU,
-   variance of several hundred percent between runs — are not a baseline, and a threshold set loosely enough to survive them catches nothing. → _Add it once a
-   staging environment exists (ADR-012), pointed at that._
+1. **There is nothing representative to run `load.js` and `spike.js` against from CI.** Numbers from a shared GitHub runner — noisy neighbours, no dedicated
+   CPU, variance of several hundred percent between runs — are not a baseline, and a threshold set loosely enough to survive them catches nothing. Staging
+   exists, and CI cannot reach it (ADR-033), so the two run on demand over the tunnel. A load generator on the node it measures would not be a measurement
+   either. → _Point them at staging from somewhere that is not the node, once #298 step 2 has somewhere to keep the numbers._
 2. **The functional coverage is already there and is better.** A CI run would need Postgres, then the importer to apply the Flyway migrations (the BFF owns
    none), then the BFF — and would end up asserting that every endpoint returns 200 against an **empty** database. The Testcontainers integration tests already
    do that with real data, in-process, on every build. → _A perf workflow should measure, not duplicate._

@@ -36,10 +36,7 @@ import http from 'k6/http'
 import {check, sleep} from 'k6'
 import {Counter} from 'k6/metrics'
 
-import {BASE_URL} from './lib/config.js'
-
-/** The site's origin. `BASE_URL` is the origin plus `/api`; static assets and the HTML are not. */
-const ORIGIN = BASE_URL.replace(/\/api$/, '')
+import {BASE_URL, INSECURE, ORIGIN, hostsOption} from './lib/config.js'
 
 /**
  * Concurrent streams the abuse scenario runs, and **the number that makes this test mean anything.**
@@ -80,22 +77,10 @@ const abuseRejected = new Counter('rl_rejected_abuse')
 const broken = new Counter('rl_broken')
 const brokenStatus = {}
 
-/**
- * `RESOLVE` is `host:ip`, for reaching an environment whose name does not resolve publicly.
- *
- * Staging has no public DNS record (PLATFORM_SETUP §6) and is reached over the WireGuard tunnel, so
- * without this the script fails at DNS and looks like an outage. `INSECURE` goes with it: staging's
- * certificate comes from Let's Encrypt's *staging* CA, which is deliberately not publicly trusted.
- */
-function hostsOption() {
-    if (!__ENV.RESOLVE) return {}
-    const separator = __ENV.RESOLVE.lastIndexOf(':')
-    return {[__ENV.RESOLVE.slice(0, separator)]: __ENV.RESOLVE.slice(separator + 1)}
-}
-
 export const options = {
+    // `RESOLVE` and `INSECURE` are what reach staging over the tunnel; `lib/config.js` says how.
     hosts: hostsOption(),
-    insecureSkipTLSVerify: __ENV.INSECURE === 'true',
+    insecureSkipTLSVerify: INSECURE,
     scenarios: {
         // One VU, a handful of iterations: this is not a load test. It asks whether a single
         // visitor doing ordinary things is ever rejected, and one visitor is the whole question.
