@@ -66,5 +66,8 @@ val ESCHSCHLORAQUE_LIMITATIONS =
         AcceptedLimitation(LimitedAspect.SOLD_OUT, "the venue flags nothing sold out"),
         AcceptedLimitation(LimitedAspect.CANCELLATION, "the venue flags nothing cancelled, so every event stays scheduled"),
         AcceptedLimitation(LimitedAspect.EVENT_TYPE, "the programme mixes DJ nights, live sets, bingo and theatre with no kind field anywhere"),
-        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the venue publishes a single ab-HH-Uhr start and never a separate doors time")
+        AcceptedLimitation(
+            LimitedAspect.DOORS_TIME,
+            "the date field carries one ab-HH-Uhr time; a doors time exists only where the prose labels a pair, which is read"
+        )
     )

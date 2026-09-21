@@ -64,7 +64,6 @@ class EschschloraqueOverviewPageScraperTest {
     fun `maps a fully populated event`() {
         val jubilee = events.first { it.title == "20 Jahre MissVergnügen!" }
         jubilee.eventDate shouldBe LocalDate.of(2026, 8, 12)
-        jubilee.startTime shouldBe LocalTime.of(21, 0)
         jubilee.sourceUrl shouldBe "https://www.eschschloraque.de/20-jahre-missvergn%C3%BCgen-12082026"
         jubilee.sourceId shouldBe "eschschloraque:20-jahre-missvergnügen-12082026"
         jubilee.subtitle shouldBe
@@ -75,13 +74,30 @@ class EschschloraqueOverviewPageScraperTest {
     }
 
     @Test
-    fun `reads date and start time from the RDFa attribute, not the German rendering`() {
+    fun `reads the date from the RDFa attribute, not the German rendering`() {
         // The node renders "Donnerstag, 06. August 2026 ab 19Uhr" beside content="2026-08-06T19:00:00+02:00".
         val bingo = events.first { it.title.startsWith("BULETTEN BINGO") }
         bingo.eventDate shouldBe LocalDate.of(2026, 8, 6)
-        bingo.startTime shouldBe LocalTime.of(19, 0)
-        // The venue announces one time only; it is the start, never a separate doors time.
-        bingo.doorsTime.shouldBeNull()
+    }
+
+    // #318 — the structured field carries one time; the prose says which of the two it is.
+    @Test
+    fun `a labelled pair in the prose places the structured time and fills the other slot`() {
+        // `Einlass: 19:00 / Beginn: 19:30` names the structured 19:00 as the doors.
+        val bingo = events.first { it.title.startsWith("BULETTEN BINGO") }
+        bingo.doorsTime shouldBe LocalTime.of(19, 0)
+        bingo.startTime shouldBe LocalTime.of(19, 30)
+        // `DJs ab 21 Uhr, Showtime ab 22 Uhr`: the structured 21:00 is the doors, the show fills the start.
+        val jubilee = events.first { it.title == "20 Jahre MissVergnügen!" }
+        jubilee.doorsTime shouldBe LocalTime.of(21, 0)
+        jubilee.startTime shouldBe LocalTime.of(22, 0)
+    }
+
+    @Test
+    fun `one time alone stays the start, never a doors time`() {
+        val cats = events.first { it.title == "Hot Tunes for Cool Cats" }
+        cats.doorsTime.shouldBeNull()
+        cats.startTime.shouldNotBeNull()
     }
 
     @Test
