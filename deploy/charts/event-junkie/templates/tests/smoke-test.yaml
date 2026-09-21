@@ -95,13 +95,18 @@ spec:
           set -eu
           address="$(getent hosts "${INGRESS_SERVICE}" | awk '{print $1; exit}')"
           [ -n "${address}" ] || { echo "smoke-test: ${INGRESS_SERVICE} did not resolve" >&2; exit 1; }
-          # k6 exits non-zero on a failed threshold or check, and that is the hook's verdict — after the
-          # summary is re-emitted on one line: the collector ships this container's stdout, so each
-          # reconcile leaves one JSON row in OpenObserve under k8s_container_name.
-          k6 run --no-usage-report --summary-export=/tmp/summary.json \
+          # k6 exits non-zero on a failed threshold or check, and that is the hook's verdict. Its text
+          # summary is kept for a failure only: the collector ships this container's stdout, and the
+          # first run on staging left 142 rows for one green reconcile. What every run leaves is the
+          # summary export on one line, `setup_data` (the discovered slugs) cut off the end, so one
+          # reconcile is one JSON row in OpenObserve under k8s_container_name.
+          k6 run --quiet --no-usage-report --summary-mode=compact --summary-export=/tmp/summary.json \
             -e RESOLVE="${INGRESS_HOST}:${address}:${INGRESS_PORT}" /scripts/smoke.js \
-            || status=$?
-          if [ -s /tmp/summary.json ]; then tr -d '\n' < /tmp/summary.json | tr -s ' '; echo; fi
+            > /tmp/k6.log 2>&1 || status=$?
+          [ "${status:-0}" -eq 0 ] || cat /tmp/k6.log
+          if [ -s /tmp/summary.json ]; then
+            tr -d '\n' < /tmp/summary.json | tr -s ' ' | sed -E 's/, "setup_data": .*$/}/'; echo
+          fi
           exit "${status:-0}"
       volumeMounts:
         - name: scripts
