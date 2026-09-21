@@ -169,13 +169,13 @@ where the workloads do.
 
 ### 1.4 The workloads
 
-| Workload          | Shape                    | Replicas      | Notes                                              |
-| ----------------- | ------------------------ | ------------- | -------------------------------------------------- |
-| `events-importer` | JVM, always-on scheduler | **exactly 1** | ADR-008. `strategy: Recreate`, never rolling       |
-| `events-bff`      | JVM, stateless HTTP      | 1–N           | The only genuinely scalable thing here             |
-| `events-frontend` | nginx serving `dist/`    | 1–N           | Same origin as the API — ADR-012 §Frontend hosting |
-| admin frontend    | nginx                    | 1             | **Not built.** Must not be publicly routed — §8    |
-| SEO sidecar       | head rewriting           | 1             | **Not built.** ADR-014, settled as in-cluster      |
+| Workload          | Shape                    | Replicas      | Notes                                                      |
+| ----------------- | ------------------------ | ------------- | ---------------------------------------------------------- |
+| `events-importer` | JVM, always-on scheduler | **exactly 1** | ADR-008. `strategy: Recreate`, never rolling               |
+| `events-bff`      | JVM, stateless HTTP      | 1–N           | The only genuinely scalable thing here                     |
+| `events-frontend` | nginx serving `dist/`    | 1–N           | Same origin as the API — ADR-012 §Frontend hosting         |
+| admin frontend    | nginx                    | 1             | **Not built.** Must not be publicly routed — §8            |
+| SEO sidecar       | head rewriting           | 1             | **Built (#287), enabled by default** — ADR-014, in-cluster |
 
 | Thing           | Choice                                          |
 | --------------- | ----------------------------------------------- |
@@ -208,7 +208,7 @@ Realistic resident memory, measured in "what it actually uses", not "what the do
 | `events-importer` (JVM)                          | ~900 MB     |                                             |
 | `events-frontend` (nginx)                        | ~32 MB      |                                             |
 | admin frontend (nginx)                           | ~32 MB      | Not built yet                               |
-| SEO sidecar (ADR-014)                            | ~100 MB     | Not built yet                               |
+| SEO sidecar (ADR-014)                            | ~100 MB     | Built (#287)                                |
 | Flux                                             | ~300 MB     | A quarter of ArgoCD, and it is required     |
 | Observability (OpenObserve + collector)          | ~938 MB     | Measured, §4 — SigNoz would be ~5 GB        |
 | **Total**                                        | **~4.5 GB** | Plus OS ≈ **5.0 GB**                        |
@@ -334,8 +334,8 @@ is already a named processor in both privacy notices, for issue handling. Nothin
 ### Four things that each cost an afternoon if learned the hard way
 
 - **Packages are private on first publish, always** — regardless of the repository's visibility. The symptom is `ImagePullBackOff` on the first deploy, **with
-  nothing in the logs naming visibility as the cause**. Flipping each to public is one click in its package settings, once per package, and there are **four**:
-  `bff`, `importer`, `frontend`, plus the chart. Once public they pull anonymously, so the cluster needs no `imagePullSecret` — which is why the chart's
+  nothing in the logs naming visibility as the cause**. Flipping each to public is one click in its package settings, once per package, and there are **five**:
+  `bff`, `importer`, `frontend`, `injector`, plus the chart. Once public they pull anonymously, so the cluster needs no `imagePullSecret` — which is why the chart's
   `imagePullSecrets` value defaults to empty. It stays in the chart for k3d and for the window before the flip.
 - **CI needs no credential to create.** `permissions: packages: write` plus `docker/login-action` with `${{ secrets.GITHUB_TOKEN }}`. The token gets `admin` on
   packages published by its own repository.
@@ -346,7 +346,7 @@ is already a named processor in both privacy notices, for issue handling. Nothin
 
 ### What publishes them — `release.yml`
 
-**One workflow, one computed version, four artifacts, and no path filters.** `.github/workflows/release.yml` runs on every push to `main` (a snapshot) and on a
+**One workflow, one computed version, five artifacts, and no path filters.** `.github/workflows/release.yml` runs on every push to `main` (a snapshot) and on a
 `v*` tag (a release). It builds the four images, packages the chart, scans the images with Trivy _before_ pushing anything, and pushes images before the
 chart.
 
