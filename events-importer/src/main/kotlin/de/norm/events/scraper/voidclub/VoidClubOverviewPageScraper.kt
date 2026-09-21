@@ -28,44 +28,37 @@ import java.util.Locale
 /**
  * Pure HTML parser for VOID Club's homepage programme.
  *
- * Every night is an `article.void-event-card` carrying a `.void-event-date` calendar block, the
- * room(s) in use (`.void-event-venue`), one or more `.void-event-genre` tags, a
- * `.void-event-title`, a `.void-event-lineup` paragraph per note and per DJ billing, and a
- * Resident Advisor `a.void-event-button`. The venue publishes no times, no prices, no descriptions
- * and no per-event page, so an event's identity is its date plus its slugified title, and every
- * night stores a bare date.
+ * Every night is an `article.void-event-card`: a `.void-event-date` calendar block, the room(s)
+ * in use (`.void-event-venue`), one or more `.void-event-genre` tags, a `.void-event-title`, a
+ * `.void-event-lineup` paragraph per note and per DJ billing, and a Resident Advisor
+ * `a.void-event-button`. No times, prices, descriptions or per-event page, so an event's
+ * identity is its date plus slugified title, and every night stores a bare date.
  *
- * Three things about this page shape the parser:
- *
- * 1. **The date carries no year** and the programme runs across the turn of the year, so the year
- *    is inferred from the stated weekday ([inferYearForWeekday]). The venue states the date twice —
- *    once as an `aria-label` on the calendar block, once as the rendered day/number/month spans —
- *    and the accessible label is read first (ADR-007 puts ARIA above class names) with the spans as
- *    the fallback.
- * 2. **`.void-event-lineup` is used for two different things**: the DJ billing, introduced by a
- *    `WITH` / `LINEUP` / `LINE-UP` label, and a standalone note naming what the night is part of
- *    ("RAVE THE PLANET AFTER PARTY"). Only the labelled billing is read as acts; the note becomes
- *    the subtitle.
- * 3. **A night may carry two buttons**: the ticket link and the venue's own guestlist raffle
- *    (`/guestlistNN.html`). Only the former is a ticket URL, and its label is also the page's only
- *    free-entry signal — the venue writes "Free Tickets & Info" for a free night and
- *    "Tickets & Info" otherwise.
+ * 1. **The date carries no year** and the programme runs across the turn of the year, so the
+ * year comes from the stated weekday ([inferYearForWeekday]). The date is stated twice — an
+ * `aria-label` on the calendar block and the rendered day/number/month spans — and the
+ * accessible label is read first (ADR-007 puts ARIA above class names), the spans as fallback.
+ * 2. **`.void-event-lineup` is used for two things**: the DJ billing, introduced by a `WITH` /
+ * `LINEUP` / `LINE-UP` label, and a standalone note naming what the night is part of ("RAVE
+ * THE PLANET AFTER PARTY"). Only the labelled billing is read as acts; the note is the subtitle.
+ * 3. **A night may carry two buttons**: the ticket link and the guestlist raffle
+ * (`/guestlistNN.html`). Only the former is a ticket URL, and its label is the page's only
+ * free-entry signal — "Free Tickets & Info" for a free night, "Tickets & Info" otherwise.
  *
  * @see VoidClubWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://www.void-club.de/">VOID Club Berlin</a>
  */
 class VoidClubOverviewPageScraper(
-    /** Clock for the year inference. Defaults to the venue's own time zone; override in tests for determinism. */
+    /** Clock for the year inference, in the venue's time zone; override in tests. */
     private val clock: Clock = Clock.system(BERLIN)
 ) {
     private val logger = KotlinLogging.logger {}
 
     /**
-     * Parses all event cards from the homepage document.
+     * Parses all event cards from the homepage, in listing order.
      *
      * @param baseUrl the URL the document was fetched from, stored as each event's
-     *   [ScrapedEvent.sourceUrl] — the venue publishes no per-event page.
-     * @return a list of [ScrapedEvent] instances, in listing order.
+     * [ScrapedEvent.sourceUrl] — no per-event page.
      */
     fun scrape(
         document: Document,
@@ -86,7 +79,7 @@ class VoidClubOverviewPageScraper(
         }
     }
 
-    /** Parses one card into a [ScrapedEvent], or `null` when it has no title or usable date. */
+    /** Parses one card into a [ScrapedEvent], or `null` without a title or usable date. */
     @Suppress("ReturnCount") // Guard clauses for the required title/date are clearer than nesting
     private fun parseCard(
         card: Element,
@@ -112,13 +105,13 @@ class VoidClubOverviewPageScraper(
                     ?.text()
                     ?.trim()
                     ?.takeIf { it.isNotBlank() },
-            // VOID is a techno club and states no category; `.void-event-genre` names the music,
-            // and `.void-event-venue` the room(s) in use — neither is a kind of event.
+            // A techno club stating no category; `.void-event-genre` names the music, `.void-event-venue`
+            // the room(s) — neither a kind of event.
             eventType = EventType.PARTY.name,
             eventDate = eventDate,
             imageUrl = ticketUrl?.let(teasers::get),
-            // No per-event page exists, so every night points at the programme and takes its
-            // identity from the date plus the slugified title.
+            // No per-event page, so every night points at the programme and takes its identity from date
+            // plus slugified title.
             sourceUrl = baseUrl,
             sourceId = "${EventSource.VOID_CLUB.sourceIdPrefix}$eventDate-${SlugGenerator.slugify(title)}",
             ticketUrl = ticketUrl,
@@ -129,8 +122,8 @@ class VoidClubOverviewPageScraper(
                     .filter { it.isNotBlank() }
                     .joinToString(", ")
                     .ifBlank { null },
-            // The venue prefixes the ticket button with "Free" for a free night and prints no
-            // prices anywhere, so the button's own wording is the only free-entry signal.
+            // The ticket button is prefixed "Free" for a free night and no prices print anywhere, so the
+            // button's wording is the only free-entry signal.
             free = ticketLink?.text()?.startsWith("Free", ignoreCase = true) == true,
             artists = parseLineup(billings.firstOrNull(), roomOf(card))
         )
@@ -140,10 +133,8 @@ class VoidClubOverviewPageScraper(
     private fun isBilling(paragraph: Element): Boolean = BILLING_LABEL.matches(paragraph.textAt(".void-event-label").orEmpty())
 
     /**
-     * Reads the card's date, preferring the calendar block's `aria-label` ("Friday, August 7") over
-     * the rendered `FRI` / `07` / `AUG` spans.
-     *
-     * Both spell the same year-less date, so either resolves it; the accessible label is tried
+     * The card's date, preferring the calendar block's `aria-label` ("Friday, August 7") over the
+     * rendered `FRI` / `07` / `AUG` spans. Both spell the same year-less date; the label is tried
      * first because ADR-007 ranks an ARIA attribute above a class name, and the spans keep the
      * scraper working if the label is ever dropped.
      */
@@ -160,7 +151,7 @@ class VoidClubOverviewPageScraper(
         return "$weekday $day $month"
     }
 
-    /** Parses a year-less weekday + month + day rendering, inferring the year from the weekday. */
+    /** Parses a year-less weekday + month + day rendering, year from the weekday. */
     @Suppress("ReturnCount") // Guard clauses for the blank / unparseable input are clearer than nesting
     private fun parseWeekdayDate(
         text: String?,
@@ -175,18 +166,16 @@ class VoidClubOverviewPageScraper(
     }
 
     /**
-     * Reads the night's DJs from its labelled `.void-event-lineup` paragraph.
+     * The night's DJs from its labelled `.void-event-lineup` paragraph.
      *
-     * The venue separates acts with commas, so a comma is the only act boundary honoured — a `&`
-     * inside one comma segment belongs to the act's own name ("Skulder & Mully", billed on its own
-     * elsewhere in the same programme), which is why this does not split on conjunctions the way
-     * Kater's and Renate's per-floor lines do. A `b2b` marker *within* a segment does open a second
-     * slot, unless the segment is parenthesised — there the brackets hold a duo's members rather
-     * than a co-bill, the same guard Kater applies.
+     * Acts are comma-separated, so a comma is the only boundary honoured — a `&` inside one
+     * segment belongs to the act's name ("Skulder & Mully", billed alone elsewhere in the same
+     * programme), which is why this does not split on conjunctions the way Kater's and Renate's
+     * per-floor lines do. A `b2b` *within* a segment does open a second slot, unless the segment
+     * is parenthesised — the brackets hold a duo's members, Kater's guard.
      *
-     * An act billed twice on one night would produce two `event_artist` rows for the same
-     * (event, artist) pair and hit that table's unique constraint, failing the whole import, so the
-     * first billing wins.
+     * An act billed twice would produce two `event_artist` rows for one (event, artist) pair and
+     * hit the unique constraint, failing the whole import, so the first billing wins.
      */
     private fun parseLineup(
         paragraph: Element?,
@@ -204,24 +193,19 @@ class VoidClubOverviewPageScraper(
     }
 
     /**
-     * The room the night's acts play in, or `null` when it runs across both.
-     *
-     * `.void-event-venue` names the room(s) in use — `VOID CLUB`, `VOID HALL`, or `VOID CLUB &
-     * HALL`. A single-room night puts every listed act in that room; a two-room night does not say
-     * who plays where, so no act is attributed to either.
+     * The room the night's acts play in, or `null` across both. `.void-event-venue` names `VOID
+     * CLUB`, `VOID HALL`, or `VOID CLUB & HALL`. A single-room night puts every act in that room;
+     * a two-room night does not say who plays where, so no act is attributed.
      */
     private fun roomOf(card: Element): String? = card.textAt(".void-event-venue")?.takeIf { '&' !in it }
 
     /**
-     * Splits one comma segment into the acts it bills, dropping placeholders.
-     *
-     * The venue closes an unfinished billing with a continuation phrase rather than a name
-     * ("… Lepido and more", "… DaSoMaZo — more to be announced"), and states a whole unannounced
-     * lineup as "TBA" or "To be announced" — [UNANNOUNCED_TAIL] cuts all of those off, leaving
-     * nothing behind when the segment was only the placeholder. Each act then goes through
+     * Splits one comma segment into its acts, dropping placeholders. An unfinished billing closes
+     * with a continuation phrase ("… Lepido and more", "… DaSoMaZo — more to be announced"), and a
+     * whole unannounced lineup is "TBA" or "To be announced" — [UNANNOUNCED_TAIL] cuts all of those
+     * off, leaving nothing when the segment was only the placeholder. Each act then goes through
      * [stripArtistSuffix] for the spellings the shared rule knows and this one does not: the live
-     * page closed a billing with `Seimen Dexter — more TBA` and the placeholder rode along in the
-     * name (#1564).
+     * page closed a billing with `Seimen Dexter — more TBA` and the placeholder rode along (#1564).
      */
     private fun splitActs(segment: String): List<String> {
         val act = segment.replace(UNANNOUNCED_TAIL, "").trim()
@@ -232,10 +216,8 @@ class VoidClubOverviewPageScraper(
 
     /**
      * Per-event teaser images from the hero slider, keyed by the Resident Advisor URL each slide
-     * links to.
-     *
-     * The cards themselves carry no image; the slider above them re-links the soonest few events by
-     * their ticket URL, which is what lets a slide's `img` be matched back to its card.
+     * links to. The cards carry no image; the slider re-links the soonest few events by ticket
+     * URL, which matches a slide's `img` back to its card.
      */
     private fun teaserImages(
         document: Document,
@@ -267,8 +249,8 @@ class VoidClubOverviewPageScraper(
         const val TICKET_LINK = "a.void-event-button:not([href*=guestlist])"
 
         /**
-         * The label that opens the DJ billing, in each spelling the venue uses (`WITH`, `LINEUP`,
-         * `LINE-UP`). Any other label — `RAVE THE PLANET AFTER PARTY` — makes the paragraph a note.
+         * The label opening the DJ billing, in each spelling (`WITH`, `LINEUP`, `LINE-UP`). Any other
+         * label — `RAVE THE PLANET AFTER PARTY` — makes the paragraph a note.
          */
         val BILLING_LABEL = Regex("""with|line\s?-?\s?up""", RegexOption.IGNORE_CASE)
 

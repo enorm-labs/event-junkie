@@ -24,24 +24,23 @@ import java.time.format.DateTimeParseException
 /**
  * Pure HTML parser for Supamolly Berlin's retro hand-coded single-page programme.
  *
- * The whole programme is one `<table>` on `?p=programm` (byte-identical to the homepage). Every night
- * is a `<tr class="event" id="YYYYMMDDHHMM">` whose **`id` is a date+time stamp** — the most stable
- * signal on the page (ADR-007 selector priority 4) and the basis for both [ScrapedEvent.eventDate]
- * and a stable [ScrapedEvent.sourceId]. Its `td.date` carries a year-less `DD.MM.`, an `HH:MM` time
- * and an optional flyer; its `td.evcont` holds one `div.even` per billed act, each a `.tit` name, an
- * optional `.beschr` note and a `.lin` reference link.
+ * The whole programme is one `<table>` on `?p=programm` (byte-identical to the homepage). Every
+ * night is a `<tr class="event" id="YYYYMMDDHHMM">` whose **`id` is a date+time stamp** — the
+ * most stable signal on the page (ADR-007 selector priority 4) and the basis for
+ * [ScrapedEvent.eventDate] and a stable [ScrapedEvent.sourceId]. Its `td.date` carries a
+ * year-less `DD.MM.`, an `HH:MM` time and an optional flyer; its `td.evcont` holds one
+ * `div.even` per billed act, each a `.tit` name, an optional `.beschr` note and a `.lin` link.
  *
- * Three quirks drive the design:
- * - **The lineup is the billing.** There is no separate headline: the venue's own RSS renders a night
- *   as its act names joined with ", ", so that joined string is the event title and the individual
- *   `.even` names become the artist list, first billed the headliner. A block with an empty `.tit` is
- *   an extra reference link for the act above, not an act, and is dropped.
- * - **Monthly programme posters are listed as rows.** A flyer-only row titled "September Programm
- *   2026" ([PROGRAMME_POSTER_TITLE]) announces the printed programme rather than an event.
- * - **Service notes sit in an act slot.** The weekly "Kuchen & Kaffee 15:30 Uhr" social is billed
- *   like an act; a name carrying an inline `HH:MM Uhr` ([isScheduleNote]) is a programme note, so it
- *   stays the event title but is never minted as an artist — which in turn types the night via
- *   [inferUnmarkedTitleType] instead of defaulting it to a concert.
+ * - **The lineup is the billing.** No separate headline: the venue's own RSS renders a night as
+ * its act names joined with ", ", so that joined string is the title and the `.even` names the
+ * artist list, first billed the headliner. A block with an empty `.tit` is an extra reference
+ * link for the act above, not an act, and dropped.
+ * - **Monthly programme posters are rows.** A flyer-only row titled "September Programm 2026"
+ * ([PROGRAMME_POSTER_TITLE]) announces the printed programme, not an event.
+ * - **Service notes sit in an act slot.** The weekly "Kuchen & Kaffee 15:30 Uhr" social is
+ * billed like an act; a name carrying an inline `HH:MM Uhr` ([isScheduleNote]) is a programme
+ * note, so it stays the title but is never an artist — which types the night via
+ * [inferUnmarkedTitleType] instead of defaulting to a concert.
  *
  * @see SUPAMOLLY_LIMITATIONS for what the venue does not publish.
  * @see SupamollyWebsiteImporter for the HTTP fetch orchestrator.
@@ -50,9 +49,9 @@ class SupamollyOverviewPageScraper {
     private val logger = KotlinLogging.logger {}
 
     /**
-     * Parses all events from the Supamolly programme page document.
+     * Parses all events from the programme page.
      *
-     * @param baseUrl the URL the document was fetched from, used for resolving relative links.
+     * @param baseUrl the URL the document was fetched from, for resolving relative links.
      */
     fun scrape(
         document: Document,
@@ -73,11 +72,8 @@ class SupamollyOverviewPageScraper {
     }
 
     /**
-     * Parses a single `<tr class="event">` row into a [ScrapedEvent].
-     *
-     * Skips (returns `null`) when the row carries no `YYYYMMDDHHMM` id, no billed
-     * act name, or is a monthly programme poster — so neither malformed rows nor
-     * non-events reach persistence.
+     * Parses one `<tr class="event">` row into a [ScrapedEvent], or `null` without a
+     * `YYYYMMDDHHMM` id or billed act name, or for a monthly programme poster.
      */
     @Suppress("ReturnCount") // Guard clauses for the required id/title fields and the poster row are clearer than nesting
     private fun parseEventRow(
@@ -128,13 +124,10 @@ class SupamollyOverviewPageScraper {
     }
 
     /**
-     * Reads one `div.even` block into its act name and note.
-     *
-     * Both fields are read off a clone with the block's two non-content children
-     * removed — `.progln` (a spacer carrying the reference URL in an `alt`) and
-     * `.lin` (the visible copy of that URL) — so neither leaks into the name or the
-     * description. Reading `.tit` rather than `.tit b` keeps this robust to the
-     * HTML5 parser restructuring the `<b>` that wraps a nested `<div>`.
+     * One `div.even` block as act name and note. Both are read off a clone with the block's two
+     * non-content children removed — `.progln` (a spacer carrying the reference URL in an `alt`)
+     * and `.lin` (the visible copy) — so neither leaks into name or description. Reading `.tit`
+     * rather than `.tit b` survives the HTML5 parser restructuring the `<b>` wrapping a nested `<div>`.
      */
     private fun parseActBlock(block: Element): ActBlock {
         val work = block.clone()
@@ -143,14 +136,11 @@ class SupamollyOverviewPageScraper {
     }
 
     /**
-     * Turns the billed act names into artist entries, in billing order.
-     *
-     * Each name is stripped of a leading co-bill conjunction (`"& Support"` →
-     * `"Support"`, so the shared [isNonArtistName] can recognise the bare role
-     * label) and of a trailing tour/live/format tail ([stripArtistSuffix]), then
-     * dropped if it is not a performer ([isNonArtistName]) or is a programme note
-     * ([isScheduleNote]). The first survivor is billed as headliner, the rest as
-     * support.
+     * The billed act names as artist entries, in billing order. Each is stripped of a leading
+     * co-bill conjunction (`"& Support"` → `"Support"`, so the shared [isNonArtistName] recognises
+     * the bare role label) and a trailing tour/live/format tail ([stripArtistSuffix]), then dropped
+     * if not a performer ([isNonArtistName]) or a programme note ([isScheduleNote]). First survivor
+     * is headliner, the rest support.
      */
     private fun buildArtists(actNames: List<String>): List<ScrapedArtist> =
         actNames
@@ -162,13 +152,10 @@ class SupamollyOverviewPageScraper {
             }
 
     /**
-     * Resolves the flyer URL from the row's thumbnail.
-     *
-     * The markup links a `flyer/small/<stamp>.jpg` thumbnail (~3 KB); the full-size
-     * poster lives at `flyer/<stamp>.jpg` — the same image the row's
-     * `index.php?programm=<stamp>` link serves — so the `small/` path segment is
-     * dropped to prefer the usable resolution. A thumbnail whose path does not carry
-     * that segment is kept as-is, and a row without a flyer degrades to `null`.
+     * The flyer URL from the row's thumbnail. The markup links a `flyer/small/<stamp>.jpg`
+     * thumbnail (~3 KB); the full-size poster is `flyer/<stamp>.jpg` — the image the row's
+     * `index.php?programm=<stamp>` link serves — so the `small/` segment is dropped. A path without
+     * that segment is kept as-is; a row without a flyer degrades to `null`.
      */
     private fun parseImageUrl(
         row: Element,
@@ -183,7 +170,7 @@ class SupamollyOverviewPageScraper {
         return runCatching { resolveUrl(baseUrl, src).replace(FLYER_THUMBNAIL_SEGMENT, "/flyer/") }.getOrNull()
     }
 
-    /** Reads the `YYYYMMDD` date from a row's stamp id, or `null` when it is not a real calendar date. */
+    /** The `YYYYMMDD` date from a row's stamp id, or `null` when not a real calendar date. */
     private fun parseStampDate(stamp: String): LocalDate? =
         try {
             LocalDate.parse(stamp.take(DATE_LENGTH), STAMP_DATE_FORMATTER)
@@ -191,7 +178,7 @@ class SupamollyOverviewPageScraper {
             null
         }
 
-    /** Reads the trailing `HHMM` time from a row's stamp id, or `null` when it is not a real time. */
+    /** The trailing `HHMM` time from a row's stamp id, or `null` when not a real time. */
     private fun parseStampTime(stamp: String): LocalTime? =
         try {
             LocalTime.parse(stamp.drop(DATE_LENGTH), STAMP_TIME_FORMATTER)
@@ -200,15 +187,13 @@ class SupamollyOverviewPageScraper {
         }
 
     /**
-     * True when an act name is really a programme note — it carries an inline
-     * `HH:MM Uhr` schedule (e.g. `"Kuchen & Kaffee 15:30 Uhr"`, the venue's weekly
-     * café social). A performer name never states its own start time, so this keeps
-     * the venue's service listings out of the artist table while leaving them as the
-     * event title.
+     * True when an act name is a programme note — an inline `HH:MM Uhr` schedule (`"Kuchen &
+     * Kaffee 15:30 Uhr"`, the weekly café social). A performer never states their own start time,
+     * so this keeps service listings out of the artist table while leaving them as the title.
      */
     private fun isScheduleNote(name: String): Boolean = SCHEDULE_NOTE_PATTERN.containsMatchIn(name)
 
-    /** One billed `div.even` block: the act name and its accompanying note, either of which may be absent. */
+    /** One billed `div.even` block: the act name and its note, either of which may be absent. */
     private data class ActBlock(
         val name: String?,
         val description: String?
@@ -226,10 +211,9 @@ class SupamollyOverviewPageScraper {
         private val STAMP_TIME_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern("HHmm")
 
         /**
-         * A flyer-only row announcing the month's printed programme ("September Programm
-         * 2026", "September Prog 2026") rather than an event. Anchored to the whole title
-         * and keyed on a German month name followed by `Prog`/`Programm`, so a real event
-         * merely mentioning a month is untouched.
+         * A flyer-only row announcing the month's printed programme ("September Programm 2026",
+         * "September Prog 2026"). Anchored to the whole title and keyed on a German month name followed
+         * by `Prog`/`Programm`, so a real event merely mentioning a month is untouched.
          */
         private val PROGRAMME_POSTER_TITLE =
             Regex(

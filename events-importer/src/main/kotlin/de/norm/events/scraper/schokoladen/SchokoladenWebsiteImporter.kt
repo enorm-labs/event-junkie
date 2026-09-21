@@ -12,13 +12,10 @@ import org.springframework.stereotype.Component
 /**
  * Website importer for Schokoladen Mitte's Laravel-based event listing.
  *
- * Schokoladen renders all upcoming events on a single page (`/`) with full
- * details expanded inline (times, descriptions, ticket links, images). Events
- * are addressed only by page fragment (`#e20260711`), so no separate detail
- * pages exist — the pipeline is a single HTTP request per import cycle:
- * 1. Fetch the overview page via [HtmlFetcher] with conditional-request support
- *    (ETag / Last-Modified).
- * 2. Parse all events from the single page via [SchokoladenOverviewPageScraper].
+ * All upcoming events on one page (`/`) with details inline (times, descriptions, ticket
+ * links, images), addressed only by page fragment (`#e20260711`), so no detail pages — one HTTP
+ * request per cycle: [HtmlFetcher] fetches it conditionally (ETag / Last-Modified),
+ * [SchokoladenOverviewPageScraper] parses it.
  *
  * @see SchokoladenOverviewPageScraper for the HTML parsing logic.
  * @see <a href="https://www.schokoladen-mitte.de/">Schokoladen Mitte</a>

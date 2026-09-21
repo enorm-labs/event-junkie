@@ -19,18 +19,15 @@ import java.time.LocalTime
 /**
  * Pure HTML parser for Schokoladen Mitte's Laravel-based event overview page.
  *
- * Schokoladen renders all upcoming events on a single page (`/`) with full
- * details expanded inline. Each event is a `div.event` block split across two
- * `div.container` children: a collapsible header (category, date, promoter,
- * title, subtitle) and an `div.event-info` body (times, ticket link,
- * description, image carousel). Individual events are addressed only by a page
- * fragment (`#e20260711`), not a separate URL — so no detail-page fetching is
- * needed and this is a single-page importer.
+ * All upcoming events sit on one page (`/`) with details inline. Each is a `div.event` split
+ * across two `div.container` children: a collapsible header (category, date, promoter, title,
+ * subtitle) and a `div.event-info` body (times, ticket link, description, image carousel).
+ * Events are addressed only by page fragment (`#e20260711`), not a URL — no detail fetch, a
+ * single-page importer.
  *
- * The `div.event-info` carries a machine-readable `data-event-date` attribute
- * (ISO 8601, e.g. `2026-07-11`) and a matching `id` (`e<yyyymmdd>`). These are
- * the most stable extraction targets: the date needs no year inference, and the
- * fragment id yields a stable per-event `sourceId`.
+ * `div.event-info` carries a machine-readable `data-event-date` (ISO 8601, `2026-07-11`) and a
+ * matching `id` (`e<yyyymmdd>`) — the most stable targets: no year inference, and the fragment
+ * id is a stable `sourceId`.
  *
  * @see SchokoladenWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://www.schokoladen-mitte.de/">Schokoladen Mitte</a>
@@ -39,9 +36,9 @@ class SchokoladenOverviewPageScraper {
     private val logger = KotlinLogging.logger {}
 
     /**
-     * Parses all events from the Schokoladen overview page document.
+     * Parses all events from the overview page.
      *
-     * @param baseUrl the URL the document was fetched from, used for resolving relative links.
+     * @param baseUrl the URL the document was fetched from, for resolving relative links.
      */
     fun scrape(
         document: Document,
@@ -62,8 +59,7 @@ class SchokoladenOverviewPageScraper {
     }
 
     /**
-     * Parses a single `div.event` block into a [ScrapedEvent], or `null` when a
-     * required field (title, date, or fragment id) is missing.
+     * Parses one `div.event` into a [ScrapedEvent], or `null` when title, date or fragment id is missing.
      */
     @Suppress("ReturnCount") // Null-safe early exits for each required field are clearer than nested let-chains
     private fun parseEvent(
@@ -118,10 +114,10 @@ class SchokoladenOverviewPageScraper {
     }
 
     /**
-     * Whether the venue has put its sold-out banner on the entry — "---> Ausverkauft / Sold Out /
-     * 10 Tickets on the Doors at 19:00 <---" as the subtitle, repeated as a description paragraph
-     * (#1495). Each is matched at its own start, so a band's bio that mentions a record that "sold
-     * out in a record 3 months" does not mark the night sold out.
+     * Whether the venue put its sold-out banner on the entry — "---> Ausverkauft / Sold Out / 10
+     * Tickets on the Doors at 19:00 <---" as the subtitle, repeated as a description paragraph
+     * (#1495). Each is matched at its own start, so a bio mentioning a record that "sold out in a
+     * record 3 months" does not mark the night sold out.
      */
     private fun isSoldOut(
         subtitle: String?,
@@ -132,11 +128,11 @@ class SchokoladenOverviewPageScraper {
 
     /**
      * The genres the title's per-act "(genre, origin)" annotations name, joined for the shared
-     * genre normalizer — "1000 Rabbits (art-pop, uk) + Lande Hekt (indie-pop/songwriter, uk)" →
+     * normalizer — "1000 Rabbits (art-pop, uk) + Lande Hekt (indie-pop/songwriter, uk)" →
      * "art-pop, indie-pop/songwriter" (#1495). The origin is not a genre (#314): an annotation with
-     * more than one comma-separated part loses its last one, or its first when that is the country
-     * or city code ("(Bln, punk)"), and a code or a place the venue spells out is dropped wherever
-     * it stands. A one-part annotation is a genre unless it is a code ("(SWE)").
+     * more than one comma-separated part loses its last, or its first when that is the country or
+     * city code ("(Bln, punk)"), and a code or a spelled-out place is dropped wherever it stands.
+     * A one-part annotation is a genre unless it is a code ("(SWE)").
      */
     private fun parseGenre(title: String): String? =
         GENRE_PARENTHETICAL
@@ -147,12 +143,10 @@ class SchokoladenOverviewPageScraper {
             .takeIf { it.isNotBlank() }
 
     /**
-     * Parses the doors and show times from the event-facts "Time" line.
-     *
-     * The times sit in free text under a `<strong>Time</strong>` label and vary
-     * in spelling: `"doors 19:00 - show 20:00"`, `"Doors 19h / Show 20h"`,
-     * `"Einlass 19h Beginn 20h"`, `"Einlass: 18:30 Uhr"`, `"19:00 Einlass - 20:00 Konzert - 22:00
-     * DJ-Set"`. [timeBesideLabel] picks the two labelled times; the header's `span.d-none`
+     * Doors and show times from the event-facts "Time" line: free text under a
+     * `<strong>Time</strong>` label, varying — `"doors 19:00 - show 20:00"`, `"Doors 19h / Show
+     * 20h"`, `"Einlass 19h Beginn 20h"`, `"Einlass: 18:30 Uhr"`, `"19:00 Einlass - 20:00 Konzert -
+     * 22:00 DJ-Set"`. [timeBesideLabel] picks the two labelled times; the header's `span.d-none`
      * (`"19:00 Uhr"`) is a doors fallback when the line has no parseable time.
      */
     private fun parseTimes(
@@ -166,12 +160,9 @@ class SchokoladenOverviewPageScraper {
     }
 
     /**
-     * Extracts the event image from the media column.
-     *
-     * Events render either a Bootstrap carousel (the first `.carousel-item` is
-     * `active`) or a single `.imageWrapper`; either way the first `<img>` in the
-     * media column is the primary image. Sources are site-relative
-     * (`/media/images/…`) and resolved against [baseUrl].
+     * The event image from the media column: a Bootstrap carousel (first `.carousel-item` is
+     * `active`) or a single `.imageWrapper`; either way the first `<img>` is the primary image.
+     * Sources are site-relative (`/media/images/…`), resolved against [baseUrl].
      */
     private fun parseImageUrl(
         info: Element?,
@@ -182,8 +173,7 @@ class SchokoladenOverviewPageScraper {
     }
 
     /**
-     * Joins the paragraphs of the `.event-description` block into a single
-     * newline-separated description, or `null` when there is no description.
+     * The paragraphs of `.event-description` joined newline-separated, or `null`.
      */
     private fun parseDescription(info: Element?): String? {
         val description = info?.selectFirst(".event-description") ?: return null
@@ -196,10 +186,10 @@ class SchokoladenOverviewPageScraper {
     }
 
     /**
-     * Extracts the promoters from the header's `span.promoter`, stripping a trailing
-     * "presents:" / "prsnts:" flourish. The venue lists co-promoters in one span, joined by
-     * "," and "&" (`"beav boloney, wild wax & little league shows prsnt:"`), and each one is a
-     * promoter row of its own — a joined name was one row per billing (#328).
+     * The promoters from the header's `span.promoter`, minus a trailing "presents:" / "prsnts:"
+     * flourish. Co-promoters share one span, joined by "," and "&" (`"beav boloney, wild wax &
+     * little league shows prsnt:"`), each its own promoter row — a joined name was one row per
+     * billing (#328).
      */
     private fun parsePromoters(block: Element): List<String> =
         block
@@ -211,15 +201,11 @@ class SchokoladenOverviewPageScraper {
             .orEmpty()
 
     /**
-     * Derives artist entries from the title (headliner) plus any support acts.
-     *
-     * Schokoladen embeds a "(genre, origin)" annotation after each act in the
-     * title (`"MOLOCH (punk, bln) + PINK WONDER (scumpunk, bln)"`); those
-     * parentheticals are stripped before the shared
-     * [buildArtistsForEventType][de.norm.events.scraper.buildArtistsForEventType]
-     * co-bill splitter runs, so headliners come out clean (`MOLOCH`, `PINK
-     * WONDER`). The original title is still stored verbatim on the event — only
-     * the derived artist names are cleaned. Non-concert events (readings,
+     * Artist entries from the title (headliner) plus any support acts. A "(genre, origin)"
+     * annotation follows each act (`"MOLOCH (punk, bln) + PINK WONDER (scumpunk, bln)"`), stripped
+     * before the shared [buildArtistsForEventType][de.norm.events.scraper.buildArtistsForEventType]
+     * co-bill splitter runs, so headliners come out clean (`MOLOCH`, `PINK WONDER`). The title is
+     * stored verbatim — only the derived names are cleaned. Non-concert events (readings,
      * specials) yield no artists unless a "Support:" line is present.
      */
     private fun parseArtists(
@@ -232,9 +218,8 @@ class SchokoladenOverviewPageScraper {
     }
 
     /**
-     * The time beside a label, whichever side of it the venue wrote it on: "Einlass 19h" and
-     * "19:00 Einlass" both name the doors. The label-first form is tried first, then the time-first
-     * one (#1141).
+     * The time beside a label, whichever side the venue wrote it: "Einlass 19h" and "19:00
+     * Einlass" both name the doors. Label-first is tried first, then time-first (#1141).
      */
     private fun timeBesideLabel(
         text: String,
@@ -242,7 +227,7 @@ class SchokoladenOverviewPageScraper {
         timeFirst: Regex
     ): LocalTime? = flexTime(labelFirst.find(text)) ?: flexTime(timeFirst.find(text))
 
-    /** Builds a [LocalTime] from a doors/show regex match whose groups are (hour, optional minute), or `null`. */
+    /** A [LocalTime] from a doors/show regex match whose groups are (hour, optional minute), or `null`. */
     private fun flexTime(match: MatchResult?): LocalTime? {
         val hour = match?.groupValues?.get(1)?.toIntOrNull() ?: return null
         val minute = match.groupValues.getOrNull(2)?.toIntOrNull() ?: 0
@@ -250,13 +235,13 @@ class SchokoladenOverviewPageScraper {
     }
 
     companion object {
-        /** Venue category labels that the shared [mapEventType] table doesn't cover. "Musik" is live music → CONCERT. */
+        /** Venue category labels the shared [mapEventType] table doesn't cover. "Musik" is live music → CONCERT. */
         private val CATEGORY_SYNONYMS = mapOf("musik" to "CONCERT")
 
         /** A "(genre, origin)" annotation appended to each act in a title, stripped before artist derivation and read for [parseGenre]. */
         private val GENRE_PARENTHETICAL = Regex("""\s*\(([^)]*)\)""")
 
-        /** The venue's sold-out banner, at the start of the subtitle or of a description paragraph: "---> Ausverkauft / Sold Out / …". */
+        /** The sold-out banner, at the start of the subtitle or of a description paragraph: "---> Ausverkauft / Sold Out / …". */
         private val SOLD_OUT_BANNER = Regex("""^\W*(?:ausverkauft|sold\s*out)\b""", RegexOption.IGNORE_CASE)
 
         /** What the venue joins co-promoters with inside one `span.promoter`. */

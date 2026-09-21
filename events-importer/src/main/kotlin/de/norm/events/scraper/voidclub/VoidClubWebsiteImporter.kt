@@ -14,11 +14,10 @@ import org.springframework.stereotype.Component
 /**
  * Website importer for VOID Club's homepage programme.
  *
- * The site is hand-coded Bootstrap on plain Apache — no CMS, no REST API, no `sitemap.xml`, no
- * feed and no embedded structured data (it does not even serve a `robots.txt`), so the homepage,
- * which carries the whole programme inline including every lineup, is the source. The pipeline is:
- * 1. Fetch the homepage via [HtmlFetcher] with conditional-request support.
- * 2. Parse every `article.void-event-card` via [VoidClubOverviewPageScraper].
+ * Hand-coded Bootstrap on plain Apache — no CMS, REST API, `sitemap.xml`, feed or structured
+ * data (not even a `robots.txt`), so the homepage, the whole programme inline with every
+ * lineup, is the source: [HtmlFetcher] fetches it conditionally, [VoidClubOverviewPageScraper]
+ * parses every `article.void-event-card`.
  *
  * @see VoidClubOverviewPageScraper for the HTML parsing logic.
  * @see <a href="https://www.void-club.de/">VOID Club Berlin</a>

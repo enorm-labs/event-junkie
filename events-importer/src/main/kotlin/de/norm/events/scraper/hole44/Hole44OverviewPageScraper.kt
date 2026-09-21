@@ -18,18 +18,16 @@ import org.jsoup.nodes.Element
 /**
  * Pure HTML parser for Hole 44 Berlin's Events-Manager listing (overview) page.
  *
- * The `/events/` page renders every upcoming show as an `li.event-item` block: a
- * `.event_date` column (day / month-year / start time), an `a.artist` title link
- * to the `/event/<date-slug>/` detail page, an inline `.event-support` span, a
- * `.event-tags` genre list, and — for relocated/cancelled shows — a leading
- * `.changes` note.
+ * `/events/` renders every upcoming show as an `li.event-item`: an `.event_date` column (day /
+ * month-year / start time), an `a.artist` title link to the `/event/<date-slug>/` page, an
+ * inline `.event-support` span, an `.event-tags` genre list, and for relocated/cancelled shows
+ * a leading `.changes` note.
  *
- * The overview is the source for the event discovery list plus every field except
- * the ones only the detail page carries (promoter, doors time, image, description).
- * Because [Hole44WebsiteImporter] falls back to this data when a detail page fails
- * to fetch, each event is parsed as completely as the listing allows. The date is
- * read from the ISO `YYYY-MM-DD` prefix the venue bakes into every event slug — a
- * canonical identifier that is cleaner than the German `"Juli 2026"` month rendering.
+ * The overview is the discovery list plus every field except the detail-only ones (promoter,
+ * doors time, image, description). [Hole44WebsiteImporter] falls back to it when a detail page
+ * fails, so each event is parsed as completely as the listing allows. The date is read from
+ * the ISO `YYYY-MM-DD` prefix in every event slug — cleaner than the German `"Juli 2026"`
+ * month rendering.
  *
  * @see Hole44DetailPageScraper for the detail-page data source (promoter, doors, image).
  * @see Hole44WebsiteImporter for the HTTP fetch orchestrator.
@@ -39,10 +37,9 @@ class Hole44OverviewPageScraper {
     private val logger = KotlinLogging.logger {}
 
     /**
-     * Parses all event items from the overview page document.
+     * Parses all event items from the overview page.
      *
-     * @param baseUrl the URL the document was fetched from, used to resolve relative
-     *   detail links and build `sourceId` values.
+     * @param baseUrl the URL the document was fetched from, for detail links and `sourceId` values.
      */
     fun scrape(
         document: Document,
@@ -62,7 +59,7 @@ class Hole44OverviewPageScraper {
         }
     }
 
-    /** Parses a single `li.event-item` block into a [ScrapedEvent], or `null` if it has no title link. */
+    /** Parses one `li.event-item` into a [ScrapedEvent], or `null` without a title link. */
     @Suppress("ReturnCount") // Guard clauses for the required link/href/title are clearer than nesting
     private fun parseItem(
         item: Element,
@@ -95,13 +92,12 @@ class Hole44OverviewPageScraper {
     }
 }
 
-/** Length of the leading ISO `YYYY-MM-DD` date the venue bakes into every event slug. */
+/** Length of the leading ISO `YYYY-MM-DD` date in every event slug. */
 internal const val ISO_DATE_LENGTH = 10
 
 /**
- * Joins the genre labels from a `.event-tags` block into a single comma-separated
- * string (e.g. "crossover trash, Hardcore-Punk, Trash Metal"), or `null` when the
- * event carries no tags. Shared by the overview and detail scrapers, whose
+ * The genre labels from a `.event-tags` block as one comma-separated string ("crossover trash,
+ * Hardcore-Punk, Trash Metal"), or `null` without tags. Shared by both scrapers, whose
  * `.event-tags` markup is identical.
  */
 internal fun parseGenres(root: Element): String? =

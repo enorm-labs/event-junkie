@@ -31,21 +31,20 @@ import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
 
 /**
- * Pure HTML parser for Säälchen's programme, taken from the Holzmarkt site's shared
- * `/kalender` page.
+ * Pure HTML parser for Säälchen's programme, from the Holzmarkt site's shared `/kalender` page.
  *
  * The calendar covers **the whole Holzmarkt site** — the Marktplatz flea markets and the
- * Holzmarkt 25 grounds as well — so rows are filtered on the `.location` span and only
- * `Säälchen` is kept. Month tabs are in-page anchors, so one fetch carries the whole programme.
+ * Holzmarkt 25 grounds too — so rows are filtered on the `.location` span and only `Säälchen`
+ * is kept. Month tabs are in-page anchors, so one fetch carries the whole programme.
  *
- * Each `.views-row` embeds an **AddToCalendar** widget whose `<var class="atc_*">` values are the
- * machine-readable part. `atc_date_start` is a **UTC** timestamp, converted here to
- * `Europe/Berlin`. Its `atc_description` holds a hand-typed `Datum / Einlass / Beginn / Ende /
- * Eintritt / Tickets` block followed by the event's prose — the source for the times and the
- * price. The row's `.body-content` renders the same prose in full where `atc_description` holds
- * only its first paragraph, so the description comes from there; a festival names its acts there, in one
- * sentence ending in `mit: <acts>.` (`Das diesjährige Line-up verspricht musikalische Vielfalt
- * mit: Catch The Young, Bongjeingan, kimseungjoo und Chang Kiha.`), which is read as the line-up (#1584).
+ * Each `.views-row` embeds an **AddToCalendar** widget whose `<var class="atc_*">` values are
+ * the machine-readable part. `atc_date_start` is a **UTC** timestamp, converted to
+ * `Europe/Berlin`. `atc_description` holds a hand-typed `Datum / Einlass / Beginn / Ende /
+ * Eintritt / Tickets` block then the prose — the source for times and price. The row's
+ * `.body-content` renders the same prose in full where `atc_description` holds only its first
+ * paragraph, so the description comes from there; a festival names its acts there in one
+ * sentence ending `mit: <acts>.` (`Das diesjährige Line-up verspricht musikalische Vielfalt
+ * mit: Catch The Young, Bongjeingan, kimseungjoo und Chang Kiha.`), read as the line-up (#1584).
  *
  * @see SaalchenWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://www.holzmarkt.com/kalender">Holzmarkt calendar</a>
@@ -54,11 +53,10 @@ class SaalchenOverviewPageScraper {
     private val logger = KotlinLogging.logger {}
 
     /**
-     * Parses every Säälchen row from the shared calendar document.
+     * Parses every Säälchen row from the shared calendar, one [ScrapedEvent] per row.
      *
-     * @param baseUrl the URL the document was fetched from, used to resolve the per-event
-     *   `/veranstaltung/<slug>` links and the relative poster paths.
-     * @return a list of [ScrapedEvent] instances, one per Säälchen row.
+     * @param baseUrl the URL the document was fetched from, for the `/veranstaltung/<slug>` links
+     * and the relative poster paths.
      */
     fun scrape(
         document: Document,
@@ -79,7 +77,7 @@ class SaalchenOverviewPageScraper {
         }
     }
 
-    /** Parses a single `.views-row` into a [ScrapedEvent], or `null` when it has no link, title or date. */
+    /** Parses one `.views-row` into a [ScrapedEvent], or `null` without link, title or date. */
     @Suppress("ReturnCount") // Guard clauses for the required href/title/date are clearer than nesting
     private fun parseRow(
         row: Element,
@@ -115,8 +113,8 @@ class SaalchenOverviewPageScraper {
             description = description,
             eventType = eventType,
             eventDate = eventDate,
-            // The labelled prose wins: the venue's single `.doors` CMS field is filled
-            // inconsistently, holding the Einlass on some nights and the Beginn on others.
+            // The labelled prose wins: the single `.doors` CMS field is filled inconsistently, the Einlass
+            // on some nights and the Beginn on others.
             doorsTime = parseNoticeTime(notice[DOORS_LABEL]) ?: parseTime(row.textAt(".doors")?.substringBefore(" Uhr")),
             startTime = startTime,
             endTime = endTime,
@@ -126,12 +124,12 @@ class SaalchenOverviewPageScraper {
             sourceUrl = sourceUrl,
             sourceId = "${EventSource.SAALCHEN.sourceIdPrefix}$slug",
             ticketUrl = row.hrefAt("a.link-ticket"),
-            // `.event-category` names a staging format (`Konzert`, `Kultur`, `Kunst`), not a musical
-            // style, so it drives the event type only and is deliberately not stored as the genre —
-            // the same call as Admiralspalast. The venue publishes no genre field of its own.
+            // `.event-category` names a staging format (`Konzert`, `Kultur`, `Kunst`), not a style, so it
+            // drives the event type only and is not stored as the genre — Admiralspalast's call. The venue
+            // publishes no genre field.
             pricePresale = parseSinglePrice(entrance),
-            // The Eintritt line is free-form (tiered prices, "+ fees", a bare "30,00"), so the
-            // venue's own wording is kept whenever it names one.
+            // The Eintritt line is free-form (tiered prices, "+ fees", a bare "30,00"), so the venue's own
+            // wording is kept whenever it names one.
             priceNote = entrance,
             artists =
                 (buildArtistsForEventType(title, subtitle = null, eventType = eventType) + parseLineupSentence(row))
@@ -151,8 +149,8 @@ class SaalchenOverviewPageScraper {
             .map { ScrapedArtist(name = it, role = "HEADLINER") }
 
     /**
-     * Converts the AddToCalendar `atc_date_start` UTC timestamp (`2026-11-14 19:00:00`) to the
-     * Berlin calendar date. Returns `null` when the value is missing or unparseable.
+     * The AddToCalendar `atc_date_start` UTC timestamp (`2026-11-14 19:00:00`) as the Berlin
+     * calendar date. `null` when missing or unparseable.
      */
     private fun parseUtcStartDate(text: String?): LocalDate? {
         if (text.isNullOrBlank()) return null
@@ -168,9 +166,9 @@ class SaalchenOverviewPageScraper {
     }
 
     /**
-     * Splits the AddToCalendar description's leading metadata block into its labelled lines
-     * (`Einlass`, `Beginn`, `Eintritt`, …). The value is double-escaped HTML, so it is unescaped
-     * and re-parsed before the `<br>`-separated lines are read.
+     * The AddToCalendar description's leading metadata block as labelled lines (`Einlass`,
+     * `Beginn`, `Eintritt`, …). The value is double-escaped HTML, unescaped and re-parsed before
+     * the `<br>`-separated lines are read.
      */
     private fun parseNotice(row: Element): Map<String, String> =
         noticeLines(row)
@@ -181,9 +179,9 @@ class SaalchenOverviewPageScraper {
             }.toMap()
 
     /**
-     * Reads the event's own prose — every line of the row's rendered `.body-content` that is *not*
-     * one of the [NOTICE_LABELS] metadata lines (#1647). The AddToCalendar description holds the
-     * same text cut to its first paragraph and is the fallback for a row with no body.
+     * The event's own prose — every line of the rendered `.body-content` that is *not* one of the
+     * [NOTICE_LABELS] metadata lines (#1647). The AddToCalendar description holds the same text cut
+     * to its first paragraph and is the fallback for a row with no body.
      */
     private fun parseDescription(row: Element): String? =
         (bodyLines(row).ifEmpty { noticeLines(row) })
@@ -193,9 +191,9 @@ class SaalchenOverviewPageScraper {
             .takeIf { it.isNotBlank() }
 
     /**
-     * The rendered `.body-content` split into lines, the same way [noticeLines] splits the escaped
-     * copy. The widget and the ticket button sit inside the same div in the served markup, so they
-     * are cut from a copy first — their `<var>` values would otherwise read as prose.
+     * The rendered `.body-content` split into lines, as [noticeLines] splits the escaped copy. The
+     * widget and the ticket button sit inside the same div, so they are cut from a copy first —
+     * their `<var>` values would otherwise read as prose.
      */
     private fun bodyLines(row: Element): List<String> =
         row
@@ -209,12 +207,10 @@ class SaalchenOverviewPageScraper {
             .orEmpty()
 
     /**
-     * Splits the AddToCalendar description into its rendered lines.
-     *
-     * The value is double-escaped HTML, so it is re-parsed before being split on `<br>` and on
-     * paragraph boundaries. Splitting rather than selecting `<p>` matters: the venue wraps the
-     * block in a paragraph on most events but writes it bare on others (`Jimmy Sax`, `Main
-     * Event`), where a `<p>`-scoped lookup would find nothing at all.
+     * The AddToCalendar description split into rendered lines. Double-escaped HTML, re-parsed
+     * before splitting on `<br>` and paragraph boundaries. Splitting rather than selecting `<p>`
+     * matters: the block is wrapped in a paragraph on most events but bare on others (`Jimmy
+     * Sax`, `Main Event`), where a `<p>`-scoped lookup finds nothing.
      */
     private fun noticeLines(row: Element): List<String> {
         val raw = row.textAt("var.atc_description") ?: return emptyList()
@@ -229,10 +225,9 @@ class SaalchenOverviewPageScraper {
 }
 
 /**
- * Parses an `HH:mm`-ish time out of a hand-typed notice value, tolerating every spelling the
- * venue uses: `"20:00"`, `"19 Uhr"`, `"18:00 Uhr"`, and a trailing aside
- * (`"18:00 Uhr (Beginn der Vorentscheidung um 15:30 Uhr)"` → 18:00). Returns `null` when the
- * value names no time.
+ * An `HH:mm`-ish time out of a hand-typed notice value, in every spelling: `"20:00"`, `"19
+ * Uhr"`, `"18:00 Uhr"`, and a trailing aside (`"18:00 Uhr (Beginn der Vorentscheidung um 15:30
+ * Uhr)"` → 18:00). `null` when the value names no time.
  */
 private fun parseNoticeTime(text: String?): LocalTime? =
     NOTICE_TIME_PATTERN.find(text.orEmpty())?.let { match ->
@@ -243,13 +238,12 @@ private fun parseNoticeTime(text: String?): LocalTime? =
     }
 
 /**
- * Converts the free-form `Eintritt:` line to a number, but **only when it names exactly one
- * amount** — or labels one as the day ticket. `"17,00 €"`, `"€40 + fees"`, `"30,00"` and
- * `"36,95€"` all resolve, and so does `"Tagesticket: 13 € / 2-Tagesticket: 20 €"`, where the
- * `Tagesticket` figure is what one day costs (#1584). The venue's three-tier `"15€ ermäßigt … 25€
- * Normalpreis … 35€ Förderticket"` deliberately does not, because picking the first of three would
- * store the concession price as the ticket price. The raw line is kept in
- * [ScrapedEvent.priceNote] either way.
+ * The free-form `Eintritt:` line as a number, **only when it names exactly one amount** — or
+ * labels one as the day ticket. `"17,00 €"`, `"€40 + fees"`, `"30,00"` and `"36,95€"` resolve,
+ * as does `"Tagesticket: 13 € / 2-Tagesticket: 20 €"`, where the `Tagesticket` figure is one
+ * day's cost (#1584). The three-tier `"15€ ermäßigt … 25€ Normalpreis … 35€ Förderticket"`
+ * deliberately does not: the first of three would store the concession as the ticket price.
+ * The raw line is kept in [ScrapedEvent.priceNote] either way.
  */
 private fun parseSinglePrice(text: String?): BigDecimal? {
     val value = text?.trim().orEmpty()
@@ -287,8 +281,8 @@ private val DAY_TICKET_PATTERN = Regex("""(?<!\d-)\btagesticket:?\s*(\d+(?:[.,]\
 private val LINEUP_SENTENCE = Regex("""line-?up\b[^.:]*\bmit:\s*([^.]+)\.""", RegexOption.IGNORE_CASE)
 
 /**
- * Every label the venue uses in its AddToCalendar metadata block. A line starting with one of
- * these is metadata; anything else is the event's own prose.
+ * Every label the venue uses in its AddToCalendar metadata block. A line starting with one is
+ * metadata; anything else is the event's own prose.
  */
 private val NOTICE_LABELS = setOf("datum", DOORS_LABEL, START_LABEL, END_LABEL, ENTRANCE_LABEL, "tickets")
 
@@ -298,11 +292,11 @@ private val LINE_BREAK_PATTERN = Regex("""<br\s*/?>|</p>\s*<p[^>]*>""", RegexOpt
 /** The AddToCalendar widget's timestamp format, always emitted in UTC. */
 private val ATC_TIMESTAMP_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
 
-/** Matches the first time in a notice value: `"20:00"` (branch 1) or the bare-hour `"19 Uhr"` (branch 2). */
+/** The first time in a notice value: `"20:00"` (branch 1) or the bare-hour `"19 Uhr"` (branch 2). */
 private val NOTICE_TIME_PATTERN = Regex("""(\d{1,2}):(\d{2})|(\d{1,2})\s*Uhr""", RegexOption.IGNORE_CASE)
 
-/** Matches a currency amount written either before or after the euro sign (`"€40"`, `"17,00 €"`). */
+/** A currency amount written before or after the euro sign (`"€40"`, `"17,00 €"`). */
 private val EURO_AMOUNT_PATTERN = Regex("""€\s*(\d+(?:[.,]\d{1,2})?)|(\d+(?:[.,]\d{1,2})?)\s*€""")
 
-/** Matches a whole value that is nothing but a bare amount, the venue's `"30,00"` spelling. */
+/** A whole value that is nothing but a bare amount, the venue's `"30,00"` spelling. */
 private val BARE_AMOUNT_PATTERN = Regex("""(\d+(?:[.,]\d{1,2})?)""")

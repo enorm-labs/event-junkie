@@ -27,39 +27,37 @@ import java.time.MonthDay
 /**
  * Pure HTML parser for Renate's homepage programme.
  *
- * Each night is a `.prog-row` holding a `.prog-day` weekday, a year-less `.prog-date`, a
+ * Each night is a `.prog-row`: a `.prog-day` weekday, a year-less `.prog-date`, a
  * `.prog-title`, the spaces in use (`.cat-btn`), a Resident Advisor `.ticket-link`, and a
- * `.prog-text` block with the per-floor lineup. The trailing `.prog-row.blog-row` is a news post,
- * excluded by requiring a date.
+ * `.prog-text` block with the per-floor lineup. The trailing `.prog-row.blog-row` is a news
+ * post, excluded by requiring a date.
  *
  * **The lineup needs two guards, because the venue reuses `<strong>` for prose.** A `<strong>`
- * heading opens a floor only when it starts with one of the venue's actual floor names
+ * heading opens a floor only when it starts with one of the actual floor names
  * ([FLOOR_HEADING]) — `Garten für alle!` is a slogan, `hosted by Neer` a continuation of the
- * heading above it, and `House of Lunacy presents THE VILLAGE` a festival blurb, none of which is
- * a floor. And a line beneath a floor is taken as an act only when it is short enough to be a name
- * ([MAX_ACT_WORDS]); the venue mixes workshop schedules and multi-sentence policy text into the
- * same block, and those would otherwise be stored as DJs.
+ * heading above, `House of Lunacy presents THE VILLAGE` a festival blurb, none a floor. And a
+ * line beneath a floor is an act only when short enough to be a name ([MAX_ACT_WORDS]); the
+ * venue mixes workshop schedules and multi-sentence policy text into the same block.
  *
  * **A single-space night names no floor at all** — SENSUS lists eleven DJs under a bare `CLUB`
  * badge with no heading (#1582). Then the one `.cat-btn` is the stage, but only when every line
- * of the block reads as a name: a night that describes itself in prose under the same badge
- * (House of Lunacy) still yields nothing.
+ * reads as a name: a night describing itself in prose under the same badge (House of Lunacy)
+ * still yields nothing.
  *
  * @see RenateWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://www.renate.cc/">Renate Berlin</a>
  */
 class RenateOverviewPageScraper(
-    /** Clock for the year inference. Defaults to the venue's own time zone; override in tests for determinism. */
+    /** Clock for the year inference, in the venue's time zone; override in tests. */
     private val clock: Clock = Clock.system(BERLIN)
 ) {
     private val logger = KotlinLogging.logger {}
 
     /**
-     * Parses all event rows from the homepage document.
+     * Parses all event rows from the homepage, in listing order.
      *
      * @param baseUrl the URL the document was fetched from, stored as each event's
-     *   [ScrapedEvent.sourceUrl] — the venue publishes no per-event page.
-     * @return a list of [ScrapedEvent] instances, in listing order.
+     * [ScrapedEvent.sourceUrl] — no per-event page.
      */
     fun scrape(
         document: Document,
@@ -80,7 +78,7 @@ class RenateOverviewPageScraper(
         }
     }
 
-    /** Parses one `.prog-row` into a [ScrapedEvent], or `null` when it has no title or usable date. */
+    /** Parses one `.prog-row` into a [ScrapedEvent], or `null` without a title or usable date. */
     @Suppress("ReturnCount") // Guard clauses for the required title/date are clearer than nesting
     private fun parseRow(
         row: Element,
@@ -95,12 +93,12 @@ class RenateOverviewPageScraper(
 
         return ScrapedEvent(
             title = title,
-            // Renate is a techno club and states no category; `.cat-btn` names the spaces in use
-            // (CLUB / GARTEN), not a kind of event.
+            // A techno club stating no category; `.cat-btn` names the spaces in use (CLUB / GARTEN), not a
+            // kind of event.
             eventType = EventType.PARTY.name,
             eventDate = eventDate,
-            // No per-event page exists, so every night points at the programme and takes its
-            // identity from the date plus the slugified title.
+            // No per-event page, so every night points at the programme and takes its identity from date
+            // plus slugified title.
             sourceUrl = baseUrl,
             sourceId = "${EventSource.RENATE.sourceIdPrefix}$eventDate-${SlugGenerator.slugify(title)}",
             ticketUrl = row.hrefAt(".ticket-link"),
@@ -109,10 +107,8 @@ class RenateOverviewPageScraper(
     }
 
     /**
-     * Reads the row's `Thu.` / `06.08.` date pair and infers its year from the weekday.
-     *
-     * The programme prints no year anywhere, and it runs across the turn of the year, so the
-     * weekday is what disambiguates ([inferYearForWeekday]).
+     * The row's `Thu.` / `06.08.` date pair, year from the weekday: the programme prints no year
+     * and runs across the turn of the year ([inferYearForWeekday]).
      */
     @Suppress("ReturnCount") // Guard clauses for the missing / unparseable date parts are clearer than nesting
     private fun parseRowDate(row: Element): LocalDate? {
@@ -120,24 +116,22 @@ class RenateOverviewPageScraper(
         val monthDay =
             runCatching { MonthDay.of(match.groupValues[MONTH_GROUP].toInt(), match.groupValues[DAY_GROUP].toInt()) }
                 .getOrNull() ?: return null
-        // The venue writes the weekday in English on this page and in German on some rows.
+        // The weekday is English on this page and German on some rows.
         val day = row.textAt(".prog-day")?.trim(' ', '.')
         val weekday = parseEnglishWeekdayAbbreviation(day) ?: parseGermanWeekdayAbbreviation(day)
         return inferYearForWeekday(monthDay, weekday, clock)
     }
 
     /**
-     * Reads the night's DJs, grouped by the floor they play on.
+     * The night's DJs grouped by floor. The markup is inconsistent: most nights put each floor
+     * heading and act in its own paragraph, some pack a whole night — headings included — into one
+     * paragraph split by `<br>`. So the block is flattened to an ordered run of lines and the floor
+     * switches whenever a line *names* a floor.
      *
-     * The markup is not consistent across nights: most put each floor heading and each act in its
-     * own paragraph, but some pack a whole night — headings included — into one paragraph split by
-     * `<br>`. So the block is flattened to an ordered run of lines and the floor is switched
-     * whenever a line *names* a floor, whichever shape produced it.
-     *
-     * A paragraph that is nothing but a non-floor `<strong>` is skipped outright rather than read
-     * as a line: those are the venue's slogan (`Garten für alle!`), a continuation of the heading
-     * above (`hosted by Neer`) and festival blurbs, and the first two are short enough to pass the
-     * act-line guard. The shared policy block (`.info-text`) is excluded for the same reason.
+     * A paragraph that is nothing but a non-floor `<strong>` is skipped outright: the slogan
+     * (`Garten für alle!`), a heading continuation (`hosted by Neer`) and festival blurbs, the
+     * first two short enough to pass the act-line guard. The shared policy block (`.info-text`) is
+     * excluded for the same reason.
      */
     private fun parseLineup(row: Element): List<ScrapedArtist> {
         val text = row.selectFirst(".prog-text") ?: return emptyList()
@@ -158,9 +152,9 @@ class RenateOverviewPageScraper(
                 }
             }
         }
-        // An act billed on two floors of one night would otherwise produce two `event_artist` rows
-        // for the same (event, artist) pair and hit that table's unique constraint, failing the
-        // whole import — so the first billing wins, keeping its floor.
+        // An act billed on two floors of one night would produce two `event_artist` rows for one
+        // (event, artist) pair and hit the unique constraint, failing the whole import — first billing
+        // wins, keeping its floor.
         return artists.distinctBy { it.name.lowercase() }
     }
 
@@ -179,13 +173,11 @@ class RenateOverviewPageScraper(
     }
 
     /**
-     * The lineup block's paragraphs flattened into one ordered run of lines.
-     *
-     * A paragraph that is nothing but a `<strong>` heading contributes only that heading, and only
-     * when it names a floor — otherwise it is the venue's slogan, a host credit or a festival
-     * blurb, all of which are short enough to survive the act-line guard if let through. Every
-     * other paragraph contributes its `<br>`-split lines, which is what makes the one-paragraph
-     * nights parse the same as the paragraph-per-act ones.
+     * The lineup block's paragraphs flattened into one ordered run of lines. A paragraph that is
+     * only a `<strong>` heading contributes that heading, and only when it names a floor —
+     * otherwise it is the slogan, a host credit or a festival blurb, all short enough to survive
+     * the act-line guard. Every other paragraph contributes its `<br>`-split lines, which makes
+     * one-paragraph nights parse like paragraph-per-act ones.
      */
     private fun lineupLines(text: Element): List<String> =
         text
@@ -200,7 +192,7 @@ class RenateOverviewPageScraper(
                 }
             }
 
-    /** The floor a heading or line names, or `null` when it names none. */
+    /** The floor a heading or line names, or `null`. */
     private fun floorNameOf(line: String): String? =
         FLOOR_HEADING
             .find(line)
@@ -209,18 +201,15 @@ class RenateOverviewPageScraper(
             ?.uppercase()
 
     /**
-     * Whether [line] is an act name rather than prose, a schedule note or an unfilled slot.
+     * Whether [line] is an act name rather than prose, a schedule note or an unfilled slot. The
+     * venue mixes all of them into the same run as its DJs and marks none differently:
+     * - longer than [MAX_ACT_WORDS] words is prose (a policy sentence, a festival blurb);
+     * - a clock time is a schedule line ("Workshops starting from 16:00"), not a performer;
+     * - a `hosted by …` line credits the collective curating a floor — both as a heading
+     * continuation and inside a run of `<br>`-split lines;
+     * - the venue's "+ more tba" placeholder names nobody yet.
      *
-     * Three rejections, because the venue mixes all of them into the same paragraph run as its
-     * DJs and marks none of them differently:
-     * - anything longer than [MAX_ACT_WORDS] words is prose (a policy sentence, a festival blurb);
-     * - anything carrying a clock time is a schedule line ("Workshops starting from 16:00"), not a
-     *   performer;
-     * - a `hosted by …` line credits the collective curating a floor, not an act — it appears both
-     *   as a continuation of a floor heading and inside a run of `<br>`-split lines;
-     * - the venue's own "+ more tba" placeholder, which names nobody yet.
-     *
-     * The cost is that an unusually wordy billing is dropped rather than mangled.
+     * The cost: an unusually wordy billing is dropped rather than mangled.
      */
     private fun isActLine(line: String): Boolean =
         line.isNotBlank() &&
@@ -233,8 +222,8 @@ class RenateOverviewPageScraper(
     private fun isUnannouncedAct(line: String): Boolean = isNonArtistName(line) || isNonArtistName(line.replaceFirst(MORE_PREFIX, "").trim())
 
     /**
-     * Splits an act line at a `b2b` marker and at safe `&`/`and`/`und` boundaries, leaving a
-     * parenthesised name whole — the same rule as Kater, where the brackets hold a duo's members.
+     * Splits an act line at `b2b` and at safe `&`/`and`/`und` boundaries, leaving a parenthesised
+     * name whole — Kater's rule, where the brackets hold a duo's members.
      */
     private fun splitActs(line: String): List<String> =
         (if (line.contains('(')) listOf(line) else line.split(B2B_SEPARATOR).flatMap(::splitSegmentOnConjunctions))
@@ -243,11 +232,10 @@ class RenateOverviewPageScraper(
 
     private companion object {
         /**
-         * The venue's actual floor names, matched at the start of a `<strong>` heading. Curated
-         * because `<strong>` is also the venue's slogan (`Garten für alle!` — note the garden floor
-         * is spelled `GARDEN`, so the German spelling is deliberately absent), a continuation line
-         * (`hosted by Neer`) and festival prose. `TOP SECRET` precedes `SECRET` so the longer name
-         * wins.
+         * The actual floor names, matched at the start of a `<strong>` heading. Curated because
+         * `<strong>` is also the slogan (`Garten für alle!` — the garden floor is spelled `GARDEN`, so
+         * the German spelling is deliberately absent), a continuation line (`hosted by Neer`) and
+         * festival prose. `TOP SECRET` precedes `SECRET` so the longer name wins.
          */
         val FLOOR_HEADING = Regex("""^(top secret|secret|garden|green|black|red)\b""", RegexOption.IGNORE_CASE)
 

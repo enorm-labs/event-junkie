@@ -18,15 +18,14 @@ import org.jsoup.nodes.Element
 /**
  * Pure HTML parser for Ritter Butzke's `/events` listing page.
  *
- * The page renders the whole programme, unpaginated, as Bootstrap grid cards. Each card holds an
- * `a.event-link` to the `/event/DDMMYY-<Name>` detail page wrapping the poster, a `DD.MM.YY` date
- * and an `h2` title.
+ * The whole programme, unpaginated, as Bootstrap grid cards. Each holds an `a.event-link` to
+ * the `/event/DDMMYY-<Name>` detail page wrapping the poster, a `DD.MM.YY` date and an `h2` title.
  *
- * The **rendered** date is the one read, never the one encoded in the slug: the slug is minted
- * once and keeps the original date when a show moves (`310726-DeeportamentCommunityw-…` renders
- * `04.09.2026`). The slug is used only for the stable [ScrapedEvent.sourceId], so a moved show
- * keeps its identity — which also matters because the club runs several floors and two or three
- * events routinely share a date.
+ * The **rendered** date is read, never the slug's: the slug is minted once and keeps the
+ * original date when a show moves (`310726-DeeportamentCommunityw-…` renders `04.09.2026`).
+ * The slug serves only the stable [ScrapedEvent.sourceId], so a moved show keeps its identity —
+ * which also matters because the club runs several floors and two or three events routinely
+ * share a date.
  *
  * @see RitterButzkeDetailPageScraper for the detail-page data (start time, ticket, DJ lineup).
  * @see RitterButzkeWebsiteImporter for the HTTP fetch orchestrator.
@@ -36,11 +35,9 @@ class RitterButzkeOverviewPageScraper {
     private val logger = KotlinLogging.logger {}
 
     /**
-     * Parses all event cards from the listing page document.
+     * Parses all event cards from the listing page, one [ScrapedEvent] per card.
      *
-     * @param baseUrl the URL the document was fetched from, used to resolve the per-event
-     *   detail links.
-     * @return a list of [ScrapedEvent] instances, one per card.
+     * @param baseUrl the URL the document was fetched from, for resolving the detail links.
      */
     fun scrape(
         document: Document,
@@ -60,7 +57,7 @@ class RitterButzkeOverviewPageScraper {
         }
     }
 
-    /** Parses a single grid card into a [ScrapedEvent], or `null` when it has no link or title. */
+    /** Parses one grid card into a [ScrapedEvent], or `null` without a link or title. */
     @Suppress("ReturnCount") // Guard clauses for the required href/title are clearer than nesting
     private fun parseCard(
         card: Element,
@@ -80,8 +77,7 @@ class RitterButzkeOverviewPageScraper {
             title = title,
             // Every night is a DJ programme; the venue publishes no categories.
             eventType = EventType.PARTY.name,
-            // The card's own two-digit-year date — see the class KDoc for why the slug's DDMMYY
-            // is deliberately ignored.
+            // The card's own two-digit-year date — see the class KDoc for why the slug's DDMMYY is ignored.
             eventDate = parseGermanShortDate(card.textAt(DATE_SELECTOR)) ?: UNRESOLVED_EVENT_DATE,
             imageUrl = card.imgSrcAt("a.event-link img"),
             sourceUrl = sourceUrl,
@@ -91,8 +87,8 @@ class RitterButzkeOverviewPageScraper {
 }
 
 /**
- * The card's date cell. The venue gives it no class of its own beyond a Bootstrap padding utility,
- * so it is reached through the row that also holds the (robots-disallowed) calendar link — the
- * narrowest stable container available on this template.
+ * The card's date cell. No class of its own beyond a Bootstrap padding utility, so reached
+ * through the row that also holds the (robots-disallowed) calendar link — the narrowest stable
+ * container on this template.
  */
 private const val DATE_SELECTOR = ".d-flex.flex-row > .pt-1"
