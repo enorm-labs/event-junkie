@@ -657,7 +657,7 @@ export interface components {
              * @description Where a RELOCATED event moved to, as the venue's own note names the house; absent on every other status
              * @example Hole44
              */
-            relocatedTo?: string;
+            relocatedTo?: string | null;
             /**
              * Format: date
              * @description Calendar date of the event
@@ -890,7 +890,7 @@ export interface components {
              * @description Where a RELOCATED event moved to, as the venue's own note names the house; absent on every other status
              * @example Hole44
              */
-            relocatedTo?: string;
+            relocatedTo?: string | null;
             /**
              * Format: date
              * @description Calendar date of the event
@@ -1163,6 +1163,27 @@ export interface components {
             instagramUrl?: string | null;
             /** @description URL of the artist's YouTube channel */
             youtubeUrl?: string | null;
+            /** @description URL of the artist's Bandcamp page */
+            bandcampUrl?: string | null;
+            /** @description URL of the artist's SoundCloud profile */
+            soundcloudUrl?: string | null;
+            /** @description URL of the artist's Discogs page */
+            discogsUrl?: string | null;
+            /** @description URL of the artist's Resident Advisor page */
+            residentAdvisorUrl?: string | null;
+            /** @description URL of the artist's Spotify page */
+            spotifyUrl?: string | null;
+            /**
+             * @description The artist's MusicBrainz page, the correction path for a wrong match; set exactly when `musicbrainzMatch` is `EXACT`
+             * @example https://musicbrainz.org/artist/41f4d85a-0bd7-4602-a3e3-8c47f36efb0a
+             */
+            musicbrainzUrl?: string | null;
+            /**
+             * @description What kind of act this is, as MusicBrainz types it; null until read
+             * @example GROUP
+             * @enum {string|null}
+             */
+            artistType?: "PERSON" | "GROUP" | "ORCHESTRA" | "CHOIR" | "OTHER" | null;
             /**
              * @description MusicBrainz artist id (MBID), set exactly when `musicbrainzMatch` is `EXACT`
              * @example 41f4d85a-0bd7-4602-a3e3-8c47f36efb0a

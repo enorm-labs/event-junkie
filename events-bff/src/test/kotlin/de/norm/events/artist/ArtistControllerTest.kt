@@ -134,6 +134,42 @@ class ArtistControllerTest : BaseControllerTest() {
                 .isEqualTo("41f4d85a-0bd7-4602-a3e3-8c47f36efb0a")
                 .jsonPath("$.musicbrainzCheckedAt")
                 .exists()
+                .jsonPath("$.musicbrainzUrl")
+                .isEqualTo("https://musicbrainz.org/artist/41f4d85a-0bd7-4602-a3e3-8c47f36efb0a")
+        }
+
+    @Test
+    fun `GET artist by slug carries the links and the type the enrichment filled, and no MusicBrainz page without a match`(): Unit =
+        runBlocking {
+            val id = insertArtist("Neubauten", "neubauten")
+            databaseClient
+                .sql(
+                    """
+                    UPDATE events.artist
+                    SET bandcamp_url = 'https://neubauten.bandcamp.com/', resident_advisor_url = 'https://ra.co/dj/neubauten', artist_type = 'GROUP'
+                    WHERE id = :id
+                    """.trimIndent()
+                ).bind("id", id)
+                .fetch()
+                .awaitRowsUpdated()
+
+            webTestClient
+                .get()
+                .uri("/artists/neubauten")
+                .exchange()
+                .expectStatus()
+                .isOk
+                .expectBody()
+                .jsonPath("$.bandcampUrl")
+                .isEqualTo("https://neubauten.bandcamp.com/")
+                .jsonPath("$.residentAdvisorUrl")
+                .isEqualTo("https://ra.co/dj/neubauten")
+                .jsonPath("$.artistType")
+                .isEqualTo("GROUP")
+                .jsonPath("$.spotifyUrl")
+                .doesNotExist()
+                .jsonPath("$.musicbrainzUrl")
+                .doesNotExist()
         }
 
     @Test
