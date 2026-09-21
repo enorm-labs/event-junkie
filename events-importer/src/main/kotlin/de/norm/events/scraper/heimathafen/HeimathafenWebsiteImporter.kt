@@ -12,21 +12,21 @@ import org.springframework.stereotype.Component
 /**
  * Website importer for Heimathafen Neukölln, sourced from its WordPress REST API.
  *
- * The venue exposes an Advanced Custom Fields `events` post type in full over
- * `/wp-json/wp/v2/events`, so nothing is scraped (ADR-007 §"Selector Strategy" priority 1): walk the
- * paged listing via [ApiClient.fetchJson], then have [HeimathafenApiScraper] expand each post's
- * `acf.event_performances` array into one event per dated performance, dropping past ones.
+ * The Advanced Custom Fields `events` post type is exposed in full over `/wp-json/wp/v2/events`,
+ * so nothing is scraped (ADR-007 §"Selector Strategy" priority 1): walk the paged listing via
+ * [ApiClient.fetchJson], then [HeimathafenApiScraper] expands each post's
+ * `acf.event_performances` into one event per dated performance, dropping past ones.
  *
- * **Every page is walked, not the first.** The endpoint returns the venue's whole archive — 400+
- * posts and 800+ performances — ordered by *post* date, while the event date lives in an ACF field
- * WordPress cannot filter or sort on. Upcoming performances are therefore scattered across all pages
- * (a recent capture found 67 on page 1 and 29 more over pages 2–5), so stopping at the first would
- * silently lose two thirds of the programme. This is the per-importer pagination loop ADR-007
- * §"Pagination" allows, bounded by [MAX_PAGES]; paging stops as soon as a page comes back short, so
- * nothing is requested past the last one (WordPress answers 400 beyond it).
+ * **Every page is walked, not the first.** The endpoint returns the whole archive — 400+ posts,
+ * 800+ performances — ordered by *post* date, while the event date is an ACF field WordPress
+ * cannot filter or sort on. Upcoming performances are scattered across all pages (a capture
+ * found 67 on page 1 and 29 more over pages 2–5), so stopping at the first would lose two
+ * thirds of the programme. This is the per-importer pagination loop ADR-007 §"Pagination"
+ * allows, bounded by [MAX_PAGES]; paging stops at the first short page, so nothing is
+ * requested past the last one (WordPress answers 400 beyond it).
  *
- * No conditional request is used: `etag` / `lastModified` are ignored and every import returns
- * [ImportResult.Success], which is safe because persistence upserts idempotently by `sourceId`.
+ * No conditional request: `etag` / `lastModified` are ignored and every import returns
+ * [ImportResult.Success], safe because persistence upserts idempotently by `sourceId`.
  *
  * The genre comes from the `events_tag-*` slugs `class_list` inlines, filtered to the ones the
  * genre vocabulary knows (#313) — no taxonomy request.
@@ -63,10 +63,9 @@ class HeimathafenWebsiteImporter(
     }
 
     /**
-     * Builds the WP REST query for one [page] from the configured API base [baseUrl].
-     *
-     * Page size and the field projection are parsing concerns and live in code (ADR-007: parsing
-     * logic in code, entry-point URL in config). The base is stored on the event source, e.g.
+     * The WP REST query for one [page] from the configured API base [baseUrl]. Page size and field
+     * projection are parsing concerns and live in code (ADR-007: parsing logic in code, entry-point
+     * URL in config). The base is on the event source, e.g.
      * `https://heimathafen-neukoelln.de/wp-json/wp/v2/events`.
      */
     private fun buildRequestUrl(
@@ -78,19 +77,18 @@ class HeimathafenWebsiteImporter(
     }
 
     private companion object {
-        /** WordPress's maximum page size, so the archive needs the fewest possible requests. */
+        /** WordPress's maximum page size, so the archive needs the fewest requests. */
         const val PER_PAGE = 100
 
         /**
-         * Safety bound on the paging loop. The archive is ~5 pages today; the cap keeps a runaway
-         * loop impossible if the endpoint ever stops shortening its last page, and is logged when hit.
+         * Safety bound on the paging loop. The archive is ~5 pages today; the cap makes a runaway loop
+         * impossible if the endpoint ever stops shortening its last page, and is logged when hit.
          */
         const val MAX_PAGES = 20
 
         /**
-         * The fields the parser reads. `class_list` matters: it inlines the venue's own
-         * `events_cat-*` taxonomy slug, which is what types the event, sparing a second request to
-         * resolve category ids to names.
+         * The fields the parser reads. `class_list` matters: it inlines the venue's `events_cat-*`
+         * taxonomy slug, which types the event, sparing a second request to resolve category ids.
          */
         const val FIELDS = "id,link,title,excerpt,content,acf,class_list,featured_images"
     }

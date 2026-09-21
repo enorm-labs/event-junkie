@@ -21,24 +21,23 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 
 /**
- * Pure HTML parser for the Theater im Delphi `/programm/` page — the venue's whole upcoming
- * programme, rendered in one WordPress page with no pagination and no archive.
+ * Pure HTML parser for the Theater im Delphi `/programm/` page — the whole upcoming programme
+ * in one WordPress page, no pagination, no archive.
  *
- * The page is a run of `h2.month` headings ("August 2026"), each followed by a
- * `table.program_table` whose every `<tr>` is **one performance**: the heading supplies the month
- * and year, the row supplies the day, the clock, the poster, the genre labels, a teaser and a link
- * to its production page (`?prod=<id>`), plus its own ticket-shop link where the venue sells one.
- * A production that runs several nights repeats its row once per date, so this parser emits one
- * event per performance, not per production.
+ * A run of `h2.month` headings ("August 2026"), each followed by a `table.program_table` whose
+ * every `<tr>` is **one performance**: the heading supplies month and year, the row the day,
+ * clock, poster, genre labels, a teaser and a link to its production page (`?prod=<id>`), plus
+ * its own ticket-shop link where the venue sells one. A production running several nights
+ * repeats its row per date, so this parser emits one event per performance, not per production.
  *
  * Prices and the free-entry flag come from [parseDelphiEventRecords] — the page leaks a
- * `var_dump()` of each performance's database row into an HTML comment, and that leak is the only
- * place either fact appears. It is joined on `(production id, start time)` and is deliberately
- * best-effort: everything load-bearing is read from the rendered markup, so the day the venue
- * fixes the leak these events simply lose their prices.
+ * `var_dump()` of each performance's database row into an HTML comment, the only place either
+ * fact appears. Joined on `(production id, start time)` and strictly best-effort: everything
+ * load-bearing is read from the rendered markup, so the day the venue fixes the leak these
+ * events simply lose their prices.
  *
- * The venue's own labels are **formats**, not musical genres — `Tanz`, `Theater`, `Dialog & Lesung`
- * — so they drive the event type. Only the two that do name a genre ([MUSIC_GENRE_LABELS]) are also
+ * The venue's labels are **formats**, not musical genres — `Tanz`, `Theater`, `Dialog & Lesung`
+ * — so they drive the event type. Only the two naming a genre ([MUSIC_GENRE_LABELS]) are also
  * stored as one.
  *
  * @see DelphiProductionPageScraper for the per-production page (full description, bigger poster).
@@ -50,7 +49,7 @@ class DelphiProgrammePageScraper {
     /**
      * Parses every performance row on the programme page.
      *
-     * @param baseUrl the URL the document was fetched from, used to resolve production links.
+     * @param baseUrl the URL the document was fetched from, for resolving production links.
      */
     fun scrape(
         document: Document,
@@ -90,8 +89,7 @@ class DelphiProgrammePageScraper {
             .toList()
 
     /**
-     * Parses a single performance row into a [ScrapedEvent], or `null` when it names no production
-     * or no title.
+     * Parses one performance row into a [ScrapedEvent], or `null` without a production or title.
      */
     @Suppress("ReturnCount") // Guard clauses for the required link/title/day are clearer than nesting
     private fun parseRow(
@@ -127,11 +125,11 @@ class DelphiProgrammePageScraper {
             startTime = startTime,
             imageUrl = row.imgSrcAt("img.listBild"),
             sourceUrl = sourceUrl,
-            // Each row links its own shop (Reservix, Eventim, the act's own site); a free date
-            // renders a `.kein-ticket-link` placeholder instead, which carries no href.
+            // Each row links its own shop (Reservix, Eventim, the act's own site); a free date renders a
+            // `.kein-ticket-link` placeholder with no href.
             ticketUrl = row.hrefAt("a.ticket-link"),
-            // A production repeats its slug across dates, so the clock is part of the identity:
-            // several of them play a matinee and an evening on the same day.
+            // A production repeats its slug across dates, so the clock is part of the identity: several
+            // play a matinee and an evening on the same day.
             sourceId = "${EventSource.THEATER_IM_DELPHI.sourceIdPrefix}$productionId/$eventDate-${startTime ?: NO_CLOCK}",
             genre = labels.filter { it in MUSIC_GENRE_LABELS }.joinToString(", ").takeIf { it.isNotBlank() },
             pricePresale = record?.pricePresale,
@@ -142,12 +140,10 @@ class DelphiProgrammePageScraper {
     }
 
     /**
-     * The venue's category labels for a row, `<br>`-separated in a single cell
-     * ("Musiktheater", "Musical & Show").
-     *
-     * Read as the cell's text nodes rather than by splitting its markup: the `<br>`s already
-     * separate them, and the labels carry HTML entities (`Musical &amp; Show`) that must be
-     * decoded before they can be matched against a label table.
+     * The venue's category labels for a row, `<br>`-separated in a single cell ("Musiktheater",
+     * "Musical & Show"). Read as the cell's text nodes, not by splitting markup: the `<br>`s
+     * already separate them, and the labels carry HTML entities (`Musical &amp; Show`) that must
+     * decode before matching a label table.
      */
     private fun labelsOf(row: Element): List<String> =
         row
@@ -158,9 +154,9 @@ class DelphiProgrammePageScraper {
             .orEmpty()
 
     /**
-     * Parses a `"August 2026"` month heading into the first of that month, or `null` when the
-     * heading is not one. The German month names are read through their three-letter prefix, which
-     * is the abbreviation the shared parser knows.
+     * Parses a `"August 2026"` month heading into the first of that month, or `null` when it is
+     * not one. German month names are read through their three-letter prefix, the abbreviation
+     * the shared parser knows.
      */
     private fun parseMonthHeading(text: String): LocalDate? {
         val parts = text.trim().split(WHITESPACE)
@@ -175,10 +171,9 @@ class DelphiProgrammePageScraper {
 }
 
 /**
- * The venue's format labels, mapped onto the model's types. The model has no dance or theatre
- * type, so a staged performance of either kind is a [EventType.SHOW] — the same call the AEG
- * venues make for their ballet. `Dialog & Lesung` is a talk or reading, and the two music labels
- * are concerts.
+ * The format labels mapped onto the model's types. No dance or theatre type exists, so a
+ * staged performance of either kind is a [EventType.SHOW] — the call the AEG venues make for
+ * their ballet. `Dialog & Lesung` is a talk or reading; the two music labels are concerts.
  */
 private val DELPHI_CATEGORY_SYNONYMS =
     mapOf(
@@ -192,8 +187,8 @@ private val DELPHI_CATEGORY_SYNONYMS =
     )
 
 /**
- * The labels that name a musical genre rather than a staging format. Only these become genre tags;
- * filing `Tanz` or `Theater` as a genre would put formats into a vocabulary of musical styles.
+ * The labels naming a musical genre rather than a staging format. Only these become genre
+ * tags; filing `Tanz` or `Theater` as a genre would put formats into a vocabulary of styles.
  */
 private val MUSIC_GENRE_LABELS = setOf("Kammermusik", "Elektronische Musik")
 
@@ -206,5 +201,5 @@ private val PRODUCTION_ID_PATTERN = Regex("""[?&]prod=(\d+)""")
 /** The trailing `Uhr` the venue appends to its start time. */
 private const val CLOCK_SUFFIX = "Uhr"
 
-/** Stands in for the clock in a `sourceId` when the venue has announced no start time. */
+/** Stands in for the clock in a `sourceId` when no start time is announced. */
 private const val NO_CLOCK = "tba"

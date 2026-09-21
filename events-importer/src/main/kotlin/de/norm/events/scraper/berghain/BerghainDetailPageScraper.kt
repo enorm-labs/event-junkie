@@ -18,17 +18,14 @@ import java.net.URI
 /**
  * Pure HTML parser for Berghain `/de/event/<id>/` detail pages.
  *
- * The detail page is the enrichment source in the two-page pipeline: it adds the
- * poster image, the ticket-shop link, presale / box-office (`Abendkasse`) prices
- * with an `ausverkauft` sold-out marker, and a prose description that the overview
- * listing lacks. It re-parses the core fields (title, date, times, floor) from the
- * same markup so it is self-sufficient as the merge's primary event, but it
- * deliberately does **not** parse the lineup — the detail page renders artists in a
- * flat running-order that mixes in labels, whereas the overview lists each act in
- * its own span, so [BerghainOverviewPageScraper]'s artists win on merge.
+ * The enrichment source: poster image, ticket-shop link, presale / box-office (`Abendkasse`)
+ * prices with an `ausverkauft` marker, and a prose description the listing lacks. It
+ * re-parses the core fields (title, date, times, floor) from the same markup so it is
+ * self-sufficient as the merge's primary event, but deliberately does **not** parse the lineup
+ * — the detail page renders artists in a flat running-order mixed with labels, whereas the
+ * overview lists each act in its own span, so [BerghainOverviewPageScraper]'s artists win.
  *
- * All parsing is scoped to the `<main>` content region, excluding the site header, navigation and
- * footer.
+ * All parsing is scoped to `<main>`, excluding header, navigation and footer.
  *
  * @see BerghainWebsiteImporter for the fetch orchestration and overview merge.
  */
@@ -38,10 +35,8 @@ class BerghainDetailPageScraper {
     /**
      * Parses a single event detail page.
      *
-     * @param sourceUrl the event's URL, used as [ScrapedEvent.sourceUrl] and to
-     *   derive its [ScrapedEvent.sourceId].
-     * @return the parsed event, or `null` when the page lacks the `<main>`
-     *   container, a title, or a parseable date (an unexpected structure).
+     * @param sourceUrl the event's URL: [ScrapedEvent.sourceUrl] and its [ScrapedEvent.sourceId].
+     * @return the parsed event, or `null` without `<main>`, a title, or a parseable date.
      */
     @Suppress("ReturnCount") // Guard clauses for the missing container/title/date are clearer than nesting
     fun scrape(
@@ -87,21 +82,19 @@ class BerghainDetailPageScraper {
             pricePresale = tickets.presale,
             priceBoxOffice = tickets.boxOffice,
             soldOut = tickets.soldOut
-            // Lineup intentionally omitted — the overview page is the authoritative artist source (see class KDoc).
+            // Lineup omitted on purpose — the overview page is the authoritative artist source (see class KDoc).
         )
     }
 
-    /** Extracts the numeric event id from the detail URL path (`/de/event/80835/` → `80835`). */
+    /** The numeric event id from the detail URL path (`/de/event/80835/` → `80835`). */
     private fun extractEventId(sourceUrl: String): String = URI(sourceUrl).path.trim('/').substringAfterLast('/')
 
     /**
-     * Parses the "Tickets" block: the ticket-shop link, the presale and box-office
-     * (`Abendkasse`) prices, and the sold-out state. A presale line reading
-     * "Vorverkauf ausverkauft" yields a null presale price, but the event counts as
-     * sold out only when there is no purchasable option left at all — no ticket
-     * link and neither price available. The CMS prints `0,00€ Abendkasse` for a door
-     * price nobody set, so a zero beside a paid presale is dropped rather than stored
-     * as a free door (#1589); a zero with no paid presale is how a free night prints.
+     * The "Tickets" block: ticket-shop link, presale and box-office (`Abendkasse`) prices, sold-out
+     * state. "Vorverkauf ausverkauft" yields a null presale price, but the event is sold out only
+     * with no purchasable option left — no ticket link and neither price. The CMS prints
+     * `0,00€ Abendkasse` for a door price nobody set, so a zero beside a paid presale is dropped
+     * rather than stored as a free door (#1589); a zero with no paid presale is how a free night prints.
      */
     private fun parseTickets(content: Element): Tickets {
         val block =
@@ -128,7 +121,7 @@ class BerghainDetailPageScraper {
         return Tickets(ticketUrl = ticketUrl, presale = presale, boxOffice = boxOffice.takeUnless { doorUnset }, soldOut = soldOut)
     }
 
-    /** Joins the `.rich-text` description paragraphs, or `null` when the page carries none. */
+    /** The `.rich-text` description paragraphs joined, or `null`. */
     private fun parseDescription(content: Element): String? =
         content
             .select(".rich-text")

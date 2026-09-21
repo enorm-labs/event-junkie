@@ -23,23 +23,23 @@ import java.time.format.DateTimeParseException
 /**
  * Pure HTML parser for Tresor's `/club/events/` listing.
  *
- * Each night is an `article.event-item` whose lineup is already grouped by floor in the markup:
+ * Each night is an `article.event-item` whose lineup is already grouped by floor:
  *
  * ```html
  * <article class="event-item">
- *   <div class="event-date"><a href="…/event/20260801-tresor-klubnacht/"><span>Sa 01.08</span></a></div>
- *   <a class="event-title" href="…"><span><span>Tresor Klubnacht</span></span></a>
- *   <div class="event-lineup">
- *     <div class="event-floor"><div class="floor-name">Tresor</div>
- *       <div class="floor-lineup"><div class="floor-artist"><span>Developer</span></div>…</div></div>
- *     <div class="event-floor"><div class="floor-name">Globus</div>…</div>
- *   </div>
+ * <div class="event-date"><a href="…/event/20260801-tresor-klubnacht/"><span>Sa 01.08</span></a></div>
+ * <a class="event-title" href="…"><span><span>Tresor Klubnacht</span></span></a>
+ * <div class="event-lineup">
+ * <div class="event-floor"><div class="floor-name">Tresor</div>
+ * <div class="floor-lineup"><div class="floor-artist"><span>Developer</span></div>…</div></div>
+ * <div class="event-floor"><div class="floor-name">Globus</div>…</div>
+ * </div>
  * </article>
  * ```
  *
- * so the floor a DJ plays maps straight onto [ScrapedArtist.stage] with no heuristics — unlike
- * Kater's rules or Renate's curated floor names. The rendered date carries no year, so the date is
- * read from the `YYYYMMDD` prefix of the permalink instead.
+ * so the floor maps straight onto [ScrapedArtist.stage] with no heuristics — unlike Kater's
+ * rules or Renate's curated floor names. The rendered date carries no year, so the date is read
+ * from the `YYYYMMDD` permalink prefix.
  *
  * @see TresorDetailPageScraper for the set times and blurb.
  * @see TresorWebsiteImporter for the HTTP fetch orchestrator.
@@ -49,10 +49,9 @@ class TresorOverviewPageScraper {
     private val logger = KotlinLogging.logger {}
 
     /**
-     * Parses all event items from the listing document.
+     * Parses all event items from the listing, in listing order.
      *
-     * @param baseUrl the URL the document was fetched from, used to resolve detail links.
-     * @return a list of [ScrapedEvent] instances, in listing order.
+     * @param baseUrl the URL the document was fetched from, for resolving detail links.
      */
     fun scrape(
         document: Document,
@@ -72,7 +71,7 @@ class TresorOverviewPageScraper {
         }
     }
 
-    /** Parses one `article.event-item`, or `null` when it has no permalink or title. */
+    /** Parses one `article.event-item`, or `null` without a permalink or title. */
     @Suppress("ReturnCount") // Guard clauses for the required href/title are clearer than nesting
     private fun parseItem(
         item: Element,
@@ -97,15 +96,15 @@ class TresorOverviewPageScraper {
     }
 }
 
-/** Path prefix of a Tresor event permalink, stripped to obtain the `YYYYMMDD-<slug>` identity. */
+/** Path prefix of an event permalink, stripped to obtain the `YYYYMMDD-<slug>` identity. */
 internal const val EVENT_PATH_PREFIX = "/event/"
 
 /** The `YYYYMMDD` date the venue prefixes to every event permalink. */
 private val SLUG_DATE_PATTERN = Regex("""^(\d{8})-""")
 
 /**
- * Reads the event date from the `YYYYMMDD` prefix of a permalink slug, or `null` when the slug
- * carries none — the rendered card shows only a weekday and `DD.MM`.
+ * The event date from the `YYYYMMDD` permalink prefix, or `null` without one — the card shows
+ * only a weekday and `DD.MM`.
  */
 internal fun parseSlugDate(slug: String): LocalDate? {
     val digits = SLUG_DATE_PATTERN.find(slug)?.groupValues?.get(1) ?: return null
@@ -117,11 +116,9 @@ internal fun parseSlugDate(slug: String): LocalDate? {
 }
 
 /**
- * Reads the DJs grouped by the floor they play on.
- *
- * Both pages mark the lineup up the same way — a floor block naming the floor and listing its
- * artists — so this is shared between them. An unannounced slot is billed `???`, which names
- * nobody and is dropped; an act billed on two floors of one night is kept once, because
+ * The DJs grouped by floor. Both pages mark the lineup up the same way — a floor block naming
+ * the floor and listing its artists — so this is shared. An unannounced slot is billed `???`,
+ * names nobody and is dropped; an act on two floors of one night is kept once, because
  * `event_artist` is `UNIQUE (event_id, artist_id)` and a second row would fail the whole import.
  */
 internal fun parseLineup(root: Element): List<ScrapedArtist> =
@@ -135,19 +132,18 @@ internal fun parseLineup(root: Element): List<ScrapedArtist> =
         }.distinctBy { it.name.lowercase() }
 
 /**
- * Splits one billed slot into the acts it names and drops what is not one.
- *
- * A slot may bill a back-to-back pair (`pschukk b2b Robert We`), decorate the act with its set
- * format (`Ngly [LIVE]`, `The Ghost [All Night Long]`, `Shackleton Live` — stripped so the same DJ
- * is one artist across nights), or credit the collective curating the floor (`hosted by HARD WAX`),
- * which names a host rather than a performer and is already visible in the floor label.
+ * Splits one billed slot into its acts and drops what is not one. A slot may bill a
+ * back-to-back pair (`pschukk b2b Robert We`), decorate the act with its set format
+ * (`Ngly [LIVE]`, `The Ghost [All Night Long]`, `Shackleton Live` — stripped so the same DJ is
+ * one artist across nights), or credit the collective curating the floor (`hosted by HARD WAX`),
+ * a host rather than a performer and already visible in the floor label.
  */
 private fun splitActs(slot: String): List<String> =
     slot
         .split(B2B_SEPARATOR)
         .map(::stripSetFormatNote)
-        // The venue also bills a format in *front* of the act ("Listening Session: Drexciya —
-        // Neptune's Lair"); that names the slot, not the performer.
+        // A format in *front* of the act ("Listening Session: Drexciya — Neptune's Lair") names the
+        // slot, not the performer.
         .map(::stripFormatLabel)
         .map(::stripReleaseTitle)
         .filter { it.isNotBlank() && !isUnannouncedAct(it) && !HOST_CREDIT.containsMatchIn(it) }
@@ -156,9 +152,9 @@ private fun splitActs(slot: String): List<String> =
 private fun stripSetFormatNote(act: String): String = act.replace(SET_FORMAT_NOTE, "").trim().ifBlank { act.trim() }
 
 /**
- * Strips a leading format label, with or without the room in front of it: the Globus programme
- * line reads `Globus Listening Session: The Fear Ratio 'Slinky'` (#1133). The room is dropped only
- * when a label follows it, so an act whose name opens with a room's name is left whole.
+ * Strips a leading format label, with or without the room before it: the Globus programme line
+ * reads `Globus Listening Session: The Fear Ratio 'Slinky'` (#1133). The room is dropped only
+ * when a label follows it, so an act whose name opens with a room's name stays whole.
  */
 private fun stripFormatLabel(act: String): String {
     val withoutRoom = act.replaceFirst(ROOM_PREFIX, "")
@@ -179,9 +175,8 @@ private val RELEASE_TITLE = Regex("""\s+['"‘’“„]([^'"‘’“”„]+)[
 private val B2B_SEPARATOR = Regex("""\s+b2b\s+""", RegexOption.IGNORE_CASE)
 
 /**
- * A trailing set-format note decorating an act name. The venue writes it both bracketed
- * (`Ngly [LIVE]`) and bare (`Shackleton Live`); the vocabulary is curated and anchored at the end
- * so a stylised name keeps its own words.
+ * A trailing set-format note on an act name, bracketed (`Ngly [LIVE]`) or bare (`Shackleton
+ * Live`); the vocabulary is curated and end-anchored so a stylised name keeps its own words.
  */
 private val SET_FORMAT_NOTE =
     Regex(
@@ -194,20 +189,18 @@ private val SET_FORMAT_NOTE =
 private val HOST_CREDIT = Regex("""\bhosted\s+by\b""", RegexOption.IGNORE_CASE)
 
 /**
- * Reduces a floor label to the room it names.
- *
- * The venue often brands the label with the night hosted there — `Globus x Black Rave Culture`,
- * `Tresor New Faces hosted by Grab The Groove / 23h`, `Globus Stage: Büro Siebzig / 21h` — which
- * would fragment the stage vocabulary into a new value per event. A label opening with one of the
- * three real rooms is reduced to that room; anything else is kept verbatim, so a genuinely new
- * space still comes through.
+ * Reduces a floor label to the room it names. The venue brands the label with the night hosted
+ * there — `Globus x Black Rave Culture`, `Tresor New Faces hosted by Grab The Groove / 23h`,
+ * `Globus Stage: Büro Siebzig / 21h` — which would fragment the stage vocabulary into a value
+ * per event. A label opening with one of the three real rooms is reduced to that room; anything
+ * else stays verbatim, so a genuinely new space still comes through.
  */
 private fun normalizeFloor(label: String): String = FLOORS.firstOrNull { label.startsWith(it, ignoreCase = true) } ?: label
 
 /** The venue's three rooms, longest first so `Aurora Bar` is not shadowed by a prefix. */
 private val FLOORS = listOf("Aurora Bar", "Tresor", "Globus")
 
-/** The venue's placeholder for a slot it has not announced yet, alongside the shared non-artist filter. */
+/** The placeholder for a slot not yet announced, alongside the shared non-artist filter. */
 private fun isUnannouncedAct(name: String): Boolean = UNANNOUNCED_SLOT.matches(name) || isNonArtistName(name)
 
 /** `???` — the venue's own "act to be announced" billing. */

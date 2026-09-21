@@ -16,19 +16,17 @@ import org.springframework.stereotype.Component
 /**
  * Website importer for Admiralspalast's programme.
  *
- * The venue is on Contao and publishes nothing machine-readable, so it is scraped as HTML — but not
- * with the usual list+detail shape, because **one production page yields many events**. Its
- * `/veranstaltung/<slug>.html` page lists one row per performance, so
- * [AbstractTwoPageWebsiteImporter][de.norm.events.scraper.AbstractTwoPageWebsiteImporter]'s
- * one-overview-entry-to-one-detail-event merge does not fit; [EventImporter] is implemented
- * directly instead. The pipeline is:
- * 1. Fetch the A–Z listing via [HtmlFetcher] with conditional-request support — the discovery list.
- * 2. Walk the `eventkategorie` filter pages to learn each production's category, the only place the
- *    venue states one ([resolveGenres]).
- * 3. Fetch each production page and read its performances via [AdmiralspalastDetailPageScraper].
+ * Contao, nothing machine-readable, so HTML — but not the usual list+detail shape, because
+ * **one production page yields many events**. `/veranstaltung/<slug>.html` lists one row per
+ * performance, so [AbstractTwoPageWebsiteImporter][de.norm.events.scraper.AbstractTwoPageWebsiteImporter]'s
+ * one-entry-to-one-event merge does not fit; [EventImporter] is implemented directly:
+ * 1. The A–Z listing via [HtmlFetcher] with conditional-request support — the discovery list.
+ * 2. The `eventkategorie` filter pages for each production's category, the only place the
+ * venue states one ([resolveGenres]).
+ * 3. Each production page's performances via [AdmiralspalastDetailPageScraper].
  *
- * That is one request per production plus one per category. The per-host throttle keeps the walk
- * polite, and a single failed page costs only its own production rather than the import.
+ * One request per production plus one per category. The per-host throttle keeps the walk
+ * polite, and a failed page costs only its own production.
  *
  * @see AdmiralspalastListingPageScraper for discovery and the categories.
  * @see AdmiralspalastDetailPageScraper for the performances.
@@ -70,12 +68,11 @@ class AdmiralspalastWebsiteImporter(
         }
 
     /**
-     * Maps each production URL to the category the venue files it under.
-     *
-     * The category exists only as a filtered copy of the listing, so each filter page is fetched and
-     * every production on it takes that page's label. A production listed under several categories
-     * keeps the first — the map is built in the venue's own alphabetical order, so the choice is at
-     * least stable between imports. A filter page that fails to load costs only its own category.
+     * Maps each production URL to the category the venue files it under. The category exists only
+     * as a filtered copy of the listing, so each filter page is fetched and every production on it
+     * takes that label. A production under several categories keeps the first — built in the
+     * venue's alphabetical order, so stable between imports. A failed filter page costs only its
+     * own category.
      */
     private suspend fun resolveGenres(
         listing: Document,

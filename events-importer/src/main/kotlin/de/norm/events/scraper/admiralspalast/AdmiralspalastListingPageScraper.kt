@@ -7,13 +7,13 @@ import org.jsoup.nodes.Document
 /**
  * Pure HTML parser for Admiralspalast's production listings.
  *
- * This scraper is deliberately **not** a `*OverviewPageScraper` returning events: the A–Z listing at
- * `/veranstaltungsuebersicht.html` carries no schedule at all. Every one of its tiles renders the
- * same `ab DD.MM.YY` run-start date, so the only thing worth taking from it is the set of
- * `/veranstaltung/<slug>.html` production links — the pages that actually list the performances.
+ * Deliberately **not** a `*OverviewPageScraper` returning events: the A–Z listing at
+ * `/veranstaltungsuebersicht.html` carries no schedule. Every tile renders the same
+ * `ab DD.MM.YY` run-start date, so the only thing worth taking is the set of
+ * `/veranstaltung/<slug>.html` production links — the pages that list the performances.
  *
- * The same markup backs the `/veranstaltungsuebersicht/eventkategorie/<genre>.html` filter pages, so
- * one parser serves both: the A–Z page for discovery, and each genre page for the category it names.
+ * The same markup backs the `/veranstaltungsuebersicht/eventkategorie/<genre>.html` filter
+ * pages, so one parser serves both: the A–Z page for discovery, each genre page for its category.
  *
  * @see AdmiralspalastDetailPageScraper for the performances themselves.
  * @see AdmiralspalastWebsiteImporter for the HTTP fetch orchestrator.
@@ -23,12 +23,10 @@ class AdmiralspalastListingPageScraper {
     private val logger = KotlinLogging.logger {}
 
     /**
-     * Reads the production links from a listing page, in listing order and without duplicates.
+     * The production links from a listing page, in order and deduplicated — a tile links to its
+     * production several times (poster, title, date), roughly three hits per production.
      *
-     * A tile links to its production several times over (poster, title, date), so the raw selector
-     * yields roughly three hits per production.
-     *
-     * @param baseUrl the URL the document was fetched from, used to resolve the links.
+     * @param baseUrl the URL the document was fetched from, for resolving the links.
      */
     fun scrapeProductionUrls(
         document: Document,
@@ -47,10 +45,9 @@ class AdmiralspalastListingPageScraper {
     }
 
     /**
-     * Reads the genre-filter links, mapping each category slug to the label the venue prints.
-     *
-     * The venue states a category nowhere on the event itself — the filter pages are the only place
-     * it exists, so the importer walks them to type its events.
+     * The genre-filter links, mapping each category slug to the label the venue prints. The venue
+     * states a category nowhere on the event itself — the filter pages are the only place it
+     * exists, so the importer walks them to type its events.
      */
     fun scrapeGenreUrls(
         document: Document,

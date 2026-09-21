@@ -26,11 +26,9 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeParseException
 
 /**
- * One upcoming LARK event, plus the WordPress attachment id of its poster.
- *
- * The listing carries only a `featured_media` id, so the image URL is resolved separately
- * ([LarkApiScraper.parseMedia]) and applied by [LarkWebsiteImporter]. Keeping the id beside the
- * event lets the parser stay I/O-free.
+ * One upcoming LARK event plus the WordPress attachment id of its poster. The listing carries
+ * only a `featured_media` id, so the URL is resolved separately ([LarkApiScraper.parseMedia])
+ * and applied by [LarkWebsiteImporter]; keeping the id beside the event keeps the parser I/O-free.
  */
 internal data class LarkEntry(
     val event: ScrapedEvent,
@@ -38,11 +36,9 @@ internal data class LarkEntry(
 )
 
 /**
- * One parsed page of the LARK listing.
- *
- * [postCount] and [oldestDate] drive paging: the listing is ordered newest-first *by event date*
- * (see [LarkApiScraper]), so a page whose oldest event is already past is the last one worth
- * reading.
+ * One parsed page of the LARK listing. [postCount] and [oldestDate] drive paging: the listing
+ * is ordered newest-first *by event date* (see [LarkApiScraper]), so a page whose oldest event
+ * is past is the last one worth reading.
  */
 internal data class LarkPage(
     val entries: List<LarkEntry>,
@@ -51,28 +47,27 @@ internal data class LarkPage(
 )
 
 /**
- * Pure parser for LARK's programme, sourced from its WordPress REST API (`/wp-json/wp/v2/event`): the
- * venue exposes an Advanced Custom Fields `event` post type in full, so no HTML is scraped (ADR-007
+ * Pure parser for LARK's programme from its WordPress REST API (`/wp-json/wp/v2/event`): an
+ * Advanced Custom Fields `event` post type exposed in full, so no HTML is scraped (ADR-007
  * §"Selector Strategy" priority 1).
  *
- * **The post date *is* the event date.** LARK overloads WordPress's own `post.date` with the show's
- * date and time, leaving `date_gmt` as the publish instant — see [LarkWebsiteImporter] for what that
- * buys — and past ones are dropped here rather than minted and discarded. Its time is the one the
- * venue renders as `Doors`, so it becomes [ScrapedEvent.doorsTime]; `acf.event_doors_time` is *not*
- * used, reading `19:00` on almost every post whatever the real time, which would put doors after an
- * 18:30 start.
+ * **The post date *is* the event date.** LARK overloads `post.date` with the show's date and
+ * time, leaving `date_gmt` as the publish instant — see [LarkWebsiteImporter] for what that buys
+ * — and past ones are dropped here rather than minted and discarded. Its time is what the venue
+ * renders as `Doors`, so it becomes [ScrapedEvent.doorsTime]; `acf.event_doors_time` is *not*
+ * used, reading `19:00` on almost every post whatever the real time, which would put doors after
+ * an 18:30 start.
  *
- * **Status is written into the title.** `acf.event_status` reads `Scheduled` on every post, while the
- * venue appends or prefixes the real marker — `Flower Face SOLD OUT`, `DOTAN (ausverkauft)`,
+ * **Status is written into the title.** `acf.event_status` reads `Scheduled` on every post; the
+ * real marker is appended or prefixed — `Flower Face SOLD OUT`, `DOTAN (ausverkauft)`,
  * `CANCELLED: …`. It sets [ScrapedEvent.soldOut] / [ScrapedEvent.status], then is stripped.
  *
- * Support acts are written into the title too, as `<act> + <act> (support)`: it splits on the shared
- * co-bill separators and a `(support)` marker bills that act
- * [SUPPORT][de.norm.events.event.ArtistRole.SUPPORT]. Dashes are normalised first, the venue writing
- * tour tails with an en dash (`Greg Mendez – BEAUTY LAND TOUR`) while [stripArtistSuffix] is keyed on
- * the ASCII hyphen. **That tail is stripped before the event is classified**, because it otherwise
- * decides the type: a bare `club` in the keyword classifier turned `LEILA – 20 SOMETHING CLUB TOUR`
- * into a `PARTY` that lost its headliner.
+ * Support acts are in the title too, as `<act> + <act> (support)`: split on the shared co-bill
+ * separators, a `(support)` marker bills that act [SUPPORT][de.norm.events.event.ArtistRole.SUPPORT].
+ * Dashes are normalised first — tour tails use an en dash (`Greg Mendez – BEAUTY LAND TOUR`)
+ * while [stripArtistSuffix] is keyed on the ASCII hyphen. **That tail is stripped before the
+ * event is classified**, because it otherwise decides the type: a bare `club` in the keyword
+ * classifier turned `LEILA – 20 SOMETHING CLUB TOUR` into a `PARTY` that lost its headliner.
  *
  * The remaining ACF fields are unused defaults: `event_entrance_fee` is `None` throughout, and
  * `event_music_genre`, `event_card_subtitle` and the act repeater are all but always empty.
@@ -97,9 +92,9 @@ internal class LarkApiScraper(
      * Parses one page of the `event` listing, keeping only events on or after today.
      *
      * @param json the raw JSON body of a `/wp-json/wp/v2/event?page=<n>` response.
-     * @return the upcoming events on the page, the number of posts it held (for the short-page
-     *   check) and its oldest event date (for the reached-the-past check). An unparseable or
-     *   non-array body yields an empty page, which stops paging.
+     * @return the upcoming events, the number of posts the page held (short-page check) and its
+     * oldest event date (reached-the-past check). An unparseable or non-array body yields an
+     * empty page, which stops paging.
      */
     @Suppress("TooGenericExceptionCaught") // A malformed payload must degrade to an empty page, never abort the import.
     fun scrapePage(json: String): LarkPage {
@@ -132,10 +127,8 @@ internal class LarkApiScraper(
     }
 
     /**
-     * Parses a `/wp-json/wp/v2/media?include=…` response into attachment id → image URL.
-     *
-     * Returns an empty map for an unparseable body: a missing poster is worth losing, an import
-     * is not.
+     * Parses a `/wp-json/wp/v2/media?include=…` response into attachment id → image URL. Empty for
+     * an unparseable body: a missing poster is worth losing, an import is not.
      */
     @Suppress("TooGenericExceptionCaught") // A malformed media response must not cost the events.
     fun parseMedia(json: String): Map<Long, String> =
@@ -185,8 +178,8 @@ internal class LarkApiScraper(
         val title = cleanEventTitle(stripStatusMarkers(rawTitle))
 
         val acf = post.path("acf")
-        // Classify the act, not the tour it is touring: "LEILA – 20 SOMETHING CLUB TOUR" is a gig,
-        // but the shared keyword classifier sees the "club" in its tour name and calls it a party.
+        // Classify the act, not the tour: "LEILA – 20 SOMETHING CLUB TOUR" is a gig, but the shared
+        // keyword classifier sees the "club" in its tour name and calls it a party.
         val actTitle = stripArtistSuffix(title)
         val eventType = refineConcertVenueType(mapEventType(acf.stringOrNull("event_type"), LARK_EVENT_TYPES), actTitle)
 
@@ -217,13 +210,11 @@ internal class LarkApiScraper(
     }
 
     /**
-     * The acts billed in a concert title.
-     *
-     * LARK is a live-music club whose title names the act, so a `CONCERT` title is split on the
-     * shared co-bill separators and each part becomes an artist — billed
-     * [SUPPORT][de.norm.events.event.ArtistRole.SUPPORT] when it carries the venue's own
-     * `(support)` marker, otherwise a headliner. A party or other non-concert format names an
-     * event rather than a performer, so it yields none (mirroring `buildArtistsForEventType`).
+     * The acts billed in a concert title. LARK is a live-music club whose title names the act, so
+     * a `CONCERT` title is split on the shared co-bill separators, each part an artist —
+     * [SUPPORT][de.norm.events.event.ArtistRole.SUPPORT] with the venue's `(support)` marker,
+     * otherwise a headliner. A party or other non-concert format names an event, not a performer,
+     * so it yields none (mirroring `buildArtistsForEventType`).
      */
     private fun artistsFrom(
         title: String,
@@ -238,7 +229,7 @@ internal class LarkApiScraper(
             }.filterNot { it.name.isBlank() || isNonArtistName(it.name) }
     }
 
-    /** Removes the venue's in-title status markers (and any note parenthesised right after one). */
+    /** Removes the in-title status markers (and any note parenthesised right after one). */
     private fun stripStatusMarkers(title: String): String =
         title
             .replace(TITLE_STATUS_MARKER, " ")
@@ -246,7 +237,7 @@ internal class LarkApiScraper(
             .trim()
             .ifBlank { title.trim() }
 
-    /** Parses WordPress's `yyyy-MM-dd'T'HH:mm:ss` local post date, returning null instead of throwing. */
+    /** Parses WordPress's `yyyy-MM-dd'T'HH:mm:ss` local post date, null instead of throwing. */
     private fun parseDateTime(raw: String): LocalDateTime? {
         val cleaned = raw.trim().takeIf { it.isNotBlank() } ?: return null
         return try {
@@ -261,9 +252,9 @@ internal class LarkApiScraper(
         const val LARK_EVENTS_URL = "https://larkberlin.com/events/"
 
         /**
-         * LARK's own `acf.event_type` vocabulary, beyond the shared synonyms. `Live` is the
-         * venue's word for a gig; `Club` and `Dance` are both DJ nights; `Seminar` is a workshop
-         * with no closer type than `OTHER`.
+         * LARK's `acf.event_type` vocabulary beyond the shared synonyms. `Live` is the venue's word
+         * for a gig; `Club` and `Dance` are both DJ nights; `Seminar` is a workshop with no closer
+         * type than `OTHER`.
          */
         val LARK_EVENT_TYPES: Map<String, String> =
             mapOf(
@@ -280,10 +271,9 @@ internal class LarkApiScraper(
         val CANCELLED_MARKER = Regex("""\bcancell?ed\b|\babgesagt\b""", RegexOption.IGNORE_CASE)
 
         /**
-         * Either marker as it is punctuated in a title — optionally led by a separating dash or
-         * pipe, optionally parenthesised, optionally followed by its own explanatory parenthetical
-         * (`CANCELLED (follow ticket link for refunds)`) — so the whole annotation leaves the
-         * stored title.
+         * Either marker as punctuated in a title — optionally led by a separating dash or pipe,
+         * optionally parenthesised, optionally followed by its own explanatory parenthetical
+         * (`CANCELLED (follow ticket link for refunds)`) — so the whole annotation leaves the title.
          */
         val TITLE_STATUS_MARKER =
             Regex(
@@ -297,14 +287,12 @@ internal class LarkApiScraper(
 }
 
 /**
- * Renders `acf.event_description` — which is *markup*, not text — down to a plain-text blurb.
- *
- * The venue writes the field in the WordPress editor, so it arrives carrying `<p class="p1">`
- * wrappers and `<a href>` links, and one event's whole description is a single anchor tag. Stored
- * raw those tags reached the frontend verbatim, so the markup is parsed and only its visible text
- * kept: `<br>` and `<p>` become line breaks, an anchor collapses to its label (the URL is dropped,
- * the same call Frannz makes for its Markdown links), and entities decode as a side effect of
- * reading the text out of the parse tree.
+ * Renders `acf.event_description` — *markup*, not text — to a plain-text blurb. Written in
+ * the WordPress editor, it arrives with `<p class="p1">` wrappers and `<a href>` links, and one
+ * event's whole description is a single anchor. Stored raw those tags reached the frontend, so
+ * only the visible text is kept: `<br>` and `<p>` become line breaks, an anchor collapses to
+ * its label (URL dropped, the same call Frannz makes for its Markdown links), and entities
+ * decode as a side effect of reading text out of the parse tree.
  */
 private fun htmlToPlainText(raw: String): String {
     val fragment = Jsoup.parseBodyFragment(raw)

@@ -29,31 +29,29 @@ import java.util.Locale
 /**
  * Pure HTML parser for Crack Bellmer's Webflow programme listing.
  *
- * Every night is an `.event-item` in one Finsweet CMS list, carrying a `data-date`, an `h:mm a`
- * start time, the title, a comma-separated genre line, a comma-separated lineup line, and a poster.
- * The `/events/<slug>` page it links to adds only a prose blurb, which
- * [CrackBellmerDetailPageScraper] reads.
+ * Every night is an `.event-item` in one Finsweet CMS list: a `data-date`, an `h:mm a` start
+ * time, the title, a comma-separated genre line, a comma-separated lineup line, and a poster.
+ * Its `/events/<slug>` page adds only a prose blurb, read by [CrackBellmerDetailPageScraper].
  *
- * 1. **`data-date` is the only place the year is written.** The rendered calendar column spells the
- *    date as `Fri . 7 . 8 .` while the attribute carries the full `August 7, 2026` — and ADR-007
- *    ranks a `data-*` attribute above a class name anyway.
- * 2. **The list is the venue's whole published programme, not a month.** The `previous-month`,
- *    `this-month` and `next-month` tabs serve identical markup and filter it client-side, so the
- *    listing carries about a month of already-passed nights. Those are dropped here, before the
- *    importer's detail fetch, so no HTTP is wasted on events persistence would discard
- *    ([dropPastEvents]).
- * 3. **The venue states no event category.** Its genre line ("Techno, House", but also "Drag Show",
- *    "Concert meets Pub Quiz") is the only cue, so the type is read from the title and then the
- *    genre with the shared keyword classifier, defaulting to `PARTY` — this is a dance bar whose
- *    programme is DJ nights, so a cue-less night is one of those.
- * 4. **A poster-less night still renders an `<img>`**, pointing at Webflow's placeholder SVG and
- *    flagged `w-dyn-bind-empty`; the same flag marks an empty genre or lineup paragraph.
+ * 1. **`data-date` is the only place the year is written.** The calendar column renders
+ * `Fri . 7 . 8 .`; the attribute carries the full `August 7, 2026` — and ADR-007 ranks a
+ * `data-*` attribute above a class name anyway.
+ * 2. **The list is the whole published programme, not a month.** The `previous-month`,
+ * `this-month` and `next-month` tabs serve identical markup filtered client-side, so the
+ * listing carries about a month of passed nights. Those are dropped here, before the detail
+ * fetch, so no HTTP is wasted on events persistence would discard ([dropPastEvents]).
+ * 3. **No event category.** The genre line ("Techno, House", but also "Drag Show", "Concert
+ * meets Pub Quiz") is the only cue, so the type is read from the title and then the genre
+ * with the shared keyword classifier, defaulting to `PARTY` — a dance bar of DJ nights, so a
+ * cue-less night is one of those.
+ * 4. **A poster-less night still renders an `<img>`**, pointing at Webflow's placeholder SVG
+ * and flagged `w-dyn-bind-empty`; the same flag marks an empty genre or lineup paragraph.
  *
  * @see CRACK_BELLMER_LIMITATIONS for what the venue does not publish.
  * @see CrackBellmerWebsiteImporter for the HTTP fetch orchestrator.
  */
 class CrackBellmerOverviewPageScraper(
-    /** Clock for the past-event cutoff. Defaults to the system clock; override in tests for determinism. */
+    /** Clock for the past-event cutoff; override in tests. */
     private val clock: Clock = Clock.systemDefaultZone()
 ) {
     private val logger = KotlinLogging.logger {}
@@ -61,8 +59,7 @@ class CrackBellmerOverviewPageScraper(
     /**
      * Parses all event items from the programme document.
      *
-     * @param sourceUrl the URL the document was fetched from, used to resolve the relative
-     *   `/events/<slug>` detail links.
+     * @param sourceUrl the URL the document was fetched from, for the relative `/events/<slug>` links.
      * @return the upcoming [ScrapedEvent] instances (today onward) in listing order.
      */
     fun scrape(
@@ -88,7 +85,7 @@ class CrackBellmerOverviewPageScraper(
         }
     }
 
-    /** Parses one `.event-item` into a [ScrapedEvent], or `null` when it is unusable or not an event. */
+    /** Parses one `.event-item` into a [ScrapedEvent], or `null` when unusable or not an event. */
     @Suppress("ReturnCount") // Guard clauses for the required link/title/date and the closed-day marker are clearer than nesting
     private fun parseItem(
         item: Element,
@@ -96,8 +93,8 @@ class CrackBellmerOverviewPageScraper(
     ): ScrapedEvent? {
         val href = item.attrAt("a[href*=/events/]", "href") ?: error("No event link found")
         val title = item.textAt("[fs-list-field=title]")?.let(::cleanEventTitle) ?: error("No title found")
-        // The venue publishes its closed days as programme entries. They name no event, so storing
-        // one would put a night titled "CLOSED" in the calendar.
+        // Closed days are programme entries. They name no event, so storing one would put a night
+        // titled "CLOSED" in the calendar.
         if (title.equals(CLOSED_MARKER, ignoreCase = true)) return null
 
         val eventDate = parseDate(item)
@@ -120,7 +117,7 @@ class CrackBellmerOverviewPageScraper(
         )
     }
 
-    /** Reads the item's `data-date` (`August 7, 2026`), the only rendering that carries the year. */
+    /** The item's `data-date` (`August 7, 2026`), the only rendering that carries the year. */
     private fun parseDate(item: Element): LocalDate? {
         val text = item.attr(DATE_ATTRIBUTE).takeIf { it.isNotBlank() } ?: return null
         return try {
@@ -133,13 +130,12 @@ class CrackBellmerOverviewPageScraper(
     /**
      * Types an event from its [title] and then its [genre], defaulting to `PARTY`.
      *
-     * The venue emits no category at all, so both classifications go through the shared
-     * [inferUnmarkedTitleType] keyword classifier — including on the genre line, which is where this
-     * venue tends to name a non-musical format ("Concert meets Pub Quiz" → `QUIZ`) while the title
-     * stays a bare event name. The fallback is deliberately `PARTY` rather than
-     * [inferConcertVenueType][de.norm.events.scraper.inferConcertVenueType]'s `CONCERT` or
-     * [inferUnmarkedTitleType]'s `OTHER`: Crack Bellmer is a dance bar programming DJ nights, so a
-     * night with no format cue is one of those, not a gig and not an unknown.
+     * No category at all, so both go through the shared [inferUnmarkedTitleType] keyword
+     * classifier — including the genre line, where this venue names a non-musical format
+     * ("Concert meets Pub Quiz" → `QUIZ`) while the title stays a bare event name. The fallback
+     * is `PARTY`, not [inferConcertVenueType][de.norm.events.scraper.inferConcertVenueType]'s
+     * `CONCERT` or [inferUnmarkedTitleType]'s `OTHER`: a dance bar programming DJ nights, so a
+     * night with no cue is one of those, not a gig and not an unknown.
      */
     private fun classifyEventType(
         title: String,
@@ -152,21 +148,19 @@ class CrackBellmerOverviewPageScraper(
     }
 
     /**
-     * Reads the night's acts from its lineup line.
+     * The night's acts from its lineup line.
      *
-     * The venue writes a flat, comma-separated billing, so the shared [splitSupportActs] applies
-     * directly — with two venue spellings normalised first: `w/` introduces the acts a host plays
-     * with ("hosted by Nicole M Pikole w/ KumKween & Slaxy Lexy"), and `b2b` joins two DJs into one
-     * slot, both of which open a new act.
+     * A flat, comma-separated billing, so the shared [splitSupportActs] applies — after two venue
+     * spellings are normalised: `w/` introduces the acts a host plays with ("hosted by Nicole M
+     * Pikole w/ KumKween & Slaxy Lexy"), and `b2b` joins two DJs into one slot; both open a new act.
      *
-     * Roles come from the venue's own annotations, the only distinction it draws: a `(live)` /
-     * trailing `LIVE` marks a band, and `hosted by …` / `(Host)` marks whoever fronts the night —
-     * both `HEADLINER`. Everything else is a `DJ` booking, the closest the three-value role model has
-     * to a flat club billing.
+     * Roles come from the venue's annotations, the only distinction it draws: `(live)` / trailing
+     * `LIVE` marks a band, `hosted by …` / `(Host)` whoever fronts the night — both `HEADLINER`.
+     * Everything else is a `DJ` booking, the closest the three-value role model has to a flat
+     * club billing.
      *
-     * An act billed twice on one night would produce two `event_artist` rows for the same
-     * (event, artist) pair and hit that table's unique constraint, failing the whole import, so the
-     * first billing wins.
+     * An act billed twice would produce two `event_artist` rows for one (event, artist) pair and
+     * hit the unique constraint, failing the whole import, so the first billing wins.
      */
     private fun parseArtists(lineup: String?): List<ScrapedArtist> {
         if (lineup == null) return emptyList()
@@ -179,7 +173,7 @@ class CrackBellmerOverviewPageScraper(
             .distinctBy { it.name.lowercase() }
     }
 
-    /** Strips the venue's host label and the shared act suffixes (`(live)`, tour tails) from an act name. */
+    /** Strips the host label and the shared act suffixes (`(live)`, tour tails) from an act name. */
     private fun cleanActName(act: String): String =
         stripArtistSuffix(
             act
@@ -188,7 +182,7 @@ class CrackBellmerOverviewPageScraper(
                 .trim()
         )
 
-    /** `HEADLINER` for an act the venue marked as playing live or hosting, `DJ` for the rest of the billing. */
+    /** `HEADLINER` for an act marked live or hosting, `DJ` for the rest of the billing. */
     private fun roleOf(act: String): String =
         if (LIVE_MARKER.containsMatchIn(act) || HOST_LABEL.containsMatchIn(act) || HOST_ANNOTATION.containsMatchIn(act)) {
             "HEADLINER"
@@ -196,7 +190,7 @@ class CrackBellmerOverviewPageScraper(
             "DJ"
         }
 
-    /** True when an act name is really one of the venue's own lineup fillers — see [PROGRAMME_FILLER]. */
+    /** True when an act name is really one of the venue's lineup fillers — see [PROGRAMME_FILLER]. */
     private fun isProgrammeFiller(name: String): Boolean = PROGRAMME_FILLER.matches(name.trim().replace(WHITESPACE, " "))
 
     private companion object {
@@ -206,7 +200,7 @@ class CrackBellmerOverviewPageScraper(
         /** The detail-page path prefix the Webflow slug follows. */
         const val EVENT_PATH = "/events/"
 
-        /** The title the venue gives a closed day, which is a programme entry but not an event. */
+        /** The title the venue gives a closed day, a programme entry but not an event. */
         const val CLOSED_MARKER = "CLOSED"
 
         /** The `data-date` rendering, e.g. `August 7, 2026`. */
@@ -229,25 +223,24 @@ class CrackBellmerOverviewPageScraper(
         /** The back-to-back marker joining two DJs into one slot. */
         val B2B_SEPARATOR = Regex("""\s+b2b\s+""", RegexOption.IGNORE_CASE)
 
-        /** The venue's "hosted by …" lineup lead-in — a role, not part of the name. */
+        /** The "hosted by …" lineup lead-in — a role, not part of the name. */
         val HOST_LABEL = Regex("""^hosted\s+by\s+""", RegexOption.IGNORE_CASE)
 
-        /** The venue's trailing `(Host)` annotation on the act fronting a drag night. */
+        /** The trailing `(Host)` annotation on the act fronting a drag night. */
         val HOST_ANNOTATION = Regex("""\s*\(\s*host\s*\)\s*$""", RegexOption.IGNORE_CASE)
 
-        /** The venue's live-act marker, written either `(Live)` or as a trailing shouted `LIVE`. */
+        /** The live-act marker, written `(Live)` or as a trailing shouted `LIVE`. */
         val LIVE_MARKER = Regex("""\(\s*live\s*\)\s*$|\blive\s*$""", RegexOption.IGNORE_CASE)
 
         /**
-         * What the venue writes in the lineup field when there is no billing to state: the night's
-         * activities rather than performers ("Ping Pong, Music And Hangout" for the open-decks
-         * nights), an open slot ("open decks slot"), or a lineup deliberately withheld ("Secret
-         * Line-Up", "Spontaneous :)"). The shared [isNonArtistName] denylist covers only the bare
-         * `TBA`/`more tba` tokens the venue also uses.
+         * What the venue writes in the lineup field with no billing to state: activities rather than
+         * performers ("Ping Pong, Music And Hangout" for the open-decks nights), an open slot ("open
+         * decks slot"), or a lineup withheld ("Secret Line-Up", "Spontaneous :)"). The shared
+         * [isNonArtistName] denylist covers only the bare `TBA`/`more tba` tokens the venue also uses.
          *
-         * Matching is fully anchored on the whitespace-collapsed value, so a real act whose name
-         * merely contains one of these words is untouched. Curated and reactive, like every other
-         * such list in the scrapers: entries are added as the venue's phrasings surface.
+         * Fully anchored on the whitespace-collapsed value, so a real act whose name merely contains
+         * one of these words is untouched. Curated and reactive, like every such list in the
+         * scrapers: entries are added as the venue's phrasings surface.
          */
         val PROGRAMME_FILLER =
             Regex(

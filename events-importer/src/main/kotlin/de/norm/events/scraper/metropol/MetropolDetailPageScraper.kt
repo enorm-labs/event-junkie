@@ -19,15 +19,14 @@ import org.jsoup.nodes.Document
 /**
  * Pure HTML parser for Metropol Berlin event detail pages (`/event/<iso-date-slug>`).
  *
- * Each page renders an `.em-event-single` block: an optional `.alert-red` status badge and
- * `.alert-blue` explanatory note, a `.promoter` line (`Trinity Music presents:`), the `h1`
- * headliner, an optional `p.tour` subtitle, an `.event-details` box holding the rendered date,
- * the `Einlass: 19:00 // Beginn: 20:00` time line and the category, an `a.button.ticket`
- * Eventim link, a lazy-loaded poster, and the `.event-text` prose description.
+ * One `.em-event-single` block: optional `.alert-red` status badge and `.alert-blue` note, a
+ * `.promoter` line (`Trinity Music presents:`), the `h1` headliner, optional `p.tour`
+ * subtitle, an `.event-details` box with the rendered date, the `Einlass: 19:00 // Beginn:
+ * 20:00` line and the category, an `a.button.ticket` Eventim link, a lazy-loaded poster, and
+ * the `.event-text` description.
  *
- * The detail page is the primary source for everything except the support acts, which only the
- * overview's `small.support` line carries (see
- * [MetropolWebsiteImporter.fillGapsFromOverview]).
+ * Primary for everything except the support acts, which only the overview's `small.support`
+ * line carries (see [MetropolWebsiteImporter.fillGapsFromOverview]).
  *
  * @see MetropolOverviewPageScraper for the listing parser (discovery, support acts, fallback).
  * @see MetropolWebsiteImporter for the HTTP fetch orchestrator.
@@ -37,11 +36,9 @@ class MetropolDetailPageScraper {
     private val logger = KotlinLogging.logger {}
 
     /**
-     * Parses an event detail page into a [ScrapedEvent], or `null` when the page carries no
-     * `h1` title.
+     * Parses a detail page into a [ScrapedEvent], or `null` without an `h1` title.
      *
-     * @param sourceUrl the event's URL, used as [ScrapedEvent.sourceUrl] and to derive
-     *   the [ScrapedEvent.sourceId].
+     * @param sourceUrl the event's URL: [ScrapedEvent.sourceUrl] and the [ScrapedEvent.sourceId].
      */
     @Suppress("ReturnCount") // A guard clause for the missing title is clearer than nesting
     fun scrape(
@@ -61,8 +58,8 @@ class MetropolDetailPageScraper {
             subtitle = document.textAt(".event-info p.tour"),
             description = document.textAt(".event-text"),
             eventType = mapEventType(document.textAt(".event-details ul.event-categories")),
-            // The slug's ISO prefix is the canonical date; the sentinel lets the overview's
-            // rendered German date backstop it via fillGapsFromOverview.
+            // The slug's ISO prefix is the canonical date; the sentinel lets the overview's rendered
+            // German date backstop it via fillGapsFromOverview.
             eventDate = parseIsoDate(slug.take(ISO_DATE_LENGTH)) ?: UNRESOLVED_EVENT_DATE,
             doorsTime = parseMetropolTime(labelledTime(timeLine, DOORS_LABEL)),
             startTime = parseMetropolTime(labelledTime(timeLine, START_LABEL)),
@@ -77,15 +74,13 @@ class MetropolDetailPageScraper {
     }
 
     /**
-     * Reads the scheduling status from the `.alert-red` badge (`Achtung: Abgesagt!`) and the
-     * title's `"Verlegt ins <venue> –"` prefix.
+     * The status from the `.alert-red` badge (`Achtung: Abgesagt!`) and the title's
+     * `"Verlegt ins <venue> –"` prefix.
      *
-     * The neighbouring `.alert-blue` prose is deliberately **not** fed to [parseEventStatus].
-     * It explains a change in either direction, and both spellings contain "verlegt": a show
-     * that moved *out* of the house ("vom Metropol ins Bi Nuu verlegt") is genuinely
-     * `RELOCATED`, but one that moved *in* ("vom Gretchen ins Metropol verlegt") does take
-     * place here and must stay `SCHEDULED`. Only the badge and the title prefix distinguish
-     * the two, so only those are read.
+     * The `.alert-blue` prose is deliberately **not** fed to [parseEventStatus]: it explains a
+     * change in either direction, and both contain "verlegt" — a show moved *out* ("vom Metropol
+     * ins Bi Nuu verlegt") is `RELOCATED`, one moved *in* ("vom Gretchen ins Metropol verlegt")
+     * takes place here and must stay `SCHEDULED`. Only the badge and the prefix distinguish them.
      */
     private fun parseStatus(
         document: Document,
@@ -93,9 +88,8 @@ class MetropolDetailPageScraper {
     ): String = parseEventStatus("${document.textAt(".alert-red").orEmpty()} $rawTitle")
 
     /**
-     * Reads the promoter from the `.promoter` line, dropping the venue's `"… presents:"`
-     * suffix (`"Trinity Music presents:"` → `"Trinity Music"`). Returns `null` when the line is
-     * absent or carries nothing but the suffix.
+     * The promoter from the `.promoter` line minus the `"… presents:"` suffix (`"Trinity Music
+     * presents:"` → `"Trinity Music"`); `null` when absent or nothing but the suffix.
      */
     private fun parsePromoter(document: Document): String? =
         document
@@ -105,10 +99,9 @@ class MetropolDetailPageScraper {
             ?.takeIf { it.isNotBlank() }
 
     /**
-     * Reads the poster URL from the desktop `.event-image` thumbnail. The theme lazy-loads its
-     * images, so `src` holds a base64 placeholder and the real URL lives in `data-src` — the
-     * shared `imgSrcAt` helper would reject the placeholder as non-absolute and return `null`.
-     * Falls back to the `<noscript>` copy's plain `src`, which carries no placeholder.
+     * The poster URL from the desktop `.event-image` thumbnail. The theme lazy-loads: `src` is a
+     * base64 placeholder and the real URL is in `data-src` — the shared `imgSrcAt` would reject the
+     * placeholder as non-absolute and return `null`. Falls back to the `<noscript>` copy's plain `src`.
      */
     private fun parsePosterUrl(document: Document): String? =
         (
@@ -118,9 +111,8 @@ class MetropolDetailPageScraper {
 }
 
 /**
- * Extracts the time following [label] from the detail page's combined time line
- * (`"Einlass: 19:00 // Beginn: 20:00"`, or just `"Beginn: 20:00"` when the venue lists no
- * doors time). Returns `null` when the label is absent.
+ * The time after [label] on the combined time line (`"Einlass: 19:00 // Beginn: 20:00"`, or
+ * just `"Beginn: 20:00"` without doors). `null` when the label is absent.
  */
 private fun labelledTime(
     timeLine: String?,

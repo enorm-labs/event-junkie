@@ -14,13 +14,13 @@ import org.springframework.stereotype.Component
 /**
  * Website importer for Tresor's club programme.
  *
- * Tresor runs WordPress with its REST API disabled site-wide (`401 rest_disabled`) and embeds no
- * structured data, so it is scraped as two HTML pages:
- * 1. Fetches `/club/events/` via [HtmlFetcher] with conditional-request support.
- * 2. Parses the items via [TresorOverviewPageScraper] — the source for the discovery list, date,
- *    title and the floor-grouped lineup.
- * 3. For each event, fetches its `/event/YYYYMMDD-<slug>/` page via [TresorDetailPageScraper] — the
- *    source for the start time (the night's opening set) and the blurb.
+ * WordPress with the REST API disabled site-wide (`401 rest_disabled`) and no structured data,
+ * so two HTML pages:
+ * 1. [HtmlFetcher] fetches `/club/events/` conditionally.
+ * 2. [TresorOverviewPageScraper] parses the items — discovery list, date, title and the
+ * floor-grouped lineup.
+ * 3. Each `/event/YYYYMMDD-<slug>/` page via [TresorDetailPageScraper] — the start time (the
+ * night's opening set) and the blurb.
  *
  * @see TresorOverviewPageScraper for listing parsing.
  * @see TresorDetailPageScraper for the set times and blurb.
@@ -46,12 +46,11 @@ class TresorWebsiteImporter(
     ): ScrapedEvent? = detailPageScraper.scrape(document, url)
 
     /**
-     * Merges event-page data ([primary]) with listing data ([fallback]).
-     *
-     * The event page is the only source of the start time and the blurb. The **title** keeps the
-     * listing's value, because the event page renders no heading and its document title carries the
-     * site name; the lineup prefers the listing's for the same reason — both pages mark it up
-     * identically, and the listing is the one the venue curates as the programme.
+     * Merges event-page data ([primary]) with listing data ([fallback]). The event page is the only
+     * source of start time and blurb. The **title** keeps the listing's value, because the event
+     * page renders no heading and its document title carries the site name; the lineup prefers the
+     * listing's for the same reason — both pages mark it up identically, and the listing is the one
+     * the venue curates as the programme.
      */
     override fun fillGapsFromOverview(
         primary: ScrapedEvent,

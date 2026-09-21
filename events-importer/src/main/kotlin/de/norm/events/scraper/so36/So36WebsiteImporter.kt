@@ -14,16 +14,13 @@ import org.springframework.stereotype.Component
 /**
  * Website importer for SO36 Berlin's Ticket-Toaster shop platform.
  *
- * Orchestrates the full fetch → parse pipeline for SO36:
- * 1. Fetches the overview page (`/tickets`) via [HtmlFetcher] with conditional
- *    request support (ETag / Last-Modified). The configured source URL points
- *    straight at `/tickets` (the homepage 302-redirects there) to save the extra
- *    redirect hop, though the scraper client now follows redirects either way.
- * 2. Discovers every event and its detail URL via [So36OverviewPageScraper]
- *    (which also supplies the fallback title and date).
- * 3. For each event, fetches its `/produkte/…` detail page via [HtmlFetcher].
- * 4. Parses the detail page via [So36DetailPageScraper] — the primary source for
- *    type, subtitle, times, description, image, price, ticket link, and status.
+ * 1. [HtmlFetcher] fetches `/tickets` conditionally (ETag / Last-Modified). The configured
+ * source URL points straight at `/tickets` (the homepage 302-redirects there) to save the hop,
+ * though the scraper client now follows redirects either way.
+ * 2. [So36OverviewPageScraper] discovers every event and its detail URL (plus fallback title and date).
+ * 3. Each `/produkte/…` detail page via [HtmlFetcher].
+ * 4. [So36DetailPageScraper] — primary for type, subtitle, times, description, image, price,
+ * ticket link and status.
  *
  * @see So36OverviewPageScraper for overview parsing (discovery, fallback data).
  * @see So36DetailPageScraper for detail parsing (the primary per-event source).
@@ -49,12 +46,10 @@ class So36WebsiteImporter(
     ): ScrapedEvent? = detailPageScraper.scrape(document, url)
 
     /**
-     * Merges detail-page data ([primary]) with overview-page data ([fallback]).
-     *
-     * The detail page is authoritative for every enriched field. The overview
-     * only backstops the date: when the detail page carries no parseable
-     * `startDate` (the [UNRESOLVED_EVENT_DATE] sentinel), the date parsed from the
-     * overview product URL is used instead.
+     * Merges detail-page data ([primary]) with overview data ([fallback]). The detail page is
+     * authoritative for every field; the overview only backstops the date: when the detail page
+     * has no parseable `startDate` (the [UNRESOLVED_EVENT_DATE] sentinel), the date from the
+     * product URL is used.
      */
     override fun fillGapsFromOverview(
         primary: ScrapedEvent,

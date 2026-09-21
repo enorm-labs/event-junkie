@@ -19,24 +19,19 @@ import java.time.LocalTime
 /**
  * Pure HTML parser for Badehaus Berlin's WordPress `/events/` listing page.
  *
- * Badehaus runs WordPress with the Events Manager plugin, but the theme renders
- * its own event cards. The whole upcoming programme lives on the single `/events/`
- * page as a flat list of card wrappers — one `<div>` per event containing an image
- * link, a `.eventinfo` line (date + doors time + ticket link), a title (`h2 > a`)
- * and a subtitle.
+ * WordPress with the Events Manager plugin, but the theme renders its own cards. The whole
+ * programme is on the single `/events/` page as a flat list of card wrappers — one `<div>` per
+ * event with an image link, a `.eventinfo` line (date + doors time + ticket link), a title
+ * (`h2 > a`) and a subtitle.
  *
- * The overview serves two purposes:
- * 1. **Discovery** — identifies every event and its `/events/<slug>/` detail URL,
- *    which [BadehausDetailPageScraper] then enriches with the description, start
- *    time (`Beginn`) and promoter.
- * 2. **Authoritative source** for the fields the detail page lacks or renders
- *    unreliably: the sold-out flag and the status class (a CSS class on the card —
- *    `AUSVERKAUFT` sold out, `ABGESAGT` cancelled, `VERLEGT` changed, turned into
- *    an overlay badge by the stylesheet), the subtitle, and the inferred event
- *    type (see [inferEventType]). `VERLEGT` covers a postponement and a move alike,
- *    so the detail page's notice decides between them and the class is the fallback
- *    (#1578). It also supplies fallback title / date / doors / image. Merging is
- *    handled by [BadehausWebsiteImporter].
+ * The overview is the discovery list — every event and its `/events/<slug>/` detail URL, which
+ * [BadehausDetailPageScraper] enriches with description, start time (`Beginn`) and promoter —
+ * and the **authoritative source** for what the detail page lacks or renders unreliably: the
+ * sold-out flag and status class (a CSS class on the card — `AUSVERKAUFT` sold out, `ABGESAGT`
+ * cancelled, `VERLEGT` changed, styled into an overlay badge), the subtitle, and the inferred
+ * event type (see [inferEventType]). `VERLEGT` covers a postponement and a move alike, so the
+ * detail page's notice decides and the class is the fallback (#1578). It also supplies fallback
+ * title / date / doors / image. [BadehausWebsiteImporter] merges.
  *
  * @see BadehausWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://badehaus-berlin.com/events/">Badehaus Berlin programme</a>
@@ -45,10 +40,9 @@ class BadehausOverviewPageScraper {
     private val logger = KotlinLogging.logger {}
 
     /**
-     * Parses all event cards from the `/events/` listing document.
+     * Parses all event cards from the `/events/` listing, one [ScrapedEvent] per card.
      *
-     * @param baseUrl the URL the document was fetched from, used to resolve relative links.
-     * @return a list of [ScrapedEvent] instances, one per card.
+     * @param baseUrl the URL the document was fetched from, for resolving relative links.
      */
     fun scrape(
         document: Document,
@@ -69,7 +63,7 @@ class BadehausOverviewPageScraper {
         }
     }
 
-    /** Parses one event card wrapper into a [ScrapedEvent], or `null` when required fields are missing. */
+    /** Parses one card wrapper into a [ScrapedEvent], or `null` when required fields are missing. */
     @Suppress("ReturnCount") // Guard clauses for the required title/date/url are clearer than nesting
     private fun parseCard(
         card: Element,
@@ -105,9 +99,8 @@ class BadehausOverviewPageScraper {
             ticketUrl = card.selectFirst(".eventinfo a[href^=http]")?.attr("href"),
             soldOut = card.hasClass(SOLD_OUT_CLASS),
             status = status,
-            // Badehaus exposes no artist roster; for concerts the title is the act
-            // (support acts come from the subtitle's "Support:" pattern). Non-artist
-            // titles (quiz/screening/festival names) are filtered by isNonArtistName.
+            // No artist roster; for concerts the title is the act (support from the subtitle's "Support:"
+            // pattern). Non-artist titles (quiz/screening/festival names) are filtered by isNonArtistName.
             artists = buildArtistsForEventType(title, subtitle, eventType)
         )
     }
@@ -115,13 +108,11 @@ class BadehausOverviewPageScraper {
     /**
      * Infers the [event type][de.norm.events.event.EventType] from the title/slug.
      *
-     * Badehaus publishes **no machine-readable category** anywhere in its HTML
-     * (no taxonomy term, body class or schema field), so the type is a best-effort
-     * heuristic on the event name: pub quizzes, parties/themed club nights and
-     * screenings are detected by keyword, and everything else defaults to `CONCERT` —
-     * Badehaus is a live-music venue where concerts are by far the most common event.
-     * Getting a themed night classified as `PARTY` matters beyond the label: a `PARTY`
-     * extracts no artists, so the night's event-name title isn't minted as a fake act
+     * **No machine-readable category** anywhere in the HTML (no taxonomy term, body class or
+     * schema field), so a best-effort heuristic on the name: pub quizzes, parties/themed club
+     * nights and screenings by keyword, everything else `CONCERT` — a live-music venue where
+     * concerts are by far the most common event. A themed night classified `PARTY` matters beyond
+     * the label: a `PARTY` extracts no artists, so its event-name title is not minted as a fake act
      * (see [buildArtistsForEventType]).
      */
     private fun inferEventType(
@@ -138,8 +129,8 @@ class BadehausOverviewPageScraper {
     }
 
     /**
-     * The subtitle line — the card's `<p>` that is neither the `.eventinfo` line
-     * nor the "MORE" link paragraph (identified by carrying an anchor).
+     * The subtitle line — the card's `<p>` that is neither the `.eventinfo` line nor the "MORE"
+     * link paragraph (identified by carrying an anchor).
      */
     private fun parseSubtitle(card: Element): String? =
         card
@@ -149,16 +140,16 @@ class BadehausOverviewPageScraper {
             ?.trim()
             ?.takeIf { it.isNotBlank() }
 
-    /** Parses the `DD.MM.YYYY` date from the `.eventinfo` line (e.g. "Mi. 23.09.2026 | 19:00 UHR"). */
+    /** The `DD.MM.YYYY` date from the `.eventinfo` line (e.g. "Mi. 23.09.2026 | 19:00 UHR"). */
     private fun parseDate(eventInfo: String): LocalDate? = parseGermanDate(DATE_PATTERN.find(eventInfo)?.value)
 
-    /** Parses the doors time (`HH:mm` before "UHR") from the `.eventinfo` line. */
+    /** The doors time (`HH:mm` before "UHR") from the `.eventinfo` line. */
     private fun parseDoorsTime(eventInfo: String): LocalTime? = parseTime(TIME_PATTERN.find(eventInfo)?.groupValues?.get(1))
 
     /**
-     * Maps the card wrapper's status class to an [EventStatus] name. Sold-out
-     * (`AUSVERKAUFT`) is intentionally handled as a separate flag, not a status, and
-     * `VERLEGT` reads as relocated only until the detail page's notice says otherwise.
+     * Maps the card wrapper's status class to an [EventStatus] name. Sold-out (`AUSVERKAUFT`) is a
+     * separate flag, not a status, and `VERLEGT` reads as relocated only until the detail page's
+     * notice says otherwise.
      */
     private fun parseStatus(className: String): String {
         val classes = className.uppercase()
@@ -177,28 +168,26 @@ class BadehausOverviewPageScraper {
         private val QUIZ_KEYWORDS = listOf("quiz")
 
         /**
-         * Party signals in the title/slug. Beyond the obvious `party`/`karaoke`, these
-         * catch Badehaus's themed club nights, whose titles are event names, not acts —
-         * a themed `… Night`, a decade night (`TOP90s …`), and party-décor words
-         * (`Konfetti`, `Glitzer`). Kept deliberately narrow to avoid flipping a real
-         * band to PARTY (which would drop its headliner): e.g. no `jam` (would hit
-         * "Pearl Jam") and no `allstars` (a real act, "Heavy Hands Allstars").
+         * Party signals in the title/slug. Beyond `party`/`karaoke`, these catch themed club nights
+         * whose titles are event names, not acts — a themed `… Night`, a decade night (`TOP90s …`),
+         * party-décor words (`Konfetti`, `Glitzer`). Kept narrow to avoid flipping a real band to PARTY
+         * (which would drop its headliner): no `jam` (would hit "Pearl Jam"), no `allstars` (a real
+         * act, "Heavy Hands Allstars").
          */
         private val PARTY_KEYWORDS =
             listOf("party", "karaoke", "night", "konfetti", "glitzer", "90s", "2000s", "2010s")
         private val SCREENING_KEYWORDS = listOf("screening", "public viewing", "world cup", "live-screening")
 
-        /** Matches a `DD.MM.YYYY` date in the event-info line. */
+        /** A `DD.MM.YYYY` date in the event-info line. */
         private val DATE_PATTERN = Regex("""\d{2}\.\d{2}\.\d{4}""")
 
-        /** Matches the `HH:mm` doors time before the "UHR" suffix. */
+        /** The `HH:mm` doors time before the "UHR" suffix. */
         private val TIME_PATTERN = Regex("""(\d{1,2}:\d{2})\s*UHR""", RegexOption.IGNORE_CASE)
     }
 }
 
 /**
- * The event slug of a `/events/<slug>/` URL — the last path segment.
- *
- * Both pages build the `sourceId` from it, and they must agree on it.
+ * The event slug of a `/events/<slug>/` URL — the last path segment. Both pages build the
+ * `sourceId` from it and must agree.
  */
 internal fun badehausEventSlug(url: String): String = URI(url).path.trim('/').substringAfterLast('/')

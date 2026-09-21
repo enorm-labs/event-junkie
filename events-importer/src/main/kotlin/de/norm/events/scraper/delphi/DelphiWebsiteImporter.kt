@@ -11,24 +11,24 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
 
 /**
- * Website importer for Theater im Delphi, the 1929 silent-cinema building in Weißensee now run as a
- * theatre and concert hall.
+ * Website importer for Theater im Delphi, the 1929 silent-cinema building in Weißensee now run
+ * as a theatre and concert hall.
  *
- * The pipeline is programme → production page, but **not** the per-event detail fetch
+ * Programme → production page, but **not** the per-event detail fetch
  * [de.norm.events.scraper.AbstractTwoPageWebsiteImporter] performs:
- * 1. Fetch `/programm/` via [HtmlFetcher] with conditional-request support (ETag / Last-Modified).
- * 2. Parse one event per performance date via [DelphiProgrammePageScraper].
- * 3. Fetch each **distinct** `?prod=<id>` page once and apply its full blurb and photo to every
- *    date of that production ([DelphiProduction.applyTo]).
+ * 1. [HtmlFetcher] fetches `/programm/` conditionally (ETag / Last-Modified).
+ * 2. [DelphiProgrammePageScraper] parses one event per performance date.
+ * 3. Each **distinct** `?prod=<id>` page once, applying its full blurb and photo to every date
+ * of that production ([DelphiProduction.applyTo]).
  *
- * Step 3 is why this class implements [EventImporter] directly, as at Bar jeder Vernunft. The house
- * programmes runs, not one-off nights: at the time of writing 24 performance rows resolve to 15
- * production pages, and one ballet alone owns 8 of them. Fetching per event would re-request the
+ * Step 3 is why this class implements [EventImporter] directly, as at Bar jeder Vernunft. The
+ * house programmes runs, not one-off nights: at the time of writing 24 performance rows resolve
+ * to 15 production pages, one ballet alone owning 8. Per-event fetching would re-request the
  * same page eight times, which the per-host politeness throttle would rightly serialise into a
  * slow, pointless crawl.
  *
- * A production page that cannot be fetched or parsed is not fatal: those dates keep the programme
- * row's teaser and thumbnail, losing only the fuller text and photo.
+ * A production page that cannot be fetched or parsed is not fatal: those dates keep the row's
+ * teaser and thumbnail, losing only the fuller text and photo.
  *
  * @see DelphiProgrammePageScraper for the programme parsing logic.
  * @see DelphiProductionPageScraper for the production-page parsing logic.
@@ -69,9 +69,7 @@ class DelphiWebsiteImporter(
 
     /**
      * Fetches each distinct production page once and applies it to every date of that production.
-     *
-     * The de-duplication is the point: `sourceUrl` is the production's page, shared by all of its
-     * performance dates.
+     * The de-duplication is the point: `sourceUrl` is the production's page, shared by all its dates.
      */
     private suspend fun enrichFromProductionPages(events: List<ScrapedEvent>): List<ScrapedEvent> {
         val productionUrls = events.map { it.sourceUrl }.distinct()

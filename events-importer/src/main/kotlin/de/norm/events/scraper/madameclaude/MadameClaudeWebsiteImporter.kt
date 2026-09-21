@@ -15,23 +15,20 @@ import java.time.format.DateTimeFormatter
 /**
  * Website importer for Madame Claude Berlin.
  *
- * Madame Claude runs on WordPress with an Advanced Custom Fields `event` post type, whose
- * public REST API (`/wp-json/wp/v2/event`) exposes every event as clean structured JSON.
- * Importing from that API is far more stable than the previous two-page HTML scrape (an
- * events grid plus a detail-page fetch per event) — structured data is priority 1 in
- * ADR-007 §"Selector Strategy" — and needs a single request, so this importer:
- * 1. Builds the query URL from the configured API base ([buildRequestUrl]) — upcoming
- *    `event`s only (`after=<today>`), ordered by date, with the featured image embedded.
- * 2. Fetches the JSON body via [ApiClient.fetchJson] (shared politeness throttle and
- *    identifying User-Agent).
- * 3. Parses it into [de.norm.events.scraper.ScrapedEvent]s via [MadameClaudeApiScraper].
+ * WordPress with an Advanced Custom Fields `event` post type whose public REST API
+ * (`/wp-json/wp/v2/event`) exposes every event as clean JSON — far more stable than the
+ * previous two-page HTML scrape (grid plus a detail fetch per event); structured data is
+ * priority 1 in ADR-007 §"Selector Strategy", and it needs one request:
+ * 1. Build the query from the configured API base ([buildRequestUrl]) — upcoming `event`s only
+ * (`after=<today>`), ordered by date, featured image embedded.
+ * 2. Fetch the JSON body via [ApiClient.fetchJson] (shared politeness throttle and User-Agent).
+ * 3. Parse it into [de.norm.events.scraper.ScrapedEvent]s via [MadameClaudeApiScraper].
  *
- * The WP REST list endpoint returns the venue's full event history (past included), so the
- * `after` filter restricts the response to upcoming events server-side (ADR-007
- * first-page-only: ~two dozen upcoming shows fit in one page). No ETag / Last-Modified
- * conditional request is used — the `etag` / `lastModified` parameters are ignored and every
- * import returns [ImportResult.Success]; re-imports stay cheap and safe because persistence
- * upserts idempotently by `sourceId`.
+ * The list endpoint returns the full history (past included), so `after` restricts it to
+ * upcoming events server-side (ADR-007 first-page-only: ~two dozen upcoming shows fit one
+ * page). No ETag / Last-Modified conditional request — `etag` / `lastModified` are ignored and
+ * every import returns [ImportResult.Success]; re-imports stay cheap and safe because
+ * persistence upserts idempotently by `sourceId`.
  *
  * @see MadameClaudeApiScraper for the JSON parsing logic.
  * @see <a href="https://madameclaude.de/events/">Madame Claude Events</a>
@@ -59,18 +56,17 @@ class MadameClaudeWebsiteImporter(
         val events = apiScraper.scrape(json)
         logger.info { "Scraped ${events.size} event(s) from Madame Claude" }
 
-        // The WP REST endpoint's conditional-cache support is not used here; ETag / Last-Modified
-        // are always null and change detection relies on idempotent upserts.
+        // No conditional-cache support here; ETag / Last-Modified are always null and change
+        // detection relies on idempotent upserts.
         return ImportResult.Success(events = events, etag = null, lastModified = null)
     }
 
     /**
-     * Builds the WP REST `event` query from the configured API base [baseUrl].
-     *
-     * The ordering, page size, upcoming-only cut-off and image-embed flag are parsing concerns
-     * and live in code (ADR-007: parsing logic in code, entry-point URL in config). The base is
-     * stored on the event source, e.g. `https://madameclaude.de/wp-json/wp/v2/event`. `after`
-     * is start of today in Berlin so an event later today is still included.
+     * The WP REST `event` query from the configured API base [baseUrl]. Ordering, page size,
+     * upcoming-only cut-off and image-embed flag are parsing concerns and live in code (ADR-007:
+     * parsing logic in code, entry-point URL in config). The base is on the event source, e.g.
+     * `https://madameclaude.de/wp-json/wp/v2/event`. `after` is start of today in Berlin so an
+     * event later today is still included.
      */
     private fun buildRequestUrl(baseUrl: String): String {
         val separator = if ('?' in baseUrl) '&' else '?'
@@ -79,7 +75,7 @@ class MadameClaudeWebsiteImporter(
     }
 
     private companion object {
-        /** Upper bound on events fetched in the single request; comfortably above the venue's ~two dozen upcoming shows. */
+        /** Upper bound on events fetched in the single request; comfortably above ~two dozen upcoming shows. */
         const val PER_PAGE = 100
     }
 }
