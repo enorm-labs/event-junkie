@@ -1,6 +1,7 @@
 package de.norm.events.scraper.hole44
 
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.ISO_DATE_LENGTH
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
 import de.norm.events.scraper.buildArtistsForEventType
@@ -91,9 +92,6 @@ class Hole44OverviewPageScraper {
         )
     }
 }
-
-/** Length of the leading ISO `YYYY-MM-DD` date in every event slug. */
-internal const val ISO_DATE_LENGTH = 10
 
 /**
  * The genre labels from a `.event-tags` block as one comma-separated string ("crossover trash,
