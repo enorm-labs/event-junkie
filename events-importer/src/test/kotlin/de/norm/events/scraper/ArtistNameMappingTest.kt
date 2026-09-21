@@ -1113,6 +1113,20 @@ class ArtistNameMappingTest {
         stripArtistSuffix("Mehr Is Mehr") shouldBe "Mehr Is Mehr"
     }
 
+    // #301 — what the staging re-seed left behind once every line-up entry ran through the rule.
+    @Test
+    fun `stripArtistSuffix drops a leading relocation note, and the split remnants are non-artists`() {
+        stripArtistSuffix("verschoben – Black River Delta") shouldBe "Black River Delta"
+        stripArtistSuffix("Nachholtermin: Kraftklub") shouldBe "Kraftklub"
+        // A whole `X & Friends` billing stays one act; the bare `Friends` a venue's own split leaves is dropped.
+        stripArtistSuffix("Feo & Friends") shouldBe "Feo & Friends"
+        isNonArtistName("verschoben") shouldBe true
+        isNonArtistName("Panel") shouldBe true
+        isNonArtistName("Friends") shouldBe true
+        // A band with a conjunction in its name is one act.
+        splitHeadlinerTitle("Chase & Status") shouldBe listOf("Chase & Status")
+    }
+
     // #301 — the performance-format suffixes a line-up carries, in the spellings staging held.
     @Test
     fun `stripArtistSuffix drops every spelling of a performance-format suffix`() {

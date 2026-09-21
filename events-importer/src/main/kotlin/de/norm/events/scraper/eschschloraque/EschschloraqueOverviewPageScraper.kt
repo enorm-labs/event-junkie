@@ -7,6 +7,7 @@ import de.norm.events.scraper.attrAt
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.inferUnmarkedTitleType
 import de.norm.events.scraper.isNonArtistName
+import de.norm.events.scraper.orderDoorsBeforeStart
 import de.norm.events.scraper.resolveUrl
 import de.norm.events.scraper.splitSupportActs
 import de.norm.events.scraper.textAt
@@ -99,6 +100,7 @@ class EschschloraqueOverviewPageScraper {
 
         val billingParagraphs = findBillingParagraphs(node)
         val description = parseDescription(node, billingParagraphs)
+        val (doorsTime, startTime) = resolveTimes(startDateTime.second, node.select(PROSE_PARAGRAPHS).text())
 
         return ScrapedEvent(
             title = title,
@@ -112,8 +114,8 @@ class EschschloraqueOverviewPageScraper {
             description = description,
             eventType = inferUnmarkedTitleType(title),
             eventDate = startDateTime.first,
-            // One "ab HH Uhr" time is announced; it is the start, never a separate doors time.
-            startTime = startDateTime.second,
+            doorsTime = doorsTime,
+            startTime = startTime,
             imageUrl = node.attrAt(".field-type-image img", "src")?.takeIf { it.startsWith("http") },
             sourceUrl = resolveUrl(baseUrl, path),
             // URI.getPath() decodes the alias's percent escapes, so the id reads
@@ -123,6 +125,40 @@ class EschschloraqueOverviewPageScraper {
             artists = parseLineup(billingParagraphs)
         )
     }
+
+    /**
+     * The doors and the start, from the one structured time and the prose (#318). The date field
+     * carries one time; where a night has two, only the description says so — `Einlass: 19:00 /
+     * Beginn: 19:30`, `Doors: / Starts:`, `DJs ab 21 Uhr, Showtime ab 22 Uhr`. **Prose fills, it
+     * never overrides**: the structured time keeps its value, and a labelled pair that names it
+     * decides which of the two it is, the other value filling the empty slot. A pair naming neither
+     * leaves the structured time as the start and fills the doors only from before it. One time
+     * alone stays the start, never a doors time.
+     */
+    private fun resolveTimes(
+        structured: LocalTime,
+        prose: String
+    ): Pair<LocalTime?, LocalTime?> {
+        val proseDoors = proseTime(prose, DOORS_LABELS)
+        val proseStart = proseTime(prose, START_LABELS)
+        return when {
+            proseDoors == null && proseStart == null -> null to structured
+            proseDoors == structured -> structured to (proseStart ?: structured)
+            proseStart == structured -> proseDoors to structured
+            else -> orderDoorsBeforeStart(proseDoors?.takeIf { it < structured }, structured)
+        }
+    }
+
+    /** The first clock a label in [labels] introduces — `Einlass: 19:00`, `DJs ab 21 Uhr` — or `null`. */
+    private fun proseTime(
+        prose: String,
+        labels: Regex
+    ): LocalTime? =
+        labels.find(prose)?.let { match ->
+            val hour = match.groupValues[1].toInt()
+            val minute = match.groupValues[2].ifBlank { "0" }.toInt()
+            runCatching { LocalTime.of(hour, minute) }.getOrNull()
+        }
 
     /**
      * The event's start from the RDFa `content` attribute (`2026-08-12T21:00:00+02:00`): date and
@@ -233,6 +269,15 @@ class EschschloraqueOverviewPageScraper {
          * keeps the `DJ` that is part of each name. `djs` precedes `dj` so the longer label wins.
          */
         val BILLING_LABEL = Regex("""^(?:live|djs|dj|on\s+the\s+couch)\s*:\s*""", RegexOption.IGNORE_CASE)
+
+        /** A clock after a label: `19:00`, `19.00`, `21 Uhr`, `19Uhr`. Group 1 the hour, group 2 the minutes or blank. */
+        private const val CLOCK = """\s*:?\s*(?:ab\s+)?(\d{1,2})(?:[:.](\d{2}))?\s*(?:uhr)?\b"""
+
+        /** The doors as the prose labels them, in both of the venue's languages. */
+        val DOORS_LABELS = Regex("""\b(?:einlass|doors?|djs)$CLOCK""", RegexOption.IGNORE_CASE)
+
+        /** The start as the prose labels it; `Showtime` is the venue's word for a show's start after the DJs. */
+        val START_LABELS = Regex("""\b(?:beginn|starts?|start|showtime)$CLOCK""", RegexOption.IGNORE_CASE)
 
         /** The `Live:` label, which bills the line's acts as headliners rather than DJs. */
         val LIVE_LABEL = Regex("""^live\s*:""", RegexOption.IGNORE_CASE)

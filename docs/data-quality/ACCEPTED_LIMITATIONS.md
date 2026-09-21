@@ -62,7 +62,7 @@ says so.
 | `ESCHSCHLORAQUE`      | `SOLD_OUT`         | the venue flags nothing sold out                                                                                                                 | —     |
 | `ESCHSCHLORAQUE`      | `CANCELLATION`     | the venue flags nothing cancelled, so every event stays scheduled                                                                                | —     |
 | `ESCHSCHLORAQUE`      | `EVENT_TYPE`       | the programme mixes DJ nights, live sets, bingo and theatre with no kind field anywhere                                                          | —     |
-| `ESCHSCHLORAQUE`      | `DOORS_TIME`       | the venue publishes a single ab-HH-Uhr start and never a separate doors time                                                                     | —     |
+| `ESCHSCHLORAQUE`      | `DOORS_TIME`       | the date field carries one ab-HH-Uhr time; a doors time exists only where the prose labels a pair, which is read                                 | —     |
 | `FESTSAAL`            | `EVENT_TYPE`       | the API exposes no category field; its `genre` node is a musical genre, not an event kind                                                        | —     |
 | `FRANNZ`              | `PER_EVENT_PAGE`   | nothing on the site links a `/events/<slug>/` page                                                                                               | —     |
 | `FRANNZ`              | `SOLD_OUT`         | the word ausverkauft appears only in the prose blurb, where it also turns up describing a past tour                                              | —     |
