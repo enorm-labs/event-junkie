@@ -14,14 +14,12 @@ import org.springframework.stereotype.Component
 /**
  * Website importer for Columbiahalle Berlin's Contao event listing.
  *
- * Columbiahalle renders its whole upcoming programme on `/veranstaltungen.html` with every field
- * expanded inline — times, prices, promoter, ticket link, poster and the untruncated blurb — so no
- * detail-page fetching is needed. The cards' "Kalender-Eintrag" links look like detail pages
- * (`veranstaltung/<alias>.html`) but serve an **iCal download** carrying strictly less than the
- * listing, so they are deliberately not followed. The pipeline is:
- * 1. Fetch `/veranstaltungen.html` via [HtmlFetcher] with conditional-request support (the site
- *    sends neither ETag nor Last-Modified, so in practice every run is a full fetch of one page).
- * 2. Parse all events from that single page via [ColumbiahalleOverviewPageScraper].
+ * The whole programme is on `/veranstaltungen.html` with every field inline — times, prices,
+ * promoter, ticket link, poster and the untruncated blurb — so no detail fetch. The cards'
+ * "Kalender-Eintrag" links look like detail pages (`veranstaltung/<alias>.html`) but serve an
+ * **iCal download** carrying strictly less than the listing, so they are not followed.
+ * [HtmlFetcher] fetches the page conditionally (the site sends neither ETag nor Last-Modified,
+ * so every run is a full fetch of one page), [ColumbiahalleOverviewPageScraper] parses it.
  *
  * @see ColumbiahalleOverviewPageScraper for the HTML parsing logic.
  * @see <a href="https://www.columbiahalle.berlin/veranstaltungen.html">Columbiahalle Berlin</a>

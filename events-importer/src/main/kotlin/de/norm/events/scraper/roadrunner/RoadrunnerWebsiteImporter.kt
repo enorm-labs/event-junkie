@@ -15,14 +15,10 @@ import java.time.Clock
 /**
  * Website importer for Roadrunner's Paradise' retro `programm.html` page.
  *
- * The whole programme lives on a single hand-coded HTML page with no per-event
- * detail pages, so the pipeline is a single fetch:
- * 1. Fetch `programm.html` via [HtmlFetcher] with conditional-request support
- *    (ETag / Last-Modified).
- * 2. Parse all events from the page via [RoadrunnerOverviewPageScraper].
- *
- * The configured source URL must point at `programm.html` (the homepage is a
- * separate landing page that carries no event data).
+ * The whole programme is one hand-coded page with no detail pages, so a single fetch:
+ * [HtmlFetcher] fetches `programm.html` conditionally (ETag / Last-Modified),
+ * [RoadrunnerOverviewPageScraper] parses it. The configured source URL must point at
+ * `programm.html` (the homepage is a separate landing page with no event data).
  *
  * @see RoadrunnerOverviewPageScraper for the HTML parsing logic.
  * @see <a href="http://www.roadrunners-paradise.de/programm.html">Roadrunner's Paradise programme</a>
@@ -30,7 +26,7 @@ import java.time.Clock
 @Component
 class RoadrunnerWebsiteImporter(
     private val htmlFetcher: HtmlFetcher,
-    /** Clock for the scraper's past-event cutoff and year inference. Defaults to the system clock; override in tests. */
+    /** Clock for the scraper's past-event cutoff and year inference; override in tests. */
     clock: Clock = Clock.systemDefaultZone()
 ) : EventImporter {
     private val logger = KotlinLogging.logger {}

@@ -20,14 +20,13 @@ import org.jsoup.nodes.Element
 /**
  * Pure HTML parser for Modus Berlin's `/events` programme page.
  *
- * The page renders the whole programme, unpaginated, as `.event-item` tiles. Each tile is an
- * `a.event-link` to the `/event/DDMMYY-<Name>` detail page wrapping a poster and a `figcaption`
- * that holds a German `DD.MM.YYYY` date in a bare `div` and the title in an `h2`.
+ * The whole programme, unpaginated, as `.event-item` tiles. Each is an `a.event-link` to the
+ * `/event/DDMMYY-<Name>` detail page wrapping a poster and a `figcaption` holding a German
+ * `DD.MM.YYYY` date in a bare `div` and the title in an `h2`.
  *
- * The **rendered** date is the one read, never the one encoded in the slug: the slug is minted
- * once and keeps the original date when a show moves (`160426-LunaSimao` renders as
- * `13.04.2027`). The slug is used only for the stable [ScrapedEvent.sourceId], so a postponed
- * show keeps its identity across the move.
+ * The **rendered** date is read, never the slug's: the slug is minted once and keeps the
+ * original date when a show moves (`160426-LunaSimao` renders as `13.04.2027`). The slug serves
+ * only the stable [ScrapedEvent.sourceId], so a postponed show keeps its identity.
  *
  * @see ModusDetailPageScraper for the detail-page data (start time, ticket link, description).
  * @see ModusWebsiteImporter for the HTTP fetch orchestrator.
@@ -37,11 +36,9 @@ class ModusOverviewPageScraper {
     private val logger = KotlinLogging.logger {}
 
     /**
-     * Parses all event tiles from the programme page document.
+     * Parses all event tiles from the programme page, one [ScrapedEvent] per tile.
      *
-     * @param baseUrl the URL the document was fetched from, used to resolve the per-event
-     *   detail links and build `sourceId` values.
-     * @return a list of [ScrapedEvent] instances, one per tile.
+     * @param baseUrl the URL the document was fetched from, for detail links and `sourceId` values.
      */
     fun scrape(
         document: Document,
@@ -61,7 +58,7 @@ class ModusOverviewPageScraper {
         }
     }
 
-    /** Parses a single `.event-item` tile into a [ScrapedEvent], or `null` when it has no link or title. */
+    /** Parses one `.event-item` tile into a [ScrapedEvent], or `null` without a link or title. */
     @Suppress("ReturnCount") // Guard clauses for the required href/title are clearer than nesting
     private fun parseTile(
         tile: Element,
@@ -78,8 +75,8 @@ class ModusOverviewPageScraper {
         return ScrapedEvent(
             title = title,
             eventType = eventType,
-            // The bare div beside the h2 carries the rendered German date — see the class KDoc
-            // for why the slug's own DDMMYY is deliberately ignored.
+            // The bare div beside the h2 carries the rendered German date — see the class KDoc for why
+            // the slug's DDMMYY is ignored.
             eventDate = parseGermanDate(tile.textAt("figcaption div")) ?: UNRESOLVED_EVENT_DATE,
             imageUrl = tile.imgSrcAt("img"),
             sourceUrl = sourceUrl,

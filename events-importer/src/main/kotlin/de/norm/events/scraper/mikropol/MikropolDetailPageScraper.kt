@@ -23,18 +23,17 @@ import org.jsoup.nodes.Element
 /**
  * Pure HTML parser for Mikropol Berlin event detail pages (`/event/<date-slug>/`).
  *
- * Each detail page renders a `.single-event` block: an `h1.entry-title`, an optional
- * `h2.support` line, an inline `.event-details` box (`DD.MM.YYYY` date plus `Beginn` /
- * `Einlass` times), a `.ticket-links` Eventim button, a `a.event-image` poster, and an
- * `.eventnotes` description, and a `.promoter` credit ("Trinity Music presents:") above the
- * title. A sold-out / cancelled show carries a `.canceledsoldout`
- * badge (`Ausverkauft` / `Abgesagt`); a relocated show opens its title with a
- * "verlegt in den … –" note. The theme embeds no schema.org JSON-LD.
+ * One `.single-event` block: an `h1.entry-title`, an optional `h2.support` line, an inline
+ * `.event-details` box (`DD.MM.YYYY` date plus `Beginn` / `Einlass` times), a `.ticket-links`
+ * Eventim button, an `a.event-image` poster, an `.eventnotes` description, and a `.promoter`
+ * credit ("Trinity Music presents:") above the title. A sold-out / cancelled show carries a
+ * `.canceledsoldout` badge (`Ausverkauft` / `Abgesagt`); a relocated show opens its title with
+ * a "verlegt in den … –" note. No JSON-LD.
  *
- * The detail page is the source for the fields the overview lacks — description, image,
- * and ticket URL — and carries the shared fields (date, times, status) too, so a
- * successful fetch yields a complete event; the overview only fills gaps (and stands in
- * entirely when the detail fetch fails) via [MikropolWebsiteImporter.fillGapsFromOverview].
+ * Source for what the overview lacks — description, image, ticket URL — and carries the shared
+ * fields (date, times, status) too, so a successful fetch is a complete event; the overview
+ * fills gaps (or stands in entirely when the fetch fails) via
+ * [MikropolWebsiteImporter.fillGapsFromOverview].
  *
  * @see MikropolOverviewPageScraper for overview parsing (discovery, date, fallback).
  * @see MikropolWebsiteImporter for the HTTP fetch orchestrator.
@@ -44,11 +43,9 @@ class MikropolDetailPageScraper {
     private val logger = KotlinLogging.logger {}
 
     /**
-     * Parses an event detail page into a [ScrapedEvent], or `null` when the page has no
-     * event title (an unexpected structure).
+     * Parses a detail page into a [ScrapedEvent], or `null` without an event title.
      *
-     * @param sourceUrl the event's URL, used as [ScrapedEvent.sourceUrl] and to derive the
-     *   [ScrapedEvent.sourceId].
+     * @param sourceUrl the event's URL: [ScrapedEvent.sourceUrl] and the [ScrapedEvent.sourceId].
      */
     @Suppress("ReturnCount") // Guard clause for the missing title is clearer than nesting
     fun scrape(

@@ -14,26 +14,25 @@ import org.springframework.stereotype.Component
 /**
  * Website importer for Colosseum's Wix Events programme.
  *
- * The whole programme — including prices, sold-out flags and external ticket shops — is carried by
- * the `wix-warmup-data` payload of the single `/event` page, so the pipeline is one HTTP request
- * per import cycle:
- * 1. Fetch `/event` via [HtmlFetcher] with conditional request support (Wix serves a weak `ETag`).
- * 2. Parse every event out of the embedded JSON via [ColosseumOverviewPageScraper].
+ * The whole programme — prices, sold-out flags and external ticket shops included — is in the
+ * `wix-warmup-data` payload of the single `/event` page, so one HTTP request per cycle:
+ * [HtmlFetcher] fetches `/event` conditionally (Wix serves a weak `ETag`),
+ * [ColosseumOverviewPageScraper] parses the embedded JSON.
  *
- * **The `/details-registrierung/<slug>` pages are deliberately not fetched.** They add exactly two
- * things, and neither survives inspection:
- * - Their `about` field is *not* per-event text. The house creates each event by cloning an old one
- *   and never rewrites that section, so the same 3,440-character block — a Dustin O'Halloran
- *   biography, opening "Einlass: 19 Uhr / Beginn: 20 Uhr" — is served verbatim for a Cornelia Funke
- *   reading, an Irvine Welsh evening and a football talk alike. Importing it would attach a
- *   stranger's biography, and a door time contradicting the event's own `startDate`, to nearly
- *   every event. Both the description and the doors time are therefore left empty.
- * - Their `tickets[].price` is the ticket's face value, where the overview's `lowestTicketPrice` is
- *   the checkout total including Wix's service fee. The total is what a buyer pays, so the overview
- *   figure is the better of the two — and the one that needs no extra request.
+ * **The `/details-registrierung/<slug>` pages are deliberately not fetched.** They add two things,
+ * neither surviving inspection:
+ * - Their `about` field is *not* per-event text. Each event is created by cloning an old one and
+ * that section is never rewritten, so the same 3,440-character block — a Dustin O'Halloran
+ * biography opening "Einlass: 19 Uhr / Beginn: 20 Uhr" — is served for a Cornelia Funke reading,
+ * an Irvine Welsh evening and a football talk alike. Importing it would attach a stranger's
+ * biography, and a door time contradicting the event's `startDate`, to nearly every event. Both
+ * description and doors time are left empty.
+ * - Their `tickets[].price` is the face value, where the overview's `lowestTicketPrice` is the
+ * checkout total including Wix's service fee. The total is what a buyer pays, so the overview
+ * figure is the better one — and needs no extra request.
  *
- * The widget ships the upcoming window only (18 events) and reports `hasMore: true`; loading the
- * rest needs the authenticated widget API, as at MAXXIM. First page only is the standing decision
+ * The widget ships the upcoming window only (18 events) and reports `hasMore: true`; the rest
+ * needs the authenticated widget API, as at MAXXIM. First page only is the standing decision
  * (ADR-007 §"Pagination — First Page Only"), and the events beyond it are the far-future tail —
  * the window already runs about six weeks out.
  *

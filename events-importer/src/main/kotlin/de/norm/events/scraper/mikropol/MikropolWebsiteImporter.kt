@@ -13,15 +13,12 @@ import org.springframework.stereotype.Component
 /**
  * Website importer for Mikropol Berlin's Events-Manager concert listing.
  *
- * Mikropol is a WordPress/Events-Manager site whose theme renders no schema.org JSON-LD and
- * whose Events-Manager REST API is not exposed for anonymous reads, so it is scraped as two
- * HTML pages:
- * 1. Fetches the `/events/` overview page via [HtmlFetcher] with conditional-request support
- *    (ETag / Last-Modified).
- * 2. Parses the event cards via [MikropolOverviewPageScraper] — the source for the discovery
- *    list, date, start/doors times, status, sold-out flag, and headliner/support artists.
- * 3. For each event, fetches and parses its detail page via [MikropolDetailPageScraper] — the
- *    source for the description, image, and Eventim ticket URL.
+ * WordPress/Events-Manager with no JSON-LD and the REST API not exposed for anonymous reads,
+ * so two HTML pages:
+ * 1. [HtmlFetcher] fetches `/events/` conditionally (ETag / Last-Modified).
+ * 2. [MikropolOverviewPageScraper] parses the cards — discovery list, date, start/doors times,
+ * status, sold-out flag, and headliner/support artists.
+ * 3. Each detail page via [MikropolDetailPageScraper] — description, image and Eventim ticket URL.
  *
  * @see MikropolOverviewPageScraper for overview parsing (date, status, artists, fallback).
  * @see MikropolDetailPageScraper for detail parsing (description, image, ticket URL).
@@ -47,12 +44,9 @@ class MikropolWebsiteImporter(
     ): ScrapedEvent? = detailPageScraper.scrape(document, url)
 
     /**
-     * Merges detail-page data ([primary]) with overview-page data ([fallback]).
-     *
-     * The detail page is authoritative and carries the fields the overview lacks (description,
-     * image, ticket URL). The fields both pages share (date, times, status, sold-out, artists)
-     * prefer the detail value and fall back to the overview — so if a specific field is missing
-     * on the detail page, the overview still supplies it.
+     * Merges detail-page data ([primary]) with overview data ([fallback]). The detail page is
+     * authoritative and carries what the overview lacks (description, image, ticket URL); shared
+     * fields (date, times, status, sold-out, artists) prefer the detail value and fall back.
      */
     override fun fillGapsFromOverview(
         primary: ScrapedEvent,
@@ -66,7 +60,7 @@ class MikropolWebsiteImporter(
             startTime = primary.startTime ?: fallback.startTime,
             imageUrl = primary.imageUrl ?: fallback.imageUrl,
             ticketUrl = primary.ticketUrl ?: fallback.ticketUrl,
-            // A sold-out/cancelled badge or relocation note may render on only one of the pages, so keep it
+            // A sold-out/cancelled badge or relocation note may render on only one page, so keep it
             // whenever either page reports it.
             soldOut = primary.soldOut || fallback.soldOut,
             status = primary.status.takeIf { it != EventStatus.SCHEDULED.name } ?: fallback.status,

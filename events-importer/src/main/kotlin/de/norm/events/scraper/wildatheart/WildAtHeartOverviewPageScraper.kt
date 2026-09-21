@@ -22,40 +22,36 @@ import java.time.MonthDay
 /**
  * Pure HTML parser for Wild at Heart's retro `concerts.php` programme page.
  *
- * The site is a hand-coded frameset (`wah.htm`); the concert programme lives on a
- * single `/concerts.php` page reached from the `topics.htm` nav frame. Every event is
- * a `<tr>` row carrying a leading `.datum` date cell (`Weekday DD.MM.`, **no year**),
- * a `.band` headliner and any number of `.supportband` acts (each tagged with a
- * `.stil-country` `(Genre - Country)` label), an optional `.dj`, a flyer image under
- * `/uploads/img/…`, and an optional `.headlines` banner that may embed a
- * `Tickets:<url>` presale link, a `Beginn HH:MM` start time, or an `Eintritt frei`
- * free-entry note. There are no per-event URLs — the whole programme is one page.
+ * A hand-coded frameset (`wah.htm`); the programme is one `/concerts.php` page reached from the
+ * `topics.htm` nav frame. Every event is a `<tr>` with a leading `.datum` cell (`Weekday DD.MM.`,
+ * **no year**), a `.band` headliner and any number of `.supportband` acts (each tagged with a
+ * `.stil-country` `(Genre - Country)` label), an optional `.dj`, a flyer under `/uploads/img/…`,
+ * and an optional `.headlines` banner that may embed a `Tickets:<url>` presale link, a `Beginn
+ * HH:MM` start time, or an `Eintritt frei` note. No per-event URLs — one page.
  *
  * A row without a banner time stores the house doors instead of nothing: `info.htm` states
  * "Geöffnet ist für Konzerte und Events von 20 Uhr bis Open End", and the one per-event time
  * the listing prints, Wild Wednesday's `Beginn 21:00`, is an hour after it (#1403).
  *
- * Dates carry a weekday but no year, so the year is inferred from the weekday via
- * [inferYearForWeekday]: among nearby candidate years the one whose `DD.MM.` actually
- * lands on the stated weekday and falls closest to today wins. The venue leaves
- * recently-passed events listed; those are dropped centrally at persistence time
- * (`EventUpsertService`), so this parser returns every dated row as-is.
+ * Dates carry a weekday but no year, so the year comes from the weekday via
+ * [inferYearForWeekday]: among nearby candidate years the one whose `DD.MM.` lands on the
+ * stated weekday and falls closest to today. Recently-passed events stay listed and are dropped
+ * centrally at persistence (`EventUpsertService`), so this parser returns every dated row as-is.
  *
  * @see WildAtHeartWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://www.wildatheartberlin.de/concerts.php">Wild at Heart programme</a>
  */
 @Suppress("TooManyFunctions") // Cohesive single-responsibility parser; the retro markup needs many small field extractors
 class WildAtHeartOverviewPageScraper(
-    /** Clock for year inference. Defaults to the system clock; override in tests for determinism. */
+    /** Clock for year inference; override in tests. */
     private val clock: Clock = Clock.systemDefaultZone()
 ) {
     private val logger = KotlinLogging.logger {}
 
     /**
-     * Parses all events from the programme page document.
+     * Parses all events from the programme page, one per dated `<tr>` row.
      *
-     * @param baseUrl the URL the document was fetched from, used as each event's `sourceUrl`.
-     * @return a list of [ScrapedEvent] instances, one per dated `<tr>` row.
+     * @param baseUrl the URL the document was fetched from, each event's `sourceUrl`.
      */
     fun scrape(
         document: Document,
@@ -116,8 +112,8 @@ class WildAtHeartOverviewPageScraper(
             title = title,
             subtitle = subtitle,
             description = description,
-            // No category field on this retro page; infer from the title (concert by default for this
-            // live-music venue, flipping only on an unambiguous keyword — e.g. a "Flohmarkt" → OTHER).
+            // No category field; infer from the title (concert by default for this live-music venue,
+            // flipping only on an unambiguous keyword — a "Flohmarkt" → OTHER).
             eventType = inferConcertVenueType(title),
             eventDate = eventDate,
             startTime = startTime,
@@ -134,10 +130,9 @@ class WildAtHeartOverviewPageScraper(
     }
 
     /**
-     * Builds the lineup: the `.band` headliner(s) first, then support acts and DJs in listing order.
-     *
-     * A bandless row (title came from the banner) contributes no headliner — its title is an event
-     * name, not a performer. Non-artist labels (placeholders, "+Guest", segment labels) are dropped.
+     * The lineup: the `.band` headliner(s) first, then support acts and DJs in listing order. A
+     * bandless row (title from the banner) contributes no headliner — its title is an event name.
+     * Non-artist labels (placeholders, "+Guest", segment labels) are dropped.
      */
     private fun buildArtists(
         bandName: String?,
@@ -151,11 +146,9 @@ class WildAtHeartOverviewPageScraper(
         }
 
     /**
-     * Parses a `.datum` cell like "Mi 15.07." into a [LocalDate].
-     *
-     * The weekday abbreviation and `DD.MM.` day/month come from the text; the year is
-     * [inferred][inferYearForWeekday] from the weekday. Returns `null` when the text
-     * carries no parseable date.
+     * Parses a `.datum` cell like "Mi 15.07." into a [LocalDate]: weekday abbreviation and
+     * `DD.MM.` from the text, year [inferred][inferYearForWeekday] from the weekday. `null`
+     * without a parseable date.
      */
     @Suppress("ReturnCount") // Null-safe early exits for each date component are clearer than nested let-chains
     private fun parseDatum(text: String?): LocalDate? {
@@ -168,10 +161,9 @@ class WildAtHeartOverviewPageScraper(
     }
 
     /**
-     * Extracts the genre from a `.stil-country` label like "(Punk - USA)" → "Punk".
-     *
-     * The label packs a music style and a country/origin as "(Style - Country)". Only the
-     * style is kept (the part before the " - " separator). An empty "( - )" label yields `null`.
+     * The genre from a `.stil-country` label like "(Punk - USA)" → "Punk". The label packs style
+     * and country as "(Style - Country)"; only the part before " - " is kept. An empty "( - )"
+     * yields `null`.
      */
     private fun parseGenre(stilCountry: String?): String? {
         if (stilCountry == null) return null
@@ -185,8 +177,8 @@ class WildAtHeartOverviewPageScraper(
     }
 
     /**
-     * The start time a `.headlines` banner states — "Beginn 21:00", or the flea market's "ab 14 Uhr"
-     * (#1142). `null` when the banner names no time, which most rows do not (see
+     * The start time a `.headlines` banner states — "Beginn 21:00", or the flea market's "ab 14
+     * Uhr" (#1142). `null` when the banner names no time, which most rows do not (see
      * [WILD_AT_HEART_LIMITATIONS]).
      */
     private fun parseBannerStart(headline: String): LocalTime? =
@@ -210,16 +202,16 @@ class WildAtHeartOverviewPageScraper(
         /** The doors the venue's `info.htm` states for concerts and events: "von 20 Uhr bis Open End". */
         private val HOUSE_DOORS: LocalTime = LocalTime.of(20, 0)
 
-        /** Matches a `.datum` cell "Weekday DD.MM.", capturing the German weekday abbreviation, day and month. */
+        /** A `.datum` cell "Weekday DD.MM.", capturing the German weekday abbreviation, day and month. */
         private val DATUM_PATTERN = Regex("""(Mo|Di|Mi|Do|Fr|Sa|So)\s*(\d{1,2})\.(\d{1,2})\.""", RegexOption.IGNORE_CASE)
 
-        /** Extracts a `Tickets:<url>` presale link embedded in a `.headlines` banner. */
+        /** A `Tickets:<url>` presale link embedded in a `.headlines` banner. */
         private val TICKETS_PATTERN = Regex("""Tickets:\s*(https?://\S+)""", RegexOption.IGNORE_CASE)
 
-        /** Extracts a "Beginn HH:MM" start time from a `.headlines` banner. */
+        /** A "Beginn HH:MM" start time in a `.headlines` banner. */
         private val BEGINN_PATTERN = Regex("""Beginn\s*:?\s*(\d{1,2}:\d{2})""", RegexOption.IGNORE_CASE)
 
-        /** Extracts an "ab HH Uhr" / "ab HH:MM Uhr" start time from a `.headlines` banner. */
+        /** An "ab HH Uhr" / "ab HH:MM Uhr" start time in a `.headlines` banner. */
         private val AB_UHR_PATTERN = Regex("""\bab\s+(\d{1,2})(?:[:.](\d{2}))?\s*Uhr\b""", RegexOption.IGNORE_CASE)
     }
 }

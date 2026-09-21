@@ -26,23 +26,23 @@ import java.math.BigDecimal
  * Pure parser for Colosseum's Wix Events programme page (`/event`).
  *
  * Every field comes from the embedded `wix-warmup-data` JSON (see [WixEventsWarmupData]) — the
- * rendered cards are never read. As at MAXXIM, the payload already carries prices and the sold-out
- * flag, so the single overview fetch is complete and no per-event page is fetched. The event `slug`
- * still yields the canonical [ScrapedEvent.sourceUrl] and the stable [ScrapedEvent.sourceId]; this
- * site publishes its detail pages under `/details-registrierung/<slug>` rather than Wix's default,
- * and the payload's own `siteSettings.detailsPagePath` says `"details"`, which is not the live path
- * — so the path is a constant here.
+ * rendered cards are never read. As at MAXXIM, the payload carries prices and the sold-out flag,
+ * so the single overview fetch is complete and no per-event page is fetched. The event `slug`
+ * still yields the canonical [ScrapedEvent.sourceUrl] and the stable [ScrapedEvent.sourceId];
+ * this site publishes its detail pages under `/details-registrierung/<slug>` rather than Wix's
+ * default, and the payload's own `siteSettings.detailsPagePath` says `"details"`, not the live
+ * path — so the path is a constant here.
  *
  * **`registration.ticketing` lies for externally ticketed events.** Three of the eighteen live
- * events sell through a promoter's shop (`registration.type == 3`); Wix still emits a `ticketing`
- * node for them and — the event having no Wix ticket definitions — reports `"soldOut": true` while
- * the page renders a working "Tickets kaufen" button. The block is therefore read only when Wix
- * itself sells the tickets ([WIX_REGISTRATION_TICKETS]); for the external ones the shop URL becomes
- * the [ScrapedEvent.ticketUrl] instead.
+ * events sell through a promoter's shop (`registration.type == 3`); Wix still emits a
+ * `ticketing` node for them and — with no Wix ticket definitions — reports `"soldOut": true`
+ * while the page renders a working "Tickets kaufen" button. The block is read only when Wix
+ * itself sells the tickets ([WIX_REGISTRATION_TICKETS]); for the external ones the shop URL
+ * becomes the [ScrapedEvent.ticketUrl].
  *
- * With no support-act convention in the subtitles, [buildArtistList] extracts nothing: a Colosseum
- * title is as often an event name ("Investment", "Das Betreute Singen September") as a performer's,
- * so minting it as a headliner would create artists that are not people.
+ * With no support-act convention in the subtitles, [buildArtistList] extracts nothing: a
+ * Colosseum title is as often an event name ("Investment", "Das Betreute Singen September") as
+ * a performer's, so minting it as a headliner would create artists that are not people.
  *
  * @see COLOSSEUM_LIMITATIONS for what the house does not publish.
  * @see ColosseumWebsiteImporter for the HTTP fetch orchestrator.
@@ -51,11 +51,9 @@ class ColosseumOverviewPageScraper {
     private val logger = KotlinLogging.logger {}
 
     /**
-     * Parses all events from the programme page's embedded Wix warmup payload.
+     * Parses all events from the programme page's embedded Wix warmup payload, one per listed event.
      *
-     * @param baseUrl the URL the document was fetched from, used to resolve the per-event
-     *   `/details-registrierung/<slug>` URLs.
-     * @return a list of [ScrapedEvent] instances, one per listed event.
+     * @param baseUrl the URL the document was fetched from, for the `/details-registrierung/<slug>` URLs.
      */
     fun scrape(
         document: Document,
@@ -90,8 +88,8 @@ class ColosseumOverviewPageScraper {
             logger.warn { "Colosseum event '$slug' has no title, skipping" }
             return null
         }
-        // No detail page is fetched, so an event without a resolvable startDate has no second
-        // chance at a date — drop it rather than persist a sentinel.
+        // No detail page is fetched, so an event without a resolvable startDate has no second chance
+        // at a date — drop it rather than persist a sentinel.
         val schedule = parseWixSchedule(node.path("scheduling").path("config"))
         val eventDate = schedule.date
         if (eventDate == null) {
@@ -129,14 +127,11 @@ class ColosseumOverviewPageScraper {
         private const val DETAILS_PATH = "/details-registrierung/"
 
         /**
-         * The event type, from the title and subtitle only — the house states no category
-         * (`categories` is empty on every event).
-         *
-         * A format this house names in its own words ([VENUE_FORMAT_KEYWORDS]) wins; otherwise the
-         * shared [inferUnmarkedTitleType] applies its unambiguous keyword cues and falls back to
-         * `OTHER`. It deliberately does not default to `CONCERT`: this is a talks-and-readings
-         * house whose occasional gig is the exception, and `OTHER` is also where a talk lands —
-         * the model has no `TALK` type.
+         * The event type from title and subtitle only — the house states no category (`categories` is
+         * empty on every event). A house format ([VENUE_FORMAT_KEYWORDS]) wins; otherwise the shared
+         * [inferUnmarkedTitleType]'s unambiguous cues, then `OTHER`. Deliberately not `CONCERT`: a
+         * talks-and-readings house whose occasional gig is the exception, and `OTHER` is also where a
+         * talk lands — the model has no `TALK` type.
          */
         private fun resolveEventType(
             title: String,
@@ -148,14 +143,14 @@ class ColosseumOverviewPageScraper {
         }
 
         /**
-         * Formats this house names in its own words, which the shared classifier does not cover: it
-         * announces a film night as "… - Film: <title>" or as part of its "Kinoevents" series, a
-         * book launch as a "Buchpremiere", and records podcasts on stage in front of an audience —
-         * a staged show. Checked before [inferUnmarkedTitleType], lowercase, first match wins.
+         * Formats this house names in its own words that the shared classifier misses: a film night as
+         * "… - Film: <title>" or its "Kinoevents" series, a book launch as a "Buchpremiere", and
+         * podcasts recorded on stage before an audience — a staged show. Checked before
+         * [inferUnmarkedTitleType], lowercase, first match wins.
          *
          * The two screening cues come first on purpose: a film night is regularly *presented by* a
-         * podcast ("… Kinoevents 2026, presented by … Podcast & ByteFM"), and what the audience
-         * watches decides the type, not who hosts it.
+         * podcast ("… Kinoevents 2026, presented by … Podcast & ByteFM"), and what the audience watches
+         * decides the type, not who hosts it.
          */
         private val VENUE_FORMAT_KEYWORDS: Map<String, String> =
             linkedMapOf(

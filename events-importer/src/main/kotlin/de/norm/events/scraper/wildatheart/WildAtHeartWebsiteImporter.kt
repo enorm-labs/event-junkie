@@ -15,15 +15,11 @@ import java.time.Clock
 /**
  * Website importer for Wild at Heart's retro `concerts.php` programme page.
  *
- * The whole concert programme lives on a single hand-coded page with no per-event
- * detail pages, so the pipeline is a single fetch:
- * 1. Fetch `concerts.php` via [HtmlFetcher] with conditional-request support
- *    (ETag / Last-Modified).
- * 2. Parse all events from the page via [WildAtHeartOverviewPageScraper].
- *
- * The configured source URL must point at `concerts.php` (the `wah.htm` frameset entry
- * and its `main.htm` welcome frame carry no event data — only the `topics.htm` nav
- * frame links to the programme).
+ * The whole programme is one hand-coded page with no detail pages, so a single fetch:
+ * [HtmlFetcher] fetches `concerts.php` conditionally (ETag / Last-Modified),
+ * [WildAtHeartOverviewPageScraper] parses it. The configured source URL must point at
+ * `concerts.php` (the `wah.htm` frameset and its `main.htm` welcome frame carry no event data
+ * — only the `topics.htm` nav frame links to the programme).
  *
  * @see WildAtHeartOverviewPageScraper for the HTML parsing logic.
  * @see <a href="https://www.wildatheartberlin.de/concerts.php">Wild at Heart programme</a>
@@ -31,7 +27,7 @@ import java.time.Clock
 @Component
 class WildAtHeartWebsiteImporter(
     private val htmlFetcher: HtmlFetcher,
-    /** Clock for the scraper's weekday-based year inference. Defaults to the system clock; override in tests. */
+    /** Clock for the scraper's weekday-based year inference; override in tests. */
     clock: Clock = Clock.systemDefaultZone()
 ) : EventImporter {
     private val logger = KotlinLogging.logger {}

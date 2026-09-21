@@ -14,13 +14,11 @@ import org.springframework.stereotype.Component
 /**
  * Website importer for Kater Berlin's homepage programme.
  *
- * Kater runs WordPress with an `event` post type, but neither of the two structured sources is
- * usable: the REST route (`/wp-json/wp/v2/event`) returns an **empty `acf` object** because the
- * venue does not expose its custom fields to REST, leaving only id, title and permalink; and the
- * `/event/<slug>` pages render nothing but a heading. The homepage carries the entire programme
- * inline instead, so the pipeline is:
- * 1. Fetch the homepage via [HtmlFetcher] with conditional-request support.
- * 2. Parse every `article.event` via [KaterOverviewPageScraper].
+ * WordPress with an `event` post type, but neither structured source is usable: the REST route
+ * (`/wp-json/wp/v2/event`) returns an **empty `acf` object** because the venue does not expose
+ * its custom fields, leaving only id, title and permalink; and the `/event/<slug>` pages render
+ * nothing but a heading. The homepage carries the entire programme inline: [HtmlFetcher]
+ * fetches it conditionally, [KaterOverviewPageScraper] parses every `article.event`.
  *
  * @see KaterOverviewPageScraper for the HTML parsing logic.
  * @see <a href="https://www.katerclub.de/">Kater Berlin</a>

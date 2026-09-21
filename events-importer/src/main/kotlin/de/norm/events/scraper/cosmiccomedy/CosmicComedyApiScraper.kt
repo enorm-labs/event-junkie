@@ -29,20 +29,19 @@ data class CosmicComedyPage(
  * Pure JSON parser for Cosmic Comedy Berlin's **The Events Calendar** REST API
  * (`/wp-json/tribe/events/v1/events`).
  *
- * The plugin's own API is used rather than the `Event` JSON-LD the listing page also embeds: the
- * JSON-LD covers only the page's current view (22 events at capture) where the API returns the
- * whole upcoming programme (57), and it carries the categories, organizers and full descriptions
- * the JSON-LD omits. It is the JSON source ADR-007 prefers over any HTML.
+ * The plugin's API rather than the `Event` JSON-LD the listing also embeds: the JSON-LD covers
+ * only the page's current view (22 events at capture) where the API returns the whole upcoming
+ * programme (57), with the categories, organizers and full descriptions the JSON-LD omits. The
+ * JSON source ADR-007 prefers over any HTML.
  *
- * A few things about this venue shape the mapping:
- *  - **Everything here is comedy**, so every event is a [EventType.SHOW]. The `categories` name a
- *    format or a language (`Showcase`, `Open Mic`, `Comedy Special`, `English Language`), never a
- *    musical genre, so nothing is stored as one.
- *  - **The programme is mostly one recurring house night.** 57 events resolve to 11 distinct
- *    titles; the `slug` is unique per date and is what identifies an event.
- *  - **No prices anywhere.** `cost` and `cost_details` are empty on every event.
- *  - **Titles and taxonomy names are HTML-escaped** (`&#8211;`, `&#8217;`) and the description is
- *    raw HTML opening with an embedded ticket-widget `<script>`, so both are decoded before use.
+ * - **Everything here is comedy**, so every event is a [EventType.SHOW]. The `categories` name
+ * a format or a language (`Showcase`, `Open Mic`, `Comedy Special`, `English Language`), never
+ * a musical genre, so nothing is stored as one.
+ * - **The programme is mostly one recurring house night.** 57 events resolve to 11 distinct
+ * titles; the `slug` is unique per date and identifies an event.
+ * - **No prices anywhere.** `cost` and `cost_details` are empty on every event.
+ * - **Titles and taxonomy names are HTML-escaped** (`&#8211;`, `&#8217;`) and the description is
+ * raw HTML opening with an embedded ticket-widget `<script>`, so both are decoded before use.
  *
  * @see CosmicComedyWebsiteImporter for the HTTP fetch orchestrator.
  */
@@ -56,10 +55,8 @@ class CosmicComedyApiScraper {
             .build()
 
     /**
-     * Parses one page of the events endpoint.
-     *
-     * An unparseable body yields an empty page with no cursor, which stops paging rather than
-     * aborting an import that may already hold earlier pages.
+     * Parses one page of the events endpoint. An unparseable body yields an empty page with no
+     * cursor, which stops paging rather than aborting an import that may already hold earlier pages.
      */
     @Suppress("TooGenericExceptionCaught") // A malformed payload must degrade to an empty page, never abort the import.
     fun scrapePage(json: String): CosmicComedyPage {
@@ -121,10 +118,10 @@ class CosmicComedyApiScraper {
     }
 
     /**
-     * The performer, for the nights the club files as a `Comedy Special` — its own marker for a
-     * named act rather than the house showcase. Those titles are all `"<Performer> – <Show>"`, so
-     * the part before the dash is the act; a special without one yields no artist rather than a
-     * guess. The recurring showcase and open-mic nights name no performer at all and get none.
+     * The performer, for nights filed as a `Comedy Special` — the club's marker for a named act
+     * rather than the house showcase. Those titles are all `"<Performer> – <Show>"`, so the part
+     * before the dash is the act; a special without one yields no artist rather than a guess. The
+     * recurring showcase and open-mic nights name no performer and get none.
      */
     private fun headlinerOf(
         title: String,
@@ -141,12 +138,10 @@ class CosmicComedyApiScraper {
     }
 
     /**
-     * The ticket link: the event's own `website` where the venue set one, otherwise the Universe
-     * listing embedded as a widget in the description.
-     *
-     * That widget is the club's season listing for its recurring nights, so most events share one
-     * URL — it is still where their tickets are sold. Events with neither are stored without a link
-     * rather than pointing at the venue's front page.
+     * The ticket link: the event's own `website` where set, otherwise the Universe listing embedded
+     * as a widget in the description. That widget is the club's season listing for its recurring
+     * nights, so most events share one URL — still where their tickets are sold. Events with
+     * neither are stored without a link rather than pointing at the front page.
      */
     private fun ticketUrl(event: JsonNode): String? =
         event.path("website").asString("").takeIf { it.isNotBlank() }
@@ -156,7 +151,7 @@ class CosmicComedyApiScraper {
                 ?.get(1)
                 ?.let { "$UNIVERSE_EVENT_BASE$it" }
 
-    /** Parses the API's local `"yyyy-MM-dd HH:mm:ss"` start, which is already in the venue's zone. */
+    /** Parses the API's local `"yyyy-MM-dd HH:mm:ss"` start, already in the venue's zone. */
     private fun parseLocalDateTime(text: String): LocalDateTime? =
         text.takeIf { it.isNotBlank() }?.let {
             runCatching { LocalDateTime.parse(it.trim(), API_DATE_TIME) }.getOrNull()
@@ -170,7 +165,7 @@ class CosmicComedyApiScraper {
             .takeIf { it.isNotEmpty() }
 
     /**
-     * Flattens the description's HTML to text. Parsing rather than stripping tags matters here: the
+     * Flattens the description's HTML to text. Parsing rather than stripping tags matters: the
      * field opens with an embedded ticket-widget `<script>` whose body would otherwise land in the
      * stored description.
      */

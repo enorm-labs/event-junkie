@@ -20,14 +20,14 @@ import org.jsoup.nodes.Element
 /**
  * Pure HTML parser for Quasimodo Berlin event detail pages (`/events/<slug>-<postId>`).
  *
- * Each page adds what the listing card cannot carry: the prose `.description`, the
- * `… präsentiert:` `.promoter`, the full-size poster, and a `<table>` of `Beginn` / `Einlass` /
- * `Vorverkauf` / `Tageskasse` rows — a real presale *and* box-office price.
+ * Each page adds what the card cannot carry: the prose `.description`, the `… präsentiert:`
+ * `.promoter`, the full-size poster, and a `<table>` of `Beginn` / `Einlass` / `Vorverkauf` /
+ * `Tageskasse` rows — a real presale *and* box-office price.
  *
- * It is also the only page carrying the **category**, as an `event-categories-<slug>` class on
- * its `<article>`. The venue marks its DJ nights `party` and leaves most concerts untagged, and a
- * night can carry both (`Disco Inferno` is `concerts party`) — so `party` wins, and an untagged
- * event falls back to title inference rather than being defaulted to `OTHER`.
+ * Also the only page carrying the **category**, as an `event-categories-<slug>` class on its
+ * `<article>`. The venue marks DJ nights `party` and leaves most concerts untagged, and a night
+ * can carry both (`Disco Inferno` is `concerts party`) — so `party` wins, and an untagged event
+ * falls back to title inference rather than `OTHER`.
  *
  * @see QuasimodoOverviewPageScraper for the listing parser (discovery, date, genre, thumbnail).
  * @see QuasimodoWebsiteImporter for the HTTP fetch orchestrator.
@@ -37,10 +37,9 @@ class QuasimodoDetailPageScraper {
     private val logger = KotlinLogging.logger {}
 
     /**
-     * Parses an event detail page into a [ScrapedEvent], or `null` when the page carries no title.
+     * Parses a detail page into a [ScrapedEvent], or `null` without a title.
      *
-     * @param sourceUrl the event's URL, used as [ScrapedEvent.sourceUrl] and to derive the
-     *   [ScrapedEvent.sourceId].
+     * @param sourceUrl the event's URL: [ScrapedEvent.sourceUrl] and the [ScrapedEvent.sourceId].
      */
     @Suppress("ReturnCount") // A guard clause for the missing title is clearer than nesting
     fun scrape(
@@ -71,8 +70,8 @@ class QuasimodoDetailPageScraper {
             ticketUrl = document.hrefAt("a.ticket"),
             pricePresale = parsePriceValue(presale),
             priceBoxOffice = parsePriceValue(document.detailTableCell(BOX_OFFICE_LABEL)),
-            // The presale is written "ab 30€ (zzgl. Gebühr)"; the numeric field cannot carry the
-            // "from" or the booking-fee caveat, so the venue's own wording is kept alongside it.
+            // The presale is written "ab 30€ (zzgl. Gebühr)"; the numeric field cannot carry the "from" or
+            // the booking-fee caveat, so the venue's own wording is kept alongside it.
             priceNote = presale,
             genre = document.select(".tags a").joinToString(", ") { it.text().trim() }.takeIf { it.isNotBlank() },
             promoters = listOfNotNull(parsePromoter(document)),
@@ -81,11 +80,9 @@ class QuasimodoDetailPageScraper {
     }
 
     /**
-     * Maps the `event-categories-<slug>` class on the page's `<article>` to an [EventType], or
-     * `null` when the venue tagged the event with no category at all.
-     *
-     * `party` is checked first because a DJ night can also be filed under `concerts`, and the
-     * party reading is the one that keeps its event name out of the artist list.
+     * Maps the `event-categories-<slug>` class on the `<article>` to an [EventType], or `null`
+     * when untagged. `party` is checked first because a DJ night can also be filed under
+     * `concerts`, and the party reading keeps its event name out of the artist list.
      */
     private fun parseCategory(document: Document): String? {
         val classes = document.selectFirst("article.type-event")?.classNames().orEmpty()
@@ -98,9 +95,8 @@ class QuasimodoDetailPageScraper {
     }
 
     /**
-     * Reads the promoter from the `.promoter` line, dropping the venue's `"… präsentiert:"`
-     * suffix (`"FKP Scorpio präsentiert:"` → `"FKP Scorpio"`). Returns `null` when the line is
-     * absent — the venue's own in-house nights name no promoter.
+     * The promoter from the `.promoter` line minus the `"… präsentiert:"` suffix (`"FKP Scorpio
+     * präsentiert:"` → `"FKP Scorpio"`); `null` when absent — in-house nights name no promoter.
      */
     private fun parsePromoter(document: Document): String? =
         document

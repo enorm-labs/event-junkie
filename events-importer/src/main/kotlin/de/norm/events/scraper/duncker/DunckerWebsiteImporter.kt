@@ -15,11 +15,8 @@ import java.time.Clock
 /**
  * Website importer for Duncker Club Berlin's retro `start.html` programme page.
  *
- * The whole programme lives on a single hand-coded HTML page with no per-event
- * detail pages, so the pipeline is a single fetch:
- * 1. Fetch `start.html` via [HtmlFetcher] with conditional-request support
- *    (ETag / Last-Modified).
- * 2. Parse all events from the page via [DunckerOverviewPageScraper].
+ * One hand-coded page, no detail pages, so a single fetch: [HtmlFetcher] fetches `start.html`
+ * conditionally (ETag / Last-Modified), [DunckerOverviewPageScraper] parses it.
  *
  * @see DunckerOverviewPageScraper for the HTML parsing logic.
  * @see <a href="https://www.dunckerclub.de/start.html">Duncker Club programme</a>
@@ -27,7 +24,7 @@ import java.time.Clock
 @Component
 class DunckerWebsiteImporter(
     private val htmlFetcher: HtmlFetcher,
-    /** Clock for the scraper's past-event cutoff and year inference. Defaults to the system clock; override in tests. */
+    /** Clock for the scraper's past-event cutoff and year inference; override in tests. */
     clock: Clock = Clock.systemDefaultZone()
 ) : EventImporter {
     private val logger = KotlinLogging.logger {}

@@ -22,20 +22,18 @@ import org.jsoup.nodes.Element
 /**
  * Pure HTML parser for Mikropol Berlin's Events-Manager `/events/` listing (overview) page.
  *
- * The `/events/` page groups every upcoming show under `<h2 class="event-month">` headings
- * and renders each as an `<a class="event">` card linking to its `/event/<date-slug>/`
- * detail page. A card carries a `.date` line (weekday + `DD.MM.YYYY`), a `.time` block
- * (`.start` / `.doors` spans), an `.eventname`, an optional `.support` line, and — for a
- * sold-out or cancelled show — an `Ausverkauft` / `Abgesagt` CSS class on the anchor. A
- * relocated show is not flagged with a class; instead its title opens with a
- * "verlegt in den … –" note (stripped by [stripRelocationPrefix]).
+ * Every upcoming show sits under an `<h2 class="event-month">` heading as an `<a class="event">`
+ * card linking to its `/event/<date-slug>/` page: a `.date` line (weekday + `DD.MM.YYYY`), a
+ * `.time` block (`.start` / `.doors` spans), an `.eventname`, an optional `.support` line, and
+ * for a sold-out or cancelled show an `Ausverkauft` / `Abgesagt` CSS class on the anchor. A
+ * relocated show has no class; its title opens with a "verlegt in den … –" note (stripped by
+ * [stripRelocationPrefix]).
  *
- * The overview is the source for the event discovery list plus every field except the ones
- * only the detail page carries (description, image, ticket URL). Because
- * [MikropolWebsiteImporter] falls back to this data when a detail page fails to fetch, each
- * event is parsed as completely as the listing allows. The date is read from the ISO
- * `YYYY-MM-DD` prefix the venue bakes into every event slug — a canonical identifier cleaner
- * than the German `DD.MM.YYYY` rendering — falling back to the `.date` line.
+ * The overview is the discovery list plus every field except the detail-only ones
+ * (description, image, ticket URL). [MikropolWebsiteImporter] falls back to it when a detail
+ * page fails, so each event is parsed as completely as the listing allows. The date comes from
+ * the ISO `YYYY-MM-DD` prefix in every event slug — cleaner than the German `DD.MM.YYYY`
+ * rendering — falling back to the `.date` line.
  *
  * @see MikropolDetailPageScraper for the detail-page data source (description, image, ticket).
  * @see MikropolWebsiteImporter for the HTTP fetch orchestrator.
@@ -45,10 +43,9 @@ class MikropolOverviewPageScraper {
     private val logger = KotlinLogging.logger {}
 
     /**
-     * Parses all event cards from the overview page document.
+     * Parses all event cards from the overview page.
      *
-     * @param baseUrl the URL the document was fetched from, used to resolve relative
-     *   detail links and build `sourceId` values.
+     * @param baseUrl the URL the document was fetched from, for detail links and `sourceId` values.
      */
     fun scrape(
         document: Document,
@@ -68,7 +65,7 @@ class MikropolOverviewPageScraper {
         }
     }
 
-    /** Parses a single `a.event` card into a [ScrapedEvent], or `null` when it has no title. */
+    /** Parses one `a.event` card into a [ScrapedEvent], or `null` without a title. */
     @Suppress("ReturnCount") // Guard clauses for the required href/title are clearer than nesting
     private fun parseCard(
         card: Element,
