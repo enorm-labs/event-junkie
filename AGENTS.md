@@ -323,6 +323,7 @@ ADR-032 is the one to know unprompted — no file carries the version, it is com
 | Release notes categories                | `.github/release.yml`                                                                                                                     |
 | Dependabot · Renovate · the boundary    | `.github/dependabot.yml`, `.github/renovate.json5`, ADR-024 — which mechanism owns what; read before adding a fourth                      |
 | Releasing & deploying, end to end       | `docs/ops/RELEASING.md` — the diagram; ADR-016 has the reasoning                                                                          |
+| Post-deploy checks, where each one runs | ADR-033 — nothing in Actions reaches staging; a hook in-cluster, k3d for a browser suite, production from Actions                         |
 | Bootstrapping a cluster, once           | `docs/ops/CLUSTER_BOOTSTRAP.md` — ordered runbook; traps table at the bottom                                                              |
 | Connecting to a running cluster         | `docs/ops/CLUSTER_ACCESS.md` — tunnel, kubeconfig, contexts, k9s. Read-only; nothing in it changes anything                               |
 | Upgrading k3s on a running node         | `docs/ops/K3S_UPGRADE.md` — in place, not a rebuild; the Traefik check is the one that matters                                            |
