@@ -267,7 +267,7 @@ predefined role granting the statistics views and nothing else.
 [CLUSTER_ACCESS.md](CLUSTER_ACCESS.md) §7 does not cover. That section's `ssh -L` forward connects you
 as the **`events`** role, which cannot `CREATE ROLE`. For a superuser you skip the forward and work on
 the node itself, where the distribution's peer entries still admit the `postgres` account.
-`cloud-init/postgres.sh` keeps them deliberately, "so `sudo -u postgres psql` keeps working for
+`infra/modules/environment/cloud-init/postgres.sh` keeps them deliberately, "so `sudo -u postgres psql` keeps working for
 operators":
 
 ```sh
