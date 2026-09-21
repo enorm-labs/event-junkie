@@ -19,25 +19,21 @@ import java.time.LocalTime
 /**
  * Pure HTML parser for Monarch Berlin's retro `programm.php` event page.
  *
- * The site is hand-coded PHP with **no semantic structure**: the whole programme
- * lives on one page as a flat run of presentational `<div>` blocks, one per event,
- * and there are no per-event URLs. Each block carries:
- * - a leading bold date line — `Weekday DD/MM/YYYY-HH:MM` (e.g. "Samstag 11/07/2026-18:30");
- * - a title cell `td#td1`, where a trailing `(KONZERT)` suffix marks a concert and a
- *   leading `ABGESAGT` marks a cancellation; and
+ * Hand-coded PHP with **no semantic structure**: the whole programme is one page of flat
+ * presentational `<div>` blocks, one per event, no per-event URLs. Each block carries:
+ * - a leading bold date line — `Weekday DD/MM/YYYY-HH:MM` ("Samstag 11/07/2026-18:30");
+ * - a title cell `td#td1`, where a trailing `(KONZERT)` marks a concert and a leading
+ * `ABGESAGT` a cancellation; and
  * - an optional external "Ticket Vorverkauf" shop link (eventim, dice, ra.co, …).
  *
- * Parsing anchors on the one stable, semantic-ish handle in the markup: the title
- * cell's `id=td1`. The enclosing event block is its nearest `<div>` ancestor, which
- * supplies the date line and ticket link. The date carries a full four-digit year,
- * so no weekday-based year inference is needed. The venue leaves stale past events
- * listed; those are dropped centrally at persistence time (`EventUpsertService`), so
- * this parser returns every dated block as-is.
+ * Parsing anchors on the one stable handle: the title cell's `id=td1`. The enclosing block is
+ * its nearest `<div>` ancestor, supplying date line and ticket link. The date carries a full
+ * four-digit year, so no weekday inference. Stale past events stay listed and are dropped
+ * centrally at persistence (`EventUpsertService`), so every dated block is returned as-is.
  *
- * The block's secondary `td.tom` cell mixes real support lineups with pay-at-door
- * notes ("Abendkasse") and free-text blurbs with no structural separator, so it is
- * intentionally not parsed for artists — only a concert's title-derived headliner is
- * extracted, avoiding minting notes/descriptions as artist entries.
+ * The secondary `td.tom` cell mixes real support lineups with pay-at-door notes ("Abendkasse")
+ * and free-text blurbs with no structural separator, so it is intentionally not parsed for
+ * artists — only a concert's title-derived headliner is extracted, avoiding notes minted as artists.
  *
  * @see MonarchWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://kottimonarch.de/programm.php">Monarch programme</a>
@@ -46,10 +42,9 @@ class MonarchOverviewPageScraper {
     private val logger = KotlinLogging.logger {}
 
     /**
-     * Parses all events from the Monarch programme page document.
+     * Parses all events from the programme page, one per event block.
      *
-     * @param baseUrl the URL the document was fetched from, used as each event's `sourceUrl`.
-     * @return a list of [ScrapedEvent] instances, one per event block.
+     * @param baseUrl the URL the document was fetched from, each event's `sourceUrl`.
      */
     fun scrape(
         document: Document,
@@ -92,17 +87,17 @@ class MonarchOverviewPageScraper {
             return null
         }
 
-        // "(KONZERT)" is the venue's authoritative concert marker. For everything else
-        // (DJ nights, parties, other formats) the title is classified by keyword —
-        // a party/quiz/show/… cue types it, otherwise it stays OTHER. It deliberately
-        // does not default unmarked events to CONCERT (see [inferUnmarkedTitleType]).
+        // "(KONZERT)" is the venue's authoritative concert marker. Everything else (DJ nights,
+        // parties, other formats) is classified by keyword — a party/quiz/show/… cue types it,
+        // otherwise OTHER. Unmarked events deliberately do not default to CONCERT (see
+        // [inferUnmarkedTitleType]).
         val eventType =
             if (KONZERT_PATTERN.containsMatchIn(rawTitle)) mapEventType("konzert") else inferUnmarkedTitleType(rawTitle)
         // "ABGESAGT" in the raw title flags a cancellation.
         val status = parseEventStatus(rawTitle)
 
-        // The ticket link is the external "Ticket Vorverkauf" anchor; artist info links
-        // inside td.tom carry only an icon (no text), so they never match here.
+        // The ticket link is the external "Ticket Vorverkauf" anchor; artist info links inside td.tom
+        // carry only an icon (no text), so they never match here.
         val ticketUrl = block.hrefAt("a:contains(Vorverkauf)")
 
         return ScrapedEvent(
@@ -120,7 +115,7 @@ class MonarchOverviewPageScraper {
         )
     }
 
-    /** Parses the calendar date from a "Weekday DD/MM/YYYY-HH:MM" line, or `null` when absent/invalid. */
+    /** The calendar date from a "Weekday DD/MM/YYYY-HH:MM" line, or `null` when absent/invalid. */
     @Suppress("ReturnCount") // Early exits per date component are clearer than nested lets
     private fun parseDate(dateText: String): LocalDate? {
         val match = DATE_TIME_PATTERN.find(dateText) ?: return null
@@ -132,7 +127,7 @@ class MonarchOverviewPageScraper {
         }
     }
 
-    /** Parses the start time from a "Weekday DD/MM/YYYY-HH:MM" line, or `null` when absent/invalid. */
+    /** The start time from a "Weekday DD/MM/YYYY-HH:MM" line, or `null` when absent/invalid. */
     private fun parseStartTime(dateText: String): LocalTime? {
         val match = DATE_TIME_PATTERN.find(dateText) ?: return null
         val hour = match.groupValues[HOUR_GROUP].toInt()
@@ -154,9 +149,8 @@ class MonarchOverviewPageScraper {
 
     companion object {
         /**
-         * Matches the block's date line "<Weekday> DD/MM/YYYY-HH:MM", capturing day,
-         * month, year, hour and minute. The weekday prefix is redundant (the year is
-         * explicit) and ignored.
+         * The block's date line "<Weekday> DD/MM/YYYY-HH:MM", capturing day, month, year, hour and
+         * minute. The weekday prefix is redundant (the year is explicit) and ignored.
          */
         private val DATE_TIME_PATTERN = Regex("""(\d{1,2})/(\d{1,2})/(\d{4})-(\d{1,2}):(\d{2})""")
         private const val HOUR_GROUP = 4

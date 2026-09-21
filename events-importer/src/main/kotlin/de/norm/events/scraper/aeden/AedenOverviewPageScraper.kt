@@ -24,18 +24,17 @@ import java.time.format.DateTimeParseException
  * Every night is a `.single-accordion` block holding the full event data:
  * - `.event-title` — the party/series name (never a performer, see below);
  * - `.event-time` — the start time as `HH:mm`;
- * - `.event-date` — the date as `"01/08/2026 Saturday"` (`d/M/yyyy` plus an English weekday, which is
- *   redundant and ignored — the four-digit year makes weekday inference unnecessary);
+ * - `.event-date` — `"01/08/2026 Saturday"` (`d/M/yyyy` plus an English weekday, redundant and
+ * ignored — the four-digit year needs no weekday inference);
  * - `.event-genre` — a comma-separated style list (`"Trance, Techno"`), stored raw as the genre;
- * - `.event-lineup` — a prose block stored as the description, whose `Lineup:` paragraph lists the
- *   DJs one per `<br>` line (see [parseLineup]);
- * - `.event-poster img` — the poster image; and
+ * - `.event-lineup` — a prose block stored as the description, whose `Lineup:` paragraph lists
+ * the DJs one per `<br>` line (see [parseLineup]);
+ * - `.event-poster img` — the poster; and
  * - `.accordion-footer a` — the external ticket link (Resident Advisor or Weeztix).
  *
- * Every event is typed [EventType.PARTY]: ÆDEN is a techno club whose nights are DJ parties, so the
- * title is a series name (`silikon`, `TRINITY pt. IV`) rather than a headliner and is never minted
- * as an artist. The month page carries no per-event link and no prices, so `sourceId` is built from
- * the event date plus the slugified title.
+ * Every event is [EventType.PARTY]: a techno club whose nights are DJ parties, so the title is a
+ * series name (`silikon`, `TRINITY pt. IV`) rather than a headliner and never an artist. The
+ * month page carries no per-event link and no prices, so `sourceId` is date plus slugified title.
  *
  * @see AedenWebsiteImporter for the fetch orchestration (entry page → month pages).
  */
@@ -45,11 +44,11 @@ class AedenOverviewPageScraper {
     /**
      * Parses all events from one month page.
      *
-     * @param baseUrl the URL the document was fetched from; used as the `sourceUrl` since the month
-     *   page links no per-event detail pages.
-     * @return one [ScrapedEvent] per night with a parseable date and title. The venue leaves
-     *   already-passed nights on the current-month page; those are dropped centrally at persistence
-     *   time (`EventUpsertService`), so this parser returns every dated night as-is.
+     * @param baseUrl the URL the document was fetched from; the `sourceUrl`, since the month page
+     * links no detail pages.
+     * @return one [ScrapedEvent] per night with a parseable date and title. Passed nights stay on
+     * the current-month page and are dropped centrally at persistence (`EventUpsertService`), so
+     * every dated night is returned as-is.
      */
     fun scrape(
         document: Document,
@@ -102,13 +101,11 @@ class AedenOverviewPageScraper {
     }
 
     /**
-     * The DJs announced in the lineup block, in billing order.
-     *
-     * The block is prose, but the venue consistently formats the roster as one paragraph opening with
-     * a `Lineup:` label followed by `<br>`-separated names, so only that paragraph is read — the
-     * surrounding blurb paragraphs are left to the description. Names are cleaned of the decorative
-     * leading `&`/`+` the venue uses on a final act, and announcement placeholders (`TBA soon..`,
-     * `More TBA soon…`, `SECRET ACT`) are dropped rather than minted as artists.
+     * The DJs announced in the lineup block, in billing order. The block is prose, but the roster
+     * is consistently one paragraph opening with a `Lineup:` label followed by `<br>`-separated
+     * names, so only that paragraph is read — the blurb paragraphs go to the description. Names
+     * are cleaned of the decorative leading `&`/`+` on a final act, and announcement placeholders
+     * (`TBA soon..`, `More TBA soon…`, `SECRET ACT`) are dropped rather than minted.
      */
     private fun parseLineup(item: Element): List<ScrapedArtist> {
         val lineupParagraph =
@@ -124,10 +121,10 @@ class AedenOverviewPageScraper {
     }
 
     /**
-     * Whether [line] is an "act still to be announced" note rather than a name. Complements the shared
-     * [isNonArtistName] denylist, which matches only the bare `TBA`/`N.N.` tokens — ÆDEN writes the
-     * announcement as a sentence (`TBA soon..`, `More TBA soon…`) and books unnamed slots as
-     * `SECRET ACT`.
+     * Whether [line] is an "act still to be announced" note rather than a name. Complements the
+     * shared [isNonArtistName] denylist, which matches only the bare `TBA`/`N.N.` tokens — ÆDEN
+     * writes the announcement as a sentence (`TBA soon..`, `More TBA soon…`) and books unnamed
+     * slots as `SECRET ACT`.
      */
     private fun isAnnouncementPlaceholder(line: String): Boolean = ANNOUNCEMENT_PLACEHOLDER.containsMatchIn(line)
 

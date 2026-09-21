@@ -13,11 +13,10 @@ import org.springframework.stereotype.Component
 /**
  * Website importer for Sisyphos, read from its Shopify ticket shop.
  *
- * The club publishes no programme. Its only site is the merch shop, and the `TICKETS`
- * collection there carries the few nights the club sells tickets for in advance — one
- * `generationS` a month beside the T-shirts — while the every-weekend programme stays off the
- * web. The import is therefore those ticketed specials, not the club's calendar, and a count of
- * one or two is the source, not a broken parser.
+ * The club publishes no programme. Its only site is the merch shop, whose `TICKETS` collection
+ * carries the few nights sold in advance — one `generationS` a month beside the T-shirts — while
+ * the every-weekend programme stays off the web. The import is those ticketed specials, not the
+ * club's calendar, and a count of one or two is the source, not a broken parser.
  *
  * Shopify exposes every collection as JSON at `/collections/<handle>/products.json`, so one
  * [ApiClient] request feeds [SisyphosApiScraper]. The endpoint answers with a weak `ETag` that

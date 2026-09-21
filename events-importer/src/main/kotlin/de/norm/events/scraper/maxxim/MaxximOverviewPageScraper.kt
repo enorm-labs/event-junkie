@@ -20,13 +20,11 @@ import java.math.BigDecimal
 /**
  * Pure parser for MAXXIM's Wix Events programme page (`/partys`).
  *
- * Every field comes from the embedded `wix-warmup-data` JSON (see
- * [WixEventsWarmupData]) — the rendered cards are never read. Unlike Loge, whose
- * warmup payload omits the price, MAXXIM's `registration.ticketing` block carries
- * the ticket price and the sold-out flag, so the single overview fetch is
- * complete: no `/event-details/<slug>` page is fetched (its `<slug>` is still
- * used for the canonical [ScrapedEvent.sourceUrl] and the stable
- * [ScrapedEvent.sourceId]).
+ * Every field comes from the embedded `wix-warmup-data` JSON (see [WixEventsWarmupData]) — the
+ * rendered cards are never read. Unlike Loge, whose payload omits the price, MAXXIM's
+ * `registration.ticketing` block carries ticket price and sold-out flag, so the single overview
+ * fetch is complete: no `/event-details/<slug>` page is fetched (its `<slug>` still serves the
+ * canonical [ScrapedEvent.sourceUrl] and the stable [ScrapedEvent.sourceId]).
  *
  * @see MaxximWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://www.maxxim-berlin.de/partys">MAXXIM programme</a>
@@ -35,11 +33,9 @@ class MaxximOverviewPageScraper {
     private val logger = KotlinLogging.logger {}
 
     /**
-     * Parses all events from the programme page's embedded Wix warmup payload.
+     * Parses all events from the programme page's embedded Wix warmup payload, one per listed night.
      *
-     * @param baseUrl the URL the document was fetched from, used to resolve the
-     *   per-event `/event-details/<slug>` URLs.
-     * @return a list of [ScrapedEvent] instances, one per listed night.
+     * @param baseUrl the URL the document was fetched from, for the `/event-details/<slug>` URLs.
      */
     fun scrape(
         document: Document,
@@ -75,7 +71,7 @@ class MaxximOverviewPageScraper {
             return null
         }
         // Unlike Loge there is no detail page to recover a to-be-decided date from, so an event
-        // without a resolvable startDate is dropped rather than persisted with a sentinel date.
+        // without a resolvable startDate is dropped rather than persisted with a sentinel.
         val schedule = parseWixSchedule(node.path("scheduling").path("config"))
         val eventDate = schedule.date
         if (eventDate == null) {
@@ -90,7 +86,7 @@ class MaxximOverviewPageScraper {
         return ScrapedEvent(
             title = title,
             description = node.stringOrNull("description"),
-            // MAXXIM publishes no categories: it is a club whose every night is a DJ dance party.
+            // MAXXIM publishes no categories: a club whose every night is a DJ dance party.
             eventType = EventType.PARTY.name,
             eventDate = eventDate,
             startTime = schedule.startTime,

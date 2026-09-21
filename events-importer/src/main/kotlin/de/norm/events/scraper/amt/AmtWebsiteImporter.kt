@@ -14,18 +14,16 @@ import org.jsoup.nodes.Document
 import org.springframework.stereotype.Component
 
 /**
- * Website importer for AMT Club Berlin — a Webflow techno club whose `/events` entry page carries
- * no events server-side (a Finsweet CMS-nest list injects them client-side). The entry page instead
- * links to per-month `/month/<name>` pages, each of which is fully server-rendered; this importer
- * discovers those month links from the entry page, fetches each one, and parses its events via
- * [AmtOverviewPageScraper].
+ * Website importer for AMT Club Berlin — a Webflow techno club whose `/events` entry page
+ * carries no events server-side (a Finsweet CMS-nest list injects them client-side). The entry
+ * page links to per-month `/month/<name>` pages, each fully server-rendered; this importer
+ * discovers those links, fetches each, and parses its events via [AmtOverviewPageScraper].
  *
- * Conditional requests are intentionally **not** used: the entry-page ETag only changes when a new
- * month is added, not when a night is edited within an existing month, so relying on it would miss
- * mid-month edits. Every run re-fetches the entry and month pages and relies on idempotent `sourceId`
- * upserts — [ImportResult.Success] is returned with `null` cache headers (there is no `NotModified`
- * path). Past-dated nights the venue leaves on the current-month page are dropped centrally at
- * persistence time (`EventUpsertService`).
+ * Conditional requests are intentionally **not** used: the entry-page ETag changes only when a
+ * month is added, not when a night is edited within one, so relying on it would miss mid-month
+ * edits. Every run re-fetches entry and month pages and relies on idempotent `sourceId` upserts
+ * — [ImportResult.Success] with `null` cache headers (no `NotModified` path). Past-dated nights
+ * left on the current-month page are dropped centrally at persistence (`EventUpsertService`).
  *
  * @see AmtOverviewPageScraper for the per-month parsing.
  * @see <a href="https://www.club-amt.berlin/events">AMT events page</a>

@@ -21,11 +21,11 @@ import java.time.LocalDate
  * Pure parser for the Sisyphos ticket shop's Shopify product feed
  * (`/collections/tickets/products.json`).
  *
- * The shop is the club's only website, and a ticketed night is a product of type `Ticket`
- * whose only date is written into the title (`generationS 10. OKT 2026`). A product with no
- * date in its title or its `body_html` — the Sauniphos sauna weekend names only weekdays — is
- * skipped rather than stored on a guessed day. A night whose every variant is unavailable is
- * sold out, and the lowest variant price is the online (presale) price.
+ * The shop is the club's only website, and a ticketed night is a product of type `Ticket` whose
+ * only date is in the title (`generationS 10. OKT 2026`). A product with no date in its title
+ * or `body_html` — the Sauniphos sauna weekend names only weekdays — is skipped rather than
+ * stored on a guessed day. A night whose every variant is unavailable is sold out, and the
+ * lowest variant price is the online (presale) price.
  */
 class SisyphosApiScraper {
     private val logger = KotlinLogging.logger {}
@@ -112,9 +112,8 @@ class SisyphosApiScraper {
     }
 
     /**
-     * Reads the night's date out of [rawTitle] (`generationS 10. OKT 2026`), else out of the
-     * [description], and returns the title with the date removed. The date is null when neither
-     * names one.
+     * The night's date out of [rawTitle] (`generationS 10. OKT 2026`), else out of the
+     * [description], and the title with the date removed. The date is null when neither names one.
      */
     private fun splitTitleAndDate(
         rawTitle: String,

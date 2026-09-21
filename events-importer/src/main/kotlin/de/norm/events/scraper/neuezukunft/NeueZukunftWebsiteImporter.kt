@@ -13,22 +13,20 @@ import org.springframework.stereotype.Component
 /**
  * Website importer for Neue Zukunft Berlin.
  *
- * The public site (`neue-zukunft.org`) is a static landing page whose concert programme
- * is published only as an image-based monthly PDF poster and, on the page, an embedded
- * Elfsight "Event Calendar" widget rendered client-side. Neither is scrapeable as HTML,
- * but the widget's public boot API returns every event as clean structured JSON — the
- * most stable possible source (ADR-007 §"Selector Strategy" — structured data is
- * priority 1), reachable without a headless browser. This importer:
- * 1. Fetches the widget boot JSON via [ApiClient.fetchJson] (shared politeness
- *    throttle and identifying User-Agent). The configured `url` is the boot endpoint
- *    carrying the widget id (`core.service.elfsight.com/p/boot/?w=<widgetId>`) and is
- *    used verbatim — all events come back in the single response (ADR-007 first-page-only).
- * 2. Parses it into [de.norm.events.scraper.ScrapedEvent]s via [NeueZukunftApiScraper].
+ * The public site (`neue-zukunft.org`) is a static landing page whose programme is published
+ * only as an image-based monthly PDF poster and an embedded Elfsight "Event Calendar" widget
+ * rendered client-side. Neither is scrapeable as HTML, but the widget's public boot API returns
+ * every event as clean JSON — the most stable source (ADR-007 §"Selector Strategy" — structured
+ * data is priority 1), no headless browser needed:
+ * 1. [ApiClient.fetchJson] fetches the boot JSON (shared politeness throttle and User-Agent).
+ * The configured `url` is the boot endpoint with the widget id
+ * (`core.service.elfsight.com/p/boot/?w=<widgetId>`), used verbatim — all events come back in
+ * one response (ADR-007 first-page-only).
+ * 2. [NeueZukunftApiScraper] parses it into [de.norm.events.scraper.ScrapedEvent]s.
  *
- * The Elfsight boot API sends no ETag / Last-Modified, so conditional requests do not
- * apply: the `etag` / `lastModified` parameters are ignored and every import returns
- * [ImportResult.Success] (never [ImportResult.NotModified]). Re-imports stay cheap and
- * safe because persistence upserts idempotently by `sourceId`.
+ * The boot API sends no ETag / Last-Modified, so `etag` / `lastModified` are ignored and every
+ * import returns [ImportResult.Success] (never [ImportResult.NotModified]). Re-imports stay
+ * cheap and safe because persistence upserts idempotently by `sourceId`.
  *
  * @see NeueZukunftApiScraper for the JSON parsing logic.
  * @see <a href="https://neue-zukunft.org/">Neue Zukunft</a>
@@ -52,8 +50,8 @@ class NeueZukunftWebsiteImporter(
         val events = apiScraper.scrape(json)
         logger.info { "Scraped ${events.size} event(s) from Neue Zukunft" }
 
-        // The Elfsight boot API has no conditional-request support, so there is no NotModified path;
-        // ETag / Last-Modified are always null and change detection relies on idempotent upserts.
+        // No conditional-request support, so no NotModified path; ETag / Last-Modified are always
+        // null and change detection relies on idempotent upserts.
         return ImportResult.Success(events = events, etag = null, lastModified = null)
     }
 }

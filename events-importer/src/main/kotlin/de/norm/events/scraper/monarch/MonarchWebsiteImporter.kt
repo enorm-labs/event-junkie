@@ -14,11 +14,9 @@ import org.springframework.stereotype.Component
 /**
  * Website importer for Monarch Berlin's retro `programm.php` event listing.
  *
- * Monarch renders its whole programme on a single hand-coded PHP page with no
- * per-event detail pages, so the pipeline is a single request per cycle:
- * 1. Fetch the programme page via [HtmlFetcher] with conditional request support
- *    (ETag / Last-Modified).
- * 2. Parse all events from the single page via [MonarchOverviewPageScraper].
+ * The whole programme is one hand-coded PHP page with no detail pages, so one request per
+ * cycle: [HtmlFetcher] fetches it conditionally (ETag / Last-Modified),
+ * [MonarchOverviewPageScraper] parses it.
  *
  * @see MonarchOverviewPageScraper for the HTML parsing logic.
  * @see <a href="https://kottimonarch.de/programm.php">Monarch programme</a>

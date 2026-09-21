@@ -21,33 +21,30 @@ import java.time.MonthDay
 /**
  * Pure HTML parser for OHM Berlin's home-page programme.
  *
- * The venue's whole upcoming programme is a `ul.event-list`, each `li.event-item` carrying a
- * `.event-date` (`31/07`), a `.event-time` (`23:00`), an `.event-title` and a `<br>`-separated
- * `.event-lineup` of DJs. There are no per-event URLs, images, prices or ticket links, so this
- * single page is the whole source and `sourceId` is built from the resolved date plus the
- * slugified title.
+ * The whole upcoming programme is a `ul.event-list`, each `li.event-item` carrying an
+ * `.event-date` (`31/07`), an `.event-time` (`23:00`), an `.event-title` and a `<br>`-separated
+ * `.event-lineup` of DJs. No per-event URLs, images, prices or ticket links, so this page is the
+ * whole source and `sourceId` is the resolved date plus slugified title.
  *
- * **The date carries no year and no weekday.** The year is resolved with
- * [inferYearForWeekday]'s weekday-less path — the occurrence nearest today wins — so a night
- * that has just happened stays in the current year rather than rolling twelve months forward.
- * The venue leaves the night in progress on the page until it is over, which is exactly the case
- * that rule protects.
+ * **The date carries no year and no weekday.** The year comes from [inferYearForWeekday]'s
+ * weekday-less path — the occurrence nearest today — so a night that has just happened stays in
+ * the current year rather than rolling twelve months forward. The venue leaves the night in
+ * progress on the page until it is over, exactly the case that rule protects.
  *
  * @see OhmWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://ohmberlin.com/">OHM Berlin</a>
  */
 class OhmOverviewPageScraper(
-    /** Clock for year inference on the year-less dates. Defaults to the system clock; override in tests for determinism. */
+    /** Clock for year inference on the year-less dates; override in tests. */
     private val clock: Clock = Clock.systemDefaultZone()
 ) {
     private val logger = KotlinLogging.logger {}
 
     /**
-     * Parses all events from the programme page document.
+     * Parses all events from the programme page, one per listed night.
      *
-     * @param baseUrl the URL the document was fetched from; used as every event's `sourceUrl`,
-     *   since the venue publishes no per-event pages.
-     * @return a list of [ScrapedEvent] instances, one per listed night.
+     * @param baseUrl the URL the document was fetched from; every event's `sourceUrl`, since no
+     * per-event pages exist.
      */
     fun scrape(
         document: Document,
@@ -67,7 +64,7 @@ class OhmOverviewPageScraper(
         }
     }
 
-    /** Parses a single `li.event-item` into a [ScrapedEvent], or `null` when it has no title or date. */
+    /** Parses one `li.event-item` into a [ScrapedEvent], or `null` without a title or date. */
     @Suppress("ReturnCount") // Guard clauses for the required title/date are clearer than nesting
     private fun parseItem(
         item: Element,
@@ -91,7 +88,7 @@ class OhmOverviewPageScraper(
             eventType = EventType.PARTY.name,
             eventDate = eventDate,
             startTime = parseTime(item.textAt(".event-time")),
-            // No per-event pages exist, so the listing itself is the canonical URL.
+            // No per-event pages, so the listing itself is the canonical URL.
             sourceUrl = baseUrl,
             sourceId = "${EventSource.OHM.sourceIdPrefix}$eventDate-${SlugGenerator.slugify(title)}",
             artists = parseLineup(item)
@@ -99,8 +96,7 @@ class OhmOverviewPageScraper(
     }
 
     /**
-     * Resolves the year-less `DD/MM` date the venue renders. Returns `null` when the text is
-     * missing or not a day/month pair.
+     * Resolves the year-less `DD/MM` date. `null` when missing or not a day/month pair.
      */
     private fun parseEventDate(text: String?): LocalDate? {
         val match = DAY_MONTH_PATTERN.find(text.orEmpty())
@@ -113,11 +109,9 @@ class OhmOverviewPageScraper(
     }
 
     /**
-     * Builds the DJ roster from the `<br>`-separated `.event-lineup` block.
-     *
-     * The event *title* is a party or collective name (`"Ouch x FemmeDecks"`), never an act, so
-     * it is deliberately not minted as an artist — only the lineup entries are, each as a `DJ`.
-     * Placeholder and role labels are dropped by [isNonArtistName].
+     * The DJ roster from the `<br>`-separated `.event-lineup` block. The *title* is a party or
+     * collective name (`"Ouch x FemmeDecks"`), never an act, so not minted — only the lineup
+     * entries are, each a `DJ`. Placeholder and role labels are dropped by [isNonArtistName].
      */
     private fun parseLineup(item: Element): List<ScrapedArtist> =
         item
@@ -126,5 +120,5 @@ class OhmOverviewPageScraper(
             .map { ScrapedArtist(name = it, role = "DJ") }
 }
 
-/** Matches the venue's year-less `DD/MM` date rendering, tolerating single-digit parts. */
+/** The year-less `DD/MM` date rendering, tolerating single-digit parts. */
 private val DAY_MONTH_PATTERN = Regex("""(\d{1,2})\s*/\s*(\d{1,2})""")

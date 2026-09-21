@@ -12,21 +12,20 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
 
 /**
- * The cookie ROSA's age gate sets on a visitor who confirms they are 18 or over.
- *
- * Without it `/dates` serves the gate and no programme at all. The value is a self-certification
- * flag rather than a credential: nothing is authenticated, and the same page is public to anyone
- * who clicks through. It is sent with the fetch because the alternative is importing an empty
- * programme from a venue that publishes one.
+ * The cookie ROSA's age gate sets on a visitor who confirms they are 18 or over. Without it
+ * `/dates` serves the gate and no programme. A self-certification flag, not a credential:
+ * nothing is authenticated, and the same page is public to anyone who clicks through. Sent
+ * with the fetch because the alternative is importing an empty programme from a venue that
+ * publishes one.
  */
 private val AGE_GATE_COOKIE = mapOf("rosa_age_ok" to "1")
 
 /**
  * Website importer for ROSA Berlin's Next.js programme page.
  *
- * One fetch per import: the listing carries every event, and the parsing lives in
- * [RosaOverviewPageScraper]. The fetch sends [AGE_GATE_COOKIE], which is the only reason this
- * importer needs anything the other single-page venues do not.
+ * One fetch per import: the listing carries every event, parsed by [RosaOverviewPageScraper].
+ * The fetch sends [AGE_GATE_COOKIE], the only reason this importer needs anything the other
+ * single-page venues do not.
  *
  * @see <a href="https://www.rosaclub.de/dates">ROSA dates</a>
  */

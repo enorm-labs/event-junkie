@@ -14,11 +14,9 @@ import org.springframework.stereotype.Component
 /**
  * Website importer for Clash Berlin's WordPress-based event listing.
  *
- * Clash renders all upcoming events inline in the homepage `#events` section — there
- * are no separate detail pages, so the pipeline is a single request:
- * 1. Fetch the homepage via [HtmlFetcher] with conditional-request support
- *    (ETag / Last-Modified).
- * 2. Parse all events from the single page via [ClashOverviewPageScraper].
+ * All upcoming events render inline in the homepage `#events` section — no detail pages, so a
+ * single request: [HtmlFetcher] fetches the homepage conditionally (ETag / Last-Modified),
+ * [ClashOverviewPageScraper] parses it.
  *
  * @see ClashOverviewPageScraper for the HTML parsing logic.
  * @see <a href="https://clash-berlin.de/">Clash Berlin</a>

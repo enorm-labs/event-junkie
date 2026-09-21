@@ -22,10 +22,9 @@ private val SANITY_ASSET_REF = Regex("""^image-([0-9a-f]+)-(\d+x\d+)-(\w+)$""")
 private const val EVENTS_KEY = "events"
 
 /**
- * Pure parser for ROSA's programme, read from the Next.js flight payload of `/dates`.
- *
- * The markup states each date as a column of animated digits and carries no `time[datetime]`, while
- * the payload holds an ISO `date`, a `time` range, the title, the RA ticket link and the flyer's
+ * Pure parser for ROSA's programme, read from the Next.js flight payload of `/dates`. The
+ * markup states each date as a column of animated digits with no `time[datetime]`, while the
+ * payload holds an ISO `date`, a `time` range, the title, the RA ticket link and the flyer's
  * asset reference — so the payload is the source (ADR-007 §"Prefer a JSON / API Source").
  *
  * @see RosaWebsiteImporter for the fetch, which carries the age-gate cookie.

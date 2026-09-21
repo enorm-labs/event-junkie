@@ -25,19 +25,19 @@ import java.util.Locale
  * Pure HTML parser for a single AMT `/month/<name>` page (e.g. `/month/june`).
  *
  * Each night is a `.div-grid-dan` block carrying the full event data:
- * - `data-date` — the event date as `"June 19, 2026"` (`MMMM d, yyyy`, English), the reliable
- *   date source (it carries a four-digit year, so no weekday inference is needed);
- * - `.name` — the event title (a party/series name like `SUBSTATION`, not a performer);
+ * - `data-date` — `"June 19, 2026"` (`MMMM d, yyyy`, English), the reliable date source (a
+ * four-digit year, so no weekday inference);
+ * - `.name` — the title (a party/series name like `SUBSTATION`, not a performer);
  * - `.sexpos` — an optional theme tag (`[SEX POSITIV]`), stored as the subtitle;
- * - `.perf` — the DJ line, stored as the description; split into [ScrapedArtist]s only when the
- *   venue delimits them with `//` (a space-separated line cannot be split reliably), and dropped
- *   entirely when it is a `tba` placeholder;
+ * - `.perf` — the DJ line, stored as the description; split into [ScrapedArtist]s only when
+ * delimited with `//` (a space-separated line cannot be split reliably), and dropped entirely
+ * when it is a `tba` placeholder;
  * - `a.div-strela` — the external ticket link (Resident Advisor / EventJet);
  * - `.text-block-4` — a tiered `min – max` price (mapped to presale / box-office); and
  * - `a[href^="/event/"]` — the detail-page link, the stable per-event identity for `sourceId`.
  *
- * Every event is typed [EventType.PARTY]: AMT is a techno club and its nights are DJ dance parties,
- * so the title is a series name rather than a headliner and is never minted as an artist.
+ * Every event is [EventType.PARTY]: a techno club whose nights are DJ dance parties, so the
+ * title is a series name rather than a headliner and never an artist.
  *
  * @see AmtWebsiteImporter for the fetch orchestration (entry page → month pages).
  */
@@ -47,11 +47,11 @@ class AmtOverviewPageScraper {
     /**
      * Parses all events from one month page.
      *
-     * @param baseUrl the URL the document was fetched from, used to resolve the relative
-     *   `/event/<slug>` detail links into absolute `sourceUrl` values.
-     * @return one [ScrapedEvent] per night with a parseable date and title. The venue leaves
-     *   recently-passed nights on the current-month page; those are dropped centrally at
-     *   persistence time (`EventUpsertService`), so this parser returns every dated night as-is.
+     * @param baseUrl the URL the document was fetched from, for resolving the relative
+     * `/event/<slug>` links into absolute `sourceUrl` values.
+     * @return one [ScrapedEvent] per night with a parseable date and title. Recently-passed nights
+     * stay on the current-month page and are dropped centrally at persistence
+     * (`EventUpsertService`), so every dated night is returned as-is.
      */
     fun scrape(
         document: Document,
@@ -112,9 +112,9 @@ class AmtOverviewPageScraper {
     }
 
     /**
-     * The DJ line split into performers — but only when the venue delimits them with `//`. A
-     * space-separated line (`"Rubi ChrizzT Reza"`) cannot be split into names reliably, so no
-     * artists are extracted from it. Placeholder/non-artist tokens are filtered out.
+     * The DJ line split into performers — only when delimited with `//`. A space-separated line
+     * (`"Rubi ChrizzT Reza"`) cannot be split reliably, so no artists come from it.
+     * Placeholder/non-artist tokens are filtered out.
      */
     private fun parseDjs(lineup: String?): List<ScrapedArtist> {
         if (lineup == null || !lineup.contains(DJ_SEPARATOR)) return emptyList()
@@ -125,7 +125,7 @@ class AmtOverviewPageScraper {
             .map { ScrapedArtist(name = it, role = "DJ") }
     }
 
-    /** Parses the `MMMM d, yyyy` (`"June 19, 2026"`) `data-date`, returning null when absent or unparseable. */
+    /** Parses the `MMMM d, yyyy` (`"June 19, 2026"`) `data-date`, null when absent or unparseable. */
     private fun parseAmtDate(text: String?): LocalDate? {
         if (text.isNullOrBlank()) return null
         return try {
@@ -136,9 +136,9 @@ class AmtOverviewPageScraper {
     }
 
     /**
-     * Splits a tiered price cell into (presale, box-office). A range (`"10 – 20"`) maps its lower
-     * tier to presale and its upper tier to box-office; a single value (`"25"`) is the presale
-     * price with no box-office tier. Returns `(null, null)` when the cell is blank or carries no digits.
+     * Splits a tiered price cell into (presale, box-office). A range (`"10 – 20"`) maps lower to
+     * presale and upper to box-office; a single value (`"25"`) is the presale price with no
+     * box-office tier. `(null, null)` when blank or without digits.
      */
     private fun parsePrices(text: String?): Pair<BigDecimal?, BigDecimal?> {
         if (text.isNullOrBlank()) return null to null
@@ -153,7 +153,7 @@ class AmtOverviewPageScraper {
         /** The `//` delimiter AMT uses between DJs in the `.perf` line. */
         private const val DJ_SEPARATOR = "//"
 
-        /** A single monetary value in a tiered price cell, accepting a German (`, `) or dot decimal separator. */
+        /** A single monetary value in a tiered price cell, German (`, `) or dot decimal separator. */
         private val PRICE_NUMBER = Regex("""\d+(?:[.,]\d{1,2})?""")
     }
 }
