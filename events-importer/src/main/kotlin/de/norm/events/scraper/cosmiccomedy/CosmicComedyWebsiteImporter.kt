@@ -13,18 +13,17 @@ import org.springframework.stereotype.Component
 
 /**
  * Website importer for Cosmic Comedy Berlin, the English-language stand-up club on Schönhauser
- * Allee — an entirely JSON-sourced importer over the venue's **The Events Calendar** REST API.
+ * Allee — entirely JSON-sourced over the venue's **The Events Calendar** REST API.
  *
- * The plugin returns the whole upcoming programme (its default window runs from today to two years
- * out) fifty events at a time, and hands back its own `next_rest_url` cursor, which this walks
- * rather than building page URLs of its own. [MAX_PAGES] bounds the walk in case that cursor ever
- * fails to terminate.
+ * The plugin returns the whole upcoming programme (default window from today to two years out)
+ * fifty events at a time, handing back its own `next_rest_url` cursor, which this walks rather
+ * than building page URLs. [MAX_PAGES] bounds the walk in case the cursor ever fails to terminate.
  *
- * Conditional requests are unused: the plugin's window is relative to *today*, so the same URL
+ * Conditional requests are unused: the window is relative to *today*, so the same URL
  * legitimately yields a different payload each day, and upserts are idempotent by `sourceId`.
  *
- * The club runs one venue and one art form, so there is nothing to filter — everything the API
- * returns is a comedy night on Schönhauser Allee.
+ * One venue and one art form, so nothing to filter — everything the API returns is a comedy
+ * night on Schönhauser Allee.
  *
  * @see CosmicComedyApiScraper for the parsing logic and the field mapping.
  * @see <a href="https://comedyclubberlin.com/events/">Cosmic Comedy Berlin programme</a>
@@ -64,7 +63,7 @@ class CosmicComedyWebsiteImporter(
     private fun String.querySeparator(): String = if (contains('?')) "&" else "?"
 
     companion object {
-        /** The plugin's maximum page size, so the programme needs the fewest possible requests. */
+        /** The plugin's maximum page size, so the programme needs the fewest requests. */
         private const val PER_PAGE = 50
 
         /**

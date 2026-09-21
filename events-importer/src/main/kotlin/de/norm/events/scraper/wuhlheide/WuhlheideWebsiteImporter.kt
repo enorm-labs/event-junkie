@@ -15,13 +15,11 @@ import org.springframework.stereotype.Component
 /**
  * Website importer for Parkbühne Wuhlheide's open-air programme.
  *
- * Orchestrates the fetch → parse pipeline:
- * 1. Fetch the unpaginated `/programm` page via [HtmlFetcher] with conditional request support
- *    (ETag / Last-Modified).
- * 2. Discover every `.show` via [WuhlheideOverviewPageScraper] — act, tour name, poster,
- *    sold-out flag and the ISO date carried by the event URL.
- * 3. For each event, fetch its `/programm/<act>/YYYY-MM-DD` page and parse it via
- *    [WuhlheideDetailPageScraper] — the only source for doors, start, price and promoter.
+ * 1. [HtmlFetcher] fetches the unpaginated `/programm` page conditionally (ETag / Last-Modified).
+ * 2. [WuhlheideOverviewPageScraper] discovers every `.show` — act, tour name, poster, sold-out
+ * flag and the ISO date in the event URL.
+ * 3. Each `/programm/<act>/YYYY-MM-DD` page via [WuhlheideDetailPageScraper] — the only source
+ * for doors, start, price and promoter.
  *
  * @see WuhlheideOverviewPageScraper for listing parsing (discovery, subtitle, sold-out).
  * @see WuhlheideDetailPageScraper for detail parsing (times, price, promoter).
@@ -47,13 +45,11 @@ class WuhlheideWebsiteImporter(
     ): ScrapedEvent? = detailPageScraper.scrape(document, url)
 
     /**
-     * Merges detail-page data ([primary]) with listing data ([fallback]).
-     *
-     * The detail page owns the times, price and promoter. The **listing owns the subtitle**: the
-     * detail page's `h3` is not reliably a tour name — a show can put an admin notice there — so
-     * it is never read, and the artist roster is rebuilt from the listing's subtitle so a
-     * `Support:` line there still reaches the lineup. The listing also owns the sold-out flag,
-     * which only its `.statusLabel` carries.
+     * Merges detail-page data ([primary]) with listing data ([fallback]). The detail page owns
+     * times, price and promoter. The **listing owns the subtitle**: the detail page's `h3` is not
+     * reliably a tour name — a show can put an admin notice there — so it is never read, and the
+     * roster is rebuilt from the listing's subtitle so a `Support:` line still reaches the lineup.
+     * The listing also owns the sold-out flag, which only its `.statusLabel` carries.
      */
     override fun fillGapsFromOverview(
         primary: ScrapedEvent,

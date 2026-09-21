@@ -22,38 +22,34 @@ import java.util.Locale
 /**
  * Pure HTML parser for Roadrunner's Paradise' retro `programm.html` event page.
  *
- * The site is hand-coded HTML from the early 2000s with **no semantic structure**:
- * every event is a flat run of `<p>` paragraphs, and events are separated by
- * paragraphs containing only a row of dots (". . . . ."). There are no per-event
- * URLs — the whole programme lives on one page.
+ * Hand-coded HTML from the early 2000s with **no semantic structure**: every event is a flat run
+ * of `<p>` paragraphs, separated by paragraphs containing only a row of dots (". . . . ."). No
+ * per-event URLs — the whole programme is one page.
  *
- * Parsing therefore anchors on the one thing that carries meaning: the **German
- * date line** ("Freitag, 29. Mai:"). An event starts at a date line and runs until
- * the next date line or a dotted separator; the paragraphs in between supply the
- * title, doors time, ticket link, flyer image and description.
+ * Parsing anchors on the one thing that carries meaning: the **German date line** ("Freitag,
+ * 29. Mai:"). An event starts at a date line and runs until the next date line or a dotted
+ * separator; the paragraphs between supply title, doors time, ticket link, flyer and description.
  *
- * Dates carry a weekday but **no year**, so the year is inferred from the weekday:
- * among nearby candidate years, the one whose 29 May actually falls on the stated
- * Friday and lands closest to today (see [inferYear]). The venue often leaves stale
- * past events listed; those past-dated events are dropped centrally at persistence
- * time (`EventUpsertService`), so this parser returns every dated block as-is.
+ * Dates carry a weekday but **no year**, so the year comes from the weekday: among nearby
+ * candidate years, the one whose 29 May falls on the stated Friday and lands closest to today
+ * (see [inferYear]). Stale past events often stay listed; they are dropped centrally at
+ * persistence (`EventUpsertService`), so this parser returns every dated block as-is.
  *
  * @see RoadrunnerWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="http://www.roadrunners-paradise.de/programm.html">Roadrunner's Paradise programme</a>
  */
 @Suppress("TooManyFunctions") // Cohesive single-responsibility parser; the retro markup needs many small field extractors
 class RoadrunnerOverviewPageScraper(
-    /** Clock for year inference. Defaults to the system clock; override in tests for determinism. */
+    /** Clock for year inference; override in tests. */
     private val clock: Clock = Clock.systemDefaultZone()
 ) {
     private val logger = KotlinLogging.logger {}
 
     /**
-     * Parses all events from the programme page document.
+     * Parses all events from the programme page, one per dated block.
      *
-     * @param baseUrl the URL the document was fetched from, used to resolve the
-     *   relative flyer image path and as each event's `sourceUrl`.
-     * @return a list of [ScrapedEvent] instances, one per dated block.
+     * @param baseUrl the URL the document was fetched from, for the relative flyer path and as
+     * each event's `sourceUrl`.
      */
     fun scrape(
         document: Document,
@@ -77,11 +73,9 @@ class RoadrunnerOverviewPageScraper(
     }
 
     /**
-     * Groups the flat paragraph list into per-event blocks.
-     *
-     * A [date line][isDateLine] opens a new block; the block then absorbs following
-     * paragraphs until the next date line or a [dotted separator][isSeparator].
-     * Paragraphs before the first date line (page header) and after the last
+     * Groups the flat paragraph list into per-event blocks. A [date line][isDateLine] opens a
+     * block, which absorbs following paragraphs until the next date line or a [dotted
+     * separator][isSeparator]. Paragraphs before the first date line (header) and after the last
      * separator (footer) belong to no block and are dropped.
      */
     @Suppress("DoubleMutabilityForCollection") // The segmenter both starts a block (reassign) and extends it (mutate).
@@ -132,7 +126,7 @@ class RoadrunnerOverviewPageScraper(
         val doorsTime = parseDoorsTime(block)
         val ticketUrl = block.firstNotNullOfOrNull { it.selectFirst("a[href^=http]")?.attr("href") }
         // Flyer file names are typed by hand and may carry a space ("Images/Programm/The lazys.jpg"),
-        // which URI.resolve rejects — and an unusable flyer must not cost the whole event (#1130).
+        // which URI.resolve rejects — an unusable flyer must not cost the whole event (#1130).
         val imageUrl =
             block
                 .firstNotNullOfOrNull { it.selectFirst("img[src]") }
@@ -144,8 +138,8 @@ class RoadrunnerOverviewPageScraper(
         return ScrapedEvent(
             title = title,
             description = description,
-            // The retro programme carries no category field; infer from the title
-            // (concert by default for this live-music venue). See inferConcertVenueType.
+            // No category field; infer from the title (concert by default for this live-music venue). See
+            // inferConcertVenueType.
             eventType = inferConcertVenueType(title),
             eventDate = eventDate,
             doorsTime = doorsTime,
@@ -157,7 +151,7 @@ class RoadrunnerOverviewPageScraper(
         )
     }
 
-    /** The event title, rendered in the first `Stil11` element, with the plain bold title as a fallback. */
+    /** The event title, in the first `Stil11` element, with the plain bold title as fallback. */
     private fun parseTitle(block: List<Element>): String? =
         block
             .firstNotNullOfOrNull { titleElement(it) }
@@ -177,9 +171,8 @@ class RoadrunnerOverviewPageScraper(
     }
 
     /**
-     * Joins the block's prose paragraphs into the description, dropping the
-     * structural lines (date, title, "Einlass…", the ticket-link line, and
-     * dot separators) and image-only paragraphs.
+     * The block's prose paragraphs joined into the description, minus the structural lines (date,
+     * title, "Einlass…", the ticket-link line, dot separators) and image-only paragraphs.
      */
     private fun parseDescription(
         block: List<Element>,
@@ -202,10 +195,8 @@ class RoadrunnerOverviewPageScraper(
     // -- Date parsing & year inference ------------------------------------
 
     /**
-     * Parses a German date line like "Freitag, 29. Mai:" into a [LocalDate].
-     *
-     * The day and month come from the text; the year is [inferred][inferYear] from
-     * the weekday. Returns `null` when the day/month cannot be parsed.
+     * Parses a German date line like "Freitag, 29. Mai:" into a [LocalDate]: day and month from
+     * the text, year [inferred][inferYear] from the weekday. `null` when day/month cannot be parsed.
      */
     private fun parseGermanDate(text: String): LocalDate? {
         val match = DATE_PATTERN.find(text) ?: return null
@@ -223,8 +214,8 @@ class RoadrunnerOverviewPageScraper(
     // -- Line classification ----------------------------------------------
 
     /**
-     * The `Stil11` title styling, which the hand-coded page puts on a `<span>` inside the paragraph
-     * on some blocks and on the `<p>` itself on others (autumn 2026: "BLUT & EISEN 30 JAHRE").
+     * The `Stil11` title styling, on a `<span>` inside the paragraph on some blocks and on the
+     * `<p>` itself on others (autumn 2026: "BLUT & EISEN 30 JAHRE").
      */
     private fun titleElement(p: Element): Element? = if (p.hasClass(TITLE_CLASS)) p else p.selectFirst("span.$TITLE_CLASS")
 
@@ -243,11 +234,11 @@ class RoadrunnerOverviewPageScraper(
         private const val TITLE_CLASS = "Stil11"
 
         /**
-         * Matches a German date line — "<Weekday>, <day>. <Month>" — capturing the weekday, day
-         * number and month name. The comma and the day's dot are optional: the page is typed by
-         * hand and one season wrote "Samstag 05 September:" and "Samstag 31 Oktober:", which the
-         * strict form silently turned into an import of zero events (#1130). The trailing colon
-         * and any following text (e.g. a second date for two-day events) are ignored.
+         * A German date line — "<Weekday>, <day>. <Month>" — capturing weekday, day number and month
+         * name. The comma and the day's dot are optional: the page is typed by hand and one season
+         * wrote "Samstag 05 September:" and "Samstag 31 Oktober:", which the strict form silently
+         * turned into an import of zero events (#1130). The trailing colon and any following text
+         * (e.g. a second date for two-day events) are ignored.
          */
         private val DATE_PATTERN =
             Regex(
@@ -256,7 +247,7 @@ class RoadrunnerOverviewPageScraper(
                 RegexOption.IGNORE_CASE
             )
 
-        /** Extracts "Einlass: HH:mm" (the "Uhr" suffix is ignored). */
+        /** "Einlass: HH:mm" (the "Uhr" suffix is ignored). */
         private val EINLASS_PATTERN = Regex("""Einlass:\s*(\d{1,2}:\d{2})""", RegexOption.IGNORE_CASE)
 
         /** Parses "29. Mai" using full German month names, case-insensitively. */

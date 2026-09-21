@@ -20,15 +20,14 @@ import org.jsoup.nodes.Element
 /**
  * Pure HTML parser for Parkbühne Wuhlheide's `/programm` listing page.
  *
- * The page carries the whole season unpaginated, split into one `.shows` block per year
- * (`Konzerte 2026`, `Konzerte 2027`). Each `.show` holds a German long date, an `h2` act, an
- * `h3` tour name, a poster, an `Ausverkauft` `.statusLabel` and — unless sold out — a ticket
- * link.
+ * The whole season, unpaginated, in one `.shows` block per year (`Konzerte 2026`, `Konzerte
+ * 2027`). Each `.show` holds a German long date, an `h2` act, an `h3` tour name, a poster, an
+ * `Ausverkauft` `.statusLabel` and — unless sold out — a ticket link.
  *
  * The **date comes from the URL**, not the rendered German text: every event links to
- * `/programm/<act>/YYYY-MM-DD`, an ISO date that needs no month-name parsing and doubles as the
+ * `/programm/<act>/YYYY-MM-DD`, an ISO date needing no month-name parsing that doubles as the
  * stable [ScrapedEvent.sourceId]. A run of nights by one act is normal here, and the per-date
- * URL is what keeps them apart.
+ * URL keeps them apart.
  *
  * @see WuhlheideDetailPageScraper for the detail-page data (times, price, promoter).
  * @see WuhlheideWebsiteImporter for the HTTP fetch orchestrator.
@@ -38,11 +37,9 @@ class WuhlheideOverviewPageScraper {
     private val logger = KotlinLogging.logger {}
 
     /**
-     * Parses all shows from the programme page document.
+     * Parses all shows from the programme page, one [ScrapedEvent] per listed show.
      *
-     * @param baseUrl the URL the document was fetched from, used to resolve the per-event
-     *   detail links.
-     * @return a list of [ScrapedEvent] instances, one per listed show.
+     * @param baseUrl the URL the document was fetched from, for resolving the detail links.
      */
     fun scrape(
         document: Document,
@@ -62,7 +59,7 @@ class WuhlheideOverviewPageScraper {
         }
     }
 
-    /** Parses a single `.show` block into a [ScrapedEvent], or `null` when it has no link or title. */
+    /** Parses one `.show` block into a [ScrapedEvent], or `null` without a link or title. */
     @Suppress("ReturnCount") // Guard clauses for the required href/title are clearer than nesting
     private fun parseShow(
         show: Element,
@@ -72,8 +69,8 @@ class WuhlheideOverviewPageScraper {
         val sourceUrl = resolveUrl(baseUrl, href)
         val slug = extractEventSlug(sourceUrl, "/programm/")
 
-        // Jsoup renders the act's <wbr> word-break hint away, so "AnnenMay<wbr>Kantereit"
-        // comes back as the unbroken "AnnenMayKantereit".
+        // Jsoup renders the act's <wbr> word-break hint away, so "AnnenMay<wbr>Kantereit" comes back
+        // as the unbroken "AnnenMayKantereit".
         val title = show.textAt("h2 a")?.let { cleanEventTitle(it) }
         if (title.isNullOrBlank()) {
             logger.warn { "Parkbühne Wuhlheide show '$slug' has no title, skipping" }

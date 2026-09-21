@@ -12,13 +12,10 @@ import org.springframework.stereotype.Component
 /**
  * Website importer for Modus Berlin's programme.
  *
- * Orchestrates the fetch → parse pipeline:
- * 1. Fetch the unpaginated `/events` page via [HtmlFetcher] with conditional request support
- *    (ETag / Last-Modified).
- * 2. Discover every `.event-item` tile via [ModusOverviewPageScraper] — title, rendered date
- *    and poster.
- * 3. For each event, fetch its `/event/DDMMYY-<Name>` page and parse it via
- *    [ModusDetailPageScraper] — the source for the start time, ticket link and description.
+ * 1. [HtmlFetcher] fetches the unpaginated `/events` page conditionally (ETag / Last-Modified).
+ * 2. [ModusOverviewPageScraper] discovers every `.event-item` tile — title, rendered date and poster.
+ * 3. Each `/event/DDMMYY-<Name>` page via [ModusDetailPageScraper] — start time, ticket link
+ * and description.
  *
  * @see ModusOverviewPageScraper for listing parsing (discovery, date, poster).
  * @see ModusDetailPageScraper for detail parsing (times, ticket, description).
@@ -44,11 +41,10 @@ class ModusWebsiteImporter(
     ): ScrapedEvent? = detailPageScraper.scrape(document, url)
 
     /**
-     * Merges detail-page data ([primary]) with listing data ([fallback]).
-     *
-     * Both pages render the same date and title, so the detail page simply wins and the
-     * listing backstops it. The poster is taken from the listing when the detail page has
-     * none, and the listing's date fills in only if the detail `h2` was unparseable.
+     * Merges detail-page data ([primary]) with listing data ([fallback]). Both render the same
+     * date and title, so the detail page wins and the listing backstops it. The poster comes from
+     * the listing when the detail page has none; the listing's date fills in only if the detail
+     * `h2` was unparseable.
      */
     override fun fillGapsFromOverview(
         primary: ScrapedEvent,

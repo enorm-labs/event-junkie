@@ -25,17 +25,17 @@ import java.util.Locale
 /**
  * Pure HTML parser for Columbiahalle Berlin's `/veranstaltungen.html` programme.
  *
- * The Contao event list renders the whole upcoming programme as one flat, chronological stream of
- * two node kinds inside `.mod_eventlist`: a `.eventlist_monat` heading ("August 2026") followed by
- * the `.eventlist_event` cards belonging to that month. A card states only its weekday and day of
- * month, so the heading is what supplies the month and year — the stream is therefore walked in
- * document order with the current [YearMonth] carried along.
+ * The Contao event list renders the whole programme as one flat, chronological stream of two
+ * node kinds inside `.mod_eventlist`: a `.eventlist_monat` heading ("August 2026") then the
+ * `.eventlist_event` cards of that month. A card states only weekday and day of month, so the
+ * heading supplies month and year — the stream is walked in document order with the current
+ * [YearMonth] carried along.
  *
- * Each card is self-contained: the act (`h2`), an optional tour/support line (`h3`), the booking
- * agency (`.veranstalter`), `Einlass`/`Beginn` times (`.zeit`), `VVK`/`AK` prices (`.preis`), a
- * ticket-shop link, a poster, an optional `.stoerer` status sticker, and the untruncated blurb in
- * the collapsed `.bandinfo` panel — so no detail page is fetched (the cards' "Kalender-Eintrag"
- * links serve an iCal file, not HTML).
+ * Each card is self-contained: the act (`h2`), an optional tour/support line (`h3`), the
+ * booking agency (`.veranstalter`), `Einlass`/`Beginn` times (`.zeit`), `VVK`/`AK` prices
+ * (`.preis`), a ticket-shop link, a poster, an optional `.stoerer` status sticker, and the
+ * untruncated blurb in the collapsed `.bandinfo` panel — no detail page is fetched (the
+ * "Kalender-Eintrag" links serve an iCal file, not HTML).
  *
  * @see ColumbiahalleWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://www.columbiahalle.berlin/veranstaltungen.html">Columbiahalle programme</a>
@@ -44,11 +44,9 @@ class ColumbiahalleOverviewPageScraper {
     private val logger = KotlinLogging.logger {}
 
     /**
-     * Parses all event cards from the programme page document.
+     * Parses all event cards from the programme page, in listing order.
      *
-     * @param baseUrl the URL the document was fetched from, used to resolve poster paths and to
-     *   build the per-event anchor URL.
-     * @return a list of [ScrapedEvent] instances extracted from the page, in listing order.
+     * @param baseUrl the URL the document was fetched from, for poster paths and the per-event anchor URL.
      */
     fun scrape(
         document: Document,
@@ -63,8 +61,8 @@ class ColumbiahalleOverviewPageScraper {
         @Suppress("TooGenericExceptionCaught") // Intentional: skip individual malformed cards without aborting the whole import
         for (node in nodes) {
             if (node.hasClass(MONTH_HEADING_CLASS)) {
-                // A heading that doesn't parse voids the month rather than carrying the previous one
-                // forward, which would silently file a whole month of events under the wrong date.
+                // A heading that doesn't parse voids the month rather than carrying the previous one forward,
+                // which would silently file a whole month under the wrong date.
                 month = parseGermanYearMonth(node.text())
                 if (month == null) logger.warn { "Unparseable month heading '${node.text()}', skipping its events" }
             } else {
@@ -79,8 +77,8 @@ class ColumbiahalleOverviewPageScraper {
     }
 
     /**
-     * Parses a single `.eventlist_event` card into a [ScrapedEvent], or `null` when it lacks the
-     * Contao event id, a title, or a resolvable date.
+     * Parses one `.eventlist_event` card into a [ScrapedEvent], or `null` without the Contao event
+     * id, a title, or a resolvable date.
      */
     @Suppress("ReturnCount") // Guard clauses for the required id / title / date are clearer than nesting
     private fun parseCard(
@@ -116,8 +114,8 @@ class ColumbiahalleOverviewPageScraper {
             doorsTime = parseTime(labelledTime(times, DOORS_LABEL)),
             startTime = parseTime(labelledTime(times, START_LABEL)),
             imageUrl = parseImageUrl(card, baseUrl),
-            // The venue publishes no per-event page; its own iCal export keys the event on the same
-            // Contao id and points back at this listing anchor.
+            // No per-event page; the venue's own iCal export keys the event on the same Contao id and
+            // points back at this listing anchor.
             sourceUrl = resolveUrl(baseUrl, "#$EVENT_ID_PREFIX$eventId"),
             sourceId = "${EventSource.COLUMBIAHALLE.sourceIdPrefix}$eventId",
             ticketUrl = card.hrefAt(".tickets a"),
@@ -131,7 +129,7 @@ class ColumbiahalleOverviewPageScraper {
         )
     }
 
-    /** Resolves the card's day-of-month text against the month heading, or `null` when it is not a valid day. */
+    /** The card's day-of-month text against the month heading, or `null` when not a valid day. */
     private fun resolveDayOfMonth(
         dayText: String?,
         month: YearMonth
@@ -141,7 +139,7 @@ class ColumbiahalleOverviewPageScraper {
         ?.takeIf { it in 1..month.lengthOfMonth() }
         ?.let(month::atDay)
 
-    /** Resolves the card's poster path (a site-relative `files/BilderCache/…`) against the listing URL. */
+    /** The card's poster path (a site-relative `files/BilderCache/…`) against the listing URL. */
     private fun parseImageUrl(
         card: Element,
         baseUrl: String
@@ -156,15 +154,12 @@ class ColumbiahalleOverviewPageScraper {
     }
 
     /**
-     * Splits the `.preis` block into presale, box-office and a free-form note.
-     *
-     * The amounts live as `<br>`-separated `LABEL: <amount> €` lines in the block's first
-     * paragraph — `AK` (Abendkasse) is the box-office price, `VVK` (Vorverkauf) the presale one.
-     * The note captures what the two numbers cannot say: the venue's "zzgl. Gebühr" (plus booking
-     * fee) footnote in `p.small`, and the `ab`-qualified tiered prices where the stated amount is
-     * only the cheapest ticket — storing `ab 74,99 €` as a flat presale price would otherwise read
-     * as the actual price. When either qualifier is present the whole block text is kept verbatim
-     * as the note.
+     * Splits the `.preis` block into presale, box-office and a free-form note. The amounts are
+     * `<br>`-separated `LABEL: <amount> €` lines in the first paragraph — `AK` (Abendkasse) is box
+     * office, `VVK` (Vorverkauf) presale. The note captures what the two numbers cannot: the "zzgl.
+     * Gebühr" (plus booking fee) footnote in `p.small`, and `ab`-qualified tiered prices where the
+     * amount is only the cheapest ticket — `ab 74,99 €` as a flat presale price would read as the
+     * actual price. With either qualifier the whole block text is kept verbatim as the note.
      */
     private fun parsePrices(card: Element): Triple<BigDecimal?, BigDecimal?, String?> {
         val block = card.selectFirst(".preis") ?: return Triple(null, null, null)
@@ -208,17 +203,17 @@ class ColumbiahalleOverviewPageScraper {
         private val AK_LABEL_PATTERN = Regex("""\bAK\b""", RegexOption.IGNORE_CASE)
 
         /**
-         * A "from" qualifier on a tiered price — `VVK: ab 74,99 €`. `an` is matched too: it is the
-         * venue's own typo for `ab` on one current event, and since this only decides whether the
-         * raw text is kept as a note, a false match costs nothing but a slightly redundant note.
+         * A "from" qualifier on a tiered price — `VVK: ab 74,99 €`. `an` is matched too: the venue's
+         * own typo for `ab` on one current event, and since this only decides whether the raw text is
+         * kept as a note, a false match costs nothing but a slightly redundant note.
          */
         private val FROM_PRICE_PATTERN = Regex("""\b(ab|an)\b\s*\d""", RegexOption.IGNORE_CASE)
     }
 }
 
 /**
- * Parses a German month heading ("August 2026", "März 2027") into a [YearMonth], or `null` when it
- * is not one — the only place the programme states a month and a year at all.
+ * Parses a German month heading ("August 2026", "März 2027") into a [YearMonth], or `null` —
+ * the only place the programme states a month and a year at all.
  */
 private fun parseGermanYearMonth(text: String): YearMonth? =
     try {

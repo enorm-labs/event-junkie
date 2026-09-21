@@ -24,36 +24,32 @@ import java.time.MonthDay
 /**
  * Pure HTML parser for Duncker Club Berlin's retro `start.html` programme page.
  *
- * The site is hand-coded HTML with a single `<table class="bodytable">`: each
- * programme row is a `<tr>` of four cells — weekday, date, event, and time. The
- * event cell packs everything inline: the night's name in `<span class="eventname">`,
- * a free-text genre/style line, the flyer `<img>`, a Facebook-event link, and the
- * resident DJ(s). A few leading rows are pure flyer banners (no date, no
- * `eventname`) and are skipped.
+ * Hand-coded HTML with a single `<table class="bodytable">`: each programme row is a `<tr>` of
+ * four cells — weekday, date, event, time. The event cell packs everything inline: the night's
+ * name in `<span class="eventname">`, a free-text genre/style line, the flyer `<img>`, a
+ * Facebook-event link, and the resident DJ(s). A few leading rows are pure flyer banners (no
+ * date, no `eventname`) and are skipped.
  *
- * Every night is a DJ dance party, so all events are typed [EventType.PARTY].
- * Dates render as German `DD.MM.` with **no year**, but the row carries a German
- * two-letter weekday (Mo–So); the year is inferred from it via [inferYearForWeekday].
- * The venue leaves recently-passed nights on the page; those past-dated events are
- * dropped centrally at persistence time (`EventUpsertService`), so this parser returns
- * every dated row as-is.
+ * Every night is a DJ dance party, so all events are [EventType.PARTY]. Dates render as German
+ * `DD.MM.` with **no year**, but the row carries a German two-letter weekday (Mo–So); the year
+ * comes from it via [inferYearForWeekday]. Recently-passed nights stay on the page and are
+ * dropped centrally at persistence (`EventUpsertService`), so every dated row is returned as-is.
  *
  * @see DunckerWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://www.dunckerclub.de/start.html">Duncker Club programme</a>
  */
 @Suppress("TooManyFunctions") // Cohesive single-responsibility parser; the inline markup needs several small field extractors.
 class DunckerOverviewPageScraper(
-    /** Clock for weekday-based year inference. Defaults to the system clock; override in tests for determinism. */
+    /** Clock for weekday-based year inference; override in tests. */
     private val clock: Clock = Clock.systemDefaultZone()
 ) {
     private val logger = KotlinLogging.logger {}
 
     /**
-     * Parses all events from the programme page document.
+     * Parses all events from the programme page, one per dated table row.
      *
-     * @param baseUrl the URL the document was fetched from, used to resolve the
-     *   relative flyer image path and as each event's `sourceUrl`.
-     * @return a list of [ScrapedEvent] instances, one per dated table row.
+     * @param baseUrl the URL the document was fetched from, for the relative flyer path and as
+     * each event's `sourceUrl`.
      */
     fun scrape(
         document: Document,
@@ -99,7 +95,7 @@ class DunckerOverviewPageScraper(
         return ScrapedEvent(
             title = title,
             // The free-text style line ("Rock, Indie, Alternative, Punk") is display prose, not a
-            // normalizable genre — keep it as a subtitle so it never seeds bogus genre tags.
+            // normalizable genre — kept as a subtitle so it never seeds bogus genre tags.
             subtitle = parseSubtitle(cell),
             // Every listing is a resident DJ dance night.
             eventType = EventType.PARTY.name,
@@ -108,7 +104,7 @@ class DunckerOverviewPageScraper(
             imageUrl = parseImageUrl(cell, baseUrl),
             // No per-event pages on this single-page site — the programme page is the source.
             sourceUrl = baseUrl,
-            // The Facebook event id is the stable canonical identity; fall back to date + title when absent.
+            // The Facebook event id is the stable identity; fall back to date + title when absent.
             sourceId =
                 fbEventId
                     ?.let { "${EventSource.DUNCKER.sourceIdPrefix}$it" }
@@ -120,12 +116,10 @@ class DunckerOverviewPageScraper(
     }
 
     /**
-     * The event title from `span.eventname`, with nested links removed.
-     *
-     * The name may span a `<br>` (kept, e.g. "Time Machine and The Cure Special")
-     * but can also embed a presenter link (`<a class="eventLINK">TIQ</a>`) that is
-     * a promoter, not part of the title — those anchors are dropped here and picked
-     * up by [parsePromoters].
+     * The title from `span.eventname`, nested links removed. The name may span a `<br>` (kept,
+     * "Time Machine and The Cure Special") but can also embed a presenter link
+     * (`<a class="eventLINK">TIQ</a>`) that is a promoter, not title — dropped here and picked up
+     * by [parsePromoters].
      */
     private fun parseTitle(cell: Element): String? {
         val nameEl = cell.selectFirst("span.eventname") ?: return null
@@ -134,8 +128,8 @@ class DunckerOverviewPageScraper(
     }
 
     /**
-     * The free-text style/genre line: everything in the event cell that is not the
-     * name span, a link, or the flyer image.
+     * The free-text style/genre line: everything in the event cell that is not the name span, a
+     * link, or the flyer image.
      */
     private fun parseSubtitle(cell: Element): String? =
         cell
@@ -146,9 +140,8 @@ class DunckerOverviewPageScraper(
             .takeIf { it.isNotBlank() }
 
     /**
-     * Parses the row's German `DD.MM.` date, inferring the year from the two-letter
-     * weekday cell (Mo–So) via [inferYearForWeekday]. Returns `null` when the date
-     * cannot be parsed.
+     * The row's German `DD.MM.` date, year from the two-letter weekday cell (Mo–So) via
+     * [inferYearForWeekday]. `null` when unparseable.
      */
     @Suppress("ReturnCount") // Null-safe early exits per date component are clearer than nested let-chains.
     private fun parseDate(row: Element): LocalDate? {
@@ -186,12 +179,9 @@ class DunckerOverviewPageScraper(
             ?.let { resolveUrl(baseUrl, it) }
 
     /**
-     * Resident DJ(s) for the night, role [DJ][ScrapedArtist].
-     *
-     * DJ names appear either as the text of a link (a profile, or inside the
-     * Facebook-event link) or as a trailing text node, always prefixed with the
-     * "DJ"/"Djs" label. The label is stripped and multi-DJ lines
-     * ("Djs Neue K & Lichene") are split into individual acts.
+     * Resident DJ(s) for the night, role [DJ][ScrapedArtist]. Names appear as the text of a link
+     * (a profile, or inside the Facebook-event link) or as a trailing text node, always prefixed
+     * with "DJ"/"Djs". The label is stripped and multi-DJ lines ("Djs Neue K & Lichene") split.
      */
     private fun parseDjs(cell: Element): List<ScrapedArtist> {
         val candidates = cell.select("a").map { it.text() } + cell.textNodes().map { it.text() }
@@ -216,13 +206,13 @@ class DunckerOverviewPageScraper(
         /** Path fragment identifying a Facebook event link (vs. a DJ/venue profile link). */
         private const val FB_EVENT_PATH = "facebook.com/events/"
 
-        /** Captures the numeric event id from a Facebook event URL. */
+        /** The numeric event id from a Facebook event URL. */
         private val FB_EVENT_ID_PATTERN = Regex("""facebook\.com/events/(\d+)""")
 
-        /** Captures the day and month from a "DD.MM." date cell. */
+        /** Day and month from a "DD.MM." date cell. */
         private val DATE_PATTERN = Regex("""(\d{1,2})\.(\d{1,2})\.""")
 
-        /** Captures the opening hour from a "21h-05h" time range. */
+        /** The opening hour from a "21h-05h" time range. */
         private val TIME_PATTERN = Regex("""(\d{1,2})h""")
 
         /** A "DJ"/"Djs" label followed by the act name(s), captured to end of line. */

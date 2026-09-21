@@ -21,8 +21,8 @@ import java.util.Locale
 /**
  * Pure HTML parser for Golden Gate Berlin's homepage programme.
  *
- * The club announces only the **current Thursday–Saturday block** — three nights at a time, each
- * rendered as an Elementor container holding exactly three headings:
+ * The club announces only the **current Thursday–Saturday block** — three nights, each an
+ * Elementor container holding exactly three headings:
  *
  * ```
  * Do. 30. Juli 2026 - 23:59      ← date line: weekday, day, German month, year, door time
@@ -30,19 +30,17 @@ import java.util.Locale
  * Neco<br>Jeremy Reinhard<br>…    ← the DJ roster
  * ```
  *
- * Elementor names every element with a per-element hash (`elementor-element-7b3297a`) that changes
- * whenever the page is edited, and the theme adds no venue-semantic classes, so there is nothing
- * stable to anchor a container selector on. This parser therefore walks the
- * `.elementor-heading-title` headings — Elementor's own *widget-type* class, which is stable across
- * edits — as one ordered stream and keys off **content**: a heading matching [DATE_LINE_PATTERN]
- * opens a night, the next two headings are its title and lineup, and the next date heading closes
- * it. That also skips the page's trailing non-event headings ("Tickets only available at the
- * door.", "enter", "SHOPPING") without having to enumerate them.
+ * Elementor names every element with a per-element hash (`elementor-element-7b3297a`) that
+ * changes on every edit, and the theme adds no venue-semantic classes, so nothing stable
+ * anchors a container selector. This parser walks the `.elementor-heading-title` headings —
+ * Elementor's *widget-type* class, stable across edits — as one ordered stream keyed off
+ * **content**: a heading matching [DATE_LINE_PATTERN] opens a night, the next two are its title
+ * and lineup, the next date heading closes it. That also skips the trailing non-event headings
+ * ("Tickets only available at the door.", "enter", "SHOPPING") without enumerating them.
  *
- * Nights that have already passed stay on the page until the block rolls over; they are parsed here
- * and dropped centrally at persistence time by
- * [EventUpsertService][de.norm.events.scraper.EventUpsertService], so an import late in the week
- * legitimately stores as little as one event.
+ * Passed nights stay on the page until the block rolls over; parsed here, dropped centrally at
+ * persistence by [EventUpsertService][de.norm.events.scraper.EventUpsertService], so an import
+ * late in the week legitimately stores as little as one event.
  *
  * @see GoldenGateWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://goldengate-berlin.de/">Golden Gate Berlin</a>
@@ -51,11 +49,10 @@ class GoldenGateOverviewPageScraper {
     private val logger = KotlinLogging.logger {}
 
     /**
-     * Parses the announced nights from the homepage document.
+     * Parses the announced nights from the homepage, in listing order.
      *
      * @param baseUrl the URL the document was fetched from, stored as each event's
-     *   [ScrapedEvent.sourceUrl] — the venue publishes no per-event page.
-     * @return a list of [ScrapedEvent] instances, in listing order.
+     * [ScrapedEvent.sourceUrl] — no per-event page.
      */
     fun scrape(
         document: Document,
@@ -72,11 +69,9 @@ class GoldenGateOverviewPageScraper {
     }
 
     /**
-     * Builds one night from its date heading and the two headings that follow it.
-     *
-     * [titleHeading] and [lineupHeading] are only used when they are *not* themselves a date line —
-     * a night announced without a lineup (or as the last heading on the page) simply yields no
-     * artists rather than absorbing the next night's date.
+     * One night from its date heading and the two headings after it. [titleHeading] and
+     * [lineupHeading] are used only when *not* themselves a date line — a night announced without
+     * a lineup (or as the last heading) yields no artists rather than absorbing the next night's date.
      */
     @Suppress("ReturnCount") // Guard clauses for the unparseable date / missing title are clearer than nesting
     private fun parseNight(
@@ -101,13 +96,13 @@ class GoldenGateOverviewPageScraper {
 
         return ScrapedEvent(
             title = title,
-            // Golden Gate is a techno club whose whole programme is DJ nights and which emits no
-            // category at all, so the type is fixed rather than inferred from the night's name.
+            // A techno club whose whole programme is DJ nights, emitting no category, so the type is
+            // fixed rather than inferred from the night's name.
             eventType = EventType.PARTY.name,
             eventDate = eventDate,
             startTime = parseTime(match.groupValues[2].takeIf { it.isNotBlank() }),
-            // No per-event page exists, so every night points at the homepage and takes its identity
-            // from the date plus the slugified title.
+            // No per-event page, so every night points at the homepage and takes its identity from date
+            // plus slugified title.
             sourceUrl = baseUrl,
             sourceId = "${EventSource.GOLDEN_GATE.sourceIdPrefix}$eventDate-${SlugGenerator.slugify(title)}",
             artists = parseLineup(nonDateHeading(lineupHeading))
@@ -118,13 +113,10 @@ class GoldenGateOverviewPageScraper {
     private fun nonDateHeading(heading: Element?): Element? = heading?.takeUnless { DATE_LINE_PATTERN.containsMatchIn(it.text()) }
 
     /**
-     * The DJs billed for the night, in listing order.
-     *
-     * The roster is one heading with the names `<br>`-separated. A line is split further at safe
-     * `&`/`and`/`und` boundaries ([splitSegmentOnConjunctions]), so a back-to-back billing
-     * ("Nyna Curtis & Kisling") becomes two DJs while a name whose own spelling contains a
-     * conjunction tail is left whole. Placeholder and non-artist entries are dropped rather than
-     * minted as artists.
+     * The DJs billed for the night, in listing order: one heading, names `<br>`-separated, each
+     * line split further at safe `&`/`and`/`und` boundaries ([splitSegmentOnConjunctions]), so a
+     * back-to-back billing ("Nyna Curtis & Kisling") becomes two DJs while a name whose spelling
+     * contains a conjunction tail stays whole. Placeholders and non-artists are dropped.
      */
     private fun parseLineup(lineupHeading: Element?): List<ScrapedArtist> =
         lineupHeading
@@ -137,10 +129,10 @@ class GoldenGateOverviewPageScraper {
 
     private companion object {
         /**
-         * A Golden Gate date heading — `"Do. 30. Juli 2026 - 23:59"`. Captures the date without its
-         * weekday (group 1, the only part that needs parsing — the weekday is redundant given the
-         * full year) and the optional door time (group 2). Anchored at the start so a heading that
-         * merely mentions a date in prose cannot open a night.
+         * A date heading — `"Do. 30. Juli 2026 - 23:59"`. Captures the date without its weekday
+         * (group 1, the only part needing parsing — the weekday is redundant given the full year)
+         * and the optional door time (group 2). Anchored at the start so a heading merely mentioning
+         * a date in prose cannot open a night.
          */
         private val DATE_LINE_PATTERN =
             Regex("""^\s*\p{L}{2,3}\.?\s+(\d{1,2}\.\s+\p{L}+\s+\d{4})(?:\s*[-–—]\s*(\d{1,2}:\d{2}))?""")

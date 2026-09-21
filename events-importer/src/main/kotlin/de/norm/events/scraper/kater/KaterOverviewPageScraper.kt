@@ -27,36 +27,33 @@ import java.time.MonthDay
 /**
  * Pure HTML parser for Kater Berlin's homepage programme.
  *
- * The homepage is the whole source: the venue's `event` REST route exposes no ACF fields (`acf`
- * comes back empty) and its `/event/<slug>` pages carry nothing but a heading, so neither is worth
- * fetching. Each night is an `article.event[id=event-<postId>]` holding a `.date-title` name and an
- * `.entry-summary` that opens with a `Wd. DD.MM HH:mm — Wd. DD.MM HH:mm` span, then an optional
- * Resident Advisor ticket link, then free prose.
+ * The homepage is the whole source: the `event` REST route exposes no ACF fields (`acf` comes
+ * back empty) and the `/event/<slug>` pages carry nothing but a heading. Each night is an
+ * `article.event[id=event-<postId>]` with a `.date-title` name and an `.entry-summary` that
+ * opens with a `Wd. DD.MM HH:mm — Wd. DD.MM HH:mm` span, then an optional Resident Advisor
+ * ticket link, then free prose.
  *
  * **The prose is only sometimes a lineup, and the venue marks which.** A `____________` rule
- * introduces a floor (`HOPPER`, `ACID BOGEN`, `EXTRA`, sometimes suffixed `by <presenter>`) and the
- * lines beneath it are that floor's DJs, which is what [ScrapedArtist.stage] is for. A summary with
- * no rule is a description — a garden evening, a film night, a residency's schedule notes — and
- * yields **no** artists, rather than minting lines like "free entry till 20:00" or a film synopsis
- * as acts.
+ * introduces a floor (`HOPPER`, `ACID BOGEN`, `EXTRA`, sometimes suffixed `by <presenter>`)
+ * and the lines beneath are that floor's DJs — what [ScrapedArtist.stage] is for. A summary
+ * with no rule is a description — a garden evening, a film night, a residency's schedule notes
+ * — and yields **no** artists, rather than minting "free entry till 20:00" or a film synopsis.
  *
- * Dates carry a weekday but no year, so the year is inferred from the weekday
- * ([inferYearForWeekday]).
+ * Dates carry a weekday but no year, so the year comes from the weekday ([inferYearForWeekday]).
  *
  * @see KaterWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://www.katerclub.de/">Kater Berlin</a>
  */
 class KaterOverviewPageScraper(
-    /** Clock for the year inference. Defaults to the venue's own time zone; override in tests for determinism. */
+    /** Clock for the year inference, in the venue's time zone; override in tests. */
     private val clock: Clock = Clock.system(BERLIN)
 ) {
     private val logger = KotlinLogging.logger {}
 
     /**
-     * Parses all event articles from the homepage document.
+     * Parses all event articles from the homepage, in listing order.
      *
-     * @param baseUrl the URL the document was fetched from, used to build each event's anchor URL.
-     * @return a list of [ScrapedEvent] instances, in listing order.
+     * @param baseUrl the URL the document was fetched from, for each event's anchor URL.
      */
     fun scrape(
         document: Document,
@@ -78,7 +75,7 @@ class KaterOverviewPageScraper(
         }
     }
 
-    /** Parses a single `article.event` into a [ScrapedEvent], or `null` when it has no id, title or date. */
+    /** Parses one `article.event` into a [ScrapedEvent], or `null` without id, title or date. */
     @Suppress("ReturnCount") // Guard clauses for the required id / title / date are clearer than nesting
     private fun parseArticle(
         article: Element,
@@ -107,7 +104,7 @@ class KaterOverviewPageScraper(
             startTime = schedule.startTime,
             endDate = schedule.endDate,
             endTime = schedule.endTime,
-            // The venue publishes no per-event page worth fetching, so the homepage anchor is the URL.
+            // No per-event page worth fetching, so the homepage anchor is the URL.
             sourceUrl = "$baseUrl#$EVENT_ID_PREFIX$eventId",
             sourceId = "${EventSource.KATER.sourceIdPrefix}$eventId",
             ticketUrl = article.hrefAt("a.rsvp"),
@@ -118,11 +115,9 @@ class KaterOverviewPageScraper(
     }
 
     /**
-     * The summary's text lines, with the ticket paragraph dropped.
-     *
-     * The summary mixes `<p>` blocks and `<br>` breaks inconsistently — a floor rule and its name
-     * may sit in one paragraph while the acts continue in the next — so every paragraph is
-     * flattened into one ordered stream of lines before anything is read out of it.
+     * The summary's text lines, with the ticket paragraph dropped. The summary mixes `<p>` blocks
+     * and `<br>` breaks inconsistently — a floor rule and its name may sit in one paragraph while
+     * the acts continue in the next — so every paragraph is flattened into one ordered stream first.
      */
     private fun summaryLines(article: Element): List<String> =
         article
@@ -133,11 +128,9 @@ class KaterOverviewPageScraper(
             .filter { it.isNotBlank() }
 
     /**
-     * Splits the summary body into floors and their acts.
-     *
-     * Returns empty for a summary with no `____` rule: that is the venue's own signal that the
-     * prose is a description rather than a lineup, and reading it as acts would mint schedule notes
-     * and film synopses as artists.
+     * Splits the summary body into floors and their acts. Empty for a summary with no `____` rule:
+     * the venue's own signal that the prose is a description, and reading it as acts would mint
+     * schedule notes and film synopses as artists.
      */
     private fun parseLineup(body: List<String>): List<ScrapedArtist> {
         if (body.none { FLOOR_RULE.matches(it) }) return emptyList()
@@ -172,11 +165,10 @@ class KaterOverviewPageScraper(
     }
 
     /**
-     * Splits an act line into individual acts: at a `b2b` marker and at safe `&`/`and`/`und`
-     * boundaries — but a **parenthesised** line is never split, because the brackets hold a duo's
-     * member list rather than a second slot ("Double Penetration (FLOWWW b2b Joe Cleen)" is one
-     * act). A trailing `[LIVE]` format marker is stripped, as is any tail
-     * [stripArtistSuffix] recognises.
+     * Splits an act line at a `b2b` marker and at safe `&`/`and`/`und` boundaries — but a
+     * **parenthesised** line is never split, because the brackets hold a duo's member list rather
+     * than a second slot ("Double Penetration (FLOWWW b2b Joe Cleen)" is one act). A trailing
+     * `[LIVE]` marker is stripped, as is any tail [stripArtistSuffix] recognises.
      */
     private fun splitActs(line: String): List<String> =
         (if (line.contains('(')) listOf(line) else line.split(B2B_SEPARATOR).flatMap(::splitSegmentOnConjunctions))
@@ -192,11 +184,10 @@ class KaterOverviewPageScraper(
     )
 
     /**
-     * Parses the summary's opening `Wd. DD.MM HH:mm — Wd. DD.MM HH:mm` line.
-     *
-     * Both halves are read, and the closing one is usually the following morning (ADR-029). Neither
-     * date carries a year, so the weekday disambiguates each via [inferYearForWeekday]. A line
-     * without the closing half still yields a start.
+     * Parses the summary's opening `Wd. DD.MM HH:mm — Wd. DD.MM HH:mm` line. Both halves are
+     * read, the closing one usually the following morning (ADR-029). Neither carries a year, so
+     * the weekday disambiguates each via [inferYearForWeekday]. A line without the closing half
+     * still yields a start.
      */
     private fun parseSchedule(line: String): Schedule? {
         val groups = SCHEDULE_PATTERN.find(line)?.groupValues ?: return null
@@ -223,7 +214,7 @@ class KaterOverviewPageScraper(
             ?.let { inferYearForWeekday(it, parseGermanWeekdayAbbreviation(weekday), clock) }
 
     private companion object {
-        /** The WordPress post id on the article, which is the night's only stable identity. */
+        /** The WordPress post id on the article, the night's only stable identity. */
         val EVENT_ID_PATTERN = Regex("""^event-(\d+)$""")
 
         /** The `id` prefix, reused to build the homepage anchor URL. */
@@ -241,7 +232,7 @@ class KaterOverviewPageScraper(
         /** The back-to-back marker joining two DJs into one slot. */
         val B2B_SEPARATOR = Regex("""\s+b2b\s+""", RegexOption.IGNORE_CASE)
 
-        /** A bracketed performance-format marker the venue appends to an act ("Vovolectr0 [LIVE]"). */
+        /** A bracketed performance-format marker appended to an act ("Vovolectr0 [LIVE]"). */
         val FORMAT_MARKER = Regex("""\s*\[[^\]]*]\s*$""")
 
         /** Capture-group indices of [SCHEDULE_PATTERN]; the closing half's groups are empty when the line has none. */
@@ -261,12 +252,10 @@ class KaterOverviewPageScraper(
         val SCHEDULE_PATTERN = Regex("""^$HALF(?:\s*[—–-]\s*$HALF)?""")
 
         /**
-         * An unambiguous free-entry phrase in the blurb. Deliberately multi-word: the shared
-         * [detectFree][de.norm.events.scraper.detectFree] also accepts a bare `free`, which a
-         * description mentioning "free drinks" would trip.
-         *
-         * The lookahead rejects a **time-limited** offer — the venue's Tuesday residency writes
-         * "free entry till 20:00", which is not a free event and must not be flagged as one.
+         * An unambiguous free-entry phrase in the blurb. Multi-word on purpose: the shared
+         * [detectFree][de.norm.events.scraper.detectFree] also accepts a bare `free`, which "free
+         * drinks" would trip. The lookahead rejects a **time-limited** offer — the Tuesday residency
+         * writes "free entry till 20:00", not a free event.
          */
         val FREE_ENTRY_PHRASE =
             Regex("""(?:free entry|eintritt frei|freier eintritt)(?!\s+(?:till|until|before|bis|ab)\b)""", RegexOption.IGNORE_CASE)

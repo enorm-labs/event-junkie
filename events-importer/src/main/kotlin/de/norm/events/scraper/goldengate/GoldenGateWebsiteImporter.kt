@@ -14,16 +14,14 @@ import org.springframework.stereotype.Component
 /**
  * Website importer for Golden Gate Berlin's Elementor-built WordPress homepage.
  *
- * Golden Gate announces only the current Thursday–Saturday block, inline on its homepage — three
- * nights, each a date line, a title and a DJ roster. There are no per-event pages, no custom
- * `event` post type in the WordPress REST API (only the stock types are registered), and no
- * structured data, so the single rendered page is the source. The pipeline is:
- * 1. Fetch the homepage via [HtmlFetcher] with conditional-request support.
- * 2. Parse the announced nights via [GoldenGateOverviewPageScraper].
+ * Only the current Thursday–Saturday block is announced, inline on the homepage — three nights,
+ * each a date line, a title and a DJ roster. No per-event pages, no `event` post type in the
+ * REST API (only stock types), no structured data, so the single rendered page is the source:
+ * [HtmlFetcher] fetches it conditionally, [GoldenGateOverviewPageScraper] parses the nights.
  *
- * Past nights stay on the page until the block rolls over and are dropped centrally at persistence
- * time by [EventUpsertService][de.norm.events.scraper.EventUpsertService], so a run late in the week
- * legitimately stores fewer events than the page shows — as few as one.
+ * Past nights stay on the page until the block rolls over and are dropped centrally at
+ * persistence by [EventUpsertService][de.norm.events.scraper.EventUpsertService], so a run late
+ * in the week legitimately stores fewer events than the page shows — as few as one.
  *
  * @see GoldenGateOverviewPageScraper for the HTML parsing logic.
  * @see <a href="https://goldengate-berlin.de/">Golden Gate Berlin</a>

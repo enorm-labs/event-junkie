@@ -20,15 +20,15 @@ import java.time.LocalTime
 /**
  * Pure HTML parser for Modus Berlin event detail pages (`/event/DDMMYY-<Name>`).
  *
- * Each page renders an `.event-view-right` column: an `h1` title, an `h2` restating the date
- * with the start time (`"24.09.2026 - 20:00"`), an `.all-events-button` ticket link (Eventim,
- * the venue's own shop, or the promoter's), and an `.event-description` prose block. The poster
- * is the `img.event-view-image` beside it.
+ * One `.event-view-right` column: an `h1` title, an `h2` restating the date with the start time
+ * (`"24.09.2026 - 20:00"`), an `.all-events-button` ticket link (Eventim, the venue's own shop,
+ * or the promoter's), and an `.event-description` prose block. The poster is the
+ * `img.event-view-image` beside it.
  *
- * As on the listing, the date comes from the rendered `h2` rather than the slug, which keeps a
+ * As on the listing, the date comes from the rendered `h2`, not the slug, which keeps a
  * postponed show's original date (see [ModusOverviewPageScraper]). The **doors time has no
- * markup of its own** — where the venue publishes one at all it is a line inside the
- * description prose (`"Doors: 19:30"`, `"Beginn 20:00"`), so it is read from there.
+ * markup of its own** — where published at all it is a line inside the description prose
+ * (`"Doors: 19:30"`, `"Beginn 20:00"`), so it is read from there.
  *
  * @see ModusOverviewPageScraper for the listing parser (discovery, date, poster).
  * @see ModusWebsiteImporter for the HTTP fetch orchestrator.
@@ -38,10 +38,9 @@ class ModusDetailPageScraper {
     private val logger = KotlinLogging.logger {}
 
     /**
-     * Parses an event detail page into a [ScrapedEvent], or `null` when the page carries no title.
+     * Parses a detail page into a [ScrapedEvent], or `null` without a title.
      *
-     * @param sourceUrl the event's URL, used as [ScrapedEvent.sourceUrl] and to derive the
-     *   [ScrapedEvent.sourceId].
+     * @param sourceUrl the event's URL: [ScrapedEvent.sourceUrl] and the [ScrapedEvent.sourceId].
      */
     @Suppress("ReturnCount") // A guard clause for the missing title is clearer than nesting
     fun scrape(
@@ -77,11 +76,10 @@ class ModusDetailPageScraper {
     }
 
     /**
-     * Reads the doors time out of the description prose, the only place the venue ever states
-     * one. Both spellings it uses are accepted — the English `"Doors: 19:30"` and the German
-     * `"Einlass 19:30"` — while a `"Start"` / `"Beginn"` line is ignored here because the `h2`
-     * already carries the start time in markup. Returns `null` when the prose names no doors
-     * time, which is the common case.
+     * The doors time out of the description prose, the only place the venue states one. Both
+     * spellings are accepted — the English `"Doors: 19:30"` and the German `"Einlass 19:30"` —
+     * while a `"Start"` / `"Beginn"` line is ignored because the `h2` already carries the start in
+     * markup. `null` when the prose names no doors time, the common case.
      */
     private fun parseDoorsFromDescription(description: String?): LocalTime? {
         val match = DOORS_PATTERN.find(description.orEmpty()) ?: return null
@@ -89,7 +87,7 @@ class ModusDetailPageScraper {
     }
 }
 
-/** Matches the doors line venues write into Modus's description prose (`"Doors: 19:30"`, `"Einlass 19:30"`). */
+/** The doors line venues write into Modus's description prose (`"Doors: 19:30"`, `"Einlass 19:30"`). */
 private val DOORS_PATTERN = Regex("""(?:doors|einlass)\s*:?\s*(\d{1,2}:\d{2})""", RegexOption.IGNORE_CASE)
 
 /** The separator the detail `h2` puts between the date and the start time (`"24.09.2026 - 20:00"`). */

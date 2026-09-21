@@ -20,15 +20,15 @@ import org.jsoup.nodes.Element
 /**
  * Pure HTML parser for Quasimodo Berlin's `/events` listing page.
  *
- * The page renders the whole season unpaginated as `a.event-item` cards grouped under German
- * month headings. Each card carries **two** date blocks, one per breakpoint, and the mobile one
- * is the useful one: `.event-data.visible-xs .date` holds a complete `DD.MM.YYYY - HH:mm`, so
- * neither the month heading nor the abbreviated desktop `.day`/`.month` pair has to be read.
+ * The whole season, unpaginated, as `a.event-item` cards under German month headings. Each
+ * card carries **two** date blocks, one per breakpoint, and the mobile one is the useful one:
+ * `.event-data.visible-xs .date` holds a complete `DD.MM.YYYY - HH:mm`, so neither the month
+ * heading nor the abbreviated desktop `.day`/`.month` pair has to be read.
  *
- * The card is also the only source for the venue's **genre tags** (`.event-tags a` — Blues,
- * Latin Jazz, Neo-Soul), and carries the poster as a CSS `background-image` plus the external
- * ticket-shop link. Each links to `/events/<slug>-<postId>`, whose trailing id keeps the
- * `sourceId` stable across the venue's recurring series.
+ * The card is also the only source for the **genre tags** (`.event-tags a` — Blues, Latin Jazz,
+ * Neo-Soul), and carries the poster as a CSS `background-image` plus the external ticket-shop
+ * link. Each links to `/events/<slug>-<postId>`, whose trailing id keeps the `sourceId` stable
+ * across the venue's recurring series.
  *
  * @see QuasimodoDetailPageScraper for the detail-page data (category, promoter, prices, text).
  * @see QuasimodoWebsiteImporter for the HTTP fetch orchestrator.
@@ -38,11 +38,9 @@ class QuasimodoOverviewPageScraper {
     private val logger = KotlinLogging.logger {}
 
     /**
-     * Parses all event cards from the listing page document.
+     * Parses all event cards from the listing page, one [ScrapedEvent] per card.
      *
-     * @param baseUrl the URL the document was fetched from, used to resolve the per-event
-     *   detail links.
-     * @return a list of [ScrapedEvent] instances, one per card.
+     * @param baseUrl the URL the document was fetched from, for resolving the detail links.
      */
     fun scrape(
         document: Document,
@@ -64,7 +62,7 @@ class QuasimodoOverviewPageScraper {
         }
     }
 
-    /** Parses a single listing `<li>` into a [ScrapedEvent], or `null` when it has no title. */
+    /** Parses one listing `<li>` into a [ScrapedEvent], or `null` without a title. */
     @Suppress("ReturnCount") // Guard clauses for the required href/title are clearer than nesting
     private fun parseCard(
         card: Element,
@@ -99,8 +97,8 @@ class QuasimodoOverviewPageScraper {
     }
 
     /**
-     * Reads the poster from the card's `.event-image` CSS `background-image`. The listing serves a
-     * 300×300 thumbnail here; the detail page's full-size original replaces it at merge time.
+     * The poster from the card's `.event-image` CSS `background-image` — a 300×300 thumbnail here;
+     * the detail page's full-size original replaces it at merge time.
      */
     private fun parseBackgroundImage(card: Element): String? {
         val style = card.attrAt(".event-image", "style") ?: return null
@@ -112,7 +110,7 @@ class QuasimodoOverviewPageScraper {
     }
 }
 
-/** Matches the URL inside a CSS `background-image: url(...)` declaration, with or without quotes. */
+/** The URL inside a CSS `background-image: url(...)` declaration, with or without quotes. */
 private val BACKGROUND_IMAGE_PATTERN = Regex("""background-image:\s*url\(['"]?([^'")]+)['"]?\)""", RegexOption.IGNORE_CASE)
 
 /** The separator the mobile date block puts between the date and the start time. */
