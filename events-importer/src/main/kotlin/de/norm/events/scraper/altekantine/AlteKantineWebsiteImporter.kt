@@ -13,15 +13,12 @@ import java.time.Clock
 /**
  * Website importer for Alte Kantine (Kulturbrauerei) Berlin's WordPress programme.
  *
- * The WP REST API is locked down (iThemes Security returns 401 for anonymous
- * reads), so the site is scraped as two HTML pages:
- * 1. Fetches the homepage overview via [HtmlFetcher] with conditional-request
- *    support (ETag / Last-Modified).
- * 2. Parses the Content Views grid via [AlteKantineOverviewPageScraper] — the
- *    source for the discovery list, date, start time, title and act line.
- * 3. For each event, fetches and parses its `?p=<id>` post via
- *    [AlteKantineDetailPageScraper] — the source for the event kind, price,
- *    description, image and DJ.
+ * The WP REST API is locked down (iThemes Security returns 401 for anonymous reads), so two
+ * HTML pages:
+ * 1. [HtmlFetcher] fetches the homepage conditionally (ETag / Last-Modified).
+ * 2. [AlteKantineOverviewPageScraper] parses the Content Views grid — discovery list, date,
+ * start time, title and act line.
+ * 3. Each `?p=<id>` post via [AlteKantineDetailPageScraper] — kind, price, description, image and DJ.
  *
  * @see AlteKantineOverviewPageScraper for overview parsing (discovery, date, fallback).
  * @see AlteKantineDetailPageScraper for detail parsing (kind, price, image, DJ).
@@ -30,7 +27,7 @@ import java.time.Clock
 @Component
 class AlteKantineWebsiteImporter(
     htmlFetcher: HtmlFetcher,
-    /** Clock for year inference on the year-less dates. Defaults to the system clock; override in tests. */
+    /** Clock for year inference on the year-less dates; override in tests. */
     clock: Clock = Clock.systemDefaultZone()
 ) : AbstractTwoPageWebsiteImporter(htmlFetcher) {
     override val eventSource: EventSource = EventSource.ALTE_KANTINE
@@ -49,13 +46,10 @@ class AlteKantineWebsiteImporter(
     ): ScrapedEvent? = detailPageScraper.scrape(document, url)
 
     /**
-     * Merges detail-page data ([primary]) with overview-page data ([fallback]).
-     *
-     * The detail page is authoritative and carries the fields the overview lacks
-     * (description, image, price, DJ). The subtitle lives only on the overview, so
-     * it is always filled from there. The fields both pages share (date, start time,
-     * event type) prefer the detail value and fall back to the overview — so a field
-     * missing on the detail page is still supplied by the overview.
+     * Merges detail-page data ([primary]) with overview data ([fallback]). The detail page is
+     * authoritative and carries what the overview lacks (description, image, price, DJ). The
+     * subtitle lives only on the overview, so it is always filled from there. Shared fields (date,
+     * start time, event type) prefer the detail value and fall back to the overview.
      */
     override fun fillGapsFromOverview(
         primary: ScrapedEvent,

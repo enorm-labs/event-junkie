@@ -14,15 +14,13 @@ import java.time.Clock
 /**
  * Pure HTML parser for an Alte Kantine event detail page (`?p=<id>`).
  *
- * Each post renders the event kind, price, date, start time and DJ as a
- * `ul.list-style-6` label/value list (`Wann:` / `Beginn:` / `Eintritt:` / `Was:` /
- * `DJ:`), the title as an `h2.heading-1`, the blurb in a `.line-height-28` text
- * block, and the poster as an `img.vc_single_image-img`.
+ * Each post renders kind, price, date, start time and DJ as a `ul.list-style-6` label/value
+ * list (`Wann:` / `Beginn:` / `Eintritt:` / `Was:` / `DJ:`), the title as `h2.heading-1`, the
+ * blurb in a `.line-height-28` block, and the poster as `img.vc_single_image-img`.
  *
- * The detail page is authoritative for the kind, price, description, image and DJ —
- * the fields the overview lacks — and also re-states the date and start time, so a
- * successful detail fetch yields a complete event. The overview only fills the
- * subtitle gap and stands in entirely when the detail fetch fails, via
+ * Authoritative for kind, price, description, image and DJ — what the overview lacks — and
+ * restates date and start time, so a successful fetch is a complete event. The overview only
+ * fills the subtitle gap and stands in entirely when the fetch fails, via
  * [AlteKantineWebsiteImporter.fillGapsFromOverview].
  *
  * @see AlteKantineOverviewPageScraper for overview parsing (discovery, date, fallback).
@@ -30,17 +28,15 @@ import java.time.Clock
  * @see <a href="https://alte-kantine.eu/?p=12371">Example detail page</a>
  */
 class AlteKantineDetailPageScraper(
-    /** Clock for year inference on the year-less `Wann:` date. Defaults to the system clock; override in tests for determinism. */
+    /** Clock for year inference on the year-less `Wann:` date; override in tests. */
     private val clock: Clock = Clock.systemDefaultZone()
 ) {
     private val logger = KotlinLogging.logger {}
 
     /**
-     * Parses an event detail page into a [ScrapedEvent], or `null` when the page has
-     * no resolvable title or post id (an unexpected structure).
+     * Parses a detail page into a [ScrapedEvent], or `null` without a resolvable title or post id.
      *
-     * @param sourceUrl the event's URL, used as [ScrapedEvent.sourceUrl] and to derive
-     *   the [ScrapedEvent.sourceId].
+     * @param sourceUrl the event's URL: [ScrapedEvent.sourceUrl] and the [ScrapedEvent.sourceId].
      */
     @Suppress("ReturnCount") // Guard clauses for the missing title/post-id are clearer than nesting
     fun scrape(
@@ -68,9 +64,9 @@ class AlteKantineDetailPageScraper(
             imageUrl = content.imgSrcAt("img.vc_single_image-img"),
             sourceUrl = sourceUrl,
             sourceId = "${EventSource.ALTE_KANTINE.sourceIdPrefix}$postId",
-            // A clean numeric door price maps to the box office; keep the raw label as a note otherwise
-            // (e.g. "frei", "mit Passwort"), where free-entry detection and the frontend can still use it.
-            // A value carrying no letter or digit (e.g. a lone "€") is noise, so it is dropped.
+            // A clean numeric door price maps to the box office; otherwise the raw label is a note
+            // ("frei", "mit Passwort") that free-entry detection and the frontend can still use. A value
+            // with no letter or digit (a lone "€") is noise and dropped.
             priceBoxOffice = boxOffice,
             priceNote = eintritt?.takeIf { boxOffice == null && it.any(Char::isLetterOrDigit) },
             artists = buildAlteKantineArtists(title, detailField(content, "DJ"), eventType)
@@ -82,9 +78,8 @@ class AlteKantineDetailPageScraper(
 private val SITE_TITLE_SUFFIX = Regex("""\s*[–—-]\s*Alte Kantine\s*$""", RegexOption.IGNORE_CASE)
 
 /**
- * Reads the event title from the `h2.heading-1` content heading, falling back to the
- * page `<title>` with the trailing " – Alte Kantine" site name stripped. Returns
- * `null` when neither yields a non-blank title.
+ * The title from `h2.heading-1`, else the page `<title>` minus " – Alte Kantine"; `null` when
+ * neither yields a non-blank title.
  */
 private fun titleFrom(
     document: Document,
@@ -98,10 +93,9 @@ private fun titleFrom(
             .takeIf { it.isNotBlank() }
 
 /**
- * Reads the value of the `ul.list-style-6` row whose `<label>` matches [label]
- * (ignoring the trailing colon and case), e.g. `"Wann"` → `"23.07."`, `"Eintritt"`
- * → `"4 €"`, or `null` when no such row exists. The label is a child `<label>`
- * element; the value is the list item's own trailing text.
+ * The value of the `ul.list-style-6` row whose `<label>` matches [label] (ignoring trailing
+ * colon and case), e.g. `"Wann"` → `"23.07."`, `"Eintritt"` → `"4 €"`, or `null`. The label
+ * is a child `<label>`; the value is the list item's own trailing text.
  */
 private fun detailField(
     content: Element,
@@ -122,9 +116,8 @@ private fun detailField(
         ?.takeIf { it.isNotBlank() }
 
 /**
- * Joins the blurb paragraphs from the `.line-height-28` text block into a single
- * description, dropping the `p.p1` line that merely echoes the title, or `null`
- * when the block is absent or empty.
+ * The blurb paragraphs from `.line-height-28` joined, minus the `p.p1` line that echoes the
+ * title; `null` when absent or empty.
  */
 private fun parseDescription(content: Element): String? =
     content

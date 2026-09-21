@@ -30,13 +30,13 @@ import java.time.LocalTime
 /**
  * Pure HTML parser for Metropol Berlin's Events-Manager `/events/` listing (overview) page.
  *
- * The page carries the venue's whole programme unpaginated as `li.event` rows. Each row has a
- * `.date` block — a `.day` (`04/`), a `.monthyear` (`Aug. 2026`), a `.time` whose own text is
- * the start time and whose nested `<small>` holds `Einlass: HH:mm` — a category link
- * (`Konzert` / `Party`), an `h2.artist` title whose `small.support` child lists the `+`-joined
- * support acts, and a link to the `/event/<iso-date-slug>` detail page.
+ * The whole programme, unpaginated, as `li.event` rows. Each has a `.date` block — a `.day`
+ * (`04/`), a `.monthyear` (`Aug. 2026`), a `.time` whose own text is the start and whose
+ * nested `<small>` holds `Einlass: HH:mm` — a category link (`Konzert` / `Party`), an
+ * `h2.artist` title whose `small.support` child lists the `+`-joined support acts, and a link
+ * to the `/event/<iso-date-slug>` detail page.
  *
- * The overview is the discovery list plus the fallback for every field the detail page also
+ * The overview is the discovery list, the fallback for every field the detail page also
  * carries (the importer degrades to it when a detail fetch fails), and the **only** source for
  * the support acts — the detail page's `h1` names the headliner alone.
  *
@@ -48,11 +48,9 @@ class MetropolOverviewPageScraper {
     private val logger = KotlinLogging.logger {}
 
     /**
-     * Parses all event rows from the overview page document.
+     * Parses all event rows from the overview page, one [ScrapedEvent] per row.
      *
-     * @param baseUrl the URL the document was fetched from, used to resolve the per-event
-     *   detail links and build `sourceId` values.
-     * @return a list of [ScrapedEvent] instances, one per listed row.
+     * @param baseUrl the URL the document was fetched from, for detail links and `sourceId` values.
      */
     fun scrape(
         document: Document,
@@ -72,7 +70,7 @@ class MetropolOverviewPageScraper {
         }
     }
 
-    /** Parses a single `li.event` row into a [ScrapedEvent], or `null` when it has no link or title. */
+    /** Parses one `li.event` row into a [ScrapedEvent], or `null` without a link or title. */
     @Suppress("ReturnCount") // Guard clauses for the required href/title are clearer than nesting
     private fun parseRow(
         row: Element,
@@ -82,8 +80,8 @@ class MetropolOverviewPageScraper {
         val sourceUrl = resolveUrl(baseUrl, href)
         val slug = extractEventSlug(sourceUrl, "/event/")
 
-        // The title's support acts live in a nested <small>, so read the heading's own text
-        // rather than .text(), which would glue "Thy Art is MurderFit For An Autopsy + …".
+        // The support acts live in a nested <small>, so read the heading's own text rather than
+        // .text(), which would glue "Thy Art is MurderFit For An Autopsy + …".
         val rawTitle =
             row
                 .selectFirst("h2.artist")
@@ -108,8 +106,8 @@ class MetropolOverviewPageScraper {
             startTime = parseMetropolTime(row.selectFirst(".date .time")?.ownText()),
             sourceUrl = sourceUrl,
             sourceId = "${EventSource.METROPOL.sourceIdPrefix}$slug",
-            // Cancellation is the `.attention` badge; a relocation *away* from the house is the
-            // title prefix. The neighbouring `.changes` prose is deliberately not read — see
+            // Cancellation is the `.attention` badge; a relocation *away* from the house is the title
+            // prefix. The neighbouring `.changes` prose is deliberately not read — see
             // MetropolDetailPageScraper.parseStatus.
             status = parseEventStatus("${row.textAt(".info .attention").orEmpty()} $rawTitle"),
             statusNote = rawTitle,
@@ -118,9 +116,9 @@ class MetropolOverviewPageScraper {
     }
 
     /**
-     * Parses the rendered German date from the row's calendar block — a `.day` carrying the day
-     * with a trailing slash (`04/`) and a `.monthyear` carrying an abbreviated German month and
-     * the year (`Aug. 2026`, `März 2027`). Returns `null` when any part is missing or unparseable.
+     * The rendered German date from the calendar block — a `.day` with a trailing slash (`04/`)
+     * and a `.monthyear` with an abbreviated German month and the year (`Aug. 2026`, `März 2027`).
+     * `null` when any part is missing or unparseable.
      */
     private fun parseRenderedDate(row: Element): LocalDate? {
         val day = row.textAt(".date .day")?.trim('/', ' ')?.toIntOrNull()
@@ -136,14 +134,12 @@ class MetropolOverviewPageScraper {
 }
 
 /**
- * Builds the artist roster for a Metropol event: the headliner(s) from the [title], then the
- * acts on the listing's `small.support` line, in billing order.
- *
- * The shared [buildArtistsForEventType] cannot be used directly because it reads support acts
- * via `extractSupportFromSubtitle`, which requires an explicit `"Support:"` marker. Metropol
- * writes a bare `+`-joined list (`"Fit For An Autopsy + Sun Eater + Protest The Hero"`), so the
- * line is handed straight to [splitSupportActs]. A `PARTY` title is an event name rather than an
- * act, so it yields no artists — the same rule [buildArtistsForEventType] applies.
+ * The artist roster: the headliner(s) from the [title], then the acts on the listing's
+ * `small.support` line, in billing order. The shared [buildArtistsForEventType] cannot be used
+ * directly because it reads support acts via `extractSupportFromSubtitle`, which requires an
+ * explicit `"Support:"` marker; Metropol writes a bare `+`-joined list (`"Fit For An Autopsy +
+ * Sun Eater + Protest The Hero"`), handed straight to [splitSupportActs]. A `PARTY` title is an
+ * event name, not an act, so it yields none — the rule [buildArtistsForEventType] applies.
  */
 internal fun buildMetropolArtists(
     title: String,
@@ -161,14 +157,14 @@ internal fun buildMetropolArtists(
 }
 
 /**
- * Parses an `HH:mm` time out of a Metropol time fragment, which may carry a leading label
+ * An `HH:mm` time from a Metropol time fragment, which may carry a leading label
  * (`Einlass: 19:00`, `Beginn: 20:00`) or be the bare time the overview's `.time` renders.
  *
- * Returns `null` for a **midnight** value: the venue writes an unset start time as `0:00`
- * (e.g. `Einlass: 18:00 // Beginn: 0:00`), and storing that as `00:00` would not merely be
- * wrong — the shared `orderDoorsBeforeStart` guard at the persistence boundary would then read
- * doors 18:00 as "later than the start" and swap the two, inventing an 18:00 start. No Metropol
- * show genuinely begins at midnight; the hall's latest listed start is 20:30.
+ * `null` for a **midnight** value: the venue writes an unset start as `0:00` (`Einlass: 18:00
+ * // Beginn: 0:00`), and storing `00:00` would not merely be wrong — the shared
+ * `orderDoorsBeforeStart` guard would read doors 18:00 as later than the start and swap the
+ * two, inventing an 18:00 start. No Metropol show begins at midnight; the latest listed start
+ * is 20:30.
  */
 internal fun parseMetropolTime(text: String?): LocalTime? =
     TIME_PATTERN.find(text.orEmpty())?.let { match ->
@@ -178,7 +174,7 @@ internal fun parseMetropolTime(text: String?): LocalTime? =
     }
 
 /**
- * Matches an `H:mm` / `HH:mm` time anywhere in a fragment, tolerating the single-digit hour the
- * venue writes for its `0:00` placeholder (which the shared `HH:mm` formatter would reject).
+ * An `H:mm` / `HH:mm` time anywhere in a fragment, tolerating the single-digit hour of the
+ * `0:00` placeholder (which the shared `HH:mm` formatter would reject).
  */
 private val TIME_PATTERN = Regex("""(\d{1,2}):(\d{2})""")

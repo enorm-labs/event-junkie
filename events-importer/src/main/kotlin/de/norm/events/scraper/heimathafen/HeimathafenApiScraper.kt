@@ -26,41 +26,39 @@ import java.time.format.DateTimeParseException
 import java.util.Locale
 
 /**
- * Pure parser for Heimathafen Neukölln's event data, sourced from its WordPress REST API
- * (`/wp-json/wp/v2/events`) — the venue's own ACF-backed `events` custom post type, and the most
- * stable possible source (ADR-007 §"Selector Strategy" priority 1). No HTML is scraped;
- * [HeimathafenWebsiteImporter] fetches the response body and this class parses it.
+ * Pure parser for Heimathafen Neukölln's event data from its WordPress REST API
+ * (`/wp-json/wp/v2/events`) — the venue's ACF-backed `events` custom post type, the most stable
+ * source possible (ADR-007 §"Selector Strategy" priority 1). No HTML is scraped;
+ * [HeimathafenWebsiteImporter] fetches the body and this class parses it.
  *
- * The shape that drives everything here is that **one post holds many dated performances**.
- * `acf.event_performances` is an array — a single theatre run reaches 30 entries — and each entry
- * carries its own date, ticket link, doors note and status:
+ * **One post holds many dated performances.** `acf.event_performances` is an array — a theatre
+ * run reaches 30 entries — each with its own date, ticket link, doors note and status:
  *
  * ```json
  * { "performance_date_time": "11/27/2026 8:00 p.m.",
- *   "performance_description": "Einlass ab 19:00 Uhr (Saal)",
- *   "performance_ticket": "https://www.eventim.de/event/…",
- *   "performance_status": "ausverkauft" }
+ * "performance_description": "Einlass ab 19:00 Uhr (Saal)",
+ * "performance_ticket": "https://www.eventim.de/event/…",
+ * "performance_status": "ausverkauft" }
  * ```
  *
- * so each performance becomes its own [ScrapedEvent], sharing the post's title, blurb, image,
- * prices and promoter. The identity is `<postId>-<date>-<HHmm>`: the **time is part of the key**
- * because a run legitimately plays twice on one day (a matinee plus an evening show), which a
- * date-only key would collapse into one event.
+ * so each performance is its own [ScrapedEvent], sharing the post's title, blurb, image, prices
+ * and promoter. The identity is `<postId>-<date>-<HHmm>`: the **time is part of the key** because
+ * a run legitimately plays twice a day (matinee plus evening), which a date-only key collapses.
  *
- * The API returns the venue's whole archive — 400+ posts and 800+ performances, of which fewer
- * than a hundred are upcoming — and the ACF date is not queryable server-side, so past
- * performances are dropped here rather than minting hundreds of throwaway events per run (the
- * same reason as Zenner's archive filter).
+ * The API returns the whole archive — 400+ posts, 800+ performances, fewer than a hundred
+ * upcoming — and the ACF date is not queryable server-side, so past performances are dropped
+ * here rather than minting hundreds of throwaway events per run (Zenner's archive filter, same
+ * reason).
  *
- * This class performs **no network I/O** — it operates on the raw JSON string (using Jsoup only to
- * flatten HTML in text fields), making it trivial to test against a saved API snapshot.
+ * **No network I/O** — operates on the raw JSON string (Jsoup only to flatten HTML in text
+ * fields), so it tests against a saved API snapshot.
  *
  * @see HeimathafenWebsiteImporter for the HTTP fetch orchestrator and pagination.
  * @see <a href="https://heimathafen-neukoelln.de/wp-json/wp/v2/events">Heimathafen events API</a>
  */
 @Suppress("LongComment") // 6 of these lines are the payload, which names the ACF fields the parser reads.
 class HeimathafenApiScraper(
-    /** Clock for the past-performance cut-off. Defaults to the venue's own time zone; override in tests for determinism. */
+    /** Clock for the past-performance cut-off, in the venue's time zone; override in tests. */
     private val clock: Clock = Clock.system(BERLIN)
 ) {
     private val logger = KotlinLogging.logger {}
@@ -71,9 +69,8 @@ class HeimathafenApiScraper(
      * Parses one page of the WP REST listing response [json].
      *
      * @param json the raw JSON body of a `/wp-json/wp/v2/events` response (a JSON array).
-     * @return the page's post count (which tells the caller whether another page may follow) and
-     *   one [ScrapedEvent] per **upcoming** performance; an empty page if the payload is absent,
-     *   unparseable, or not an array.
+     * @return the page's post count (tells the caller whether another page may follow) and one
+     * [ScrapedEvent] per **upcoming** performance; empty if absent, unparseable or not an array.
      */
     fun scrape(json: String): HeimathafenPage {
         val root = parseRoot(json) ?: return HeimathafenPage(postCount = 0, events = emptyList())
@@ -140,7 +137,7 @@ class HeimathafenApiScraper(
             .filterNot { it.eventDate.isBefore(today) }
     }
 
-    /** Builds one event from a single `event_performances` entry, or `null` when its date is unparseable. */
+    /** One event from a single `event_performances` entry, or `null` when its date is unparseable. */
     private fun parsePerformance(
         performance: JsonNode,
         postId: Int,
@@ -178,12 +175,12 @@ class HeimathafenApiScraper(
     /**
      * Splits the ACF `event_prices` repeater into presale, box-office and a free-form note.
      *
-     * The venue prices by audience rather than by sales channel: alongside `VVK` / `Vorverkauf` /
-     * `Abendkasse` it lists `Regulär`, `Ermäßigt`, `Studierende`, `Mit Berlin-Pass` and a
-     * pay-it-forward `ZUGABE TICKET`. Only the two the model has columns for are mapped —
-     * `Abendkasse` to box office, the first general-admission label to presale — and the whole
-     * `label: price` list is kept verbatim as the note whenever it carries more than that single
-     * general price, so a concession tier is never silently lost.
+     * The venue prices by audience, not sales channel: beside `VVK` / `Vorverkauf` / `Abendkasse`
+     * it lists `Regulär`, `Ermäßigt`, `Studierende`, `Mit Berlin-Pass` and a pay-it-forward
+     * `ZUGABE TICKET`. Only the two with columns are mapped — `Abendkasse` to box office, the first
+     * general-admission label to presale — and the whole `label: price` list is kept verbatim as
+     * the note whenever it carries more than that single general price, so no concession tier is
+     * silently lost.
      */
     @Suppress("ReturnCount") // Guard clauses for the absent / empty price repeater are clearer than nesting
     private fun parsePrices(prices: JsonNode): Triple<BigDecimal?, BigDecimal?, String?> {
@@ -209,13 +206,12 @@ class HeimathafenApiScraper(
     }
 
     /**
-     * The promoter named by the ACF `event_organiser` blurb, or none.
-     *
-     * Only the unambiguous `"Eine Veranstaltung von <name>"` phrasing is read. The field is free
-     * prose and its other shapes do not name a promoter at all: `"Eine Veranstaltung des Heimathafen
-     * Neukölln in Kooperation mit …"` credits the venue itself, `"Heimathafen Neukölln mit Sophia
-     * Keßen und Margret Schütz"` names *performers*, and some entries are nothing but a sponsor
-     * logo. Guessing at those would mint performers and partners as promoters, so they are skipped.
+     * The promoter named by the ACF `event_organiser` blurb, or none. Only the unambiguous
+     * `"Eine Veranstaltung von <name>"` phrasing is read. The field is free prose whose other
+     * shapes name no promoter: `"Eine Veranstaltung des Heimathafen Neukölln in Kooperation mit …"`
+     * credits the venue, `"Heimathafen Neukölln mit Sophia Keßen und Margret Schütz"` names
+     * *performers*, some entries are only a sponsor logo. Guessing would mint performers and
+     * partners as promoters, so they are skipped.
      */
     private fun parsePromoters(organiserHtml: String): List<String> {
         val text = htmlToText(organiserHtml) ?: return emptyList()
@@ -232,11 +228,10 @@ class HeimathafenApiScraper(
 
     /**
      * The genres among the venue's `events_tag-*` slugs, which `class_list` inlines beside the
-     * category (#313). The vocabulary mixes genres with formats, rooms and access notes
-     * (`konzert`, `saal`, `gebaerdensprache`), so a slug counts only when [isGenreLabel] knows
-     * it — 48 of the venue's 562 terms. The slug is lossy once: `rb` for R&B, mapped by
-     * hand. Resolving the taxonomy itself would give the names but not the decision, and would
-     * cost a request per import for the same 48 words.
+     * category (#313). The vocabulary mixes genres with formats, rooms and access notes (`konzert`,
+     * `saal`, `gebaerdensprache`), so a slug counts only when [isGenreLabel] knows it — 48 of the
+     * venue's 562 terms. The slug is lossy once: `rb` for R&B, mapped by hand. Resolving the
+     * taxonomy would give the names but not the decision, at a request per import for the same 48 words.
      */
     private fun resolveGenre(classes: List<String>): String? =
         classes
@@ -249,9 +244,8 @@ class HeimathafenApiScraper(
             .ifBlank { null }
 
     /**
-     * Maps the venue's own `events_cat-*` taxonomy slug — inlined on every post by `class_list`, so
-     * no second taxonomy request is needed — onto an [EventType], falling back to the title when a
-     * post carries no category.
+     * Maps the venue's `events_cat-*` taxonomy slug — inlined on every post by `class_list`, so no
+     * second request — onto an [EventType], falling back to the title without a category.
      */
     private fun resolveEventType(
         classes: List<String>,
@@ -270,8 +264,8 @@ class HeimathafenApiScraper(
             .takeIf { it.isNotBlank() }
 
     /**
-     * One parsed page of the listing: how many posts it carried (the caller's signal for whether
-     * another page may follow) and the upcoming performances parsed out of them.
+     * One parsed page: how many posts it carried (the caller's signal for another page) and the
+     * upcoming performances parsed out of them.
      */
     data class HeimathafenPage(
         val postCount: Int,
@@ -305,10 +299,10 @@ class HeimathafenApiScraper(
         const val CATEGORY_CLASS_PREFIX = "events_cat-"
 
         /**
-         * The venue's category vocabulary. `musik` is its concert programme; `theater`,
-         * `amusemang` (its comedy/variety strand) and the three production labels are staged
-         * shows; `literatur` is readings. `tacheles` (talks and panels), `jugendclub` and
-         * `kiezklub` (community formats) have no closer type than `OTHER`.
+         * The venue's category vocabulary. `musik` is its concert programme; `theater`, `amusemang`
+         * (its comedy/variety strand) and the three production labels are staged shows; `literatur` is
+         * readings. `tacheles` (talks and panels), `jugendclub` and `kiezklub` (community formats) have
+         * no closer type than `OTHER`.
          */
         val CATEGORY_TYPES: Map<String, String> =
             mapOf(
@@ -331,10 +325,10 @@ class HeimathafenApiScraper(
         const val FREE_ENTRY_STATUS = "freier_eintritt"
 
         /**
-         * The `performance_status` values that change the scheduling status. `entfallt` is the
-         * venue's spelling of *entfällt* (cancelled) and `verlegt` a move to another date or room.
-         * Everything else — `default`, `premiere`, `restkarten` (few tickets left), `diskussion`,
-         * `custom`, `nktag` — is a badge on a scheduled performance.
+         * The `performance_status` values that change the scheduling status. `entfallt` is the venue's
+         * spelling of *entfällt* (cancelled), `verlegt` a move to another date or room. Everything else
+         * — `default`, `premiere`, `restkarten` (few tickets left), `diskussion`, `custom`, `nktag` —
+         * is a badge on a scheduled performance.
          */
         val STATUS_TYPES: Map<String, String> =
             mapOf(
@@ -349,21 +343,19 @@ class HeimathafenApiScraper(
         val HH_MM: DateTimeFormatter = DateTimeFormatter.ofPattern("HHmm")
 
         /**
-         * The doors time inside a performance note. The venue writes the qualifier three ways —
-         * "Einlass ab 19:00 Uhr (Saal)", "Einlass ca. 18:30 Uhr", plain "Einlass 19:00 Uhr (Saal)" —
-         * so a short run of non-digits is allowed between the label and the time rather than
-         * enumerating them.
+         * The doors time inside a performance note. Three qualifier spellings — "Einlass ab 19:00 Uhr
+         * (Saal)", "Einlass ca. 18:30 Uhr", plain "Einlass 19:00 Uhr (Saal)" — so a short run of
+         * non-digits is allowed between label and time rather than enumerating them.
          */
         val DOORS_PATTERN = Regex("""Einlass\b[^\d]{0,10}(\d{1,2}:\d{2})""", RegexOption.IGNORE_CASE)
 
         /**
-         * Price labels naming a **concession** rather than a general-admission tier. These are
-         * excluded from both price columns before anything else is matched: the venue prices by
-         * audience, and its social tiers are labelled with the sales channel too — "Mit Berlin-Pass
-         * (Abendkasse)" is €3 and "Für Geflüchtete (Abendkasse)" is €0, either of which would
-         * otherwise be stored as *the* box-office price (and the latter would mark the whole event
-         * free). The pay-it-forward "ZUGABE TICKET" is excluded for the mirror-image reason — it is
-         * priced *above* general admission. They all survive in the price note.
+         * Price labels naming a **concession** rather than a general-admission tier, excluded from
+         * both price columns before anything else is matched: the venue prices by audience and labels
+         * its social tiers with the channel too — "Mit Berlin-Pass (Abendkasse)" is €3 and "Für
+         * Geflüchtete (Abendkasse)" is €0, either of which would otherwise be *the* box-office price
+         * (and the latter would mark the event free). The pay-it-forward "ZUGABE TICKET" is excluded
+         * for the mirror-image reason — priced *above* general admission. All survive in the price note.
          */
         val CONCESSION_LABEL =
             Regex(

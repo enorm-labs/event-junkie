@@ -18,36 +18,34 @@ import java.time.Clock
 /**
  * Pure HTML parser for Berghain's server-rendered programme (overview) page.
  *
- * Handles both source pages, which share one template: the main `/de/program/`
- * page (Berghain building floors) and the `/de/program/kantine-am-berghain/`
- * concert-hall page. Each night is a self-contained `a[href^=/de/event/<id>/]`
- * block, so events are discovered by that semantic link selector rather than the
- * per-page wrapper class (`upcoming-event` on the main page, plain `block` on
- * Kantine). Within a block:
- * - a leading `<p>` carries the weekday, a `span.font-bold` German `DD.MM.YYYY`
- *   date, and inline `tür` (doors) / `beginn` (start) times;
+ * Both source pages share one template: the main `/de/program/` page (Berghain building
+ * floors) and `/de/program/kantine-am-berghain/` (concert hall). Each night is a
+ * self-contained `a[href^=/de/event/<id>/]` block, so events are discovered by that semantic
+ * link selector rather than the per-page wrapper class (`upcoming-event` on the main page,
+ * plain `block` on Kantine). Within a block:
+ * - a leading `<p>` carries the weekday, a `span.font-bold` German `DD.MM.YYYY` date, and
+ * inline `tür` (doors) / `beginn` (start) times;
  * - `<h2>` is the event title;
- * - one or more `<h3>` labels name the floor(s) (Berghain, Panorama Bar, Säule,
- *   Halle, or Kantine am Berghain) — used to type the event and as the subtitle;
- * - one or more `<h4>` blocks hold the running-order lineup, each act in its own
- *   leaf `<span>`, with `Live` / `b2b` format markers in `uppercase` spans.
+ * - one or more `<h3>` labels name the floor(s) (Berghain, Panorama Bar, Säule, Halle, or
+ * Kantine am Berghain) — used to type the event and as the subtitle;
+ * - one or more `<h4>` blocks hold the running-order lineup, each act in its own leaf `<span>`,
+ * with `Live` / `b2b` format markers in `uppercase` spans.
  *
- * The listing carries only upcoming events, but recently-passed dates are dropped here (mirroring
- * the persistence cutoff) to avoid wasted detail-page fetches.
+ * The listing carries only upcoming events, but recently-passed dates are dropped here
+ * (mirroring the persistence cutoff) to avoid wasted detail-page fetches.
  *
  * @see BerghainDetailPageScraper for the per-event enrichment source (image, prices, ticket, description).
  */
 class BerghainOverviewPageScraper(
-    /** Clock for the past-event cutoff. Defaults to the system clock; override in tests for determinism. */
+    /** Clock for the past-event cutoff; override in tests. */
     private val clock: Clock = Clock.systemDefaultZone()
 ) {
     private val logger = KotlinLogging.logger {}
 
     /**
-     * Parses every event block on the overview page document.
+     * Parses every event block on the overview page.
      *
-     * @param sourceUrl the URL the document was fetched from, used to resolve
-     *   relative event links.
+     * @param sourceUrl the URL the document was fetched from, for resolving relative event links.
      * @return upcoming [ScrapedEvent]s (today onward); past-dated entries are dropped.
      */
     fun scrape(
@@ -113,14 +111,11 @@ class BerghainOverviewPageScraper(
     }
 
     /**
-     * Extracts the running-order lineup, tagging each act with the floor it plays.
-     *
-     * The block interleaves `<h3>` floor headings with the `<h4>` lineup for that
-     * floor, so a running scan pairs each act with the most recent floor as its
-     * [stage][ScrapedArtist.stage]. Each act is a leaf `<span>` (an inner name span);
-     * the `Live` / `b2b` format markers live in `uppercase` spans and are skipped, so
-     * a `"A b2b B"` back-to-back slot naturally yields two artists on the same floor.
-     * Concert-hall (Kantine) lineups are billed as headliners; club floors are DJ sets.
+     * The running-order lineup, each act tagged with its floor. The block interleaves `<h3>` floor
+     * headings with that floor's `<h4>` lineup, so a running scan pairs each act with the most
+     * recent floor as its [stage][ScrapedArtist.stage]. Each act is a leaf `<span>`; the `Live` /
+     * `b2b` markers live in `uppercase` spans and are skipped, so `"A b2b B"` yields two artists on
+     * the same floor. Kantine lineups are headliners; club floors are DJ sets.
      */
     private fun parseLineup(
         block: Element,
@@ -145,7 +140,7 @@ class BerghainOverviewPageScraper(
     }
 
     companion object {
-        /** Semantic selector for event blocks — a link to a `/de/event/<id>/` detail page, on either source page. */
+        /** Semantic selector for event blocks — a link to a `/de/event/<id>/` page, on either source page. */
         private const val EVENT_LINK_SELECTOR = "a[href^=/de/event/]"
 
         /** Tailwind utility class marking a `Live`/`b2b` format label span (not an artist name). */

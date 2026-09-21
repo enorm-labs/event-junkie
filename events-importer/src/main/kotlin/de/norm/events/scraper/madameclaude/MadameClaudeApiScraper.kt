@@ -29,26 +29,24 @@ import java.time.LocalDate
 import java.time.LocalTime
 
 /**
- * Pure parser for Madame Claude's event data, sourced from its WordPress REST API
- * (`/wp-json/wp/v2/event`), the venue's own `event` custom-post-type endpoint.
+ * Pure parser for Madame Claude's event data from its WordPress REST API (`/wp-json/wp/v2/event`),
+ * the venue's `event` custom-post-type endpoint.
  *
- * Madame Claude's site is WordPress with an Advanced Custom Fields (ACF) `event` post
- * type, and its REST API exposes every event as clean structured JSON — the most stable
- * possible source (ADR-007 §"Selector Strategy" priority 1). This replaced the previous
- * two-page HTML scrape (an events grid plus per-event detail pages): a single API request
- * now yields date, doors time, type, entrance fee, ticket link, genre, description, and the
- * featured image (via `_embed`), so no detail-page fetch is needed.
- * [MadameClaudeWebsiteImporter] fetches the response body; this class parses it.
+ * WordPress with an Advanced Custom Fields (ACF) `event` post type whose REST API exposes every
+ * event as clean JSON — the most stable source possible (ADR-007 §"Selector Strategy" priority 1).
+ * This replaced a two-page HTML scrape (events grid plus per-event detail pages): one API
+ * request yields date, doors time, type, entrance fee, ticket link, genre, description and the
+ * featured image (via `_embed`). [MadameClaudeWebsiteImporter] fetches the body; this class
+ * parses it.
  *
- * Each array entry carries the post `date` (the event's date **and** start time — the CMS
- * stores them identically to `acf.event_date`), a `title.rendered`, a `slug`, a canonical
- * `link`, an embedded `wp:featuredmedia[0].source_url`, and an `acf` object with
- * `event_type`, `event_doors_time`, `event_entrance_fee`, `event_tickets_url`,
- * `event_music_genre`, `event_card_subtitle`, `event_description`, and `event_status`.
- * Participant fields are always empty, so artists are derived from the title (as the old
- * HTML scraper did). This class performs **no network I/O** — it operates on the raw JSON
- * string (using Jsoup only to unescape/flatten HTML in text fields), making it trivial to
- * test against a saved API snapshot.
+ * Each entry carries the post `date` (the event's date **and** start time — stored identically
+ * to `acf.event_date`), `title.rendered`, `slug`, a canonical `link`, an embedded
+ * `wp:featuredmedia[0].source_url`, and an `acf` object with `event_type`, `event_doors_time`,
+ * `event_entrance_fee`, `event_tickets_url`, `event_music_genre`, `event_card_subtitle`,
+ * `event_description` and `event_status`. Participant fields are always empty, so artists come
+ * from the title (as the old HTML scraper did). **No network I/O** — operates on the raw JSON
+ * string (Jsoup only to unescape/flatten HTML in text fields), so it tests against a saved
+ * API snapshot.
  *
  * @see MadameClaudeWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://madameclaude.de/events/">Madame Claude Events</a>
@@ -56,10 +54,9 @@ import java.time.LocalTime
 class MadameClaudeApiScraper {
     private val logger = KotlinLogging.logger {}
 
-    // Maps the API's snake_case fields onto camelCase DTO properties, so the DTOs need no
-    // per-field @JsonProperty annotations (except the two WP keys — `_embedded` and its
-    // colon-bearing `wp:featuredmedia` — which the SNAKE_CASE strategy cannot derive).
-    // Unknown fields are ignored (Jackson 3 default).
+    // Maps the API's snake_case fields onto camelCase DTO properties, so no per-field
+    // @JsonProperty (except the two WP keys — `_embedded` and the colon-bearing `wp:featuredmedia`
+    // — the SNAKE_CASE strategy cannot derive). Unknown fields are ignored (Jackson 3 default).
     private val jsonMapper: JsonMapper =
         JsonMapper
             .builder()
@@ -71,8 +68,7 @@ class MadameClaudeApiScraper {
      * Parses every event from the WP REST API listing response [json].
      *
      * @param json the raw JSON body of the `/wp-json/wp/v2/event` response (a JSON array).
-     * @return a list of [ScrapedEvent] instances, one per listed event; empty if the payload
-     *   is absent, unparseable, or not an array.
+     * @return one [ScrapedEvent] per listed event; empty if absent, unparseable or not an array.
      */
     fun scrape(json: String): List<ScrapedEvent> {
         val root = parseRoot(json) ?: return emptyList()
@@ -89,7 +85,7 @@ class MadameClaudeApiScraper {
         }
     }
 
-    /** Parses the response body and returns it as a JSON array, or null if it is unparseable or not an array. */
+    /** The response body as a JSON array, or null if unparseable or not an array. */
     @Suppress(
         "TooGenericExceptionCaught", // A malformed payload must degrade to null, never abort the import.
         "ReturnCount" // Guard clauses for the unparseable body and non-array root are clearer than nesting.
@@ -124,9 +120,9 @@ class MadameClaudeApiScraper {
                 ?.rendered
                 .blankToNull()
                 ?.let { Parser.unescapeEntities(it, false) }
-                // The venue's editor leaves a stray double space in some titles
-                // ("Adventurous Juan  (DJ-Set)"); the shared cleanup collapses whitespace runs and
-                // strips the trailing notes every other scraper already routes its title through.
+                // The editor leaves a stray double space in some titles ("Adventurous Juan  (DJ-Set)"); the
+                // shared cleanup collapses whitespace runs and strips the trailing notes every other scraper
+                // routes its title through.
                 ?.let(::cleanEventTitle)
                 .blankToNull()
         if (title == null) {
@@ -173,10 +169,10 @@ class MadameClaudeApiScraper {
     }
 
     /**
-     * Types the event from the ACF `event_type` label (the authoritative CMS value), falling
-     * back to a title-based screening net when the label is unknown — a "SCREENING" title
-     * (e.g. "SHORTIES FILMS SCREENING #28") should not fall to the `OTHER` default. Returns
-     * `null` when nothing matches so the persistence boundary applies the `OTHER` default.
+     * Types the event from the ACF `event_type` label (the authoritative CMS value), falling back
+     * to a title-based screening net when the label is unknown — a "SCREENING" title ("SHORTIES
+     * FILMS SCREENING #28") should not fall to `OTHER`. `null` when nothing matches so the
+     * persistence boundary applies the `OTHER` default.
      */
     private fun inferEventType(
         typeLabel: String?,
@@ -184,17 +180,14 @@ class MadameClaudeApiScraper {
     ): String? = mapEventType(typeLabel, MADAME_CLAUDE_TYPE_SYNONYMS) ?: if (isScreeningTitle(title)) EventType.SCREENING.name else null
 
     /**
-     * Builds the lineup from the title, keyed off the authoritative [eventType]:
-     * - **Concerts** — the title carries the co-billed acts (`A + B + C`), split into
-     *   headliners via [headlinersFromTitle] with `splitOnSlash = false` (Madame Claude
-     *   uses `/` *inside* a single act name — `Morimoto / Wong duo` — so co-bills are
-     *   delimited only by `+`); a trailing "(DJ-Set)" on the last act is stripped as an
-     *   artist-name suffix.
-     * - **Parties** — only a "(DJ-Set)" night names its DJs (via [djSetArtistsFromTitle],
-     *   role `DJ`); a party whose title is an event name (e.g. "Summer Break Send-Off")
-     *   mints none.
-     * - **Everything else** (quiz, screening, festival) — the title names an event, not an
-     *   artist, so no artists are extracted.
+     * The lineup from the title, keyed off the authoritative [eventType]:
+     * - **Concerts** — co-billed acts (`A + B + C`) split into headliners via [headlinersFromTitle]
+     * with `splitOnSlash = false` (the venue uses `/` *inside* a single act name — `Morimoto / Wong
+     * duo` — so co-bills are delimited only by `+`); a trailing "(DJ-Set)" on the last act is
+     * stripped as an artist-name suffix.
+     * - **Parties** — only a "(DJ-Set)" night names its DJs ([djSetArtistsFromTitle], role `DJ`);
+     * a party titled as an event ("Summer Break Send-Off") mints none.
+     * - **Everything else** (quiz, screening, festival) — the title names an event, no artists.
      */
     private fun buildArtists(
         title: String,
@@ -207,10 +200,9 @@ class MadameClaudeApiScraper {
         }
 
     /**
-     * Maps Madame Claude's ACF `event_status` to a domain [EventStatus][de.norm.events.event.EventStatus] name.
-     *
-     * Every current event is `Scheduled`; the cancelled/postponed/relocated codes are mapped
-     * defensively so a future status surfaces rather than being silently treated as scheduled.
+     * Maps the ACF `event_status` to a domain [EventStatus][de.norm.events.event.EventStatus] name.
+     * Every current event is `Scheduled`; cancelled/postponed/relocated codes are mapped
+     * defensively so a future status surfaces rather than passing as scheduled.
      */
     private fun mapStatus(code: String?): String =
         when (val normalized = code?.trim()?.lowercase()) {
@@ -240,7 +232,7 @@ class MadameClaudeApiScraper {
             }
         }
 
-    /** Reads the embedded featured-media URL (`_embedded.wp:featuredmedia[0].source_url`), or null when absent. */
+    /** The embedded featured-media URL (`_embedded.wp:featuredmedia[0].source_url`), or null. */
     private fun MadameClaudeEventNode.embeddedImageUrl(): String? =
         embedded
             ?.featuredMedia
@@ -250,8 +242,8 @@ class MadameClaudeApiScraper {
             ?.takeIf { it.startsWith("http") }
 
     /**
-     * Parses the event date from the post `date` (ISO `yyyy-MM-dd'T'HH:mm:ss`), falling back to
-     * the ACF `event_date` (space-separated `yyyy-MM-dd HH:mm:ss`). Both encode the same day.
+     * The event date from the post `date` (ISO `yyyy-MM-dd'T'HH:mm:ss`), else the ACF `event_date`
+     * (space-separated `yyyy-MM-dd HH:mm:ss`). Both encode the same day.
      */
     private fun parseEventDate(
         postDate: String?,
@@ -261,10 +253,9 @@ class MadameClaudeApiScraper {
             ?: acfDate?.substringBefore(' ')?.let { parseIsoDate(it) }
 
     /**
-     * Flattens a WordPress HTML content blob (`event_description`) to readable plain text:
-     * Jsoup strips the tags while the source's own line breaks are preserved, `&nbsp;` is
-     * normalised to a space, each line is trimmed, and runs of blank lines are collapsed.
-     * Returns null when the blob is absent or yields no text.
+     * Flattens a WordPress HTML blob (`event_description`) to plain text: Jsoup strips tags while
+     * the source's line breaks stay, `&nbsp;` becomes a space, lines are trimmed, blank-line runs
+     * collapse. Null when absent or empty.
      */
     private fun htmlToText(html: String?): String? {
         if (html.isNullOrBlank()) return null
@@ -280,13 +271,12 @@ class MadameClaudeApiScraper {
     }
 
     private companion object {
-        /** Collapses three-or-more consecutive newlines (blank-line runs) down to a single blank line. */
+        /** Collapses three-or-more consecutive newlines down to a single blank line. */
         val BLANK_LINE_RUN = Regex("\n{3,}")
 
         /**
-         * Madame Claude's ACF `event_type` labels mapped to [EventType] values. `Live` and
-         * `Open Mic` are live-music formats (→ `CONCERT`); `DJ`, `Party` and `Karaoke` are
-         * club nights (→ `PARTY`); `Film Night` is a `SCREENING`.
+         * ACF `event_type` labels mapped to [EventType]. `Live` and `Open Mic` are live-music formats
+         * (→ `CONCERT`); `DJ`, `Party` and `Karaoke` are club nights (→ `PARTY`); `Film Night` is a `SCREENING`.
          */
         val MADAME_CLAUDE_TYPE_SYNONYMS: Map<String, String> =
             mapOf(
@@ -304,14 +294,11 @@ class MadameClaudeApiScraper {
 }
 
 /**
- * One event in the WP REST API listing, mapped from its JSON by Jackson.
- *
- * Only the fields Madame Claude actually populates are declared; the mapper's
- * `SNAKE_CASE` strategy maps snake_case JSON keys (`event_doors_time`,
- * `event_card_subtitle`) onto these camelCase properties, and unknown keys are
- * ignored. The event's date **and** start time live in the top-level [date]; the
- * ACF block carries the rest. Every field is nullable/defaulted so a partial or
- * evolving payload deserializes cleanly and is validated in
+ * One event in the WP REST API listing, mapped by Jackson. Only the fields the venue populates
+ * are declared; `SNAKE_CASE` maps `event_doors_time`, `event_card_subtitle` etc. onto these
+ * camelCase properties, unknown keys are ignored. Date **and** start time live in the
+ * top-level [date]; the ACF block carries the rest. Every field is nullable/defaulted so a
+ * partial or evolving payload deserializes and is validated in
  * [MadameClaudeApiScraper.parseEvent] instead.
  */
 private data class MadameClaudeEventNode(
@@ -355,28 +342,24 @@ private data class MadameClaudeMedia(
     val sourceUrl: String? = null
 )
 
-/** Matches the "(DJ-Set)" / "(DJ Set)" marker Madame Claude appends to a DJ-night title. */
+/** The "(DJ-Set)" / "(DJ Set)" marker appended to a DJ-night title. */
 private val DJ_SET_TITLE_MARKER = Regex("""\(\s*dj[\s-]?set\s*\)""", RegexOption.IGNORE_CASE)
 
-/** "+" separator between co-billed DJs in a Madame Claude title (a "/" belongs to a single duo name). */
+/** "+" separator between co-billed DJs (a "/" belongs to a single duo name). */
 private val DJ_ACT_SEPARATOR = Regex("""\s*\+\s*""")
 
 /**
- * Whether [title] carries Madame Claude's "(DJ-Set)" marker, identifying a DJ-set night.
- *
- * Used to source a party's lineup from the title (the DJ names) rather than treating the
- * title as an event name with no performers.
+ * Whether [title] carries the "(DJ-Set)" marker — a party whose lineup comes from the title
+ * (the DJ names) rather than a title that is an event name with no performers.
  */
 private fun isDjSetTitle(title: String): Boolean = DJ_SET_TITLE_MARKER.containsMatchIn(title)
 
 /**
- * Derives the DJ lineup from a "(DJ-Set)" [title].
- *
- * Madame Claude bills co-DJs with `+` and uses `/` **inside** a single act name
- * (`Morimoto / Wong duo`). So the "(DJ-Set)" suffix is stripped, acts are split on `+`
- * then on guarded `&`/`and`/`und` ([splitSegmentOnConjunctions]) — never on `/` —
- * per-act tour/format suffixes are stripped, and non-artists (placeholders, `Open Mic
- * L. J. Fox`, `DJ-Set / Berlin`) are dropped. All are role `DJ`, in billing order.
+ * The DJ lineup from a "(DJ-Set)" [title]. Co-DJs are billed with `+` and `/` sits **inside**
+ * a single act name (`Morimoto / Wong duo`), so the suffix is stripped, acts split on `+` then
+ * on guarded `&`/`and`/`und` ([splitSegmentOnConjunctions]) — never `/` — per-act tour/format
+ * suffixes stripped, non-artists (placeholders, `Open Mic L. J. Fox`, `DJ-Set / Berlin`)
+ * dropped. All role `DJ`, in billing order.
  */
 internal fun djSetArtistsFromTitle(title: String): List<ScrapedArtist> =
     stripArtistSuffix(title)

@@ -5,24 +5,20 @@ import de.norm.events.event.EventType
 /**
  * Maps a Berghain floor label to its signature music genre.
  *
- * The site exposes **no** structured genre field — genre words appear only woven
- * into the editorial description prose, and always attached to an individual
- * artist rather than the night as a whole (e.g. one act "modernen Techno", the
- * next an "Acid-House-Jam"). So there is nothing to reliably *extract*. What each
- * room *does* have is a strong, settled programming identity, which makes the
- * floor a useful genre **default** for filtering:
+ * The site exposes **no** structured genre field — genre words appear only in the editorial
+ * prose, attached to an individual artist rather than the night (one act "modernen Techno",
+ * the next an "Acid-House-Jam"), so nothing can be reliably *extracted*. Each room does have a
+ * settled programming identity, which makes the floor a useful genre **default** for filtering:
  * - **Berghain** (the main hall) → Techno
  * - **Panorama Bar** → House
  * - **Säule** (the small experimental room) → Experimental
  *
- * This is a curated stereotype, not ground truth: a given line-up can diverge
- * from its room's usual sound (an Acid House bill booked into the Berghain hall
- * does happen). Floors without one settled genre — the Halle event hall and the
- * Kantine am Berghain concert hall, both of which host varied bills — contribute
- * nothing and yield `null`.
+ * A curated stereotype, not ground truth: a line-up can diverge from its room's usual sound
+ * (an Acid House bill in the Berghain hall does happen). Floors without one settled genre — the
+ * Halle event hall and the Kantine am Berghain concert hall, both varied — yield `null`.
  *
- * The `Kantine` check comes first because its label ("Kantine am Berghain")
- * contains the substring "Berghain" and must not be mis-mapped to Techno.
+ * The `Kantine` check comes first because "Kantine am Berghain" contains "Berghain" and must
+ * not be mis-mapped to Techno.
  */
 private fun floorToGenre(floor: String): String? {
     val label = floor.trim()
@@ -36,9 +32,9 @@ private fun floorToGenre(floor: String): String? {
 }
 
 /**
- * Derives an event's genre from the floor(s) it runs on, or `null` when no floor
- * maps to a settled genre. Distinct floor genres are joined in listing order, so a
- * night split across the main hall and Panorama Bar reads "Techno, House".
+ * An event's genre from the floor(s) it runs on, or `null` when none maps to a settled genre.
+ * Distinct floor genres are joined in listing order, so a night across the main hall and
+ * Panorama Bar reads "Techno, House".
  *
  * @see floorToGenre for the per-floor mapping and its stereotype caveat.
  */
@@ -51,11 +47,9 @@ fun floorsToGenre(floors: List<String>): String? =
 
 /**
  * Types an event from its floor label(s): the Kantine am Berghain concert hall lists live
- * [CONCERT][EventType.CONCERT]s, while the Berghain building floors (Berghain, Panorama Bar,
- * Säule, Halle) host club [PARTY][EventType.PARTY] nights.
- *
- * Returns `null` when no floor is given, letting the persistence boundary apply the `OTHER`
- * default.
+ * [CONCERT][EventType.CONCERT]s; the Berghain building floors (Berghain, Panorama Bar, Säule,
+ * Halle) host club [PARTY][EventType.PARTY] nights. `null` without a floor, letting the
+ * persistence boundary apply the `OTHER` default.
  */
 internal fun floorsToEventType(floors: List<String>): String? =
     when {

@@ -11,19 +11,14 @@ import java.time.LocalDate
 /**
  * Pure HTML parser for SO36's event listing (overview) page.
  *
- * SO36 runs on the "Ticket-Toaster" shop platform. The homepage (`/`) redirects
- * to `/tickets`, which server-renders every upcoming event as an anchor to its
- * `/produkte/<id>-…-am-DD-MM-YYYY` detail page. The visible listing itself is a
- * client-rendered (Knockout.js) grid, but the same anchors are also emitted into
- * a static, server-rendered accessibility list — so the overview needs no
- * JavaScript to enumerate the program.
+ * SO36 runs on the "Ticket-Toaster" shop platform. The homepage (`/`) redirects to `/tickets`,
+ * which server-renders every upcoming event as an anchor to its `/produkte/<id>-…-am-DD-MM-YYYY`
+ * detail page. The visible grid is client-rendered (Knockout.js), but the same anchors are
+ * emitted into a static accessibility list — no JavaScript needed to enumerate the program.
  *
- * The overview serves two purposes:
- * 1. **Discovery** — identifies all event detail URLs for enrichment.
- * 2. **Fallback data** — the product URL carries a stable numeric id (used for the
- *    `sourceId`) and the event date (`am-DD-MM-YYYY`, four-digit year), and the
- *    link text carries the title. The detail page (the primary source) supplies
- *    everything else. Merging is handled by [So36WebsiteImporter].
+ * The overview is the discovery list plus fallback data: the product URL carries a stable
+ * numeric id (the `sourceId`) and the event date (`am-DD-MM-YYYY`, four-digit year), the link
+ * text the title. The detail page supplies everything else; [So36WebsiteImporter] merges.
  *
  * @see So36DetailPageScraper for the primary per-event data source.
  * @see So36WebsiteImporter for the HTTP fetch orchestrator.
@@ -33,16 +28,13 @@ class So36OverviewPageScraper {
     private val logger = KotlinLogging.logger {}
 
     /**
-     * Parses all event links from the overview page document.
+     * Parses all event links from the overview page. Every event is an
+     * `<a href="/produkte/<id>-…-am-DD-MM-YYYY">`; non-event shop links (e.g. merch) carry no
+     * `am-DD-MM-YYYY` suffix and are skipped. Deduplicated by numeric product id, since the
+     * featured "TONIGHT" teaser repeats an event also in the list.
      *
-     * Every event is an `<a href="/produkte/<id>-…-am-DD-MM-YYYY">`. Non-event
-     * shop links (e.g. merch) carry no `am-DD-MM-YYYY` date suffix and are
-     * skipped. Events are deduplicated by their numeric product id, since the
-     * featured "TONIGHT" teaser repeats an event that is also in the list.
-     *
-     * @param baseUrl the URL the document was fetched from, used to resolve
-     *   relative detail links.
-     * @return a list of [ScrapedEvent] instances (one per distinct event).
+     * @param baseUrl the URL the document was fetched from, for resolving relative detail links.
+     * @return one [ScrapedEvent] per distinct event.
      */
     fun scrape(
         document: Document,
@@ -65,8 +57,8 @@ class So36OverviewPageScraper {
     }
 
     /**
-     * Parses a single product anchor into a [ScrapedEvent], or `null` when the
-     * link is not an event (no date suffix) or has already been seen.
+     * Parses one product anchor into a [ScrapedEvent], or `null` when it is not an event (no date
+     * suffix) or already seen.
      */
     @Suppress("ReturnCount") // Guard clauses for non-event links and duplicates are clearer than nesting
     private fun parseLink(
@@ -96,10 +88,8 @@ class So36OverviewPageScraper {
     }
 
     /**
-     * Extracts the event title from the link text, which follows the pattern
-     * `"Tickets <TITLE> in <City> am DD.MM.YYYY"`. Returns `null` if the text
-     * does not match, letting the caller fall back to a placeholder that the
-     * detail page's `<h1>` then overrides.
+     * The title from the link text `"Tickets <TITLE> in <City> am DD.MM.YYYY"`; `null` on no
+     * match, so the caller falls back to a placeholder the detail page's `<h1>` overrides.
      */
     private fun parseTitle(text: String): String? =
         LINK_TEXT_PATTERN
@@ -111,14 +101,13 @@ class So36OverviewPageScraper {
 
     private companion object {
         /**
-         * Matches a `/produkte/<id>-…-am-DD-MM-YYYY` event detail path, capturing
-         * the numeric product id and the date parts. The `am-…` date suffix is
-         * what distinguishes an event ticket from a non-dated shop product.
+         * A `/produkte/<id>-…-am-DD-MM-YYYY` detail path, capturing the product id and the date parts.
+         * The `am-…` suffix distinguishes an event ticket from a non-dated shop product.
          */
         private val PRODUCT_HREF_PATTERN =
             Regex("""/produkte/(\d+)-.*-am-(\d{2})-(\d{2})-(\d{4})""")
 
-        /** Matches the `"Tickets <TITLE> in <City> am <date>"` link text, capturing the title. */
+        /** The `"Tickets <TITLE> in <City> am <date>"` link text, capturing the title. */
         private val LINK_TEXT_PATTERN = Regex("""^Tickets\s+(.+?)\s+in\s+\S+\s+am\s+\d""")
     }
 }

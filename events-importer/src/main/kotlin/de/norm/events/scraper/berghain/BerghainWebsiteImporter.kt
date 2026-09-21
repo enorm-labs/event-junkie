@@ -12,18 +12,17 @@ import java.time.Clock
 /**
  * Website importer for Berghain's server-rendered programme.
  *
- * A single importer serves both source rows built on the identical page template —
- * the main `/de/program/` page (Berghain building floors → parties) and the
- * `/de/program/kantine-am-berghain/` concert-hall page. Each row carries its own
- * URL, ETag and venue; both dispatch here via [EventSource.BERGHAIN].
+ * One importer serves both source rows on the identical template — the main `/de/program/`
+ * page (Berghain building floors → parties) and `/de/program/kantine-am-berghain/` (concert
+ * hall). Each row carries its own URL, ETag and venue; both dispatch via [EventSource.BERGHAIN].
  *
- * The pipeline (inherited from [AbstractTwoPageWebsiteImporter]):
- * 1. Fetch the overview page and discover events via [BerghainOverviewPageScraper]
- *    (the authoritative source for title, date, times, floor and the lineup).
- * 2. For each event, fetch its `/de/event/<id>/` detail page and parse it via
- *    [BerghainDetailPageScraper] for the image, ticket link, prices and description.
- * 3. Merge: the detail page is primary, with the overview filling any gaps —
- *    crucially the artist lineup, which only the overview parses cleanly.
+ * Inherited from [AbstractTwoPageWebsiteImporter]:
+ * 1. Fetch the overview and discover events via [BerghainOverviewPageScraper] (authoritative
+ * for title, date, times, floor and the lineup).
+ * 2. Each `/de/event/<id>/` page via [BerghainDetailPageScraper] for image, ticket link,
+ * prices and description.
+ * 3. Merge: the detail page is primary, the overview fills gaps — crucially the artist lineup,
+ * which only the overview parses cleanly.
  *
  * @see BerghainOverviewPageScraper for overview parsing (discovery + lineup + fallback).
  * @see BerghainDetailPageScraper for detail parsing (image, prices, ticket, description).
@@ -32,7 +31,7 @@ import java.time.Clock
 @Component
 class BerghainWebsiteImporter(
     htmlFetcher: HtmlFetcher,
-    /** Clock for the overview scraper's past-event cutoff. Defaults to the system clock; override in tests. */
+    /** Clock for the overview scraper's past-event cutoff; override in tests. */
     clock: Clock = Clock.systemDefaultZone()
 ) : AbstractTwoPageWebsiteImporter(htmlFetcher) {
     override val eventSource: EventSource = EventSource.BERGHAIN
@@ -51,10 +50,9 @@ class BerghainWebsiteImporter(
     ): ScrapedEvent? = detailPageScraper.scrape(document, url)
 
     /**
-     * Fills fields the detail page could not supply from the overview event. The
-     * detail page is authoritative for everything it parses; the overview only
-     * contributes where the detail returned null — most importantly the artist
-     * lineup, which the detail page does not parse (see [BerghainDetailPageScraper]).
+     * Fills what the detail page could not supply from the overview event. The detail page is
+     * authoritative for everything it parses; the overview contributes only where it returned null
+     * — most importantly the lineup, which the detail page does not parse (see [BerghainDetailPageScraper]).
      */
     override fun fillGapsFromOverview(
         primary: ScrapedEvent,

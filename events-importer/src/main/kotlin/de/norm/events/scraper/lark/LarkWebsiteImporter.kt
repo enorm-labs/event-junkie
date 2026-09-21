@@ -16,23 +16,23 @@ import java.time.LocalDate
 /**
  * Website importer for LARK Berlin, sourced from its WordPress REST API.
  *
- * The venue exposes an Advanced Custom Fields `event` post type in full over
- * `/wp-json/wp/v2/event`, so nothing is scraped (ADR-007 §"Selector Strategy" priority 1): walk the
- * listing newest-first via [ApiClient.fetchJson], parse each page with [LarkApiScraper], then resolve
- * the upcoming events' posters in one batched `/wp-json/wp/v2/media?include=<ids>` request.
+ * An Advanced Custom Fields `event` post type exposed in full over `/wp-json/wp/v2/event`, so
+ * nothing is scraped (ADR-007 §"Selector Strategy" priority 1): walk the listing newest-first
+ * via [ApiClient.fetchJson], parse each page with [LarkApiScraper], then resolve the upcoming
+ * events' posters in one batched `/wp-json/wp/v2/media?include=<ids>` request.
  *
- * **Paging usually stops after one request** because LARK overloads `post.date` with the *event*
- * date, making the endpoint's newest-first ordering chronological in event terms — so the upcoming
- * programme sits at the front of page 1 and paging stops as soon as a page's oldest event is past.
- * [HeimathafenWebsiteImporter][de.norm.events.scraper.heimathafen.HeimathafenWebsiteImporter] walks
- * its whole archive for want of that. [MAX_PAGES] still bounds the loop.
+ * **Paging usually stops after one request** because LARK overloads `post.date` with the
+ * *event* date, making newest-first chronological in event terms — the upcoming programme sits
+ * at the front of page 1 and paging stops once a page's oldest event is past.
+ * [HeimathafenWebsiteImporter][de.norm.events.scraper.heimathafen.HeimathafenWebsiteImporter]
+ * walks its whole archive for want of that. [MAX_PAGES] still bounds the loop.
  *
- * **The poster is fetched separately** because the listing carries only a `featured_media` id, and
- * WordPress's `_embed` inlines every generated size for every post — 308 KB → 845 KB in a live
- * capture, against ~2 KB for one batched lookup. A failed media response costs posters, never events.
+ * **The poster is fetched separately**: the listing carries only a `featured_media` id, and
+ * `_embed` inlines every generated size for every post — 308 KB → 845 KB in a live capture,
+ * against ~2 KB for one batched lookup. A failed media response costs posters, never events.
  *
- * No conditional request is used: `etag` / `lastModified` are ignored and every import returns
- * [ImportResult.Success], which is safe because persistence upserts idempotently by `sourceId`.
+ * No conditional request: `etag` / `lastModified` are ignored and every import returns
+ * [ImportResult.Success], safe because persistence upserts idempotently by `sourceId`.
  *
  * @see LarkApiScraper for the JSON parsing logic.
  * @see <a href="https://larkberlin.com/events/">LARK events</a>
@@ -40,7 +40,7 @@ import java.time.LocalDate
 @Component
 class LarkWebsiteImporter(
     private val apiClient: ApiClient,
-    /** Clock deciding which events are still upcoming. Defaults to the system clock; override in tests. */
+    /** Clock deciding which events are still upcoming; override in tests. */
     private val clock: Clock = Clock.systemDefaultZone()
 ) : EventImporter {
     private val logger = KotlinLogging.logger {}
@@ -60,8 +60,8 @@ class LarkWebsiteImporter(
         for (page in 1..MAX_PAGES) {
             val parsed = apiScraper.scrapePage(apiClient.fetchJson(buildListingUrl(url, page)))
             entries += parsed.entries
-            // The listing is ordered by event date, so a page reaching the past holds no more
-            // upcoming events — and a short page is the last one (WordPress 400s beyond it).
+            // Ordered by event date, so a page reaching the past holds no more upcoming events — and a
+            // short page is the last one (WordPress 400s beyond it).
             val lastPage = parsed.postCount < PER_PAGE || parsed.oldestDate?.let { it < today } == true
             if (lastPage) break
             if (page == MAX_PAGES) logger.warn { "LARK paging stopped at the $MAX_PAGES-page cap; later pages were not read" }
@@ -89,10 +89,9 @@ class LarkWebsiteImporter(
     }
 
     /**
-     * Builds the WP REST query for one listing [page] from the configured API base [baseUrl].
-     *
-     * Page size and the field projection are parsing concerns and live in code (ADR-007: parsing
-     * logic in code, entry-point URL in config). The base is stored on the event source, e.g.
+     * The WP REST query for one listing [page] from the configured API base [baseUrl]. Page size
+     * and field projection are parsing concerns and live in code (ADR-007: parsing logic in code,
+     * entry-point URL in config). The base is on the event source, e.g.
      * `https://larkberlin.com/wp-json/wp/v2/event`.
      */
     private fun buildListingUrl(
@@ -100,7 +99,7 @@ class LarkWebsiteImporter(
         page: Int
     ): String = "$baseUrl${baseUrl.querySeparator()}per_page=$PER_PAGE&page=$page&_fields=$FIELDS"
 
-    /** Builds the batched attachment lookup, sharing the listing's host and `/wp/v2` namespace. */
+    /** The batched attachment lookup, sharing the listing's host and `/wp/v2` namespace. */
     private fun buildMediaUrl(
         baseUrl: String,
         mediaIds: List<Long>
@@ -112,19 +111,18 @@ class LarkWebsiteImporter(
     private fun String.querySeparator(): Char = if ('?' in this) '&' else '?'
 
     private companion object {
-        /** WordPress's maximum page size, so the programme needs the fewest possible requests. */
+        /** WordPress's maximum page size, so the programme needs the fewest requests. */
         const val PER_PAGE = 100
 
         /**
          * Safety bound on the paging loop. One page covers the whole upcoming programme today; the
-         * cap keeps a runaway loop impossible if the ordering assumption ever breaks, and is logged
-         * when hit.
+         * cap makes a runaway loop impossible if the ordering assumption ever breaks, logged when hit.
          */
         const val MAX_PAGES = 10
 
         /**
-         * The fields the parser reads. `date` matters most: LARK stores the *event* date there, so
-         * it supplies both the date and the doors time.
+         * The fields the parser reads. `date` matters most: LARK stores the *event* date there, so it
+         * supplies both the date and the doors time.
          */
         const val FIELDS = "id,link,title,date,acf,featured_media"
     }

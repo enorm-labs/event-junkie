@@ -14,12 +14,12 @@ private val logger = KotlinLogging.logger {}
  * The price and free-entry facts for one performance, recovered from the programme page's
  * **leaked record dump**.
  *
- * The page's calendar section emits a `var_dump()` of each performance's database row into an HTML
- * comment — 23 fields per event, including the two things the rendered programme never states: the
- * ticket price range and the free-entry flag. Nothing about that leak is intentional, so it is
- * treated as strictly best-effort: [parseDelphiEventRecords] returns an empty map the day the
- * venue notices, and every event simply loses its price. Nothing load-bearing — the date, title,
- * identity and ticket link all come from the rendered HTML — depends on it.
+ * The calendar section emits a `var_dump()` of each performance's database row into an HTML
+ * comment — 23 fields per event, including the two things the rendered programme never states:
+ * the ticket price range and the free-entry flag. The leak is not intentional, so it is strictly
+ * best-effort: [parseDelphiEventRecords] returns an empty map the day the venue notices, and
+ * every event simply loses its price. Nothing load-bearing — date, title, identity, ticket link
+ * — depends on it.
  *
  * @property pricePresale the lowest published price, or `null` when the venue states none.
  * @property priceNote the published range as rendered for display ("15–25 €"), or `null`.
@@ -32,12 +32,10 @@ data class DelphiEventRecord(
 )
 
 /**
- * Parses every leaked record on the programme page into a map keyed by
- * [performance key][delphiPerformanceKey], so a record can be matched to the rendered row for the
- * same production and start time.
- *
- * The dump is emitted as one block *before* the programme table rather than beside each row, so
- * the join is on `(production id, start instant)` rather than on document order.
+ * Parses every leaked record into a map keyed by [performance key][delphiPerformanceKey], so a
+ * record matches the rendered row for the same production and start time. The dump is one
+ * block *before* the programme table, not beside each row, so the join is on
+ * `(production id, start instant)` rather than document order.
  */
 fun parseDelphiEventRecords(document: Document): Map<String, DelphiEventRecord> =
     document
@@ -48,9 +46,9 @@ fun parseDelphiEventRecords(document: Document): Map<String, DelphiEventRecord> 
         .also { logger.info { "Recovered ${it.size} leaked price record(s) from the Delphi programme page" } }
 
 /**
- * The join key for one performance: its production id and its local start time. Both sides of the
- * join can state these — the rendered row from its `?prod=` link and its date heading plus clock,
- * the leaked record from `event_FK_production` and `event_Zeit`.
+ * The join key for one performance: production id and local start time. Both sides can state
+ * these — the rendered row from its `?prod=` link and date heading plus clock, the leaked
+ * record from `event_FK_production` and `event_Zeit`.
  */
 fun delphiPerformanceKey(
     productionId: String,
@@ -70,7 +68,7 @@ private fun parseRecord(data: String): Pair<String, DelphiEventRecord>? {
     val start = fields[TIMESTAMP_FIELD]?.toLongOrNull()?.let { LocalDateTime.ofInstant(Instant.ofEpochSecond(it), BERLIN) }
 
     // The production-level amounts carry cents where the per-event copies are rounded to whole
-    // euros ("29.95" vs "29"), so they win wherever the venue has filled them in.
+    // euros ("29.95" vs "29"), so they win wherever the venue filled them in.
     val from = fields.amount(PRODUCTION_PRICE_FROM) ?: fields.amount(EVENT_PRICE_FROM)
     val to = fields.amount(PRODUCTION_PRICE_TO) ?: fields.amount(EVENT_PRICE_TO)
 

@@ -16,20 +16,19 @@ import java.time.Clock
 /**
  * Website importer for Crack Bellmer, the RAW-Gelände microclub and dance bar, on Webflow.
  *
- * The pipeline is listing → event page, but not the merge
- * [de.norm.events.scraper.AbstractTwoPageWebsiteImporter] performs:
- * 1. Fetch the `/program/this-month` listing via [HtmlFetcher] with conditional-request support
- *    (ETag / Last-Modified). All three month tabs serve the same markup — the whole programme in one
- *    Finsweet CMS list, filtered client-side — so one fetch gets everything.
- * 2. Parse every `.event-item` via [CrackBellmerOverviewPageScraper], which supplies every stored
- *    field and drops the already-passed nights the listing carries.
- * 3. Fetch each remaining event's `/events/<slug>` page and add its blurb
- *    ([CrackBellmerDetailPageScraper]).
+ * Listing → event page, but not the merge [de.norm.events.scraper.AbstractTwoPageWebsiteImporter]
+ * performs:
+ * 1. [HtmlFetcher] fetches `/program/this-month` conditionally (ETag / Last-Modified). All three
+ * month tabs serve the same markup — the whole programme in one Finsweet CMS list, filtered
+ * client-side — so one fetch gets everything.
+ * 2. [CrackBellmerOverviewPageScraper] parses every `.event-item`, supplying every stored field
+ * and dropping the passed nights the listing carries.
+ * 3. Each remaining event's `/events/<slug>` page adds its blurb ([CrackBellmerDetailPageScraper]).
  *
- * Step 3 is why this class implements [EventImporter] directly: the event page adds a description
- * and nothing else, and spells its date without a year, so it is not the primary source the abstract
- * base class's detail scraper is expected to be. An event page that cannot be fetched or parsed is
- * not fatal — that night keeps its listing data, losing only the blurb.
+ * Step 3 is why this class implements [EventImporter] directly: the event page adds a
+ * description and nothing else, and spells its date without a year, so it is not the primary
+ * source the base class's detail scraper must be. A failed event page is not fatal — the night
+ * keeps its listing data, losing only the blurb.
  *
  * @see CrackBellmerOverviewPageScraper for the listing parsing logic.
  * @see CrackBellmerDetailPageScraper for the event-page blurb.
@@ -38,7 +37,7 @@ import java.time.Clock
 @Component
 class CrackBellmerWebsiteImporter(
     private val htmlFetcher: HtmlFetcher,
-    /** Clock for the listing scraper's past-event cutoff. Defaults to the system clock; override in tests. */
+    /** Clock for the listing scraper's past-event cutoff; override in tests. */
     clock: Clock = Clock.systemDefaultZone()
 ) : EventImporter {
     private val logger = KotlinLogging.logger {}

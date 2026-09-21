@@ -12,14 +12,10 @@ import org.springframework.stereotype.Component
 /**
  * Website importer for Metropol Berlin's Events-Manager programme.
  *
- * Orchestrates the fetch → parse pipeline:
- * 1. Fetch the unpaginated `/events` listing via [HtmlFetcher] with conditional request
- *    support (ETag / Last-Modified).
- * 2. Discover every `li.event` row via [MetropolOverviewPageScraper] — the only source for the
- *    support acts.
- * 3. For each event, fetch its `/event/<iso-date-slug>` page and parse it via
- *    [MetropolDetailPageScraper] — the source for the promoter, subtitle, poster, description,
- *    ticket link and the unambiguously labelled times.
+ * 1. [HtmlFetcher] fetches the unpaginated `/events` listing conditionally (ETag / Last-Modified).
+ * 2. [MetropolOverviewPageScraper] discovers every `li.event` row — the only source for the support acts.
+ * 3. Each `/event/<iso-date-slug>` page via [MetropolDetailPageScraper] — promoter, subtitle,
+ * poster, description, ticket link and the unambiguously labelled times.
  *
  * @see MetropolOverviewPageScraper for listing parsing (discovery, support acts, fallback).
  * @see MetropolDetailPageScraper for detail parsing (promoter, image, ticket, description).
@@ -45,14 +41,11 @@ class MetropolWebsiteImporter(
     ): ScrapedEvent? = detailPageScraper.scrape(document, url)
 
     /**
-     * Merges detail-page data ([primary]) with listing data ([fallback]).
-     *
-     * The detail page wins on everything it carries — notably the times, which it labels
-     * explicitly (`Einlass: … // Beginn: …`) where the listing only implies them by position.
-     * The listing is authoritative for the **support acts**, which the detail page's `h1` omits,
-     * so the subtitle and the artist roster are rebuilt from it: the headliner comes from the
-     * detail title and the support acts from the listing, rather than taking either side's
-     * roster wholesale.
+     * Merges detail-page data ([primary]) with listing data ([fallback]). The detail page wins on
+     * everything it carries — notably the times, labelled explicitly (`Einlass: … // Beginn: …`)
+     * where the listing implies them by position. The listing is authoritative for the **support
+     * acts**, which the detail `h1` omits, so subtitle and roster are rebuilt: headliner from the
+     * detail title, support acts from the listing, rather than either roster wholesale.
      */
     override fun fillGapsFromOverview(
         primary: ScrapedEvent,
@@ -60,8 +53,8 @@ class MetropolWebsiteImporter(
     ): ScrapedEvent {
         val subtitle = primary.subtitle ?: fallback.subtitle
         return primary.copy(
-            // Only the listing renders a support line, so it supplies the subtitle when the
-            // detail page has no tour name of its own.
+            // Only the listing renders a support line, so it supplies the subtitle when the detail page
+            // has no tour name.
             subtitle = subtitle,
             // The slug date is on both pages; fall back only if the detail slug was unparseable.
             eventDate = primary.eventDate.takeIf { it != UNRESOLVED_EVENT_DATE } ?: fallback.eventDate,
