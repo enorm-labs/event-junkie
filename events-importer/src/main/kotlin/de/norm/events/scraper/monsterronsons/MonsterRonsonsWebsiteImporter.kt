@@ -16,27 +16,24 @@ import java.time.Clock
 /**
  * Website importer for Monster Ronson's Ichiban Karaoke, the Friedrichshain karaoke bar, on Webflow.
  *
- * The pipeline is overview → night page:
- * 1. Fetch `/events` via [HtmlFetcher] with conditional-request support (ETag / Last-Modified).
- * 2. Parse one event per calendar day via [MonsterRonsonsOverviewPageScraper] — the card carries
- *    title, date, start time, poster and the night's host(s).
- * 3. Fetch each night's `/posts/<slug>` page once and apply its prose, door price and ticket link
- *    ([MonsterRonsonsNightDetail.applyTo]).
+ * Overview → night page:
+ * 1. [HtmlFetcher] fetches `/events` conditionally (ETag / Last-Modified).
+ * 2. [MonsterRonsonsOverviewPageScraper] parses one event per calendar day — title, date, start
+ * time, poster and host(s).
+ * 3. Each night's `/posts/<slug>` page once, applying prose, door price and ticket link
+ * ([MonsterRonsonsNightDetail.applyTo]).
  *
- * It implements [EventImporter] directly rather than extending
- * [de.norm.events.scraper.AbstractTwoPageWebsiteImporter] because the night page enriches the card
- * instead of superseding it: the base class treats the detail page as the primary source and merges
- * the overview into its gaps, which is the wrong way round here — the card is the only place the
- * date is stated in full, and a night page that fails to load must not be able to blank it.
+ * Implements [EventImporter] directly rather than
+ * [de.norm.events.scraper.AbstractTwoPageWebsiteImporter] because the night page enriches the
+ * card instead of superseding it: the base class treats the detail page as primary and merges
+ * the overview into its gaps, the wrong way round here — the card is the only place the date is
+ * stated in full, and a failed night page must not blank it. Such a page is not fatal: the date
+ * keeps its card data and loses only description, price and ticket link.
  *
- * A night page that cannot be fetched or parsed is not fatal: that date keeps its card data and
- * loses only the description, price and ticket link.
- *
- * **What this source does not publish**: no doors time (one time per night, taken as the start), no
- * presale price, no genre, and no lineup beyond the host named in the title. The venue also runs
- * private karaoke boxes all evening, which appear nowhere in the programme — the listing describes
- * the main stage only. The window is short by design: the CMS holds roughly twelve days at a time,
- * so each import replaces a rolling window rather than accumulating a season.
+ * **Not published**: no doors time (one time per night, taken as the start), no presale price,
+ * no genre, no lineup beyond the host in the title. The private karaoke boxes running all
+ * evening appear nowhere — the listing is the main stage only. The window is short by design:
+ * roughly twelve days, so each import replaces a rolling window rather than accumulating a season.
  *
  * @see MonsterRonsonsOverviewPageScraper for the listing parsing logic.
  * @see MonsterRonsonsDetailPageScraper for the night-page parsing logic.
@@ -45,7 +42,7 @@ import java.time.Clock
 @Component
 class MonsterRonsonsWebsiteImporter(
     private val htmlFetcher: HtmlFetcher,
-    /** Clock for the overview scraper's year inference and past-event cutoff. Defaults to the system clock; override in tests. */
+    /** Clock for the overview scraper's year inference and past-event cutoff; override in tests. */
     clock: Clock = Clock.systemDefaultZone()
 ) : EventImporter {
     private val logger = KotlinLogging.logger {}
@@ -78,10 +75,9 @@ class MonsterRonsonsWebsiteImporter(
         }
 
     /**
-     * Fetches each distinct night page once and applies it to the event that links to it.
-     *
-     * The CMS recycles its entries, so two cards pointing at one page is possible even though the
-     * current window has none; fetching per distinct URL keeps that case from re-requesting a page.
+     * Fetches each distinct night page once and applies it to the events linking to it. The CMS
+     * recycles entries, so two cards on one page is possible even though the current window has
+     * none; per distinct URL keeps that from re-requesting.
      */
     private suspend fun enrichFromNightPages(events: List<ScrapedEvent>): List<ScrapedEvent> {
         val nightUrls = events.map { it.sourceUrl }.distinct()

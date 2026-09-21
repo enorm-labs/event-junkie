@@ -21,37 +21,35 @@ import java.time.LocalDate
 import java.time.MonthDay
 
 /**
- * Pure HTML parser for the Club der Visionäre programme page, shared by all three
- * rooms it lists (see [ClubDerVisionaereRoom]).
+ * Pure HTML parser for the Club der Visionäre programme page, shared by all three rooms it
+ * lists (see [ClubDerVisionaereRoom]).
  *
- * The page is one chronological run of `div#programmC > div[id^=post-]` blocks, each carrying a
- * `div.headerTxt` date cell, a `p.headerTxt.<room>` title whose colour class names the room, and a
- * flat sequence of `<p>` lineup lines. [scrape] walks **every** block — the date carry-forward below
- * spans rooms — but returns only those belonging to the requested room.
+ * One chronological run of `div#programmC > div[id^=post-]` blocks, each with a `div.headerTxt`
+ * date cell, a `p.headerTxt.<room>` title whose colour class names the room, and a flat
+ * sequence of `<p>` lineup lines. [scrape] walks **every** block — the date carry-forward spans
+ * rooms — but returns only the requested room's.
  *
- * Three quirks drive the parsing:
+ * Three quirks:
  *
- * 1. **Year-less dates.** The date cell reads `Fr. 31.7.`, sometimes without the dot after the
- *    weekday. The German weekday disambiguates the year via [inferYearForWeekday].
- * 2. **Dates are printed once per day.** When a night shares its date with the block
- *    above it — a boat party and the club afterparty that follows it — the second
- *    block's date cell is *empty*, so a dateless block inherits the preceding block's
- *    date. A dateless block with nothing before it is skipped rather than guessed at.
- * 3. **The lineup is prose, not markup.** Acts are `// <name>` paragraphs, optionally
- *    grouped under a `<label>:` paragraph — a floor (`Main:`, `Chill Floor:`) or a
- *    billing section (`Live Band featuring:`, `DJ Sets:`). A trailing `LIVE` marker or
- *    a `from HH:mm` set time may ride along on the act line; the set time is dropped
- *    rather than used as the event's start time, which this page does not print — the
- *    homepage does, and the importer joins it on (see [ClubDerVisionaereHomePageScraper]).
+ * 1. **Year-less dates.** The cell reads `Fr. 31.7.`, sometimes without the dot after the
+ * weekday; the German weekday disambiguates the year via [inferYearForWeekday].
+ * 2. **Dates print once per day.** A night sharing its date with the block above — a boat
+ * party and the club afterparty after it — has an *empty* cell and inherits the preceding
+ * block's date. A dateless block with nothing before it is skipped, not guessed.
+ * 3. **The lineup is prose.** Acts are `// <name>` paragraphs, optionally under a `<label>:`
+ * paragraph — a floor (`Main:`, `Chill Floor:`) or a billing section (`Live Band featuring:`,
+ * `DJ Sets:`). A trailing `LIVE` marker or `from HH:mm` set time may ride on the act line; the
+ * set time is dropped, not used as the start, which this page does not print — the homepage
+ * does, and the importer joins it on (see [ClubDerVisionaereHomePageScraper]).
  *
- * Parenthesised names are left whole — `Los Refrescos (Dandy Jack & Argenis Brito)` is one
- * act billed with its members, `Naima (2)` a Resident Advisor disambiguator.
+ * Parenthesised names stay whole — `Los Refrescos (Dandy Jack & Argenis Brito)` is one act
+ * billed with its members, `Naima (2)` a Resident Advisor disambiguator.
  *
  * @see CLUB_DER_VISIONAERE_LIMITATIONS for what the venue does not publish.
  * @see ClubDerVisionaereWebsiteImporter and its sibling room importers for the fetch orchestration.
  */
 class ClubDerVisionaereProgrammePageScraper(
-    /** Clock for weekday-based year inference. Defaults to the system clock; override in tests for determinism. */
+    /** Clock for weekday-based year inference; override in tests. */
     private val clock: Clock = Clock.systemDefaultZone()
 ) {
     private val logger = KotlinLogging.logger {}
@@ -59,8 +57,8 @@ class ClubDerVisionaereProgrammePageScraper(
     /**
      * Parses the programme page, returning only the events of the given [room].
      *
-     * @param sourceUrl the URL the document was fetched from; the page has no per-event
-     *   URLs, so it doubles as every event's `sourceUrl`.
+     * @param sourceUrl the URL the document was fetched from; no per-event URLs exist, so it is
+     * every event's `sourceUrl`.
      * @param room the room whose nights to return.
      */
     fun scrape(
@@ -89,9 +87,8 @@ class ClubDerVisionaereProgrammePageScraper(
     }
 
     /**
-     * Pairs each block with its date, carrying the last seen date forward into blocks
-     * whose date cell is empty (quirk 2 in the class doc). Runs over all rooms' blocks
-     * because a night can inherit its date from a block belonging to another room.
+     * Pairs each block with its date, carrying the last seen date into blocks with an empty cell
+     * (quirk 2). Runs over all rooms because a night can inherit from another room's block.
      */
     private fun withCarriedDates(blocks: List<Element>): List<Pair<Element, LocalDate?>> {
         var lastDate: LocalDate? = null
@@ -101,7 +98,7 @@ class ClubDerVisionaereProgrammePageScraper(
         }
     }
 
-    /** The room a block belongs to, read from its title's colour class; null when the title is missing or unknown. */
+    /** The room from the title's colour class; null when the title is missing or unknown. */
     private fun roomOf(block: Element): ClubDerVisionaereRoom? {
         val title = block.selectFirst(TITLE_SELECTOR) ?: return null
         return ClubDerVisionaereRoom.entries.firstOrNull { title.hasClass(it.titleClass) }
@@ -133,10 +130,10 @@ class ClubDerVisionaereProgrammePageScraper(
 
         return ScrapedEvent(
             title = title,
-            // Every listing is a club night; the venue publishes no category of its own.
+            // Every listing is a club night; the venue publishes no category.
             eventType = EventType.PARTY.name,
             eventDate = eventDate,
-            // No per-event pages: the programme page is the source for every night.
+            // No per-event pages: the programme page is every night's source.
             sourceUrl = sourceUrl,
             sourceId = "${room.eventSource.sourceIdPrefix}$postId",
             artists = parseLineup(block)
@@ -144,9 +141,8 @@ class ClubDerVisionaereProgrammePageScraper(
     }
 
     /**
-     * Parses the block's German `Wd. D.M.` date cell, inferring the year from the
-     * weekday. Returns `null` for an empty cell (the shared-date case) or an
-     * unparseable one.
+     * The block's German `Wd. D.M.` date cell, year from the weekday. `null` for an empty cell
+     * (the shared-date case) or an unparseable one.
      */
     @Suppress("ReturnCount") // Null-safe early exits per date component are clearer than nested let-chains.
     private fun parseDate(block: Element): LocalDate? {
@@ -163,18 +159,15 @@ class ClubDerVisionaereProgrammePageScraper(
     }
 
     /**
-     * Reads the block's `// <act>` lineup lines into artists, tracking the floor and
-     * billing section they are listed under.
+     * The block's `// <act>` lines as artists, tracking floor and billing section.
      *
-     * A `<label>:` paragraph opens a section: a floor label ([FLOOR_LABEL_PATTERN])
-     * becomes the [stage][ScrapedArtist.stage] of the acts below it, while a live-band
-     * section bills them as headliners. Anything else resets both, so a section that
-     * names neither cannot leak a bogus stage onto later acts.
+     * A `<label>:` paragraph opens a section: a floor label ([FLOOR_LABEL_PATTERN]) becomes the
+     * [stage][ScrapedArtist.stage] of the acts below, a live-band section bills them as headliners,
+     * anything else resets both so a section naming neither cannot leak a stage onto later acts.
      *
-     * The result is de-duplicated by name: an act billed twice on one night (a live-band
-     * member who also plays a DJ set later, e.g. Remain In Love) would otherwise produce
-     * two `event_artist` rows for the same pair and violate its unique constraint. The
-     * first billing wins, keeping both the earlier lineup position and its role.
+     * De-duplicated by name: an act billed twice on one night (a live-band member who also plays
+     * a DJ set later, e.g. Remain In Love) would produce two `event_artist` rows for one pair and
+     * violate the unique constraint. First billing wins — its lineup position and role.
      */
     private fun parseLineup(block: Element): List<ScrapedArtist> {
         var stage: String? = null
@@ -203,14 +196,12 @@ class ClubDerVisionaereProgrammePageScraper(
     }
 
     /**
-     * Turns one `// <act>` line into its artist entries — usually one, two for a co-bill
-     * or a `b2b` slot.
+     * One `// <act>` line into artist entries — usually one, two for a co-bill or `b2b` slot.
      *
-     * An act the venue marks `LIVE` (or one listed under a live-band section) is billed
+     * An act marked `LIVE` (or under a live-band section) is
      * [HEADLINER][de.norm.events.event.ArtistRole.HEADLINER] rather than
-     * [DJ][de.norm.events.event.ArtistRole.DJ]: the marker is the venue's own statement
-     * that the act performs rather than DJs, and HEADLINER is the only performing role the
-     * model has. Everything else on this programme is a DJ set.
+     * [DJ][de.norm.events.event.ArtistRole.DJ]: the venue's own statement that the act performs, and
+     * HEADLINER is the only performing role the model has. Everything else here is a DJ set.
      */
     private fun parseActLine(
         line: String,
@@ -231,10 +222,9 @@ class ClubDerVisionaereProgrammePageScraper(
     }
 
     /**
-     * Splits an act line into individual acts: always at a `b2b` marker, and at
-     * `&`/`and`/`und` boundaries via [splitSegmentOnConjunctions] — but never inside a
-     * parenthesised name, whose brackets hold a member list or a Resident Advisor
-     * disambiguator rather than a second act.
+     * Splits an act line at `b2b` and at `&`/`and`/`und` via [splitSegmentOnConjunctions] — never
+     * inside a parenthesised name, whose brackets hold a member list or a Resident Advisor
+     * disambiguator, not a second act.
      */
     private fun splitActs(line: String): List<String> =
         line
@@ -244,9 +234,9 @@ class ClubDerVisionaereProgrammePageScraper(
             .filter { it.isNotBlank() }
 
     /**
-     * True when [name] names no act yet: the shared non-artist predicate, plus the
-     * venue's `More TBA` spelling — the `More ` prefix is only ever dropped when what
-     * remains is itself a placeholder, so a real act like "More Ghost Than Man" is kept.
+     * True when [name] names no act yet: the shared non-artist predicate plus the venue's
+     * `More TBA` — the `More ` prefix is dropped only when the rest is itself a placeholder, so
+     * "More Ghost Than Man" is kept.
      */
     private fun isUnannouncedAct(name: String): Boolean = isNonArtistName(name) || isNonArtistName(name.replaceFirst(MORE_PREFIX, ""))
 
@@ -278,13 +268,13 @@ class ClubDerVisionaereProgrammePageScraper(
         /** A section heading naming a floor rather than a billing group — `Main`, `Chill Floor`. */
         private val FLOOR_LABEL_PATTERN = Regex("""\bfloor\b|^main$""", RegexOption.IGNORE_CASE)
 
-        /** The venue's live-performance marker, on a section heading ("Live Band featuring") or an act ("… LIVE"). */
+        /** The live-performance marker, on a section heading ("Live Band featuring") or an act ("… LIVE"). */
         private val LIVE_MARKER_PATTERN = Regex("""\blive\b""", RegexOption.IGNORE_CASE)
 
         /** A trailing set time on an act line ("… LIVE from 21:00") — a slot time, not the event's start. */
         private val SET_TIME_TAIL_PATTERN = Regex("""\s+from\s+\d{1,2}:\d{2}\s*$""", RegexOption.IGNORE_CASE)
 
-        /** A leading series label on an act line ("Soundz of:  Guest DJs"), stripped so the act itself remains. */
+        /** A leading series label on an act line ("Soundz of:  Guest DJs"), stripped so the act remains. */
         private val LINEUP_LABEL_PREFIX = Regex("""^[^:]{1,30}:\s+""")
 
         /** The `More` in the venue's "More TBA" not-yet-announced marker. */

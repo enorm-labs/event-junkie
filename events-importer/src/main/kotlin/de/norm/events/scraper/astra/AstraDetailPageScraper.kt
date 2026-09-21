@@ -11,21 +11,17 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 
 /**
- * Pure HTML parser for Astra Kulturhaus event detail pages.
+ * Pure HTML parser for Astra Kulturhaus event detail pages — the **primary data source**.
  *
- * The detail page is the **primary data source** for each event. It reuses the
- * same `.event__*` header markup as the overview (parsed via
- * [parseAstraEventBlock]) and adds the fields that only the detail page carries:
- * - promoter(s) (`.promoters__link`)
- * - presale / box-office prices (`.prices .price`)
- * - ticket shop URL (`.purchase-option__button`)
- * - description / artist bio (`.gig__description`, `.detail__description`)
+ * Reuses the overview's `.event__*` header markup ([parseAstraEventBlock]) and adds the
+ * detail-only fields: promoter(s) (`.promoters__link`), presale / box-office prices
+ * (`.prices .price`), ticket shop URL (`.purchase-option__button`), description / artist bio
+ * (`.gig__description`, `.detail__description`).
  *
- * The detail page does not render the artist roster, so `artists` is left for
- * the overview page to supply via [AstraWebsiteImporter.fillGapsFromOverview].
- * It may render a `kind` label, but that is the raw per-day value (uncorrected
- * by the overview's festival-day normalization), so the overview type wins in
- * the merge and the detail value is only a fallback.
+ * No artist roster here, so `artists` is left to the overview via
+ * [AstraWebsiteImporter.fillGapsFromOverview]. A `kind` label may render, but as the raw
+ * per-day value without the overview's festival-day normalization, so the overview type wins
+ * and the detail value is only a fallback.
  *
  * @see AstraOverviewPageScraper for overview parsing (event type, discovery).
  * @see AstraWebsiteImporter for the HTTP fetch orchestrator.
@@ -35,14 +31,10 @@ class AstraDetailPageScraper {
     private val logger = KotlinLogging.logger {}
 
     /**
-     * Parses an event detail page into a [ScrapedEvent].
+     * Parses a detail page into a [ScrapedEvent], scoped to `main.page-content` (the single
+     * event). `null` when the container or the title is missing.
      *
-     * Scopes parsing to the `main.page-content` container, which holds the
-     * single event. Returns `null` if the container or the event title is
-     * missing (an unexpected page structure).
-     *
-     * @param sourceUrl the event's URL, used as [ScrapedEvent.sourceUrl] and to
-     *   derive the [ScrapedEvent.sourceId].
+     * @param sourceUrl the event's URL: [ScrapedEvent.sourceUrl] and the [ScrapedEvent.sourceId].
      */
     @Suppress("ReturnCount") // Guard clauses for missing container and title are clearer than nesting
     fun scrape(
@@ -64,8 +56,7 @@ class AstraDetailPageScraper {
             // The banner leads the description, the way the Lido template stores it.
             description = listOfNotNull(block.notice, parseDescription(content)).joinToString("\n").ifBlank { null },
             eventType = block.eventType,
-            // Detail pages always carry the real date; sentinel only if absent
-            // (then the overview value is used via fillGapsFromOverview).
+            // Detail pages always carry the real date; sentinel only if absent (then fillGapsFromOverview).
             eventDate = block.eventDate ?: UNRESOLVED_EVENT_DATE,
             doorsTime = block.doorsTime,
             startTime = block.startTime,
@@ -83,8 +74,8 @@ class AstraDetailPageScraper {
     }
 
     /**
-     * Extracts promoter names from the `.promoters__link` anchors, deduplicated
-     * while preserving order (the markup repeats them for mobile/desktop layouts).
+     * Promoter names from the `.promoters__link` anchors, deduplicated in order (the markup repeats
+     * them for mobile/desktop layouts).
      */
     private fun parsePromoters(content: Element): List<String> =
         content
@@ -103,11 +94,8 @@ class AstraDetailPageScraper {
             }.toMap()
 
     /**
-     * Extracts the event description from the artist bio and detail sections.
-     *
-     * Paragraphs are gathered from `.gig__description` (per-artist bios) and
-     * `.detail__description` (event blurb), deduplicated while preserving order
-     * since both layouts can repeat content. Returns `null` when no prose exists.
+     * Description from `.gig__description` (per-artist bios) and `.detail__description` (event
+     * blurb), deduplicated in order since both layouts can repeat content. `null` without prose.
      */
     private fun parseDescription(content: Element): String? =
         content

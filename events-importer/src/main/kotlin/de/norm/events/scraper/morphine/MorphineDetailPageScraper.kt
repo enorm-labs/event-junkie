@@ -22,30 +22,27 @@ import java.math.BigDecimal
 /**
  * Pure HTML parser for Morphine Raum event detail pages (`/events/<slug>`).
  *
- * A detail page renders the event as a `section.content.overlay` above the full `/events` listing —
- * the same listing the overview page carries, repeated as navigation. Every selector here is scoped to
- * that overlay; reading the document whole would pull the other nights' titles and dates into it.
+ * The event renders as a `section.content.overlay` above the full `/events` listing — the same
+ * listing the overview carries, repeated as navigation. Every selector is scoped to that
+ * overlay; the whole document would pull the other nights' titles and dates in.
  *
- * Inside it the hand-coded Kirby template emits typed `div.block` boxes, of which four carry data.
- * `.block.day` is the header `"Friday, 07.08.26, door  20:00"` plus a nested `ul.lineup` whose first
- * entry's time is the event's start and whose every name is a performer. `.block.paypal` is an
- * advance-ticket form: its hidden `amount` input is the presale price, and it posts to PayPal rather
- * than linking, so the button is the only way to buy and there is nothing to store as a ticket URL.
- * `.block.priceevent` is free text the venue also uses for house rules, so [readPriceNote] requires a
- * pricing signal and [parseDoorPrice] stores a figure only for a single unambiguous amount — a
- * sliding scale or donation range, which is most nights, has no field to go in. `.block.paragraph`
- * keeps its `<br>` breaks, because that is how the instrument credits are written ("Jon Rose | violin
- * & field recordings").
-
+ * The hand-coded Kirby template emits typed `div.block` boxes, four with data. `.block.day` is
+ * the header `"Friday, 07.08.26, door  20:00"` plus a nested `ul.lineup` whose first entry's
+ * time is the start and whose every name is a performer. `.block.paypal` is an advance-ticket
+ * form: its hidden `amount` input is the presale price, and it posts to PayPal rather than
+ * linking, so the button is the only way to buy and there is no ticket URL. `.block.priceevent`
+ * is free text the venue also uses for house rules, so [readPriceNote] requires a pricing signal
+ * and [parseDoorPrice] stores a figure only for a single unambiguous amount — a sliding scale or
+ * donation range, most nights, has no field. `.block.paragraph` keeps its `<br>` breaks, which
+ * is how the instrument credits are written ("Jon Rose | violin & field recordings").
  *
- * **The lineup names carry more than the act**, and the shared splitters resolve them only as far as a
- * structural signal allows: a `/`-separated co-bill written without spaces stays one name, because
- * [splitHeadlinerTitle][de.norm.events.scraper.splitHeadlinerTitle] requires the padding that protects
- * `AC/DC`, and a `– <project>` tail stays attached for want of anything separating it from a
- * hyphenated act name. Both need a curated vocabulary rather than a Morphine-local rule; see #302.
+ * **The lineup names carry more than the act**, and the shared splitters resolve them only as
+ * far as a structural signal allows: a `/`-separated co-bill without spaces stays one name,
+ * because [splitHeadlinerTitle][de.norm.events.scraper.splitHeadlinerTitle] requires the padding
+ * that protects `AC/DC`, and a `– <project>` tail stays attached for want of anything separating
+ * it from a hyphenated act name. Both need a curated vocabulary, not a Morphine-local rule; see #302.
  *
  * @see MORPHINE_LIMITATIONS for what the source does not publish.
- *
  * @see MorphineOverviewPageScraper for overview parsing (discovery, date, fallback).
  * @see MorphineWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="http://www.morphinerecords.com/events/sardy-fardy-live-recording">Example detail page</a>
@@ -54,11 +51,9 @@ class MorphineDetailPageScraper {
     private val logger = KotlinLogging.logger {}
 
     /**
-     * Parses an event detail page into a [ScrapedEvent], or `null` when the page carries no event
-     * overlay or no title (an unexpected structure).
+     * Parses a detail page into a [ScrapedEvent], or `null` without an event overlay or title.
      *
-     * @param sourceUrl the event's URL, used as [ScrapedEvent.sourceUrl] and to derive the
-     *   [ScrapedEvent.sourceId].
+     * @param sourceUrl the event's URL: [ScrapedEvent.sourceUrl] and the [ScrapedEvent.sourceId].
      */
     @Suppress("ReturnCount") // Guard clauses for the missing overlay and title are clearer than nesting
     fun scrape(
@@ -108,12 +103,12 @@ class MorphineDetailPageScraper {
     }
 
     /**
-     * Reads the performers of an ensemble piece out of the first `.block.paragraph` whose every line
-     * is a `Name (instrument, …)` credit — at least [MIN_PERFORMER_CREDITS] of them, so a single
-     * parenthesised remark in prose is never mistaken for a lineup. Such a piece is billed under the
-     * work's name ("VINYL REDUCTION" is a turntable-quartet composition, not an act, #1134), so when
-     * the block exists its names are the lineup and the work stays the title. Empty otherwise, and
-     * the `ul.lineup` names are the acts as before.
+     * The performers of an ensemble piece from the first `.block.paragraph` whose every line is a
+     * `Name (instrument, …)` credit — at least [MIN_PERFORMER_CREDITS], so one parenthesised
+     * remark in prose is never a lineup. Such a piece is billed under the work's name ("VINYL
+     * REDUCTION" is a turntable-quartet composition, not an act, #1134), so when the block exists
+     * its names are the lineup and the work stays the title. Empty otherwise, and the `ul.lineup`
+     * names are the acts.
      */
     private fun readPerformers(overlay: Element): List<ScrapedArtist> =
         overlay
@@ -132,10 +127,10 @@ class MorphineDetailPageScraper {
             .map { ScrapedArtist(name = it, role = "HEADLINER") }
 
     /**
-     * Reads the `ul.lineup` set entries, each an `<li>` of two spans: the set's start time and the
-     * billed name. An entry missing either span, or blank in both, is skipped. One with a time and
-     * no name stays: the venue writes a bare `20:30` under `door 20:00` when the night is billed by
-     * its title alone, and that time is the start (#1497).
+     * The `ul.lineup` set entries, each an `<li>` of two spans: start time and billed name. An
+     * entry missing either span, or blank in both, is skipped. One with a time and no name stays:
+     * the venue writes a bare `20:30` under `door 20:00` when the night is billed by its title
+     * alone, and that time is the start (#1497).
      */
     private fun readLineup(overlay: Element): List<LineupEntry> =
         overlay.select("div.block.day ul.lineup li").mapNotNull { item ->
@@ -149,8 +144,8 @@ class MorphineDetailPageScraper {
         }
 
     /**
-     * Joins the programme text from every `.block.paragraph` box, preserving the `<br>` line
-     * breaks the venue writes its instrument credits with, and separating boxes by a blank line.
+     * The programme text from every `.block.paragraph` box, keeping the `<br>` breaks the
+     * instrument credits are written with, boxes separated by a blank line.
      */
     private fun readDescription(overlay: Element): String? =
         overlay
@@ -160,9 +155,9 @@ class MorphineDetailPageScraper {
             .takeIf { it.isNotBlank() }
 
     /**
-     * Reads the presale price from the advance-ticket PayPal form's hidden inputs, or `null` when
-     * the night has no such form. Guarded on `currency_code` so a non-EUR form is never stored as
-     * euros — `EventEntity` has no per-event currency (all scraped venues are in Berlin).
+     * The presale price from the PayPal form's hidden inputs, or `null` without a form. Guarded on
+     * `currency_code` so a non-EUR form is never stored as euros — `EventEntity` has no per-event
+     * currency (all scraped venues are in Berlin).
      */
     private fun readPaypalPrice(overlay: Element): BigDecimal? =
         overlay

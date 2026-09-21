@@ -3,17 +3,14 @@ package de.norm.events.scraper.clubdervisionaere
 import de.norm.events.scraper.EventSource
 
 /**
- * The three rooms whose programmes share the one Club der Visionäre listing page.
+ * The three rooms sharing the one Club der Visionäre listing page.
  *
  * The page (`clubdervisionaere.com/programm/`, mirrored byte-identically at
- * `hoppetosse.berlin/program/`) interleaves the nights of all three rooms in one
- * chronological run. The **only** marker of which room a night belongs to is the
- * colour class the theme puts on its title paragraph — there is no per-room page,
- * category or data attribute, and the WordPress REST API exposes no room either.
- *
- * Each room is therefore a separate import source with its own venue and its own
- * `sourceId` prefix, all served by [ClubDerVisionaereProgrammePageScraper] filtering
- * on [titleClass].
+ * `hoppetosse.berlin/program/`) interleaves all three rooms' nights chronologically. The
+ * **only** room marker is the colour class on the title paragraph — no per-room page,
+ * category or data attribute, and the WordPress REST API exposes no room either. So each room
+ * is its own import source with its own venue and `sourceId` prefix, all served by
+ * [ClubDerVisionaereProgrammePageScraper] filtering on [titleClass].
  */
 enum class ClubDerVisionaereRoom(
     /** The CSS class the theme puts on a title paragraph belonging to this room. */

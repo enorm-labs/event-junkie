@@ -12,17 +12,16 @@ import org.jsoup.nodes.Element
 import java.math.BigDecimal
 
 /**
- * Pure HTML parser for a Bar jeder Vernunft **show page**
- * (`/de/programm/programmuebersicht/<show>.html`).
+ * Pure HTML parser for a Bar jeder Vernunft **show page** (`/de/programm/programmuebersicht/<show>.html`).
  *
- * A show page describes a production, not a single night: the calendar links every date
- * of a run to the same page. It carries the three fields the calendar card omits — the
- * `Genre`, the `Preise` range, and the untruncated blurb — which
- * [BarJederVernunftWebsiteImporter] applies to every date of that show.
+ * A show page describes a production, not a night: the calendar links every date of a run to
+ * the same page. It carries the three fields the calendar card omits — `Genre`, the `Preise`
+ * range, and the untruncated blurb — which [BarJederVernunftWebsiteImporter] applies to every
+ * date of that show.
  *
- * The page's own `Überblick` block is a label/value grid (`Spielzeit`, `Programmhinweis`,
- * `Genre`, `Preise`), whose column count varies per show (`col-lg-3` / `col-lg-4`), so
- * values are looked up by their **label text** rather than by position.
+ * The `Überblick` block is a label/value grid (`Spielzeit`, `Programmhinweis`, `Genre`,
+ * `Preise`) whose column count varies per show (`col-lg-3` / `col-lg-4`), so values are looked
+ * up by **label text**, not position.
  *
  * @see BarJederVernunftWebsiteImporter for the HTTP fetch orchestrator.
  */
@@ -30,13 +29,13 @@ class BarJederVernunftShowPageScraper {
     private val logger = KotlinLogging.logger {}
 
     /**
-     * Parses the show-level fields from a show page, or `null` when the page carries
-     * none of them (e.g. a redirect or an error page served with a 200).
+     * Parses the show-level fields, or `null` when the page has none (e.g. a redirect or error
+     * page served with a 200).
      */
     fun scrape(document: Document): BarJederVernunftShow? {
         val genre = overviewValue(document, "Genre")?.text()?.trim()?.takeIf { it.isNotBlank() }
-        // The Preise block stacks regular / reduced / special-performance prices as
-        // <br>-separated lines in one <p>; only the first is the regular admission range.
+        // The Preise block stacks regular / reduced / special-performance prices as <br>-separated
+        // lines in one <p>; only the first is the regular admission range.
         val priceLine = overviewValue(document, "Preise")?.textLinesAt("p")?.firstOrNull()
         val description = parseDescription(document)
 
@@ -55,9 +54,8 @@ class BarJederVernunftShowPageScraper {
     }
 
     /**
-     * Reads the value cell of the `Überblick` grid row whose label is [label], or `null`
-     * when the show page has no such row (`Programmhinweis` is optional, and a one-night
-     * show may drop `Spielzeit`).
+     * The value cell of the `Überblick` row labelled [label], or `null` without such a row
+     * (`Programmhinweis` is optional, and a one-night show may drop `Spielzeit`).
      */
     private fun overviewValue(
         document: Document,
@@ -74,11 +72,9 @@ class BarJederVernunftShowPageScraper {
             }?.selectFirst(".h6 + div")
 
     /**
-     * Joins the prose paragraphs of the `Überblick` section into the show description.
-     *
-     * Scoped to `#ueberblick` so the later `Mitwirkende` (cast and creative team) and
-     * ticketing sections stay out, and to `.vivomedia-text` so the pull-quote card
-     * rendered alongside the blurb is not folded into it.
+     * The `Überblick` prose paragraphs joined into the show description. Scoped to `#ueberblick`
+     * so the later `Mitwirkende` (cast and creative team) and ticketing sections stay out, and to
+     * `.vivomedia-text` so the pull-quote card beside the blurb is not folded in.
      */
     private fun parseDescription(document: Document): String? =
         document
@@ -90,11 +86,9 @@ class BarJederVernunftShowPageScraper {
 }
 
 /**
- * The show-level fields shared by every date of one Bar jeder Vernunft production.
- *
- * Applied to each calendar occurrence by [applyTo], which is where the venue's own
- * `Genre` also decides the event type — and therefore whether the billed name is an
- * artist at all.
+ * The show-level fields shared by every date of one production. Applied to each calendar
+ * occurrence by [applyTo], where the venue's own `Genre` also decides the event type — and so
+ * whether the billed name is an artist at all.
  */
 data class BarJederVernunftShow(
     /** The venue's own genre label, e.g. "Chanson", "Musik-Show". */
@@ -107,15 +101,13 @@ data class BarJederVernunftShow(
     val description: String?
 ) {
     /**
-     * Returns [event] enriched with this show's genre, prices, description and derived
-     * event type.
+     * Returns [event] enriched with this show's genre, prices, description and derived event type.
      *
-     * The type is resolved here rather than in the calendar scraper because the genre —
-     * the only signal this venue gives — lives on the show page. It also decides the
-     * lineup: [buildArtistsForEventType] mints the billed name as headliner for a
-     * `CONCERT` and nothing for a `SHOW`, which is the distinction that matters here.
-     * "Tim Fischer" (Chanson) is a performer; "Oh What A Night!" (Musik-Show) is the
-     * name of a production and must not become an artist row.
+     * The type is resolved here, not in the calendar scraper, because the genre — the only signal
+     * this venue gives — lives on the show page. It also decides the lineup:
+     * [buildArtistsForEventType] mints the billed name as headliner for a `CONCERT` and nothing for
+     * a `SHOW`. "Tim Fischer" (Chanson) is a performer; "Oh What A Night!" (Musik-Show) is a
+     * production and must not become an artist row.
      */
     fun applyTo(event: ScrapedEvent): ScrapedEvent {
         val eventType = resolveEventType(genre)
@@ -131,14 +123,13 @@ data class BarJederVernunftShow(
 }
 
 /**
- * Maps a Bar jeder Vernunft `Genre` label to an [EventType] name.
+ * Maps a `Genre` label to an [EventType] name.
  *
- * Everything the venue stages is an evening in its Spiegelzelt, so the genre only has to
- * separate two cases: a **music style** ([MUSIC_GENRES]) is a concert whose billed name
- * is the performer, and a **staged format** ([STAGE_FORMAT_GENRES]) is a show whose
- * billed name is the production. An unrecognized or missing genre therefore defaults to
- * [EventType.SHOW] — the safe side, since it mints no artist. The lists are curated from
- * the venue's own programme; add a new music style here when one appears, otherwise a
+ * Everything here is an evening in the Spiegelzelt, so the genre only separates two cases: a
+ * **music style** ([MUSIC_GENRES]) is a concert whose billed name is the performer, a **staged
+ * format** ([STAGE_FORMAT_GENRES]) a show whose billed name is the production. Unrecognized or
+ * missing defaults to [EventType.SHOW] — the safe side, minting no artist. The lists are
+ * curated from the venue's programme; add a new music style when one appears, otherwise a
  * genuine concert is filed as a show and its performer is lost.
  */
 private fun resolveEventType(genre: String?): String = mapEventType(genre, BAR_JEDER_VERNUNFT_GENRES) ?: EventType.SHOW.name

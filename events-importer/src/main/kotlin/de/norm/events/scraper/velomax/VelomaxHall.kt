@@ -3,14 +3,12 @@ package de.norm.events.scraper.velomax
 import de.norm.events.scraper.EventSource
 
 /**
- * The three halls whose programmes share the one Velomax listing page.
+ * The three halls sharing the one Velomax listing page.
  *
- * `velomax.de/events` interleaves the events of all three halls in one chronological run. Unlike
- * Club der Visionäre's colour-coded rooms, the hall here is stated three times over — as a CSS
- * class on the entry, as a `.location` label, and by the domain its detail link points at — so
- * [cssClass] is a durable filter rather than a last resort.
- *
- * Each hall is a separate import source with its own venue and `sourceId` prefix, all served by
+ * `velomax.de/events` interleaves all three chronologically. Unlike Club der Visionäre's
+ * colour-coded rooms, the hall is stated three times — a CSS class on the entry, a `.location`
+ * label, and the detail link's domain — so [cssClass] is a durable filter, not a last resort.
+ * Each hall is its own import source with its own venue and `sourceId` prefix, all served by
  * [VelomaxOverviewPageScraper] filtering on that class.
  */
 enum class VelomaxHall(
@@ -19,7 +17,7 @@ enum class VelomaxHall(
     /** The import source this hall's events are attributed to. */
     val eventSource: EventSource
 ) {
-    /** The Prenzlauer Berg arena — the largest of the three, and the one with most of the sport. */
+    /** The Prenzlauer Berg arena — the largest, and the one with most of the sport. */
     MAX_SCHMELING_HALLE("msh", EventSource.MAX_SCHMELING_HALLE),
 
     /** The Landsberger Allee arena. */

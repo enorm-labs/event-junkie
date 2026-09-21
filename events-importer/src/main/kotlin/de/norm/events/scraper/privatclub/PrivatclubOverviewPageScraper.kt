@@ -30,27 +30,23 @@ import java.time.format.DateTimeParseException
 import java.util.Locale
 
 /**
- * Pure HTML parser for Privatclub Berlin's WordPress-based event overview page.
+ * Pure HTML parser for Privatclub Berlin's WordPress event overview page.
  *
- * Privatclub renders all upcoming events on a single page (`/`) with full
- * details expanded inline (descriptions, prices, ticket links, promoters).
- * Each event also links to a dedicated detail page (e.g. `/event/sean-rowe-2/`),
- * but all data is already available on the overview page — no detail page
- * fetching is needed.
+ * One page (`/`) lists every upcoming event with its details expanded inline
+ * (description, prices, ticket link, promoter). Each event links to a detail page
+ * (e.g. `/event/sean-rowe-2/`), but nothing there is missing here, so none is fetched.
  *
- * Each event is accompanied by a `<script type="application/ld+json">` block
- * containing schema.org `MusicEvent` structured data. The JSON-LD is used as
- * the **primary source** for structured fields (`startDate`, `doorTime`,
- * `image`, `url`, ticket `offers`) because it is more reliable than CSS
- * selectors. HTML elements serve as **fallback** and provide fields not
- * present in JSON-LD (genre, subtitle, description, prices, status, promoter).
+ * A `<script type="application/ld+json">` block with schema.org `MusicEvent` data
+ * follows each event. JSON-LD is the primary source for the structured fields
+ * (`startDate`, `doorTime`, `image`, `url`, ticket `offers`); HTML is the fallback
+ * and the only source of genre, subtitle, description, prices, status and promoter.
  *
  * @see PrivatclubWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://privatclub-berlin.de/">Privatclub Berlin</a>
  */
 @Suppress("TooManyFunctions")
 class PrivatclubOverviewPageScraper(
-    /** Clock used for date calculations. Defaults to the system clock; override in tests for deterministic year-rollover logic. */
+    /** Clock for the year-rollover fallback; override in tests. */
     private val clock: Clock = Clock.systemDefaultZone()
 ) {
     private val logger = KotlinLogging.logger {}
@@ -58,12 +54,9 @@ class PrivatclubOverviewPageScraper(
     private val jsonMapper: JsonMapper = JsonMapper.builder().build()
 
     /**
-     * Parses all events from the Privatclub overview page document.
+     * Parses all events: each lives in `.event_wrapper.skewed`, followed by its JSON-LD script.
      *
-     * Each event lives in a `.event_wrapper.skewed` element, followed by a
-     * JSON-LD script tag with structured event data.
-     *
-     * @param baseUrl the URL the document was fetched from, used for resolving relative links.
+     * @param baseUrl the URL the document was fetched from, for resolving relative links.
      */
     fun scrape(
         document: Document,
@@ -84,11 +77,9 @@ class PrivatclubOverviewPageScraper(
     }
 
     /**
-     * Parses a single `.event_wrapper` element into a [ScrapedEvent].
-     *
-     * Uses a two-layer extraction strategy:
-     * 1. **JSON-LD** (primary) — structured data for date, doors time, image, URL, ticket URL
-     * 2. **HTML** (fallback + enrichment) — title, subtitle, genre, description, prices, status, promoter, artists
+     * Parses one `.event_wrapper` into a [ScrapedEvent]: JSON-LD first (date, doors, image,
+     * URL, ticket URL), HTML as fallback and for title, subtitle, genre, description, prices,
+     * status, promoter, artists.
      */
     @Suppress("CyclomaticComplexity", "CyclomaticComplexMethod", "ReturnCount", "LongMethod") // Cohesive single-event parsing with many optional fields
     private fun parseEventWrapper(
@@ -98,17 +89,16 @@ class PrivatclubOverviewPageScraper(
         val header = wrapper.selectFirst("a.event_header") ?: return null
         val detail = wrapper.selectFirst(".event_detail")
 
-        // --- JSON-LD: primary source for structured fields ---
+        // JSON-LD first
         val jsonLd = parseJsonLd(wrapper)
 
-        // Title is the core required field (not in JSON-LD in a reliably clean form)
+        // Title is required and not reliably clean in JSON-LD
         val title = header.textAt("span.titel")
         if (title.isNullOrBlank()) {
             logger.warn { "Event wrapper has no title, skipping" }
             return null
         }
 
-        // Event URL: prefer JSON-LD `url`, fall back to HTML href
         val href = header.attr("href")
         val eventUrl =
             jsonLd?.url
@@ -119,56 +109,49 @@ class PrivatclubOverviewPageScraper(
         }
         val slug = extractSlug(eventUrl)
 
-        // Event date: prefer JSON-LD `startDate` (includes year), fall back to HTML
         val eventDate = jsonLd?.eventDate ?: parseDateFromHtml(header)
         if (eventDate == null) {
             logger.warn { "Could not parse event date for '$title', skipping" }
             return null
         }
 
-        // Times: prefer JSON-LD, fall back to HTML
         val (htmlDoorsTime, htmlStartTime) = parseTimes(detail, header)
         val doorsTime = jsonLd?.doorsTime ?: htmlDoorsTime
         val startTime = jsonLd?.startTime ?: htmlStartTime
 
-        // Image: prefer JSON-LD (full resolution), fall back to HTML data-src
+        // JSON-LD image is full resolution
         val imageUrl = jsonLd?.imageUrl ?: parseImageUrl(detail)
 
-        // Ticket URL: prefer JSON-LD offers, fall back to HTML ticket link
         val htmlTicketUrl = detail?.hrefAt("a.ticketlink")
         val ticketUrl = jsonLd?.ticketUrl ?: htmlTicketUrl
 
-        // --- HTML-only fields (not available in JSON-LD) ---
+        // HTML-only fields
 
-        // Event type from the dedicated row (not the desktop genre line)
+        // The dedicated row, not the desktop genre line
         val eventTypeText = header.textAt(".event_typ")
         val eventType = mapEventType(eventTypeText)
 
-        // Genre from the desktop "typ" div (shows genre in desktop, type in mobile)
+        // Desktop "typ" div shows the genre; mobile shows the type
         val genre = header.textAt(".typ.typdesktop")
 
-        // Subtitle / tour name
         val subtitle = header.textAt("span.untertitel")?.takeIf { it.isNotBlank() }
 
-        // Status from label element (sold out, rescheduled, cancelled)
+        // sold out, rescheduled, cancelled
         val statusLabel = header.textAt(".label.notice")?.lowercase().orEmpty()
         val soldOut =
             statusLabel.contains("ausverkauft") || statusLabel.contains("sold out") ||
                 (detail?.selectFirst(".tickets_vkk.soldout") != null)
         val status = parseStatus(statusLabel)
 
-        // Prices
         val (pricePresale, priceBoxOffice, priceNote) = parsePrices(detail)
 
-        // Description (paragraphs in the content section, excluding genre paragraph)
         val description = parseDescription(detail)
 
-        // Promoter name from the "Örtlicher Veranstalter" section
+        // "Örtlicher Veranstalter"
         val promoters = parsePromoterName(detail)?.let { listOf(it) }.orEmpty()
 
-        // Artists extraction — for concerts the title is the headliner (support
-        // acts come from the subtitle's "Support: <name>" pattern); parties and
-        // festivals extract none. See buildArtistsForEventType.
+        // Concerts: title is the headliner, support from the subtitle's "Support: <name>";
+        // parties and festivals extract none. See buildArtistsForEventType.
         val artists = buildArtistsForEventType(title, subtitle, eventType)
 
         return ScrapedEvent(
@@ -197,21 +180,13 @@ class PrivatclubOverviewPageScraper(
     // -- JSON-LD parsing --------------------------------------------------
 
     /**
-     * Extracts structured event data from the JSON-LD block following the event wrapper.
+     * Reads the schema.org `MusicEvent` from the sibling JSON-LD script: `startDate`
+     * (ISO 8601 date+time, e.g. `"2026-05-16T20:00"`), `doorTime` (`"19:00"`), `image`
+     * (full resolution), `url` (canonical detail page), `offers[].url` (first ticket shop).
      *
-     * The JSON-LD `<script type="application/ld+json">` is a sibling element
-     * containing a schema.org `MusicEvent` object with fields:
-     * - `startDate` — ISO 8601 date+time (e.g. `"2026-05-16T20:00"`)
-     * - `doorTime` — HH:mm doors time (e.g. `"19:00"`)
-     * - `image` — full resolution image URL
-     * - `url` — canonical event detail page URL
-     * - `offers[].url` — first ticket shop URL
-     *
-     * The block is parsed with Jackson rather than by regex: proper JSON parsing
-     * handles escaping, whitespace, and field ordering, and reads the ticket URL
-     * from the structured `offers[].url` instead of a substring search that could
-     * mismatch the event's own top-level `url`. Returns `null` if no JSON-LD block
-     * is found or it cannot be parsed.
+     * Parsed with Jackson, not regex: escaping, whitespace and field order are handled, and
+     * the ticket URL comes from `offers[].url` rather than a substring search that could hit
+     * the event's own top-level `url`. Null when no block is found or it does not parse.
      */
     @Suppress("ReturnCount") // Guard clauses for the missing and unparseable JSON-LD block are clearer than nesting.
     private fun parseJsonLd(wrapper: Element): JsonLdData? {
@@ -235,10 +210,8 @@ class PrivatclubOverviewPageScraper(
     }
 
     /**
-     * Parses the JSON-LD block and returns the event object node, or null if unparseable.
-     *
-     * Privatclub emits a single schema.org `MusicEvent` object per block; an array or
-     * `@graph` wrapper is handled defensively by taking the first object node.
+     * Returns the event object node, or null. One `MusicEvent` per block; an array or
+     * `@graph` wrapper yields its first object node.
      */
     @Suppress(
         "TooGenericExceptionCaught", // A malformed block must degrade to null, never abort the import.
@@ -261,7 +234,7 @@ class PrivatclubOverviewPageScraper(
         return candidates.firstOrNull { it.isObject }
     }
 
-    /** Reads the first ticket-shop URL from the structured JSON-LD `offers[].url`, or null when absent. */
+    /** First ticket-shop URL from `offers[].url`, or null. */
     private fun extractOfferUrl(eventNode: JsonNode): String? {
         val offers = eventNode.path("offers")
         val offerNodes = if (offers.isArray) offers.toList() else listOf(offers)
@@ -274,21 +247,14 @@ class PrivatclubOverviewPageScraper(
     // -- HTML fallback parsers --------------------------------------------
 
     /**
-     * Extracts the event slug from the URL path.
-     *
-     * Uses [URI] for robust path extraction — works regardless of scheme,
-     * host, or port, unlike manual string prefix stripping.
+     * Event slug from the URL path via [URI], so scheme, host and port do not matter.
      */
     private fun extractSlug(url: String): String = URI(url).path.removePrefix("/event/").trimEnd('/')
 
     /**
-     * Fallback date parser using the HTML `.datum` element.
-     *
-     * The HTML shows dates like "Sa. 16." (part1) and "Mai" (part2).
-     * The day number is extracted via regex from part1, then combined
-     * with the German month name and parsed using [GERMAN_DATE_FORMATTER].
-     * Without the year, we assume the current or next year based on whether
-     * the date has already passed. This is only used if JSON-LD is unavailable.
+     * Fallback date from `.datum`: "Sa. 16." (part1) and "Mai" (part2). Day number by
+     * regex, month by [GERMAN_DATE_FORMATTER], year = current or next depending on
+     * whether the date has passed. Only used without JSON-LD.
      */
     @Suppress("ReturnCount") // Null-safe early exits for each date component are clearer than nested let-chains
     private fun parseDateFromHtml(header: Element): LocalDate? {
@@ -303,7 +269,7 @@ class PrivatclubOverviewPageScraper(
                 return null
             }
 
-        // Without a year, assume the nearest future occurrence
+        // Nearest future occurrence
         val now = LocalDate.now(clock)
         val candidate = monthDay.atYear(now.year)
         return if (candidate.isBefore(now)) candidate.plusYears(1) else candidate
@@ -321,11 +287,8 @@ class PrivatclubOverviewPageScraper(
         }
 
     /**
-     * Parses doors and start times from the HTML detail section.
-     *
-     * Times are rendered as "Einlass: 19:00 Beginn: 20:00" inside `.zeit_einlass`.
-     * Falls back to the header's `.einlass` span if detail section is missing.
-     * Used as fallback when JSON-LD times are not available.
+     * Doors and start from "Einlass: 19:00 Beginn: 20:00" in `.zeit_einlass`, else the
+     * header's `.einlass` span. Fallback when JSON-LD has no times.
      */
     private fun parseTimes(
         detail: Element?,
@@ -333,7 +296,6 @@ class PrivatclubOverviewPageScraper(
     ): Pair<LocalTime?, LocalTime?> {
         val zeitText = detail?.textAt(".zeit_einlass").orEmpty()
 
-        // Extract "Einlass: HH:mm" and "Beginn: HH:mm" from the combined text
         val doorsMatch = EINLASS_PATTERN.find(zeitText)
         val startMatch = BEGINN_PATTERN.find(zeitText)
 
@@ -346,11 +308,8 @@ class PrivatclubOverviewPageScraper(
     }
 
     /**
-     * Extracts the event image URL from the banner's `data-src` attribute.
-     *
-     * The WordPress theme uses lazy loading — `src` contains a tiny thumbnail
-     * and `data-src` holds the full resolution image URL.
-     * Used as fallback when JSON-LD image is not available.
+     * Image from the banner's `data-src`: the theme lazy-loads, `src` is a tiny thumbnail.
+     * Fallback when JSON-LD has no image.
      */
     private fun parseImageUrl(detail: Element?): String? =
         detail
@@ -358,14 +317,12 @@ class PrivatclubOverviewPageScraper(
             ?.takeIf { it.startsWith("http") }
 
     /**
-     * Parses structured prices from the ticket/entry section.
-     *
-     * Privatclub uses several pricing patterns:
+     * Prices from the ticket/entry section:
      * - `"Tickets: 25€ (Early Bird) + 30€ (Standard)"` → presale
      * - `"AK: 35€"` → box office
-     * - `"Eintritt: 4€ - ab 24h 6€"` → complex pricing → priceNote
+     * - `"Eintritt: 4€ - ab 24h 6€"` → priceNote
      *
-     * Returns a triple of (presale, boxOffice, priceNote).
+     * Returns (presale, boxOffice, priceNote).
      */
     private fun parsePrices(detail: Element?): Triple<BigDecimal?, BigDecimal?, String?> {
         if (detail == null) return Triple(null, null, null)
@@ -374,31 +331,27 @@ class PrivatclubOverviewPageScraper(
         var priceBoxOffice: BigDecimal? = null
         var priceNote: String? = null
 
-        // Box office price from ".tickets_ak" element
+        // ".tickets_ak"
         val akText = detail.textAt(".tickets_ak")
         if (akText != null) {
             val allPrices = PRICE_PATTERN.findAll(akText).toList()
             if (allPrices.size == 1 && !akText.contains("-") && !akText.contains("ab ")) {
-                // Simple single price (e.g. "AK: 35€") → box office
+                // Single price ("AK: 35€") → box office
                 priceBoxOffice = extractFirstPrice(akText)
             } else {
-                // Complex/conditional pricing (e.g. "Eintritt: 4€ - ab 24h 6€") → store as note
+                // Conditional pricing ("Eintritt: 4€ - ab 24h 6€") → note
                 priceNote = akText.replace(Regex("""^[^:]*:\s*"""), "").trim()
             }
         }
 
-        // Presale price from the tickets section text
         val vkkDiv = detail.selectFirst(".tickets_vkk")
         if (vkkDiv != null && !vkkDiv.hasClass("soldout")) {
-            // Look for pricing text in the linkbar area above ticket links.
-            // Uses .closest() to find the enclosing .flex_wrapper instead of
-            // fragile parent-chain navigation (vkkDiv sits inside
-            // .linkbar > .flex_wrapper.ticketlinks > .flex > .tickets_vkk).
+            // Pricing text sits in the linkbar above the ticket links; `.closest()` finds the
+            // enclosing .flex_wrapper (vkkDiv is at .linkbar > .flex_wrapper.ticketlinks > .flex > .tickets_vkk).
             val linkbarText = detail.selectFirst(".linkbar")?.ownText().orEmpty()
             val ticketText = vkkDiv.closest(".flex_wrapper")?.text().orEmpty()
             val combinedText = "$linkbarText $ticketText"
 
-            // Try to find a VVK/presale price
             val vkkPrice = extractFirstPrice(combinedText.substringBefore("AK"))
             if (vkkPrice != null && vkkPrice != priceBoxOffice) {
                 pricePresale = vkkPrice
@@ -409,10 +362,8 @@ class PrivatclubOverviewPageScraper(
     }
 
     /**
-     * Extracts the first numeric price from a text string.
-     *
-     * Handles German price formats: "25€", "25,00€", "25.00€", "25 €".
-     * Returns null for complex/multi-price strings or when no price is found.
+     * First numeric price from "25€", "25,00€", "25.00€", "25 €"; null for multi-price
+     * strings or no price.
      */
     private fun extractFirstPrice(text: String): BigDecimal? {
         val match = PRICE_PATTERN.find(text) ?: return null
@@ -425,11 +376,8 @@ class PrivatclubOverviewPageScraper(
     }
 
     /**
-     * Extracts the event description from the content section.
-     *
-     * Selects all `<p>` elements in the `.content` div, excluding the genre
-     * paragraph (identified by class `genre`), the promoter section, and
-     * status/ticketing notices.
+     * Description: every `<p>` in `.content` except the `genre` paragraph, the promoter
+     * section and status/ticketing notices.
      */
     @Suppress("ReturnCount") // Guard clauses for null detail/content are clearer than nesting
     private fun parseDescription(detail: Element?): String? {
@@ -450,22 +398,19 @@ class PrivatclubOverviewPageScraper(
     }
 
     /**
-     * Extracts the promoter name from the "Örtlicher Veranstalter" section.
-     *
-     * The promoter is rendered as a link inside `.veranstaltertext`, or as
-     * plain text prefixed with "präsentiert von" in the header area.
+     * Promoter: a link inside `.veranstaltertext`, or plain text after "präsentiert von" in the header.
      */
     @Suppress("ReturnCount") // Multiple fallback strategies with early returns are clearer than nested conditionals
     private fun parsePromoterName(detail: Element?): String? {
         if (detail == null) return null
 
-        // Primary: "Örtlicher Veranstalter: <link>" in the content section
+        // "Örtlicher Veranstalter: <link>" in the content section
         val veranstalterLink = detail.selectFirst(".veranstaltertext a")
         if (veranstalterLink != null) {
             return veranstalterLink.text().trim().takeIf { it.isNotBlank() }
         }
 
-        // Fallback: plain text after "Örtlicher Veranstalter:"
+        // Plain text after "Örtlicher Veranstalter:"
         val veranstalterText = detail.textAt(".veranstaltertext")
         if (veranstalterText != null) {
             return veranstalterText
@@ -474,7 +419,7 @@ class PrivatclubOverviewPageScraper(
                 .takeIf { it.isNotBlank() }
         }
 
-        // Fallback: "präsentiert von" in the header
+        // "präsentiert von" in the header
         val presentedBy = detail.textAt(".presentedbytext")
         if (presentedBy != null) {
             return presentedBy
@@ -487,10 +432,7 @@ class PrivatclubOverviewPageScraper(
     }
 
     /**
-     * Structured data extracted from a JSON-LD `MusicEvent` block.
-     *
-     * Used as the primary source for fields that have reliable structured
-     * representations in JSON-LD, with HTML elements as fallback.
+     * Structured fields from a JSON-LD `MusicEvent` block; HTML is the fallback.
      */
     private data class JsonLdData(
         val eventDate: LocalDate?,
@@ -502,24 +444,20 @@ class PrivatclubOverviewPageScraper(
     )
 
     companion object {
-        /** Regex to extract day number from date text like "Sa. 16." */
+        /** Day number from "Sa. 16." */
         private val DAY_NUMBER_PATTERN = Regex("""\d+""")
 
-        /** Regex to extract "Einlass: HH:mm" from times text. */
+        /** "Einlass: HH:mm" */
         private val EINLASS_PATTERN = Regex("""Einlass:\s*(\d{1,2}:\d{2})""")
 
-        /** Regex to extract "Beginn: HH:mm" from times text. */
+        /** "Beginn: HH:mm" */
         private val BEGINN_PATTERN = Regex("""Beginn:\s*(\d{1,2}:\d{2})""")
 
-        /** Regex to extract the first price value (e.g. "25€", "25,50 €", "25.00€"). */
+        /** First price value ("25€", "25,50 €", "25.00€"). */
         private val PRICE_PATTERN = Regex("""(\d+(?:[.,]\d{1,2})?)\s*€""")
 
         /**
-         * Formatter for parsing German month names (e.g. "16. Mai" → May 16).
-         *
-         * Uses [Locale.GERMAN] to recognize full German month names (Januar,
-         * Februar, März, …). Case-insensitive to handle any capitalization
-         * variant from the HTML source.
+         * German month names ("16. Mai" → May 16), [Locale.GERMAN], case-insensitive.
          */
         private val GERMAN_DATE_FORMATTER: DateTimeFormatter =
             DateTimeFormatterBuilder()

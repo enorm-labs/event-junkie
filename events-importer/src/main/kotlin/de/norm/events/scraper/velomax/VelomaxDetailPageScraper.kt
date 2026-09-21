@@ -19,15 +19,15 @@ import org.jsoup.nodes.Element
 /**
  * Pure parser for a Velomax hall's `/events/event/<slug>` detail page.
  *
- * The page embeds the event as **schema.org Microdata** — one
- * `[itemtype=https://schema.org/Event]` block carrying `name`, `alternateName`, `performer`,
- * `eventStatus`, and `startDate` / `doorTime` as `<time datetime="2026-08-29 20:00:00">` — so the
- * structured data is read rather than the rendered markup (ADR-007 §"Selector Strategy" priority
- * 1). Only the description, the ticket link and the poster come from the surrounding HTML.
+ * The event is **schema.org Microdata** — one `[itemtype=https://schema.org/Event]` block with
+ * `name`, `alternateName`, `performer`, `eventStatus`, and `startDate` / `doorTime` as
+ * `<time datetime="2026-08-29 20:00:00">` — so the structured data is read, not the rendered
+ * markup (ADR-007 §"Selector Strategy" priority 1). Only description, ticket link and poster
+ * come from the surrounding HTML.
  *
- * Everything is scoped to that Microdata block, which matters because the page also renders a
- * `section.additional-content` of teasers for *other* events, each with its own date, title and
- * image; reading the page unscoped would mix a neighbouring show's data into this one.
+ * Everything is scoped to that block: the page also renders a `section.additional-content` of
+ * teasers for *other* events, each with its own date, title and image, and an unscoped read
+ * would mix a neighbouring show in.
  *
  * @see VelomaxOverviewPageScraper for the shared listing (discovery, hall filter, fallback).
  * @see <a href="https://www.velodrom.de/events/event/joji-velodrom-2026-08-29">Example detail page</a>
@@ -36,11 +36,10 @@ class VelomaxDetailPageScraper {
     private val logger = KotlinLogging.logger {}
 
     /**
-     * Parses an event detail page into a [ScrapedEvent], or `null` when the page carries no
-     * schema.org `Event` block or no name within it.
+     * Parses a detail page into a [ScrapedEvent], or `null` without a schema.org `Event` block
+     * or a name in it.
      *
-     * @param sourceUrl the event's URL, used as [ScrapedEvent.sourceUrl] and to derive its
-     *   [ScrapedEvent.sourceId].
+     * @param sourceUrl the event's URL: [ScrapedEvent.sourceUrl] and its [ScrapedEvent.sourceId].
      * @param hall the hall this source imports, supplying the `sourceId` prefix.
      */
     @Suppress("ReturnCount") // Guard clauses for the missing Microdata block / name are clearer than nesting
@@ -68,7 +67,7 @@ class VelomaxDetailPageScraper {
         return ScrapedEvent(
             title = title,
             subtitle = subtitle,
-            // Scoped to the single-event block: the page's teaser strip carries other events' prose.
+            // Scoped to the single-event block: the teaser strip carries other events' prose.
             description = document.textAt(".eventSingle .event-content"),
             eventType = eventType,
             // `datetime` is a machine-readable "yyyy-MM-dd HH:mm:ss"; the rendered text is only "20:00 Uhr".
@@ -77,11 +76,10 @@ class VelomaxDetailPageScraper {
             startTime = parseTime(startedAt?.clockTime()),
             imageUrl = parseImageUrl(document, sourceUrl),
             sourceUrl = sourceUrl,
-            // Show-level, and deliberately so: this permalink is one page per production, which is
-            // exactly why a same-day run of sessions cannot be keyed from here. The importer keeps
-            // the listing's session-keyed id instead (see
-            // `AbstractVelomaxHallImporter.fillGapsFromOverview`); this one only stands in when the
-            // page is parsed on its own.
+            // Show-level on purpose: one page per production, which is why a same-day run of sessions
+            // cannot be keyed from here. The importer keeps the listing's session-keyed id
+            // (`AbstractVelomaxHallImporter.fillGapsFromOverview`); this one stands in only when the
+            // page is parsed alone.
             sourceId = "${hall.eventSource.sourceIdPrefix}$slug",
             ticketUrl = parseTicketUrl(document),
             status = parseSchemaEventStatus(event.attrAtProp("eventStatus", "content")),
@@ -91,11 +89,9 @@ class VelomaxDetailPageScraper {
     }
 
     /**
-     * The event's own poster, taken from the page's stage banner.
-     *
-     * Scoped to `section.stage` on purpose: the teaser strip further down carries the *next*
-     * events' images, and the first `<img>` on the page would otherwise belong to whichever of
-     * those the theme rendered first. Paths are site-relative (`/fileadmin/…`).
+     * The event's poster from the stage banner. Scoped to `section.stage`: the teaser strip
+     * carries the *next* events' images, and the first `<img>` would belong to whichever of
+     * those rendered first. Paths are site-relative (`/fileadmin/…`).
      */
     private fun parseImageUrl(
         document: Document,
@@ -110,7 +106,7 @@ class VelomaxDetailPageScraper {
         return runCatching { resolveUrl(sourceUrl, src) }.getOrNull()
     }
 
-    /** The external ticket-shop link, rendered in the performance block beside the times. */
+    /** The external ticket-shop link, in the performance block beside the times. */
     private fun parseTicketUrl(document: Document): String? =
         document
             .select(".eventSingle a[href]")

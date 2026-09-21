@@ -14,17 +14,15 @@ import org.springframework.stereotype.Component
 /**
  * Website importer for Kulturhaus Peter Edel's Umbraco programme page.
  *
- * The house puts its entire programme on one server-rendered page — 39 events running from this month
- * to May 2027 at capture, each with times, prices, a promoter credit, a flyer and a description. There
- * is no pagination, no per-event page (the title links straight to the ticket shop) and no structured
- * source to prefer: the page carries no JSON-LD and no API, only an Umbraco grid of hand-authored rich
- * text. So the pipeline is a single request per cycle:
- * 1. Fetch `/events/` via [HtmlFetcher] with conditional-request support (ETag / Last-Modified).
- * 2. Parse every event from that one page via [PeterEdelOverviewPageScraper].
+ * The entire programme is one server-rendered page — 39 events from this month to May 2027 at
+ * capture, each with times, prices, promoter credit, flyer and description. No pagination, no
+ * per-event page (the title links to the ticket shop), no JSON-LD, no API: an Umbraco grid of
+ * hand-authored rich text. One request per cycle: [HtmlFetcher] fetches `/events/` conditionally
+ * (ETag / Last-Modified), [PeterEdelOverviewPageScraper] parses it.
  *
- * The server sends `Cache-Control: private` and neither validator header, so the conditional request
- * never actually saves a fetch. The [FetchResult.NotModified] branch is kept regardless — it costs
- * nothing and covers the server growing an `ETag` later.
+ * The server sends `Cache-Control: private` and neither validator header, so the conditional
+ * request never saves a fetch. The [FetchResult.NotModified] branch stays — it costs nothing and
+ * covers the server growing an `ETag` later.
  *
  * @see PeterEdelOverviewPageScraper for the HTML parsing logic and the source's limitations.
  * @see <a href="https://www.peteredel.de/events/">Kulturhaus Peter Edel</a>

@@ -16,19 +16,18 @@ import org.jsoup.nodes.Document
 /**
  * Pure HTML parser for Columbia Theater Berlin event detail pages (`/event/YYYYMMDD-<slug>/`).
  *
- * Each page renders one `.event-content` block: an `h1.header-title`, an optional
- * `.header-tour-text` tour name, the `.header-support` billing rows, a `.header-date` line
- * (`Wd. DD.MM.[YY] um HH:mm / Einlass HH:mm`), the poster (`img.event-image-img`), a
- * `.header-promoters` "präsentiert von …" credit, the ticket-shop button, the prose blurb
- * (`.event-text`), and — for a cancelled/relocated/rescheduled show — an `.event-status` notice
- * plus the same `data-c` / `data-m` / `data-p` flags the overview card carries. The theme embeds
- * no schema.org JSON-LD and the WordPress REST API is disabled site-wide.
+ * One `.event-content` block: `h1.header-title`, optional `.header-tour-text` tour name,
+ * `.header-support` billing rows, `.header-date` (`Wd. DD.MM.[YY] um HH:mm / Einlass HH:mm`),
+ * poster (`img.event-image-img`), `.header-promoters` "präsentiert von …", the ticket-shop
+ * button, the `.event-text` blurb, and for a cancelled/relocated/rescheduled show an
+ * `.event-status` notice plus the overview's `data-c` / `data-m` / `data-p` flags. No JSON-LD;
+ * the WordPress REST API is disabled site-wide.
  *
- * The detail page is the source for the fields the overview lacks — doors/start times, blurb,
- * ticket URL, presenters — and repeats the shared fields, so a successful fetch yields a complete
- * event; the overview only fills gaps (and stands in entirely when the detail fetch fails) via
+ * Source for what the overview lacks — doors/start, blurb, ticket URL, presenters — and repeats
+ * the shared fields, so a successful fetch is a complete event; the overview fills gaps (or
+ * stands in entirely when the fetch fails) via
  * [ColumbiaTheaterWebsiteImporter.fillGapsFromOverview]. The date comes from the permalink slug
- * for the same reason as on the overview: the rendered header date usually omits the year.
+ * because the rendered header date usually omits the year.
  *
  * @see ColumbiaTheaterOverviewPageScraper for overview parsing (discovery, date, fallback).
  * @see ColumbiaTheaterWebsiteImporter for the HTTP fetch orchestrator.
@@ -38,11 +37,9 @@ class ColumbiaTheaterDetailPageScraper {
     private val logger = KotlinLogging.logger {}
 
     /**
-     * Parses an event detail page into a [ScrapedEvent], or `null` when the page carries no
-     * `.event-content` block or no title (an unexpected structure).
+     * Parses a detail page into a [ScrapedEvent], or `null` without `.event-content` or a title.
      *
-     * @param sourceUrl the event's URL, used as [ScrapedEvent.sourceUrl] and to derive its date
-     *   and [ScrapedEvent.sourceId].
+     * @param sourceUrl the event's URL: [ScrapedEvent.sourceUrl], its date and [ScrapedEvent.sourceId].
      */
     @Suppress("ReturnCount") // Guard clauses for the missing content block / title are clearer than nesting
     fun scrape(
@@ -92,10 +89,9 @@ private const val DOORS_LABEL = "Einlass"
 private const val START_LABEL = "um"
 
 /**
- * Matches the `HH:mm` time introduced by [label] on the header date line
- * (`"So. 16.08. um 20:00 / Einlass 19:00"`), or `null` when the line carries no such time — a
- * relocated show renders "Mo. 28.09. / Verlegt" with no times at all. The label is word-anchored
- * so the short `um` preposition cannot match inside another word.
+ * The `HH:mm` after [label] on the header date line (`"So. 16.08. um 20:00 / Einlass 19:00"`),
+ * or `null` — a relocated show renders "Mo. 28.09. / Verlegt" with no times. The label is
+ * word-anchored so the short `um` cannot match inside another word.
  */
 private fun labelledTime(
     text: String,
@@ -106,11 +102,9 @@ private fun labelledTime(
 private val URL_SCHEME = Regex("""https?://""")
 
 /**
- * Keeps only the first URL of a ticket `href` that has **two shop links concatenated** into one
- * attribute — the venue's CMS occasionally emits
- * `"https://www.eventim.de/…&utm_medium=dphttps://www.eventim.de/…"`, which is not a resolvable
- * link. Everything from the second `http(s)://` on is dropped; an ordinary single-URL href is
- * returned unchanged.
+ * The first URL of a ticket `href` with **two shop links concatenated** — the CMS occasionally
+ * emits `"https://www.eventim.de/…&utm_medium=dphttps://www.eventim.de/…"`, not a resolvable
+ * link. Everything from the second `http(s)://` on is dropped; a single-URL href is unchanged.
  */
 private fun firstTicketUrl(href: String): String =
     URL_SCHEME
