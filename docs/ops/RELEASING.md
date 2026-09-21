@@ -53,7 +53,7 @@ flowchart TB
         ocirepo["OCIRepository<br/>semver range"]
         hr["HelmRelease"]
         wl["bff · importer · frontend + injector"]
-        test{{"helm test hook"}}
+        test{{"helm test hooks"}}
     end
 
     main --> ver
@@ -202,8 +202,9 @@ Flux's source-controller embeds, and asserts the newest wins. Asserting the _for
 
 ## When a deploy goes wrong
 
-Flux runs the chart's own `helm test` hook as part of reconciliation — the smoke test CI cannot run, because CI cannot reach the cluster. A failure triggers
-remediation:
+Flux runs the chart's own `helm test` hooks as part of reconciliation — the smoke tests CI cannot run, because CI cannot reach the cluster (ADR-033). The
+first curls the two Services. The second, where `tests.smoke.enabled` is on, runs `perf/smoke.js` through the Ingress: every public endpoint once, and the
+SPA. A failure of either triggers remediation:
 
 |                                 |                                                                                                                                                    |
 | ------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |

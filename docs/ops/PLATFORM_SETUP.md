@@ -601,6 +601,7 @@ set, as defence-in-depth rather than as the actual control.
 **And one thing it breaks:** CI cannot reach staging either, so post-deploy smoke tests cannot run from GitHub Actions. Same shape as the problem that killed
 push-based Helm, and the same resolution: run the checks _inside_ the cluster. Flux's `HelmRelease` supports Helm test hooks with `test.enable`, and rolls back
 automatically when they fail. That is better than an external smoke test anyway, because the rollback does not wait for a human to notice a red build.
+ADR-033 records which routes into staging were refused for Actions, and where each kind of check runs instead.
 
 **If staging ever needs showing to someone else**, a designer or a tester, there are two fallbacks. A WireGuard config for them, or temporarily re-adding a
 public Ingress with `basicAuth`.

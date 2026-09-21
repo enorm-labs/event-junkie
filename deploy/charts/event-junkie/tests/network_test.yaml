@@ -460,3 +460,54 @@ tests:
           value: "10.42.0.0/16"
       - notExists:
           path: spec.ingress[0].from[0].namespaceSelector
+
+  # --- The smoke hook's route to the ingress controller (#1697) ----------------------------------
+  # Egress only: the return half, Traefik into the two workloads, is `-allow-ingress-controller` and
+  # exists whether or not the hook does. The pod ports, because policy sees the packet after DNAT.
+  - it: the smoke hook reaches the ingress controller on its container ports and nothing else
+    set:
+      database.host: "10.0.1.2"
+      networkPolicy.databaseCidr: "10.0.1.2/32"
+      database.existingSecret: "events-db"
+      tests.smoke.enabled: true
+    templates:
+      - templates/networkpolicy.yaml
+    documentSelector:
+      path: metadata.name
+      value: RELEASE-NAME-event-junkie-allow-smoke-hook-to-ingress
+    asserts:
+      - equal:
+          path: spec.policyTypes
+          value: [Egress]
+      - equal:
+          path: spec.podSelector.matchLabels["app.kubernetes.io/component"]
+          value: test
+      - equal:
+          path: spec.egress[0].to[0].namespaceSelector.matchLabels["kubernetes.io/metadata.name"]
+          value: kube-system
+      - equal:
+          path: spec.egress[0].to[0].podSelector.matchLabels["app.kubernetes.io/name"]
+          value: traefik
+      # Traefik's container ports, not the Service's 80 and 443, and no node address.
+      - equal:
+          path: spec.egress[0].ports
+          value:
+            - protocol: TCP
+              port: 8000
+            - protocol: TCP
+              port: 8443
+      - notExists:
+          path: spec.egress[0].to[0].ipBlock
+
+  - it: turning the smoke hook off removes its route with it
+    set:
+      database.host: "10.0.1.2"
+      networkPolicy.databaseCidr: "10.0.1.2/32"
+      database.existingSecret: "events-db"
+      tests.smoke.enabled: false
+    templates:
+      - templates/networkpolicy.yaml
+    asserts:
+      - notMatchRegex:
+          path: "$..metadata.name"
+          pattern: "allow-smoke-hook-to-ingress$"

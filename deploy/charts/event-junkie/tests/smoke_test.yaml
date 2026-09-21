@@ -1,0 +1,206 @@
+# The post-deploy smoke hook (#1697): k6 runs `perf/smoke.js` against the Ingress after every
+# install and upgrade, and a failure is a rollback. What a render can prove: that the hook is off
+# until a cluster turns it on, that it runs after the curl hook, that the scripts reach the pod under
+# the paths `smoke.js` imports, and that scheme, port and TLS verification follow the Ingress. What
+# it cannot: that the route works. The k3d rehearsal's `test` step is where that is proved.
+suite: smoke test hook
+
+templates:
+  - templates/tests/smoke-test.yaml
+
+tests:
+  - it: renders nothing under the default values
+    set:
+      database.host: "10.0.1.2"
+      networkPolicy.databaseCidr: "10.0.1.2/32"
+      database.existingSecret: "events-db"
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: renders nothing while the test hooks as a whole are off
+    set:
+      database.host: "10.0.1.2"
+      networkPolicy.databaseCidr: "10.0.1.2/32"
+      database.existingSecret: "events-db"
+      tests.enabled: false
+      tests.smoke.enabled: true
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: renders the scripts and the pod as test hooks, scripts first, pod after the curl hook
+    set:
+      database.host: "10.0.1.2"
+      networkPolicy.databaseCidr: "10.0.1.2/32"
+      database.existingSecret: "events-db"
+      tests.smoke.enabled: true
+    asserts:
+      - hasDocuments:
+          count: 2
+      - documentIndex: 0
+        isKind:
+          of: ConfigMap
+      - documentIndex: 0
+        equal:
+          path: metadata.annotations["helm.sh/hook"]
+          value: test
+      - documentIndex: 0
+        equal:
+          path: metadata.annotations["helm.sh/hook-weight"]
+          value: "-5"
+      # The three files `smoke.js` needs, under the keys the volume maps back to `lib/`.
+      - documentIndex: 0
+        exists:
+          path: data["smoke.js"]
+      - documentIndex: 0
+        exists:
+          path: data["lib__api.js"]
+      - documentIndex: 0
+        exists:
+          path: data["lib__config.js"]
+      - documentIndex: 1
+        isKind:
+          of: Pod
+      - documentIndex: 1
+        equal:
+          path: metadata.annotations["helm.sh/hook"]
+          value: test
+      # After `connection-test.yaml`, which carries no weight and so runs at 0.
+      - documentIndex: 1
+        equal:
+          path: metadata.annotations["helm.sh/hook-weight"]
+          value: "5"
+      - documentIndex: 1
+        equal:
+          path: metadata.annotations["helm.sh/hook-delete-policy"]
+          value: before-hook-creation
+      - documentIndex: 1
+        contains:
+          path: spec.volumes[0].configMap.items
+          content:
+            key: lib__api.js
+            path: lib/api.js
+      - documentIndex: 1
+        contains:
+          path: spec.volumes[0].configMap.items
+          content:
+            key: smoke.js
+            path: smoke.js
+
+  - it: follows the Ingress — https, the Service's 443 and a verified certificate when TLS is on
+    set:
+      database.host: "10.0.1.2"
+      networkPolicy.databaseCidr: "10.0.1.2/32"
+      database.existingSecret: "events-db"
+      tests.smoke.enabled: true
+      ingress.host: "event-junkie.de"
+      ingress.tls.enabled: true
+    documentIndex: 1
+    asserts:
+      - contains:
+          path: spec.containers[0].env
+          content:
+            name: BFF_HOST
+            value: "https://event-junkie.de"
+      - contains:
+          path: spec.containers[0].env
+          content:
+            name: INGRESS_PORT
+            value: "443"
+      - contains:
+          path: spec.containers[0].env
+          content:
+            name: INSECURE
+            value: "false"
+
+  - it: follows the Ingress — plain http on the Service's 80 when TLS is off, as k3d runs
+    values:
+      - ../values-k3d.yaml
+    set:
+      tests.smoke.enabled: true
+    documentIndex: 1
+    asserts:
+      - contains:
+          path: spec.containers[0].env
+          content:
+            name: BFF_HOST
+            value: "http://event-junkie.localhost"
+      - contains:
+          path: spec.containers[0].env
+          content:
+            name: INGRESS_PORT
+            value: "80"
+
+  - it: skips certificate verification only where the values say so
+    set:
+      database.host: "10.0.1.2"
+      networkPolicy.databaseCidr: "10.0.1.2/32"
+      database.existingSecret: "events-db"
+      tests.smoke.enabled: true
+      tests.smoke.verifyTls: false
+    documentIndex: 1
+    asserts:
+      - contains:
+          path: spec.containers[0].env
+          content:
+            name: INSECURE
+            value: "true"
+
+  # The budget reaches all three endpoint groups: `baseThresholds()` in `perf/lib/config.js` reads
+  # one variable per group, and a group left on its laptop number would roll a release back for a
+  # slow cold start.
+  - it: applies the latency budget to every endpoint group
+    set:
+      database.host: "10.0.1.2"
+      networkPolicy.databaseCidr: "10.0.1.2/32"
+      database.existingSecret: "events-db"
+      tests.smoke.enabled: true
+      tests.smoke.latencyBudgetMs: 4321
+    documentIndex: 1
+    asserts:
+      - contains:
+          path: spec.containers[0].env
+          content:
+            name: THRESHOLD_DETAIL_MS
+            value: "4321"
+      - contains:
+          path: spec.containers[0].env
+          content:
+            name: THRESHOLD_LIST_MS
+            value: "4321"
+      - contains:
+          path: spec.containers[0].env
+          content:
+            name: THRESHOLD_CALENDAR_MS
+            value: "4321"
+
+  # The pod is hardened like a workload, and the root filesystem stays read-only: k6's summary goes
+  # to an emptyDir, not to `/`.
+  - it: is hardened, runs as the shared UID and writes only to an emptyDir
+    set:
+      database.host: "10.0.1.2"
+      networkPolicy.databaseCidr: "10.0.1.2/32"
+      database.existingSecret: "events-db"
+      tests.smoke.enabled: true
+    documentIndex: 1
+    asserts:
+      - equal:
+          path: spec.securityContext.runAsUser
+          value: 10001
+      - equal:
+          path: spec.containers[0].securityContext.readOnlyRootFilesystem
+          value: true
+      - equal:
+          path: spec.automountServiceAccountToken
+          value: false
+      - equal:
+          path: spec.restartPolicy
+          value: Never
+      - exists:
+          path: spec.volumes[1].emptyDir
+      - contains:
+          path: spec.containers[0].volumeMounts
+          content:
+            name: tmp
+            mountPath: /tmp

@@ -1,0 +1,133 @@
+{{- if and .Values.tests.enabled .Values.tests.smoke.enabled }}
+{{- $args := dict "ctx" $ "component" "test" }}
+{{- $smoke := .Values.tests.smoke }}
+{{- $scripts := printf "%s-smoke-scripts" (include "event-junkie.fullname" $) }}
+{{- /* The second `helm test` hook (#1697): `perf/smoke.js` from a k6 pod, every public endpoint
+   once, THROUGH THE INGRESS. `connection-test.yaml` proves the two Services answer; this proves the
+   route a visitor takes — Traefik, the middlewares, the certificate — and every `/api/**` endpoint
+   behind it. Flux runs both after every install and upgrade and rolls back when either fails, so
+   the latency budget is widened to "catastrophically slow" and status and shape are the gate. */}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $scripts }}
+  labels:
+    {{- include "event-junkie.labels" $args | nindent 4 }}
+  annotations:
+    kubernetes.io/description: >-
+      perf/smoke.js and its lib/, for the smoke-test hook pod. A hook resource like the pod, so nothing test-only sits in the steady-state release.
+    helm.sh/hook: test
+    {{- /* Before the pod, which mounts it. */}}
+    helm.sh/hook-weight: "-5"
+    helm.sh/hook-delete-policy: before-hook-creation
+data:
+  {{- /* `files/perf/` holds symlinks into the repository's `perf/`, so the chart carries no copy of the
+     scripts and a change to the k6 suite is a change to the hook. Helm follows them in place; a copy
+     of the chart directory must dereference them (`cp -RL`, as version-test.sh does) or they dangle.
+     Keys cannot contain `/`, hence `lib__api.js`; the volume's `items` put them back under `lib/`. */}}
+  {{- range $path, $_ := .Files.Glob "files/perf/**.js" }}
+  {{ $path | trimPrefix "files/perf/" | replace "/" "__" }}: |-
+    {{- $.Files.Get $path | nindent 4 }}
+  {{- end }}
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: {{ printf "%s-smoke-test" (include "event-junkie.fullname" $) }}
+  labels:
+    {{- include "event-junkie.labels" $args | nindent 4 }}
+  annotations:
+    kubernetes.io/description: >-
+      The post-deploy smoke: k6 runs perf/smoke.js against the Ingress. Its exit code is the test result, which is why this is a bare Pod (ADR-016).
+    helm.sh/hook: test
+    {{- /* After the curl hook (weight 0): a BFF that is not ready fails on the cheap check first. */}}
+    helm.sh/hook-weight: "5"
+    {{- /* Deleted before the next test run rather than after this one, so a failed test leaves its
+       pod behind for `kubectl logs`. */}}
+    helm.sh/hook-delete-policy: before-hook-creation
+spec:
+  restartPolicy: Never
+  automountServiceAccountToken: false
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: {{ .Values.security.runAsUser }}
+    runAsGroup: {{ .Values.security.runAsGroup }}
+    seccompProfile:
+      type: RuntimeDefault
+  containers:
+    - name: smoke-test
+      image: {{ printf "%s/%s:%s" $smoke.image.registry $smoke.image.repository $smoke.image.tag | quote }}
+      imagePullPolicy: {{ .Values.image.pullPolicy }}
+      securityContext:
+        {{- include "event-junkie.containerSecurityContext" $args | nindent 8 }}
+      env:
+        {{- /* The visitor's origin. The name does not resolve in-cluster on staging (no public record) and
+           resolves to the node on production, which the egress policy does not admit, so `RESOLVE` sends it
+           to the ingress controller's Service instead — its ClusterIP is not known at render time, hence
+           the `getent` below. Scheme and Service port follow the Ingress's TLS setting; k3d runs plain HTTP. */}}
+        {{- $scheme := ternary "https" "http" .Values.ingress.tls.enabled }}
+        - name: BFF_HOST
+          value: {{ printf "%s://%s" $scheme .Values.ingress.host | quote }}
+        - name: INGRESS_HOST
+          value: {{ .Values.ingress.host | quote }}
+        - name: INGRESS_SERVICE
+          value: {{ $smoke.ingressService | quote }}
+        - name: INGRESS_PORT
+          value: {{ ternary "443" "80" .Values.ingress.tls.enabled | quote }}
+        {{- /* Staging's certificate is from Let's Encrypt's staging CA, which nothing trusts on purpose.
+           Production verifies: a certificate that did not issue is a finding, not a flake. */}}
+        - name: INSECURE
+          value: {{ not $smoke.verifyTls | toString | quote }}
+        - name: SITE
+          value: "true"
+        {{- /* One budget for all three endpoint groups. `perf/lib/config.js` says why the laptop numbers
+           are tighter; here a cold JVM after a rollout must not roll the release back. */}}
+        - name: THRESHOLD_DETAIL_MS
+          value: {{ $smoke.latencyBudgetMs | quote }}
+        - name: THRESHOLD_LIST_MS
+          value: {{ $smoke.latencyBudgetMs | quote }}
+        - name: THRESHOLD_CALENDAR_MS
+          value: {{ $smoke.latencyBudgetMs | quote }}
+      command:
+        - /bin/sh
+        - -c
+        - |
+          set -eu
+          address="$(getent hosts "${INGRESS_SERVICE}" | awk '{print $1; exit}')"
+          [ -n "${address}" ] || { echo "smoke-test: ${INGRESS_SERVICE} did not resolve" >&2; exit 1; }
+          # k6 exits non-zero on a failed threshold or check, and that is the hook's verdict — after the
+          # summary is re-emitted on one line: the collector ships this container's stdout, so each
+          # reconcile leaves one JSON row in OpenObserve under k8s_container_name.
+          k6 run --no-usage-report --summary-export=/tmp/summary.json \
+            -e RESOLVE="${INGRESS_HOST}:${address}:${INGRESS_PORT}" /scripts/smoke.js \
+            || status=$?
+          if [ -s /tmp/summary.json ]; then tr -d '\n' < /tmp/summary.json | tr -s ' '; echo; fi
+          exit "${status:-0}"
+      volumeMounts:
+        - name: scripts
+          mountPath: /scripts
+          readOnly: true
+        {{- /* The root filesystem is read-only; k6 writes its summary here. */}}
+        - name: tmp
+          mountPath: /tmp
+      resources:
+        requests:
+          cpu: "50m"
+          memory: "64Mi"
+        limits:
+          cpu: "500m"
+          memory: "256Mi"
+  volumes:
+    - name: scripts
+      configMap:
+        name: {{ $scripts }}
+        items:
+          {{- range $path, $_ := .Files.Glob "files/perf/**.js" }}
+          {{- $rel := $path | trimPrefix "files/perf/" }}
+          - key: {{ $rel | replace "/" "__" }}
+            path: {{ $rel }}
+          {{- end }}
+    - name: tmp
+      emptyDir:
+        sizeLimit: 8Mi
+{{- end }}

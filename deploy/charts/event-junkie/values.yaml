@@ -395,6 +395,11 @@ networkPolicy:
       kubernetes.io/metadata.name: kube-system
     podSelector:
       app.kubernetes.io/name: traefik
+    # networkPolicy.ingressController.podPorts are Traefik's *container* ports, not its Service's 80
+    # and 443: a policy is evaluated after the Service DNAT, so the smoke hook's egress names these.
+    podPorts:
+      web: 8000
+      websecure: 8443
   metricsScrape:
     # networkPolicy.metricsScrape lets a collector reach `/actuator/**` on the management port; without
     # it every scrape is refused while the pods look annotated and discovered (#271). **`scrapeEgress`
@@ -466,13 +471,34 @@ certManager:
       # `.cloud` and speak the dead API.
       webhookGroupName: "acme.hetzner.com"
 
-# Renders the `helm test` hook pod in `templates/tests/connection-test.yaml`. #414 wires Flux's
-# `test.enable` to it.
+# Renders the `helm test` hook pods under `templates/tests/`. #414 wires Flux's `test.enable` to
+# them: both run after every install and upgrade, and a failure rolls the release back.
 tests:
   enabled: true
   image:
-    # Docker Hub rather than `image.registry` — the one image here that is not ours.
+    # Docker Hub rather than `image.registry` — an image here that is not ours.
     registry: "docker.io"
-    # The one place a third-party image is acceptable: nothing the test pod does outlives the test.
+    # A third-party image is acceptable here: nothing a test pod does outlives the test.
     repository: "curlimages/curl"
     tag: "8.22.0"
+  # The second hook (#1697): `perf/smoke.js` from a k6 pod, every public endpoint once, through
+  # the Ingress. Off by default and switched on per cluster, because the default `verifyTls` fails
+  # against staging's Let's Encrypt staging certificate before staging's own values can say
+  # otherwise — and a failing hook is a rollback, not a warning.
+  smoke:
+    enabled: false
+    image:
+      registry: "docker.io"
+      repository: "grafana/k6"
+      tag: "2.3.0"
+    # tests.smoke.verifyTls: false on staging only. Production keeps it: a certificate that did not
+    # issue is a finding this hook exists to make.
+    verifyTls: true
+    # tests.smoke.latencyBudgetMs replaces the laptop thresholds in `perf/lib/config.js` for every
+    # endpoint group. Status and shape are the gate; this only catches "catastrophically slow", and
+    # a cold JVM after a rollout has to clear it.
+    latencyBudgetMs: 10000
+    # tests.smoke.ingressService is how the pod reaches the Ingress: the host does not resolve
+    # in-cluster on staging and resolves to the node on production, which no policy admits. k3s's
+    # bundled Traefik, the same object `networkPolicy.ingressController` selects.
+    ingressService: "traefik.kube-system.svc.cluster.local"

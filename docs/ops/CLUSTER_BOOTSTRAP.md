@@ -431,8 +431,8 @@ flux --context event-junkie-staging get helmreleases -A       # cert-manager →
 kubectl --context event-junkie-staging get pods -A
 ```
 
-Success looks like `Helm test succeeded … 1 test hook completed successfully` on the app release — the chart's own smoke test, run where the workloads are
-because CI cannot reach here.
+Success looks like `Helm test succeeded … 2 test hooks completed successfully` on the app release — the chart's own smoke tests, run where the workloads are
+because CI cannot reach here (ADR-033). It reads `1 test hook` while `tests.smoke.enabled` is still false on this cluster.
 
 **Then check that the reconcile reached GitHub**, which is the half that has no evidence inside the cluster (#565):
 
