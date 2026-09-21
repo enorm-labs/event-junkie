@@ -152,43 +152,25 @@ threshold flags the whole catalogue every day as a matter of routine, and a rule
 ## Where the notifications go, and why not to Signal yet
 
 Every rule routes to `record-only`, a destination that POSTs the firing back into OpenObserve as a row in the `alert_history` stream. Firing is therefore
-observable now, which is what makes these rules exercised rather than hypothetical while item 4 waits on the eSIM.
+observable now, which is what makes these rules exercised rather than hypothetical while [#877](https://github.com/enorm-labs/event-junkie/issues/877) waits
+on a registered phone number. **A firing reaches no person until then**, and [THREAT_MODEL.md](../../docs/security/THREAT_MODEL.md) B8 says so.
 
-**Signal is blocked by something other than the missing number, and this is the finding worth carrying to #271.** OpenObserve refuses any alert destination whose
-URL resolves inside the cluster:
+**The number is the only blocker left.** An OpenObserve webhook into `signal-cli-rest-api` is #877's architecture, and OpenObserve's SSRF guard used to refuse
+any destination that resolves inside the cluster. Two flags govern it (`config.rs:1177`), and they are not equivalent:
 
-```
-signal-cli.observability.svc.cluster.local  ->  400 Destination URL blocked by SSRF guard
-openobserve-…svc.cluster.local              ->  400 Destination URL blocked by SSRF guard
-```
+|                          |                                                                                    |
+| ------------------------ | ---------------------------------------------------------------------------------- |
+| `ZO_SSRF_ALLOW_LOOPBACK` | the process may notify **itself** and nothing else. What `record-only` uses        |
+| `ZO_SKIP_SSRF_CHECKS`    | removes the check for **every** destination. Set on staging, with the policy below |
 
-An OpenObserve webhook into `signal-cli-rest-api` **is** item 4's architecture. Two flags govern it (`config.rs:1177`), and they are not equivalent:
+On staging the guard is off and the containment is the network: `deploy/clusters/staging/observability-netpol.yaml` lets the OpenObserve pod reach CoreDNS,
+the public internet on 443 (Hetzner Object Storage) and `signal-cli:8080`, and nothing else. PostgreSQL on the private network, the Kubernetes API, the kubelet
+and every other pod are unreachable from it, so a destination aimed at them fails at the network rather than at a check somebody can turn off. A URL allowlist
+inside a process constrains the feature; an egress policy constrains anything the pod can be made to do. Production sets neither the flag nor the allowance,
+because it has no bridge to reach; [OPENOBSERVE.md](../../docs/ops/OPENOBSERVE.md) carries the per-cluster table.
 
-|                          |                                                                             |
-| ------------------------ | --------------------------------------------------------------------------- |
-| `ZO_SSRF_ALLOW_LOOPBACK` | the process may notify **itself** and nothing else. What `record-only` uses |
-| `ZO_SKIP_SSRF_CHECKS`    | removes the check for **every** destination. Set, **with the policy below** |
-
-**The decision, taken 2026-08-23: the guard comes off and the containment moves to the network.** A URL allowlist inside a process is advisory — it constrains
-the feature, not the process — while an egress policy constrains anything the pod can be made to do. `deploy/clusters/staging/openobserve-netpol.yaml` is that
-policy, and the two shipped in the same change:
-
-```
-OpenObserve -> CoreDNS:53                resolving anything at all
-OpenObserve -> the public internet:443   Hetzner Object Storage, where the data lives
-OpenObserve -> signal-cli:8080           the alert route, once item 4 has a number
-```
-
-PostgreSQL on the private network, the Kubernetes API, the kubelet and every other pod are unreachable from this pod, so a destination aimed at them fails at
-the network rather than at a check somebody can turn off.
-
-**What it does not fix, stated rather than glossed:** a destination may still point at any _public_ address, so whoever holds the root credential can exfiltrate
-alert bodies. That is inherent to having a webhook feature, it is not what the SSRF guard addressed, and that credential already reads every metric and log in
-the system.
-
-**The namespace still has no default-deny.** This policy is egress-only and selects one pod, which is enough to bound the feature being unblocked and is not the
-same thing as hardening the namespace — that needs an allowance per conversation for the operator, both collectors, the exporter and the bridge, and a k3d
-rehearsal to prove none of them break. That is [#662](https://github.com/enorm-labs/event-junkie/issues/662).
+**What the policy does not fix, stated rather than glossed:** a destination may still point at any _public_ address, so whoever holds the root credential can
+exfiltrate alert bodies. That is inherent to having a webhook feature, and that credential already reads every metric and log in the system.
 
 A destination is mandatory, incidentally: `POST /api/v2/{org}/alerts` with `destinations: []` returns `Alert destination or workflows is required`, with or
 without `creates_incident`. So "rules now, delivery later" needs _a_ destination, which is why the loopback one exists.

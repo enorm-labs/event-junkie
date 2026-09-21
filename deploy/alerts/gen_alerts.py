@@ -82,7 +82,7 @@ created to avoid.
 Every rule below is `enabled: true` and every rule routes to the `record-only`
 destination, which POSTs the firing back into OpenObserve as a log row. That is
 deliberate: it makes firing observable now, so the rules are exercised rather
-than hypothetical, while delivery waits on the eSIM (#271 item 4). The Signal
+than hypothetical, while delivery waits on the eSIM (#877). The Signal
 destination is one `apply.sh` away once the number registers — see README.md.
 
 **The self-reference is real and is not solved here:** an alert about OpenObserve

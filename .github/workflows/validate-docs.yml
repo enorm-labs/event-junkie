@@ -16,6 +16,7 @@ on:
       - 'scripts/rules-parity.sh'
       - 'scripts/collector-parity.sh'
       - 'scripts/scope-parity.sh'
+      - 'scripts/secrets-parity.sh'
       - '.github/workflows/label-pr.yml'
       - 'scripts/version.sh'
       - 'scripts/release-highlights.sh'
@@ -45,6 +46,7 @@ on:
       - 'scripts/rules-parity.sh'
       - 'scripts/collector-parity.sh'
       - 'scripts/scope-parity.sh'
+      - 'scripts/secrets-parity.sh'
       - '.github/workflows/label-pr.yml'
       - 'scripts/version.sh'
       - 'scripts/release-highlights.sh'
@@ -94,6 +96,9 @@ jobs:
 
       - name: Check product scope parity
         run: scripts/scope-parity.sh
+
+      - name: Check the secret count
+        run: scripts/secrets-parity.sh
 
       - name: Check the scripts index
         run: scripts/index-parity.sh

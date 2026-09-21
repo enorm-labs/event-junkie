@@ -35,6 +35,7 @@ scripts/skill-parity.sh               # skills ↔ commands ↔ the AGENTS.md li
 scripts/rules-parity.sh               # applyTo ↔ paths per rule, symlinks resolve, no @ pointer bodies, every glob hits a file
 scripts/collector-parity.sh           # LogFields ↔ LogContextConfiguration ↔ collector.yaml ↔ PLATFORM_SETUP §7
 scripts/scope-parity.sh               # the feat scope list, nine copies, labeller's is canonical
+scripts/secrets-parity.sh             # the secret count SECRETS.md states ↔ the rows its table lists
 scripts/index-parity.sh               # scripts/README.md ↔ scripts/, every referenced script exists and answers --help
 ```
 
