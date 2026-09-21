@@ -100,10 +100,7 @@ data class ScrapedEvent(
      * the event date, venue slug and title, plus [slugDiscriminator]. On updates [existing]'s `id`,
      * `sourceId` and `createdAt` are preserved.
      *
-     * @param venueId the venue's database ID.
      * @param venueSlug the venue's slug, in the event slug for cross-venue uniqueness.
-     * @param eventSourceId the database ID of the importing source.
-     * @param existing the previously persisted entity, or null.
      * @param slugDiscriminator appended to separate two sittings of one production on one day. Only
      * the whole scrape can see a collision, so
      * [EventUpsertService][de.norm.events.scraper.EventUpsertService] computes it. Null for the
@@ -296,8 +293,6 @@ data class ScrapedArtist(
      * Converts this scraped artist into an [EventArtistEntity], parsing [role] with
      * [ArtistRole.HEADLINER] as the fallback.
      *
-     * @param eventId the event's database ID.
-     * @param artistId the resolved artist's database ID.
      * @param billingOrder the position in the lineup (0-based).
      */
     fun toEventArtistEntity(
