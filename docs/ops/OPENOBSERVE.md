@@ -73,7 +73,7 @@ flux --context event-junkie-staging reconcile helmrelease openobserve -n flux-sy
 ```
 
 **`--force` is the word that matters, and leaving it out costs an outage.** A plain `flux reconcile helmrelease` re-evaluates the release, finds the stored
-revision already equal to the desired chart and values, and does nothing. It then prints `applied revision 0.92.2` and exits 0.
+revision already equal to the desired chart and values, and does nothing. It then prints `applied revision 1.0.1` and exits 0.
 
 Drift detection would notice the missing StatefulSet. It is not enabled on either cluster — `spec.driftDetection.mode` is unset. So nothing puts the
 workload back. The Service keeps answering with `ENDPOINTS: <none>`, and the collectors retry into it. Measured on 2026-09-01: four minutes of refused
@@ -233,12 +233,12 @@ What still needs a person is the review, because a bump here changes what is run
 | -------------------------------------------- | -------------- |
 | `openobserve-standalone`                     | 1.0.1          |
 | `openobserve-collector`                      | 0.4.6          |
-| `opentelemetry-operator`                     | 0.121.0        |
-| `cert-manager`                               | v1.21.1        |
-| `cert-manager-webhook-hetzner`               | 0.8.0          |
+| `opentelemetry-operator`                     | 0.123.0        |
+| `cert-manager`                               | v1.21.2        |
+| `cert-manager-webhook-hetzner`               | 0.9.0          |
 | `signal-cli-rest-api` (image, digest-pinned) | 0.100-rootless |
 | `postgres-exporter` (image, digest-pinned)   | v0.20.1        |
-| `busybox` (initContainer image)              | 1.37.0         |
+| `busybox` (initContainer image)              | 1.38.0         |
 
 A major OpenObserve release goes to staging first and holds a night there, with a copy of the data volume taken before each
 cluster moves. The application migrates its metadata sqlite forward on start, and a rollback across that is untested.
