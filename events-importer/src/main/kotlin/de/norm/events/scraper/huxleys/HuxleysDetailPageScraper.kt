@@ -1,6 +1,7 @@
 package de.norm.events.scraper.huxleys
 
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.ISO_DATE_LENGTH
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
 import de.norm.events.scraper.attrAt

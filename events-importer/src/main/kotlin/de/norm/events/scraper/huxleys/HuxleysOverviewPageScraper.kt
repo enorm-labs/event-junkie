@@ -1,6 +1,7 @@
 package de.norm.events.scraper.huxleys
 
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.ISO_DATE_LENGTH
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
 import de.norm.events.scraper.attrAt
@@ -100,9 +101,6 @@ class HuxleysOverviewPageScraper {
 
 /** Path prefix of an event permalink, stripped to obtain the `YYYY-MM-DD-<slug>` identity. */
 internal const val EVENT_PATH_PREFIX = "/event/"
-
-/** Length of the leading ISO `YYYY-MM-DD` date in every event slug. */
-internal const val ISO_DATE_LENGTH = 10
 
 /** The CSS class on a sold-out card's `li` (and its badge text). */
 private const val SOLD_OUT_CLASS = "Ausverkauft"
