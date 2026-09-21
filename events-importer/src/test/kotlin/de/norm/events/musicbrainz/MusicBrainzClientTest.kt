@@ -2,6 +2,7 @@ package de.norm.events.musicbrainz
 
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.collections.shouldHaveSize
+import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldStartWith
@@ -124,5 +125,59 @@ class MusicBrainzClientTest {
             server.close()
 
             shouldThrow<MusicBrainzUnavailableException> { client.search("x") }
+        }
+
+    @Test
+    fun `reads one entity with its URL relationships, and a 404 is no entity rather than an error`() =
+        runTest {
+            server.enqueue(
+                json(
+                    javaClass.classLoader
+                        .getResourceAsStream("musicbrainz/artist-klock.json")!!
+                        .bufferedReader()
+                        .readText()
+                )
+            )
+            server.enqueue(
+                MockResponse
+                    .Builder()
+                    .code(404)
+                    .body("""{"error":"Not Found"}""")
+                    .build()
+            )
+
+            val klock = client().artist("mbid-klock")
+            server.takeRequest().target shouldBe "/ws/2/artist/mbid-klock?inc=url-rels&fmt=json"
+            klock?.name shouldBe "Ben Klock"
+            klock?.type shouldBe "Person"
+            klock?.relations?.count { it.type == "soundcloud" } shouldBe 1
+
+            client().artist("mbid-klock").shouldBeNull()
+        }
+
+    @Test
+    fun `an entity read is retried behind a 503 like a search`() =
+        runTest {
+            server.enqueue(MockResponse.Builder().code(503).build())
+            server.enqueue(json("""{"id":"x","name":"Pici","relations":[]}"""))
+
+            client().artist("x")?.name shouldBe "Pici"
+            server.requestCount shouldBe 2
+        }
+
+    @Test
+    fun `a merged MBID is followed to its survivor`() =
+        runTest {
+            server.enqueue(
+                MockResponse
+                    .Builder()
+                    .code(301)
+                    .addHeader("Location", server.url("/ws/2/artist/survivor?inc=url-rels&fmt=json").toString())
+                    .build()
+            )
+            server.enqueue(json("""{"id":"survivor","name":"Pici","relations":[]}"""))
+
+            client().artist("merged")?.id shouldBe "survivor"
+            server.requestCount shouldBe 2
         }
 }

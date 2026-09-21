@@ -6,7 +6,7 @@
 MusicBrainz id are stored. The name is never rewritten from it. Enrichment from the id is a second step, and it runs
 only for a row with an `EXACT` verdict.**
 
-**Not implemented.** Step B is [#1567](https://github.com/enorm-labs/event-junkie/issues/1567). Step C is
+**Steps B and C implemented.** Step B is [#1567](https://github.com/enorm-labs/event-junkie/issues/1567). Step C is
 [#1568](https://github.com/enorm-labs/event-junkie/issues/1568). Step C+ is decided in
 [#1569](https://github.com/enorm-labs/event-junkie/issues/1569). The queue column is a note on #1145. Decided in
 [#1549](https://github.com/enorm-labs/event-junkie/issues/1549).

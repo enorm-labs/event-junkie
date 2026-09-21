@@ -1,0 +1,801 @@
+{
+    "begin-area": {
+        "id": "c9ac1239-e832-41bc-9930-e252a1fd1105",
+        "iso-3166-2-codes": [
+            "DE-BE"
+        ],
+        "name": "Berlin",
+        "type": null,
+        "type-id": null,
+        "disambiguation": "",
+        "sort-name": "Berlin"
+    },
+    "disambiguation": "",
+    "type-id": "e431f5f6-b5d2-343d-8b36-72607fffb74b",
+    "sort-name": "Einst\u00fcrzende Neubauten",
+    "type": "Group",
+    "gender-id": null,
+    "gender": null,
+    "relations": [
+        {
+            "attribute-values": {},
+            "end": null,
+            "attribute-ids": {},
+            "source-credit": "",
+            "target-type": "url",
+            "begin": null,
+            "url": {
+                "id": "de4b5b41-fc53-435c-badd-56d9ede79307",
+                "resource": "https://www.allmusic.com/artist/mn0000926091"
+            },
+            "target-credit": "",
+            "direction": "forward",
+            "type": "allmusic",
+            "attributes": [],
+            "type-id": "6b3e3c85-0002-4f34-aca6-80ace0d7e846",
+            "ended": false
+        },
+        {
+            "ended": false,
+            "type-id": "c550166e-0548-4a18-b1d4-e2ae423a3e88",
+            "type": "bandcamp",
+            "attributes": [],
+            "direction": "forward",
+            "begin": null,
+            "url": {
+                "id": "09b7b082-fcba-4d8c-8efd-e3ab199b7015",
+                "resource": "https://einstrzendeneubauten.bandcamp.com/"
+            },
+            "target-credit": "",
+            "source-credit": "",
+            "target-type": "url",
+            "attribute-ids": {},
+            "end": null,
+            "attribute-values": {}
+        },
+        {
+            "end": null,
+            "attribute-values": {},
+            "attribute-ids": {},
+            "target-type": "url",
+            "source-credit": "",
+            "direction": "forward",
+            "url": {
+                "id": "322a68ab-2ef8-4f01-a89f-211f92ae8b48",
+                "resource": "https://neubauten.bandcamp.com/"
+            },
+            "target-credit": "",
+            "begin": null,
+            "type-id": "c550166e-0548-4a18-b1d4-e2ae423a3e88",
+            "attributes": [],
+            "type": "bandcamp",
+            "ended": false
+        },
+        {
+            "ended": false,
+            "direction": "forward",
+            "begin": null,
+            "url": {
+                "id": "f7c2fc30-6372-4557-b8d8-68129fd8d502",
+                "resource": "https://www.bandsintown.com/a/54107"
+            },
+            "target-credit": "",
+            "type-id": "ea45ed3d-2d5e-456e-8c32-94b6f51426e2",
+            "type": "bandsintown",
+            "attributes": [],
+            "attribute-ids": {},
+            "source-credit": "",
+            "target-type": "url",
+            "end": null,
+            "attribute-values": {}
+        },
+        {
+            "end": "2020-11-19",
+            "attribute-values": {},
+            "target-type": "url",
+            "source-credit": "",
+            "attribute-ids": {},
+            "type-id": "d028a975-000c-4525-9333-d3c8425e4b54",
+            "attributes": [],
+            "type": "BBC Music page",
+            "direction": "forward",
+            "url": {
+                "id": "2f0a7ecf-e77d-417b-9a54-5b82ec2896ee",
+                "resource": "https://www.bbc.co.uk/music/artists/6e9ac29b-798c-4af7-8d9e-55cdc72a999c"
+            },
+            "target-credit": "",
+            "begin": null,
+            "ended": true
+        },
+        {
+            "ended": false,
+            "type-id": "4fb0eeec-a6eb-4ae3-ad52-b55765b94e8f",
+            "type": "discography page",
+            "attributes": [],
+            "direction": "forward",
+            "begin": null,
+            "target-credit": "",
+            "url": {
+                "id": "7fbd9afe-d0d7-422b-8b18-aec250df6e4b",
+                "resource": "https://web.archive.org/web/20090625022735/http://www.musicmight.com/artist/germany/berlin/einsturzende+neubauten"
+            },
+            "source-credit": "",
+            "target-type": "url",
+            "attribute-ids": {},
+            "end": null,
+            "attribute-values": {}
+        },
+        {
+            "attribute-ids": {},
+            "target-type": "url",
+            "source-credit": "",
+            "attribute-values": {},
+            "end": null,
+            "ended": false,
+            "url": {
+                "id": "cfca08ac-4b9b-412b-90e5-f3dfd239b0e0",
+                "resource": "https://www.discogs.com/artist/38794"
+            },
+            "target-credit": "",
+            "begin": null,
+            "direction": "forward",
+            "attributes": [],
+            "type": "discogs",
+            "type-id": "04a5b104-a4c2-4bac-99a1-7b837c37d9e4"
+        },
+        {
+            "begin": null,
+            "target-credit": "",
+            "url": {
+                "resource": "https://open.spotify.com/artist/7KomCxZv6D5qCVvefwMnwB",
+                "id": "8e7354e4-5cfb-47ec-a3d9-ad9c9f92bc60"
+            },
+            "direction": "forward",
+            "type": "free streaming",
+            "attributes": [],
+            "type-id": "769085a1-c2f7-4c24-a532-2375a77693bd",
+            "ended": false,
+            "attribute-values": {},
+            "end": null,
+            "attribute-ids": {},
+            "source-credit": "",
+            "target-type": "url"
+        },
+        {
+            "begin": null,
+            "target-credit": "",
+            "url": {
+                "resource": "https://www.deezer.com/artist/4272",
+                "id": "d4b9a316-0b21-43fc-89b9-3e1b2e65d9df"
+            },
+            "direction": "forward",
+            "type": "free streaming",
+            "attributes": [],
+            "type-id": "769085a1-c2f7-4c24-a532-2375a77693bd",
+            "ended": false,
+            "attribute-values": {},
+            "end": null,
+            "attribute-ids": {},
+            "source-credit": "",
+            "target-type": "url"
+        },
+        {
+            "type": "IMDb",
+            "attributes": [],
+            "type-id": "94c8b0cc-4477-4106-932c-da60e63de61c",
+            "begin": null,
+            "target-credit": "",
+            "url": {
+                "id": "4297bd48-1d54-4940-8203-e7eab2168535",
+                "resource": "https://www.imdb.com/name/nm0251884/"
+            },
+            "direction": "forward",
+            "ended": false,
+            "attribute-values": {},
+            "end": null,
+            "source-credit": "",
+            "target-type": "url",
+            "attribute-ids": {}
+        },
+        {
+            "source-credit": "",
+            "target-type": "url",
+            "attribute-ids": {},
+            "attribute-values": {},
+            "end": null,
+            "ended": false,
+            "type": "last.fm",
+            "attributes": [],
+            "type-id": "08db8098-c0df-4b78-82c3-c8697b4bba7f",
+            "begin": null,
+            "url": {
+                "resource": "https://www.last.fm/music/Einst%C3%BCrzende+Neubauten",
+                "id": "ed3bcf39-5be3-4cdc-8015-ff06e8c91338"
+            },
+            "target-credit": "",
+            "direction": "forward"
+        },
+        {
+            "url": {
+                "resource": "https://genius.com/artists/Einsturzende-neubauten",
+                "id": "dfc0cb26-e838-4ae4-8c49-85333a06d13e"
+            },
+            "target-credit": "",
+            "begin": null,
+            "direction": "forward",
+            "attributes": [],
+            "type": "lyrics",
+            "type-id": "e4d73442-3762-45a8-905c-401da65544ed",
+            "ended": false,
+            "attribute-values": {},
+            "end": null,
+            "attribute-ids": {},
+            "target-type": "url",
+            "source-credit": ""
+        },
+        {
+            "type": "myspace",
+            "attributes": [],
+            "type-id": "bac47923-ecde-4b59-822e-d08f0cd10156",
+            "begin": null,
+            "target-credit": "",
+            "url": {
+                "id": "fae18e31-0e1a-488d-9eb6-f6237732cc64",
+                "resource": "https://myspace.com/neubauten"
+            },
+            "direction": "forward",
+            "ended": false,
+            "attribute-values": {},
+            "end": null,
+            "source-credit": "",
+            "target-type": "url",
+            "attribute-ids": {}
+        },
+        {
+            "ended": false,
+            "direction": "forward",
+            "url": {
+                "id": "a71257e2-2940-4e39-bf11-169913916944",
+                "resource": "https://neubauten.org/"
+            },
+            "target-credit": "",
+            "begin": null,
+            "type-id": "fe33d22f-c3b0-4d68-bd53-a856badf2b15",
+            "attributes": [],
+            "type": "official homepage",
+            "attribute-ids": {},
+            "target-type": "url",
+            "source-credit": "",
+            "end": null,
+            "attribute-values": {}
+        },
+        {
+            "ended": false,
+            "type-id": "d94fb61c-fa20-4e3c-a19a-71a949fb2c55",
+            "attributes": [],
+            "type": "other databases",
+            "direction": "forward",
+            "target-credit": "",
+            "url": {
+                "resource": "http://id.loc.gov/authorities/names/n93040214",
+                "id": "40495b26-266a-4824-800b-790a03567abd"
+            },
+            "begin": null,
+            "target-type": "url",
+            "source-credit": "",
+            "attribute-ids": {},
+            "end": null,
+            "attribute-values": {}
+        },
+        {
+            "target-type": "url",
+            "source-credit": "",
+            "attribute-ids": {},
+            "attribute-values": {},
+            "end": null,
+            "ended": false,
+            "attributes": [],
+            "type": "other databases",
+            "type-id": "d94fb61c-fa20-4e3c-a19a-71a949fb2c55",
+            "target-credit": "",
+            "url": {
+                "id": "15d93077-8e7f-40ad-9333-8272ab18f39a",
+                "resource": "https://catalogue.bnf.fr/ark:/12148/cb13903165q"
+            },
+            "begin": null,
+            "direction": "forward"
+        },
+        {
+            "attribute-ids": {},
+            "target-type": "url",
+            "source-credit": "",
+            "attribute-values": {},
+            "end": null,
+            "ended": false,
+            "url": {
+                "id": "1c79e1ad-bea9-4eb0-ac6c-c537c938e92d",
+                "resource": "https://d-nb.info/gnd/2106802-1"
+            },
+            "target-credit": "",
+            "begin": null,
+            "direction": "forward",
+            "attributes": [],
+            "type": "other databases",
+            "type-id": "d94fb61c-fa20-4e3c-a19a-71a949fb2c55"
+        },
+        {
+            "ended": false,
+            "attributes": [],
+            "type": "other databases",
+            "type-id": "d94fb61c-fa20-4e3c-a19a-71a949fb2c55",
+            "target-credit": "",
+            "url": {
+                "id": "0e082835-96bf-45e5-8688-e695b60a8d54",
+                "resource": "https://id.oclc.org/worldcat/entity/E39QQPVp7Y3MTXXY8qbCdhCY7R"
+            },
+            "begin": null,
+            "direction": "forward",
+            "target-type": "url",
+            "source-credit": "",
+            "attribute-ids": {},
+            "attribute-values": {},
+            "end": null
+        },
+        {
+            "source-credit": "",
+            "target-type": "url",
+            "attribute-ids": {},
+            "attribute-values": {},
+            "end": null,
+            "ended": false,
+            "type": "other databases",
+            "attributes": [],
+            "type-id": "d94fb61c-fa20-4e3c-a19a-71a949fb2c55",
+            "begin": null,
+            "target-credit": "",
+            "url": {
+                "resource": "https://imvdb.com/n/einst%C3%BCrzende-neubauten",
+                "id": "5bbbb513-afe6-47a5-a895-1ed06d015736"
+            },
+            "direction": "forward"
+        },
+        {
+            "attribute-ids": {},
+            "source-credit": "",
+            "target-type": "url",
+            "end": null,
+            "attribute-values": {},
+            "ended": false,
+            "direction": "forward",
+            "begin": null,
+            "target-credit": "",
+            "url": {
+                "resource": "https://rateyourmusic.com/artist/einsturzende_neubauten",
+                "id": "7b2f5ab0-eb1a-47ac-b124-a29fd21b7ce5"
+            },
+            "type-id": "d94fb61c-fa20-4e3c-a19a-71a949fb2c55",
+            "type": "other databases",
+            "attributes": []
+        },
+        {
+            "end": null,
+            "attribute-values": {},
+            "attribute-ids": {},
+            "target-type": "url",
+            "source-credit": "",
+            "direction": "forward",
+            "url": {
+                "id": "c010e408-89de-47ac-9cef-2f58b3b4d9af",
+                "resource": "https://www.musik-sammler.de/artist/einst%C3%BCrzende-neubauten/"
+            },
+            "target-credit": "",
+            "begin": null,
+            "type-id": "d94fb61c-fa20-4e3c-a19a-71a949fb2c55",
+            "attributes": [],
+            "type": "other databases",
+            "ended": false
+        },
+        {
+            "attribute-ids": {},
+            "target-type": "url",
+            "source-credit": "",
+            "end": null,
+            "attribute-values": {},
+            "ended": false,
+            "direction": "forward",
+            "target-credit": "",
+            "url": {
+                "resource": "https://www.spirit-of-rock.com/en/band/Einsturzende_Neubauten",
+                "id": "858d908c-27ea-4d9e-a223-f980aaba731a"
+            },
+            "begin": null,
+            "type-id": "d94fb61c-fa20-4e3c-a19a-71a949fb2c55",
+            "attributes": [],
+            "type": "other databases"
+        },
+        {
+            "end": null,
+            "attribute-values": {},
+            "target-type": "url",
+            "source-credit": "",
+            "attribute-ids": {},
+            "type-id": "d94fb61c-fa20-4e3c-a19a-71a949fb2c55",
+            "attributes": [],
+            "type": "other databases",
+            "direction": "forward",
+            "url": {
+                "resource": "https://www.whosampled.com/Einst%C3%BCrzende-Neubauten/",
+                "id": "bf93d321-feff-4c05-915d-e9b9a9458b0c"
+            },
+            "target-credit": "",
+            "begin": null,
+            "ended": false
+        },
+        {
+            "end": null,
+            "attribute-values": {},
+            "source-credit": "",
+            "target-type": "url",
+            "attribute-ids": {},
+            "type-id": "6f77d54e-1d81-4e1a-9ea5-37947577151b",
+            "type": "patronage",
+            "attributes": [],
+            "direction": "forward",
+            "begin": null,
+            "target-credit": "",
+            "url": {
+                "resource": "https://www.patreon.com/neubauten",
+                "id": "c27bdd51-9e55-4350-b19b-7010c7baed77"
+            },
+            "ended": false
+        },
+        {
+            "direction": "forward",
+            "begin": null,
+            "target-credit": "",
+            "url": {
+                "id": "291c5f04-3adc-44ce-975f-025187a7667e",
+                "resource": "https://itunes.apple.com/us/artist/id3716338"
+            },
+            "type-id": "f8319a2f-f824-4617-81c8-be6560b3b203",
+            "type": "purchase for download",
+            "attributes": [],
+            "ended": false,
+            "end": null,
+            "attribute-values": {},
+            "attribute-ids": {},
+            "source-credit": "",
+            "target-type": "url"
+        },
+        {
+            "target-type": "url",
+            "source-credit": "",
+            "attribute-ids": {},
+            "end": null,
+            "attribute-values": {},
+            "ended": false,
+            "type-id": "f8319a2f-f824-4617-81c8-be6560b3b203",
+            "attributes": [],
+            "type": "purchase for download",
+            "direction": "forward",
+            "url": {
+                "id": "536c260b-4ae4-448a-babe-2d93b1fcea5f",
+                "resource": "https://music.apple.com/de/artist/3716338"
+            },
+            "target-credit": "",
+            "begin": null
+        },
+        {
+            "source-credit": "",
+            "target-type": "url",
+            "attribute-ids": {},
+            "end": null,
+            "attribute-values": {},
+            "ended": false,
+            "type-id": "f8319a2f-f824-4617-81c8-be6560b3b203",
+            "type": "purchase for download",
+            "attributes": [],
+            "direction": "forward",
+            "begin": null,
+            "target-credit": "",
+            "url": {
+                "id": "29e3276c-df58-4409-9dfd-c1de998eb12c",
+                "resource": "https://www.qobuz.com/us-en/interpreter/einsturzende-neubauten/239966"
+            }
+        },
+        {
+            "source-credit": "",
+            "target-type": "url",
+            "attribute-ids": {},
+            "attribute-values": {},
+            "end": null,
+            "ended": false,
+            "type": "secondhandsongs",
+            "attributes": [],
+            "type-id": "79c5b84d-a206-4f4c-9832-78c028c312c3",
+            "begin": null,
+            "url": {
+                "resource": "https://secondhandsongs.com/artist/2545",
+                "id": "b8ba052a-24d4-427c-8daa-da49f61e381c"
+            },
+            "target-credit": "",
+            "direction": "forward"
+        },
+        {
+            "target-type": "url",
+            "source-credit": "",
+            "attribute-ids": {},
+            "attribute-values": {},
+            "end": null,
+            "ended": false,
+            "attributes": [],
+            "type": "setlistfm",
+            "type-id": "bf5d0d5e-27a1-4e94-9df7-3cdc67b3b207",
+            "target-credit": "",
+            "url": {
+                "resource": "https://www.setlist.fm/setlists/einsturzende-neubauten-23d6a807.html",
+                "id": "0fef2dc5-7a48-4319-8c5d-4268b4b0d1d0"
+            },
+            "begin": null,
+            "direction": "forward"
+        },
+        {
+            "end": "2019-04",
+            "attribute-values": {},
+            "source-credit": "",
+            "target-type": "url",
+            "attribute-ids": {},
+            "type-id": "99429741-f3f6-484b-84f8-23af51991770",
+            "type": "social network",
+            "attributes": [],
+            "direction": "forward",
+            "begin": null,
+            "url": {
+                "resource": "https://plus.google.com/b/114058432390773291637/114399517309668649987",
+                "id": "6e24651a-c229-4b9d-bbaa-4e5abb7e20ed"
+            },
+            "target-credit": "",
+            "ended": true
+        },
+        {
+            "attribute-values": {},
+            "end": null,
+            "source-credit": "",
+            "target-type": "url",
+            "attribute-ids": {},
+            "type": "social network",
+            "attributes": [],
+            "type-id": "99429741-f3f6-484b-84f8-23af51991770",
+            "begin": null,
+            "url": {
+                "resource": "https://twitter.com/neubautenorg",
+                "id": "83fe2152-f995-4fde-ab3c-dcd418026b05"
+            },
+            "target-credit": "",
+            "direction": "forward",
+            "ended": false
+        },
+        {
+            "ended": false,
+            "type-id": "99429741-f3f6-484b-84f8-23af51991770",
+            "type": "social network",
+            "attributes": [],
+            "direction": "forward",
+            "begin": null,
+            "target-credit": "",
+            "url": {
+                "id": "a62fae6b-a3e2-4715-8f9c-940d6b511586",
+                "resource": "https://www.facebook.com/EinstuerzendeNeubauten"
+            },
+            "source-credit": "",
+            "target-type": "url",
+            "attribute-ids": {},
+            "end": null,
+            "attribute-values": {}
+        },
+        {
+            "target-type": "url",
+            "source-credit": "",
+            "attribute-ids": {},
+            "end": null,
+            "attribute-values": {},
+            "ended": false,
+            "type-id": "99429741-f3f6-484b-84f8-23af51991770",
+            "attributes": [],
+            "type": "social network",
+            "direction": "forward",
+            "target-credit": "",
+            "url": {
+                "id": "87d597e0-80b7-4ec7-bc9f-97bffacb4e17",
+                "resource": "https://www.instagram.com/neubautenorg/"
+            },
+            "begin": null
+        },
+        {
+            "target-type": "url",
+            "source-credit": "",
+            "attribute-ids": {},
+            "end": null,
+            "attribute-values": {},
+            "ended": false,
+            "type-id": "aac9c4bc-a5b9-30b8-9839-e3ac314c6e58",
+            "attributes": [],
+            "type": "songkick",
+            "direction": "forward",
+            "url": {
+                "resource": "https://www.songkick.com/artists/171328",
+                "id": "a4e9e7ef-5b79-42a2-85a1-25b2c9e0f29c"
+            },
+            "target-credit": "",
+            "begin": null
+        },
+        {
+            "direction": "forward",
+            "url": {
+                "id": "c4cc9ab5-e809-479c-917c-a5508366adfc",
+                "resource": "https://soundcloud.com/einsturzende-neubauten"
+            },
+            "target-credit": "",
+            "begin": null,
+            "type-id": "89e4a949-0976-440d-bda1-5f772c1e5710",
+            "attributes": [],
+            "type": "soundcloud",
+            "ended": false,
+            "end": null,
+            "attribute-values": {},
+            "attribute-ids": {},
+            "target-type": "url",
+            "source-credit": ""
+        },
+        {
+            "ended": false,
+            "type-id": "63cc5d1f-f096-4c94-a43f-ecb32ea94161",
+            "type": "streaming",
+            "attributes": [],
+            "direction": "forward",
+            "begin": null,
+            "target-credit": "",
+            "url": {
+                "id": "536c260b-4ae4-448a-babe-2d93b1fcea5f",
+                "resource": "https://music.apple.com/de/artist/3716338"
+            },
+            "source-credit": "",
+            "target-type": "url",
+            "attribute-ids": {},
+            "end": null,
+            "attribute-values": {}
+        },
+        {
+            "source-credit": "",
+            "target-type": "url",
+            "attribute-ids": {},
+            "attribute-values": {},
+            "end": null,
+            "ended": false,
+            "type": "streaming",
+            "attributes": [],
+            "type-id": "63cc5d1f-f096-4c94-a43f-ecb32ea94161",
+            "begin": null,
+            "url": {
+                "id": "639bf699-136f-4068-9770-d48c99e7adf3",
+                "resource": "https://tidal.com/artist/3545413"
+            },
+            "target-credit": "",
+            "direction": "forward"
+        },
+        {
+            "attribute-ids": {},
+            "source-credit": "",
+            "target-type": "url",
+            "end": null,
+            "attribute-values": {},
+            "ended": false,
+            "direction": "forward",
+            "begin": null,
+            "url": {
+                "id": "29e3276c-df58-4409-9dfd-c1de998eb12c",
+                "resource": "https://www.qobuz.com/us-en/interpreter/einsturzende-neubauten/239966"
+            },
+            "target-credit": "",
+            "type-id": "63cc5d1f-f096-4c94-a43f-ecb32ea94161",
+            "type": "streaming",
+            "attributes": []
+        },
+        {
+            "target-type": "url",
+            "source-credit": "",
+            "attribute-ids": {},
+            "attribute-values": {},
+            "end": null,
+            "ended": false,
+            "attributes": [],
+            "type": "VIAF",
+            "type-id": "e8571dcc-35d4-4e91-a577-a3382fd84460",
+            "target-credit": "",
+            "url": {
+                "id": "ce384ecf-e184-4225-8da1-52979950d87b",
+                "resource": "http://viaf.org/viaf/137330981"
+            },
+            "begin": null,
+            "direction": "forward"
+        },
+        {
+            "attributes": [],
+            "type": "wikidata",
+            "type-id": "689870a4-a1e4-4912-b17f-7b2664215698",
+            "target-credit": "",
+            "url": {
+                "id": "9285488d-f621-42fe-b4f4-96aa1458b91f",
+                "resource": "https://www.wikidata.org/wiki/Q11898"
+            },
+            "begin": null,
+            "direction": "forward",
+            "ended": false,
+            "attribute-values": {},
+            "end": null,
+            "target-type": "url",
+            "source-credit": "",
+            "attribute-ids": {}
+        },
+        {
+            "attribute-ids": {},
+            "target-type": "url",
+            "source-credit": "",
+            "attribute-values": {},
+            "end": null,
+            "ended": false,
+            "url": {
+                "id": "5807dc95-b067-435e-aaf3-0c715dc75c36",
+                "resource": "https://www.youtube.com/channel/UCv2vygC5_E7HEbWoWYwNkIg"
+            },
+            "target-credit": "",
+            "begin": null,
+            "direction": "forward",
+            "attributes": [],
+            "type": "youtube",
+            "type-id": "6a540e5b-58c6-4192-b6ba-dbc71ec8fcf0"
+        },
+        {
+            "ended": false,
+            "direction": "forward",
+            "target-credit": "",
+            "url": {
+                "resource": "https://music.youtube.com/channel/UC7dNbCq4nwEQhGOYx7LWLEw",
+                "id": "0d1bdec3-cd54-4e5d-84ee-4a0ae47462c9"
+            },
+            "begin": null,
+            "type-id": "631712a0-7525-42ba-b7a3-605aa7a238c4",
+            "attributes": [],
+            "type": "youtube music",
+            "attribute-ids": {},
+            "target-type": "url",
+            "source-credit": "",
+            "end": null,
+            "attribute-values": {}
+        }
+    ],
+    "area": {
+        "type": null,
+        "sort-name": "Germany",
+        "iso-3166-1-codes": [
+            "DE"
+        ],
+        "type-id": null,
+        "disambiguation": "",
+        "name": "Germany",
+        "id": "85752fda-13c4-31a3-bee5-0e5cb1f51dad"
+    },
+    "country": "DE",
+    "life-span": {
+        "ended": false,
+        "end": null,
+        "begin": "1980-04-01"
+    },
+    "id": "6e9ac29b-798c-4af7-8d9e-55cdc72a999c",
+    "ipis": [],
+    "end-area": null,
+    "name": "Einst\u00fcrzende Neubauten",
+    "isnis": [
+        "0000000122910804"
+    ]
+}

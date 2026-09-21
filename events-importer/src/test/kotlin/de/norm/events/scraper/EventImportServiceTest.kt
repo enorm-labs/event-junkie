@@ -99,6 +99,7 @@ class EventImportServiceTest {
 
     /** The MusicBrainz sweep runs after the transaction too, and reaches the network in production (#1567). */
     private val musicBrainzLookupService: MusicBrainzLookupService = mockk(relaxed = true)
+    private val musicBrainzEnrichmentService: MusicBrainzEnrichmentService = mockk(relaxed = true)
 
     /**
      * Stubbed: the cache would reach the network for a `robots.txt`. [RobotsRulesCacheTest] covers it.
@@ -192,6 +193,7 @@ class EventImportServiceTest {
                 fieldCoverageService = fieldCoverageService,
                 descriptionTranslationService = descriptionTranslationService,
                 musicBrainzLookupService = musicBrainzLookupService,
+                musicBrainzEnrichmentService = musicBrainzEnrichmentService,
                 robotsRulesCache = robotsRulesCache,
                 maxConcurrency = EventImportService.DEFAULT_MAX_CONCURRENCY
             )
@@ -326,6 +328,7 @@ class EventImportServiceTest {
                         fieldCoverageService = fieldCoverageService,
                         descriptionTranslationService = descriptionTranslationService,
                         musicBrainzLookupService = musicBrainzLookupService,
+                        musicBrainzEnrichmentService = musicBrainzEnrichmentService,
                         robotsRulesCache = robotsRulesCache,
                         maxConcurrency = EventImportService.DEFAULT_MAX_CONCURRENCY
                     )
@@ -464,6 +467,21 @@ class EventImportServiceTest {
 
                 result.imported shouldBe true
                 coVerify { musicBrainzLookupService.lookupFor(match { it.slug == src.slug }, any()) }
+                // The enrichment still runs; the lookup's failure is its own.
+                coVerify { musicBrainzEnrichmentService.enrichFor(match { it.slug == src.slug }, any()) }
+                coVerify { eventSourceRepository.save(match { it.status == ImportStatus.SUCCESS.name }) }
+            }
+
+        @Test
+        fun `an enrichment that throws leaves the source SUCCESS too`() =
+            runTest {
+                val src = source()
+                coEvery { cassiopeiaImporter.importEvents(any(), any(), any()) } returns
+                    ImportResult.Success(events = listOf(scrapedEvent()), etag = null, lastModified = null)
+                coEvery { musicBrainzEnrichmentService.enrichFor(any(), any()) } throws IllegalStateException("boom")
+
+                service.importFromSource(src).imported shouldBe true
+
                 coVerify { eventSourceRepository.save(match { it.status == ImportStatus.SUCCESS.name }) }
             }
 
@@ -479,6 +497,7 @@ class EventImportServiceTest {
                 coVerifyOrder {
                     eventSourceRepository.save(match { it.status == ImportStatus.SUCCESS.name })
                     musicBrainzLookupService.lookupFor(match { it.slug == src.slug }, any())
+                    musicBrainzEnrichmentService.enrichFor(match { it.slug == src.slug }, any())
                 }
             }
     }
@@ -1255,6 +1274,7 @@ class EventImportServiceTest {
                         fieldCoverageService = fieldCoverageService,
                         descriptionTranslationService = descriptionTranslationService,
                         musicBrainzLookupService = musicBrainzLookupService,
+                        musicBrainzEnrichmentService = musicBrainzEnrichmentService,
                         robotsRulesCache = robotsRulesCache,
                         maxConcurrency = maxConcurrency
                     )

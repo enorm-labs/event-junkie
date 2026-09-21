@@ -25,7 +25,9 @@ data class MusicBrainzProperties(
     /** How many times one request is retried after a 503 before the row is given up on. */
     val retries: Int = DEFAULT_RETRIES,
     /** How many rows one sweep looks up at most — the backfill's slice, ~9 minutes at the polite pace. */
-    val maxPerRun: Int = DEFAULT_MAX_PER_RUN
+    val maxPerRun: Int = DEFAULT_MAX_PER_RUN,
+    /** How many EXACT rows one sweep reads the entity of at most (step C): one request here and up to two at Wikimedia per row. */
+    val enrichMaxPerRun: Int = DEFAULT_ENRICH_MAX_PER_RUN
 ) {
     companion object {
         private const val DEFAULT_POLITE_DELAY_MILLIS = 1_100L
@@ -33,5 +35,6 @@ data class MusicBrainzProperties(
         private const val DEFAULT_BACKOFF_SECONDS = 5L
         private const val DEFAULT_RETRIES = 3
         private const val DEFAULT_MAX_PER_RUN = 500
+        private const val DEFAULT_ENRICH_MAX_PER_RUN = 100
     }
 }

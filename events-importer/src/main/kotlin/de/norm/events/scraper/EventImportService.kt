@@ -46,6 +46,7 @@ class EventImportService(
     /** Fills in the missing language, for the sources whose grant allows it (ADR-026, #470). */
     private val descriptionTranslationService: DescriptionTranslationService,
     private val musicBrainzLookupService: MusicBrainzLookupService,
+    private val musicBrainzEnrichmentService: MusicBrainzEnrichmentService,
     /**
      * The `robots.txt` rules behind [RobotsTxtFilter], read again to record what they said about
      * this source's entry URL (#790). A map read, not a fetch: the filter has already read the file.
@@ -312,7 +313,8 @@ class EventImportService(
      * The MusicBrainz pass, after `markSuccess` (#1604): the slowest thing a run does, one request a
      * second over the billed artists and a slice of the backfill (ADR-031), nine minutes for a full
      * slice and five more per 503, and a source `RUNNING` that long is one bad slice from
-     * `app.scheduling.staleness-timeout` reaping it. Guarded like the translation pass.
+     * `app.scheduling.staleness-timeout` reaping it. Guarded like the translation pass. The
+     * enrichment follows the lookup, so a verdict reached in this run is read in this run.
      */
     private suspend fun afterSuccess(
         source: EventSourceEntity,
@@ -320,6 +322,8 @@ class EventImportService(
     ) {
         runCatching { musicBrainzLookupService.lookupFor(source, upsert.touchedArtistIds) }
             .onFailure { logger.warn(it) { "MusicBrainz pass failed for '${source.slug}'" } }
+        runCatching { musicBrainzEnrichmentService.enrichFor(source, upsert.touchedArtistIds) }
+            .onFailure { logger.warn(it) { "MusicBrainz enrichment failed for '${source.slug}'" } }
     }
 
     /**

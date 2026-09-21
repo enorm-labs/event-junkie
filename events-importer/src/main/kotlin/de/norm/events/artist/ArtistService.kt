@@ -69,7 +69,13 @@ class ArtistService(
                 websiteUrl = request.websiteUrl,
                 facebookUrl = request.facebookUrl,
                 instagramUrl = request.instagramUrl,
-                youtubeUrl = request.youtubeUrl
+                youtubeUrl = request.youtubeUrl,
+                bandcampUrl = request.bandcampUrl,
+                soundcloudUrl = request.soundcloudUrl,
+                discogsUrl = request.discogsUrl,
+                wikidataUrl = request.wikidataUrl,
+                residentAdvisorUrl = request.residentAdvisorUrl,
+                spotifyUrl = request.spotifyUrl
             )
         val entity = ArtistEntity.fromDomain(artist)
         val saved = artistRepository.save(entity)
@@ -109,7 +115,13 @@ class ArtistService(
                 websiteUrl = request.websiteUrl,
                 facebookUrl = request.facebookUrl,
                 instagramUrl = request.instagramUrl,
-                youtubeUrl = request.youtubeUrl
+                youtubeUrl = request.youtubeUrl,
+                bandcampUrl = request.bandcampUrl,
+                soundcloudUrl = request.soundcloudUrl,
+                discogsUrl = request.discogsUrl,
+                wikidataUrl = request.wikidataUrl,
+                residentAdvisorUrl = request.residentAdvisorUrl,
+                spotifyUrl = request.spotifyUrl
             )
         val saved = artistRepository.save(updated)
         logger.info { "Updated artist '${saved.name}' (id=${saved.id})" }

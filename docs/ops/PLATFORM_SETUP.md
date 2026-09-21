@@ -764,6 +764,9 @@ Free from the framework: JVM memory and GC, HTTP server request rate/latency/sta
 | `images.derivatives{outcome}`                  | Counter                               | written / refused, counted in files rather than images                             |
 | `importer.musicbrainz.lookups{state}`          | Counter                               | exact / ambiguous / none / error — the ADR-031 shares, and the rows given up on    |
 | `importer.musicbrainz.unchecked`               | Gauge                                 | Artist rows still owed a verdict. Drains after the columns land; then a flat zero  |
+| `importer.musicbrainz.enriched{field}`         | Counter                               | Fields step C filled from an `EXACT` entity: website … image; `error`, read failed |
+| `importer.musicbrainz.image_refused{reason}`   | Counter                               | A Commons picture not stored: licence / author / source / mime / size              |
+| `importer.musicbrainz.unenriched`              | Gauge                                 | `EXACT` rows still owed their entity read. Drains 100 per import; then a flat zero |
 | `images.sweep.candidates{kind}`                | Gauge                                 | What the last sweep would delete, whether or not it may. rows / strays             |
 | `images.sweep.deleted{kind}`                   | Counter                               | What it removed. Moves only while `app.images.sweep.enabled` is on                 |
 | `bff.images.served{outcome}`                   | Counter                               | found / unknown / missing / unavailable — two 404s that mean opposite things       |

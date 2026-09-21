@@ -23,6 +23,8 @@ app:
   # service a fake client and the integration tests never want the network.
   musicbrainz:
     enabled: false
+  wikimedia:
+    enabled: false
   metrics:
     refresh-interval-ms: 3600000
   images:

@@ -16,6 +16,6 @@ import org.springframework.modulith.ApplicationModule
  * - `licence` — the per-source licence vocabulary the admin API accepts (#283)
  */
 @ApplicationModule(
-    allowedDependencies = ["event", "venue", "artist", "promoter", "genretag", "slug", "licence", "translation", "musicbrainz", "common"]
+    allowedDependencies = ["event", "venue", "artist", "promoter", "genretag", "slug", "licence", "translation", "musicbrainz", "wikimedia", "common"]
 )
 class ScraperModule

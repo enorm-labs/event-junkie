@@ -373,9 +373,98 @@
           "layout": {
             "x": 0,
             "y": 28,
-            "w": 192,
+            "w": 96,
             "h": 12,
             "i": 8
+          }
+        },
+        {
+          "id": "p_musicbrainz_enriched",
+          "type": "line",
+          "title": "EXACT artists awaiting their entity read, and fields filled per hour",
+          "description": "Step C of ADR-031 (#1568): an `EXACT` row's MusicBrainz entity is read once for its links, its type and, through Wikidata, its Commons picture, and only an empty column is filled. The gauge is that backlog, drained 100 per import; the rates say what the reads bring \u2014 `image` is the one to watch, and `error` is MusicBrainz or Wikimedia not answering. A picture Commons offers under a licence or a credit the importer does not accept is counted in `importer_musicbrainz_image_refused_total`, by reason.",
+          "config": {
+            "show_legends": true,
+            "decimals": 0
+          },
+          "queryType": "promql",
+          "queries": [
+            {
+              "query": "max(importer_musicbrainz_unenriched)",
+              "vrlFunctionQuery": null,
+              "customQuery": true,
+              "fields": {
+                "stream": "",
+                "stream_type": "metrics",
+                "x": [],
+                "y": [],
+                "z": [],
+                "breakdown": [],
+                "filter": {
+                  "filterType": "group",
+                  "logicalOperator": "AND",
+                  "conditions": []
+                }
+              },
+              "config": {
+                "promql_legend": "",
+                "layer_type": "scatter",
+                "weight_fixed": 1
+              }
+            },
+            {
+              "query": "sum by (field) (rate(importer_musicbrainz_enriched_total[1h])) * 3600",
+              "vrlFunctionQuery": null,
+              "customQuery": true,
+              "fields": {
+                "stream": "",
+                "stream_type": "metrics",
+                "x": [],
+                "y": [],
+                "z": [],
+                "breakdown": [],
+                "filter": {
+                  "filterType": "group",
+                  "logicalOperator": "AND",
+                  "conditions": []
+                }
+              },
+              "config": {
+                "promql_legend": "",
+                "layer_type": "scatter",
+                "weight_fixed": 1
+              }
+            },
+            {
+              "query": "sum by (reason) (rate(importer_musicbrainz_image_refused_total[1h])) * 3600",
+              "vrlFunctionQuery": null,
+              "customQuery": true,
+              "fields": {
+                "stream": "",
+                "stream_type": "metrics",
+                "x": [],
+                "y": [],
+                "z": [],
+                "breakdown": [],
+                "filter": {
+                  "filterType": "group",
+                  "logicalOperator": "AND",
+                  "conditions": []
+                }
+              },
+              "config": {
+                "promql_legend": "",
+                "layer_type": "scatter",
+                "weight_fixed": 1
+              }
+            }
+          ],
+          "layout": {
+            "x": 96,
+            "y": 28,
+            "w": 96,
+            "h": 12,
+            "i": 9
           }
         },
         {
@@ -441,7 +530,7 @@
             "y": 40,
             "w": 192,
             "h": 12,
-            "i": 9
+            "i": 10
           }
         },
         {
@@ -485,7 +574,7 @@
             "y": 52,
             "w": 48,
             "h": 16,
-            "i": 10
+            "i": 11
           }
         },
         {
@@ -551,7 +640,7 @@
             "y": 52,
             "w": 48,
             "h": 16,
-            "i": 11
+            "i": 12
           }
         },
         {
@@ -595,7 +684,7 @@
             "y": 52,
             "w": 48,
             "h": 16,
-            "i": 12
+            "i": 13
           }
         },
         {
@@ -639,7 +728,7 @@
             "y": 52,
             "w": 48,
             "h": 16,
-            "i": 13
+            "i": 14
           }
         },
         {
@@ -705,7 +794,7 @@
             "y": 68,
             "w": 96,
             "h": 16,
-            "i": 14
+            "i": 15
           }
         },
         {
@@ -749,7 +838,7 @@
             "y": 68,
             "w": 96,
             "h": 16,
-            "i": 15
+            "i": 16
           }
         },
         {
@@ -806,7 +895,7 @@
             "y": 84,
             "w": 112,
             "h": 16,
-            "i": 16
+            "i": 17
           }
         },
         {
@@ -869,7 +958,7 @@
             "y": 84,
             "w": 80,
             "h": 16,
-            "i": 17
+            "i": 18
           }
         }
       ]

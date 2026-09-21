@@ -35,12 +35,34 @@ data class ArtistResponse(
     val instagramUrl: String?,
     @Schema(description = "URL of the artist's YouTube channel", example = "https://www.youtube.com/@theadictsofficial")
     val youtubeUrl: String?,
+    @Schema(description = "URL of the artist's Bandcamp page", example = "https://theadicts.bandcamp.com/")
+    val bandcampUrl: String?,
+    @Schema(description = "URL of the artist's SoundCloud profile", example = "https://soundcloud.com/theadicts")
+    val soundcloudUrl: String?,
+    @Schema(description = "URL of the artist's Discogs page", example = "https://www.discogs.com/artist/252143")
+    val discogsUrl: String?,
+    @Schema(description = "URL of the artist's Wikidata item", example = "https://www.wikidata.org/wiki/Q1414437")
+    val wikidataUrl: String?,
+    @Schema(description = "URL of the artist's Resident Advisor page", example = "https://ra.co/dj/theadicts")
+    val residentAdvisorUrl: String?,
+    @Schema(description = "URL of the artist's Spotify page", example = "https://open.spotify.com/artist/5dqOB8KIVGgFxbELxDfJcz")
+    val spotifyUrl: String?,
+    @Schema(description = "What kind of act this is, as MusicBrainz types it; null until an EXACT match is read", example = "GROUP")
+    val artistType: ArtistType?,
+    @Schema(description = "When the act formed, MusicBrainz's partial date; ensembles only", example = "1975")
+    val founded: String?,
+    @Schema(description = "Where the act formed; ensembles only", example = "Ipswich")
+    val foundedIn: String?,
+    @Schema(description = "ISO 3166-1 code of the country the act is from", example = "GB")
+    val country: String?,
     @Schema(description = "MusicBrainz artist id (MBID), set exactly when `musicbrainzMatch` is `EXACT`", example = "3ec6ee6a-88e6-4e7b-8f3f-7a4b2d5c8a1e")
     val musicbrainzId: String?,
     @Schema(description = "What the MusicBrainz lookup decided about the name (ADR-031)", example = "EXACT")
     val musicbrainzMatch: MusicBrainzMatch,
     @Schema(description = "When that verdict was reached")
     val musicbrainzCheckedAt: Instant?,
+    @Schema(description = "When the enrichment last read the MusicBrainz entity (ADR-031, step C)")
+    val musicbrainzEnrichedAt: Instant?,
     @Schema(description = "Timestamp when this record was first created")
     val createdAt: Instant?,
     @Schema(description = "Timestamp when this record was last modified")
@@ -61,9 +83,20 @@ data class ArtistResponse(
                 facebookUrl = artist.facebookUrl,
                 instagramUrl = artist.instagramUrl,
                 youtubeUrl = artist.youtubeUrl,
+                bandcampUrl = artist.bandcampUrl,
+                soundcloudUrl = artist.soundcloudUrl,
+                discogsUrl = artist.discogsUrl,
+                wikidataUrl = artist.wikidataUrl,
+                residentAdvisorUrl = artist.residentAdvisorUrl,
+                spotifyUrl = artist.spotifyUrl,
+                artistType = artist.artistType,
+                founded = artist.founded,
+                foundedIn = artist.foundedIn,
+                country = artist.country,
                 musicbrainzId = artist.musicbrainzId,
                 musicbrainzMatch = artist.musicbrainzMatch,
                 musicbrainzCheckedAt = artist.musicbrainzCheckedAt,
+                musicbrainzEnrichedAt = artist.musicbrainzEnrichedAt,
                 createdAt = artist.createdAt,
                 updatedAt = artist.updatedAt
             )

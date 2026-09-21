@@ -1,0 +1,744 @@
+{
+    "relations": [
+        {
+            "target-type": "url",
+            "attribute-ids": {},
+            "attribute-values": {},
+            "target-credit": "",
+            "attributes": [],
+            "direction": "forward",
+            "begin": null,
+            "end": null,
+            "type": "allmusic",
+            "source-credit": "",
+            "type-id": "6b3e3c85-0002-4f34-aca6-80ace0d7e846",
+            "url": {
+                "id": "615ef532-5c1f-4e18-b95e-3e0671181220",
+                "resource": "https://www.allmusic.com/artist/mn0002472966"
+            },
+            "ended": false
+        },
+        {
+            "attribute-values": {},
+            "target-type": "url",
+            "attribute-ids": {},
+            "source-credit": "",
+            "ended": false,
+            "type-id": "c550166e-0548-4a18-b1d4-e2ae423a3e88",
+            "url": {
+                "id": "909fbeef-efeb-4c2a-b03c-0de52f3a66b5",
+                "resource": "https://annavonhausswolff.bandcamp.com/"
+            },
+            "type": "bandcamp",
+            "target-credit": "",
+            "attributes": [],
+            "direction": "forward",
+            "begin": null,
+            "end": null
+        },
+        {
+            "attribute-values": {},
+            "target-type": "url",
+            "attribute-ids": {},
+            "type": "bandcamp",
+            "source-credit": "",
+            "url": {
+                "resource": "https://annavonhausswolffmusic.bandcamp.com/",
+                "id": "fd4861a1-6401-4075-b303-cf636fb3e956"
+            },
+            "type-id": "c550166e-0548-4a18-b1d4-e2ae423a3e88",
+            "ended": true,
+            "direction": "forward",
+            "target-credit": "",
+            "attributes": [],
+            "end": null,
+            "begin": null
+        },
+        {
+            "type-id": "ea45ed3d-2d5e-456e-8c32-94b6f51426e2",
+            "source-credit": "",
+            "ended": false,
+            "url": {
+                "resource": "https://www.bandsintown.com/a/943376",
+                "id": "989b2ef5-89ae-4e9e-97de-d245d63a9589"
+            },
+            "type": "bandsintown",
+            "target-credit": "",
+            "attributes": [],
+            "direction": "forward",
+            "begin": null,
+            "end": null,
+            "attribute-values": {},
+            "target-type": "url",
+            "attribute-ids": {}
+        },
+        {
+            "direction": "forward",
+            "target-credit": "",
+            "attributes": [],
+            "end": null,
+            "begin": null,
+            "type-id": "04a5b104-a4c2-4bac-99a1-7b837c37d9e4",
+            "source-credit": "",
+            "ended": false,
+            "url": {
+                "resource": "https://www.discogs.com/artist/1724854",
+                "id": "fd1d0b34-ef76-47f2-8d4b-f492db81039b"
+            },
+            "type": "discogs",
+            "target-type": "url",
+            "attribute-ids": {},
+            "attribute-values": {}
+        },
+        {
+            "attribute-ids": {},
+            "target-type": "url",
+            "attribute-values": {},
+            "begin": null,
+            "end": null,
+            "target-credit": "",
+            "direction": "forward",
+            "attributes": [],
+            "type": "free streaming",
+            "source-credit": "",
+            "type-id": "769085a1-c2f7-4c24-a532-2375a77693bd",
+            "ended": false,
+            "url": {
+                "resource": "https://open.spotify.com/artist/1eiXrvua27VlWgZ9kiaIn6",
+                "id": "17e85f03-2ce7-4fe0-9157-8203918bd03c"
+            }
+        },
+        {
+            "target-credit": "",
+            "attributes": [],
+            "direction": "forward",
+            "end": null,
+            "begin": null,
+            "type-id": "769085a1-c2f7-4c24-a532-2375a77693bd",
+            "source-credit": "",
+            "ended": false,
+            "url": {
+                "resource": "https://www.deezer.com/artist/390950",
+                "id": "50d49c0b-3066-4670-8e40-2f6cee1ef0aa"
+            },
+            "type": "free streaming",
+            "target-type": "url",
+            "attribute-ids": {},
+            "attribute-values": {}
+        },
+        {
+            "attribute-values": {},
+            "attribute-ids": {},
+            "target-type": "url",
+            "type": "IMDb",
+            "source-credit": "",
+            "ended": false,
+            "url": {
+                "resource": "https://www.imdb.com/name/nm8955272/",
+                "id": "d7ca0340-fe71-4571-b23c-d3d40befb53a"
+            },
+            "type-id": "94c8b0cc-4477-4106-932c-da60e63de61c",
+            "begin": null,
+            "end": null,
+            "attributes": [],
+            "target-credit": "",
+            "direction": "forward"
+        },
+        {
+            "attribute-values": {},
+            "attribute-ids": {},
+            "target-type": "url",
+            "ended": false,
+            "source-credit": "",
+            "type-id": "08db8098-c0df-4b78-82c3-c8697b4bba7f",
+            "url": {
+                "id": "435dc565-a0a3-4cf6-9dbf-76b65a7f2596",
+                "resource": "https://www.last.fm/music/Anna+von+Hausswolff"
+            },
+            "type": "last.fm",
+            "begin": null,
+            "end": null,
+            "target-credit": "",
+            "direction": "forward",
+            "attributes": []
+        },
+        {
+            "begin": null,
+            "end": null,
+            "direction": "forward",
+            "target-credit": "",
+            "attributes": [],
+            "url": {
+                "resource": "https://genius.com/artists/Anna-von-hausswolff",
+                "id": "f4108b46-149f-43b5-a5b2-a69803009a29"
+            },
+            "source-credit": "",
+            "type-id": "e4d73442-3762-45a8-905c-401da65544ed",
+            "ended": false,
+            "type": "lyrics",
+            "attribute-ids": {},
+            "target-type": "url",
+            "attribute-values": {}
+        },
+        {
+            "ended": false,
+            "source-credit": "",
+            "type-id": "bac47923-ecde-4b59-822e-d08f0cd10156",
+            "url": {
+                "id": "876194e4-6d35-4443-9458-bdd2220a6a81",
+                "resource": "https://myspace.com/vonhausswolff"
+            },
+            "type": "myspace",
+            "target-credit": "",
+            "attributes": [],
+            "direction": "forward",
+            "end": null,
+            "begin": null,
+            "attribute-values": {},
+            "target-type": "url",
+            "attribute-ids": {}
+        },
+        {
+            "type": "official homepage",
+            "source-credit": "",
+            "url": {
+                "id": "9ee20c5d-2fe9-48af-8494-0e2b33155852",
+                "resource": "https://www.annavonhausswolff.com/"
+            },
+            "type-id": "fe33d22f-c3b0-4d68-bd53-a856badf2b15",
+            "ended": false,
+            "end": null,
+            "begin": null,
+            "direction": "forward",
+            "target-credit": "",
+            "attributes": [],
+            "attribute-values": {},
+            "attribute-ids": {},
+            "target-type": "url"
+        },
+        {
+            "target-credit": "",
+            "attributes": [],
+            "direction": "forward",
+            "end": null,
+            "begin": null,
+            "type-id": "d94fb61c-fa20-4e3c-a19a-71a949fb2c55",
+            "source-credit": "",
+            "url": {
+                "resource": "http://id.loc.gov/authorities/names/no2014129109",
+                "id": "7e3a3c44-ee91-4e8b-be9b-a04f3fb9cf7c"
+            },
+            "ended": false,
+            "type": "other databases",
+            "target-type": "url",
+            "attribute-ids": {},
+            "attribute-values": {}
+        },
+        {
+            "attribute-ids": {},
+            "target-type": "url",
+            "attribute-values": {},
+            "begin": null,
+            "end": null,
+            "target-credit": "",
+            "direction": "forward",
+            "attributes": [],
+            "type": "other databases",
+            "type-id": "d94fb61c-fa20-4e3c-a19a-71a949fb2c55",
+            "source-credit": "",
+            "url": {
+                "resource": "https://d-nb.info/gnd/1044495715",
+                "id": "50ce5348-0366-438c-b49a-29151dc51f4d"
+            },
+            "ended": false
+        },
+        {
+            "attribute-values": {},
+            "attribute-ids": {},
+            "target-type": "url",
+            "type-id": "d94fb61c-fa20-4e3c-a19a-71a949fb2c55",
+            "source-credit": "",
+            "ended": false,
+            "url": {
+                "resource": "https://id.oclc.org/worldcat/entity/E39PBJjxxhy7jhKq3fFrdQfTHC",
+                "id": "0c564d5d-f00e-4cc5-aa92-91b41db613bc"
+            },
+            "type": "other databases",
+            "begin": null,
+            "end": null,
+            "target-credit": "",
+            "direction": "forward",
+            "attributes": []
+        },
+        {
+            "end": null,
+            "begin": null,
+            "attributes": [],
+            "target-credit": "",
+            "direction": "forward",
+            "type": "other databases",
+            "source-credit": "",
+            "type-id": "d94fb61c-fa20-4e3c-a19a-71a949fb2c55",
+            "url": {
+                "resource": "https://rateyourmusic.com/artist/anna-von-hausswolff",
+                "id": "31d25521-59d8-496d-9242-3f5282d71c2b"
+            },
+            "ended": false,
+            "attribute-ids": {},
+            "target-type": "url",
+            "attribute-values": {}
+        },
+        {
+            "attribute-ids": {},
+            "target-type": "url",
+            "attribute-values": {},
+            "begin": null,
+            "end": null,
+            "attributes": [],
+            "target-credit": "",
+            "direction": "forward",
+            "type": "other databases",
+            "type-id": "d94fb61c-fa20-4e3c-a19a-71a949fb2c55",
+            "source-credit": "",
+            "url": {
+                "id": "f7a5c44a-e792-4b01-91e7-f8df87e7feda",
+                "resource": "https://www.musik-sammler.de/artist/anna-von-hausswolff/"
+            },
+            "ended": false
+        },
+        {
+            "end": null,
+            "begin": null,
+            "direction": "forward",
+            "target-credit": "",
+            "attributes": [],
+            "type": "other databases",
+            "url": {
+                "id": "84c6202f-0cc9-4eff-b5b3-1190e39c978f",
+                "resource": "https://www.progarchives.com/artist.asp?id=10351"
+            },
+            "source-credit": "",
+            "ended": false,
+            "type-id": "d94fb61c-fa20-4e3c-a19a-71a949fb2c55",
+            "attribute-ids": {},
+            "target-type": "url",
+            "attribute-values": {}
+        },
+        {
+            "attribute-values": {},
+            "attribute-ids": {},
+            "target-type": "url",
+            "type": "other databases",
+            "source-credit": "",
+            "url": {
+                "id": "ffb2c5bc-3dfa-4777-aa65-df16fd9b699e",
+                "resource": "https://www.spirit-of-rock.com/en/band/Anna_Von_Hausswolff"
+            },
+            "type-id": "d94fb61c-fa20-4e3c-a19a-71a949fb2c55",
+            "ended": false,
+            "end": null,
+            "begin": null,
+            "target-credit": "",
+            "direction": "forward",
+            "attributes": []
+        },
+        {
+            "attributes": [],
+            "target-credit": "",
+            "direction": "forward",
+            "end": null,
+            "begin": null,
+            "source-credit": "",
+            "ended": false,
+            "url": {
+                "resource": "https://itunes.apple.com/se/artist/id351852229",
+                "id": "04f28c06-6d1a-40ca-bccd-c06727564913"
+            },
+            "type-id": "f8319a2f-f824-4617-81c8-be6560b3b203",
+            "type": "purchase for download",
+            "target-type": "url",
+            "attribute-ids": {},
+            "attribute-values": {}
+        },
+        {
+            "attribute-values": {},
+            "attribute-ids": {},
+            "target-type": "url",
+            "type": "purchase for download",
+            "type-id": "f8319a2f-f824-4617-81c8-be6560b3b203",
+            "source-credit": "",
+            "ended": false,
+            "url": {
+                "id": "0e23b7f7-d4ee-418f-a22a-ec4c0da39cd6",
+                "resource": "https://music.apple.com/se/artist/351852229"
+            },
+            "end": null,
+            "begin": null,
+            "target-credit": "",
+            "direction": "forward",
+            "attributes": []
+        },
+        {
+            "target-credit": "",
+            "direction": "forward",
+            "attributes": [],
+            "end": null,
+            "begin": null,
+            "url": {
+                "id": "d51a1a10-ad0d-4b46-88d5-49e5d9843bf1",
+                "resource": "https://music.bugs.co.kr/artist/80078519"
+            },
+            "source-credit": "",
+            "type-id": "f8319a2f-f824-4617-81c8-be6560b3b203",
+            "ended": false,
+            "type": "purchase for download",
+            "target-type": "url",
+            "attribute-ids": {},
+            "attribute-values": {}
+        },
+        {
+            "source-credit": "",
+            "ended": false,
+            "type-id": "f8319a2f-f824-4617-81c8-be6560b3b203",
+            "url": {
+                "resource": "https://ototoy.jp/_/default/a/300575",
+                "id": "31709133-146a-4f8e-9553-ca011aac089b"
+            },
+            "type": "purchase for download",
+            "attributes": [],
+            "target-credit": "",
+            "direction": "forward",
+            "end": null,
+            "begin": null,
+            "attribute-values": {},
+            "target-type": "url",
+            "attribute-ids": {}
+        },
+        {
+            "attribute-ids": {},
+            "target-type": "url",
+            "attribute-values": {},
+            "end": null,
+            "begin": null,
+            "target-credit": "",
+            "direction": "forward",
+            "attributes": [],
+            "type-id": "f8319a2f-f824-4617-81c8-be6560b3b203",
+            "source-credit": "",
+            "url": {
+                "resource": "https://se.7digital.com/artist/anna-von-hausswolff",
+                "id": "4a5c44e1-f84c-4895-a2be-f20fe3060d51"
+            },
+            "ended": false,
+            "type": "purchase for download"
+        },
+        {
+            "type": "purchase for download",
+            "source-credit": "",
+            "ended": false,
+            "type-id": "f8319a2f-f824-4617-81c8-be6560b3b203",
+            "url": {
+                "resource": "https://www.melon.com/artist/detail.htm?artistId=497763",
+                "id": "cdb430d9-1eef-430b-a7c1-e75bd05e5b0a"
+            },
+            "begin": null,
+            "end": null,
+            "direction": "forward",
+            "target-credit": "",
+            "attributes": [],
+            "attribute-values": {},
+            "attribute-ids": {},
+            "target-type": "url"
+        },
+        {
+            "end": null,
+            "begin": null,
+            "direction": "forward",
+            "target-credit": "",
+            "attributes": [],
+            "type": "secondhandsongs",
+            "type-id": "79c5b84d-a206-4f4c-9832-78c028c312c3",
+            "source-credit": "",
+            "ended": false,
+            "url": {
+                "id": "a4e6d77a-e8de-4583-ba95-34ec713481dd",
+                "resource": "https://secondhandsongs.com/artist/80990"
+            },
+            "attribute-ids": {},
+            "target-type": "url",
+            "attribute-values": {}
+        },
+        {
+            "direction": "forward",
+            "target-credit": "",
+            "attributes": [],
+            "end": null,
+            "begin": null,
+            "type": "setlistfm",
+            "source-credit": "",
+            "ended": false,
+            "type-id": "bf5d0d5e-27a1-4e94-9df7-3cdc67b3b207",
+            "url": {
+                "resource": "https://www.setlist.fm/setlists/anna-von-hausswolff-3bd57040.html",
+                "id": "f3963d74-79e8-4300-acc2-77c5d12d08d1"
+            },
+            "target-type": "url",
+            "attribute-ids": {},
+            "attribute-values": {}
+        },
+        {
+            "attribute-values": {},
+            "target-type": "url",
+            "attribute-ids": {},
+            "type": "social network",
+            "source-credit": "",
+            "ended": false,
+            "type-id": "99429741-f3f6-484b-84f8-23af51991770",
+            "url": {
+                "id": "80c898f6-1f50-4bf6-b102-50cd0703220a",
+                "resource": "https://twitter.com/avonhausswolff"
+            },
+            "direction": "forward",
+            "target-credit": "",
+            "attributes": [],
+            "begin": null,
+            "end": null
+        },
+        {
+            "attribute-values": {},
+            "attribute-ids": {},
+            "target-type": "url",
+            "type": "social network",
+            "source-credit": "",
+            "ended": false,
+            "type-id": "99429741-f3f6-484b-84f8-23af51991770",
+            "url": {
+                "id": "6f262033-8ac4-493e-ac7e-6723da269b9f",
+                "resource": "https://www.facebook.com/annavonhausswolff"
+            },
+            "end": null,
+            "begin": null,
+            "direction": "forward",
+            "target-credit": "",
+            "attributes": []
+        },
+        {
+            "attribute-values": {},
+            "target-type": "url",
+            "attribute-ids": {},
+            "type-id": "99429741-f3f6-484b-84f8-23af51991770",
+            "source-credit": "",
+            "url": {
+                "resource": "https://www.instagram.com/annavonhausswolff/",
+                "id": "83560386-4c32-4b6d-b7bb-f7c102536b6d"
+            },
+            "ended": false,
+            "type": "social network",
+            "direction": "forward",
+            "target-credit": "",
+            "attributes": [],
+            "end": null,
+            "begin": null
+        },
+        {
+            "attribute-values": {},
+            "attribute-ids": {},
+            "target-type": "url",
+            "source-credit": "",
+            "ended": false,
+            "type-id": "aac9c4bc-a5b9-30b8-9839-e3ac314c6e58",
+            "url": {
+                "id": "8fb74624-6e13-4f1a-9304-30528e151472",
+                "resource": "https://www.songkick.com/artists/2795241"
+            },
+            "type": "songkick",
+            "end": null,
+            "begin": null,
+            "direction": "forward",
+            "target-credit": "",
+            "attributes": []
+        },
+        {
+            "attribute-values": {},
+            "target-type": "url",
+            "attribute-ids": {},
+            "source-credit": "",
+            "url": {
+                "resource": "https://music.apple.com/se/artist/351852229",
+                "id": "0e23b7f7-d4ee-418f-a22a-ec4c0da39cd6"
+            },
+            "type-id": "63cc5d1f-f096-4c94-a43f-ecb32ea94161",
+            "ended": false,
+            "type": "streaming",
+            "target-credit": "",
+            "attributes": [],
+            "direction": "forward",
+            "begin": null,
+            "end": null
+        },
+        {
+            "ended": false,
+            "source-credit": "",
+            "type-id": "63cc5d1f-f096-4c94-a43f-ecb32ea94161",
+            "url": {
+                "id": "d51a1a10-ad0d-4b46-88d5-49e5d9843bf1",
+                "resource": "https://music.bugs.co.kr/artist/80078519"
+            },
+            "type": "streaming",
+            "attributes": [],
+            "target-credit": "",
+            "direction": "forward",
+            "end": null,
+            "begin": null,
+            "attribute-values": {},
+            "target-type": "url",
+            "attribute-ids": {}
+        },
+        {
+            "direction": "forward",
+            "target-credit": "",
+            "attributes": [],
+            "begin": null,
+            "end": null,
+            "type": "streaming",
+            "url": {
+                "id": "b65bf58d-bd03-4a7f-80c9-9d7d4c6c65d0",
+                "resource": "https://tidal.com/artist/3664307"
+            },
+            "source-credit": "",
+            "type-id": "63cc5d1f-f096-4c94-a43f-ecb32ea94161",
+            "ended": false,
+            "target-type": "url",
+            "attribute-ids": {},
+            "attribute-values": {}
+        },
+        {
+            "target-credit": "",
+            "attributes": [],
+            "direction": "forward",
+            "begin": null,
+            "end": null,
+            "type": "streaming",
+            "ended": false,
+            "source-credit": "",
+            "type-id": "63cc5d1f-f096-4c94-a43f-ecb32ea94161",
+            "url": {
+                "resource": "https://www.melon.com/artist/detail.htm?artistId=497763",
+                "id": "cdb430d9-1eef-430b-a7c1-e75bd05e5b0a"
+            },
+            "target-type": "url",
+            "attribute-ids": {},
+            "attribute-values": {}
+        },
+        {
+            "end": null,
+            "begin": null,
+            "target-credit": "",
+            "direction": "forward",
+            "attributes": [],
+            "source-credit": "",
+            "type-id": "e8571dcc-35d4-4e91-a577-a3382fd84460",
+            "url": {
+                "resource": "http://viaf.org/viaf/305357345",
+                "id": "a8cf659a-ff1d-4053-a905-a16c8871528f"
+            },
+            "ended": false,
+            "type": "VIAF",
+            "attribute-ids": {},
+            "target-type": "url",
+            "attribute-values": {}
+        },
+        {
+            "source-credit": "",
+            "ended": false,
+            "type-id": "689870a4-a1e4-4912-b17f-7b2664215698",
+            "url": {
+                "id": "a0ecb0a6-d35f-49f2-9cde-71794b8d20f0",
+                "resource": "https://www.wikidata.org/wiki/Q3374548"
+            },
+            "type": "wikidata",
+            "attributes": [],
+            "target-credit": "",
+            "direction": "forward",
+            "end": null,
+            "begin": null,
+            "attribute-values": {},
+            "target-type": "url",
+            "attribute-ids": {}
+        },
+        {
+            "source-credit": "",
+            "ended": false,
+            "type-id": "6a540e5b-58c6-4192-b6ba-dbc71ec8fcf0",
+            "url": {
+                "id": "ae007a3d-30a5-4e16-b6f7-ca67018979bc",
+                "resource": "https://www.youtube.com/channel/UCzGfg7QwtVgx5bT7kVQ24UA"
+            },
+            "type": "youtube",
+            "attributes": [],
+            "target-credit": "",
+            "direction": "forward",
+            "end": null,
+            "begin": null,
+            "attribute-values": {},
+            "target-type": "url",
+            "attribute-ids": {}
+        },
+        {
+            "attribute-ids": {},
+            "target-type": "url",
+            "attribute-values": {},
+            "begin": null,
+            "end": null,
+            "target-credit": "",
+            "direction": "forward",
+            "attributes": [],
+            "source-credit": "",
+            "type-id": "631712a0-7525-42ba-b7a3-605aa7a238c4",
+            "url": {
+                "id": "b7b27963-09d3-4282-9899-d102a4da4331",
+                "resource": "https://music.youtube.com/channel/UC8Bo97y1WAkq6s1L07m8UPQ"
+            },
+            "ended": false,
+            "type": "youtube music"
+        }
+    ],
+    "type-id": "b6e035f4-3ce9-331c-97df-83397230b0df",
+    "life-span": {
+        "ended": false,
+        "end": null,
+        "begin": "1986-09-06"
+    },
+    "type": "Person",
+    "disambiguation": "Swedish singer\u2010songwriter",
+    "end-area": null,
+    "isnis": [
+        "0000000362173153"
+    ],
+    "name": "Anna von Hausswolff",
+    "id": "6bd920ac-3b7c-47e0-8f0f-c390f63f5112",
+    "begin-area": {
+        "name": "Gothenburg",
+        "id": "8f6c316e-9924-48ea-967b-16757dd82399",
+        "sort-name": "Gothenburg",
+        "type-id": null,
+        "disambiguation": "",
+        "type": null
+    },
+    "gender-id": "93452b5a-a947-30c8-934f-6a4056b151c2",
+    "sort-name": "Hausswolff, Anna von",
+    "country": "SE",
+    "ipis": [],
+    "gender": "Female",
+    "area": {
+        "type-id": null,
+        "sort-name": "Sweden",
+        "type": null,
+        "disambiguation": "",
+        "id": "23d10872-f5ae-3f0c-bf55-332788a16ecb",
+        "name": "Sweden",
+        "iso-3166-1-codes": [
+            "SE"
+        ]
+    }
+}
