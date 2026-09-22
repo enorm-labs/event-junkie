@@ -1321,25 +1321,25 @@
         },
         {
           "name": "@intlify/core-base",
-          "version": "11.4.10",
+          "version": "11.4.12",
           "url": "https://github.com/intlify/vue-i18n",
           "ecosystem": "frontend"
         },
         {
           "name": "@intlify/devtools-types",
-          "version": "11.4.10",
+          "version": "11.4.12",
           "url": "https://github.com/intlify/vue-i18n",
           "ecosystem": "frontend"
         },
         {
           "name": "@intlify/message-compiler",
-          "version": "11.4.10",
+          "version": "11.4.12",
           "url": "https://github.com/intlify/vue-i18n",
           "ecosystem": "frontend"
         },
         {
           "name": "@intlify/shared",
-          "version": "11.4.10",
+          "version": "11.4.12",
           "url": "https://github.com/intlify/vue-i18n",
           "ecosystem": "frontend"
         },
@@ -1399,25 +1399,25 @@
         },
         {
           "name": "@vue/compiler-core",
-          "version": "3.5.42",
+          "version": "3.5.43",
           "url": "https://github.com/vuejs/core",
           "ecosystem": "frontend"
         },
         {
           "name": "@vue/compiler-dom",
-          "version": "3.5.42",
+          "version": "3.5.43",
           "url": "https://github.com/vuejs/core",
           "ecosystem": "frontend"
         },
         {
           "name": "@vue/compiler-sfc",
-          "version": "3.5.42",
+          "version": "3.5.43",
           "url": "https://github.com/vuejs/core",
           "ecosystem": "frontend"
         },
         {
           "name": "@vue/compiler-ssr",
-          "version": "3.5.42",
+          "version": "3.5.43",
           "url": "https://github.com/vuejs/core",
           "ecosystem": "frontend"
         },
@@ -1447,31 +1447,31 @@
         },
         {
           "name": "@vue/reactivity",
-          "version": "3.5.42",
+          "version": "3.5.43",
           "url": "https://github.com/vuejs/core",
           "ecosystem": "frontend"
         },
         {
           "name": "@vue/runtime-core",
-          "version": "3.5.42",
+          "version": "3.5.43",
           "url": "https://github.com/vuejs/core",
           "ecosystem": "frontend"
         },
         {
           "name": "@vue/runtime-dom",
-          "version": "3.5.42",
+          "version": "3.5.43",
           "url": "https://github.com/vuejs/core",
           "ecosystem": "frontend"
         },
         {
           "name": "@vue/server-renderer",
-          "version": "3.5.42",
+          "version": "3.5.43",
           "url": "https://github.com/vuejs/core",
           "ecosystem": "frontend"
         },
         {
           "name": "@vue/shared",
-          "version": "3.5.42",
+          "version": "3.5.43",
           "url": "https://github.com/vuejs/core",
           "ecosystem": "frontend"
         },
@@ -1807,7 +1807,7 @@
         },
         {
           "name": "vue",
-          "version": "3.5.42",
+          "version": "3.5.43",
           "url": "https://github.com/vuejs/core",
           "ecosystem": "frontend"
         },
@@ -1819,7 +1819,7 @@
         },
         {
           "name": "vue-i18n",
-          "version": "11.4.10",
+          "version": "11.4.12",
           "url": "https://github.com/intlify/vue-i18n",
           "ecosystem": "frontend"
         },
