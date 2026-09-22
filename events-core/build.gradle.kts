@@ -42,6 +42,12 @@ dependencies {
     api("org.springframework.modulith:spring-modulith-starter-core")
     testImplementation("org.springframework.modulith:spring-modulith-starter-test")
 
+    // `ModuleDiagram` in the fixtures reads `ApplicationModules`, which lives in
+    // `spring-modulith-core` — a dependency of `spring-modulith-starter-test`, not of
+    // `starter-core`, so neither the `api()` above nor the fixtures' implicit dependency on the
+    // main source set brings it. Declared by name, versioned by the Modulith BOM.
+    testFixturesImplementation("org.springframework.modulith:spring-modulith-core")
+
     // Kotlin Logging — idiomatic SLF4J wrapper for Kotlin
     // See: https://github.com/oshai/kotlin-logging
     implementation("io.github.oshai:kotlin-logging-jvm:${property("kotlin-logging.version")}")
