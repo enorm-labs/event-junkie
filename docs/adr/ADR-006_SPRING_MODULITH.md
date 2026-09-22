@@ -3,7 +3,13 @@
 ## Status
 
 **Accepted — Spring Modulith, with each module declaring its `allowedDependencies` and a test failing the build on a
-violation.**
+violation.** The one exception is a module declared `Type.OPEN`, which is `common` in each application.
+
+The structure the three applications ended up with is drawn in
+[docs/architecture/modules-events-core.md](../architecture/modules-events-core.md),
+[modules-events-bff.md](../architecture/modules-events-bff.md) and
+[modules-events-importer.md](../architecture/modules-events-importer.md). Those diagrams are generated from the modules
+and the build fails when they stop matching.
 
 ## Context
 
@@ -57,14 +63,17 @@ The decision to keep all modules as **direct sub-packages** of `de.norm.events` 
 - **Workarounds add complexity without value.** Using `@ApplicationModule(type = Type.OPEN)` or
   `@NamedInterface` to restore sub-module detection is verbose and fragile.
 - **Flat is the Spring Modulith convention.** The official documentation recommends direct sub-packages as modules.
-- **At 6 packages, grouping adds no discoverability benefit.** The distinction between domain (`artist`, `event`, `promoter`, `venue`) and infrastructure
-  (`slug`, `scraper`) is already obvious from context. Revisit if the project grows beyond ~15 modules.
+- **Grouping adds no discoverability benefit at this size.** The distinction between domain (`artist`, `event`, `promoter`, `venue`) and infrastructure
+  (`slug`, `scraper`) is obvious from context. Spring Modulith reads 6 modules in `events-core`, 10 in `events-bff` and 14 in `events-importer`. Each
+  application sees its own packages, plus `licence` from `events-core` on the classpath. **The importer is the one to watch.** It gains a module every few
+  venues, and 15 was the number at which this was to be revisited.
 
 ## Consequences
 
 - **Positive**: the build enforces module boundaries, rather than convention alone, and CI catches a violation at
-  once. `allowedDependencies` is living documentation of the dependency graph. Spring Modulith can also generate
-  module documentation into `build/spring-modulith-docs/`.
+  once. `allowedDependencies` is living documentation of the dependency graph. Spring Modulith's `Documenter` also
+  writes PlantUML diagrams and module canvases into `build/spring-modulith-docs/`. Those stay there, because GitHub
+  does not render PlantUML. The Mermaid diagrams linked above are the committed ones (#1721).
 - **Negative**: every new feature module needs a `*Module.kt` marker and has to declare its dependencies. A new
   cross-module dependency means editing `allowedDependencies`. That friction is intentional: it forces a conscious
   decision.
