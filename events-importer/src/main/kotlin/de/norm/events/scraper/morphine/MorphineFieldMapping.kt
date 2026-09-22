@@ -68,11 +68,23 @@ fun morphineSetLineActs(
         .distinctBy { it.lowercase() }
 }
 
-/** `PICI - Clémence Manachère & Polina Pohozha`: a one-token head and a conjunction in the tail. */
+/**
+ * `PICI - Clémence Manachère & Polina Pohozha`, `Exoteric Chamber - Gilles Aubry & Marta
+ * Zapparoli`: an act and the people in it, which bills the act alone.
+ *
+ * Two guards keep a co-bill out. The tail must name **two or more** people, so
+ * `Alister Spence – Within Without` stays a pair for #302's sync-time head rule. The head must
+ * carry no conjunction of its own, so `Tony Buck & Flo Stoffner - Live Recording` stays two acts.
+ * With both in place the head may be two words: #1674 allowed one, and the venue's duos are
+ * named `Exoteric Chamber` as often as `PICI` (#1710). Three words waits for a line that asks.
+ */
 private fun isMemberList(
     head: String,
     tail: String
-): Boolean = !head.contains(WHITESPACE) && MEMBER_JOIN.containsMatchIn(tail)
+): Boolean =
+    head.split(WHITESPACE).size <= MAX_MEMBER_HEAD_WORDS &&
+        !MEMBER_JOIN.containsMatchIn(head) &&
+        tail.split(MEMBER_JOIN).count { it.isNotBlank() } >= MIN_MEMBERS
 
 /** `Uncanny Valley presents:` — the frame the venue puts before a guest promoter's bill. */
 private val PRESENTS_FRAME = Regex("""^.{2,60}?\s+(?:presents|präsentiert|pres\.?)\s*:?\s+""", RegexOption.IGNORE_CASE)
@@ -89,6 +101,12 @@ private const val MAX_ACT_WORDS = 5
 
 /** A dash list of acts has at least three; a pair is an act and its work until #302's rule says otherwise. */
 private const val MIN_DASH_LIST = 3
+
+/** A member list names at least two people; one name after the dash is a work, not a line-up. */
+private const val MIN_MEMBERS = 2
+
+/** How many words an act can have and still be read as the head of its own member list. */
+private const val MAX_MEMBER_HEAD_WORDS = 2
 
 /**
  * The `DD.MM.YY` date inside the `.block.day` header (`"Friday, 07.08.26, door  20:00"`). The
