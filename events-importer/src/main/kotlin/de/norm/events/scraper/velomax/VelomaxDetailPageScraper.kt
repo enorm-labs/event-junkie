@@ -12,6 +12,7 @@ import de.norm.events.scraper.parseSchemaEventStatus
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.resolveUrl
 import de.norm.events.scraper.textAt
+import de.norm.events.scraper.textLinesAt
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
@@ -60,7 +61,8 @@ class VelomaxDetailPageScraper {
         }
 
         val slug = extractEventSlug(sourceUrl, EVENT_PATH_PREFIX)
-        val subtitle = event.textAt("[itemprop=alternateName]")
+        val subtitleLines = event.textLinesAt("[itemprop=alternateName]")
+        val subtitle = subtitleLines.firstOrNull()
         val startedAt = event.attrAtProp("startDate", "datetime")
         val eventType = inferConcertVenueType(title)
 
@@ -83,7 +85,7 @@ class VelomaxDetailPageScraper {
             sourceId = "${hall.eventSource.sourceIdPrefix}$slug",
             ticketUrl = parseTicketUrl(document),
             status = parseSchemaEventStatus(event.attrAtProp("eventStatus", "content")),
-            artists = buildArtistsForEventType(title, subtitle, eventType),
+            artists = buildArtistsForEventType(title, subtitleLines.joinToString("\n"), eventType),
             promoters = listOfNotNull(event.textAt("[itemprop=organizer] [itemprop=name]"))
         )
     }

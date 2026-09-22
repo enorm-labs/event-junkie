@@ -11,6 +11,7 @@ import de.norm.events.scraper.parseGermanMonthAbbreviation
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.resolveUrl
 import de.norm.events.scraper.textAt
+import de.norm.events.scraper.textLinesAt
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
@@ -92,7 +93,8 @@ class VelomaxOverviewPageScraper {
         val slug = extractEventSlug(sourceUrl, EVENT_PATH_PREFIX)
 
         val title = entry.textAt(".event-title .title")?.let(::cleanEventTitle) ?: return null
-        val subtitle = entry.textAt(".eventSubtitle")
+        val subtitleLines = entry.textLinesAt(".eventSubtitle")
+        val subtitle = subtitleLines.firstOrNull()
         val signal = entry.textAt(".ticketSignal").orEmpty()
         val startTime = parseTime(TIME_PATTERN.find(entry.textAt(".begin").orEmpty())?.value)
 
@@ -111,7 +113,7 @@ class VelomaxOverviewPageScraper {
             // entry with no published time keeps the bare slug — nothing to disambiguate with.
             sourceId = "${hall.eventSource.sourceIdPrefix}$slug${sessionSuffix(startTime)}",
             soldOut = signal.contains(SOLD_OUT_SIGNAL, ignoreCase = true),
-            artists = buildArtistsForEventType(title, subtitle, eventType)
+            artists = buildArtistsForEventType(title, subtitleLines.joinToString("\n"), eventType)
         )
     }
 

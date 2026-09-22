@@ -12,27 +12,27 @@ import java.text.Normalizer
 
 /**
  * Extracts support act names from a subtitle's `"… + <marker>: A & B"` pattern, where
- * `<marker>` is `Support`, `Opener` or `Special Guest(s)` ([SUPPORT_INTRO_PATTERN]). Captures
- * everything after the first marker and hands it to [splitSupportActs]; a subtitle stacking two
- * markers (`"Opener: Warwolf + Special Guest: Motorjesus"`) splits on the `+`, and a leading
- * marker left on a later act is stripped via [ROLE_LABEL_PREFIX]. Empty when no support line.
- * Shared by Privatclub, Astra, Hole 44 and others.
+ * `<marker>` is `Support`, `Support Act`, `Opener`, `Opening Act` or `Special Guest(s)`
+ * ([SUPPORT_INTRO_PATTERN]). Every line is read, not only the first: a venue that stacks
+ * `Support Act: Jinjer` and `Opening Act: Dying Wish` on separate lines bills two acts (#1680).
+ * Within a line, a second marker splits on the `+` and is stripped per act by [splitSupportActs].
+ * Empty when no support line. Shared by Privatclub, Astra, Hole 44 and others.
  */
-@Suppress("ReturnCount") // Guard clauses for blank subtitle and missing support line are clearer than nesting
-fun extractSupportFromSubtitle(subtitle: String?): List<String> {
-    if (subtitle.isNullOrBlank()) return emptyList()
-    val match = SUPPORT_INTRO_PATTERN.find(subtitle) ?: return emptyList()
-    return splitSupportActs(match.groupValues[1])
+fun extractSupportFromSubtitle(subtitle: String?): List<String> =
+    subtitle
+        .orEmpty()
+        .split(SUBTITLE_LINE_SEPARATOR)
+        .mapNotNull { line -> SUPPORT_INTRO_PATTERN.find(line)?.groupValues?.get(1) }
+        .flatMap(::splitSupportActs)
         .map { it.replaceFirst(ROLE_LABEL_PREFIX, "").trim() }
         .filter { it.isNotBlank() }
-}
 
 /**
- * The first support-billing marker in a subtitle, capturing the acts after it to end of line. A
- * second marker in the tail is stripped per act by [ROLE_LABEL_PREFIX] after [splitSupportActs].
+ * The first support-billing marker in one subtitle line, capturing the acts after it to the end
+ * of that line. The optional `Act` is how Velomax spells both markers (#1680).
  */
 private val SUPPORT_INTRO_PATTERN =
-    Regex("""(?:supports?|openers?|special\s+guests?)\s*:\s*(.+)""", RegexOption.IGNORE_CASE)
+    Regex("""(?:supports?|openers?|opening|special\s+guests?)(?:\s+acts?)?\s*:\s*(.+)""", RegexOption.IGNORE_CASE)
 
 /**
  * The subtitle line carrying a support-billing marker from already-split [lines], or `null`. A
@@ -700,13 +700,18 @@ private val SUPPORT_HARD_SEPARATOR = Regex("""\s*[,+/]\s*""")
 /**
  * Splits a support line into act names: comma, `+` and `/` always delimit; `&` / `and` / `und`
  * per boundary via [splitSegmentOnConjunctions], so `Scott Hepple & The Sun Band` is one act and
- * `High On Fire & Gnome` two. Role-label stripping and placeholder filtering are the caller's.
+ * `High On Fire & Gnome` two.
+ *
+ * Each act loses a leading [ARTIST_LABEL_PREFIX]: a venue that prints its support line as
+ * `Support: THE BAXBYS` bills the band, and thirteen Metropol rows were stored under the label
+ * (#1678). The colon is what makes that safe — the band `Support Lesbiens` keeps its name.
+ * Placeholder filtering stays the caller's.
  */
 fun splitSupportActs(text: String): List<String> =
     text
         .split(SUPPORT_HARD_SEPARATOR)
         .flatMap { splitSegmentOnConjunctions(it) }
-        .map { it.trim() }
+        .map { stripArtistPrefix(it.trim()) }
         .filter { it.isNotBlank() }
 
 /**
@@ -795,7 +800,7 @@ private val SUPPORT_ROLE_PREFIX =
  */
 private val ARTIST_LABEL_PREFIX =
     Regex(
-        """^(?:div\.?\s*supports?|special\s+guests?|supports?|openers?""" +
+        """^(?:div\.?\s*supports?|special\s+guests?|supports?(?:\s+acts?)?|openers?|opening\s+acts?""" +
             """|listening\s+session|record\s+release|record\s+launch|album\s+release|release\s+show)\s*:\s*""",
         RegexOption.IGNORE_CASE
     )
@@ -837,6 +842,7 @@ fun headlinersFromTitle(
     if (unpackWithFrame) withFrameActs(title)?.let { return it }
     // `<act> feat. <guest>` mid-title: the guest is billed as support, the act goes on (#305).
     val (billing, guests) = splitFeaturedGuests(title)
+    presentsFrameActs(billing)?.let { return it + guests }
     return splitHeadlinerTitle(stripSeriesPrefix(billedSideOfPres(billing, splitOnSlash)), splitOnSlash)
         .map { segment ->
             // The role is decided from the *raw* segment, before its label is stripped: a title
@@ -893,6 +899,38 @@ private fun splitFeaturedGuests(title: String): Pair<String, List<ScrapedArtist>
 
 /** `<X> pres. <Y>` / `<X> pres: <Y>` — the abbreviated presenter marker, with what stands on either side. */
 private val PRES_MARKER = Regex("""^(.+?)\s+pres[.:]\s+(.+)$""", RegexOption.IGNORE_CASE)
+
+/**
+ * `<promoter> presents: <bill>` / `<promoter> präsentiert: <bill>` — the spelled-out marker with
+ * its colon, which the abbreviated [PRES_MARKER] never reads.
+ *
+ * The colon is what makes the reading unambiguous where `pres.` is not: what follows it is the
+ * night's bill, and what precedes it is who booked it. Gretchen and Morphine each carry a local
+ * copy of this frame; this is the shared one, and the promoter half is not stored anywhere yet.
+ */
+private val PRESENTS_FRAME =
+    Regex("""^.{2,60}?\s+(?:presents|pr(?:ä|ae)sentiert)\s*:\s*(.+)$""", RegexOption.IGNORE_CASE)
+
+/**
+ * The acts of a `<promoter> presents: <bill>` title, or `null` when the title carries no such
+ * frame (#1690).
+ *
+ * A bill is a list, so a comma separates acts here where it does not in a headline title: Delphi
+ * writes `Berlin Confidential präsentiert: Georgy Gusev, Sven Helbig, Ivan Skanavi & Deutsches
+ * Kammerorchester Berlin`, which [splitHeadlinerTitle] alone reads as one 104-character act. Each
+ * comma segment then goes through [splitHeadlinerTitle], which keeps `David August w/ MFO` and
+ * `AC/DC` whole. Every act is a headliner: the frame says who booked the night, not who opens it.
+ */
+private fun presentsFrameActs(title: String): List<ScrapedArtist>? {
+    val bill = PRESENTS_FRAME.find(title.trim())?.groupValues?.get(1) ?: return null
+    return bill
+        .split(',')
+        .flatMap { splitHeadlinerTitle(it.trim()) }
+        .map { stripFramingPrefix(stripArtistPrefix(stripArtistSuffix(it))) }
+        .filterNot(::isNonArtistName)
+        .map { ScrapedArtist(name = it, role = "HEADLINER", titleDerived = true) }
+        .ifEmpty { null }
+}
 
 /**
  * The side of a `pres.` / `pres:` title that bills the acts (#1581).

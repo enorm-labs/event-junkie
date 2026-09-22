@@ -149,8 +149,11 @@ class KaterOverviewPageScraper(
                     expectFloorName = false
                 }
 
-                // `+ Darkroom`, `+ Daytime Market`: what else the floor offers, under its acts (#1564).
-                stage != null && !NOTE_LINE.containsMatchIn(line) -> {
+                // Two kinds of line inside a floor block that bill nobody: `+ Darkroom` and
+                // `+ Daytime Market`, what else the floor offers (#1564); and `Saturday by Muting
+                // The Noise`, a second floor's own heading printed without the floor rule above it,
+                // so the acts under it continue under the stage in hand (#1679).
+                stage != null && !NOTE_LINE.containsMatchIn(line) && !WEEKDAY_HEADING.containsMatchIn(line) -> {
                     artists += splitActs(line).map { ScrapedArtist(name = it, role = "DJ", stage = stage) }
                 }
             }
@@ -228,6 +231,14 @@ class KaterOverviewPageScraper(
 
         /** A floor-block line that opens with a plus is a programme note, never an act. */
         val NOTE_LINE = Regex("""^\+\s""")
+
+        /**
+         * `Saturday by Muting The Noise`, `Sunday by 257`: a weekday and the collective hosting that
+         * night's floor. The host is a booking, never a billed act, and the weekday anchors the rule
+         * so a line like `Nina by Night` is untouched.
+         */
+        val WEEKDAY_HEADING =
+            Regex("""^(?:mon|tues|wednes|thurs|fri|satur|sun)day\s+by\s+\S""", RegexOption.IGNORE_CASE)
 
         /** The back-to-back marker joining two DJs into one slot. */
         val B2B_SEPARATOR = Regex("""\s+b2b\s+""", RegexOption.IGNORE_CASE)

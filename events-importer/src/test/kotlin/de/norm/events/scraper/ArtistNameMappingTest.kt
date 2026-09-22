@@ -13,6 +13,35 @@ class ArtistNameMappingTest {
     // --- extractSupportFromSubtitle ---
 
     @Test
+    fun `extractSupportFromSubtitle reads every line, and the Act spelling of both markers`() {
+        // Velomax stacks the two markers on their own lines under the tour name (#1680).
+        extractSupportFromSubtitle("Tsunami Sea Tour 2026\nSupport Act: Jinjer\nOpening Act: Dying Wish") shouldContainExactly
+            listOf("Jinjer", "Dying Wish")
+        extractSupportFromSubtitle("Support Act: Jinjer") shouldContainExactly listOf("Jinjer")
+    }
+
+    @Test
+    fun `splitSupportActs drops a role label from each act, and keeps a band named after one`() {
+        // Metropol prints its support line as `Support: THE BAXBYS` (#1678).
+        splitSupportActs("Support: THE BAXBYS") shouldContainExactly listOf("THE BAXBYS")
+        splitSupportActs("Support: Silent Planet + Opener: Boyish") shouldContainExactly listOf("Silent Planet", "Boyish")
+        // The colon is what makes the strip safe: this band keeps its name.
+        splitSupportActs("Support Lesbiens") shouldContainExactly listOf("Support Lesbiens")
+    }
+
+    @Test
+    fun `a presents frame bills the acts after the colon, comma-separated`() {
+        // Delphi writes the whole night into the title (#1690); the list is a bill, not a name.
+        headlinersFromTitle(
+            "Berlin Confidential präsentiert: Georgy Gusev, Sven Helbig, Ivan Skanavi & Deutsches Kammerorchester Berlin"
+        ).map { it.name } shouldContainExactly
+            listOf("Georgy Gusev", "Sven Helbig", "Ivan Skanavi", "Deutsches Kammerorchester Berlin")
+        headlinersFromTitle("Landstreicher Booking presents: XAVI").map { it.name } shouldContainExactly listOf("XAVI")
+        // The abbreviated marker keeps its own rule: a single name on the right is the act's work.
+        headlinersFromTitle("Burnt Friedman pres: Secret Rhythms").map { it.name } shouldContainExactly listOf("Burnt Friedman")
+    }
+
+    @Test
     fun `extractSupportFromSubtitle returns empty when no support line`() {
         extractSupportFromSubtitle("Tour 2026").shouldBeEmpty()
         extractSupportFromSubtitle(null).shouldBeEmpty()
@@ -725,9 +754,9 @@ class ArtistNameMappingTest {
     @Test
     fun `headlinersFromTitle leaves a w-slash title alone unless the venue asks`() {
         // Off by default: `w/` joins collaborators at some venues (Zenner's "David August w/ MFO"),
-        // where unpacking would delete the headliner.
+        // where unpacking would delete the headliner. The `presents:` frame comes off either way.
         headlinersFromTitle("Analogue Foundation presents: David August w/ MFO") shouldContainExactly
-            listOf(ScrapedArtist(name = "Analogue Foundation presents: David August w/ MFO", role = "HEADLINER", titleDerived = true))
+            listOf(ScrapedArtist(name = "David August w/ MFO", role = "HEADLINER", titleDerived = true))
     }
 
     @Test
@@ -915,11 +944,12 @@ class ArtistNameMappingTest {
     }
 
     @Test
-    fun `headlinersFromTitle keeps the act of a title that carries the presents marker itself`() {
+    fun `headlinersFromTitle bills the act of a title that carries the presents marker itself`() {
         // `<X> presents: <act>` is the opposite billing and the common one — Gretchen alone has 20.
-        // Such a title trivially starts with `<X>`, so the marker in the title must veto the rule.
+        // Such a title trivially starts with `<X>`, so the marker in the title must veto the rule
+        // that reads it as the label's own night, and the act after the colon is what is billed.
         headlinersFromTitle("Analogue Foundation presents: David August", subtitle = "Analogue Foundation presents")
-            .map { it.name } shouldContainExactly listOf("Analogue Foundation presents: David August")
+            .map { it.name } shouldContainExactly listOf("David August")
     }
 
     @Test

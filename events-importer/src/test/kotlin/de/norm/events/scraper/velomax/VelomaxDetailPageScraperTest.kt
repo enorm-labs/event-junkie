@@ -45,7 +45,9 @@ class VelomaxDetailPageScraperTest {
             )
         joji.shouldNotBeNull()
         joji.title shouldBe "Joji"
-        joji.subtitle shouldBe "SOLARIS Support: Tommy Richmann"
+        // The `<br>` splits the block: the tour name is the subtitle, the line below it a billing (#1680).
+        joji.subtitle shouldBe "SOLARIS"
+        joji.artists.map { it.name to it.role } shouldContainExactly listOf("Joji" to "HEADLINER", "Tommy Richmann" to "SUPPORT")
         // startDate / doorTime carry machine-readable `datetime` attributes; the rendered text is
         // only "20:00 Uhr", with no date at all.
         joji.eventDate shouldBe LocalDate.of(2026, 8, 29)
