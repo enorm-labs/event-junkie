@@ -14,10 +14,6 @@ flowchart TD
     licence["licence"]
     promoter["promoter"]
     venue["venue"]
-
-    event --> artist
-    event --> promoter
-    event --> venue
 ```
 
 <!-- /generated: module diagram -->

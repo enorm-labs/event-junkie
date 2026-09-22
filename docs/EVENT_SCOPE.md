@@ -32,7 +32,7 @@ venue-specific label is passed in per scraper, rather than polluting the shared 
 
 ## 2. Event types in the model
 
-Ten values on [`EventType`](../events-core/src/main/kotlin/de/norm/events/event/Event.kt). Every one is in real use,
+Ten values on [`EventType`](../events-core/src/main/kotlin/de/norm/events/event/EventEnums.kt). Every one is in real use,
 and this is not an aspirational list. The counts come from the development database and illustrate the _mix_, not the
 coverage:
 

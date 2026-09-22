@@ -34,9 +34,10 @@ mismatch`** — the pod never goes Ready and `remediateLastFailure` rolls the re
       itself; a **nullable** column loads and covers nothing, so that test fails until the fixture sets it or `WAIVED` carries a reason. Every `EventStatus`
       and `ArtistRole` value is asserted present for the same reason.
 - **Spring Modulith** (ADR-006): each direct sub-package under `de.norm.events` is a module, declared by a `*Module.kt` marker with `allowedDependencies`;
-  `ModularityTests` in all three modules verify it. Domain classes in `events-core` carry no Spring Data and no Swagger annotations; entities (`*Entity.kt`)
-  convert with `toDomain()` / `fromDomain()`; controllers take `*Request` and return `*Response`, never a domain object (`EventResponse.fromEntity()` is the
-  exception, because the aggregate resolves associations at the entity level). ADR-003.
+  `ModularityTests` in all three modules verify it. Domain classes in `events-core` carry no Spring Data and no Swagger annotations. Only the importer's admin
+  entities convert with `toDomain()` / `fromDomain()` — the BFF declares neither, and the event path has no domain class at all (ADR-003 Status, #1725).
+  Controllers take `*Request` and return `*Response`, never a domain object (`EventResponse.fromEntity()` is the exception, because the aggregate resolves
+  associations at the entity level). ADR-003.
 - **Changing the BFF's public API means regenerating the frontend's types in the same PR** — `events-frontend/src/api/schema.d.ts` is generated from
   `/v3/api-docs` and nothing checks it is current. `cd events-frontend && npm run generate:api` with the BFF running; the traps are in
   [events-frontend/AGENTS.md](../../events-frontend/AGENTS.md) § API Communication.
