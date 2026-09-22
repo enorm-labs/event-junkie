@@ -208,6 +208,15 @@ class ArtistNameMappingTest {
     }
 
     @Test
+    fun `a support act named after a role word keeps that word`() {
+        // The Czech band billed as the support act, which the colon-less strip maimed (#1732).
+        extractSupportFromSubtitle("Support: Support Lesbiens") shouldContainExactly listOf("Support Lesbiens")
+        extractSupportFromSubtitle("Special Guest: Special Guest Stars") shouldContainExactly listOf("Special Guest Stars")
+        // The abbreviations keep their colon-less form: no venue writes one after them.
+        extractSupportFromSubtitle("Support: feat. Kate NV") shouldContainExactly listOf("Kate NV")
+    }
+
+    @Test
     fun `isNonArtistLabel returns false for real names that merely contain a label word`() {
         isNonArtistLabel("Green Lung") shouldBe false
         isNonArtistLabel("Special Guest Stars") shouldBe false

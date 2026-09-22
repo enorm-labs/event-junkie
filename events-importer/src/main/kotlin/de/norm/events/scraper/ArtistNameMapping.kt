@@ -88,22 +88,30 @@ fun isPlaceholderName(name: String): Boolean {
 }
 
 /**
- * A leading role label ("Support:", "Opener:", "Special Guest(s):", "div. Supports", "feat.",
- * "featuring", "w/"), colon optional. Strips the label off an act ("Special Guest: FUCK" to
- * "FUCK") and, when a chunk is nothing but the label, marks it a non-artist via
- * [isNonArtistLabel]. Shared with the SO36 detail scraper and [extractSupportFromSubtitle].
+ * A leading role label in front of the billed act, stripped off it ("Special Guest: FUCK" to
+ * "FUCK"). Shared with the SO36 detail scraper and [extractSupportFromSubtitle].
+ *
+ * **A role word needs its colon**, as in [ARTIST_LABEL_PREFIX] and for the same reason: without it
+ * the band `Support Lesbiens` is stored as `Lesbiens` (#1732). The abbreviations are the exception,
+ * because no venue writes a colon after them — `feat. Kate NV`, `w/ Gudrun Gut`.
  */
 val ROLE_LABEL_PREFIX =
-    Regex("""^(?:div\.?\s*supports?|special\s+guests?|supports?|openers?|feat\.?|featuring|w/)\s*:?\s*""", RegexOption.IGNORE_CASE)
+    Regex(
+        """^(?:(?:div\.?\s*supports?|special\s+guests?|supports?|openers?)\s*:|(?:feat\.?|featuring|w/)\s*:?)\s*""",
+        RegexOption.IGNORE_CASE
+    )
 
 /**
- * Whether [name] is a bare [ROLE_LABEL_PREFIX] label: a subtitle `"Support: Special Guest"`
- * captures the label as the act. Matching is exact, so `"Special Guest Foo"` is kept.
+ * Whether [name] is a role label and nothing else: a subtitle `"Support: Special Guest"` captures
+ * the label as the act. Matching is exact, so `"Special Guest Foo"` is a name and is kept — and the
+ * colon [ROLE_LABEL_PREFIX] requires is optional here, because a line reading `Support` alone names
+ * no act either way.
  */
-fun isNonArtistLabel(name: String): Boolean {
-    val trimmed = name.trim()
-    return trimmed.isNotEmpty() && trimmed.replaceFirst(ROLE_LABEL_PREFIX, "").isBlank()
-}
+fun isNonArtistLabel(name: String): Boolean = BARE_ROLE_LABEL.matches(name.trim())
+
+/** A whole string that is a role label, with or without its colon. */
+private val BARE_ROLE_LABEL =
+    Regex("""^(?:div\.?\s*supports?|special\s+guests?|supports?|openers?|feat\.?|featuring|w/)\s*:?\s*$""", RegexOption.IGNORE_CASE)
 
 /**
  * Curated event-segment labels, an aftershow/afterparty/warm-up slot listed in the lineup, with
