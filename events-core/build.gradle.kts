@@ -48,6 +48,11 @@ dependencies {
 
     testImplementation(kotlin("test"))
 
+    // DomainClassDiagramTest reads the domain classes' primary constructors to generate the diagram
+    // in docs/DATA_MODEL.md. Declared at the Kotlin plugin's version: it arrives transitively too,
+    // at an older one, and reflection against a newer stdlib is not a gamble worth taking.
+    testImplementation(kotlin("reflect"))
+
     // Kotest assertions – expressive matchers for readable test assertions
     // See: https://kotest.io/docs/assertions/assertions.html
     testImplementation("io.kotest:kotest-assertions-core:${property("kotest.version")}")
@@ -92,6 +97,32 @@ tasks.test {
             .withPropertyName("$module-main-sources")
             .withPathSensitivity(PathSensitivity.RELATIVE)
     }
+
+    // DomainClassDiagramTest asserts on this document for the same reason, and an edit to it alone
+    // would otherwise leave the task UP-TO-DATE with the diagram it guards already wrong.
+    inputs
+        .file(rootProject.layout.projectDirectory.file("docs/DATA_MODEL.md"))
+        .withPropertyName("data-model-document")
+        .withPathSensitivity(PathSensitivity.RELATIVE)
+}
+
+// The one command that rewrites the diagram in docs/DATA_MODEL.md. It is the same test, told to
+// write instead of fail, so the output cannot disagree with what the build then asserts.
+tasks.register<Test>("updateDataModelDiagram") {
+    group = "documentation"
+    description = "Regenerate the domain class diagram in docs/DATA_MODEL.md from the domain classes."
+
+    testClassesDirs =
+        sourceSets.test
+            .get()
+            .output.classesDirs
+    classpath = sourceSets.test.get().runtimeClasspath
+    useJUnitPlatform()
+    filter { includeTestsMatching("de.norm.events.DomainClassDiagramTest") }
+    systemProperty("updateDataModelDiagram", "true")
+
+    // It writes a file Gradle does not know it writes, so a second run must not be skipped.
+    outputs.upToDateWhen { false }
 }
 
 // events-core is a pure domain library: almost every class is a plain data class, a Spring
