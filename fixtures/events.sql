@@ -8,7 +8,7 @@
 -- every filter. The named half is one event per shape, `source_id = 'fixture-<shape>'`, so a test
 -- finds the row by name: a multi-artist bill, a festival, sold out, free, no price, no genre, two
 -- rooms of one venue on one night, relocated, cancelled, postponed, past, a translated description,
--- and one artist MusicBrainz verified.
+-- and one artist MusicBrainz verified and enriched.
 --
 -- Dates are relative to CURRENT_DATE. The past row is three days back, because the BFF keeps
 -- yesterday's late starts listed until 06:00 (#299). No row has an image: `image_url` needs the
@@ -100,9 +100,24 @@ WHERE e.source_id LIKE 'dast-%' AND e.event_type = 'PARTY';
 
 -- The cast for the named rows. `mobius-trio` above is the one row a MusicBrainz lookup verified
 -- (ADR-031). The MBID is nobody's: the site links it and MusicBrainz answers 404, which is the
--- right outcome for an invented artist and beats borrowing a real act's identity.
+-- right outcome for an invented artist and beats borrowing a real act's identity. It is also the one
+-- row the enrichment filled (V040), so the artist page has a row with every profile and `founded`,
+-- which V040 allows only for an ensemble.
 UPDATE events.artist
-SET musicbrainz_id = '00000000-0000-4000-8000-000000000272', musicbrainz_match = 'EXACT', musicbrainz_checked_at = now()
+SET musicbrainz_id = '00000000-0000-4000-8000-000000000272',
+    musicbrainz_match = 'EXACT',
+    musicbrainz_checked_at = now(),
+    musicbrainz_enriched_at = now(),
+    artist_type = 'GROUP',
+    founded = '2014',
+    founded_in = 'Leipzig',
+    country = 'DE',
+    bandcamp_url = 'https://mobiustrio.bandcamp.example',
+    soundcloud_url = 'https://soundcloud.example/mobius-trio',
+    discogs_url = 'https://discogs.example/artist/mobius-trio',
+    wikidata_url = 'https://wikidata.example/wiki/Q272',
+    resident_advisor_url = 'https://ra.example/dj/mobius-trio',
+    spotify_url = 'https://spotify.example/artist/mobius-trio'
 WHERE slug = 'mobius-trio';
 
 INSERT INTO events.artist (name, slug, website_url, description, facebook_url, instagram_url, youtube_url)
