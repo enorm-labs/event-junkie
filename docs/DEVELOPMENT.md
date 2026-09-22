@@ -14,6 +14,7 @@ sdk env                                   # the JDK from .sdkmanrc
 brew install pre-commit && pre-commit install     # gitleaks + formatting hooks, before your first commit
 
 scripts/dev-env.sh up all                 # importer + bff + frontend, each waited on until it answers
+scripts/dev-env.sh seed-fixture           # the fixed dataset, no network — or the two lines below for real data
 scripts/dev-env.sh seed-all               # register all event sources (needs ijhttp)
 scripts/dev-env.sh import <slug>          # import one source, polling until it settles
 scripts/dev-env.sh status                 # database / importer / bff / frontend
@@ -182,6 +183,12 @@ docker compose down --volumes     # or: scripts/dev-env.sh db-reset
 The next `bootRun` recreates it and re-runs the Flyway migrations. Note that an **empty** database makes
 `dev-env.sh diff-snapshot` report every existing source as `GONE`, which looks alarming and is not.
 
+**A database with known rows in one command, no network:** `scripts/dev-env.sh seed-fixture` loads
+[`fixtures/events.sql`](../fixtures/events.sql) (#272), the same file the BFF's `FixtureTest` and the DAST
+scan use. Three venues and 42 events. One event per shape the site renders differently, with
+`source_id = 'fixture-<shape>'`. The file's header lists the shapes. It needs the schema,
+so run `up importer` once first. For this week's real programme, `seed-all` and `import` are still the way.
+
 ## The `local` profile — logging to a file
 
 Both services define a `local` Spring profile whose only effect is to mirror console output to a file. An import or a
@@ -217,8 +224,8 @@ scripts/dev-env.sh down all     # add --db to stop Postgres too
 `up` and `down` take one or more of `importer` (the default) · `bff` · `frontend` · `all`. Each service logs to
 `build/dev-env/<service>.log`. The frontend proxies `/api` to the BFF, so starting it alone renders the app but every request 502s.
 
-It also covers the importer workflow: `seed-all`, `seed-one`, `import <slug>`, `snapshot`, `diff-snapshot`,
-`check <slug>` and `psql <sql>`.
+It also covers the importer workflow: `seed-fixture`, `seed-all`, `seed-one`, `import <slug>`, `snapshot`,
+`diff-snapshot`, `check <slug>` and `psql <sql>`.
 
 ## Calling the APIs
 

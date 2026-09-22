@@ -84,7 +84,7 @@ is the map and the traps.
   arches, thresholds identical to `release.yml`'s so a finding here means a new advisory. **The fix for a red run is a release**, not a re-run.
 - `dependency-check-scheduled.yml` — the authoritative nightly OWASP scan; owns the NVD cache the PR scan restores.
 - `dast.yml` (#1421, #1423, #1461) — the only scanner that sends requests; three jobs, no cluster credential. `dast-k3d` nightly: the newest signed snapshot on an
-  ephemeral k3d via `k3d-rehearsal.sh flux-up`, `.zap/seed.sql`, the full scan through Traefik, the API scan past the limiter on purpose, Nuclei's `misconfig`,
+  ephemeral k3d via `k3d-rehearsal.sh flux-up`, `fixtures/events.sql`, the full scan through Traefik, the API scan past the limiter on purpose, Nuclei's `misconfig`,
   `exposure`, `tech`, `cve` templates. `dast-production` weekly passive and `nuclei-production` weekly at a fifth of the limiter's rate, against `SITE_URL`.
   Red only on a `FAIL` rule in `.zap/rules-*.tsv` or a Nuclei match outside `.nuclei/waivers-<target>.tsv`; every `IGNORE` and waiver dated and reasoned.
   Reports are artifacts; nothing opens an issue; no `pull_request` trigger, decided.

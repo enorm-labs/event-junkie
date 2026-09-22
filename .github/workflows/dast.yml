@@ -71,9 +71,9 @@ env:
   # rehearsal hostname, the apex once it is deleted at go-live, a dispatch input over both. Never unset,
   # so never a silent permanent skip.
   SITE_URL: ${{ inputs.target || vars.SITE_URL || 'https://event-junkie.de' }}
-  # How many events `.zap/seed.sql` inserts, asserted through the API before the scan so a seed that no
-  # longer matches the schema fails as a PostgreSQL error, not as a spider that found one page.
-  SEED_EVENTS: '30'
+  # The shared dataset (#272). Its row count is asserted through the API before the scan, so a seed
+  # that no longer matches the schema fails as a PostgreSQL error, not as a spider that found one page.
+  FIXTURE: fixtures/events.sql
 
 jobs:
   dast-k3d:
@@ -129,14 +129,18 @@ jobs:
           scripts/k3d-rehearsal.sh flux-verify
 
       # A fixture, not an import: the same rows every night, no venue's page fetched for our scanner's sake.
+      # The expected count comes from the database, not a literal: the file carries a past row the
+      # default list leaves out, and `FixtureTest` in the BFF is where that window is asserted.
       - name: Seed the database and assert the site serves the rows
         run: |
           set -euo pipefail
-          docker exec -i event-junkie-postgres-1 psql -U admin -d event_junkie_k3d -v ON_ERROR_STOP=1 < .zap/seed.sql
+          psql() { docker exec -i event-junkie-postgres-1 psql -U admin -d event_junkie_k3d -v ON_ERROR_STOP=1 "$@"; }
+          psql < "$FIXTURE"
+          expected="$(psql -qAt -c "SELECT count(*) FROM events.event WHERE COALESCE(end_date, event_date) >= CURRENT_DATE")"
           total="$(curl -sS -H 'Host: event-junkie.localhost' 'http://localhost:8080/api/events?size=1' \
             | jq -r '.totalElements')"
-          if [ "$total" != "$SEED_EVENTS" ]; then
-            echo "::error::/api/events reports $total events after seeding, expected $SEED_EVENTS."
+          if [ "$total" != "$expected" ]; then
+            echo "::error::/api/events reports $total events after seeding, expected $expected from $FIXTURE."
             exit 1
           fi
           echo "/api/events serves $total seeded events"
