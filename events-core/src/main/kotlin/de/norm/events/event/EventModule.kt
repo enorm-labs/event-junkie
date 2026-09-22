@@ -5,9 +5,8 @@ import org.springframework.modulith.ApplicationModule
 /**
  * Module metadata declaring the event module's allowed dependencies.
  *
- * The event domain model references artist, venue, and promoter domain
- * objects as part of its aggregate (e.g. [Event.venue], [Event.lineup],
- * [Event.promoters]).
+ * The module holds the three event enums and the money scale, and references no other module.
+ * The shared model has no event aggregate: ADR-003's Status line says why.
  */
-@ApplicationModule(allowedDependencies = ["artist", "venue", "promoter"])
+@ApplicationModule(allowedDependencies = [])
 class EventModule

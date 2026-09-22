@@ -4,10 +4,17 @@
 
 **Accepted — plain domain classes in `events-core`, and annotated `*Entity` classes per application.**
 
+**The shared model covers `Venue`, `Artist`, `Promoter` and `GenreTag`. The event path stays outside it (#1725).** The
+two applications' `EventEntity` classes differ on purpose. The BFF's is a read-only subset and the importer's carries
+the columns only an import writes. A shared `Event` would have to be their union or their intersection, and neither
+side wants either. The importer writes event rows from `ScrapedEvent`. The BFF reads them into `EventResponse`. The
+`Event` and `LineupEntry` classes arrived with the first schema in May 2026 and no application ever referenced them, so
+#1725 deleted them.
+
 ## Context
 
-The project has a shared library (`events-core`) consumed by multiple applications (BFF, importer). The domain model (e.g. `Venue`, `Artist`, `Event`) needs to
-be accessible to all consumers without coupling them to persistence concerns.
+The project has a shared library (`events-core`) consumed by multiple applications (BFF, importer). The domain model (e.g. `Venue`, `Artist`, `Promoter`) needs
+to be accessible to all consumers without coupling them to persistence concerns.
 
 Two approaches were considered:
 

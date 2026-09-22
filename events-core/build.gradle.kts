@@ -149,8 +149,6 @@ kover {
                 classes(
                     // Plain domain data classes — no logic, only synthetic members.
                     "de.norm.events.artist.Artist",
-                    "de.norm.events.event.Event",
-                    "de.norm.events.event.LineupEntry",
                     "de.norm.events.genretag.GenreTag",
                     "de.norm.events.promoter.Promoter",
                     "de.norm.events.venue.Venue"

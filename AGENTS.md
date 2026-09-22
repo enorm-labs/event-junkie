@@ -146,7 +146,7 @@ When in doubt, flag it in the PR. Raising it costs a sentence; missing it is a l
 Event Junkie discovers music events in Berlin. A **Gradle multi-project build** (root `settings.gradle.kts`) plus a standalone frontend:
 
 - **`events-core`** — shared domain model, no Boot app; `java-library` + `java-test-fixtures` (`src/testFixtures/`); `api()` scope on
-  `spring-modulith-starter-core`. Domain classes by feature: `artist/`, `event/`, `promoter/`, `venue/`; enums and `LineupEntry` in `event/Event.kt`.
+  `spring-modulith-starter-core`. Domain classes by feature: `artist/`, `genretag/`, `promoter/`, `venue/`. The event path has none, and `event/` holds the enums and the money scale (ADR-003).
 - **`events-bff`** — the public read API (Spring Boot 4 + WebFlux + R2DBC), port `8080`.
 - **`events-importer`** — imports events from venue sites (Boot 4 + WebFlux + R2DBC + Flyway), port `8081`. Owns every migration under
   `src/main/resources/db/migration/`.

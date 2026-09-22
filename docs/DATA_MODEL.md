@@ -49,41 +49,6 @@ classDiagram
         Instant? updatedAt
     }
 
-    class Event {
-        Long? id
-        String title
-        String? subtitle
-        String? description
-        EventType eventType
-        String slug
-        LocalDate eventDate
-        LocalTime? doorsTime
-        LocalTime? startTime
-        LocalDate? endDate
-        LocalTime? endTime
-        String? imageUrl
-        String? sourceUrl
-        String sourceId
-        String? ticketUrl
-        String? facebookEventUrl
-        String? genre
-        EventStatus status
-        BigDecimal? pricePresale
-        BigDecimal? priceBoxOffice
-        String priceCurrency
-        String? priceNote
-        Boolean soldOut
-        Boolean free
-        Instant? createdAt
-        Instant? updatedAt
-    }
-
-    class LineupEntry {
-        ArtistRole role
-        Int billingOrder
-        String? stage
-    }
-
     class Artist {
         Long? id
         String name
@@ -142,35 +107,6 @@ classDiagram
         Instant? updatedAt
     }
 
-    class EventType {
-        <<enumeration>>
-        CONCERT
-        FESTIVAL
-        PARTY
-        QUIZ
-        CLUB_NIGHT
-        SHOW
-        SCREENING
-        EXHIBITION
-        READING
-        OTHER
-    }
-
-    class EventStatus {
-        <<enumeration>>
-        SCHEDULED
-        RELOCATED
-        CANCELLED
-        POSTPONED
-    }
-
-    class ArtistRole {
-        <<enumeration>>
-        HEADLINER
-        SUPPORT
-        DJ
-    }
-
     class ArtistType {
         <<enumeration>>
         PERSON
@@ -205,13 +141,6 @@ classDiagram
         CHARTS
     }
 
-    Event "*" --> "1" Venue: venue
-    Event "1" --> "*" LineupEntry: lineup
-    Event "1" --> "*" Promoter: promoters
-    Event --> EventType: eventType
-    Event --> EventStatus: status
-    LineupEntry "*" --> "1" Artist: artist
-    LineupEntry --> ArtistRole: role
     Artist --> ArtistType: artistType
     Artist --> MusicBrainzMatch: musicbrainzMatch
     GenreTag --> GenreFamily: family
@@ -226,7 +155,7 @@ de.norm.events
 ├── artist/
 │   └── Artist.kt         (Artist, ArtistType, MusicBrainzMatch)
 ├── event/
-│   └── Event.kt          (Event, EventType, EventStatus, LineupEntry, ArtistRole)
+│   └── EventEnums.kt     (EventType, EventStatus, ArtistRole)
 ├── genretag/
 │   ├── GenreTag.kt
 │   └── GenreFamily.kt
@@ -243,8 +172,8 @@ de.norm.events
 The diagram shows the **domain classes**. The field tables below show the **database**. The two layers are separate by
 [ADR-003](adr/ADR-003_ENTITY_DOMAIN_SEPARATION.md), and they do not always agree.
 
-`event.relocated_to` is the example. The column exists since V036. Both applications carry it on their own `EventEntity`. The domain `Event` does not carry
-it. So the diagram does not draw it and the table below lists it. **Where the two disagree, the table is right about the database**, because the column is what
+The `event` table is the example. It exists and both applications map it. The shared model has no `Event` class, so
+the diagram draws none. **Where the two disagree, the table is right about the database**, because the column is what
 exists. The diagram is right about what the shared code can pass around.
 
 The tables are written by hand. They carry a description and an example for each column, and no generator writes those.
@@ -253,16 +182,19 @@ The tables are written by hand. They carry a description and an example for each
 
 Less than the diagram suggests, and the difference is worth knowing before you add a field to one.
 
-`Venue`, `Artist`, `Promoter` and `GenreTag` are used. The importer's admin API round-trips each one through the pattern
-[ADR-003](adr/ADR-003_ENTITY_DOMAIN_SEPARATION.md) describes: `Response.fromDomain(entity.toDomain())` in `VenueService`, `ArtistService`,
-`PromoterService` and `GenreTagService`.
+One caller uses all four. The importer's admin API round-trips each one through the pattern
+[ADR-003](adr/ADR-003_ENTITY_DOMAIN_SEPARATION.md) describes: `Response.fromDomain(entity.toDomain())` in `VenueService`,
+`ArtistService`, `PromoterService` and `GenreTagService`.
 
-**`Event` and `LineupEntry` are used by nothing.** Neither application's `EventEntity` has a `toDomain()` or a `fromDomain()`. The importer writes entities
-from `ScrapedEvent`. The BFF reads entities and builds `EventResponse` directly, with its own `LineupEntryResponse` type. No code in either application
-constructs or accepts a domain `Event`.
+**The BFF uses none of them.** No file in `events-bff` declares a `toDomain` or a `fromDomain`. It reads its own
+entities and builds its responses straight from them.
 
-This is why the diagram has no edge from `Event` to `GenreTag`. The join table `event_genre_tag` exists. The public API returns `genreTags` on every event. The relation is real in the database and in the API. It is absent from the shared classes, along with the rest of the event path. Adding the
-property would give the diagram an edge and give the code nothing (#1717). What to do about the two unused classes is #1725.
+**The event path has no domain class at all.** The importer writes entities from `ScrapedEvent`. The BFF reads entities
+and builds `EventResponse` with its own `LineupEntryResponse`. #1725 deleted the `Event` and `LineupEntry` classes that
+nothing used. The two applications' `EventEntity` classes differ on purpose, so one shared class would fit neither side.
+
+The same answer covers `genreTags`. The join table `event_genre_tag` exists and the public API returns the array on
+every event. The shared model carries neither, and a property there would give the code nothing (#1717).
 
 ## Entities
 
@@ -373,11 +305,10 @@ Represents an event promoter or presenter. Shared across events and venues.
 the same language and all-or-nothing constraints V019 gave `venue`. A promoter's own site is not scraped for them: no
 `event_source` row records a promoter's terms, so the per-source licence gate never reaches a promoter.
 
-### event_artist (Join Table / LineupEntry)
+### event_artist (Join Table)
 
-Links events to artists with role and billing order to model the lineup. In the domain model the `LineupEntry` class
-represents this, and it holds a full `Artist` object. The persistence layer (`EventArtistEntity`) maps to this join
-table with foreign keys.
+Links events to artists with role and billing order to model the lineup. Each application maps the table with its own
+`EventArtistEntity`. The BFF turns those rows into the `lineup` array of its `EventResponse`.
 
 | Field           | Type        | Nullable | Description                         | Example     |
 | --------------- | ----------- | -------- | ----------------------------------- | ----------- |
@@ -437,23 +368,26 @@ Unique constraint on `(event_id, genre_tag_id)` prevents duplicate tag-event ass
 Each event has a unique `source_id` (e.g. `astra:2026-06-12-the-adicts`) that identifies it from the import source. This allows the importer to use upsert
 semantics: if an event with the same `source_id` already exists, it gets updated rather than duplicated. This is critical for scheduled re-imports.
 
-### Rich Domain Model in `events-core`
+### What `events-core` Shares
 
-The Kotlin domain classes in `events-core` use embedded object references (e.g. `Event.venue: Venue`) rather than raw foreign key IDs. This makes the domain
-model expressive and self-documenting. The persistence layer in `events-importer`
-and `events-bff` maps between these domain objects and the flat relational schema.
+`events-core` holds the three event enums, their `parseOrDefault` parsers, the money scale, the licence vocabulary and
+the schema constant. Both applications use every one of them.
 
-### Separate `LineupEntry` / `event_artist` Join Entity
+It also holds four plain domain classes: `Venue`, `Artist`, `Promoter` and `GenreTag`. Only the importer's admin API
+uses those. [ADR-003](adr/ADR-003_ENTITY_DOMAIN_SEPARATION.md) gives the pattern, and its Status line says why no event
+class joins them.
 
-A dedicated join entity (rather than just a list of artist IDs on the event) captures:
+### Separate `event_artist` Join Table
+
+A dedicated join table (rather than just a list of artist IDs on the event) captures:
 
 - **Role** — whether the artist is a headliner, support act, or DJ
 - **Billing order** — the position in the lineup (lower = higher on the bill)
 
 This information is displayed prominently on venue websites and is important for the UI.
 
-In the domain model, `LineupEntry` holds a full `Artist` reference (consistent with how `Event`
-references `Venue` and `Promoter`). The persistence layer uses `EventArtistEntity` with foreign key IDs to map to the `event_artist` database table.
+Each application maps the table with its own `EventArtistEntity`, keyed by foreign key IDs. The BFF builds a
+`LineupEntryResponse` from those rows. The shared model has no lineup class.
 
 ### Inline Price Fields Instead of Separate Table
 
