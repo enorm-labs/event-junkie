@@ -102,7 +102,7 @@ spec:
   chart:
     spec:
       chart: openobserve-collector
-      version: "0.4.6"
+      version: "0.4.7"
       # The shared source, not a second object at the same URL (#1080).
       sourceRef:
         kind: HelmRepository
@@ -380,7 +380,7 @@ spec:
   chart:
     spec:
       chart: openobserve-collector
-      version: "0.4.6"
+      version: "0.4.7"
       sourceRef:
         kind: HelmRepository
         name: openobserve
