@@ -249,6 +249,21 @@ exists. The diagram is right about what the shared code can pass around.
 
 The tables are written by hand. They carry a description and an example for each column, and no generator writes those.
 
+### How much of the code uses these classes
+
+Less than the diagram suggests, and the difference is worth knowing before you add a field to one.
+
+`Venue`, `Artist`, `Promoter` and `GenreTag` are used. The importer's admin API round-trips each one through the pattern
+[ADR-003](adr/ADR-003_ENTITY_DOMAIN_SEPARATION.md) describes: `Response.fromDomain(entity.toDomain())` in `VenueService`, `ArtistService`,
+`PromoterService` and `GenreTagService`.
+
+**`Event` and `LineupEntry` are used by nothing.** Neither application's `EventEntity` has a `toDomain()` or a `fromDomain()`. The importer writes entities
+from `ScrapedEvent`. The BFF reads entities and builds `EventResponse` directly, with its own `LineupEntryResponse` type. No code in either application
+constructs or accepts a domain `Event`.
+
+This is why the diagram has no edge from `Event` to `GenreTag`. The join table `event_genre_tag` exists. The public API returns `genreTags` on every event. The relation is real in the database and in the API. It is absent from the shared classes, along with the rest of the event path. Adding the
+property would give the diagram an edge and give the code nothing (#1717). What to do about the two unused classes is #1725.
+
 ## Entities
 
 ### Venue
