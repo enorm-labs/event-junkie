@@ -274,6 +274,10 @@ The workflow refuses three things. Nothing landed since the last release. The ta
 The last one is the release gate seen early. A release rebuilds what the snapshot built, so it fails the same way. It then leaves a tag with nothing
 behind it. The by-hand fallback and the reasoning are in [DEVELOPMENT.md § Cutting a release](../DEVELOPMENT.md#cutting-a-release).
 
+**The snapshot gate asks for one commit, never a page of runs** (#1579). A run listing is eventually consistent. On 2026-09-17 it returned nothing for a
+publish that went green 13 minutes earlier. The gate read that as an absent snapshot publish and refused a commit that was ready. The gate now looks
+the commit up directly. An empty answer therefore means that the workflow never ran for it.
+
 **Nothing moves `main` after a cut.** The next commit publishes as the next patch snapshot, and a `feat` during the cycle moves the snapshot number to
 the minor on its own. `helm list` on staging shows `0.3.13-snapshot.…` become `0.4.0-snapshot.…` without a release. That is expected.
 
