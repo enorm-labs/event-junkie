@@ -11,6 +11,37 @@ const REAL_DATA_URL = process.env.E2E_BASE_URL ?? 'http://event-junkie.localhost
 /** The one suite that talks to a deployment, kept out of every other project by path. */
 const REAL_DATA_DIR = '**/real-data/**'
 
+/**
+ * The deployment suite (#1699): the chart on k3d, through Traefik, against the rows
+ * `fixtures/events.sql` seeded. It mocks nothing — that is the point, and `e2e/real-data/` is a
+ * directory rather than a naming convention so the rule is a path a job can check.
+ *
+ * **Rendered only when `E2E_BASE_URL` is set**, because a bare `npm run test:e2e` runs every project:
+ * on the frontend runner there is no cluster, so an unconditional project turns that suite red with
+ * 17 connection failures. Setting the variable is what opts in, and `e2e-k3d` in `dast.yml` sets it.
+ *
+ * Chromium alone: what is under test is nginx, the middlewares and a real BFF, not how five engines
+ * lay the page out. `--host-resolver-rules` is what lets the browser ask for the Ingress name — a
+ * `Host` header cannot be set on a navigation.
+ */
+function realDataProject() {
+  if (!process.env.E2E_BASE_URL) return []
+  const url = new URL(REAL_DATA_URL)
+  return [
+    {
+      name: 'real-data',
+      testDir: './e2e/real-data',
+      use: {
+        ...devices['Desktop Chrome'],
+        baseURL: REAL_DATA_URL,
+        launchOptions: {
+          args: [`--host-resolver-rules=MAP ${url.hostname} 127.0.0.1:${url.port || 80}`],
+        },
+      },
+    },
+  ]
+}
+
 export default defineConfig({
   testDir: './e2e',
   timeout: 30 * 1000,
@@ -75,26 +106,7 @@ export default defineConfig({
       },
     },
 
-    /**
-     * The deployment suite (#1699): the chart on k3d, through Traefik, against the rows
-     * `fixtures/events.sql` seeded. It mocks nothing — that is the whole point, and `e2e/real-data/`
-     * is a directory rather than a naming convention so the rule is a path.
-     *
-     * Chromium alone: what is under test is nginx, the middlewares and a real BFF, not how five
-     * engines lay the page out. `--host-resolver-rules` is what lets the browser ask for the Ingress
-     * name; the five projects above never load it, because `testIgnore` keeps them out of here.
-     */
-    {
-      name: 'real-data',
-      testDir: './e2e/real-data',
-      use: {
-        ...devices['Desktop Chrome'],
-        baseURL: REAL_DATA_URL,
-        launchOptions: {
-          args: [`--host-resolver-rules=MAP ${new URL(REAL_DATA_URL).hostname} 127.0.0.1:${new URL(REAL_DATA_URL).port || 80}`],
-        },
-      },
-    },
+    ...realDataProject(),
   ],
 
   // Not started for the `real-data` project: it has a deployment to talk to, and a Vite server on
