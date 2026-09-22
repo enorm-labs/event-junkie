@@ -7,19 +7,27 @@
 -- Two halves. The generated half is volume: thirty events over fourteen days, rows on both sides of
 -- every filter. The named half is one event per shape, `source_id = 'fixture-<shape>'`, so a test
 -- finds the row by name: a multi-artist bill, a festival, sold out, free, no price, no genre, two
--- rooms of one venue on one night, relocated, cancelled, past, a translated description, and one
--- artist MusicBrainz verified.
+-- rooms of one venue on one night, relocated, cancelled, postponed, past, a translated description,
+-- and one artist MusicBrainz verified.
 --
 -- Dates are relative to CURRENT_DATE. The past row is three days back, because the BFF keeps
 -- yesterday's late starts listed until 06:00 (#299). No row has an image: `image_url` needs the
 -- attribution triple (V020). Every name is schema-qualified, because psql and the BFF's R2DBC client
 -- both run this and only one of them has a session to set `search_path` on.
+--
+-- **Keeping it current is FixtureTest's job, not memory's.** It asserts that every column of `event`,
+-- `venue` and `artist` is set on some row, and that every `EventStatus` and `ArtistRole` value is
+-- here. A migration adding a NOT NULL column or a CHECK breaks the load and names the column; a
+-- nullable one loads and covers nothing, and the column assertion is what catches that. Add the row,
+-- or waive the column in `FixtureTest.WAIVED` with a reason.
 
-INSERT INTO events.venue (name, slug, address, postal_code, district, latitude, longitude, website_url, description, description_language)
+INSERT INTO events.venue (name, slug, address, postal_code, district, latitude, longitude, website_url, description, description_language,
+                          description_alt, description_alt_language)
 VALUES
-    ('Kesselhaus Nord', 'kesselhaus-nord', 'Prenzlauer Allee 1', '10405', 'prenzlauer-berg', 52.531000, 13.421000, 'https://kesselhaus-nord.example', 'Ein Club im alten Kesselhaus. Zwei Floors, ein Garten.', 'de'),
-    ('Salon Zur Wilden Renate & Co.', 'salon-zur-wilden-renate-co', 'Alt-Stralau 70', '10245', 'friedrichshain', 52.497000, 13.470000, 'https://renate.example', NULL, NULL),
-    ('Jazzkeller $& Kreuzberg', 'jazzkeller-kreuzberg', 'Oranienstraße 12', '10999', 'kreuzberg', 52.501000, 13.421000, 'https://jazzkeller.example', 'Small basement stage. Jazz on weekdays, blues at the weekend.', 'en');
+    ('Kesselhaus Nord', 'kesselhaus-nord', 'Prenzlauer Allee 1', '10405', 'prenzlauer-berg', 52.531000, 13.421000, 'https://kesselhaus-nord.example', 'Ein Club im alten Kesselhaus. Zwei Floors, ein Garten.', 'de',
+     'A club in the old boiler house. Two floors and a garden.', 'en'),
+    ('Salon Zur Wilden Renate & Co.', 'salon-zur-wilden-renate-co', 'Alt-Stralau 70', '10245', 'friedrichshain', 52.497000, 13.470000, 'https://renate.example', NULL, NULL, NULL, NULL),
+    ('Jazzkeller $& Kreuzberg', 'jazzkeller-kreuzberg', 'Oranienstraße 12', '10999', 'kreuzberg', 52.501000, 13.421000, 'https://jazzkeller.example', 'Small basement stage. Jazz on weekdays, blues at the weekend.', 'en', NULL, NULL);
 
 INSERT INTO events.promoter (name, slug, website_url)
 VALUES ('Nachtschicht Kollektiv', 'nachtschicht-kollektiv', 'https://nachtschicht.example');
@@ -97,22 +105,25 @@ UPDATE events.artist
 SET musicbrainz_id = '00000000-0000-4000-8000-000000000272', musicbrainz_match = 'EXACT', musicbrainz_checked_at = now()
 WHERE slug = 'mobius-trio';
 
-INSERT INTO events.artist (name, slug, website_url)
+INSERT INTO events.artist (name, slug, website_url, description, facebook_url, instagram_url, youtube_url)
 VALUES
-    ('Anna Kessel', 'anna-kessel', 'https://annakessel.example'),
-    ('Rauhfaser', 'rauhfaser', NULL),
-    ('DJ Nachtfalter', 'dj-nachtfalter', NULL);
+    ('Anna Kessel', 'anna-kessel', 'https://annakessel.example',
+     'Songwriterin aus Leipzig. Zweites Album im Frühjahr.', 'https://facebook.example/annakessel',
+     'https://instagram.example/annakessel', 'https://youtube.example/@annakessel'),
+    ('Rauhfaser', 'rauhfaser', NULL, NULL, NULL, NULL, NULL),
+    ('DJ Nachtfalter', 'dj-nachtfalter', NULL, NULL, NULL, NULL, NULL);
 
 INSERT INTO events.promoter (name, slug, website_url)
 VALUES ('Sommerlaune Festival GmbH', 'sommerlaune-festival', 'https://sommerlaune.example');
 
 -- A multi-artist bill: a headliner, two supports and a DJ, in billing order, and one line-up entry
 -- the importer derived from the title rather than read from a line-up (V038).
-INSERT INTO events.event (venue_id, title, subtitle, event_type, slug, event_date, doors_time, start_time, source_url, source_id, ticket_url, genre,
-                          price_presale, price_box_office)
+INSERT INTO events.event (venue_id, title, subtitle, event_type, slug, event_date, doors_time, start_time, source_url, source_id, ticket_url,
+                          facebook_event_url, genre, price_presale, price_box_office)
 SELECT v.id, 'Møbius Trio', 'Support: Anna Kessel, Rauhfaser · Afterparty: DJ Nachtfalter', 'CONCERT',
        'fixture-multi-bill-' || to_char(CURRENT_DATE + 3, 'YYYY-MM-DD'), CURRENT_DATE + 3, TIME '19:00', TIME '20:00',
-       v.website_url || '/events/multi-bill', 'fixture-multi-bill', 'https://tickets.example/multi-bill', 'Jazz', 18.00, 22.00
+       v.website_url || '/events/multi-bill', 'fixture-multi-bill', 'https://tickets.example/multi-bill',
+       'https://fb.example/e/multi-bill', 'Jazz', 18.00, 22.00
 FROM events.venue v WHERE v.slug = 'jazzkeller-kreuzberg';
 
 INSERT INTO events.event_artist (event_id, artist_id, role, billing_order, title_derived)
@@ -221,6 +232,16 @@ FROM events.venue v WHERE v.slug = 'salon-zur-wilden-renate-co';
 
 INSERT INTO events.event_genre_tag (event_id, genre_tag_id)
 SELECT e.id, g.id FROM events.event e, events.genre_tag g WHERE e.source_id IN ('fixture-relocated', 'fixture-cancelled') AND g.slug = 'punk';
+
+-- Postponed: the venue says the date moves and names no new one, so the row keeps the date it had.
+-- The fourth EventStatus, and `FixtureTest` asserts all four are here.
+INSERT INTO events.event (venue_id, title, event_type, status, slug, event_date, start_time, source_url, source_id, genre, price_presale)
+SELECT v.id, 'DJ Überdruck — verschoben', 'PARTY', 'POSTPONED', 'fixture-postponed-' || to_char(CURRENT_DATE + 17, 'YYYY-MM-DD'), CURRENT_DATE + 17,
+       TIME '23:00', v.website_url || '/events/verschoben', 'fixture-postponed', 'Techno', 15.00
+FROM events.venue v WHERE v.slug = 'kesselhaus-nord';
+
+INSERT INTO events.event_genre_tag (event_id, genre_tag_id)
+SELECT e.id, g.id FROM events.event e, events.genre_tag g WHERE e.source_id = 'fixture-postponed' AND g.slug = 'techno';
 
 -- Past: three days back (see the header), so the default list, Tonight and the calendar from today
 -- leave it out, while its slug still resolves.

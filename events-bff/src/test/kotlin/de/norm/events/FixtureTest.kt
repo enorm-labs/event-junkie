@@ -1,5 +1,8 @@
 package de.norm.events
 
+import de.norm.events.event.ArtistRole
+import de.norm.events.event.EventStatus
+import kotlinx.coroutines.reactive.awaitSingle
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 import org.springframework.r2dbc.core.await
@@ -40,8 +43,8 @@ class FixtureTest : BaseControllerTest() {
         runBlocking {
             loadFixture()
 
-            // 30 generated + 11 named upcoming; the past row is the one the default window leaves out.
-            get("/events?size=1").jsonPath("$.totalElements").isEqualTo(41)
+            // 30 generated + 12 named upcoming; the past row is the one the default window leaves out.
+            get("/events?size=1").jsonPath("$.totalElements").isEqualTo(42)
             get("/events?size=100").jsonPath("$.content[?(@.slug == '${slug("past", -3)}')]").doesNotExist()
             webTestClient
                 .get()
@@ -172,6 +175,93 @@ class FixtureTest : BaseControllerTest() {
                 .jsonPath("$.content[?(@.slug == '${slug("cancelled", 11)}')]")
                 .exists()
         }
+
+    /**
+     * The closed sets of values the site renders differently, each covered by a row. Small enough to
+     * demand completeness rather than an allowlist: `EventType` is left out deliberately, because ten
+     * values that differ only as a label would make the exception list longer than the enum.
+     */
+    @Test
+    fun `every event status and every line-up role appears in the fixture`(): Unit =
+        runBlocking {
+            loadFixture()
+
+            assertCovers("SELECT DISTINCT status FROM events.event", EventStatus.entries.map { it.name })
+            assertCovers("SELECT DISTINCT role FROM events.event_artist", ArtistRole.entries.map { it.name })
+        }
+
+    /**
+     * Every column of the three main tables is set on at least one row, or waived below with a reason.
+     * This is the assertion that keeps the fixture growing with the schema: a migration adding a
+     * NULLABLE column loads fine and silently covers nothing, which no other check here would catch.
+     */
+    @Test
+    fun `every column of the main tables is exercised by some row, or waived`(): Unit =
+        runBlocking {
+            loadFixture()
+
+            val unset =
+                databaseClient
+                    .sql(
+                        TABLES.joinToString(" UNION ALL ") { table ->
+                            "SELECT '$table.' || c.column_name AS col FROM information_schema.columns c " +
+                                "WHERE c.table_schema = 'events' AND c.table_name = '$table' " +
+                                "AND NOT EXISTS (SELECT 1 FROM events.$table t WHERE to_jsonb(t) -> c.column_name <> 'null'::jsonb)"
+                        }
+                    ).map { row -> row.get("col", String::class.java)!! }
+                    .all()
+                    .collectList()
+                    .awaitSingle()
+
+            assert(unset.toSet() == WAIVED.keys) {
+                "Columns no fixture row sets: ${(unset.toSet() - WAIVED.keys).sorted()}. Add a row that " +
+                    "exercises each, or waive it in WAIVED with a reason. Waived but now covered, so the " +
+                    "waiver is stale: ${(WAIVED.keys - unset.toSet()).sorted()}"
+            }
+        }
+
+    private suspend fun assertCovers(
+        sql: String,
+        expected: List<String>
+    ) {
+        val present =
+            databaseClient
+                .sql(sql)
+                .map { row -> row.get(0, String::class.java)!! }
+                .all()
+                .collectList()
+                .awaitSingle()
+                .toSet()
+        assert(present.containsAll(expected)) { "No fixture row carries ${expected - present}; add one per value." }
+    }
+
+    private companion object {
+        val TABLES = listOf("event", "venue", "artist")
+
+        /**
+         * A column no row sets, and why. The value is the reason, so a reader sees the argument and a
+         * new entry needs one. Both groups here are decisions the fixture's header states.
+         */
+        val WAIVED =
+            mapOf(
+                // No fixture event has an event_source row, so the licence gate reads UNKNOWN_SOURCE and
+                // these rows exercise its fail-open path, which is what the site shows for them.
+                "event.event_source_id" to "no fixture row has a source; the gate's fail-open path is the one under test",
+                "event.image_url" to IMAGES,
+                "venue.image_url" to IMAGES,
+                "venue.image_attribution" to IMAGES,
+                "venue.image_licence_id" to IMAGES,
+                "venue.image_source_url" to IMAGES,
+                "artist.image_url" to IMAGES,
+                "artist.image_attribution" to IMAGES,
+                "artist.image_licence_id" to IMAGES,
+                "artist.image_source_url" to IMAGES
+            )
+
+        // V020 requires the attribution triple beside any image_url, and an image nobody serves would
+        // test the wrong thing: the served path is cached_image, which the image module covers.
+        const val IMAGES = "no fixture row names an image"
+    }
 
     @Test
     fun `the translated description is served with its origin, and the verified artist with its MBID`(): Unit =
