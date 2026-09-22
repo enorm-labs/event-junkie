@@ -141,16 +141,18 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           sha="$(git rev-parse HEAD)"
-          run="$(gh run list --workflow=release.yml --event push --branch main --limit 30 \
-            --json headSha,status,conclusion,url |
-            jq -c --arg sha "$sha" '[.[] | select(.headSha == $sha)][0]')"
+          # A point lookup by commit, not a page of the run listing: the listing is eventually
+          # consistent and returned nothing for a run that had been green for 13 minutes, which
+          # this gate reported as "no snapshot publish has run" (#1579).
+          run="$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs?head_sha=${sha}&event=push&per_page=100" \
+            --jq '[.workflow_runs[] | select(.path == ".github/workflows/release.yml")][0]')"
           if [ -z "$run" ] || [ "$run" = "null" ]; then
-            echo "::error::No snapshot publish has run for ${sha}. Wait for release.yml on main, then retry."
+            echo "::error::release.yml has never run for ${sha}. Wait for the snapshot publish on main, then retry."
             exit 1
           fi
           status="$(jq -r .status <<<"$run")"
           conclusion="$(jq -r .conclusion <<<"$run")"
-          url="$(jq -r .url <<<"$run")"
+          url="$(jq -r .html_url <<<"$run")"
           if [ "$status" != "completed" ] || [ "$conclusion" != "success" ]; then
             echo "::error::The snapshot publish for ${sha} is ${status}/${conclusion}: ${url} — a release from this commit fails the same gate. See docs/ops/RELEASING.md § Publishing is blocked."
             exit 1
