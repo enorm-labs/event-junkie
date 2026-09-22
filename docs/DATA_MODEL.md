@@ -17,95 +17,129 @@ are owned by the importer ([ADR-005](adr/ADR-005_MIGRATIONS_OWNED_BY_IMPORTER.md
 
 ## Class Diagram
 
+**This diagram is generated from the domain classes in `events-core`.** Do not edit it by hand. `DomainClassDiagramTest` writes it and the backend build
+fails when it stops matching. Rewrite it with `./gradlew :events-core:updateDataModelDiagram`.
+
+<!-- generated: domain class diagram -->
+
 ```mermaid
 classDiagram
     direction LR
 
     class Venue {
-        Long id
+        Long? id
         String name
         String slug
-        String address
+        String? address
         String city
-        String postalCode
-        BigDecimal latitude
-        BigDecimal longitude
-        String websiteUrl
-        String imageUrl
-        Instant createdAt
-        Instant updatedAt
+        String? postalCode
+        String? district
+        BigDecimal? latitude
+        BigDecimal? longitude
+        String? websiteUrl
+        String? imageUrl
+        String? imageAttribution
+        String? imageLicenceId
+        String? imageSourceUrl
+        String? description
+        String? descriptionLanguage
+        String? descriptionAlt
+        String? descriptionAltLanguage
+        Instant? createdAt
+        Instant? updatedAt
     }
 
     class Event {
-        Long id
+        Long? id
         String title
-        String subtitle
-        String description
+        String? subtitle
+        String? description
         EventType eventType
-        EventStatus status
-        String relocatedTo
         String slug
         LocalDate eventDate
-        LocalTime doorsTime
-        LocalTime startTime
-        LocalDate endDate
-        LocalTime endTime
-        String imageUrl
-        String sourceUrl
+        LocalTime? doorsTime
+        LocalTime? startTime
+        LocalDate? endDate
+        LocalTime? endTime
+        String? imageUrl
+        String? sourceUrl
         String sourceId
-        String ticketUrl
-        String facebookEventUrl
-        String genre
-        BigDecimal pricePresale
-        BigDecimal priceBoxOffice
+        String? ticketUrl
+        String? facebookEventUrl
+        String? genre
+        EventStatus status
+        BigDecimal? pricePresale
+        BigDecimal? priceBoxOffice
         String priceCurrency
-        String priceNote
-        boolean soldOut
-        Instant createdAt
-        Instant updatedAt
-    }
-
-    class Artist {
-        Long id
-        String name
-        String slug
-        String description
-        String imageUrl
-        String websiteUrl
-        String facebookUrl
-        String instagramUrl
-        String youtubeUrl
-        Instant createdAt
-        Instant updatedAt
-    }
-
-    class Promoter {
-        Long id
-        String name
-        String slug
-        String websiteUrl
-        String imageUrl
-        String description
-        String descriptionLanguage
-        String descriptionAlt
-        String descriptionAltLanguage
-        Instant reviewedAt
-        Instant createdAt
-        Instant updatedAt
-    }
-
-    class GenreTag {
-        Long id
-        String name
-        String slug
-        GenreFamily family
-        Instant createdAt
-        Instant updatedAt
+        String? priceNote
+        Boolean soldOut
+        Boolean free
+        Instant? createdAt
+        Instant? updatedAt
     }
 
     class LineupEntry {
         ArtistRole role
-        int billingOrder
+        Int billingOrder
+        String? stage
+    }
+
+    class Artist {
+        Long? id
+        String name
+        String slug
+        String? description
+        String? imageUrl
+        String? imageAttribution
+        String? imageLicenceId
+        String? imageSourceUrl
+        String? websiteUrl
+        String? facebookUrl
+        String? instagramUrl
+        String? youtubeUrl
+        String? bandcampUrl
+        String? soundcloudUrl
+        String? discogsUrl
+        String? wikidataUrl
+        String? residentAdvisorUrl
+        String? spotifyUrl
+        ArtistType? artistType
+        String? founded
+        String? foundedIn
+        String? country
+        String? musicbrainzId
+        MusicBrainzMatch musicbrainzMatch
+        Instant? musicbrainzCheckedAt
+        Instant? musicbrainzEnrichedAt
+        Instant? createdAt
+        Instant? updatedAt
+    }
+
+    class Promoter {
+        Long? id
+        String name
+        String slug
+        String? websiteUrl
+        String? imageUrl
+        String? imageAttribution
+        String? imageLicenceId
+        String? imageSourceUrl
+        String? description
+        String? descriptionLanguage
+        String? descriptionAlt
+        String? descriptionAltLanguage
+        Instant? reviewedAt
+        Instant? createdAt
+        Instant? updatedAt
+    }
+
+    class GenreTag {
+        Long? id
+        String name
+        String slug
+        GenreFamily? family
+        Instant? createdAt
+        Instant? updatedAt
     }
 
     class EventType {
@@ -137,31 +171,83 @@ classDiagram
         DJ
     }
 
-    Venue "1" <-- "*" Event: venue
+    class ArtistType {
+        <<enumeration>>
+        PERSON
+        GROUP
+        ORCHESTRA
+        CHOIR
+        OTHER
+    }
+
+    class MusicBrainzMatch {
+        <<enumeration>>
+        EXACT
+        AMBIGUOUS
+        NONE
+        UNCHECKED
+    }
+
+    class GenreFamily {
+        <<enumeration>>
+        ELECTRONIC
+        HIP_HOP
+        POP
+        ROCK
+        PUNK
+        METAL
+        WAVE
+        SOUL_FUNK
+        JAZZ_BLUES
+        FOLK
+        LATIN_WORLD
+        CLASSICAL
+        CHARTS
+    }
+
+    Event "*" --> "1" Venue: venue
     Event "1" --> "*" LineupEntry: lineup
-    LineupEntry "*" --> "1" Artist: artist
-    Event "*" --> "*" Promoter: promoters
-    Event "*" --> "*" GenreTag: genreTags
+    Event "1" --> "*" Promoter: promoters
     Event --> EventType: eventType
     Event --> EventStatus: status
+    LineupEntry "*" --> "1" Artist: artist
     LineupEntry --> ArtistRole: role
+    Artist --> ArtistType: artistType
+    Artist --> MusicBrainzMatch: musicbrainzMatch
+    GenreTag --> GenreFamily: family
 ```
+
+<!-- /generated: domain class diagram -->
 
 Domain classes are organized by feature in `events-core`:
 
 ```
 de.norm.events
 ├── artist/
-│   └── Artist.kt
+│   └── Artist.kt         (Artist, ArtistType, MusicBrainzMatch)
 ├── event/
 │   └── Event.kt          (Event, EventType, EventStatus, LineupEntry, ArtistRole)
 ├── genretag/
-│   └── GenreTag.kt
+│   ├── GenreTag.kt
+│   └── GenreFamily.kt
+├── licence/
+│   └── SourceLicence.kt
 ├── promoter/
 │   └── Promoter.kt
 └── venue/
     └── Venue.kt
 ```
+
+### What is generated, and what is not
+
+The diagram shows the **domain classes**. The field tables below show the **database**. The two layers are separate by
+[ADR-003](adr/ADR-003_ENTITY_DOMAIN_SEPARATION.md), and they do not always agree.
+
+`event.relocated_to` is the example. The column exists since V036. Both applications carry it on their own `EventEntity`. The domain `Event` does not carry
+it. So the diagram does not draw it and the table below lists it. **Where the two disagree, the table is right about the database**, because the column is what
+exists. The diagram is right about what the shared code can pass around.
+
+The tables are written by hand. They carry a description and an example for each column, and no generator writes those.
 
 ## Entities
 
