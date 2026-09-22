@@ -1,14 +1,13 @@
 package de.norm.events.scraper.colosseum
 
+import de.norm.events.scraper.AbstractTwoPageWebsiteImporter
 import de.norm.events.scraper.AcceptedLimitation
-import de.norm.events.scraper.EventImporter
 import de.norm.events.scraper.EventSource
-import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
-import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.LimitedAspect
+import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.VenueLimitations
-import io.github.oshai.kotlinlogging.KotlinLogging
+import org.jsoup.nodes.Document
 import org.springframework.stereotype.Component
 
 /**
@@ -19,17 +18,18 @@ import org.springframework.stereotype.Component
  * [HtmlFetcher] fetches `/event` conditionally (Wix serves a weak `ETag`),
  * [ColosseumOverviewPageScraper] parses the embedded JSON.
  *
- * **The `/details-registrierung/<slug>` pages are deliberately not fetched.** They add two things,
- * neither surviving inspection:
- * - Their `about` field is *not* per-event text. Each event is created by cloning an old one and
- * that section is never rewritten, so the same 3,440-character block — a Dustin O'Halloran
- * biography opening "Einlass: 19 Uhr / Beginn: 20 Uhr" — is served for a Cornelia Funke reading,
- * an Irvine Welsh evening and a football talk alike. Importing it would attach a stranger's
- * biography, and a door time contradicting the event's `startDate`, to nearly every event. Both
- * description and doors time are left empty.
+ * **The `/details-registrierung/<slug>` pages are fetched for their times alone** (#1684). The
+ * listing carries one `startDate` per event, and that time is the doors as often as it is the
+ * start — 8 of 18 live events against 7 — so a row built from the listing alone puts a door time
+ * in `startTime` about half the time. [ColosseumDetailPageScraper] reads the event's own `Einlass`
+ * and `Beginn` lines; the listing's record is kept for everything else. Two fields stay refused:
+ * - Their `about` is *not* per-event text. Each event is created by cloning an old one and that
+ * section is never rewritten, so the same 3,440-character block — a Dustin O'Halloran biography
+ * opening "Einlass: 19 Uhr / Beginn: 20 Uhr" — is served for a Cornelia Funke reading, an Irvine
+ * Welsh evening and a football talk alike. It would attach a stranger's biography to nearly every
+ * event, and it is the second Einlass line the time parsing steps over.
  * - Their `tickets[].price` is the face value, where the overview's `lowestTicketPrice` is the
- * checkout total including Wix's service fee. The total is what a buyer pays, so the overview
- * figure is the better one — and needs no extra request.
+ * checkout total including Wix's service fee. The total is what a buyer pays.
  *
  * The widget ships the upcoming window only (18 events) and reports `hasMore: true`; the rest
  * needs the authenticated widget API, as at MAXXIM. First page only is the standing decision
@@ -41,35 +41,38 @@ import org.springframework.stereotype.Component
  */
 @Component
 class ColosseumWebsiteImporter(
-    private val htmlFetcher: HtmlFetcher
-) : EventImporter {
-    private val logger = KotlinLogging.logger {}
-
+    htmlFetcher: HtmlFetcher
+) : AbstractTwoPageWebsiteImporter(htmlFetcher) {
     override val eventSource: EventSource = EventSource.COLOSSEUM
 
     private val overviewPageScraper = ColosseumOverviewPageScraper()
+    private val detailPageScraper = ColosseumDetailPageScraper()
 
-    override suspend fun importEvents(
-        url: String,
-        etag: String?,
-        lastModified: String?
-    ): ImportResult =
-        when (val fetchResult = htmlFetcher.fetch(url, etag, lastModified)) {
-            is FetchResult.NotModified -> {
-                ImportResult.NotModified
-            }
+    override fun scrapeOverview(
+        document: Document,
+        url: String
+    ): List<ScrapedEvent> = overviewPageScraper.scrape(document, url)
 
-            is FetchResult.Success -> {
-                val events = overviewPageScraper.scrape(fetchResult.document, url)
-                logger.info { "Scraped ${events.size} event(s) from Colosseum" }
+    override fun scrapeDetail(
+        document: Document,
+        url: String
+    ): ScrapedEvent? = detailPageScraper.scrape(document, url)
 
-                ImportResult.Success(
-                    events = events,
-                    etag = fetchResult.etag,
-                    lastModified = fetchResult.lastModified
-                )
-            }
-        }
+    /**
+     * Keeps the listing's record whole and takes the two times from the event's own page.
+     *
+     * The listing is the richer source — prices, the sold-out flag, the poster, the ticket shop and
+     * the type are all read from it — and the detail page is fetched for nothing else. A page that
+     * states no clock leaves the listing's time where it was.
+     */
+    override fun fillGapsFromOverview(
+        primary: ScrapedEvent,
+        fallback: ScrapedEvent
+    ): ScrapedEvent =
+        fallback.copy(
+            doorsTime = primary.doorsTime ?: fallback.doorsTime,
+            startTime = primary.startTime ?: fallback.startTime
+        )
 }
 
 val COLOSSEUM_LIMITATIONS =
@@ -78,7 +81,7 @@ val COLOSSEUM_LIMITATIONS =
         AcceptedLimitation(LimitedAspect.EVENT_TYPE, "`categories` is empty on every event, so the type is inferred from the title and subtitle"),
         AcceptedLimitation(
             LimitedAspect.DOORS_TIME,
-            "the Wix payload carries one `startDate` per event, and the detail page repeats one boilerplate Einlass line for all of them"
+            "an event whose own page states no Einlass line keeps the listing's single time as the start, and gets no doors"
         ),
         AcceptedLimitation(LimitedAspect.GENRE, "the house names no musical style anywhere"),
         AcceptedLimitation(LimitedAspect.ARTISTS, "no support-act convention exists in the subtitles, and a title is as often an event name as a performer's")

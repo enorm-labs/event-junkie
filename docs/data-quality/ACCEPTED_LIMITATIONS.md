@@ -41,7 +41,7 @@ says so.
 | `CLUB_OST`            | `ARTISTS`          | the listing carries no lineup, though the CMS holds an empty div where one would go                                                              | —     |
 | `CLUB_OST`            | `DOORS_TIME`       | the listing carries one time per night and no doors time                                                                                         | —     |
 | `COLOSSEUM`           | `EVENT_TYPE`       | `categories` is empty on every event, so the type is inferred from the title and subtitle                                                        | —     |
-| `COLOSSEUM`           | `DOORS_TIME`       | the Wix payload carries one `startDate` per event, and the detail page repeats one boilerplate Einlass line for all of them                      | —     |
+| `COLOSSEUM`           | `DOORS_TIME`       | an event whose own page states no Einlass line keeps the listing's single time as the start, and gets no doors                                   | —     |
 | `COLOSSEUM`           | `GENRE`            | the house names no musical style anywhere                                                                                                        | —     |
 | `COLOSSEUM`           | `ARTISTS`          | no support-act convention exists in the subtitles, and a title is as often an event name as a performer's                                        | —     |
 | `COLUMBIAHALLE`       | `PER_EVENT_PAGE`   | the venue's own iCal export keys the event on the same Contao id and points back at the listing anchor                                           | —     |
