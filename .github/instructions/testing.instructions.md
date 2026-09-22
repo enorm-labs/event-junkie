@@ -53,8 +53,8 @@ Extend what is already here rather than repeating its boilerplate.
   bare `npm run test:e2e` would run it against a runner with no cluster behind it. A spec belongs there
   only when it asserts something a deployment has and a dev server does not — nginx serving the bundle,
   Traefik's middlewares and the CSP, the SPA fallback, the rows `fixtures/events.sql` seeded (#272).
-  **A `page.route` under `real-data/` fails the job**, because it would put a mock back in front of the
-  thing under test. Chromium only there: what is under test is the deployment, not five engines.
+  **A `page.route` under `real-data/` fails `npm run lint`** (`no-restricted-syntax`, scoped to that
+  directory), because it would put a mock back in front of the thing under test. Chromium only there: what is under test is the deployment, not five engines.
 - **`/verify` is chromium desktop and will not see a mobile break** — a header nav overflowing 390 px pushed a control off-screen once. When touching the
   app shell, header, nav or any layout: `npm run test:e2e -- --project="Mobile Chrome" --project="Mobile Safari"` before pushing. On CI such a break also
   burns 30 s × 2 retries × 5 projects.

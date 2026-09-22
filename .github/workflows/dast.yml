@@ -39,7 +39,10 @@ on:
   workflow_dispatch:
     inputs:
       job:
-        description: Which scan to run
+        # **Every job below names the values it runs for.** These were `!= 'production'` and `!= 'k3d'`,
+        # which was exhaustive for three choices and admitted the fourth the day one was added: a
+        # dispatch for `e2e` started both production scans as well (#1699).
+        description: Which job to run
         type: choice
         options:
           - both
@@ -86,7 +89,7 @@ jobs:
     timeout-minutes: 75
     if: >-
       (github.event_name == 'schedule' && github.event.schedule == '52 3 * * *')
-      || (github.event_name == 'workflow_dispatch' && inputs.job != 'production')
+      || (github.event_name == 'workflow_dispatch' && (inputs.job == 'both' || inputs.job == 'k3d'))
 
     steps:
       - name: Checkout
@@ -350,18 +353,6 @@ jobs:
           fi
           echo "/api/events serves $total seeded events"
 
-      # The property that makes this suite worth running: a spec here must talk to the deployment, and
-      # a `page.route` would quietly put a mock back in front of it. Cheap enough to check in the job
-      # that cares rather than in a lint rule nobody reads.
-      - name: Refuse a mock in the un-mocked suite
-        working-directory: events-frontend
-        run: |
-          if grep -rn "page.route" e2e/real-data/; then
-            echo "::error::e2e/real-data is the suite that talks to the deployment; a route handler makes it test a mock again."
-            exit 1
-          fi
-          echo "No request interception in e2e/real-data."
-
       # `--host-resolver-rules` in the project config points the Ingress name at the published port,
       # which is what carries the right `Host` on a navigation; `extraHTTPHeaders` cannot.
       - name: Run the un-mocked suite through Traefik
@@ -392,7 +383,7 @@ jobs:
     timeout-minutes: 30
     if: >-
       (github.event_name == 'schedule' && github.event.schedule == '46 5 * * 0')
-      || (github.event_name == 'workflow_dispatch' && inputs.job != 'k3d')
+      || (github.event_name == 'workflow_dispatch' && (inputs.job == 'both' || inputs.job == 'production'))
 
     steps:
       - name: Checkout
@@ -457,7 +448,7 @@ jobs:
     timeout-minutes: 40
     if: >-
       (github.event_name == 'schedule' && github.event.schedule == '19 4 * * 0')
-      || (github.event_name == 'workflow_dispatch' && inputs.job != 'k3d')
+      || (github.event_name == 'workflow_dispatch' && (inputs.job == 'both' || inputs.job == 'production'))
 
     steps:
       - name: Checkout
