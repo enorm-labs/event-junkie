@@ -10,6 +10,7 @@
 #   up [service…] [--scheduling] Start service(s) in the background, wait until they answer
 #   down [service…] [--db]       Stop service(s) (and with --db the database too)
 #   status                       Show database + service state
+#   seed-fixture                 Load fixtures/events.sql — the fixed dataset, no network (#272)
 #   seed-all                     Run http/importer/dev-seed.http via ijhttp (all sources)
 #   seed-one <venue.json> <source.json>
 #                                POST one venue + one event source, print the source slug
@@ -308,6 +309,17 @@ cmd_status() {
     done
 }
 
+# The migrations have to be there first, and the importer's start is what applies them; a bare
+# database answers with `relation "events.venue" does not exist`, which reads like a broken fixture.
+cmd_seed_fixture() {
+    db_ready || die "Database is not running — run 'dev-env.sh db-reset' first"
+    [[ "$(query "SELECT to_regclass('events.event') IS NOT NULL")" == "t" ]] \
+        || die "No schema yet — run 'dev-env.sh up importer' once so Flyway applies the migrations"
+    log "Loading fixtures/events.sql"
+    run_psql -q -f "$REPO_ROOT/fixtures/events.sql"
+    log "Loaded: $(query "SELECT count(*) || ' events, ' || (SELECT count(*) FROM venue) || ' venues, ' || (SELECT count(*) FROM artist) || ' artists' FROM event")"
+}
+
 cmd_seed_all() {
     need ijhttp
     importer_healthy || die "Importer is not running — run 'dev-env.sh up' first"
@@ -479,6 +491,7 @@ case "${1:-}" in
     up) shift && cmd_up "$@" ;;
     down) shift && cmd_down "$@" ;;
     status) shift && cmd_status "$@" ;;
+    seed-fixture) shift && cmd_seed_fixture "$@" ;;
     seed-all) shift && cmd_seed_all "$@" ;;
     seed-one) shift && cmd_seed_one "$@" ;;
     import) shift && cmd_import "$@" ;;

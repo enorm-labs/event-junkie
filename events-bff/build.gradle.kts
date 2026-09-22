@@ -141,4 +141,6 @@ tasks.withType<Test> {
         "spring.flyway.locations",
         "filesystem:${rootProject.projectDir}/events-importer/src/main/resources/db/migration"
     )
+    // The shared dataset (#272), read by FixtureTest through the same door as the migrations above.
+    systemProperty("fixture.sql", "${rootProject.projectDir}/fixtures/events.sql")
 }
