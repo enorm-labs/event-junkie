@@ -1,6 +1,16 @@
 import process from 'node:process'
 import { defineConfig, devices } from '@playwright/test'
 
+/**
+ * The Ingress name the chart routes, and where k3d publishes Traefik (#1699). `Host` cannot be set on
+ * a navigation, so chromium is told to resolve that name to the published port instead — which is
+ * also what makes the request carry the right `Host`, SNI included.
+ */
+const REAL_DATA_URL = process.env.E2E_BASE_URL ?? 'http://event-junkie.localhost:8080'
+
+/** The one suite that talks to a deployment, kept out of every other project by path. */
+const REAL_DATA_DIR = '**/real-data/**'
+
 export default defineConfig({
   testDir: './e2e',
   timeout: 30 * 1000,
@@ -26,18 +36,24 @@ export default defineConfig({
 
   projects: [
     {
+      // The five browser projects run against a dev server with no BFF, so none of them may pick up
+      // `real-data/`. A top-level `testIgnore` would also apply to the project whose testDir is in
+      // there, and Playwright would then find no tests at all.
+      testIgnore: REAL_DATA_DIR,
       name: 'chromium',
       use: {
         ...devices['Desktop Chrome'],
       },
     },
     {
+      testIgnore: REAL_DATA_DIR,
       name: 'firefox',
       use: {
         ...devices['Desktop Firefox'],
       },
     },
     {
+      testIgnore: REAL_DATA_DIR,
       name: 'webkit',
       use: {
         ...devices['Desktop Safari'],
@@ -45,19 +61,45 @@ export default defineConfig({
     },
 
     {
+      testIgnore: REAL_DATA_DIR,
       name: 'Mobile Chrome',
       use: {
         ...devices['Pixel 5'],
       },
     },
     {
+      testIgnore: REAL_DATA_DIR,
       name: 'Mobile Safari',
       use: {
         ...devices['iPhone 12'],
       },
     },
+
+    /**
+     * The deployment suite (#1699): the chart on k3d, through Traefik, against the rows
+     * `fixtures/events.sql` seeded. It mocks nothing — that is the whole point, and `e2e/real-data/`
+     * is a directory rather than a naming convention so the rule is a path.
+     *
+     * Chromium alone: what is under test is nginx, the middlewares and a real BFF, not how five
+     * engines lay the page out. `--host-resolver-rules` is what lets the browser ask for the Ingress
+     * name; the five projects above never load it, because `testIgnore` keeps them out of here.
+     */
+    {
+      name: 'real-data',
+      testDir: './e2e/real-data',
+      use: {
+        ...devices['Desktop Chrome'],
+        baseURL: REAL_DATA_URL,
+        launchOptions: {
+          args: [`--host-resolver-rules=MAP ${new URL(REAL_DATA_URL).hostname} 127.0.0.1:${new URL(REAL_DATA_URL).port || 80}`],
+        },
+      },
+    },
   ],
 
+  // Not started for the `real-data` project: it has a deployment to talk to, and a Vite server on
+  // 4173 would answer nothing it asks for. Playwright starts this for every run, so the project is
+  // selected with `--project=real-data` and the server is harmless; `E2E_BASE_URL` decides the target.
   webServer: {
     /**
      * Dev server locally for the feedback loop, preview server on CI; an already running dev server
