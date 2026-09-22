@@ -765,14 +765,22 @@ cmd_flux_verify() {
   guard_context
   log "What Flux actually pulled"
 
-  local revision
+  local revision range
   revision="$(k -n flux-system get ocirepository event-junkie -o jsonpath='{.status.artifact.revision}')"
-  # The whole point of the `-0` in the semver range: a snapshot is a SemVer prerelease, and a range
-  # without a prerelease comparator skips it silently. `flux-trap` shows the failure mode.
+  range="$(k -n flux-system get ocirepository event-junkie -o jsonpath='{.spec.ref.semver}')"
+  # THE `-0` IS THE ASSERTION, NOT THE KIND OF CHART THAT RESOLVED. A snapshot is a SemVer prerelease
+  # and a range without a prerelease comparator skips it silently, which is the trap `flux-trap`
+  # demonstrates. Asserting "a snapshot resolved" was a proxy for that, and it is wrong for the window
+  # between a release and the next merge to main: `cut-release.yml` publishes 0.23.0, which outranks
+  # every snapshot before it, so the correct resolution is a release and the run failed on it (#1699).
+  case "$range" in
+    *-0*) ok "the range admits prereleases: $range" ;;
+    *)    bad "the range is '$range' — without the -0 no snapshot can ever resolve" ;;
+  esac
   case "$revision" in
-    *snapshot*) ok "resolved a snapshot: $revision" ;;
     "")         bad "no artifact resolved at all" ;;
-    *)          bad "resolved '$revision', which is not a snapshot — is the -0 missing from the range?" ;;
+    *snapshot*) ok "resolved a snapshot: $revision" ;;
+    *)          ok "resolved a release: $revision — newer than every snapshot, which is what a cut means" ;;
   esac
 
   local images
@@ -815,22 +823,34 @@ cmd_flux_verify() {
   fi
 }
 
-# Removes the `-0` and watches the range stop matching. The trap is silent, so the only way to trust
-# the range is to see both states.
+# Removes the `-0` and watches the range stop seeing snapshots. The trap is silent, so the only way to
+# trust the range is to see both states.
 cmd_flux_trap() {
   guard_context
   log "The prerelease trap, observed rather than trusted"
+  local before
+  before="$(k -n flux-system get ocirepository event-junkie -o jsonpath='{.status.artifact.revision}')"
   k -n flux-system patch ocirepository event-junkie --type=merge \
     -p '{"spec":{"ref":{"semver":">=0.0.0"}}}' >/dev/null
   f reconcile source oci event-junkie >/dev/null 2>&1 || true
   sleep 5
-  local ready message
+  local ready message after
   ready="$(k -n flux-system get ocirepository event-junkie -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}')"
   message="$(k -n flux-system get ocirepository event-junkie -o jsonpath='{.status.conditions[?(@.type=="Ready")].message}')"
+  after="$(k -n flux-system get ocirepository event-junkie -o jsonpath='{.status.artifact.revision}')"
+  # TWO OUTCOMES, BOTH CORRECT, AND WHICH ONE DEPENDS ON WHETHER A RELEASE EXISTS YET. With only
+  # snapshots published the range matches nothing at all. Once a release is out it matches that
+  # release, and the trap is that every snapshot after it is invisible — the same silence, one version
+  # later. Asserting only the first left this red for the window after a cut (#1699).
   if [ "$ready" = "False" ]; then
     ok "without the -0 the range matches nothing: $message"
+  elif [ -n "$after" ] && [ "$after" != "$before" ]; then
+    case "$after" in
+      *snapshot*) bad "expected the range to stop seeing snapshots, but it resolved $after" ;;
+      *)          ok "without the -0 the range falls back to a release and ignores every later snapshot: $after" ;;
+    esac
   else
-    bad "expected the range to stop matching, but Ready=$ready ($message)"
+    bad "expected the range to stop matching, but Ready=$ready and the revision did not move ($message)"
   fi
 
   info "restoring the range"
