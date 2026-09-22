@@ -42,8 +42,10 @@ class BinuuDetailPageScraperTest {
         archEnemy.title shouldBe "Arch Enemy"
         archEnemy.subtitle shouldBe "Back To The Root Of All Evil"
         archEnemy.eventDate shouldBe LocalDate.of(2026, 7, 19)
-        archEnemy.doorsTime shouldBe LocalTime.of(18, 0)
-        archEnemy.startTime shouldBe LocalTime.of(19, 0)
+        // The payload's `18:00:00.000Z` / `19:00:00.000Z` are UTC instants, and the venue's own page
+        // renders them two hours later in summer (#1675).
+        archEnemy.doorsTime shouldBe LocalTime.of(20, 0)
+        archEnemy.startTime shouldBe LocalTime.of(21, 0)
     }
 
     @Test

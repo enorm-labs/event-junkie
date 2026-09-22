@@ -78,6 +78,23 @@ class BadehausDetailPageScraperTest {
         event.description.shouldNotBeNull() shouldNotContain "Doors:"
     }
 
+    @Test
+    fun `reads the start from the verb that labels it, and keeps the donation sentences as the price note`() {
+        // "Doors 19:30 / Quiz starts 20:00": the venue's phrasing for its recurring quiz, where the
+        // verb carries the label and a second clock follows it (#1681).
+        val url = "https://badehaus-berlin.com/events/pubquiz-with-simply-quiz-184/"
+        val event = scraper.scrape(fixture("badehaus-detail-donation-quiz.html", url), url)
+        event.shouldNotBeNull()
+
+        event.doorsTime shouldBe LocalTime.of(19, 30)
+        event.startTime shouldBe LocalTime.of(20, 0)
+        // The night sells no ticket, so what a visitor pays is a sentence and nothing else holds it.
+        event.priceNote shouldBe
+            "The event is donation-based. We suggest a donation of 2–5 € at the door to help keep the Pub Quiz running."
+        event.pricePresale shouldBe null
+        event.free shouldBe false
+    }
+
     // The card's one VERLEGT class covers both changes; the opening notice says which (#1578).
     @Test
     fun `reads a postponement from the opening notice`() {

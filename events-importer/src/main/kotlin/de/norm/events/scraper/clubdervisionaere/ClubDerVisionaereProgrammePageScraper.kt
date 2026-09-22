@@ -8,6 +8,7 @@ import de.norm.events.scraper.clubdervisionaere.ClubDerVisionaereProgrammePageSc
 import de.norm.events.scraper.inferYearForWeekday
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.parseGermanWeekdayAbbreviation
+import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.splitSegmentOnConjunctions
 import de.norm.events.scraper.stripArtistSuffix
 import de.norm.events.scraper.textAt
@@ -18,6 +19,7 @@ import org.jsoup.nodes.Element
 import java.time.Clock
 import java.time.DateTimeException
 import java.time.LocalDate
+import java.time.LocalTime
 import java.time.MonthDay
 
 /**
@@ -136,9 +138,26 @@ class ClubDerVisionaereProgrammePageScraper(
             // No per-event pages: the programme page is every night's source.
             sourceUrl = sourceUrl,
             sourceId = "${room.eventSource.sourceIdPrefix}$postId",
+            startTime = earliestSlotTime(block),
             artists = parseLineup(block)
         )
     }
+
+    /**
+     * The earliest slot time the block's act lines carry (`// The Omniversal Earkestra LIVE from
+     * 21:00`, `// Guest DJs from 23:00` → 21:00), or `null` when none does.
+     *
+     * A slot time is when one act plays, not when the night opens, which is why [parseActLine]
+     * strips it from the name. The earliest of them is still the best evidence the listing gives
+     * that the night is open, and a Sonnenraum Monday carries nothing else (#1687). The homepage's
+     * NEXT box outranks it wherever it has an answer.
+     */
+    private fun earliestSlotTime(block: Element): LocalTime? =
+        block
+            .select(LINEUP_LINE_SELECTOR)
+            .mapNotNull { SET_TIME_TAIL_PATTERN.find(it.text().replace(NON_BREAKING_SPACE, ' ').trim())?.groupValues?.get(1) }
+            .mapNotNull(::parseTime)
+            .minOrNull()
 
     /**
      * The block's German `Wd. D.M.` date cell, year from the weekday. `null` for an empty cell
@@ -271,8 +290,11 @@ class ClubDerVisionaereProgrammePageScraper(
         /** The live-performance marker, on a section heading ("Live Band featuring") or an act ("… LIVE"). */
         private val LIVE_MARKER_PATTERN = Regex("""\blive\b""", RegexOption.IGNORE_CASE)
 
-        /** A trailing set time on an act line ("… LIVE from 21:00") — a slot time, not the event's start. */
-        private val SET_TIME_TAIL_PATTERN = Regex("""\s+from\s+\d{1,2}:\d{2}\s*$""", RegexOption.IGNORE_CASE)
+        /**
+         * A trailing set time on an act line ("… LIVE from 21:00"): when that act plays, stripped
+         * from the name, and the earliest of them stands in for the night's start ([earliestSlotTime]).
+         */
+        private val SET_TIME_TAIL_PATTERN = Regex("""\s+from\s+(\d{1,2}:\d{2})\s*$""", RegexOption.IGNORE_CASE)
 
         /** A leading series label on an act line ("Soundz of:  Guest DJs"), stripped so the act remains. */
         private val LINEUP_LABEL_PREFIX = Regex("""^[^:]{1,30}:\s+""")

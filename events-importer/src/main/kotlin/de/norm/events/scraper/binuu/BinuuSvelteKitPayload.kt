@@ -1,16 +1,17 @@
 package de.norm.events.scraper.binuu
 
 import de.norm.events.event.EventType
-import de.norm.events.scraper.HH_MM_LENGTH
+import de.norm.events.scraper.BERLIN
 import de.norm.events.scraper.WHITESPACE
-import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.stringOrNull
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import tools.jackson.core.json.JsonReadFeature
 import tools.jackson.databind.JsonNode
 import tools.jackson.databind.json.JsonMapper
+import java.time.Instant
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.format.DateTimeParseException
 
@@ -144,25 +145,30 @@ internal fun JsonNode.binuuImageUrl(): String? {
 }
 
 /**
- * The date from a timestamp like `"2026-07-19 19:00:00.000Z"`. The `Z` is spurious: the values
- * are Berlin wall-clock times, so only `yyyy-MM-dd` is read with no shift.
+ * The Berlin date of a timestamp like `"2026-07-19 19:00:00.000Z"`.
+ *
+ * **The `Z` is not spurious.** The payload's instants are UTC, and the page's own renderer shows
+ * them two hours later in summer: `"2026-09-22 18:00:00.000Z"` renders as `Start: 20:00`. The
+ * one-hour step every row took at the autumn CEST→CET boundary is what proved it (#1675). So the
+ * date is read after the conversion too: a 23:00 UTC start is the next day in Berlin.
  */
-internal fun parseBinuuDate(raw: String?): LocalDate? {
-    if (raw.isNullOrBlank() || raw.length < DATE_LENGTH) return null
+internal fun parseBinuuDate(raw: String?): LocalDate? = parseBinuuInstant(raw)?.toLocalDate()
+
+/** The Berlin time of the same timestamp, `null` without a parseable one. */
+internal fun parseBinuuTime(raw: String?): LocalTime? = parseBinuuInstant(raw)?.toLocalTime()
+
+/**
+ * `"2026-07-19 19:00:00.000Z"` as a Berlin date and time. The space where ISO-8601 puts a `T` is
+ * the one thing that stops [java.time.Instant.parse] reading it, so it is replaced.
+ */
+private fun parseBinuuInstant(raw: String?): LocalDateTime? {
+    val trimmed = raw?.trim()
+    if (trimmed.isNullOrBlank() || trimmed.length < DATE_LENGTH) return null
     return try {
-        LocalDate.parse(raw.trim().substring(0, DATE_LENGTH))
+        Instant.parse(trimmed.replaceFirst(' ', 'T')).atZone(BERLIN).toLocalDateTime()
     } catch (_: DateTimeParseException) {
         null
     }
-}
-
-/**
- * The `HH:mm` after the space in `"2026-07-19 19:00:00.000Z"` ([parseBinuuDate] on the spurious
- * `Z`). `null` without a time component.
- */
-internal fun parseBinuuTime(raw: String?): LocalTime? {
-    val timePart = raw?.trim()?.substringAfter(' ', "")?.take(HH_MM_LENGTH)
-    return parseTime(timePart?.takeIf { it.isNotBlank() })
 }
 
 /**
