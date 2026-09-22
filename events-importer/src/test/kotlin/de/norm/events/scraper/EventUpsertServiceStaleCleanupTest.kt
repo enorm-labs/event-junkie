@@ -87,6 +87,7 @@ class EventUpsertServiceStaleCleanupTest {
 
         // Default stubs for the upsert pipeline (we're testing stale cleanup, not upsert)
         coEvery { eventRepository.findBySourceIdIn(any()) } returns emptyFlow()
+        coEvery { eventRepository.findBySlugIn(any()) } returns emptyFlow()
         coEvery { eventRepository.deleteByIdIn(any()) } returns Unit
         coEvery { eventRepository.saveAll(any<Iterable<EventEntity>>()) } answers {
             firstArg<Iterable<EventEntity>>()

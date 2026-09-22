@@ -124,7 +124,7 @@ class ImporterMetrics(
     }
 
     /**
-     * Every meter one upsert produces, three writes and three drops (#982), in one call because the
+     * Every meter one upsert produces, three writes and four drops (#982), in one call because the
      * mapping from an outcome to its meters is this class's job. [droppedUnresolvedDate] is separate
      * because it is dropped before the upsert. The `reason` values are constants, as for
      * [scrapeFailureReason]: a tag fed by a title or a URL is unbounded.
@@ -143,7 +143,8 @@ class ImporterMetrics(
         mapOf(
             DropReason.PAST to upsert.droppedPast,
             DropReason.DUPLICATE to upsert.droppedDuplicate,
-            DropReason.UNRESOLVED_DATE to droppedUnresolvedDate
+            DropReason.UNRESOLVED_DATE to droppedUnresolvedDate,
+            DropReason.SLUG_CONFLICT to upsert.droppedSlugConflict
         ).forEach { (reason, count) ->
             if (count > 0) {
                 registry.counter(EVENTS_DROPPED, TAG_SOURCE, sourceSlug, TAG_REASON, reason.tag).increment(count.toDouble())
@@ -406,7 +407,10 @@ class ImporterMetrics(
         DUPLICATE("duplicate"),
 
         /** Neither the overview nor the detail page yielded a date. */
-        UNRESOLVED_DATE("unresolved_date")
+        UNRESOLVED_DATE("unresolved_date"),
+
+        /** Another event already holds the slug the event needs (#1719). */
+        SLUG_CONFLICT("slug_conflict")
     }
 
     companion object {

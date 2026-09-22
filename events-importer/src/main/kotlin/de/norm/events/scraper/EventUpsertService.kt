@@ -106,18 +106,14 @@ class EventUpsertService(
                 .associateBy { it.sourceId }
 
         val discriminators = slugDiscriminators(scrapedEvents)
-        val entities =
-            scrapedEvents.map { scraped ->
-                scraped.toEventEntity(
-                    venueId,
-                    venueSlug,
-                    eventSourceId,
-                    existingBySourceId[scraped.sourceId],
-                    discriminators[scraped.sourceId],
-                    licences
-                )
-            }
-        val (changed, unchanged) = partitionByChanged(entities, existingBySourceId)
+        val build = { scraped: ScrapedEvent, existing: EventEntity? ->
+            scraped.toEventEntity(venueId, venueSlug, eventSourceId, existing, discriminators[scraped.sourceId], licences)
+        }
+        val candidates = scrapedEvents.map { scraped -> scraped to build(scraped, existingBySourceId[scraped.sourceId]) }
+        val resolved = resolveBySlug(candidates, existingBySourceId, eventSourceId, build)
+
+        val entities = resolved.kept
+        val (changed, unchanged) = partitionByChanged(entities, existingBySourceId, resolved.movedSourceIds)
         val savedEvents =
             if (changed.isNotEmpty()) {
                 eventRepository.saveAll(changed).toList() + unchanged
@@ -130,7 +126,8 @@ class EventUpsertService(
         // Only changed/new events are logged here; unchanged ones already are, in partitionByChanged.
         var inserted = 0
         changed.forEach { saved ->
-            val existed = existingBySourceId.containsKey(saved.sourceId)
+            // A row matched by slug existed too, under the `sourceId` it is being renamed away from.
+            val existed = existingBySourceId.containsKey(saved.sourceId) || saved.sourceId in resolved.movedSourceIds
             if (!existed) inserted++
             logger.at(Level.DEBUG) {
                 message = "${if (existed) "Updated" else "Created"} event '${saved.title}'"
@@ -141,9 +138,85 @@ class EventUpsertService(
             inserted = inserted,
             updated = changed.size - inserted,
             skipped = unchanged.size,
+            droppedSlugConflict = resolved.droppedSlugConflict,
             touchedArtistIds = touchedArtistIds
         )
     }
+
+    /**
+     * Resolves the events that matched no `sourceId` against the second key, `event.slug`.
+     *
+     * `event.slug` is `UNIQUE` and carries date + venue + title, while a `sourceId` may carry a
+     * discriminator the slug does not — Velomax appends the session time, because one permalink
+     * serves several sittings. A venue that moves a published start time therefore moves the row's
+     * identity while its slug stands still, and the insert lands on the slug the old row holds. The
+     * stale sweep does not free it: [removeStaleEvents] starts tomorrow, and the identity of a
+     * same-day event moves while the event is still listed (#1719).
+     *
+     * A stored row of **this** source whose own `sourceId` this scrape does not claim is that event
+     * under a new identity: the entity is rebuilt on it, keeping `id` and `createdAt` and writing the
+     * **new** `sourceId`. Anything else — another source's row, or one this scrape already matched —
+     * cannot be taken, so the incoming event is dropped rather than left to fail the whole batch: one
+     * `executeMany` carries the run, and a violation inside it aborts the transaction.
+     *
+     * @param candidates each scraped event beside the entity built for it.
+     * @param build rebuilds one entity on a different existing row.
+     * @return the entities to save, which `sourceId`s arrived by a slug match, and how many events
+     * were refused.
+     */
+    private suspend fun resolveBySlug(
+        candidates: List<Pair<ScrapedEvent, EventEntity>>,
+        existingBySourceId: Map<String, EventEntity>,
+        eventSourceId: Long,
+        build: (ScrapedEvent, EventEntity?) -> EventEntity
+    ): SlugResolution {
+        val unmatched = candidates.filter { (scraped, _) -> scraped.sourceId !in existingBySourceId }
+        if (unmatched.isEmpty()) return SlugResolution(candidates.map { it.second })
+
+        val bySlug =
+            eventRepository
+                .findBySlugIn(unmatched.map { it.second.slug })
+                .toList()
+                .associateBy { it.slug }
+
+        val kept = mutableListOf<EventEntity>()
+        val moved = mutableSetOf<String>()
+        var dropped = 0
+        for ((scraped, entity) in candidates) {
+            val holder = if (scraped.sourceId in existingBySourceId) null else bySlug[entity.slug]
+            when {
+                holder == null -> {
+                    kept.add(entity)
+                }
+
+                // Its own row is claimed by another event of this scrape, so this one cannot have it.
+                holder.eventSourceId != eventSourceId || holder.sourceId in existingBySourceId -> {
+                    dropped++
+                    logger.at(Level.WARN) {
+                        message = "Skipping event '${scraped.title}' on ${scraped.eventDate}: slug '${entity.slug}' is held by another event"
+                        payload = mapOf(LogFields.EVENT_ID to holder.id, LogFields.EVENT_SOURCE_ID to holder.sourceId)
+                    }
+                }
+
+                else -> {
+                    moved.add(scraped.sourceId)
+                    kept.add(build(scraped, holder.copy(sourceId = scraped.sourceId)))
+                    logger.at(Level.INFO) {
+                        message = "Event '${scraped.title}' on ${scraped.eventDate} kept its slug and changed identity"
+                        payload = mapOf(LogFields.EVENT_ID to holder.id, LogFields.EVENT_SOURCE_ID to scraped.sourceId)
+                    }
+                }
+            }
+        }
+        return SlugResolution(kept, moved, dropped)
+    }
+
+    /** What [resolveBySlug] decided: the entities to save, the renamed ones, and the refused count. */
+    private data class SlugResolution(
+        val kept: List<EventEntity>,
+        val movedSourceIds: Set<String> = emptySet(),
+        val droppedSlugConflict: Int = 0
+    )
 
     /**
      * Removes duplicate events from the scraped list, keeping a second sitting. Keyed on date +
@@ -243,17 +316,21 @@ class EventUpsertService(
      * Partitions built entities into changed-or-new and identical to their database row, so only the
      * former are saved.
      *
+     * @param movedSourceIds the `sourceId`s [resolveBySlug] matched by slug rather than by identity.
      * @return a pair of (changed/new entities, unchanged entities).
      */
     private fun partitionByChanged(
         entities: List<EventEntity>,
-        existingBySourceId: Map<String, EventEntity>
+        existingBySourceId: Map<String, EventEntity>,
+        movedSourceIds: Set<String>
     ): Pair<List<EventEntity>, List<EventEntity>> {
         val changed = mutableListOf<EventEntity>()
         val unchanged = mutableListOf<EventEntity>()
 
         for (entity in entities) {
-            val existing = existingBySourceId[entity.sourceId]
+            // A renamed row is always written: the new `sourceId` has to reach the database even when
+            // every other field stood still, or the next run matches it by slug again (#1719).
+            val existing = if (entity.sourceId in movedSourceIds) null else existingBySourceId[entity.sourceId]
             if (existing == null || !entity.contentEquals(existing)) {
                 changed.add(entity)
             } else {
@@ -304,6 +381,12 @@ data class UpsertOutcome(
     /** Scraped events discarded as duplicates within one scrape (#982). */
     val droppedDuplicate: Int = 0,
     /**
+     * Scraped events refused because another event already holds the slug they would need (#1719).
+     * Rare, and a real conflict: two different events on one date with one title, which the
+     * `event_slug_key` constraint exists to refuse.
+     */
+    val droppedSlugConflict: Int = 0,
+    /**
      * The artist rows this run billed, created or found, for the MusicBrainz sweep that runs after
      * the commit over what the import touched (#1567).
      */
@@ -318,5 +401,5 @@ data class UpsertOutcome(
      * Everything the run threw away before writing. Not added to [total], which feeds
      * `event_source.last_event_count`: a dropped event holds nothing.
      */
-    val dropped: Int get() = droppedPast + droppedDuplicate
+    val dropped: Int get() = droppedPast + droppedDuplicate + droppedSlugConflict
 }
