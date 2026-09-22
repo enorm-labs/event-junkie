@@ -307,6 +307,14 @@ subprojects {
         // unaffected either way, which is why one shared value is cheaper than two to keep in step.
         // `-Xmx` is a ceiling, not a reservation: a suite needing 600 MB still uses 600 MB here.
         maxHeapSize = "3g"
+        // A failed assertion's MESSAGE, not only its line number. Gradle's default console prints
+        // `java.lang.AssertionError at FooTest.kt:200` and drops the message, which is the whole
+        // finding when a test computes what went wrong; the XML report carrying it is not uploaded,
+        // so a CI failure needed a local reproduction to read (#272).
+        testLogging {
+            events("failed")
+            exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+        }
     }
     tasks.withType<JavaExec> {
         jvmArgs("--enable-native-access=ALL-UNNAMED")

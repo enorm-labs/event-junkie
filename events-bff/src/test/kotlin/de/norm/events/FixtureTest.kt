@@ -186,8 +186,15 @@ class FixtureTest : BaseControllerTest() {
         runBlocking {
             loadFixture()
 
-            assertCovers("SELECT DISTINCT status FROM events.event", EventStatus.entries.map { it.name })
-            assertCovers("SELECT DISTINCT role FROM events.event_artist", ArtistRole.entries.map { it.name })
+            assertCovers(
+                "SELECT DISTINCT status FROM events.event t WHERE ${OWNED_BY_FIXTURE.getValue("event")}",
+                EventStatus.entries.map { it.name }
+            )
+            assertCovers(
+                "SELECT DISTINCT ea.role FROM events.event_artist ea JOIN events.event t ON t.id = ea.event_id " +
+                    "WHERE ${OWNED_BY_FIXTURE.getValue("event")}",
+                ArtistRole.entries.map { it.name }
+            )
         }
 
     /**
@@ -206,7 +213,8 @@ class FixtureTest : BaseControllerTest() {
                         TABLES.joinToString(" UNION ALL ") { table ->
                             "SELECT '$table.' || c.column_name AS col FROM information_schema.columns c " +
                                 "WHERE c.table_schema = 'events' AND c.table_name = '$table' " +
-                                "AND NOT EXISTS (SELECT 1 FROM events.$table t WHERE to_jsonb(t) -> c.column_name <> 'null'::jsonb)"
+                                "AND NOT EXISTS (SELECT 1 FROM events.$table t WHERE to_jsonb(t) -> c.column_name <> 'null'::jsonb " +
+                                "AND ${OWNED_BY_FIXTURE.getValue(table)})"
                         }
                     ).map { row -> row.get("col", String::class.java)!! }
                     .all()
@@ -237,6 +245,21 @@ class FixtureTest : BaseControllerTest() {
 
     private companion object {
         val TABLES = listOf("event", "venue", "artist")
+
+        /**
+         * "A row this fixture created", per table. The coverage assertion counts only these, so it
+         * says what it means — the dataset covers the column — rather than "something in the database
+         * does", which would pass on a row another test left behind and read differently depending on
+         * the order the classes ran in.
+         */
+        val OWNED_BY_FIXTURE =
+            mapOf(
+                "event" to "(t.source_id LIKE 'fixture-%' OR t.source_id LIKE 'dast-%')",
+                "venue" to "t.id IN (SELECT venue_id FROM events.event WHERE source_id LIKE 'fixture-%' OR source_id LIKE 'dast-%')",
+                "artist" to
+                    "t.id IN (SELECT ea.artist_id FROM events.event_artist ea JOIN events.event e ON e.id = ea.event_id " +
+                    "WHERE e.source_id LIKE 'fixture-%' OR e.source_id LIKE 'dast-%')"
+            )
 
         /**
          * A column no row sets, and why. The value is the reason, so a reader sees the argument and a
