@@ -353,6 +353,18 @@ jobs:
           fi
           echo "/api/events serves $total seeded events"
 
+      # **The BFF caches a response for 60 seconds, and the seed does not invalidate it.** The chart's
+      # own smoke hook (#1697) asks for `/api/events?free=true&size=20` while the database is still
+      # empty, which is the key the events list requests, `PAGE_SIZE` included — so the suite reads
+      # "Nothing matches those filters" for a minute after seeding. Measured on k3d: 0 rows before the
+      # seed, 0 after it, 7 after this restart. A restart rather than a sleep, because the cache is
+      # in-process and waiting out a TTL is a number to keep in step with `app.api.cache.ttl-seconds`.
+      - name: Start the BFF on a cold cache
+        run: |
+          set -euo pipefail
+          kubectl --context k3d-event-junkie -n event-junkie rollout restart deploy/event-junkie-bff
+          kubectl --context k3d-event-junkie -n event-junkie rollout status deploy/event-junkie-bff --timeout=3m
+
       # `--host-resolver-rules` in the project config points the Ingress name at the published port,
       # which is what carries the right `Host` on a navigation; `extraHTTPHeaders` cannot.
       - name: Run the un-mocked suite through Traefik
