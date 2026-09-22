@@ -232,7 +232,7 @@ jobs:
 
       - name: Upload Trivy SARIF (imgproxy)
         if: (success() || failure()) && github.event.pull_request.head.repo.fork != true && hashFiles('sarif/trivy-imgproxy.sarif') != ''
-        uses: github/codeql-action/upload-sarif@b96794f015dfd88f77b49b1c93e0fa7110f94c63 # v4.38.0
+        uses: github/codeql-action/upload-sarif@1c5b675653bb5c22dbe9b12b556ec555138e09fd # v4.38.1
         with:
           sarif_file: sarif/trivy-imgproxy.sarif
           category: trivy-deployed-imgproxy
@@ -273,49 +273,49 @@ jobs:
       # the `hashFiles` guard skips a report the scan never produced.
       - name: Upload Trivy SARIF (bff, amd64)
         if: (success() || failure()) && github.event.pull_request.head.repo.fork != true && hashFiles('sarif/trivy-bff-amd64.sarif') != ''
-        uses: github/codeql-action/upload-sarif@b96794f015dfd88f77b49b1c93e0fa7110f94c63 # v4.38.0
+        uses: github/codeql-action/upload-sarif@1c5b675653bb5c22dbe9b12b556ec555138e09fd # v4.38.1
         with:
           sarif_file: sarif/trivy-bff-amd64.sarif
           category: trivy-deployed-bff-amd64
       - name: Upload Trivy SARIF (bff, arm64)
         if: (success() || failure()) && github.event.pull_request.head.repo.fork != true && hashFiles('sarif/trivy-bff-arm64.sarif') != ''
-        uses: github/codeql-action/upload-sarif@b96794f015dfd88f77b49b1c93e0fa7110f94c63 # v4.38.0
+        uses: github/codeql-action/upload-sarif@1c5b675653bb5c22dbe9b12b556ec555138e09fd # v4.38.1
         with:
           sarif_file: sarif/trivy-bff-arm64.sarif
           category: trivy-deployed-bff-arm64
       - name: Upload Trivy SARIF (importer, amd64)
         if: (success() || failure()) && github.event.pull_request.head.repo.fork != true && hashFiles('sarif/trivy-importer-amd64.sarif') != ''
-        uses: github/codeql-action/upload-sarif@b96794f015dfd88f77b49b1c93e0fa7110f94c63 # v4.38.0
+        uses: github/codeql-action/upload-sarif@1c5b675653bb5c22dbe9b12b556ec555138e09fd # v4.38.1
         with:
           sarif_file: sarif/trivy-importer-amd64.sarif
           category: trivy-deployed-importer-amd64
       - name: Upload Trivy SARIF (importer, arm64)
         if: (success() || failure()) && github.event.pull_request.head.repo.fork != true && hashFiles('sarif/trivy-importer-arm64.sarif') != ''
-        uses: github/codeql-action/upload-sarif@b96794f015dfd88f77b49b1c93e0fa7110f94c63 # v4.38.0
+        uses: github/codeql-action/upload-sarif@1c5b675653bb5c22dbe9b12b556ec555138e09fd # v4.38.1
         with:
           sarif_file: sarif/trivy-importer-arm64.sarif
           category: trivy-deployed-importer-arm64
       - name: Upload Trivy SARIF (frontend, amd64)
         if: (success() || failure()) && github.event.pull_request.head.repo.fork != true && hashFiles('sarif/trivy-frontend-amd64.sarif') != ''
-        uses: github/codeql-action/upload-sarif@b96794f015dfd88f77b49b1c93e0fa7110f94c63 # v4.38.0
+        uses: github/codeql-action/upload-sarif@1c5b675653bb5c22dbe9b12b556ec555138e09fd # v4.38.1
         with:
           sarif_file: sarif/trivy-frontend-amd64.sarif
           category: trivy-deployed-frontend-amd64
       - name: Upload Trivy SARIF (frontend, arm64)
         if: (success() || failure()) && github.event.pull_request.head.repo.fork != true && hashFiles('sarif/trivy-frontend-arm64.sarif') != ''
-        uses: github/codeql-action/upload-sarif@b96794f015dfd88f77b49b1c93e0fa7110f94c63 # v4.38.0
+        uses: github/codeql-action/upload-sarif@1c5b675653bb5c22dbe9b12b556ec555138e09fd # v4.38.1
         with:
           sarif_file: sarif/trivy-frontend-arm64.sarif
           category: trivy-deployed-frontend-arm64
       - name: Upload Trivy SARIF (injector, amd64)
         if: (success() || failure()) && github.event.pull_request.head.repo.fork != true && hashFiles('sarif/trivy-injector-amd64.sarif') != ''
-        uses: github/codeql-action/upload-sarif@b96794f015dfd88f77b49b1c93e0fa7110f94c63 # v4.38.0
+        uses: github/codeql-action/upload-sarif@1c5b675653bb5c22dbe9b12b556ec555138e09fd # v4.38.1
         with:
           sarif_file: sarif/trivy-injector-amd64.sarif
           category: trivy-deployed-injector-amd64
       - name: Upload Trivy SARIF (injector, arm64)
         if: (success() || failure()) && github.event.pull_request.head.repo.fork != true && hashFiles('sarif/trivy-injector-arm64.sarif') != ''
-        uses: github/codeql-action/upload-sarif@b96794f015dfd88f77b49b1c93e0fa7110f94c63 # v4.38.0
+        uses: github/codeql-action/upload-sarif@1c5b675653bb5c22dbe9b12b556ec555138e09fd # v4.38.1
         with:
           sarif_file: sarif/trivy-injector-arm64.sarif
           category: trivy-deployed-injector-arm64
