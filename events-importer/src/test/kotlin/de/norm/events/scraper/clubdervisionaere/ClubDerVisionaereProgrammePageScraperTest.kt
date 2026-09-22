@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test
 import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
+import java.time.LocalTime
 import java.time.ZoneOffset
 
 /**
@@ -175,11 +176,11 @@ class ClubDerVisionaereProgrammePageScraperTest {
     fun `keeps a live act but drops the unbooked guest-DJ slot and its set times`() {
         val event = sonnenraumEvents.first { it.sourceId == "sonnenraum:41733" }
 
-        // "// The Omniversal Earkestra LIVE from 21:00" → the band, billed live; the set time is
-        // not the event's start time, which the venue never publishes. "// Guest DJs from 23:00"
-        // names no act at all.
+        // "// The Omniversal Earkestra LIVE from 21:00" → the band, billed live; the set time comes
+        // off the name. "// Guest DJs from 23:00" names no act at all. The earlier of the two slot
+        // times stands in for the night's start, which the listing states no other way (#1687).
         event.artists shouldContainExactly listOf(ScrapedArtist(name = "The Omniversal Earkestra", role = "HEADLINER"))
-        event.startTime.shouldBeNull()
+        event.startTime shouldBe LocalTime.of(21, 0)
     }
 
     @Test

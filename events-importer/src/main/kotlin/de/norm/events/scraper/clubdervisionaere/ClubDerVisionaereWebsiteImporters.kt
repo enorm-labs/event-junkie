@@ -79,8 +79,9 @@ abstract class AbstractClubDerVisionaereRoomImporter(
 
     /**
      * Joins the homepage's start times onto [events] by post id. A night the homepage does not
-     * list keeps no time — never a guess; an unreachable homepage leaves every night without one,
-     * logged as a warning, since the programme imported fine.
+     * list keeps whatever the listing's own slot times gave it, and nothing when they gave none —
+     * never a guess; an unreachable homepage leaves every night on the listing's answer, logged as
+     * a warning, since the programme imported fine.
      */
     @Suppress("TooGenericExceptionCaught") // Intentional: the homepage is the clock, not the listing; degrade rather than fail.
     private suspend fun withStartTimes(
@@ -96,7 +97,7 @@ abstract class AbstractClubDerVisionaereRoomImporter(
                 return events
             }
         val prefix = room.eventSource.sourceIdPrefix
-        return events.map { event -> event.copy(startTime = times[event.sourceId.removePrefix(prefix)]) }
+        return events.map { event -> event.copy(startTime = times[event.sourceId.removePrefix(prefix)] ?: event.startTime) }
     }
 }
 
@@ -139,7 +140,8 @@ val CLUB_DER_VISIONAERE_LIMITATIONS =
             listOf(
                 AcceptedLimitation(
                     LimitedAspect.START_TIME,
-                    "the listing prints none; the homepage's NEXT box does, for the ten nights it shows — a night further out gets its time once it moves in"
+                    "the listing prints one only where an act line carries a slot time; the homepage's NEXT box prints the rest, " +
+                        "for the ten nights it shows"
                 ),
                 AcceptedLimitation(LimitedAspect.EVENT_TYPE, "the venue publishes no category of its own; every listing is a club night"),
                 AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "the programme page is the source for every night")

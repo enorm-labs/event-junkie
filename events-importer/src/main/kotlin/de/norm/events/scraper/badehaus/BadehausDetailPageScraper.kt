@@ -71,6 +71,7 @@ class BadehausDetailPageScraper {
             eventDate = eventDate,
             doorsTime = parseTime(EINLASS_PATTERN.find(metaText)?.groupValues?.get(1)),
             startTime = parseTime(BEGINN_PATTERN.find(metaText)?.groupValues?.get(1)),
+            priceNote = description?.let(::parseDonationNote),
             imageUrl = event.selectFirst(".single-event-image-wrap img")?.absUrl("src")?.takeIf { it.isNotBlank() },
             sourceUrl = sourceUrl,
             sourceId = "${EventSource.BADEHAUS.sourceIdPrefix}${badehausEventSlug(sourceUrl)}",
@@ -142,6 +143,21 @@ class BadehausDetailPageScraper {
         return parseGermanDate(DATE_PATTERN.find(header)?.value)
     }
 
+    /**
+     * What the description says about paying at the door, or `null` when it says nothing.
+     *
+     * A donation-based night sells no ticket, so no price field can hold it, and these sentences
+     * are the only statement of what a visitor pays (#1681). Kept verbatim and whole, the way
+     * Klunkerkranich keeps a banded tariff. A suggested donation is not free admission, so `free`
+     * stays false.
+     */
+    private fun parseDonationNote(description: String): String? =
+        description
+            .split(SENTENCE_END)
+            .filter { DONATION_MARKER.containsMatchIn(it) }
+            .joinToString(" ") { it.trim() }
+            .takeIf { it.isNotBlank() }
+
     private companion object {
         /** A `DD.MM.YYYY` date. */
         private val DATE_PATTERN = Regex("""\d{2}\.\d{2}\.\d{4}""")
@@ -149,8 +165,15 @@ class BadehausDetailPageScraper {
         /** The doors time: "Einlass: 19:00", "Einlass 19:00" or, on the pages that label in English, "Doors: 19:00h" (#1497). */
         private val EINLASS_PATTERN = Regex("""(?:Einlass|Doors):?\s*(\d{1,2}:\d{2})""", RegexOption.IGNORE_CASE)
 
-        /** The start time: "Beginn: 20:00", "Beginn 20:00" or "Start 20:00h". */
-        private val BEGINN_PATTERN = Regex("""(?:Beginn|Start):?\s*(\d{1,2}:\d{2})""", RegexOption.IGNORE_CASE)
+        /**
+         * The start time: "Beginn: 20:00", "Beginn 20:00", "Start 20:00h", and the venue's own
+         * phrasing for a recurring night, "Doors 19:30 / Quiz starts 20:00" — there the verb is the
+         * label, so the word is matched to its end (#1681).
+         */
+        private val BEGINN_PATTERN = Regex("""(?:Beginn\w*|Start\w*):?\s*(\d{1,2}:\d{2})""", RegexOption.IGNORE_CASE)
+
+        /** A sentence about what to pay where no ticket is sold: "The event is donation-based.", "Spende erwünscht". */
+        private val DONATION_MARKER = Regex("""\bdonation|\bspende""", RegexOption.IGNORE_CASE)
 
         /** The date a notice moves the show to: "auf den 27.02.2027" or "auf den 22.09.26". */
         private val NOTICE_TARGET_DATE = Regex("""auf\s+den\s+(\d{1,2}\.\d{1,2}\.\d{2,4})""", RegexOption.IGNORE_CASE)

@@ -23,17 +23,22 @@ class BinuuFieldMappingTest {
     }
 
     @Test
-    fun `reads the date from a spurious-Z timestamp without shifting the timezone`() {
-        // 19:00 local is stored as "19:00…Z"; the date must stay 2026-07-19, not roll back a day.
+    fun `reads the Berlin date of a UTC timestamp, rolling over a late start`() {
         parseBinuuDate("2026-07-19 19:00:00.000Z") shouldBe LocalDate.of(2026, 7, 19)
+        // 23:30 UTC is already the next day in Berlin, and the night belongs to that date (#1675).
+        parseBinuuDate("2026-07-19 23:30:00.000Z") shouldBe LocalDate.of(2026, 7, 20)
         parseBinuuDate(null).shouldBeNull()
         parseBinuuDate("").shouldBeNull()
         parseBinuuDate("not-a-date").shouldBeNull()
     }
 
     @Test
-    fun `reads the wall-clock time from a timestamp`() {
-        parseBinuuTime("2026-07-19 19:00:00.000Z") shouldBe LocalTime.of(19, 0)
+    fun `reads the Berlin time of a UTC timestamp, on both sides of the DST boundary`() {
+        // The payload's instants are UTC: the venue's own page renders this one as 21:00 (#1675).
+        parseBinuuTime("2026-07-19 19:00:00.000Z") shouldBe LocalTime.of(21, 0)
+        // Summer is +2, winter +1, which is the step every row took on 2026-10-25.
+        parseBinuuTime("2026-09-22 18:00:00.000Z") shouldBe LocalTime.of(20, 0)
+        parseBinuuTime("2026-11-22 19:00:00.000Z") shouldBe LocalTime.of(20, 0)
         // A date-only value (no time component) yields null.
         parseBinuuTime("2026-07-19").shouldBeNull()
         parseBinuuTime(null).shouldBeNull()

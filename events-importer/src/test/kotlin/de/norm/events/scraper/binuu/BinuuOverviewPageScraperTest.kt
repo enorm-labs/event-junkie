@@ -48,7 +48,8 @@ class BinuuOverviewPageScraperTest {
     fun `parses the date and start time from the ISO timestamp with year`() {
         val grooveJet = event("binuu:zf0kroyf2cjolyl")
         grooveJet.eventDate shouldBe LocalDate.of(2026, 7, 11)
-        grooveJet.startTime shouldBe LocalTime.of(20, 0)
+        // `20:00:00.000Z` in July is 22:00 in Berlin, which is what the venue prints (#1675).
+        grooveJet.startTime shouldBe LocalTime.of(22, 0)
     }
 
     @Test
