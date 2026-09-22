@@ -19,9 +19,9 @@ on:
     types: [ HelmRelease/event-junkie.flux-system ]
 
 permissions:
-  # To resolve a release version to the commit its tag points at. Read-only; no checkout.
+  # Read-only at the workflow level, so the Lighthouse job below gets no more than it declares for
+  # itself. The deployment write lives on the one job that writes deployments.
   contents: read
-  deployments: write
 
 # Per environment, queued: `Progressing` then `UpgradeSucceeded` must land in order on one deployment,
 # and cancelling the first would leave a rollout that looks like it never started.
@@ -35,9 +35,24 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
 
+    permissions:
+      # To resolve a release version to the commit its tag points at. Read-only; no checkout.
+      contents: read
+      deployments: write
+
+    # What the Lighthouse job below decides on. Every early return leaves these empty, so a payload this
+    # job refused cannot start an audit — a missing output does not equal `production`.
+    outputs:
+      environment: ${{ steps.record.outputs.environment }}
+      state: ${{ steps.record.outputs.state }}
+      revision: ${{ steps.record.outputs.revision }}
+
     steps:
-      # No `actions/checkout`, and none should be added: everything comes from the payload and the API.
+      # No `actions/checkout` IN THIS JOB, and none should be added: everything comes from the payload
+      # and the API. The Lighthouse job below does check out, because it runs a script from this
+      # repository; it touches no deployment and cannot colour this one.
       - name: Record the deployment and its status
+        id: record
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         with:
           script: |
@@ -167,6 +182,12 @@ jobs:
               ...(ENVIRONMENTS[environment].url ? { environment_url: ENVIRONMENTS[environment].url } : {}),
             });
 
+            // For the Lighthouse job. Set here and not earlier: only a payload that produced a real
+            // deployment status is worth auditing production over.
+            core.setOutput('environment', environment);
+            core.setOutput('state', state);
+            core.setOutput('revision', revision);
+
             await core.summary
               .addHeading(`${environment} — ${state}`, 2)
               .addTable([
@@ -177,3 +198,23 @@ jobs:
                 ['Cluster', metadata.cluster ?? '—'],
               ])
               .write();
+
+  # Lighthouse against the public site, after a production deployment that succeeded (#1698). Staging
+  # is never audited from here and cannot be: it has no public name (ADR-033).
+  #
+  # **A second job rather than a second workflow listening for the status.** A `deployment_status`
+  # event created with `GITHUB_TOKEN` does not start a workflow, by GitHub's rule against
+  # token-triggered runs, so the status this job writes above would reach nothing.
+  #
+  # **It must not be read as a failed deploy.** It writes no deployment status and carries its own job
+  # name; a red Lighthouse gate says the site regressed, not that the rollout did.
+  lighthouse:
+    name: Lighthouse
+    needs: record
+    if: needs.record.outputs.environment == 'production' && needs.record.outputs.state == 'success'
+    uses: ./.github/workflows/lighthouse.yml
+    with:
+      # Empty on purpose: the called workflow falls back to the `SITE_URL` variable, which is the one
+      # place the rehearsal hostname is configured (#939 flips it).
+      target: ''
+      version: ${{ needs.record.outputs.revision }}

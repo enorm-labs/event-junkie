@@ -8,7 +8,7 @@ but no particular environment runs against the chart on k3d in CI. No workflow g
 self-hosted runner.**
 
 **Implemented in part.** The first hook, `templates/tests/connection-test.yaml`, runs on both clusters since [#414][414]. The smoke hook is the pull
-request that closes [#1697][1697]. The k3d browser suite is [#1699][1699] and the production Lighthouse run is [#1698][1698].
+request that closes [#1697][1697]. The k3d browser suite landed with [#1699][1699] and the production Lighthouse run with [#1698][1698].
 
 **Does not supersede anything.** [ADR-016](ADR-016_GITOPS_DELIVERY.md) states one line of this: "verification runs where the workloads do". It did not say
 which routes into staging were refused, or where a check that is not a hook belongs. [ADR-021](ADR-021_PUBLIC_SITE_MONITORING.md) decided how production is
@@ -90,6 +90,11 @@ What settled it: the two refused options each trade the admin API's only protect
   and a person on the tunnel covers the rest.
 - **Trend data comes from the log pipeline, not from a store this ADR adds.** Each hook writes one JSON line to stdout, and the collector ships it. [#298][298]
   step 2, a metric store for durations, is still open.
+- **A check that runs from Actions has no trend store at all.** The line above works for a hook because the hook runs beside the collector. OpenObserve is
+  `ClusterIP` on both clusters with no Ingress, so a runner cannot write to it. Two changes would open that path. One is a credential into a cluster. The
+  other is a public route to the store that holds every log line in the system. This ADR refuses both. So [#1698][1698] keeps its reports as 30-day artifacts and
+  [#1699][1699] keeps none, and both said so rather than inventing a second store. This is the cost of the decision, and [#298][298] step 2 is where it is
+  paid.
 - **If staging is ever made reachable for a person**, PLATFORM_SETUP §4a names the two shapes, a WireGuard config or a `basicAuth` Ingress. Neither of those
   is a route for Actions, and this ADR is the reason.
 

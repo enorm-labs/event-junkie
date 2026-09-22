@@ -90,9 +90,16 @@ is the map and the traps.
   Reports are artifacts; nothing opens an issue; no `pull_request` trigger, decided.
 - `deployment-status.yml` (#565) — turns Flux's `repository_dispatch` (`HelmRelease/event-junkie.flux-system`) into a GitHub deployment. Parses the commit
   out of the chart version through `scripts/version.sh`'s two shapes — change one, change this — after stripping helm-controller's `+<digest>` build metadata.
+  Since #1698 it carries a second job: `lighthouse`, `needs: record`, which calls `lighthouse.yml` when the deployment is `production` and `success`. A
+  `deployment_status` trigger cannot replace it — a status created with `GITHUB_TOKEN` starts no workflow.
   `flux-source-failure.yml` (#1454) — the other listener, on `OCIRepository/event-junkie.flux-system` from each cluster's `source-failure` Alert; a failed
   signature or an unreachable registry keeps the last artifact and emits no HelmRelease event, so this job is **red by construction** — the one shape GitHub
   mails about. **Neither can be tested from a PR**: `repository_dispatch` runs the default branch only, so both fail loudly on an unrecognised payload.
+- `lighthouse.yml` (#1698) — the four cells of `perf/README.md` § Lighthouse baseline against `SITE_URL`, three runs each, the medians in the step summary and
+  the JSON as a 30-day artifact. Called by `deployment-status.yml` after a successful production deployment, plus a Wednesday cron and `workflow_dispatch`;
+  never Sunday, when the two production scans already load that host. The gate is `scripts/lighthouse.sh`: accessibility, best practices and SEO, with
+  `is-crawlable` asserted against the `X-Robots-Tag` header rather than waived (#286). Performance and the vitals are reported only, and **nothing is stored
+  over time** — OpenObserve has no Ingress, so #298 step 2 still owns the trend (ADR-033).
 - `site-probe.yml` — the daily outer half of #271's alerting, against `SITE_URL` with the apex fallback (ADR-021 says why Better Stack is the other half).
   `mail-probe.yml` (#637) — proves `hello@` and `security@` still receive, because a dead mailbox looks exactly like a quiet week.
 

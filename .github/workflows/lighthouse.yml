@@ -1,0 +1,124 @@
+# Lighthouse against production, after every production deployment and once a week (#1698).
+#
+# **Production is the one environment a GitHub runner can reach.** Staging has no public name and its
+# Ingress is bound to the tunnel, so nothing here can audit it — ADR-033 decided that once, for all
+# three post-deploy suites, and refused both routes that would change it. Production is public and
+# read-only from here, which is also why `site-probe.yml` and `dast-production` already point at it.
+#
+# **Called, not triggered, after a deployment.** `deployment-status.yml` turns Flux's
+# `repository_dispatch` into a GitHub deployment and calls this workflow when that deployment is
+# `production` and `success`. A `deployment_status` trigger would never fire: a status created with
+# `GITHUB_TOKEN` does not start another workflow, by GitHub's rule against token-triggered runs.
+#
+# **Nothing here is stored over time.** The JSON reports are artifacts for 30 days and the medians are
+# in the step summary. OpenObserve is `ClusterIP` on both clusters with no Ingress, so a runner cannot
+# write to it, and #1698 shipped with that done-when **not delivered** rather than with a store that is
+# not OpenObserve. #298 step 2 owns the trend.
+name: Lighthouse
+
+on:
+  workflow_call:
+    inputs:
+      target:
+        description: The origin to audit. Empty falls back to the SITE_URL variable.
+        type: string
+        required: false
+        default: ''
+      version:
+        description: The chart revision Flux reconciled, for the step summary.
+        type: string
+        required: false
+        default: ''
+  workflow_dispatch:
+    inputs:
+      target:
+        description: The origin to audit. Empty falls back to the SITE_URL variable.
+        type: string
+        required: false
+        default: ''
+  schedule:
+    # **Weekly, and deliberately not on Sunday**: `nuclei-production` (19 4) and `dast-production`
+    # (46 5) already send that day's requests to this host, and an audit taken while a scanner is
+    # crawling measures the scanner. Off-the-hour like every schedule here. Actions delivers a cron
+    # hours late (#889), so a Wednesday run arriving Wednesday afternoon is the norm, not a fault.
+    - cron: '26 7 * * 3'
+
+permissions:
+  # Read the repository for `scripts/lighthouse.sh` and the pin. Nothing is written anywhere.
+  contents: read
+
+concurrency:
+  # Deliberately NOT `cancel-in-progress`: a deployment run and the weekly run must not audit the site
+  # at the same time, and the one already in flight is the one holding real numbers.
+  group: lighthouse
+  cancel-in-progress: false
+
+jobs:
+  audit:
+    name: Audit the four baseline cells
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    env:
+      # `ingress.host` from the chart, overridden by the repository variable while production serves the
+      # rehearsal hostname — `site-probe.yml` carries the same three-way default and the same reason.
+      # `is-crawlable` is 0 on that host on purpose (#286); the script asserts it rather than waiving it.
+      SITE_URL: ${{ inputs.target || vars.SITE_URL || 'https://event-junkie.de' }}
+      REVISION: ${{ inputs.version }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24' # should match the version specified in .nvmrc
+          cache: 'npm'
+          cache-dependency-path: perf/lighthouse/package-lock.json
+
+      # The pin. `npx --yes lighthouse@13` would resolve a different build on every run, which makes a
+      # move in the numbers unattributable — and Lighthouse's scoring does move between minors.
+      - name: Install the pinned Lighthouse CLI
+        working-directory: perf/lighthouse
+        run: npm ci
+
+      - name: Name the release in the summary
+        run: |
+          set -euo pipefail
+          {
+            printf '## Lighthouse run\n\n'
+            printf -- '- Target: `%s`\n' "${SITE_URL}"
+            printf -- '- Trigger: `%s`\n' "${GITHUB_EVENT_NAME}"
+            if [ -n "${REVISION}" ]; then
+              printf -- '- Release: `%s`\n' "${REVISION}"
+            fi
+            printf '\n'
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+      # Four cells, three runs each, medians reported. The gate is accessibility, best-practices and
+      # SEO; performance and the three vitals are reported and not gated, because a shared runner moves
+      # a performance score by tens of points and a threshold loose enough to survive that catches
+      # nothing (`perf/README.md` § Why there is no CI workflow).
+      #
+      # `--no-sandbox` is not optional on `ubuntu-latest`: Ubuntu 24.04 restricts unprivileged user
+      # namespaces through AppArmor, and Chrome's sandbox cannot start without them. The page under
+      # audit is this project's own public site.
+      - name: Run Lighthouse
+        env:
+          RUNS: '3'
+          CHROME_FLAGS: --headless=new --no-sandbox
+        run: scripts/lighthouse.sh "${SITE_URL}" "${RUNNER_TEMP}/lighthouse"
+
+      # On failure too: the JSON is what names the audit that dropped, and a red run is when someone
+      # wants it. Thirty days, as #1698 asks — there is no longer-term store to send these to.
+      - name: Upload the reports
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: lighthouse-reports
+          path: ${{ runner.temp }}/lighthouse
+          retention-days: 30
+          if-no-files-found: error

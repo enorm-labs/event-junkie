@@ -154,6 +154,22 @@ updates:
           - "minor"
           - "patch"
 
+  # The pinned Lighthouse CLI that `lighthouse.yml` runs against production (#1698). Its own package
+  # rather than a dependency of `events-frontend`: a browser audit tool has no business in the tree
+  # that builds the site, and Dependabot groups per directory, so a Lighthouse bump would otherwise
+  # arrive inside a frontend PR and be merged on the frontend's checks.
+  #
+  # **Renovate does not cover this**: the header of `.github/renovate.json5` gives npm to Dependabot,
+  # so without this entry the pin is never bumped and "pinned" quietly becomes "stale".
+  #
+  # One dependency, so no groups. A Lighthouse major changes what the scores mean, which is a PR to
+  # read rather than one to batch.
+  - package-ecosystem: "npm"
+    directory: "/perf/lighthouse"
+    schedule:
+      interval: "weekly"
+    versioning-strategy: "increase"
+
   # Keeps the `uses:` pins in .github/workflows/ current. `/` is correct here and does not mean the
   # repository root in the usual sense — for this ecosystem Dependabot always reads .github/workflows.
   # One group, because an action bump is a one-line change and fourteen separate PRs for fourteen
