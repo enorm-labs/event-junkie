@@ -169,6 +169,58 @@ where the workloads do.
 
 ### 1.4 The workloads
 
+This is what the chart itself creates, inside one namespace. §1.2 above is the request path. This is the object graph that serves it.
+
+```mermaid
+flowchart TB
+    tr["Traefik<br/>IngressClass: traefik"]
+
+    subgraph ns["Namespace: event-junkie — everything the chart creates"]
+        ing["Ingress/event-junkie<br/>one host, TLS from cert-manager"]
+        mw{{"Middlewares<br/>security-headers · rate-limit<br/>in-flight-req · noindex"}}
+
+        svcF["Service/…-frontend"]
+        svcB["Service/…-bff"]
+        svcI["Service/…-importer<br/>no Ingress route exists"]
+
+        depF["Deployment/…-frontend<br/>nginx + SEO injector sidecar"]
+        depB["Deployment/…-bff"]
+        depI["Deployment/…-importer<br/>replicas 1 · Recreate · imgproxy sidecar"]
+
+        cm[["ConfigMap/…<br/>ConfigMap/…-seo"]]
+        sec[["Secret/events-db<br/>hand-made, not in the chart"]]
+        netpol{{"NetworkPolicies<br/>default-deny, then one rule per allowed path"}}
+    end
+
+    pg[("PostgreSQL 18<br/>other node, private network")]
+    venues["Venue websites"]
+    obj[("Object Storage<br/>venue images")]
+
+    tr --> ing
+    ing --> mw
+    mw -->|"/"| svcF
+    mw -->|"/api"| svcB
+    svcF --> depF
+    svcB --> depB
+    svcI --> depI
+
+    cm -.-> depF
+    cm -.-> depB
+    cm -.-> depI
+    sec -.-> depB
+    sec -.-> depI
+
+    depF -->|"/api"| svcB
+    depB --> pg
+    depI --> pg
+    depI -->|"scrapes"| venues
+    depB --> obj
+```
+
+**Every workload is reachable only along an arrow a NetworkPolicy names.** The default policy denies all traffic in the namespace. Each other policy opens one
+path. `docs/architecture/*.inventory.txt` lists each policy and the pods it selects, per environment, and CI fails when that list stops matching the chart —
+[ADR-034](../adr/ADR-034_ARCHITECTURE_DIAGRAMS.md).
+
 | Workload          | Shape                    | Replicas      | Notes                                                      |
 | ----------------- | ------------------------ | ------------- | ---------------------------------------------------------- |
 | `events-importer` | JVM, always-on scheduler | **exactly 1** | ADR-008. `strategy: Recreate`, never rolling               |

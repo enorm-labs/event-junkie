@@ -26,6 +26,7 @@ everything below — someone with a WireGuard tunnel open, not someone writing a
 | [ops/EMAIL.md](ops/EMAIL.md)                         | The role mailboxes, and the DNS that lets exactly one machine send as the domain                                    |
 | [ops/COSTS.md](ops/COSTS.md)                         | Every recurring charge, where each number comes from, and which ones are still guesses                              |
 | [ops/dashboard/index.html](ops/dashboard/index.html) | The local operations page: open it in a browser after `scripts/ej.sh up` — links, tunnel status, deployed versions  |
+| [architecture/](architecture)                        | What each environment deploys, generated — the gate that asks whether the diagrams above are still true             |
 
 ## Building it
 

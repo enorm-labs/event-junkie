@@ -302,6 +302,7 @@ ADR-032 is the one to know unprompted — no file carries the version, it is com
 | Every script, and the `--help` rule     | `scripts/README.md` — gates, tools, and ops; `scripts/index-parity.sh` fails when the directory, the index, or the tree disagrees         |
 | Markdown formatting                     | `scripts/format-markdown.sh` + `.oxfmtrc.json` — Markdown only, and the scope is load-bearing                                             |
 | README screenshots, and when they rot   | `docs/screenshots/` — dated, because nothing else signals staleness; retake on design changes, never on data changes                      |
+| Architecture diagrams, and the gate     | `docs/architecture/` — generated inventories; the diagrams are hand-written in PLATFORM_SETUP.md §1, and ADR-034 says why                 |
 | Trivy waivers                           | `.trivyignore` — empty on purpose; an entry needs a reason and a date                                                                     |
 | OWASP CVE false-positive suppressions   | `owasp-suppressions.xml`                                                                                                                  |
 | Shared MCP servers                      | `.mcp.json` — `opentofu`, the hosted registry lookup; no key, one approval per contributor                                                |

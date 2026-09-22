@@ -155,6 +155,10 @@ scripts/dev-env.sh import <slug>    # import one source, polling until it settle
 | [`events-core`](./events-core)         | Shared domain model consumed by both services                                                                                   |
 | PostgreSQL                             | The database. Flyway migrations are owned by the importer                                                                       |
 
+**In a picture:** [docs/ops/PLATFORM_SETUP.md §1](./docs/ops/PLATFORM_SETUP.md#1-what-runs-where) — the trust boundaries, the request path, the deploy path and
+the objects the chart creates. [docs/architecture/](./docs/architecture) holds the generated inventory that fails CI when those diagrams stop matching what is
+deployed.
+
 Considered and not adopted yet: Elasticsearch, a management frontend, an Android app, an MCP server. The reasoning behind the choices that _were_ made lives in
 the [ADRs](./docs/adr).
 
