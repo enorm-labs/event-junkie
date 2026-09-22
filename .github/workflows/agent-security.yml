@@ -78,7 +78,7 @@ jobs:
       # The prompt is a one-line `@` pointer into `.github/prompts/`, so the checkout is what resolves it.
       - name: Run /security-triage
         id: claude
-        uses: anthropics/claude-code-action@7b0b255830a1fab6e602658672acad11c12d841d # v1
+        uses: anthropics/claude-code-action@cfc3eb22bfed5c26ef66e3223c982af27e4524de # v1
         env:
           # The Actions token, under a name the action does not overwrite. Read-only.
           ACTIONS_GITHUB_TOKEN: ${{ github.token }}
