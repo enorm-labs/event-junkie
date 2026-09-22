@@ -72,13 +72,16 @@ helm lint --strict deploy/charts/event-junkie --values deploy/charts/event-junki
 helm unittest --strict deploy/charts/event-junkie
 scripts/cluster-assertions.sh
 scripts/uid-consistency.sh
+scripts/architecture-diagram.sh check
 helm template t deploy/charts/event-junkie --values deploy/charts/event-junkie/values-k3d.yaml | flux schema validate - -s ecosystem --verbose
 flux schema validate deploy/clusters -s ecosystem --verbose --skip-kind kustomize.config.k8s.io/v1beta1/Kustomization
 ```
 
 `helm unittest` needs the plugin: `helm plugin install https://github.com/helm-unittest/helm-unittest --version <HELM_UNITTEST_VERSION from validate-chart.yml> --verify=false`
 (Helm 4 refuses an unverifiable plugin source without the flag). `cluster-assertions.sh` re-runs the invariant suites against each cluster's `spec.values`,
-so the gate covers what Flux deploys. **Watch `Skipped:`, not just `Invalid:`** — a resource with no schema is skipped, not failed. **Never `helm install`,
+so the gate covers what Flux deploys. `architecture-diagram.sh check` fails when a chart change moved what an environment deploys without
+`docs/architecture/` following; `write` is the fix, and then read the diagrams in PLATFORM_SETUP.md §1.4 (ADR-034).
+**Watch `Skipped:`, not just `Invalid:`** — a resource with no schema is skipped, not failed. **Never `helm install`,
 `upgrade`, `uninstall`, `rollback` or `install --dry-run`** ([deploy/AGENTS.md](../../deploy/AGENTS.md)).
 
 Also when the diff touches `scripts/version.sh`: `scripts/version-deserved-test.sh` (the rule, and what `compute` names a commit, against fabricated

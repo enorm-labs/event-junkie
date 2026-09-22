@@ -20,6 +20,9 @@ on:
       - 'scripts/version-test.sh'
       - 'scripts/uid-consistency.sh'
       - 'scripts/csp-parity.sh'
+      - 'scripts/architecture-diagram.sh'
+      # The committed inventories, which are a function of the chart and each cluster's values.
+      - 'docs/architecture/**'
       # The coverage floors this workflow asserts. Editing the baseline without a run lowers a floor unnoticed.
       - 'scripts/scan-coverage.sh'
       - 'scripts/scan-coverage-baseline.txt'
@@ -215,6 +218,13 @@ jobs:
       - name: Assert on the cluster configurations
         run: scripts/cluster-assertions.sh "$CHART"
 
+      # What each environment deploys, as sorted text, against what is committed under
+      # `docs/architecture/`. The assertions above say the chart is well formed; this says the shape
+      # of the deployment has not changed behind the hand-written diagrams in PLATFORM_SETUP.md,
+      # which no generator maintains. ADR-034.
+      - name: Check the committed inventories still match the chart
+        run: scripts/architecture-diagram.sh check
+
   # The job name **`ShellCheck deploy-story scripts`** is a required status check on the `main` ruleset:
   # **the name here and the context in the ruleset are one string in two places.** Change one without
   # the other and pull requests stop being mergeable rather than start failing. #430 deleted this job
@@ -230,7 +240,7 @@ jobs:
         with:
           persist-credentials: false
 
-      # All six are part of the deploy story, so a chart change lints them even when nothing under
+      # All seven are part of the deploy story, so a chart change lints them even when nothing under
       # `scripts/` moved. **The overlap with validate-scripts.yml is deliberate**: that one is not required
       # and carries a `paths:` filter, so this is the job that makes shell linting a merge gate. From the
       # pinned image, so the two cannot reach different verdicts.
@@ -240,4 +250,4 @@ jobs:
             "koalaman/shellcheck:${SHELLCHECK_VERSION}" \
             -x scripts/cluster-assertions.sh scripts/k3d-rehearsal.sh \
             scripts/version.sh scripts/version-test.sh scripts/uid-consistency.sh \
-            scripts/csp-parity.sh
+            scripts/csp-parity.sh scripts/architecture-diagram.sh
