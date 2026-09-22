@@ -8,9 +8,20 @@ import org.springframework.data.r2dbc.repository.Query
 import org.springframework.data.repository.kotlin.CoroutineCrudRepository
 import java.time.LocalDate
 
+@Suppress("TooManyFunctions") // One query per question the importer asks of the event table; each is named by what it answers.
 interface EventRepository : CoroutineCrudRepository<EventEntity, Long> {
     /** Batch-fetches events by their source IDs to avoid N+1 queries during upsert. */
     fun findBySourceIdIn(sourceIds: Collection<String>): Flow<EventEntity>
+
+    /**
+     * Batch-fetches events by their slugs, the upsert's second key.
+     *
+     * `event.slug` is `UNIQUE` and built from date + venue + title, while `source_id` may carry a
+     * discriminator the slug does not — Velomax appends the session time. A venue that moves a
+     * published start time therefore moves the row's identity and leaves its slug alone, and the
+     * upsert would insert onto a slug an existing row still holds (#1719).
+     */
+    fun findBySlugIn(slugs: Collection<String>): Flow<EventEntity>
 
     /**
      * Events dated [date] or later — the `db.events.future` gauge (#415).

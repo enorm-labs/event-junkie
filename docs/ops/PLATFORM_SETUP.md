@@ -798,7 +798,7 @@ Free from the framework: JVM memory and GC, HTTP server request rate/latency/sta
 | `importer.run.duration`                        | Timer, tagged `source`                | Detects a venue that got slow before it gets fatal                                 |
 | `importer.run.outcome`                         | Counter, tagged `source`, `outcome`   | success / not_modified / failed / misconfigured / skipped                          |
 | `importer.events.written`                      | Counter, tagged `source`, `operation` | inserted / updated / skipped                                                       |
-| `importer.events.dropped`                      | Counter, tagged `source`, `reason`    | past / duplicate / unresolved_date — **what a run threw away**, see below          |
+| `importer.events.dropped`                      | Counter, tagged `source`, `reason`    | past / duplicate / unresolved_date / slug_conflict — **what a run threw away**     |
 | `importer.scrape.failures`                     | Counter, tagged `source`, `reason`    | Distinguishes HTTP 403 from a parse failure                                        |
 | `importer.source.last_success`                 | Gauge, tagged `source`                | Age of the last good run; alert past ~3× its schedule                              |
 | `importer.source.has_succeeded`                | Gauge, tagged `source`                | 1/0 — **exists for a source that has never worked**, which the row above does not  |
@@ -839,8 +839,8 @@ Free from the framework: JVM memory and GC, HTTP server request rate/latency/sta
   responses**, so keep them separate in rules. `importer_source_has_succeeded == 0` is a scraper that never once worked. An old
   `importer_source_last_success` is one that stopped.
 - **`importer.events.dropped` counts only what shared code drops, and the gap is deliberate** (#982). Each reason is computed in one shared place. It therefore
-  holds for every importer that reaches it: `past` in `EventUpsertService.dropPastEvents`, `duplicate` in `deduplicateScrapedEvents`, and `unresolved_date`
-  in `AbstractTwoPageWebsiteImporter`. **Roughly 93 further drops happen inside individual overview and API scrapers and are not counted.**
+  holds for every importer that reaches it: `past` in `EventUpsertService.dropPastEvents`, `duplicate` in `deduplicateScrapedEvents`, `slug_conflict` in
+  `resolveBySlug`, and `unresolved_date` in `AbstractTwoPageWebsiteImporter`. **Roughly 93 further drops happen inside individual overview and API scrapers and are not counted.**
   Counting those needs each scraper to report rows-seen against events-returned, which is per-scraper work. So a low number here does not mean little was
   discarded. `past` is usually the scraper working rather than failing — a calendar source republishing last month.
 
