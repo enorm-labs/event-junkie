@@ -319,6 +319,50 @@ subprojects {
     tasks.withType<JavaExec> {
         jvmArgs("--enable-native-access=ALL-UNNAMED")
     }
+
+    // Each of the three carries a `ModularityTests` that asserts its own module diagram under
+    // `docs/architecture/` (#1721). One document per application, because `build-backend.yml` runs
+    // `./gradlew test --parallel` and three tasks writing one file is a race whose loser wins it.
+    //
+    // In `afterEvaluate`, because this block is configured before the subproject's own build file
+    // applies the Java plugin: `test` and `sourceSets` do not exist yet. `plugins.withId("java")`
+    // is too early for the same reason — it fires *during* the plugin's own application, and
+    // `SourceSetContainer` is not registered at that point.
+    if (name in listOf("events-core", "events-bff", "events-importer")) {
+        afterEvaluate {
+            val document = rootProject.layout.projectDirectory.file("docs/architecture/modules-$name.md")
+
+            // Resolved here, on the project. Inside `tasks.register`'s block the receiver is the
+            // task, so `extensions` there is the task's own and holds no SourceSetContainer.
+            val testSourceSet = extensions.getByType<SourceSetContainer>().named("test").get()
+
+            // The document is an input, or Gradle reports the task UP-TO-DATE after a hand edit and the
+            // assertion never runs on the change it exists to catch — the same trap the sibling-source
+            // inputs in events-core/build.gradle.kts work around.
+            tasks.named<Test>("test") {
+                inputs
+                    .file(document)
+                    .withPropertyName("module-diagram-document")
+                    .withPathSensitivity(PathSensitivity.RELATIVE)
+            }
+
+            // The same test, told to write instead of compare, so the output cannot disagree with what
+            // the build then asserts. `updateModuleDiagrams` at the root runs all three.
+            tasks.register<Test>("updateModuleDiagram") {
+                group = "documentation"
+                description = "Regenerate docs/architecture/modules-$name.md from this module's structure."
+
+                testClassesDirs = testSourceSet.output.classesDirs
+                classpath = testSourceSet.runtimeClasspath
+                useJUnitPlatform()
+                filter { includeTestsMatching("de.norm.events.ModularityTests") }
+                systemProperty("updateModuleDiagram", "true")
+
+                // It writes a file Gradle does not know it writes, so a second run must not be skipped.
+                outputs.upToDateWhen { false }
+            }
+        }
+    }
     // `bootRun` runs with the *module* as its working directory, and `compose.yaml` is at the repo
     // root, so Spring's Docker Compose support looked one directory too deep and the app died at
     // startup with "No Docker Compose file found in directory '.../events-importer/.'". Pointing it
@@ -379,6 +423,18 @@ kover {
             }
         }
     }
+}
+
+// One command for all three module diagrams, because a reader of `docs/architecture/` sees three
+// documents and should not have to know they come from three modules.
+tasks.register("updateModuleDiagrams") {
+    group = "documentation"
+    description = "Regenerate every docs/architecture/modules-*.md from the module structure."
+    dependsOn(
+        ":events-core:updateModuleDiagram",
+        ":events-bff:updateModuleDiagram",
+        ":events-importer:updateModuleDiagram"
+    )
 }
 
 // IntelliJ HTTP Client CLI – runs .http request files from the command line.

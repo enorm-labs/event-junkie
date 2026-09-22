@@ -28,6 +28,10 @@ dependencies {
     // Shared domain model and utilities from the events-core library module
     implementation(project(":events-core"))
 
+    // The fixtures carry `ModuleDiagram`, which ModularityTests uses here and in the importer. Each
+    // module can only see its own application class, so the generator is shared rather than copied.
+    testImplementation(testFixtures(project(":events-core")))
+
     // Spring Modulith
     implementation("org.springframework.modulith:spring-modulith-starter-core")
     testImplementation("org.springframework.modulith:spring-modulith-starter-test")

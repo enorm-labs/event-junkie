@@ -1,5 +1,7 @@
 package de.norm.events
 
+import io.kotest.assertions.withClue
+import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
 import org.springframework.modulith.core.ApplicationModules
 
@@ -26,5 +28,23 @@ class ModularityTests {
         org.springframework.modulith.docs
             .Documenter(modules)
             .writeDocumentation()
+    }
+
+    /**
+     * The picture of the same structure, in `docs/architecture/modules-events-core.md` (#1721).
+     *
+     * The `Documenter` output above is PlantUML, which GitHub does not render, so it stays in `build/`.
+     * This is the Mermaid one a reader sees, drawn from the modules themselves and asserted here.
+     */
+    @Test
+    fun `the module diagram in docs matches the modules`() {
+        val comparison = ModuleDiagram.compare(modules, "events-core")
+
+        withClue(
+            "the diagram in ${comparison.document.name} no longer matches the modules. " +
+                "Rewrite it with `./gradlew updateModuleDiagrams`."
+        ) {
+            comparison.actual shouldBe comparison.expected
+        }
     }
 }

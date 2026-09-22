@@ -55,12 +55,13 @@ jobs:
             exit 1
           fi
           printf '%s\n' "$FILES" | sed 's/^/  /'
-          # The one document the backend tests assert on: `DomainClassDiagramTest` generates the class
-          # diagram in it (#394). Ignoring it with the rest of `docs/` would let a hand edit to that
-          # diagram merge without the test that rejects it. The `push:` filter cannot carry this
-          # exception — `paths-ignore` has no negation — and does not need to: the ruleset admits
-          # nothing to `main` that has not been a pull request.
-          if printf '%s\n' "$FILES" | grep -qxF 'docs/DATA_MODEL.md'; then
+          # The documents the backend tests assert on: `DomainClassDiagramTest` generates the class
+          # diagram in DATA_MODEL.md (#394), and each module's `ModularityTests` generates its own
+          # module diagram under docs/architecture/ (#1721). Ignoring them with the rest of `docs/`
+          # would let a hand edit to a generated diagram merge without the test that rejects it. The
+          # `push:` filter cannot carry this exception — `paths-ignore` has no negation — and does
+          # not need to: the ruleset admits nothing to `main` that has not been a pull request.
+          if printf '%s\n' "$FILES" | grep -qE '^(docs/DATA_MODEL\.md|docs/architecture/modules-.*\.md)$'; then
             echo 'relevant=true' >> "$GITHUB_OUTPUT"
             exit 0
           fi
