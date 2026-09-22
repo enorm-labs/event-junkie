@@ -142,5 +142,9 @@ tasks.withType<Test> {
         "filesystem:${rootProject.projectDir}/events-importer/src/main/resources/db/migration"
     )
     // The shared dataset (#272), read by FixtureTest through the same door as the migrations above.
-    systemProperty("fixture.sql", "${rootProject.projectDir}/fixtures/events.sql")
+    val fixture = rootProject.file("fixtures/events.sql")
+    systemProperty("fixture.sql", fixture.absolutePath)
+    // **Declared as an input, or editing the fixture leaves the task UP-TO-DATE** and the last run's
+    // verdict is reported for a file that has changed. A system property is not an input by itself.
+    inputs.file(fixture).withPropertyName("fixture.sql").withPathSensitivity(PathSensitivity.RELATIVE)
 }

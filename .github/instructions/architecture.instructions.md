@@ -29,6 +29,10 @@ mismatch`** — the pod never goes Ready and `remediateLastFailure` rolls the re
       `slugify(name)` (V025 repaired that). Step 1 picks the smallest loser **that exists** (V023 left `tip-berlin` behind on production, #1343); step 3
       inserts the survivor's links rather than updating the losers', or two losers on one event trip `UNIQUE (event_id, promoter_id)` (that failed `v0.13.1`).
       Copy V031's shape.
+    - **A migration ships with the fixture row that exercises it** (#272). `fixtures/events.sql` is the shared dataset, and `FixtureTest` in `events-bff`
+      loads it and asserts that every column of `event`, `venue` and `artist` is set on some row. A NOT NULL column or a new CHECK breaks the load and names
+      itself; a **nullable** column loads and covers nothing, so that test fails until the fixture sets it or `WAIVED` carries a reason. Every `EventStatus`
+      and `ArtistRole` value is asserted present for the same reason.
 - **Spring Modulith** (ADR-006): each direct sub-package under `de.norm.events` is a module, declared by a `*Module.kt` marker with `allowedDependencies`;
   `ModularityTests` in all three modules verify it. Domain classes in `events-core` carry no Spring Data and no Swagger annotations; entities (`*Entity.kt`)
   convert with `toDomain()` / `fromDomain()`; controllers take `*Request` and return `*Response`, never a domain object (`EventResponse.fromEntity()` is the
