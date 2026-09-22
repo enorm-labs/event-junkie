@@ -21,6 +21,17 @@ class ArtistNameMappingTest {
     }
 
     @Test
+    fun `extractSupportFromSubtitle splits two markers a venue wrote on one line`() {
+        // Simple Plan at UFO im Velodrom, where both billings share a line (#1730).
+        extractSupportFromSubtitle("Bigger Than You Think! Europe Tour 2026 Support: Neck Deep Opener: Charlotte Sands") shouldContainExactly
+            listOf("Neck Deep", "Charlotte Sands")
+        // The second marker needs its colon, so a line that merely contains the word is one act.
+        extractSupportFromSubtitle("Support: Jinjer Opening Wish") shouldContainExactly listOf("Jinjer Opening Wish")
+        extractSupportFromSubtitle("Support: Neck Deep, Charlotte Sands Special Guest: Oxis") shouldContainExactly
+            listOf("Neck Deep", "Charlotte Sands", "Oxis")
+    }
+
+    @Test
     fun `splitSupportActs drops a role label from each act, and keeps a band named after one`() {
         // Metropol prints its support line as `Support: THE BAXBYS` (#1678).
         splitSupportActs("Support: THE BAXBYS") shouldContainExactly listOf("THE BAXBYS")

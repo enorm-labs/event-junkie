@@ -15,7 +15,9 @@ import java.text.Normalizer
  * `<marker>` is `Support`, `Support Act`, `Opener`, `Opening Act` or `Special Guest(s)`
  * ([SUPPORT_INTRO_PATTERN]). Every line is read, not only the first: a venue that stacks
  * `Support Act: Jinjer` and `Opening Act: Dying Wish` on separate lines bills two acts (#1680).
- * Within a line, a second marker splits on the `+` and is stripped per act by [splitSupportActs].
+ * A line stacking both markers instead — `Support: Neck Deep Opener: Charlotte Sands` — is split
+ * at the second marker ([FURTHER_SUPPORT_MARKER]), which needs its colon, so the band
+ * `Support Lesbiens` billed as a support act keeps its name (#1730).
  * Empty when no support line. Shared by Privatclub, Astra, Hole 44 and others.
  */
 fun extractSupportFromSubtitle(subtitle: String?): List<String> =
@@ -23,16 +25,25 @@ fun extractSupportFromSubtitle(subtitle: String?): List<String> =
         .orEmpty()
         .split(SUBTITLE_LINE_SEPARATOR)
         .mapNotNull { line -> SUPPORT_INTRO_PATTERN.find(line)?.groupValues?.get(1) }
+        .flatMap { tail -> tail.split(FURTHER_SUPPORT_MARKER) }
         .flatMap(::splitSupportActs)
         .map { it.replaceFirst(ROLE_LABEL_PREFIX, "").trim() }
         .filter { it.isNotBlank() }
+
+/** A support-billing marker and its colon: `Support:`, `Support Act:`, `Opener:`, `Special Guest:`. */
+private const val SUPPORT_MARKER = """(?:supports?|openers?|opening|special\s+guests?)(?:\s+acts?)?\s*:\s*"""
 
 /**
  * The first support-billing marker in one subtitle line, capturing the acts after it to the end
  * of that line. The optional `Act` is how Velomax spells both markers (#1680).
  */
-private val SUPPORT_INTRO_PATTERN =
-    Regex("""(?:supports?|openers?|opening|special\s+guests?)(?:\s+acts?)?\s*:\s*(.+)""", RegexOption.IGNORE_CASE)
+private val SUPPORT_INTRO_PATTERN = Regex("""$SUPPORT_MARKER(.+)""", RegexOption.IGNORE_CASE)
+
+/**
+ * A second marker inside that capture, which separates two billings a venue wrote on one line.
+ * The leading whitespace keeps it from matching the marker the capture already began after.
+ */
+private val FURTHER_SUPPORT_MARKER = Regex("""\s+$SUPPORT_MARKER""", RegexOption.IGNORE_CASE)
 
 /**
  * The subtitle line carrying a support-billing marker from already-split [lines], or `null`. A
