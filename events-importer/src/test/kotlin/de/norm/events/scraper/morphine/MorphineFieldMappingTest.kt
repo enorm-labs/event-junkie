@@ -61,6 +61,24 @@ class MorphineFieldMappingTest {
     }
 
     @Test
+    fun `a two-word act keeps its own member list, and a co-bill is not one`() {
+        // #1710: the same shape as PICI, with a duo whose name is two words.
+        morphineSetLineActs("Exoteric Chamber - Gilles Aubry & Marta Zapparoli", "Exoteric Chamber") shouldBe listOf("Exoteric Chamber")
+        morphineSetLineActs("Exoteric Chamber - Gilles Aubry, Marta Zapparoli & Ute Wassermann", "Exoteric Chamber") shouldBe
+            listOf("Exoteric Chamber")
+        // A conjunction in the head makes it a co-bill, so a tail of names does not turn it into
+        // one act: `Tony Buck & Flo Stoffner` are two people who play together, not a duo's members.
+        morphineSetLineActs("Tony Buck & Flo Stoffner - Ute Wassermann & Magda Mayas", "x") shouldBe
+            listOf("Tony Buck & Flo Stoffner - Ute Wassermann & Magda Mayas")
+        // One name after the dash is a work, not a line-up, so the pair stays for #302's head rule.
+        morphineSetLineActs("Exoteric Chamber - Within Without", "Exoteric Chamber - Within Without") shouldBe
+            listOf("Exoteric Chamber - Within Without")
+        // Three words is a bill, not an act with members, until a line says otherwise.
+        morphineSetLineActs("The Exoteric Chamber - Gilles Aubry & Marta Zapparoli", "x") shouldBe
+            listOf("The Exoteric Chamber - Gilles Aubry & Marta Zapparoli")
+    }
+
+    @Test
     fun `reads the date out of the day header line`() {
         parseDayLineDate("Friday, 07.08.26, door  20:00") shouldBe LocalDate.of(2026, 8, 7)
     }
