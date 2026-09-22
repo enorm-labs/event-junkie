@@ -32,7 +32,7 @@ const val SCRAPER_BASE_WEB_CLIENT = "scraperBaseWebClient"
  * the product token and the URL** if it ever changes — and keep the token in step with
  * [RobotsRulesCache.ROBOT_NAMES], which is what matches a `robots.txt` group.
  */
-const val SCRAPER_USER_AGENT = "Mozilla/5.0 (compatible; EventJunkie/1.0; +https://github.com/enorm-labs/event-junkie)"
+internal const val SCRAPER_USER_AGENT = "Mozilla/5.0 (compatible; EventJunkie/1.0; +https://github.com/enorm-labs/event-junkie)"
 
 /**
  * Builds the single [WebClient] instance shared by every outbound scraper request —
