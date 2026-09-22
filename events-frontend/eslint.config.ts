@@ -47,6 +47,29 @@ export default defineConfigWithVueTs(
   },
 
   {
+    // `e2e/real-data/` is the suite that talks to a deployment (#1699), and a request handler there
+    // would put a mock back in front of the thing under test. A grep for `page.route` matched its own
+    // documentation on the first run; this reads the syntax, and it runs on every pull request rather
+    // than nightly.
+    name: 'app/real-data-mocks-nothing',
+    files: ['e2e/real-data/**/*.{test,spec}.{js,ts,jsx,tsx}'],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: "CallExpression[callee.property.name='route']",
+          message:
+            'e2e/real-data runs against a deployment: intercepting a request makes it test a mock again. Put the spec in e2e/ instead.',
+        },
+        {
+          selector: "CallExpression[callee.property.name='routeFromHAR']",
+          message: 'e2e/real-data runs against a deployment: replaying a HAR makes it test a recording.',
+        },
+      ],
+    },
+  },
+
+  {
     ...pluginVitest.configs.recommended,
     files: ['src/**/__tests__/*'],
   },
