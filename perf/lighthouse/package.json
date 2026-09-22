@@ -1,0 +1,12 @@
+{
+  "name": "event-junkie-lighthouse",
+  "private": true,
+  "description": "The pinned Lighthouse CLI that .github/workflows/lighthouse.yml runs against production. Deliberately its own package: the k6 scripts beside it are not npm, and the site's own dependencies must not gain a browser audit tool.",
+  "license": "UNLICENSED",
+  "engines": {
+    "node": ">=24.15.0"
+  },
+  "dependencies": {
+    "lighthouse": "13.5.0"
+  }
+}

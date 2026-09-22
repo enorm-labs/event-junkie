@@ -319,6 +319,7 @@ ADR-032 is the one to know unprompted — no file carries the version, it is com
 | CI: credential expiry reminder          | `.github/workflows/credential-expiry-reminder.yml` — dates live in the workflow, mirrored in docs/CREDENTIALS.md §2                       |
 | CI: nightly scan of deployed images     | `.github/workflows/image-scan-scheduled.yml` — a published tag, both arches; thresholds match release.yml                                 |
 | CI: DAST, ZAP and Nuclei                | `.github/workflows/dast.yml` — active nightly on an ephemeral k3d, passive and Nuclei weekly on the site; `.zap/`, `.nuclei/`             |
+| CI: Lighthouse against production       | `.github/workflows/lighthouse.yml` — four cells after a production deploy and weekly; no trend store (#1698, ADR-033)                     |
 | CI: workflow lint + security audit      | `.github/workflows/validate-workflows.yml`; suppressions in `zizmor.yml`                                                                  |
 | Agentic workflows                       | `.github/workflows/agent-*.yml` — security opens a PR and dismisses nothing; comments caps twelve files per PR; docs never touches an ADR |
 | Release notes categories                | `.github/release.yml`                                                                                                                     |

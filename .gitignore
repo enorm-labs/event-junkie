@@ -36,3 +36,9 @@ http/http-client.private.env.json
 
 # Written by scripts/ej.sh for the local operations page (#1185); regenerated on every call.
 docs/ops/dashboard/status.js
+
+# The pinned Lighthouse CLI that `.github/workflows/lighthouse.yml` installs with `npm ci` (#1698).
+# `perf/lighthouse/package-lock.json` is tracked and is the pin; the tree it installs is not. The
+# frontend's own `node_modules` is covered by `events-frontend/.gitignore`, which is why this entry
+# is needed and a bare `node_modules` is not enough.
+perf/lighthouse/node_modules/

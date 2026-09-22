@@ -144,7 +144,25 @@ What the numbers say, and what was done with each:
 - **Not actionable, and recorded so the next run does not rediscover them:** `bf-cache` reports "Internal error" on every run, a Lighthouse limitation on
   headless Chrome; `dom-size` on the list page is 925 elements for 20 cards and their filters, which is the page.
 
-**Run it again after the flip (#939) on the apex**, mobile and desktop, and add a row here. The number to watch is CLS, then LCP on mobile.
+**Since #1698 the row above is the last one taken by hand.** `.github/workflows/lighthouse.yml` runs the same four cells after every successful production
+deployment and weekly, through `scripts/lighthouse.sh`, and ADR-033 says why that one runs from Actions while the smoke runs in the cluster: production is
+public and staging is not. Its numbers are in the run's step summary and its JSON reports are artifacts for 30 days. **There is no trend store**: OpenObserve
+is `ClusterIP` on both clusters with no Ingress, so nothing in Actions can write to it, and #298 step 2 still owns the question. Read the last four weeks of
+runs, not this table.
+
+Four things the workflow does that a hand run does not have to, and each is a reason the numbers moved:
+
+- **It pins Lighthouse** in `perf/lighthouse/package.json`. The table above is 12.8.2 and the workflow runs 13.x, which scores the same page differently — a
+  step between the row above and the first workflow run is the tool, not the site.
+- **It gates only what is deterministic**: accessibility and best practices at 100, and SEO. Performance, LCP, CLS and TBT are reported and not gated, for
+  reason 1 below.
+- **`is-crawlable` is asserted, not waived.** On a host that is not the apex the script reads the `X-Robots-Tag` header itself and demands that `is-crawlable`
+  is the _only_ failing SEO audit, then accepts 69. On the apex it demands 100 and grants no exception, so #939's flip needs no edit.
+- **The detail slug comes from `/api/events` at run time**, the first event with a poster. A literal slug becomes a 404 the day the event passes. The cost is
+  that the detail row compares different events between runs; the list row is the comparable one.
+
+**CLS is not gated yet.** Every cell above is over Google's 0.1 line, so the gate would be red on its first run and then switched off. `CLS_BUDGET=0.1` is the
+value to set the day #1207 closes. The number to watch is still CLS, then LCP on mobile.
 
 ## The in-cluster smoke
 
