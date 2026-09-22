@@ -84,6 +84,14 @@ class MetropolOverviewPageScraperTest {
     }
 
     @Test
+    fun `drops the role label the venue prints in front of its support act`() {
+        // `Support: Crag Finn` on the listing minted an artist under the label on thirteen nights (#1678).
+        val mountainGoats = event("metropol:2026-10-11-the-mountain-goats")
+        mountainGoats.artists.map { it.name } shouldBe listOf("The Mountain Goats", "Crag Finn")
+        mountainGoats.artists.map { it.role } shouldBe listOf("HEADLINER", "SUPPORT")
+    }
+
+    @Test
     fun `mints the title as the headliner for a support-less concert`() {
         event("metropol:2026-09-06-khamari").artists.map { it.name } shouldBe listOf("Khamari")
     }

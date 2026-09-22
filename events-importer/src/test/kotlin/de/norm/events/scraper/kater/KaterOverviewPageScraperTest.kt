@@ -76,6 +76,7 @@ class KaterOverviewPageScraperTest {
                 ScrapedArtist("Cosmic Cherry", "DJ", "ACID BOGEN"),
                 ScrapedArtist("Daraio", "DJ", "ACID BOGEN"),
                 ScrapedArtist("Andrea Fiorito", "DJ", "ACID BOGEN"),
+                // `Saturday by Muting The Noise` sits between the acts: a floor heading, never a DJ (#1679).
                 ScrapedArtist("Mystigrix", "DJ", "ACID BOGEN"),
                 ScrapedArtist("Josiane", "DJ", "ACID BOGEN"),
                 ScrapedArtist("TDKK", "DJ", "ACID BOGEN"),
