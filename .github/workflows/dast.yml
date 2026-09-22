@@ -3,7 +3,7 @@ name: DAST
 # Hostile requests against the running site, from something with no source and no credential (#1421,
 # #1419). Every other scanner here reads an artifact; this one talks to the site.
 #
-# **Three jobs, two targets.** `dast-k3d` is the active scan: ZAP's full and API scans fuzzing every
+# **Four jobs, two targets.** `dast-k3d` is the active scan: ZAP's full and API scans fuzzing every
 # parameter, then Nuclei (#1423) asking "is a known bad thing exposed" — one template per CVE or
 # misconfiguration, kept current upstream — against the chart on an ephemeral k3d cluster on this
 # runner, built the way Hetzner runs it: same chart, images and Traefik middlewares. `dast-production`
@@ -11,6 +11,8 @@ name: DAST
 # a CX33 with visitors on it is a self-inflicted load test; staging is on the tunnel, unreachable on
 # purpose. `nuclei-production` (#1461) is the Nuclei pass against the public site, weekly, at a
 # quarter of the k3d rate — what production has that k3d does not is the surface the templates check.
+# `e2e-k3d` (#1699) is not a scanner at all: it points a browser at the same ephemeral cluster and
+# runs the un-mocked Playwright suite, because CI can reach no other deployment (ADR-033).
 #
 # **No job holds a credential to any cluster, and that is a property to keep.** The k3d cluster is
 # created and deleted inside the job; the production jobs send HTTPS with `contents: read`.
@@ -43,6 +45,7 @@ on:
           - both
           - k3d
           - production
+          - e2e
         default: both
       target:
         description: URL for the two production jobs. Empty means SITE_URL, then the apex.
@@ -274,6 +277,109 @@ jobs:
             build/zap/*.txt
             build/nuclei/*.jsonl
             build/nuclei/*.txt
+          retention-days: 30
+
+      - name: Tear the cluster down
+        if: always()
+        run: scripts/k3d-rehearsal.sh down
+
+  # The browser half of #298, answered on k3d rather than staging for the reason ADR-033 gives: no
+  # workflow gets a route into staging, and the chart runs here exactly as it runs on Hetzner. A
+  # cluster of its own rather than `dast-k3d`'s: the scan job runs for over an hour, and coupling a
+  # five-minute browser suite to it makes either failure the other's problem.
+  e2e-k3d:
+    name: Un-mocked e2e against k3d
+    runs-on: ubuntu-latest
+    # Measured locally: flux-up 4 minutes, the suite 5 seconds. The margin is the cluster, not the tests.
+    timeout-minutes: 30
+    if: >-
+      (github.event_name == 'schedule' && github.event.schedule == '52 3 * * *')
+      || (github.event_name == 'workflow_dispatch' && (inputs.job == 'both' || inputs.job == 'e2e'))
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install k3d and flux
+        run: |
+          set -euo pipefail
+          curl -fsSL -o /usr/local/bin/k3d \
+            "https://github.com/k3d-io/k3d/releases/download/${K3D_VERSION}/k3d-linux-amd64"
+          chmod +x /usr/local/bin/k3d
+          curl -fsSL \
+            "https://github.com/fluxcd/flux2/releases/download/v${FLUX_VERSION}/flux_${FLUX_VERSION}_linux_amd64.tar.gz" \
+            | tar -xz -C /usr/local/bin flux
+
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24' # should match the version specified in .nvmrc
+          cache: 'npm'
+          cache-dependency-path: events-frontend/package-lock.json
+
+      # No `npm run build`: the bundle under test is the one inside the chart's image. Only the test
+      # runner and the browser come from here.
+      - name: Install dependencies
+        working-directory: events-frontend
+        run: npm ci
+
+      - name: Install Playwright chromium
+        working-directory: events-frontend
+        run: npx playwright install --with-deps chromium
+
+      # The same two commands `dast-k3d` runs: the newest signed snapshot from GHCR, through the
+      # controllers that run on Hetzner, so cosign verification is exercised here too (#1425).
+      - name: Bring the chart up through Flux
+        run: |
+          scripts/k3d-rehearsal.sh flux-up
+          scripts/k3d-rehearsal.sh flux-verify
+
+      - name: Seed the database and assert the site serves the rows
+        run: |
+          set -euo pipefail
+          psql() { docker exec -i event-junkie-postgres-1 psql -U admin -d event_junkie_k3d -v ON_ERROR_STOP=1 "$@"; }
+          psql < "$FIXTURE"
+          expected="$(psql -qAt -c "SELECT count(*) FROM events.event WHERE COALESCE(end_date, event_date) >= CURRENT_DATE")"
+          total="$(curl -sS -H 'Host: event-junkie.localhost' 'http://localhost:8080/api/events?size=1' \
+            | jq -r '.totalElements')"
+          if [ "$total" != "$expected" ]; then
+            echo "::error::/api/events reports $total events after seeding, expected $expected from $FIXTURE."
+            exit 1
+          fi
+          echo "/api/events serves $total seeded events"
+
+      # The property that makes this suite worth running: a spec here must talk to the deployment, and
+      # a `page.route` would quietly put a mock back in front of it. Cheap enough to check in the job
+      # that cares rather than in a lint rule nobody reads.
+      - name: Refuse a mock in the un-mocked suite
+        working-directory: events-frontend
+        run: |
+          if grep -rn "page.route" e2e/real-data/; then
+            echo "::error::e2e/real-data is the suite that talks to the deployment; a route handler makes it test a mock again."
+            exit 1
+          fi
+          echo "No request interception in e2e/real-data."
+
+      # `--host-resolver-rules` in the project config points the Ingress name at the published port,
+      # which is what carries the right `Host` on a navigation; `extraHTTPHeaders` cannot.
+      - name: Run the un-mocked suite through Traefik
+        working-directory: events-frontend
+        run: npm run test:e2e -- --project=real-data
+        env:
+          E2E_BASE_URL: http://event-junkie.localhost:8080
+
+      # Failure and success alike: the durations are the trend #298 asks for, and the artifact is
+      # where they live — a runner cannot reach the cluster's OpenObserve (ADR-033).
+      - name: Upload the report
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: e2e-k3d
+          path: |
+            events-frontend/playwright-report/
+            events-frontend/test-results/
           retention-days: 30
 
       - name: Tear the cluster down

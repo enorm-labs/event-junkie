@@ -46,6 +46,14 @@ Extend what is already here rather than repeating its boilerplate.
   names as stable handles — and landmark names are translated, so `getByRole('navigation', { name: 'Main' })` is `'Haupt'` under `/de`. Anything that exists
   only in a second language (the URL contract, the switcher, date formats, the per-locale pages) goes in `i18n.spec.ts`. The axe sweep runs both locales
   because German is longer, which is where overflow and contrast regress.
+- **Two kinds of e2e spec, and the directory is the rule.** `e2e/*.spec.ts` mock the BFF with
+  `page.route` and run against a dev server; they cover component behaviour and gate every pull request.
+  `e2e/real-data/*.spec.ts` mock nothing and run only against a deployment (`--project=real-data`,
+  `E2E_BASE_URL`): the chart on k3d, nightly, from `e2e-k3d` in `dast.yml` (#1699). A spec belongs there
+  only when it asserts something a deployment has and a dev server does not — nginx serving the bundle,
+  Traefik's middlewares and the CSP, the SPA fallback, the rows `fixtures/events.sql` seeded (#272).
+  **A `page.route` under `real-data/` fails the job**, because it would put a mock back in front of the
+  thing under test. Chromium only there: what is under test is the deployment, not five engines.
 - **`/verify` is chromium desktop and will not see a mobile break** — a header nav overflowing 390 px pushed a control off-screen once. When touching the
   app shell, header, nav or any layout: `npm run test:e2e -- --project="Mobile Chrome" --project="Mobile Safari"` before pushing. On CI such a break also
   burns 30 s × 2 retries × 5 projects.
