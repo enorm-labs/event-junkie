@@ -266,7 +266,8 @@ Realistic resident memory, measured in "what it actually uses", not "what the do
 | **Total**                                        | **~4.5 GB** | Plus OS ≈ **5.0 GB**                        |
 
 On an 8 GB node that leaves **~3.0 GB**. The worst spike is a deploy running a second JVM alongside the one it is replacing, about 900 MB. The floor under
-pressure is still ~2.1 GB free.
+pressure is still ~2.1 GB free. Under load the BFF's HPA adds a third replica, up to 768 MB more ([#1774](https://github.com/enorm-labs/event-junkie/issues/1774)).
+A deploy during that scale-up leaves about 1.3 GB.
 
 **The margin is thinner than it looks, and something already hit it.** Staging ran a 2-core / 4 GB `CPX22`, and a global OOM killed OpenObserve while load
 reached 99 on two cores ([#271](https://github.com/enorm-labs/event-junkie/issues/271)). 8 GB is the floor for this stack, not a comfort.

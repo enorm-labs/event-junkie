@@ -120,6 +120,11 @@ It is k3s's other documented method, and it installs a controller, a CRD and a p
 upgrade nodes in order. There is one node per cluster and no agents, so it automates a single
 command. Reconsider it when there is more than one node.
 
+For the same reason the chart has no PodDisruptionBudget. A PDB limits evictions only, and nothing
+here evicts: the upgrade is in place, and a rolling update follows the Deployment's own strategy. On
+one node a PDB also blocks `kubectl drain`, because an evicted pod has no other node to go to. Add
+one for the BFF and the frontend together with the second node.
+
 ## Links
 
 - [k3s releases](https://github.com/k3s-io/k3s/releases) — the notes, one per version, with the

@@ -119,13 +119,19 @@ inventory() {
     yq -N -r '[.kind, .metadata.name] as $id | ($id | join("/")) + "\t" + ($id | join("/"))' "$rendered"
 
     yq -N -r 'select(.kind == "Deployment") | ("Deployment/" + .metadata.name) as $k | (
-        [$k + "\t  replicas " + (.spec.replicas // 1 | tostring)
+        [$k + "\t  replicas " + (.spec.replicas // "hpa" | tostring)
            + "  strategy " + (.spec.strategy.type // "RollingUpdate")
            + "  serviceAccount " + (.spec.template.spec.serviceAccountName // "default")]
         + [.spec.template.spec.containers[] | $k + "\t  container " + .name
            + "  image " + (.image | sub("@.*$"; "") | sub(":[^:/]*$"; ""))
            + "  ports " + (([.ports[]? | .name + "=" + (.containerPort | tostring)] | join(",")) | sub("^$"; "<none>"))]
       ) | .[]' "$rendered"
+
+    # An HPA owns the replica count, so its range stands where the Deployment's number would.
+    yq -N -r 'select(.kind == "HorizontalPodAutoscaler") | ("HorizontalPodAutoscaler/" + .metadata.name) as $k |
+      $k + "\t  " + .spec.scaleTargetRef.kind + "/" + .spec.scaleTargetRef.name
+        + "  replicas " + (.spec.minReplicas | tostring) + ".." + (.spec.maxReplicas | tostring)
+        + "  cpu " + (.spec.metrics[0].resource.target.averageUtilization | tostring) + "%"' "$rendered"
 
     yq -N -r 'select(.kind == "Service") | ("Service/" + .metadata.name) as $k |
       $k + "\t  " + .spec.type + "  "

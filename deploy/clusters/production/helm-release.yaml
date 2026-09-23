@@ -91,8 +91,11 @@ spec:
       imgproxy:
         enabled: true
     # No replica counts and no resources: `values.yaml`'s defaults are production-shaped by design, so
-    # repeating them here would be a second place to look with nothing to say. The ingress below is the
-    # exception, only while the domain stays dark.
+    # repeating them here would be a second place to look with nothing to say. The HPA's bounds are
+    # defaults too, and only its switch is here (#1774). The ingress below is the exception, while dark.
+    bff:
+      autoscaling:
+        enabled: true
     #
     # Dark-mode ingress. All three revert at go-live, together and in one commit (#284 §0).
     ingress:

@@ -8,7 +8,7 @@ ConfigMap/event-junkie
 ConfigMap/event-junkie-seo
 ConfigMap/event-junkie-smoke-scripts
 Deployment/event-junkie-bff
-  replicas 1  strategy RollingUpdate  serviceAccount event-junkie-bff
+  replicas hpa  strategy RollingUpdate  serviceAccount event-junkie-bff
   container bff  image ghcr.io/enorm-labs/event-junkie/bff  ports http=8080,management=9001
 Deployment/event-junkie-frontend
   replicas 1  strategy RollingUpdate  serviceAccount event-junkie-frontend
@@ -19,6 +19,7 @@ Deployment/event-junkie-importer
   container importer  image ghcr.io/enorm-labs/event-junkie/importer  ports http=8081,management=9001
   container imgproxy  image ghcr.io/imgproxy/imgproxy  ports <none>
 HorizontalPodAutoscaler/event-junkie-bff
+  Deployment/event-junkie-bff  replicas 1..2  cpu 70%
 Ingress/event-junkie
   class traefik
   tls staging.event-junkie.de -> secret/event-junkie-staging-tls
