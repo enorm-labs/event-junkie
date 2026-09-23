@@ -156,6 +156,12 @@ class BerghainOverviewPageScraper(
      * marker joining two DJ sets. Sometimes it is plain text inside one name span, `"Agata B2B Cunt
      * Remember"`, which [B2B_SEPARATOR] splits. Back-to-back is never one act, which is why that
      * split is safe where a conjunction would not be: `"Blasha & Allatt"` is a duo in the same shape.
+     *
+     * **A comma inside a name span is the same shape one separator further on** (#1789). The venue
+     * wrote the five DJs of one wsnwg night into a single span, and the span was stored as one
+     * artist. A comma is safe here where it is not in an event title: this span is a lineup slot,
+     * so its content is a list of performers, and a band whose name carries a comma is billed in a
+     * span of its own.
      */
     private fun parseFloorLineup(
         element: Element,
@@ -176,7 +182,7 @@ class BerghainOverviewPageScraper(
             }
             val first = acts.size
             text
-                .split(B2B_SEPARATOR)
+                .split(SLOT_SEPARATOR)
                 .map { it.trim() }
                 .filter { it.isNotBlank() && !isNonArtistName(it) }
                 .forEach { acts.add(ScrapedArtist(name = it, role = role, stage = stage)) }
@@ -200,5 +206,11 @@ class BerghainOverviewPageScraper(
          * is what keeps it off a name that merely contains the letters.
          */
         private val B2B_SEPARATOR = Regex("""\s+b2b\s+""", RegexOption.IGNORE_CASE)
+
+        /**
+         * What separates the performers written into one name span: a [B2B_SEPARATOR], or a comma.
+         * The comma needs no padding, because the venue writes the list both ways.
+         */
+        private val SLOT_SEPARATOR = Regex("""${B2B_SEPARATOR.pattern}|\s*,\s*""", RegexOption.IGNORE_CASE)
     }
 }

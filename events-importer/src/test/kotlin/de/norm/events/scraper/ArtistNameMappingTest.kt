@@ -844,6 +844,49 @@ class ArtistNameMappingTest {
         stripArtistSuffix("DZ - DEATHRAY") shouldBe "DZ - DEATHRAY"
     }
 
+    // Two commas make a list; one decides nothing, because a band name carries one as often as a
+    // bill does (#1789).
+    @Test
+    fun `splitHeadlinerTitle reads two or more commas as a bill`() {
+        splitHeadlinerTitle("HALF LIGHT \u2013 Abul Mogard, Marja de Sanctis, Rafael Anton Irisarri, Concepci\u00f3n Huerta") shouldContainExactly
+            listOf("HALF LIGHT \u2013 Abul Mogard", "Marja de Sanctis", "Rafael Anton Irisarri", "Concepci\u00f3n Huerta")
+        splitHeadlinerTitle("Amber Broos, DJ Sexstasy, Sektor69") shouldContainExactly
+            listOf("Amber Broos", "DJ Sexstasy", "Sektor69")
+    }
+
+    @Test
+    fun `splitHeadlinerTitle keeps a one-comma name whole, whichever it turns out to be`() {
+        // Four real acts, each with exactly one comma. Nothing in the string says they are not bills.
+        splitHeadlinerTitle("Hey, Nothing") shouldContainExactly listOf("Hey, Nothing")
+        splitHeadlinerTitle("Kitty, Daisy & Lewis") shouldContainExactly listOf("Kitty, Daisy & Lewis")
+        splitHeadlinerTitle("Wracaj, bociemno") shouldContainExactly listOf("Wracaj, bociemno")
+        splitHeadlinerTitle("Yes, I\u2019m Very Tired Now") shouldContainExactly listOf("Yes, I\u2019m Very Tired Now")
+        // And one that is a bill, kept whole for the same reason. The comma rule does not guess.
+        splitHeadlinerTitle("D-Block Europe, French Montana") shouldContainExactly listOf("D-Block Europe, French Montana")
+    }
+
+    // A hard separator proves the title is a bill and still does not make its commas separators:
+    // Neue Zukunft billed `Wracaj, bociemno` as the third act of a three-act night (#1789).
+    @Test
+    fun `splitHeadlinerTitle keeps a one-comma act whole inside a plus-separated bill`() {
+        splitHeadlinerTitle("Sorry I'm Late + I hate the bouncers + Wracaj, bociemno") shouldContainExactly
+            listOf("Sorry I'm Late", "I hate the bouncers", "Wracaj, bociemno")
+    }
+
+    // Both commas are parenthetical affiliations, so the title carries none that separates acts.
+    @Test
+    fun `splitHeadlinerTitle ignores commas inside brackets`() {
+        splitHeadlinerTitle("New Candys (It, Fuzz Club) \u2022 Blke (De, Tonzonen)") shouldContainExactly
+            listOf("New Candys (It, Fuzz Club) \u2022 Blke (De, Tonzonen)")
+    }
+
+    // A comma list still splits its segments the ordinary way afterwards.
+    @Test
+    fun `splitHeadlinerTitle splits a comma segment on its own separators`() {
+        splitHeadlinerTitle("Georgy Gusev, Sven Helbig, Ivan Skanavi & Deutsches Kammerorchester Berlin") shouldContainExactly
+            listOf("Georgy Gusev", "Sven Helbig", "Ivan Skanavi", "Deutsches Kammerorchester Berlin")
+    }
+
     @Test
     fun `splitHeadlinerTitle splits space-padded plus and slash co-bills`() {
         splitHeadlinerTitle("TOTAL CHAOS + RUMKICKS + THE DOLLHEADS") shouldContainExactly

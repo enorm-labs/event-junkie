@@ -178,6 +178,68 @@ class BerghainOverviewPageScraperTest {
             )
     }
 
+    // The venue wrote five DJs of one night into a single name span; the span was stored as one act.
+    @Test
+    fun `a comma inside a name span separates the performers of one slot`() {
+        val html =
+            """
+            <html><body>
+              <a href="/de/event/94001/">
+                <p>Freitag <span class="font-bold">25.09.2026</span> beginn 23:59</p>
+                <h2>wsnwg</h2>
+                <h3>Berghain</h3>
+                <h4>
+                  <span class="font-bold">
+                    <span class="xs:whitespace-no-wrap">Rødhåd, Dasha Rush, Megan Leber, Speedy J, UFO95</span>
+                  </span>
+                </h4>
+              </a>
+            </body></html>
+            """.trimIndent()
+        val event = scraper.scrape(Jsoup.parse(html, berghainUrl), berghainUrl).single()
+
+        event.artists shouldContainExactly
+            listOf(
+                ScrapedArtist("R\u00f8dh\u00e5d", "DJ", "Berghain"),
+                ScrapedArtist("Dasha Rush", "DJ", "Berghain"),
+                ScrapedArtist("Megan Leber", "DJ", "Berghain"),
+                ScrapedArtist("Speedy J", "DJ", "Berghain"),
+                ScrapedArtist("UFO95", "DJ", "Berghain")
+            )
+    }
+
+    // A `Live` marker after a comma list bills every performer in it, the way it does after a b2b.
+    @Test
+    fun `a Live marker after a comma list bills every act in it`() {
+        val html =
+            """
+            <html><body>
+              <a href="/de/event/94002/">
+                <p>Freitag <span class="font-bold">25.09.2026</span> beginn 23:59</p>
+                <h2>wsnwg</h2>
+                <h3>Berghain</h3>
+                <h4>
+                  <span class="font-bold">
+                    <span class="xs:whitespace-no-wrap">Nonn, Ruhig</span>
+                    <span class="text-sm font-bold uppercase">Live</span>,
+                  </span>
+                  <span class="font-bold">
+                    <span class="xs:whitespace-no-wrap">Sedef Adası</span>
+                  </span>
+                </h4>
+              </a>
+            </body></html>
+            """.trimIndent()
+        val event = scraper.scrape(Jsoup.parse(html, berghainUrl), berghainUrl).single()
+
+        event.artists shouldContainExactly
+            listOf(
+                ScrapedArtist("Nonn", "HEADLINER", "Berghain"),
+                ScrapedArtist("Ruhig", "HEADLINER", "Berghain"),
+                ScrapedArtist("Sedef Adas\u0131", "DJ", "Berghain")
+            )
+    }
+
     // `b2b` is an `uppercase` span too, and it joins two DJ sets rather than announcing a live act.
     @Test
     fun `leaves a back-to-back slot marked by its own span as two DJs`() {
