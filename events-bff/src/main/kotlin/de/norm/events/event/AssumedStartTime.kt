@@ -1,6 +1,5 @@
 package de.norm.events.event
 
-import de.norm.events.event.EventType.CLUB_NIGHT
 import de.norm.events.event.EventType.CONCERT
 import de.norm.events.event.EventType.EXHIBITION
 import de.norm.events.event.EventType.FESTIVAL
@@ -18,10 +17,9 @@ import java.time.LocalTime
  * is a night, not the 23:59 `NULLS LAST` made of it. The list sorts by this slot and the page
  * shows it as a guess (`assumedStartTime`, never `startTime`), both reading this one table.
  *
- * The medians of the events that carry a start (3711 on staging, measured in #1384), with two
- * exceptions: `PARTY` sits at the top of its p75, because the parties without a time are the
- * clubs, whose doors are 23:00–00:00; `CLUB_NIGHT` takes the same slot, because 18 rows is not
- * a sample and the name says night.
+ * The medians of the events that carry a start (3711 on staging, measured in #1384), with one
+ * exception: `PARTY` sits at the top of its p75, because the parties without a time are the
+ * clubs, whose doors are 23:00–00:00.
  *
  * | type       | rows | median | p25–p75     |
  * |------------|------|--------|-------------|
@@ -33,7 +31,6 @@ import java.time.LocalTime
  * | READING    |   72 | 19:30  | 19:30–20:00 |
  * | CONCERT    | 1815 | 20:00  | 19:30–20:00 |
  * | SCREENING  |   13 | 20:00  | 19:00–20:30 |
- * | CLUB_NIGHT |   18 | 20:00  | 20:00–20:00 |
  * | PARTY      |  893 | 22:00  | 19:00–22:30 |
  */
 object AssumedStartTime {
@@ -47,7 +44,6 @@ object AssumedStartTime {
             READING to LocalTime.of(19, 30),
             CONCERT to LocalTime.of(20, 0),
             SCREENING to LocalTime.of(20, 0),
-            CLUB_NIGHT to LocalTime.of(23, 0),
             PARTY to LocalTime.of(23, 0)
         )
 

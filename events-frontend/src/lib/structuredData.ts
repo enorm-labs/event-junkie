@@ -76,7 +76,6 @@ const EVENT_STATUS: Record<string, string> = {
 const EVENT_TYPES: Record<string, string> = {
   CONCERT: 'MusicEvent',
   FESTIVAL: 'MusicEvent',
-  CLUB_NIGHT: 'MusicEvent',
   PARTY: 'SocialEvent',
   QUIZ: 'SocialEvent',
   SCREENING: 'ScreeningEvent',

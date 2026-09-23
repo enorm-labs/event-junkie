@@ -69,10 +69,10 @@ class MigasOverviewPageScraperTest {
     }
 
     @Test
-    fun `scrape types a playing night as a club night and bills its selector as a DJ`() {
+    fun `scrape types a playing night as a party and bills its selector as a DJ`() {
         val night = event("vip client")
 
-        night.eventType shouldBe EventType.CLUB_NIGHT.name
+        night.eventType shouldBe EventType.PARTY.name
         night.eventDate shouldBe LocalDate.of(2026, 8, 6)
         night.sourceId shouldBe "migas:vip-client"
         night.artists shouldContainExactly listOf(ScrapedArtist(name = "vip client", role = "DJ", titleDerived = true))

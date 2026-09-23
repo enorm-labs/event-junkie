@@ -43,7 +43,7 @@ Tables (all in schema `events`): `venue`, `artist`, `promoter`, `event`, `event_
 
 Valid enum values (stored as `TEXT`; anything else is a bug — parsers fall back on unknowns):
 
-- `event.event_type`: `CONCERT`, `FESTIVAL`, `PARTY`, `QUIZ`, `CLUB_NIGHT`, `SHOW`, `SCREENING`, `EXHIBITION`, `READING`, `OTHER`
+- `event.event_type`: `CONCERT`, `FESTIVAL`, `PARTY`, `QUIZ`, `SHOW`, `SCREENING`, `EXHIBITION`, `READING`, `OTHER`
 - `event.status`: `SCHEDULED`, `RELOCATED`, `CANCELLED`, `POSTPONED`
 - `event_artist.role`: `HEADLINER`, `SUPPORT`, `DJ`
 

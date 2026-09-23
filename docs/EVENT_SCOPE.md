@@ -39,7 +39,7 @@ coverage:
 | Type         | Share | What it covers                                                     | Where it comes from                             |
 | ------------ | ----: | ------------------------------------------------------------------ | ----------------------------------------------- |
 | `CONCERT`    |  ~62% | Live music with a billed lineup, from back rooms to arenas         | `konzert` / `concert`, and most venues' default |
-| `PARTY`      |  ~19% | DJ nights, one-off parties                                         | `party`                                         |
+| `PARTY`      |  ~19% | Club nights and parties, one-off or recurring                      | `party`                                         |
 | `SHOW`       |  ~11% | Staged performance — cabaret, burlesque, comedy, musicals, variety | `show`                                          |
 | `OTHER`      |   ~3% | The genuine remainder, plus anything a venue labels `sonstiges`    | fallback                                        |
 | `READING`    |   ~2% | Literary readings, spoken word, poetry slams                       | `lesung` / `reading`                            |
@@ -47,31 +47,17 @@ coverage:
 | `EXHIBITION` |   ~1% | A run, opening day to closing day; the vernissage is its evening   | `ausstellung` / `exhibition` / `vernissage`     |
 | `QUIZ`       |   <1% | Pub quizzes and game nights                                        | `quiz`                                          |
 | `SCREENING`  |   <1% | Film screenings, open-air cinema, football "public viewing"        | `screening`, `public viewing`                   |
-| `CLUB_NIGHT` |   <1% | A recurring club night distinct from a one-off party               | venue-specific labels                           |
 
 **`OTHER` is a fallback, not a bin.** `parseOrDefault` logs a warning whenever it resolves to `OTHER`. An
 unrecognised label is therefore a signal to extend the mapping, not something that silently accumulates. The 3% share
 is a health metric. If it climbs, a venue is using vocabulary nobody mapped.
 
-**`CLUB_NIGHT` is a real distinction, not a loose synonym for `PARTY`, and it is load-bearing.** Only 8 events carry
-it, which makes it look like a candidate for merging into `PARTY`. It is not, and the reason is in the code rather
-than in taste:
+**`PARTY` holds every club night.** There is no separate club-night type (#1783). A `PARTY` keeps a lineup that the
+venue publishes. Tresor, Matrix and OHM bill their DJs as `PARTY`.
 
-```kotlin
-// ArtistNameMapping.kt — buildArtistsForEventType
-if (eventType == EventType.FESTIVAL.name || eventType == EventType.PARTY.name) return emptyList()
-```
-
-**Typing a night as `PARTY` discards its lineup.** migas maps its `playing` category to `CLUB_NIGHT` deliberately for
-exactly this reason. There the _title is the artist_, so all 8 of its events would lose their artist link on a merge.
-`PARTY` would also misdescribe the venue, which is a seated listening bar.
-
-So the definition to work from. **`CLUB_NIGHT` is a DJ set where the booked act is the draw**, and the artist matters
-and is extracted. `PARTY` is a night where the event is the draw and no lineup is claimed. Map to whichever of those
-is true of the venue, and do not "tidy" one into the other.
-
-_(That `PARTY` and `FESTIVAL` discard artists at all is a separate and larger question. It affects far more than these
-8 rows, and it is tracked in [issue #332](https://github.com/enorm-labs/event-junkie/issues/332).)_
+One path discards artists for `PARTY`: `buildArtistsForEventType`, which reads artists from a title when the venue
+publishes no lineup. A party title names the night, not an act. That rule is tracked in
+[issue #332](https://github.com/enorm-labs/event-junkie/issues/332).
 
 **`EXHIBITION` is a _run_.** An event carries an optional end since ADR-029, and an exhibition uses it. It is one row
 from opening day to closing day, with `end_date` set and `end_time` empty. The vernissage time is its `start_time`

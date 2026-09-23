@@ -19,7 +19,7 @@ class EventTypeTest {
     @Test
     fun `parseOrDefault trims whitespace`() {
         EventType.parseOrDefault("  QUIZ  ") shouldBe EventType.QUIZ
-        EventType.parseOrDefault("\tCLUB_NIGHT\n") shouldBe EventType.CLUB_NIGHT
+        EventType.parseOrDefault("\tSHOW\n") shouldBe EventType.SHOW
     }
 
     @Test
@@ -28,7 +28,6 @@ class EventTypeTest {
         EventType.parseOrDefault("FESTIVAL") shouldBe EventType.FESTIVAL
         EventType.parseOrDefault("PARTY") shouldBe EventType.PARTY
         EventType.parseOrDefault("QUIZ") shouldBe EventType.QUIZ
-        EventType.parseOrDefault("CLUB_NIGHT") shouldBe EventType.CLUB_NIGHT
         EventType.parseOrDefault("SHOW") shouldBe EventType.SHOW
         EventType.parseOrDefault("SCREENING") shouldBe EventType.SCREENING
         EventType.parseOrDefault("EXHIBITION") shouldBe EventType.EXHIBITION

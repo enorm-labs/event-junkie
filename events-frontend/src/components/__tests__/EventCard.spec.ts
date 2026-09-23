@@ -14,7 +14,7 @@ const event: EventSummary = {
   soldOut: true,
   priceCurrency: 'EUR',
   pricePresale: 25,
-  eventType: 'CLUB_NIGHT',
+  eventType: 'PARTY',
   genreTags: ['Punk'],
   venue: { slug: 'lido', name: 'Lido', city: 'Berlin' },
 }
@@ -139,7 +139,7 @@ describe('EventCard', () => {
 
   it('shows the event type as a readable pill alongside the genres', () => {
     const wrapper = mount(EventCard, { props: { event }, global: { stubs } })
-    expect(wrapper.text()).toContain('Club night')
+    expect(wrapper.text()).toContain('Party')
     expect(wrapper.text()).toContain('Punk')
   })
 

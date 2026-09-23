@@ -27,7 +27,6 @@ const EVENT_TYPES = [
   'FESTIVAL',
   'PARTY',
   'QUIZ',
-  'CLUB_NIGHT',
   'SHOW',
   'SCREENING',
   'EXHIBITION',
