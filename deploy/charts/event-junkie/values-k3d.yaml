@@ -62,6 +62,15 @@ ingress:
     # No TLS, therefore no cert-manager: the rehearsal is about whether the workloads start and route,
     # not about ACME against a name that does not exist.
     enabled: false
+  # The nightly ZAP active scan runs through this Traefik, to exercise the middlewares, and a fuzzer
+  # spends requests far faster than a visitor. At the chart's 50/s it crossed the limiter and rule
+  # 40018 read the 429s as an injected expression (#1746). The middleware still renders and still
+  # applies; only its ceiling moves, and the numbers a visitor meets are proven by `perf/ratelimit.js`
+  # against staging and production.
+  rateLimit:
+    perSource:
+      average: 5000
+      burst: 10000
 
 certManager:
   clusterIssuer:
