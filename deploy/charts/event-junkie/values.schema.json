@@ -137,6 +137,7 @@
             "minReplicas",
             "maxReplicas",
             "targetCPUUtilizationPercentage",
+            "scaleUpStabilizationSeconds",
             "scaleDownStabilizationSeconds"
           ],
           "properties": {
@@ -155,6 +156,11 @@
               "type": "integer",
               "minimum": 1,
               "maximum": 100
+            },
+            "scaleUpStabilizationSeconds": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 3600
             },
             "scaleDownStabilizationSeconds": {
               "type": "integer",

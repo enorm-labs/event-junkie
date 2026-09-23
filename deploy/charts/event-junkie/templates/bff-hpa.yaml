@@ -28,8 +28,10 @@ spec:
           type: Utilization
           averageUtilization: {{ $a.targetCPUUtilizationPercentage }}
   behavior:
-    {{- /* A new JVM pegs a core while it compiles, so scaling down too soon trades one burst for a
-       cold start the next burst pays for. */}}
+    {{- /* A new JVM pegs a core for about a minute while it compiles. Up: that minute is not load, so
+       a scale-up needs longer than it. Down: too soon trades one burst for the next one's cold start. */}}
+    scaleUp:
+      stabilizationWindowSeconds: {{ $a.scaleUpStabilizationSeconds }}
     scaleDown:
       stabilizationWindowSeconds: {{ $a.scaleDownStabilizationSeconds }}
 {{- end }}

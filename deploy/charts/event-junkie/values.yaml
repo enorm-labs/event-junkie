@@ -48,13 +48,15 @@ bff:
   # bff.replicaCount is free to exceed 1: the BFF is stateless and read-only. Ignored while
   # bff.autoscaling is on.
   replicaCount: 2
-  # bff.autoscaling renders an HPA on CPU (#1774). Off by default, so k3d keeps a fixed count. Scale-down
-  # waits five minutes, because a new replica spends its first minute compiling at full CPU.
+  # bff.autoscaling renders an HPA on CPU (#1774). Off by default, so k3d keeps a fixed count. A new
+  # replica compiles at full CPU for about a minute. Without the 120 s scale-up window, every deploy
+  # added a replica on staging. Scale-down waits five minutes, so a burst is not followed by a cold start.
   autoscaling:
     enabled: false
     minReplicas: 2
     maxReplicas: 3
     targetCPUUtilizationPercentage: 70
+    scaleUpStabilizationSeconds: 120
     scaleDownStabilizationSeconds: 300
   image:
     repository: "enorm-labs/event-junkie/bff"
