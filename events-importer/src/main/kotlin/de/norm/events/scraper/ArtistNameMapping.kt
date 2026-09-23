@@ -581,6 +581,11 @@ private fun isTitleFragment(name: String): Boolean = name.contains('|')
  * matched case-insensitively against the whole title. `AC/DC` needs no entry, being protected
  * by space-padding; this list is for the `" & "` / `" and "` / `" und "` cases. Entries are in
  * `&` form and the title's conjunctions are normalized to `&` first.
+ *
+ * **Name by name, because no source carries the signal.** Klunkerkranich bills a duo and a pair
+ * of residents identically — one line in the event page's lineup block, one `&` slot in the
+ * title — so nothing on the page separates `Überhaupt & Außerdem` from `Ilo Pan & Elmo Lewis`
+ * (#1760). This list is the standing answer, and it does not generalise by design.
  */
 private val KNOWN_SINGLE_ACTS: Set<String> =
     setOf(
@@ -597,7 +602,8 @@ private val KNOWN_SINGLE_ACTS: Set<String> =
         "blood & sun",
         "pure obsessions & red nights",
         "scala & kolacny brothers",
-        "chase & status"
+        "chase & status",
+        "überhaupt & außerdem"
     )
 
 /**
@@ -643,9 +649,10 @@ private val PROSE_END = Regex("""\s(?:in|im|mit|für|von|of|the|for|to|at|on|aus
 /**
  * True when [name] is a [KNOWN_SINGLE_ACTS] entry, conjunctions normalized to `&` first. Checked
  * at segment level, so `"BLOOD & SUN + SOCIETY OF THE SILVER CROSS"` splits at the `+` into two
- * acts, and "Support: Simon & Garfunkel" is protected.
+ * acts, and "Support: Simon & Garfunkel" is protected. Public because a venue parser with its own
+ * act separator asks the same question before splitting (Klunkerkranich, #1760).
  */
-private fun isKnownSingleAct(name: String): Boolean = name.trim().replace(CONJUNCTION_SEPARATOR, " & ").lowercase() in KNOWN_SINGLE_ACTS
+fun isKnownSingleAct(name: String): Boolean = name.trim().replace(CONJUNCTION_SEPARATOR, " & ").lowercase() in KNOWN_SINGLE_ACTS
 
 /**
  * Splits a title segment into acts at its conjunctions, per boundary, so a real co-bill still
