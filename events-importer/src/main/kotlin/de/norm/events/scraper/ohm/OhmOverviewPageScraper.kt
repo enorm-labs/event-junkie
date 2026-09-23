@@ -109,16 +109,24 @@ class OhmOverviewPageScraper(
     }
 
     /**
-     * The DJ roster from the `<br>`-separated `.event-lineup` block. The *title* is a party or
-     * collective name (`"Ouch x FemmeDecks"`), never an act, so not minted — only the lineup
-     * entries are, each a `DJ`. Placeholder and role labels are dropped by [isNonArtistName].
+     * The roster from the `<br>`-separated `.event-lineup` block. The *title* is a party or
+     * collective name (`"Ouch x FemmeDecks"`), never an act, so not minted. A bracket annotates
+     * a line (#1756): `(Live Painting)` or `(Sonic Visual Installation)` is not a music act and is
+     * dropped, `(OPERA live)` bills a `HEADLINER`, every other line a `DJ`. The bracket stays on the
+     * name, because `V.` alone would merge into another act's `v` slug.
      */
     private fun parseLineup(item: Element): List<ScrapedArtist> =
         item
             .textLinesAt(".event-lineup")
-            .filterNot { isNonArtistName(it) }
-            .map { ScrapedArtist(name = it, role = "DJ") }
+            .filterNot { isNonArtistName(it) || NON_MUSIC_ANNOTATION.containsMatchIn(it) }
+            .map { ScrapedArtist(name = it, role = if (LIVE_ANNOTATION.containsMatchIn(it)) "HEADLINER" else "DJ") }
 }
+
+/** A bracket naming a contribution that is not music: `(Live Painting)`, `(Sonic Visual Installation)`. */
+private val NON_MUSIC_ANNOTATION = Regex("""\([^()]*\b(?:painting|visuals?|installation|vj)\b[^()]*\)""", RegexOption.IGNORE_CASE)
+
+/** A bracket marking a live act: `(OPERA live)`, `(live)`. */
+private val LIVE_ANNOTATION = Regex("""\([^()]*\blive\b[^()]*\)""", RegexOption.IGNORE_CASE)
 
 /** The year-less `DD/MM` date rendering, tolerating single-digit parts. */
 private val DAY_MONTH_PATTERN = Regex("""(\d{1,2})\s*/\s*(\d{1,2})""")

@@ -257,6 +257,31 @@ class GretchenOverviewPageScraperTest {
                     ScrapedArtist("Sean Steinfeger", "SUPPORT")
                 )
         }
+
+        // detail.php?id=3543 and id=3571: the second `.lineup` block adds acts after the main
+        // billing with a leading "+", and its <em> price note holds the only <br> between two lines.
+        @Test
+        fun `keeps a line break that sits inside an em and strips a leading plus`() {
+            val html =
+                """
+                <div class="gig">
+                    <div class="gig_top">
+                        <span class="date">Do. <strong>05.11.2026</strong><br> Doors: 20.00</span>
+                    </div>
+                    <div class="gig_main"><div class="scroll nano"><div class="text nano-content">
+                        <span class="title">Afro<h2><a href="detail.php?id=3543">Àbáse</a></h2></span>
+                        <span class="box"></span><span class="lineup"><p>Àbáse  (Analogue Foundation & Oshu Records/HU/D ) *live*<br />ZENA    (Brownswood Rec./UK) *live*<br /></p></span>
+                        <span class="box"></span><span class="lineup">+ guests<em><br /><br /></em>Opening DJ-Set by Sean Steinfeger<em><br /><br />*Vorverkauf 12 €/ 18 €/ 24 € zzgl. Gebühren * Abendkasse tba.*</em></span>
+                        <span class="box"></span><span class="lineup">+ Mittelmeer Monologe</span>
+                    </div></div></div>
+                </div>
+                """.trimIndent()
+
+            val event = scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl).single()
+
+            event.artists.map { it.name } shouldContainExactly
+                listOf("Àbáse", "ZENA", "Sean Steinfeger", "Mittelmeer Monologe")
+        }
     }
 
     @Nested
