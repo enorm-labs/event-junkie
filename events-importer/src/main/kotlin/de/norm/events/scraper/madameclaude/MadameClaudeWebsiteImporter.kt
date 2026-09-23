@@ -6,6 +6,7 @@ import de.norm.events.scraper.EventImporter
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.VenueLimitations
+import de.norm.events.scraper.querySeparator
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
 import java.time.Clock
@@ -69,7 +70,7 @@ class MadameClaudeWebsiteImporter(
      * event later today is still included.
      */
     private fun buildRequestUrl(baseUrl: String): String {
-        val separator = if ('?' in baseUrl) '&' else '?'
+        val separator = baseUrl.querySeparator()
         val after = LocalDate.now(clock).atStartOfDay().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
         return "$baseUrl${separator}per_page=$PER_PAGE&orderby=date&order=asc&after=$after&_embed=wp:featuredmedia"
     }

@@ -9,6 +9,7 @@ import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.VenueLimitations
+import de.norm.events.scraper.querySeparator
 import de.norm.events.scraper.urbanspree.UrbanSpreeWebsiteImporter.Companion.MAX_PAGES
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
@@ -97,7 +98,7 @@ class UrbanSpreeWebsiteImporter(
         page: Int
     ): String {
         if (page == 1) return entryUrl
-        val separator = if ('?' in entryUrl) '&' else '?'
+        val separator = entryUrl.querySeparator()
         return "$entryUrl$separator$PAGE_QUERY_PARAM=$page"
     }
 
