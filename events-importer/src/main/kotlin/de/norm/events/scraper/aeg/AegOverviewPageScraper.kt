@@ -15,6 +15,7 @@ import de.norm.events.scraper.parseGermanMonthAbbreviation
 import de.norm.events.scraper.parsePriceValue
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.resolveUrl
+import de.norm.events.scraper.stripTitleStatusMarker
 import de.norm.events.scraper.textAt
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
@@ -92,7 +93,7 @@ class AegOverviewPageScraper {
         val slug = extractEventSlug(sourceUrl, "/events/detail/")
 
         val rawTitle = row.textAt("h3.event-title")
-        val title = rawTitle?.replace(CANCELLED_PREFIX, "")?.let { cleanEventTitle(it) }
+        val title = rawTitle?.let { stripTitleStatusMarker(it) }?.let { cleanEventTitle(it) }
         if (title.isNullOrBlank()) {
             logger.warn { "$eventSource row '$slug' has no title, skipping" }
             return null
@@ -179,12 +180,6 @@ private val SPORT_CATEGORIES = setOf("eishockey", "basketball", "sport")
 
 /** Category labels the shared table does not carry. A comedy night is a staged show. */
 private val EXTRA_CATEGORY_SYNONYMS = mapOf("comedy" to EventType.SHOW.name)
-
-/**
- * The cancellation marker prefixed to a title (`ABGESAGT: Ryan Adams`), read for the status
- * and removed so the stored name stays the act's.
- */
-private val CANCELLED_PREFIX = Regex("""^\s*ABGESAGT\s*[:.\-]?\s*""", RegexOption.IGNORE_CASE)
 
 /** The trailing `Uhr` the venues append to their start time. */
 private const val CLOCK_SUFFIX = "Uhr"

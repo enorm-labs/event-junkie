@@ -11,17 +11,27 @@ import java.time.LocalTime
 /**
  * Maps a venue status-badge text, German or English, to an [EventStatus] name, case-insensitive.
  * "sold out" / "ausverkauft" is not a status: venues capture it as `soldOut`. A move is also "new
- * venue" / "neuer Ort", the badge Lido and Gretchen print beside the note.
+ * venue" / "neuer Ort", the badge Lido and Gretchen print beside the note, and the AEG houses'
+ * `VENUE ÄNDERUNG` title prefix ([MOVED_TEXT], #1771).
  */
 fun parseEventStatus(statusText: String): String {
     val text = statusText.lowercase()
     return when {
         CANCELLED_TEXT.containsMatchIn(text) -> EventStatus.CANCELLED.name
         text.contains("verschoben") || text.contains("postpon") || VERLEGT_AUF_DATUM.containsMatchIn(text) -> EventStatus.POSTPONED.name
-        text.contains("verlegt") || text.contains("reloc") || text.contains("new venue") || text.contains("neuer ort") -> EventStatus.RELOCATED.name
+        MOVED_TEXT.containsMatchIn(text) -> EventStatus.RELOCATED.name
         else -> EventStatus.SCHEDULED.name
     }
 }
+
+/**
+ * A move, in any of the words a venue writes it: the verb, the badge Lido and Gretchen print, and
+ * the AEG houses' `VENUE ÄNDERUNG` — which names the change rather than the verb, so none of the
+ * others reached it and the show published as if it still happened there (#1771). Both spellings
+ * of the umlaut, and the compound with or without its space.
+ */
+private val MOVED_TEXT =
+    Regex("""verlegt|reloc|new venue|neuer ort|venue\s?(?:ä|ae)nderung""", RegexOption.IGNORE_CASE)
 
 /**
  * "auf den 30.05.2027 verlegt" moves the date, not the house: a postponement written with the
@@ -38,12 +48,14 @@ private val CANCELLED_TEXT = Regex("""abgesagt|absage|cancel|\b(?:f(?:ä|ae)llt\
 /**
  * A status word a venue writes into the title itself: Kantine am Berghain's `Olga Myko -
  * Abgesagt`, Wild at Heart's `Da Konzert von Scarfold und Los Mierda faellt leider aus!`, Uber
- * Eats Music Hall's `ABSAGE: …` (#1560). Word-anchored, and the bare "cancel" of
- * [parseEventStatus] is not accepted: "Cancel Culture" is a film.
+ * Eats Music Hall's `ABSAGE: …` (#1560), Uber Arena's `VENUE ÄNDERUNG: …` (#1771).
+ * Word-anchored, and the bare "cancel" of [parseEventStatus] is not accepted: "Cancel Culture"
+ * is a film.
  */
 private val TITLE_STATUS_PATTERN =
     Regex(
-        """\b(?:abgesagt|absage|cancell?ed|f(?:ä|ae)llt\s+(?:\w+\s+)?aus|entf(?:ä|ae)llt|verschoben|verlegt)\b""",
+        """\b(?:abgesagt|absage|cancell?ed|f(?:ä|ae)llt\s+(?:\w+\s+)?aus|entf(?:ä|ae)llt|verschoben|verlegt""" +
+            """|venue\s?(?:ä|ae)nderung)\b""",
         RegexOption.IGNORE_CASE
     )
 
@@ -54,15 +66,15 @@ private val TITLE_STATUS_PATTERN =
 fun parseTitleStatus(title: String): String? = TITLE_STATUS_PATTERN.find(title)?.let { parseEventStatus(it.value) }
 
 /**
- * A cancellation marker glued to the front or end of a title (`Olga Myko - Abgesagt`,
- * `(cancelled) The Act`, `The Act [ABGESAGT!]`) with its separator and brackets. A
+ * A status marker glued to the front or end of a title (`Olga Myko - Abgesagt`, `(cancelled) The
+ * Act`, `The Act [ABGESAGT!]`, `VENUE ÄNDERUNG: Jazeek`) with its separator and brackets. A
  * "verschoben"/"verlegt" tail is [cleanEventTitle]'s, and a sentence that is the notice (Wild
  * at Heart) stays the title.
  */
 private val TITLE_STATUS_MARKER =
     Regex(
-        """^\s*[(\[]?\s*(?:abgesagt|absage|cancell?ed)!?\s*[)\]]?\s*[-–—:|]*\s*""" +
-            """|\s*[-–—:|]*\s*[(\[]?\s*(?:abgesagt|absage|cancell?ed)!?\s*[)\]]?\s*$""",
+        """^\s*[(\[]?\s*(?:abgesagt|absage|cancell?ed|venue\s?(?:ä|ae)nderung)!?\s*[)\]]?\s*[-–—:|]*\s*""" +
+            """|\s*[-–—:|]*\s*[(\[]?\s*(?:abgesagt|absage|cancell?ed|venue\s?(?:ä|ae)nderung)!?\s*[)\]]?\s*$""",
         RegexOption.IGNORE_CASE
     )
 

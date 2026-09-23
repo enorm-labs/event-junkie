@@ -141,6 +141,51 @@ class AegOverviewPageScraperTest {
         arenaEvents.all { it.status == EventStatus.SCHEDULED.name } shouldBe true
     }
 
+    // The venues name the change rather than the verb, so none of the move words reached it (#1771).
+    @Test
+    fun `reads a VENUE ÄNDERUNG prefix as a move and keeps it out of the title and the lineup`() {
+        val row =
+            """
+            <html><body>
+              <div class="active-date entry clearfix" data-category="3" data-categoryname="konzert" data-date="2026-09">
+                <div class="info"><div class="details">
+                  <div class="date"><span class="m-date__singleDate"><span class="m-date__day">23.</span><span
+                      class="m-date__month">09.</span><span class="m-date__year">2026, </span><span
+                      class="m-date__hour"> 20:00 Uhr</span></span></div>
+                  <h3 class="event-title"><a
+                      href="https://www.uber-arena.de/events/detail/jazeek-26/2026-09-23-2000">VENUE ÄNDERUNG: Jazeek</a></h3>
+                </div></div>
+              </div>
+            </body></html>
+            """.trimIndent()
+        val event = scraper.scrape(Jsoup.parse(row, arenaUrl), arenaUrl, EventSource.UBER_ARENA).single()
+
+        event.status shouldBe EventStatus.RELOCATED.name
+        event.title shouldBe "Jazeek"
+        // The notice is no act: it was minted as `venue-anderung-jazeek` beside the real Jazeek.
+        event.artists.map { it.name } shouldBe listOf("Jazeek")
+    }
+
+    @Test
+    fun `resolves the destination the event's own page names`() {
+        // The relocation parsing already worked; a SCHEDULED status threw the answer away (#1771).
+        val moved =
+            ScrapedEvent(
+                title = "Jazeek",
+                eventDate = LocalDate.of(2026, 9, 23),
+                sourceUrl = "https://www.uber-arena.de/events/detail/jazeek-26/2026-09-23-2000",
+                sourceId = "uber_arena:jazeek-26/2026-09-23-2000",
+                status = EventStatus.RELOCATED.name,
+                description =
+                    "Das Konzert von Jazeek, das am 23. September 2026 in der Uber Arena stattfinden sollte, " +
+                        "wird in die Uber Eats Music Hall verlegt."
+            )
+        val entity = moved.toEventEntity(venueId = 1, venueSlug = "uber-arena", eventSourceId = 1)
+
+        entity.status shouldBe EventStatus.RELOCATED.name
+        entity.relocatedTo shouldBe "Uber Eats Music Hall"
+    }
+
     @Test
     fun `keeps one production's many dates apart by the date segment in its url`() {
         // A run reuses a single slug, so only the trailing "/YYYY-MM-DD-HHMM" makes it unique.
