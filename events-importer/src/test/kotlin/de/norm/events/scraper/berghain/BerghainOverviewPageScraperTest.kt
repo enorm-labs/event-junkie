@@ -53,10 +53,10 @@ class BerghainOverviewPageScraperTest {
         event.genre shouldBe "Techno"
         event.sourceUrl shouldBe "https://www.berghain.berlin/de/event/80835/"
         event.sourceId shouldBe "berghain:80835"
-        // Each act is tagged with the floor (stage) it plays.
+        // Each act is tagged with the floor (stage) it plays, and the one billed `Live` performs.
         event.artists shouldContainExactly
             listOf(
-                ScrapedArtist("Hurricane Alexander", "DJ", "Berghain"),
+                ScrapedArtist("Hurricane Alexander", "HEADLINER", "Berghain"),
                 ScrapedArtist("Amanda Mussi", "DJ", "Berghain"),
                 ScrapedArtist("Magna Pia", "DJ", "Berghain"),
                 ScrapedArtist("X TiN", "DJ", "Berghain")
@@ -135,14 +135,97 @@ class BerghainOverviewPageScraperTest {
             """.trimIndent()
         val event = scraper.scrape(Jsoup.parse(html, berghainUrl), berghainUrl).single()
 
-        // Five performers on one floor, not three. The prose names all five.
+        // Five performers on one floor, not three. The prose names all five, and KĀ is billed `Live`.
         event.artists shouldContainExactly
             listOf(
-                ScrapedArtist("KĀ", "DJ", "Säule"),
+                ScrapedArtist("KĀ", "HEADLINER", "Säule"),
                 ScrapedArtist("Agata", "DJ", "Säule"),
                 ScrapedArtist("Cunt Remember", "DJ", "Säule"),
                 ScrapedArtist("Egregore", "DJ", "Säule"),
                 ScrapedArtist("Jolly", "DJ", "Säule")
+            )
+    }
+
+    // The marker is the venue saying the act performs, and it sits inside that act's wrapper (#1787).
+    @Test
+    fun `bills an act marked Live as a headliner and leaves the rest of the floor DJs`() {
+        val html =
+            """
+            <html><body>
+              <a href="/de/event/82270/">
+                <p>Dienstag <span class="font-bold">13.10.2026</span> beginn 20:00</p>
+                <h2>Krallice</h2>
+                <h3>Berghain</h3>
+                <h4>
+                  <span class="font-bold">
+                    <span class="xs:whitespace-no-wrap">Krallice</span>
+                    <span class="text-sm font-bold uppercase">Live</span>,
+                  </span>
+                  <span class="font-bold">
+                    <span class="xs:whitespace-no-wrap">Marcel Dettmann</span>
+                  </span>
+                </h4>
+              </a>
+            </body></html>
+            """.trimIndent()
+        val event = scraper.scrape(Jsoup.parse(html, berghainUrl), berghainUrl).single()
+
+        // A band and a DJ on one bill, told apart by the only place the venue publishes it.
+        event.artists shouldContainExactly
+            listOf(
+                ScrapedArtist("Krallice", "HEADLINER", "Berghain"),
+                ScrapedArtist("Marcel Dettmann", "DJ", "Berghain")
+            )
+    }
+
+    // `b2b` is an `uppercase` span too, and it joins two DJ sets rather than announcing a live act.
+    @Test
+    fun `leaves a back-to-back slot marked by its own span as two DJs`() {
+        val html =
+            """
+            <html><body>
+              <a href="/de/event/11/">
+                <p>Samstag <span class="font-bold">25.07.2026</span> beginn 23:59</p>
+                <h2>Klubnacht</h2>
+                <h3>Panorama Bar</h3>
+                <h4><span class="font-bold"><span>Ryan Elliott</span> <span class="uppercase">b2b</span> <span>Tama Sumo</span></span></h4>
+              </a>
+            </body></html>
+            """.trimIndent()
+        val event = scraper.scrape(Jsoup.parse(html, berghainUrl), berghainUrl).single()
+
+        event.artists shouldContainExactly
+            listOf(
+                ScrapedArtist("Ryan Elliott", "DJ", "Panorama Bar"),
+                ScrapedArtist("Tama Sumo", "DJ", "Panorama Bar")
+            )
+    }
+
+    // A marker after a span the b2b split marks both halves, not the second one alone.
+    @Test
+    fun `bills both halves of a split slot live when the marker follows it`() {
+        val html =
+            """
+            <html><body>
+              <a href="/de/event/12/">
+                <p>Samstag <span class="font-bold">25.07.2026</span> beginn 23:59</p>
+                <h2>Klubnacht</h2>
+                <h3>Säule</h3>
+                <h4>
+                  <span class="font-bold">
+                    <span class="xs:whitespace-no-wrap">Agata B2B Cunt Remember</span>
+                    <span class="text-sm font-bold uppercase">Live</span>
+                  </span>
+                </h4>
+              </a>
+            </body></html>
+            """.trimIndent()
+        val event = scraper.scrape(Jsoup.parse(html, berghainUrl), berghainUrl).single()
+
+        event.artists shouldContainExactly
+            listOf(
+                ScrapedArtist("Agata", "HEADLINER", "Säule"),
+                ScrapedArtist("Cunt Remember", "HEADLINER", "Säule")
             )
     }
 

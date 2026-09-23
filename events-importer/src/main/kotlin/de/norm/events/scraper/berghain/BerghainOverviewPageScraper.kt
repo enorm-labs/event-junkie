@@ -29,7 +29,8 @@ import java.time.Clock
  * - one or more `<h3>` labels name the floor(s) (Berghain, Panorama Bar, Säule, Halle, or
  * Kantine am Berghain) — used to type the event and as the subtitle;
  * - one or more `<h4>` blocks hold the running-order lineup, each act in its own leaf `<span>`,
- * with `Live` / `b2b` format markers in `uppercase` spans.
+ * with `Live` / `b2b` format markers in `uppercase` spans — `Live` bills its act a headliner,
+ * `b2b` joins two DJ sets and leaves them DJs.
  *
  * The listing carries only upcoming events, but recently-passed dates are dropped here
  * (mirroring the persistence cutoff) to avoid wasted detail-page fetches.
@@ -113,15 +114,8 @@ class BerghainOverviewPageScraper(
     /**
      * The running-order lineup, each act tagged with its floor. The block interleaves `<h3>` floor
      * headings with that floor's `<h4>` lineup, so a running scan pairs each act with the most
-     * recent floor as its [stage][ScrapedArtist.stage]. Each act is a leaf `<span>`; a `Live`
-     * marker is an `uppercase` span of its own and is skipped. Kantine lineups are headliners;
-     * club floors are DJ sets.
-     *
-     * **The venue writes a back-to-back slot two ways** (#1759). Sometimes the join is its own
-     * `uppercase` span, which leaves a leaf span per DJ and needs nothing. Sometimes it is plain
-     * text inside one name span — `"Agata B2B Cunt Remember"` — and that span is then two DJs, so
-     * [B2B_SEPARATOR] splits it. Back-to-back is never one act, which is why this split is safe
-     * where a conjunction would not be: `"Blasha & Allatt"` arrives in the same shape and is a duo.
+     * recent floor as its [stage][ScrapedArtist.stage]. Kantine lineups are headliners; a club
+     * floor is DJ sets unless the venue says otherwise.
      */
     private fun parseLineup(
         block: Element,
@@ -133,17 +127,62 @@ class BerghainOverviewPageScraper(
         for (element in block.select("h3, h4")) {
             if (element.tagName() == "h3") {
                 currentStage = element.text().trim().takeIf { it.isNotBlank() }
-                continue
+            } else {
+                lineup += parseFloorLineup(element, role, currentStage)
             }
-            element
-                .select("span")
-                .filter { it.children().isEmpty() && !it.hasClass(MARKER_CLASS) }
-                .flatMap { it.text().split(B2B_SEPARATOR) }
-                .map { it.trim() }
-                .filter { it.isNotBlank() && !isNonArtistName(it) }
-                .forEach { lineup.add(ScrapedArtist(name = it, role = role, stage = currentStage)) }
         }
         return lineup
+    }
+
+    /**
+     * One floor's `<h4>` into acts. Each act is a leaf `<span>`.
+     *
+     * **A `Live` marker is the venue saying the act performs** (#1787), so that act is billed
+     * [HEADLINER][de.norm.events.event.ArtistRole.HEADLINER] rather than
+     * [DJ][de.norm.events.event.ArtistRole.DJ] — the reading Klunkerkranich, OHM and Club der
+     * Visionäre already give their own live markers, HEADLINER being the only performing role the
+     * model has. The marker sits inside the act's wrapper span, after the name, so document order
+     * is the pairing, and it marks every act the preceding name span produced:
+     *
+     * ```html
+     * <span class="font-bold">
+     *   <span class="xs:whitespace-no-wrap">Krallice</span>
+     *   <span class="… uppercase">Live</span>,
+     * </span>
+     * ```
+     *
+     * **The venue writes a back-to-back slot two ways** (#1759). Sometimes the join is its own
+     * `uppercase` span, which leaves a leaf span per DJ — and is why only `Live` promotes, a `b2b`
+     * marker joining two DJ sets. Sometimes it is plain text inside one name span, `"Agata B2B Cunt
+     * Remember"`, which [B2B_SEPARATOR] splits. Back-to-back is never one act, which is why that
+     * split is safe where a conjunction would not be: `"Blasha & Allatt"` is a duo in the same shape.
+     */
+    private fun parseFloorLineup(
+        element: Element,
+        role: String,
+        stage: String?
+    ): List<ScrapedArtist> {
+        val acts = mutableListOf<ScrapedArtist>()
+        // The acts the last name span produced, so a marker that follows can bill them live. An
+        // empty range is a marker with no act before it, which marks nothing rather than failing.
+        var marked = IntRange.EMPTY
+        for (span in element.select("span").filter { it.children().isEmpty() }) {
+            val text = span.text().trim()
+            if (span.hasClass(MARKER_CLASS)) {
+                if (text.equals(LIVE_MARKER, ignoreCase = true)) {
+                    for (i in marked) acts[i] = acts[i].copy(role = "HEADLINER")
+                }
+                continue
+            }
+            val first = acts.size
+            text
+                .split(B2B_SEPARATOR)
+                .map { it.trim() }
+                .filter { it.isNotBlank() && !isNonArtistName(it) }
+                .forEach { acts.add(ScrapedArtist(name = it, role = role, stage = stage)) }
+            marked = first until acts.size
+        }
+        return acts
     }
 
     companion object {
@@ -152,6 +191,9 @@ class BerghainOverviewPageScraper(
 
         /** Tailwind utility class marking a `Live`/`b2b` format label span (not an artist name). */
         private const val MARKER_CLASS = "uppercase"
+
+        /** The one marker that changes a role: the venue's statement that the act plays live. */
+        private const val LIVE_MARKER = "Live"
 
         /**
          * A space-padded `b2b` written inside a name span, joining the two DJs of one slot. Padding
