@@ -16,11 +16,8 @@ data class Venue(
     val name: String,
     /** URL-friendly identifier, derived from the name. Example: `"astra-kulturhaus"` */
     val slug: String,
-    /** Street address of the venue. */
     val address: String? = null,
-    /** City where the venue is located. */
     val city: String = "Berlin",
-    /** Postal code of the venue's address. */
     val postalCode: String? = null,
     /** Berlin borough (Bezirk) as a canonical slug. Example: `"friedrichshain-kreuzberg"` */
     val district: String? = null,
@@ -28,7 +25,6 @@ data class Venue(
     val latitude: BigDecimal? = null,
     /** Geographic longitude for map display. Example: `13.451803` */
     val longitude: BigDecimal? = null,
-    /** URL of the venue's official website. */
     val websiteUrl: String? = null,
     /** URL of the venue's logo or photo. */
     val imageUrl: String? = null,
