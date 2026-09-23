@@ -108,7 +108,12 @@ class AssociationSyncService(
      * slugs to nothing has escaped [isNonArtistName], and would take the empty slug every later one
      * collides with (#1553). A headliner read off a title the boundary resolves to a festival is the
      * festival's name, not an act (`ELLE & L's Festival` → `Elle`, #300): undone here, once, while a
-     * published line-up stays. A guest in a bracket is split off first ([splitBracketedGuest]). Then
+     * published line-up stays. A guest in a bracket is split off first ([splitBracketedGuest]).
+     *
+     * **A title-derived name the same event credits as its promoter is the series, not an act**
+     * (#1772): Astra's secret-lineup night is titled `UNRELEASED BERLIN` and credits `Unreleased
+     * Berlin` in its promoter block, so the title-as-headliner default minted the promoter. A
+     * billed act is never dropped this way — only a name no line-up stated. Then
      * [unglueSeriesTails].
      */
     private suspend fun billedArtists(scrapedEvents: List<ScrapedEvent>): Map<String, List<ScrapedArtist>> {
@@ -120,11 +125,16 @@ class AssociationSyncService(
         val stripped =
             scrapedEvents.associate { event ->
                 val festival = event.resolvedEventType() == EventType.FESTIVAL
+                val promoterSlugs = event.promoters.map(::slugOf).toSet()
                 event.sourceId to
                     event.artists
                         .flatMap { artist -> splitGuest(artist) }
                         .map { it.copy(name = stripArtistSuffix(it.name)) }
-                        .filterNot { isSlugless(it.name) || isNonArtistName(it.name) || (festival && it.titleDerived) }
+                        .filterNot {
+                            isSlugless(it.name) ||
+                                isNonArtistName(it.name) ||
+                                (it.titleDerived && (festival || slugOf(it.name) in promoterSlugs))
+                        }
             }
         return unglueSeriesTails(stripped)
     }

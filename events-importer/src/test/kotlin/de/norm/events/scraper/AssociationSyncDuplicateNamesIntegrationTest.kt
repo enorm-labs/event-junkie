@@ -10,6 +10,7 @@ import de.norm.events.event.EventRepository
 import de.norm.events.promoter.PromoterRepository
 import de.norm.events.venue.VenueEntity
 import de.norm.events.venue.VenueRepository
+import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.flow.first
@@ -323,6 +324,45 @@ class AssociationSyncDuplicateNamesIntegrationTest : BaseControllerTest() {
 
             val stored = artistRepository.findAll().toList().map { it.name }
             stored shouldBe listOf("Real Band")
+        }
+    }
+
+    // A secret-lineup night is titled after the series that promotes it, and the title-as-headliner
+    // default then mints the promoter as the act (#1772).
+    @Test
+    fun `a title-derived name the event credits as its promoter is not stored as an artist`() {
+        runBlocking {
+            val sourceId = "promoter-title:1"
+            val event = persistEvent(sourceId)
+
+            associationSyncService.resolveAndSyncAssociations(
+                listOf(event),
+                listOf(
+                    scraped(sourceId, artists = listOf(ScrapedArtist(name = "Unreleased Berlin", role = "HEADLINER", titleDerived = true)))
+                        .copy(title = "UNRELEASED BERLIN", promoters = listOf("Unreleased Berlin"))
+                )
+            )
+
+            artistRepository.findAll().toList().shouldBeEmpty()
+        }
+    }
+
+    // Only a name no line-up stated is dropped: a venue that promotes its own night still plays it.
+    @Test
+    fun `an act the venue billed is kept even when it promotes the same night`() {
+        runBlocking {
+            val sourceId = "promoter-billed:1"
+            val event = persistEvent(sourceId)
+
+            associationSyncService.resolveAndSyncAssociations(
+                listOf(event),
+                listOf(
+                    scraped(sourceId, artists = listOf(ScrapedArtist(name = "Unreleased Berlin", role = "HEADLINER")))
+                        .copy(title = "UNRELEASED BERLIN", promoters = listOf("Unreleased Berlin"))
+                )
+            )
+
+            artistRepository.findAll().toList().map { it.name } shouldBe listOf("Unreleased Berlin")
         }
     }
 
