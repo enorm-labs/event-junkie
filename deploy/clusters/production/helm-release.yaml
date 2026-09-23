@@ -125,3 +125,9 @@ spec:
         # registered domain per week, and `event-junkie.de` is the same registered domain staging uses —
         # which is why staging stays on the ACME staging endpoint.
         server: "https://acme-v02.api.letsencrypt.org/directory"
+    tests:
+      smoke:
+        # The k6 hook (#1697), second here: staging carried it first, through 64 reconciles with no
+        # false rollback. `verifyTls` keeps the chart default, unlike staging — a certificate that did
+        # not issue is a finding this hook exists to make.
+        enabled: true
