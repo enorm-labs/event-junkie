@@ -113,9 +113,15 @@ class BerghainOverviewPageScraper(
     /**
      * The running-order lineup, each act tagged with its floor. The block interleaves `<h3>` floor
      * headings with that floor's `<h4>` lineup, so a running scan pairs each act with the most
-     * recent floor as its [stage][ScrapedArtist.stage]. Each act is a leaf `<span>`; the `Live` /
-     * `b2b` markers live in `uppercase` spans and are skipped, so `"A b2b B"` yields two artists on
-     * the same floor. Kantine lineups are headliners; club floors are DJ sets.
+     * recent floor as its [stage][ScrapedArtist.stage]. Each act is a leaf `<span>`; a `Live`
+     * marker is an `uppercase` span of its own and is skipped. Kantine lineups are headliners;
+     * club floors are DJ sets.
+     *
+     * **The venue writes a back-to-back slot two ways** (#1759). Sometimes the join is its own
+     * `uppercase` span, which leaves a leaf span per DJ and needs nothing. Sometimes it is plain
+     * text inside one name span — `"Agata B2B Cunt Remember"` — and that span is then two DJs, so
+     * [B2B_SEPARATOR] splits it. Back-to-back is never one act, which is why this split is safe
+     * where a conjunction would not be: `"Blasha & Allatt"` arrives in the same shape and is a duo.
      */
     private fun parseLineup(
         block: Element,
@@ -132,7 +138,8 @@ class BerghainOverviewPageScraper(
             element
                 .select("span")
                 .filter { it.children().isEmpty() && !it.hasClass(MARKER_CLASS) }
-                .map { it.text().trim() }
+                .flatMap { it.text().split(B2B_SEPARATOR) }
+                .map { it.trim() }
                 .filter { it.isNotBlank() && !isNonArtistName(it) }
                 .forEach { lineup.add(ScrapedArtist(name = it, role = role, stage = currentStage)) }
         }
@@ -145,5 +152,11 @@ class BerghainOverviewPageScraper(
 
         /** Tailwind utility class marking a `Live`/`b2b` format label span (not an artist name). */
         private const val MARKER_CLASS = "uppercase"
+
+        /**
+         * A space-padded `b2b` written inside a name span, joining the two DJs of one slot. Padding
+         * is what keeps it off a name that merely contains the letters.
+         */
+        private val B2B_SEPARATOR = Regex("""\s+b2b\s+""", RegexOption.IGNORE_CASE)
     }
 }

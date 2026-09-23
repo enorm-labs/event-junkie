@@ -108,6 +108,63 @@ class BerghainOverviewPageScraperTest {
             )
     }
 
+    // The venue also writes the join inside the name span, where no marker class reaches it (#1759).
+    @Test
+    fun `splits a back-to-back slot the venue wrote inside one name span`() {
+        val html =
+            """
+            <html><body>
+              <a href="/de/event/80845/">
+                <p>Donnerstag <span class="font-bold">24.09.2026</span> beginn 22:00</p>
+                <h2>Terenor</h2>
+                <h3>Säule</h3>
+                <h4>
+                  <span class="font-bold">
+                    <span class="xs:whitespace-no-wrap">KĀ</span>
+                    <span class="text-sm font-bold uppercase">Live</span>,
+                  </span>
+                  <span class="font-bold">
+                    <span class="xs:whitespace-no-wrap">Agata B2B Cunt Remember</span>,
+                  </span>
+                  <span class="font-bold">
+                    <span class="xs:whitespace-no-wrap">Egregore B2B Jolly</span>
+                  </span>
+                </h4>
+              </a>
+            </body></html>
+            """.trimIndent()
+        val event = scraper.scrape(Jsoup.parse(html, berghainUrl), berghainUrl).single()
+
+        // Five performers on one floor, not three. The prose names all five.
+        event.artists shouldContainExactly
+            listOf(
+                ScrapedArtist("KĀ", "DJ", "Säule"),
+                ScrapedArtist("Agata", "DJ", "Säule"),
+                ScrapedArtist("Cunt Remember", "DJ", "Säule"),
+                ScrapedArtist("Egregore", "DJ", "Säule"),
+                ScrapedArtist("Jolly", "DJ", "Säule")
+            )
+    }
+
+    // Back-to-back is two DJs; a conjunction is not, and the venue bills both in the same shape.
+    @Test
+    fun `keeps a duo whose name carries a conjunction whole`() {
+        val html =
+            """
+            <html><body>
+              <a href="/de/event/10/">
+                <p>Samstag <span class="font-bold">25.07.2026</span> beginn 23:59</p>
+                <h2>Klubnacht</h2>
+                <h3>Panorama Bar</h3>
+                <h4><span class="font-bold"><span>Blasha &amp; Allatt</span></span></h4>
+              </a>
+            </body></html>
+            """.trimIndent()
+        val event = scraper.scrape(Jsoup.parse(html, berghainUrl), berghainUrl).single()
+
+        event.artists.map { it.name } shouldBe listOf("Blasha & Allatt")
+    }
+
     @Test
     fun `drops events dated before today`() {
         val lateClock = Clock.fixed(Instant.parse("2027-01-01T00:00:00Z"), ZoneOffset.UTC)
