@@ -5,6 +5,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.cleanEventTitle
+import de.norm.events.scraper.imgSrcAt
 import de.norm.events.scraper.inferYearForWeekday
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.parseTime
@@ -23,8 +24,9 @@ import java.time.MonthDay
  *
  * The whole upcoming programme is a `ul.event-list`, each `li.event-item` carrying an
  * `.event-date` (`31/07`), an `.event-time` (`23:00`), an `.event-title` and a `<br>`-separated
- * `.event-lineup` of DJs. No per-event URLs, images, prices or ticket links, so this page is the
- * whole source and `sourceId` is the resolved date plus slugified title.
+ * `.event-lineup` of DJs, and an `.event-poster` image (#1777). No per-event URLs, prices or ticket
+ * links, so this page is the whole source and `sourceId` is the resolved date plus slugified title.
+ * The poster appears twice; the copy under `.event-item-hidden` is the mobile layout's and is not read.
  *
  * **The date carries no year and no weekday.** The year comes from [inferYearForWeekday]'s
  * weekday-less path — the occurrence nearest today — so a night that has just happened stays in
@@ -88,6 +90,7 @@ class OhmOverviewPageScraper(
             eventType = EventType.PARTY.name,
             eventDate = eventDate,
             startTime = parseTime(item.textAt(".event-time")),
+            imageUrl = item.imgSrcAt(".event-poster img"),
             // No per-event pages, so the listing itself is the canonical URL.
             sourceUrl = baseUrl,
             sourceId = "${EventSource.OHM.sourceIdPrefix}$eventDate-${SlugGenerator.slugify(title)}",

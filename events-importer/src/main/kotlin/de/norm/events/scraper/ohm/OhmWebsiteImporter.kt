@@ -62,7 +62,6 @@ val OHM_LIMITATIONS =
     VenueLimitations(
         EventSource.OHM,
         AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "the venue's whole programme is one page"),
-        AcceptedLimitation(LimitedAspect.IMAGE, "the programme page carries no per-event image"),
         AcceptedLimitation(LimitedAspect.PRICE, "the programme page carries no price"),
         AcceptedLimitation(LimitedAspect.TICKET_URL, "the programme page links no ticket shop"),
         AcceptedLimitation(LimitedAspect.EVENT_TYPE, "the venue publishes no categories; every night is a DJ programme")
