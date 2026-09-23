@@ -9,7 +9,10 @@ metadata:
   labels:
     {{- include "event-junkie.labels" $args | nindent 4 }}
 spec:
+  {{- /* Absent under the HPA, or every upgrade resets the count it chose. */}}
+  {{- if not .Values.bff.autoscaling.enabled }}
   replicas: {{ .Values.bff.replicaCount }}
+  {{- end }}
   selector:
     matchLabels:
       {{- include "event-junkie.selectorLabels" $args | nindent 6 }}

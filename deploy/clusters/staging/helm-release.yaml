@@ -99,9 +99,14 @@ spec:
     # Measured at 51% of memory, ~300 MB of it Flux.
     bff:
       replicaCount: 1
+      # One replica at rest, a second under load (#1774). Production's values follow its release.
+      autoscaling:
+        enabled: true
+        minReplicas: 1
+        maxReplicas: 2
       resources:
         requests:
-          cpu: "50m"
+          cpu: "200m"
           memory: "384Mi"
         limits:
           cpu: "1000m"
