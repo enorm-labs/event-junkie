@@ -22,9 +22,6 @@ enum class EventSource {
     /** Arcanoa Berlin – a tiny Kreuzberg bar running since 1988: independent live acts at the weekend, open stages and jam sessions midweek. */
     ARCANOA,
 
-    /** arkaoda Berlin – the Neukölln outpost of the Istanbul bar and club, programming experimental concerts, DJ nights and label showcases. */
-    ARKAODA,
-
     /** Astra Kulturhaus Berlin – a large concert venue on the RAW-Gelände hosting touring rock, pop, indie and electronic acts. */
     ASTRA,
 

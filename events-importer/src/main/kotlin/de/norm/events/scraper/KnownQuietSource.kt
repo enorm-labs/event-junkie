@@ -20,6 +20,5 @@ val KNOWN_QUIET_SOURCES: Map<String, KnownQuietSource> =
     mapOf(
         "amt" to KnownQuietSource(LocalDate.of(2026, 9, 16), "the events page links the months July and August only"),
         "golden-gate" to
-            KnownQuietSource(LocalDate.of(2026, 9, 16), "the programme stops at 12 September and the footer still says 2025"),
-        "arkaoda" to KnownQuietSource(LocalDate.of(2026, 9, 16), "the programme page is the bare template with no entry")
+            KnownQuietSource(LocalDate.of(2026, 9, 16), "the programme stops at 12 September and the footer still says 2025")
     )

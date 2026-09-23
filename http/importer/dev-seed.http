@@ -9,13 +9,17 @@
 ### import runs in the background, so events keep landing for up to ~a minute after the
 ### run finishes. Poll `GET /api/admin/event-sources` to watch each source's status.
 ###
+### Removed, and deliberately not listed below:
+###   arkaoda — the club closed on 2026-08-30 and the venue is gone from both clusters (#1788).
+###   Do not add it back: the programme page is empty because there is no programme, and V051
+###   deletes the venue, its source row and its one past event.
+###
 ### Sources (alphabetical):
 ###   Admiralspalast       — https://www.admiralspalast.theater/veranstaltungsuebersicht.html
 ###   ÆDEN                 — https://aedenberlin.com/events/
 ###   Alte Kantine         — https://alte-kantine.eu/
 ###   AMT                  — https://www.club-amt.berlin/events
 ###   Arcanoa              — https://www.ssi-media.com/arcanoa/veranst.htm
-###   arkaoda              — https://berlin.arkaoda.com/?/default/program
 ###   Astra Kulturhaus     — https://www.astra-berlin.de/
 ###   Badehaus             — https://badehaus-berlin.com/events/
 ###   Bar jeder Vernunft   — https://www.bar-jeder-vernunft.de/de/programm/kalender.html
@@ -406,68 +410,6 @@ Accept: application/json
 
 > {%
     client.test("Arcanoa import triggered", function () {
-        client.assert(response.status === 202, "Expected 202 but got " + response.status);
-    });
-%}
-
-### ————————————————————————————————————————————————————————————
-### arkaoda (Karl-Marx-Platz 16, Berlin-Neukölln)
-### ————————————————————————————————————————————————————————————
-
-### --- Create arkaoda venue ---
-POST {{importer-host}}/api/admin/venues
-Content-Type: application/json
-
-{
-    "name": "arkaoda",
-    "address": "Karl-Marx-Platz 16",
-    "city": "Berlin",
-    "postalCode": "12043",
-    "district": "neukoelln",
-    "latitude": 52.47383,
-    "longitude": 13.44267,
-    "websiteUrl": "https://berlin.arkaoda.com",
-    "description": "The Berlin outpost of the Istanbul bar and club, on Karl-Marx-Platz in Neukölln. A small basement room programming experimental and electronic concerts alongside DJ nights, label showcases and vinyl markets.",
-    "descriptionLanguage": "en",
-    "descriptionAlt": "Der Berliner Ableger von Bar und Club aus Istanbul, am Karl-Marx-Platz in Neukölln. Ein kleiner Kellerraum mit experimentellen und elektronischen Konzerten, dazu DJ-Nächte, Label-Showcases und Plattenmärkte.",
-    "descriptionAltLanguage": "de"
-}
-
-> {%
-    client.global.set("arkaoda_venue_id", response.body.id);
-    client.test("arkaoda venue created", function () {
-        client.assert(response.status === 201, "Expected 201 but got " + response.status);
-    });
-%}
-
-### --- Create arkaoda event source ---
-# Links the venue to the ArkaodaWebsiteImporter.
-# The sourceType "ARKAODA" matches EventSource.ARKAODA.
-POST {{importer-host}}/api/admin/event-sources
-Content-Type: application/json
-
-{
-    "venueId": {{arkaoda_venue_id}},
-    "name": "arkaoda",
-    "url": "https://berlin.arkaoda.com/?/default/program",
-    "sourceType": "ARKAODA",
-    "enabled": true,
-    "importIntervalMinutes": 1440,
-    "maxRetries": 3
-}
-
-> {%
-    client.test("arkaoda event source created", function () {
-        client.assert(response.status === 201, "Expected 201 but got " + response.status);
-    });
-%}
-
-### --- Trigger initial arkaoda import ---
-POST {{importer-host}}/api/admin/event-sources/arkaoda/import
-Accept: application/json
-
-> {%
-    client.test("arkaoda import triggered", function () {
         client.assert(response.status === 202, "Expected 202 but got " + response.status);
     });
 %}

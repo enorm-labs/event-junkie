@@ -19,11 +19,6 @@ says so.
 | `ARCANOA`             | `TICKET_URL`       | entry is paid at the door, and the page's only links point at partner sites                                                                      | —     |
 | `ARCANOA`             | `IMAGE`            | the page carries no image element at all                                                                                                         | —     |
 | `ARCANOA`             | `DESCRIPTION`      | the one line per night is the whole entry, with no blurb after it                                                                                | —     |
-| `ARKAODA`             | `DOORS_TIME`       | a set time is written into the prose blurb, which has no reliable delimiter                                                                      | —     |
-| `ARKAODA`             | `START_TIME`       | a set time is written into the prose blurb, which has no reliable delimiter                                                                      | —     |
-| `ARKAODA`             | `PRICE`            | a door price is written into the prose blurb, which has no reliable delimiter                                                                    | —     |
-| `ARKAODA`             | `SOLD_OUT`         | the venue runs no ticket integration and has no field for the sold-out state                                                                     | —     |
-| `ARKAODA`             | `GENRE`            | the venue has no structured genre field                                                                                                          | —     |
 | `BAR_JEDER_VERNUNFT`  | `DOORS_TIME`       | the calendar and the show pages state one Beginn time and never an Einlass                                                                       | —     |
 | `BADEHAUS`            | `ARTISTS`          | the venue publishes no roster; for a concert the title is taken as the act and a Support: subtitle as the rest                                   | —     |
 | `BADEHAUS`            | `EVENT_TYPE`       | the venue publishes no category; the type is inferred from the title and subtitle                                                                | —     |

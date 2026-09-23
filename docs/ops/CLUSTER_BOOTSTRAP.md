@@ -489,7 +489,7 @@ A cluster with a certificate still serves an empty site. Nothing seeds the sourc
 inserts a row, and `dev-seed.http` is written for a local run. Production ran green and empty for
 nine days before anybody noticed (#876).
 
-`http/importer/dev-seed.http` is the source of truth for the 88 venues and their sources.
+`http/importer/dev-seed.http` is the source of truth for the 87 venues and their sources.
 `scripts/seed-sources.py` reads that file and writes it to any host, so there is no second copy to
 drift.
 
@@ -544,8 +544,8 @@ Omit `--apply` and nothing is written. The output names what the target is missi
 target holds that the file does not:
 
 ```
-http/importer/dev-seed.http: 88 venues, 88 event sources
-http://localhost:18081 holds 88 venues and 88 sources
+http/importer/dev-seed.http: 87 venues, 87 event sources
+http://localhost:18081 holds 87 venues and 87 sources
   to create: 0 venues, 0 sources
 ```
 
