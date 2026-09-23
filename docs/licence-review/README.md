@@ -7,7 +7,9 @@ the record. `scripts/apply-licence-review.py` writes it to a database.
 ## The short version
 
 1. **All 86 sources were read on 2026-08-28.** The result was 83 `UNCLEAR`, 2 `PROHIBITED` and one
-   source that our agent cannot fetch.
+   source that our agent cannot fetch. **ROSA and Sisyphos were read on 2026-09-23**, when
+   [#1782](https://github.com/enorm-labs/event-junkie/issues/1782) seeded the two sources that no
+   cluster had ever held. Both are `UNCLEAR`, so the file now carries 88 rows.
 2. **No source grants a reuse we can rely on.** `PERMITTED` is zero in this review, which reads what
    the venues published. It is not zero on the clusters: ADR-027 sets `translation_licence` to
    `PERMITTED` wherever a venue does not prohibit the description. That is our reading of silence,

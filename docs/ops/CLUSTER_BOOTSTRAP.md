@@ -506,6 +506,15 @@ kubectl --context <your-context> -n event-junkie \
 stack writes to the wrong database without saying so. Both scripts refuse to write to a non-default
 host until you pass `--yes`, and the refusal prints the host and the row count.
 
+### Before any of it: the source must be in the licence review
+
+`RESULTS.tsv` is keyed on the source name. Step 3 refuses while a source has no verdict. So a source
+added to the seed file needs its row there **before** it is seeded, not after. The review covered
+neither ROSA nor Sisyphos when [#1782](https://github.com/enorm-labs/event-junkie/issues/1782)
+seeded them. Both were read first, and both are `UNCLEAR`. §3 of
+[licence-review/README.md](../licence-review/README.md) says what each verdict needs. An agent may
+record `UNCLEAR`. A person confirms the other two.
+
 ### The three steps
 
 ```sh
@@ -542,6 +551,21 @@ http://localhost:18081 holds 88 venues and 88 sources
 
 That is how you compare two environments. Run it against each context and read the two reports.
 Nothing is ever deleted: a row the file does not carry is drift to explain, not to remove.
+
+### A report nobody runs is not a report
+
+The dry run answered the ROSA and Sisyphos question from the first day they were merged, and nobody
+asked it for months. `--site` makes the same comparison from outside the cluster, against the public
+`/api/venues` listing, so it needs no port-forward and no credentials:
+
+```sh
+python3 scripts/seed-sources.py --site https://event-junkie.de
+```
+
+It writes nothing, and its exit code is the report: 0 no drift, 1 drift, 2 the comparison could not
+be made. [`seed-drift.yml`](../../.github/workflows/seed-drift.yml) runs it daily and opens one
+issue on drift. **It compares venues, not sources**, because no source listing is public, and it
+covers production alone, because staging is not on the public internet.
 
 ### The source list is data, and this is the decision
 
