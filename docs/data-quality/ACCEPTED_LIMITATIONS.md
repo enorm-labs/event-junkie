@@ -15,6 +15,10 @@ says so.
 | `ADMIRALSPALAST`      | `GENRE`            | the house classifies by staging format (Konzert, Lesung) and names no musical style anywhere                                                     | —     |
 | `AMT`                 | `ARTISTS`          | the DJ line separates names with spaces and nothing else, so it cannot be split apart reliably                                                   | —     |
 | `ARCANOA`             | `PER_EVENT_PAGE`   | the whole programme is one hand-coded page                                                                                                       | —     |
+| `ARCANOA`             | `PRICE`            | a night is one line — a date, the act and a genre string — and the page prints no figure anywhere                                                | —     |
+| `ARCANOA`             | `TICKET_URL`       | entry is paid at the door, and the page's only links point at partner sites                                                                      | —     |
+| `ARCANOA`             | `IMAGE`            | the page carries no image element at all                                                                                                         | —     |
+| `ARCANOA`             | `DESCRIPTION`      | the one line per night is the whole entry, with no blurb after it                                                                                | —     |
 | `ARKAODA`             | `DOORS_TIME`       | a set time is written into the prose blurb, which has no reliable delimiter                                                                      | —     |
 | `ARKAODA`             | `START_TIME`       | a set time is written into the prose blurb, which has no reliable delimiter                                                                      | —     |
 | `ARKAODA`             | `PRICE`            | a door price is written into the prose blurb, which has no reliable delimiter                                                                    | —     |
@@ -23,6 +27,7 @@ says so.
 | `BAR_JEDER_VERNUNFT`  | `DOORS_TIME`       | the calendar and the show pages state one Beginn time and never an Einlass                                                                       | —     |
 | `BADEHAUS`            | `ARTISTS`          | the venue publishes no roster; for a concert the title is taken as the act and a Support: subtitle as the rest                                   | —     |
 | `BADEHAUS`            | `EVENT_TYPE`       | the venue publishes no category; the type is inferred from the title and subtitle                                                                | —     |
+| `BADEHAUS`            | `PRICE`            | the venue prints no figure, and where it names money at all it is a donation range the model has no field for, kept verbatim as the note         | —     |
 | `BINUU`               | `EVENT_TYPE`       | the SvelteKit payload carries no category field, and neither does anywhere else on the site                                                      | —     |
 | `CASSIOPEIA`          | `PAGINATION`       | only the first page of the listing is read                                                                                                       | —     |
 | `CLASH`               | `PER_EVENT_PAGE`   | the `event` post type is not exposed over the WordPress REST API and the numeric permalinks 404                                                  | —     |
@@ -66,6 +71,7 @@ says so.
 | `FESTSAAL`            | `EVENT_TYPE`       | the API exposes no category field; its `genre` node is a musical genre, not an event kind                                                        | —     |
 | `FRANNZ`              | `PER_EVENT_PAGE`   | nothing on the site links a `/events/<slug>/` page                                                                                               | —     |
 | `FRANNZ`              | `SOLD_OUT`         | the word ausverkauft appears only in the prose blurb, where it also turns up describing a past tour                                              | —     |
+| `FRANNZ`              | `PRICE`            | most nights name the ticket seller instead of a figure; only the venue's own party nights carry a structured Abendkasse item, which is read      | —     |
 | `GAERTEN_DER_WELT`    | `GENRE`            | the park's only classification is the format category the event type is already built from; it names no musical style, not even in prose         | —     |
 | `GARTN`               | `PRICE`            | the venue publishes no prices                                                                                                                    | —     |
 | `GARTN`               | `GENRE`            | the venue publishes no genre                                                                                                                     | —     |
