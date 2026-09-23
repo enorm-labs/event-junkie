@@ -12,6 +12,7 @@ import de.norm.events.scraper.endOn
 import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.imgSrcAt
 import de.norm.events.scraper.inferYearForWeekday
+import de.norm.events.scraper.isKnownSingleAct
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.parseIsoDate
 import de.norm.events.scraper.parseTime
@@ -175,6 +176,12 @@ class KlunkerkranichOverviewPageScraper(
      * — stored separately. `*live` qualifies the **billing**, not just the name it trails
      * ("IBAAKU & K'BOKO *live" is one live pairing), so the role is decided before the split.
      *
+     * **A conjunction here is ambiguous and the page never resolves it** (#1760). The event page's
+     * lineup block prints one act per line, and it puts `Überhaupt & Außerdem` — a duo — on one
+     * line exactly as it puts `Ilo Pan & Elmo Lewis`, two residents billed together. So the split
+     * stays, and [isKnownSingleAct] is what holds a named duo together; what it does not name is
+     * this source's declared `ARTISTS` limitation.
+     *
      * A collective may be billed with its members after a colon — "In Limbo Audio: Sven Howland
      * & Niklas Gietmann & Nicolai Toma" — and the page names both, so the collective is an act
      * of its own and the members separate ones; the first member no longer keeps the team's name
@@ -182,7 +189,8 @@ class KlunkerkranichOverviewPageScraper(
      */
     private fun parseBilling(billing: String): List<ScrapedArtist> {
         val role = if (LIVE_MARKER.containsMatchIn(billing)) "HEADLINER" else "DJ"
-        val unmarked = billing.replace(LIVE_MARKER, "")
+        val unmarked = billing.replace(LIVE_MARKER, "").trim()
+        if (isKnownSingleAct(unmarked)) return listOf(ScrapedArtist(name = unmarked, role = role))
         val collective = COLLECTIVE_PREFIX.find(unmarked)
         val members = collective?.let { unmarked.substring(it.range.last + 1) } ?: unmarked
         return listOfNotNull(collective?.groupValues?.get(1)?.trim())

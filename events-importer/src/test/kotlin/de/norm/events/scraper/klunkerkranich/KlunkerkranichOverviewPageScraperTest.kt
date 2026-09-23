@@ -126,6 +126,33 @@ class KlunkerkranichOverviewPageScraperTest {
         b2bNight.artists.map { it.name } shouldContainExactly listOf("Kīto", "Juli Lee", "K2WO", "Her", "Woanders", "ELENE")
     }
 
+    // The venue bills a duo and two separate acts the same way, so a named duo is what holds (#1760).
+    @Test
+    fun `keeps a named duo whole and splits the pair billed identically beside it`() {
+        val duo = billing("MAGICIAN ON DUTY LABEL SHOWCASE w. Mia Kober, Überhaupt & Außerdem, PYSH, kayḆe, Magician On Duty")
+
+        duo.map { it.name } shouldContainExactly
+            listOf("Mia Kober", "Überhaupt & Außerdem", "PYSH", "kayḆe", "Magician On Duty")
+
+        // Same shape on the same programme, and the page's prose calls them two residents.
+        billing("DUSTY BALLROOM w. Cane Cattivo *live, Ilo Pan & Elmo Lewis").map { it.name } shouldContainExactly
+            listOf("Cane Cattivo", "Ilo Pan", "Elmo Lewis")
+    }
+
+    @Test
+    fun `still splits the billings the conjunction rule exists for`() {
+        // A shared slot, and a collective whose unnamed cast is dropped rather than minted.
+        billing("THE COOLEST KIDS IN TOWN w. Big Leg b2b *n8").map { it.name } shouldContainExactly listOf("Big Leg", "*n8")
+        billing("WELLENBRUCH x BANDIDAS w. Emorine, Bandidas & Friends").map { it.name } shouldContainExactly
+            listOf("Emorine", "Bandidas")
+    }
+
+    /** The acts of one title, read through a card the real snapshot does not carry. */
+    private fun billing(title: String): List<ScrapedArtist> =
+        scrape(cardHtml(href = "/events/2026-09-24-a-night/", dateLine = "Mittwoch, 24. September", title = title))
+            .single()
+            .artists
+
     @Test
     fun `reads the acts of a promoter's presents billing`() {
         val night = on(LocalDate.of(2026, 8, 12), "Sonic Odyssey presents: IBAAKU & K’BOKO *live")

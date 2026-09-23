@@ -100,6 +100,7 @@ says so.
 | `KLUNKERKRANICH`      | `TICKET_URL`       | entry is paid at the door; an occasional advance-RSVP link is written into a blurb rather than published as a field                              | —     |
 | `KLUNKERKRANICH`      | `SOLD_OUT`         | nothing flags a night sold out                                                                                                                   | —     |
 | `KLUNKERKRANICH`      | `CANCELLATION`     | nothing flags a night cancelled                                                                                                                  | —     |
+| `KLUNKERKRANICH`      | `ARTISTS`          | a billing joined by `&` is split into two acts, the venue billing a duo and a pair of separate acts the same way                                 | —     |
 | `KLUNKERKRANICH`      | `PRICE`            | entry is a time-banded range (`5-9€`) the model has no field for, so the wording is kept verbatim as the note and only a lone figure is stored   | —     |
 | `LARK`                | `START_TIME`       | the venue renders its one time as Doors and publishes no separate start time                                                                     | —     |
 | `LOGE`                | `EVENT_TYPE`       | the venue has no category field; a live-music venue, so an unmarked title defaults to a concert                                                  | —     |

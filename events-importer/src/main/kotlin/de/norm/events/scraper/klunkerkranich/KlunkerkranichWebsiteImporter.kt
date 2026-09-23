@@ -113,6 +113,10 @@ val KLUNKERKRANICH_LIMITATIONS =
         AcceptedLimitation(LimitedAspect.SOLD_OUT, "nothing flags a night sold out"),
         AcceptedLimitation(LimitedAspect.CANCELLATION, "nothing flags a night cancelled"),
         AcceptedLimitation(
+            LimitedAspect.ARTISTS,
+            "a billing joined by `&` is split into two acts, the venue billing a duo and a pair of separate acts the same way"
+        ),
+        AcceptedLimitation(
             LimitedAspect.PRICE,
             "entry is a time-banded range (`5-9€`) the model has no field for, so the wording is kept verbatim as the note and only a lone figure is stored"
         )
