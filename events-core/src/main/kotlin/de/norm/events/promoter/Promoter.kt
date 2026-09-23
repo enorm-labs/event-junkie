@@ -15,7 +15,6 @@ data class Promoter(
     val name: String,
     /** URL-friendly identifier, derived from the name. Example: `"36-concerts"` */
     val slug: String,
-    /** URL of the promoter's website or social page. */
     val websiteUrl: String? = null,
     /** URL of the promoter's logo image. */
     val imageUrl: String? = null,

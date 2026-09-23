@@ -25,13 +25,9 @@ data class Artist(
     val imageLicenceId: String? = null,
     /** The image's description page, which the rendered credit links to. */
     val imageSourceUrl: String? = null,
-    /** URL of the artist's official homepage. */
     val websiteUrl: String? = null,
-    /** URL of the artist's Facebook page. */
     val facebookUrl: String? = null,
-    /** URL of the artist's Instagram profile. */
     val instagramUrl: String? = null,
-    /** URL of the artist's YouTube channel. */
     val youtubeUrl: String? = null,
     /** URL of the artist's Bandcamp page. Filled from MusicBrainz on an [MusicBrainzMatch.EXACT] match (ADR-031, step C). */
     val bandcampUrl: String? = null,
