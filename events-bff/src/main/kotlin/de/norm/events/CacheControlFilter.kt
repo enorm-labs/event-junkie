@@ -21,8 +21,10 @@ import java.time.Duration
  * `beforeCommit` rather than a header set up front, so a handler with its own answer keeps it:
  * the image route marks content named by its own hash `immutable` for a year. A non-success
  * answer gets `no-store`, since a shared cache may apply a heuristic lifetime, and an event
- * published a minute ago would keep being reported missing. Actuator responses are left alone,
- * as [RequestLoggingFilter] leaves them, with the base path read from the property.
+ * published a minute ago would keep being reported missing. Every read also carries
+ * `Vary: Accept-Encoding`, because Netty gzips it for some clients only and does not say so (#1206).
+ * Actuator responses are left alone, as [RequestLoggingFilter] leaves them, with the base path
+ * read from the property.
  */
 @Component
 class CacheControlFilter(
@@ -45,6 +47,9 @@ class CacheControlFilter(
                 val status = response.statusCode
                 val value = if (status != null && status.is2xxSuccessful) publicCaching else NO_STORE
                 if (value != null) response.headers.set(HttpHeaders.CACHE_CONTROL, value)
+            }
+            if (response.headers.vary.none { it.equals(HttpHeaders.ACCEPT_ENCODING, ignoreCase = true) }) {
+                response.headers.add(HttpHeaders.VARY, HttpHeaders.ACCEPT_ENCODING)
             }
             Mono.empty()
         }
