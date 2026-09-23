@@ -13,6 +13,7 @@ import { useStructuredData } from '@/composables/useStructuredData'
 import { breadcrumbJsonLd, eventJsonLd, type JsonLd } from '@/lib/structuredData'
 import type { Locale } from '@/i18n/locales'
 import { formatPrice, isPastEvent, isRunningEvent } from '@/lib/format'
+import { CARD_LIST_CLASS, cn } from '@/lib/utils'
 import { useFormat } from '@/composables/useFormat'
 import { useLocalePath } from '@/composables/useLocalePath'
 import { useI18n } from 'vue-i18n'
@@ -33,6 +34,19 @@ const lineup = computed(() =>
  * all-DJ night keeps its tags: `DJ` says the acts play records, not live.
  */
 const showRoles = computed(() => lineup.value.some((entry) => entry.role !== 'HEADLINER'))
+
+/**
+ * Whether the headliners print larger than the rest, as on a festival poster. Only a lineup that
+ * mixes headliners with other roles has a billing to show; a co-bill or an all-DJ night stays level.
+ */
+const billed = computed(
+  () => showRoles.value && lineup.value.some((entry) => entry.role === 'HEADLINER'),
+)
+
+function lineupNameClass(role: string | undefined): string {
+  if (!billed.value) return 'text-card-title'
+  return role === 'HEADLINER' ? 'text-lede' : 'text-body'
+}
 
 const isPast = computed(() => !!event.value && isPastEvent(event.value))
 const isRunning = computed(() => !!event.value && isRunningEvent(event.value))
@@ -220,21 +234,23 @@ useStructuredData((): JsonLd[] => {
 
       <section v-if="lineup.length" class="space-y-3">
         <SectionLabel>{{ t('events.detail.lineup') }}</SectionLabel>
-        <ul class="space-y-2">
+        <ul :class="CARD_LIST_CLASS">
           <li
             v-for="entry in lineup"
             :key="entry.artist?.slug ?? entry.artist?.name"
-            class="flex items-center justify-between gap-3 rounded-lg border border-border p-3"
+            class="flex items-baseline justify-between gap-3 py-3"
           >
             <RouterLink
               v-if="entry.artist?.slug"
               :to="localePath(`/artists/${entry.artist.slug}`)"
-              class="font-medium text-primary underline-offset-4 hover:underline"
+              :class="cn(lineupNameClass(entry.role), 'font-medium hover:text-primary')"
             >
               {{ entry.artist.name }}
             </RouterLink>
-            <span v-else class="font-medium">{{ entry.artist?.name }}</span>
-            <div class="flex items-center gap-2 text-meta text-muted-foreground">
+            <span v-else :class="cn(lineupNameClass(entry.role), 'font-medium')">
+              {{ entry.artist?.name }}
+            </span>
+            <div class="flex shrink-0 items-center gap-2 text-meta text-muted-foreground">
               <span v-if="entry.stage">{{ entry.stage }}</span>
               <span v-if="entry.stage && showRoles && entry.role" aria-hidden="true">·</span>
               <span v-if="showRoles && entry.role">
