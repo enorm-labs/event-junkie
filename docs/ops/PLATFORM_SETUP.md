@@ -256,7 +256,7 @@ Realistic resident memory, measured in "what it actually uses", not "what the do
 | k3s server + CoreDNS, metrics-server, local-path | ~800 MB     | The floor                                   |
 | Traefik (bundled with k3s)                       | ~100 MB     |                                             |
 | cert-manager                                     | ~150 MB     | §6                                          |
-| `events-bff` (JVM)                               | ~900 MB     | 512 MB heap plus metaspace, threads, direct |
+| `events-bff` (JVM)                               | ~900 MB     | 384 MB heap, metaspace, 64 MB direct, #1766 |
 | `events-importer` (JVM)                          | ~900 MB     |                                             |
 | `events-frontend` (nginx)                        | ~32 MB      |                                             |
 | admin frontend (nginx)                           | ~32 MB      | Not built yet                               |
