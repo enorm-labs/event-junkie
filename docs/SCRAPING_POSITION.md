@@ -114,7 +114,8 @@ read yet would remove material that no venue objects to.
 
 **All 86 sources were read on 2026-08-28, and the result is in
 [licence-review/](licence-review/README.md).** It found 83 `UNCLEAR`, 2 `PROHIBITED` and no
-`PERMITTED` at all. That document also records how the pages were read, which matters more than the
+`PERMITTED` at all. ROSA and Sisyphos were read on 2026-09-23, before their first import, and both
+are `UNCLEAR` too. That document also records how the pages were read, which matters more than the
 counts. The standard German copyright boilerplate is `UNCLEAR` rather than `PROHIBITED`, and it
 decides most of the corpus.
 

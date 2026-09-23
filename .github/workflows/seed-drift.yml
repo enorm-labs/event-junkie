@@ -1,0 +1,156 @@
+# Compares http/importer/dev-seed.http with the venues the public site serves, and opens one issue
+# when they disagree (#1782). `SISYPHOS` and `ROSA` were complete scrapers, declared in `EventSource`,
+# listed in the docs and written into the seed file, and no cluster ever held either row.
+#
+# **Nothing reported that, and nothing could.** A source is a row created through the importer's
+# admin API, never by a migration, so a source that was never seeded is absent rather than failing:
+# no `FAILED` status, no `lastError`, and no metric, because `importer.source.events_future`
+# publishes its explicit zero only for the sources a cluster holds (#618). The dry run of
+# `seed-sources.py` has always answered this question; it answers it for whoever thinks to ask.
+#
+# **The public API is what makes this cheap.** `/api/venues` lists every venue row and filters
+# nothing, so the comparison needs no port-forward, no credentials and no cluster access. Staging is
+# not on the public internet, so this covers production alone.
+#
+# **Venues, not sources**: no source listing is public. `seed-sources.py --site` says so in its own
+# docstring, along with what that misses.
+name: Seed Drift
+
+on:
+  schedule:
+    # Daily, off-the-hour, clear of the plausibility check (17 5), the site probe (37 5) and the node
+    # pins (52 6). A scheduled trigger here lands hours after its cron, which is fine for a check
+    # whose subject changes when a person seeds a cluster.
+    - cron: '23 7 * * *'
+  workflow_dispatch:
+    inputs:
+      site:
+        description: Origin to compare; empty means the SITE_URL variable, then the apex
+        type: string
+        default: ''
+
+permissions:
+  contents: read
+  # Creating the issue, and listing to find one that is already open.
+  issues: write
+
+# A dispatch racing the schedule must not produce two issues; the second still runs the comparison.
+concurrency:
+  group: seed-drift
+  cancel-in-progress: false
+
+jobs:
+  check:
+    name: Compare the seed file with the site
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      # site-probe.yml's variable with the same fallback, so deleting it at go-live retargets this
+      # without an edit.
+      SITE_URL: ${{ inputs.site || vars.SITE_URL || 'https://event-junkie.de' }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # Exit 1 is "the file and the site disagree" and is the finding. Anything above it means no
+      # comparison was made — an unreachable site, a partial listing, an unreadable seed file — and
+      # that fails the job, because a check that cannot be made and stays green is this bug's shape.
+      - name: Compare
+        id: compare
+        run: |
+          rc=0
+          python3 scripts/seed-sources.py --site "$SITE_URL" > report.txt 2>&1 || rc=$?
+          cat report.txt
+          if [ "$rc" -ge 2 ]; then
+            echo "::error::The comparison could not be made — see the report above."
+            exit "$rc"
+          fi
+          echo "drift=$([ "$rc" -eq 1 ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+
+      - name: Open an issue for the drift
+        if: steps.compare.outputs.drift == 'true'
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          # An assignee rather than a mention: an unassigned issue on a board is nobody's.
+          DRIFT_OWNER: enorm
+        with:
+          script: |
+            const fs = require('fs');
+            const { owner, repo } = context.repo;
+            const blob = `https://github.com/${owner}/${repo}/blob/main`;
+            const report = fs.readFileSync('report.txt', 'utf8').trim();
+
+            // One title, so a drift that lasts a week is one issue rather than seven. The names are in
+            // the body; the script named below answers for today.
+            const title = 'The public site does not serve every venue in dev-seed.http';
+
+            // Listing, not search: the search index is eventually consistent. `listForRepo` returns
+            // pull requests too, and a same-titled one would suppress the issue.
+            const open = await github.paginate(github.rest.issues.listForRepo, {
+              owner, repo, state: 'open', per_page: 100,
+            });
+            const existing = open.filter((i) => !i.pull_request).find((i) => i.title === title);
+
+            const body = [
+              `> Opened automatically by [\`seed-drift.yml\`](${blob}/.github/workflows/seed-drift.yml) ` +
+                '([#1782](https://github.com/enorm-labs/event-junkie/issues/1782)). The report below was true when ' +
+                `this issue opened; \`python3 scripts/seed-sources.py --site ${process.env.SITE_URL}\` answers for today.`,
+              '',
+              '**A venue in the seed file that the site does not serve has never been seeded.** It is not failing ' +
+                'and it is not late — the row does not exist, so no status, no `lastError` and no metric can report ' +
+                'it. Seeding is three ordered steps and `--enable` refuses to run out of order; ' +
+                `[\`CLUSTER_BOOTSTRAP.md\`](${blob}/docs/ops/CLUSTER_BOOTSTRAP.md) carries them.`,
+              '',
+              '```',
+              report,
+              '```',
+              '',
+              '## Done when',
+              '',
+              '- [ ] Every venue named above is served, or this issue records why the seed file carries a row no ' +
+                'cluster should have',
+              '- [ ] `python3 scripts/seed-sources.py --site <site>` exits 0',
+              '- [ ] Each newly seeded source has imported once, and the result is recorded here',
+            ].join('\n');
+
+            if (existing) {
+              core.notice(`Drift is already open as #${existing.number} — not opening a second issue.`);
+              core.summary.addHeading('🌱 Seed drift', 2)
+                .addRaw(`Already open as [#${existing.number}](${existing.html_url}).`)
+                .addCodeBlock(report);
+              await core.summary.write();
+              return;
+            }
+
+            const { data: issue } = await github.rest.issues.create({
+              owner,
+              repo,
+              title,
+              body,
+              // Intrinsic properties of the work; Status and Priority are board fields.
+              labels: ['importer', 'area:data-quality', 'size:S'],
+              assignees: [process.env.DRIFT_OWNER],
+              type: 'Bug',
+            });
+
+            // The board cannot be written from here: `GITHUB_TOKEN` cannot write to an organisation
+            // project, and "Auto-add to project" misses items at roughly 4% (#1092). Check the card.
+            core.notice(`Opened #${issue.number} — ${title}`);
+            core.summary.addHeading('🌱 Seed drift', 2)
+              .addRaw(`Opened [#${issue.number}](${issue.html_url}).`)
+              .addCodeBlock(report);
+            await core.summary.write();
+
+      - name: Report no drift
+        if: steps.compare.outputs.drift == 'false'
+        run: |
+          {
+            echo "## 🌱 No seed drift"
+            echo
+            echo '```'
+            cat report.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"

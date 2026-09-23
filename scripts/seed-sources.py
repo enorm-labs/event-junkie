@@ -24,6 +24,19 @@ order:
 
 **This never triggers an import.** The file's third request per venue does; it is dropped here.
 Step 3 hands the sources to the scheduler, which picks them up on its next tick.
+
+**`--site` is the same comparison from outside the cluster**, against the public site rather than the
+admin API, so a workflow can make it without a port-forward and without credentials (#1782):
+
+    python3 scripts/seed-sources.py --site https://event-junkie.de
+
+It reads `/api/venues`, which lists every venue row and filters nothing, and it writes nothing at
+all. Its exit code is the report: 0 for no drift, 1 for drift, 2 when the comparison could not be
+made. `node-pin-reminder.yml` already reads that contract from `upstream-node-pins.sh`.
+
+**`--site` compares venues, not sources**, because no source listing is public. A venue created
+without its source therefore reads as seeded here. The realistic failure creates neither: a source
+is created against its venue, and ROSA and Sisyphos were missing as pairs on both clusters.
 """
 
 import argparse
@@ -35,6 +48,10 @@ import urllib.request
 
 SEED_FILE = "http/importer/dev-seed.http"
 LOCAL_HOST = "http://localhost:8081"
+# `--site` only. 1 is an answer -- the file and the site disagree. Anything above it means no answer
+# was produced, which a scheduled check must not report as health.
+EXIT_DRIFT = 1
+EXIT_CANNOT_CHECK = 2
 PAGE_SIZE = 100
 MAX_PAGES = 100
 
@@ -81,6 +98,15 @@ def parse_seed(path):
     return steps
 
 
+class ListingError(Exception):
+    """A listing could not be read completely.
+
+    Raised rather than exited, because the right exit code depends on the caller: writing on a
+    partial listing is a failure, and so is reporting one as no drift, but they are not the same
+    failure and `--site` has to tell them apart.
+    """
+
+
 def fetch_all(host, path):
     """Read every page, and check the count against the total the API reports.
 
@@ -95,9 +121,9 @@ def fetch_all(host, path):
             break
         page += 1
         if page > MAX_PAGES:
-            sys.exit(f"Stopped after {MAX_PAGES} pages of {path}. The listing is not terminating.")
+            raise ListingError(f"Stopped after {MAX_PAGES} pages of {path}. The listing is not terminating.")
     if len(out) != total:
-        sys.exit(f"Read {len(out)} of {total} from {path}. Refusing to act on a partial listing.")
+        raise ListingError(f"Read {len(out)} of {total} from {path}. Refusing to act on a partial listing.")
     return out
 
 
@@ -115,6 +141,8 @@ def enable(args):
     """Step 3. Separated from creation so the licence review has somewhere to happen in between."""
     try:
         sources = fetch_all(args.host, "/api/admin/event-sources")
+    except ListingError as e:
+        sys.exit(str(e))
     except (urllib.error.URLError, OSError) as e:
         sys.exit(f"Cannot reach the importer at {args.host}: {e}")
 
@@ -147,6 +175,54 @@ def enable(args):
     print(f"\nEnabled {ok} of {len(disabled)}. The scheduler picks them up within a minute.")
 
 
+def compare_site(args):
+    """Compare the seed file with the public site, and report through the exit code (#1782).
+
+    The failure this exists for is silent by construction. A source is a row created through the
+    admin API, never by a migration, so a source added to the seed file and never seeded is simply
+    absent: no `FAILED` status, no `lastError`, and no metric, because
+    `importer.source.events_future` publishes its explicit zero only for the sources a cluster holds
+    (#618). ROSA and Sisyphos were complete, documented and released, and reached no cluster for as
+    long as nobody thought to run the dry run.
+
+    This reads the public API instead of the admin API, so the check needs no port-forward and no
+    credentials, and a scheduled workflow can make it. Staging is not on the public internet, so
+    this covers production alone.
+    """
+    site = args.site.rstrip("/")
+    try:
+        steps = parse_seed(args.seed)
+    except OSError as e:
+        print(f"Cannot read {args.seed}: {e}", file=sys.stderr)
+        return EXIT_CANNOT_CHECK
+
+    want = {json.loads(text)["name"] for kind, text, _ in steps if kind == "venue"}
+    try:
+        have = {v["name"] for v in fetch_all(site, "/api/venues")}
+    except ListingError as e:
+        print(f"{e}", file=sys.stderr)
+        return EXIT_CANNOT_CHECK
+    except (urllib.error.URLError, OSError, ValueError, KeyError) as e:
+        print(f"Cannot read the venues at {site}: {e}", file=sys.stderr)
+        return EXIT_CANNOT_CHECK
+
+    missing = sorted(want - have)
+    extra = sorted(have - want)
+    print(f"{args.seed}: {len(want)} venues")
+    print(f"{site} serves {len(have)} venues\n")
+    for n in missing:
+        print(f"  MISSING FROM THE SITE  {n}")
+    for n in extra:
+        print(f"  ONLY ON THE SITE       {n}")
+    if not missing and not extra:
+        print("  No drift. Every venue in the seed file is served.")
+        return 0
+    # A venue the file does not carry is drift to explain as well: it was created by hand, or the
+    # file lost a row. Neither is removed here, by the same rule the admin dry run states.
+    print(f"\n{len(missing)} venue(s) in the seed file are not served, {len(extra)} served venue(s) are not in it.")
+    return EXIT_DRIFT
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--host", default=LOCAL_HOST)
@@ -165,12 +241,26 @@ def main():
         "is unreviewed, because that is the order the licence gate depends on.",
     )
     ap.add_argument(
+        "--site",
+        help="compare the seed file with the public site at this origin and report through the exit "
+        "code: 0 no drift, 1 drift, 2 the comparison could not be made. Reads the public API, "
+        "writes nothing, and needs no port-forward.",
+    )
+    ap.add_argument(
         "--allow-unreviewed",
         action="store_true",
         help="enable despite unreviewed sources. One is expected -- the venue whose site answers "
         "our user agent with 406, recorded in docs/licence-review/README.md section 6.",
     )
     args = ap.parse_args()
+
+    if args.site:
+        # Refused rather than ignored: --site names a public origin, and the write flags name a host
+        # that is an admin API. A run that quietly dropped one of the two would be reporting on a
+        # different target than the one it was given.
+        if args.apply or args.enable:
+            ap.error("--site is read-only and cannot be combined with --apply or --enable")
+        sys.exit(compare_site(args))
 
     if args.enable:
         enable(args)
@@ -184,6 +274,8 @@ def main():
     try:
         have_venues = {v["name"]: v["id"] for v in fetch_all(args.host, "/api/admin/venues")}
         have_sources = {s["name"]: s["slug"] for s in fetch_all(args.host, "/api/admin/event-sources")}
+    except ListingError as e:
+        sys.exit(str(e))
     except (urllib.error.URLError, OSError) as e:
         sys.exit(f"Cannot reach the importer at {args.host}: {e}")
 
