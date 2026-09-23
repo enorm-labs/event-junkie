@@ -114,6 +114,39 @@ class OhmOverviewPageScraperTest {
         edgeCases.map { it.title } shouldBe listOf("New Year Reset", "Tonight, Time TBC")
     }
 
+    // LA CASITA, 24/09 (#1756): the venue's brackets mark a live act and two credits that are not music.
+    @Test
+    fun `bills a live act as headliner and drops painting and installation credits`() {
+        val html =
+            """
+            <ul class="event-list"><li class="event-item">
+                <div class="event-date"><h2>24/09</h2></div>
+                <div class="event-time">22:00</div>
+                <h2 class="event-title">LA CASITA</h2>
+                <div class="event-lineup medium-type">Banu <br />
+            CH3LO <br />
+            DJ TOWER<br />
+            Huamaniser<br />
+            V. (OPERA live)<br />
+            SPICY LAB (VCO & THIRTEEN DOZE) <br />
+            TEO CLAVERO (Live Painting)<br />
+            S.O.N.O.S (Sonic Visual Installation)</div>
+            </li></ul>
+            """.trimIndent()
+
+        val event = OhmOverviewPageScraper(captureClock).scrape(Jsoup.parse(html, baseUrl), baseUrl).single()
+
+        event.artists.map { it.name to it.role } shouldBe
+            listOf(
+                "Banu" to "DJ",
+                "CH3LO" to "DJ",
+                "DJ TOWER" to "DJ",
+                "Huamaniser" to "DJ",
+                "V. (OPERA live)" to "HEADLINER",
+                "SPICY LAB (VCO & THIRTEEN DOZE)" to "DJ"
+            )
+    }
+
     @Test
     fun `returns an empty list for a page without an event list`() {
         val document = Jsoup.parse("<html><body><section class='events'></section></body></html>", baseUrl)

@@ -245,9 +245,10 @@ class GretchenOverviewPageScraper {
             gig
                 .select(".lineup")
                 .flatMap { lineup ->
-                    // On a clone: drop the pricing <em> and the <b> floor headers, then turn <br> into newlines.
+                    // On a clone: the pricing <em> and the <b> floor headers become line breaks, not nothing,
+                    // because an <em> can hold the only <br> between two lines (#1755).
                     val work = lineup.clone()
-                    work.select("em, b").remove()
+                    work.select("em, b").forEach { it.replaceWith(TextNode("\n")) }
                     work.select("br").forEach { it.replaceWith(TextNode("\n")) }
                     work.wholeText().split(LINE_BREAK)
                 }.map { it.trim() }
@@ -296,12 +297,14 @@ class GretchenOverviewPageScraper {
     }
 
     /**
-     * Strips a lineup line to the name: `*…*` markers, a trailing `(country)` / `(label)`, a
-     * trailing `+<tag>` (`OKVSHO +experience` to `OKVSHO`), whitespace collapsed. The `+<tag>` strip
-     * is safe because every co-billed act has its own `<br>` line.
+     * Strips a lineup line to the name: a leading `+ ` (`+ Mittelmeer Monologe`, an act added
+     * after the main billing), `*…*` markers, a trailing `(country)` / `(label)`, a trailing
+     * `+<tag>` (`OKVSHO +experience` to `OKVSHO`), whitespace collapsed. The `+<tag>` strip is safe
+     * because every co-billed act has its own `<br>` line.
      */
     private fun cleanArtistName(line: String): String =
         line
+            .replaceFirst(LEADING_PLUS, "")
             .replace(STAR_MARKER, " ")
             .replace(TRAILING_PARENS, "")
             .replace(TRAILING_PLUS_TAG, "")
@@ -364,6 +367,9 @@ class GretchenOverviewPageScraper {
 
         /** A trailing `(country)` / `(label/country)` annotation on a lineup line. */
         private val TRAILING_PARENS = Regex("""\s*\([^)]*\)\s*$""")
+
+        /** A leading `+` and its space; a `+` fused to a word (`+44`) is part of the name. */
+        private val LEADING_PLUS = Regex("""^\s*\+\s+""")
 
         /** A trailing `+<tag>` stylisation on a lineup line (e.g. `OKVSHO +experience`). */
         private val TRAILING_PLUS_TAG = Regex("""\s*\+\s*\S+\s*$""")
