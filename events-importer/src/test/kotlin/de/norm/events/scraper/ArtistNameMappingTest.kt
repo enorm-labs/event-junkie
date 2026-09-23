@@ -1150,6 +1150,35 @@ class ArtistNameMappingTest {
         stripArtistSuffix("Pauline Murray (PENETRATION)") shouldBe "Pauline Murray (PENETRATION)"
     }
 
+    // #1761 — the bracket shapes staging stored on upcoming events, and the brackets that are the name.
+    @Test
+    fun `stripArtistSuffix drops an annotation bracket and keeps a bracket that is the name`() {
+        stripArtistSuffix("Flow Rea (Est)") shouldBe "Flow Rea"
+        stripArtistSuffix("goat (jp)") shouldBe "goat"
+        stripArtistSuffix("David J (Bauhaus / Love & Rockets)") shouldBe "David J"
+        stripArtistSuffix("Steve Norman (von Spandau Ballet) & The Sleevz") shouldBe "Steve Norman & The Sleevz"
+        stripArtistSuffix("Paula Paula (Zusatzshow)") shouldBe "Paula Paula"
+        stripArtistSuffix("DJ Hell (Vinyl Set)") shouldBe "DJ Hell"
+        stripArtistSuffix("Sean Steinfeger (OHSHITF*CKYES") shouldBe "Sean Steinfeger"
+
+        stripArtistSuffix("Maynd (Chi)") shouldBe "Maynd (Chi)"
+        stripArtistSuffix("Luca Saporito (Audiofly)") shouldBe "Luca Saporito (Audiofly)"
+        stripArtistSuffix("SiSi (2)") shouldBe "SiSi (2)"
+        stripArtistSuffix("All(h)ours") shouldBe "All(h)ours"
+        stripArtistSuffix("Go(ø)d Trip") shouldBe "Go(ø)d Trip"
+        stripArtistSuffix("Kreisfrequenz ((ω))") shouldBe "Kreisfrequenz ((ω))"
+        stripArtistSuffix("(Th)ink About That") shouldBe "(Th)ink About That"
+        stripArtistSuffix("Друга Ріка (Druha Rika)") shouldBe "Друга Ріка (Druha Rika)"
+    }
+
+    @Test
+    fun `splitBracketedGuest splits a featured or added act out of a trailing bracket`() {
+        splitBracketedGuest("Dosenstolz (feat. Tancred)") shouldBe listOf("Dosenstolz", "Tancred")
+        splitBracketedGuest("Warhammer (+ Corrode)") shouldBe listOf("Warhammer", "Corrode")
+        splitBracketedGuest("Clive (Splitting Image) and friends") shouldBe listOf("Clive (Splitting Image) and friends")
+        splitBracketedGuest("Sickboyrari (Black Kray)") shouldBe listOf("Sickboyrari (Black Kray)")
+    }
+
     // #1564 — a line-up placeholder glued to the last act.
     @Test
     fun `stripArtistSuffix drops a more-to-come tail`() {

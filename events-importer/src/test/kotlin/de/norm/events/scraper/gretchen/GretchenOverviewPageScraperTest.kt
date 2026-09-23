@@ -282,6 +282,28 @@ class GretchenOverviewPageScraperTest {
             event.artists.map { it.name } shouldContainExactly
                 listOf("Àbáse", "ZENA", "Sean Steinfeger", "Mittelmeer Monologe")
         }
+
+        // detail.php?id=3480 (#1761): the page opens `*live` and never closes it.
+        @Test
+        fun `strips a star marker the page never closed`() {
+            val html =
+                """
+                <div class="gig">
+                    <div class="gig_top">
+                        <span class="date">Mi. <strong>07.10.2026</strong><br> Doors: 20.00</span>
+                    </div>
+                    <div class="gig_main"><div class="scroll nano"><div class="text nano-content">
+                        <span class="title">Brasil<h2><a href="detail.php?id=3480">Sessa</a></h2></span>
+                        <span class="box"></span><span class="lineup"><p>Sessa  (Mexican Summer/BR/US) *live*<br /></p></span>
+                        <span class="box"></span><span class="lineup">Support: Tontom (BR) *live<em><br /><br />*Vorverkauf 25 € zzgl. Gebühren * Abendkasse 30 €*</em></span>
+                    </div></div></div>
+                </div>
+                """.trimIndent()
+
+            val event = scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl).single()
+
+            event.artists.map { it.name } shouldContainExactly listOf("Sessa", "Tontom")
+        }
     }
 
     @Nested

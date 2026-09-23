@@ -108,7 +108,8 @@ class AssociationSyncService(
      * slugs to nothing has escaped [isNonArtistName], and would take the empty slug every later one
      * collides with (#1553). A headliner read off a title the boundary resolves to a festival is the
      * festival's name, not an act (`ELLE & L's Festival` → `Elle`, #300): undone here, once, while a
-     * published line-up stays. Then [unglueSeriesTails].
+     * published line-up stays. A guest in a bracket is split off first ([splitBracketedGuest]). Then
+     * [unglueSeriesTails].
      */
     private suspend fun billedArtists(scrapedEvents: List<ScrapedEvent>): Map<String, List<ScrapedArtist>> {
         scrapedEvents.forEach { event ->
@@ -121,11 +122,19 @@ class AssociationSyncService(
                 val festival = event.resolvedEventType() == EventType.FESTIVAL
                 event.sourceId to
                     event.artists
+                        .flatMap { artist -> splitGuest(artist) }
                         .map { it.copy(name = stripArtistSuffix(it.name)) }
                         .filterNot { isSlugless(it.name) || isNonArtistName(it.name) || (festival && it.titleDerived) }
             }
         return unglueSeriesTails(stripped)
     }
+
+    /** [splitBracketedGuest] on one billing; a headliner's guest is support, as a `feat.` title bills it (#305). */
+    private fun splitGuest(artist: ScrapedArtist): List<ScrapedArtist> =
+        splitBracketedGuest(artist.name).mapIndexed { index, name ->
+            val role = if (index > 0 && artist.role == "HEADLINER") "SUPPORT" else artist.role
+            artist.copy(name = name, role = role)
+        }
 
     /**
      * `Xmal Deutschland – Sonic Morgue` is `Xmal Deutschland` when the catalogue already holds
