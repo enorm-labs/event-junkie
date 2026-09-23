@@ -53,6 +53,11 @@ tests:
               type: Utilization
               averageUtilization: 70
         template: bff-hpa.yaml
+      # A deploy's compile burst lasts about a minute and must not scale the BFF up.
+      - equal:
+          path: spec.behavior.scaleUp.stabilizationWindowSeconds
+          value: 120
+        template: bff-hpa.yaml
       - equal:
           path: spec.behavior.scaleDown.stabilizationWindowSeconds
           value: 300
