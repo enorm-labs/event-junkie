@@ -7,6 +7,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.VenueLimitations
+import de.norm.events.scraper.querySeparator
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
 
@@ -61,7 +62,7 @@ class FestsaalWebsiteImporter(
      * `https://admin.festsaal-kreuzberg.de/api/v2/pages/`.
      */
     private fun buildRequestUrl(baseUrl: String): String {
-        val separator = if ('?' in baseUrl) '&' else '?'
+        val separator = baseUrl.querySeparator()
         return "$baseUrl${separator}type=home.EventPage&fields=$FIELDS&locale=de&order=date&limit=$LIMIT"
     }
 

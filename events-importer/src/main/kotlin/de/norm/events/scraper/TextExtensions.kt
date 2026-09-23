@@ -21,6 +21,14 @@ fun String?.blankToNull(): String? = this?.trim()?.takeIf { it.isNotBlank() }
  */
 fun decodeHtmlEntities(raw: String): String = Parser.unescapeEntities(raw.trim(), false).trim()
 
+/**
+ * `&` when this URL already carries a query string, `?` when it does not.
+ *
+ * An importer appends its parsing parameters to an entry-point URL that the event source
+ * configures either way (ADR-007).
+ */
+fun String.querySeparator(): Char = if ('?' in this) '&' else '?'
+
 /** A run of whitespace, for splitting a line into words or flattening one to single spaces. */
 val WHITESPACE = Regex("""\s+""")
 

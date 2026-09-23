@@ -8,6 +8,7 @@ import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.VenueLimitations
+import de.norm.events.scraper.querySeparator
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
 
@@ -58,9 +59,6 @@ class CosmicComedyWebsiteImporter(
 
         return ImportResult.Success(events = events, etag = null, lastModified = null)
     }
-
-    /** Appends to whatever query the configured endpoint already carries. */
-    private fun String.querySeparator(): String = if (contains('?')) "&" else "?"
 
     companion object {
         /** The plugin's maximum page size, so the programme needs the fewest requests. */

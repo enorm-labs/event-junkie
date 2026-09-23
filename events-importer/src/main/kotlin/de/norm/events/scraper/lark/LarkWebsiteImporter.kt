@@ -8,6 +8,7 @@ import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.VenueLimitations
+import de.norm.events.scraper.querySeparator
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
 import java.time.Clock
@@ -107,8 +108,6 @@ class LarkWebsiteImporter(
         val root = baseUrl.substringBefore('?').trimEnd('/').substringBeforeLast('/')
         return "$root/media?include=${mediaIds.joinToString(",")}&per_page=$PER_PAGE&_fields=id,source_url"
     }
-
-    private fun String.querySeparator(): Char = if ('?' in this) '&' else '?'
 
     private companion object {
         /** WordPress's maximum page size, so the programme needs the fewest requests. */

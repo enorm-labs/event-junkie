@@ -229,6 +229,19 @@ class ScrapingExtensionsTest {
     }
 
     @Nested
+    inner class QuerySeparator {
+        @Test
+        fun `opens the query string when the URL carries none`() {
+            "https://venue.com/wp-json/wp/v2/event".querySeparator() shouldBe '?'
+        }
+
+        @Test
+        fun `appends to a query string the configured URL already carries`() {
+            "https://venue.com/api/v2/pages/?type=home.EventPage".querySeparator() shouldBe '&'
+        }
+    }
+
+    @Nested
     inner class TextLines {
         @Test
         fun `textLinesAt splits the matched element on br, trimming and dropping blanks`() {
