@@ -79,11 +79,10 @@ class OhmOverviewPageScraperTest {
     }
 
     @Test
-    fun `publishes no prices, images or ticket links`() {
+    fun `publishes no prices or ticket links`() {
         events.forEach {
             it.pricePresale.shouldBeNull()
             it.priceBoxOffice.shouldBeNull()
-            it.imageUrl.shouldBeNull()
             it.ticketUrl.shouldBeNull()
             it.soldOut shouldBe false
         }
@@ -145,6 +144,35 @@ class OhmOverviewPageScraperTest {
                 "V. (OPERA live)" to "HEADLINER",
                 "SPICY LAB (VCO & THIRTEEN DOZE)" to "DJ"
             )
+    }
+
+    // The fixtures predate the posters, which the venue added in September 2026 (#1777).
+    @Test
+    fun `reads the night's poster and leaves the image empty where there is none`() {
+        val html =
+            """
+            <ul class="event-list"><li class="event-item">
+                <div class="event-item-details">
+                    <div class="event-item-details-more">
+                        <div class="event-date"><h2>24/09</h2></div>
+                        <div class="event-time">22:00</div>
+                        <h2 class="event-title">LA CASITA</h2>
+                        <div class="event-lineup medium-type">Banu</div>
+                    </div>
+                </div>
+                <div class="event-poster">
+                    <img width="719" height="900" src="https://ohmberlin.com/wp-content/uploads/2026/09/Screenshot-2026-09-07-at-20.02.27-719x900.png" class="attachment-medium size-medium" alt="" />
+                </div>
+                <div class="event-item-hidden"><div class="event-poster-mobile">
+                    <img width="719" height="900" src="https://ohmberlin.com/wp-content/uploads/2026/09/Screenshot-2026-09-07-at-20.02.27-719x900.png" alt="" />
+                </div></div>
+            </li></ul>
+            """.trimIndent()
+
+        val event = OhmOverviewPageScraper(captureClock).scrape(Jsoup.parse(html, baseUrl), baseUrl).single()
+
+        event.imageUrl shouldBe "https://ohmberlin.com/wp-content/uploads/2026/09/Screenshot-2026-09-07-at-20.02.27-719x900.png"
+        events.forEach { it.imageUrl.shouldBeNull() }
     }
 
     @Test

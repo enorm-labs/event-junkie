@@ -133,7 +133,6 @@ says so.
 | `MS_HOPPETOSSE`       | `PER_EVENT_PAGE`   | the programme page is the source for every night                                                                                                 | —     |
 | `NEUE_ZUKUNFT`        | `PER_EVENT_PAGE`   | the calendar widget exposes no per-event URLs                                                                                                    | —     |
 | `OHM`                 | `PER_EVENT_PAGE`   | the venue's whole programme is one page                                                                                                          | —     |
-| `OHM`                 | `IMAGE`            | the programme page carries no per-event image                                                                                                    | —     |
 | `OHM`                 | `PRICE`            | the programme page carries no price                                                                                                              | —     |
 | `OHM`                 | `TICKET_URL`       | the programme page links no ticket shop                                                                                                          | —     |
 | `OHM`                 | `EVENT_TYPE`       | the venue publishes no categories; every night is a DJ programme                                                                                 | —     |
