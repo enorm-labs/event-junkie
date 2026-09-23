@@ -191,6 +191,10 @@ class FrannzOverviewPageScraper(
      * Presale and box-office prices from the structured `li.event-vvk` items. Each pairs a
      * `.value` ("10,00 €") with a `.key` label; a label containing "Abendkasse" is box office,
      * everything else (Vorverkauf / "VVK …") presale. First value per category wins.
+     *
+     * **Most articles carry no such item, and that is the source rather than this parser.** Over a
+     * 30-day window, 5 of 29 nights state a figure and all 5 are read; the other 24 name the ticket
+     * seller instead. [FRANNZ_LIMITATIONS] declares it (#1781).
      */
     private fun parsePrices(article: Element): Pair<BigDecimal?, BigDecimal?> {
         var presale: BigDecimal? = null

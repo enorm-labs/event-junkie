@@ -84,5 +84,9 @@ val BADEHAUS_LIMITATIONS =
             LimitedAspect.ARTISTS,
             "the venue publishes no roster; for a concert the title is taken as the act and a Support: subtitle as the rest"
         ),
-        AcceptedLimitation(LimitedAspect.EVENT_TYPE, "the venue publishes no category; the type is inferred from the title and subtitle")
+        AcceptedLimitation(LimitedAspect.EVENT_TYPE, "the venue publishes no category; the type is inferred from the title and subtitle"),
+        AcceptedLimitation(
+            LimitedAspect.PRICE,
+            "the venue prints no figure, and where it names money at all it is a donation range the model has no field for, kept verbatim as the note"
+        )
     )
