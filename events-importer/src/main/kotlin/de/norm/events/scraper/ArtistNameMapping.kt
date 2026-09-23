@@ -747,6 +747,21 @@ private fun isInsideBrackets(
     return depth > 0
 }
 
+/**
+ * Two commas make a list; one does not (#1789). `Hey, Nothing`, `Kitty, Daisy & Lewis`,
+ * `Wracaj, bociemno` and `Yes, I’m Very Tired Now` are all real acts with one comma, and
+ * `D-Block Europe, French Montana` is a bill with one, so a single comma decides nothing. No act
+ * in the corpus carries two.
+ */
+private const val MIN_COMMAS_FOR_A_LIST = 2
+
+/**
+ * The positions of the commas that separate acts: those outside any bracket. A comma inside one
+ * belongs to that act's own affiliation, as in `New Candys (It, Fuzz Club)`, where both commas are
+ * parenthetical and the bill is delimited by something else entirely.
+ */
+private fun topLevelCommas(text: String): List<Int> = text.indices.filter { text[it] == ',' && !isInsideBrackets(text, it) }
+
 /** Splits [text] at the given separator [cuts], dropping the separators themselves. */
 private fun cutAt(
     text: String,
@@ -797,13 +812,23 @@ fun splitSupportActs(text: String): List<String> =
 @Suppress("ReturnCount") // Guard clauses for blank and denylisted titles are clearer than nesting
 fun splitHeadlinerTitle(
     title: String,
-    splitOnSlash: Boolean = true
+    splitOnSlash: Boolean = true,
+    splitOnComma: Boolean = false
 ): List<String> {
     val trimmed = title.trim()
     if (trimmed.isEmpty()) return listOf(title)
     // A whole title that is one denylisted act is kept intact before any separator split;
     // co-billed occurrences are protected per segment inside splitSegmentOnConjunctions.
     if (isKnownSingleAct(trimmed)) return listOf(trimmed)
+
+    val commas = topLevelCommas(trimmed)
+    if (commas.size >= MIN_COMMAS_FOR_A_LIST || (splitOnComma && commas.isNotEmpty())) {
+        return cutAt(trimmed, commas.map { it..it })
+            .flatMap { splitHeadlinerTitle(it.trim(), splitOnSlash) }
+            .map { it.trim() }
+            .filter { it.isNotBlank() }
+            .ifEmpty { listOf(trimmed) }
+    }
 
     val separator = if (splitOnSlash) SAFE_TITLE_SEPARATOR else PLUS_ONLY_TITLE_SEPARATOR
     // Bracket-aware: a `/` or `+` inside a parenthetical belongs to that act's own affiliation
@@ -900,7 +925,8 @@ fun headlinersFromTitle(
     rawTitle: String,
     splitOnSlash: Boolean = true,
     unpackWithFrame: Boolean = false,
-    subtitle: String? = null
+    subtitle: String? = null,
+    splitOnComma: Boolean = false
 ): List<ScrapedArtist> {
     // The persistence boundary strips a cancellation from the title after the acts are built, so
     // `Absage: The Act` must lose the marker here or bill it (#1560).
@@ -913,7 +939,7 @@ fun headlinersFromTitle(
     // `<act> feat. <guest>` mid-title: the guest is billed as support, the act goes on (#305).
     val (billing, guests) = splitFeaturedGuests(title)
     presentsFrameActs(billing)?.let { return it + guests }
-    return splitHeadlinerTitle(stripSeriesPrefix(billedSideOfPres(billing, splitOnSlash)), splitOnSlash)
+    return splitHeadlinerTitle(stripSeriesPrefix(billedSideOfPres(billing, splitOnSlash)), splitOnSlash, splitOnComma)
         .map { segment ->
             // The role is decided from the *raw* segment, before its label is stripped: a title
             // that bills "… + Support: A.A. Williams" names a support act, not a second headliner.
