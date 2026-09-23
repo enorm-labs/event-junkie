@@ -13,6 +13,12 @@ spring:
     schemas: events
     create-schemas: true
 
+# Repeated because this file shadows the main one. `CompressionTest` asserts the two blocks agree.
+server:
+  compression:
+    enabled: true
+    min-response-size: 1KB
+
 # Mirrors the main application.yaml's exposure list and health groups, and has to (#415): this
 # file shadows the main one rather than merging, so without the list `/actuator/prometheus` 404s
 # in tests while working in production, and the groups prove nothing about what ships. A test

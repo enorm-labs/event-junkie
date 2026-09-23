@@ -5,6 +5,14 @@ spring:
     properties:
       schema: events
 
+# gzip for every caller that asks (#1206): JSON shrinks about tenfold, and the 30-day calendar is
+# 2.2 MB without it. 1 KB matches the frontend's nginx `gzip_min_length`. Boot's default MIME types
+# include `application/json` and exclude `image/*`, so the image route's bytes are left alone.
+server:
+  compression:
+    enabled: true
+    min-response-size: 1KB
+
 app:
   api:
     # The largest page the public read API returns (#268). `@PageableDefault` sets a default and

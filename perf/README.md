@@ -101,7 +101,8 @@ each carry their own budget.
 
 ## Where the numbers come from
 
-The defaults are calibrated for a **local run against a laptop**, with the dev database's seeded data. They are regression detectors, not SLOs: loose enough
+The defaults are calibrated for a **local run against a laptop**, with the dev database's seeded data. k6 sends `Accept-Encoding: gzip`, and the BFF
+compresses since #1206, so a run before that change and a run after it are not comparable. They are regression detectors, not SLOs: loose enough
 that an ordinary machine under ordinary background load does not trip them, tight enough that an accidental N+1 or a dropped index does.
 
 Production exists ([ADR-012](../docs/adr/ADR-012_CLOUD_PLATFORM.md), accepted) and the thresholds have not moved since they were set against a laptop.
@@ -139,8 +140,7 @@ What the numbers say, and what was done with each:
 - **CLS is the finding.** Every cell is over Google's 0.25 line for poor. The footer moves by the height of the content once the fetch completes, because each
   view's `<main>` shows a one-line loading text until then. The detail page adds the poster: lazy-loaded although it is the LCP, and flagged unsized. Filed
   as #1207 rather than fixed here.
-- **JSON is not compressed.** `uses-text-compression` lists only `/api/**` URLs: 41 KiB on the list page that gzip would make 9 KiB. Assets are gzipped by
-  nginx. Filed as #1206.
+- **JSON was not compressed.** `uses-text-compression` listed only `/api/**` URLs: 41 KiB on the list page that gzip makes 9 KiB. The BFF gzips since #1206.
 - **Not actionable, and recorded so the next run does not rediscover them:** `bf-cache` reports "Internal error" on every run, a Lighthouse limitation on
   headless Chrome; `dom-size` on the list page is 925 elements for 20 cards and their filters, which is the page.
 
