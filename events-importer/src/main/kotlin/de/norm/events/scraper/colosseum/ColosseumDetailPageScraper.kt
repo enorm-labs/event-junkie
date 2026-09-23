@@ -18,14 +18,13 @@ import java.time.LocalTime
  * **The page states two Einlass/Beginn pairs, and the field they sit in tells them apart.** The
  * payload's `about` is a cloned block the house never rewrites: all 18 live events carry the same
  * `Einlass: 19 Uhr / Beginn: 20 Uhr` there, over a Dustin O'Halloran biography. The rich-content
- * `longDescription` carries the event's own lines, and 17 of the 18 have them. Reading the field
- * rather than the formatting is what gets the hard rows right: the Gene Krupa Show states
- * `Einlass: 17 Uhr` without minutes, and Das Betreute Singen states `19 Uhr / 20 Uhr` as its own
- * text (#1684).
+ * `longDescription` carries the event's own lines, and all 18 have them. Reading the field rather
+ * than the formatting is what gets the hard rows right: the Gene Krupa Show states `Einlass: 17
+ * Uhr` without minutes, and Peter Sandberg states the boilerplate's own clocks as its own text
+ * (#1684).
  *
- * **The listing's time is the Einlass as often as it is the Beginn** — 8 of 18 against 7, with 3
- * events stating no clock of their own — so it cannot be relabelled without this page, and the
- * pair read here replaces it whole.
+ * **The listing's time is the Einlass more often than the Beginn** — 10 of 18 against 8 — so it
+ * cannot be relabelled without this page, and the pair read here replaces it whole.
  *
  * The description and the price are still refused, for the reasons in
  * [ColosseumWebsiteImporter]'s KDoc.
@@ -67,26 +66,40 @@ class ColosseumDetailPageScraper {
     /**
      * The clocks the event's own text states, by their label.
      *
-     * A label with nothing after it is how the house writes "we have not decided yet" (Peter
-     * Sandberg's page prints `Einlass:` and `Beginn:` bare), so it yields no entry and the listing's
-     * time stands.
+     * A label with nothing after it yields no entry, and the listing's time stands. No live event
+     * writes one today; the house edits these lines by hand, so the case is covered rather than
+     * assumed away.
      */
     private fun timeLines(richContent: JsonNode): Map<String, LocalTime> =
-        textNodes(richContent)
+        paragraphs(richContent)
             .mapNotNull { text -> TIME_LINE.find(text) }
             .associate { match ->
                 val (label, hour, minute) = match.destructured
                 label.lowercase() to LocalTime.of(hour.toInt(), minute.ifEmpty { "0" }.toInt())
             }
 
-    /** Every `textData.text` in a Wix rich-content tree, in document order. */
-    private fun textNodes(node: JsonNode): List<String> =
+    /**
+     * The rich content's paragraphs, each as one string.
+     *
+     * **A line is read per paragraph, not per text node.** Wix splits a styled line into one node
+     * per run, so a bold label and its clock are siblings — `Einlass:` then ` 19:00 Uhr` — and six
+     * of the eighteen events kept the listing's time because neither half matched on its own.
+     */
+    private fun paragraphs(node: JsonNode): List<String> =
         buildList {
-            node.path("textData").stringOrNull("text")?.let { add(it) }
-            node.path("nodes").forEach { child -> addAll(textNodes(child)) }
+            if (node.stringOrNull("type") == PARAGRAPH) add(joinedText(node))
+            node.path("nodes").forEach { child -> addAll(paragraphs(child)) }
+        }
+
+    /** Every `textData.text` below [node], joined in document order. */
+    private fun joinedText(node: JsonNode): String =
+        buildString {
+            node.path("textData").stringOrNull("text")?.let { append(it) }
+            node.path("nodes").forEach { child -> append(joinedText(child)) }
         }
 
     private companion object {
+        const val PARAGRAPH = "PARAGRAPH"
         const val EINLASS = "einlass"
         const val BEGINN = "beginn"
 
