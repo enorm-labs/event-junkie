@@ -139,6 +139,7 @@ says so.
 | `OHM`                 | `EVENT_TYPE`       | the venue publishes no categories; every night is a DJ programme                                                                                 | —     |
 | `PANKE`               | `PER_EVENT_PAGE`   | the venue expands each event's full text inline and publishes no page per event                                                                  | —     |
 | `PANKE`               | `EVENT_TYPE`       | the venue publishes no category, and its titles are series names rather than formats                                                             | —     |
+| `PANKE`               | `DOORS_TIME`       | only an event whose body prints a `Doors … · Concert …` line states two clocks; for the rest the venue publishes one and calls it the start      | —     |
 | `PETER_EDEL`          | `EVENT_TYPE`       | the venue publishes no event category at all, across a programme spanning concerts, comedy, readings and dance teas                              | —     |
 | `PETER_EDEL`          | `ARTISTS`          | without a category nothing confirms that a title is a performer rather than a format, so an act is taken only when a support act is billed       | —     |
 | `PETER_EDEL`          | `GENRE`            | the venue publishes no genre                                                                                                                     | —     |
