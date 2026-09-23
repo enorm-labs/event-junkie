@@ -19,9 +19,9 @@ import org.springframework.stereotype.Component
  * [ColosseumOverviewPageScraper] parses the embedded JSON.
  *
  * **The `/details-registrierung/<slug>` pages are fetched for their times alone** (#1684). The
- * listing carries one `startDate` per event, and that time is the doors as often as it is the
- * start — 8 of 18 live events against 7 — so a row built from the listing alone puts a door time
- * in `startTime` about half the time. [ColosseumDetailPageScraper] reads the event's own `Einlass`
+ * listing carries one `startDate` per event, and that time is the doors more often than the start
+ * — 10 of 18 live events against 8 — so a row built from the listing alone puts a door time in
+ * `startTime` more often than not. [ColosseumDetailPageScraper] reads the event's own `Einlass`
  * and `Beginn` lines; the listing's record is kept for everything else. Two fields stay refused:
  * - Their `about` is *not* per-event text. Each event is created by cloning an old one and that
  * section is never rewritten, so the same 3,440-character block — a Dustin O'Halloran biography

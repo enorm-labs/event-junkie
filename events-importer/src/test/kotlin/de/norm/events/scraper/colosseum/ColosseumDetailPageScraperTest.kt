@@ -62,17 +62,48 @@ class ColosseumDetailPageScraperTest {
     }
 
     @Test
-    fun `a page stating the labels without a clock keeps the listing's time and gets no doors`() {
-        val event = scrape("colosseum-detail-no-times.html").shouldNotBeNull()
+    fun `a bold label and its clock in separate text nodes are read as one line`() {
+        // Wix splits a styled line into one node per run, which is how six of the eighteen events
+        // kept the listing's time after the first fix (#1684).
+        val event = scrape("colosseum-detail-styled-label.html").shouldNotBeNull()
 
-        event.doorsTime.shouldBeNull()
-        // The payload's own start, which the importer then keeps.
-        event.startTime shouldBe LocalTime.of(19, 0)
+        event.doorsTime shouldBe LocalTime.of(19, 0)
+        event.startTime shouldBe LocalTime.of(20, 0)
+    }
+
+    @Test
+    fun `a pair equal to the boilerplate is still the event's own text`() {
+        // Peter Sandberg states `Einlass: 19 Uhr / Beginn: 20 Uhr` in its rich content, the same
+        // clocks the cloned `about` block carries. The field it sits in is what decides, and the
+        // listing's 19:00 is this event's doors.
+        val event = scrape("colosseum-detail-sandberg.html").shouldNotBeNull()
+
+        event.doorsTime shouldBe LocalTime.of(19, 0)
+        event.startTime shouldBe LocalTime.of(20, 0)
     }
 
     @Test
     fun `a page without the warmup payload yields nothing`() {
         scraper.scrape(Jsoup.parse("<html><body><p>Wartung</p></body></html>", URL), URL).shouldBeNull()
+    }
+
+    @Test
+    fun `an event stating no clock at all keeps the listing's time and gets no doors`() {
+        // No live event does this today; the path exists because the house edits these lines by hand.
+        val page =
+            Jsoup.parse(
+                javaClass.classLoader
+                    .getResourceAsStream("scraper/colosseum/colosseum-detail-kramer.html")!!
+                    .bufferedReader()
+                    .readText()
+                    .replace("Einlass: 18:30 Uhr", "Einlass:")
+                    .replace("Beginn: 19:30 Uhr", "Beginn:"),
+                URL
+            )
+        val event = scraper.scrape(page, URL).shouldNotBeNull()
+
+        event.doorsTime.shouldBeNull()
+        event.startTime shouldBe LocalTime.of(19, 30)
     }
 
     private companion object {
