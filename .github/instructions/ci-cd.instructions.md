@@ -90,8 +90,10 @@ is the map and the traps.
   Reports are artifacts; nothing opens an issue; no `pull_request` trigger, decided.
 - `deployment-status.yml` (#565) — turns Flux's `repository_dispatch` (`HelmRelease/event-junkie.flux-system`) into a GitHub deployment. Parses the commit
   out of the chart version through `scripts/version.sh`'s two shapes — change one, change this — after stripping helm-controller's `+<digest>` build metadata.
-  Since #1698 it carries a second job: `lighthouse`, `needs: record`, which calls `lighthouse.yml` when the deployment is `production` and `success`. A
-  `deployment_status` trigger cannot replace it — a status created with `GITHUB_TOKEN` starts no workflow.
+  Since #1698 it carries a second job: `lighthouse`, `needs: record`, which calls `lighthouse.yml` when the deployment is `production` and `success` **and that
+  is the deployment's first success**. `UpgradeSucceeded` and `TestSucceeded` are both successes, so without the third condition one reconcile audits the site
+  twice and reports two medians for one release. A `deployment_status` trigger cannot replace any of it — a status created with `GITHUB_TOKEN` starts no
+  workflow.
   `flux-source-failure.yml` (#1454) — the other listener, on `OCIRepository/event-junkie.flux-system` from each cluster's `source-failure` Alert; a failed
   signature or an unreachable registry keeps the last artifact and emits no HelmRelease event, so this job is **red by construction** — the one shape GitHub
   mails about. **Neither can be tested from a PR**: `repository_dispatch` runs the default branch only, so both fail loudly on an unrecognised payload.

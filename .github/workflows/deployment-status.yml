@@ -46,6 +46,7 @@ jobs:
       environment: ${{ steps.record.outputs.environment }}
       state: ${{ steps.record.outputs.state }}
       revision: ${{ steps.record.outputs.revision }}
+      first_success: ${{ steps.record.outputs.first_success }}
 
     steps:
       # No `actions/checkout` IN THIS JOB, and none should be added: everything comes from the payload
@@ -169,6 +170,21 @@ jobs:
               core.info(`Created deployment ${deploymentId} for ${environment} at ${sha.slice(0, 7)}.`);
             }
 
+            // --- Is this the FIRST success on this deployment? -----------------------------------
+            // One reconcile produces several statuses, and helm-controller sends more than one whose reason
+            // ends in `Succeeded`: `UpgradeSucceeded` when the release is up, then `TestSucceeded` when the
+            // `helm test` hooks pass. Both are a real success and both belong on the timeline. But a post-deploy
+            // check must not run once per event — production ran two full Lighthouse audits, 24 page loads on
+            // the node that serves the site, and reported two different medians for one release (#1698).
+            //
+            // Read BEFORE the write below, so the status this run is about to add does not count itself.
+            // `paginate`, because a deployment accumulates statuses across re-reconciles and the default page
+            // would silently stop at 30 — which reads as "no success yet" and audits again.
+            const statuses = await github.paginate(github.rest.repos.listDeploymentStatuses, {
+              ...context.repo, deployment_id: deploymentId, per_page: 100,
+            });
+            const alreadySucceeded = statuses.some((status) => status.state === 'success');
+
             await github.rest.repos.createDeploymentStatus({
               ...context.repo,
               deployment_id: deploymentId,
@@ -183,10 +199,15 @@ jobs:
             });
 
             // For the Lighthouse job. Set here and not earlier: only a payload that produced a real
-            // deployment status is worth auditing production over.
+            // deployment status is worth auditing production over. `first_success` is what makes the audit
+            // once per (environment, commit) rather than once per success event.
             core.setOutput('environment', environment);
             core.setOutput('state', state);
             core.setOutput('revision', revision);
+            core.setOutput('first_success', String(state === 'success' && !alreadySucceeded));
+            if (state === 'success' && alreadySucceeded) {
+              core.info(`${environment} at ${sha.slice(0, 7)} already had a success status; no post-deploy check this time.`);
+            }
 
             await core.summary
               .addHeading(`${environment} — ${state}`, 2)
@@ -208,10 +229,18 @@ jobs:
   #
   # **It must not be read as a failed deploy.** It writes no deployment status and carries its own job
   # name; a red Lighthouse gate says the site regressed, not that the rollout did.
+  #
+  # **Once per deployment, not once per success event.** `first_success` is false on the second and later
+  # successes of the same (environment, commit) — `UpgradeSucceeded` and then `TestSucceeded` are both
+  # successes, and without this the first production reconcile audited the site twice and reported two
+  # different medians for one release. The weekly cron is what re-measures between releases.
   lighthouse:
     name: Lighthouse
     needs: record
-    if: needs.record.outputs.environment == 'production' && needs.record.outputs.state == 'success'
+    if: >-
+      needs.record.outputs.environment == 'production'
+      && needs.record.outputs.state == 'success'
+      && needs.record.outputs.first_success == 'true'
     uses: ./.github/workflows/lighthouse.yml
     with:
       # Empty on purpose: the called workflow falls back to the `SITE_URL` variable, which is the one
