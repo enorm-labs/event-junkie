@@ -164,8 +164,9 @@ jobs:
       # replacer rule rewrites `Host` to the Ingress name. Not `--network host`: `.localhost` resolves to
       # loopback inside curl and Firefox whatever `/etc/hosts` says. `-j` adds the browser spider — the
       # frontend is an SPA and the traditional spider reads a head with no links. Two threads and a delay
-      # keep the active scan under the per-source rate limit (50 req/s, burst 250); a fuzzer that gets 429s
-      # tests the limiter and nothing else. Capped at 30 minutes.
+      # pace the scan, and `values-k3d.yaml` raises the per-source limit to a ceiling a fuzzer cannot
+      # reach: a scanner that collects 429s tests the limiter and nothing else, and ZAP read two of them
+      # as an injected expression (#1746). Capped at 30 minutes.
       #
       # The exit status is kept and applied after the coverage floors, so a red run says which it was.
       # `-e` is what makes a missed floor red; no `-s`, because the short format drops the `Total of N URLs`

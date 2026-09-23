@@ -440,6 +440,11 @@ and it fails a run that produces a 429 during ordinary browsing **and** a run th
 over `/api` — the same mechanism the Ingress template already relies on. It is not done here because it buys nothing until a real limit is measured to be
 insufficient.
 
+**k3d raises `perSource` and does not follow these numbers.** The nightly ZAP active scan runs through that Traefik on purpose, and a fuzzer spends requests
+far faster than any visitor: at 50/s it collected 429s and reported two of them as an injected expression (#1746). `values-k3d.yaml` therefore sets a ceiling
+the scan cannot reach. The middleware still renders and still applies there; what a visitor meets is proven by `perf/ratelimit.js` against staging and
+production.
+
 **`sourceCriterion.requestHost` on `rateLimit` is deliberately absent.** It would make one budget for the whole site, which hands any single client the ability
 to spend everybody's.
 
