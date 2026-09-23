@@ -266,6 +266,10 @@ Art. 13 (2) (a) accepts the criteria used to determine the period in place of a 
 Erasure is on objection under Art. 21, with no reason required — the same route §7.3 already offers. Decided in #362,
 jointly with the archive: keeping past events reachable is deciding not to delete them.
 
+**An artist row that no event bills is deleted.** A daily pass in the importer deletes it once the row is a day old
+(#350). Such a row holds no event history, so this deletes personal data and keeps none longer. The pass keeps a row
+with an exact MusicBrainz match or a profile, because that row names a real act that the next billing reuses.
+
 **A stored image is a different question from a stored URL, and the row above is new because of it.** Until ADR-019
 the site embedded the venue's URL and held no file. It now downloads the file and keeps it, which is a reproduction
 under § 16 UrhG and a processing operation under the DSGVO. Two consequences follow.
