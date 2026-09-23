@@ -20,7 +20,8 @@ private val STATEMENT_TABLE = Regex("""\b(?:UPDATE|DELETE\s+FROM|INSERT\s+INTO)\
  * A rename or a removal leaves an older migration naming a venue that is gone. The entry records
  * that, where a reviewer sees it.
  */
-private val RETIRED_VENUE_SLUGS: Map<String, String> = emptyMap()
+private val RETIRED_VENUE_SLUGS: Map<String, String> =
+    mapOf("arkaoda" to "the club closed on 2026-08-30; V051 removes the venue and the seed file no longer creates it (#1788)")
 
 /**
  * Asserts that every `slug` literal in a migration names a venue the seed file creates.

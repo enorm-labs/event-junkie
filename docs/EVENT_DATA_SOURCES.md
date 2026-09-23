@@ -37,7 +37,6 @@ schema change.
 | Alte Kantine Kulturbrauerei      | https://alte-kantine.eu/                                    | Concert Hall |                                                        |
 | AMT                              | https://www.club-amt.berlin                                 | Techno Club  | Webflow; /events → month pages                         |
 | Arcanoa                          | https://www.ssi-media.com/arcanoa/veranst.htm               | Bar          | 1990s HTML; title/date only; year from weekday         |
-| arkaoda                          | https://berlin.arkaoda.com/?/default/program                | Bar          | PHP router; only "Konser" typed; RA link in prose      |
 | Astra Kulturhaus                 | https://www.astra-berlin.de/                                | Concert Hall | schema.org `MusicEvent`; presale + door prices         |
 | Badehaus                         | https://badehaus-berlin.com/                                | Club         | "AUSVERKAUFT"/"VERLEGT" labels; ticket + FB links      |
 | Bar jeder Vernunft               | https://www.bar-jeder-vernunft.de/de/programm/kalender.html | Bar          | Neos; per-date JSON-LD; one show page per run          |
@@ -121,7 +120,7 @@ schema change.
 | Zenner                           | https://zenner.berlin/programm                              | Club         | Gatsby/Sanity page-data JSON; UTC dates; archive       |
 | Zitadelle                        | https://citadel-music-festival.de/events                    | Open Air     | Festival site; WordPress/EM; summer season only        |
 
-87 importer classes cover 88 sources. Only Kantine am Berghain has no class of its own, and it shares the Berghain
+86 importer classes cover 87 sources. Only Kantine am Berghain has no class of its own, and it shares the Berghain
 importer outright. Three other groups share a _listing and parser_ while keeping one thin `@Component` per venue, so
 they do not reduce the count. They are Club der Visionäre with Sonnenraum and MS Hoppetosse, the three Velomax halls,
 and Uber Arena with the Uber Eats Music Hall.
@@ -246,6 +245,10 @@ each is cheap to recognise before spending time on a candidate:
   imported.
   Searching for an own domain is still worth it everywhere else. It turned up twelve venue sites this document did not
   have, and exactly one of them — Der Weiße Hase — carries a live programme.
+- **arkaoda closed on 2026-08-30.** The Neukölln outpost of the Istanbul bar announced it in the last event it
+  published. The programme page still answers 200. It serves the bare template, because there is no programme.
+  `V051` removes the venue, its source row and its one past event from both clusters (#1788). It is not listed
+  above. Do not add it back.
 - **Four recorded domains are dead.** `bredouille-bar.com` no longer resolves, `tausendberlin.de` is parked and for
   sale, and `kulturbrauerei-berlin.de` answers 523 from Cloudflare. Wendel's `nstp.de` serves plain HTTP only, and its
   TLS handshake fails outright.

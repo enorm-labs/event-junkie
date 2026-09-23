@@ -252,7 +252,7 @@ private val ISO_COUNTRY_CODES: String =
 /**
  * A trailing origin tag: two- or three-letter country codes (`(NL)`, `(PL/USA)`), a genre in front
  * of them (`(Dark Wave US/DE)`), or a spelled-out country with an optional `Live` (`(Thailand-Live)`)
- * (#314). arkaoda's local rule, lifted here and widened to the spelled-out form.
+ * (#314). Lifted from a venue's local rule and widened to the spelled-out form.
  */
 private val ORIGIN_TAG =
     Regex(
