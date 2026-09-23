@@ -90,5 +90,5 @@ EXPOSE 8080 9001
 
 # Exec form, so java is PID 1 and receives SIGTERM directly; a shell would swallow it and every
 # pod deletion would wait out the grace period. No JAVA_TOOL_OPTIONS baked in: the chart sets it
-# (`-XX:MaxRAMPercentage=75`).
+# (the heap share and the direct-memory cap, #1766).
 ENTRYPOINT ["java", "-jar", "application.jar"]

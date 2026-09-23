@@ -60,7 +60,7 @@ spec:
             {{- /* A JVM that sizes its heap at 25% of the container limit does not OOM; it runs in a quarter
                of what it was given. */}}
             - name: JAVA_TOOL_OPTIONS
-              value: "-XX:MaxRAMPercentage={{ .Values.bff.maxRamPercentage }}"
+              value: "-XX:MaxRAMPercentage={{ .Values.bff.maxRamPercentage }} -XX:MaxDirectMemorySize={{ .Values.bff.maxDirectMemorySize }}"
             {{- include "event-junkie.databaseEnv" $ | nindent 12 }}
             {{- if and .Values.images.enabled .Values.images.serving.enabled }}
             {{- /* The half of ADR-019 a visitor sees: the API hands out a path on our own origin and the

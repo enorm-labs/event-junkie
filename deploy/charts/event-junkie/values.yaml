@@ -74,8 +74,13 @@ bff:
       # (PLATFORM_SETUP §8 item 12). The JVM reads it and sizes its heap from `MaxRAMPercentage`.
       memory: "768Mi"
   # bff.maxRamPercentage is the JVM heap as a share of the container limit. Without it a JVM sizes
-  # its heap at 25% of the limit and then dies with three-quarters of its memory unused.
-  maxRamPercentage: 75
+  # its heap at 25% of the limit. Half, because the rest is not spare: under load on staging (#1766)
+  # metaspace and code cache held 150 Mi and native memory the JVM does not report another 130 Mi.
+  # At 75 the kernel killed the pod at 612 Mi of 640 with the heap not yet full.
+  maxRamPercentage: 50
+  # bff.maxDirectMemorySize caps Netty's buffers, which otherwise default to the heap's size. Past
+  # it one response fails with OutOfDirectMemoryError; without it the kernel kills the pod (#1766).
+  maxDirectMemorySize: "64m"
   # A dedicated ServiceAccount with no token mounted. `name` overrides the generated one, for a
   # hand-made RBAC binding.
   serviceAccount:

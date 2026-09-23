@@ -102,7 +102,9 @@
         "image",
         "basePath",
         "service",
-        "resources"
+        "resources",
+        "maxRamPercentage",
+        "maxDirectMemorySize"
       ],
       "properties": {
         "replicaCount": {
@@ -124,6 +126,11 @@
           "type": "integer",
           "minimum": 25,
           "maximum": 90
+        },
+        "maxDirectMemorySize": {
+          "description": "A JVM size such as 64m. Netty's buffers default to the heap's size without it, and the kernel kills the pod first (#1766).",
+          "type": "string",
+          "pattern": "^[0-9]+[kKmMgG]$"
         }
       }
     },

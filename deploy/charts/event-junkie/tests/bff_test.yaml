@@ -9,6 +9,23 @@ templates:
   - configmap.yaml
 
 tests:
+  # --- Memory budget (#1766) ---------------------------------------------------------------------
+  # Heap and Netty's buffers are both capped, so the pod's native memory fits the limit under load.
+  - it: caps the heap and the direct memory in JAVA_TOOL_OPTIONS
+    set:
+      database.host: "10.0.1.2"
+      networkPolicy.databaseCidr: "10.0.1.2/32"
+      database.existingSecret: "events-db"
+    documentSelector:
+      path: kind
+      value: Deployment
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: JAVA_TOOL_OPTIONS
+            value: "-XX:MaxRAMPercentage=50 -XX:MaxDirectMemorySize=64m"
+
   # --- Serving cached venue images (ADR-019) -----------------------------------------------------
   # The switch a visitor sees: off, the API hands out the venue's URL; on, a path on our own origin (#792).
   - it: passes no storage configuration while it is not serving images
