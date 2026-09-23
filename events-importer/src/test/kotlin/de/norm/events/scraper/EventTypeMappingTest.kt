@@ -35,7 +35,7 @@ class EventTypeMappingTest {
     fun `mapEventType prefers venue-specific synonyms over the base table`() {
         mapEventType("Live", mapOf("live" to "CONCERT")) shouldBe "CONCERT"
         // extra synonyms take precedence over the base mapping
-        mapEventType("Party", mapOf("party" to "CLUB_NIGHT")) shouldBe "CLUB_NIGHT"
+        mapEventType("Party", mapOf("party" to "SHOW")) shouldBe "SHOW"
     }
 
     @Test

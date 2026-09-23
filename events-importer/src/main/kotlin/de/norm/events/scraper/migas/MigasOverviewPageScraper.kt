@@ -178,25 +178,16 @@ class MigasOverviewPageScraper {
         /**
          * migas' two programme categories, both describing the *format* of the night, neither an
          * existing [EventType] synonym:
-         * - `playing` — a booked selector plays a record set, the closest to [EventType.CLUB_NIGHT].
-         * Deliberately not `PARTY`, which would describe a seated listening bar as a dance floor:
-         * a visitor comes for the act on the decks, exactly the distinction `CLUB_NIGHT` draws
-         * (EVENT_SCOPE.md §2).
+         * - `playing` — a booked selector plays a record set, which is what [EventType.PARTY]
+         *   holds at every other venue (#1783). The selector stays billed: only
+         *   [buildArtistsForEventType][de.norm.events.scraper.buildArtistsForEventType] drops
+         *   artists for `PARTY`, and [artistsFor] never calls it.
          * - `listening session` — a guest session or full-album playback, neither a concert (nobody
-         * performs) nor a club night, so [EventType.OTHER].
-         *
-         * **This choice costs no lineup either way, contrary to what this KDoc used to claim.** It
-         * said `PARTY` would make [buildArtistsForEventType][de.norm.events.scraper.buildArtistsForEventType]
-         * drop the artists — true of that function, but [artistsFor] never calls it; it goes straight
-         * to [headlinersFromTitle][de.norm.events.scraper.headlinersFromTitle], which ignores the type.
-         * That early return is the only place in the importer where a type suppresses a lineup, so
-         * retyping these nights would leave their artists untouched. Measured while establishing what
-         * that rule costs; recorded because a right decision on a wrong reason is one re-reading away
-         * from being reversed for the wrong reason too.
+         *   performs) nor a party, so [EventType.OTHER].
          */
         val EVENT_TYPE_SYNONYMS =
             mapOf(
-                "playing" to EventType.CLUB_NIGHT.name,
+                "playing" to EventType.PARTY.name,
                 "listening session" to EventType.OTHER.name
             )
 

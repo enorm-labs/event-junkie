@@ -18,7 +18,7 @@ const event: EventSummary = {
   soldOut: true,
   priceCurrency: 'EUR',
   pricePresale: 25,
-  eventType: 'CLUB_NIGHT',
+  eventType: 'PARTY',
   genreTags: ['Punk'],
   imageUrl: '/api/images/abc/192.jpg',
   imageSources: [{ type: 'image/avif', srcset: '/api/images/abc/192.avif 192w' }],

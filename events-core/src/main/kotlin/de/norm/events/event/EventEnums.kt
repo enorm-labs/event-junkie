@@ -16,7 +16,6 @@ enum class EventType {
     FESTIVAL,
     PARTY,
     QUIZ,
-    CLUB_NIGHT,
     SHOW,
     SCREENING,
     EXHIBITION,

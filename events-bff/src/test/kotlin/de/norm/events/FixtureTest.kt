@@ -178,7 +178,7 @@ class FixtureTest : BaseControllerTest() {
 
     /**
      * The closed sets of values the site renders differently, each covered by a row. Small enough to
-     * demand completeness rather than an allowlist: `EventType` is left out deliberately, because ten
+     * demand completeness rather than an allowlist: `EventType` is left out deliberately, because nine
      * values that differ only as a label would make the exception list longer than the enum.
      */
     @Test
