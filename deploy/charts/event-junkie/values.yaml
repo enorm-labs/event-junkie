@@ -82,7 +82,10 @@ bff:
       cpu: "200m"
       memory: "512Mi"
     limits:
-      cpu: "1000m"
+      # Two cores, so a new replica compiles beside its requests rather than in front of them: at
+      # 1000m the first 10 s under load ran at a 5 s p95, at 2000m at 25–125 ms (#434). A burst
+      # allowance, not a reservation. The request above is what the scheduler and the HPA see.
+      cpu: "2000m"
       # A security control on a single node, not a tuning knob
       # (PLATFORM_SETUP §8 item 12). The JVM reads it and sizes its heap from `MaxRAMPercentage`.
       memory: "768Mi"

@@ -20,7 +20,8 @@
 # `USER 10001:10001` below it.
 #
 # The cost of that rule: Spring Boot's AOT cache for Java 25+ (`RUN java -XX:AOTCacheOutput=…`)
-# is architecture-specific. Revisit when startup time is measured against the probe budget.
+# is architecture-specific, so it is not used. Measured in #434: it halves startup, which was never
+# slow, and barely shortens warm-up under load. A second CPU in the chart's limit removes that.
 
 # Pinned by tag and digest; Dependabot's `docker` ecosystem tracks both, and the digest is the
 # multi-arch manifest list.
