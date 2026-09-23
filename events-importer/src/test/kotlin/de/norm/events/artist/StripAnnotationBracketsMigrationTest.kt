@@ -16,7 +16,7 @@ import java.sql.DriverManager
 import java.sql.Statement
 
 /**
- * Runs V042 (#1761) against planted artist rows on a database migrated to just before it: a merge
+ * Runs V045 (#1761) against planted artist rows on a database migrated to just before it: a merge
  * onto an existing slug, a rename, a rename whose slug is taken, and an unlinked bracketed leftover.
  */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -28,7 +28,7 @@ class StripAnnotationBracketsMigrationTest {
     fun migrateAndPlant() {
         postgres.start()
         connection = DriverManager.getConnection(postgres.jdbcUrl, postgres.username, postgres.password)
-        flyway("41").migrate()
+        flyway("44").migrate()
         connection.createStatement().use { statement ->
             statement.execute("SET search_path TO events")
             statement.execute("INSERT INTO venue (name, slug) VALUES ('Fixture', 'fixture')")
@@ -53,7 +53,7 @@ class StripAnnotationBracketsMigrationTest {
             plantArtist(statement, "Fracture (Uk)", "fracture-uk")
             plantArtist(statement, "Plain", "plain")
         }
-        flyway("42").migrate()
+        flyway("45").migrate()
     }
 
     @AfterAll
@@ -92,7 +92,7 @@ class StripAnnotationBracketsMigrationTest {
 
     @Test
     fun `every new slug is the slug of its new name`() {
-        val migration = File("src/main/resources/db/migration/V042__strip_annotation_brackets_from_artist_names.sql").readText()
+        val migration = File("src/main/resources/db/migration/V045__strip_annotation_brackets_from_artist_names.sql").readText()
         RENAME_ROW
             .findAll(migration)
             .map { it.destructured }
