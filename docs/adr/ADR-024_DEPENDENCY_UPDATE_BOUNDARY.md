@@ -122,7 +122,13 @@ Empty output means the bump is complete. Any output is what the string edit coul
   weekly by `scripts/upstream-node-pins.sh`, and `node-pin-reminder.yml` turns a gap into an assigned issue. Detection and proposal come apart here on purpose.
   See below.
 - **One deliberate gap remains.** imgproxy stays unwatched because it pins a bare digest with no tag. Its version rests on a hand-made judgement about CRITICAL
-  findings that an updater cannot reproduce.
+  findings that an updater cannot reproduce. Measured rather than inferred: a local Renovate extract over this repository lists six `helm-values`
+  dependencies, and imgproxy is not one of them.
+- **A digest belongs inside the tag, for anything a watcher maintains** (#1751). The four digest-pinned images — `postgres-exporter`,
+  `signal-cli-rest-api`, and the two `helm test` hook images — write `name:tag@sha256:…` as one string. Renovate parses the digest out of that string and
+  replaces the whole of it, so a bump moves both. A separate `digest` key beside the tag is invisible to both managers here. A bump would
+  then move the tag and leave the digest. The pod would run the old image while the file said otherwise. The application images are the exception and keep a separate `digest`
+  key, because `release.yml` stamps those and no watcher touches them.
 
 ## Why Renovate owns the CI tool pins
 

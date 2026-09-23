@@ -119,7 +119,10 @@ gives us** per minor or major ("Nothing for us" is valid; skip patches); what wa
   invalidates the measurement, not the decision: re-check resident memory against the ~1.5 GB ceiling and say so. **The `ZO_*` defaults change between
   versions** (`ZO_LOCAL_MODE` is topology, `ZO_LOCAL_MODE_STORAGE` is the backend); read the changelog for default changes.
 - **`cert-manager` is pinned in both clusters and must not drift**; Renovate groups them. A split PR means the grouping broke — wait.
-- **`signal-cli-rest-api` and `postgres-exporter` are digest-pinned**: tag and `@sha256:` move together, or the digest silently wins.
+- **Four images are digest-pinned**: `signal-cli-rest-api`, `postgres-exporter`, and the two `helm test` hook images, `curlimages/curl` and `grafana/k6`
+  (#1751). Tag and `@sha256:` move together, or the digest silently wins. All four carry the digest **inside the tag string**, which is what makes Renovate
+  move both: its replace template for each is `…{{#if newDigest}}@{{newDigest}}{{/if}}`. So this is a glance at the diff, not an edit to make by hand — and a
+  bump that arrives with the tag alone is the thing to stop.
 - **Flux**: Renovate edits the strings in `gotk-components.yaml` and does not regenerate it (#1075). First check `flux install --export … | diff -`
   (CLUSTER_BOOTSTRAP.md §9b); empty means complete. Then the Pod Security Admission patch's _"Re-check after a Flux upgrade"_ — a controller that violates
   `enforce: restricted` will not schedule, and takes every deploy with it. `FLUX_VERSION` in `validate-chart.yml` arrives as a second PR; **merge them

@@ -165,6 +165,32 @@ tests:
           path: "$..image"
           pattern: '^ghcr\.io/enorm-labs/event-junkie/(bff|importer|frontend|injector):[0-9]+\.[0-9]+\.[0-9]+([-+][0-9A-Za-z.-]+)?@sha256:(1{64}|2{64}|3{64}|4{64})$'
 
+  - it: both test hook images carry their digest inside the tag, and the tag stays
+    set:
+      database.host: "10.0.1.2"
+      networkPolicy.databaseCidr: "10.0.1.2/32"
+      database.existingSecret: "events-db"
+      tests.smoke.enabled: true
+      tests.image.tag: "9.9.9@sha256:5555555555555555555555555555555555555555555555555555555555555555"
+      tests.smoke.image.tag: "9.9.9@sha256:6666666666666666666666666666666666666666666666666666666666666666"
+    documentSelector:
+      path: kind
+      value: Pod
+      matchMany: true
+    asserts:
+      # The two `helm test` hooks are the only third-party images this chart runs that a watcher bumps,
+      # so their digest lives IN the tag rather than beside it (#1751): Renovate's helm-values manager
+      # replaces the whole string, and a separate `digest` key would let a bump move the tag alone. The
+      # tags are set here rather than read, so a bump does not edit this test — `values.schema.json`
+      # is what holds the committed values to the same shape.
+      - matchRegex:
+          path: "$..image"
+          pattern: '^docker\.io/(curlimages/curl|grafana/k6):[0-9]+\.[0-9]+\.[0-9]+@sha256:(5{64}|6{64})$'
+      # No separate control for this one, unlike the assertions above, and the reason is measured rather
+      # than assumed: assertions run per TEMPLATE, and a `documentSelector` that matches no document in a
+      # template FAILS the assertion instead of passing over nothing. Pointing this selector at `Secret`,
+      # which neither hook renders, turns it red. So a hook that stopped rendering cannot pass by absence.
+
   - it: control — the image path above reaches the imgproxy sidecar too
     set:
       database.host: "10.0.1.2"

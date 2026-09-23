@@ -480,6 +480,9 @@
         "enabled": {
           "type": "boolean"
         },
+        "image": {
+          "$ref": "#/definitions/hookImage"
+        },
         "smoke": {
           "description": "The second `helm test` hook (#1697): perf/smoke.js from a k6 pod, through the Ingress. Off by default; each cluster switches it on once its own values are right.",
           "type": "object",
@@ -492,6 +495,9 @@
           "properties": {
             "enabled": {
               "type": "boolean"
+            },
+            "image": {
+              "$ref": "#/definitions/hookImage"
             },
             "verifyTls": {
               "description": "False on staging only, whose certificate is from Let's Encrypt's staging CA.",
@@ -640,6 +646,24 @@
     }
   },
   "definitions": {
+    "hookImage": {
+      "description": "A `helm test` hook's image: a third party we do not rebuild, so the tag carries its own digest — `X.Y.Z@sha256:<64 hex>` (#1751). One string, unlike `componentImage`'s separate `digest`, and the difference is who maintains it. A pipeline stamps ours; a watcher bumps this one. Renovate's helm-values manager parses the digest out of this value and replaces the whole of it, so a bump cannot move the tag and leave the digest behind — which a separate `digest` key here would allow, silently, and the pod would run the old image. A cluster that overrides the tag without a digest fails this schema, which is the point.",
+      "type": "object",
+      "properties": {
+        "registry": {
+          "type": "string",
+          "minLength": 1
+        },
+        "repository": {
+          "type": "string",
+          "minLength": 1
+        },
+        "tag": {
+          "type": "string",
+          "pattern": "^[^@\\s]+@sha256:[0-9a-f]{64}$"
+        }
+      }
+    },
     "componentImage": {
       "description": "One of the four images release.yml builds. `tag` falls back to appVersion; `digest`, when release.yml stamps it, is what the node pulls (#1473).",
       "type": "object",

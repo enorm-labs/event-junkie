@@ -480,7 +480,13 @@ tests:
     registry: "docker.io"
     # A third-party image is acceptable here: nothing a test pod does outlives the test.
     repository: "curlimages/curl"
-    tag: "8.22.0"
+    # Tag AND digest in one string (#1751), never a separate `digest:` key beside it. Renovate's
+    # `helm-values` manager reads the digest out of this value and replaces the whole of it, so a bump
+    # moves both: it proposed `8.22.0@sha256:58adaa…` from `8.11.1@sha256:c1fe16…` in a dry run. A
+    # `digest:` key is invisible to that manager, so the bump would move the tag alone and the pod would
+    # run the old image while this file said otherwise. The digest is the manifest LIST's, not one
+    # architecture's. `values.schema.json` refuses a tag without a digest.
+    tag: "8.22.0@sha256:58adaa4e8dca9c988bae2aba4ab3434a0bb2da16bbe3f92dec39ec7785166777"
   # The second hook (#1697): `perf/smoke.js` from a k6 pod, every public endpoint once, through
   # the Ingress. Off by default and switched on per cluster, because the default `verifyTls` fails
   # against staging's Let's Encrypt staging certificate before staging's own values can say
@@ -490,7 +496,8 @@ tests:
     image:
       registry: "docker.io"
       repository: "grafana/k6"
-      tag: "2.3.0"
+      # Digest in the tag, for the reason on `tests.image.tag` above.
+      tag: "2.3.0@sha256:9c2dee7f8ed74d317e4027c06a10f169b625638189de8d4555d0b3486a5aeb34"
     # tests.smoke.verifyTls: false on staging only. Production keeps it: a certificate that did not
     # issue is a finding this hook exists to make.
     verifyTls: true
