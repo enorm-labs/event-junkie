@@ -66,13 +66,12 @@ Calls go through `src/api/client.ts` (`openapi-fetch`), typed from the generated
 ```bash
 ./gradlew :events-bff:bootRun          # or scripts/dev-env.sh up bff — restart it after editing a controller or DTO
 npm run generate:api                   # events-frontend/
-npx oxfmt src/api/schema.d.ts          # BEFORE reading the diff
 git diff src/api/schema.d.ts && npm run type-check
 ```
 
 - **A running but stale BFF succeeds and writes the schema for the API you didn't change.** Restart first.
-- **The generator writes double quotes and semicolons; the committed file has neither.** Unformatted, two added fields read as 1,304 insertions and 1,228
-  deletions; formatted, 96 insertions. **Format before you read the diff.**
+- **The committed file is the generator's raw output — double quotes, semicolons — and oxfmt ignores it** (`.oxfmtrc.json`). Never format it: the diff
+  of a regeneration is then the API change alone, and a formatted copy turns two changed lines into a 3,000-line rewrite.
 - **A rename lands as a delete plus an add**, and surfaces as a type error in `types.ts` — fix the alias, don't widen it. **Removing or narrowing a field is
   a site break, not a type break**: regenerating makes it compile, not render. Grep for the alias.
 - **Never edit `schema.d.ts` by hand.** It covers the BFF only; the importer's admin API on `:8081` is not consumed.
