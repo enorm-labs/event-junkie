@@ -54,7 +54,9 @@ jobs:
       # The OIDC exchange for the Claude App's token.
       id-token: write
     # The fetches are rationed and throttled, so the wall clock is the comparison. `--max-turns` is the
-    # cost ceiling.
+    # cost ceiling, set from what finished runs cost: three in a row took 62, 74 and 64 turns, and a
+    # cap of 100 then stopped one twelve minutes in, before it could post (#1748). The timeout is the
+    # bound that should bite first.
     timeout-minutes: 45
     env:
       SITE_URL: ${{ inputs.site || vars.SITE_URL || 'https://event-junkie.de' }}
@@ -76,7 +78,7 @@ jobs:
           prompt: /plausibility-check --days ${{ inputs.days || '2' }} --sample ${{ inputs.sample || '20' }} --unattended
           claude_args: |
             --model ${{ inputs.model || 'claude-opus-5' }}
-            --max-turns 100
+            --max-turns 160
             --allowedTools "Bash,Read,Glob,Grep,Write,TodoWrite"
 
       # Reporting steps last and guarded. The step summary has no REST API, so the final report is
