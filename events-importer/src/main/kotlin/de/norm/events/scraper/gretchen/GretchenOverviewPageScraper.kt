@@ -298,14 +298,15 @@ class GretchenOverviewPageScraper {
 
     /**
      * Strips a lineup line to the name: a leading `+ ` (`+ Mittelmeer Monologe`, an act added
-     * after the main billing), `*…*` markers, a trailing `(country)` / `(label)`, a trailing
-     * `+<tag>` (`OKVSHO +experience` to `OKVSHO`), whitespace collapsed. The `+<tag>` strip is safe
-     * because every co-billed act has its own `<br>` line.
+     * after the main billing), `*…*` markers and an unclosed `*live`, a trailing `(country)` /
+     * `(label)`, a trailing `+<tag>` (`OKVSHO +experience` to `OKVSHO`), whitespace collapsed. The
+     * `+<tag>` strip is safe because every co-billed act has its own `<br>` line.
      */
     private fun cleanArtistName(line: String): String =
         line
             .replaceFirst(LEADING_PLUS, "")
             .replace(STAR_MARKER, " ")
+            .replace(LONE_TRAILING_STAR, "")
             .replace(TRAILING_PARENS, "")
             .replace(TRAILING_PLUS_TAG, "")
             .replace(WHITESPACE, " ")
@@ -364,6 +365,9 @@ class GretchenOverviewPageScraper {
 
         /** A `*…*` decoration on a lineup line (e.g. `*live*`). */
         private val STAR_MARKER = Regex("""\*[^*]*\*""")
+
+        /** A `*…*` decoration the page never closed, at the end of a line: `Tontom (BR) *live` (#1761). */
+        private val LONE_TRAILING_STAR = Regex("""\s*\*[^*\s]+\s*$""")
 
         /** A trailing `(country)` / `(label/country)` annotation on a lineup line. */
         private val TRAILING_PARENS = Regex("""\s*\([^)]*\)\s*$""")

@@ -199,6 +199,29 @@ class AssociationSyncDuplicateNamesIntegrationTest : BaseControllerTest() {
         }
     }
 
+    // #1761: a guest in a bracket is a second act, split at sync for every source.
+    @Test
+    fun `a bracketed guest becomes its own act, for every source`() {
+        runBlocking {
+            val sourceId = "bracketed-guest:1"
+            val event = persistEvent(sourceId)
+
+            associationSyncService.resolveAndSyncAssociations(
+                listOf(event),
+                listOf(scraped(sourceId, artists = listOf(ScrapedArtist(name = "Dosenstolz (feat. Tancred)", role = "HEADLINER"))))
+            )
+
+            artistRepository.findBySlug("dosenstolz")?.name shouldBe "Dosenstolz"
+            artistRepository.findBySlug("tancred")?.name shouldBe "Tancred"
+            eventArtistRepository
+                .findByEventIdIn(listOf(requireNotNull(event.id)))
+                .toList()
+                .map { it.role }
+                .sorted() shouldBe
+                listOf("HEADLINER", "SUPPORT")
+        }
+    }
+
     // #302: a series or album glued to an act with a dash comes off when the catalogue already holds
     // the bare act as a MusicBrainz EXACT row. MusicBrainz is the vocabulary; nothing else is listed.
     @Test

@@ -5,6 +5,7 @@ package de.norm.events.scraper
 import de.norm.events.event.EventType
 import de.norm.events.slug.SlugGenerator
 import java.text.Normalizer
+import java.util.Locale
 
 // Artist-name resolution for scraped events: performer names from titles and support lines,
 // minus non-artist labels (placeholders, role labels, event and segment names). Event-type
@@ -173,7 +174,8 @@ fun isNonArtistEvent(name: String): Boolean {
  * because its head is shouted too (#1533), and from #1580 the act's own backing (`Lacrimosa mit
  * Orchester`), which the conjunction split keeps attached, and a dash tail ending in `!`, which
  * is billing prose. A `: <night> 2027` tail is the year-ended tour rule again with a colon
- * (#305), and a `— more TBA` tail is a line-up placeholder glued to the last act (#1564).
+ * (#305), and a `— more TBA` tail is a line-up placeholder glued to the last act (#1564). A show
+ * note in brackets (`(Zusatzshow)`, `(Vinyl)`) is a format too (#1761).
  *
  * The boundaries keep real names intact: hyphen tails need `<space>-<space>` and a marker
  * ("BAD COMPANY LEGACY - Dave Colwell" is left alone); the year is anchored at the end ("Blink -
@@ -192,7 +194,8 @@ private val ARTIST_SUFFIX_PATTERN =
             """|\s+(?:more|mehr)\s+(?:tba|tbc|tbd)\.*$""" +
             """|\s+[-–—]\s*release\s?show\s*$""" +
             """|\s+(?:hybrid\s+)?live(?:\s+(?:set|band))?(?:\s*&\s*dj[\s-]?set)?(?:\s+in\s+\S.*)?$""" +
-            """|\s*\((?:dj[\s-]?set|(?:hybrid\s+)?live(?:\s+(?:set|band))?|hybrid|acoustic|akustik|unplugged|solo|konzert|concert)\)\s*$""" +
+            """|\s*\((?:dj[\s-]?set|(?:hybrid\s+)?live(?:\s+(?:set|band))?|hybrid|acoustic|akustik|unplugged|solo|konzert|concert""" +
+            """|zusatz(?:show|konzert|termin)|(?:extra|additional)\s+show|(?:all\s+)?vinyl(?:\s+(?:set|only))?)\)\s*$""" +
             """|\s+(?:dj[\s-]?set|hybrid)$""" +
             """|\s+[-–—(]*\s*(?:nachholtermin|hochverlegung|verschoben)\b.*$""" +
             """|\s+singt\s+\S.*$""" +
@@ -206,6 +209,20 @@ private val ARTIST_SUFFIX_PATTERN =
     )
 
 /**
+ * Splits a guest out of a trailing bracket: `Dosenstolz (feat. Tancred)` and `Warhammer (+ Corrode)`
+ * are two acts each (#1761). A singleton when there is no such bracket.
+ */
+fun splitBracketedGuest(name: String): List<String> {
+    val match = BRACKETED_GUEST.find(name.trim()) ?: return listOf(name)
+    val (head, guest) = match.destructured
+    return listOf(head.trim(), guest.trim()).filter { it.isNotBlank() }.ifEmpty { listOf(name) }
+}
+
+/** A trailing `(feat. X)`, `(ft. X)`, `(featuring X)`, `(with X)`, `(w/ X)` or `(+ X)`. */
+private val BRACKETED_GUEST =
+    Regex("""^(.+?)\s*\((?:feat\.?|ft\.?|featuring|with|w/|\+)\s*([^()]+)\)$""", RegexOption.IGNORE_CASE)
+
+/**
  * Strips a trailing tour/live/anniversary suffix or format annotation from an act name.
  * Unchanged when there is none or stripping would leave nothing, so `"Live"` and
  * `"Sickboyrari (Black Kray)"` survive. [ARTIST_SUFFIX_PATTERN] has the boundaries.
@@ -214,7 +231,7 @@ fun stripArtistSuffix(name: String): String {
     // One suffix can hide another (`Lacrimosa mit Orchester - … in Europa!`), so strip until stable.
     // The separator comes off first as well as last: `Tweaken – live –` hides its format word
     // behind a dash (#301).
-    var stripped = stripTrailingSeparator(name.trim())
+    var stripped = stripTrailingSeparator(name.trim().replace(AFFILIATION_OPENER_INSIDE, ""))
     repeat(MAX_SUFFIX_PASSES) {
         val next = stripped.replace(ARTIST_SUFFIX_PATTERN, "").trim()
         if (next == stripped || next.isBlank()) return@repeat
@@ -224,33 +241,60 @@ fun stripArtistSuffix(name: String): String {
 }
 
 /**
+ * Every ISO 3166 alpha-2 and alpha-3 country code, plus `UK`, for an origin tag the venue did not
+ * write in upper case (`(Est)`, `(jp)`, #1761). A list, not a letter-count rule, so a short alias
+ * (`(Chi)`) stays.
+ */
+private val ISO_COUNTRY_CODES: String =
+    (Locale.getISOCountries() + Locale.getISOCountries(Locale.IsoCountryCode.PART1_ALPHA3) + "UK")
+        .joinToString("|") { it.lowercase() }
+
+/**
  * A trailing origin tag: two- or three-letter country codes (`(NL)`, `(PL/USA)`), a genre in front
  * of them (`(Dark Wave US/DE)`), or a spelled-out country with an optional `Live` (`(Thailand-Live)`)
  * (#314). arkaoda's local rule, lifted here and widened to the spelled-out form.
  */
 private val ORIGIN_TAG =
     Regex(
-        // The codes are upper case by definition — `(An toi)` is an alias, not Antigua — so only the
-        // spelled-out alternative is case-insensitive.
+        // Any two or three capitals count, and only then: `(An toi)` is an alias, not Antigua. The
+        // spelled-out names and the ISO list match in any case.
         """\s*\((?:[^()]*?\s)?[A-Z]{2,3}(?:\s*[/,+&-]\s*[A-Z]{2,3})*\)\s*$""" +
-            """|(?i:\s*\((?:$COUNTRY_NAMES)(?:\s*[-–—/]?\s*live)?\)\s*$)"""
+            """|(?i:\s*\((?:$COUNTRY_NAMES)(?:\s*[-–—/]?\s*live)?\)\s*$)""" +
+            """|(?i:\s*\((?:$ISO_COUNTRY_CODES)(?:\s*[/,+&-]\s*(?:$ISO_COUNTRY_CODES))*\)\s*$)"""
     )
 
 /**
- * A trailing band affiliation, which is never an alias: a comma list (`(WIRE, IMMERSION)`) or an
- * `ex-` opener (`(ex-EINSTÜRZENDE NEUBAUTEN, …)`) (#1561). A single bare name in parentheses
- * (`(PENETRATION)`, `(Black Kray)`) is undecidable between the two and stays.
+ * A trailing band affiliation, which is never an alias: a comma or slash list (`(WIRE, IMMERSION)`,
+ * `(Bauhaus / Love & Rockets)`) or an opener (`(ex-EINSTÜRZENDE NEUBAUTEN, …)`, `(von Spandau
+ * Ballet)`) (#1561, #1761). A single bare name in parentheses (`(PENETRATION)`, `(Black Kray)`) is
+ * undecidable between the two and stays.
  */
-private val AFFILIATION_TAG = Regex("""\s*\((?:ex-[^()]*|[^(),]+,[^()]*)\)\s*$""", RegexOption.IGNORE_CASE)
+private val AFFILIATION_TAG =
+    Regex("""\s*\((?:$AFFILIATION_OPENER[^()]*|[^(),]+,[^()]*|[^()/]+/[^()]*)\)\s*$""", RegexOption.IGNORE_CASE)
+
+/** The words that open an affiliation: `ex-`, `von`, `of`, `formerly`. */
+private const val AFFILIATION_OPENER = """(?:ex-|(?:ex|von|of|formerly)\s)"""
+
+/** An opener affiliation before the rest of a billing: `Steve Norman (von Spandau Ballet) & The Sleevz`. */
+private val AFFILIATION_OPENER_INSIDE = Regex("""\s*\($AFFILIATION_OPENER[^()]*\)(?=\s)""", RegexOption.IGNORE_CASE)
+
+/** A bracket the page opened and never closed, at the end of a name: `Sean Steinfeger (OHSHITF*CKYES`. */
+private val UNCLOSED_TRAILING_BRACKET = Regex("""\s*\([^()]*$""")
 
 /**
- * Drops an [ORIGIN_TAG] or an [AFFILIATION_TAG] from the end of a name, keeping the input when
- * nothing else is left. Repeated, because one can hide the other (`Sylk (DE) (Malör Records, Surge)`).
+ * Drops an [ORIGIN_TAG], an [AFFILIATION_TAG] or an [UNCLOSED_TRAILING_BRACKET] from the end of a
+ * name, keeping the input when nothing else is left. Repeated, because one can hide the other
+ * (`Sylk (DE) (Malör Records, Surge)`).
  */
 private fun stripTrailingParenthetical(name: String): String {
     var stripped = name
     repeat(MAX_SUFFIX_PASSES) {
-        val next = stripped.replace(ORIGIN_TAG, "").replace(AFFILIATION_TAG, "").trim()
+        val next =
+            stripped
+                .replace(ORIGIN_TAG, "")
+                .replace(AFFILIATION_TAG, "")
+                .replace(UNCLOSED_TRAILING_BRACKET, "")
+                .trim()
         if (next == stripped || next.isBlank()) return@repeat
         stripped = next
     }

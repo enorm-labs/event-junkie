@@ -75,7 +75,8 @@ class MorphineOverviewPageScraperTest {
         val event = event("invisible-weather")
 
         event.title shouldBe "Invisible Weather (Kakaliagou/ Thieke/ Yassin) - Live Recording"
-        event.artists shouldBe listOf(ScrapedArtist("Invisible Weather (Kakaliagou/ Thieke/ Yassin)", "HEADLINER", titleDerived = true))
+        // The slash list names the trio's members, an affiliation and never an alias (#1761).
+        event.artists shouldBe listOf(ScrapedArtist("Invisible Weather", "HEADLINER", titleDerived = true))
     }
 
     @Test
