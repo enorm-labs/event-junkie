@@ -18,6 +18,7 @@ Deployment/event-junkie-importer
   replicas 1  strategy Recreate  serviceAccount event-junkie-importer
   container importer  image ghcr.io/enorm-labs/event-junkie/importer  ports http=8081,management=9001
   container imgproxy  image ghcr.io/imgproxy/imgproxy  ports <none>
+HorizontalPodAutoscaler/event-junkie-bff
 Ingress/event-junkie
   class traefik
   tls staging.event-junkie.de -> secret/event-junkie-staging-tls

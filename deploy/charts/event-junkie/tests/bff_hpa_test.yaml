@@ -1,0 +1,73 @@
+# The BFF's HPA (#1774), and the Deployment's `replicas` it takes over. `configmap.yaml` is listed because
+# `bff-deployment.yaml` includes it for `checksum/config`.
+suite: bff autoscaling
+
+templates:
+  - bff-hpa.yaml
+  - bff-deployment.yaml
+  - configmap.yaml
+
+set:
+  database.host: "10.0.1.2"
+  networkPolicy.databaseCidr: "10.0.1.2/32"
+  database.existingSecret: "events-db"
+
+tests:
+  - it: renders no HPA and a fixed replica count by default
+    asserts:
+      - hasDocuments:
+          count: 0
+        template: bff-hpa.yaml
+      - equal:
+          path: spec.replicas
+          value: 2
+        template: bff-deployment.yaml
+
+  - it: hands the replica count to the HPA when autoscaling is on
+    set:
+      bff.autoscaling.enabled: true
+    asserts:
+      - isKind:
+          of: HorizontalPodAutoscaler
+        template: bff-hpa.yaml
+      - equal:
+          path: spec.scaleTargetRef
+          value:
+            apiVersion: apps/v1
+            kind: Deployment
+            name: RELEASE-NAME-event-junkie-bff
+        template: bff-hpa.yaml
+      - equal:
+          path: spec.minReplicas
+          value: 2
+        template: bff-hpa.yaml
+      - equal:
+          path: spec.maxReplicas
+          value: 3
+        template: bff-hpa.yaml
+      - equal:
+          path: spec.metrics[0].resource
+          value:
+            name: cpu
+            target:
+              type: Utilization
+              averageUtilization: 70
+        template: bff-hpa.yaml
+      - equal:
+          path: spec.behavior.scaleDown.stabilizationWindowSeconds
+          value: 300
+        template: bff-hpa.yaml
+      # Helm would otherwise reset the count the HPA chose on every upgrade.
+      - notExists:
+          path: spec.replicas
+        template: bff-deployment.yaml
+
+  - it: refuses a maximum below the minimum
+    set:
+      bff.autoscaling.enabled: true
+      bff.autoscaling.minReplicas: 3
+      bff.autoscaling.maxReplicas: 2
+    asserts:
+      - failedTemplate:
+          errorMessage: "bff.autoscaling.maxReplicas (2) is below minReplicas (3)"
+        template: bff-hpa.yaml

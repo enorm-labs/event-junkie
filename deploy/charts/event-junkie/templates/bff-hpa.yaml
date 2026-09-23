@@ -1,0 +1,35 @@
+{{- if .Values.bff.autoscaling.enabled }}
+{{- $args := dict "ctx" $ "component" "bff" }}
+{{- $a := .Values.bff.autoscaling }}
+{{- if lt (int $a.maxReplicas) (int $a.minReplicas) }}
+{{- fail (printf "bff.autoscaling.maxReplicas (%d) is below minReplicas (%d)" (int $a.maxReplicas) (int $a.minReplicas)) }}
+{{- end }}
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ include "event-junkie.componentName" $args }}
+  annotations:
+    kubernetes.io/description: >-
+      Scales the BFF on CPU measured against its request, so the request has to be a measured number. The Deployment carries no replicas while this exists.
+  labels:
+    {{- include "event-junkie.labels" $args | nindent 4 }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ include "event-junkie.componentName" $args }}
+  minReplicas: {{ $a.minReplicas }}
+  maxReplicas: {{ $a.maxReplicas }}
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: {{ $a.targetCPUUtilizationPercentage }}
+  behavior:
+    {{- /* A new JVM pegs a core while it compiles, so scaling down too soon trades one burst for a
+       cold start the next burst pays for. */}}
+    scaleDown:
+      stabilizationWindowSeconds: {{ $a.scaleDownStabilizationSeconds }}
+{{- end }}

@@ -45,8 +45,17 @@ security:
   runAsGroup: 10001
 
 bff:
-  # bff.replicaCount is free to exceed 1: the BFF is stateless and read-only.
+  # bff.replicaCount is free to exceed 1: the BFF is stateless and read-only. Ignored while
+  # bff.autoscaling is on.
   replicaCount: 2
+  # bff.autoscaling renders an HPA on CPU (#1774). Off by default, so k3d keeps a fixed count. Scale-down
+  # waits five minutes, because a new replica spends its first minute compiling at full CPU.
+  autoscaling:
+    enabled: false
+    minReplicas: 2
+    maxReplicas: 3
+    targetCPUUtilizationPercentage: 70
+    scaleDownStabilizationSeconds: 300
   image:
     repository: "enorm-labs/event-junkie/bff"
     # bff.image.tag falls back to `.Chart.AppVersion`, which #264 stamps from the build that pushed
@@ -66,7 +75,9 @@ bff:
     managementPort: 9001
   resources:
     requests:
-      cpu: "100m"
+      # What a warm replica uses at about 55 requests/s with gzip on: median 160m on staging (#1774).
+      # The HPA measures against this number, so it has to be a measured one.
+      cpu: "200m"
       memory: "512Mi"
     limits:
       cpu: "1000m"
