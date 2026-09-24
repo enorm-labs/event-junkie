@@ -1,5 +1,9 @@
 package de.norm.events.scraper.festsaal
 
+import ch.qos.logback.classic.Logger
+import ch.qos.logback.classic.spi.ILoggingEvent
+import ch.qos.logback.core.read.ListAppender
+import de.norm.events.scraper.LogFields
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import io.kotest.matchers.collections.shouldBeEmpty
@@ -8,6 +12,7 @@ import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
+import org.slf4j.LoggerFactory
 import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.LocalTime
@@ -99,6 +104,27 @@ class FestsaalApiScraperTest {
         festaJunina.eventDate shouldBe LocalDate.of(2026, 8, 1)
     }
 
+    // Holly Humberstone's show carried this on 2026-09-27 and read as on (#1816).
+    @Test
+    fun `maps a moved-unknown event to POSTPONED on its original date`() {
+        val postponed = scraper.scrape(apiWith(status = "moved_unknown")).single()
+
+        postponed.status shouldBe "POSTPONED"
+        postponed.eventDate shouldBe LocalDate.of(2026, 9, 27)
+    }
+
+    @Test
+    fun `defaults an unknown status to SCHEDULED and names the event in the warning`() {
+        val (events, warnings) = withWarnings { scraper.scrape(apiWith(status = "moved_somewhere")) }
+
+        events.single().status shouldBe "SCHEDULED"
+        warnings
+            .single()
+            .keyValuePairs
+            .single { it.key == LogFields.EVENT_SOURCE_ID }
+            .value shouldBe "festsaal:holly-humberstone-2026"
+    }
+
     @Test
     fun `maps a transferred event to RELOCATED`() {
         event("festsaal:live-wrestling-07-2026").status shouldBe "RELOCATED"
@@ -170,5 +196,24 @@ class FestsaalApiScraperTest {
     @Test
     fun `returns an empty list for an unparseable body`() {
         scraper.scrape("not json at all").shouldBeEmpty()
+    }
+
+    /** One event with [status], shaped like the live API row; `changed_date` is null, as it was. */
+    private fun apiWith(status: String): String =
+        """
+        {"items": [{"id": 1, "meta": {"slug": "holly-humberstone-2026"}, "title": "Holly Humberstone",
+          "date": "2026-09-27", "status": "$status", "changed_date": null, "changed_text": ""}]}
+        """.trimIndent()
+
+    private fun <T> withWarnings(block: () -> T): Pair<T, List<ILoggingEvent>> {
+        val root = LoggerFactory.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME) as Logger
+        val appender = ListAppender<ILoggingEvent>().apply { start() }
+        root.addAppender(appender)
+        return try {
+            block() to appender.list.filter { it.level == ch.qos.logback.classic.Level.WARN }
+        } finally {
+            root.detachAppender(appender)
+            appender.stop()
+        }
     }
 }
