@@ -319,6 +319,10 @@
           "description": "Marks an environment as not-production: X-Robots-Tag via a Traefik Middleware (#265), plus a disallow-all robots.txt and empty sitemap mounted over the frontend build (#286). On outside production.",
           "type": "boolean"
         },
+        "httpsRedirect": {
+          "description": "Sends plain HTTP on ingress.host to HTTPS with a 301, through a Traefik Middleware on the app Ingress only (#1891). Applies only with tls.enabled.",
+          "type": "boolean"
+        },
         "tls": {
           "type": "object",
           "required": [

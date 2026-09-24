@@ -209,6 +209,7 @@ runs again against the apex, in Section 2.
 | 2026-09-07 | CSP enforced, not report-only          | #854, and #843 first     |
 | 2026-09-03 | Rate limiting on the public API        | #268                     |
 | 2026-09-24 | The Security tab is at zero or triaged | 0 open in all four lists |
+|            | Plain HTTP redirects to HTTPS          | #1891                    |
 
 **Zero on 2026-09-24 in code scanning, Dependabot, secret scanning and Code Quality.** Code Quality lists its findings
 apart from the Security tab, under `/security/quality`. Its 20 open findings were all in captured venue pages under

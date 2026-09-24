@@ -30,6 +30,8 @@ Ingress/event-junkie-redirect
   www.event-junkie.de/ -> event-junkie-frontend:http
   event-junkie.com/ -> event-junkie-frontend:http
   www.event-junkie.com/ -> event-junkie-frontend:http
+Middleware/event-junkie-https-redirect
+  redirectScheme
 Middleware/event-junkie-in-flight-req
   inFlightReq
 Middleware/event-junkie-rate-limit
