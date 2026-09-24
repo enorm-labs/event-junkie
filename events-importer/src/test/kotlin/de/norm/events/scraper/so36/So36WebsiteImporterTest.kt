@@ -116,6 +116,22 @@ class So36WebsiteImporterTest {
         }
 
     @Test
+    fun `keeps the detail page's label-opened support acts through the overview merge`() =
+        runTest {
+            val url = "https://www.so36.com/produkte/99596-tickets-poebel-gesocks-so36-berlin-am-03-10-2026"
+            val overview =
+                """<html><body><a href="$url" title="Tickets PÖBEL &amp; GESOCKS in Berlin am 03.10.2026">""" +
+                    "Tickets PÖBEL &amp; GESOCKS in Berlin am 03.10.2026</a></body></html>"
+            coEvery { htmlFetcher.fetch(sourceUrl, any(), any()) } returns
+                FetchResult.Success(document = Jsoup.parse(overview, sourceUrl), etag = null, lastModified = null)
+            coEvery { htmlFetcher.fetchDocument(url) } returns
+                Jsoup.parse(fixture("so36-detail-support-label.html"), url)
+
+            val event = events(importer.importEvents(sourceUrl)).single()
+            event.artists.filter { it.role == "SUPPORT" }.map { it.name } shouldBe listOf("GRENZER", "BIERTOIFEL")
+        }
+
+    @Test
     fun `returns NotModified when the overview page is unchanged`() =
         runTest {
             coEvery { htmlFetcher.fetch(sourceUrl, any(), any()) } returns FetchResult.NotModified

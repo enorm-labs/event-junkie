@@ -87,6 +87,23 @@ class So36DetailPageScraperTest {
     }
 
     @Test
+    fun `reads a support line that opens with its label instead of a plus`() {
+        // "PÖBEL & GESOCKS" with the subtitle "Support: GRENZER & BIERTOIFEL" (#1903).
+        val url = "https://www.so36.com/produkte/99596-tickets-poebel-gesocks-so36-berlin-am-03-10-2026"
+        val event = scraper.scrape(fixture("so36-detail-support-label.html", url), url)
+        event.shouldNotBeNull()
+
+        event.subtitle shouldBe "Support: GRENZER & BIERTOIFEL"
+        event.artists.map { it.name to it.role } shouldBe
+            listOf(
+                "PÖBEL" to "HEADLINER",
+                "GESOCKS" to "HEADLINER",
+                "GRENZER" to "SUPPORT",
+                "BIERTOIFEL" to "SUPPORT"
+            )
+    }
+
+    @Test
     fun `parses a party detail page without a lineup, price or ticket link`() {
         val event = scraper.scrape(fixture("so36-detail-party.html", partyUrl), partyUrl)
         event.shouldNotBeNull()
@@ -161,6 +178,15 @@ class So36DetailPageScraperTest {
         supports("+ Support") shouldBe emptyList()
         // An event-segment label (aftershow slot) is not a performer and is dropped.
         supports("+ ACID AFTERSHOW") shouldBe emptyList()
+        // A subtitle that opens with a support label is a support line without its "+" (#1903).
+        supports("Support: DEMOB HAPPY") shouldBe listOf("DEMOB HAPPY")
+        supports("Special Guest: The Flatliners") shouldBe listOf("The Flatliners")
+        supports("Special Guests: THE NIGHT FLIGHT ORCHESTRA & EDGE OF PARADISE") shouldBe
+            listOf("THE NIGHT FLIGHT ORCHESTRA", "EDGE OF PARADISE")
+        // A tagline carries no labelled opener, so it bills nobody.
+        supports("Europa Tour 2026") shouldBe emptyList()
+        supports("With Special Guest & Support") shouldBe emptyList()
+        supports("feat. Birte Volta mit Special-Guests") shouldBe emptyList()
     }
 
     @Test
