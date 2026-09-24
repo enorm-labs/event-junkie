@@ -247,7 +247,8 @@ fun stripArtistSuffix(name: String): String {
     // One suffix can hide another (`Lacrimosa mit Orchester - … in Europa!`), so strip until stable.
     // The separator comes off first as well as last: `Tweaken – live –` hides its format word
     // behind a dash (#301).
-    var stripped = stripTrailingSeparator(name.trim().replace(AFFILIATION_OPENER_INSIDE, ""))
+    // A footnote star (`Sinkane live*`) comes off first, or it hides the `live` in front of it (#1845).
+    var stripped = stripTrailingSeparator(name.trim().replace(AFFILIATION_OPENER_INSIDE, "").replace(FOOTNOTE_STAR, ""))
     repeat(MAX_SUFFIX_PASSES) {
         val next = stripped.replace(ARTIST_SUFFIX_PATTERN, "").trim()
         if (next == stripped || next.isBlank()) return@repeat
@@ -255,6 +256,9 @@ fun stripArtistSuffix(name: String): String {
     }
     return stripTrailingSeparator(stripWorkTitle(stripShoutedTourTail(stripTrailingParenthetical(stripped))))
 }
+
+/** A footnote star after the last word: `Sweely live*`. A star inside a name (`*n8`) stays. */
+private val FOOTNOTE_STAR = Regex("""(?<=\S)\*+\s*$""")
 
 /**
  * Every ISO 3166 alpha-2 and alpha-3 country code, plus `UK`, for an origin tag the venue did not
