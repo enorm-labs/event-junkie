@@ -21,11 +21,15 @@ object WikipediaLead {
 
     private val GERMAN_SPEAKING = setOf("DE", "AT", "CH")
 
-    /** The marks of a person's dates in either wiki's lead: `(* 6. September 1986 in Göteborg)`, `born`, `geboren`, `†`. */
+    /**
+     * The marks of a person's dates in either wiki's lead: `(* 6. September 1986 in Göteborg)`, `born`, `geboren`, `†`.
+     * `geboren` is case-sensitive: German writes the participle in lower case mid-sentence, and a capital one is a title (#1879).
+     */
     private val BIRTH_DATA =
         listOf(
             Regex("\\(\\s*\\*"),
-            Regex("\\bgeb(oren|\\.)", RegexOption.IGNORE_CASE),
+            Regex("\\bgeb(oren|\\.)"),
+            Regex("(^|[.!?]\\s+)Geboren\\s+(am\\b|in\\b|\\d)"),
             Regex("\\bborn\\b", RegexOption.IGNORE_CASE),
             Regex("†")
         )
