@@ -40,10 +40,10 @@ import java.util.Locale
  * - **No structured status markers.** The *description* is deliberately not read for one:
  * "ausverkauft" turns up in ordinary prose ("ihrer restlos *ausverkauften* Tour"), a false
  * positive. The **title** is different — the venue appends the note tersely ("MAD TSAI -verlegt
- * ins Gretchen-"), so the status is read from the raw title via [parseEventStatus] before
- * [cleanEventTitle] strips that note, the way Metropol reads its `"Verlegt ins <venue> –"`
- * prefix. A show that moved *out* is stored `RELOCATED` rather than `SCHEDULED` at a venue it
- * will not play.
+ * ins Gretchen-", "Haken -ausverkauft-"), so the status and [SOLD_OUT_NOTE] are read from the raw
+ * title before [cleanEventTitle] strips that note, the way Metropol reads its `"Verlegt ins
+ * <venue> –"` prefix. A show that moved *out* is stored `RELOCATED` rather than `SCHEDULED` at a
+ * venue it will not play.
  *
  * The stable identity is the WordPress post id (`<article id="post-9874">`), used for the
  * `sourceId` and a `#post-<id>` deep-link `sourceUrl` back into the listing.
@@ -148,6 +148,7 @@ class FrannzOverviewPageScraper(
             priceBoxOffice = priceBoxOffice,
             status = status,
             statusNote = statusNote,
+            soldOut = SOLD_OUT_NOTE.containsMatchIn(rawTitle),
             artists = buildArtistsForEventType(title, subtitle, eventType),
             promoters = parsePromoters(article.textAt("h4.event-otitle"))
         )
@@ -360,6 +361,12 @@ class FrannzOverviewPageScraper(
         /** Captures the promoter names preceding a "präsentiert:" / "präsentieren:" marker. */
         private val PRESENTER_PATTERN =
             Regex("""(.+?)\s+präsentier(?:t|en)\s*:?\s*$""", RegexOption.IGNORE_CASE)
+
+        /**
+         * The venue's sold-out note at the end of a title, set off by a dash or a bracket:
+         * "Haken -ausverkauft-", "Singalong (ausverkauft)".
+         */
+        private val SOLD_OUT_NOTE = Regex("""[-–—(]\s*ausverkauft!?\s*[-–—)]?\s*$""", RegexOption.IGNORE_CASE)
 
         /** Splits a multi-promoter presenter string on comma / `&` / `/` / "und". */
         private val PROMOTER_SEPARATOR = Regex("""\s*(?:,|&|/|\bund\b)\s*""", RegexOption.IGNORE_CASE)

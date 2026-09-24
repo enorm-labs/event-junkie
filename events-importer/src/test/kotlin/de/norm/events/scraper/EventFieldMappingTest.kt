@@ -26,6 +26,17 @@ class EventFieldMappingTest {
         cleanEventTitle("Singalong -Das große Mitsing-Event") shouldBe "Singalong -Das große Mitsing-Event"
         cleanEventTitle("Some Show ausverkauft") shouldBe "Some Show"
         cleanEventTitle("Some Show - AUSVERKAUFT!") shouldBe "Some Show"
+        // Frannz sets the note between two dashes (#1840).
+        cleanEventTitle("Haken -ausverkauft-") shouldBe "Haken"
+    }
+
+    @Test
+    fun `cleanEventTitle strips a relocation note written destination first`() {
+        // Frannz writes both orders: "-verlegt ins Gretchen-" and "-ins Lido verlegt-" (#1840).
+        cleanEventTitle("Georgia Cavallo -ins Lido verlegt-") shouldBe "Georgia Cavallo"
+        cleanEventTitle("MAD TSAI -verlegt ins Gretchen-") shouldBe "MAD TSAI"
+        // Without a leading dash the words are the title, not a note.
+        cleanEventTitle("Alles ins Blaue verlegt") shouldBe "Alles ins Blaue verlegt"
     }
 
     @Test
