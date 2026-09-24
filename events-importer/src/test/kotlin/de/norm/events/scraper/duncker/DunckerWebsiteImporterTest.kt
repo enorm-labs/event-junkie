@@ -56,7 +56,7 @@ class DunckerWebsiteImporterTest {
         runTest {
             val result = importer.importEvents(sourceUrl)
             result.shouldBeInstanceOf<ImportResult.Success>()
-            result.events shouldHaveSize 13
+            result.events shouldHaveSize 15
             result.events.first().title shouldBe "Das neue Partymaß 80-90-00"
             result.etag shouldBe "\"duncker-etag\""
             result.lastModified shouldBe "Thu, 02 Jul 2026 13:52:23 GMT"

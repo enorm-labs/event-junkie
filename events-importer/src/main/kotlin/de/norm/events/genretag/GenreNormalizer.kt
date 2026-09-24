@@ -88,6 +88,7 @@ internal val GENRE_SYNONYMS: Map<String, String> =
         "newwave" to "New Wave",
         "darkwave" to "Darkwave",
         "ebm" to "EBM",
+        "industrial" to "Industrial",
         "gothicrock" to "Gothic Rock",
         "goth" to "Gothic Rock",
         "gothic" to "Gothic Rock",
