@@ -88,7 +88,13 @@ const { compact } = useCompactView()
         <EventRow v-for="event in page.content" :key="event.slug" :event="event" as="h2" />
       </div>
       <div v-else :class="CARD_GRID_CLASS">
-        <EventCard v-for="event in page.content" :key="event.slug" :event="event" as="h2" />
+        <EventCard
+          v-for="(event, index) in page.content"
+          :key="event.slug"
+          :event="event"
+          :priority="index === 0"
+          as="h2"
+        />
       </div>
 
       <div v-if="totalPages > 1" class="flex items-center justify-between gap-3 pt-2">

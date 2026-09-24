@@ -137,9 +137,21 @@ What the numbers say, and what was done with each:
 
 - **SEO 69 is `prod-check`, not the site.** The one failing SEO audit is `is-crawlable`, because that host sends `X-Robots-Tag: noindex, nofollow` on purpose
   (#286). It reads 100 on the apex, or the flip has gone wrong.
-- **CLS is the finding.** Every cell is over Google's 0.25 line for poor. The footer moves by the height of the content once the fetch completes, because each
-  view's `<main>` shows a one-line loading text until then. The detail page adds the poster: lazy-loaded although it is the LCP, and flagged unsized. Filed
-  as #1207 rather than fixed here.
+- **CLS was the finding, and #1207 fixed it.** Every cell was over Google's 0.25 line for poor. The footer painted at the bottom of the viewport while a view
+  loaded, then dropped below the fold. `#main-content` in `App.vue` is now a screen tall, so the footer never paints above the fold. The "unsized" poster was
+  a false culprit: `unsized-images` passes, and the `<img>` carries `width` and `height`. The table below is the same four cells on 2026-09-24, Lighthouse
+  13.5.0, a local `vite preview` of `main` against the same build with the fix, both proxying `/api` to `prod-check`. Medians of three:
+
+    | Page                | Profile | CLS before | CLS after |
+    | ------------------- | ------- | ---------- | --------- |
+    | `/de/events`        | mobile  | 0.68       | 0.035     |
+    | `/de/events`        | desktop | 0.34       | 0.001     |
+    | `/de/events/<slug>` | mobile  | 0.79       | 0         |
+    | `/de/events/<slug>` | desktop | 0.34       | 0         |
+
+    What is left on the list is the filter bar wrapping once its options arrive. The LCP poster is eager with `fetchpriority=high` on both pages. The LCP
+    times did not move: the request still cannot start before the JavaScript has fetched the event.
+
 - **JSON was not compressed.** `uses-text-compression` listed only `/api/**` URLs: 41 KiB on the list page that gzip makes 9 KiB. The BFF gzips since #1206.
 - **Not actionable, and recorded so the next run does not rediscover them:** `bf-cache` reports "Internal error" on every run, a Lighthouse limitation on
   headless Chrome; `dom-size` on the list page is 925 elements for 20 cards and their filters, which is the page.
@@ -154,15 +166,14 @@ Four things the workflow does that a hand run does not have to, and each is a re
 
 - **It pins Lighthouse** in `perf/lighthouse/package.json`. The table above is 12.8.2 and the workflow runs 13.x, which scores the same page differently — a
   step between the row above and the first workflow run is the tool, not the site.
-- **It gates only what is deterministic**: accessibility and best practices at 100, and SEO. Performance, LCP, CLS and TBT are reported and not gated, for
-  reason 1 below.
+- **It gates only what is deterministic**: accessibility and best practices at 100, SEO, and CLS at 0.1 (`CLS_BUDGET`). CLS measures where boxes land,
+  not how fast, so the runner does not move it. Performance, LCP and TBT are reported and not gated, for reason 1 below.
 - **`is-crawlable` is asserted, not waived.** On a host that is not the apex the script reads the `X-Robots-Tag` header itself and demands that `is-crawlable`
   is the _only_ failing SEO audit, then accepts 69. On the apex it demands 100 and grants no exception, so #939's flip needs no edit.
 - **The detail slug comes from `/api/events` at run time**, the first event with a poster. A literal slug becomes a 404 the day the event passes. The cost is
   that the detail row compares different events between runs; the list row is the comparable one.
 
-**CLS is not gated yet.** Every cell above is over Google's 0.1 line, so the gate would be red on its first run and then switched off. `CLS_BUDGET=0.1` is the
-value to set the day #1207 closes. The number to watch is still CLS, then LCP on mobile.
+The number to watch is LCP on mobile.
 
 ## The in-cluster smoke
 

@@ -97,7 +97,12 @@ describe('CachedImage', () => {
 
   // A caller that crops to a fixed box needs the box reserved, not the original's shape (#1245).
   it('reserves the caller box instead of the original shape when given one', () => {
-    const wrapper = mount_({ sources, intrinsicWidth: 1200, intrinsicHeight: 630, aspect: 'aspect-[3/2]' })
+    const wrapper = mount_({
+      sources,
+      intrinsicWidth: 1200,
+      intrinsicHeight: 630,
+      aspect: 'aspect-[3/2]',
+    })
 
     expect(wrapper.get('picture').classes()).toContain('aspect-[3/2]')
     expect(wrapper.get('img').attributes('width')).toBeUndefined()
@@ -131,5 +136,20 @@ describe('CachedImage', () => {
 
     expect(wrapper.get('img').attributes('srcset')).toBeUndefined()
     expect(wrapper.get('img').attributes('loading')).toBe('lazy')
+  })
+
+  // A lazy LCP image waits for layout before it is requested, which Lighthouse flags (#1207).
+  it('fetches a priority image at once and first', () => {
+    const img = mount_({ sources, priority: true }).get('img')
+
+    expect(img.attributes('loading')).toBe('eager')
+    expect(img.attributes('fetchpriority')).toBe('high')
+  })
+
+  it('leaves every other image lazy, with the default priority', () => {
+    const img = mount_({ sources }).get('img')
+
+    expect(img.attributes('loading')).toBe('lazy')
+    expect(img.attributes('fetchpriority')).toBeUndefined()
   })
 })

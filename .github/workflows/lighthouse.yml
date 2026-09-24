@@ -98,10 +98,10 @@ jobs:
             printf '\n'
           } >> "${GITHUB_STEP_SUMMARY}"
 
-      # Four cells, three runs each, medians reported. The gate is accessibility, best-practices and
-      # SEO; performance and the three vitals are reported and not gated, because a shared runner moves
-      # a performance score by tens of points and a threshold loose enough to survive that catches
-      # nothing (`perf/README.md` § Why there is no CI workflow).
+      # Four cells, three runs each, medians reported. The gate is accessibility, best-practices, SEO
+      # and CLS; performance, LCP and TBT are reported and not gated, because a shared runner moves
+      # them by tens of points and a threshold loose enough to survive that catches nothing
+      # (`perf/README.md` § Why there is no CI workflow). CLS is layout, not timing.
       #
       # `--no-sandbox` is not optional on `ubuntu-latest`: Ubuntu 24.04 restricts unprivileged user
       # namespaces through AppArmor, and Chrome's sandbox cannot start without them. The page under
@@ -110,6 +110,7 @@ jobs:
         env:
           RUNS: '3'
           CHROME_FLAGS: --headless=new --no-sandbox
+          CLS_BUDGET: '0.1'
         run: scripts/lighthouse.sh "${SITE_URL}" "${RUNNER_TEMP}/lighthouse"
 
       # On failure too: the JSON is what names the audit that dropped, and a red run is when someone

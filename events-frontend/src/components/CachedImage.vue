@@ -24,9 +24,10 @@ const props = defineProps<{
    */
   title?: string | null
   /**
-   * `lazy` everywhere but the one image that is the LCP element on its page (#1207).
+   * Whether this is the image the page is judged by, its LCP element: fetched at once and first,
+   * where every other image is lazy. One per page (#1207).
    */
-  loading?: 'lazy' | 'eager'
+  priority?: boolean
   /**
    * A box to reserve, as a Tailwind aspect utility: `aspect-[3/2]`. Only a fixed slot needs this:
    * the intrinsic dimensions below reserve the original's shape, wrong where the caller crops to a
@@ -79,7 +80,8 @@ const dimensions = computed(() =>
       :alt="alt"
       :title="title ?? undefined"
       :class="[imgClass, aspect && 'size-full object-cover']"
-      :loading="loading ?? 'lazy'"
+      :loading="priority ? 'eager' : 'lazy'"
+      :fetchpriority="priority ? 'high' : undefined"
     />
   </picture>
   <!--
