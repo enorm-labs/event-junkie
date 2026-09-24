@@ -1,8 +1,6 @@
-# Production's release of the event-junkie chart. **Live, and deliberately dark**: the apex and `www`
-# resolve to nothing while `publish_dns` is `false` in `infra/environments/production/variables.tf`,
-# and only the throwaway `prod-check` name points here. The three `ingress` overrides below make that
-# state serveable, and all three revert together at go-live (#284). `oci-repository.yaml` admits
-# release tags only.
+# Production's release of the event-junkie chart, serving the apex. The ingress host, redirect hosts and
+# `noindex` are the chart's defaults, which describe production. `oci-repository.yaml` admits release tags
+# only.
 apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
@@ -10,7 +8,7 @@ metadata:
   namespace: flux-system
   annotations:
     kubernetes.io/description: >-
-      The BFF, importer and frontend on the production cluster. Serving prod-check while the domain stays dark.
+      The BFF, importer and frontend on the production cluster, serving event-junkie.de.
 spec:
   releaseName: event-junkie
   targetNamespace: event-junkie
@@ -92,25 +90,11 @@ spec:
         enabled: true
     # No replica counts and no resources: `values.yaml`'s defaults are production-shaped by design, so
     # repeating them here would be a second place to look with nothing to say. The HPA's bounds are
-    # defaults too, and only its switch is here (#1774). The ingress below is the exception, while dark.
+    # defaults too, and only its switch is here (#1774).
     bff:
       autoscaling:
         enabled: true
-    #
-    # Dark-mode ingress. All three revert at go-live, together and in one commit (#284 §0).
     ingress:
-      # The apex does not resolve while `publish_dns` is false, and production solves **HTTP-01**, which
-      # needs Let's Encrypt to reach the host BY NAME; pointing at `event-junkie.de` now would leave the
-      # Certificate pending for ever with Traefik serving its default cert (#634). `prod-check` is the one
-      # name that resolves.
-      host: "prod-check.event-junkie.de"
-      # Emptied for the same reason: every redirect host gets its OWN certificate, and none of them resolves
-      # yet, so each would stall its own issuance while looking configured.
-      redirectHosts: []
-      # `X-Robots-Tag: noindex, nofollow` plus a robots.txt override. **This is the control, not decoration**:
-      # a real certificate puts `prod-check.event-junkie.de` into Certificate Transparency within minutes,
-      # so crawlers will find it.
-      noindex: true
       # The Content-Security-Policy is enforced here, not report-only (#854): staging went first, and
       # production's report-only header had the same pass — every route family, both locales, both themes,
       # zero violations. The chart default stays report-only.

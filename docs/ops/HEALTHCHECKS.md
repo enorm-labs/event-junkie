@@ -59,8 +59,8 @@ the path that reports a real outage. The daily check is the path that does not s
 80/443, so nothing outside can probe it. `site-production` is the only one of that row that can
 exist before go-live.
 
-**The site probe is armed.** `HEALTHCHECKS_PING_URL` was set on 2026-08-30, and `SITE_URL` points the workflow at
-`prod-check.event-junkie.de`. The probe still skips when the secret is absent, which is the state any new environment
+**The site probe is armed.** `HEALTHCHECKS_PING_URL` was set on 2026-08-30. The workflow probes the apex, which is
+its default when no `SITE_URL` variable exists. The probe still skips when the secret is absent, which is the state any new environment
 starts in. Staging is not on the internet by design ([PLATFORM_SETUP](PLATFORM_SETUP.md) §4a), so it never gets one.
 
 A silent skip would be the wrong shape here, because this repository was bitten twice by one.
@@ -155,7 +155,7 @@ misrouting and a non-200.
 | ------------------------------- | ------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
 | **Alert us when**               | `URL doesn't contain keyword`                     | **Do this first.** The keyword field is hidden under every other type                                                      |
 | **Keyword to find on the page** | `Event Junkie`                                    | The product name, not a layout detail. A redesign must not alert, a wrong page must. Matching is case insensitive          |
-| **URL**                         | what production actually serves                   | `prod-check.event-junkie.de` today. The apex at go-live — change it in both places                                         |
+| **URL**                         | what production actually serves                   | `https://event-junkie.de/`. If the host ever moves, change it in both places                                               |
 | **Pronounceable monitor name**  | `site-<environment>`                              | Defaults to the hostname. Rename it to match the healthchecks.io check                                                     |
 | **Check frequency**             | `3 minutes`                                       | The floor on the free plan. Everything faster is disabled. An outage reaches somebody in about six minutes                 |
 | **Confirmation period**         | `3 minutes`                                       | Defaults to immediate. One blip must never alert, or the alert gets muted. This is the probe's `--retry 3`, in their words |

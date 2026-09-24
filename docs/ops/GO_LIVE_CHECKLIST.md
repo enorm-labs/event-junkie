@@ -9,12 +9,15 @@ Every line names the issue or the evidence that satisfies it. A line is done whe
 
 ```sh
 # 1. DNS first. This publishes the apex and removes prod-check in one apply.
-#    Edit publish_dns to true in infra/environments/production/variables.tf, then:
-cd infra/environments/production && tofu plan -out=golive.tfplan     # READ IT
+#    Edit publish_dns to true in infra/environments/production/variables.tf, then target the
+#    records: an untargeted plan also rebuilds both nodes while user_data has drifted (infra/AGENTS.md).
+cd infra/environments/production && tofu plan -out=golive.tfplan \
+  -target=hcloud_zone_rrset.address -target=hcloud_zone_rrset.redirect     # READ IT
 
 # 2. Immediately after, the chart must serve the apex instead of the rehearsal name.
-#    Merge the deploy change, then stop waiting for the ten-minute poll:
-flux --context event-junkie-production reconcile source oci event-junkie -n flux-system
+#    Merge the deploy change, then stop waiting for the ten-minute poll. The values come from git:
+flux --context event-junkie-production reconcile kustomization flux-system --with-source
+flux --context event-junkie-production reconcile helmrelease event-junkie -n flux-system
 ```
 
 **Both changes, or neither.** Section 0 explains the gap between them.
@@ -61,7 +64,12 @@ could both be published is how a temporary record becomes permanent.
 Any edit under `infra/modules/environment/cloud-init/` since the last apply replaces **both nodes**.
 `user_data` is a force-new attribute. A comment change is enough.
 
-Expect the apply to touch `hcloud_zone_rrset` only. Stop if a server appears.
+**Target the records.** `user_data` on both production nodes differs from the code, so an untargeted plan replaces them
+(`infra/AGENTS.md`). The records read the Primary IPs and not the servers, so
+`-target=hcloud_zone_rrset.address -target=hcloud_zone_rrset.redirect` plans DNS alone.
+
+Expect 8 to add and 2 to destroy, all `hcloud_zone_rrset`: `@` and `www` on both domains, A and AAAA, and
+`prod-check` removed. Stop if a server appears.
 
 ## 1 · What must be true first
 

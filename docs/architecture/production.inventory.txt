@@ -5,7 +5,6 @@
 
 ClusterIssuer/letsencrypt-production
 ConfigMap/event-junkie
-ConfigMap/event-junkie-seo
 ConfigMap/event-junkie-smoke-scripts
 Deployment/event-junkie-bff
   replicas hpa  strategy RollingUpdate  serviceAccount event-junkie-bff
@@ -22,15 +21,21 @@ HorizontalPodAutoscaler/event-junkie-bff
   Deployment/event-junkie-bff  replicas 2..3  cpu 70%
 Ingress/event-junkie
   class traefik
-  tls prod-check.event-junkie.de -> secret/event-junkie-tls
-  prod-check.event-junkie.de/api -> event-junkie-bff:http
-  prod-check.event-junkie.de/ -> event-junkie-frontend:http
+  tls event-junkie.de -> secret/event-junkie-tls
+  event-junkie.de/api -> event-junkie-bff:http
+  event-junkie.de/ -> event-junkie-frontend:http
+Ingress/event-junkie-redirect
+  class traefik
+  tls www.event-junkie.de,event-junkie.com,www.event-junkie.com -> secret/event-junkie-tls-redirect
+  www.event-junkie.de/ -> event-junkie-frontend:http
+  event-junkie.com/ -> event-junkie-frontend:http
+  www.event-junkie.com/ -> event-junkie-frontend:http
 Middleware/event-junkie-in-flight-req
   inFlightReq
-Middleware/event-junkie-noindex
-  headers
 Middleware/event-junkie-rate-limit
   rateLimit
+Middleware/event-junkie-redirect
+  redirectRegex
 Middleware/event-junkie-security-headers
   headers
 NetworkPolicy/event-junkie-allow-acme-solver

@@ -9,8 +9,7 @@ name: Public Site Probe
 # asserts status and content **before** pinging, so one check also catches DNS failure, an expired
 # certificate, misrouting and an application error.
 #
-# **Arming it is two settings**: the `HEALTHCHECKS_PING_URL` secret and the `SITE_URL` variable
-# pointed at what production serves. The probe skips loudly when the secret is unset. Staging is not
+# **Arming it is the `HEALTHCHECKS_PING_URL` secret.** The probe skips loudly when it is unset. Staging is not
 # on the internet and cannot be probed from here.
 #
 # **Do not self-host the other end**: a dead-man's switch on the infrastructure it monitors cannot
@@ -36,10 +35,9 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  # `ingress.host` from the chart's values.yaml; if it changes, it changes there first. **A repository
-  # variable overrides it**: production serves a rehearsal hostname while `publish_dns` is false, so
-  # `SITE_URL` names that, and deleting the variable at go-live makes the default right again. The
-  # default is the canonical host so that forgetting this workflow exists leaves it correct at launch.
+  # `ingress.host` from the chart's values.yaml; if it changes, it changes there first. A `SITE_URL`
+  # repository variable overrides it, for a rehearsal hostname while production is dark
+  # (GO_LIVE_CHECKLIST.md §4). Delete the variable when the site is public again.
   SITE_URL: ${{ vars.SITE_URL || 'https://event-junkie.de' }}
   # Asserted in the body. The product name rather than a layout detail: a redesign should not page
   # anyone; a page that no longer says what it is should.
