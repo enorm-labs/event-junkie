@@ -81,13 +81,13 @@ const localePath = useLocalePath()
     </a>
 
     <header class="border-b border-border">
-      <!-- Below `sm` the links drop to a second line: one row overflows a ~390px viewport, and the
-           guard in e2e/smoke.spec.ts keeps this honest as items are added. -->
+      <!-- Below `lg` the links drop to a second line: one row needs about 810px in German, and the
+           guard in e2e/smoke.spec.ts checks the widths in between in both languages. -->
       <!-- Named because the footer contributes a second navigation landmark; e2e selectors address
            it by this name. -->
       <nav
         :aria-label="t('common.nav.label')"
-        class="mx-auto flex max-w-5xl flex-wrap items-center gap-x-4 gap-y-3 p-4 text-sm font-medium sm:flex-nowrap sm:gap-6"
+        class="mx-auto flex max-w-5xl flex-wrap items-center gap-x-4 gap-y-3 p-4 text-sm font-medium lg:flex-nowrap lg:gap-6"
       >
         <RouterLink :to="localePath('/')" class="rounded-sm transition-opacity hover:opacity-80">
           <BrandLogo />
@@ -105,9 +105,9 @@ const localePath = useLocalePath()
         </RouterLink>
         <!-- Order is deliberate: /events and /calendar are two views of the same data, /venues and
              /promoters the other entities, /about is meta. e2e/smoke.spec.ts pins it. -->
-        <!-- The row wraps below `sm` so "Über uns" never breaks across two lines. -->
+        <!-- The row wraps below `lg` so "Über das Projekt" never breaks across two lines. -->
         <div
-          class="order-last flex w-full flex-wrap items-center gap-x-4 gap-y-1 sm:order-none sm:w-auto sm:flex-nowrap sm:gap-6"
+          class="order-last flex w-full flex-wrap items-center gap-x-4 gap-y-1 lg:order-none lg:w-auto lg:flex-nowrap lg:gap-6"
         >
           <RouterLink
             :to="localePath('/events')"

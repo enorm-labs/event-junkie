@@ -67,14 +67,13 @@ const { t } = useI18n()
     </section>
 
     <section>
-      <h2>Nicht einschlägig</h2>
+      <h2>Was hier nicht zutrifft</h2>
       <p>
-        Event Junkie wird von einer Privatperson betrieben, nicht von einem Unternehmen: Es gibt
+        Event Junkie wird von einer Privatperson betrieben, nicht von einem Unternehmen. Es gibt
         keinen Handelsregistereintrag, keine Umsatzsteuer-Identifikationsnummer nach § 27a UStG,
         keine Aufsichtsbehörde und keine reglementierte Berufsbezeichnung. Über diese Seite werden
-        keine Verbraucherverträge geschlossen, sodass weder die EU-Plattform zur
-        Online-Streitbeilegung noch § 36 VSBG einschlägig sind. Zur Teilnahme an einem
-        Streitbeilegungsverfahren vor einer Verbraucherschlichtungsstelle sind wir weder
+        keine Verbraucherverträge geschlossen, daher ist § 36 VSBG nicht anwendbar. Zur Teilnahme an
+        einem Streitbeilegungsverfahren vor einer Verbraucherschlichtungsstelle sind wir weder
         verpflichtet noch bereit.
       </p>
     </section>
@@ -97,11 +96,11 @@ const { t } = useI18n()
       <h2>Haftung für Links</h2>
       <p>
         Diese Seite verlinkt auf externe Websites, auf deren Inhalte wir keinen Einfluss haben. Für
-        diese Inhalte ist der jeweilige Anbieter verantwortlich. Die verlinkten Seiten wurden zum
-        Zeitpunkt der Verlinkung auf Rechtsverstöße geprüft; solche waren nicht erkennbar. Eine
-        permanente inhaltliche Kontrolle ohne konkrete Anhaltspunkte für eine Rechtsverletzung ist
-        nicht zumutbar. Sobald uns eine Rechtsverletzung bekannt wird, entfernen wir den
-        entsprechenden Link umgehend.
+        diese Inhalte ist der jeweilige Anbieter verantwortlich. Die meisten Links setzt unser
+        Import automatisch auf die Seiten der Locations und Ticketanbieter. Wir prüfen sie nicht
+        einzeln. Eine permanente inhaltliche Kontrolle ohne konkrete Anhaltspunkte für eine
+        Rechtsverletzung ist nicht zumutbar. Sobald uns eine Rechtsverletzung bekannt wird,
+        entfernen wir den entsprechenden Link umgehend.
       </p>
     </section>
 
@@ -116,9 +115,9 @@ const { t } = useI18n()
         >
           Lizenztext</a
         >. Veranstaltungsbeschreibungen, Bilder und sonstige Materialien, die von Locations,
-        Veranstaltern und Künstler*innen stammen, bleiben Eigentum der jeweiligen Rechteinhaber und
-        werden von dieser Lizenz nicht erfasst. Wer Rechte an hier gezeigtem Material hält und
-        dessen Entfernung wünscht, schreibt uns. Wir kümmern uns umgehend darum.
+        Veranstaltern und Künstler*innen stammen, bleiben Eigentum der jeweiligen
+        Rechteinhaber*innen und werden von dieser Lizenz nicht erfasst. Wer Rechte an hier gezeigtem
+        Material hält und dessen Entfernung wünscht, schreibt uns. Wir kümmern uns umgehend darum.
       </p>
     </section>
   </LegalPage>

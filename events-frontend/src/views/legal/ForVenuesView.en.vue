@@ -40,8 +40,8 @@ const localePath = useLocalePath()
       <h2>What we read from your page</h2>
       <p>
         Per event: the title, the date, the start time, the venue, the line-up and the kind of
-        event, plus the links to your page and to the ticket seller. Along with the description and
-        the image you publish yourself.
+        event, plus the links to your page and to the ticket seller. We also read the description
+        and the image you publish yourself.
       </p>
       <p>
         We download the image and keep a copy, so your server does not have to serve it again on
@@ -53,7 +53,9 @@ const localePath = useLocalePath()
     <section>
       <h2>How we read</h2>
       <ul>
-        <li>Once a day, one overview page per source, plus the detail pages it links to.</li>
+        <li>
+          Once a day, usually one overview page per source, plus the detail pages it links to.
+        </li>
         <li>With at least 200 milliseconds between two requests to the same host.</li>
         <li>
           With <code>ETag</code> and <code>Last-Modified</code>, so an unchanged page costs you
@@ -119,9 +121,10 @@ const localePath = useLocalePath()
         and the same route applies to it as to a venue: write to
         <a :href="`mailto:${CONTROLLER.email}`">{{ CONTROLLER.email }}</a>
         and name yourself. We correct or remove the name, the website link, the logo or the
-        description, or take the page down altogether. The description texts are our own words,
-        not copied. We do not ask for a reason and we answer within seven days. The events
-        themselves stay listed under their venue.
+        description, or take the page down altogether. The description texts are our own words, not
+        copied, except for bands, orchestras and choirs: their short description comes from
+        Wikipedia and is credited to it. We do not ask for a reason and we answer within seven days.
+        The events themselves stay listed under their venue.
       </p>
     </section>
 

@@ -221,7 +221,7 @@ test('the About page and its beta anchor are German under /de', async ({ page })
   // translation.
   await page.goto('/de/about#beta')
 
-  await expect(page.getByRole('heading', { level: 1, name: 'Über uns' })).toBeVisible()
+  await expect(page.getByRole('heading', { level: 1, name: 'Über das Projekt' })).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Warum da beta steht' })).toBeVisible()
 })
 

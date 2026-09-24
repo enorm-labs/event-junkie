@@ -36,8 +36,8 @@ const { t } = useI18n()
         Event Junkie sets no cookies, runs no analytics, embeds no third-party fonts, maps, social
         widgets or advertising, and has no user accounts. Nothing you do here is tracked or
         profiled. What remains is the unavoidable minimum: a web server records requests so the site
-        can be delivered and defended, and your browser remembers which language and which display
-        mode you chose.
+        can be delivered and defended, and your browser remembers which language, colour scheme and
+        list view you chose.
       </p>
       <p>
         <strong>Images come from us too.</strong> Event Junkie downloads them once and serves them
@@ -106,8 +106,8 @@ const { t } = useI18n()
     <section>
       <h2>3. Local storage on your device</h2>
       <p>
-        This site sets <strong>no cookies</strong>. It stores exactly two values in your browser's
-        local storage, and both only record a setting you made yourself:
+        This site sets <strong>no cookies</strong>. It stores exactly three values in your browser's
+        local storage, and each only records a setting you made yourself:
       </p>
       <ul>
         <li>
@@ -118,10 +118,14 @@ const { t } = useI18n()
           <code>locale</code>, holding <code>de</code> or <code>en</code>, so your next visit starts
           in the language you last chose
         </li>
+        <li>
+          <code>view</code>, holding <code>poster</code> or <code>compact</code>, so the event list
+          appears as you last set it: with pictures or compact
+        </li>
       </ul>
       <p>
         These values never leave your device, are not transmitted to us or to anyone else, and are
-        not readable by any third party. Both are strictly necessary to provide the setting you
+        not readable by any third party. All three are strictly necessary to provide the setting you
         explicitly chose, so under § 25 (2) 2 TDDDG they require no consent. That is why you are not
         being asked to dismiss a banner. You can clear them at any time through your browser
         settings.

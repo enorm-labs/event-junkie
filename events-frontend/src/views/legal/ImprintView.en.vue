@@ -63,14 +63,13 @@ const { t } = useI18n()
     </section>
 
     <section>
-      <h2>Not applicable</h2>
+      <h2>What does not apply here</h2>
       <p>
-        Event Junkie is operated by a private individual, not a company: there is no commercial
+        Event Junkie is operated by a private individual, not a company. There is no commercial
         register entry, no VAT identification number under § 27a UStG, no supervisory authority and
-        no regulated professional title. No consumer contracts are concluded through this site, so
-        the EU online dispute resolution platform and § 36 VSBG do not apply. We are neither obliged
-        nor willing to take part in dispute resolution proceedings before a consumer arbitration
-        board.
+        no regulated professional title. No consumer contracts are concluded through this site, so §
+        36 VSBG does not apply. We are neither obliged nor willing to take part in dispute
+        resolution proceedings before a consumer arbitration board.
       </p>
     </section>
 
@@ -91,10 +90,10 @@ const { t } = useI18n()
       <h2>Liability for links</h2>
       <p>
         This site links to external websites over whose content we have no control. Responsibility
-        for that content lies with the respective operator. The linked pages were checked for legal
-        violations at the time of linking; no such violations were apparent. Ongoing monitoring
-        without concrete evidence of an infringement is not reasonable; such links will be removed
-        promptly once we become aware of one.
+        for that content lies with the respective operator. Our import sets most of these links
+        automatically to the pages of venues and ticket sellers. We do not check them one by one.
+        Ongoing monitoring without concrete evidence of an infringement is not reasonable; such
+        links will be removed promptly once we become aware of one.
       </p>
     </section>
 
