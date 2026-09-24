@@ -5,11 +5,12 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.springframework.beans.factory.annotation.Qualifier
+import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.WebClientException
 import org.springframework.web.reactive.function.client.awaitBody
-import org.springframework.web.reactive.function.client.awaitExchange
+import org.springframework.web.reactive.function.client.awaitExchangeOrNull
 import org.springframework.web.util.UriComponentsBuilder
 import tools.jackson.databind.JsonNode
 import java.io.IOException
@@ -25,7 +26,8 @@ class WikimediaUnavailableException(
 ) : RuntimeException(message, cause)
 
 /**
- * The picture behind a Wikidata item: its `P18` claim, then that file's `imageinfo` on Commons.
+ * The picture behind a Wikidata item: its `P18` claim, then that file's `imageinfo` on Commons. And
+ * the item's Wikipedia lead: its `dewiki` / `enwiki` sitelinks, then that article's REST summary.
  *
  * Two hosts, one pace: `wbgetclaims` on Wikidata names the file, `imageinfo` on Commons renders a
  * thumbnail at [WikimediaProperties.thumbWidth] and states the licence and the author. Both are
@@ -46,6 +48,68 @@ class WikimediaClient(
 
     /** The `P18` picture of [wikidataId] (`Q3374548`) as Commons states it, or null when there is none or the read is off. */
     suspend fun imageFor(wikidataId: String): CommonsImage? = if (properties.enabled) fileOf(wikidataId)?.let { file -> imageInfo(file) } else null
+
+    /**
+     * The lead of the first article in [languages] (`de`, `en`) that [wikidataId] links, or null when
+     * it links none, the article is not a standard page, or the read is off. Only the preferred
+     * language that exists is read: one text is stored, because one credit can link one article.
+     */
+    suspend fun extractFor(
+        wikidataId: String,
+        languages: List<String>
+    ): WikipediaExtract? {
+        if (!properties.enabled) return null
+        val titles = sitelinksOf(wikidataId, languages)
+        return languages.firstOrNull { it in titles }?.let { language -> summaryOf(language, titles.getValue(language)) }
+    }
+
+    private suspend fun sitelinksOf(
+        wikidataId: String,
+        languages: List<String>
+    ): Map<String, String> {
+        val uri =
+            UriComponentsBuilder
+                .fromUriString(properties.wikidataBaseUrl)
+                .queryParam("action", "wbgetentities")
+                .queryParam("ids", wikidataId)
+                .queryParam("props", "sitelinks")
+                .queryParam("sitefilter", "{sites}")
+                .queryParam("format", "json")
+                .encode()
+                .buildAndExpand(languages.joinToString("|") { "${it}wiki" })
+                .toUri()
+        val body = get(uri, "Wikidata $wikidataId")
+        if (body.has("error")) {
+            logger.info { "Wikidata answered '${body.path("error").path("code").asString("")}' for $wikidataId" }
+            return emptyMap()
+        }
+        val sitelinks = body.path("entities").path(wikidataId).path("sitelinks")
+        return languages
+            .mapNotNull { language ->
+                sitelinks
+                    .path("${language}wiki")
+                    .path("title")
+                    .textOrNull()
+                    ?.let { language to it }
+            }.toMap()
+    }
+
+    private suspend fun summaryOf(
+        language: String,
+        title: String
+    ): WikipediaExtract? {
+        val uri =
+            UriComponentsBuilder
+                .fromUriString(properties.wikipediaBaseUrl.replace("{lang}", language))
+                .path("/api/rest_v1/page/summary/{title}")
+                .encode()
+                .buildAndExpand(title.replace(' ', '_'))
+                .toUri()
+        val summary = get(uri, "Wikipedia $language:$title", missingIsNull = true)
+        val extract = summary?.let { WikipediaExtract.fromSummary(language, it) }
+        if (summary != null && extract == null) logger.info { "Wikipedia $language:$title is a '${summary.path("type").asString("")}' page; no extract" }
+        return extract
+    }
 
     private suspend fun fileOf(wikidataId: String): String? {
         val uri =
@@ -116,13 +180,24 @@ class WikimediaClient(
     private suspend fun get(
         uri: URI,
         subject: String
-    ): JsonNode =
+    ): JsonNode = checkNotNull(get(uri, subject, missingIsNull = false))
+
+    /** The body, or null for a 404 when [missingIsNull]: a sitelink can outlive its article by a few minutes. */
+    private suspend fun get(
+        uri: URI,
+        subject: String,
+        missingIsNull: Boolean
+    ): JsonNode? =
         try {
             pace.withLock {
                 waitForPace()
-                webClient.get().uri(uri).awaitExchange { response ->
-                    if (response.statusCode().isError) throw WikimediaUnavailableException("$subject answered ${response.statusCode().value()}")
-                    response.awaitBody<JsonNode>()
+                webClient.get().uri(uri).awaitExchangeOrNull { response ->
+                    val status = response.statusCode()
+                    when {
+                        missingIsNull && status.isSameCodeAs(HttpStatus.NOT_FOUND) -> null
+                        status.isError -> throw WikimediaUnavailableException("$subject answered ${status.value()}")
+                        else -> response.awaitBody<JsonNode>()
+                    }
                 }
             }
         } catch (e: IOException) {

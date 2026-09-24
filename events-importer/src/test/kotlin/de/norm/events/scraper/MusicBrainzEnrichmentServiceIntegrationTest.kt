@@ -15,6 +15,7 @@ import de.norm.events.musicbrainz.MusicBrainzUrl
 import de.norm.events.musicbrainz.MusicBrainzUrlRelation
 import de.norm.events.wikimedia.CommonsImage
 import de.norm.events.wikimedia.WikimediaClient
+import de.norm.events.wikimedia.WikipediaExtract
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
@@ -43,7 +44,11 @@ class MusicBrainzEnrichmentServiceIntegrationTest : BaseControllerTest() {
     private lateinit var store: ArtistEnrichmentStore
 
     private val musicBrainz = mockk<MusicBrainzClient>()
-    private val wikimedia = mockk<WikimediaClient> { every { maxBytes } returns 8L * 1024 * 1024 }
+    private val wikimedia =
+        mockk<WikimediaClient> {
+            every { maxBytes } returns 8L * 1024 * 1024
+            coEvery { extractFor(any(), any()) } returns null
+        }
     private val registry = SimpleMeterRegistry()
     private val metrics = ImporterMetrics(registry)
 
@@ -274,6 +279,65 @@ class MusicBrainzEnrichmentServiceIntegrationTest : BaseControllerTest() {
                 .tag("reason", "licence")
                 .counter()
                 ?.count() shouldBe 1.0
+        }
+    }
+
+    @Test
+    fun `a group without a description takes its Wikipedia lead in the act's own language, with the credit`() {
+        runBlocking {
+            val id = exact("Neubauten")
+            coEvery { musicBrainz.artist("mbid-neubauten") } returns
+                entity("mbid-neubauten", "Group", relation("wikidata", "https://www.wikidata.org/wiki/Q11898"))
+            coEvery { wikimedia.imageFor("Q11898") } returns null
+            val lead = "Einstürzende Neubauten ist eine deutsche Band aus Berlin, die 1980 gegründet wurde und Industrial-Musik spielt."
+            coEvery { wikimedia.extractFor("Q11898", listOf("de", "en")) } returns
+                WikipediaExtract(language = "de", text = lead, pageUrl = "https://de.wikipedia.org/wiki/Einst%C3%BCrzende_Neubauten")
+
+            service().enrichFor(source(), setOf(id)) shouldBe 1
+
+            val stored = row(id)
+            stored.description shouldBe lead
+            stored.descriptionLanguage shouldBe "de"
+            stored.descriptionAttribution shouldBe "Wikipedia"
+            stored.descriptionLicenceId shouldBe "CC-BY-SA-4.0"
+            stored.descriptionSourceUrl shouldBe "https://de.wikipedia.org/wiki/Einst%C3%BCrzende_Neubauten"
+            enriched("description") shouldBe 1.0
+        }
+    }
+
+    @Test
+    fun `a group whose item links no article is counted as no-article, and a person is never asked`() {
+        runBlocking {
+            val group = exact("Articleless")
+            val person = exact("Solo")
+            coEvery { musicBrainz.artist("mbid-articleless") } returns
+                entity("mbid-articleless", "Group", relation("wikidata", "https://www.wikidata.org/wiki/Q2"))
+            coEvery { musicBrainz.artist("mbid-solo") } returns entity("mbid-solo", "Person", relation("wikidata", "https://www.wikidata.org/wiki/Q3"))
+            coEvery { wikimedia.imageFor(any()) } returns null
+
+            service().enrichFor(source(), setOf(group, person)) shouldBe 2
+
+            row(group).description.shouldBeNull()
+            registry
+                .find(ImporterMetrics.WIKIPEDIA_REFUSED)
+                .tag("reason", "no-article")
+                .counter()
+                ?.count() shouldBe 1.0
+            coVerify(exactly = 0) { wikimedia.extractFor("Q3", any()) }
+        }
+    }
+
+    @Test
+    fun `the CHECK refuses a credit without a text, and a partial credit`() {
+        runBlocking {
+            val id = exact("Uncredited")
+            shouldThrow<DataIntegrityViolationException> {
+                store.store(id, mapOf("description_attribution" to "Wikipedia", "description_licence_id" to "CC-BY-SA-4.0", "description_source_url" to "x"))
+            }
+            shouldThrow<DataIntegrityViolationException> {
+                store.store(id, mapOf("description" to "Ein Text.", "description_attribution" to "Wikipedia"))
+            }
+            store.store(id, mapOf("description" to "Ein Text, den eine Person schrieb.")) shouldBe 1L
         }
     }
 }

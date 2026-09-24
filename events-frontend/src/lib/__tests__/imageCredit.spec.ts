@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { imageCredit } from '@/lib/imageCredit'
+import { imageCredit, textCredit } from '@/lib/imageCredit'
 
 /**
  * Whether an image may be shown, and what has to be shown with it.
@@ -73,5 +73,29 @@ describe('imageCredit', () => {
   it('renders nothing for a row with no image', () => {
     expect(imageCredit({ ...complete, imageUrl: null })).toBeNull()
     expect(imageCredit(null)).toBeNull()
+  })
+})
+
+describe('textCredit', () => {
+  const lead = {
+    description: 'Giant Rooks ist eine deutsche Indie-Pop-Band aus Hamm, die 2014 gegründet wurde.',
+    descriptionAttribution: 'Wikipedia',
+    descriptionLicenceId: 'CC-BY-SA-4.0',
+    descriptionSourceUrl: 'https://de.wikipedia.org/wiki/Giant_Rooks',
+  }
+
+  it('credits a Wikipedia lead with the article and the licence deed', () => {
+    expect(textCredit(lead)).toEqual({
+      attribution: 'Wikipedia',
+      sourceUrl: 'https://de.wikipedia.org/wiki/Giant_Rooks',
+      licenceLabel: 'CC BY-SA 4.0',
+      licenceUrl: 'https://creativecommons.org/licenses/by-sa/4.0/',
+    })
+  })
+
+  it('owes nothing for a text a venue or a person wrote, or for a credit with no text', () => {
+    expect(textCredit({ description: 'Punk aus Ipswich.' })).toBeNull()
+    expect(textCredit({ ...lead, description: null })).toBeNull()
+    expect(textCredit(null)).toBeNull()
   })
 })

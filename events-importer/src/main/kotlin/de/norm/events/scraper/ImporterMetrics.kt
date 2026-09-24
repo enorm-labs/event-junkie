@@ -207,6 +207,11 @@ class ImporterMetrics(
         registry.counter(MUSICBRAINZ_IMAGE_REFUSED, TAG_REASON, reason).increment()
     }
 
+    /** Counts one ensemble's Wikipedia lead the enrichment did not store, by `birth-data`, `short` or `no-article`. */
+    fun recordWikipediaDescriptionRefused(reason: String) {
+        registry.counter(WIKIPEDIA_REFUSED, TAG_REASON, reason).increment()
+    }
+
     /** Counts one entity read that could not complete: MusicBrainz or Wikimedia unavailable. */
     fun recordMusicBrainzEnrichmentError() {
         registry.counter(MUSICBRAINZ_ENRICHED, TAG_FIELD, FIELD_ERROR).increment()
@@ -444,6 +449,7 @@ class ImporterMetrics(
 
         /** `importer.musicbrainz.image_refused{reason}` — a Commons picture step C would not store. */
         const val MUSICBRAINZ_IMAGE_REFUSED = "importer.musicbrainz.image_refused"
+        const val WIKIPEDIA_REFUSED = "importer.wikipedia.refused"
 
         /** `importer.musicbrainz.unenriched` — EXACT rows awaiting their entity read; step C's backfill draining. */
         const val MUSICBRAINZ_UNENRICHED = "importer.musicbrainz.unenriched"

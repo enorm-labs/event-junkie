@@ -161,7 +161,8 @@ const { t } = useI18n()
       <p>
         Künstlerprofile werden mit MusicBrainz abgeglichen, einer offenen Musikdatenbank. Wo sie
         übereinstimmen, stammen die offiziellen Links und das Bild von dort und aus Wikidata.
-        Übermittelt wird nur der Künstlername.
+        Übermittelt wird nur der Künstlername. Für Bands, Orchester und Chöre stammt die
+        Kurzbeschreibung aus der Wikipedia.
       </p>
       <p>
         <strong>Zweck:</strong> Information der Öffentlichkeit über öffentlich angekündigte
@@ -202,8 +203,8 @@ const { t } = useI18n()
         Veranstaltungsseite als solche gekennzeichnet, und der Originaltext bleibt maßgeblich.
       </p>
       <p>
-        <strong>Wenn du Künstler*in bist</strong> und möchtest, dass dein Name entfernt oder
-        korrigiert wird, schreib an
+        <strong>Wenn du Künstler*in bist</strong> und möchtest, dass dein Name oder eine
+        Beschreibung, die dich nennt, entfernt oder korrigiert wird, schreib an
         <a :href="`mailto:${CONTROLLER.email}`">{{ CONTROLLER.email }}</a
         >. Wir kümmern uns umgehend darum. Eine Begründung brauchst du nicht, und du musst das Thema
         nicht öffentlich ansprechen.

@@ -1,0 +1,21 @@
+{
+    "entities": {
+        "Q27897897": {
+            "type": "item",
+            "id": "Q27897897",
+            "sitelinks": {
+                "dewiki": {
+                    "site": "dewiki",
+                    "title": "Giant Rooks",
+                    "badges": []
+                },
+                "enwiki": {
+                    "site": "enwiki",
+                    "title": "Giant Rooks",
+                    "badges": []
+                }
+            }
+        }
+    },
+    "success": 1
+}

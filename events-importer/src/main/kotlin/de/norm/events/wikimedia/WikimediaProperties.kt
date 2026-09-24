@@ -4,7 +4,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties
 import java.time.Duration
 
 /**
- * Configuration for the Wikidata and Commons reads, bound to `app.wikimedia` in `application.yaml`.
+ * Configuration for the Wikidata, Commons and Wikipedia reads, bound to `app.wikimedia` in `application.yaml`.
  *
  * Wikimedia publishes no hard read limit but asks for a contact in the `User-Agent` and for
  * requests in series rather than in parallel; the pace here keeps both.
@@ -15,6 +15,8 @@ data class WikimediaProperties(
     val enabled: Boolean = true,
     val wikidataBaseUrl: String = "https://www.wikidata.org/w/api.php",
     val commonsBaseUrl: String = "https://commons.wikimedia.org/w/api.php",
+    /** The Wikipedia host per language; `{lang}` is `de` or `en`. */
+    val wikipediaBaseUrl: String = "https://{lang}.wikipedia.org",
     /** Minimum gap between two requests, process-wide. */
     val politeDelayMillis: Long = DEFAULT_POLITE_DELAY_MILLIS,
     val timeout: Duration = Duration.ofSeconds(DEFAULT_TIMEOUT_SECONDS),

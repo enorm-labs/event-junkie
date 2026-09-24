@@ -5,6 +5,7 @@ import de.norm.events.musicbrainz.MusicBrainzArtist
 import de.norm.events.musicbrainz.MusicBrainzUrl
 import de.norm.events.musicbrainz.MusicBrainzUrlRelation
 import de.norm.events.wikimedia.CommonsImage
+import de.norm.events.wikimedia.WikipediaExtract
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.maps.shouldContainExactly
 import io.kotest.matchers.maps.shouldNotContainKey
@@ -29,11 +30,13 @@ class ArtistEnrichmentTest {
         name: String = "Anna von Hausswolff",
         websiteUrl: String? = null,
         imageUrl: String? = null,
-        artistType: String? = null
+        artistType: String? = null,
+        description: String? = null
     ) = ArtistEntity(
         id = 1L,
         name = name,
         slug = "anna-von-hausswolff",
+        description = description,
         websiteUrl = websiteUrl,
         imageUrl = imageUrl,
         imageAttribution = imageUrl?.let { "Someone" },
@@ -185,5 +188,76 @@ class ArtistEnrichmentTest {
 
         filled.columns shouldNotContainKey "image_url"
         filled.imageRefusal.shouldBeNull()
+    }
+
+    private val neubautenLead =
+        "Einstürzende Neubauten ist eine deutsche Band aus Berlin, die 1980 gegründet wurde. " +
+            "Sie gilt als eine der einflussreichsten Gruppen der Industrial-Musik."
+
+    private fun wikipedia(
+        text: String = neubautenLead,
+        language: String = "de"
+    ) = WikipediaExtract(language = language, text = text, pageUrl = "https://$language.wikipedia.org/wiki/Einst%C3%BCrzende_Neubauten")
+
+    @Test
+    fun `an ensemble's lead lands with its language and its credit`() {
+        val filled = ArtistEnrichment.fill(row(name = "Einstürzende Neubauten"), entity("neubauten"), image = null, maxBytes = maxBytes, extract = wikipedia())
+
+        filled.columns["description"] shouldBe neubautenLead
+        filled.columns["description_language"] shouldBe "de"
+        filled.columns["description_attribution"] shouldBe "Wikipedia"
+        filled.columns["description_licence_id"] shouldBe "CC-BY-SA-4.0"
+        filled.columns["description_source_url"] shouldBe "https://de.wikipedia.org/wiki/Einst%C3%BCrzende_Neubauten"
+        filled.fields.last() shouldBe "description"
+        filled.descriptionRefusal.shouldBeNull()
+    }
+
+    @Test
+    fun `a person is never offered a lead, whatever the extract says`() {
+        ArtistEnrichment.wantsDescription(row(), entity("hausswolff")) shouldBe false
+        val filled = ArtistEnrichment.fill(row(), entity("hausswolff"), image = null, maxBytes = maxBytes, extract = wikipedia())
+
+        filled.columns shouldNotContainKey "description"
+        filled.descriptionRefusal.shouldBeNull()
+    }
+
+    @Test
+    fun `a stored description is never replaced, the venue's or a person's`() {
+        val own = row(name = "Einstürzende Neubauten", description = "Die Band spielt heute ihr neues Album.")
+
+        ArtistEnrichment.wantsDescription(own, entity("neubauten")) shouldBe false
+        ArtistEnrichment.fill(own, entity("neubauten"), image = null, maxBytes = maxBytes, extract = wikipedia()).columns shouldNotContainKey "description"
+    }
+
+    @Test
+    fun `birth data refuses the lead on an ensemble too, because MusicBrainz types some solo acts as groups`() {
+        listOf(
+            "Deine Cousine (* 12. März 1990 in Hamburg) ist eine deutsche Rockmusikerin, die seit 2016 unter diesem Namen auftritt.",
+            "Kid Francescoli is the project of Mathieu Hocine, born in Marseille, who has released five albums of electropop since 2002.",
+            "Die Band wurde von Max Muster (geb. 1970) gegründet und spielt seitdem in wechselnder Besetzung deutschsprachigen Rock.",
+            "Anna Beispiel (1986–2024) war eine schwedische Sängerin und Organistin, deren Alben vor allem in Skandinavien erschienen.",
+            "Die Gruppe um den Sänger Otto Beispiel († 2019) war eine der ersten deutschen Punkbands und spielte bis 2019 in Berlin."
+        ).forEach { lead ->
+            val filled = ArtistEnrichment.fill(row(name = "Einstürzende Neubauten"), entity("neubauten"), null, maxBytes, wikipedia(text = lead))
+            filled.descriptionRefusal shouldBe "birth-data"
+            filled.columns shouldNotContainKey "description"
+        }
+    }
+
+    @Test
+    fun `a lead shorter than a sentence of substance is refused as short`() {
+        val lead = "Einstürzende Neubauten ist eine deutsche Band aus Berlin."
+        val filled = ArtistEnrichment.fill(row(name = "Einstürzende Neubauten"), entity("neubauten"), null, maxBytes, wikipedia(text = lead))
+
+        filled.descriptionRefusal shouldBe "short"
+        filled.columns shouldNotContainKey "description"
+    }
+
+    @Test
+    fun `a German-speaking act reads dewiki first, any other enwiki first`() {
+        WikipediaLead.languagesFor("DE") shouldContainExactly listOf("de", "en")
+        WikipediaLead.languagesFor("at") shouldContainExactly listOf("de", "en")
+        WikipediaLead.languagesFor("SE") shouldContainExactly listOf("en", "de")
+        WikipediaLead.languagesFor(null) shouldContainExactly listOf("en", "de")
     }
 }

@@ -45,5 +45,8 @@
   "imageCredit": {
     "photo": "Foto:",
     "title": "Foto: {attribution} · {licence}"
+  },
+  "textCredit": {
+    "text": "Text:"
   }
 }

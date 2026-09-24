@@ -1,0 +1,49 @@
+{
+    "type": "standard",
+    "title": "War on Women (band)",
+    "displaytitle": "<span lang=\"en\" dir=\"ltr\"><span class=\"mw-page-title-main\">War on Women (band)</span></span>",
+    "namespace": {
+        "id": 0,
+        "text": ""
+    },
+    "wikibase_item": "Q66734658",
+    "titles": {
+        "canonical": "War_on_Women_(band)",
+        "normalized": "War on Women (band)",
+        "display": "<span lang=\"en\" dir=\"ltr\"><span class=\"mw-page-title-main\">War on Women (band)</span></span>"
+    },
+    "pageid": 61386109,
+    "thumbnail": {
+        "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/0/07/War_On_Women_in_St._Augustine.jpg/330px-War_On_Women_in_St._Augustine.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+        "width": 330,
+        "height": 248
+    },
+    "originalimage": {
+        "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/0/07/War_On_Women_in_St._Augustine.jpg/3840px-War_On_Women_in_St._Augustine.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+        "width": 4000,
+        "height": 3000
+    },
+    "lang": "en",
+    "dir": "ltr",
+    "revision": "1375573554",
+    "tid": "dff8b49d-b380-11f1-a857-a073a925bc84",
+    "timestamp": "2026-09-18T16:49:12Z",
+    "description": "American punk rock band",
+    "description_source": "local",
+    "content_urls": {
+        "desktop": {
+            "page": "https://en.wikipedia.org/wiki/War_on_Women_(band)",
+            "revisions": "https://en.wikipedia.org/wiki/War_on_Women_(band)?action=history",
+            "edit": "https://en.wikipedia.org/wiki/War_on_Women_(band)?action=edit",
+            "talk": "https://en.wikipedia.org/wiki/Talk:War_on_Women_(band)"
+        },
+        "mobile": {
+            "page": "https://en.wikipedia.org/wiki/War_on_Women_(band)",
+            "revisions": "https://en.wikipedia.org/wiki/Special:History/War_on_Women_(band)",
+            "edit": "https://en.wikipedia.org/wiki/War_on_Women_(band)?action=edit",
+            "talk": "https://en.wikipedia.org/wiki/Talk:War_on_Women_(band)"
+        }
+    },
+    "extract": "War on Women is an American hardcore punk band from Baltimore, Maryland, formed in 2010. The political, feminist themes in their music include abortion rights, rape, and misogyny.",
+    "extract_html": "<p><b>War on Women</b> is an American hardcore punk band from Baltimore, Maryland, formed in 2010. The political, feminist themes in their music include abortion rights, rape, and misogyny.</p>"
+}

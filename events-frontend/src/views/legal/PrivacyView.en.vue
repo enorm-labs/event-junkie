@@ -151,7 +151,8 @@ const { t } = useI18n()
       <p>
         Artist profiles are checked against MusicBrainz, an open music database. Where they match,
         the official links and the picture come from there and from Wikidata. Only the artist's
-        stage name is sent.
+        stage name is sent. For bands, orchestras and choirs, the short description comes from
+        Wikipedia.
       </p>
       <p>
         <strong>Purpose:</strong> informing the public about publicly announced cultural events.
@@ -189,8 +190,8 @@ const { t } = useI18n()
         stays authoritative.
       </p>
       <p>
-        <strong>If you are an artist</strong> and would like your name removed or corrected, write
-        to
+        <strong>If you are an artist</strong> and would like your name, or a description that names
+        you, removed or corrected, write to
         <a :href="`mailto:${CONTROLLER.email}`">{{ CONTROLLER.email }}</a>
         and we will deal with it promptly. You do not need to give a reason, and you do not have to
         raise it in public.

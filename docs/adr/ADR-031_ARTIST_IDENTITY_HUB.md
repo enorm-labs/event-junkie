@@ -6,8 +6,9 @@
 MusicBrainz id are stored. The name is never rewritten from it. Enrichment from the id is a second step, and it runs
 only for a row with an `EXACT` verdict.**
 
-**Steps B and C implemented.** Step B is [#1567](https://github.com/enorm-labs/event-junkie/issues/1567). Step C is
-[#1568](https://github.com/enorm-labs/event-junkie/issues/1568). Step C+ is decided in
+**Steps B, C and C+ implemented.** Step B is [#1567](https://github.com/enorm-labs/event-junkie/issues/1567). Step C is
+[#1568](https://github.com/enorm-labs/event-junkie/issues/1568). Step C+ is
+[#1837](https://github.com/enorm-labs/event-junkie/issues/1837), decided in
 [#1569](https://github.com/enorm-labs/event-junkie/issues/1569). The queue column is a note on #1145. Decided in
 [#1549](https://github.com/enorm-labs/event-junkie/issues/1549).
 
@@ -131,12 +132,19 @@ a verified row, not the head pass's own verdict. No stored name is rewritten: th
 head whose row is absent, `UNCHECKED`, `AMBIGUOUS` or `NONE` still decides nothing, and the glued name stays for the
 queue. No list of series names is kept anywhere. MusicBrainz is the vocabulary.
 
+Amended 2026-09-24 ([#1569](https://github.com/enorm-labs/event-junkie/issues/1569)): step C+ covers ensembles only.
+A `GROUP`, `ORCHESTRA` or `CHOIR` row with an `EXACT` match and no description takes the lead of one Wikipedia article.
+The German Wikipedia comes first for an act from DE, AT or CH, the English one for any other. One text is stored,
+because one credit links one article. The credit is all or none, and an edit of the text clears it. A lead with birth data is
+refused on an ensemble too, because MusicBrainz types some solo acts as groups. A lead under 80 characters is refused.
+A person gets no lead. Its first sentence is a birth date and a birthplace, and a rule that cuts them is never complete.
+
 What is stored per artist in step B: `musicbrainz_id` (nullable), `musicbrainz_match` (`EXACT`, `AMBIGUOUS`, `NONE`,
 `UNCHECKED`), `musicbrainz_checked_at`. Nothing else.
 
 What is never stored, in any step: tags and genre associations, ratings and annotations, because of the licence. An
 artist's genres are the `genre_tag` rows of its own events, one query and no import. A person's birth date, gender or
-birthplace, because of §7.3. A Wikipedia biography is C+ above, not a step of this decision.
+birthplace, because of §7.3. A person's Wikipedia lead, for the same reason.
 
 Where it runs: its own sweep after an import commits, the shape of `DescriptionTranslationService`. Never inside a
 scrape. New and changed names only after the backfill. The backfill is one second per row, so about two hours for
@@ -168,8 +176,9 @@ staging. An outage is a counter and a retry, never a `FAILED` source. One host i
 - **#1145 gains a column**, and its queue becomes `title-derived ∧ one event ∧ NONE`.
 - **#322's ADR (#473) assumes this one.** A lookup answers "is this an act" before a model is asked, and the verdict
   is an input to the prompt.
-- **A review queue has to exist before C+ does.** 122 spelling disagreements and 172 `AMBIGUOUS` rows are a
-  person's work, and #345 is where that surface lives.
+- **A review queue has to exist before an `AMBIGUOUS` row gets a profile.** 122 spelling disagreements and 172
+  `AMBIGUOUS` rows are a person's work, and #345 is where that surface lives. C+ reads `EXACT` rows only, so it does
+  not wait for the queue.
 
 ### What it does not do
 

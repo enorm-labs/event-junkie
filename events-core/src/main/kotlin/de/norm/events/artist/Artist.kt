@@ -17,6 +17,14 @@ data class Artist(
     val slug: String,
     /** Biography or description text, often imported from venue pages. */
     val description: String? = null,
+    /** Language of [description]: `de` or `en`, or null when unknown. */
+    val descriptionLanguage: String? = null,
+    /** Who to credit for [description] when it is licensed text, as `Wikipedia`. Null for a text a venue or a person wrote. */
+    val descriptionAttribution: String? = null,
+    /** SPDX identifier of the licence [description] is published under. Set exactly when [descriptionAttribution] is. */
+    val descriptionLicenceId: String? = null,
+    /** The page [description] was taken from, which the rendered credit links to. Set exactly when [descriptionAttribution] is. */
+    val descriptionSourceUrl: String? = null,
     /** URL of the artist's photo or band logo. */
     val imageUrl: String? = null,
     /** Who to credit for [imageUrl], worded as the archive publishes it. Null exactly when [imageUrl] is. */

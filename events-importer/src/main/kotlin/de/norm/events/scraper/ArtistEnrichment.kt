@@ -7,6 +7,7 @@ import de.norm.events.musicbrainz.MusicBrainzUrlRelation
 import de.norm.events.wikimedia.CommonsCredit
 import de.norm.events.wikimedia.CommonsImage
 import de.norm.events.wikimedia.CommonsLicences
+import de.norm.events.wikimedia.WikipediaExtract
 import java.net.URI
 
 /**
@@ -18,14 +19,16 @@ import java.net.URI
  * MusicBrainz's order, an ended one is skipped, and Resident Advisor has no relationship type of its
  * own, so it is read by host from `other databases` as Facebook and Instagram are from
  * `social network`. `founded` and `foundedIn` are written for an ensemble only; for a person the
- * same MusicBrainz fields are a birth date and a birthplace, and V040's CHECK refuses them.
+ * same MusicBrainz fields are a birth date and a birthplace, and V040's CHECK refuses them. The
+ * Wikipedia lead is an ensemble's only, for the same reason, under [WikipediaLead]'s rules.
  */
 object ArtistEnrichment {
-    /** The columns to write, the fields they fill for the counter, and why a picture was not written. */
+    /** The columns to write, the fields they fill for the counter, and why a picture or a description was not written. */
     data class Filled(
         val columns: Map<String, String>,
         val fields: List<String>,
-        val imageRefusal: String?
+        val imageRefusal: String?,
+        val descriptionRefusal: String? = null
     ) {
         val isEmpty: Boolean get() = columns.isEmpty()
     }
@@ -39,11 +42,18 @@ object ArtistEnrichment {
             ?.substringAfterLast('/')
             ?.takeIf { WIKIDATA_ID.matches(it) }
 
+    /** Whether the row may take a Wikipedia extract: an ensemble with no description whose entity links a Wikidata item. */
+    fun wantsDescription(
+        artist: ArtistEntity,
+        entity: MusicBrainzArtist
+    ): Boolean = artist.description == null && typeOf(artist, entity)?.isEnsemble == true && wikidataIdOf(entity) != null
+
     fun fill(
         artist: ArtistEntity,
         entity: MusicBrainzArtist,
         image: CommonsImage?,
-        maxBytes: Long
+        maxBytes: Long,
+        extract: WikipediaExtract? = null
     ): Filled {
         val columns = linkedMapOf<String, String>()
         val fields = mutableListOf<String>()
@@ -75,8 +85,7 @@ object ArtistEnrichment {
         val type = ArtistType.fromMusicBrainz(entity.type)
         fill("type", "artist_type", artist.artistType, type?.name)
         fill("country", "country", artist.country, entity.country?.takeIf { it.isNotBlank() })
-        val storedType = artist.artistType?.let { ArtistType.valueOf(it) } ?: type
-        if (storedType?.isEnsemble == true) {
+        if (typeOf(artist, entity)?.isEnsemble == true) {
             fill("founded", "founded", artist.founded, entity.lifeSpan?.begin?.takeIf { it.isNotBlank() })
             fill("founded_in", "founded_in", artist.foundedIn, entity.beginArea?.name?.takeIf { it.isNotBlank() })
         }
@@ -92,8 +101,25 @@ object ArtistEnrichment {
                 fields += "image"
             }
         }
-        return Filled(columns, fields, refusal)
+        var descriptionRefusal: String? = null
+        if (extract != null && wantsDescription(artist, entity)) {
+            descriptionRefusal = WikipediaLead.refusalOf(extract.text)
+            if (descriptionRefusal == null) {
+                columns["description"] = extract.text
+                columns["description_language"] = extract.language
+                columns["description_attribution"] = WikipediaLead.ATTRIBUTION
+                columns["description_licence_id"] = WikipediaLead.LICENCE_ID
+                columns["description_source_url"] = extract.pageUrl
+                fields += "description"
+            }
+        }
+        return Filled(columns, fields, refusal, descriptionRefusal)
     }
+
+    private fun typeOf(
+        artist: ArtistEntity,
+        entity: MusicBrainzArtist
+    ): ArtistType? = artist.artistType?.let { ArtistType.valueOf(it) } ?: ArtistType.fromMusicBrainz(entity.type)
 
     /**
      * Why a Commons file may not be stored, or null when it may. All four credit columns or none

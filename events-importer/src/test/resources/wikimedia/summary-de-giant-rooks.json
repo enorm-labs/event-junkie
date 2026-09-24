@@ -1,0 +1,49 @@
+{
+    "type": "standard",
+    "title": "Giant Rooks",
+    "displaytitle": "<span lang=\"de\" dir=\"ltr\"><span class=\"mw-page-title-main\">Giant Rooks</span></span>",
+    "namespace": {
+        "id": 0,
+        "text": ""
+    },
+    "wikibase_item": "Q27897897",
+    "titles": {
+        "canonical": "Giant_Rooks",
+        "normalized": "Giant Rooks",
+        "display": "<span lang=\"de\" dir=\"ltr\"><span class=\"mw-page-title-main\">Giant Rooks</span></span>"
+    },
+    "pageid": 9628962,
+    "thumbnail": {
+        "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/3/34/Giant_Rooks_-_Highfield-Festival_2026_-_DSC3261.jpg/330px-Giant_Rooks_-_Highfield-Festival_2026_-_DSC3261.jpg?utm_source=de.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+        "width": 330,
+        "height": 220
+    },
+    "originalimage": {
+        "source": "https://upload.wikimedia.org/wikipedia/commons/3/34/Giant_Rooks_-_Highfield-Festival_2026_-_DSC3261.jpg?utm_source=de.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled",
+        "width": 3593,
+        "height": 2391
+    },
+    "lang": "de",
+    "dir": "ltr",
+    "revision": "270196511",
+    "tid": "58f3eccb-a787-11f1-b5c5-54d6626150db",
+    "timestamp": "2026-09-03T11:05:18Z",
+    "description": "deutsche Indie-Pop-Band aus Hamm",
+    "description_source": "central",
+    "content_urls": {
+        "desktop": {
+            "page": "https://de.wikipedia.org/wiki/Giant_Rooks",
+            "revisions": "https://de.wikipedia.org/wiki/Giant_Rooks?action=history",
+            "edit": "https://de.wikipedia.org/wiki/Giant_Rooks?action=edit",
+            "talk": "https://de.wikipedia.org/wiki/Diskussion:Giant_Rooks"
+        },
+        "mobile": {
+            "page": "https://de.wikipedia.org/wiki/Giant_Rooks",
+            "revisions": "https://de.wikipedia.org/wiki/Special:History/Giant_Rooks",
+            "edit": "https://de.wikipedia.org/wiki/Giant_Rooks?action=edit",
+            "talk": "https://de.wikipedia.org/wiki/Diskussion:Giant_Rooks"
+        }
+    },
+    "extract": "Giant Rooks ist eine deutsche Indie-Pop-Band aus Hamm, die 2014 gegr\u00fcndet wurde.",
+    "extract_html": "<p><b>Giant Rooks</b> ist eine deutsche Indie-Pop-Band aus Hamm, die 2014 gegr\u00fcndet wurde.</p>"
+}
