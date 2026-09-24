@@ -37,11 +37,12 @@ fun normalizeAssetUrl(url: String?): String? = url?.takeIf { it.isNotBlank() }?.
 /**
  * A leading status marker, the venue's only cancellation signal ("CANCELLED - SOM - Berlin -
  * Urban Spree"). Word-anchored to the title start with the marker captured, handed verbatim to
- * [parseEventStatus]; a band whose name contains one of these words is untouched.
+ * [parseEventStatus]; a band whose name contains one of these words is untouched. `SOLD OUT -`
+ * leads a title the same way (#1841); it is no status, and [urbanSpreeSoldOut] reads it.
  */
 private val STATUS_PREFIX_PATTERN =
     Regex(
-        """^\s*(cancelled|canceled|abgesagt|postponed|verschoben|verlegt|relocated)\b\s*[-–—:!.]*\s*""",
+        """^\s*(cancelled|canceled|abgesagt|postponed|verschoben|verlegt|relocated|sold\s+out|ausverkauft)\b\s*[-–—:!.]*\s*""",
         RegexOption.IGNORE_CASE
     )
 
@@ -98,6 +99,16 @@ fun urbanSpreeStatus(title: String): String =
         .find(title)
         ?.let { parseEventStatus(it.groupValues[1]) }
         ?: EventStatus.SCHEDULED.name
+
+/** Whether the title leads with the venue's `SOLD OUT -` marker (`SOLD OUT - Otha`). */
+fun urbanSpreeSoldOut(title: String): Boolean =
+    STATUS_PREFIX_PATTERN
+        .find(title)
+        ?.groupValues
+        ?.get(1)
+        ?.let { SOLD_OUT_MARKER.matches(it) } == true
+
+private val SOLD_OUT_MARKER = Regex("""sold\s+out|ausverkauft""", RegexOption.IGNORE_CASE)
 
 /**
  * Strips the decorations to the billed act(s): the leading status marker ([urbanSpreeStatus])
