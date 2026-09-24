@@ -119,7 +119,7 @@ class UrbanSpreeWebsiteImporter(
     /**
      * Merges a parsed [detail] page over its listing [card]. The detail page owns the untruncated
      * title, description, promoter and ticket link; the card wins on date and start time
-     * (`data-dateStart`) and on image (the original upload rather than the detail page's
+     * (`data-dateStart`), except its 23:59 placeholder, and on image (the original upload rather than the detail page's
      * cache-keyed `phpthumbof` thumbnail) (ADR-007 §"Selector Strategy"). Everything else falls
      * back to the card only where the detail page supplied nothing.
      */
@@ -129,7 +129,8 @@ class UrbanSpreeWebsiteImporter(
     ): ScrapedEvent =
         detail.copy(
             eventDate = card.eventDate,
-            startTime = card.startTime ?: detail.startTime,
+            // The card's 23:59 is a placeholder; the detail page resolves it from the prose when it can (#1904).
+            startTime = if (card.startTime == URBAN_SPREE_LATE_PLACEHOLDER) detail.startTime ?: card.startTime else card.startTime ?: detail.startTime,
             eventType = detail.eventType ?: card.eventType,
             imageUrl = card.imageUrl ?: detail.imageUrl,
             pricePresale = detail.pricePresale ?: card.pricePresale,

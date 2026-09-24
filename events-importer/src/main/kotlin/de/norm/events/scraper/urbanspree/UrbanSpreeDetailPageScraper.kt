@@ -1,6 +1,8 @@
 package de.norm.events.scraper.urbanspree
 
+import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
 import de.norm.events.scraper.buildArtistsForEventType
@@ -31,6 +33,11 @@ import java.util.Locale
  * date is parsed, but [UrbanSpreeWebsiteImporter] prefers the card's `data-dateStart` (ADR-007
  * §"Selector Strategy"). Doors time is not extracted: it appears only inside the description,
  * where an "Einlass: …" line may belong to another show mentioned in the blurb.
+ *
+ * A late club night is the exception on both counts (#1904). Its hero says 23:59
+ * ([URBAN_SPREE_LATE_PLACEHOLDER]), the description opens with the real start stamped with the
+ * night's own date, and the DJs appear only there, as `<name> — DJ set`. Such a night is typed
+ * `PARTY`, although the venue files it under Concerts.
  *
  * @see UrbanSpreeOverviewPageScraper for discovery and the authoritative date.
  * @see UrbanSpreeWebsiteImporter for the fetch orchestrator and the merge.
@@ -71,14 +78,21 @@ class UrbanSpreeDetailPageScraper {
         // The blurb opens with the night's own billing — one act per line under `Live:`, each with
         // its genres and origin — which is what corroborates a comma the title alone cannot (#1832).
         val description = document.textAt(".rte.tv-content")
+        val eventDate = parseHeroDate(hero) ?: UNRESOLVED_EVENT_DATE
+        val heroStart = parseTime(hero.dateInfo(index = 1))
+        val startTime =
+            if (heroStart == URBAN_SPREE_LATE_PLACEHOLDER) urbanSpreeHeaderStart(description, eventDate) ?: heroStart else heroStart
+        val titleArtists = buildArtistsForEventType(title, subtitle = supportNote, eventType = eventType, description = description)
+        // A club night filed under Concerts names no act in its title; its DJs are in the running order.
+        val djSets = if (titleArtists.isEmpty()) urbanSpreeDjSets(description) else emptyList()
         return ScrapedEvent(
             title = title,
             subtitle = supportNote,
             description = description,
-            eventType = eventType,
+            eventType = if (djSets.isNotEmpty() && eventType == EventType.CONCERT.name) EventType.PARTY.name else eventType,
             // The overview card's data-dateStart wins during the merge; this is the standalone value.
-            eventDate = parseHeroDate(hero) ?: UNRESOLVED_EVENT_DATE,
-            startTime = parseTime(hero.dateInfo(index = 1)),
+            eventDate = eventDate,
+            startTime = startTime,
             imageUrl = normalizeAssetUrl(hero.absUrlAt("img.img-feat-noslider", "src")),
             sourceUrl = sourceUrl,
             sourceId = "${EventSource.URBAN_SPREE.sourceIdPrefix}${urbanSpreeEventSlug(sourceUrl)}",
@@ -88,7 +102,7 @@ class UrbanSpreeDetailPageScraper {
             free = detectFree(pricePresale = price, priceNote = priceText),
             status = urbanSpreeStatus(rawTitle),
             soldOut = urbanSpreeSoldOut(rawTitle),
-            artists = buildArtistsForEventType(title, subtitle = supportNote, eventType = eventType, description = description),
+            artists = titleArtists.ifEmpty { djSets.map { ScrapedArtist(name = it, role = "DJ") } },
             promoters = infoValue(document, PROMOTER_LABEL)?.let(::splitPromoters).orEmpty()
         )
     }

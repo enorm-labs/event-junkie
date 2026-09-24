@@ -1,9 +1,13 @@
 package de.norm.events.scraper.urbanspree
 
 import de.norm.events.event.EventStatus
+import io.kotest.matchers.collections.shouldBeEmpty
+import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
+import java.time.LocalDate
+import java.time.LocalTime
 
 /** Unit tests for the title/category mapping shared by the two Urban Spree scrapers. */
 class UrbanSpreeFieldMappingTest {
@@ -105,5 +109,39 @@ class UrbanSpreeFieldMappingTest {
         normalizeAssetUrl("https://www.urbanspree.com/assets/plain.jpg") shouldBe "https://www.urbanspree.com/assets/plain.jpg"
         normalizeAssetUrl(null).shouldBeNull()
         normalizeAssetUrl("  ").shouldBeNull()
+    }
+
+    // --- urbanSpreeHeaderStart and urbanSpreeDjSets (#1904) ---
+
+    private val klubnacht =
+        "URBAN SPREE KLUBNACHT 25.09.26 21:00 — LATE One night, two spaces. The night starts outside in the Urban Spree " +
+            "Garden at 21:00 with Albert Kraft, before moving inside to the Klub from 00:00 with Key Clef and Daraio. " +
+            "GARDEN — 21:00 → 00:30 Albert Kraft — DJ set KLUB — FROM 00:00 Key Clef — DJ set Daraio — DJ set " +
+            "ALBERT KRAFT Berlin-based DJ and producer"
+
+    @Test
+    fun `urbanSpreeHeaderStart reads the opening stamp for the night's own date`() {
+        urbanSpreeHeaderStart(klubnacht, LocalDate.of(2026, 9, 25)) shouldBe LocalTime.of(21, 0)
+    }
+
+    @Test
+    fun `urbanSpreeHeaderStart ignores a stamp for another date`() {
+        urbanSpreeHeaderStart(klubnacht, LocalDate.of(2026, 9, 26)).shouldBeNull()
+    }
+
+    @Test
+    fun `urbanSpreeHeaderStart finds nothing in prose without a stamp`() {
+        urbanSpreeHeaderStart("Doors open at 23:59 — come early!", LocalDate.of(2026, 10, 24)).shouldBeNull()
+        urbanSpreeHeaderStart(null, LocalDate.of(2026, 10, 24)).shouldBeNull()
+    }
+
+    @Test
+    fun `urbanSpreeDjSets reads each running-order entry once, in order`() {
+        urbanSpreeDjSets(klubnacht) shouldContainExactly listOf("Albert Kraft", "Key Clef", "Daraio")
+    }
+
+    @Test
+    fun `urbanSpreeDjSets finds nothing in prose that only mentions a DJ set`() {
+        urbanSpreeDjSets("The night closes with a DJ set by the band's drummer.").shouldBeEmpty()
     }
 }

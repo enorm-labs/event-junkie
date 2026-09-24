@@ -4,6 +4,10 @@ import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.parseEventStatus
+import de.norm.events.scraper.parseTime
+import java.time.LocalDate
+import java.time.LocalTime
+import java.time.format.DateTimeFormatter
 
 // Field mapping shared by the Urban Spree scrapers: the venue's category labels and the title
 // cleanup both pages need. The venue writes its own name and city into almost every title
@@ -125,3 +129,52 @@ fun cleanUrbanSpreeTitle(title: String): String {
     }
     return cleanEventTitle(current).ifBlank { title.trim() }
 }
+
+/**
+ * The start both `data-dateStart` and the detail hero give a late club night (#1904). It is a
+ * placeholder there, not a time, unless the prose says the same ("Doors open at 23:59").
+ */
+val URBAN_SPREE_LATE_PLACEHOLDER: LocalTime = LocalTime.of(23, 59)
+
+/**
+ * A `dd.mm.yy HH:MM` stamp, as a club night's description opens: `25.09.26 21:00 — LATE`.
+ */
+private val HEADER_DATE_TIME = Regex("""\b(\d{1,2}\.\d{1,2}\.\d{2})\s+(\d{1,2}:\d{2})\b""")
+
+/** The stamp's date half, `25.09.26`. */
+private val HEADER_DATE_FORMAT: DateTimeFormatter = DateTimeFormatter.ofPattern("d.M.yy")
+
+/** How far into the description the stamp is looked for: its opening line or two. */
+private const val HEADER_SCAN_LENGTH = 120
+
+/**
+ * The start a description's opening stamp states, when the stamp names [eventDate]; `null`
+ * otherwise. The date must match, because a blurb can quote another show's time.
+ */
+fun urbanSpreeHeaderStart(
+    description: String?,
+    eventDate: LocalDate
+): LocalTime? {
+    val stamp = HEADER_DATE_TIME.find(description?.take(HEADER_SCAN_LENGTH).orEmpty()) ?: return null
+    val (date, time) = stamp.destructured
+    val stampedDate = runCatching { LocalDate.parse(date, HEADER_DATE_FORMAT) }.getOrNull()
+    return if (stampedDate == eventDate) parseTime(time) else null
+}
+
+/**
+ * One `<name> — DJ set` entry of a club night's running order. The venue's paragraph breaks fall
+ * inside entries, so the flat text is read: a name follows a clock time or the previous entry's
+ * `DJ set`, which a lookahead leaves for the next match.
+ */
+private val DJ_SET_ENTRY = Regex("""(?:\d{1,2}:\d{2}|DJ set)\s+([^\s\d—–→][^\d—–→]*?)\s+[—–]\s+(?=DJ set\b)""", RegexOption.IGNORE_CASE)
+
+/** The DJs a description bills as `<name> — DJ set`, in order, each once. */
+fun urbanSpreeDjSets(description: String?): List<String> =
+    description
+        ?.let { text ->
+            DJ_SET_ENTRY
+                .findAll(text)
+                .map { it.groupValues[1].trim() }
+                .distinct()
+                .toList()
+        }.orEmpty()
