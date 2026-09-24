@@ -207,6 +207,26 @@ and the egress rule arrive together.
 
 **Re-apply after any rebuild**, for the same reason as the dashboard: alerts, destinations and templates are all metadata.
 
+### Delivery drills
+
+A configured route is not a working route (#704). Each row is a rule that fired and a mail that a person received.
+
+| Date       | Cluster    | Induced                                                              | Mail arrived                                   |
+| ---------- | ---------- | -------------------------------------------------------------------- | ---------------------------------------------- |
+| 2026-09-24 | staging    | `ej-site-down`: frontend scaled to zero at 07:57Z                    | yes — fired 08:03Z, mail at the forward target |
+| 2026-09-24 | production | none: `ej-image-store-unreachable` fired on its own after `apply.sh` | yes — fired 08:08Z, mail at the forward target |
+
+**The production row is a real firing, not an induced one.** It went through the same template, destination, SMTP login and egress rule as any other rule.
+It is also a false alarm, tracked in #1807.
+
+**Scaling a deployment down does not trip a rule on production.** The `event-junkie` HelmRelease has drift detection on, so helm-controller restores the
+replica count within minutes. `ej-site-down` needs five minutes at zero. To induce it there, suspend the HelmRelease first and resume it after. Staging's
+drift detection is `warn`, so a scale-down holds.
+
+**A send failure is in the pod log, not in `alert_history`.** The row is written whether the mail leaves or not. Look for `Error sending` in
+`kubectl -n observability logs openobserve-openobserve-standalone-0`. On 2026-09-24 that line showed `Network is unreachable (os error 101)`, which was
+port 465. Hetzner Cloud blocks outbound 25 and 465, so the route uses 587.
+
 ## Credentials
 
 The full inventory is [SECRETS.md](SECRETS.md). Two operational traps belong here.
