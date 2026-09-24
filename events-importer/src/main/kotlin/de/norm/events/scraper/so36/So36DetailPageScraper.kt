@@ -133,9 +133,8 @@ class So36DetailPageScraper {
 
     /**
      * The artist list for concerts: the title is the headliner (unless a placeholder like "TBA"),
-     * then support acts from a subtitle starting with "+", SO36's support-line convention
-     * ("+ GUM + CLAVV"); a subtitle without a leading "+" is a tagline ("Die Indie-Pop Party"), not
-     * a lineup. Non-concert events (parties, shows) carry no roster.
+     * then support acts from the subtitle ([parseSupportActs]). Non-concert events (parties, shows)
+     * carry no roster.
      *
      * The venue names a night and its acts as `"<night> mit <acts>"` ("SADTEMBER mit TAHA, JOHNBOY
      * M.IKARUS"), so the shared billing frame is switched on: the acts after the marker are the
@@ -154,19 +153,23 @@ class So36DetailPageScraper {
     }
 
     /**
-     * Splits a leading-"+" support subtitle into act names.
+     * Splits a support subtitle into act names. SO36 writes the line in two shapes: opening with "+"
+     * ("+ GUM + CLAVV", "+ Support: cosmic joke & bad beat") or with a support label ("Support:
+     * DEMOB HAPPY", "Special Guest: The Flatliners"). Any other subtitle is a tagline ("Die
+     * Indie-Pop Party") and yields nothing — `feat.` included, because "feat. Birte Volta mit
+     * Special-Guests" bills the headliner's guest, not a support act (#1903).
      *
-     * Lines vary: bare ("+ GUM + CLAVV") or labelled ("+ Special Guest: FUCK", "+ Support: cosmic
-     * joke & bad beat"). [splitSupportActs] cuts on commas, `+` and `/` and handles `&` / `and` /
+     * [splitSupportActs] cuts on commas, `+` and `/` and handles `&` / `and` /
      * `und` per boundary — "Earth Tongue und Scott Hepple & The Sun Band" yields "Earth Tongue"
      * and "Scott Hepple & The Sun Band" without mangling either. Each act's leading role label
      * ("Support:", "Special Guest(s):", "div. Supports", …) is stripped, and any chunk that is not
      * an act — a bare label, "TBA", an event-segment label like "ACID AFTERSHOW"
-     * ([isNonArtistName]) — is dropped. A subtitle without a leading "+" is a tagline and yields nothing.
+     * ([isNonArtistName]) — is dropped.
      */
     private fun parseSupportActs(subtitle: String?): List<String> {
-        if (subtitle == null || !subtitle.trimStart().startsWith("+")) return emptyList()
-        return splitSupportActs(subtitle.trimStart().removePrefix("+"))
+        val line = subtitle?.trimStart().orEmpty()
+        if (!line.startsWith("+") && !SUPPORT_LABEL_OPENER.containsMatchIn(line)) return emptyList()
+        return splitSupportActs(line.removePrefix("+"))
             .map { it.replaceFirst(ROLE_LABEL_PREFIX, "").trim() }
             .filter { it.isNotBlank() && !isNonArtistName(it) }
     }
@@ -231,6 +234,10 @@ class So36DetailPageScraper {
 
         /** "Beginn: HH:mm" from the clock line. */
         private val BEGINN_PATTERN = Regex("""Beginn:\s*(\d{1,2}:\d{2})""")
+
+        /** The support labels of [ROLE_LABEL_PREFIX] opening a subtitle, colon required. */
+        private val SUPPORT_LABEL_OPENER =
+            Regex("""^(?:div\.?\s*supports?|special\s+guests?|supports?|openers?)\s*:""", RegexOption.IGNORE_CASE)
 
         /** The numeric product id from a `/produkte/<id>-…` path. */
         private val PRODUCT_ID_PATTERN = Regex("""/produkte/(\d+)""")
