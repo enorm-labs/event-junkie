@@ -108,6 +108,29 @@ class BinuuDetailPageScraperTest {
     }
 
     @Test
+    fun `stores a show moved to its own date as scheduled, and one without a new date as postponed`() {
+        val url = "https://binuu.de/de/events/inzpqdgvi1eab2q"
+        val html =
+            javaClass.classLoader
+                .getResourceAsStream("scraper/binuu/binuu-detail-arch-enemy.html")!!
+                .bufferedReader()
+                .readText()
+
+        fun withStatus(startOld: String): ScrapedEvent {
+            val moved =
+                html
+                    .replace("eventStatus: null", "eventStatus: \"p\"")
+                    .replace("startOld: \"\"", "startOld: \"$startOld\"")
+            return scraper.scrape(Jsoup.parse(moved, url), url)!!
+        }
+
+        // "Die Veranstaltung wurde auf den 19.07.26 verschoben." names this row's date (#1689).
+        withStatus("2026-03-28 19:00:00.000Z").status shouldBe "SCHEDULED"
+        // No old date: the venue shows the new one as still to be announced.
+        withStatus("").status shouldBe "POSTPONED"
+    }
+
+    @Test
     fun `infers CONCERT for a band and PARTY for a known DJ series`() {
         // A real band with no party signal defaults to the live-music venue's norm.
         archEnemy.eventType shouldBe "CONCERT"

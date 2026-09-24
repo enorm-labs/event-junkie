@@ -72,7 +72,7 @@ class BinuuDetailPageScraper {
             sourceId = "${EventSource.BINUU.sourceIdPrefix}$id",
             ticketUrl = parseTicketUrl(item),
             soldOut = item.path("soldout").asBoolean(),
-            status = mapBinuuStatus(item.stringOrNull("eventStatus")),
+            status = mapBinuuStatus(item.stringOrNull("eventStatus"), item.stringOrNull("startOld")),
             artists = parseArtists(item),
             promoters = parsePromoters(item),
             promoterWebsites = parsePromoterWebsites(item)

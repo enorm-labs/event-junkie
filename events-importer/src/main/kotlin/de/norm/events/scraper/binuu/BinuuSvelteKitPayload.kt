@@ -173,10 +173,18 @@ private fun parseBinuuInstant(raw: String?): LocalDateTime? {
 
 /**
  * Maps the single-letter `eventStatus` code: `"r"` (Verlegt, carries `locationNew`), `"p"`
- * (Verschoben, carries the original date in `startOld`). Any other non-blank code is logged and
- * treated as [SCHEDULED][de.norm.events.event.EventStatus.SCHEDULED].
+ * (Verschoben). Any other non-blank code is logged and treated as
+ * [SCHEDULED][de.norm.events.event.EventStatus.SCHEDULED].
+ *
+ * **A `"p"` with a [startOld] is the new date, not a postponed one** (#1689). The venue's page
+ * then renders `Die Veranstaltung wurde auf den <start> verschoben` from the row's own `start`,
+ * and its JSON-LD says `EventRescheduled`. The row holds the show as it will happen, so it is
+ * `SCHEDULED`. Without a `startOld` the page says the new date is still open: `POSTPONED`.
  */
-internal fun mapBinuuStatus(code: String?): String {
+internal fun mapBinuuStatus(
+    code: String?,
+    startOld: String?
+): String {
     val logger = KotlinLogging.logger("de.norm.events.scraper.binuu.BinuuStatus")
     return when (val normalized = code?.trim()?.lowercase()) {
         null, "" -> {
@@ -188,7 +196,7 @@ internal fun mapBinuuStatus(code: String?): String {
         }
 
         "p" -> {
-            "POSTPONED"
+            if (startOld.isNullOrBlank()) "POSTPONED" else "SCHEDULED"
         }
 
         else -> {

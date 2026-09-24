@@ -13,13 +13,20 @@ import java.time.LocalTime
 class BinuuFieldMappingTest {
     @Test
     fun `maps the observed status codes and defaults the rest`() {
-        mapBinuuStatus(null) shouldBe "SCHEDULED"
-        mapBinuuStatus("") shouldBe "SCHEDULED"
-        mapBinuuStatus("r") shouldBe "RELOCATED"
-        // "p" (Verschoben / postponed) is a real on-site code, seen only on detail pages.
-        mapBinuuStatus("p") shouldBe "POSTPONED"
+        mapBinuuStatus(null, null) shouldBe "SCHEDULED"
+        mapBinuuStatus("", "") shouldBe "SCHEDULED"
+        mapBinuuStatus("r", "") shouldBe "RELOCATED"
         // An unknown code degrades to SCHEDULED rather than being mismapped.
-        mapBinuuStatus("x") shouldBe "SCHEDULED"
+        mapBinuuStatus("x", null) shouldBe "SCHEDULED"
+    }
+
+    @Test
+    fun `reads a postponed code with an old date as the show on its new date`() {
+        // The page renders "Die Veranstaltung wurde auf den 20.09.26 verschoben." from the row's own start (#1689).
+        mapBinuuStatus("p", "2026-05-14 18:00:00.000Z") shouldBe "SCHEDULED"
+        // No old date: the page says the new date is still open.
+        mapBinuuStatus("p", "") shouldBe "POSTPONED"
+        mapBinuuStatus("p", null) shouldBe "POSTPONED"
     }
 
     @Test
