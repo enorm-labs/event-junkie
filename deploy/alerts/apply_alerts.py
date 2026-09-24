@@ -10,7 +10,7 @@ after editing `gen_alerts.py` is the normal workflow.
 
 ## What it creates, in dependency order
 
-    1. an org user   `alerts@event-junkie.de` — the only recipient OpenObserve accepts
+    1. a service account `alerts@event-junkie.de` — the only recipient OpenObserve accepts
     2. two templates `event-junkie`, `event-junkie-email` — the body of a notification
     3. two destinations `record-only`, `email` — where a firing goes
     4. the rules themselves, each notifying both destinations
@@ -21,13 +21,13 @@ person** (#877). It needs `ZO_SMTP_*` in the HelmRelease and the `openobserve-sm
 Secret; without them OpenObserve refuses the destination with `SMTPUnavailable`
 and this script stops there, before any rule is touched.
 
-**The recipient has to be a user of the org**, or the destination is refused with
-`UserNotPermitted`. The user is created once, with a random password this script
-never prints or stores. An existing user is left as it is.
+**The recipient has to be a member of the org**, or the destination is refused with
+`UserNotPermitted`. It is created once as a service account, which has no password.
+The API token OpenObserve returns is never printed or stored. An existing member is
+left as it is.
 """
 
 import json
-import secrets
 import subprocess
 import sys
 
@@ -40,7 +40,7 @@ from alert_objects import (
     destination_payload,
     email_destination_payload,
     email_template_payload,
-    recipient_user_payload,
+    recipient_payload,
     template_payload,
 )
 
@@ -75,16 +75,21 @@ def ensure(kind, name, payload):
 
 
 def ensure_recipient():
-    code, body = call("GET", base + "/users")
-    if code == 200 and ALERT_RECIPIENT in body:
-        print("user %s exists" % ALERT_RECIPIENT)
+    # The listing carries every account's API token: parse it, compare emails, print nothing from it.
+    code, body = call("GET", base + "/service_accounts")
+    try:
+        rows = json.loads(body).get("data", []) if code == 200 else []
+    except ValueError:
+        rows = []
+    if any(isinstance(row, dict) and row.get("email") == ALERT_RECIPIENT for row in rows):
+        print("service account %s exists" % ALERT_RECIPIENT)
         return
-    # OpenObserve wants a lower, an upper, a digit and a special character.
-    password = secrets.token_urlsafe(24) + "aA1!"
-    code, body = call("POST", base + "/users", recipient_user_payload(password))
-    print("user %s created (%s)%s" % (ALERT_RECIPIENT, code, "" if 200 <= code < 300 else "  <-- " + body[:200]))
+    # The response carries the account's API token, so the body is printed only on a refusal.
+    code, body = call("POST", base + "/service_accounts", recipient_payload())
     if not 200 <= code < 300:
+        print("service account %s refused (%s)  <-- %s" % (ALERT_RECIPIENT, code, body[:200]))
         sys.exit(1)
+    print("service account %s created (%s)" % (ALERT_RECIPIENT, code))
 
 
 def existing_alerts():

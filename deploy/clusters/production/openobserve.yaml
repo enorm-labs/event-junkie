@@ -180,14 +180,15 @@ spec:
       - name: ZO_DISK_CACHE_MAX_AGE_DAYS
         value: "3"
       # **E-mail for the alert rules** (#877), sent as the `alerts@` role mailbox through Hetzner Webhosting
-      # (docs/ops/EMAIL.md). Port 465 makes OpenObserve use implicit TLS. The password is the hand-made
+      # (docs/ops/EMAIL.md). **587, STARTTLS, because Hetzner Cloud blocks outbound 25 and 465** on every server,
+      # measured from both nodes; OpenObserve derives STARTTLS from the port. The password is the hand-made
       # `openobserve-smtp` Secret (docs/ops/SECRETS.md): without it the pod does not start.
       - name: ZO_SMTP_ENABLED
         value: "true"
       - name: ZO_SMTP_HOST
         value: "mail.your-server.de"
       - name: ZO_SMTP_PORT
-        value: "465"
+        value: "587"
       - name: ZO_SMTP_USER_NAME
         value: "alerts@event-junkie.de"
       - name: ZO_SMTP_FROM_EMAIL
