@@ -173,7 +173,7 @@ service account has no password and no UI login. Its API token appears in every 
 
 **The subject names the environment**, `[event-junkie production] ej-site-down`, because both clusters send from the same address to the same inbox.
 
-**E-mail is the interim route; Signal is the deferred one** ([#877](https://github.com/enorm-labs/event-junkie/issues/877)). The prepaid-SIM registration
+**E-mail is the interim route; Signal is the deferred one** ([#1812](https://github.com/enorm-labs/event-junkie/issues/1812)). The prepaid-SIM registration
 failed, and the route now waits for `signal-cli` to link to an account registered without a phone number. The staging bridge stays deployed and
 unregistered until then. The e-mail template carries only the alert name, the stream, the value and the environment, so the mail holds nothing the Signal
 reasoning in PLATFORM_SETUP §4.1 was protecting.

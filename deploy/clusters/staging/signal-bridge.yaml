@@ -1,5 +1,5 @@
 # The Signal alert bridge — deployed, unregistered and **not a destination**: the alert rules go by
-# e-mail, and the Signal route waits for numberless registration in signal-cli (#877). **Signal rather
+# e-mail, and the Signal route waits for numberless registration in signal-cli (#1812). **Signal rather
 # than Telegram** (PLATFORM_SETUP §4.1): alert bodies carry venue names, error strings and possibly IP
 # addresses, and Signal is end-to-end encrypted where Telegram's Bot API is plaintext to Telegram.
 # **This layer cannot report the node being dead** — that is what `site-probe.yml` and healthchecks.io

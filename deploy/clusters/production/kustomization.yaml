@@ -26,7 +26,7 @@ resources:
   - cert-manager-netpol.yaml
   - traefik-host-ports.yaml
   # **One of staging's files is absent.** `signal-bridge.yaml`: alerts go by e-mail and the Signal route
-  # is deferred (#877). The bridge and the route into it arrive together or not at all.
+  # is deferred (#1812). The bridge and the route into it arrive together or not at all.
   - oci-repository.yaml
   - helm-release.yaml
   - notification.yaml

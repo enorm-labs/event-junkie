@@ -31,7 +31,7 @@ Store the password, the TOTP seed, **and the recovery codes** for each. The reco
 | 4   | **healthchecks.io**                           | The dead-man's switch — its checks, its notification channel, its ping URLs     | In use                                 | Yes        |
 | 4a  | **Better Stack** (`betterstack.com`)          | The site monitor, its alert channel and the Uptime API tokens (ADR-021)         | **In use** — since 2026-08-31          | Yes        |
 | 5   | **Postflex**                                  | The rented imprint address (§ 5 DDG). **A lapsed renewal breaks § 5 silently**  | **In use** — since 2026-08-21          | Yes        |
-| 6   | **Signal**, the deferred alert route          | The alert bridge's identity. Registration state also lives on a PVC             | **Deferred** — #877                    | Yes        |
+| 6   | **Signal**, the deferred alert route          | The alert bridge's identity. Registration state also lives on a PVC             | **Deferred** — #1812                   | Yes        |
 | 7   | **Hetzner Webhosting S** (konsoleH)           | The hosting package the mailboxes live on. **Its own login, not the Cloud one** | **In use** — since 2026-08-21          | Yes        |
 | 7a  | **The three mailbox passwords**               | `hello@`, `security@`, `alerts@` — IMAP, SMTP, webmail. Probe #637, alerts #877 | **In use** — since 2026-08-21          | Yes        |
 | 8   | **OpenObserve** admin login                   | Logs, metrics, dashboards, alert rules. Created at first start                  | **In use** — staging, since 2026-08-20 | Yes        |

@@ -526,7 +526,7 @@ person who reads the alerts. [deploy/alerts/README.md](../../deploy/alerts/READM
 **The mail carries only the alert name, the stream, the value and the environment.** It carries no venue names, error strings or IP addresses. Hetzner is
 already the one processor. So e-mail adds no new party that can read personal data.
 
-**Signal is the deferred end state** ([#877](https://github.com/enorm-labs/event-junkie/issues/877)). It is end-to-end encrypted, so no mail provider can
+**Signal is the deferred end state** ([#1812](https://github.com/enorm-labs/event-junkie/issues/1812)). It is end-to-end encrypted, so no mail provider can
 read an alert. A prepaid-SIM registration failed. The route now waits for `signal-cli` to link to a Signal account registered without a phone number. The
 staging bridge is deployed and unregistered, and it is not a destination.
 
@@ -567,7 +567,7 @@ path that keeps the assertions in git and does not share a fate with the monitor
 **Four caveats on the deferred Signal route**, for the day it replaces e-mail:
 
 1. **There is no official Signal bot API.** `signal-cli` is unofficial and Signal does not support automation. The account could in principle be restricted.
-2. **It needs its own account.** A prepaid SIM did not work. The watch list for numberless registration is in #877.
+2. **It needs its own account.** A prepaid SIM did not work. The watch list for numberless registration is in #1812.
 3. **Registration state must persist on a PVC.** Lose it and alerts stop _silently_ — the same failure the dead-man's switch exists to catch.
 4. **~150–250 MB**, because signal-cli is a JVM. It fits, but it is not free.
 
@@ -1084,8 +1084,7 @@ minutes) writes two ages. `node_reboot_required_age_seconds` is the age of `/var
 `node_unattended_upgrades_last_run_age_seconds` is the age of the updater's stamp file. The collector gateway scrapes both nodes on 9100: `prometheus/nodes`
 in `collector.yaml`, one target per node in each cluster's `kustomization.yaml`. Two rules in `deploy/alerts/gen_alerts.py` read them: `ej-reboot-pending`
 at three days, `ej-patching-stalled` at two. Three days of grace, because the flag appears after most kernel updates. An immediate alert is one that gets
-muted. Both route where every other rule does, so a person is told once [#877](https://github.com/enorm-labs/event-junkie/issues/877) lands. Until then
-the firing is a row in `alert_history`, which is still one more sign than the login banner. A kernel CVE with no reboot is otherwise indistinguishable from
+muted. Both route where every other rule does: a mail to `alerts@` and a row in `alert_history`. A kernel CVE with no reboot is otherwise indistinguishable from
 being patched.
 
 Live nodes do not get a `harden.sh` change by themselves. [CLUSTER_BOOTSTRAP.md](CLUSTER_BOOTSTRAP.md) § Applying a `cloud-init` fix without rebuilding
