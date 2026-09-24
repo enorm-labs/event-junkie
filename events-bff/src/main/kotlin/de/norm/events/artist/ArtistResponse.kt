@@ -86,6 +86,21 @@ data class ArtistDetailResponse(
     val descriptionLicenceId: String?,
     @Schema(description = "The page `description` was taken from, which the rendered credit links to", example = "https://en.wikipedia.org/wiki/Buffalo_Tom")
     val descriptionSourceUrl: String?,
+    @Schema(
+        description =
+            "The other Wikipedia's own lead beside a Wikipedia `description`, in the other language. " +
+                "Null beside a text a venue or a person wrote",
+        example = "Buffalo Tom ist eine US-amerikanische Alternative-Rock-Band aus Boston."
+    )
+    val descriptionAlt: String?,
+    @Schema(description = "Language of `descriptionAlt`: `de` or `en`. Null exactly when `descriptionAlt` is.", example = "de")
+    val descriptionAltLanguage: String?,
+    @Schema(description = "Who to credit for `descriptionAlt`. Set exactly when `descriptionAlt` is", example = "Wikipedia")
+    val descriptionAltAttribution: String?,
+    @Schema(description = "SPDX identifier of the licence `descriptionAlt` is published under", example = "CC-BY-SA-4.0")
+    val descriptionAltLicenceId: String?,
+    @Schema(description = "The page `descriptionAlt` was taken from, which the rendered credit links to", example = "https://de.wikipedia.org/wiki/Buffalo_Tom")
+    val descriptionAltSourceUrl: String?,
     @Schema(description = "URL of the artist's photo or band logo")
     val imageUrl: String?,
     @Schema(description = IMAGE_ATTRIBUTION_DESCRIPTION, example = "Photographer Name, via Wikimedia Commons")
@@ -148,6 +163,11 @@ data class ArtistDetailResponse(
                 descriptionAttribution = entity.descriptionAttribution,
                 descriptionLicenceId = entity.descriptionLicenceId,
                 descriptionSourceUrl = entity.descriptionSourceUrl,
+                descriptionAlt = entity.descriptionAlt,
+                descriptionAltLanguage = entity.descriptionAltLanguage,
+                descriptionAltAttribution = entity.descriptionAltAttribution,
+                descriptionAltLicenceId = entity.descriptionAltLicenceId,
+                descriptionAltSourceUrl = entity.descriptionAltSourceUrl,
                 imageUrl = image.url,
                 imageAttribution = entity.imageAttribution,
                 imageLicenceId = entity.imageLicenceId,

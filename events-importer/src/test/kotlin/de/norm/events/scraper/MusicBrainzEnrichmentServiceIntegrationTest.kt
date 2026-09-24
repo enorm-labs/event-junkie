@@ -47,7 +47,7 @@ class MusicBrainzEnrichmentServiceIntegrationTest : BaseControllerTest() {
     private val wikimedia =
         mockk<WikimediaClient> {
             every { maxBytes } returns 8L * 1024 * 1024
-            coEvery { extractFor(any(), any()) } returns null
+            coEvery { extractsFor(any(), any()) } returns emptyList()
         }
     private val registry = SimpleMeterRegistry()
     private val metrics = ImporterMetrics(registry)
@@ -69,9 +69,10 @@ class MusicBrainzEnrichmentServiceIntegrationTest : BaseControllerTest() {
     private suspend fun exact(
         name: String,
         mbid: String = "mbid-${name.lowercase()}",
-        websiteUrl: String? = null
+        websiteUrl: String? = null,
+        prefill: (ArtistEntity) -> ArtistEntity = { it }
     ): Long {
-        val saved = artistRepository.save(ArtistEntity(name = name, slug = name.lowercase().replace(' ', '-'), websiteUrl = websiteUrl))
+        val saved = artistRepository.save(prefill(ArtistEntity(name = name, slug = name.lowercase().replace(' ', '-'), websiteUrl = websiteUrl)))
         val id = requireNotNull(saved.id)
         artistRepository.storeMusicBrainzVerdict(id, MusicBrainzMatch.EXACT.name, mbid)
         return id
@@ -283,15 +284,19 @@ class MusicBrainzEnrichmentServiceIntegrationTest : BaseControllerTest() {
     }
 
     @Test
-    fun `a group without a description takes its Wikipedia lead in the act's own language, with the credit`() {
+    fun `a group without a description takes both Wikipedia leads, its own language first, each with its credit`() {
         runBlocking {
             val id = exact("Neubauten")
             coEvery { musicBrainz.artist("mbid-neubauten") } returns
                 entity("mbid-neubauten", "Group", relation("wikidata", "https://www.wikidata.org/wiki/Q11898"))
             coEvery { wikimedia.imageFor("Q11898") } returns null
             val lead = "Einstürzende Neubauten ist eine deutsche Band aus Berlin, die 1980 gegründet wurde und Industrial-Musik spielt."
-            coEvery { wikimedia.extractFor("Q11898", listOf("de", "en")) } returns
-                WikipediaExtract(language = "de", text = lead, pageUrl = "https://de.wikipedia.org/wiki/Einst%C3%BCrzende_Neubauten")
+            val leadEn = "Einstürzende Neubauten is a German band from West Berlin, formed in 1980, known for instruments built from scrap metal."
+            coEvery { wikimedia.extractsFor("Q11898", listOf("de", "en")) } returns
+                listOf(
+                    WikipediaExtract(language = "de", text = lead, pageUrl = "https://de.wikipedia.org/wiki/Einst%C3%BCrzende_Neubauten"),
+                    WikipediaExtract(language = "en", text = leadEn, pageUrl = "https://en.wikipedia.org/wiki/Einst%C3%BCrzende_Neubauten")
+                )
 
             service().enrichFor(source(), setOf(id)) shouldBe 1
 
@@ -301,7 +306,44 @@ class MusicBrainzEnrichmentServiceIntegrationTest : BaseControllerTest() {
             stored.descriptionAttribution shouldBe "Wikipedia"
             stored.descriptionLicenceId shouldBe "CC-BY-SA-4.0"
             stored.descriptionSourceUrl shouldBe "https://de.wikipedia.org/wiki/Einst%C3%BCrzende_Neubauten"
+            stored.descriptionAlt shouldBe leadEn
+            stored.descriptionAltLanguage shouldBe "en"
+            stored.descriptionAltAttribution shouldBe "Wikipedia"
+            stored.descriptionAltLicenceId shouldBe "CC-BY-SA-4.0"
+            stored.descriptionAltSourceUrl shouldBe "https://en.wikipedia.org/wiki/Einst%C3%BCrzende_Neubauten"
             enriched("description") shouldBe 1.0
+            enriched("description_alt") shouldBe 1.0
+        }
+    }
+
+    @Test
+    fun `a stored Wikipedia lead asks only the other wiki, and takes its lead beside it`() {
+        runBlocking {
+            val lead = "Einstürzende Neubauten ist eine deutsche Band aus Berlin, die 1980 gegründet wurde und Industrial-Musik spielt."
+            val id =
+                exact("Neubauten") {
+                    it.copy(
+                        description = lead,
+                        descriptionLanguage = "de",
+                        descriptionAttribution = "Wikipedia",
+                        descriptionLicenceId = "CC-BY-SA-4.0",
+                        descriptionSourceUrl = "https://de.wikipedia.org/wiki/Einst%C3%BCrzende_Neubauten"
+                    )
+                }
+            coEvery { musicBrainz.artist("mbid-neubauten") } returns
+                entity("mbid-neubauten", "Group", relation("wikidata", "https://www.wikidata.org/wiki/Q11898"))
+            coEvery { wikimedia.imageFor("Q11898") } returns null
+            val leadEn = "Einstürzende Neubauten is a German band from West Berlin, formed in 1980, known for instruments built from scrap metal."
+            coEvery { wikimedia.extractsFor("Q11898", listOf("en")) } returns
+                listOf(WikipediaExtract(language = "en", text = leadEn, pageUrl = "https://en.wikipedia.org/wiki/Einst%C3%BCrzende_Neubauten"))
+
+            service().enrichFor(source(), setOf(id)) shouldBe 1
+
+            val stored = row(id)
+            stored.description shouldBe lead
+            stored.descriptionAlt shouldBe leadEn
+            stored.descriptionAltLanguage shouldBe "en"
+            coVerify(exactly = 0) { wikimedia.extractsFor("Q11898", listOf("de", "en")) }
         }
     }
 
@@ -323,7 +365,7 @@ class MusicBrainzEnrichmentServiceIntegrationTest : BaseControllerTest() {
                 .tag("reason", "no-article")
                 .counter()
                 ?.count() shouldBe 1.0
-            coVerify(exactly = 0) { wikimedia.extractFor("Q3", any()) }
+            coVerify(exactly = 0) { wikimedia.extractsFor("Q3", any()) }
         }
     }
 
@@ -338,6 +380,35 @@ class MusicBrainzEnrichmentServiceIntegrationTest : BaseControllerTest() {
                 store.store(id, mapOf("description" to "Ein Text.", "description_attribution" to "Wikipedia"))
             }
             store.store(id, mapOf("description" to "Ein Text, den eine Person schrieb.")) shouldBe 1L
+        }
+    }
+
+    @Test
+    fun `the CHECK refuses an alt beside a text Wikipedia did not write, and an alt in the text's own language`() {
+        runBlocking {
+            val alt =
+                mapOf(
+                    "description_alt" to "A text in English.",
+                    "description_alt_attribution" to "Wikipedia",
+                    "description_alt_licence_id" to "CC-BY-SA-4.0",
+                    "description_alt_source_url" to "https://en.wikipedia.org/wiki/X"
+                )
+            val own = exact("Own") { it.copy(description = "Ein Text, den eine Person schrieb.", descriptionLanguage = "de") }
+            shouldThrow<DataIntegrityViolationException> { store.store(own, alt + ("description_alt_language" to "en")) }
+
+            val wikipedia =
+                exact("Wiki") {
+                    it.copy(
+                        description = "Ein Text aus der Wikipedia.",
+                        descriptionLanguage = "de",
+                        descriptionAttribution = "Wikipedia",
+                        descriptionLicenceId = "CC-BY-SA-4.0",
+                        descriptionSourceUrl = "https://de.wikipedia.org/wiki/X"
+                    )
+                }
+            shouldThrow<DataIntegrityViolationException> { store.store(wikipedia, alt + ("description_alt_language" to "de")) }
+            shouldThrow<DataIntegrityViolationException> { store.store(wikipedia, alt) }
+            store.store(wikipedia, alt + ("description_alt_language" to "en")) shouldBe 1L
         }
     }
 }

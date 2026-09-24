@@ -306,7 +306,7 @@ class FixtureTest : BaseControllerTest() {
         }
 
     @Test
-    fun `the verified ensemble's Wikipedia lead is served with its language and its credit`(): Unit =
+    fun `the verified ensemble's Wikipedia leads are served with their languages and their credits`(): Unit =
         runBlocking {
             loadFixture()
 
@@ -321,5 +321,15 @@ class FixtureTest : BaseControllerTest() {
                 .isEqualTo("CC-BY-SA-4.0")
                 .jsonPath("$.descriptionSourceUrl")
                 .isEqualTo("https://de.wikipedia.example/wiki/Møbius_Trio")
+                .jsonPath("$.descriptionAlt")
+                .value<String> { assert(it.startsWith("Møbius Trio is a German jazz band")) }
+                .jsonPath("$.descriptionAltLanguage")
+                .isEqualTo("en")
+                .jsonPath("$.descriptionAltAttribution")
+                .isEqualTo("Wikipedia")
+                .jsonPath("$.descriptionAltLicenceId")
+                .isEqualTo("CC-BY-SA-4.0")
+                .jsonPath("$.descriptionAltSourceUrl")
+                .isEqualTo("https://en.wikipedia.example/wiki/Møbius_Trio")
         }
 }

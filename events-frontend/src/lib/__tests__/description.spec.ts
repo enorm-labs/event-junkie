@@ -24,7 +24,12 @@ describe('descriptionFor', () => {
       'de',
     )
 
-    expect(chosen).toEqual({ text: 'Ein Abend mit Aussicht', lang: 'de', machine: false })
+    expect(chosen).toEqual({
+      text: 'Ein Abend mit Aussicht',
+      lang: 'de',
+      machine: false,
+      side: 'original',
+    })
   })
 
   it('prefers the other-language text when the visitor reads that language', () => {
@@ -39,7 +44,12 @@ describe('descriptionFor', () => {
       'en',
     )
 
-    expect(chosen).toEqual({ text: 'An evening with a view', lang: 'en', machine: false })
+    expect(chosen).toEqual({
+      text: 'An evening with a view',
+      lang: 'en',
+      machine: false,
+      side: 'alt',
+    })
   })
 
   // The disclosure the page shows hangs off this flag, and ADR-026 makes it non-optional.
@@ -55,7 +65,12 @@ describe('descriptionFor', () => {
       'en',
     )
 
-    expect(chosen).toEqual({ text: 'An evening with a view', lang: 'en', machine: true })
+    expect(chosen).toEqual({
+      text: 'An evening with a view',
+      lang: 'en',
+      machine: true,
+      side: 'alt',
+    })
   })
 
   // A description a visitor cannot read still says who is playing. It stays, marked.
@@ -65,14 +80,19 @@ describe('descriptionFor', () => {
       'en',
     )
 
-    expect(chosen).toEqual({ text: 'Ein Abend mit Aussicht', lang: 'de', machine: false })
+    expect(chosen).toEqual({
+      text: 'Ein Abend mit Aussicht',
+      lang: 'de',
+      machine: false,
+      side: 'original',
+    })
   })
 
   // An unclassified text claims nothing rather than claiming the page's locale.
   it('declares no language for an unclassified description', () => {
     const chosen = descriptionFor(event({ description: 'Doors 19:30' }), 'en')
 
-    expect(chosen).toEqual({ text: 'Doors 19:30', lang: null, machine: false })
+    expect(chosen).toEqual({ text: 'Doors 19:30', lang: null, machine: false, side: 'original' })
   })
 
   it('returns null when the event has no description', () => {
@@ -87,7 +107,12 @@ describe('descriptionFor', () => {
       'en',
     )
 
-    expect(chosen).toEqual({ text: 'Un dúo argentino', lang: null, machine: false })
+    expect(chosen).toEqual({
+      text: 'Un dúo argentino',
+      lang: null,
+      machine: false,
+      side: 'original',
+    })
   })
 })
 
@@ -104,6 +129,7 @@ describe('descriptionFor, on a venue', () => {
       text: 'Ein früheres Kino am Kanal.',
       lang: 'de',
       machine: false,
+      side: 'alt',
     })
   })
 
@@ -118,6 +144,7 @@ describe('descriptionFor, on a venue', () => {
       text: 'Only English here.',
       lang: 'en',
       machine: false,
+      side: 'original',
     })
   })
 })

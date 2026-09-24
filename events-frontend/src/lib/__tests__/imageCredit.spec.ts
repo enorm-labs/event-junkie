@@ -93,6 +93,23 @@ describe('textCredit', () => {
     })
   })
 
+  it('credits the other wiki’s lead with its own article when the page shows that side', () => {
+    const both = {
+      ...lead,
+      descriptionAlt:
+        'Giant Rooks are a German indie rock band from Hamm, Germany founded in 2014.',
+      descriptionAltAttribution: 'Wikipedia',
+      descriptionAltLicenceId: 'CC-BY-SA-4.0',
+      descriptionAltSourceUrl: 'https://en.wikipedia.org/wiki/Giant_Rooks',
+    }
+
+    expect(textCredit(both, 'alt')?.sourceUrl).toBe('https://en.wikipedia.org/wiki/Giant_Rooks')
+    expect(textCredit(both, 'original')?.sourceUrl).toBe(
+      'https://de.wikipedia.org/wiki/Giant_Rooks',
+    )
+    expect(textCredit(lead, 'alt')).toBeNull()
+  })
+
   it('owes nothing for a text a venue or a person wrote, or for a credit with no text', () => {
     expect(textCredit({ description: 'Punk aus Ipswich.' })).toBeNull()
     expect(textCredit({ ...lead, description: null })).toBeNull()

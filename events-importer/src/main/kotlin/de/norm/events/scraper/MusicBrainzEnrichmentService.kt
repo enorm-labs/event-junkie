@@ -123,17 +123,17 @@ class MusicBrainzEnrichmentService(
             store.store(id, emptyMap())
         } else {
             val image = if (artist.imageUrl == null) pictureOf(entity) else null
-            val wantsDescription = ArtistEnrichment.wantsDescription(artist, entity)
-            val extract = if (wantsDescription) extractOf(artist, entity) else null
-            val filled = ArtistEnrichment.fill(artist, entity, image, wikimedia.maxBytes, extract)
+            val languages = leadLanguagesOf(artist, entity)
+            val extracts = if (languages.isEmpty()) emptyList() else extractsOf(entity, languages)
+            val filled = ArtistEnrichment.fill(artist, entity, image, wikimedia.maxBytes, extracts)
             store.store(id, filled.columns)
             filled.fields.forEach(metrics::recordMusicBrainzEnriched)
             filled.imageRefusal?.let { reason ->
                 metrics.recordMusicBrainzImageRefused(reason)
                 logger.info { "Commons picture for '${artist.name}' refused: $reason" }
             }
-            val descriptionRefusal = filled.descriptionRefusal ?: NO_ARTICLE.takeIf { wantsDescription && extract == null }
-            descriptionRefusal?.let { reason ->
+            val descriptionRefusals = filled.descriptionRefusals.ifEmpty { listOfNotNull(NO_ARTICLE.takeIf { languages.isNotEmpty() && extracts.isEmpty() }) }
+            descriptionRefusals.forEach { reason ->
                 metrics.recordWikipediaDescriptionRefused(reason)
                 logger.info { "Wikipedia description for '${artist.name}' refused: $reason" }
             }
@@ -143,10 +143,21 @@ class MusicBrainzEnrichmentService(
 
     private suspend fun pictureOf(entity: MusicBrainzArtist): CommonsImage? = ArtistEnrichment.wikidataIdOf(entity)?.let { wikimedia.imageFor(it) }
 
-    private suspend fun extractOf(
+    /** The wikis to read: both, preferred first, for a row with no description; the other one beside a stored Wikipedia lead; none otherwise. */
+    private fun leadLanguagesOf(
         artist: ArtistEntity,
         entity: MusicBrainzArtist
-    ): WikipediaExtract? = ArtistEnrichment.wikidataIdOf(entity)?.let { wikimedia.extractFor(it, WikipediaLead.languagesFor(artist.country ?: entity.country)) }
+    ): List<String> =
+        when {
+            ArtistEnrichment.wantsDescription(artist, entity) -> WikipediaLead.languagesFor(artist.country ?: entity.country)
+            ArtistEnrichment.wantsDescriptionAlt(artist, entity) -> WikipediaLead.languagesFor(null).filter { it != artist.descriptionLanguage }
+            else -> emptyList()
+        }
+
+    private suspend fun extractsOf(
+        entity: MusicBrainzArtist,
+        languages: List<String>
+    ): List<WikipediaExtract> = ArtistEnrichment.wikidataIdOf(entity)?.let { wikimedia.extractsFor(it, languages) }.orEmpty()
 
     private companion object {
         const val STOP_AFTER_CONSECUTIVE_FAILURES = 3

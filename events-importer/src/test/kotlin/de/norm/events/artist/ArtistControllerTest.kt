@@ -195,7 +195,7 @@ class ArtistControllerTest : BaseControllerTest() {
     }
 
     @Test
-    fun `PUT keeps a licensed text's credit while the text is unchanged, and drops it once a person edits the text`() {
+    fun `PUT keeps a licensed text's credit and its other-language lead while the text is unchanged, and drops both once a person edits the text`() {
         val created = createArtist(ArtistRequestFixtures.adicts(description = null))
         val lead = "The Adicts are an English punk rock band from Ipswich, formed in 1975 and known for their Clockwork Orange look."
         runBlocking {
@@ -206,7 +206,12 @@ class ArtistControllerTest : BaseControllerTest() {
                     "description_language" to "en",
                     "description_attribution" to "Wikipedia",
                     "description_licence_id" to "CC-BY-SA-4.0",
-                    "description_source_url" to "https://en.wikipedia.org/wiki/The_Adicts"
+                    "description_source_url" to "https://en.wikipedia.org/wiki/The_Adicts",
+                    "description_alt" to "The Adicts sind eine englische Punkband aus Ipswich, die 1975 gegründet wurde.",
+                    "description_alt_language" to "de",
+                    "description_alt_attribution" to "Wikipedia",
+                    "description_alt_licence_id" to "CC-BY-SA-4.0",
+                    "description_alt_source_url" to "https://de.wikipedia.org/wiki/The_Adicts"
                 )
             )
         }
@@ -227,6 +232,8 @@ class ArtistControllerTest : BaseControllerTest() {
         unchanged.descriptionAttribution shouldBe "Wikipedia"
         unchanged.descriptionLanguage shouldBe "en"
         unchanged.descriptionSourceUrl shouldBe "https://en.wikipedia.org/wiki/The_Adicts"
+        unchanged.descriptionAltLanguage shouldBe "de"
+        unchanged.descriptionAltSourceUrl shouldBe "https://de.wikipedia.org/wiki/The_Adicts"
 
         val edited = put("Punk aus Ipswich, seit 1975.")
         edited.description shouldBe "Punk aus Ipswich, seit 1975."
@@ -234,6 +241,11 @@ class ArtistControllerTest : BaseControllerTest() {
         edited.descriptionAttribution shouldBe null
         edited.descriptionLicenceId shouldBe null
         edited.descriptionSourceUrl shouldBe null
+        edited.descriptionAlt shouldBe null
+        edited.descriptionAltLanguage shouldBe null
+        edited.descriptionAltAttribution shouldBe null
+        edited.descriptionAltLicenceId shouldBe null
+        edited.descriptionAltSourceUrl shouldBe null
 
         deleteArtist(created.id)
     }

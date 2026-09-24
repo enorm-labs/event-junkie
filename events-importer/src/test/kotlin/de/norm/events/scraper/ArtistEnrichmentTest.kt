@@ -6,6 +6,7 @@ import de.norm.events.musicbrainz.MusicBrainzUrl
 import de.norm.events.musicbrainz.MusicBrainzUrlRelation
 import de.norm.events.wikimedia.CommonsImage
 import de.norm.events.wikimedia.WikipediaExtract
+import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.maps.shouldContainExactly
 import io.kotest.matchers.maps.shouldNotContainKey
@@ -201,7 +202,14 @@ class ArtistEnrichmentTest {
 
     @Test
     fun `an ensemble's lead lands with its language and its credit`() {
-        val filled = ArtistEnrichment.fill(row(name = "Einstürzende Neubauten"), entity("neubauten"), image = null, maxBytes = maxBytes, extract = wikipedia())
+        val filled =
+            ArtistEnrichment.fill(
+                row(name = "Einstürzende Neubauten"),
+                entity("neubauten"),
+                image = null,
+                maxBytes = maxBytes,
+                extracts = listOf(wikipedia())
+            )
 
         filled.columns["description"] shouldBe neubautenLead
         filled.columns["description_language"] shouldBe "de"
@@ -209,16 +217,16 @@ class ArtistEnrichmentTest {
         filled.columns["description_licence_id"] shouldBe "CC-BY-SA-4.0"
         filled.columns["description_source_url"] shouldBe "https://de.wikipedia.org/wiki/Einst%C3%BCrzende_Neubauten"
         filled.fields.last() shouldBe "description"
-        filled.descriptionRefusal.shouldBeNull()
+        filled.descriptionRefusals.shouldBeEmpty()
     }
 
     @Test
     fun `a person is never offered a lead, whatever the extract says`() {
         ArtistEnrichment.wantsDescription(row(), entity("hausswolff")) shouldBe false
-        val filled = ArtistEnrichment.fill(row(), entity("hausswolff"), image = null, maxBytes = maxBytes, extract = wikipedia())
+        val filled = ArtistEnrichment.fill(row(), entity("hausswolff"), image = null, maxBytes = maxBytes, extracts = listOf(wikipedia()))
 
         filled.columns shouldNotContainKey "description"
-        filled.descriptionRefusal.shouldBeNull()
+        filled.descriptionRefusals.shouldBeEmpty()
     }
 
     @Test
@@ -226,7 +234,8 @@ class ArtistEnrichmentTest {
         val own = row(name = "Einstürzende Neubauten", description = "Die Band spielt heute ihr neues Album.")
 
         ArtistEnrichment.wantsDescription(own, entity("neubauten")) shouldBe false
-        ArtistEnrichment.fill(own, entity("neubauten"), image = null, maxBytes = maxBytes, extract = wikipedia()).columns shouldNotContainKey "description"
+        ArtistEnrichment.fill(own, entity("neubauten"), image = null, maxBytes = maxBytes, extracts = listOf(wikipedia())).columns shouldNotContainKey
+            "description"
     }
 
     @Test
@@ -238,8 +247,8 @@ class ArtistEnrichmentTest {
             "Anna Beispiel (1986–2024) war eine schwedische Sängerin und Organistin, deren Alben vor allem in Skandinavien erschienen.",
             "Die Gruppe um den Sänger Otto Beispiel († 2019) war eine der ersten deutschen Punkbands und spielte bis 2019 in Berlin."
         ).forEach { lead ->
-            val filled = ArtistEnrichment.fill(row(name = "Einstürzende Neubauten"), entity("neubauten"), null, maxBytes, wikipedia(text = lead))
-            filled.descriptionRefusal shouldBe "birth-data"
+            val filled = ArtistEnrichment.fill(row(name = "Einstürzende Neubauten"), entity("neubauten"), null, maxBytes, listOf(wikipedia(text = lead)))
+            filled.descriptionRefusals shouldContainExactly listOf("birth-data")
             filled.columns shouldNotContainKey "description"
         }
     }
@@ -247,10 +256,104 @@ class ArtistEnrichmentTest {
     @Test
     fun `a lead shorter than a sentence of substance is refused as short`() {
         val lead = "Einstürzende Neubauten ist eine deutsche Band aus Berlin."
-        val filled = ArtistEnrichment.fill(row(name = "Einstürzende Neubauten"), entity("neubauten"), null, maxBytes, wikipedia(text = lead))
+        val filled = ArtistEnrichment.fill(row(name = "Einstürzende Neubauten"), entity("neubauten"), null, maxBytes, listOf(wikipedia(text = lead)))
 
-        filled.descriptionRefusal shouldBe "short"
+        filled.descriptionRefusals shouldContainExactly listOf("short")
         filled.columns shouldNotContainKey "description"
+    }
+
+    private val neubautenLeadEn =
+        "Einstürzende Neubauten is a German band from West Berlin, formed in 1980. " +
+            "The group is known for building its own instruments from scrap metal."
+
+    private val storedLead =
+        row(name = "Einstürzende Neubauten", description = neubautenLead).copy(
+            descriptionLanguage = "de",
+            descriptionAttribution = "Wikipedia",
+            descriptionLicenceId = "CC-BY-SA-4.0",
+            descriptionSourceUrl = "https://de.wikipedia.org/wiki/Einst%C3%BCrzende_Neubauten"
+        )
+
+    @Test
+    fun `both wikis' leads land, each with its own language and credit`() {
+        val leads = listOf(wikipedia(), wikipedia(text = neubautenLeadEn, language = "en"))
+        val filled = ArtistEnrichment.fill(row(name = "Einstürzende Neubauten"), entity("neubauten"), null, maxBytes, leads)
+
+        filled.columns["description"] shouldBe neubautenLead
+        filled.columns["description_language"] shouldBe "de"
+        filled.columns["description_alt"] shouldBe neubautenLeadEn
+        filled.columns["description_alt_language"] shouldBe "en"
+        filled.columns["description_alt_attribution"] shouldBe "Wikipedia"
+        filled.columns["description_alt_licence_id"] shouldBe "CC-BY-SA-4.0"
+        filled.columns["description_alt_source_url"] shouldBe "https://en.wikipedia.org/wiki/Einst%C3%BCrzende_Neubauten"
+        filled.fields.takeLast(2) shouldContainExactly listOf("description", "description_alt")
+        filled.descriptionRefusals.shouldBeEmpty()
+    }
+
+    @Test
+    fun `a short second lead is refused alone, and the first still lands`() {
+        val leads = listOf(wikipedia(), wikipedia(text = "Einstürzende Neubauten is a German band.", language = "en"))
+        val filled = ArtistEnrichment.fill(row(name = "Einstürzende Neubauten"), entity("neubauten"), null, maxBytes, leads)
+
+        filled.columns["description"] shouldBe neubautenLead
+        filled.columns shouldNotContainKey "description_alt"
+        filled.descriptionRefusals shouldContainExactly listOf("short")
+    }
+
+    @Test
+    fun `a short preferred lead gives way to the other wiki's, which then has no alt`() {
+        val leads = listOf(wikipedia(text = "Einstürzende Neubauten ist eine Band."), wikipedia(text = neubautenLeadEn, language = "en"))
+        val filled = ArtistEnrichment.fill(row(name = "Einstürzende Neubauten"), entity("neubauten"), null, maxBytes, leads)
+
+        filled.columns["description"] shouldBe neubautenLeadEn
+        filled.columns["description_language"] shouldBe "en"
+        filled.columns shouldNotContainKey "description_alt"
+        filled.descriptionRefusals shouldContainExactly listOf("short")
+    }
+
+    @Test
+    fun `birth data in either lead refuses both, because the item is a person`() {
+        val person = "Kid Francescoli is the project of Mathieu Hocine, born in Marseille, who has released five albums of electropop since 2002."
+        val leads = listOf(wikipedia(), wikipedia(text = person, language = "en"))
+        val filled = ArtistEnrichment.fill(row(name = "Einstürzende Neubauten"), entity("neubauten"), null, maxBytes, leads)
+
+        filled.columns shouldNotContainKey "description"
+        filled.columns shouldNotContainKey "description_alt"
+        filled.descriptionRefusals shouldContainExactly listOf("birth-data", "birth-data")
+    }
+
+    @Test
+    fun `a stored Wikipedia lead takes the other wiki's beside it, and is not rewritten`() {
+        ArtistEnrichment.wantsDescription(storedLead, entity("neubauten")) shouldBe false
+        ArtistEnrichment.wantsDescriptionAlt(storedLead, entity("neubauten")) shouldBe true
+        val filled = ArtistEnrichment.fill(storedLead, entity("neubauten"), null, maxBytes, listOf(wikipedia(text = neubautenLeadEn, language = "en")))
+
+        filled.columns shouldNotContainKey "description"
+        filled.columns["description_alt"] shouldBe neubautenLeadEn
+        filled.columns["description_alt_language"] shouldBe "en"
+    }
+
+    @Test
+    fun `a stored lead is never paired with a lead in its own language`() {
+        val filled = ArtistEnrichment.fill(storedLead, entity("neubauten"), null, maxBytes, listOf(wikipedia()))
+
+        filled.columns shouldNotContainKey "description_alt"
+    }
+
+    @Test
+    fun `a venue's or a person's text takes no Wikipedia lead beside it`() {
+        val own = row(name = "Einstürzende Neubauten", description = "Die Band spielt heute ihr neues Album.")
+
+        ArtistEnrichment.wantsDescriptionAlt(own, entity("neubauten")) shouldBe false
+        val filled = ArtistEnrichment.fill(own, entity("neubauten"), null, maxBytes, listOf(wikipedia(text = neubautenLeadEn, language = "en")))
+        filled.columns shouldNotContainKey "description_alt"
+    }
+
+    @Test
+    fun `a row with both leads is offered neither`() {
+        val both = storedLead.copy(descriptionAlt = neubautenLeadEn, descriptionAltLanguage = "en")
+
+        ArtistEnrichment.wantsDescriptionAlt(both, entity("neubauten")) shouldBe false
     }
 
     @Test

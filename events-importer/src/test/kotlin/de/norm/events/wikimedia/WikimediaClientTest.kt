@@ -1,6 +1,8 @@
 package de.norm.events.wikimedia
 
 import io.kotest.assertions.throwables.shouldThrow
+import io.kotest.matchers.collections.shouldBeEmpty
+import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
@@ -128,61 +130,85 @@ class WikimediaClientTest {
         }
 
     @Test
-    fun `reads the item's sitelinks, then the preferred wiki's summary, and keeps the article URL for the credit`() =
+    fun `reads the item's sitelinks, then each wiki's summary in order, and keeps the article URL for the credit`() =
         runTest {
             server.enqueue(json(fixture("wbgetentities-Q27897897")))
             server.enqueue(json(fixture("summary-de-giant-rooks")))
+            server.enqueue(json(fixture("summary-en-giant-rooks")))
 
-            val extract = client().extractFor("Q27897897", listOf("de", "en"))
+            val extracts = client().extractsFor("Q27897897", listOf("de", "en"))
 
             server.takeRequest().target shouldBe
                 "/wikidata/api.php?action=wbgetentities&ids=Q27897897&props=sitelinks&sitefilter=dewiki%7Cenwiki&format=json"
             server.takeRequest().target shouldBe "/dewiki/api/rest_v1/page/summary/Giant_Rooks"
-            extract shouldBe
-                WikipediaExtract(
-                    language = "de",
-                    text = "Giant Rooks ist eine deutsche Indie-Pop-Band aus Hamm, die 2014 gegründet wurde.",
-                    pageUrl = "https://de.wikipedia.org/wiki/Giant_Rooks"
+            server.takeRequest().target shouldBe "/enwiki/api/rest_v1/page/summary/Giant_Rooks"
+            extracts shouldContainExactly
+                listOf(
+                    WikipediaExtract(
+                        language = "de",
+                        text = "Giant Rooks ist eine deutsche Indie-Pop-Band aus Hamm, die 2014 gegründet wurde.",
+                        pageUrl = "https://de.wikipedia.org/wiki/Giant_Rooks"
+                    ),
+                    WikipediaExtract(
+                        language = "en",
+                        text = "Giant Rooks are a German indie rock band from Hamm, Germany founded in 2014.",
+                        pageUrl = "https://en.wikipedia.org/wiki/Giant_Rooks"
+                    )
                 )
         }
 
     @Test
-    fun `falls back to the other wiki when the preferred one has no article, and encodes the title as one segment`() =
+    fun `reads only the wiki that has an article, and encodes the title as one segment`() =
         runTest {
             server.enqueue(json(fixture("wbgetentities-Q66734658")))
             server.enqueue(json(fixture("summary-en-war-on-women")))
 
-            val extract = client().extractFor("Q66734658", listOf("de", "en"))
+            val extracts = client().extractsFor("Q66734658", listOf("de", "en"))
 
             server.takeRequest()
             server.takeRequest().target shouldBe "/enwiki/api/rest_v1/page/summary/War_on_Women_%28band%29"
-            extract?.language shouldBe "en"
-            extract?.pageUrl shouldBe "https://en.wikipedia.org/wiki/War_on_Women_(band)"
+            server.requestCount shouldBe 2
+            extracts.map { it.language } shouldContainExactly listOf("en")
+            extracts.single().pageUrl shouldBe "https://en.wikipedia.org/wiki/War_on_Women_(band)"
         }
 
     @Test
-    fun `an unknown item, a disambiguation page and a vanished article are no extract`() =
+    fun `an unknown item is no extract, and a disambiguation page or a vanished article leaves only the other wiki`() =
         runTest {
             server.enqueue(json(fixture("wbgetentities-missing")))
-            client().extractFor("Q999999999999", listOf("de", "en")).shouldBeNull()
+            client().extractsFor("Q999999999999", listOf("de", "en")).shouldBeEmpty()
 
             server.enqueue(json(fixture("wbgetentities-Q27897897")))
             server.enqueue(json(fixture("summary-en-disambiguation")))
-            client().extractFor("Q27897897", listOf("en", "de")).shouldBeNull()
+            server.enqueue(json(fixture("summary-de-giant-rooks")))
+            client().extractsFor("Q27897897", listOf("en", "de")).map { it.language } shouldContainExactly listOf("de")
 
             server.enqueue(json(fixture("wbgetentities-Q27897897")))
             server.enqueue(MockResponse.Builder().code(404).build())
-            client().extractFor("Q27897897", listOf("de", "en")).shouldBeNull()
+            server.enqueue(json(fixture("summary-en-giant-rooks")))
+            client().extractsFor("Q27897897", listOf("de", "en")).map { it.language } shouldContainExactly listOf("en")
 
-            server.requestCount shouldBe 5
+            server.requestCount shouldBe 7
         }
 
     @Test
-    fun `a server error on the summary is unavailable, so the row is retried`() =
+    fun `asks only for the wikis it is given`() =
+        runTest {
+            server.enqueue(json(fixture("wbgetentities-Q27897897")))
+            server.enqueue(json(fixture("summary-en-giant-rooks")))
+
+            client().extractsFor("Q27897897", listOf("en")).map { it.language } shouldContainExactly listOf("en")
+
+            server.takeRequest().target shouldContain "sitefilter=enwiki&"
+            server.requestCount shouldBe 2
+        }
+
+    @Test
+    fun `a server error on a summary is unavailable, so the row is retried`() =
         runTest {
             server.enqueue(json(fixture("wbgetentities-Q27897897")))
             server.enqueue(MockResponse.Builder().code(503).build())
 
-            shouldThrow<WikimediaUnavailableException> { client().extractFor("Q27897897", listOf("de", "en")) }.message shouldContain "503"
+            shouldThrow<WikimediaUnavailableException> { client().extractsFor("Q27897897", listOf("de", "en")) }.message shouldContain "503"
         }
 }

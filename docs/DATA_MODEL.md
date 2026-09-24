@@ -58,6 +58,11 @@ classDiagram
         String? descriptionAttribution
         String? descriptionLicenceId
         String? descriptionSourceUrl
+        String? descriptionAlt
+        String? descriptionAltLanguage
+        String? descriptionAltAttribution
+        String? descriptionAltLicenceId
+        String? descriptionAltSourceUrl
         String? imageUrl
         String? imageAttribution
         String? imageLicenceId

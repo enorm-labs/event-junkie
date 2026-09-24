@@ -44,7 +44,7 @@ class ArtistEnrichmentStore(
     }
 
     companion object {
-        /** Every column the enrichment may write; the four image columns, and the text with its credit, are written together or not at all. */
+        /** Every column the enrichment may write; the four image columns, and each text with its credit, are written together or not at all. */
         val COLUMNS =
             setOf(
                 "website_url",
@@ -69,7 +69,12 @@ class ArtistEnrichmentStore(
                 "description_language",
                 "description_attribution",
                 "description_licence_id",
-                "description_source_url"
+                "description_source_url",
+                "description_alt",
+                "description_alt_language",
+                "description_alt_attribution",
+                "description_alt_licence_id",
+                "description_alt_source_url"
             )
     }
 }

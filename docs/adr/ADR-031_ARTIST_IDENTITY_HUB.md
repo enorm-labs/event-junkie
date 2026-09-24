@@ -133,10 +133,12 @@ head whose row is absent, `UNCHECKED`, `AMBIGUOUS` or `NONE` still decides nothi
 queue. No list of series names is kept anywhere. MusicBrainz is the vocabulary.
 
 Amended 2026-09-24 ([#1569](https://github.com/enorm-labs/event-junkie/issues/1569)): step C+ covers ensembles only.
-A `GROUP`, `ORCHESTRA` or `CHOIR` row with an `EXACT` match and no description takes the lead of one Wikipedia article.
-The German Wikipedia comes first for an act from DE, AT or CH, the English one for any other. One text is stored,
-because one credit links one article. The credit is all or none, and an edit of the text clears it. A lead with birth data is
-refused on an ensemble too, because MusicBrainz types some solo acts as groups. A lead under 80 characters is refused.
+A `GROUP`, `ORCHESTRA` or `CHOIR` row with an `EXACT` match and no description takes the Wikipedia lead in each
+language that has an article ([#1849](https://github.com/enorm-labs/event-junkie/issues/1849)). The German lead is the
+description for an act from DE, AT or CH, the English one for any other. The other lead is the alt text. Each lead
+has its own credit, because one credit links one article. A credit is all or none, and an edit of the text clears both
+leads. An alt text stands only beside a Wikipedia description. A lead under 80 characters is refused. A lead with birth
+data is refused on an ensemble too, because MusicBrainz types some solo acts as groups. Birth data in one lead refuses both.
 A person gets no lead. Its first sentence is a birth date and a birthplace, and a rule that cuts them is never complete.
 
 What is stored per artist in step B: `musicbrainz_id` (nullable), `musicbrainz_match` (`EXACT`, `AMBIGUOUS`, `NONE`,

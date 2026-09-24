@@ -14,11 +14,13 @@ export interface ChosenDescription {
   lang: Locale | null
   /** True when a machine produced this text, which the page must disclose. */
   machine: boolean
+  /** Which field the text is: `description` or `descriptionAlt`. A credit belongs to the one shown. */
+  side: 'original' | 'alt'
 }
 
 /**
- * Anything that carries a description in up to two languages: an event, a venue and a promoter,
- * one rule, so this is structural. `descriptionAltOrigin` is optional because only event text can
+ * Anything that carries a description in up to two languages: an event, a venue, a promoter and an
+ * artist, one rule, so this is structural. `descriptionAltOrigin` is optional because only event text can
  * be machine-made; a venue or promoter description is our own prose in both languages (#1210,
  * #328).
  */
@@ -45,8 +47,10 @@ export function descriptionFor(subject: Described, locale: Locale): ChosenDescri
   const altLang = isLocale(subject.descriptionAltLanguage) ? subject.descriptionAltLanguage : null
   const altIsMachine = subject.descriptionAltOrigin === 'MACHINE'
 
-  if (original && originalLang === locale) return { text: original, lang: locale, machine: false }
-  if (alt && altLang === locale) return { text: alt, lang: locale, machine: altIsMachine }
-  if (original) return { text: original, lang: originalLang, machine: false }
+  if (original && originalLang === locale)
+    return { text: original, lang: locale, machine: false, side: 'original' }
+  if (alt && altLang === locale)
+    return { text: alt, lang: locale, machine: altIsMachine, side: 'alt' }
+  if (original) return { text: original, lang: originalLang, machine: false, side: 'original' }
   return null
 }

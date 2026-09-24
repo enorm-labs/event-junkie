@@ -122,7 +122,12 @@ SET musicbrainz_id = '00000000-0000-4000-8000-000000000272',
     description_language = 'de',
     description_attribution = 'Wikipedia',
     description_licence_id = 'CC-BY-SA-4.0',
-    description_source_url = 'https://de.wikipedia.example/wiki/Møbius_Trio'
+    description_source_url = 'https://de.wikipedia.example/wiki/Møbius_Trio',
+    description_alt = 'Møbius Trio is a German jazz band from Leipzig, formed in 2014, that plays chamber jazz.',
+    description_alt_language = 'en',
+    description_alt_attribution = 'Wikipedia',
+    description_alt_licence_id = 'CC-BY-SA-4.0',
+    description_alt_source_url = 'https://en.wikipedia.example/wiki/Møbius_Trio'
 WHERE slug = 'mobius-trio';
 
 INSERT INTO events.artist (name, slug, website_url, description, facebook_url, instagram_url, youtube_url)

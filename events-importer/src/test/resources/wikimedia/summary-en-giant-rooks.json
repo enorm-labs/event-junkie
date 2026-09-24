@@ -1,0 +1,49 @@
+{
+    "type": "standard",
+    "title": "Giant Rooks",
+    "displaytitle": "<span lang=\"en\" dir=\"ltr\"><span class=\"mw-page-title-main\">Giant Rooks</span></span>",
+    "namespace": {
+        "id": 0,
+        "text": ""
+    },
+    "wikibase_item": "Q27897897",
+    "titles": {
+        "canonical": "Giant_Rooks",
+        "normalized": "Giant Rooks",
+        "display": "<span lang=\"en\" dir=\"ltr\"><span class=\"mw-page-title-main\">Giant Rooks</span></span>"
+    },
+    "pageid": 58082704,
+    "thumbnail": {
+        "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/4/4b/Bochum_Total_2016_Giant_Rooks_04.jpg/330px-Bochum_Total_2016_Giant_Rooks_04.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+        "width": 330,
+        "height": 107
+    },
+    "originalimage": {
+        "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/4/4b/Bochum_Total_2016_Giant_Rooks_04.jpg/3840px-Bochum_Total_2016_Giant_Rooks_04.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+        "width": 5680,
+        "height": 1850
+    },
+    "lang": "en",
+    "dir": "ltr",
+    "revision": "1372510201",
+    "tid": "1a073f19-a5a7-11f1-8532-92c4fbc2006c",
+    "timestamp": "2026-09-01T01:47:34Z",
+    "description": "German indie band",
+    "description_source": "local",
+    "content_urls": {
+        "desktop": {
+            "page": "https://en.wikipedia.org/wiki/Giant_Rooks",
+            "revisions": "https://en.wikipedia.org/wiki/Giant_Rooks?action=history",
+            "edit": "https://en.wikipedia.org/wiki/Giant_Rooks?action=edit",
+            "talk": "https://en.wikipedia.org/wiki/Talk:Giant_Rooks"
+        },
+        "mobile": {
+            "page": "https://en.wikipedia.org/wiki/Giant_Rooks",
+            "revisions": "https://en.wikipedia.org/wiki/Special:History/Giant_Rooks",
+            "edit": "https://en.wikipedia.org/wiki/Giant_Rooks?action=edit",
+            "talk": "https://en.wikipedia.org/wiki/Talk:Giant_Rooks"
+        }
+    },
+    "extract": "Giant Rooks are a German indie rock band from Hamm, Germany founded in 2014.",
+    "extract_html": "<p><b>Giant Rooks</b> are a German indie rock band from Hamm, Germany founded in 2014.</p>"
+}

@@ -25,6 +25,16 @@ data class Artist(
     val descriptionLicenceId: String? = null,
     /** The page [description] was taken from, which the rendered credit links to. Set exactly when [descriptionAttribution] is. */
     val descriptionSourceUrl: String? = null,
+    /** The other wiki's own lead beside a Wikipedia [description], in the other language. Null beside any other text. */
+    val descriptionAlt: String? = null,
+    /** Language of [descriptionAlt]: `de` or `en`. Null exactly when [descriptionAlt] is. */
+    val descriptionAltLanguage: String? = null,
+    /** Who to credit for [descriptionAlt], as `Wikipedia`. Set exactly when [descriptionAlt] is. */
+    val descriptionAltAttribution: String? = null,
+    /** SPDX identifier of the licence [descriptionAlt] is published under. Set exactly when [descriptionAlt] is. */
+    val descriptionAltLicenceId: String? = null,
+    /** The article [descriptionAlt] was taken from. Set exactly when [descriptionAlt] is. */
+    val descriptionAltSourceUrl: String? = null,
     /** URL of the artist's photo or band logo. */
     val imageUrl: String? = null,
     /** Who to credit for [imageUrl], worded as the archive publishes it. Null exactly when [imageUrl] is. */

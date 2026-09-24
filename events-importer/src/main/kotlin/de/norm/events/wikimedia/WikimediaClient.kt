@@ -27,7 +27,7 @@ class WikimediaUnavailableException(
 
 /**
  * The picture behind a Wikidata item: its `P18` claim, then that file's `imageinfo` on Commons. And
- * the item's Wikipedia lead: its `dewiki` / `enwiki` sitelinks, then that article's REST summary.
+ * the item's Wikipedia leads: its `dewiki` / `enwiki` sitelinks, then each article's REST summary.
  *
  * Two hosts, one pace: `wbgetclaims` on Wikidata names the file, `imageinfo` on Commons renders a
  * thumbnail at [WikimediaProperties.thumbWidth] and states the licence and the author. Both are
@@ -50,17 +50,16 @@ class WikimediaClient(
     suspend fun imageFor(wikidataId: String): CommonsImage? = if (properties.enabled) fileOf(wikidataId)?.let { file -> imageInfo(file) } else null
 
     /**
-     * The lead of the first article in [languages] (`de`, `en`) that [wikidataId] links, or null when
-     * it links none, the article is not a standard page, or the read is off. Only the preferred
-     * language that exists is read: one text is stored, because one credit can link one article.
+     * The lead of each article in [languages] (`de`, `en`) that [wikidataId] links, in that order.
+     * Empty when it links none or the read is off; an article that is not a standard page is left out.
      */
-    suspend fun extractFor(
+    suspend fun extractsFor(
         wikidataId: String,
         languages: List<String>
-    ): WikipediaExtract? {
-        if (!properties.enabled) return null
+    ): List<WikipediaExtract> {
+        if (!properties.enabled) return emptyList()
         val titles = sitelinksOf(wikidataId, languages)
-        return languages.firstOrNull { it in titles }?.let { language -> summaryOf(language, titles.getValue(language)) }
+        return languages.filter { it in titles }.mapNotNull { language -> summaryOf(language, titles.getValue(language)) }
     }
 
     private suspend fun sitelinksOf(

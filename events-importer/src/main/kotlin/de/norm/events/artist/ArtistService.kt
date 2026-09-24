@@ -103,7 +103,7 @@ class ArtistService(
             ensureSlugAvailable(request.name, slug)
         }
 
-        // A licensed text keeps its language and credit only while it is unchanged; an edited text is the editor's own.
+        // A licensed text keeps its language, credit and other-language lead only while it is unchanged; an edited text is the editor's own.
         val keepsDescription = request.description == existing.description
         val updated =
             existing.copy(
@@ -114,6 +114,11 @@ class ArtistService(
                 descriptionAttribution = existing.descriptionAttribution.takeIf { keepsDescription },
                 descriptionLicenceId = existing.descriptionLicenceId.takeIf { keepsDescription },
                 descriptionSourceUrl = existing.descriptionSourceUrl.takeIf { keepsDescription },
+                descriptionAlt = existing.descriptionAlt.takeIf { keepsDescription },
+                descriptionAltLanguage = existing.descriptionAltLanguage.takeIf { keepsDescription },
+                descriptionAltAttribution = existing.descriptionAltAttribution.takeIf { keepsDescription },
+                descriptionAltLicenceId = existing.descriptionAltLicenceId.takeIf { keepsDescription },
+                descriptionAltSourceUrl = existing.descriptionAltSourceUrl.takeIf { keepsDescription },
                 imageUrl = request.imageUrl,
                 imageAttribution = request.imageAttribution,
                 imageLicenceId = request.imageLicenceId,

@@ -1144,6 +1144,31 @@ export interface components {
              * @example https://en.wikipedia.org/wiki/Buffalo_Tom
              */
             descriptionSourceUrl?: string | null;
+            /**
+             * @description The other Wikipedia's own lead beside a Wikipedia `description`, in the other language. Null beside a text a venue or a person wrote
+             * @example Buffalo Tom ist eine US-amerikanische Alternative-Rock-Band aus Boston.
+             */
+            descriptionAlt?: string | null;
+            /**
+             * @description Language of `descriptionAlt`: `de` or `en`. Null exactly when `descriptionAlt` is.
+             * @example de
+             */
+            descriptionAltLanguage?: string | null;
+            /**
+             * @description Who to credit for `descriptionAlt`. Set exactly when `descriptionAlt` is
+             * @example Wikipedia
+             */
+            descriptionAltAttribution?: string | null;
+            /**
+             * @description SPDX identifier of the licence `descriptionAlt` is published under
+             * @example CC-BY-SA-4.0
+             */
+            descriptionAltLicenceId?: string | null;
+            /**
+             * @description The page `descriptionAlt` was taken from, which the rendered credit links to
+             * @example https://de.wikipedia.org/wiki/Buffalo_Tom
+             */
+            descriptionAltSourceUrl?: string | null;
             /** @description URL of the artist's photo or band logo */
             imageUrl?: string | null;
             /**
