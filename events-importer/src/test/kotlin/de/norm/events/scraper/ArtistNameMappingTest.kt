@@ -749,6 +749,27 @@ class ArtistNameMappingTest {
     }
 
     @Test
+    fun `lineup notes are no acts`() {
+        // Production stored each of these as a DJ or support act (#1843).
+        stripArtistSuffix("lisa tba") shouldBe "lisa"
+        isNonArtistName("Lineup Tba") shouldBe true
+        isNonArtistName(stripArtistSuffix("Line Up tba.")) shouldBe true
+        isNonArtistName("All night long") shouldBe true
+        isNonArtistName("Secret Guest") shouldBe true
+        isNonArtistName("Surprise Guest") shouldBe true
+        isNonArtistName("Eine Veranstaltung im Rahmen vom Tag Der Clubkultur") shouldBe true
+        isNonArtistName("Eine Veranstaltung des Landesdenkmalamts Berlin und der Architektenkammer Berlin") shouldBe true
+        stripArtistPrefix("Live: Mnglxmplr") shouldBe "Mnglxmplr"
+        // Names in the same shapes stay.
+        isNonArtistName("Special Guest Foo") shouldBe false
+        isNonArtistName("Lisa") shouldBe false
+        stripArtistSuffix("Tabata") shouldBe "Tabata"
+        // `more tba` stays whole, so the placeholder check still sees it; `More` alone is a band.
+        stripArtistSuffix("more tba") shouldBe "more tba"
+        stripArtistPrefix("Live Electronic Showcase") shouldBe "Live Electronic Showcase"
+    }
+
+    @Test
     fun `stripArtistSuffix recovers the act from tour and live suffixes`() {
         stripArtistSuffix("DOMINIUM - NIGHT IS CALLING TOUR 2026") shouldBe "DOMINIUM"
         stripArtistSuffix("AZ LIVE IN BERLIN") shouldBe "AZ"
@@ -1082,9 +1103,10 @@ class ArtistNameMappingTest {
 
     @Test
     fun `headlinersFromTitle falls back to the whole title when a w-slash frame yields nothing`() {
-        // "w/ TBA" leaves no usable act, so the title is parsed normally rather than yielding none.
+        // "w/ TBA" leaves no usable act, so the title is parsed normally rather than yielding none,
+        // and the placeholder tail comes off the act (#1843).
         headlinersFromTitle("Green Lung w/ TBA", unpackWithFrame = true)
-            .map { it.name } shouldContainExactly listOf("Green Lung w/ TBA")
+            .map { it.name } shouldContainExactly listOf("Green Lung")
     }
 
     // --- splitHeadlinerTitle ---
