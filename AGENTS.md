@@ -84,7 +84,7 @@ local `CLAUDE.md` holding just `@AGENTS.md`.
   section beside the old one — two passages for successive states is a defect. Delete completed phases and settled decisions; git and the issue hold them.
   Reasoning goes below the instructions, in a final `## Background and history`, or into an ADR, or nowhere. **Every document over ~150 lines opens with
   `## The short version`** — commands and the two or three rules that catch most changes, no prose. A status banner stays only while it warns of something
-  _currently_ untrue ([docs/LEGAL.md](docs/LEGAL.md)'s "not signed off") and goes the moment that stops. A closed item on a list of open questions is deleted,
+  _currently_ untrue and goes the moment that stops, as LEGAL.md's "not signed off" did. A closed item on a list of open questions is deleted,
   not annotated. An issue or ADR reference is a pointer, not a summary: `see #540`, and stop.
 - **Documentation under `docs/` is written in Simplified Technical English.** One idea per sentence, 25 words at most, active voice, no semicolons; the whole
   rule and the `asd-ste100` skill are in [documentation.instructions.md](.github/instructions/documentation.instructions.md). **Keep every hedge at its

@@ -1,8 +1,6 @@
 # Legal, compliance and site-chrome policy
 
-> **Not signed off.** This is what the site _does_, and what future changes must keep true. Several decisions here are
-> provisional, and the site cannot go live until §14 is closed. Read that section before treating anything here as
-> final.
+> This is what the site _does_, and what future changes must keep true.
 >
 > Related: [ADR-012 (cloud platform)](adr/ADR-012_CLOUD_PLATFORM.md) · [ADR-013 (localisation)](adr/ADR-013_LOCALISATION.md) ·
 > [ADR-014 (rendering)](adr/ADR-014_RENDERING_STRATEGY.md) · [the `v1.0 — Go-live` milestone](https://github.com/enorm-labs/event-junkie/milestones) · [BRANDING.md](BRANDING.md)
@@ -18,8 +16,6 @@
 3. **German is authoritative** where the two versions could be read differently (§6.1).
 4. **The three flags in `events-frontend/src/lib/legal.ts` are the machine-readable record** of what is still provisional. Never clear one ahead of the thing it
    describes — that is what §14 exists to prevent.
-
-**The site is not signed off and cannot go live until §14 is closed.**
 
 ## 1. Scope and how to use this
 
@@ -232,13 +228,29 @@ below. The picture, its author, its licence and its source page are stored toget
 and birthplace MusicBrainz publishes for a person are not read. The founding date and place of a group are, and a CHECK
 constraint keeps the two apart. The second sentence of the notice paragraph names both sources.
 
+**The role mailboxes hold email, and the Hetzner AVV covers them.** `hello@`, `security@` and `alerts@` are mailboxes
+on Hetzner Webhosting S, under the same Hetzner account as the servers ([`ops/EMAIL.md`](ops/EMAIL.md)). The AVV is
+account-level, so the mailboxes add no processor. A mailbox holds the sender's address, the message and whatever the
+sender writes into it. That can be an Art. 15 request, a Code of Conduct report or a security disclosure. The category
+is communication data, in the table below. The data subjects are the people who write to us, in the first row of the
+second table. **A mail is kept until its request is dealt with, and deleted one year after that at the latest.** The
+year covers follow-up questions about the same request. §5 of the notice states the period. Nothing deletes a mail
+automatically, so the period holds only while the maintainer deletes by hand.
+
+**`hello@` and `security@` have no forward, and `alerts@` has one.** The maintainer reads the first two over IMAP from
+Hetzner. A forward to a personal Gmail account would give the mail to Google under its consumer terms. Those terms are
+not an Art. 28 contract, and Gmail stores mail outside the EU. So both forwards were removed before go-live.
+`alerts@` keeps its forward, because OpenObserve is its only sender and an alert mail names a rule and a cluster, not a
+person. **A forward from `hello@` or `security@` to any provider other than Hetzner is a new recipient.** It needs a
+row in §5 of the notice first ([`ops/EMAIL.md`](ops/EMAIL.md) §4 step 7).
+
 **Categories of personal data**, mapped to the vocabulary these forms use:
 
 | Category                        | Applies                      | What it actually is here                                                                                                                                                                                                                                                  |
 | ------------------------------- | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Personal master data**        | **yes**                      | Artist names, and each artist's `description`, `imageUrl`, ten profile links, its type, an ensemble's founding date and place, its country, `musicbrainzId` and the MusicBrainz verdict (ADR-031). The largest category by far; see §7.3 for why it counts                |
 | **Image files**                 | **yes**                      | Copies of the images venues, promoters and artists publish, and of venue photographs from open archives (#1275), stored in `event-junkie-images` at Hetzner (ADR-019, #833). An artist photograph shows an identifiable person, so this is personal data in its own right |
-| **Communication data**          | **yes, on a strict reading** | No phone numbers and no email addresses are stored anywhere. The artist profile and social URLs are what a strict reading catches. Declared deliberately: the cost was nil and omitting it would have left a scope gap                                                    |
+| **Communication data**          | **yes — mailboxes and URLs** | Mail to the role mailboxes: the sender's address and the message (see below). No phone numbers. The artist profile and social URLs count too. Declared before the mailboxes existed, so they needed no change to the AVV                                                  |
 | Contractual master data         | no                           | There is no contract with any data subject                                                                                                                                                                                                                                |
 | **Log data**                    | **yes**                      | Timestamp, requested path, HTTP status, bytes transferred, referrer, browser and OS. **No IP address** since §7.5 was settled on 2026-08-19. Retention is a size bound, not a period — see §7.5.1                                                                         |
 | **Connection data**             | **yes, transient only**      | The visitor's IP address, held in memory by Traefik's per-source rate limiter for a one-second window and written nowhere (#268). Declared for the same reason log data was — see below and §7.5.1                                                                        |
@@ -252,7 +264,7 @@ outside its scope is not.
 
 | Who                                                        | Applies                                |                                                                                                                                                                         |
 | ---------------------------------------------------------- | -------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Customers and interested parties                           | **yes**                                | Site visitors. Nothing is sold, so they are _Interessenten_ rather than customers, but that is the box these forms offer                                                |
+| Customers and interested parties                           | **yes**                                | Site visitors, and anyone who writes to a role mailbox. Nothing is sold, so they are _Interessenten_ rather than customers, but that is the box these forms offer       |
 | Employees                                                  | no                                     | There are none                                                                                                                                                          |
 | **Artists and promoters named in the imported event data** | **yes — and it must be added by hand** | Neither customers nor employees, and **the largest group of data subjects in the system**. A form filled in with only the two standard boxes would omit almost everyone |
 
@@ -631,30 +643,21 @@ Settled questions, so they are not re-litigated. The reasoning is in the section
 | 10  | Licence tooling        | Not ORT: generated notices plus two allow-list gates and a PR deny-list                                           | §9.1                 |
 | 11  | Version source         | Build-stamped from the release tags and commits, never the GitHub API                                             | §4.1                 |
 | 12  | Role mailboxes         | Hetzner Webhosting S, **not** a mail specialist — the account-level AVV already covers it, so no second processor | `ops/EMAIL.md`       |
-| 13  | Art. 28 contracts      | One: Hetzner's AVV, concluded. No third-country transfer to name at all                                           | §14                  |
+| 13  | Art. 28 contracts      | Two: Hetzner's AVV and Anthropic's DPA. The translation is the one third-country transfer — #1233                 | §7.3a                |
 | 14  | Event-data retention   | Kept while the calendar operates, no deletion by age; erased on Art. 21 objection — #362                          | §7.3a                |
 | 15  | Terms of Use           | None. No accounts and no contract with the visitor, so the §7.6 disclaimer is the whole answer — #478             | §7.6                 |
+| 16  | Notice review          | Our own, article by article — #279. A qualified opinion is deferred with its triggers — #788                      | `legal-review/`      |
 
-## 14. Open items — what is **not** signed off
+## 14. Open items
 
-The site cannot go live until these are closed. They are tracked as issues in the `v0.3 — Launch-ready` and
-`v1.0 — Go-live` milestones, with the deployment-blocked ones labelled `needs-deployment`. This section says what each
-one _means_.
-
-**Blocking:**
-
-1. **§7.3a does not cover the role mailboxes.** An email address is a category of personal data the processing
-   inventory was not written against. So is the body of whatever someone writes to `hello@` or `security@`. That is a
-   disclosure question wanting a legal read, not a mechanical edit.
-2. **A qualified review of the German privacy notice.** The drafts are careful and test-covered, and neither makes
-   them _reviewed_. This is the item no amount of engineering substitutes for.
-   [`LEGAL_REVIEW_BRIEF.md`](LEGAL_REVIEW_BRIEF.md) is what a reviewer is handed, and carries the questions.
+**No item blocks go-live.** A new blocking item goes here, and the site does not go public while one is open. Each item
+is also an issue, and this section says what it _means_.
 
 **Not blocking, recorded so it is not rediscovered:**
 
-3. **`1.0.0` and dropping the beta badge** — one decision, deliberately deferred (§4.7).
-4. **An accessibility statement** — only publishable once conformance is actually measured (§12).
-5. **`FUNDING.yml`** — deliberately absent until donations are wanted (§8.4).
+1. **`1.0.0` and dropping the beta badge** — one decision, deliberately deferred (§4.7).
+2. **An accessibility statement** — only publishable once conformance is actually measured (§12).
+3. **`FUNDING.yml`** — deliberately absent until donations are wanted (§8.4).
 
 ### Two rules this section exists to enforce
 

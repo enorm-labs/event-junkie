@@ -150,8 +150,8 @@ const { t } = useI18n()
       </p>
       <p>
         Artist profiles are checked against MusicBrainz, an open music database. Where they match,
-        the official links and the picture come from there and from Wikidata. Only the artist's stage
-        name is sent.
+        the official links and the picture come from there and from Wikidata. Only the artist's
+        stage name is sent.
       </p>
       <p>
         <strong>Purpose:</strong> informing the public about publicly announced cultural events.
@@ -240,6 +240,11 @@ const { t } = useI18n()
         If you contact us by email, or open an issue on GitHub, that data is processed to handle
         your request (Art. 6 (1) (f), or Art. 6 (1) (b) where it concerns a contract). GitHub is
         operated by a US company; choosing to write there rather than by email is yours.
+      </p>
+      <p>
+        <strong>Retention:</strong> we keep an email until your request is dealt with, and delete it
+        <strong>one year after that at the latest</strong>. The year covers follow-up questions
+        about the same request.
       </p>
     </section>
 

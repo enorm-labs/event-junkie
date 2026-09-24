@@ -59,7 +59,7 @@ export const PROCESSOR_CONTRACTS_PENDING = false
  * the deployed configuration, not the plan: #279's pass found the notice still describing image
  * requests to venue servers that `images.serving.enabled` had stopped three days earlier.
  */
-export const LAST_REVIEWED = '2026-09-09'
+export const LAST_REVIEWED = '2026-09-24'
 
 /**
  * The supervisory authority (Art. 13 (2) (d) GDPR). Competence follows where the controller is
