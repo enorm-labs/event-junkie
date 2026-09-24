@@ -1,5 +1,6 @@
 package de.norm.events.scraper.arcanoa
 
+import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
@@ -146,8 +147,16 @@ class ArcanoaOverviewPageScraper(
             return null
         }
 
-        val eventType = inferConcertVenueType(title)
         val subtitle = rawSubtitle?.let { normalizeDashSpacing(it.trimStart('+', '-', ' ')) }?.takeIf { it.isNotBlank() }
+        val keywordType = inferConcertVenueType(title)
+        val artists = parseArtists(title, subtitle, keywordType)
+        // An unmarked night defaults to CONCERT. A standing format whose title names no act is not a concert.
+        val eventType =
+            if (keywordType == EventType.CONCERT.name && artists.isEmpty() && RECURRING_FORMAT_PATTERN.containsMatchIn(title)) {
+                EventType.OTHER.name
+            } else {
+                keywordType
+            }
 
         return ScrapedEvent(
             title = title,
@@ -160,7 +169,7 @@ class ArcanoaOverviewPageScraper(
             // No per-event pages on this single-page site — the programme page is the source.
             sourceUrl = baseUrl,
             sourceId = "${EventSource.ARCANOA.sourceIdPrefix}$eventDate-${SlugGenerator.slugify(title)}",
-            artists = parseArtists(title, subtitle, eventType)
+            artists = artists
         )
     }
 
@@ -284,17 +293,18 @@ class ArcanoaOverviewPageScraper(
 
         /**
          * Arcanoa's standing weekly formats, programmes rather than performers: the Monday/Tuesday
-         * open stage and jam, the Wednesday `SpielleuteSession` medieval night, the Liedermacher
+         * open stage (`freie Bühne`) and jam, the Wednesday `SpielleuteSession` medieval night, the Liedermacher
          * festival, and the venue's own name leading its house nights. Venue-local rather than in the
          * shared `ArtistNameMapping` denylist — every entry is specific to this programme. Matched as a
-         * substring on an already-split act name, so a co-billed real act survives. `jam session`
+         * substring on an already-split act name, so a co-billed real act survives; a title that
+         * matches and leaves no act is typed OTHER, not CONCERT. `jam session`
          * beside `\bjam\b` is not redundant: the venue also writes "JamSession" run-together, where
          * the trailing boundary `\bjam\b` needs is absent — and a bare `\bjam` prefix would swallow
          * "Jamiroquai".
          */
         private val RECURRING_FORMAT_PATTERN =
             Regex(
-                """\barcanoa\b|open\s*stage|\bjam[\s-]*session\b|\bjam\b|spielleute|mittelalter""" +
+                """\barcanoa\b|open\s*stage|freie\s+bühne|\bjam[\s-]*session\b|\bjam\b|spielleute|mittelalter""" +
                     """|liedermacherfestival|singersongwriter""",
                 RegexOption.IGNORE_CASE
             )
