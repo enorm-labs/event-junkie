@@ -30,6 +30,19 @@ data class ArtistResponse(
     val descriptionLicenceId: String?,
     @Schema(description = "The page `description` was taken from", example = "https://en.wikipedia.org/wiki/Buffalo_Tom")
     val descriptionSourceUrl: String?,
+    @Schema(
+        description = "The other wiki's lead beside a Wikipedia `description`, in the other language; cleared when `description` is edited",
+        example = "Buffalo Tom ist eine US-amerikanische Alternative-Rock-Band aus Boston…"
+    )
+    val descriptionAlt: String?,
+    @Schema(description = "Language of `descriptionAlt`: `de` or `en`. Null exactly when `descriptionAlt` is.", example = "de")
+    val descriptionAltLanguage: String?,
+    @Schema(description = "Who to credit for `descriptionAlt`", example = "Wikipedia")
+    val descriptionAltAttribution: String?,
+    @Schema(description = "SPDX identifier of the licence `descriptionAlt` is published under", example = "CC-BY-SA-4.0")
+    val descriptionAltLicenceId: String?,
+    @Schema(description = "The page `descriptionAlt` was taken from", example = "https://de.wikipedia.org/wiki/Buffalo_Tom")
+    val descriptionAltSourceUrl: String?,
     @Schema(description = "URL of the artist's photo or band logo", example = "https://example.com/adicts.jpg")
     val imageUrl: String?,
     @Schema(description = "Who to credit for `imageUrl`", example = "Photographer Name, via Wikimedia Commons")
@@ -90,6 +103,11 @@ data class ArtistResponse(
                 descriptionAttribution = artist.descriptionAttribution,
                 descriptionLicenceId = artist.descriptionLicenceId,
                 descriptionSourceUrl = artist.descriptionSourceUrl,
+                descriptionAlt = artist.descriptionAlt,
+                descriptionAltLanguage = artist.descriptionAltLanguage,
+                descriptionAltAttribution = artist.descriptionAltAttribution,
+                descriptionAltLicenceId = artist.descriptionAltLicenceId,
+                descriptionAltSourceUrl = artist.descriptionAltSourceUrl,
                 imageUrl = artist.imageUrl,
                 imageAttribution = artist.imageAttribution,
                 imageLicenceId = artist.imageLicenceId,

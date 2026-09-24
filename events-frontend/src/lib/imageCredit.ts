@@ -80,26 +80,41 @@ export interface AttributedText {
   descriptionAttribution?: string | null
   descriptionLicenceId?: string | null
   descriptionSourceUrl?: string | null
+  descriptionAlt?: string | null
+  descriptionAltAttribution?: string | null
+  descriptionAltLicenceId?: string | null
+  descriptionAltSourceUrl?: string | null
 }
 
 /**
- * The credit for [row]'s description, or `null` for a text a venue or a person wrote, which owes
- * none. CC BY-SA text carries the same three parts as an image, so the licence table is shared.
+ * The credit for [row]'s description on [side], or `null` for a text a venue or a person wrote,
+ * which owes none. Each Wikipedia lead links its own article. CC BY-SA text carries the same three
+ * parts as an image, so the licence table is shared.
  */
-export function textCredit(row: AttributedText | null | undefined): ImageCredit | null {
-  if (
-    !row?.description ||
-    !row.descriptionAttribution ||
-    !row.descriptionLicenceId ||
-    !row.descriptionSourceUrl
-  ) {
-    return null
-  }
-  const licence = LICENCES[row.descriptionLicenceId]
+export function textCredit(
+  row: AttributedText | null | undefined,
+  side: 'original' | 'alt' = 'original',
+): ImageCredit | null {
+  const [text, attribution, licenceId, sourceUrl] =
+    side === 'alt'
+      ? [
+          row?.descriptionAlt,
+          row?.descriptionAltAttribution,
+          row?.descriptionAltLicenceId,
+          row?.descriptionAltSourceUrl,
+        ]
+      : [
+          row?.description,
+          row?.descriptionAttribution,
+          row?.descriptionLicenceId,
+          row?.descriptionSourceUrl,
+        ]
+  if (!text || !attribution || !licenceId || !sourceUrl) return null
+  const licence = LICENCES[licenceId]
   return {
-    attribution: row.descriptionAttribution,
-    sourceUrl: row.descriptionSourceUrl,
-    licenceLabel: licence?.label ?? row.descriptionLicenceId,
+    attribution,
+    sourceUrl,
+    licenceLabel: licence?.label ?? licenceId,
     licenceUrl: licence?.url ?? null,
   }
 }

@@ -75,7 +75,9 @@ const credit = computed(() => imageCredit(artist.value))
 const description = computed(() =>
   artist.value ? descriptionFor(artist.value, locale.value as Locale) : null,
 )
-const descriptionCredit = computed(() => textCredit(artist.value))
+const descriptionCredit = computed(() =>
+  description.value ? textCredit(artist.value, description.value.side) : null,
+)
 </script>
 
 <template>

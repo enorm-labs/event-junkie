@@ -231,8 +231,9 @@ constraint keeps the two apart. The second sentence of the notice paragraph name
 **Wikipedia is the same source again, for an ensemble's description** (ADR-031 step C+,
 [#1837](https://github.com/enorm-labs/event-junkie/issues/1837)). This applies to a group, an orchestra or a choir
 with an exact match and no description. The importer asks Wikidata for the item's German and English article titles. It then asks
-Wikipedia for the lead of one article. What leaves the stack is a Wikidata id and an article title. The lead is stored
-in `description`, which the row below already lists, with its credit and licence (CC BY-SA 4.0). A person gets no lead,
+Wikipedia for the lead of each article. What leaves the stack is a Wikidata id and the article titles. The leads are stored
+in `description` and `description_alt`, each with its credit and licence (CC BY-SA 4.0). Both are the `description`
+that the row below already lists. A person gets no lead,
 because the first sentence of a person's article is a birth date and a birthplace. A lead that contains birth data is
 refused on an ensemble too. A lead often names the members of the band. Those names are published stage credits, and
 the removal route in §7.3 covers them with the description. The third sentence of the notice paragraph names the source.
@@ -305,8 +306,8 @@ under § 16 UrhG and a processing operation under the DSGVO. Two consequences fo
   takedown deliberately covers a venue's own image and its events' images, and stops there. Deleting a performer's
   photograph on one venue's request would remove it from every other listing.
 - **An artist description from Wikipedia is erased through §7.3 too, with the member names in it.** Deleting the text
-  clears its credit. An edit through the admin API does the same, so a person's own text never carries Wikipedia's
-  credit.
+  clears its credit and the lead in the other language. An edit through the admin API does the same, so a person's
+  own text never carries Wikipedia's credit.
 - **A venue photograph from an open archive answers to its photographer.** 43 of the 86 venue images come from
   Wikimedia Commons or Flickr (#1275). The venue neither took nor published them, so a request to remove one reaches
   us from the photographer. The credit under each picture names that person and links the original.

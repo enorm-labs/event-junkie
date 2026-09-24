@@ -28,7 +28,7 @@ object ArtistEnrichment {
         val columns: Map<String, String>,
         val fields: List<String>,
         val imageRefusal: String?,
-        val descriptionRefusal: String? = null
+        val descriptionRefusals: List<String> = emptyList()
     ) {
         val isEmpty: Boolean get() = columns.isEmpty()
     }
@@ -48,12 +48,26 @@ object ArtistEnrichment {
         entity: MusicBrainzArtist
     ): Boolean = artist.description == null && typeOf(artist, entity)?.isEnsemble == true && wikidataIdOf(entity) != null
 
+    /**
+     * Whether the row may take the other wiki's lead beside its own (#1849): an ensemble whose
+     * description is a Wikipedia lead, with no alt yet. A venue's or a person's text takes none.
+     */
+    fun wantsDescriptionAlt(
+        artist: ArtistEntity,
+        entity: MusicBrainzArtist
+    ): Boolean =
+        artist.descriptionAttribution != null &&
+            artist.descriptionLanguage != null &&
+            artist.descriptionAlt == null &&
+            typeOf(artist, entity)?.isEnsemble == true &&
+            wikidataIdOf(entity) != null
+
     fun fill(
         artist: ArtistEntity,
         entity: MusicBrainzArtist,
         image: CommonsImage?,
         maxBytes: Long,
-        extract: WikipediaExtract? = null
+        extracts: List<WikipediaExtract> = emptyList()
     ): Filled {
         val columns = linkedMapOf<String, String>()
         val fields = mutableListOf<String>()
@@ -101,19 +115,31 @@ object ArtistEnrichment {
                 fields += "image"
             }
         }
-        var descriptionRefusal: String? = null
-        if (extract != null && wantsDescription(artist, entity)) {
-            descriptionRefusal = WikipediaLead.refusalOf(extract.text)
-            if (descriptionRefusal == null) {
-                columns["description"] = extract.text
-                columns["description_language"] = extract.language
-                columns["description_attribution"] = WikipediaLead.ATTRIBUTION
-                columns["description_licence_id"] = WikipediaLead.LICENCE_ID
-                columns["description_source_url"] = extract.pageUrl
-                fields += "description"
+        val choice =
+            when {
+                extracts.isEmpty() -> null
+                wantsDescription(artist, entity) -> WikipediaLead.choose(extracts)
+                wantsDescriptionAlt(artist, entity) -> WikipediaLead.choose(extracts, artist.descriptionLanguage)
+                else -> null
             }
-        }
-        return Filled(columns, fields, refusal, descriptionRefusal)
+        choice?.primary?.let { lead(columns, fields, "description", it) }
+        choice?.alt?.let { lead(columns, fields, "description_alt", it) }
+        return Filled(columns, fields, refusal, choice?.refusals.orEmpty())
+    }
+
+    /** A lead and its credit under [prefix], `description` or `description_alt`. */
+    private fun lead(
+        columns: MutableMap<String, String>,
+        fields: MutableList<String>,
+        prefix: String,
+        extract: WikipediaExtract
+    ) {
+        columns[prefix] = extract.text
+        columns["${prefix}_language"] = extract.language
+        columns["${prefix}_attribution"] = WikipediaLead.ATTRIBUTION
+        columns["${prefix}_licence_id"] = WikipediaLead.LICENCE_ID
+        columns["${prefix}_source_url"] = extract.pageUrl
+        fields += prefix
     }
 
     private fun typeOf(
