@@ -1,9 +1,11 @@
 package de.norm.events.scraper.junctionbar
 
+import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.EventImporter
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.VenueLimitations
 import de.norm.events.scraper.attrAt
@@ -122,5 +124,11 @@ class JunctionBarWebsiteImporter(
     }
 }
 
-/** Nothing this source withholds needs declaring (#715). */
-val JUNCTION_BAR_LIMITATIONS = VenueLimitations(EventSource.JUNCTION_BAR)
+val JUNCTION_BAR_LIMITATIONS =
+    VenueLimitations(
+        EventSource.JUNCTION_BAR,
+        AcceptedLimitation(
+            LimitedAspect.PER_EVENT_PAGE,
+            "the programme is one page per month; a live night's only page of its own is its ticket-shop entry, kept as the ticket link"
+        )
+    )
