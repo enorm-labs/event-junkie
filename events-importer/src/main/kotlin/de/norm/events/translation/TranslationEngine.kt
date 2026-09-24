@@ -14,6 +14,12 @@ interface TranslationEngine {
     val id: String
 
     /**
+     * Whether this engine is switched on. A switched-off engine is never asked, so its nulls do not
+     * count as failed translations (#1810).
+     */
+    val enabled: Boolean get() = true
+
+    /**
      * Translates [request], or returns null when it cannot.
      *
      * Null is an ordinary outcome, not an error: an engine that is switched off returns it for

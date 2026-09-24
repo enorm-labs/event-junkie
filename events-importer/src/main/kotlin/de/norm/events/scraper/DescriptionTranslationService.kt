@@ -109,7 +109,7 @@ class DescriptionTranslationService(
     ): Boolean {
         val description = event.description
         val from = event.descriptionLanguage?.let { code -> DescriptionLanguage.entries.find { it.code == code } }
-        if (description == null || from == null) return false
+        if (!engine.enabled || description == null || from == null) return false
         val to = if (from == DescriptionLanguage.GERMAN) DescriptionLanguage.ENGLISH else DescriptionLanguage.GERMAN
 
         val request =

@@ -44,7 +44,8 @@ class DescriptionTranslationServiceTest {
     private val artistRepository = mockk<ArtistRepository>()
     private val eventSourceRepository = mockk<EventSourceRepository>()
     private val venueRepository = mockk<VenueRepository>()
-    private val engine = mockk<TranslationEngine>()
+    private val engine = mockk<TranslationEngine> { every { enabled } returns true }
+    private val registry = SimpleMeterRegistry()
 
     private val service =
         DescriptionTranslationService(
@@ -55,7 +56,7 @@ class DescriptionTranslationServiceTest {
             venueRepository = venueRepository,
             engine = engine,
             properties = TranslationProperties(),
-            metrics = ImporterMetrics(SimpleMeterRegistry())
+            metrics = ImporterMetrics(registry)
         )
 
     @Test
@@ -145,6 +146,23 @@ class DescriptionTranslationServiceTest {
             service.translateFor(source(), VENUE_NAME, licences(SourceLicence.PERMITTED)) shouldBe 0
 
             coVerify(exactly = 0) { eventRepository.save(any()) }
+            translations("skipped") shouldBe 1.0
+        }
+
+    // Staging runs with the engine off. Counted as `skipped`, every candidate fired
+    // ej-translations-failing, the alert for an engine that fails (#1810).
+    @Test
+    @DisplayName("a switched-off engine is not asked and counts nothing")
+    fun `counts nothing when the engine is off`(): Unit =
+        runBlocking {
+            givenOneCandidate(event(description = GERMAN_TEXT, language = "de"))
+            every { engine.enabled } returns false
+            every { engine.id } returns "none"
+
+            service.translateFor(source(), VENUE_NAME, licences(SourceLicence.PERMITTED)) shouldBe 0
+
+            coVerify(exactly = 0) { engine.translate(any()) }
+            registry.find(ImporterMetrics.TRANSLATIONS).counters().sumOf { it.count() } shouldBe 0.0
         }
 
     // The hash is what makes a re-import cheap: an unchanged description needs no second call.
@@ -257,6 +275,13 @@ class DescriptionTranslationServiceTest {
         // A relaxed mock answers `save` with a bare Object, which the generic return type cannot hold.
         coEvery { eventRepository.save(any<EventEntity>()) } answers { firstArg() }
     }
+
+    private fun translations(outcome: String): Double =
+        registry
+            .find(ImporterMetrics.TRANSLATIONS)
+            .tag("outcome", outcome)
+            .counter()
+            ?.count() ?: 0.0
 
     private fun licences(translation: SourceLicence?) =
         SourceLicences(description = SourceLicence.UNCLEAR, image = SourceLicence.UNCLEAR, translation = translation)
