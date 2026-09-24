@@ -55,6 +55,51 @@ class HeimathafenApiScraperTest {
           "featured_images":{},"acf":{"event_performances":[$performance]}}]
         """.trimIndent()
 
+    /** Wraps a title and an `event_cast` into a minimal one-post payload with one performance. */
+    private fun payloadWithCast(
+        title: String,
+        cast: String
+    ): String =
+        """
+        [{"id":98,"link":"https://heimathafen-neukoelln.de/events/y/","title":{"rendered":"$title"},
+          "excerpt":{"rendered":""},"content":{"rendered":""},"class_list":["events_cat-musik"],
+          "featured_images":{},"acf":{"event_cast":"$cast",
+          "event_performances":[{"performance_date_time":"11/02/2026 8:00 p.m."}]}}]
+        """.trimIndent()
+
+    // The venue names each act as the lead <strong> of its own paragraph, which is what decides a
+    // comma no rule over the title can safely cut (#1789).
+    @Test
+    fun `bills the acts the cast names when the title names them too`() {
+        val cast =
+            "<p><strong>Jamie Baum Quartet</strong><br />Jamie Baum: flutes</p>" +
+                "<p><strong>Anke Helfrich Trio</strong><br />Anke Helfrich: piano</p>" +
+                "<p><strong>Judith Owen Septett</strong><br />Judith Owen: vocals</p>"
+        val events = scraper.scrape(payloadWithCast("JAMIE BAUM QUARTET, ANKE HELFRICH TRIO &amp; JUDITH OWEN SEPTETT", cast)).events
+
+        events.single().artists.map { it.name } shouldContainExactly
+            listOf("Jamie Baum Quartet", "Anke Helfrich Trio", "Judith Owen Septett")
+    }
+
+    // The same field carries a theatre bill's section labels, which name nobody the title bills.
+    @Test
+    fun `ignores a cast whose leads the title does not name`() {
+        val cast =
+            "<p><strong>Die Rixdorfer Perlen sind</strong><br />Mieze, Marianne, Jule</p>" +
+                "<p><strong>In weiteren Rollen</strong><br />Inka Löwendorf</p>"
+        val events = scraper.scrape(payloadWithCast("DIE RIXDORFER PERLEN", cast)).events
+
+        events.single().artists.map { it.name } shouldContainExactly listOf("DIE RIXDORFER PERLEN")
+    }
+
+    // One lead corroborates nothing the title does not already say.
+    @Test
+    fun `ignores a cast naming a single act`() {
+        val events = scraper.scrape(payloadWithCast("KAE TEMPEST", "<p><strong>Kae Tempest</strong><br />vocals</p>")).events
+
+        events.single().artists.map { it.name } shouldContainExactly listOf("KAE TEMPEST")
+    }
+
     @Test
     fun `reports the page's post count so the caller can page`() {
         page.postCount shouldBe 100

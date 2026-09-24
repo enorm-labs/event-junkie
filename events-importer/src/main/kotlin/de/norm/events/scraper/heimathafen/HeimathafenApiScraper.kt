@@ -127,7 +127,7 @@ class HeimathafenApiScraper(
                 priceBoxOffice = boxOffice,
                 priceNote = priceNote,
                 genre = genre,
-                artists = buildArtistsForEventType(title, subtitle, eventType),
+                artists = castActs(acf.path("event_cast").asString(""), title) ?: buildArtistsForEventType(title, subtitle, eventType),
                 promoters = parsePromoters(acf.path("event_organiser").asString(""))
             )
 
@@ -135,6 +135,40 @@ class HeimathafenApiScraper(
             .path("event_performances")
             .mapNotNull { performance -> parsePerformance(performance, postId, shared) }
             .filterNot { it.eventDate.isBefore(today) }
+    }
+
+    /**
+     * The billed acts from the venue's own `event_cast`, or `null` when it does not name them.
+     *
+     * Each act opens a paragraph of the cast as a lead `<strong>`, with its personnel under it:
+     * `<p><strong>Jamie Baum Quartet</strong><br>Jamie Baum: flutes …</p>`. Reading those leads is
+     * what removes the guess from a title like `JAMIE BAUM QUARTET, ANKE HELFRICH TRIO & JUDITH
+     * OWEN SEPTETT`, whose comma no rule over the string can safely cut (#1789).
+     *
+     * **A lead is not always an act.** The same field carries section labels for a theatre bill —
+     * `Die Rixdorfer Perlen sind`, `In weiteren Rollen`, `Regie,Text:` — so the cast is trusted
+     * only when it corroborates the title: every lead has to appear in it, and there have to be at
+     * least two. A cast that names someone the title does not is a credit list, and the title wins.
+     */
+    private fun castActs(
+        castHtml: String,
+        title: String
+    ): List<ScrapedArtist>? {
+        val leads =
+            Jsoup
+                .parseBodyFragment(castHtml)
+                .select("p")
+                .mapNotNull { paragraph ->
+                    paragraph
+                        .selectFirst("> strong")
+                        ?.text()
+                        ?.trim()
+                        ?.takeIf { it.isNotBlank() }
+                }
+        val corroborated = leads.size >= MIN_CAST_ACTS && leads.all { title.contains(it, ignoreCase = true) }
+        return leads
+            .takeIf { corroborated }
+            ?.map { ScrapedArtist(name = it, role = "HEADLINER") }
     }
 
     /** One event from a single `event_performances` entry, or `null` when its date is unparseable. */
@@ -371,6 +405,9 @@ class HeimathafenApiScraper(
 
         /** A booking-fee qualifier, which makes even a single-tier price worth keeping as a note. */
         val FEE_NOTE = Regex("""geb(?:ü|ue)hr""", RegexOption.IGNORE_CASE)
+
+        /** A cast naming one act corroborates nothing the title does not already say. */
+        const val MIN_CAST_ACTS = 2
 
         /** The one organiser phrasing that unambiguously names a promoter. */
         val ORGANISER_INTRO = Regex("""^\s*eine\s+veranstaltung\s+von\s+""", RegexOption.IGNORE_CASE)
