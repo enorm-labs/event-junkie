@@ -62,13 +62,15 @@ reaches every bucket including `-backups` and `-tfstate`. Here the same objectio
 backups and the OpenTofu state turns a server-side request forgery into an infrastructure compromise. `ImageUrlValidator`
 is a control and not a guarantee. It says so itself.
 
-**So create a keypair for this bucket and nothing else**, and scope it to `event-junkie-images` if Hetzner's bucket
-policies allow. This is a decision about what you type in, not a change to any manifest.
+**So create a keypair for this bucket and nothing else.** A second keypair alone does not narrow the reach: a Hetzner
+keypair reads and writes every bucket of the project by default. A bucket policy narrows it, per key and per action
+([Hetzner's S3 credentials FAQ](https://docs.hetzner.com/storage/object-storage/faq/s3-credentials/)). This repository
+applies none. This is a decision about what you type in, not a change to any manifest.
 
 **One Secret, mounted into two workloads.** It is one bucket, so a second keypair is a second thing to rotate for no
 gain. The scoping matters twice over here. With `images.serving.enabled` the same keypair sits in the pod that Traefik
-can reach. Hetzner also scopes a keypair to a bucket and not to a verb. The BFF therefore holds a key that can write,
-although it only ever gets.
+can reach. Without a bucket policy that allows it `s3:GetObject` only, the BFF holds a key that can write, although it
+only ever gets.
 
 ```sh
 kubectl create secret generic event-junkie-images -n event-junkie \
@@ -173,7 +175,7 @@ backups and the OpenTofu state. Encrypting that into a public repository is the 
 
 > **Worth fixing rather than only documenting.** A pod that ingests untrusted content should not hold a credential that reaches the infrastructure state. This
 > one ingests venue HTML in error strings, and request paths from the open internet. **Give OpenObserve its own S3 keypair**, so it can be rotated without
-> breaking the state backend. Scope it to `-o2` if Hetzner's bucket policies allow. The Secret below takes whatever keys it is given. This is a decision about
+> breaking the state backend. Scope it to `-o2` with a bucket policy. The Secret below takes whatever keys it is given. This is a decision about
 > what you type into it, not a change to any manifest.
 
 **Production took that advice and staging has not yet** ([#880](https://github.com/enorm-labs/event-junkie/issues/880)). Production's instance holds a
