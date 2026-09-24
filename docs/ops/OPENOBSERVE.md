@@ -15,6 +15,7 @@ re-argue it.
 kubectl --context event-junkie-staging -n observability \
   port-forward svc/openobserve-openobserve-standalone 5080:5080     # then http://localhost:5080/
 flux --context event-junkie-staging get helmrelease openobserve -n flux-system
+scripts/o2-query.sh staging sweep                                  # the last day's errors, warnings, events and alerts; /log-check
 ```
 
 The production forms are the same commands with `--context event-junkie-production`, over that cluster's tunnel (`10.10.0.1`, CLUSTER_ACCESS.md §Two
