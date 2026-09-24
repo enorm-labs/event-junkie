@@ -29,6 +29,7 @@ flowchart LR
         venue["Venue websites"]
         le["Let's Encrypt"]
         claude["Claude API"]
+        wiki["MusicBrainz · Wikidata · Commons · Wikipedia"]
         ext["healthchecks.io · Better Stack"]
     end
 
@@ -68,6 +69,7 @@ flowchart LR
     bff -->|"read"| s3
     importer -->|"80 · 443 · public addresses only"| venue
     importer --> claude
+    importer -->|"names and ids only"| wiki
     importer --> pg
     importer -->|"write"| s3
     certmgr --> le
@@ -115,6 +117,7 @@ Every namespace under the chart starts from default deny. Each arrow below is a 
 | importer     | Any public address, TCP 80 and 443          | `allow-scraping`. Excepts the three RFC 1918 ranges and `169.254/16`. Pods have no IPv6 address |
 | importer     | PostgreSQL                                  | `allow-database`, one address                                                                   |
 | importer     | Object Storage, 443                         | `allow-scraping` covers it, since the bucket is a public address                                |
+| importer     | MusicBrainz, Wikidata, Commons, Wikipedia   | `allow-scraping` covers them, since they are public addresses. B5 lists what is sent            |
 | BFF          | PostgreSQL, Object Storage on 443           | `allow-database` and `allow-object-storage`. The BFF never reaches a venue                      |
 | frontend     | The BFF service port                        | `allow-frontend-to-bff`, for the injector sidecar                                               |
 | cert-manager | Let's Encrypt, the Hetzner API on staging   | `cert-manager-netpol.yaml` per cluster                                                          |
@@ -154,12 +157,13 @@ Likelihood and impact are each `low`, `medium` or `high`, judged for this system
 
 ### B3 · BFF and importer → PostgreSQL
 
-| Threat                                   | STRIDE | Likelihood | Impact | Status                                                                                                                             |
-| ---------------------------------------- | ------ | ---------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------- |
-| SQL injection through a query parameter  | T, I   | low        | high   | Mitigated. R2DBC binds every parameter. `EventSearchRepository.kt` whitelists sort columns. #1421's API scan fuzzes each parameter |
-| The database answers on a public address | I, E   | low        | high   | Mitigated. `listen_addresses` is `localhost` and the private address. `pg_hba.conf` allows the subnet and the pod CIDR             |
-| The `events` password leaks from git     | I      | low        | low    | Accepted. SOPS with age. SECRETS.md records that the password is useless without network access                                    |
-| A backup is lost or restored wrong       | T, D   | low        | high   | Mitigated. wal-g to Object Storage, a quarterly restore drill (`restore-drill-reminder.yml`), [BACKUPS.md](../ops/BACKUPS.md)      |
+| Threat                                            | STRIDE | Likelihood | Impact | Status                                                                                                                                      |
+| ------------------------------------------------- | ------ | ---------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| SQL injection through a query parameter           | T, I   | low        | high   | Mitigated. R2DBC binds every parameter. `EventSearchRepository.kt` whitelists sort columns. #1421's API scan fuzzes each parameter          |
+| The database answers on a public address          | I, E   | low        | high   | Mitigated. `listen_addresses` is `localhost` and the private address. `pg_hba.conf` allows the subnet and the pod CIDR                      |
+| The `events` password leaks from git              | I      | low        | low    | Accepted. SOPS with age. SECRETS.md records that the password is useless without network access                                             |
+| A backup is lost or restored wrong                | T, D   | low        | high   | Mitigated. wal-g to Object Storage, a quarterly restore drill (`restore-drill-reminder.yml`), [BACKUPS.md](../ops/BACKUPS.md)               |
+| A backup is read by a key that reaches its bucket | I      | low        | high   | Accepted. wal-g compresses the base backups and the WAL and does not encrypt them (`backups.sh`). Any key of the project can read them, B10 |
 
 ### B4 · Importer → venue websites
 
@@ -173,12 +177,21 @@ The importer is the one workload that talks to the open internet. Everything it 
 | Bad data poisons the dataset                            | T      | medium     | low    | Accepted. A venue can publish anything about itself. `/plausibility-check` and `/data-quality-audit` read for it                             |
 | Our scraping harms a venue                              | D      | low        | medium | Mitigated. `PerHostThrottlingFilter.kt`, `RobotsTxtFilter.kt`, one User-Agent ([ADR-007](../adr/ADR-007_WEB_SCRAPING_STRATEGY.md))           |
 
-### B5 · Importer → Claude API
+### B5 · Importer → Claude API, MusicBrainz and Wikimedia
 
-| Threat                                                 | STRIDE | Likelihood | Impact | Status                                                                                                                        |
-| ------------------------------------------------------ | ------ | ---------- | ------ | ----------------------------------------------------------------------------------------------------------------------------- |
-| Venue text instructs the translation model             | T      | medium     | low    | Accepted. The output is a translation stored as text and rendered escaped. The worst case is a wrong translation of one event |
-| The key leaks and someone spends against the workspace | I      | low        | low    | Mitigated. Hand-made, never in git, a spend cap on the workspace. SECRETS.md § `event-junkie-translation`                     |
+After each import the importer looks up the billed artists in MusicBrainz ([ADR-031](../adr/ADR-031_ARTIST_IDENTITY_HUB.md)). For an exact match it
+reads a picture from Wikidata and Commons, and an ensemble's lead from Wikipedia. All four are on by default (`app.musicbrainz.enabled`,
+`app.wikimedia.enabled`). Anyone can edit what they return.
+
+| Threat                                                                                | STRIDE | Likelihood | Impact | Status                                                                                                                                                                                                               |
+| ------------------------------------------------------------------------------------- | ------ | ---------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Venue text instructs the translation model                                            | T      | medium     | low    | Accepted. The output is a translation stored as text and rendered escaped. The worst case is a wrong translation of one event                                                                                        |
+| The key leaks and someone spends against the workspace                                | I      | low        | low    | Mitigated. Hand-made, never in git, a spend cap on the workspace. SECRETS.md § `event-junkie-translation`                                                                                                            |
+| An edited MusicBrainz or Wikipedia entry puts false or hostile text on an artist page | T      | medium     | low    | Mitigated. Only an exact match is enriched. The text is stored as text and rendered escaped, as in B2. `WikipediaLead.kt` refuses a lead with birth data or under 80 characters. Each lead keeps its CC BY-SA credit |
+| A Commons picture carries a licence we may not use                                    | T      | low        | medium | Mitigated. `CommonsLicences` in `CommonsImage.kt` maps known templates to SPDX and refuses any other. The picture, author, licence and source page are stored together or not at all                                 |
+| A Commons picture URL points a fetch somewhere hostile                                | I, D   | low        | low    | Mitigated. The picture goes through the same image cache as a venue image, so B4's `ImageFetcher.kt` and `allow-scraping` apply                                                                                      |
+| A lookup sends more than a name                                                       | I      | low        | low    | Mitigated. Only a stage name, a MusicBrainz id, a Wikidata id and article titles leave the cluster. `application.yaml`, [LEGAL.md](../LEGAL.md) §7.3a                                                                |
+| MusicBrainz or Wikimedia fails for days, unseen                                       | D      | medium     | low    | Mitigated. Polite delays and retries, and a pass stops after three failures in a row. `ej-musicbrainz-failing` and `ej-musicbrainz-backlog-stuck` mail `alerts@` (#1900)                                             |
 
 ### B6 · GitHub Actions → GHCR → Flux → cluster
 
@@ -213,7 +226,8 @@ The importer is the one workload that talks to the open internet. Everything it 
 
 ### B9 · Agent workflows → repository
 
-Five `agent-*.yml` workflows run Claude with a shell. The action replaces `GITHUB_TOKEN` in the process with the `claude` App's installation token.
+The `agent-*.yml` workflows run Claude with a shell: `agent-comments`, `agent-docs`, `agent-owasp`, `agent-plausibility`, `agent-refactor` and
+`agent-security`. The action replaces `GITHUB_TOKEN` in the process with the `claude` App's installation token.
 That App holds `contents`, `pull_requests`, `workflows` and `actions` at `write`. `agent-owasp.yml` and `agent-plausibility.yml` carry a second
 job, `notify`, with `issues: write` (#1499). The agent never runs in that job.
 
@@ -228,11 +242,11 @@ job, `notify`, with `issues: write` (#1499). The agent never runs in that job.
 
 ### B10 · Object Storage and imgproxy → visitors
 
-| Threat                                      | STRIDE | Likelihood | Impact | Status                                                                                                                             |
-| ------------------------------------------- | ------ | ---------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------- |
-| imgproxy fetches an arbitrary URL           | I, E   | low        | medium | Mitigated. It binds to localhost in the importer pod, `IMGPROXY_ALLOWED_SOURCES` lists the origins, and every URL is signed        |
-| The images key reaches the backups bucket   | T      | low        | high   | Accepted. Hetzner scopes a key to a bucket, not a verb. A bucket policy is a separate question, SECRETS.md § `event-junkie-images` |
-| A hostile image reaches a visitor's browser | T      | low        | low    | Mitigated. Every derivative is re-encoded by imgproxy at import time ([ADR-020](../adr/ADR-020_IMAGE_PROCESSING.md))               |
+| Threat                                      | STRIDE | Likelihood | Impact | Status                                                                                                                                                                  |
+| ------------------------------------------- | ------ | ---------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| imgproxy fetches an arbitrary URL           | I, E   | low        | medium | Mitigated. It binds to localhost in the importer pod, `IMGPROXY_ALLOWED_SOURCES` lists the origins, and every URL is signed                                             |
+| The images key reaches the backups bucket   | T, I   | low        | high   | Accepted. A Hetzner key reads and writes every bucket of the project until a bucket policy narrows it. This repository applies none. SECRETS.md § `event-junkie-images` |
+| A hostile image reaches a visitor's browser | T      | low        | low    | Mitigated. Every derivative is re-encoded by imgproxy at import time ([ADR-020](../adr/ADR-020_IMAGE_PROCESSING.md))                                                    |
 
 ### Cluster-wide
 
@@ -258,7 +272,9 @@ Each of these is a choice. A reviewer who disagrees with one changes the row and
 - The `events` password is in git under SOPS. Useless without network access.
 - The Hetzner token lives in staging's `cert-manager`. DNS-01 needs it, and the token cannot be scoped narrower.
 - `github-dispatch` holds `contents: write`. `repository_dispatch` needs that scope, and the ruleset still requires a pull request.
-- The images key can write to every bucket the account holds. Hetzner scopes a key to a bucket, not a verb.
+- The images key can read and write every bucket of the project, the backups and the OpenTofu state included. A Hetzner key has that reach until a
+  bucket policy narrows it, and this repository applies none.
+- The database backups are not encrypted. Whoever holds a key of the project can read them.
 - Venue text can steer a translation. The result is text, rendered escaped.
 - One operator, so repudiation is not a threat this system defends against.
 - The collector agent runs `privileged`. Reading every container log means mounting the node, and Pod Security has no per-workload exemption. So it

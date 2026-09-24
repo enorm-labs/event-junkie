@@ -17,6 +17,7 @@ it produces an alert that never fires rather than an error.
     a source quiet for a month     -> ej-source-quiet             (#1498)
     metrics being dropped          -> ej-ingest-shedding          (#625)
     translation failing open       -> ej-translations-failing      (#1301)
+    MusicBrainz failing or stuck   -> ej-musicbrainz-failing, ej-musicbrainz-backlog-stuck (#1900)
     a node waiting for a reboot    -> ej-reboot-pending            (#419)
     a node not being patched       -> ej-patching-stalled          (#419)
     many sources failing on DNS    -> ej-dns-fanout                 (#708)
@@ -361,6 +362,46 @@ rule(
     period_minutes=15,
     frequency_minutes=30,
     silence_minutes=12 * 60,
+)
+
+# MusicBrainz and Wikimedia fail quietly too: a lookup that errors leaves the row
+# unchecked, and the artist page simply goes without its links, picture and lead
+# (#1900). Two shapes. A share of errors, like the translation rule: MusicBrainz
+# answers 503 in bursts and the client retries each three times, so a counted error
+# is one that outlasted them. The week before these rules held at most 3 % errors on
+# either cluster, with 100 to 150 lookups a day. And a backlog that never reaches
+# zero: both gauges read 0 between imports once the backfill drained, so a minimum
+# above zero over two days is a sweep that stopped, not a busy one.
+rule(
+    "ej-musicbrainz-failing",
+    "More than a quarter of the MusicBrainz lookups in 24 hours failed, over at least twenty "
+    "lookups. A failed lookup has already been retried three times, so this is an outage or "
+    "a block, not a 503 burst. The rows stay unchecked and their artist pages lose links, "
+    "pictures and Wikipedia leads. Read the importer log for `MusicBrainz`.",
+    'sum(increase(importer_musicbrainz_lookups_total{state="error"}[24h])) '
+    "/ (sum(increase(importer_musicbrainz_lookups_total[24h])) >= 20)",
+    ">",
+    0.25,
+    stream_name="importer_musicbrainz_lookups_total",
+    period_minutes=15,
+    frequency_minutes=30,
+    silence_minutes=12 * 60,
+)
+
+rule(
+    "ej-musicbrainz-backlog-stuck",
+    "Artist rows have waited for their MusicBrainz lookup (`importer_musicbrainz_unchecked`) "
+    "or their entity read (`importer_musicbrainz_unenriched`) for two whole days. Both drain "
+    "after every import and read 0 in between, so a floor above zero is a sweep that stopped. "
+    "Read the importer log for `MusicBrainz` and `Entity read`.",
+    "sum(min(min_over_time(importer_musicbrainz_unchecked[48h])) > bool 0) "
+    "+ sum(min(min_over_time(importer_musicbrainz_unenriched[48h])) > bool 0)",
+    ">",
+    0,
+    stream_name="importer_musicbrainz_unchecked",
+    period_minutes=60,
+    frequency_minutes=60,
+    silence_minutes=24 * 60,
 )
 
 # --- The platform underneath --------------------------------------------------

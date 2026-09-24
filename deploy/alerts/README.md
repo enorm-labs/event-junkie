@@ -110,19 +110,21 @@ loses its silence window and can fire again immediately.
 
 ## The rules
 
-| Rule                        | Fires when                                                                                                                                   | #271 item          |
-| --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- | ------------------ |
-| `ej-site-down`              | an application Deployment has zero available replicas                                                                                        | site down          |
-| `ej-importer-stale`         | the stalest source passes 36h against a 24h interval                                                                                         | importer failing   |
-| `ej-source-never-succeeded` | a source has never once completed a run ([#618](https://github.com/enorm-labs/event-junkie/issues/618))                                      | importer failing   |
-| `ej-catalogue-emptying`     | future events fall below 500, from a normal ~3,000                                                                                           | zero events        |
-| `ej-source-emptied`         | one source holds zero future events after holding more than twenty this week ([#700](https://github.com/enorm-labs/event-junkie/issues/700)) | zero events        |
-| `ej-source-quiet`           | a source not known to be quiet has held zero future events for 30 days ([#1498](https://github.com/enorm-labs/event-junkie/issues/1498))     | zero events        |
-| `ej-node-disk-filling`      | less than 15% of the node's filesystem is free                                                                                               | disk filling       |
-| `ej-certificate-expiry`     | the soonest certificate is inside 14 days                                                                                                    | certificate expiry |
-| `ej-ingest-shedding`        | OpenObserve is rejecting writes ([#625](https://github.com/enorm-labs/event-junkie/issues/625))                                              | —                  |
-| `ej-ingest-queue-saturated` | the collector's export queue is over 80% full                                                                                                | —                  |
-| `ej-dns-fanout`             | three or more sources are FAILED on a name lookup at once ([#708](https://github.com/enorm-labs/event-junkie/issues/708))                    | importer failing   |
+| Rule                           | Fires when                                                                                                                                   | #271 item          |
+| ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------- | ------------------ |
+| `ej-site-down`                 | an application Deployment has zero available replicas                                                                                        | site down          |
+| `ej-importer-stale`            | the stalest source passes 36h against a 24h interval                                                                                         | importer failing   |
+| `ej-source-never-succeeded`    | a source has never once completed a run ([#618](https://github.com/enorm-labs/event-junkie/issues/618))                                      | importer failing   |
+| `ej-catalogue-emptying`        | future events fall below 500, from a normal ~3,000                                                                                           | zero events        |
+| `ej-source-emptied`            | one source holds zero future events after holding more than twenty this week ([#700](https://github.com/enorm-labs/event-junkie/issues/700)) | zero events        |
+| `ej-source-quiet`              | a source not known to be quiet has held zero future events for 30 days ([#1498](https://github.com/enorm-labs/event-junkie/issues/1498))     | zero events        |
+| `ej-node-disk-filling`         | less than 15% of the node's filesystem is free                                                                                               | disk filling       |
+| `ej-certificate-expiry`        | the soonest certificate is inside 14 days                                                                                                    | certificate expiry |
+| `ej-ingest-shedding`           | OpenObserve is rejecting writes ([#625](https://github.com/enorm-labs/event-junkie/issues/625))                                              | —                  |
+| `ej-ingest-queue-saturated`    | the collector's export queue is over 80% full                                                                                                | —                  |
+| `ej-dns-fanout`                | three or more sources are FAILED on a name lookup at once ([#708](https://github.com/enorm-labs/event-junkie/issues/708))                    | importer failing   |
+| `ej-musicbrainz-failing`       | more than a quarter of 24 hours' MusicBrainz lookups failed ([#1900](https://github.com/enorm-labs/event-junkie/issues/1900))                | —                  |
+| `ej-musicbrainz-backlog-stuck` | the lookup or entity-read backlog has not reached zero in two days ([#1900](https://github.com/enorm-labs/event-junkie/issues/1900))         | —                  |
 
 **The zero-events failure is two rules, and keeping both is deliberate.** ADR-015's criterion 1 is per-source — a venue whose scraper still returns 200 while
 writing nothing — and `ej-source-emptied` is that rule at last, on the `importer_source_events_future` gauge

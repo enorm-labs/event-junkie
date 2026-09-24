@@ -34,6 +34,7 @@
 10032	WARN	(Viewstate - Passive/release)
 10033	FAIL	(Directory Browsing - Passive/release)
 10034	WARN	(Heartbleed OpenSSL Vulnerability (Indicative) - Passive/release)
+# WARN on k3d only: the rehearsal has no TLS (`tls.enabled: false` in values-k3d.yaml), and a browser ignores HSTS over HTTP. Production has it at FAIL.
 10035	WARN	(Strict-Transport-Security Header - Passive/release)
 10036	FAIL	(HTTP Server Response Header - Passive/release)
 10037	FAIL	(Server Leaks Information via "X-Powered-By" HTTP Response Header Field(s) - Passive/release)
