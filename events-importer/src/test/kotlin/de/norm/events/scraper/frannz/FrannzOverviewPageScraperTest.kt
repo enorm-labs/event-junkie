@@ -172,7 +172,7 @@ class FrannzOverviewPageScraperTest {
             val html =
                 """
                 <article id="post-1" class="events event_typ-konzert">
-                    <h2 class="event-title">Singalong -Das große Mitsing-Event (ausverkauft)</h2>
+                    <h2 class="event-title">Pohlmann (ausverkauft)</h2>
                     <div class="event-day">10</div>
                     <div class="event-month">Dezember</div>
                 </article>
@@ -180,11 +180,29 @@ class FrannzOverviewPageScraperTest {
 
             val event = scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl).single()
 
-            event.title shouldBe "Singalong -Das große Mitsing-Event"
+            event.title shouldBe "Pohlmann"
             event.title shouldNotContain "ausverkauft"
-            event.artists shouldContainExactly
-                listOf(ScrapedArtist(name = "Singalong -Das große Mitsing-Event", role = "HEADLINER", titleDerived = true))
+            event.artists shouldContainExactly listOf(ScrapedArtist(name = "Pohlmann", role = "HEADLINER", titleDerived = true))
             event.soldOut shouldBe true
+        }
+
+        // The sing-along is a format with no performer named, and stays a concert as the venue types it (#1902).
+        @Test
+        fun `bills no act for a sing-along night`() {
+            val html =
+                """
+                <article id="post-1" class="events event_typ-konzert">
+                    <h2 class="event-title">SingAlong – Das große Mitsing-Event</h2>
+                    <h4 class="event-utitle">Reise durch die größten Hits von ABBA</h4>
+                    <div class="event-day">25</div>
+                    <div class="event-month">September</div>
+                </article>
+                """.trimIndent()
+
+            val event = scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl).single()
+
+            event.eventType shouldBe "CONCERT"
+            event.artists.shouldBeEmpty()
         }
 
         // Production stored "Haken -ausverkauft" as the act and the show as on sale (#1840).
