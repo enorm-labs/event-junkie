@@ -2,8 +2,10 @@ package de.norm.events.scraper.velomax
 
 import de.norm.events.event.EventStatus
 import de.norm.events.scraper.AbstractTwoPageWebsiteImporter
+import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
+import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
 import de.norm.events.scraper.VenueLimitations
@@ -94,7 +96,6 @@ class UfoImVelodromWebsiteImporter(
     htmlFetcher: HtmlFetcher
 ) : AbstractVelomaxHallImporter(htmlFetcher, VelomaxHall.UFO_IM_VELODROM)
 
-/** Nothing this source withholds needs declaring (#715). */
 val VELOMAX_LIMITATIONS =
     VenueLimitations(
         sources =
@@ -102,5 +103,9 @@ val VELOMAX_LIMITATIONS =
                 EventSource.MAX_SCHMELING_HALLE,
                 EventSource.UFO_IM_VELODROM,
                 EventSource.VELODROM
+            ),
+        limitations =
+            listOf(
+                AcceptedLimitation(LimitedAspect.PRICE, "the listing and the event pages print no figure; tickets are sold through outside shops")
             )
     )

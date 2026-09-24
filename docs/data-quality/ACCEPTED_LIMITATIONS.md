@@ -24,6 +24,7 @@ says so.
 | `BADEHAUS`            | `EVENT_TYPE`       | the venue publishes no category; the type is inferred from the title and subtitle                                                                | —     |
 | `BADEHAUS`            | `PRICE`            | the venue prints no figure, and where it names money at all it is a donation range the model has no field for, kept verbatim as the note         | —     |
 | `BINUU`               | `EVENT_TYPE`       | the SvelteKit payload carries no category field, and neither does anywhere else on the site                                                      | —     |
+| `BINUU`               | `PRICE`            | the payload carries no price field and the pages print no figure; tickets are sold through outside shops                                         | —     |
 | `CLASH`               | `PER_EVENT_PAGE`   | the `event` post type is not exposed over the WordPress REST API and the numeric permalinks 404                                                  | —     |
 | `CLASH`               | `DOORS_TIME`       | the homepage listing is the whole source and carries no doors time                                                                               | —     |
 | `CLASH`               | `PRICE`            | the homepage listing is the whole source and carries no price                                                                                    | —     |
@@ -90,6 +91,7 @@ says so.
 | `INSEL`               | `PER_EVENT_PAGE`   | every event points at the programme page and takes its identity from its date plus its title                                                     | —     |
 | `INSEL`               | `EVENT_TYPE`       | the venue publishes no category, so a title that is an event name rather than an act is minted as a concert                                      | —     |
 | `INSEL`               | `ARTISTS`          | a support act billed without a colon reads as prose, so only a colon or a line-leading support marker is followed                                | —     |
+| `JUNCTION_BAR`        | `PER_EVENT_PAGE`   | the programme is one page per month; a live night's only page of its own is its ticket-shop entry, kept as the ticket link                       | —     |
 | `KATER`               | `EVENT_TYPE`       | the club has no category field; only an unambiguous title keyword overrides the party default                                                    | —     |
 | `KATER`               | `PER_EVENT_PAGE`   | the per-event page carries nothing the homepage listing lacks                                                                                    | —     |
 | `KATER`               | `PRICE`            | the club sells at the door and prints no figure; a night is flagged free only when its title or blurb says so                                    | —     |
@@ -110,12 +112,14 @@ says so.
 | `MAAYA`               | `ARTISTS`          | there is no lineup field, and the titles are series and party names rather than acts                                                             | —     |
 | `MAAYA`               | `DOORS_TIME`       | the venue publishes no doors time                                                                                                                | —     |
 | `MAAYA`               | `GENRE`            | the venue publishes no genre                                                                                                                     | —     |
+| `MAX_SCHMELING_HALLE` | `PRICE`            | the listing and the event pages print no figure; tickets are sold through outside shops                                                          | —     |
 | `MAXXIM`              | `EVENT_TYPE`       | the club publishes no categories; every night is a DJ dance party                                                                                | —     |
 | `MIGAS`               | `PRICE`            | entry arrangements are not stated on the site at all                                                                                             | —     |
 | `MIGAS`               | `TICKET_URL`       | entry arrangements are not stated on the site at all                                                                                             | —     |
 | `MIGAS`               | `DOORS_TIME`       | the listing carries no door time                                                                                                                 | —     |
 | `MIGAS`               | `SOLD_OUT`         | the listing carries no sold-out badge                                                                                                            | —     |
 | `MIGAS`               | `CANCELLATION`     | the listing carries no cancellation badge                                                                                                        | —     |
+| `MIKROPOL`            | `GENRE`            | the site names no musical style; its only category is Konzert or Club                                                                            | —     |
 | `MONARCH`             | `PER_EVENT_PAGE`   | the site is hand-coded PHP with no per-event URLs                                                                                                | —     |
 | `MONSTER_RONSONS`     | `DOORS_TIME`       | the venue states one time per night, which is taken as the start                                                                                 | —     |
 | `MONSTER_RONSONS`     | `PRICE`            | the price lives in prose and is often a time-banded tariff, which the model has no field for                                                     | —     |
@@ -182,7 +186,9 @@ says so.
 | `TRESOR`              | `DOORS_TIME`       | the venue states no doors or start time; the night's opening set is the only clock it gives, and that is stored as the start                     | —     |
 | `TRESOR`              | `EVENT_TYPE`       | the club states no category; every listing is a club night                                                                                       | —     |
 | `TRESOR`              | `PRICE`            | the club sells at the door and prints no figure on its programme                                                                                 | —     |
+| `UFO_IM_VELODROM`     | `PRICE`            | the listing and the event pages print no figure; tickets are sold through outside shops                                                          | —     |
 | `URBAN_SPREE`         | `PROMOTERS`        | the venue credits itself as the organiser on its own nights, so the stored promoter is the venue                                                 | —     |
+| `VELODROM`            | `PRICE`            | the listing and the event pages print no figure; tickets are sold through outside shops                                                          | —     |
 | `VOID_CLUB`           | `START_TIME`       | the venue publishes no times; every night stores a bare date                                                                                     | —     |
 | `VOID_CLUB`           | `DOORS_TIME`       | the venue publishes no times; every night stores a bare date                                                                                     | —     |
 | `VOID_CLUB`           | `PRICE`            | the venue publishes no prices                                                                                                                    | —     |
@@ -202,4 +208,4 @@ says so.
 
 These publish everything the model stores, as of the last review:
 
-`ALTE_KANTINE`, `ASTRA`, `BERGHAIN`, `CASSIOPEIA`, `COLUMBIA_THEATER`, `GRETCHEN`, `HEIMATHAFEN`, `HOLE44`, `JUNCTION_BAR`, `LIDO`, `MADAME_CLAUDE`, `MATRIX`, `MAX_SCHMELING_HALLE`, `METROPOL`, `MIKROPOL`, `MODUS`, `PRIVATCLUB`, `QUASIMODO`, `SCHOKOLADEN`, `TEMPODROM`, `THEATER_IM_DELPHI`, `UBER_ARENA`, `UBER_EATS_MUSIC_HALL`, `UFO_IM_VELODROM`, `URANIA`, `VELODROM`, `ZITADELLE`
+`ALTE_KANTINE`, `ASTRA`, `BERGHAIN`, `CASSIOPEIA`, `COLUMBIA_THEATER`, `GRETCHEN`, `HEIMATHAFEN`, `HOLE44`, `LIDO`, `MADAME_CLAUDE`, `MATRIX`, `METROPOL`, `MODUS`, `PRIVATCLUB`, `QUASIMODO`, `SCHOKOLADEN`, `TEMPODROM`, `THEATER_IM_DELPHI`, `UBER_ARENA`, `UBER_EATS_MUSIC_HALL`, `URANIA`, `ZITADELLE`

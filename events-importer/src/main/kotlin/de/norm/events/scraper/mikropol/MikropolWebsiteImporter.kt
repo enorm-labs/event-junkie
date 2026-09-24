@@ -2,8 +2,10 @@ package de.norm.events.scraper.mikropol
 
 import de.norm.events.event.EventStatus
 import de.norm.events.scraper.AbstractTwoPageWebsiteImporter
+import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
+import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
 import de.norm.events.scraper.VenueLimitations
@@ -69,5 +71,8 @@ class MikropolWebsiteImporter(
         )
 }
 
-/** Nothing this source withholds needs declaring (#715). */
-val MIKROPOL_LIMITATIONS = VenueLimitations(EventSource.MIKROPOL)
+val MIKROPOL_LIMITATIONS =
+    VenueLimitations(
+        EventSource.MIKROPOL,
+        AcceptedLimitation(LimitedAspect.GENRE, "the site names no musical style; its only category is Konzert or Club")
+    )
