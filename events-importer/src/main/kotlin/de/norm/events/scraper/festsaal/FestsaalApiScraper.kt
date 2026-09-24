@@ -2,6 +2,7 @@ package de.norm.events.scraper.festsaal
 
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.LogFields
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.blankToNull
@@ -12,6 +13,7 @@ import de.norm.events.scraper.parseClockPrefix
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.splitSupportActs
 import io.github.oshai.kotlinlogging.KotlinLogging
+import io.github.oshai.kotlinlogging.Level
 import tools.jackson.databind.JsonNode
 import tools.jackson.databind.PropertyNamingStrategies
 import tools.jackson.databind.json.JsonMapper
@@ -41,8 +43,9 @@ private const val FESTSAAL_PROGRAMM_BASE = "https://$FESTSAAL_PUBLIC_HOST/de/pro
  *
  * Each `items[]` entry carries `title`, `sub_title`, `date`, `doors`, `start`, `ticket`,
  * `price`, a nested `genre.title` and `preview_image.download_url`, a `support` act line, and
- * a `status` code (`sold_out`, `moved_date`, `transferred`, `custom`, or absent). No
- * event-category field, so the type is inferred from title/subtitle like Bi Nuu ([inferEventType]).
+ * a `status` code (`sold_out`, `moved_date`, `moved_unknown`, `transferred`, `cancelled`,
+ * `custom`, or absent). No event-category field, so the type is inferred from title/subtitle like
+ * Bi Nuu ([inferEventType]).
  *
  * @see FestsaalWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://festsaal-kreuzberg.de/de/programm/">Festsaal Kreuzberg programme</a>
@@ -117,6 +120,7 @@ class FestsaalApiScraper {
 
         val statusCode = node.status.blankToNull()
         val postponed = statusCode == STATUS_MOVED_DATE
+        val sourceId = "${EventSource.FESTSAAL.sourceIdPrefix}$slug"
 
         // A postponed event moves to its `changed_*` date/times — when it now actually happens — so
         // those win when present; otherwise the originals stand.
@@ -150,31 +154,35 @@ class FestsaalApiScraper {
                     .blankToNull()
                     ?.takeIf { it.startsWith("http") },
             sourceUrl = publicEventUrl(node.meta?.htmlUrl.blankToNull(), slug),
-            sourceId = "${EventSource.FESTSAAL.sourceIdPrefix}$slug",
+            sourceId = sourceId,
             ticketUrl = node.ticket.blankToNull()?.takeIf { it.startsWith("http") },
             genre = node.genre?.title.blankToNull(),
             pricePresale = parsePrice(node.price.blankToNull()),
             soldOut = statusCode == STATUS_SOLD_OUT,
-            status = mapStatus(statusCode),
+            status = mapStatus(statusCode, sourceId),
             artists = buildArtists(title, node.support.blankToNull(), eventType)
         )
     }
 
     /**
      * Maps the `status` code to a domain [EventStatus][de.norm.events.event.EventStatus] name.
-     * Observed: `moved_date` (postponed to `changed_date`), `transferred` (relocated), `sold_out`
-     * (captured separately as the `soldOut` flag, so `SCHEDULED` here) and `custom` (a free-text
-     * `changed_text` note we cannot classify — `SCHEDULED`). A `cancelled`-family code is mapped
-     * defensively though none appears in current data; any other non-blank code is logged and
-     * defaults to `SCHEDULED` so a new code surfaces rather than being silently mismapped.
+     * Observed: `moved_date` (postponed to `changed_date`), `moved_unknown` (postponed with no new
+     * date, so it keeps `date`), `transferred` (relocated), `cancelled`, `sold_out` (captured
+     * separately as the `soldOut` flag, so `SCHEDULED` here) and `custom` (a free-text
+     * `changed_text` note we cannot classify — `SCHEDULED`). Any other non-blank code is logged
+     * with the event's [sourceId] and defaults to `SCHEDULED`, so a new code surfaces rather than
+     * being silently mismapped.
      */
-    private fun mapStatus(code: String?): String =
+    private fun mapStatus(
+        code: String?,
+        sourceId: String
+    ): String =
         when (val normalized = code?.trim()?.lowercase()) {
             null, "", STATUS_SOLD_OUT, STATUS_CUSTOM -> {
                 "SCHEDULED"
             }
 
-            STATUS_MOVED_DATE -> {
+            STATUS_MOVED_DATE, STATUS_MOVED_UNKNOWN -> {
                 "POSTPONED"
             }
 
@@ -186,7 +194,10 @@ class FestsaalApiScraper {
                 if (normalized.contains("cancel") || normalized.contains("abgesagt")) {
                     "CANCELLED"
                 } else {
-                    logger.warn { "Unknown Festsaal status code '$normalized', defaulting to SCHEDULED" }
+                    logger.at(Level.WARN) {
+                        message = "Unknown Festsaal status code '$normalized', defaulting to SCHEDULED"
+                        payload = mapOf(LogFields.EVENT_SOURCE_ID to sourceId)
+                    }
                     "SCHEDULED"
                 }
             }
@@ -278,6 +289,7 @@ class FestsaalApiScraper {
     private companion object {
         const val STATUS_SOLD_OUT = "sold_out"
         const val STATUS_MOVED_DATE = "moved_date"
+        const val STATUS_MOVED_UNKNOWN = "moved_unknown"
         const val STATUS_TRANSFERRED = "transferred"
         const val STATUS_CUSTOM = "custom"
 
