@@ -21,8 +21,8 @@ resources:
   # The observability stack (#880); each file argues its own difference from staging's copy.
   - openobserve.yaml
   - observability-netpol.yaml
-  # Its own file, shorter than staging's (#920): this cluster solves HTTP01, so the DNS01 self-check and
-  # the Hetzner webhook are arrows it does not have.
+  # Its own file (#920): this cluster solves HTTP01, so it has the HTTP01 self-check on port 80 in
+  # place of staging's DNS01 self-check and Hetzner webhook.
   - cert-manager-netpol.yaml
   - traefik-host-ports.yaml
   # **One of staging's files is absent.** `signal-bridge.yaml`: alerts go by e-mail and the Signal route
