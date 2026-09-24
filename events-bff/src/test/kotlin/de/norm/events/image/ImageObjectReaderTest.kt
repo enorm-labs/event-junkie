@@ -5,10 +5,15 @@ import ch.qos.logback.classic.LoggerContext
 import ch.qos.logback.classic.spi.ILoggingEvent
 import ch.qos.logback.core.read.ListAppender
 import de.norm.events.LogContextConfiguration
+import io.kotest.matchers.collections.shouldBeEmpty
+import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
@@ -25,6 +30,7 @@ import software.amazon.awssdk.services.s3.model.GetObjectResponse
 import software.amazon.awssdk.services.s3.model.NoSuchKeyException
 import tools.jackson.databind.json.JsonMapper
 import java.io.IOException
+import java.lang.reflect.Proxy
 import java.util.concurrent.CompletableFuture
 
 /**
@@ -95,10 +101,59 @@ class ImageObjectReaderTest {
             error.get("type").stringValue() shouldBe IOException::class.java.name
         }
 
-    private fun readerFor(failure: Exception): ImageObjectReader {
+    /** A browser that aborts an image mid-read cancels the coroutine; that is no fault of the store (#1807). */
+    @Test
+    fun `a cancelled read rethrows and logs nothing`() =
+        runTest {
+            val called = CompletableDeferred<Unit>()
+            val reader = readerOn(HangingS3Client(called))
+            var outcome: ImageObject? = null
+
+            val read = launch { outcome = reader.read(KEY) }
+            called.await()
+            read.cancelAndJoin()
+
+            outcome.shouldBeNull()
+            appender.list.shouldBeEmpty()
+        }
+
+    @Test
+    fun `a cancelled read records no outcome`() =
+        runTest {
+            val called = CompletableDeferred<Unit>()
+            val registry = SimpleMeterRegistry()
+            val properties = ImageServingProperties()
+            val cache = ImageObjectCache(properties, registry)
+            val controller =
+                CachedImageController(
+                    repositoryHolding(KEY),
+                    ImageObjectReader(HangingS3Client(called), properties, cache),
+                    ImageServingMetrics(registry, cache)
+                )
+
+            val serve = launch { controller.serve(HASH, "288.jpg") }
+            called.await()
+            serve.cancelAndJoin()
+
+            registry.find(ImageServingMetrics.SERVED).counters().sumOf { it.count() } shouldBe 0.0
+        }
+
+    private fun readerFor(failure: Exception): ImageObjectReader = readerOn(FailingS3Client(failure))
+
+    private fun readerOn(client: S3AsyncClient): ImageObjectReader {
         val properties = ImageServingProperties()
-        return ImageObjectReader(FailingS3Client(failure), properties, ImageObjectCache(properties, SimpleMeterRegistry()))
+        return ImageObjectReader(client, properties, ImageObjectCache(properties, SimpleMeterRegistry()))
     }
+
+    /**
+     * Answers only the lookup the controller makes. A proxy rather than a hand-written fake, because
+     * `CoroutineCrudRepository` has a dozen members; the suspend call returns without suspending.
+     */
+    private fun repositoryHolding(storageKey: String): CachedImageRepository =
+        Proxy.newProxyInstance(javaClass.classLoader, arrayOf(CachedImageRepository::class.java)) { _, method, _ ->
+            check(method.name == "findStorageKey") { "unexpected call to ${method.name}" }
+            storageKey
+        } as CachedImageRepository
 
     /**
      * The single line captured as the pod writes it: `StructuredLogEncoder` in `ecs` mode is what
@@ -133,7 +188,22 @@ class ImageObjectReaderTest {
         ): CompletableFuture<ReturnT> = CompletableFuture.failedFuture(failure)
     }
 
+    /** Never answers, like a read still in flight; [called] says the request went out. */
+    private class HangingS3Client(
+        private val called: CompletableDeferred<Unit>
+    ) : S3AsyncClient {
+        override fun serviceName(): String = "s3"
+
+        override fun close() = Unit
+
+        override fun <ReturnT : Any?> getObject(
+            getObjectRequest: GetObjectRequest,
+            asyncResponseTransformer: AsyncResponseTransformer<GetObjectResponse, ReturnT>
+        ): CompletableFuture<ReturnT> = CompletableFuture<ReturnT>().also { called.complete(Unit) }
+    }
+
     private companion object {
+        const val HASH = "0f4b0f4b0f4b0f4b0f4b0f4b0f4b0f4b0f4b0f4b0f4b0f4b0f4b0f4b0f4b0f4b"
         const val KEY = "images/derived/0f4b/288.jpg"
     }
 }

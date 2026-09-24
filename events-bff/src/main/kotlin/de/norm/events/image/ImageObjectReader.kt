@@ -3,6 +3,7 @@ package de.norm.events.image
 import de.norm.events.LogContextConfiguration
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.github.oshai.kotlinlogging.Level
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.future.await
 import org.springframework.stereotype.Component
 import software.amazon.awssdk.core.async.AsyncResponseTransformer
@@ -47,6 +48,10 @@ class ImageObjectReader(
                         AsyncResponseTransformer.toBytes()
                     ).await()
             ImageObject.Found(response.asByteArray())
+        } catch (e: CancellationException) {
+            // The visitor went away mid-read, which is no fault of the store. Caught below it became
+            // an `unavailable` outcome and a false ej-image-store-unreachable (#1807).
+            throw e
         } catch (e: NoSuchKeyException) {
             // A row promised an object that is not there: a warning, the shape of a sweep that deleted
             // something it should have kept.
