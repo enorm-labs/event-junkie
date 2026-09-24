@@ -1,6 +1,7 @@
 package de.norm.events.scraper.berghain
 
 import de.norm.events.event.EventType
+import de.norm.events.scraper.B2B_SEPARATOR
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
@@ -202,15 +203,10 @@ class BerghainOverviewPageScraper(
         private const val LIVE_MARKER = "Live"
 
         /**
-         * A space-padded `b2b` written inside a name span, joining the two DJs of one slot. Padding
-         * is what keeps it off a name that merely contains the letters.
+         * What separates the performers written into one name span: a [B2B_SEPARATOR], a padded
+         * `+` (Kantine's `Dicken45 + Benito`, #1844), or a comma. The comma needs no padding,
+         * because the venue writes the list both ways.
          */
-        private val B2B_SEPARATOR = Regex("""\s+b2b\s+""", RegexOption.IGNORE_CASE)
-
-        /**
-         * What separates the performers written into one name span: a [B2B_SEPARATOR], or a comma.
-         * The comma needs no padding, because the venue writes the list both ways.
-         */
-        private val SLOT_SEPARATOR = Regex("""${B2B_SEPARATOR.pattern}|\s*,\s*""", RegexOption.IGNORE_CASE)
+        private val SLOT_SEPARATOR = Regex("""${B2B_SEPARATOR.pattern}|\s+\+\s+|\s*,\s*""", RegexOption.IGNORE_CASE)
     }
 }

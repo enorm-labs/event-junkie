@@ -17,6 +17,7 @@ import de.norm.events.scraper.parseGermanDate
 import de.norm.events.scraper.parsePriceValue
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.resolveUrl
+import de.norm.events.scraper.splitBackToBack
 import de.norm.events.scraper.stripArtistSuffix
 import de.norm.events.scraper.textAt
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -255,6 +256,7 @@ class GretchenOverviewPageScraper {
                 .filterNot { it.isBlank() || isCreditOrNoteLine(it) }
                 .map { stripCreditPrefix(it) }
                 .flatMap { splitFeaturedActs(it) }
+                .flatMap(::splitBackToBack)
                 .map { stripArtistSuffix(cleanArtistName(it)) }
                 .filter { it.isNotBlank() && !isNonArtistName(it) && !isProseNote(it) }
                 .distinct()

@@ -88,11 +88,12 @@ class AedenOverviewPageScraperTest {
         val event = julyEvents.first { it.eventDate == LocalDate.of(2026, 7, 15) && it.title == "LILITH" }
 
         // "&#038; SECRET ACT" is a decorative conjunction plus an unnamed slot — the "&" is stripped
-        // and "SECRET ACT" is dropped rather than minted as an artist.
+        // and "SECRET ACT" is dropped rather than minted as an artist. A b2b slot is two DJs (#1844).
         event.artists shouldContainExactly
             listOf(
                 ScrapedArtist(name = "DANA NADA", role = "DJ"),
-                ScrapedArtist(name = "STEEZY B2B KIV", role = "DJ"),
+                ScrapedArtist(name = "STEEZY", role = "DJ"),
+                ScrapedArtist(name = "KIV", role = "DJ"),
                 ScrapedArtist(name = "YANES", role = "DJ")
             )
     }

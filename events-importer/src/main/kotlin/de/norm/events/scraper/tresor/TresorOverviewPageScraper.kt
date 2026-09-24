@@ -1,6 +1,7 @@
 package de.norm.events.scraper.tresor
 
 import de.norm.events.event.EventType
+import de.norm.events.scraper.B2B_SEPARATOR
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
@@ -170,9 +171,6 @@ private val ROOM_PREFIX = Regex("""^(?:aurora\s+bar|tresor|globus)\s+""", RegexO
 
 /** A quoted release title trailing the act that presents it: `'Slinky'`, `"Neptune's Lair"`. */
 private val RELEASE_TITLE = Regex("""\s+['"‘’“„]([^'"‘’“”„]+)['"’”“]\s*$""")
-
-/** The back-to-back marker joining two DJs into one slot. */
-private val B2B_SEPARATOR = Regex("""\s+b2b\s+""", RegexOption.IGNORE_CASE)
 
 /**
  * A trailing set-format note on an act name, bracketed (`Ngly [LIVE]`) or bare (`Shackleton

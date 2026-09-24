@@ -719,6 +719,28 @@ private val PROSE_END = Regex("""\s(?:in|im|mit|für|von|of|the|for|to|at|on|aus
 fun isKnownSingleAct(name: String): Boolean = name.trim().replace(CONJUNCTION_SEPARATOR, " & ").lowercase() in KNOWN_SINGLE_ACTS
 
 /**
+ * The back-to-back marker joining two DJs into one slot. Padding keeps it off a name that merely
+ * contains the letters.
+ */
+val B2B_SEPARATOR = Regex("""\s+b2b\s+""", RegexOption.IGNORE_CASE)
+
+/**
+ * Splits a lineup line at [B2B_SEPARATOR], because back-to-back is never one act (#1759, #1844).
+ * A line with a bracket stays whole: the brackets hold a duo's members, as in
+ * `Double Penetration (FLOWWW b2b Joe Cleen)`.
+ */
+fun splitBackToBack(line: String): List<String> =
+    if ('(' in line) {
+        listOf(line)
+    } else {
+        line
+            .split(B2B_SEPARATOR)
+            .map { it.trim() }
+            .filter { it.isNotBlank() }
+            .ifEmpty { listOf(line) }
+    }
+
+/**
  * Splits a title segment into acts at its conjunctions, per boundary, so a real co-bill still
  * splits beside a band-name tail: a comma anywhere suppresses splitting ("Earth, Wind & Fire"),
  * and a boundary whose right-hand side opens with a [tail marker][CONJUNCTION_TAIL_MARKERS]

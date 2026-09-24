@@ -1,6 +1,7 @@
 package de.norm.events.scraper.kater
 
 import de.norm.events.event.EventType
+import de.norm.events.scraper.B2B_SEPARATOR
 import de.norm.events.scraper.BERLIN
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
@@ -239,9 +240,6 @@ class KaterOverviewPageScraper(
          */
         val WEEKDAY_HEADING =
             Regex("""^(?:mon|tues|wednes|thurs|fri|satur|sun)day\s+by\s+\S""", RegexOption.IGNORE_CASE)
-
-        /** The back-to-back marker joining two DJs into one slot. */
-        val B2B_SEPARATOR = Regex("""\s+b2b\s+""", RegexOption.IGNORE_CASE)
 
         /** A bracketed performance-format marker appended to an act ("Vovolectr0 [LIVE]"). */
         val FORMAT_MARKER = Regex("""\s*\[[^\]]*]\s*$""")
