@@ -309,7 +309,6 @@ private val NOISE_SUFFIXES = listOf("disco floor", "floor")
  * delimiters, noise suffixes stripped, looked up case-insensitively. A token matching nothing is
  * kept in title case, so an unseen genre is captured without a map change.
  *
- * @param rawGenre the free-text genre string, or null.
  * @return canonical genre tag names, empty when the input is null or blank.
  *
  * ```
