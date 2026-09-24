@@ -254,7 +254,8 @@ class GretchenOverviewPageScraper {
                     work.wholeText().split(LINE_BREAK)
                 }.map { it.trim() }
                 .filterNot { it.isBlank() || isCreditOrNoteLine(it) }
-                .map { stripCreditPrefix(it) }
+                .map { stripCreditPrefix(it).replaceFirst(ROOM_LABEL, "") }
+                .flatMap { it.split(PADDED_PLUS) }
                 .flatMap { splitFeaturedActs(it) }
                 .flatMap(::splitBackToBack)
                 .map { stripArtistSuffix(cleanArtistName(it)) }
@@ -408,6 +409,15 @@ class GretchenOverviewPageScraper {
          * on "gretchen" so "Recycle: 15 Years FLEXOUT AUDIO" is intact.
          */
         private val SERIES_PREFIX = Regex("""^\d+\s+years\s+gretchen\s*:\s*""", RegexOption.IGNORE_CASE)
+
+        /**
+         * A room label before the room's crews: `Box 2: Bassism + Impulse Basskultur` (#1843). The
+         * crews follow, joined with a padded [PADDED_PLUS]; production lineups hold no act with one.
+         */
+        private val ROOM_LABEL = Regex("""^box\s*\d+\s*:\s*""", RegexOption.IGNORE_CASE)
+
+        /** A `+` with a space on each side: two acts on one line. A glued `+experience` tag is [TRAILING_PLUS_TAG]'s. */
+        private val PADDED_PLUS = Regex("""\s+\+\s+""")
 
         /** A lineup line of this many words or more is prose (a note/blurb), not a performer name. */
         private const val PROSE_WORD_THRESHOLD = 10

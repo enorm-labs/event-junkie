@@ -84,7 +84,7 @@ class KaterOverviewPageScraperTest {
             )
     }
 
-    // Production billed `Saturday night`, `by Kater` and `by Fridas Pier` as DJs (#1843).
+    // Production billed `Saturday night`, `by Kater`, `by Fridas Pier` and `GYMie Kater + Rave Olympiad` as DJs (#1843).
     @Test
     fun `reads a bare weekday heading and a wrapped floor credit as no act`() {
         val html =
@@ -100,6 +100,7 @@ class KaterOverviewPageScraperTest {
                         by Fridas Pier</p>
                     <p>Nümphe<br/>
                         Saturday night<br/>
+                        GYMie Kater + Rave Olympiad<br/>
                         Adri Tüde</p>
                 </div>
             </article>

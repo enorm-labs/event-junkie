@@ -169,6 +169,29 @@ class BerghainOverviewPageScraperTest {
         event.artists.map { it.name } shouldContainExactly listOf("Dicken45", "Benito")
     }
 
+    // Production stored `Booty Carrell DJ (Vinyl) Warm-up + Party` as one act (#1843).
+    @Test
+    fun `drops Kantine's slot description after a name`() {
+        val html =
+            """
+            <html><body>
+              <a href="/de/event/80901/">
+                <p>Freitag <span class="font-bold">02.10.2026</span> beginn 20:00</p>
+                <h2>Soul Night</h2>
+                <h3>Kantine am Berghain</h3>
+                <h4>
+                  <span class="font-bold">
+                    <span class="xs:whitespace-no-wrap">Booty Carrell DJ (Vinyl) Warm-up + Party</span>
+                  </span>
+                </h4>
+              </a>
+            </body></html>
+            """.trimIndent()
+        val event = scraper.scrape(Jsoup.parse(html, berghainUrl), berghainUrl).single()
+
+        event.artists.map { it.name } shouldContainExactly listOf("Booty Carrell")
+    }
+
     // The marker is the venue saying the act performs, and it sits inside that act's wrapper (#1787).
     @Test
     fun `bills an act marked Live as a headliner and leaves the rest of the floor DJs`() {
