@@ -279,6 +279,55 @@ class ArtistNameMappingTest {
         isNonArtistEvent("Fettes Brot") shouldBe false
     }
 
+    // --- isScoreConcertTitle (#1829) ---
+
+    @Test
+    fun `isScoreConcertTitle recognises a film or game score concert`() {
+        listOf(
+            "William Shakespeare’s Romeo + Juliet Film in Concert",
+            "Disney in Concert",
+            "MY HERO ACADEMIA - In Concert",
+            "Top Gun: Maverick – in Concert",
+            "STUDIO GHIBLI IN CONCERT – A SYMPHONIC HOMAGE TO THE BEST OF JAPANESE ANIME",
+            "The Music of STAR WARS - Live in Concert",
+            "Der König der Löwen - The Music live in Concert",
+            "Der Herr der Ringe: Die zwei Türme – in Concert Live to Film",
+            "UNDERTALE: The Determination Symphony",
+            "CLAIR OBSCUR: EXPEDITION 33 - A PAINTED SYMPHONY",
+            "David Bowie Symphony - The Celebration Concert",
+            "Nosferatu. Eine Symphonie des Grauens",
+            "Hans Zimmer Live in Concert"
+        ).forEach { isScoreConcertTitle(it) shouldBe true }
+    }
+
+    @Test
+    fun `isScoreConcertTitle keeps an orchestra, a band and a plain live billing`() {
+        listOf(
+            "Roncalli und Deutsches Symphonie-Orchester Berlin",
+            "Deutsches Symphonieorchester Berlin",
+            "London Symphony Orchestra",
+            "Symphony X",
+            "Chanel Beads + urika's bedroom",
+            "Green Lung Live",
+            "Concert for Ukraine"
+        ).forEach { isScoreConcertTitle(it) shouldBe false }
+    }
+
+    // `+` is the film's own title here, and a split would mint two nonsense artist pages.
+    @Test
+    fun `a score concert bills no act, and its title is not split`() {
+        buildArtistsForEventType(
+            "William Shakespeare’s Romeo + Juliet Film in Concert",
+            subtitle = null,
+            eventType = "CONCERT"
+        ).shouldBeEmpty()
+        headlinersFromTitle("Disney in Concert").shouldBeEmpty()
+        headlinersFromTitle("Roncalli und Deutsches Symphonie-Orchester Berlin").map { it.name } shouldContainExactly
+            listOf("Roncalli", "Deutsches Symphonie-Orchester Berlin")
+        headlinersFromTitle("Chanel Beads + urika's bedroom").map { it.name } shouldContainExactly
+            listOf("Chanel Beads", "urika's bedroom")
+    }
+
     // --- isNonArtistName slugless (#1553) ---
 
     @Test
@@ -458,8 +507,7 @@ class ArtistNameMappingTest {
     // #1560: the marker comes off the title at persistence, after the acts were built from it.
     @Test
     fun `headlinersFromTitle bills the act, not the cancellation glued to it`() {
-        headlinersFromTitle("ABSAGE: MY HERO ACADEMIA - In Concert") shouldBe
-            listOf(ScrapedArtist("MY HERO ACADEMIA - In Concert", "HEADLINER", titleDerived = true))
+        headlinersFromTitle("ABSAGE: Green Lung") shouldBe listOf(ScrapedArtist("Green Lung", "HEADLINER", titleDerived = true))
         headlinersFromTitle("Olga Myko - Abgesagt") shouldBe listOf(ScrapedArtist("Olga Myko", "HEADLINER", titleDerived = true))
         headlinersFromTitle("Canceled: Modern English") shouldBe listOf(ScrapedArtist("Modern English", "HEADLINER", titleDerived = true))
     }

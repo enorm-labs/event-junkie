@@ -116,8 +116,9 @@ class TempodromOverviewPageScraperTest {
 
     @Test
     fun `derives the headliner from the title, not the placeholder performer`() {
-        // `performer.name` is a copy of the event name on all 145 events, so it names no act.
-        events.count { it.artists.isNotEmpty() } shouldBe 143
+        // `performer.name` is a copy of the event name on all 145 events, so it names no act. Three
+        // of the rest are score concerts (`The Witcher in Concert`), which bill no act (#1829).
+        events.count { it.artists.isNotEmpty() } shouldBe 140
         events.flatMap { it.artists }.all { it.role == "HEADLINER" } shouldBe true
     }
 
