@@ -63,6 +63,18 @@ describe('EventCard', () => {
     expect(wrapper.get('picture').classes()).toContain('aspect-[3/2]')
   })
 
+  it('hands its priority to the poster, and is lazy without one', () => {
+    const withImage = { ...event, imageUrl: '/api/images/abc/192.jpg' }
+    const first = mount(EventCard, {
+      props: { event: withImage, priority: true },
+      global: { stubs },
+    })
+    const rest = mount(EventCard, { props: { event: withImage }, global: { stubs } })
+
+    expect(first.get('img').attributes('fetchpriority')).toBe('high')
+    expect(rest.get('img').attributes('loading')).toBe('lazy')
+  })
+
   it('draws the title as the poster when the event has no image', () => {
     // One upcoming event in nine has no flyer, so this is a normal card, not a fallback.
     const wrapper = mount(EventCard, {

@@ -87,7 +87,7 @@ const { compact } = useCompactView()
         `sm:p-8`, the viewport less its padding below that; `sizes` tracks the `<main>` classes. The
         wrapper carries the border and positions the credit, because `CachedImage` renders a
         `display: contents` <picture>; the image is `block` so no inline descender opens a gap under
-        it. `eager` because this is the LCP element (#1207). `max-h-[35rem]` is what makes
+        it. `priority` because this is the LCP element (#1207). `max-h-[35rem]` is what makes
         `object-cover` do anything: 560 px sits above the tallest landscape image of the 43, so 39
         render unchanged and the 4 taller ones crop to the same weight.
       -->
@@ -98,7 +98,7 @@ const { compact } = useCompactView()
           :intrinsic-width="intrinsicWidth"
           :intrinsic-height="intrinsicHeight"
           :alt="name ?? ''"
-          loading="eager"
+          priority
           sizes="(min-width: 768px) 704px, (min-width: 640px) calc(100vw - 4rem), calc(100vw - 2rem)"
           img-class="block max-h-[35rem] w-full object-cover"
         />

@@ -24,7 +24,7 @@
 # WHAT IS GATED AND WHAT IS ONLY REPORTED. Performance scores from a shared runner move by tens of
 # points for reasons that belong to the runner, so a threshold loose enough to survive them catches
 # nothing (`perf/README.md` § Why there is no CI workflow). Gated: accessibility and best-practices at
-# 100, and SEO. Reported: the performance score, LCP, CLS and TBT.
+# 100, SEO, and CLS when CLS_BUDGET is set. Reported: the performance score, LCP and TBT.
 #
 # `is-crawlable` IS HANDLED, NOT WAIVED. `prod-check.event-junkie.de` sends `X-Robots-Tag: noindex,
 # nofollow` on purpose (#286), which scores that one audit 0 and the SEO category 69. On a host that is
@@ -32,9 +32,8 @@
 # failing SEO audit, then accepts 69. A second failing audit is red. On the apex it demands 100 and
 # grants no exception, so #939's flip needs no edit here.
 #
-# CLS IS NOT GATED YET. #1207 is open and every cell reads 0.27–0.79 against Google's 0.1 line, so the
-# gate the issue asks for would be red on its first run and then turned off. `CLS_BUDGET=0.1` is the
-# value to set the day #1207 closes, and that issue says so.
+# CLS IS GATED, UNLIKE THE OTHER VITALS. It measures where boxes land, not how fast, so a slow runner
+# does not move it. The workflow sets CLS_BUDGET to Google's 0.1 line for a good score (#1207).
 
 set -euo pipefail
 
@@ -245,7 +244,7 @@ chrome_version="$(jq -r '.environment.hostUserAgent' < "$OUT/list-mobile-1.json"
   fi
   if [[ -z "${CLS_BUDGET:-}" ]]; then
     # shellcheck disable=SC2016  # the backticks are markdown, not a substitution
-    printf 'CLS is reported and not gated until #1207 lands. Set `CLS_BUDGET=0.1` then.\n'
+    printf 'CLS is reported and not gated: `CLS_BUDGET` is unset.\n'
   fi
 } | tee -a "${GITHUB_STEP_SUMMARY:-/dev/null}"
 

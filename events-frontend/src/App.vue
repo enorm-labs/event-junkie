@@ -183,8 +183,9 @@ const localePath = useLocalePath()
     </header>
 
     <!-- `tabindex="-1"` makes this focusable by the skip link without adding it to the tab order.
-         `flex-1` pushes the footer to the bottom on short pages. -->
-    <div id="main-content" class="flex-1" tabindex="-1">
+         A screen tall, so the footer never paints above the fold. Otherwise it sits there while a
+         view's chunk and data load, then drops, and that one move is the page's layout shift (#1207). -->
+    <div id="main-content" class="min-h-screen" tabindex="-1">
       <RouterView />
     </div>
 

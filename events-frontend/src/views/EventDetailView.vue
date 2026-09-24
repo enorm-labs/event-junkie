@@ -184,7 +184,7 @@ useStructuredData((): JsonLd[] => {
         the viewport minus padding below that; `sizes` tracks the `<main>` classes above. The wrapper
         is the spacing: `CachedImage` renders a `display: contents` <picture> with no box to carry a
         `space-y-8` margin. No poster, no placeholder: here the title is the content, and a 3:2 void
-        would push it off the screen. `eager` because the poster is the LCP element (#1207).
+        would push it off the screen. `priority` because the poster is the LCP element (#1207).
       -->
       <div v-if="event.imageUrl">
         <CachedImage
@@ -193,7 +193,7 @@ useStructuredData((): JsonLd[] => {
           :intrinsic-width="event.intrinsicWidth"
           :intrinsic-height="event.intrinsicHeight"
           :alt="event.title ?? ''"
-          loading="eager"
+          priority
           sizes="(min-width: 768px) 704px, (min-width: 640px) calc(100vw - 4rem), calc(100vw - 2rem)"
           img-class="w-full border border-border object-cover"
         />

@@ -21,8 +21,10 @@ const props = withDefaults(
      * element, not the card's root.
      */
     as?: 'h2' | 'h3' | 'h4'
+    /** The first card of a list, whose poster is a likely LCP element: see `CachedImage`. */
+    priority?: boolean
   }>(),
-  { as: 'h3' },
+  { as: 'h3', priority: false },
 )
 
 const {
@@ -98,6 +100,7 @@ const { el: posterEl, focused: posterFocused } = useViewportFocus()
         :src="event.imageUrl"
         :sources="event.imageSources"
         :alt="event.title ?? ''"
+        :priority="priority"
         aspect="aspect-[3/2]"
         sizes="(min-width: 640px) 474px, 100vw"
         img-class="grayscale transition duration-300 group-hover:grayscale-0 group-data-focus/poster:grayscale-0"
