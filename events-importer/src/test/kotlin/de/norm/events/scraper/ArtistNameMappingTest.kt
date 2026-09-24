@@ -726,6 +726,29 @@ class ArtistNameMappingTest {
     }
 
     @Test
+    fun `stripArtistSuffix drops show, tour and anniversary words a title glues on without a dash`() {
+        // Production titles that minted these as acts (#1841).
+        stripArtistSuffix("SIDOS WEIHNACHTSSHOW 2026") shouldBe "SIDO"
+        stripArtistSuffix("Mutabor 35 Jahre Jubiläum") shouldBe "Mutabor"
+        stripArtistSuffix("COOGANS BLUFF 10 Years Of Flying To The Stars") shouldBe "COOGANS BLUFF"
+        stripArtistSuffix("Bernhard Brink - \"Danke für die Zeit\" Die Abschiedstour") shouldBe "Bernhard Brink"
+        stripArtistSuffix("Reg Meuross – Sonic Morgue – Zusatzshow") shouldBe "Reg Meuross – Sonic Morgue"
+        stripArtistSuffix("Jan Becker „HYPNOTIZE THE WORLD“") shouldBe "Jan Becker"
+        // Real names in the same shapes stay.
+        stripArtistSuffix("10 Years") shouldBe "10 Years"
+        stripArtistSuffix("Ship Happens Aftershow") shouldBe "Ship Happens Aftershow"
+        stripArtistSuffix("Voodoo Jürgens und die \"Ansa Panier\"") shouldBe "Voodoo Jürgens und die \"Ansa Panier\""
+    }
+
+    @Test
+    fun `headlinersFromTitle reads a festival lead, a Vorprogramm and a clock range`() {
+        headlinersFromTitle("Jazzfest Berlin – Wendy Eisenberg").map { it.name } shouldBe listOf("Wendy Eisenberg")
+        headlinersFromTitle("KARAT „45 Jahre Der blaue Planet“ Vorprogramm: Dirk Michaelis") shouldBe
+            listOf(ScrapedArtist("KARAT", "HEADLINER", titleDerived = true), ScrapedArtist("Dirk Michaelis", "SUPPORT", titleDerived = true))
+        headlinersFromTitle("19-21Uhr") shouldBe emptyList()
+    }
+
+    @Test
     fun `stripArtistSuffix recovers the act from tour and live suffixes`() {
         stripArtistSuffix("DOMINIUM - NIGHT IS CALLING TOUR 2026") shouldBe "DOMINIUM"
         stripArtistSuffix("AZ LIVE IN BERLIN") shouldBe "AZ"

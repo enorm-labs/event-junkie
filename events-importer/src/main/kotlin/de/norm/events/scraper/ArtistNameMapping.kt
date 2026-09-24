@@ -188,6 +188,11 @@ fun isScoreConcertTitle(title: String): Boolean = SCORE_CONCERT_PATTERN.contains
  * (#305), and a `— more TBA` tail is a line-up placeholder glued to the last act (#1564). A show
  * note in brackets (`(Zusatzshow)`, `(Vinyl)`) is a format too (#1761).
  *
+ * From #1841: a compound tour word after a dash (`Die Abschiedstour`), an anniversary without a
+ * dash when it reads `<n> Years Of …` or `<n> Jahre Jubiläum` (`Mutabor 35 Jahre Jubiläum`), and
+ * a `– Zusatzshow` dash tail, and a work title in German quotes (`KARAT „45 Jahre Der blaue
+ * Planet“`); straight quotes stay, because `Voodoo Jürgens und die "Ansa Panier"` names the band.
+ *
  * The boundaries keep real names intact: hyphen tails need `<space>-<space>` and a marker
  * ("BAD COMPANY LEGACY - Dave Colwell" is left alone); the year is anchored at the end ("Blink -
  * 182", "Front 242"); "Live" needs a preceding whitespace boundary (the band Live); the bare
@@ -197,7 +202,10 @@ fun isScoreConcertTitle(title: String): Boolean = SCORE_CONCERT_PATTERN.contains
  */
 private val ARTIST_SUFFIX_PATTERN =
     Regex(
-        """\s+[-–—]\s+(?:\S.*\btour\b|\d+\s+(?:years?|jahre|sets?)\b).*$""" +
+        """\s+[-–—]\s+(?:\S.*tour\b|\d+\s+(?:years?|jahre|sets?)\b).*$""" +
+            """|(?<=\S)\s+\d+\s+(?:years\s+of|jahre\s+jubil(?:ä|ae)um)\b.*$""" +
+            """|\s+[-–—]\s*zusatz(?:show|konzert|termin)\s*$""" +
+            """|(?<=\S)\s+„[^„“]+“\s*$""" +
             """|\s+[-–—]\s+\S.*\b(?:19|20)\d{2}\s*$""" +
             """|(?<=\S):\s+\S.*\b(?:19|20)\d{2}\s*$""" +
             """|(?:\s*[-–—]\s*|\s+(?:[&+]|and|und)\s+)(?:many\s+|viele\s+)?(?:more|mehr)\b(?:\s+(?:tba|tbc|tbd))?\.*$""" +
@@ -249,11 +257,21 @@ fun stripArtistSuffix(name: String): String {
         if (next == stripped || next.isBlank()) return@repeat
         stripped = next
     }
-    return stripTrailingSeparator(stripWorkTitle(stripShoutedTourTail(stripTrailingParenthetical(stripped))))
+    return stripGenitiveShow(stripTrailingSeparator(stripWorkTitle(stripShoutedTourTail(stripTrailingParenthetical(stripped)))))
 }
 
 /** A footnote star after the last word: `Sweely live*`. A star inside a name (`*n8`) stays. */
 private val FOOTNOTE_STAR = Regex("""(?<=\S)\*+\s*$""")
+
+/**
+ * A show named in the German genitive after its act, without the apostrophe: `SIDOS
+ * WEIHNACHTSSHOW 2026` is Sido's Christmas show (#1841). The compound `…show` word and its year
+ * go, and so does the genitive `s`. The year is required: without it `Ship Happens Aftershow`
+ * reads the same way. A plain `Show` word is not enough either (`Harry Styles Show 2026`).
+ */
+private val GENITIVE_SHOW = Regex("""^(.*\p{L}{2})s\s+\p{L}{3,}show\s+(?:19|20)\d{2}$""", RegexOption.IGNORE_CASE)
+
+private fun stripGenitiveShow(name: String): String = GENITIVE_SHOW.matchEntire(name)?.groupValues?.get(1) ?: name
 
 /**
  * Every ISO 3166 alpha-2 and alpha-3 country code, plus `UK`, for an origin tag the venue did not
@@ -615,7 +633,7 @@ fun isGuestSlotLabel(name: String): Boolean = GUEST_SLOT_PATTERN.matches(name.tr
 fun isNonArtistName(name: String): Boolean =
     isPlaceholderName(name) || isNonArtistLabel(name) || isEventSegmentLabel(name) ||
         isNonArtistEvent(name) || isScoreConcertTitle(name) || isDjSetFormatLabel(name) || isGuestSlotLabel(name) || isDenylistedNonArtist(name) ||
-        isTitleFragment(name) || isSlugless(name) || isBareNumber(name)
+        isTitleFragment(name) || isSlugless(name) || isBareNumber(name) || isTimeRange(name)
 
 /**
  * A name with nothing a slug can keep is a separator the split left behind (#1553).
@@ -627,6 +645,12 @@ private val BARE_NUMBER = Regex("""\d+""")
 
 /** A digits-only name is the tail of a `<show> 1 & 2` billing, never an act (#1556). */
 fun isBareNumber(name: String): Boolean = BARE_NUMBER.matches(name.trim())
+
+/** A clock range that a title can be cut down to: Arcanoa's `19-21Uhr` (#1841). */
+private val TIME_RANGE = Regex("""\d{1,2}(?:[:.]\d{2})?\s*[-–]\s*\d{1,2}(?:[:.]\d{2})?\s*uhr""", RegexOption.IGNORE_CASE)
+
+/** Whether [name] is only a [TIME_RANGE]. */
+fun isTimeRange(name: String): Boolean = TIME_RANGE.matches(name.trim())
 
 /**
  * A candidate still carrying a title's `|` separator ("SKETCHY SESSIONS | jazz") is a slice of
@@ -1098,10 +1122,11 @@ private fun commaBillOf(
 }
 
 /**
- * A leading series label ending in "#<n>:" ("OFF THE RAILS #5: …"); the acts follow the colon.
- * Non-greedy, and a non-blank series name is required, so "9:3" or "H2:O" is untouched.
+ * A leading series label: one ending in "#<n>:" ("OFF THE RAILS #5: …"), or a Berlin festival
+ * named before a dash ("Jazzfest Berlin – Wendy Eisenberg", #1841); the acts follow. Non-greedy,
+ * and a non-blank series name is required, so "9:3" or "H2:O" is untouched.
  */
-private val SERIES_PREFIX_PATTERN = Regex("""^.+?#\s*\d+\s*:\s*""")
+private val SERIES_PREFIX_PATTERN = Regex("""^.+?#\s*\d+\s*:\s*|^(?i:\p{L}+fest(?:ival)?\s+berlin\s+[-–—]\s+)""")
 
 /**
  * Strips a leading "<series> #<n>:" label: `"OFF THE RAILS #5: Blake Harley & Superior Motive"`
@@ -1187,7 +1212,8 @@ fun headlinersFromTitle(
     if (isPresenterOwnEventTitle(title, subtitle)) return emptyList()
     if (unpackWithFrame) withFrameActs(title)?.let { return it }
     // `<act> feat. <guest>` mid-title: the guest is billed as support, the act goes on (#305).
-    val (billing, guests) = splitFeaturedGuests(title)
+    // A `Vorprogramm:` names the support act, so it bills like `+ Support:` (#1841).
+    val (billing, guests) = splitFeaturedGuests(title.replace(VORPROGRAMM_MARKER, " + Support: "))
     presentsFrameActs(billing)?.let { return it + guests }
     return splitHeadlinerTitle(stripConjoinedTail(stripSeriesPrefix(billedSideOfPres(billing, splitOnSlash))), splitOnSlash, description)
         .map { segment ->
@@ -1198,6 +1224,9 @@ fun headlinersFromTitle(
         }.filterNot { (name, _) -> isNonArtistName(name) }
         .map { (name, role) -> ScrapedArtist(name = name, role = role, titleDerived = true) } + guests
 }
+
+/** The German opening-act marker inside a title: `KARAT „45 Jahre …“ Vorprogramm: Dirk Michaelis`. */
+private val VORPROGRAMM_MARKER = Regex("""\s+vorprogramm\s*:\s*""", RegexOption.IGNORE_CASE)
 
 /**
  * Cuts a dash tail that holds a conjunction, before the title is split on conjunctions (#1842).

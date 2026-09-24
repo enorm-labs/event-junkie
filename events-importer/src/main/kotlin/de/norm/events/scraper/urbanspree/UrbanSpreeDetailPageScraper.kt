@@ -87,6 +87,7 @@ class UrbanSpreeDetailPageScraper {
             pricePresale = price,
             free = detectFree(pricePresale = price, priceNote = priceText),
             status = urbanSpreeStatus(rawTitle),
+            soldOut = urbanSpreeSoldOut(rawTitle),
             artists = buildArtistsForEventType(title, subtitle = supportNote, eventType = eventType, description = description),
             promoters = infoValue(document, PROMOTER_LABEL)?.let(::splitPromoters).orEmpty()
         )

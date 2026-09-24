@@ -75,6 +75,16 @@ class UrbanSpreeFieldMappingTest {
     // --- urbanSpreeStatus ---
 
     @Test
+    fun `a SOLD OUT lead marks the show sold out and leaves the act`() {
+        // Production stored `Sold Out - Otha` as the act, on sale (#1841).
+        cleanUrbanSpreeTitle("SOLD OUT - Otha") shouldBe "Otha"
+        urbanSpreeSoldOut("SOLD OUT - Otha") shouldBe true
+        urbanSpreeStatus("SOLD OUT - Otha") shouldBe EventStatus.SCHEDULED.name
+        urbanSpreeSoldOut("CANCELLED - SOM") shouldBe false
+        urbanSpreeSoldOut("Otha") shouldBe false
+    }
+
+    @Test
     fun `urbanSpreeStatus reads the leading status marker`() {
         urbanSpreeStatus("CANCELLED - SOM - Berlin - Urban Spree") shouldBe EventStatus.CANCELLED.name
         urbanSpreeStatus("ABGESAGT - Band") shouldBe EventStatus.CANCELLED.name
