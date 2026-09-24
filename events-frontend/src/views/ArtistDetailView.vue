@@ -2,15 +2,18 @@
 import { computed, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import BaseDetailView from '@/components/BaseDetailView.vue'
+import TextCreditLine from '@/components/TextCreditLine.vue'
 import { usePageMeta } from '@/composables/usePageMeta'
 import { artistPageMeta, placeholderPageMeta } from '@/lib/pageMeta'
 import { useArtist } from '@/composables/useArtist'
 import { useEventSearch } from '@/composables/useEvents'
 import { yesterdayIso } from '@/lib/format'
-import { imageCredit } from '@/lib/imageCredit'
+import { descriptionFor } from '@/lib/description'
+import { imageCredit, textCredit } from '@/lib/imageCredit'
+import type { Locale } from '@/i18n/locales'
 import { useI18n } from 'vue-i18n'
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 
 /** Entity label. A `computed` because a locale switch rewrites the URL without remounting this. */
 const kind = computed(() => t('detail.artist.kind'))
@@ -69,6 +72,10 @@ usePageMeta(() =>
 )
 
 const credit = computed(() => imageCredit(artist.value))
+const description = computed(() =>
+  artist.value ? descriptionFor(artist.value, locale.value as Locale) : null,
+)
+const descriptionCredit = computed(() => textCredit(artist.value))
 </script>
 
 <template>
@@ -106,8 +113,11 @@ const credit = computed(() => imageCredit(artist.value))
       </div>
     </template>
 
-    <p v-if="artist?.description" class="whitespace-pre-line text-foreground/90">
-      {{ artist.description }}
-    </p>
+    <div v-if="description" class="space-y-2">
+      <p :lang="description.lang ?? undefined" class="whitespace-pre-line text-foreground/90">
+        {{ description.text }}
+      </p>
+      <TextCreditLine v-if="descriptionCredit" :credit="descriptionCredit" />
+    </div>
   </BaseDetailView>
 </template>

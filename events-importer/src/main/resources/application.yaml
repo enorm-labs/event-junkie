@@ -91,10 +91,12 @@ app:
     enrich-max-per-run: 100
   wikimedia:
     # The picture of an EXACT artist: the Wikidata item's P18 claim, then the file's licence and
-    # credit from Commons (ADR-031, step C). Only the Wikidata id is sent.
+    # credit from Commons (ADR-031, step C); an ensemble's Wikipedia extract through the item's
+    # sitelinks (step C+, #1837). Only the Wikidata id and an article title are sent.
     enabled: ${APP_WIKIMEDIA_ENABLED:true}
     wikidata-base-url: https://www.wikidata.org/w/api.php
     commons-base-url: https://commons.wikimedia.org/w/api.php
+    wikipedia-base-url: https://{lang}.wikipedia.org
     polite-delay-millis: 250
     timeout: 30s
     thumb-width: 1600

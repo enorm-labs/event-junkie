@@ -228,6 +228,15 @@ below. The picture, its author, its licence and its source page are stored toget
 and birthplace MusicBrainz publishes for a person are not read. The founding date and place of a group are, and a CHECK
 constraint keeps the two apart. The second sentence of the notice paragraph names both sources.
 
+**Wikipedia is the same source again, for an ensemble's description** (ADR-031 step C+,
+[#1837](https://github.com/enorm-labs/event-junkie/issues/1837)). This applies to a group, an orchestra or a choir
+with an exact match and no description. The importer asks Wikidata for the item's German and English article titles. It then asks
+Wikipedia for the lead of one article. What leaves the stack is a Wikidata id and an article title. The lead is stored
+in `description`, which the row below already lists, with its credit and licence (CC BY-SA 4.0). A person gets no lead,
+because the first sentence of a person's article is a birth date and a birthplace. A lead that contains birth data is
+refused on an ensemble too. A lead often names the members of the band. Those names are published stage credits, and
+the removal route in §7.3 covers them with the description. The third sentence of the notice paragraph names the source.
+
 **The role mailboxes hold email, and the Hetzner AVV covers them.** `hello@`, `security@` and `alerts@` are mailboxes
 on Hetzner Webhosting S, under the same Hetzner account as the servers ([`ops/EMAIL.md`](ops/EMAIL.md)). The AVV is
 account-level, so the mailboxes add no processor. A mailbox holds the sender's address, the message and whatever the
@@ -295,6 +304,9 @@ under § 16 UrhG and a processing operation under the DSGVO. Two consequences fo
 - **An artist photograph is erased through §7.3, not through the venue opt-out.** An artist plays many venues. The
   takedown deliberately covers a venue's own image and its events' images, and stops there. Deleting a performer's
   photograph on one venue's request would remove it from every other listing.
+- **An artist description from Wikipedia is erased through §7.3 too, with the member names in it.** Deleting the text
+  clears its credit. An edit through the admin API does the same, so a person's own text never carries Wikipedia's
+  credit.
 - **A venue photograph from an open archive answers to its photographer.** 43 of the 86 venue images come from
   Wikimedia Commons or Flickr (#1275). The venue neither took nor published them, so a request to remove one reaches
   us from the photographer. The credit under each picture names that person and links the original.

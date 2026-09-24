@@ -15,7 +15,7 @@ import org.springframework.beans.factory.support.DefaultListableBeanFactory
 import org.springframework.boot.info.BuildProperties
 import org.springframework.web.reactive.function.client.WebClient
 
-/** The two MediaWiki reads against a local server, on captured responses. */
+/** The MediaWiki and Wikipedia REST reads against a local server, on captured responses. */
 class WikimediaClientTest {
     private lateinit var server: MockWebServer
 
@@ -35,6 +35,7 @@ class WikimediaClientTest {
             WikimediaProperties(
                 wikidataBaseUrl = server.url("/wikidata/api.php").toString(),
                 commonsBaseUrl = server.url("/commons/api.php").toString(),
+                wikipediaBaseUrl = server.url("/").toString() + "{lang}wiki",
                 politeDelayMillis = 0
             )
         val webClient =
@@ -124,5 +125,64 @@ class WikimediaClientTest {
             server.enqueue(MockResponse.Builder().code(503).build())
 
             shouldThrow<WikimediaUnavailableException> { client().imageFor("Q3374548") }.message shouldContain "503"
+        }
+
+    @Test
+    fun `reads the item's sitelinks, then the preferred wiki's summary, and keeps the article URL for the credit`() =
+        runTest {
+            server.enqueue(json(fixture("wbgetentities-Q27897897")))
+            server.enqueue(json(fixture("summary-de-giant-rooks")))
+
+            val extract = client().extractFor("Q27897897", listOf("de", "en"))
+
+            server.takeRequest().target shouldBe
+                "/wikidata/api.php?action=wbgetentities&ids=Q27897897&props=sitelinks&sitefilter=dewiki%7Cenwiki&format=json"
+            server.takeRequest().target shouldBe "/dewiki/api/rest_v1/page/summary/Giant_Rooks"
+            extract shouldBe
+                WikipediaExtract(
+                    language = "de",
+                    text = "Giant Rooks ist eine deutsche Indie-Pop-Band aus Hamm, die 2014 gegründet wurde.",
+                    pageUrl = "https://de.wikipedia.org/wiki/Giant_Rooks"
+                )
+        }
+
+    @Test
+    fun `falls back to the other wiki when the preferred one has no article, and encodes the title as one segment`() =
+        runTest {
+            server.enqueue(json(fixture("wbgetentities-Q66734658")))
+            server.enqueue(json(fixture("summary-en-war-on-women")))
+
+            val extract = client().extractFor("Q66734658", listOf("de", "en"))
+
+            server.takeRequest()
+            server.takeRequest().target shouldBe "/enwiki/api/rest_v1/page/summary/War_on_Women_%28band%29"
+            extract?.language shouldBe "en"
+            extract?.pageUrl shouldBe "https://en.wikipedia.org/wiki/War_on_Women_(band)"
+        }
+
+    @Test
+    fun `an unknown item, a disambiguation page and a vanished article are no extract`() =
+        runTest {
+            server.enqueue(json(fixture("wbgetentities-missing")))
+            client().extractFor("Q999999999999", listOf("de", "en")).shouldBeNull()
+
+            server.enqueue(json(fixture("wbgetentities-Q27897897")))
+            server.enqueue(json(fixture("summary-en-disambiguation")))
+            client().extractFor("Q27897897", listOf("en", "de")).shouldBeNull()
+
+            server.enqueue(json(fixture("wbgetentities-Q27897897")))
+            server.enqueue(MockResponse.Builder().code(404).build())
+            client().extractFor("Q27897897", listOf("de", "en")).shouldBeNull()
+
+            server.requestCount shouldBe 5
+        }
+
+    @Test
+    fun `a server error on the summary is unavailable, so the row is retried`() =
+        runTest {
+            server.enqueue(json(fixture("wbgetentities-Q27897897")))
+            server.enqueue(MockResponse.Builder().code(503).build())
+
+            shouldThrow<WikimediaUnavailableException> { client().extractFor("Q27897897", listOf("de", "en")) }.message shouldContain "503"
         }
 }

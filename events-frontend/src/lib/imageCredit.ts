@@ -73,3 +73,33 @@ export function imageCredit(row: AttributedImage | null | undefined): ImageCredi
     licenceUrl: licence?.url ?? null,
   }
 }
+
+/** A row whose description may be licensed text: an artist's Wikipedia lead (#1837). */
+export interface AttributedText {
+  description?: string | null
+  descriptionAttribution?: string | null
+  descriptionLicenceId?: string | null
+  descriptionSourceUrl?: string | null
+}
+
+/**
+ * The credit for [row]'s description, or `null` for a text a venue or a person wrote, which owes
+ * none. CC BY-SA text carries the same three parts as an image, so the licence table is shared.
+ */
+export function textCredit(row: AttributedText | null | undefined): ImageCredit | null {
+  if (
+    !row?.description ||
+    !row.descriptionAttribution ||
+    !row.descriptionLicenceId ||
+    !row.descriptionSourceUrl
+  ) {
+    return null
+  }
+  const licence = LICENCES[row.descriptionLicenceId]
+  return {
+    attribution: row.descriptionAttribution,
+    sourceUrl: row.descriptionSourceUrl,
+    licenceLabel: licence?.label ?? row.descriptionLicenceId,
+    licenceUrl: licence?.url ?? null,
+  }
+}

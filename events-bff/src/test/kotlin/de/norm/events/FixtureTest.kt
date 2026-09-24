@@ -304,4 +304,22 @@ class FixtureTest : BaseControllerTest() {
                 .jsonPath("$.musicbrainzId")
                 .isEqualTo("00000000-0000-4000-8000-000000000272")
         }
+
+    @Test
+    fun `the verified ensemble's Wikipedia lead is served with its language and its credit`(): Unit =
+        runBlocking {
+            loadFixture()
+
+            get("/artists/mobius-trio")
+                .jsonPath("$.description")
+                .value<String> { assert(it.startsWith("Møbius Trio ist eine deutsche Jazz-Band")) }
+                .jsonPath("$.descriptionLanguage")
+                .isEqualTo("de")
+                .jsonPath("$.descriptionAttribution")
+                .isEqualTo("Wikipedia")
+                .jsonPath("$.descriptionLicenceId")
+                .isEqualTo("CC-BY-SA-4.0")
+                .jsonPath("$.descriptionSourceUrl")
+                .isEqualTo("https://de.wikipedia.example/wiki/Møbius_Trio")
+        }
 }

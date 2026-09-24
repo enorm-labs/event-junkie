@@ -10,6 +10,7 @@ import de.norm.events.musicbrainz.MusicBrainzUnavailableException
 import de.norm.events.wikimedia.CommonsImage
 import de.norm.events.wikimedia.WikimediaClient
 import de.norm.events.wikimedia.WikimediaUnavailableException
+import de.norm.events.wikimedia.WikipediaExtract
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.sync.Mutex
@@ -17,14 +18,14 @@ import org.springframework.stereotype.Service
 
 /**
  * Reads the MusicBrainz entity behind every EXACT verdict and fills what the row lacks: links, type,
- * for an ensemble when and where it formed, and the Commons picture its Wikidata item names
- * (ADR-031, step C).
+ * for an ensemble when and where it formed, the Commons picture its Wikidata item names (ADR-031,
+ * step C), and an ensemble's Wikipedia lead (step C+).
  *
  * Runs after [MusicBrainzLookupService], in the same guarded slot after an import commits, and for
  * the same reasons: derived data, a retry on failure, never a `FAILED` source. The touched rows come
  * first, then a slice of the backfill under a `tryLock` mutex so concurrent sweeps do not read the
  * same slice (#1604). Each row costs one MusicBrainz request and, when the entity links a Wikidata
- * item and the row has no picture, two at Wikimedia.
+ * item, two at Wikimedia for a missing picture and two for a missing ensemble description.
  *
  * [ArtistEnrichment] decides what is written; [ArtistEnrichmentStore] writes only that. A row whose
  * MBID is gone is stamped as read with nothing filled, so it is not asked for again until the
@@ -122,12 +123,19 @@ class MusicBrainzEnrichmentService(
             store.store(id, emptyMap())
         } else {
             val image = if (artist.imageUrl == null) pictureOf(entity) else null
-            val filled = ArtistEnrichment.fill(artist, entity, image, wikimedia.maxBytes)
+            val wantsDescription = ArtistEnrichment.wantsDescription(artist, entity)
+            val extract = if (wantsDescription) extractOf(artist, entity) else null
+            val filled = ArtistEnrichment.fill(artist, entity, image, wikimedia.maxBytes, extract)
             store.store(id, filled.columns)
             filled.fields.forEach(metrics::recordMusicBrainzEnriched)
             filled.imageRefusal?.let { reason ->
                 metrics.recordMusicBrainzImageRefused(reason)
                 logger.info { "Commons picture for '${artist.name}' refused: $reason" }
+            }
+            val descriptionRefusal = filled.descriptionRefusal ?: NO_ARTICLE.takeIf { wantsDescription && extract == null }
+            descriptionRefusal?.let { reason ->
+                metrics.recordWikipediaDescriptionRefused(reason)
+                logger.info { "Wikipedia description for '${artist.name}' refused: $reason" }
             }
             logger.debug { "Filled ${filled.fields} on '${artist.name}' from MusicBrainz $mbid" }
         }
@@ -135,7 +143,13 @@ class MusicBrainzEnrichmentService(
 
     private suspend fun pictureOf(entity: MusicBrainzArtist): CommonsImage? = ArtistEnrichment.wikidataIdOf(entity)?.let { wikimedia.imageFor(it) }
 
+    private suspend fun extractOf(
+        artist: ArtistEntity,
+        entity: MusicBrainzArtist
+    ): WikipediaExtract? = ArtistEnrichment.wikidataIdOf(entity)?.let { wikimedia.extractFor(it, WikipediaLead.languagesFor(artist.country ?: entity.country)) }
+
     private companion object {
         const val STOP_AFTER_CONSECUTIVE_FAILURES = 3
+        const val NO_ARTICLE = "no-article"
     }
 }

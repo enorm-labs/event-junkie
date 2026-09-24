@@ -54,6 +54,10 @@ classDiagram
         String name
         String slug
         String? description
+        String? descriptionLanguage
+        String? descriptionAttribution
+        String? descriptionLicenceId
+        String? descriptionSourceUrl
         String? imageUrl
         String? imageAttribution
         String? imageLicenceId

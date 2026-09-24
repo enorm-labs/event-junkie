@@ -1124,6 +1124,26 @@ export interface components {
             name?: string;
             /** @description Biography or description text */
             description?: string | null;
+            /**
+             * @description Language of `description`: `de` or `en`. Null when the language is unknown.
+             * @example en
+             */
+            descriptionLanguage?: string | null;
+            /**
+             * @description Who to credit for `description` when it is licensed text. Null for a text a venue or a person wrote; set exactly when `descriptionLicenceId` and `descriptionSourceUrl` are
+             * @example Wikipedia
+             */
+            descriptionAttribution?: string | null;
+            /**
+             * @description SPDX identifier of the licence `description` is published under
+             * @example CC-BY-SA-4.0
+             */
+            descriptionLicenceId?: string | null;
+            /**
+             * @description The page `description` was taken from, which the rendered credit links to
+             * @example https://en.wikipedia.org/wiki/Buffalo_Tom
+             */
+            descriptionSourceUrl?: string | null;
             /** @description URL of the artist's photo or band logo */
             imageUrl?: string | null;
             /**

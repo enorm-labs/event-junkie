@@ -19,6 +19,17 @@ data class ArtistResponse(
     val slug: String,
     @Schema(description = "Biography or description text", example = "Formed in Ipswich in the late 1970s…")
     val description: String?,
+    @Schema(description = "Language of `description`: `de` or `en`, or null when unknown", example = "en")
+    val descriptionLanguage: String?,
+    @Schema(
+        description = "Who to credit for `description` when it is licensed text; filled by the enrichment and cleared when the text is edited",
+        example = "Wikipedia"
+    )
+    val descriptionAttribution: String?,
+    @Schema(description = "SPDX identifier of the licence `description` is published under", example = "CC-BY-SA-4.0")
+    val descriptionLicenceId: String?,
+    @Schema(description = "The page `description` was taken from", example = "https://en.wikipedia.org/wiki/Buffalo_Tom")
+    val descriptionSourceUrl: String?,
     @Schema(description = "URL of the artist's photo or band logo", example = "https://example.com/adicts.jpg")
     val imageUrl: String?,
     @Schema(description = "Who to credit for `imageUrl`", example = "Photographer Name, via Wikimedia Commons")
@@ -75,6 +86,10 @@ data class ArtistResponse(
                 name = artist.name,
                 slug = artist.slug,
                 description = artist.description,
+                descriptionLanguage = artist.descriptionLanguage,
+                descriptionAttribution = artist.descriptionAttribution,
+                descriptionLicenceId = artist.descriptionLicenceId,
+                descriptionSourceUrl = artist.descriptionSourceUrl,
                 imageUrl = artist.imageUrl,
                 imageAttribution = artist.imageAttribution,
                 imageLicenceId = artist.imageLicenceId,
