@@ -21,13 +21,13 @@ import java.math.BigDecimal
  * (`Schönheitssalon` is a discussion format), and `OTHER` would bury a talk among the
  * genuinely unclassifiable.
  *
- * A workshop is the one exception, matched anywhere in the label (`Workshop im Urania-Garten`,
- * `Film und Workshop für Schulklassen`): its leaders teach rather than speak to an audience, so
- * it is `OTHER` (#1906).
+ * Workshops and guided walks are the exception, matched anywhere in the label (`Workshop im
+ * Urania-Garten`, `Kiezspaziergang`): their leaders teach or guide rather than speak to an
+ * audience, so they are `OTHER` (#1906, #1927).
  */
 fun uraniaEventType(format: String?): String =
     mapEventType(format, URANIA_FORMAT_SYNONYMS)
-        ?: EventType.OTHER.name.takeIf { format.orEmpty().contains(WORKSHOP_MARKER, ignoreCase = true) }
+        ?: EventType.OTHER.name.takeIf { NON_TALK_MARKERS.any { marker -> format.orEmpty().contains(marker, ignoreCase = true) } }
         ?: EventType.READING.name
 
 /**
@@ -36,7 +36,7 @@ fun uraniaEventType(format: String?): String =
  *
  * Two appended tails are removed rather than stored as people: a space-padded dash introducing
  * a note about the evening (`"Yoshua Yaffa - in englischer Sprache"`), and `"et al."` standing
- * in for unnamed panellists. An `OTHER` event bills nobody: a workshop leader is not a performer.
+ * in for unnamed panellists. An `OTHER` event bills nobody: a workshop leader or a walk's guide is not a performer.
  */
 fun uraniaSpeakers(
     billing: String?,
@@ -79,8 +79,11 @@ private val URANIA_FORMAT_SYNONYMS =
         "ausstellungseröffnung" to EventType.EXHIBITION.name
     )
 
-/** The word that marks a workshop in any of the venue's format labels. */
-private const val WORKSHOP_MARKER = "workshop"
+/**
+ * Words that mark a workshop or a guided walk in any of the venue's format labels. `führung` is
+ * left out: it is also the tail of `Aufführung` and `Einführung`.
+ */
+private val NON_TALK_MARKERS = listOf("workshop", "spaziergang", "rundgang")
 
 /** The label introducing the admission figures, before which any prose is ignored. */
 private const val ADMISSION_LABEL = ":"

@@ -11,8 +11,19 @@ import org.junit.jupiter.api.Test
 class UraniaEventFieldsTest {
     @Test
     fun `types the house's talk formats as spoken word`() {
-        listOf("Vortrag", "Podiumsdiskussion zur Buchpremiere", "Schönheitssalon", "Live-Podcast", null)
-            .map { uraniaEventType(it) }
+        // Every live talk format as of #1927, plus the missing label.
+        listOf(
+            "Vortrag",
+            "Podiumsdiskussion",
+            "Podiumsdiskussion zur Buchpremiere",
+            "Podiumsgespräch",
+            "Podiumsgespräch in englischer Sprache",
+            "Lesung und Diskussion für Schulklassen",
+            "Debatte",
+            "Schönheitssalon",
+            "Live-Podcast",
+            null
+        ).map { uraniaEventType(it) }
             .toSet() shouldBe setOf(EventType.READING.name)
     }
 
@@ -22,6 +33,19 @@ class UraniaEventFieldsTest {
         listOf("Workshop im Urania-Garten", "Film und Workshop für Schulklassen", "Workshop für Schulklassen", "Workshop")
             .map { uraniaEventType(it) }
             .toSet() shouldBe setOf(EventType.OTHER.name)
+    }
+
+    @Test
+    fun `types a guided walk as other`() {
+        // Kiezspaziergang is the live format as of #1927.
+        listOf("Kiezspaziergang", "Spaziergang durch den Tiergarten", "Rundgang")
+            .map { uraniaEventType(it) }
+            .toSet() shouldBe setOf(EventType.OTHER.name)
+    }
+
+    @Test
+    fun `keeps a talk whose label merely contains führung`() {
+        uraniaEventType("Einführung und Gespräch") shouldBe EventType.READING.name
     }
 
     @Test
@@ -50,6 +74,31 @@ class UraniaEventFieldsTest {
                 <h5 class="o-h6">AUFBAUAUF</h5><h3 class="o-h3">Ernte und Ausblick</h3>
                 <h6 class="o-h6">Workshop im Urania-Garten</h6>
                 <div class="c-event-calendar-item_content_text">Léna Kútvölgyi, Sara Stenczer</div></a>
+                </div></div></body></html>
+                """.trimIndent(),
+                baseUrl
+            )
+
+        val events = UraniaCalendarPageScraper().scrape(document, baseUrl)
+
+        events shouldHaveSize 1
+        events.single().eventType shouldBe EventType.OTHER.name
+        events.single().artists.shouldBeEmpty()
+    }
+
+    @Test
+    fun `a calendar walk is stored as other with no artists`() {
+        val baseUrl = "https://www.urania.de/kalender/"
+        val document =
+            Jsoup.parse(
+                """
+                <html><body><div class="c-event-calendar_day js-day" data-day="10-sa-10-2026">
+                <div class="c-event-calendar-item">
+                <div class="c-event-calendar-item_time">11:00 Uhr</div>
+                <a class="c-event-calendar-item_content" href="https://www.urania.de/event/fair-und-nachhaltig-im-wedding/">
+                <h5 class="o-h6">StadtNatur ON TOUR</h5><h3 class="o-h3">Fair und nachhaltig im Wedding</h3>
+                <h6 class="o-h6">Kiezspaziergang</h6>
+                <div class="c-event-calendar-item_content_text">Kathrin Scheurich</div></a>
                 </div></div></body></html>
                 """.trimIndent(),
                 baseUrl
