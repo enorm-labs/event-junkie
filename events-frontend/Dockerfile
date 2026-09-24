@@ -10,8 +10,8 @@
 # Deliberately no builder stage and no `RUN` that does build work, unlike every guide: build work
 # in a `RUN` executes target-architecture code, so a two-platform image would need a runner per
 # architecture plus a manifest merge, while `dist/` is identical on amd64 and arm64 (the same
-# reasoning as events-bff/Dockerfile, whose one exception, a named `apk upgrade`, this file does
-# not need). And `build-frontend.yml` already builds it with a cached node_modules.
+# reasoning as events-bff/Dockerfile, which also carries the one exception this file now needs, a
+# named `apk upgrade`). And `build-frontend.yml` already builds it with a cached node_modules.
 #
 # The base image is the unprivileged variant: it listens on 8080, and its nginx.conf relocates the
 # pid file and every temp path into /tmp (docker/nginx.conf).
@@ -27,12 +27,11 @@
 #
 # Verify the package, never the digest: #770 was triaged against a digest that had moved while
 # still shipping the vulnerable openssl. This pin must satisfy `libssl3 >= 3.5.8-r0` (#770),
-# `libexpat >= 2.8.4-r0` (#1009) and `libuuid >= 2.42.3-r1` (#1117), checked with
+# `libexpat >= 2.8.5-r0` (#1009, #1802) and `libuuid >= 2.42.3-r1` (#1117), checked with
 # `docker run --rm --entrypoint sh <ref> -c 'apk list | grep -E "^libssl3|^libexpat|^libuuid"'`
 # and `trivy image <ref> --severity CRITICAL,HIGH --ignore-unfixed --ignorefile /dev/null`, both
 # on `--platform linux/amd64`: Alpine builds each architecture separately, which is how #1118
-# verified clean and changed nothing. No `apk upgrade` layer: kept past its purpose it hides that
-# the base has caught up.
+# verified clean and changed nothing. The `apk upgrade` layer below covers what this pin does not.
 FROM nginxinc/nginx-unprivileged:1.31-alpine@sha256:b54ac358b83fc6c965793fd271839b4ea4cdb6e99895bb19618cbc2ca152d972
 
 ARG VERSION=unspecified
@@ -44,6 +43,21 @@ LABEL org.opencontainers.image.source="https://github.com/enorm-labs/event-junki
       org.opencontainers.image.licenses="Apache-2.0" \
       org.opencontainers.image.version="${VERSION}" \
       org.opencontainers.image.revision="${REVISION}"
+
+# A base-image CVE fix that has not arrived upstream (#1802): CVE-2026-93990, XML injection through
+# malformed UTF-16 input, is fixed in Alpine 3.24's `expat 2.8.5-r0` on both architectures, but the
+# nginx base still ships 2.8.4-r0. A digest bump was not the lever here — `1.31-alpine` had already
+# moved from the pinned digest to Alpine 3.24.2 and still carried 2.8.4-r0, so the newer digest
+# scans exactly as red. nginx links libexpat, so this is not an unreachable finding, and a fixable
+# HIGH blocks every publish on `main`.
+#
+# Delete this once the base ships 2.8.5-r0 or later, by the BOM-override rule: an upgrade kept past
+# its purpose hides that the base has caught up, and then chooses the version itself. Check with
+# `docker run --rm --platform linux/amd64 --entrypoint sh <ref> -c 'apk list --installed | grep
+# -E "^libexpat"'` on the pinned digest. `USER root` because apk needs write access; the final
+# `USER` below is unaffected.
+USER root
+RUN apk upgrade --no-cache libexpat
 
 # Config first, bundle second, so the config layer stays cached.
 COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
