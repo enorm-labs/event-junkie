@@ -4,6 +4,7 @@ import de.norm.events.event.EventStatus
 import de.norm.events.scraper.WixEventsWarmupData.WIX_EVENTS_APP_DEF_ID
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
+import org.jsoup.nodes.Element
 import tools.jackson.databind.JsonNode
 import tools.jackson.databind.json.JsonMapper
 import java.math.BigDecimal
@@ -52,10 +53,7 @@ internal object WixEventsWarmupData {
      *
      * @param source the venue whose page is being read, used only for log context.
      */
-    @Suppress(
-        "TooGenericExceptionCaught", // A malformed/absent payload must degrade to null, never abort the import
-        "ReturnCount" // Sequential null-guards for each extraction step are clearer than nesting
-    )
+    @Suppress("ReturnCount") // Sequential null-guards for each extraction step are clearer than nesting
     fun events(
         document: Document,
         source: EventSource
@@ -65,13 +63,7 @@ internal object WixEventsWarmupData {
             logger.warn { "No '$WARMUP_SCRIPT_ID' script found on $source overview page" }
             return null
         }
-        val root =
-            try {
-                jsonMapper.readTree(script.data())
-            } catch (e: Exception) {
-                logger.warn(e) { "Failed to parse $source wix-warmup-data JSON" }
-                return null
-            }
+        val root = parseWarmupJson(script, source) ?: return null
         val appNode = root.path("appsWarmupData").path(WIX_EVENTS_APP_DEF_ID)
         if (!appNode.isObject) {
             logger.warn { "No Wix Events app data in $source warmup payload" }
@@ -93,10 +85,7 @@ internal object WixEventsWarmupData {
      * carries the widget's array, and that object holds the rich-content `longDescription` the
      * listing leaves out.
      */
-    @Suppress(
-        "TooGenericExceptionCaught", // A malformed/absent payload must degrade to null, never abort the import
-        "ReturnCount" // Sequential null-guards for each extraction step are clearer than nesting
-    )
+    @Suppress("ReturnCount") // Sequential null-guards for each extraction step are clearer than nesting
     fun event(
         document: Document,
         source: EventSource
@@ -105,13 +94,7 @@ internal object WixEventsWarmupData {
             document.getElementById(WARMUP_SCRIPT_ID) ?: return null.also {
                 logger.warn { "No '$WARMUP_SCRIPT_ID' script found on $source detail page" }
             }
-        val root =
-            try {
-                jsonMapper.readTree(script.data())
-            } catch (e: Exception) {
-                logger.warn(e) { "Failed to parse $source wix-warmup-data JSON" }
-                return null
-            }
+        val root = parseWarmupJson(script, source) ?: return null
         val event =
             root
                 .path("appsWarmupData")
@@ -128,6 +111,19 @@ internal object WixEventsWarmupData {
 
     /** The detail page's state key, where the overview's widget key is generated per page. */
     private const val EVENTS_PAGE_STATE = "EventsPageInitialState"
+
+    /** Reads the warmup [script]'s JSON, or `null` when it does not parse. */
+    @Suppress("TooGenericExceptionCaught") // A malformed payload must degrade to null, never abort the import
+    private fun parseWarmupJson(
+        script: Element,
+        source: EventSource
+    ): JsonNode? =
+        try {
+            jsonMapper.readTree(script.data())
+        } catch (e: Exception) {
+            logger.warn(e) { "Failed to parse $source wix-warmup-data JSON" }
+            null
+        }
 }
 
 /**
