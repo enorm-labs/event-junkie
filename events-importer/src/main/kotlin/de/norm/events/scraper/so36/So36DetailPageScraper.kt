@@ -153,11 +153,16 @@ class So36DetailPageScraper {
     }
 
     /**
-     * Splits a support subtitle into act names. SO36 writes the line in two shapes: opening with "+"
-     * ("+ GUM + CLAVV", "+ Support: cosmic joke & bad beat") or with a support label ("Support:
-     * DEMOB HAPPY", "Special Guest: The Flatliners"). Any other subtitle is a tagline ("Die
-     * Indie-Pop Party") and yields nothing — `feat.` included, because "feat. Birte Volta mit
-     * Special-Guests" bills the headliner's guest, not a support act (#1903).
+     * Splits a support subtitle into act names. SO36 writes the line in two shapes: opening with a
+     * joiner, "+" or "&" ("+ GUM + CLAVV", "+ Support: cosmic joke & bad beat", "& CRAWLSPACE &
+     * PINTGLASS & GHETTO JUSTICE"), or with a support label ("Support: DEMOB HAPPY", "Special Guest:
+     * The Flatliners"). Any other subtitle is a tagline ("Die Indie-Pop Party") and yields nothing —
+     * `feat.` included, because "feat. Birte Volta mit Special-Guests" bills the headliner's guest,
+     * not a support act (#1903).
+     *
+     * An "&" line is support, not a co-bill: SO36 puts co-headliners in the title ("PÖBEL &
+     * GESOCKS"), and the NASTY page names only NASTY on its ticket and the "&" acts as "mit dabei"
+     * (#1928).
      *
      * [splitSupportActs] cuts on commas, `+` and `/` and handles `&` / `and` /
      * `und` per boundary — "Earth Tongue und Scott Hepple & The Sun Band" yields "Earth Tongue"
@@ -168,8 +173,9 @@ class So36DetailPageScraper {
      */
     private fun parseSupportActs(subtitle: String?): List<String> {
         val line = subtitle?.trimStart().orEmpty()
-        if (!line.startsWith("+") && !SUPPORT_LABEL_OPENER.containsMatchIn(line)) return emptyList()
-        return splitSupportActs(line.removePrefix("+"))
+        val joined = line.firstOrNull() in SUPPORT_JOINERS
+        if (!joined && !SUPPORT_LABEL_OPENER.containsMatchIn(line)) return emptyList()
+        return splitSupportActs(if (joined) line.drop(1) else line)
             .map { it.replaceFirst(ROLE_LABEL_PREFIX, "").trim() }
             .filter { it.isNotBlank() && !isNonArtistName(it) }
     }
@@ -234,6 +240,9 @@ class So36DetailPageScraper {
 
         /** "Beginn: HH:mm" from the clock line. */
         private val BEGINN_PATTERN = Regex("""Beginn:\s*(\d{1,2}:\d{2})""")
+
+        /** The characters that join a subtitle's acts to the headliner when they open it. */
+        private val SUPPORT_JOINERS = setOf('+', '&')
 
         /** The support labels of [ROLE_LABEL_PREFIX] opening a subtitle, colon required. */
         private val SUPPORT_LABEL_OPENER =

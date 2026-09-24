@@ -104,6 +104,23 @@ class So36DetailPageScraperTest {
     }
 
     @Test
+    fun `reads a support line that opens with an ampersand as support acts`() {
+        // "NASTY" with the subtitle "& CRAWLSPACE & PINTGLASS & GHETTO JUSTICE" (#1928).
+        val url = "https://www.so36.com/produkte/96899-tickets-nasty-so36-berlin-am-12-11-2026"
+        val event = scraper.scrape(fixture("so36-detail-ampersand.html", url), url)
+        event.shouldNotBeNull()
+
+        event.subtitle shouldBe "& CRAWLSPACE & PINTGLASS & GHETTO JUSTICE"
+        event.artists.map { it.name to it.role } shouldBe
+            listOf(
+                "NASTY" to "HEADLINER",
+                "CRAWLSPACE" to "SUPPORT",
+                "PINTGLASS" to "SUPPORT",
+                "GHETTO JUSTICE" to "SUPPORT"
+            )
+    }
+
+    @Test
     fun `parses a party detail page without a lineup, price or ticket link`() {
         val event = scraper.scrape(fixture("so36-detail-party.html", partyUrl), partyUrl)
         event.shouldNotBeNull()
@@ -183,8 +200,12 @@ class So36DetailPageScraperTest {
         supports("Special Guest: The Flatliners") shouldBe listOf("The Flatliners")
         supports("Special Guests: THE NIGHT FLIGHT ORCHESTRA & EDGE OF PARADISE") shouldBe
             listOf("THE NIGHT FLIGHT ORCHESTRA", "EDGE OF PARADISE")
-        // A tagline carries no labelled opener, so it bills nobody.
+        // A leading "&" joins the acts to the headliner like "+" (#1928).
+        supports("& Pool Girl") shouldBe listOf("Pool Girl")
+        supports("& Special Guest: The Flatliners") shouldBe listOf("The Flatliners")
+        // A tagline carries no labelled opener, so it bills nobody — an "&" inside it included.
         supports("Europa Tour 2026") shouldBe emptyList()
+        supports("Präsentiert von Inge Borg & Gisela Sommer") shouldBe emptyList()
         supports("With Special Guest & Support") shouldBe emptyList()
         supports("feat. Birte Volta mit Special-Guests") shouldBe emptyList()
     }
