@@ -142,11 +142,13 @@ fun isEventSegmentLabel(name: String): Boolean {
  * "Manifest" and "Sommerfest" stay safe. The anniversary marker is anchored to the title start,
  * so an "… - 30 Jahre" tour tail (already trimmed by [stripArtistSuffix]) never matches. An
  * organiser credit is no act either: `Eine Veranstaltung des …`, `In Kooperation mit …` (#1843).
+ * A sing-along names its format, not who leads it: `SingAlong – Das große Mitsing-Event` (#1902).
  */
 private val NON_ARTIST_EVENT_PATTERN =
     Regex(
         """.*\bfest\b.*|.*\bfestival\b.*|.*\bfestivalticket\b.*""" +
             """|.*\bhoffest\b.*""" +
+            """|.*\bsing[\s-]?along\b.*|.*\bmitsing.*""" +
             """|\d+\.?\s+(?:jahre|jahr|years?)\b.*""" +
             """|(?:eine\s+veranstaltung|in\s+kooperation\s+mit|in\s+zusammenarbeit\s+mit)\b.*""",
         RegexOption.IGNORE_CASE
@@ -480,8 +482,7 @@ private val NON_ARTIST_NAMES: Set<String> =
         // DLTLLY (Don't Let The Label Label You) is a battle-rap league: Festsaal bills its birthday
         // show under the league's name and names no performer anywhere on the page (#1135).
         "dltlly",
-        // Bare event-format words a co-billed title splits off as if they were acts — Säälchen's
-        // `10 Jahre "The Big Brassers" – Jubiläumskonzert & Party` yields both of these.
+        // Bare event-format words a co-billed title splits off as if they were acts: `… – Jubiläumskonzert & Party`.
         "party",
         "jubiläumskonzert",
         // Genre words a co-billed format title splits off — Monarch's `POETRY & HIP HOP (KONZERT)` (#1580).
@@ -1238,6 +1239,7 @@ fun headlinersFromTitle(
     if (isScoreConcertTitle(title)) return emptyList()
     // Same conclusion, reached structurally: the subtitle credits the label and the title repeats it.
     if (isPresenterOwnEventTitle(title, subtitle)) return emptyList()
+    anniversaryQuotedAct(title)?.let { return it }
     if (unpackWithFrame) withFrameActs(title)?.let { return it }
     // `<act> feat. <guest>` mid-title: the guest is billed as support, the act goes on (#305).
     // A `Vorprogramm:` names the support act, so it bills like `+ Support:` (#1841).
@@ -1252,6 +1254,23 @@ fun headlinersFromTitle(
         }.filterNot { (name, _) -> isNonArtistName(name) }
         .map { (name, role) -> ScrapedArtist(name = name, role = role, titleDerived = true) } + guests
 }
+
+/**
+ * The act an anniversary title quotes, or `null` when the title has no such frame (#1905). In `10 Jahre
+ * "The Big Brassers" – Jubiläumskonzert & Party` the quotes mark the act and the rest names the occasion.
+ * An unquoted `22 JAHRE CLASH` stays with [NON_ARTIST_EVENT_PATTERN], because that name can be the venue's own.
+ */
+private fun anniversaryQuotedAct(title: String): List<ScrapedArtist>? =
+    ANNIVERSARY_QUOTED_ACT
+        .find(title.trim())
+        ?.groupValues
+        ?.get(1)
+        ?.let { stripArtistSuffix(it) }
+        ?.let { name -> listOf(name).filterNot(::isNonArtistName).map { ScrapedArtist(name = it, role = "HEADLINER", titleDerived = true) } }
+
+/** A leading `<n> Jahre "<act>"` or `<n> Years of "<act>"`, in straight, German or guillemet quotes. */
+private val ANNIVERSARY_QUOTED_ACT =
+    Regex("""^\d+\.?\s+(?:jahre|jahr|years?)(?:\s+of)?\s+["„“»]([^"„“”»«]+)["“”«]""", RegexOption.IGNORE_CASE)
 
 /** The German opening-act marker inside a title: `KARAT „45 Jahre …“ Vorprogramm: Dirk Michaelis`. */
 private val VORPROGRAMM_MARKER = Regex("""\s+vorprogramm\s*:\s*""", RegexOption.IGNORE_CASE)

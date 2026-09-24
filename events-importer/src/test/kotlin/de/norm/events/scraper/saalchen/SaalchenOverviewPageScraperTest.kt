@@ -144,6 +144,14 @@ class SaalchenOverviewPageScraperTest {
     }
 
     @Test
+    fun `bills the act an anniversary title quotes`() {
+        // `10 Jahre "The Big Brassers" – Jubiläumskonzert & Party`: the quotes mark the act (#1905).
+        val jubilee = event("saalchen:10-jahre-big-brassers-jubilaeumskonzert-party")
+        jubilee.eventType shouldBe EventType.CONCERT.name
+        jubilee.artists.map { it.name } shouldBe listOf("The Big Brassers")
+    }
+
+    @Test
     fun `reads the notice block even when the venue leaves it unwrapped`() {
         // Jimmy Sax's description is not wrapped in a paragraph at all, so a <p>-scoped lookup
         // would find no times or price for it.

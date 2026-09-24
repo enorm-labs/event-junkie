@@ -279,6 +279,18 @@ class ArtistNameMappingTest {
         isNonArtistEvent("Fettes Brot") shouldBe false
     }
 
+    // #1902 — a sing-along bills its format, and no performer.
+    @Test
+    fun `headlinersFromTitle reads a sing-along title as a format with no act`() {
+        headlinersFromTitle("SingAlong – Das große Mitsing-Event").shouldBeEmpty()
+        headlinersFromTitle("Singalong -Das große Mitsing-Event").shouldBeEmpty()
+        headlinersFromTitle("Disney Sing-Along").shouldBeEmpty()
+        isNonArtistEvent("Großes Mitsingkonzert") shouldBe true
+        // The word must stand alone: a name that merely contains the letters is kept.
+        isNonArtistEvent("Singalongs") shouldBe false
+        isNonArtistEvent("Sing Sing") shouldBe false
+    }
+
     // --- isScoreConcertTitle (#1829) ---
 
     @Test
@@ -756,6 +768,17 @@ class ArtistNameMappingTest {
         // The frame goes; a `with` billing stays one act, as everywhere else in a title.
         headlinersFromTitle("Celebrating Meat Loaf' - The Neverland Express with Andrew Polec").map { it.name } shouldBe
             listOf("The Neverland Express with Andrew Polec")
+    }
+
+    // #1905 — an anniversary title that quotes a name bills that name, and the rest is the occasion.
+    @Test
+    fun `headlinersFromTitle bills the act an anniversary title quotes`() {
+        headlinersFromTitle("10 Jahre \"The Big Brassers\" – Jubiläumskonzert & Party") shouldBe
+            listOf(ScrapedArtist("The Big Brassers", "HEADLINER", titleDerived = true))
+        headlinersFromTitle("25 Years of „Die Ärzte“").map { it.name } shouldBe listOf("Die Ärzte")
+        // Without quotes the name can be the venue's own, so the anniversary still bills nothing.
+        headlinersFromTitle("22 JAHRE CLASH").shouldBeEmpty()
+        headlinersFromTitle("10 Jahre \"Festival\"").shouldBeEmpty()
     }
 
     @Test
