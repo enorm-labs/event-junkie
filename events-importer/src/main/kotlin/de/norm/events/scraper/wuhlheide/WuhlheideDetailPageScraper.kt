@@ -9,13 +9,13 @@ import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.imgSrcAt
 import de.norm.events.scraper.inferConcertVenueType
+import de.norm.events.scraper.parseEurCodePrice
 import de.norm.events.scraper.parseIsoDate
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.textAt
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
-import java.math.BigDecimal
 
 /**
  * Pure HTML parser for Parkbühne Wuhlheide event detail pages (`/programm/<act>/YYYY-MM-DD`).
@@ -65,24 +65,11 @@ class WuhlheideDetailPageScraper {
             sourceId = "${EventSource.WUHLHEIDE.sourceIdPrefix}$slug",
             // Anchored on the ticket icon: the sibling share buttons are also target="_blank".
             ticketUrl = document.hrefAt(".details .buttons a.button:has(i.fa-ticket)"),
-            pricePresale = parsePrice(document.detailTableCell(PRICE_LABEL)),
+            pricePresale = parseEurCodePrice(document.detailTableCell(PRICE_LABEL)),
             promoters = listOfNotNull(document.textAt(".promoter a"))
         )
     }
-
-    /**
-     * Parses the venue's `"69,90 EUR"` price. The currency is spelled out rather than `€`, so the
-     * shared `€`-anchored [parsePriceValue][de.norm.events.scraper.parsePriceValue] does not match;
-     * the German decimal comma is normalised first. `null` for an absent or unparseable price.
-     */
-    private fun parsePrice(text: String?): BigDecimal? {
-        val match = PRICE_PATTERN.find(text.orEmpty()) ?: return null
-        return match.groupValues[1].replace(',', '.').toBigDecimalOrNull()
-    }
 }
-
-/** The venue's `NN,NN EUR` price, whose currency is spelled out rather than `€`. */
-private val PRICE_PATTERN = Regex("""(\d+(?:[.,]\d{1,2})?)\s*EUR""", RegexOption.IGNORE_CASE)
 
 /** Label of the detail table's doors row. */
 private const val DOORS_LABEL = "Einlass"

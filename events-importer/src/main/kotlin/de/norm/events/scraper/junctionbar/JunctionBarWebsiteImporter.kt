@@ -6,14 +6,17 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.LimitedAspect
+import de.norm.events.scraper.LogFields
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.VenueLimitations
 import de.norm.events.scraper.attrAt
 import de.norm.events.scraper.resolveUrl
 import io.github.oshai.kotlinlogging.KotlinLogging
+import io.github.oshai.kotlinlogging.Level
 import org.jsoup.nodes.Document
 import org.springframework.stereotype.Component
 import java.time.Clock
+import java.time.LocalDate
 
 /**
  * Website importer for Junction Bar Berlin — a single source covering **both** of the venue's
@@ -23,6 +26,12 @@ import java.time.Clock
  * 1. **Live music** — a `music_html/music.html` listing linking to per-month program pages
  * (`program/MM_YYYY/MM_YY.html`), each parsed by [JunctionBarMusicOverviewPageScraper].
  * 2. **DJ program** — a single `DJ_html/DJ.html` page parsed by [JunctionBarDjOverviewPageScraper].
+ *
+ * Each upcoming live night then gets one more request: its `junction-bar-shop.de` ticket page,
+ * the only place the venue prints the price and the sold-out badge ([JunctionBarShopPageScraper]).
+ * A failed shop page is not fatal: the night keeps its programme data and loses only those two
+ * fields. DJ nights link no shop page and cost no extra request. Past nights are skipped, because
+ * persistence drops them anyway.
  *
  * Both program URLs are discovered from the homepage's navigation (falling back to their
  * conventional relative paths), then fetched internally. Conditional requests are intentionally
@@ -34,13 +43,14 @@ import java.time.Clock
  *
  * @see JunctionBarMusicOverviewPageScraper for live-music parsing.
  * @see JunctionBarDjOverviewPageScraper for DJ parsing.
+ * @see JunctionBarShopPageScraper for the ticket shop's price and sold-out badge.
  * @see <a href="https://www.junction-bar.de/index.html">Junction Bar homepage</a>
  */
 @Component
 class JunctionBarWebsiteImporter(
     private val htmlFetcher: HtmlFetcher,
-    /** Clock for the DJ scraper's weekday-based year inference; override in tests. */
-    clock: Clock = Clock.systemDefaultZone()
+    /** Clock for the DJ scraper's year inference and the past-night cutoff on shop fetches; override in tests. */
+    private val clock: Clock = Clock.systemDefaultZone()
 ) : EventImporter {
     private val logger = KotlinLogging.logger {}
 
@@ -48,6 +58,7 @@ class JunctionBarWebsiteImporter(
 
     private val musicOverviewPageScraper = JunctionBarMusicOverviewPageScraper()
     private val djOverviewPageScraper = JunctionBarDjOverviewPageScraper(clock)
+    private val shopPageScraper = JunctionBarShopPageScraper()
 
     override suspend fun importEvents(
         url: String,
@@ -79,10 +90,38 @@ class JunctionBarWebsiteImporter(
                 .distinct()
         logger.info { "Found ${monthUrls.size} monthly program page(s) linked from Junction Bar listing $listingUrl" }
 
-        return monthUrls.flatMap { monthUrl ->
-            musicOverviewPageScraper.scrape(htmlFetcher.fetchDocument(monthUrl), monthUrl)
+        val nights =
+            monthUrls.flatMap { monthUrl ->
+                musicOverviewPageScraper.scrape(htmlFetcher.fetchDocument(monthUrl), monthUrl)
+            }
+        return enrichFromShopPages(nights)
+    }
+
+    /** Applies each upcoming night's shop page; a night without a ticket link stays as it is. */
+    private suspend fun enrichFromShopPages(nights: List<ScrapedEvent>): List<ScrapedEvent> {
+        val today = LocalDate.now(clock)
+        return nights.map { night ->
+            val shopUrl = night.ticketUrl?.takeIf { night.eventDate >= today } ?: return@map night
+            fetchShopOffer(night, shopUrl)?.applyTo(night) ?: night
         }
     }
+
+    /** Fetches and parses one shop page, degrading to `null` so the night keeps its programme data. */
+    @Suppress("TooGenericExceptionCaught") // Intentional: a broken shop page must not fail the whole import
+    private suspend fun fetchShopOffer(
+        night: ScrapedEvent,
+        shopUrl: String
+    ): JunctionBarShopOffer? =
+        try {
+            shopPageScraper.scrape(htmlFetcher.fetchDocument(shopUrl))
+        } catch (e: Exception) {
+            logger.at(Level.WARN) {
+                message = "Failed to fetch shop page for '${night.title}', keeping it without price or sold-out state"
+                cause = e
+                payload = mapOf(LogFields.URL to shopUrl, LogFields.EVENT_SOURCE_ID to night.sourceId)
+            }
+            null
+        }
 
     /** Fetches and parses the single DJ program page. */
     private suspend fun importDjProgram(
