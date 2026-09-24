@@ -140,7 +140,7 @@ class UrbanSpreeDetailPageScraperTest {
         event.title shouldBe "WISBORG Phantomschmerz Tour"
         event.subtitle shouldBe "| Special Guest: The Fright"
         event.artists.map { it.name to it.role } shouldContainExactly
-            listOf("WISBORG Phantomschmerz Tour" to "HEADLINER", "The Fright" to "SUPPORT")
+            listOf("WISBORG" to "HEADLINER", "The Fright" to "SUPPORT")
     }
 
     @Test

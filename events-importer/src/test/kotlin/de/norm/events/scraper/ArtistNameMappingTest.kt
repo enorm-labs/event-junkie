@@ -734,10 +734,17 @@ class ArtistNameMappingTest {
         stripArtistSuffix("Bernhard Brink - \"Danke für die Zeit\" Die Abschiedstour") shouldBe "Bernhard Brink"
         stripArtistSuffix("Reg Meuross – Sonic Morgue – Zusatzshow") shouldBe "Reg Meuross – Sonic Morgue"
         stripArtistSuffix("Jan Becker „HYPNOTIZE THE WORLD“") shouldBe "Jan Becker"
+        stripArtistSuffix("Zascha HOT MESS Debut at Lark") shouldBe "Zascha"
+        stripArtistSuffix("WISBORG Phantomschmerz Tour") shouldBe "WISBORG"
+        stripArtistSuffix("schluma Heulen am Wasser 2026") shouldBe "schluma"
+        stripArtistSuffix("Exofa - Altern.RockPop") shouldBe "Exofa"
         // Real names in the same shapes stay.
         stripArtistSuffix("10 Years") shouldBe "10 Years"
         stripArtistSuffix("Ship Happens Aftershow") shouldBe "Ship Happens Aftershow"
         stripArtistSuffix("Voodoo Jürgens und die \"Ansa Panier\"") shouldBe "Voodoo Jürgens und die \"Ansa Panier\""
+        stripArtistSuffix("The Rolling Stones Tour") shouldBe "The Rolling Stones Tour"
+        stripArtistSuffix("Class of 1984") shouldBe "Class of 1984"
+        stripArtistSuffix("Kwam.E") shouldBe "Kwam.E"
     }
 
     @Test
@@ -746,6 +753,9 @@ class ArtistNameMappingTest {
         headlinersFromTitle("KARAT „45 Jahre Der blaue Planet“ Vorprogramm: Dirk Michaelis") shouldBe
             listOf(ScrapedArtist("KARAT", "HEADLINER", titleDerived = true), ScrapedArtist("Dirk Michaelis", "SUPPORT", titleDerived = true))
         headlinersFromTitle("19-21Uhr") shouldBe emptyList()
+        // The frame goes; a `with` billing stays one act, as everywhere else in a title.
+        headlinersFromTitle("Celebrating Meat Loaf' - The Neverland Express with Andrew Polec").map { it.name } shouldBe
+            listOf("The Neverland Express with Andrew Polec")
     }
 
     @Test
