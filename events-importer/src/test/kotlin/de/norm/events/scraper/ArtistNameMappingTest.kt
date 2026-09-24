@@ -694,6 +694,17 @@ class ArtistNameMappingTest {
     // --- stripArtistSuffix ---
 
     @Test
+    fun `stripArtistSuffix drops a footnote star`() {
+        // Production stored all of these as written (#1845).
+        stripArtistSuffix("Sinkane live*") shouldBe "Sinkane"
+        stripArtistSuffix("Sweely live*") shouldBe "Sweely"
+        stripArtistSuffix("Jonny*") shouldBe "Jonny"
+        // A star inside the name stays.
+        stripArtistSuffix("*n8") shouldBe "*n8"
+        stripArtistSuffix("Sean Steinfeger (OHSHITF*CKYES") shouldBe "Sean Steinfeger"
+    }
+
+    @Test
     fun `stripArtistSuffix recovers the act from tour and live suffixes`() {
         stripArtistSuffix("DOMINIUM - NIGHT IS CALLING TOUR 2026") shouldBe "DOMINIUM"
         stripArtistSuffix("AZ LIVE IN BERLIN") shouldBe "AZ"
