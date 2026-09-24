@@ -3,11 +3,11 @@ package de.norm.events.image
 import org.testcontainers.utility.DockerImageName
 
 /**
- * The S3 server the image tests run against, pinned by digest. MinIO stopped serving its own images
- * anonymously, and Chainguard publishes only `latest` (#1855). The same pin is in the other Boot
- * module and in `compose.yaml`.
+ * The S3 server the image tests run against: our unmodified GHCR copy of Chainguard's MinIO, pinned by
+ * digest, because MinIO no longer serves its own images and Chainguard keeps only `latest` (#1855).
+ * `mirror-test-images.yml` makes the copy; the same pin is in the other Boot module and `compose.yaml`.
  */
 val MINIO_TEST_IMAGE: DockerImageName =
     DockerImageName
-        .parse("cgr.dev/chainguard/minio@sha256:bd014394a80898e68c149f2311fdf8d5a2c2f3bb2c33b9327ae6d02b4b065ae1")
+        .parse("ghcr.io/enorm-labs/minio@sha256:45f553211dd65f13be15ed9afc3b5b1f7622d45a0d11b5646572d3e11c78d9fb")
         .asCompatibleSubstituteFor("minio/minio")

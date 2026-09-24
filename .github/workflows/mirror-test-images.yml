@@ -7,8 +7,8 @@ name: Mirror Test Images
 # **Not part of `release.yml`**, which publishes the product from one computed version on every push.
 # This publishes test dependencies, by hand, when the table below changes. **Registry to registry**:
 # `imagetools create` copies the whole index, so amd64 and arm64 both survive; a pull and push from a
-# laptop keeps one. **The copies start private**: make each package public once in its settings, or CI
-# and a fork cannot pull it.
+# laptop keeps one. **The `source` annotation links each package to this public repository**, so a new
+# copy is public too; CI and a fork pull it anonymously.
 
 on:
   workflow_dispatch:

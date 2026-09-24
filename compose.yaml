@@ -29,9 +29,9 @@ services:
   # type and streaming faults until after a deploy, and this repo already runs a k3d rehearsal
   # rather than accept that class of trade.
   minio:
-    # Pinned by digest: MinIO stopped serving its own images anonymously, and Chainguard publishes only
-    # `latest` (#1855). The tests pin the same digest in MinioTestImage.kt.
-    image: 'cgr.dev/chainguard/minio@sha256:bd014394a80898e68c149f2311fdf8d5a2c2f3bb2c33b9327ae6d02b4b065ae1'
+    # Our GHCR copy of Chainguard's MinIO, pinned by digest: MinIO no longer serves its own images and
+    # Chainguard keeps only `latest` (#1855). `mirror-test-images.yml` makes it; MinioTestImage.kt pins the same.
+    image: 'ghcr.io/enorm-labs/minio@sha256:45f553211dd65f13be15ed9afc3b5b1f7622d45a0d11b5646572d3e11c78d9fb'
     command: 'server /data --console-address ":9001"'
     # Root, because the volume was created by the old image, which ran as root; Chainguard's user 65532
     # cannot write to it. Local development only.
@@ -52,7 +52,7 @@ services:
   # `mc mb --ignore-existing` is idempotent, which is what makes re-running compose free.
   minio-init:
     # The `-dev` variant, because the entrypoint below needs a shell and the plain image has none.
-    image: 'cgr.dev/chainguard/minio-client@sha256:614e083a12c6dc779f13f97e01b13afda4021a8ce3f4021a2fcf23ec86f46837'
+    image: 'ghcr.io/enorm-labs/minio-client@sha256:bf8f9b8a05a987a7764c13963ebed09ddba2fac14a648aa0aeebd3d750e78217'
     depends_on:
       - minio
     entrypoint: >

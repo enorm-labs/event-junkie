@@ -314,7 +314,7 @@ ADR-032 is the one to know unprompted — no file carries the version, it is com
 | Frontend container image                | `events-frontend/Dockerfile` + `events-frontend/docker/nginx.conf` — nginx on 8080, context is the module                                 |
 | Chart ↔ image UID                       | `scripts/uid-consistency.sh` — the `USER` line of all three Dockerfiles against what the chart resolves; floor >10000 (#448)              |
 | CI: build, scan and publish to GHCR     | `.github/workflows/release.yml` — the only workflow that publishes the product; it does not deploy                                        |
-| CI: mirror third-party test images      | `.github/workflows/mirror-test-images.yml` — dispatch only; a new package starts private, so make it public                               |
+| CI: mirror third-party test images      | `.github/workflows/mirror-test-images.yml` — dispatch only; copies MinIO and its client, pinned by digest                                 |
 | CI: deployment records from Flux        | `.github/workflows/deployment-status.yml` — the cluster triggers it, not a merge                                                          |
 | CI: a failing Flux source, made visible | `.github/workflows/flux-source-failure.yml` — red by construction; the cluster's `source-failure` Alert triggers it (#1454)               |
 | CI: blocker issue for a red publish     | `.github/workflows/publish-failure-issue.yml` — one issue per red streak on `main`, closed by the next green publish                      |
