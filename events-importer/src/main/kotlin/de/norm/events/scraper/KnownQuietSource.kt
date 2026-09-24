@@ -22,7 +22,5 @@ val KNOWN_QUIET_SOURCES: Map<String, KnownQuietSource> =
             KnownQuietSource(
                 LocalDate.of(2026, 9, 24),
                 "the venue stopped publishing its own calendar while it kept programming, and announces its nights on Resident Advisor instead (#1677)"
-            ),
-        "golden-gate" to
-            KnownQuietSource(LocalDate.of(2026, 9, 16), "the programme stops at 12 September and the footer still says 2025")
+            )
     )
