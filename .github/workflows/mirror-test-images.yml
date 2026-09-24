@@ -1,0 +1,83 @@
+name: Mirror Test Images
+
+# Copies the third-party images the tests and the dev stack run into GHCR, unmodified (#1859). MinIO
+# stopped serving its own images anonymously, and Chainguard's free tier keeps `latest` only, so a
+# pinned upstream digest can stop pulling at any time (#1855). A copy under our organisation cannot.
+#
+# **Not part of `release.yml`**, which publishes the product from one computed version on every push.
+# This publishes test dependencies, by hand, when the table below changes. **Registry to registry**:
+# `imagetools create` copies the whole index, so amd64 and arm64 both survive; a pull and push from a
+# laptop keeps one. **The copies start private**: make each package public once in its settings, or CI
+# and a fork cannot pull it.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mirror-test-images
+  cancel-in-progress: false
+
+jobs:
+  mirror:
+    name: Mirror the test images
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@594f3bf4285d9ea8dc53c9a0c9c4092420091003 # v4.4.0
+
+      - name: Log in to GHCR
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # One line per image: target name, target tag, source by digest. A refresh is a diff here, and the
+      # summary prints the digests MinioTestImage.kt and compose.yaml pin.
+      #
+      # `source` names this repository because GHCR links a package through it; MinIO's own source is in
+      # `url` and the description, which is what an AGPL-3.0 redistribution points to.
+      - name: Copy each image and verify both platforms arrived
+        env:
+          IMAGES: |
+            minio RELEASE.2026-09-22T19-25-18Z cgr.dev/chainguard/minio@sha256:bd014394a80898e68c149f2311fdf8d5a2c2f3bb2c33b9327ae6d02b4b065ae1
+            minio-client dev-614e083a12c6 cgr.dev/chainguard/minio-client@sha256:614e083a12c6dc779f13f97e01b13afda4021a8ce3f4021a2fcf23ec86f46837
+          OWNER: ${{ github.repository_owner }}
+          REPOSITORY_URL: ${{ github.server_url }}/${{ github.repository }}
+        run: |
+          set -euo pipefail
+          platforms() { docker buildx imagetools inspect --raw "$1" | jq -r '.manifests[] | select(.platform.os == "linux") | "\(.platform.architecture) \(.digest)"' | sort; }
+          {
+            echo '| Image | Pinned digest |'
+            echo '| ----- | ------------- |'
+          } >> "$GITHUB_STEP_SUMMARY"
+          while read -r name tag source; do
+            [ -n "$name" ] || continue
+            target="ghcr.io/${OWNER}/${name}:${tag}"
+            docker buildx imagetools create --tag "$target" \
+              --annotation "index:org.opencontainers.image.source=${REPOSITORY_URL}" \
+              --annotation "index:org.opencontainers.image.url=https://github.com/minio/minio" \
+              --annotation "index:org.opencontainers.image.licenses=AGPL-3.0-only" \
+              --annotation "index:org.opencontainers.image.description=Unmodified mirror of ${source} for tests. Source: https://github.com/minio/minio" \
+              "$source"
+            # The annotations rewrite the index, so its digest changes; the per-platform manifests must not.
+            expected="$(platforms "$source")"
+            actual="$(platforms "$target")"
+            if [ "$expected" != "$actual" ]; then
+              printf '::error::%s differs from its source\nsource:\n%s\ncopy:\n%s\n' "$target" "$expected" "$actual"
+              exit 1
+            fi
+            for arch in amd64 arm64; do
+              grep -q "^${arch} " <<< "$actual" || { echo "::error::${target} has no linux/${arch}"; exit 1; }
+            done
+            digest="$(docker buildx imagetools inspect "$target" --format '{{json .Manifest}}' | jq -r .digest)"
+            echo "| \`${target}\` | \`ghcr.io/${OWNER}/${name}@${digest}\` |" >> "$GITHUB_STEP_SUMMARY"
+          done <<< "$IMAGES"
