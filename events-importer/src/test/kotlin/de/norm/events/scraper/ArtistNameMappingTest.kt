@@ -490,6 +490,46 @@ class ArtistNameMappingTest {
             listOf("David J (Bauhaus)", "Tom Verlaine")
     }
 
+    @Test
+    fun `splitHeadlinerTitle reads a bullet bill whose every act carries an annotation`() {
+        splitHeadlinerTitle("New Candys (IT, Fuzz Club) • BLKE (DE, Tonzonen)") shouldBe
+            listOf("New Candys (IT, Fuzz Club)", "BLKE (DE, Tonzonen)")
+        // Through the title path, where stripArtistSuffix takes each act's affiliation off (#1818).
+        headlinersFromTitle("New Candys (IT, Fuzz Club) • BLKE (DE, Tonzonen)") shouldBe
+            listOf(
+                ScrapedArtist("New Candys", "HEADLINER", titleDerived = true),
+                ScrapedArtist("BLKE", "HEADLINER", titleDerived = true)
+            )
+    }
+
+    @Test
+    fun `splitHeadlinerTitle keeps a night and its strapline whole across a bullet`() {
+        // Eight of the nine top-level bullet titles on production are this shape, and none of them
+        // annotates every segment. Splitting on the character alone bills the strapline.
+        splitHeadlinerTitle("THE EARLY DAYS • THROWBACK INDIE PARTY") shouldBe
+            listOf("THE EARLY DAYS • THROWBACK INDIE PARTY")
+        // These two are cut at their conjunction, as they are on main — a separate defect, and the
+        // point here is that neither is cut at its bullet.
+        splitHeadlinerTitle("HEADLESS PARTY • The Home of Core & Alternative Rock") shouldBe
+            listOf("HEADLESS PARTY • The Home of Core", "Alternative Rock")
+        splitHeadlinerTitle("Call Me Maybe! • 2000s & 2010s – Pop Party") shouldBe
+            listOf("Call Me Maybe! • 2000s", "2010s – Pop Party")
+    }
+
+    @Test
+    fun `splitHeadlinerTitle needs the annotation on every segment, not on one`() {
+        // The near miss: two segments are annotated and the third is not, so nothing splits.
+        splitHeadlinerTitle("June Cocó • Berlin (Kulturhaus Insel) • EP Release Show") shouldBe
+            listOf("June Cocó • Berlin (Kulturhaus Insel) • EP Release Show")
+    }
+
+    @Test
+    fun `splitHeadlinerTitle never cuts at a bullet inside brackets`() {
+        // Migas writes a record's label, year, running time and format in one parenthetical.
+        splitHeadlinerTitle("Barker – Utility (Ostgut Ton, 2019 • 43 min • vinyl)") shouldBe
+            listOf("Barker – Utility (Ostgut Ton, 2019 • 43 min • vinyl)")
+    }
+
     // --- stripArtistSuffix ---
 
     @Test
@@ -876,8 +916,10 @@ class ArtistNameMappingTest {
     // Both commas are parenthetical affiliations, so the title carries none that separates acts.
     @Test
     fun `splitHeadlinerTitle ignores commas inside brackets`() {
+        // The bullet is the separator here and the commas are not: each act keeps its own
+        // parenthetical, which stripArtistSuffix takes off afterwards (#1789, #1818).
         splitHeadlinerTitle("New Candys (It, Fuzz Club) \u2022 Blke (De, Tonzonen)") shouldContainExactly
-            listOf("New Candys (It, Fuzz Club) \u2022 Blke (De, Tonzonen)")
+            listOf("New Candys (It, Fuzz Club)", "Blke (De, Tonzonen)")
     }
 
     // A comma list still splits its segments the ordinary way afterwards.

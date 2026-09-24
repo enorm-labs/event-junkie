@@ -779,6 +779,42 @@ private fun cutAt(
     return parts
 }
 
+/**
+ * A space-padded bullet, `•` or `·`. Almost never a separator: eight of the nine top-level
+ * occurrences on production are a night's name and its strapline (`THE EARLY DAYS • THROWBACK INDIE
+ * PARTY`, `Call Me Maybe! • 2000s & 2010s – Pop Party`), and splitting on the character alone would
+ * mint the strapline as an act. [bulletCoBill] has the one shape that is a bill.
+ */
+private val BULLET_SEPARATOR = Regex("""\s+[•·]\s+""")
+
+/** A closing annotation ending a segment: the origin or affiliation tag [stripArtistSuffix] removes. */
+private val TRAILING_ANNOTATION = Regex("""\([^()]*\)\s*$""")
+
+/**
+ * The acts of a bullet-separated bill, or `null` when [title] is not one (#1818).
+ *
+ * A bill is recognised by every segment carrying its own trailing annotation, which is the venue
+ * writing `<act> (<country>, <label>)` once per act: Urban Spree's `New Candys (IT, Fuzz Club) •
+ * BLKE (DE, Tonzonen)` was stored as a single 46-character artist. A night's strapline never
+ * carries one, so `June Cocó • Berlin (Kulturhaus Insel) • EP Release Show` stays whole on its last
+ * segment — the near miss, and the reason the annotation is required on *every* segment rather than
+ * on any. One of the nine top-level bullet titles on production matches.
+ *
+ * Bracket-aware like the comma and the hard separators: Migas writes a record's running time as
+ * `(Ostgut Ton, 2019 • 43 min • vinyl)`, where the bullets are the label's own punctuation.
+ */
+private fun bulletCoBill(title: String): List<String>? {
+    val cuts =
+        BULLET_SEPARATOR
+            .findAll(title)
+            .filter { !isInsideBrackets(title, it.range.first) }
+            .map { it.range }
+            .toList()
+    if (cuts.isEmpty()) return null
+    val segments = cutAt(title, cuts).map { it.trim() }.filter { it.isNotBlank() }
+    return segments.takeIf { it.size > 1 && it.all { segment -> TRAILING_ANNOTATION.containsMatchIn(segment) } }
+}
+
 /** Hard separators that always delimit acts in a support/lineup line: comma, plus, slash. */
 private val SUPPORT_HARD_SEPARATOR = Regex("""\s*[,+/]\s*""")
 
@@ -803,8 +839,9 @@ fun splitSupportActs(text: String): List<String> =
  * Splits a headliner title into co-billed acts (`TOTAL CHAOS + RUMKICKS + THE DOLLHEADS`,
  * `LAGWAGON / THE VIRGINMARYS`, `BLACK STAR RIDERS & TYKETTO`) on space-padded separators only,
  * which protects `AC/DC` and `dance/electronic`; `" & "` / `" and "` / `" und "` per boundary
- * via [splitSegmentOnConjunctions], never for a [KNOWN_SINGLE_ACTS] title. No separator returns
- * the trimmed title alone. Every case is asserted in `ArtistNameMappingTest`.
+ * via [splitSegmentOnConjunctions], never for a [KNOWN_SINGLE_ACTS] title. A bullet delimits only
+ * in the one shape [bulletCoBill] recognises. No separator returns the trimmed title alone. Every
+ * case is asserted in `ArtistNameMappingTest`.
  *
  * @param splitOnSlash when false, `/` is not a separator, for venues that use it inside one act
  * name (Madame Claude's `Morimoto / Wong duo`).
@@ -825,6 +862,14 @@ fun splitHeadlinerTitle(
     if (commas.size >= MIN_COMMAS_FOR_A_LIST || (splitOnComma && commas.isNotEmpty())) {
         return cutAt(trimmed, commas.map { it..it })
             .flatMap { splitHeadlinerTitle(it.trim(), splitOnSlash) }
+            .map { it.trim() }
+            .filter { it.isNotBlank() }
+            .ifEmpty { listOf(trimmed) }
+    }
+
+    bulletCoBill(trimmed)?.let { segments ->
+        return segments
+            .flatMap { splitHeadlinerTitle(it, splitOnSlash) }
             .map { it.trim() }
             .filter { it.isNotBlank() }
             .ifEmpty { listOf(trimmed) }
