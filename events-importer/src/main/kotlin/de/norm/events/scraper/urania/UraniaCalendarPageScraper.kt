@@ -88,18 +88,19 @@ class UraniaCalendarPageScraper {
             return null
         }
         val format = item.textAt("h6.o-h6")
+        val eventType = uraniaEventType(format)
 
         return ScrapedEvent(
             title = title,
             subtitle = uraniaSubtitle(series = item.textAt("h5.o-h6"), format = format),
             // The calendar carries no prose; its one text block is the speaker billing.
-            eventType = uraniaEventType(format),
+            eventType = eventType,
             eventDate = date,
             startTime = parseTime(item.textAt(".c-event-calendar-item_time")?.substringBefore(CLOCK_SUFFIX)?.trim()),
             sourceUrl = sourceUrl,
             sourceId = "${EventSource.URANIA.sourceIdPrefix}$slug",
             ticketUrl = item.hrefAt(".c-event-calendar-item_ticket-link a"),
-            artists = uraniaSpeakers(item.textAt(".c-event-calendar-item_content_text"))
+            artists = uraniaSpeakers(item.textAt(".c-event-calendar-item_content_text"), eventType)
         )
     }
 

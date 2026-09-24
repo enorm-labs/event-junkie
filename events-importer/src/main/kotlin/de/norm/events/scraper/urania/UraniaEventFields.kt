@@ -20,8 +20,15 @@ import java.math.BigDecimal
  * than `OTHER`. That fallback is deliberate: the venue invents format names freely
  * (`Schönheitssalon` is a discussion format), and `OTHER` would bury a talk among the
  * genuinely unclassifiable.
+ *
+ * A workshop is the one exception, matched anywhere in the label (`Workshop im Urania-Garten`,
+ * `Film und Workshop für Schulklassen`): its leaders teach rather than speak to an audience, so
+ * it is `OTHER` (#1906).
  */
-fun uraniaEventType(format: String?): String = mapEventType(format, URANIA_FORMAT_SYNONYMS) ?: EventType.READING.name
+fun uraniaEventType(format: String?): String =
+    mapEventType(format, URANIA_FORMAT_SYNONYMS)
+        ?: EventType.OTHER.name.takeIf { format.orEmpty().contains(WORKSHOP_MARKER, ignoreCase = true) }
+        ?: EventType.READING.name
 
 /**
  * The speakers of a talk, from the `"A, B, C und D"` billing line, stored as headliners: the
@@ -29,10 +36,14 @@ fun uraniaEventType(format: String?): String = mapEventType(format, URANIA_FORMA
  *
  * Two appended tails are removed rather than stored as people: a space-padded dash introducing
  * a note about the evening (`"Yoshua Yaffa - in englischer Sprache"`), and `"et al."` standing
- * in for unnamed panellists.
+ * in for unnamed panellists. An `OTHER` event bills nobody: a workshop leader is not a performer.
  */
-fun uraniaSpeakers(billing: String?): List<ScrapedArtist> =
+fun uraniaSpeakers(
+    billing: String?,
+    eventType: String
+): List<ScrapedArtist> =
     billing
+        ?.takeIf { eventType != EventType.OTHER.name }
         ?.let { splitSupportActs(it) }
         ?.map {
             it
@@ -67,6 +78,9 @@ private val URANIA_FORMAT_SYNONYMS =
         "filmvorführung" to EventType.SCREENING.name,
         "ausstellungseröffnung" to EventType.EXHIBITION.name
     )
+
+/** The word that marks a workshop in any of the venue's format labels. */
+private const val WORKSHOP_MARKER = "workshop"
 
 /** The label introducing the admission figures, before which any prose is ignored. */
 private const val ADMISSION_LABEL = ":"
