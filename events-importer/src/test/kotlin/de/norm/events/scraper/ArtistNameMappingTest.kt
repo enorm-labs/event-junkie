@@ -504,6 +504,19 @@ class ArtistNameMappingTest {
         stripArtistPrefix("Support:") shouldBe "Support:"
     }
 
+    @Test
+    fun `headlinersFromTitle cuts a conjoined tour or prose tail before splitting`() {
+        // Production minted `Fury Tour 2026`, `new songs` and `Mike Kraus live 2027` (#1842).
+        headlinersFromTitle("Joe Jackson & Band - Hope and Fury Tour 2026").map { it.name } shouldBe listOf("Joe Jackson & Band")
+        headlinersFromTitle("LYAPIS TRUBETSKOY - the best & new songs").map { it.name } shouldBe listOf("LYAPIS TRUBETSKOY")
+        headlinersFromTitle("Peter Kraus & Mike Kraus live 2027").map { it.name } shouldBe listOf("Peter Kraus", "Mike Kraus")
+        // A `mit` tail names the performers, so it is not cut as prose.
+        headlinersFromTitle("Schund und Asche - mit Moritz Neumeier und Till Reiners").map { it.name } shouldContain "Till Reiners"
+        // A conjoined tail that is neither a suffix nor prose can be a co-bill, and still splits.
+        headlinersFromTitle("Night Series - Wendy Eisenberg & Mary Halvorson").map { it.name } shouldBe
+            listOf("Night Series - Wendy Eisenberg", "Mary Halvorson")
+    }
+
     // #1560: the marker comes off the title at persistence, after the acts were built from it.
     @Test
     fun `headlinersFromTitle bills the act, not the cancellation glued to it`() {

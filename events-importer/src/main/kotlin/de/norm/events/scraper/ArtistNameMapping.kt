@@ -175,15 +175,10 @@ fun isScoreConcertTitle(title: String): Boolean = SCORE_CONCERT_PATTERN.contains
 
 /**
  * Trailing suffixes that decorate a real act name, stripped by [stripArtistSuffix]; every case
- * is asserted in `ArtistNameMappingTest`. Hyphen tails: a tour name, "<n> Years/Jahre", "<n>
- * Sets", an edition ending in a four-digit year, "Releaseshow". Trailing tails: "Live" / "Live
- * in <city>", a format annotation parenthesized or a bare "DJ-Set", "Nachholtermin vom <date>"
- * / "Hochverlegung", "singt <repertoire>", "<Album/EP/…> Release" / "Release Party", and a
- * record title spelled letter by letter after a dash (`KAT FRANKIE - B O D I E S`), which the
- * shouted-tail rule cannot reach because its head is shouted too (#1533).
+ * is asserted in `ArtistNameMappingTest`.
  *
  * Hyphen tails: a tour name, "<n> Years/Jahre", "<n> Sets", an edition ending in a four-digit
- * year, "Releaseshow". Trailing tails: "Live" / "Live in <city>", a format annotation
+ * year, "Releaseshow". Trailing tails: "Live" / "Live in <city>" / "live <year>", a format annotation
  * parenthesized or a bare "DJ-Set", "Nachholtermin vom <date>" / "Hochverlegung", "singt
  * <repertoire>", "<Album/EP/…> Release" / "Release Party", a record title spelled letter by
  * letter after a dash (`KAT FRANKIE - B O D I E S`), which the shouted-tail rule cannot reach
@@ -209,7 +204,7 @@ private val ARTIST_SUFFIX_PATTERN =
             """|\s+(?:many|viele)\s+(?:more|mehr)\b(?:\s+(?:tba|tbc|tbd))?\.*$""" +
             """|\s+(?:more|mehr)\s+(?:tba|tbc|tbd)\.*$""" +
             """|\s+[-–—]\s*release\s?show\s*$""" +
-            """|\s+(?:hybrid\s+)?live(?:\s+(?:set|band))?(?:\s*&\s*dj[\s-]?set)?(?:\s+in\s+\S.*)?$""" +
+            """|\s+(?:hybrid\s+)?live(?:\s+(?:set|band))?(?:\s*&\s*dj[\s-]?set)?(?:\s+in\s+\S.*|\s+(?:19|20)\d{2})?$""" +
             """|\s*\((?:dj[\s-]?set|(?:hybrid\s+)?live(?:\s+(?:set|band))?|hybrid|acoustic|akustik|unplugged|solo|konzert|concert""" +
             """|zusatz(?:show|konzert|termin)|(?:extra|additional)\s+show|(?:all\s+)?vinyl(?:\s+(?:set|only))?)\)\s*$""" +
             """|\s+(?:dj[\s-]?set|hybrid)$""" +
@@ -1168,7 +1163,7 @@ fun headlinersFromTitle(
     // `<act> feat. <guest>` mid-title: the guest is billed as support, the act goes on (#305).
     val (billing, guests) = splitFeaturedGuests(title)
     presentsFrameActs(billing)?.let { return it + guests }
-    return splitHeadlinerTitle(stripSeriesPrefix(billedSideOfPres(billing, splitOnSlash)), splitOnSlash, description)
+    return splitHeadlinerTitle(stripConjoinedTail(stripSeriesPrefix(billedSideOfPres(billing, splitOnSlash))), splitOnSlash, description)
         .map { segment ->
             // The role is decided from the *raw* segment, before its label is stripped: a title
             // that bills "… + Support: A.A. Williams" names a support act, not a second headliner.
@@ -1177,6 +1172,28 @@ fun headlinersFromTitle(
         }.filterNot { (name, _) -> isNonArtistName(name) }
         .map { (name, role) -> ScrapedArtist(name = name, role = role, titleDerived = true) } + guests
 }
+
+/**
+ * Cuts a dash tail that holds a conjunction, before the title is split on conjunctions (#1842).
+ * The split would cut the tail in two and leave neither half in the ` - <tour>` shape that
+ * [ARTIST_SUFFIX_PATTERN] strips: `Joe Jackson & Band - Hope and Fury Tour 2026` minted `Fury
+ * Tour 2026`. The tail goes only when that pattern matches from the dash, or when the tail opens
+ * in lowercase, which an act billed after a dash does not (`LYAPIS TRUBETSKOY - the best & new
+ * songs`). A `mit`/`with` tail names performers (`Schund und Asche - mit Moritz Neumeier und Till
+ * Reiners`), and any other conjoined tail can be a co-bill, so both stay.
+ */
+private fun stripConjoinedTail(title: String): String {
+    val dash = DASH_SEPARATOR.findAll(title).lastOrNull() ?: return title
+    val head = title.substring(0, dash.range.first).trim()
+    val tail = title.substring(dash.range.last + 1).trim()
+    val conjoined = head.isNotBlank() && tail.isNotBlank() && CONJUNCTION_SEPARATOR.containsMatchIn(tail)
+    val suffixFromDash = ARTIST_SUFFIX_PATTERN.find(title)?.range?.first == dash.range.first
+    val proseTail = tail.firstOrNull()?.isLowerCase() == true && !PERFORMER_LEAD.containsMatchIn(tail)
+    return if (conjoined && (suffixFromDash || proseTail)) head else title
+}
+
+/** A tail that goes on to name who performs: `mit …`, `with …`, `w/ …`, `feat. …`. */
+private val PERFORMER_LEAD = Regex("""^(?:mit|with|w/|feat\.?|ft\.|featuring)\s""", RegexOption.IGNORE_CASE)
 
 /**
  * A night named for the DJ who runs it: `<night> curated by <acts>`, `<night> hosted by <acts>`,
