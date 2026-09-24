@@ -130,8 +130,9 @@ between `AGENTS.md` and the actual code. If `AGENTS.md` describes something the 
 
 ## Output
 
-Write the report to `docs/audits/audit-<YYYY-MM-DD>.md` (create the `docs/audits/` directory if needed; use today's date). Do not ask whether to write the
-file — always produce it. Structure it as:
+Write the report to `temp/audit-<YYYY-MM-DD>.md`, then run `scripts/format-markdown.sh` on it by name. Do not ask whether to write the file — always produce
+it. **Never commit it**: an audit in the tree is documentation nobody updates, and `ste-lint` gates everything under `docs/` (AGENTS.md § Agent
+Instructions). Unattended, the report is your final message instead. Structure it as:
 
 1. **Summary** — a short health snapshot: module/file counts, the largest files, detekt/coverage headline numbers, and a one-line verdict per assessment
    dimension above (✅ healthy / ⚠️ N findings). Lead with the 3–5 highest-impact recommendations so the user can act without reading the whole document.
