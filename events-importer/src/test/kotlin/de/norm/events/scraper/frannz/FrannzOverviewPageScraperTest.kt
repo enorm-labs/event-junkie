@@ -184,6 +184,31 @@ class FrannzOverviewPageScraperTest {
             event.title shouldNotContain "ausverkauft"
             event.artists shouldContainExactly
                 listOf(ScrapedArtist(name = "Singalong -Das große Mitsing-Event", role = "HEADLINER", titleDerived = true))
+            event.soldOut shouldBe true
+        }
+
+        // Production stored "Haken -ausverkauft" as the act and the show as on sale (#1840).
+        @Test
+        fun `reads a dash-framed sold-out note as sold out and keeps it out of the act`() {
+            val html =
+                """
+                <article id="post-1" class="events event_typ-konzert">
+                    <h2 class="event-title">Haken -ausverkauft-</h2>
+                    <div class="event-day">6</div>
+                    <div class="event-month">Oktober</div>
+                </article>
+                """.trimIndent()
+
+            val event = scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl).single()
+
+            event.title shouldBe "Haken"
+            event.soldOut shouldBe true
+            event.artists shouldContainExactly listOf(ScrapedArtist(name = "Haken", role = "HEADLINER", titleDerived = true))
+        }
+
+        @Test
+        fun `leaves a title without a note on sale`() {
+            scrape().filter { !it.title.contains("ausverkauft", ignoreCase = true) }.forEach { it.soldOut shouldBe false }
         }
     }
 
@@ -212,6 +237,25 @@ class FrannzOverviewPageScraperTest {
             // The raw title is the note; the boundary reads the destination off it (#1551).
             event.statusNote shouldBe "MAD TSAI -verlegt ins Gretchen-"
             event.toEventEntity(venueId = 1L, venueSlug = "frannz-club", eventSourceId = 1L).relocatedTo shouldBe "Gretchen"
+        }
+
+        @Test
+        fun `reads a destination-first move note as RELOCATED and keeps it out of the act`() {
+            val html =
+                """
+                <article id="post-1" class="events event_typ-konzert">
+                    <h2 class="event-title">Georgia Cavallo -ins Lido verlegt-</h2>
+                    <div class="event-day">9</div>
+                    <div class="event-month">Dezember</div>
+                </article>
+                """.trimIndent()
+
+            val event = scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl).single()
+
+            event.status shouldBe "RELOCATED"
+            event.title shouldBe "Georgia Cavallo"
+            event.artists shouldContainExactly listOf(ScrapedArtist(name = "Georgia Cavallo", role = "HEADLINER", titleDerived = true))
+            event.toEventEntity(venueId = 1L, venueSlug = "frannz-club", eventSourceId = 1L).relocatedTo shouldBe "Lido"
         }
 
         // The mirror case, and the reason the status is read from the title and never the subtitle:

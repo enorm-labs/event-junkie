@@ -65,7 +65,6 @@ says so.
 | `ESCHSCHLORAQUE`      | `DOORS_TIME`       | the date field carries one ab-HH-Uhr time; a doors time exists only where the prose labels a pair, which is read                                 | —     |
 | `FESTSAAL`            | `EVENT_TYPE`       | the API exposes no category field; its `genre` node is a musical genre, not an event kind                                                        | —     |
 | `FRANNZ`              | `PER_EVENT_PAGE`   | nothing on the site links a `/events/<slug>/` page                                                                                               | —     |
-| `FRANNZ`              | `SOLD_OUT`         | the word ausverkauft appears only in the prose blurb, where it also turns up describing a past tour                                              | —     |
 | `FRANNZ`              | `PRICE`            | most nights name the ticket seller instead of a figure; only the venue's own party nights carry a structured Abendkasse item, which is read      | —     |
 | `GAERTEN_DER_WELT`    | `GENRE`            | the park's only classification is the format category the event type is already built from; it names no musical style, not even in prose         | —     |
 | `GARTN`               | `PRICE`            | the venue publishes no prices                                                                                                                    | —     |

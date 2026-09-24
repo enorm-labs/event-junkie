@@ -58,7 +58,6 @@ val FRANNZ_LIMITATIONS =
     VenueLimitations(
         EventSource.FRANNZ,
         AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "nothing on the site links a `/events/<slug>/` page"),
-        AcceptedLimitation(LimitedAspect.SOLD_OUT, "the word ausverkauft appears only in the prose blurb, where it also turns up describing a past tour"),
         AcceptedLimitation(
             LimitedAspect.PRICE,
             "most nights name the ticket seller instead of a figure; only the venue's own party nights carry a structured Abendkasse item, which is read"
