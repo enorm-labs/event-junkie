@@ -185,13 +185,23 @@ class KlunkerkranichOverviewPageScraperTest {
     @Test
     fun `reads every act of a billing split into sections by a pipe`() {
         // The 23.09.2026 card (#1908): the acts after the "|" were lost, and the label glued to the first.
+        billing("N.E.S.T.A. presents: BATILA &amp; THE DREAMBUS | DJ Sets by Diablas Finas &amp; Bela Patrutzi,")
+            .map { it.name } shouldContainExactly listOf("BATILA", "THE DREAMBUS", "Diablas Finas", "Bela Patrutzi")
+    }
+
+    @Test
+    fun `bills an unlabelled section beside a DJ-labelled one as the live acts`() {
+        // #1926: the section the venue contrasts with its DJ section is the concert, not more DJs.
         billing("N.E.S.T.A. presents: BATILA &amp; THE DREAMBUS | DJ Sets by Diablas Finas &amp; Bela Patrutzi,") shouldContainExactly
             listOf(
-                ScrapedArtist(name = "BATILA", role = "DJ"),
-                ScrapedArtist(name = "THE DREAMBUS", role = "DJ"),
+                ScrapedArtist(name = "BATILA", role = "HEADLINER"),
+                ScrapedArtist(name = "THE DREAMBUS", role = "HEADLINER"),
                 ScrapedArtist(name = "Diablas Finas", role = "DJ"),
                 ScrapedArtist(name = "Bela Patrutzi", role = "DJ")
             )
+
+        // Without a label, a section after a pipe keeps the DJ default.
+        billing("NIGHT w. Big Leg | MCRD").map { it.role } shouldContainExactly listOf("DJ", "DJ")
     }
 
     @Test
