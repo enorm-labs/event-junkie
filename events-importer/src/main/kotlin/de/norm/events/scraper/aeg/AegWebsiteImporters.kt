@@ -3,9 +3,11 @@ package de.norm.events.scraper.aeg
 import de.norm.events.scraper.AbstractTwoPageWebsiteImporter
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
+import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
 import de.norm.events.scraper.VenueLimitations
+import de.norm.events.scraper.buildArtistsForEventType
 import org.jsoup.nodes.Document
 import org.springframework.stereotype.Component
 
@@ -43,6 +45,10 @@ abstract class AbstractAegVenueImporter(
      * none cleanly: its heading appends "in der <venue>", and it renders neither a date nor a
      * cancellation this parser reads. The detail page contributes only doors time, description and
      * ticket link. The artist roster also comes from the listing, where the clean title lives.
+     *
+     * **The roster is re-derived here, and only here, when the description can add to it.** The two
+     * halves the rule needs never meet before this point: the title and its acts are the listing's,
+     * the description is the detail page's. See [billedActs].
      */
     override fun fillGapsFromOverview(
         primary: ScrapedEvent,
@@ -57,8 +63,35 @@ abstract class AbstractAegVenueImporter(
             imageUrl = primary.imageUrl ?: fallback.imageUrl,
             pricePresale = primary.pricePresale ?: fallback.pricePresale,
             priceNote = primary.priceNote ?: fallback.priceNote,
-            artists = primary.artists.ifEmpty { fallback.artists }
+            artists = billedActs(primary, fallback)
         )
+
+    /**
+     * The merged roster: the listing's, unless it is a single act the detail page's description
+     * shows to be a whole bill (#1832).
+     *
+     * `D-Block Europe, French Montana` is one artist row on the listing, because a single comma
+     * decides nothing about a title; the description reads `D-Block Europe und French Montana …`
+     * and settles it. The re-derivation is deliberately narrow: **only a one-act roster can grow**,
+     * so a listing that already bills a co-bill correctly is never rebuilt, and the description can
+     * only ever add acts the title already named.
+     */
+    private fun billedActs(
+        primary: ScrapedEvent,
+        fallback: ScrapedEvent
+    ): List<ScrapedArtist> {
+        val roster = primary.artists.ifEmpty { fallback.artists }
+        val description = primary.description
+        if (roster.size != 1 || description.isNullOrBlank()) return roster
+        val corroborated =
+            buildArtistsForEventType(
+                fallback.title,
+                subtitle = null,
+                eventType = fallback.eventType,
+                description = description
+            )
+        return corroborated.takeIf { it.size > roster.size } ?: roster
+    }
 }
 
 /**
