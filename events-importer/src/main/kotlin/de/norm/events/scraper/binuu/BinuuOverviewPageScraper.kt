@@ -81,7 +81,8 @@ class BinuuOverviewPageScraper {
             sourceUrl = binuuDetailUrl(baseUrl, id),
             sourceId = "${EventSource.BINUU.sourceIdPrefix}$id",
             soldOut = node.path("soldout").asBoolean(),
-            status = mapBinuuStatus(node.stringOrNull("eventStatus"), node.stringOrNull("startOld"))
+            status = mapBinuuStatus(node.stringOrNull("eventStatus"), node.stringOrNull("startOld")),
+            statusNote = binuuRelocationNote(node.stringOrNull("eventStatus"), node.stringOrNull("locationNew"), node.stringOrNull("locationArticle"))
         )
     }
 }

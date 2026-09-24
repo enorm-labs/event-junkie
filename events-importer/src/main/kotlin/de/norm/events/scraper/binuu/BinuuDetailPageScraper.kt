@@ -73,6 +73,7 @@ class BinuuDetailPageScraper {
             ticketUrl = parseTicketUrl(item),
             soldOut = item.path("soldout").asBoolean(),
             status = mapBinuuStatus(item.stringOrNull("eventStatus"), item.stringOrNull("startOld")),
+            statusNote = binuuRelocationNote(item.stringOrNull("eventStatus"), item.stringOrNull("locationNew"), item.stringOrNull("locationArticle")),
             artists = parseArtists(item),
             promoters = parsePromoters(item),
             promoterWebsites = parsePromoterWebsites(item)

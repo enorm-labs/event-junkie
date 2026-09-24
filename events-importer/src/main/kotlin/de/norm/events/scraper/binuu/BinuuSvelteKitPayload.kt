@@ -172,8 +172,9 @@ private fun parseBinuuInstant(raw: String?): LocalDateTime? {
 }
 
 /**
- * Maps the single-letter `eventStatus` code: `"r"` (Verlegt, carries `locationNew`), `"p"`
- * (Verschoben). Any other non-blank code is logged and treated as
+ * Maps the single-letter `eventStatus` code: `"c"` (Abgesagt), `"r"` (Verlegt, carries
+ * `locationNew`), `"p"` (Verschoben) and `"rp"` (verlegt and verschoben, #1867). The venue's page
+ * bundle knows no other code; one it adds later is logged and treated as
  * [SCHEDULED][de.norm.events.event.EventStatus.SCHEDULED].
  *
  * **A `"p"` with a [startOld] is the new date, not a postponed one** (#1689). The venue's page
@@ -191,7 +192,12 @@ internal fun mapBinuuStatus(
             "SCHEDULED"
         }
 
-        "r" -> {
+        "c" -> {
+            "CANCELLED"
+        }
+
+        // A moved show keeps RELOCATED whether or not its date moved too: the venue is what a visitor must not miss.
+        "r", "rp" -> {
             "RELOCATED"
         }
 
@@ -205,6 +211,23 @@ internal fun mapBinuuStatus(
         }
     }
 }
+
+/**
+ * The move a `"r"` or `"rp"` row states, in the venue's own wording (`Verlegt in den Monarch`), so
+ * the shared relocation parser fills `relocatedTo` (#1867). The payload carries the destination
+ * as `locationNew` and its article as `locationArticle`, and the page falls back to `nach`. Null
+ * for any other code, or when the destination is still open.
+ */
+internal fun binuuRelocationNote(
+    code: String?,
+    locationNew: String?,
+    locationArticle: String?
+): String? {
+    val destination = locationNew?.trim()?.takeIf { it.isNotEmpty() && code?.trim()?.lowercase() in RELOCATION_CODES } ?: return null
+    return "Verlegt ${locationArticle?.trim()?.takeIf { it.isNotEmpty() } ?: "nach"} $destination"
+}
+
+private val RELOCATION_CODES = setOf("r", "rp")
 
 /**
  * Best-effort [EventType][de.norm.events.event.EventType] from title/subtitle, since Bi Nuu has

@@ -131,6 +131,33 @@ class BinuuDetailPageScraperTest {
     }
 
     @Test
+    fun `reads a cancelled show and a move with its destination`() {
+        val url = "https://binuu.de/de/events/inzpqdgvi1eab2q"
+        val html =
+            javaClass.classLoader
+                .getResourceAsStream("scraper/binuu/binuu-detail-arch-enemy.html")!!
+                .bufferedReader()
+                .readText()
+
+        fun withStatus(
+            code: String,
+            location: String = ""
+        ): ScrapedEvent {
+            val changed =
+                html
+                    .replace("eventStatus: null", "eventStatus: \"$code\"")
+                    .replace("startOld: \"\"", "startOld: \"\", locationArticle: \"in den\", locationNew: \"$location\"")
+            return scraper.scrape(Jsoup.parse(changed, url), url)!!
+        }
+
+        // The page bundle's other two codes were stored as SCHEDULED (#1867).
+        withStatus("c").status shouldBe "CANCELLED"
+        val moved = withStatus("rp", "Monarch")
+        moved.status shouldBe "RELOCATED"
+        moved.statusNote shouldBe "Verlegt in den Monarch"
+    }
+
+    @Test
     fun `infers CONCERT for a band and PARTY for a known DJ series`() {
         // A real band with no party signal defaults to the live-music venue's norm.
         archEnemy.eventType shouldBe "CONCERT"
