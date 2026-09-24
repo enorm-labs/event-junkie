@@ -25,6 +25,13 @@ import org.springframework.stereotype.Component
  * — [ImportResult.Success] with `null` cache headers (no `NotModified` path). Past-dated nights
  * left on the current-month page are dropped centrally at persistence (`EventUpsertService`).
  *
+ * **The source reads zero because the venue stopped filling it, not because this parser broke**
+ * (#1677). The entry page links two months and no more, every later `/month/<name>` answers 404,
+ * and the home page's own upcoming-events list renders `No items found.` server-side. Both linked
+ * months still parse, so the markup is unchanged. Meanwhile the club is programming and announces
+ * its nights on Resident Advisor, which is why the zero is recorded in `KNOWN_QUIET_SOURCES`
+ * rather than repaired here. #356 decides whether that listing may be read.
+ *
  * @see AmtOverviewPageScraper for the per-month parsing.
  * @see <a href="https://www.club-amt.berlin/events">AMT events page</a>
  */
