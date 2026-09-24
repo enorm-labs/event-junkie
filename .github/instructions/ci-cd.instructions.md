@@ -71,9 +71,9 @@ is the map and the traps.
   as a `trivy-reports` artifact for `publish-failure-issue.yml`.
 - `mirror-test-images.yml` (#1859) — copies the third-party images the tests and `compose.yaml` pin (MinIO and its client, from Chainguard) into GHCR,
   **unmodified and by hand**: `workflow_dispatch` only, the source digests a literal table in the file, `packages: write` on its one job. `imagetools create`
-  copies registry to registry, so both architectures survive, and the job fails when a copy's per-platform manifests differ from the source's. **A package
-  it creates starts private**, and no API makes it public: set the visibility in the package settings once, or CI and forks cannot pull it. Its `source`
-  annotation names this repository, because GHCR links a package through it; MinIO's source (AGPL-3.0) is in `url` and the description.
+  copies registry to registry, so both architectures survive, and the job fails when a copy's per-platform manifests differ from the source's. **Its
+  `source` annotation names this repository**, because GHCR links a package through it, and the link makes a new copy public like the repository: CI and
+  forks pull it anonymously (checked on the first run, #1859); MinIO's source (AGPL-3.0) is in `url` and the description.
 - `cut-release.yml` (#868) — publishes the GitHub Release that `release.yml` keys on; `workflow_dispatch` only, `dry_run` default. **Refuses a commit whose
   snapshot publish is not green** (v0.3.10 left an empty tag, #1117). **The version is never typed and never chosen**: no file carries it (ADR-032), and
   `scripts/version.sh deserved` reads the commits since the last release tag — a `feat` in a product scope is a minor, a break a major (a minor before
