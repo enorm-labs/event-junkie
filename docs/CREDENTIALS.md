@@ -31,17 +31,17 @@ Store the password, the TOTP seed, **and the recovery codes** for each. The reco
 | 4   | **healthchecks.io**                           | The dead-man's switch — its checks, its notification channel, its ping URLs     | In use                                 | Yes        |
 | 4a  | **Better Stack** (`betterstack.com`)          | The site monitor, its alert channel and the Uptime API tokens (ADR-021)         | **In use** — since 2026-08-31          | Yes        |
 | 5   | **Postflex**                                  | The rented imprint address (§ 5 DDG). **A lapsed renewal breaks § 5 silently**  | **In use** — since 2026-08-21          | Yes        |
-| 6   | **Signal**, on its own prepaid number         | The alert bridge's identity. Registration state also lives on a PVC             | **Decided, not built**                 | Yes        |
+| 6   | **Signal**, the deferred alert route          | The alert bridge's identity. Registration state also lives on a PVC             | **Deferred** — #877                    | Yes        |
 | 7   | **Hetzner Webhosting S** (konsoleH)           | The hosting package the mailboxes live on. **Its own login, not the Cloud one** | **In use** — since 2026-08-21          | Yes        |
-| 7a  | **The two mailbox passwords**                 | `hello@` and `security@` — IMAP, SMTP and webmail, and the daily probe (#637)   | **In use** — since 2026-08-21          | Yes        |
+| 7a  | **The three mailbox passwords**               | `hello@`, `security@`, `alerts@` — IMAP, SMTP, webmail. Probe #637, alerts #877 | **In use** — since 2026-08-21          | Yes        |
 | 8   | **OpenObserve** admin login                   | Logs, metrics, dashboards, alert rules. Created at first start                  | **In use** — staging, since 2026-08-20 | Yes        |
 | 8a  | **Anthropic Console** (`platform.claude.com`) | The `event-junkie` workspace and the API key the importer translates with (#26) | **In use** — since 2026-09-08          | Yes        |
 
 **On the Hetzner account specifically:** it is the single point of total failure here. It holds the infrastructure, the DNS, the backups and the state file.
 Treat its 2FA recovery codes with the same care as the age key in §3.
 
-**Prepaid SIM (#6):** keep the number, the PIN, the **PUK** and the top-up schedule together. Signal blocks most VoIP providers for registration, and a lapsed
-prepaid number silently ends the alerting path.
+**`alerts@` (#7a) lives in two more places**: the `openobserve-smtp` Secret on each cluster ([ops/SECRETS.md](ops/SECRETS.md)). A password change in konsoleH
+that does not reach both Secrets stops the alert mail without an error anywhere.
 
 ---
 

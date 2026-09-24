@@ -23,7 +23,7 @@ import sys
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 
 import diff_alerts  # noqa: E402  (path set above; this file is run, not imported)
-from alert_objects import destination_payload  # noqa: E402
+from alert_objects import destination_payload, email_destination_payload  # noqa: E402
 
 SECRET = "Basic cm9vdEBleGFtcGxlLmRlOnN1cGVyLXNlY3JldC1wYXNzd29yZA=="
 OTHER = "Basic cm9vdEBleGFtcGxlLmRlOnNvbWV0aGluZy1lbHNl"
@@ -67,6 +67,15 @@ check("a redacted value says 'cannot compare'", len(found) == 1 and "cannot comp
 changed = destination_payload("default", SECRET)
 changed["url"] = "http://elsewhere.example/hook"
 check("a changed url is still shown in full", diff_alerts.differences(wanted, changed)[0][2] == changed["url"])
+
+# 5. The e-mail destination has no headers, so a changed recipient is shown in full:
+#    an address is what a reader needs to see, and it is not a credential.
+mail = email_destination_payload()
+check("an unchanged e-mail destination is silent", diff_alerts.differences(mail, email_destination_payload()) == [])
+moved = email_destination_payload()
+moved["emails"] = ["someone-else@example.org"]
+found = diff_alerts.differences(mail, moved)
+check("a changed recipient is shown in full", len(found) == 1 and found[0][2] == moved["emails"])
 
 print("\n%d checks, %d failed" % (checks, len(failures)))
 sys.exit(1 if failures else 0)

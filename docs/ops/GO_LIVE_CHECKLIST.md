@@ -124,7 +124,7 @@ other. Drop the flag to push. Both are idempotent — the dashboard import match
 **The external layer is a Better Stack monitor** (ADR-021). It polls every three minutes and alerts in about six. A
 drill proved it, by changing its keyword to a string the site does not serve. `site-probe.yml` stays as a daily
 dead-man's switch and asserts the monitor's settings against the repository. **The row _Alerts reach a person_ above
-refers to the in-cluster path** (#877, OpenObserve to Signal). That chain stays unbuilt.
+refers to the in-cluster path** (#877, OpenObserve to e-mail). It is done when a rule tripped on purpose on each cluster produces a mail.
 
 ### Content and data
 

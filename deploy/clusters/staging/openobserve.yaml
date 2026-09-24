@@ -176,6 +176,24 @@ spec:
       # hours. Not in `config:` — the chart would drop the key.
       - name: ZO_DISK_CACHE_MAX_AGE_DAYS
         value: "3"
+      # **E-mail for the alert rules** (#877), sent as the `alerts@` role mailbox through Hetzner Webhosting
+      # (docs/ops/EMAIL.md). Port 465 makes OpenObserve use implicit TLS. The password is the hand-made
+      # `openobserve-smtp` Secret (docs/ops/SECRETS.md): without it the pod does not start.
+      - name: ZO_SMTP_ENABLED
+        value: "true"
+      - name: ZO_SMTP_HOST
+        value: "mail.your-server.de"
+      - name: ZO_SMTP_PORT
+        value: "465"
+      - name: ZO_SMTP_USER_NAME
+        value: "alerts@event-junkie.de"
+      - name: ZO_SMTP_FROM_EMAIL
+        value: "alerts@event-junkie.de"
+      - name: ZO_SMTP_PASSWORD
+        valueFrom:
+          secretKeyRef:
+            name: openobserve-smtp
+            key: ZO_SMTP_PASSWORD
       - name: ZO_SKIP_SSRF_CHECKS
         value: "true"
 

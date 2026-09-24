@@ -25,7 +25,8 @@
       "silence": 30
     },
     "destinations": [
-      "record-only"
+      "record-only",
+      "email"
     ]
   },
   {
@@ -54,7 +55,8 @@
       "silence": 720
     },
     "destinations": [
-      "record-only"
+      "record-only",
+      "email"
     ]
   },
   {
@@ -83,7 +85,8 @@
       "silence": 1440
     },
     "destinations": [
-      "record-only"
+      "record-only",
+      "email"
     ]
   },
   {
@@ -112,7 +115,8 @@
       "silence": 720
     },
     "destinations": [
-      "record-only"
+      "record-only",
+      "email"
     ]
   },
   {
@@ -141,7 +145,8 @@
       "silence": 1440
     },
     "destinations": [
-      "record-only"
+      "record-only",
+      "email"
     ]
   },
   {
@@ -170,7 +175,8 @@
       "silence": 1440
     },
     "destinations": [
-      "record-only"
+      "record-only",
+      "email"
     ]
   },
   {
@@ -199,7 +205,8 @@
       "silence": 720
     },
     "destinations": [
-      "record-only"
+      "record-only",
+      "email"
     ]
   },
   {
@@ -228,7 +235,8 @@
       "silence": 360
     },
     "destinations": [
-      "record-only"
+      "record-only",
+      "email"
     ]
   },
   {
@@ -257,7 +265,8 @@
       "silence": 1440
     },
     "destinations": [
-      "record-only"
+      "record-only",
+      "email"
     ]
   },
   {
@@ -286,7 +295,8 @@
       "silence": 120
     },
     "destinations": [
-      "record-only"
+      "record-only",
+      "email"
     ]
   },
   {
@@ -315,7 +325,8 @@
       "silence": 120
     },
     "destinations": [
-      "record-only"
+      "record-only",
+      "email"
     ]
   },
   {
@@ -344,7 +355,8 @@
       "silence": 360
     },
     "destinations": [
-      "record-only"
+      "record-only",
+      "email"
     ]
   },
   {
@@ -373,7 +385,8 @@
       "silence": 120
     },
     "destinations": [
-      "record-only"
+      "record-only",
+      "email"
     ]
   },
   {
@@ -402,7 +415,8 @@
       "silence": 1440
     },
     "destinations": [
-      "record-only"
+      "record-only",
+      "email"
     ]
   },
   {
@@ -431,7 +445,8 @@
       "silence": 360
     },
     "destinations": [
-      "record-only"
+      "record-only",
+      "email"
     ]
   },
   {
@@ -460,7 +475,8 @@
       "silence": 1440
     },
     "destinations": [
-      "record-only"
+      "record-only",
+      "email"
     ]
   },
   {
@@ -489,7 +505,8 @@
       "silence": 1440
     },
     "destinations": [
-      "record-only"
+      "record-only",
+      "email"
     ]
   }
 ]

@@ -40,14 +40,15 @@ environments). Both tunnels can be up at once, so the context is the only thing 
 
 ### Two instances, and where they differ
 
-|                       | Staging                                | Production                                                                       |
-| --------------------- | -------------------------------------- | -------------------------------------------------------------------------------- |
-| Bucket keys           | `staging/` (`ZO_S3_BUCKET_PREFIX`)     | `production/` (`ZO_S3_BUCKET_PREFIX`)                                            |
-| S3 credential         | the project keypair, all three buckets | its own keypair, rotatable without touching staging                              |
-| Alert destination     | `record-only`, into `alert_history`    | the same — no bridge here either                                                 |
-| Signal bridge         | deployed, unregistered                 | **not deployed** ([#877](https://github.com/enorm-labs/event-junkie/issues/877)) |
-| `ZO_SKIP_SSRF_CHECKS` | set, for the bridge destination        | **not set** — nothing in-cluster to allow yet                                    |
-| Database metrics      | `postgres-exporter` → the k3s node     | `postgres-exporter` → the dedicated node, `10.0.1.20`                            |
+|                       | Staging                                                      | Production                                                                                                      |
+| --------------------- | ------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------- |
+| Bucket keys           | `staging/` (`ZO_S3_BUCKET_PREFIX`)                           | `production/` (`ZO_S3_BUCKET_PREFIX`)                                                                           |
+| S3 credential         | the project keypair, all three buckets                       | its own keypair, rotatable without touching staging                                                             |
+| Alert destinations    | `record-only` into `alert_history`, and `email` to `alerts@` | the same                                                                                                        |
+| Signal bridge         | deployed, unregistered, not a destination                    | **not deployed** — the Signal route is deferred ([#877](https://github.com/enorm-labs/event-junkie/issues/877)) |
+| `ZO_SKIP_SSRF_CHECKS` | set, for the bridge                                          | **not set** — nothing in-cluster to allow                                                                       |
+| SMTP                  | port 465 to `mail.your-server.de`, `openobserve-smtp` Secret | the same                                                                                                        |
+| Database metrics      | `postgres-exporter` → the k3s node                           | `postgres-exporter` → the dedicated node, `10.0.1.20`                                                           |
 
 **Why one bucket rather than two.** The same separation `s3://event-junkie-backups/<environment>/` and the images bucket already make. It keeps one
 lifecycle backstop covering both, which is what [LEGAL.md](../LEGAL.md) §7.5 rests on when a compactor stops running.
@@ -188,17 +189,20 @@ runs this, and `--diff` is the only thing that reports the gap ([#702](https://g
 series at all. One that matches none never fires, and is indistinguishable from health. It caught a rule summing two counters that was silently
 un-fireable whenever either counter was quiet.
 
-**Firings go into the `alert_history` stream, not to a person yet.** Two separate reasons, and only one of them is the phone number:
+**Each firing goes to two destinations.** `record-only` writes a row into the `alert_history` stream. `email` sends a mail to `alerts@event-junkie.de`,
+which forwards to the person who reads the alerts. The subject starts with `[event-junkie <environment>]`, because both clusters use the same address.
+[deploy/alerts/README.md](../../deploy/alerts/README.md) § _Where the notifications go_ has the configuration.
 
-- the Signal bridge is unregistered ([#877](https://github.com/enorm-labs/event-junkie/issues/877)), and
-- **OpenObserve's SSRF guard rejects an alert destination inside the cluster**, including
-  `signal-cli.observability.svc.cluster.local`. On staging `ZO_SKIP_SSRF_CHECKS` is therefore set, **and paired with an egress NetworkPolicy**
-  (`deploy/clusters/staging/observability-netpol.yaml`). That policy lets this pod reach CoreDNS, the public internet on 443 and the Signal bridge. Nothing
-  else — not the database, not the Kubernetes API. `deploy/alerts/README.md` has the reasoning. So the remaining blocker on delivery really is just the phone
-  number.
+**OpenObserve refuses the `email` destination in two cases.** It refuses it when SMTP is off (`SMTPUnavailable`). It refuses a recipient that is not a user
+of the org (`UserNotPermitted`). `apply.sh` creates the `alerts@` user first, and `--diff` reports it when it is missing.
 
-**Production sets neither the flag nor the allowance.** It has no bridge to reach. Its rules use the same loopback `record-only` destination, which needs
-only `ZO_SSRF_ALLOW_LOOPBACK`. The bridge, the flag and the egress rule arrive together in #877, or not at all.
+**OpenObserve's SSRF guard applies to webhook destinations only.** On staging `ZO_SKIP_SSRF_CHECKS` is set for the Signal bridge, **and paired with an egress
+NetworkPolicy** (`deploy/clusters/staging/observability-netpol.yaml`). That policy lets this pod reach CoreDNS, the public internet on 443 and 465, and the
+Signal bridge. Nothing else — not the database, not the Kubernetes API. `deploy/alerts/README.md` has the reasoning.
+
+**Production does not set the flag.** It has no bridge to reach. Its only webhook is the loopback `record-only` destination, which needs only
+`ZO_SSRF_ALLOW_LOOPBACK`. The Signal route is deferred ([#877](https://github.com/enorm-labs/event-junkie/issues/877)). When it comes, the bridge, the flag
+and the egress rule arrive together.
 
 **Re-apply after any rebuild**, for the same reason as the dashboard: alerts, destinations and templates are all metadata.
 
@@ -296,9 +300,8 @@ A healthy system writes into the current hour. Hours that trail off are a backlo
 
 ## What it does not do yet
 
-- **A firing reaches no person.** Every rule evaluates, and each one posts into the `alert_history` stream instead of to somebody
-  ([#877](https://github.com/enorm-labs/event-junkie/issues/877)). So a firing is a row you must go and look at. That is a worse guarantee than it
-  sounds, and it is the shape of the eight hours in #813. The Signal route waits only on a registered number now. The SSRF guard that also blocked it is
-  gone, traded for the egress policy in `observability-netpol.yaml`.
+- **An alert mail is not end-to-end encrypted.** It goes over TLS to Hetzner and then to the forward target. The template carries only the alert name, the
+  stream, the value and the environment, so the mail holds no personal data. Signal would remove the exposure, and that route is deferred
+  ([#877](https://github.com/enorm-labs/event-junkie/issues/877)).
 - **The two instances are copies, not one source.** The rules, one dashboard and two collector filter lists exist twice, kept in step by hand. `--diff`
   catches a cluster that drifts from the repository. Nothing catches the two clusters drifting from each other.

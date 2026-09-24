@@ -23,10 +23,10 @@ happens on every commit is [RELEASING.md](RELEASING.md).
 | **Production**     | `CX33` k3s node + `CX23` PostgreSQL node (2 vCPU / 4 GB / 40 GB, no public IPv4), one private network         |
 | **Both**           | 10 GB volume for `PGDATA` · Primary IPv4 + IPv6 · Hetzner firewall · daily Hetzner backups on production      |
 | **Storage**        | One Object Storage subscription, three buckets: `…-tfstate`, `…-o2`, `…-backups`                              |
-| **In the cluster** | Traefik (k3s), cert-manager, Flux, OpenObserve + OTel collector, signal-cli, and the three application pods   |
+| **In the cluster** | Traefik (k3s), cert-manager, Flux, OpenObserve + OTel collector, and the three application pods               |
 | **Public ports**   | `80`, `443`, and `51820/udp` for WireGuard. `22` and `6443` answer through the tunnel only                    |
 | **Deploys**        | Pull-based. CI builds and pushes to GHCR; Flux notices and reconciles. No cluster credential exists in GitHub |
-| **Alerts**         | OpenObserve → Signal, plus healthchecks.io as a dead-man's switch **outside** the cluster                     |
+| **Alerts**         | OpenObserve → e-mail, plus healthchecks.io as a dead-man's switch **outside** the cluster                     |
 | **Cost**           | ~€31–33/month, both environments — [COSTS.md](COSTS.md) has the line items                                    |
 
 Everything here is declared in [`infra/`](../../infra) and [`deploy/`](../../deploy) and applied by OpenTofu and Flux. Three things are deliberately hand-made:
@@ -51,7 +51,7 @@ flowchart TB
         subgraph n1["CX33 — k3s node · public IPv4 + IPv6"]
             f1{{"Firewall<br/>80, 443 → world<br/>51820/udp → world<br/>22, 6443 → tunnel only"}}
             wg(["WireGuard<br/>host service, not a pod"])
-            k3s["k3s<br/>Traefik · cert-manager · Flux<br/>OpenObserve · signal-cli<br/>+ the app workloads"]
+            k3s["k3s<br/>Traefik · cert-manager · Flux<br/>OpenObserve<br/>+ the app workloads"]
         end
         subgraph n2["CX23 — PostgreSQL node · IPv6 only, no public IPv4"]
             f2{{"Firewall<br/>no public ingress<br/>5432 ← private network only"}}
@@ -65,7 +65,7 @@ flowchart TB
         ghcr["GHCR<br/>images + chart"]
         le["Let's Encrypt"]
         hc["healthchecks.io"]
-        sg["Signal"]
+        sm["Hetzner SMTP<br/>alerts@"]
     end
 
     vis -->|"80 / 443"| f1
@@ -81,7 +81,7 @@ flowchart TB
     k3s -->|"pull"| ghcr
     k3s -->|"ACME"| le
     k3s -->|"conditional heartbeat"| hc
-    k3s -->|"alerts"| sg
+    k3s -->|"alerts, 465"| sm
 ```
 
 **Staging is the same picture with both nodes collapsed into one.** It has no public `A` record and no public 80/443 at all — see §6.
@@ -518,24 +518,28 @@ vendor-neutral OpenTelemetry either way.
 **The requirement that decides it** is not infrastructure monitoring. It is that a scraper does not fail loudly. When a venue redesigns its site, the importer
 keeps reporting success and silently writes zero events, and nobody notices for a fortnight. Catching that needs a **business metric with an alert** — §7.
 
-### 4.1 Where alerts go — Signal, plus something outside the cluster
+### 4.1 Where alerts go — e-mail, plus something outside the cluster
 
-**Signal**, via OpenObserve's webhook destination → [`signal-cli-rest-api`](https://github.com/bbernhard/signal-cli-rest-api) running in the cluster. OpenObserve
-supports custom webhook templates, so the alert payload is shaped to signal-cli's API directly and there is no glue service to write.
+**E-mail**, through OpenObserve's e-mail destination. OpenObserve sends through Hetzner's SMTP as `alerts@event-junkie.de`. That role mailbox forwards to the
+person who reads the alerts. [deploy/alerts/README.md](../../deploy/alerts/README.md) has the configuration and [SECRETS.md](SECRETS.md) has the credential.
 
-**Signal is chosen for a better reason than convenience: it is end-to-end encrypted.** Alert bodies carry venue names, error strings, query fragments and
-possibly IP addresses — and with Signal the carrier cannot read any of it. Telegram's Bot API, the obvious easy alternative, is plaintext to Telegram's servers.
+**The mail carries only the alert name, the stream, the value and the environment.** It carries no venue names, error strings or IP addresses. Hetzner is
+already the one processor. So e-mail adds no new party that can read personal data.
+
+**Signal is the deferred end state** ([#877](https://github.com/enorm-labs/event-junkie/issues/877)). It is end-to-end encrypted, so no mail provider can
+read an alert. A prepaid-SIM registration failed. The route now waits for `signal-cli` to link to a Signal account registered without a phone number. The
+staging bridge is deployed and unregistered, and it is not a destination.
 
 **The trap that actually matters:**
 
-> **An alerting path that runs on the node it monitors cannot tell you the node is dead.** If the cluster is down, OpenObserve is down, signal-cli is down, and
+> **An alerting path that runs on the node it monitors cannot tell you the node is dead.** If the cluster is down, OpenObserve is down, no alert mail leaves, and
 > the silence is indistinguishable from everything being fine.
 
 So alerting is **two layers, and the second is not optional**:
 
 | Layer                                           | Runs            | Catches                                                                          | Cannot catch                   |
 | ----------------------------------------------- | --------------- | -------------------------------------------------------------------------------- | ------------------------------ |
-| OpenObserve → Signal                            | In the cluster  | The app misbehaving: zero-event imports, error rates, disk filling, pod restarts | The cluster being gone         |
+| OpenObserve → e-mail                            | In the cluster  | The app misbehaving: zero-event imports, error rates, disk filling, pod restarts | The cluster being gone         |
 | **External uptime monitor + dead-man's switch** | **Off Hetzner** | The node, k3s, or the whole site being down; alerting itself having died         | Nuance — it only knows up/down |
 
 The second layer is two mechanisms rather than one, and [HEALTHCHECKS.md](HEALTHCHECKS.md) is the full picture.
@@ -556,14 +560,14 @@ path that keeps the assertions in git and does not share a fate with the monitor
 
 **Two things to get right:**
 
-- **Its alerts must never route through the in-cluster Signal bridge**, or both layers die together, which is the exact scenario it exists for.
+- **Its alerts must never route through OpenObserve**, or both layers die together, which is the exact scenario it exists for.
 - **Do not self-host it.** A dead-man's switch hosted on the infrastructure it monitors cannot report that infrastructure's death. This is the one place in this
   document where self-hosting is the wrong answer.
 
-**Four caveats on Signal**, all acceptable, none of which should be discovered later:
+**Four caveats on the deferred Signal route**, for the day it replaces e-mail:
 
 1. **There is no official Signal bot API.** `signal-cli` is unofficial and Signal does not support automation. The account could in principle be restricted.
-2. **It needs its own phone number** — a cheap prepaid SIM. Signal blocks most VoIP providers for registration.
+2. **It needs its own account.** A prepaid SIM did not work. The watch list for numberless registration is in #877.
 3. **Registration state must persist on a PVC.** Lose it and alerts stop _silently_ — the same failure the dead-man's switch exists to catch.
 4. **~150–250 MB**, because signal-cli is a JVM. It fits, but it is not free.
 

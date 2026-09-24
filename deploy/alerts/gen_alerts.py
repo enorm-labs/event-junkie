@@ -77,13 +77,13 @@ created to avoid.
      number that are down). A site-down rule written with `count` fires forever
      and gets muted in week one.
 
-## What "enabled" means before the number exists
+## Where a firing goes
 
-Every rule below is `enabled: true` and every rule routes to the `record-only`
-destination, which POSTs the firing back into OpenObserve as a log row. That is
-deliberate: it makes firing observable now, so the rules are exercised rather
-than hypothetical, while delivery waits on the eSIM (#877). The Signal
-destination is one `apply.sh` away once the number registers — see README.md.
+Every rule below is `enabled: true` and notifies both destinations in
+`alert_objects.DESTINATIONS`: `record-only`, which POSTs the firing back into
+OpenObserve as a row in `alert_history`, and `email`, which mails
+`alerts@event-junkie.de` (#877). The row is the record; the mail is what reaches a
+person.
 
 **The self-reference is real and is not solved here:** an alert about OpenObserve
 being down cannot be recorded by OpenObserve. That is what the external
@@ -93,8 +93,9 @@ layer on purpose.
 
 import json
 
+from alert_objects import DESTINATIONS
+
 ORG = "default"
-DESTINATION = "record-only"
 
 # Seconds and minutes, named so the rule table reads as prose rather than arithmetic.
 HOUR_S = 3600
@@ -170,7 +171,7 @@ def rule(
                 "threshold": 1,
                 "silence": silence_minutes,
             },
-            "destinations": [DESTINATION],
+            "destinations": list(DESTINATIONS),
         }
     )
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Push the alert template, destination and rules into OpenObserve.
+"""Push the alert recipient, templates, destinations and rules into OpenObserve.
 
 Runs on the node (see apply.sh). Idempotent: every object is matched by name, and
 an existing one is updated in place rather than duplicated — the same property
@@ -10,35 +10,39 @@ after editing `gen_alerts.py` is the normal workflow.
 
 ## What it creates, in dependency order
 
-    1. a template    `event-junkie`   — the body of a notification
-    2. a destination `record-only`    — where a firing goes
-    3. the rules themselves
+    1. an org user   `alerts@event-junkie.de` — the only recipient OpenObserve accepts
+    2. two templates `event-junkie`, `event-junkie-email` — the body of a notification
+    3. two destinations `record-only`, `email` — where a firing goes
+    4. the rules themselves, each notifying both destinations
 
-**The destination posts back into OpenObserve**, as JSON into an `alert_history`
-stream. A firing therefore becomes a queryable row rather than a message nobody
-receives, which is what makes these rules exercised rather than hypothetical
-while #877 waits on a phone number.
+**`record-only` posts back into OpenObserve**, as JSON into an `alert_history`
+stream, so every firing is a queryable row. **`email` is the one that reaches a
+person** (#877). It needs `ZO_SMTP_*` in the HelmRelease and the `openobserve-smtp`
+Secret; without them OpenObserve refuses the destination with `SMTPUnavailable`
+and this script stops there, before any rule is touched.
 
-**Switching to the Signal bridge now needs only a registered number.** It once
-also needed a way past OpenObserve's SSRF guard, which rejected any destination
-resolving inside the cluster:
-
-    signal-cli.observability.svc.cluster.local
-      -> 400 Destination URL blocked by SSRF guard
-
-That is gone. `ZO_SKIP_SSRF_CHECKS` is set in the HelmRelease, and the control
-moved to the network: `observability-netpol.yaml` permits this pod to reach
-CoreDNS, the internet on 443 and the Signal bridge, and nothing else. So the
-remaining work for #877 is to point DESTINATION_NAME at
-`http://signal-cli.observability.svc.cluster.local:8080/v2/send` once the
-number exists.
+**The recipient has to be a user of the org**, or the destination is refused with
+`UserNotPermitted`. The user is created once, with a random password this script
+never prints or stores. An existing user is left as it is.
 """
 
 import json
+import secrets
 import subprocess
 import sys
 
-from alert_objects import DESTINATION_NAME, TEMPLATE_NAME, destination_payload, template_payload
+from alert_objects import (
+    ALERT_RECIPIENT,
+    DESTINATION_NAME,
+    EMAIL_DESTINATION_NAME,
+    EMAIL_TEMPLATE_NAME,
+    TEMPLATE_NAME,
+    destination_payload,
+    email_destination_payload,
+    email_template_payload,
+    recipient_user_payload,
+    template_payload,
+)
 
 auth, svc, org, path = sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4]
 # The cluster this is being applied to, for the template's `environment` field (#928).
@@ -57,23 +61,30 @@ def call(method, url, payload=None):
     return int(code or 0), body
 
 
-def ensure_template():
-    code, _ = call("POST", base + "/alerts/templates", template_payload(environment))
+def ensure(kind, name, payload):
+    """Create one template or destination by name, or update it in place. Stops on a refusal."""
+    code, body = call("POST", "%s/alerts/%s" % (base, kind), payload)
+    verb = "created"
     if code in (409, 400):  # already exists — update it, so an edit here lands
-        code, body = call("PUT", "%s/alerts/templates/%s" % (base, TEMPLATE_NAME), template_payload(environment))
-        print("template %s updated (%s)" % (TEMPLATE_NAME, code))
-    else:
-        print("template %s created (%s)" % (TEMPLATE_NAME, code))
+        code, body = call("PUT", "%s/alerts/%s/%s" % (base, kind, name), payload)
+        verb = "updated"
+    ok = 200 <= code < 300
+    print("%s %s %s (%s)%s" % (kind[:-1], name, verb, code, "" if ok else "  <-- " + body[:200]))
+    if not ok:
+        sys.exit(1)
 
 
-def ensure_destination():
-    payload = destination_payload(org, auth)
-    code, _ = call("POST", base + "/alerts/destinations", payload)
-    if code in (409, 400):
-        code, _ = call("PUT", "%s/alerts/destinations/%s" % (base, DESTINATION_NAME), payload)
-        print("destination %s updated (%s)" % (DESTINATION_NAME, code))
-    else:
-        print("destination %s created (%s)" % (DESTINATION_NAME, code))
+def ensure_recipient():
+    code, body = call("GET", base + "/users")
+    if code == 200 and ALERT_RECIPIENT in body:
+        print("user %s exists" % ALERT_RECIPIENT)
+        return
+    # OpenObserve wants a lower, an upper, a digit and a special character.
+    password = secrets.token_urlsafe(24) + "aA1!"
+    code, body = call("POST", base + "/users", recipient_user_payload(password))
+    print("user %s created (%s)%s" % (ALERT_RECIPIENT, code, "" if 200 <= code < 300 else "  <-- " + body[:200]))
+    if not 200 <= code < 300:
+        sys.exit(1)
 
 
 def existing_alerts():
@@ -103,8 +114,11 @@ def stored_stream(alert_id):
 
 
 def main():
-    ensure_template()
-    ensure_destination()
+    ensure_recipient()
+    ensure("templates", TEMPLATE_NAME, template_payload(environment))
+    ensure("templates", EMAIL_TEMPLATE_NAME, email_template_payload(environment))
+    ensure("destinations", DESTINATION_NAME, destination_payload(org, auth))
+    ensure("destinations", EMAIL_DESTINATION_NAME, email_destination_payload())
 
     known = existing_alerts()
     with open(path) as f:
