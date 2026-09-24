@@ -54,12 +54,13 @@ class UraniaEventPageScraper {
         val body = document.textAt(".c-text-box")
         val admissionLine = admissionLineOf(body)
         val price = uraniaPrice(admissionLine)
+        val eventType = uraniaEventType(format)
 
         return ScrapedEvent(
             title = title,
             subtitle = uraniaSubtitle(series = document.textAt(".c-event-article_content_group"), format = format),
             description = joinIntroAndBody(document.textAt("h2.c-event-article_content_intro"), body),
-            eventType = uraniaEventType(format),
+            eventType = eventType,
             eventDate = parseDateLine(document.textAt("h4.c-event-article_content_date-time")) ?: UNRESOLVED_EVENT_DATE,
             startTime = parseTimeLine(document.textAt("h4.c-event-article_content_date-time")),
             // The poster is lazy-loaded: its URL is in `data-src` and never in `src`.
@@ -70,7 +71,7 @@ class UraniaEventPageScraper {
             pricePresale = price,
             priceNote = admissionLine,
             free = detectFree(pricePresale = price, priceNote = admissionLine, title = title),
-            artists = uraniaSpeakers(document.textAt("p.c-event-article_content_artist"))
+            artists = uraniaSpeakers(document.textAt("p.c-event-article_content_artist"), eventType)
         )
     }
 
