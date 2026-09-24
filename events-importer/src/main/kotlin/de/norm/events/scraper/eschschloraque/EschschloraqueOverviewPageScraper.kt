@@ -1,5 +1,6 @@
 package de.norm.events.scraper.eschschloraque
 
+import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
@@ -34,7 +35,8 @@ import java.time.format.DateTimeParseException
  * table, so it is the only date source and an event without it is skipped.
  *
  * Typing goes through [inferUnmarkedTitleType], so an event is `OTHER` unless its *title* names
- * an unambiguous format. Deliberately **not**
+ * an unambiguous format. A `<host> presents <act> - live!` title is one: it bills a live act, so
+ * the night is a `CONCERT`. Deliberately **not**
  * [inferConcertVenueType][de.norm.events.scraper.inferConcertVenueType]: defaulting a bar's DJ
  * nights to `CONCERT` would also mint each event name ("Hot Tunes for Cool Cats") as a
  * headliner. Free entry stated in prose is flagged via [FREE_ENTRY_PHRASE]; every other night
@@ -101,6 +103,7 @@ class EschschloraqueOverviewPageScraper {
         val billingParagraphs = findBillingParagraphs(node)
         val description = parseDescription(node, billingParagraphs)
         val (doorsTime, startTime) = resolveTimes(startDateTime.second, node.select(PROSE_PARAGRAPHS).text())
+        val presentedActs = presentedLiveActs(title)
 
         return ScrapedEvent(
             title = title,
@@ -112,7 +115,7 @@ class EschschloraqueOverviewPageScraper {
                     ?.trim()
                     ?.takeIf { it.isNotBlank() },
             description = description,
-            eventType = inferUnmarkedTitleType(title),
+            eventType = if (presentedActs.isEmpty()) inferUnmarkedTitleType(title) else EventType.CONCERT.name,
             eventDate = startDateTime.first,
             doorsTime = doorsTime,
             startTime = startTime,
@@ -122,7 +125,7 @@ class EschschloraqueOverviewPageScraper {
             // "eschschloraque:20-jahre-missvergnügen-12082026" rather than "…missvergn%C3%BCgen…".
             sourceId = "${EventSource.ESCHSCHLORAQUE.sourceIdPrefix}${extractSlug(path)}",
             free = description?.let { FREE_ENTRY_PHRASE.containsMatchIn(it) } == true,
-            artists = parseLineup(billingParagraphs)
+            artists = (presentedActs + parseLineup(billingParagraphs)).distinctBy { it.name.lowercase() }
         )
     }
 
@@ -219,9 +222,8 @@ class EschschloraqueOverviewPageScraper {
      * other line (`Dj:`, `on the couch:`, or an unlabelled list of DJ names) bills DJs. The label
      * is stripped so it cannot enter a name.
      *
-     * The event *title* is never an artist: here it names the night or hosting series ("Hot Tunes
-     * for Cool Cats", "MissVergnügen presents RESITANT – live"), not the performer — the
-     * performers are exactly what these lines list.
+     * The event *title* is not read here: it names the night ("Hot Tunes for Cool Cats"), and
+     * [presentedLiveActs] reads the one title form that bills a performer.
      */
     private fun parseLineup(billingParagraphs: List<Element>): List<ScrapedArtist> =
         billingParagraphs
@@ -305,3 +307,22 @@ class EschschloraqueOverviewPageScraper {
             Regex("""(?:eintritt frei|freier eintritt|free entry)(?!\s+(?:till|until|before|bis|ab)\b)""", RegexOption.IGNORE_CASE)
     }
 }
+
+/**
+ * The live acts a `<host> presents <act> - live!` title bills as headliners (#1907). The host is
+ * the resident DJ, billed by the subtitle. Empty for any other title, so a night name never enters
+ * the lineup.
+ */
+private fun presentedLiveActs(title: String): List<ScrapedArtist> {
+    val act = PRESENTED_LIVE_ACT.find(title)?.groupValues?.get(1) ?: return emptyList()
+    return splitSupportActs(act)
+        .map { it.trim() }
+        .filterNot { it.isBlank() || isNonArtistName(it) }
+        .map { ScrapedArtist(name = it, role = "HEADLINER", titleDerived = true) }
+}
+
+/**
+ * `MissVergnügen presents FRAUKE 400 - live!`, group 1 the act. The `live` suffix is required, so a
+ * presented series name is never billed.
+ */
+private val PRESENTED_LIVE_ACT = Regex("""^.+?\s+presents\s+(.+?)\s*[-–—]\s*live!*$""", RegexOption.IGNORE_CASE)

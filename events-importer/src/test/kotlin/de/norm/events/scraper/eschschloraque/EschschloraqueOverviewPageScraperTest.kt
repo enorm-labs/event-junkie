@@ -158,10 +158,28 @@ class EschschloraqueOverviewPageScraperTest {
     }
 
     @Test
-    fun `never mints the event title as an artist`() {
+    fun `bills the act a presents-live title names as a headliner beside the presenting DJ`() {
+        // The title names the live act the night is billed on; the subtitle bills the host as DJ (#1907).
         val resitant = events.first { it.title == "MissVergnügen presents RESITANT – live" }
-        // The title names the hosting series, not the performer; only the billing line is a lineup.
-        resitant.artists.map { it.name } shouldBe listOf("MissVergnügen")
+        resitant.artists.map { it.name to it.role } shouldBe listOf("RESITANT" to "HEADLINER", "MissVergnügen" to "DJ")
+        resitant.artists.first().titleDerived shouldBe true
+        resitant.eventType shouldBe EventType.CONCERT.name
+
+        val nights = scrape("eschschloraque-overview-two-djs.html").filter { " presents " in it.title }
+        val frauke = nights.first { it.title == "MissVergnügen presents FRAUKE 400 - live!" }
+        frauke.artists.map { it.name to it.role } shouldBe listOf("FRAUKE 400" to "HEADLINER", "MissVergnügen" to "DJ")
+        // `live!!` and a backtick inside the act's name read the same way.
+        nights.map { it.artists.first().name } shouldBe listOf("AUGELEKTRIK", "FRAUKE 400", "Dingo`s Dream")
+    }
+
+    @Test
+    fun `never mints a night's name from its title`() {
+        // Only the presents-live form bills a performer; a night name stays out of the lineup.
+        events
+            .filterNot { " presents " in it.title }
+            .flatMap { it.artists }
+            .filter { it.titleDerived }
+            .shouldBeEmpty()
     }
 
     @Test
@@ -171,8 +189,8 @@ class EschschloraqueOverviewPageScraperTest {
     }
 
     @Test
-    fun `types every event OTHER because the venue publishes no categories`() {
-        events.map { it.eventType }.toSet() shouldBe setOf(EventType.OTHER.name)
+    fun `types every other event OTHER because the venue publishes no categories`() {
+        events.filterNot { it.title.contains(" presents ") }.map { it.eventType }.toSet() shouldBe setOf(EventType.OTHER.name)
     }
 
     @Test
