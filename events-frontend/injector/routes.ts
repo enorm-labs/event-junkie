@@ -1,6 +1,8 @@
 // Explicit `.ts` on every import here: the injector is type-checked under `tsconfig.node.json`
 // and bundled by `vite.injector.config.ts`, both following Node's ESM resolver (vite.config.ts).
 import { type Locale, LOCALES } from '../src/i18n/locales.ts'
+import { INDEXABLE_PATHS } from '../src/lib/seo.ts'
+import type { StaticPath } from '../src/lib/staticPages.ts'
 
 /**
  * Which of the four data-driven route families a request is for: the slug to ask the BFF about,
@@ -38,4 +40,32 @@ export function matchDetailRoute(url: string): DetailRoute | null {
 
   const [, locale, kind, slug] = match as unknown as [string, Locale, EntityKind, string]
   return { kind, locale, slug, path: `/${kind}/${slug}` }
+}
+
+export interface StaticRoute {
+  locale: Locale
+  /** Locale-relative, `''` for the home page, one of `INDEXABLE_PATHS`. */
+  path: StaticPath
+}
+
+/**
+ * The static pages, from the sitemap's list, so a new page is covered the day it is indexable.
+ * Their head comes from the catalogue and needs no BFF request (ADR-014 §Decision 2). The regex
+ * only shapes the path; the list decides, so no path is ever spliced into a pattern.
+ */
+const STATIC_SHAPE = new RegExp(`^/(${LOCALES.join('|')})((?:/[a-z-]+)*)/?$`)
+const STATIC_PATHS = new Set<string>(INDEXABLE_PATHS)
+
+function isStaticPath(path: string): path is StaticPath {
+  return STATIC_PATHS.has(path)
+}
+
+/** Parses a request URL for a static page, as {@link matchDetailRoute} does for a detail page. */
+export function matchStaticRoute(url: string): StaticRoute | null {
+  const pathname = url.split('#')[0]?.split('?')[0] ?? ''
+  const match = STATIC_SHAPE.exec(pathname)
+  if (!match) return null
+
+  const [, locale, path = ''] = match as unknown as [string, Locale, string | undefined]
+  return isStaticPath(path) ? { locale, path } : null
 }

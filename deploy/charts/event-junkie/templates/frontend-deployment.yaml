@@ -91,8 +91,8 @@ spec:
         {{- if .Values.frontend.injector.enabled }}
         {{- $injector := .Values.frontend.injector }}
         {{- /* The meta-injection sidecar (ADR-014 §Decision 3). nginx proxies the four detail route families
-           to it on loopback; it fetches the shell from nginx, the entity from the BFF Service, and
-           rewrites the head. Every failure is a 502 that nginx turns into the plain shell (docker/nginx.conf).
+           and the static pages to it on loopback; it fetches the shell from nginx and, for a detail
+           page, the entity from the BFF Service, and rewrites the head. Every failure is a 502 that nginx turns into the plain shell (docker/nginx.conf).
            A sidecar, like imgproxy, because sharing the pod is what makes the loopback contract hold; it
            shares the network namespace, so `allow-frontend-to-bff` in networkpolicy.yaml is its only
            egress beyond DNS. */}}

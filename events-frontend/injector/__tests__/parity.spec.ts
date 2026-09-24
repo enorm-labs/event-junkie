@@ -5,7 +5,8 @@ import { describe, expect, it } from 'vitest'
 
 import type { EventDetail, VenueDetail } from '@/api/types'
 import { applyPageMeta } from '@/composables/usePageMeta'
-import { eventPageMeta, venuePageMeta } from '@/lib/pageMeta'
+import { artistPageMeta, eventPageMeta, venuePageMeta } from '@/lib/pageMeta'
+import { siteDescription, staticPathMeta } from '@/lib/staticPages'
 import { updateSeoTags } from '@/lib/seoTags'
 import { rewriteHead } from '../rewrite.ts'
 
@@ -51,8 +52,9 @@ function headState() {
     ogImage: meta('meta[property="og:image"]'),
     ogUrl: meta('meta[property="og:url"]'),
     ogLocale: meta('meta[property="og:locale"]'),
-    ogLocaleAlternates: [...document.head.querySelectorAll('meta[property="og:locale:alternate"]')]
-      .map((element) => element.getAttribute('content')),
+    ogLocaleAlternates: [
+      ...document.head.querySelectorAll('meta[property="og:locale:alternate"]'),
+    ].map((element) => element.getAttribute('content')),
     twitterTitle: meta('meta[name="twitter:title"]'),
     twitterDescription: meta('meta[name="twitter:description"]'),
     twitterImage: meta('meta[name="twitter:image"]'),
@@ -70,7 +72,14 @@ function serve(html: string) {
 describe('the injector and the client write the same head', () => {
   it('for an event in German, with an image and a description', () => {
     const meta = eventPageMeta(event, 'de')
-    serve(rewriteHead(shell, { meta, image: { width: 800, height: 450 }, locale: 'de', path: '/events/x' }))
+    serve(
+      rewriteHead(shell, {
+        meta,
+        image: { width: 800, height: 450 },
+        locale: 'de',
+        path: '/events/x',
+      }),
+    )
     const served = headState()
 
     applyPageMeta(meta)
@@ -93,7 +102,40 @@ describe('the injector and the client write the same head', () => {
     updateSeoTags('en', '/venues/lido')
 
     expect(headState()).toEqual(served)
-    expect(served.ogImage).toBeNull()
+    // No image of its own keeps the site card, in both writers (#1911).
+    expect(served.ogImage).toBe('https://event-junkie.de/og-image.png')
+  })
+
+  it('for an artist in German with neither a description nor a picture', () => {
+    const meta = artistPageMeta({ slug: 'mia-kober', name: 'Mia Kober' })
+    serve(rewriteHead(shell, { meta, locale: 'de', path: '/artists/mia-kober' }))
+    const served = headState()
+
+    applyPageMeta(meta)
+    updateSeoTags('de', '/artists/mia-kober')
+
+    expect(headState()).toEqual(served)
+    expect(served.lang).toBe('de')
+    expect(served.ogDescription).toBe(siteDescription('de'))
+    expect(served.ogImage).toBe('https://event-junkie.de/og-image.png')
+  })
+
+  it.each([
+    ['de', ''],
+    ['de', '/events'],
+    ['en', '/venues'],
+    ['de', '/legal/imprint'],
+  ] as const)('for the static page %s%s, from the catalogue', (locale, path) => {
+    const meta = staticPathMeta(locale, path)
+    serve(rewriteHead(shell, { meta, locale, path }))
+    const served = headState()
+
+    applyPageMeta(meta)
+    updateSeoTags(locale, path)
+
+    expect(headState()).toEqual(served)
+    expect(served.lang).toBe(locale)
+    expect(served.canonical).toBe(`https://event-junkie.de/${locale}${path}`)
   })
 
   it('leaves the client a real site default to fall back to', () => {

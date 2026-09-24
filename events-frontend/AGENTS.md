@@ -105,10 +105,11 @@ Every page lives under `/<locale>/…`; `src/i18n/locales.ts` is the single list
 - **Title, description and image come from `src/lib/pageMeta.ts` — nowhere else.** The client and the injector (`injector/`, ADR-014 §Decision 3) both use it;
   `usePageMeta.ts` only writes tags, and `injector/__tests__/parity.spec.ts` proves both writers leave the same head.
 - **The injector is a second Vite build and a second image**: `vite.injector.config.ts` bundles `injector/server.ts` into `dist-injector/injector.mjs`,
-  `Dockerfile.injector` ships that file, it answers only the four detail route families `nginx.conf` proxies to it, and it fails open. Everything it imports
+  `Dockerfile.injector` ships that file, it answers only the four detail route families and the static pages `nginx.conf` proxies to it, and it fails open. Everything it imports
   stays free of the DOM and of Vue — `tsconfig.node.json` type-checks it and has neither.
-- **Entity descriptions are data and punctuation, never prose** (`Fr., 12. Juni 2026 · Lido, Berlin` needs only `Intl`; the injector may run with no
-  catalogue). Static pages take `pageDescription.*` from the catalogue. **Omit a description rather than pad one.**
+- **Entity descriptions are data and punctuation, never prose** (`Fr., 12. Juni 2026 · Lido, Berlin` needs only `Intl`). Static pages take `pageTitle.*`
+  and `pageDescription.*` from the catalogue, which reaches the injector as plain strings through `virtual:page-meta-text`, because the vue-i18n plugin
+  compiles every direct import. **Omit a description rather than pad one**: the page then gets the site description in its own locale.
 - **Structured data (`src/lib/structuredData.ts`) describes only what the page displays** — Google policy. **Omit rather than guess**: `eventJsonLd` returns
   `null` when a required field is absent, because partial structured data is rejected outright. Two claims are deliberately not made, for legal reasons:
   performers are `PerformingGroup`, never `Person` (§7.3, artist names are personal data), and the site is a `WebSite`, never an `Organization` (the imprint

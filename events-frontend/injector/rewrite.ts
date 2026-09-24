@@ -1,10 +1,11 @@
 import { type Locale, LOCALES } from '../src/i18n/locales.ts'
 import type { PageMeta } from '../src/lib/pageMeta.ts'
 import { alternatesFor, canonicalUrl, OG_LOCALES } from '../src/lib/seo.ts'
+import { siteDescription } from '../src/lib/staticPages.ts'
 import type { ImageSize } from './meta.ts'
 
 /**
- * Rewrites the head of the built `index.html` for one detail page. Pure: a string in, a string
+ * Rewrites the head of the built `index.html` for one page. Pure: a string in, a string
  * out. It writes exactly what the client writes after boot, `usePageMeta.ts`'s set and
  * `seoTags.ts`'s set, and `__tests__/parity.spec.ts` holds the two writers together. Every tag
  * rewritten here keeps its shipped value in `data-site-default`, so the client can fall back to
@@ -56,6 +57,21 @@ function removeTag(html: string, key: string): string {
   return html.replace(metaTag(key), '')
 }
 
+/**
+ * The shell in `locale`: its language, and the site description from the catalogue. Written as the
+ * tags' own content, not remembered in `data-site-default`, because this is the default the client
+ * falls back to on a page without a description.
+ */
+function localiseShell(html: string, locale: Locale): string {
+  let localised = html.replace(/<html\s+lang="[^"]*"/, () => `<html lang="${locale}"`)
+  for (const key of ['description', 'og:description', 'twitter:description']) {
+    localised = localised.replace(metaTag(key), (tag) =>
+      tag.replace(/\scontent="[^"]*"/, () => ` content="${escapeHtml(siteDescription(locale))}"`),
+    )
+  }
+  return localised
+}
+
 /** Builds the `data-seo` set `seoTags.ts` would build for the same route, in the same order. */
 function managedTags(locale: Locale, path: string): string {
   const canonical = canonicalUrl(locale, path)
@@ -78,26 +94,25 @@ function managedTags(locale: Locale, path: string): string {
 /** The per-page head for `input`, written into the served shell. */
 export function rewriteHead(shell: string, input: RewriteInput): string {
   const { meta, locale, path, image } = input
-  let html = shell
+  let html = localiseShell(shell, locale)
 
-  html = html.replace(/<html\s+lang="[^"]*"/, () => `<html lang="${locale}"`)
   html = html.replace(/<title>[^<]*<\/title>/, () => `<title>${escapeHtml(meta.title)}</title>`)
 
   html = setContent(html, 'og:title', meta.title)
   html = setContent(html, 'twitter:title', meta.title)
 
-  // The client restores the site description on a page without one, and so does this, by not
-  // touching the tags.
+  // A page without a description keeps the site's, in its locale, as the client does.
   if (meta.description) {
     for (const key of ['description', 'og:description', 'twitter:description']) {
       html = setContent(html, key, meta.description)
     }
   }
 
-  // Mirrors `applyPageMeta`: an image replaces the site card, no image removes it, and the site
-  // card's width, height and alt go with it either way.
-  for (const key of ['og:image:width', 'og:image:height', 'og:image:alt']) html = removeTag(html, key)
+  // Mirrors `applyPageMeta`: an image replaces the site card and drops the card's width, height and
+  // alt; no image keeps the card, since a preview without a picture is a bare text link.
   if (meta.image) {
+    for (const key of ['og:image:width', 'og:image:height', 'og:image:alt'])
+      html = removeTag(html, key)
     html = setContent(html, 'og:image', meta.image)
     html = setContent(html, 'twitter:image', meta.image)
     if (image) {
@@ -108,9 +123,6 @@ export function rewriteHead(shell: string, input: RewriteInput): string {
           `\n    <meta content="${image.height}" property="og:image:height" />`,
       )
     }
-  } else {
-    html = removeTag(html, 'og:image')
-    html = removeTag(html, 'twitter:image')
   }
 
   return html.replace('</head>', () => `    ${managedTags(locale, path)}\n  </head>`)

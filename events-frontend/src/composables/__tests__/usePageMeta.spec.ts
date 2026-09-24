@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest'
 
 import { applyPageMeta, pageTitle } from '@/composables/usePageMeta'
 import { HOME_TITLE } from '@/lib/pageMeta'
+import { siteDescription } from '@/lib/staticPages'
 
 /**
  * The head is shared mutable state that no route resets, so the bug this guards against is not a
@@ -10,14 +11,15 @@ import { HOME_TITLE } from '@/lib/pageMeta'
  * describes the imprint as a club night.
  */
 
-const SITE_DESCRIPTION = 'Concerts, club nights and festivals across Berlin venues.'
+const SITE_DESCRIPTION = siteDescription('en')
 
 const content = (selector: string) =>
   document.head.querySelector<HTMLMetaElement>(selector)?.content
 
 beforeEach(() => {
-  // The tags `index.html` ships with. `og:image` is deliberately absent — there is no site-level
-  // image, which is why the image tags are created and removed rather than reset.
+  // The description and title tags `index.html` ships with. The site image is left out here, so the
+  // image cases below meet a shell without one; `usePageMeta.siteImage.spec.ts` covers the other.
+  document.documentElement.lang = 'en'
   document.head.innerHTML = `
     <meta name="description" content="${SITE_DESCRIPTION}" />
     <meta property="og:description" content="${SITE_DESCRIPTION}" />
@@ -56,8 +58,7 @@ describe('applyPageMeta', () => {
   })
 
   it('restores the site description for a page that has none of its own', () => {
-    // The whole reason the defaults are captured at module load. Without it this page would keep
-    // describing itself as the event you were looking at a moment ago.
+    // Without it this page would keep describing itself as the event you were looking at a moment ago.
     applyPageMeta({ title: HOME_TITLE, description: 'An event.' })
     applyPageMeta({ title: HOME_TITLE })
 
@@ -65,16 +66,25 @@ describe('applyPageMeta', () => {
     expect(content('meta[property="og:description"]')).toBe(SITE_DESCRIPTION)
   })
 
-  it('creates the image tags on demand, since index.html carries none', () => {
+  it("restores it in the page's own language, after a switch inside the app", () => {
+    document.documentElement.lang = 'de'
+    applyPageMeta({ title: HOME_TITLE })
+    expect(content('meta[property="og:description"]')).toBe(siteDescription('de'))
+
+    document.documentElement.lang = 'en'
+    applyPageMeta({ title: HOME_TITLE })
+    expect(content('meta[property="og:description"]')).toBe(siteDescription('en'))
+  })
+
+  it('creates the image tags on demand, when the shell carries none', () => {
     applyPageMeta({ title: HOME_TITLE, image: 'https://example.test/poster.jpg' })
 
     expect(content('meta[property="og:image"]')).toBe('https://example.test/poster.jpg')
     expect(content('meta[name="twitter:image"]')).toBe('https://example.test/poster.jpg')
   })
 
-  it('removes the image again rather than leaving the last one behind', () => {
-    // An event poster still attached to the imprint is an outright wrong preview, not a vague one
-    // — and there is no site-level image to fall back to.
+  it('removes the image again rather than leaving the last one behind, when there is no site image', () => {
+    // An event poster still attached to the imprint is an outright wrong preview, not a vague one.
     applyPageMeta({ title: HOME_TITLE, image: 'https://example.test/poster.jpg' })
     applyPageMeta({ title: HOME_TITLE })
 

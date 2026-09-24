@@ -13,7 +13,9 @@
     "eslint-rules/**/*.ts",
     // The meta-injection sidecar. Node code, not app code: it uses `node:http` and has no DOM, so
     // it is checked here rather than under tsconfig.app.json.
-    "injector/**/*.ts"
+    "injector/**/*.ts",
+    // `virtual:page-meta-text`, which `src/lib/staticPages.ts` imports on the injector's behalf.
+    "src/lib/pageMetaText.d.ts"
   ],
   "compilerOptions": {
     // Most tools use transpilation instead of Node.js's native type-stripping.

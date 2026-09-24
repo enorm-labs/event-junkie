@@ -3,8 +3,8 @@
 ## Status
 
 **Accepted (2026-09-06).** Built. The shared module landed first (`events-frontend/src/lib/pageMeta.ts`). The
-transport is #287: the `injector` sidecar in the frontend pod, `events-frontend/injector/`, which `docker/nginx.conf`
-proxies to for the four detail route families. The parity test §Consequences asks for is
+transport is #287: the `injector` sidecar in the frontend pod, `events-frontend/injector/`. `docker/nginx.conf` proxies
+the four detail route families and the static pages to it (#1911). The parity test §Consequences asks for is
 `injector/__tests__/parity.spec.ts`.
 
 > Closes the question [ADR-013](ADR-013_LOCALISATION.md) §Consequences deferred: _"SSR / prerendering — wanted for SEO
@@ -153,10 +153,12 @@ Options B and C are both rejected. B fails cost/benefit, and C fails the freshne
 frontend build stays a plain `vite build` producing a static `dist/`. It also **stays independent of the BFF and the
 database**, which is a property worth protecting deliberately.
 
-### 2. Meta injection (Option F) for data-driven routes
+### 2. Meta injection (Option F) for data-driven routes and the static pages
 
-The primary decision. Event, venue, artist and promoter detail pages get their head tags filled in on the server.
-Everything else is served as it is today.
+The primary decision. Event, venue, artist and promoter detail pages get their head tags filled in on the server, from
+the entity. The static pages get theirs too, from the message catalogue and with no BFF request (#1911). Without that,
+a German link previewed with the English shell's language and description. Prerendering them stays rejected (Option B).
+Injecting their head costs one more nginx pattern and needs no build change. Every other path is served as it is.
 
 ### 3. Build it in two parts, split by what each part depends on
 

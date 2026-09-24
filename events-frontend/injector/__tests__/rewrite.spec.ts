@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
+import { siteDescription } from '@/lib/staticPages'
 import { escapeHtml, rewriteHead } from '../rewrite.ts'
 
 /**
@@ -50,19 +51,46 @@ describe('rewriteHead', () => {
   it('writes the description into all three description tags, across line breaks', () => {
     const html = rewriteHead(shell, { meta: event, locale: 'en', path: '/events/x' })
     const keys = ['description', 'og:description', 'twitter:description']
-    expect(keys.map((key) => content(html, key))).toEqual(Array(3).fill('Fri, 12 Jun 2026 · Lido, Berlin'))
+    expect(keys.map((key) => content(html, key))).toEqual(
+      Array(3).fill('Fri, 12 Jun 2026 · Lido, Berlin'),
+    )
   })
 
-  it('keeps what the tag shipped with in data-site-default, for the client to fall back to', () => {
+  it('keeps the site value in data-site-default, for the client to fall back to', () => {
     const html = rewriteHead(shell, { meta: event, locale: 'en', path: '/events/x' })
-    expect(html).toMatch(/property="og:description"\s+data-site-default="Site description\." \/>/)
-    expect(html).toMatch(/property="og:title" data-site-default="Event Junkie — Can't get enough of Berlin" \/>/)
+    // The site description is the catalogue's, which the shell is localised to before the page's own.
+    expect(html).toContain(
+      `property="og:description" data-site-default="${escapeHtml(siteDescription('en'))}" />`,
+    )
+    expect(html).toMatch(
+      /property="og:title" data-site-default="Event Junkie — Can't get enough of Berlin" \/>/,
+    )
   })
 
-  it('leaves the site description alone for a page that has none of its own', () => {
-    const html = rewriteHead(shell, { meta: { title: 'Somebody · Event Junkie' }, locale: 'en', path: '/promoters/x' })
-    expect(content(html, 'og:description')).toBe('Site description.')
-    expect(html).not.toContain('data-site-default="Site description."')
+  it('gives a page without a description the site description in its own locale', () => {
+    for (const locale of ['en', 'de'] as const) {
+      const html = rewriteHead(shell, {
+        meta: { title: 'Somebody · Event Junkie' },
+        locale,
+        path: '/artists/x',
+      })
+      for (const key of ['description', 'og:description', 'twitter:description']) {
+        expect(content(html, key)).toBe(escapeHtml(siteDescription(locale)))
+      }
+      // The client's fallback, so it must be the tag's own content rather than a remembered one.
+      expect(html).not.toContain('data-site-default="Site description."')
+    }
+  })
+
+  it('remembers the localised site description, not the shipped English one, under a page description', () => {
+    const html = rewriteHead(shell, { meta: event, locale: 'de', path: '/events/x' })
+    expect(html).toContain(`data-site-default="${escapeHtml(siteDescription('de'))}"`)
+  })
+
+  it('writes the language of the page, not the shell', () => {
+    expect(rewriteHead(shell, { meta: event, locale: 'de', path: '/events/x' })).toContain(
+      '<html lang="de"',
+    )
   })
 
   it("replaces the site card with the entity's image and drops the card's width, height and alt", () => {
@@ -85,18 +113,29 @@ describe('rewriteHead', () => {
     expect(content(html, 'og:image:height')).toBe('450')
   })
 
-  it('removes the site card entirely for an entity without an image, as the client does', () => {
-    const html = rewriteHead(shell, { meta: { title: 'Somebody · Event Junkie' }, locale: 'en', path: '/promoters/x' })
-    expect(html).not.toContain('og:image')
-    expect(html).not.toContain('twitter:image')
+  it('keeps the site card, with its size and alt, for a page without an image, as the client does', () => {
+    const html = rewriteHead(shell, {
+      meta: { title: 'Somebody · Event Junkie' },
+      locale: 'en',
+      path: '/promoters/x',
+    })
+    expect(content(html, 'og:image')).toBe('https://event-junkie.de/og-image.png')
+    expect(content(html, 'twitter:image')).toBe('https://event-junkie.de/og-image.png')
+    expect(content(html, 'og:image:width')).toBe('1200')
+    expect(content(html, 'og:image:height')).toBe('630')
+    expect(content(html, 'og:image:alt')).toBe('Site card')
   })
 
   it('appends the canonical set marked data-seo, so the client replaces rather than duplicates it', () => {
     const html = rewriteHead(shell, { meta: event, locale: 'de', path: '/events/x' })
-    expect(html).toContain('<link data-seo rel="canonical" href="https://event-junkie.de/de/events/x" />')
+    expect(html).toContain(
+      '<link data-seo rel="canonical" href="https://event-junkie.de/de/events/x" />',
+    )
     expect(html).toContain('hreflang="en" href="https://event-junkie.de/en/events/x"')
     expect(html).toContain('hreflang="x-default" href="https://event-junkie.de/en/events/x"')
-    expect(html).toContain('<meta data-seo property="og:url" content="https://event-junkie.de/de/events/x" />')
+    expect(html).toContain(
+      '<meta data-seo property="og:url" content="https://event-junkie.de/de/events/x" />',
+    )
     expect(html).toContain('<meta data-seo property="og:locale" content="de_DE" />')
     expect(html).toContain('<meta data-seo property="og:locale:alternate" content="en_GB" />')
     expect(html).toContain('<html lang="de">')

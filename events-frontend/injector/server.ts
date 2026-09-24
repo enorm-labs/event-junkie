@@ -2,12 +2,13 @@ import { createServer, type IncomingMessage, type ServerResponse } from 'node:ht
 
 import { bffPath, entityMeta } from './meta.ts'
 import { rewriteHead } from './rewrite.ts'
-import { matchDetailRoute } from './routes.ts'
+import { matchDetailRoute, matchStaticRoute } from './routes.ts'
+import { staticPathMeta } from '../src/lib/staticPages.ts'
 
 /**
  * The meta-injection sidecar, ADR-014 §Decision 3's transport. nginx proxies the four detail
- * route families here; each request fetches the shell from nginx on loopback and the entity from
- * the BFF, rewrites the head, and answers. Any failure is a 502 and nothing else: nginx's
+ * route families and the static pages here; each request fetches the shell from nginx on loopback
+ * and, for a detail page, the entity from the BFF, rewrites the head, and answers. Any failure is a 502 and nothing else: nginx's
  * `error_page` then serves the plain shell, so every branch that is not the happy path ends in
  * `fail()`. Nothing about the visitor reaches the BFF, and nothing is logged per request. Two
  * in-process caches bound the BFF load: the shell changes only on deploy, and a link shared into
@@ -72,6 +73,17 @@ async function loadEntity(path: string): Promise<unknown> {
   return value
 }
 
+function send(response: ServerResponse, body: string): void {
+  response
+    .writeHead(200, {
+      'content-type': 'text/html; charset=utf-8',
+      // The shell's own rule, kept on the rewritten copy: a cached one pins a browser to files a
+      // deploy has deleted.
+      'cache-control': 'no-cache',
+    })
+    .end(body)
+}
+
 function fail(response: ServerResponse, status: number, reason: string): void {
   if (status !== 404) console.error(`injector: ${reason}`)
   response.writeHead(status, { 'content-type': 'text/plain; charset=utf-8' }).end(reason)
@@ -84,24 +96,31 @@ async function handle(request: IncomingMessage, response: ServerResponse): Promi
     return
   }
 
+  // A static page needs no entity: its head is the catalogue's.
+  const page = matchStaticRoute(url)
+  if (page) {
+    try {
+      const meta = staticPathMeta(page.locale, page.path)
+      send(response, rewriteHead(await loadShell(), { meta, locale: page.locale, path: page.path }))
+    } catch (error) {
+      fail(response, 502, `${page.locale}${page.path}: ${(error as Error).message}`)
+    }
+    return
+  }
+
   const route = matchDetailRoute(url)
   if (!route) {
-    fail(response, 404, `not a detail route: ${url}`)
+    fail(response, 404, `not an injected route: ${url}`)
     return
   }
 
   try {
-    const [html, entity] = await Promise.all([loadShell(), loadEntity(bffPath(route.kind, route.slug))])
+    const [html, entity] = await Promise.all([
+      loadShell(),
+      loadEntity(bffPath(route.kind, route.slug)),
+    ])
     const { meta, image } = entityMeta(route.kind, entity, route.locale)
-    const body = rewriteHead(html, { meta, image, locale: route.locale, path: route.path })
-    response
-      .writeHead(200, {
-        'content-type': 'text/html; charset=utf-8',
-        // The shell's own rule, kept on the rewritten copy: a cached one pins a browser to files a
-        // deploy has deleted.
-        'cache-control': 'no-cache',
-      })
-      .end(body)
+    send(response, rewriteHead(html, { meta, image, locale: route.locale, path: route.path }))
   } catch (error) {
     // A 404 from the BFF is an unknown slug, which the SPA renders as its own not-found page.
     const status = error instanceof Fail && error.status === 404 ? 404 : 502
@@ -114,5 +133,7 @@ createServer((request, response) => {
     fail(response, 502, `unhandled: ${(error as Error).message}`)
   })
 }).listen(PORT, () => {
-  console.log(`injector: listening on ${PORT}, shell ${SHELL_URL}, bff ${BFF_URL} (${BFF_TIMEOUT_MS}ms)`)
+  console.log(
+    `injector: listening on ${PORT}, shell ${SHELL_URL}, bff ${BFF_URL} (${BFF_TIMEOUT_MS}ms)`,
+  )
 })

@@ -2,6 +2,8 @@ import { fileURLToPath, URL } from 'node:url'
 
 import { defineConfig } from 'vite'
 
+import { pageMetaText } from './scripts/pageMetaText.ts'
+
 /**
  * The second build `npm run build` runs: the meta-injection sidecar (ADR-014 §Decision 3), bundled
  * into one file for the `Dockerfile.injector` image.
@@ -14,6 +16,8 @@ import { defineConfig } from 'vite'
 export default defineConfig({
   // The app build copies `public/` into `dist/`; this one ships one file and no favicon.
   publicDir: false,
+  // The static pages' head text, the one plugin the two builds share.
+  plugins: [pageMetaText()],
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
