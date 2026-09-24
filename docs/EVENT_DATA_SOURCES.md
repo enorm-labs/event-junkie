@@ -35,7 +35,7 @@ schema change.
 | ÆDEN                             | https://aedenberlin.com/                                    | Techno Club  | WordPress; /events → month pages; no prices            |
 | Admiralspalast                   | https://www.admiralspalast.theater/                         | Theater      | Contao; one event per performance row; no prices       |
 | Alte Kantine Kulturbrauerei      | https://alte-kantine.eu/                                    | Concert Hall |                                                        |
-| AMT                              | https://www.club-amt.berlin                                 | Techno Club  | Webflow; /events → month pages                         |
+| AMT                              | https://www.club-amt.berlin                                 | Techno Club  | Webflow; month pages; calendar stale since August      |
 | Arcanoa                          | https://www.ssi-media.com/arcanoa/veranst.htm               | Bar          | 1990s HTML; title/date only; year from weekday         |
 | Astra Kulturhaus                 | https://www.astra-berlin.de/                                | Concert Hall | schema.org `MusicEvent`; presale + door prices         |
 | Badehaus                         | https://badehaus-berlin.com/                                | Club         | "AUSVERKAUFT"/"VERLEGT" labels; ticket + FB links      |
