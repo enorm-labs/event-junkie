@@ -188,13 +188,15 @@ def named(kind, name):
 
 
 def recipient_missing():
-    """Whether the mail recipient has stopped being an org user.
+    """Whether the mail recipient has stopped being a service account of the org.
 
     OpenObserve checks membership when the destination is saved, not when it sends,
-    so a user deleted afterwards leaves a destination that looks valid (#877).
+    so an account deleted afterwards leaves a destination that looks valid (#877).
+    **The listing carries every account's API token**, so only the `email` field is
+    read and nothing from the response is ever printed.
     """
-    users = get("http://%s:5080/api/%s/users" % (svc, org))
-    rows = users.get("data", users.get("list", [])) if isinstance(users, dict) else users
+    listing = get("http://%s:5080/api/%s/service_accounts" % (svc, org))
+    rows = listing.get("data", []) if isinstance(listing, dict) else []
     return not any(isinstance(row, dict) and row.get("email") == ALERT_RECIPIENT for row in rows)
 
 
@@ -238,10 +240,10 @@ def main():
         "NO E-MAIL DESTINATION — every rule below reaches nobody, and the UI still shows them firing",
     )
     if recipient_missing():
-        print("%-30s MISSING     not an org user — OpenObserve will not mail it" % ALERT_RECIPIENT)
+        print("%-30s MISSING     not a service account — OpenObserve will not mail it" % ALERT_RECIPIENT)
         drifted += 1
     else:
-        print("%-30s in sync" % (ALERT_RECIPIENT + " (user)"))
+        print("%-30s in sync" % (ALERT_RECIPIENT + " (account)"))
 
     for name, wanted in wanted_alerts.items():
         if name not in live:
@@ -268,7 +270,7 @@ def main():
         print("%-30s EXTRA       in the cluster, absent from alerts.json — created outside this repository?" % name)
         drifted += 1
 
-    delivery = 5  # two templates, two destinations, the recipient user
+    delivery = 5  # two templates, two destinations, the recipient account
     total = len(set(wanted_alerts) | set(live)) + delivery
     print(
         "\n%d/%d objects match this repository (%d rules, two templates, two destinations, the recipient)"

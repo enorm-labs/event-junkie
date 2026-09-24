@@ -47,7 +47,7 @@ environments). Both tunnels can be up at once, so the context is the only thing 
 | Alert destinations    | `record-only` into `alert_history`, and `email` to `alerts@` | the same                                                                                                        |
 | Signal bridge         | deployed, unregistered, not a destination                    | **not deployed** — the Signal route is deferred ([#877](https://github.com/enorm-labs/event-junkie/issues/877)) |
 | `ZO_SKIP_SSRF_CHECKS` | set, for the bridge                                          | **not set** — nothing in-cluster to allow                                                                       |
-| SMTP                  | port 465 to `mail.your-server.de`, `openobserve-smtp` Secret | the same                                                                                                        |
+| SMTP                  | port 587 to `mail.your-server.de`, `openobserve-smtp` Secret | the same                                                                                                        |
 | Database metrics      | `postgres-exporter` → the k3s node                           | `postgres-exporter` → the dedicated node, `10.0.1.20`                                                           |
 
 **Why one bucket rather than two.** The same separation `s3://event-junkie-backups/<environment>/` and the images bucket already make. It keeps one
@@ -193,11 +193,12 @@ un-fireable whenever either counter was quiet.
 which forwards to the person who reads the alerts. The subject starts with `[event-junkie <environment>]`, because both clusters use the same address.
 [deploy/alerts/README.md](../../deploy/alerts/README.md) § _Where the notifications go_ has the configuration.
 
-**OpenObserve refuses the `email` destination in two cases.** It refuses it when SMTP is off (`SMTPUnavailable`). It refuses a recipient that is not a user
-of the org (`UserNotPermitted`). `apply.sh` creates the `alerts@` user first, and `--diff` reports it when it is missing.
+**OpenObserve refuses the `email` destination in two cases.** It refuses it when SMTP is off (`SMTPUnavailable`). It refuses a recipient that is not a member
+of the org (`UserNotPermitted`). `apply.sh` creates `alerts@` as a service account first, and `--diff` reports it when it is missing. A service account
+has no password and cannot log in to the UI. The open-source build has no read-only role to use instead.
 
 **OpenObserve's SSRF guard applies to webhook destinations only.** On staging `ZO_SKIP_SSRF_CHECKS` is set for the Signal bridge, **and paired with an egress
-NetworkPolicy** (`deploy/clusters/staging/observability-netpol.yaml`). That policy lets this pod reach CoreDNS, the public internet on 443 and 465, and the
+NetworkPolicy** (`deploy/clusters/staging/observability-netpol.yaml`). That policy lets this pod reach CoreDNS, the public internet on 443 and 587, and the
 Signal bridge. Nothing else — not the database, not the Kubernetes API. `deploy/alerts/README.md` has the reasoning.
 
 **Production does not set the flag.** It has no bridge to reach. Its only webhook is the loopback `record-only` destination, which needs only

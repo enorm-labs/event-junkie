@@ -81,7 +81,7 @@ flowchart TB
     k3s -->|"pull"| ghcr
     k3s -->|"ACME"| le
     k3s -->|"conditional heartbeat"| hc
-    k3s -->|"alerts, 465"| sm
+    k3s -->|"alerts, 587"| sm
 ```
 
 **Staging is the same picture with both nodes collapsed into one.** It has no public `A` record and no public 80/443 at all — see §6.

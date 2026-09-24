@@ -106,9 +106,9 @@ def email_template_payload(environment):
 def email_destination_payload():
     """Where a firing reaches a person.
 
-    **OpenObserve refuses a recipient that is not a user of the org** (`UserNotPermitted`,
+    **OpenObserve refuses a recipient that is not a member of the org** (`UserNotPermitted`,
     `core/src/alerts/destinations.rs` in 1.0.1), and refuses the destination outright
-    while `ZO_SMTP_ENABLED` is false. `recipient_user_payload` is what satisfies the first.
+    while `ZO_SMTP_ENABLED` is false. `recipient_payload` is what satisfies the first.
     """
     return {
         "name": EMAIL_DESTINATION_NAME,
@@ -118,16 +118,13 @@ def email_destination_payload():
     }
 
 
-def recipient_user_payload(password):
-    """The org user that makes `ALERT_RECIPIENT` a permitted recipient.
+def recipient_payload():
+    """The org member that makes `ALERT_RECIPIENT` a permitted recipient.
 
-    `viewer` is read-only. The password is random, generated per run and never
-    stored: nobody logs in as this user, and it exists only for the recipient check.
+    **A service account, not a user.** The open-source build accepts only `admin`,
+    `root` and `service_account` as roles (`get_roles` in `common/src/meta/user.rs`,
+    1.0.1) and refuses `viewer` or `user` with `Custom roles not allowed`. A service
+    account has no password and cannot log in to the UI. OpenObserve returns an API
+    token when it is created, and `apply_alerts.py` never prints or stores it.
     """
-    return {
-        "email": ALERT_RECIPIENT,
-        "first_name": "Alerts",
-        "last_name": "Event Junkie",
-        "password": password,
-        "role": "viewer",
-    }
+    return {"email": ALERT_RECIPIENT, "first_name": "Alerts", "last_name": "Event Junkie"}

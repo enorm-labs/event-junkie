@@ -72,13 +72,13 @@ event-junkie (template)        in sync
 event-junkie-email (template)  in sync
 record-only (destination)      in sync
 email (destination)            in sync
-alerts@event-junkie.de (user)  in sync
+alerts@event-junkie.de (account) in sync
 …
 22/22 objects match this repository (17 rules, two templates, two destinations, the recipient)
 ```
 
-**The recipient is checked as well.** OpenObserve checks that `alerts@event-junkie.de` is a user of the org when the destination is saved, not when it sends.
-A user deleted afterwards leaves an `email` destination that looks valid and mails nobody.
+**The recipient is checked as well.** OpenObserve checks that `alerts@event-junkie.de` is a member of the org when the destination is saved, not when it sends.
+An account deleted afterwards leaves an `email` destination that looks valid and mails nobody.
 
 **The destination's header values are compared by fingerprint and cannot be printed.** It carries the OpenObserve root credential, and the API returns it in
 full — measured, 74 characters, unredacted — so a field diff of the kind this does everywhere else would put that credential into a terminal, a scrollback and
@@ -165,9 +165,11 @@ Every rule notifies two destinations, both declared in `alert_objects.py`:
 | `email`       | mails `alerts@event-junkie.de`, a role mailbox that forwards to whoever reads the alerts. The one that reaches a person |
 
 **The mail goes out through Hetzner's SMTP as `alerts@`**, configured by `ZO_SMTP_*` in each cluster's `openobserve.yaml`. The password is the hand-made
-`openobserve-smtp` Secret ([SECRETS.md](../../docs/ops/SECRETS.md)), and `observability-netpol.yaml` lets the pod reach port 465 and no other mail port.
-OpenObserve refuses an `email` destination while SMTP is off (`SMTPUnavailable`) and a recipient who is not a user of the org (`UserNotPermitted`), so
-`apply_alerts.py` creates that user first, with a random password it never stores.
+`openobserve-smtp` Secret ([SECRETS.md](../../docs/ops/SECRETS.md)), and `observability-netpol.yaml` lets the pod reach port 587 and no other mail port.
+**Port 587 with STARTTLS, not 465**: Hetzner Cloud blocks outbound 25 and 465 on every server. OpenObserve then reports `Network is unreachable`.
+OpenObserve refuses an `email` destination while SMTP is off (`SMTPUnavailable`) and a recipient who is not a member of the org (`UserNotPermitted`), so
+`apply_alerts.py` first creates `alerts@` as a service account. The open-source build allows no read-only role (`Custom roles not allowed`), and a
+service account has no password and no UI login. Its API token appears in every service-account listing, so the scripts read only the `email` field.
 
 **The subject names the environment**, `[event-junkie production] ej-site-down`, because both clusters send from the same address to the same inbox.
 
@@ -184,7 +186,7 @@ reasoning in PLATFORM_SETUP §4.1 was protecting.
 | `ZO_SKIP_SSRF_CHECKS`    | removes the check for **every** destination. Set on staging, with the policy below |
 
 On staging the guard is off and the containment is the network: `deploy/clusters/staging/observability-netpol.yaml` lets the OpenObserve pod reach CoreDNS,
-the public internet on 443 (Hetzner Object Storage) and 465 (SMTP), and `signal-cli:8080`, and nothing else. PostgreSQL on the private network, the Kubernetes
+the public internet on 443 (Hetzner Object Storage) and 587 (SMTP), and `signal-cli:8080`, and nothing else. PostgreSQL on the private network, the Kubernetes
 API, the kubelet and every other pod are unreachable from it, so a destination aimed at them fails at the network rather than at a check somebody can turn
 off. A URL allowlist inside a process constrains the feature; an egress policy constrains anything the pod can be made to do. Production sets neither the
 flag nor the bridge allowance, because it has no bridge to reach; [OPENOBSERVE.md](../../docs/ops/OPENOBSERVE.md) carries the per-cluster table.
