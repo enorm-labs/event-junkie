@@ -183,6 +183,27 @@ class KlunkerkranichOverviewPageScraperTest {
     }
 
     @Test
+    fun `reads every act of a billing split into sections by a pipe`() {
+        // The 23.09.2026 card (#1908): the acts after the "|" were lost, and the label glued to the first.
+        billing("N.E.S.T.A. presents: BATILA &amp; THE DREAMBUS | DJ Sets by Diablas Finas &amp; Bela Patrutzi,") shouldContainExactly
+            listOf(
+                ScrapedArtist(name = "BATILA", role = "DJ"),
+                ScrapedArtist(name = "THE DREAMBUS", role = "DJ"),
+                ScrapedArtist(name = "Diablas Finas", role = "DJ"),
+                ScrapedArtist(name = "Bela Patrutzi", role = "DJ")
+            )
+    }
+
+    @Test
+    fun `bills a DJ-labelled section as DJs, not as a collective named after the label`() {
+        billing("SUNSET SESSION w. Kora *live | DJ Set: Mona Lisa") shouldContainExactly
+            listOf(
+                ScrapedArtist(name = "Kora", role = "HEADLINER"),
+                ScrapedArtist(name = "Mona Lisa", role = "DJ")
+            )
+    }
+
+    @Test
     fun `bills a live act as a headliner and a DJ night's acts as DJs`() {
         on(LocalDate.of(2026, 8, 13), "SOULJAM x KLUNKERKRANICH w. Soul Jam Collective *live").artists shouldContainExactly
             listOf(ScrapedArtist(name = "Soul Jam Collective", role = "HEADLINER"))

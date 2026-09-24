@@ -45,8 +45,8 @@ import java.util.Locale
  * 2. **The time range is opening hours, not doors and start.** "17:00 — 00:00": the first time
  * is the start, the second the end, next day when past midnight.
  * 3. **The title packs the whole billing** — `<series> w. <DJ lineup>`, occasionally
- * `<promoter> presents: <acts>` — acts separated by commas, `&` and `b2b`, `*live` on the ones
- * that play rather than spin. [parseLineup] reads the acts from the tail and uses the marker
+ * `<promoter> presents: <acts>` — acts separated by commas, `|`, `&` and `b2b`, `*live` on the ones
+ * that play rather than spin, and a `DJ Sets by` / `DJ Set:` label opening a DJ section. [parseLineup] reads the acts from the tail and uses the marker
  * to tell a live act (`HEADLINER`) from a DJ, as Club der Visionäre does. The series name
  * before the marker stays in the title and is no artist: a night's name ("WOCHENMITTE",
  * "MONDAY ROAST"), not a performer.
@@ -150,8 +150,9 @@ class KlunkerkranichOverviewPageScraper(
      * The billed acts from a title's `w.` / `presents:` lineup tail.
      *
      * Empty for a title with no marker ("LA MAISON x KLUNKERKRANICH") — the whole title is the
-     * night's name, no act to mint. Otherwise the tail splits on commas into one billing per
-     * slot, each parsed by [parseBilling].
+     * night's name, no act to mint. Otherwise the tail splits on commas and `|` into one billing
+     * per slot, each parsed by [parseBilling]. A `|` opens a section — "BATILA & THE DREAMBUS | DJ
+     * Sets by Diablas Finas & Bela Patrutzi" — and joining two sections into one billing drops acts (#1908).
      *
      * The **last** marker opens the tail. A hosted night carries both — "COUNTERCULT presents:
      * SKETCHY SESSIONS | jazz & draw rooftop sunset jam w. Analog Beats Collective, …" — the
@@ -164,17 +165,18 @@ class KlunkerkranichOverviewPageScraper(
     private fun parseLineup(title: String): List<ScrapedArtist> {
         val lineup = LINEUP_MARKER.findAll(title).lastOrNull()?.let { title.substring(it.range.last + 1) } ?: return emptyList()
         return lineup
-            .split(',')
+            .split(BILLING_SEPARATOR)
             .flatMap(::parseBilling)
             .distinctBy { it.name.lowercase() }
     }
 
     /**
-     * Splits one comma-separated billing into its acts, all sharing its role.
+     * Splits one billing into its acts, all sharing its role.
      *
      * A billing may pair two acts — `&`/`and`/`und` for a joint project, `b2b` for a shared slot
      * — stored separately. `*live` qualifies the **billing**, not just the name it trails
-     * ("IBAAKU & K'BOKO *live" is one live pairing), so the role is decided before the split.
+     * ("IBAAKU & K'BOKO *live" is one live pairing), so the role is decided before the split. A
+     * [DJ_SECTION_LABEL] makes the billing a DJ one and is stripped, or it reads as a collective.
      *
      * **A conjunction here is ambiguous and the page never resolves it** (#1760). The event page's
      * lineup block prints one act per line, and it puts `Überhaupt & Außerdem` — a duo — on one
@@ -188,8 +190,9 @@ class KlunkerkranichOverviewPageScraper(
      * glued to its own (#1137).
      */
     private fun parseBilling(billing: String): List<ScrapedArtist> {
-        val role = if (LIVE_MARKER.containsMatchIn(billing)) "HEADLINER" else "DJ"
-        val unmarked = billing.replace(LIVE_MARKER, "").trim()
+        val djSection = DJ_SECTION_LABEL.find(billing)
+        val role = if (djSection == null && LIVE_MARKER.containsMatchIn(billing)) "HEADLINER" else "DJ"
+        val unmarked = billing.replaceFirst(DJ_SECTION_LABEL, "").replace(LIVE_MARKER, "").trim()
         if (isKnownSingleAct(unmarked)) return listOf(ScrapedArtist(name = unmarked, role = role))
         val collective = COLLECTIVE_PREFIX.find(unmarked)
         val members = collective?.let { unmarked.substring(it.range.last + 1) } ?: unmarked
@@ -227,6 +230,15 @@ class KlunkerkranichOverviewPageScraper(
          * never matches. [parseLineup] takes the last one on the title.
          */
         val LINEUP_MARKER = Regex("""\sw[./]\s|\s(?:presents|präsentiert)\s*:\s*""", RegexOption.IGNORE_CASE)
+
+        /** Billing boundaries in the lineup tail: a comma between slots, a `|` between sections. */
+        val BILLING_SEPARATOR = Regex("""[,|]""")
+
+        /**
+         * A label opening a DJ section — `DJ Sets by`, `DJ Set:`, `DJs:`. The `by` or colon is required,
+         * so an act named "DJ Something" keeps its name.
+         */
+        val DJ_SECTION_LABEL = Regex("""^\s*DJ(?:s|[\s-]*sets?)?\s*(?:by\b|:)\s*""", RegexOption.IGNORE_CASE)
 
         /**
          * Act boundaries inside one billing: a space-padded `&` / `and` / `und` joining two separately
