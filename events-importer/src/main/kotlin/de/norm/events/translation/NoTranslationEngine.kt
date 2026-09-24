@@ -19,6 +19,8 @@ class NoTranslationEngine : TranslationEngine {
 
     override val id = "none"
 
+    override val enabled = false
+
     /** Logs once per call at DEBUG, so a grant that produces nothing is explainable without a restart. */
     override suspend fun translate(request: TranslationRequest): String? {
         logger.debug { "No translation engine is configured, so ${request.from.code}->${request.to.code} is skipped" }

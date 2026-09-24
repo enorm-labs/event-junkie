@@ -36,4 +36,10 @@ class NoTranslationEngineTest {
     fun `names itself`() {
         engine.id shouldBe "none"
     }
+
+    @Test
+    @DisplayName("it says it is switched off")
+    fun `is not enabled`() {
+        engine.enabled shouldBe false
+    }
 }
