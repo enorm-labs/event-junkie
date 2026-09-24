@@ -337,6 +337,7 @@ Confirm that it shows in the mail client you read.** Record the date here.
 | Date       | Checked by     | Result                                              |
 | ---------- | -------------- | --------------------------------------------------- |
 | 2026-08-21 | the maintainer | Both addresses delivered to the mailbox and forward |
+| 2026-09-24 | the maintainer | Both addresses shown in the IMAP client, no forward |
 
 ## 8. What else changes, and what is still open
 
