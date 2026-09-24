@@ -1,0 +1,21 @@
+{{- if and .Values.ingress.enabled .Values.ingress.tls.enabled .Values.ingress.httpsRedirect }}
+{{- $args := dict "ctx" $ "component" "https-redirect" }}
+{{- /* Per Ingress, not Traefik's global `web -> websecure` redirect: cert-manager's HTTP-01 solver
+   Ingresses answer on port 80, and a global redirect would send Let's Encrypt to HTTPS for a name
+   with no certificate yet (#1891). The solver's longer rule outranks this Ingress's `/`, so the
+   challenge never reaches this middleware. */}}
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: {{ printf "%s-https-redirect" (include "event-junkie.fullname" $) }}
+  labels:
+    {{- include "event-junkie.labels" $args | nindent 4 }}
+  annotations:
+    kubernetes.io/description: >-
+      Sends plain HTTP to HTTPS with a 301. A request that already arrives over HTTPS passes through
+      unchanged. On the app Ingress only, so cert-manager's HTTP-01 challenges still answer on port 80.
+spec:
+  redirectScheme:
+    scheme: https
+    permanent: true
+{{- end }}

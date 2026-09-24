@@ -25,6 +25,8 @@ Ingress/event-junkie
   tls staging.event-junkie.de -> secret/event-junkie-staging-tls
   staging.event-junkie.de/api -> event-junkie-bff:http
   staging.event-junkie.de/ -> event-junkie-frontend:http
+Middleware/event-junkie-https-redirect
+  redirectScheme
 Middleware/event-junkie-in-flight-req
   inFlightReq
 Middleware/event-junkie-noindex

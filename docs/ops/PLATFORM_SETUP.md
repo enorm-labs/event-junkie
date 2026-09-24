@@ -177,7 +177,7 @@ flowchart TB
 
     subgraph ns["Namespace: event-junkie — everything the chart creates"]
         ing["Ingress/event-junkie<br/>one host, TLS from cert-manager"]
-        mw{{"Middlewares<br/>security-headers · rate-limit<br/>in-flight-req · noindex"}}
+        mw{{"Middlewares<br/>https-redirect · security-headers<br/>rate-limit · in-flight-req · noindex"}}
 
         svcF["Service/…-frontend"]
         svcB["Service/…-bff"]
@@ -624,8 +624,9 @@ resource of its own. Two things about the split are decisions rather than defaul
 therefore how a chart acquires a resource it can never safely change. The consequence: **`helm install` fails outright if cert-manager is not already
 present**, because the API server rejects an unknown kind. It is not a race that resolves itself.
 
-The redirect from `event-junkie.com` is the one place the chart uses a Traefik-specific object. It is a `Middleware` doing `redirectRegex`, because the
-Ingress API has no way to express a redirect. It is gated on a values list, so emptying that list leaves a chart with nothing Traefik-specific in it.
+The chart uses five Traefik `Middleware` objects, each for something the Ingress API cannot express. Two are redirects. `redirectRegex` sends the
+redirect hosts to the apex, and `redirectScheme` sends plain HTTP to HTTPS on the app Ingress (#1891). The others are the security headers, `noindex` and
+the rate limit. The HTTPS redirect is per Ingress, not Traefik's global one, because cert-manager's HTTP-01 challenges must still answer on port 80.
 
 **No MetalLB, and probably never.** k3s ships **ServiceLB** (klipper-lb), which binds `LoadBalancer` services straight to the node's IP. On a single node that
 is exactly right. MetalLB solves address allocation on bare metal with a pool of IPs, which is not the situation. If a second node ever arrives, the answer is

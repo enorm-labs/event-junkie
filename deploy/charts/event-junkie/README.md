@@ -63,7 +63,8 @@ Only the values worth a decision are listed. Every property is documented in
 | `frontend.injector.enabled`                  | `true`                  | The meta-injection sidecar (ADR-014, #287). Off is an emergency switch: detail pages then preview generically        |
 | `security.runAsUser`                         | `10001`                 | Must match the UID the images actually run as (#426); above 10000 per #448, enforced by `scripts/uid-consistency.sh` |
 | `ingress.host`                               | `event-junkie.de`       | The only name routed to the applications                                                                             |
-| `ingress.redirectHosts`                      | `[event-junkie.com]`    | 301 to `ingress.host`, with its own certificate. Empty means nothing Traefik-specific renders at all                 |
+| `ingress.redirectHosts`                      | `[event-junkie.com]`    | 301 to `ingress.host`, with its own certificate. Empty renders no redirect Ingress and no `redirectRegex`            |
+| `ingress.httpsRedirect`                      | `true`                  | 301 from plain HTTP to HTTPS on the app Ingress only, and only with `tls.enabled`, so HTTP-01 still works (#1891)    |
 | `certManager.clusterIssuer.create`           | `false`                 | A ClusterIssuer is a cluster-scoped singleton — see below                                                            |
 | `certManager.clusterIssuer.server`           | ACME **staging**        | Deliberately not production. 50 certificates per registered domain per week, and burning it costs seven days         |
 | `certManager.clusterIssuer.solver`           | `http01`                | `dns01` for staging, which has no public address for HTTP-01 to reach                                                |

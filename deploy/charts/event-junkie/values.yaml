@@ -229,8 +229,8 @@ frontend:
 ingress:
   # ingress.enabled turns the single Ingress object on. Off for k3d smoke tests that port-forward.
   enabled: true
-  # ingress.className is k3s's bundled Traefik. Four Middleware objects below are Traefik-specific,
-  # each for something the Ingress API has no vocabulary for: a redirect, a header set, a robots
+  # ingress.className is k3s's bundled Traefik. Five Middleware objects below are Traefik-specific,
+  # each for something the Ingress API has no vocabulary for: two redirects, a header set, a robots
   # header, a limit.
   className: "traefik"
   # ingress.host is the name the certificate is issued for and the only name routed to the apps.
@@ -253,6 +253,9 @@ ingress:
   # allow-all robots.txt naming production's sitemap. Defence in depth for the day somebody adds an A
   # record "just to check something".
   noindex: false
+  # ingress.httpsRedirect sends plain HTTP on `host` to HTTPS with a 301 (#1891). It applies only with
+  # `tls.enabled`, so an environment without TLS keeps serving HTTP. Off only to debug a routing problem.
+  httpsRedirect: true
   tls:
     # ingress.tls.enabled asks cert-manager for a certificate via the ingress-shim annotation.
     enabled: true

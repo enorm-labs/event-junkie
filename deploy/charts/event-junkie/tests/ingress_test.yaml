@@ -1,7 +1,7 @@
 # The ingress must not reach anything private, and the noindex mechanism must not render half of
 # itself. The importer has no Ingress backend and actuator lives on a port no rule names; both are
 # one careless path entry from false, and neither failure is visible in a diff.
-suite: ingress routing, noindex and rate limiting
+suite: ingress routing, the HTTPS redirect, noindex and rate limiting
 
 templates:
   - ingress.yaml
@@ -9,6 +9,7 @@ templates:
   - noindex-middleware.yaml
   - redirect-middleware.yaml
   - rate-limit-middleware.yaml
+  - https-redirect-middleware.yaml
 
 tests:
   - it: routes /api to the BFF and / to the frontend, and nothing else
@@ -168,12 +169,13 @@ tests:
 
   # The annotation is a comma-separated string with no schema, so a stray comma is not a render error —
   # it is a router that silently drops **every** middleware in the list. These pin the whole list (#416).
-  - it: names all three middlewares on the ingress when noindex is on, in one well-formed list
+  - it: names every middleware on the ingress when noindex is on, in one well-formed list
     set:
       database.host: "10.0.1.2"
       networkPolicy.databaseCidr: "10.0.1.2/32"
       database.existingSecret: "events-db"
       ingress.noindex: true
+      ingress.tls.enabled: true
     templates:
       - ingress.yaml
     asserts:
@@ -181,7 +183,7 @@ tests:
       - equal:
           path: metadata.annotations["traefik.ingress.kubernetes.io/router.middlewares"]
           value: >-
-            NAMESPACE-RELEASE-NAME-event-junkie-security-headers@kubernetescrd,NAMESPACE-RELEASE-NAME-event-junkie-in-flight-req@kubernetescrd,NAMESPACE-RELEASE-NAME-event-junkie-rate-limit@kubernetescrd,NAMESPACE-RELEASE-NAME-event-junkie-noindex@kubernetescrd
+            NAMESPACE-RELEASE-NAME-event-junkie-https-redirect@kubernetescrd,NAMESPACE-RELEASE-NAME-event-junkie-security-headers@kubernetescrd,NAMESPACE-RELEASE-NAME-event-junkie-in-flight-req@kubernetescrd,NAMESPACE-RELEASE-NAME-event-junkie-rate-limit@kubernetescrd,NAMESPACE-RELEASE-NAME-event-junkie-noindex@kubernetescrd
 
   - it: names the security headers and rate limit middlewares in production, where noindex is off
     set:
@@ -189,15 +191,16 @@ tests:
       networkPolicy.databaseCidr: "10.0.1.2/32"
       database.existingSecret: "events-db"
       ingress.noindex: false
+      ingress.tls.enabled: true
     templates:
       - ingress.yaml
     asserts:
       - equal:
           path: metadata.annotations["traefik.ingress.kubernetes.io/router.middlewares"]
           value: >-
-            NAMESPACE-RELEASE-NAME-event-junkie-security-headers@kubernetescrd,NAMESPACE-RELEASE-NAME-event-junkie-in-flight-req@kubernetescrd,NAMESPACE-RELEASE-NAME-event-junkie-rate-limit@kubernetescrd
+            NAMESPACE-RELEASE-NAME-event-junkie-https-redirect@kubernetescrd,NAMESPACE-RELEASE-NAME-event-junkie-security-headers@kubernetescrd,NAMESPACE-RELEASE-NAME-event-junkie-in-flight-req@kubernetescrd,NAMESPACE-RELEASE-NAME-event-junkie-rate-limit@kubernetescrd
 
-  # With all three off the annotation must be absent rather than empty.
+  # With every middleware off the annotation must be absent rather than empty.
   - it: omits the annotation entirely when no middleware applies
     set:
       database.host: "10.0.1.2"
@@ -206,11 +209,83 @@ tests:
       ingress.noindex: false
       ingress.securityHeaders.enabled: false
       ingress.rateLimit.enabled: false
+      ingress.httpsRedirect: false
     templates:
       - ingress.yaml
     asserts:
       - notExists:
           path: metadata.annotations["traefik.ingress.kubernetes.io/router.middlewares"]
+
+  # --- plain HTTP to HTTPS (#1891) ---------------------------------------------------------------
+  # Per Ingress and not global, so cert-manager's HTTP-01 solver still answers on port 80. First in the
+  # list, so a plain-HTTP request gets its 301 before any other middleware runs.
+  - it: redirects plain HTTP to HTTPS with a permanent redirect when TLS is on
+    set:
+      database.host: "10.0.1.2"
+      networkPolicy.databaseCidr: "10.0.1.2/32"
+      database.existingSecret: "events-db"
+      ingress.tls.enabled: true
+    templates:
+      - https-redirect-middleware.yaml
+    asserts:
+      - hasDocuments:
+          count: 1
+      - equal:
+          path: metadata.name
+          value: RELEASE-NAME-event-junkie-https-redirect
+      - equal:
+          path: spec.redirectScheme
+          value:
+            scheme: https
+            permanent: true
+
+  - it: puts the HTTPS redirect first in the ingress middleware list
+    set:
+      database.host: "10.0.1.2"
+      networkPolicy.databaseCidr: "10.0.1.2/32"
+      database.existingSecret: "events-db"
+      ingress.tls.enabled: true
+    templates:
+      - ingress.yaml
+    asserts:
+      - matchRegex:
+          path: metadata.annotations["traefik.ingress.kubernetes.io/router.middlewares"]
+          pattern: "^NAMESPACE-RELEASE-NAME-event-junkie-https-redirect@kubernetescrd,"
+
+  # k3d serves plain HTTP, and the DAST and e2e runs reach it that way. A redirect there would send them to
+  # a port nothing listens on.
+  - it: renders neither half of the HTTPS redirect without TLS, as k3d has it
+    values:
+      - ../values-k3d.yaml
+    templates:
+      - https-redirect-middleware.yaml
+      - ingress.yaml
+    asserts:
+      - hasDocuments:
+          count: 0
+        template: https-redirect-middleware.yaml
+      - notMatchRegex:
+          path: metadata.annotations["traefik.ingress.kubernetes.io/router.middlewares"]
+          pattern: "https-redirect"
+        template: ingress.yaml
+
+  - it: renders neither half of the HTTPS redirect when it is turned off
+    set:
+      database.host: "10.0.1.2"
+      networkPolicy.databaseCidr: "10.0.1.2/32"
+      database.existingSecret: "events-db"
+      ingress.httpsRedirect: false
+    templates:
+      - https-redirect-middleware.yaml
+      - ingress.yaml
+    asserts:
+      - hasDocuments:
+          count: 0
+        template: https-redirect-middleware.yaml
+      - notMatchRegex:
+          path: metadata.annotations["traefik.ingress.kubernetes.io/router.middlewares"]
+          pattern: "https-redirect"
+        template: ingress.yaml
 
   # --- the rate limit, which is two limits and therefore two objects ---------------------------
   # `inFlightReq` bounds concurrency by request host; `rateLimit` groups by client address, which the

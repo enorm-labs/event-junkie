@@ -31,6 +31,10 @@ metadata:
        is not pinned to HTTPS, only `event-junkie.de` is. Pinning a host we merely redirect from
        would be a long-lived promise about a name we do not serve. */}}
     {{- $middlewares := list }}
+    {{- /* First, so plain HTTP gets its 301 before any other middleware runs. On HTTPS it is a no-op. */}}
+    {{- if and .Values.ingress.tls.enabled .Values.ingress.httpsRedirect }}
+    {{- $middlewares = append $middlewares (printf "%s-%s-https-redirect@kubernetescrd" .Release.Namespace (include "event-junkie.fullname" $)) }}
+    {{- end }}
     {{- if .Values.ingress.securityHeaders.enabled }}
     {{- $middlewares = append $middlewares (printf "%s-%s-security-headers@kubernetescrd" .Release.Namespace (include "event-junkie.fullname" $)) }}
     {{- end }}
