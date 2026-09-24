@@ -45,7 +45,7 @@ class FrannzWebsiteImporterTest {
         runTest {
             val result = importer.importEvents(sourceUrl)
             result.shouldBeInstanceOf<ImportResult.Success>()
-            result.events shouldHaveSize 89
+            result.events shouldHaveSize 100
         }
 
     @Test
