@@ -10,6 +10,7 @@ import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.parseEventStatus
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.resolveUrl
+import de.norm.events.scraper.stripArtistPrefix
 import de.norm.events.scraper.stripArtistSuffix
 import de.norm.events.scraper.supamolly.SupamollyOverviewPageScraper.Companion.PROGRAMME_POSTER_TITLE
 import de.norm.events.scraper.textAt
@@ -144,7 +145,7 @@ class SupamollyOverviewPageScraper {
      */
     private fun buildArtists(actNames: List<String>): List<ScrapedArtist> =
         actNames
-            .map { stripArtistSuffix(it.replaceFirst(LEADING_CONJUNCTION, "")) }
+            .map { stripArtistSuffix(stripArtistPrefix(it.replaceFirst(LEADING_CONJUNCTION, ""))) }
             .filter { it.isNotBlank() && !isNonArtistName(it) && !isScheduleNote(it) }
             .distinct()
             .mapIndexed { index, name ->

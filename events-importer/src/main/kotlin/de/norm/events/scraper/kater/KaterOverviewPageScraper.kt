@@ -230,16 +230,20 @@ class KaterOverviewPageScraper(
         /** A `by <presenter>` tail on a floor name, dropped so the same floor groups across nights. */
         val FLOOR_PRESENTER_SUFFIX = Regex("""\s+by\s+.*$""", RegexOption.IGNORE_CASE)
 
-        /** A floor-block line that opens with a plus is a programme note, never an act. */
-        val NOTE_LINE = Regex("""^\+\s""")
+        /**
+         * A floor-block line that opens with a plus is a programme note, never an act, and one that
+         * opens with `by` is a floor credit that wrapped onto its own line (`by Kater`, #1843).
+         */
+        val NOTE_LINE = Regex("""^\+\s|^by\s+\S""", RegexOption.IGNORE_CASE)
 
         /**
          * `Saturday by Muting The Noise`, `Sunday by 257`: a weekday and the collective hosting that
          * night's floor. The host is a booking, never a billed act, and the weekday anchors the rule
-         * so a line like `Nina by Night` is untouched.
+         * so a line like `Nina by Night` is untouched. A bare `Saturday night` heads a floor the
+         * same way (#1843).
          */
         val WEEKDAY_HEADING =
-            Regex("""^(?:mon|tues|wednes|thurs|fri|satur|sun)day\s+by\s+\S""", RegexOption.IGNORE_CASE)
+            Regex("""^(?:mon|tues|wednes|thurs|fri|satur|sun)day(?:\s+by\s+\S|(?:\s+night)?\s*$)""", RegexOption.IGNORE_CASE)
 
         /** A bracketed performance-format marker appended to an act ("Vovolectr0 [LIVE]"). */
         val FORMAT_MARKER = Regex("""\s*\[[^\]]*]\s*$""")

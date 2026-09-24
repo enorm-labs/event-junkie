@@ -71,6 +71,7 @@ private val PLACEHOLDER_NAMES =
 private val MORE_TO_COME_PATTERN =
     Regex(
         """^(?:[+&]|and|und)\s*(?:many\s+|viele\s+)?(?:more|mehr)(?:\s+(?:tba|tbc|tbd))?\.*$""" +
+            """|^line[\s-]?up(?:\s+(?:tba|tbc|tbd))?\.*$""" +
             """|^(?:more|mehr)\s+(?:tba|tbc|tbd)\.*$""" +
             """|^(?:many|viele)\s+(?:more|mehr)\.*$""",
         RegexOption.IGNORE_CASE
@@ -139,13 +140,15 @@ fun isEventSegmentLabel(name: String): Boolean {
  * leading "<n> Jahre/Years …" anniversary ("36 Jahre Schokoladen - Hoffest"). The
  * `fest`/`festival` markers are word-anchored with any trailing content, so "Infest",
  * "Manifest" and "Sommerfest" stay safe. The anniversary marker is anchored to the title start,
- * so an "… - 30 Jahre" tour tail (already trimmed by [stripArtistSuffix]) never matches.
+ * so an "… - 30 Jahre" tour tail (already trimmed by [stripArtistSuffix]) never matches. An
+ * organiser credit is no act either: `Eine Veranstaltung des …`, `In Kooperation mit …` (#1843).
  */
 private val NON_ARTIST_EVENT_PATTERN =
     Regex(
         """.*\bfest\b.*|.*\bfestival\b.*|.*\bfestivalticket\b.*""" +
             """|.*\bhoffest\b.*""" +
-            """|\d+\.?\s+(?:jahre|jahr|years?)\b.*""",
+            """|\d+\.?\s+(?:jahre|jahr|years?)\b.*""" +
+            """|(?:eine\s+veranstaltung|in\s+kooperation\s+mit|in\s+zusammenarbeit\s+mit)\b.*""",
         RegexOption.IGNORE_CASE
     )
 
@@ -185,7 +188,7 @@ fun isScoreConcertTitle(title: String): Boolean = SCORE_CONCERT_PATTERN.contains
  * because its head is shouted too (#1533), and from #1580 the act's own backing (`Lacrimosa mit
  * Orchester`), which the conjunction split keeps attached, and a dash tail ending in `!`, which
  * is billing prose. A `: <night> 2027` tail is the year-ended tour rule again with a colon
- * (#305), and a `— more TBA` tail is a line-up placeholder glued to the last act (#1564). A show
+ * (#305), and a `— more TBA` or bare `tba` tail is a placeholder glued to the act (#1564, #1843). A show
  * note in brackets (`(Zusatzshow)`, `(Vinyl)`) is a format too (#1761).
  *
  * From #1841: a compound tour word after a dash (`Die Abschiedstour`), an anniversary without a
@@ -211,6 +214,7 @@ private val ARTIST_SUFFIX_PATTERN =
             """|(?:\s*[-–—]\s*|\s+(?:[&+]|and|und)\s+)(?:many\s+|viele\s+)?(?:more|mehr)\b(?:\s+(?:tba|tbc|tbd))?\.*$""" +
             """|\s+(?:many|viele)\s+(?:more|mehr)\b(?:\s+(?:tba|tbc|tbd))?\.*$""" +
             """|\s+(?:more|mehr)\s+(?:tba|tbc|tbd)\.*$""" +
+            """|(?<=\S)(?<!\bmore)(?<!\bmehr)\s+(?:(?:w/|with|feat\.?|[+&])\s*)?(?:tba|tbc|tbd)\.*$""" +
             """|\s+[-–—]\s*release\s?show\s*$""" +
             """|\s+(?:hybrid\s+)?live(?:\s+(?:set|band))?(?:\s*&\s*dj[\s-]?set)?(?:\s+in\s+\S.*|\s+(?:19|20)\d{2})?$""" +
             """|\s*\((?:dj[\s-]?set|(?:hybrid\s+)?live(?:\s+(?:set|band))?|hybrid|acoustic|akustik|unplugged|solo|konzert|concert""" +
@@ -599,9 +603,10 @@ private fun isDenylistedNonArtist(name: String): Boolean =
 /**
  * A bare "DJ set" format label, optionally with a `/ <origin>` tail (`DJ-Set`, `DJ Set`, `DJ-Set
  * / Berlin`), which a Madame Claude detail heading pushes into a performer slot. Anchored, so
- * `DJ Koze` and any `DJ <handle>` are untouched.
+ * `DJ Koze` and any `DJ <handle>` are untouched. A set-length note is the same kind of label:
+ * Tresor bills `All night long` in a performer slot (#1843).
  */
-private val DJ_SET_LABEL_PATTERN = Regex("""dj[\s-]?set(?:\s*/.*)?""", RegexOption.IGNORE_CASE)
+private val DJ_SET_LABEL_PATTERN = Regex("""dj[\s-]?set(?:\s*/.*)?|all\s+night\s+long|open\s+to\s+close""", RegexOption.IGNORE_CASE)
 
 /**
  * Whether [name] is a bare `DJ set` label ([DJ_SET_LABEL_PATTERN]); anchored, so `DJ Koze` /
@@ -610,13 +615,15 @@ private val DJ_SET_LABEL_PATTERN = Regex("""dj[\s-]?set(?:\s*/.*)?""", RegexOpti
 fun isDjSetFormatLabel(name: String): Boolean = DJ_SET_LABEL_PATTERN.matches(name.trim().replace(WHITESPACE, " "))
 
 /**
- * An unannounced-guest slot: a bare "Guest(s)"/"Gäste", optionally with a leading "+" and a
- * format ("Guest DJs", Club der Visionäre's spelling); Wild at Heart lists "+ Guest". A
+ * An unannounced-guest slot: a bare "Guest(s)"/"Gäste", optionally with a leading "+", a
+ * `secret`/`surprise` (Aeden, #1843) and a format ("Guest DJs", Club der Visionäre's spelling);
+ * Wild at Heart lists "+ Guest". A
  * placeholder, mirroring the [CONJUNCTION_TAIL_COLLECTIVES] that keep "X & Guests" one act.
  * Anchored, so "Special Guest DJ Foo" is untouched; kept to the guest forms, since a standalone
  * "Friends"/"Band" is a plausible act name.
  */
-private val GUEST_SLOT_PATTERN = Regex("""\+?\s*(?:guests?|gäste|gaeste)(?:\s+djs?)?""", RegexOption.IGNORE_CASE)
+private val GUEST_SLOT_PATTERN =
+    Regex("""\+?\s*(?:(?:secret|surprise|mystery)\s+)?(?:guests?|gäste|gaeste)(?:\s+djs?)?""", RegexOption.IGNORE_CASE)
 
 /**
  * Whether [name] is a bare guest slot ("+ Guest", "Guests", "Gäste", "Guest DJs");
@@ -1160,7 +1167,7 @@ private val SUPPORT_ROLE_PREFIX =
 
 /**
  * A leading role or event-format label in front of the billed act (`Support:`, `Opener:`,
- * `Record Release:`, `Listening Session:`), which must not become part of the name
+ * `Record Release:`, `Listening Session:`, `Live:`), which must not become part of the name
  * (Admiralspalast stored `Support: A.A. Williams`, Loge `Record Release: Pair`, Tresor
  * `Listening Session: Drexciya - Neptune's Lair`). The colon is required, unlike
  * [ROLE_LABEL_PREFIX]: against an arbitrary title, `Support Lesbiens` and `Session Victim`
@@ -1169,7 +1176,7 @@ private val SUPPORT_ROLE_PREFIX =
 private val ARTIST_LABEL_PREFIX =
     Regex(
         """^(?:div\.?\s*supports?|special\s+guests?|supports?(?:\s+acts?)?|openers?|opening\s+acts?""" +
-            """|listening\s+session|record\s+release|record\s+launch|album\s+release|release\s+show)\s*:\s*""",
+            """|listening\s+session|record\s+release|record\s+launch|album\s+release|release\s+show|live)\s*:\s*""",
         RegexOption.IGNORE_CASE
     )
 

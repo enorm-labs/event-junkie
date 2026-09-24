@@ -84,6 +84,32 @@ class KaterOverviewPageScraperTest {
             )
     }
 
+    // Production billed `Saturday night`, `by Kater` and `by Fridas Pier` as DJs (#1843).
+    @Test
+    fun `reads a bare weekday heading and a wrapped floor credit as no act`() {
+        val html =
+            """
+            <article class="post-1 event type-event" id="event-1">
+                <header class="entry-header"><h2 class="toggle-article">
+                    <span class="date-header">09.10.</span><span class="date-title">FOREVER 25</span>
+                </h2></header>
+                <div class="entry-summary">
+                    <p>Fr. 09.10 23:00 — So. 11.10 12:00</p>
+                    <p>__________________<br/>
+                        HOPPER<br/>
+                        by Fridas Pier</p>
+                    <p>Nümphe<br/>
+                        Saturday night<br/>
+                        Adri Tüde</p>
+                </div>
+            </article>
+            """.trimIndent()
+
+        val artists = scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl).single().artists
+
+        artists.map { it.name } shouldContainExactly listOf("Nümphe", "Adri Tüde")
+    }
+
     @Test
     fun `strips the presenter suffix so a floor groups across nights`() {
         // The rule reads "ACID BOGEN by Wabi-Sabi & Flirt Records" on this night and plain
