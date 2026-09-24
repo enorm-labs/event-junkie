@@ -21,7 +21,6 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.r2dbc.core.await
 import org.springframework.r2dbc.core.awaitSingle
 import org.testcontainers.containers.MinIOContainer
-import org.testcontainers.utility.DockerImageName
 import software.amazon.awssdk.services.s3.model.CreateBucketRequest
 import java.awt.image.BufferedImage
 import java.io.ByteArrayOutputStream
@@ -40,7 +39,7 @@ class ImageCacheServiceIntegrationTest : BaseControllerTest() {
     private lateinit var repository: CachedImageRepository
 
     private val servers = mutableListOf<MockWebServer>()
-    private val minio = MinIOContainer(DockerImageName.parse("quay.io/minio/minio:RELEASE.2025-09-07T16-13-09Z").asCompatibleSubstituteFor("minio/minio"))
+    private val minio = MinIOContainer(MINIO_TEST_IMAGE)
     private var minioStarted = false
 
     @AfterEach
