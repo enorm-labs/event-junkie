@@ -87,7 +87,7 @@ Every group gets one verdict. Work through them in this order, because each is c
 | otel-operator `TLS handshake error … bad certificate`, a burst when it restarts             | Stops within the minute of the restart. Likely the webhook serving a new cert before its CA lands     |
 | `RobotsTxtFilter` `Blocked by robots.txt`, one line per URL                                 | The importer obeying a venue. `ej-robots-disallowed` watches the rate                                 |
 | `MusicBrainz unavailable … answered 503`, a few a day                                       | MusicBrainz rate-limits by IP. The lookup retries on the next import                                  |
-| `AnthropicTranslationEngine` `Rejected a translation`, a few a day                          | The guard doing its job. `ej-translations-failing` watches the rate                                   |
+| `AnthropicTranslationEngine` `Rejected a translation`, a few a day                          | The guard doing its job. Counted as `rejected`; `ej-translations-failing` reads only `failed`         |
 | `EventUpsertService` `Skipping duplicate event`, scraper `names no date, skipping`          | Ordinary import decisions, logged so a missing event can be explained                                 |
 
 A signal that the table covers **at a rate far above normal** is not noise. Say so, with both numbers.

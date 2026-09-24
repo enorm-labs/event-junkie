@@ -5,7 +5,6 @@ import ch.qos.logback.classic.Logger
 import ch.qos.logback.classic.spi.ILoggingEvent
 import ch.qos.logback.core.read.ListAppender
 import de.norm.events.event.DescriptionLanguage
-import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry
@@ -47,7 +46,7 @@ class AnthropicTranslationEngineTest {
         runTest {
             server.enqueue(textResponse(ENGLISH))
 
-            engine().translate(request()) shouldBe ENGLISH
+            engine().translate(request()) shouldBe TranslationResult.Translated(ENGLISH)
 
             val recorded = server.takeRequest()
             recorded.headers["x-api-key"] shouldBe "test-key"
@@ -65,7 +64,7 @@ class AnthropicTranslationEngineTest {
         runTest {
             server.enqueue(textResponse("A party."))
 
-            engine().translate(request()).shouldBeNull()
+            engine().translate(request()) shouldBe TranslationResult.Rejected
         }
 
     @Test
@@ -74,7 +73,7 @@ class AnthropicTranslationEngineTest {
         runTest {
             server.enqueue(textResponse(ENGLISH.replace("Klunkerkranich", "Clinking Crane")))
 
-            engine().translate(request()).shouldBeNull()
+            engine().translate(request()) shouldBe TranslationResult.Rejected
         }
 
     // Found on the first real run against the API. The protected terms are the whole bill, and a
@@ -94,7 +93,7 @@ class AnthropicTranslationEngineTest {
                     protectedTerms = listOf("Klunkerkranich", "Elsa Shelelé", "A Venue Nobody Mentioned")
                 )
 
-            engine().translate(request) shouldBe ENGLISH
+            engine().translate(request) shouldBe TranslationResult.Translated(ENGLISH)
         }
 
     // Five of the nine descriptions production refused every night named an act with `’` (#1823).
@@ -112,7 +111,8 @@ class AnthropicTranslationEngineTest {
                     protectedTerms = listOf("D’Artagnan")
                 )
 
-            engine().translate(request) shouldBe "Tonight D'Artagnan plays the Klunkerkranich, with a view over the roofs of Neukölln."
+            engine().translate(request) shouldBe
+                TranslationResult.Translated("Tonight D'Artagnan plays the Klunkerkranich, with a view over the roofs of Neukölln.")
         }
 
     @Test
@@ -122,7 +122,7 @@ class AnthropicTranslationEngineTest {
             val answer = ENGLISH.replace("Shelelé", "Shelele")
             server.enqueue(textResponse(answer))
 
-            engine().translate(request()) shouldBe answer
+            engine().translate(request()) shouldBe TranslationResult.Translated(answer)
         }
 
     @Test
@@ -132,7 +132,7 @@ class AnthropicTranslationEngineTest {
             val answer = ENGLISH.replace("Elsa Shelelé", "Elsa\nShelelé")
             server.enqueue(textResponse(answer))
 
-            engine().translate(request()) shouldBe answer
+            engine().translate(request()) shouldBe TranslationResult.Translated(answer)
         }
 
     // The count alone could not say whether a refusal was a kept name in another form or a real loss.
@@ -146,7 +146,7 @@ class AnthropicTranslationEngineTest {
             try {
                 server.enqueue(textResponse(ENGLISH.replace("Klunkerkranich", "Clinking Crane")))
 
-                engine().translate(request()).shouldBeNull()
+                engine().translate(request()) shouldBe TranslationResult.Rejected
 
                 appender.list.single { it.level == Level.WARN }.formattedMessage shouldBe
                     "Rejected a translation because it lost 1 protected name(s): 'Klunkerkranich'"
@@ -164,11 +164,11 @@ class AnthropicTranslationEngineTest {
         runTest {
             server.enqueue(messageResponse(""""type":"text","text":""""", "refusal"))
 
-            engine().translate(request()).shouldBeNull()
+            engine().translate(request()) shouldBe TranslationResult.Rejected
         }
 
     @Test
-    @DisplayName("an error from the API is an ordinary null, not a thrown import failure")
+    @DisplayName("an error from the API is a failed result, not a thrown import failure")
     fun `swallows an api error`() =
         runTest {
             server.enqueue(
@@ -179,7 +179,7 @@ class AnthropicTranslationEngineTest {
                     .build()
             )
 
-            engine().translate(request()).shouldBeNull()
+            engine().translate(request()) shouldBe TranslationResult.Failed
         }
 
     // The engine is selected by configuration and the key by environment, so the two can disagree.
@@ -187,7 +187,7 @@ class AnthropicTranslationEngineTest {
     @DisplayName("no API key means no request at all")
     fun `sends nothing without a key`() =
         runTest {
-            engine(apiKey = "").translate(request()).shouldBeNull()
+            engine(apiKey = "").translate(request()) shouldBe TranslationResult.Failed
 
             server.requestCount shouldBe 0
         }

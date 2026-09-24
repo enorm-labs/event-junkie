@@ -20,12 +20,25 @@ interface TranslationEngine {
     val enabled: Boolean get() = true
 
     /**
-     * Translates [request], or returns null when it cannot.
+     * Translates [request], or says why no text came back.
      *
-     * Null is an ordinary outcome, not an error: an engine that is switched off returns it for
-     * everything. The caller logs and moves on, leaving the columns as they were.
+     * Every result is an ordinary outcome, not an error. The caller counts it and moves on, and only
+     * [TranslationResult.Translated] changes the columns.
      */
-    suspend fun translate(request: TranslationRequest): String?
+    suspend fun translate(request: TranslationRequest): TranslationResult
+}
+
+/** What one translation attempt produced. The alert tells [Rejected] and [Failed] apart (#1822). */
+sealed interface TranslationResult {
+    data class Translated(
+        val text: String
+    ) : TranslationResult
+
+    /** The engine answered and the answer was not kept: its own checks refused it, or the model declined. */
+    data object Rejected : TranslationResult
+
+    /** No answer came back: the call failed, or the engine cannot call at all. */
+    data object Failed : TranslationResult
 }
 
 /**

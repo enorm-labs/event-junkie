@@ -1,7 +1,6 @@
 package de.norm.events.translation
 
 import de.norm.events.event.DescriptionLanguage
-import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.DisplayName
@@ -18,7 +17,7 @@ class NoTranslationEngineTest {
 
     @Test
     @DisplayName("it translates nothing")
-    fun `returns null`() =
+    fun `fails without calling anything`() =
         runTest {
             engine
                 .translate(
@@ -27,7 +26,7 @@ class NoTranslationEngineTest {
                         from = DescriptionLanguage.GERMAN,
                         to = DescriptionLanguage.ENGLISH
                     )
-                ).shouldBeNull()
+                ) shouldBe TranslationResult.Failed
         }
 
     // The id reaches `description_alt_engine`, so it has to say which engine produced a text.
