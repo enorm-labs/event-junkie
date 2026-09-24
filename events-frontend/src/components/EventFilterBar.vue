@@ -66,6 +66,14 @@ const genres = useGenres()
 const venues = useAllVenues()
 
 /**
+ * A native select is as wide as its longest option, and the venue list arrives after the first
+ * paint. On a phone the grown select would wrap its row and drop the page (#1830). Two equal
+ * columns there make every width the viewport's; from `sm` up the rows have the room.
+ */
+const SELECT_ROW_CLASS = 'grid w-full grid-cols-2 gap-3 sm:flex sm:w-auto sm:flex-wrap'
+const SELECT_CLASS = 'w-full min-w-0 truncate sm:w-auto'
+
+/**
  * The family the bar shows as chosen: the URL's, or, for a link from before families existed
  * carrying only `genre=`, the family of that style.
  */
@@ -78,7 +86,7 @@ const activeFamily = computed(() => {
 
 /**
  * The styles inside the chosen family, the second level of the genre filter (#363). Empty when
- * no family is chosen, which hides the select; a tag without a family is offered nowhere.
+ * no family is chosen; a tag without a family is offered nowhere.
  */
 const stylesInFamily = computed(() => {
   if (!activeFamily.value) return []
@@ -173,9 +181,10 @@ const { t } = useI18n()
       venue names the type select used to trail the date row. "Free only" is the price axis at
       zero, so it stays with the price range.
     -->
-    <div class="flex flex-wrap gap-3">
+    <div :class="SELECT_ROW_CLASS">
       <BaseSelect
         :aria-label="t('events.filters.byType')"
+        :class="SELECT_CLASS"
         :model-value="queryString('eventType')"
         @change="applyFilters({ eventType: ($event.target as HTMLSelectElement).value })"
       >
@@ -193,6 +202,7 @@ const { t } = useI18n()
       -->
       <BaseSelect
         :aria-label="t('events.filters.byGenre')"
+        :class="SELECT_CLASS"
         :model-value="activeFamily"
         @change="applyFamily(($event.target as HTMLSelectElement).value)"
       >
@@ -202,9 +212,11 @@ const { t } = useI18n()
         </option>
       </BaseSelect>
 
+      <!-- Shown once the URL names a family, not once its styles load, so it cannot appear late. -->
       <BaseSelect
-        v-if="stylesInFamily.length"
+        v-if="activeFamily"
         :aria-label="t('events.filters.bySubgenre')"
+        :class="[SELECT_CLASS, 'col-span-2']"
         :model-value="queryString('genre')"
         @change="applyFilters({ genre: ($event.target as HTMLSelectElement).value })"
       >
@@ -215,9 +227,10 @@ const { t } = useI18n()
       </BaseSelect>
     </div>
 
-    <div class="flex flex-wrap gap-3">
+    <div :class="SELECT_ROW_CLASS">
       <BaseSelect
         :aria-label="t('events.filters.byVenue')"
+        :class="SELECT_CLASS"
         :model-value="queryString('venue')"
         @change="applyFilters({ venue: ($event.target as HTMLSelectElement).value })"
       >
@@ -229,6 +242,7 @@ const { t } = useI18n()
 
       <BaseSelect
         :aria-label="t('events.filters.byDistrict')"
+        :class="SELECT_CLASS"
         :model-value="queryString('district')"
         @change="applyFilters({ district: ($event.target as HTMLSelectElement).value })"
       >

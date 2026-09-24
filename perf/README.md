@@ -149,7 +149,7 @@ What the numbers say, and what was done with each:
     | `/de/events/<slug>` | mobile  | 0.79       | 0         |
     | `/de/events/<slug>` | desktop | 0.34       | 0         |
 
-    What is left on the list is the filter bar wrapping once its options arrive. The LCP poster is eager with `fetchpriority=high` on both pages. The LCP
+    The first production run after the release read 0.07 on list mobile: the filter bar wrapped once its venue list arrived, which #1830 fixed. The LCP poster is eager with `fetchpriority=high` on both pages. The LCP
     times did not move: the request still cannot start before the JavaScript has fetched the event.
 
 - **JSON was not compressed.** `uses-text-compression` listed only `/api/**` URLs: 41 KiB on the list page that gzip makes 9 KiB. The BFF gzips since #1206.
