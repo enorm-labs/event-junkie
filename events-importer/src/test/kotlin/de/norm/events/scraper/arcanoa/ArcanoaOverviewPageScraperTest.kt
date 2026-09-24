@@ -102,6 +102,16 @@ class ArcanoaOverviewPageScraperTest {
         }
 
         @Test
+        fun `types the venue's format nights as other, not concert`() {
+            val events = scraper.scrape(programme(), baseUrl)
+
+            // Monday open stage, Tuesday jam, Wednesday freie Bühne session.
+            listOf(LocalDate.of(2026, 8, 3), LocalDate.of(2026, 8, 4), LocalDate.of(2026, 8, 5)).forEach { date ->
+                events.single { it.eventDate == date }.eventType shouldBe EventType.OTHER.name
+            }
+        }
+
+        @Test
         fun `titles a labelled programme line by its label, not the whole blurb`() {
             val event = scraper.scrape(programme(), baseUrl).single { it.eventDate == LocalDate.of(2026, 8, 4) }
 
@@ -249,6 +259,35 @@ class ArcanoaOverviewPageScraperTest {
             event.eventType shouldBe EventType.PARTY.name
             // A party's title names the night, not a performer.
             event.artists.shouldHaveSize(0)
+        }
+
+        @Test
+        fun `types the Monday open stage as other and mints no artist`() {
+            val events =
+                scraper.scrape(fragment("Mo 05.10.Live: ARCANOA- Open Stage - SingerSongwriter/Poets mit Moderation"), baseUrl)
+
+            val event = events.single()
+            event.title shouldBe "ARCANOA - Open Stage"
+            event.eventType shouldBe EventType.OTHER.name
+            event.artists.shouldHaveSize(0)
+        }
+
+        @Test
+        fun `types a jam session as other`() {
+            val events = scraper.scrape(fragment("Di 06.10.Live: JamSession - offen für alle"), baseUrl)
+
+            val event = events.single()
+            event.eventType shouldBe EventType.OTHER.name
+            event.artists.shouldHaveSize(0)
+        }
+
+        @Test
+        fun `keeps a billed act a concert beside an open stage`() {
+            val events = scraper.scrape(fragment("Sa 03.10.Live: Some Band + open stage - IndieRock"), baseUrl)
+
+            val event = events.single()
+            event.eventType shouldBe EventType.CONCERT.name
+            event.artists.map { it.name } shouldContainExactly listOf("Some Band")
         }
 
         @Test
