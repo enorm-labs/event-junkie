@@ -1,6 +1,8 @@
 import { type MaybeRefOrGetter, ref, toValue, watchEffect } from 'vue'
 
+import { DEFAULT_LOCALE, isLocale } from '@/i18n/locales'
 import { HOME_TITLE, type PageMeta } from '@/lib/pageMeta'
+import { siteDescription } from '@/lib/staticPages'
 
 /**
  * Writes the current page's title, description and image into the document head. What the tags
@@ -21,7 +23,7 @@ export const pageTitle = ref(HOME_TITLE)
  */
 const SITE_DEFAULTS = new Map<string, string>()
 
-/** Tags this module owns. `og:image`/`twitter:image` are absent from `index.html` by design. */
+/** Tags this module owns. */
 const DESCRIPTION_SELECTORS = [
   'meta[name="description"]',
   'meta[property="og:description"]',
@@ -62,25 +64,33 @@ export function applyPageMeta(meta: PageMeta): void {
   pageTitle.value = meta.title
   document.title = meta.title
   for (const selector of TITLE_SELECTORS) setMeta(selector, meta.title)
-  for (const selector of DESCRIPTION_SELECTORS) setMeta(selector, meta.description)
+  // The site description in the page's own locale, from the catalogue as the injector writes it, so
+  // a language switch inside the app does not keep the first page's (#1911).
+  const lang = document.documentElement.lang
+  const description = meta.description ?? siteDescription(isLocale(lang) ? lang : DEFAULT_LOCALE)
+  for (const selector of DESCRIPTION_SELECTORS) setMeta(selector, description)
 
-  // Images are created and removed rather than reset: `index.html` carries no site-level image, and
-  // an event poster left on the imprint is an outright wrong preview.
+  // A page without an image falls back to the site card, never to the last page's: an event poster
+  // left on the imprint is an outright wrong preview, and no image at all is a bare text link.
+  // Created when missing, because a shell without a site image would leave nothing to update.
   for (const [attribute, name] of IMAGE_TAGS) {
     const selector = `meta[${attribute}="${name}"]`
+    // Remembered before anything is written, or a first page with a poster becomes the default.
+    const fallback = rememberDefault(selector)
+    const content = meta.image ?? fallback
     const existing = document.head.querySelector<HTMLMetaElement>(selector)
 
-    if (!meta.image) {
+    if (!content) {
       existing?.remove()
       continue
     }
     if (existing) {
-      existing.content = meta.image
+      existing.content = content
       continue
     }
     const element = document.createElement('meta')
     element.setAttribute(attribute, name)
-    element.content = meta.image
+    element.content = content
     document.head.append(element)
   }
 }

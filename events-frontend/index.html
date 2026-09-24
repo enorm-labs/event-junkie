@@ -15,18 +15,19 @@
       Site-level meta and social-share tags. The SPA rewrites them per view after boot
       (usePageMeta), which reaches JS-executing crawlers. For the four detail route families the
       meta-injection sidecar rewrites them in the served HTML too (injector/rewrite.ts, ADR-014),
-      which is what a scraper that runs no JavaScript reads. Every other route serves these
-      values as they stand.
+      which is what a scraper that runs no JavaScript reads. It does the same for the static pages,
+      from the message catalogue. The description here is `pageDescription.home` in English, and
+      `lib/__tests__/staticPages.spec.ts` holds the two together.
     -->
     <meta
-      content="Concerts, club nights, festivals and more across Berlin venues. Find your next event with Event Junkie."
+      content="Concerts, club nights, festivals and more across Berlin's venues: one feed of what's on tonight and this week."
       name="description"
     />
     <meta content="website" property="og:type" />
     <meta content="Event Junkie" property="og:site_name" />
     <meta content="Event Junkie — Can't get enough of Berlin" property="og:title" />
     <meta
-      content="Concerts, club nights, festivals and more across Berlin venues. Find your next event with Event Junkie."
+      content="Concerts, club nights, festivals and more across Berlin's venues: one feed of what's on tonight and this week."
       property="og:description"
     />
     <!--
@@ -43,7 +44,7 @@
     <meta content="https://event-junkie.de/og-image.png" name="twitter:image" />
     <meta content="Event Junkie — Can't get enough of Berlin" name="twitter:title" />
     <meta
-      content="Concerts, club nights, festivals and more across Berlin venues. Find your next event with Event Junkie."
+      content="Concerts, club nights, festivals and more across Berlin's venues: one feed of what's on tonight and this week."
       name="twitter:description"
     />
     <script>

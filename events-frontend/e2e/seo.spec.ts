@@ -229,7 +229,7 @@ test('the same event describes itself in German under /de', async ({ page }) => 
 
 test('leaves no description or image behind when the view changes', async ({ page }) => {
   // The failure this prevents: the imprint describing itself as the club night you just looked at,
-  // with the event poster still attached.
+  // with the event poster still attached. The imprint has no image, so it gets the site card (#1911).
   await page.route(`**/api/events/${EVENT_SLUG}`, (route) =>
     route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(EVENT) }),
   )
@@ -241,7 +241,7 @@ test('leaves no description or image behind when the view changes', async ({ pag
   await expect(page.getByRole('heading', { level: 1, name: 'Imprint' })).toBeVisible()
 
   expect(await meta(page, 'meta[name="description"]')).toContain('§ 5 DDG')
-  await expect(page.locator('head meta[property="og:image"]')).toHaveCount(0)
+  expect(await meta(page, 'meta[property="og:image"]')).toBe('https://event-junkie.de/og-image.png')
 })
 
 test('every static page carries its own description', async ({ page }) => {

@@ -9,9 +9,10 @@ import { absoluteImageUrl } from '@/lib/seo'
  *
  * Used twice: the client writes these tags after boot, and the meta injector (ADR-014 §Decision 3)
  * writes the same tags server-side for scrapers that do not run JavaScript; both read from here
- * so a shared link previews as what it opens as. Hence descriptions are composed from data and
- * punctuation, never prose, because the injector runs where there is no message catalogue; and
- * canonical URLs are absent, `canonicalUrl()` in `lib/seo.ts` being the one source.
+ * so a shared link previews as what it opens as. Hence a detail page's description is composed from
+ * data and punctuation, never prose; a static page's prose comes from the catalogue, through
+ * `lib/staticPages.ts`. Canonical URLs are absent, `canonicalUrl()` in `lib/seo.ts` being the one
+ * source.
  */
 
 /** Brand name shown in the browser tab, appended to every interior view's title. */
@@ -121,10 +122,7 @@ export function promoterPageMeta(promoter: PromoterDetail, locale: Locale): Page
   }
 }
 
-/**
- * A static page, the one case whose description is prose, from the message catalogue: these
- * routes are out of the injector's scope (ADR-014 §Decision 2), which makes the catalogue safe.
- */
+/** A static page, the one case whose description is prose, from the message catalogue. */
 export function staticPageMeta(title: string | null, description?: string | null): PageMeta {
   return { title: formatTitle(title), description: truncateOrUndefined(description) }
 }
