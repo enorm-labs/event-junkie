@@ -76,14 +76,21 @@ class AnthropicTranslationEngine(
         }
     }
 
-    override suspend fun translate(request: TranslationRequest): String? {
-        if (properties.apiKey.isEmpty()) return null
-        val translated =
-            runCatching { call(request) }.getOrElse { error ->
+    override suspend fun translate(request: TranslationRequest): TranslationResult {
+        if (properties.apiKey.isEmpty()) return TranslationResult.Failed
+        return runCatching { call(request) }.fold(
+            onSuccess = { translated ->
+                if (translated != null && isPlausible(request, translated)) {
+                    TranslationResult.Translated(translated)
+                } else {
+                    TranslationResult.Rejected
+                }
+            },
+            onFailure = { error ->
                 logger.warn(error) { "Translation ${request.from.code}->${request.to.code} failed" }
-                null
+                TranslationResult.Failed
             }
-        return translated?.takeIf { isPlausible(request, it) }
+        )
     }
 
     /**

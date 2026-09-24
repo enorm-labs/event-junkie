@@ -1,5 +1,6 @@
 package de.norm.events.scraper
 
+import de.norm.events.translation.TranslationResult
 import io.micrometer.core.instrument.MeterRegistry
 import io.micrometer.core.instrument.Tags
 import io.micrometer.core.instrument.Timer
@@ -164,12 +165,17 @@ class ImporterMetrics(
     }
 
     /**
-     * Counts one attempt to translate a description, and whether a text came back. A refused,
-     * failed or implausible translation is an ordinary outcome, so a grant that produces nothing is
-     * visible as a ratio rather than as silence (ADR-026).
+     * Counts one attempt to translate a description as `written`, `rejected` or `failed`. A rejection
+     * is the engine's own checks at work. `ej-translations-failing` reads the share of `failed` (#1822).
      */
-    fun recordTranslation(written: Boolean) {
-        registry.counter(TRANSLATIONS, TAG_OUTCOME, if (written) "written" else "skipped").increment()
+    fun recordTranslation(result: TranslationResult) {
+        val outcome =
+            when (result) {
+                is TranslationResult.Translated -> "written"
+                TranslationResult.Rejected -> "rejected"
+                TranslationResult.Failed -> "failed"
+            }
+        registry.counter(TRANSLATIONS, TAG_OUTCOME, outcome).increment()
     }
 
     /**

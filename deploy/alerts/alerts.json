@@ -186,14 +186,14 @@
     "stream_name": "importer_translations_total",
     "is_real_time": false,
     "enabled": true,
-    "description": "More than ten descriptions failed to translate in six hours. The engine fails open, so the page shows German to an English reader and nothing else says a word. An exhausted credit balance, a rejected key and a model outage all land here. Counts skips rather than comparing them to successes, because the failure series does not exist until the first failure and an empty side would make the rule silent when everything is failing.",
+    "description": "More than half of the translation attempts in 24 hours failed, over at least five attempts. The engine fails open, so the page shows German to an English reader and nothing else says a word. An exhausted credit balance, a rejected key and a model outage all land here. A translation the engine's own checks refused is not a failure.",
     "query_condition": {
       "type": "promql",
-      "promql": "sum(increase(importer_translations_total{outcome=\"skipped\"}[6h]))",
+      "promql": "sum(increase(importer_translations_total{outcome=\"failed\"}[24h])) / (sum(increase(importer_translations_total[24h])) >= 5)",
       "promql_condition": {
         "column": "value",
         "operator": ">",
-        "value": 10
+        "value": 0.5
       }
     },
     "trigger_condition": {

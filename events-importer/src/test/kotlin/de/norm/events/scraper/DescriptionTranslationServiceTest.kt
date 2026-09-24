@@ -12,6 +12,7 @@ import de.norm.events.licence.SourceLicences
 import de.norm.events.translation.TranslationEngine
 import de.norm.events.translation.TranslationProperties
 import de.norm.events.translation.TranslationRequest
+import de.norm.events.translation.TranslationResult
 import de.norm.events.venue.VenueEntity
 import de.norm.events.venue.VenueRepository
 import io.kotest.assertions.throwables.shouldThrow
@@ -83,7 +84,7 @@ class DescriptionTranslationServiceTest {
     fun `translates a permitted source`(): Unit =
         runBlocking {
             givenOneCandidate(event(description = GERMAN_TEXT, language = "de"))
-            coEvery { engine.translate(any()) } returns "An evening with a view."
+            coEvery { engine.translate(any()) } returns TranslationResult.Translated("An evening with a view.")
             every { engine.id } returns "test:engine"
 
             service.translateFor(source(), VENUE_NAME, licences(SourceLicence.PERMITTED)) shouldBe 1
@@ -107,7 +108,7 @@ class DescriptionTranslationServiceTest {
             val seen = AtomicReference<String?>()
             coEvery { engine.translate(any()) } answers {
                 seen.set(MDC.get(LogFields.EVENT_ID))
-                null
+                TranslationResult.Rejected
             }
 
             service.translateFor(source(), VENUE_NAME, licences(SourceLicence.PERMITTED))
@@ -122,7 +123,7 @@ class DescriptionTranslationServiceTest {
     fun `protects the names on the bill`(): Unit =
         runBlocking {
             givenOneCandidate(event(description = GERMAN_TEXT, language = "de"))
-            coEvery { engine.translate(any()) } returns "An evening with a view."
+            coEvery { engine.translate(any()) } returns TranslationResult.Translated("An evening with a view.")
             every { engine.id } returns "test:engine"
 
             service.translateFor(source(), VENUE_NAME, licences(SourceLicence.PERMITTED))
@@ -136,20 +137,37 @@ class DescriptionTranslationServiceTest {
 
     // An engine that declines is an ordinary outcome. The row keeps what it had.
     @Test
-    @DisplayName("an engine that returns nothing writes nothing")
-    fun `writes nothing when the engine declines`(): Unit =
+    @DisplayName("a rejected translation writes nothing and counts as rejected")
+    fun `writes nothing when the engine rejects`(): Unit =
         runBlocking {
             givenOneCandidate(event(description = GERMAN_TEXT, language = "de"))
-            coEvery { engine.translate(any()) } returns null
-            every { engine.id } returns "none"
+            coEvery { engine.translate(any()) } returns TranslationResult.Rejected
+            every { engine.id } returns "test:engine"
 
             service.translateFor(source(), VENUE_NAME, licences(SourceLicence.PERMITTED)) shouldBe 0
 
             coVerify(exactly = 0) { eventRepository.save(any()) }
-            translations("skipped") shouldBe 1.0
+            translations("rejected") shouldBe 1.0
+            translations("failed") shouldBe 0.0
         }
 
-    // Staging runs with the engine off. Counted as `skipped`, every candidate fired
+    // ej-translations-failing reads the share of `failed`, so a refusal must not land there (#1822).
+    @Test
+    @DisplayName("a failed call writes nothing and counts as failed")
+    fun `counts a failed call as failed`(): Unit =
+        runBlocking {
+            givenOneCandidate(event(description = GERMAN_TEXT, language = "de"))
+            coEvery { engine.translate(any()) } returns TranslationResult.Failed
+            every { engine.id } returns "test:engine"
+
+            service.translateFor(source(), VENUE_NAME, licences(SourceLicence.PERMITTED)) shouldBe 0
+
+            coVerify(exactly = 0) { eventRepository.save(any()) }
+            translations("failed") shouldBe 1.0
+            translations("rejected") shouldBe 0.0
+        }
+
+    // Staging runs with the engine off. Counted as a failure, every candidate fired
     // ej-translations-failing, the alert for an engine that fails (#1810).
     @Test
     @DisplayName("a switched-off engine is not asked and counts nothing")
@@ -196,7 +214,7 @@ class DescriptionTranslationServiceTest {
                     descriptionAltSourceHash = DescriptionLanguage.hash("something the venue has since replaced")
                 )
             )
-            coEvery { engine.translate(any()) } returns "A different evening."
+            coEvery { engine.translate(any()) } returns TranslationResult.Translated("A different evening.")
             every { engine.id } returns "test:engine"
 
             service.translateFor(source(), VENUE_NAME, licences(SourceLicence.PERMITTED)) shouldBe 1
@@ -226,7 +244,7 @@ class DescriptionTranslationServiceTest {
         runBlocking {
             givenSource(SourceLicence.PERMITTED)
             givenOneCandidate(event(description = GERMAN_TEXT, language = "de"))
-            coEvery { engine.translate(any()) } returns "An evening with a view."
+            coEvery { engine.translate(any()) } returns TranslationResult.Translated("An evening with a view.")
             every { engine.id } returns "test:engine"
 
             val result = service.translateOnDemand("klunkerkranich", eventSlug = null)

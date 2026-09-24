@@ -332,33 +332,31 @@ rule(
     silence_minutes=24 * 60,
 )
 
-# The engine fails open (#1301): `AnthropicTranslationEngine.translate` catches
-# everything, logs a warning and returns null, so the event keeps its German text
-# and the English page shows German. Nothing crashes, which is why nothing tells
-# anybody. An exhausted credit balance looks exactly like a healthy quiet night.
+# The engine fails open (#1301): a failed call is logged and the event keeps its
+# German text, so the English page shows German. An exhausted credit balance
+# looks exactly like a healthy quiet night.
 #
-# **NO DATA here is the healthy state**, for `ej-robots-disallowed`'s reason: a
-# counter that never incremented is absent from the exposition. Production today
-# exports `outcome="written"` alone — measured, 69 of them, no `skipped` series.
+# **Only `failed` counts.** `rejected` is the engine's own plausibility guard and
+# runs at a steady fifth of requests, so a rule over it measures the guard, not
+# the engine (#1822).
 #
-# **A ratio of skipped to written was the obvious shape and is the wrong one.**
-# Its `written` side empties exactly when everything is failing, and a binary
-# operation with an empty side yields an empty result rather than the other
-# side's value. Trap 4 below. The rule would go silent when it matters most.
-#
-# Ten in six hours clears the occasional refusal or timeout and sits far under a
-# failing night: production allows 250 translations a run, and `max-retries: 2`
-# makes each failure three requests.
+# **A share, not a count.** A forced re-import of the catalogue produces a burst
+# of failures that is no fault, and an engine failing every request at the
+# nightly ~50 never reaches a count threshold. Both sides are unlabelled sums, so
+# no series matching is involved: when everything fails the denominator is the
+# `failed` series itself and the share is 1. **NO DATA is the healthy state**:
+# `failed` is absent from the exposition until the first failure, and the
+# `>= 5` filter leaves a thin day with no result rather than a noisy ratio.
 rule(
     "ej-translations-failing",
-    "More than ten descriptions failed to translate in six hours. The engine fails open, so "
-    "the page shows German to an English reader and nothing else says a word. An exhausted "
-    "credit balance, a rejected key and a model outage all land here. Counts skips rather "
-    "than comparing them to successes, because the failure series does not exist until the "
-    "first failure and an empty side would make the rule silent when everything is failing.",
-    'sum(increase(importer_translations_total{outcome="skipped"}[6h]))',
+    "More than half of the translation attempts in 24 hours failed, over at least five "
+    "attempts. The engine fails open, so the page shows German to an English reader and "
+    "nothing else says a word. An exhausted credit balance, a rejected key and a model "
+    "outage all land here. A translation the engine's own checks refused is not a failure.",
+    'sum(increase(importer_translations_total{outcome="failed"}[24h])) '
+    "/ (sum(increase(importer_translations_total[24h])) >= 5)",
     ">",
-    10,
+    0.5,
     stream_name="importer_translations_total",
     period_minutes=15,
     frequency_minutes=30,

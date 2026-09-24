@@ -9,6 +9,7 @@ import de.norm.events.licence.SourceLicences
 import de.norm.events.translation.TranslationEngine
 import de.norm.events.translation.TranslationProperties
 import de.norm.events.translation.TranslationRequest
+import de.norm.events.translation.TranslationResult
 import de.norm.events.venue.VenueRepository
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.flow.toList
@@ -121,15 +122,15 @@ class DescriptionTranslationService(
             )
         // The engine's lines — a failed call, a refusal, a rejected result — name the event through
         // the context, so the engine stays ignorant of what it translates.
-        val translated =
+        val result =
             withContext(LogContext.forEvent(requireNotNull(event.id) { "A translation candidate is a stored row" })) {
                 engine.translate(request)
             }
-        metrics.recordTranslation(translated != null)
-        translated?.let {
+        metrics.recordTranslation(result)
+        (result as? TranslationResult.Translated)?.let {
             eventRepository.save(
                 event.copy(
-                    descriptionAlt = it,
+                    descriptionAlt = it.text,
                     descriptionAltLanguage = to.code,
                     descriptionAltOrigin = MACHINE_ORIGIN,
                     descriptionAltEngine = engine.id,
@@ -137,7 +138,7 @@ class DescriptionTranslationService(
                 )
             )
         }
-        return translated != null
+        return result is TranslationResult.Translated
     }
 
     /** The venue and the acts on this bill. The words a translation is most likely to damage. */
