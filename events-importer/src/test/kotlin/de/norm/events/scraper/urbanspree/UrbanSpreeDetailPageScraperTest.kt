@@ -38,6 +38,27 @@ class UrbanSpreeDetailPageScraperTest {
             baseUrl
         )
 
+    private val klubnachtUrl = "https://www.urbanspree.com/program/concerts/urban-spree-klubnacht-005.html"
+
+    @Test
+    fun `scrape resolves a club night's 23-59 placeholder and bills its DJ sets`() {
+        val event = scraper.scrape(fixture("urbanspree-detail-klubnacht.html", klubnachtUrl), klubnachtUrl).shouldNotBeNull()
+
+        event.eventDate shouldBe LocalDate.of(2026, 9, 25)
+        event.startTime shouldBe LocalTime.of(21, 0)
+        event.eventType shouldBe EventType.PARTY.name
+        event.artists.map { it.name to it.role } shouldContainExactly
+            listOf("Albert Kraft" to "DJ", "Key Clef" to "DJ", "Daraio" to "DJ")
+    }
+
+    @Test
+    fun `scrape keeps 23-59 when the description's stamp names another date`() {
+        val document = fixture("urbanspree-detail-klubnacht.html", klubnachtUrl)
+        document.selectFirst(".rte.tv-content p:contains(25.09.26)")!!.text("26.09.26 21:00 — LATE")
+
+        scraper.scrape(document, klubnachtUrl).shouldNotBeNull().startTime shouldBe LocalTime.of(23, 59)
+    }
+
     private fun scrapeConcert() = scraper.scrape(fixture("urbanspree-detail-concert.html", concertUrl), concertUrl)
 
     @Test

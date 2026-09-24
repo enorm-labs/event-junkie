@@ -1,6 +1,7 @@
 package de.norm.events.scraper.urbanspree
 
 import de.norm.events.event.EventStatus
+import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
@@ -169,7 +170,54 @@ class UrbanSpreeWebsiteImporterTest {
             coVerify(exactly = 1) { htmlFetcher.fetchDocument("$queryEntryUrl&page=2") }
         }
 
+    private fun lateCard(href: String) =
+        Jsoup.parse(
+            """<html><head><base href="https://www.urbanspree.com/"></head><body><div id="pdopage">
+            <a class="card" href="$href" data-dateStart="2026-09-25 23:59:00">
+            <div class="card-text cat">Concerts</div><div class="card-text title">Urban Spree KLUBNACHT 005</div></a>
+            </div></body></html>""",
+            entryUrl
+        )
+
+    @Test
+    fun `importEvents replaces the card's 23-59 placeholder with the start the detail page resolves`() =
+        runTest {
+            coEvery { htmlFetcher.fetchDocument(entryUrl) } returns lateCard("program/concerts/urban-spree-klubnacht-005.html")
+            coEvery { htmlFetcher.fetchDocument(page2Url) } returns emptyListing(page2Url)
+            coEvery { htmlFetcher.fetchDocument(KLUBNACHT_URL) } returns fixture("urbanspree-detail-klubnacht.html", KLUBNACHT_URL)
+
+            val event =
+                importer
+                    .importEvents(entryUrl)
+                    .shouldBeInstanceOf<ImportResult.Success>()
+                    .events
+                    .single()
+
+            event.startTime shouldBe LocalTime.of(21, 0)
+            event.eventType shouldBe EventType.PARTY.name
+        }
+
+    @Test
+    fun `importEvents keeps the card's 23-59 when the detail page states no other start`() =
+        runTest {
+            coEvery { htmlFetcher.fetchDocument(entryUrl) } returns lateCard("program/concerts/urban-spree-klubnacht-005.html")
+            coEvery { htmlFetcher.fetchDocument(page2Url) } returns emptyListing(page2Url)
+            val detail = fixture("urbanspree-detail-klubnacht.html", KLUBNACHT_URL)
+            detail.select(".rte.tv-content p").remove()
+            coEvery { htmlFetcher.fetchDocument(KLUBNACHT_URL) } returns detail
+
+            val event =
+                importer
+                    .importEvents(entryUrl)
+                    .shouldBeInstanceOf<ImportResult.Success>()
+                    .events
+                    .single()
+
+            event.startTime shouldBe LocalTime.of(23, 59)
+        }
+
     private companion object {
+        private const val KLUBNACHT_URL = "https://www.urbanspree.com/program/concerts/urban-spree-klubnacht-005.html"
         private const val TWIN_NOIR_URL = "https://www.urbanspree.com/program/concerts/twin-noir-hinfort-urban-spree,-berlin.html"
         private const val SOM_URL = "https://www.urbanspree.com/program/concerts/som-berlin-urban-spree.html"
 
