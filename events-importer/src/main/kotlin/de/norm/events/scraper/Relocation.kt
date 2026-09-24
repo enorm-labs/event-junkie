@@ -61,15 +61,19 @@ fun resolveRelocation(
     }
 }
 
-/** Any spelling of the relocation itself, German or English. */
-private val RELOCATION_WORD = Regex("""\b(?:hoch)?verlegt\b|\bverlegung\b|\breloc|\bmoved\b""", RegexOption.IGNORE_CASE)
+/**
+ * Any spelling of the relocation itself, German or English. "verlegt" may be glued to the name
+ * before it — Festsaal's "ins Bi Nuuverlegt" (#1683) — but not to "vor", which moves the date.
+ */
+private val RELOCATION_WORD = Regex("""(?<!vor)verlegt\b|\bverlegung\b|\breloc|\bmoved\b""", RegexOption.IGNORE_CASE)
 
 /**
  * A venue name in a note: starts with a letter and runs to punctuation, a dash, a bracket, a
- * quote, an asterisk, a line break, the relocation word or the next preposition.
+ * quote, an asterisk, a line break, the relocation word or the next preposition. The relocation
+ * word needs no boundary in front, so the lazy body stops short of a glued "verlegt".
  */
 private const val NAME_BODY =
-    """(\p{L}[^,.!?;:()\[\]–—/*|<>"„“\n]*?)(?=\s*(?:[-–—,.!?;:()\[\]/*|<>"„“\n]|\b(?:hoch)?verlegt\b|\bins\b|\bin\b|\bnach\b|\bvom\b|\bvon\b|\baus\b|\bmoved\b|$))"""
+    """(\p{L}[^,.!?;:()\[\]–—/*|<>"„“\n]*?)(?=\s*(?:[-–—,.!?;:()\[\]/*|<>"„“\n]|(?:hoch)?verlegt\b|\bins\b|\bin\b|\bnach\b|\bvom\b|\bvon\b|\baus\b|\bmoved\b|$))"""
 
 /** The destination, named with a contracted or articled preposition: "ins Metropol", "in den Privatclub", "nach Kreuzberg", "to Hole 44". */
 private val RELOCATION_TO =

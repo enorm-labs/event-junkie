@@ -274,6 +274,18 @@ class EventFieldMappingTest {
     }
 
     @Test
+    fun `parseRelocation ends a name at a verlegt glued to it, spaced or not`() {
+        val glued = parseRelocation("Das Mr. P-Square Konzert am 22.09.2026 in Berlin wird vom Festsaal Kreuzberg ins Bi Nuuverlegt.")
+        glued shouldBe Relocation(from = "Festsaal Kreuzberg", to = "Bi Nuu")
+        resolveRelocation("RELOCATED", glued, "festsaal-kreuzberg") shouldBe ("RELOCATED" to "Bi Nuu")
+        parseRelocation("Das Mr. P-Square Konzert am 22.09.2026 in Berlin wird vom Festsaal Kreuzberg ins Bi Nuu verlegt.") shouldBe
+            Relocation(from = "Festsaal Kreuzberg", to = "Bi Nuu")
+        parseRelocation("Die Show wird vom Bi Nuu in den Festsaal Kreuzberg verlegt") shouldBe Relocation(from = "Bi Nuu", to = "Festsaal Kreuzberg")
+        parseRelocation("Die Show wird ins Columbia Theater hochverlegt") shouldBe Relocation(from = null, to = "Columbia Theater")
+        parseRelocation("Das Konzert im Bi Nuu wird um eine Stunde vorverlegt").shouldBeNull()
+    }
+
+    @Test
     fun `resolveRelocation makes the row at the house the show left the origin, and the other one a plain event`() {
         val move = Relocation(from = "Huxleys", to = "Hole44")
         resolveRelocation("RELOCATED", move, "huxleys-neue-welt") shouldBe ("RELOCATED" to "Hole44")
