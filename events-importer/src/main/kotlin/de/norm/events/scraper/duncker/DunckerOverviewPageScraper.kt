@@ -1,10 +1,13 @@
 package de.norm.events.scraper.duncker
 
 import de.norm.events.event.EventType
+import de.norm.events.genretag.isGenreLabel
+import de.norm.events.genretag.normalizeGenre
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.attrAt
+import de.norm.events.scraper.endOn
 import de.norm.events.scraper.inferYearForWeekday
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.parseGermanWeekdayAbbreviation
@@ -29,6 +32,10 @@ import java.time.MonthDay
  * name in `<span class="eventname">`, a free-text genre/style line, the flyer `<img>`, a
  * Facebook-event link, and the resident DJ(s). A few leading rows are pure flyer banners (no
  * date, no `eventname`) and are skipped.
+ *
+ * The time cell ("22h-04h") is the night's opening hours, not doors: start and end, the end on
+ * the next day. A single DJ may carry a set name after a colon ("DJ Hanzel: Efetto Notte"); two
+ * DJs are joined with `&`, never a colon, so the colon tail is cut as the set name.
  *
  * Every night is a DJ dance party, so all events are [EventType.PARTY]. Dates render as German
  * `DD.MM.` with **no year**, but the row carries a German two-letter weekday (Mo–So); the year
@@ -91,16 +98,19 @@ class DunckerOverviewPageScraper(
 
         val fbEventUrl = cell.select("a[href]").map { it.attr("href") }.firstOrNull { it.contains(FB_EVENT_PATH) }
         val fbEventId = fbEventUrl?.let { FB_EVENT_ID_PATTERN.find(it)?.groupValues?.get(1) }
+        val styleLine = parseStyleLine(cell)
+        val (startTime, endTime) = parseOpeningHours(row)
 
         return ScrapedEvent(
             title = title,
-            // The free-text style line ("Rock, Indie, Alternative, Punk") is display prose, not a
-            // normalizable genre — kept as a subtitle so it never seeds bogus genre tags.
-            subtitle = parseSubtitle(cell),
+            subtitle = styleLine,
+            genre = parseGenre(styleLine),
             // Every listing is a resident DJ dance night.
             eventType = EventType.PARTY.name,
             eventDate = eventDate,
-            doorsTime = parseDoorsTime(row),
+            startTime = startTime,
+            endDate = endTime?.let { endOn(eventDate, startTime, it) },
+            endTime = endTime,
             imageUrl = parseImageUrl(cell, baseUrl),
             // No per-event pages on this single-page site — the programme page is the source.
             sourceUrl = baseUrl,
@@ -129,15 +139,27 @@ class DunckerOverviewPageScraper(
 
     /**
      * The free-text style/genre line: everything in the event cell that is not the name span, a
-     * link, or the flyer image.
+     * link, the flyer image or a bare DJ line (a commented-out Facebook link leaves "DJ Boris" as text).
      */
-    private fun parseSubtitle(cell: Element): String? =
+    private fun parseStyleLine(cell: Element): String? =
         cell
             .clone()
-            .also { it.select("span.eventname, a, img").remove() }
-            .text()
+            .also { clone ->
+                clone.select("span.eventname, a, img").remove()
+                clone.textNodes().filter { DJ_PATTERN.containsMatchIn(it.text().trim()) }.forEach { it.remove() }
+            }.text()
             .trim()
             .takeIf { it.isNotBlank() }
+
+    /**
+     * The known genres in the style line. The line is sometimes prose ("80s Party & Die Ärzte"),
+     * and the normalizer keeps an unknown short token as a new genre, so only [isGenreLabel] ones pass.
+     */
+    private fun parseGenre(styleLine: String?): String? =
+        normalizeGenre(styleLine)
+            .filter(::isGenreLabel)
+            .joinToString(", ")
+            .ifBlank { null }
 
     /**
      * The row's German `DD.MM.` date, year from the two-letter weekday cell (Mo–So) via
@@ -158,16 +180,17 @@ class DunckerOverviewPageScraper(
         return inferYearForWeekday(monthDay, weekday, clock)
     }
 
-    /** Doors time from the "21h-05h" range cell — the opening hour, on the hour. */
-    private fun parseDoorsTime(row: Element): LocalTime? {
-        val hour =
+    /** Opening and closing hour from the "22h-04h" range cell; either is `null` when absent. */
+    private fun parseOpeningHours(row: Element): Pair<LocalTime?, LocalTime?> {
+        val hours =
             TIME_PATTERN
-                .find(row.textAt("td.tabletime") ?: return null)
-                ?.groupValues
-                ?.get(1)
-                ?.toIntOrNull()
-        return hour?.let { runCatching { LocalTime.of(it, 0) }.getOrNull() }
+                .findAll(row.textAt("td.tabletime").orEmpty())
+                .map { hourOf(it.groupValues[1]) }
+                .toList()
+        return hours.getOrNull(0) to hours.getOrNull(1)
     }
+
+    private fun hourOf(digits: String): LocalTime? = runCatching { LocalTime.of(digits.toInt(), 0) }.getOrNull()
 
     /** The flyer image, resolved to an absolute URL against [baseUrl]. */
     private fun parseImageUrl(
@@ -181,13 +204,15 @@ class DunckerOverviewPageScraper(
     /**
      * Resident DJ(s) for the night, role [DJ][ScrapedArtist]. Names appear as the text of a link
      * (a profile, or inside the Facebook-event link) or as a trailing text node, always prefixed
-     * with "DJ"/"Djs". The label is stripped and multi-DJ lines ("Djs Neue K & Lichene") split.
+     * with "DJ"/"Djs". The label and a set-name tail ("DJ Hanzel: Efetto Notte") are stripped,
+     * and multi-DJ lines ("Djs Neue K & Lichene") split.
      */
     private fun parseDjs(cell: Element): List<ScrapedArtist> {
         val candidates = cell.select("a").map { it.text() } + cell.textNodes().map { it.text() }
         return candidates
             .map { it.trim() }
             .mapNotNull { DJ_PATTERN.find(it)?.groupValues?.get(1) }
+            .map { it.substringBefore(SET_NAME_SEPARATOR).trim() }
             .flatMap { splitSupportActs(it) }
             .filterNot { isNonArtistName(it) }
             .distinct()
@@ -212,8 +237,11 @@ class DunckerOverviewPageScraper(
         /** Day and month from a "DD.MM." date cell. */
         private val DATE_PATTERN = Regex("""(\d{1,2})\.(\d{1,2})\.""")
 
-        /** The opening hour from a "21h-05h" time range. */
+        /** Each hour of a "21h-05h" time range. */
         private val TIME_PATTERN = Regex("""(\d{1,2})h""")
+
+        /** Separates a DJ's name from the set name that may follow it. */
+        private const val SET_NAME_SEPARATOR = ":"
 
         /** A "DJ"/"Djs" label followed by the act name(s), captured to end of line. */
         private val DJ_PATTERN = Regex("""^djs?\b\.?\s+(.+)$""", RegexOption.IGNORE_CASE)

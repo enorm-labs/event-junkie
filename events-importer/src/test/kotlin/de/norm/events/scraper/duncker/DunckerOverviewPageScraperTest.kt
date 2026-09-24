@@ -42,8 +42,8 @@ class DunckerOverviewPageScraperTest {
 
     @Test
     fun `parses every dated programme row and skips the flyer banner rows`() {
-        // 13 dated events; the three leading flyer-banner rows (no date, no event name) are skipped.
-        events shouldHaveSize 13
+        // 15 dated events; the three leading flyer-banner rows (no date, no event name) are skipped.
+        events shouldHaveSize 15
     }
 
     @Test
@@ -56,7 +56,11 @@ class DunckerOverviewPageScraperTest {
         event.eventType shouldBe EventType.PARTY.name
         // "Fr 03.07." with no year → 2026 (3 July falls on a Friday nearest today).
         event.eventDate shouldBe LocalDate.of(2026, 7, 3)
-        event.doorsTime shouldBe LocalTime.of(21, 0)
+        // "21h-05h" is the night's opening hours, not doors.
+        event.doorsTime shouldBe null
+        event.startTime shouldBe LocalTime.of(21, 0)
+        event.endDate shouldBe LocalDate.of(2026, 7, 4)
+        event.endTime shouldBe LocalTime.of(5, 0)
         event.imageUrl shouldBe "https://www.dunckerclub.de/bilder/2026-07-03.jpg"
         // No per-event pages on this single-page site.
         event.sourceUrl shouldBe baseUrl
@@ -80,6 +84,22 @@ class DunckerOverviewPageScraperTest {
                 ScrapedArtist(name = "Neue K", role = "DJ"),
                 ScrapedArtist(name = "Lichene", role = "DJ")
             )
+        event.genre shouldBe "EBM, Post-Punk"
+    }
+
+    @Test
+    fun `reads genre, opening hours and the DJ from a set-named Dark Mønday row`() {
+        // Dark Mønday | darkwave, ebm, postpunk & industrial | DJ Hanzel: Efetto Notte | 22h-04h
+        val event = events.first { it.eventDate == LocalDate.of(2026, 9, 21) }
+
+        event.title shouldBe "Dark Mønday"
+        event.genre shouldBe "Darkwave, EBM, Post-Punk, Industrial"
+        event.doorsTime shouldBe null
+        event.startTime shouldBe LocalTime.of(22, 0)
+        event.endDate shouldBe LocalDate.of(2026, 9, 22)
+        event.endTime shouldBe LocalTime.of(4, 0)
+        // "Efetto Notte" is the set name, not a second DJ.
+        event.artists shouldContainExactly listOf(ScrapedArtist(name = "Hanzel", role = "DJ"))
     }
 
     @Test
@@ -93,6 +113,17 @@ class DunckerOverviewPageScraperTest {
         val independent = events.first { it.eventDate == LocalDate.of(2026, 7, 25) }
         independent.title shouldBe "Independent Tanzmusik"
         independent.artists shouldContainExactly listOf(ScrapedArtist(name = "Spy", role = "DJ"))
+    }
+
+    @Test
+    fun `keeps only known genres from a prose style line`() {
+        val event = events.first { it.eventDate == LocalDate.of(2026, 10, 16) }
+
+        event.subtitle shouldBe "80s Party & Die Ärzte"
+        // The band name stays in the subtitle and never becomes a genre tag.
+        event.genre shouldBe "80s"
+        // The Facebook link is commented out, so the DJ is a bare text node.
+        event.artists shouldContainExactly listOf(ScrapedArtist(name = "WhamPee", role = "DJ"))
     }
 
     @Test
