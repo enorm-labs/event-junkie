@@ -38,8 +38,8 @@ const { t } = useI18n()
         Karten, Social-Media-Widgets oder Werbung von Dritten ein und kennt keine Benutzerkonten.
         Nichts von dem, was du hier tust, wird getrackt oder zu einem Profil verarbeitet. Übrig
         bleibt das unvermeidbare Minimum: Ein Webserver protokolliert Anfragen, damit die Seite
-        ausgeliefert und geschützt werden kann, und dein Browser merkt sich, welche Sprache und
-        welche Darstellung du gewählt hast.
+        ausgeliefert und geschützt werden kann, und dein Browser merkt sich, welche Sprache, welches
+        Farbschema und welche Ansicht du gewählt hast.
       </p>
       <p>
         <strong>Auch die Bilder kommen von uns.</strong> Event Junkie lädt sie einmal herunter und
@@ -91,11 +91,12 @@ const { t } = useI18n()
       <p>
         <strong>Speicherdauer:</strong> Logdaten werden <strong>14 Tage</strong> aufbewahrt und
         danach automatisch gelöscht. Zwei unabhängige Mechanismen begrenzen sie, und meist greift
-        der kürzere: Auf dem Server selbst werden Einträge nach Volumen verdrängt. Dort wird eine
-        feste Menge vorgehalten und der jeweils älteste Eintrag überschrieben, sodass eine Zeile oft
-        früher verschwindet. Im Log-Speicher wird unabhängig davon alles gelöscht, was älter als 14
-        Tage ist. Ausgenommen sind Einträge, die wegen eines konkreten Sicherheitsvorfalls länger
-        aufbewahrt werden müssen. Genannt wird hier immer die tatsächlich konfigurierte Frist.
+        der, der früher löscht: Auf dem Server selbst werden Einträge nach Volumen verdrängt. Dort
+        wird eine feste Menge vorgehalten und der jeweils älteste Eintrag überschrieben, sodass eine
+        Zeile oft früher verschwindet. Im Log-Speicher wird unabhängig davon alles gelöscht, was
+        älter als 14 Tage ist. Ausgenommen sind Einträge, die wegen eines konkreten
+        Sicherheitsvorfalls länger aufbewahrt werden müssen. Genannt wird hier immer die tatsächlich
+        konfigurierte Frist.
       </p>
       <p>
         <strong>Sicherungskopien:</strong> Die Datenbank wird gesichert. Diese Sicherungen werden im
@@ -114,8 +115,8 @@ const { t } = useI18n()
     <section>
       <h2>3. Lokale Speicherung auf deinem Gerät</h2>
       <p>
-        Diese Seite setzt <strong>keine Cookies</strong>. Sie speichert genau zwei Werte im lokalen
-        Speicher deines Browsers, und beide halten nur fest, was du selbst eingestellt hast:
+        Diese Seite setzt <strong>keine Cookies</strong>. Sie speichert genau drei Werte im lokalen
+        Speicher deines Browsers, und alle drei halten nur fest, was du selbst eingestellt hast:
       </p>
       <ul>
         <li>
@@ -126,10 +127,15 @@ const { t } = useI18n()
           <code>locale</code> mit dem Wert <code>de</code> oder <code>en</code>, damit du beim
           nächsten Besuch in der zuletzt gewählten Sprache landest
         </li>
+        <li>
+          <code>view</code> mit dem Wert <code>poster</code> oder <code>compact</code>, damit die
+          Veranstaltungsliste so erscheint, wie du sie zuletzt eingestellt hast: mit Bildern oder
+          kompakt
+        </li>
       </ul>
       <p>
         Diese Werte verlassen dein Gerät nicht, werden weder an uns noch an Dritte übermittelt und
-        sind für Dritte nicht auslesbar. Beide sind unbedingt erforderlich, um die von dir
+        sind für Dritte nicht auslesbar. Alle drei sind unbedingt erforderlich, um die von dir
         ausdrücklich gewählte Einstellung bereitzustellen, und bedürfen deshalb nach § 25 Abs. 2 Nr.
         2 TDDDG keiner Einwilligung. Deshalb musst du hier auch kein Banner wegklicken. Du kannst
         sie jederzeit über die Einstellungen deines Browsers löschen.
@@ -144,7 +150,7 @@ const { t } = useI18n()
       <!-- §7.3: Künstlernamen sind personenbezogene Daten, soweit die Künstlerin oder der Künstler
            eine natürliche Person ist. Das zu benennen und einen Weg zur Löschung anzubieten ist die
            wahrscheinlichste Beschwerde, die diese Seite je erreichen wird. -->
-      <h2>4. Veranstaltungs-, Künstler- und Locationdaten</h2>
+      <h2>4. Daten zu Veranstaltungen, Künstler*innen und Locations</h2>
       <p>
         Event Junkie sammelt öffentlich zugängliche Informationen über Veranstaltungen in Berlin von
         den Websites der Locations, Veranstalter und Ticketanbieter und führt sie an einer Stelle
@@ -184,17 +190,17 @@ const { t } = useI18n()
         E-Mail im nächsten Absatz.
       </p>
       <p>
-        <strong>Bilder:</strong> sie stammen aus zwei Quellen. Locations, Veranstalter und
-        Künstler*innen veröffentlichen Bilder, zu einzelnen Veranstaltungen und zu sich selbst.
-        Fotos von Gebäuden der Locations stammen außerdem aus offenen Archiven wie Wikimedia Commons
-        und Flickr, wo Fotograf*innen sie unter einer Lizenz veröffentlicht haben, die das erlaubt.
-        Event Junkie lädt beides herunter und speichert eine Kopie auf eigenen Servern bei Hetzner,
-        statt sie bei jedem Seitenaufruf erneut beim Anbieter anzufragen. Rechtsgrundlage ist Art. 6
-        Abs. 1 lit. f DSGVO. Das berechtigte Interesse ist eine Auslieferung ohne Beteiligung
-        Dritter und eine geringere Last für die Server der Locations. Die Kopie wird gelöscht,
-        sobald die Location aussteigt oder Rechteinhaber*innen das verlangen, und danach nicht
-        erneut geladen. Bei einem Archivfoto sind die Rechteinhaber*innen die Fotograf*innen und
-        nicht die Location. Der Bildnachweis unter dem Foto nennt sie.
+        <strong>Bilder:</strong> Es gibt zwei Quellen. Locations, Veranstalter und Künstler*innen
+        veröffentlichen Bilder, zu einzelnen Veranstaltungen und zu sich selbst. Fotos von Gebäuden
+        der Locations stammen außerdem aus offenen Archiven wie Wikimedia Commons und Flickr, wo
+        Fotograf*innen sie unter einer Lizenz veröffentlicht haben, die das erlaubt. Event Junkie
+        lädt beides herunter und speichert eine Kopie auf eigenen Servern bei Hetzner, statt sie bei
+        jedem Seitenaufruf erneut beim Anbieter anzufragen. Rechtsgrundlage ist Art. 6 Abs. 1 lit. f
+        DSGVO. Das berechtigte Interesse ist eine Auslieferung ohne Beteiligung Dritter und eine
+        geringere Last für die Server der Locations. Die Kopie wird gelöscht, sobald die Location
+        aussteigt oder Rechteinhaber*innen das verlangen, und danach nicht erneut geladen. Bei einem
+        Archivfoto sind die Rechteinhaber*innen die Fotograf*innen und nicht die Location. Der
+        Bildnachweis unter dem Foto nennt sie.
       </p>
       <p>
         <strong>Übersetzungen:</strong> Beschreibungen werden maschinell übersetzt, damit die Seite
@@ -233,7 +239,7 @@ const { t } = useI18n()
       </ul>
       <p>
         <strong>Übermittlung in die USA.</strong> Anthropic verarbeitet diese Texte ausschließlich
-        nach unserer Weisung. Grundlage ist der Data Processing Addendum, der über die Commercial
+        nach unserer Weisung. Grundlage ist das Data Processing Addendum, das über die Commercial
         Terms of Service Bestandteil des Vertrags ist und die Standardvertragsklauseln der
         EU-Kommission einschließt (Art. 46 Abs. 2 lit. c DSGVO). Derselbe Vertrag schließt aus, dass
         die übermittelten Texte zum Training von Modellen verwendet werden.
@@ -242,7 +248,7 @@ const { t } = useI18n()
         Es gibt kein Content-Delivery-Netzwerk, keinen Edge-Anbieter und keinen Proxy vor der Seite.
         Deine Anfrage erreicht unsere Server in Deutschland direkt. An der Auslieferung dieser Seite
         ist damit kein Drittland beteiligt. Die Übersetzung oben ist der einzige Weg, auf dem Daten
-        die EU verlassen, und sie betrifft Veranstaltungstexte statt deines Besuchs.
+        die EU verlassen, und sie betrifft Veranstaltungstexte, nicht deinen Besuch.
       </p>
       <p>
         <strong>Für Bilder gilt das ebenso.</strong> Sie kommen von unseren Servern, weil Event

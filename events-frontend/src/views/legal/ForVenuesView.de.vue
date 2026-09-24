@@ -33,7 +33,7 @@ const localePath = useLocalePath()
       <h2>Kurz gesagt</h2>
       <p>
         Event Junkie sammelt öffentlich angekündigte Veranstaltungen in Berlin und verlinkt jede
-        davon zurück auf eure eigene Seite. Wollt ihr das nicht, schreibt uns eine Mail: wir
+        davon zurück auf eure eigene Seite. Wollt ihr das nicht, schreibt uns eine Mail. Wir
         schalten die Quelle ab und löschen eure Veranstaltungen. Wir fragen nicht nach einem Grund.
       </p>
     </section>
@@ -55,7 +55,9 @@ const localePath = useLocalePath()
     <section>
       <h2>Wie wir lesen</h2>
       <ul>
-        <li>Einmal am Tag, eine Übersichtsseite je Quelle, dazu deren Detailseiten.</li>
+        <li>
+          Einmal am Tag, in der Regel eine Übersichtsseite je Quelle, dazu deren Detailseiten.
+        </li>
         <li>Mit mindestens 200 Millisekunden Abstand zwischen zwei Anfragen an denselben Host.</li>
         <li>
           Mit <code>ETag</code> und <code>Last-Modified</code>, damit eine unveränderte Seite uns
@@ -98,8 +100,8 @@ const localePath = useLocalePath()
       <p>
         Eine Regel in eurer <code>robots.txt</code>, die den Zugriff auf die betreffenden Seiten
         verbietet, wirkt genauso und braucht keine Nachricht an uns. Wir lesen die Datei einmal pro
-        Host und Tag und prüfen jede Anfrage dagegen. Eine verbotene Adresse holen wir nicht: der
-        Lauf schlägt stattdessen fehl.
+        Host und Tag und prüfen jede Anfrage dagegen. Eine verbotene Adresse rufen wir nicht ab.
+        Stattdessen schlägt der Lauf fehl.
       </p>
     </section>
 
@@ -122,9 +124,10 @@ const localePath = useLocalePath()
         aber eine eigene Seite, und für die gilt dasselbe wie für eine Location: Schreibt an
         <a :href="`mailto:${CONTROLLER.email}`">{{ CONTROLLER.email }}</a>
         und nennt den Namen. Wir korrigieren oder entfernen den Namen, den Link zur Website, das
-        Logo oder die Beschreibung, oder wir nehmen die Seite ganz heraus. Die
-        Beschreibungstexte sind unsere eigenen Worte, nicht kopiert. Wir fragen nicht nach einem
-        Grund und antworten innerhalb von sieben Tagen. Die Veranstaltungen selbst bleiben bei
+        Logo oder die Beschreibung, oder wir nehmen die Seite ganz heraus. Die Beschreibungstexte
+        sind unsere eigenen Worte, nicht kopiert, außer bei Bands, Orchestern und Chören: Deren
+        Kurzbeschreibung stammt aus der Wikipedia und ist dort nachgewiesen. Wir fragen nicht nach
+        einem Grund und antworten innerhalb von sieben Tagen. Die Veranstaltungen selbst bleiben bei
         ihrer Location gelistet.
       </p>
     </section>
@@ -133,8 +136,8 @@ const localePath = useLocalePath()
       <h2>Rechte an Texten und Bildern</h2>
       <p>
         Beschreibungen, Bilder und anderes Material von Locations, Veranstaltern und Künstler*innen
-        bleiben Eigentum der jeweiligen Rechteinhaber. Wer Rechte an etwas hält, das hier zu sehen
-        ist, und die Entfernung möchte, findet den Weg im
+        bleiben Eigentum der jeweiligen Rechteinhaber*innen. Wer Rechte an etwas hält, das hier zu
+        sehen ist, und die Entfernung möchte, findet den Weg im
         <RouterLink :to="localePath('/legal/imprint')">Impressum</RouterLink>. Bei einem Bild
         löschen wir dabei auch die Kopie, die auf unseren Servern liegt.
       </p>

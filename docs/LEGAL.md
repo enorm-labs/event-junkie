@@ -153,8 +153,8 @@ both header and footer, `hreflang`, `og:locale` and structured data.
 ### 7.1 What actually applies
 
 A German controller running a public site with no accounts, no analytics, no advertising and no third-party embeds.
-The processing that exists is server logs (Art. 6 (1) (f)), one `localStorage` key for the theme preference and one
-for the locale hint, and publicly announced event data (§7.3).
+The processing that exists is server logs (Art. 6 (1) (f)), three `localStorage` keys for settings the visitor chose,
+and publicly announced event data (§7.3).
 
 ### 7.2 The Art. 13 checklist
 
@@ -338,14 +338,15 @@ state them and both must move with it.**
 
 ### 7.4 Device storage — `localStorage`, not just cookies
 
-The site sets **no cookies**. It stores exactly two keys: **`theme`** (`App.vue`) and **`locale`**
-(`i18n/locales.ts`). § 25 TDDDG covers _storage on terminal equipment_, not cookies specifically. Both items are
-strictly necessary for a setting the visitor chose, so § 25 (2) 2 applies and **no consent banner is required**.
+The site sets **no cookies**. It stores exactly three keys: **`theme`** (`App.vue`), **`locale`**
+(`i18n/locales.ts`) and **`view`** (`composables/useCompactView.ts`). § 25 TDDDG covers _storage on terminal
+equipment_, not cookies specifically. Each item is strictly necessary for a setting the visitor chose, so § 25 (2) 2
+applies and **no consent banner is required**.
 
-**§3 of the notice names both keys, and it said "exactly one" until 2026-09-03.** The site wrote `locale` from the day
-the second language shipped. Nothing caught it. `legalViews.spec.ts` asserts that a required element is _present_, and
-never that a sentence is _true_ — the defect class §7.2 is about. The assertion added with #279 pins both names, so a
-third stored key fails the build rather than a complaint.
+**The notice fell behind the code twice.** It said "exactly one" while the site wrote `locale`, and "exactly two" for
+eleven days after the compact view added `view`. A test that pins names in the notice cannot see a new key in the
+code. `storedKeys.spec.ts` therefore reads every `localStorage.setItem` key from `src/` and requires it in both
+notices, and `legalViews.spec.ts` pins the count the prose states.
 
 That is a property worth defending deliberately. The first non-essential stored item makes a banner mandatory. It is a
 product decision, not an implementation detail, so escalate rather than implement.

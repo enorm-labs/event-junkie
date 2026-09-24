@@ -90,27 +90,34 @@ test('header nav lists the sections in the intended order', async ({ page }) => 
   expect(rendered).toEqual(sections)
 })
 
-test('header nav fits its viewport without overflowing', async ({ page }) => {
-  // On a ~390px screen one row overflowed and pushed the controls off-screen, so the nav wraps
-  // below `sm`; the two mobile projects are what this guards. Scoped to the nav because this runs
-  // without a BFF; the document-level check lives in home-feeds.spec.ts, where real cards exist to
-  // overflow.
-  await page.goto('/about')
+// One row overflowed a ~390px screen, and later the 640–800px band where the nav had already
+// switched to one row, which neither the desktop nor the phone project ever rendered. So the widths
+// in between are set here, in both languages: the German labels are the longer ones. Scoped to the
+// nav because this runs without a BFF; the document-level check lives in home-feeds.spec.ts, where
+// real cards exist to overflow.
+for (const locale of ['en', 'de']) {
+  test(`header nav fits its viewport without overflowing (${locale})`, async ({ page }) => {
+    await page.goto(`/${locale}/about`)
+    const nav = page.getByRole('navigation', { name: locale === 'de' ? 'Hauptnavigation' : 'Main' })
+    await expect(nav).toBeVisible()
 
-  const nav = page.getByRole('navigation', { name: 'Main' })
-  await expect(nav).toBeVisible()
+    for (const width of [390, 640, 720, 800, 900, 1024, 1280]) {
+      await page.setViewportSize({ width, height: 800 })
+      const box = await nav.evaluate((el) => ({ scroll: el.scrollWidth, client: el.clientWidth }))
+      expect(box.scroll, `nav content is wider than the nav at ${width}px`).toBeLessThanOrEqual(
+        box.client,
+      )
 
-  const box = await nav.evaluate((el) => ({ scroll: el.scrollWidth, client: el.clientWidth }))
-  expect(box.scroll, 'nav content is wider than the nav').toBeLessThanOrEqual(box.client)
-
-  // The right-most control must land inside the viewport, not merely inside a clipped nav.
-  const toggle = page.getByRole('button', { name: /switch to (dark|light) mode/i })
-  const toggleBox = await toggle.boundingBox()
-  const viewport = page.viewportSize()
-  expect(toggleBox && viewport && toggleBox.x + toggleBox.width).toBeLessThanOrEqual(
-    viewport!.width,
-  )
-})
+      // The right-most control must land inside the viewport, not merely inside a clipped nav.
+      const toggle = nav.getByRole('button').last()
+      const toggleBox = await toggle.boundingBox()
+      expect(
+        toggleBox!.x + toggleBox!.width,
+        `last control off-screen at ${width}px`,
+      ).toBeLessThanOrEqual(width)
+    }
+  })
+}
 
 test('app shell marks the app as beta and explains what that means', async ({ page }) => {
   await page.goto('/venues')

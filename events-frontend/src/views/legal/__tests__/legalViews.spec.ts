@@ -213,12 +213,12 @@ const PRIVACY_ELEMENTS: Element[] = [
     en: /§ 25 \(2\) 2 TDDDG/,
     de: /§ 25 Abs\. 2 Nr\. 2 TDDDG/,
   },
-  // §3 said "exactly one value" while the site wrote two, `theme` and `locale`; the checklist
-  // above asserts presence, never truth. Naming both keys makes a third one fail here.
+  // The keys themselves are checked against the code in `storedKeys.spec.ts`; this pins the count
+  // the prose states, so a fourth key cannot hide behind "exactly three".
   {
-    what: 'stored keys, both of them by name',
-    en: /\btheme\b[\s\S]*\blocale\b/,
-    de: /\btheme\b[\s\S]*\blocale\b/,
+    what: 'the number of stored values',
+    en: /exactly three values/,
+    de: /genau drei Werte/,
   },
   { what: 'that no cookies are set', en: /no cookies/i, de: /keine Cookies/i },
   {
