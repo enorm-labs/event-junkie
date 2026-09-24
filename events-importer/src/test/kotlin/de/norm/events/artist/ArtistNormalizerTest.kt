@@ -88,6 +88,26 @@ class ArtistNormalizerTest {
         }
     }
 
+    // Production minted `Lsd & The Search for God`, `Sdp & …`, `Ufo 361`, `$Ono$ Cliq` and
+    // `Lexy & K-paul` from shouted billings (#1846).
+    @Test
+    fun `keeps an acronym, a stylised token and each part of a hyphenated name`() {
+        assertSoftly {
+            canonicalArtistName("LSD & The Search for God") shouldBe "LSD & The Search for God"
+            canonicalArtistName("SDP & THE CAPITAL DANCE ORCHESTRA") shouldBe "SDP & The Capital Dance Orchestra"
+            canonicalArtistName("UFO 361") shouldBe "UFO 361"
+            canonicalArtistName("\$ONO\$ CLIQ") shouldBe "\$ONO\$ Cliq"
+            canonicalArtistName("LEXY & K-PAUL") shouldBe "Lexy & K-Paul"
+            canonicalArtistName("K-POP FOREVER!") shouldBe "K-Pop Forever!"
+            canonicalArtistName("KING NO-ONE") shouldBe "King No-One"
+            // Each part meets the acronym list on its own.
+            canonicalArtistName("WILDCARD DJ-SLOT") shouldBe "Wildcard DJ-Slot"
+            canonicalArtistName("RAFA-FX") shouldBe "Rafa-FX"
+            // A digit still keeps the whole token as written.
+            canonicalArtistName("BLINK-182") shouldBe "BLINK-182"
+        }
+    }
+
     @Test
     fun `never strips a word from a band name`() {
         assertSoftly {
