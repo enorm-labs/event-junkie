@@ -354,8 +354,8 @@ destination in the UI.
 
 ### Registering Signal — deferred, and not a Secret
 
-**The Signal route is deferred** ([#877](https://github.com/enorm-labs/event-junkie/issues/877)). A prepaid-SIM registration failed. The route waits for
-`signal-cli` to link to an account registered without a phone number, and the watch list is in #877. The bridge on staging is deployed and unregistered.
+**The Signal route is deferred** ([#1812](https://github.com/enorm-labs/event-junkie/issues/1812)). A prepaid-SIM registration failed. The route waits for
+`signal-cli` to link to an account registered without a phone number, and the watch list is in #1812. The bridge on staging is deployed and unregistered.
 
 `signal-cli`'s registration is **state on a PVC**, not a Kubernetes Secret. It behaves like a hand-made credential in every way that matters. Nothing in this
 repository creates it, no deploy brings it, and **losing it stops alerting silently** (PLATFORM_SETUP §4.1, caveat 3). Write the procedure here when the route

@@ -46,7 +46,7 @@ environments). Both tunnels can be up at once, so the context is the only thing 
 | Bucket keys           | `staging/` (`ZO_S3_BUCKET_PREFIX`)                           | `production/` (`ZO_S3_BUCKET_PREFIX`)                                                                           |
 | S3 credential         | the project keypair, all three buckets                       | its own keypair, rotatable without touching staging                                                             |
 | Alert destinations    | `record-only` into `alert_history`, and `email` to `alerts@` | the same                                                                                                        |
-| Signal bridge         | deployed, unregistered, not a destination                    | **not deployed** — the Signal route is deferred ([#877](https://github.com/enorm-labs/event-junkie/issues/877)) |
+| Signal bridge         | deployed, unregistered, not a destination                    | **not deployed** — the Signal route: deferred ([#1812](https://github.com/enorm-labs/event-junkie/issues/1812)) |
 | `ZO_SKIP_SSRF_CHECKS` | set, for the bridge                                          | **not set** — nothing in-cluster to allow                                                                       |
 | SMTP                  | port 587 to `mail.your-server.de`, `openobserve-smtp` Secret | the same                                                                                                        |
 | Database metrics      | `postgres-exporter` → the k3s node                           | `postgres-exporter` → the dedicated node, `10.0.1.20`                                                           |
@@ -203,7 +203,7 @@ NetworkPolicy** (`deploy/clusters/staging/observability-netpol.yaml`). That poli
 Signal bridge. Nothing else — not the database, not the Kubernetes API. `deploy/alerts/README.md` has the reasoning.
 
 **Production does not set the flag.** It has no bridge to reach. Its only webhook is the loopback `record-only` destination, which needs only
-`ZO_SSRF_ALLOW_LOOPBACK`. The Signal route is deferred ([#877](https://github.com/enorm-labs/event-junkie/issues/877)). When it comes, the bridge, the flag
+`ZO_SSRF_ALLOW_LOOPBACK`. The Signal route is deferred ([#1812](https://github.com/enorm-labs/event-junkie/issues/1812)). When it comes, the bridge, the flag
 and the egress rule arrive together.
 
 **Re-apply after any rebuild**, for the same reason as the dashboard: alerts, destinations and templates are all metadata.
@@ -324,6 +324,6 @@ A healthy system writes into the current hour. Hours that trail off are a backlo
 
 - **An alert mail is not end-to-end encrypted.** It goes over TLS to Hetzner and then to the forward target. The template carries only the alert name, the
   stream, the value and the environment, so the mail holds no personal data. Signal would remove the exposure, and that route is deferred
-  ([#877](https://github.com/enorm-labs/event-junkie/issues/877)).
+  ([#1812](https://github.com/enorm-labs/event-junkie/issues/1812)).
 - **The two instances are copies, not one source.** The rules, one dashboard and two collector filter lists exist twice, kept in step by hand. `--diff`
   catches a cluster that drifts from the repository. Nothing catches the two clusters drifting from each other.

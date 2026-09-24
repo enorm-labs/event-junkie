@@ -119,7 +119,7 @@ Two layers, and the second is not optional: an alerting path that runs on the no
 | <https://healthchecks.io>                          | **The dead-man's switches.** Silence is the alarm, so it survives what it watches            | Live — `walg-staging`, `walg-production`, `site-production`                       |
 | `https://hc-ping.com/<uuid>`                       | The ping endpoint. **Every ping URL is a credential** — see CREDENTIALS.md                   | Live                                                                              |
 | <https://github.com/openobserve/openobserve>       | OpenObserve — logs, metrics, dashboards, alerting. AGPL-3.0, in-cluster, Parquet to `-o2`    | **Deployed on staging.** Operating it: [`ops/OPENOBSERVE.md`](ops/OPENOBSERVE.md) |
-| <https://github.com/bbernhard/signal-cli-rest-api> | The Signal alert bridge — OpenObserve webhook → signal-cli. The deferred alert route         | **Deployed on staging, unregistered** — deferred (#877)                           |
+| <https://github.com/bbernhard/signal-cli-rest-api> | The Signal alert bridge — OpenObserve webhook → signal-cli. The deferred alert route         | **Deployed on staging, unregistered** — deferred (#1812)                          |
 | <https://www.netdata.cloud>                        | Netdata, **self-hosted only** — connecting it to Netdata Cloud would reintroduce a processor | Optional complement                                                               |
 
 ---

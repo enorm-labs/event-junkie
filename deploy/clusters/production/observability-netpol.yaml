@@ -2,7 +2,7 @@
 # Default-deny for the `observability` namespace, plus one named allowance per real conversation
 # (#662). This namespace holds the pod with every log line and metric in the system and a Postgres
 # exporter carrying database credentials. **Two arrows staging has are absent here** (#880): the
-# Signal bridge is not deployed until it has a destination (#877). **The arrows below are the whole of
+# Signal bridge is not deployed until it has a destination (#1812). **The arrows below are the whole of
 # what production allows** — an arrow not written down does not happen, and every one was read off
 # the pinned charts:
 #
@@ -317,7 +317,7 @@ metadata:
   namespace: observability
   annotations:
     kubernetes.io/description: >-
-      Bounds what OpenObserve may connect to. Object storage and SMTP for the e-mail alerts, nothing else — the Signal bridge staging also allows is not deployed here (#877).
+      Bounds what OpenObserve may connect to. Object storage and SMTP for the e-mail alerts, nothing else — the Signal bridge staging also allows is not deployed here (#1812).
 spec:
   podSelector:
     matchLabels:
@@ -363,7 +363,7 @@ spec:
           port: 587
 
     # **No in-cluster destination, deliberately.** Production has no bridge to allow, and an allowance
-    # pointing at a pod that does not exist looks like the route works. The deferred Signal route (#877)
+    # pointing at a pod that does not exist looks like the route works. The deferred Signal route (#1812)
     # adds the bridge, that rule and the `ZO_SKIP_SSRF_CHECKS` flag in one change, or none of them.
 ---
 apiVersion: networking.k8s.io/v1

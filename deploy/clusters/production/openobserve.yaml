@@ -160,7 +160,7 @@ spec:
       # `ZO_SSRF_ALLOW_LOOPBACK` lets the process notify itself and nothing else, `ZO_SKIP_SSRF_CHECKS`
       # removes the check for every destination. **Staging sets both. This sets only the first, and the
       # difference is the Signal bridge** (#880): production has none, because the Signal route is deferred
-      # (#877). Its only webhook is the loopback POST into its own ingest API that turns a firing into a row
+      # (#1812). Its only webhook is the loopback POST into its own ingest API that turns a firing into a row
       # in `alert_history`; the e-mail destination is not a webhook, and the guard does not apply to it. A
       # bridge, this flag and its egress allowance arrive together, or not at all. So production keeps the
       # in-application guard as well as the egress policy. What neither fixes: a destination may still be any *public* address, inherent to

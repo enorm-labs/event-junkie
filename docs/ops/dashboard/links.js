@@ -346,8 +346,8 @@ window.EJ_LINKS = {
           "label": "github.com/bbernhard/signal-cli-rest-api",
           "what": "The Signal alert bridge — OpenObserve webhook → signal-cli. The deferred alert route",
           "whatText": "The Signal alert bridge — OpenObserve webhook → signal-cli. The deferred alert route",
-          "status": "<strong>Deployed on staging, unregistered</strong> — deferred (#877)",
-          "statusText": "Deployed on staging, unregistered — deferred (#877)"
+          "status": "<strong>Deployed on staging, unregistered</strong> — deferred (#1812)",
+          "statusText": "Deployed on staging, unregistered — deferred (#1812)"
         },
         {
           "url": "https://www.netdata.cloud",

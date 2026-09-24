@@ -191,8 +191,8 @@ def rule(
 # is `Recreate` at one replica because two of it would double-write, so a deploy
 # takes it to a real zero for about a minute. Both fixes are the same lesson: a
 # deploy is indistinguishable from an outage at an instant, and separable over a
-# window. Anything added here needs the same treatment before #877 makes a firing
-# wake somebody.
+# window. Anything added here needs the same treatment, because a firing mails a
+# person (#877).
 rule(
     "ej-site-down",
     "One of the application's Deployments has had **zero available replicas for five solid "

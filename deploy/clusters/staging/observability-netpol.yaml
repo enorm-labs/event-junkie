@@ -361,7 +361,7 @@ spec:
           port: 587
 
     # The Signal route, and the only in-cluster destination this pod may reach. Dormant: the bridge has
-    # no number, and the route is deferred (#877).
+    # no number, and the route is deferred (#1812).
     - to:
         - podSelector:
             matchLabels:
