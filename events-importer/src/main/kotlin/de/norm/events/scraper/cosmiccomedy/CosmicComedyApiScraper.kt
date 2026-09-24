@@ -122,6 +122,14 @@ class CosmicComedyApiScraper {
      * rather than the house showcase. Those titles are all `"<Performer> – <Show>"`, so the part
      * before the dash is the act; a special without one yields no artist rather than a guess. The
      * recurring showcase and open-mic nights name no performer and get none.
+     *
+     * **A night filed as both a special and a [SHOWCASE_CATEGORY] is the house showcase**, whatever
+     * the marker says, and it names no performer either. The club's own recurring night is titled
+     * `"Comedy, Pizza and Shots – SHOWCASE FRIDAY"`, and one edition of it went out as `"Laughs,
+     * Pizza & Shots – English Comedy Night in the Heart of Berlin!"` carrying both categories: the
+     * part before the dash was stored as an act, so a night's name became an artist (#1789). Across
+     * the live programme every other special names a real comedian and carries no showcase
+     * category, so the pair is the signal and nothing about the string has to be guessed at.
      */
     private fun headlinerOf(
         title: String,
@@ -129,13 +137,18 @@ class CosmicComedyApiScraper {
     ): List<ScrapedArtist> {
         val performer =
             title
-                .takeIf { categories.any { category -> category.equals(SPECIAL_CATEGORY, ignoreCase = true) } }
+                .takeIf { namesAPerformer(categories) }
                 ?.split(TITLE_DASHES)
                 ?.takeIf { it.size > 1 }
                 ?.first()
                 ?.trim()
         return listOfNotNull(performer?.takeIf { it.isNotBlank() }?.let { ScrapedArtist(name = it) })
     }
+
+    /** Whether [categories] mark a named act: a [SPECIAL_CATEGORY] that is not also a showcase. */
+    private fun namesAPerformer(categories: List<String>): Boolean =
+        categories.any { it.equals(SPECIAL_CATEGORY, ignoreCase = true) } &&
+            categories.none { it.equals(SHOWCASE_CATEGORY, ignoreCase = true) }
 
     /**
      * The ticket link: the event's own `website` where set, otherwise the Universe listing embedded
@@ -185,6 +198,9 @@ private val API_DATE_TIME: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy
 
 /** The category the club puts on a night with a named act rather than its house showcase. */
 private const val SPECIAL_CATEGORY = "Comedy Special"
+
+/** The category of the club's recurring house night, which names a format and never an act. */
+private const val SHOWCASE_CATEGORY = "Showcase"
 
 /** The dashes the club separates a performer from their show title with. */
 private val TITLE_DASHES = Regex("[–—]")
