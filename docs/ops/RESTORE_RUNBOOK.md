@@ -7,7 +7,8 @@ assumes you are reading it because something already went wrong.
 
 ```sh
 sudo wg-quick up ~/.wireguard/staging.conf      # nothing is reachable without the tunnel
-ssh -i ~/.ssh/id_ed25519_hetzner ops@10.10.1.1
+ssh -i ~/.ssh/id_ed25519_hetzner ops@10.10.1.1  # staging: one node
+ssh -J ops@10.10.0.1 ops@10.0.1.20              # production: the database node, through the k3s node
 sudo -u postgres /usr/local/bin/walg check      # is there anything to restore from?
 ```
 
@@ -43,9 +44,13 @@ Then read §1 for which restore you need, and take the sections in order.
 ```sh
 sudo wg-quick up ~/.wireguard/staging.conf      # nothing is reachable without the tunnel
 ssh -i ~/.ssh/id_ed25519_hetzner ops@10.10.1.1
+
+sudo wg-quick up ~/.wireguard/production.conf
+ssh -J ops@10.10.0.1 ops@10.0.1.20
 ```
 
-Full detail, including what to do when the handshake does not happen, is [CLUSTER_ACCESS.md](CLUSTER_ACCESS.md).
+**On production, PostgreSQL does not run on the k3s node.** It has its own node, `10.0.1.20`, reached through `10.10.0.1`. A command run on `10.10.0.1`
+stops at `sudo: unknown user postgres`. The jump needs the key in `~/.ssh/config`, because `-i` does not reach the jump host. Full detail, including what to do when the handshake does not happen, is [CLUSTER_ACCESS.md](CLUSTER_ACCESS.md).
 
 ## 3. Confirm there is something to restore from
 

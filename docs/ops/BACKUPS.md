@@ -305,27 +305,30 @@ numbers exist somewhere durable before anyone has to remember to update a docume
 
 ### Recorded runs
 
-**2026-09-09 — staging — passed, both halves.** Run for [#862](https://github.com/enorm-labs/event-junkie/issues/862), after
-[`78ca2ec`](https://github.com/enorm-labs/event-junkie/commit/78ca2ecfc8697ae92b2543f6b01d589bcd801d44) changed `postgres.sh`.
+**2026-09-24 — production — passed, both halves.** Run for [#1636](https://github.com/enorm-labs/event-junkie/issues/1636), after
+[`e82245a`](https://github.com/enorm-labs/event-junkie/commit/e82245a471ab) changed the backup scripts. It is the first drill against production's
+bucket, and it is the go-live gate in `GO_LIVE_CHECKLIST.md`.
 
-A base backup taken at 11:52:59 was restored from the bucket alone into a scratch cluster and replayed forward. 4,201 events, 5,275 artists and 86 venues came
-back exactly, **including a marker row written at 11:52:59, after the base backup was taken**. That marker is what proves WAL archiving rather than file
+A base backup taken at 13:39:00 was restored from the bucket alone into a scratch cluster and replayed forward. 4,253 events, 5,107 artists and 87 venues came
+back exactly, **including a marker row written 13 seconds after the base backup started**. That marker is what proves WAL archiving rather than file
 copying. Then `public.restore_drill` was dropped on the live database and recovered by PITR to a timestamp before the drop. The log said `recovery stopping
-before commit of transaction 85748`: table back, live database still without it. Archiving stayed healthy throughout, at 508 archived segments and none failed.
+before commit of transaction 145673`: table back, live database still without it. The live counts were the same before and after the run.
+
+**The archiver shows 39 failures, and none of them is recent.** The last failed segment is `000000010000000000000003`, from the first days of the cluster.
+The archiver counts 1,398 archived segments since then, up to `000000010000000500000052`, which the drill itself forced.
 
 | Step                               | Time                          |
 | ---------------------------------- | ----------------------------- |
-| Base backup                        | 8 s                           |
-| `backup-fetch`                     | 11 s                          |
+| Base backup                        | 13 s                          |
+| `backup-fetch`                     | 12 s                          |
 | Replay and promote                 | 1 s                           |
-| **Restore to serving, end to end** | **≈ 12 s** on a 40 MB cluster |
+| **Restore to serving, end to end** | **≈ 13 s** on a 55 MB cluster |
 
-**The run found three errors in the runbook, and all three are fixed in the same pass.** `pg_ctl -w start` returns before a cluster under a recovery target
-promotes, so §5 asked `pg_is_in_recovery()` too early and read a healthy restore as a failure. `pg_ctl -w stop` returns before the postmaster is gone, so §7's
-`rm -rf` raced it and failed as `Directory not empty`. A `pgrep -f` on the data directory path matches the command line of whatever runs it, which over
-`ssh host '…'` makes the cleanup kill its own shell. Only running the procedure finds these.
+**The run found one error in the runbook, and it is fixed in the same pass.** The runbook and the script's usage named only staging's node. On production,
+PostgreSQL runs on its own node, `10.0.1.20`, behind the k3s node `10.10.0.1`. The first attempt ran on the k3s node and stopped at `sudo: unknown user
+postgres`, before it wrote anything. RESTORE_RUNBOOK.md §2 now names both.
 
-**None of this extrapolates linearly, and an RTO derived from 40 MB is not an RTO.** Re-measure every run and overwrite the table above. The recorded figure then always
+**None of this extrapolates linearly, and an RTO derived from 55 MB is not an RTO.** Re-measure every run and overwrite the table above. The recorded figure then always
 reflects the database's current size, rather than the day it was first small.
 
 ## 10. Known gaps, named rather than hidden
