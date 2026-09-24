@@ -105,7 +105,8 @@ class AedenOverviewPageScraper {
      * The DJs announced in the lineup block, in billing order. The block is prose, but the roster
      * is consistently one paragraph opening with a `Lineup:` label followed by `<br>`-separated
      * names, so only that paragraph is read — the blurb paragraphs go to the description. Names
-     * are cleaned of the decorative leading `&`/`+` on a final act, and announcement placeholders
+     * are cleaned of the decorative leading `&`/`+` on a final act and of the `?` the venue puts
+     * after a booking it is unsure of (`Octave?`, #1843), and announcement placeholders
      * (`TBA soon..`, `More TBA soon…`, `SECRET ACT`) are dropped rather than minted.
      */
     private fun parseLineup(item: Element): List<ScrapedArtist> {
@@ -116,8 +117,13 @@ class AedenOverviewPageScraper {
 
         return lineupParagraph
             .textLines()
-            .map { it.replaceFirst(LINEUP_LABEL, "").replaceFirst(LEADING_CONJUNCTION, "").trim() }
-            .flatMap(::splitBackToBack)
+            .map {
+                it
+                    .replaceFirst(LINEUP_LABEL, "")
+                    .replaceFirst(LEADING_CONJUNCTION, "")
+                    .replace(UNSURE_MARK, "")
+                    .trim()
+            }.flatMap(::splitBackToBack)
             .filter { it.isNotBlank() && !isAnnouncementPlaceholder(it) && !isNonArtistName(it) }
             .map { ScrapedArtist(name = it, role = "DJ") }
     }
@@ -149,6 +155,9 @@ class AedenOverviewPageScraper {
 
         /** A decorative `&`/`+` the venue prefixes to the last act of a roster (`& SECRET ACT`). */
         private val LEADING_CONJUNCTION = Regex("""^\s*[&+]\s*""")
+
+        /** A question mark after a name, the venue's note that the booking is not confirmed. */
+        private val UNSURE_MARK = Regex("""(?<=\S)\?+\s*$""")
 
         /** An announcement note standing in for an act: `TBA soon..`, `More TBA soon…`, `SECRET ACT`. */
         private val ANNOUNCEMENT_PLACEHOLDER =

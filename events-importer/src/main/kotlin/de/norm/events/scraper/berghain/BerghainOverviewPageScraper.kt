@@ -184,7 +184,7 @@ class BerghainOverviewPageScraper(
             val first = acts.size
             text
                 .split(SLOT_SEPARATOR)
-                .map { it.trim() }
+                .map { it.replace(SLOT_DESCRIPTION, "").trim() }
                 .filter { it.isNotBlank() && !isNonArtistName(it) }
                 .forEach { acts.add(ScrapedArtist(name = it, role = role, stage = stage)) }
             marked = first until acts.size
@@ -201,6 +201,14 @@ class BerghainOverviewPageScraper(
 
         /** The one marker that changes a role: the venue's statement that the act plays live. */
         private const val LIVE_MARKER = "Live"
+
+        /**
+         * What Kantine writes after a name to describe the slot, not the act: `Booty Carrell DJ
+         * (Vinyl) Warm-up`, whose `+ Party` the [SLOT_SEPARATOR] already cut off (#1843). Each part
+         * is optional, and only a whole tail comes off, so `DJ Koze` keeps its leading `DJ`.
+         */
+        private val SLOT_DESCRIPTION =
+            Regex("""(?:\s+dj)?(?:\s*\((?:all\s+)?vinyl(?:\s+only)?\))?(?:\s+warm[\s-]?up)?\s*$""", RegexOption.IGNORE_CASE)
 
         /**
          * What separates the performers written into one name span: a [B2B_SEPARATOR], a padded

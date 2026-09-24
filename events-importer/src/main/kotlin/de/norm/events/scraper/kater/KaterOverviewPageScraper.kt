@@ -232,9 +232,10 @@ class KaterOverviewPageScraper(
 
         /**
          * A floor-block line that opens with a plus is a programme note, never an act, and one that
-         * opens with `by` is a floor credit that wrapped onto its own line (`by Kater`, #1843).
+         * opens with `by` is a floor credit that wrapped onto its own line (`by Kater`, #1843). A line
+         * that names the venue is its own programme (`GYMie Kater + Rave Olympiad`, #1843).
          */
-        val NOTE_LINE = Regex("""^\+\s|^by\s+\S""", RegexOption.IGNORE_CASE)
+        val NOTE_LINE = Regex("""^\+\s|^by\s+\S|\bkater\b""", RegexOption.IGNORE_CASE)
 
         /**
          * `Saturday by Muting The Noise`, `Sunday by 257`: a weekday and the collective hosting that

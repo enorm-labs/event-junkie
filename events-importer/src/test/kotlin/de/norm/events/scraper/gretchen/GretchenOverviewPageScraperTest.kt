@@ -305,6 +305,27 @@ class GretchenOverviewPageScraperTest {
             event.artists.map { it.name } shouldContainExactly listOf("The Bug", "Slimzee", "Grandmixxer")
         }
 
+        // Production stored `Box 2: Bassism + Impulse Basskultur` as one act (#1843).
+        @Test
+        fun `drops a room label and splits the crews after it`() {
+            val html =
+                """
+                <div class="gig">
+                    <div class="gig_top">
+                        <span class="date">Sa. <strong>21.11.2026</strong><br> Doors: 23.00</span>
+                    </div>
+                    <div class="gig_main"><div class="scroll nano"><div class="text nano-content">
+                        <span class="title">Drum &amp; Bass<h2><a href="detail.php?id=3601">30 Years Recycle</a></h2></span>
+                        <span class="box"></span><span class="lineup"><p>Congo Natty<br />Box 2: Bassism + Impulse Basskultur<br /></p></span>
+                    </div></div></div>
+                </div>
+                """.trimIndent()
+
+            val event = scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl).single()
+
+            event.artists.map { it.name } shouldContainExactly listOf("Congo Natty", "Bassism", "Impulse Basskultur")
+        }
+
         // detail.php?id=3480 (#1761): the page opens `*live` and never closes it.
         @Test
         fun `strips a star marker the page never closed`() {

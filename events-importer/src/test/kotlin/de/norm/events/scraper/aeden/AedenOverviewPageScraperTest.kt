@@ -156,6 +156,28 @@ class AedenOverviewPageScraperTest {
         scraper.scrape(malformed, julyUrl).shouldBeEmpty()
     }
 
+    // Production stored `Octave?` as a DJ (#1843).
+    @Test
+    fun `drops the question mark after an unconfirmed booking`() {
+        val page =
+            Jsoup.parse(
+                """
+                <html><body><div class="single-accordion">
+                    <div class="event-title"><h3>INTERSTICE</h3></div>
+                    <div class="event-date"><h3>01/08/2026 Saturday</h3></div>
+                    <div class="event-lineup"><p>Lineup:<br>Complice<br>Octave?</p></div>
+                </div></body></html>
+                """.trimIndent(),
+                julyUrl
+            )
+
+        scraper
+            .scrape(page, julyUrl)
+            .single()
+            .artists
+            .map { it.name } shouldContainExactly listOf("Complice", "Octave")
+    }
+
     @Test
     fun `skips a block with no title`() {
         val untitled =
