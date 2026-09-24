@@ -10,13 +10,13 @@
 [![Build & Test Backend](https://github.com/enorm-labs/event-junkie/actions/workflows/build-backend.yml/badge.svg)](https://github.com/enorm-labs/event-junkie/actions/workflows/build-backend.yml)
 [![Build & Test Frontend](https://github.com/enorm-labs/event-junkie/actions/workflows/build-frontend.yml/badge.svg)](https://github.com/enorm-labs/event-junkie/actions/workflows/build-frontend.yml)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](./LICENSE)
-[![Status](https://img.shields.io/badge/Status-In%20Development-orange.svg)](#status)
+[![Status](https://img.shields.io/badge/Status-Beta-orange.svg)](#status)
 [![Kotlin](https://img.shields.io/badge/Kotlin-2.4.10-7F52FF.svg?logo=kotlin&logoColor=white)](https://kotlinlang.org)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.1.1-6DB33F.svg?logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot)
 [![Java](https://img.shields.io/badge/Java-25-ED8B00.svg?logo=openjdk&logoColor=white)](https://openjdk.org)
 [![Vue.js](https://img.shields.io/badge/Vue.js-3-4FC08D.svg?logo=vuedotjs&logoColor=white)](https://vuejs.org)
 
-One filterable feed of what is on across Berlin's venues, collected automatically from their own websites.
+One filterable feed of what is on across Berlin's venues, collected automatically from their own websites. Live at <https://event-junkie.de>.
 
 > **The event app Berlin deserves.**
 
@@ -25,7 +25,7 @@ One filterable feed of what is on across Berlin's venues, collected automaticall
 </p>
 
 <p align="center">
-  <sub>The events list, in the dark theme new visitors get by default — real data, scraped from the venues' own sites. August 2026; see <a href="./docs/screenshots/">docs/screenshots</a>.</sub>
+  <sub>The events list, in the dark theme new visitors get by default — real data, scraped from the venues' own sites. September 2026; see <a href="./docs/screenshots/">docs/screenshots</a>.</sub>
 </p>
 
 ## Contents
@@ -78,11 +78,11 @@ which coverage questions are still open is in
 
 ## Status
 
-🚧 **In development — deployed, but not public yet.**
+🚧 **Public beta.** The site is live at <https://event-junkie.de>.
 
-The product works end-to-end: 86 Berlin sources are imported on a schedule, and the frontend, BFF and importer run locally and on both Hetzner environments.
-Staging and production are stood up and reconciling under Flux — production is **dark**, serving nothing publicly until the domain is pointed at it at go-live.
-What is left is the legal, auth and go-live work, tracked in the [`v0.3` and `v1.0` milestones](https://github.com/enorm-labs/event-junkie/milestones).
+87 Berlin sources are imported on a schedule. Production and staging run on Hetzner and are reconciled by Flux; staging has no public address. The site
+carries a `beta` badge until `1.0.0`, because coverage is incomplete and some details can be stale. `1.0.0` comes when the criteria on
+[#295](https://github.com/enorm-labs/event-junkie/issues/295) hold.
 
 ## Built with AI
 
@@ -105,7 +105,7 @@ still needs a human paying attention.
 ## Install
 
 Prerequisites: a JDK (see [`.sdkmanrc`](./.sdkmanrc), managed with [SDKMAN](https://sdkman.io/)), Docker, the
-[GitHub CLI](https://cli.github.com/), and Node.js (see [`.nvmrc`](./events-frontend/.nvmrc)) if you want the frontend.
+[GitHub CLI](https://cli.github.com/), and Node.js 24.15 or later (see [`.nvmrc`](./events-frontend/.nvmrc)) if you want the frontend.
 
 ```bash
 git clone git@github.com:enorm-labs/event-junkie.git
@@ -216,7 +216,7 @@ git switch -c feat/so36-importer
 #    this project has strong opinions and they are all written down.
 
 # 3. Verify. Skip the Gradle build for docs-only or frontend-only changes.
-./gradlew ktlintCheck detekt build koverLog
+./gradlew ktlintCheck detekt detektMain detektTest build koverLog -PwarningsAsErrors
 cd events-frontend && npm run type-check && npm run lint && npm run test:unit -- --run && npm run test:e2e -- --project=chromium
 
 # 4. Commit with a Conventional Commits subject. It drives the labels and release notes.
