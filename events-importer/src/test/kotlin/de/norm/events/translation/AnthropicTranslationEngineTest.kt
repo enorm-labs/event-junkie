@@ -97,6 +97,65 @@ class AnthropicTranslationEngineTest {
             engine().translate(request) shouldBe ENGLISH
         }
 
+    // Five of the nine descriptions production refused every night named an act with `’` (#1823).
+    @Test
+    @DisplayName("a name kept with a straight apostrophe for a typographic one is not lost")
+    fun `accepts a name with another apostrophe`() =
+        runTest {
+            server.enqueue(textResponse("Tonight D'Artagnan plays the Klunkerkranich, with a view over the roofs of Neukölln."))
+
+            val request =
+                TranslationRequest(
+                    text = "Heute spielt D’Artagnan im Klunkerkranich, mit Aussicht über die Dächer von Neukölln.",
+                    from = DescriptionLanguage.GERMAN,
+                    to = DescriptionLanguage.ENGLISH,
+                    protectedTerms = listOf("D’Artagnan")
+                )
+
+            engine().translate(request) shouldBe "Tonight D'Artagnan plays the Klunkerkranich, with a view over the roofs of Neukölln."
+        }
+
+    @Test
+    @DisplayName("a name kept without its accent is not lost")
+    fun `accepts a name without its accent`() =
+        runTest {
+            val answer = ENGLISH.replace("Shelelé", "Shelele")
+            server.enqueue(textResponse(answer))
+
+            engine().translate(request()) shouldBe answer
+        }
+
+    @Test
+    @DisplayName("a name kept across a line break is not lost")
+    fun `accepts a name across a line break`() =
+        runTest {
+            val answer = ENGLISH.replace("Elsa Shelelé", "Elsa\nShelelé")
+            server.enqueue(textResponse(answer))
+
+            engine().translate(request()) shouldBe answer
+        }
+
+    // The count alone could not say whether a refusal was a kept name in another form or a real loss.
+    @Test
+    @DisplayName("a refusal for a lost name says which name")
+    fun `names the lost name`() =
+        runTest {
+            val log = LoggerFactory.getLogger(AnthropicTranslationEngine::class.java) as Logger
+            val appender = ListAppender<ILoggingEvent>().apply { start() }
+            log.addAppender(appender)
+            try {
+                server.enqueue(textResponse(ENGLISH.replace("Klunkerkranich", "Clinking Crane")))
+
+                engine().translate(request()).shouldBeNull()
+
+                appender.list.single { it.level == Level.WARN }.formattedMessage shouldBe
+                    "Rejected a translation because it lost 1 protected name(s): 'Klunkerkranich'"
+            } finally {
+                log.detachAppender(appender)
+                appender.stop()
+            }
+        }
+
     // A safety classifier declines with a 200 and this stop reason, so reading the content would
     // otherwise hand back an empty translation as though it were a real one.
     @Test
@@ -200,7 +259,7 @@ class AnthropicTranslationEngineTest {
             .body(body)
             .build()
 
-    private fun quote(value: String) = "\"" + value.replace("\\", "\\\\").replace("\"", "\\\"") + "\""
+    private fun quote(value: String) = "\"" + value.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n") + "\""
 
     private companion object {
         const val HTTP_OK = 200
