@@ -53,7 +53,7 @@ One JSON object per environment, with these keys:
 | `warnings`     | The same for `WARN`                                                                                            |
 | `unstructured` | Lines that are not JSON (`severity = '0'`: nginx, Flux, helm test pods, k6) and name a failure                 |
 | `http5xx`      | Answers with `httpstatus >= 500`                                                                               |
-| `k8s_warnings` | Kubernetes events of type `Warning`, grouped by reason and note                                                |
+| `k8s_warnings` | Kubernetes `Warning` events by reason and note; `n` counts occurrences, not re-sends                           |
 | `alerts`       | Every row in `alert_history`: each firing, with its rule and value. Since #877 each one is a mail to `alerts@` |
 
 Each log group carries `n`, `first`, `last`, the newest `version` it reached, and one `sample` line as written. For a group that needs more, read the whole
@@ -81,9 +81,10 @@ Every group gets one verdict. Work through them in this order, because each is c
 | ------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
 | `SpringDoc … endpoint is enabled by default` at each start                                  | One line per pod start. It counts starts, not a fault                                                 |
 | `DNSConfigForming` `Nameserver limits were exceeded`                                        | Hetzner hands the node more resolvers than the kubelet uses. Constant on both clusters                |
-| `Startup probe failed … 9001 … connection refused` within two minutes of a pod start        | A JVM that has not bound its port yet. The probe exists for this                                      |
+| Probes in a pod's first minutes: `connection refused`, `statuscode: 503`                    | A JVM or nginx not yet listening, or Spring not yet ready. The probes exist for this                  |
 | `test` component: `curl: (7) Failed to connect to event-junkie-bff:9001`, k6 JSON summaries | Helm test pods during a rollout, and load-test output. A failing smoke test shows as a failed rollout |
-| nginx `access forbidden by rule` on `/.well-known/…`                                        | The frontend refuses these paths on purpose                                                           |
+| nginx `access forbidden by rule` on `/.well-known/…`, `/.git/…`, `/.env`                    | The frontend refuses these paths on purpose. Scanners ask for the last two                            |
+| otel-operator `TLS handshake error … bad certificate`, a burst when it restarts             | Stops within the minute of the restart. Likely the webhook serving a new cert before its CA lands     |
 | `RobotsTxtFilter` `Blocked by robots.txt`, one line per URL                                 | The importer obeying a venue. `ej-robots-disallowed` watches the rate                                 |
 | `MusicBrainz unavailable … answered 503`, a few a day                                       | MusicBrainz rate-limits by IP. The lookup retries on the next import                                  |
 | `AnthropicTranslationEngine` `Rejected a translation`, a few a day                          | The guard doing its job. `ej-translations-failing` watches the rate                                   |

@@ -122,6 +122,9 @@ case "$VERB" in
         # the newest build the group reached, which separates a rollout from what runs now.
         LOG_COLUMNS="k8s_app_component AS component, logger, errortype, regexp_replace(substr(body, 1, 160), '[0-9]+', 'N', 'g') AS message, min(substr(body, 1, 300)) AS sample, COUNT(*) AS n, min(_timestamp) AS first, max(_timestamp) AS last, max(service_version) AS version"
         LOG_GROUP="GROUP BY component, logger, errortype, message ORDER BY n DESC LIMIT 60"
+        # The collector re-sends each event about an hour later with a new resourceVersion, so a row
+        # count doubles it. One occurrence is one event name at one count.
+        K8S_MESSAGE="regexp_replace(substr(body_object_note, 1, 160), '[0-9]+', 'N', 'g')"
         jq -n \
             --arg environment "$ENVIRONMENT" --argjson hours "$HOURS" \
             --arg from "$(date -u -r "$START_S" +%FT%TZ 2>/dev/null || date -u -d "@$START_S" +%FT%TZ)" \
@@ -130,7 +133,7 @@ case "$VERB" in
             --argjson warnings "$(search "SELECT $LOG_COLUMNS FROM default WHERE severity = 'WARN' $LOG_GROUP")" \
             --argjson unstructured "$(search "SELECT $LOG_COLUMNS FROM default WHERE severity = '0' AND NOT str_match(body, '\"level\":\"info\"') AND re_match(body, '(?i)error|fail|panic|fatal|exception|refused|denied|timeout') $LOG_GROUP")" \
             --argjson http5xx "$(search "SELECT k8s_app_component AS component, logger, httpstatus, COUNT(*) AS n, min(_timestamp) AS first, max(_timestamp) AS last FROM default WHERE httpstatus >= 500 GROUP BY component, logger, httpstatus ORDER BY n DESC")" \
-            --argjson k8s_warnings "$(search "SELECT body_object_reason AS reason, substr(body_object_note, 1, 160) AS message, COUNT(*) AS n, min(_timestamp) AS first, max(_timestamp) AS last FROM k8s_events WHERE body_object_type = 'Warning' GROUP BY reason, message ORDER BY n DESC LIMIT 40")" \
+            --argjson k8s_warnings "$(search "SELECT body_object_reason AS reason, $K8S_MESSAGE AS message, min(substr(body_object_note, 1, 300)) AS sample, COUNT(DISTINCT concat(event_name, '/', body_object_deprecatedcount)) AS n, min(_timestamp) AS first, max(_timestamp) AS last FROM k8s_events WHERE body_object_type = 'Warning' GROUP BY reason, message ORDER BY n DESC LIMIT 40")" \
             --argjson alerts "$(search "SELECT _timestamp, alert, value FROM alert_history ORDER BY _timestamp DESC LIMIT 200")" \
             '{environment: $environment, hours: $hours, from: $from, totals: $totals, errors: $errors, warnings: $warnings,
               unstructured: $unstructured, http5xx: $http5xx, k8s_warnings: $k8s_warnings, alerts: $alerts}'
