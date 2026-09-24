@@ -1,6 +1,7 @@
 package de.norm.events.scraper.renate
 
 import de.norm.events.event.EventType
+import de.norm.events.scraper.B2B_SEPARATOR
 import de.norm.events.scraper.BERLIN
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
@@ -246,9 +247,6 @@ class RenateOverviewPageScraper(
         const val MIN_BARE_LINEUP_LINES = 3
 
         val SENTENCE_END = Regex("""[.!?:,]$""")
-
-        /** The back-to-back marker joining two DJs into one slot. */
-        val B2B_SEPARATOR = Regex("""\s+b2b\s+""", RegexOption.IGNORE_CASE)
 
         /** A `hosted by …` credit for the collective curating a floor. */
         val HOST_CREDIT = Regex("""\bhosted\s+by\b""", RegexOption.IGNORE_CASE)

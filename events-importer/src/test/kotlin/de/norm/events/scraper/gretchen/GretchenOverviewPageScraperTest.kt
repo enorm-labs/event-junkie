@@ -154,7 +154,8 @@ class GretchenOverviewPageScraperTest {
                     ScrapedArtist("Peter Somuah", "HEADLINER"),
                     ScrapedArtist("Skyline Sun", "SUPPORT"),
                     ScrapedArtist("Outta Line", "SUPPORT"),
-                    ScrapedArtist("Allynx b2b Sean Steinfeger", "SUPPORT")
+                    ScrapedArtist("Allynx", "SUPPORT"),
+                    ScrapedArtist("Sean Steinfeger", "SUPPORT")
                 )
         }
 
@@ -281,6 +282,27 @@ class GretchenOverviewPageScraperTest {
 
             event.artists.map { it.name } shouldContainExactly
                 listOf("Àbáse", "ZENA", "Sean Steinfeger", "Mittelmeer Monologe")
+        }
+
+        // Production stored `Allynx b2b Sean Steinfeger` and `Slimzee b2b Grandmixxer` as one act each (#1844).
+        @Test
+        fun `splits a back-to-back slot into two acts`() {
+            val html =
+                """
+                <div class="gig">
+                    <div class="gig_top">
+                        <span class="date">Sa. <strong>21.11.2026</strong><br> Doors: 23.00</span>
+                    </div>
+                    <div class="gig_main"><div class="scroll nano"><div class="text nano-content">
+                        <span class="title">Dub<h2><a href="detail.php?id=3600">The Bug presents: Pressure</a></h2></span>
+                        <span class="box"></span><span class="lineup"><p>The Bug<br />Slimzee b2b Grandmixxer<br /></p></span>
+                    </div></div></div>
+                </div>
+                """.trimIndent()
+
+            val event = scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl).single()
+
+            event.artists.map { it.name } shouldContainExactly listOf("The Bug", "Slimzee", "Grandmixxer")
         }
 
         // detail.php?id=3480 (#1761): the page opens `*live` and never closes it.

@@ -454,6 +454,14 @@ class ArtistNameMappingTest {
     // --- splitSegmentOnConjunctions ---
 
     @Test
+    fun `splitBackToBack splits a b2b slot and keeps a bracketed duo whole`() {
+        splitBackToBack("Sicion b2b Iman Janes") shouldBe listOf("Sicion", "Iman Janes")
+        splitBackToBack("Emira B2B Ayham") shouldBe listOf("Emira", "Ayham")
+        splitBackToBack("Double Penetration (FLOWWW b2b Joe Cleen)") shouldBe listOf("Double Penetration (FLOWWW b2b Joe Cleen)")
+        splitBackToBack("Ab2bc") shouldBe listOf("Ab2bc")
+    }
+
+    @Test
     fun `splitSegmentOnConjunctions splits guarded conjunctions but never a slash`() {
         splitSegmentOnConjunctions("Lichene & Neue K") shouldBe listOf("Lichene", "Neue K")
         // A "/" inside a single act name is preserved (not a co-bill separator here).

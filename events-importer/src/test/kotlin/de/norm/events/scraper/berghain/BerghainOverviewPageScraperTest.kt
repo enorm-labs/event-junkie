@@ -146,6 +146,29 @@ class BerghainOverviewPageScraperTest {
             )
     }
 
+    // Kantine am Berghain joins two acts in one name span with a padded `+` (#1844).
+    @Test
+    fun `splits two acts the venue joined with a plus inside one name span`() {
+        val html =
+            """
+            <html><body>
+              <a href="/de/event/80900/">
+                <p>Sonntag <span class="font-bold">27.09.2026</span> beginn 20:00</p>
+                <h2>Caramelo</h2>
+                <h3>Kantine am Berghain</h3>
+                <h4>
+                  <span class="font-bold">
+                    <span class="xs:whitespace-no-wrap">Dicken45 + Benito</span>
+                  </span>
+                </h4>
+              </a>
+            </body></html>
+            """.trimIndent()
+        val event = scraper.scrape(Jsoup.parse(html, berghainUrl), berghainUrl).single()
+
+        event.artists.map { it.name } shouldContainExactly listOf("Dicken45", "Benito")
+    }
+
     // The marker is the venue saying the act performs, and it sits inside that act's wrapper (#1787).
     @Test
     fun `bills an act marked Live as a headliner and leaves the rest of the floor DJs`() {

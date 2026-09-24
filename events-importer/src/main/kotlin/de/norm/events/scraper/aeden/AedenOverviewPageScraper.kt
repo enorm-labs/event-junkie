@@ -8,6 +8,7 @@ import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.imgSrcAt
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.parseTime
+import de.norm.events.scraper.splitBackToBack
 import de.norm.events.scraper.textAt
 import de.norm.events.scraper.textLines
 import de.norm.events.slug.SlugGenerator
@@ -116,6 +117,7 @@ class AedenOverviewPageScraper {
         return lineupParagraph
             .textLines()
             .map { it.replaceFirst(LINEUP_LABEL, "").replaceFirst(LEADING_CONJUNCTION, "").trim() }
+            .flatMap(::splitBackToBack)
             .filter { it.isNotBlank() && !isAnnouncementPlaceholder(it) && !isNonArtistName(it) }
             .map { ScrapedArtist(name = it, role = "DJ") }
     }
