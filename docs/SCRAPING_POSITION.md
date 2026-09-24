@@ -42,8 +42,8 @@ no longer exists.
 | Page depth           | ADR-007 § Pagination — First Page Only                                 | The overview pages to the list's end, plus details |
 | No arbitrary crawl   | Each `EventImporter` parses one known structure                        | The scraper follows no link it discovers at random |
 
-**A list that ends is read to its end.** Most listings are one page. Seven importers walk a paginated list: LARK, Urban
-Spree, Heimathafen, Gärten der Welt, Cosmic Comedy, migas and Cassiopeia. Each one stops at the last page, and at a
+**A list that ends is read to its end.** Most listings are one page. Nine importers walk a paginated list: LARK, Urban
+Spree, Heimathafen, Gärten der Welt, Cosmic Comedy, migas, Cassiopeia, Schokoladen and Monster Ronson's. Each one stops at the last page, and at a
 page cap of its own. A list that only JavaScript can extend is read to its first page only, and ADR-007 records the
 reasons.
 

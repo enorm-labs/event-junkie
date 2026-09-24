@@ -9,6 +9,8 @@ import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.VenueLimitations
+import de.norm.events.scraper.nextPageUrl
+import de.norm.events.scraper.scrapeListingPages
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
 import java.time.Clock
@@ -17,7 +19,10 @@ import java.time.Clock
  * Website importer for Monster Ronson's Ichiban Karaoke, the Friedrichshain karaoke bar, on Webflow.
  *
  * Overview → night page:
- * 1. [HtmlFetcher] fetches `/events` conditionally (ETag / Last-Modified).
+ * 1. [HtmlFetcher] fetches `/events` conditionally (ETag / Last-Modified). The listing is paged
+ * twelve nights at a time, about five weeks over four pages (#1884); the later pages are read to
+ * the last, bounded by [MAX_PAGES]. Last-Modified is Webflow's site publish time, so a `304` on
+ * the first page means no page changed.
  * 2. [MonsterRonsonsOverviewPageScraper] parses one event per calendar day — title, date, start
  * time, poster and host(s).
  * 3. Each night's `/posts/<slug>` page once, applying prose, door price and ticket link
@@ -32,8 +37,7 @@ import java.time.Clock
  *
  * **Not published**: no doors time (one time per night, taken as the start), no presale price,
  * no genre, no lineup beyond the host in the title. The private karaoke boxes running all
- * evening appear nowhere — the listing is the main stage only. The window is short by design:
- * roughly twelve days, so each import replaces a rolling window rather than accumulating a season.
+ * evening appear nowhere — the listing is the main stage only.
  *
  * @see MonsterRonsonsOverviewPageScraper for the listing parsing logic.
  * @see MonsterRonsonsDetailPageScraper for the night-page parsing logic.
@@ -63,7 +67,15 @@ class MonsterRonsonsWebsiteImporter(
             }
 
             is FetchResult.Success -> {
-                val events = overviewPageScraper.scrape(fetchResult.document, url)
+                val events =
+                    htmlFetcher.scrapeListingPages(
+                        eventSource,
+                        fetchResult.document,
+                        url,
+                        MAX_PAGES,
+                        { document, _ -> document.nextPageUrl(NEXT_PAGE_SELECTOR) },
+                        overviewPageScraper::scrape
+                    )
                 logger.info { "Scraped ${events.size} karaoke night(s) from Monster Ronson's listing" }
 
                 ImportResult.Success(
@@ -76,8 +88,8 @@ class MonsterRonsonsWebsiteImporter(
 
     /**
      * Fetches each distinct night page once and applies it to the events linking to it. The CMS
-     * recycles entries, so two cards on one page is possible even though the current window has
-     * none; per distinct URL keeps that from re-requesting.
+     * recycles entries, so two cards may link one URL, although no page did when #1884 was measured;
+     * per distinct URL keeps that from re-requesting.
      */
     private suspend fun enrichFromNightPages(events: List<ScrapedEvent>): List<ScrapedEvent> {
         val nightUrls = events.map { it.sourceUrl }.distinct()
@@ -96,6 +108,14 @@ class MonsterRonsonsWebsiteImporter(
             logger.warn(e) { "Failed to fetch night page $url, keeping listing data only" }
             null
         }
+
+    private companion object {
+        /** A runaway guard on the page walk; the listing runs to four pages. */
+        const val MAX_PAGES = 8
+
+        /** Webflow's pagination link; the query parameter name is the collection list's id. */
+        const val NEXT_PAGE_SELECTOR = "a.w-pagination-next[href]"
+    }
 }
 
 val MONSTER_RONSONS_LIMITATIONS =

@@ -3,6 +3,7 @@ package de.norm.events.scraper.monsterronsons
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
+import de.norm.events.scraper.HttpFetchException
 import de.norm.events.scraper.ImportResult
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
@@ -21,12 +22,13 @@ import org.junit.jupiter.api.Test
 import java.math.BigDecimal
 import java.time.Clock
 import java.time.Instant
+import java.time.LocalDate
 import java.time.ZoneId
 
 /**
  * Unit tests for [MonsterRonsonsWebsiteImporter].
  *
- * Uses saved snapshots of the listing and one night page, with [HtmlFetcher] mocked so no real HTTP
+ * Uses saved snapshots of three listing pages and one night page, with [HtmlFetcher] mocked so no real HTTP
  * requests are made. The clock is pinned to the capture date (2026-08-06) so the listing's year-less
  * dates resolve deterministically.
  */
@@ -47,12 +49,22 @@ class MonsterRonsonsWebsiteImporterTest {
                 etag = "\"events-1\"",
                 lastModified = "Thu, 06 Aug 2026 06:00:00 GMT"
             )
+        // Page 1 links page 2, whose snapshot links page 3; the last page's snapshot stands in for page 3.
         // Every night page returns the hosted snapshot; the opener is asserted on by name.
         coEvery { htmlFetcher.fetchDocument(any()) } answers {
             val url = firstArg<String>()
-            Jsoup.parse(loadFixture("monsterronsons-detail-hosted.html"), url)
+            val fixture =
+                when (url) {
+                    page2Url -> "monsterronsons-overview-page-2.html"
+                    page3Url -> "monsterronsons-overview-page-last.html"
+                    else -> "monsterronsons-detail-hosted.html"
+                }
+            Jsoup.parse(loadFixture(fixture), url)
         }
     }
+
+    private val page2Url = "$sourceUrl?0ac6f618_page=2"
+    private val page3Url = "$sourceUrl?0ac6f618_page=3"
 
     private fun loadFixture(name: String): String =
         javaClass.classLoader
@@ -61,11 +73,12 @@ class MonsterRonsonsWebsiteImporterTest {
             .readText()
 
     @Test
-    fun `imports the listing window and propagates cache headers`() =
+    fun `imports every listing page and propagates cache headers`() =
         runTest {
             val result = importer.importEvents(sourceUrl, null, null).shouldBeInstanceOf<ImportResult.Success>()
 
-            result.events shouldHaveSize 11
+            result.events shouldHaveSize EVENTS_ON_ALL_PAGES
+            result.events.last().eventDate shouldBe LocalDate.of(2026, 10, 31)
             result.etag shouldBe "\"events-1\""
             result.lastModified shouldBe "Thu, 06 Aug 2026 06:00:00 GMT"
         }
@@ -85,11 +98,24 @@ class MonsterRonsonsWebsiteImporterTest {
     @Test
     fun `fetches one night page per distinct url`() =
         runTest {
-            importer.importEvents(sourceUrl, null, null)
+            val result = importer.importEvents(sourceUrl, null, null).shouldBeInstanceOf<ImportResult.Success>()
 
-            // 11 events, 11 distinct night URLs — the closure card never reaches a fetch.
-            coVerify(exactly = 11) { htmlFetcher.fetchDocument(any()) }
+            // Two listing pages, then one night page per distinct URL: `boxhopping-6` and
+            // `sing-with-oozing-gloop-gutter-gucci` are recycled onto an August and an October night.
+            // The closure card never reaches a fetch.
+            coVerify(exactly = 2 + EVENTS_ON_ALL_PAGES - 2) { htmlFetcher.fetchDocument(any()) }
+            result.events.map { it.sourceId }.distinct() shouldHaveSize EVENTS_ON_ALL_PAGES
             coVerify(exactly = 0) { htmlFetcher.fetchDocument("https://www.karaokemonster.de/posts/sorry-we-are-closed") }
+        }
+
+    @Test
+    fun `keeps the first page when a later listing page fails`() =
+        runTest {
+            coEvery { htmlFetcher.fetchDocument(page2Url) } throws HttpFetchException(503, page2Url)
+
+            val result = importer.importEvents(sourceUrl, null, null).shouldBeInstanceOf<ImportResult.Success>()
+
+            result.events shouldHaveSize 11
         }
 
     @Test
@@ -99,6 +125,7 @@ class MonsterRonsonsWebsiteImporterTest {
 
             val result = importer.importEvents(sourceUrl, null, null).shouldBeInstanceOf<ImportResult.Success>()
 
+            // The listing's later pages fail too, so only the first page's 11 nights remain.
             result.events shouldHaveSize 11
             val opener = result.events.first { it.sourceId == "monster_ronsons:2026-08-06-sing-with-fauxpas-2" }
             opener.title shouldBe "SING WITH IVANKA TRAMP"
@@ -131,5 +158,10 @@ class MonsterRonsonsWebsiteImporterTest {
     @Test
     fun `reports its event source`() {
         importer.eventSource shouldBe EventSource.MONSTER_RONSONS
+    }
+
+    private companion object {
+        /** 11 nights on page 1, 12 on page 2 and 3 on the last page. */
+        const val EVENTS_ON_ALL_PAGES = 26
     }
 }

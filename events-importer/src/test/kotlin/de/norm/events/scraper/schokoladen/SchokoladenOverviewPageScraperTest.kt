@@ -43,6 +43,24 @@ class SchokoladenOverviewPageScraperTest {
     }
 
     @Nested
+    inner class Pagination {
+        private fun load(name: String) =
+            javaClass.classLoader
+                .getResourceAsStream("scraper/schokoladen/$name")!!
+                .bufferedReader()
+                .readText()
+
+        @Test
+        fun `parses a later page in the next year`() {
+            val url = "https://www.schokoladen-mitte.de/?page=8"
+            val events = scraper.scrape(Jsoup.parse(load("schokoladen-overview-page-last.html"), url), url)
+
+            events shouldHaveSize 8
+            events.first().eventDate shouldBe LocalDate.of(2027, 2, 6)
+        }
+    }
+
+    @Nested
     inner class ConcertParsing {
         @Test
         fun `parses a Musik concert with full data`() {
