@@ -261,8 +261,27 @@ fun stripArtistSuffix(name: String): String {
         if (next == stripped || next.isBlank()) return@repeat
         stripped = next
     }
-    return stripGenitiveShow(stripTrailingSeparator(stripWorkTitle(stripShoutedTourTail(stripTrailingParenthetical(stripped)))))
+    return stripCasedTail(stripGenitiveShow(stripTrailingSeparator(stripWorkTitle(stripShoutedTourTail(stripTrailingParenthetical(stripped))))))
 }
+
+/**
+ * Tails no separator marks, where the casing change alone shows where the act ends (#1841). Case-sensitive
+ * on purpose, and each shape needs a closing word as well: a debut at a venue, a tour word, or a year.
+ * Each matched one production title of 3303.
+ */
+private val CASED_TAILS: List<Regex> =
+    listOf(
+        // `Zascha HOT MESS Debut at Lark`: the shouted words are the show, the debut its venue.
+        Regex("""^(.*?\p{Ll}\S*)(?:\s+[\p{Lu}\d]{2,})*\s+[Dd]ebut\s+at\s+\S.*$"""),
+        // `WISBORG Phantomschmerz Tour`: a shouted act before a tour name in mixed case.
+        Regex("""^([\p{Lu}\d]{2,}(?:\s+[\p{Lu}\d]{2,})*)\s+\p{Lu}\p{Ll}.*[Tt]our$"""),
+        // `schluma Heulen am Wasser 2026`: a lowercase act before a capitalised work title and its year.
+        Regex("""^(\p{Ll}[\p{Ll}\d]+)\s+\p{Lu}\p{Ll}.*\s(?:19|20)\d{2}$"""),
+        // `Exofa - Altern.RockPop`: a genre tag abbreviated with a dot inside one word.
+        Regex("""^(.+?)\s+[-–—]\s+\p{L}+\p{Ll}\.\p{Lu}\p{L}+$""")
+    )
+
+private fun stripCasedTail(name: String): String = CASED_TAILS.firstNotNullOfOrNull { it.matchEntire(name)?.groupValues?.get(1) } ?: name
 
 /** A footnote star after the last word: `Sweely live*`. A star inside a name (`*n8`) stays. */
 private val FOOTNOTE_STAR = Regex("""(?<=\S)\*+\s*$""")
@@ -1130,10 +1149,12 @@ private fun commaBillOf(
 
 /**
  * A leading series label: one ending in "#<n>:" ("OFF THE RAILS #5: …"), or a Berlin festival
- * named before a dash ("Jazzfest Berlin – Wendy Eisenberg", #1841); the acts follow. Non-greedy,
+ * named before a dash ("Jazzfest Berlin – Wendy Eisenberg", #1841), or a tribute's
+ * "Celebrating <artist> –" frame; the acts follow. Non-greedy,
  * and a non-blank series name is required, so "9:3" or "H2:O" is untouched.
  */
-private val SERIES_PREFIX_PATTERN = Regex("""^.+?#\s*\d+\s*:\s*|^(?i:\p{L}+fest(?:ival)?\s+berlin\s+[-–—]\s+)""")
+private val SERIES_PREFIX_PATTERN =
+    Regex("""^.+?#\s*\d+\s*:\s*|^(?i:\p{L}+fest(?:ival)?\s+berlin\s+[-–—]\s+)|^(?i:celebrating\s+[^-–—]+?\s+[-–—]\s+)""")
 
 /**
  * Strips a leading "<series> #<n>:" label: `"OFF THE RAILS #5: Blake Harley & Superior Motive"`
