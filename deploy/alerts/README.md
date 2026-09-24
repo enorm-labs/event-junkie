@@ -69,10 +69,16 @@ written anywhere.
 
 ```
 event-junkie (template)        in sync
+event-junkie-email (template)  in sync
 record-only (destination)      in sync
+email (destination)            in sync
+alerts@event-junkie.de (user)  in sync
 …
-13/13 objects match this repository (11 rules, the template and the destination)
+22/22 objects match this repository (17 rules, two templates, two destinations, the recipient)
 ```
+
+**The recipient is checked as well.** OpenObserve checks that `alerts@event-junkie.de` is a user of the org when the destination is saved, not when it sends.
+A user deleted afterwards leaves an `email` destination that looks valid and mails nobody.
 
 **The destination's header values are compared by fingerprint and cannot be printed.** It carries the OpenObserve root credential, and the API returns it in
 full — measured, 74 characters, unredacted — so a field diff of the kind this does everywhere else would put that credential into a terminal, a scrollback and
@@ -88,7 +94,7 @@ health is the failure this whole check exists to remove.
 python3 test_diff_alerts.py
 ```
 
-**Both `apply.sh` and `--diff` read the expected template and destination from `alert_objects.py`**, one definition for both. Two copies of the same expected
+**Both `apply.sh` and `--diff` read the expected templates, destinations and recipient from `alert_objects.py`**, one definition for both. Two copies of the same expected
 object, edited in one place and silently not the other, is the bug this entire directory has spent a week on.
 
 **It compares a subset, deliberately.** The server fills in defaults (`ignore_case`, `cron`, `align_time`), stamps identity (`id`, `owner`, `last_edited_by`)
@@ -149,14 +155,28 @@ reason to widen the rule. `ej-source-never-succeeded` covers the other end: a so
 **36h, not 24h**, for the reason [#617](https://github.com/enorm-labs/event-junkie/issues/617) gives about the dashboard panel: the interval _is_ 24h, so a 24h
 threshold flags the whole catalogue every day as a matter of routine, and a rule that fires every day is a rule that gets muted.
 
-## Where the notifications go, and why not to Signal yet
+## Where the notifications go
 
-Every rule routes to `record-only`, a destination that POSTs the firing back into OpenObserve as a row in the `alert_history` stream. Firing is therefore
-observable now, which is what makes these rules exercised rather than hypothetical while [#877](https://github.com/enorm-labs/event-junkie/issues/877) waits
-on a registered phone number. **A firing reaches no person until then**, and [THREAT_MODEL.md](../../docs/security/THREAT_MODEL.md) B8 says so.
+Every rule notifies two destinations, both declared in `alert_objects.py`:
 
-**The number is the only blocker left.** An OpenObserve webhook into `signal-cli-rest-api` is #877's architecture, and OpenObserve's SSRF guard used to refuse
-any destination that resolves inside the cluster. Two flags govern it (`config.rs:1177`), and they are not equivalent:
+|               |                                                                                                                         |
+| ------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `record-only` | POSTs the firing back into OpenObserve as a row in the `alert_history` stream. The queryable record of every firing     |
+| `email`       | mails `alerts@event-junkie.de`, a role mailbox that forwards to whoever reads the alerts. The one that reaches a person |
+
+**The mail goes out through Hetzner's SMTP as `alerts@`**, configured by `ZO_SMTP_*` in each cluster's `openobserve.yaml`. The password is the hand-made
+`openobserve-smtp` Secret ([SECRETS.md](../../docs/ops/SECRETS.md)), and `observability-netpol.yaml` lets the pod reach port 465 and no other mail port.
+OpenObserve refuses an `email` destination while SMTP is off (`SMTPUnavailable`) and a recipient who is not a user of the org (`UserNotPermitted`), so
+`apply_alerts.py` creates that user first, with a random password it never stores.
+
+**The subject names the environment**, `[event-junkie production] ej-site-down`, because both clusters send from the same address to the same inbox.
+
+**E-mail is the interim route; Signal is the deferred one** ([#877](https://github.com/enorm-labs/event-junkie/issues/877)). The prepaid-SIM registration
+failed, and the route now waits for `signal-cli` to link to an account registered without a phone number. The staging bridge stays deployed and
+unregistered until then. The e-mail template carries only the alert name, the stream, the value and the environment, so the mail holds nothing the Signal
+reasoning in PLATFORM_SETUP §4.1 was protecting.
+
+**OpenObserve's SSRF guard applies to webhook destinations only**, and two flags govern it (`config.rs:1177`). They are not equivalent:
 
 |                          |                                                                                    |
 | ------------------------ | ---------------------------------------------------------------------------------- |
@@ -164,16 +184,16 @@ any destination that resolves inside the cluster. Two flags govern it (`config.r
 | `ZO_SKIP_SSRF_CHECKS`    | removes the check for **every** destination. Set on staging, with the policy below |
 
 On staging the guard is off and the containment is the network: `deploy/clusters/staging/observability-netpol.yaml` lets the OpenObserve pod reach CoreDNS,
-the public internet on 443 (Hetzner Object Storage) and `signal-cli:8080`, and nothing else. PostgreSQL on the private network, the Kubernetes API, the kubelet
-and every other pod are unreachable from it, so a destination aimed at them fails at the network rather than at a check somebody can turn off. A URL allowlist
-inside a process constrains the feature; an egress policy constrains anything the pod can be made to do. Production sets neither the flag nor the allowance,
-because it has no bridge to reach; [OPENOBSERVE.md](../../docs/ops/OPENOBSERVE.md) carries the per-cluster table.
+the public internet on 443 (Hetzner Object Storage) and 465 (SMTP), and `signal-cli:8080`, and nothing else. PostgreSQL on the private network, the Kubernetes
+API, the kubelet and every other pod are unreachable from it, so a destination aimed at them fails at the network rather than at a check somebody can turn
+off. A URL allowlist inside a process constrains the feature; an egress policy constrains anything the pod can be made to do. Production sets neither the
+flag nor the bridge allowance, because it has no bridge to reach; [OPENOBSERVE.md](../../docs/ops/OPENOBSERVE.md) carries the per-cluster table.
 
 **What the policy does not fix, stated rather than glossed:** a destination may still point at any _public_ address, so whoever holds the root credential can
 exfiltrate alert bodies. That is inherent to having a webhook feature, and that credential already reads every metric and log in the system.
 
 A destination is mandatory, incidentally: `POST /api/v2/{org}/alerts` with `destinations: []` returns `Alert destination or workflows is required`, with or
-without `creates_incident`. So "rules now, delivery later" needs _a_ destination, which is why the loopback one exists.
+without `creates_incident`.
 
 ## `ej-dns-fanout` claims the fleet-wide reading, not the single venue
 

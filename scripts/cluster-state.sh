@@ -59,11 +59,11 @@ if [ "$ENVIRONMENT" = production ]; then
     NODE=ops@10.10.0.1
     DB_SSH=(ssh -i "$SSH_KEY" -o BatchMode=yes -o ConnectTimeout=10 -J "$NODE" ops@10.0.1.20)
     # cert-manager/hetzner is staging's alone: production solves HTTP-01 and holds no Hetzner token.
-    EXPECTED_SECRETS="flux-system/github-dispatch flux-system/sops-age flux-system/openobserve-credentials event-junkie/events-db event-junkie/event-junkie-images event-junkie/event-junkie-imgproxy event-junkie/event-junkie-translation"
+    EXPECTED_SECRETS="flux-system/github-dispatch flux-system/sops-age flux-system/openobserve-credentials observability/openobserve-smtp event-junkie/events-db event-junkie/event-junkie-images event-junkie/event-junkie-imgproxy event-junkie/event-junkie-translation"
 else
     NODE=ops@10.10.1.1
     DB_SSH=(ssh -i "$SSH_KEY" -o BatchMode=yes -o ConnectTimeout=10 "$NODE")
-    EXPECTED_SECRETS="flux-system/github-dispatch flux-system/sops-age flux-system/openobserve-credentials event-junkie/events-db event-junkie/event-junkie-images event-junkie/event-junkie-imgproxy event-junkie/event-junkie-translation cert-manager/hetzner"
+    EXPECTED_SECRETS="flux-system/github-dispatch flux-system/sops-age flux-system/openobserve-credentials observability/openobserve-smtp event-junkie/events-db event-junkie/event-junkie-images event-junkie/event-junkie-imgproxy event-junkie/event-junkie-translation cert-manager/hetzner"
 fi
 
 NODE_SSH=(ssh -i "$SSH_KEY" -o BatchMode=yes -o ConnectTimeout=10 "$NODE")

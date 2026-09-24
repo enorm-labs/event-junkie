@@ -21,6 +21,7 @@
 #     otel-operator    -> apiserver:6443            reconciling the two collector CRs
 #     postgres-exporter-> 10.0.1.20:5432            the only pod here that may reach the private network
 #     OpenObserve      -> the internet:443          Hetzner Object Storage, where the data lives
+#     OpenObserve      -> the internet:465          SMTP, the e-mail alert destination (#877)
 #     everything       -> CoreDNS:53
 #
 # **Two selector hazards, both silent.** The operator labels both collector pods
@@ -316,7 +317,7 @@ metadata:
   namespace: observability
   annotations:
     kubernetes.io/description: >-
-      Bounds what OpenObserve may connect to. Object storage and nothing else — the Signal bridge staging also allows is not deployed here (#877).
+      Bounds what OpenObserve may connect to. Object storage and SMTP for the e-mail alerts, nothing else — the Signal bridge staging also allows is not deployed here (#877).
 spec:
   podSelector:
     matchLabels:
@@ -328,7 +329,7 @@ spec:
     # cluster, and the only switch that unblocks it, `ZO_SKIP_SSRF_CHECKS`, removes the check for every
     # destination — so the control moved from the application to the network. **A URL allowlist inside a
     # process is advisory, an egress policy is not.** On production that switch is not set; both
-    # controls are in force, and this policy is the one that stays true when #877 sets the flag.
+    # controls are in force, and this policy is the one that stays true if the Signal route ever sets it.
     #
     # Hetzner Object Storage, `fsn1.your-objectstorage.com` (ADR-015). **By exclusion rather than by
     # address**: the endpoint is a CDN name whose addresses change. Excluded is every RFC1918 range and
@@ -345,9 +346,24 @@ spec:
         - protocol: TCP
           port: 443
 
+    # SMTP submission for the e-mail alert destination (#877): `mail.your-server.de` on 465, implicit TLS.
+    # By exclusion rather than by address, like the rule above: a shared webhosting name whose addresses
+    # are Hetzner's to change.
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+            except:
+              - 10.0.0.0/8
+              - 172.16.0.0/12
+              - 192.168.0.0/16
+              - 169.254.0.0/16
+      ports:
+        - protocol: TCP
+          port: 465
+
     # **No in-cluster destination, deliberately.** Production has no bridge to allow, and an allowance
-    # pointing at a pod that does not exist looks like the route works. #877 adds the bridge, this rule
-    # and the `ZO_SKIP_SSRF_CHECKS` flag in one change, or none of them.
+    # pointing at a pod that does not exist looks like the route works. The deferred Signal route (#877)
+    # adds the bridge, that rule and the `ZO_SKIP_SSRF_CHECKS` flag in one change, or none of them.
 ---
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy

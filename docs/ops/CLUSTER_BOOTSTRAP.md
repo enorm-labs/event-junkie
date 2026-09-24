@@ -203,8 +203,8 @@ printf '%s\n' "$PGPASS" | ssh -i ~/.ssh/id_ed25519_hetzner ops@10.10.1.1 \
 unset PGPASS                                                          # expect: events|events
 ```
 
-`events-db` is committed encrypted and restored by Flux ([SECRETS.md](SECRETS.md)). **Six hand-made objects are left.** A rebuild that restores fewer than
-all six brings the cluster back with part of the observability stack dead and no obvious cause:
+`events-db` is committed encrypted and restored by Flux ([SECRETS.md](SECRETS.md)). **Seven hand-made objects are left.** A rebuild that restores fewer than
+all seven brings the cluster back with part of the observability stack dead and no obvious cause:
 
 | Secret                    | Namespace       | Recreated from                                  | In this document                                  |
 | ------------------------- | --------------- | ----------------------------------------------- | ------------------------------------------------- |
@@ -214,6 +214,7 @@ all six brings the cluster back with part of the observability stack dead and no
 | `openobserve-credentials` | `flux-system`   | a **fresh** root password + an `-o2` S3 keypair | [SECRETS.md](SECRETS.md) §openobserve-credentials |
 | `openobserve-credentials` | `observability` | the same values again — see SECRETS.md on why   | as above                                          |
 | `postgres-exporter`       | `observability` | `ALTER ROLE metrics` + a new DSN                | as above                                          |
+| `openobserve-smtp`        | `observability` | the `alerts@` mailbox password                  | [SECRETS.md](SECRETS.md) §openobserve-smtp        |
 
 **Production's `openobserve-credentials` is not staging's, and that is deliberate** ([#880](https://github.com/enorm-labs/event-junkie/issues/880)). Its own
 root password and its own `-o2` S3 keypair, so either can be rotated without touching the other cluster. Copying staging's across is the shortcut that

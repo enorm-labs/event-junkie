@@ -1,6 +1,6 @@
 # The role mailboxes — ordering them at Hetzner and wiring up the DNS
 
-`hello@event-junkie.de` and `security@event-junkie.de` are **live**, on Hetzner Webhosting S. This page is how they got there and how to rebuild them. What to order, what
+`hello@event-junkie.de`, `security@event-junkie.de` and `alerts@event-junkie.de` are **live**, on Hetzner Webhosting S. This page is how they got there and how to rebuild them. What to order, what
 it costs, which DNS records carry them, and what breaks if those drift apart.
 
 ## The short version
@@ -102,6 +102,8 @@ left-hand menu is nearly empty and correctly so.
    `Accounts/mail`, per [CREDENTIALS.md](../CREDENTIALS.md).
 6. **Create `security@event-junkie.de`** the same way — a **separate mailbox, not an alias**. They have different audiences and different retention
    expectations. An alias cannot be handed to someone else later without handing over `hello@` too.
+   **Create `alerts@event-junkie.de` the same way.** OpenObserve sends the alert mail as this mailbox and to it (#877). The password also goes into the
+   `openobserve-smtp` Secret on both clusters ([SECRETS.md](SECRETS.md) §openobserve-smtp).
 7. **Set a forward on each**, to the address actually read day to day, keeping a copy on the server. It is _Kopie an_, edited on the mailbox after it exists.
    #274's "done when" is not _the mailbox exists_. It is _a test message arrives somewhere a human reads_. A mailbox that only fills up quietly fails that
    in a way nobody notices for months.
@@ -295,6 +297,9 @@ SMTP. It then waits for that message to arrive over IMAP, deletes it, and only t
 | **Secrets**           | `MAIL_PROBE_HELLO_PASSWORD` · `MAIL_PROBE_SECURITY_PASSWORD` · `HEALTHCHECKS_MAIL_HELLO_PING_URL` · `HEALTHCHECKS_MAIL_SECURITY_PING_URL` |
 | **Passwords**         | The mailbox passwords from §4, which the password manager holds under `Mailboxes/` ([CREDENTIALS.md](../CREDENTIALS.md) row 7a)           |
 | **It runs on GitHub** | The mail is on Hetzner Webhosting, not on the node. A check inside the cluster would report cluster death as mail death                   |
+
+**`alerts@` has no probe.** The alert mail itself is its test: a rule tripped on purpose must produce a mail at the forward target
+([OPENOBSERVE.md](OPENOBSERVE.md)). A quiet `alerts@` is the normal state, so silence does not show a broken forward.
 
 **It sends through Hetzner's SMTP with the mailbox credential, and that is not a convenience.** SPF authorises the hosting server and nothing else. A
 message sent from a CI runner as `hello@` fails under `p=reject` and never arrives. That false alarm has the shape of the outage itself.

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""The template and the destination this repository declares, defined once.
+"""The templates, destinations and recipient this repository declares, defined once.
 
 `apply_alerts.py` pushes these and `diff_alerts.py` compares against them, and
 **two copies of the same expected object is precisely the bug this directory has
@@ -13,6 +13,17 @@ import json
 
 TEMPLATE_NAME = "event-junkie"
 DESTINATION_NAME = "record-only"
+EMAIL_TEMPLATE_NAME = "event-junkie-email"
+EMAIL_DESTINATION_NAME = "email"
+
+# Every rule notifies both, in this order. `record-only` keeps `alert_history` the
+# queryable record of every firing; `email` is the one that reaches a person (#877).
+DESTINATIONS = [DESTINATION_NAME, EMAIL_DESTINATION_NAME]
+
+# A role mailbox that forwards to whoever is on call, so no personal address is
+# written here or stored in OpenObserve. It is also the SMTP sender in both
+# clusters' `openobserve.yaml`.
+ALERT_RECIPIENT = "alerts@event-junkie.de"
 
 
 def template_body(environment):
@@ -70,4 +81,53 @@ def destination_payload(org, auth):
         "skip_tls_verify": False,
         "template": TEMPLATE_NAME,
         "headers": {"Authorization": auth},
+    }
+
+
+def email_template_payload(environment):
+    """The e-mail a firing becomes. `title` is the subject line.
+
+    OpenObserve sends the body as both the plain-text and the HTML part, so it is one
+    line: a line break in the plain part collapses in the HTML one. The environment
+    leads the subject, because it is the only field that says which cluster is broken
+    (#928).
+    """
+    return {
+        "name": EMAIL_TEMPLATE_NAME,
+        "type": "email",
+        "title": "[event-junkie %s] {alert_name}" % environment,
+        "body": (
+            "{alert_name} fired on %s. Stream {stream_name}, value {value}. "
+            "The row is in the alert_history stream; docs/ops/OPENOBSERVE.md says how to read it." % environment
+        ),
+    }
+
+
+def email_destination_payload():
+    """Where a firing reaches a person.
+
+    **OpenObserve refuses a recipient that is not a user of the org** (`UserNotPermitted`,
+    `core/src/alerts/destinations.rs` in 1.0.1), and refuses the destination outright
+    while `ZO_SMTP_ENABLED` is false. `recipient_user_payload` is what satisfies the first.
+    """
+    return {
+        "name": EMAIL_DESTINATION_NAME,
+        "type": "email",
+        "emails": [ALERT_RECIPIENT],
+        "template": EMAIL_TEMPLATE_NAME,
+    }
+
+
+def recipient_user_payload(password):
+    """The org user that makes `ALERT_RECIPIENT` a permitted recipient.
+
+    `viewer` is read-only. The password is random, generated per run and never
+    stored: nobody logs in as this user, and it exists only for the recipient check.
+    """
+    return {
+        "email": ALERT_RECIPIENT,
+        "first_name": "Alerts",
+        "last_name": "Event Junkie",
+        "password": password,
+        "role": "viewer",
     }

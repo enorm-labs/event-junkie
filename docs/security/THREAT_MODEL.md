@@ -87,7 +87,7 @@ flowchart LR
 | `main`                         | What lands there is what runs on the cluster, after `release.yml` and Flux                                                                 | GitHub, ruleset `main`                                         |
 | The published chart and images | Flux pulls them by semver range, anonymously, and runs what it gets                                                                        | `ghcr.io/enorm-labs/`                                          |
 | The database                   | Every event, venue and artist. A `--full` re-seed rebuilds it from the venues, [RESTORE_RUNBOOK.md](../ops/RESTORE_RUNBOOK.md) restores it | PostgreSQL on the private network, backups in Object Storage   |
-| The nine cluster secrets       | Each has its own exposure cost, listed in [SECRETS.md](../ops/SECRETS.md)                                                                  | Per cluster. `events-db` in git under SOPS, the rest hand-made |
+| The ten cluster secrets        | Each has its own exposure cost, listed in [SECRETS.md](../ops/SECRETS.md)                                                                  | Per cluster. `events-db` in git under SOPS, the rest hand-made |
 | The Hetzner token              | Read and write on every server, volume and firewall in the project                                                                         | Staging's `cert-manager` namespace, the operator's Keychain    |
 | `github-dispatch`              | `contents: write` on this repository. The one secret that cannot be regenerated                                                            | `flux-system` on each cluster                                  |
 | The domain and its certificate | `event-junkie.de`, HSTS pinned for a year                                                                                                  | Hetzner DNS, cert-manager                                      |
@@ -209,7 +209,7 @@ The importer is the one workload that talks to the open internet. Everything it 
 | A node compromise on staging yields the Hetzner token         | E      | low        | high   | Accepted. DNS-01 needs it and Hetzner tokens are project-wide. `infra/AGENTS.md` records the choice. Staging is tunnel-only                                                        |
 | Alerting dies with the node it watches                        | D      | low        | medium | Mitigated. healthchecks.io and Better Stack run outside. Silence is the alarm ([HEALTHCHECKS.md](../ops/HEALTHCHECKS.md))                                                          |
 | A ping URL leaks and silences an alarm                        | S      | low        | medium | Mitigated. Ping URLs live on the node only, never in git                                                                                                                           |
-| An in-cluster rule fires and nobody is told                   | D      | medium     | medium | Accepted until #877. Every rule in `deploy/alerts/alerts.json` routes to `record-only`, a row in `alert_history`, not a person. The external layer above is what reaches one today |
+| An in-cluster rule fires and nobody is told                   | D      | low        | medium | Mitigated. Every rule in `deploy/alerts/alerts.json` mails `alerts@` and writes a row in `alert_history`. `apply.sh --diff` reports a missing mail destination or recipient (#877) |
 
 ### B9 · Agent workflows → repository
 

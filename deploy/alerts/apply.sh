@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Push the #271 alert rules into OpenObserve, or check that they can fire at all.
+# Push the #271 alert rules and their e-mail route (#877) into OpenObserve, or check that they can fire at all.
 #
 # Alerts are API objects, not Kubernetes ones, so Flux cannot reconcile them —
 # the same seam `../dashboards/apply.sh` sits on, with the same consequence:
@@ -113,7 +113,7 @@ ssh_node "
 
 cat <<EOF
 
-Firings land in the \`alert_history\` stream, because delivery waits on #271 item 4:
+Each firing mails alerts@event-junkie.de and lands as a row in the \`alert_history\` stream:
   kubectl --context $CONTEXT -n observability port-forward svc/openobserve-openobserve-standalone 5080:5080
   http://localhost:5080/web/alerts        — the rules
   http://localhost:5080/web/logs          — stream \`alert_history\`, one row per firing

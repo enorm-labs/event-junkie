@@ -159,12 +159,11 @@ spec:
       # `400 Destination URL blocked by SSRF guard`. `config.rs:1177` offers two ways out:
       # `ZO_SSRF_ALLOW_LOOPBACK` lets the process notify itself and nothing else, `ZO_SKIP_SSRF_CHECKS`
       # removes the check for every destination. **Staging sets both. This sets only the first, and the
-      # difference is the Signal bridge** (#880): production has no bridge until #877, so its only
-      # destination is the loopback POST into its own ingest API that turns a firing into a row in
-      # `alert_history`. #877 brings the bridge, this line and the egress allowance in
-      # `observability-netpol.yaml` together, or the destination is refused — the correct answer to a
-      # webhook aimed at a pod nothing may reach. So production keeps the in-application guard as well as
-      # the egress policy. What neither fixes: a destination may still be any *public* address, inherent to
+      # difference is the Signal bridge** (#880): production has none, because the Signal route is deferred
+      # (#877). Its only webhook is the loopback POST into its own ingest API that turns a firing into a row
+      # in `alert_history`; the e-mail destination is not a webhook, and the guard does not apply to it. A
+      # bridge, this flag and its egress allowance arrive together, or not at all. So production keeps the
+      # in-application guard as well as the egress policy. What neither fixes: a destination may still be any *public* address, inherent to
       # having a webhook.
 
       # **NOT in the `config:` block above.** The chart renders its ConfigMap from the keys it knows and
@@ -172,14 +171,32 @@ spec:
       # plain environment variable anyway.
 
     extraEnv:
-      # The only destination production has, and the reason the alert rules can exist here: a POST into
-      # this pod's own ingest API. `ZO_SKIP_SSRF_CHECKS` is deliberately absent — see above.
+      # The only webhook production has: a POST into this pod's own ingest API, which records every firing.
+      # `ZO_SKIP_SSRF_CHECKS` is deliberately absent — see above.
       - name: ZO_SSRF_ALLOW_LOOPBACK
         value: "true"
       # Files older than this are read from the bucket rather than cached (#1521); the dashboards query
       # hours. Not in `config:` — the chart would drop the key.
       - name: ZO_DISK_CACHE_MAX_AGE_DAYS
         value: "3"
+      # **E-mail for the alert rules** (#877), sent as the `alerts@` role mailbox through Hetzner Webhosting
+      # (docs/ops/EMAIL.md). Port 465 makes OpenObserve use implicit TLS. The password is the hand-made
+      # `openobserve-smtp` Secret (docs/ops/SECRETS.md): without it the pod does not start.
+      - name: ZO_SMTP_ENABLED
+        value: "true"
+      - name: ZO_SMTP_HOST
+        value: "mail.your-server.de"
+      - name: ZO_SMTP_PORT
+        value: "465"
+      - name: ZO_SMTP_USER_NAME
+        value: "alerts@event-junkie.de"
+      - name: ZO_SMTP_FROM_EMAIL
+        value: "alerts@event-junkie.de"
+      - name: ZO_SMTP_PASSWORD
+        valueFrom:
+          secretKeyRef:
+            name: openobserve-smtp
+            key: ZO_SMTP_PASSWORD
 
     # The gateway's `prometheus-autodiscovery` job keys on these; without them the setting above exposes
     # metrics nothing collects.

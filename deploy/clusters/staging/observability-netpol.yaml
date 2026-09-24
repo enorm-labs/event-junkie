@@ -20,7 +20,8 @@
 #     otel-operator    -> apiserver:6443            reconciling the two collector CRs
 #     postgres-exporter-> 10.1.1.10:5432            the only pod here that may reach the private network
 #     OpenObserve      -> the internet:443          Hetzner Object Storage, where the data lives
-#     OpenObserve      -> signal-cli:8080           the alert route
+#     OpenObserve      -> the internet:465          SMTP, the e-mail alert destination (#877)
+#     OpenObserve      -> signal-cli:8080           the deferred Signal route
 #     signal-cli       -> the internet:443          Signal's servers, once registered
 #     everything       -> CoreDNS:53
 #
@@ -314,8 +315,8 @@ metadata:
   namespace: observability
   annotations:
     kubernetes.io/description: >-
-      Bounds what OpenObserve may connect to, so that disabling its in-application SSRF guard costs the cluster nothing. Object storage and the Signal bridge —
-      nothing else.
+      Bounds what OpenObserve may connect to, so that disabling its in-application SSRF guard costs the cluster nothing. Object storage, SMTP for the e-mail alerts
+      and the Signal bridge — nothing else.
 spec:
   podSelector:
     matchLabels:
@@ -343,8 +344,23 @@ spec:
         - protocol: TCP
           port: 443
 
-    # The alert route, and the only in-cluster destination this pod may reach. Dormant until the bridge
-    # has a number (#271 item 4).
+    # SMTP submission for the e-mail alert destination (#877): `mail.your-server.de` on 465, implicit TLS.
+    # By exclusion rather than by address, like the rule above: a shared webhosting name whose addresses
+    # are Hetzner's to change.
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+            except:
+              - 10.0.0.0/8
+              - 172.16.0.0/12
+              - 192.168.0.0/16
+              - 169.254.0.0/16
+      ports:
+        - protocol: TCP
+          port: 465
+
+    # The Signal route, and the only in-cluster destination this pod may reach. Dormant: the bridge has
+    # no number, and the route is deferred (#877).
     - to:
         - podSelector:
             matchLabels:

@@ -4,7 +4,7 @@ What is encrypted into git and restored by Flux, what stays hand-made and why, a
 
 ## The short version
 
-- **Nine objects.** One, `events-db`, is encrypted into git and restored by Flux. The other eight are typed by a human and exist nowhere else.
+- **Ten objects.** One, `events-db`, is encrypted into git and restored by Flux. The other nine are typed by a human and exist nowhere else.
 - **Only `github-dispatch` cannot be regenerated.** Everything else comes back from the Keychain, a local file, or an `ALTER ROLE`.
 - **A rebuild silently loses every hand-made one**, and the cluster comes back looking healthy. §8b is the same shape.
 - **`sops-age` is the whole recovery story.** The repository without it is noise.
@@ -18,7 +18,7 @@ flux --context event-junkie-staging get helmreleases -A       # a missing creden
 > decision. `github-dispatch` is the one place the "encrypt it, the value is a nuisance at worst" reasoning does not hold, because its scope is
 > `contents: write`. See the note under the table.
 
-## The nine objects, and where each comes from
+## The ten objects, and where each comes from
 
 | Secret                     | Namespace                                         | Holds                                                 | Created at                                                     |
 | -------------------------- | ------------------------------------------------- | ----------------------------------------------------- | -------------------------------------------------------------- |
@@ -31,11 +31,12 @@ flux --context event-junkie-staging get helmreleases -A       # a missing creden
 | `sops-age`                 | `flux-system`                                     | the age private key that decrypts `events-db`         | §3, below                                                      |
 | `event-junkie-images`      | `event-junkie`                                    | an S3 keypair for the cached image bucket **only**    | §event-junkie-images, below                                    |
 | `event-junkie-imgproxy`    | `event-junkie`                                    | the key and salt that sign imgproxy URLs              | §event-junkie-imgproxy, below                                  |
+| `openobserve-smtp`         | `observability`                                   | the `alerts@` mailbox password, for the alert mail    | §openobserve-smtp, below                                       |
 
-**All nine belong in that table.** Two were once documented only in their own sections below and never reached this summary. A rebuild that followed it would restore
+**All ten belong in that table.** Two were once documented only in their own sections below and never reached this summary. A rebuild that followed it would restore
 four, which is exactly the failure mode a summary exists to prevent. Add a row here in the same change that adds a secret.
 
-**Every one of these is per cluster.** The table lists nine objects, not nine values. Staging and production each hold their own copy. Two of them hold
+**Every one of these is per cluster.** The table lists ten objects, not ten values. Staging and production each hold their own copy. Two of them hold
 _different_ values on purpose: `github-dispatch`, so revoking one does not take both clusters down, and `openobserve-credentials`, since
 [#880](https://github.com/enorm-labs/event-junkie/issues/880).
 
@@ -94,7 +95,7 @@ importer calling the sidecar. imgproxy also binds `127.0.0.1`. Nothing outside t
 all, so the signature is the second lock rather than the only one.
 
 **So losing it costs nothing.** Generate a fresh pair, restart the pod, and both sides agree again.
-No stored object is signed, and no URL survives a restart. It is the least dangerous of the nine on
+No stored object is signed, and no URL survives a restart. It is the least dangerous of the ten on
 every axis, which is worth stating so a rebuild does not treat it as precious.
 
 ```sh
@@ -131,6 +132,7 @@ secret.
 | `hetzner`                  | **Read+write control of the Hetzner account** — servers, volumes, firewalls, the lot                                      | **Recommend not**                    |
 | `openobserve-credentials`  | Admin login to every log and metric, **and** Object Storage keys reaching all three buckets                               | **No** — see below                   |
 | `event-junkie-translation` | Someone else spends against one Anthropic workspace, up to its cap. No data of ours, no infrastructure                    | **No** — see below                   |
+| `openobserve-smtp`         | Mail sent as `alerts@`, and the alert mail read from that mailbox. Reset in konsoleH in a minute                          | **No** — one mailbox, two clusters   |
 
 **On `github-dispatch`.** The table's logic is exposure cost. A broken `github-dispatch` ciphertext buys `contents: write` on this repository. Under
 ADR-016, what lands on `main` is what the cluster runs, so repository write access is one branch-protection rule away from cluster access. That is the
@@ -330,38 +332,34 @@ line. **Production's is different**, which is the whole reason it is a value and
 **`sslmode=require`** rather than the libpq default of `prefer`, which silently accepts plaintext if
 the server declines TLS. On a private network that is a small risk and an even smaller cost to close.
 
-### Registering the Signal number — not a Secret, but the same shape of problem
+### `openobserve-smtp` — the password OpenObserve sends alert mail with
 
-`signal-cli`'s registration is **state on a PVC**, not a Kubernetes Secret. It behaves like a
-hand-made credential in every way that matters. Nothing in this repository creates it, no deploy
-brings it, and **losing it stops alerting silently** (PLATFORM_SETUP §5a, caveat 3).
+The password of the `alerts@event-junkie.de` mailbox (#877). OpenObserve logs in to Hetzner's SMTP with it and sends every alert mail as `alerts@`. **One
+key, the same value on both clusters**, because both send as the one mailbox. The password manager holds it under `Mailboxes/`, beside `hello@` and
+`security@` ([CREDENTIALS.md](../CREDENTIALS.md) row 7a).
 
-The pod runs, answers its health probe and sends nothing until this is done. That is precisely the
-failure the external dead-man's switch exists to catch, and the second reason that layer is not
-optional.
-
-Once the prepaid SIM exists:
+**Create it before the HelmRelease that reads it rolls out.** Each `openobserve.yaml` reads the key with a `secretKeyRef`. If the Secret is missing, the pod
+does not start, and every in-cluster alert stops with it.
 
 ```sh
-kubectl --context event-junkie-staging -n observability port-forward svc/signal-cli 8080:8080
-
-# In another shell. +49… is the SIM's number, in international format.
-curl -X POST 'http://localhost:8080/v1/register/+49XXXXXXXXX' \
-  -H 'Content-Type: application/json' -d '{"use_voice": false}'
-
-# Signal sends an SMS. Then:
-curl -X POST 'http://localhost:8080/v1/register/+49XXXXXXXXX/verify/123-456'
-
-# Prove it end to end before trusting it with an alert at 03:00:
-curl -X POST 'http://localhost:8080/v2/send' -H 'Content-Type: application/json' \
-  -d '{"message":"event-junkie alerting is alive","number":"+49XXXXXXXXX","recipients":["+49YYYYYYYYY"]}'
+printf 'alerts@ password: '; read -rs P; echo
+kubectl --context event-junkie-staging -n observability create secret generic openobserve-smtp --from-literal=ZO_SMTP_PASSWORD="$P"
+kubectl --context event-junkie-production -n observability create secret generic openobserve-smtp --from-literal=ZO_SMTP_PASSWORD="$P"
+unset P
 ```
 
-**Do the last one.** §5a is explicit: _"an alert route that never delivered a message at 23:00 is a
-hypothesis, not a route"_. This is the cheapest moment to turn it into one.
+**A rotation is three steps.** Change the password in konsoleH, patch both Secrets, and restart OpenObserve on both clusters. The process reads the value at
+start. `deploy/alerts/apply.sh --check` cannot see a wrong password, because a rule evaluates without sending. Trip a rule, or send a test from the
+destination in the UI.
 
-**Then record, in the password manager and not here:** the number, its PIN, its PUK and the top-up
-schedule. A prepaid number that lapses takes the alert channel with it, and the failure is silence.
+### Registering Signal — deferred, and not a Secret
+
+**The Signal route is deferred** ([#877](https://github.com/enorm-labs/event-junkie/issues/877)). A prepaid-SIM registration failed. The route waits for
+`signal-cli` to link to an account registered without a phone number, and the watch list is in #877. The bridge on staging is deployed and unregistered.
+
+`signal-cli`'s registration is **state on a PVC**, not a Kubernetes Secret. It behaves like a hand-made credential in every way that matters. Nothing in this
+repository creates it, no deploy brings it, and **losing it stops alerting silently** (PLATFORM_SETUP §4.1, caveat 3). Write the procedure here when the route
+is built, and prove it end to end before a rule depends on it.
 
 **Encrypt `events-db`, leave the Hetzner token hand-made.** The token is staging-only, because production solves ACME by HTTP-01 and holds no Hetzner token at
 all. It is a two-minute recreation, and it is the one credential where the rebuild-survival argument buys least and the exposure argument costs most.

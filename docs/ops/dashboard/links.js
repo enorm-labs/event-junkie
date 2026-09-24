@@ -344,10 +344,10 @@ window.EJ_LINKS = {
         {
           "url": "https://github.com/bbernhard/signal-cli-rest-api",
           "label": "github.com/bbernhard/signal-cli-rest-api",
-          "what": "The Signal alert bridge — OpenObserve webhook → signal-cli. Needs its own prepaid number",
-          "whatText": "The Signal alert bridge — OpenObserve webhook → signal-cli. Needs its own prepaid number",
-          "status": "<strong>Deployed, unregistered</strong> — no number yet (#271)",
-          "statusText": "Deployed, unregistered — no number yet (#271)"
+          "what": "The Signal alert bridge — OpenObserve webhook → signal-cli. The deferred alert route",
+          "whatText": "The Signal alert bridge — OpenObserve webhook → signal-cli. The deferred alert route",
+          "status": "<strong>Deployed on staging, unregistered</strong> — deferred (#877)",
+          "statusText": "Deployed on staging, unregistered — deferred (#877)"
         },
         {
           "url": "https://www.netdata.cloud",

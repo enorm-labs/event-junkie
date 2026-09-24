@@ -1,11 +1,11 @@
-# The Signal alert bridge — OpenObserve's webhook destination, the inner half of #271's two-layer
-# alerting. **Signal rather than Telegram** (PLATFORM_SETUP §5a): alert bodies carry venue names,
-# error strings and possibly IP addresses, and Signal is end-to-end encrypted where Telegram's Bot API
-# is plaintext to Telegram. **This layer cannot report the node being dead** — that is what
-# `site-probe.yml` and healthchecks.io are for, off Hetzner. **Registration is a manual step, once,
-# and losing it is silent**: until a real SIM and an SMS code register the number, the pod answers
-# health checks and sends nothing (docs/ops/SECRETS.md). The registration state lives on the PVC
-# below; lose the PVC and alerting stops without saying so.
+# The Signal alert bridge — deployed, unregistered and **not a destination**: the alert rules go by
+# e-mail, and the Signal route waits for numberless registration in signal-cli (#877). **Signal rather
+# than Telegram** (PLATFORM_SETUP §4.1): alert bodies carry venue names, error strings and possibly IP
+# addresses, and Signal is end-to-end encrypted where Telegram's Bot API is plaintext to Telegram.
+# **This layer cannot report the node being dead** — that is what `site-probe.yml` and healthchecks.io
+# are for, off Hetzner. **Registration is a manual step, once, and losing it is silent**: until an
+# account is registered, the pod answers health checks and sends nothing (docs/ops/SECRETS.md). The
+# registration state lives on the PVC below; lose the PVC and alerting stops without saying so.
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -67,7 +67,7 @@ spec:
           # `signal-json-rpc` daemon, so switching MODE to `json-rpc` means revisiting this decision.
           command: ["/usr/bin/signal-cli-rest-api"]
           env:
-            # `normal` is the JVM mode §5a budgeted for. `native` (GraalVM) is the lever if the node gets tight —
+            # `normal` is the JVM mode §4.1 budgeted for. `native` (GraalVM) is the lever if the node gets tight —
             # a behaviour change, not a tuning knob.
             - name: MODE
               value: "normal"
@@ -82,7 +82,7 @@ spec:
               memory: "128Mi"
               cpu: "50m"
             limits:
-              # 320Mi against §5a's ~150–250 MB, above the range: a JVM that OOMs while delivering an alert is a
+              # 320Mi against §4.1's ~150–250 MB, above the range: a JVM that OOMs while delivering an alert is a
               # failure of the thing that reports failures.
               memory: "320Mi"
               cpu: "500m"

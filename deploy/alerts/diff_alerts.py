@@ -39,10 +39,11 @@ most worth watching — including the destination, which is where a firing goes.
 The list is therefore used only to resolve name -> id, and each rule is then
 fetched individually, which returns the POST shape plus the server's additions.
 
-## The template and the destination, and the credential in one of them (#704)
+## The templates, the destinations, and the credential in one of them (#704)
 
-Both are compared too, because **the destination is where a firing goes: a wrong
-one makes every rule silently undeliverable**, which is worse than a wrong rule.
+All four are compared too, and so is the mail recipient's org membership, because
+**a destination is where a firing goes: a wrong one makes every rule silently
+undeliverable**, which is worse than a wrong rule.
 The UI still shows the alert firing and `last_satisfied_at` still advances while
 nobody is told — the combination README.md calls the worst available.
 
@@ -72,7 +73,17 @@ import re
 import subprocess
 import sys
 
-from alert_objects import DESTINATION_NAME, TEMPLATE_NAME, destination_payload, template_payload
+from alert_objects import (
+    ALERT_RECIPIENT,
+    DESTINATION_NAME,
+    EMAIL_DESTINATION_NAME,
+    EMAIL_TEMPLATE_NAME,
+    TEMPLATE_NAME,
+    destination_payload,
+    email_destination_payload,
+    email_template_payload,
+    template_payload,
+)
 
 # Tolerant of being imported with no arguments, so the comparison functions can be
 # exercised without a cluster — which is how the "a header value is never printed"
@@ -166,18 +177,25 @@ def report(label, wanted, stored, missing_note):
     return 1
 
 
-def delivery_objects():
-    """The template and the destination — what a firing is shaped like, and where it goes.
+def named(kind, name):
+    """One template or destination by name, or None when the cluster has none.
 
     Fetched by name rather than listed: both endpoints answer 404 with a body, so
     `None` here means genuinely absent rather than a parse accident.
     """
-    template = get("%s/templates/%s" % (V1, TEMPLATE_NAME))
-    destination = get("%s/destinations/%s" % (V1, DESTINATION_NAME))
-    return (
-        template if isinstance(template, dict) and template.get("name") else None,
-        destination if isinstance(destination, dict) and destination.get("name") else None,
-    )
+    stored = get("%s/%s/%s" % (V1, kind, name))
+    return stored if isinstance(stored, dict) and stored.get("name") else None
+
+
+def recipient_missing():
+    """Whether the mail recipient has stopped being an org user.
+
+    OpenObserve checks membership when the destination is saved, not when it sends,
+    so a user deleted afterwards leaves a destination that looks valid (#877).
+    """
+    users = get("http://%s:5080/api/%s/users" % (svc, org))
+    rows = users.get("data", users.get("list", [])) if isinstance(users, dict) else users
+    return not any(isinstance(row, dict) and row.get("email") == ALERT_RECIPIENT for row in rows)
 
 
 def main():
@@ -193,21 +211,37 @@ def main():
     drifted = 0
 
     # The delivery path first, because a rule that matches perfectly still tells
-    # nobody anything if these two are wrong, and that is the failure that looks
-    # most like health.
-    template, destination = delivery_objects()
+    # nobody anything if these are wrong, and that is the failure that looks most
+    # like health.
     drifted += report(
         TEMPLATE_NAME + " (template)",
         template_payload(environment),
-        template,
+        named("templates", TEMPLATE_NAME),
         "no notification template — firings would arrive shapeless, with no alert name or value",
+    )
+    drifted += report(
+        EMAIL_TEMPLATE_NAME + " (template)",
+        email_template_payload(environment),
+        named("templates", EMAIL_TEMPLATE_NAME),
+        "no e-mail template — the e-mail destination cannot render a firing",
     )
     drifted += report(
         DESTINATION_NAME + " (destination)",
         destination_payload(org, auth),
-        destination,
-        "NO DESTINATION — every rule below is undeliverable, and the UI still shows them firing",
+        named("destinations", DESTINATION_NAME),
+        "NO DESTINATION — firings are not recorded in alert_history",
     )
+    drifted += report(
+        EMAIL_DESTINATION_NAME + " (destination)",
+        email_destination_payload(),
+        named("destinations", EMAIL_DESTINATION_NAME),
+        "NO E-MAIL DESTINATION — every rule below reaches nobody, and the UI still shows them firing",
+    )
+    if recipient_missing():
+        print("%-30s MISSING     not an org user — OpenObserve will not mail it" % ALERT_RECIPIENT)
+        drifted += 1
+    else:
+        print("%-30s in sync" % (ALERT_RECIPIENT + " (user)"))
 
     for name, wanted in wanted_alerts.items():
         if name not in live:
@@ -234,10 +268,11 @@ def main():
         print("%-30s EXTRA       in the cluster, absent from alerts.json — created outside this repository?" % name)
         drifted += 1
 
-    total = len(set(wanted_alerts) | set(live)) + 2  # + the template and the destination
+    delivery = 5  # two templates, two destinations, the recipient user
+    total = len(set(wanted_alerts) | set(live)) + delivery
     print(
-        "\n%d/%d objects match this repository (%d rules, the template and the destination)"
-        % (total - drifted, total, total - 2)
+        "\n%d/%d objects match this repository (%d rules, two templates, two destinations, the recipient)"
+        % (total - drifted, total, total - delivery)
     )
     if drifted:
         print("`./apply.sh` makes the cluster match the file. Check WHY they differ before running it —")
