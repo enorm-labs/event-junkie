@@ -8,6 +8,7 @@ import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
+import io.kotest.matchers.string.shouldNotContain
 import org.jsoup.Jsoup
 import org.junit.jupiter.api.Test
 import java.math.BigDecimal
@@ -99,21 +100,27 @@ class MatrixOverviewPageScraperTest {
 
         // "► Entry : / 10,00 € Ladies / 12,00 € Gents" — the lowest tier is the "from" price…
         event.priceBoxOffice shouldBe BigDecimal("10.00")
-        // …and both tiers are kept verbatim.
-        event.priceNote shouldBe "10,00 € Ladies, 12,00 € Gents"
-        // The starred promo is a conditional discount, not the admission price.
-        event.subtitle shouldBe "Nur 5€ Eintritt für Ladies & Studenten bis 0 Uhr!"
+        // …both tiers are kept verbatim, and the starred promo names a € amount, so it follows them.
+        event.priceNote shouldBe "10,00 € Ladies, 12,00 € Gents; Nur 5€ Eintritt für Ladies & Studenten bis 0 Uhr!"
+        // The promo repeats on nearly every night: it is no subtitle, and its 5 € is no door price.
+        event.subtitle.shouldBeNull()
     }
 
     @Test
     fun `keeps a ladies-free-entry night off the free flag`() {
         val event = augustEvents.first { it.eventDate == LocalDate.of(2026, 8, 5) }
 
-        event.subtitle shouldBe "Freier Eintritt für Ladies bis 0 Uhr!"
-        // Ladies get in free until midnight; everyone else pays. Routing that line through
-        // priceNote would have detectFree() mark the whole night free at the mapping boundary.
+        // "Freier Eintritt für Ladies bis 0 Uhr!" names no € amount, so it goes nowhere. Ladies get in
+        // free until midnight; everyone else pays. In priceNote, detectFree() would mark the night free.
+        event.subtitle.shouldBeNull()
+        event.priceNote!! shouldNotContain "Freier"
         event.free shouldBe false
         event.toEventEntity(venueId = 1L, venueSlug = "matrix", eventSourceId = 1L).free shouldBe false
+    }
+
+    @Test
+    fun `stores no night's promo banner as its subtitle`() {
+        (augustEvents + septemberEvents).map { it.subtitle }.distinct() shouldContainExactly listOf(null)
     }
 
     @Test
