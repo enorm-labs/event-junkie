@@ -15,7 +15,6 @@ import org.springframework.http.MediaType
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
 import org.testcontainers.containers.MinIOContainer
-import org.testcontainers.utility.DockerImageName
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider
 import software.amazon.awssdk.core.async.AsyncRequestBody
@@ -491,7 +490,7 @@ class CachedImageServingTest : BaseControllerTest() {
         /** What imgproxy generates: 96 px cards at 2x and 3x, the poster card, then the detail column at 1x and 2x. */
         private val ALL_WIDTHS = listOf(192, 288, 512, 768, 1536)
 
-        private val minio = MinIOContainer(DockerImageName.parse("quay.io/minio/minio:RELEASE.2025-09-07T16-13-09Z").asCompatibleSubstituteFor("minio/minio"))
+        private val minio = MinIOContainer(MINIO_TEST_IMAGE)
 
         private lateinit var s3: S3AsyncClient
 

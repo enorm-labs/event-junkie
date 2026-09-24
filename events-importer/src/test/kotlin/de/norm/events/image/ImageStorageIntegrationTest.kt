@@ -10,7 +10,6 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import org.testcontainers.containers.MinIOContainer
-import org.testcontainers.utility.DockerImageName
 import software.amazon.awssdk.core.async.AsyncResponseTransformer
 import software.amazon.awssdk.services.s3.S3AsyncClient
 import software.amazon.awssdk.services.s3.model.CreateBucketRequest
@@ -25,7 +24,7 @@ import software.amazon.awssdk.services.s3.model.GetObjectRequest
  */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class ImageStorageIntegrationTest {
-    private val minio = MinIOContainer(DockerImageName.parse("quay.io/minio/minio:RELEASE.2025-09-07T16-13-09Z").asCompatibleSubstituteFor("minio/minio"))
+    private val minio = MinIOContainer(MINIO_TEST_IMAGE)
 
     private lateinit var client: S3AsyncClient
     private val properties = ImageStorageProperties(bucket = "images", prefix = "staging")
