@@ -63,6 +63,18 @@ fun parsePriceValue(text: String?): BigDecimal? {
 }
 
 /**
+ * Parses the first price whose currency is spelled out, as in "69,90 EUR" (Gambio shops, Wuhlheide).
+ * The `€`-anchored [parsePriceValue] misses that spelling. Returns `null` when no value is found.
+ */
+fun parseEurCodePrice(text: String?): BigDecimal? =
+    EUR_CODE_PRICE_PATTERN
+        .find(text.orEmpty())
+        ?.groupValues
+        ?.get(1)
+        ?.replace(',', '.')
+        ?.toBigDecimalOrNull()
+
+/**
  * Matches a price value with an optional decimal part, e.g. "39,90€", "35.20€",
  * "53€", or "30,00&nbsp;€". The character class also accepts a non-breaking
  * space, which some themes (Lido) place between the amount and the euro sign.
@@ -71,3 +83,6 @@ private val PRICE_PATTERN = Regex("""(\d+(?:[.,]\d{1,2})?)[\s\u00a0]*€""")
 
 /** Matches the standalone "AK" (Abendkasse) token, so labels like "VVK" don't false-match on the letters. */
 private val AK_LABEL_PATTERN = Regex("""\bak\b""")
+
+/** A price value followed by the spelled-out currency code, e.g. "13,00 EUR". */
+private val EUR_CODE_PRICE_PATTERN = Regex("""(\d+(?:[.,]\d{1,2})?)\s*EUR""", RegexOption.IGNORE_CASE)

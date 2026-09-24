@@ -58,4 +58,12 @@ class PriceParsingExtensionsTest {
         empty.first.shouldBeNull()
         empty.second.shouldBeNull()
     }
+
+    @Test
+    fun `parseEurCodePrice reads a price whose currency is spelled out`() {
+        parseEurCodePrice("13,00 EUR") shouldBe BigDecimal("13.00")
+        parseEurCodePrice("Preis: 69.90 eur") shouldBe BigDecimal("69.90")
+        parseEurCodePrice("13,00 €").shouldBeNull()
+        parseEurCodePrice(null).shouldBeNull()
+    }
 }
