@@ -3,9 +3,7 @@
 Thanks for using Event Junkie. This file is the map: it says where each kind of question goes, and what to expect once it gets there. Everything here is free
 and voluntary — there is no paid tier and no support contract.
 
-> **The site is not public yet.** Event Junkie is deployed, but production serves nothing until the domain is pointed at it at go-live
-> (see [README §Status](./README.md#status)). So "the site is down" is not yet a thing that can happen,
-> and questions today are mostly about the code, the data model, or running it locally.
+The site is live at <https://event-junkie.de> and is in beta (see [README §Status](./README.md#status)).
 
 ## Where to go
 
@@ -20,10 +18,9 @@ and voluntary — there is no paid tier and no support contract.
 | **Ask for your name or details to be removed**    | **hello@event-junkie.de**, or [the same private form](https://github.com/enorm-labs/event-junkie/security/advisories/new) — see [below](#artists-organisers-and-venues)                  |
 | **Contribute code**                               | [CONTRIBUTING.md](./CONTRIBUTING.md)                                                                                                                                                     |
 
-**Questions go to Discussions, not the issue tracker.** Not to keep them at arm's length — a question is a conversation, whereas an issue is a unit of work that
-can be closed. A discussion that turns out to be actionable gets converted into an issue, so nothing is lost by starting there. Blank issues are disabled for
-the same reason; the forms ask for the one thing that makes a report actionable (which event, which venue, which URL), and asking afterwards usually loses the
-reporter.
+**Questions go to Discussions, not the issue tracker.** An issue is a unit of work that can be closed, and a question usually is not. A discussion that turns
+out to be actionable gets converted into an issue, so nothing is lost by starting there. Blank issues are disabled: the forms ask for the one thing that
+makes a report actionable (which event, which venue, which URL), and asking afterwards usually loses the reporter.
 
 ## The most useful thing you can report
 
@@ -35,7 +32,7 @@ reproduce first.
 
 ## What to expect
 
-A single person maintains this in their own time. The honest version rather than a service-level promise:
+A single person maintains this in their own time, so there is no service-level promise. What you can expect:
 
 - **A reply within a few days**, usually sooner. If a week passes with nothing, assume the notification was missed and say so on the thread — a nudge is
   welcome, not rude.

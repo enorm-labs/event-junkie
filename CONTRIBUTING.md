@@ -1,7 +1,6 @@
 # Contributing to Event Junkie
 
-Thanks for looking. This is a small project maintained by one person, so this file is short and tries to be honest about what contribution actually looks like
-here rather than describing a process that does not exist.
+Thanks for looking. This is a small project maintained by one person. This file describes how contribution works here today, and nothing more.
 
 By taking part you agree to the [Code of Conduct](./CODE_OF_CONDUCT.md).
 
@@ -18,15 +17,15 @@ wrong for weeks without noticing. Nobody sees that faster than someone who went 
 Two things go **privately** instead: [security problems](./SECURITY.md), and artists or organisers asking for their name or details to be removed — you do not
 need a reason and you should not have to ask in public.
 
-Questions and product ideas belong in [Discussions](https://github.com/enorm-labs/event-junkie/discussions) rather than the issue tracker — they are
-conversations rather than units of work, and one that turns out to be actionable can be converted into an issue, so nothing is lost by starting there.
+Questions and product ideas belong in [Discussions](https://github.com/enorm-labs/event-junkie/discussions), not the issue tracker. A discussion that turns
+out to be actionable can be converted into an issue, so nothing is lost by starting there.
 
 ## Before you write code
 
-**Open an issue first** for anything beyond a small fix. Not bureaucracy — this project has a strong opinion about how importers, modules and the data model fit
-together, and a pull request that cuts across that is painful to review and disheartening to receive back. A short conversation first saves your evening.
+**Open an issue first** for anything beyond a small fix. This project has strong opinions about how importers, modules and the data model fit together, and a
+pull request that cuts across them is hard to review and discouraging to get back. A short conversation first saves your evening.
 
-Pick whichever form fits; the forms set the labels and the issue type, so there is nothing to add by hand. Issues labelled
+The visitor forms (wrong data, venue, bug) set the labels and the issue type, so there is nothing to add by hand. Issues labelled
 [`good first issue`](https://github.com/enorm-labs/event-junkie/labels/good%20first%20issue) are the ones picked out as a sensible place to start.
 
 ## Getting set up
@@ -53,8 +52,8 @@ A few that catch people out:
   become three commits on `main` for good. Fold review fixes into the commit (`git commit --amend`, then `git push --force-with-lease`) and keep the commit
   message, the PR title and the PR description saying the same thing.
 - **`Closes #<n>` in the PR body**, on its own line, when the change finishes an issue. Merging then closes the issue and moves it on the project board.
-- **Leave the version alone.** It lives in `gradle.properties` and is mirrored into three other files by `scripts/version.sh`, which the release workflow
-  drives. A pull request never bumps it.
+- **Leave the version alone.** No file carries it: a build computes it from the release tags and the commits since the last one
+  ([ADR-032](./docs/adr/ADR-032_VERSION_FROM_TAGS.md)). The `version=0.0.0-SNAPSHOT` in `gradle.properties` is a placeholder for local builds.
 - **Reformatting is intentional.** If `ktlintFormat` or `npm run format` rewrites a file, leave it; do not revert it as noise.
 
 ## Adding an importer
@@ -88,9 +87,9 @@ with "Rebase and merge", and a merge commit blocks the button.
 
 ### What CI will and will not run on your pull request
 
-Worth knowing before a red check makes you think you broke something. **Fourteen checks are required**,
-and all fourteen run on a fork's pull request exactly as they do on ours — none of them needs a secret
-or a token that can write:
+Worth knowing before a red check makes you think you broke something. **Every required check runs on
+a fork's pull request** exactly as it does on ours. None of them depends on a secret, and none needs
+your pull request to hold a token that can write:
 
 ```
 Build & Test (backend | frontend)                   Gradle, and the Vite + Playwright matrix
@@ -101,7 +100,12 @@ ShellCheck cloud-init
 Analyze (actions | javascript-typescript | java-kotlin)    CodeQL
 Dependency Review
 Check the notices against the dependencies          the open-source notices file is current
+Apply Conventional Commits labels                   the PR title, see Conventions above
+Merge gate                                          passes for a person; it holds back unlisted bots
 ```
+
+**The first run needs the maintainer's approval.** GitHub holds the workflows of a first-time
+contributor's pull request until a maintainer approves the run. Nothing is wrong while the checks wait.
 
 That was verified rather than assumed, on 2026-08-19, by opening the repository's first fork pull
 request and merging it (#579).
@@ -136,7 +140,7 @@ which no pull request triggers. Nothing else here reads a secret on a pull reque
 ## Before opening a pull request
 
 ```bash
-./gradlew ktlintCheck detekt build koverLog      # compiles, tests, ktlint, detekt, coverage
+./gradlew ktlintCheck detekt detektMain detektTest build koverLog -PwarningsAsErrors   # as CI runs it
 cd events-frontend
 npm run type-check && npm run lint && npm run test:unit -- --run && npm run test:e2e -- --project=chromium
 cd ..
@@ -158,6 +162,8 @@ The pull request template asks two questions that are easy to skip and expensive
   ([English](./events-frontend/src/views/legal/PrivacyView.en.vue), [German](./events-frontend/src/views/legal/PrivacyView.de.vue)). The list of triggers is in
   [AGENTS.md](./AGENTS.md#privacy--gdpr--re-check-when-infrastructure-or-features-change) — they rarely look like privacy work.
 - **Accessibility.** The project targets WCAG 2.1 AA, and both the linter and an axe sweep enforce it. Do not disable a rule to go green.
+
+For an importer change it also asks whether existing rows need a `--full` re-seed and a diff, the same question the importer-defect form asks.
 
 ## Licensing
 
