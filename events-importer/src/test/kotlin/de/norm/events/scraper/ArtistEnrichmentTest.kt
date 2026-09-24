@@ -254,6 +254,44 @@ class ArtistEnrichmentTest {
     }
 
     @Test
+    fun `a capital Geboren is a title, not birth data, so both of Unheilig's leads land`() {
+        val de =
+            "Unheilig ist eine deutsche Musikgruppe aus Aachen, die 1999 um den Sänger und Songschreiber Der Graf entstand. " +
+                "Der größte Erfolg der Band ist das Album Große Freiheit aus dem Jahr 2010 mit der Singleauskopplung Geboren um zu leben."
+        val en =
+            "Unheilig is a German band that combines a number of musical styles, including pop and electronic as well as hard rock. " +
+                "It was founded in Aachen in 1999 and principally consists of vocalist Bernd \"Der Graf\" Heinrich, along with various musicians."
+        val filled =
+            ArtistEnrichment.fill(
+                row(name = "Unheilig"),
+                entity("neubauten"),
+                null,
+                maxBytes,
+                listOf(wikipedia(text = de), wikipedia(text = en, language = "en"))
+            )
+
+        filled.descriptionRefusals.shouldBeEmpty()
+        filled.columns["description"] shouldBe de
+        filled.columns["description_alt"] shouldBe en
+    }
+
+    @Test
+    fun `a member's birthplace or a German birth clause is still birth data, wherever the date stands`() {
+        listOf(
+            "Los Bitchos is a pan-continental band based in London, England. The band consists of Western Australian-born Serra Petale " +
+                "(guitar), Swede Josefine Jonsson, and South London-born Nic Crawshaw.",
+            "The Temperance Movement are a British blues rock supergroup formed in 2011 by Glasgow-born vocalist Phil Campbell " +
+                "and guitarists Luke Potashnick and Paul Sayer.",
+            "Die Band gründete der Sänger Max Muster, der 1970 in Hamburg geboren wurde, gemeinsam mit zwei Schulfreunden aus Altona.",
+            "Die Band spielt Rock aus Köln. Geboren am 3. Mai 1980 in Köln, gründete ihr Sänger sie nach dem Studium mit zwei Freunden.",
+            "Die Band gründete die Sängerin Anna Schmidt geb. Müller gemeinsam mit ihrem Bruder, und sie spielt seitdem Folk in Leipzig."
+        ).forEach { lead ->
+            val filled = ArtistEnrichment.fill(row(name = "Einstürzende Neubauten"), entity("neubauten"), null, maxBytes, listOf(wikipedia(text = lead)))
+            filled.descriptionRefusals shouldContainExactly listOf("birth-data")
+        }
+    }
+
+    @Test
     fun `a lead shorter than a sentence of substance is refused as short`() {
         val lead = "Einstürzende Neubauten ist eine deutsche Band aus Berlin."
         val filled = ArtistEnrichment.fill(row(name = "Einstürzende Neubauten"), entity("neubauten"), null, maxBytes, listOf(wikipedia(text = lead)))
