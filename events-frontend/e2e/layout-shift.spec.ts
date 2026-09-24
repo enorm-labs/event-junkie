@@ -9,8 +9,11 @@ import { expect, type Page, type Route, test } from '@playwright/test'
 // eslint-disable-next-line playwright/no-skipped-test -- the Layout Instability API is Chromium's alone
 test.skip(({ browserName }) => browserName !== 'chromium', 'layout-shift entries are Chromium-only')
 
-/** Google's line for a good score. */
-const GOOD_CLS = 0.1
+/**
+ * A tenth of Google's 0.1 line. The mocks leave a fixed page at about 0.001, and the filter bar's
+ * wrap scored 0.07: a budget of 0.1 would not see it (#1830).
+ */
+const BUDGET = 0.02
 
 /** A 1x1 PNG, so every card renders a real `<picture>` without a backend or a fixture file. */
 const PIXEL = Buffer.from(
@@ -26,6 +29,19 @@ const events = Array.from({ length: 20 }, (_, i) => ({
   imageUrl: `/api/images/shift-${i + 1}/512.png`,
   venue: { slug: 'mock-venue', name: 'Mock Venue', city: 'Berlin' },
 }))
+
+/** The longest names on staging: the venue select grows to the widest option. */
+const venues = [
+  "Monster Ronson's Ichiban Karaoke",
+  'Eschschloraque Rümschrümp',
+  'Berghain / Panorama Bar',
+  'Kulturhaus Insel Berlin',
+].map((name) => ({ slug: name.toLowerCase().replace(/\W+/g, '-'), name, city: 'Berlin' }))
+
+const genres = [
+  { slug: 'progressive-psytrance', name: 'Progressive Psytrance', family: 'electronic' },
+  { slug: 'techno', name: 'Techno', family: 'electronic' },
+]
 
 function json(route: Route, body: unknown, delayMs = 0): Promise<void> {
   const fulfil = () =>
@@ -54,9 +70,10 @@ test.beforeEach(async ({ page }) => {
   await page.route(/\/api\/events\/shift-gig-1$/, (route) =>
     json(route, { ...events[0], intrinsicWidth: 800, intrinsicHeight: 1000 }, 500),
   )
-  await page.route(/\/api\/genres/, (route) => json(route, []))
+  // After the events, as on staging: the options change the bar's size under a rendered grid.
+  await page.route(/\/api\/genres/, (route) => json(route, genres, 800))
   await page.route(/\/api\/venues/, (route) =>
-    json(route, { content: [], page: 0, size: 500, totalElements: 0, totalPages: 0 }),
+    json(route, { content: venues, page: 0, size: 500, totalElements: 4, totalPages: 1 }, 800),
   )
 })
 
@@ -76,16 +93,24 @@ async function cumulativeShift(page: Page): Promise<number> {
   )
 }
 
-test('the events list does not move when its results arrive', async ({ page }) => {
-  await page.goto('/events')
-  await expect(page.getByRole('heading', { level: 2, name: 'Shift Gig 20' })).toBeVisible()
+for (const [label, path] of [
+  ['', '/events'],
+  [', with a genre family chosen', '/events?family=electronic'],
+]) {
+  test(`the events list does not move when its results and filters arrive${label}`, async ({
+    page,
+  }) => {
+    await page.goto(path)
+    await expect(page.getByRole('heading', { level: 2, name: 'Shift Gig 20' })).toBeVisible()
+    await expect(page.locator('option', { hasText: 'Ichiban Karaoke' })).toBeAttached()
 
-  expect(await cumulativeShift(page)).toBeLessThan(GOOD_CLS)
-})
+    expect(await cumulativeShift(page)).toBeLessThan(BUDGET)
+  })
+}
 
 test('an event page does not move when its event arrives', async ({ page }) => {
   await page.goto('/events/shift-gig-1')
   await expect(page.getByRole('heading', { level: 1, name: 'Shift Gig 1' })).toBeVisible()
 
-  expect(await cumulativeShift(page)).toBeLessThan(GOOD_CLS)
+  expect(await cumulativeShift(page)).toBeLessThan(BUDGET)
 })
