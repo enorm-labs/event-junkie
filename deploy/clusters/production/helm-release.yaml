@@ -34,11 +34,8 @@ spec:
       # false, so remediation runs between attempts and never after the final one (#414).
       remediateLastFailure: true
     cleanupOnFail: true
-  # **Off for one upgrade, back on in the next PR.** The go-live upgrade moves the Ingress to the apex,
-  # and the k6 hook verifies TLS about ten seconds later, while HTTP-01 still needs a minute. It failed
-  # three times on Traefik's default certificate, and each rollback undid the certificate request.
   test:
-    enable: false
+    enable: true
     timeout: 3m
   rollback:
     cleanupOnFail: true
