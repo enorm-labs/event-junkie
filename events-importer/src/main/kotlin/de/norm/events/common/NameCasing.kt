@@ -8,7 +8,7 @@ package de.norm.events.common
 // title-cases a shouted word and leaves four kinds of token alone:
 //   - tokens already carrying a lowercase letter, so intentional styling survives ("DJ Koze",
 //     "will.i.am", "GoGo");
-//   - tokens with a digit or an interior "." / "/" — stylised names and dotted initialisms rather
+//   - tokens with a digit or a "." / "/" / "$" — stylised names and dotted initialisms rather
 //     than plain words ("MC5", "AC/DC", "R.E.M.");
 //   - recognised acronyms in [ACRONYMS], so "DJ KOZE" becomes "DJ Koze" and not "Dj Koze", and
 //     "TV NOIR" becomes "TV Noir" and not "Tv Noir";
@@ -20,8 +20,19 @@ package de.norm.events.common
 // lookup table — extend [ACRONYMS] when a real act or promoter needs its capitals kept. Display-only
 // either way: slugs are case-insensitive, so the resolved row is unaffected.
 
-/** Title-cases a shouted word (see [isShoutedWord]); returns any other token unchanged. */
-fun String.deshoutWord(): String = if (isShoutedWord()) titleCaseKeepingPunctuation() else this
+/**
+ * Title-cases a shouted word (see [isShoutedWord]); returns any other token unchanged. A hyphen
+ * joins words, so each part is de-shouted on its own: "K-POP" to "K-Pop", "DJ-SLOT" to "DJ-Slot"
+ * (#1846). A token with a digit or a stylising character stays whole, as before ("BLINK-182").
+ */
+fun String.deshoutWord(): String =
+    when {
+        any { it.isDigit() || it in STYLISED_CHARS } -> this
+        '-' in this -> split('-').joinToString("-") { it.deshoutPart() }
+        else -> deshoutPart()
+    }
+
+private fun String.deshoutPart(): String = if (isShoutedWord()) titleCaseKeepingPunctuation() else this
 
 /**
  * Whether the token is a short initialism to keep verbatim: only letters, no lowercase, and at
@@ -37,7 +48,7 @@ private const val SHORT_INITIALISM_MAX_LEN = 2
 
 /**
  * A token is a shouted word — safe to title-case — when it has letters, no lowercase, no
- * digit or interior "." / "/" (which mark stylised names and dotted initialisms), and is not
+ * digit or "." / "/" / "$" (which mark stylised names and dotted initialisms), and is not
  * a recognised acronym. Punctuation like apostrophes, parentheses, "!" or "," does not exempt
  * it, so possessives and bracketed words de-shout too ("MURPHY'S" -> "Murphy's").
  */
@@ -61,8 +72,8 @@ private fun String.titleCaseKeepingPunctuation(): String {
     }
 }
 
-/** Interior characters that mark a token as a stylised name or dotted initialism, not a plain word. */
-private val STYLISED_CHARS = setOf('.', '/')
+/** Characters that mark a token as a stylised name or dotted initialism, not a plain word ("$ONO$"). */
+private val STYLISED_CHARS = setOf('.', '/', '$')
 
 /**
  * Acronyms/initialisms kept in their capitals when they appear as a standalone word,
@@ -88,10 +99,14 @@ private val ACRONYMS: Set<String> =
         "EDM",
         "DIY",
         "RIP",
+        "FX",
         // Act names that are themselves initialisms — kept in caps so they aren't flattened.
         "FKJ",
         "AZ",
         "DBG",
+        "LSD",
+        "SDP",
+        "UFO",
         // A DJ handle that is the act's own initials; without an entry the two-token
         // "DJ JC" reads as a shouted word and de-shouts to "DJ Jc" (the standalone
         // short-initialism rule only covers a single-token name).
