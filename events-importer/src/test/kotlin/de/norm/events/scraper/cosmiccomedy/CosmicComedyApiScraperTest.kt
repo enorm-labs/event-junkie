@@ -33,6 +33,15 @@ class CosmicComedyApiScraperTest {
     private val pageTwo: CosmicComedyPage by lazy { scraper.scrapePage(readFixture("cosmiccomedy-events-page2.json")) }
     private val events: List<ScrapedEvent> by lazy { pageOne.events + pageTwo.events }
 
+    /**
+     * The two events that decide whether a `Comedy Special` names an act, captured verbatim from
+     * the live endpoint: the house night filed as both a special and a showcase, and a real
+     * comedian's special filed without one.
+     */
+    private val showcaseSpecial: List<ScrapedEvent> by lazy {
+        scraper.scrapePage(readFixture("cosmiccomedy-events-showcase-special.json")).events
+    }
+
     private fun event(sourceId: String): ScrapedEvent = events.first { it.sourceId == sourceId }
 
     @Test
@@ -101,6 +110,22 @@ class CosmicComedyApiScraperTest {
         // "Comedy, Pizza and Shots – SHOWCASE FRIDAY" names a series, not an act.
         event("cosmic_comedy:comedy-pizza-and-shots-showcase-friday-17").artists.shouldBeEmpty()
         event("cosmic_comedy:comedy-pizza-and-shots-open-mic-thursday-6").artists.shouldBeEmpty()
+    }
+
+    @Test
+    fun `leaves a special that is also a showcase without an artist`() {
+        // The club filed one edition of its house night as a Comedy Special as well, and the part
+        // before the dash was stored as the act "Laughs, Pizza & Shots" (#1789).
+        val showcase = showcaseSpecial.first { it.sourceId == "cosmic_comedy:65129" }
+        showcase.title shouldBe "Laughs, Pizza & Shots – English Comedy Night in the Heart of Berlin!"
+        showcase.artists.shouldBeEmpty()
+    }
+
+    @Test
+    fun `still names the performer on a special that is not a showcase`() {
+        // The control from the same payload: the pair of categories decides, not the Special alone.
+        val special = showcaseSpecial.first { it.sourceId == "cosmic_comedy:turbopaolo-il-poliziotto-del-formaggio-2026" }
+        special.artists.single().name shouldBe "TURBOPAOLO"
     }
 
     @Test
