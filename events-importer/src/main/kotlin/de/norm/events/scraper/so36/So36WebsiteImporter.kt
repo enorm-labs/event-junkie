@@ -20,7 +20,7 @@ import org.springframework.stereotype.Component
  * 2. [So36OverviewPageScraper] discovers every event and its detail URL (plus fallback title and date).
  * 3. Each `/produkte/…` detail page via [HtmlFetcher].
  * 4. [So36DetailPageScraper] — primary for type, subtitle, times, description, image, price,
- * ticket link and status.
+ * free admission, ticket link, promoter and status.
  *
  * @see So36OverviewPageScraper for overview parsing (discovery, fallback data).
  * @see So36DetailPageScraper for detail parsing (the primary per-event source).
@@ -64,8 +64,8 @@ val SO36_LIMITATIONS =
     VenueLimitations(
         EventSource.SO36,
         AcceptedLimitation(
-            LimitedAspect.PRICE_BOX_OFFICE,
-            "the shop publishes the presale price as microdata and does not expose a box-office price structurally"
+            LimitedAspect.PRICE,
+            "the shop exposes only a presale price as microdata, so a door-only event carries no figure at all"
         ),
         AcceptedLimitation(
             LimitedAspect.SOLD_OUT,

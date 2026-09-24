@@ -29,6 +29,8 @@ import java.time.LocalTime
  * - doors / start times (the "Einlass … Beginn …" clock line)
  * - description (`.product_description`), poster image (`og:image`)
  * - ticket price (`[itemprop=price]` content) and the external ticket-shop link
+ * - free admission (the ticket tab's `Eintritt frei / Admission free!` notice)
+ * - promoter (the `Anbieter/Veranstalter` field, `.product_merchant`)
  *
  * Only two fields come from the schema.org `Event` JSON-LD block, having no reliable HTML
  * rendering: the ISO `startDate` (four-digit, time-zoned) and the `eventStatus` (scheduled /
@@ -79,8 +81,10 @@ class So36DetailPageScraper {
             sourceId = "${EventSource.SO36.sourceIdPrefix}${extractProductId(sourceUrl)}",
             ticketUrl = document.hrefAt(".variants-listing a.btn-buyme"),
             pricePresale = parsePresalePrice(document),
+            free = document.isFreeAdmission(),
             status = mapSchemaStatus(jsonLd.eventStatus),
-            artists = parseArtists(title, subtitle, eventType)
+            artists = parseArtists(title, subtitle, eventType),
+            promoters = listOfNotNull(document.parsePromoter())
         )
     }
 
@@ -232,3 +236,25 @@ class So36DetailPageScraper {
         private val PRODUCT_ID_PATTERN = Regex("""/produkte/(\d+)""")
     }
 }
+
+/**
+ * Whether the ticket tab shows the free-admission notice where a price category would be. A free
+ * night has no `€` figure at all, so the price microdata cannot say it.
+ */
+private fun Document.isFreeAdmission(): Boolean =
+    select(".tabs .panel-body .alert")
+        .any { FREE_ADMISSION_PATTERN.containsMatchIn(it.text()) }
+
+/**
+ * The `Anbieter/Veranstalter` name. The house's own nights credit `SO36`, the venue itself, so
+ * that credit is dropped.
+ */
+private fun Document.parsePromoter(): String? =
+    textAt(".product_merchant b")
+        ?.takeUnless { it.equals(VENUE_NAME, ignoreCase = true) }
+
+/** The ticket tab's notice for a free night: `Eintritt frei / Admission free!`. */
+private val FREE_ADMISSION_PATTERN = Regex("""eintritt\s+frei|admission\s+free""", RegexOption.IGNORE_CASE)
+
+/** The promoter credit on the house's own nights. */
+private const val VENUE_NAME = "SO36"
