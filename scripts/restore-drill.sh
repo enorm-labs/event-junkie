@@ -7,6 +7,8 @@
 #   restore-drill.sh --force    # also on an environment that is not staging
 #   scp -i ~/.ssh/id_ed25519_hetzner scripts/restore-drill.sh ops@10.10.1.1:/tmp/restore-drill.sh
 #   ssh -i ~/.ssh/id_ed25519_hetzner ops@10.10.1.1 'bash /tmp/restore-drill.sh'
+#   scp -J ops@10.10.0.1 scripts/restore-drill.sh ops@10.0.1.20:/tmp/restore-drill.sh     # production: the database node
+#   ssh -J ops@10.10.0.1 ops@10.0.1.20 'bash /tmp/restore-drill.sh --force'
 #
 # Runs on the database node itself, needs the wal-g credential in /etc/wal-g/credentials.env, restores
 # into /var/lib/postgresql/drill on port 5433, never touches the live PGDATA and reads only the bucket.

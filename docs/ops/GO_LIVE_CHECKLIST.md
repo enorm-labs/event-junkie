@@ -83,10 +83,10 @@ Expect the apply to touch `hcloud_zone_rrset` only. Stop if a server appears.
 | 2026-08-30 | `walg check` passes on production      | `ok: newest …, disk 1%`         |
 | 2026-08-30 | Base backups run nightly               | `walg-basebackup.timer`         |
 | 2026-08-21 | The dead-man's switch reaches a human  | `HEALTHCHECKS.md` drill log     |
-|            | **A restore drill against production** | #862, `RESTORE_RUNBOOK.md` §4–5 |
+| 2026-09-24 | **A restore drill against production** | #1636, `BACKUPS.md` §9, run log |
 
 The restore drill is the line most easily nodded through. `infra/AGENTS.md` calls it not optional
-before go-live. The drill covers staging only, so far.
+before go-live.
 
 ### Monitoring and alerting
 

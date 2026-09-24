@@ -789,7 +789,7 @@ and that changes three things.
 
 **The volume is attached to the database node, not the k3s node.** A rebuild there keeps the data
 (#460). A `tofu destroy` still loses it, because the provider lifts its own locks. Restore from the
-bucket is [RESTORE_RUNBOOK.md](RESTORE_RUNBOOK.md). That drill covers staging only.
+bucket is [RESTORE_RUNBOOK.md](RESTORE_RUNBOOK.md). The drill passes on both clusters.
 
 **Which node drifts is checkable without a credential.** Each node keeps its scripts at
 `/opt/event-junkie/`. Compare them against the repository:
