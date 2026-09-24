@@ -99,6 +99,8 @@ made. Three of the rules above stop being advice and become hard limits.
   the finding was worth.
 - **The suite is the gate, not the goal.** If `./gradlew build` goes red, revert the change and report it as a finding. Do not fix the test to match the new
   shape: that is exactly how a behaviour change ships as a refactor.
+- **The `--audit` report is not part of the change.** It goes into the pull request body and your final message, never into a commit. A committed audit
+  fails the required `Check documentation language` check and blocks the refactor it came with (#1826).
 - **Report the findings you did not act on**, with the reason — out of scope, needs a re-seed, too large for one unwatched diff. A run that quietly applied the
   two easy findings and said nothing about the six real ones reads exactly like a clean codebase.
 

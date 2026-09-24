@@ -159,7 +159,7 @@ useful — a problem concentrated at one venue usually points at that importer. 
 
 ## Output
 
-Write the report to `docs/data-quality/audit-<YYYY-MM-DD>.md` (create the directory if needed; use today's date). Structure it as:
+Write the report to `temp/data-quality-<YYYY-MM-DD>.md`, then run `scripts/format-markdown.sh` on it by name. Never commit it. Structure it as:
 
 1. **Summary** — total rows per table, and a one-line-per-category verdict (clean / N issues).
 2. **Findings**, grouped by category and ordered by severity:
