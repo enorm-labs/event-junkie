@@ -29,7 +29,7 @@ this table:
 | Tunnel address  | `10.10.1.1`                                      | `10.10.0.1`                                                    |
 | kubectl context | `event-junkie-staging`                           | `event-junkie-production`                                      |
 | PostgreSQL      | **on the k3s node**, `10.1.1.10`                 | a **separate node**, `10.0.1.20`, reached through the k3s node |
-| Public web      | none — no `A` record, no 80/443                  | 80/443 open; only `prod-check` resolves, the apex does not     |
+| Public web      | none — no `A` record, no 80/443                  | 80/443 open; the apex, `www` and `event-junkie.com` resolve    |
 | TLS             | Let's Encrypt **staging** CA, so `-k` is correct | real certificates, via HTTP-01                                 |
 | Observability   | OpenObserve, see §6b                             | OpenObserve too, since #880 — same §, different context        |
 
@@ -58,8 +58,8 @@ Host 10.10.0.1 10.10.1.1 10.0.1.20
 
 `ssh-add ~/.ssh/id_ed25519_hetzner` also works, because the agent offers the key to both hops. It lasts until the agent forgets the key.
 
-**Production is dark, and that is a state rather than a stage.** `publish_dns` in `infra/environments/production/variables.tf` defaults to `false`. The apex and
-`www` therefore resolve to nothing. A throwaway `prod-check` record points at the node, so you can exercise TLS before launch. Flipping that variable is the launch.
+**Production is public.** `publish_dns` in `infra/environments/production/variables.tf` is `true`, so the apex, `www` and `event-junkie.com` resolve to the
+k3s node. Setting it back to `false` takes the site dark again, and GO_LIVE_CHECKLIST.md §4 is the procedure.
 CLUSTER_BOOTSTRAP.md §12.
 
 ---
