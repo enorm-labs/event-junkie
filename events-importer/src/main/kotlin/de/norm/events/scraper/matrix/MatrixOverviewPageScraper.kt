@@ -32,7 +32,8 @@ import java.time.format.DateTimeParseException
  * - `p.text-lg strong` — the title, always the resident night's name (`"Matrix - Saturday"`);
  * - `li:has(i.fa-music) > span.d-block` — the `•`-separated genre list, rejoined with commas so
  * `GenreNormalizer` (which does not treat `•` as a delimiter) can tokenize it;
- * - `li:has(i.fa-star) > span.d-block` — an optional starred promo line, stored as the subtitle;
+ * - `li:has(i.fa-star) > span.d-block` — an optional starred promo banner, never the subtitle (see
+ * [parseEntryPrices]);
  * - the first unlabelled `<p>` — the blurb, read as `<br>`-delimited lines so the `► Entry :`
  * price block below can be found by line rather than in one flattened run;
  * - `DJs:` and `Specials:` — labelled lists holding the lineup.
@@ -98,11 +99,10 @@ class MatrixOverviewPageScraper {
             }
 
         val descriptionLines = review.textLinesAt(DESCRIPTION_QUERY)
-        val (boxOffice, priceNote) = parseEntryPrices(descriptionLines)
+        val (boxOffice, priceNote) = parseEntryPrices(descriptionLines, review.textAt(PROMO_QUERY))
 
         return ScrapedEvent(
             title = title,
-            subtitle = review.textAt("li:has(i.fa-star) > span.d-block"),
             description = descriptionLines.joinToString("\n").takeIf { it.isNotBlank() },
             eventType = EventType.PARTY.name,
             eventDate = eventDate,
@@ -196,21 +196,27 @@ class MatrixOverviewPageScraper {
      * the **lowest** becomes the box-office price — the "from" figure. No presale: Matrix sells no
      * advance tickets, only table reservations.
      *
-     * The starred promo line ("Nur 5€ Eintritt für Ladies & Studenten bis 0 Uhr!") is *not* part
-     * of the note: a conditional discount, not the admission price, and routing "Freier Eintritt
-     * für Ladies bis 0 Uhr!" through `priceNote` would have `detectFree` mark a 15 € night as free;
-     * it is the subtitle instead.
+     * The starred [promo] banner is the same sentence on nearly every night, so it is no subtitle.
+     * One naming a € amount ("Nur 5€ Eintritt für Ladies & Studenten bis 0 Uhr!") is a conditional
+     * discount and is appended to the note, but never priced. One naming none ("Freier Eintritt für
+     * Ladies bis 0 Uhr!") is dropped: in `priceNote` it would have `detectFree` mark a 15 € night free.
      *
-     * @return the lowest tier price and the tier breakdown, or `(null, null)` when the blurb has
-     * no entry block (a handful of nights publish none).
+     * @return the lowest tier price and the tier breakdown plus any priced promo, or `(null, null)`
+     * when the blurb has no entry block (a handful of nights publish none) and no priced promo.
      */
-    private fun parseEntryPrices(descriptionLines: List<String>): Pair<BigDecimal?, String?> {
+    private fun parseEntryPrices(
+        descriptionLines: List<String>,
+        promo: String?
+    ): Pair<BigDecimal?, String?> {
         val headingIndex = descriptionLines.indexOfFirst { ENTRY_HEADING.matches(it) }
-        if (headingIndex < 0) return null to null
         val tiers =
-            descriptionLines
-                .drop(headingIndex + 1)
-                .takeWhile { PRICE_VALUE.containsMatchIn(it) }
+            if (headingIndex < 0) {
+                emptyList()
+            } else {
+                descriptionLines
+                    .drop(headingIndex + 1)
+                    .takeWhile { PRICE_VALUE.containsMatchIn(it) }
+            }
         val values =
             tiers.mapNotNull { tier ->
                 PRICE_VALUE
@@ -219,7 +225,12 @@ class MatrixOverviewPageScraper {
                     ?.get(1)
                     ?.let { BigDecimal(it.replace(",", ".")) }
             }
-        return values.minOrNull() to tiers.joinToString(", ").takeIf { it.isNotBlank() }
+        val note =
+            listOfNotNull(
+                tiers.joinToString(", ").takeIf { it.isNotBlank() },
+                promo?.takeIf { PRICE_VALUE.containsMatchIn(it) }
+            ).joinToString("; ")
+        return values.minOrNull() to note.takeIf { it.isNotBlank() }
     }
 
     /**
@@ -246,6 +257,9 @@ class MatrixOverviewPageScraper {
          * header lines) nor a `<strong>` section label (excluding `Floors:` / `DJs:` / `Specials:`).
          */
         private const val DESCRIPTION_QUERY = "p:not([class]):not(:has(strong))"
+
+        /** The starred promo banner under the title, e.g. `"Nur 5€ Eintritt für Ladies & Studenten bis 0 Uhr!"`. */
+        private const val PROMO_QUERY = "li:has(i.fa-star) > span.d-block"
 
         /** The bullet the venue puts between genres, and between a DJ and the genres they play. */
         private const val BULLET = "•"
