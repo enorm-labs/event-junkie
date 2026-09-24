@@ -29,7 +29,7 @@ permissions:
 env:
   # Pinned: ruff's formatter style moves between releases, and a gate on whatever the runner ships fails
   # files the author's copy just passed. Renovate watches it (ADR-024). No `v`.
-  RUFF_VERSION: 0.16.8
+  RUFF_VERSION: 0.16.9
 
 jobs:
   python:
