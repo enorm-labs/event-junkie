@@ -2,6 +2,7 @@ package de.norm.events.scraper.cassiopeia
 
 import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
+import de.norm.events.scraper.HttpFetchException
 import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.ScrapedArtist
 import io.kotest.matchers.collections.shouldBeEmpty
@@ -11,6 +12,7 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.types.shouldBeInstanceOf
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
 import org.jsoup.Jsoup
@@ -279,5 +281,73 @@ class CassiopeiaWebsiteImporterTest {
 
             val result = importer.importEvents(sourceUrl)
             result.shouldBeInstanceOf<ImportResult.NotModified>()
+        }
+
+    private val page2Url = "https://cassiopeia-berlin.de/club?f74de34a_page=2"
+    private val page3Url = "https://cassiopeia-berlin.de/club?f74de34a_page=3"
+
+    /** The synthetic first page with the "Next Page" link Webflow renders, then the live page 2 and the last page. */
+    private fun paginate() {
+        val first = html.replace("</body>", "<a href=\"?f74de34a_page=2\" aria-label=\"Next Page\" class=\"w-pagination-next\">Next</a></body>")
+        coEvery { htmlFetcher.fetch(sourceUrl, any(), any()) } returns FetchResult.Success(Jsoup.parse(first, sourceUrl), null, null)
+        coEvery { htmlFetcher.fetchDocument(page2Url) } returns
+            Jsoup.parse(loadFixture("scraper/cassiopeia/cassiopeia-club-page-2.html"), page2Url)
+        coEvery { htmlFetcher.fetchDocument(page3Url) } returns
+            Jsoup.parse(loadFixture("scraper/cassiopeia/cassiopeia-club-page-last.html"), page3Url)
+    }
+
+    @Test
+    fun `importEvents follows the Next Page link until the last page renders none`() =
+        runTest {
+            val single =
+                importer
+                    .importEvents(sourceUrl)
+                    .shouldBeInstanceOf<ImportResult.Success>()
+                    .events.size
+            paginate()
+
+            val result = importer.importEvents(sourceUrl)
+
+            result.shouldBeInstanceOf<ImportResult.Success>()
+            result.events shouldHaveSize single + 8 + 1
+            coVerify(exactly = 1) { htmlFetcher.fetchDocument(page2Url) }
+            coVerify(exactly = 1) { htmlFetcher.fetchDocument(page3Url) }
+        }
+
+    @Test
+    fun `a later page that fails keeps the pages already read`() =
+        runTest {
+            val single =
+                importer
+                    .importEvents(sourceUrl)
+                    .shouldBeInstanceOf<ImportResult.Success>()
+                    .events.size
+            paginate()
+            coEvery { htmlFetcher.fetchDocument(page3Url) } throws HttpFetchException(503, page3Url)
+
+            importer.importEvents(sourceUrl).shouldBeInstanceOf<ImportResult.Success>().events shouldHaveSize single + 8
+        }
+
+    @Test
+    fun `an event that reappears on a later page is kept once`() =
+        runTest {
+            val single =
+                importer
+                    .importEvents(sourceUrl)
+                    .shouldBeInstanceOf<ImportResult.Success>()
+                    .events.size
+            val first = html.replace("</body>", "<a href=\"?f74de34a_page=2\" class=\"w-pagination-next\">Next</a></body>")
+            coEvery { htmlFetcher.fetch(sourceUrl, any(), any()) } returns FetchResult.Success(Jsoup.parse(first, sourceUrl), null, null)
+            coEvery { htmlFetcher.fetchDocument(page2Url) } returns Jsoup.parse(html, page2Url)
+
+            importer.importEvents(sourceUrl).shouldBeInstanceOf<ImportResult.Success>().events shouldHaveSize single
+        }
+
+    @Test
+    fun `a listing without a Next Page link fetches no further page`() =
+        runTest {
+            importer.importEvents(sourceUrl)
+
+            coVerify(exactly = 0) { htmlFetcher.fetchDocument(match { "_page=" in it }) }
         }
 }

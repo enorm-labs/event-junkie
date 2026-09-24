@@ -54,12 +54,13 @@ const localePath = useLocalePath()
       <h2>How we read</h2>
       <ul>
         <li>
-          Once a day, usually one overview page per source, plus the detail pages it links to.
+          Once a day, the overview page of each source, its further pages where the list continues,
+          and the detail pages they link to.
         </li>
         <li>With at least 200 milliseconds between two requests to the same host.</li>
         <li>
-          With <code>ETag</code> and <code>Last-Modified</code>, so an unchanged page costs you
-          nothing but a <code>304</code>.
+          With <code>ETag</code> and <code>Last-Modified</code>, so an unchanged overview page costs
+          you nothing but a <code>304</code>.
         </li>
         <li>With a user agent that names the project and links to its source code.</li>
         <li>Without arbitrary crawling: each importer knows exactly one page structure.</li>

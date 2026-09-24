@@ -8,7 +8,9 @@ import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.VenueLimitations
 import io.github.oshai.kotlinlogging.KotlinLogging
+import org.jsoup.nodes.Document
 import org.springframework.stereotype.Component
+import java.net.URI
 
 /**
  * Website importer for migas, a listening bar in Wedding, whose custom WordPress theme renders
@@ -27,12 +29,12 @@ import org.springframework.stereotype.Component
  * cache headers so there is nothing to replay (and no [ImportResult.NotModified] path).
  * Havanna's derived weekly occurrences are disabled for the same reason.
  *
- * **Only the first page is imported**, per ADR-007 §"Pagination — First Page Only": the rest
- * sits behind a button that POSTs to `wp-admin/admin-ajax.php`, which the shared [HtmlFetcher]
- * has no transport for. Bounded and self-correcting — the page always holds the *next* ten
- * upcoming events, so a later night moves onto it as each one passes, and a daily import
- * catches every event well before it happens. Stale-event cleanup is scoped to the scraped date
- * range, so the untouched tail is never mistaken for a deletion.
+ * **Every page is read.** The page shows ten events. Its "Load More" button POSTs
+ * `action=load_events&paged=<n>&type=upcoming` to `wp-admin/admin-ajax.php`, and its `data-pages`
+ * states the page count, which bounds the loop. The answer is a fragment of items and their modals,
+ * added to the page's `.events-list` as the site's own script does, so the scraper reads one
+ * document. A later page that fails is logged and skipped: stale-event cleanup is scoped to the
+ * scraped date range, so the unread tail is never mistaken for a deletion (#331).
  *
  * @see MigasOverviewPageScraper for the page shape, the lazy-loaded image trap, and what the
  * source does not publish.
@@ -54,10 +56,51 @@ class MigasWebsiteImporter(
         lastModified: String?
     ): ImportResult {
         val document = htmlFetcher.fetchDocument(url)
+        val pages = appendLaterPages(document, url)
         val events = overviewPageScraper.scrape(document)
-        logger.info { "Scraped ${events.size} event(s) from migas" }
+        logger.info { "Scraped ${events.size} event(s) from $pages migas page(s)" }
 
         return ImportResult.Success(events = events, etag = null, lastModified = null)
+    }
+
+    /** Adds pages `2..data-pages` to [document]'s list and returns how many pages it now holds. */
+    @Suppress("TooGenericExceptionCaught") // Intentional: keep the pages already read if a later one fails
+    private suspend fun appendLaterPages(
+        document: Document,
+        url: String
+    ): Int {
+        val list = document.selectFirst(EVENTS_LIST_SELECTOR)
+        val pageCount =
+            document
+                .selectFirst(LOAD_MORE_SELECTOR)
+                ?.attr("data-pages")
+                ?.toIntOrNull()
+                ?.coerceAtMost(MAX_PAGES)
+                ?.takeIf { list != null } ?: 1
+        val ajaxUrl = URI(url).resolve(AJAX_PATH).toString()
+        var read = 1
+        while (read < pageCount) {
+            val page = read + 1
+            val fragment =
+                try {
+                    htmlFetcher.postForm(ajaxUrl, mapOf("action" to "load_events", "paged" to "$page", "type" to "upcoming"))
+                } catch (e: Exception) {
+                    logger.warn(e) { "migas page $page of $pageCount failed; importing the $read page(s) read" }
+                    break
+                }
+            list?.append(fragment)
+            read = page
+        }
+        return read
+    }
+
+    private companion object {
+        const val EVENTS_LIST_SELECTOR = ".events-list"
+        const val LOAD_MORE_SELECTOR = "[data-target=load-more]"
+        const val AJAX_PATH = "/wp-admin/admin-ajax.php"
+
+        /** A runaway guard: the site states two pages. */
+        const val MAX_PAGES = 10
     }
 }
 
@@ -68,6 +111,5 @@ val MIGAS_LIMITATIONS =
         AcceptedLimitation(LimitedAspect.TICKET_URL, "entry arrangements are not stated on the site at all"),
         AcceptedLimitation(LimitedAspect.DOORS_TIME, "the listing carries no door time"),
         AcceptedLimitation(LimitedAspect.SOLD_OUT, "the listing carries no sold-out badge"),
-        AcceptedLimitation(LimitedAspect.CANCELLATION, "the listing carries no cancellation badge"),
-        AcceptedLimitation(LimitedAspect.PAGINATION, "the listing pages at ten events, with the rest behind a Load More button that POSTs to `admin-ajax.php`")
+        AcceptedLimitation(LimitedAspect.CANCELLATION, "the listing carries no cancellation badge")
     )

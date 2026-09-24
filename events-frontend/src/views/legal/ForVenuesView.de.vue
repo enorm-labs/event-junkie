@@ -56,12 +56,13 @@ const localePath = useLocalePath()
       <h2>Wie wir lesen</h2>
       <ul>
         <li>
-          Einmal am Tag, in der Regel eine Übersichtsseite je Quelle, dazu deren Detailseiten.
+          Einmal am Tag die Übersichtsseite je Quelle, ihre Folgeseiten, wo die Liste weitergeht,
+          und die Detailseiten, auf die sie verlinken.
         </li>
         <li>Mit mindestens 200 Millisekunden Abstand zwischen zwei Anfragen an denselben Host.</li>
         <li>
-          Mit <code>ETag</code> und <code>Last-Modified</code>, damit eine unveränderte Seite uns
-          nur ein <code>304</code> kostet.
+          Mit <code>ETag</code> und <code>Last-Modified</code>, damit euch eine unveränderte
+          Übersichtsseite nur ein <code>304</code> kostet.
         </li>
         <li>Mit einem User-Agent, der das Projekt nennt und auf seinen Quellcode verlinkt.</li>
         <li>Ohne wildes Crawlen: Jeder Importer kennt genau eine Seitenstruktur.</li>

@@ -9,6 +9,8 @@ import org.jsoup.nodes.Document
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Component
+import org.springframework.util.LinkedMultiValueMap
+import org.springframework.web.reactive.function.BodyInserters
 import org.springframework.web.reactive.function.client.ClientResponse
 import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.awaitBody
@@ -99,15 +101,30 @@ class HtmlFetcher(
     }
 
     /**
-     * Fetches [url] as raw bytes, failing fast with [HttpFetchException] on any 4xx/5xx; undecoded
-     * so the caller can apply the page's own encoding (class KDoc).
+     * POSTs [form] to [url] as `application/x-www-form-urlencoded` and returns the decoded answer, for
+     * a listing whose "Load More" button asks a WordPress `admin-ajax.php` for the next page (migas).
+     * The answer is usually a fragment, which the caller adds to the page it already holds.
      */
-    private suspend fun fetchRawBody(url: String): RawBody {
+    suspend fun postForm(
+        url: String,
+        form: Map<String, String>
+    ): String {
+        val fields = LinkedMultiValueMap<String, String>().apply { form.forEach { (name, value) -> add(name, value) } }
+        val body = fetchRawBody(url, webClient.post().uri(URI.create(url)).body(BodyInserters.fromFormData(fields)))
+        return String(body.bytes, body.charset())
+    }
+
+    /**
+     * Sends [request] (a GET of [url] unless given) and reads the body as raw bytes, failing fast with
+     * [HttpFetchException] on any 4xx/5xx; undecoded so the caller can apply the page's own encoding.
+     */
+    private suspend fun fetchRawBody(
+        url: String,
+        // A pre-built URI, so '%' is not re-encoded into a 404.
+        request: WebClient.RequestHeadersSpec<*> = webClient.get().uri(URI.create(url))
+    ): RawBody {
         logger.debug { "Fetching HTML body: $url" }
-        return webClient
-            .get()
-            // A pre-built URI, so '%' is not re-encoded into a 404.
-            .uri(URI.create(url))
+        return request
             .awaitExchange { response ->
                 // Fail fast on HTTP errors to avoid returning error pages as valid data
                 if (response.statusCode().isError) {

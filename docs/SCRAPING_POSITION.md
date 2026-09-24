@@ -39,13 +39,13 @@ no longer exists.
 | Identifying agent    | `ScraperHttpClientConfig.kt`                                           | Names the product and links the repository         |
 | Conditional requests | `HtmlFetcher`, ETag and Last-Modified on the `event_source` row        | A `304` response costs the venue almost nothing    |
 | Import frequency     | `ScheduledImportService.kt`, `EventSourceEntity.importIntervalMinutes` | Once per day for each source, by default           |
-| Page depth           | ADR-007 § Pagination — First Page Only                                 | The first overview page, plus its detail pages     |
+| Page depth           | ADR-007 § Pagination — First Page Only                                 | The overview pages to the list's end, plus details |
 | No arbitrary crawl   | Each `EventImporter` parses one known structure                        | The scraper follows no link it discovers at random |
 
-**First page only, with one exception.** Most listings are unpaginated, or their pagination is a no-op. Where a
-listing does paginate, the default is to read page one and stop, and ADR-007 records the five reasons. **LARK is the
-exception.** `LarkWebsiteImporter` walks the venue's WordPress API for up to 10 pages of 100 entries. It stops early on
-a short page, or on a page that reaches the past. ADR-007 permits that as a per-importer concern.
+**A list that ends is read to its end.** Most listings are one page. Seven importers walk a paginated list: LARK, Urban
+Spree, Heimathafen, Gärten der Welt, Cosmic Comedy, migas and Cassiopeia. Each one stops at the last page, and at a
+page cap of its own. A list that only JavaScript can extend is read to its first page only, and ADR-007 records the
+reasons.
 
 **What we store per event:** title, date, start time, venue, artist list, source URL, ticket URL, event type,
 `description` and `imageUrl`.
@@ -196,8 +196,9 @@ the disallowed calendar links. Those notes say **why a URL is not fetched**, whi
 
 **Our position:** the load we cause is too small to be an interference.
 
-We read one overview page per source per day, with a 200 ms delay between requests to a host. Conditional requests turn
-most fetches into a `304`. A venue with a weekly programme serves us less traffic than one visitor with an open browser
+Once a day, we read each source's overview page, its further pages where the list continues, and the detail pages
+they link to. There is a 200 ms delay between requests to a host. Conditional requests turn many overview fetches into
+a `304`. A venue with a weekly programme serves us less traffic than one visitor with an open browser
 tab.
 
 The BGH considered screen scraping of a competing portal under the predecessor of § 4 Nr. 4 UWG in

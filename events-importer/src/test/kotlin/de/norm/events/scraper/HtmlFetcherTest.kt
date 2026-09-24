@@ -256,6 +256,40 @@ class HtmlFetcherTest {
     }
 
     @Nested
+    inner class FormPost {
+        @Test
+        fun `postForm sends the fields form-encoded and returns the answer decoded`() =
+            runTest {
+                server.enqueue(
+                    MockResponse
+                        .Builder()
+                        .code(200)
+                        .addHeader("Content-Type", "text/html; charset=UTF-8")
+                        .body("<a class=\"event-item\">Björk</a>")
+                        .build()
+                )
+
+                val html = fetcher.postForm(baseUrl() + "/wp-admin/admin-ajax.php", mapOf("action" to "load_events", "paged" to "2", "type" to "upcoming"))
+
+                html shouldBe "<a class=\"event-item\">Björk</a>"
+                val recorded = server.takeRequest()
+                recorded.method shouldBe "POST"
+                recorded.target shouldBe "/wp-admin/admin-ajax.php"
+                recorded.headers["Content-Type"]!! shouldContain "application/x-www-form-urlencoded"
+                recorded.body!!.utf8() shouldBe "action=load_events&paged=2&type=upcoming"
+            }
+
+        @Test
+        fun `postForm throws HttpFetchException on a server error, so an error page is never parsed`() =
+            runTest {
+                server.enqueue(MockResponse.Builder().code(503).build())
+
+                shouldThrow<HttpFetchException> { fetcher.postForm(baseUrl() + "/wp-admin/admin-ajax.php", mapOf("paged" to "2")) }
+                    .message!! shouldContain "HTTP 503"
+            }
+    }
+
+    @Nested
     inner class ErrorHandling {
         @Test
         fun `fetchHtml throws HttpFetchException on a 404`() =

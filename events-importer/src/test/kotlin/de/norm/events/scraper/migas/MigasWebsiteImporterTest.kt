@@ -2,6 +2,7 @@ package de.norm.events.scraper.migas
 
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
+import de.norm.events.scraper.HttpFetchException
 import de.norm.events.scraper.ImportResult
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
@@ -37,7 +38,18 @@ class MigasWebsiteImporterTest {
                 .readText()
 
         coEvery { htmlFetcher.fetchDocument(sourceUrl) } returns Jsoup.parse(html, sourceUrl)
+        coEvery { htmlFetcher.postForm(ajaxUrl, page(2)) } returns fixture("migas-load-events-page-2")
     }
+
+    private val ajaxUrl = "https://migas.berlin/wp-admin/admin-ajax.php"
+
+    private fun page(n: Int) = mapOf("action" to "load_events", "paged" to "$n", "type" to "upcoming")
+
+    private fun fixture(name: String): String =
+        javaClass.classLoader
+            .getResourceAsStream("scraper/migas/$name.html")!!
+            .bufferedReader()
+            .readText()
 
     @Test
     fun `eventSource identifies this importer as migas`() {
@@ -45,12 +57,36 @@ class MigasWebsiteImporterTest {
     }
 
     @Test
-    fun `importEvents extracts all events from fixture`() =
+    fun `importEvents reads the page and the Load More page the button states, one POST each`() =
         runTest {
             val result = importer.importEvents(sourceUrl)
 
             result.shouldBeInstanceOf<ImportResult.Success>()
+            result.events shouldHaveSize 16
+            result.events.map { it.sourceId }.distinct() shouldHaveSize 16
+            coVerify(exactly = 1) { htmlFetcher.postForm(ajaxUrl, page(2)) }
+            coVerify(exactly = 0) { htmlFetcher.postForm(ajaxUrl, page(3)) }
+        }
+
+    @Test
+    fun `a later page that fails keeps the first page's events`() =
+        runTest {
+            coEvery { htmlFetcher.postForm(ajaxUrl, page(2)) } throws HttpFetchException(503, ajaxUrl)
+
+            val result = importer.importEvents(sourceUrl)
+
+            result.shouldBeInstanceOf<ImportResult.Success>()
             result.events shouldHaveSize 10
+        }
+
+    @Test
+    fun `a page with no Load More button asks for no further page`() =
+        runTest {
+            val html = fixture("migas-overview").replace("data-target=\"load-more\"", "data-target=\"gone\"")
+            coEvery { htmlFetcher.fetchDocument(sourceUrl) } returns Jsoup.parse(html, sourceUrl)
+
+            importer.importEvents(sourceUrl).shouldBeInstanceOf<ImportResult.Success>().events shouldHaveSize 10
+            coVerify(exactly = 0) { htmlFetcher.postForm(any(), any()) }
         }
 
     @Test

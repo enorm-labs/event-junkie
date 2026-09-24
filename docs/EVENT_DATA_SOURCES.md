@@ -42,7 +42,7 @@ schema change.
 | Bar jeder Vernunft               | https://www.bar-jeder-vernunft.de/de/programm/kalender.html | Bar          | Neos; per-date JSON-LD; one show page per run          |
 | Berghain / Panorama Bar          | https://www.berghain.berlin/de/program/                     | Techno Club  | Server-rendered; list + detail                         |
 | Bi Nuu                           | https://binuu.de/                                           | Club         | No genre or prices on site; only via ticket link       |
-| Cassiopeia                       | https://cassiopeia-berlin.de/                               | Club         | Webflow; genre tags, sold-out / cancelled badges       |
+| Cassiopeia                       | https://cassiopeia-berlin.de/                               | Club         | Webflow; genre tags, badges; walks all pages           |
 | Clash Club                       | https://clash-berlin.de/                                    | Club         | WordPress; sparse — no times, prices or text           |
 | Club der Visionäre               | https://clubdervisionaere.com/programm                      | Techno Club  | WordPress; one listing, 3 rooms by CSS class           |
 | Club OST                         | https://clubost.de/                                         | Techno Club  | Django; homepage is the programme; RA tickets          |
@@ -81,7 +81,7 @@ schema change.
 | Max-Schmeling-Halle              | https://www.velomax.de/events                               | Arena        | Shared VELOMAX listing; no sport imported              |
 | Maxxim Club                      | https://www.maxxim-berlin.de/partys                         | Club         | Wix Events warmup JSON; UTC dates; prices inline       |
 | Metropol                         | https://metropol-berlin.de/events                           | Concert Hall | Events-Manager list + detail; no prices; "Verlegt"     |
-| migas                            | https://migas.berlin/program/                               | Bar          | WordPress; per-event modal; lazy imgs; page 1 only     |
+| migas                            | https://migas.berlin/program/                               | Bar          | WordPress; per-event modal; lazy imgs; POSTs page 2+   |
 | Mikropol                         | https://mikropol-berlin.de/                                 | Club         | Events-Manager list + detail; "verlegt in den …"       |
 | Modus Berlin                     | https://modus-berlin.de/events                              | Club         | List + detail; rendered date wins over stale slug      |
 | Monarch                          | https://www.kottimonarch.de/                                | Bar          | PHP /programm.php; type + status inline in title       |

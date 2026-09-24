@@ -2,10 +2,8 @@ package de.norm.events.scraper.cassiopeia
 
 import de.norm.events.event.EventType
 import de.norm.events.scraper.AbstractTwoPageWebsiteImporter
-import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
-import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.VenueLimitations
 import org.jsoup.nodes.Document
@@ -17,6 +15,10 @@ import java.time.Clock
  * with conditional headers, parse via [CassiopeiaOverviewPageScraper], fetch each detail page,
  * parse via [CassiopeiaDetailPageScraper], the primary source; the overview supplies discovery
  * and fallback.
+ *
+ * The listing shows eight events a page. Webflow paginates it server-side with a plain link,
+ * `a.w-pagination-next` to `?f74de34a_page=<n>`, which the last page omits, so every page is read
+ * (#331).
  *
  * @see CassiopeiaOverviewPageScraper for overview page parsing (discovery + fallback)
  * @see CassiopeiaDetailPageScraper for detail page parsing (primary data source)
@@ -37,6 +39,11 @@ class CassiopeiaWebsiteImporter(
         document: Document,
         url: String
     ): List<ScrapedEvent> = overviewPageScraper.scrape(document, url)
+
+    override fun nextOverviewPage(
+        document: Document,
+        url: String
+    ): String? = document.selectFirst(NEXT_PAGE_SELECTOR)?.absUrl("href")?.takeIf { it.isNotEmpty() }
 
     override fun scrapeDetail(
         document: Document,
@@ -66,10 +73,11 @@ class CassiopeiaWebsiteImporter(
             // Detail artists include support acts; the overview has only the headliner.
             artists = primary.artists.ifEmpty { fallback.artists }
         )
+
+    private companion object {
+        const val NEXT_PAGE_SELECTOR = "a.w-pagination-next[href]"
+    }
 }
 
-val CASSIOPEIA_LIMITATIONS =
-    VenueLimitations(
-        EventSource.CASSIOPEIA,
-        AcceptedLimitation(LimitedAspect.PAGINATION, "only the first page of the listing is read")
-    )
+/** Nothing this source withholds needs declaring (#715). */
+val CASSIOPEIA_LIMITATIONS = VenueLimitations(EventSource.CASSIOPEIA)
