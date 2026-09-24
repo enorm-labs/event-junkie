@@ -18,10 +18,10 @@ import org.springframework.stereotype.Component
  * 1. [HtmlFetcher] fetches `/events/` conditionally (ETag / Last-Modified).
  * 2. [MikropolOverviewPageScraper] parses the cards — discovery list, date, start/doors times,
  * status, sold-out flag, and headliner/support artists.
- * 3. Each detail page via [MikropolDetailPageScraper] — description, image and Eventim ticket URL.
+ * 3. Each detail page via [MikropolDetailPageScraper] — description, image, Eventim ticket URL and door price.
  *
  * @see MikropolOverviewPageScraper for overview parsing (date, status, artists, fallback).
- * @see MikropolDetailPageScraper for detail parsing (description, image, ticket URL).
+ * @see MikropolDetailPageScraper for detail parsing (description, image, ticket URL, door price).
  * @see <a href="https://mikropol-berlin.de/events/">Mikropol Berlin</a>
  */
 @Component
@@ -45,7 +45,8 @@ class MikropolWebsiteImporter(
 
     /**
      * Merges detail-page data ([primary]) with overview data ([fallback]). The detail page is
-     * authoritative and carries what the overview lacks (description, image, ticket URL); shared
+     * authoritative and carries what the overview lacks (description, image, ticket URL, and the
+     * door price and free flag, which the copy keeps); shared
      * fields (date, times, status, sold-out, artists) prefer the detail value and fall back.
      */
     override fun fillGapsFromOverview(

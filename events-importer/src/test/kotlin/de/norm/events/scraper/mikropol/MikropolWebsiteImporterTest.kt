@@ -17,6 +17,7 @@ import kotlinx.coroutines.test.runTest
 import org.jsoup.Jsoup
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.LocalTime
 
@@ -123,6 +124,20 @@ class MikropolWebsiteImporterTest {
     fun `keeps the cancelled status through the merge`() =
         runTest {
             event(importer.importEvents(overviewUrl), "2026-07-25-vowws").status shouldBe "CANCELLED"
+        }
+
+    @Test
+    fun `keeps the detail door price and free flag through the merge`() =
+        runTest {
+            val freeUrl = "https://mikropol-berlin.de/event/2026-10-05-grosse-hip-hop-offensive-17/"
+            val overviewHtml = """<html><body><a class="event" href="$freeUrl"><span class="eventname">Große Hip Hop Offensive 17</span></a></body></html>"""
+            coEvery { htmlFetcher.fetch(overviewUrl, any(), any()) } returns
+                FetchResult.Success(document = Jsoup.parse(overviewHtml, overviewUrl), etag = null, lastModified = null)
+            coEvery { htmlFetcher.fetchDocument(freeUrl) } returns Jsoup.parse(fixture("mikropol-detail-free.html"), freeUrl)
+
+            val free = event(importer.importEvents(overviewUrl), "2026-10-05-grosse-hip-hop-offensive-17")
+            free.priceBoxOffice shouldBe BigDecimal("0.00")
+            free.free shouldBe true
         }
 
     @Test

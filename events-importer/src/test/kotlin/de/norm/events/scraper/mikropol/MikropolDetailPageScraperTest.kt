@@ -7,6 +7,7 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldStartWith
 import org.jsoup.Jsoup
 import org.junit.jupiter.api.Test
+import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.LocalTime
 
@@ -15,7 +16,7 @@ import java.time.LocalTime
  *
  * Uses real detail-page snapshots: a fully-populated sold-out concert (support,
  * description, image, ticket link), a cancelled show, a relocated show whose title prefix
- * is stripped, and a plain concert with no support act.
+ * is stripped, a plain concert with no support act, and a free night with a zero door price.
  */
 class MikropolDetailPageScraperTest {
     private val scraper = MikropolDetailPageScraper()
@@ -102,6 +103,38 @@ class MikropolDetailPageScraperTest {
         parse("mikropol-detail-simple.html", "https://mikropol-berlin.de/event/2026-07-14-house-of-protection/")
             .shouldNotBeNull()
             .promoters shouldBe emptyList()
+    }
+
+    @Test
+    fun `reads the door price and flags a free night`() {
+        val url = "https://mikropol-berlin.de/event/2026-10-05-grosse-hip-hop-offensive-17/"
+        val event = parse("mikropol-detail-free.html", url).shouldNotBeNull()
+
+        event.title shouldBe "Große Hip Hop Offensive 17"
+        event.priceBoxOffice shouldBe BigDecimal("0.00")
+        event.pricePresale shouldBe null
+        event.free shouldBe true
+    }
+
+    @Test
+    fun `stores no price when the door price slot is empty`() {
+        val event = parse("mikropol-detail-simple.html", "https://mikropol-berlin.de/event/2026-07-17-dueja/").shouldNotBeNull()
+
+        event.priceBoxOffice shouldBe null
+        event.free shouldBe false
+    }
+
+    @Test
+    fun `reads a paid door price`() {
+        val url = "https://mikropol-berlin.de/event/2026-10-05-paid/"
+        val html =
+            """<html><body><h1 class="entry-title">Paid</h1>
+            <div class="event-details"><div><b>Beginn:</b> 20:00</div><div><br><b>Abendkasse:</b> 15,50&nbsp;€</div></div>
+            </body></html>"""
+        val event = scraper.scrape(Jsoup.parse(html, url), url).shouldNotBeNull()
+
+        event.priceBoxOffice shouldBe BigDecimal("15.50")
+        event.free shouldBe false
     }
 
     @Test
