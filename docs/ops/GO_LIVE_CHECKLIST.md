@@ -71,6 +71,10 @@ Any edit under `infra/modules/environment/cloud-init/` since the last apply repl
 Expect 8 to add and 2 to destroy, all `hcloud_zone_rrset`: `@` and `www` on both domains, A and AAAA, and
 `prod-check` removed. Stop if a server appears.
 
+**A new hostname also needs its certificate, and the chart's smoke hook does not wait for it.** The flip needed
+#1886 to #1890 for that reason. Until #1892 lands, turn `spec.test` off for the upgrade that changes the host, check
+`kubectl -n event-junkie get certificate,challenge`, then turn it back on.
+
 ## 1 · What must be true first
 
 ### Platform
@@ -82,7 +86,7 @@ Expect 8 to add and 2 to destroy, all `hcloud_zone_rrset`: `@` and `www` on both
 | 2026-08-30 | A real certificate has issued           | Let's Encrypt `CN=YR1`, not `(STAGING) Pretend Pear` |
 | 2026-08-30 | The site answers over TLS from outside  | `curl https://prod-check.event-junkie.de/`           |
 | 2026-08-30 | #813 patched on the database node       | `ss -lntp` names the private address                 |
-|            | `tofu plan` shows no server replacement | Section 0                                            |
+| 2026-09-24 | `tofu plan` shows no server replacement | targeted: 8 add, 2 destroy, DNS only                 |
 
 ### Backups and recovery
 
@@ -105,7 +109,7 @@ before go-live.
 | 2026-08-31 | A decision on how the site is watched from outside       | ADR-021                            |
 | 2026-08-31 | **The Better Stack monitor exists and polls production** | ADR-021, HEALTHCHECKS.md           |
 | 2026-08-31 | That monitor proven by inducing a failure                | HEALTHCHECKS.md drill log          |
-|            | The monitor and `SITE_URL` both name the apex            | Section 0, changes 3 and 4         |
+| 2026-09-24 | The monitor and `SITE_URL` both name the apex            | site-probe run 36049602634         |
 | 2026-09-06 | Decide how visitors and traffic are counted              | #1126 — page loads, nothing new    |
 | 2026-08-31 | **Production has any in-cluster monitoring**             | #880, and the dashboard push below |
 | 2026-09-24 | Alerts reach a person                                    | #877, OPENOBSERVE.md drill log     |
@@ -142,7 +146,7 @@ refers to the in-cluster path** (#877, OpenObserve to e-mail). A firing produced
 | 2026-08-30 | Venue addresses, districts and coordinates audited                                                        | #329         |
 | 2026-09-07 | Venue descriptions read against the venue they describe                                                   | #1124        |
 |            | Venue descriptions proof-read once more **by the maintainer**, in both languages, before the flip         | #1124, #1210 |
-|            | Every page read in both languages **by the maintainer**, as a reader — About and the legal texts included | #280         |
+| 2026-09-24 | Every page read in both languages **by the maintainer**, as a reader — About and the legal texts included | #280, #1880  |
 | 2026-08-31 | Images served from our own cache, not hotlinked                                                           | #843         |
 | 2026-09-07 | Multilingual event text decided, so the translation question is answered before a venue is asked          | #469         |
 | 2026-09-08 | Every description a venue has not prohibited translated on production                                     | #470         |
@@ -223,23 +227,23 @@ A new fixture brings new ones, because the fixtures carry the venues' own JavaSc
 The apex resolves and the site is public. These are the acts that could not happen before that. The
 section exists so they are not lost in the relief of the flip working.
 
-| Done | Item                                                                 | Evidence                 |
-| ---- | -------------------------------------------------------------------- | ------------------------ |
-|      | `noindex` off and the apex served, confirmed against the live origin | Section 0                |
-|      | Search Console set up                                                | #288                     |
-|      | Sitemap and hreflang accepted                                        | #289                     |
-|      | Rich Results Test re-run in URL mode against the apex                | #290                     |
-|      | Link previews checked in Slack, WhatsApp and iMessage                | #291                     |
-|      | The Better Stack monitor re-proved against the apex                  | ADR-021                  |
-|      | The first nightly plausibility run green against the apex            | `agent-plausibility.yml` |
-|      | The venue licence enquiry sent, first batch of twelve                | #808                     |
-|      | Launch marketing, venues first                                       | #481, Phase 2            |
-|      | The beta badge decision, and the README rewritten around it          | #295                     |
-|      | Whether to publish an uptime badge                                   | HEALTHCHECKS.md          |
-|      | Whether to turn HSTS `preload` on, once the domain is settled        | Section 4                |
-|      | Indexing watched, especially of detail pages                         | #293                     |
-|      | The k6 runs automated against a real origin                          | #298, Phase 2            |
-|      | Session weights re-derived from real traffic                         | #297                     |
+| Done       | Item                                                                 | Evidence                 |
+| ---------- | -------------------------------------------------------------------- | ------------------------ |
+| 2026-09-24 | `noindex` off and the apex served, confirmed against the live origin | `curl -sI` + robots.txt  |
+|            | Search Console set up                                                | #288                     |
+|            | Sitemap and hreflang accepted                                        | #289                     |
+|            | Rich Results Test re-run in URL mode against the apex                | #290                     |
+|            | Link previews checked in Slack, WhatsApp and iMessage                | #291                     |
+|            | The Better Stack monitor re-proved against the apex                  | ADR-021                  |
+|            | The first nightly plausibility run green against the apex            | `agent-plausibility.yml` |
+|            | The venue licence enquiry sent, first batch of twelve                | #808                     |
+|            | Launch marketing, venues first                                       | #481, Phase 2            |
+| 2026-09-24 | The beta badge decision, and the README rewritten around it          | stays beta; #295         |
+|            | Whether to publish an uptime badge                                   | HEALTHCHECKS.md          |
+|            | Whether to turn HSTS `preload` on, once the domain is settled        | Section 4                |
+|            | Indexing watched, especially of detail pages                         | #293                     |
+|            | The k6 runs automated against a real origin                          | #298, Phase 2            |
+|            | Session weights re-derived from real traffic                         | #297                     |
 
 **The first five are launch day, or the morning after.** Each needs a name that resolves for somebody
 other than us. That is the whole reason they are here rather than in Section 1.
@@ -249,10 +253,9 @@ fails makes an enquiry look like a pitch, and that reading is what § 7 UWG puni
 [`docs/licence-review/ENQUIRY.md`](../licence-review/ENQUIRY.md) carries the three mails, the first
 batch of twelve, and how a reply is written back.
 
-**The README claims a status in two places, and both are wrong the moment the apex serves.** The
-badge near the top reads `Status-In Development`, and § Status opens with "In development — deployed,
-but not public yet." Change the badge to `Status-Live-brightgreen`, and rewrite the section around
-what production serves. One without the other leaves the page contradicting itself.
+**The README states the status in two places, the badge and § Status.** Both say public beta since
+#1881. They change again only with `1.0.0`, when the criteria on #295 hold. One without the other
+leaves the page contradicting itself.
 
 **Two of these prove that the flip did not break the watching.** Changes 3 and 4 in Section 0 repoint
 the monitor and the daily probe at the apex. Neither is proved by being repointed. The monitor gets a
@@ -268,14 +271,9 @@ same reason it moved to `Phase 2`. It is not a launch gate.
 
 ## 3 · What is deliberately not here
 
-Items in `v1.0 — Go-live` with the `needs-deployment` label wait on a live origin. They are not
-blocked on effort, and Section 2 is where the ones that matter reappear as acts rather than as
-issues.
-
-**Four of them can run early**, because production serves a real hostname over a real certificate:
-#290, #291, #292 and #298. Point them at `prod-check`.
-
-Two cannot. #288 and #293 need the real domain.
+Items in `v1.0 — Go-live` with the `needs-deployment` label waited on a live origin, not on effort.
+The apex is that origin, so each of them can run now. Section 2 is where the ones that matter appear
+as acts rather than as issues.
 
 ## 4 · Going dark again
 
