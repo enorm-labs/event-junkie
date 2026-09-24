@@ -64,10 +64,13 @@ class Hole44DetailPageScraper {
         val slug = extractEventSlug(sourceUrl, "/event/")
         val support = content.textAt("h5.single-event-support")
         val eventType = inferConcertVenueType(title)
+        // The blurb names the acts in full where the title abbreviates them — `Myki, Darlene & Nini`
+        // is billed by `Myki Meeks, Darlene Mitchell, and Nini Coco` (#1832).
+        val description = jsonLd?.stringOrNull("description")
         return ScrapedEvent(
             title = title,
             subtitle = support,
-            description = jsonLd?.stringOrNull("description"),
+            description = description,
             eventType = eventType,
             // Prefer the structured startDate, then the slug's ISO prefix, then the German `.details` date.
             eventDate =
@@ -86,7 +89,7 @@ class Hole44DetailPageScraper {
             status = parseEventStatus(content.textAt(".single_event_header span.changes").orEmpty()),
             statusNote = content.textAt(".single_event_header span.changes"),
             promoters = parsePromoter(content),
-            artists = buildArtistsForEventType(title, support, eventType)
+            artists = buildArtistsForEventType(title, support, eventType, description)
         )
     }
 

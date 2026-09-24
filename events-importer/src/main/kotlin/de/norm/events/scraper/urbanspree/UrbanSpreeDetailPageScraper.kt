@@ -68,10 +68,13 @@ class UrbanSpreeDetailPageScraper {
         val eventType = mapEventType(hero.textAt(".parent-name"), URBAN_SPREE_CATEGORY_SYNONYMS)
         val priceText = hero.textAt(".ct-dates li.price")
         val price = parsePriceValue(priceText)
+        // The blurb opens with the night's own billing — one act per line under `Live:`, each with
+        // its genres and origin — which is what corroborates a comma the title alone cannot (#1832).
+        val description = document.textAt(".rte.tv-content")
         return ScrapedEvent(
             title = title,
             subtitle = supportNote,
-            description = document.textAt(".rte.tv-content"),
+            description = description,
             eventType = eventType,
             // The overview card's data-dateStart wins during the merge; this is the standalone value.
             eventDate = parseHeroDate(hero) ?: UNRESOLVED_EVENT_DATE,
@@ -84,7 +87,7 @@ class UrbanSpreeDetailPageScraper {
             pricePresale = price,
             free = detectFree(pricePresale = price, priceNote = priceText),
             status = urbanSpreeStatus(rawTitle),
-            artists = buildArtistsForEventType(title, subtitle = supportNote, eventType = eventType),
+            artists = buildArtistsForEventType(title, subtitle = supportNote, eventType = eventType, description = description),
             promoters = infoValue(document, PROMOTER_LABEL)?.let(::splitPromoters).orEmpty()
         )
     }

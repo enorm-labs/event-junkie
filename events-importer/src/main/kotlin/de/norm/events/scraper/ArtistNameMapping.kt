@@ -815,6 +815,145 @@ private fun bulletCoBill(title: String): List<String>? {
     return segments.takeIf { it.size > 1 && it.all { segment -> TRAILING_ANNOTATION.containsMatchIn(segment) } }
 }
 
+/**
+ * The typographic characters a venue's title and its own blurb spell differently: curly quotes and
+ * the dashes. `Yes, I’m Very Tired Now` is billed with `\u2019` and described with `'`.
+ */
+private val TYPOGRAPHIC_FORMS =
+    mapOf('\u2019' to '\'', '\u2018' to '\'', '\u02bc' to '\'', '\u201c' to '"', '\u201d' to '"', '\u2013' to '-', '\u2014' to '-', '\u2212' to '-')
+
+private val COMBINING_MARKS = Regex("""\p{M}+""")
+
+/** Everything a phrase drops: punctuation, but never a space and never the `&` that joins a name. */
+private val NOT_PHRASE_CHARACTER = Regex("""[^\p{L}\p{N}&\s]""")
+
+/**
+ * The comparison form of a line of prose or a title: accents stripped, typographic forms folded,
+ * lower case, punctuation dropped **without joining the words it sat between**, whitespace
+ * collapsed.
+ *
+ * **Deliberately not [MusicBrainzMatcher.fold][de.norm.events.musicbrainz.MusicBrainzMatcher.fold]**,
+ * which maps `and`/`und`/`&` onto one token. Under that fold a description reading `D-Block Europe
+ * und French Montana` is the same string as the title `D-Block Europe, French Montana`, so
+ * [corroboratedActs] reads the bill as one act's own name and keeps it fused — measured, and the
+ * reason this fold exists separately (#1832). Keeping the conjunction keeps `A, B` and `A und B`
+ * apart, while dropping the comma and the apostrophe makes `Yes, I’m Very Tired Now` and a blurb's
+ * `Yes I'm Very Tired Now` one string, which is what protects the band.
+ */
+private fun phraseForm(text: String): String =
+    Normalizer
+        .normalize(text.map { TYPOGRAPHIC_FORMS[it] ?: it }.joinToString(""), Normalizer.Form.NFKD)
+        .replace(COMBINING_MARKS, "")
+        .lowercase()
+        .replace(NOT_PHRASE_CHARACTER, "")
+        .replace(WHITESPACE, " ")
+        .trim()
+
+/** Whether [term] stands in [descriptionPhrase] as a whole word, both already in [phraseForm]. */
+private fun namedIn(
+    descriptionPhrase: String,
+    term: String
+): Boolean {
+    val wanted = phraseForm(term)
+    return wanted.isNotBlank() &&
+        Regex("""(?<![\p{L}\p{N}])${Regex.escape(wanted)}(?![\p{L}\p{N}])""").containsMatchIn(descriptionPhrase)
+}
+
+/** How many capitalised words an act's name may gain from the description. */
+private const val MAX_EXTENSION_WORDS = 3
+
+/**
+ * Spaces within one line. A name never runs across a line break, and a blurb that puts the night's
+ * instrumentation on the line under its bill would otherwise hand a greedy run an act that is not
+ * one: Madame Claude's reads `Elshan Ghasimi, Carla Boregas & Joss Turnbull\nSoundart, classical
+ * iranien, …`.
+ */
+private const val SAME_LINE_GAP = """[ \t]+"""
+
+/** A capitalised word, as the tail of a name the description spells out more fully. */
+private const val CAPITALISED_WORD = """\p{Lu}[\p{L}\p{N}'\u2019.-]*"""
+
+/**
+ * [segment] as the description spells it: the longest run of up to [MAX_EXTENSION_WORDS]
+ * capitalised words that begins with it, or [segment] unchanged when the description adds nothing.
+ *
+ * This is what makes the description worth reading rather than the title worth splitting. Hole 44
+ * bills `Myki, Darlene & Nini` and describes `Myki Meeks, Darlene Mitchell, and Nini Coco`, so
+ * every act in that title is a short form and no rule over the string can reach the real name.
+ */
+private fun extendFromDescription(
+    description: String,
+    segment: String
+): String =
+    Regex("""${Regex.escape(segment)}(?:$SAME_LINE_GAP$CAPITALISED_WORD){1,$MAX_EXTENSION_WORDS}""")
+        .findAll(description)
+        .map { it.value.trim() }
+        .maxByOrNull { it.length }
+        ?: segment
+
+/**
+ * The acts a single-comma title bills, when the event's own [description] corroborates them, or
+ * `null` to leave the title whole (#1832).
+ *
+ * A single top-level comma decides nothing by itself ([MIN_COMMAS_FOR_A_LIST]) — `Hey, Nothing` is
+ * a band and `D-Block Europe, French Montana` is a bill. The description is the evidence the title
+ * lacks, and it answers in two steps, both required:
+ *
+ * 1. **The whole title standing in the description as a phrase is a name**, not a bill, and is kept
+ *    whole. This is what `Kitty, Daisy & Lewis` and `Yes, I’m Very Tired Now` rest on.
+ * 2. **Otherwise every candidate act must be named in it** as a whole word. One segment the blurb
+ *    never mentions makes the split a guess, and the title is kept.
+ *
+ * Whatever the description does not decide is left alone: no description, or a title whose segments
+ * it does not all name, keeps today's answer exactly.
+ */
+private fun corroboratedActs(
+    title: String,
+    candidates: List<String>,
+    description: String?
+): List<String>? {
+    val descriptionPhrase = description?.takeIf { it.isNotBlank() }?.let(::phraseForm) ?: return null
+    val titlePhrase = phraseForm(title)
+    val corroborated =
+        candidates.size >= MIN_CORROBORATED_ACTS &&
+            !descriptionPhrase.contains(titlePhrase) &&
+            candidates.all { namedIn(descriptionPhrase, it) } &&
+            !conjoinedAlike(titlePhrase, descriptionPhrase, candidates)
+    return candidates
+        .takeIf { corroborated }
+        ?.map { extendFromDescription(description, it) }
+}
+
+/** A bill is at least two acts; one segment is the title itself. */
+private const val MIN_CORROBORATED_ACTS = 2
+
+/** A conjunction as it stands between two names once both sides are in [phraseForm]. */
+private const val JOINED_BY_CONJUNCTION = """\s+(?:&|and|und)\s+"""
+
+/**
+ * Whether two neighbouring [candidates] are joined by a conjunction in the title **and** in the
+ * description alike, which makes them one act rather than two.
+ *
+ * Kantine am Berghain bills `Parlour Magic, Fee Aviv und Ghosts & Errors` and writes `GHOSTS &
+ * ERRORS` throughout its blurb: the conjunction split inside that comma segment is wrong, and
+ * nothing in the title says so. Both sides are required, because a description joining two acts
+ * on its own proves the opposite — Uber Eats writes `D-Block Europe und French Montana` for a
+ * bill its title separates with a comma. A pair joined in both places leaves the whole segment
+ * to the ordinary rules rather than guessing which of the two readings to keep.
+ */
+private fun conjoinedAlike(
+    titlePhrase: String,
+    descriptionPhrase: String,
+    candidates: List<String>
+): Boolean =
+    candidates.zipWithNext().any { (first, second) ->
+        val joined =
+            Regex(
+                """(?<![\p{L}\p{N}])${Regex.escape(phraseForm(first))}$JOINED_BY_CONJUNCTION${Regex.escape(phraseForm(second))}(?![\p{L}\p{N}])"""
+            )
+        joined.containsMatchIn(titlePhrase) && joined.containsMatchIn(descriptionPhrase)
+    }
+
 /** Hard separators that always delimit acts in a support/lineup line: comma, plus, slash. */
 private val SUPPORT_HARD_SEPARATOR = Regex("""\s*[,+/]\s*""")
 
@@ -845,12 +984,14 @@ fun splitSupportActs(text: String): List<String> =
  *
  * @param splitOnSlash when false, `/` is not a separator, for venues that use it inside one act
  * name (Madame Claude's `Morimoto / Wong duo`).
+ * @param description the event's own blurb, which alone can decide a single comma — see
+ * [commaBillOf]. Null keeps the title's answer.
  */
 @Suppress("ReturnCount") // Guard clauses for blank and denylisted titles are clearer than nesting
 fun splitHeadlinerTitle(
     title: String,
     splitOnSlash: Boolean = true,
-    splitOnComma: Boolean = false
+    description: String? = null
 ): List<String> {
     val trimmed = title.trim()
     if (trimmed.isEmpty()) return listOf(title)
@@ -859,7 +1000,7 @@ fun splitHeadlinerTitle(
     if (isKnownSingleAct(trimmed)) return listOf(trimmed)
 
     val commas = topLevelCommas(trimmed)
-    if (commas.size >= MIN_COMMAS_FOR_A_LIST || (splitOnComma && commas.isNotEmpty())) {
+    if (commas.size >= MIN_COMMAS_FOR_A_LIST) {
         return cutAt(trimmed, commas.map { it..it })
             .flatMap { splitHeadlinerTitle(it.trim(), splitOnSlash) }
             .map { it.trim() }
@@ -887,11 +1028,36 @@ fun splitHeadlinerTitle(
 
     val acts =
         cutAt(trimmed, hardCuts)
-            .flatMap { splitSegmentOnConjunctions(it) }
+            .flatMap { segment -> commaBillOf(segment, description) ?: splitSegmentOnConjunctions(segment) }
             .map { it.trim() }
             .filter { it.isNotBlank() }
 
     return acts.ifEmpty { listOf(trimmed) }
+}
+
+/**
+ * The acts of one hard-separated [segment] whose single comma the [description] corroborates, or
+ * `null` to leave the segment to the ordinary rules (#1832).
+ *
+ * **Asked per segment, after the hard separators**, because a comma binds no tighter than a `+`.
+ * Madame Claude bills `Elshan Ghasimi, Carla Boregas & Joss Turnbull + Orca Eroticae + …`, and only
+ * the part before the first `+` is the comma's business; asking the description about the whole
+ * title finds none of it and splits a name the blurb states outright. Aeden's `Pikante / rhythm,
+ * spice and everything heiß` is the same shape behind a slash.
+ */
+private fun commaBillOf(
+    segment: String,
+    description: String?
+): List<String>? {
+    val trimmed = segment.trim()
+    val commas = topLevelCommas(trimmed)
+    if (description.isNullOrBlank() || commas.size != 1) return null
+    val candidates =
+        cutAt(trimmed, commas.map { it..it })
+            .flatMap { splitSegmentOnConjunctions(it) }
+            .map { it.trim() }
+            .filter { it.isNotBlank() }
+    return corroboratedActs(trimmed, candidates, description)
 }
 
 /**
@@ -971,7 +1137,7 @@ fun headlinersFromTitle(
     splitOnSlash: Boolean = true,
     unpackWithFrame: Boolean = false,
     subtitle: String? = null,
-    splitOnComma: Boolean = false
+    description: String? = null
 ): List<ScrapedArtist> {
     // The persistence boundary strips a cancellation from the title after the acts are built, so
     // `Absage: The Act` must lose the marker here or bill it (#1560).
@@ -984,7 +1150,7 @@ fun headlinersFromTitle(
     // `<act> feat. <guest>` mid-title: the guest is billed as support, the act goes on (#305).
     val (billing, guests) = splitFeaturedGuests(title)
     presentsFrameActs(billing)?.let { return it + guests }
-    return splitHeadlinerTitle(stripSeriesPrefix(billedSideOfPres(billing, splitOnSlash)), splitOnSlash, splitOnComma)
+    return splitHeadlinerTitle(stripSeriesPrefix(billedSideOfPres(billing, splitOnSlash)), splitOnSlash, description)
         .map { segment ->
             // The role is decided from the *raw* segment, before its label is stripped: a title
             // that bills "… + Support: A.A. Williams" names a support act, not a second headliner.
@@ -1133,12 +1299,14 @@ private fun withFrameActs(title: String): List<ScrapedArtist>? {
  * @param title the event title, one or more headliner names.
  * @param supportNames support acts; empty returns an empty list.
  * @param subtitle forwarded to [headlinersFromTitle] for the label-showcase check.
+ * @param description forwarded to [headlinersFromTitle], which reads it to corroborate a comma.
  * @return headliner(s) first, then support acts in order.
  */
 fun buildArtistList(
     title: String,
     supportNames: List<String>,
-    subtitle: String? = null
+    subtitle: String? = null,
+    description: String? = null
 ): List<ScrapedArtist> {
     if (supportNames.isEmpty()) return emptyList()
 
@@ -1147,7 +1315,7 @@ fun buildArtistList(
             .filterNot { isNonArtistName(it) }
             .map { ScrapedArtist(name = it, role = "SUPPORT") }
 
-    return headlinersFromTitle(title, subtitle = subtitle) + supportActs
+    return headlinersFromTitle(title, subtitle = subtitle, description = description) + supportActs
 }
 
 /**
@@ -1190,13 +1358,14 @@ private fun soloBillOf(title: String): List<ScrapedArtist> =
 fun buildArtistsForEventType(
     title: String,
     subtitle: String?,
-    eventType: String?
+    eventType: String?,
+    description: String? = null
 ): List<ScrapedArtist> {
     if (eventType == EventType.FESTIVAL.name || eventType == EventType.PARTY.name) return emptyList()
 
     val supportNames = extractSupportFromSubtitle(subtitle)
     if (eventType == EventType.SHOW.name && supportNames.isEmpty()) return soloBillOf(title)
-    if (eventType != EventType.CONCERT.name) return buildArtistList(title, supportNames, subtitle)
+    if (eventType != EventType.CONCERT.name) return buildArtistList(title, supportNames, subtitle, description)
 
     // Concert: the title carries the headliner(s) (co-bills split out), then support acts in listing order.
     val supportActs =
@@ -1205,5 +1374,5 @@ fun buildArtistsForEventType(
             .map { ScrapedArtist(name = it, role = "SUPPORT") }
     // The subtitle goes in as well as being read for support: a `"<X> presents"` credit beside a
     // title that opens with `<X>` means the title is the label's night, not the act.
-    return headlinersFromTitle(title, subtitle = subtitle) + supportActs
+    return headlinersFromTitle(title, subtitle = subtitle, description = description) + supportActs
 }

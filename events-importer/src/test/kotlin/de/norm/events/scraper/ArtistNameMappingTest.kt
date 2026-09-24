@@ -530,6 +530,119 @@ class ArtistNameMappingTest {
             listOf("Barker – Utility (Ostgut Ton, 2019 • 43 min • vinyl)")
     }
 
+    // --- a description corroborating a single comma (#1832) ---
+
+    @Test
+    fun `headlinersFromTitle splits a one-comma bill the description names act by act`() {
+        headlinersFromTitle(
+            "D-Block Europe, French Montana",
+            description = "D-Block Europe und French Montana machen mit ihrer gemeinsamen \"Worldwide Wave\"-Tour Halt in Berlin."
+        ) shouldBe
+            listOf(
+                ScrapedArtist("D-Block Europe", "HEADLINER", titleDerived = true),
+                ScrapedArtist("French Montana", "HEADLINER", titleDerived = true)
+            )
+    }
+
+    @Test
+    fun `headlinersFromTitle takes the fuller name the description spells out`() {
+        // The whole point of reading the blurb: every act in this title is a short form, so even a
+        // correct split of the title alone would mint three names no act carries.
+        headlinersFromTitle(
+            "Myki, Darlene & Nini",
+            description =
+                "Straight from the latest season of RuPaul's Drag Race, Myki Meeks, Darlene Mitchell, " +
+                    "and Nini Coco bring three powerhouse energies and one unforgettable show."
+        ).map { it.name } shouldBe listOf("Myki Meeks", "Darlene Mitchell", "Nini Coco")
+    }
+
+    @Test
+    fun `headlinersFromTitle corroborates the comma segment and leaves the hard separator alone`() {
+        headlinersFromTitle(
+            "FLAME PARADE, ALICE GIFT + ANNA GROB",
+            description =
+                "Live:\nFLAME PARADE (Indie/Dreampop/Alternative, IT)\nALICE GIFT (Indie/Shoegaze/Glam, Berlin)\n" +
+                    "ANNA GROB (Indie/Alternative/BaRock)"
+        ).map { it.name } shouldBe listOf("FLAME PARADE", "ALICE GIFT", "ANNA GROB")
+    }
+
+    @Test
+    fun `headlinersFromTitle keeps a name the description states in full`() {
+        // The band writes its name with a comma and the blurb without one, and the apostrophes
+        // differ; both have to fold away or a real act is split in two.
+        headlinersFromTitle(
+            "Yes, I\u2019m Very Tired Now",
+            description = "Die f\u00fcnfk\u00f6pfige Band um Marc Frischknecht alias Yes I'm Very Tired Now l\u00e4dt zu einem Konzert ein."
+        ).map { it.name } shouldBe listOf("Yes, I\u2019m Very Tired Now")
+        headlinersFromTitle(
+            "Kitty, Daisy & Lewis",
+            description = "Kitty, Daisy & Lewis are a British band of siblings."
+        ).map { it.name } shouldBe listOf("Kitty, Daisy & Lewis")
+    }
+
+    @Test
+    fun `headlinersFromTitle keeps a title whose segments the description does not all name`() {
+        headlinersFromTitle(
+            "Hey, Nothing",
+            description = "An evening of quiet songs at the Modus."
+        ).map { it.name } shouldBe listOf("Hey, Nothing")
+    }
+
+    @Test
+    fun `headlinersFromTitle changes nothing without a description`() {
+        headlinersFromTitle("D-Block Europe, French Montana").map { it.name } shouldBe
+            listOf("D-Block Europe, French Montana")
+        headlinersFromTitle("Myki, Darlene & Nini").map { it.name } shouldBe listOf("Myki, Darlene & Nini")
+    }
+
+    @Test
+    fun `headlinersFromTitle asks the description per segment, after the hard separators`() {
+        // Madame Claude's blurb opens with the bill verbatim, so that segment is one act's name —
+        // and the `+` acts after it are none of the comma's business.
+        headlinersFromTitle(
+            "Elshan Ghasimi, Carla Boregas & Joss Turnbull + Orca Eroticae",
+            description =
+                "Elshan Ghasimi, Carla Boregas & Joss Turnbull\nSoundart, classical iranien, percussion, " +
+                    "objects and electronics / Berlin based"
+        ).map { it.name } shouldBe listOf("Elshan Ghasimi, Carla Boregas & Joss Turnbull", "Orca Eroticae")
+    }
+
+    @Test
+    fun `headlinersFromTitle keeps a pair the title and the description both join with a conjunction`() {
+        // `GHOSTS & ERRORS` is one act, and only the blurb says so: the title's conjunction alone
+        // would split it, and the comma would then look corroborated.
+        headlinersFromTitle(
+            "Parlour Magic, Fee Aviv und Ghosts & Errors",
+            description = "PARLOUR MAGIC ... FEE AVIV ... GHOSTS & ERRORS \u201eTeenage Prose\u201c von GHOSTS & ERRORS ist intensiv."
+        ).map { it.name } shouldBe listOf("Parlour Magic, Fee Aviv und Ghosts & Errors")
+    }
+
+    @Test
+    fun `headlinersFromTitle does not let a description conjunction defeat a comma bill`() {
+        // The mirror of the case above, and why both sides are required: the description joins the
+        // two acts with `und` where the title separates them with a comma.
+        headlinersFromTitle(
+            "D-Block Europe, French Montana",
+            description = "D-Block Europe und French Montana auf Tour."
+        ).map { it.name } shouldBe listOf("D-Block Europe", "French Montana")
+    }
+
+    @Test
+    fun `headlinersFromTitle never extends an act across a line break`() {
+        headlinersFromTitle(
+            "Myki, Darlene & Nini",
+            description = "Myki Meeks, Darlene Mitchell, and Nini Coco\nSoundart And Percussion"
+        ).map { it.name } shouldBe listOf("Myki Meeks", "Darlene Mitchell", "Nini Coco")
+    }
+
+    @Test
+    fun `headlinersFromTitle never bills an act only the description names`() {
+        headlinersFromTitle(
+            "D-Block Europe, French Montana",
+            description = "D-Block Europe und French Montana, mit einem Gastauftritt von Some Other Act."
+        ).map { it.name } shouldBe listOf("D-Block Europe", "French Montana")
+    }
+
     // --- stripArtistSuffix ---
 
     @Test
