@@ -1,7 +1,7 @@
 # Default-deny for the `cert-manager` namespace, plus one named allowance per conversation (#920):
 #     controller  -> apiserver:6443       watching Certificates, leader election
 #     controller  -> the internet:443     ACME — Let's Encrypt's directory and orders
-#     controller  -> the internet:80      the HTTP-01 self-check, against this node's own public IP
+#     controller  -> Traefik:8000         the HTTP-01 self-check, which the node DNATs to Traefik
 #     cainjector  -> apiserver:6443       injecting CA bundles into webhook configs
 #     webhook     -> apiserver:6443       SubjectAccessReview on every admission call
 #     everything  -> CoreDNS:53
@@ -10,9 +10,11 @@
 # against the real ACME endpoint, so staging's DNS-01 self-check (`controller -> the internet:53`) and
 # its Hetzner webhook describe conversations that cannot happen here. HTTP-01 has a self-check of its
 # own: before cert-manager lets Let's Encrypt validate, the controller GETs the token on port 80 of the
-# name, which resolves to this node. Without port 80 the challenge stays pending with `connection
-# refused`, while the token answers 200 from outside. Renewals of a name Let's Encrypt already
-# authorised skip the challenge, so the gap showed only when go-live asked for new names. **The HTTP-01 solver is not this file's to
+# name, which resolves to this node. The node's hostPort rule DNATs that to the Traefik pod on 8000
+# before the policy is evaluated, the same trap as the API server below, so the arrow names the pod,
+# not the public address. Without it the challenge stays pending with `connection refused`, while
+# the token answers 200 from outside. Renewals of a name Let's Encrypt already authorised skip the
+# challenge, so the gap showed only when go-live asked for new names. **The HTTP-01 solver is not this file's to
 # allow**: cert-manager creates the solver Pod in the Ingress's namespace, `event-junkie`, and the
 # arrow is `allow-acme-solver` in the chart's `templates/networkpolicy.yaml`.
 #
@@ -98,7 +100,7 @@ metadata:
   namespace: cert-manager
   annotations:
     kubernetes.io/description: >-
-      ACME over 443 to Let's Encrypt, and the HTTP-01 self-check over 80 to this node's public address. No DNS-01 self-check here, unlike staging.
+      ACME over 443 to Let's Encrypt, and the HTTP-01 self-check to Traefik on 8000, where the node's hostPort 80 lands. No DNS-01 self-check here, unlike staging.
 spec:
   podSelector:
     matchLabels:
@@ -120,8 +122,18 @@ spec:
       ports:
         - protocol: TCP
           port: 443
+    # The self-check. Matched after the DNAT, so by pod: `hostPort: 80` is `containerPort: 8000` in
+    # `traefik-host-ports.yaml`, the rule the chart's smoke hook uses for the same path.
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: traefik
+      ports:
         - protocol: TCP
-          port: 80
+          port: 8000
 ---
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
