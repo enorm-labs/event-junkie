@@ -1,6 +1,7 @@
 package de.norm.events.scraper
 
 import de.norm.events.BaseControllerTest
+import de.norm.events.artist.ArtistEntity
 import de.norm.events.artist.ArtistRepository
 import de.norm.events.artist.MusicBrainzMatch
 import de.norm.events.event.EventArtistRepository
@@ -335,15 +336,45 @@ class AssociationSyncDuplicateNamesIntegrationTest : BaseControllerTest() {
             val sourceId = "promoter-title:1"
             val event = persistEvent(sourceId)
 
+            val touched =
+                associationSyncService.resolveAndSyncAssociations(
+                    listOf(event),
+                    listOf(
+                        scraped(sourceId, artists = listOf(ScrapedArtist(name = "Unreleased Berlin", role = "HEADLINER", titleDerived = true)))
+                            .copy(title = "UNRELEASED BERLIN", promoters = listOf("Unreleased Berlin"))
+                    )
+                )
+
+            // Held back, not billed: the row exists only for the MusicBrainz sweep to look at (#1841).
+            eventArtistRepository.findByEventIdIn(listOf(requireNotNull(event.id))).toList().shouldBeEmpty()
+            val held = artistRepository.findAll().toList()
+            held.map { it.name } shouldBe listOf("Unreleased Berlin")
+            touched shouldBe setOf(requireNotNull(held.single().id))
+        }
+    }
+
+    // A band can promote its own show: Urban Spree credits `WISBORG` for `WISBORG Phantomschmerz Tour` (#1841).
+    @Test
+    fun `a title-derived promoter name that MusicBrainz knows as an act is billed`() {
+        runBlocking {
+            artistRepository.save(ArtistEntity(name = "Wisborg", slug = "wisborg", musicbrainzMatch = MusicBrainzMatch.EXACT.name))
+            val sourceId = "promoter-exact:1"
+            val event = persistEvent(sourceId)
+
             associationSyncService.resolveAndSyncAssociations(
                 listOf(event),
                 listOf(
-                    scraped(sourceId, artists = listOf(ScrapedArtist(name = "Unreleased Berlin", role = "HEADLINER", titleDerived = true)))
-                        .copy(title = "UNRELEASED BERLIN", promoters = listOf("Unreleased Berlin"))
+                    scraped(sourceId, artists = listOf(ScrapedArtist(name = "WISBORG", role = "HEADLINER", titleDerived = true)))
+                        .copy(title = "WISBORG Phantomschmerz Tour", promoters = listOf("WISBORG"))
                 )
             )
 
-            artistRepository.findAll().toList().shouldBeEmpty()
+            val linked = eventArtistRepository.findByEventIdIn(listOf(requireNotNull(event.id))).toList().map { it.artistId }
+            artistRepository
+                .findAll()
+                .toList()
+                .filter { it.id in linked }
+                .map { it.name } shouldBe listOf("Wisborg")
         }
     }
 

@@ -51,14 +51,15 @@ class AssociationSyncService(
      * @param savedEvents the persisted event entities (non-null IDs).
      * @param scrapedEvents the raw scraped events.
      * @return the ids of every artist row this run billed, new or existing, for the MusicBrainz
-     * sweep after the commit (#1567).
+     * sweep after the commit (#1567), and of every row held back unbilled until that sweep can vouch
+     * for it (#1841).
      */
     suspend fun resolveAndSyncAssociations(
         savedEvents: List<EventEntity>,
         scrapedEvents: List<ScrapedEvent>
     ): Set<Long> {
-        val billed = billedArtists(scrapedEvents)
-        val artistCache = resolveAllArtists(billed.values.flatten())
+        val (billed, unverified) = billedArtists(scrapedEvents)
+        val artistCache = resolveAllArtists(billed.values.flatten() + unverified)
         syncArtistAssociations(savedEvents, billed, artistCache)
 
         val promoterCache = resolveAllPromoters(scrapedEvents)
@@ -113,10 +114,16 @@ class AssociationSyncService(
      * **A title-derived name the same event credits as its promoter is the series, not an act**
      * (#1772): Astra's secret-lineup night is titled `UNRELEASED BERLIN` and credits `Unreleased
      * Berlin` in its promoter block, so the title-as-headliner default minted the promoter. A
-     * billed act is never dropped this way — only a name no line-up stated. Then
+     * billed act is never dropped this way — only a name no line-up stated. **A band can promote its
+     * own show too** (Urban Spree credits `WISBORG` for `WISBORG Phantomschmerz Tour`, #1841), and
+     * the title cannot tell the two apart, so a MusicBrainz `EXACT` row for the name keeps it billed.
+     * A name with no such row is held back: its row is created unbilled and returned for the sweep
+     * after the commit, and the orphan sweep's grace day outlasts the next daily import. Then
      * [unglueSeriesTails].
+     *
+     * @return the billed artists by `sourceId`, and the held-back names.
      */
-    private suspend fun billedArtists(scrapedEvents: List<ScrapedEvent>): Map<String, List<ScrapedArtist>> {
+    private suspend fun billedArtists(scrapedEvents: List<ScrapedEvent>): Pair<Map<String, List<ScrapedArtist>>, List<ScrapedArtist>> {
         scrapedEvents.forEach { event ->
             event.artists
                 .filter { isSlugless(it.name) }
@@ -125,19 +132,38 @@ class AssociationSyncService(
         val stripped =
             scrapedEvents.associate { event ->
                 val festival = event.resolvedEventType() == EventType.FESTIVAL
-                val promoterSlugs = event.promoters.map(::slugOf).toSet()
                 event.sourceId to
                     event.artists
                         .flatMap { artist -> splitGuest(artist) }
                         .map { it.copy(name = stripArtistSuffix(it.name)) }
-                        .filterNot {
-                            isSlugless(it.name) ||
-                                isNonArtistName(it.name) ||
-                                (it.titleDerived && (festival || slugOf(it.name) in promoterSlugs))
-                        }
+                        .filterNot { isSlugless(it.name) || isNonArtistName(it.name) || (it.titleDerived && festival) }
             }
-        return unglueSeriesTails(stripped)
+        val promoterSlugsById = scrapedEvents.associate { event -> event.sourceId to event.promoters.map(::slugOf).toSet() }
+        val promoterNamed =
+            stripped.flatMap { (sourceId, artists) ->
+                artists.filter { it.titleDerived && slugOf(it.name) in promoterSlugsById.getValue(sourceId) }
+            }
+        val verified = exactSlugs(promoterNamed.map { slugOf(it.name) }.toSet())
+        val billed =
+            stripped.mapValues { (sourceId, artists) ->
+                artists.filterNot { it.titleDerived && slugOf(it.name) in promoterSlugsById.getValue(sourceId) && slugOf(it.name) !in verified }
+            }
+        val unverified = promoterNamed.filterNot { slugOf(it.name) in verified }.distinctBy { slugOf(it.name) }
+        unverified.forEach { logger.info { "Holding back '${it.name}': the event's promoter, and no MusicBrainz EXACT row vouches for it as an act" } }
+        return unglueSeriesTails(billed) to unverified
     }
+
+    /** The subset of [slugs] whose artist row MusicBrainz matched `EXACT`. */
+    private suspend fun exactSlugs(slugs: Set<String>): Set<String> =
+        if (slugs.isEmpty()) {
+            emptySet()
+        } else {
+            artistRepository
+                .findBySlugIn(slugs)
+                .toList()
+                .filter { it.musicbrainzMatch == MusicBrainzMatch.EXACT.name }
+                .mapTo(mutableSetOf()) { it.slug }
+        }
 
     /** [splitBracketedGuest] on one billing; a headliner's guest is support, as a `feat.` title bills it (#305). */
     private fun splitGuest(artist: ScrapedArtist): List<ScrapedArtist> =
