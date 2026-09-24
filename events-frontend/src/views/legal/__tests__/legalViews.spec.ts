@@ -136,6 +136,13 @@ const PRIVACY_ELEMENTS: Element[] = [
   // GitHub, not a processor: opening an issue rather than writing an email sends data to a US
   // company, so the notice still addresses a third country.
   { what: 'third-country transfer — GitHub only', en: /US company/, de: /US-Unternehmen/ },
+  // Mail to the role mailboxes is personal data with its own period (LEGAL.md §7.3a). Nothing
+  // deletes it automatically, so the sentence is the only record of the promise.
+  {
+    what: 'mail retention, one year after the request is dealt with',
+    en: /one year after that at the latest/,
+    de: /spätestens ein Jahr danach/,
+  },
   // #278. The real bound is 14 days, `ZO_COMPACT_DATA_RETENTION_DAYS` in both clusters'
   // `openobserve.yaml`, whose own comment says this notice must state whatever it says; the
   // kubelet rotation is a second, usually shorter, bound on volume. The number is the assertion:

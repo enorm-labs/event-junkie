@@ -256,6 +256,11 @@ const { t } = useI18n()
         6 Abs. 1 lit. b DSGVO). GitHub wird von einem US-Unternehmen betrieben; ob du dort statt per
         E-Mail schreibst, entscheidest du.
       </p>
+      <p>
+        <strong>Speicherdauer:</strong> Wir bewahren eine E-Mail auf, bis dein Anliegen erledigt
+        ist, und löschen sie <strong>spätestens ein Jahr danach</strong>. Das Jahr deckt Rückfragen
+        zum selben Anliegen ab.
+      </p>
     </section>
 
     <section>
