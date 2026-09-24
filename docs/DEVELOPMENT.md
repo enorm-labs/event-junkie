@@ -738,7 +738,7 @@ chart's helm-unittest suites fail the build on a floating tag, which is that rul
 
 - **Every GHCR package is private on its first publish**, regardless of repository visibility. Four packages — `bff`, `importer`, `frontend` and the chart —
   each needing one visibility flip in its package settings. The symptom of forgetting is `ImagePullBackOff` on the first deploy, with nothing in the logs
-  naming the cause. See [PLATFORM_SETUP §3](ops/PLATFORM_SETUP.md#3-container-registry--ghcr-not-docker-hub).
+  naming the cause. See [PLATFORM_SETUP §2](ops/PLATFORM_SETUP.md#2-container-registry--ghcr-not-docker-hub).
 - **A local `docker push` or `helm push` needs a classic PAT** with `write:packages`, because GitHub Packages does not
   support a fine-grained token. CI needs no such credential: `permissions: packages: write` and the run's own token
   are enough.
