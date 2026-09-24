@@ -50,9 +50,36 @@ class FrannzOverviewPageScraperTest {
 
     private fun scrape() = scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl)
 
+    // 89 plain articles and 11 the venue flags `highlight` while giving them full event data; the
+    // 7 carousel teasers carry neither a title nor a date and stay out (#1797).
     @Test
-    fun `scrape extracts all main-list events, excluding highlight carousel`() {
-        scrape() shouldHaveSize 89
+    fun `scrape extracts every article carrying an event, whatever its class`() {
+        scrape() shouldHaveSize 100
+    }
+
+    // The class says which nights the venue promotes, not which markup it rendered. Excluding it
+    // dropped these four touring concerts, each present in this fixture all along.
+    @Test
+    fun `scrape reads a promoted night that carries full event data`() {
+        val titles = scrape().map { it.title }
+
+        titles shouldContainAll listOf("Klez.e", "The Bones Of J.R. Jones", "Henrik Freischlader", "Clan Of Xymox")
+    }
+
+    // A teaser renders a date and a name into a slider and nothing else, so it is not an event.
+    @Test
+    fun `scrape skips a carousel teaser`() {
+        val teaser =
+            """
+            <html><body>
+              <article class="highlight post-1 events type-events" id="post-1">
+                <div class="slider-infos top"><span class="date">25.09.</span></div>
+                <div class="event-slider-img"></div>
+              </article>
+            </body></html>
+            """.trimIndent()
+
+        scraper.scrape(Jsoup.parse(teaser, baseUrl), baseUrl).shouldBeEmpty()
     }
 
     @Nested

@@ -59,9 +59,14 @@ class FrannzOverviewPageScraper(
     private val logger = KotlinLogging.logger {}
 
     /**
-     * Parses all events from the Frannz homepage: each `<article class="events">` in the main
-     * listing. The highlight carousel of `article.events.highlight` teaser cards (a subset without
-     * full data) is excluded via `:not(.highlight)`.
+     * Parses all events from the Frannz homepage: each `<article class="events">` carrying an
+     * event.
+     *
+     * **Selected on structure, not on the `highlight` class** (#1797). The venue reuses that class
+     * for two things: the carousel teaser, which renders a date and a name and nothing else, and
+     * the full article of a night it is promoting. Excluding the class dropped ten upcoming nights,
+     * four of them touring concerts. A teaser carries neither `h2.event-title` nor `.event-day`,
+     * and every real article carries both, so the two shapes separate on what they hold.
      *
      * @param baseUrl the URL the document was fetched from, for resolving relative links.
      */
@@ -69,7 +74,7 @@ class FrannzOverviewPageScraper(
         document: Document,
         baseUrl: String
     ): List<ScrapedEvent> {
-        val articles = document.select("article.events:not(.highlight)")
+        val articles = document.select("article.events:has(h2.event-title):has(.event-day)")
         logger.info { "Found ${articles.size} event article(s) on Frannz homepage" }
 
         @Suppress("TooGenericExceptionCaught") // Intentional: skip individual malformed events without aborting the import
