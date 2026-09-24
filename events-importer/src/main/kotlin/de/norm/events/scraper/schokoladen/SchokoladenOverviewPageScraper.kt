@@ -19,8 +19,8 @@ import java.time.LocalTime
 /**
  * Pure HTML parser for Schokoladen Mitte's Laravel-based event overview page.
  *
- * All upcoming events sit on one page (`/`) with details inline. Each is a `div.event` split
- * across two `div.container` children: a collapsible header (category, date, promoter, title,
+ * Each listing page (`/`, `?page=N`) holds ten events with details inline. Each is a `div.event`
+ * split across two `div.container` children: a collapsible header (category, date, promoter, title,
  * subtitle) and a `div.event-info` body (times, ticket link, description, image carousel).
  * Events are addressed only by page fragment (`#e20260711`), not a URL — no detail fetch, a
  * single-page importer.
@@ -36,7 +36,7 @@ class SchokoladenOverviewPageScraper {
     private val logger = KotlinLogging.logger {}
 
     /**
-     * Parses all events from the overview page.
+     * Parses all events from one listing page.
      *
      * @param baseUrl the URL the document was fetched from, for resolving relative links.
      */

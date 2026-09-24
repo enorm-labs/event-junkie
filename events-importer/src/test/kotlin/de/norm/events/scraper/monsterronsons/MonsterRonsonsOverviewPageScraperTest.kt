@@ -19,7 +19,7 @@ import java.time.ZoneId
 /**
  * Unit tests for [MonsterRonsonsOverviewPageScraper].
  *
- * Parses a static snapshot of the `/events` page captured on 2026-08-06, whose rolling window runs
+ * Parses a static snapshot of the `/events` page captured on 2026-08-06, whose first page runs
  * 6–17 August 2026. The clock is pinned to the capture date so the year inferred from each card's
  * weekday is deterministic, and so no card falls foul of the past-event cutoff.
  */
@@ -42,7 +42,7 @@ class MonsterRonsonsOverviewPageScraperTest {
     private fun event(sourceId: String): ScrapedEvent = events.first { it.sourceId == sourceId }
 
     @Test
-    fun `discovers every card in the window except the closure notice`() {
+    fun `discovers every card on the first page except the closure notice`() {
         // 12 cards cover 6–17 Aug; the 16 Aug card is a "CLOSED" notice, not an event.
         events shouldHaveSize 11
         events.map { it.title } shouldContain "BOXHOPPING!"

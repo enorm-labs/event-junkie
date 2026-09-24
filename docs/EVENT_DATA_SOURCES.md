@@ -85,7 +85,7 @@ schema change.
 | Mikropol                         | https://mikropol-berlin.de/                                 | Club         | Events-Manager list + detail; "verlegt in den …"       |
 | Modus Berlin                     | https://modus-berlin.de/events                              | Club         | List + detail; rendered date wins over stale slug      |
 | Monarch                          | https://www.kottimonarch.de/                                | Bar          | PHP /programm.php; type + status inline in title       |
-| Monster Ronson's Ichiban Karaoke | https://www.karaokemonster.de/                              | Bar          | Webflow; ~12-day window; banded prices; closure cards  |
+| Monster Ronson's Ichiban Karaoke | https://www.karaokemonster.de/                              | Bar          | Webflow; paged listing; banded prices; closure cards   |
 | Morphine Raum                    | http://www.morphinerecords.com/events                       | Club         | Hand-coded Kirby; ARCHIVE row skipped; price ranges    |
 | MS Hoppetosse                    | https://hoppetosse.berlin/                                  | Techno Club  | Shares the CdV listing; winter location only           |
 | Neue Zukunft                     | https://neue-zukunft.org/                                   | Club         | Elfsight Event Calendar widget API                     |

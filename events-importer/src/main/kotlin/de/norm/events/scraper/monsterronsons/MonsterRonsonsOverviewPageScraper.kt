@@ -23,10 +23,10 @@ import java.time.MonthDay
 /**
  * Pure HTML parser for Monster Ronson's Webflow event listing (`/events`).
  *
- * A Webflow CMS collection: one `.grid-item` card per calendar day over a rolling window of
- * roughly twelve days. Every card carries the whole summary — host title, weekday, day + month,
- * start time, teaser line, poster — so this scraper produces complete events; the detail page
- * only adds description, price and ticket link.
+ * A Webflow CMS collection: one `.grid-item` card per calendar day, twelve to a page, paged
+ * through a plain `?<id>_page=N` link that the importer follows (#1884). Every card carries the
+ * whole summary — host title, weekday, day + month, start time, teaser line, poster — so this
+ * scraper produces complete events; the detail page only adds description, price and ticket link.
  *
  * 1. **Year-less dates.** Cards state `Thu` / `6 Aug`. The year is inferred from the weekday
  * ([inferYearForWeekday]) rather than assumed current — the rule Arcanoa, gART.n and VOID Club
@@ -50,7 +50,7 @@ class MonsterRonsonsOverviewPageScraper(
     private val logger = KotlinLogging.logger {}
 
     /**
-     * Parses every event card on the listing.
+     * Parses every event card on one listing page.
      *
      * @param sourceUrl the URL the document was fetched from, for resolving relative card links.
      * @return the upcoming karaoke nights (today onward); closure cards and past dates are dropped.

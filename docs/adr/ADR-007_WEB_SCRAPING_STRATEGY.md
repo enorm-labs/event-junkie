@@ -367,11 +367,13 @@ framework-level infrastructure do not change.
 
 Amended 2026-09-24 ([#331](https://github.com/enorm-labs/event-junkie/issues/331)): a list that ends is read to its
 end, when the next page is a plain link or a form POST. Each importer stops at the last page and at a page cap of its
-own. The first-page rule stays for a list that only JavaScript can extend. Seven importers walk pages: LARK, Urban
-Spree, Heimathafen, Gärten der Welt, Cosmic Comedy, migas and Cassiopeia. `HtmlFetcher.postForm` sends
-the POST for migas. `AbstractTwoPageWebsiteImporter.nextOverviewPage` gives a two-page importer its later pages
-(Cassiopeia). A later page is fetched without ETag and Last-Modified, because those cover the entry page only. A later
-page that fails ends the walk, and the import keeps the pages it read.
+own. The first-page rule stays for a list that only JavaScript can extend. Nine importers walk pages: LARK, Urban
+Spree, Heimathafen, Gärten der Welt, Cosmic Comedy, migas, Cassiopeia, Schokoladen and Monster Ronson's.
+`HtmlFetcher.postForm` sends the POST for migas. `scrapeListingPages` walks the later pages for Cassiopeia (through
+`AbstractTwoPageWebsiteImporter.nextOverviewPage`), Schokoladen and Monster Ronson's
+([#1883](https://github.com/enorm-labs/event-junkie/issues/1883), [#1884](https://github.com/enorm-labs/event-junkie/issues/1884)).
+A later page is fetched without ETag and Last-Modified, because those cover the entry page only. A later page that
+fails ends the walk, and the import keeps the pages it read.
 
 ### Shared Detail Pages — Fetch Once Per Distinct URL
 

@@ -6,6 +6,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.VenueLimitations
+import de.norm.events.scraper.nextPageUrl
 import org.jsoup.nodes.Document
 import org.springframework.stereotype.Component
 import java.time.Clock
@@ -43,7 +44,7 @@ class CassiopeiaWebsiteImporter(
     override fun nextOverviewPage(
         document: Document,
         url: String
-    ): String? = document.selectFirst(NEXT_PAGE_SELECTOR)?.absUrl("href")?.takeIf { it.isNotEmpty() }
+    ): String? = document.nextPageUrl(NEXT_PAGE_SELECTOR)
 
     override fun scrapeDetail(
         document: Document,

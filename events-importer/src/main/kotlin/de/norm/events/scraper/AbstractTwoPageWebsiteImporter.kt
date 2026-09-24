@@ -72,7 +72,15 @@ abstract class AbstractTwoPageWebsiteImporter(
             }
 
             is FetchResult.Success -> {
-                val overviewEvents = scrapeOverviewPages(fetchResult.document, url)
+                val overviewEvents =
+                    htmlFetcher.scrapeListingPages(
+                        eventSource,
+                        fetchResult.document,
+                        url,
+                        MAX_OVERVIEW_PAGES,
+                        ::nextOverviewPage,
+                        ::scrapeOverview
+                    )
                 logger.info { "Scraped ${overviewEvents.size} event(s) from ${eventSource.name} overview" }
                 val merged = overviewEvents.map { parseDetailOrFallback(it) }
                 val events = dropUnresolvedDates(merged)
@@ -84,39 +92,6 @@ abstract class AbstractTwoPageWebsiteImporter(
                 )
             }
         }
-
-    /**
-     * Scrapes [first] and every later page [nextOverviewPage] names. A later page is fetched without
-     * validators: they cover the entry page only. One that fails is logged and ends the walk, keeping
-     * what was read; stale-event cleanup is scoped to the scraped dates, so the unread tail survives.
-     * An event that moved across a page boundary between two requests is kept once.
-     */
-    @Suppress("TooGenericExceptionCaught") // Intentional: keep the pages already read if a later one fails
-    private suspend fun scrapeOverviewPages(
-        first: Document,
-        url: String
-    ): List<ScrapedEvent> {
-        val events = scrapeOverview(first, url).toMutableList()
-        var next = nextOverviewPage(first, url)
-        var pages = 1
-        while (next != null && pages < MAX_OVERVIEW_PAGES) {
-            val pageUrl: String = next
-            val document =
-                try {
-                    htmlFetcher.fetchDocument(pageUrl)
-                } catch (e: Exception) {
-                    logger.warn(e) { "${eventSource.name} overview page ${pages + 1} failed ($pageUrl); importing the $pages page(s) read" }
-                    break
-                }
-            events += scrapeOverview(document, pageUrl)
-            next = nextOverviewPage(document, pageUrl)
-            pages++
-        }
-        if (next != null && pages == MAX_OVERVIEW_PAGES) {
-            logger.warn { "${eventSource.name} pagination hit the $MAX_OVERVIEW_PAGES-page cap before the listing ended; later pages were not read" }
-        }
-        return events.distinctBy { it.sourceId }
-    }
 
     /**
      * Drops events whose date is still the [UNRESOLVED_EVENT_DATE] sentinel after the merge —
