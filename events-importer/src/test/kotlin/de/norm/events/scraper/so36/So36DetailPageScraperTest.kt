@@ -58,6 +58,8 @@ class So36DetailPageScraperTest {
         event.status shouldBe EventStatus.SCHEDULED.name
         event.sourceId shouldBe "so36:95201"
         event.soldOut shouldBe false
+        event.free shouldBe false
+        event.promoters shouldBe listOf("GreyZone Concerts")
     }
 
     @Test
@@ -99,6 +101,31 @@ class So36DetailPageScraperTest {
         event.doorsTime shouldBe LocalTime.of(22, 0)
         event.startTime shouldBe LocalTime.of(22, 0)
         event.sourceId shouldBe "so36:97683"
+        // A house night credits "SO36", the venue itself, which is no promoter.
+        event.promoters shouldHaveSize 0
+    }
+
+    @Test
+    fun `reads the free-admission notice as a free night`() {
+        // The ticket tab shows "Eintritt frei / Admission free!" where a price category would be (#1686).
+        val url = "https://www.so36.com/produkte/92090-tickets-dav-jura-slam-so36-berlin-am-17-11-2026"
+        val event = scraper.scrape(fixture("so36-detail-free.html", url), url)
+        event.shouldNotBeNull()
+
+        event.title shouldBe "DAV JURA SLAM"
+        event.free shouldBe true
+        event.pricePresale shouldBe null
+        event.promoters shouldBe listOf("Deutscher Anwaltverein")
+    }
+
+    @Test
+    fun `reads the Anbieter-Veranstalter field as the promoter`() {
+        val url = "https://www.so36.com/produkte/99637-tickets-superstars-der-demokratie-so36-berlin-am-20-09-2026"
+        val event = scraper.scrape(fixture("so36-detail-promoter.html", url), url)
+        event.shouldNotBeNull()
+
+        event.title shouldBe "SUPERSTARS DER DEMOKRATIE"
+        event.promoters shouldBe listOf("Die PARTEI")
     }
 
     @Test
