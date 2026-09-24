@@ -365,6 +365,14 @@ One venue may later need multi-page support — a site with server-side `?page=2
 you return `ImportResult.Success`. Pagination stays a per-importer concern, and the `EventImporter` interface and the
 framework-level infrastructure do not change.
 
+Amended 2026-09-24 ([#331](https://github.com/enorm-labs/event-junkie/issues/331)): a list that ends is read to its
+end, when the next page is a plain link or a form POST. Each importer stops at the last page and at a page cap of its
+own. The first-page rule stays for a list that only JavaScript can extend. Seven importers walk pages: LARK, Urban
+Spree, Heimathafen, Gärten der Welt, Cosmic Comedy, migas and Cassiopeia. `HtmlFetcher.postForm` sends
+the POST for migas. `AbstractTwoPageWebsiteImporter.nextOverviewPage` gives a two-page importer its later pages
+(Cassiopeia). A later page is fetched without ETag and Last-Modified, because those cover the entry page only. A later
+page that fails ends the walk, and the import keeps the pages it read.
+
 ### Shared Detail Pages — Fetch Once Per Distinct URL
 
 The list+detail pattern above assumes a one-to-one mapping: one listing entry, one detail page. A venue that programmes **runs** rather than one-off nights

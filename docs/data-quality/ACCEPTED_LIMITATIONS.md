@@ -24,7 +24,6 @@ says so.
 | `BADEHAUS`            | `EVENT_TYPE`       | the venue publishes no category; the type is inferred from the title and subtitle                                                                | —     |
 | `BADEHAUS`            | `PRICE`            | the venue prints no figure, and where it names money at all it is a donation range the model has no field for, kept verbatim as the note         | —     |
 | `BINUU`               | `EVENT_TYPE`       | the SvelteKit payload carries no category field, and neither does anywhere else on the site                                                      | —     |
-| `CASSIOPEIA`          | `PAGINATION`       | only the first page of the listing is read                                                                                                       | —     |
 | `CLASH`               | `PER_EVENT_PAGE`   | the `event` post type is not exposed over the WordPress REST API and the numeric permalinks 404                                                  | —     |
 | `CLASH`               | `DOORS_TIME`       | the homepage listing is the whole source and carries no doors time                                                                               | —     |
 | `CLASH`               | `PRICE`            | the homepage listing is the whole source and carries no price                                                                                    | —     |
@@ -117,7 +116,6 @@ says so.
 | `MIGAS`               | `DOORS_TIME`       | the listing carries no door time                                                                                                                 | —     |
 | `MIGAS`               | `SOLD_OUT`         | the listing carries no sold-out badge                                                                                                            | —     |
 | `MIGAS`               | `CANCELLATION`     | the listing carries no cancellation badge                                                                                                        | —     |
-| `MIGAS`               | `PAGINATION`       | the listing pages at ten events, with the rest behind a Load More button that POSTs to `admin-ajax.php`                                          | —     |
 | `MONARCH`             | `PER_EVENT_PAGE`   | the site is hand-coded PHP with no per-event URLs                                                                                                | —     |
 | `MONSTER_RONSONS`     | `DOORS_TIME`       | the venue states one time per night, which is taken as the start                                                                                 | —     |
 | `MONSTER_RONSONS`     | `PRICE`            | the price lives in prose and is often a time-banded tariff, which the model has no field for                                                     | —     |
@@ -204,4 +202,4 @@ says so.
 
 These publish everything the model stores, as of the last review:
 
-`ALTE_KANTINE`, `ASTRA`, `BERGHAIN`, `COLUMBIA_THEATER`, `GRETCHEN`, `HEIMATHAFEN`, `HOLE44`, `JUNCTION_BAR`, `LIDO`, `MADAME_CLAUDE`, `MATRIX`, `MAX_SCHMELING_HALLE`, `METROPOL`, `MIKROPOL`, `MODUS`, `PRIVATCLUB`, `QUASIMODO`, `SCHOKOLADEN`, `TEMPODROM`, `THEATER_IM_DELPHI`, `UBER_ARENA`, `UBER_EATS_MUSIC_HALL`, `UFO_IM_VELODROM`, `URANIA`, `VELODROM`, `ZITADELLE`
+`ALTE_KANTINE`, `ASTRA`, `BERGHAIN`, `CASSIOPEIA`, `COLUMBIA_THEATER`, `GRETCHEN`, `HEIMATHAFEN`, `HOLE44`, `JUNCTION_BAR`, `LIDO`, `MADAME_CLAUDE`, `MATRIX`, `MAX_SCHMELING_HALLE`, `METROPOL`, `MIKROPOL`, `MODUS`, `PRIVATCLUB`, `QUASIMODO`, `SCHOKOLADEN`, `TEMPODROM`, `THEATER_IM_DELPHI`, `UBER_ARENA`, `UBER_EATS_MUSIC_HALL`, `UFO_IM_VELODROM`, `URANIA`, `VELODROM`, `ZITADELLE`
