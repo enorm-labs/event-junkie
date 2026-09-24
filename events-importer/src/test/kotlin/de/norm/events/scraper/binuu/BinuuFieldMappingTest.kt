@@ -1,5 +1,6 @@
 package de.norm.events.scraper.binuu
 
+import de.norm.events.scraper.parseRelocation
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
@@ -7,7 +8,7 @@ import java.time.LocalDate
 import java.time.LocalTime
 
 /**
- * Unit tests for Bi Nuu's field-mapping helpers ([mapBinuuStatus], [parseBinuuDate],
+ * Unit tests for Bi Nuu's field-mapping helpers ([mapBinuuStatus], [binuuRelocationNote], [parseBinuuDate],
  * [parseBinuuTime]), which translate the raw SvelteKit payload values into domain types.
  */
 class BinuuFieldMappingTest {
@@ -16,6 +17,10 @@ class BinuuFieldMappingTest {
         mapBinuuStatus(null, null) shouldBe "SCHEDULED"
         mapBinuuStatus("", "") shouldBe "SCHEDULED"
         mapBinuuStatus("r", "") shouldBe "RELOCATED"
+        // The venue page's other two codes (#1867).
+        mapBinuuStatus("c", null) shouldBe "CANCELLED"
+        mapBinuuStatus("rp", "2026-05-14 18:00:00.000Z") shouldBe "RELOCATED"
+        mapBinuuStatus("rp", "") shouldBe "RELOCATED"
         // An unknown code degrades to SCHEDULED rather than being mismapped.
         mapBinuuStatus("x", null) shouldBe "SCHEDULED"
     }
@@ -27,6 +32,19 @@ class BinuuFieldMappingTest {
         // No old date: the page says the new date is still open.
         mapBinuuStatus("p", "") shouldBe "POSTPONED"
         mapBinuuStatus("p", null) shouldBe "POSTPONED"
+    }
+
+    @Test
+    fun `states a move in the venue's wording, so the shared parser finds the destination`() {
+        // The live `David Mayonga aka Roger Rekless` row: `r`, `locationArticle: "in den"`, `locationNew: "Monarch"` (#1867).
+        val note = binuuRelocationNote("r", "Monarch", "in den")
+        note shouldBe "Verlegt in den Monarch"
+        parseRelocation(note!!)?.to shouldBe "Monarch"
+        binuuRelocationNote("rp", "Lido", null) shouldBe "Verlegt nach Lido"
+        // No destination yet, or no move at all: no note.
+        binuuRelocationNote("r", "", "in den").shouldBeNull()
+        binuuRelocationNote("p", "Monarch", "in den").shouldBeNull()
+        binuuRelocationNote(null, null, null).shouldBeNull()
     }
 
     @Test
