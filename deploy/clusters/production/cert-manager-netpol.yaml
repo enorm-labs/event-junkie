@@ -1,13 +1,18 @@
 # Default-deny for the `cert-manager` namespace, plus one named allowance per conversation (#920):
 #     controller  -> apiserver:6443       watching Certificates, leader election
 #     controller  -> the internet:443     ACME — Let's Encrypt's directory and orders
+#     controller  -> the internet:80      the HTTP-01 self-check, against this node's own public IP
 #     cainjector  -> apiserver:6443       injecting CA bundles into webhook configs
 #     webhook     -> apiserver:6443       SubjectAccessReview on every admission call
 #     everything  -> CoreDNS:53
 #     gateway     -> the three pods:9402  the metrics, and see below
-# **Staging's file with arrows removed, not added.** This cluster issues over HTTP-01 against the real
-# ACME endpoint, so staging's DNS-01 self-check (`controller -> the internet:53`) and its Hetzner
-# webhook describe conversations that cannot happen here. **The HTTP-01 solver is not this file's to
+# **Staging's DNS-01 arrows removed, and one HTTP-01 arrow added.** This cluster issues over HTTP-01
+# against the real ACME endpoint, so staging's DNS-01 self-check (`controller -> the internet:53`) and
+# its Hetzner webhook describe conversations that cannot happen here. HTTP-01 has a self-check of its
+# own: before cert-manager lets Let's Encrypt validate, the controller GETs the token on port 80 of the
+# name, which resolves to this node. Without port 80 the challenge stays pending with `connection
+# refused`, while the token answers 200 from outside. Renewals of a name Let's Encrypt already
+# authorised skip the challenge, so the gap showed only when go-live asked for new names. **The HTTP-01 solver is not this file's to
 # allow**: cert-manager creates the solver Pod in the Ingress's namespace, `event-junkie`, and the
 # arrow is `allow-acme-solver` in the chart's `templates/networkpolicy.yaml`.
 #
@@ -93,7 +98,7 @@ metadata:
   namespace: cert-manager
   annotations:
     kubernetes.io/description: >-
-      ACME over 443 to Let's Encrypt, and nothing else. No DNS-01 self-check here, unlike staging — HTTP-01 has no TXT record to verify.
+      ACME over 443 to Let's Encrypt, and the HTTP-01 self-check over 80 to this node's public address. No DNS-01 self-check here, unlike staging.
 spec:
   podSelector:
     matchLabels:
@@ -115,6 +120,8 @@ spec:
       ports:
         - protocol: TCP
           port: 443
+        - protocol: TCP
+          port: 80
 ---
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
