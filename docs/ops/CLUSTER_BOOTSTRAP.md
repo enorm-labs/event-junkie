@@ -620,6 +620,52 @@ even though the certificate is valid and trusted. That is the absence of a workl
 `prod-check.<domain>` is a different name from the apex. So it costs one of Let's Encrypt's fifty certificates per registered domain per week, and leaves all
 five duplicate slots for `event-junkie.de` itself.
 
+### Going dark, and going live again
+
+Production is public since 2026-09-24 (#939). Four changes in four places switch it between dark and live. The first
+two change what the cluster serves. The last two keep the monitoring on the name that resolves.
+
+| #   | Change                                                        | Dark                                                        | Live                               | Where                                          |
+| --- | ------------------------------------------------------------- | ----------------------------------------------------------- | ---------------------------------- | ---------------------------------------------- |
+| 1   | `publish_dns`, then a targeted apply                          | `false`                                                     | `true`                             | `infra/environments/production/variables.tf`   |
+| 2   | `ingress.host`, `ingress.redirectHosts` and `ingress.noindex` | `prod-check.event-junkie.de`, `[]` and `true`, as overrides | the chart's defaults, no overrides | `deploy/clusters/production/helm-release.yaml` |
+| 3   | The `SITE_URL` repository variable                            | `https://prod-check.event-junkie.de`                        | **deleted**                        | GitHub → Settings → Variables                  |
+| 4   | The Better Stack monitor's URL                                | `prod-check`                                                | the apex                           | the Better Stack console, monitor `4876693`    |
+
+**Changes 3 and 4 are not tidying.** One name stops resolving the moment change 1 applies. The daily probe then fails
+against a name that is gone and pings healthchecks.io `/fail`. Better Stack reports the site down while it is up.
+Live deletes `SITE_URL` rather than editing it: `site-probe.yml` falls back to the apex when the variable is absent.
+
+**Change 2 is all three values or none.** Every redirect host gets its own certificate, so a redirect host that does not
+resolve stalls its own issuance. `noindex` is the control that keeps a rehearsal name out of search, because Certificate
+Transparency publishes it within minutes. `scripts/cluster-assertions.sh` fails the build on half of the change: it
+ties `noindex` to the hostname.
+
+**DNS first, in both directions.** `publish_dns` swaps rather than adds, so no instant exists where both names resolve.
+DNS first means Traefik answers 404 for minutes, until Flux reconciles the new host. Deploy first means the Ingress
+names a host that does not resolve, and no certificate can issue until DNS propagates. Do not publish both names for
+one apply. `variables.tf` rejects it, because a record that could be temporary becomes permanent.
+
+**Target the records, and read the plan.** `user_data` on both production nodes differs from the code, so an untargeted
+plan replaces them (`infra/AGENTS.md`). `-target=hcloud_zone_rrset.address -target=hcloud_zone_rrset.redirect` plans
+DNS alone. Going live adds four A records and removes `prod-check`. Going dark does the opposite. Stop if a server
+appears. Then reconcile rather than wait for the poll:
+
+```sh
+flux --context event-junkie-production reconcile kustomization flux-system --with-source
+flux --context event-junkie-production reconcile helmrelease event-junkie -n flux-system
+```
+
+**A new host needs its certificate, in both directions.** Let's Encrypt keeps an authorisation for 30 days, so a host
+that was last validated earlier needs a full HTTP-01 challenge. The chart's smoke hook waits up to 120 s for it, then
+fails and rolls the upgrade back (#1892). If it fails, check `kubectl -n event-junkie get certificate,challenge`. A
+challenge stuck on `connection refused` is a NetworkPolicy, and the DNAT table in `kubernetes.instructions.md` says
+which. `ej-certificate-expiry` fires until the first issue, because a Certificate without a Secret reports its expiry
+as 0.
+
+**HSTS makes losing TLS an outage.** `max-age` is one year, with `includeSubDomains`, so a browser that loaded the site
+once refuses plain HTTP for a year. `preload` is off, because it takes months to undo (#1937).
+
 ## Rebuilding a node — including migrating to ARM
 
 **A rebuild is this runbook again from §3, and that is the whole point of writing it down.** What follows is only the deltas.

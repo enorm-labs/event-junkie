@@ -318,7 +318,7 @@ Three things that catch people out:
   the alert not working. Shorten the grace to a few minutes for the drill and put it back afterwards.
 - **Delete the drill file.** The command above removes it, but confirm — `sudo test -e /var/lib/postgresql/ZZ-drill`. Leaving a file sized at 90% of the volume
   turns a drill into the outage it was rehearsing. The next `walg-basebackup` is what would find out.
-- **Record the date the notification actually arrived**, in the go-live checklist (#284). That date, not the configuration, is what makes this real.
+- **Record the date the notification actually arrived**, in the drill log below. That date, not the configuration, is what makes this real.
 
 ### Drill log
 
@@ -418,8 +418,7 @@ Availability is for operators. There is no public status page and no uptime badg
 decision rather than an omission. Publishing a number is a transparency commitment to venues and
 visitors, and it is worth making deliberately rather than discovering it when somebody asks.
 
-**Revisit at launch** (#285), and the go-live checklist carries the row. A figure nobody reads yet is a poor basis for
-a public promise.
+**Decided at launch: not now** (#1936). A figure nobody reads yet is a poor basis for a public promise.
 
 **Better Stack makes publishing a one-line change, which is the reason to decide it on purpose.** The monitor offers a
 README badge that renders live uptime:

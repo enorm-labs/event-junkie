@@ -974,14 +974,6 @@ window.EJ_LINKS = {
           "statusText": ""
         },
         {
-          "url": "https://github.com/enorm-labs/event-junkie/blob/main/docs/ops/GO_LIVE_CHECKLIST.md",
-          "label": "docs/ops/GO_LIVE_CHECKLIST.md",
-          "what": "What must be true before the domain resolves, the four changes that make it, and what follows",
-          "whatText": "What must be true before the domain resolves, the four changes that make it, and what follows",
-          "status": "",
-          "statusText": ""
-        },
-        {
           "url": "https://github.com/enorm-labs/event-junkie/blob/main/docs/ops/RELEASING.md",
           "label": "docs/ops/RELEASING.md",
           "what": "Commit → image → chart → cluster",

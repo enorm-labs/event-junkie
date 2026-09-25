@@ -251,7 +251,6 @@ version. The links here are for people.
 | [`docs/ops/RESTORE_RUNBOOK.md`](ops/RESTORE_RUNBOOK.md)     | Restoring, including PITR                                                                     |
 | [`docs/ops/TROUBLESHOOTING.md`](ops/TROUBLESHOOTING.md)     | What you see, the check that tells the causes apart, the fix, and where the reasoning lives   |
 | [`docs/ops/HEALTHCHECKS.md`](ops/HEALTHCHECKS.md)           | Watching from outside: the site monitor, the dead-man's switches, and how to prove each fires |
-| [`docs/ops/GO_LIVE_CHECKLIST.md`](ops/GO_LIVE_CHECKLIST.md) | What must be true before the domain resolves, the four changes that make it, and what follows |
 | [`docs/ops/RELEASING.md`](ops/RELEASING.md)                 | Commit → image → chart → cluster                                                              |
 | [`docs/LEGAL.md`](LEGAL.md)                                 | Processors, the AVV, the imprint, what is not signed off                                      |
 | [`infra/README.md`](../infra/README.md)                     | The OpenTofu operator's guide, and the three things only a human can do                       |

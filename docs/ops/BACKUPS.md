@@ -307,7 +307,7 @@ numbers exist somewhere durable before anyone has to remember to update a docume
 
 **2026-09-24 — production — passed, both halves.** Run for [#1636](https://github.com/enorm-labs/event-junkie/issues/1636), after
 [`e82245a`](https://github.com/enorm-labs/event-junkie/commit/e82245a471ab) changed the backup scripts. It is the first drill against production's
-bucket, and it is the go-live gate in `GO_LIVE_CHECKLIST.md`.
+bucket, and it was a go-live gate (#939).
 
 A base backup taken at 13:39:00 was restored from the bucket alone into a scratch cluster and replayed forward. 4,253 events, 5,107 artists and 87 venues came
 back exactly, **including a marker row written 13 seconds after the base backup started**. That marker is what proves WAL archiving rather than file

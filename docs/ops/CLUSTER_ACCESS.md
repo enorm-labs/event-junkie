@@ -59,7 +59,7 @@ Host 10.10.0.1 10.10.1.1 10.0.1.20
 `ssh-add ~/.ssh/id_ed25519_hetzner` also works, because the agent offers the key to both hops. It lasts until the agent forgets the key.
 
 **Production is public.** `publish_dns` in `infra/environments/production/variables.tf` is `true`, so the apex, `www` and `event-junkie.com` resolve to the
-k3s node. Setting it back to `false` takes the site dark again, and GO_LIVE_CHECKLIST.md §4 is the procedure.
+k3s node. Setting it back to `false` takes the site dark again, and CLUSTER_BOOTSTRAP.md §12 is the procedure.
 CLUSTER_BOOTSTRAP.md §12.
 
 ---
