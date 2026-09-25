@@ -24,7 +24,7 @@
 import http from 'k6/http'
 import {check, sleep} from 'k6'
 
-import {INSECURE, ORIGIN, baseThresholds, hostsOption} from './lib/config.js'
+import {INSECURE, ORIGIN, WAIT_FOR_ORIGIN_SECONDS, baseThresholds, hostsOption} from './lib/config.js'
 import {api, checkOk, checkPage, discover, pick} from './lib/api.js'
 
 export const options = {
@@ -34,6 +34,8 @@ export const options = {
     // `RESOLVE` and `INSECURE` are what reach staging over the tunnel; `lib/config.js` says how.
     hosts: hostsOption(),
     insecureSkipTLSVerify: INSECURE,
+    // k6 stops `setup()` after 60 s by default, which would cut the wait for the origin short.
+    setupTimeout: `${WAIT_FOR_ORIGIN_SECONDS + 60}s`,
 }
 
 export function setup() {

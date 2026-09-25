@@ -529,6 +529,10 @@ tests:
     # endpoint group. Status and shape are the gate; this only catches "catastrophically slow", and
     # a cold JVM after a rollout has to clear it.
     latencyBudgetMs: 10000
+    # tests.smoke.waitForOriginSeconds is how long the hook waits for the origin before it fails. An
+    # upgrade that moves the Ingress to a new host is tested while HTTP-01 still runs, and TLS fails
+    # until the certificate issues (#1892). Twice the minute it took at go-live, inside `test.timeout`.
+    waitForOriginSeconds: 120
     # tests.smoke.ingressService is how the pod reaches the Ingress: the host does not resolve
     # in-cluster on staging and resolves to the node on production, which no policy admits. k3s's
     # bundled Traefik, the same object `networkPolicy.ingressController` selects.

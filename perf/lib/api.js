@@ -6,9 +6,9 @@
  * changes, this file is the single place to follow it.
  */
 import http from 'k6/http'
-import {check, fail} from 'k6'
+import {check, fail, sleep} from 'k6'
 
-import {BASE_URL, isoDate} from './config.js'
+import {BASE_URL, ORIGIN, WAIT_FOR_ORIGIN_SECONDS, isoDate} from './config.js'
 
 /**
  * A tagged GET.
@@ -85,6 +85,24 @@ export const api = {
 
 // --- Discovery ---------------------------------------------------------------------------------
 
+/** Every status counts as expected, the failed dial (`0`) included, so a wait is not a failure. */
+const WAITING = http.expectedStatuses(0, {min: 200, max: 599})
+
+/**
+ * Polls `GET /meta` until it answers 200 or {@link WAIT_FOR_ORIGIN_SECONDS} runs out. The polls
+ * stay out of `http_req_failed`; the request after them counts as usual, so an origin that never
+ * comes up still fails the run.
+ */
+function waitForOrigin() {
+    const deadline = Date.now() + WAIT_FOR_ORIGIN_SECONDS * 1000
+    for (let attempt = 1; Date.now() < deadline; attempt++) {
+        const response = http.get(`${BASE_URL}/meta`, {responseCallback: WAITING, tags: {name: 'wait for origin'}})
+        if (response.status === 200) return
+        console.log(`waiting for ${ORIGIN}: attempt ${attempt}, status ${response.status}${response.error ? `, ${response.error}` : ''}`)
+        sleep(5)
+    }
+}
+
 /**
  * Ask the API what exists, so the scripts exercise real rows instead of invented ones.
  *
@@ -96,6 +114,7 @@ export const api = {
  * to every VU.
  */
 export function discover({requireData = true} = {}) {
+    waitForOrigin()
     const liveness = api.meta()
     if (liveness.status !== 200) {
         fail(

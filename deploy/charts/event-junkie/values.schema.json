@@ -543,7 +543,8 @@
             "enabled",
             "verifyTls",
             "latencyBudgetMs",
-            "ingressService"
+            "ingressService",
+            "waitForOriginSeconds"
           ],
           "properties": {
             "enabled": {
@@ -560,6 +561,12 @@
               "description": "One p95 budget for every endpoint group. A gate on catastrophically slow, not on latency: a failed hook is a rollback.",
               "type": "integer",
               "minimum": 1000
+            },
+            "waitForOriginSeconds": {
+              "description": "How long the hook waits for the origin before it fails, for a certificate still being issued after a host change (#1892). Must fit inside the HelmRelease's test timeout.",
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 150
             },
             "ingressService": {
               "description": "The ingress controller's Service, resolved in the pod because the Ingress host does not resolve to something the egress policy admits.",

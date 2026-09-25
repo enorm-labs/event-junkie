@@ -480,6 +480,13 @@ kubectl --context event-junkie-staging get secret event-junkie-staging-tls -n ev
 > account registration and nothing else. It would also spend the shared domain's rate limit on the environment that is _meant_ to break. Nobody sees the
 > warning from outside the tunnel.
 
+**On production, the natural renewal is the HTTP-01 drill** (#1892). Let's Encrypt keeps a validated authorisation for
+30 days, and cert-manager renews at 30 days remaining, which is day 60. So every renewal after the first runs a full
+challenge. The first after go-live is due around 2026-11-23. On that day, run the two commands above with
+`--context event-junkie-production` and see the challenge reach `valid`. `ej-certificate-expiry` fires below 14 days if a
+renewal fails quietly. **`cmctl renew` within 30 days of the last challenge proves nothing**: it reuses the authorisation
+and runs no challenge.
+
 **If a challenge fails at `Present`, fixing the config is not enough.** See the last row of the traps table.
 
 ---
@@ -978,3 +985,4 @@ rather than as nothing at all. Each run records its measured timings in that iss
 | **`walg-basebackup` fails, or `walg check` exits 1**                            | Almost always `/etc/wal-g/credentials.env` — absent on a fresh node and destroyed by a rebuild, because it is deliberately not in `user_data`. §8b. `sudo -u postgres walg check` says which of the three assertions failed                                                                                                                       |
 | **The database stops accepting writes, disk full**                              | A failing `archive_command` does not block writes, it accumulates WAL — and `PGDATA` is a 10 GB volume. `walg check` warns at 85% for this reason. Fix the archive, then `pg_archivecleanup` or let the backlog drain; do **not** delete from `pg_wal` by hand                                                                                    |
 | **A restore lists fine and will not replay**                                    | A base backup was removed while a later delta still needed it — `wal-g delete before` run without `FIND_FULL`, or a bucket lifecycle rule expiring at exactly the retention window rather than five days past it. §8b                                                                                                                             |
+| **An HTTP-01 challenge stays `pending` with `connection refused`**              | cert-manager's self-check cannot reach the token, while `curl` from outside gets 200. The self-check is DNATed to the Traefik pod on 8000 before the policy sees it, so the controller's egress must name that pod. `kubernetes.instructions.md` has the DNAT table (#1889)                                                                       |

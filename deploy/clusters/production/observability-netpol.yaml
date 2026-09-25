@@ -35,12 +35,10 @@
 # pods --show-labels`. Second: **the node is reached by port, not address** — its address is public
 # and has changed once — so `ipBlock: 0.0.0.0/0` bounded by port survives a rebuild.
 #
-# **The API server is reached on the NODE's address and port 6443, never `10.43.0.1:443`.**
-# `kubernetes.default` is a ClusterIP with no pods behind it; kube-proxy DNATs it and a policy is
-# evaluated after that translation, so the service-address form matches nothing and the pod reports
-# `connection refused`, which reads like a dead API server. It cost the whole rollout on production:
-# every pod on staging predated these policies and kept its connection through conntrack, so
-# **a policy never exercised from a cold start has not been tested**. The same trap found the Traefik
+# **The API server is reached on the NODE's address and port 6443, never `10.43.0.1:443`** — the DNAT
+# table in kubernetes.instructions.md. It cost the whole rollout on production: every pod on staging
+# predated these policies and kept its connection through conntrack, so **a policy never exercised
+# from a cold start has not been tested**. The same trap found the Traefik
 # and `flux-system` scrape rules below: staging read `up=1` on connections conntrack had already
 # established, production read `up=0`, and production was the one telling the truth.
 #

@@ -72,6 +72,7 @@ Only the values worth a decision are listed. Every property is documented in
 | `ingress.noindex`                            | `false`                 | Marks an environment as not-production: the header, plus a disallow-all `robots.txt` and empty sitemap               |
 | `tests.smoke.enabled`                        | `false`                 | The post-deploy k6 smoke through the Ingress (#1697). On per cluster, after `verifyTls` is right for its certificate |
 | `tests.smoke.verifyTls`                      | `true`                  | `false` on staging only: Let's Encrypt's staging CA is untrusted on purpose. Production verifies                     |
+| `tests.smoke.waitForOriginSeconds`           | `120`                   | How long the hook waits for the origin: a host change is tested while its certificate is still issued (#1892)        |
 
 **Two values files ship with the chart, and the environments are not among them.** `values.yaml` is
 production-shaped and cannot render on its own — the two required keys have no safe default.

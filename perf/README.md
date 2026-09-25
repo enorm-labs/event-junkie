@@ -63,21 +63,22 @@ never in question. `-e STRICT=true` turns them on.
 
 Everything is an environment variable with a working default:
 
-| Variable                | Default                 | Notes                                                                                                                                                                  |
-| ----------------------- | ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `BFF_HOST`              | `http://localhost:8080` | **An origin, not a path.** The scripts append `/api` themselves, because the BFF serves that prefix everywhere — see below. Adding it here asks for `/api/api/events`. |
-| `VUS`                   | `20`                    | `load.js` — peak virtual users                                                                                                                                         |
-| `DURATION`              | `2m`                    | `load.js` — how long to hold the peak                                                                                                                                  |
-| `PEAK`                  | `100`                   | `spike.js` — peak virtual users                                                                                                                                        |
-| `STRICT`                | unset                   | `spike.js` — apply the standard thresholds                                                                                                                             |
-| `RESOLVE`               | unset                   | `smoke.js`, `ratelimit.js` — `host:address`, for an environment whose name does not resolve where the script runs; the address may carry a port                        |
-| `INSECURE`              | unset                   | `smoke.js`, `ratelimit.js` — accept a certificate from a CA that is not publicly trusted                                                                               |
-| `SITE`                  | unset                   | `smoke.js` — also fetch `/` and expect HTML: `BFF_HOST` is an Ingress, and the SPA's route is part of what is checked                                                  |
-| `VISITS`                | `4`                     | `ratelimit.js` — first-time page loads the browsing scenario performs                                                                                                  |
-| `ABUSE_STREAMS`         | `10`                    | `ratelimit.js` — concurrent streams in the abuse scenario; must stay under `inFlightRequests`                                                                          |
-| `THRESHOLD_DETAIL_MS`   | `300`                   | p95 budget for single-row lookups                                                                                                                                      |
-| `THRESHOLD_LIST_MS`     | `600`                   | p95 budget for paged list endpoints                                                                                                                                    |
-| `THRESHOLD_CALENDAR_MS` | `1200`                  | p95 budget for the calendar range query — the heaviest read in the API                                                                                                 |
+| Variable                  | Default                 | Notes                                                                                                                                                                  |
+| ------------------------- | ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `BFF_HOST`                | `http://localhost:8080` | **An origin, not a path.** The scripts append `/api` themselves, because the BFF serves that prefix everywhere — see below. Adding it here asks for `/api/api/events`. |
+| `VUS`                     | `20`                    | `load.js` — peak virtual users                                                                                                                                         |
+| `DURATION`                | `2m`                    | `load.js` — how long to hold the peak                                                                                                                                  |
+| `PEAK`                    | `100`                   | `spike.js` — peak virtual users                                                                                                                                        |
+| `STRICT`                  | unset                   | `spike.js` — apply the standard thresholds                                                                                                                             |
+| `RESOLVE`                 | unset                   | `smoke.js`, `ratelimit.js` — `host:address`, for an environment whose name does not resolve where the script runs; the address may carry a port                        |
+| `INSECURE`                | unset                   | `smoke.js`, `ratelimit.js` — accept a certificate from a CA that is not publicly trusted                                                                               |
+| `SITE`                    | unset                   | `smoke.js` — also fetch `/` and expect HTML: `BFF_HOST` is an Ingress, and the SPA's route is part of what is checked                                                  |
+| `WAIT_FOR_ORIGIN_SECONDS` | `0`                     | `setup()` — poll `GET /meta` this long before giving up. The chart's hook sets 120, for a certificate still being issued (#1892)                                       |
+| `VISITS`                  | `4`                     | `ratelimit.js` — first-time page loads the browsing scenario performs                                                                                                  |
+| `ABUSE_STREAMS`           | `10`                    | `ratelimit.js` — concurrent streams in the abuse scenario; must stay under `inFlightRequests`                                                                          |
+| `THRESHOLD_DETAIL_MS`     | `300`                   | p95 budget for single-row lookups                                                                                                                                      |
+| `THRESHOLD_LIST_MS`       | `600`                   | p95 budget for paged list endpoints                                                                                                                                    |
+| `THRESHOLD_CALENDAR_MS`   | `1200`                  | p95 budget for the calendar range query — the heaviest read in the API                                                                                                 |
 
 ```bash
 k6 run -e VUS=50 -e DURATION=5m perf/load.js
