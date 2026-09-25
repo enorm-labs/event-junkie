@@ -13,6 +13,15 @@ import org.springframework.boot.gradle.tasks.run.BootRun
 // Centralized dependency versions live in `gradle.properties` – change them there to update
 // all subprojects at once.
 
+// Kover's report renderer drags an old FreeMarker onto the plugin classpath; see gradle.properties.
+buildscript {
+    dependencies {
+        constraints {
+            classpath("org.freemarker:freemarker:${property("freemarker.version")}")
+        }
+    }
+}
+
 // Plugins are applied in the subprojects, so that they are only applied to the relevant modules
 plugins {
     kotlin("jvm") apply false
