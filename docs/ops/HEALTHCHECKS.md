@@ -327,6 +327,7 @@ Three things that catch people out:
 | 2026-08-19 | staging     | disk past 85%                                                    | yes                             |
 | 2026-08-21 | production  | explicit `/fail`                                                 | yes — within seconds, 06:06 UTC |
 | 2026-08-31 | production  | Better Stack keyword pointed at a string the page does not serve | yes — e-mail, within minutes    |
+| 2026-09-25 | production  | The same keyword drill, against the apex after the go-live flip  | yes — e-mail, within minutes    |
 
 **The third row is a different mechanism, and it answered the question the other two cannot.** It drilled the Better
 Stack monitor rather than a healthchecks.io check, by changing the keyword to `EVENT-JUNKIE-DRILL-DO-NOT-SHIP` and
@@ -337,6 +338,10 @@ schedule, so nothing established that the alert routed anywhere.
 The drill also proved the drift check against a real console change rather than a synthetic one. `site-probe.yml`
 reported `required_keyword is 'EVENT-JUNKIE-DRILL-DO-NOT-SHIP', this repository says 'Event Junkie'` and failed, while
 the probe step stayed green and pinged as usual. **Workflow red, check green** — the site was up throughout.
+
+**The fourth row repeats the third against the apex.** The go-live flip repointed the monitor from `prod-check` to
+`event-junkie.de`, and a repointed monitor is not proved by the edit (#939). The drill proves that the monitor watches
+the name visitors use and still reaches a person.
 
 **The first two rows induced different things, and the second is the weaker drill.** The disk assertion makes the check go _silent_, so the notification comes from
 healthchecks.io noticing an absence after the grace period. That is what a dead-man's switch actually is, and what a real backup failure looks like. An

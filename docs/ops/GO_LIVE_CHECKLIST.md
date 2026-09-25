@@ -238,7 +238,7 @@ section exists so they are not lost in the relief of the flip working.
 | 2026-09-25 | Sitemap and hreflang accepted                                        | #289, 20 pages, 0 errors |
 | 2026-09-24 | Rich Results Test re-run in URL mode against the apex                | #290, events detected    |
 | 2026-09-25 | Link previews checked in Slack, WhatsApp and iMessage                | #291, WhatsApp           |
-|            | The Better Stack monitor re-proved against the apex                  | ADR-021                  |
+| 2026-09-25 | The Better Stack monitor re-proved against the apex                  | ADR-021, HEALTHCHECKS.md |
 |            | The first nightly plausibility run green against the apex            | `agent-plausibility.yml` |
 |            | The venue licence enquiry sent, first batch of twelve                | #808                     |
 |            | Launch marketing, venues first                                       | #481, Phase 2            |
