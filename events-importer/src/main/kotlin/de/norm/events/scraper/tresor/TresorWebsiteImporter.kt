@@ -50,7 +50,7 @@ class TresorWebsiteImporter(
      * source of start time and blurb. The **title** keeps the listing's value, because the event
      * page renders no heading and its document title carries the site name; the lineup prefers the
      * listing's for the same reason — both pages mark it up identically, and the listing is the one
-     * the venue curates as the programme.
+     * the venue curates as the programme. The genre is the listing's venue default.
      */
     override fun fillGapsFromOverview(
         primary: ScrapedEvent,
@@ -59,7 +59,8 @@ class TresorWebsiteImporter(
         primary.copy(
             title = fallback.title,
             eventDate = primary.eventDate.takeIf { it != UNRESOLVED_EVENT_DATE } ?: fallback.eventDate,
-            artists = fallback.artists.ifEmpty { primary.artists }
+            artists = fallback.artists.ifEmpty { primary.artists },
+            genre = fallback.genre
         )
 }
 
