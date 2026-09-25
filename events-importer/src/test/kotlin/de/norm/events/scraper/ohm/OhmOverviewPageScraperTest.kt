@@ -64,6 +64,11 @@ class OhmOverviewPageScraperTest {
     }
 
     @Test
+    fun `tags every night Techno, since the club programmes it and the site names no style`() {
+        events.map { it.genre }.distinct() shouldBe listOf("Techno")
+    }
+
+    @Test
     fun `stores the lineup as DJs and never the title`() {
         val ouch = events.first { it.title == "Ouch x FemmeDecks" }
         ouch.artists.map { it.name } shouldBe listOf("Godsfave", "Kontronatura", "missteikk", "Rafush")
