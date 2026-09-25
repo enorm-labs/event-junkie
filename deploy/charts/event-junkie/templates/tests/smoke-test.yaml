@@ -88,6 +88,9 @@ spec:
           value: {{ $smoke.latencyBudgetMs | quote }}
         - name: THRESHOLD_CALENDAR_MS
           value: {{ $smoke.latencyBudgetMs | quote }}
+        {{- /* A new host's certificate is still being issued when the upgrade is tested (#1892). */}}
+        - name: WAIT_FOR_ORIGIN_SECONDS
+          value: {{ $smoke.waitForOriginSeconds | quote }}
       command:
         - /bin/sh
         - -c

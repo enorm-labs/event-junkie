@@ -175,6 +175,21 @@ tests:
             name: THRESHOLD_CALENDAR_MS
             value: "4321"
 
+  # A host change is tested before cert-manager can issue for it, so the hook waits for the origin (#1892).
+  - it: waits for the origin for as long as the values say
+    set:
+      database.host: "10.0.1.2"
+      networkPolicy.databaseCidr: "10.0.1.2/32"
+      database.existingSecret: "events-db"
+      tests.smoke.enabled: true
+    documentIndex: 1
+    asserts:
+      - contains:
+          path: spec.containers[0].env
+          content:
+            name: WAIT_FOR_ORIGIN_SECONDS
+            value: "120"
+
   # The pod is hardened like a workload, and the root filesystem stays read-only: k6's summary goes
   # to an emptyDir, not to `/`.
   - it: is hardened, runs as the shared UID and writes only to an emptyDir

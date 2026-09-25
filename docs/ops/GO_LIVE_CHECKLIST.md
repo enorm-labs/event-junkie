@@ -71,9 +71,10 @@ Any edit under `infra/modules/environment/cloud-init/` since the last apply repl
 Expect 8 to add and 2 to destroy, all `hcloud_zone_rrset`: `@` and `www` on both domains, A and AAAA, and
 `prod-check` removed. Stop if a server appears.
 
-**A new hostname also needs its certificate, and the chart's smoke hook does not wait for it.** The flip needed
-#1886 to #1890 for that reason. Until #1892 lands, turn `spec.test` off for the upgrade that changes the host, check
-`kubectl -n event-junkie get certificate,challenge`, then turn it back on.
+**A new hostname also needs its certificate.** The chart's smoke hook waits up to 120 s for it, then fails and rolls
+the upgrade back (#1892). If it fails, check `kubectl -n event-junkie get certificate,challenge`. A challenge stuck on
+`connection refused` is a NetworkPolicy, and the DNAT table in `kubernetes.instructions.md` says which. Expect
+`ej-certificate-expiry` to fire until the first issue: a Certificate without a Secret reports its expiry as 0.
 
 ## 1 · What must be true first
 
@@ -279,6 +280,9 @@ as acts rather than as issues.
 ## 4 · Going dark again
 
 Revert both changes from Section 0. The apex stops resolving within one TTL, which is 300 seconds.
+
+**Going dark is a host change too.** The Ingress moves back to `prod-check`, and its certificate needs a challenge once
+Let's Encrypt's authorisation for it lapses, 30 days after the last one. The hook waits for it, as in Section 0.
 
 Two things to know before you need them:
 

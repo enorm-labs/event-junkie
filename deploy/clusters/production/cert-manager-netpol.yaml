@@ -10,17 +10,15 @@
 # against the real ACME endpoint, so staging's DNS-01 self-check (`controller -> the internet:53`) and
 # its Hetzner webhook describe conversations that cannot happen here. HTTP-01 has a self-check of its
 # own: before cert-manager lets Let's Encrypt validate, the controller GETs the token on port 80 of the
-# name, which resolves to this node. The node's hostPort rule DNATs that to the Traefik pod on 8000
-# before the policy is evaluated, the same trap as the API server below, so the arrow names the pod,
-# not the public address. Without it the challenge stays pending with `connection refused`, while
-# the token answers 200 from outside. Renewals of a name Let's Encrypt already authorised skip the
+# name, which resolves to this node and is DNATed to the Traefik pod on 8000 before the policy sees it
+# (kubernetes.instructions.md, the DNAT table). Without it the challenge stays pending with
+# `connection refused`, while the token answers 200 from outside. Renewals of a name Let's Encrypt already authorised skip the
 # challenge, so the gap showed only when go-live asked for new names. **The HTTP-01 solver is not this file's to
 # allow**: cert-manager creates the solver Pod in the Ingress's namespace, `event-junkie`, and the
 # arrow is `allow-acme-solver` in the chart's `templates/networkpolicy.yaml`.
 #
-# **The API server is reached on the NODE's address and port 6443, never `10.43.0.1:443`**: kube-proxy
-# DNATs `kubernetes.default` before the policy is evaluated, so the service-address form matches
-# nothing and the pod reports `connection refused` (#923, #940).
+# **The API server is reached on the NODE's address and port 6443, never `10.43.0.1:443`** — the DNAT
+# table in kubernetes.instructions.md (#923, #940).
 #
 # **The scrape is not optional, and losing it is silent.** `ej-certificate-expiry` reads
 # `certmanager_certificate_expiration_timestamp_seconds` from 9402; without the ingress allowance the

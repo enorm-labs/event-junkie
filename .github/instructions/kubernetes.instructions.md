@@ -46,5 +46,18 @@ privileged containers, and only `emptyDir`/`configMap`/`secret` volumes. `tests/
 deliberate rather than incidental — **until #416 adds the label, nothing rejects a violation at admission**, so a workload could drift and only fail on the day
 the label lands.
 
+**A NetworkPolicy sees the destination after the node's DNAT, not the address the client dialled.** A rule on the dialled
+address matches nothing, and the pod reports `connection refused`, which reads like a dead server. It has cost three
+debugging sessions:
+
+| The client dials                                    | The policy sees                          | So the rule names                                   | Found in     |
+| --------------------------------------------------- | ---------------------------------------- | --------------------------------------------------- | ------------ |
+| `kubernetes.default`, `10.43.0.1:443`               | the node's address on **6443**           | the node's address and 6443                         | #923, #940   |
+| this node's public IP on 80, the HTTP-01 self-check | the Traefik pod on **8000** (`hostPort`) | Traefik in `kube-system` by pod selector, port 8000 | #1888, #1889 |
+
+**A policy that no pod has met from a cold start is untested.** Pods that predate a policy keep their connections through
+conntrack, which is how staging stayed green while production failed. A self-check runs only for a name without a
+cached authorisation, which is how the cert-manager gap waited for go-live.
+
 **What does not apply**, recorded so the setup guide is not re-read from scratch: _large clusters_ and _multiple zones_ (one node, one zone — ADR-012), _node
 conformance_ (k3s owns it), and _PKI certificates_ (k3s owns the cluster PKI; the public certificate is cert-manager's, #265).

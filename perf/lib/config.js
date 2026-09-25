@@ -39,6 +39,14 @@ export function hostsOption() {
 export const INSECURE = __ENV.INSECURE === 'true'
 
 /**
+ * `WAIT_FOR_ORIGIN_SECONDS` is how long `setup()` waits for the origin before it gives up. The
+ * chart's post-deploy hook sets it: an upgrade that moves the Ingress to a new host is tested while
+ * cert-manager still solves HTTP-01, and TLS fails until the certificate issues (#1892). Zero, the
+ * default, fails at once, as a local run should.
+ */
+export const WAIT_FOR_ORIGIN_SECONDS = Number(__ENV.WAIT_FOR_ORIGIN_SECONDS || 0)
+
+/**
  * Latency budgets, in milliseconds, for a **local** run against a laptop.
  *
  * These are deliberately not "production SLOs" — there is no production yet (ADR-012 picked the
