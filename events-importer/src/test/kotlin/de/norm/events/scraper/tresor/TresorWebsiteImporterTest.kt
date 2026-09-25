@@ -91,6 +91,7 @@ class TresorWebsiteImporterTest {
             klubnacht.title shouldBe "Tresor Klubnacht"
             klubnacht.eventDate shouldBe LocalDate.of(2026, 8, 1)
             klubnacht.artists.map { it.stage }.distinct() shouldBe listOf("Tresor", "Globus")
+            klubnacht.genre shouldBe "Techno"
         }
 
     @Test

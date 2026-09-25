@@ -87,6 +87,8 @@ class TresorOverviewPageScraper {
             title = title,
             // A techno club that states no category; every listing is a club night.
             eventType = EventType.PARTY.name,
+            // The site names no style, but all three rooms programme techno, so the venue is the default (as Berghain's floors are).
+            genre = TRESOR_GENRE,
             // The card prints "Sa 01.08" with no year; the permalink states it.
             eventDate = parseSlugDate(slug) ?: UNRESOLVED_EVENT_DATE,
             sourceUrl = sourceUrl,
@@ -96,6 +98,9 @@ class TresorOverviewPageScraper {
         )
     }
 }
+
+/** The sound every Tresor room programmes: the vault, Globus and Aurora Bar alike. */
+internal const val TRESOR_GENRE = "Techno"
 
 /** Path prefix of an event permalink, stripped to obtain the `YYYYMMDD-<slug>` identity. */
 internal const val EVENT_PATH_PREFIX = "/event/"

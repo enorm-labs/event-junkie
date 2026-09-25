@@ -53,6 +53,11 @@ class TresorOverviewPageScraperTest {
     }
 
     @Test
+    fun `tags every night Techno, since every room programmes it and the site names no style`() {
+        events.map { it.genre }.distinct() shouldBe listOf("Techno")
+    }
+
+    @Test
     fun `groups the DJs by the floor the markup already assigns them`() {
         event("20260801-tresor-klubnacht").artists shouldContainExactly
             listOf(
