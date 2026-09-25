@@ -88,6 +88,8 @@ class OhmOverviewPageScraper(
             title = title,
             // Every OHM night is a DJ programme; the venue publishes no categories.
             eventType = EventType.PARTY.name,
+            // The venue names no style, but it programmes techno, so the venue is the default (as Tresor's rooms are).
+            genre = OHM_GENRE,
             eventDate = eventDate,
             startTime = parseTime(item.textAt(".event-time")),
             imageUrl = item.imgSrcAt(".event-poster img"),
@@ -124,6 +126,9 @@ class OhmOverviewPageScraper(
             .filterNot { isNonArtistName(it) || NON_MUSIC_ANNOTATION.containsMatchIn(it) }
             .map { ScrapedArtist(name = it, role = if (LIVE_ANNOTATION.containsMatchIn(it)) "HEADLINER" else "DJ") }
 }
+
+/** The sound the club programmes; the venue publishes no per-night style. */
+internal const val OHM_GENRE = "Techno"
 
 /** A bracket naming a contribution that is not music: `(Live Painting)`, `(Sonic Visual Installation)`. */
 private val NON_MUSIC_ANNOTATION = Regex("""\([^()]*\b(?:painting|visuals?|installation|vj)\b[^()]*\)""", RegexOption.IGNORE_CASE)
