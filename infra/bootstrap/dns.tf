@@ -91,6 +91,27 @@ locals {
   )
 }
 
+locals {
+  # Search Console's domain-property tokens (#288). Public by design: Google reads them from DNS, so
+  # anyone can. A name has one TXT set, so each token joins its domain's SPF set by the `spf` key.
+  site_verification = {
+    "event-junkie.de"  = "google-site-verification=-F9q9kIq-uPFzrrLpc7oRC9tPvZFXpaKDl77Ppvef70"
+    "event-junkie.com" = "google-site-verification=gz6UP4DpQGjAgz7pNgBhbjAdb0aBAF3MFtvdOAoiTzQ"
+  }
+
+  dns_rrsets = {
+    for key, rrset in local.rrsets : key => (
+      endswith(key, "/spf") && contains(keys(local.site_verification), rrset.zone)
+      ? merge(rrset, {
+        record = merge(rrset.record, {
+          records = concat(rrset.record.records, ["\"${local.site_verification[rrset.zone]}\""])
+        })
+      })
+      : rrset
+    )
+  }
+}
+
 resource "hcloud_zone" "main" {
   for_each = toset(local.all_domains)
 
@@ -113,7 +134,7 @@ resource "hcloud_zone" "main" {
 }
 
 resource "hcloud_zone_rrset" "defaults" {
-  for_each = local.rrsets
+  for_each = local.dns_rrsets
 
   zone = hcloud_zone.main[each.value.zone].name
   name = each.value.record.name
