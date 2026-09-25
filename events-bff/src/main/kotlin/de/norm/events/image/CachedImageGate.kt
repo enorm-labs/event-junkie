@@ -26,6 +26,15 @@ class CachedImageGate(
         return CachedImages(if (distinct.isEmpty()) emptyMap() else lookUp(distinct), IMAGES_PATH)
     }
 
+    /**
+     * What to serve for a single [sourceUrl] drawn [renderedWidth] CSS pixels wide — a detail page,
+     * which resolves one image rather than a listing's page of them.
+     */
+    suspend fun forUrl(
+        sourceUrl: String?,
+        renderedWidth: Int
+    ): ServedImage = forUrls(listOf(sourceUrl)).serve(sourceUrl, renderedWidth)
+
     private suspend fun lookUp(sourceUrls: List<String>): Map<String, ServableImage> =
         repository
             .findServableBySourceUrlIn(sourceUrls)
