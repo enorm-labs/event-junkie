@@ -134,6 +134,7 @@ class ClubDerVisionaereProgrammePageScraper(
             title = title,
             // Every listing is a club night; the venue publishes no category.
             eventType = EventType.PARTY.name,
+            genre = room.genre,
             eventDate = eventDate,
             // No per-event pages: the programme page is every night's source.
             sourceUrl = sourceUrl,

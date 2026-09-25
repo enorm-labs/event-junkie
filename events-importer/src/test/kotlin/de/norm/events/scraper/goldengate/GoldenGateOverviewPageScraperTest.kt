@@ -44,6 +44,11 @@ class GoldenGateOverviewPageScraperTest {
         )
 
     @Test
+    fun `tags every night Techno, House, the club's sound, since the venue names no style`() {
+        events.map { it.genre }.distinct() shouldBe listOf("Techno, House")
+    }
+
+    @Test
     fun `extracts the announced Thursday to Saturday block`() {
         events shouldHaveSize 3
         events.map { it.eventDate } shouldContainExactly
@@ -69,7 +74,6 @@ class GoldenGateOverviewPageScraperTest {
         donnerdogge.imageUrl.shouldBeNull()
         donnerdogge.ticketUrl.shouldBeNull()
         donnerdogge.pricePresale.shouldBeNull()
-        donnerdogge.genre.shouldBeNull()
         donnerdogge.artists shouldContainExactly
             listOf(
                 ScrapedArtist("Neco", "DJ"),

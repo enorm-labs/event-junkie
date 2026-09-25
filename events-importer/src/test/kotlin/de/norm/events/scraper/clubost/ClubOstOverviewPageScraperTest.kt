@@ -32,6 +32,11 @@ class ClubOstOverviewPageScraperTest {
             .readText()
 
     @Test
+    fun `tags every night Techno, the club's sound, since the venue names no style`() {
+        scrapeFixture().map { it.genre }.distinct() shouldBe listOf("Techno")
+    }
+
+    @Test
     fun `scrape extracts every card on the homepage`() {
         scrapeFixture() shouldHaveSize 8
     }
@@ -115,11 +120,10 @@ class ClubOstOverviewPageScraperTest {
     }
 
     @Test
-    fun `scrape publishes no genre, price, lineup or doors time`() {
+    fun `scrape publishes no price, lineup or doors time`() {
         // None of these are on the site at all; asserting it keeps a later "fix" from
         // inventing them.
         scrapeFixture().forEach { event ->
-            event.genre shouldBe null
             event.doorsTime shouldBe null
             event.pricePresale shouldBe null
             event.priceBoxOffice shouldBe null

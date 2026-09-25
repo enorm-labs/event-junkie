@@ -102,6 +102,8 @@ class ClubOstOverviewPageScraper {
             eventDate = eventDate,
             startTime = parseClubOstTime(info.substringAfter(INFO_SEPARATOR, "")),
             eventType = EventType.PARTY.name,
+            // The venue names no style but programmes techno, so the venue is the default, as at Tresor.
+            genre = "Techno",
             // A card with no flyer falls back to the house logo on a site-relative /static path, which
             // imgSrcAt rejects as non-absolute.
             imageUrl = card.imgSrcAt("img.event-image"),

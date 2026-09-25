@@ -16,14 +16,16 @@ enum class ClubDerVisionaereRoom(
     /** The CSS class the theme puts on a title paragraph belonging to this room. */
     val titleClass: String,
     /** The import source this room's events are attributed to. */
-    val eventSource: EventSource
+    val eventSource: EventSource,
+    /** The room's default genre where it programmes one sound, since the venue names none; null where it varies. */
+    val genre: String?
 ) {
     /** The open-air club on the Flutgraben — the summer programme. */
-    CLUB("cdvRed", EventSource.CLUB_DER_VISIONAERE),
+    CLUB("cdvRed", EventSource.CLUB_DER_VISIONAERE, "Techno, House"),
 
     /** The indoor concert space next door, programmed year-round. */
-    SONNENRAUM("sonnenraumYellow", EventSource.SONNENRAUM),
+    SONNENRAUM("sonnenraumYellow", EventSource.SONNENRAUM, null),
 
     /** The moored salon boat — the winter location. */
-    MS_HOPPETOSSE("hoppetosseYellow", EventSource.MS_HOPPETOSSE)
+    MS_HOPPETOSSE("hoppetosseYellow", EventSource.MS_HOPPETOSSE, "Techno, House")
 }

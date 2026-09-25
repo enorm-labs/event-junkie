@@ -61,7 +61,7 @@ val GARTN_LIMITATIONS =
     VenueLimitations(
         EventSource.GARTN,
         AcceptedLimitation(LimitedAspect.PRICE, "the venue publishes no prices"),
-        AcceptedLimitation(LimitedAspect.GENRE, "the venue publishes no genre"),
+        AcceptedLimitation(LimitedAspect.GENRE, "the venue publishes no genre; every night takes the club's Techno default"),
         AcceptedLimitation(LimitedAspect.IMAGE, "the venue publishes no per-event image"),
         AcceptedLimitation(LimitedAspect.DESCRIPTION, "the venue publishes no per-event text"),
         AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "the Carrd page emits no per-event URL, and removes an event once it has passed"),

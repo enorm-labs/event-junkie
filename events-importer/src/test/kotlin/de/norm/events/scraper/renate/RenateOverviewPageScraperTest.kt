@@ -50,6 +50,11 @@ class RenateOverviewPageScraperTest {
     ): List<String> = event.artists.filter { it.stage == stage }.map { it.name }
 
     @Test
+    fun `tags every night Techno, House, the club's sound, since the venue names no style`() {
+        events.map { it.genre }.distinct() shouldBe listOf("Techno, House")
+    }
+
+    @Test
     fun `extracts every event row, excluding the trailing blog post`() {
         // The page ends with a `.prog-row.blog-row` news item that carries no date.
         events shouldHaveSize 14

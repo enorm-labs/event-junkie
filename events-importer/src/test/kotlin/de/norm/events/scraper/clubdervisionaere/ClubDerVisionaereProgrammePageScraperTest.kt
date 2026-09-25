@@ -58,6 +58,13 @@ class ClubDerVisionaereProgrammePageScraperTest {
     private val sonnenraumEvents by lazy { summer(ClubDerVisionaereRoom.SONNENRAUM) }
 
     @Test
+    fun `tags the club and the boat Techno, House and leaves the Sonnenraum's concerts untagged`() {
+        clubEvents.map { it.genre }.distinct() shouldBe listOf("Techno, House")
+        winter(ClubDerVisionaereRoom.MS_HOPPETOSSE).map { it.genre }.distinct() shouldBe listOf("Techno, House")
+        sonnenraumEvents.map { it.genre }.distinct() shouldBe listOf(null)
+    }
+
+    @Test
     fun `splits the one listing into its three rooms by title colour class`() {
         // The summer page carries 20 blocks: 17 club nights and 3 in the Sonnenraum. The boat
         // is the winter location, so it legitimately contributes nothing to a summer import.
@@ -84,7 +91,6 @@ class ClubDerVisionaereProgrammePageScraperTest {
         event.doorsTime.shouldBeNull()
         event.imageUrl.shouldBeNull()
         event.ticketUrl.shouldBeNull()
-        event.genre.shouldBeNull()
         event.pricePresale.shouldBeNull()
 
         // "Main:" / "Chill Floor:" headings become the stage of the acts below them; the

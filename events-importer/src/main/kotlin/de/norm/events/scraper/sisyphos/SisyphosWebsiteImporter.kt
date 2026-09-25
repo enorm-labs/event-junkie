@@ -51,7 +51,7 @@ val SISYPHOS_LIMITATIONS =
         AcceptedLimitation(LimitedAspect.DOORS_TIME, "a ticket product names a day and never a time"),
         AcceptedLimitation(LimitedAspect.START_TIME, "a ticket product names a day and never a time"),
         AcceptedLimitation(LimitedAspect.ARTISTS, "the shop names no DJ anywhere; a night is sold under its series name"),
-        AcceptedLimitation(LimitedAspect.GENRE, "the shop names no musical style"),
+        AcceptedLimitation(LimitedAspect.GENRE, "the shop names no musical style; every night takes the club's Techno, House default"),
         AcceptedLimitation(LimitedAspect.PRICE_BOX_OFFICE, "the shop sells online only and states no door price"),
         AcceptedLimitation(LimitedAspect.CANCELLATION, "a cancelled night is removed from the shop rather than marked")
     )

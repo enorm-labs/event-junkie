@@ -101,6 +101,8 @@ class KaterOverviewPageScraper(
             description = description,
             // A techno club with no category field; only an unambiguous title keyword overrides the party default.
             eventType = if (isScreeningTitle(title)) EventType.SCREENING.name else EventType.PARTY.name,
+            // The venue names no style but programmes techno and house; a screening is not a club night.
+            genre = "Techno, House".takeUnless { isScreeningTitle(title) },
             eventDate = schedule.date,
             startTime = schedule.startTime,
             endDate = schedule.endDate,

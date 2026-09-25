@@ -92,6 +92,8 @@ class HeidegluehenMonthPageScraper {
             title = title,
             subtitle = marks.drop(1).joinToString(" · ").takeIf { it.isNotBlank() },
             eventType = EventType.PARTY.name,
+            // The venue names no style but programmes techno and house, so the venue is the default, as at Tresor.
+            genre = "Techno, House",
             eventDate = schedule.date,
             startTime = schedule.startTime,
             endDate = schedule.endDate,

@@ -44,6 +44,11 @@ class GartnOverviewPageScraperTest {
     private fun event(title: String): ScrapedEvent = events.first { it.title == title }
 
     @Test
+    fun `tags every night Techno, the club's sound, since the venue names no style`() {
+        events.map { it.genre }.distinct() shouldBe listOf("Techno")
+    }
+
+    @Test
     fun `extracts every dated block and no other container`() {
         // The page's image and footer containers carry the same `.container-component` class; only
         // the ten with a `SA 08.08.` heading are events.
