@@ -2,9 +2,9 @@
 
 ## The short version
 
-Every external service, console and reference this project depends on, in one place. **Read the status column**: most
-of this project is documented well ahead of being deployed. Staging exists, production does not, and several accounts
-below are decided rather than opened. A link that resolves is not evidence that the thing behind it is running.
+Every external service, console and reference this project depends on, in one place. **Read the status column**:
+production is public since 2026-09-24, but several accounts below are decided rather than opened. A link that
+resolves is not evidence that the thing behind it is running.
 
 Two companion files sit beside this one. [`event-junkie-bookmarks.html`](event-junkie-bookmarks.html) is the same set,
 importable into a browser, and **generated from this file** by `scripts/dashboard-parity.sh`. So is the links section of
@@ -81,14 +81,15 @@ ADR-012, as amended on 2026-08-10, leaves exactly one processor. Everything belo
 
 ## 3. Domains, DNS and the sites
 
-| Link                                                     | What it is                                                                                       | Status                                    |
-| -------------------------------------------------------- | ------------------------------------------------------------------------------------------------ | ----------------------------------------- |
-| <https://www.inwx.de> _(added)_                          | **Registrar.** Where the nameservers point at Hetzner and where the DNSSEC DS record lives       | Registered 2026-08-10; DNSSEC still to do |
-| <https://event-junkie.de>                                | Production site                                                                                  | **Not deployed**                          |
-| <https://staging.event-junkie.de>                        | Staging — **no public `A` record, reachable only over WireGuard**                                | Live                                      |
-| <https://event-junkie.com>                               | Defensive registration, same records                                                             | Zone declared                             |
-| <https://acme-v02.api.letsencrypt.org/directory>         | Let's Encrypt **production** ACME directory                                                      | Production only                           |
-| <https://acme-staging-v02.api.letsencrypt.org/directory> | Let's Encrypt **staging** ACME directory — the default in every values file, including staging's | In use                                    |
+| Link                                                                                     | What it is                                                                                                   | Status                                    |
+| ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ | ----------------------------------------- |
+| <https://www.inwx.de> _(added)_                                                          | **Registrar.** Where the nameservers point at Hetzner and where the DNSSEC DS record lives                   | Registered 2026-08-10; DNSSEC still to do |
+| <https://event-junkie.de>                                                                | Production site                                                                                              | Live since 2026-09-24                     |
+| <https://staging.event-junkie.de>                                                        | Staging — **no public `A` record, reachable only over WireGuard**                                            | Live                                      |
+| <https://event-junkie.com>                                                               | Defensive registration. Redirects to `event-junkie.de`, as does `www` on both domains                        | Live since 2026-09-24                     |
+| <https://search.google.com/search-console?resource_id=sc-domain%3Aevent-junkie.de&hl=de> | **Google Search Console**, domain property for `event-junkie.de`: indexing, the sitemap, rich results (#288) | Verified 2026-09-25 by DNS TXT            |
+| <https://acme-v02.api.letsencrypt.org/directory>                                         | Let's Encrypt **production** ACME directory                                                                  | Production only                           |
+| <https://acme-staging-v02.api.letsencrypt.org/directory>                                 | Let's Encrypt **staging** ACME directory — the default in every values file, including staging's             | In use                                    |
 
 > The production ACME rate limit is **per registered domain**, and `event-junkie.de` is the same registered domain in both environments. Burning it from
 > staging would lock production out for a week.

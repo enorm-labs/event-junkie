@@ -255,8 +255,8 @@ window.EJ_LINKS = {
           "label": "event-junkie.de",
           "what": "Production site",
           "whatText": "Production site",
-          "status": "<strong>Not deployed</strong>",
-          "statusText": "Not deployed"
+          "status": "Live since 2026-09-24",
+          "statusText": "Live since 2026-09-24"
         },
         {
           "url": "https://staging.event-junkie.de",
@@ -269,10 +269,18 @@ window.EJ_LINKS = {
         {
           "url": "https://event-junkie.com",
           "label": "event-junkie.com",
-          "what": "Defensive registration, same records",
-          "whatText": "Defensive registration, same records",
-          "status": "Zone declared",
-          "statusText": "Zone declared"
+          "what": "Defensive registration. Redirects to <code>event-junkie.de</code>, as does <code>www</code> on both domains",
+          "whatText": "Defensive registration. Redirects to event-junkie.de, as does www on both domains",
+          "status": "Live since 2026-09-24",
+          "statusText": "Live since 2026-09-24"
+        },
+        {
+          "url": "https://search.google.com/search-console?resource_id=sc-domain%3Aevent-junkie.de&hl=de",
+          "label": "search.google.com/search-console?resource_id=sc-domain%3Aevent-junkie.de&hl=de",
+          "what": "<strong>Google Search Console</strong>, domain property for <code>event-junkie.de</code>: indexing, the sitemap, rich results (#288)",
+          "whatText": "Google Search Console, domain property for event-junkie.de: indexing, the sitemap, rich results (#288)",
+          "status": "Verified 2026-09-25 by DNS TXT",
+          "statusText": "Verified 2026-09-25 by DNS TXT"
         },
         {
           "url": "https://acme-v02.api.letsencrypt.org/directory",
