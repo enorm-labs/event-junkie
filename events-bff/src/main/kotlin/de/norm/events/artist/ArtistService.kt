@@ -49,7 +49,7 @@ class ArtistService(
     @Transactional(readOnly = true)
     suspend fun findBySlug(slug: String): ArtistDetailResponse {
         val entity = artistRepository.findBySlug(slug) ?: throw ArtistNotFoundException(slug)
-        val image = cachedImageGate.forUrls(listOf(entity.imageUrl)).serve(entity.imageUrl, DETAIL_WIDTH)
+        val image = cachedImageGate.forUrl(entity.imageUrl, DETAIL_WIDTH)
         return ArtistDetailResponse.fromEntity(entity, image)
     }
 

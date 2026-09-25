@@ -48,7 +48,7 @@ class PromoterService(
     @Transactional(readOnly = true)
     suspend fun findBySlug(slug: String): PromoterDetailResponse {
         val entity = promoterRepository.findBySlug(slug) ?: throw PromoterNotFoundException(slug)
-        val image = cachedImageGate.forUrls(listOf(entity.imageUrl)).serve(entity.imageUrl, DETAIL_WIDTH)
+        val image = cachedImageGate.forUrl(entity.imageUrl, DETAIL_WIDTH)
         return PromoterDetailResponse.fromEntity(entity, image)
     }
 

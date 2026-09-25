@@ -67,7 +67,7 @@ class VenueService(
     @Transactional(readOnly = true)
     suspend fun findBySlug(slug: String): VenueDetailResponse {
         val entity = venueRepository.findBySlug(slug) ?: throw VenueNotFoundException(slug)
-        val image = cachedImageGate.forUrls(listOf(entity.imageUrl)).serve(entity.imageUrl, DETAIL_WIDTH)
+        val image = cachedImageGate.forUrl(entity.imageUrl, DETAIL_WIDTH)
         return VenueDetailResponse.fromEntity(entity, image)
     }
 
