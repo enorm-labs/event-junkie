@@ -234,8 +234,8 @@ section exists so they are not lost in the relief of the flip working.
 | Done       | Item                                                                 | Evidence                 |
 | ---------- | -------------------------------------------------------------------- | ------------------------ |
 | 2026-09-24 | `noindex` off and the apex served, confirmed against the live origin | `curl -sI` + robots.txt  |
-|            | Search Console set up                                                | #288                     |
-|            | Sitemap and hreflang accepted                                        | #289                     |
+| 2026-09-25 | Search Console set up                                                | #288, DNS TXT            |
+| 2026-09-25 | Sitemap and hreflang accepted                                        | #289, 20 pages, 0 errors |
 | 2026-09-24 | Rich Results Test re-run in URL mode against the apex                | #290, events detected    |
 | 2026-09-25 | Link previews checked in Slack, WhatsApp and iMessage                | #291, WhatsApp           |
 |            | The Better Stack monitor re-proved against the apex                  | ADR-021                  |
