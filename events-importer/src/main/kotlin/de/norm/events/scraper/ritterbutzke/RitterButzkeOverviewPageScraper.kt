@@ -77,6 +77,8 @@ class RitterButzkeOverviewPageScraper {
             title = title,
             // Every night is a DJ programme; the venue publishes no categories.
             eventType = EventType.PARTY.name,
+            // The venue names no style but programmes techno and house, so the venue is the default, as at Tresor.
+            genre = "Techno, House",
             // The card's own two-digit-year date — see the class KDoc for why the slug's DDMMYY is ignored.
             eventDate = parseGermanShortDate(card.textAt(DATE_SELECTOR)) ?: UNRESOLVED_EVENT_DATE,
             imageUrl = card.imgSrcAt("a.event-link img"),

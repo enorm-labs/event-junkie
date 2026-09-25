@@ -46,6 +46,12 @@ class KaterOverviewPageScraperTest {
     private fun event(id: String): ScrapedEvent = events.first { it.sourceId == "kater:$id" }
 
     @Test
+    fun `tags every club night Techno, House and leaves a screening untagged`() {
+        events.filter { it.eventType == "PARTY" }.map { it.genre }.distinct() shouldBe listOf("Techno, House")
+        events.filter { it.eventType == "SCREENING" }.all { it.genre == null } shouldBe true
+    }
+
+    @Test
     fun `extracts every event article, ignoring the resident and awareness posts`() {
         // The page also renders 20 `.resident` and 2 `.awareness` articles in the same markup.
         events shouldHaveSize 26

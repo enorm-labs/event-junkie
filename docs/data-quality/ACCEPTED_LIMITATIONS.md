@@ -36,7 +36,7 @@ says so.
 | `CLUB_DER_VISIONAERE` | `PER_EVENT_PAGE`   | the programme page is the source for every night                                                                                                 | —     |
 | `CLUB_OST`            | `DESCRIPTION`      | the venue programmes through Resident Advisor and leaves the CMS description empty on every event                                                | —     |
 | `CLUB_OST`            | `EVENT_TYPE`       | the listing carries no category; every card is a flyer, a title, a start time and a ticket link                                                  | —     |
-| `CLUB_OST`            | `GENRE`            | the listing carries no genre                                                                                                                     | —     |
+| `CLUB_OST`            | `GENRE`            | the listing carries no genre; every night takes the club's Techno default                                                                        | —     |
 | `CLUB_OST`            | `PRICE`            | the listing carries no price; tickets are sold on Resident Advisor                                                                               | —     |
 | `CLUB_OST`            | `ARTISTS`          | the listing carries no lineup, though the CMS holds an empty div where one would go                                                              | —     |
 | `CLUB_OST`            | `DOORS_TIME`       | the listing carries one time per night and no doors time                                                                                         | —     |
@@ -68,7 +68,7 @@ says so.
 | `FRANNZ`              | `PRICE`            | most nights name the ticket seller instead of a figure; only the venue's own party nights carry a structured Abendkasse item, which is read      | —     |
 | `GAERTEN_DER_WELT`    | `GENRE`            | the park's only classification is the format category the event type is already built from; it names no musical style, not even in prose         | —     |
 | `GARTN`               | `PRICE`            | the venue publishes no prices                                                                                                                    | —     |
-| `GARTN`               | `GENRE`            | the venue publishes no genre                                                                                                                     | —     |
+| `GARTN`               | `GENRE`            | the venue publishes no genre; every night takes the club's Techno default                                                                        | —     |
 | `GARTN`               | `IMAGE`            | the venue publishes no per-event image                                                                                                           | —     |
 | `GARTN`               | `DESCRIPTION`      | the venue publishes no per-event text                                                                                                            | —     |
 | `GARTN`               | `PER_EVENT_PAGE`   | the Carrd page emits no per-event URL, and removes an event once it has passed                                                                   | —     |
@@ -170,7 +170,7 @@ says so.
 | `SISYPHOS`            | `DOORS_TIME`       | a ticket product names a day and never a time                                                                                                    | —     |
 | `SISYPHOS`            | `START_TIME`       | a ticket product names a day and never a time                                                                                                    | —     |
 | `SISYPHOS`            | `ARTISTS`          | the shop names no DJ anywhere; a night is sold under its series name                                                                             | —     |
-| `SISYPHOS`            | `GENRE`            | the shop names no musical style                                                                                                                  | —     |
+| `SISYPHOS`            | `GENRE`            | the shop names no musical style; every night takes the club's Techno, House default                                                              | —     |
 | `SISYPHOS`            | `PRICE_BOX_OFFICE` | the shop sells online only and states no door price                                                                                              | —     |
 | `SISYPHOS`            | `CANCELLATION`     | a cancelled night is removed from the shop rather than marked                                                                                    | —     |
 | `SO36`                | `PRICE`            | the shop exposes only a presale price as microdata, so a door-only event carries no figure at all                                                | —     |

@@ -99,6 +99,8 @@ class GoldenGateOverviewPageScraper {
             // A techno club whose whole programme is DJ nights, emitting no category, so the type is
             // fixed rather than inferred from the night's name.
             eventType = EventType.PARTY.name,
+            // The venue names no style but programmes techno and house, so the venue is the default, as at Tresor.
+            genre = "Techno, House",
             eventDate = eventDate,
             startTime = parseTime(match.groupValues[2].takeIf { it.isNotBlank() }),
             // No per-event page, so every night points at the homepage and takes its identity from date

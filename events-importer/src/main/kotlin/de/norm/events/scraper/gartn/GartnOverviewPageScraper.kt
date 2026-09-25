@@ -121,6 +121,8 @@ class GartnOverviewPageScraper(
             subtitle = heading.drop(1).joinToString(" ").ifBlank { null },
             // Every night is a DJ party; the venue states no category and publishes no genre.
             eventType = EventType.PARTY.name,
+            // The venue names no style but programmes techno, so the venue is the default, as at Tresor.
+            genre = "Techno",
             eventDate = eventDate,
             // Opening hours ("14:00 - 22:00"), whose first half is when the party starts. No separate
             // doors time and no field for the closing time.

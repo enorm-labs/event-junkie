@@ -62,6 +62,14 @@ class RitterButzkeWebsiteImporterTest {
     }
 
     @Test
+    fun `keeps the listing's Techno, House default through the merge with the event page`() =
+        runTest {
+            val result = importer.importEvents(sourceUrl)
+            result.shouldBeInstanceOf<ImportResult.Success>()
+            result.events.map { it.genre }.distinct() shouldBe listOf("Techno, House")
+        }
+
+    @Test
     fun `importEvents extracts all events from fixture`() =
         runTest {
             val result = importer.importEvents(sourceUrl)

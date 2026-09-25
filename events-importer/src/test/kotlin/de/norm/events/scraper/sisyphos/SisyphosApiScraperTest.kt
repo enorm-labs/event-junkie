@@ -29,6 +29,11 @@ class SisyphosApiScraperTest {
     }
 
     @Test
+    fun `tags every night Techno, House, the club's sound, since the venue names no style`() {
+        events.map { it.genre }.distinct() shouldBe listOf("Techno, House")
+    }
+
+    @Test
     fun `keeps only the tickets that name a date`() {
         events shouldHaveSize 1
         events.single().sourceId shouldBe "sisyphos:generations-10-okt-2026"

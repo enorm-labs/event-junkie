@@ -35,6 +35,11 @@ class HeidegluehenMonthPageScraperTest {
     private fun event(date: LocalDate): ScrapedEvent = events.first { it.eventDate == date }
 
     @Test
+    fun `tags every night Techno, House, the club's sound, since the venue names no style`() {
+        events.map { it.genre }.distinct() shouldBe listOf("Techno, House")
+    }
+
+    @Test
     fun `discovers the month's parties and nothing else on the page`() {
         // Five Saturdays. The "~~~" separators, the month's shared name-drop and the footer notes
         // all carry no date, which is what keeps them out.

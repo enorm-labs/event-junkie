@@ -96,6 +96,8 @@ class SisyphosApiScraper {
             title = title,
             description = description,
             eventType = EventType.PARTY.name,
+            // The venue names no style but programmes techno and house, so the venue is the default, as at Tresor.
+            genre = "Techno, House",
             eventDate = eventDate,
             imageUrl =
                 node

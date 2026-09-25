@@ -57,6 +57,7 @@ class RitterButzkeWebsiteImporter(
             eventDate = primary.eventDate.takeIf { it != UNRESOLVED_EVENT_DATE } ?: fallback.eventDate,
             imageUrl = primary.imageUrl ?: fallback.imageUrl,
             eventType = primary.eventType ?: fallback.eventType,
+            genre = primary.genre ?: fallback.genre,
             artists = primary.artists.ifEmpty { fallback.artists }
         )
 }
