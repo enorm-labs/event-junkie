@@ -68,7 +68,7 @@ Any edit under `infra/modules/environment/cloud-init/` since the last apply repl
 (`infra/AGENTS.md`). The records read the Primary IPs and not the servers, so
 `-target=hcloud_zone_rrset.address -target=hcloud_zone_rrset.redirect` plans DNS alone.
 
-Expect 8 to add and 2 to destroy, all `hcloud_zone_rrset`: `@` and `www` on both domains, A and AAAA, and
+Expect 4 to add and 1 to destroy, all `hcloud_zone_rrset`: `@` and `www` on both domains, A only, and
 `prod-check` removed. Stop if a server appears.
 
 **A new hostname also needs its certificate.** The chart's smoke hook waits up to 120 s for it, then fails and rolls

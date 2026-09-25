@@ -4,7 +4,7 @@ output "k3s_ipv4" {
 }
 
 output "k3s_ipv6" {
-  description = "Public IPv6 of the k3s node, and the value of the apex and `www` AAAA records."
+  description = "Public IPv6 of the k3s node. No record publishes it: the cluster is IPv4 only (#1941)."
   value       = module.environment.k3s_ipv6
 }
 
