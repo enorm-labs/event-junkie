@@ -199,8 +199,10 @@ same day. `PROHIBITED` on either licence field then removes every translation fo
 JSON-LD each page renders was submitted as is. Both a `MusicEvent` with an offer and a `SocialEvent`
 without one came back valid, with the breadcrumb list valid beside them. Every warning is optional
 and accepted. `endDate` and `offers.validFrom` are not in the data. `organizer` and `offers` are
-emitted when a promoter or a price exists. Structured data may only say what the page shows. URL mode
-runs again against the apex, in Section 2.
+emitted when a promoter or a price exists. Structured data may only say what the page shows.
+
+**URL mode against the apex recognises event pages** (§2, #290). An event without `endDate` whose start
+lies in the past is not shown as an event, because Google treats it as over. That is the data, not the markup.
 
 ### Security
 
@@ -209,7 +211,7 @@ runs again against the apex, in Section 2.
 | 2026-09-07 | CSP enforced, not report-only          | #854, and #843 first     |
 | 2026-09-03 | Rate limiting on the public API        | #268                     |
 | 2026-09-24 | The Security tab is at zero or triaged | 0 open in all four lists |
-|            | Plain HTTP redirects to HTTPS          | #1891                    |
+| 2026-09-24 | Plain HTTP redirects to HTTPS          | #1910, v0.27.2           |
 
 **Zero on 2026-09-24 in code scanning, Dependabot, secret scanning and Code Quality.** Code Quality lists its findings
 apart from the Security tab, under `/security/quality`. Its 20 open findings were all in captured venue pages under
@@ -233,7 +235,7 @@ section exists so they are not lost in the relief of the flip working.
 | 2026-09-24 | `noindex` off and the apex served, confirmed against the live origin | `curl -sI` + robots.txt  |
 |            | Search Console set up                                                | #288                     |
 |            | Sitemap and hreflang accepted                                        | #289                     |
-|            | Rich Results Test re-run in URL mode against the apex                | #290                     |
+| 2026-09-24 | Rich Results Test re-run in URL mode against the apex                | #290, events detected    |
 |            | Link previews checked in Slack, WhatsApp and iMessage                | #291                     |
 |            | The Better Stack monitor re-proved against the apex                  | ADR-021                  |
 |            | The first nightly plausibility run green against the apex            | `agent-plausibility.yml` |
