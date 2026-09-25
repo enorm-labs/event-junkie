@@ -9,7 +9,7 @@ output "k3s_ipv4" {
 }
 
 output "k3s_ipv6" {
-  description = "The k3s node's public IPv6 address, the first host in its /64. The AAAA record's value."
+  description = "The k3s node's public IPv6 address, the first host in its /64. No AAAA record uses it while k3s is IPv4 only."
 
   # `hcloud_primary_ip.ipv6.ip_address` is NOT a usable address: measured against production, it
   # returns the base of the /64, `2a01:4f8:c0c:9c82::`, while the server answers on `...::1`. It

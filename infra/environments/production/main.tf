@@ -73,12 +73,14 @@ locals {
   # that could both be published is how a temporary record becomes permanent.
   hostnames = var.publish_dns ? ["@", "www"] : ["prod-check"]
 
+  # A only. k3s runs single-stack IPv4, so Traefik's hostPorts do not exist on the node's IPv6 and
+  # an AAAA record sends every IPv6-first client to a refused connection (#1941). Add AAAA back
+  # only with a dual-stack cluster, which k3s cannot switch to in place.
   address_records = {
-    for pair in setproduct(local.hostnames, ["A", "AAAA"]) :
-    "${pair[0]}/${pair[1]}" => {
-      name  = pair[0]
-      type  = pair[1]
-      value = pair[1] == "A" ? module.environment.k3s_ipv4 : module.environment.k3s_ipv6
+    for name in local.hostnames : "${name}/A" => {
+      name  = name
+      type  = "A"
+      value = module.environment.k3s_ipv4
     }
   }
 }
@@ -114,14 +116,15 @@ data "hcloud_zone" "redirect" {
 }
 
 locals {
-  publish_redirect = var.publish_dns && var.redirect_domain != ""
+  publish_redirect   = var.publish_dns && var.redirect_domain != ""
+  redirect_hostnames = local.publish_redirect ? ["@", "www"] : []
 
+  # A only, for the same reason as the apex (#1941).
   redirect_records = {
-    for pair in setproduct(local.publish_redirect ? ["@", "www"] : [], ["A", "AAAA"]) :
-    "${pair[0]}/${pair[1]}" => {
-      name  = pair[0]
-      type  = pair[1]
-      value = pair[1] == "A" ? module.environment.k3s_ipv4 : module.environment.k3s_ipv6
+    for name in local.redirect_hostnames : "${name}/A" => {
+      name  = name
+      type  = "A"
+      value = module.environment.k3s_ipv4
     }
   }
 }

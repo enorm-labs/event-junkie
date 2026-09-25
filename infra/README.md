@@ -48,7 +48,7 @@ fixed, but **DNSSEC would not**. A re-created zone has a new key, the DS record 
 wrong. Keeping the zone in a stack that `destroy` never reaches makes that impossible rather than something to remember at the wrong moment. `delete_protection`
 on the zone is the second lock.
 
-Environments read the zone with a `data` source and manage only their own address records, so destroying production removes its `A`/`AAAA` records and leaves
+Environments read the zone with a `data` source and manage only their own address records, so destroying production removes its `A` records and leaves
 the zone, its delegation and its key untouched.
 
 ## Before the first apply — three things only a human can do

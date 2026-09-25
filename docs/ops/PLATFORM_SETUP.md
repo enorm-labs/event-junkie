@@ -103,7 +103,7 @@ depends on it.
 flowchart LR
     subgraph public["Public — anyone"]
         v["Visitor"]
-        dns["Public DNS<br/>event-junkie.de<br/>A/AAAA → node"]
+        dns["Public DNS<br/>event-junkie.de<br/>A → node"]
         v --> dns
     end
 

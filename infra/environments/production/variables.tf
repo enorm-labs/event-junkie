@@ -73,8 +73,8 @@ variable "publish_dns" {
   description = <<-EOT
     Whether the apex and `www` resolve to this environment — in other words, whether the site is
     live. **This is the go-live switch, and it is the only one.** `public_web` opens 80/443 in the
-    firewall, but with nothing resolving to the node that buys an attacker a Traefik 404; the A and
-    AAAA records at `@` are what put the site in front of people.
+    firewall, but with nothing resolving to the node that buys an attacker a Traefik 404; the A
+    records at `@` are what put the site in front of people.
 
     False publishes a single throwaway name, `prod-check`, at the same addresses instead. That is
     not a decoration: production solves **HTTP-01**, which needs Let's Encrypt to reach the host by
