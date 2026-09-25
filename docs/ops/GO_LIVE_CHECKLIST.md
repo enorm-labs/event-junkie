@@ -146,12 +146,12 @@ refers to the in-cluster path** (#877, OpenObserve to e-mail). A firing produced
 | 2026-08-30 | Event sources registered **and enabled**, so the site has content                                         | #876         |
 | 2026-08-30 | Venue addresses, districts and coordinates audited                                                        | #329         |
 | 2026-09-07 | Venue descriptions read against the venue they describe                                                   | #1124        |
-|            | Venue descriptions proof-read once more **by the maintainer**, in both languages, before the flip         | #1124, #1210 |
+| 2026-09-25 | Venue descriptions proof-read once more **by the maintainer**, in both languages, before the flip         | #1124, #1210 |
 | 2026-09-24 | Every page read in both languages **by the maintainer**, as a reader — About and the legal texts included | #280, #1880  |
 | 2026-08-31 | Images served from our own cache, not hotlinked                                                           | #843         |
 | 2026-09-07 | Multilingual event text decided, so the translation question is answered before a venue is asked          | #469         |
 | 2026-09-08 | Every description a venue has not prohibited translated on production                                     | #470         |
-|            | Machine-translated descriptions read on the site **by the maintainer**, in German and English             | ADR-027      |
+| 2026-09-25 | Machine-translated descriptions read on the site **by the maintainer**, in German and English             | ADR-027      |
 
 **Production serves the full catalogue.** Every source is registered, enabled and carries its licence verdict. The
 importer runs on schedule. Images come from the cache (#843). Two venues forbid their descriptions and images, and
@@ -221,10 +221,10 @@ A new fixture brings new ones, because the fixtures carry the venues' own JavaSc
 
 ### Product
 
-| Done | Item                                                                                                                                 | Evidence |
-| ---- | ------------------------------------------------------------------------------------------------------------------------------------ | -------- |
-|      | Maintenance mode, if wanted first                                                                                                    | #296     |
-|      | The repo health files proof-read **by the maintainer** — README, CONTRIBUTING, SUPPORT, SECURITY, the Code of Conduct, the templates | #281     |
+| Done       | Item                                                                                                                                 | Evidence         |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------------ | ---------------- |
+| 2026-09-25 | Maintenance mode, if wanted first                                                                                                    | not needed; #296 |
+| 2026-09-25 | The repo health files proof-read **by the maintainer** — README, CONTRIBUTING, SUPPORT, SECURITY, the Code of Conduct, the templates | #281             |
 
 ## 2 · After go-live
 
@@ -237,14 +237,14 @@ section exists so they are not lost in the relief of the flip working.
 |            | Search Console set up                                                | #288                     |
 |            | Sitemap and hreflang accepted                                        | #289                     |
 | 2026-09-24 | Rich Results Test re-run in URL mode against the apex                | #290, events detected    |
-|            | Link previews checked in Slack, WhatsApp and iMessage                | #291                     |
+| 2026-09-25 | Link previews checked in Slack, WhatsApp and iMessage                | #291, WhatsApp           |
 |            | The Better Stack monitor re-proved against the apex                  | ADR-021                  |
 |            | The first nightly plausibility run green against the apex            | `agent-plausibility.yml` |
 |            | The venue licence enquiry sent, first batch of twelve                | #808                     |
 |            | Launch marketing, venues first                                       | #481, Phase 2            |
 | 2026-09-24 | The beta badge decision, and the README rewritten around it          | stays beta; #295         |
-|            | Whether to publish an uptime badge                                   | HEALTHCHECKS.md          |
-|            | Whether to turn HSTS `preload` on, once the domain is settled        | Section 4                |
+| 2026-09-25 | Whether to publish an uptime badge                                   | not now; #1936           |
+| 2026-09-25 | Whether to turn HSTS `preload` on, once the domain is settled        | not now; #1937           |
 |            | Indexing watched, especially of detail pages                         | #293                     |
 |            | The k6 runs automated against a real origin                          | #298, Phase 2            |
 |            | Session weights re-derived from real traffic                         | #297                     |
