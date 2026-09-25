@@ -85,7 +85,7 @@ variable "publish_dns" {
     Swapped rather than added, so there is never a forgotten record: at go-live `prod-check`
     disappears in the same apply that publishes the apex.
 
-    **True since go-live, and setting it back to false is going dark** (GO_LIVE_CHECKLIST.md §4).
+    **True since go-live, and setting it back to false is going dark** (CLUSTER_BOOTSTRAP.md §12).
     Not a `terraform.tfvars` value, which is gitignored and would make go-live an act with no record:
     each flip is a one-line commit, reviewed and dated like anything else that matters.
   EOT

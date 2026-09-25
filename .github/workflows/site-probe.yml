@@ -37,7 +37,7 @@ concurrency:
 env:
   # `ingress.host` from the chart's values.yaml; if it changes, it changes there first. A `SITE_URL`
   # repository variable overrides it, for a rehearsal hostname while production is dark
-  # (GO_LIVE_CHECKLIST.md §4). Delete the variable when the site is public again.
+  # (CLUSTER_BOOTSTRAP.md §12). Delete the variable when the site is public again.
   SITE_URL: ${{ vars.SITE_URL || 'https://event-junkie.de' }}
   # Asserted in the body. The product name rather than a layout detail: a redesign should not page
   # anyone; a page that no longer says what it is should.

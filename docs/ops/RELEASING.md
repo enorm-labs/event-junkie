@@ -309,6 +309,6 @@ The one property worth carrying across, because it constrains the chart rather t
   and creates a deploy key. It needs a GitHub PAT once, which CI never holds.
 - **Two secrets are made by hand** — the database credentials, and on staging only the Hetzner DNS token. The chart never templates a password, and
   [#416](https://github.com/enorm-labs/event-junkie/issues/416) replaces both with SOPS.
-- **Production is deployed and dark.** Its `database.host` is the real private address. While `publish_dns` is false it serves a rehearsal hostname, so its
-  `ingress` values differ from the chart's defaults and revert at go-live — [GO_LIVE_CHECKLIST.md](GO_LIVE_CHECKLIST.md).
+- **Production is public.** Its `database.host` is the real private address, and its `ingress` values are the chart's defaults. Going dark overrides them
+  with a rehearsal hostname — [CLUSTER_BOOTSTRAP.md](CLUSTER_BOOTSTRAP.md) §12.
 - **GHCR package visibility** is a click, once per package, and every package is private on first publish regardless of repository visibility.

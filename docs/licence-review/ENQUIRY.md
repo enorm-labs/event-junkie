@@ -20,11 +20,10 @@ file is what the venues published. This is what we ask them.
    addresses and the replies stay in the mailbox and in a local file.
 5. **Twelve first, then a decision.** The point of a first batch is the yes, no and silence ratio.
    All 86 at once spends the whole audience before we know what the mail achieves.
-6. **The batch goes out after the flip.** The mail links the venue's own page on the site, and
-   `event-junkie.de` resolves to nothing until [#939](https://github.com/enorm-labs/event-junkie/issues/939).
-   A link that fails makes the ask both weak and promotional-looking, which is the one reading § 7
-   UWG punishes. The template is ready before the flip. The sending is not, and it is a row in
-   [GO_LIVE_CHECKLIST.md](../ops/GO_LIVE_CHECKLIST.md) §2.
+6. **The batch links the live site.** The mail links the venue's own page on `event-junkie.de`,
+   which is public since 2026-09-24. A link that fails makes the ask both weak and
+   promotional-looking, which is the one reading § 7 UWG punishes. Check each link before a mail
+   goes out. [#808](https://github.com/enorm-labs/event-junkie/issues/808) tracks the sending.
 
 ## 1. The German template
 

@@ -55,7 +55,7 @@ the two registries usually agree.
 All three stacks are applied and live. `bootstrap/` holds both DNS zones, the SSH key and the S3 backend on Hetzner's Ceph. Staging is one `cx33` in `nbg1`,
 all-in-one, with no DNS records. Production is a `cx33` k3s node and a `cx23` PostgreSQL node, x86 because `cax*` cannot be bought in `eu-central`. Both have
 a PGDATA volume, and a node replacement has been proven to bring the database back with zero rows lost (#460). **Production is public**: `publish_dns` is
-`true`, and setting it to `false` takes the site dark — [GO_LIVE_CHECKLIST.md](../docs/ops/GO_LIVE_CHECKLIST.md) §4 first.
+`true`, and setting it to `false` takes the site dark — [CLUSTER_BOOTSTRAP.md](../docs/ops/CLUSTER_BOOTSTRAP.md) §12 first.
 
 > **`user_data` has drifted on staging and on both production nodes, and an apply REBUILDS THEM.** `servers.tf` forces replacement on it, and `cloud-init/`
 > has changed since the last apply. Any apply made for an unrelated reason rebuilds the nodes too, and looks like the unrelated change's doing. The volume,
