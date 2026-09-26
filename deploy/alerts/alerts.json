@@ -333,13 +333,13 @@
     "name": "ej-ingest-shedding",
     "org_id": "default",
     "stream_type": "metrics",
-    "stream_name": "otelcol_exporter_send_failed_metric_points_total",
+    "stream_name": "otelcol_receiver_refused_metric_points",
     "is_real_time": false,
     "enabled": true,
-    "description": "OpenObserve is rejecting writes. That means the other rules are evaluating a sample rather than the data \u2014 a gap that looks exactly like a healthy quiet period. #625 ran at ~51% loss for days before anybody noticed, and none of these rules would have said so.",
+    "description": "The collector is refusing metric points, because the export to OpenObserve is not draining. That means the other rules are evaluating a sample rather than the data \u2014 a gap that looks exactly like a healthy quiet period. #625 ran at ~51% loss for days before anybody noticed, and none of these rules would have said so.",
     "query_condition": {
       "type": "promql",
-      "promql": "sum(rate(otelcol_exporter_send_failed_metric_points_total[5m]))",
+      "promql": "sum(rate(otelcol_receiver_refused_metric_points[5m]))",
       "promql_condition": {
         "column": "value",
         "operator": ">",

@@ -959,8 +959,9 @@ cd deploy/alerts     && ./apply.sh --diff
 **Both scripts default to staging's node, so a production rebuild needs `EJ_NODE=ops@10.10.0.1` in front of each of the four.** Without it every command
 succeeds, reports that the push landed, and writes to the cluster you were not rebuilding.
 
-**All fourteen dashboard queries return data on a healthy cluster. A `NO DATA` is a finding.** A collector exports
-some series only after a failure (`enqueue_failed`). A query on such a series is blank on a healthy cluster. The
+**A `NO DATA` from a dashboard query is a finding.** A collector exports some series only after a failure
+(`enqueue_failed`, `send_failed`). A query on such a series is blank on a healthy cluster. Since collector 0.158 no
+collector counter carries `_total` (#1964). The
 dashboard reads `receiver_refused` instead, which exists from start-up
 ([#969](https://github.com/enorm-labs/event-junkie/issues/969)). [`deploy/alerts/README.md`](../../deploy/alerts/README.md)
 records the same trap for `ej-ingest-shedding`. **One query per always-present series.**

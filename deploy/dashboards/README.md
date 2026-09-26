@@ -153,12 +153,12 @@ metric points were being dropped** before they reached storage — 4.44M rejecte
 8.45M never queued by the collector, in 48 hours. A dashboard that cannot distinguish "quiet" from
 "blind" is the thing #625 fixed; these two are how it stays fixed.
 
-**Both of `p_shedding`'s series have to exist on a healthy collector, or the panel cannot do that
-job.** Its second half was `otelcol_exporter_enqueue_failed_metric_points_total`, which a collector
-creates only once something has already failed to enqueue — so the half meant to certify calm was
-blank whenever things were calm, and read as a broken panel. It is now
-`otelcol_receiver_refused_metric_points_total`, which is present from start-up and carries the same
-signal: queue pressure surfaces at the receiver once the exporter stops accepting.
+**`p_shedding`'s series has to exist on a healthy collector, or the panel cannot do that job.** A
+collector creates `enqueue_failed` and, since 0.158, `send_failed` only after the first failure, so a
+query on either is blank whenever things are calm and reads as a broken panel (#969, #1964). The panel
+reads `otelcol_receiver_refused_metric_points`, which is present from start-up and carries the same
+signal: queue pressure surfaces at the receiver once the exporter stops accepting. Since 0.158 no
+collector counter carries `_total`.
 [`../alerts/README.md`](../alerts/README.md) records `ej-ingest-shedding` reaching this conclusion
 first, for the same metric and the same reason — **one query per always-present series**.
 
