@@ -21,7 +21,9 @@ import java.time.LocalTime
  *
  * Hand-coded PHP with **no semantic structure**: the whole programme is one page of flat
  * presentational `<div>` blocks, one per event, no per-event URLs. Each block carries:
- * - a leading bold date line — `Weekday DD/MM/YYYY-HH:MM` ("Samstag 11/07/2026-18:30");
+ * - a leading bold date line — `Weekday DD/MM/YYYY-HH:MM` ("Samstag 11/07/2026-18:30"). The time
+ * can be missing ("Samstag 24/10/2026-") while the venue fills an entry in, and such an event is
+ * kept with no start time (#1962);
  * - a title cell `td#td1`, where a trailing `(KONZERT)` marks a concert and a leading
  * `ABGESAGT` a cancellation; and
  * - an optional external "Ticket Vorverkauf" shop link (eventim, dice, ra.co, …).
@@ -128,9 +130,10 @@ class MonarchOverviewPageScraper {
     }
 
     /** The start time from a "Weekday DD/MM/YYYY-HH:MM" line, or `null` when absent/invalid. */
+    @Suppress("ReturnCount") // Early exits for no match and no time are clearer than nested lets
     private fun parseStartTime(dateText: String): LocalTime? {
         val match = DATE_TIME_PATTERN.find(dateText) ?: return null
-        val hour = match.groupValues[HOUR_GROUP].toInt()
+        val hour = match.groupValues[HOUR_GROUP].toIntOrNull() ?: return null
         val minute = match.groupValues[MINUTE_GROUP].toInt()
         return try {
             LocalTime.of(hour, minute)
@@ -150,9 +153,10 @@ class MonarchOverviewPageScraper {
     companion object {
         /**
          * The block's date line "<Weekday> DD/MM/YYYY-HH:MM", capturing day, month, year, hour and
-         * minute. The weekday prefix is redundant (the year is explicit) and ignored.
+         * minute. The weekday prefix is redundant (the year is explicit) and ignored. The time is
+         * optional, but the dash is not, so only the date line matches.
          */
-        private val DATE_TIME_PATTERN = Regex("""(\d{1,2})/(\d{1,2})/(\d{4})-(\d{1,2}):(\d{2})""")
+        private val DATE_TIME_PATTERN = Regex("""(\d{1,2})/(\d{1,2})/(\d{4})-(?:(\d{1,2}):(\d{2}))?""")
         private const val HOUR_GROUP = 4
         private const val MINUTE_GROUP = 5
 
