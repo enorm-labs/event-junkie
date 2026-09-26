@@ -60,6 +60,8 @@ class RosaOverviewPageScraper {
             title = title,
             description = node.stringOrNull("description")?.takeUnless { it.equals("TBA", ignoreCase = true) },
             eventType = EventType.PARTY.name,
+            // The venue names no style but programmes techno nights, so the venue is the default.
+            genre = "Techno",
             eventDate = date,
             startTime = parseClockPrefix(node.stringOrNull("time")),
             imageUrl = flyerUrl(node),

@@ -88,6 +88,8 @@ class MaxximOverviewPageScraper {
             description = node.stringOrNull("description"),
             // MAXXIM publishes no categories: a club whose every night is a DJ dance party.
             eventType = EventType.PARTY.name,
+            // The club names no style but plays disco and party classics, so the venue is the default.
+            genre = "Disco, Charts",
             eventDate = eventDate,
             startTime = schedule.startTime,
             endDate = schedule.endDate,

@@ -23,8 +23,8 @@ enum class ClubDerVisionaereRoom(
     /** The open-air club on the Flutgraben — the summer programme. */
     CLUB("cdvRed", EventSource.CLUB_DER_VISIONAERE, "Techno, House"),
 
-    /** The indoor concert space next door, programmed year-round. */
-    SONNENRAUM("sonnenraumYellow", EventSource.SONNENRAUM, null),
+    /** The indoor concert space next door, whose one programme is a jazz residency. */
+    SONNENRAUM("sonnenraumYellow", EventSource.SONNENRAUM, "Jazz"),
 
     /** The moored salon boat — the winter location. */
     MS_HOPPETOSSE("hoppetosseYellow", EventSource.MS_HOPPETOSSE, "Techno, House")

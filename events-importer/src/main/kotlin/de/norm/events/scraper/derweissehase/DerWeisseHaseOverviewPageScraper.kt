@@ -113,6 +113,8 @@ class DerWeisseHaseOverviewPageScraper {
             // The club programmes nothing but DJ nights and states no category, so the type is fixed, not
             // inferred from the night's name.
             eventType = EventType.PARTY.name,
+            // The club names no style but programmes techno, so the venue is the default.
+            genre = "Techno",
             eventDate = eventDate,
             startTime = parseStartTime(dateLine),
             // The flyer is served from a root-relative path, so it needs resolving against the listing URL.

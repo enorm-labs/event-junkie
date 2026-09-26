@@ -43,6 +43,11 @@ class MaxximOverviewPageScraperTest {
     private fun edgeCaseEvent(sourceId: String): ScrapedEvent = edgeCaseEvents.first { it.sourceId == sourceId }
 
     @Test
+    fun `tags every night Disco, Charts, the club's sound, since it names no style`() {
+        events.map { it.genre }.distinct() shouldBe listOf("Disco, Charts")
+    }
+
+    @Test
     fun `discovers every event in the warmup payload`() {
         events shouldHaveSize 18
     }
