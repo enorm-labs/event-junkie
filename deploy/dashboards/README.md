@@ -162,10 +162,11 @@ signal: queue pressure surfaces at the receiver once the exporter stops acceptin
 [`../alerts/README.md`](../alerts/README.md) records `ej-ingest-shedding` reaching this conclusion
 first, for the same metric and the same reason — **one query per always-present series**.
 
-**`apply.sh --check` reports every query returning data on production** (16 of 16 since #1126). It has not always: `p_memtable` was blank until
+**`apply.sh --check` reports which queries return data on production.** The two reach panels returned none from #1179
+until #1960: they filtered on `k8s_container_name = 'frontend'`, and the nginx lines carry no container name. `p_memtable` was blank until
 the release carrying `ZO_PROMETHEUS_ENABLED: "true"` reconciled — the chart ships that setting off,
 which is why the outage had to be diagnosed from log lines — and `p_shedding`'s second query was on
-a series a healthy collector never creates. Both are resolved, so **a `NO DATA` here is now a
+a series a healthy collector never creates. All three are resolved, so **a `NO DATA` here is a
 finding rather than a known gap**, which is the state a check is worth having in.
 
 **"Node memory available" was added after the fact.** On 2026-08-20 the node global-OOMed — load
@@ -184,7 +185,7 @@ Console (#288). No new processing, no notice change, no ADR.
 **The two bottom panels are that decision.** They read the `default` logs stream with SQL — the only panels here
 that do — and pull request, status, referrer and user agent out of `body` with `regexp_match`, because the collector
 parses only JSON bodies and an nginx line is not one. A page load is a successful `GET` for a path without a dot;
-a visitor is any user agent not matching `NOT_A_VISITOR` in `gen_dashboard.py`. **The count sums a condition over
+a visitor is any user agent not matching `NOT_A_VISITOR` in `gen_dashboard.py`, which also excludes headless and emulated browsers, link previews and scanners (#1960). **The count sums a condition over
 every access line rather than filtering first**, so a quiet hour draws 0 and a missing log draws nothing — the same
 distinction row 4 exists for.
 

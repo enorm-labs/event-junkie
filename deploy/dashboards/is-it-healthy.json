@@ -853,7 +853,7 @@
           "queryType": "sql",
           "queries": [
             {
-              "query": "SELECT histogram(_timestamp, '1 hour') AS x_axis_1, sum(CASE WHEN ((regexp_match(body, '\"GET ([^ ?\"]*)')[1] IS NOT NULL AND regexp_match(body, '\"GET ([^ ?\"]*)')[1] NOT LIKE '%.%' AND regexp_match(body, '\" ([0-9]{3}) ')[1] IN ('200','304')) AND NOT regexp_like(coalesce(regexp_match(body, '\"([^\"]*)\"$')[1], ''), '(?i)bot|crawl|spider|slurp|kube-probe|betterstack|curl/|k6')) THEN 1 ELSE 0 END) AS y_axis_1 FROM \"default\" WHERE k8s_container_name = 'frontend' AND body LIKE '[%' GROUP BY x_axis_1 ORDER BY x_axis_1",
+              "query": "SELECT histogram(_timestamp, '1 hour') AS x_axis_1, sum(CASE WHEN ((regexp_match(body, '\"GET ([^ ?\"]*)')[1] IS NOT NULL AND regexp_match(body, '\"GET ([^ ?\"]*)')[1] NOT LIKE '%.%' AND regexp_match(body, '\" ([0-9]{3}) ')[1] IN ('200','304')) AND NOT regexp_like(coalesce(regexp_match(body, '\"([^\"]*)\"$')[1], ''), '(?i)bot|crawl|spider|slurp|kube-probe|betterstack|curl/|k6|headlesschrome|moto g power|googleother|google-inspectiontool|whatsapp|facebookexternalhit|leakix|l9scan|go-http-client|python|wget|ej-check')) THEN 1 ELSE 0 END) AS y_axis_1 FROM \"default\" WHERE k8s_app_component = 'frontend' AND body LIKE '[%' GROUP BY x_axis_1 ORDER BY x_axis_1",
               "vrlFunctionQuery": null,
               "customQuery": true,
               "fields": {
@@ -910,7 +910,7 @@
           "queryType": "sql",
           "queries": [
             {
-              "query": "SELECT coalesce(regexp_match(body, '\"([^\"]*)\" \"[^\"]*\"$')[1], '-') AS x_axis_1, sum(CASE WHEN ((regexp_match(body, '\"GET ([^ ?\"]*)')[1] IS NOT NULL AND regexp_match(body, '\"GET ([^ ?\"]*)')[1] NOT LIKE '%.%' AND regexp_match(body, '\" ([0-9]{3}) ')[1] IN ('200','304')) AND NOT regexp_like(coalesce(regexp_match(body, '\"([^\"]*)\"$')[1], ''), '(?i)bot|crawl|spider|slurp|kube-probe|betterstack|curl/|k6')) THEN 1 ELSE 0 END) AS y_axis_1, sum(CASE WHEN (regexp_match(body, '\"GET ([^ ?\"]*)')[1] IS NOT NULL AND regexp_match(body, '\"GET ([^ ?\"]*)')[1] NOT LIKE '%.%' AND regexp_match(body, '\" ([0-9]{3}) ')[1] IN ('200','304')) THEN 1 ELSE 0 END) AS y_axis_2 FROM \"default\" WHERE k8s_container_name = 'frontend' AND body LIKE '[%' GROUP BY x_axis_1 ORDER BY y_axis_1 DESC, y_axis_2 DESC LIMIT 15",
+              "query": "SELECT coalesce(regexp_match(body, '\"([^\"]*)\" \"[^\"]*\"$')[1], '-') AS x_axis_1, sum(CASE WHEN ((regexp_match(body, '\"GET ([^ ?\"]*)')[1] IS NOT NULL AND regexp_match(body, '\"GET ([^ ?\"]*)')[1] NOT LIKE '%.%' AND regexp_match(body, '\" ([0-9]{3}) ')[1] IN ('200','304')) AND NOT regexp_like(coalesce(regexp_match(body, '\"([^\"]*)\"$')[1], ''), '(?i)bot|crawl|spider|slurp|kube-probe|betterstack|curl/|k6|headlesschrome|moto g power|googleother|google-inspectiontool|whatsapp|facebookexternalhit|leakix|l9scan|go-http-client|python|wget|ej-check')) THEN 1 ELSE 0 END) AS y_axis_1, sum(CASE WHEN (regexp_match(body, '\"GET ([^ ?\"]*)')[1] IS NOT NULL AND regexp_match(body, '\"GET ([^ ?\"]*)')[1] NOT LIKE '%.%' AND regexp_match(body, '\" ([0-9]{3}) ')[1] IN ('200','304')) THEN 1 ELSE 0 END) AS y_axis_2 FROM \"default\" WHERE k8s_app_component = 'frontend' AND body LIKE '[%' GROUP BY x_axis_1 ORDER BY y_axis_1 DESC, y_axis_2 DESC LIMIT 15",
               "vrlFunctionQuery": null,
               "customQuery": true,
               "fields": {
