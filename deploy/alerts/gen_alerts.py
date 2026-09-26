@@ -460,18 +460,23 @@ rule(
 # fine in the UI. Measured: the sum returned 0 series over the rule's own 15
 # minute window; `send_failed` alone returned 16 points over the same window.
 #
-# So: one rule per always-present series. Rejects on one side, backpressure on the
-# other, and queue fill is the leading indicator of the enqueue failures that the
-# absent counter would have reported too late.
+# So: one rule per always-present series. **`send_failed` is no longer one** (#1964):
+# collector 0.158 exports its telemetry through the OTel SDK, which drops `_total`
+# and creates a failure counter only on the first failure, so this rule watched a
+# name that did not exist. OpenObserve's `or` does not rescue an absent stream
+# either. The refused counter exists from start-up: when OpenObserve rejects, the
+# exporter retries, its queue fills, and the receivers refuse new points — the
+# "8.45M never queued" half of #625. Queue fill is the earlier signal of the same.
 rule(
     "ej-ingest-shedding",
-    "OpenObserve is rejecting writes. That means the other rules are evaluating a sample "
-    "rather than the data — a gap that looks exactly like a healthy quiet period. #625 ran "
-    "at ~51% loss for days before anybody noticed, and none of these rules would have said so.",
-    "sum(rate(otelcol_exporter_send_failed_metric_points_total[5m]))",
+    "The collector is refusing metric points, because the export to OpenObserve is not "
+    "draining. That means the other rules are evaluating a sample rather than the data — a "
+    "gap that looks exactly like a healthy quiet period. #625 ran at ~51% loss for days before "
+    "anybody noticed, and none of these rules would have said so.",
+    "sum(rate(otelcol_receiver_refused_metric_points[5m]))",
     ">",
     0,
-    stream_name="otelcol_exporter_send_failed_metric_points_total",
+    stream_name="otelcol_receiver_refused_metric_points",
     period_minutes=15,
     frequency_minutes=5,
     silence_minutes=2 * 60,
