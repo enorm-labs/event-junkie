@@ -155,8 +155,11 @@ LOG_STREAM = "default"
 # The frontend's access line: `[time] "GET /path HTTP/1.1" 200 3566 "referrer" "user agent"`
 # (`events-frontend/docker/nginx.conf`, format `ej_no_ip`). nginx's error log shares the container's
 # stdout and starts with a date rather than a bracket, so `body LIKE '[%'` is what keeps the count
-# to access lines.
-ACCESS_LINES = "FROM \"%s\" WHERE k8s_container_name = 'frontend' AND body LIKE '[%%'" % LOG_STREAM
+# to access lines. **Scoped by `k8s_app_component`, not `k8s_container_name`**: the nginx lines
+# arrive with no container name on either cluster, so the container filter matched nothing and both
+# panels stayed empty through launch week (#1960). The injector shares the component, but its lines
+# start with a date, so the bracket still separates them.
+ACCESS_LINES = "FROM \"%s\" WHERE k8s_app_component = 'frontend' AND body LIKE '[%%'" % LOG_STREAM
 REQUEST_PATH = "regexp_match(body, '\"GET ([^ ?\"]*)')[1]"
 STATUS = "regexp_match(body, '\" ([0-9]{3}) ')[1]"
 REFERRER = 'regexp_match(body, \'"([^"]*)" "[^"]*"$\')[1]'
@@ -173,7 +176,15 @@ PAGE_LOAD = "(%s IS NOT NULL AND %s NOT LIKE '%%.%%' AND %s IN ('200','304'))" %
 # evidence the site answered the internet — so they are removed here, where reach is counted, and
 # nowhere else. **A crawler that matches nothing counts as a visitor**, the same direction of error
 # as nginx's own `map`: correctable by adding a word, rather than discovered as a silence.
-NOT_A_VISITOR = "(?i)bot|crawl|spider|slurp|kube-probe|betterstack|curl/|k6"
+# Launch week added the automated browsers and fetchers that carry none of those words (#1960):
+# `HeadlessChrome` (screenshots, Playwright, DAST), Lighthouse's emulated `moto g power` phone,
+# Google's `GoogleOther` and `Google-InspectionTool`, link previews (`WhatsApp`,
+# `facebookexternalhit`), scanners (`leakix`, `l9scan`) and scripting clients.
+NOT_A_VISITOR = (
+    "(?i)bot|crawl|spider|slurp|kube-probe|betterstack|curl/|k6"
+    "|headlesschrome|moto g power|googleother|google-inspectiontool|whatsapp|facebookexternalhit"
+    "|leakix|l9scan|go-http-client|python|wget|ej-check"
+)
 VISITOR_PAGE_LOAD = "(%s AND NOT regexp_like(coalesce(%s, ''), '%s'))" % (PAGE_LOAD, USER_AGENT, NOT_A_VISITOR)
 
 panels = [
