@@ -1,6 +1,7 @@
 package de.norm.events.scraper.voidclub
 
 import de.norm.events.event.EventType
+import de.norm.events.scraper.B2B_SEPARATOR
 import de.norm.events.scraper.BERLIN
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
@@ -253,9 +254,6 @@ class VoidClubOverviewPageScraper(
          * label — `RAVE THE PLANET AFTER PARTY` — makes the paragraph a note.
          */
         val BILLING_LABEL = Regex("""with|line\s?-?\s?up""", RegexOption.IGNORE_CASE)
-
-        /** The back-to-back marker joining two DJs into one slot. */
-        val B2B_SEPARATOR = Regex("""\s+b2b\s+""", RegexOption.IGNORE_CASE)
 
         /** The venue's "the rest of the lineup isn't fixed yet" phrasings, with any dash lead-in. */
         val UNANNOUNCED_TAIL =

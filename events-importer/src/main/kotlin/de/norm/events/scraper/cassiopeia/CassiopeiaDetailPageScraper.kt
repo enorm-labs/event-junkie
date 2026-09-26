@@ -3,6 +3,7 @@ package de.norm.events.scraper.cassiopeia
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.hasVisibleWebflowFlag
 import de.norm.events.scraper.headlinersFromTitle
 import de.norm.events.scraper.hrefAt
@@ -15,7 +16,6 @@ import de.norm.events.scraper.textAt
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
-import java.net.URI
 import java.time.LocalDate
 import java.time.LocalTime
 
@@ -66,7 +66,7 @@ class CassiopeiaDetailPageScraper {
             return null
         }
 
-        val eventSlug = extractEventSlug(sourceUrl)
+        val eventSlug = extractEventSlug(sourceUrl, prefix = EVENT_PATH_PREFIX)
         val hasFlags = content.selectFirst(".flag-wrapper") != null
         val eventType = mapEventType(content.textAt(".subheading.invert.gap"))
         val eventDate =
@@ -95,12 +95,6 @@ class CassiopeiaDetailPageScraper {
             ticketUrl = parseTicketUrl(content),
             artists = parseArtists(title, eventType, content)
         )
-    }
-
-    /** Extracts the event slug from the detail page URL path. */
-    private fun extractEventSlug(sourceUrl: String): String {
-        val path = URI(sourceUrl).path
-        return path.removePrefix("/event/").trimEnd('/')
     }
 
     /**
@@ -210,6 +204,9 @@ class CassiopeiaDetailPageScraper {
     companion object {
         /** CSS selector for the main event content container on the detail page. */
         private const val CONTENT_CONTAINER = ".modul-section.events"
+
+        /** Path prefix a detail-page URL puts before the slug — singular, unlike the shared default. */
+        private const val EVENT_PATH_PREFIX = "/event/"
 
         /** CSS selector for sold-out / cancelled flag elements (Webflow conditional visibility). */
         private const val FLAG_SELECTOR = ".flag-wrapper .event-detail.sold-out"

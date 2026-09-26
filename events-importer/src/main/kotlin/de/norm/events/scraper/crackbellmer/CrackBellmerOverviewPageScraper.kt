@@ -1,6 +1,7 @@
 package de.norm.events.scraper.crackbellmer
 
 import de.norm.events.event.EventType
+import de.norm.events.scraper.B2B_SEPARATOR
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
@@ -219,9 +220,6 @@ class CrackBellmerOverviewPageScraper(
 
         /** The `w/` ("with") marker introducing the acts a host plays with — an act boundary. */
         val WITH_SEPARATOR = Regex("""\s+w/\s*""", RegexOption.IGNORE_CASE)
-
-        /** The back-to-back marker joining two DJs into one slot. */
-        val B2B_SEPARATOR = Regex("""\s+b2b\s+""", RegexOption.IGNORE_CASE)
 
         /** The "hosted by …" lineup lead-in — a role, not part of the name. */
         val HOST_LABEL = Regex("""^hosted\s+by\s+""", RegexOption.IGNORE_CASE)
