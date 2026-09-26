@@ -30,6 +30,23 @@ class MonarchOverviewPageScraperTest {
             baseUrl
         )
 
+    private fun block(
+        dateLine: String,
+        title: String
+    ) = Jsoup.parse(
+        """
+        <html><body>
+          <div class="nachrichten">
+            <div style="border-bottom:1px solid #cccccc; padding-left:4px;">
+              <b>$dateLine</b><br>
+              <table><tr><td id=td1><b><div>$title</div></b></td></tr></table>
+            </div>
+          </div>
+        </body></html>
+        """.trimIndent(),
+        baseUrl
+    )
+
     @Test
     fun `parses every event block from the retro programme page`() {
         scraper.scrape(programme(), baseUrl) shouldHaveSize 18
@@ -118,6 +135,21 @@ class MonarchOverviewPageScraperTest {
         event.eventType shouldBe "CONCERT"
         event.eventDate shouldBe LocalDate.of(2026, 7, 24)
         event.sourceId shouldBe "monarch:2026-07-24-weird-youth"
+    }
+
+    @Test
+    fun `keeps an event whose date line has no time yet, with no start time`() {
+        val event = scraper.scrape(block("Samstag 24/10/2026-", "CHEERS QUEERS"), baseUrl).single()
+
+        event.title shouldBe "CHEERS QUEERS"
+        event.eventDate shouldBe LocalDate.of(2026, 10, 24)
+        event.startTime.shouldBeNull()
+        event.sourceId shouldBe "monarch:2026-10-24-cheers-queers"
+    }
+
+    @Test
+    fun `skips a block whose date line carries no date`() {
+        scraper.scrape(block("Samstag", "CHEERS QUEERS"), baseUrl) shouldHaveSize 0
     }
 
     @Test
