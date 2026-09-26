@@ -422,21 +422,17 @@ panels = [
     panel(
         "p_shedding",
         "Metrics dropped before storage (points/sec)",
-        "**Two ways a metric dies on the way in, and neither raises anything.** `send_failed` is OpenObserve "
-        "returning 503 — the memtable overflow of #625. `receiver_refused` is the collector declining a point it "
-        "cannot place, which is where queue pressure surfaces once the exporter stops accepting. Measured "
-        "2026-08-23, before the fix: 4.44M rejected by OpenObserve and 8.45M never queued by the collector, in 48h "
-        "against 12.2M delivered — **about half of everything scraped**. Anything but a flat zero here means the "
-        "panels above are sampling, not reporting.\n\n"
-        "**Both series exist on a healthy collector, and that is the whole requirement.** This panel's second half "
-        "was `otelcol_exporter_enqueue_failed_metric_points_total`, which a collector creates only after something "
-        "has already failed to enqueue — so it was blank in exactly the case it was meant to certify, and read as a "
-        "broken panel rather than a calm one (#969). `deploy/alerts/README.md` records `ej-ingest-shedding` reaching "
-        "the same conclusion first: one query per always-present series.",
+        "**A metric that dies on the way in raises nothing.** `receiver_refused` is the collector declining a "
+        "point it cannot place, which is where queue pressure surfaces once OpenObserve stops accepting — the "
+        "memtable overflow of #625. Measured 2026-08-23, before the fix: 4.44M rejected by OpenObserve and 8.45M "
+        "never queued by the collector, in 48h against 12.2M delivered — **about half of everything scraped**. "
+        "Anything but a flat zero here means the panels above are sampling, not reporting.\n\n"
+        "**The series has to exist on a healthy collector, and that is the whole requirement.** `send_failed` and "
+        "`enqueue_failed` are created only after the first failure, and since collector 0.158 no counter carries "
+        "`_total` (#1964), so a query on either is blank in exactly the case it is meant to certify (#969).",
         "line",
         [
-            "sum(rate(otelcol_exporter_send_failed_metric_points_total[5m]))",
-            "sum(rate(otelcol_receiver_refused_metric_points_total[5m]))",
+            "sum(rate(otelcol_receiver_refused_metric_points[5m]))",
         ],
         x=0,
         y=68,
