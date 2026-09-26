@@ -1,6 +1,7 @@
 package de.norm.events.scraper.clubdervisionaere
 
 import de.norm.events.event.EventType
+import de.norm.events.scraper.B2B_SEPARATOR
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.cleanEventTitle
@@ -302,8 +303,5 @@ class ClubDerVisionaereProgrammePageScraper(
 
         /** The `More` in the venue's "More TBA" not-yet-announced marker. */
         private val MORE_PREFIX = Regex("""^more\s+""", RegexOption.IGNORE_CASE)
-
-        /** The back-to-back marker joining two DJs into one slot ("XDB b2b Onirik"). */
-        private val B2B_SEPARATOR = Regex("""\s+b2b\s+""", RegexOption.IGNORE_CASE)
     }
 }

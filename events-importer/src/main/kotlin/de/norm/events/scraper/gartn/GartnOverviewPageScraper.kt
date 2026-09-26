@@ -1,6 +1,7 @@
 package de.norm.events.scraper.gartn
 
 import de.norm.events.event.EventType
+import de.norm.events.scraper.B2B_SEPARATOR
 import de.norm.events.scraper.BERLIN
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
@@ -256,9 +257,6 @@ class GartnOverviewPageScraper(
 
         /** The note that qualifies a sold-out presale — the night still has tickets at the door. */
         val DOOR_TICKETS_NOTE = Regex("""at\s+the\s+door|abendkasse""", RegexOption.IGNORE_CASE)
-
-        /** The back-to-back marker joining two DJs into one slot. */
-        val B2B_SEPARATOR = Regex("""\s+b2b\s+""", RegexOption.IGNORE_CASE)
 
         /** The opener of a cast annotation: `mit Judith van Waterkant und Ruede Hagelstein`, `w/ …`. */
         val CAST_PREFIX = Regex("""^(?:mit|w/)\s+""", RegexOption.IGNORE_CASE)
