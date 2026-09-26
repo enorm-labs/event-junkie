@@ -67,7 +67,7 @@ val ROSA_LIMITATIONS =
         EventSource.ROSA,
         AcceptedLimitation(LimitedAspect.SUBTITLE, "the site states one title per night and no second line"),
         AcceptedLimitation(LimitedAspect.DOORS_TIME, "the site publishes an opening range, not a doors time"),
-        AcceptedLimitation(LimitedAspect.GENRE, "the venue names no musical style anywhere"),
+        AcceptedLimitation(LimitedAspect.GENRE, "the venue names no musical style anywhere; every night takes the club's Techno default"),
         AcceptedLimitation(LimitedAspect.PRICE, "the venue sells through Resident Advisor and prints no price"),
         AcceptedLimitation(LimitedAspect.ARTISTS, "the site names the party series, never who plays it"),
         AcceptedLimitation(LimitedAspect.PROMOTERS, "the site credits no promoter beside the party name"),

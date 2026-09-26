@@ -141,6 +141,8 @@ class RoadrunnerOverviewPageScraper(
             // No category field; infer from the title (concert by default for this live-music venue). See
             // inferConcertVenueType.
             eventType = inferConcertVenueType(title),
+            // The venue names no style but books rock'n'roll, rockabilly and blues-rock, so the venue is the default.
+            genre = "Rock",
             eventDate = eventDate,
             doorsTime = doorsTime,
             imageUrl = imageUrl,

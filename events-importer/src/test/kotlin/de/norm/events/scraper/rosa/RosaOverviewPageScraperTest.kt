@@ -29,6 +29,11 @@ class RosaOverviewPageScraperTest {
     private fun scrape(name: String) = scraper.scrape(Jsoup.parse(fixture(name), baseUrl), baseUrl)
 
     @Test
+    fun `tags every night Techno, the club's sound, since it names no style`() {
+        scrape("rosa-overview.html").map { it.genre }.distinct() shouldBe listOf("Techno")
+    }
+
+    @Test
     fun `scrape reads every event from the flight payload`() {
         val events = scrape("rosa-overview.html")
 

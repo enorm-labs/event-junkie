@@ -33,6 +33,11 @@ class LogeOverviewPageScraperTest {
     private fun event(sourceId: String): ScrapedEvent = events.first { it.sourceId == sourceId }
 
     @Test
+    fun `tags every show Punk, the venue's sound, since it names no style`() {
+        events.map { it.genre }.distinct() shouldBe listOf("Punk")
+    }
+
+    @Test
     fun `discovers every event in the warmup payload`() {
         events shouldHaveSize 9
     }

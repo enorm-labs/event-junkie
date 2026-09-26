@@ -51,7 +51,7 @@ says so.
 | `CRACK_BELLMER`       | `PRICE`            | the venue publishes no prices                                                                                                                    | —     |
 | `CRACK_BELLMER`       | `TICKET_URL`       | the venue links no ticket shop                                                                                                                   | —     |
 | `DER_WEISSE_HASE`     | `PRICE`            | the club publishes no prices anywhere, not even at the door                                                                                      | —     |
-| `DER_WEISSE_HASE`     | `GENRE`            | the club publishes no genre                                                                                                                      | —     |
+| `DER_WEISSE_HASE`     | `GENRE`            | the club publishes no genre; every night takes the club's Techno default                                                                         | —     |
 | `DER_WEISSE_HASE`     | `DOORS_TIME`       | the club publishes no doors time                                                                                                                 | —     |
 | `DER_WEISSE_HASE`     | `EVENT_TYPE`       | the club states no category anywhere and programmes nothing but DJ nights, so the type is fixed rather than inferred                             | —     |
 | `DER_WEISSE_HASE`     | `PER_EVENT_PAGE`   | the club sells through Resident Advisor and the listing links off-site                                                                           | —     |
@@ -155,7 +155,7 @@ says so.
 | `ROADRUNNER`          | `EVENT_TYPE`       | the retro programme carries no category field; a live-music venue, so an unmarked title defaults to a concert                                    | —     |
 | `ROSA`                | `SUBTITLE`         | the site states one title per night and no second line                                                                                           | —     |
 | `ROSA`                | `DOORS_TIME`       | the site publishes an opening range, not a doors time                                                                                            | —     |
-| `ROSA`                | `GENRE`            | the venue names no musical style anywhere                                                                                                        | —     |
+| `ROSA`                | `GENRE`            | the venue names no musical style anywhere; every night takes the club's Techno default                                                           | —     |
 | `ROSA`                | `PRICE`            | the venue sells through Resident Advisor and prints no price                                                                                     | —     |
 | `ROSA`                | `ARTISTS`          | the site names the party series, never who plays it                                                                                              | —     |
 | `ROSA`                | `PROMOTERS`        | the site credits no promoter beside the party name                                                                                               | —     |

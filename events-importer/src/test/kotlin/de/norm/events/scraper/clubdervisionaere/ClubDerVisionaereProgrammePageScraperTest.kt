@@ -58,10 +58,10 @@ class ClubDerVisionaereProgrammePageScraperTest {
     private val sonnenraumEvents by lazy { summer(ClubDerVisionaereRoom.SONNENRAUM) }
 
     @Test
-    fun `tags the club and the boat Techno, House and leaves the Sonnenraum's concerts untagged`() {
+    fun `tags the club and the boat Techno, House and the Sonnenraum's residency Jazz`() {
         clubEvents.map { it.genre }.distinct() shouldBe listOf("Techno, House")
         winter(ClubDerVisionaereRoom.MS_HOPPETOSSE).map { it.genre }.distinct() shouldBe listOf("Techno, House")
-        sonnenraumEvents.map { it.genre }.distinct() shouldBe listOf(null)
+        sonnenraumEvents.map { it.genre }.distinct() shouldBe listOf("Jazz")
     }
 
     @Test

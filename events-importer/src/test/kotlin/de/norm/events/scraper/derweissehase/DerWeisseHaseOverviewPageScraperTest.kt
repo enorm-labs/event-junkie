@@ -71,7 +71,7 @@ class DerWeisseHaseOverviewPageScraperTest {
         // The club publishes none of these anywhere on the page.
         straff.description.shouldBeNull()
         straff.doorsTime.shouldBeNull()
-        straff.genre.shouldBeNull()
+        straff.genre shouldBe "Techno"
         straff.pricePresale.shouldBeNull()
         straff.priceBoxOffice.shouldBeNull()
         // "+ Surprise DJ" closes the billing and is not a performer.

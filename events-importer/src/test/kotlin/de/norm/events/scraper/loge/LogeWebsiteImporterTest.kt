@@ -92,6 +92,8 @@ class LogeWebsiteImporterTest {
             // The end is in the overview JSON alone and has to survive the merge (#1408).
             estamoe.endDate shouldBe LocalDate.of(2026, 7, 17)
             estamoe.endTime shouldBe LocalTime.of(22, 0)
+            // The genre is the overview's venue default and has to survive the merge too.
+            estamoe.genre shouldBe "Punk"
         }
 
     @Test

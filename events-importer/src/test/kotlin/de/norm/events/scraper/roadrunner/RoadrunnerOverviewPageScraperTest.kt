@@ -39,6 +39,11 @@ class RoadrunnerOverviewPageScraperTest {
         )
 
     @Test
+    fun `tags every night Rock, the venue's sound, since it names no style`() {
+        scraper.scrape(programme(), baseUrl).map { it.genre }.distinct() shouldBe listOf("Rock")
+    }
+
+    @Test
     fun `parses the single dated event from the retro programme page`() {
         val events = scraper.scrape(programme(), baseUrl)
         events shouldHaveSize 1
