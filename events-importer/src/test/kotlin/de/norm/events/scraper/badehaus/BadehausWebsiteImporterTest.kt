@@ -10,6 +10,7 @@ import de.norm.events.scraper.ScrapedEvent
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldNotBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import io.mockk.coEvery
 import io.mockk.mockk
@@ -132,6 +133,23 @@ class BadehausWebsiteImporterTest {
             val postponed = events(importer.importEvents(sourceUrl)).first { it.sourceId == "badehaus:forager" }
             postponed.status shouldBe EventStatus.POSTPONED.name
             postponed.statusNote shouldBe "Das Konzert wurde auf den 27.02.2027 verschoben;"
+        }
+
+    // The card infers CONCERT and mints the title as the act; the page's category says Party (#1950).
+    @Test
+    fun `lets the detail page's category retype the night and drop the title as an act`() =
+        runTest {
+            val futurebaeUrl = "https://badehaus-berlin.com/events/futurebae/"
+            val before = events(importer.importEvents(sourceUrl)).first { it.sourceId == "badehaus:futurebae" }
+            before.eventType shouldBe EventType.CONCERT.name
+            before.artists.map { it.name } shouldNotBe emptyList<String>()
+
+            coEvery { htmlFetcher.fetchDocument(futurebaeUrl) } returns
+                Jsoup.parse(fixture("badehaus-detail-party-twelve-hour.html"), futurebaeUrl)
+
+            val after = events(importer.importEvents(sourceUrl)).first { it.sourceId == "badehaus:futurebae" }
+            after.eventType shouldBe EventType.PARTY.name
+            after.artists shouldHaveSize 0
         }
 
     @Test

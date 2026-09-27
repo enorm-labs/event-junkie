@@ -31,6 +31,30 @@ fun parseTime(
     }
 }
 
+/** A clock with a one- or two-digit hour, as the 12-hour form prints it (`9:30`, `11:30`). */
+private val H_MM_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern("H:mm")
+
+private const val HOURS_PER_HALF_DAY = 12L
+
+/**
+ * Parses an `H:mm` [clock] and applies an English [meridiem] (`a`/`am`, `p`/`pm`), or returns
+ * `null` for a missing or unparseable clock. Without a meridiem the clock is read as 24-hour.
+ *
+ * A venue that prints `Doors 11:30pm` beside a German `23:30 UHR` loses the evening if the
+ * `pm` is dropped: the night party shows a midday doors time (#1949).
+ */
+fun parseClock(
+    clock: String?,
+    meridiem: String? = null
+): LocalTime? {
+    val time = parseTime(clock, H_MM_FORMATTER) ?: return null
+    return when (meridiem?.trim()?.firstOrNull()?.lowercaseChar()) {
+        'p' -> if (time.hour < HOURS_PER_HALF_DAY) time.plusHours(HOURS_PER_HALF_DAY) else time
+        'a' -> if (time.hour.toLong() == HOURS_PER_HALF_DAY) time.minusHours(HOURS_PER_HALF_DAY) else time
+        else -> time
+    }
+}
+
 /**
  * Parses the leading `HH:mm` of a longer clock string, or `null` for a missing or unparseable one.
  *
