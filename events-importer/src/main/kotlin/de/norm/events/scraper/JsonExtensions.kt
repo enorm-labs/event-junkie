@@ -12,3 +12,14 @@ import tools.jackson.databind.JsonNode
  * an exception, so every shape that is not a scalar reads as absent.
  */
 fun JsonNode.stringOrNull(field: String): String? = path(field).asString("").trim().takeIf { it.isNotBlank() }
+
+/**
+ * The nodes a parsed JSON-LD block offers, whatever container the venue wrapped them in: a bare
+ * object, a top-level array, or a schema.org `@graph`. Callers pick the one they want.
+ */
+fun JsonNode.jsonLdNodes(): List<JsonNode> =
+    when {
+        isArray -> toList()
+        path("@graph").isArray -> path("@graph").toList()
+        else -> listOf(this)
+    }
