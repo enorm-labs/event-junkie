@@ -111,6 +111,7 @@ says so.
 | `MAAYA`               | `PRICE`            | the venue publishes an entry note in words and no numeric price                                                                                  | —     |
 | `MAAYA`               | `ARTISTS`          | there is no lineup field, and the titles are series and party names rather than acts                                                             | —     |
 | `MAAYA`               | `DOORS_TIME`       | the venue publishes no doors time                                                                                                                | —     |
+| `MAAYA`               | `EVENT_TYPE`       | the programme carries a name, a date and a time and no category; the type comes from a title keyword, else OTHER                                 | —     |
 | `MAAYA`               | `GENRE`            | the venue publishes no genre                                                                                                                     | —     |
 | `MAX_SCHMELING_HALLE` | `PRICE`            | the listing and the event pages print no figure; tickets are sold through outside shops                                                          | —     |
 | `MAXXIM`              | `EVENT_TYPE`       | the club publishes no categories; every night is a DJ dance party                                                                                | —     |

@@ -119,6 +119,15 @@ fetch, counted against `--sample`, and say the URL came from the tree. The only 
 
 A `403` or `429` ends fetching from that host for the run; no other path or header. A `404` is a finding: often a cancellation the importer has not seen.
 
+**Fetch a host that refuses curl the way the importer does.** Some hosts sit behind a bot rule that answers curl with `403` and serves the JVM, and the
+scraper's KDoc says so. Today that is `maaya.de` (`MaayaWebsiteImporter`). For those, from the first request, use the same User-Agent through the JVM client:
+
+```sh
+scripts/jdk-fetch.sh "$SOURCE_URL" "temp/source-<slug>.html"    # prints the status
+```
+
+A `403` from `jdk-fetch.sh` is a finding: the importer is refused too.
+
 Reduce the page to text and read it in German and English: _Einlass_ / _Doors_, _Beginn_ / _Start_, _ausverkauft_ / _sold out_, _abgesagt_ / _cancelled_,
 _verschoben_ / _postponed_, a `€` amount, the date, and the acts (heading billing, line-up section, _Support:_, _feat._, _w/_, _+_). Classify:
 
