@@ -31,7 +31,8 @@ import java.util.Locale
  * heading supplies month and year — the stream is walked in document order with the current
  * [YearMonth] carried along.
  *
- * Each card is self-contained: the act (`h2`), an optional tour/support line (`h3`), the
+ * Each card is self-contained: the act (`h2`), up to two `h3` lines — a tour name, a support
+ * line, or both, the support line second (#1953) — the
  * booking agency (`.veranstalter`), `Einlass`/`Beginn` times (`.zeit`), `VVK`/`AK` prices
  * (`.preis`), a ticket-shop link, a poster, an optional `.stoerer` status sticker, and the
  * untruncated blurb in the collapsed `.bandinfo` panel — no detail page is fetched (the
@@ -99,7 +100,10 @@ class ColumbiahalleOverviewPageScraper {
             return null
         }
 
-        val subtitle = card.textAt("h3")
+        // The tour name is the subtitle; the artists read every line, so a support line in the second
+        // `h3` is billed (#1953).
+        val subtitleLines = card.select("h3").map { it.text().trim() }.filter { it.isNotBlank() }
+        val subtitle = subtitleLines.firstOrNull()
         val times = card.textAt(".zeit").orEmpty()
         val sticker = card.textAt(".stoerer").orEmpty()
         val eventType = inferConcertVenueType(title)
@@ -124,7 +128,7 @@ class ColumbiahalleOverviewPageScraper {
             priceNote = priceNote,
             soldOut = sticker.contains(SOLD_OUT_TEXT, ignoreCase = true),
             status = parseEventStatus(sticker),
-            artists = buildArtistsForEventType(title, subtitle, eventType),
+            artists = buildArtistsForEventType(title, subtitleLines.joinToString("\n"), eventType),
             promoters = listOfNotNull(card.textAt(".veranstalter a"))
         )
     }
