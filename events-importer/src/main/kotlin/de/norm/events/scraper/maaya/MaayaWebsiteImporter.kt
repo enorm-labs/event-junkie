@@ -74,5 +74,9 @@ val MAAYA_LIMITATIONS =
         AcceptedLimitation(LimitedAspect.PRICE, "the venue publishes an entry note in words and no numeric price"),
         AcceptedLimitation(LimitedAspect.ARTISTS, "there is no lineup field, and the titles are series and party names rather than acts"),
         AcceptedLimitation(LimitedAspect.DOORS_TIME, "the venue publishes no doors time"),
+        AcceptedLimitation(
+            LimitedAspect.EVENT_TYPE,
+            "the programme carries a name, a date and a time and no category; the type comes from a title keyword, else OTHER"
+        ),
         AcceptedLimitation(LimitedAspect.GENRE, "the venue publishes no genre")
     )
