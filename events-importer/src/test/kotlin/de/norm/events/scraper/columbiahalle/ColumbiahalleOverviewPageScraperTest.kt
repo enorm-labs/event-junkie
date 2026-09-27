@@ -107,6 +107,15 @@ class ColumbiahalleOverviewPageScraperTest {
     }
 
     @Test
+    fun `bills the support line in a second h3, and keeps the tour name as the subtitle`() {
+        // Kitschkrieg: "KITSCHKRIEG LIVE" then "Support: 255 & BLUMENGARTEN" (#1953).
+        val kitschkrieg = event("9759")
+        kitschkrieg.subtitle shouldBe "KITSCHKRIEG LIVE"
+        kitschkrieg.artists.filter { it.role == "SUPPORT" }.map { it.name } shouldContainExactly listOf("255", "BLUMENGARTEN")
+        event("9715").artists.filter { it.role == "SUPPORT" }.map { it.name } shouldContainExactly listOf("Those Damn Crows")
+    }
+
+    @Test
     fun `splits a co-billed title into one headliner per act`() {
         val metric = event("9729")
         metric.title shouldBe "METRIC / BROKEN SOCIAL SCENE / STARS"

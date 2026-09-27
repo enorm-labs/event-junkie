@@ -359,6 +359,8 @@ class ArtistNameMappingTest {
         isNonArtistName(" 2027 ") shouldBe true
         isNonArtistName("100 Kilo Herz") shouldBe false
         isNonArtistName("1-800-Mikey") shouldBe false
+        // A known act whose name is a number (#1953).
+        isNonArtistName("255") shouldBe false
     }
 
     // --- isNonArtistName title fragment (#1494) ---

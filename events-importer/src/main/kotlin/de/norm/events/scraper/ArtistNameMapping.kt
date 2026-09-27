@@ -670,8 +670,14 @@ fun isSlugless(name: String): Boolean = SlugGenerator.slugify(name).isBlank()
 
 private val BARE_NUMBER = Regex("""\d+""")
 
-/** A digits-only name is the tail of a `<show> 1 & 2` billing, never an act (#1556). */
-fun isBareNumber(name: String): Boolean = BARE_NUMBER.matches(name.trim())
+/**
+ * Acts whose whole name is a number, kept against [isBareNumber]. Name by name, like
+ * [KNOWN_SINGLE_ACTS]: Columbiahalle bills `Support: 255 & BLUMENGARTEN` (#1953).
+ */
+private val KNOWN_NUMERIC_ACTS: Set<String> = setOf("255")
+
+/** A digits-only name is the tail of a `<show> 1 & 2` billing, never an act (#1556), unless it is a [KNOWN_NUMERIC_ACTS] name. */
+fun isBareNumber(name: String): Boolean = BARE_NUMBER.matches(name.trim()) && name.trim() !in KNOWN_NUMERIC_ACTS
 
 /** A clock range that a title can be cut down to: Arcanoa's `19-21Uhr` (#1841). */
 private val TIME_RANGE = Regex("""\d{1,2}(?:[:.]\d{2})?\s*[-–]\s*\d{1,2}(?:[:.]\d{2})?\s*uhr""", RegexOption.IGNORE_CASE)
