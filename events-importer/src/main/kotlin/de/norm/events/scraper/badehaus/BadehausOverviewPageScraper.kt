@@ -108,8 +108,9 @@ class BadehausOverviewPageScraper {
     /**
      * Infers the [event type][de.norm.events.event.EventType] from the title/slug.
      *
-     * **No machine-readable category** anywhere in the HTML (no taxonomy term, body class or
-     * schema field), so a best-effort heuristic on the name: pub quizzes, parties/themed club
+     * **The listing card carries no category**; the detail page does, and its category wins in
+     * [BadehausWebsiteImporter.fillGapsFromOverview] (#1950). This is the fallback for a page
+     * without one: a best-effort heuristic on the name — pub quizzes, parties/themed club
      * nights and screenings by keyword, everything else `CONCERT` — a live-music venue where
      * concerts are by far the most common event. A themed night classified `PARTY` matters beyond
      * the label: a `PARTY` extracts no artists, so its event-name title is not minted as a fake act

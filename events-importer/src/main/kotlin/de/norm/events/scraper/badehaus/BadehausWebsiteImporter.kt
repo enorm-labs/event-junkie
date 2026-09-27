@@ -9,6 +9,7 @@ import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
 import de.norm.events.scraper.VenueLimitations
+import de.norm.events.scraper.buildArtistsForEventType
 import org.jsoup.nodes.Document
 import org.springframework.stereotype.Component
 
@@ -49,10 +50,14 @@ class BadehausWebsiteImporter(
 
     /**
      * Merges detail-page data ([primary]) with overview data ([fallback]). The detail page is
-     * authoritative for what only it carries — description, start time, promoter and the status its
-     * notice announces. The overview is authoritative for the sold-out flag (the card's CSS class),
-     * the subtitle and the inferred type; the rest, the status among them, falls back to the
-     * overview only when the detail page did not supply it.
+     * authoritative for what only it carries — description, start time, promoter, the category
+     * and the status its notice announces. The overview is authoritative for the sold-out flag (the
+     * card's CSS class) and the subtitle; the rest, the status and the inferred type among them,
+     * falls back to the overview only when the detail page did not supply it.
+     *
+     * **The artists follow the final type.** The overview builds them from the inferred type, so a
+     * night the category calls a party would keep its title as a fake act (#1950); they are rebuilt
+     * whenever the category decides the type.
      */
     override fun fillGapsFromOverview(
         primary: ScrapedEvent,
@@ -64,8 +69,12 @@ class BadehausWebsiteImporter(
             // Overview-only fields (the detail scraper leaves these unset).
             subtitle = primary.subtitle ?: fallback.subtitle,
             eventType = primary.eventType ?: fallback.eventType,
-            // Artists come from the overview (title + subtitle + type); the detail page has no roster.
-            artists = primary.artists.ifEmpty { fallback.artists },
+            // The detail page has no roster: the artists come from the card's title and subtitle, typed
+            // by the category when the page has one.
+            artists =
+                primary.eventType
+                    ?.let { buildArtistsForEventType(fallback.title, fallback.subtitle, it) }
+                    ?: primary.artists.ifEmpty { fallback.artists },
             doorsTime = primary.doorsTime ?: fallback.doorsTime,
             imageUrl = primary.imageUrl ?: fallback.imageUrl,
             ticketUrl = primary.ticketUrl ?: fallback.ticketUrl,
@@ -84,7 +93,6 @@ val BADEHAUS_LIMITATIONS =
             LimitedAspect.ARTISTS,
             "the venue publishes no roster; for a concert the title is taken as the act and a Support: subtitle as the rest"
         ),
-        AcceptedLimitation(LimitedAspect.EVENT_TYPE, "the venue publishes no category; the type is inferred from the title and subtitle"),
         AcceptedLimitation(
             LimitedAspect.PRICE,
             "the venue prints no figure, and where it names money at all it is a donation range the model has no field for, kept verbatim as the note"

@@ -21,7 +21,6 @@ says so.
 | `ARCANOA`             | `DESCRIPTION`      | the one line per night is the whole entry, with no blurb after it                                                                                | —     |
 | `BAR_JEDER_VERNUNFT`  | `DOORS_TIME`       | the calendar and the show pages state one Beginn time and never an Einlass                                                                       | —     |
 | `BADEHAUS`            | `ARTISTS`          | the venue publishes no roster; for a concert the title is taken as the act and a Support: subtitle as the rest                                   | —     |
-| `BADEHAUS`            | `EVENT_TYPE`       | the venue publishes no category; the type is inferred from the title and subtitle                                                                | —     |
 | `BADEHAUS`            | `PRICE`            | the venue prints no figure, and where it names money at all it is a donation range the model has no field for, kept verbatim as the note         | —     |
 | `BINUU`               | `EVENT_TYPE`       | the SvelteKit payload carries no category field, and neither does anywhere else on the site                                                      | —     |
 | `BINUU`               | `PRICE`            | the payload carries no price field and the pages print no figure; tickets are sold through outside shops                                         | —     |

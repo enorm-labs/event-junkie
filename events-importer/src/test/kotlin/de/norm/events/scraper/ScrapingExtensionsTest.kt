@@ -168,6 +168,34 @@ class ScrapingExtensionsTest {
     }
 
     @Nested
+    inner class ParseClock {
+        @Test
+        fun `reads a clock without a meridiem as 24-hour`() {
+            parseClock("23:30") shouldBe LocalTime.of(23, 30)
+            parseClock("9:30") shouldBe LocalTime.of(9, 30)
+        }
+
+        @Test
+        fun `moves a pm clock into the evening`() {
+            parseClock("11:30", "pm") shouldBe LocalTime.of(23, 30)
+            parseClock("7:00", "p") shouldBe LocalTime.of(19, 0)
+        }
+
+        @Test
+        fun `keeps noon at noon and moves midnight to zero`() {
+            parseClock("12:00", "pm") shouldBe LocalTime.of(12, 0)
+            parseClock("12:30", "AM") shouldBe LocalTime.of(0, 30)
+            parseClock("10:00", "am") shouldBe LocalTime.of(10, 0)
+        }
+
+        @Test
+        fun `returns null for a missing or unparseable clock`() {
+            parseClock(null, "pm") shouldBe null
+            parseClock("TBA") shouldBe null
+        }
+    }
+
+    @Nested
     inner class IsPlaceholderName {
         @Test
         fun `TBA is a placeholder`() {

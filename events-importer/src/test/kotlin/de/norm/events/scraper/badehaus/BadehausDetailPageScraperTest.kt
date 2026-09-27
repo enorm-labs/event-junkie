@@ -1,6 +1,7 @@
 package de.norm.events.scraper.badehaus
 
 import de.norm.events.event.EventStatus
+import de.norm.events.event.EventType
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
@@ -139,6 +140,32 @@ class BadehausDetailPageScraperTest {
 
         event.status shouldBe EventStatus.SCHEDULED.name
         event.statusNote.shouldBeNull()
+    }
+
+    @Test
+    fun `keeps the meridiem of an English 12-hour start, and reads the category as the type`() {
+        // Call Me Maybe: "Start: 11:30 pm • Minimum Age: 18", "Categorised Party" (#1949, #1950).
+        val url = "https://badehaus-berlin.com/events/call-me-maybe-2000s-2010s-pop-party-9/"
+        val event = scraper.scrape(fixture("badehaus-detail-party-twelve-hour.html", url), url)
+        event.shouldNotBeNull()
+
+        event.startTime shouldBe LocalTime.of(23, 30)
+        event.eventType shouldBe EventType.PARTY.name
+    }
+
+    @Test
+    fun `reads a Concert category as a concert`() {
+        val url = "https://badehaus-berlin.com/events/gauchito-club/"
+        val event = scraper.scrape(fixture("badehaus-detail-concert-category.html", url), url)
+        event.shouldNotBeNull()
+
+        event.eventType shouldBe EventType.CONCERT.name
+    }
+
+    @Test
+    fun `leaves the type to the overview when the page has no category`() {
+        val url = "https://badehaus-berlin.com/events/dominic-donner/"
+        scraper.scrape(fixture("badehaus-detail-promoter.html", url), url).shouldNotBeNull().eventType shouldBe null
     }
 
     @Test
