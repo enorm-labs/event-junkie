@@ -9,6 +9,7 @@ import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.headlinersFromTitle
 import de.norm.events.scraper.isFestivalTitle
 import de.norm.events.scraper.isNonArtistName
+import de.norm.events.scraper.mapEventType
 import de.norm.events.scraper.parseClockPrefix
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.splitSupportActs
@@ -139,7 +140,11 @@ class FestsaalApiScraper {
         val startTime = parseClockPrefix(effective(node.changedStart, node.start))
 
         val subtitle = node.subTitle.blankToNull()
-        val eventType = inferEventType(title, subtitle)
+        val genreNode = node.genre?.title.blankToNull()
+        // The genre node is a musical genre, except when the house files a night under an event
+        // kind: "In The Mountains" is a queer art festival with `Festival` as its genre (#1952).
+        val kindFromGenre = mapEventType(genreNode)?.takeIf { it != EventType.CONCERT.name }
+        val eventType = kindFromGenre ?: inferEventType(title, subtitle)
 
         return ScrapedEvent(
             title = title,
@@ -156,7 +161,7 @@ class FestsaalApiScraper {
             sourceUrl = publicEventUrl(node.meta?.htmlUrl.blankToNull(), slug),
             sourceId = sourceId,
             ticketUrl = node.ticket.blankToNull()?.takeIf { it.startsWith("http") },
-            genre = node.genre?.title.blankToNull(),
+            genre = genreNode.takeIf { kindFromGenre == null },
             pricePresale = parsePrice(node.price.blankToNull()),
             soldOut = statusCode == STATUS_SOLD_OUT,
             status = mapStatus(statusCode, sourceId),
@@ -205,7 +210,8 @@ class FestsaalApiScraper {
 
     /**
      * Infers the event type from title/subtitle, since Festsaal exposes no category field
-     * (`genre` is a *musical* genre, not an event kind).
+     * (`genre` is a *musical* genre, not an event kind — the one exception, an event kind filed
+     * as the genre, is read before this runs).
      *
      * A live-music venue, so the default is `CONCERT`; only unambiguous signals flip it — a quiz
      * keyword → `QUIZ`, a wrestling show → `SHOW`, a market or open-air series → `OTHER`, a

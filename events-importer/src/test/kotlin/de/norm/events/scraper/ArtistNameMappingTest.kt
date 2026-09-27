@@ -404,6 +404,21 @@ class ArtistNameMappingTest {
     }
 
     @Test
+    fun `isNonArtistName drops series and festivals billed as their own act`() {
+        // The three the 2026-09-25 plausibility check found (#1952), with and without their edition.
+        isNonArtistName("Thrash Talk Vol 5") shouldBe true
+        isNonArtistName("Thrash Talk") shouldBe true
+        isNonArtistName("In The Mountains") shouldBe true
+        isNonArtistName("ROCKSTAR GIRLFRIENDS") shouldBe true
+        // Any numbered volume is a series edition, not a performer.
+        isNonArtistName("Some Night Vol. 12") shouldBe true
+        isNonArtistName("Deep Cuts Volume 3") shouldBe true
+        // A name that merely contains the letters keeps.
+        isNonArtistName("Volbeat") shouldBe false
+        isNonArtistName("Revolver") shouldBe false
+    }
+
+    @Test
     fun `isNonArtistName keeps real names including those ending in a number`() {
         isNonArtistName("WEDNESDAY 13") shouldBe false
         isNonArtistName("OXO86") shouldBe false

@@ -3,6 +3,7 @@ package de.norm.events.scraper.festsaal
 import ch.qos.logback.classic.Logger
 import ch.qos.logback.classic.spi.ILoggingEvent
 import ch.qos.logback.core.read.ListAppender
+import de.norm.events.event.EventType
 import de.norm.events.scraper.LogFields
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
@@ -181,6 +182,22 @@ class FestsaalApiScraperTest {
         // "Bohème Sauvage Berlin" stays CONCERT (no keyword), but the shared denylist —
         // now accent- and city-normalized — filters the title so no headliner is created.
         event("festsaal:Bohème-Sauvage-Berlin").artists.shouldBeEmpty()
+    }
+
+    @Test
+    fun `types a night filed under the Festival genre as a festival, with no genre and no artist`() {
+        // In The Mountains: a queer art festival whose genre node says "Festival" (#1952).
+        val json =
+            """
+            {"items": [{"id": 1, "meta": {"slug": "in-the-mountains"}, "title": "In The Mountains",
+              "sub_title": "Queer art festival from South Caucasus", "date": "2026-09-26", "status": null,
+              "genre": {"id": 99, "title": "Festival"}}]}
+            """.trimIndent()
+        val festival = scraper.scrape(json).single()
+
+        festival.eventType shouldBe EventType.FESTIVAL.name
+        festival.genre.shouldBeNull()
+        festival.artists.shouldBeEmpty()
     }
 
     @Test
