@@ -24,6 +24,7 @@ class GretchenWebsiteImporter(
     private val logger = KotlinLogging.logger {}
 
     override val eventSource: EventSource = EventSource.GRETCHEN
+    override val listsWholeProgramme: Boolean = true
 
     private val overviewPageScraper = GretchenOverviewPageScraper()
 

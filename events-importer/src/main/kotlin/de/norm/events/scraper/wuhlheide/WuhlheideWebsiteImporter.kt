@@ -30,6 +30,7 @@ class WuhlheideWebsiteImporter(
     htmlFetcher: HtmlFetcher
 ) : AbstractTwoPageWebsiteImporter(htmlFetcher) {
     override val eventSource: EventSource = EventSource.WUHLHEIDE
+    override val listsWholeProgramme: Boolean = true
 
     private val overviewPageScraper = WuhlheideOverviewPageScraper()
     private val detailPageScraper = WuhlheideDetailPageScraper()

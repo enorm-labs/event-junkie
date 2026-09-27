@@ -26,6 +26,7 @@ class MetropolWebsiteImporter(
     htmlFetcher: HtmlFetcher
 ) : AbstractTwoPageWebsiteImporter(htmlFetcher) {
     override val eventSource: EventSource = EventSource.METROPOL
+    override val listsWholeProgramme: Boolean = true
 
     private val overviewPageScraper = MetropolOverviewPageScraper()
     private val detailPageScraper = MetropolDetailPageScraper()

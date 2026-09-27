@@ -185,6 +185,53 @@ class EventUpsertServiceStaleCleanupTest {
             }
     }
 
+    /** A source whose scrape is its whole programme, which opens the window past the last scraped date (#1974). */
+    @Nested
+    inner class WholeProgramme {
+        private val lastListed = today.plusDays(30)
+        private val farBeyond = today.plusDays(300)
+
+        @Test
+        fun `deletes a far-future event the whole programme no longer lists`() =
+            runTest {
+                val scrapedEvents = listOf(scrapedEvent(title = "Listed", eventDate = lastListed, sourceId = "src:listed"))
+                val dropped = existingEvent(id = 1L, eventDate = farBeyond, sourceId = "src:dropped")
+                val listed = existingEvent(id = 2L, eventDate = lastListed, sourceId = "src:listed")
+                coEvery {
+                    eventRepository.findByEventSourceIdAndEventDateGreaterThanEqual(eventSourceId, tomorrow)
+                } returns listOf(dropped, listed).asFlow()
+
+                service.upsertAndCleanup(scrapedEvents, venueId, venueSlug, eventSourceId, wholeProgramme = true)
+
+                coVerify { eventRepository.deleteByIdIn(match { 1L in it && 2L !in it }) }
+                coVerify(exactly = 0) { eventRepository.findByEventSourceIdAndEventDateBetween(any(), any(), any()) }
+            }
+
+        @Test
+        fun `keeps the window bounded at the last scraped date when the source is not a whole programme`() =
+            runTest {
+                val scrapedEvents = listOf(scrapedEvent(title = "Listed", eventDate = lastListed, sourceId = "src:listed"))
+                coEvery {
+                    eventRepository.findByEventSourceIdAndEventDateBetween(eventSourceId, tomorrow, lastListed)
+                } returns emptyFlow()
+
+                service.upsertAndCleanup(scrapedEvents, venueId, venueSlug, eventSourceId)
+
+                coVerify { eventRepository.findByEventSourceIdAndEventDateBetween(eventSourceId, tomorrow, lastListed) }
+                coVerify(exactly = 0) { eventRepository.findByEventSourceIdAndEventDateGreaterThanEqual(any(), any()) }
+                coVerify(exactly = 0) { eventRepository.deleteByIdIn(any()) }
+            }
+
+        @Test
+        fun `an empty scrape deletes nothing, even for a whole programme`() =
+            runTest {
+                service.upsertAndCleanup(emptyList(), venueId, venueSlug, eventSourceId, wholeProgramme = true)
+
+                coVerify(exactly = 0) { eventRepository.findByEventSourceIdAndEventDateGreaterThanEqual(any(), any()) }
+                coVerify(exactly = 0) { eventRepository.deleteByIdIn(any()) }
+            }
+    }
+
     @Nested
     inner class DateRangeBounds {
         @Test

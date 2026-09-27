@@ -30,6 +30,7 @@ class ZennerWebsiteImporter(
     private val logger = KotlinLogging.logger {}
 
     override val eventSource: EventSource = EventSource.ZENNER
+    override val listsWholeProgramme: Boolean = true
 
     private val apiScraper = ZennerApiScraper()
 

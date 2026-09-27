@@ -34,6 +34,7 @@ class PeterEdelWebsiteImporter(
     private val logger = KotlinLogging.logger {}
 
     override val eventSource: EventSource = EventSource.PETER_EDEL
+    override val listsWholeProgramme: Boolean = true
 
     private val overviewPageScraper = PeterEdelOverviewPageScraper()
 

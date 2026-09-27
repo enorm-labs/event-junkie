@@ -39,6 +39,7 @@ class AedenWebsiteImporter(
     private val logger = KotlinLogging.logger {}
 
     override val eventSource: EventSource = EventSource.AEDEN
+    override val listsWholeProgramme: Boolean = true
 
     private val overviewPageScraper = AedenOverviewPageScraper()
 

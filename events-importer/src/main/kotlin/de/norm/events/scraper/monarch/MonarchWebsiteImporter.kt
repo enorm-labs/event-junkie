@@ -28,6 +28,7 @@ class MonarchWebsiteImporter(
     private val logger = KotlinLogging.logger {}
 
     override val eventSource: EventSource = EventSource.MONARCH
+    override val listsWholeProgramme: Boolean = true
 
     private val overviewPageScraper = MonarchOverviewPageScraper()
 

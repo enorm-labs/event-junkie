@@ -628,6 +628,7 @@ class EventImportServiceIntegrationTest : BaseControllerTest() {
         fun mockCassiopeiaImporter(): EventImporter =
             mockk {
                 every { eventSource } returns EventSource.CASSIOPEIA
+                every { listsWholeProgramme } returns false
             }
 
         @Bean

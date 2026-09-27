@@ -31,6 +31,7 @@ class ColumbiahalleWebsiteImporter(
     private val logger = KotlinLogging.logger {}
 
     override val eventSource: EventSource = EventSource.COLUMBIAHALLE
+    override val listsWholeProgramme: Boolean = true
 
     private val overviewPageScraper = ColumbiahalleOverviewPageScraper()
 

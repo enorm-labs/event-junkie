@@ -31,6 +31,7 @@ class So36WebsiteImporter(
     htmlFetcher: HtmlFetcher
 ) : AbstractTwoPageWebsiteImporter(htmlFetcher) {
     override val eventSource: EventSource = EventSource.SO36
+    override val listsWholeProgramme: Boolean = true
 
     private val overviewPageScraper = So36OverviewPageScraper()
     private val detailPageScraper = So36DetailPageScraper()

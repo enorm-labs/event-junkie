@@ -63,6 +63,7 @@ class EventImportServiceTest {
     private val cassiopeiaImporter: EventImporter =
         mockk {
             coEvery { eventSource } returns EventSource.CASSIOPEIA
+            coEvery { listsWholeProgramme } returns false
         }
 
     // TransactionalOperator that executes the callback directly.
@@ -954,6 +955,22 @@ class EventImportServiceTest {
                 coVerify {
                     eventRepository.deleteByIdIn(match { 2L in it })
                 }
+            }
+
+        @Test
+        fun `opens the cleanup window when the importer lists its whole programme`() =
+            runTest {
+                val src = source()
+                val scrapedEvents = listOf(scrapedEvent(title = "Active Event", sourceId = "cassiopeia:active", eventDate = LocalDate.of(2026, 6, 15)))
+                coEvery { cassiopeiaImporter.listsWholeProgramme } returns true
+                coEvery { cassiopeiaImporter.importEvents(any(), any(), any()) } returns
+                    ImportResult.Success(events = scrapedEvents, etag = null, lastModified = null)
+                coEvery { eventRepository.findByEventSourceIdAndEventDateGreaterThanEqual(any(), any()) } returns emptyFlow()
+
+                service.importFromSource(src)
+
+                coVerify { eventRepository.findByEventSourceIdAndEventDateGreaterThanEqual(any(), any()) }
+                coVerify(exactly = 0) { eventRepository.findByEventSourceIdAndEventDateBetween(any(), any(), any()) }
             }
 
         @Test

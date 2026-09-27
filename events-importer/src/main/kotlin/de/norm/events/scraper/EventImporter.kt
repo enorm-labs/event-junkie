@@ -23,6 +23,13 @@ interface EventImporter {
     val eventSource: EventSource
 
     /**
+     * Whether one [importEvents] run returns the venue's whole standing programme: no page cap, no
+     * month walk, no horizon. True opens the stale cleanup past the scrape's last date (#1974). A
+     * wrong true deletes real events beyond what was fetched on every run, so it is opt-in.
+     */
+    val listsWholeProgramme: Boolean get() = false
+
+    /**
      * Imports events from the venue's website.
      *
      * The importer is responsible for:

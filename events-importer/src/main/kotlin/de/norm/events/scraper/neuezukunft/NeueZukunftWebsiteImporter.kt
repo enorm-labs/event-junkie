@@ -38,6 +38,7 @@ class NeueZukunftWebsiteImporter(
     private val logger = KotlinLogging.logger {}
 
     override val eventSource: EventSource = EventSource.NEUE_ZUKUNFT
+    override val listsWholeProgramme: Boolean = true
 
     private val apiScraper = NeueZukunftApiScraper()
 

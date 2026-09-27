@@ -30,6 +30,7 @@ class DunckerWebsiteImporter(
     private val logger = KotlinLogging.logger {}
 
     override val eventSource: EventSource = EventSource.DUNCKER
+    override val listsWholeProgramme: Boolean = true
 
     private val overviewPageScraper = DunckerOverviewPageScraper(clock)
 

@@ -32,6 +32,7 @@ class EschschloraqueWebsiteImporter(
     private val logger = KotlinLogging.logger {}
 
     override val eventSource: EventSource = EventSource.ESCHSCHLORAQUE
+    override val listsWholeProgramme: Boolean = true
 
     private val overviewPageScraper = EschschloraqueOverviewPageScraper()
 

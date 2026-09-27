@@ -30,6 +30,7 @@ class RitterButzkeWebsiteImporter(
     htmlFetcher: HtmlFetcher
 ) : AbstractTwoPageWebsiteImporter(htmlFetcher) {
     override val eventSource: EventSource = EventSource.RITTER_BUTZKE
+    override val listsWholeProgramme: Boolean = true
 
     private val overviewPageScraper = RitterButzkeOverviewPageScraper()
     private val detailPageScraper = RitterButzkeDetailPageScraper()

@@ -36,6 +36,7 @@ class ArcanoaWebsiteImporter(
     private val logger = KotlinLogging.logger {}
 
     override val eventSource: EventSource = EventSource.ARCANOA
+    override val listsWholeProgramme: Boolean = true
 
     private val overviewPageScraper = ArcanoaOverviewPageScraper(clock)
 

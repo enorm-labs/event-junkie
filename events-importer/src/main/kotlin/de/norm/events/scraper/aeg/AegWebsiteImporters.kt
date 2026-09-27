@@ -26,6 +26,8 @@ abstract class AbstractAegVenueImporter(
     htmlFetcher: HtmlFetcher,
     override val eventSource: EventSource
 ) : AbstractTwoPageWebsiteImporter(htmlFetcher) {
+    override val listsWholeProgramme: Boolean = true
+
     private val overviewPageScraper = AegOverviewPageScraper()
     private val detailPageScraper = AegDetailPageScraper()
 

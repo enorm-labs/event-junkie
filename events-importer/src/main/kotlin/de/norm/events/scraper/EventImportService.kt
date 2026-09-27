@@ -215,14 +215,9 @@ class EventImportService(
                         venueRepository.findById(runningSource.venueId)
                             ?: error("Venue with id ${runningSource.venueId} not found for source '${runningSource.slug}'")
 
-                    // One transaction for upserts and cleanup, via TransactionalOperator so the status updates stay
-                    // outside it and always commit. PROHIBITED means the field is never stored (#807).
+                    // PROHIBITED means the field is never stored (#807).
                     val licences = runningSource.licences()
-                    val upsert =
-                        transactionalOperator.executeAndAwait {
-                            val sourceId = requireNotNull(runningSource.id) { "Event source must be persisted before importing" }
-                            eventUpsertService.upsertAndCleanup(result.events, runningSource.venueId, venue.slug, sourceId, licences)
-                        }
+                    val upsert = upsertInTransaction(runningSource, venue.slug, result.events, licences, importer.listsWholeProgramme)
 
                     afterCommit(runningSource, venue.name, result, upsert, licences)
 
@@ -236,6 +231,22 @@ class EventImportService(
             recordFailure(runningSource, e)
         }
     }
+
+    /**
+     * Upserts and cleans up [events] in one transaction, via [TransactionalOperator] so the status
+     * updates stay outside it and always commit.
+     */
+    private suspend fun upsertInTransaction(
+        source: EventSourceEntity,
+        venueSlug: String,
+        events: List<ScrapedEvent>,
+        licences: SourceLicences,
+        wholeProgramme: Boolean
+    ): UpsertOutcome =
+        transactionalOperator.executeAndAwait {
+            val sourceId = requireNotNull(source.id) { "Event source must be persisted before importing" }
+            eventUpsertService.upsertAndCleanup(events, source.venueId, venueSlug, sourceId, licences, wholeProgramme)
+        }
 
     /**
      * The streak in the log line, because one broken venue writes it once per attempt. Not "of

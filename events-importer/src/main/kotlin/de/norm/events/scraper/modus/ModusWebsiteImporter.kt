@@ -26,6 +26,7 @@ class ModusWebsiteImporter(
     htmlFetcher: HtmlFetcher
 ) : AbstractTwoPageWebsiteImporter(htmlFetcher) {
     override val eventSource: EventSource = EventSource.MODUS
+    override val listsWholeProgramme: Boolean = true
 
     private val overviewPageScraper = ModusOverviewPageScraper()
     private val detailPageScraper = ModusDetailPageScraper()

@@ -28,6 +28,7 @@ abstract class AbstractVelomaxHallImporter(
     private val hall: VelomaxHall
 ) : AbstractTwoPageWebsiteImporter(htmlFetcher) {
     override val eventSource: EventSource get() = hall.eventSource
+    override val listsWholeProgramme: Boolean = true
 
     private val overviewPageScraper = VelomaxOverviewPageScraper()
     private val detailPageScraper = VelomaxDetailPageScraper()

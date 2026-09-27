@@ -31,6 +31,7 @@ class GartnWebsiteImporter(
     private val logger = KotlinLogging.logger {}
 
     override val eventSource: EventSource = EventSource.GARTN
+    override val listsWholeProgramme: Boolean = true
 
     private val overviewPageScraper = GartnOverviewPageScraper()
 

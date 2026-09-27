@@ -36,6 +36,7 @@ class MorphineWebsiteImporter(
     htmlFetcher: HtmlFetcher
 ) : AbstractTwoPageWebsiteImporter(htmlFetcher) {
     override val eventSource: EventSource = EventSource.MORPHINE
+    override val listsWholeProgramme: Boolean = true
 
     private val overviewPageScraper = MorphineOverviewPageScraper()
     private val detailPageScraper = MorphineDetailPageScraper()
