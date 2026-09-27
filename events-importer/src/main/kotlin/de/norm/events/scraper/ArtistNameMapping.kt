@@ -498,15 +498,20 @@ private val NON_ARTIST_NAMES: Set<String> =
         // Friends` billing stays one act (Supamolly); only the split-off word is dropped.
         "verschoben",
         "panel",
-        "friends"
+        "friends",
+        // Series and festivals minted as their own act (#1952): Cassiopeia's two-stage metal day,
+        // Festsaal's queer art festival, a Badehaus party the listing typed as a concert.
+        "thrash talk",
+        "in the mountains",
+        "rockstar girlfriends"
     )
 
 /**
  * A trailing edition number on a recurring title, ignored when matching [NON_ARTIST_NAMES]: the
- * plain `… 5`, the `… N°141` and `… No 8` forms (optional `n°`/`nº`/`no.`) and a roman numeral
- * (`Methods of Dance II`).
+ * plain `… 5`, the `… N°141`, `… No 8` and `… Vol 5` forms (optional `n°`/`nº`/`no.`/`vol.`) and a
+ * roman numeral (`Methods of Dance II`).
  */
-private val TRAILING_EDITION = Regex("""\s+(?:n[°º]\s*|no\.?\s*)?(?:\d+|[ivx]{1,5})$""", RegexOption.IGNORE_CASE)
+private val TRAILING_EDITION = Regex("""\s+(?:n[°º]\s*|no\.?\s*|vol\.?\s*)?(?:\d+|[ivx]{1,5})$""", RegexOption.IGNORE_CASE)
 
 /**
  * A trailing `Berlin` on a series title (`GrooveJet Berlin`, `Bohème Sauvage Berlin`), ignored
@@ -660,7 +665,13 @@ fun isGuestSlotLabel(name: String): Boolean = GUEST_SLOT_PATTERN.matches(name.tr
 fun isNonArtistName(name: String): Boolean =
     isPlaceholderName(name) || isNonArtistLabel(name) || isEventSegmentLabel(name) ||
         isNonArtistEvent(name) || isScoreConcertTitle(name) || isDjSetFormatLabel(name) || isGuestSlotLabel(name) || isDenylistedNonArtist(name) ||
-        isTitleFragment(name) || isSlugless(name) || isBareNumber(name) || isTimeRange(name)
+        isTitleFragment(name) || isSlugless(name) || isBareNumber(name) || isTimeRange(name) || isNumberedVolume(name)
+
+/** A `Vol 5` / `Vol. 12` / `Volume 3` ending: a series edition, never a performer (#1952). */
+private val NUMBERED_VOLUME = Regex("""\bvol(?:\.|ume)?\s*\d+$""", RegexOption.IGNORE_CASE)
+
+/** Whether [name] ends in a [NUMBERED_VOLUME], so it names an edition of a series. */
+fun isNumberedVolume(name: String): Boolean = NUMBERED_VOLUME.containsMatchIn(name.trim())
 
 /**
  * A name with nothing a slug can keep is a separator the split left behind (#1553).

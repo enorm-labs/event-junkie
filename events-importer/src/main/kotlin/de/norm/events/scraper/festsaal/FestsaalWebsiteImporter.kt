@@ -79,5 +79,8 @@ class FestsaalWebsiteImporter(
 val FESTSAAL_LIMITATIONS =
     VenueLimitations(
         EventSource.FESTSAAL,
-        AcceptedLimitation(LimitedAspect.EVENT_TYPE, "the API exposes no category field; its `genre` node is a musical genre, not an event kind")
+        AcceptedLimitation(
+            LimitedAspect.EVENT_TYPE,
+            "the API exposes no category field; its `genre` node is a musical genre, and only an event kind filed there (Festival) types the night"
+        )
     )
