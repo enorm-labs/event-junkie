@@ -29,6 +29,7 @@ class UraniaWebsiteImporter(
     htmlFetcher: HtmlFetcher
 ) : AbstractTwoPageWebsiteImporter(htmlFetcher) {
     override val eventSource: EventSource get() = EventSource.URANIA
+    override val listsWholeProgramme: Boolean = true
 
     private val calendarPageScraper = UraniaCalendarPageScraper()
     private val eventPageScraper = UraniaEventPageScraper()

@@ -149,6 +149,15 @@ interface EventRepository : CoroutineCrudRepository<EventEntity, Long> {
     ): Flow<EventEntity>
 
     /**
+     * Finds events imported by a specific event source dated [fromDate] or later: the stale-cleanup
+     * window of a source whose scrape is its whole programme, which has no upper bound (#1974).
+     */
+    fun findByEventSourceIdAndEventDateGreaterThanEqual(
+        eventSourceId: Long,
+        fromDate: LocalDate
+    ): Flow<EventEntity>
+
+    /**
      * Bulk-deletes events by their IDs (used for stale event cleanup).
      *
      * Associated join table rows (`event_artist`, `event_promoter`) are cleaned up

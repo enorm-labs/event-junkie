@@ -35,6 +35,7 @@ class DerWeisseHaseWebsiteImporter(
     private val logger = KotlinLogging.logger {}
 
     override val eventSource: EventSource = EventSource.DER_WEISSE_HASE
+    override val listsWholeProgramme: Boolean = true
 
     private val overviewPageScraper = DerWeisseHaseOverviewPageScraper()
 

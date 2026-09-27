@@ -28,6 +28,7 @@ class TempodromWebsiteImporter(
     private val logger = KotlinLogging.logger {}
 
     override val eventSource: EventSource = EventSource.TEMPODROM
+    override val listsWholeProgramme: Boolean = true
 
     private val overviewPageScraper = TempodromOverviewPageScraper()
 

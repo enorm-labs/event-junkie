@@ -29,6 +29,7 @@ class VoidClubWebsiteImporter(
     private val logger = KotlinLogging.logger {}
 
     override val eventSource: EventSource = EventSource.VOID_CLUB
+    override val listsWholeProgramme: Boolean = true
 
     private val overviewPageScraper = VoidClubOverviewPageScraper()
 

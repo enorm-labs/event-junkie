@@ -27,6 +27,7 @@ class ZitadelleWebsiteImporter(
     htmlFetcher: HtmlFetcher
 ) : AbstractTwoPageWebsiteImporter(htmlFetcher) {
     override val eventSource: EventSource get() = EventSource.ZITADELLE
+    override val listsWholeProgramme: Boolean = true
 
     private val overviewPageScraper = ZitadelleOverviewPageScraper()
     private val detailPageScraper = ZitadelleDetailPageScraper()

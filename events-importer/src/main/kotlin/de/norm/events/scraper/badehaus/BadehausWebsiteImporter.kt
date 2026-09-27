@@ -34,6 +34,7 @@ class BadehausWebsiteImporter(
     htmlFetcher: HtmlFetcher
 ) : AbstractTwoPageWebsiteImporter(htmlFetcher) {
     override val eventSource: EventSource = EventSource.BADEHAUS
+    override val listsWholeProgramme: Boolean = true
 
     private val overviewPageScraper = BadehausOverviewPageScraper()
     private val detailPageScraper = BadehausDetailPageScraper()

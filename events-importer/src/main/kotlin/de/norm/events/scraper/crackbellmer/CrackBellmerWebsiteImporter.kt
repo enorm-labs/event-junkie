@@ -43,6 +43,7 @@ class CrackBellmerWebsiteImporter(
     private val logger = KotlinLogging.logger {}
 
     override val eventSource: EventSource = EventSource.CRACK_BELLMER
+    override val listsWholeProgramme: Boolean = true
 
     private val overviewPageScraper = CrackBellmerOverviewPageScraper(clock)
     private val detailPageScraper = CrackBellmerDetailPageScraper()

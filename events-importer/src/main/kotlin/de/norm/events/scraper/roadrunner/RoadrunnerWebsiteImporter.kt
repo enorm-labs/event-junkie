@@ -32,6 +32,7 @@ class RoadrunnerWebsiteImporter(
     private val logger = KotlinLogging.logger {}
 
     override val eventSource: EventSource = EventSource.ROADRUNNER
+    override val listsWholeProgramme: Boolean = true
 
     private val overviewPageScraper = RoadrunnerOverviewPageScraper(clock)
 

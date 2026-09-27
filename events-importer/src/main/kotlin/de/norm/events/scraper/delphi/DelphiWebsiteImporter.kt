@@ -41,6 +41,7 @@ class DelphiWebsiteImporter(
     private val logger = KotlinLogging.logger {}
 
     override val eventSource: EventSource = EventSource.THEATER_IM_DELPHI
+    override val listsWholeProgramme: Boolean = true
 
     private val programmePageScraper = DelphiProgrammePageScraper()
     private val productionPageScraper = DelphiProductionPageScraper()

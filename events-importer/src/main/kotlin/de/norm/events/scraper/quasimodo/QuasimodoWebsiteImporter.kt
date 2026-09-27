@@ -30,6 +30,7 @@ class QuasimodoWebsiteImporter(
     htmlFetcher: HtmlFetcher
 ) : AbstractTwoPageWebsiteImporter(htmlFetcher) {
     override val eventSource: EventSource = EventSource.QUASIMODO
+    override val listsWholeProgramme: Boolean = true
 
     private val overviewPageScraper = QuasimodoOverviewPageScraper()
     private val detailPageScraper = QuasimodoDetailPageScraper()

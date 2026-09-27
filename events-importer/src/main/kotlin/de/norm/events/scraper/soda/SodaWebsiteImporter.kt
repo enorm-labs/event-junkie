@@ -34,6 +34,7 @@ class SodaWebsiteImporter(
     clock: Clock = Clock.systemDefaultZone()
 ) : AbstractTwoPageWebsiteImporter(htmlFetcher) {
     override val eventSource: EventSource = EventSource.SODA
+    override val listsWholeProgramme: Boolean = true
 
     private val overviewPageScraper = SodaOverviewPageScraper(clock)
     private val detailPageScraper = SodaDetailPageScraper()

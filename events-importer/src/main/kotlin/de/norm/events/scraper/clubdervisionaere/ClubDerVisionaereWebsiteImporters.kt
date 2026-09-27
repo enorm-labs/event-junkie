@@ -54,6 +54,7 @@ abstract class AbstractClubDerVisionaereRoomImporter(
     private val homePageScraper = ClubDerVisionaereHomePageScraper()
 
     override val eventSource: EventSource get() = room.eventSource
+    override val listsWholeProgramme: Boolean = true
 
     override suspend fun importEvents(
         url: String,

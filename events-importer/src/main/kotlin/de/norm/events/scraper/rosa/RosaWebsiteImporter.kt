@@ -36,6 +36,7 @@ class RosaWebsiteImporter(
     private val logger = KotlinLogging.logger {}
 
     override val eventSource: EventSource = EventSource.ROSA
+    override val listsWholeProgramme: Boolean = true
 
     private val overviewPageScraper = RosaOverviewPageScraper()
 

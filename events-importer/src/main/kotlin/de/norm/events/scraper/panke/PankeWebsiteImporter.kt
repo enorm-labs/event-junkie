@@ -31,6 +31,7 @@ class PankeWebsiteImporter(
     private val logger = KotlinLogging.logger {}
 
     override val eventSource: EventSource = EventSource.PANKE
+    override val listsWholeProgramme: Boolean = true
 
     private val programmePageScraper = PankeProgrammePageScraper()
 

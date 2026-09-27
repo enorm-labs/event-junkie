@@ -30,6 +30,7 @@ class SaalchenWebsiteImporter(
     private val logger = KotlinLogging.logger {}
 
     override val eventSource: EventSource = EventSource.SAALCHEN
+    override val listsWholeProgramme: Boolean = true
 
     private val overviewPageScraper = SaalchenOverviewPageScraper()
 

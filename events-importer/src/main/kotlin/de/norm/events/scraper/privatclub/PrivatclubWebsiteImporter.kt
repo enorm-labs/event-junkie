@@ -27,6 +27,7 @@ class PrivatclubWebsiteImporter(
     private val logger = KotlinLogging.logger {}
 
     override val eventSource: EventSource = EventSource.PRIVATCLUB
+    override val listsWholeProgramme: Boolean = true
 
     private val overviewPageScraper = PrivatclubOverviewPageScraper()
 

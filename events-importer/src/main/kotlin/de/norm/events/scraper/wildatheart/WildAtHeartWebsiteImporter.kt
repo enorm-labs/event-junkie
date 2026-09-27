@@ -33,6 +33,7 @@ class WildAtHeartWebsiteImporter(
     private val logger = KotlinLogging.logger {}
 
     override val eventSource: EventSource = EventSource.WILD_AT_HEART
+    override val listsWholeProgramme: Boolean = true
 
     private val overviewPageScraper = WildAtHeartOverviewPageScraper(clock)
 
