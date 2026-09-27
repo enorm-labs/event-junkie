@@ -66,6 +66,7 @@ class CassiopeiaWebsiteImporter(
             // The detail page's "OTHER" is a weak signal: a more specific overview type wins over it.
             eventType = primary.eventType?.takeIf { it != EventType.OTHER.name } ?: fallback.eventType,
             genre = primary.genre ?: fallback.genre,
+            promoters = primary.promoters.ifEmpty { fallback.promoters },
             imageUrl = primary.imageUrl ?: fallback.imageUrl,
             soldOut = primary.soldOut || fallback.soldOut,
             status = primary.status.takeIf { it != "SCHEDULED" } ?: fallback.status,
