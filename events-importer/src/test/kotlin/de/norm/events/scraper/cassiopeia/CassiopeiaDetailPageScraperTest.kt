@@ -3,6 +3,9 @@ package de.norm.events.scraper.cassiopeia
 import de.norm.events.scraper.ScrapedArtist
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
+import io.kotest.matchers.nulls.shouldBeNull
+import io.kotest.matchers.nulls.shouldNotBeNull
+import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import org.jsoup.Jsoup
 import org.junit.jupiter.api.Test
@@ -130,5 +133,32 @@ class CassiopeiaDetailPageScraperTest {
 
         event shouldNotBe null
         event!!.artists.shouldBeEmpty()
+    }
+
+    @Test
+    fun `reads a presented-by genre slot as the promoter and leaves the genre empty`() {
+        // Thrash Talk Vol 5: the genre slot says "presented by ATOK Berlin" (#1951).
+        val url = "https://cassiopeia-berlin.de/event/thrash-talk-vol-5-111591357"
+        val html =
+            javaClass.classLoader
+                .getResourceAsStream("scraper/cassiopeia/cassiopeia-detail-presented-by.html")!!
+                .bufferedReader()
+                .readText()
+        val event = scraper.scrape(Jsoup.parse(html, url), url).shouldNotBeNull()
+
+        event.promoters shouldBe listOf("ATOK Berlin")
+        event.genre.shouldBeNull()
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = ["presented by ATOK Berlin", "Präsentiert von: ATOK Berlin", "  presented   by ATOK Berlin "])
+    fun `finds the promoter in a credit, in either language`(slot: String) {
+        presenterInGenreSlot(slot) shouldBe "ATOK Berlin"
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = ["Noise", "Thrash Metal", "presented by", ""])
+    fun `leaves a genre alone`(slot: String) {
+        presenterInGenreSlot(slot).shouldBeNull()
     }
 }

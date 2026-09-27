@@ -69,6 +69,8 @@ class CassiopeiaDetailPageScraper {
         val eventSlug = extractEventSlug(sourceUrl, prefix = EVENT_PATH_PREFIX)
         val hasFlags = content.selectFirst(".flag-wrapper") != null
         val eventType = mapEventType(content.textAt(".subheading.invert.gap"))
+        val genreSlot = parseGenre(content)
+        val presenter = presenterInGenreSlot(genreSlot)
         val eventDate =
             parseEventDate(content) ?: run {
                 logger.warn { "Detail page has no parseable date, skipping" }
@@ -81,7 +83,8 @@ class CassiopeiaDetailPageScraper {
             doorsTime = parseTimeByLabel(content, DOORS_LABEL),
             startTime = parseTimeByLabel(content, START_LABEL),
             eventType = eventType,
-            genre = parseGenre(content),
+            genre = genreSlot.takeIf { presenter == null },
+            promoters = listOfNotNull(presenter),
             imageUrl = content.imgSrcAt("img.eventpage-image"),
             sourceUrl = sourceUrl,
             sourceId = "${EventSource.CASSIOPEIA.sourceIdPrefix}$eventSlug",
@@ -221,3 +224,17 @@ class CassiopeiaDetailPageScraper {
         private const val SUPPORT_PREFIX = "Support: "
     }
 }
+
+/**
+ * The promoter a genre slot credits, or `null` when the slot holds a genre. The venue sometimes
+ * writes the credit where the genre goes ("presented by ATOK Berlin", #1951); read as a genre, it
+ * hid the promoter and put a sentence in the genre column. Both pages' genre slots pass through
+ * here, so the listing cannot put the credit back in the merge.
+ */
+internal fun presenterInGenreSlot(slot: String?): String? =
+    slot
+        ?.let { PRESENTER_CREDIT.find(it)?.groupValues?.get(1) }
+        ?.trim()
+        ?.takeIf { it.isNotBlank() }
+
+private val PRESENTER_CREDIT = Regex("""^\s*(?:presented\s+by|präsentiert\s+von)\s*:?\s+(.+)$""", RegexOption.IGNORE_CASE)
