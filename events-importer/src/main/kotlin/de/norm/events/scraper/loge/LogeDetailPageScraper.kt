@@ -6,6 +6,7 @@ import de.norm.events.scraper.HH_MM_LENGTH
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
 import de.norm.events.scraper.extractEventSlug
+import de.norm.events.scraper.jsonLdNodes
 import de.norm.events.scraper.parseIsoDate
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.stringOrNull
@@ -72,7 +73,7 @@ class LogeDetailPageScraper {
 
     /**
      * The JSON-LD block's schema.org `Event` object node, or `null` when absent or unparseable.
-     * Defensively unwraps an array or `@graph` container and picks the first object.
+     * Picks the first object node with a `startDate` from whatever [jsonLdNodes] unwraps.
      */
     @Suppress(
         "TooGenericExceptionCaught", // A malformed block must degrade to null, never abort the import
@@ -92,13 +93,7 @@ class LogeDetailPageScraper {
                 logger.warn(e) { "Failed to parse Loge JSON-LD block" }
                 return null
             }
-        val candidates =
-            when {
-                root.isArray -> root.toList()
-                root.path("@graph").isArray -> root.path("@graph").toList()
-                else -> listOf(root)
-            }
-        return candidates.firstOrNull { it.isObject && it.stringOrNull("startDate") != null }
+        return root.jsonLdNodes().firstOrNull { it.isObject && it.stringOrNull("startDate") != null }
     }
 
     /**

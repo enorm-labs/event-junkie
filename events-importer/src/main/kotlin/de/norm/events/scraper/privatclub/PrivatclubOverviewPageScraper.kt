@@ -5,6 +5,7 @@ import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.attrAt
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.hrefAt
+import de.norm.events.scraper.jsonLdNodes
 import de.norm.events.scraper.mapEventType
 import de.norm.events.scraper.parseIsoDate
 import de.norm.events.scraper.parseIsoTime
@@ -210,8 +211,8 @@ class PrivatclubOverviewPageScraper(
     }
 
     /**
-     * Returns the event object node, or null. One `MusicEvent` per block; an array or
-     * `@graph` wrapper yields its first object node.
+     * Returns the event object node, or null. One `MusicEvent` per block; [jsonLdNodes] unwraps
+     * an array or `@graph` container, and the first object node in it wins.
      */
     @Suppress(
         "TooGenericExceptionCaught", // A malformed block must degrade to null, never abort the import.
@@ -225,13 +226,7 @@ class PrivatclubOverviewPageScraper(
                 logger.warn(e) { "Failed to parse Privatclub JSON-LD block" }
                 return null
             }
-        val candidates =
-            when {
-                root.isArray -> root.toList()
-                root.path("@graph").isArray -> root.path("@graph").toList()
-                else -> listOf(root)
-            }
-        return candidates.firstOrNull { it.isObject }
+        return root.jsonLdNodes().firstOrNull { it.isObject }
     }
 
     /** First ticket-shop URL from `offers[].url`, or null. */
