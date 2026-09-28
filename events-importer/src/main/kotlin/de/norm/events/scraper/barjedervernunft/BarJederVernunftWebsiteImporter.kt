@@ -9,6 +9,7 @@ import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.VenueLimitations
+import de.norm.events.scraper.scrapeListingPages
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
 
@@ -19,6 +20,8 @@ import org.springframework.stereotype.Component
  * Overview → show page, but **not** the per-event detail fetch
  * [de.norm.events.scraper.AbstractTwoPageWebsiteImporter] performs:
  * 1. [HtmlFetcher] fetches `/de/programm/kalender.html` conditionally (ETag / Last-Modified).
+ * The page holds the first batch of dates, and the later batches load as the visitor scrolls,
+ * so they are fetched too ([BarJederVernunftOverviewPageScraper.nextBatchUrl]).
  * 2. [BarJederVernunftOverviewPageScraper] parses one event per performance date.
  * 3. Each **distinct** `/programmuebersicht/<show>.html` page once, applying genre, prices and
  * description to every date of that show ([BarJederVernunftShow.applyTo]).
@@ -61,13 +64,21 @@ class BarJederVernunftWebsiteImporter(
             }
 
             is FetchResult.Success -> {
-                val events = overviewPageScraper.scrape(fetchResult.document)
-                logger.info { "Scraped ${events.size} performance date(s) from Bar jeder Vernunft" }
+                val calendar =
+                    htmlFetcher.scrapeListingPages(
+                        eventSource,
+                        fetchResult.document,
+                        url,
+                        MAX_BATCHES,
+                        overviewPageScraper::nextBatchUrl
+                    ) { document, _ -> overviewPageScraper.scrape(document) }
+                logger.info { "Scraped ${calendar.events.size} performance date(s) from Bar jeder Vernunft" }
 
                 ImportResult.Success(
-                    events = enrichFromShowPages(events),
+                    events = enrichFromShowPages(calendar.events),
                     etag = fetchResult.etag,
-                    lastModified = fetchResult.lastModified
+                    lastModified = fetchResult.lastModified,
+                    complete = calendar.complete
                 )
             }
         }
@@ -93,6 +104,11 @@ class BarJederVernunftWebsiteImporter(
             logger.warn(e) { "Failed to fetch show page $url, keeping calendar data only" }
             null
         }
+
+    private companion object {
+        /** A runaway guard on the batch walk; the calendar ran to four batches and an empty one. */
+        const val MAX_BATCHES = 12
+    }
 }
 
 val BAR_JEDER_VERNUNFT_LIMITATIONS =

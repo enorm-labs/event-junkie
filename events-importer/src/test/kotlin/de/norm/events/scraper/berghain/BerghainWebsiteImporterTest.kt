@@ -6,6 +6,7 @@ import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
 import io.kotest.matchers.collections.shouldBeEmpty
+import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.collections.shouldNotBeEmpty
 import io.kotest.matchers.nulls.shouldBeNull
@@ -13,6 +14,7 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldStartWith
 import io.kotest.matchers.types.shouldBeInstanceOf
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
 import org.jsoup.Jsoup
@@ -141,6 +143,36 @@ class BerghainWebsiteImporterTest {
             val result = importer.importEvents(sourceUrl)
             result.shouldBeInstanceOf<ImportResult.Success>()
             result.events.shouldBeEmpty()
+        }
+
+    @Test
+    fun `importEvents follows the Mehr pages until one comes back empty`() =
+        runTest {
+            val page2 = "$sourceUrl?page=2"
+            val page3 = "$sourceUrl?page=3"
+            coEvery { htmlFetcher.fetchDocument(page2) } returns Jsoup.parse(loadFixture("scraper/berghain/berghain-overview-page-2.html"), page2)
+            coEvery { htmlFetcher.fetchDocument(page3) } returns Jsoup.parse(loadFixture("scraper/berghain/berghain-overview-page-3.html"), page3)
+
+            val result = importer.importEvents(sourceUrl)
+            result.shouldBeInstanceOf<ImportResult.Success>()
+
+            result.events shouldHaveSize 31
+            result.events.map { it.sourceId } shouldContain "berghain:80748"
+            result.complete shouldBe true
+            coVerify(exactly = 1) { htmlFetcher.fetchDocument(page3) }
+            coVerify(exactly = 0) { htmlFetcher.fetchDocument("$sourceUrl?page=4") }
+        }
+
+    @Test
+    fun `importEvents reads Kantine as one page, since it has no Mehr button`() =
+        runTest {
+            val kantineUrl = "https://www.berghain.berlin/de/program/kantine-am-berghain/"
+            coEvery { htmlFetcher.fetch(kantineUrl, any(), any()) } returns
+                FetchResult.Success(document = Jsoup.parse(loadFixture("scraper/berghain/kantine-overview.html"), kantineUrl), etag = null, lastModified = null)
+
+            importer.importEvents(kantineUrl).shouldBeInstanceOf<ImportResult.Success>()
+
+            coVerify(exactly = 0) { htmlFetcher.fetchDocument(match { "page=" in it }) }
         }
 
     @Test

@@ -5,6 +5,8 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.VenueLimitations
+import de.norm.events.scraper.queryParameter
+import de.norm.events.scraper.withQueryParameter
 import org.jsoup.nodes.Document
 import org.springframework.stereotype.Component
 import java.time.Clock
@@ -18,7 +20,7 @@ import java.time.Clock
  *
  * Inherited from [AbstractTwoPageWebsiteImporter]:
  * 1. Fetch the overview and discover events via [BerghainOverviewPageScraper] (authoritative
- * for title, date, times, floor and the lineup).
+ * for title, date, times, floor and the lineup), following its later pages ([nextOverviewPage]).
  * 2. Each `/de/event/<id>/` page via [BerghainDetailPageScraper] for image, ticket link,
  * prices and description.
  * 3. Merge: the detail page is primary, the overview fills gaps — crucially the artist lineup,
@@ -43,6 +45,20 @@ class BerghainWebsiteImporter(
         document: Document,
         url: String
     ): List<ScrapedEvent> = overviewPageScraper.scrape(document, url)
+
+    /**
+     * The main programme shows about three weeks, and its "Mehr" button loads `?page=N+1`. Page 2
+     * still carries the button while page 3 comes back empty, so the walk also stops at a page
+     * without events. Kantine renders its whole programme and has no button.
+     */
+    override fun nextOverviewPage(
+        document: Document,
+        url: String
+    ): String? {
+        if (document.selectFirst(LOAD_MORE_SELECTOR) == null || document.selectFirst(EVENT_LINK_SELECTOR) == null) return null
+        val page = url.queryParameter(PAGE_PARAMETER)?.toIntOrNull() ?: 1
+        return url.withQueryParameter(PAGE_PARAMETER, page + 1)
+    }
 
     override fun scrapeDetail(
         document: Document,
@@ -73,6 +89,12 @@ class BerghainWebsiteImporter(
             // The detail page does not parse the lineup — the overview's artists are authoritative.
             artists = primary.artists.ifEmpty { fallback.artists }
         )
+
+    private companion object {
+        const val LOAD_MORE_SELECTOR = "button#load-more-events"
+        const val EVENT_LINK_SELECTOR = "a[href^=/de/event/]"
+        const val PAGE_PARAMETER = "page"
+    }
 }
 
 /** Nothing this source withholds needs declaring (#715). */
