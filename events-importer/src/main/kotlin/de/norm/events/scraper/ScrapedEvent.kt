@@ -90,11 +90,17 @@ data class ScrapedEvent(
     val promoterWebsites: Map<String, String> = emptyMap()
 ) {
     /**
+     * The title as stored: a status note or marker removed, once [toEventEntity] has read the status
+     * off it (#2008). Dedup and slug collisions key on this too, so they agree with the stored slug.
+     */
+    fun storedTitle(): String = stripTitleStatusMarker(title)
+
+    /**
      * The type the event is stored with — the source's own, or the festival/format override
      * [resolveEventType] applies at the boundary. Scrapers build their artists before this is
      * known; [AssociationSyncService] reads it to drop a headliner minted from a festival title (#300).
      */
-    fun resolvedEventType(): EventType = resolveEventType(eventType, stripTitleStatusMarker(title), genre)
+    fun resolvedEventType(): EventType = resolveEventType(eventType, storedTitle(), genre)
 
     /**
      * Converts this scraped event into an [EventEntity]; pure, no I/O. The slug is regenerated from
@@ -127,7 +133,7 @@ data class ScrapedEvent(
         // (#1551).
         val relocation = listOfNotNull(statusNote, title, subtitle, description).firstNotNullOfOrNull(::parseRelocation)
         val (storedStatus, relocatedTo) = resolveRelocation(badgeStatus, relocation, venueSlug)
-        val storedTitle = stripTitleStatusMarker(title)
+        val storedTitle = storedTitle()
         // Presale dearer than the door is a misread price (#1583); named so the nightly log says which
         // source, stored as read because the fix is per parser.
         if (presaleAboveDoor(pricePresale, priceBoxOffice)) {

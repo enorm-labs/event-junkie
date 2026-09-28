@@ -120,7 +120,7 @@ class ModusWebsiteImporterTest {
             result.shouldBeInstanceOf<ImportResult.Success>()
             val lunaSimao = result.events.first { it.sourceId == "modus:160426-LunaSimao" }
             lunaSimao.eventDate shouldBe LocalDate.of(2027, 4, 13)
-            lunaSimao.title shouldBe "Luna Simao"
+            lunaSimao.storedTitle() shouldBe "Luna Simao"
             lunaSimao.status shouldBe "POSTPONED"
         }
 

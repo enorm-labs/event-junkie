@@ -12,11 +12,17 @@ class EventFieldMappingTest {
     // --- cleanEventTitle ---
 
     @Test
-    fun `cleanEventTitle strips a trailing reschedule note and stray dash`() {
-        cleanEventTitle("Iggi Kelly Nachholtermin vom 28.04.26-") shouldBe "Iggi Kelly"
-        cleanEventTitle("The Dear Hunter -Nachholtermin vom 30.09.2025.") shouldBe "The Dear Hunter"
+    fun `cleanEventTitle strips a stray dash but keeps a scheduling note for the status`() {
         cleanEventTitle("Some Show -") shouldBe "Some Show"
-        cleanEventTitle("DIE REIMANNS SABBELSTUNDE MIT MANU & KONNY  WIRD VERSCHOBEN") shouldBe
+        // The note carries the status; only stripTitleStatusMarker removes it, once it is read (#2008).
+        cleanEventTitle("Iggi Kelly Nachholtermin vom 28.04.26-") shouldBe "Iggi Kelly Nachholtermin vom 28.04.26-"
+    }
+
+    @Test
+    fun `stripTitleStatusMarker strips a trailing scheduling note and stray dash`() {
+        stripTitleStatusMarker("Iggi Kelly Nachholtermin vom 28.04.26-") shouldBe "Iggi Kelly"
+        stripTitleStatusMarker("The Dear Hunter -Nachholtermin vom 30.09.2025.") shouldBe "The Dear Hunter"
+        stripTitleStatusMarker(cleanEventTitle("DIE REIMANNS SABBELSTUNDE MIT MANU & KONNY  WIRD VERSCHOBEN")) shouldBe
             "DIE REIMANNS SABBELSTUNDE MIT MANU & KONNY"
     }
 
@@ -33,12 +39,14 @@ class EventFieldMappingTest {
     }
 
     @Test
-    fun `cleanEventTitle strips a relocation note written destination first`() {
+    fun `stripTitleStatusMarker strips a relocation note written destination first`() {
         // Frannz writes both orders: "-verlegt ins Gretchen-" and "-ins Lido verlegt-" (#1840).
-        cleanEventTitle("Georgia Cavallo -ins Lido verlegt-") shouldBe "Georgia Cavallo"
-        cleanEventTitle("MAD TSAI -verlegt ins Gretchen-") shouldBe "MAD TSAI"
+        stripTitleStatusMarker("Georgia Cavallo -ins Lido verlegt-") shouldBe "Georgia Cavallo"
+        stripTitleStatusMarker("MAD TSAI -verlegt ins Gretchen-") shouldBe "MAD TSAI"
         // Without a leading dash the words are the title, not a note.
-        cleanEventTitle("Alles ins Blaue verlegt") shouldBe "Alles ins Blaue verlegt"
+        stripTitleStatusMarker("Alles ins Blaue verlegt") shouldBe "Alles ins Blaue verlegt"
+        // A marker is a whole word, so a title that starts with the adjective keeps it.
+        stripTitleStatusMarker("Abgesagte Lesung") shouldBe "Abgesagte Lesung"
     }
 
     @Test
@@ -57,7 +65,7 @@ class EventFieldMappingTest {
         cleanEventTitle("Lucas Lauriente –  Stand Up 2026") shouldBe "Lucas Lauriente – Stand Up 2026"
         cleanEventTitle("Some\nAct\tName") shouldBe "Some Act Name"
         // Collapsing runs first keeps the tail patterns keyed on a single space.
-        cleanEventTitle("Iggi Kelly  Nachholtermin vom 28.04.26-") shouldBe "Iggi Kelly"
+        stripTitleStatusMarker(cleanEventTitle("Iggi Kelly  Nachholtermin vom 28.04.26-")) shouldBe "Iggi Kelly"
     }
 
     // Java's `\s` matches ASCII whitespace only, so a non-breaking space a CMS editor produced

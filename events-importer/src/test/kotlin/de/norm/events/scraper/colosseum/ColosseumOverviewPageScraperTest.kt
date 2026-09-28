@@ -151,7 +151,7 @@ class ColosseumOverviewPageScraperTest {
 
     @Test
     fun `skips entries without a slug or a resolvable date`() {
-        edgeCaseEvents.map { it.title } shouldBe
+        edgeCaseEvents.map { it.storedTitle() } shouldBe
             listOf(
                 "Abgesagte Lesung",
                 "Ausverkaufter Abend mit Rängen",
@@ -162,11 +162,14 @@ class ColosseumOverviewPageScraperTest {
     }
 
     @Test
-    fun `reads a postponement from the title before cleaning it, where Wix still says scheduled`() {
+    fun `reads a postponement from the title, where Wix still says scheduled`() {
         // The live payload of 2026-09-28: Wix `status` 0, the notice only in the title (#2007).
-        val postponed = edgeCaseEvent("colosseum:die-reimanns-sabbelstunde-mit-manu-konny-wird-verschoben")
+        val postponed =
+            edgeCaseEvent("colosseum:die-reimanns-sabbelstunde-mit-manu-konny-wird-verschoben")
+                .toEventEntity(venueId = 1L, venueSlug = "colosseum", eventSourceId = 1L)
         postponed.status shouldBe EventStatus.POSTPONED.name
         postponed.title shouldBe "DIE REIMANNS SABBELSTUNDE MIT MANU & KONNY"
+        postponed.slug shouldBe "${postponed.eventDate}-colosseum-die-reimanns-sabbelstunde-mit-manu-konny"
     }
 
     @Test
