@@ -28,6 +28,7 @@ class FrannzWebsiteImporter(
     private val logger = KotlinLogging.logger {}
 
     override val eventSource: EventSource = EventSource.FRANNZ
+    override val listsWholeProgramme: Boolean = true
 
     private val overviewPageScraper = FrannzOverviewPageScraper()
 

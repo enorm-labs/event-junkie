@@ -28,6 +28,7 @@ class Hole44WebsiteImporter(
     htmlFetcher: HtmlFetcher
 ) : AbstractTwoPageWebsiteImporter(htmlFetcher) {
     override val eventSource: EventSource = EventSource.HOLE44
+    override val listsWholeProgramme: Boolean = true
 
     private val overviewPageScraper = Hole44OverviewPageScraper()
     private val detailPageScraper = Hole44DetailPageScraper()

@@ -37,6 +37,7 @@ class BerghainWebsiteImporter(
     clock: Clock = Clock.systemDefaultZone()
 ) : AbstractTwoPageWebsiteImporter(htmlFetcher) {
     override val eventSource: EventSource = EventSource.BERGHAIN
+    override val listsWholeProgramme: Boolean = true
 
     private val overviewPageScraper = BerghainOverviewPageScraper(clock)
     private val detailPageScraper = BerghainDetailPageScraper()

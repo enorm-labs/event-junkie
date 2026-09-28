@@ -27,6 +27,7 @@ class AstraWebsiteImporter(
     htmlFetcher: HtmlFetcher
 ) : AbstractTwoPageWebsiteImporter(htmlFetcher) {
     override val eventSource: EventSource = EventSource.ASTRA
+    override val listsWholeProgramme: Boolean = true
 
     private val overviewPageScraper = AstraOverviewPageScraper()
     private val detailPageScraper = AstraDetailPageScraper()

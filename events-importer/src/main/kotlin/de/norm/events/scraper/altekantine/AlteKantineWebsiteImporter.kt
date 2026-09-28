@@ -32,6 +32,7 @@ class AlteKantineWebsiteImporter(
     clock: Clock = Clock.systemDefaultZone()
 ) : AbstractTwoPageWebsiteImporter(htmlFetcher) {
     override val eventSource: EventSource = EventSource.ALTE_KANTINE
+    override val listsWholeProgramme: Boolean = true
 
     private val overviewPageScraper = AlteKantineOverviewPageScraper(clock)
     private val detailPageScraper = AlteKantineDetailPageScraper(clock)

@@ -33,6 +33,7 @@ class HuxleysWebsiteImporter(
     htmlFetcher: HtmlFetcher
 ) : AbstractTwoPageWebsiteImporter(htmlFetcher) {
     override val eventSource: EventSource = EventSource.HUXLEYS
+    override val listsWholeProgramme: Boolean = true
 
     private val overviewPageScraper = HuxleysOverviewPageScraper()
     private val detailPageScraper = HuxleysDetailPageScraper()
