@@ -93,6 +93,7 @@ layer on purpose.
 """
 
 import json
+import sys
 
 from alert_objects import DESTINATIONS
 
@@ -103,6 +104,9 @@ HOUR_S = 3600
 DAY_S = 86400
 
 _rules = []
+
+
+_failure_only = []
 
 
 def rule(
@@ -116,6 +120,7 @@ def rule(
     period_minutes,
     frequency_minutes,
     silence_minutes,
+    failure_only=False,
 ):
     """One alert.
 
@@ -136,7 +141,14 @@ def rule(
     `stream_name` is required by the API even for a PromQL alert, where the query
     names its own series. It is set to the metric the rule is mostly about, which
     is what the UI groups by.
+
+    `failure_only` says the series the query reads is created by the first failure,
+    so NO DATA is the healthy state. It never reaches OpenObserve: `--failure-only`
+    prints these names for `check_alerts.py`, which then reports the rule as quiet
+    when its `stream_name` exists, and as NO DATA only when that is missing too.
     """
+    if failure_only:
+        _failure_only.append(name)
     _rules.append(
         {
             "name": name,
@@ -362,6 +374,7 @@ rule(
     period_minutes=15,
     frequency_minutes=30,
     silence_minutes=12 * 60,
+    failure_only=True,
 )
 
 # MusicBrainz and Wikimedia fail quietly too: a lookup that errors leaves the row
@@ -386,6 +399,7 @@ rule(
     period_minutes=15,
     frequency_minutes=30,
     silence_minutes=12 * 60,
+    failure_only=True,
 )
 
 rule(
@@ -482,6 +496,7 @@ rule(
     period_minutes=15,
     frequency_minutes=5,
     silence_minutes=2 * 60,
+    failure_only=True,
 )
 
 rule(
@@ -591,6 +606,7 @@ rule(
     period_minutes=60,
     frequency_minutes=15,
     silence_minutes=24 * 60,
+    failure_only=True,
 )
 
 # --- Whose DNS broke, ours or the venue's ----------------------------------------
@@ -681,4 +697,7 @@ rule(
 )
 
 
-print(json.dumps(_rules, indent=2))
+if "--failure-only" in sys.argv[1:]:
+    print("\n".join(_failure_only))
+else:
+    print(json.dumps(_rules, indent=2))

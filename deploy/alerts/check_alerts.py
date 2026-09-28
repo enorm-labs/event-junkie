@@ -10,8 +10,14 @@ three wrong panels out of nine on the first attempt.
 This reports three things per rule, and they are different questions:
 
     NO DATA     the query returns nothing — the rule can never fire
+    quiet       a failure-only rule: its series appears on the first failure, and
+                its stream exists, so nothing has failed yet
     would fire  the query returns a value that crosses the threshold NOW
     ok          returns data, below the threshold
+
+`quiet` is only for a rule `gen_alerts.py` marks `failure_only`, a claim a drill
+should back (#1964). Without the mark the same silence is NO DATA, because a typo
+in a metric name looks exactly like a counter that has not incremented yet.
 
 `would fire` is not necessarily wrong. On staging today `ej-importer-stale` is
 one of them, because a source really has not succeeded in 70 hours.
@@ -19,7 +25,7 @@ one of them, because a source really has not succeeded in 70 hours.
 Invoked by apply.sh --check; it runs on the node, because OpenObserve has no
 ingress route.
 
-    python3 check_alerts.py "$AUTH" "$SVC" /tmp/ej-alerts.json
+    python3 check_alerts.py "$AUTH" "$SVC" /tmp/ej-alerts.json /tmp/ej-failure-only.txt
 """
 
 import json
@@ -30,12 +36,49 @@ import urllib.parse
 
 auth, svc = sys.argv[1], sys.argv[2]
 path = sys.argv[3] if len(sys.argv) > 3 else "/tmp/ej-alerts.json"
+failure_only_path = sys.argv[4] if len(sys.argv) > 4 else None
 
 with open(path) as f:
     alerts = json.load(f)
 
+failure_only = set()
+if failure_only_path:
+    with open(failure_only_path) as f:
+        failure_only = {line.strip() for line in f if line.strip()}
+
 failures = 0
 firing = 0
+quiet = 0
+streams = None
+
+
+def stream_exists(metric):
+    """Whether OpenObserve has a metrics stream named [metric], the one a failure-only rule is attached to.
+
+    The stream, not recent series: a restart resets every counter, so a failure-only
+    series can be absent for days while its stream, and the rule, stay in place.
+    """
+    global streams
+    if streams is None:
+        out = subprocess.run(
+            [
+                "curl",
+                "-sS",
+                "-m",
+                "60",
+                "-H",
+                "Authorization: " + auth,
+                "http://%s:5080/api/default/streams?type=metrics" % svc,
+            ],
+            capture_output=True,
+            text=True,
+        ).stdout
+        try:
+            streams = {row["name"] for row in json.loads(out).get("list", [])}
+        except (ValueError, KeyError):
+            streams = set()
+    return metric in streams
+
 
 for alert in alerts:
     cond = alert["query_condition"]
@@ -104,11 +147,16 @@ for alert in alerts:
         has_series = bool(json.loads(probe)["data"]["result"])
     except (ValueError, KeyError):
         has_series = False
-    if not has_series:
+    if not has_series and alert["name"] in failure_only and stream_exists(alert["stream_name"]):
+        print("%-30s quiet       no failure yet; its series appears on the first one" % alert["name"])
+        quiet += 1
+    elif not has_series:
         print("%-30s NO DATA     <-- the expression matches nothing; this rule can never fire" % alert["name"])
         failures += 1
     else:
         print("%-30s ok          below %s %s" % (alert["name"], operator, threshold))
 
-print("\n%d/%d rules return data; %d would fire now" % (len(alerts) - failures, len(alerts), firing))
+returning = len(alerts) - failures - quiet
+summary = "\n%d/%d rules return data, %d quiet until a first failure; %d would fire now"
+print(summary % (returning, len(alerts), quiet, firing))
 sys.exit(1 if failures else 0)
