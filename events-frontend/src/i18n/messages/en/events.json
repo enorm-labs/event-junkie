@@ -11,6 +11,8 @@
     "allVenues": "All venues",
     "allDistricts": "All districts",
     "allGenres": "All genres",
+    "typesSelected": "{n} types",
+    "clearTypes": "Clear types",
     "byType": "Filter by event type",
     "byVenue": "Filter by venue",
     "byDistrict": "Filter by district",

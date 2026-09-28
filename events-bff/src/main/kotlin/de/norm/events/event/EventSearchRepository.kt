@@ -30,7 +30,8 @@ data class EventFilter(
      * Tonight feed. Wins over [from] and [to].
      */
     val on: LocalDate? = null,
-    val eventType: String? = null,
+    /** Any of these types; empty imposes no constraint. [EventFilterParams] normalizes them. */
+    val eventTypes: List<String> = emptyList(),
     val venueSlug: String? = null,
     val district: String? = null,
     val artistSlug: String? = null,
@@ -197,9 +198,9 @@ class EventSearchRepository(
         conditions: MutableList<String>,
         params: MutableMap<String, Any>
     ) {
-        filter.eventType?.takeIf { it.isNotBlank() }?.let {
-            conditions += "e.event_type = :eventType"
-            params["eventType"] = it.trim().uppercase()
+        if (filter.eventTypes.isNotEmpty()) {
+            conditions += "e.event_type IN (:eventTypes)"
+            params["eventTypes"] = filter.eventTypes
         }
         filter.venueSlug?.takeIf { it.isNotBlank() }?.let {
             conditions += "e.venue_id IN (SELECT id FROM $EVENTS_SCHEMA.venue WHERE slug = :venueSlug)"

@@ -14,8 +14,10 @@ import java.time.LocalDate
  */
 @Suppress("LongParameterList")
 data class EventFilterParams(
-    @field:Parameter(description = "Event type filter, e.g. CONCERT (case-insensitive).")
-    val eventType: String? = null,
+    @field:Parameter(
+        description = "Event type filter, e.g. CONCERT (case-insensitive). Repeatable: an event of any given type matches. An unknown type matches nothing."
+    )
+    val eventType: List<String>? = null,
     @field:Parameter(description = "Venue slug filter — only events at the matching venue.")
     val venue: String? = null,
     @field:Parameter(description = "District filter — only events at venues in the matching pre-2001 Berlin district (e.g. kreuzberg).")
@@ -47,7 +49,7 @@ data class EventFilterParams(
         EventFilter(
             from = from,
             to = to,
-            eventType = eventType,
+            eventTypes = eventType.orEmpty().normalizedEventTypes(),
             venueSlug = venue,
             district = district,
             artistSlug = artist,
@@ -61,3 +63,9 @@ data class EventFilterParams(
             onlyFree = free
         )
 }
+
+/**
+ * Trimmed, upper-cased, de-duplicated and sorted, so two orders of the same types are one
+ * [EventFilter] and share a response-cache entry.
+ */
+private fun List<String>.normalizedEventTypes(): List<String> = map { it.trim().uppercase() }.filter { it.isNotEmpty() }.distinct().sorted()

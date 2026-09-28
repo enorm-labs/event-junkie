@@ -10,29 +10,15 @@ import { useRoute } from 'vue-router'
 import { Button } from '@/components/ui/button'
 import BaseInput from '@/components/BaseInput.vue'
 import BaseSelect from '@/components/BaseSelect.vue'
+import EventTypeFilter from '@/components/EventTypeFilter.vue'
 import { useEventFilters } from '@/composables/useEventFilters'
 import { useGenres } from '@/composables/useGenres'
 import { useAllVenues } from '@/composables/useVenues'
 import { DATE_PRESETS, type DateRange } from '@/lib/dateRanges'
 import { DISTRICTS } from '@/lib/districts'
 import { GENRE_FAMILIES } from '@/lib/genreFamilies'
-import { useFormat } from '@/composables/useFormat'
 import { useI18n } from 'vue-i18n'
 import { PANEL_CLASS } from '@/lib/utils'
-
-const { formatEventType } = useFormat()
-
-const EVENT_TYPES = [
-  'CONCERT',
-  'FESTIVAL',
-  'PARTY',
-  'QUIZ',
-  'SHOW',
-  'SCREENING',
-  'EXHIBITION',
-  'READING',
-  'OTHER',
-]
 
 withDefaults(defineProps<{ showDateRange?: boolean }>(), { showDateRange: true })
 
@@ -178,22 +164,11 @@ const { t } = useI18n()
 
     <!--
       A funnel: when, then what, then where, then how much. Each pair wraps as one, since with real
-      venue names the type select used to trail the date row. "Free only" is the price axis at
+      venue names the type filter used to trail the date row. "Free only" is the price axis at
       zero, so it stays with the price range.
     -->
     <div :class="SELECT_ROW_CLASS">
-      <BaseSelect
-        :aria-label="t('events.filters.byType')"
-        :class="SELECT_CLASS"
-        :model-value="queryString('eventType')"
-        @change="applyFilters({ eventType: ($event.target as HTMLSelectElement).value })"
-      >
-        <option value="">{{ t('events.filters.allTypes') }}</option>
-        <!-- The value stays the raw enum; the label comes from the helper the cards use. -->
-        <option v-for="type in EVENT_TYPES" :key="type" :value="type">
-          {{ formatEventType(type) }}
-        </option>
-      </BaseSelect>
+      <EventTypeFilter :class="SELECT_CLASS" />
 
       <!--
         Genre is two levels: thirteen families, then the styles of the chosen one. The family list

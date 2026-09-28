@@ -1442,8 +1442,8 @@ export interface operations {
                 from?: string;
                 /** @description Latest event date (inclusive), ISO-8601 (e.g. 2026-06-30). */
                 to?: string;
-                /** @description Event type filter, e.g. CONCERT (case-insensitive). */
-                eventType?: string;
+                /** @description Event type filter, e.g. CONCERT (case-insensitive). Repeatable: an event of any given type matches. An unknown type matches nothing. */
+                eventType?: string[];
                 /** @description Venue slug filter — only events at the matching venue. */
                 venue?: string;
                 /** @description District filter — only events at venues in the matching pre-2001 Berlin district (e.g. kreuzberg). */
@@ -1543,8 +1543,8 @@ export interface operations {
                 from: string;
                 /** @description Range end date (inclusive), ISO-8601. Must not precede 'from' or exceed 92 days from it. */
                 to: string;
-                /** @description Event type filter, e.g. CONCERT (case-insensitive). */
-                eventType?: string;
+                /** @description Event type filter, e.g. CONCERT (case-insensitive). Repeatable: an event of any given type matches. An unknown type matches nothing. */
+                eventType?: string[];
                 /** @description Venue slug filter — only events at the matching venue. */
                 venue?: string;
                 /** @description District filter — only events at venues in the matching pre-2001 Berlin district (e.g. kreuzberg). */

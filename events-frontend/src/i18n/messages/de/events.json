@@ -11,6 +11,8 @@
     "allVenues": "Alle Locations",
     "allDistricts": "Alle Bezirke",
     "allGenres": "Alle Genres",
+    "typesSelected": "{n} Arten",
+    "clearTypes": "Arten zurücksetzen",
     "byType": "Nach Art filtern",
     "byVenue": "Nach Location filtern",
     "byDistrict": "Nach Bezirk filtern",
