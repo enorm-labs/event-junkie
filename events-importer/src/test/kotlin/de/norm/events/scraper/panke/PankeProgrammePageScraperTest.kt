@@ -11,6 +11,7 @@ import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldStartWith
 import org.jsoup.Jsoup
 import org.junit.jupiter.api.Test
+import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
 
@@ -124,6 +125,36 @@ class PankeProgrammePageScraperTest {
         event("panke:17378").artists.shouldBeEmpty()
         event("panke:17337").artists.shouldBeEmpty()
         events.count { it.artists.isNotEmpty() } shouldBe 3
+    }
+
+    @Test
+    fun `stores no set time on the one real timetable night, which links no DJ`() {
+        // (c)rave: "Timetable<br>23:00-00:00 sixstar<br>…", and not one Resident Advisor link.
+        event("panke:17365").artists.shouldBeEmpty()
+    }
+
+    @Test
+    fun `times the linked DJs from a timetable and adds nobody it names beside them`() {
+        // Made-up markup in the page's shape: no real night yet carries both links and a timetable.
+        val html =
+            """
+            <div class="et_pb_events_0"><article id="1">
+              <div class="event-content-wrapper" data-date="2026-10-02"></div>
+              <h2 class="entry-title">Klubnacht</h2>
+              <div class="post-content-full"><div class="et_pb_column_3_4">
+                <p>LINE UP: <a href="https://ra.co/dj/sixstar">sixstar</a>, <a href="https://ra.co/dj/tryce">tryce</a></p>
+                <p>Timetable<br>23:00-00:00 sixstar<br>00:00-01:30 tryce<br>01:30-02:30 z0 screening</p>
+              </div></div>
+            </article></div>
+            """.trimIndent()
+        val night = scraper.scrape(Jsoup.parse(html, sourceUrl), sourceUrl).single()
+
+        night.artists.map { it.name } shouldBe listOf("sixstar", "tryce")
+        night.artists[0].setStart shouldBe Instant.parse("2026-10-02T21:00:00Z")
+        night.artists[0].setEnd shouldBe Instant.parse("2026-10-02T22:00:00Z")
+        // "00:00-01:30" is past midnight, on Saturday.
+        night.artists[1].setStart shouldBe Instant.parse("2026-10-02T22:00:00Z")
+        night.artists[1].setEnd shouldBe Instant.parse("2026-10-02T23:30:00Z")
     }
 
     @Test
