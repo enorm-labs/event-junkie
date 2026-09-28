@@ -65,8 +65,7 @@ class MaxximOverviewPageScraper {
             logger.warn { "MAXXIM event has no slug, skipping" }
             return null
         }
-        val rawTitle = node.stringOrNull("title")
-        val title = rawTitle?.let { cleanEventTitle(it) }
+        val title = node.stringOrNull("title")?.let { cleanEventTitle(it) }
         if (title.isNullOrBlank()) {
             logger.warn { "MAXXIM event '$slug' has no title, skipping" }
             return null
@@ -101,7 +100,7 @@ class MaxximOverviewPageScraper {
             pricePresale = ticketing?.let { parseWixTicketPrice(it.path("lowestTicketPrice")) },
             priceNote = ticketing?.let { wixPriceRangeNote(it) },
             soldOut = ticketing?.path("soldOut")?.asBoolean(false) == true,
-            status = mapWixEventStatus(node.path("status"), rawTitle)
+            status = mapWixEventStatus(node.path("status"))
         )
     }
 }

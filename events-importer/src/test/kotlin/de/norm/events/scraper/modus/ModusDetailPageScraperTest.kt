@@ -82,7 +82,7 @@ class ModusDetailPageScraperTest {
     fun `marks a postponed show and strips the note from its title`() {
         val lunaSimao = scrape("luna-simao", "160426-LunaSimao")
         lunaSimao.status shouldBe EventStatus.POSTPONED.name
-        lunaSimao.title shouldBe "Luna Simao"
+        lunaSimao.storedTitle() shouldBe "Luna Simao"
         lunaSimao.ticketUrl!! shouldContain "eventim.de"
     }
 

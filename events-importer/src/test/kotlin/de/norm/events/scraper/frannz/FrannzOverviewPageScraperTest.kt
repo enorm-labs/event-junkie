@@ -160,7 +160,7 @@ class FrannzOverviewPageScraperTest {
     inner class TitleCleaning {
         @Test
         fun `strips the trailing Nachholtermin reschedule note from titles`() {
-            val titles = scrape().map { it.title }
+            val titles = scrape().map { it.storedTitle() }
             // The three rescheduled shows keep only the act name.
             titles shouldContainAll listOf("Iggi Kelly", "The Dear Hunter", "Pohlmann")
             titles.forEach { it shouldNotContain "Nachholtermin" }
@@ -249,8 +249,7 @@ class FrannzOverviewPageScraperTest {
             val event = scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl).single()
 
             event.status shouldBe "RELOCATED"
-            event.title shouldBe "MAD TSAI"
-            event.title shouldNotContain "verlegt"
+            event.storedTitle() shouldBe "MAD TSAI"
             event.artists shouldContainExactly listOf(ScrapedArtist(name = "MAD TSAI", role = "HEADLINER", titleDerived = true))
             // The raw title is the note; the boundary reads the destination off it (#1551).
             event.statusNote shouldBe "MAD TSAI -verlegt ins Gretchen-"
@@ -271,7 +270,7 @@ class FrannzOverviewPageScraperTest {
             val event = scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl).single()
 
             event.status shouldBe "RELOCATED"
-            event.title shouldBe "Georgia Cavallo"
+            event.storedTitle() shouldBe "Georgia Cavallo"
             event.artists shouldContainExactly listOf(ScrapedArtist(name = "Georgia Cavallo", role = "HEADLINER", titleDerived = true))
             event.toEventEntity(venueId = 1L, venueSlug = "frannz-club", eventSourceId = 1L).relocatedTo shouldBe "Lido"
         }
@@ -283,7 +282,7 @@ class FrannzOverviewPageScraperTest {
         // tail, which cleanEventTitle strips without it becoming a status.
         @Test
         fun `keeps a show that moved into the house SCHEDULED`() {
-            val movedIn = scrape().first { it.title == "OCT (ON COMPANY TIME)" }
+            val movedIn = scrape().first { it.storedTitle() == "OCT (ON COMPANY TIME)" }
 
             movedIn.subtitle shouldContain "ins Frannz verlegt"
             movedIn.status shouldBe "SCHEDULED"

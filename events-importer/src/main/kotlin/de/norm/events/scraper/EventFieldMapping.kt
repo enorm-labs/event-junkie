@@ -67,23 +67,31 @@ fun parseTitleStatus(title: String): String? = TITLE_STATUS_PATTERN.find(title)?
 
 /**
  * A status marker glued to the front or end of a title (`Olga Myko - Abgesagt`, `(cancelled) The
- * Act`, `The Act [ABGESAGT!]`, `VENUE ÄNDERUNG: Jazeek`) with its separator and brackets. A
- * "verschoben"/"verlegt" tail is [cleanEventTitle]'s, and a sentence that is the notice (Wild
+ * Act`, `The Act [ABGESAGT!]`, `VENUE ÄNDERUNG: Jazeek`) with its separator and brackets. Whole
+ * words only: "Abgesagte Lesung" is a title, not a marker. A
+ * "verschoben"/"verlegt" tail is [TITLE_STATUS_TAIL]'s, and a sentence that is the notice (Wild
  * at Heart) stays the title.
  */
 private val TITLE_STATUS_MARKER =
     Regex(
-        """^\s*[(\[]?\s*(?:abgesagt|absage|cancell?ed|venue\s?(?:ä|ae)nderung)!?\s*[)\]]?\s*[-–—:|]*\s*""" +
-            """|\s*[-–—:|]*\s*[(\[]?\s*(?:abgesagt|absage|cancell?ed|venue\s?(?:ä|ae)nderung)!?\s*[)\]]?\s*$""",
+        """^\s*[(\[]?\s*(?:abgesagt|absage|cancell?ed|venue\s?(?:ä|ae)nderung)\b!?\s*[)\]]?\s*[-–—:|]*\s*""" +
+            """|\s*[-–—:|]*\s*[(\[]?\s*\b(?:abgesagt|absage|cancell?ed|venue\s?(?:ä|ae)nderung)!?\s*[)\]]?\s*$""",
         RegexOption.IGNORE_CASE
     )
 
 /**
- * Strips a leading or trailing [TITLE_STATUS_MARKER]; unchanged when none or when stripping
- * would leave nothing.
+ * Strips a [TITLE_STATUS_TAIL] and a leading or trailing [TITLE_STATUS_MARKER]; unchanged when
+ * none or when stripping would leave nothing. It runs where the status has been read from the
+ * same title, in [ScrapedEvent.toEventEntity], so no scraper can clean the status away first
+ * (#2008).
  */
 fun stripTitleStatusMarker(title: String): String {
-    val stripped = title.replace(TITLE_STATUS_MARKER, "").trim()
+    val stripped =
+        title
+            .replace(TITLE_STATUS_TAIL, "")
+            .replace(TITLE_STATUS_MARKER, "")
+            .replace(TITLE_NOISE_PATTERN, "")
+            .trim()
     return stripped.ifBlank { title.trim() }
 }
 
@@ -155,27 +163,36 @@ fun stripRelocationPrefix(title: String): String {
 }
 
 /**
- * Trailing noise venues append to a title that must not reach the stored title or a
- * title-derived headliner: a "Nachholtermin vom <date>" / "(verschoben aus <year>)" / "wird
- * verschoben" / "Hochverlegung" note (read as `POSTPONED` from the raw title first); a "-verlegt ins <venue>-"
- * or "-ins <venue> verlegt-" suffix (Frannz's spellings of Metropol's prefix; read as `RELOCATED`
- * first), anchored on "ins"/"nach" after the word or on a leading dash before "ins"; a
- * "(ausverkauft)" / "-ausverkauft-" annotation, which would split the act and its twin into two
- * artists; any stray trailing dash. Each alternative is word- or end-anchored, so "ausverkauften"
- * mid-title is never touched. The title-level counterpart of [ARTIST_SUFFIX_PATTERN].
+ * A scheduling note a venue appends to a title: a "Nachholtermin vom <date>" / "(verschoben aus
+ * <year>)" / "wird verschoben" / "Hochverlegung" note, or a "-verlegt ins <venue>-" / "-ins
+ * <venue> verlegt-" suffix (Frannz's spellings of Metropol's prefix), anchored on "ins"/"nach"
+ * after the word or on a leading dash before "ins". It carries the row's status, so only
+ * [stripTitleStatusMarker] removes it, after [parseTitleStatus] has read it (#2008). The
+ * title-level counterpart of [ARTIST_SUFFIX_PATTERN].
+ */
+private val TITLE_STATUS_TAIL =
+    Regex(
+        """\s+[-–—(]*\s*(?:nachholtermin|hochverlegung|(?:wird\s+)?verschoben|verlegt\s+(?:ins|nach))\b.*$""" +
+            """|\s+[-–—(]+\s*ins?\s+\S.*?\s+verlegt!?\s*[-–—)]*\s*$""",
+        RegexOption.IGNORE_CASE
+    )
+
+/**
+ * Trailing noise that is no status: a "(ausverkauft)" / "-ausverkauft-" annotation, which would
+ * split the act and its twin into two artists, and any stray trailing dash. Word- or
+ * end-anchored, so "ausverkauften" mid-title is never touched.
  */
 private val TITLE_NOISE_PATTERN =
     Regex(
-        """\s+[-–—(]*\s*(?:nachholtermin|hochverlegung|(?:wird\s+)?verschoben|verlegt\s+(?:ins|nach))\b.*$""" +
-            """|\s+[-–—(]+\s*ins?\s+\S.*?\s+verlegt!?\s*[-–—)]*\s*$""" +
-            """|\s+[-–—(]*\s*ausverkauft!?\s*[-–—)]?\s*$""" +
+        """\s+[-–—(]*\s*ausverkauft!?\s*[-–—)]?\s*$""" +
             """|\s+[-–—]\s*$""",
         RegexOption.IGNORE_CASE
     )
 
 /**
- * Strips a trailing rescheduled-show note and stray dash: "Iggi Kelly Nachholtermin vom
- * 28.04.26-" to "Iggi Kelly". Unchanged when there is no tail or stripping would leave nothing.
+ * Strips trailing noise and a stray dash: "Some Show -" to "Some Show". A scheduling note stays,
+ * because it carries the status; [stripTitleStatusMarker] removes it once the status is read.
+ * Unchanged when stripping would leave nothing.
  * Zero-width characters are removed and whitespace runs collapsed first: a line break inside
  * the heading or a double space in the CMS is presentation, not the name ("Adventurous Juan
  * (DJ-Set)", "Lucas Lauriente – Stand Up 2026"), and the tail patterns key on a single space. A

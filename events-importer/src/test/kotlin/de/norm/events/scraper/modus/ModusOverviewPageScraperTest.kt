@@ -62,7 +62,7 @@ class ModusOverviewPageScraperTest {
     fun `marks a postponed show and strips the note from its title and artist`() {
         val lunaSimao = event("modus:160426-LunaSimao")
         lunaSimao.status shouldBe EventStatus.POSTPONED.name
-        lunaSimao.title shouldBe "Luna Simao"
+        lunaSimao.storedTitle() shouldBe "Luna Simao"
         lunaSimao.artists.map { it.name } shouldBe listOf("Luna Simao")
     }
 

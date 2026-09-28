@@ -197,21 +197,12 @@ private val FALLBACK_ZONE: ZoneId = BERLIN
  * `0` SCHEDULED, `1` STARTED, `2` ENDED, `3` CANCELED, `4` DRAFT. Only the
  * cancellation is meaningful here — a started/ended night is simply in the past,
  * and a draft is never published to the widget — so everything else keeps the
- * `SCHEDULED` default rather than inventing statuses the model has no place for.
- *
- * A house that postpones a show says so in the title and leaves the status at `0` (Colosseum's
- * `… WIRD VERSCHOBEN`, #2007), so a scheduled event falls back to [parseTitleStatus] on
- * [rawTitle]. It must be the title before [cleanEventTitle], which strips that tail.
+ * `SCHEDULED` default rather than inventing statuses the model has no place for. A postponement
+ * the house writes into the title (Colosseum's `… WIRD VERSCHOBEN`, #2007) is read from it at
+ * [ScrapedEvent.toEventEntity].
  */
-internal fun mapWixEventStatus(
-    status: JsonNode,
-    rawTitle: String
-): String =
-    if (status.asInt(WIX_STATUS_SCHEDULED) == WIX_STATUS_CANCELED) {
-        EventStatus.CANCELLED.name
-    } else {
-        parseTitleStatus(rawTitle) ?: EventStatus.SCHEDULED.name
-    }
+internal fun mapWixEventStatus(status: JsonNode): String =
+    if (status.asInt(WIX_STATUS_SCHEDULED) == WIX_STATUS_CANCELED) EventStatus.CANCELLED.name else EventStatus.SCHEDULED.name
 
 private const val WIX_STATUS_SCHEDULED = 0
 private const val WIX_STATUS_CANCELED = 3
