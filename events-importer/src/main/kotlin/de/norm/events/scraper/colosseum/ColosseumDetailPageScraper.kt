@@ -5,15 +5,17 @@ import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
 import de.norm.events.scraper.WixEventsWarmupData
 import de.norm.events.scraper.parseWixSchedule
+import de.norm.events.scraper.parseWixTicketPrice
 import de.norm.events.scraper.stringOrNull
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import tools.jackson.databind.JsonNode
+import java.math.BigDecimal
 import java.time.LocalTime
 
 /**
  * Pure parser for one Colosseum event page (`/details-registrierung/<slug>`), read for its times
- * and for nothing else.
+ * and its ticket price.
  *
  * **The page states two Einlass/Beginn pairs, and the field they sit in tells them apart.** The
  * payload's `about` is a cloned block the house never rewrites: all 18 live events carry the same
@@ -26,8 +28,13 @@ import java.time.LocalTime
  * **The listing's time is the Einlass more often than the Beginn** — 10 of 18 against 8 — so it
  * cannot be relabelled without this page, and the pair read here replaces it whole.
  *
- * The description and the price are still refused, for the reasons in
- * [ColosseumWebsiteImporter]'s KDoc.
+ * **The price is the ticket's own, the figure the page labels `Preis`** (#1954): face value plus
+ * the presale fee, as other venues publish it. The listing's `lowestTicketPrice` is the checkout
+ * total, with Wix's service fee and, on some events, VAT added on top — 21,72 € for a 19,80 €
+ * ticket. An event sold through an outside shop has no `tickets`, and keeps the listing's figure.
+ * Several tiers give the lowest as the price and the range as the note.
+ *
+ * The description is still refused, for the reason in [ColosseumWebsiteImporter]'s KDoc.
  *
  * @see ColosseumWebsiteImporter for the fetch orchestration.
  */
@@ -44,7 +51,9 @@ class ColosseumDetailPageScraper {
         document: Document,
         url: String
     ): ScrapedEvent? {
-        val event = WixEventsWarmupData.event(document, EventSource.COLOSSEUM) ?: return null
+        val state = WixEventsWarmupData.pageState(document, EventSource.COLOSSEUM)
+        val event = state?.let { WixEventsWarmupData.eventOf(it, EventSource.COLOSSEUM) } ?: return null
+        val prices = state.path("tickets").mapNotNull { parseWixTicketPrice(it.path("price")) }
         val schedule = parseWixSchedule(event.path("scheduling").path("config"))
         val lines = timeLines(event.path("longDescription"))
         val start = lines[BEGINN] ?: schedule.startTime
@@ -58,9 +67,18 @@ class ColosseumDetailPageScraper {
             eventDate = schedule.date ?: UNRESOLVED_EVENT_DATE,
             doorsTime = doors,
             startTime = start,
+            pricePresale = prices.minOrNull(),
+            priceNote = priceRange(prices),
             sourceUrl = url,
             sourceId = "${EventSource.COLOSSEUM.sourceIdPrefix}${event.stringOrNull("slug").orEmpty()}"
         )
+    }
+
+    /** `€15.00 – €30.00` when the tiers differ, in the listing note's format; null for one price or none. */
+    private fun priceRange(prices: List<BigDecimal>): String? {
+        val low = prices.minOrNull() ?: return null
+        val high = prices.max()
+        return if (low.compareTo(high) == 0) null else "€${low.setScale(2)} – €${high.setScale(2)}"
     }
 
     /**

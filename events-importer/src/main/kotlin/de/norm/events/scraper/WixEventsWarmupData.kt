@@ -79,14 +79,10 @@ internal object WixEventsWarmupData {
     }
 
     /**
-     * The single event of a Wix event **detail** page, from the same warmup payload.
-     *
-     * A detail page carries one `EventsPageInitialState.event.event` object where an overview
-     * carries the widget's array, and that object holds the rich-content `longDescription` the
-     * listing leaves out.
+     * The whole Wix Events state of a **detail** page, or null when the payload cannot be read:
+     * the event under `event.event`, and beside it the `tickets` the checkout sells.
      */
-    @Suppress("ReturnCount") // Sequential null-guards for each extraction step are clearer than nesting
-    fun event(
+    fun pageState(
         document: Document,
         source: EventSource
     ): JsonNode? {
@@ -94,15 +90,31 @@ internal object WixEventsWarmupData {
             document.getElementById(WARMUP_SCRIPT_ID) ?: return null.also {
                 logger.warn { "No '$WARMUP_SCRIPT_ID' script found on $source detail page" }
             }
-        val root = parseWarmupJson(script, source) ?: return null
-        val event =
-            root
-                .path("appsWarmupData")
-                .path(WIX_EVENTS_APP_DEF_ID)
-                .path(EVENTS_PAGE_STATE)
-                .path("event")
-                .path("event")
-                .takeIf { it.isObject }
+        return parseWarmupJson(script, source)
+            ?.path("appsWarmupData")
+            ?.path(WIX_EVENTS_APP_DEF_ID)
+            ?.path(EVENTS_PAGE_STATE)
+            ?.takeIf { it.isObject }
+    }
+
+    /**
+     * The single event of a Wix event **detail** page, from the same warmup payload.
+     *
+     * A detail page carries one `EventsPageInitialState.event.event` object where an overview
+     * carries the widget's array, and that object holds the rich-content `longDescription` the
+     * listing leaves out.
+     */
+    fun event(
+        document: Document,
+        source: EventSource
+    ): JsonNode? = pageState(document, source)?.let { eventOf(it, source) }
+
+    /** The event object inside a [pageState], or null with a warning when the state has none. */
+    fun eventOf(
+        state: JsonNode,
+        source: EventSource
+    ): JsonNode? {
+        val event = state.path("event").path("event").takeIf { it.isObject }
         if (event == null) {
             logger.warn { "No event object in $source Wix Events detail payload" }
         }

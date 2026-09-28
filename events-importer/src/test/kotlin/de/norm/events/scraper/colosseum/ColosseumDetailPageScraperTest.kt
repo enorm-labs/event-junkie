@@ -5,6 +5,7 @@ import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import org.jsoup.Jsoup
 import org.junit.jupiter.api.Test
+import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.LocalTime
 
@@ -80,6 +81,20 @@ class ColosseumDetailPageScraperTest {
 
         event.doorsTime shouldBe LocalTime.of(19, 0)
         event.startTime shouldBe LocalTime.of(20, 0)
+    }
+
+    @Test
+    fun `takes the ticket's own price, the figure the page labels Preis`() {
+        // Investment: "Standard (15€ + 1,5€ Gebühr)", Preis 16,50 €; the listing's checkout total is 16,91 € (#1954).
+        val event = scrape("colosseum-detail-ticket-price.html").shouldNotBeNull()
+
+        event.pricePresale shouldBe BigDecimal("16.50")
+        event.priceNote.shouldBeNull()
+    }
+
+    @Test
+    fun `leaves the price to the listing when the page sells no ticket itself`() {
+        scrape("colosseum-detail-gysi.html").shouldNotBeNull().pricePresale.shouldBeNull()
     }
 
     @Test

@@ -18,18 +18,17 @@ import org.springframework.stereotype.Component
  * [HtmlFetcher] fetches `/event` conditionally (Wix serves a weak `ETag`),
  * [ColosseumOverviewPageScraper] parses the embedded JSON.
  *
- * **The `/details-registrierung/<slug>` pages are fetched for their times alone** (#1684). The
+ * **The `/details-registrierung/<slug>` pages are fetched for their times and their price** (#1684). The
  * listing carries one `startDate` per event, and that time is the doors more often than the start
  * — 10 of 18 live events against 8 — so a row built from the listing alone puts a door time in
  * `startTime` more often than not. [ColosseumDetailPageScraper] reads the event's own `Einlass`
- * and `Beginn` lines; the listing's record is kept for everything else. Two fields stay refused:
+ * and `Beginn` lines, and its ticket price (#1954); the listing's record is kept for everything
+ * else. One field stays refused:
  * - Their `about` is *not* per-event text. Each event is created by cloning an old one and that
  * section is never rewritten, so the same 3,440-character block — a Dustin O'Halloran biography
  * opening "Einlass: 19 Uhr / Beginn: 20 Uhr" — is served for a Cornelia Funke reading, an Irvine
  * Welsh evening and a football talk alike. It would attach a stranger's biography to nearly every
  * event, and it is the second Einlass line the time parsing steps over.
- * - Their `tickets[].price` is the face value, where the overview's `lowestTicketPrice` is the
- * checkout total including Wix's service fee. The total is what a buyer pays.
  *
  * The widget ships the upcoming window only (18 events) and reports `hasMore: true`; the rest
  * needs the authenticated widget API, as at MAXXIM. First page only is the standing decision
@@ -71,7 +70,10 @@ class ColosseumWebsiteImporter(
     ): ScrapedEvent =
         fallback.copy(
             doorsTime = primary.doorsTime ?: fallback.doorsTime,
-            startTime = primary.startTime ?: fallback.startTime
+            startTime = primary.startTime ?: fallback.startTime,
+            // The ticket's own price wins over the listing's checkout total; the note follows it.
+            pricePresale = primary.pricePresale ?: fallback.pricePresale,
+            priceNote = if (primary.pricePresale != null) primary.priceNote else fallback.priceNote
         )
 }
 
