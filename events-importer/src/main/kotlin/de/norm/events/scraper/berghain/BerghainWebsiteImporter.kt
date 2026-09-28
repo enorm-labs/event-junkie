@@ -3,12 +3,11 @@ package de.norm.events.scraper.berghain
 import de.norm.events.scraper.AbstractTwoPageWebsiteImporter
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
-import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.VenueLimitations
 import de.norm.events.scraper.queryParameter
 import de.norm.events.scraper.withQueryParameter
-import de.norm.events.slug.SlugGenerator
+import de.norm.events.scraper.withSetTimesFrom
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.springframework.stereotype.Component
@@ -76,7 +75,7 @@ class BerghainWebsiteImporter(
     /**
      * Fills what the detail page could not supply from the overview event. The detail page is
      * authoritative for everything it parses; the overview contributes only where it returned null
-     * — most importantly the lineup, which the detail page does not parse (see [BerghainDetailPageScraper]).
+     * — and the lineup, which is the overview's, with the detail page's set times attached.
      */
     override fun fillGapsFromOverview(
         primary: ScrapedEvent,
@@ -95,29 +94,11 @@ class BerghainWebsiteImporter(
             priceBoxOffice = primary.priceBoxOffice ?: fallback.priceBoxOffice,
             soldOut = primary.soldOut || fallback.soldOut,
             // The overview's lineup is authoritative; the detail page's artists carry only set times.
-            artists = fallback.artists.withSetTimesFrom(primary.artists)
+            artists =
+                fallback.artists.withSetTimesFrom(primary.artists) {
+                    logger.warn { "Running-order slot '${it.name}' matches no act on the programme; its set time is dropped" }
+                }
         )
-
-    /**
-     * Each billed act with the start and end of its running-order slot. A slot is matched by slug
-     * and floor, then by slug alone, so an act on two floors keeps both sets and a floor renamed
-     * between the pages still matches. A slot that matches no billed act is logged and dropped: the
-     * lineup stays the programme's.
-     */
-    private fun List<ScrapedArtist>.withSetTimesFrom(runningOrder: List<ScrapedArtist>): List<ScrapedArtist> {
-        if (runningOrder.isEmpty()) return this
-        val byFloor = runningOrder.groupBy { SlugGenerator.slugify(it.name) to it.stage }
-        val byName = runningOrder.groupBy { SlugGenerator.slugify(it.name) }
-        val billed = map { SlugGenerator.slugify(it.name) }.toSet()
-        runningOrder
-            .filter { SlugGenerator.slugify(it.name) !in billed }
-            .forEach { logger.warn { "Running-order slot '${it.name}' matches no act on the programme; its set time is dropped" } }
-        return map { act ->
-            val slug = SlugGenerator.slugify(act.name)
-            val slot = byFloor[slug to act.stage]?.first() ?: byName[slug]?.first()
-            slot?.let { act.copy(setStart = it.setStart, setEnd = it.setEnd) } ?: act
-        }
-    }
 
     private companion object {
         const val LOAD_MORE_SELECTOR = "button#load-more-events"

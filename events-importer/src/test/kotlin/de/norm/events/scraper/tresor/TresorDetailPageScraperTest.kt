@@ -9,6 +9,7 @@ import io.kotest.matchers.string.shouldNotContain
 import io.kotest.matchers.string.shouldStartWith
 import org.jsoup.Jsoup
 import org.junit.jupiter.api.Test
+import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
 
@@ -96,5 +97,37 @@ class TresorDetailPageScraperTest {
     fun `returns null for a page without a title`() {
         val url = "https://tresorberlin.com/event/20260801-x/"
         scraper.scrape(Jsoup.parse("<html><head></head><body></body></html>", url), url).shouldBeNull()
+    }
+
+    @Test
+    fun `gives each act its slot's start and end, across midnight and per floor`() {
+        val klubnacht = scrape("tresor-detail-klubnacht.html", "20260801-tresor-klubnacht").shouldNotBeNull()
+        val sets = klubnacht.artists.associate { it.name to (it.setStart to it.setEnd) }
+
+        // "23:00-02:00" on Saturday 1 August runs into Sunday.
+        sets.getValue("Hypnotic Black Magic") shouldBe (Instant.parse("2026-08-01T21:00:00Z") to Instant.parse("2026-08-02T00:00:00Z"))
+        // After the unannounced "???" slot, "04:30 – 07:30" is Sunday morning, en dash and all.
+        sets.getValue("Developer") shouldBe (Instant.parse("2026-08-02T02:30:00Z") to Instant.parse("2026-08-02T05:30:00Z"))
+        // "07:30-END" has a start and no end.
+        sets.getValue("Maedon") shouldBe (Instant.parse("2026-08-02T05:30:00Z") to null)
+        // The Globus floor opens at "00:00", which is already Sunday.
+        sets.getValue("Janina") shouldBe (Instant.parse("2026-08-01T22:00:00Z") to Instant.parse("2026-08-02T00:30:00Z"))
+    }
+
+    @Test
+    fun `leaves an act without a slot time untimed`() {
+        val night = scrape("tresor-detail-blurb.html", "20260807-tresor-aquabahn-x-mechatronica").shouldNotBeNull()
+
+        night.artists
+            .first { it.name.startsWith("Daniel Boubet") }
+            .setStart
+            .shouldBeNull()
+        night.artists.first { it.name == "Aura Nox" }.setStart shouldBe Instant.parse("2026-08-07T21:00:00Z")
+    }
+
+    @Test
+    fun `rejects the home page a dead event link redirects to`() {
+        // Tresor answers every event URL with a 302 to its home page (#2000); the listing's data must stand.
+        scrape("tresor-home.html", "20261010-tresor-klubnacht").shouldBeNull()
     }
 }
