@@ -42,6 +42,12 @@ export interface PageMeta {
   description?: string
   /** Absolute URL of a representative image, when the entity has one. */
   image?: string
+  /**
+   * Keeps the page out of the index. Only a detail page whose entity the BFF does not know sets it:
+   * nginx answers that URL with 404 already, and this covers the one path where it cannot, a
+   * sidecar that timed out and fell back to the plain shell with 200.
+   */
+  noindex?: boolean
 }
 
 /**
@@ -130,6 +136,11 @@ export function staticPageMeta(title: string | null, description?: string | null
 /** The title a detail view shows before its entity arrives, or when there is none. */
 export function placeholderPageMeta(title: string): PageMeta {
   return { title: formatTitle(title) }
+}
+
+/** A detail view whose entity does not exist: a page no search engine should keep. */
+export function notFoundPageMeta(title: string): PageMeta {
+  return { title: formatTitle(title), noindex: true }
 }
 
 function truncateOrUndefined(text?: string | null): string | undefined {

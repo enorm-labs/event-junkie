@@ -8,7 +8,7 @@ import SectionLabel from '@/components/SectionLabel.vue'
 import { useEvent } from '@/composables/useEvent'
 import { descriptionFor } from '@/lib/description'
 import { usePageMeta } from '@/composables/usePageMeta'
-import { APP_NAME, eventPageMeta, placeholderPageMeta } from '@/lib/pageMeta'
+import { APP_NAME, eventPageMeta, notFoundPageMeta, placeholderPageMeta } from '@/lib/pageMeta'
 import { useStructuredData } from '@/composables/useStructuredData'
 import { breadcrumbJsonLd, eventJsonLd, type JsonLd } from '@/lib/structuredData'
 import type { Locale } from '@/i18n/locales'
@@ -96,11 +96,9 @@ function enumLabel(namespace: string, value: string): string {
 usePageMeta(() =>
   event.value
     ? eventPageMeta(event.value, locale.value as Locale)
-    : placeholderPageMeta(
-        notFound.value
-          ? t('detail.notFoundHeading', { kind: t('events.detail.kind') })
-          : t('events.detail.kind'),
-      ),
+    : notFound.value
+      ? notFoundPageMeta(t('detail.notFoundHeading', { kind: t('events.detail.kind') }))
+      : placeholderPageMeta(t('events.detail.kind')),
 )
 
 // The rich-result payload: an Event document plus the breadcrumb trail. `eventJsonLd` returns

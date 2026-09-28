@@ -8,9 +8,10 @@ import { staticPathMeta } from '../src/lib/staticPages.ts'
 /**
  * The meta-injection sidecar, ADR-014 §Decision 3's transport. nginx proxies the four detail
  * route families and the static pages here; each request fetches the shell from nginx on loopback
- * and, for a detail page, the entity from the BFF, rewrites the head, and answers. Any failure is a 502 and nothing else: nginx's
- * `error_page` then serves the plain shell, so every branch that is not the happy path ends in
- * `fail()`. Nothing about the visitor reaches the BFF, and nothing is logged per request. Two
+ * and, for a detail page, the entity from the BFF, rewrites the head, and answers. A slug the BFF
+ * does not know is a 404 and any other failure a 502: nginx's `error_page` then serves the plain
+ * shell, with the 404 kept and the 502 turned into 200, so every branch that is not the happy
+ * path ends in `fail()`. Nothing about the visitor reaches the BFF, and nothing is logged per request. Two
  * in-process caches bound the BFF load: the shell changes only on deploy, and a link shared into
  * a busy group is fetched by every scraper at once.
  */

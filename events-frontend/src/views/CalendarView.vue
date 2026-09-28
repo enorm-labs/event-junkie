@@ -8,11 +8,13 @@ import { describeError } from '@/api/client'
 import { fetchCalendarEvents } from '@/composables/useEvents'
 import { toCalendarInput } from '@/lib/calendarEvent'
 import { useEventFilters } from '@/composables/useEventFilters'
+import { useLocalePath } from '@/composables/useLocalePath'
 import { useI18n } from 'vue-i18n'
 
 const route = useRoute()
 const router = useRouter()
 const { filters } = useEventFilters()
+const localePath = useLocalePath()
 
 const events = ref<EventInput[]>([])
 const error = ref<string | null>(null)
@@ -32,7 +34,7 @@ async function load() {
   const { from, to } = range.value
   try {
     const data = await fetchCalendarEvents(from, clampTo(from, to), filters.value)
-    events.value = data.map(toCalendarInput)
+    events.value = data.map((event) => toCalendarInput(event, localePath))
     error.value = null
   } catch (e) {
     error.value = describeError(e, 'errors.subject.calendar')
@@ -49,7 +51,7 @@ function loadRange(next: { from: string; to: string }) {
 watch(() => route.query, load, { deep: true })
 
 function openEvent(slug: string) {
-  router.push(`/events/${slug}`)
+  router.push(localePath(`/events/${slug}`))
 }
 
 const { t } = useI18n()

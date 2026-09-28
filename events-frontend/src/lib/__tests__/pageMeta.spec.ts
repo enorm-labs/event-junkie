@@ -7,6 +7,7 @@ import {
   eventPageMeta,
   formatTitle,
   HOME_TITLE,
+  notFoundPageMeta,
   placeholderPageMeta,
   promoterPageMeta,
   staticPageMeta,
@@ -183,5 +184,13 @@ describe('titles', () => {
   it('suffixes interior pages with the brand', () => {
     expect(staticPageMeta('Venues').title).toBe(`Venues · ${APP_NAME}`)
     expect(placeholderPageMeta('Event not found').title).toBe(`Event not found · ${APP_NAME}`)
+  })
+
+  it('keeps a not-found page out of the index, and only that one', () => {
+    expect(notFoundPageMeta('Event not found')).toEqual({
+      title: `Event not found · ${APP_NAME}`,
+      noindex: true,
+    })
+    expect(placeholderPageMeta('Event')).not.toHaveProperty('noindex')
   })
 })

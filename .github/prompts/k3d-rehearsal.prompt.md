@@ -99,9 +99,9 @@ Beyond that, six things are worth confirming rather than assuming:
 
 ## The trap that has already caught someone
 
-**Check the content type, not the status code**, on every negative assertion. nginx serves the SPA for any unmatched path, so `/actuator/health` through the
-ingress returns **200** — and that 200 is `text/html`. A status-only test reports a leak that is not there, and would keep passing if actuator were genuinely
-exposed. The script does this correctly; if you write an ad-hoc check, write it the same way.
+**Check the content type, not the status code**, on every negative assertion. nginx serves the SPA shell for any unmatched path, with **404**, so
+`/actuator/health` through the ingress answers `404 text/html`. A 404 is also what a misrouted ingress returns, so the status alone proves nothing about
+actuator; `text/html` does. The script does this correctly; if you write an ad-hoc check, write it the same way.
 
 ## When it finds something
 

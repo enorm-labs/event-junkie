@@ -4,7 +4,7 @@ import { useRoute } from 'vue-router'
 import BaseDetailView from '@/components/BaseDetailView.vue'
 import TextCreditLine from '@/components/TextCreditLine.vue'
 import { usePageMeta } from '@/composables/usePageMeta'
-import { artistPageMeta, placeholderPageMeta } from '@/lib/pageMeta'
+import { artistPageMeta, notFoundPageMeta, placeholderPageMeta } from '@/lib/pageMeta'
 import { useArtist } from '@/composables/useArtist'
 import { useEventSearch } from '@/composables/useEvents'
 import { yesterdayIso } from '@/lib/format'
@@ -66,9 +66,9 @@ watch(slug, reload)
 usePageMeta(() =>
   artist.value
     ? artistPageMeta(artist.value)
-    : placeholderPageMeta(
-        notFound.value ? t('detail.notFoundHeading', { kind: kind.value }) : kind.value,
-      ),
+    : notFound.value
+      ? notFoundPageMeta(t('detail.notFoundHeading', { kind: kind.value }))
+      : placeholderPageMeta(kind.value),
 )
 
 const credit = computed(() => imageCredit(artist.value))

@@ -17,7 +17,7 @@ Find the line that looks like your screen, and jump.
 | `kubectl` fails with `localhost:8080 connection refused`                          | [kubectl fails inside ssh](#kubectl-fails-inside-ssh)                                             |
 | `staging.event-junkie.de` does not resolve                                        | [The staging name does not resolve](#the-staging-name-does-not-resolve)                           |
 | A certificate warning on staging                                                  | [The certificate warning](#the-certificate-warning)                                               |
-| `/actuator/health` or `/events` answers `200`                                     | [A path answers 200 that should not](#a-path-answers-200-that-should-not)                         |
+| `/actuator/health` or `/events` answers `text/html`                               | [A path answers with HTML that should not](#a-path-answers-with-html-that-should-not)             |
 | `/api/admin` answers `404`                                                        | [The admin API answers 404](#the-admin-api-answers-404)                                           |
 | A port-forward seeded the wrong database                                          | [The forward landed on the local stack](#the-forward-landed-on-the-local-stack)                   |
 | `ej.sh up` says a port is already served                                          | [A port is already served](#a-port-is-already-served)                                             |
@@ -118,11 +118,11 @@ Every check below is read-only. **Nothing in this file writes to a cluster.** A 
 
 **Why:** [CLUSTER_ACCESS.md §6](CLUSTER_ACCESS.md#6--the-site-itself), and [#265](https://github.com/enorm-labs/event-junkie/issues/265) for the issuer.
 
-## A path answers 200 that should not
+## A path answers with HTML that should not
 
 **Check:** Read the `server:` and `content-type:` headers. `nginx` and `text/html` mean the SPA fallback, not the service.
 
-**Fix:** Nothing is exposed. Any unmatched path falls through to the frontend's index page. Check the body before you believe a `200`.
+**Fix:** Nothing is exposed. Any unmatched path falls through to the frontend's index page, with `404`. Check the body before you believe the status.
 
 **Why:** [CLUSTER_ACCESS.md §6](CLUSTER_ACCESS.md#6--the-site-itself), the table _What each path should do_.
 

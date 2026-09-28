@@ -93,6 +93,17 @@ export function applyPageMeta(meta: PageMeta): void {
     element.content = content
     document.head.append(element)
   }
+
+  // Removed as well as added: the next page the visitor opens must not inherit it.
+  const robots = document.head.querySelector<HTMLMetaElement>('meta[name="robots"]')
+  if (!meta.noindex) {
+    robots?.remove()
+  } else if (!robots) {
+    const element = document.createElement('meta')
+    element.name = 'robots'
+    element.content = 'noindex'
+    document.head.append(element)
+  }
 }
 
 /**

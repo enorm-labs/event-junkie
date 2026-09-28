@@ -99,4 +99,15 @@ describe('applyPageMeta', () => {
     expect(document.head.querySelectorAll('meta[property="og:image"]')).toHaveLength(1)
     expect(content('meta[property="og:image"]')).toBe('https://example.test/b.jpg')
   })
+
+  it('marks a page noindex, and drops the mark on the next page instead of carrying it along', () => {
+    // A not-found detail page followed by a real one: an inherited noindex would deindex the page.
+    applyPageMeta({ title: HOME_TITLE, noindex: true })
+    applyPageMeta({ title: HOME_TITLE, noindex: true })
+    expect(document.head.querySelectorAll('meta[name="robots"]')).toHaveLength(1)
+    expect(content('meta[name="robots"]')).toBe('noindex')
+
+    applyPageMeta({ title: HOME_TITLE })
+    expect(document.head.querySelector('meta[name="robots"]')).toBeNull()
+  })
 })

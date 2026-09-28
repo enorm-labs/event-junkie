@@ -550,8 +550,8 @@ the one that gets run. What is worth knowing before you read it:
     routing assertion failed.** That looks exactly like a broken change, and is not one.
 
 **Check the content type, not the status code**, when testing what should _not_ be reachable. The nginx container
-serves the SPA on every unmatched path, so `/actuator/health` through the ingress returns **200**. That 200 is `text/html`, the SPA
-fallback, not actuator. A negative test that reads only the status code passes for the wrong reason:
+serves the SPA shell on every unmatched path, with **404**, so `/actuator/health` through the ingress returns `404 text/html`. A
+misrouted ingress also returns 404. A negative test that reads only the status code can pass for the wrong reason:
 
 ```bash
 curl -s -o /dev/null -w '%{content_type}\n' -H 'Host: event-junkie.localhost' localhost:8080/actuator/health
