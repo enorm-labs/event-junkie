@@ -217,7 +217,7 @@ class EventImportService(
 
                     // PROHIBITED means the field is never stored (#807).
                     val licences = runningSource.licences()
-                    val upsert = upsertInTransaction(runningSource, venue.slug, result.events, licences, importer.listsWholeProgramme)
+                    val upsert = upsertInTransaction(runningSource, venue.slug, result.events, licences, staleCleanup(importer, result))
 
                     afterCommit(runningSource, venue.name, result, upsert, licences)
 
@@ -241,11 +241,22 @@ class EventImportService(
         venueSlug: String,
         events: List<ScrapedEvent>,
         licences: SourceLicences,
-        wholeProgramme: Boolean
+        staleCleanup: StaleCleanup
     ): UpsertOutcome =
         transactionalOperator.executeAndAwait {
             val sourceId = requireNotNull(source.id) { "Event source must be persisted before importing" }
-            eventUpsertService.upsertAndCleanup(events, source.venueId, venueSlug, sourceId, licences, wholeProgramme)
+            eventUpsertService.upsertAndCleanup(events, source.venueId, venueSlug, sourceId, licences, staleCleanup)
+        }
+
+    /** An incomplete scrape wins over [EventImporter.listsWholeProgramme]: a failed page lists nothing. */
+    private fun staleCleanup(
+        importer: EventImporter,
+        result: ImportResult.Success
+    ): StaleCleanup =
+        when {
+            !result.complete -> StaleCleanup.SKIPPED
+            importer.listsWholeProgramme -> StaleCleanup.OPEN_ENDED
+            else -> StaleCleanup.WINDOWED
         }
 
     /**

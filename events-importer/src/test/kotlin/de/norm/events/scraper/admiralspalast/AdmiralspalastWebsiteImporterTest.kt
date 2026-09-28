@@ -79,6 +79,7 @@ class AdmiralspalastWebsiteImporterTest {
             result.events.map { it.sourceId } shouldContain "admiralspalast:abba-gold-the-concert-show-emotion-2027-01-26-1930"
             result.events.count { it.sourceUrl == abbaUrl } shouldBe 2
             result.etag shouldBe "\"admiralspalast-etag\""
+            result.complete shouldBe true
         }
 
     @Test
@@ -94,12 +95,13 @@ class AdmiralspalastWebsiteImporterTest {
         }
 
     @Test
-    fun `an unreachable production costs only its own events`() =
+    fun `an unreachable production costs only its own events, and marks the scrape incomplete`() =
         runTest {
             coEvery { htmlFetcher.fetchDocument(abbaUrl) } throws RuntimeException("503")
             val result = importer.importEvents(listingUrl)
             result.shouldBeInstanceOf<ImportResult.Success>()
             result.events.none { it.sourceUrl == abbaUrl } shouldBe true
             result.events.any { it.sourceUrl == antigoneUrl } shouldBe true
+            result.complete shouldBe false
         }
 }

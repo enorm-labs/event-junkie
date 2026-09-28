@@ -974,6 +974,22 @@ class EventImportServiceTest {
             }
 
         @Test
+        fun `skips the cleanup when the scrape is incomplete, even for a whole programme`() =
+            runTest {
+                val src = source()
+                val scrapedEvents = listOf(scrapedEvent(title = "Active Event", sourceId = "cassiopeia:active", eventDate = LocalDate.of(2026, 6, 15)))
+                coEvery { cassiopeiaImporter.listsWholeProgramme } returns true
+                coEvery { cassiopeiaImporter.importEvents(any(), any(), any()) } returns
+                    ImportResult.Success(events = scrapedEvents, etag = null, lastModified = null, complete = false)
+
+                service.importFromSource(src)
+
+                coVerify(exactly = 0) { eventRepository.findByEventSourceIdAndEventDateGreaterThanEqual(any(), any()) }
+                coVerify(exactly = 0) { eventRepository.findByEventSourceIdAndEventDateBetween(any(), any(), any()) }
+                coVerify(exactly = 0) { eventRepository.deleteByIdIn(any()) }
+            }
+
+        @Test
         fun `does not delete events when scraped list is empty`() =
             runTest {
                 val src = source()

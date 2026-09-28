@@ -72,7 +72,7 @@ abstract class AbstractTwoPageWebsiteImporter(
             }
 
             is FetchResult.Success -> {
-                val overviewEvents =
+                val overview =
                     htmlFetcher.scrapeListingPages(
                         eventSource,
                         fetchResult.document,
@@ -81,14 +81,15 @@ abstract class AbstractTwoPageWebsiteImporter(
                         ::nextOverviewPage,
                         ::scrapeOverview
                     )
-                logger.info { "Scraped ${overviewEvents.size} event(s) from ${eventSource.name} overview" }
-                val merged = overviewEvents.map { parseDetailOrFallback(it) }
+                logger.info { "Scraped ${overview.events.size} event(s) from ${eventSource.name} overview" }
+                val merged = overview.events.map { parseDetailOrFallback(it) }
                 val events = dropUnresolvedDates(merged)
                 ImportResult.Success(
                     events,
                     fetchResult.etag,
                     fetchResult.lastModified,
-                    droppedUnresolvedDate = merged.size - events.size
+                    droppedUnresolvedDate = merged.size - events.size,
+                    complete = overview.complete
                 )
             }
         }

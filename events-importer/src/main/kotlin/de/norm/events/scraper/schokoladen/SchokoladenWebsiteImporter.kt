@@ -44,7 +44,7 @@ class SchokoladenWebsiteImporter(
             }
 
             is FetchResult.Success -> {
-                val events =
+                val listing =
                     htmlFetcher.scrapeListingPages(
                         eventSource,
                         fetchResult.document,
@@ -53,12 +53,13 @@ class SchokoladenWebsiteImporter(
                         { document, _ -> document.nextPageUrl(NEXT_PAGE_SELECTOR) },
                         overviewPageScraper::scrape
                     )
-                logger.info { "Scraped ${events.size} event(s) from Schokoladen" }
+                logger.info { "Scraped ${listing.events.size} event(s) from Schokoladen" }
 
                 ImportResult.Success(
-                    events = events,
+                    events = listing.events,
                     etag = fetchResult.etag,
-                    lastModified = fetchResult.lastModified
+                    lastModified = fetchResult.lastModified,
+                    complete = listing.complete
                 )
             }
         }

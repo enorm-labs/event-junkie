@@ -26,7 +26,8 @@ import org.springframework.stereotype.Component
  * 3. Each production page's performances via [AdmiralspalastDetailPageScraper].
  *
  * One request per production plus one per category. The per-host throttle keeps the walk
- * polite, and a failed page costs only its own production.
+ * polite. A failed production page costs that production's performances for the run, and marks
+ * the result incomplete so the stale cleanup does not delete them (#1980).
  *
  * @see AdmiralspalastListingPageScraper for discovery and the categories.
  * @see AdmiralspalastDetailPageScraper for the performances.
@@ -56,13 +57,15 @@ class AdmiralspalastWebsiteImporter(
             is FetchResult.Success -> {
                 val productionUrls = listingPageScraper.scrapeProductionUrls(fetchResult.document, url)
                 val genres = resolveGenres(fetchResult.document, url)
-                val events = productionUrls.flatMap { scrapeProduction(it, genres[it]) }
+                val productions = productionUrls.map { scrapeProduction(it, genres[it]) }
+                val events = productions.flatMap { it.orEmpty() }
                 logger.info { "Scraped ${events.size} performance(s) from ${productionUrls.size} Admiralspalast production(s)" }
 
                 ImportResult.Success(
                     events = events,
                     etag = fetchResult.etag,
-                    lastModified = fetchResult.lastModified
+                    lastModified = fetchResult.lastModified,
+                    complete = productions.none { it == null }
                 )
             }
         }
@@ -97,17 +100,17 @@ class AdmiralspalastWebsiteImporter(
         return genres
     }
 
-    /** Fetches one production page and reads its performances; an unreachable page yields none. */
+    /** Fetches one production page and reads its performances; null when the page is unreachable. */
     private suspend fun scrapeProduction(
         productionUrl: String,
         genre: String?
-    ): List<ScrapedEvent> =
+    ): List<ScrapedEvent>? =
         @Suppress("TooGenericExceptionCaught") // Intentional: one unreachable production must not fail the import
         try {
             detailPageScraper.scrape(htmlFetcher.fetchDocument(productionUrl), productionUrl, genre)
         } catch (e: Exception) {
             logger.warn(e) { "Failed to load the Admiralspalast production page $productionUrl, skipping" }
-            emptyList()
+            null
         }
 }
 

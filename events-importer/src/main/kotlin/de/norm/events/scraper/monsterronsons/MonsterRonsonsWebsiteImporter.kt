@@ -67,7 +67,7 @@ class MonsterRonsonsWebsiteImporter(
             }
 
             is FetchResult.Success -> {
-                val events =
+                val listing =
                     htmlFetcher.scrapeListingPages(
                         eventSource,
                         fetchResult.document,
@@ -76,12 +76,13 @@ class MonsterRonsonsWebsiteImporter(
                         { document, _ -> document.nextPageUrl(NEXT_PAGE_SELECTOR) },
                         overviewPageScraper::scrape
                     )
-                logger.info { "Scraped ${events.size} karaoke night(s) from Monster Ronson's listing" }
+                logger.info { "Scraped ${listing.events.size} karaoke night(s) from Monster Ronson's listing" }
 
                 ImportResult.Success(
-                    events = enrichFromNightPages(events),
+                    events = enrichFromNightPages(listing.events),
                     etag = fetchResult.etag,
-                    lastModified = fetchResult.lastModified
+                    lastModified = fetchResult.lastModified,
+                    complete = listing.complete
                 )
             }
         }
