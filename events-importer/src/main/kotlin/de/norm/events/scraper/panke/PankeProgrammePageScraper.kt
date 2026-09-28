@@ -1,6 +1,7 @@
 package de.norm.events.scraper.panke
 
 import de.norm.events.event.EventType
+import de.norm.events.scraper.BERLIN
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
@@ -10,9 +11,13 @@ import de.norm.events.scraper.inferUnmarkedTitleType
 import de.norm.events.scraper.parseIsoDate
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.textAt
+import de.norm.events.scraper.textLines
+import de.norm.events.slug.SlugGenerator
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
+import java.time.Instant
+import java.time.LocalDate
 import java.time.LocalTime
 
 /**
@@ -42,6 +47,7 @@ import java.time.LocalTime
  *
  * Those links also type the event: no category is published, and titles are series names
  * rather than formats, so a billed DJ lineup is the best evidence of a club night. See [eventTypeOf].
+
  *
  * @see PankeWebsiteImporter for the HTTP fetch orchestrator.
  */
@@ -90,7 +96,7 @@ class PankeProgrammePageScraper {
             logger.warn { "Panke article '$postId' has no title, skipping" }
             return null
         }
-        val lineup = residentAdvisorLineup(article)
+        val lineup = withTimetable(residentAdvisorLineup(article), article, eventDate)
         val times = parseTimes(article)
 
         return ScrapedEvent(
@@ -143,6 +149,38 @@ class PankeProgrammePageScraper {
             .distinctBy { it.attr("href").trimEnd('/').lowercase() }
             .mapNotNull { it.text().trim().takeIf(String::isNotEmpty) }
             .map { ScrapedArtist(name = it, role = DJ_ROLE) }
+
+    /**
+     * The linked DJs, each with the set the body's timetable gives them (#2002), matched by slug:
+     * `Timetable<br>23:00-00:00 sixstar<br>…`. A line naming no linked DJ adds nobody, so the one
+     * night seen with a timetable, (c)rave on 29 August, which links no DJ, stores no set time.
+     * The first slot before [NIGHT_ENDS] is already the next day; a slot starting earlier than the
+     * one before has crossed midnight; an end at or before its start is the next day.
+     */
+    private fun withTimetable(
+        lineup: List<ScrapedArtist>,
+        article: Element,
+        eventDate: LocalDate
+    ): List<ScrapedArtist> {
+        val slots = article.select("$BODY_COLUMN p").flatMap { it.textLines() }.mapNotNull { TIMETABLE_LINE.matchEntire(it.trim()) }
+        if (lineup.isEmpty() || slots.isEmpty()) return lineup
+        var day = eventDate
+        var previous = NIGHT_ENDS
+        val sets = mutableMapOf<String, Pair<Instant, Instant?>>()
+        for (slot in slots) {
+            val (startText, endText, name) = slot.destructured
+            val start = parseTime(startText.replace('.', ':').padStart(CLOCK_LENGTH, '0')) ?: continue
+            val end = parseTime(endText.replace('.', ':').padStart(CLOCK_LENGTH, '0'))
+            if (start < previous) day = day.plusDays(1)
+            previous = start
+            val endDay = if (end != null && end <= start) day.plusDays(1) else day
+            sets.putIfAbsent(
+                SlugGenerator.slugify(name.trim()),
+                day.atTime(start).atZone(BERLIN).toInstant() to end?.let { endDay.atTime(it).atZone(BERLIN).toInstant() }
+            )
+        }
+        return lineup.map { act -> sets[SlugGenerator.slugify(act.name)]?.let { act.copy(setStart = it.first, setEnd = it.second) } ?: act }
+    }
 
     /**
      * The event's doors and start.
@@ -217,6 +255,15 @@ private const val DOORS_GROUP = 1
 
 /** [DOORS_AND_CONCERT]'s concert group. */
 private const val CONCERT_GROUP = 2
+
+/** A timetable line, `23:00-00:00 sixstar`: start, end and the name the venue gives the slot. */
+private val TIMETABLE_LINE = Regex("""(\d{1,2}[:.]\d{2})\s*[-–]\s*(\d{1,2}[:.]\d{2})\s+(.+)""")
+
+/** A club night's first slot before this is past midnight already. */
+private val NIGHT_ENDS: LocalTime = LocalTime.of(6, 0)
+
+/** `HH:mm`, what a one-digit hour is padded to before parsing. */
+private const val CLOCK_LENGTH = 5
 
 /** The expanded body's prose column, where the pair is printed; the first column repeats the date. */
 private const val BODY_COLUMN = ".post-content-full .et_pb_column_3_4"
