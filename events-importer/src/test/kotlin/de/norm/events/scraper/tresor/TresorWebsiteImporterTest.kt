@@ -15,6 +15,7 @@ import kotlinx.coroutines.test.runTest
 import org.jsoup.Jsoup
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
 
@@ -92,6 +93,8 @@ class TresorWebsiteImporterTest {
             klubnacht.eventDate shouldBe LocalDate.of(2026, 8, 1)
             klubnacht.artists.map { it.stage }.distinct() shouldBe listOf("Tresor", "Globus")
             klubnacht.genre shouldBe "Techno"
+            // The listing's lineup takes the event page's set times (#2002).
+            klubnacht.artists.first { it.name == "Janina" }.setStart shouldBe Instant.parse("2026-08-01T22:00:00Z")
         }
 
     @Test

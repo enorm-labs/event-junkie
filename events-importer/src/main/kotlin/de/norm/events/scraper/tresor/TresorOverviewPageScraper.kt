@@ -144,7 +144,7 @@ internal fun parseLineup(root: Element): List<ScrapedArtist> =
  * one artist across nights), or credit the collective curating the floor (`hosted by HARD WAX`),
  * a host rather than a performer and already visible in the floor label.
  */
-private fun splitActs(slot: String): List<String> =
+internal fun splitActs(slot: String): List<String> =
     slot
         .split(B2B_SEPARATOR)
         .map(::stripSetFormatNote)
@@ -198,7 +198,7 @@ private val HOST_CREDIT = Regex("""\bhosted\s+by\b""", RegexOption.IGNORE_CASE)
  * per event. A label opening with one of the three real rooms is reduced to that room; anything
  * else stays verbatim, so a genuinely new space still comes through.
  */
-private fun normalizeFloor(label: String): String = FLOORS.firstOrNull { label.startsWith(it, ignoreCase = true) } ?: label
+internal fun normalizeFloor(label: String): String = FLOORS.firstOrNull { label.startsWith(it, ignoreCase = true) } ?: label
 
 /** The venue's three rooms, longest first so `Aurora Bar` is not shadowed by a prefix. */
 private val FLOORS = listOf("Aurora Bar", "Tresor", "Globus")

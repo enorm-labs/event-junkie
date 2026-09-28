@@ -8,6 +8,8 @@ import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
 import de.norm.events.scraper.VenueLimitations
+import de.norm.events.scraper.withSetTimesFrom
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.springframework.stereotype.Component
 
@@ -33,6 +35,7 @@ class TresorWebsiteImporter(
     override val eventSource: EventSource = EventSource.TRESOR
     override val listsWholeProgramme: Boolean = true
 
+    private val logger = KotlinLogging.logger {}
     private val overviewPageScraper = TresorOverviewPageScraper()
     private val detailPageScraper = TresorDetailPageScraper()
 
@@ -48,10 +51,10 @@ class TresorWebsiteImporter(
 
     /**
      * Merges event-page data ([primary]) with listing data ([fallback]). The event page is the only
-     * source of start time and blurb. The **title** keeps the listing's value, because the event
-     * page renders no heading and its document title carries the site name; the lineup prefers the
-     * listing's for the same reason — both pages mark it up identically, and the listing is the one
-     * the venue curates as the programme. The genre is the listing's venue default.
+     * source of start time, blurb and set times. The **title** keeps the listing's value, because
+     * the event page renders no heading and its document title carries the site name; the lineup
+     * prefers the listing's too, as the one the venue curates as the programme, and takes the event
+     * page's set times. The genre is the listing's venue default.
      */
     override fun fillGapsFromOverview(
         primary: ScrapedEvent,
@@ -60,7 +63,10 @@ class TresorWebsiteImporter(
         primary.copy(
             title = fallback.title,
             eventDate = primary.eventDate.takeIf { it != UNRESOLVED_EVENT_DATE } ?: fallback.eventDate,
-            artists = fallback.artists.ifEmpty { primary.artists },
+            artists =
+                fallback.artists.ifEmpty { primary.artists }.withSetTimesFrom(primary.artists) {
+                    logger.warn { "Running-order slot '${it.name}' matches no act on the listing; its set time is dropped" }
+                },
             genre = fallback.genre
         )
 }
