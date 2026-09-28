@@ -16,6 +16,8 @@
     "byType": "Nach Art filtern",
     "byVenue": "Nach Location filtern",
     "byDistrict": "Nach Bezirk filtern",
+    "familiesSelected": "{n} Genres",
+    "clearFamilies": "Genres zurücksetzen",
     "byGenre": "Nach Genre filtern",
     "allSubgenres": "Alle Stile",
     "bySubgenre": "Nach Stil filtern",

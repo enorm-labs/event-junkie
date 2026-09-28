@@ -27,13 +27,14 @@ export function useEventFilters() {
 
   const filters = computed<EventFilterValues>(() => {
     const eventTypes = queryList('eventType')
+    const families = queryList('family')
     return {
       q: queryString('q') || undefined,
       eventType: eventTypes.length ? eventTypes : undefined,
       venue: queryString('venue') || undefined,
       district: queryString('district') || undefined,
       genre: queryString('genre') || undefined,
-      family: queryString('family') || undefined,
+      family: families.length ? families : undefined,
       minPrice: queryString('minPrice') ? Number(queryString('minPrice')) : undefined,
       maxPrice: queryString('maxPrice') ? Number(queryString('maxPrice')) : undefined,
       excludeSoldOut: queryString('excludeSoldOut') === 'true' || undefined,

@@ -1,7 +1,8 @@
 <script setup lang="ts">
 /**
  * The registry's `PopoverContent`, ported by hand: a border instead of its shadow and ring
- * (design rule, #1241), and no enter/exit animation, which needs `tw-animate-css`.
+ * (design rule, #1241), and no enter/exit animation, which needs `tw-animate-css`. It scrolls
+ * within the viewport's free height, so a long list stays reachable on a phone.
  */
 import type { PopoverContentEmits, PopoverContentProps } from 'reka-ui'
 import { computed, type HTMLAttributes } from 'vue'
@@ -37,7 +38,7 @@ const forwarded = useForwardPropsEmits(delegatedProps, emits)
       v-bind="{ ...$attrs, ...forwarded }"
       :class="
         cn(
-          'z-50 flex w-72 max-w-(--reka-popover-content-available-width) origin-(--reka-popover-content-transform-origin) flex-col gap-2.5 rounded-lg border border-border bg-popover p-2.5 text-sm text-popover-foreground outline-hidden',
+          'z-50 flex max-h-(--reka-popover-content-available-height) w-72 max-w-(--reka-popover-content-available-width) origin-(--reka-popover-content-transform-origin) flex-col gap-2.5 overflow-y-auto rounded-lg border border-border bg-popover p-2.5 text-sm text-popover-foreground outline-hidden',
           props.class,
         )
       "
