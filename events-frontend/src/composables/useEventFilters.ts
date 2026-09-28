@@ -18,18 +18,28 @@ export function useEventFilters() {
     return typeof value === 'string' ? value : ''
   }
 
-  const filters = computed<EventFilterValues>(() => ({
-    q: queryString('q') || undefined,
-    eventType: queryString('eventType') || undefined,
-    venue: queryString('venue') || undefined,
-    district: queryString('district') || undefined,
-    genre: queryString('genre') || undefined,
-    family: queryString('family') || undefined,
-    minPrice: queryString('minPrice') ? Number(queryString('minPrice')) : undefined,
-    maxPrice: queryString('maxPrice') ? Number(queryString('maxPrice')) : undefined,
-    excludeSoldOut: queryString('excludeSoldOut') === 'true' || undefined,
-    free: queryString('free') === 'true' || undefined,
-  }))
+  /** Every non-empty value of `key`, whether it appears once or repeated (`?t=a&t=b`). */
+  function queryList(key: string): string[] {
+    const value = route.query[key]
+    const values = Array.isArray(value) ? value : [value]
+    return values.filter((v): v is string => typeof v === 'string' && v !== '')
+  }
+
+  const filters = computed<EventFilterValues>(() => {
+    const eventTypes = queryList('eventType')
+    return {
+      q: queryString('q') || undefined,
+      eventType: eventTypes.length ? eventTypes : undefined,
+      venue: queryString('venue') || undefined,
+      district: queryString('district') || undefined,
+      genre: queryString('genre') || undefined,
+      family: queryString('family') || undefined,
+      minPrice: queryString('minPrice') ? Number(queryString('minPrice')) : undefined,
+      maxPrice: queryString('maxPrice') ? Number(queryString('maxPrice')) : undefined,
+      excludeSoldOut: queryString('excludeSoldOut') === 'true' || undefined,
+      free: queryString('free') === 'true' || undefined,
+    }
+  })
 
   /**
    * The date range, returned separately from {@link filters} so only views that own their dates
@@ -42,13 +52,16 @@ export function useEventFilters() {
   }))
 
   function applyFilters(patch: LocationQueryRaw) {
-    // Any filter change resets to the first page; empty values drop out of the URL.
+    // Any filter change resets to the first page; empty values and lists drop out of the URL.
     const next: LocationQueryRaw = { ...route.query, ...patch, page: undefined }
     for (const key of Object.keys(next)) {
-      if (next[key] === '' || next[key] === undefined) delete next[key]
+      const value = next[key]
+      if (value === '' || value === undefined || (Array.isArray(value) && !value.length)) {
+        delete next[key]
+      }
     }
     router.push({ query: next })
   }
 
-  return { queryString, filters, dateRange, applyFilters }
+  return { queryString, queryList, filters, dateRange, applyFilters }
 }

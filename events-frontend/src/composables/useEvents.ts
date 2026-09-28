@@ -7,7 +7,8 @@ import { useAsync } from './useAsync'
 export interface EventSearchParams {
   from?: string
   to?: string
-  eventType?: string
+  /** Any of these types; sent as a repeated parameter. */
+  eventType?: string[]
   venue?: string
   district?: string
   artist?: string

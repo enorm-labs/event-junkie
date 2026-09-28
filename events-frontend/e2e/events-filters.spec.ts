@@ -55,6 +55,7 @@ function eventPage(
 function eventsResponseFor(sp: URLSearchParams) {
   if (sp.get('q') === 'nothing') return eventPage([])
   if (sp.get('q') === 'jazz') return eventPage(['Jazz Night'])
+  if (sp.getAll('eventType').join() === 'FESTIVAL,PARTY') return eventPage(['Festival Or Party'])
   if (sp.get('eventType') === 'FESTIVAL') return eventPage(['Big Festival'])
   if (sp.get('venue') === 'lido') return eventPage(['Lido Show'])
   if (sp.get('genre') === 'techno') return eventPage(['Techno Rave'])
@@ -133,10 +134,21 @@ test('filters by event type', async ({ page }) => {
   await page.goto('/events')
   await expect(eventHeading(page, 'Default Event A')).toBeVisible()
 
-  await selectWithOption(page, 'All types').selectOption('FESTIVAL')
+  await page.getByRole('button', { name: 'Filter by event type: All types' }).click()
+  await page.getByRole('checkbox', { name: 'Festival' }).check()
 
   await expect(page).toHaveURL(/[?&]eventType=FESTIVAL\b/)
   await expect(eventHeading(page, 'Big Festival')).toBeVisible()
+
+  // A second type widens the list: the BFF receives both, repeated.
+  await page.getByRole('checkbox', { name: 'Party' }).check()
+  await expect(page).toHaveURL(/eventType=FESTIVAL&eventType=PARTY\b/)
+  await expect(eventHeading(page, 'Festival Or Party')).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Filter by event type: 2 types' })).toBeVisible()
+
+  await page.getByRole('button', { name: 'Clear types' }).click()
+  await expect(page).not.toHaveURL(/eventType=/)
+  await expect(eventHeading(page, 'Default Event A')).toBeVisible()
 })
 
 test('filters by venue', async ({ page }) => {
