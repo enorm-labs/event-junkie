@@ -152,7 +152,21 @@ class ColosseumOverviewPageScraperTest {
     @Test
     fun `skips entries without a slug or a resolvable date`() {
         edgeCaseEvents.map { it.title } shouldBe
-            listOf("Abgesagte Lesung", "Ausverkaufter Abend mit Rängen", "Vorverkauf beim Veranstalter", "Eintritt frei")
+            listOf(
+                "Abgesagte Lesung",
+                "Ausverkaufter Abend mit Rängen",
+                "Vorverkauf beim Veranstalter",
+                "Eintritt frei",
+                "DIE REIMANNS SABBELSTUNDE MIT MANU & KONNY"
+            )
+    }
+
+    @Test
+    fun `reads a postponement from the title before cleaning it, where Wix still says scheduled`() {
+        // The live payload of 2026-09-28: Wix `status` 0, the notice only in the title (#2007).
+        val postponed = edgeCaseEvent("colosseum:die-reimanns-sabbelstunde-mit-manu-konny-wird-verschoben")
+        postponed.status shouldBe EventStatus.POSTPONED.name
+        postponed.title shouldBe "DIE REIMANNS SABBELSTUNDE MIT MANU & KONNY"
     }
 
     @Test

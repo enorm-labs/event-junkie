@@ -16,6 +16,8 @@ class EventFieldMappingTest {
         cleanEventTitle("Iggi Kelly Nachholtermin vom 28.04.26-") shouldBe "Iggi Kelly"
         cleanEventTitle("The Dear Hunter -Nachholtermin vom 30.09.2025.") shouldBe "The Dear Hunter"
         cleanEventTitle("Some Show -") shouldBe "Some Show"
+        cleanEventTitle("DIE REIMANNS SABBELSTUNDE MIT MANU & KONNY  WIRD VERSCHOBEN") shouldBe
+            "DIE REIMANNS SABBELSTUNDE MIT MANU & KONNY"
     }
 
     @Test

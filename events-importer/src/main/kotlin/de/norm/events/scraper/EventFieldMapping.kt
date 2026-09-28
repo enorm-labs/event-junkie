@@ -156,8 +156,8 @@ fun stripRelocationPrefix(title: String): String {
 
 /**
  * Trailing noise venues append to a title that must not reach the stored title or a
- * title-derived headliner: a "Nachholtermin vom <date>" / "(verschoben aus <year>)" /
- * "Hochverlegung" note (read as `POSTPONED` from the raw title first); a "-verlegt ins <venue>-"
+ * title-derived headliner: a "Nachholtermin vom <date>" / "(verschoben aus <year>)" / "wird
+ * verschoben" / "Hochverlegung" note (read as `POSTPONED` from the raw title first); a "-verlegt ins <venue>-"
  * or "-ins <venue> verlegt-" suffix (Frannz's spellings of Metropol's prefix; read as `RELOCATED`
  * first), anchored on "ins"/"nach" after the word or on a leading dash before "ins"; a
  * "(ausverkauft)" / "-ausverkauft-" annotation, which would split the act and its twin into two
@@ -166,7 +166,7 @@ fun stripRelocationPrefix(title: String): String {
  */
 private val TITLE_NOISE_PATTERN =
     Regex(
-        """\s+[-–—(]*\s*(?:nachholtermin|hochverlegung|verschoben|verlegt\s+(?:ins|nach))\b.*$""" +
+        """\s+[-–—(]*\s*(?:nachholtermin|hochverlegung|(?:wird\s+)?verschoben|verlegt\s+(?:ins|nach))\b.*$""" +
             """|\s+[-–—(]+\s*ins?\s+\S.*?\s+verlegt!?\s*[-–—)]*\s*$""" +
             """|\s+[-–—(]*\s*ausverkauft!?\s*[-–—)]?\s*$""" +
             """|\s+[-–—]\s*$""",
