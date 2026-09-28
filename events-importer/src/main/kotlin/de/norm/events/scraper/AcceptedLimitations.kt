@@ -81,6 +81,7 @@ import de.norm.events.scraper.wildatheart.WILD_AT_HEART_LIMITATIONS
 import de.norm.events.scraper.wuhlheide.WUHLHEIDE_LIMITATIONS
 import de.norm.events.scraper.zenner.ZENNER_LIMITATIONS
 import de.norm.events.scraper.zitadelle.ZITADELLE_LIMITATIONS
+import de.norm.events.scraper.zurklappe.ZUR_KLAPPE_LIMITATIONS
 
 /**
  * Every venue's [VenueLimitations] in one place, and the lookups the data-quality audit runs (#715).
@@ -172,7 +173,8 @@ object AcceptedLimitations {
             WILD_AT_HEART_LIMITATIONS,
             WUHLHEIDE_LIMITATIONS,
             ZENNER_LIMITATIONS,
-            ZITADELLE_LIMITATIONS
+            ZITADELLE_LIMITATIONS,
+            ZUR_KLAPPE_LIMITATIONS
         )
 
     /** What [source] does not publish. Empty for a source with nothing to declare. */

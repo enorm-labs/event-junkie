@@ -274,7 +274,10 @@ enum class EventSource {
     ZENNER,
 
     /** Zitadelle Spandau – the Renaissance fortress whose courtyard hosts the Citadel Music Festival, an open-air concert series each summer. */
-    ZITADELLE;
+    ZITADELLE,
+
+    /** Zur Klappe Berlin – a one-room club in a former public toilet at Yorckstraße and Mehringdamm in Kreuzberg. */
+    ZUR_KLAPPE;
 
     /**
      * Prefix for `sourceId` values, the enum name in lowercase (`"cassiopeia:some-event-slug"`).
