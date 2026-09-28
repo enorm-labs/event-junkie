@@ -164,7 +164,8 @@ WHERE e.source_id = 'fixture-multi-bill';
 INSERT INTO events.event_genre_tag (event_id, genre_tag_id)
 SELECT e.id, g.id FROM events.event e, events.genre_tag g WHERE e.source_id = 'fixture-multi-bill' AND g.slug = 'jazz';
 
--- A festival: three days by the venue's own word (ADR-029), three artists on two stages, a promoter.
+-- A festival: three days by the venue's own word (ADR-029), three artists on two stages, a promoter. The running order
+-- (#2002) gives one set a start and an end past midnight, one a start alone, and leaves the third without.
 INSERT INTO events.event (venue_id, title, subtitle, description, description_language, event_type, slug, event_date, doors_time, start_time,
                           end_date, end_time, source_url, source_id, ticket_url, genre, price_presale, price_box_office)
 SELECT v.id, 'Sommerlaune Festival', 'Drei Tage, zwei Bühnen', 'Das Festival im Garten des Kesselhauses. Camping auf der Wiese.', 'de', 'FESTIVAL',
@@ -173,12 +174,15 @@ SELECT v.id, 'Sommerlaune Festival', 'Drei Tage, zwei Bühnen', 'Das Festival im
        'Techno', 89.00, 110.00
 FROM events.venue v WHERE v.slug = 'kesselhaus-nord';
 
-INSERT INTO events.event_artist (event_id, artist_id, role, billing_order, stage)
-SELECT e.id, a.id, r.role, r.billing_order, r.stage
+INSERT INTO events.event_artist (event_id, artist_id, role, billing_order, stage, set_start, set_end)
+SELECT e.id, a.id, r.role, r.billing_order, r.stage,
+       (e.event_date + r.starts_after)::timestamp AT TIME ZONE 'Europe/Berlin',
+       (e.event_date + r.ends_after)::timestamp AT TIME ZONE 'Europe/Berlin'
 FROM events.event e
-         CROSS JOIN (VALUES ('dj-uberdruck', 'HEADLINER', 0, 'Hauptbühne'),
-                            ('dj-nachtfalter', 'DJ', 1, 'Garten'),
-                            ('rauhfaser', 'SUPPORT', 2, 'Hauptbühne')) AS r(slug, role, billing_order, stage)
+         CROSS JOIN (VALUES ('dj-uberdruck', 'HEADLINER', 0, 'Hauptbühne', INTERVAL '22 hours', INTERVAL '26 hours'),
+                            ('dj-nachtfalter', 'DJ', 1, 'Garten', INTERVAL '18 hours', NULL::interval),
+                            ('rauhfaser', 'SUPPORT', 2, 'Hauptbühne', NULL::interval, NULL::interval))
+    AS r(slug, role, billing_order, stage, starts_after, ends_after)
          JOIN events.artist a ON a.slug = r.slug
 WHERE e.source_id = 'fixture-festival';
 

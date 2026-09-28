@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.media.Schema
 import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.LocalTime
+import java.time.OffsetDateTime
 
 /**
  * Compact event representation for list, calendar, and "today" responses.
@@ -327,7 +328,9 @@ data class EventDetailResponse(
 }
 
 /**
- * A single entry in an event's lineup: the artist plus their role and billing position.
+ * A single entry in an event's lineup: the artist plus their role and billing position, and the
+ * set's times where the venue publishes a running order. The times carry Berlin's offset, so the
+ * clock time a visitor reads is the one the venue printed.
  */
 @Schema(description = "An artist's participation in an event lineup")
 data class LineupEntryResponse(
@@ -338,5 +341,9 @@ data class LineupEntryResponse(
     @Schema(description = "Position in the lineup — lower numbers appear first", example = "0")
     val billingOrder: Int,
     @Schema(description = "Room / stage the artist plays (multi-room venues), or null", example = "Panorama Bar")
-    val stage: String? = null
+    val stage: String? = null,
+    @Schema(description = "Start of the set in Berlin time, from the venue's running order, or null", example = "2026-09-26T23:59:00+02:00")
+    val setStart: OffsetDateTime? = null,
+    @Schema(description = "End of the set in Berlin time, or null", example = "2026-09-27T04:30:00+02:00")
+    val setEnd: OffsetDateTime? = null
 )

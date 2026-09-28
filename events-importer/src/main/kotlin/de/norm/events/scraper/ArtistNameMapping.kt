@@ -116,14 +116,14 @@ private val BARE_ROLE_LABEL =
     Regex("""^(?:div\.?\s*supports?|special\s+guests?|supports?|openers?|feat\.?|featuring|w/)\s*:?\s*$""", RegexOption.IGNORE_CASE)
 
 /**
- * Curated event-segment labels, an aftershow/afterparty/warm-up slot listed in the lineup, with
+ * Curated event-segment labels, an aftershow/afterparty/warm-up/event-start slot listed in the lineup, with
  * any leading qualifier (`ACID AFTERSHOW`, `TECHNO AFTERPARTY`) and the `aftershow`/`after
  * show`/`after-show` spellings. Matched fully anchored by [isEventSegmentLabel], so the band
  * `"AFTERHOURS"` and the venue's `"Warm Up im Franken"` are kept. Curated because flat lineup
  * text carries no structural signal; add families as they appear.
  */
 private val EVENT_SEGMENT_PATTERN =
-    Regex("""(?:\S+ )*after[ -]?show(?: party)?|(?:\S+ )*after[ -]?party|warm[ -]?up""", RegexOption.IGNORE_CASE)
+    Regex("""(?:\S+ )*after[ -]?show(?: party)?|(?:\S+ )*after[ -]?party|warm[ -]?up|event[ -]?start""", RegexOption.IGNORE_CASE)
 
 /**
  * Whether the whole trimmed, whitespace-collapsed [name] is an [EVENT_SEGMENT_PATTERN] label.

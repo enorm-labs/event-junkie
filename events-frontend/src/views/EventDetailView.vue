@@ -13,6 +13,7 @@ import { useStructuredData } from '@/composables/useStructuredData'
 import { breadcrumbJsonLd, eventJsonLd, type JsonLd } from '@/lib/structuredData'
 import type { Locale } from '@/i18n/locales'
 import { formatPrice, isPastEvent, isRunningEvent } from '@/lib/format'
+import { runningOrder, type RunningOrderSet } from '@/lib/runningOrder'
 import { CARD_LIST_CLASS, cn } from '@/lib/utils'
 import { useFormat } from '@/composables/useFormat'
 import { useLocalePath } from '@/composables/useLocalePath'
@@ -34,6 +35,16 @@ const lineup = computed(() =>
  * all-DJ night keeps its tags: `DJ` says the acts play records, not live.
  */
 const showRoles = computed(() => lineup.value.some((entry) => entry.role !== 'HEADLINER'))
+
+// Floors and set times where the venue published a running order (#2002); null for the rest.
+const floors = computed(() => runningOrder(lineup.value))
+
+/** `Sun 08:30–12:30`: the weekday only where a new night begins, the end only where it is known. */
+function setTimeLabel(set: RunningOrderSet): string {
+  const day = set.opensNight ? `${formatWeekday(set.opensNight)} ` : ''
+  const span = set.start ? `${set.start}${set.end ? `–${set.end}` : ''}` : ''
+  return `${day}${span}`
+}
 
 /**
  * Whether the headliners print larger than the rest, as on a festival poster. Only a lineup that
@@ -232,7 +243,43 @@ useStructuredData((): JsonLd[] => {
         {{ t('events.detail.descriptionElsewhere') }}
       </p>
 
-      <section v-if="lineup.length" class="space-y-3">
+      <section v-if="floors" class="space-y-3">
+        <SectionLabel>{{ t('events.detail.runningOrder') }}</SectionLabel>
+        <div v-for="floor in floors" :key="floor.stage ?? ''" class="space-y-1">
+          <h3 v-if="floor.stage" class="pt-2 text-body font-medium text-muted-foreground">
+            {{ floor.stage }}
+          </h3>
+          <ul :class="CARD_LIST_CLASS">
+            <li
+              v-for="set in floor.sets"
+              :key="set.entry.artist?.slug ?? set.entry.artist?.name"
+              class="flex items-baseline gap-3 py-3"
+            >
+              <span class="w-28 shrink-0 text-meta text-muted-foreground tabular-nums">
+                {{ setTimeLabel(set) }}
+              </span>
+              <RouterLink
+                v-if="set.entry.artist?.slug"
+                :to="localePath(`/artists/${set.entry.artist.slug}`)"
+                class="min-w-0 flex-1 text-card-title font-medium hover:text-primary"
+              >
+                {{ set.entry.artist.name }}
+              </RouterLink>
+              <span v-else class="min-w-0 flex-1 text-card-title font-medium">
+                {{ set.entry.artist?.name }}
+              </span>
+              <span
+                v-if="showRoles && set.entry.role"
+                class="shrink-0 text-meta text-muted-foreground"
+              >
+                {{ enumLabel('events.role', set.entry.role) }}
+              </span>
+            </li>
+          </ul>
+        </div>
+      </section>
+
+      <section v-else-if="lineup.length" class="space-y-3">
         <SectionLabel>{{ t('events.detail.lineup') }}</SectionLabel>
         <ul :class="CARD_LIST_CLASS">
           <li

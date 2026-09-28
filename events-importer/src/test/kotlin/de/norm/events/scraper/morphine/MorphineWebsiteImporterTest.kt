@@ -17,6 +17,7 @@ import org.jsoup.Jsoup
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.math.BigDecimal
+import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
 
@@ -122,8 +123,8 @@ class MorphineWebsiteImporterTest {
             birds.pricePresale shouldBe BigDecimal("15")
             birds.artists shouldBe
                 listOf(
-                    ScrapedArtist("ALL ABOUT BIRDS", "HEADLINER", titleDerived = true),
-                    ScrapedArtist("JON ROSE", "HEADLINER", titleDerived = true)
+                    ScrapedArtist("ALL ABOUT BIRDS", "HEADLINER", titleDerived = true, setStart = Instant.parse("2026-09-18T18:00:00Z")),
+                    ScrapedArtist("JON ROSE", "HEADLINER", titleDerived = true, setStart = Instant.parse("2026-09-18T18:00:00Z"))
                 )
         }
 

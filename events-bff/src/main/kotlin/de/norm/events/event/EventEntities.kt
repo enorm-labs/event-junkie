@@ -65,7 +65,11 @@ data class EventArtistEntity(
     val role: String = "HEADLINER",
     val billingOrder: Int = 0,
     /** Room / stage the artist plays at this event (e.g. "Panorama Bar"). Null for single-room venues. */
-    val stage: String? = null
+    val stage: String? = null,
+    /** When the act's set starts, where the venue publishes a running order. */
+    val setStart: Instant? = null,
+    /** When the act's set ends. */
+    val setEnd: Instant? = null
 )
 
 /**

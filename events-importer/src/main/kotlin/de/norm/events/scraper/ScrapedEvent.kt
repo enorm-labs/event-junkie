@@ -13,6 +13,7 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import io.github.oshai.kotlinlogging.Level
 import java.math.BigDecimal
 import java.time.Clock
+import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
@@ -287,7 +288,11 @@ data class ScrapedArtist(
      * Provenance, not a verdict: a touring act on its first Berlin date is title-derived and real
      * (#1145).
      */
-    val titleDerived: Boolean = false
+    val titleDerived: Boolean = false,
+    /** When the set starts, from the venue's running order (#2002). Null where none is published. */
+    val setStart: Instant? = null,
+    /** When the set ends. Null where the running order gives only starts, or none at all. */
+    val setEnd: Instant? = null
 ) {
     /**
      * Converts this scraped artist into an [EventArtistEntity], parsing [role] with
@@ -306,6 +311,8 @@ data class ScrapedArtist(
             role = ArtistRole.parseOrDefault(role).name,
             billingOrder = billingOrder,
             stage = stage,
-            titleDerived = titleDerived
+            titleDerived = titleDerived,
+            setStart = setStart,
+            setEnd = setEnd
         )
 }

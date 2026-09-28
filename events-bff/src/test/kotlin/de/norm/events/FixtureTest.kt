@@ -94,6 +94,17 @@ class FixtureTest : BaseControllerTest() {
                 .value<List<*>> { assert(it.size == 2) }
                 .jsonPath("$.lineup[?(@.stage == 'Garten')]")
                 .value<List<*>> { assert(it.size == 1) }
+                // The running order in Berlin time: a set past midnight, a start alone, and none (#2002).
+                .jsonPath("$.lineup[0].setStart")
+                .value<String> { assert(it.startsWith("${today.plusDays(10)}T22:00:00+0")) }
+                .jsonPath("$.lineup[0].setEnd")
+                .value<String> { assert(it.startsWith("${today.plusDays(11)}T02:00:00+0")) }
+                .jsonPath("$.lineup[1].setStart")
+                .value<String> { assert(it.startsWith("${today.plusDays(10)}T18:00:00+0")) }
+                .jsonPath("$.lineup[1].setEnd")
+                .doesNotExist()
+                .jsonPath("$.lineup[2].setStart")
+                .doesNotExist()
                 .jsonPath("$.promoters[0].slug")
                 .isEqualTo("sommerlaune-festival")
             // On the calendar it is present on its middle day, which is not its event_date.

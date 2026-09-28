@@ -149,6 +149,10 @@ async function mockBff(page: Page): Promise<void> {
           artist: { slug: 'mock-artist', name: 'Mock Artist' },
           role: 'HEADLINER',
           billingOrder: 1,
+          // A running order, so the sweep reaches its floor headings and time column (#2002).
+          stage: 'Main Floor',
+          setStart: '2026-08-15T21:00:00+02:00',
+          setEnd: '2026-08-15T23:00:00+02:00',
         },
       ],
       promoters: [{ slug: 'mock-promoter', name: 'Mock Promoter' }],
