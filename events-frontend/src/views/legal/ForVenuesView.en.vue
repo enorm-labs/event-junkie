@@ -107,10 +107,12 @@ const localePath = useLocalePath()
       <h2>If something is merely wrong</h2>
       <p>
         For a wrong start time, a moved show or an event that is no longer happening, the route is
-        shorter. Write to us, or report it publicly on
+        shorter. Correct it on your own page: we read every venue once a day, and the next read
+        picks up the change. If we still show it wrong after that, write to us or report it publicly
+        on
         <a href="https://github.com/enorm-labs/event-junkie/issues" rel="noopener" target="_blank">
           GitHub</a
-        >. Either is faster than our next read.
+        >.
       </p>
     </section>
 
