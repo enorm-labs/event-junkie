@@ -8,6 +8,7 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldEndWith
 import org.jsoup.Jsoup
 import org.junit.jupiter.api.Test
+import java.time.Instant
 import java.time.LocalDate
 
 /**
@@ -66,6 +67,21 @@ class HeidegluehenWeekPageScraperTest {
         lineup.artists.none { it.name.contains(":") } shouldBe true
         // "Finale b2b" closes the running order and is not a billed act.
         lineup.artists.none { it.name.contains("Finale") } shouldBe true
+    }
+
+    @Test
+    fun `times every billed DJ from the running order, from Saturday noon into Sunday night`() {
+        val sets = scrape("mit-lineup")!!.artists.associate { it.name to (it.setStart to it.setEnd) }
+
+        sets.values.none { it.first == null } shouldBe true
+        sets.getValue("Forsberg") shouldBe (Instant.parse("2026-06-06T10:00:00Z") to Instant.parse("2026-06-06T14:00:00Z"))
+        // "22:00-01:00" ends on Sunday, and "01:00-04:00" after it starts there.
+        sets.getValue("Roman Flügel") shouldBe (Instant.parse("2026-06-06T20:00:00Z") to Instant.parse("2026-06-06T23:00:00Z"))
+        sets.getValue("Isaac Carter") shouldBe (Instant.parse("2026-06-06T23:00:00Z") to Instant.parse("2026-06-07T02:00:00Z"))
+        // The second "12:00" is Sunday's; a name wrapped over two source lines still matches its billing.
+        sets.getValue("Shonky").first shouldBe Instant.parse("2026-06-07T10:00:00Z")
+        sets.getValue("Marcel Dettmann") shouldBe (Instant.parse("2026-06-07T16:00:00Z") to Instant.parse("2026-06-07T19:00:00Z"))
+        sets.getValue("Violetta & Lucas Depta").first shouldBe Instant.parse("2026-06-07T06:00:00Z")
     }
 
     @Test
