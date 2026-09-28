@@ -130,7 +130,7 @@ def main():
                 continue
             planned.append((name, slug, row))
 
-    for _name, slug, row in planned:
+    for name, slug, row in planned:
         print(f"  {row['description_licence']:<11} {row['image_licence']:<11} {slug:<28} {name}")
     print()
     for name, why in skipped:
