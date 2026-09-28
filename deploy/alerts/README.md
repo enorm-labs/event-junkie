@@ -38,12 +38,13 @@ sum(rate(otelcol_exporter_send_failed_metric_points_total[5m]))
 
 `--check` returned `NO DATA` for it while both halves were healthy. A collector only exports `enqueue_failed` once something has failed to enqueue, so after a
 restart the series does not exist — and **a binary operation with an empty side yields an empty result, not the other side's value**. The rule was therefore
-un-fireable during exactly the normal operation it was meant to watch, and nothing in the UI would have said so. It is now two rules, each on a series that is
-always present: `otelcol_receiver_refused_metric_points` and the queue gauges.
+un-fireable during exactly the normal operation it was meant to watch, and nothing in the UI would have said so. It is now two rules, each on one series, never a sum across an
+absent side.
 
-**The same trap came back with collector 0.158** (#1964). Its counters no longer carry `_total`, and `send_failed` now appears only after a failure, like
-`enqueue_failed`. `ej-ingest-shedding` watched `send_failed…_total`, a name that no longer existed, so it could not fire. `--check` reports such a rule as
-`NO DATA`, which is why that verdict is a finding and not a quiet day.
+**Since collector 0.158 `send_failed` is a failure-only series too** (#1964): no `_total`, and no series until the first failure. `ej-ingest-shedding`
+therefore reports `NO DATA` on a healthy cluster, like `ej-translations-failing`, and is attached to `otelcol_exporter_queue_size`, which always exists. A
+staging drill proved it is the right counter: with the collector cut off from OpenObserve for 10 minutes, 9973 points were dropped through `send_failed`,
+the queue reached 10% and `receiver_refused` stayed 0.
 
 ## What `--diff` answers that `--check` cannot
 
