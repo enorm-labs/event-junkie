@@ -40,6 +40,7 @@ class AdmiralspalastWebsiteImporter(
     private val logger = KotlinLogging.logger {}
 
     override val eventSource: EventSource = EventSource.ADMIRALSPALAST
+    override val listsWholeProgramme: Boolean = true
 
     private val listingPageScraper = AdmiralspalastListingPageScraper()
     private val detailPageScraper = AdmiralspalastDetailPageScraper()

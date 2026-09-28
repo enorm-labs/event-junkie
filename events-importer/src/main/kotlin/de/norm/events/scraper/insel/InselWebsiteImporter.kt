@@ -37,6 +37,7 @@ class InselWebsiteImporter(
     private val logger = KotlinLogging.logger {}
 
     override val eventSource: EventSource = EventSource.INSEL
+    override val listsWholeProgramme: Boolean = true
 
     private val apiScraper = InselApiScraper()
 

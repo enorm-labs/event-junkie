@@ -31,6 +31,7 @@ class MikropolWebsiteImporter(
     htmlFetcher: HtmlFetcher
 ) : AbstractTwoPageWebsiteImporter(htmlFetcher) {
     override val eventSource: EventSource = EventSource.MIKROPOL
+    override val listsWholeProgramme: Boolean = true
 
     private val overviewPageScraper = MikropolOverviewPageScraper()
     private val detailPageScraper = MikropolDetailPageScraper()

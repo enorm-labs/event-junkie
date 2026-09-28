@@ -55,6 +55,7 @@ class JunctionBarWebsiteImporter(
     private val logger = KotlinLogging.logger {}
 
     override val eventSource: EventSource = EventSource.JUNCTION_BAR
+    override val listsWholeProgramme: Boolean = true
 
     private val musicOverviewPageScraper = JunctionBarMusicOverviewPageScraper()
     private val djOverviewPageScraper = JunctionBarDjOverviewPageScraper(clock)

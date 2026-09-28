@@ -27,6 +27,7 @@ class BinuuWebsiteImporter(
     htmlFetcher: HtmlFetcher
 ) : AbstractTwoPageWebsiteImporter(htmlFetcher) {
     override val eventSource: EventSource = EventSource.BINUU
+    override val listsWholeProgramme: Boolean = true
 
     private val overviewPageScraper = BinuuOverviewPageScraper()
     private val detailPageScraper = BinuuDetailPageScraper()
