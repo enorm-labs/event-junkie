@@ -16,6 +16,8 @@
     "byType": "Filter by event type",
     "byVenue": "Filter by venue",
     "byDistrict": "Filter by district",
+    "familiesSelected": "{n} genres",
+    "clearFamilies": "Clear genres",
     "byGenre": "Filter by genre",
     "allSubgenres": "All styles",
     "bySubgenre": "Filter by style",

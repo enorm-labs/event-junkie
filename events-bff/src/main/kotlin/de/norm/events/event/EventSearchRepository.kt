@@ -37,7 +37,8 @@ data class EventFilter(
     val artistSlug: String? = null,
     val promoterSlug: String? = null,
     val genreSlug: String? = null,
-    val familySlug: String? = null,
+    /** Any of these families; empty imposes no constraint. [EventFilterParams] normalizes them. */
+    val familySlugs: List<String> = emptyList(),
     val minPrice: BigDecimal? = null,
     val maxPrice: BigDecimal? = null,
     val query: String? = null,
@@ -242,9 +243,9 @@ class EventSearchRepository(
         }
         // The family lives on the tag, so this is the genre EXISTS testing `family` in place of `slug`.
         // Beside `genre=` it narrows, never widens.
-        filter.familySlug?.takeIf { it.isNotBlank() }?.let {
-            conditions += Association.GENRE.existsClause(column = "family", param = "familySlug")
-            params["familySlug"] = it.trim()
+        if (filter.familySlugs.isNotEmpty()) {
+            conditions += Association.GENRE.existsClause(column = "family", param = "familySlugs")
+            params["familySlugs"] = filter.familySlugs
         }
     }
 
@@ -310,14 +311,17 @@ class EventSearchRepository(
         PROMOTER("event_promoter", "ep", "promoter_id", "promoter", "p", "promoterSlug")
         ;
 
-        /** Membership test on the referenced entity's [column] — `slug` unless a caller says otherwise. */
+        /**
+         * Membership test on the referenced entity's [column] — `slug` unless a caller says otherwise.
+         * `IN` takes a single bound value or a list.
+         */
         fun existsClause(
             column: String = "slug",
             param: String = this.param
         ): String =
             "EXISTS (SELECT 1 FROM $EVENTS_SCHEMA.$joinTable $joinAlias " +
                 "JOIN $EVENTS_SCHEMA.$refTable $refAlias ON $refAlias.id = $joinAlias.$foreignKey " +
-                "WHERE $joinAlias.event_id = e.id AND $refAlias.$column = :$param)"
+                "WHERE $joinAlias.event_id = e.id AND $refAlias.$column IN (:$param))"
     }
 
     companion object {

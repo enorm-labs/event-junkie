@@ -14,7 +14,8 @@ export interface EventSearchParams {
   artist?: string
   promoter?: string
   genre?: string
-  family?: string
+  /** Any of these genre families; sent as a repeated parameter. */
+  family?: string[]
   minPrice?: number
   maxPrice?: number
   q?: string

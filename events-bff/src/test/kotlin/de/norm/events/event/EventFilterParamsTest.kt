@@ -17,4 +17,13 @@ class EventFilterParamsTest {
     fun `no event type imposes no constraint`() {
         EventFilterParams().toFilter().eventTypes shouldBe emptyList()
     }
+
+    @Test
+    fun `two orders of the same families are one filter`() {
+        val first = EventFilterParams(family = listOf("hip-hop", " electronic", "hip-hop", "")).toFilter()
+        val second = EventFilterParams(family = listOf("electronic", "hip-hop")).toFilter()
+
+        first.familySlugs shouldBe listOf("electronic", "hip-hop")
+        first shouldBe second
+    }
 }

@@ -28,8 +28,10 @@ data class EventFilterParams(
     val promoter: String? = null,
     @field:Parameter(description = "Genre tag slug filter — only events tagged with the matching genre.")
     val genre: String? = null,
-    @field:Parameter(description = "Genre family slug filter (e.g. electronic) — only events tagged with a genre in that family.")
-    val family: String? = null,
+    @field:Parameter(
+        description = "Genre family slug filter (e.g. electronic). Repeatable: an event tagged with a genre in any given family matches."
+    )
+    val family: List<String>? = null,
     @field:Parameter(description = "Minimum presale price (inclusive). Excludes events with an unknown (null) price.")
     val minPrice: BigDecimal? = null,
     @field:Parameter(description = "Maximum presale price (inclusive). Excludes events with an unknown (null) price.")
@@ -55,7 +57,7 @@ data class EventFilterParams(
             artistSlug = artist,
             promoterSlug = promoter,
             genreSlug = genre,
-            familySlug = family,
+            familySlugs = family.orEmpty().normalizedSlugs(),
             minPrice = minPrice,
             maxPrice = maxPrice,
             query = q,
@@ -68,4 +70,7 @@ data class EventFilterParams(
  * Trimmed, upper-cased, de-duplicated and sorted, so two orders of the same types are one
  * [EventFilter] and share a response-cache entry.
  */
-private fun List<String>.normalizedEventTypes(): List<String> = map { it.trim().uppercase() }.filter { it.isNotEmpty() }.distinct().sorted()
+private fun List<String>.normalizedEventTypes(): List<String> = map { it.uppercase() }.normalizedSlugs()
+
+/** Trimmed, de-duplicated and sorted, for the same cache-key reason as [normalizedEventTypes]. */
+private fun List<String>.normalizedSlugs(): List<String> = map { it.trim() }.filter { it.isNotEmpty() }.distinct().sorted()

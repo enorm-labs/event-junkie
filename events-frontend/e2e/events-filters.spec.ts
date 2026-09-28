@@ -59,6 +59,8 @@ function eventsResponseFor(sp: URLSearchParams) {
   if (sp.get('eventType') === 'FESTIVAL') return eventPage(['Big Festival'])
   if (sp.get('venue') === 'lido') return eventPage(['Lido Show'])
   if (sp.get('genre') === 'techno') return eventPage(['Techno Rave'])
+  if (sp.getAll('family').join() === 'electronic,jazz-blues')
+    return eventPage(['Electronic Or Jazz'])
   if (sp.get('family') === 'electronic') return eventPage(['Electronic Night'])
   if (sp.get('district') === 'neukoelln') return eventPage(['Neukölln Night'])
   if (sp.get('excludeSoldOut') === 'true') return eventPage(['Available Only'])
@@ -167,7 +169,9 @@ test('filters by genre family, then by a style inside it', async ({ page }) => {
   // No family chosen: the style select does not exist yet.
   await expect(selectWithOption(page, 'All styles')).toHaveCount(0)
 
-  await selectWithOption(page, 'All genres').selectOption('electronic')
+  await page.getByRole('button', { name: 'Filter by genre: All genres' }).click()
+  await page.getByRole('checkbox', { name: 'Electronic' }).check()
+  await page.keyboard.press('Escape')
 
   await expect(page).toHaveURL(/[?&]family=electronic\b/)
   await expect(eventHeading(page, 'Electronic Night')).toBeVisible()
@@ -180,19 +184,33 @@ test('filters by genre family, then by a style inside it', async ({ page }) => {
   await expect(page).toHaveURL(/[?&]genre=techno\b/)
   await expect(eventHeading(page, 'Techno Rave')).toBeVisible()
 
-  // A new family drops the style, which belonged to the old one.
-  await selectWithOption(page, 'All genres').selectOption('jazz-blues')
-  await expect(page).toHaveURL(/[?&]family=jazz-blues\b/)
+  // A second family drops the style, and styles are offered for one family only.
+  await page.getByRole('button', { name: 'Filter by genre: Electronic' }).click()
+  await page.getByRole('checkbox', { name: 'Jazz & Blues' }).check()
+  await expect(page).toHaveURL(/family=electronic&family=jazz-blues\b/)
   await expect(page).not.toHaveURL(/[?&]genre=/)
+  await expect(eventHeading(page, 'Electronic Or Jazz')).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Filter by genre: 2 genres' })).toBeVisible()
+  await expect(selectWithOption(page, 'All styles')).toHaveCount(0)
+
+  // Back to one family: its styles return.
+  await page.getByRole('checkbox', { name: 'Electronic' }).uncheck()
+  await expect(page).toHaveURL(/[?&]family=jazz-blues\b/)
+  await expect(page).not.toHaveURL(/family=electronic/)
+  await page.keyboard.press('Escape')
+  await expect(selectWithOption(page, 'All styles').getByRole('option')).toHaveText([
+    'All styles',
+    'Jazz',
+  ])
 })
 
-test('a link from before families carries only genre, and both selects still show it', async ({
+test('a link from before families carries only genre, and both controls still show it', async ({
   page,
 }) => {
   await page.goto('/events?genre=techno')
   await expect(eventHeading(page, 'Techno Rave')).toBeVisible()
 
-  await expect(selectWithOption(page, 'All genres')).toHaveValue('electronic')
+  await expect(page.getByRole('button', { name: 'Filter by genre: Electronic' })).toBeVisible()
   await expect(selectWithOption(page, 'All styles')).toHaveValue('techno')
 })
 

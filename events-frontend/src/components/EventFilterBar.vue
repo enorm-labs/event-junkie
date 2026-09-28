@@ -10,20 +10,21 @@ import { useRoute } from 'vue-router'
 import { Button } from '@/components/ui/button'
 import BaseInput from '@/components/BaseInput.vue'
 import BaseSelect from '@/components/BaseSelect.vue'
-import EventTypeFilter from '@/components/EventTypeFilter.vue'
+import MultiSelectFilter, { type FilterOption } from '@/components/MultiSelectFilter.vue'
 import { useEventFilters } from '@/composables/useEventFilters'
 import { useGenres } from '@/composables/useGenres'
 import { useAllVenues } from '@/composables/useVenues'
 import { DATE_PRESETS, type DateRange } from '@/lib/dateRanges'
 import { DISTRICTS } from '@/lib/districts'
 import { GENRE_FAMILIES } from '@/lib/genreFamilies'
+import { useFormat } from '@/composables/useFormat'
 import { useI18n } from 'vue-i18n'
 import { PANEL_CLASS } from '@/lib/utils'
 
 withDefaults(defineProps<{ showDateRange?: boolean }>(), { showDateRange: true })
 
 const route = useRoute()
-const { queryString, applyFilters } = useEventFilters()
+const { queryString, queryList, applyFilters } = useEventFilters()
 
 /**
  * Opens the browser's calendar on a click anywhere in the field; Chrome otherwise opens it from
@@ -59,29 +60,58 @@ const venues = useAllVenues()
 const SELECT_ROW_CLASS = 'grid w-full grid-cols-2 gap-3 sm:flex sm:w-auto sm:flex-wrap'
 const SELECT_CLASS = 'w-full min-w-0 truncate sm:w-auto'
 
+const EVENT_TYPES = [
+  'CONCERT',
+  'FESTIVAL',
+  'PARTY',
+  'QUIZ',
+  'SHOW',
+  'SCREENING',
+  'EXHIBITION',
+  'READING',
+  'OTHER',
+]
+
+const { t } = useI18n()
+const { formatEventType } = useFormat()
+
+const typeOptions = computed<FilterOption[]>(() =>
+  EVENT_TYPES.map((type) => ({ value: type, label: formatEventType(type) })),
+)
+const familyOptions = computed<FilterOption[]>(() =>
+  GENRE_FAMILIES.map((family) => ({
+    value: family,
+    label: t(`events.filters.families.${family}`),
+  })),
+)
+
 /**
- * The family the bar shows as chosen: the URL's, or, for a link from before families existed
+ * The families the bar shows as chosen: the URL's, or, for a link from before families existed
  * carrying only `genre=`, the family of that style.
  */
-const activeFamily = computed(() => {
-  const family = queryString('family')
-  if (family) return family
+const activeFamilies = computed(() => {
+  const families = queryList('family')
+  if (families.length) return families
   const genre = queryString('genre')
-  return (genres.data.value ?? []).find((tag) => tag.slug === genre)?.family ?? ''
+  const family = (genres.data.value ?? []).find((tag) => tag.slug === genre)?.family
+  return family ? [family] : []
 })
 
 /**
- * The styles inside the chosen family, the second level of the genre filter (#363). Empty when
- * no family is chosen; a tag without a family is offered nowhere.
+ * The styles inside the chosen family, the second level of the genre filter (#363). Offered only
+ * for exactly one family: a style across several has no clear reading (#1996). A tag without a
+ * family is offered nowhere.
  */
-const stylesInFamily = computed(() => {
-  if (!activeFamily.value) return []
-  return (genres.data.value ?? []).filter((tag) => tag.family === activeFamily.value)
-})
+const soleFamily = computed(() =>
+  activeFamilies.value.length === 1 ? activeFamilies.value[0] : undefined,
+)
+const stylesInFamily = computed(() =>
+  (genres.data.value ?? []).filter((tag) => tag.family === soleFamily.value),
+)
 
-/** A new family invalidates the style, which is the one filter that depends on another. */
-function applyFamily(family: string) {
-  applyFilters({ family, genre: '' })
+/** Any family change invalidates the style, which is the one filter that depends on another. */
+function applyFamilies(families: string[]) {
+  applyFilters({ family: families, genre: '' })
 }
 
 // Drafts are seeded from the URL and re-synced whenever it changes elsewhere.
@@ -107,8 +137,6 @@ onMounted(() => {
   genres.run()
   venues.run()
 })
-
-const { t } = useI18n()
 </script>
 
 <template>
@@ -168,28 +196,36 @@ const { t } = useI18n()
       zero, so it stays with the price range.
     -->
     <div :class="SELECT_ROW_CLASS">
-      <EventTypeFilter :class="SELECT_CLASS" />
+      <MultiSelectFilter
+        :all-label="t('events.filters.allTypes')"
+        :class="SELECT_CLASS"
+        :clear-label="t('events.filters.clearTypes')"
+        :count-label="(n) => t('events.filters.typesSelected', { n })"
+        :label="t('events.filters.byType')"
+        :options="typeOptions"
+        :selected="queryList('eventType')"
+        @change="applyFilters({ eventType: $event })"
+      />
 
       <!--
-        Genre is two levels: thirteen families, then the styles of the chosen one. The family list
-        is the constant, so a family link never lands on an empty select; style options carry the
-        tag slug, so older `genre=` links keep working.
+        Genre is two levels: any of thirteen families, then the styles when exactly one is chosen.
+        The family list is the constant, so a family link never lands on an empty list; style
+        options carry the tag slug, so older `genre=` links keep working.
       -->
-      <BaseSelect
-        :aria-label="t('events.filters.byGenre')"
+      <MultiSelectFilter
+        :all-label="t('events.filters.allGenres')"
         :class="SELECT_CLASS"
-        :model-value="activeFamily"
-        @change="applyFamily(($event.target as HTMLSelectElement).value)"
-      >
-        <option value="">{{ t('events.filters.allGenres') }}</option>
-        <option v-for="family in GENRE_FAMILIES" :key="family" :value="family">
-          {{ t(`events.filters.families.${family}`) }}
-        </option>
-      </BaseSelect>
+        :clear-label="t('events.filters.clearFamilies')"
+        :count-label="(n) => t('events.filters.familiesSelected', { n })"
+        :label="t('events.filters.byGenre')"
+        :options="familyOptions"
+        :selected="activeFamilies"
+        @change="applyFamilies"
+      />
 
-      <!-- Shown once the URL names a family, not once its styles load, so it cannot appear late. -->
+      <!-- Shown once the URL names one family, not once its styles load, so it cannot appear late. -->
       <BaseSelect
-        v-if="activeFamily"
+        v-if="soleFamily"
         :aria-label="t('events.filters.bySubgenre')"
         :class="[SELECT_CLASS, 'col-span-2']"
         :model-value="queryString('genre')"

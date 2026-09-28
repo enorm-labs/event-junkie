@@ -28,6 +28,15 @@ describe('useEventFilters', () => {
     expect(queryList('eventType')).toEqual(['CONCERT', 'PARTY'])
   })
 
+  it('reads one genre family or a repeated one as a list', () => {
+    const { filters } = useEventFilters()
+    route.query = { family: 'electronic' }
+    expect(filters.value.family).toEqual(['electronic'])
+
+    route.query = { family: ['electronic', 'hip-hop'] }
+    expect(filters.value.family).toEqual(['electronic', 'hip-hop'])
+  })
+
   it('drops an empty list from the URL and resets the page', () => {
     route.query = { eventType: ['CONCERT', 'PARTY'], page: '3', venue: 'lido' }
     useEventFilters().applyFilters({ eventType: [] })
