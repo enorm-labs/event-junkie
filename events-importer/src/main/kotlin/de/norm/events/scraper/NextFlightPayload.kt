@@ -1,6 +1,7 @@
 package de.norm.events.scraper
 
 import org.jsoup.nodes.Document
+import tools.jackson.databind.JsonNode
 import tools.jackson.databind.json.JsonMapper
 
 // Shared reader for the Next.js App Router sites this project scrapes (ROSA). Next ships a page's
@@ -112,3 +113,9 @@ fun jsonArrayAt(
     }
     return null
 }
+
+/** React writes an `undefined` prop into the flight payload as this string. */
+private const val FLIGHT_UNDEFINED = "\$undefined"
+
+/** [stringOrNull] for a flight payload node, where an unset field arrives as `"$undefined"`. */
+fun JsonNode.flightStringOrNull(field: String): String? = stringOrNull(field)?.takeUnless { it == FLIGHT_UNDEFINED }

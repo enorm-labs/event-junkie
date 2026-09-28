@@ -102,6 +102,7 @@
 ###   Wild at Heart        — https://www.wildatheartberlin.de/concerts.php
 ###   Zenner               — https://zenner.berlin/programm
 ###   Zitadelle            — https://citadel-music-festival.de/events
+###   Zur Klappe           — https://zurklappe.org/events
 ### ============================================================
 
 ### ————————————————————————————————————————————————————————————
@@ -5495,6 +5496,68 @@ Accept: application/json
 
 > {%
     client.test("Zitadelle import triggered", function () {
+        client.assert(response.status === 202, "Expected 202 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
+### Zur Klappe (Yorckstr. 0, Berlin-Kreuzberg)
+### ————————————————————————————————————————————————————————————
+
+### --- Create Zur Klappe venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Zur Klappe",
+    "address": "Yorckstr. 0",
+    "city": "Berlin",
+    "postalCode": "10965",
+    "district": "kreuzberg",
+    "latitude": 52.49305,
+    "longitude": 13.38715,
+    "websiteUrl": "https://zurklappe.org",
+    "description": "A former public toilet at the corner of Yorckstrasse and Mehringdamm, now a one-room club with a Funktion-One sound system, hosting club nights, live performances and art events.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Eine ehemalige öffentliche Toilette an der Ecke Yorckstraße und Mehringdamm, heute ein Club mit einem Raum und einer Funktion-One-Anlage, für Clubnächte, Live-Auftritte und Kunstveranstaltungen.",
+    "descriptionAltLanguage": "de"
+}
+
+> {%
+    client.global.set("zur_klappe_venue_id", response.body.id);
+    client.test("Zur Klappe venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Create Zur Klappe event source ---
+# Links the venue to the ZurKlappeWebsiteImporter.
+# The sourceType "ZUR_KLAPPE" matches EventSource.ZUR_KLAPPE.
+POST {{importer-host}}/api/admin/event-sources
+Content-Type: application/json
+
+{
+    "venueId": {{zur_klappe_venue_id}},
+    "name": "Zur Klappe",
+    "url": "https://zurklappe.org/events",
+    "sourceType": "ZUR_KLAPPE",
+    "enabled": true,
+    "importIntervalMinutes": 1440,
+    "maxRetries": 3
+}
+
+> {%
+    client.test("Zur Klappe event source created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Trigger initial Zur Klappe import ---
+POST {{importer-host}}/api/admin/event-sources/zur-klappe/import
+Accept: application/json
+
+> {%
+    client.test("Zur Klappe import triggered", function () {
         client.assert(response.status === 202, "Expected 202 but got " + response.status);
     });
 %}

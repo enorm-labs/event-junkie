@@ -11,7 +11,8 @@ the record. `scripts/apply-licence-review.py` writes it to a database.
    [#1782](https://github.com/enorm-labs/event-junkie/issues/1782) seeded the two sources that no
    cluster had ever held. Both are `UNCLEAR`. **arkaoda's row went with the venue itself** in
    [#1788](https://github.com/enorm-labs/event-junkie/issues/1788). The club closed, so no source
-   remains to hold a verdict. The file now carries 87 rows.
+   remains to hold a verdict. **Zur Klappe was read on 2026-09-28**, when its importer was added. It is
+   `UNCLEAR`. The file now carries 88 rows.
 2. **No source grants a reuse we can rely on.** `PERMITTED` is zero in this review, which reads what
    the venues published. It is not zero on the clusters: ADR-027 sets `translation_licence` to
    `PERMITTED` wherever a venue does not prohibit the description. That is our reading of silence,

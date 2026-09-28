@@ -203,6 +203,13 @@ says so.
 | `ZENNER`              | `DOORS_TIME`       | the venue publishes no doors times                                                                                                               | —     |
 | `ZENNER`              | `SOLD_OUT`         | the venue publishes no sold-out state                                                                                                            | —     |
 | `ZENNER`              | `PER_EVENT_PAGE`   | the venue publishes no per-event pages                                                                                                           | —     |
+| `ZUR_KLAPPE`          | `SUBTITLE`         | the site states one title per night and no second line                                                                                           | —     |
+| `ZUR_KLAPPE`          | `DOORS_TIME`       | the site publishes an opening time, not a separate doors time                                                                                    | —     |
+| `ZUR_KLAPPE`          | `GENRE`            | the site names no musical style                                                                                                                  | —     |
+| `ZUR_KLAPPE`          | `PRICE`            | the site prints no price for a night                                                                                                             | —     |
+| `ZUR_KLAPPE`          | `PROMOTERS`        | the site credits no promoter beside the party name                                                                                               | —     |
+| `ZUR_KLAPPE`          | `SOLD_OUT`         | the site states no ticket status                                                                                                                 | —     |
+| `ZUR_KLAPPE`          | `CANCELLATION`     | the site has no cancelled marker for a night                                                                                                     | —     |
 
 ## Sources with nothing declared
 
