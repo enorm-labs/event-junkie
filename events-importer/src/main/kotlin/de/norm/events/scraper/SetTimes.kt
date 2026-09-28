@@ -1,6 +1,9 @@
 package de.norm.events.scraper
 
 import de.norm.events.slug.SlugGenerator
+import java.time.Instant
+import java.time.LocalDate
+import java.time.LocalTime
 
 /**
  * Each billed act with the start and end of its running-order slot (#2002), for a venue whose
@@ -22,5 +25,32 @@ fun List<ScrapedArtist>.withSetTimesFrom(
         val slug = SlugGenerator.slugify(act.name)
         val slot = byFloor[slug to act.stage]?.first() ?: byName[slug]?.first()
         slot?.let { act.copy(setStart = it.setStart, setEnd = it.setEnd) } ?: act
+    }
+}
+
+/** A set that starts before this belongs to the night before, as a 04:30 set does on a Saturday. */
+val NIGHT_ENDS: LocalTime = LocalTime.of(6, 0)
+
+/**
+ * A running order's printed clock times as instants, one slot at a time and in the venue's order
+ * (#2013). A slot earlier than the one before it has crossed midnight, and an end at or before its
+ * start is the next day's. A first slot earlier than [dayBreak] is already past midnight; with no
+ * [dayBreak], the first slot is on [night].
+ */
+class RunningOrderClock(
+    night: LocalDate,
+    dayBreak: LocalTime? = null
+) {
+    private var day = night
+    private var previous: LocalTime? = dayBreak
+
+    fun slot(
+        start: LocalTime,
+        end: LocalTime? = null
+    ): Pair<Instant, Instant?> {
+        if (previous?.let { start < it } == true) day = day.plusDays(1)
+        previous = start
+        val endDay = if (end != null && end <= start) day.plusDays(1) else day
+        return day.atTime(start).atZone(BERLIN).toInstant() to end?.let { endDay.atTime(it).atZone(BERLIN).toInstant() }
     }
 }

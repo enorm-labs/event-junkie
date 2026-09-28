@@ -1,6 +1,7 @@
 package de.norm.events.scraper.heidegluehen
 
 import de.norm.events.scraper.BERLIN
+import de.norm.events.scraper.RunningOrderClock
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.imgSrcAt
@@ -100,20 +101,12 @@ class HeidegluehenWeekPageScraper {
         lines: List<String>,
         date: LocalDate
     ): Map<String, Pair<Instant, Instant?>> {
-        var day = date
-        var previous: LocalTime? = null
+        val clock = RunningOrderClock(date)
         val sets = mutableMapOf<String, Pair<Instant, Instant?>>()
         for (match in lines.mapNotNull { RUNNING_ORDER_LINE.matchEntire(it.trim()) }) {
             val (startText, endText, name) = match.destructured
             val start = parseTime(startText.replace('.', ':')) ?: continue
-            val end = parseTime(endText.replace('.', ':'))
-            if (previous != null && start < previous) day = day.plusDays(1)
-            previous = start
-            val endDay = if (end != null && end <= start) day.plusDays(1) else day
-            sets.putIfAbsent(
-                SlugGenerator.slugify(name.trim()),
-                day.atTime(start).atZone(BERLIN).toInstant() to end?.let { endDay.atTime(it).atZone(BERLIN).toInstant() }
-            )
+            sets.putIfAbsent(SlugGenerator.slugify(name.trim()), clock.slot(start, parseTime(endText.replace('.', ':'))))
         }
         return sets
     }
