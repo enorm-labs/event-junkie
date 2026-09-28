@@ -49,14 +49,16 @@ class HavannaWebsiteImporter(
         val nightLinks = overviewPageScraper.scrape(overview, url)
         logger.info { "Found ${nightLinks.size} weekly night page(s) linked from Havanna $url" }
 
-        val events = nightLinks.flatMap { scrapeNight(it) }.distinctBy { it.sourceId }
+        val nights = nightLinks.map { scrapeNight(it) }
+        val events = nights.flatMap { it.orEmpty() }.distinctBy { it.sourceId }
         logger.info { "Generated ${events.size} Havanna event(s) from ${nightLinks.size} weekly night(s)" }
-        return ImportResult.Success(events = events, etag = null, lastModified = null)
+        // A failed night page would otherwise read as a cancelled weekday (#1980).
+        return ImportResult.Success(events = events, etag = null, lastModified = null, complete = nights.none { it == null })
     }
 
-    /** Fetches one night page and expands it into its weekly occurrences, degrading to none on failure. */
+    /** Fetches one night page and expands it into its weekly occurrences; null when the page is unreachable. */
     @Suppress("TooGenericExceptionCaught") // Intentional: one unreachable night page must not abort the other nights.
-    private suspend fun scrapeNight(link: HavannaNightLink): List<ScrapedEvent> =
+    private suspend fun scrapeNight(link: HavannaNightLink): List<ScrapedEvent>? =
         try {
             val night = detailPageScraper.scrape(htmlFetcher.fetchDocument(link.url), link.url)
             night
@@ -66,7 +68,7 @@ class HavannaWebsiteImporter(
                 .orEmpty()
         } catch (e: Exception) {
             logger.warn(e) { "Failed to import Havanna night page ${link.url}, skipping" }
-            emptyList()
+            null
         }
 }
 

@@ -49,7 +49,10 @@ class PagedListingTest {
             coEvery { htmlFetcher.fetchDocument("$entryUrl?page=2") } returns page("$entryUrl?page=2", "c", "d", next = "?page=3")
             coEvery { htmlFetcher.fetchDocument("$entryUrl?page=3") } returns page("$entryUrl?page=3", "e")
 
-            walk(page(entryUrl, "a", "b", next = "?page=2")).map { it.sourceId } shouldContainExactly listOf("a", "b", "c", "d", "e")
+            val listing = walk(page(entryUrl, "a", "b", next = "?page=2"))
+
+            listing.events.map { it.sourceId } shouldContainExactly listOf("a", "b", "c", "d", "e")
+            listing.complete shouldBe true
         }
 
     @Test
@@ -57,24 +60,30 @@ class PagedListingTest {
         runTest {
             coEvery { htmlFetcher.fetchDocument("$entryUrl?page=2") } returns page("$entryUrl?page=2", "b", "c")
 
-            walk(page(entryUrl, "a", "b", next = "?page=2")).map { it.sourceId } shouldContainExactly listOf("a", "b", "c")
+            walk(page(entryUrl, "a", "b", next = "?page=2")).events.map { it.sourceId } shouldContainExactly listOf("a", "b", "c")
         }
 
     @Test
-    fun `keeps the pages read when a later page fails`() =
+    fun `keeps the pages read when a later page fails, and reports the walk incomplete`() =
         runTest {
             coEvery { htmlFetcher.fetchDocument("$entryUrl?page=2") } returns page("$entryUrl?page=2", "c", next = "?page=3")
             coEvery { htmlFetcher.fetchDocument("$entryUrl?page=3") } throws HttpFetchException(503, "$entryUrl?page=3")
 
-            walk(page(entryUrl, "a", "b", next = "?page=2")).map { it.sourceId } shouldContainExactly listOf("a", "b", "c")
+            val listing = walk(page(entryUrl, "a", "b", next = "?page=2"))
+
+            listing.events.map { it.sourceId } shouldContainExactly listOf("a", "b", "c")
+            listing.complete shouldBe false
         }
 
     @Test
-    fun `stops at the page cap`() =
+    fun `stops at the page cap, and reports the walk incomplete`() =
         runTest {
             coEvery { htmlFetcher.fetchDocument(any()) } answers { page(firstArg(), firstArg<String>().substringAfterLast('='), next = "?page=9") }
 
-            walk(page(entryUrl, "a", next = "?page=2"), maxPages = 2).map { it.sourceId } shouldContainExactly listOf("a", "2")
+            val listing = walk(page(entryUrl, "a", next = "?page=2"), maxPages = 2)
+
+            listing.events.map { it.sourceId } shouldContainExactly listOf("a", "2")
+            listing.complete shouldBe false
             coVerify(exactly = 1) { htmlFetcher.fetchDocument(any()) }
         }
 

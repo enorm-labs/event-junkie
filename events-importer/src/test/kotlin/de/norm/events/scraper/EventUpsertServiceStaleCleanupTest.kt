@@ -201,7 +201,7 @@ class EventUpsertServiceStaleCleanupTest {
                     eventRepository.findByEventSourceIdAndEventDateGreaterThanEqual(eventSourceId, tomorrow)
                 } returns listOf(dropped, listed).asFlow()
 
-                service.upsertAndCleanup(scrapedEvents, venueId, venueSlug, eventSourceId, wholeProgramme = true)
+                service.upsertAndCleanup(scrapedEvents, venueId, venueSlug, eventSourceId, staleCleanup = StaleCleanup.OPEN_ENDED)
 
                 coVerify { eventRepository.deleteByIdIn(match { 1L in it && 2L !in it }) }
                 coVerify(exactly = 0) { eventRepository.findByEventSourceIdAndEventDateBetween(any(), any(), any()) }
@@ -225,10 +225,27 @@ class EventUpsertServiceStaleCleanupTest {
         @Test
         fun `an empty scrape deletes nothing, even for a whole programme`() =
             runTest {
-                service.upsertAndCleanup(emptyList(), venueId, venueSlug, eventSourceId, wholeProgramme = true)
+                service.upsertAndCleanup(emptyList(), venueId, venueSlug, eventSourceId, staleCleanup = StaleCleanup.OPEN_ENDED)
 
                 coVerify(exactly = 0) { eventRepository.findByEventSourceIdAndEventDateGreaterThanEqual(any(), any()) }
                 coVerify(exactly = 0) { eventRepository.deleteByIdIn(any()) }
+            }
+    }
+
+    /** A scrape that lost a page holding events, so an absence proves nothing (#1980). */
+    @Nested
+    inner class Skipped {
+        @Test
+        fun `deletes nothing and still upserts what was scraped`() =
+            runTest {
+                val scrapedEvents = listOf(scrapedEvent(title = "Listed", eventDate = today.plusDays(10), sourceId = "src:listed"))
+
+                val outcome = service.upsertAndCleanup(scrapedEvents, venueId, venueSlug, eventSourceId, staleCleanup = StaleCleanup.SKIPPED)
+
+                coVerify(exactly = 0) { eventRepository.findByEventSourceIdAndEventDateBetween(any(), any(), any()) }
+                coVerify(exactly = 0) { eventRepository.findByEventSourceIdAndEventDateGreaterThanEqual(any(), any()) }
+                coVerify(exactly = 0) { eventRepository.deleteByIdIn(any()) }
+                outcome.total shouldBe 1
             }
     }
 

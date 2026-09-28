@@ -43,8 +43,7 @@ class EventUpsertService(
      * same transaction.
      *
      * @param scrapedEvents the raw events from the scraper; may contain duplicates.
-     * @param wholeProgramme whether the scrape is the source's whole programme, which opens the stale
-     * cleanup past its last date ([removeStaleEvents]).
+     * @param staleCleanup how far [removeStaleEvents] reaches, or whether it runs at all.
      * @return what the upsert did, split by operation. [UpsertOutcome.total] is what the source's
      * `lastEventCount` records.
      */
@@ -55,12 +54,12 @@ class EventUpsertService(
         venueSlug: String,
         eventSourceId: Long,
         licences: SourceLicences = SourceLicences.UNKNOWN_SOURCE,
-        wholeProgramme: Boolean = false
+        staleCleanup: StaleCleanup = StaleCleanup.WINDOWED
     ): UpsertOutcome {
         val upcomingEvents = dropPastEvents(scrapedEvents, eventSourceId)
         val uniqueEvents = deduplicateScrapedEvents(upcomingEvents)
         // Cleanup BEFORE the upsert; the order is load-bearing (KDoc).
-        removeStaleEvents(uniqueEvents, eventSourceId, wholeProgramme)
+        removeStaleEvents(uniqueEvents, eventSourceId, staleCleanup)
         return upsertEvents(uniqueEvents, venueId, venueSlug, eventSourceId, licences)
             // Counted here rather than where they are dropped, because the tag needs the source slug and
             // this service holds only the numeric id (#982).
@@ -280,20 +279,25 @@ class EventUpsertService(
      * so `today` would delete same-day events that are happening. A genuinely cancelled today-event
      * stays for at most a few hours until it is past.
      *
-     * The window ends at the latest scraped date, so events on pages we did not fetch survive. A
-     * [wholeProgramme] scrape has no such pages, and its window has no end: a far-future date the
-     * venue dropped would otherwise stay until it passed (#1974).
+     * The window ends at the latest scraped date, so events on pages we did not fetch survive. An
+     * [StaleCleanup.OPEN_ENDED] scrape has no such pages, and its window has no end: a far-future
+     * date the venue dropped would otherwise stay until it passed (#1974). A
+     * [StaleCleanup.SKIPPED] scrape lost a page that holds events, so an absence proves nothing
+     * (#1980).
      *
      * @param scrapedEvents the current scrape, for the date range and the set of known sourceIds.
      * @param eventSourceId the owning [EventSourceEntity]'s id, to query by FK.
-     * @param wholeProgramme whether [scrapedEvents] is the source's whole standing programme.
      */
     private suspend fun removeStaleEvents(
         scrapedEvents: List<ScrapedEvent>,
         eventSourceId: Long,
-        wholeProgramme: Boolean
+        staleCleanup: StaleCleanup
     ) {
         if (scrapedEvents.isEmpty()) return
+        if (staleCleanup == StaleCleanup.SKIPPED) {
+            logger.info { "Skipped the stale cleanup for event source $eventSourceId: the scrape is incomplete" }
+            return
+        }
 
         val tomorrow = LocalDate.now(clock).plusDays(1)
         val maxScrapedDate = scrapedEvents.maxOf { it.eventDate }
@@ -301,7 +305,7 @@ class EventUpsertService(
 
         // All events from this source within the cleanup window, from tomorrow (KDoc).
         val existingEvents =
-            if (wholeProgramme) {
+            if (staleCleanup == StaleCleanup.OPEN_ENDED) {
                 eventRepository.findByEventSourceIdAndEventDateGreaterThanEqual(eventSourceId, tomorrow)
             } else {
                 eventRepository.findByEventSourceIdAndEventDateBetween(eventSourceId, fromDate = tomorrow, toDate = maxScrapedDate)
@@ -318,7 +322,7 @@ class EventUpsertService(
                     payload = mapOf(LogFields.EVENT_ID to event.id, LogFields.EVENT_SOURCE_ID to event.sourceId)
                 }
             }
-            val window = if (wholeProgramme) "from $tomorrow, open-ended" else "from $tomorrow to $maxScrapedDate"
+            val window = if (staleCleanup == StaleCleanup.OPEN_ENDED) "from $tomorrow, open-ended" else "from $tomorrow to $maxScrapedDate"
             logger.info { "Removed ${staleEvents.size} stale event(s) no longer listed on event source $eventSourceId ($window)" }
         }
     }
@@ -413,4 +417,16 @@ data class UpsertOutcome(
      * `event_source.last_event_count`: a dropped event holds nothing.
      */
     val dropped: Int get() = droppedPast + droppedDuplicate + droppedSlugConflict
+}
+
+/** How far one run's stale cleanup reaches ([EventUpsertService.upsertAndCleanup]). */
+enum class StaleCleanup {
+    /** From tomorrow to the scrape's last date: pages the run did not fetch keep their events. */
+    WINDOWED,
+
+    /** From tomorrow, with no end: the scrape is the source's whole programme (#1974). */
+    OPEN_ENDED,
+
+    /** None: a page that holds events failed, so a missing event may still be listed (#1980). */
+    SKIPPED
 }

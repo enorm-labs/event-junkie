@@ -69,6 +69,7 @@ class HavannaWebsiteImporterTest {
             val result = importer.importEvents(overviewUrl)
             result.shouldBeInstanceOf<ImportResult.Success>()
 
+            result.complete shouldBe true
             // Friday and Saturday run for the full 8-week horizon; Wednesday is in its summer break.
             result.events shouldHaveSize 2 * HavannaWeeklyNight.OCCURRENCE_WEEKS
             result.events.map { it.sourceId }.distinct() shouldHaveSize result.events.size
@@ -105,7 +106,7 @@ class HavannaWebsiteImporterTest {
         }
 
     @Test
-    fun `keeps the other nights when one night page cannot be fetched`() =
+    fun `keeps the other nights when one night page cannot be fetched, and marks the scrape incomplete`() =
         runTest {
             coEvery { htmlFetcher.fetchDocument(fridayUrl) } throws HttpFetchException(500, fridayUrl)
 
@@ -114,6 +115,7 @@ class HavannaWebsiteImporterTest {
             // Only Saturday survives: Friday failed and Wednesday is on its summer break.
             result.events shouldHaveSize HavannaWeeklyNight.OCCURRENCE_WEEKS
             result.events.map { it.sourceUrl }.distinct() shouldContainExactly listOf("https://www.havanna-berlin.de/saturday")
+            result.complete shouldBe false
         }
 
     @Test

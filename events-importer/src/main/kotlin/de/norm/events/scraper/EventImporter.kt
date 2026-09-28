@@ -64,6 +64,8 @@ sealed interface ImportResult {
         /** New Last-Modified header from the response, if present. */
         val lastModified: String?,
         /** Discarded for want of a date (#982). Zero means "not measured", not "none dropped". */
-        val droppedUnresolvedDate: Int = 0
+        val droppedUnresolvedDate: Int = 0,
+        /** False when a page that holds events failed to load, which skips the stale cleanup (#1980). */
+        val complete: Boolean = true
     ) : ImportResult
 }

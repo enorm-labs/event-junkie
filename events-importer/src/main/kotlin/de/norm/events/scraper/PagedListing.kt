@@ -6,12 +6,18 @@ import org.jsoup.nodes.Element
 
 private val logger = KotlinLogging.logger {}
 
+/** What [scrapeListingPages] read: the events, and whether the walk reached the listing's last page. */
+data class ListingPages(
+    val events: List<ScrapedEvent>,
+    val complete: Boolean
+)
+
 /**
  * Scrapes a paged listing from its [first] page to the last, following [nextPage] up to [maxPages]
  * (ADR-007 §"Pagination — First Page Only"). A later page is fetched without validators: they cover
- * the entry page only. One that fails is logged and ends the walk, keeping what was read; stale-event
- * cleanup is scoped to the scraped dates, so the unread tail survives. An event that moved across a
- * page boundary between two requests is kept once.
+ * the entry page only. One that fails is logged and ends the walk, keeping what was read, and so
+ * does the cap. Either way the result is not [ListingPages.complete], which skips the stale cleanup
+ * for the run (#1980). An event that moved across a page boundary between two requests is kept once.
  *
  * @param nextPage the absolute URL of the page after the given one, or null on the last page.
  */
@@ -23,7 +29,7 @@ suspend fun HtmlFetcher.scrapeListingPages(
     maxPages: Int,
     nextPage: (Document, String) -> String?,
     scrape: (Document, String) -> List<ScrapedEvent>
-): List<ScrapedEvent> {
+): ListingPages {
     val events = scrape(first, url).toMutableList()
     var next = nextPage(first, url)
     var pages = 1
@@ -43,7 +49,7 @@ suspend fun HtmlFetcher.scrapeListingPages(
     if (next != null && pages == maxPages) {
         logger.warn { "${source.name} pagination hit the $maxPages-page cap before the listing ended; later pages were not read" }
     }
-    return events.distinctBy { it.sourceId }
+    return ListingPages(events.distinctBy { it.sourceId }, complete = next == null)
 }
 
 /**
