@@ -20,9 +20,9 @@ export const SITE_URL = 'https://event-junkie.de'
  * locale home); each gets a `<url>` per locale in the sitemap.
  *
  * Detail routes are deliberately absent: this build is independent of the BFF and the database
- * (ADR-014 §Decision 1), and Googlebot reaches them through internal links regardless. Their
- * sitemap belongs in the BFF, which can leave out past events. A unit test holds this list
- * against the router, so a new static route has to decide whether it is indexable.
+ * (ADR-014 §Decision 1). Their sitemaps come from the BFF, which can leave out past events, and
+ * the index names them ({@link DETAIL_SITEMAPS}). A unit test holds this list against the router,
+ * so a new static route has to decide whether it is indexable.
  */
 export const INDEXABLE_PATHS = [
   '',
@@ -87,7 +87,38 @@ const escapeXml = (value: string) =>
   )
 
 /**
- * The sitemap, as XML. This is where `hreflang` works today: the `<link>` tags `lib/seoTags.ts`
+ * The detail sitemaps (#367), one per route family. The BFF renders them, and nginx serves them at
+ * the root through the injector, because a sitemap only vouches for URLs under its own directory.
+ */
+export const DETAIL_SITEMAPS = [
+  '/sitemap-events.xml',
+  '/sitemap-venues.xml',
+  '/sitemap-artists.xml',
+  '/sitemap-promoters.xml',
+] as const
+
+/** The static pages' sitemap, the one this build writes itself. */
+export const PAGES_SITEMAP = '/sitemap-pages.xml'
+
+/**
+ * `/sitemap.xml`, a sitemap index: the static pages' sitemap and the four detail ones. An index
+ * rather than one `Sitemap:` line each in `robots.txt`, so Search Console reports on every child
+ * under the one URL it was given.
+ */
+export function sitemapIndexXml(): string {
+  return [
+    '<?xml version="1.0" encoding="UTF-8"?>',
+    '<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
+    ...[PAGES_SITEMAP, ...DETAIL_SITEMAPS].map(
+      (path) => `  <sitemap>\n    <loc>${SITE_URL}${path}</loc>\n  </sitemap>`,
+    ),
+    '</sitemapindex>',
+    '',
+  ].join('\n')
+}
+
+/**
+ * The static pages' sitemap, as XML. This is where `hreflang` works today: the `<link>` tags `lib/seoTags.ts`
  * injects after boot are script-injected, which Google treats as unreliable, while the sitemap is
  * a static file. Each language version needs its own `<url>` carrying the full alternate set,
  * including a self-reference; a one-way annotation is ignored.

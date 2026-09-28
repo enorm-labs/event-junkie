@@ -246,7 +246,7 @@ BFF's public API means regenerating them in the same PR.
 [`http/`](../http) holds request files, split by service:
 
 - [`http/importer/`](../http/importer) — the admin CRUD endpoints (venues, artists, promoters, events, sources, dev seed) plus health and OpenAPI checks.
-- [`http/bff/`](../http/bff) — the public read API (events, venues, artists, genres) plus health and OpenAPI checks.
+- [`http/bff/`](../http/bff) — the public read API (events, venues, artists, promoters, genres, sitemaps) plus health and OpenAPI checks.
 - [`http/google/`](../http/google) — the Google Geocoding lookups behind `scripts/geocode-venues.py`. Billed, and they need the key below.
 - [`http/osm/`](../http/osm) — OpenStreetMap, in two files because they are two services. `nominatim.http` searches by name or address, and reverse-geocodes a
   point. `overpass.http` asks what is tagged at a place. That is how "does house number 114 exist on this street" gets answered. No key, and **results are

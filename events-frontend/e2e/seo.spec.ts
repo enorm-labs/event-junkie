@@ -1,14 +1,24 @@
 import { expect, test } from '@playwright/test'
 
 /**
- * The crawler-facing surface: `/sitemap.xml`, `/robots.txt`, and the per-route head annotations.
- * The two files come from a Vite plugin (`scripts/seoFiles.ts`) that also serves them in dev, so
+ * The crawler-facing surface: `/sitemap.xml`, `/sitemap-pages.xml`, `/robots.txt`, and the
+ * per-route head annotations. The files come from a Vite plugin (`scripts/seoFiles.ts`) that also serves them in dev, so
  * these pass under `npm run dev` and `npm run preview` alike. The head tags need a real browser:
  * they are written after the router resolves, which a unit test cannot prove.
  */
 
-test('serves a sitemap listing every static page in both locales', async ({ request }) => {
+test('serves a sitemap index naming the static and the detail sitemaps', async ({ request }) => {
   const response = await request.get('/sitemap.xml')
+
+  expect(response.status()).toBe(200)
+  const xml = await response.text()
+  expect(xml).toContain('<sitemapindex')
+  expect(xml).toContain('<loc>https://event-junkie.de/sitemap-pages.xml</loc>')
+  expect(xml).toContain('<loc>https://event-junkie.de/sitemap-events.xml</loc>')
+})
+
+test('serves a sitemap listing every static page in both locales', async ({ request }) => {
+  const response = await request.get('/sitemap-pages.xml')
 
   expect(response.status()).toBe(200)
   expect(response.headers()['content-type']).toContain('xml')

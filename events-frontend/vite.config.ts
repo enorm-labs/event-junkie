@@ -23,7 +23,8 @@ export default defineConfig({
     // Precompiles the message catalogues so the vue-i18n message compiler is not shipped to the
     // browser (ADR-013).
     vueI18n({ include: fileURLToPath(new URL('./src/i18n/messages/**/*.json', import.meta.url)) }),
-    // Generates /sitemap.xml and /robots.txt from LOCALES and INDEXABLE_PATHS, in dev and build.
+    // Generates /sitemap.xml, /sitemap-pages.xml and /robots.txt from LOCALES and INDEXABLE_PATHS,
+    // in dev and build.
     seoFiles(),
     // The static pages' titles and descriptions as plain strings, for the injector's parity (#1911).
     pageMetaText(),
@@ -49,6 +50,12 @@ export default defineConfig({
       '/api': {
         target: 'http://localhost:8080',
         changeOrigin: true,
+      },
+      // The detail sitemaps, which nginx sends through the injector on a cluster (#367).
+      '^/sitemap-(events|venues|artists|promoters)\\.xml$': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/sitemap-(\w+)\.xml$/, '/api/sitemaps/$1.xml'),
       },
     },
   },

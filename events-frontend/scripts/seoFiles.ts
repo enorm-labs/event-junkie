@@ -2,10 +2,11 @@ import type { Plugin } from 'vite'
 
 // Explicit `.ts`: this module is reached from vite.config.ts, which Vite's `configLoader: 'native'`
 // mode loads through Node's ESM resolver. See the note in vite.config.ts.
-import { robotsTxt, sitemapXml } from '../src/lib/seo.ts'
+import { PAGES_SITEMAP, robotsTxt, sitemapIndexXml, sitemapXml } from '../src/lib/seo.ts'
 
 /**
- * Emits `sitemap.xml` and `robots.txt`.
+ * Emits `sitemap.xml`, the index, the static pages' `sitemap-pages.xml` and `robots.txt`. The
+ * detail sitemaps the index names come from the BFF: the dev server proxies them (vite.config.ts).
  *
  * A build step rather than two checked-in files under `public/`: both are derived entirely from
  * `LOCALES` and `INDEXABLE_PATHS`, so generating them makes drift **impossible** instead of
@@ -19,7 +20,8 @@ import { robotsTxt, sitemapXml } from '../src/lib/seo.ts'
  */
 export function seoFiles(): Plugin {
   const files: Record<string, { body: () => string; type: string }> = {
-    '/sitemap.xml': { body: sitemapXml, type: 'application/xml' },
+    '/sitemap.xml': { body: sitemapIndexXml, type: 'application/xml' },
+    [PAGES_SITEMAP]: { body: sitemapXml, type: 'application/xml' },
     '/robots.txt': { body: robotsTxt, type: 'text/plain' },
   }
 

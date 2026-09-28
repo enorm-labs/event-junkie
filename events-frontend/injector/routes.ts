@@ -69,3 +69,15 @@ export function matchStaticRoute(url: string): StaticRoute | null {
   const [, locale, path = ''] = match as unknown as [string, Locale, string | undefined]
   return isStaticPath(path) ? { locale, path } : null
 }
+
+const SITEMAP = new RegExp(`^/sitemap-(${ENTITY_KINDS.join('|')})\\.xml$`)
+
+/**
+ * The detail sitemap a request is for (#367), or `null`. The kind comes from {@link ENTITY_KINDS}
+ * and never from the request, so nothing the client sent reaches the BFF path.
+ */
+export function matchSitemap(url: string): EntityKind | null {
+  const pathname = url.split('#')[0]?.split('?')[0] ?? ''
+  const kind = SITEMAP.exec(pathname)?.[1]
+  return ENTITY_KINDS.find((candidate) => candidate === kind) ?? null
+}

@@ -3,10 +3,13 @@ import { describe, expect, it } from 'vitest'
 import {
   alternatesFor,
   canonicalUrl,
+  DETAIL_SITEMAPS,
   INDEXABLE_PATHS,
   NON_INDEXABLE_PATHS,
   robotsTxt,
+  PAGES_SITEMAP,
   SITE_URL,
+  sitemapIndexXml,
   sitemapXml,
 } from '@/lib/seo'
 import { DEFAULT_LOCALE, LOCALES } from '@/i18n/locales'
@@ -117,6 +120,17 @@ describe('the sitemap', () => {
     // Google ignores the latter two, and a build-stamped lastmod on every page is a confident claim
     // that happens to be false.
     expect(sitemapXml()).not.toMatch(/<(lastmod|changefreq|priority)>/)
+  })
+})
+
+describe('the sitemap index', () => {
+  it('names the static pages and one sitemap per detail family, at absolute URLs', () => {
+    const document = new DOMParser().parseFromString(sitemapIndexXml(), 'application/xml')
+    expect(document.querySelector('parsererror'), 'index is not well-formed XML').toBeNull()
+    expect(document.documentElement.localName).toBe('sitemapindex')
+
+    const locs = [...document.getElementsByTagName('loc')].map((loc) => loc.textContent)
+    expect(locs).toEqual([PAGES_SITEMAP, ...DETAIL_SITEMAPS].map((path) => `${SITE_URL}${path}`))
   })
 })
 
