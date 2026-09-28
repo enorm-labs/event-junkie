@@ -431,8 +431,8 @@ cmd_up() {
 }
 
 # Every negative assertion here checks the CONTENT TYPE, not the status code: nginx serves the SPA for
-# any unmatched path, so `/actuator/health` through the ingress returns 200 and a status-only test
-# would keep passing if actuator were genuinely exposed.
+# any unmatched path, with 404, so the content type is what says who answered `/actuator/health`: a
+# 404 is also what a misrouted ingress or a locked-down actuator returns.
 cmd_verify() {
   guard_context
   local code type

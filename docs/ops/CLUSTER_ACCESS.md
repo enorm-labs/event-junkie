@@ -250,20 +250,20 @@ content-type: text/html
 
 Worth knowing, because three of these look wrong and are not:
 
-|                    |                                                                                                                                       |
-| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------- |
-| `/`                | `200` — the frontend                                                                                                                  |
-| `/api/events`      | `200` — the BFF, which serves under `/api` itself; there is no rewrite                                                                |
-| `/api/admin`       | **`404`** — correct. The importer's admin API has no ingress backend at all                                                           |
-| `/events`          | **`200`, but from nginx** — a BFF path without `/api` is the SPA catch-all again, not the BFF. See the note below                     |
-| `/actuator/health` | **`200`, but from nginx** — the SPA catch-all, _not_ the actuator. Check `server:` and the body before concluding anything is exposed |
+|                    |                                                                                                                        |
+| ------------------ | ---------------------------------------------------------------------------------------------------------------------- |
+| `/`                | `200` — the frontend                                                                                                   |
+| `/api/events`      | `200` — the BFF, which serves under `/api` itself; there is no rewrite                                                 |
+| `/api/admin`       | **`404`** — correct. The importer's admin API has no ingress backend at all                                            |
+| `/events`          | **`404`, from nginx** — a BFF path without `/api` is the SPA catch-all again, not the BFF. See the note below          |
+| `/actuator/health` | **`404`, from nginx** — the SPA catch-all, _not_ the actuator. Check `server:` and the body before concluding anything |
 
-The last two rows are the ones that look alarming. Actuator lives on its own port, which no ingress rule names. Any unmatched path falls through to the
-frontend's SPA fallback and returns the index page with a `200`.
+Actuator lives on its own port, which no ingress rule names. Any unmatched path falls through to the frontend's SPA fallback and returns the index page with a
+`404`, so a crawler does not index it.
 
-**That fallback is why a missing `/api` is so hard to see.** The BFF serves the prefix itself, so `/events` matches no BFF route and no `/api` ingress rule. It
-matches `/` instead, reaches the frontend, and answers `200` with the SPA shell. A client that only reads the status code cannot tell that from a working API.
-A client that parses the body gets HTML where it expected JSON. Check `content-type` before you believe a `200` from this host.
+**That fallback is why a missing `/api` is hard to see.** The BFF serves the prefix itself, so `/events` matches no BFF route and no `/api` ingress rule. It
+matches `/` instead, reaches the frontend, and answers `404` with the SPA shell. A client that only reads the status code cannot tell that from a BFF 404. A
+client that parses the body gets HTML where it expected JSON. Check `content-type` before you believe any status from this host.
 
 ## 6a · The importer's admin API, and seeding staging
 

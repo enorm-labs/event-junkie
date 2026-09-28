@@ -13,9 +13,13 @@ function dayAfter(isoDate: string): string {
 /**
  * The calendar's entry for an event. A span with both times is a timed block from start to end;
  * a span without is an all-day bar from the opening day through the closing day (#1405). Past
- * and live are the same classes EventCard uses, off the same Berlin clock.
+ * and live are the same classes EventCard uses, off the same Berlin clock. `localePath` is
+ * `useLocalePath()`'s: the link is a real `href` a crawler follows, and an unprefixed path is a 404.
  */
-export function toCalendarInput(event: EventSummary): EventInput {
+export function toCalendarInput(
+  event: EventSummary,
+  localePath: (path: string) => string,
+): EventInput {
   const timed = !!event.startTime && !!event.endTime
   const end = timed
     ? `${event.endDate ?? event.eventDate}T${event.endTime}`
@@ -26,7 +30,7 @@ export function toCalendarInput(event: EventSummary): EventInput {
     title: event.title ?? '',
     start: event.startTime ? `${event.eventDate}T${event.startTime}` : event.eventDate,
     ...(end ? { end } : {}),
-    url: `/events/${event.slug}`,
+    url: localePath(`/events/${event.slug}`),
     // Paging back a month already returned past events; this is what tells them apart. Today's
     // get the same "live" mark as EventCard, and a run is live on every day it is on.
     // v7 reads `className` (one string); the v6 `classNames` array is ignored without a warning.

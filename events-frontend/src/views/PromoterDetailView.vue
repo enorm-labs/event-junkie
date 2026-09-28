@@ -3,7 +3,7 @@ import { computed, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import BaseDetailView from '@/components/BaseDetailView.vue'
 import { usePageMeta } from '@/composables/usePageMeta'
-import { placeholderPageMeta, promoterPageMeta } from '@/lib/pageMeta'
+import { notFoundPageMeta, placeholderPageMeta, promoterPageMeta } from '@/lib/pageMeta'
 import { useEventSearch } from '@/composables/useEvents'
 import { yesterdayIso } from '@/lib/format'
 import { usePromoter } from '@/composables/usePromoter'
@@ -58,9 +58,9 @@ const kind = computed(() => t('detail.promoter.kind'))
 usePageMeta(() =>
   promoter.value
     ? promoterPageMeta(promoter.value, locale.value as Locale)
-    : placeholderPageMeta(
-        notFound.value ? t('detail.notFoundHeading', { kind: kind.value }) : kind.value,
-      ),
+    : notFound.value
+      ? notFoundPageMeta(t('detail.notFoundHeading', { kind: kind.value }))
+      : placeholderPageMeta(kind.value),
 )
 
 const credit = computed(() => imageCredit(promoter.value))

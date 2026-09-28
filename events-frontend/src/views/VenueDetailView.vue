@@ -3,7 +3,7 @@ import { computed, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import BaseDetailView from '@/components/BaseDetailView.vue'
 import { usePageMeta } from '@/composables/usePageMeta'
-import { APP_NAME, placeholderPageMeta, venuePageMeta } from '@/lib/pageMeta'
+import { APP_NAME, notFoundPageMeta, placeholderPageMeta, venuePageMeta } from '@/lib/pageMeta'
 import { useEventSearch } from '@/composables/useEvents'
 import { yesterdayIso } from '@/lib/format'
 import { useVenue } from '@/composables/useVenue'
@@ -84,9 +84,9 @@ useStructuredData((): JsonLd[] => {
 usePageMeta(() =>
   venue.value
     ? venuePageMeta(venue.value, locale.value as Locale)
-    : placeholderPageMeta(
-        notFound.value ? t('detail.notFoundHeading', { kind: kind.value }) : kind.value,
-      ),
+    : notFound.value
+      ? notFoundPageMeta(t('detail.notFoundHeading', { kind: kind.value }))
+      : placeholderPageMeta(kind.value),
 )
 
 const credit = computed(() => imageCredit(venue.value))
