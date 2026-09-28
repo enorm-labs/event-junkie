@@ -2,6 +2,7 @@ package de.norm.events.scraper.clubdervisionaere
 
 import de.norm.events.event.EventType
 import de.norm.events.scraper.B2B_SEPARATOR
+import de.norm.events.scraper.BERLIN
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.cleanEventTitle
@@ -42,8 +43,8 @@ import java.time.MonthDay
  * 3. **The lineup is prose.** Acts are `// <name>` paragraphs, optionally under a `<label>:`
  * paragraph — a floor (`Main:`, `Chill Floor:`) or a billing section (`Live Band featuring:`,
  * `DJ Sets:`). A trailing `LIVE` marker or `from HH:mm` set time may ride on the act line; the
- * set time is dropped, not used as the start, which this page does not print — the homepage
- * does, and the importer joins it on (see [ClubDerVisionaereHomePageScraper]).
+ * set time is that act's set start (#2002), with no end. The night's start is not printed here —
+ * the homepage prints it, and the importer joins it on (see [ClubDerVisionaereHomePageScraper]).
  *
  * Parenthesised names stay whole — `Los Refrescos (Dandy Jack & Argenis Brito)` is one act
  * billed with its members, `Naima (2)` a Resident Advisor disambiguator.
@@ -141,7 +142,7 @@ class ClubDerVisionaereProgrammePageScraper(
             sourceUrl = sourceUrl,
             sourceId = "${room.eventSource.sourceIdPrefix}$postId",
             startTime = earliestSlotTime(block),
-            artists = parseLineup(block)
+            artists = parseLineup(block, eventDate)
         )
     }
 
@@ -190,7 +191,10 @@ class ClubDerVisionaereProgrammePageScraper(
      * a DJ set later, e.g. Remain In Love) would produce two `event_artist` rows for one pair and
      * violate the unique constraint. First billing wins — its lineup position and role.
      */
-    private fun parseLineup(block: Element): List<ScrapedArtist> {
+    private fun parseLineup(
+        block: Element,
+        eventDate: LocalDate
+    ): List<ScrapedArtist> {
         var stage: String? = null
         var sectionIsLive = false
         val artists = mutableListOf<ScrapedArtist>()
@@ -209,7 +213,7 @@ class ClubDerVisionaereProgrammePageScraper(
                 }
 
                 else -> {
-                    artists += parseActLine(line, stage, sectionIsLive)
+                    artists += parseActLine(line, stage, sectionIsLive, eventDate)
                 }
             }
         }
@@ -222,13 +226,23 @@ class ClubDerVisionaereProgrammePageScraper(
      * An act marked `LIVE` (or under a live-band section) is
      * [HEADLINER][de.norm.events.event.ArtistRole.HEADLINER] rather than
      * [DJ][de.norm.events.event.ArtistRole.DJ]: the venue's own statement that the act performs, and
-     * HEADLINER is the only performing role the model has. Everything else here is a DJ set.
+     * HEADLINER is the only performing role the model has. Everything else here is a DJ set. A
+     * `from HH:mm` tail is the set's start; one before [NIGHT_ENDS] is already the next day.
      */
     private fun parseActLine(
         line: String,
         stage: String?,
-        sectionIsLive: Boolean
+        sectionIsLive: Boolean,
+        eventDate: LocalDate
     ): List<ScrapedArtist> {
+        val setStart =
+            SET_TIME_TAIL_PATTERN.find(line)?.let { parseTime(it.groupValues[1].padStart(CLOCK_LENGTH, '0')) }?.let { time ->
+                eventDate
+                    .plusDays(if (time < NIGHT_ENDS) 1 else 0)
+                    .atTime(time)
+                    .atZone(BERLIN)
+                    .toInstant()
+            }
         val cleaned =
             line
                 .removePrefix(ACT_MARKER)
@@ -239,7 +253,7 @@ class ClubDerVisionaereProgrammePageScraper(
         return splitActs(cleaned)
             .map(::stripArtistSuffix)
             .filterNot(::isUnannouncedAct)
-            .map { ScrapedArtist(name = it, role = role, stage = stage) }
+            .map { ScrapedArtist(name = it, role = role, stage = stage, setStart = setStart) }
     }
 
     /**
@@ -293,13 +307,19 @@ class ClubDerVisionaereProgrammePageScraper(
         private val LIVE_MARKER_PATTERN = Regex("""\blive\b""", RegexOption.IGNORE_CASE)
 
         /**
-         * A trailing set time on an act line ("… LIVE from 21:00"): when that act plays, stripped
+         * A trailing set time on an act line ("… LIVE from 21:00"): that act's set start, stripped
          * from the name, and the earliest of them stands in for the night's start ([earliestSlotTime]).
          */
         private val SET_TIME_TAIL_PATTERN = Regex("""\s+from\s+(\d{1,2}:\d{2})\s*$""", RegexOption.IGNORE_CASE)
 
         /** A leading series label on an act line ("Soundz of:  Guest DJs"), stripped so the act remains. */
         private val LINEUP_LABEL_PREFIX = Regex("""^[^:]{1,30}:\s+""")
+
+        /** A set starting before this is already the next day. */
+        private val NIGHT_ENDS: LocalTime = LocalTime.of(6, 0)
+
+        /** `HH:mm`, what a one-digit hour is padded to before parsing. */
+        private const val CLOCK_LENGTH = 5
 
         /** The `More` in the venue's "More TBA" not-yet-announced marker. */
         private val MORE_PREFIX = Regex("""^more\s+""", RegexOption.IGNORE_CASE)
