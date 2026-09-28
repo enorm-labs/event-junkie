@@ -23,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.server.ResponseStatusException
 import java.time.Clock
 import java.time.LocalDate
+import java.time.ZoneId
 
 /**
  * Read service assembling the public event responses. List/calendar/today responses batch-load
@@ -137,7 +138,9 @@ class EventService(
                         artist = ArtistSummaryResponse.fromEntity(artist, images.serve(artist.imageUrl, CARD_WIDTH)),
                         role = ArtistRole.parseOrDefault(link.role),
                         billingOrder = link.billingOrder,
-                        stage = link.stage
+                        stage = link.stage,
+                        setStart = link.setStart?.atZone(BERLIN)?.toOffsetDateTime(),
+                        setEnd = link.setEnd?.atZone(BERLIN)?.toOffsetDateTime()
                     )
                 }
             }
@@ -259,6 +262,9 @@ class EventService(
     companion object {
         /** Maximum span (inclusive) the calendar endpoint will return in a single request. */
         private const val MAX_CALENDAR_DAYS = 92L
+
+        /** The zone a set time is shown in: the venue's clock, whatever the server's. */
+        private val BERLIN: ZoneId = ZoneId.of("Europe/Berlin")
 
         /**
          * How wide each image is drawn, in CSS pixels, which decides the derivatives offered: a card

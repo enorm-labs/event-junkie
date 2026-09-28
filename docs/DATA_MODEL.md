@@ -319,15 +319,23 @@ the same language and all-or-nothing constraints V019 gave `venue`. A promoter's
 Links events to artists with role and billing order to model the lineup. Each application maps the table with its own
 `EventArtistEntity`. The BFF turns those rows into the `lineup` array of its `EventResponse`.
 
-| Field           | Type        | Nullable | Description                         | Example     |
-| --------------- | ----------- | -------- | ----------------------------------- | ----------- |
-| `id`            | `BIGINT`    | No       | Auto-generated primary key          | `12`        |
-| `event_id`      | `BIGINT` FK | No       | References `event.id`               | `101`       |
-| `artist_id`     | `BIGINT` FK | No       | References `artist.id`              | `7`         |
-| `role`          | `TEXT`      | No       | `HEADLINER`, `SUPPORT`, or `DJ`     | `HEADLINER` |
-| `billing_order` | `INT`       | No       | Position in lineup (0 = top-billed) | `0`         |
+| Field           | Type          | Nullable | Description                                                                        | Example               |
+| --------------- | ------------- | -------- | ---------------------------------------------------------------------------------- | --------------------- |
+| `id`            | `BIGINT`      | No       | Auto-generated primary key                                                         | `12`                  |
+| `event_id`      | `BIGINT` FK   | No       | References `event.id`                                                              | `101`                 |
+| `artist_id`     | `BIGINT` FK   | No       | References `artist.id`                                                             | `7`                   |
+| `role`          | `TEXT`        | No       | `HEADLINER`, `SUPPORT`, or `DJ`                                                    | `HEADLINER`           |
+| `billing_order` | `INT`         | No       | Position in lineup (0 = top-billed)                                                | `0`                   |
+| `stage`         | `TEXT`        | Yes      | The room or floor of the set, at a venue with more than one                        | `Panorama Bar`        |
+| `title_derived` | `BOOLEAN`     | No       | The importer read the name from the event title, not from a lineup element (#1145) | `false`               |
+| `set_start`     | `TIMESTAMPTZ` | Yes      | Start of the set, from the venue's running order (#2002)                           | `2026-09-26 23:59+02` |
+| `set_end`       | `TIMESTAMPTZ` | Yes      | End of the set. Null when the running order gives only the start                   | `2026-09-27 04:30+02` |
 
-Unique constraint on `(event_id, artist_id)` prevents duplicate artist-event associations.
+Unique constraint on `(event_id, artist_id)` prevents duplicate artist-event associations. Thus one row holds one set, and an
+artist with two sets at one event keeps the first.
+
+The set times are instants, not local times. A club night crosses midnight, so the event date does not tell the day of a
+04:30 set. Most venues publish no running order, and these rows keep both columns null.
 
 ### EventPromoter (Join Table)
 

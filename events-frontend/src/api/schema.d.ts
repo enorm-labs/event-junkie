@@ -1022,6 +1022,18 @@ export interface components {
              * @example Panorama Bar
              */
             stage?: string | null;
+            /**
+             * Format: date-time
+             * @description Start of the set in Berlin time, from the venue's running order, or null
+             * @example 2026-09-26T23:59:00+02:00
+             */
+            setStart?: string | null;
+            /**
+             * Format: date-time
+             * @description End of the set in Berlin time, or null
+             * @example 2026-09-27T04:30:00+02:00
+             */
+            setEnd?: string | null;
         };
         /** @description Compact promoter summary */
         PromoterSummaryResponse: {

@@ -2,6 +2,7 @@ package de.norm.events.scraper.berghain
 
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.imgSrcAt
@@ -14,16 +15,17 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import java.math.BigDecimal
 import java.net.URI
+import java.time.Instant
 
 /**
  * Pure HTML parser for Berghain `/de/event/<id>/` detail pages.
  *
  * The enrichment source: poster image, ticket-shop link, presale / box-office (`Abendkasse`)
- * prices with an `ausverkauft` marker, and a prose description the listing lacks. It
- * re-parses the core fields (title, date, times, floor) from the same markup so it is
- * self-sufficient as the merge's primary event, but deliberately does **not** parse the lineup
- * — the detail page renders artists in a flat running-order mixed with labels, whereas the
- * overview lists each act in its own span, so [BerghainOverviewPageScraper]'s artists win.
+ * prices with an `ausverkauft` marker, a prose description the listing lacks, and the running
+ * order's set times. It re-parses the core fields (title, date, times, floor) from the same
+ * markup so it is self-sufficient as the merge's primary event. Its artists carry only the set
+ * times: the lineup itself — roles, `Live` markers, which acts are billed — is
+ * [BerghainOverviewPageScraper]'s, and the merge attaches these times to it.
  *
  * All parsing is scoped to `<main>`, excluding header, navigation and footer.
  *
@@ -81,10 +83,37 @@ class BerghainDetailPageScraper {
             ticketUrl = tickets.ticketUrl,
             pricePresale = tickets.presale,
             priceBoxOffice = tickets.boxOffice,
-            soldOut = tickets.soldOut
-            // Lineup omitted on purpose — the overview page is the authoritative artist source (see class KDoc).
+            soldOut = tickets.soldOut,
+            artists = parseRunningOrder(content)
         )
     }
+
+    /**
+     * Every act of the running order with its set's start and end (#2002), or none before the venue
+     * publishes it. Until then the page lists the same slots without `data-set-item-start`, which the
+     * programme's lineup already covers. Each `[data-set-floor]` block is a floor named by its `<h2>`;
+     * a slot's performers are the own text of its bold name span, whose nested `Live` marker and
+     * label span are not part of the name:
+     *
+     * ```html
+     * <li data-set-item data-set-item-start="2026-09-27T04:30:00+02:00" data-set-item-end="2026-09-27T08:30:00+02:00">
+     *   <div class="running-order-set__info"><span class="font-bold">Colin Benders
+     *     <span data-set-item-live>Live</span><span class="lowercase">Hiss & Hertz</span></span></div>
+     * </li>
+     * ```
+     */
+    private fun parseRunningOrder(content: Element): List<ScrapedArtist> =
+        content.select("[data-set-floor]").flatMap { floor ->
+            val stage = floor.textAt("h2")
+            floor.select("li[data-set-item-start]").flatMap { slot ->
+                val start = parseInstant(slot.attr("data-set-item-start")) ?: return@flatMap emptyList()
+                val end = parseInstant(slot.attr("data-set-item-end"))
+                splitSlot(slot.selectFirst(SLOT_NAME_SELECTOR)?.ownText().orEmpty())
+                    .map { ScrapedArtist(name = it, stage = stage, setStart = start, setEnd = end) }
+            }
+        }
+
+    private fun parseInstant(text: String): Instant? = runCatching { Instant.parse(text) }.getOrNull()
 
     /** The numeric event id from the detail URL path (`/de/event/80835/` → `80835`). */
     private fun extractEventId(sourceUrl: String): String = URI(sourceUrl).path.trim('/').substringAfterLast('/')
@@ -144,6 +173,9 @@ class BerghainDetailPageScraper {
 
         /** German label marking the box-office (door) price line. */
         private const val BOX_OFFICE_MARKER = "Abendkasse"
+
+        /** A running-order slot's name span; its own text is the performers. */
+        private const val SLOT_NAME_SELECTOR = ".running-order-set__info span.font-bold"
 
         /** German sold-out marker used in the ticket block. */
         private const val SOLD_OUT_MARKER = "ausverkauft"

@@ -36,8 +36,8 @@ data class HeidegluehenLineup(
  * Same markup as the month page, so date and title parse the same way. It adds a
  * `Das Programm:` block naming the DJs one per line as `"Antal // Rush Hour, NL"` — name, then
  * the label or city billed under — followed by `~~~` and a running order (`"12:00-16:00
- * Forsberg"`). Only the names are stored: no field for a set time, and the running order
- * repeats names the billing listed. It also carries that party's own flyer where the month page
+ * Forsberg"`). Only the names are stored: the set times are not read yet (see #2002), and the
+ * running order repeats names the billing listed. It also carries that party's own flyer where the month page
  * has one graphic for the month, so the image comes along with the lineup.
  *
  * The lineup appears a few days before each party ("Das Programm folgt am Dienstag…" until

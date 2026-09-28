@@ -228,7 +228,7 @@ class AssociationSyncService(
 
     /**
      * Synchronizes artist associations by diff, matched on `(eventId, artistId)`: inserts new,
-     * updates changed role or billing order, deletes removed, skips the rest. Deleting and
+     * updates changed role, billing order, floor or set times, deletes removed, skips the rest. Deleting and
      * re-creating on every import wastes auto-increment IDs.
      */
     private suspend fun syncArtistAssociations(

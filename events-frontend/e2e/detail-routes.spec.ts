@@ -305,6 +305,51 @@ test.describe('a past event', () => {
     )
   })
 
+  test('a published running order lists each floor in time order', async ({ page }) => {
+    // A Klubnacht runs from Saturday to Monday, so each floor marks where a new night begins (#2002).
+    const klubnacht = {
+      ...eventBody,
+      lineup: [
+        {
+          artist: { slug: 'late', name: 'Late Set' },
+          role: 'DJ',
+          billingOrder: 0,
+          stage: 'Berghain',
+          setStart: '2026-09-27T08:30:00+02:00',
+          setEnd: '2026-09-27T12:30:00+02:00',
+        },
+        {
+          artist: { slug: 'opener', name: 'Opener' },
+          role: 'DJ',
+          billingOrder: 1,
+          stage: 'Berghain',
+          setStart: '2026-09-26T23:59:00+02:00',
+          setEnd: '2026-09-27T04:30:00+02:00',
+        },
+        {
+          artist: { slug: 'bar', name: 'Bar Act' },
+          role: 'DJ',
+          billingOrder: 2,
+          stage: 'Panorama Bar',
+          setStart: '2026-09-26T23:59:00+02:00',
+        },
+      ],
+    }
+    await page.route(/\/api\/events\/[^/?]+/, (route) => json(route, klubnacht))
+
+    await page.goto('/en/events/mock-event')
+
+    await expect(page.getByRole('heading', { name: 'Running order' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Berghain', level: 3 })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Panorama Bar', level: 3 })).toBeVisible()
+    const berghain = page.getByRole('list').filter({ hasText: 'Opener' })
+    await expect(berghain.getByRole('listitem')).toHaveText([
+      /Sat\s+23:59–04:30\s*Opener/,
+      /Sun\s+08:30–12:30\s*Late Set/,
+    ])
+    await expect(page.getByRole('heading', { name: 'Lineup' })).toHaveCount(0)
+  })
+
   test('a mixed lineup labels every act', async ({ page }) => {
     const mixed = {
       ...eventBody,

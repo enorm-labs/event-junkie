@@ -1,5 +1,6 @@
 package de.norm.events.scraper.morphine
 
+import de.norm.events.scraper.BERLIN
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
@@ -18,6 +19,9 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import java.math.BigDecimal
+import java.time.Instant
+import java.time.LocalDate
+import java.time.LocalTime
 
 /**
  * Pure HTML parser for Morphine Raum event detail pages (`/events/<slug>`).
@@ -28,7 +32,7 @@ import java.math.BigDecimal
  *
  * The hand-coded Kirby template emits typed `div.block` boxes, four with data. `.block.day` is
  * the header `"Friday, 07.08.26, door  20:00"` plus a nested `ul.lineup` whose first entry's
- * time is the start and whose every name is a performer. `.block.paypal` is an advance-ticket
+ * time is the start, whose every name is a performer, and whose every time is that set's start. `.block.paypal` is an advance-ticket
  * form: its hidden `amount` input is the presale price, and it posts to PayPal rather than
  * linking, so the button is the only way to buy and there is no ticket URL. `.block.priceevent`
  * is free text the venue also uses for house rules, so [readPriceNote] requires a pricing signal
@@ -78,11 +82,12 @@ class MorphineDetailPageScraper {
         val lineup = readLineup(overlay)
         val priceNote = readPriceNote(overlay.textAt("div.block.priceevent > p"))
 
+        val eventDate = parseDayLineDate(dayLine)
         return ScrapedEvent(
             title = title,
             description = readDescription(overlay),
             eventType = inferConcertVenueType(title),
-            eventDate = parseDayLineDate(dayLine) ?: UNRESOLVED_EVENT_DATE,
+            eventDate = eventDate ?: UNRESOLVED_EVENT_DATE,
             doorsTime = parseDayLineDoors(dayLine),
             // The first set's time is when the night starts; later entries are sets within it.
             startTime = parseTime(lineup.firstOrNull()?.startTime),
@@ -94,13 +99,38 @@ class MorphineDetailPageScraper {
             priceNote = priceNote,
             artists =
                 readPerformers(overlay).ifEmpty {
+                    val starts = setStarts(lineup, eventDate)
                     lineup
-                        .filter { it.name.isNotBlank() }
-                        .flatMap { morphineSetLineActs(stripLiveRecordingSuffix(it.name), title) }
-                        .flatMap { headlinersFromTitle(it) }
-                        .distinctBy { it.name.lowercase() }
+                        .withIndex()
+                        .filter { it.value.name.isNotBlank() }
+                        .flatMap { (index, set) ->
+                            morphineSetLineActs(stripLiveRecordingSuffix(set.name), title)
+                                .flatMap { headlinersFromTitle(it) }
+                                .map { it.copy(setStart = starts[index]) }
+                        }.distinctBy { it.name.lowercase() }
                 }
         )
+    }
+
+    /**
+     * Each set's start as an instant, in lineup order (#2002). The venue prints a clock time and
+     * no end, so the end stays unknown. A time earlier than the set before it has crossed
+     * midnight. Every entry is `null` without the night's date, since a clock alone is no instant.
+     * An ensemble's performers ([readPerformers]) get none: their credits name no set.
+     */
+    private fun setStarts(
+        lineup: List<LineupEntry>,
+        eventDate: LocalDate?
+    ): List<Instant?> {
+        var day = eventDate ?: return lineup.map { null }
+        var previous: LocalTime? = null
+        return lineup.map { set ->
+            parseTime(set.startTime)?.let { time ->
+                if (previous != null && time < previous) day = day.plusDays(1)
+                previous = time
+                day.atTime(time).atZone(BERLIN).toInstant()
+            }
+        }
     }
 
     /**

@@ -16,9 +16,9 @@ import org.jsoup.nodes.Element
  * Pure HTML parser for a Tresor event page (`/event/YYYYMMDD-<slug>/`).
  *
  * Repeats the listing's floor-grouped lineup and adds what the listing lacks: a **set time per
- * artist** (`23:00-02:00`) and a blurb. The model has no per-artist time, so the opening set —
- * the first `.lineup-time` in document order, the first slot on the first floor — becomes the
- * start time; the venue publishes no doors or start time, so this is the only clock it gives.
+ * artist** (`23:00-02:00`) and a blurb. Only the opening set is read, and the per-artist times
+ * are not stored yet (see #2002). That set — the first `.lineup-time` in document order, the first
+ * slot on the first floor — becomes the start time: the venue publishes no doors or start time.
  *
  * The blurb is followed by an underscore rule and then several screens of guest and ticket
  * policy repeated verbatim on every night ("Garderobe at Tresor is now self-service lockers…"),

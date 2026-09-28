@@ -10,6 +10,7 @@ import io.kotest.matchers.string.shouldStartWith
 import org.jsoup.Jsoup
 import org.junit.jupiter.api.Test
 import java.math.BigDecimal
+import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
 
@@ -52,7 +53,7 @@ class MorphineDetailPageScraperTest {
         event.description.shouldNotBeNull() shouldStartWith "After the remarkable success"
         event.status shouldBe "SCHEDULED"
         event.soldOut shouldBe false
-        event.artists shouldBe listOf(ScrapedArtist("Sardy Fardy", "HEADLINER", titleDerived = true))
+        event.artists shouldBe listOf(ScrapedArtist("Sardy Fardy", "HEADLINER", titleDerived = true, setStart = Instant.parse("2026-08-07T18:30:00Z")))
     }
 
     @Test
@@ -94,9 +95,9 @@ class MorphineDetailPageScraperTest {
 
         event.artists shouldBe
             listOf(
-                ScrapedArtist("ALL ABOUT BIRDS", "HEADLINER", titleDerived = true),
+                ScrapedArtist("ALL ABOUT BIRDS", "HEADLINER", titleDerived = true, setStart = Instant.parse("2026-09-18T18:00:00Z")),
                 // The project after the colon is the work, not the act (#1585).
-                ScrapedArtist("JON ROSE", "HEADLINER", titleDerived = true)
+                ScrapedArtist("JON ROSE", "HEADLINER", titleDerived = true, setStart = Instant.parse("2026-09-18T18:00:00Z"))
             )
         event.doorsTime shouldBe LocalTime.of(19, 30)
         event.startTime shouldBe LocalTime.of(20, 0)
@@ -110,9 +111,9 @@ class MorphineDetailPageScraperTest {
 
         event.artists shouldBe
             listOf(
-                ScrapedArtist("Gareth Psaltis", "HEADLINER", titleDerived = true),
-                ScrapedArtist("Temple Rat", "HEADLINER", titleDerived = true),
-                ScrapedArtist("Jacob Stoy", "HEADLINER", titleDerived = true)
+                ScrapedArtist("Gareth Psaltis", "HEADLINER", titleDerived = true, setStart = Instant.parse("2026-08-07T18:30:00Z")),
+                ScrapedArtist("Temple Rat", "HEADLINER", titleDerived = true, setStart = Instant.parse("2026-08-07T18:30:00Z")),
+                ScrapedArtist("Jacob Stoy", "HEADLINER", titleDerived = true, setStart = Instant.parse("2026-08-07T18:30:00Z"))
             )
     }
 
@@ -170,6 +171,43 @@ class MorphineDetailPageScraperTest {
         event.startTime shouldBe LocalTime.of(20, 30)
         // No act is billed; the night is its title.
         event.artists.shouldBeEmpty()
+    }
+
+    @Test
+    fun `gives each act the start of its own set`() {
+        // Two sets an hour apart (#2002). The venue prints no end, so none is stored.
+        val url = "http://www.morphinerecords.com/events/bnnt-radwan"
+        val event = parse("morphine-detail-several-sets.html", url).shouldNotBeNull()
+
+        event.startTime shouldBe LocalTime.of(20, 30)
+        val starts = event.artists.associate { it.name to it.setStart }
+        starts.getValue("BNNT") shouldBe Instant.parse("2026-10-14T19:30:00Z")
+        event.artists.first().setStart shouldBe Instant.parse("2026-10-14T18:30:00Z")
+        event.artists.map { it.setEnd }.distinct() shouldBe listOf(null)
+    }
+
+    @Test
+    fun `moves a set past midnight to the next day`() {
+        val html =
+            """
+            <section class="content overlay"><div class="title">Late Night</div>
+              <div class="block day">Friday, 07.08.26, door 22:00
+                <ul class="lineup"><li><span>23:00</span><span>First Act</span></li><li><span>00:30</span><span>Second Act</span></li></ul>
+              </div>
+            </section>
+            """.trimIndent()
+        val event = scraper.scrape(Jsoup.parse(html), "http://www.morphinerecords.com/events/late-night").shouldNotBeNull()
+
+        event.artists.map { it.setStart } shouldBe
+            listOf(Instant.parse("2026-08-07T21:00:00Z"), Instant.parse("2026-08-07T22:30:00Z"))
+    }
+
+    @Test
+    fun `bills an ensemble's performers without a set time, since their credits name none`() {
+        val url = "http://www.morphinerecords.com/events/vinyl-reduction"
+        val event = parse("morphine-detail-performers.html", url).shouldNotBeNull()
+
+        event.artists.map { it.setStart }.distinct() shouldBe listOf(null)
     }
 
     @Test

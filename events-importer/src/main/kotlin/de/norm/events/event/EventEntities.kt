@@ -80,7 +80,11 @@ data class EventArtistEntity(
     /** Room / stage the artist plays at this event (e.g. "Panorama Bar"). Null for single-room venues. */
     val stage: String? = null,
     /** The name was read off the event title (#1145); see `ScrapedArtist.titleDerived`. */
-    val titleDerived: Boolean = false
+    val titleDerived: Boolean = false,
+    /** When the act's set starts, where the venue publishes a running order (#2002). */
+    val setStart: Instant? = null,
+    /** When the act's set ends, where the venue publishes one. */
+    val setEnd: Instant? = null
 )
 
 /**

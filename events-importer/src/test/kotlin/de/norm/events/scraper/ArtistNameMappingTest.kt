@@ -233,6 +233,8 @@ class ArtistNameMappingTest {
         isEventSegmentLabel("Techno Afterparty") shouldBe true
         isEventSegmentLabel("Warm Up") shouldBe true
         isEventSegmentLabel("warm-up") shouldBe true
+        // Morphine Raum's set line on a listening session, whose time is the start and whose name is none.
+        isEventSegmentLabel("Event start") shouldBe true
     }
 
     @Test

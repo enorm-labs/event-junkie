@@ -176,6 +176,51 @@ class BerghainWebsiteImporterTest {
         }
 
     @Test
+    fun `importEvents attaches the running order's set times to the overview lineup`() =
+        runTest {
+            // The 26.09 Klubnacht as the programme bills it, trimmed to four slots: one act per floor
+            // with a time, a Live act, a back-to-back, and one act the running order does not name.
+            val overview =
+                """
+                <html><body>
+                <a href="/de/event/80744/">
+                  <p>Samstag <span class="font-bold">26.09.2026</span> beginn 23:59</p>
+                  <h2>Klubnacht</h2>
+                  <h3>Berghain</h3>
+                  <h4><span><span>Joline Scheffler</span>,</span>
+                      <span><span>Colin Benders</span><span class="uppercase">Live</span></span></h4>
+                  <h3>Panorama Bar</h3>
+                  <h4><span><span>nd_baumecker</span><span class="uppercase">b2b</span><span>Jorkes</span>,</span>
+                      <span><span>Not On The Running Order</span></span></h4>
+                </a>
+                </body></html>
+                """.trimIndent()
+            val runningOrderImporter = BerghainWebsiteImporter(htmlFetcher, Clock.fixed(Instant.parse("2026-09-20T00:00:00Z"), ZoneOffset.UTC))
+            val detailUrl = "https://www.berghain.berlin/de/event/80744/"
+            coEvery { htmlFetcher.fetch(sourceUrl, any(), any()) } returns
+                FetchResult.Success(document = Jsoup.parse(overview, sourceUrl), etag = null, lastModified = null)
+            coEvery { htmlFetcher.fetchDocument(detailUrl) } returns
+                Jsoup.parse(loadFixture("scraper/berghain/berghain-detail-running-order.html"), detailUrl)
+
+            val result = runningOrderImporter.importEvents(sourceUrl)
+            result.shouldBeInstanceOf<ImportResult.Success>()
+            val artists =
+                result.events
+                    .single()
+                    .artists
+                    .associateBy { it.name }
+
+            // The lineup is the programme's: its five acts, its roles, none of the running order's other names.
+            artists.keys shouldBe setOf("Joline Scheffler", "Colin Benders", "nd_baumecker", "Jorkes", "Not On The Running Order")
+            artists.getValue("Colin Benders").role shouldBe "HEADLINER"
+            artists.getValue("Joline Scheffler").setStart shouldBe Instant.parse("2026-09-26T21:59:00Z")
+            artists.getValue("Colin Benders").setEnd shouldBe Instant.parse("2026-09-27T06:30:00Z")
+            artists.getValue("Jorkes").setStart shouldBe Instant.parse("2026-09-27T23:00:00Z")
+            artists.getValue("nd_baumecker").stage shouldBe "Panorama Bar"
+            artists.getValue("Not On The Running Order").setStart.shouldBeNull()
+        }
+
+    @Test
     fun `eventSource matches the expected enum value`() {
         importer.eventSource shouldBe EventSource.BERGHAIN
     }

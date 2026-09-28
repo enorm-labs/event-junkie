@@ -1,6 +1,8 @@
 package de.norm.events.scraper.berghain
 
 import de.norm.events.event.EventType
+import de.norm.events.scraper.B2B_SEPARATOR
+import de.norm.events.scraper.isNonArtistName
 
 /**
  * Maps a Berghain floor label to its signature music genre.
@@ -66,3 +68,29 @@ internal val BERGHAIN_DOORS_PATTERN = Regex("""tür\s+(\d{1,2}:\d{2})""", RegexO
 
 /** Show start time in the date line, e.g. "beginn 21:00". */
 internal val BERGHAIN_START_PATTERN = Regex("""beginn\s+(\d{1,2}:\d{2})""", RegexOption.IGNORE_CASE)
+
+/**
+ * The performers one lineup slot names: `Agata B2B Cunt Remember` is two acts, `Booty Carrell DJ
+ * (Vinyl) Warm-up` is one. Shared by the programme and the event page, so a running-order slot
+ * names the acts the programme billed. Why each split is safe: [BerghainOverviewPageScraper].
+ */
+internal fun splitSlot(text: String): List<String> =
+    text
+        .split(SLOT_SEPARATOR)
+        .map { it.replace(SLOT_DESCRIPTION, "").trim() }
+        .filter { it.isNotBlank() && !isNonArtistName(it) }
+
+/**
+ * What Kantine writes after a name to describe the slot, not the act: `Booty Carrell DJ (Vinyl)
+ * Warm-up`, whose `+ Party` the [SLOT_SEPARATOR] already cut off (#1843). Each part is optional,
+ * and only a whole tail comes off, so `DJ Koze` keeps its leading `DJ`.
+ */
+private val SLOT_DESCRIPTION =
+    Regex("""(?:\s+dj)?(?:\s*\((?:all\s+)?vinyl(?:\s+only)?\))?(?:\s+warm[\s-]?up)?\s*$""", RegexOption.IGNORE_CASE)
+
+/**
+ * What separates the performers written into one slot: a [B2B_SEPARATOR], a padded `+` (Kantine's
+ * `Dicken45 + Benito`, #1844), or a comma. The comma needs no padding, because the venue writes the
+ * list both ways.
+ */
+private val SLOT_SEPARATOR = Regex("""${B2B_SEPARATOR.pattern}|\s+\+\s+|\s*,\s*""", RegexOption.IGNORE_CASE)
