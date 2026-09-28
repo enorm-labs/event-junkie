@@ -1,0 +1,22 @@
+### ============================================================
+### BFF: Sitemaps — the detail-page sitemaps (#367)
+###
+### Read-only, no auth. A crawler reads these at the site root,
+### /sitemap-<kind>.xml, through the frontend's injector sidecar.
+### ============================================================
+
+### Events that are not over yet, in both locales
+GET {{bff-host}}/api/sitemaps/events.xml
+Accept: application/xml
+
+### Every venue
+GET {{bff-host}}/api/sitemaps/venues.xml
+Accept: application/xml
+
+### Artists with an event that is not over yet
+GET {{bff-host}}/api/sitemaps/artists.xml
+Accept: application/xml
+
+### Promoters with an event that is not over yet
+GET {{bff-host}}/api/sitemaps/promoters.xml
+Accept: application/xml

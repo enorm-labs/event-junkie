@@ -16,6 +16,7 @@ flowchart TD
     licence["licence"]
     meta["meta"]
     promoter["promoter"]
+    sitemap["sitemap"]
     sourcelicence["sourcelicence"]
     venue["venue"]
 

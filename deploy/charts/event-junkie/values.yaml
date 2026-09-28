@@ -196,8 +196,9 @@ frontend:
     name: ""
   # frontend.injector is the meta-injection sidecar (ADR-014 §Decision 3): a second container filling
   # the head of index.html per detail page for scrapers that run no JavaScript. nginx proxies the four
-  # detail route families to it on loopback and serves the plain shell when it does not answer, so
-  # `enabled: false` costs link previews and nothing else.
+  # detail route families to it on loopback and serves the plain shell when it does not answer. It also
+  # forwards the detail sitemaps from the BFF (#367), so `enabled: false` costs link previews and
+  # those sitemaps, which then answer 502.
   injector:
     enabled: true
     image:

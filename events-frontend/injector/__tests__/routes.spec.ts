@@ -4,8 +4,8 @@ import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
 
 import { LOCALES } from '@/i18n/locales'
-import { INDEXABLE_PATHS } from '@/lib/seo'
-import { matchDetailRoute, matchStaticRoute } from '../routes.ts'
+import { DETAIL_SITEMAPS, INDEXABLE_PATHS } from '@/lib/seo'
+import { ENTITY_KINDS, matchDetailRoute, matchSitemap, matchStaticRoute } from '../routes.ts'
 
 /**
  * The route matcher is the injector's whole surface: what it accepts reaches the BFF as a URL, so
@@ -131,5 +131,36 @@ describe('the nginx location that proxies to the injector', () => {
     ]
     expect(paths.filter((path) => nginx.test(path))).toEqual([])
     for (const path of paths) expect(matchStaticRoute(path) ?? matchDetailRoute(path)).toBeNull()
+  })
+})
+
+describe('matchSitemap', () => {
+  it('recognises the sitemap the index names for each family', () => {
+    // The index, nginx and the BFF all list these four; a fifth family needs every one of them.
+    expect(DETAIL_SITEMAPS.map((path) => matchSitemap(path))).toEqual([...ENTITY_KINDS])
+  })
+
+  it('refuses anything else, the static pages sitemap included', () => {
+    const paths = [
+      '/sitemap.xml',
+      '/sitemap-pages.xml',
+      '/sitemap-genres.xml',
+      '/sitemap-events.xml/x',
+      '/en/sitemap-events.xml',
+    ]
+    expect(paths.map((path) => [path, matchSitemap(path)])).toEqual(
+      paths.map((path) => [path, null]),
+    )
+  })
+
+  it('agrees with the nginx location that sends the sitemaps here', () => {
+    const conf = readFileSync(resolve(process.cwd(), 'docker/nginx.conf'), 'utf8')
+    const source = /location ~ (\^\/sitemap-\S*) \{\s*proxy_pass http:\/\/127\.0\.0\.1:3000;/.exec(
+      conf,
+    )?.[1]
+    expect(source).toBeTruthy()
+    const nginx = new RegExp(source ?? '(?!)')
+    expect(DETAIL_SITEMAPS.filter((path) => !nginx.test(path))).toEqual([])
+    expect(['/sitemap.xml', '/sitemap-pages.xml'].filter((path) => nginx.test(path))).toEqual([])
   })
 })

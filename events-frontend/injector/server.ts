@@ -1,8 +1,11 @@
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http'
+import { Readable } from 'node:stream'
+import { pipeline } from 'node:stream/promises'
+import type { ReadableStream } from 'node:stream/web'
 
 import { bffPath, entityMeta } from './meta.ts'
 import { rewriteHead } from './rewrite.ts'
-import { matchDetailRoute, matchStaticRoute } from './routes.ts'
+import { type EntityKind, matchDetailRoute, matchSitemap, matchStaticRoute } from './routes.ts'
 import { staticPathMeta } from '../src/lib/staticPages.ts'
 
 /**
@@ -11,7 +14,8 @@ import { staticPathMeta } from '../src/lib/staticPages.ts'
  * and, for a detail page, the entity from the BFF, rewrites the head, and answers. A slug the BFF
  * does not know is a 404 and any other failure a 502: nginx's `error_page` then serves the plain
  * shell, with the 404 kept and the 502 turned into 200, so every branch that is not the happy
- * path ends in `fail()`. Nothing about the visitor reaches the BFF, and nothing is logged per request. Two
+ * path ends in `fail()`. It also forwards the detail sitemaps from the BFF, which nginx serves at
+ * the root (#367). Nothing about the visitor reaches the BFF, and nothing is logged per request. Two
  * in-process caches bound the BFF load: the shell changes only on deploy, and a link shared into
  * a busy group is fetched by every scraper at once.
  */
@@ -23,6 +27,11 @@ const BFF_TIMEOUT_MS = Number(process.env.BFF_TIMEOUT_MS ?? 1500)
 const SHELL_TTL_MS = 5 * 60 * 1000
 const ENTITY_TTL_MS = 60 * 1000
 const ENTITY_CACHE_LIMIT = 500
+/**
+ * A sitemap lists every upcoming event in both locales, so it is streamed rather than buffered and
+ * gets longer than a page lookup. nginx's `proxy_read_timeout` for it is 15s.
+ */
+const SITEMAP_TIMEOUT_MS = 10_000
 /** A shell or an entity larger than this is not ours; refuse it rather than buffer it. */
 const MAX_BODY_BYTES = 1024 * 1024
 
@@ -87,13 +96,46 @@ function send(response: ServerResponse, body: string): void {
 
 function fail(response: ServerResponse, status: number, reason: string): void {
   if (status !== 404) console.error(`injector: ${reason}`)
+  // A sitemap that broke mid-stream has sent its status already; cutting it short is all that is left.
+  if (response.headersSent) {
+    response.destroy()
+    return
+  }
   response.writeHead(status, { 'content-type': 'text/plain; charset=utf-8' }).end(reason)
+}
+
+/** Streams the BFF's sitemap for `kind` through, with its type and cache lifetime. */
+async function proxySitemap(kind: EntityKind, response: ServerResponse): Promise<void> {
+  const url = `${BFF_URL}/api/sitemaps/${kind}.xml`
+  const upstream = await fetch(url, {
+    headers: { accept: 'application/xml' },
+    signal: AbortSignal.timeout(SITEMAP_TIMEOUT_MS),
+  }).catch((error: Error) => {
+    throw new Fail(`${url}: ${(error.cause as Error | undefined)?.message ?? error.message}`, 502)
+  })
+  // Any answer but a sitemap is a 502: a crawler retries one, and a 404 would drop the file.
+  if (!upstream.ok || !upstream.body) throw new Fail(`${url} answered ${upstream.status}`, 502)
+  response.writeHead(200, {
+    'content-type': upstream.headers.get('content-type') ?? 'application/xml',
+    'cache-control': upstream.headers.get('cache-control') ?? 'public, max-age=3600',
+  })
+  await pipeline(Readable.fromWeb(upstream.body as ReadableStream), response)
 }
 
 async function handle(request: IncomingMessage, response: ServerResponse): Promise<void> {
   const url = request.url ?? '/'
   if (url === '/healthz') {
     response.writeHead(200, { 'content-type': 'text/plain' }).end('ok')
+    return
+  }
+
+  const sitemap = matchSitemap(url)
+  if (sitemap) {
+    try {
+      await proxySitemap(sitemap, response)
+    } catch (error) {
+      fail(response, 502, `sitemap-${sitemap}: ${(error as Error).message}`)
+    }
     return
   }
 
