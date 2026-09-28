@@ -95,10 +95,11 @@ fi
 
 if $check_only; then
     ssh_node 'cat > /tmp/ej-check-alerts.py' < check_alerts.py
+    python3 gen_alerts.py --failure-only | ssh_node 'cat > /tmp/ej-failure-only.txt'
     ssh_node "
         AUTH=\$(sudo k3s kubectl -n flux-system get secret openobserve-credentials -o jsonpath='{.data.O2_BASIC_AUTH_HEADER}' | base64 -d)
         SVC=\$(sudo k3s kubectl -n observability get svc openobserve-openobserve-standalone -o jsonpath='{.spec.clusterIP}')
-        python3 /tmp/ej-check-alerts.py \"\$AUTH\" \"\$SVC\" /tmp/ej-alerts.json
+        python3 /tmp/ej-check-alerts.py \"\$AUTH\" \"\$SVC\" /tmp/ej-alerts.json /tmp/ej-failure-only.txt
     "
     exit $?
 fi

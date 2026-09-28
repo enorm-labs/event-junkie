@@ -19,13 +19,18 @@ applies here: forty lines of scaffolding per rule, and a typo in one copy is inv
 
 ## What `--check` answers that the UI does not
 
-Three states, and they are different questions:
+Four states, and they are different questions:
 
-|              |                                                                                          |
-| ------------ | ---------------------------------------------------------------------------------------- |
-| `NO DATA`    | the query matches no series — **the rule can never fire**, and looks exactly like health |
-| `WOULD FIRE` | the query crosses its threshold right now                                                |
-| `ok`         | returns data, below the threshold                                                        |
+|              |                                                                                                                |
+| ------------ | -------------------------------------------------------------------------------------------------------------- |
+| `NO DATA`    | the query matches no series — **the rule can never fire**, and looks exactly like health                       |
+| `quiet`      | a rule marked `failure_only`: its series appears on the first failure, and the stream it is attached to exists |
+| `WOULD FIRE` | the query crosses its threshold right now                                                                      |
+| `ok`         | returns data, below the threshold                                                                              |
+
+**`quiet` needs the mark.** `gen_alerts.py` passes `failure_only=True` for the four rules whose series a failure creates, and
+`gen_alerts.py --failure-only` lists them for the check. Unmarked, the same silence stays `NO DATA`, because a typo in a metric name looks exactly like a
+counter that has not incremented yet — the #1964 defect. The mark is a claim, and a drill is what backs it.
 
 `WOULD FIRE` is not necessarily wrong. On staging today `ej-importer-stale` is one, because `loge` genuinely has not succeeded in 70 hours.
 
@@ -42,7 +47,7 @@ un-fireable during exactly the normal operation it was meant to watch, and nothi
 absent side.
 
 **Since collector 0.158 `send_failed` is a failure-only series too** (#1964): no `_total`, and no series until the first failure. `ej-ingest-shedding`
-therefore reports `NO DATA` on a healthy cluster, like `ej-translations-failing`, and is attached to `otelcol_exporter_queue_size`, which always exists. A
+therefore reports `quiet` on a healthy cluster, like `ej-translations-failing`, and is attached to `otelcol_exporter_queue_size`, which always exists. A
 staging drill proved it is the right counter: with the collector cut off from OpenObserve for 10 minutes, 9973 points were dropped through `send_failed`,
 the queue reached 10% and `receiver_refused` stayed 0.
 
