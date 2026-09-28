@@ -438,6 +438,38 @@ class FrannzOverviewPageScraperTest {
             events shouldHaveSize 1
             events.first().eventDate shouldBe LocalDate.of(2026, 12, 5)
         }
+
+        private fun nightOn(weekday: String) =
+            scraper.scrape(
+                Jsoup.parse(
+                    """
+                    <article id="post-9988" class="events event_typ-konzert">
+                        <h2 class="event-title">D/TROIT</h2>
+                        <div class="event-dayname">$weekday</div>
+                        <div class="event-day">08</div>
+                        <div class="event-month">Oktober</div>
+                    </article>
+                    """.trimIndent(),
+                    baseUrl
+                ),
+                baseUrl
+            )
+
+        @Test
+        fun `takes the year whose weekday matches, for a night more than a year ahead`() {
+            // 8 October is a Thursday in 2026 and a Friday in 2027.
+            nightOn("Freitag").single().eventDate shouldBe LocalDate.of(2027, 10, 8)
+        }
+
+        @Test
+        fun `keeps the current year when its weekday matches`() {
+            nightOn("Donnerstag").single().eventDate shouldBe LocalDate.of(2026, 10, 8)
+        }
+
+        @Test
+        fun `falls back to the next occurrence when no year matches the weekday`() {
+            nightOn("Montag").single().eventDate shouldBe LocalDate.of(2026, 10, 8)
+        }
     }
 
     @Test

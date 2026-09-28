@@ -9,6 +9,7 @@ import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.imgSrcAt
 import de.norm.events.scraper.mapEventType
 import de.norm.events.scraper.parseEventStatus
+import de.norm.events.scraper.parseGermanWeekday
 import de.norm.events.scraper.parsePriceValue
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.refineConcertVenueType
@@ -156,9 +157,9 @@ class FrannzOverviewPageScraper(
 
     /**
      * The event date from `.event-day` (day number) and `.event-month` (full German month name).
-     * No year is rendered, so the [MonthDay] resolves to its nearest future occurrence: this year,
-     * or next when the date has passed. The listing is chronological and wraps December → January,
-     * which the rollover handles.
+     * No year is rendered, and the listing runs more than a year ahead, so the date is the first
+     * occurrence from today whose weekday matches `.event-dayname` (#1988). Without a weekday, or
+     * when none matches, it is the next occurrence.
      */
     @Suppress("ReturnCount") // Null-safe early exits per date component are clearer than nested let-chains
     private fun parseEventDate(article: Element): LocalDate? {
@@ -172,9 +173,10 @@ class FrannzOverviewPageScraper(
                 return null
             }
 
-        val now = LocalDate.now(clock)
-        val candidate = monthDay.atYear(now.year)
-        return if (candidate.isBefore(now)) candidate.plusYears(1) else candidate
+        val today = LocalDate.now(clock)
+        val upcoming = (0..YEARS_AHEAD).map { monthDay.atYear(today.year + it) }.filterNot { it.isBefore(today) }
+        val weekday = parseGermanWeekday(article.textAt(".event-dayname"))
+        return upcoming.firstOrNull { it.dayOfWeek == weekday } ?: upcoming.first()
     }
 
     /**
@@ -312,6 +314,9 @@ class FrannzOverviewPageScraper(
     }
 
     companion object {
+        /** How many years past this one a year-less date may fall in; the listing reaches about 13 months. */
+        private const val YEARS_AHEAD = 2
+
         private const val EVENT_TYP_PREFIX = "event_typ-"
         private const val HIGHLIGHT_CLASS = "event_typ-highlight"
 
