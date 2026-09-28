@@ -179,14 +179,34 @@ class ClubDerVisionaereProgrammePageScraperTest {
     }
 
     @Test
-    fun `keeps a live act but drops the unbooked guest-DJ slot and its set times`() {
+    fun `keeps a live act with its set start but drops the unbooked guest-DJ slot`() {
         val event = sonnenraumEvents.first { it.sourceId == "sonnenraum:41733" }
 
-        // "// The Omniversal Earkestra LIVE from 21:00" → the band, billed live; the set time comes
-        // off the name. "// Guest DJs from 23:00" names no act at all. The earlier of the two slot
-        // times stands in for the night's start, which the listing states no other way (#1687).
-        event.artists shouldContainExactly listOf(ScrapedArtist(name = "The Omniversal Earkestra", role = "HEADLINER"))
+        // "// The Omniversal Earkestra LIVE from 21:00" → the band, billed live, its set from 21:00
+        // on Monday 3 August (#2002). "// Guest DJs from 23:00" names no act at all. The earlier of
+        // the two slot times stands in for the night's start, which the listing states no other way (#1687).
+        event.artists shouldContainExactly
+            listOf(ScrapedArtist(name = "The Omniversal Earkestra", role = "HEADLINER", setStart = Instant.parse("2026-08-03T19:00:00Z")))
         event.startTime shouldBe LocalTime.of(21, 0)
+    }
+
+    @Test
+    fun `moves a set before six in the morning to the next day`() {
+        val html =
+            """
+            <div id="programmC"><div id="post-1">
+              <div class="headerTxt">Sa. 3.10.</div>
+              <div class="programmCContentBox">
+                <p class="headerTxt cdvRed">Late</p>
+                <p>// Early Act from 23:00</p>
+                <p>// Late Act from 2:00</p>
+              </div>
+            </div></div>
+            """.trimIndent()
+        val night = summerScraper.scrape(Jsoup.parse(html, sourceUrl), sourceUrl, ClubDerVisionaereRoom.CLUB).single()
+
+        night.artists.map { it.setStart } shouldBe
+            listOf(Instant.parse("2026-10-03T21:00:00Z"), Instant.parse("2026-10-04T00:00:00Z"))
     }
 
     @Test
