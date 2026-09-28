@@ -220,6 +220,50 @@ class EventTypeMappingTest {
         inferUnmarkedTitleType("DAS LUNSENTRIO") shouldBe "OTHER"
     }
 
+    // --- inferVenueFormatType ---
+
+    // The two houses' own format vocabularies, copied so this test does not reach into a scraper.
+    private val colosseumFormats =
+        linkedMapOf(
+            "film:" to "SCREENING",
+            "kinoevent" to "SCREENING",
+            "buchpremiere" to "READING",
+            "podcast" to "SHOW"
+        )
+
+    private val peterEdelFormats = linkedMapOf("talkshow" to "SHOW", "stummfilm" to "SCREENING", "tanztee" to "PARTY")
+
+    @Test
+    fun `inferVenueFormatType prefers a house format over the shared cues`() {
+        // Peter Edel's "Tanztee" is a party the shared classifier has no cue for.
+        inferVenueFormatType("Tanztee im PETER EDEL", null, peterEdelFormats) shouldBe "PARTY"
+        inferVenueFormatType("Stummfilm mit Live-Musik", null, peterEdelFormats) shouldBe "SCREENING"
+    }
+
+    @Test
+    fun `inferVenueFormatType reads the subtitle as part of the haystack`() {
+        inferVenueFormatType("Irvine Welsh", "Buchpremiere", colosseumFormats) shouldBe "READING"
+    }
+
+    @Test
+    fun `inferVenueFormatType keeps the first matching entry when two keywords hit`() {
+        // A film night presented by a podcast is a screening: the earlier entry wins.
+        inferVenueFormatType("Kinoevents 2026, presented by a Podcast", null, colosseumFormats) shouldBe "SCREENING"
+    }
+
+    @Test
+    fun `inferVenueFormatType matches a keyword regardless of case`() {
+        inferVenueFormatType("TALKSHOW MIT GÄSTEN", null, peterEdelFormats) shouldBe "SHOW"
+    }
+
+    @Test
+    fun `inferVenueFormatType falls through to the shared cues and then OTHER`() {
+        inferVenueFormatType("Kotti Karaoke Party", null, peterEdelFormats) shouldBe "PARTY"
+        // No house format and no shared cue stays OTHER, never CONCERT.
+        inferVenueFormatType("Das Betreute Singen September", null, colosseumFormats) shouldBe "OTHER"
+        inferVenueFormatType("Das Betreute Singen September", null, emptyMap()) shouldBe "OTHER"
+    }
+
     // --- isFestivalTitle ---
 
     @Test

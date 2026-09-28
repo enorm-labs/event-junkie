@@ -8,9 +8,9 @@ import de.norm.events.scraper.WixEventsWarmupData
 import de.norm.events.scraper.buildArtistList
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.colosseum.ColosseumOverviewPageScraper.Companion.VENUE_FORMAT_KEYWORDS
-import de.norm.events.scraper.colosseum.ColosseumOverviewPageScraper.Companion.resolveEventType
 import de.norm.events.scraper.extractSupportFromSubtitle
 import de.norm.events.scraper.inferUnmarkedTitleType
+import de.norm.events.scraper.inferVenueFormatType
 import de.norm.events.scraper.mapWixEventStatus
 import de.norm.events.scraper.parseWixSchedule
 import de.norm.events.scraper.parseWixTicketPrice
@@ -43,6 +43,11 @@ import java.math.BigDecimal
  * With no support-act convention in the subtitles, [buildArtistList] extracts nothing: a
  * Colosseum title is as often an event name ("Investment", "Das Betreute Singen September") as
  * a performer's, so minting it as a headliner would create artists that are not people.
+ *
+ * Typing: [VENUE_FORMAT_KEYWORDS] first, then [inferUnmarkedTitleType] over title and subtitle,
+ * else `OTHER` — the house publishes no category (`categories` is empty on every event), and
+ * `CONCERT` would be wrong for a talks-and-readings room. A talk lands on `OTHER` too: the model
+ * has no `TALK` type.
  *
  * @see COLOSSEUM_LIMITATIONS for what the house does not publish.
  * @see ColosseumWebsiteImporter for the HTTP fetch orchestrator.
@@ -105,7 +110,7 @@ class ColosseumOverviewPageScraper {
         return ScrapedEvent(
             title = title,
             subtitle = subtitle,
-            eventType = resolveEventType(title, subtitle),
+            eventType = inferVenueFormatType(title, subtitle, VENUE_FORMAT_KEYWORDS),
             eventDate = eventDate,
             startTime = schedule.startTime,
             endDate = schedule.endDate,
@@ -125,22 +130,6 @@ class ColosseumOverviewPageScraper {
     private companion object {
         /** Path prefix of a Colosseum event's own page, e.g. `/details-registrierung/irvine-welsh-live`. */
         private const val DETAILS_PATH = "/details-registrierung/"
-
-        /**
-         * The event type from title and subtitle only — the house states no category (`categories` is
-         * empty on every event). A house format ([VENUE_FORMAT_KEYWORDS]) wins; otherwise the shared
-         * [inferUnmarkedTitleType]'s unambiguous cues, then `OTHER`. Deliberately not `CONCERT`: a
-         * talks-and-readings house whose occasional gig is the exception, and `OTHER` is also where a
-         * talk lands — the model has no `TALK` type.
-         */
-        private fun resolveEventType(
-            title: String,
-            subtitle: String?
-        ): String {
-            val haystack = listOfNotNull(title, subtitle).joinToString(" ").lowercase()
-            return VENUE_FORMAT_KEYWORDS.entries.firstOrNull { (keyword, _) -> keyword in haystack }?.value
-                ?: inferUnmarkedTitleType(haystack)
-        }
 
         /**
          * Formats this house names in its own words that the shared classifier misses: a film night as
