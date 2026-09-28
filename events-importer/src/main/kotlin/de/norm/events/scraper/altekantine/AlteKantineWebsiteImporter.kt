@@ -6,6 +6,7 @@ import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
 import de.norm.events.scraper.VenueLimitations
+import de.norm.events.scraper.withQueryParameter
 import org.jsoup.nodes.Document
 import org.springframework.stereotype.Component
 import java.time.Clock
@@ -17,7 +18,7 @@ import java.time.Clock
  * HTML pages:
  * 1. [HtmlFetcher] fetches the homepage conditionally (ETag / Last-Modified).
  * 2. [AlteKantineOverviewPageScraper] parses the Content Views grid — discovery list, date,
- * start time, title and act line.
+ * start time, title and act line — on every page of it ([nextOverviewPage]).
  * 3. Each `?p=<id>` post via [AlteKantineDetailPageScraper] — kind, price, description, image and DJ.
  *
  * @see AlteKantineOverviewPageScraper for overview parsing (discovery, date, fallback).
@@ -39,6 +40,20 @@ class AlteKantineWebsiteImporter(
         document: Document,
         url: String
     ): List<ScrapedEvent> = overviewPageScraper.scrape(document, url)
+
+    /**
+     * The grid shows ten events a page. Its paginator states the current and total page numbers,
+     * and each later page renders server-side at `?_page=N`.
+     */
+    override fun nextOverviewPage(
+        document: Document,
+        url: String
+    ): String? {
+        val paginator = document.selectFirst(PAGINATOR_SELECTOR)
+        val current = paginator?.attr("data-currentpage")?.toIntOrNull()
+        val total = paginator?.attr("data-totalpages")?.toIntOrNull()
+        return if (current != null && total != null && current < total) url.withQueryParameter(PAGE_PARAMETER, current + 1) else null
+    }
 
     override fun scrapeDetail(
         document: Document,
@@ -62,6 +77,11 @@ class AlteKantineWebsiteImporter(
             eventType = primary.eventType ?: fallback.eventType,
             artists = primary.artists.ifEmpty { fallback.artists }
         )
+
+    private companion object {
+        const val PAGINATOR_SELECTOR = "ul.pt-cv-pagination"
+        const val PAGE_PARAMETER = "_page"
+    }
 }
 
 /** Nothing this source withholds needs declaring (#715). */

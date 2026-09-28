@@ -7,12 +7,14 @@ import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
 import org.jsoup.Jsoup
@@ -80,6 +82,20 @@ class AlteKantineWebsiteImporterTest {
         result: ImportResult,
         postId: String
     ): ScrapedEvent = events(result).first { it.sourceId == "alte_kantine:$postId" }
+
+    @Test
+    fun `follows the grid paginator to the next page until a page has none`() =
+        runTest {
+            val page2 = "$overviewUrl?_page=2"
+            coEvery { htmlFetcher.fetchDocument(page2) } returns Jsoup.parse(fixture("altekantine-overview-page-2.html"), page2)
+
+            val result = importer.importEvents(overviewUrl)
+
+            events(result).map { it.sourceId } shouldContain "alte_kantine:12515"
+            events(result).map { it.sourceId } shouldContain "alte_kantine:12331"
+            (result as ImportResult.Success).complete shouldBe true
+            coVerify(exactly = 1) { htmlFetcher.fetchDocument(page2) }
+        }
 
     @Test
     fun `eventSource matches expected enum value`() {

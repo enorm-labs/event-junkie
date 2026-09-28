@@ -35,6 +35,11 @@ class BarJederVernunftWebsiteImporterTest {
 
     private val sourceUrl = "https://www.bar-jeder-vernunft.de/de/programm/kalender.html"
 
+    /** Where the saved calendar says its later batches load from. */
+    private val batchUrl by lazy {
+        Jsoup.parse(loadFixture("barjedervernunft-overview.html"), sourceUrl).selectFirst("[data-render-partial-url]")!!.absUrl("data-render-partial-url")
+    }
+
     @BeforeEach
     fun setUp() {
         importer = BarJederVernunftWebsiteImporter(htmlFetcher)
@@ -49,6 +54,9 @@ class BarJederVernunftWebsiteImporterTest {
             Jsoup.parse(loadFixture("barjedervernunft-show-oh-what-a-night.html"), RESIDENCY_URL)
         coEvery { htmlFetcher.fetchDocument(GUEST_URL) } returns
             Jsoup.parse(loadFixture("barjedervernunft-show-happy-disharmonists.html"), GUEST_URL)
+        // The saved calendar names its later batches; by default the first of them is empty.
+        coEvery { htmlFetcher.fetchDocument(match { it.startsWith(batchUrl) }) } returns
+            Jsoup.parse(loadFixture("barjedervernunft-calendar-batch-empty.html"), batchUrl)
     }
 
     private fun loadFixture(name: String): String =
@@ -165,6 +173,23 @@ class BarJederVernunftWebsiteImporterTest {
             show.eventType shouldBe null
             // The JSON-LD teaser survives as the description when the full text is unavailable.
             show.description.shouldNotBeNull() shouldContain "Oh What A Night: Ein musikalischer Showhit"
+        }
+
+    @Test
+    fun `importEvents reads the later calendar batches until an empty one`() =
+        runTest {
+            coEvery { htmlFetcher.fetchDocument("$batchUrl&currentPage=2") } returns
+                Jsoup.parse(loadFixture("barjedervernunft-calendar-batch-3.html"), "$batchUrl&currentPage=2")
+            coEvery { htmlFetcher.fetchDocument(match { "programmuebersicht" in it && it != RESIDENCY_URL && it != GUEST_URL }) } returns
+                Jsoup.parse("<html><body></body></html>", sourceUrl)
+
+            val result = importer.importEvents(sourceUrl)
+            result.shouldBeInstanceOf<ImportResult.Success>()
+
+            result.events shouldHaveSize 28 + 8
+            result.complete shouldBe true
+            coVerify(exactly = 1) { htmlFetcher.fetchDocument("$batchUrl&currentPage=3") }
+            coVerify(exactly = 0) { htmlFetcher.fetchDocument("$batchUrl&currentPage=4") }
         }
 
     @Test

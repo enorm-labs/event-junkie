@@ -6,8 +6,10 @@ import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.parseIsoDate
 import de.norm.events.scraper.parseTime
+import de.norm.events.scraper.queryParameter
 import de.norm.events.scraper.stringOrNull
 import de.norm.events.scraper.textAt
+import de.norm.events.scraper.withQueryParameter
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
@@ -59,6 +61,36 @@ class BarJederVernunftOverviewPageScraper {
             } catch (e: Exception) {
                 logger.warn(e) { "Failed to parse Bar jeder Vernunft calendar card, skipping" }
                 null
+            }
+        }
+    }
+
+    /**
+     * The URL of the calendar batch after [document], or null after an empty batch. The page holds
+     * the first batch and names the later ones in `data-render-partial-url`, which the site's script
+     * requests with `&currentPage=N`. Every batch claims a next page, so an empty one ends the walk.
+     */
+    fun nextBatchUrl(
+        document: Document,
+        url: String
+    ): String? {
+        val current = url.queryParameter(CURRENT_PAGE_PARAMETER)?.toIntOrNull()
+        return when {
+            document.selectFirst(CARD_SELECTOR) == null -> {
+                null
+            }
+
+            current != null -> {
+                url.withQueryParameter(CURRENT_PAGE_PARAMETER, current + 1)
+            }
+
+            else -> {
+                document
+                    .selectFirst(
+                        BATCH_LIST_SELECTOR
+                    )?.absUrl(BATCH_URL_ATTRIBUTE)
+                    ?.takeIf { it.isNotEmpty() }
+                    ?.withQueryParameter(CURRENT_PAGE_PARAMETER, 2)
             }
         }
     }
@@ -170,6 +202,10 @@ class BarJederVernunftOverviewPageScraper {
          * from elsewhere on the site.
          */
         const val CARD_SELECTOR = ".card-type-event.card-type-calendar"
+
+        const val BATCH_LIST_SELECTOR = ".partial-render[data-render-partial-url]"
+        const val BATCH_URL_ATTRIBUTE = "data-render-partial-url"
+        const val CURRENT_PAGE_PARAMETER = "currentPage"
 
         /** schema.org availability values that mean no tickets are left. */
         val SOLD_OUT_AVAILABILITY = listOf("SoldOut", "OutOfStock")

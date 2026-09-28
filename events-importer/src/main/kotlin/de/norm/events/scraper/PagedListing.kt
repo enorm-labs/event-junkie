@@ -3,6 +3,7 @@ package de.norm.events.scraper
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
+import org.springframework.web.util.UriComponentsBuilder
 
 private val logger = KotlinLogging.logger {}
 
@@ -57,3 +58,22 @@ suspend fun HtmlFetcher.scrapeListingPages(
  * URI, or null on the last page.
  */
 fun Element.nextPageUrl(cssQuery: String): String? = selectFirst(cssQuery)?.absUrl("href")?.takeIf { it.isNotEmpty() }
+
+/** This URL's [name] query parameter, or null without one. */
+fun String.queryParameter(name: String): String? =
+    UriComponentsBuilder
+        .fromUriString(this)
+        .build()
+        .queryParams
+        .getFirst(name)
+
+/** This URL with its [name] query parameter set to [value], replacing any value it had. */
+fun String.withQueryParameter(
+    name: String,
+    value: Any
+): String =
+    UriComponentsBuilder
+        .fromUriString(this)
+        .replaceQueryParam(name, value)
+        .build()
+        .toUriString()
