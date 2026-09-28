@@ -3,6 +3,7 @@ package de.norm.events.scraper.tresor
 import de.norm.events.event.EventType
 import de.norm.events.scraper.BERLIN
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.RunningOrderClock
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
@@ -107,23 +108,11 @@ class TresorDetailPageScraper {
         slots: List<String>,
         eventDate: LocalDate?
     ): List<Pair<Instant?, Instant?>> {
-        var day = eventDate ?: return slots.map { null to null }
-        var previous = NOON
-        val times = mutableListOf<Pair<Instant?, Instant?>>()
-        for (slot in slots) {
+        val clock = RunningOrderClock(eventDate ?: return slots.map { null to null }, dayBreak = NOON)
+        return slots.map { slot ->
             val match = SLOT_TIME.find(slot)
-            val start = match?.let { parseTime(it.groupValues[1]) }
-            if (start == null) {
-                times += null to null
-                continue
-            }
-            if (start < previous) day = day.plusDays(1)
-            previous = start
-            val end = parseTime(match.groupValues[2])
-            val endDay = if (end != null && end <= start) day.plusDays(1) else day
-            times += day.atTime(start).atZone(BERLIN).toInstant() to end?.let { endDay.atTime(it).atZone(BERLIN).toInstant() }
+            match?.let { parseTime(it.groupValues[1]) }?.let { clock.slot(it, parseTime(match.groupValues[2])) } ?: (null to null)
         }
-        return times
     }
 
     /**

@@ -3,6 +3,8 @@ package de.norm.events.scraper.clubdervisionaere
 import de.norm.events.event.EventType
 import de.norm.events.scraper.B2B_SEPARATOR
 import de.norm.events.scraper.BERLIN
+import de.norm.events.scraper.NIGHT_ENDS
+import de.norm.events.scraper.RunningOrderClock
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.cleanEventTitle
@@ -237,11 +239,7 @@ class ClubDerVisionaereProgrammePageScraper(
     ): List<ScrapedArtist> {
         val setStart =
             SET_TIME_TAIL_PATTERN.find(line)?.let { parseTime(it.groupValues[1].padStart(CLOCK_LENGTH, '0')) }?.let { time ->
-                eventDate
-                    .plusDays(if (time < NIGHT_ENDS) 1 else 0)
-                    .atTime(time)
-                    .atZone(BERLIN)
-                    .toInstant()
+                RunningOrderClock(eventDate, dayBreak = NIGHT_ENDS).slot(time).first
             }
         val cleaned =
             line
@@ -314,9 +312,6 @@ class ClubDerVisionaereProgrammePageScraper(
 
         /** A leading series label on an act line ("Soundz of:  Guest DJs"), stripped so the act remains. */
         private val LINEUP_LABEL_PREFIX = Regex("""^[^:]{1,30}:\s+""")
-
-        /** A set starting before this is already the next day. */
-        private val NIGHT_ENDS: LocalTime = LocalTime.of(6, 0)
 
         /** `HH:mm`, what a one-digit hour is padded to before parsing. */
         private const val CLOCK_LENGTH = 5

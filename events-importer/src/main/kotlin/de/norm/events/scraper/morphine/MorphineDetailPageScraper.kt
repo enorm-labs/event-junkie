@@ -2,6 +2,7 @@ package de.norm.events.scraper.morphine
 
 import de.norm.events.scraper.BERLIN
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.RunningOrderClock
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
@@ -122,15 +123,8 @@ class MorphineDetailPageScraper {
         lineup: List<LineupEntry>,
         eventDate: LocalDate?
     ): List<Instant?> {
-        var day = eventDate ?: return lineup.map { null }
-        var previous: LocalTime? = null
-        return lineup.map { set ->
-            parseTime(set.startTime)?.let { time ->
-                if (previous != null && time < previous) day = day.plusDays(1)
-                previous = time
-                day.atTime(time).atZone(BERLIN).toInstant()
-            }
-        }
+        val clock = RunningOrderClock(eventDate ?: return lineup.map { null })
+        return lineup.map { set -> parseTime(set.startTime)?.let { clock.slot(it).first } }
     }
 
     /**
