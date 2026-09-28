@@ -18,16 +18,11 @@ const localePath = useLocalePath()
     <h1 class="text-3xl font-bold tracking-tight">Über das Projekt</h1>
     <p class="text-muted-foreground">
       Event Junkie ist dein Überblick über das, was in Berlins Locations läuft: ein Feed mit
-      Live-Events, von Konzerten und Clubnächten über Festivals und Partys bis zum gelegentlichen
-      Kneipenquiz.
+      Live-Events jeder Art, auf großen Bühnen und in kleinen Hinterzimmern.
     </p>
     <p class="text-muted-foreground">
-      Stöbere durch alles, filtere nach Genre oder Art, bis du deine Szene gefunden hast, und plan
-      im Kalender deine Woche. Von jedem Event kommst du weiter zur Location, zum Line-up und zu den
-      Künstler*innen. So findest du die Abende, für die es sich lohnt, rauszugehen.
-    </p>
-    <p class="text-muted-foreground">
-      Es geht um Musik jeder Art, auf großen Bühnen und in kleinen Hinterzimmern, überall in Berlin.
+      Stöbere durch alles und plan im Kalender deine Woche. So findest du die Abende, für die es
+      sich lohnt, rauszugehen.
     </p>
 
     <section class="space-y-4 pt-4">
@@ -94,16 +89,15 @@ const localePath = useLocalePath()
         kleinen Läden, die noch nie ein Ticket online verkauft haben.
       </p>
       <p class="text-muted-foreground">
-        Was fehlt, will keins davon sein:
+        Keins davon bietet, was eigentlich fehlt:
         <strong class="font-medium text-foreground">ein Feed für alles</strong>, für jede Art von
         Location und jedes Genre, ob umsonst oder mit Ticket. Du filterst nach dem, was für dich
         sowieso zählt (heute Abend, in der Nähe, dein Genre, unter 15 €). Jeder Eintrag verlinkt auf
         die Seite der Location: Dort gibt es die Tickets, und dort steht, was am Ende gilt.
       </p>
       <p class="text-muted-foreground">
-        Ich wollte das schon seit Jahren bauen. Angefangen habe ich mehrmals, aber als Hobbyprojekt
-        neben allem anderen war es für eine Person jedes Mal zu viel Arbeit. Mit KI-Agenten geht es
-        jetzt.
+        Ich habe es mehrmals versucht, aber als Hobbyprojekt neben allem anderen war es für eine
+        Person jedes Mal zu viel Arbeit. Mit KI-Agenten geht es jetzt.
       </p>
     </section>
 
@@ -187,9 +181,8 @@ const localePath = useLocalePath()
         >
           Claude Code
         </a>
-        ). Sie arbeiten nach Konventionen und Prompts, die im Repository liegen. Die Vision, die
-        Produktentscheidungen, die Architektur und die Prioritäten sind meine. Die Agenten setzen
-        sie um, und ich prüfe jede Änderung, bevor sie übernommen wird.
+        ). Die Vision, die Produktentscheidungen, die Architektur und die Prioritäten sind meine.
+        Die Agenten setzen sie um, und ich prüfe jede Änderung, bevor sie übernommen wird.
       </p>
       <p class="text-muted-foreground">
         Ich erzähle das, weil genau das der spannende Teil ist. Erst an einem echten Projekt mit

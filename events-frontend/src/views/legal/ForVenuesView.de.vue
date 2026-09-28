@@ -110,10 +110,12 @@ const localePath = useLocalePath()
       <h2>Wenn nur etwas nicht stimmt</h2>
       <p>
         Für eine falsche Uhrzeit, eine verschobene Show oder eine Veranstaltung, die es nicht mehr
-        gibt, ist der Weg kürzer. Schreibt uns, oder meldet es öffentlich auf
+        gibt, ist der Weg kürzer. Korrigiert es auf eurer eigenen Seite: Wir lesen jede Location
+        einmal am Tag, und der nächste Durchlauf übernimmt die Änderung. Steht es danach bei uns
+        immer noch falsch, schreibt uns oder meldet es öffentlich auf
         <a href="https://github.com/enorm-labs/event-junkie/issues" rel="noopener" target="_blank">
           GitHub</a
-        >. Beides ist schneller als unser nächster Durchlauf.
+        >.
       </p>
     </section>
 

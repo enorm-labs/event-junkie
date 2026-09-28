@@ -14,16 +14,12 @@ const localePath = useLocalePath()
   <main class="mx-auto max-w-3xl space-y-6 p-4 sm:p-8">
     <h1 class="text-3xl font-bold tracking-tight">About</h1>
     <p class="text-muted-foreground">
-      Event Junkie is your guide to what's on across Berlin's venues: one feed of live events, from
-      concerts and club nights to festivals, parties and the odd quiz night.
+      Event Junkie is your guide to what's on across Berlin's venues: one feed of live events of
+      every kind, on big stages and in small back rooms.
     </p>
     <p class="text-muted-foreground">
-      Browse everything at a glance, filter by genre or type to find your scene, and open the
-      calendar to plan your week. Every event links through to its venue, lineup and artists, so you
-      can dig into the details and catch the nights worth showing up for.
-    </p>
-    <p class="text-muted-foreground">
-      The focus is music of every stripe, on big stages and in small back rooms, all across Berlin.
+      Browse everything at a glance and open the calendar to plan your week, so you catch the nights
+      worth showing up for.
     </p>
 
     <section class="space-y-4 pt-4">
@@ -83,16 +79,15 @@ const localePath = useLocalePath()
         entry, door-only nights and the small rooms that never sold a ticket online stay invisible.
       </p>
       <p class="text-muted-foreground">
-        The gap is the thing none of them tries to be:
+        None of them offers what is missing:
         <strong class="font-medium text-foreground">one feed for all of it</strong>, every kind of
         venue and every genre, free and ticketed alike. You filter by the things you decide on
         anyway (tonight, near me, my genre, under €15), and every entry links back to the venue's
         own page for tickets and the final word.
       </p>
       <p class="text-muted-foreground">
-        I wanted to build it for years. I started several times, and as a hobby project alongside
-        everything else it was simply too much work for one person every time. With AI agents it is
-        possible.
+        I tried several times, and as a hobby project alongside everything else it was simply too
+        much work for one person every time. With AI agents it is possible.
       </p>
     </section>
 
@@ -175,9 +170,8 @@ const localePath = useLocalePath()
         >
           Claude Code
         </a>
-        ), working from conventions and prompts kept in the repository. The vision, the product
-        decisions, the architecture and the priorities are mine. The agents implement against them,
-        and I review every change before it lands.
+        ). The vision, the product decisions, the architecture and the priorities are mine. The
+        agents implement against them, and I review every change before it lands.
       </p>
       <p class="text-muted-foreground">
         I say so because it is the interesting part. A real project, with real users and real
