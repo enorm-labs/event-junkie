@@ -8,6 +8,7 @@ import de.norm.events.scraper.buildArtistList
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.extractSupportFromSubtitle
 import de.norm.events.scraper.inferUnmarkedTitleType
+import de.norm.events.scraper.inferVenueFormatType
 import de.norm.events.scraper.parseGermanMonthAbbreviation
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.peteredel.PeterEdelOverviewPageScraper.Companion.VENUE_FORMAT_KEYWORDS
@@ -208,7 +209,7 @@ class PeterEdelOverviewPageScraper {
             title = title,
             subtitle = subtitle,
             description = main.textAt(".text-block .text-container"),
-            eventType = resolveEventType(title, subtitle),
+            eventType = inferVenueFormatType(title, subtitle, VENUE_FORMAT_KEYWORDS),
             eventDate = eventDate,
             doorsTime = doors,
             startTime = start,
@@ -316,20 +317,6 @@ class PeterEdelOverviewPageScraper {
                 ?.groupValues
                 ?.get(1)
                 ?.let { runCatching { BigDecimal(it.replace(',', '.')) }.getOrNull() }
-
-        /**
-         * The event type from title and subtitle only — the venue states no category. A house format
-         * ([VENUE_FORMAT_KEYWORDS]) wins; otherwise [inferUnmarkedTitleType]'s unambiguous cues, then
-         * `OTHER`. Never defaults to `CONCERT`: a mixed-programme Kulturhaus, not a live-music room.
-         */
-        private fun resolveEventType(
-            title: String,
-            subtitle: String?
-        ): String {
-            val haystack = listOfNotNull(title, subtitle).joinToString(" ").lowercase()
-            return VENUE_FORMAT_KEYWORDS.entries.firstOrNull { (keyword, _) -> keyword in haystack }?.value
-                ?: inferUnmarkedTitleType(haystack)
-        }
 
         /** The Umbraco grid class wrapping exactly one event. */
         private const val EVENT_BOX_CLASS = "box-rc-dark-grey"

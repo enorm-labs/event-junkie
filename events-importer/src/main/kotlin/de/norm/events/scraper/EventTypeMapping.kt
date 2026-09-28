@@ -199,6 +199,25 @@ fun inferConcertVenueType(title: String): String = classifyByTitleKeyword(title)
 fun inferUnmarkedTitleType(title: String): String = classifyByTitleKeyword(title) ?: EventType.OTHER.name
 
 /**
+ * Title-based inference for a house that states no category but names its formats in its own
+ * words: Colosseum a film night as "Kinoevents", Peter Edel a silent-film night as "Stummfilm".
+ * [venueFormats] maps such a keyword to its type and is checked first, so the house's own
+ * vocabulary beats the shared cues; use a [linkedMapOf] where an earlier entry has to win. Then
+ * [inferUnmarkedTitleType], which falls back to [OTHER][EventType.OTHER] rather than CONCERT.
+ *
+ * [title] and [subtitle] are searched as one lowercased string, because either may carry the cue.
+ */
+fun inferVenueFormatType(
+    title: String,
+    subtitle: String?,
+    venueFormats: Map<String, String>
+): String {
+    val haystack = listOfNotNull(title, subtitle).joinToString(" ").lowercase()
+    return venueFormats.entries.firstOrNull { (keyword, _) -> keyword in haystack }?.value
+        ?: inferUnmarkedTitleType(haystack)
+}
+
+/**
  * Classifies an event by a non-musical format cue in its raw [genre] text, or `null`: Festsaal
  * tags a reading `genre = "Lesung"`, Cassiopeia an immersive show `genre = "Immersive
  * Ausstellung"`, leaving the title cue-less. Narrower than the title classifier: only a
