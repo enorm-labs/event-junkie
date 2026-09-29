@@ -200,7 +200,9 @@ internal fun parseLidoEventBlock(
 
 /**
  * Doors (Einlass) and start (Start/Beginn) times. The meta block renders twice (desktop +
- * mobile), each with both times, so the first value per label wins.
+ * mobile), each with both times, so the first value per label wins. The site answers identical
+ * requests in German or English at random — about one in three reads `Doors` — so both labels
+ * count (#2030).
  */
 private fun parseLidoTimes(root: Element): Pair<LocalTime?, LocalTime?> {
     var doors: LocalTime? = null
@@ -214,7 +216,7 @@ private fun parseLidoTimes(root: Element): Pair<LocalTime?, LocalTime?> {
                 .orEmpty()
         val value = parseTime(slot.textAt(".event-ticket__meta__times__time__value"))
         when {
-            label.contains("einlass") -> doors = doors ?: value
+            label.contains("einlass") || label.contains("doors") -> doors = doors ?: value
             label.contains("start") || label.contains("beginn") -> start = start ?: value
         }
     }
