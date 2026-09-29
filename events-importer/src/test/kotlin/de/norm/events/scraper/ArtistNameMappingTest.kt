@@ -1257,6 +1257,8 @@ class ArtistNameMappingTest {
         // Denylist matches even when the source spells the conjunction as "and".
         splitHeadlinerTitle("Simon and Garfunkel") shouldContainExactly listOf("Simon and Garfunkel")
         splitHeadlinerTitle("BLOOD & SUN") shouldContainExactly listOf("BLOOD & SUN")
+        // Huxleys bills the duo as its whole title (#2063).
+        headlinersFromTitle("HAUTE & FREDDY").map { it.name } shouldContainExactly listOf("HAUTE & FREDDY")
         // "X & the Ys" band-name tail, in both & and "and" forms.
         splitHeadlinerTitle("Nick Cave & the Bad Seeds") shouldContainExactly listOf("Nick Cave & the Bad Seeds")
         splitHeadlinerTitle("James and the Cold Gun") shouldContainExactly listOf("James and the Cold Gun")
