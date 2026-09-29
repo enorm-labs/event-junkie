@@ -24,7 +24,7 @@ How code here is written, and where its versions and thresholds live. Comments h
       fails `compileKotlin` on a null plugin classpath, and `spring-framework-bom` is the one BOM that can be imported because it manages `spring-*` only.
     - **A CVE-remediation override is temporary by design.** Setting a BOM property name in `gradle.properties` overrides it for every Boot module, and an
       override kept past its purpose pins the project _behind_ the BOM invisibly. Delete it once a Boot release ships an equal or newer version;
-      `/update-dependencies` checks on every run. (`netty.version` is the current one, for CVE-2026-89044.)
+      `/update-dependencies` checks on every run. (`netty.version`, for CVE-2026-89044, and `jackson-bom.version` / `jackson-2-bom.version`, for CVE-2026-68497.)
     - **`log4j-api.version` is deliberately not `log4j2.version`, and `spring-framework-bom.version` not `spring-framework.version`** — each is the BOM's own
       property, and a pin `events-core` needs would silently become an override every Boot module resolves. Check a new pin's name against the BOM properties;
       verifying only the Boot modules reports success either way.
