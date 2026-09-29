@@ -339,7 +339,7 @@
     "description": "The artist lookup tick (MusicBrainz, its enrichment, Discogs) has not finished in an hour, against a five-minute interval. New artists get no verdict and no links. Read the importer log for `Artist lookup tick`. `timestamp(x) - x` because OpenObserve freezes `time()` at the window start.",
     "query_condition": {
       "type": "promql",
-      "promql": "((timestamp(max(importer_artists_lookup_tick_last_success)) - max(importer_artists_lookup_tick_last_success)) / 60) and (max(importer_artists_lookup_tick_last_success) > 0)",
+      "promql": "((timestamp(max(importer_artists_lookup_tick_last_success)) - max(importer_artists_lookup_tick_last_success)) / 60) * (max(importer_artists_lookup_tick_last_success) > bool 0)",
       "promql_condition": {
         "column": "value",
         "operator": ">",

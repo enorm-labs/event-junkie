@@ -266,9 +266,9 @@ are the zeros, so a "down for the whole window" test still passes.
 available by definition, and zero available replicas is what "the site is down" actually means. Checked against the 13:07 deploy on 2026-08-23 — 61 samples
 across the hour, every one of them zero-unavailable, while `up` went to 0 twice.
 
-## Six traps these rules are written around
+## Seven traps these rules are written around
 
-All five were established by running things against the live instance, and every one of them fails **silently** — a rule that looks configured and does nothing.
+All seven were established by running things against the live instance, and every one of them fails **silently** — a rule that looks configured and does nothing.
 
 1. **`time()` is frozen at the query window's start.** An age is `timestamp(x) - x`. The `time()` form under-reports by the whole window width and goes negative
    for anything newer than the window start.
@@ -293,6 +293,10 @@ All five were established by running things against the live instance, and every
    the rule's own operator means `ej-importer-stale` asked for **more than one** matching series and never fired, while its query returned 71 hours against a 36
    hour threshold for eight minutes straight. One field changed to `>=` produced `Alert conditions satisfied` → `Alert notification sent` →
    `POST /api/default/alert_history/_json 200` on the very next evaluation.
+7. **`and` does not drop the steps where its right side is false.** `ej-artist-lookup-tick-stale` was written as `age and (max(gauge) > 0)`, to stay quiet
+   before the first tick. Over a range where the gauge was 0 for two minutes and then set, the query returned the left side at every step, the whole epoch
+   in minutes where the gauge was 0. The rule fired on a pod's first two minutes. A right side that is false at **every** step does empty the result, which
+   is why a test against a constant looked right. Guard by arithmetic instead: `age * (max(gauge) > bool 0)` is 0 where the guard is false (#2059).
 
 **What a working firing looks like**, from `alert_history` on 2026-08-23:
 
