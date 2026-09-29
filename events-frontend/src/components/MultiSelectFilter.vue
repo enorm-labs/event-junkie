@@ -50,10 +50,12 @@ function toggle(value: string, checked: boolean) {
 
 <template>
   <Popover>
+    <!-- eslint-disable shadcn/require-static-classes -- FIELD_CLASS lives in lib/utils, shared with BaseInput and BaseSelect -->
     <PopoverTrigger
       :aria-label="`${label}: ${summary}`"
       :class="cn(FIELD_CLASS, 'flex items-center justify-between gap-2 text-left', props.class)"
     >
+      <!-- eslint-enable shadcn/require-static-classes -->
       <span class="truncate">{{ summary }}</span>
       <ChevronDown aria-hidden="true" class="size-4 shrink-0 text-muted-foreground" />
     </PopoverTrigger>

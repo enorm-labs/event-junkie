@@ -5,6 +5,7 @@ import pluginVueA11y from 'eslint-plugin-vuejs-accessibility'
 import pluginPlaywright from 'eslint-plugin-playwright'
 import pluginVitest from '@vitest/eslint-plugin'
 import pluginOxlint from 'eslint-plugin-oxlint'
+import { plugin as shadcn } from '@shadcn/lint'
 import skipFormatting from 'eslint-config-prettier/flat'
 import { commentDensity } from './eslint-rules/comment-density.ts'
 import { commentSmell } from './eslint-rules/comment-smell.ts'
@@ -63,7 +64,8 @@ export default defineConfigWithVueTs(
         },
         {
           selector: "CallExpression[callee.property.name='routeFromHAR']",
-          message: 'e2e/real-data runs against a deployment: replaying a HAR makes it test a recording.',
+          message:
+            'e2e/real-data runs against a deployment: replaying a HAR makes it test a recording.',
         },
       ],
     },
@@ -85,7 +87,7 @@ export default defineConfigWithVueTs(
 
   {
     // This repository's own rules, the counterpart to `:detekt-rules`; on the ESLint side because
-    // oxlint is Rust and cannot host a JS plugin. 15 rather than Kotlin's 25 from this tree's own
+    // oxlint reads only the `<script>` block of a `.vue` file. 15 rather than Kotlin's 25 from this tree's own
     // distribution: of 285 block comments none reached 25 and ten passed 15
     // (.github/instructions/comments.instructions.md). `comment-density` is per file, where a
     // per-comment cap cannot see twenty reasonable comments adding up; `minCommentLines` keeps a
@@ -125,6 +127,52 @@ export default defineConfigWithVueTs(
     name: 'app/comment-density-exemptions',
     files: ['src/lib/legal.ts'],
     rules: { 'event-junkie/comment-density': 'off' },
+  },
+
+  {
+    // The machine-checkable rows of design.instructions.md: raw palette, hex, arbitrary values.
+    // It reads the theme from main.css through components.json. ESLint rather than oxlint for the
+    // same reason as the comment rules: the classes live in templates.
+    name: 'app/design-system',
+    files: ['src/**/*.{vue,ts}'],
+    ignores: ['src/**/__tests__/**', 'src/api/schema.d.ts'],
+    plugins: { shadcn },
+    settings: {
+      shadcn: { note: 'See .github/instructions/design.instructions.md.' },
+    },
+    rules: {
+      'shadcn/no-raw-colors': 'error',
+      'shadcn/no-arbitrary-values': 'error',
+      'shadcn/no-inline-styles': 'error',
+      'shadcn/no-unknown-classes': 'error',
+      'shadcn/require-static-classes': 'error',
+      'shadcn/no-restyle': [
+        'error',
+        {
+          allow: ['layout'],
+          // Unstyled reka-ui parts, so the wrapper gives the trigger the native selects' chrome.
+          contracts: [
+            {
+              pattern: '^PopoverTrigger$',
+              allow: ['layout', 'spacing', 'typography', 'color', 'shape', 'effects'],
+            },
+          ],
+        },
+      ],
+    },
+  },
+
+  {
+    // Vendored shadcn-vue, which the forbidden list exempts.
+    name: 'app/design-system-vendored',
+    files: ['src/components/ui/**'],
+    rules: { 'shadcn/no-arbitrary-values': 'off', 'shadcn/no-restyle': 'off' },
+  },
+  {
+    // Illustrations, where each colour is part of the picture rather than a theme choice.
+    name: 'app/design-system-artwork',
+    files: ['src/components/ClubStamp.*.vue', 'src/components/EjBadge.vue'],
+    rules: { 'shadcn/no-raw-colors': 'off' },
   },
 
   ...pluginOxlint.buildFromOxlintConfigFile('.oxlintrc.json'),

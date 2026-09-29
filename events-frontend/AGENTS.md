@@ -35,7 +35,7 @@ Path-scoped rules carry the rest and load with the matching files: [vue.instruct
 Tailwind, shadcn-vue, accessibility), [design.instructions.md](../.github/instructions/design.instructions.md) (tokens, type scale),
 [testing.instructions.md](../.github/instructions/testing.instructions.md) (Vitest, Playwright, the locale strategy),
 [comments.instructions.md](../.github/instructions/comments.instructions.md) (`max-comment-lines` at 15, `comment-density`, `comment-smell` — the local
-ESLint rules in `eslint-rules/`, on the ESLint side because oxlint takes no JS plugins).
+ESLint rules in `eslint-rules/`, on the ESLint side because oxlint reads only the `<script>` block of a `.vue` file).
 
 ## Agent Instructions
 

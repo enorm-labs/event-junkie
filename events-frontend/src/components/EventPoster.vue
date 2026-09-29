@@ -11,9 +11,7 @@ defineProps<{ title?: string | null; aspect?: string }>()
 </script>
 
 <template>
-  <div
-    :class="[aspect ?? 'aspect-[3/2]', 'flex w-full flex-col justify-end gap-2 bg-muted p-4']"
-  >
+  <div :class="[aspect ?? 'aspect-poster', 'flex w-full flex-col justify-end gap-2 bg-muted p-4']">
     <!-- The counterpart to the poster's grayscale reveal: the card answers the pointer either way. -->
     <span
       class="h-px w-10 bg-primary transition-all duration-300 motion-safe:group-hover:w-20 motion-safe:group-data-focus/poster:w-20"

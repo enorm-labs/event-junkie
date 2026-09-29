@@ -60,7 +60,7 @@ describe('EventCard', () => {
     // above it. Without this the browser reads the srcset widths against the wrong number.
     expect(wrapper.get('source').attributes('sizes')).toBe('(min-width: 640px) 474px, 100vw')
     // The box is reserved before the bytes arrive, so a portrait flyer does not push the text (#1245).
-    expect(wrapper.get('picture').classes()).toContain('aspect-[3/2]')
+    expect(wrapper.get('picture').classes()).toContain('aspect-poster')
   })
 
   it('hands its priority to the poster, and is lazy without one', () => {

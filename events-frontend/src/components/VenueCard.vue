@@ -53,7 +53,7 @@ const { el: posterEl, focused: posterFocused } = useViewportFocus()
         :sources="venue.imageSources"
         :alt="venue.name ?? ''"
         :title="creditTitle"
-        aspect="aspect-[3/2]"
+        aspect="aspect-poster"
         sizes="(min-width: 640px) 474px, 100vw"
         img-class="grayscale transition duration-300 group-hover:grayscale-0 group-data-focus/poster:grayscale-0"
       />
