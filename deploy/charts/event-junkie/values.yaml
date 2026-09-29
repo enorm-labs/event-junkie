@@ -167,6 +167,13 @@ importer:
     model: "claude-haiku-4-5"
     # Descriptions one source translates per pass. One that gains more in a night never catches up.
     maxPerRun: 50
+  # importer.discogs asks Discogs about every artist MusicBrainz marks NONE, and stores its id and an
+  # empty link (#2026, ADR-035). Off by default: it sends a stage name to a third party.
+  discogs:
+    enabled: false
+    # Read only when enabled. Hand-made, never encrypted into this public repository (docs/ops/SECRETS.md).
+    existingSecret: "event-junkie-discogs"
+    maxPerRun: 100
 
 frontend:
   # frontend.replicaCount is free to exceed 1: it serves static files.

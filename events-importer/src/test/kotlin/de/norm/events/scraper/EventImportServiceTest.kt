@@ -102,6 +102,7 @@ class EventImportServiceTest {
     /** The MusicBrainz sweep runs after the transaction too, and reaches the network in production (#1567). */
     private val musicBrainzLookupService: MusicBrainzLookupService = mockk(relaxed = true)
     private val musicBrainzEnrichmentService: MusicBrainzEnrichmentService = mockk(relaxed = true)
+    private val discogsLookupService: DiscogsLookupService = mockk(relaxed = true)
 
     /**
      * Stubbed: the cache would reach the network for a `robots.txt`. [RobotsRulesCacheTest] covers it.
@@ -196,6 +197,7 @@ class EventImportServiceTest {
                 descriptionTranslationService = descriptionTranslationService,
                 musicBrainzLookupService = musicBrainzLookupService,
                 musicBrainzEnrichmentService = musicBrainzEnrichmentService,
+                discogsLookupService = discogsLookupService,
                 robotsRulesCache = robotsRulesCache,
                 maxConcurrency = EventImportService.DEFAULT_MAX_CONCURRENCY
             )
@@ -349,6 +351,7 @@ class EventImportServiceTest {
                         descriptionTranslationService = descriptionTranslationService,
                         musicBrainzLookupService = musicBrainzLookupService,
                         musicBrainzEnrichmentService = musicBrainzEnrichmentService,
+                        discogsLookupService = discogsLookupService,
                         robotsRulesCache = robotsRulesCache,
                         maxConcurrency = EventImportService.DEFAULT_MAX_CONCURRENCY
                     )
@@ -518,7 +521,21 @@ class EventImportServiceTest {
                     eventSourceRepository.save(match { it.status == ImportStatus.SUCCESS.name })
                     musicBrainzLookupService.lookupFor(match { it.slug == src.slug }, any())
                     musicBrainzEnrichmentService.enrichFor(match { it.slug == src.slug }, any())
+                    discogsLookupService.lookupFor(match { it.slug == src.slug }, any())
                 }
+            }
+
+        @Test
+        fun `a Discogs pass that throws leaves the source SUCCESS`() =
+            runTest {
+                val src = source()
+                coEvery { cassiopeiaImporter.importEvents(any(), any(), any()) } returns
+                    ImportResult.Success(events = listOf(scrapedEvent()), etag = null, lastModified = null)
+                coEvery { discogsLookupService.lookupFor(any(), any()) } throws IllegalStateException("boom")
+
+                service.importFromSource(src).imported shouldBe true
+
+                coVerify { eventSourceRepository.save(match { it.status == ImportStatus.SUCCESS.name }) }
             }
     }
 
@@ -1327,6 +1344,7 @@ class EventImportServiceTest {
                         descriptionTranslationService = descriptionTranslationService,
                         musicBrainzLookupService = musicBrainzLookupService,
                         musicBrainzEnrichmentService = musicBrainzEnrichmentService,
+                        discogsLookupService = discogsLookupService,
                         robotsRulesCache = robotsRulesCache,
                         maxConcurrency = maxConcurrency
                     )

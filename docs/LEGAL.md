@@ -238,6 +238,13 @@ because the first sentence of a person's article is a birth date and a birthplac
 refused on an ensemble too. A lead often names the members of the band. Those names are published stage credits, and
 the removal route in §7.3 covers them with the description. The third sentence of the notice paragraph names the source.
 
+**Discogs is a second source of the same kind** (ADR-035, [#2026](https://github.com/enorm-labs/event-junkie/issues/2026)).
+The importer asks Discogs only about an artist that MusicBrainz does not know. It sends the stage name as a search term
+to Zink Media, LLC (Oregon, USA). It stores the verdict and, on an exact match, the Discogs id and the page link. A
+read-only lookup of a public database is not processing on our behalf, for the reason given above for MusicBrainz. So
+there is no Art. 28 contract to conclude, and the Hetzner AVV is untouched. The Discogs API terms forbid storing more,
+and nothing more is stored. The fourth sentence of the notice paragraph names the source.
+
 **The role mailboxes hold email, and the Hetzner AVV covers them.** `hello@`, `security@` and `alerts@` are mailboxes
 on Hetzner Webhosting S, under the same Hetzner account as the servers ([`ops/EMAIL.md`](ops/EMAIL.md)). The AVV is
 account-level, so the mailboxes add no processor. A mailbox holds the sender's address, the message and whatever the
@@ -258,7 +265,7 @@ row in §5 of the notice first ([`ops/EMAIL.md`](ops/EMAIL.md) §4 step 7).
 
 | Category                        | Applies                      | What it actually is here                                                                                                                                                                                                                                                  |
 | ------------------------------- | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Personal master data**        | **yes**                      | Artist names, and each artist's `description`, `imageUrl`, ten profile links, its type, an ensemble's founding date and place, its country, `musicbrainzId` and the MusicBrainz verdict (ADR-031). The largest category by far; see §7.3 for why it counts                |
+| **Personal master data**        | **yes**                      | Artist names, and each artist's `description`, `imageUrl`, ten profile links, its type, an ensemble's founding date and place, its country, `musicbrainzId`, `discogsId` and both verdicts (ADR-031, ADR-035). The largest category by far; see §7.3 for why it counts    |
 | **Image files**                 | **yes**                      | Copies of the images venues, promoters and artists publish, and of venue photographs from open archives (#1275), stored in `event-junkie-images` at Hetzner (ADR-019, #833). An artist photograph shows an identifiable person, so this is personal data in its own right |
 | **Communication data**          | **yes — mailboxes and URLs** | Mail to the role mailboxes: the sender's address and the message (see below). No phone numbers. The artist profile and social URLs count too. Declared before the mailboxes existed, so they needed no change to the AVV                                                  |
 | Contractual master data         | no                           | There is no contract with any data subject                                                                                                                                                                                                                                |

@@ -1,5 +1,6 @@
 package de.norm.events.scraper
 
+import de.norm.events.artist.ArtistDiscogsRepository
 import de.norm.events.artist.ArtistRepository
 import de.norm.events.event.EventRepository
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -32,6 +33,7 @@ class MetricsRefreshService(
     private val eventRepository: EventRepository,
     private val eventSourceRepository: EventSourceRepository,
     private val artistRepository: ArtistRepository,
+    private val artistDiscogsRepository: ArtistDiscogsRepository,
     private val metrics: ImporterMetrics,
     /** Injected clock for deterministic time in tests, as elsewhere in this module. */
     private val clock: Clock = Clock.systemUTC()
@@ -65,6 +67,7 @@ class MetricsRefreshService(
             metrics.updateSourcesRunning(eventSourceRepository.countByStatus(ImportStatus.RUNNING.name))
             metrics.updateMusicBrainzUnchecked(artistRepository.countUncheckedByMusicBrainz())
             metrics.updateMusicBrainzUnenriched(artistRepository.countUnenrichedByMusicBrainz())
+            metrics.updateDiscogsUnchecked(artistDiscogsRepository.countUncheckedByDiscogs())
             republishSourceState()
             republishFailedSources()
         } catch (e: Exception) {

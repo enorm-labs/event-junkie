@@ -87,6 +87,12 @@ data class ArtistResponse(
     val musicbrainzCheckedAt: Instant?,
     @Schema(description = "When the enrichment last read the MusicBrainz entity (ADR-031, step C)")
     val musicbrainzEnrichedAt: Instant?,
+    @Schema(description = "Discogs artist id, set exactly when `discogsMatch` is `EXACT`", example = "252143")
+    val discogsId: Long?,
+    @Schema(description = "What the Discogs lookup decided about a name MusicBrainz does not know (#2026)", example = "EXACT")
+    val discogsMatch: DiscogsMatch,
+    @Schema(description = "When the Discogs verdict was reached")
+    val discogsCheckedAt: Instant?,
     @Schema(description = "Timestamp when this record was first created")
     val createdAt: Instant?,
     @Schema(description = "Timestamp when this record was last modified")
@@ -130,6 +136,9 @@ data class ArtistResponse(
                 musicbrainzMatch = artist.musicbrainzMatch,
                 musicbrainzCheckedAt = artist.musicbrainzCheckedAt,
                 musicbrainzEnrichedAt = artist.musicbrainzEnrichedAt,
+                discogsId = artist.discogsId,
+                discogsMatch = artist.discogsMatch,
+                discogsCheckedAt = artist.discogsCheckedAt,
                 createdAt = artist.createdAt,
                 updatedAt = artist.updatedAt
             )

@@ -25,6 +25,8 @@ app:
     enabled: false
   wikimedia:
     enabled: false
+  discogs:
+    enabled: false
   metrics:
     refresh-interval-ms: 3600000
   images:

@@ -12,6 +12,8 @@ only for a row with an `EXACT` verdict.**
 [#1569](https://github.com/enorm-labs/event-junkie/issues/1569). The queue column is a note on #1145. Decided in
 [#1549](https://github.com/enorm-labs/event-junkie/issues/1549).
 
+**Option D is decided in [ADR-035](ADR-035_DISCOGS_SECOND_ARTIST_INDEX.md).** Discogs is asked about the `NONE` rows only, for an id and a link.
+
 **Does not supersede anything.** [ADR-026](ADR-026_MULTILINGUAL_EVENT_TEXT.md) and
 [ADR-027](ADR-027_TRANSLATION_FOLLOWS_THE_DISPLAY_RULE.md) put a third-country service behind the importer and said how
 it runs. This decision does the same with a smaller payload. [ADR-019](ADR-019_VENUE_IMAGE_DELIVERY.md) fixed how an

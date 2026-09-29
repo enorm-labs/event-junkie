@@ -168,7 +168,11 @@ const { t } = useI18n()
         Künstlerprofile werden mit MusicBrainz abgeglichen, einer offenen Musikdatenbank. Wo sie
         übereinstimmen, stammen die offiziellen Links und das Bild von dort und aus Wikidata.
         Übermittelt wird nur der Künstlername. Für Bands, Orchester und Chöre stammt die
-        Kurzbeschreibung aus der Wikipedia.
+        Kurzbeschreibung aus der Wikipedia. Kennt MusicBrainz einen Namen nicht, fragen wir Discogs
+        (Zink Media, LLC, USA) und speichern bei einem Treffer nur den Link zur Discogs-Seite; auch
+        dabei wird nur der Künstlername übermittelt. Diese Website nutzt die Discogs-API, ist aber
+        nicht mit Discogs verbunden und wird von Discogs weder gesponsert noch empfohlen. „Discogs“
+        ist eine Marke der Zink Media, LLC.
       </p>
       <p>
         <strong>Zweck:</strong> Information der Öffentlichkeit über öffentlich angekündigte

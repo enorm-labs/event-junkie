@@ -1,0 +1,164 @@
+{
+  "pagination": {
+    "page": 1,
+    "pages": 3,
+    "per_page": 25,
+    "items": 67,
+    "urls": {
+      "last": "https://api.discogs.com/database/search?q=Hanzel&type=artist&per_page=25&page=3",
+      "next": "https://api.discogs.com/database/search?q=Hanzel&type=artist&per_page=25&page=2"
+    }
+  },
+  "results": [
+    {
+      "id": 50424,
+      "type": "artist",
+      "title": "Hanzel Und Gretyl",
+      "uri": "/artist/50424-Hanzel-Und-Gretyl"
+    },
+    {
+      "id": 2378870,
+      "type": "artist",
+      "title": "Mike Hanzel",
+      "uri": "/artist/2378870-Mike-Hanzel"
+    },
+    {
+      "id": 886857,
+      "type": "artist",
+      "title": "Martin Hanzel",
+      "uri": "/artist/886857-Martin-Hanzel"
+    },
+    {
+      "id": 197910,
+      "type": "artist",
+      "title": "Hänzel & Gretzel",
+      "uri": "/artist/197910-Hänzel-Gretzel"
+    },
+    {
+      "id": 2063200,
+      "type": "artist",
+      "title": "Bernie Hanzel",
+      "uri": "/artist/2063200-Bernie-Hanzel"
+    },
+    {
+      "id": 2063202,
+      "type": "artist",
+      "title": "Bob Hanzel",
+      "uri": "/artist/2063202-Bob-Hanzel"
+    },
+    {
+      "id": 1331007,
+      "type": "artist",
+      "title": "Carol Hanzel",
+      "uri": "/artist/1331007-Carol-Hanzel"
+    },
+    {
+      "id": 1520271,
+      "type": "artist",
+      "title": "Vladimír Hanzel",
+      "uri": "/artist/1520271-Vladimír-Hanzel"
+    },
+    {
+      "id": 5183351,
+      "type": "artist",
+      "title": "Jarda Hanzel",
+      "uri": "/artist/5183351-Jarda-Hanzel"
+    },
+    {
+      "id": 1240980,
+      "type": "artist",
+      "title": "Hanzel Arroyo",
+      "uri": "/artist/1240980-Hanzel-Arroyo"
+    },
+    {
+      "id": 3279459,
+      "type": "artist",
+      "title": "Hanzel Henrik",
+      "uri": "/artist/3279459-Hanzel-Henrik"
+    },
+    {
+      "id": 5513828,
+      "type": "artist",
+      "title": "Hanzel",
+      "uri": "/artist/5513828-Hanzel"
+    },
+    {
+      "id": 5260640,
+      "type": "artist",
+      "title": "Peter Hanzel",
+      "uri": "/artist/5260640-Peter-Hanzel"
+    },
+    {
+      "id": 1519277,
+      "type": "artist",
+      "title": "Peter Hanzely",
+      "uri": "/artist/1519277-Peter-Hanzely"
+    },
+    {
+      "id": 2113212,
+      "type": "artist",
+      "title": "Pavel Hanzel",
+      "uri": "/artist/2113212-Pavel-Hanzel"
+    },
+    {
+      "id": 610510,
+      "type": "artist",
+      "title": "Matt Hanzelka",
+      "uri": "/artist/610510-Matt-Hanzelka"
+    },
+    {
+      "id": 1693158,
+      "type": "artist",
+      "title": "Marie Hanzelková",
+      "uri": "/artist/1693158-Marie-Hanzelková"
+    },
+    {
+      "id": 5420157,
+      "type": "artist",
+      "title": "Hanzel Morgan",
+      "uri": "/artist/5420157-Hanzel-Morgan"
+    },
+    {
+      "id": 7041085,
+      "type": "artist",
+      "title": "Jana Hanzelková",
+      "uri": "/artist/7041085-Jana-Hanzelková"
+    },
+    {
+      "id": 4480822,
+      "type": "artist",
+      "title": "Elena Hanzelová",
+      "uri": "/artist/4480822-Elena-Hanzelová"
+    },
+    {
+      "id": 4876297,
+      "type": "artist",
+      "title": "Maťo Hanzel",
+      "uri": "/artist/4876297-Maťo-Hanzel"
+    },
+    {
+      "id": 5171726,
+      "type": "artist",
+      "title": "Dave Hanzel",
+      "uri": "/artist/5171726-Dave-Hanzel"
+    },
+    {
+      "id": 6261083,
+      "type": "artist",
+      "title": "Ralph Hanzel",
+      "uri": "/artist/6261083-Ralph-Hanzel"
+    },
+    {
+      "id": 4793724,
+      "type": "artist",
+      "title": "Pavol Hanzel",
+      "uri": "/artist/4793724-Pavol-Hanzel"
+    },
+    {
+      "id": 4171601,
+      "type": "artist",
+      "title": "Eva Hanzelová",
+      "uri": "/artist/4171601-Eva-Hanzelová"
+    }
+  ]
+}

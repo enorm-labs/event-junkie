@@ -43,6 +43,8 @@ data class ArtistEntity(
     val musicbrainzId: String? = null,
     val musicbrainzMatch: String = MusicBrainzMatch.UNCHECKED.name,
     val musicbrainzCheckedAt: Instant? = null,
+    /** [DiscogsMatch] by name. EXACT means the Discogs link came from Discogs itself, which asks for a credit beside it. */
+    val discogsMatch: String = DiscogsMatch.UNCHECKED.name,
     val createdAt: Instant? = null,
     val updatedAt: Instant? = null
 )

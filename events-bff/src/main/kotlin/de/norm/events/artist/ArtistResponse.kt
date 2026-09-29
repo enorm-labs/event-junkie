@@ -145,7 +145,12 @@ data class ArtistDetailResponse(
     @Schema(description = "What the MusicBrainz lookup decided about the name (ADR-031)", example = "EXACT")
     val musicbrainzMatch: MusicBrainzMatch,
     @Schema(description = "When that verdict was reached")
-    val musicbrainzCheckedAt: Instant?
+    val musicbrainzCheckedAt: Instant?,
+    @Schema(
+        description = "What the Discogs lookup decided about a name MusicBrainz does not know (#2026); `EXACT` means Discogs gave `discogsUrl`",
+        example = "EXACT"
+    )
+    val discogsMatch: DiscogsMatch
 ) {
     companion object {
         private const val MUSICBRAINZ_ARTIST_PAGE = "https://musicbrainz.org/artist/"
@@ -188,7 +193,8 @@ data class ArtistDetailResponse(
                 artistType = entity.artistType?.let { ArtistType.valueOf(it) },
                 musicbrainzId = entity.musicbrainzId,
                 musicbrainzMatch = MusicBrainzMatch.valueOf(entity.musicbrainzMatch),
-                musicbrainzCheckedAt = entity.musicbrainzCheckedAt
+                musicbrainzCheckedAt = entity.musicbrainzCheckedAt,
+                discogsMatch = DiscogsMatch.valueOf(entity.discogsMatch)
             )
     }
 }

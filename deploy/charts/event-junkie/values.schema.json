@@ -233,6 +233,33 @@
             }
           },
           "additionalProperties": false
+        },
+        "discogs": {
+          "type": "object",
+          "description": "The Discogs lookup for artists MusicBrainz does not know (#2026, ADR-035). Off by default.",
+          "required": [
+            "enabled",
+            "existingSecret",
+            "maxPerRun"
+          ],
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "false names no Secret and sends nothing to Discogs."
+            },
+            "existingSecret": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Hand-made Secret holding APP_DISCOGS_CONSUMER_KEY and APP_DISCOGS_CONSUMER_SECRET. Read only when enabled."
+            },
+            "maxPerRun": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1000,
+              "description": "Artist rows one import may look up. About 55 a minute, so 100 adds two minutes to the tail of a run."
+            }
+          },
+          "additionalProperties": false
         }
       }
     },

@@ -1,0 +1,53 @@
+{
+  "pagination": {
+    "page": 1,
+    "pages": 1,
+    "per_page": 25,
+    "items": 7,
+    "urls": {}
+  },
+  "results": [
+    {
+      "id": 130715,
+      "type": "artist",
+      "title": "Okkyung Lee",
+      "uri": "/artist/130715-Okkyung-Lee"
+    },
+    {
+      "id": 3373604,
+      "type": "artist",
+      "title": "Maze (21)",
+      "uri": "/artist/3373604-Maze-21"
+    },
+    {
+      "id": 2020023,
+      "type": "artist",
+      "title": "Kihnoua",
+      "uri": "/artist/2020023-Kihnoua"
+    },
+    {
+      "id": 1897316,
+      "type": "artist",
+      "title": "Nadia Ratsimandresy",
+      "uri": "/artist/1897316-Nadia-Ratsimandresy"
+    },
+    {
+      "id": 6902692,
+      "type": "artist",
+      "title": "Alto Aria",
+      "uri": "/artist/6902692-Alto-Aria"
+    },
+    {
+      "id": 3487116,
+      "type": "artist",
+      "title": "Neža Naglič",
+      "uri": "/artist/3487116-Neža-Naglič"
+    },
+    {
+      "id": 3775077,
+      "type": "artist",
+      "title": "Brian Settles Trio",
+      "uri": "/artist/3775077-Brian-Settles-Trio"
+    }
+  ]
+}

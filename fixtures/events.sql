@@ -130,6 +130,17 @@ SET musicbrainz_id = '00000000-0000-4000-8000-000000000272',
     description_alt_source_url = 'https://en.wikipedia.example/wiki/Møbius_Trio'
 WHERE slug = 'mobius-trio';
 
+-- `dj-uberdruck` is the row MusicBrainz does not know and Discogs does (ADR-035): the artist page
+-- shows its Discogs link with the "Data provided by Discogs." line. The id is nobody's, as above.
+UPDATE events.artist
+SET musicbrainz_match = 'NONE',
+    musicbrainz_checked_at = now(),
+    discogs_match = 'EXACT',
+    discogs_id = 272,
+    discogs_checked_at = now(),
+    discogs_url = 'https://discogs.example/artist/272-DJ-Uberdruck'
+WHERE slug = 'dj-uberdruck';
+
 INSERT INTO events.artist (name, slug, website_url, description, facebook_url, instagram_url, youtube_url)
 VALUES
     ('Anna Kessel', 'anna-kessel', 'https://annakessel.example',

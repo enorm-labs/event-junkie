@@ -9,7 +9,7 @@ import { useArtist } from '@/composables/useArtist'
 import { useEventSearch } from '@/composables/useEvents'
 import { yesterdayIso } from '@/lib/format'
 import { descriptionFor } from '@/lib/description'
-import { imageCredit, textCredit } from '@/lib/imageCredit'
+import { imageCredit, owesDiscogsCredit, textCredit } from '@/lib/imageCredit'
 import type { Locale } from '@/i18n/locales'
 import { useI18n } from 'vue-i18n'
 
@@ -52,6 +52,9 @@ const links = computed(() =>
     { label: 'MusicBrainz', url: artist.value?.musicbrainzUrl },
   ].filter((link): link is { label: string; url: string } => Boolean(link.url)),
 )
+
+// Discogs' terms prescribe the wording, so the line stays English on the German page too.
+const discogsCredit = computed(() => owesDiscogsCredit(artist.value))
 
 function reload() {
   loadArtist()
@@ -113,6 +116,16 @@ const descriptionCredit = computed(() =>
           {{ link.label }}
         </a>
       </div>
+      <p v-if="discogsCredit" class="mt-2 text-xs text-muted-foreground">
+        <a
+          class="underline underline-offset-2"
+          href="https://www.discogs.com"
+          lang="en"
+          rel="noopener"
+          target="_blank"
+          >Data provided by Discogs.</a
+        >
+      </p>
     </template>
 
     <div v-if="description" class="space-y-2">

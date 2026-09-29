@@ -13,6 +13,9 @@ MusicBrainz reports as `none` -- DJs and producers with releases but no MusicBra
 cross-table against the MusicBrainz TSV is the number that matters, and with `--compare` the
 MusicBrainz `none` rows are queried first.
 
+The importer runs this rule since #2026 (`DiscogsMatcher`, ADR-035), one step stricter: a suffixed
+candidate such as `Kevin (27)` is ambiguous even alone, which this script still counts as exact.
+
 The match rule is rule 1 of the MusicBrainz spike, on what the search returns: a candidate counts
 only when its folded title equals the folded query. Discogs' search is fuzzy (`Boris Brejcha` also
 returns `Luke Mandala`), so the search's own ranking decides nothing. Discogs disambiguates homonyms

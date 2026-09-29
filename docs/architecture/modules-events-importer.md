@@ -11,6 +11,7 @@ flowchart TD
     artist["artist"]
     common["common «open»"]
     dataquality["dataquality"]
+    discogs["discogs"]
     event["event"]
     genretag["genretag"]
     image["image"]
@@ -27,6 +28,9 @@ flowchart TD
     artist --> slug
     dataquality --> event
     dataquality --> scraper
+    discogs --> artist
+    discogs --> common
+    discogs --> musicbrainz
     event --> artist
     event --> common
     event --> genretag
@@ -40,6 +44,7 @@ flowchart TD
     promoter --> slug
     scraper --> artist
     scraper --> common
+    scraper --> discogs
     scraper --> event
     scraper --> genretag
     scraper --> licence

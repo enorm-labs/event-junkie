@@ -47,6 +47,7 @@ class EventImportService(
     private val descriptionTranslationService: DescriptionTranslationService,
     private val musicBrainzLookupService: MusicBrainzLookupService,
     private val musicBrainzEnrichmentService: MusicBrainzEnrichmentService,
+    private val discogsLookupService: DiscogsLookupService,
     /**
      * The `robots.txt` rules behind [RobotsTxtFilter], read again to record what they said about
      * this source's entry URL (#790). A map read, not a fetch: the filter has already read the file.
@@ -343,7 +344,8 @@ class EventImportService(
      * second over the billed artists and a slice of the backfill (ADR-031), nine minutes for a full
      * slice and five more per 503, and a source `RUNNING` that long is one bad slice from
      * `app.scheduling.staleness-timeout` reaping it. Guarded like the translation pass. The
-     * enrichment follows the lookup, so a verdict reached in this run is read in this run.
+     * enrichment follows the lookup, so a verdict reached in this run is read in this run; the
+     * Discogs lookup comes last for the same reason, because it asks about this run's `NONE` rows.
      */
     private suspend fun afterSuccess(
         source: EventSourceEntity,
@@ -353,6 +355,8 @@ class EventImportService(
             .onFailure { logger.warn(it) { "MusicBrainz pass failed for '${source.slug}'" } }
         runCatching { musicBrainzEnrichmentService.enrichFor(source, upsert.touchedArtistIds) }
             .onFailure { logger.warn(it) { "MusicBrainz enrichment failed for '${source.slug}'" } }
+        runCatching { discogsLookupService.lookupFor(source, upsert.touchedArtistIds) }
+            .onFailure { logger.warn(it) { "Discogs pass failed for '${source.slug}'" } }
     }
 
     /**

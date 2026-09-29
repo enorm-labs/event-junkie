@@ -118,3 +118,18 @@ export function textCredit(
     licenceUrl: licence?.url ?? null,
   }
 }
+
+/** A row whose Discogs link may have come from Discogs itself (#2026). */
+export interface DiscogsLinked {
+  discogsUrl?: string | null
+  discogsMatch?: string | null
+}
+
+/**
+ * Whether the page owes Discogs its "Data provided by Discogs." line: the API terms ask for it
+ * beside data taken from Discogs. Only a link the Discogs lookup resolved (`EXACT`) is such data.
+ * A link MusicBrainz relates is MusicBrainz's, and a row without a link shows nothing to credit.
+ */
+export function owesDiscogsCredit(row: DiscogsLinked | null | undefined): boolean {
+  return Boolean(row?.discogsUrl) && row?.discogsMatch === 'EXACT'
+}

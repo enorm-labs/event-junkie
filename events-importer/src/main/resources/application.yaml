@@ -89,6 +89,22 @@ app:
     # Step C reads the entity of an EXACT row for its links, type and picture: this many per
     # import, one request here and up to two at Wikimedia each.
     enrich-max-per-run: 100
+  discogs:
+    # After the MusicBrainz lookup, every artist it marked NONE is looked up in Discogs and the
+    # verdict, the id and an empty link stored (#2026, ADR-035). Only the stage name is sent. Off
+    # until both consumer credentials of the Discogs application are set.
+    enabled: ${APP_DISCOGS_ENABLED:true}
+    base-url: https://api.discogs.com/
+    consumer-key: ${APP_DISCOGS_CONSUMER_KEY:}
+    consumer-secret: ${APP_DISCOGS_CONSUMER_SECRET:}
+    # 60 requests a minute per address in a rolling window; a little slower than that.
+    polite-delay-millis: 1100
+    timeout: 30s
+    # A 429, or a nearly spent window, waits this long before the next request.
+    backoff: 20s
+    retries: 3
+    # About two minutes at the pace above.
+    max-per-run: 100
   wikimedia:
     # The picture of an EXACT artist: the Wikidata item's P18 claim, then the file's licence and
     # credit from Commons (ADR-031, step C); an ensemble's Wikipedia extract through the item's
