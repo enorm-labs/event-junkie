@@ -163,22 +163,25 @@ scripts/o2-query.sh production traffic --hours 336 | jq '.totals'
 scripts/o2-query.sh production traffic --hours 336 | jq -r '.days[] | [.day, .frontend.page_loads, .bff.sessions] | @tsv'
 ```
 
-| Column                       | What it counts                                                                                                          |
-| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| `frontend.page_loads`        | nginx answers 200 to a GET for an HTML route, and the user agent is a browser. Scanners with a browser agent stay in    |
-| `frontend.in_burst`          | Lines in an hour above `burst_threshold` (600). The weekly DAST run and a crawler that walks the sitemap cause these    |
-| `frontend.own_monitoring`    | Better Stack, Lighthouse, headless Chrome, the injector and the `node` health check                                     |
-| `frontend.crawlers`          | Search and AI crawlers that name themselves                                                                             |
-| `bff.sessions`               | `/api/meta` calls above the day's `meta_floor`. The SPA calls it once when it starts                                    |
-| `bff.meta_floor`             | The lowest hourly `/api/meta` count of the day. A machine calls it about 24 times an hour, and the log does not say who |
-| `bff.lists`                  | List and search calls. Only the SPA makes them                                                                          |
-| `bff.details` · `bff.images` | Detail and image calls. The injector also calls a detail endpoint for a crawler, so these include crawlers              |
+| Column                          | What it counts                                                                                                       |
+| ------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| `frontend.page_loads`           | nginx answers 200 to a GET for an HTML route, and the user agent is a browser. Scanners with a browser agent stay in |
+| `frontend.in_burst`             | Lines in an hour above `burst_threshold` (600). The weekly DAST run and a crawler that walks the sitemap cause these |
+| `frontend.own_monitoring`       | Better Stack, Lighthouse, headless Chrome, the injector and the `node` health check                                  |
+| `frontend.crawlers`             | Search and AI crawlers that name themselves                                                                          |
+| `frontend.rendered_by_crawlers` | Pages that Baiduspider fetched. It runs the SPA on each one, so each one also calls the BFF                          |
+| `bff.meta`                      | `/api/meta` calls. The SPA calls it once when it starts                                                              |
+| `bff.sessions`                  | `bff.meta` less `frontend.rendered_by_crawlers`                                                                      |
+| `bff.lists`                     | List and search calls. Only the SPA makes them                                                                       |
+| `bff.details_by_people`         | Detail calls less one per detail page that Baiduspider rendered and one per detail page a non-person agent fetched   |
+| `bff.images`                    | Image calls. Rendered pages from crawlers are still in this count                                                    |
 
 **nginx sees only the first page of a visit.** The SPA changes pages in the browser, so later pages reach only the BFF. That is why `bff.sessions` and
 `bff.lists` are the better signal of use.
 
-**The floor is 0 on a day when an hour has no BFF call.** That day's `sessions` is then every `/api/meta` call and is too high. The first day of the
-window is usually a part day.
+**Baiduspider is the only crawler that is subtracted, because it is the only one measured to render.** 97% of its page fetches are followed by
+`/api/meta` within 15 seconds. For Googlebot and ClaudeBot, the rate is the same as chance, about 13%. When a new crawler runs the SPA, `bff.sessions`
+goes up at a steady rate by day and by night. Measure the crawler the same way, then add it to `RENDERER` in the script.
 
 **Retention sets the limit.** OpenObserve keeps 14 days, so `--hours 336` is the longest useful window. Older traffic is gone.
 
