@@ -35,13 +35,13 @@ interface ArtistRepository : CoroutineCrudRepository<ArtistEntity, Long> {
 
     /**
      * The rows the MusicBrainz sweep still owes a verdict, among [ids]: never checked, or renamed
-     * since they were (`updated_at` moves on every save, `musicbrainz_checked_at` only on a verdict).
+     * since. `name_changed_at` moves only on a rename (V062); `updated_at` moves on every write.
      */
     @Query(
         """
         SELECT * FROM $EVENTS_SCHEMA.artist
         WHERE id IN (:ids)
-          AND (musicbrainz_match = 'UNCHECKED' OR updated_at > musicbrainz_checked_at)
+          AND (musicbrainz_match = 'UNCHECKED' OR name_changed_at > musicbrainz_checked_at)
         ORDER BY id
         """
     )
@@ -92,11 +92,8 @@ interface ArtistRepository : CoroutineCrudRepository<ArtistEntity, Long> {
      * verdict (ADR-031). The id is nulled unless the match is EXACT, which is also what the CHECK
      * constraint of V037 demands.
      *
-     * **`now()` in SQL, not a timestamp from the JVM.** `trg_artist_updated_at` (V001) sets
-     * `updated_at = now()` on every UPDATE, this one included, and [findNeedingMusicBrainzLookup]
-     * reads `updated_at > musicbrainz_checked_at` as "renamed since". Both `now()` calls in one
-     * statement are the same instant, so the two columns come out equal and the row is not queued
-     * again; a clock read a millisecond earlier on the JVM would queue every row forever.
+     * `now()` in SQL, not a timestamp from the JVM: the enrichment compares this column with
+     * `musicbrainz_enriched_at`, which [ArtistEnrichmentStore] also writes with the database clock.
      */
     @Modifying
     @Query(

@@ -11,12 +11,6 @@ import org.springframework.stereotype.Repository
  * One UPDATE over the columns the sweep decided on, never a `save`: `save` writes every column and
  * the name is never rewritten from MusicBrainz. The column names come from [COLUMNS], so the SQL is
  * assembled from a fixed vocabulary and every value is bound.
- *
- * **Both timestamps are `now()` in the same statement, on purpose.** `trg_artist_updated_at` moves
- * `updated_at` on this UPDATE too, and `ArtistRepository.findNeedingMusicBrainzLookup` reads
- * `updated_at > musicbrainz_checked_at` as "renamed since". Left alone, every enrichment queued its
- * row for a lookup, whose fresh `checked_at` queued it for an enrichment, one round trip per import
- * forever. Equal timestamps end that; the verdict itself is not touched.
  */
 @Repository
 class ArtistEnrichmentStore(
@@ -35,7 +29,7 @@ class ArtistEnrichmentStore(
                 .sql(
                     """
                     UPDATE $EVENTS_SCHEMA.artist
-                    SET ${assignments}musicbrainz_enriched_at = now(), musicbrainz_checked_at = now()
+                    SET ${assignments}musicbrainz_enriched_at = now()
                     WHERE id = :id
                     """.trimIndent()
                 ).bind("id", id)

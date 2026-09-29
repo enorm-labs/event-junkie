@@ -14,14 +14,14 @@ import org.springframework.data.repository.kotlin.CoroutineCrudRepository
 interface ArtistDiscogsRepository : CoroutineCrudRepository<ArtistEntity, Long> {
     /**
      * The rows the Discogs sweep still owes a verdict, among [ids]: MusicBrainz knows no such
-     * artist, and Discogs was never asked or the row was renamed since (#2026).
+     * artist, and Discogs was never asked or the row was renamed since (`name_changed_at`, V062).
      */
     @Query(
         """
         SELECT * FROM $EVENTS_SCHEMA.artist
         WHERE id IN (:ids)
           AND musicbrainz_match = 'NONE'
-          AND (discogs_match = 'UNCHECKED' OR updated_at > discogs_checked_at)
+          AND (discogs_match = 'UNCHECKED' OR name_changed_at > discogs_checked_at)
         ORDER BY id
         """
     )
@@ -41,8 +41,8 @@ interface ArtistDiscogsRepository : CoroutineCrudRepository<ArtistEntity, Long> 
      * An empty link is filled and a present one is kept, the rule #1319 set for promoter websites
      * and step C follows. A row that loses its EXACT verdict on a later lookup also loses the link
      * that verdict wrote, and only that one: the link is cleared when it is the old id's page. The
-     * right-hand side reads the row as it was before this update. `now()` in SQL for the reason
-     * [ArtistRepository.storeMusicBrainzVerdict] gives.
+     * right-hand side reads the row as it was before this update. `now()` in SQL, because the
+     * `name_changed_at` it is compared with comes from the database clock too.
      */
     @Modifying
     @Query(
