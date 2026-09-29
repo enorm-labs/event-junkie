@@ -4,6 +4,7 @@
 #
 # Usage:
 #   scripts/o2-query.sh <staging|production> sweep [--hours N]           # the /log-check sweep, one JSON object
+#   scripts/o2-query.sh <staging|production> traffic [--hours N]         # requests and visitor estimates per day
 #   scripts/o2-query.sh <staging|production> sql '<SQL>' [--hours N]     # one search; prints the hits
 #   scripts/o2-query.sh <staging|production> promql '<expr>' [--hours N] [--step S]
 #
@@ -15,6 +16,8 @@
 # --hours defaults to 24. The window ends now. `sweep` groups what a person reads first: ERROR and
 # WARN lines, unstructured lines that name a failure, 5xx answers, Kubernetes Warning events and
 # every alert that fired. Each group carries a count, the first and last time and the newest version.
+# `traffic` counts nginx page loads and BFF calls per day. Neither log names a visitor, so both counts
+# are upper bounds, not visitors; OPENOBSERVE.md § Traffic says what each column counts.
 #
 # The field names are not the ones the code writes: the message is `body`, fields are lower-case,
 # and a line that is not JSON (nginx, Flux, a helm test pod) has `severity = '0'`. OPENOBSERVE.md has
@@ -45,7 +48,7 @@ esac
 
 QUERY=
 case "$VERB" in
-    sweep) ;;
+    sweep | traffic) ;;
     sql | promql)
         [ $# -ge 1 ] || die "$VERB needs a query"
         QUERY="$1"
@@ -137,5 +140,55 @@ case "$VERB" in
             --argjson alerts "$(search "SELECT _timestamp, alert, value FROM alert_history ORDER BY _timestamp DESC LIMIT 200")" \
             '{environment: $environment, hours: $hours, from: $from, totals: $totals, errors: $errors, warnings: $warnings,
               unstructured: $unstructured, http5xx: $http5xx, k8s_warnings: $k8s_warnings, alerts: $alerts}'
+        ;;
+    traffic)
+        # An hour above this many nginx lines is a scan or a crawl: the weekly DAST run, or a crawler
+        # walking the sitemap. Such an hour counts as requests and never as a visitor.
+        BURST=600
+        # User agents that are not a person: crawlers, our own monitors and tests, scanners, and a
+        # missing agent. An agent that names a URL is a scanner probing for WordPress.
+        NOT_A_PERSON='(?i)bot|spider|crawl|slurp|facebookexternalhit|Better Stack|Uptime|lighthouse|Headless|curl|python|Go-http|"node"|k6|zgrab|nuclei|ZAP|wget|scan|http://|injector|akiaenvgo|"-"$'
+        OURS='(?i)Better Stack|lighthouse|Headless|"node"|nuclei|ZAP|injector'
+        # A page load is a GET for an HTML route that answers 200. Assets, probes and 404s are not.
+        PAGE_LOAD='^\[[^]]+\] "GET /(|de|en|de/[^ .]*|en/[^ .]*)(\?[^ ]*)? HTTP/[0-9.]+" 200 '
+        FRONTEND=$(search "SELECT date_trunc('hour', to_timestamp_micros(_timestamp)) AS h, COUNT(*) AS total,
+            sum(CASE WHEN NOT regexp_like(body, '$NOT_A_PERSON') AND regexp_like(body, '$PAGE_LOAD') THEN 1 ELSE 0 END) AS pages,
+            sum(CASE WHEN regexp_like(body, '$OURS') THEN 1 ELSE 0 END) AS ours,
+            sum(CASE WHEN regexp_like(body, '(?i)bot|spider|crawl|slurp') AND NOT str_match(body, 'Better Stack') THEN 1 ELSE 0 END) AS crawlers
+            FROM default WHERE k8s_app_component = 'frontend' AND regexp_like(body, '^\[') GROUP BY h ORDER BY h")
+        # The SPA calls /api/meta once when it starts, so it counts sessions in a browser that runs
+        # JavaScript. Only the SPA calls a list endpoint. The injector also calls a detail endpoint
+        # for every detail page it renders, so details include crawlers.
+        BFF=$(search "SELECT date_trunc('hour', to_timestamp_micros(_timestamp)) AS h, COUNT(*) AS total,
+            sum(CASE WHEN path = '/api/meta' THEN 1 ELSE 0 END) AS meta,
+            sum(CASE WHEN regexp_like(path, '^/api/(events|events/today|venues|artists|genres|promoters)$') THEN 1 ELSE 0 END) AS lists,
+            sum(CASE WHEN regexp_like(path, '^/api/(events|venues|artists|promoters)/[^/]+$') AND path <> '/api/events/today' THEN 1 ELSE 0 END) AS details,
+            sum(CASE WHEN str_match(path, '/api/images/') THEN 1 ELSE 0 END) AS images
+            FROM default WHERE k8s_app_component = 'bff' AND logger = 'de.norm.events.RequestLoggingFilter' GROUP BY h ORDER BY h")
+        # A machine calls /api/meta at a steady rate, night and day. The lowest hour of a day is that
+        # floor, and each hour above it counts as sessions. A day with an hour of no BFF call has no floor.
+        jq -n \
+            --arg environment "$ENVIRONMENT" --argjson hours "$HOURS" --argjson burst "$BURST" \
+            --arg from "$(date -u -r "$START_S" +%FT%TZ 2>/dev/null || date -u -d "@$START_S" +%FT%TZ)" \
+            --argjson fe "$FRONTEND" --argjson bff "$BFF" '
+            def total(f): map(f) | add // 0;
+            ($fe | map(select(.total > $burst) | .h)) as $bursts
+            | def quiet: (.h as $h | $bursts | index($h)) == null;
+            [([$fe[], $bff[]] | map(.h[0:10]) | unique)[] as $day
+                | ($fe | map(select(.h[0:10] == $day))) as $f
+                | ($bff | map(select(.h[0:10] == $day))) as $b
+                | ($b | map(select(quiet))) as $bq
+                | (if ($b | length) < ($f | length) then 0 else ($bq | map(.meta) | min // 0) end) as $floor
+                | {day: $day,
+                   frontend: {requests: ($f | total(.total)), in_burst: ($f | map(select(quiet | not)) | total(.total)),
+                              own_monitoring: ($f | total(.ours)), crawlers: ($f | total(.crawlers)),
+                              page_loads: ($f | map(select(quiet)) | total(.pages))},
+                   bff: {requests: ($b | total(.total)), in_burst: ($b | map(select(quiet | not)) | total(.total)),
+                         meta: ($bq | total(.meta)), meta_floor: $floor, sessions: ($bq | total([.meta - $floor, 0] | max)),
+                         lists: ($bq | total(.lists)), details: ($bq | total(.details)), images: ($bq | total(.images))}}]
+            | {environment: $environment, hours: $hours, from: $from, burst_threshold: $burst,
+               totals: {page_loads: total(.frontend.page_loads), sessions: total(.bff.sessions),
+                        lists: total(.bff.lists), details: total(.bff.details), images: total(.bff.images)},
+               days: .}'
         ;;
 esac
