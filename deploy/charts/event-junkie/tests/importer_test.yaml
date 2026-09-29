@@ -219,6 +219,32 @@ tests:
       - lengthEqual:
           path: spec.template.spec.containers
           count: 1
+      - notExists:
+          path: spec.template.spec.initContainers
+
+  # A plain second container gets SIGTERM with the importer and exits first: a rollout during an image
+  # pass logged 1010 refused calls in three seconds (#2039). A native sidecar is stopped after it.
+  - it: runs the sidecar as a native sidecar, not a second container
+    set:
+      database.host: "10.0.1.2"
+      networkPolicy.databaseCidr: "10.0.1.2/32"
+      database.existingSecret: "events-db"
+      images.enabled: true
+      images.storage.prefix: "staging"
+      images.imgproxy.enabled: true
+    documentSelector:
+      path: kind
+      value: Deployment
+    asserts:
+      - lengthEqual:
+          path: spec.template.spec.containers
+          count: 1
+      - equal:
+          path: spec.template.spec.initContainers[0].name
+          value: imgproxy
+      - equal:
+          path: spec.template.spec.initContainers[0].restartPolicy
+          value: Always
 
   - it: binds the sidecar to loopback and allows only the bucket as a source
     set:
@@ -235,21 +261,21 @@ tests:
       # Nothing outside the pod may reach it. NetworkPolicy cannot express this — a sidecar shares the
       # pod's network namespace — so the bind address is the control.
       - contains:
-          path: spec.template.spec.containers[1].env
+          path: spec.template.spec.initContainers[0].env
           content:
             name: IMGPROXY_BIND
             value: "127.0.0.1:8080"
       # imgproxy may reach the bucket and nothing else; a venue URL would go around robots.txt, the
       # throttle and the SSRF checks in our own fetcher.
       - contains:
-          path: spec.template.spec.containers[1].env
+          path: spec.template.spec.initContainers[0].env
           content:
             name: IMGPROXY_ALLOWED_SOURCES
             value: "s3://event-junkie-images/"
       # EXIF can carry GPS coordinates and a camera serial: a legal step (LEGAL.md §7.3a), stated rather
       # than left to the default.
       - contains:
-          path: spec.template.spec.containers[1].env
+          path: spec.template.spec.initContainers[0].env
           content:
             name: IMGPROXY_STRIP_METADATA
             value: "true"
@@ -324,12 +350,12 @@ tests:
     asserts:
       # A third-party image we cannot rebuild, so the version is a decision, not a tag that moves (ADR-017).
       - matchRegex:
-          path: spec.template.spec.containers[1].image
+          path: spec.template.spec.initContainers[0].image
           pattern: "^ghcr\\.io/imgproxy/imgproxy@sha256:[0-9a-f]{64}$"
       # The decode bounds, here because ADR-020 moved decoding out of the JVM: a bomb is small on the wire
       # and enormous decoded.
       - contains:
-          path: spec.template.spec.containers[1].env
+          path: spec.template.spec.initContainers[0].env
           content:
             name: IMGPROXY_MAX_SRC_RESOLUTION
             value: "50"
@@ -337,15 +363,15 @@ tests:
       # parses a values number as float64, and imgproxy exits on `strconv.Atoi: parsing "8.388608e+06"`. The
       # sidecar crash-looped; the presence assertion passed throughout, because 50 renders without an exponent.
       - contains:
-          path: spec.template.spec.containers[1].env
+          path: spec.template.spec.initContainers[0].env
           content:
             name: IMGPROXY_MAX_SRC_FILE_SIZE
             value: "8388608"
       - equal:
-          path: spec.template.spec.containers[1].resources.limits.memory
+          path: spec.template.spec.initContainers[0].resources.limits.memory
           value: 512Mi
       - equal:
-          path: spec.template.spec.containers[1].securityContext.readOnlyRootFilesystem
+          path: spec.template.spec.initContainers[0].securityContext.readOnlyRootFilesystem
           value: true
 
 

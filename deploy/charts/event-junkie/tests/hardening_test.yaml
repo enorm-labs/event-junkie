@@ -106,6 +106,32 @@ tests:
       matchMany: true
     asserts: *hardening
 
+  # The native sidecar sits in `initContainers`, outside every `containers[*]` path above (#2039). Its own
+  # case, because the default values render no `initContainers` and an `exists` on it would fail there.
+  - it: the imgproxy native sidecar is hardened like every container
+    template: templates/importer-deployment.yaml
+    set:
+      database.host: "10.0.1.2"
+      networkPolicy.databaseCidr: "10.0.1.2/32"
+      database.existingSecret: "events-db"
+      images.enabled: true
+      images.storage.prefix: "staging"
+      images.imgproxy.enabled: true
+    asserts:
+      - exists:
+          path: spec.template.spec.initContainers[*].resources.limits.memory
+      - exists:
+          path: spec.template.spec.initContainers[*].resources.requests.memory
+      - equal:
+          path: spec.template.spec.initContainers[*].securityContext.readOnlyRootFilesystem
+          value: true
+      - equal:
+          path: spec.template.spec.initContainers[*].securityContext.allowPrivilegeEscalation
+          value: false
+      - equal:
+          path: spec.template.spec.initContainers[*].securityContext.capabilities.drop[0]
+          value: ALL
+
   # `runAsUser` has to match the UID the images run as; a mismatch is a pod that cannot read its own
   # files, so the value is asserted, not its presence.
   - it: every pod runs as the UID the images are built with

@@ -125,6 +125,9 @@ inventory() {
         + [.spec.template.spec.containers[] | $k + "\t  container " + .name
            + "  image " + (.image | sub("@.*$"; "") | sub(":[^:/]*$"; ""))
            + "  ports " + (([.ports[]? | .name + "=" + (.containerPort | tostring)] | join(",")) | sub("^$"; "<none>"))]
+        + [.spec.template.spec.initContainers[]? | select(.restartPolicy == "Always") | $k + "\t  sidecar " + .name
+           + "  image " + (.image | sub("@.*$"; "") | sub(":[^:/]*$"; ""))
+           + "  ports " + (([.ports[]? | .name + "=" + (.containerPort | tostring)] | join(",")) | sub("^$"; "<none>"))]
       ) | .[]' "$rendered"
 
     # An HPA owns the replica count, so its range stands where the Deployment's number would.

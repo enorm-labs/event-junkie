@@ -38,6 +38,74 @@ spec:
       {{- end }}
       securityContext:
         {{- include "event-junkie.podSecurityContext" $args | nindent 8 }}
+      {{- if and .Values.images.enabled .Values.images.imgproxy.enabled }}
+      initContainers:
+        {{- /* imgproxy generates the derivatives at import time and never for a visitor (ADR-020). A sidecar
+           rather than a Deployment: idle outside import windows, and only the importer may call it.
+           **NetworkPolicy cannot constrain it separately** — a sidecar shares the pod's network namespace
+           and inherits the importer's open-internet egress — so IMGPROXY_ALLOWED_SOURCES below is what keeps
+           it off venue URLs. **Native, not a second container** (#2039): the kubelet stops it after the
+           importer, so an image pass still running at a rollout can reach it. */}}
+        - name: imgproxy
+          restartPolicy: Always
+          image: "{{ .Values.images.imgproxy.image.repository }}@{{ .Values.images.imgproxy.image.digest }}"
+          imagePullPolicy: {{ .Values.images.imgproxy.image.pullPolicy }}
+          securityContext:
+            {{- toYaml .Values.images.imgproxy.securityContext | nindent 12 }}
+          env:
+            {{- /* Loopback only: nothing outside this pod can reach the sidecar, the first half of "imgproxy never
+               serves a visitor"; URL signing is the second. */}}
+            - name: IMGPROXY_BIND
+              value: "127.0.0.1:8080"
+            {{- /* The bounds that kill a decompression bomb, set explicitly: ADR-020 moved decoding out of the JVM
+               into a Go process with a memory limit. `| int64` is load-bearing: Helm parses a values number as
+               float64, and 8388608 quoted straight renders as "8.388608e+06", which imgproxy refuses with
+               `strconv.Atoi: parsing "8.388608e+06": invalid syntax` and crash-loops. */}}
+            - name: IMGPROXY_MAX_SRC_RESOLUTION
+              value: {{ .Values.images.imgproxy.maxSrcResolutionMp | int64 | quote }}
+            - name: IMGPROXY_MAX_SRC_FILE_SIZE
+              value: {{ .Values.images.imgproxy.maxSrcFileSizeBytes | int64 | quote }}
+            {{- /* Stated, not assumed: EXIF can carry GPS coordinates and a camera serial, personal data for
+               photographs of venues and artists (LEGAL.md §7.3a). */}}
+            - name: IMGPROXY_STRIP_METADATA
+              value: "true"
+            {{- /* The bucket, and nothing else: our fetcher owns robots.txt, throttling and the SSRF checks, and
+               imgproxy pulling directly would go around all three (ADR-007). */}}
+            - name: IMGPROXY_ALLOWED_SOURCES
+              value: "s3://{{ .Values.images.storage.bucket }}/"
+            - name: IMGPROXY_USE_S3
+              value: "true"
+            - name: IMGPROXY_S3_ENDPOINT
+              value: {{ .Values.images.storage.endpoint | quote }}
+            - name: IMGPROXY_S3_REGION
+              value: {{ .Values.images.storage.region | quote }}
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.images.storage.existingSecret | quote }}
+                  key: IMAGE_STORAGE_ACCESS_KEY
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.images.storage.existingSecret | quote }}
+                  key: IMAGE_STORAGE_SECRET_KEY
+            {{- /* Signing, so nothing that reaches the sidecar can ask it to process anything. */}}
+            - name: IMGPROXY_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.images.imgproxy.existingSecret | quote }}
+                  key: IMGPROXY_KEY
+            - name: IMGPROXY_SALT
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.images.imgproxy.existingSecret | quote }}
+                  key: IMGPROXY_SALT
+          resources:
+            {{- toYaml .Values.images.imgproxy.resources | nindent 12 }}
+          volumeMounts:
+            - name: imgproxy-tmp
+              mountPath: /tmp
+      {{- end }}
       containers:
         - name: importer
           image: {{ include "event-junkie.image" $args | quote }}
@@ -154,71 +222,6 @@ spec:
           volumeMounts:
             - name: tmp
               mountPath: /tmp
-        {{- if and .Values.images.enabled .Values.images.imgproxy.enabled }}
-        {{- /* imgproxy generates the derivatives at import time and never for a visitor (ADR-020). A sidecar
-           rather than a Deployment: idle outside import windows, and only the importer may call it.
-           **NetworkPolicy cannot constrain it separately** — a sidecar shares the pod's network namespace
-           and inherits the importer's open-internet egress — so IMGPROXY_ALLOWED_SOURCES below is what keeps
-           it off venue URLs. */}}
-        - name: imgproxy
-          image: "{{ .Values.images.imgproxy.image.repository }}@{{ .Values.images.imgproxy.image.digest }}"
-          imagePullPolicy: {{ .Values.images.imgproxy.image.pullPolicy }}
-          securityContext:
-            {{- toYaml .Values.images.imgproxy.securityContext | nindent 12 }}
-          env:
-            {{- /* Loopback only: nothing outside this pod can reach the sidecar, the first half of "imgproxy never
-               serves a visitor"; URL signing is the second. */}}
-            - name: IMGPROXY_BIND
-              value: "127.0.0.1:8080"
-            {{- /* The bounds that kill a decompression bomb, set explicitly: ADR-020 moved decoding out of the JVM
-               into a Go process with a memory limit. `| int64` is load-bearing: Helm parses a values number as
-               float64, and 8388608 quoted straight renders as "8.388608e+06", which imgproxy refuses with
-               `strconv.Atoi: parsing "8.388608e+06": invalid syntax` and crash-loops. */}}
-            - name: IMGPROXY_MAX_SRC_RESOLUTION
-              value: {{ .Values.images.imgproxy.maxSrcResolutionMp | int64 | quote }}
-            - name: IMGPROXY_MAX_SRC_FILE_SIZE
-              value: {{ .Values.images.imgproxy.maxSrcFileSizeBytes | int64 | quote }}
-            {{- /* Stated, not assumed: EXIF can carry GPS coordinates and a camera serial, personal data for
-               photographs of venues and artists (LEGAL.md §7.3a). */}}
-            - name: IMGPROXY_STRIP_METADATA
-              value: "true"
-            {{- /* The bucket, and nothing else: our fetcher owns robots.txt, throttling and the SSRF checks, and
-               imgproxy pulling directly would go around all three (ADR-007). */}}
-            - name: IMGPROXY_ALLOWED_SOURCES
-              value: "s3://{{ .Values.images.storage.bucket }}/"
-            - name: IMGPROXY_USE_S3
-              value: "true"
-            - name: IMGPROXY_S3_ENDPOINT
-              value: {{ .Values.images.storage.endpoint | quote }}
-            - name: IMGPROXY_S3_REGION
-              value: {{ .Values.images.storage.region | quote }}
-            - name: AWS_ACCESS_KEY_ID
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.images.storage.existingSecret | quote }}
-                  key: IMAGE_STORAGE_ACCESS_KEY
-            - name: AWS_SECRET_ACCESS_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.images.storage.existingSecret | quote }}
-                  key: IMAGE_STORAGE_SECRET_KEY
-            {{- /* Signing, so nothing that reaches the sidecar can ask it to process anything. */}}
-            - name: IMGPROXY_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.images.imgproxy.existingSecret | quote }}
-                  key: IMGPROXY_KEY
-            - name: IMGPROXY_SALT
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.images.imgproxy.existingSecret | quote }}
-                  key: IMGPROXY_SALT
-          resources:
-            {{- toYaml .Values.images.imgproxy.resources | nindent 12 }}
-          volumeMounts:
-            - name: imgproxy-tmp
-              mountPath: /tmp
-        {{- end }}
       volumes:
         - name: tmp
           emptyDir: {}
