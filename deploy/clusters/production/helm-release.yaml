@@ -72,6 +72,8 @@ spec:
         # sources (92 on Uber Arena, measured), and a pass that stops at the cap leaves a tail no later pass
         # clears. 250 covers the largest night seen; across 84 sources it bounds a night at 21,000 (#1432).
         maxPerRun: 250
+      discogs:
+        enabled: true
     images:
       enabled: true
       serving:
