@@ -14,8 +14,8 @@
 3. **We display the venue's description, and we keep a copy of the venue's event image.** §3.1 and §3.6 explain why
    those two are the weakest parts of this position. The copy is a reproduction, which embedding was not. **A source
    can now forbid either one**, and §3.1 says what we do until a source is reviewed.
-4. **We are polite.** One entry page per source, once per day, with a delay between requests and conditional requests on
-   top.
+4. **We are polite.** One entry page per source, once per day, with a delay between requests. A source that is one page
+   also gets conditional requests.
 5. **A venue can ask us to stop, and we stop.** §5 is the route.
 6. **The database right in §3.2 is the argument we would most likely lose.** We say so rather than hide it.
 
@@ -197,8 +197,8 @@ the disallowed calendar links. Those notes say **why a URL is not fetched**, whi
 **Our position:** the load we cause is too small to be an interference.
 
 Once a day, we read each source's overview page, its further pages where the list continues, and the detail pages
-they link to. There is a 200 ms delay between requests to a host. Conditional requests turn many overview fetches into
-a `304`. A venue with a weekly programme serves us less traffic than one visitor with an open browser
+they link to. There is a 200 ms delay between requests to a host. For a source that is one page, a conditional request
+often gets a `304`. A venue with a weekly programme serves us less traffic than one visitor with an open browser
 tab.
 
 The BGH considered screen scraping of a competing portal under the predecessor of § 4 Nr. 4 UWG in

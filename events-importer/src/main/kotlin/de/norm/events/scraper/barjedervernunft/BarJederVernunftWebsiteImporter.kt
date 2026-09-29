@@ -50,6 +50,7 @@ class BarJederVernunftWebsiteImporter(
 
     override val eventSource: EventSource = EventSource.BAR_JEDER_VERNUNFT
     override val listsWholeProgramme: Boolean = true
+    override val fetchesBeyondEntryPage: Boolean = true
 
     private val overviewPageScraper = BarJederVernunftOverviewPageScraper()
     private val showPageScraper = BarJederVernunftShowPageScraper()

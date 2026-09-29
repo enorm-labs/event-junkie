@@ -194,7 +194,7 @@ class EventImportService(
                     ImporterMetrics.RunOutcome.SKIPPED
 
         if (force) logger.info { "Fetching source page unconditionally (forced) for '${runningSource.slug}'" }
-        val (etag, lastModified) = runningSource.validatorsFor(force)
+        val (etag, lastModified) = runningSource.validatorsFor(conditional = !force && !importer.fetchesBeyondEntryPage)
         return try {
             when (val result = importer.importEvents(runningSource.url, etag, lastModified)) {
                 is ImportResult.NotModified -> {
@@ -221,7 +221,14 @@ class EventImportService(
 
                     afterCommit(runningSource, venue.name, result, upsert, licences)
 
-                    markSuccess(runningSource, upsert.total, result.etag, result.lastModified)
+                    // Nothing is kept that this source will never send (#2020).
+                    val keepValidators = !importer.fetchesBeyondEntryPage
+                    markSuccess(
+                        runningSource,
+                        upsert.total,
+                        result.etag.takeIf { keepValidators },
+                        result.lastModified.takeIf { keepValidators }
+                    )
                     afterSuccess(runningSource, upsert)
                     ImportResultResponse(sourceSlug = runningSource.slug, imported = true, eventCount = upsert.total) to
                         ImporterMetrics.RunOutcome.SUCCESS
@@ -468,8 +475,8 @@ private fun EventSourceEntity.withRobots(check: RobotsCheck): EventSourceEntity 
     )
 
 /**
- * The cached validators this run sends, `etag to lastModified`, neither when [force] (#1159).
- * Null validators make `HtmlFetcher.fetch` unconditional, so one call site covers every
- * conditional importer.
+ * The cached validators this run sends, `etag to lastModified`, or neither when the run is not
+ * [conditional]: a forced run (#1159), or an importer that fetches past its entry page (#2020).
+ * Null validators make `HtmlFetcher.fetch` unconditional, so one call site covers every importer.
  */
-private fun EventSourceEntity.validatorsFor(force: Boolean): Pair<String?, String?> = if (force) null to null else etag to lastModified
+private fun EventSourceEntity.validatorsFor(conditional: Boolean): Pair<String?, String?> = if (conditional) etag to lastModified else null to null

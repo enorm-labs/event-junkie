@@ -28,6 +28,9 @@ abstract class AbstractTwoPageWebsiteImporter(
     // (Cassiopeia / MadameClaude) rather than this abstract base.
     private val logger = KotlinLogging.logger(javaClass.name)
 
+    /** Every run fetches the detail pages, which the overview's validators do not cover. */
+    final override val fetchesBeyondEntryPage: Boolean get() = true
+
     /** Parses all events from the overview page HTML. */
     protected abstract fun scrapeOverview(
         document: Document,

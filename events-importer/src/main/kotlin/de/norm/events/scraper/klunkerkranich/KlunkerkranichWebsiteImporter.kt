@@ -50,6 +50,7 @@ class KlunkerkranichWebsiteImporter(
     private val logger = KotlinLogging.logger {}
 
     override val eventSource: EventSource = EventSource.KLUNKERKRANICH
+    override val fetchesBeyondEntryPage: Boolean = true
 
     private val overviewPageScraper = KlunkerkranichOverviewPageScraper(clock)
     private val detailPageScraper = KlunkerkranichDetailPageScraper()

@@ -7,8 +7,8 @@ The domain model: what is stored, and how the pieces relate. It exists to captur
 
 An `event` belongs to one `venue` and links to `artist`, `promoter` and `genre_tag` through join tables.
 `event.sourceId` is what makes imports idempotent — an upsert keyed on it, not on the title. `event_source` holds the
-per-venue import configuration and the conditional-request headers (ETag, Last-Modified) that let an unchanged page
-cost one 304. It also holds the licence status that decides whether an event's description and image are served.
+per-venue import configuration and the conditional-request headers (ETag, Last-Modified) that let an unchanged one-page
+source cost one 304. It also holds the licence status that decides whether an event's description and image are served.
 
 **Everything lives in the `events` schema, never `public`.** The name comes from the `EVENTS_SCHEMA` constant in
 `events-core`, not from a YAML property. See [ADR-004](adr/ADR-004_DEDICATED_DATABASE_SCHEMA.md) and

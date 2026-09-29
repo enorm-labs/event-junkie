@@ -55,6 +55,7 @@ abstract class AbstractClubDerVisionaereRoomImporter(
 
     override val eventSource: EventSource get() = room.eventSource
     override val listsWholeProgramme: Boolean = true
+    override val fetchesBeyondEntryPage: Boolean = true
 
     override suspend fun importEvents(
         url: String,

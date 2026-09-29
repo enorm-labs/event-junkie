@@ -283,7 +283,7 @@ kubectl --context event-junkie-staging port-forward -n event-junkie svc/event-ju
 **`18081`, not `8081`.** The local importer from `scripts/dev-env.sh` owns `8081`. A forward that silently lands on a local stack is how you seed the wrong
 database and believe you seeded staging.
 
-One admin call belongs here. A parser fix for a venue whose page did not change gets a `304` on every run. The forward is the only way to force a fetch on
+One admin call belongs here. A parser fix for a one-page venue whose page did not change gets a `304` on every run. The forward is the only way to force a fetch on
 a cluster.
 
 ```sh

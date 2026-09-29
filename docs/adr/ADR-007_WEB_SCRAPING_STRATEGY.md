@@ -473,6 +473,12 @@ Each import source row stores the last ETag and Last-Modified values. Before scr
 
 This minimizes unnecessary network traffic and database writes.
 
+**Only a source whose entry page is the whole source uses them.** The validators describe the entry page and nothing
+else. A detail page, a later listing page or a month page can change while the entry page does not. A 304 would then
+skip all of them. An importer that fetches past its entry page declares `fetchesBeyondEntryPage`. For such an
+importer, `EventImportService` sends no validators and stores none (#2020). `AbstractTwoPageWebsiteImporter` declares
+it for every subclass.
+
 ### Shared Scraping Utilities
 
 Three focused extension files in the `de.norm.events.scraper` package provide reusable utilities shared across all venue scrapers. Each file has a single

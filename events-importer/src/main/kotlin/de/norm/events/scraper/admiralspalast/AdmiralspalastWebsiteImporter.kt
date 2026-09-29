@@ -41,6 +41,7 @@ class AdmiralspalastWebsiteImporter(
 
     override val eventSource: EventSource = EventSource.ADMIRALSPALAST
     override val listsWholeProgramme: Boolean = true
+    override val fetchesBeyondEntryPage: Boolean = true
 
     private val listingPageScraper = AdmiralspalastListingPageScraper()
     private val detailPageScraper = AdmiralspalastDetailPageScraper()
