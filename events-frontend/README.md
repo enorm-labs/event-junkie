@@ -158,10 +158,11 @@ separate check — `npm run test:e2e` already runs it, so CI is covered. It exis
 the whole suite. The static half of the same target is `eslint-plugin-vuejs-accessibility`, which runs inside
 `npm run lint`. Neither may be silenced to make a build pass.
 
-### Lint with [ESLint](https://eslint.org/)
+### Lint with [oxlint](https://oxc.rs/) and [ESLint](https://eslint.org/)
 
 ```sh
-npm run lint
+npm run lint           # oxlint, then ESLint, both with --fix: repairs what it can
+npm run check:lint     # the same without --fix, as CI runs it: a fixable finding fails
 ```
 
 ### Add UI components (shadcn-vue)
