@@ -151,22 +151,29 @@ case "$VERB" in
         OURS='(?i)Better Stack|lighthouse|Headless|"node"|nuclei|ZAP|injector'
         # A page load is a GET for an HTML route that answers 200. Assets, probes and 404s are not.
         PAGE_LOAD='^\[[^]]+\] "GET /(|de|en|de/[^ .]*|en/[^ .]*)(\?[^ ]*)? HTTP/[0-9.]+" 200 '
+        DETAIL_PAGE='^\[[^]]+\] "GET /(de|en)/(events|venues|artists|promoters)/[^ /?]+/?(\?[^ ]*)? HTTP/[0-9.]+" 200 '
+        # Baiduspider runs the SPA on the page it fetches, so each fetch also calls /api/meta and the
+        # detail endpoint. Googlebot and ClaudeBot do not: their fetches meet /api/meta only by chance.
+        RENDERER='Baiduspider'
         FRONTEND=$(search "SELECT date_trunc('hour', to_timestamp_micros(_timestamp)) AS h, COUNT(*) AS total,
             sum(CASE WHEN NOT regexp_like(body, '$NOT_A_PERSON') AND regexp_like(body, '$PAGE_LOAD') THEN 1 ELSE 0 END) AS pages,
             sum(CASE WHEN regexp_like(body, '$OURS') THEN 1 ELSE 0 END) AS ours,
-            sum(CASE WHEN regexp_like(body, '(?i)bot|spider|crawl|slurp') AND NOT str_match(body, 'Better Stack') THEN 1 ELSE 0 END) AS crawlers
+            sum(CASE WHEN regexp_like(body, '(?i)bot|spider|crawl|slurp') AND NOT str_match(body, 'Better Stack') THEN 1 ELSE 0 END) AS crawlers,
+            sum(CASE WHEN str_match(body, '$RENDERER') AND regexp_like(body, '$PAGE_LOAD') THEN 1 ELSE 0 END) AS renders,
+            sum(CASE WHEN str_match(body, '$RENDERER') AND regexp_like(body, '$DETAIL_PAGE') THEN 1 ELSE 0 END) AS rendered_details,
+            sum(CASE WHEN regexp_like(body, '$NOT_A_PERSON') AND regexp_like(body, '$DETAIL_PAGE') THEN 1 ELSE 0 END) AS injected_details
             FROM default WHERE k8s_app_component = 'frontend' AND regexp_like(body, '^\[') GROUP BY h ORDER BY h")
         # The SPA calls /api/meta once when it starts, so it counts sessions in a browser that runs
-        # JavaScript. Only the SPA calls a list endpoint. The injector also calls a detail endpoint
-        # for every detail page it renders, so details include crawlers.
+        # JavaScript. Only the SPA calls a list endpoint. The injector calls a detail endpoint for
+        # every detail page nginx serves, and the SPA calls it again.
         BFF=$(search "SELECT date_trunc('hour', to_timestamp_micros(_timestamp)) AS h, COUNT(*) AS total,
             sum(CASE WHEN path = '/api/meta' THEN 1 ELSE 0 END) AS meta,
             sum(CASE WHEN regexp_like(path, '^/api/(events|events/today|venues|artists|genres|promoters)$') THEN 1 ELSE 0 END) AS lists,
             sum(CASE WHEN regexp_like(path, '^/api/(events|venues|artists|promoters)/[^/]+$') AND path <> '/api/events/today' THEN 1 ELSE 0 END) AS details,
             sum(CASE WHEN str_match(path, '/api/images/') THEN 1 ELSE 0 END) AS images
             FROM default WHERE k8s_app_component = 'bff' AND logger = 'de.norm.events.RequestLoggingFilter' GROUP BY h ORDER BY h")
-        # A machine calls /api/meta at a steady rate, night and day. The lowest hour of a day is that
-        # floor, and each hour above it counts as sessions. A day with an hour of no BFF call has no floor.
+        # Sessions and details leave out what crawlers cause: one /api/meta call per page Baiduspider
+        # renders, and one detail call per detail page it renders or any non-person agent fetches.
         jq -n \
             --arg environment "$ENVIRONMENT" --argjson hours "$HOURS" --argjson burst "$BURST" \
             --arg from "$(date -u -r "$START_S" +%FT%TZ 2>/dev/null || date -u -d "@$START_S" +%FT%TZ)" \
@@ -178,17 +185,20 @@ case "$VERB" in
                 | ($fe | map(select(.h[0:10] == $day))) as $f
                 | ($bff | map(select(.h[0:10] == $day))) as $b
                 | ($b | map(select(quiet))) as $bq
-                | (if ($b | length) < ($f | length) then 0 else ($bq | map(.meta) | min // 0) end) as $floor
+                | ($f | map(select(quiet))) as $fq
                 | {day: $day,
                    frontend: {requests: ($f | total(.total)), in_burst: ($f | map(select(quiet | not)) | total(.total)),
                               own_monitoring: ($f | total(.ours)), crawlers: ($f | total(.crawlers)),
-                              page_loads: ($f | map(select(quiet)) | total(.pages))},
+                              page_loads: ($fq | total(.pages)), rendered_by_crawlers: ($fq | total(.renders))},
                    bff: {requests: ($b | total(.total)), in_burst: ($b | map(select(quiet | not)) | total(.total)),
-                         meta: ($bq | total(.meta)), meta_floor: $floor, sessions: ($bq | total([.meta - $floor, 0] | max)),
-                         lists: ($bq | total(.lists)), details: ($bq | total(.details)), images: ($bq | total(.images))}}]
+                         meta: ($bq | total(.meta)),
+                         sessions: ([($bq | total(.meta)) - ($fq | total(.renders)), 0] | max),
+                         lists: ($bq | total(.lists)), details: ($bq | total(.details)),
+                         details_by_people: ([($bq | total(.details)) - ($fq | total(.rendered_details + .injected_details)), 0] | max),
+                         images: ($bq | total(.images))}}]
             | {environment: $environment, hours: $hours, from: $from, burst_threshold: $burst,
                totals: {page_loads: total(.frontend.page_loads), sessions: total(.bff.sessions),
-                        lists: total(.bff.lists), details: total(.bff.details), images: total(.bff.images)},
+                        lists: total(.bff.lists), details_by_people: total(.bff.details_by_people), images: total(.bff.images)},
                days: .}'
         ;;
 esac
