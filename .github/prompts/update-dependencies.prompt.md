@@ -40,7 +40,7 @@ was wrong. Every count in the summary carries the command that produced it.
 - **Anything declared without a version string comes from a BOM and is not touched**: `spring-boot-starter-*`, `spring-*`, `kotlin-*`, `kotlinx-coroutines-*`,
   `reactor-kotlin-extensions`, `jackson-module-kotlin`, `flyway-*`, `postgresql` / `r2dbc-postgresql`, `testcontainers`, `junit`.
 - **Existing CVE-remediation overrides are the exception**, and they are temporary by design: a property named exactly as the Boot BOM names it
-  (`netty.version` today), plus `constraints` blocks in module scripts (`com.ongres.scram`). The "Pins that are not ordinary project versions" block —
+  (`netty.version`, `jackson-bom.version` and `jackson-2-bom.version` today), plus `constraints` blocks in module scripts (`com.ongres.scram`). The "Pins that are not ordinary project versions" block —
   `log4j-api`, `scram`, `spring-framework-bom` — is not BOM-managed. Never bump these because a newer release exists; **do check on every run whether they
   are obsolete** (Step 5).
 

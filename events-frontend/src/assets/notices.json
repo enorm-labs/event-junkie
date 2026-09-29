@@ -37,7 +37,7 @@
         },
         {
           "name": "com.fasterxml.jackson:jackson-bom",
-          "version": "2.21.5",
+          "version": "2.21.6",
           "url": "https://github.com/FasterXML/jackson-bom",
           "ecosystem": "backend"
         },
@@ -49,37 +49,37 @@
         },
         {
           "name": "com.fasterxml.jackson.core:jackson-core",
-          "version": "2.21.5",
+          "version": "2.21.6",
           "url": "https://github.com/FasterXML/jackson-core",
           "ecosystem": "backend"
         },
         {
           "name": "com.fasterxml.jackson.core:jackson-databind",
-          "version": "2.21.5",
+          "version": "2.21.6",
           "url": "https://github.com/FasterXML/jackson",
           "ecosystem": "backend"
         },
         {
           "name": "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml",
-          "version": "2.21.5",
+          "version": "2.21.6",
           "url": "https://github.com/FasterXML/jackson-dataformats-text",
           "ecosystem": "backend"
         },
         {
           "name": "com.fasterxml.jackson.datatype:jackson-datatype-jdk8",
-          "version": "2.21.5",
+          "version": "2.21.6",
           "url": "https://github.com/FasterXML/jackson-modules-java8/jackson-datatype-jdk8",
           "ecosystem": "backend"
         },
         {
           "name": "com.fasterxml.jackson.datatype:jackson-datatype-jsr310",
-          "version": "2.21.5",
+          "version": "2.21.6",
           "url": "https://github.com/FasterXML/jackson-modules-java8/jackson-datatype-jsr310",
           "ecosystem": "backend"
         },
         {
           "name": "com.fasterxml.jackson.module:jackson-module-kotlin",
-          "version": "2.21.5",
+          "version": "2.21.6",
           "url": "https://github.com/FasterXML/jackson-module-kotlin",
           "ecosystem": "backend"
         },
@@ -1225,25 +1225,25 @@
         },
         {
           "name": "tools.jackson:jackson-bom",
-          "version": "3.1.5",
+          "version": "3.1.6",
           "url": "https://github.com/FasterXML/jackson-bom",
           "ecosystem": "backend"
         },
         {
           "name": "tools.jackson.core:jackson-core",
-          "version": "3.1.5",
+          "version": "3.1.6",
           "url": "https://github.com/FasterXML/jackson-core",
           "ecosystem": "backend"
         },
         {
           "name": "tools.jackson.core:jackson-databind",
-          "version": "3.1.5",
+          "version": "3.1.6",
           "url": "https://github.com/FasterXML/jackson",
           "ecosystem": "backend"
         },
         {
           "name": "tools.jackson.module:jackson-module-kotlin",
-          "version": "3.1.5",
+          "version": "3.1.6",
           "url": "https://github.com/FasterXML/jackson-module-kotlin",
           "ecosystem": "backend"
         }
