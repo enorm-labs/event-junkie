@@ -2,7 +2,7 @@
 
 ## Status
 
-**Accepted (2026-09-17) — every artist row is looked up in MusicBrainz after an import commits. The verdict and the
+**Accepted (2026-09-17) — every artist row is looked up in MusicBrainz on a tick of its own, outside every import. The verdict and the
 MusicBrainz id are stored. The name is never rewritten from it. Enrichment from the id is a second step, and it runs
 only for a row with an `EXACT` verdict.**
 
@@ -150,7 +150,7 @@ What is never stored, in any step: tags and genre associations, ratings and anno
 artist's genres are the `genre_tag` rows of its own events, one query and no import. A person's birth date, gender or
 birthplace, because of §7.3. A person's Wikipedia lead, for the same reason.
 
-Where it runs: its own sweep after an import commits, the shape of `DescriptionTranslationService`. Never inside a
+Where it runs: its own scheduled tick, every five minutes, separate from the imports ([#2051](https://github.com/enorm-labs/event-junkie/issues/2051)). Never inside a
 scrape. New and changed names only after the backfill. The backfill is one second per row, so about two hours for
 staging. An outage is a counter and a retry, never a `FAILED` source. One host in `PerHostThrottlingFilter` at
 1,000 ms or more, and a `User-Agent` naming the repository.

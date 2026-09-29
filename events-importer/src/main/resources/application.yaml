@@ -20,6 +20,12 @@ spring:
       max-size: 12
     properties:
       schema: events
+  task:
+    scheduling:
+      pool:
+        # A fixed-delay `suspend` tick holds its thread until it finishes, and the artist lookup
+        # tick runs for minutes: with one thread it would hold back the import tick.
+        size: 4
 
 # `info` joins the default `health` so an operator can ask which build this is (docs/LEGAL.md
 # §4.4). The importer has no public surface and no `/meta`.
@@ -73,8 +79,8 @@ app:
     # A source that grants translation and publishes 300 events spreads over several runs.
     max-per-run: 50
   musicbrainz:
-    # After each import, every artist it billed is looked up in MusicBrainz and the verdict stored
-    # (ADR-031). Only the stage name is sent.
+    # On the artist lookup tick, every artist an import billed is looked up in MusicBrainz and the
+    # verdict stored (ADR-031). Only the stage name is sent.
     enabled: ${APP_MUSICBRAINZ_ENABLED:true}
     base-url: https://musicbrainz.org/ws/2/
     # MusicBrainz allows one request a second per address, shared by every process behind it. A
@@ -84,10 +90,10 @@ app:
     # A 503 burst outlasts one pause: three retries at 5s, 15s and 45s before a row is given up on.
     backoff: 5s
     retries: 3
-    # The backfill's slice, drained this many per import: about nine minutes at the pace above.
+    # The backfill's slice, drained this many per tick: about nine minutes at the pace above.
     max-per-run: 500
     # Step C reads the entity of an EXACT row for its links, type and picture: this many per
-    # import, one request here and up to two at Wikimedia each.
+    # tick, one request here and up to two at Wikimedia each.
     enrich-max-per-run: 100
   discogs:
     # After the MusicBrainz lookup, every artist it marked NONE is looked up in Discogs and the
@@ -121,6 +127,11 @@ app:
   scheduling:
     # Reset sources stuck in RUNNING longer than this to FAILED (Duration format, e.g. 30m, 1h)
     staleness-timeout: 30m
+  artists:
+    # The MusicBrainz lookup, its enrichment and the Discogs lookup run on this tick, not after
+    # each import (#2051). Off stops all three; the per-service switches still apply when on.
+    lookup-enabled: true
+    lookup-tick-millis: 300000
   images:
     # Off means nothing is fetched or stored. Not the hotlink-versus-cache switch, which is
     # `app.images.serving.enabled` in the BFF; this has to be on first (ADR-019 §2.10).

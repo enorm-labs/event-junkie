@@ -180,7 +180,7 @@ The importer is the one workload that talks to the open internet. Everything it 
 
 ### B5 · Importer → Claude API, MusicBrainz, Wikimedia and Discogs
 
-After each import the importer looks up the billed artists in MusicBrainz ([ADR-031](../adr/ADR-031_ARTIST_IDENTITY_HUB.md)). For an exact match it
+On a scheduled tick the importer looks up the billed artists in MusicBrainz ([ADR-031](../adr/ADR-031_ARTIST_IDENTITY_HUB.md)). For an exact match it
 reads a picture from Wikidata and Commons, and an ensemble's lead from Wikipedia. All four are on by default (`app.musicbrainz.enabled`,
 `app.wikimedia.enabled`). Anyone can edit what they return. For an artist MusicBrainz does not know, the importer searches Discogs
 ([ADR-035](../adr/ADR-035_DISCOGS_SECOND_ARTIST_INDEX.md)). The chart ships that lookup off (`importer.discogs.enabled`).

@@ -45,9 +45,8 @@ class EventImportService(
     private val fieldCoverageService: FieldCoverageService,
     /** Fills in the missing language, for the sources whose grant allows it (ADR-026, #470). */
     private val descriptionTranslationService: DescriptionTranslationService,
-    private val musicBrainzLookupService: MusicBrainzLookupService,
-    private val musicBrainzEnrichmentService: MusicBrainzEnrichmentService,
-    private val discogsLookupService: DiscogsLookupService,
+    /** Takes the artists a run touched; the MusicBrainz and Discogs lookups run on its tick (#2051). */
+    private val artistLookupSweep: ArtistLookupSweep,
     /**
      * The `robots.txt` rules behind [RobotsTxtFilter], read again to record what they said about
      * this source's entry URL (#790). A map read, not a fetch: the filter has already read the file.
@@ -230,7 +229,7 @@ class EventImportService(
                         result.etag.takeIf { keepValidators },
                         result.lastModified.takeIf { keepValidators }
                     )
-                    afterSuccess(runningSource, upsert)
+                    afterSuccess(upsert)
                     ImportResultResponse(sourceSlug = runningSource.slug, imported = true, eventCount = upsert.total) to
                         ImporterMetrics.RunOutcome.SUCCESS
                 }
@@ -324,7 +323,7 @@ class EventImportService(
      * the scraper extracted, not the stored rows, where a selector that stopped matching is invisible
      * until old rows age out (#472); it runs before `markSuccess` and is unguarded because `record`
      * never throws. The translation pass is guarded: derived text, so an engine that is down must
-     * never fail a scrape that worked (ADR-026). The MusicBrainz pass runs in [afterSuccess].
+     * never fail a scrape that worked (ADR-026). The artist lookups are only queued, in [afterSuccess].
      */
     private suspend fun afterCommit(
         source: EventSourceEntity,
@@ -340,24 +339,11 @@ class EventImportService(
     }
 
     /**
-     * The MusicBrainz pass, after `markSuccess` (#1604): the slowest thing a run does, one request a
-     * second over the billed artists and a slice of the backfill (ADR-031), nine minutes for a full
-     * slice and five more per 503, and a source `RUNNING` that long is one bad slice from
-     * `app.scheduling.staleness-timeout` reaping it. Guarded like the translation pass. The
-     * enrichment follows the lookup, so a verdict reached in this run is read in this run; the
-     * Discogs lookup comes last for the same reason, because it asks about this run's `NONE` rows.
+     * Hands the touched artists to [ArtistLookupSweep], after `markSuccess`. The lookups themselves
+     * run on its tick (#2051): one request a second to MusicBrainz, minutes per run, is not a cost a
+     * scrape should carry or a source should sit in `RUNNING` for.
      */
-    private suspend fun afterSuccess(
-        source: EventSourceEntity,
-        upsert: UpsertOutcome
-    ) {
-        runCatching { musicBrainzLookupService.lookupFor(source, upsert.touchedArtistIds) }
-            .onFailure { logger.warn(it) { "MusicBrainz pass failed for '${source.slug}'" } }
-        runCatching { musicBrainzEnrichmentService.enrichFor(source, upsert.touchedArtistIds) }
-            .onFailure { logger.warn(it) { "MusicBrainz enrichment failed for '${source.slug}'" } }
-        runCatching { discogsLookupService.lookupFor(source, upsert.touchedArtistIds) }
-            .onFailure { logger.warn(it) { "Discogs pass failed for '${source.slug}'" } }
-    }
+    private fun afterSuccess(upsert: UpsertOutcome) = artistLookupSweep.queue(upsert.touchedArtistIds)
 
     /**
      * Closes a run that worked. `lastSuccessAt` is written only here; `lastImportAt` also by

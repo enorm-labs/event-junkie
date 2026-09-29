@@ -99,10 +99,8 @@ class EventImportServiceTest {
     /** TranslationRequest runs after the transaction and is gated on a grant no test source holds (#470). */
     private val descriptionTranslationService: DescriptionTranslationService = mockk(relaxed = true)
 
-    /** The MusicBrainz sweep runs after the transaction too, and reaches the network in production (#1567). */
-    private val musicBrainzLookupService: MusicBrainzLookupService = mockk(relaxed = true)
-    private val musicBrainzEnrichmentService: MusicBrainzEnrichmentService = mockk(relaxed = true)
-    private val discogsLookupService: DiscogsLookupService = mockk(relaxed = true)
+    /** Takes the touched artists; the lookups run on its own tick (#2051). */
+    private val artistLookupSweep: ArtistLookupSweep = mockk(relaxed = true)
 
     /**
      * Stubbed: the cache would reach the network for a `robots.txt`. [RobotsRulesCacheTest] covers it.
@@ -195,9 +193,7 @@ class EventImportServiceTest {
                 metrics = metrics,
                 fieldCoverageService = fieldCoverageService,
                 descriptionTranslationService = descriptionTranslationService,
-                musicBrainzLookupService = musicBrainzLookupService,
-                musicBrainzEnrichmentService = musicBrainzEnrichmentService,
-                discogsLookupService = discogsLookupService,
+                artistLookupSweep = artistLookupSweep,
                 robotsRulesCache = robotsRulesCache,
                 maxConcurrency = EventImportService.DEFAULT_MAX_CONCURRENCY
             )
@@ -349,9 +345,7 @@ class EventImportServiceTest {
                         metrics = metrics,
                         fieldCoverageService = fieldCoverageService,
                         descriptionTranslationService = descriptionTranslationService,
-                        musicBrainzLookupService = musicBrainzLookupService,
-                        musicBrainzEnrichmentService = musicBrainzEnrichmentService,
-                        discogsLookupService = discogsLookupService,
+                        artistLookupSweep = artistLookupSweep,
                         robotsRulesCache = robotsRulesCache,
                         maxConcurrency = EventImportService.DEFAULT_MAX_CONCURRENCY
                     )
@@ -479,63 +473,18 @@ class EventImportServiceTest {
             }
 
         @Test
-        fun `a MusicBrainz pass that throws leaves the source SUCCESS`() =
+        fun `a successful run queues its touched artists for the lookup tick after the closing save`() =
             runTest {
                 val src = source()
                 coEvery { cassiopeiaImporter.importEvents(any(), any(), any()) } returns
                     ImportResult.Success(events = listOf(scrapedEvent()), etag = null, lastModified = null)
-                coEvery { musicBrainzLookupService.lookupFor(any(), any()) } throws IllegalStateException("boom")
-
-                val result = service.importFromSource(src)
-
-                result.imported shouldBe true
-                coVerify { musicBrainzLookupService.lookupFor(match { it.slug == src.slug }, any()) }
-                // The enrichment still runs; the lookup's failure is its own.
-                coVerify { musicBrainzEnrichmentService.enrichFor(match { it.slug == src.slug }, any()) }
-                coVerify { eventSourceRepository.save(match { it.status == ImportStatus.SUCCESS.name }) }
-            }
-
-        @Test
-        fun `an enrichment that throws leaves the source SUCCESS too`() =
-            runTest {
-                val src = source()
-                coEvery { cassiopeiaImporter.importEvents(any(), any(), any()) } returns
-                    ImportResult.Success(events = listOf(scrapedEvent()), etag = null, lastModified = null)
-                coEvery { musicBrainzEnrichmentService.enrichFor(any(), any()) } throws IllegalStateException("boom")
 
                 service.importFromSource(src).imported shouldBe true
-
-                coVerify { eventSourceRepository.save(match { it.status == ImportStatus.SUCCESS.name }) }
-            }
-
-        @Test
-        fun `the MusicBrainz pass starts after the closing save, so lastSuccessAt is not late by the sweep`() =
-            runTest {
-                val src = source()
-                coEvery { cassiopeiaImporter.importEvents(any(), any(), any()) } returns
-                    ImportResult.Success(events = listOf(scrapedEvent()), etag = null, lastModified = null)
-
-                service.importFromSource(src)
 
                 coVerifyOrder {
                     eventSourceRepository.save(match { it.status == ImportStatus.SUCCESS.name })
-                    musicBrainzLookupService.lookupFor(match { it.slug == src.slug }, any())
-                    musicBrainzEnrichmentService.enrichFor(match { it.slug == src.slug }, any())
-                    discogsLookupService.lookupFor(match { it.slug == src.slug }, any())
+                    artistLookupSweep.queue(any())
                 }
-            }
-
-        @Test
-        fun `a Discogs pass that throws leaves the source SUCCESS`() =
-            runTest {
-                val src = source()
-                coEvery { cassiopeiaImporter.importEvents(any(), any(), any()) } returns
-                    ImportResult.Success(events = listOf(scrapedEvent()), etag = null, lastModified = null)
-                coEvery { discogsLookupService.lookupFor(any(), any()) } throws IllegalStateException("boom")
-
-                service.importFromSource(src).imported shouldBe true
-
-                coVerify { eventSourceRepository.save(match { it.status == ImportStatus.SUCCESS.name }) }
             }
     }
 
@@ -1342,9 +1291,7 @@ class EventImportServiceTest {
                         metrics = metrics,
                         fieldCoverageService = fieldCoverageService,
                         descriptionTranslationService = descriptionTranslationService,
-                        musicBrainzLookupService = musicBrainzLookupService,
-                        musicBrainzEnrichmentService = musicBrainzEnrichmentService,
-                        discogsLookupService = discogsLookupService,
+                        artistLookupSweep = artistLookupSweep,
                         robotsRulesCache = robotsRulesCache,
                         maxConcurrency = maxConcurrency
                     )

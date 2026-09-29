@@ -13,7 +13,6 @@ import de.norm.events.wikimedia.WikimediaUnavailableException
 import de.norm.events.wikimedia.WikipediaExtract
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.flow.toList
-import kotlinx.coroutines.sync.Mutex
 import org.springframework.stereotype.Service
 
 /**
@@ -21,10 +20,9 @@ import org.springframework.stereotype.Service
  * for an ensemble when and where it formed, the Commons picture its Wikidata item names (ADR-031,
  * step C), and an ensemble's Wikipedia lead (step C+).
  *
- * Runs after [MusicBrainzLookupService], in the same guarded slot after an import commits, and for
- * the same reasons: derived data, a retry on failure, never a `FAILED` source. The touched rows come
- * first, then a slice of the backfill under a `tryLock` mutex so concurrent sweeps do not read the
- * same slice (#1604). Each row costs one MusicBrainz request and, when the entity links a Wikidata
+ * Runs after [MusicBrainzLookupService] on [ArtistLookupSweep]'s tick, and for the same reasons:
+ * derived data, a retry on failure, never a `FAILED` source. The touched rows come first, then a
+ * slice of the backfill. Each row costs one MusicBrainz request and, when the entity links a Wikidata
  * item, two at Wikimedia for a missing picture and two for a missing ensemble description.
  *
  * [ArtistEnrichment] decides what is written; [ArtistEnrichmentStore] writes only that. A row whose
@@ -41,32 +39,19 @@ class MusicBrainzEnrichmentService(
     private val metrics: ImporterMetrics
 ) {
     private val logger = KotlinLogging.logger {}
-    private val backfill = Mutex()
 
     /**
-     * Reads what this run owes: the touched EXACT rows without a current read, then the backfill
-     * when no other sweep is draining it.
+     * Reads what this tick owes: the touched EXACT rows without a current read, then the backfill.
      *
      * @return how many rows were stamped as read; zero when the lookup is disabled or nothing is owed.
      */
-    suspend fun enrichFor(
-        source: EventSourceEntity,
-        touchedArtistIds: Set<Long>
-    ): Int {
+    suspend fun sweep(touchedArtistIds: Set<Long>): Int {
         if (!properties.enabled) return 0
-        val drainsBackfill = backfill.tryLock()
-        try {
-            val candidates = candidatesFor(touchedArtistIds, drainsBackfill)
-            return if (candidates.isEmpty()) 0 else enrich(source, candidates)
-        } finally {
-            if (drainsBackfill) backfill.unlock()
-        }
+        val candidates = candidatesFor(touchedArtistIds)
+        return if (candidates.isEmpty()) 0 else enrich(candidates)
     }
 
-    private suspend fun enrich(
-        source: EventSourceEntity,
-        candidates: List<ArtistEntity>
-    ): Int {
+    private suspend fun enrich(candidates: List<ArtistEntity>): Int {
         var stored = 0
         var consecutiveFailures = 0
         for (artist in candidates) {
@@ -77,11 +62,11 @@ class MusicBrainzEnrichmentService(
             } else {
                 consecutiveFailures++
                 metrics.recordMusicBrainzEnrichmentError()
-                logger.warn(failure) { "Entity read for '${artist.name}' failed ($consecutiveFailures in a row) during '${source.slug}'" }
+                logger.warn(failure) { "Entity read for '${artist.name}' failed ($consecutiveFailures in a row)" }
                 if (consecutiveFailures >= STOP_AFTER_CONSECUTIVE_FAILURES) break
             }
         }
-        logger.info { "Read $stored MusicBrainz entity(ies) of ${candidates.size} owed after '${source.slug}'" }
+        logger.info { "Read $stored MusicBrainz entity(ies) of ${candidates.size} owed" }
         return stored
     }
 
@@ -96,10 +81,7 @@ class MusicBrainzEnrichmentService(
             e
         }
 
-    private suspend fun candidatesFor(
-        touchedArtistIds: Set<Long>,
-        includeBackfill: Boolean
-    ): List<ArtistEntity> {
+    private suspend fun candidatesFor(touchedArtistIds: Set<Long>): List<ArtistEntity> {
         val limit = properties.enrichMaxPerRun
         val touched =
             if (touchedArtistIds.isEmpty()) {
@@ -108,7 +90,7 @@ class MusicBrainzEnrichmentService(
                 artistRepository.findNeedingMusicBrainzEnrichment(touchedArtistIds).toList().take(limit)
             }
         val room = limit - touched.size
-        if (!includeBackfill || room <= 0) return touched
+        if (room <= 0) return touched
         val touchedIds = touched.mapTo(mutableSetOf()) { it.id }
         val backlog = artistRepository.findUnenrichedByMusicBrainz(room + touched.size).toList().filterNot { it.id in touchedIds }
         return touched + backlog.take(room)
