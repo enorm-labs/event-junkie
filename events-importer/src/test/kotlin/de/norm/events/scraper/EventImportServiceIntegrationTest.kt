@@ -459,6 +459,27 @@ class EventImportServiceIntegrationTest : BaseControllerTest() {
             }
         }
 
+        @Test
+        fun `stores a message-less read timeout as a timeout on the request, not as unknown`() {
+            runBlocking {
+                coEvery { mockImporter.importEvents(any(), any(), any()) } throws
+                    org.springframework.web.reactive.function.client.WebClientRequestException(
+                        io.netty.handler.timeout.ReadTimeoutException.INSTANCE,
+                        org.springframework.http.HttpMethod.GET,
+                        java.net.URI.create("https://venue.example/programm"),
+                        org.springframework.http.HttpHeaders.EMPTY
+                    )
+
+                val result = eventImportService.importFromSource(eventSourceRepository.findBySlug("test-source")!!)
+
+                val expected = "timeout (ReadTimeoutException) on GET https://venue.example/programm"
+                result.error shouldBe expected
+                val updatedSource = eventSourceRepository.findBySlug("test-source")!!
+                updatedSource.lastError shouldBe expected
+                updatedSource.lastFailureReason shouldBe "timeout"
+            }
+        }
+
         /**
          * The column #708 adds is the durable half of the counter: the class of the failure outlives the
          * process, and it is cleared by the next success so the per-reason count reads the present.

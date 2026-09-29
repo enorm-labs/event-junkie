@@ -1,5 +1,6 @@
 package de.norm.events.scraper
 
+import org.springframework.web.reactive.function.client.WebClientRequestException
 import java.io.IOException
 import java.net.UnknownHostException
 import java.util.concurrent.TimeoutException
@@ -62,6 +63,19 @@ internal object ScrapeFailureReason {
  */
 internal fun scrapeFailureReason(error: Throwable): String =
     causeChain(error).map(::classify).firstOrNull { it != ScrapeFailureReason.OTHER } ?: ScrapeFailureReason.OTHER
+
+/**
+ * The text for `event_source.last_error` and the failure line: [error]'s own message, else the first
+ * message in its cause chain, else the reason and the innermost class. A Netty read timeout has no
+ * message, and `WebClient` copies the null onto its wrapper, so the request it names is appended (#2042).
+ */
+internal fun describeFailure(error: Throwable): String {
+    error.message?.let { return it }
+    val chain = causeChain(error).toList()
+    val text = chain.firstNotNullOfOrNull { it.message } ?: "${scrapeFailureReason(error)} (${chain.last().javaClass.simpleName})"
+    val request = chain.firstNotNullOfOrNull { it as? WebClientRequestException }
+    return if (request == null) text else "$text on ${request.method} ${request.uri}"
+}
 
 /**
  * [error] first, then each cause, bounded and cycle-safe. `WebClient` wraps every transport failure

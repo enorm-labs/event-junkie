@@ -81,6 +81,25 @@ class ScrapeFailureReasonsTest {
             scrapeFailureReason(wrapped(RuntimeException("nothing known"))) shouldBe "other"
         }
 
+        // Admiralspalast on staging, 2026-09-28: stored as `Unknown error during import` while the row's reason said `timeout` (#2042).
+        @Test
+        fun `a message-less timeout is described by its reason, its class and the request`() {
+            describeFailure(wrapped(io.netty.handler.timeout.ReadTimeoutException.INSTANCE)) shouldBe
+                "timeout (ReadTimeoutException) on GET https://venue.example/events"
+        }
+
+        @Test
+        fun `a message-less wrapper takes its cause's message, and names the request`() {
+            val wrapper = RuntimeException(null, wrapped(java.net.ConnectException("Connection refused")))
+
+            describeFailure(wrapper) shouldBe "Connection refused on GET https://venue.example/events"
+        }
+
+        @Test
+        fun `an exception with a message is described by that message alone`() {
+            describeFailure(IllegalStateException("no event cards found")) shouldBe "no event cards found"
+        }
+
         @Test
         fun `a cause chain that loops still terminates`() {
             val a = RuntimeException("a")
