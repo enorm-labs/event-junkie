@@ -111,6 +111,8 @@ app:
     retries: 3
     # About two minutes at the pace above.
     max-per-run: 100
+    # An EXACT match stands only when the Discogs artist released within this many years (#2054).
+    recent-release-years: 15
   wikimedia:
     # The picture of an EXACT artist: the Wikidata item's P18 claim, then the file's licence and
     # credit from Commons (ADR-031, step C); an ensemble's Wikipedia extract through the item's

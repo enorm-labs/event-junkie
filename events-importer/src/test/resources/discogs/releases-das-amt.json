@@ -1,0 +1,8 @@
+{
+  "pagination": {"page": 1, "pages": 1, "per_page": 100, "items": 3, "urls": {}},
+  "releases": [
+    {"id": 101, "type": "release", "role": "Appearance", "title": "Wab Bam Boogie / It Work's", "artist": "Various", "resource_url": "https://api.discogs.com/releases/101"},
+    {"id": 102, "type": "release", "role": "TrackAppearance", "title": "Too Hot Club Compilation Vol. 1", "year": 2007, "artist": "Various", "resource_url": "https://api.discogs.com/releases/102"},
+    {"id": 103, "type": "master", "role": "TrackAppearance", "title": "Too Hot Club Compilation Vol. 1", "year": 2006, "artist": "Various", "resource_url": "https://api.discogs.com/masters/103"}
+  ]
+}

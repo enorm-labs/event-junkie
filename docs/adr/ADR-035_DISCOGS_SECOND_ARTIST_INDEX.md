@@ -3,9 +3,11 @@
 ## Status
 
 **Accepted (2026-09-29) — the importer asks Discogs about each artist that MusicBrainz marks `NONE`. It stores the Discogs verdict and, on an exact match, the
-Discogs id. It fills `discogs_url` only when the column is empty. It reads and stores nothing else from Discogs. MusicBrainz stays the hub.**
+Discogs id. An exact match counts only when the Discogs artist released something in the last 15 years. It fills `discogs_url` only when the column is
+empty. It stores nothing else from Discogs. MusicBrainz stays the hub.**
 
-**Implemented in [#2026](https://github.com/enorm-labs/event-junkie/issues/2026).** The chart ships the lookup switched off. A cluster turns it on when its
+**Implemented in [#2026](https://github.com/enorm-labs/event-junkie/issues/2026). The recency rule is from
+[#2054](https://github.com/enorm-labs/event-junkie/issues/2054).** The chart ships the lookup switched off. A cluster turns it on when its
 Secret exists.
 
 **Does not supersede anything.** [ADR-031](ADR-031_ARTIST_IDENTITY_HUB.md) made MusicBrainz the hub and named Discogs as option D. It said that Discogs needs
@@ -59,6 +61,10 @@ trigger did not fire. Eight of nineteen club venues are below a third. The produ
 - **The match rule is the spike's, one step stricter.** A candidate counts only when its folded title equals the folded name. A homonym suffix, as in `Nails (2)`, is removed
   first. So every homonym counts, and two of them make the row `AMBIGUOUS`. A suffixed candidate is `AMBIGUOUS` even
   alone, because `Kevin (27)` proves that at least 27 artists share the name. The spike script does not apply this last rule.
+- **An exact match needs a recent release.** The importer reads the artist's release list once and takes the newest dated year. If that year is more
+  than 15 years ago, or no release has a year, the row is `AMBIGUOUS`. The hand review of 40 exact links found 8 homonyms. The newest release of each
+  was from 2001 or earlier, or had no year. Each correct link had a release from 2012 or later. A minimum release count did not separate the two
+  groups: correct and wrong links both had 0 to 2 releases. The review and the replay of the rule are on #2026 and #2054.
 - **The credit line shows only beside a link that Discogs resolved.** A link from MusicBrainz is MusicBrainz data. The terms prescribe the English words, so the
   German page shows them unchanged.
 - **The consumer key and secret, not a personal token.** They identify the application, not a person's account. The OAuth flow is not used, because the
@@ -72,15 +78,16 @@ trigger did not fire. Eight of nineteen club venues are below a third. The produ
   `docs/ops/SECRETS.md` describes. Without it the lookup stays off.
 - **`LEGAL.md` §7 and both privacy notices name Discogs.** The stage name of an artist that MusicBrainz does not know goes to Zink Media, LLC (Oregon, USA).
   Discogs is a source, not a processor, for the reason §7 gives for MusicBrainz.
-- **A hand review after the first staging run.** The spike's `exact` set contains names that are a night here and an act on Discogs: `Beat It!`,
-  `Disco Sour`, `Power Apes`. A wrong link is visible. The review decides if the rule needs a minimum release count.
-- **The artist lookup tick gets longer.** At most `maxPerRun` rows (default 100) at about 55 a minute. That adds about two minutes after the MusicBrainz
-  lookup. The tick runs outside the imports (#2051).
+- **A second hand review of 40 exact links before production turns the lookup on.** The links must come from verdicts made with the recency rule. A
+  wrong link is visible on an artist page.
+- **The artist lookup tick gets longer.** At most `maxPerRun` rows (default 100) at about 55 requests a minute. That adds about two minutes after the
+  MusicBrainz lookup. An exact match costs one more request for its releases, and about one row in six is an exact match. The tick runs outside the
+  imports (#2051).
 
 ### What it does not do
 
 - It does not change a MusicBrainz verdict, a name or a slug.
-- It does not read a Discogs profile, picture, name variation, release or genre.
+- It does not read a Discogs profile, picture, name variation or genre. It reads the years of an artist's releases, and it stores nothing from them.
 - It does not ask about a MusicBrainz `AMBIGUOUS` or `EXACT` row.
 - **It does not take a description from a Discogs profile.** The monthly data dumps are CC0, so the API terms would not
   stop it. The text is the obstacle. On 2026-09-29, 39 local artists had an `EXACT` Discogs match. 30 of them had no profile.
@@ -89,13 +96,14 @@ trigger did not fire. Eight of nineteen club venues are below a third. The produ
 
 ## When to revisit
 
-- **If the hand review finds more than a handful of wrong links in 40.** Require a release count, at one more request per candidate, or stop.
+- **If the second hand review finds more than a handful of wrong links in 40.** Then stop the lookup.
 - **If the Discogs terms change** on storage, staleness or attribution.
 - **If the club `EXACT` share falls below a third after this runs.** Then option 4 gets a second look.
 
 ## References
 
-- [#2026](https://github.com/enorm-labs/event-junkie/issues/2026) — the implementation
+- [#2026](https://github.com/enorm-labs/event-junkie/issues/2026) — the implementation, and the first hand review
+- [#2054](https://github.com/enorm-labs/event-junkie/issues/2054) — the recency rule
 - [#1549](https://github.com/enorm-labs/event-junkie/issues/1549) — the spike, the two re-measurements and the decision
 - [ADR-031](ADR-031_ARTIST_IDENTITY_HUB.md) — MusicBrainz as the hub
 - [#1626](https://github.com/enorm-labs/event-junkie/pull/1626) · [#1627](https://github.com/enorm-labs/event-junkie/pull/1627) — `scripts/discogs-match.py`

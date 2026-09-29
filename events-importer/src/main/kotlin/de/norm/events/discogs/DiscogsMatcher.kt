@@ -27,6 +27,9 @@ data class DiscogsVerdict(
  * 3. A counting candidate with a suffix is AMBIGUOUS even alone. `Kevin (27)` says Discogs holds
  *    at least 27 artists of that name, and the search returned one of them.
  * 4. No candidate is NONE.
+ * 5. An EXACT candidate stands only when it released something recently ([confirmRecent], #2054).
+ *    The hand review on #2026 found 8 homonyms in 40 EXACT links. Every one's newest release was
+ *    from 2001 or earlier, or undated, and every right link had released since 2020.
  */
 object DiscogsMatcher {
     private const val ARTIST = "artist"
@@ -46,6 +49,22 @@ object DiscogsMatcher {
             else -> DiscogsVerdict(DiscogsMatch.EXACT, chosen.id, pageOf(chosen))
         }
     }
+
+    /**
+     * Rule 5: an EXACT [verdict] whose artist's newest dated release, [newestReleaseYear], is older
+     * than [earliestYear], or who has none, becomes AMBIGUOUS. Discogs has an artist of this name,
+     * and nothing ties it to the act on a Berlin bill. Any other verdict passes unchanged.
+     */
+    fun confirmRecent(
+        verdict: DiscogsVerdict,
+        newestReleaseYear: Int?,
+        earliestYear: Int
+    ): DiscogsVerdict =
+        if (verdict.match != DiscogsMatch.EXACT || (newestReleaseYear != null && newestReleaseYear >= earliestYear)) {
+            verdict
+        } else {
+            DiscogsVerdict.AMBIGUOUS
+        }
 
     /** The public page of [candidate]: its `uri` on discogs.com, or the bare id path when the search gave none. */
     private fun pageOf(candidate: DiscogsCandidate): String = SITE + (candidate.uri?.takeIf { it.startsWith("/artist/") } ?: "/artist/${candidate.id}")

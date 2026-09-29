@@ -10,6 +10,8 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import jakarta.annotation.PostConstruct
 import kotlinx.coroutines.flow.toList
 import org.springframework.stereotype.Service
+import java.time.Year
+import java.time.ZoneOffset
 
 /**
  * Asks Discogs about every artist MusicBrainz does not know, and stores the verdict (#2026, ADR-035).
@@ -22,6 +24,10 @@ import org.springframework.stereotype.Service
  *
  * **The same queue as MusicBrainz's.** The touched rows first, then the oldest unasked `NONE` rows
  * up to [DiscogsProperties.maxPerRun]. `importer.discogs.unchecked` shows it draining.
+ *
+ * **An EXACT match needs a recent release** (#2054). Its newest release year is read, compared
+ * with [DiscogsProperties.recentReleaseYears] and dropped. `state="inactive"` counts the rows it
+ * turns to AMBIGUOUS.
  *
  * **An id, a verdict and an empty link filled — nothing else.** Discogs' API terms forbid storing
  * its content longer than a service needs it and showing it more than six hours stale. The name and
@@ -98,16 +104,29 @@ class DiscogsLookupService(
         return touched + backlog.take(room)
     }
 
+    /** The search, then for an EXACT match its newest release (rule 5, #2054): one more request for about one row in six. */
     private suspend fun lookup(artist: ArtistEntity): Boolean {
         val id = artist.id ?: return false
-        val verdict = DiscogsMatcher.decide(artist.name, client.search(artist.name))
-        metrics.recordDiscogsLookup(verdict.match.name.lowercase())
+        val found = DiscogsMatcher.decide(artist.name, client.search(artist.name))
+        val newestRelease = found.discogsId?.let { client.newestReleaseYear(it) }
+        val earliestYear = Year.now(ZoneOffset.UTC).value - properties.recentReleaseYears
+        val verdict = DiscogsMatcher.confirmRecent(found, newestRelease, earliestYear)
+        if (verdict != found) {
+            logger.info {
+                "Discogs artist ${found.discogsId} for '${artist.name}' last released in ${newestRelease ?: "no dated year"}, " +
+                    "before $earliestYear; stored AMBIGUOUS"
+            }
+            metrics.recordDiscogsLookup(STATE_INACTIVE)
+        } else {
+            metrics.recordDiscogsLookup(verdict.match.name.lowercase())
+        }
         artistRepository.storeDiscogsVerdict(id, verdict.match.name, verdict.discogsId, verdict.discogsUrl)
         return true
     }
 
     private companion object {
         const val STATE_ERROR = "error"
+        const val STATE_INACTIVE = "inactive"
         const val STOP_AFTER_CONSECUTIVE_FAILURES = 3
     }
 }

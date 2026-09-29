@@ -224,7 +224,7 @@ class ImporterMetrics(
     /** Publishes how many EXACT rows still await their entity read; refreshed by [MetricsRefreshService]. */
     fun updateMusicBrainzUnenriched(count: Long) = musicBrainzUnenriched.set(count)
 
-    /** Counts one Discogs lookup by verdict, `exact`, `ambiguous`, `none`, or `error` (#2026). */
+    /** Counts one Discogs lookup by verdict, `exact`, `ambiguous`, `none`, `inactive` (#2054) or `error` (#2026). */
     fun recordDiscogsLookup(state: String) {
         registry.counter(DISCOGS_LOOKUPS, TAG_STATE, state).increment()
     }

@@ -161,6 +161,52 @@ class DiscogsClientTest {
         }
 
     @Test
+    fun `reads an artist's releases, newest year first, a page of 100`() =
+        runTest {
+            server.enqueue(json(fixture("releases-das-amt.json")))
+
+            client().newestReleaseYear(2222385) shouldBe 2007
+
+            server.takeRequest().target shouldBe "/artists/2222385/releases?sort=year&sort_order=desc&per_page=100"
+        }
+
+    @Test
+    fun `an artist with only undated releases, or none, has no newest year`() =
+        runTest {
+            server.enqueue(json("""{"releases": [{"id": 1, "title": "Heimlich"}, {"id": 2, "title": "Undated", "year": 0}]}"""))
+            server.enqueue(json("""{"releases": []}"""))
+
+            client().newestReleaseYear(4158988).shouldBeNull()
+            client().newestReleaseYear(1).shouldBeNull()
+        }
+
+    @Test
+    fun `an artist Discogs has deleted answers 404, which is no release rather than unavailable`() =
+        runTest {
+            server.enqueue(status(404))
+
+            client().newestReleaseYear(964345).shouldBeNull()
+        }
+
+    @Test
+    fun `a 404 on the search is still unavailable`() =
+        runTest {
+            server.enqueue(status(404))
+
+            shouldThrow<DiscogsUnavailableException> { client().search("Barker") }
+        }
+
+    @Test
+    fun `the releases call retries a 429 too`() =
+        runTest {
+            server.enqueue(status(429))
+            server.enqueue(json(fixture("releases-das-amt.json")))
+
+            client().newestReleaseYear(2222385) shouldBe 2007
+            server.requestCount shouldBe 2
+        }
+
+    @Test
     fun `the properties never print a credential`() {
         val printed = DiscogsProperties(consumerKey = KEY, consumerSecret = SECRET).toString()
 
