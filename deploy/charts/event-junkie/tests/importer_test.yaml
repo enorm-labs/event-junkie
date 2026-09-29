@@ -422,6 +422,8 @@ tests:
       database.host: "10.0.1.2"
       networkPolicy.databaseCidr: "10.0.1.2/32"
       database.existingSecret: "events-db"
+      # Forced: staging turns it on, and this case asserts the default.
+      importer.discogs.enabled: false
     documentSelector:
       path: kind
       value: Deployment
