@@ -85,8 +85,9 @@ Every group gets one verdict. Work through them in this order, because each is c
 | `test` component: `curl: (7) Failed to connect to event-junkie-bff:9001`, k6 JSON summaries | Helm test pods during a rollout, and load-test output. A failing smoke test shows as a failed rollout |
 | nginx `access forbidden by rule` on `/.well-known/…`, `/.git/…`, `/.env`                    | The frontend refuses these paths on purpose. Scanners ask for the last two                            |
 | otel-operator `TLS handshake error … bad certificate`, a burst when it restarts             | Stops within the minute of the restart. Likely the webhook serving a new cert before its CA lands     |
+| source-controller `handshake failed … unable to authenticate`, seconds at a time            | The deploy key is refused briefly; the next poll recovers (#2048). Over 5 min is not noise            |
 | `RobotsTxtFilter` `Blocked by robots.txt`, one line per URL                                 | The importer obeying a venue. `ej-robots-disallowed` watches the rate                                 |
-| `SimpleRobotRulesParser` `Problem processing robots.txt`, `Unknown line … Content-Signal`   | crawler-commons skips Cloudflare's unknown line and applies the rest. MAAYA, one pair a day           |
+| `SimpleRobotRulesParser` `Problem processing robots.txt`, `Unknown line … Content-Signal`   | crawler-commons skips Cloudflare's unknown line and applies the rest. MAAYA, a pair per start         |
 | `MusicBrainz unavailable … answered 503`, a few a day                                       | MusicBrainz rate-limits by IP. The lookup retries on the next import                                  |
 | `AnthropicTranslationEngine` `Rejected a translation`, a few a day                          | The guard doing its job. Counted as `rejected`; `ej-translations-failing` reads only `failed`         |
 | `EventUpsertService` `Skipping duplicate event`, scraper `names no date, skipping`          | Ordinary import decisions, logged so a missing event can be explained                                 |
