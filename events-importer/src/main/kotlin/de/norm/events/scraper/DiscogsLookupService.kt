@@ -69,6 +69,13 @@ class DiscogsLookupService(
         }
     }
 
+    /**
+     * The `NONE` rows Discogs has not been asked about, for `importer.discogs.unchecked`. Zero while the
+     * lookup is off: a switched-off lookup owes nothing, and every `NONE` row would read as a backlog
+     * that `ej-discogs-backlog-stuck` fires on (#2043).
+     */
+    suspend fun backlog(): Long = if (properties.active) artistRepository.countUncheckedByDiscogs() else 0
+
     /** One lookup per row; the run stops after [STOP_AFTER_CONSECUTIVE_FAILURES] unavailable rows in a row. */
     private suspend fun storeVerdicts(
         source: EventSourceEntity,

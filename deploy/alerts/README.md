@@ -28,7 +28,7 @@ Four states, and they are different questions:
 | `WOULD FIRE` | the query crosses its threshold right now                                                                      |
 | `ok`         | returns data, below the threshold                                                                              |
 
-**`quiet` needs the mark.** `gen_alerts.py` passes `failure_only=True` for the four rules whose series a failure creates, and
+**`quiet` needs the mark.** `gen_alerts.py` passes `failure_only=True` for the five rules whose series a failure creates, and
 `gen_alerts.py --failure-only` lists them for the check. Unmarked, the same silence stays `NO DATA`, because a typo in a metric name looks exactly like a
 counter that has not incremented yet — the #1964 defect. The mark is a claim, and a drill is what backs it.
 
@@ -135,6 +135,8 @@ loses its silence window and can fire again immediately.
 | `ej-dns-fanout`                | three or more sources are FAILED on a name lookup at once ([#708](https://github.com/enorm-labs/event-junkie/issues/708))                    | importer failing   |
 | `ej-musicbrainz-failing`       | more than a quarter of 24 hours' MusicBrainz lookups failed ([#1900](https://github.com/enorm-labs/event-junkie/issues/1900))                | —                  |
 | `ej-musicbrainz-backlog-stuck` | the lookup or entity-read backlog has not reached zero in two days ([#1900](https://github.com/enorm-labs/event-junkie/issues/1900))         | —                  |
+| `ej-discogs-failing`           | more than a quarter of 24 hours' Discogs lookups failed ([#2043](https://github.com/enorm-labs/event-junkie/issues/2043))                    | —                  |
+| `ej-discogs-backlog-stuck`     | the Discogs lookup backlog has not reached zero in two days ([#2043](https://github.com/enorm-labs/event-junkie/issues/2043))                | —                  |
 
 **The zero-events failure is two rules, and keeping both is deliberate.** ADR-015's criterion 1 is per-source — a venue whose scraper still returns 200 while
 writing nothing — and `ej-source-emptied` is that rule at last, on the `importer_source_events_future` gauge

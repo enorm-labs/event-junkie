@@ -199,6 +199,17 @@ class DiscogsLookupServiceIntegrationTest : BaseControllerTest() {
     }
 
     @Test
+    fun `reports the unasked NONE rows as its backlog, and zero while it is off`() {
+        runBlocking {
+            artist("Horst Haller")
+            artist("Barker", MusicBrainzMatch.EXACT)
+
+            service().backlog() shouldBe 1L
+            service(key = "").backlog() shouldBe 0L
+        }
+    }
+
+    @Test
     fun `sends nothing without credentials`() {
         runBlocking {
             val row = artist("Angel D'lite")

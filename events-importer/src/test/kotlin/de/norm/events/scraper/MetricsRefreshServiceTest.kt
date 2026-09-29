@@ -1,6 +1,5 @@
 package de.norm.events.scraper
 
-import de.norm.events.artist.ArtistDiscogsRepository
 import de.norm.events.artist.ArtistRepository
 import de.norm.events.event.EventRepository
 import de.norm.events.event.SourceFutureEventsRow
@@ -29,7 +28,7 @@ class MetricsRefreshServiceTest {
     private val eventRepository: EventRepository = mockk(relaxed = true)
     private val eventSourceRepository: EventSourceRepository = mockk(relaxed = true)
     private val artistRepository: ArtistRepository = mockk(relaxed = true)
-    private val artistDiscogsRepository: ArtistDiscogsRepository = mockk(relaxed = true)
+    private val discogsLookupService: DiscogsLookupService = mockk(relaxed = true)
     private val today = LocalDate.of(2026, 6, 15)
     private val clock = Clock.fixed(today.atStartOfDay().toInstant(ZoneOffset.UTC), ZoneOffset.UTC)
 
@@ -41,7 +40,7 @@ class MetricsRefreshServiceTest {
     fun setUp() {
         registry = SimpleMeterRegistry()
         metrics = ImporterMetrics(registry)
-        service = MetricsRefreshService(eventRepository, eventSourceRepository, artistRepository, artistDiscogsRepository, metrics, clock)
+        service = MetricsRefreshService(eventRepository, eventSourceRepository, artistRepository, discogsLookupService, metrics, clock)
 
         coEvery { eventRepository.count() } returns 0
         coEvery { eventRepository.countByEventDateGreaterThanEqual(any()) } returns 0
@@ -60,6 +59,16 @@ class MetricsRefreshServiceTest {
             service.refreshGauges()
 
             registry.get(ImporterMetrics.MUSICBRAINZ_UNCHECKED).gauge().value() shouldBe 5730.0
+        }
+
+    @Test
+    fun `publishes the Discogs backlog the lookup service reports`() =
+        runTest {
+            coEvery { discogsLookupService.backlog() } returns 2242
+
+            service.refreshGauges()
+
+            registry.get(ImporterMetrics.DISCOGS_UNCHECKED).gauge().value() shouldBe 2242.0
         }
 
     /**

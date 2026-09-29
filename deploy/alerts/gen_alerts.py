@@ -18,6 +18,7 @@ it produces an alert that never fires rather than an error.
     metrics being dropped          -> ej-ingest-shedding          (#625)
     translation failing open       -> ej-translations-failing      (#1301)
     MusicBrainz failing or stuck   -> ej-musicbrainz-failing, ej-musicbrainz-backlog-stuck (#1900)
+    Discogs failing or stuck       -> ej-discogs-failing, ej-discogs-backlog-stuck (#2043)
     a node waiting for a reboot    -> ej-reboot-pending            (#419)
     a node not being patched       -> ej-patching-stalled          (#419)
     many sources failing on DNS    -> ej-dns-fanout                 (#708)
@@ -413,6 +414,47 @@ rule(
     ">",
     0,
     stream_name="importer_musicbrainz_unchecked",
+    period_minutes=60,
+    frequency_minutes=60,
+    silence_minutes=24 * 60,
+)
+
+# Discogs, the second index for the rows MusicBrainz marks NONE (ADR-035), fails the
+# same quiet way: an errored row stays unchecked and its page goes without a link. The
+# same two shapes, the same thresholds. A counted error has outlasted three retries
+# 20 s apart, so it is a block or an outage. The backlog drains 100 per import, and
+# staging's first 2,242 rows needed about 23 imports, well inside two days.
+# **Both rules attach to the gauge's stream.** OpenObserve refuses a rule on a stream
+# with no rows, and a cluster with the lookup off never writes the counter. The gauge
+# is registered at start-up and reads 0 while the lookup is off (#2043), so the stream
+# exists on both clusters and neither rule can fire where nothing is asked.
+rule(
+    "ej-discogs-failing",
+    "More than a quarter of the Discogs lookups in 24 hours failed, over at least twenty "
+    "lookups. A failed lookup has already been retried three times, so this is a revoked "
+    "consumer key, a block or an outage. The rows stay unchecked and their artist pages "
+    "go without a Discogs link. Read the importer log for `Discogs`.",
+    'sum(increase(importer_discogs_lookups_total{state="error"}[24h])) '
+    "/ (sum(increase(importer_discogs_lookups_total[24h])) >= 20)",
+    ">",
+    0.25,
+    stream_name="importer_discogs_unchecked",
+    period_minutes=15,
+    frequency_minutes=30,
+    silence_minutes=12 * 60,
+    failure_only=True,
+)
+
+rule(
+    "ej-discogs-backlog-stuck",
+    "Artist rows MusicBrainz does not know have waited for their Discogs lookup "
+    "(`importer_discogs_unchecked`) for two whole days. The backlog drains 100 per import "
+    "and reads 0 in between, so a floor above zero is a sweep that stopped. Read the "
+    "importer log for `Discogs`.",
+    "sum(min(min_over_time(importer_discogs_unchecked[48h])) > bool 0)",
+    ">",
+    0,
+    stream_name="importer_discogs_unchecked",
     period_minutes=60,
     frequency_minutes=60,
     silence_minutes=24 * 60,

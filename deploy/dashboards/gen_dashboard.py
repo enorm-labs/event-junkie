@@ -332,6 +332,26 @@ panels = [
         decimals=0,
     ),
     panel(
+        "p_discogs",
+        "Artists awaiting a Discogs verdict, and verdicts per hour by state",
+        "Every artist MusicBrainz marks `NONE` is looked up in Discogs after the MusicBrainz lookup, and the verdict "
+        "stored with an empty Discogs link filled (ADR-035, #2026). The gauge is that backlog: about 2,242 on staging "
+        "the day the lookup turned on, drained 100 per import, and zero from then on. It reads zero on a cluster "
+        "with the lookup off (#2043). **A gauge that stops falling, or climbs, is Discogs refusing us.** The rates "
+        "are the shares the spike measured on the `NONE` rows: about 15 % `exact`, and most of the rest `none`. "
+        "`error` is a request that outlasted three retries.",
+        "line",
+        [
+            "max(importer_discogs_unchecked)",
+            "sum by (state) (rate(importer_discogs_lookups_total[1h])) * 3600",
+        ],
+        x=0,
+        y=40,
+        w=192,
+        h=12,
+        decimals=0,
+    ),
+    panel(
         "p_title_derived",
         "Nights stored as acts — title-derived one-event headliners, per source",
         "Every artist minted from a bare event title carries `title_derived` since #1145. Charted are the ones "
@@ -349,7 +369,7 @@ panels = [
             'topk(20, sum by (source) (data_quality{metric="titleDerivedUnmatched"}))',
         ],
         x=0,
-        y=40,
+        y=52,
         w=192,
         h=12,
         decimals=0,
@@ -363,7 +383,7 @@ panels = [
         "line",
         "max by (datname) (pg_database_size_bytes)",
         x=0,
-        y=52,
+        y=64,
         w=48,
         h=16,
         unit="bytes",
@@ -376,7 +396,7 @@ panels = [
         "line",
         ["max(system_cpu_load_average_5m)", "max(system_memory_utilization)"],
         x=48,
-        y=52,
+        y=64,
         w=48,
         h=16,
     ),
@@ -388,7 +408,7 @@ panels = [
         "metric",
         "min(k8s_node_memory_available)",
         x=96,
-        y=52,
+        y=64,
         w=48,
         h=16,
         unit="bytes",
@@ -411,7 +431,7 @@ panels = [
         "clamp_max((min by (name) (certmanager_certificate_expiration_timestamp_seconds) - timestamp("
         "min by (name) (certmanager_certificate_expiration_timestamp_seconds))) / 86400, %d)" % CERT_CEILING_DAYS,
         x=144,
-        y=52,
+        y=64,
         w=48,
         h=16,
         decimals=1,
@@ -435,7 +455,7 @@ panels = [
             "sum(rate(otelcol_receiver_refused_metric_points[5m]))",
         ],
         x=0,
-        y=68,
+        y=80,
         w=96,
         h=16,
         decimals=2,
@@ -452,7 +472,7 @@ panels = [
         "line",
         "max(zo_ingest_memtable_arrow_bytes)",
         x=96,
-        y=68,
+        y=80,
         w=96,
         h=16,
         unit="bytes",
@@ -477,7 +497,7 @@ panels = [
         "SELECT histogram(_timestamp, '1 hour') AS x_axis_1, sum(CASE WHEN %s THEN 1 ELSE 0 END) AS y_axis_1 "
         "%s GROUP BY x_axis_1 ORDER BY x_axis_1" % (VISITOR_PAGE_LOAD, ACCESS_LINES),
         x=0,
-        y=84,
+        y=96,
         w=112,
         h=16,
         columns=[("Hour", "x_axis_1"), ("Page loads", "y_axis_1")],
@@ -495,7 +515,7 @@ panels = [
         "sum(CASE WHEN %s THEN 1 ELSE 0 END) AS y_axis_2 %s GROUP BY x_axis_1 "
         "ORDER BY y_axis_1 DESC, y_axis_2 DESC LIMIT 15" % (REFERRER, VISITOR_PAGE_LOAD, PAGE_LOAD, ACCESS_LINES),
         x=112,
-        y=84,
+        y=96,
         w=80,
         h=16,
         columns=[("Referrer", "x_axis_1"), ("Visitors", "y_axis_1"), ("All agents", "y_axis_2")],
