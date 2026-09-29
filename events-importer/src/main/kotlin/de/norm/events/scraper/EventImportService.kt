@@ -277,7 +277,7 @@ class EventImportService(
         runningSource: EventSourceEntity,
         e: Exception
     ): Pair<ImportResultResponse, ImporterMetrics.RunOutcome> {
-        val error = e.message ?: "Unknown error during import"
+        val error = describeFailure(e)
         logger.error(e) { "Import failed for source '${runningSource.slug}' (consecutive failures: ${runningSource.retryCount + 1}): $error" }
         val reason = scrapeFailureReason(e)
         metrics.recordScrapeFailure(runningSource.slug, reason)
