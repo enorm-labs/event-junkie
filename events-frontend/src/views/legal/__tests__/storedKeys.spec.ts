@@ -16,7 +16,7 @@ function sourceFiles(dir: string): string[] {
   return readdirSync(dir).flatMap((name) => {
     const path = join(dir, name)
     if (statSync(path).isDirectory()) return name === '__tests__' ? [] : sourceFiles(path)
-    return /\.(ts|vue)$/.test(name) && !/\.spec\.ts$/.test(name) ? [path] : []
+    return /\.(ts|vue)$/.test(name) && !name.endsWith('.spec.ts') ? [path] : []
   })
 }
 
