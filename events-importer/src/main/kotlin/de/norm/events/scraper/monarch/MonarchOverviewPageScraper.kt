@@ -25,7 +25,8 @@ import java.time.LocalTime
  * can be missing ("Samstag 24/10/2026-") while the venue fills an entry in, and such an event is
  * kept with no start time (#1962);
  * - a title cell `td#td1`, where a trailing `(KONZERT)` marks a concert and a leading
- * `ABGESAGT` a cancellation; and
+ * `ABGESAGT` a cancellation. The bold line below it is empty, except that an external organiser's
+ * night can carry its name there under a `Veranstalter*in` label with `td#td1` blank (#2045); and
  * - an optional external "Ticket Vorverkauf" shop link (eventim, dice, ra.co, …).
  *
  * Parsing anchors on the one stable handle: the title cell's `id=td1`. The enclosing block is
@@ -82,7 +83,7 @@ class MonarchOverviewPageScraper {
             return null
         }
 
-        val rawTitle = titleCell.text().trim()
+        val rawTitle = titleCell.text().trim().ifBlank { secondTitleLine(titleCell) }
         val title = cleanTitle(rawTitle)
         if (title.isBlank()) {
             logger.warn { "Monarch event on $eventDate has no title, skipping" }
@@ -116,6 +117,17 @@ class MonarchOverviewPageScraper {
             artists = buildArtistsForEventType(title, subtitle = null, eventType = eventType)
         )
     }
+
+    /** The bold line in the title table's second row, or empty when the table has none. */
+    private fun secondTitleLine(titleCell: Element): String =
+        titleCell
+            .closest("table")
+            ?.select("tr")
+            ?.getOrNull(1)
+            ?.selectFirst("b")
+            ?.text()
+            ?.trim()
+            .orEmpty()
 
     /** The calendar date from a "Weekday DD/MM/YYYY-HH:MM" line, or `null` when absent/invalid. */
     @Suppress("ReturnCount") // Early exits per date component are clearer than nested lets

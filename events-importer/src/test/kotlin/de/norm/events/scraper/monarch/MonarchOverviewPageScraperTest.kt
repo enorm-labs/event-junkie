@@ -47,6 +47,22 @@ class MonarchOverviewPageScraperTest {
         baseUrl
     )
 
+    /** The live 2026-10-24 shape: `td#td1` blank, the name in the second line under `Veranstalter*in` (#2045). */
+    private fun organiserBlock(
+        dateLine: String,
+        organiser: String
+    ) = Jsoup.parse(
+        """
+        <html><body>
+          <div style='border-bottom:1px solid #cccccc; padding-left:4px; font-size:14px;'><b>$dateLine</b><br>
+            <a href=https://hausofus.ditix.shop/event/66p0v12m0t41xn3m target=_blank>Ticket Vorverkauf</a><br>
+            <table><tr><td id=td1><b><div > </div></b></td></tr><tr><td><b><div >$organiser</div></b></td></tr><tr><td class=kotti_online_td>Veranstalter*in</td></tr></table>
+          </div>
+        </body></html>
+        """.trimIndent(),
+        baseUrl
+    )
+
     @Test
     fun `parses every event block from the retro programme page`() {
         scraper.scrape(programme(), baseUrl) shouldHaveSize 18
@@ -138,13 +154,19 @@ class MonarchOverviewPageScraperTest {
     }
 
     @Test
-    fun `keeps an event whose date line has no time yet, with no start time`() {
-        val event = scraper.scrape(block("Samstag 24/10/2026-", "CHEERS QUEERS"), baseUrl).single()
+    fun `keeps an event whose date line has no time yet and whose name is only on the organiser line`() {
+        val event = scraper.scrape(organiserBlock("Samstag 24/10/2026-", "CHEERS QUEERS"), baseUrl).single()
 
         event.title shouldBe "CHEERS QUEERS"
         event.eventDate shouldBe LocalDate.of(2026, 10, 24)
         event.startTime.shouldBeNull()
         event.sourceId shouldBe "monarch:2026-10-24-cheers-queers"
+        event.ticketUrl shouldBe "https://hausofus.ditix.shop/event/66p0v12m0t41xn3m"
+    }
+
+    @Test
+    fun `skips a block whose title and organiser lines are both blank`() {
+        scraper.scrape(organiserBlock("Samstag 24/10/2026-19:00", " "), baseUrl) shouldHaveSize 0
     }
 
     @Test
