@@ -47,9 +47,6 @@ class DiscogsLookupServiceIntegrationTest : BaseControllerTest() {
         metrics = metrics
     )
 
-    private fun source() =
-        EventSourceEntity(id = 1L, venueId = 1L, name = "Kater", slug = "kater-blau", url = "https://kater.example/events", sourceType = "KATER_BLAU")
-
     private suspend fun artist(
         name: String,
         musicbrainz: MusicBrainzMatch = MusicBrainzMatch.NONE,
@@ -85,7 +82,7 @@ class DiscogsLookupServiceIntegrationTest : BaseControllerTest() {
             coEvery { client.search("Okkyung Lee") } returns listOf(candidate(130715, "Okkyung Lee"), candidate(3373604, "Maze (21)"))
             coEvery { client.search("Nails") } returns listOf(candidate(1, "Nails"), candidate(2, "Nails (2)"))
 
-            service().lookupFor(source(), setOfNotNull(okkyung.id, nails.id)) shouldBe 2
+            service().sweep(setOfNotNull(okkyung.id, nails.id)) shouldBe 2
 
             val exact = reload(okkyung.id)
             exact.discogsMatch shouldBe DiscogsMatch.EXACT.name
@@ -110,7 +107,7 @@ class DiscogsLookupServiceIntegrationTest : BaseControllerTest() {
             val unsure = artist("Chris Wood", MusicBrainzMatch.AMBIGUOUS)
             val unchecked = artist("Veit", MusicBrainzMatch.UNCHECKED)
 
-            service().lookupFor(source(), setOfNotNull(known.id, unsure.id, unchecked.id)) shouldBe 0
+            service().sweep(setOfNotNull(known.id, unsure.id, unchecked.id)) shouldBe 0
 
             coVerify(exactly = 0) { client.search(any()) }
             reload(known.id).discogsMatch shouldBe DiscogsMatch.UNCHECKED.name
@@ -123,7 +120,7 @@ class DiscogsLookupServiceIntegrationTest : BaseControllerTest() {
             val zoh = artist("Zoh Amba", discogsUrl = "https://www.discogs.com/artist/1-Venue-Supplied")
             coEvery { client.search("Zoh Amba") } returns listOf(candidate(7_000_001, "Zoh Amba"))
 
-            service().lookupFor(source(), setOfNotNull(zoh.id))
+            service().sweep(setOfNotNull(zoh.id))
 
             val row = reload(zoh.id)
             row.discogsMatch shouldBe DiscogsMatch.EXACT.name
@@ -139,7 +136,7 @@ class DiscogsLookupServiceIntegrationTest : BaseControllerTest() {
             val venueLinked = artist("Victor", discogsUrl = "https://www.discogs.com/artist/1-Venue-Supplied")
             coEvery { client.search("Kevin") } returns listOf(candidate(1007151, "Kevin"))
             coEvery { client.search("Victor") } returns listOf(candidate(642486, "Victor"))
-            service().lookupFor(source(), setOfNotNull(kevin.id, venueLinked.id))
+            service().sweep(setOfNotNull(kevin.id, venueLinked.id))
             reload(kevin.id).discogsUrl shouldBe "https://www.discogs.com/artist/1007151-Kevin"
 
             // Renamed rows are asked again; this time the only hits are suffixed homonyms.
@@ -147,7 +144,7 @@ class DiscogsLookupServiceIntegrationTest : BaseControllerTest() {
             artistRepository.save(reload(venueLinked.id).copy(name = "Victor"))
             coEvery { client.search("Kevin") } returns listOf(candidate(1007151, "Kevin (27)"))
             coEvery { client.search("Victor") } returns listOf(candidate(642486, "Victor (10)"))
-            service().lookupFor(source(), setOfNotNull(kevin.id, venueLinked.id)) shouldBe 2
+            service().sweep(setOfNotNull(kevin.id, venueLinked.id)) shouldBe 2
 
             val cleared = reload(kevin.id)
             cleared.discogsMatch shouldBe DiscogsMatch.AMBIGUOUS.name
@@ -163,8 +160,8 @@ class DiscogsLookupServiceIntegrationTest : BaseControllerTest() {
             val rena = artist("Rena Volvo")
             coEvery { client.search("Rena Volvo") } returns emptyList()
 
-            service().lookupFor(source(), setOfNotNull(rena.id)) shouldBe 1
-            service().lookupFor(source(), setOfNotNull(rena.id)) shouldBe 0
+            service().sweep(setOfNotNull(rena.id)) shouldBe 1
+            service().sweep(setOfNotNull(rena.id)) shouldBe 0
 
             coVerify(exactly = 1) { client.search("Rena Volvo") }
             reload(rena.id).discogsMatch shouldBe DiscogsMatch.NONE.name
@@ -177,7 +174,7 @@ class DiscogsLookupServiceIntegrationTest : BaseControllerTest() {
             val backlog = (1..3).map { artist("Backlog $it") }
             coEvery { client.search(any()) } returns emptyList()
 
-            service(maxPerRun = 2).lookupFor(source(), emptySet()) shouldBe 2
+            service(maxPerRun = 2).sweep(emptySet()) shouldBe 2
 
             reload(backlog[2].id).discogsMatch shouldBe DiscogsMatch.UNCHECKED.name
             discogsRepository.countUncheckedByDiscogs() shouldBe 1L
@@ -190,7 +187,7 @@ class DiscogsLookupServiceIntegrationTest : BaseControllerTest() {
             val rows = (1..5).map { artist("Outage $it") }
             coEvery { client.search(any()) } throws DiscogsUnavailableException("Discogs answered 503 for 'x'")
 
-            service().lookupFor(source(), rows.mapNotNull { it.id }.toSet()) shouldBe 0
+            service().sweep(rows.mapNotNull { it.id }.toSet()) shouldBe 0
 
             coVerify(exactly = 3) { client.search(any()) }
             lookups("error") shouldBe 3.0
@@ -214,7 +211,7 @@ class DiscogsLookupServiceIntegrationTest : BaseControllerTest() {
         runBlocking {
             val row = artist("Angel D'lite")
 
-            service(key = "").lookupFor(source(), setOfNotNull(row.id)) shouldBe 0
+            service(key = "").sweep(setOfNotNull(row.id)) shouldBe 0
 
             coVerify(exactly = 0) { client.search(any()) }
         }

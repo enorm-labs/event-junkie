@@ -74,7 +74,8 @@ trigger did not fire. Eight of nineteen club venues are below a third. The produ
   Discogs is a source, not a processor, for the reason §7 gives for MusicBrainz.
 - **A hand review after the first staging run.** The spike's `exact` set contains names that are a night here and an act on Discogs: `Beat It!`,
   `Disco Sour`, `Power Apes`. A wrong link is visible. The review decides if the rule needs a minimum release count.
-- **Each import run gets longer.** At most `maxPerRun` rows (default 100) at about 55 a minute. That adds about two minutes after the MusicBrainz lookup.
+- **The artist lookup tick gets longer.** At most `maxPerRun` rows (default 100) at about 55 a minute. That adds about two minutes after the MusicBrainz
+  lookup. The tick runs outside the imports (#2051).
 
 ### What it does not do
 

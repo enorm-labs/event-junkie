@@ -15,14 +15,10 @@ import io.micrometer.core.instrument.simple.SimpleMeterRegistry
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.toList
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
-import java.util.concurrent.atomic.AtomicInteger
 
 /**
  * The sweep against a real PostgreSQL (Testcontainers), with MusicBrainz replaced by a scripted
@@ -45,9 +41,6 @@ class MusicBrainzLookupServiceIntegrationTest : BaseControllerTest() {
             properties = MusicBrainzProperties(maxPerRun = maxPerRun),
             metrics = metrics
         )
-
-    private fun source() =
-        EventSourceEntity(id = 1L, venueId = 1L, name = "Cassiopeia", slug = "cassiopeia", url = "https://cassiopeia.example/events", sourceType = "CASSIOPEIA")
 
     private suspend fun artist(name: String) = artistRepository.save(ArtistEntity(name = name, slug = name.lowercase().replace(' ', '-')))
 
@@ -76,7 +69,7 @@ class MusicBrainzLookupServiceIntegrationTest : BaseControllerTest() {
             coEvery { client.search("Accept") } returns listOf(candidate("Accept", "mbid-de", "DE"), candidate("ACCEPT", "mbid-jp", "JP"))
             coEvery { client.search("Pici") } returns listOf(candidate("Pici Mazzei", "mbid-it", "IT"))
 
-            service().lookupFor(source(), setOfNotNull(accept.id, pici.id)) shouldBe 2
+            service().sweep(setOfNotNull(accept.id, pici.id)) shouldBe 2
 
             val acceptId = requireNotNull(accept.id)
             val storedAccept = artistRepository.findById(acceptId).shouldNotBeNull()
@@ -108,59 +101,13 @@ class MusicBrainzLookupServiceIntegrationTest : BaseControllerTest() {
             coEvery { client.search(any()) } returns emptyList()
 
             // Room for two: the touched row first, then the oldest unchecked row — not the second.
-            service(maxPerRun = 2).lookupFor(source(), setOfNotNull(checked.id, touched.id)) shouldBe 2
+            service(maxPerRun = 2).sweep(setOfNotNull(checked.id, touched.id)) shouldBe 2
 
             matchOf(checkedId) shouldBe MusicBrainzMatch.AMBIGUOUS.name
             matchOf(requireNotNull(touched.id)) shouldBe MusicBrainzMatch.NONE.name
             matchOf(requireNotNull(backlogA.id)) shouldBe MusicBrainzMatch.NONE.name
             matchOf(requireNotNull(backlogB.id)) shouldBe MusicBrainzMatch.UNCHECKED.name
             artistRepository.countUncheckedByMusicBrainz() shouldBe 1
-        }
-    }
-
-    @Test
-    fun `two sweeps starting together look each unchecked row up once`() {
-        runBlocking {
-            repeat(4) { artist("Backlog $it") }
-            val searches = AtomicInteger()
-            coEvery { client.search(any()) } coAnswers {
-                searches.incrementAndGet()
-                delay(20)
-                emptyList()
-            }
-            val service = service()
-
-            coroutineScope {
-                launch { service.lookupFor(source(), emptySet()) }
-                launch { service.lookupFor(source(), emptySet()) }
-            }
-
-            searches.get() shouldBe 4
-            artistRepository.countUncheckedByMusicBrainz() shouldBe 0
-        }
-    }
-
-    @Test
-    fun `a sweep that finds the backfill held still looks up its own touched rows`() {
-        runBlocking {
-            val backlog = artist("Backlog")
-            val touched = artist("Touched")
-            coEvery { client.search("Backlog") } coAnswers {
-                delay(200)
-                emptyList()
-            }
-            coEvery { client.search("Touched") } returns emptyList()
-            val service = service()
-
-            coroutineScope {
-                launch { service.lookupFor(source(), emptySet()) }
-                delay(50)
-                service.lookupFor(source(), setOfNotNull(touched.id)) shouldBe 1
-                matchOf(requireNotNull(backlog.id)) shouldBe MusicBrainzMatch.UNCHECKED.name
-                matchOf(requireNotNull(touched.id)) shouldBe MusicBrainzMatch.NONE.name
-            }
-
-            matchOf(requireNotNull(backlog.id)) shouldBe MusicBrainzMatch.NONE.name
         }
     }
 
@@ -172,7 +119,7 @@ class MusicBrainzLookupServiceIntegrationTest : BaseControllerTest() {
             artistRepository.save(requireNotNull(artistRepository.findById(id)).copy(name = "New Name"))
             coEvery { client.search("New Name") } returns emptyList()
 
-            service().lookupFor(source(), setOf(id)) shouldBe 1
+            service().sweep(setOf(id)) shouldBe 1
 
             val stored = requireNotNull(artistRepository.findById(id))
             stored.musicbrainzMatch shouldBe MusicBrainzMatch.NONE.name
@@ -190,7 +137,7 @@ class MusicBrainzLookupServiceIntegrationTest : BaseControllerTest() {
             coEvery { client.search("Second") } returns emptyList()
             coEvery { client.search("Third") } returns emptyList()
 
-            service().lookupFor(source(), setOfNotNull(first.id, second.id, third.id)) shouldBe 2
+            service().sweep(setOfNotNull(first.id, second.id, third.id)) shouldBe 2
 
             matchOf(requireNotNull(first.id)) shouldBe MusicBrainzMatch.UNCHECKED.name
             matchOf(requireNotNull(second.id)) shouldBe MusicBrainzMatch.NONE.name
@@ -205,7 +152,7 @@ class MusicBrainzLookupServiceIntegrationTest : BaseControllerTest() {
             val ids = listOf("A", "B", "C", "D").map { requireNotNull(artist(it).id) }
             coEvery { client.search(any()) } throws MusicBrainzUnavailableException("503 four times")
 
-            service().lookupFor(source(), ids.toSet()) shouldBe 0
+            service().sweep(ids.toSet()) shouldBe 0
 
             ids.forEach { matchOf(it) shouldBe MusicBrainzMatch.UNCHECKED.name }
             lookups("error") shouldBe 3.0
@@ -220,7 +167,7 @@ class MusicBrainzLookupServiceIntegrationTest : BaseControllerTest() {
             coEvery { client.search("Current 93 - Sonic Morgue") } returns emptyList()
             coEvery { client.search("Current 93") } throws MusicBrainzUnavailableException("503 four times")
 
-            service().lookupFor(source(), setOf(id)) shouldBe 1
+            service().sweep(setOf(id)) shouldBe 1
 
             matchOf(id) shouldBe MusicBrainzMatch.NONE.name
             lookups("error") shouldBe 0.0
@@ -233,7 +180,7 @@ class MusicBrainzLookupServiceIntegrationTest : BaseControllerTest() {
             val id = requireNotNull(artist("Anyone").id)
             val disabled = MusicBrainzLookupService(artistRepository, client, MusicBrainzProperties(enabled = false), metrics)
 
-            disabled.lookupFor(source(), setOf(id)) shouldBe 0
+            disabled.sweep(setOf(id)) shouldBe 0
 
             matchOf(id) shouldBe MusicBrainzMatch.UNCHECKED.name
         }

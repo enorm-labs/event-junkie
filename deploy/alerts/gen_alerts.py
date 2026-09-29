@@ -407,7 +407,7 @@ rule(
     "ej-musicbrainz-backlog-stuck",
     "Artist rows have waited for their MusicBrainz lookup (`importer_musicbrainz_unchecked`) "
     "or their entity read (`importer_musicbrainz_unenriched`) for two whole days. Both drain "
-    "after every import and read 0 in between, so a floor above zero is a sweep that stopped. "
+    "on the artist lookup tick and read 0 in between, so a floor above zero is a tick that stopped. "
     "Read the importer log for `MusicBrainz` and `Entity read`.",
     "sum(min(min_over_time(importer_musicbrainz_unchecked[48h])) > bool 0) "
     "+ sum(min(min_over_time(importer_musicbrainz_unenriched[48h])) > bool 0)",
@@ -422,8 +422,8 @@ rule(
 # Discogs, the second index for the rows MusicBrainz marks NONE (ADR-035), fails the
 # same quiet way: an errored row stays unchecked and its page goes without a link. The
 # same two shapes, the same thresholds. A counted error has outlasted three retries
-# 20 s apart, so it is a block or an outage. The backlog drains 100 per import, and
-# staging's first 2,242 rows needed about 23 imports, well inside two days.
+# 20 s apart, so it is a block or an outage. The backlog drains 100 per tick, about
+# every seven minutes, so 2,000 rows take about two and a half hours, well inside two days.
 # **Both rules attach to the gauge's stream.** OpenObserve refuses a rule on a stream
 # with no rows, and a cluster with the lookup off never writes the counter. The gauge
 # is registered at start-up and reads 0 while the lookup is off (#2043), so the stream
@@ -448,8 +448,8 @@ rule(
 rule(
     "ej-discogs-backlog-stuck",
     "Artist rows MusicBrainz does not know have waited for their Discogs lookup "
-    "(`importer_discogs_unchecked`) for two whole days. The backlog drains 100 per import "
-    "and reads 0 in between, so a floor above zero is a sweep that stopped. Read the "
+    "(`importer_discogs_unchecked`) for two whole days. The backlog drains 100 per tick "
+    "and reads 0 in between, so a floor above zero is a tick that stopped. Read the "
     "importer log for `Discogs`.",
     "sum(min(min_over_time(importer_discogs_unchecked[48h])) > bool 0)",
     ">",

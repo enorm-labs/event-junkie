@@ -246,7 +246,7 @@
     "stream_name": "importer_musicbrainz_unchecked",
     "is_real_time": false,
     "enabled": true,
-    "description": "Artist rows have waited for their MusicBrainz lookup (`importer_musicbrainz_unchecked`) or their entity read (`importer_musicbrainz_unenriched`) for two whole days. Both drain after every import and read 0 in between, so a floor above zero is a sweep that stopped. Read the importer log for `MusicBrainz` and `Entity read`.",
+    "description": "Artist rows have waited for their MusicBrainz lookup (`importer_musicbrainz_unchecked`) or their entity read (`importer_musicbrainz_unenriched`) for two whole days. Both drain on the artist lookup tick and read 0 in between, so a floor above zero is a tick that stopped. Read the importer log for `MusicBrainz` and `Entity read`.",
     "query_condition": {
       "type": "promql",
       "promql": "sum(min(min_over_time(importer_musicbrainz_unchecked[48h])) > bool 0) + sum(min(min_over_time(importer_musicbrainz_unenriched[48h])) > bool 0)",
@@ -306,7 +306,7 @@
     "stream_name": "importer_discogs_unchecked",
     "is_real_time": false,
     "enabled": true,
-    "description": "Artist rows MusicBrainz does not know have waited for their Discogs lookup (`importer_discogs_unchecked`) for two whole days. The backlog drains 100 per import and reads 0 in between, so a floor above zero is a sweep that stopped. Read the importer log for `Discogs`.",
+    "description": "Artist rows MusicBrainz does not know have waited for their Discogs lookup (`importer_discogs_unchecked`) for two whole days. The backlog drains 100 per tick and reads 0 in between, so a floor above zero is a tick that stopped. Read the importer log for `Discogs`.",
     "query_condition": {
       "type": "promql",
       "promql": "sum(min(min_over_time(importer_discogs_unchecked[48h])) > bool 0)",

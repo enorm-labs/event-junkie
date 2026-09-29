@@ -211,7 +211,7 @@ disclosure, which is what [#1233](https://github.com/enorm-labs/event-junkie/iss
   that too, because a reader cannot check it.
 
 **MusicBrainz is a source, not a processor, and this is where that is decided so it is not asked again** (ADR-031,
-[#1567](https://github.com/enorm-labs/event-junkie/issues/1567)). After each import the importer sends every billed
+[#1567](https://github.com/enorm-labs/event-junkie/issues/1567)). On a scheduled tick the importer sends every billed
 artist's stage name as a search term to the MetaBrainz Foundation (California). It stores what came back: the verdict
 and, on an exact match, the MusicBrainz id. A read-only lookup of a public database is not processing on our behalf.
 MetaBrainz decides nothing for us and holds nothing of ours, and the name it receives is one it already publishes. So
