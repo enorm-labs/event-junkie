@@ -53,6 +53,25 @@ class LidoOverviewPageScraperTest {
         sorry.sourceId shouldBe "lido:2026-06-15-sorry"
     }
 
+    // The site answers the same request in English about one time in three; production lost 103 of 104 door times to it (#2030).
+    @Test
+    fun `reads the door time from the English rendering`() {
+        val html =
+            """
+            <html><body><article class="event-ticket" data-realdate="2026-09-30 18:30:00 +0200">
+              <div class="event-ticket__meta__times">
+                <div class="event-ticket__meta__times__time"><div class="event-ticket__meta__times__time__value">18:30</div><div class="event-ticket__meta__times__time__label">Doors</div></div>
+                <div class="event-ticket__meta__times__time"><div class="event-ticket__meta__times__time__value">19:00</div><div class="event-ticket__meta__times__time__label">Start</div></div>
+              </div>
+              <div class="event-ticket__content__title"><a href="/events/2026-09-30-sorry">SORRY</a></div>
+            </article></body></html>
+            """.trimIndent()
+        val scraped = scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl).single()
+
+        scraped.doorsTime shouldBe LocalTime.of(18, 30)
+        scraped.startTime shouldBe LocalTime.of(19, 0)
+    }
+
     @Test
     fun `extracts the headliner and support act for a concert`() {
         event("Sorry").artists shouldContainExactly
