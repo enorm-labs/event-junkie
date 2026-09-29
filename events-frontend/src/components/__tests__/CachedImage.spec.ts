@@ -101,10 +101,10 @@ describe('CachedImage', () => {
       sources,
       intrinsicWidth: 1200,
       intrinsicHeight: 630,
-      aspect: 'aspect-[3/2]',
+      aspect: 'aspect-poster',
     })
 
-    expect(wrapper.get('picture').classes()).toContain('aspect-[3/2]')
+    expect(wrapper.get('picture').classes()).toContain('aspect-poster')
     expect(wrapper.get('img').attributes('width')).toBeUndefined()
     expect(wrapper.get('img').classes()).toContain('object-cover')
   })

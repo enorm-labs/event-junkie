@@ -432,7 +432,7 @@ the area lost:
 | 16:9    | 26.5%             | 938                         |
 
 3:2 wins on both numbers. 16:9 matches it on the mean and destroys 938 images instead of 577, because it is brutal to the fifth of the corpus that is portrait.
-`CachedImage`'s placeholder already reserved `aspect-[3/2]`, so the empty state and the filled state now agree.
+The box is the `--aspect-poster` token, used as `aspect-poster` by the posters and by `CachedImage`'s placeholder, so the empty state and the filled state agree.
 
 **The stored file is never cropped.** imgproxy is called with `rs:fit:<width>:0`, which fits the width and lets the height follow, so a derivative keeps the
 shape the venue published. 3:2 is a box the browser fills with `object-cover`, which keeps a future layout free to want a different one.

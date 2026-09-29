@@ -29,7 +29,7 @@ const props = defineProps<{
    */
   priority?: boolean
   /**
-   * A box to reserve, as a Tailwind aspect utility: `aspect-[3/2]`. Only a fixed slot needs this:
+   * A box to reserve, as a Tailwind aspect utility: `aspect-poster`. Only a fixed slot needs this:
    * the intrinsic dimensions below reserve the original's shape, wrong where the caller crops to a
    * box, since a portrait flyer would still jump into a landscape slot.
    */
@@ -86,13 +86,13 @@ const dimensions = computed(() =>
   </picture>
   <!--
     One placeholder for both kinds of nothing: a "withheld" variant would word a position no venue
-    has taken (#811). `aspect-[3/2]` only acts where the caller leaves the height open (the detail
+    has taken (#811). `aspect-poster` only acts where the caller leaves the height open (the detail
     header); the cards pass `size-20`/`size-24`.
   -->
   <div
     v-else
     :class="imgClass"
-    class="flex aspect-[3/2] items-center justify-center bg-muted text-muted-foreground"
+    class="flex aspect-poster items-center justify-center bg-muted text-muted-foreground"
   >
     <ImageOff aria-hidden="true" class="size-1/4 max-h-12 min-h-4 min-w-4 max-w-12" />
   </div>

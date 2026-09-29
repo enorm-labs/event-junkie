@@ -107,6 +107,7 @@ const { compact } = useCompactView()
         <div v-else :class="CARD_GRID_CLASS">
           <EventCard v-for="event in upcoming.data.value" :key="event.slug" :event="event" />
         </div>
+        <!-- eslint-disable-next-line shadcn/no-restyle -- a text link sits flush with the column above it -->
         <Button as-child class="px-0" variant="link">
           <RouterLink :to="localePath('/events')">{{ t('home.seeAllUpcoming') }}</RouterLink>
         </Button>
