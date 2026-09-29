@@ -91,7 +91,7 @@ jobs:
         run: npm ci
 
       - name: Lint
-        run: npm run lint
+        run: npm run check:lint
 
       # Every production npm dependency against config/allowed-licenses-npm.json. `./gradlew checkLicense`
       # sees only the JVM tree, and dependency-review looks only at newly introduced dependencies.

@@ -18,6 +18,8 @@
     "generate:api": "npx -y openapi-typescript@7.13.0 http://localhost:8080/v3/api-docs -o src/api/schema.d.ts",
     "generate:notices": "node scripts/generate-notices.mjs",
     "check:licenses": "node scripts/check-licenses.mjs",
+    "//check:lint": "What CI runs: `lint` without `--fix`, so a finding with an automatic fix fails instead of being rewritten on the runner and passing (#2037). Not `lint:ci`, which `lint:*` would match. `npm run lint` repairs what this reports.",
+    "check:lint": "oxlint && eslint",
     "type-check": "vue-tsc --build",
     "lint": "run-s lint:*",
     "lint:oxlint": "oxlint --fix",

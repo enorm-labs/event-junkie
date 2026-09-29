@@ -19,7 +19,7 @@ where a plain local build does not.
 
 ```bash
 npm run type-check
-npm run lint                          # oxlint --fix, then eslint --fix --cache; what remains is a real finding
+npm run check:lint                    # what CI runs: oxlint, then eslint, no --fix; `npm run lint` repairs what it reports
 npm run test:unit -- --run
 npm run test:e2e -- --project=chromium
 ```
