@@ -137,6 +137,7 @@ loses its silence window and can fire again immediately.
 | `ej-musicbrainz-backlog-stuck` | the lookup or entity-read backlog has not reached zero in two days ([#1900](https://github.com/enorm-labs/event-junkie/issues/1900))         | —                  |
 | `ej-discogs-failing`           | more than a quarter of 24 hours' Discogs lookups failed ([#2043](https://github.com/enorm-labs/event-junkie/issues/2043))                    | —                  |
 | `ej-discogs-backlog-stuck`     | the Discogs lookup backlog has not reached zero in two days ([#2043](https://github.com/enorm-labs/event-junkie/issues/2043))                | —                  |
+| `ej-artist-lookup-tick-stale`  | the artist lookup tick has not finished in an hour ([#2059](https://github.com/enorm-labs/event-junkie/issues/2059))                         | —                  |
 
 **The zero-events failure is two rules, and keeping both is deliberate.** ADR-015's criterion 1 is per-source — a venue whose scraper still returns 200 while
 writing nothing — and `ej-source-emptied` is that rule at last, on the `importer_source_events_future` gauge

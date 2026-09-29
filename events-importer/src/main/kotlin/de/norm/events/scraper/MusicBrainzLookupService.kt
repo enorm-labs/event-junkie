@@ -39,14 +39,13 @@ class MusicBrainzLookupService(
     /**
      * Looks up what this tick owes: the touched rows without a current verdict, then the backfill.
      *
-     * @return how many verdicts were stored. Zero when the lookup is disabled, when nothing is owed,
-     *   or when MusicBrainz was unavailable before the first row — one answer, because none of the
-     *   three is a failure the caller can act on.
+     * @return what the tick owed and stored, or [LookupPass.OFF] when the lookup is disabled. A
+     *   MusicBrainz outage shows as fewer stored than owed, never as an exception.
      */
-    suspend fun sweep(touchedArtistIds: Set<Long>): Int {
-        if (!properties.enabled) return 0
+    suspend fun sweep(touchedArtistIds: Set<Long>): LookupPass {
+        if (!properties.enabled) return LookupPass.OFF
         val candidates = candidatesFor(touchedArtistIds)
-        return if (candidates.isEmpty()) 0 else storeVerdicts(candidates)
+        return LookupPass(owed = candidates.size, stored = if (candidates.isEmpty()) 0 else storeVerdicts(candidates))
     }
 
     /**

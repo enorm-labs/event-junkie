@@ -19,6 +19,7 @@ it produces an alert that never fires rather than an error.
     translation failing open       -> ej-translations-failing      (#1301)
     MusicBrainz failing or stuck   -> ej-musicbrainz-failing, ej-musicbrainz-backlog-stuck (#1900)
     Discogs failing or stuck       -> ej-discogs-failing, ej-discogs-backlog-stuck (#2043)
+    artist lookup tick stopped     -> ej-artist-lookup-tick-stale (#2059)
     a node waiting for a reboot    -> ej-reboot-pending            (#419)
     a node not being patched       -> ej-patching-stalled          (#419)
     many sources failing on DNS    -> ej-dns-fanout                 (#708)
@@ -458,6 +459,28 @@ rule(
     period_minutes=60,
     frequency_minutes=60,
     silence_minutes=24 * 60,
+)
+
+# The three lookups run on one scheduled tick (#2051), which writes the gauge when it
+# finishes. The backlog rules above only see a stopped tick while a backlog exists, so
+# a tick that died with nothing owed would stay silent until new artists arrived. An
+# hour is about four missed ticks, and the longest real tick is about fifteen minutes.
+# `> 0` keeps a switched-off tick quiet: its gauge stays 0, and off is a decision.
+rule(
+    "ej-artist-lookup-tick-stale",
+    "The artist lookup tick (MusicBrainz, its enrichment, Discogs) has not finished in an "
+    "hour, against a five-minute interval. New artists get no verdict and no links. Read "
+    "the importer log for `Artist lookup tick`. `timestamp(x) - x` because OpenObserve "
+    "freezes `time()` at the window start.",
+    "((timestamp(max(importer_artists_lookup_tick_last_success)) "
+    "- max(importer_artists_lookup_tick_last_success)) / 60) "
+    "and (max(importer_artists_lookup_tick_last_success) > 0)",
+    ">",
+    60,
+    stream_name="importer_artists_lookup_tick_last_success",
+    period_minutes=10,
+    frequency_minutes=5,
+    silence_minutes=12 * 60,
 )
 
 # --- The platform underneath --------------------------------------------------
