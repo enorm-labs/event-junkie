@@ -43,12 +43,12 @@ class MusicBrainzEnrichmentService(
     /**
      * Reads what this tick owes: the touched EXACT rows without a current read, then the backfill.
      *
-     * @return how many rows were stamped as read; zero when the lookup is disabled or nothing is owed.
+     * @return the rows owed and the rows stamped as read, or [LookupPass.OFF] when the lookup is disabled.
      */
-    suspend fun sweep(touchedArtistIds: Set<Long>): Int {
-        if (!properties.enabled) return 0
+    suspend fun sweep(touchedArtistIds: Set<Long>): LookupPass {
+        if (!properties.enabled) return LookupPass.OFF
         val candidates = candidatesFor(touchedArtistIds)
-        return if (candidates.isEmpty()) 0 else enrich(candidates)
+        return LookupPass(owed = candidates.size, stored = if (candidates.isEmpty()) 0 else enrich(candidates))
     }
 
     private suspend fun enrich(candidates: List<ArtistEntity>): Int {

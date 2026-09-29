@@ -197,6 +197,7 @@ reads a picture from Wikidata and Commons, and an ensemble's lead from Wikipedia
 | A lookup sends more than a name                                                       | I      | low        | low    | Mitigated. Only a stage name, a MusicBrainz id, a Wikidata id and article titles leave the cluster. `application.yaml`, [LEGAL.md](../LEGAL.md) §7.3a                                                                |
 | MusicBrainz or Wikimedia fails for days, unseen                                       | D      | medium     | low    | Mitigated. Polite delays and retries, and a pass stops after three failures in a row. `ej-musicbrainz-failing` and `ej-musicbrainz-backlog-stuck` mail `alerts@` (#1900)                                             |
 | Discogs fails for days, unseen                                                        | D      | medium     | low    | Mitigated. The same retries and three-failure stop. `ej-discogs-failing` and `ej-discogs-backlog-stuck` mail `alerts@` (#2043)                                                                                       |
+| The artist lookup tick stops, unseen                                                  | D      | low        | low    | Mitigated. `ej-artist-lookup-tick-stale` mails `alerts@` when no tick finished in an hour, backlog or not (#2059)                                                                                                    |
 
 ### B6 · GitHub Actions → GHCR → Flux → cluster
 

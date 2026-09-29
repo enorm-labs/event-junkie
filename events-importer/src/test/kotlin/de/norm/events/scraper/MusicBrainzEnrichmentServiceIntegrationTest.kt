@@ -132,7 +132,7 @@ class MusicBrainzEnrichmentServiceIntegrationTest : BaseControllerTest() {
                 )
             coEvery { wikimedia.imageFor("Q11898") } returns commons()
 
-            service().sweep(setOf(id)) shouldBe 1
+            service().sweep(setOf(id)).stored shouldBe 1
 
             val stored = row(id)
             stored.name shouldBe "Neubauten"
@@ -166,7 +166,7 @@ class MusicBrainzEnrichmentServiceIntegrationTest : BaseControllerTest() {
             val id = exact("Hausswolff")
             coEvery { musicBrainz.artist("mbid-hausswolff") } returns entity("mbid-hausswolff", "Person")
 
-            service().sweep(setOf(id)) shouldBe 1
+            service().sweep(setOf(id)).stored shouldBe 1
 
             val stored = row(id)
             stored.artistType shouldBe "PERSON"
@@ -184,10 +184,10 @@ class MusicBrainzEnrichmentServiceIntegrationTest : BaseControllerTest() {
             val id = exact("Klock", websiteUrl = "https://a-person-set-this.test/")
             coEvery { musicBrainz.artist("mbid-klock") } returns entity("mbid-klock", "Person", relation("official homepage", "https://benklock.example/"))
 
-            service().sweep(setOf(id)) shouldBe 1
+            service().sweep(setOf(id)).stored shouldBe 1
             row(id).websiteUrl shouldBe "https://a-person-set-this.test/"
 
-            service().sweep(setOf(id)) shouldBe 0
+            service().sweep(setOf(id)).stored shouldBe 0
             coVerify(exactly = 1) { musicBrainz.artist("mbid-klock") }
         }
     }
@@ -197,11 +197,11 @@ class MusicBrainzEnrichmentServiceIntegrationTest : BaseControllerTest() {
         runBlocking {
             val id = exact("Renamed")
             coEvery { musicBrainz.artist(any()) } returns entity("mbid-renamed", "Person")
-            service().sweep(setOf(id)) shouldBe 1
+            service().sweep(setOf(id)).stored shouldBe 1
 
             artistRepository.storeMusicBrainzVerdict(id, MusicBrainzMatch.EXACT.name, "mbid-other")
 
-            service().sweep(setOf(id)) shouldBe 1
+            service().sweep(setOf(id)).stored shouldBe 1
             coVerify(exactly = 1) { musicBrainz.artist("mbid-other") }
         }
     }
@@ -215,7 +215,7 @@ class MusicBrainzEnrichmentServiceIntegrationTest : BaseControllerTest() {
             val newer = exact("Newer")
             coEvery { musicBrainz.artist(any()) } returns entity("x", "Person")
 
-            service(maxPerRun = 1).sweep(emptySet()) shouldBe 1
+            service(maxPerRun = 1).sweep(emptySet()).stored shouldBe 1
 
             row(older).musicbrainzEnrichedAt.shouldNotBeNull()
             row(newer).musicbrainzEnrichedAt.shouldBeNull()
@@ -230,7 +230,7 @@ class MusicBrainzEnrichmentServiceIntegrationTest : BaseControllerTest() {
             val id = exact("Gone")
             coEvery { musicBrainz.artist("mbid-gone") } returns null
 
-            service().sweep(setOf(id)) shouldBe 1
+            service().sweep(setOf(id)).stored shouldBe 1
 
             val stored = row(id)
             stored.musicbrainzEnrichedAt.shouldNotBeNull()
@@ -246,7 +246,7 @@ class MusicBrainzEnrichmentServiceIntegrationTest : BaseControllerTest() {
             coEvery { musicBrainz.artist("mbid-first") } throws MusicBrainzUnavailableException("503 four times")
             coEvery { musicBrainz.artist("mbid-second") } returns entity("mbid-second", "Person")
 
-            service().sweep(setOf(first, second)) shouldBe 1
+            service().sweep(setOf(first, second)).stored shouldBe 1
 
             row(first).musicbrainzEnrichedAt.shouldBeNull()
             row(second).musicbrainzEnrichedAt.shouldNotBeNull()
@@ -267,7 +267,7 @@ class MusicBrainzEnrichmentServiceIntegrationTest : BaseControllerTest() {
                 )
             coEvery { wikimedia.imageFor("Q1") } returns commons().copy(licenceShortName = "GFDL")
 
-            service().sweep(setOf(id)) shouldBe 1
+            service().sweep(setOf(id)).stored shouldBe 1
 
             val stored = row(id)
             stored.bandcampUrl shouldBe "https://refused.bandcamp.com/"
@@ -295,7 +295,7 @@ class MusicBrainzEnrichmentServiceIntegrationTest : BaseControllerTest() {
                     WikipediaExtract(language = "en", text = leadEn, pageUrl = "https://en.wikipedia.org/wiki/Einst%C3%BCrzende_Neubauten")
                 )
 
-            service().sweep(setOf(id)) shouldBe 1
+            service().sweep(setOf(id)).stored shouldBe 1
 
             val stored = row(id)
             stored.description shouldBe lead
@@ -334,7 +334,7 @@ class MusicBrainzEnrichmentServiceIntegrationTest : BaseControllerTest() {
             coEvery { wikimedia.extractsFor("Q11898", listOf("en")) } returns
                 listOf(WikipediaExtract(language = "en", text = leadEn, pageUrl = "https://en.wikipedia.org/wiki/Einst%C3%BCrzende_Neubauten"))
 
-            service().sweep(setOf(id)) shouldBe 1
+            service().sweep(setOf(id)).stored shouldBe 1
 
             val stored = row(id)
             stored.description shouldBe lead
@@ -354,7 +354,7 @@ class MusicBrainzEnrichmentServiceIntegrationTest : BaseControllerTest() {
             coEvery { musicBrainz.artist("mbid-solo") } returns entity("mbid-solo", "Person", relation("wikidata", "https://www.wikidata.org/wiki/Q3"))
             coEvery { wikimedia.imageFor(any()) } returns null
 
-            service().sweep(setOf(group, person)) shouldBe 2
+            service().sweep(setOf(group, person)).stored shouldBe 2
 
             row(group).description.shouldBeNull()
             registry

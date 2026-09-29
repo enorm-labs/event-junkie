@@ -69,7 +69,7 @@ class MusicBrainzLookupServiceIntegrationTest : BaseControllerTest() {
             coEvery { client.search("Accept") } returns listOf(candidate("Accept", "mbid-de", "DE"), candidate("ACCEPT", "mbid-jp", "JP"))
             coEvery { client.search("Pici") } returns listOf(candidate("Pici Mazzei", "mbid-it", "IT"))
 
-            service().sweep(setOfNotNull(accept.id, pici.id)) shouldBe 2
+            service().sweep(setOfNotNull(accept.id, pici.id)).stored shouldBe 2
 
             val acceptId = requireNotNull(accept.id)
             val storedAccept = artistRepository.findById(acceptId).shouldNotBeNull()
@@ -98,7 +98,7 @@ class MusicBrainzLookupServiceIntegrationTest : BaseControllerTest() {
             coEvery { client.search(any()) } returns emptyList()
 
             // Room for two: the touched row first, then the oldest unchecked row — not the second.
-            service(maxPerRun = 2).sweep(setOfNotNull(checked.id, touched.id)) shouldBe 2
+            service(maxPerRun = 2).sweep(setOfNotNull(checked.id, touched.id)).stored shouldBe 2
 
             matchOf(checkedId) shouldBe MusicBrainzMatch.AMBIGUOUS.name
             matchOf(requireNotNull(touched.id)) shouldBe MusicBrainzMatch.NONE.name
@@ -116,7 +116,7 @@ class MusicBrainzLookupServiceIntegrationTest : BaseControllerTest() {
             artistRepository.save(requireNotNull(artistRepository.findById(id)).copy(name = "New Name"))
             coEvery { client.search("New Name") } returns emptyList()
 
-            service().sweep(setOf(id)) shouldBe 1
+            service().sweep(setOf(id)).stored shouldBe 1
 
             val stored = requireNotNull(artistRepository.findById(id))
             stored.musicbrainzMatch shouldBe MusicBrainzMatch.NONE.name
@@ -131,7 +131,7 @@ class MusicBrainzLookupServiceIntegrationTest : BaseControllerTest() {
             artistRepository.storeMusicBrainzVerdict(id, MusicBrainzMatch.NONE.name, null)
             artistRepository.save(requireNotNull(artistRepository.findById(id)).copy(websiteUrl = "https://kept.example"))
 
-            service().sweep(setOf(id)) shouldBe 0
+            service().sweep(setOf(id)).stored shouldBe 0
         }
     }
 
@@ -145,7 +145,7 @@ class MusicBrainzLookupServiceIntegrationTest : BaseControllerTest() {
             coEvery { client.search("Second") } returns emptyList()
             coEvery { client.search("Third") } returns emptyList()
 
-            service().sweep(setOfNotNull(first.id, second.id, third.id)) shouldBe 2
+            service().sweep(setOfNotNull(first.id, second.id, third.id)).stored shouldBe 2
 
             matchOf(requireNotNull(first.id)) shouldBe MusicBrainzMatch.UNCHECKED.name
             matchOf(requireNotNull(second.id)) shouldBe MusicBrainzMatch.NONE.name
@@ -160,7 +160,7 @@ class MusicBrainzLookupServiceIntegrationTest : BaseControllerTest() {
             val ids = listOf("A", "B", "C", "D").map { requireNotNull(artist(it).id) }
             coEvery { client.search(any()) } throws MusicBrainzUnavailableException("503 four times")
 
-            service().sweep(ids.toSet()) shouldBe 0
+            service().sweep(ids.toSet()).stored shouldBe 0
 
             ids.forEach { matchOf(it) shouldBe MusicBrainzMatch.UNCHECKED.name }
             lookups("error") shouldBe 3.0
@@ -175,7 +175,7 @@ class MusicBrainzLookupServiceIntegrationTest : BaseControllerTest() {
             coEvery { client.search("Current 93 - Sonic Morgue") } returns emptyList()
             coEvery { client.search("Current 93") } throws MusicBrainzUnavailableException("503 four times")
 
-            service().sweep(setOf(id)) shouldBe 1
+            service().sweep(setOf(id)).stored shouldBe 1
 
             matchOf(id) shouldBe MusicBrainzMatch.NONE.name
             lookups("error") shouldBe 0.0
@@ -188,7 +188,7 @@ class MusicBrainzLookupServiceIntegrationTest : BaseControllerTest() {
             val id = requireNotNull(artist("Anyone").id)
             val disabled = MusicBrainzLookupService(artistRepository, client, MusicBrainzProperties(enabled = false), metrics)
 
-            disabled.sweep(setOf(id)) shouldBe 0
+            disabled.sweep(setOf(id)) shouldBe LookupPass.OFF
 
             matchOf(id) shouldBe MusicBrainzMatch.UNCHECKED.name
         }

@@ -24,6 +24,7 @@ class ArtistLookupSweep(
     private val musicBrainzLookupService: MusicBrainzLookupService,
     private val musicBrainzEnrichmentService: MusicBrainzEnrichmentService,
     private val discogsLookupService: DiscogsLookupService,
+    private val metrics: ImporterMetrics,
     @Value($$"${app.artists.lookup-enabled:true}")
     private val enabled: Boolean = true
 ) {
@@ -50,17 +51,32 @@ class ArtistLookupSweep(
         }
     }
 
-    /** One tick's work. Each pass is guarded alone, so MusicBrainz being down does not stop Discogs. */
+    /**
+     * One tick's work. Each pass is guarded alone, so MusicBrainz being down does not stop Discogs.
+     * The closing line is written on every tick, one that owed nothing included, so a quiet log
+     * never stands for a stopped tick (#2059).
+     */
     suspend fun sweep() {
         val ids = takeQueued()
-        logger.debug { "Artist lookup tick with ${ids.size} touched artist(s)" }
-        runCatching { musicBrainzLookupService.sweep(ids) }
-            .onFailure { logger.warn(it) { "MusicBrainz lookup pass failed" } }
-        runCatching { musicBrainzEnrichmentService.sweep(ids) }
-            .onFailure { logger.warn(it) { "MusicBrainz enrichment pass failed" } }
-        runCatching { discogsLookupService.sweep(ids) }
-            .onFailure { logger.warn(it) { "Discogs lookup pass failed" } }
+        val lookup = pass("MusicBrainz lookup") { musicBrainzLookupService.sweep(ids) }
+        val enrichment = pass("MusicBrainz enrichment") { musicBrainzEnrichmentService.sweep(ids) }
+        val discogs = pass("Discogs lookup") { discogsLookupService.sweep(ids) }
+        logger.info { "Artist lookup tick: ${ids.size} touched · MusicBrainz $lookup · enrichment $enrichment · Discogs $discogs" }
+        metrics.markArtistLookupTickSucceeded()
     }
 
+    /** The pass's outcome, or `failed` after its `WARN`. */
+    private suspend fun pass(
+        name: String,
+        block: suspend () -> LookupPass
+    ): String =
+        runCatching { block().toString() }
+            .onFailure { logger.warn(it) { "$name pass failed" } }
+            .getOrElse { FAILED }
+
     private fun takeQueued(): Set<Long> = touched.toSet().also { touched.removeAll(it) }
+
+    private companion object {
+        const val FAILED = "failed"
+    }
 }

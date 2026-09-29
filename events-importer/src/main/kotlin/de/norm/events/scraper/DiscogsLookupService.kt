@@ -54,13 +54,12 @@ class DiscogsLookupService(
      * Looks up what this tick owes: the touched `NONE` rows without a current Discogs verdict, then
      * the backfill.
      *
-     * @return how many verdicts were stored. Zero when the lookup is off, when nothing is owed, or
-     *   when Discogs was unavailable before the first row.
+     * @return what the tick owed and stored, or [LookupPass.OFF] without both consumer credentials.
      */
-    suspend fun sweep(touchedArtistIds: Set<Long>): Int {
-        if (!properties.active) return 0
+    suspend fun sweep(touchedArtistIds: Set<Long>): LookupPass {
+        if (!properties.active) return LookupPass.OFF
         val candidates = candidatesFor(touchedArtistIds)
-        return if (candidates.isEmpty()) 0 else storeVerdicts(candidates)
+        return LookupPass(owed = candidates.size, stored = if (candidates.isEmpty()) 0 else storeVerdicts(candidates))
     }
 
     /**

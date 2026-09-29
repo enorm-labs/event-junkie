@@ -76,6 +76,9 @@ class ImporterMetrics(
     /** Backs [DISCOGS_UNCHECKED]: NONE rows the Discogs sweep has not asked about yet (#2026). */
     private val discogsUnchecked = AtomicLong(0)
 
+    /** Backs [ARTIST_LOOKUP_TICK_LAST_SUCCESS]: epoch seconds of the last lookup tick that finished; 0 before the first (#2059). */
+    private val artistLookupTickLastSuccess = AtomicLong(0)
+
     /** Sources currently `FAILED`, per reason, backing the `sources.failed` gauge (#708); keyed by reason. */
     private val failedSources = ConcurrentHashMap<String, AtomicLong>()
 
@@ -86,6 +89,7 @@ class ImporterMetrics(
         registry.gauge(MUSICBRAINZ_UNCHECKED, musicBrainzUnchecked) { it.get().toDouble() }
         registry.gauge(MUSICBRAINZ_UNENRICHED, musicBrainzUnenriched) { it.get().toDouble() }
         registry.gauge(DISCOGS_UNCHECKED, discogsUnchecked) { it.get().toDouble() }
+        registry.gauge(ARTIST_LOOKUP_TICK_LAST_SUCCESS, artistLookupTickLastSuccess) { it.get().toDouble() }
     }
 
     /**
@@ -231,6 +235,9 @@ class ImporterMetrics(
 
     /** Publishes how many NONE rows Discogs has not been asked about; refreshed by [MetricsRefreshService]. */
     fun updateDiscogsUnchecked(count: Long) = discogsUnchecked.set(count)
+
+    /** Stamps the artist lookup tick as finished now; `ej-artist-lookup-tick-stale` reads the age. */
+    fun markArtistLookupTickSucceeded() = artistLookupTickLastSuccess.set(System.currentTimeMillis() / MILLIS_PER_SECOND)
 
     /**
      * Publishes [epochSeconds] as the source's last success. A timestamp, not an age, the
@@ -471,6 +478,9 @@ class ImporterMetrics(
 
         /** `importer.discogs.unchecked` — NONE rows still awaiting a Discogs verdict; the backfill draining. */
         const val DISCOGS_UNCHECKED = "importer.discogs.unchecked"
+
+        /** `importer.artists.lookup_tick.last_success` — epoch seconds of the last finished [ArtistLookupSweep] tick. */
+        const val ARTIST_LOOKUP_TICK_LAST_SUCCESS = "importer.artists.lookup_tick.last_success"
 
         const val FIELD_ERROR = "error"
 
