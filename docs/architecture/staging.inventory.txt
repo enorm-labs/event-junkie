@@ -17,7 +17,7 @@ Deployment/event-junkie-frontend
 Deployment/event-junkie-importer
   replicas 1  strategy Recreate  serviceAccount event-junkie-importer
   container importer  image ghcr.io/enorm-labs/event-junkie/importer  ports http=8081,management=9001
-  container imgproxy  image ghcr.io/imgproxy/imgproxy  ports <none>
+  sidecar imgproxy  image ghcr.io/imgproxy/imgproxy  ports <none>
 HorizontalPodAutoscaler/event-junkie-bff
   Deployment/event-junkie-bff  replicas 1..2  cpu 70%
 Ingress/event-junkie
