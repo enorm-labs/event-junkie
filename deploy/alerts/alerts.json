@@ -270,6 +270,66 @@
     ]
   },
   {
+    "name": "ej-discogs-failing",
+    "org_id": "default",
+    "stream_type": "metrics",
+    "stream_name": "importer_discogs_unchecked",
+    "is_real_time": false,
+    "enabled": true,
+    "description": "More than a quarter of the Discogs lookups in 24 hours failed, over at least twenty lookups. A failed lookup has already been retried three times, so this is a revoked consumer key, a block or an outage. The rows stay unchecked and their artist pages go without a Discogs link. Read the importer log for `Discogs`.",
+    "query_condition": {
+      "type": "promql",
+      "promql": "sum(increase(importer_discogs_lookups_total{state=\"error\"}[24h])) / (sum(increase(importer_discogs_lookups_total[24h])) >= 20)",
+      "promql_condition": {
+        "column": "value",
+        "operator": ">",
+        "value": 0.25
+      }
+    },
+    "trigger_condition": {
+      "period": 15,
+      "frequency": 30,
+      "frequency_type": "minutes",
+      "operator": ">=",
+      "threshold": 1,
+      "silence": 720
+    },
+    "destinations": [
+      "record-only",
+      "email"
+    ]
+  },
+  {
+    "name": "ej-discogs-backlog-stuck",
+    "org_id": "default",
+    "stream_type": "metrics",
+    "stream_name": "importer_discogs_unchecked",
+    "is_real_time": false,
+    "enabled": true,
+    "description": "Artist rows MusicBrainz does not know have waited for their Discogs lookup (`importer_discogs_unchecked`) for two whole days. The backlog drains 100 per import and reads 0 in between, so a floor above zero is a sweep that stopped. Read the importer log for `Discogs`.",
+    "query_condition": {
+      "type": "promql",
+      "promql": "sum(min(min_over_time(importer_discogs_unchecked[48h])) > bool 0)",
+      "promql_condition": {
+        "column": "value",
+        "operator": ">",
+        "value": 0
+      }
+    },
+    "trigger_condition": {
+      "period": 60,
+      "frequency": 60,
+      "frequency_type": "minutes",
+      "operator": ">=",
+      "threshold": 1,
+      "silence": 1440
+    },
+    "destinations": [
+      "record-only",
+      "email"
+    ]
+  },
+  {
     "name": "ej-node-disk-filling",
     "org_id": "default",
     "stream_type": "metrics",
