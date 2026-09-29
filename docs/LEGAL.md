@@ -240,7 +240,8 @@ the removal route in §7.3 covers them with the description. The third sentence 
 
 **Discogs is a second source of the same kind** (ADR-035, [#2026](https://github.com/enorm-labs/event-junkie/issues/2026)).
 The importer asks Discogs only about an artist that MusicBrainz does not know. It sends the stage name as a search term
-to Zink Media, LLC (Oregon, USA). It stores the verdict and, on an exact match, the Discogs id and the page link. A
+to Zink Media, LLC (Oregon, USA). On an exact match it also asks for that Discogs artist's release years, by the Discogs
+id (#2054). It stores the verdict and, on an exact match, the Discogs id and the page link. A
 read-only lookup of a public database is not processing on our behalf, for the reason given above for MusicBrainz. So
 there is no Art. 28 contract to conclude, and the Hetzner AVV is untouched. The Discogs API terms forbid storing more,
 and nothing more is stored. The fourth sentence of the notice paragraph names the source.

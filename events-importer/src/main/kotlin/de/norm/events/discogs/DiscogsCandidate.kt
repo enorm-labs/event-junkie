@@ -26,3 +26,18 @@ data class DiscogsCandidate(
 data class DiscogsSearchResponse(
     val results: List<DiscogsCandidate> = emptyList()
 )
+
+/**
+ * One release in an artist's release list, reduced to its year (#2054). The match rule reads the
+ * newest year and stores nothing; titles, labels and formats are not mapped. 0 is undated.
+ */
+@JsonIgnoreProperties(ignoreUnknown = true)
+data class DiscogsRelease(
+    val year: Int = 0
+)
+
+/** The release list's envelope: one page of releases, and nothing else read. */
+@JsonIgnoreProperties(ignoreUnknown = true)
+data class DiscogsReleasesResponse(
+    val releases: List<DiscogsRelease> = emptyList()
+)

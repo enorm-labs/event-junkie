@@ -29,7 +29,12 @@ data class DiscogsProperties(
     /** How many times one request is retried after a 429 before the row is given up on. */
     val retries: Int = DEFAULT_RETRIES,
     /** How many rows one sweep looks up at most, about two minutes at the polite pace. */
-    val maxPerRun: Int = DEFAULT_MAX_PER_RUN
+    val maxPerRun: Int = DEFAULT_MAX_PER_RUN,
+    /**
+     * How many years back an EXACT candidate's newest release may be (#2054). 15 means 2011 or later in
+     * 2026. The hand review's wrong links were 2001 or older, its right ones 2012 or newer.
+     */
+    val recentReleaseYears: Int = DEFAULT_RECENT_RELEASE_YEARS
 ) {
     /** Whether a sweep may send anything: switched on, and both credentials present. */
     val active: Boolean get() = enabled && consumerKey.isNotBlank() && consumerSecret.isNotBlank()
@@ -37,7 +42,7 @@ data class DiscogsProperties(
     /** Keeps the credentials out of every log line and exception message that prints the properties. */
     override fun toString(): String =
         "DiscogsProperties(enabled=$enabled, baseUrl=$baseUrl, credentials=${if (consumerKey.isBlank() || consumerSecret.isBlank()) "missing" else "set"}, " +
-            "politeDelayMillis=$politeDelayMillis, timeout=$timeout, backoff=$backoff, retries=$retries, maxPerRun=$maxPerRun)"
+            "politeDelayMillis=$politeDelayMillis, timeout=$timeout, backoff=$backoff, retries=$retries, maxPerRun=$maxPerRun, recentReleaseYears=$recentReleaseYears)"
 
     companion object {
         private const val DEFAULT_POLITE_DELAY_MILLIS = 1_100L
@@ -45,5 +50,6 @@ data class DiscogsProperties(
         private const val DEFAULT_BACKOFF_SECONDS = 20L
         private const val DEFAULT_RETRIES = 3
         private const val DEFAULT_MAX_PER_RUN = 100
+        private const val DEFAULT_RECENT_RELEASE_YEARS = 15
     }
 }

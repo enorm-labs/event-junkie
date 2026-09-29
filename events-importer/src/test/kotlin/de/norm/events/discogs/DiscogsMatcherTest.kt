@@ -67,4 +67,27 @@ class DiscogsMatcherTest {
         DiscogsMatcher.decide("Barker", listOf(DiscogsCandidate(id = 9, type = "artist", title = "Barker", uri = null))).discogsUrl shouldBe
             "https://www.discogs.com/artist/9"
     }
+
+    @Test
+    fun `an EXACT match stands when the artist released in or after the earliest year`() {
+        val exact = DiscogsMatcher.decide("Okkyung Lee", fixture("search-okkyung-lee.json"))
+
+        DiscogsMatcher.confirmRecent(exact, newestReleaseYear = 2025, earliestYear = 2011) shouldBe exact
+        DiscogsMatcher.confirmRecent(exact, newestReleaseYear = 2011, earliestYear = 2011) shouldBe exact
+    }
+
+    @Test
+    fun `an EXACT match whose artist last released before the earliest year, or never, is AMBIGUOUS`() {
+        val beatIt = DiscogsMatcher.decide("Beat It!", listOf(artist(6728639, "Beat It!")))
+
+        DiscogsMatcher.confirmRecent(beatIt, newestReleaseYear = 2001, earliestYear = 2011) shouldBe DiscogsVerdict.AMBIGUOUS
+        DiscogsMatcher.confirmRecent(beatIt, newestReleaseYear = 2010, earliestYear = 2011) shouldBe DiscogsVerdict.AMBIGUOUS
+        DiscogsMatcher.confirmRecent(beatIt, newestReleaseYear = null, earliestYear = 2011) shouldBe DiscogsVerdict.AMBIGUOUS
+    }
+
+    @Test
+    fun `rule 5 leaves every other verdict alone`() {
+        DiscogsMatcher.confirmRecent(DiscogsVerdict.NONE, newestReleaseYear = null, earliestYear = 2011) shouldBe DiscogsVerdict.NONE
+        DiscogsMatcher.confirmRecent(DiscogsVerdict.AMBIGUOUS, newestReleaseYear = null, earliestYear = 2011) shouldBe DiscogsVerdict.AMBIGUOUS
+    }
 }

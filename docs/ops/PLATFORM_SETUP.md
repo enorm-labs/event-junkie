@@ -832,7 +832,7 @@ Free from the framework: JVM memory and GC, HTTP server request rate/latency/sta
 | `importer.musicbrainz.image_refused{reason}`   | Counter                               | A Commons picture not stored: licence / author / source / mime / size              |
 | `importer.wikipedia.refused{reason}`           | Counter                               | An ensemble's Wikipedia lead not stored: birth-data / short / no-article           |
 | `importer.musicbrainz.unenriched`              | Gauge                                 | `EXACT` rows still owed their entity read. Drains 100 per tick; then a flat zero   |
-| `importer.discogs.lookups{state}`              | Counter                               | exact / ambiguous / none / error — asked of MusicBrainz `NONE` rows only, ADR-035  |
+| `importer.discogs.lookups{state}`              | Counter                               | exact / ambiguous / none / inactive / error — MusicBrainz `NONE` rows only         |
 | `importer.discogs.unchecked`                   | Gauge                                 | `NONE` rows still owed a Discogs verdict. 0 where the lookup is off                |
 | `images.sweep.candidates{kind}`                | Gauge                                 | What the last sweep would delete, whether or not it may. rows / strays             |
 | `images.sweep.deleted{kind}`                   | Counter                               | What it removed. Moves only while `app.images.sweep.enabled` is on                 |

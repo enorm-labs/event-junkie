@@ -20,8 +20,11 @@ import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
+import java.time.Year
+import java.time.ZoneOffset
 
 /**
  * The Discogs sweep against a real PostgreSQL (Testcontainers), with Discogs replaced by a scripted
@@ -38,6 +41,12 @@ class DiscogsLookupServiceIntegrationTest : BaseControllerTest() {
     private val client = mockk<DiscogsClient>()
     private val metricsRegistry = SimpleMeterRegistry()
     private val metrics = ImporterMetrics(metricsRegistry)
+
+    // Every EXACT candidate released this year unless a test says otherwise, so rule 5 (#2054) keeps it.
+    @BeforeEach
+    fun recentByDefault() {
+        coEvery { client.newestReleaseYear(any()) } returns Year.now(ZoneOffset.UTC).value
+    }
 
     private fun service(
         maxPerRun: Int = 100,
@@ -99,6 +108,42 @@ class DiscogsLookupServiceIntegrationTest : BaseControllerTest() {
             ambiguous.discogsUrl.shouldBeNull()
             lookups("exact") shouldBe 1.0
             lookups("ambiguous") shouldBe 1.0
+        }
+    }
+
+    @Test
+    fun `an EXACT match whose artist last released long ago is stored AMBIGUOUS, without a link`() {
+        runBlocking {
+            val beatIt = artist("Beat It!")
+            val fresh = artist("Okkyung Lee")
+            coEvery { client.search("Beat It!") } returns listOf(candidate(6728639, "Beat It!"))
+            coEvery { client.search("Okkyung Lee") } returns listOf(candidate(130715, "Okkyung Lee"))
+            coEvery { client.newestReleaseYear(6728639) } returns 2001
+
+            service().sweep(setOfNotNull(beatIt.id, fresh.id)) shouldBe 2
+
+            val old = reload(beatIt.id)
+            old.discogsMatch shouldBe DiscogsMatch.AMBIGUOUS.name
+            old.discogsId.shouldBeNull()
+            old.discogsUrl.shouldBeNull()
+            reload(fresh.id).discogsMatch shouldBe DiscogsMatch.EXACT.name
+            lookups("inactive") shouldBe 1.0
+            lookups("exact") shouldBe 1.0
+            lookups("ambiguous") shouldBe 0.0
+        }
+    }
+
+    @Test
+    fun `reads releases only for an EXACT match`() {
+        runBlocking {
+            val nails = artist("Nails")
+            val morgue = artist("Sonic Morgue")
+            coEvery { client.search("Nails") } returns listOf(candidate(1, "Nails"), candidate(2, "Nails (2)"))
+            coEvery { client.search("Sonic Morgue") } returns emptyList()
+
+            service().sweep(setOfNotNull(nails.id, morgue.id)) shouldBe 2
+
+            coVerify(exactly = 0) { client.newestReleaseYear(any()) }
         }
     }
 
