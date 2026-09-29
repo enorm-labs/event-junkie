@@ -117,7 +117,7 @@ spec:
       translation:
         engine: none
       discogs:
-        enabled: true
+        enabled: false
       resources:
         requests:
           cpu: "50m"
