@@ -1,6 +1,20 @@
 import type { ClassValue } from 'clsx'
 import { clsx } from 'clsx'
-import { twMerge } from 'tailwind-merge'
+import { extendTailwindMerge } from 'tailwind-merge'
+
+/**
+ * The names our `@theme` block in `main.css` adds. Without them tailwind-merge reads `text-meta` as a
+ * colour and drops it beside `text-muted-foreground` (#2027). `utils.spec.ts` fails when the two drift.
+ */
+const twMerge = extendTailwindMerge({
+  extend: {
+    theme: {
+      text: ['meta', 'body', 'card-title', 'lede', 'section', 'page'],
+      font: ['wordmark', 'heading'],
+      tracking: ['eyebrow'],
+    },
+  },
+})
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
