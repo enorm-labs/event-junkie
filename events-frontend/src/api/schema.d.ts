@@ -1257,6 +1257,12 @@ export interface components {
              * @description When that verdict was reached
              */
             musicbrainzCheckedAt?: string | null;
+            /**
+             * @description What the Discogs lookup decided about a name MusicBrainz does not know (#2026); `EXACT` means Discogs gave `discogsUrl`
+             * @example EXACT
+             * @enum {string}
+             */
+            discogsMatch?: "EXACT" | "AMBIGUOUS" | "NONE" | "UNCHECKED";
         };
     };
     responses: never;

@@ -29,7 +29,7 @@ flowchart LR
         venue["Venue websites"]
         le["Let's Encrypt"]
         claude["Claude API"]
-        wiki["MusicBrainz · Wikidata · Commons · Wikipedia"]
+        wiki["MusicBrainz · Wikidata · Commons · Wikipedia · Discogs"]
         ext["healthchecks.io · Better Stack"]
     end
 
@@ -89,7 +89,7 @@ flowchart LR
 | `main`                         | What lands there is what runs on the cluster, after `release.yml` and Flux                                                                 | GitHub, ruleset `main`                                         |
 | The published chart and images | Flux pulls them by semver range, anonymously, and runs what it gets                                                                        | `ghcr.io/enorm-labs/`                                          |
 | The database                   | Every event, venue and artist. A `--full` re-seed rebuilds it from the venues, [RESTORE_RUNBOOK.md](../ops/RESTORE_RUNBOOK.md) restores it | PostgreSQL on the private network, backups in Object Storage   |
-| The ten cluster secrets        | Each has its own exposure cost, listed in [SECRETS.md](../ops/SECRETS.md)                                                                  | Per cluster. `events-db` in git under SOPS, the rest hand-made |
+| The eleven cluster secrets     | Each has its own exposure cost, listed in [SECRETS.md](../ops/SECRETS.md)                                                                  | Per cluster. `events-db` in git under SOPS, the rest hand-made |
 | The Hetzner token              | Read and write on every server, volume and firewall in the project                                                                         | Staging's `cert-manager` namespace, the operator's Keychain    |
 | `github-dispatch`              | `contents: write` on this repository. The one secret that cannot be regenerated                                                            | `flux-system` on each cluster                                  |
 | The domain and its certificate | `event-junkie.de`, HSTS pinned for a year                                                                                                  | Hetzner DNS, cert-manager                                      |
@@ -118,6 +118,7 @@ Every namespace under the chart starts from default deny. Each arrow below is a 
 | importer     | PostgreSQL                                  | `allow-database`, one address                                                                   |
 | importer     | Object Storage, 443                         | `allow-scraping` covers it, since the bucket is a public address                                |
 | importer     | MusicBrainz, Wikidata, Commons, Wikipedia   | `allow-scraping` covers them, since they are public addresses. B5 lists what is sent            |
+| importer     | Discogs                                     | `allow-scraping` covers it, since it is a public address. B5 lists what is sent                 |
 | BFF          | PostgreSQL, Object Storage on 443           | `allow-database` and `allow-object-storage`. The BFF never reaches a venue                      |
 | frontend     | The BFF service port                        | `allow-frontend-to-bff`, for the injector sidecar                                               |
 | cert-manager | Let's Encrypt, the Hetzner API on staging   | `cert-manager-netpol.yaml` per cluster                                                          |
@@ -177,16 +178,19 @@ The importer is the one workload that talks to the open internet. Everything it 
 | Bad data poisons the dataset                            | T      | medium     | low    | Accepted. A venue can publish anything about itself. `/plausibility-check` and `/data-quality-audit` read for it                             |
 | Our scraping harms a venue                              | D      | low        | medium | Mitigated. `PerHostThrottlingFilter.kt`, `RobotsTxtFilter.kt`, one User-Agent ([ADR-007](../adr/ADR-007_WEB_SCRAPING_STRATEGY.md))           |
 
-### B5 · Importer → Claude API, MusicBrainz and Wikimedia
+### B5 · Importer → Claude API, MusicBrainz, Wikimedia and Discogs
 
 After each import the importer looks up the billed artists in MusicBrainz ([ADR-031](../adr/ADR-031_ARTIST_IDENTITY_HUB.md)). For an exact match it
 reads a picture from Wikidata and Commons, and an ensemble's lead from Wikipedia. All four are on by default (`app.musicbrainz.enabled`,
-`app.wikimedia.enabled`). Anyone can edit what they return.
+`app.wikimedia.enabled`). Anyone can edit what they return. For an artist MusicBrainz does not know, the importer searches Discogs
+([ADR-035](../adr/ADR-035_DISCOGS_SECOND_ARTIST_INDEX.md)). The chart ships that lookup off (`importer.discogs.enabled`).
 
 | Threat                                                                                | STRIDE | Likelihood | Impact | Status                                                                                                                                                                                                               |
 | ------------------------------------------------------------------------------------- | ------ | ---------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Venue text instructs the translation model                                            | T      | medium     | low    | Accepted. The output is a translation stored as text and rendered escaped. The worst case is a wrong translation of one event                                                                                        |
 | The key leaks and someone spends against the workspace                                | I      | low        | low    | Mitigated. Hand-made, never in git, a spend cap on the workspace. SECRETS.md § `event-junkie-translation`                                                                                                            |
+| The Discogs consumer credentials leak and someone searches as our application         | I      | low        | low    | Mitigated. Hand-made, never in git, never logged: `DiscogsProperties.toString` hides them and `DiscogsClientTest` asserts it. SECRETS.md § `event-junkie-discogs`                                                    |
+| A Discogs entry gives a wrong act the same name, and its link reaches an artist page  | T      | medium     | low    | Accepted. Only a single exact title match is stored, and only as a link. ADR-035 requires a hand review of 40 matches after the first staging run                                                                    |
 | An edited MusicBrainz or Wikipedia entry puts false or hostile text on an artist page | T      | medium     | low    | Mitigated. Only an exact match is enriched. The text is stored as text and rendered escaped, as in B2. `WikipediaLead.kt` refuses a lead with birth data or under 80 characters. Each lead keeps its CC BY-SA credit |
 | A Commons picture carries a licence we may not use                                    | T      | low        | medium | Mitigated. `CommonsLicences` in `CommonsImage.kt` maps known templates to SPDX and refuses any other. The picture, author, licence and source page are stored together or not at all                                 |
 | A Commons picture URL points a fetch somewhere hostile                                | I, D   | low        | low    | Mitigated. The picture goes through the same image cache as a venue image, so B4's `ImageFetcher.kt` and `allow-scraping` apply                                                                                      |

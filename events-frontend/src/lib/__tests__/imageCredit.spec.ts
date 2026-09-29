@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { imageCredit, textCredit } from '@/lib/imageCredit'
+import { imageCredit, owesDiscogsCredit, textCredit } from '@/lib/imageCredit'
 
 /**
  * Whether an image may be shown, and what has to be shown with it.
@@ -114,5 +114,19 @@ describe('textCredit', () => {
     expect(textCredit({ description: 'Punk aus Ipswich.' })).toBeNull()
     expect(textCredit({ ...lead, description: null })).toBeNull()
     expect(textCredit(null)).toBeNull()
+  })
+})
+
+describe('owesDiscogsCredit', () => {
+  const link = 'https://www.discogs.com/artist/130715-Okkyung-Lee'
+
+  it('credits a link the Discogs lookup resolved', () => {
+    expect(owesDiscogsCredit({ discogsUrl: link, discogsMatch: 'EXACT' })).toBe(true)
+  })
+
+  it('does not credit a link MusicBrainz relates, or a verdict with no link', () => {
+    expect(owesDiscogsCredit({ discogsUrl: link, discogsMatch: 'UNCHECKED' })).toBe(false)
+    expect(owesDiscogsCredit({ discogsUrl: null, discogsMatch: 'EXACT' })).toBe(false)
+    expect(owesDiscogsCredit(null)).toBe(false)
   })
 })

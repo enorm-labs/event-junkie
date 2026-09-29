@@ -4,7 +4,7 @@ What is encrypted into git and restored by Flux, what stays hand-made and why, a
 
 ## The short version
 
-- **Ten objects.** One, `events-db`, is encrypted into git and restored by Flux. The other nine are typed by a human and exist nowhere else.
+- **Eleven objects.** One, `events-db`, is encrypted into git and restored by Flux. The other ten are typed by a human and exist nowhere else.
 - **Only `github-dispatch` cannot be regenerated.** Everything else comes back from the Keychain, a local file, or an `ALTER ROLE`.
 - **A rebuild silently loses every hand-made one**, and the cluster comes back looking healthy. §8b is the same shape.
 - **`sops-age` is the whole recovery story.** The repository without it is noise.
@@ -18,7 +18,7 @@ flux --context event-junkie-staging get helmreleases -A       # a missing creden
 > decision. `github-dispatch` is the one place the "encrypt it, the value is a nuisance at worst" reasoning does not hold, because its scope is
 > `contents: write`. See the note under the table.
 
-## The ten objects, and where each comes from
+## The eleven objects, and where each comes from
 
 | Secret                     | Namespace                                         | Holds                                                 | Created at                                                     |
 | -------------------------- | ------------------------------------------------- | ----------------------------------------------------- | -------------------------------------------------------------- |
@@ -28,15 +28,16 @@ flux --context event-junkie-staging get helmreleases -A       # a missing creden
 | `github-dispatch`          | `flux-system`                                     | a fine-grained PAT, **`contents: write`** on one repo | [CLUSTER_BOOTSTRAP.md](CLUSTER_BOOTSTRAP.md) §8 — **after** §9 |
 | `postgres-exporter`        | `observability`                                   | the `metrics` role's DSN                              | §postgres-exporter, below                                      |
 | `event-junkie-translation` | `event-junkie`                                    | the Claude API key the importer translates with       | §event-junkie-translation, below                               |
+| `event-junkie-discogs`     | `event-junkie`                                    | the Discogs application's consumer key and secret     | §event-junkie-discogs, below                                   |
 | `sops-age`                 | `flux-system`                                     | the age private key that decrypts `events-db`         | §3, below                                                      |
 | `event-junkie-images`      | `event-junkie`                                    | an S3 keypair for the cached image bucket **only**    | §event-junkie-images, below                                    |
 | `event-junkie-imgproxy`    | `event-junkie`                                    | the key and salt that sign imgproxy URLs              | §event-junkie-imgproxy, below                                  |
 | `openobserve-smtp`         | `observability`                                   | the `alerts@` mailbox password, for the alert mail    | §openobserve-smtp, below                                       |
 
-**All ten belong in that table.** Two were once documented only in their own sections below and never reached this summary. A rebuild that followed it would restore
+**All eleven belong in that table.** Two were once documented only in their own sections below and never reached this summary. A rebuild that followed it would restore
 four, which is exactly the failure mode a summary exists to prevent. Add a row here in the same change that adds a secret.
 
-**Every one of these is per cluster.** The table lists ten objects, not ten values. Staging and production each hold their own copy. Two of them hold
+**Every one of these is per cluster.** The table lists eleven objects, not eleven values. Staging and production each hold their own copy. Two of them hold
 _different_ values on purpose: `github-dispatch`, so revoking one does not take both clusters down, and `openobserve-credentials`, since
 [#880](https://github.com/enorm-labs/event-junkie/issues/880).
 
@@ -97,7 +98,7 @@ importer calling the sidecar. imgproxy also binds `127.0.0.1`. Nothing outside t
 all, so the signature is the second lock rather than the only one.
 
 **So losing it costs nothing.** Generate a fresh pair, restart the pod, and both sides agree again.
-No stored object is signed, and no URL survives a restart. It is the least dangerous of the ten on
+No stored object is signed, and no URL survives a restart. It is the least dangerous of the eleven on
 every axis, which is worth stating so a rebuild does not treat it as precious.
 
 ```sh
@@ -134,6 +135,7 @@ secret.
 | `hetzner`                  | **Read+write control of the Hetzner account** — servers, volumes, firewalls, the lot                                      | **Recommend not**                    |
 | `openobserve-credentials`  | Admin login to every log and metric, **and** Object Storage keys reaching all three buckets                               | **No** — see below                   |
 | `event-junkie-translation` | Someone else spends against one Anthropic workspace, up to its cap. No data of ours, no infrastructure                    | **No** — see below                   |
+| `event-junkie-discogs`     | Someone else searches Discogs as our application, at 60 requests a minute. No data of ours, no infrastructure             | **No** — as the translation key      |
 | `openobserve-smtp`         | Mail sent as `alerts@`, and the alert mail read from that mailbox. Reset in konsoleH in a minute                          | **No** — one mailbox, two clusters   |
 
 **On `github-dispatch`.** The table's logic is exposure cost. A broken `github-dispatch` ciphertext buys `contents: write` on this repository. Under
@@ -257,6 +259,21 @@ followed by a restart of the importer.
 twice for output nobody read on staging. The engine is not the switch that spends: a source needs `translation_licence = PERMITTED` as well, and 84 of the 86
 hold it on both clusters. ADR-027 reads that verdict off the display rule, instead of waiting for a venue's own answer. Staging's Secret is left in place, so
 putting `anthropic` back is the only step needed to translate there again.
+
+### `event-junkie-discogs` — the one that is not needed for a healthy cluster either
+
+The consumer key and secret of the Discogs application the importer searches with (ADR-035). Without the Secret nothing fails. `importer.discogs.enabled`
+defaults to `false`, so the deployment names no Secret, and the importer sends nothing to Discogs.
+
+```sh
+kubectl --context event-junkie-staging -n event-junkie create secret generic event-junkie-discogs \
+  --from-literal=APP_DISCOGS_CONSUMER_KEY="$(security find-generic-password -s discogs-consumer-key -w)" \
+  --from-literal=APP_DISCOGS_CONSUMER_SECRET="$(security find-generic-password -s discogs-consumer-secret -w)"
+```
+
+The same command against `event-junkie-production`. One application serves both clusters. The rate limit counts per source address, so each cluster has its
+own 60 requests a minute. Create the Secret before a cluster sets `importer.discogs.enabled: true`. Otherwise the importer pod does not start. Rotating is a new
+secret in the Discogs developer settings, then `kubectl delete secret`, this command again, and a restart of the importer.
 
 ### `postgres-exporter` — a monitoring role, not the application's
 

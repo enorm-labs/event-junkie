@@ -73,6 +73,9 @@ class ImporterMetrics(
     /** Backs [MUSICBRAINZ_UNENRICHED]: EXACT rows whose entity step C has not read yet (#1568). */
     private val musicBrainzUnenriched = AtomicLong(0)
 
+    /** Backs [DISCOGS_UNCHECKED]: NONE rows the Discogs sweep has not asked about yet (#2026). */
+    private val discogsUnchecked = AtomicLong(0)
+
     /** Sources currently `FAILED`, per reason, backing the `sources.failed` gauge (#708); keyed by reason. */
     private val failedSources = ConcurrentHashMap<String, AtomicLong>()
 
@@ -82,6 +85,7 @@ class ImporterMetrics(
         registry.gauge(DB_EVENTS, Tags.of(TAG_HORIZON, HORIZON_FUTURE), eventsFuture) { it.get().toDouble() }
         registry.gauge(MUSICBRAINZ_UNCHECKED, musicBrainzUnchecked) { it.get().toDouble() }
         registry.gauge(MUSICBRAINZ_UNENRICHED, musicBrainzUnenriched) { it.get().toDouble() }
+        registry.gauge(DISCOGS_UNCHECKED, discogsUnchecked) { it.get().toDouble() }
     }
 
     /**
@@ -219,6 +223,14 @@ class ImporterMetrics(
 
     /** Publishes how many EXACT rows still await their entity read; refreshed by [MetricsRefreshService]. */
     fun updateMusicBrainzUnenriched(count: Long) = musicBrainzUnenriched.set(count)
+
+    /** Counts one Discogs lookup by verdict, `exact`, `ambiguous`, `none`, or `error` (#2026). */
+    fun recordDiscogsLookup(state: String) {
+        registry.counter(DISCOGS_LOOKUPS, TAG_STATE, state).increment()
+    }
+
+    /** Publishes how many NONE rows Discogs has not been asked about; refreshed by [MetricsRefreshService]. */
+    fun updateDiscogsUnchecked(count: Long) = discogsUnchecked.set(count)
 
     /**
      * Publishes [epochSeconds] as the source's last success. A timestamp, not an age, the
@@ -453,6 +465,12 @@ class ImporterMetrics(
 
         /** `importer.musicbrainz.unenriched` — EXACT rows awaiting their entity read; step C's backfill draining. */
         const val MUSICBRAINZ_UNENRICHED = "importer.musicbrainz.unenriched"
+
+        /** `importer.discogs.lookups{state}` — one per name looked up. See [recordDiscogsLookup]. */
+        const val DISCOGS_LOOKUPS = "importer.discogs.lookups"
+
+        /** `importer.discogs.unchecked` — NONE rows still awaiting a Discogs verdict; the backfill draining. */
+        const val DISCOGS_UNCHECKED = "importer.discogs.unchecked"
 
         const val FIELD_ERROR = "error"
 

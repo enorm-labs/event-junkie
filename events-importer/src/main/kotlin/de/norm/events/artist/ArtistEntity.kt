@@ -51,6 +51,10 @@ data class ArtistEntity(
     val musicbrainzMatch: String = MusicBrainzMatch.UNCHECKED.name,
     val musicbrainzCheckedAt: Instant? = null,
     val musicbrainzEnrichedAt: Instant? = null,
+    val discogsId: Long? = null,
+    /** [DiscogsMatch] by name, a String for the same reason as [musicbrainzMatch]. */
+    val discogsMatch: String = DiscogsMatch.UNCHECKED.name,
+    val discogsCheckedAt: Instant? = null,
     @CreatedDate val createdAt: Instant? = null,
     @LastModifiedDate val updatedAt: Instant? = null
 ) {
@@ -91,6 +95,9 @@ data class ArtistEntity(
             musicbrainzMatch = MusicBrainzMatch.valueOf(musicbrainzMatch),
             musicbrainzCheckedAt = musicbrainzCheckedAt,
             musicbrainzEnrichedAt = musicbrainzEnrichedAt,
+            discogsId = discogsId,
+            discogsMatch = DiscogsMatch.valueOf(discogsMatch),
+            discogsCheckedAt = discogsCheckedAt,
             createdAt = createdAt,
             updatedAt = updatedAt
         )
@@ -133,6 +140,9 @@ data class ArtistEntity(
                 musicbrainzMatch = artist.musicbrainzMatch.name,
                 musicbrainzCheckedAt = artist.musicbrainzCheckedAt,
                 musicbrainzEnrichedAt = artist.musicbrainzEnrichedAt,
+                discogsId = artist.discogsId,
+                discogsMatch = artist.discogsMatch.name,
+                discogsCheckedAt = artist.discogsCheckedAt,
                 createdAt = artist.createdAt,
                 updatedAt = artist.updatedAt
             )

@@ -108,6 +108,8 @@ class ArtistControllerTest : BaseControllerTest() {
                 .isEqualTo("UNCHECKED")
                 .jsonPath("$.musicbrainzId")
                 .doesNotExist()
+                .jsonPath("$.discogsMatch")
+                .isEqualTo("UNCHECKED")
         }
 
     @Test
@@ -136,6 +138,33 @@ class ArtistControllerTest : BaseControllerTest() {
                 .exists()
                 .jsonPath("$.musicbrainzUrl")
                 .isEqualTo("https://musicbrainz.org/artist/41f4d85a-0bd7-4602-a3e3-8c47f36efb0a")
+        }
+
+    @Test
+    fun `GET artist by slug carries the Discogs verdict, and the link it filled`(): Unit =
+        runBlocking {
+            val id = insertArtist("Okkyung Lee", "okkyung-lee")
+            databaseClient
+                .sql(
+                    "UPDATE events.artist SET musicbrainz_match = 'NONE', discogs_match = 'EXACT', discogs_id = 130715, " +
+                        "discogs_url = 'https://www.discogs.com/artist/130715-Okkyung-Lee', discogs_checked_at = now() WHERE id = :id"
+                ).bind("id", id)
+                .fetch()
+                .awaitRowsUpdated()
+
+            webTestClient
+                .get()
+                .uri("/artists/okkyung-lee")
+                .exchange()
+                .expectStatus()
+                .isOk
+                .expectBody()
+                .jsonPath("$.discogsMatch")
+                .isEqualTo("EXACT")
+                .jsonPath("$.discogsUrl")
+                .isEqualTo("https://www.discogs.com/artist/130715-Okkyung-Lee")
+                .jsonPath("$.discogsId")
+                .doesNotExist()
         }
 
     @Test

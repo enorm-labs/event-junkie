@@ -75,6 +75,12 @@ data class Artist(
     val musicbrainzCheckedAt: Instant? = null,
     /** When the enrichment last read the MusicBrainz entity. A row matched again after this is read again. */
     val musicbrainzEnrichedAt: Instant? = null,
+    /** The Discogs artist id this row resolved to. Set exactly when [discogsMatch] is [DiscogsMatch.EXACT]. */
+    val discogsId: Long? = null,
+    /** What the Discogs lookup decided about [name]. Asked only of a row MusicBrainz marks [MusicBrainzMatch.NONE] (#2026). */
+    val discogsMatch: DiscogsMatch = DiscogsMatch.UNCHECKED,
+    /** When [discogsMatch] was reached. A row modified after this is looked up again. */
+    val discogsCheckedAt: Instant? = null,
     /** Timestamp when this record was first created. Set by the database. */
     val createdAt: Instant? = null,
     /** Timestamp when this record was last modified. Set by the database. */
@@ -100,6 +106,28 @@ enum class MusicBrainzMatch {
     NONE,
 
     /** The sweep has not looked yet, or the name changed since it did. */
+    UNCHECKED
+}
+
+/**
+ * The verdict of a Discogs lookup on the stored name of an artist MusicBrainz does not know (#2026).
+ *
+ * The rule is [MusicBrainzMatch]'s first one on what Discogs' search returns: a candidate counts only
+ * when its folded title equals the folded name. Discogs' search carries no country and no aliases, so
+ * there is no tie-break; a homonym suffix (`Hanzel (2)`) is stripped first so that every homonym counts,
+ * and a suffixed candidate is never EXACT, because the suffix proves that others share the name.
+ */
+enum class DiscogsMatch {
+    /** One Discogs artist carries this name; its id is stored and its page fills an empty `discogsUrl`. */
+    EXACT,
+
+    /** Several Discogs artists carry the name. Nothing is filled. */
+    AMBIGUOUS,
+
+    /** No Discogs artist carries the name. */
+    NONE,
+
+    /** Not looked up: MusicBrainz knows the name, the lookup has not run, or the name changed since it did. */
     UNCHECKED
 }
 

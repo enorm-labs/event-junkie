@@ -415,3 +415,52 @@ tests:
           content:
             name: APP_TRANSLATION_MAX_PER_RUN
             value: "250"
+
+  # --- Discogs: off by default, and off means no Secret named (#2026) ---------------------------
+  - it: names no Discogs secret while the lookup is off
+    set:
+      database.host: "10.0.1.2"
+      networkPolicy.databaseCidr: "10.0.1.2/32"
+      database.existingSecret: "events-db"
+    documentSelector:
+      path: kind
+      value: Deployment
+    asserts:
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: APP_DISCOGS_CONSUMER_KEY
+          any: true
+
+  - it: reads both consumer credentials from the hand-made secret once the lookup is on
+    set:
+      database.host: "10.0.1.2"
+      networkPolicy.databaseCidr: "10.0.1.2/32"
+      database.existingSecret: "events-db"
+      importer.discogs.enabled: true
+      importer.discogs.maxPerRun: 200
+    documentSelector:
+      path: kind
+      value: Deployment
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: APP_DISCOGS_CONSUMER_KEY
+            valueFrom:
+              secretKeyRef:
+                name: event-junkie-discogs
+                key: APP_DISCOGS_CONSUMER_KEY
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: APP_DISCOGS_CONSUMER_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: event-junkie-discogs
+                key: APP_DISCOGS_CONSUMER_SECRET
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: APP_DISCOGS_MAX_PER_RUN
+            value: "200"

@@ -156,7 +156,10 @@ const { t } = useI18n()
         Artist profiles are checked against MusicBrainz, an open music database. Where they match,
         the official links and the picture come from there and from Wikidata. Only the artist's
         stage name is sent. For bands, orchestras and choirs, the short description comes from
-        Wikipedia.
+        Wikipedia. Where MusicBrainz does not know a name, we ask Discogs (Zink Media, LLC, USA) and
+        store only the link to the Discogs page on a match; again only the stage name is sent. This
+        website uses the Discogs API but is not affiliated with, sponsored or endorsed by Discogs.
+        “Discogs” is a trademark of Zink Media, LLC.
       </p>
       <p>
         <strong>Purpose:</strong> informing the public about publicly announced cultural events.

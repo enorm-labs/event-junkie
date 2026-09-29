@@ -85,6 +85,9 @@ classDiagram
         MusicBrainzMatch musicbrainzMatch
         Instant? musicbrainzCheckedAt
         Instant? musicbrainzEnrichedAt
+        Long? discogsId
+        DiscogsMatch discogsMatch
+        Instant? discogsCheckedAt
         Instant? createdAt
         Instant? updatedAt
     }
@@ -133,6 +136,14 @@ classDiagram
         UNCHECKED
     }
 
+    class DiscogsMatch {
+        <<enumeration>>
+        EXACT
+        AMBIGUOUS
+        NONE
+        UNCHECKED
+    }
+
     class GenreFamily {
         <<enumeration>>
         ELECTRONIC
@@ -152,6 +163,7 @@ classDiagram
 
     Artist --> ArtistType: artistType
     Artist --> MusicBrainzMatch: musicbrainzMatch
+    Artist --> DiscogsMatch: discogsMatch
     GenreTag --> GenreFamily: family
 ```
 
@@ -288,6 +300,9 @@ Represents a musical artist or band. Normalized separately so artists can appear
 | `musicbrainz_id`         | `TEXT`        | Yes      | MBID, set exactly when the verdict is `EXACT` (ADR-031)                 | `41f4d85a-0bd7-4602-a3e3-8c47f36efb0a`         |
 | `musicbrainz_match`      | `TEXT`        | No       | `EXACT` / `AMBIGUOUS` / `NONE` / `UNCHECKED` — the lookup's verdict     | `EXACT`                                        |
 | `musicbrainz_checked_at` | `TIMESTAMPTZ` | Yes      | When the verdict was reached; a later `updated_at` queues the row again |                                                |
+| `discogs_id`             | `BIGINT`      | Yes      | Discogs artist id, set exactly when the Discogs verdict is `EXACT`      | `130715`                                       |
+| `discogs_match`          | `TEXT`        | No       | The Discogs verdict. Asked only when `musicbrainz_match` is `NONE`      | `EXACT`                                        |
+| `discogs_checked_at`     | `TIMESTAMPTZ` | Yes      | When the Discogs verdict was reached (ADR-035)                          |                                                |
 | `created_at`             | `TIMESTAMPTZ` | No       | Record creation timestamp                                               |                                                |
 | `updated_at`             | `TIMESTAMPTZ` | No       | Last modification timestamp                                             |                                                |
 
