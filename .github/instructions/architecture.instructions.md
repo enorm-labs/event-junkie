@@ -81,7 +81,8 @@ mismatch`** — the pod never goes Ready and `remediateLastFailure` rolls the re
   on `,`, `//`, `&`, `/`, strips noise suffixes, maps synonyms (`Hip-Hop`/`Rap` → `Hip Hop`), keeps unknowns in title case; shared by `EventService` and
   `AssociationSyncService`. No manual tag CRUD.
 - **Web scraping** (ADR-007), the `scraper` module: Jsoup, a throttled `WebClient` (`PerHostThrottlingFilter`, `app.scraper.polite-delay-millis`, 200ms per
-  host, transparent to every `HtmlFetcher` and `ApiClient` call), conditional requests by ETag / Last-Modified. `EventSource` is the enum registry; each
+  host, transparent to every `HtmlFetcher` and `ApiClient` call), conditional requests by ETag / Last-Modified, for an entry page that is the whole source
+  only (`EventImporter.fetchesBeyondEntryPage`, #2020). `EventSource` is the enum registry; each
   value's KDoc is **one line about the venue**, and everything else about a source — platform, pages read, traps, accepted limitations — lives on that
   venue's sub-package under `scraper/<venue>/`, the single home. A repairable defect is an issue (🔍 Importer / data defect), not KDoc.
     - `EventImportService` orchestrates (RUNNING → SUCCESS/FAILED/MISCONFIGURED, concurrent under `app.import.max-concurrency`, 4) and delegates to

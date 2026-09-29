@@ -30,6 +30,13 @@ interface EventImporter {
     val listsWholeProgramme: Boolean get() = false
 
     /**
+     * Whether a run fetches anything past the entry page: detail pages, later listing pages, month
+     * pages. True makes [EventImportService] fetch unconditionally, because the entry page's ETag or
+     * Last-Modified says nothing about those pages, and a 304 on it would skip them all (#2020).
+     */
+    val fetchesBeyondEntryPage: Boolean get() = false
+
+    /**
      * Imports events from the venue's website.
      *
      * The importer is responsible for:

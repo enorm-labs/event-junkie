@@ -42,6 +42,7 @@ class AmtWebsiteImporter(
     private val logger = KotlinLogging.logger {}
 
     override val eventSource: EventSource = EventSource.AMT
+    override val fetchesBeyondEntryPage: Boolean = true
 
     private val overviewPageScraper = AmtOverviewPageScraper()
 

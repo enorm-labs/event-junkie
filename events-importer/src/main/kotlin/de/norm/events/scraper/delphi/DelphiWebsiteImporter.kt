@@ -42,6 +42,7 @@ class DelphiWebsiteImporter(
 
     override val eventSource: EventSource = EventSource.THEATER_IM_DELPHI
     override val listsWholeProgramme: Boolean = true
+    override val fetchesBeyondEntryPage: Boolean = true
 
     private val programmePageScraper = DelphiProgrammePageScraper()
     private val productionPageScraper = DelphiProductionPageScraper()

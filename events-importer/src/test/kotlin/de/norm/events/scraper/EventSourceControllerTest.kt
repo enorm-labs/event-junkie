@@ -227,7 +227,8 @@ class EventSourceControllerTest : BaseControllerTest() {
     @Test
     fun `POST import with force=true fetches without the cached validators and stores the new ones`() {
         // One listing on a local server that honours If-None-Match, so the three triggers below can be
-        // told apart by what the server received: a first fetch, a 304, and a forced full fetch.
+        // told apart by what the server received: a first fetch, a 304, and a forced full fetch. A
+        // one-page importer, because a two-page one never sends validators (#2020).
         val server = MockWebServer()
         val listing = ConditionalListing()
         server.dispatcher = listing
@@ -235,7 +236,7 @@ class EventSourceControllerTest : BaseControllerTest() {
         try {
             val venueId = createVenue().id
             val listingUrl = server.url("/programm/").toString()
-            val slug = createSource(EventSourceRequestFixtures.create(venueId = venueId, url = listingUrl)).slug
+            val slug = createSource(EventSourceRequestFixtures.create(venueId = venueId, url = listingUrl, sourceType = "SUPAMOLLY")).slug
 
             triggerImport(slug)
             listing.nextRequest().headers["If-None-Match"] shouldBe null

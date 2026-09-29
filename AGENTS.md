@@ -182,7 +182,7 @@ Java comes from SDKMAN (`.sdkmanrc`, `sdk env`); target **Java 25**. Infra, char
   under the scheduler. The tell is `restartedMain` beside `Started EventsImporterApplicationKt in 1.0 seconds (process running for 117.3)`. Recovery:
   `scripts/dev-env.sh psql "UPDATE events.event_source SET status='IDLE', retry_count=0, version=version+1 WHERE status='RUNNING'"`, then re-trigger.
   On a long job compile first, restart once, then import.
-- **A parser fix at a venue whose page has not changed is a 304 forever.** The cached `ETag` / `Last-Modified` skip the import on schedule and manual trigger
+- **A parser fix at a one-page venue whose page has not changed is a 304 forever.** The cached `ETag` / `Last-Modified` skip the import on schedule and manual trigger
   alike. Do not clear the columns; `POST /api/admin/event-sources/<slug>/import?force=true` (#1159) fetches unconditionally and stores fresh validators.
 - **Re-keying a live source collides with its own today-dated rows.** A new `sourceId` shape stales every old row, but `removeStaleEvents` spares **today**,
   so a today-dated row keeps its slug while its replacement claims the same one. Re-key on a day the venue is dark, or clear that source's rows first —

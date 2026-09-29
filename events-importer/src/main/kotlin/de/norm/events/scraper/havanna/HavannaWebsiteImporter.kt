@@ -36,6 +36,7 @@ class HavannaWebsiteImporter(
     private val logger = KotlinLogging.logger {}
 
     override val eventSource: EventSource = EventSource.HAVANNA
+    override val fetchesBeyondEntryPage: Boolean = true
 
     private val overviewPageScraper = HavannaOverviewPageScraper()
     private val detailPageScraper = HavannaDetailPageScraper()

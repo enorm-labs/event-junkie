@@ -30,6 +30,7 @@ class SchokoladenWebsiteImporter(
     private val logger = KotlinLogging.logger {}
 
     override val eventSource: EventSource = EventSource.SCHOKOLADEN
+    override val fetchesBeyondEntryPage: Boolean = true
 
     private val overviewPageScraper = SchokoladenOverviewPageScraper()
 

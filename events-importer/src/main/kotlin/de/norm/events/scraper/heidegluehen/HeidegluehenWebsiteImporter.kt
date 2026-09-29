@@ -39,6 +39,7 @@ class HeidegluehenWebsiteImporter(
     private val logger = KotlinLogging.logger {}
 
     override val eventSource: EventSource = EventSource.HEIDEGLUEHEN
+    override val fetchesBeyondEntryPage: Boolean = true
 
     private val monthPageScraper = HeidegluehenMonthPageScraper()
     private val weekPageScraper = HeidegluehenWeekPageScraper()

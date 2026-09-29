@@ -64,6 +64,7 @@ class EventImportServiceTest {
         mockk {
             coEvery { eventSource } returns EventSource.CASSIOPEIA
             coEvery { listsWholeProgramme } returns false
+            coEvery { fetchesBeyondEntryPage } returns false
         }
 
     // TransactionalOperator that executes the callback directly.
@@ -296,6 +297,24 @@ class EventImportServiceTest {
                 // The following run is conditional again: the forced fetch's validators are stored like any other.
                 coVerify {
                     eventSourceRepository.save(match { it.status == ImportStatus.SUCCESS.name && it.etag == "\"new-etag\"" && it.lastModified == null })
+                }
+            }
+
+        @Test
+        fun `an importer that fetches past its entry page never sends or keeps a validator`() =
+            runTest {
+                coEvery { cassiopeiaImporter.fetchesBeyondEntryPage } returns true
+                val src = source(etag = "\"old-etag\"", lastModified = "Mon, 31 Aug 2026 20:43:18 GMT")
+
+                coEvery { cassiopeiaImporter.importEvents(src.url, null, null) } returns
+                    ImportResult.Success(events = emptyList(), etag = "\"new-etag\"", lastModified = "Tue, 29 Sep 2026 08:00:00 GMT")
+
+                service.importFromSource(src).imported shouldBe true
+
+                coVerify(exactly = 0) { cassiopeiaImporter.importEvents(any(), "\"old-etag\"", any()) }
+                // A stored validator would be sent again by nothing, and would read as one that works.
+                coVerify {
+                    eventSourceRepository.save(match { it.status == ImportStatus.SUCCESS.name && it.etag == null && it.lastModified == null })
                 }
             }
 

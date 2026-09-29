@@ -52,6 +52,7 @@ class MonsterRonsonsWebsiteImporter(
     private val logger = KotlinLogging.logger {}
 
     override val eventSource: EventSource = EventSource.MONSTER_RONSONS
+    override val fetchesBeyondEntryPage: Boolean = true
 
     private val overviewPageScraper = MonsterRonsonsOverviewPageScraper(clock)
     private val detailPageScraper = MonsterRonsonsDetailPageScraper()
