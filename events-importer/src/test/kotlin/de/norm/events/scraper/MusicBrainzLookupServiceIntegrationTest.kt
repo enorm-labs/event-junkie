@@ -24,7 +24,7 @@ import org.springframework.beans.factory.annotation.Autowired
  * The sweep against a real PostgreSQL (Testcontainers), with MusicBrainz replaced by a scripted
  * client. What the columns of V037 do under the verdict is the point — the CHECK constraints, the
  * partial-index query, and that a verdict leaves `name` alone and does not queue the row again
- * through `trg_artist_updated_at` — and a repository double would assert none of it.
+ * — and a repository double would assert none of it.
  */
 class MusicBrainzLookupServiceIntegrationTest : BaseControllerTest() {
     @Autowired
@@ -76,9 +76,6 @@ class MusicBrainzLookupServiceIntegrationTest : BaseControllerTest() {
             storedAccept.musicbrainzMatch shouldBe MusicBrainzMatch.EXACT.name
             storedAccept.musicbrainzId shouldBe "mbid-de"
             storedAccept.name shouldBe "Accept"
-            // The trigger bumped `updated_at` to the same `now()` the verdict wrote, so the row is
-            // current, not "renamed since checked".
-            storedAccept.musicbrainzCheckedAt shouldBe storedAccept.updatedAt
             artistRepository.findNeedingMusicBrainzLookup(setOf(acceptId)).toList() shouldBe emptyList()
 
             val storedPici = artistRepository.findById(requireNotNull(pici.id)).shouldNotBeNull()
@@ -112,7 +109,7 @@ class MusicBrainzLookupServiceIntegrationTest : BaseControllerTest() {
     }
 
     @Test
-    fun `a renamed row is looked up again, because its updated_at outran the verdict`() {
+    fun `a renamed row is looked up again, because its name changed after the verdict`() {
         runBlocking {
             val id = requireNotNull(artist("Old Name").id)
             artistRepository.storeMusicBrainzVerdict(id, MusicBrainzMatch.EXACT.name, "mbid-old")
@@ -124,6 +121,17 @@ class MusicBrainzLookupServiceIntegrationTest : BaseControllerTest() {
             val stored = requireNotNull(artistRepository.findById(id))
             stored.musicbrainzMatch shouldBe MusicBrainzMatch.NONE.name
             stored.musicbrainzId.shouldBeNull()
+        }
+    }
+
+    @Test
+    fun `a write that leaves the name alone does not queue the row again`() {
+        runBlocking {
+            val id = requireNotNull(artist("Kept Name").id)
+            artistRepository.storeMusicBrainzVerdict(id, MusicBrainzMatch.NONE.name, null)
+            artistRepository.save(requireNotNull(artistRepository.findById(id)).copy(websiteUrl = "https://kept.example"))
+
+            service().sweep(setOf(id)) shouldBe 0
         }
     }
 

@@ -10,6 +10,7 @@ import de.norm.events.discogs.DiscogsCandidate
 import de.norm.events.discogs.DiscogsClient
 import de.norm.events.discogs.DiscogsProperties
 import de.norm.events.discogs.DiscogsUnavailableException
+import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
@@ -17,6 +18,7 @@ import io.micrometer.core.instrument.simple.SimpleMeterRegistry
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
+import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -140,10 +142,10 @@ class DiscogsLookupServiceIntegrationTest : BaseControllerTest() {
             reload(kevin.id).discogsUrl shouldBe "https://www.discogs.com/artist/1007151-Kevin"
 
             // Renamed rows are asked again; this time the only hits are suffixed homonyms.
-            artistRepository.save(reload(kevin.id).copy(name = "Kevin"))
-            artistRepository.save(reload(venueLinked.id).copy(name = "Victor"))
-            coEvery { client.search("Kevin") } returns listOf(candidate(1007151, "Kevin (27)"))
-            coEvery { client.search("Victor") } returns listOf(candidate(642486, "Victor (10)"))
+            artistRepository.save(reload(kevin.id).copy(name = "Kevin K"))
+            artistRepository.save(reload(venueLinked.id).copy(name = "Victor V"))
+            coEvery { client.search("Kevin K") } returns listOf(candidate(1007151, "Kevin K (27)"))
+            coEvery { client.search("Victor V") } returns listOf(candidate(642486, "Victor V (10)"))
             service().sweep(setOfNotNull(kevin.id, venueLinked.id)) shouldBe 2
 
             val cleared = reload(kevin.id)
@@ -165,6 +167,34 @@ class DiscogsLookupServiceIntegrationTest : BaseControllerTest() {
 
             coVerify(exactly = 1) { client.search("Rena Volvo") }
             reload(rena.id).discogsMatch shouldBe DiscogsMatch.NONE.name
+        }
+    }
+
+    @Test
+    fun `a Discogs verdict does not queue the row for MusicBrainz, nor a later MusicBrainz verdict for Discogs`() {
+        runBlocking {
+            val id = requireNotNull(artist("Zoh Amba").id)
+            coEvery { client.search("Zoh Amba") } returns listOf(candidate(4, "Zoh Amba"))
+
+            service().sweep(setOf(id)) shouldBe 1
+            artistRepository.findNeedingMusicBrainzLookup(setOf(id)).toList().shouldBeEmpty()
+
+            artistRepository.storeMusicBrainzVerdict(id, MusicBrainzMatch.NONE.name, null)
+            discogsRepository.findNeedingDiscogsLookup(setOf(id)).toList().shouldBeEmpty()
+        }
+    }
+
+    @Test
+    fun `a renamed row is asked again`() {
+        runBlocking {
+            val id = requireNotNull(artist("Old Name").id)
+            coEvery { client.search(any()) } returns emptyList()
+            service().sweep(setOf(id)) shouldBe 1
+
+            artistRepository.save(reload(id).copy(name = "New Name"))
+
+            service().sweep(setOf(id)) shouldBe 1
+            coVerify { client.search("New Name") }
         }
     }
 

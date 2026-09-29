@@ -34,7 +34,7 @@ import org.springframework.dao.DataIntegrityViolationException
 /**
  * Step C against a real PostgreSQL, with MusicBrainz and Wikimedia replaced by scripted clients.
  * What V040's columns and CHECKs do under a fill, and that the write does not queue the row for
- * another lookup through `trg_artist_updated_at`, are the point; a repository double asserts none of it.
+ * another lookup, are the point; a repository double asserts none of it.
  */
 class MusicBrainzEnrichmentServiceIntegrationTest : BaseControllerTest() {
     @Autowired
@@ -154,7 +154,7 @@ class MusicBrainzEnrichmentServiceIntegrationTest : BaseControllerTest() {
             enriched("image") shouldBe 1.0
             enriched("founded") shouldBe 1.0
 
-            // The trigger moved updated_at on this write too; equal to checked_at, so neither sweep owes the row.
+            // The write left the name alone, so neither sweep owes the row (V062).
             artistRepository.findNeedingMusicBrainzLookup(setOf(id)).toList() shouldBe emptyList()
             artistRepository.findNeedingMusicBrainzEnrichment(setOf(id)).toList() shouldBe emptyList()
         }
