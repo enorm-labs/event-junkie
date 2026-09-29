@@ -483,6 +483,11 @@ this repository`, and no PAT of any shape helps.
 - **Bootstrap pushes directly to `main`**, which the branch ruleset forbids. It has to be disabled for two pushes and re-enabled immediately. That window
   matters more than it sounds, because with Flux live, branch protection _is_ the control that replaces the kubeconfig (ADR-016).
 
+**The Git source can fail for a few seconds, and the next poll recovers.** `GitRepository/flux-system` polls GitHub over SSH every minute with the deploy
+key. A few times a week a poll fails with `ssh: handshake failed … unable to authenticate`, often on both clusters in the same minute. The deploys come from
+the OCIRepository, so no deploy is late. No alert watches it, on purpose. The cause is not known: GitHub's status history and the org audit log show nothing
+at those times (#2048). A failure that continues for more than five minutes is a real fault.
+
 The ordered runbook is [CLUSTER_BOOTSTRAP.md](CLUSTER_BOOTSTRAP.md).
 
 ---
