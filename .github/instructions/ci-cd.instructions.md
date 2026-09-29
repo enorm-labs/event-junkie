@@ -101,7 +101,8 @@ is the map and the traps.
   workflow.
   `flux-source-failure.yml` (#1454) — the other listener, on `OCIRepository/event-junkie.flux-system` from each cluster's `source-failure` Alert; a failed
   signature or an unreachable registry keeps the last artifact and emits no HelmRelease event, so this job is **red by construction** — the one shape GitHub
-  mails about. **Neither can be tested from a PR**: `repository_dispatch` runs the default branch only, so both fail loudly on an unrecognised payload.
+  mails about. The one exception is the publish race (#2031): on `no signatures found` it waits a minute, resolves the cluster's version with
+  `scripts/deployed-versions.sh`, and ends green when `cosign verify` passes against that cluster's `spec.verify`. **Neither can be tested from a PR**: `repository_dispatch` runs the default branch only, so both fail loudly on an unrecognised payload.
 - `lighthouse.yml` (#1698) — the four cells of `perf/README.md` § Lighthouse baseline against `SITE_URL`, three runs each, the medians in the step summary and
   the JSON as a 30-day artifact. Called by `deployment-status.yml` after a successful production deployment, plus a Wednesday cron and `workflow_dispatch`;
   never Sunday, when the two production scans already load that host. The gate is `scripts/lighthouse.sh`: accessibility, best practices and SEO, with

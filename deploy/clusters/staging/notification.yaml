@@ -52,7 +52,7 @@ spec:
 # The source's failures, and nothing else (#1454): a chart that fails cosign verification or an
 # unreachable registry keeps the last good artifact, and the HelmRelease emits no event. `error`
 # rather than `info`, or every merge would spend a `contents: write` call on nothing.
-# `flux-source-failure.yml` receives these and goes red.
+# `flux-source-failure.yml` receives these and goes red, unless a signature was in flight (#2031).
 apiVersion: notification.toolkit.fluxcd.io/v1beta3
 kind: Alert
 metadata:
