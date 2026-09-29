@@ -124,7 +124,7 @@
   // stale against its tag.
   //
   // **A pin in three files becomes one pull request**, because Renovate groups by `depName`.
-  // `HELM_VERSION` lives in three workflows and `SHELLCHECK_VERSION` in three; they must move
+  // `HELM_VERSION` lives in four workflows and `SHELLCHECK_VERSION` in three; they must move
   // together or the gate disagrees with itself, and this makes that automatic rather than remembered.
   //
   // **`extractVersionTemplate` strips a leading `v`** so the datasource compares versions rather than

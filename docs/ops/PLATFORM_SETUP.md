@@ -447,7 +447,8 @@ Flux's **notification-controller** reports back through a `githubdispatch` Provi
 [`.github/workflows/deployment-status.yml`](../../.github/workflows/deployment-status.yml), which records a deployment on an environment named after the
 cluster. `source-failure` watches the OCIRepository at `eventSeverity: error`. Its dispatch reaches
 [`.github/workflows/flux-source-failure.yml`](../../.github/workflows/flux-source-failure.yml), which goes red (#1454). A chart that fails verification keeps the last
-good artifact installed. The HelmRelease turns not-Ready with the source's message but emits no event, so the first Alert alone never reports it.
+good artifact installed. One failure ends green: `no signatures found` for a chart that verifies one minute later. That is the publish race
+between `helm push` and `cosign sign` (#2031). The HelmRelease turns not-Ready with the source's message but emits no event, so the first Alert alone never reports it.
 
 **The `github` commit-status provider does not work for this workload and is deliberately absent.** notification-controller's `parseRevision` requires a git
 hash. A HelmRelease event reports the _chart version_, and an OCIRepository event reports `<tag>@sha256:<digest>`. The latter passes as a valid-looking SHA-256

@@ -3,17 +3,23 @@
 # (#1425), an unreachable registry, a range matching nothing. source-controller keeps the last good
 # artifact and the HelmRelease emits no event, so `deployment-status.yml` records nothing.
 #
-# THIS JOB IS RED BY CONSTRUCTION: every dispatch that reaches it is a failure, and a failed run is the
-# one shape GitHub mails anyone about — the actor is the `github-dispatch` PAT's owner. The dispatch
-# type is Flux's own `{Kind}/{Name}.{Namespace}`; an unmatched dispatch leaves no trace on GitHub,
-# which is why this exists instead of the Alert alone. Cannot be tested from a pull request.
+# THIS JOB IS RED BY CONSTRUCTION, with one exception: a failed run is the one shape GitHub mails
+# anyone about — the actor is the `github-dispatch` PAT's owner. The dispatch type is Flux's own
+# `{Kind}/{Name}.{Namespace}`; an unmatched dispatch leaves no trace on GitHub, which is why this
+# exists instead of the Alert alone. Cannot be tested from a pull request.
+#
+# The exception is the publish race (#2031). `release.yml` pushes the chart and signs it seconds
+# later, and a poll in between reports `no signatures found`. That dispatch ends green when, a minute
+# on, the version the cluster selects verifies against the cluster's own `spec.verify`.
 name: Flux Source Failure
 
 on:
   repository_dispatch:
     types: [ OCIRepository/event-junkie.flux-system ]
 
-permissions: {}
+# The checkout only: the race check reads the cluster's source and `scripts/deployed-versions.sh`.
+permissions:
+  contents: read
 
 # Per environment and queued: notification-controller drops repeats of an identical event for five
 # minutes, and two different ones for the same cluster should both be seen.
@@ -21,16 +27,99 @@ concurrency:
   group: flux-source-failure-${{ github.event.client_payload.metadata.env }}
   cancel-in-progress: false
 
+env:
+  # Matched to the SDK helm-controller embeds, as in image-scan-scheduled.yml: the resolver borrows
+  # Helm's solver to make Flux's selection.
+  HELM_VERSION: 4.3.0
+
 jobs:
   report:
     name: Report the failing source
     runs-on: ubuntu-latest
-    timeout-minutes: 2
+    timeout-minutes: 5
 
     steps:
-      # No checkout: the payload is the whole input. The keys arrive bare (notification-controller strips
-      # the API-group prefix); `env`/`cluster` come from the Alert's `.spec.eventMetadata`.
+      # The payload is the whole input to the report. The keys arrive bare (notification-controller
+      # strips the API-group prefix); `env`/`cluster` come from the Alert's `.spec.eventMetadata`.
+      - name: Checkout repository
+        if: contains(github.event.client_payload.message, 'no signatures found')
+        continue-on-error: true
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          sparse-checkout: |
+            scripts
+            deploy/clusters
+
+      - name: Set up Helm
+        if: contains(github.event.client_payload.message, 'no signatures found')
+        continue-on-error: true
+        uses: azure/setup-helm@9bc31f4ebc9c6b171d7bfbaa5d006ae7abdb4310 # v5.0.1
+        with:
+          version: ${{ env.HELM_VERSION }}
+
+      # The same cosign release.yml signs with.
+      - name: Install cosign
+        if: contains(github.event.client_payload.message, 'no signatures found')
+        continue-on-error: true
+        uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
+        with:
+          cosign-release: v3.1.3
+
+      # Resolves the version the way Flux does, then verifies it with the identities the cluster
+      # enforces. Anything short of a verified signature leaves `verified` unset and the run red.
+      - name: Check for a signature that was still in flight
+        id: race
+        if: contains(github.event.client_payload.message, 'no signatures found')
+        continue-on-error: true
+        env:
+          CLUSTER: ${{ github.event.client_payload.metadata.cluster }}
+        run: |
+          set -euo pipefail
+          source_file="deploy/clusters/${CLUSTER}/oci-repository.yaml"
+          if [[ ! "$CLUSTER" =~ ^[a-z0-9-]+$ || ! -f "$source_file" ]]; then
+            echo "::warning::No OCIRepository source for cluster '${CLUSTER}'; reporting the failure."
+            exit 0
+          fi
+
+          # Release runs sign within seconds of the push; the source polls every minute.
+          sleep 60
+
+          version="$(scripts/deployed-versions.sh "$CLUSTER" | cut -f2)"
+          if [[ -z "$version" || "$version" == "(none)" ]]; then
+            echo "::warning::${CLUSTER} resolves no published version; reporting the failure."
+            exit 0
+          fi
+
+          reference="$(yq -N '.spec.url' "$source_file")"
+          reference="${reference#oci://}:${version}"
+          count="$(yq -N '.spec.verify.matchOIDCIdentity | length' "$source_file")"
+          for ((i = 0; i < count; i++)); do
+            issuer="$(yq -N ".spec.verify.matchOIDCIdentity[$i].issuer" "$source_file")"
+            subject="$(yq -N ".spec.verify.matchOIDCIdentity[$i].subject" "$source_file")"
+            if cosign verify --certificate-oidc-issuer-regexp "$issuer" \
+              --certificate-identity-regexp "$subject" "$reference" > /dev/null; then
+              echo "verified=${version}" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+          done
+          echo "::warning::${reference} does not verify against ${source_file}; reporting the failure."
+
+      - name: Record the race
+        if: steps.race.outputs.verified != ''
+        env:
+          CLUSTER: ${{ github.event.client_payload.metadata.cluster }}
+          VERIFIED: ${{ steps.race.outputs.verified }}
+        run: |
+          {
+            echo "## ${CLUSTER} — signature race, no action needed"
+            echo
+            echo "The source polled between the chart push and its signature. \`${VERIFIED}\`, the version ${CLUSTER} selects, now verifies against its \`spec.verify\`."
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "::notice title=Signature race on ${CLUSTER}::${VERIFIED} verifies; the source takes it on its next poll."
+
       - name: Fail with the source's own message
+        if: steps.race.outputs.verified == ''
         env:
           CLUSTER: ${{ github.event.client_payload.metadata.cluster }}
           REASON: ${{ github.event.client_payload.reason }}
