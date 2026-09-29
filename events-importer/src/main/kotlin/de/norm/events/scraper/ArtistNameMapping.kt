@@ -730,7 +730,8 @@ private val KNOWN_SINGLE_ACTS: Set<String> =
         "pure obsessions & red nights",
         "scala & kolacny brothers",
         "chase & status",
-        "überhaupt & außerdem"
+        "überhaupt & außerdem",
+        "haute & freddy"
     )
 
 /**
