@@ -52,6 +52,7 @@ scripts/daily-check.sh --hours "$HOURS" > temp/daily-check-$(date +%F).json
 | `renovate_dashboard` | Unticked boxes on the Dependency Dashboard: updates Renovate holds for a person                                                            |
 | `release`            | Commits on `main` since the last release, with their subjects                                                                              |
 | `unclosed`           | Issues still open although a pull request merged in the window says `Closes #N`: GitHub registered no closing reference                    |
+| `after_deploy`       | Merged pull requests labelled `after-deploy` with unticked steps, and whether the latest release carries them                              |
 
 A key that holds `{"error": …}` is an API that refused. Report it as not checked, never as clean.
 
@@ -69,6 +70,8 @@ an approval, a decision, a dispatch), **DRAFTED** (a new defect, with an issue d
   [`/security-triage`](security-triage.prompt.md) the fix. Known open alerts are one line with the count.
 - **The operator's own pull requests**: one line each — waiting for an approval, a red check, or auto-merge armed and green.
 - **An unclosed issue**: ACT. Confirm the pull request did the work, then `gh issue close <n> --reason completed` with a comment naming it.
+- **An `after_deploy` entry**: `released: true` is ACT, "run `/post-release`", with its unticked steps; production already runs the change. `released:
+false` is waiting for a release: one line each.
 - **Unreleased commits**: say whether they hold a product change. When they do, suggest a cut: `gh workflow run cut-release.yml -f dry_run=false`. Never cut.
 
 ## Step 4 — The logs

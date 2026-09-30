@@ -7,6 +7,14 @@ Keep this short. The PR title drives the release notes and the labels
 
 <!-- One or two sentences. If this finishes an issue, put `Closes #<n>` on its own line here. -->
 
+## After deploy
+
+<!-- Only when something has to happen once this runs on a cluster; otherwise delete the section. Add the
+     `after-deploy` label, and `/post-release` runs the steps after the next deployment (.github/prompts/post-release.prompt.md).
+     One step per line, `<staging|production|both>: <force-import slugs|check what passes|run scripts/… command>`. -->
+
+- [ ] both: force-import <slug>
+
 ## Checks
 
 <!-- The full sequence, including what to run for infra/, deploy/ and dependency changes, is

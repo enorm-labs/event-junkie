@@ -217,6 +217,7 @@ Slash commands under `.claude/skills/`, each a one-line `@` pointer into `.githu
 - `/open-pr` — branch, commit (Conventional Commits), push, open a PR
 - `/owasp-top-10` — OWASP Top 10:2025 against the deployed tree, one line per category; `agent-owasp.yml` runs it weekly
 - `/plausibility-check` — the next days' events on the public site against the venues' pages; `agent-plausibility.yml` runs it nightly
+- `/post-release` — after a deployment, the checks, forced imports and scripts merged pull requests left under `## After deploy` (label `after-deploy`)
 - `/refactor` — change the shape of the code, not what it does; the acting counterpart to `/codebase-audit`
 - `/release-highlights` — the visitor-facing summary that opens a release's notes; `cut-release.yml` runs it before every cut
 - `/start-issue <n>` — claim an issue, move the board, cut the branch, read its dependencies, plan
@@ -286,7 +287,8 @@ form asks **whether the fix needs a `--full` re-seed** — usually the differenc
 
 **Labels and fields.** Intrinsic properties are **labels** — `area:*`, `size:*`, `importer`, `documentation`. Planning state is Status and Priority on the
 [project board](https://github.com/orgs/enorm-labs/projects/1). Issue _type_ is a GitHub issue type, not a label. Three labels say _why_ something cannot
-start: `blocked`, `needs-decision`, `needs-deployment` — the last is work that cannot exist yet, not neglect.
+start: `blocked`, `needs-decision`, `needs-deployment` — the last is work that cannot exist yet, not neglect. `after-deploy` is on a merged **pull request**:
+its `## After deploy` steps wait for a release, and [`/post-release`](.github/prompts/post-release.prompt.md) runs them, so no session waits open for one.
 
 **Milestones.** `v0.2 — Deployable` → `v0.3 — Launch-ready` → `v1.0 — Go-live` lead to launch; `Phase 2/3/4` are post-launch buckets. No milestone means
 unscheduled. Reasoning in [docs/VISION_ROADMAP_IDEAS.md](docs/VISION_ROADMAP_IDEAS.md).
