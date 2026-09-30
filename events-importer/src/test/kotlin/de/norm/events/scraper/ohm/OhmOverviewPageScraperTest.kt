@@ -151,6 +151,34 @@ class OhmOverviewPageScraperTest {
             )
     }
 
+    @Test
+    fun `drops a night's part headings and the speakers of its talk, and a VJ credit`() {
+        // Schallträume, 4 October 2026, as printed.
+        val html =
+            """
+            <ul class="event-list"><li class="event-item">
+                <div class="event-date"><h2>04/10</h2></div>
+                <div class="event-time">20:00</div>
+                <h2 class="event-title">Schallträume</h2>
+                <div class="event-lineup medium-type">Panel Talk [ 20:00 ]<br />
+            Academy of Subcultural Understanding<br />
+            With Dimitri Hegemann, Greta Bukowski, Maggie Zaios &amp; Martin Fuller<br />
+            <br />
+            Club [ 22:00 ]<br />
+            Audrey Danza<br />
+            Ceasul<br />
+            ELSA<br />
+            Laima Adelaide<br />
+            <br />
+            laserlake (VJs)</div>
+            </li></ul>
+            """.trimIndent()
+
+        val event = OhmOverviewPageScraper(captureClock).scrape(Jsoup.parse(html, baseUrl), baseUrl).single()
+
+        event.artists.map { it.name } shouldBe listOf("Audrey Danza", "Ceasul", "ELSA", "Laima Adelaide")
+    }
+
     // The fixtures predate the posters, which the venue added in September 2026 (#1777).
     @Test
     fun `reads the night's poster and leaves the image empty where there is none`() {
