@@ -60,7 +60,7 @@ class ColosseumOverviewPageScraperTest {
         funke.imageUrl shouldBe "https://static.wixstatic.com/media/fb623f_be9dd581db1b41dd8cfbff934388e18f~mv2.jpg"
         funke.pricePresale shouldBe BigDecimal("20.30")
         funke.priceNote.shouldBeNull()
-        funke.ticketUrl.shouldBeNull()
+        funke.ticketUrl shouldBe funke.sourceUrl
         funke.soldOut shouldBe false
         funke.status shouldBe EventStatus.SCHEDULED.name
     }
@@ -86,8 +86,15 @@ class ColosseumOverviewPageScraperTest {
     }
 
     @Test
-    fun `sets no ticket url when tickets are sold on the wix event page`() {
-        event("colosseum:gysis-begegnungen-mit-joe-kaeser").ticketUrl.shouldBeNull()
+    fun `links the event's own page when Wix sells the tickets there`() {
+        event("colosseum:gysis-begegnungen-mit-joe-kaeser").ticketUrl shouldBe
+            "https://www.colosseumberlin.com/details-registrierung/gysis-begegnungen-mit-joe-kaeser"
+    }
+
+    @Test
+    fun `links no page when the Wix sale is closed`() {
+        // Registration status 1 (`CLOSED`): the page has no checkout, only the event.
+        edgeCaseEvent("colosseum:anmeldung-geschlossen").ticketUrl.shouldBeNull()
     }
 
     @Test
@@ -157,6 +164,7 @@ class ColosseumOverviewPageScraperTest {
                 "Ausverkaufter Abend mit Rängen",
                 "Vorverkauf beim Veranstalter",
                 "Eintritt frei",
+                "Anmeldung geschlossen",
                 "DIE REIMANNS SABBELSTUNDE MIT MANU & KONNY"
             )
     }

@@ -3,6 +3,7 @@ package de.norm.events.scraper.colosseum
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.WIX_REGISTRATION_OPEN_TICKETS
 import de.norm.events.scraper.WIX_REGISTRATION_TICKETS
 import de.norm.events.scraper.WixEventsWarmupData
 import de.norm.events.scraper.buildArtistList
@@ -37,8 +38,8 @@ import java.math.BigDecimal
  * events sell through a promoter's shop (`registration.type == 3`); Wix still emits a
  * `ticketing` node for them and — with no Wix ticket definitions — reports `"soldOut": true`
  * while the page renders a working "Tickets kaufen" button. The block is read only when Wix
- * itself sells the tickets ([WIX_REGISTRATION_TICKETS]); for the external ones the shop URL
- * becomes the [ScrapedEvent.ticketUrl].
+ * itself sells the tickets ([WIX_REGISTRATION_TICKETS]). The ticket URL is the external shop,
+ * or the event's own page, where an open Wix sale has its checkout.
  *
  * With no support-act convention in the subtitles, [buildArtistList] extracts nothing: a
  * Colosseum title is as often an event name ("Investment", "Das Betreute Singen September") as
@@ -106,7 +107,9 @@ class ColosseumOverviewPageScraper {
         // Freunden", "CEO, Wirtschaftsmanager, Aufsichtsrat") — a subtitle, not a description.
         val subtitle = node.stringOrNull("description")
         val registration = node.path("registration")
-        val ticketing = registration.path("ticketing").takeIf { registration.path("type").asInt(0) == WIX_REGISTRATION_TICKETS }
+        val soldByWix = registration.path("type").asInt(0) == WIX_REGISTRATION_TICKETS
+        val ticketing = registration.path("ticketing").takeIf { soldByWix }
+        val eventPage = resolveUrl(baseUrl, "$DETAILS_PATH$slug")
         return ScrapedEvent(
             title = title,
             subtitle = subtitle,
@@ -116,9 +119,11 @@ class ColosseumOverviewPageScraper {
             endDate = schedule.endDate,
             endTime = schedule.endTime,
             imageUrl = node.path("mainImage").stringOrNull("url"),
-            sourceUrl = resolveUrl(baseUrl, "$DETAILS_PATH$slug"),
+            sourceUrl = eventPage,
             sourceId = "${EventSource.COLOSSEUM.sourceIdPrefix}$slug",
-            ticketUrl = registration.path("external").stringOrNull("registration"),
+            ticketUrl =
+                registration.path("external").stringOrNull("registration")
+                    ?: eventPage.takeIf { soldByWix && registration.path("status").asInt(0) == WIX_REGISTRATION_OPEN_TICKETS },
             pricePresale = ticketing?.let { parseWixTicketPrice(it.path("lowestTicketPrice")) },
             priceNote = ticketing?.let { wixPriceRangeNote(it) },
             soldOut = ticketing?.path("soldOut")?.asBoolean(false) == true,

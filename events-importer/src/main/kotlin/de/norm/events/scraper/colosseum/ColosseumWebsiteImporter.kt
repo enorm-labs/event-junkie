@@ -86,5 +86,9 @@ val COLOSSEUM_LIMITATIONS =
             "an event whose own page states no Einlass line keeps the listing's single time as the start, and gets no doors"
         ),
         AcceptedLimitation(LimitedAspect.GENRE, "the house names no musical style anywhere"),
-        AcceptedLimitation(LimitedAspect.ARTISTS, "no support-act convention exists in the subtitles, and a title is as often an event name as a performer's")
+        AcceptedLimitation(LimitedAspect.ARTISTS, "no support-act convention exists in the subtitles, and a title is as often an event name as a performer's"),
+        AcceptedLimitation(
+            LimitedAspect.DESCRIPTION,
+            "each event is cloned from an old one and its about text is never rewritten, so it is another act's biography, not the event's"
+        )
     )
