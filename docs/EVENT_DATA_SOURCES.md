@@ -21,9 +21,9 @@ repairing live in the [issue tracker](https://github.com/enorm-labs/event-junkie
 | Status                              | Meaning                                                                              | Count |
 | ----------------------------------- | ------------------------------------------------------------------------------------ | ----: |
 | ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |    88 |
-| 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |     3 |
-| ⛔ [Blocked](#-blocked--deferred)   | Website analyzed, but no usable listings (no programme page, JS-only, or too sparse) |   102 |
-| ❓ [Unanalyzed](#-not-analyzed-yet) | No URL recorded yet — website still needs a first look                               |     0 |
+| 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |    13 |
+| ⛔ [Blocked](#-blocked--deferred)   | Website analyzed, but no usable listings (no programme page, JS-only, or too sparse) |   104 |
+| ❓ [Unanalyzed](#-not-analyzed-yet) | URL recorded, but the website still needs a first look                               |    21 |
 
 "Website analyzed" also means the [data model](DATA_MODEL.md) was checked against that source, and no source needed a
 schema change.
@@ -132,8 +132,7 @@ Analyzed and scrapable — the candidates for the next `/scaffold-importer` runs
 
 **A row reaches this table only by being read.** Every entry was confirmed by fetching the raw HTML or JSON and
 reading the events out of it, with no headless browser, per [ADR-007](adr/ADR-007_WEB_SCRAPING_STRATEGY.md). The
-[Unanalyzed](#-not-analyzed-yet) table is empty, so refilling this one means finding new candidates rather than picking
-from what is already recorded.
+[Unanalyzed](#-not-analyzed-yet) table holds the next candidates to open.
 
 **The RA event count is a poor priority signal, and a promoter listing is a good one.** Insel der Jugend was recorded
 with 2 RA events and publishes 39 upcoming on its own site. Der Weiße Hase's 17 understate a listing that runs two
@@ -143,15 +142,48 @@ the
 other direction, DNA. CLUB's 23 RA events appear nowhere in the venue's own calendar. Weight a promoter mention at
 least as heavily as an RA count when the next batch is prioritised.
 
-| Name               | URL                                    | Type        | Priority | Comment                                                     |
-| ------------------ | -------------------------------------- | ----------- | -------- | ----------------------------------------------------------- |
-| Fitzroy            | https://fitzroy-berlin.de/events/      | Club        | Medium   | WP REST `event` + ACF — the Madame Claude / LARK codebase   |
-| KAOS Berlin        | https://kaosberlin.de/veranstaltungen/ | Techno Club | Low      | The Events Calendar REST API, as Cosmic Comedy; 4 upcoming  |
-| DSTRKT Club Berlin | https://www.dstrkt.de/                 | Club        | Low      | Wix one-pager; 2 dated events, which is the whole programme |
+| Name               | URL                                            | Type         | Priority | Comment                                                     |
+| ------------------ | ---------------------------------------------- | ------------ | -------- | ----------------------------------------------------------- |
+| Fitzroy            | https://fitzroy-berlin.de/events/              | Club         | Medium   | WP REST `event` + ACF — the Madame Claude / LARK codebase   |
+| KAOS Berlin        | https://kaosberlin.de/veranstaltungen/         | Techno Club  | Low      | The Events Calendar REST API, as Cosmic Comedy; 4 upcoming  |
+| DSTRKT Club Berlin | https://www.dstrkt.de/                         | Club         | Low      | Wix one-pager; 2 dated events, which is the whole programme |
+| A-Trane            | https://a-trane.de/programm/                   | Club         | High     | EventON; 62 `Event` JSON-LD blocks on one page; no prices   |
+| Kunstfabrik Schlot | https://kunstfabrik-schlot.de/programm/        | Club         | High     | WordPress list; year, time and price only on detail pages   |
+| Zig Zag Jazz Club  | https://www.zigzag-jazzclub.berlin/program-mai | Club         | High     | Squarespace `?format=json` month pages; prices in body      |
+| Zig Zag Hall       | https://www.zigzag-jazzclub.berlin/program-mai | Concert Hall | High     | Zig Zag feed, only items titled `ZIG ZAG HALL: …`           |
+| ufaFabrik          | https://ufafabrik.de/spielplan.html            | Theater      | High     | Drupal calendar; `/program/YYYYMM` month pages; prices      |
+| ART Stalker        | https://art-stalker.reservix.de/events         | Bar          | High     | Reservix shop; `/events/N` pages; 56 upcoming; prices       |
+| Orania.Berlin      | https://orania.berlin/concerts                 | Bar          | Medium   | TYPO3; `/concerts/page/N`; `Event` JSON-LD; always free     |
+| ZIMMER 16          | https://zimmer16.com/                          | Other        | Medium   | Divi + YesTicket cards; time and price on YesTicket         |
+| Ballhaus Wedding   | https://www.ballhauswedding.de/veranstaltungen | Other        | Medium   | Wix rich text; 117 entries with year-less dates; no images  |
+| Soulcat            | https://soulcat-berlin.com/programm/           | Bar          | Low      | TEC REST API; one week ahead; titles only                   |
 
 **Fitzroy** needs one decision made once, rather than per event. It is on its summer break: the ACF API holds a dense
 July programme and resumes on 12 September. Only 2 events are upcoming today, so a fixture captured now would be
 unrepresentative. Scaffold it in September, when the listing is representative again.
+
+**The ten rows below DSTRKT came from the tipBerlin sweep on 2026-09-30.** Each has a quirk that the importer must
+handle:
+
+- **A-Trane** writes dates without zero padding, as in `2026-11-1T20:00+2:00`. The offset is always `+2:00`, also in
+  winter. Parse the date leniently and apply Europe/Berlin. The name field holds the lineup, split by escaped `<br>`.
+  Drop "HEUTE GESCHLOSSEN" and the shows it presents at other venues.
+- **Kunstfabrik Schlot** is the real site. `schlot.de` shows only a placeholder. The Events Calendar REST API and iCal
+  are switched off. Ignore the `Product` JSON-LD on the detail page, because its price is `0` USD.
+- **Zig Zag Jazz Club** gives the doors time as `startDate`. The start time is in the body text. Some items hold two
+  shows.
+- **Zig Zag Hall** is a separate venue, and the club's feed carries its programme. Items titled `ZIG ZAG HALL: …` belong
+  to the hall, and 20 of the items fetched carry that prefix. Filter the shared feed per venue, as Säälchen filters
+  the Holzmarkt calendar by location. The club importer drops the prefixed items, and the hall importer keeps
+  only those. The feed gives no address for the hall, so confirm it before seeding the venue.
+- **ufaFabrik** is about 29 % music, 48 % cabaret, comedy and theatre, and 23 % children's shows. Filter on the genre
+  label, as Gärten der Welt does with `isProgrammeCategory`.
+- **ART Stalker**'s own site carries no events. Its programme link goes to the Reservix white-label shop. `?page=2`
+  returns page 1, so follow `/events/2`.
+- **ZIMMER 16** and **Ballhaus Wedding** are small mixed stages. Music is one part of a programme with improv, readings
+  and dance socials. Ballhaus Wedding's dates have no year, so take it from the month headings. Its entries have no
+  fixed shape, so that parser is the most brittle of the ten.
+- **Soulcat** publishes one week ahead, and four of its seven events are one recurring bar night.
 
 **Gärten der Welt** set the precedent for the next park- or campus-like source when it was
 [imported](#-imported). The row's category decides whether it is programme at all. Its guided tours, workshops, yoga
@@ -375,6 +407,8 @@ the empty Next.js payload rather than the WAF, and a 403 is not evidence that a 
 | Studiodb                         | —                                              | Other        | No own site; Instagram and RA only                        | RA as a source             |
 | PKH Warehouse                    | —                                              | Other        | No own site; RA only                                      | RA as a source             |
 | Studio1111                       | http://studio1111.de/                          | Club         | Impressum-only page                                       | Site change                |
+| Badenscher Hof Jazzclub          | https://www.badenscher-hof.de/                 | Club         | Duda one-pager; programme only as monthly PNG images      | Site change                |
+| Mokum                            | —                                              | Bar          | No own site; Facebook only                                | Site change                |
 
 ## ❓ Not analyzed yet
 
@@ -382,8 +416,35 @@ New candidates land here first. Check for a server-rendered programme, then move
 [Ready](#-ready-to-implement) or [Blocked](#-blocked--deferred). A row belongs here only until someone opens it — the
 URL is recorded, nothing more.
 
-**The table is empty.** Every recorded candidate was opened and filed, so refilling it means finding new ones. A
-venue's type is corrected against its own site as the row is opened, so no RA-derived guess survives here.
+Every row below came from the tipBerlin sweep on 2026-09-30. The URL was confirmed to answer, and nothing else was
+checked. A venue's type is a first guess. Correct it against the venue's own site when the row is opened.
+
+| Name                              | URL                                                       | Type         |
+| --------------------------------- | --------------------------------------------------------- | ------------ |
+| Showfenster-Theater               | https://www.showfenster-show.de/events                    | Theater      |
+| Kunstquartier Bethanien           | https://kunstquartier-bethanien.de/vorschau               | Other        |
+| Revier Südost                     | https://www.reviersuedost.de/programm                     | Open Air     |
+| WABE                              | https://www.wabe-berlin.info/vorschau/                    | Concert Hall |
+| Labsaal                           | https://labsaal.de/events/                                | Other        |
+| Little Stage Bar                  | https://littlestageclubneukoelln.wordpress.com/           | Bar          |
+| Baiz                              | https://www.baiz.info/programm/                           | Bar          |
+| Begine                            | https://www.begine.de/programm/aktueller-monat.html       | Other        |
+| Kulturhaus Spandau                | https://kulturhaus-spandau.de/programm/                   | Other        |
+| Brotfabrik                        | https://brotfabrik-berlin.de/veranstaltungen/             | Other        |
+| ausland                           | https://ausland.berlin/program                            | Club         |
+| Clärchens Ballhaus                | https://claerchensball.haus/programm/                     | Club         |
+| Kühlspot Social Club              | https://kuehlspot.com/                                    | Other        |
+| Blackmore's – Berlins Musikzimmer | https://www.blackmores-musikzimmer.de/de/programm         | Concert Hall |
+| BKA Theater                       | https://www.bka-theater.de/spielplan/                     | Theater      |
+| Schlosspark Theater               | https://www.schlossparktheater.de/spielplan/kalender.html | Theater      |
+| Volksbühne                        | https://www.volksbuehne-berlin.de/konzerte/               | Theater      |
+| TIPI am Kanzleramt                | https://www.tipi-am-kanzleramt.de/                        | Theater      |
+| Spindler & Klatt                  | https://www.spindlerklatt.com/club                        | Club         |
+| Zebrano Theater                   | https://www.zebrano-theater.de/programm.html              | Theater      |
+| Renaissance-Theater               | https://renaissance-theater.de/spielplan/                 | Theater      |
+
+WABE's own building is closed for renovation. Its events run at Schönfließer Str. 7 for now. Kühlspot has no programme
+page, and its events are a section of the home page.
 
 Where candidates come from, and what is deliberately left out:
 
@@ -396,6 +457,14 @@ Where candidates come from, and what is deliberately left out:
   surface, and they are seated or open-air houses rather than clubs. Chasing down the Gärten der Welt URL surfaced
   **Landstreicher Konzerte**, a separate outfit from Landstreicher Booking, now filed under
   [Blocked](#-blocked--deferred) on the same per-event-venue limitation.
+- **tipBerlin** (<https://www.tip-berlin.de/ausgehen/konzerteclubs/>), the city magazine's calendar. It is a
+  WordPress site, and `/wp-json/wp/v2/event` returns every event with a `location-<slug>` class. Cloudflare Turnstile
+  answers curl with 403, so the sweep ran in a browser. It held 6209 events at 363 locations with a music category.
+  Classical halls and churches were left out, and so was Potsdam. tipBerlin itself is not a source, because its texts
+  are editorial.
+- **XCEED** (<https://xceed.me/de/berlin/events>), a nightlife ticket marketplace. Its open API
+  `event-b2c.xceed.me/v2/events?cities[0]=berlin` held 31 events at 11 venues on 2026-09-30. Every venue with a
+  programme was already recorded, so XCEED added nothing.
 
 **Excluded on purpose, so a later sweep does not re-litigate them.** An RA venue with a single event in the window,
 unless a promoter listed it too. A one-off booking is not evidence of a programme, and the
