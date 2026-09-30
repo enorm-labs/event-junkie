@@ -101,6 +101,12 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
+      # Seconds, before any Gradle. A pull request is checked out as its merge ref, so this sees every
+      # migration `main` holds now. It misses only two PRs whose checks ran before either merged, which
+      # the same step in `release.yml` stops before a cluster (#2183).
+      - name: No two migrations share a version
+        run: scripts/migration-versions.sh
+
       - name: Set up Java 25 (Temurin)
         uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
         with:

@@ -81,6 +81,11 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
+      # Before anything is built: two branches can each land the same migration version, and Flyway then
+      # refuses to start. Publishing that tree once put staging's importer down (#2183).
+      - name: No two migrations share a version
+        run: scripts/migration-versions.sh
+
       # One number, computed once, stamped onto all four artifacts. `scripts/version.sh` owns the rules,
       # including the guard that a tag cannot claim a number the commits do not deserve. A snapshot embeds
       # the commit's committer date (#455), so `compute` runs after the checkout.

@@ -81,6 +81,10 @@ jobs:
       - name: Assert what release-highlights.sh summarises
         run: scripts/release-highlights-test.sh
 
+      # A check that passes everything looks like one that works until two branches take one number (#2183).
+      - name: Assert what migration-versions.sh refuses
+        run: scripts/migration-versions-test.sh
+
       # Gated on the step it explains; otherwise a failing assertion above sends the reader to ShellCheck.
       - name: Explain the fix
         if: failure() && steps.shellcheck.outcome == 'failure'

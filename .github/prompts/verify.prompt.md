@@ -37,6 +37,7 @@ scripts/collector-parity.sh           # LogFields ↔ LogContextConfiguration �
 scripts/scope-parity.sh               # the feat scope list, nine copies, labeller's is canonical
 scripts/secrets-parity.sh             # the secret count SECRETS.md states ↔ the rows its table lists
 scripts/index-parity.sh               # scripts/README.md ↔ scripts/, every referenced script exists and answers --help
+scripts/migration-versions.sh         # no two Flyway migrations share a version (#2183); release.yml runs it before it builds
 ```
 
 Each takes under a second and reaches no network; `--help` on any of them says what it checks and why. `scripts/comment-density.sh` measures and gates nothing.
