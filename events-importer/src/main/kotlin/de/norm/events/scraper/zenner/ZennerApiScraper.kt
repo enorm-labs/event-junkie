@@ -5,6 +5,7 @@ import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
 import de.norm.events.scraper.BERLIN
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.PRESENTS_WORDS
 import de.norm.events.scraper.SUPPORT_LABELS
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
@@ -311,7 +312,7 @@ private fun isWeingartenOpenAir(
  * `w/` also joins two collaborating acts ("David August w/ MFO").
  */
 private val SERIES_FRAME_PATTERN =
-    Regex("""^.+?\b(?:presents|pres\.)\s*:?\s+|^\d+\s*min(?:utes)?\s+w/\s*""", RegexOption.IGNORE_CASE)
+    Regex("""^.+?\b(?:$PRESENTS_WORDS)\s*:?\s+|^\d+\s*min(?:utes)?\s+w/\s*""", RegexOption.IGNORE_CASE)
 
 /**
  * Strips a leading [SERIES_FRAME_PATTERN], or returns null when nothing is left (a bare "180

@@ -14,6 +14,7 @@ import de.norm.events.scraper.labelledClock
 import de.norm.events.scraper.mapEventType
 import de.norm.events.scraper.parseEventStatus
 import de.norm.events.scraper.parseIsoDate
+import de.norm.events.scraper.promoterFromCredit
 import de.norm.events.scraper.stripRelocationPrefix
 import de.norm.events.scraper.textAt
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -98,9 +99,7 @@ class MetropolDetailPageScraper {
     private fun parsePromoter(document: Document): String? =
         document
             .textAt(".event-info .promoter")
-            ?.replace(PRESENTS_SUFFIX, "")
-            ?.trim()
-            ?.takeIf { it.isNotBlank() }
+            .let(::promoterFromCredit)
 
     /**
      * The poster URL from the desktop `.event-image` thumbnail. The theme lazy-loads: `src` is a
@@ -113,6 +112,3 @@ class MetropolDetailPageScraper {
                 ?: document.attrAt(".event-image noscript img", "src")
         )?.takeIf { it.startsWith("http") }
 }
-
-/** The `"… presents:"` suffix the venue appends to every promoter name. */
-private val PRESENTS_SUFFIX = Regex("""\s*presents\s*:\s*$""", RegexOption.IGNORE_CASE)

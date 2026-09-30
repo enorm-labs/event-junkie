@@ -5,6 +5,7 @@ import de.norm.events.scraper.BERLIN
 import de.norm.events.scraper.DOORS_LABELS
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FREE_ENTRY_PHRASE
+import de.norm.events.scraper.PRESENTS_WORDS
 import de.norm.events.scraper.START_LABELS
 import de.norm.events.scraper.SUPPORT_LABELS
 import de.norm.events.scraper.ScrapedArtist
@@ -339,7 +340,7 @@ private val SUPPORT_SEPARATOR = Regex("""\s*[,+&]\s*|\s+und\s+""", RegexOption.I
  * line, so `Kulturalarm prs.Sameen Qasim` yields just the promoter.
  */
 private val PROMOTER_PATTERN =
-    Regex("""^(.{2,60}?)\s*(?:prs\.|pres\.|präsentiert)\s*:?(?:\s|$)""", RegexOption.IGNORE_CASE)
+    Regex("""^(.{2,60}?)\s*(?:$PRESENTS_WORDS)\s*:?(?:\s|$)""", RegexOption.IGNORE_CASE)
 
 /**
  * A trailing provenance tag on an act, a two-or-three-letter country code or the venue's `(Bln)`

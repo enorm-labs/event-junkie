@@ -396,7 +396,7 @@ private val TITLE_CASE_SMALL_WORDS: Set<String> =
 private val COLON_SEPARATOR = Regex("""\S:\s+""")
 
 /** A head that presents the tail rather than being an act: `<label> presents: <act>` keeps its right side. */
-private val PRESENTING_HEAD = Regex("""\b(?:pres|presents|pr(?:ä|ae)sentiert)[.:]?$""", RegexOption.IGNORE_CASE)
+private val PRESENTING_HEAD = Regex("""\b(?:$PRESENTS_VERBS|pres)[.:]?$""", RegexOption.IGNORE_CASE)
 
 /**
  * Strips a work title glued to an act with ` - ` or `: ` — the album played live, the project, the
@@ -571,12 +571,12 @@ private fun isLedByNonArtistLabel(title: String): Boolean {
  * Things Tour" is billing a tour, and the title beside it is still the act.
  */
 private val PRESENTER_CREDIT_PATTERN =
-    Regex("""^(.+?)\s+(?:presents|pr(?:ä|ae)sentiert)\s*[-–—:|.]*\s*$""", RegexOption.IGNORE_CASE)
+    Regex("""^(.+?)\s+(?:$PRESENTS_VERBS)\s*[-–—:|.]*\s*$""", RegexOption.IGNORE_CASE)
 
 /**
  * The same marker anywhere in a title, which disqualifies the rule ([isPresenterOwnEventTitle]).
  */
-private val PRESENTER_MARKER_IN_TITLE = Regex("""\b(?:presents|pr(?:ä|ae)sentiert)\b""", RegexOption.IGNORE_CASE)
+private val PRESENTER_MARKER_IN_TITLE = Regex("""\b(?:$PRESENTS_VERBS)\b""", RegexOption.IGNORE_CASE)
 
 /**
  * Trailing words that say what a presenter is, not what it is called: a label, an agency, a
@@ -1387,7 +1387,7 @@ private val PRES_MARKER = Regex("""^(.+?)\s+pres[.:]\s+(.+)$""", RegexOption.IGN
  * copy of this frame; this is the shared one, and the promoter half is not stored anywhere yet.
  */
 private val PRESENTS_FRAME =
-    Regex("""^.{2,60}?\s+(?:presents|pr(?:ä|ae)sentiert)\s*:\s*(.+)$""", RegexOption.IGNORE_CASE)
+    Regex("""^.{2,60}?\s+(?:$PRESENTS_VERBS)\s*:\s*(.+)$""", RegexOption.IGNORE_CASE)
 
 /**
  * The acts of a `<promoter> presents: <bill>` title, or `null` when the title carries no such

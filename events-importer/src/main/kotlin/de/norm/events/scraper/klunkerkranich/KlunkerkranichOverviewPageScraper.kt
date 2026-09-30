@@ -4,6 +4,7 @@ import de.norm.events.event.EventType
 import de.norm.events.scraper.BERLIN
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ISO_DATE_LENGTH
+import de.norm.events.scraper.PRESENTS_VERBS
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.attrAt
@@ -244,7 +245,7 @@ class KlunkerkranichOverviewPageScraper(
          * promoter's `presents:` / `präsentiert:`. Space-padded on the left so a name ending in "w"
          * never matches. [parseLineup] takes the last one on the title.
          */
-        val LINEUP_MARKER = Regex("""\sw[./]\s|\s(?:presents|präsentiert)\s*:\s*""", RegexOption.IGNORE_CASE)
+        val LINEUP_MARKER = Regex("""\sw[./]\s|\s(?:$PRESENTS_VERBS)\s*:\s*""", RegexOption.IGNORE_CASE)
 
         /** The boundary between two sections of the lineup tail. */
         const val SECTION_SEPARATOR = "|"

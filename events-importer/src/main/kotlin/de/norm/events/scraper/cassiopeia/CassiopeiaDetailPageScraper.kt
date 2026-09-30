@@ -1,6 +1,7 @@
 package de.norm.events.scraper.cassiopeia
 
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.PRESENTED_BY_WORDS
 import de.norm.events.scraper.SUPPORT_LABELS
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
@@ -241,4 +242,4 @@ internal fun presenterInGenreSlot(slot: String?): String? =
         ?.trim()
         ?.takeIf { it.isNotBlank() }
 
-private val PRESENTER_CREDIT = Regex("""^\s*(?:presented\s+by|präsentiert\s+von)\s*:?\s+(.+)$""", RegexOption.IGNORE_CASE)
+private val PRESENTER_CREDIT = Regex("""^\s*(?:$PRESENTED_BY_WORDS)\s*:?\s+(.+)$""", RegexOption.IGNORE_CASE)

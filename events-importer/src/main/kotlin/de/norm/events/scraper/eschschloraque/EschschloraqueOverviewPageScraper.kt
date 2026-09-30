@@ -2,6 +2,7 @@ package de.norm.events.scraper.eschschloraque
 
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.PRESENTS_VERBS
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.attrAt
@@ -319,4 +320,4 @@ private fun presentedLiveActs(title: String): List<ScrapedArtist> {
  * `MissVergnügen presents FRAUKE 400 - live!`, group 1 the act. The `live` suffix is required, so a
  * presented series name is never billed.
  */
-private val PRESENTED_LIVE_ACT = Regex("""^.+?\s+presents\s+(.+?)\s*[-–—]\s*live!*$""", RegexOption.IGNORE_CASE)
+private val PRESENTED_LIVE_ACT = Regex("""^.+?\s+(?:$PRESENTS_VERBS)\s+(.+?)\s*[-–—]\s*live!*$""", RegexOption.IGNORE_CASE)

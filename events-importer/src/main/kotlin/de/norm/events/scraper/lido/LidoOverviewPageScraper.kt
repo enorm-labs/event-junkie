@@ -11,6 +11,7 @@ import de.norm.events.scraper.parseEventStatus
 import de.norm.events.scraper.parseIsoDate
 import de.norm.events.scraper.parseRealDate
 import de.norm.events.scraper.parseTime
+import de.norm.events.scraper.promoterFromCredit
 import de.norm.events.scraper.refineConcertVenueType
 import de.norm.events.scraper.resolveUrl
 import de.norm.events.scraper.supportSubtitleLine
@@ -231,9 +232,12 @@ private fun parseLidoTimes(root: Element): Pair<LocalTime?, LocalTime?> {
 private fun parseLidoPresenters(root: Element): List<String> {
     val presenter = root.selectFirst(".event-ticket__meta__presenter") ?: return emptyList()
     val name =
-        presenter.selectFirst("a")?.text()?.trim()
-            ?: presenter.text().substringBefore("präsentiert").trim()
-    return listOfNotNull(name.takeIf { it.isNotBlank() })
+        presenter
+            .selectFirst("a")
+            ?.text()
+            ?.trim()
+            ?.takeIf { it.isNotBlank() } ?: promoterFromCredit(presenter.text())
+    return listOfNotNull(name)
 }
 
 /** The presenter's link, where the name is an anchor. */

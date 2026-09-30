@@ -83,6 +83,20 @@ class Hole44DetailPageScraperTest {
     }
 
     @Test
+    fun `keeps a promoter whose own name ends in Presents whole`() {
+        val url = "https://hole-berlin.de/event/2026-07-27-kang-yuchan/"
+        val html =
+            javaClass.classLoader
+                .getResourceAsStream("scraper/hole44/hole44-detail-simple.html")!!
+                .bufferedReader()
+                .readText()
+                .replace("Weird World Booking &amp; Promotion GmbH presents", "AEG Presents")
+        val event = scraper.scrape(Jsoup.parse(html, url), url).shouldNotBeNull()
+
+        event.promoters shouldContainExactly listOf("AEG Presents")
+    }
+
+    @Test
     fun `reads the ticket shop link from the Tickets button`() {
         // Modern English, 5 September 2026: "Tickets / Eventim" is an `a.button.ticket` anchor (#1140).
         val url = "https://hole-berlin.de/event/2026-09-05-modern-english/"

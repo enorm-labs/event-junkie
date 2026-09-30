@@ -4,6 +4,7 @@ import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
 import de.norm.events.scraper.DOORS_LABELS
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.PRESENTED_BY_WORDS
 import de.norm.events.scraper.START_LABELS
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.attrAt
@@ -340,7 +341,7 @@ class PeterEdelOverviewPageScraper {
          * `Hinweis:` label or end of line — the credit sits before or after the ticket line depending on
          * the event, and once a festival note appended to it became a promoter of its own (#328).
          */
-        private val PROMOTER = Regex("""Präsentiert von\s*:\s*(.+?)(?:\s*(?:Tickets|Hinweis)\s*:|$)""", RegexOption.IGNORE_CASE)
+        private val PROMOTER = Regex("""(?:$PRESENTED_BY_WORDS)\s*:\s*(.+?)(?:\s*(?:Tickets|Hinweis)\s*:|$)""", RegexOption.IGNORE_CASE)
 
         /** The ticket column's trailing call to action, dropped from the price note. */
         private val CALL_TO_ACTION = Regex("""\s*Für mehr Infos\s*hier klicken\s*:?\s*(?:Details)?\s*$""", RegexOption.IGNORE_CASE)

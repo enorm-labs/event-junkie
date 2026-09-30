@@ -1,5 +1,6 @@
 package de.norm.events.scraper.morphine
 
+import de.norm.events.scraper.PRESENTS_VERBS
 import de.norm.events.scraper.labelledClock
 import de.norm.events.scraper.parseGermanShortDate
 import de.norm.events.scraper.parseTime
@@ -88,7 +89,7 @@ private fun isMemberList(
         tail.split(MEMBER_JOIN).count { it.isNotBlank() } >= MIN_MEMBERS
 
 /** `Uncanny Valley presents:` — the frame the venue puts before a guest promoter's bill. */
-private val PRESENTS_FRAME = Regex("""^.{2,60}?\s+(?:presents|präsentiert|pres\.?)\s*:?\s+""", RegexOption.IGNORE_CASE)
+private val PRESENTS_FRAME = Regex("""^.{2,60}?\s+(?:$PRESENTS_VERBS|pres\.?)\s*:?\s+""", RegexOption.IGNORE_CASE)
 
 /** `Jakob Vasak performs with the Kobophon` — the instrument is not a co-act. */
 private val PERFORMS_WITH_TAIL = Regex("""\s+performs\s+(?:with|on)\s+.*$""", RegexOption.IGNORE_CASE)

@@ -12,6 +12,7 @@ import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.inferConcertVenueType
 import de.norm.events.scraper.parsePriceValue
 import de.norm.events.scraper.parseTime
+import de.norm.events.scraper.promoterFromCredit
 import de.norm.events.scraper.textAt
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
@@ -101,13 +102,8 @@ class QuasimodoDetailPageScraper {
     private fun parsePromoter(document: Document): String? =
         document
             .textAt(".promoter")
-            ?.replace(PRESENTS_SUFFIX, "")
-            ?.trim()
-            ?.takeIf { it.isNotBlank() }
+            .let(::promoterFromCredit)
 }
-
-/** The `"… präsentiert:"` suffix the venue appends to every promoter name. */
-private val PRESENTS_SUFFIX = Regex("""\s*präsentiert\s*:\s*$""", RegexOption.IGNORE_CASE)
 
 /** Label of the detail table's doors row. */
 private const val DOORS_LABEL = "Einlass"
