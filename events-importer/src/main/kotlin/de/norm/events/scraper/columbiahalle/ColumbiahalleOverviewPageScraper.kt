@@ -128,6 +128,8 @@ class ColumbiahalleOverviewPageScraper {
             priceNote = priceNote,
             soldOut = sticker.contains(SOLD_OUT_TEXT, ignoreCase = true),
             status = parseEventStatus(sticker),
+            // A relocation sticker names the new house: "in das huxleys verlegt".
+            statusNote = sticker.ifBlank { null },
             artists = buildArtistsForEventType(title, subtitleLines.joinToString("\n"), eventType),
             promoters = listOfNotNull(card.textAt(".veranstalter a"))
         )

@@ -175,4 +175,19 @@ class ColumbiahalleOverviewPageScraperTest {
     fun `imports the whole listing in chronological order`() {
         events.map { it.eventDate } shouldBe events.map { it.eventDate }.sorted()
     }
+
+    @Test
+    fun `stores the destination a relocation sticker names`() {
+        // The Betontod card from the live listing on 2026-09-30.
+        val html =
+            javaClass.classLoader
+                .getResourceAsStream("scraper/columbiahalle/columbiahalle-overview-relocated.html")!!
+                .bufferedReader()
+                .readText()
+        val betontod = scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl).single()
+        val stored = betontod.toEventEntity(venueId = 1L, venueSlug = "columbiahalle", eventSourceId = 1L)
+
+        stored.status shouldBe "RELOCATED"
+        stored.relocatedTo shouldBe "huxleys"
+    }
 }
