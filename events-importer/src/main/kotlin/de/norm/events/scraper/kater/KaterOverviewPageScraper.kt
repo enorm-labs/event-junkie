@@ -108,6 +108,8 @@ class KaterOverviewPageScraper(
             endDate = schedule.endDate,
             endTime = schedule.endTime,
             // No per-event page worth fetching, so the homepage anchor is the URL.
+            // Almost every night is text only; the rare flyer sits inline in the summary.
+            imageUrl = article.selectFirst(".entry-summary img[src]")?.absUrl("src")?.takeIf { it.startsWith("http") },
             sourceUrl = "$baseUrl#$EVENT_ID_PREFIX$eventId",
             sourceId = "${EventSource.KATER.sourceIdPrefix}$eventId",
             ticketUrl = article.hrefAt("a.rsvp"),

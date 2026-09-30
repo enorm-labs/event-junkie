@@ -116,6 +116,7 @@ internal data class ElfsightEventNode(
     val description: String? = null,
     val isAllDay: Boolean = false,
     val coverImage: ElfsightImage? = null,
+    val images: List<ElfsightImage> = emptyList(),
     val actions: List<ElfsightAction> = emptyList(),
     /** `noRepeat` for a one-off entry, `custom`/`nthDayInMonth` for a recurring series. */
     val repeatPeriod: String? = null,

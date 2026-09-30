@@ -129,4 +129,25 @@ class NeueZukunftApiScraperTest {
     fun `returns an empty list for unparseable JSON`() {
         scraper.scrape("not json at all").shouldBeEmpty()
     }
+
+    @Test
+    fun `reads a free-entry button as the price note and a gallery image as the fallback poster`() {
+        // The Herbstfest node from the widget on 2026-09-30, trimmed to the fields the scraper reads.
+        val json =
+            """
+            {"data":{"widgets":{"w":{"data":{"settings":{"events":[{
+              "id":"0e0d296d-710e-4dc4-9b0e-809fec5d5f02","name":"Herbstfest!",
+              "start":{"type":"datetime","date":"2026-10-02","time":"16:00"},
+              "actions":[{"type":"link","text":"Eintritt frei!","link":{"type":"url","value":""}}],
+              "coverImage":null,
+              "images":[{"url":"https://files.elfsightcdn.com/eafe4a4d/9dbf9c61/Herbstsfest-2026.jpg"}]
+            }]}}}}}}
+            """.trimIndent()
+        val herbstfest = scraper.scrape(json).single()
+
+        herbstfest.priceNote shouldBe "Eintritt frei!"
+        herbstfest.ticketUrl.shouldBeNull()
+        herbstfest.imageUrl shouldBe "https://files.elfsightcdn.com/eafe4a4d/9dbf9c61/Herbstsfest-2026.jpg"
+        herbstfest.toEventEntity(venueId = 1L, venueSlug = "neue-zukunft", eventSourceId = 1L).free shouldBe true
+    }
 }
