@@ -18,7 +18,7 @@ fun parseEventStatus(statusText: String): String {
     val text = statusText.lowercase()
     return when {
         CANCELLED_TEXT.containsMatchIn(text) -> EventStatus.CANCELLED.name
-        text.contains("verschoben") || text.contains("postpon") || VERLEGT_AUF_DATUM.containsMatchIn(text) -> EventStatus.POSTPONED.name
+        POSTPONED_TEXT.containsMatchIn(text) || VERLEGT_AUF_DATUM.containsMatchIn(text) -> EventStatus.POSTPONED.name
         MOVED_TEXT.containsMatchIn(text) -> EventStatus.RELOCATED.name
         else -> EventStatus.SCHEDULED.name
     }
@@ -32,6 +32,9 @@ fun parseEventStatus(statusText: String): String {
  */
 private val MOVED_TEXT =
     Regex("""verlegt|reloc|new venue|neuer ort|venue\s?(?:ä|ae)nderung""", RegexOption.IGNORE_CASE)
+
+/** A new date, in the words a badge writes it: "verschoben", "postponed", "rescheduled" (Privatclub). */
+private val POSTPONED_TEXT = Regex("""verschoben|postpon|reschedul""")
 
 /**
  * "auf den 30.05.2027 verlegt" moves the date, not the house: a postponement written with the

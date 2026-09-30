@@ -12,6 +12,7 @@ import de.norm.events.scraper.hasSoldOutMarker
 import de.norm.events.scraper.headlinersFromTitle
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.mapEventType
+import de.norm.events.scraper.parseTitleStatus
 import de.norm.events.scraper.refineConcertVenueType
 import de.norm.events.scraper.stringOrNull
 import de.norm.events.scraper.stripArtistSuffix
@@ -175,7 +176,7 @@ internal class LarkApiScraper(
         }
 
         val soldOut = hasSoldOutMarker(rawTitle)
-        val cancelled = CANCELLED_MARKER.containsMatchIn(rawTitle)
+        val status = parseTitleStatus(rawTitle) ?: EventStatus.SCHEDULED.name
         val title = cleanEventTitle(stripStatusMarkers(rawTitle))
 
         val acf = post.path("acf")
@@ -202,7 +203,7 @@ internal class LarkApiScraper(
                     sourceId = "${EventSource.LARK.sourceIdPrefix}$id",
                     ticketUrl = acf.stringOrNull("event_tickets_url")?.takeIf { it.startsWith("http") },
                     soldOut = soldOut,
-                    status = if (cancelled) EventStatus.CANCELLED.name else EventStatus.SCHEDULED.name,
+                    status = status,
                     artists = artistsFrom(title, eventType),
                     promoters = listOfNotNull(acf.stringOrNull("event_organizer"))
                 ),
@@ -281,9 +282,6 @@ internal class LarkApiScraper(
                 "dance" to EventType.PARTY.name,
                 "seminar" to EventType.OTHER.name
             )
-
-        /** A cancellation marker the venue writes into the title. */
-        val CANCELLED_MARKER = Regex("""\bcancell?ed\b|\babgesagt\b""", RegexOption.IGNORE_CASE)
 
         /**
          * Either marker as punctuated in a title — optionally led by a separating dash or pipe,

@@ -1,6 +1,5 @@
 package de.norm.events.scraper.loge
 
-import de.norm.events.event.EventStatus
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HH_MM_LENGTH
 import de.norm.events.scraper.ScrapedEvent
@@ -8,6 +7,7 @@ import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
 import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.jsonLdNodes
 import de.norm.events.scraper.parseIsoDate
+import de.norm.events.scraper.parseSchemaEventStatus
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.stringOrNull
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -67,7 +67,7 @@ class LogeDetailPageScraper {
             sourceUrl = sourceUrl,
             sourceId = "${EventSource.LOGE.sourceIdPrefix}${extractEventSlug(sourceUrl, "/event-details/")}",
             pricePresale = parsePresalePrice(event.path("offers")),
-            status = mapSchemaEventStatus(event.stringOrNull("eventStatus"))
+            status = parseSchemaEventStatus(event.stringOrNull("eventStatus"))
         )
     }
 
@@ -123,15 +123,3 @@ class LogeDetailPageScraper {
         return parseTime(timePart.takeIf { it.isNotBlank() })
     }
 }
-
-/**
- * Maps a schema.org `eventStatus` URL (e.g. `https://schema.org/EventCancelled`) to a domain
- * [EventStatus] name. Rescheduled (a new date) maps to `POSTPONED`; unknown or absent defaults
- * to `SCHEDULED`.
- */
-private fun mapSchemaEventStatus(url: String?): String =
-    when (url?.substringAfterLast('/')?.trim()) {
-        "EventCancelled" -> EventStatus.CANCELLED.name
-        "EventPostponed", "EventRescheduled" -> EventStatus.POSTPONED.name
-        else -> EventStatus.SCHEDULED.name
-    }

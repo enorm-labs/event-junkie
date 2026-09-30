@@ -1,6 +1,5 @@
 package de.norm.events.scraper.so36
 
-import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ROLE_LABEL_PREFIX
@@ -12,6 +11,7 @@ import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.mapEventType
 import de.norm.events.scraper.parseIsoDate
+import de.norm.events.scraper.parseSchemaEventStatus
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.refineConcertVenueType
 import de.norm.events.scraper.splitSupportActs
@@ -85,7 +85,7 @@ class So36DetailPageScraper {
             pricePresale = presale,
             priceBoxOffice = boxOffice,
             free = document.isFreeAdmission(),
-            status = mapSchemaStatus(jsonLd.eventStatus),
+            status = parseSchemaEventStatus(jsonLd.eventStatus),
             artists = parseArtists(title, subtitle, eventType),
             promoters = listOfNotNull(document.parsePromoter())
         )
@@ -192,20 +192,6 @@ class So36DetailPageScraper {
         return splitSupportActs(if (line.first() in SUPPORT_JOINERS) line.drop(1) else line)
             .map { it.replaceFirst(ROLE_LABEL_PREFIX, "").trim() }
             .filter { it.isNotBlank() && !isNonArtistName(it) }
-    }
-
-    /**
-     * Maps a schema.org `eventStatus` URL to an [EventStatus] name. `EventRescheduled` (date/time
-     * moved) maps to `POSTPONED` — the closest — rather than `RELOCATED`, reserved for venue
-     * changes. Missing or unknown defaults to `SCHEDULED`.
-     */
-    private fun mapSchemaStatus(eventStatus: String?): String {
-        val status = eventStatus.orEmpty()
-        return when {
-            status.contains("Cancelled") -> EventStatus.CANCELLED.name
-            status.contains("Postponed") || status.contains("Rescheduled") -> EventStatus.POSTPONED.name
-            else -> EventStatus.SCHEDULED.name
-        }
     }
 
     /** The numeric product id from a `/produkte/<id>-…` detail URL. */

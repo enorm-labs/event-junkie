@@ -156,6 +156,27 @@ class SodaDetailPageScraperTest {
     }
 
     @Test
+    fun `reads a rescheduled or moved-online status from the schema URL`() {
+        fun statusOf(eventStatus: String) =
+            parseHtml(
+                """
+                <html><body><h1 class="title">Sodalicious</h1>
+                <script type="application/ld+json">[{
+                  "@type": "MusicEvent",
+                  "name": "Sodalicious",
+                  "startDate": "2026-08-01T22:00:00+02:00",
+                  "eventStatus": "$eventStatus"
+                }]</script></body></html>
+                """.trimIndent()
+            ).shouldNotBeNull()
+                .status
+
+        statusOf("https://schema.org/EventRescheduled") shouldBe "POSTPONED"
+        statusOf("https://schema.org/EventMovedOnline") shouldBe "RELOCATED"
+        statusOf("https://schema.org/EventScheduled") shouldBe "SCHEDULED"
+    }
+
+    @Test
     fun `returns null for a page without an event title`() {
         parseHtml("<html><body></body></html>") shouldBe null
     }

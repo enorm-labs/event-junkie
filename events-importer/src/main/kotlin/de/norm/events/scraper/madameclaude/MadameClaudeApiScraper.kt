@@ -1,6 +1,7 @@
 package de.norm.events.scraper.madameclaude
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
@@ -13,6 +14,7 @@ import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.isScreeningTitle
 import de.norm.events.scraper.mapEventType
 import de.norm.events.scraper.parseClockPrefix
+import de.norm.events.scraper.parseEventStatus
 import de.norm.events.scraper.parseIsoDate
 import de.norm.events.scraper.parsePriceValue
 import de.norm.events.scraper.parseTime
@@ -200,7 +202,7 @@ class MadameClaudeApiScraper {
         }
 
     /**
-     * Maps the ACF `event_status` to a domain [EventStatus][de.norm.events.event.EventStatus] name.
+     * Maps the ACF `event_status` to a domain [EventStatus] name.
      * Every current event is `Scheduled`; cancelled/postponed/relocated codes are mapped
      * defensively so a future status surfaces rather than passing as scheduled.
      */
@@ -211,23 +213,8 @@ class MadameClaudeApiScraper {
             }
 
             else -> {
-                when {
-                    normalized.contains("cancel") || normalized.contains("abgesagt") -> {
-                        "CANCELLED"
-                    }
-
-                    normalized.contains("postpon") || normalized.contains("verschoben") -> {
-                        "POSTPONED"
-                    }
-
-                    normalized.contains("reloc") || normalized.contains("verlegt") -> {
-                        "RELOCATED"
-                    }
-
-                    else -> {
-                        logger.warn { "Unknown Madame Claude status '$normalized', defaulting to SCHEDULED" }
-                        "SCHEDULED"
-                    }
+                parseEventStatus(normalized).also {
+                    if (it == EventStatus.SCHEDULED.name) logger.warn { "Unknown Madame Claude status '$normalized', defaulting to SCHEDULED" }
                 }
             }
         }
