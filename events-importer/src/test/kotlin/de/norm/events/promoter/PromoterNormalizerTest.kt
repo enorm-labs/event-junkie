@@ -320,6 +320,16 @@ class PromoterNormalizerTest {
         }
     }
 
+    @Test
+    fun `restores a trading name whose descriptor the strip took`() {
+        assertSoftly {
+            canonicalPromoterName("Schubert Music") shouldBe "Schubert Music"
+            canonicalPromoterName("Schubert") shouldBe "Schubert Music"
+            canonicalPromoterName("Bliss Music") shouldBe "Bliss Music"
+            canonicalPromoterName("Bliss") shouldBe "Bliss Music"
+        }
+    }
+
     // #1361: a descriptor stays on a three-letter initialism, a legal form still comes off, and
     // the rows #1318 stored under the stripped word resolve to the whole name.
     @Test
