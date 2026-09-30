@@ -104,14 +104,15 @@ class NeueZukunftApiScraper {
             eventType = eventType,
             eventDate = eventDate,
             startTime = startTime,
+            // The cover is unset on almost every show; a gallery image is the fallback (Herbstfest 2026).
             imageUrl =
-                node.coverImage
-                    ?.url
-                    .blankToNull()
-                    ?.takeIf { it.startsWith("http") },
+                (listOfNotNull(node.coverImage) + node.images)
+                    .firstNotNullOfOrNull { image -> image.url.blankToNull()?.takeIf { it.startsWith("http") } },
             sourceUrl = NEUE_ZUKUNFT_URL,
             sourceId = "${EventSource.NEUE_ZUKUNFT.sourceIdPrefix}$id",
             ticketUrl = elfsightActionUrl(node.actions),
+            // A button that names the entry instead of a shop ("Eintritt frei!") is the price note.
+            priceNote = node.actions.firstNotNullOfOrNull { action -> action.text.blankToNull()?.takeIf { ENTRY_NOTE.containsMatchIn(it) } },
             soldOut = node.actions.any { it.text.blankToNull()?.contains("sold out", ignoreCase = true) == true },
             // A festival title names an event, not a performer; only concerts mint headliners from the title.
             artists = if (festival) emptyList() else headlinersFromTitle(title)
@@ -121,5 +122,8 @@ class NeueZukunftApiScraper {
     private companion object {
         /** Names the venue in the shared payload reader's warnings. */
         const val VENUE_NAME = "Neue Zukunft"
+
+        /** An action button about entry, not a shop: "Eintritt frei!", "Free entry". */
+        val ENTRY_NOTE = Regex("""\b(?:eintritt|entry|admission)\b""", RegexOption.IGNORE_CASE)
     }
 }

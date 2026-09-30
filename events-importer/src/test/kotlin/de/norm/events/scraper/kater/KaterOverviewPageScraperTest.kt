@@ -202,4 +202,17 @@ class KaterOverviewPageScraperTest {
     fun `leaves the description null when the summary is only a lineup`() {
         event("1885").description.shouldBeNull()
     }
+
+    @Test
+    fun `reads the rare flyer the summary carries inline`() {
+        // Seifentheater: KASSANDRA, from the homepage on 2026-09-30.
+        val html =
+            javaClass.classLoader
+                .getResourceAsStream("scraper/kater/kater-overview-inline-flyer.html")!!
+                .bufferedReader()
+                .readText()
+        val baseUrl = "https://www.katerclub.de/"
+        KaterOverviewPageScraper().scrape(Jsoup.parse(html, baseUrl), baseUrl).first().imageUrl shouldBe
+            "https://www.katerclub.de/wp-content/uploads/2026/09/Kassandra-Facebook-Beitrag-300x300.jpeg"
+    }
 }

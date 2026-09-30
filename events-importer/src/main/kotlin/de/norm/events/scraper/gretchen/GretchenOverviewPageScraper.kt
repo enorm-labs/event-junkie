@@ -208,7 +208,8 @@ class GretchenOverviewPageScraper {
      * Prices from the trailing `<em>`: `*Vorverkauf 12 €/ 18 €/ 25 € zzgl. Gebühren * Abendkasse 30
      * €*`, a tiered presale range and one box-office price (or "tba."). The lowest presale tier and
      * the box-office value become structured prices; the cleaned string is kept as the note so the
-     * tiers are not lost. `.lineup` blocks without a `Vorverkauf`/`Abendkasse` marker are ignored.
+     * tiers are not lost. A free night prints only `*freier Eintritt // Anmeldung erforderlich*`, which
+     * is kept as the note. `.lineup` blocks with neither marker are ignored.
      */
     private fun parsePrices(gig: Element): Triple<BigDecimal?, BigDecimal?, String?> {
         val priceText =
@@ -361,7 +362,7 @@ class GretchenOverviewPageScraper {
         private val SHOW_PATTERN = Regex("""Show:\s*(\d{1,2})\.(\d{2})""")
 
         /** A pricing `<em>` is the one carrying a "Vorverkauf" or "Abendkasse" marker. */
-        private val PRICE_MARKER_PATTERN = Regex("""Vorverkauf|Abendkasse""", RegexOption.IGNORE_CASE)
+        private val PRICE_MARKER_PATTERN = Regex("""Vorverkauf|Abendkasse|freier?\s+Eintritt|Eintritt\s+frei""", RegexOption.IGNORE_CASE)
 
         /** Splits a `.lineup` block's whole text into its `<br>`-delimited lines. */
         private val LINE_BREAK = Regex("""\r?\n""")

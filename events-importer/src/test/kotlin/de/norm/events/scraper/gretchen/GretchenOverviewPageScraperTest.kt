@@ -418,4 +418,20 @@ class GretchenOverviewPageScraperTest {
             event.sourceUrl.startsWith("https://www.gretchen-club.de/detail.php?id=") shouldBe true
         }
     }
+
+    @Test
+    fun `reads a free-entry line as the price note, so the night is free`() {
+        // Event 3603 from the listing on 2026-09-30: a Tag der Clubkultur night.
+        val html =
+            javaClass.classLoader
+                .getResourceAsStream("scraper/gretchen/gretchen-overview-free-entry.html")!!
+                .bufferedReader()
+                .readText()
+        val baseUrl = "https://www.gretchen-club.de/"
+        val night = GretchenOverviewPageScraper().scrape(Jsoup.parse(html, baseUrl), baseUrl).single()
+
+        night.priceNote shouldBe "freier Eintritt // Anmeldung erforderlich"
+        night.pricePresale.shouldBeNull()
+        night.toEventEntity(venueId = 1L, venueSlug = "gretchen", eventSourceId = 1L).free shouldBe true
+    }
 }
