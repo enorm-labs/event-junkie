@@ -10,6 +10,10 @@ says so.
 
 | Source                 | Aspect             | Why the source is silent                                                                                                                         | Issue |
 | ---------------------- | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------ | ----- |
+| `ABSTAND`              | `ARTISTS`          | the bands are named only in free prose of no fixed shape                                                                                         | —     |
+| `ABSTAND`              | `IMAGE`            | radar serves its poster files behind an anti-bot wall, which we do not pass                                                                      | —     |
+| `ABSTAND`              | `TICKET_URL`       | the bar sells no tickets online                                                                                                                  | —     |
+| `ABSTAND`              | `DOORS_TIME`       | radar gives one time per night                                                                                                                   | —     |
 | `AEDEN`                | `PRICE`            | the month page carries no prices                                                                                                                 | —     |
 | `AEDEN`                | `PER_EVENT_PAGE`   | the month page links no page per night                                                                                                           | —     |
 | `ADMIRALSPALAST`       | `GENRE`            | the house classifies by staging format (Konzert, Lesung) and names no musical style anywhere                                                     | —     |
@@ -65,6 +69,11 @@ says so.
 | `DER_WEISSE_HASE`      | `EVENT_TYPE`       | the club states no category anywhere and programmes nothing but DJ nights, so the type is fixed rather than inferred                             | —     |
 | `DER_WEISSE_HASE`      | `PER_EVENT_PAGE`   | the club sells through Resident Advisor and the listing links off-site                                                                           | —     |
 | `DER_WEISSE_HASE`      | `CANCELLATION`     | a cancelled night is taken off the page rather than labelled                                                                                     | —     |
+| `DRUGSTORE`            | `ARTISTS`          | the bands are named only in free prose of no fixed shape                                                                                         | —     |
+| `DRUGSTORE`            | `GENRE`            | radar files the nights under concert or party, and the style is in prose                                                                         | —     |
+| `DRUGSTORE`            | `IMAGE`            | radar serves its poster files behind an anti-bot wall, which we do not pass                                                                      | —     |
+| `DRUGSTORE`            | `TICKET_URL`       | the youth centre sells no tickets online                                                                                                         | —     |
+| `DRUGSTORE`            | `DOORS_TIME`       | radar gives one time per night, and the prose names the doors where it differs                                                                   | —     |
 | `DUNCKER`              | `PER_EVENT_PAGE`   | the whole programme is one hand-coded page                                                                                                       | —     |
 | `DUNCKER`              | `PRICE`            | the listing gives a night, a genre string and an hour range, never a figure                                                                      | —     |
 | `ESCHSCHLORAQUE`       | `PRICE`            | entry is settled at the door and the venue names no figure                                                                                       | —     |
@@ -119,6 +128,10 @@ says so.
 | `KLUNKERKRANICH`       | `CANCELLATION`     | nothing flags a night cancelled                                                                                                                  | —     |
 | `KLUNKERKRANICH`       | `ARTISTS`          | a billing joined by `&` is split into two acts, the venue billing a duo and a pair of separate acts the same way                                 | —     |
 | `KLUNKERKRANICH`       | `PRICE`            | entry is a time-banded range (`5-9€`) the model has no field for, so the wording is kept verbatim as the note and only a lone figure is stored   | —     |
+| `KOEPI`                | `IMAGE`            | radar serves its poster files behind an anti-bot wall, which we do not pass                                                                      | —     |
+| `KOEPI`                | `TICKET_URL`       | the venue sells no tickets online                                                                                                                | —     |
+| `KOEPI`                | `PRICE`            | radar carries no price for its concerts                                                                                                          | —     |
+| `KOEPI`                | `DOORS_TIME`       | radar gives one time per night                                                                                                                   | —     |
 | `LARK`                 | `START_TIME`       | the venue renders its one time as Doors and publishes no separate start time                                                                     | —     |
 | `LARK`                 | `PRICE`            | the venue prints no figure; tickets link to hum-berlin.com                                                                                       | —     |
 | `LARK`                 | `GENRE`            | the venue leaves its genre fields empty on every event; style appears only in the description                                                    | —     |

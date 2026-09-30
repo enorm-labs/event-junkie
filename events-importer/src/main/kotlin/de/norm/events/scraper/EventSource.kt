@@ -7,6 +7,9 @@ package de.norm.events.scraper
  * scrapers in `scraper/<venue>/`.
  */
 enum class EventSource {
+    /** Abstand Berlin – a punk bar at Rigaer Straße 78 in Friedrichshain, with concerts and solidarity nights. */
+    ABSTAND,
+
     /** ÆDEN Berlin – a techno club on the Spree in Kreuzberg with two floors and a garden. */
     AEDEN,
 
@@ -73,6 +76,9 @@ enum class EventSource {
     /** Der Weiße Hase Berlin – a techno club in the RAW-Gelände arches on Revaler Straße, running raves and DJ nights. */
     DER_WEISSE_HASE,
 
+    /** Drugstore Berlin – the city's oldest self-run youth centre, founded in 1972, with punk and hardcore concerts in the Rockhaus. */
+    DRUGSTORE,
+
     /** Duncker Club Berlin – a long-running goth, wave and indie club in Prenzlauer Berg. */
     DUNCKER,
 
@@ -131,6 +137,9 @@ enum class EventSource {
 
     /** Klunkerkranich Berlin – the rooftop culture garden above the Neukölln Arcaden: a bar, stage and club running a nightly programme. */
     KLUNKERKRANICH,
+
+    /** KØPI Berlin – the squatted house project at Köpenicker Straße 137, running punk, hardcore and metal concerts. */
+    KOEPI,
 
     /** LARK Berlin – a live-music club in the railway arches on Holzmarktstraße, programming indie, folk, pop and singer-songwriter shows. */
     LARK,

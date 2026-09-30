@@ -15,6 +15,7 @@
 ###   deletes the venue, its source row and its one past event.
 ###
 ### Sources (alphabetical):
+###   Abstand              — https://radar.squat.net/en/node/1608
 ###   Admiralspalast       — https://www.admiralspalast.theater/veranstaltungsuebersicht.html
 ###   ÆDEN                 — https://aedenberlin.com/events/
 ###   Alte Kantine         — https://alte-kantine.eu/
@@ -35,6 +36,7 @@
 ###   Cosmic Comedy Club   — https://comedyclubberlin.com/wp-json/tribe/events/v1/events
 ###   Crack Bellmer        — https://www.crackbellmer.de/program/this-month
 ###   Der Weiße Hase       — https://derweissehase.club/events
+###   Drugstore            — https://drugstore-berlin.de/veranstaltungen/
 ###   Duncker Club         — https://www.dunckerclub.de/start.html
 ###   Eschschloraque       — https://www.eschschloraque.de/
 ###   Festsaal Kreuzberg   — https://festsaal-kreuzberg.de/de/programm/
@@ -53,6 +55,7 @@
 ###   Kantine am Berghain  — https://www.berghain.berlin/de/program/kantine-am-berghain/
 ###   Kater                — https://www.katerclub.de/
 ###   Klunkerkranich       — https://klunkerkranich.org/events/
+###   KØPI                 — https://koepi137.net/
 ###   Kulturhaus Insel Berlin — https://www.inselberlin.de/
 ###   Kulturhaus Peter Edel — https://www.peteredel.de/events/
 ###   LARK                 — https://larkberlin.com/wp-json/wp/v2/event
@@ -5558,6 +5561,179 @@ Accept: application/json
 
 > {%
     client.test("Zur Klappe import triggered", function () {
+        client.assert(response.status === 202, "Expected 202 but got " + response.status);
+    });
+%}
+
+### ============================================================
+### Abstand (Rigaer Straße 78, Berlin-Friedrichshain)
+### ============================================================
+
+### --- Create Abstand venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Abstand",
+    "address": "Rigaer Straße 78",
+    "city": "Berlin",
+    "postalCode": "10247",
+    "district": "friedrichshain",
+    "latitude": 52.516843,
+    "longitude": 13.464298
+}
+
+> {%
+    client.global.set("abstand_venue_id", response.body.id);
+    client.test("Abstand venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Create Abstand event source ---
+# Links the venue to the AbstandWebsiteImporter.
+# The sourceType "ABSTAND" matches EventSource.ABSTAND.
+POST {{importer-host}}/api/admin/event-sources
+Content-Type: application/json
+
+{
+    "venueId": {{abstand_venue_id}},
+    "name": "Abstand",
+    "url": "https://radar.squat.net/api/1.2/search/events.json?facets%5Bgroup%5D%5B%5D=1608&limit=500",
+    "sourceType": "ABSTAND",
+    "enabled": true,
+    "importIntervalMinutes": 1440,
+    "maxRetries": 3
+}
+
+> {%
+    client.test("Abstand event source created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Trigger initial Abstand import ---
+POST {{importer-host}}/api/admin/event-sources/abstand/import
+Accept: application/json
+
+> {%
+    client.test("Abstand import triggered", function () {
+        client.assert(response.status === 202, "Expected 202 but got " + response.status);
+    });
+%}
+
+### ============================================================
+### Drugstore (Buchberger Straße 6, Berlin-Lichtenberg — in the Rockhaus)
+### ============================================================
+
+### --- Create Drugstore venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Drugstore",
+    "address": "Buchberger Straße 6",
+    "city": "Berlin",
+    "postalCode": "10365",
+    "district": "lichtenberg",
+    "latitude": 52.509567,
+    "longitude": 13.490187,
+    "websiteUrl": "https://drugstore-berlin.de"
+}
+
+> {%
+    client.global.set("drugstore_venue_id", response.body.id);
+    client.test("Drugstore venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Create Drugstore event source ---
+# Links the venue to the DrugstoreWebsiteImporter.
+# The sourceType "DRUGSTORE" matches EventSource.DRUGSTORE.
+POST {{importer-host}}/api/admin/event-sources
+Content-Type: application/json
+
+{
+    "venueId": {{drugstore_venue_id}},
+    "name": "Drugstore",
+    "url": "https://radar.squat.net/api/1.2/search/events.json?facets%5Bgroup%5D%5B%5D=1680&limit=500",
+    "sourceType": "DRUGSTORE",
+    "enabled": true,
+    "importIntervalMinutes": 1440,
+    "maxRetries": 3
+}
+
+> {%
+    client.test("Drugstore event source created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Trigger initial Drugstore import ---
+POST {{importer-host}}/api/admin/event-sources/drugstore/import
+Accept: application/json
+
+> {%
+    client.test("Drugstore import triggered", function () {
+        client.assert(response.status === 202, "Expected 202 but got " + response.status);
+    });
+%}
+
+### ============================================================
+### KØPI (Köpenicker Straße 137, Berlin-Mitte)
+### ============================================================
+
+### --- Create KØPI venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "KØPI",
+    "address": "Köpenicker Straße 137",
+    "city": "Berlin",
+    "postalCode": "10179",
+    "district": "mitte",
+    "latitude": 52.507695,
+    "longitude": 13.426116,
+    "websiteUrl": "https://koepi137.net"
+}
+
+> {%
+    client.global.set("koepi_venue_id", response.body.id);
+    client.test("KØPI venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Create KØPI event source ---
+# Links the venue to the KoepiWebsiteImporter.
+# The sourceType "KOEPI" matches EventSource.KOEPI.
+POST {{importer-host}}/api/admin/event-sources
+Content-Type: application/json
+
+{
+    "venueId": {{koepi_venue_id}},
+    "name": "KØPI",
+    "url": "https://radar.squat.net/api/1.2/search/events.json?facets%5Bgroup%5D%5B%5D=13&limit=500",
+    "sourceType": "KOEPI",
+    "enabled": true,
+    "importIntervalMinutes": 1440,
+    "maxRetries": 3
+}
+
+> {%
+    client.test("KØPI event source created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Trigger initial KØPI import ---
+POST {{importer-host}}/api/admin/event-sources/kopi/import
+Accept: application/json
+
+> {%
+    client.test("KØPI import triggered", function () {
         client.assert(response.status === 202, "Expected 202 but got " + response.status);
     });
 %}

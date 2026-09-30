@@ -1,6 +1,7 @@
 package de.norm.events.scraper
 
 import de.norm.events.event.EventType
+import de.norm.events.scraper.abstand.ABSTAND_LIMITATIONS
 import de.norm.events.scraper.admiralspalast.ADMIRALSPALAST_LIMITATIONS
 import de.norm.events.scraper.aeden.AEDEN_LIMITATIONS
 import de.norm.events.scraper.aeg.AEG_LIMITATIONS
@@ -23,6 +24,7 @@ import de.norm.events.scraper.cosmiccomedy.COSMIC_COMEDY_LIMITATIONS
 import de.norm.events.scraper.crackbellmer.CRACK_BELLMER_LIMITATIONS
 import de.norm.events.scraper.delphi.THEATER_IM_DELPHI_LIMITATIONS
 import de.norm.events.scraper.derweissehase.DER_WEISSE_HASE_LIMITATIONS
+import de.norm.events.scraper.drugstore.DRUGSTORE_LIMITATIONS
 import de.norm.events.scraper.duncker.DUNCKER_LIMITATIONS
 import de.norm.events.scraper.eschschloraque.ESCHSCHLORAQUE_LIMITATIONS
 import de.norm.events.scraper.festsaal.FESTSAAL_LIMITATIONS
@@ -41,6 +43,7 @@ import de.norm.events.scraper.insel.INSEL_LIMITATIONS
 import de.norm.events.scraper.junctionbar.JUNCTION_BAR_LIMITATIONS
 import de.norm.events.scraper.kater.KATER_LIMITATIONS
 import de.norm.events.scraper.klunkerkranich.KLUNKERKRANICH_LIMITATIONS
+import de.norm.events.scraper.koepi.KOEPI_LIMITATIONS
 import de.norm.events.scraper.lark.LARK_LIMITATIONS
 import de.norm.events.scraper.lido.LIDO_LIMITATIONS
 import de.norm.events.scraper.loge.LOGE_LIMITATIONS
@@ -94,6 +97,7 @@ import de.norm.events.scraper.zurklappe.ZUR_KLAPPE_LIMITATIONS
 object AcceptedLimitations {
     val declarations: List<VenueLimitations> =
         listOf(
+            ABSTAND_LIMITATIONS,
             ADMIRALSPALAST_LIMITATIONS,
             AEDEN_LIMITATIONS,
             AEG_LIMITATIONS,
@@ -115,6 +119,7 @@ object AcceptedLimitations {
             COSMIC_COMEDY_LIMITATIONS,
             CRACK_BELLMER_LIMITATIONS,
             DER_WEISSE_HASE_LIMITATIONS,
+            DRUGSTORE_LIMITATIONS,
             DUNCKER_LIMITATIONS,
             ESCHSCHLORAQUE_LIMITATIONS,
             FESTSAAL_LIMITATIONS,
@@ -133,6 +138,7 @@ object AcceptedLimitations {
             JUNCTION_BAR_LIMITATIONS,
             KATER_LIMITATIONS,
             KLUNKERKRANICH_LIMITATIONS,
+            KOEPI_LIMITATIONS,
             LARK_LIMITATIONS,
             LIDO_LIMITATIONS,
             LOGE_LIMITATIONS,
