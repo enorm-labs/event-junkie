@@ -87,6 +87,17 @@ class So36DetailPageScraperTest {
     }
 
     @Test
+    fun `bills the part of a piped title before the pipe`() {
+        // "SADSVIT | HYPHEN DASH", 30 September 2026; the ticket line is "SADSVIT | Ticket".
+        val url = "https://www.so36.com/produkte/100114-tickets-sadsvit-hyphen-dash-so36-berlin-am-30-09-2026"
+        val event = scraper.scrape(fixture("so36-detail-pipe-title.html", url), url)
+        event.shouldNotBeNull()
+
+        event.title shouldBe "SADSVIT | HYPHEN DASH"
+        event.artists.map { it.name to it.role } shouldBe listOf("SADSVIT" to "HEADLINER")
+    }
+
+    @Test
     fun `reads a support line that opens with its label instead of a plus`() {
         // "PÖBEL & GESOCKS" with the subtitle "Support: GRENZER & BIERTOIFEL" (#1903).
         val url = "https://www.so36.com/produkte/99596-tickets-poebel-gesocks-so36-berlin-am-03-10-2026"
