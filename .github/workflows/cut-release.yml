@@ -176,6 +176,7 @@ jobs:
           claude_args: |
             --model ${{ inputs.model || 'claude-opus-4-8' }}
             --max-turns 40
+            --tools "Bash,Read,Glob,Grep"
             --allowedTools "Bash,Read,Glob,Grep"
 
       # The one place that decides which text the release carries. The model step ends `outcome=success`

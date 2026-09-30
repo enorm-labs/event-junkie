@@ -76,6 +76,7 @@ jobs:
           claude_args: |
             --model ${{ inputs.model || 'claude-opus-4-8' }}
             --max-turns 80
+            --tools "Bash,Read,Glob,Grep,Edit,Write,TodoWrite"
             --allowedTools "Bash,Read,Glob,Grep,Edit,Write,TodoWrite"
 
       # Reporting steps last and guarded. The step summary has no REST API, so the final report is
