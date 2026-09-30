@@ -24,8 +24,8 @@ repairing live in the [issue tracker](https://github.com/enorm-labs/event-junkie
 | ----------------------------------- | ------------------------------------------------------------------------------------ | ----: |
 | ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |    88 |
 | 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |    13 |
-| ⛔ [Blocked](#-blocked--deferred)   | Website analyzed, but no usable listings (no programme page, JS-only, or too sparse) |   105 |
-| ❓ [Unanalyzed](#-not-analyzed-yet) | URL recorded, but the website still needs a first look                               |    21 |
+| ⛔ [Blocked](#-blocked--deferred)   | Website analyzed, but no usable listings (no programme page, JS-only, or too sparse) |   108 |
+| ❓ [Unanalyzed](#-not-analyzed-yet) | URL recorded, but the website still needs a first look                               |    26 |
 
 "Website analyzed" also means the [data model](DATA_MODEL.md) was checked against that source, and no source needed a
 schema change.
@@ -428,6 +428,9 @@ the empty Next.js payload rather than the WAF, and a 403 is not evidence that a 
 | Badenscher Hof Jazzclub          | https://www.badenscher-hof.de/                 | Club         | Duda one-pager; programme only as monthly PNG images      | Site change                |
 | Mokum                            | —                                              | Bar          | No own site; Facebook only                                | Site change                |
 | Komplex Berlin                   | https://komplex.berlin/                        | Other        | Adobe Portfolio rental site; no programme                 | Site change / manual entry |
+| Erreichbar                       | —                                              | Other        | No own site; radar.squat.net group 6653 only              | Radar reader (#2166)       |
+| Zielona Góra                     | —                                              | Bar          | No own site; radar.squat.net group 1746 only              | Radar reader (#2166)       |
+| Abstand                          | —                                              | Bar          | No own site; radar.squat.net group 1608 only              | Radar reader (#2166)       |
 
 ## ❓ Not analyzed yet
 
@@ -435,8 +438,9 @@ New candidates land here first. Check for a server-rendered programme, then move
 [Ready](#-ready-to-implement) or [Blocked](#-blocked--deferred). A row belongs here only until someone opens it — the
 URL is recorded, nothing more.
 
-Every row below came from the tipBerlin sweep on 2026-09-30. The URL was confirmed to answer, and nothing else was
-checked. A venue's type is a first guess. Correct it against the venue's own site when the row is opened.
+Every row below came from a sweep on 2026-09-30. The first 21 came from tipBerlin, and the last five from
+radar.squat.net. The URL was confirmed to answer, and nothing else was checked. A venue's type is a first guess.
+Correct it against the venue's own site when the row is opened.
 
 | Name                              | URL                                                       | Type         |
 | --------------------------------- | --------------------------------------------------------- | ------------ |
@@ -461,9 +465,17 @@ checked. A venue's type is a first guess. Correct it against the venue's own sit
 | Spindler & Klatt                  | https://www.spindlerklatt.com/club                        | Club         |
 | Zebrano Theater                   | https://www.zebrano-theater.de/programm.html              | Theater      |
 | Renaissance-Theater               | https://renaissance-theater.de/spielplan/                 | Theater      |
+| Jugendclub Café Köpenick          | https://www.cafe-hdjk.de/                                 | Club         |
+| Sama32                            | https://www.sama32.squat.net/                             | Bar          |
+| Køpi                              | https://koepi137.net/                                     | Club         |
+| KuBiZ                             | https://www.kubiz-wallenberg.de/                          | Other        |
+| Drugstore                         | https://drugstore-berlin.de/veranstaltungen/              | Other        |
 
 WABE's own building is closed for renovation. Its events run at Schönfließer Str. 7 for now. Kühlspot has no programme
 page, and its events are a section of the home page.
+
+The five radar rows each post their programme to their own radar.squat.net group too, and so does Baiz. Look at the
+venue's own site first. If it is thin, the radar reader in #2166 is the fallback.
 
 Where candidates come from, and what is deliberately left out:
 
@@ -484,6 +496,13 @@ Where candidates come from, and what is deliberately left out:
 - **XCEED** (<https://xceed.me/de/berlin/events>), a nightlife ticket marketplace. Its open API
   `event-b2c.xceed.me/v2/events?cities[0]=berlin` held 31 events at 11 venues on 2026-09-30. Every venue with a
   programme was already recorded, so XCEED added nothing.
+- **Stressfaktor** (<https://stressfaktor.squat.net/termine>), the calendar of Berlin's left subculture. It shows
+  the events of radar.squat.net, and an Anubis proof-of-work wall protects its HTML. Do not scrape it. The radar JSON
+  API `radar.squat.net/api/1.2/search/events.json` is outside the wall, and radar invites reuse. The `music-concert`
+  and `party` categories held 220 Berlin events at about 50 locations. 159 of them came from the venue's own radar
+  group, and those groups gave the eight new rows. The other 61 came only through the Stressfaktor group, at one-off
+  locations. Schokoladen, Loge, Supamolly, SO36, Clash, Neue Zukunft, ausland and ://about blank were already
+  recorded.
 
 **Excluded on purpose, so a later sweep does not re-litigate them.** An RA venue with a single event in the window,
 unless a promoter listed it too. A one-off booking is not evidence of a programme, and the
