@@ -135,7 +135,7 @@ class DelphiProgrammePageScraper {
             pricePresale = record?.pricePresale,
             priceNote = record?.priceNote,
             free = record?.free == true,
-            artists = buildArtistsForEventType(title, subtitle = null, eventType = eventType)
+            artists = buildArtistsForEventType(delphiBilledTitle(title), subtitle = null, eventType = eventType)
         )
     }
 
@@ -191,6 +191,15 @@ private val DELPHI_CATEGORY_SYNONYMS =
  * tags; filing `Tanz` or `Theater` as a genre would put formats into a vocabulary of styles.
  */
 private val MUSIC_GENRE_LABELS = setOf("Kammermusik", "Elektronische Musik")
+
+/**
+ * The part of [title] that bills an act: `"Delphis Orakel – Stroum"` is the house's bar series presenting
+ * Stroum, and only Stroum is billed (#2072).
+ */
+internal fun delphiBilledTitle(title: String): String = title.replaceFirst(HOUSE_SERIES, "").ifBlank { title }
+
+/** The house's own series in front of the act it presents: `"Delphis Orakel – Stroum"`. */
+private val HOUSE_SERIES = Regex("""^\s*delphis\s+orakel\s*[–—-]\s*""", RegexOption.IGNORE_CASE)
 
 /** The class marking a month heading, used to bound the search for its table. */
 private const val MONTH_HEADING_CLASS = "month"
