@@ -16,6 +16,7 @@ import java.time.Clock
 import java.time.DayOfWeek
 import java.time.LocalTime
 import java.time.ZonedDateTime
+import kotlin.coroutines.cancellation.CancellationException
 
 /**
  * Website importer for Sisyphos: its Shopify ticket shop, and on weekends the fan-run timetable
@@ -36,7 +37,9 @@ import java.time.ZonedDateTime
  *
  * A shop-only run leaves out the nights dated today or earlier. Otherwise a run early on Sunday
  * would store a merged Saturday again without its line-up, because the line-up is replaced by the
- * scrape's (`AssociationSyncService`).
+ * scrape's (`AssociationSyncService`). Inside the window a shop failure, such as Shopify's 429, does
+ * not cost the weekends: they merge into the shop's nights from the last run that read them. After a
+ * restart there are none, so a ticketed weekend can then appear twice until the shop answers again.
  */
 @Component
 class SisyphosWebsiteImporter(
@@ -51,20 +54,60 @@ class SisyphosWebsiteImporter(
     private val apiScraper = SisyphosApiScraper()
     private val timetableScraper = SisyfanTimetableScraper()
 
+    /** The shop's nights from the last run that read them, merged into when the shop fails in the window. */
+    @Volatile
+    private var lastShopNights: List<ScrapedEvent> = emptyList()
+
     override suspend fun importEvents(
         url: String,
         etag: String?,
         lastModified: String?
     ): ImportResult {
-        val shop = apiScraper.scrape(apiClient.fetchJson(url), url)
         val now = ZonedDateTime.ofInstant(clock.instant(), BERLIN)
-        val weekends = if (inSisyfanWindow(now)) fetchWeekends() else null
-        if (weekends == null) {
-            logger.info { "Scraped ${shop.size} event(s) from the Sisyphos ticket shop; sisy.fan not read" }
-            return ImportResult.Success(events = shop.filter { it.eventDate.isAfter(now.toLocalDate()) }, etag = null, lastModified = null)
+        if (!inSisyfanWindow(now)) return shopOnly(fetchShop(url), now)
+        val shop = tryFetchShop(url)
+        val weekends = fetchWeekends()
+        return when {
+            weekends == null -> {
+                shopOnly(shop.getOrThrow(), now)
+            }
+
+            shop.isSuccess -> {
+                val nights = shop.getOrThrow()
+                logger.info { "Scraped ${nights.size} event(s) from the Sisyphos ticket shop and ${weekends.size} weekend(s) from sisy.fan" }
+                ImportResult.Success(events = mergeWeekends(nights, weekends), etag = null, lastModified = null)
+            }
+
+            else -> {
+                logger.warn(shop.exceptionOrNull()) {
+                    "Sisyphos ticket shop failed; importing ${weekends.size} sisy.fan weekend(s) with ${lastShopNights.size} shop night(s) from the last run"
+                }
+                // Incomplete, so the stale cleanup cannot remove shop nights this run did not read.
+                ImportResult.Success(events = mergeWeekends(lastShopNights, weekends), etag = null, lastModified = null, complete = false)
+            }
         }
-        logger.info { "Scraped ${shop.size} event(s) from the Sisyphos ticket shop and ${weekends.size} weekend(s) from sisy.fan" }
-        return ImportResult.Success(events = mergeWeekends(shop, weekends), etag = null, lastModified = null)
+    }
+
+    private suspend fun fetchShop(url: String): List<ScrapedEvent> = apiScraper.scrape(apiClient.fetchJson(url), url).also { lastShopNights = it }
+
+    /** The shop's nights, or its failure: inside the window the weekends are still worth importing without them. */
+    @Suppress("TooGenericExceptionCaught") // A shop failure must not cost the weekends; outside the window it still fails the run
+    private suspend fun tryFetchShop(url: String): Result<List<ScrapedEvent>> =
+        try {
+            Result.success(fetchShop(url))
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+
+    /** A run without sisy.fan: the shop's nights after today, so a merged line-up is never stored again without its weekend. */
+    private fun shopOnly(
+        nights: List<ScrapedEvent>,
+        now: ZonedDateTime
+    ): ImportResult {
+        logger.info { "Scraped ${nights.size} event(s) from the Sisyphos ticket shop; sisy.fan not read" }
+        return ImportResult.Success(events = nights.filter { it.eventDate.isAfter(now.toLocalDate()) }, etag = null, lastModified = null)
     }
 
     /** The weekends on sisy.fan, or null when the page failed, which makes the run shop-only. */
