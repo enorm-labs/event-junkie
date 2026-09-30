@@ -955,9 +955,26 @@ class ArtistNameMappingTest {
 
     @Test
     fun `buildArtistList excludes placeholder headliner`() {
-        val result = buildArtistList("TBA", listOf("Support Act"))
+        val result = buildArtistList("TBA", listOf("Maid of Ace"))
         result shouldHaveSize 1
-        result[0] shouldBe ScrapedArtist(name = "Support Act", role = "SUPPORT")
+        result[0] shouldBe ScrapedArtist(name = "Maid of Ace", role = "SUPPORT")
+    }
+
+    @Test
+    fun `every support label is a role label, never an act`() {
+        listOf("Support Act", "Opening Act", "div. Support", "Special Guests", "Vorband", "Opener:").forEach {
+            isNonArtistName(it) shouldBe true
+        }
+        isNonArtistName("Opening") shouldBe false
+    }
+
+    @Test
+    fun `reads every support label in a subtitle and strips it off the act`() {
+        extractSupportFromSubtitle("Vorband: Kaos") shouldContainExactly listOf("Kaos")
+        extractSupportFromSubtitle("div. Support: Kaos") shouldContainExactly listOf("Kaos")
+        stripArtistPrefix("Vorband: Kaos") shouldBe "Kaos"
+        headlinersFromTitle("Chelsea Wolfe + Vorband: A.A. Williams").map { it.name to it.role } shouldContainExactly
+            listOf("Chelsea Wolfe" to "HEADLINER", "A.A. Williams" to "SUPPORT")
     }
 
     @Test

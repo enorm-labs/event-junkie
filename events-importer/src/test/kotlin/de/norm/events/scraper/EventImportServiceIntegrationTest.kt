@@ -121,7 +121,7 @@ class EventImportServiceIntegrationTest : BaseControllerTest() {
                             artists =
                                 listOf(
                                     ScrapedArtist(name = "The Headliners", role = "HEADLINER"),
-                                    ScrapedArtist(name = "Opening Act", role = "SUPPORT")
+                                    ScrapedArtist(name = "Maid of Ace", role = "SUPPORT")
                                 )
                         )
                     )
@@ -150,9 +150,9 @@ class EventImportServiceIntegrationTest : BaseControllerTest() {
                 headliner.shouldNotBeNull()
                 headliner.name shouldBe "The Headliners"
 
-                val support = artistRepository.findBySlug("opening-act")
+                val support = artistRepository.findBySlug("maid-of-ace")
                 support.shouldNotBeNull()
-                support.name shouldBe "Opening Act"
+                support.name shouldBe "Maid of Ace"
 
                 val associations = eventArtistRepository.findByEventId(requireNotNull(event.id)).toList()
                 associations shouldHaveSize 2

@@ -6,6 +6,7 @@ import de.norm.events.scraper.DOORS_LABELS
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FREE_ENTRY_PHRASE
 import de.norm.events.scraper.START_LABELS
+import de.norm.events.scraper.SUPPORT_LABELS
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.blankToNull
@@ -327,7 +328,7 @@ private val SOLD_OUT_LINE_PATTERN = Regex("""\bausverkauft\b""", RegexOption.IGN
  * run-together `Marlin BeachSupport: Mellow Ma`. The colon is required: a bare `support`
  * mid-prose is too common.
  */
-private val SUPPORT_PATTERN = Regex("""\+?\s*supports?\s*:\s*(.+)$""", RegexOption.IGNORE_CASE)
+private val SUPPORT_PATTERN = Regex("""\+?\s*(?:$SUPPORT_LABELS)\s*:\s*(.+)$""", RegexOption.IGNORE_CASE)
 
 /** Separators inside a support billing. */
 private val SUPPORT_SEPARATOR = Regex("""\s*[,+&]\s*|\s+und\s+""", RegexOption.IGNORE_CASE)

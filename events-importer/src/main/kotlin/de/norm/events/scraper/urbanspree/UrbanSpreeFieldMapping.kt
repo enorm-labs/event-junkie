@@ -2,6 +2,7 @@ package de.norm.events.scraper.urbanspree
 
 import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
+import de.norm.events.scraper.SUPPORT_LABELS
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.parseEventStatus
 import de.norm.events.scraper.parseTime
@@ -80,7 +81,7 @@ private val VENUE_TAIL_PATTERN =
  * `"JUD | Urban Spree Berlin"` is left to [VENUE_TAIL_PATTERN]; the separator is optional.
  */
 private val BILLING_NOTE_PATTERN =
-    Regex("""\s*[|/–—-]?\s*(?:supports?|openers?|special\s+guests?)\s*:.*$""", RegexOption.IGNORE_CASE)
+    Regex("""\s*[|/–—-]?\s*(?:$SUPPORT_LABELS)\s*:.*$""", RegexOption.IGNORE_CASE)
 
 /**
  * Splits a title into the headline and the support note trailing it, returned verbatim for the

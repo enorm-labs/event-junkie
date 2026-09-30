@@ -846,7 +846,7 @@ class EventImportServiceTest {
                             artists =
                                 listOf(
                                     ScrapedArtist(name = "Headliner", role = "HEADLINER"),
-                                    ScrapedArtist(name = "Support Act", role = "SUPPORT")
+                                    ScrapedArtist(name = "Maid of Ace", role = "SUPPORT")
                                 )
                         )
                     )

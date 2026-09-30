@@ -1,6 +1,7 @@
 package de.norm.events.scraper.cassiopeia
 
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.SUPPORT_LABELS
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.extractEventSlug
@@ -224,7 +225,7 @@ class CassiopeiaDetailPageScraper {
         private const val START_LABEL = "Beginn"
 
         /** A description paragraph naming a support act: `Support: Aska`, `+ Dani Lia`. */
-        private val SUPPORT_LINE = Regex("""(?:support:|\+)\s+(.+)""", RegexOption.IGNORE_CASE)
+        private val SUPPORT_LINE = Regex("""(?:(?:$SUPPORT_LABELS):|\+)\s+(.+)""", RegexOption.IGNORE_CASE)
     }
 }
 

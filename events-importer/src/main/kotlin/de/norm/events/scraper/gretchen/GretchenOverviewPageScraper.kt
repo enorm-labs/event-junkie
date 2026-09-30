@@ -5,6 +5,7 @@ import de.norm.events.scraper.DJ_SET_PARTY_KEYWORDS
 import de.norm.events.scraper.DOORS_LABELS
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.START_LABELS
+import de.norm.events.scraper.SUPPORT_LABELS
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.WHITESPACE
@@ -445,12 +446,12 @@ class GretchenOverviewPageScraper {
             )
 
         /**
-         * A leading role prefix: "Opening DJ-Set by " (literal "by"), or "Support:" / "Special
-         * Guest(s):" / "Show:" (colon required), each optionally preceded by "+".
+         * A leading role prefix: "Opening DJ-Set by " (literal "by"), or a [SUPPORT_LABELS] label or
+         * "Show:" (colon required), each optionally preceded by "+".
          */
         private val CREDIT_PREFIX_PATTERN =
             Regex(
-                """^\s*\+?\s*(?:opening\s+dj[\s-]?set\s+by\s+|(?:support|special\s+guests?|show)\s*:\s*)""",
+                """^\s*\+?\s*(?:opening\s+dj[\s-]?set\s+by\s+|(?:$SUPPORT_LABELS|show)\s*:\s*)""",
                 RegexOption.IGNORE_CASE
             )
     }
