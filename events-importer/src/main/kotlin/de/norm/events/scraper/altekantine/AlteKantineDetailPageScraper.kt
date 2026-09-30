@@ -3,6 +3,7 @@ package de.norm.events.scraper.altekantine
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
+import de.norm.events.scraper.hasFreeEntryPhrase
 import de.norm.events.scraper.imgSrcAt
 import de.norm.events.scraper.parsePriceValue
 import de.norm.events.scraper.textAt
@@ -78,9 +79,6 @@ class AlteKantineDetailPageScraper(
     }
 }
 
-/** A description line that states free entry: "Freier Eintritt für Alle", "Eintritt frei". */
-private val FREE_ENTRY_LINE = Regex("""\bfreier?\s+eintritt\b|\beintritt\s+frei\b""", RegexOption.IGNORE_CASE)
-
 /** The description's own line stating free entry, read per `<br>` line rather than per paragraph. */
 private fun freeEntryLine(content: Element): String? =
     content
@@ -88,7 +86,7 @@ private fun freeEntryLine(content: Element): String? =
         ?.select("p")
         ?.flatMap { it.textLines() }
         ?.map { it.trim() }
-        ?.firstOrNull { FREE_ENTRY_LINE.containsMatchIn(it) }
+        ?.firstOrNull(::hasFreeEntryPhrase)
 
 /** Trailing " – Alte Kantine" site name on the page `<title>`, stripped to leave the event title. */
 private val SITE_TITLE_SUFFIX = Regex("""\s*[–—-]\s*Alte Kantine\s*$""", RegexOption.IGNORE_CASE)

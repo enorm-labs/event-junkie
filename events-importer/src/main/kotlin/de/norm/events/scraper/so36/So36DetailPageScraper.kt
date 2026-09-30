@@ -6,6 +6,7 @@ import de.norm.events.scraper.ROLE_LABEL_PREFIX
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
+import de.norm.events.scraper.hasFreeEntryPhrase
 import de.norm.events.scraper.headlinersFromTitle
 import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.isNonArtistName
@@ -252,7 +253,7 @@ class So36DetailPageScraper {
  */
 private fun Document.isFreeAdmission(): Boolean =
     select(".tabs .panel-body .alert")
-        .any { FREE_ADMISSION_PATTERN.containsMatchIn(it.text()) }
+        .any { hasFreeEntryPhrase(it.text()) }
 
 /**
  * The `Anbieter/Veranstalter` name. The house's own nights credit `SO36`, the venue itself, so
@@ -261,9 +262,6 @@ private fun Document.isFreeAdmission(): Boolean =
 private fun Document.parsePromoter(): String? =
     textAt(".product_merchant b")
         ?.takeUnless { it.equals(VENUE_NAME, ignoreCase = true) }
-
-/** The ticket tab's notice for a free night: `Eintritt frei / Admission free!`. */
-private val FREE_ADMISSION_PATTERN = Regex("""eintritt\s+frei|admission\s+free""", RegexOption.IGNORE_CASE)
 
 /** The promoter credit on the house's own nights. */
 private const val VENUE_NAME = "SO36"

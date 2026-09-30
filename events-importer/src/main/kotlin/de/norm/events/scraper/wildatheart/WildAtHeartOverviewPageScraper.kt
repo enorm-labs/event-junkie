@@ -3,6 +3,7 @@ package de.norm.events.scraper.wildatheart
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.hasFreeEntryPhrase
 import de.norm.events.scraper.headlinersFromTitle
 import de.norm.events.scraper.inferConcertVenueType
 import de.norm.events.scraper.inferYearForWeekday
@@ -106,7 +107,7 @@ class WildAtHeartOverviewPageScraper(
         // A banner time is the venue's specific statement for that row — the flea market's `ab 14 Uhr`
         // contradicts the house rule — so the house doors apply only where the row states nothing.
         val doorsTime = HOUSE_DOORS.takeIf { startTime == null }
-        val free = headline?.contains("eintritt frei", ignoreCase = true) == true
+        val free = hasFreeEntryPhrase(headline)
 
         return ScrapedEvent(
             title = title,

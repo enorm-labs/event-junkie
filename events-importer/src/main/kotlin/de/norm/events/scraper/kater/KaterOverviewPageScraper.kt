@@ -7,6 +7,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.cleanEventTitle
+import de.norm.events.scraper.hasFreeEntryPhrase
 import de.norm.events.scraper.hostedActsFromTitle
 import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.inferYearForWeekday
@@ -113,7 +114,7 @@ class KaterOverviewPageScraper(
             sourceUrl = "$baseUrl#$EVENT_ID_PREFIX$eventId",
             sourceId = "${EventSource.KATER.sourceIdPrefix}$eventId",
             ticketUrl = article.hrefAt("a.rsvp"),
-            free = description?.let { FREE_ENTRY_PHRASE.containsMatchIn(it) } == true,
+            free = hasFreeEntryPhrase(description),
             // A night named for its curator and billed without a line-up (#339).
             artists = lineup.ifEmpty { hostedActsFromTitle(title, role = "DJ") }
         )
@@ -268,14 +269,5 @@ class KaterOverviewPageScraper(
 
         /** The opening schedule line: a start half, and usually a closing half after a dash of any width. */
         val SCHEDULE_PATTERN = Regex("""^$HALF(?:\s*[—–-]\s*$HALF)?""")
-
-        /**
-         * An unambiguous free-entry phrase in the blurb. Multi-word on purpose: the shared
-         * [detectFree][de.norm.events.scraper.detectFree] also accepts a bare `free`, which "free
-         * drinks" would trip. The lookahead rejects a **time-limited** offer — the Tuesday residency
-         * writes "free entry till 20:00", not a free event.
-         */
-        val FREE_ENTRY_PHRASE =
-            Regex("""(?:free entry|eintritt frei|freier eintritt)(?!\s+(?:till|until|before|bis|ab)\b)""", RegexOption.IGNORE_CASE)
     }
 }

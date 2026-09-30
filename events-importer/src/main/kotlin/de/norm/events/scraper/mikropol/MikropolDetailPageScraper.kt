@@ -8,6 +8,7 @@ import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.detectFree
 import de.norm.events.scraper.extractEventSlug
+import de.norm.events.scraper.hasFreeEntryPhrase
 import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.inferConcertVenueType
 import de.norm.events.scraper.labelledTime
@@ -93,7 +94,7 @@ class MikropolDetailPageScraper {
             sourceId = "${EventSource.MIKROPOL.sourceIdPrefix}$slug",
             ticketUrl = content.hrefAt("div.ticket-links a.ticket"),
             priceBoxOffice = boxOffice,
-            free = detectFree(priceBoxOffice = boxOffice) || description?.let { FREE_ENTRY.containsMatchIn(it) } == true,
+            free = detectFree(priceBoxOffice = boxOffice) || hasFreeEntryPhrase(description),
             // Sold-out and cancelled render in the `.canceledsoldout` badge; a relocation lives in the title.
             soldOut = statusBadge.contains(SOLD_OUT_TEXT, ignoreCase = true),
             status = parseEventStatus("$statusBadge $rawTitle"),
@@ -123,9 +124,6 @@ class MikropolDetailPageScraper {
 
         /** The door price after its label; the value must follow directly, so an empty slot reads nothing. */
         private val BOX_OFFICE_PRICE = Regex("""(?<=Abendkasse:)[\s\u00a0]*\d+(?:[.,]\d{1,2})?[\s\u00a0]*€""", RegexOption.IGNORE_CASE)
-
-        /** "Eintritt: Frei" in the notes; the shared free phrases have no colon. */
-        private val FREE_ENTRY = Regex("""\beintritt\s*:?\s*frei\b""", RegexOption.IGNORE_CASE)
 
         /** The billing frame the venue appends to a promoter's name. */
         private val PRESENTS_SUFFIX = Regex("""\s*(?:presents|pr(?:ä|ae)sentiert)\s*:?\s*$""", RegexOption.IGNORE_CASE)
