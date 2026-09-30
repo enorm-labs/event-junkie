@@ -64,10 +64,14 @@ STREAM_TYPE = "metrics"
 # Schema v8's grid. Panels are placed in these units, not in pixels or fractions.
 GRID_WIDTH = 192
 
-# The importer's last-success gauge, with the pod-generation labels collapsed.
-LAST_SUCCESS = "max by (source) (importer_source_last_success)"
+# The importer's last-success gauge, with the pod-generation labels collapsed. The fleet numbers
+# leave out a source with an accepted block (`KnownBlockedSource.kt`, #2201), as `ej-importer-stale`
+# does; the per-source bars keep it, marked.
+LAST_SUCCESS = 'max by (source) (importer_source_last_success{known_blocked="false"})'
 # Seconds since each source last succeeded. See gotcha 1 for why not `time()`.
 AGE = "(timestamp(%s) - %s)" % (LAST_SUCCESS, LAST_SUCCESS)
+LAST_SUCCESS_MARKED = "max by (source, known_blocked) (importer_source_last_success)"
+AGE_MARKED = "(timestamp(%s) - %s)" % (LAST_SUCCESS_MARKED, LAST_SUCCESS_MARKED)
 
 # The ceiling `p_certs` clamps to, in days. Just above a one-year certificate, which is the
 # longest-lived thing anyone here renews; above that line is self-signed internal PKI that renews
@@ -255,9 +259,10 @@ panels = [
         "Twenty stalest sources (hours)",
         "`topk` rather than `sort_desc`, which OpenObserve does not implement. Against a 24h interval, a flat band "
         "under 24 is health. One venue alone above it is a scraper to fix; all of them together is the importer or "
-        "the database.",
+        'the database. **`known_blocked="true"` is a source whose site refuses us by an accepted block** — '
+        "`KnownBlockedSource.kt` names it, and `ej-importer-stale-blocked` gives it 8 days, not 36 hours.",
         "bar",
-        "topk(20, %s / 3600)" % AGE,
+        "topk(20, %s / 3600)" % AGE_MARKED,
         x=0,
         y=10,
         w=64,

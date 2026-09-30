@@ -9,6 +9,7 @@ it produces an alert that never fires rather than an error.
 
     site down                      -> ej-site-down
     importer failing repeatedly    -> ej-importer-stale
+    a known block, and its fallback -> ej-importer-stale-blocked  (#2201)
     a source importing zero events -> ej-catalogue-emptying   (aggregate; see below)
     database disk filling          -> ej-node-disk-filling
     certificate expiry             -> ej-certificate-expiry
@@ -237,11 +238,31 @@ rule(
     "ej-importer-stale",
     "The stalest source has not had a successful run in 36 hours, against a 24h import "
     "interval. One venue is a scraper to fix; all of them together is the importer or the "
-    "database. `timestamp(x) - x` because OpenObserve freezes `time()` at the window start.",
-    "max((timestamp(max by (source) (importer_source_last_success)) "
-    "- max by (source) (importer_source_last_success)) / 3600)",
+    "database. `timestamp(x) - x` because OpenObserve freezes `time()` at the window start. "
+    'Sources marked `known_blocked="true"` from `KnownBlockedSource.kt` are left to '
+    "`ej-importer-stale-blocked`.",
+    'max((timestamp(max by (source) (importer_source_last_success{known_blocked="false"})) '
+    '- max by (source) (importer_source_last_success{known_blocked="false"})) / 3600)',
     ">",
     36,
+    stream_name="importer_source_last_success",
+    period_minutes=10,
+    frequency_minutes=5,
+    silence_minutes=12 * 60,
+)
+
+# A source whose site refuses the importer, and whose refusal we accepted rather than got around
+# (#2201), fails most runs by design. Sisyphos succeeds only on weekends, through sisy.fan, so 36h
+# named it every week. Muting it would hide the day sisy.fan breaks too. Eight days is one weekly
+# cycle and a day: a marked source that misses a whole weekend still fires.
+rule(
+    "ej-importer-stale-blocked",
+    "A source with an accepted block, marked in `KnownBlockedSource.kt`, has not had a successful "
+    "run in 8 days. Its main page refuses us, so its other route has now failed for a whole cycle.",
+    'max((timestamp(max by (source) (importer_source_last_success{known_blocked="true"})) '
+    '- max by (source) (importer_source_last_success{known_blocked="true"})) / 3600)',
+    ">",
+    8 * 24,
     stream_name="importer_source_last_success",
     period_minutes=10,
     frequency_minutes=5,

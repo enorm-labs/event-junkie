@@ -243,12 +243,19 @@ class ImporterMetrics(
      * Publishes [epochSeconds] as the source's last success. A timestamp, not an age, the
      * Prometheus idiom: an age is only correct at the instant it is scraped, while
      * `time() - importer_source_last_success_seconds > 3 * interval` stays true between scrapes.
+     * The `known_blocked` tag carries [KNOWN_BLOCKED_SOURCES], so `ej-importer-stale` can give a
+     * source with an accepted block a longer threshold rather than name it every week (#2201).
      */
     fun publishLastSuccess(
         sourceSlug: String,
         epochSeconds: Long
     ) {
-        lastSuccessEpochSeconds.publishPerSource(sourceSlug, SOURCE_LAST_SUCCESS, epochSeconds)
+        lastSuccessEpochSeconds.publishPerSource(
+            sourceSlug,
+            SOURCE_LAST_SUCCESS,
+            epochSeconds,
+            Tags.of(TAG_SOURCE, sourceSlug, TAG_KNOWN_BLOCKED, (sourceSlug in KNOWN_BLOCKED_SOURCES).toString())
+        )
         // A published last-success IS a success, so the two can never disagree about this source.
         publishHasSucceeded(sourceSlug, succeeded = true)
     }
@@ -504,6 +511,9 @@ class ImporterMetrics(
          */
         const val SOURCE_DAYS_SINCE_FUTURE_EVENT = "importer.source.days_since_future_event"
         const val TAG_KNOWN_QUIET = "known_quiet"
+
+        /** `importer.source.last_success{source,known_blocked}` (#2201). See [KNOWN_BLOCKED_SOURCES]. */
+        const val TAG_KNOWN_BLOCKED = "known_blocked"
         const val SOURCE_RUNNING = "importer.source.running"
 
         /** `importer.sources.failed{reason}` (#708). See [publishFailedSources]. */

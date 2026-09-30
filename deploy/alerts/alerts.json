@@ -36,14 +36,44 @@
     "stream_name": "importer_source_last_success",
     "is_real_time": false,
     "enabled": true,
-    "description": "The stalest source has not had a successful run in 36 hours, against a 24h import interval. One venue is a scraper to fix; all of them together is the importer or the database. `timestamp(x) - x` because OpenObserve freezes `time()` at the window start.",
+    "description": "The stalest source has not had a successful run in 36 hours, against a 24h import interval. One venue is a scraper to fix; all of them together is the importer or the database. `timestamp(x) - x` because OpenObserve freezes `time()` at the window start. Sources marked `known_blocked=\"true\"` from `KnownBlockedSource.kt` are left to `ej-importer-stale-blocked`.",
     "query_condition": {
       "type": "promql",
-      "promql": "max((timestamp(max by (source) (importer_source_last_success)) - max by (source) (importer_source_last_success)) / 3600)",
+      "promql": "max((timestamp(max by (source) (importer_source_last_success{known_blocked=\"false\"})) - max by (source) (importer_source_last_success{known_blocked=\"false\"})) / 3600)",
       "promql_condition": {
         "column": "value",
         "operator": ">",
         "value": 36
+      }
+    },
+    "trigger_condition": {
+      "period": 10,
+      "frequency": 5,
+      "frequency_type": "minutes",
+      "operator": ">=",
+      "threshold": 1,
+      "silence": 720
+    },
+    "destinations": [
+      "record-only",
+      "email"
+    ]
+  },
+  {
+    "name": "ej-importer-stale-blocked",
+    "org_id": "default",
+    "stream_type": "metrics",
+    "stream_name": "importer_source_last_success",
+    "is_real_time": false,
+    "enabled": true,
+    "description": "A source with an accepted block, marked in `KnownBlockedSource.kt`, has not had a successful run in 8 days. Its main page refuses us, so its other route has now failed for a whole cycle.",
+    "query_condition": {
+      "type": "promql",
+      "promql": "max((timestamp(max by (source) (importer_source_last_success{known_blocked=\"true\"})) - max by (source) (importer_source_last_success{known_blocked=\"true\"})) / 3600)",
+      "promql_condition": {
+        "column": "value",
+        "operator": ">",
+        "value": 192
       }
     },
     "trigger_condition": {
