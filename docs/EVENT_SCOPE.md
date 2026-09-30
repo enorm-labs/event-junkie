@@ -86,7 +86,8 @@ shows**, and that is correct rather than a bug.
 ### 3.2 Participation formats
 
 Guided tours, workshops, yoga and qigong sessions, environmental-education slots, drop-in handicraft afternoons. These are things you _take part in_, not things
-you _go and see_.
+you _go and see_. An open stage, a jam session or a karaoke night is not on this list. People come to watch it, and it
+is a recurring night (§5).
 
 **Gärten der Welt** set the precedent: 28 of its 41 upcoming rows were park activities. Importing them would have
 swamped the actual programme — the Arena concerts, the open-air cinema, the park festivals. It would present a concert
@@ -128,16 +129,18 @@ scraping**. Answer §5's first question and the importer is a short job.
 
 ## 5. Coverage decisions
 
-Each of these changes what the app _is_, so **none may be settled by an importer PR.** All five were decided on
-2026-08-08. The one that is still open is open on _sequencing_, not on principle.
+Each of these changes what the app _is_, so **none may be settled by an importer PR.** The first five were decided on
+2026-08-08, and the recurring nights on 2026-09-30. The one that is still open is open on _sequencing_, not on
+principle.
 
 | Question                                                                                     | Decision                      | Blocked on       | What it costs                                                                                                            |
 | -------------------------------------------------------------------------------------------- | ----------------------------- | ---------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| **Comedy clubs?** (Comedy Café Berlin, Quatsch Comedy Club, …)                               | ✅ **Yes**                    | nothing          | Cheapest of the five. Cosmic Comedy is already imported, so this is more venues in a category that exists                |
+| **Comedy clubs?** (Comedy Café Berlin, Quatsch Comedy Club, …)                               | ✅ **Yes**                    | nothing          | Cheapest of the six. Cosmic Comedy is already imported, so this is more venues in a category that exists                 |
 | **Theatres?** (Volksbühne, Schaubühne, Berliner Ensemble, …)                                 | ✅ **Yes**                    | nothing          | Low. Theater im Delphi, Heimathafen and Bar jeder Vernunft are already imported — coverage, not a new category           |
 | **Classical / orchestras?** (Konzerthaus, Philharmonie, RBB Sendesaal, Berliner Symphoniker) | ⏸ **Deferred** — not rejected | the artist model | Medium. `ArtistRole` and the genre vocabulary need extending **first**; the scraping is already solved for RBB Sendesaal |
 | **Exhibitions as first-class runs?**                                                         | ✅ **Yes** — done (#337)      | nothing          | Done. ADR-029 gave the row an end; an exhibition is one row from opening to closing day — see §2                         |
 | **Sport?**                                                                                   | ❌ **No**                     | —                | Settled. Different venues, different audience, and past the point where this is a music app                              |
+| **Recurring bar nights?** (a punk Tresen, an Open Jam, a karaoke night)                      | ✅ **Yes** — if not daily     | nothing          | Low. A night that recurs weekly or fortnightly is programme. A bar that is the same every evening is opening hours       |
 
 **What the two yeses unlock.** A comedy or theatre venue can be moved out of [Blocked](EVENT_DATA_SOURCES.md) and
 scaffolded like any other source. No ADR, no model change, no further discussion. Prioritise them by programme richness
