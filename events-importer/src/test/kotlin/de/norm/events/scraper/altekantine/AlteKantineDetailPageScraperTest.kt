@@ -66,14 +66,16 @@ class AlteKantineDetailPageScraperTest {
     }
 
     @Test
-    fun `drops a symbol-only price and an empty DJ field`() {
+    fun `drops a symbol-only price and an empty DJ field, and reads free entry from the text`() {
         val event = parse("altekantine-detail-freeform-price.html", "https://alte-kantine.eu/?p=12349").shouldNotBeNull()
 
         event.title shouldBe "Beer Pong Night"
         event.eventType shouldBe EventType.PARTY.name
         // "Eintritt:  €" carries no number → no box-office price, and the lone "€" is not kept as a note.
         event.priceBoxOffice.shouldBeNull()
-        event.priceNote.shouldBeNull()
+        // The text says it instead: entry is free, and only players pay a fee to take part.
+        event.priceNote shouldBe "Freier Eintritt für Alle"
+        event.toEventEntity(venueId = 1L, venueSlug = "alte-kantine", eventSourceId = 1L).free shouldBe true
         // The "DJ:" row is empty, so no performer is minted.
         event.artists.shouldBeEmpty()
     }
