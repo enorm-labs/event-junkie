@@ -75,16 +75,19 @@ const val DOORS_LABELS = """einlass|doors?(?:\s+open)?|tür"""
  */
 const val START_LABELS = """\p{L}*beginn|start|show"""
 
+/** A 12-hour meridiem ahead, with or without a space before it (`8:00pm`, `7 p.m.`), but not a word that starts with one. */
+private const val MERIDIEM_AHEAD = """(?=\s*[ap]\.?\s?m\.?(?!\p{L}))"""
+
 /**
  * The clock after a label, in every spelling the venues print: `19:30`, `19.30`, `20,00` (Insel's
  * typo), `19 Uhr`,
- * `19h`, `7pm`, `7.30 p.m.`, optionally led by a colon and up to two of "ab", "ca.", "um" ("Einlass ab ca. 18:45"). A bare hour
+ * `19h`, `7pm`, `8:00pm`, `7.30 p.m.`, optionally led by a colon and up to two of "ab", "ca.", "um" ("Einlass ab ca. 18:45"). A bare hour
  * needs "Uhr", "h" or a meridiem, so "Beginn 1. Oktober" is not a clock, and a date such as
  * "19.10.2026" is not one either.
  */
 private const val CLOCK_AFTER_LABEL =
     """\p{L}*\s*:?\s*(?:(?:ab|ca\.?|um|from|at)\s+){0,2}(\d{1,2})""" +
-        """(?:(?:[:.,](\d{2}))(?!\.?\d)\s*(?:uhr|h)?(?!\p{L})|\s*(?:uhr|h)(?!\p{L})|(?=\s*[ap]\.?\s?m))""" +
+        """(?:(?:[:.,](\d{2}))(?!\.?\d)(?:\s*(?:uhr|h)(?!\p{L})|$MERIDIEM_AHEAD|(?!\p{L}))|\s*(?:uhr|h)(?!\p{L})|$MERIDIEM_AHEAD)""" +
         """(?:\s*([ap])\.?\s?m\.?(?!\p{L}))?"""
 
 /**

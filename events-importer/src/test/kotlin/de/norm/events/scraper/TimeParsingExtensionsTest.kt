@@ -20,6 +20,15 @@ class TimeParsingExtensionsTest {
     }
 
     @Test
+    fun `labelledClock reads a meridiem written straight after the minutes`() {
+        labelledClock("Door open: 8:00pm / Show starts: 8:30pm", DOORS_LABELS) shouldBe LocalTime.of(20, 0)
+        labelledClock("Door open: 8:00pm / Show starts: 8:30pm", START_LABELS) shouldBe LocalTime.of(20, 30)
+        labelledClock("Start: 11:30pm", START_LABELS) shouldBe LocalTime.of(23, 30)
+        labelledClock("Doors 7.30p.m.", DOORS_LABELS) shouldBe LocalTime.of(19, 30)
+        labelledClock("Doors 10:00am", DOORS_LABELS) shouldBe LocalTime.of(10, 0)
+    }
+
+    @Test
     fun `labelledClock takes a qualifier, a label suffix and a compound label`() {
         labelledClock("Einlass ab ca. 18:45 (Saal)", DOORS_LABELS) shouldBe LocalTime.of(18, 45)
         labelledClock("Doors open 19:30", DOORS_LABELS) shouldBe LocalTime.of(19, 30)
@@ -35,6 +44,7 @@ class TimeParsingExtensionsTest {
         labelledClock("Beginn: 19.10.2026", START_LABELS).shouldBeNull()
         labelledClock("Einlass 19", DOORS_LABELS).shouldBeNull()
         labelledClock("Startseite", START_LABELS).shouldBeNull()
+        labelledClock("Start 20:00amazing", START_LABELS).shouldBeNull()
         labelledClock(null, DOORS_LABELS).shouldBeNull()
     }
 }
