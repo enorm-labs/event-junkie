@@ -128,6 +128,17 @@ class EventFieldMappingTest {
     }
 
     @Test
+    fun `detectFree ignores a free-entry marker that ends at a time`() {
+        detectFree(priceNote = "free entry until midnight*") shouldBe false
+        detectFree(priceNote = "Women & FLINTA free until 1 AM") shouldBe false
+        detectFree(priceNote = "Freier Eintritt für Ladies bis 0 Uhr!") shouldBe false
+        detectFree(priceNote = "Eintritt frei bis 23 Uhr") shouldBe false
+        detectFree(title = "[FREE ENTRY TILL 00:30] SAVORY") shouldBe false
+        // A marker beside the limited one still counts.
+        detectFree(priceNote = "Eintritt frei. Free entry until midnight") shouldBe true
+    }
+
+    @Test
     fun `detectFree is false when nothing is provided`() {
         detectFree() shouldBe false
         detectFree(priceNote = null, title = null) shouldBe false

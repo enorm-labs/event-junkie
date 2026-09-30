@@ -114,16 +114,18 @@ class DerWeisseHaseOverviewPageScraperTest {
     }
 
     @Test
-    fun `stores a note paragraph as the description without flagging the night free`() {
+    fun `stores an entry note as the price note without flagging the night free`() {
         val tuesdayRave = events.single { it.eventDate == LocalDate.of(2026, 8, 11) }
-        tuesdayRave.description shouldBe "free entry until midnight*"
+        tuesdayRave.priceNote shouldBe "free entry until midnight*"
+        tuesdayRave.description.shouldBeNull()
         tuesdayRave.free shouldBe false
+        tuesdayRave.toEventEntity(venueId = 1L, venueSlug = "der-weisse-hase", eventSourceId = 1L).free shouldBe false
     }
 
     @Test
-    fun `stores a note written as a heading as the description too`() {
+    fun `stores an entry note written as a heading as the price note too`() {
         val femAll = events.single { it.eventDate == LocalDate.of(2026, 8, 21) }
-        femAll.description shouldBe "Women & FLINTA free until 1 AM"
+        femAll.priceNote shouldBe "Women & FLINTA free until 1 AM"
         femAll.artists.first() shouldBe ScrapedArtist("Nat SuPrise", "DJ")
     }
 

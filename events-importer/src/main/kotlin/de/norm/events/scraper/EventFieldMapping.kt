@@ -246,9 +246,20 @@ private val FREE_TOKEN_PATTERN =
     Regex("""\b(${FREE_TOKENS.joinToString("|") { Regex.escape(it) }})\b""", RegexOption.IGNORE_CASE)
 
 /**
+ * A free-entry marker limited to the start of the night: "free entry until midnight", "FREE ENTRY
+ * TILL 00:30", "Freier Eintritt für Ladies bis 0 Uhr". Everyone arriving later pays, so the night
+ * is not free, and [detectFree] removes such a span before it looks for a marker.
+ */
+private val TIME_LIMITED_FREE =
+    Regex(
+        """\b(?:free|frei(?:e[nr]?)?|gratis|kostenlos|umsonst)\b(?:\s+[\p{L}&]+){0,4}\s+(?:until|till?|bis|before|vor)\s+(?:\d|midnight|mitternacht)""",
+        RegexOption.IGNORE_CASE
+    )
+
+/**
  * Whether an event is free. A positive signal is required, since an absent price is unknown,
  * not free: an explicit €0 price, a [FREE_PHRASES] match in the title or price note, or a
- * [FREE_TOKENS] match in the price note.
+ * [FREE_TOKENS] match in the price note. A [TIME_LIMITED_FREE] marker is not a signal.
  */
 fun detectFree(
     pricePresale: BigDecimal? = null,
@@ -257,8 +268,9 @@ fun detectFree(
     title: String? = null
 ): Boolean {
     val hasZeroPrice = pricePresale?.signum() == 0 || priceBoxOffice?.signum() == 0
-    val phraseInTitle = title?.let { FREE_PHRASE_PATTERN.containsMatchIn(it) } ?: false
+    val phraseInTitle = title?.replace(TIME_LIMITED_FREE, " ")?.let { FREE_PHRASE_PATTERN.containsMatchIn(it) } ?: false
     val markerInNote =
-        priceNote?.let { FREE_PHRASE_PATTERN.containsMatchIn(it) || FREE_TOKEN_PATTERN.containsMatchIn(it) } ?: false
+        priceNote?.replace(TIME_LIMITED_FREE, " ")?.let { FREE_PHRASE_PATTERN.containsMatchIn(it) || FREE_TOKEN_PATTERN.containsMatchIn(it) }
+            ?: false
     return hasZeroPrice || phraseInTitle || markerInNote
 }

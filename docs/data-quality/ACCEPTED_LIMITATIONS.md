@@ -49,7 +49,7 @@ says so.
 | `CRACK_BELLMER`       | `DOORS_TIME`       | the venue publishes no doors time                                                                                                                | —     |
 | `CRACK_BELLMER`       | `PRICE`            | the venue publishes no prices                                                                                                                    | —     |
 | `CRACK_BELLMER`       | `TICKET_URL`       | the venue links no ticket shop                                                                                                                   | —     |
-| `DER_WEISSE_HASE`     | `PRICE`            | the club publishes no prices anywhere, not even at the door                                                                                      | —     |
+| `DER_WEISSE_HASE`     | `PRICE`            | the club publishes no price figure; some nights carry a conditional free-entry line, stored as the price note                                    | —     |
 | `DER_WEISSE_HASE`     | `GENRE`            | the club publishes no genre; every night takes the club's Techno default                                                                         | —     |
 | `DER_WEISSE_HASE`     | `DOORS_TIME`       | the club publishes no doors time                                                                                                                 | —     |
 | `DER_WEISSE_HASE`     | `EVENT_TYPE`       | the club states no category anywhere and programmes nothing but DJ nights, so the type is fixed rather than inferred                             | —     |
