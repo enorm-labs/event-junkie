@@ -63,6 +63,29 @@ class So36DetailPageScraperTest {
     }
 
     @Test
+    fun `reads the format a Konzert page names in its subtitle or title, and bills no act for it`() {
+        // Upcoming SO36 rows on 2026-09-30, each filed under "Konzert".
+        fun typeAndActs(
+            title: String,
+            subtitle: String
+        ): Pair<String?, List<String>> {
+            val document = fixture("so36-detail-concert.html", concertUrl)
+            document.selectFirst("h1 [itemprop=name]")!!.text(title)
+            document.selectFirst("small.subtitle")!!.text(subtitle)
+            val event = scraper.scrape(document, concertUrl)!!
+            return event.eventType to event.artists.map { it.name }
+        }
+
+        typeAndActs("FEMALE-FRONTED IS NOT A GENRE 5", "Punk- und Hardcore-Festival - Tag 1") shouldBe (EventType.FESTIVAL.name to emptyList())
+        typeAndActs("(TH)INK ABOUT THAT", "queere antifaschistische Tattoo Convention") shouldBe (EventType.OTHER.name to emptyList())
+        typeAndActs("PANEL: ¡MASH-IT-UP! WE WERE ALWAYS THERE!", "BIPoC and FLINTA* Perspectives on 50 Years of Punk") shouldBe
+            (EventType.OTHER.name to emptyList())
+        typeAndActs("TALK OHNE GAST", "Qualitätspodcast mit Till Reiners und Moritz Neumeier") shouldBe (EventType.SHOW.name to emptyList())
+        // A support line naming a festival band is still a concert.
+        typeAndActs("POISON RUIN", "+ Festival Band").first shouldBe EventType.CONCERT.name
+    }
+
+    @Test
     fun `extracts the concert lineup with the title as headliner and plus-prefixed support acts`() {
         val event = scraper.scrape(fixture("so36-detail-concert.html", concertUrl), concertUrl)
         event.shouldNotBeNull()

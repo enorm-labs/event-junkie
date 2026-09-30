@@ -61,8 +61,9 @@ class So36DetailPageScraper {
             return null
         }
 
-        val eventType = refineConcertVenueType(mapEventType(document.textAt("small.supertitle:not(.ticketsfor)")), title)
         val subtitle = document.textAt("small.subtitle")
+        val eventType =
+            refineBySubtitle(refineConcertVenueType(mapEventType(document.textAt("small.supertitle:not(.ticketsfor)")), title), title, subtitle)
         val jsonLd = document.parseEventJsonLd()
         val (doorsTime, startTime) = parseTimes(document)
 
@@ -176,9 +177,8 @@ class So36DetailPageScraper {
      */
     private fun parseSupportActs(subtitle: String?): List<String> {
         val line = subtitle?.trimStart().orEmpty()
-        val joined = line.firstOrNull() in SUPPORT_JOINERS
-        if (!joined && !SUPPORT_LABEL_OPENER.containsMatchIn(line)) return emptyList()
-        return splitSupportActs(if (joined) line.drop(1) else line)
+        if (!isSupportLine(line)) return emptyList()
+        return splitSupportActs(if (line.first() in SUPPORT_JOINERS) line.drop(1) else line)
             .map { it.replaceFirst(ROLE_LABEL_PREFIX, "").trim() }
             .filter { it.isNotBlank() && !isNonArtistName(it) }
     }
@@ -244,13 +244,6 @@ class So36DetailPageScraper {
         /** "Beginn: HH:mm" from the clock line. */
         private val BEGINN_PATTERN = Regex("""Beginn:\s*(\d{1,2}:\d{2})""")
 
-        /** The characters that join a subtitle's acts to the headliner when they open it. */
-        private val SUPPORT_JOINERS = setOf('+', '&')
-
-        /** The support labels of [ROLE_LABEL_PREFIX] opening a subtitle, colon required. */
-        private val SUPPORT_LABEL_OPENER =
-            Regex("""^(?:div\.?\s*supports?|special\s+guests?|supports?|openers?)\s*:""", RegexOption.IGNORE_CASE)
-
         /** The numeric product id from a `/produkte/<id>-…` path. */
         private val PRODUCT_ID_PATTERN = Regex("""/produkte/(\d+)""")
     }
@@ -277,3 +270,45 @@ private val FREE_ADMISSION_PATTERN = Regex("""eintritt\s+frei|admission\s+free""
 
 /** The promoter credit on the house's own nights. */
 private const val VENUE_NAME = "SO36"
+
+/**
+ * The venue files every ticketed night under `Konzert`, and the subtitle or a title prefix names
+ * the real format: a `Punk- und Hardcore-Festival`, a `Tattoo Convention`, a `PANEL:`, a live
+ * `Qualitätspodcast`. A support line is never read this way, so `+ Festival Band` stays a concert.
+ */
+private fun refineBySubtitle(
+    eventType: String,
+    title: String,
+    subtitle: String?
+): String {
+    val line = subtitle?.trimStart().orEmpty()
+    if (eventType != EventType.CONCERT.name || isSupportLine(line)) return eventType
+    return when {
+        FESTIVAL_WORD.containsMatchIn(line) -> EventType.FESTIVAL.name
+        PODCAST_WORD.containsMatchIn(line) -> EventType.SHOW.name
+        CONVENTION_WORD.containsMatchIn(line) || PANEL_PREFIX.containsMatchIn(title) -> EventType.OTHER.name
+        else -> eventType
+    }
+}
+
+/** Whether a subtitle is a support line: it opens with a joiner or a support label. */
+private fun isSupportLine(line: String): Boolean = line.firstOrNull() in SUPPORT_JOINERS || SUPPORT_LABEL_OPENER.containsMatchIn(line)
+
+/** A festival named in the subtitle: `Punk- und Hardcore-Festival - Tag 1`. */
+private val FESTIVAL_WORD = Regex("""festival\b""", RegexOption.IGNORE_CASE)
+
+/** A live podcast recording: `Qualitätspodcast mit Till Reiners und Moritz Neumeier`. */
+private val PODCAST_WORD = Regex("""podcast\b""", RegexOption.IGNORE_CASE)
+
+/** A convention: `queere antifaschistische Tattoo Convention`. */
+private val CONVENTION_WORD = Regex("""\bconvention\b""", RegexOption.IGNORE_CASE)
+
+/** A panel named as the title's prefix: `PANEL: ¡MASH-IT-UP! WE WERE ALWAYS THERE!`. */
+private val PANEL_PREFIX = Regex("""^\s*panel\s*:""", RegexOption.IGNORE_CASE)
+
+/** The characters that join a subtitle's acts to the headliner when they open it. */
+private val SUPPORT_JOINERS = setOf('+', '&')
+
+/** The support labels of [ROLE_LABEL_PREFIX] opening a subtitle, colon required. */
+private val SUPPORT_LABEL_OPENER =
+    Regex("""^(?:div\.?\s*supports?|special\s+guests?|supports?|openers?)\s*:""", RegexOption.IGNORE_CASE)
