@@ -127,15 +127,11 @@ class UrbanSpreeWebsiteImporter(
         detail: ScrapedEvent,
         card: ScrapedEvent
     ): ScrapedEvent =
-        detail.copy(
+        detail.withGapsFrom(card).copy(
             eventDate = card.eventDate,
             // The card's 23:59 is a placeholder; the detail page resolves it from the prose when it can (#1904).
             startTime = if (card.startTime == URBAN_SPREE_LATE_PLACEHOLDER) detail.startTime ?: card.startTime else card.startTime ?: detail.startTime,
-            eventType = detail.eventType ?: card.eventType,
-            imageUrl = card.imageUrl ?: detail.imageUrl,
-            pricePresale = detail.pricePresale ?: card.pricePresale,
-            free = detail.free || card.free,
-            status = detail.status.takeIf { it != EventStatus.SCHEDULED.name } ?: card.status
+            imageUrl = card.imageUrl ?: detail.imageUrl
         )
 
     private companion object {

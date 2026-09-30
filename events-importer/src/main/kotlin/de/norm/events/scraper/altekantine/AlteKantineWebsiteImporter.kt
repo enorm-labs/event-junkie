@@ -63,24 +63,6 @@ class AlteKantineWebsiteImporter(
         url: String
     ): ScrapedEvent? = detailPageScraper.scrape(document, url)
 
-    /**
-     * Merges detail-page data ([primary]) with overview data ([fallback]). The detail page is
-     * authoritative and carries what the overview lacks (description, image, price, DJ). The
-     * subtitle lives only on the overview, so it is always filled from there. Shared fields (date,
-     * start time, event type) prefer the detail value and fall back to the overview.
-     */
-    override fun fillGapsFromOverview(
-        primary: ScrapedEvent,
-        fallback: ScrapedEvent
-    ): ScrapedEvent =
-        primary.copy(
-            eventDate = primary.eventDate.takeIf { it != UNRESOLVED_EVENT_DATE } ?: fallback.eventDate,
-            subtitle = primary.subtitle ?: fallback.subtitle,
-            startTime = primary.startTime ?: fallback.startTime,
-            eventType = primary.eventType ?: fallback.eventType,
-            artists = primary.artists.ifEmpty { fallback.artists }
-        )
-
     private companion object {
         const val PAGINATOR_SELECTOR = "ul.pt-cv-pagination"
         const val PAGE_PARAMETER = "_page"

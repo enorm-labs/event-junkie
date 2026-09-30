@@ -90,6 +90,48 @@ data class ScrapedEvent(
     val promoterWebsites: Map<String, String> = emptyMap()
 ) {
     /**
+     * This event with every gap filled from [fallback]: a null field takes the fallback's value, the
+     * [UNRESOLVED_EVENT_DATE] sentinel takes its date, an empty list or map takes its entries, a
+     * `SCHEDULED` status takes its status, and sold-out or free holds when either says so. A field
+     * set here is never replaced. The default merge of a detail page (this) with its listing row
+     * ([AbstractTwoPageWebsiteImporter.fillGapsFromOverview]), so a field a scraper adds later is
+     * kept without naming it in every merge (#1408). A venue whose listing is authoritative for a
+     * field overrides it with `copy` after the merge.
+     */
+    fun withGapsFrom(fallback: ScrapedEvent): ScrapedEvent = withScheduleAndTextGapsFrom(fallback).withTicketAndLineupGapsFrom(fallback)
+
+    /** [withGapsFrom] for the text, the date and times, and the links. */
+    private fun withScheduleAndTextGapsFrom(fallback: ScrapedEvent): ScrapedEvent =
+        copy(
+            subtitle = subtitle ?: fallback.subtitle,
+            description = description ?: fallback.description,
+            eventType = eventType ?: fallback.eventType,
+            eventDate = eventDate.takeIf { it != UNRESOLVED_EVENT_DATE } ?: fallback.eventDate,
+            doorsTime = doorsTime ?: fallback.doorsTime,
+            startTime = startTime ?: fallback.startTime,
+            endDate = endDate ?: fallback.endDate,
+            endTime = endTime ?: fallback.endTime,
+            imageUrl = imageUrl ?: fallback.imageUrl,
+            ticketUrl = ticketUrl ?: fallback.ticketUrl,
+            genre = genre ?: fallback.genre
+        )
+
+    /** [withGapsFrom] for the prices, the flags, the status, the lineup and the promoters. */
+    private fun withTicketAndLineupGapsFrom(fallback: ScrapedEvent): ScrapedEvent =
+        copy(
+            pricePresale = pricePresale ?: fallback.pricePresale,
+            priceBoxOffice = priceBoxOffice ?: fallback.priceBoxOffice,
+            priceNote = priceNote ?: fallback.priceNote,
+            soldOut = soldOut || fallback.soldOut,
+            free = free || fallback.free,
+            status = status.takeUnless { it == EventStatus.SCHEDULED.name } ?: fallback.status,
+            statusNote = statusNote ?: fallback.statusNote,
+            artists = artists.ifEmpty { fallback.artists },
+            promoters = promoters.ifEmpty { fallback.promoters },
+            promoterWebsites = promoterWebsites.ifEmpty { fallback.promoterWebsites }
+        )
+
+    /**
      * The title as stored: a status note or marker removed, once [toEventEntity] has read the status
      * off it (#2008). Dedup and slug collisions key on this too, so they agree with the stored slug.
      */

@@ -45,32 +45,6 @@ class LidoWebsiteImporter(
         document: Document,
         url: String
     ): ScrapedEvent? = detailPageScraper.scrape(document, url)
-
-    /**
-     * Merges detail-page data ([primary]) with overview data ([fallback]). The detail page is
-     * authoritative for description, prices, ticket URL and image; the overview supplies date,
-     * sold-out flag, status and artist roster, which the detail header omits. Shared fields
-     * (title, subtitle, type, times, presenters) prefer the detail value and fall back.
-     */
-    override fun fillGapsFromOverview(
-        primary: ScrapedEvent,
-        fallback: ScrapedEvent
-    ): ScrapedEvent =
-        primary.copy(
-            // The detail header carries no date; fall back to the overview's (sentinel otherwise).
-            eventDate = primary.eventDate.takeIf { it != UNRESOLVED_EVENT_DATE } ?: fallback.eventDate,
-            eventType = primary.eventType ?: fallback.eventType,
-            subtitle = primary.subtitle ?: fallback.subtitle,
-            doorsTime = primary.doorsTime ?: fallback.doorsTime,
-            startTime = primary.startTime ?: fallback.startTime,
-            // The detail header has no status badge, so sold-out/status come from the overview.
-            soldOut = primary.soldOut || fallback.soldOut,
-            status = primary.status.takeIf { it != EventStatus.SCHEDULED.name } ?: fallback.status,
-            promoters = primary.promoters.ifEmpty { fallback.promoters },
-            promoterWebsites = primary.promoterWebsites.ifEmpty { fallback.promoterWebsites },
-            // Artists come from the overview only (needs subtitle + type).
-            artists = primary.artists.ifEmpty { fallback.artists }
-        )
 }
 
 val LIDO_LIMITATIONS =

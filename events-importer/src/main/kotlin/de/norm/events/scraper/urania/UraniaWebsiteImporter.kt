@@ -54,13 +54,9 @@ class UraniaWebsiteImporter(
         primary: ScrapedEvent,
         fallback: ScrapedEvent
     ): ScrapedEvent =
-        primary.copy(
+        primary.withGapsFrom(fallback).copy(
             eventDate = fallback.eventDate.takeIf { it != UNRESOLVED_EVENT_DATE } ?: primary.eventDate,
-            startTime = fallback.startTime ?: primary.startTime,
-            subtitle = primary.subtitle ?: fallback.subtitle,
-            eventType = primary.eventType ?: fallback.eventType,
-            ticketUrl = primary.ticketUrl ?: fallback.ticketUrl,
-            artists = primary.artists.ifEmpty { fallback.artists }
+            startTime = fallback.startTime ?: primary.startTime
         )
 }
 

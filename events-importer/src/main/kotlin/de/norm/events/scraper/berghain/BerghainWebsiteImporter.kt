@@ -83,18 +83,7 @@ class BerghainWebsiteImporter(
         primary: ScrapedEvent,
         fallback: ScrapedEvent
     ): ScrapedEvent =
-        primary.copy(
-            subtitle = primary.subtitle ?: fallback.subtitle,
-            eventType = primary.eventType ?: fallback.eventType,
-            genre = primary.genre ?: fallback.genre,
-            doorsTime = primary.doorsTime ?: fallback.doorsTime,
-            startTime = primary.startTime ?: fallback.startTime,
-            imageUrl = primary.imageUrl ?: fallback.imageUrl,
-            description = primary.description ?: fallback.description,
-            ticketUrl = primary.ticketUrl ?: fallback.ticketUrl,
-            pricePresale = primary.pricePresale ?: fallback.pricePresale,
-            priceBoxOffice = primary.priceBoxOffice ?: fallback.priceBoxOffice,
-            soldOut = primary.soldOut || fallback.soldOut,
+        primary.withGapsFrom(fallback).copy(
             // The overview's lineup is authoritative; the detail page's artists carry only set times.
             artists =
                 fallback.artists.withSetTimesFrom(primary.artists) {

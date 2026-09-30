@@ -41,28 +41,6 @@ class ZitadelleWebsiteImporter(
         document: Document,
         url: String
     ): ScrapedEvent? = detailPageScraper.scrape(document, url)
-
-    /**
-     * Merges detail-page data ([primary]) with listing data ([fallback]). The detail page is
-     * richer on everything it states and wins wherever it has a value — the only source of doors
-     * time, tour title, description, ticket link and presenters, and it explains a changed date
-     * where the listing only badges it.
-     *
-     * The **listing owns the date**: the detail page renders it as long German prose where the
-     * card carries a machine-readable `time[datetime]`. The listing also keeps the sold-out flag
-     * alive for the same reason as the poster — both survive a detail fetch that degrades.
-     */
-    override fun fillGapsFromOverview(
-        primary: ScrapedEvent,
-        fallback: ScrapedEvent
-    ): ScrapedEvent =
-        primary.copy(
-            eventDate = primary.eventDate.takeIf { it != UNRESOLVED_EVENT_DATE } ?: fallback.eventDate,
-            startTime = primary.startTime ?: fallback.startTime,
-            imageUrl = primary.imageUrl ?: fallback.imageUrl,
-            soldOut = primary.soldOut || fallback.soldOut,
-            artists = primary.artists.ifEmpty { fallback.artists }
-        )
 }
 
 /** Nothing this source withholds needs declaring (#715). */

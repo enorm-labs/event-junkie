@@ -45,32 +45,6 @@ class MikropolWebsiteImporter(
         document: Document,
         url: String
     ): ScrapedEvent? = detailPageScraper.scrape(document, url)
-
-    /**
-     * Merges detail-page data ([primary]) with overview data ([fallback]). The detail page is
-     * authoritative and carries what the overview lacks (description, image, ticket URL, and the
-     * door price and free flag, which the copy keeps); shared
-     * fields (date, times, status, sold-out, artists) prefer the detail value and fall back.
-     */
-    override fun fillGapsFromOverview(
-        primary: ScrapedEvent,
-        fallback: ScrapedEvent
-    ): ScrapedEvent =
-        primary.copy(
-            eventDate = primary.eventDate.takeIf { it != UNRESOLVED_EVENT_DATE } ?: fallback.eventDate,
-            subtitle = primary.subtitle ?: fallback.subtitle,
-            description = primary.description ?: fallback.description,
-            doorsTime = primary.doorsTime ?: fallback.doorsTime,
-            startTime = primary.startTime ?: fallback.startTime,
-            imageUrl = primary.imageUrl ?: fallback.imageUrl,
-            ticketUrl = primary.ticketUrl ?: fallback.ticketUrl,
-            // A sold-out/cancelled badge or relocation note may render on only one page, so keep it
-            // whenever either page reports it.
-            soldOut = primary.soldOut || fallback.soldOut,
-            status = primary.status.takeIf { it != EventStatus.SCHEDULED.name } ?: fallback.status,
-            statusNote = primary.statusNote ?: fallback.statusNote,
-            artists = primary.artists.ifEmpty { fallback.artists }
-        )
 }
 
 val MIKROPOL_LIMITATIONS =

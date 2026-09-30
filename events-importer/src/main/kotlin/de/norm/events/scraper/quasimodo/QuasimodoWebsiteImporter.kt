@@ -59,13 +59,7 @@ class QuasimodoWebsiteImporter(
         fallback: ScrapedEvent
     ): ScrapedEvent {
         val eventType = primary.eventType ?: fallback.eventType
-        return primary.copy(
-            eventDate = primary.eventDate.takeIf { it != UNRESOLVED_EVENT_DATE } ?: fallback.eventDate,
-            startTime = primary.startTime ?: fallback.startTime,
-            imageUrl = primary.imageUrl ?: fallback.imageUrl,
-            ticketUrl = primary.ticketUrl ?: fallback.ticketUrl,
-            genre = primary.genre ?: fallback.genre,
-            eventType = eventType,
+        return primary.withGapsFrom(fallback).copy(
             artists = buildArtistsForEventType(primary.title, subtitle = null, eventType = eventType)
         )
     }

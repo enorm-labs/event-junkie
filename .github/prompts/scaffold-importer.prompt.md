@@ -46,7 +46,7 @@ SO36,
 - **`<Venue>WebsiteImporter.kt`** — the `@Component` that fetches and wires. JSON: inject `ApiClient`, `fetchJson(url)`, return
   `ImportResult.Success(events, null, null)` (most APIs send no validators; idempotent `sourceId` upserts do the work). Single-page HTML:
   `HtmlFetcher.fetch(url, etag, lastModified)`, `FetchResult.NotModified` → `ImportResult.NotModified`. List+detail: extend `AbstractTwoPageWebsiteImporter`,
-  implement `scrapeOverview`, `scrapeDetail`, `fillGapsFromOverview` (only what the detail page cannot supply). `override val eventSource = EventSource.<VENUE>`.
+  implement `scrapeOverview` and `scrapeDetail`. Override `fillGapsFromOverview` only where the listing is authoritative for a field, as `primary.withGapsFrom(fallback).copy(…)`; the default fills every gap from the listing. `override val eventSource = EventSource.<VENUE>`.
 
 **The importer's and scrapers' KDoc is the one home for the source** — platform, pages read and why, the traps, why a selector was chosen. Under 20 comment
 lines on the importer, under 10 per scraper; **do not copy the boilerplate an existing scraper still carries** (purity, fixture setup, `@param document the

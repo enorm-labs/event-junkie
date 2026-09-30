@@ -25,6 +25,82 @@ import java.time.ZoneOffset
  * [EventFieldMappingTest]; here we only assert the mapping actually wires it in.
  */
 class ScrapedEventTest {
+    // --- withGapsFrom ---
+
+    private val listingRow =
+        ScrapedEvent(
+            title = "Listing title",
+            subtitle = "Tour 2026",
+            description = "Listing blurb",
+            eventType = "CONCERT",
+            eventDate = LocalDate.of(2026, 10, 3),
+            doorsTime = LocalTime.of(19, 0),
+            startTime = LocalTime.of(20, 0),
+            endDate = LocalDate.of(2026, 10, 4),
+            endTime = LocalTime.of(2, 0),
+            imageUrl = "https://example.org/listing.jpg",
+            sourceUrl = "https://example.org/listing",
+            sourceId = "listing-1",
+            ticketUrl = "https://example.org/tickets",
+            genre = "Rock",
+            pricePresale = BigDecimal("20.00"),
+            priceBoxOffice = BigDecimal("25.00"),
+            priceNote = "VVK 20 / AK 25",
+            soldOut = true,
+            free = false,
+            status = "CANCELLED",
+            statusNote = "Abgesagt",
+            artists = listOf(ScrapedArtist(name = "Listing Act", role = "HEADLINER")),
+            promoters = listOf("Listing Promoter"),
+            promoterWebsites = mapOf("Listing Promoter" to "https://promoter.example.org")
+        )
+
+    @Test
+    fun `withGapsFrom fills every gap of a bare detail page from the listing`() {
+        val detail =
+            ScrapedEvent(
+                title = "Detail title",
+                eventDate = UNRESOLVED_EVENT_DATE,
+                sourceUrl = "https://example.org/detail",
+                sourceId = "detail-1"
+            )
+
+        detail.withGapsFrom(listingRow) shouldBe
+            listingRow.copy(title = "Detail title", sourceUrl = "https://example.org/detail", sourceId = "detail-1")
+    }
+
+    @Test
+    fun `withGapsFrom never replaces a value the detail page set`() {
+        val detail =
+            listingRow.copy(
+                title = "Detail title",
+                subtitle = "Detail subtitle",
+                description = "Detail blurb",
+                eventDate = LocalDate.of(2026, 10, 2),
+                endTime = LocalTime.of(3, 0),
+                pricePresale = BigDecimal("18.00"),
+                soldOut = false,
+                free = true,
+                status = "POSTPONED",
+                artists = listOf(ScrapedArtist(name = "Detail Act", role = "HEADLINER"))
+            )
+
+        val merged = detail.withGapsFrom(listingRow.copy(soldOut = false, free = false))
+
+        merged shouldBe detail
+    }
+
+    @Test
+    fun `withGapsFrom holds a sold-out or free flag and a changed status from either side`() {
+        val detail = listingRow.copy(soldOut = false, free = false, status = "SCHEDULED")
+
+        val merged = detail.withGapsFrom(listingRow.copy(soldOut = true, free = true, status = "RELOCATED"))
+
+        merged.soldOut shouldBe true
+        merged.free shouldBe true
+        merged.status shouldBe "RELOCATED"
+    }
+
     private fun scrapedEvent(
         doorsTime: LocalTime? = null,
         startTime: LocalTime? = null,

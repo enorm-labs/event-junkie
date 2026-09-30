@@ -53,21 +53,11 @@ class MetropolWebsiteImporter(
     override fun fillGapsFromOverview(
         primary: ScrapedEvent,
         fallback: ScrapedEvent
-    ): ScrapedEvent {
-        val subtitle = primary.subtitle ?: fallback.subtitle
-        return primary.copy(
-            // Only the listing renders a support line, so it supplies the subtitle when the detail page
-            // has no tour name.
-            subtitle = subtitle,
-            // The slug date is on both pages; fall back only if the detail slug was unparseable.
-            eventDate = primary.eventDate.takeIf { it != UNRESOLVED_EVENT_DATE } ?: fallback.eventDate,
-            doorsTime = primary.doorsTime ?: fallback.doorsTime,
-            startTime = primary.startTime ?: fallback.startTime,
-            eventType = primary.eventType ?: fallback.eventType,
+    ): ScrapedEvent =
+        primary.withGapsFrom(fallback).copy(
             // Rebuild from the detail headliner plus the listing's support acts.
             artists = buildMetropolArtists(primary.title, fallback.subtitle, primary.eventType ?: fallback.eventType)
         )
-    }
 }
 
 val METROPOL_LIMITATIONS =

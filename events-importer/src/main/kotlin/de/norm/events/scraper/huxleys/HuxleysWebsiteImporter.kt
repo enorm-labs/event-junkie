@@ -77,13 +77,9 @@ class HuxleysWebsiteImporter(
         fallback: ScrapedEvent
     ): ScrapedEvent {
         val subtitle = listOfNotNull(primary.subtitle, fallback.subtitle).distinct().joinToString(SUBTITLE_SEPARATOR).takeIf { it.isNotBlank() }
-        return primary.copy(
+        return primary.withGapsFrom(fallback).copy(
             title = fallback.title,
-            eventDate = primary.eventDate.takeIf { it != UNRESOLVED_EVENT_DATE } ?: fallback.eventDate,
             subtitle = subtitle,
-            doorsTime = primary.doorsTime ?: fallback.doorsTime,
-            startTime = primary.startTime ?: fallback.startTime,
-            soldOut = primary.soldOut || fallback.soldOut,
             status = fallback.status.takeIf { it != EventStatus.SCHEDULED.name } ?: primary.status,
             statusNote = fallback.statusNote ?: primary.statusNote,
             // Built from the fields this merge stores — the listing's title and the joined subtitle — so

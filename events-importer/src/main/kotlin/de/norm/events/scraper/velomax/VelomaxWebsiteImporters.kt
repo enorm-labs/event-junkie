@@ -62,15 +62,10 @@ abstract class AbstractVelomaxHallImporter(
         primary: ScrapedEvent,
         fallback: ScrapedEvent
     ): ScrapedEvent =
-        primary.copy(
-            eventDate = primary.eventDate.takeIf { it != UNRESOLVED_EVENT_DATE } ?: fallback.eventDate,
-            subtitle = primary.subtitle ?: fallback.subtitle,
+        primary.withGapsFrom(fallback).copy(
             eventType = fallback.eventType ?: primary.eventType,
             startTime = fallback.startTime ?: primary.startTime,
-            sourceId = fallback.sourceId,
-            soldOut = primary.soldOut || fallback.soldOut,
-            status = primary.status.takeIf { it != EventStatus.SCHEDULED.name } ?: fallback.status,
-            artists = primary.artists.ifEmpty { fallback.artists }
+            sourceId = fallback.sourceId
         )
 }
 
