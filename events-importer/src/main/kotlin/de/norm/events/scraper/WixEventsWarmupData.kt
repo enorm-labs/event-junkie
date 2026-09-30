@@ -220,6 +220,12 @@ private const val WIX_STATUS_CANCELED = 3
 internal const val WIX_REGISTRATION_TICKETS = 2
 
 /**
+ * The Wix `registration.status` ordinal `OPEN_TICKETS`: Wix sells the tickets and the checkout on the
+ * event's own page is open. A closed or scheduled registration has no checkout to link to.
+ */
+internal const val WIX_REGISTRATION_OPEN_TICKETS = 5
+
+/**
  * Reads a Wix ticket price node (`{"amount": "19.30", "currency": "EUR"}`), or `null` when the
  * amount is absent or is not a number.
  *

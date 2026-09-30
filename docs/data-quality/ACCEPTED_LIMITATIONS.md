@@ -43,6 +43,7 @@ says so.
 | `COLOSSEUM`           | `DOORS_TIME`       | an event whose own page states no Einlass line keeps the listing's single time as the start, and gets no doors                                   | —     |
 | `COLOSSEUM`           | `GENRE`            | the house names no musical style anywhere                                                                                                        | —     |
 | `COLOSSEUM`           | `ARTISTS`          | no support-act convention exists in the subtitles, and a title is as often an event name as a performer's                                        | —     |
+| `COLOSSEUM`           | `DESCRIPTION`      | each event is cloned from an old one and its about text is never rewritten, so it is another act's biography, not the event's                    | —     |
 | `COLUMBIAHALLE`       | `PER_EVENT_PAGE`   | the venue's own iCal export keys the event on the same Contao id and points back at the listing anchor                                           | —     |
 | `COSMIC_COMEDY`       | `PRICE`            | `cost` and `cost_details` are empty on every event                                                                                               | —     |
 | `CRACK_BELLMER`       | `EVENT_TYPE`       | the venue emits no category at all; the type is read from the title and then the genre line                                                      | —     |
