@@ -151,6 +151,14 @@ class EschschloraqueOverviewPageScraperTest {
     }
 
     @Test
+    fun `strips a billing label in any wording when the venue sets it in its own span`() {
+        // "erstmals zusammen auf der Couch:" is none of the known labels, and it was minted into
+        // the first act's name (#2173). The span around it is what marks it as the label.
+        val night = scrape("eschschloraque-overview-two-djs.html").first { it.title == "PingPongPremiere!" }
+        night.artists.map { it.name to it.role } shouldBe listOf("Gina d`Orio" to "DJ", "MissVergnügen" to "DJ")
+    }
+
+    @Test
     fun `leaves an event billed in plain prose without a subtitle or lineup`() {
         val bingo = events.first { it.title.startsWith("BULETTEN BINGO") }
         bingo.subtitle.shouldBeNull()
