@@ -119,19 +119,34 @@ class OhmOverviewPageScraper(
      * a line (#1756): `(Live Painting)` or `(Sonic Visual Installation)` is not a music act and is
      * dropped, `(OPERA live)` bills a `HEADLINER`, every other line a `DJ`. The bracket stays on the
      * name, because `V.` alone would merge into another act's `v` slug.
+     *
+     * A night in parts heads each part with its start (`Panel Talk [ 20:00 ]`, `Club [ 22:00 ]`).
+     * A heading is never an act, and the lines under a talk heading are speakers, not DJs.
      */
-    private fun parseLineup(item: Element): List<ScrapedArtist> =
-        item
+    private fun parseLineup(item: Element): List<ScrapedArtist> {
+        var inTalk = false
+        return item
             .textLinesAt(".event-lineup")
-            .filterNot { isNonArtistName(it) || NON_MUSIC_ANNOTATION.containsMatchIn(it) }
+            .filter { line ->
+                val heading = SECTION_HEADING.containsMatchIn(line)
+                if (heading) inTalk = TALK_HEADING.containsMatchIn(line)
+                !heading && !inTalk
+            }.filterNot { isNonArtistName(it) || NON_MUSIC_ANNOTATION.containsMatchIn(it) }
             .map { ScrapedArtist(name = it, role = if (LIVE_ANNOTATION.containsMatchIn(it)) "HEADLINER" else "DJ") }
+    }
 }
 
 /** The sound the club programmes; the venue publishes no per-night style. */
 internal const val OHM_GENRE = "Techno"
 
 /** A bracket naming a contribution that is not music: `(Live Painting)`, `(Sonic Visual Installation)`. */
-private val NON_MUSIC_ANNOTATION = Regex("""\([^()]*\b(?:painting|visuals?|installation|vj)\b[^()]*\)""", RegexOption.IGNORE_CASE)
+private val NON_MUSIC_ANNOTATION = Regex("""\([^()]*\b(?:painting|visuals?|installation|vjs?)\b[^()]*\)""", RegexOption.IGNORE_CASE)
+
+/** A line heading one part of the night with its start time: `Club [ 22:00 ]`. */
+private val SECTION_HEADING = Regex("""\[\s*\d{1,2}[:.]\d{2}\s*]\s*$""")
+
+/** A heading whose part is spoken, not played: `Panel Talk [ 20:00 ]`. */
+private val TALK_HEADING = Regex("""\b(?:talk|panel|lecture|discussion|vortrag|gespräch|lesung)\b""", RegexOption.IGNORE_CASE)
 
 /** A bracket marking a live act: `(OPERA live)`, `(live)`. */
 private val LIVE_ANNOTATION = Regex("""\([^()]*\blive\b[^()]*\)""", RegexOption.IGNORE_CASE)
