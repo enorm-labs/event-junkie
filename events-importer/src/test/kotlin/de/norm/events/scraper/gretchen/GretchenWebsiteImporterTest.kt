@@ -3,6 +3,7 @@ package de.norm.events.scraper.gretchen
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
+import de.norm.events.scraper.HttpFetchException
 import de.norm.events.scraper.ImportResult
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
@@ -38,7 +39,35 @@ class GretchenWebsiteImporterTest {
                 etag = "\"abc123\"",
                 lastModified = "Fri, 10 Jul 2026 03:00:00 GMT"
             )
+        // A popup that names no shop, unless a test says otherwise.
+        coEvery { htmlFetcher.postForm(POPUP_URL, any()) } returns ""
     }
+
+    @Test
+    fun `takes the ticket shop the TICKETS popup names`() =
+        runTest {
+            // The popup of 15 Years GRETCHEN: NATALIA DOCO on 2026-09-30: tixforgigs first, Resident Advisor second.
+            val popup =
+                javaClass.classLoader
+                    .getResourceAsStream("scraper/gretchen/gretchen-ticket-popup.html")!!
+                    .bufferedReader()
+                    .readText()
+            coEvery { htmlFetcher.postForm(POPUP_URL, match { it["list_id"] == "3497" }) } returns popup
+
+            val result = importer.importEvents(sourceUrl) as ImportResult.Success
+            result.events.single { it.sourceId == "gretchen:3497" }.ticketUrl shouldBe "https://www.tixforgigs.com/Event/73963"
+        }
+
+    @Test
+    fun `keeps the card's Resident Advisor link when the popup fails`() =
+        runTest {
+            val withoutPopup = (importer.importEvents(sourceUrl) as ImportResult.Success).events.associateBy { it.sourceId }
+            coEvery { htmlFetcher.postForm(POPUP_URL, any()) } throws HttpFetchException(statusCode = 500, url = POPUP_URL)
+
+            val failed = (importer.importEvents(sourceUrl) as ImportResult.Success).events
+            failed.forEach { it.ticketUrl shouldBe withoutPopup.getValue(it.sourceId).ticketUrl }
+            failed.count { it.ticketUrl != null } shouldBe withoutPopup.values.count { it.ticketUrl != null }
+        }
 
     @Test
     fun `importEvents extracts all events from fixture`() =
@@ -81,5 +110,9 @@ class GretchenWebsiteImporterTest {
     @Test
     fun `eventSource matches expected enum value`() {
         importer.eventSource shouldBe EventSource.GRETCHEN
+    }
+
+    private companion object {
+        const val POPUP_URL = "https://www.gretchen-club.de/funk/get_popup_vvk.php"
     }
 }

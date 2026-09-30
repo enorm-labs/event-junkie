@@ -120,7 +120,7 @@ class GretchenOverviewPageScraper {
             imageUrl = parseImageUrl(gig, baseUrl),
             sourceUrl = resolveUrl(baseUrl, "detail.php?id=$eventId"),
             sourceId = "${EventSource.GRETCHEN.sourceIdPrefix}$eventId",
-            // The "TICKETS" button is a JS popup, so the Resident-Advisor link is the best external ticket URL.
+            // The fallback: the "TICKETS" popup's shop, which GretchenWebsiteImporter fetches, replaces it.
             ticketUrl = gig.hrefAt(".social a[href*=\"ra.co\"]"),
             genre =
                 gig
