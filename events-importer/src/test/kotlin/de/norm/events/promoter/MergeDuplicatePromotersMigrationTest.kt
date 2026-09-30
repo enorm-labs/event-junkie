@@ -14,7 +14,7 @@ import java.sql.Connection
 import java.sql.DriverManager
 
 /**
- * Runs the promoter data migrations — V023, V025, V026, V027, V029, V030, V031, V032, V065, V066, V072 — against the rows each names, planted on a
+ * Runs the promoter data migrations — V023, V025, V026, V027, V029, V030, V031, V032, V065, V066, V073 — against the rows each names, planted on a
  * database migrated to just before it.
  *
  * The migrations are keyed on slugs read from staging, and a misspelt one updates no row while
@@ -96,7 +96,7 @@ class MergeDuplicatePromotersMigrationTest {
         plantSchokoladenSpans()
         flyway("66").migrate()
         plantCtmSpellings()
-        flyway("72").migrate()
+        flyway("73").migrate()
     }
 
     @AfterAll
@@ -244,7 +244,7 @@ class MergeDuplicatePromotersMigrationTest {
     }
 
     @Test
-    fun `V072 folds the CTM row into CTM Festival and restores that row's capitals`() {
+    fun `V073 folds the CTM row into CTM Festival and restores that row's capitals`() {
         promoters().containsKey("ctm") shouldBe false
         promoters()["ctm-festival"] shouldBe "CTM Festival"
         eventsOf("ctm-festival") shouldContainExactlyInAnyOrder listOf("c1", "c2", "c3")
@@ -293,7 +293,7 @@ class MergeDuplicatePromotersMigrationTest {
         }
     }
 
-    /** V072: both spellings of one festival, each on a night of its own and both on a third. */
+    /** V073: both spellings of one festival, each on a night of its own and both on a third. */
     private fun plantCtmSpellings() {
         connection.createStatement().use { statement ->
             plantPromoter(statement, "CTM", "ctm")
