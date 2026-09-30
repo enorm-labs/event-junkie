@@ -252,9 +252,13 @@ class GretchenOverviewPageScraper {
                     val work = lineup.clone()
                     work.select("em, b").forEach { it.replaceWith(TextNode("\n")) }
                     work.select("br").forEach { it.replaceWith(TextNode("\n")) }
-                    work.wholeText().split(LINE_BREAK)
-                }.map { it.trim() }
-                .filterNot { it.isBlank() || isCreditOrNoteLine(it) }
+                    work
+                        .wholeText()
+                        .split(LINE_BREAK)
+                        .map { it.trim() }
+                        .takeUnless { lines -> lines.any(::isNoticeSentence) }
+                        .orEmpty()
+                }.filterNot { it.isBlank() || isCreditOrNoteLine(it) }
                 .map { stripCreditPrefix(it).replaceFirst(ROOM_LABEL, "") }
                 .flatMap { it.split(PADDED_PLUS) }
                 .flatMap { splitFeaturedActs(it) }
@@ -341,6 +345,14 @@ class GretchenOverviewPageScraper {
     private fun isProseNote(name: String): Boolean = name.split(' ').size >= PROSE_WORD_THRESHOLD
 
     /**
+     * A sentence of four words or more, ending in `.` or `?`: the venue writes a cancellation
+     * notice as its own `.lineup` block, one sentence per line ("Es tut uns sehr leid."). A block
+     * that holds one is a notice, so none of its lines is read as an act (#2167). A `!` does not end
+     * one, because act names end in it ("Krizzi with the K!").
+     */
+    private fun isNoticeSentence(line: String): Boolean = NOTICE_SENTENCE.matches(line)
+
+    /**
      * Promoters from the `.promoter` line, "Veranstalter*in: <name>". "Gretchen" is the venue
      * itself, dropped.
      */
@@ -407,6 +419,9 @@ class GretchenOverviewPageScraper {
 
         /** A `+` with a space on each side: two acts on one line. A glued `+experience` tag is [TRAILING_PLUS_TAG]'s. */
         private val PADDED_PLUS = Regex("""\s+\+\s+""")
+
+        /** A line of four words or more that ends a sentence with `.` or `?`. */
+        private val NOTICE_SENTENCE = Regex("""\S+(?:\s+\S+){3,}[.?]""")
 
         /** A lineup line of this many words or more is prose (a note/blurb), not a performer name. */
         private const val PROSE_WORD_THRESHOLD = 10

@@ -313,6 +313,49 @@ class GretchenOverviewPageScraperTest {
             event.artists.map { it.name } shouldContainExactly listOf("The Bug", "Slimzee", "Grandmixxer")
         }
 
+        // Production stored three sentences of a cancellation notice as support acts (#2167).
+        @Test
+        fun `reads a lineup block that holds a notice sentence as no acts`() {
+            val html =
+                """
+                <div class="gig">
+                    <div class="gig_top">
+                        <span class="date">Mi. <strong>30.09.2026</strong><br> Doors: 19.30</span>
+                    </div>
+                    <div class="gig_main"><div class="scroll nano"><div class="text nano-content">
+                        <span class="title">Afro-Jazz<h2><a href="detail.php?id=3518">MOP MOP ft. ANTHONY JOSEPH // CANCELLED</a></h2></span>
+                        <span class="box"></span><span class="lineup"><p>Mop Mop ft. Anthony Joseph (Agogo/!K7/IT) *live*<br /></p></span>
+                        <span class="box"></span><span class="lineup">Leider entfällt das Konzert, da aufgrund eines Streiks in Italien die Flüge gestrichen wurden.<br />Tickets können da zurückgegeben werden, wo sie gekauft wurden.<br />Wir suchen einen neuen Termin, um das Konzert nachzuholen.<br />Es tut uns sehr leid.<em><br /></em></span>
+                    </div></div></div>
+                </div>
+                """.trimIndent()
+
+            val event = scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl).single()
+
+            event.artists.map { it.name } shouldContainExactly listOf("Mop Mop", "Anthony Joseph")
+        }
+
+        @Test
+        fun `keeps a lineup block whose act name ends in an exclamation mark`() {
+            val html =
+                """
+                <div class="gig">
+                    <div class="gig_top">
+                        <span class="date">Fr. <strong>16.10.2026</strong><br> Doors: 23.00</span>
+                    </div>
+                    <div class="gig_main"><div class="scroll nano"><div class="text nano-content">
+                        <span class="title">Drag<h2><a href="detail.php?id=3556">Queens Night</a></h2></span>
+                        <span class="box"></span><span class="lineup"><p>Nena Polap <br />Trust The Girl <br /></p></span>
+                        <span class="box"></span><span class="lineup"><p>Ployceebell <br />Krizzi with the K! <br /></p></span>
+                    </div></div></div>
+                </div>
+                """.trimIndent()
+
+            val event = scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl).single()
+
+            event.artists.map { it.name } shouldContainExactly listOf("Nena Polap", "Trust The Girl", "Ployceebell", "Krizzi", "the K!")
+        }
+
         // Production stored `Box 2: Bassism + Impulse Basskultur` as one act (#1843).
         @Test
         fun `drops a room label and splits the crews after it`() {
