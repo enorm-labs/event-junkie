@@ -51,7 +51,7 @@ import java.time.format.DateTimeParseException
  * trailing origin tag ("pinkpool (Bln)") is stripped from the act ([ORIGIN_TAG_PATTERN]) so it
  * resolves onto another venue's booking; the stored title keeps the venue's spelling. A closed
  * private function is imported as `OTHER` with no artists, so the calendar shows the venue shut.
- * Sold out is prose only, a `!!SOLD OUT!!` prefix or an "AUSVERKAUFT" line, and the prefix is
+ * Sold out is prose only, a `!!SOLD OUT!!` / `!!AUSVERKAUFT!!` prefix or an "AUSVERKAUFT" line, and the prefix is
  * stripped so it stays out of the `sourceId`.
  *
  * The venue writes "+ support pinkpool" beside "Support: Alles Karo", so only a colon or a
@@ -310,8 +310,8 @@ private fun descriptionLines(html: String?): List<String> {
 /** The tags that end a line in the venue's pasted HTML: an explicit break, or the close of any block element. */
 private val BLOCK_END_PATTERN = Regex("""<br\s*/?>|</(?:p|div|h[1-6]|li)>""", RegexOption.IGNORE_CASE)
 
-/** The `!!SOLD OUT!!` prefix the venue puts in front of a sold-out show's name. */
-private val SOLD_OUT_PREFIX = Regex("""^\s*!*\s*sold\s*out\s*!*\s*""", RegexOption.IGNORE_CASE)
+/** The `!!SOLD OUT!!` or `!!AUSVERKAUFT!!` prefix the venue puts in front of a sold-out show's name. */
+private val SOLD_OUT_PREFIX = Regex("""^\s*!*\s*(?:sold\s*out|ausverkauft)\s*!*\s*""", RegexOption.IGNORE_CASE)
 
 /** The venue's German sold-out notice, written as its own description line. */
 private val SOLD_OUT_LINE_PATTERN = Regex("""\bausverkauft\b""", RegexOption.IGNORE_CASE)

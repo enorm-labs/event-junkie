@@ -132,6 +132,15 @@ class InselApiScraperTest {
     }
 
     @Test
+    fun `strips the German sold-out prefix from the title and the artist`() {
+        val german = fixture("insel-events.json").replace("!!SOLD OUT!! Dead Phoenix", "!!AUSVERKAUFT!! Dead Phoenix")
+        val deadPhoenix = scraper.scrape(german, sourceUrl)!!.single { it.eventDate == LocalDate.of(2026, 12, 5) }
+        deadPhoenix.title shouldBe "Dead Phoenix - BERLIN"
+        deadPhoenix.soldOut shouldBe true
+        deadPhoenix.artists.none { it.name.contains("ausverkauft", ignoreCase = true) } shouldBe true
+    }
+
+    @Test
     fun `imports a closed private function without minting it as an artist`() {
         val closed = events.single { it.title.startsWith("Sommerfest") }
         closed.eventType shouldBe "OTHER"
