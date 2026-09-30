@@ -1038,6 +1038,10 @@ window.EJ_LINKS = {
           "note": "both clusters whole, and on the expected versions"
         },
         {
+          "command": "for env in staging production; do scripts/o2-query.sh \"$env\" sql \"SELECT _timestamp, alert, value FROM alert_history ORDER BY _timestamp DESC LIMIT 200\"; done",
+          "note": "every alert that fired in the last day"
+        },
+        {
           "command": "scripts/daily-check.sh | jq '.failed_runs, .release_main.conclusion, [.reports[] | select(.unanswered) | .url]'",
           "note": ""
         },

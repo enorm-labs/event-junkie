@@ -32,6 +32,7 @@ each for the importer admin API, the BFF's Swagger UI and OpenObserve. The ports
 
 ```sh
 scripts/ej.sh status && scripts/ej.sh versions     # both clusters whole, and on the expected versions
+for env in staging production; do scripts/o2-query.sh "$env" sql "SELECT _timestamp, alert, value FROM alert_history ORDER BY _timestamp DESC LIMIT 200"; done  # every alert that fired in the last day
 scripts/daily-check.sh | jq '.failed_runs, .release_main.conclusion, [.reports[] | select(.unanswered) | .url]'
 gh pr list --state open                            # bot pull requests to read and merge, and your own
 ```
@@ -39,6 +40,8 @@ gh pr list --state open                            # bot pull requests to read a
 `/daily-check` does all of this and more, and writes one report with an action list. Without an agent, check these in this order:
 
 1. **Both clusters.** `ej.sh status` shows no pod that is not Ready. `ej.sh versions` shows staging on the newest snapshot and production on the latest release.
+   The `alert_history` query lists every alert that fired in the last 24 hours. Name a cause for each one, or open an issue. An alert that fires for no
+   reason teaches you to ignore the mail.
 2. **Failed workflows.** A red `release.yml` on `main` blocks every release. See [RELEASING.md § Publishing is blocked](RELEASING.md#publishing-is-blocked).
    A scheduled workflow starts 4.5 to 7 hours after its cron time. A nightly run that is missing before midday UTC is late, not failed.
 3. **Issues that a workflow opened.** These are the reminders, a publish failure and seed drift. Each issue names its action.
