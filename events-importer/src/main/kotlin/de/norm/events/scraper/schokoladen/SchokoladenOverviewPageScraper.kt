@@ -232,6 +232,8 @@ class SchokoladenOverviewPageScraper {
                 .replace(TITLE_NOTE, " ")
                 .replace(WHITESPACE, " ")
                 .replace(MORE_ACTS_TAIL, "")
+                .replace(RELEASE_SHOW_OF, "")
+                .replace(QUOTED_WORK, "")
                 .trim()
         return buildArtistsForEventType(artistTitle, subtitle, eventType, unpackWithFrame = true)
     }
@@ -265,6 +267,13 @@ class SchokoladenOverviewPageScraper {
 
         /** A trailing "& more" / "+ more": the co-bill split takes the joiner and would bill "more", which is also a band's name. */
         private val MORE_ACTS_TAIL = Regex("""\s*[&+]\s*more\s*$""", RegexOption.IGNORE_CASE)
+
+        /** The night's name before its act: "Berlin Release Show von Angela Aux" bills Angela Aux (#2099). */
+        private val RELEASE_SHOW_OF =
+            Regex("""^.*?\brelease(?:[\s-]*(?:show|party|konzert))?\s+(?:von|of|by)\s+""", RegexOption.IGNORE_CASE)
+
+        /** A quoted album after `w/`: `Angela Aux w/ "Das Nichts macht Kopien von sich selbst"` names a work, not an act. */
+        private val QUOTED_WORK = Regex("""\s+w/\s*["„“][^"„“”]*["“”]""", RegexOption.IGNORE_CASE)
 
         /** A sold-out note anywhere inside a [TITLE_NOTE]. */
         private val SOLD_OUT_NOTE = Regex("""\b(?:ausverkauft|sold\s*out)\b""", RegexOption.IGNORE_CASE)
