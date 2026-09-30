@@ -150,6 +150,40 @@ class FestsaalApiScraperTest {
     }
 
     @Test
+    fun `reads a transferred show's destination from its change note`() {
+        // Five events from the API on 2026-09-30, with `changed_text` and `new_location` requested.
+        val json =
+            javaClass.classLoader
+                .getResourceAsStream("scraper/festsaal/festsaal-api-relocations.json")!!
+                .bufferedReader()
+                .readText()
+        val stored =
+            scraper.scrape(json).associate {
+                it.title to it.toEventEntity(venueId = 1L, venueSlug = "festsaal-kreuzberg", eventSourceId = 1L)
+            }
+
+        stored.getValue("nand").relocatedTo shouldBe "Lido"
+        stored.getValue("Angine De Poitrine").relocatedTo shouldBe "Astra Kulturhaus"
+        stored.getValue("\$ONO\$ CLIQ").relocatedTo shouldBe "Bi Nuu"
+        stored.values.filter { it.relocatedTo != null }.forEach { it.status shouldBe "RELOCATED" }
+        // A custom status and a stale "verlegt" template on a scheduled row move nothing.
+        listOf("MONCHI", "Yard Act").forEach {
+            stored.getValue(it).status shouldBe "SCHEDULED"
+            stored.getValue(it).relocatedTo.shouldBeNull()
+        }
+    }
+
+    @Test
+    fun `falls back to the structured new location when the change note names none`() {
+        val json =
+            """{"items":[{"id":1,"meta":{"slug":"moved"},"title":"Moved","date":"2026-10-22","status":"transferred",""" +
+                """"changed_text":"<p>Die Show wurde verlegt.</p>","new_location":"Lido"}]}"""
+        val moved = scraper.scrape(json).single()
+
+        moved.toEventEntity(venueId = 1L, venueSlug = "festsaal-kreuzberg", eventSourceId = 1L).relocatedTo shouldBe "Lido"
+    }
+
+    @Test
     fun `treats a custom status as scheduled and parses the plain decimal price`() {
         val mokaEfti = event("festsaal:moka-efti")
         mokaEfti.status shouldBe "SCHEDULED"

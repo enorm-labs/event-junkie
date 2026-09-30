@@ -1,0 +1,212 @@
+{
+  "meta": {
+    "total_count": 5
+  },
+  "items": [
+    {
+      "id": 802,
+      "meta": {
+        "type": "home.EventPage",
+        "detail_url": "https://admin.festsaal-kreuzberg.de/api/v2/pages/802/",
+        "html_url": "https://admin.festsaal-kreuzberg.de/de/programm/yard-act-2026/",
+        "slug": "yard-act-2026",
+        "first_published_at": "2026-04-14T12:39:34.019600Z",
+        "locale": "de"
+      },
+      "title": "Yard Act",
+      "url": "/de/programm/yard-act-2026/",
+      "preview_image": {
+        "id": 1256,
+        "title": "Yard-Act",
+        "download_url": "https://v2.files.funkhaus.io/fsk-1170-media/original_images/Yard-Act_c_1_Jamie-Macmillian_0426.jpeg"
+      },
+      "preview_text": "",
+      "sub_title": "Live 2026",
+      "date": "2026-10-14",
+      "doors": "19:00:00",
+      "start": "20:00:00",
+      "changed_date": null,
+      "changed_doors": null,
+      "changed_start": null,
+      "changed_text": "<p data-block-key=\"56eq1\">Aufgrund von Krankheit musste das Konzert leider abgesagt werden und wird auf ein noch ausstehendes Datum verlegt.  Alle Tickets behalten ihre Gültigkeit und können an dem neuen Termin eingesetzt werden.</p>",
+      "ticket": "https://www.eventim.de/noapp/event/yard-act-festsaal-kreuzberg-21548549/?affiliate=AAG&utm_campaign=allartistsagency&utm_source=AAG&utm_medium=dp",
+      "price": null,
+      "genre": {
+        "id": 3,
+        "meta": {
+          "type": "home.Genre",
+          "detail_url": "https://admin.festsaal-kreuzberg.de/api/v2/genre/3/"
+        },
+        "title": "Indie Rock"
+      },
+      "new_location": null,
+      "status": null,
+      "support": null,
+      "presenters": []
+    },
+    {
+      "id": 790,
+      "meta": {
+        "type": "home.EventPage",
+        "detail_url": "https://admin.festsaal-kreuzberg.de/api/v2/pages/790/",
+        "html_url": "https://admin.festsaal-kreuzberg.de/de/programm/nand-2026/",
+        "slug": "nand-2026",
+        "first_published_at": "2026-03-26T17:46:11.105000Z",
+        "locale": "de"
+      },
+      "title": "nand",
+      "url": "/de/programm/nand-2026/",
+      "preview_image": {
+        "id": 1244,
+        "title": "nand_drei-kreuze-gemacht_bts_013",
+        "download_url": "https://v2.files.funkhaus.io/fsk-1170-media/original_images/nand_drei-kreuze-gemacht_bts_013.JPG"
+      },
+      "preview_text": "",
+      "sub_title": "\"Es wäre schön\" - Tour",
+      "date": "2026-10-22",
+      "doors": "19:00:00",
+      "start": "20:00:00",
+      "changed_date": null,
+      "changed_doors": null,
+      "changed_start": null,
+      "changed_text": "Das Berlin Konzert von nand am 22.10.26 muss aus produktionstechnischen Gründen ins Lido verlegt werden. \r\nAlle Tickets behalten ihre Gültigkeit. \r\nWir freuen uns auf Euch!",
+      "ticket": null,
+      "price": null,
+      "genre": {
+        "id": 6,
+        "meta": {
+          "type": "home.Genre",
+          "detail_url": "https://admin.festsaal-kreuzberg.de/api/v2/genre/6/"
+        },
+        "title": "Indie Pop"
+      },
+      "new_location": "Lido",
+      "status": "transferred",
+      "support": null,
+      "presenters": []
+    },
+    {
+      "id": 793,
+      "meta": {
+        "type": "home.EventPage",
+        "detail_url": "https://admin.festsaal-kreuzberg.de/api/v2/pages/793/",
+        "html_url": "https://admin.festsaal-kreuzberg.de/de/programm/angine-de-poitrine/",
+        "slug": "angine-de-poitrine",
+        "first_published_at": "2026-03-31T15:08:38.472645Z",
+        "locale": "de"
+      },
+      "title": "Angine De Poitrine",
+      "url": "/de/programm/angine-de-poitrine/",
+      "preview_image": {
+        "id": 1248,
+        "title": "ANGINE_Credit_ConstantinMonfilliette2",
+        "download_url": "https://v2.files.funkhaus.io/fsk-1170-media/original_images/ANGINE_Credit_ConstantinMonfilliette2_fq0H9VC.jpg"
+      },
+      "preview_text": "",
+      "sub_title": null,
+      "date": "2026-10-27",
+      "doors": "19:00:00",
+      "start": "20:00:00",
+      "changed_date": null,
+      "changed_doors": null,
+      "changed_start": null,
+      "changed_text": "Aufgrund der hohen Nachfrage wurde das Konzert ins Astra Kulturhaus verlegt. Karten dafür gibt es ab dem 10.04.26, 10.00 Uhr. Bereits erworbene Tickets behalten ihre Gültigkeit.",
+      "ticket": "https://www.tixforgigs.com/Event/73101",
+      "price": null,
+      "genre": {
+        "id": 106,
+        "meta": {
+          "type": "home.Genre",
+          "detail_url": "https://admin.festsaal-kreuzberg.de/api/v2/genre/106/"
+        },
+        "title": "Rock"
+      },
+      "new_location": "Astra",
+      "status": "transferred",
+      "support": null,
+      "presenters": []
+    },
+    {
+      "id": 693,
+      "meta": {
+        "type": "home.EventPage",
+        "detail_url": "https://admin.festsaal-kreuzberg.de/api/v2/pages/693/",
+        "html_url": "https://admin.festsaal-kreuzberg.de/de/programm/sonos-cliq/",
+        "slug": "sonos-cliq",
+        "first_published_at": "2025-10-27T12:06:37.971000Z",
+        "locale": "de"
+      },
+      "title": "$ONO$ CLIQ",
+      "url": "/de/programm/sonos-cliq/",
+      "preview_image": {
+        "id": 1089,
+        "title": "$ONO$ CLIQ - credit Manuel Lossau",
+        "download_url": "https://v2.files.funkhaus.io/fsk-1170-media/original_images/ONO_CLIQ_-_credit_Manuel_Lossau.jpg"
+      },
+      "preview_text": "",
+      "sub_title": "Planet Kumpel Tour 2026",
+      "date": "2026-11-14",
+      "doors": "19:00:00",
+      "start": "20:00:00",
+      "changed_date": "2026-11-14",
+      "changed_doors": null,
+      "changed_start": null,
+      "changed_text": "Hinweis: Das Konzert wurde vom Festsaal Kreuzberg ins Bi Nuu verlegt und vom 02.04.26 auf den 14.11.26 verschoben! Alle bisher erworbenen Tickets behalten ihre Gültigkeit.",
+      "ticket": "https://landstreicher-konzerte.de/konzerte/sonos-cliq-b-26",
+      "price": null,
+      "genre": {
+        "id": 15,
+        "meta": {
+          "type": "home.Genre",
+          "detail_url": "https://admin.festsaal-kreuzberg.de/api/v2/genre/15/"
+        },
+        "title": "Hip-Hop"
+      },
+      "new_location": "Bi Nuu",
+      "status": "transferred",
+      "support": null,
+      "presenters": []
+    },
+    {
+      "id": 865,
+      "meta": {
+        "type": "home.EventPage",
+        "detail_url": "https://admin.festsaal-kreuzberg.de/api/v2/pages/865/",
+        "html_url": "https://admin.festsaal-kreuzberg.de/de/programm/MONCHI/",
+        "slug": "MONCHI",
+        "first_published_at": "2026-08-03T16:24:02.051616Z",
+        "locale": "de"
+      },
+      "title": "MONCHI",
+      "url": "/de/programm/MONCHI/",
+      "preview_image": {
+        "id": 1336,
+        "title": "Monchi-Jenseits_24",
+        "download_url": "https://v2.files.funkhaus.io/fsk-1170-media/original_images/IG-Kachel-Monchi-Jenseits_24.png"
+      },
+      "preview_text": "",
+      "sub_title": "Liest: Jenseits der Brandmauer",
+      "date": "2027-01-23",
+      "doors": "19:00:00",
+      "start": "20:00:00",
+      "changed_date": null,
+      "changed_doors": null,
+      "changed_start": null,
+      "changed_text": "Diese Veranstaltung findet im Urania statt.",
+      "ticket": "https://www.tixforgigs.com/Event/75977",
+      "price": null,
+      "genre": {
+        "id": 32,
+        "meta": {
+          "type": "home.Genre",
+          "detail_url": "https://admin.festsaal-kreuzberg.de/api/v2/genre/32/"
+        },
+        "title": "Lesung"
+      },
+      "new_location": null,
+      "status": "custom",
+      "support": null,
+      "presenters": []
+    }
+  ]
+}
