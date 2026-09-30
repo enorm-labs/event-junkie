@@ -137,6 +137,30 @@ class SchokoladenOverviewPageScraperTest {
         }
 
         @Test
+        fun `bills the acts of a night title, not the night, and no placeholder for more`() {
+            fun artistsOf(title: String): List<String> =
+                scraper
+                    .scrape(
+                        Jsoup.parse(
+                            """
+                            <div class="event"><h6 class="category">Musik</h6><h2 class="fw-bold">$title</h2>
+                              <div class="event-info" id="e20261031" data-event-date="2026-10-31"></div></div>
+                            """.trimIndent(),
+                            baseUrl
+                        ),
+                        baseUrl
+                    ).single()
+                    .artists
+                    .map { it.name }
+
+            // 29 September and 31 October 2026, as printed.
+            artistsOf(
+                "15 Jahre Gut Drauf – Jubiläum der Jubiläen mit mOck (math-rock, comeback!) &amp; Petula (lofi-indie-pop, 25 years!)"
+            ) shouldContainExactly listOf("mOck", "Petula")
+            artistsOf("halloween special w/ Nothing Works (post-hc, bln) &amp; more") shouldContainExactly listOf("Nothing Works")
+        }
+
+        @Test
         fun `keeps an origin out of the genres whichever way the venue wrote the annotation`() {
             fun genreOf(title: String): String? =
                 scraper
