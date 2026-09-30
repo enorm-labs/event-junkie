@@ -65,7 +65,10 @@ class DerWeisseHaseWebsiteImporter(
 val DER_WEISSE_HASE_LIMITATIONS =
     VenueLimitations(
         EventSource.DER_WEISSE_HASE,
-        AcceptedLimitation(LimitedAspect.PRICE, "the club publishes no prices anywhere, not even at the door"),
+        AcceptedLimitation(
+            LimitedAspect.PRICE,
+            "the club publishes no price figure; some nights carry a conditional free-entry line, stored as the price note"
+        ),
         AcceptedLimitation(LimitedAspect.GENRE, "the club publishes no genre; every night takes the club's Techno default"),
         AcceptedLimitation(LimitedAspect.DOORS_TIME, "the club publishes no doors time"),
         AcceptedLimitation(

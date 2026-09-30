@@ -51,9 +51,10 @@ import java.time.LocalTime
  * Dran DJ Team"). An unbooked slot ("+ Residents") is dropped on a fully anchored match
  * ([UNANNOUNCED_SLOT_PATTERN]), so a real act is never caught, and only a Resident Advisor
  * *event* link becomes the ticket URL ([RA_EVENT_URL]) — a night whose RA page is not up links
- * to the club's profile or a bare `#`. A note line is stored as the description, not a
- * `priceNote`, which would trip `detectFree` and flag a paid night free for its whole run when
- * entry is free for the first hour only. Every act is a `DJ`, the club billing no headliner.
+ * to the club's profile or a bare `#`. A note line about entry ([ENTRY_NOTE]) is the
+ * `priceNote` and any other note line the description. The club prints no figure, and its entry
+ * lines are conditional ("free entry until midnight*"), which `detectFree` does not read as a free
+ * night. Every act is a `DJ`, the club billing no headliner.
  *
  * @see DER_WEISSE_HASE_LIMITATIONS for what the club does not publish.
  * @see DerWeisseHaseWebsiteImporter for the HTTP fetch orchestrator.
@@ -107,9 +108,11 @@ class DerWeisseHaseOverviewPageScraper {
         }
 
         val lineupHeading = content.children().firstOrNull { isLineUpHeading(it) }
+        val (entryLines, otherLines) = noteBefore(content, lineupHeading).partition { ENTRY_NOTE.containsMatchIn(it) }
         return ScrapedEvent(
             title = title,
-            description = noteBefore(content, lineupHeading),
+            description = otherLines.joinToString("\n").ifBlank { null },
+            priceNote = entryLines.joinToString("\n").ifBlank { null },
             // The club programmes nothing but DJ nights and states no category, so the type is fixed, not
             // inferred from the night's name.
             eventType = EventType.PARTY.name,
@@ -139,25 +142,22 @@ class DerWeisseHaseOverviewPageScraper {
     private fun isLineUpHeading(element: Element): Boolean = LINE_UP_HEADING.matches(element.text().trim())
 
     /**
-     * The night's note — the club's lines between the title and the `LINE UP` heading, joined by
-     * a newline, or `null`. Written as a `<p>` ("free entry until midnight*") or another `<h4>`
+     * The night's note — the club's lines between the title and the `LINE UP` heading. Written as a `<p>` ("free entry until midnight*") or another `<h4>`
      * ("Women & FLINTA free until 1 AM"), so taken by position rather than tag. The `&nbsp;` spacer
      * paragraph the CMS emits after every title reads as blank and is dropped.
      */
     private fun noteBefore(
         content: Element,
         lineupHeading: Element?
-    ): String? {
+    ): List<String> {
         val children = content.children()
         val start = children.indexOfFirst { it.tagName() == "h1" }
         val end = lineupHeading?.let { children.indexOf(it) } ?: children.size
-        if (start < 0 || end <= start) return null
+        if (start < 0 || end <= start) return emptyList()
         return children
             .subList(start + 1, end)
             .map { it.text().trim() }
             .filter { it.isNotBlank() }
-            .joinToString("\n")
-            .takeIf { it.isNotBlank() }
     }
 
     /**
@@ -188,6 +188,12 @@ class DerWeisseHaseOverviewPageScraper {
 
         /** The heading the club puts above every roster; matched whole and case-insensitively so `Line Up` works too. */
         private val LINE_UP_HEADING = Regex("""line\s*-?\s*up:?""", RegexOption.IGNORE_CASE)
+
+        /**
+         * A note line about entry: "free entry until midnight*", "Women & FLINTA free until 1 AM",
+         * "Geburtstagskinder … erhalten freien Eintritt!".
+         */
+        private val ENTRY_NOTE = Regex("""\b(?:free|frei\w*|eintritt|entry|admission)\b""", RegexOption.IGNORE_CASE)
 
         /**
          * Separators inside a roster line: comma and `+`. Deliberately **not** `&` — act names
