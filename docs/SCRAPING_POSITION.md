@@ -98,9 +98,11 @@ It leaves the § 16 UrhG reproduction in place. A source we recorded as prohibit
 so it gets neither act. Three mechanisms carry it, because no single one reaches every row:
 
 1. **The importer does not store the field.** `ScrapedEvent.toEventEntity` writes `null` for a prohibited field, so every
-   import repairs the events it touches.
+   import repairs the events it touches. It sets `description_withheld` or `image_withheld` when the page had the field.
+   That boolean is a fact about the source, not a copy of its work. It lets the page say that the field was withheld
+   ([#2130](https://github.com/enorm-labs/event-junkie/issues/2130)).
 2. **Recording the prohibition clears what is already stored.** The admin `PATCH` deletes the field from that source's
-   events at once. A past event is never scraped again, so nothing else would reach it.
+   events at once and sets the same flag. A past event is never scraped again, so nothing else would reach it.
 3. **The gate still withholds on read.** It is not redundant. A licence can change between imports, and defence in depth
    is cheap here.
 

@@ -194,8 +194,11 @@ class ScrapedEventTest {
                 )
 
         entity.description shouldBe null
+        // The fact that one was left out is kept, so the page can say so (#2130).
+        entity.descriptionWithheld shouldBe true
         // Only the prohibited field goes. The other one is a separate answer for a separate right.
         entity.imageUrl shouldBe "https://example.test/a.jpg"
+        entity.imageWithheld shouldBe false
     }
 
     @Test
@@ -210,7 +213,25 @@ class ScrapedEventTest {
                 )
 
         entity.imageUrl shouldBe null
+        entity.imageWithheld shouldBe true
         entity.description shouldBe "Ein Abend mit Aussicht"
+        entity.descriptionWithheld shouldBe false
+    }
+
+    @Test
+    fun `toEventEntity records nothing withheld where the venue published nothing`() {
+        val entity =
+            scrapedEvent(description = null, imageUrl = null)
+                .toEventEntity(
+                    venueId = 1L,
+                    venueSlug = "so36",
+                    eventSourceId = 1L,
+                    licences = licensed(SourceLicence.PROHIBITED, SourceLicence.PROHIBITED)
+                )
+
+        // A prohibition over an empty field took nothing away (#811).
+        entity.descriptionWithheld shouldBe false
+        entity.imageWithheld shouldBe false
     }
 
     @Test

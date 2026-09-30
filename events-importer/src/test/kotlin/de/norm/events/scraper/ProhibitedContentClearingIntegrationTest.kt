@@ -44,8 +44,11 @@ class ProhibitedContentClearingIntegrationTest : BaseControllerTest() {
             eventSourceService.update(SLUG, EventSourceUpdateRequest(descriptionLicence = SourceLicence.PROHIBITED))
 
             storedCount("description") shouldBe 0
+            // What was cleared is recorded, so the page can still say it was withheld (#2130).
+            flaggedCount("description_withheld") shouldBe 2
             // The other field is a separate right and a separate answer. It stays.
             storedCount("image_url") shouldBe 2
+            flaggedCount("image_withheld") shouldBe 0
         }
 
     @Test
@@ -54,7 +57,9 @@ class ProhibitedContentClearingIntegrationTest : BaseControllerTest() {
             eventSourceService.update(SLUG, EventSourceUpdateRequest(imageLicence = SourceLicence.PROHIBITED))
 
             storedCount("image_url") shouldBe 0
+            flaggedCount("image_withheld") shouldBe 2
             storedCount("description") shouldBe 2
+            flaggedCount("description_withheld") shouldBe 0
         }
 
     @Test
@@ -79,6 +84,12 @@ class ProhibitedContentClearingIntegrationTest : BaseControllerTest() {
             storedCount("description") shouldBe 2
             storedCount("image_url") shouldBe 2
         }
+
+    private suspend fun flaggedCount(column: String): Long =
+        databaseClient
+            .sql("SELECT COUNT(*) AS c FROM events.event WHERE event_source_id = $sourceId AND $column")
+            .map { row, _ -> row.get("c", Number::class.java)!!.toLong() }
+            .awaitSingle()
 
     private suspend fun storedCount(column: String): Long =
         databaseClient

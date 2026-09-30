@@ -84,13 +84,13 @@ interface EventRepository : CoroutineCrudRepository<EventEntity, Long> {
     @Query(
         "UPDATE $EVENTS_SCHEMA.event SET description = NULL, description_language = NULL, description_language_confidence = NULL, " +
             "description_alt = NULL, description_alt_language = NULL, description_alt_origin = NULL, description_alt_engine = NULL, " +
-            "description_alt_source_hash = NULL WHERE event_source_id = :eventSourceId AND description IS NOT NULL"
+            "description_alt_source_hash = NULL, description_withheld = TRUE WHERE event_source_id = :eventSourceId AND description IS NOT NULL"
     )
     suspend fun clearDescriptions(eventSourceId: Long): Int
 
     /** The same for images, answered from the source's own column. */
     @Modifying
-    @Query("UPDATE $EVENTS_SCHEMA.event SET image_url = NULL WHERE event_source_id = :eventSourceId AND image_url IS NOT NULL")
+    @Query("UPDATE $EVENTS_SCHEMA.event SET image_url = NULL, image_withheld = TRUE WHERE event_source_id = :eventSourceId AND image_url IS NOT NULL")
     suspend fun clearImageUrls(eventSourceId: Long): Int
 
     /**

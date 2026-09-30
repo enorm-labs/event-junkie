@@ -36,6 +36,8 @@ data class EventEntity(
     val descriptionAltEngine: String? = null,
     /** SHA-256 of the [description] the alt text was made from. A changed original invalidates it. */
     val descriptionAltSourceHash: String? = null,
+    /** True when the source had a description and its licence kept it out (#2130); the text itself is never stored. */
+    val descriptionWithheld: Boolean = false,
     val eventType: String = EventType.CONCERT.name,
     val status: String = EventStatus.SCHEDULED.name,
     /** Where a `RELOCATED` event moved to, as the venue's note names it; null when the note names nothing (#1551). */
@@ -48,6 +50,8 @@ data class EventEntity(
     val endDate: LocalDate? = null,
     val endTime: LocalTime? = null,
     val imageUrl: String? = null,
+    /** True when the source had an image and its licence kept it out (#2130). */
+    val imageWithheld: Boolean = false,
     val sourceUrl: String? = null,
     val sourceId: String,
     val ticketUrl: String? = null,

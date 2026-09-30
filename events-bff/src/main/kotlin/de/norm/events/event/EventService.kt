@@ -178,9 +178,12 @@ class EventService(
         return events.map { event ->
             val licence = event.eventSourceId?.let { licences[it] } ?: SourceLicences.UNKNOWN_SOURCE
             // Withheld means something was taken away: a prohibited source with no description had nothing
-            // removed, and reporting one would point a reader at a venue page with nothing more (#811).
-            val descriptionWithheld = licence.withholdsDescription() && event.description != null
-            val imageWithheld = licence.withholdsImage() && event.imageUrl != null
+            // removed, and reporting one would point a reader at a venue page with nothing more (#811). The
+            // importer stores no prohibited field and records instead that it left one out (#2130). Both halves
+            // hold only while the licence still prohibits: a field stored before a new prohibition is removed
+            // here, and a flag from before a lifted one says nothing any more.
+            val descriptionWithheld = licence.withholdsDescription() && (event.descriptionWithheld || event.description != null)
+            val imageWithheld = licence.withholdsImage() && (event.imageWithheld || event.imageUrl != null)
             LicensedEvent(
                 // The language and the alt text describe the withheld text, so they go with it.
                 event =

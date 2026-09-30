@@ -29,6 +29,8 @@ data class EventEntity(
     val descriptionAlt: String? = null,
     val descriptionAltLanguage: String? = null,
     val descriptionAltOrigin: String? = null,
+    /** Set by the importer when the source's licence kept a description out; nothing of it is stored (#2130). */
+    val descriptionWithheld: Boolean = false,
     val eventType: String = "CONCERT",
     val status: String = "SCHEDULED",
     /** Where a `RELOCATED` event moved to, as the venue's note names it (#1551). */
@@ -40,6 +42,8 @@ data class EventEntity(
     val endDate: LocalDate? = null,
     val endTime: LocalTime? = null,
     val imageUrl: String? = null,
+    /** Set by the importer when the source's licence kept an image out (#2130). */
+    val imageWithheld: Boolean = false,
     val sourceUrl: String? = null,
     val ticketUrl: String? = null,
     val facebookEventUrl: String? = null,

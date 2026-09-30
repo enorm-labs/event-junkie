@@ -66,6 +66,50 @@ class SourceLicenceGateIntegrationTest : BaseControllerTest() {
                 .isEqualTo(false)
         }
 
+    // #2130: since #807 the importer stores no prohibited field, so the only trace is the flag it records.
+    @Test
+    @DisplayName("a field the importer left out for its licence is reported as withheld")
+    fun `reports what the importer left out`(): Unit =
+        runBlocking {
+            val venueId = insertVenue(name = "Stripped Venue", slug = "stripped-venue")
+            val sourceId = insertSource(venueId, slug = "stripped-src", descriptionLicence = "PROHIBITED", imageLicence = "PROHIBITED")
+            insertGatedEvent(venueId, sourceId, slug = "stripped-event", description = null, imageUrl = null, withheld = true)
+
+            webTestClient
+                .get()
+                .uri("/events/stripped-event")
+                .exchange()
+                .expectStatus()
+                .isOk
+                .expectBody()
+                .jsonPath("$.descriptionWithheld")
+                .isEqualTo(true)
+                .jsonPath("$.imageWithheld")
+                .isEqualTo(true)
+        }
+
+    // A lifted prohibition leaves the old flag behind until the next import; it no longer means anything.
+    @Test
+    @DisplayName("a stored flag says nothing once the licence no longer prohibits")
+    fun `ignores a flag the licence no longer backs`(): Unit =
+        runBlocking {
+            val venueId = insertVenue(name = "Lifted Venue", slug = "lifted-venue")
+            val sourceId = insertSource(venueId, slug = "lifted-src", descriptionLicence = "PERMITTED", imageLicence = "PERMITTED")
+            insertGatedEvent(venueId, sourceId, slug = "lifted-event", description = null, imageUrl = null, withheld = true)
+
+            webTestClient
+                .get()
+                .uri("/events/lifted-event")
+                .exchange()
+                .expectStatus()
+                .isOk
+                .expectBody()
+                .jsonPath("$.descriptionWithheld")
+                .isEqualTo(false)
+                .jsonPath("$.imageWithheld")
+                .isEqualTo(false)
+        }
+
     @Test
     @DisplayName("a prohibited image is withheld while the description survives")
     fun `withholds a prohibited image`(): Unit =
@@ -193,19 +237,25 @@ class SourceLicenceGateIntegrationTest : BaseControllerTest() {
             .map { row -> row.get("id", Long::class.javaObjectType)!! }
             .awaitSingle()
 
+    @Suppress("LongParameterList") // One parameter per column a case varies.
     private suspend fun insertGatedEvent(
         venueId: Long,
         sourceId: Long?,
         slug: String,
-        description: String? = "A description the venue never objected to."
+        description: String? = "A description the venue never objected to.",
+        imageUrl: String? = "https://example.com/poster.jpg",
+        withheld: Boolean = false
     ): Long =
         databaseClient
             .sql(
-                "INSERT INTO events.event (venue_id, event_source_id, title, slug, event_date, source_id, description, image_url) " +
+                "INSERT INTO events.event (venue_id, event_source_id, title, slug, event_date, source_id, description, image_url, " +
+                    "description_withheld, image_withheld) " +
                     "VALUES (:venueId, :sourceId, 'Gated Event', :slug, :eventDate, :sourceKey, " +
-                    ":description, 'https://example.com/poster.jpg') RETURNING id"
+                    ":description, :imageUrl, :withheld, :withheld) RETURNING id"
             ).bind("venueId", venueId)
             .let { spec -> description?.let { spec.bind("description", it) } ?: spec.bindNull("description", String::class.java) }
+            .let { spec -> imageUrl?.let { spec.bind("imageUrl", it) } ?: spec.bindNull("imageUrl", String::class.java) }
+            .bind("withheld", withheld)
             .let { spec -> sourceId?.let { spec.bind("sourceId", it) } ?: spec.bindNull("sourceId", Long::class.javaObjectType) }
             .bind("slug", slug)
             .bind("eventDate", LocalDate.now().plusDays(7))

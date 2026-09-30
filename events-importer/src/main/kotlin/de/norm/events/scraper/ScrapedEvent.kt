@@ -161,6 +161,7 @@ data class ScrapedEvent(
             // A source that forbids its prose gets none of it stored, not merely hidden (#807): blanking on
             // read would leave the § 16 reproduction in place.
             description = storedDescription,
+            descriptionWithheld = licences.withholdsDescription() && !description.isNullOrBlank(),
             // The page tells a reader and a crawler which language the text is in (ADR-026).
             descriptionLanguage = detected?.language?.code,
             descriptionLanguageConfidence = detected?.confidence,
@@ -184,6 +185,8 @@ data class ScrapedEvent(
             // through a bulk save.
             endTime = endTime?.also { requireNotNull(endDate) { "endTime without endDate on $sourceId" } },
             imageUrl = if (licences.withholdsImage()) null else imageUrl,
+            // What the licence took out is recorded as a fact, so the page can say so (#2130).
+            imageWithheld = licences.withholdsImage() && !imageUrl.isNullOrBlank(),
             sourceUrl = sourceUrl,
             ticketUrl = ticketUrl,
             genre = genre,
