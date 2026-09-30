@@ -4,6 +4,7 @@ import de.norm.events.scraper.ScrapedEvent
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldEndWith
 import io.kotest.matchers.string.shouldStartWith
 import org.jsoup.Jsoup
 import org.junit.jupiter.api.Test
@@ -53,8 +54,11 @@ class BinuuOverviewPageScraperTest {
     }
 
     @Test
-    fun `prefixes the PocketBase file base onto relative image URLs`() {
-        event("binuu:zf0kroyf2cjolyl").imageUrl!! shouldStartWith "https://pb.binuu.de/api/files/"
+    fun `prefixes the PocketBase file base onto relative image URLs and asks for the thumb`() {
+        val imageUrl = event("binuu:zf0kroyf2cjolyl").imageUrl!!
+        imageUrl shouldStartWith "https://pb.binuu.de/api/files/"
+        // The original is a print file, often above the 8 MiB image cap (#2092).
+        imageUrl shouldEndWith ".png?thumb=1200x1600f"
     }
 
     @Test
