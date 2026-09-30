@@ -14,7 +14,7 @@ import java.sql.Connection
 import java.sql.DriverManager
 
 /**
- * Runs the promoter data migrations — V023, V025, V026, V027, V029, V030, V031, V032, V065 — against the rows each names, planted on a
+ * Runs the promoter data migrations — V023, V025, V026, V027, V029, V030, V031, V032, V065, V066 — against the rows each names, planted on a
  * database migrated to just before it.
  *
  * The migrations are keyed on slugs read from staging, and a misspelt one updates no row while
@@ -91,16 +91,10 @@ class MergeDuplicatePromotersMigrationTest {
             statement.execute("UPDATE promoter SET website_url = 'http://www.MFPConcerts.com' WHERE slug = 'mfp'")
         }
         flyway("64").migrate()
-        connection.createStatement().use { statement ->
-            // V065: one row renamed onto a free slug, one whose survivor the next import already minted.
-            plantPromoter(statement, "Schubert", "schubert")
-            plantEvent(statement, "k1", "schubert")
-            plantPromoter(statement, "Bliss", "bliss")
-            plantPromoter(statement, "Bliss Music", "bliss-music")
-            plantEvent(statement, "k2", "bliss")
-            plantEvent(statement, "k3", "bliss", "bliss-music")
-        }
+        plantTradingNames()
         flyway("65").migrate()
+        plantSchokoladenSpans()
+        flyway("66").migrate()
     }
 
     @AfterAll
@@ -232,6 +226,22 @@ class MergeDuplicatePromotersMigrationTest {
     }
 
     @Test
+    fun `V066 folds the Schokoladen span rows onto their promoters and deletes the two-promoter row`() {
+        promoters().keys.filter { it.startsWith("m-soundtrack") } shouldContainExactlyInAnyOrder listOf("m-soundtrack")
+        eventsOf("m-soundtrack") shouldContainExactlyInAnyOrder listOf("sk1", "sk2")
+        promoters().containsKey("thirsty") shouldBe false
+        promoters()["thirsty-miserable"] shouldBe "thirsty & miserable"
+        eventsOf("thirsty-miserable") shouldContainExactlyInAnyOrder listOf("sk4")
+        promoters().containsKey("trust-thirsty") shouldBe false
+        connection.createStatement().use { statement ->
+            statement.executeQuery("SELECT count(*) FROM events.event WHERE source_id = 'sk5'").use { rows ->
+                rows.next()
+                rows.getInt(1) shouldBe 1
+            }
+        }
+    }
+
+    @Test
     fun `V026 deletes a row that names no promoter and leaves its event with its other promoter`() {
         promoters().containsKey("kneipenabend") shouldBe false
         eventsOf("schokoladen") shouldContainExactlyInAnyOrder listOf("j1")
@@ -240,6 +250,37 @@ class MergeDuplicatePromotersMigrationTest {
                 rows.next()
                 rows.getInt(1) shouldBe 1
             }
+        }
+    }
+
+    /** V065: one row renamed onto a free slug, one whose survivor the next import already minted. */
+    private fun plantTradingNames() {
+        connection.createStatement().use { statement ->
+            plantPromoter(statement, "Schubert", "schubert")
+            plantEvent(statement, "k1", "schubert")
+            plantPromoter(statement, "Bliss", "bliss")
+            plantPromoter(statement, "Bliss Music", "bliss-music")
+            plantEvent(statement, "k2", "bliss")
+            plantEvent(statement, "k3", "bliss", "bliss-music")
+        }
+    }
+
+    /** V066: three losers onto an existing survivor, two on one event; a rename; a row standing for two promoters. */
+    private fun plantSchokoladenSpans() {
+        connection.createStatement().use { statement ->
+            plantPromoter(statement, "m:soundtrack", "m-soundtrack")
+            plantPromoter(
+                statement,
+                "m:soundtrack prsnts a friends celebrating friends festival:",
+                "m-soundtrack-prsnts-a-friends-celebrating-friends-festival"
+            )
+            plantPromoter(statement, "M:Soundtrack prsnts: Falling into Autumn: Dreamy Indie", "m-soundtrack-prsnts-falling-into-autumn-dreamy-indie")
+            plantPromoter(statement, "thirsty", "thirsty")
+            plantPromoter(statement, "Trust + thirsty", "trust-thirsty")
+            plantEvent(statement, "sk1", "m-soundtrack-prsnts-a-friends-celebrating-friends-festival", "m-soundtrack-prsnts-falling-into-autumn-dreamy-indie")
+            plantEvent(statement, "sk2", "m-soundtrack", "m-soundtrack-prsnts-falling-into-autumn-dreamy-indie")
+            plantEvent(statement, "sk4", "thirsty")
+            plantEvent(statement, "sk5", "trust-thirsty")
         }
     }
 
