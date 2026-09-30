@@ -109,6 +109,34 @@ class SchokoladenOverviewPageScraperTest {
         }
 
         @Test
+        fun `reads a bracketed title note as sold out and keeps it out of the artist names`() {
+            // 30 September 2026: "[ausverkauft]" was minted into "Please Louise [ausverkauft]"; the page later said the longer form.
+            listOf(
+                "The Blood Arm (indie/us) + Please Louise [ausverkauft]",
+                "The Blood Arm (indie, us/bln) + Please Louise [pre-sale sold out, 10 tix on the doors]"
+            ).forEach { title ->
+                val event =
+                    scraper
+                        .scrape(
+                            Jsoup.parse(
+                                """
+                                <div class="event"><h6 class="category">Musik</h6><h2 class="fw-bold">$title</h2>
+                                  <a class="ticket-btn" href="https://vvk.link/4edjm0g">Tickets</a>
+                                  <div class="event-info" id="e20260930" data-event-date="2026-09-30"></div></div>
+                                """.trimIndent(),
+                                baseUrl
+                            ),
+                            baseUrl
+                        ).single()
+
+                event.title shouldBe title
+                event.artists.map { it.name } shouldContainExactly listOf("The Blood Arm", "Please Louise")
+                event.soldOut shouldBe true
+                event.ticketUrl.shouldBeNull()
+            }
+        }
+
+        @Test
         fun `keeps an origin out of the genres whichever way the venue wrote the annotation`() {
             fun genreOf(title: String): String? =
                 scraper
