@@ -56,7 +56,11 @@ private val NAME_CORRECTIONS: Map<String, String> =
     mapOf(
         // The Berlin punk band, written "OXO86" by one venue and "Oxo 86" by another. Its digit
         // keeps it out of the de-shouter (a stylised token), so the two spellings never converge.
-        "oxo86" to "Oxo 86"
+        "oxo86" to "Oxo 86",
+        // Stylisations the de-shouter cannot tell from a shouted word (#2082). A colon is not a
+        // rule of its own: `KOS:MO` and `RE:NI` would come out no better.
+        "ccosmo" to "CCOSMO",
+        "formatb" to "Format:B"
     )
 
 /** Lowercased, punctuation- and space-free lookup key for a name. */
