@@ -2,6 +2,8 @@ package de.norm.events.scraper.badehaus
 
 import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
+import de.norm.events.genretag.isGenreLabel
+import de.norm.events.genretag.normalizeGenre
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.buildArtistsForEventType
@@ -90,6 +92,7 @@ class BadehausOverviewPageScraper {
         return ScrapedEvent(
             title = title,
             subtitle = subtitle,
+            genre = parseGenre(subtitle),
             eventType = eventType,
             eventDate = eventDate,
             doorsTime = parseDoorsTime(eventInfo),
@@ -141,6 +144,24 @@ class BadehausOverviewPageScraper {
             ?.trim()
             ?.takeIf { it.isNotBlank() }
 
+    /**
+     * The known genres in the subtitle line. The line is a style ("Metalcore"), a tour name and a
+     * style joined by `|` or `//` ("Kein Plan B-Tour 2026 | Deutschrock"), or prose. Each part that
+     * names neither a tour nor support goes to the normalizer: a tour name can hold a genre word
+     * ("… WORLD TOUR"). The normalizer keeps an unknown short token as a new genre, so only
+     * [isGenreLabel] ones pass.
+     */
+    private fun parseGenre(subtitle: String?): String? =
+        subtitle
+            ?.split(PART_SEPARATOR)
+            ?.map { it.trim() }
+            ?.filterNot { SUPPORT_PART.containsMatchIn(it) || TOUR_PART.containsMatchIn(it) }
+            ?.flatMap { normalizeGenre(it) }
+            ?.filter(::isGenreLabel)
+            ?.distinct()
+            ?.joinToString(", ")
+            ?.ifBlank { null }
+
     /** The `DD.MM.YYYY` date from the `.eventinfo` line (e.g. "Mi. 23.09.2026 | 19:00 UHR"). */
     private fun parseDate(eventInfo: String): LocalDate? = parseGermanDate(DATE_PATTERN.find(eventInfo)?.value)
 
@@ -162,6 +183,15 @@ class BadehausOverviewPageScraper {
     }
 
     private companion object {
+        /** A `Support:` part of the subtitle line, which names acts, not a style. */
+        private val SUPPORT_PART = Regex("""^support\b""", RegexOption.IGNORE_CASE)
+
+        /** A part of the subtitle line that names a tour: "Wolkenjäger-Tour 2026", "BLOCK BLADI GANGSTER TOUR". */
+        private val TOUR_PART = Regex("""\btour\b""", RegexOption.IGNORE_CASE)
+
+        /** What separates the parts of the subtitle line. */
+        private val PART_SEPARATOR = Regex("""\s*(?:\||//)\s*""")
+
         private const val SOLD_OUT_CLASS = "AUSVERKAUFT"
         private const val CANCELLED_CLASS = "ABGESAGT"
         private const val RELOCATED_CLASS = "VERLEGT"

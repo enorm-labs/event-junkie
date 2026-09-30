@@ -114,4 +114,29 @@ class BadehausOverviewPageScraperTest {
         val html = "<html><body><div class='content'><p>No events</p></div></body></html>"
         scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl) shouldHaveSize 0
     }
+
+    @Test
+    fun `reads the genre from the subtitle line, skipping a tour name and the support part`() {
+        // Six teaser lines from the listing on 2026-09-30.
+        val lines =
+            listOf(
+                "Metalcore",
+                "Alternative Rock",
+                "Indie, Indie-Rock",
+                "Trash Metal | Support: Belligerence / Hexed",
+                "Licht am Horizont Tour | Rap",
+                "Kein Plan B-Tour 2026 | Deutschrock",
+                "EVERYBODY’S HOME NOBODY’S HAPPY WORLD TOUR | Rock, Alternative",
+                "dicker Groove, glänzende Disco-Vibes, fette Bläsersätze und Beats"
+            )
+        val cards =
+            lines.withIndex().joinToString("") { (i, line) ->
+                """<div><div class="eventlistimg"></div><div class="nomargin"><h2><a href="/events/show-$i/">Show $i</a></h2>""" +
+                    """<p class="eventinfo">Mi. 30.09.2026 | 19:00 UHR</p><p>$line</p></div></div>"""
+            }
+        val genres = scraper.scrape(Jsoup.parse("<html><body>$cards</body></html>", baseUrl), baseUrl).map { it.genre }
+
+        genres shouldBe
+            listOf("Metalcore", "Rock", "Indie", "Metal", "Hip Hop", "Rock", "Rock, Alternative", null)
+    }
 }

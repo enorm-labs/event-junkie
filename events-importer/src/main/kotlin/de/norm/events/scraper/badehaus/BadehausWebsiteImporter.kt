@@ -53,7 +53,7 @@ class BadehausWebsiteImporter(
      * Merges detail-page data ([primary]) with overview data ([fallback]). The detail page is
      * authoritative for what only it carries — description, start time, promoter, the category
      * and the status its notice announces. The overview is authoritative for the sold-out flag (the
-     * card's CSS class) and the subtitle; the rest, the status and the inferred type among them,
+     * card's CSS class) and the subtitle with the genre read from it; the rest, the status and the inferred type among them,
      * falls back to the overview only when the detail page did not supply it.
      *
      * **The artists follow the final type.** The overview builds them from the inferred type, so a
@@ -69,6 +69,7 @@ class BadehausWebsiteImporter(
             eventDate = primary.eventDate.takeIf { it != UNRESOLVED_EVENT_DATE } ?: fallback.eventDate,
             // Overview-only fields (the detail scraper leaves these unset).
             subtitle = primary.subtitle ?: fallback.subtitle,
+            genre = primary.genre ?: fallback.genre,
             eventType = primary.eventType ?: fallback.eventType,
             // The detail page has no roster: the artists come from the card's title and subtitle, typed
             // by the category when the page has one.

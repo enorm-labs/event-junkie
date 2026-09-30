@@ -106,6 +106,13 @@ class BadehausWebsiteImporterTest {
         }
 
     @Test
+    fun `keeps the genre read from the card's subtitle through the merge`() =
+        runTest {
+            // Subtitle "Alternative Metal, Nu Metal"; the detail page carries no genre.
+            events(importer.importEvents(sourceUrl)).first { it.sourceId == "badehaus:20tokens" }.genre shouldBe "Alternative, Metal"
+        }
+
+    @Test
     fun `keeps the sold-out flag from the overview when the detail page is empty`() =
         runTest {
             // futurebae's detail page is stubbed empty, so the sold-out flag (a listing
