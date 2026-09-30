@@ -93,6 +93,32 @@ class EventFieldMappingTest {
         cleanEventTitle("Some \u200B Act") shouldBe "Some Act"
     }
 
+    // --- hasFreeEntryPhrase ---
+
+    @Test
+    fun `hasFreeEntryPhrase reads every spelling the venues print`() {
+        listOf(
+            "Eintritt frei!",
+            "Eintritt: Frei",
+            "Freier Eintritt für Alle",
+            "bei freiem Eintritt",
+            "kostenloser Eintritt",
+            "FREE ENTRY",
+            "Eintritt frei / Admission free!",
+            "free admission"
+        ).forEach { hasFreeEntryPhrase(it) shouldBe true }
+    }
+
+    @Test
+    fun `hasFreeEntryPhrase rejects a time-limited offer and a donation`() {
+        // Kater's and Eschschloraque's own rule caught "free entry till 20:00" but not words between.
+        hasFreeEntryPhrase("free entry for ladies until 0 Uhr") shouldBe false
+        hasFreeEntryPhrase("Freier Eintritt für Ladies bis 0 Uhr") shouldBe false
+        hasFreeEntryPhrase("free entry till 20:00") shouldBe false
+        hasFreeEntryPhrase("Eintritt freiwillig, Spende erbeten") shouldBe false
+        hasFreeEntryPhrase(null) shouldBe false
+    }
+
     // --- detectFree ---
 
     @Test

@@ -3,11 +3,13 @@ package de.norm.events.scraper.insel
 import de.norm.events.event.EventType
 import de.norm.events.scraper.BERLIN
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.FREE_ENTRY_PHRASE
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.dropPastEvents
+import de.norm.events.scraper.hasFreeEntryPhrase
 import de.norm.events.scraper.headlinersFromTitle
 import de.norm.events.scraper.inferConcertVenueType
 import de.norm.events.scraper.isNonArtistName
@@ -173,7 +175,7 @@ class InselApiScraper(
             sourceUrl = sourceUrl,
             sourceId = "${EventSource.INSEL.sourceIdPrefix}$eventDate-${SlugGenerator.slugify(title)}",
             ticketUrl = ticketUrl(node.description),
-            free = lines.any { FREE_ENTRY_PATTERN.containsMatchIn(it) },
+            free = lines.any(::hasFreeEntryPhrase),
             soldOut = SOLD_OUT_PREFIX.containsMatchIn(rawName) || lines.any { SOLD_OUT_LINE_PATTERN.containsMatchIn(it) },
             promoters = listOfNotNull(promoter(lines)),
             artists = buildArtists(title, supportNames, eventType)
@@ -316,9 +318,6 @@ private val SOLD_OUT_PREFIX = Regex("""^\s*!*\s*(?:sold\s*out|ausverkauft)\s*!*\
 /** The venue's German sold-out notice, written as its own description line. */
 private val SOLD_OUT_LINE_PATTERN = Regex("""\bausverkauft\b""", RegexOption.IGNORE_CASE)
 
-/** The venue's free-entry notice. */
-private val FREE_ENTRY_PATTERN = Regex("""\beintritt\s+frei\b|\bfree\s+entry\b""", RegexOption.IGNORE_CASE)
-
 /** `Einlass 19.00 Uhr` / `Einlass: 19 Uhr` — the doors time; the minutes are optional. */
 private val DOORS_PATTERN = Regex("""Einlass\s*:?\s*(\d{1,2})(?:[.,:](\d{2}))?\s*Uhr""", RegexOption.IGNORE_CASE)
 
@@ -384,7 +383,7 @@ private val METADATA_LINE_PATTERNS =
         PROMOTER_PATTERN,
         DOORS_PATTERN,
         START_PATTERN,
-        FREE_ENTRY_PATTERN,
+        FREE_ENTRY_PHRASE,
         SUPPORT_PATTERN,
         Regex("""\bticket""", RegexOption.IGNORE_CASE),
         Regex("""^(?:Montag|Dienstag|Mittwoch|Donnerstag|Freitag|Samstag|Sonntag)\s+\d""", RegexOption.IGNORE_CASE)

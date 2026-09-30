@@ -220,16 +220,16 @@ private val WHITESPACE_RUN = Regex("""[\s\u00A0\u202F]+""")
 private val ZERO_WIDTH = Regex("""[\u200B-\u200D\uFEFF]""")
 
 /**
- * Free-entry phrases unambiguous enough for any text field; multi-word, so they cannot collide
- * with a band or festival name.
+ * A free-entry phrase unambiguous enough for any text field: "Eintritt frei", "Eintritt: Frei",
+ * "freier Eintritt", "bei freiem Eintritt", "kostenloser Eintritt", "free entry", "free admission", "Admission free".
+ * Multi-word, so it cannot collide with a band or festival name, and whole-word, so "Eintritt
+ * freiwillig" (pay what you want) is not free. [hasFreeEntryPhrase] applies it; a scraper that
+ * only drops such a line from a description reads the pattern itself.
  */
-private val FREE_PHRASES =
-    listOf(
-        "eintritt frei",
-        "freier eintritt",
-        "kostenloser eintritt",
-        "free entry",
-        "free admission"
+val FREE_ENTRY_PHRASE =
+    Regex(
+        """\b(?:eintritt\s*:?\s*frei|freie[mnr]?\s+eintritt|kostenlose[mnr]?\s+eintritt|free\s+(?:entry|admission)|admission\s*:?\s*free)\b""",
+        RegexOption.IGNORE_CASE
     )
 
 /**
@@ -238,9 +238,6 @@ private val FREE_PHRASES =
  * "freestyle".
  */
 private val FREE_TOKENS = listOf("free", "frei", "gratis", "kostenlos", "umsonst")
-
-private val FREE_PHRASE_PATTERN =
-    Regex(FREE_PHRASES.joinToString("|") { Regex.escape(it) }, RegexOption.IGNORE_CASE)
 
 private val FREE_TOKEN_PATTERN =
     Regex("""\b(${FREE_TOKENS.joinToString("|") { Regex.escape(it) }})\b""", RegexOption.IGNORE_CASE)
@@ -257,8 +254,15 @@ private val TIME_LIMITED_FREE =
     )
 
 /**
+ * Whether [text] states free entry ([FREE_ENTRY_PHRASE]) for the whole night. A
+ * [TIME_LIMITED_FREE] offer ("free entry for ladies until 0 Uhr") is removed first: everyone
+ * arriving later pays.
+ */
+fun hasFreeEntryPhrase(text: String?): Boolean = text != null && FREE_ENTRY_PHRASE.containsMatchIn(text.replace(TIME_LIMITED_FREE, " "))
+
+/**
  * Whether an event is free. A positive signal is required, since an absent price is unknown,
- * not free: an explicit €0 price, a [FREE_PHRASES] match in the title or price note, or a
+ * not free: an explicit €0 price, a [hasFreeEntryPhrase] match in the title or price note, or a
  * [FREE_TOKENS] match in the price note. A [TIME_LIMITED_FREE] marker is not a signal.
  */
 fun detectFree(
@@ -268,9 +272,6 @@ fun detectFree(
     title: String? = null
 ): Boolean {
     val hasZeroPrice = pricePresale?.signum() == 0 || priceBoxOffice?.signum() == 0
-    val phraseInTitle = title?.replace(TIME_LIMITED_FREE, " ")?.let { FREE_PHRASE_PATTERN.containsMatchIn(it) } ?: false
-    val markerInNote =
-        priceNote?.replace(TIME_LIMITED_FREE, " ")?.let { FREE_PHRASE_PATTERN.containsMatchIn(it) || FREE_TOKEN_PATTERN.containsMatchIn(it) }
-            ?: false
-    return hasZeroPrice || phraseInTitle || markerInNote
+    val tokenInNote = priceNote?.replace(TIME_LIMITED_FREE, " ")?.let { FREE_TOKEN_PATTERN.containsMatchIn(it) } ?: false
+    return hasZeroPrice || hasFreeEntryPhrase(title) || hasFreeEntryPhrase(priceNote) || tokenInNote
 }

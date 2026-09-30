@@ -6,6 +6,7 @@ import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.attrAt
 import de.norm.events.scraper.cleanEventTitle
+import de.norm.events.scraper.hasFreeEntryPhrase
 import de.norm.events.scraper.inferUnmarkedTitleType
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.orderDoorsBeforeStart
@@ -39,7 +40,7 @@ import java.time.format.DateTimeParseException
  * the night is a `CONCERT`. Deliberately **not**
  * [inferConcertVenueType][de.norm.events.scraper.inferConcertVenueType]: defaulting a bar's DJ
  * nights to `CONCERT` would also mint each event name ("Hot Tunes for Cool Cats") as a
- * headliner. Free entry stated in prose is flagged via [FREE_ENTRY_PHRASE]; every other night
+ * headliner. Free entry stated in prose is flagged via [hasFreeEntryPhrase]; every other night
  * keeps an unknown price rather than a guessed one.
  *
  * @see ESCHSCHLORAQUE_LIMITATIONS for what the venue does not publish.
@@ -124,7 +125,7 @@ class EschschloraqueOverviewPageScraper {
             // URI.getPath() decodes the alias's percent escapes, so the id reads
             // "eschschloraque:20-jahre-missvergnügen-12082026" rather than "…missvergn%C3%BCgen…".
             sourceId = "${EventSource.ESCHSCHLORAQUE.sourceIdPrefix}${extractSlug(path)}",
-            free = description?.let { FREE_ENTRY_PHRASE.containsMatchIn(it) } == true,
+            free = hasFreeEntryPhrase(description),
             artists = (presentedActs + parseLineup(billingParagraphs)).distinctBy { it.name.lowercase() }
         )
     }
@@ -298,13 +299,6 @@ class EschschloraqueOverviewPageScraper {
          * with those letters ("Akatombo") is not torn in half.
          */
         val ALIAS_SEPARATOR = Regex("""\s+a\.k\.a\.?\s*|\s+aka\s+""", RegexOption.IGNORE_CASE)
-
-        /**
-         * The free-entry phrases in the venue's prose ("Eintritt frei"). The lookahead rejects a
-         * time-limited offer ("Eintritt frei bis 22 Uhr"), not a free event.
-         */
-        val FREE_ENTRY_PHRASE =
-            Regex("""(?:eintritt frei|freier eintritt|free entry)(?!\s+(?:till|until|before|bis|ab)\b)""", RegexOption.IGNORE_CASE)
     }
 }
 
