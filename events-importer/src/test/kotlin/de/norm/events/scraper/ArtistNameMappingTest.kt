@@ -1527,6 +1527,16 @@ class ArtistNameMappingTest {
         stripArtistSuffix("Pauline Murray (PENETRATION)") shouldBe "Pauline Murray (PENETRATION)"
     }
 
+    @Test
+    fun `stripArtistSuffix drops a country or format tag in square brackets and keeps a bracket that is the name`() {
+        stripArtistSuffix("Endica [Esp]") shouldBe "Endica"
+        stripArtistSuffix("Marí Kozlovska [Esp]") shouldBe "Marí Kozlovska"
+        stripArtistSuffix("Ohnmacht [Live]") shouldBe "Ohnmacht"
+        stripArtistSuffix("Somebody [DJ Set]") shouldBe "Somebody"
+        stripArtistSuffix("Ø [Phase]") shouldBe "Ø [Phase]"
+        stripArtistSuffix("[o1 Temp]") shouldBe "[o1 Temp]"
+    }
+
     // #1761 — the bracket shapes staging stored on upcoming events, and the brackets that are the name.
     @Test
     fun `stripArtistSuffix drops an annotation bracket and keeps a bracket that is the name`() {

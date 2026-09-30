@@ -322,6 +322,15 @@ private val ORIGIN_TAG =
     )
 
 /**
+ * A trailing tag in square brackets: a country (`Endica [Esp]`) or a format (`Ohnmacht [Live]`)
+ * (#2078). Keyed on the content, because a bracket can be the name itself (`Ø [Phase]`).
+ */
+private val SQUARE_TAG =
+    Regex(
+        """(?i:\s*\[\s*(?:$ISO_COUNTRY_CODES|$COUNTRY_NAMES|(?:hybrid\s+)?live(?:\s+(?:set|band))?|dj[\s-]?set)\s*]\s*$)"""
+    )
+
+/**
  * A trailing band affiliation, which is never an alias: a comma or slash list (`(WIRE, IMMERSION)`,
  * `(Bauhaus / Love & Rockets)`) or an opener (`(ex-EINSTÜRZENDE NEUBAUTEN, …)`, `(von Spandau
  * Ballet)`) (#1561, #1761). A single bare name in parentheses (`(PENETRATION)`, `(Black Kray)`) is
@@ -340,7 +349,7 @@ private val AFFILIATION_OPENER_INSIDE = Regex("""\s*\($AFFILIATION_OPENER[^()]*\
 private val UNCLOSED_TRAILING_BRACKET = Regex("""\s*\([^()]*$""")
 
 /**
- * Drops an [ORIGIN_TAG], an [AFFILIATION_TAG] or an [UNCLOSED_TRAILING_BRACKET] from the end of a
+ * Drops an [ORIGIN_TAG], a [SQUARE_TAG], an [AFFILIATION_TAG] or an [UNCLOSED_TRAILING_BRACKET] from the end of a
  * name, keeping the input when nothing else is left. Repeated, because one can hide the other
  * (`Sylk (DE) (Malör Records, Surge)`).
  */
@@ -350,6 +359,7 @@ private fun stripTrailingParenthetical(name: String): String {
         val next =
             stripped
                 .replace(ORIGIN_TAG, "")
+                .replace(SQUARE_TAG, "")
                 .replace(AFFILIATION_TAG, "")
                 .replace(UNCLOSED_TRAILING_BRACKET, "")
                 .trim()
