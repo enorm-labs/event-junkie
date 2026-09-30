@@ -132,10 +132,12 @@ data class ScrapedEvent(
         )
 
     /**
-     * The title as stored: a status note or marker removed, once [toEventEntity] has read the status
-     * off it (#2008). Dedup and slug collisions key on this too, so they agree with the stored slug.
+     * The title as stored: cleaned by [cleanEventTitle] for every source, then a status note or marker
+     * removed once [toEventEntity] has read the status off it (#2008). Dedup and slug collisions key
+     * on this too, so they agree with the stored slug. A scraper that builds `sourceId` or artists
+     * from the title still cleans it first, so that identity does not depend on this step.
      */
-    fun storedTitle(): String = stripTitleStatusMarker(title)
+    fun storedTitle(): String = stripTitleStatusMarker(cleanEventTitle(title))
 
     /**
      * The type the event is stored with — the source's own, or the festival/format override

@@ -158,6 +158,25 @@ class ScrapedEventTest {
 
     // A venue with no badge writes the cancellation into the title (#1493).
     @Test
+    fun `toEventEntity cleans every title at the boundary and keeps the scraper's sourceId`() {
+        val raw = scrapedEvent(title = "\u200BOlga\u00A0 Myko  –").copy(sourceId = "so36:olga-myko-raw")
+
+        val entity = raw.toEntity()
+
+        entity.title shouldBe "Olga Myko"
+        entity.slug shouldBe "2026-12-30-so36-olga-myko"
+        entity.sourceId shouldBe "so36:olga-myko-raw"
+    }
+
+    @Test
+    fun `toEventEntity cleans the title before it strips a status marker`() {
+        val entity = scrapedEvent(title = "Olga  Myko -  Abgesagt").toEntity()
+
+        entity.status shouldBe "CANCELLED"
+        entity.title shouldBe "Olga Myko"
+    }
+
+    @Test
     fun `toEventEntity reads a cancellation from the title when the scraper found no badge`() {
         val entity = scrapedEvent(title = "Olga Myko - Abgesagt").toEntity()
 
