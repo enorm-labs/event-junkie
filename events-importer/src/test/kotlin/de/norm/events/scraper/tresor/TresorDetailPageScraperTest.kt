@@ -46,6 +46,22 @@ class TresorDetailPageScraperTest {
     }
 
     @Test
+    fun `reads the poster at the size og-image names, falling back to the page's own image`() {
+        scrape("tresor-detail-klubnacht.html", "20260801-tresor-klubnacht").shouldNotBeNull().imageUrl shouldBe
+            "https://tresorberlin.com/wp-content/uploads/2026/06/aspiration-180x140-oil-on-canvas-2024-ch-e1782818421888-1536x1536.jpg"
+
+        val url = "https://tresorberlin.com/event/20260801-tresor-klubnacht/"
+        val withoutOpenGraph =
+            javaClass.classLoader
+                .getResourceAsStream("scraper/tresor/tresor-detail-klubnacht.html")!!
+                .bufferedReader()
+                .readText()
+                .replace("og:image", "og:removed")
+        scraper.scrape(Jsoup.parse(withoutOpenGraph, url), url).shouldNotBeNull().imageUrl shouldBe
+            "https://tresorberlin.com/wp-content/uploads/2026/06/aspiration-180x140-oil-on-canvas-2024-ch-e1782818421888-2880x2882.jpg"
+    }
+
+    @Test
     fun `reads the act out of a room-and-format label and drops its quoted release`() {
         // "Globus Listening Session: The Fear Ratio 'Slinky'": Globus is the room, Listening
         // Session the format, Slinky the record (#1133).
