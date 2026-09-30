@@ -1,5 +1,6 @@
 package de.norm.events.scraper.so36
 
+import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
 import de.norm.events.scraper.DOORS_LABELS
 import de.norm.events.scraper.EventSource
@@ -14,12 +15,12 @@ import de.norm.events.scraper.headlinersFromTitle
 import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.isBoxOfficeLabel
 import de.norm.events.scraper.isNonArtistName
+import de.norm.events.scraper.jsonLdEvents
 import de.norm.events.scraper.labelledClock
 import de.norm.events.scraper.mapEventType
-import de.norm.events.scraper.parseIsoDate
-import de.norm.events.scraper.parseSchemaEventStatus
-import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.refineConcertVenueType
+import de.norm.events.scraper.schemaDate
+import de.norm.events.scraper.schemaStatus
 import de.norm.events.scraper.splitSupportActs
 import de.norm.events.scraper.textAt
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -70,7 +71,7 @@ class So36DetailPageScraper {
         val subtitle = document.textAt("small.subtitle")
         val eventType =
             refineBySubtitle(refineConcertVenueType(mapEventType(document.textAt("small.supertitle:not(.ticketsfor)")), title), title, subtitle)
-        val jsonLd = document.parseEventJsonLd()
+        val jsonLd = document.jsonLdEvents().firstOrNull()
         val (doorsTime, startTime) = parseTimes(document)
         val (presale, boxOffice) = parsePrices(document)
 
@@ -81,7 +82,7 @@ class So36DetailPageScraper {
             eventType = eventType,
             // The detail JSON-LD carries the authoritative date; sentinel when absent, so the overview's
             // date is used via So36WebsiteImporter.fillGapsFromOverview.
-            eventDate = jsonLd.startDate?.let { parseIsoDate(it) } ?: UNRESOLVED_EVENT_DATE,
+            eventDate = jsonLd?.schemaDate("startDate") ?: UNRESOLVED_EVENT_DATE,
             doorsTime = doorsTime,
             startTime = startTime,
             imageUrl = parseImageUrl(document),
@@ -91,7 +92,7 @@ class So36DetailPageScraper {
             pricePresale = presale,
             priceBoxOffice = boxOffice,
             free = document.isFreeAdmission(),
-            status = parseSchemaEventStatus(jsonLd.eventStatus),
+            status = jsonLd?.schemaStatus() ?: EventStatus.SCHEDULED.name,
             artists = parseArtists(title, subtitle, eventType),
             promoters = listOfNotNull(document.parsePromoter())
         )
@@ -207,38 +208,6 @@ class So36DetailPageScraper {
             ?.groupValues
             ?.get(1)
             .orEmpty()
-
-    /**
-     * The two scalar fields read from the schema.org `Event` JSON-LD block, extracted with
-     * targeted regexes (the [de.norm.events.scraper.privatclub] convention) rather than a JSON
-     * parser, since only two flat string fields are needed.
-     */
-    private data class EventJsonLd(
-        val startDate: String?,
-        val eventStatus: String?
-    )
-
-    /**
-     * Locates the schema.org `Event` JSON-LD script and extracts the [EventJsonLd] fields; an
-     * all-`null` instance when no block is present.
-     */
-    private fun Document.parseEventJsonLd(): EventJsonLd {
-        val json =
-            select("script[type=application/ld+json]")
-                .map { it.data() }
-                .firstOrNull { it.contains("\"@type\"") && it.contains("Event") }
-                ?: return EventJsonLd(startDate = null, eventStatus = null)
-        return EventJsonLd(
-            startDate = extractJsonLdField(json, "startDate"),
-            eventStatus = extractJsonLdField(json, "eventStatus")
-        )
-    }
-
-    /** A flat `"field": "value"` string from JSON text, or `null`. */
-    private fun extractJsonLdField(
-        json: String,
-        field: String
-    ): String? = Regex(""""$field"\s*:\s*"([^"]+)"""").find(json)?.groupValues?.get(1)
 
     private companion object {
         /** The numeric product id from a `/produkte/<id>-…` path. */

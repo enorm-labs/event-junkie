@@ -8,18 +8,20 @@ import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.inferConcertVenueType
+import de.norm.events.scraper.jsonLdEvents
 import de.norm.events.scraper.parseEventStatus
 import de.norm.events.scraper.parseGermanDate
 import de.norm.events.scraper.parseIsoDate
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.promoterFromCredit
+import de.norm.events.scraper.schemaDate
+import de.norm.events.scraper.schemaImageUrl
+import de.norm.events.scraper.schemaName
 import de.norm.events.scraper.stringOrNull
 import de.norm.events.scraper.textAt
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
-import tools.jackson.databind.JsonNode
-import tools.jackson.databind.json.JsonMapper
 
 /**
  * Pure HTML parser for Hole 44 Berlin event detail pages (`/event/<date-slug>/`).
@@ -41,8 +43,6 @@ import tools.jackson.databind.json.JsonMapper
 class Hole44DetailPageScraper {
     private val logger = KotlinLogging.logger {}
 
-    private val jsonMapper: JsonMapper = JsonMapper.builder().build()
-
     /**
      * Parses a detail page into a [ScrapedEvent], or `null` without an event title.
      *
@@ -54,9 +54,9 @@ class Hole44DetailPageScraper {
         sourceUrl: String
     ): ScrapedEvent? {
         val content = document.body()
-        val jsonLd = parseEventNode(document)
+        val jsonLd = document.jsonLdEvents().firstOrNull()
 
-        val title = content.textAt("h4.single-event-title") ?: jsonLd?.stringOrNull("name")
+        val title = content.textAt("h4.single-event-title") ?: jsonLd?.schemaName()
         if (title == null) {
             logger.warn { "Detail page has no event title, skipping" }
             return null
@@ -75,13 +75,13 @@ class Hole44DetailPageScraper {
             eventType = eventType,
             // Prefer the structured startDate, then the slug's ISO prefix, then the German `.details` date.
             eventDate =
-                jsonLd?.stringOrNull("startDate")?.let { parseIsoDate(it) }
+                jsonLd?.schemaDate("startDate")
                     ?: parseIsoDate(slug.take(ISO_DATE_LENGTH))
                     ?: parseGermanDate(detailValue(content, "Datum"))
                     ?: UNRESOLVED_EVENT_DATE,
             doorsTime = parseTime(detailValue(content, "Einlass")),
             startTime = parseTime(detailValue(content, "Start")),
-            imageUrl = jsonLd?.stringOrNull("image") ?: content.hrefAt("a.event-image"),
+            imageUrl = jsonLd?.schemaImageUrl() ?: content.hrefAt("a.event-image"),
             // The "Tickets" button links straight to the shop (Eventim); the JSON-LD carries no offer (#1140).
             ticketUrl = content.hrefAt("a.button.ticket"),
             sourceUrl = sourceUrl,
@@ -93,25 +93,6 @@ class Hole44DetailPageScraper {
             artists = buildArtistsForEventType(title, support, eventType, description)
         )
     }
-
-    /**
-     * The schema.org `Event` object node from the page's JSON-LD blocks, or `null`. Each block is
-     * parsed and matched on its **decoded** `@type` (not a raw-string search), so the Yoast SEO
-     * `@graph` block is skipped and detection survives the JSON's whitespace/format.
-     */
-    @Suppress("TooGenericExceptionCaught") // A malformed block must degrade to null, never abort the import
-    private fun parseEventNode(document: Document): JsonNode? =
-        document
-            .select("script[type=application/ld+json]")
-            .map { it.data() }
-            .firstNotNullOfOrNull { json ->
-                try {
-                    jsonMapper.readTree(json).takeIf { it.stringOrNull("@type") == "Event" }
-                } catch (e: Exception) {
-                    logger.warn(e) { "Failed to parse Hole 44 JSON-LD block" }
-                    null
-                }
-            }
 }
 
 /**

@@ -1,5 +1,6 @@
 package de.norm.events.scraper.soda
 
+import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HH_MM_LENGTH
@@ -7,12 +8,17 @@ import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
 import de.norm.events.scraper.attrAt
 import de.norm.events.scraper.imgSrcAt
-import de.norm.events.scraper.parseIsoDate
-import de.norm.events.scraper.parseIsoTime
+import de.norm.events.scraper.jsonLdEvents
 import de.norm.events.scraper.parsePriceValue
-import de.norm.events.scraper.parseSchemaEventStatus
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.resolveUrl
+import de.norm.events.scraper.schemaDate
+import de.norm.events.scraper.schemaImageUrl
+import de.norm.events.scraper.schemaName
+import de.norm.events.scraper.schemaOffers
+import de.norm.events.scraper.schemaSoldOut
+import de.norm.events.scraper.schemaStatus
+import de.norm.events.scraper.schemaTime
 import de.norm.events.scraper.stringOrNull
 import de.norm.events.scraper.textAt
 import de.norm.events.scraper.textLinesAt
@@ -20,7 +26,6 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import tools.jackson.databind.JsonNode
-import tools.jackson.databind.json.JsonMapper
 import java.math.BigDecimal
 
 /**
@@ -48,8 +53,6 @@ import java.math.BigDecimal
 class SodaDetailPageScraper {
     private val logger = KotlinLogging.logger {}
 
-    private val jsonMapper: JsonMapper = JsonMapper.builder().build()
-
     /**
      * Parses a detail page into a [ScrapedEvent], or `null` without an event title.
      *
@@ -61,21 +64,15 @@ class SodaDetailPageScraper {
         sourceUrl: String
     ): ScrapedEvent? {
         val content = document.body()
-        val jsonLd = parseMusicEventNode(document)
+        val jsonLd = document.jsonLdEvents().firstOrNull()
 
-        val title = content.textAt("h1.title") ?: jsonLd?.stringOrNull("name")?.let(::stripNameSuffix)
+        val title = content.textAt("h1.title") ?: jsonLd?.schemaName()?.let(::stripNameSuffix)
         if (title == null) {
             logger.warn { "Detail page has no event title, skipping" }
             return null
         }
 
-        val startDate = jsonLd?.stringOrNull("startDate")
-        val offers =
-            jsonLd
-                ?.path("offers")
-                ?.takeIf { it.isArray }
-                ?.toList()
-                .orEmpty()
+        val offers = jsonLd?.schemaOffers().orEmpty()
         val prices = parsePrices(content, offers)
 
         return ScrapedEvent(
@@ -83,21 +80,21 @@ class SodaDetailPageScraper {
             description = parseDescription(content) ?: jsonLd?.stringOrNull("description"),
             // Soda is a discotheque: every listing is a resident club night, never a billed act.
             eventType = EventType.PARTY.name,
-            eventDate = startDate?.let { parseIsoDate(it) } ?: UNRESOLVED_EVENT_DATE,
+            eventDate = jsonLd?.schemaDate("startDate") ?: UNRESOLVED_EVENT_DATE,
             // No doors time — the "Einlass" box states an age limit.
-            startTime = startDate?.let { parseIsoTime(it) } ?: parseTime(infoBoxValue(content, "Beginn")?.take(HH_MM_LENGTH)),
-            imageUrl = jsonLd?.stringOrNull("image") ?: content.imgSrcAt("img.event-preview-image"),
+            startTime = jsonLd?.schemaTime("startDate") ?: parseTime(infoBoxValue(content, "Beginn")?.take(HH_MM_LENGTH)),
+            imageUrl = jsonLd?.schemaImageUrl() ?: content.imgSrcAt("img.event-preview-image"),
             sourceUrl = sourceUrl,
             sourceId = "${EventSource.SODA.sourceIdPrefix}${sodaEventSlug(sourceUrl)}",
             ticketUrl = content.attrAt("a.ticket-btn", "href")?.let { resolveUrl(sourceUrl, it) },
             pricePresale = prices.presale,
             priceBoxOffice = prices.boxOffice,
             priceNote = prices.note,
-            soldOut = isSoldOut(offers),
+            soldOut = jsonLd?.schemaSoldOut() == true,
             // A €0 admission is the free-entry marker; keep it explicit even when the price is not
             // stored as a box-office price.
             free = prices.admission?.signum() == 0,
-            status = parseSchemaEventStatus(jsonLd?.stringOrNull("eventStatus"))
+            status = jsonLd?.schemaStatus() ?: EventStatus.SCHEDULED.name
         )
     }
 
@@ -146,15 +143,6 @@ class SodaDetailPageScraper {
     )
 
     /**
-     * Whether every offered ticket is `schema.org/SoldOut`. An event with no offers is never sold
-     * out — it sells nothing online (the free resident nights), so an empty list must not collapse
-     * to `all { … } == true`.
-     */
-    private fun isSoldOut(offers: List<JsonNode>): Boolean =
-        offers.isNotEmpty() &&
-            offers.all { it.stringOrNull("availability")?.contains("soldout", ignoreCase = true) == true }
-
-    /**
      * The value of the info box carrying [label] (`"Beginn"` → `"22:00 Uhr"`, `"Eintritt"` →
      * `"15 €"`), or `null`. Each box pairs a `h4.title` value with a `p.description` label.
      */
@@ -178,30 +166,7 @@ class SodaDetailPageScraper {
             .joinToString("\n")
             .takeIf { it.isNotBlank() }
 
-    /**
-     * The schema.org `MusicEvent` object node from the page's JSON-LD, or `null`. Soda wraps the
-     * block in an array, unwrapped before matching on the decoded `@type`.
-     */
-    @Suppress("TooGenericExceptionCaught") // A malformed block must degrade to null, never abort the import
-    private fun parseMusicEventNode(document: Document): JsonNode? =
-        document
-            .select("script[type=application/ld+json]")
-            .map { it.data() }
-            .firstNotNullOfOrNull { json ->
-                try {
-                    val root = jsonMapper.readTree(json)
-                    (if (root.isArray) root.toList() else listOf(root))
-                        .firstOrNull { it.stringOrNull("@type") == MUSIC_EVENT_TYPE }
-                } catch (e: Exception) {
-                    logger.warn(e) { "Failed to parse Soda JSON-LD block" }
-                    null
-                }
-            }
-
     private companion object {
-        /** The schema.org `@type` Soda uses for every event. */
-        private const val MUSIC_EVENT_TYPE = "MusicEvent"
-
         /** Renders `15.43` as the German `15,43 €` the venue's pages print. */
         private fun formatEuro(amount: BigDecimal): String = "${amount.setScale(2).toPlainString().replace('.', ',')} €"
     }

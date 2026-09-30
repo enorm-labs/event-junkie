@@ -1,21 +1,22 @@
 package de.norm.events.scraper.tempodrom
 
 import de.norm.events.scraper.EventSource
-import de.norm.events.scraper.HH_MM_LENGTH
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.decodeHtmlEntities
 import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.inferConcertVenueType
-import de.norm.events.scraper.parseIsoDate
-import de.norm.events.scraper.parseSchemaEventStatus
-import de.norm.events.scraper.parseTime
+import de.norm.events.scraper.jsonLdEvents
+import de.norm.events.scraper.schemaDate
+import de.norm.events.scraper.schemaImageUrl
+import de.norm.events.scraper.schemaName
+import de.norm.events.scraper.schemaSoldOut
+import de.norm.events.scraper.schemaStatus
+import de.norm.events.scraper.schemaTime
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import tools.jackson.databind.JsonNode
-import tools.jackson.databind.json.JsonMapper
-import tools.jackson.module.kotlin.kotlinModule
 import java.math.BigDecimal
 
 /**
@@ -42,14 +43,12 @@ import java.math.BigDecimal
 class TempodromOverviewPageScraper {
     private val logger = KotlinLogging.logger {}
 
-    private val jsonMapper: JsonMapper = JsonMapper.builder().addModule(kotlinModule()).build()
-
     /**
      * Parses every event from the listing page's JSON-LD; empty when the page carries no
      * parseable schema.org `Event` data.
      */
     fun scrape(document: Document): List<ScrapedEvent> {
-        val nodes = document.select("script[type=application/ld+json]").flatMap { parseEvents(it.data()) }
+        val nodes = document.jsonLdEvents()
         logger.info { "Found ${nodes.size} schema.org Event object(s) on the Tempodrom programme" }
 
         @Suppress("TooGenericExceptionCaught") // Intentional: skip individual malformed objects without aborting the whole import
@@ -63,34 +62,15 @@ class TempodromOverviewPageScraper {
         }
     }
 
-    /** The `Event` objects out of one JSON-LD block, which may hold a single object or an array. */
-    @Suppress("TooGenericExceptionCaught") // Intentional: a malformed block degrades to "no events", never a failed import
-    private fun parseEvents(json: String): List<JsonNode> =
-        try {
-            val root = jsonMapper.readTree(json)
-            (if (root.isArray) root.toList() else listOf(root)).filter { it.path("@type").asString("").contains(EVENT_TYPE) }
-        } catch (e: Exception) {
-            logger.warn(e) { "Tempodrom JSON-LD block is not parseable, skipping it" }
-            emptyList()
-        }
-
     /** Maps one schema.org `Event` onto a [ScrapedEvent], or `null` without a name or date. */
     @Suppress("ReturnCount") // Guard clauses for the required name/date are clearer than nesting
     private fun parseEvent(event: JsonNode): ScrapedEvent? {
-        val title =
-            event
-                .path("name")
-                .asString(null)
-                ?.let(::decodeHtmlEntities)
-                ?.takeIf { it.isNotBlank() }
-                ?.let(::cleanEventTitle) ?: return null
-        val startedAt = event.path("startDate").asString("").takeIf { it.isNotBlank() } ?: return null
-        val eventDate = parseIsoDate(startedAt) ?: return null
+        val title = event.schemaName()?.let(::cleanEventTitle) ?: return null
+        val eventDate = event.schemaDate("startDate") ?: return null
         // Every event carries an `endDate`, and 140 of 145 repeat the start date without a time — a
         // same-day, date-only end says nothing. The five that differ are the runs: a circus over
         // Christmas, a snooker week, Holiday on Ice (ADR-029).
-        val endedAt = event.path("endDate").asString("")
-        val endDate = parseIsoDate(endedAt)?.takeIf { it > eventDate || endedAt.contains('T') }
+        val endDate = event.schemaDate("endDate")?.takeIf { it > eventDate || event.schemaTime("endDate") != null }
 
         val url = event.path("url").asString("").trim()
         val subtitle =
@@ -111,24 +91,19 @@ class TempodromOverviewPageScraper {
             eventType = eventType,
             eventDate = eventDate,
             // `doorTime` is a full timestamp of its own; only its clock part is wanted.
-            doorsTime = parseClockTime(event.path("doorTime").asString("")),
+            doorsTime = event.schemaTime("doorTime"),
             // A multi-day run publishes a date-only `startDate`, so it simply has no start time.
-            startTime = parseClockTime(startedAt),
+            startTime = event.schemaTime("startDate"),
             endDate = endDate,
-            endTime = endDate?.let { parseClockTime(endedAt) },
-            imageUrl =
-                event
-                    .path("image")
-                    .firstOrNull()
-                    ?.asString(null)
-                    ?.takeIf { it.startsWith("http") },
+            endTime = endDate?.let { event.schemaTime("endDate") },
+            imageUrl = event.schemaImageUrl(),
             sourceUrl = url,
             sourceId = "${EventSource.TEMPODROM.sourceIdPrefix}${extractEventSlug(url, EVENT_PATH_PREFIX)}",
             ticketUrl = offers.path("url").asString(null)?.takeIf { it.startsWith("http") && it != url },
             pricePresale = presale,
             priceNote = priceNote,
-            soldOut = offers.path("availability").asString("").endsWith(SOLD_OUT_TERM),
-            status = parseSchemaEventStatus(event.path("eventStatus").asString(null)),
+            soldOut = event.schemaSoldOut(),
+            status = event.schemaStatus(),
             artists = buildArtistsForEventType(title, subtitle, eventType)
         )
     }
@@ -154,24 +129,9 @@ class TempodromOverviewPageScraper {
      */
     private fun parseDecimal(value: String?): BigDecimal? = value?.trim()?.takeIf { it.isNotBlank() }?.let { runCatching { BigDecimal(it) }.getOrNull() }
 
-    /**
-     * The clock part of a JSON-LD timestamp such as `2026-09-01T20:30:00`. Not
-     * [parseIsoTime][de.norm.events.scraper.parseIsoTime]: that expects the bare `HH:mm` most
-     * venues render and returns null for the seconds here. A date-only value (a multi-day run)
-     * yields no time.
-     */
-    private fun parseClockTime(timestamp: String): java.time.LocalTime? =
-        parseTime(timestamp.substringAfter('T', "").takeIf { it.isNotBlank() }?.take(HH_MM_LENGTH))
-
     private companion object {
-        /** The schema.org type this parser reads; the page also emits other JSON-LD kinds. */
-        const val EVENT_TYPE = "Event"
-
         /** Path prefix of a Tempodrom event permalink, stripped to obtain the slug identity. */
         const val EVENT_PATH_PREFIX = "/event/"
-
-        /** The trailing term of `https://schema.org/SoldOut`. */
-        const val SOLD_OUT_TERM = "SoldOut"
 
         /** Currency assumed when an offer omits one; every Tempodrom offer states EUR. */
         const val DEFAULT_CURRENCY = "EUR"
