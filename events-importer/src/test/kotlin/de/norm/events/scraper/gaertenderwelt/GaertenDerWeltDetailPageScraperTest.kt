@@ -99,6 +99,18 @@ class GaertenDerWeltDetailPageScraperTest {
     }
 
     @Test
+    fun `does not price a free event at the park ticket it names on top`() {
+        val html =
+            fixture("gaertenderwelt-detail-concert-kosten.html", KOSTEN_URL)
+                .outerHtml()
+                .replace("Tickets ab 47,00€", "die Veranstaltung ist kostenfrei (zzgl. Parkeintritt: ab 17.00 Uhr gilt unser Feierabend-Ticket für 5,50 Euro)")
+        val event = scraper.scrape(Jsoup.parse(html, KOSTEN_URL), KOSTEN_URL).shouldNotBeNull()
+
+        event.pricePresale.shouldBeNull()
+        event.priceNote shouldBe "die Veranstaltung ist kostenfrei (zzgl. Parkeintritt: ab 17.00 Uhr gilt unser Feierabend-Ticket für 5,50 Euro)"
+    }
+
+    @Test
     fun `reads a doors time the park wrote without minutes`() {
         val event = scraper.scrape(fixture("gaertenderwelt-detail-concert-kosten.html", KOSTEN_URL), KOSTEN_URL).shouldNotBeNull()
 

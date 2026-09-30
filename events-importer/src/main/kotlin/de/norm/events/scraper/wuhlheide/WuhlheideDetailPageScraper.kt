@@ -9,8 +9,8 @@ import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.imgSrcAt
 import de.norm.events.scraper.inferConcertVenueType
-import de.norm.events.scraper.parseEurCodePrice
 import de.norm.events.scraper.parseIsoDate
+import de.norm.events.scraper.parsePriceValue
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.textAt
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -65,7 +65,7 @@ class WuhlheideDetailPageScraper {
             sourceId = "${EventSource.WUHLHEIDE.sourceIdPrefix}$slug",
             // Anchored on the ticket icon: the sibling share buttons are also target="_blank".
             ticketUrl = document.hrefAt(".details .buttons a.button:has(i.fa-ticket)"),
-            pricePresale = parseEurCodePrice(document.detailTableCell(PRICE_LABEL)),
+            pricePresale = parsePriceValue(document.detailTableCell(PRICE_LABEL)),
             promoters = listOfNotNull(document.textAt(".promoter a"))
         )
     }

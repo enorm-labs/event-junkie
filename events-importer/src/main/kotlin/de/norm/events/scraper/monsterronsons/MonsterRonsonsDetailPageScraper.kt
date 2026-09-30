@@ -1,6 +1,7 @@
 package de.norm.events.scraper.monsterronsons
 
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.euroAmounts
 import de.norm.events.scraper.hasVisibleWebflowFlag
 import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.resolveUrl
@@ -73,16 +74,8 @@ class MonsterRonsonsDetailPageScraper {
         )
     }
 
-    /**
-     * Every amount in one paragraph. Both orders — `€5` and `5€` — sometimes in one list, so both
-     * match. Each pattern refuses an amount running straight into a digit or colon, which is what
-     * a following clock time looks like once the markup is flattened (`€5` + `20:00`).
-     */
-    private fun parsePricesIn(text: String): List<BigDecimal> =
-        (EURO_LEADING_PRICE_PATTERN.findAll(text) + EURO_TRAILING_PRICE_PATTERN.findAll(text))
-            .mapNotNull { match -> runCatching { BigDecimal(match.groupValues[1].replace(",", ".")) }.getOrNull() }
-            .distinct()
-            .toList()
+    /** Every distinct amount in one paragraph; both orders, `€5` and `5€`, sometimes share one list. */
+    private fun parsePricesIn(text: String): List<BigDecimal> = euroAmounts(text).distinct()
 
     /** The ticket link, only when Webflow has not hidden the button as an empty CMS field. */
     @Suppress("ReturnCount") // Guard clauses for the hidden button and the placeholder href read clearer than nesting
@@ -104,15 +97,6 @@ class MonsterRonsonsDetailPageScraper {
 
         /** Label text the ticket button carries. */
         private const val TICKET_BUTTON_LABEL = "Tickets"
-
-        /**
-         * A euro-sign-first amount as the venue usually writes it: `€5`, `€ 7,50`. The lookahead
-         * rejects `€520:00` — `€5` with the next band's start time run into it.
-         */
-        private val EURO_LEADING_PRICE_PATTERN = Regex("""€[\s ]*(\d+(?:[.,]\d{1,2})?)(?![\d.,:])""")
-
-        /** The amount-first spelling the same venue also uses: `5€`, `7,50 €`. */
-        private val EURO_TRAILING_PRICE_PATTERN = Regex("""(?<![\d.,:])(\d+(?:[.,]\d{1,2})?)[\s ]*€""")
     }
 }
 

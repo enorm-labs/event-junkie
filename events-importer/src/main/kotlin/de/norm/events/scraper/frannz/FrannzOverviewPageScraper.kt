@@ -8,6 +8,7 @@ import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.hasSoldOutMarker
 import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.imgSrcAt
+import de.norm.events.scraper.isBoxOfficeLabel
 import de.norm.events.scraper.mapEventType
 import de.norm.events.scraper.parseEventStatus
 import de.norm.events.scraper.parseGermanWeekday
@@ -198,7 +199,7 @@ class FrannzOverviewPageScraper(
 
     /**
      * Presale and box-office prices from the structured `li.event-vvk` items. Each pairs a
-     * `.value` ("10,00 €") with a `.key` label; a label containing "Abendkasse" is box office,
+     * `.value` ("10,00 €") with a `.key` label; a box-office label ([isBoxOfficeLabel]) is box office,
      * everything else (Vorverkauf / "VVK …") presale. First value per category wins.
      *
      * **Most articles carry no such item, and that is the source rather than this parser.** Over a
@@ -211,8 +212,7 @@ class FrannzOverviewPageScraper(
 
         for (item in article.select("ul.event-info li.event-vvk")) {
             val value = parsePriceValue(item.textAt(".value")) ?: continue
-            val label = item.textAt(".key")?.lowercase().orEmpty()
-            if (label.contains("abendkasse")) {
+            if (isBoxOfficeLabel(item.textAt(".key"))) {
                 boxOffice = boxOffice ?: value
             } else {
                 presale = presale ?: value

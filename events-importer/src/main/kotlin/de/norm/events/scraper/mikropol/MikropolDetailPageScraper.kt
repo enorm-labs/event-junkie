@@ -17,7 +17,7 @@ import de.norm.events.scraper.labelledClock
 import de.norm.events.scraper.parseEventStatus
 import de.norm.events.scraper.parseGermanDate
 import de.norm.events.scraper.parseIsoDate
-import de.norm.events.scraper.parsePriceValue
+import de.norm.events.scraper.parseLabelledPrices
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.stripRelocationPrefix
 import de.norm.events.scraper.textAt
@@ -74,7 +74,7 @@ class MikropolDetailPageScraper {
         val details = content.textAt("div.event-details").orEmpty()
         val statusBadge = content.textAt("div.canceledsoldout").orEmpty()
         val description = content.textAt("div.eventnotes")
-        val boxOffice = parsePriceValue(BOX_OFFICE_PRICE.find(details)?.value)
+        val boxOffice = parseLabelledPrices(details).boxOffice
 
         val eventType = inferConcertVenueType(title)
         return ScrapedEvent(
@@ -123,9 +123,6 @@ class MikropolDetailPageScraper {
     private companion object {
         /** The Events-Manager sold-out badge text (`Ausverkauft`). */
         private const val SOLD_OUT_TEXT = "ausverkauft"
-
-        /** The door price after its label; the value must follow directly, so an empty slot reads nothing. */
-        private val BOX_OFFICE_PRICE = Regex("""(?<=Abendkasse:)[\s\u00a0]*\d+(?:[.,]\d{1,2})?[\s\u00a0]*€""", RegexOption.IGNORE_CASE)
 
         /** The billing frame the venue appends to a promoter's name. */
         private val PRESENTS_SUFFIX = Regex("""\s*(?:presents|pr(?:ä|ae)sentiert)\s*:?\s*$""", RegexOption.IGNORE_CASE)

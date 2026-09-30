@@ -14,7 +14,7 @@ import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.inferConcertVenueType
 import de.norm.events.scraper.labelledClock
 import de.norm.events.scraper.parseIsoDate
-import de.norm.events.scraper.parsePriceValue
+import de.norm.events.scraper.parseLabelledPrices
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.textAt
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -119,16 +119,13 @@ class HuxleysDetailPageScraper {
      * which the bare amount cannot express.
      */
     private fun parsePrices(article: Element): Triple<BigDecimal?, BigDecimal?, String?> {
-        val line =
+        val (line, prices) =
             article
                 .select(".event-info > p")
                 .map { it.text().trim() }
-                .firstOrNull { PRICE_LINE.containsMatchIn(it) } ?: return Triple(null, null, null)
-        return Triple(
-            parsePriceValue(PRESALE_PRICE.find(line)?.value),
-            parsePriceValue(BOX_OFFICE_PRICE.find(line)?.value),
-            line.takeIf { FEE_NOTE.containsMatchIn(it) }
-        )
+                .map { it to parseLabelledPrices(it) }
+                .firstOrNull { (_, prices) -> prices.presale != null || prices.boxOffice != null } ?: return Triple(null, null, null)
+        return Triple(prices.presale, prices.boxOffice, line.takeIf { FEE_NOTE.containsMatchIn(it) })
     }
 
     /**
@@ -183,15 +180,6 @@ class HuxleysDetailPageScraper {
 
         /** The sold-out badge text. */
         const val SOLD_OUT_TEXT = "ausverkauft"
-
-        /** A `Details`-box line that states a price at all. */
-        val PRICE_LINE = Regex("""\b(?:VVK|Vorverkauf|AK|Abendkasse)\b.*€""", RegexOption.IGNORE_CASE)
-
-        /** The presale amount within such a line. */
-        val PRESALE_PRICE = Regex("""(?:VVK|Vorverkauf)\s*:?\s*\d[\d.,]*\s*€""", RegexOption.IGNORE_CASE)
-
-        /** The box-office amount within such a line. */
-        val BOX_OFFICE_PRICE = Regex("""(?:AK|Abendkasse)\s*:?\s*\d[\d.,]*\s*€""", RegexOption.IGNORE_CASE)
 
         /** A booking-fee qualifier, which makes the raw line worth keeping as a note. */
         val FEE_NOTE = Regex("""zzgl|geb(?:ü|ue)hr""", RegexOption.IGNORE_CASE)

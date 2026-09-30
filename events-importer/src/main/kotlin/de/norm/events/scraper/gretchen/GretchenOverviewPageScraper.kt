@@ -20,7 +20,7 @@ import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.labelledClock
 import de.norm.events.scraper.parseEventStatus
 import de.norm.events.scraper.parseGermanDate
-import de.norm.events.scraper.parsePriceValue
+import de.norm.events.scraper.parseLabelledPrices
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.resolveUrl
 import de.norm.events.scraper.splitBackToBack
@@ -224,14 +224,9 @@ class GretchenOverviewPageScraper {
                 .firstOrNull { PRICE_MARKER_PATTERN.containsMatchIn(it) }
                 ?: return Triple(null, null, null)
 
-        val presaleSegment = priceText.substringAfter("Vorverkauf", "").substringBefore("Abendkasse")
-        val boxOfficeSegment = priceText.substringAfter("Abendkasse", "")
-
-        val pricePresale = parsePriceValue(presaleSegment)
-        val priceBoxOffice = parsePriceValue(boxOfficeSegment)
+        val prices = parseLabelledPrices(priceText)
         val priceNote = priceText.trim('*', ' ').trim().takeIf { it.isNotBlank() }
-
-        return Triple(pricePresale, priceBoxOffice, priceNote)
+        return Triple(prices.presale, prices.boxOffice, priceNote)
     }
 
     /**

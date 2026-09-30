@@ -6,6 +6,7 @@ import de.norm.events.scraper.START_LABELS
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.attrAt
 import de.norm.events.scraper.buildArtistsForEventType
+import de.norm.events.scraper.euroAmounts
 import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.jsonLdNodes
 import de.norm.events.scraper.labelledClock
@@ -13,6 +14,7 @@ import de.norm.events.scraper.mapEventType
 import de.norm.events.scraper.parseEventStatus
 import de.norm.events.scraper.parseIsoDate
 import de.norm.events.scraper.parseIsoTime
+import de.norm.events.scraper.parsePriceValue
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.privatclub.PrivatclubOverviewPageScraper.Companion.GERMAN_DATE_FORMATTER
 import de.norm.events.scraper.resolveUrl
@@ -319,10 +321,10 @@ class PrivatclubOverviewPageScraper(
         // ".tickets_ak"
         val akText = detail.textAt(".tickets_ak")
         if (akText != null) {
-            val allPrices = PRICE_PATTERN.findAll(akText).toList()
+            val allPrices = euroAmounts(akText)
             if (allPrices.size == 1 && !akText.contains("-") && !akText.contains("ab ")) {
                 // Single price ("AK: 35€") → box office
-                priceBoxOffice = extractFirstPrice(akText)
+                priceBoxOffice = allPrices.single()
             } else {
                 // Conditional pricing ("Eintritt: 4€ - ab 24h 6€") → note
                 priceNote = akText.replace(Regex("""^[^:]*:\s*"""), "").trim()
@@ -337,27 +339,13 @@ class PrivatclubOverviewPageScraper(
             val ticketText = vkkDiv.closest(".flex_wrapper")?.text().orEmpty()
             val combinedText = "$linkbarText $ticketText"
 
-            val vkkPrice = extractFirstPrice(combinedText.substringBefore("AK"))
+            val vkkPrice = parsePriceValue(combinedText.substringBefore("AK"))
             if (vkkPrice != null && vkkPrice != priceBoxOffice) {
                 pricePresale = vkkPrice
             }
         }
 
         return Triple(pricePresale, priceBoxOffice, priceNote)
-    }
-
-    /**
-     * First numeric price from "25€", "25,00€", "25.00€", "25 €"; null for multi-price
-     * strings or no price.
-     */
-    private fun extractFirstPrice(text: String): BigDecimal? {
-        val match = PRICE_PATTERN.find(text) ?: return null
-        val priceStr = match.groupValues[1].replace(",", ".")
-        return try {
-            BigDecimal(priceStr)
-        } catch (_: NumberFormatException) {
-            null
-        }
     }
 
     /**
@@ -431,9 +419,6 @@ class PrivatclubOverviewPageScraper(
     companion object {
         /** Day number from "Sa. 16." */
         private val DAY_NUMBER_PATTERN = Regex("""\d+""")
-
-        /** First price value ("25€", "25,50 €", "25.00€"). */
-        private val PRICE_PATTERN = Regex("""(\d+(?:[.,]\d{1,2})?)\s*€""")
 
         /**
          * German month names ("16. Mai" → May 16), [Locale.GERMAN], case-insensitive.

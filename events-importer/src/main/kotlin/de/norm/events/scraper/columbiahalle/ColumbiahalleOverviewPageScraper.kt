@@ -10,7 +10,7 @@ import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.inferConcertVenueType
 import de.norm.events.scraper.labelledClock
 import de.norm.events.scraper.parseEventStatus
-import de.norm.events.scraper.parsePriceValue
+import de.norm.events.scraper.parseLabelledPrices
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.resolveUrl
 import de.norm.events.scraper.textAt
@@ -172,14 +172,13 @@ class ColumbiahalleOverviewPageScraper {
     private fun parsePrices(card: Element): Triple<BigDecimal?, BigDecimal?, String?> {
         val block = card.selectFirst(".preis") ?: return Triple(null, null, null)
         val valueLines = block.select("p:not(.small)").flatMap { it.textLines() }
-        val presale = valueLines.firstOrNull { VVK_LABEL_PATTERN.containsMatchIn(it) }
-        val boxOffice = valueLines.firstOrNull { AK_LABEL_PATTERN.containsMatchIn(it) }
+        val prices = parseLabelledPrices(valueLines.joinToString("\n"))
 
         val feeNote = block.textAt("p.small")
-        val hasFromPrice = valueLines.any { FROM_PRICE_PATTERN.containsMatchIn(it) }
+        val hasFromPrice = prices.fromPrice || valueLines.any { FROM_PRICE_TYPO.containsMatchIn(it) }
         val note = block.text().trim().takeIf { it.isNotBlank() && (feeNote != null || hasFromPrice) }
 
-        return Triple(parsePriceValue(presale), parsePriceValue(boxOffice), note)
+        return Triple(prices.presale, prices.boxOffice, note)
     }
 
     private companion object {
@@ -198,18 +197,11 @@ class ColumbiahalleOverviewPageScraper {
         /** The `.stoerer` sticker text marking a sold-out show (rendered in either case). */
         private const val SOLD_OUT_TEXT = "ausverkauft"
 
-        /** The presale (Vorverkauf) price label, word-anchored so it can't match inside another word. */
-        private val VVK_LABEL_PATTERN = Regex("""\bVVK\b""", RegexOption.IGNORE_CASE)
-
-        /** The box-office (Abendkasse) price label, word-anchored so `VVK` can't false-match on its letters. */
-        private val AK_LABEL_PATTERN = Regex("""\bAK\b""", RegexOption.IGNORE_CASE)
-
         /**
-         * A "from" qualifier on a tiered price — `VVK: ab 74,99 €`. `an` is matched too: the venue's
-         * own typo for `ab` on one current event, and since this only decides whether the raw text is
-         * kept as a note, a false match costs nothing but a slightly redundant note.
+         * The venue's own typo for the `ab` (from) qualifier, `VVK: an 15,00 €`. It only decides
+         * whether the raw text is kept as a note, so a false match costs a redundant note at most.
          */
-        private val FROM_PRICE_PATTERN = Regex("""\b(ab|an)\b\s*\d""", RegexOption.IGNORE_CASE)
+        private val FROM_PRICE_TYPO = Regex("""\ban\s*\d""", RegexOption.IGNORE_CASE)
     }
 }
 

@@ -8,6 +8,7 @@ import de.norm.events.scraper.attrAt
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.endOn
+import de.norm.events.scraper.euroAmounts
 import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.imgSrcAt
@@ -247,16 +248,10 @@ private fun parseNoticeTime(text: String?): LocalTime? =
  */
 private fun parseSinglePrice(text: String?): BigDecimal? {
     val value = text?.trim().orEmpty()
-    val euroAmounts =
-        EURO_AMOUNT_PATTERN
-            .findAll(value)
-            .map { match -> match.groupValues.drop(1).first { it.isNotEmpty() } }
-            .toList()
     val amount =
         DAY_TICKET_PATTERN.find(value)?.groupValues?.get(1)
-            ?: euroAmounts.singleOrNull()
             ?: BARE_AMOUNT_PATTERN.matchEntire(value)?.groupValues?.get(1)
-    return amount?.replace(',', '.')?.toBigDecimalOrNull()
+    return amount?.replace(',', '.')?.toBigDecimalOrNull() ?: euroAmounts(value).singleOrNull()
 }
 
 /** The `.location` value identifying this venue among the Holzmarkt site's shared calendar rows. */
@@ -294,9 +289,6 @@ private val ATC_TIMESTAMP_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPat
 
 /** The first time in a notice value: `"20:00"` (branch 1) or the bare-hour `"19 Uhr"` (branch 2). */
 private val NOTICE_TIME_PATTERN = Regex("""(\d{1,2}):(\d{2})|(\d{1,2})\s*Uhr""", RegexOption.IGNORE_CASE)
-
-/** A currency amount written before or after the euro sign (`"€40"`, `"17,00 €"`). */
-private val EURO_AMOUNT_PATTERN = Regex("""€\s*(\d+(?:[.,]\d{1,2})?)|(\d+(?:[.,]\d{1,2})?)\s*€""")
 
 /** A whole value that is nothing but a bare amount, the venue's `"30,00"` spelling. */
 private val BARE_AMOUNT_PATTERN = Regex("""(\d+(?:[.,]\d{1,2})?)""")
