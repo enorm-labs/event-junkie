@@ -65,6 +65,16 @@ machine-readable contract, so it survives a site redesign. It needs no CSS selec
 browser even for a JS-rendered SPA. Many "JS-only" venues are a thin front-end over a JSON API that the browser
 Network tab shows.
 
+**`radar/`** — the reader for a venue that publishes its programme as a group on radar.squat.net (KØPI, Abstand and
+Drugstore today). One source is one group, so one venue per source still holds. The search API is outside the Anubis
+wall that protects radar's HTML. The HTML and the poster files are not fetched.
+
+| Extension / Function            | Purpose                                                                                       |
+| ------------------------------- | --------------------------------------------------------------------------------------------- |
+| `parseRadarEvents(json, venue)` | The concert and party rows of a group response, with repeated rows dropped by start and title |
+| `RadarGroupImporter`            | The importer every radar venue extends; a venue that reads a bill overrides `lineup`          |
+| `htmlParagraphText(html)`       | An HTML body as plain text, one paragraph per line; shared with the Elfsight venues           |
+
 Two implemented importers already take this path and skip HTML entirely:
 
 - **Festsaal Kreuzberg** — the Nuxt.js SPA renders nothing on the server. A **Wagtail headless CMS** behind it has a

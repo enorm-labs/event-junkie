@@ -2,7 +2,6 @@ package de.norm.events.scraper.elfsight
 
 import de.norm.events.scraper.blankToNull
 import io.github.oshai.kotlinlogging.KotlinLogging
-import org.jsoup.Jsoup
 import tools.jackson.databind.JsonNode
 import tools.jackson.databind.json.JsonMapper
 import tools.jackson.module.kotlin.kotlinModule
@@ -74,24 +73,6 @@ internal fun parseElfsightDate(raw: String?): LocalDate? {
 }
 
 /**
- * Flattens the widget's HTML `description` into plain text, preserving paragraph breaks: `<br>`
- * and closing block tags become newlines before the remaining tags are stripped, then blank
- * lines are collapsed. `null` for a missing or empty body.
- */
-internal fun elfsightDescriptionText(html: String?): String? {
-    val raw = html.blankToNull() ?: return null
-    val withBreaks = raw.replace(BLOCK_BREAK_PATTERN, "\n")
-    return Jsoup
-        .parse(withBreaks)
-        .wholeText()
-        .lines()
-        .map { it.trim() }
-        .filter { it.isNotEmpty() }
-        .joinToString("\n")
-        .blankToNull()
-}
-
-/**
  * The first action link that is an absolute HTTP(S) URL — the widget's own ticket-shop button.
  * A non-linking marker ("Sold Out!") carries an empty link and is skipped.
  */
@@ -99,9 +80,6 @@ internal fun elfsightActionUrl(actions: List<ElfsightAction>): String? =
     actions
         .firstNotNullOfOrNull { it.link?.value.blankToNull() }
         ?.takeIf { it.startsWith("http") }
-
-/** `<br>` variants and closing block tags — the boundaries turned into newlines before tag stripping. */
-private val BLOCK_BREAK_PATTERN = Regex("""(?i)<br\s*/?>|</div>|</p>""")
 
 /**
  * One entry in the widget's `settings.events[]`, mapped by Jackson. Only the fields the

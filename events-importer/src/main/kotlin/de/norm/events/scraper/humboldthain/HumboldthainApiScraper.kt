@@ -9,11 +9,11 @@ import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.elfsight.ElfsightAction
 import de.norm.events.scraper.elfsight.ElfsightEventNode
 import de.norm.events.scraper.elfsight.elfsightActionUrl
-import de.norm.events.scraper.elfsight.elfsightDescriptionText
 import de.norm.events.scraper.elfsight.elfsightJsonMapper
 import de.norm.events.scraper.elfsight.parseElfsightDate
 import de.norm.events.scraper.elfsight.parseElfsightEventNodes
 import de.norm.events.scraper.headlinersFromTitle
+import de.norm.events.scraper.htmlParagraphText
 import de.norm.events.scraper.humboldthain.HumboldthainApiScraper.Companion.TICKET_URL_PATTERN
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.parseTime
@@ -119,7 +119,7 @@ class HumboldthainApiScraper(
         // A "KONZERT:" night bills its act in the title; every other night is a DJ party whose
         // roster, if announced, is the description's Resident Advisor artist links.
         val artists = (if (concert) headlinersFromTitle(title) else emptyList()) + djArtists(description)
-        val descriptionText = elfsightDescriptionText(descriptionHtml)
+        val descriptionText = htmlParagraphText(descriptionHtml)
 
         return occurrenceDates(node, id, seriesStart).map { date ->
             ScrapedEvent(

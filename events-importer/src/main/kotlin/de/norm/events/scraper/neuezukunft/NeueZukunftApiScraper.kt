@@ -6,11 +6,11 @@ import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.elfsight.ElfsightEventNode
 import de.norm.events.scraper.elfsight.elfsightActionUrl
-import de.norm.events.scraper.elfsight.elfsightDescriptionText
 import de.norm.events.scraper.elfsight.elfsightJsonMapper
 import de.norm.events.scraper.elfsight.parseElfsightDate
 import de.norm.events.scraper.elfsight.parseElfsightEventNodes
 import de.norm.events.scraper.headlinersFromTitle
+import de.norm.events.scraper.htmlParagraphText
 import de.norm.events.scraper.isFestivalTitle
 import de.norm.events.scraper.parseTime
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -103,7 +103,7 @@ class NeueZukunftApiScraper {
 
         return ScrapedEvent(
             title = title,
-            description = elfsightDescriptionText(node.description),
+            description = htmlParagraphText(node.description),
             eventType = eventType,
             eventDate = eventDate,
             startTime = startTime,

@@ -1,5 +1,6 @@
 package de.norm.events.scraper
 
+import org.jsoup.Jsoup
 import org.jsoup.parser.Parser
 
 // The string readers every scraper needs, whatever markup or payload it reads. The DOM helpers
@@ -34,3 +35,23 @@ val WHITESPACE = Regex("""\s+""")
 
 /** Length of the leading `HH:mm` a venue prefixes to a longer clock string (`HH:mm:ss`). */
 const val HH_MM_LENGTH = 5
+
+/**
+ * Flattens an HTML body into plain text, one paragraph per line: `<br>` and closing block tags
+ * become newlines before the remaining tags are stripped, then blank lines are collapsed. `null`
+ * for a missing or empty body. For a JSON payload that carries its text as HTML (Elfsight, radar).
+ */
+fun htmlParagraphText(html: String?): String? {
+    val raw = html.blankToNull() ?: return null
+    val withBreaks = raw.replace(BLOCK_BREAK_PATTERN, "\n")
+    return Jsoup
+        .parse(withBreaks)
+        .wholeText()
+        .lines()
+        .map { it.trim() }
+        .filter { it.isNotEmpty() }
+        .joinToString("\n")
+        .blankToNull()
+}
+
+private val BLOCK_BREAK_PATTERN = Regex("""(?i)<br\s*/?>|</div>|</p>""")

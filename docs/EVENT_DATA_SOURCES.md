@@ -22,10 +22,10 @@ repairing live in the [issue tracker](https://github.com/enorm-labs/event-junkie
 
 | Status                              | Meaning                                                                              | Count |
 | ----------------------------------- | ------------------------------------------------------------------------------------ | ----: |
-| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |    88 |
+| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |    91 |
 | 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |    13 |
-| ⛔ [Blocked](#-blocked--deferred)   | Website analyzed, but no usable listings (no programme page, JS-only, or too sparse) |   108 |
-| ❓ [Unanalyzed](#-not-analyzed-yet) | URL recorded, but the website still needs a first look                               |    26 |
+| ⛔ [Blocked](#-blocked--deferred)   | Website analyzed, but no usable listings (no programme page, JS-only, or too sparse) |   107 |
+| ❓ [Unanalyzed](#-not-analyzed-yet) | URL recorded, but the website still needs a first look                               |    24 |
 
 "Website analyzed" also means the [data model](DATA_MODEL.md) was checked against that source, and no source needed a
 schema change.
@@ -34,6 +34,7 @@ schema change.
 
 | Name                             | URL                                                         | Type         | Comment                                                |
 | -------------------------------- | ----------------------------------------------------------- | ------------ | ------------------------------------------------------ |
+| Abstand                          | https://radar.squat.net/en/node/1608                        | Bar          | radar group API; bands only in prose                   |
 | ÆDEN                             | https://aedenberlin.com/                                    | Techno Club  | WordPress; /events → month pages; no prices            |
 | Admiralspalast                   | https://www.admiralspalast.theater/                         | Theater      | Contao; one event per performance row; no prices       |
 | Alte Kantine Kulturbrauerei      | https://alte-kantine.eu/                                    | Concert Hall |                                                        |
@@ -54,6 +55,7 @@ schema change.
 | Cosmic Comedy Club               | https://comedyclubberlin.com/wp-json/tribe/events/v1/events | Comedy Club  | The Events Calendar REST API; cursor-paged; no prices  |
 | Crack Bellmer                    | https://www.crackbellmer.de/program/this-month              | Bar          | Webflow; month tabs filter one list; no prices         |
 | Der Weiße Hase                   | https://derweissehase.club/events                           | Club         | Contao; invalid `<p>` nesting; RA ticket links         |
+| Drugstore                        | https://drugstore-berlin.de/                                | Other        | radar group API; bands only in prose                   |
 | Duncker Club                     | https://www.dunckerclub.de/                                 | Club         |                                                        |
 | Eschschloraque Rümschrümp        | https://www.eschschloraque.de/                              | Bar          | Drupal 7; front page = full nodes; RDFa datetimes      |
 | Festsaal Kreuzberg               | https://festsaal-kreuzberg.de/de                            | Concert Hall | Nuxt/Wagtail SSR; `ld+json` empty; no prices           |
@@ -72,6 +74,7 @@ schema change.
 | Kantine am Berghain              | https://www.berghain.berlin/de/program/kantine-am-berghain/ | Concert Hall | Shares BERGHAIN importer                               |
 | Kater                            | https://www.katerclub.de/                                   | Techno Club  | Homepage programme; ___ floor rules mark lineups       |
 | Klunkerkranich                   | https://klunkerkranich.org/events/                          | Bar          | WordPress; ISO date in slug; ~10-day horizon           |
+| KØPI                             | https://koepi137.net/                                       | Club         | radar group API; bill read from the description        |
 | Kulturhaus Insel Berlin          | https://www.inselberlin.de/                                 | Concert Hall | Gatsby static-query JSON; times in the blurb           |
 | Kulturhaus Peter Edel            | https://www.peteredel.de/events/                            | Concert Hall | Umbraco grid; month heading carries the year           |
 | LARK                             | https://larkberlin.com/events/                              | Club         | WP REST + ACF; post date is the event date             |
@@ -428,9 +431,8 @@ the empty Next.js payload rather than the WAF, and a 403 is not evidence that a 
 | Badenscher Hof Jazzclub          | https://www.badenscher-hof.de/                 | Club         | Duda one-pager; programme only as monthly PNG images      | Site change                |
 | Mokum                            | —                                              | Bar          | No own site; Facebook only                                | Site change                |
 | Komplex Berlin                   | https://komplex.berlin/                        | Other        | Adobe Portfolio rental site; no programme                 | Site change / manual entry |
-| Erreichbar                       | —                                              | Other        | No own site; radar.squat.net group 6653 only              | Radar reader (#2166)       |
-| Zielona Góra                     | —                                              | Bar          | No own site; radar.squat.net group 1746 only              | Radar reader (#2166)       |
-| Abstand                          | —                                              | Bar          | No own site; radar.squat.net group 1608 only              | Radar reader (#2166)       |
+| Erreichbar                       | —                                              | Other        | radar only; one fortnightly punk bar night                | Scope decision             |
+| Zielona Góra                     | —                                              | Bar          | radar only; anniversary nights, no running programme      | More events                |
 
 ## ❓ Not analyzed yet
 
@@ -438,7 +440,7 @@ New candidates land here first. Check for a server-rendered programme, then move
 [Ready](#-ready-to-implement) or [Blocked](#-blocked--deferred). A row belongs here only until someone opens it — the
 URL is recorded, nothing more.
 
-Every row below came from a sweep on 2026-09-30. The first 21 came from tipBerlin, and the last five from
+Every row below came from a sweep on 2026-09-30. The first 21 came from tipBerlin, and the last three from
 radar.squat.net. The URL was confirmed to answer, and nothing else was checked. A venue's type is a first guess.
 Correct it against the venue's own site when the row is opened.
 
@@ -467,15 +469,14 @@ Correct it against the venue's own site when the row is opened.
 | Renaissance-Theater               | https://renaissance-theater.de/spielplan/                 | Theater      |
 | Jugendclub Café Köpenick          | https://www.cafe-hdjk.de/                                 | Club         |
 | Sama32                            | https://www.sama32.squat.net/                             | Bar          |
-| Køpi                              | https://koepi137.net/                                     | Club         |
 | KuBiZ                             | https://www.kubiz-wallenberg.de/                          | Other        |
-| Drugstore                         | https://drugstore-berlin.de/veranstaltungen/              | Other        |
 
 WABE's own building is closed for renovation. Its events run at Schönfließer Str. 7 for now. Kühlspot has no programme
 page, and its events are a section of the home page.
 
-The five radar rows each post their programme to their own radar.squat.net group too, and so does Baiz. Look at the
-venue's own site first. If it is thin, the radar reader in #2166 is the fallback.
+The three radar rows each post their programme to their own radar.squat.net group too, and so does Baiz. Look at the
+venue's own site first. If it is thin, `scraper/radar/` reads the group. On radar, Café Köpenick posts only its Open Jam
+and Sama32 mostly karaoke nights, so neither group is a programme on its own.
 
 Where candidates come from, and what is deliberately left out:
 
@@ -500,8 +501,8 @@ Where candidates come from, and what is deliberately left out:
   the events of radar.squat.net, and an Anubis proof-of-work wall protects its HTML. Do not scrape it. The radar JSON
   API `radar.squat.net/api/1.2/search/events.json` is outside the wall, and radar invites reuse. The `music-concert`
   and `party` categories held 220 Berlin events at about 50 locations. 159 of them came from the venue's own radar
-  group, and those groups gave the eight new rows. The other 61 came only through the Stressfaktor group, at one-off
-  locations. Schokoladen, Loge, Supamolly, SO36, Clash, Neue Zukunft, ausland and ://about blank were already
+  group, and those groups gave the eight new rows. KØPI, Abstand and Drugstore import through the radar reader
+  (#2166). The other 61 came only through the Stressfaktor group, at one-off locations. Schokoladen, Loge, Supamolly, SO36, Clash, Neue Zukunft, ausland and ://about blank were already
   recorded.
 
 **Excluded on purpose, so a later sweep does not re-litigate them.** An RA venue with a single event in the window,
