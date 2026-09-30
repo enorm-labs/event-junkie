@@ -19,6 +19,7 @@ import de.norm.events.scraper.parseGermanDate
 import de.norm.events.scraper.parseIsoDate
 import de.norm.events.scraper.parseLabelledPrices
 import de.norm.events.scraper.parseTime
+import de.norm.events.scraper.promoterFromCredit
 import de.norm.events.scraper.stripRelocationPrefix
 import de.norm.events.scraper.textAt
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -115,16 +116,11 @@ class MikropolDetailPageScraper {
         listOfNotNull(
             content
                 .textAt("div.single-event div.promoter")
-                ?.replace(PRESENTS_SUFFIX, "")
-                ?.trim()
-                ?.takeIf { it.isNotBlank() }
+                .let(::promoterFromCredit)
         )
 
     private companion object {
         /** The Events-Manager sold-out badge text (`Ausverkauft`). */
         private const val SOLD_OUT_TEXT = "ausverkauft"
-
-        /** The billing frame the venue appends to a promoter's name. */
-        private val PRESENTS_SUFFIX = Regex("""\s*(?:presents|pr(?:ä|ae)sentiert)\s*:?\s*$""", RegexOption.IGNORE_CASE)
     }
 }

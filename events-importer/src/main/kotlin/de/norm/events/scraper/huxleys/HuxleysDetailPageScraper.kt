@@ -16,6 +16,7 @@ import de.norm.events.scraper.labelledClock
 import de.norm.events.scraper.parseIsoDate
 import de.norm.events.scraper.parseLabelledPrices
 import de.norm.events.scraper.parseTime
+import de.norm.events.scraper.promoterFromCredit
 import de.norm.events.scraper.textAt
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
@@ -106,9 +107,7 @@ class HuxleysDetailPageScraper {
     ): List<String> =
         document
             .textAt(".promoter")
-            ?.replace(PROMOTER_CREDIT_SUFFIX, "")
-            ?.trim()
-            ?.takeIf { it.isNotBlank() }
+            .let(::promoterFromCredit)
             ?.let { listOf(it) }
             ?: parseTaxonomy(article, PROMOTER_CLASS_PREFIX)
 
@@ -171,9 +170,6 @@ class HuxleysDetailPageScraper {
          * a domain-shaped term mangles it (`laut-de` → "Laut De"), and the agency is what a user recognises.
          */
         const val PROMOTER_CLASS_PREFIX = "promoters-"
-
-        /** The trailing "presents" / "präsentiert" verb on the hero's promoter credit. */
-        val PROMOTER_CREDIT_SUFFIX = Regex("""\s*(?:presents?|präsentiert|pres\.)\s*$""", RegexOption.IGNORE_CASE)
 
         /** The suffix WordPress appends to every document title. */
         const val SITE_TITLE_SUFFIX = " - Huxleys Neue Welt"

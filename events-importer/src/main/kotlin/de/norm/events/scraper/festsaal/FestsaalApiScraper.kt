@@ -4,6 +4,7 @@ import de.norm.events.event.EventType
 import de.norm.events.scraper.DJ_SET_PARTY_KEYWORDS
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.LogFields
+import de.norm.events.scraper.PRESENTED_BY_WORDS
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.blankToNull
@@ -391,4 +392,4 @@ private data class FestsaalImage(
 private const val TEXT_ITEM = "item_text"
 
 /** A heading that introduces the partner logos: `präsentiert von`, `presented by`. */
-private val PRESENTED_BY_HEADING = Regex("""(?:präsentiert\s+von|presented\s+by)\s*:?""", RegexOption.IGNORE_CASE)
+private val PRESENTED_BY_HEADING = Regex("""(?:$PRESENTED_BY_WORDS)\s*:?""", RegexOption.IGNORE_CASE)

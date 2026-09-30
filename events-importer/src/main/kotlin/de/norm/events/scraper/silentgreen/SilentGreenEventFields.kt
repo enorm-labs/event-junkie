@@ -1,6 +1,7 @@
 package de.norm.events.scraper.silentgreen
 
 import de.norm.events.event.EventType
+import de.norm.events.scraper.PRESENTS_VERBS
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.inferUnmarkedTitleType
@@ -141,7 +142,7 @@ private val PRESENTER_SEPARATOR = Regex("""\s*[,&]\s*""")
 
 /** A `"<host> presents/präsentiert "` lead-in, or the venue presenting its own programme. */
 private val PRESENTED_BY_PREFIX =
-    Regex("""^(?:silent\s+green\s+pres\.|.{2,60}?\s+(?:presents|präsentiert))\s+""", RegexOption.IGNORE_CASE)
+    Regex("""^(?:silent\s+green\s+pres\.|.{2,60}?\s+(?:$PRESENTS_VERBS))\s+""", RegexOption.IGNORE_CASE)
 
 /** A `"<series>: "` lead-in — no colon or `+` inside it, so only the outermost one is taken. */
 private val SERIES_PREFIX = Regex("""^[^:+,–—]{2,60}(?::|\s[–—])\s+""")

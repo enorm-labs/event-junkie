@@ -3,6 +3,7 @@ package de.norm.events.scraper.columbiatheater
 import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.PRESENTED_BY_WORDS
 import de.norm.events.scraper.SUPPORT_LABELS
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
@@ -250,7 +251,7 @@ private fun parseSupportRow(row: String): List<ScrapedArtist> {
 }
 
 /** The German intro before the media presenters, e.g. "präsentiert von Impericon". */
-private val PRESENTER_INTRO = Regex("""^\s*präsentiert\s+von\s+""", RegexOption.IGNORE_CASE)
+private val PRESENTER_INTRO = Regex("""^\s*(?:$PRESENTED_BY_WORDS)\s+""", RegexOption.IGNORE_CASE)
 
 /**
  * Media presenters from a detail page's `.header-promoters` line ("präsentiert von DIFFUS,

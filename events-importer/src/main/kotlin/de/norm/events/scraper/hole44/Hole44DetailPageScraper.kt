@@ -12,6 +12,7 @@ import de.norm.events.scraper.parseEventStatus
 import de.norm.events.scraper.parseGermanDate
 import de.norm.events.scraper.parseIsoDate
 import de.norm.events.scraper.parseTime
+import de.norm.events.scraper.promoterFromCredit
 import de.norm.events.scraper.stringOrNull
 import de.norm.events.scraper.textAt
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -127,15 +128,8 @@ private fun detailValue(
         .firstOrNull { it.ownText().contains(label, ignoreCase = true) }
         ?.textAt("span")
 
-/** Trailing "presents" / "präsentiert" credit stripped from a `.event-promoter` label to leave the promoter name. */
-private val PROMOTER_CREDIT_SUFFIX = Regex("""\s*(?:presents?|präsentiert|pres\.)\s*$""", RegexOption.IGNORE_CASE)
-
 /**
  * The promoter from the `.event-promoter` label ("Trinity Music presents" → "Trinity Music"),
  * or empty when none is shown; the trailing "presents"/"präsentiert" credit is stripped.
  */
-private fun parsePromoter(content: Element): List<String> {
-    val raw = content.textAt(".event-promoter") ?: return emptyList()
-    val name = raw.replace(PROMOTER_CREDIT_SUFFIX, "").trim()
-    return listOfNotNull(name.takeIf { it.isNotBlank() })
-}
+private fun parsePromoter(content: Element): List<String> = listOfNotNull(promoterFromCredit(content.textAt(".event-promoter")))
