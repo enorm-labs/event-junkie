@@ -164,6 +164,17 @@ class BadehausDetailPageScraperTest {
     }
 
     @Test
+    fun `reads a 12-hour doors and start time written without a space`() {
+        // The Swag Jam: "Door open: 8:00pm / Show starts: 8:30pm".
+        val url = "https://badehaus-berlin.com/events/the-swag-jam-132/"
+        val event = scraper.scrape(fixture("badehaus-detail-twelve-hour-no-space.html", url), url)
+        event.shouldNotBeNull()
+
+        event.doorsTime shouldBe LocalTime.of(20, 0)
+        event.startTime shouldBe LocalTime.of(20, 30)
+    }
+
+    @Test
     fun `reads a Concert category as a concert`() {
         val url = "https://badehaus-berlin.com/events/gauchito-club/"
         val event = scraper.scrape(fixture("badehaus-detail-concert-category.html", url), url)
