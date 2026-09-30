@@ -6,7 +6,7 @@
 floor and the set times. Every event page that shows this data links to sisy.fan as the source. The Sisyphos source runs every two hours. It reads sisy.fan
 only from Friday 22:00 to Sunday 04:00, Berlin time. A weekend that the ticket shop also sells is one event, not two.**
 
-**Not implemented yet.** [#2187](https://github.com/enorm-labs/event-junkie/issues/2187) implements it.
+**Implemented in [#2187](https://github.com/enorm-labs/event-junkie/issues/2187) on 2026-09-30.**
 
 **Does not supersede anything.** [ADR-007](ADR-007_WEB_SCRAPING_STRATEGY.md) decided how a page is fetched and parsed. It did not decide which kinds of
 site may be a source. [ADR-008](ADR-008_IMPORT_JOB_SCHEDULING.md) decided that a source runs on a fixed interval. This ADR keeps the scheduler as it
