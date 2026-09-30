@@ -76,6 +76,7 @@ says so.
 | `GOLDEN_GATE`         | `EVENT_TYPE`       | the club emits no category at all and programmes nothing but DJ nights, so the type is fixed rather than inferred                                | —     |
 | `GOLDEN_GATE`         | `PER_EVENT_PAGE`   | there is no custom `event` post type in the WordPress REST API and no structured data; the single rendered page is the source                    | —     |
 | `GOLDEN_GATE`         | `PRICE`            | the club sells at the door and prints no figure on its programme                                                                                 | —     |
+| `GRETCHEN`            | `DESCRIPTION`      | the text is only on each night's detail page; the import reads the homepage and the ticket popups, not those pages                               | —     |
 | `HAVANNA`             | `EVENT_DATE`       | the venue publishes no dated programme: its three resident nights carry only a weekday, so occurrences are generated from the weekly schedule    | —     |
 | `HEIDEGLUEHEN`        | `PER_EVENT_PAGE`   | the site has no per-event pages and no archive; one rich-text block lists the month's Saturdays and is replaced wholesale                        | —     |
 | `HEIDEGLUEHEN`        | `PRICE`            | the club sells at the door and prints no figure on its programme                                                                                 | —     |
@@ -215,4 +216,4 @@ says so.
 
 These publish everything the model stores, as of the last review:
 
-`ALTE_KANTINE`, `ASTRA`, `BERGHAIN`, `CASSIOPEIA`, `COLUMBIA_THEATER`, `GRETCHEN`, `HEIMATHAFEN`, `HOLE44`, `LIDO`, `MADAME_CLAUDE`, `MATRIX`, `METROPOL`, `MODUS`, `PRIVATCLUB`, `QUASIMODO`, `SCHOKOLADEN`, `TEMPODROM`, `THEATER_IM_DELPHI`, `UBER_ARENA`, `UBER_EATS_MUSIC_HALL`, `URANIA`, `ZITADELLE`
+`ALTE_KANTINE`, `ASTRA`, `BERGHAIN`, `CASSIOPEIA`, `COLUMBIA_THEATER`, `HEIMATHAFEN`, `HOLE44`, `LIDO`, `MADAME_CLAUDE`, `MATRIX`, `METROPOL`, `MODUS`, `PRIVATCLUB`, `QUASIMODO`, `SCHOKOLADEN`, `TEMPODROM`, `THEATER_IM_DELPHI`, `UBER_ARENA`, `UBER_EATS_MUSIC_HALL`, `URANIA`, `ZITADELLE`
