@@ -812,7 +812,7 @@ Free from the framework: JVM memory and GC, HTTP server request rate/latency/sta
 | `importer.events.written`                      | Counter, tagged `source`, `operation` | inserted / updated / skipped                                                       |
 | `importer.events.dropped`                      | Counter, tagged `source`, `reason`    | past / duplicate / unresolved_date / slug_conflict — **what a run threw away**     |
 | `importer.scrape.failures`                     | Counter, tagged `source`, `reason`    | Distinguishes HTTP 403 from a parse failure                                        |
-| `importer.source.last_success`                 | Gauge, tagged `source`                | Age of the last good run; alert past ~3× its schedule                              |
+| `importer.source.last_success`                 | Gauge, tagged `source`                | Age of the last good run; also tagged `known_blocked` (#2201)                      |
 | `importer.source.has_succeeded`                | Gauge, tagged `source`                | 1/0 — **exists for a source that has never worked**, which the row above does not  |
 | `importer.source.running`                      | Gauge                                 | Catches the ADR-008 `RUNNING`-forever state a restart can strand                   |
 | `importer.sources.failed{reason}`              | Gauge                                 | Sources currently FAILED, per reason, read from the row — one venue's DNS or ours  |
@@ -874,6 +874,9 @@ Free from the framework: JVM memory and GC, HTTP server request rate/latency/sta
   `importer.source.days_since_future_event` is today minus the source's newest event date, re-read from the `event` table every tick. It is a floor —
   `ej-source-quiet` fires past 30 days — and the summer-break objection is answered by its `known_quiet` tag. `KnownQuietSource.kt` in the importer
   names each venue checked by hand, with a date and a reason. The rule selects `known_quiet="false"`. Delete the entry when the venue publishes again.
+- **A source whose site refuses us, by a block we accepted, keeps an alert with a longer leash** (#2201). `KnownBlockedSource.kt` names it, and
+  `importer.source.last_success` carries `known_blocked="true"`. `ej-importer-stale` selects `known_blocked="false"`. `ej-importer-stale-blocked` fires
+  for a marked source after 8 days, because such a source must still succeed by its other route. Delete the entry when the block is lifted.
 - **A 304 counts as a success**, for both the column and the gauge. The request went out, the venue answered, and the conditional headers did their job.
   Treating it as "no success" would make a stable venue look broken after three quiet days.
 - **A venue forbidding us is a decision, and it gets its own rule** (`ej-robots-disallowed`, #796). `scrape.failures{reason="robots_disallowed"}` is the one

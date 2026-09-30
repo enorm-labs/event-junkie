@@ -23,7 +23,7 @@
           "queryType": "promql",
           "queries": [
             {
-              "query": "max((timestamp(max by (source) (importer_source_last_success)) - max by (source) (importer_source_last_success))) / 3600",
+              "query": "max((timestamp(max by (source) (importer_source_last_success{known_blocked=\"false\"})) - max by (source) (importer_source_last_success{known_blocked=\"false\"}))) / 3600",
               "vrlFunctionQuery": null,
               "customQuery": true,
               "fields": {
@@ -66,7 +66,7 @@
           "queryType": "promql",
           "queries": [
             {
-              "query": "sum((timestamp(max by (source) (importer_source_last_success)) - max by (source) (importer_source_last_success)) > bool 129600)",
+              "query": "sum((timestamp(max by (source) (importer_source_last_success{known_blocked=\"false\"})) - max by (source) (importer_source_last_success{known_blocked=\"false\"})) > bool 129600)",
               "vrlFunctionQuery": null,
               "customQuery": true,
               "fields": {
@@ -187,7 +187,7 @@
           "id": "p_stale_by_source",
           "type": "bar",
           "title": "Twenty stalest sources (hours)",
-          "description": "`topk` rather than `sort_desc`, which OpenObserve does not implement. Against a 24h interval, a flat band under 24 is health. One venue alone above it is a scraper to fix; all of them together is the importer or the database.",
+          "description": "`topk` rather than `sort_desc`, which OpenObserve does not implement. Against a 24h interval, a flat band under 24 is health. One venue alone above it is a scraper to fix; all of them together is the importer or the database. **`known_blocked=\"true\"` is a source whose site refuses us by an accepted block** \u2014 `KnownBlockedSource.kt` names it, and `ej-importer-stale-blocked` gives it 8 days, not 36 hours.",
           "config": {
             "show_legends": true,
             "decimals": 1
@@ -195,7 +195,7 @@
           "queryType": "promql",
           "queries": [
             {
-              "query": "topk(20, (timestamp(max by (source) (importer_source_last_success)) - max by (source) (importer_source_last_success)) / 3600)",
+              "query": "topk(20, (timestamp(max by (source, known_blocked) (importer_source_last_success)) - max by (source, known_blocked) (importer_source_last_success)) / 3600)",
               "vrlFunctionQuery": null,
               "customQuery": true,
               "fields": {

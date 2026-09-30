@@ -1,6 +1,7 @@
 package de.norm.events.scraper
 
 import io.kotest.matchers.doubles.shouldBeGreaterThan
+import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry
 import org.junit.jupiter.api.BeforeEach
@@ -279,6 +280,26 @@ class ImporterMetricsTest {
                 .gauge()!!
                 .value() shouldBe 1250.0
             registry.find("importer.source.running").gauge()!!.value() shouldBe 2.0
+        }
+
+        // The two stale rules select on `known_blocked`, so the tag is asserted by the string a rule would write (#2201).
+        @Test
+        fun `last_success carries whether the source is known to be blocked`() {
+            metrics.publishLastSuccess("busy", 1_780_000_000L)
+            metrics.publishLastSuccess("sisyphos", 1_780_000_000L)
+
+            registry
+                .find("importer.source.last_success")
+                .tag("source", "busy")
+                .tag("known_blocked", "false")
+                .gauge()
+                .shouldNotBeNull()
+            registry
+                .find("importer.source.last_success")
+                .tag("source", "sisyphos")
+                .tag("known_blocked", "true")
+                .gauge()
+                .shouldNotBeNull()
         }
 
         /**
