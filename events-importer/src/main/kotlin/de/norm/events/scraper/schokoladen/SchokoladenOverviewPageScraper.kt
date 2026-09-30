@@ -6,6 +6,7 @@ import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.WHITESPACE
 import de.norm.events.scraper.attrAt
 import de.norm.events.scraper.buildArtistsForEventType
+import de.norm.events.scraper.hasSoldOutMarker
 import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.mapEventType
 import de.norm.events.scraper.parseIsoDate
@@ -125,7 +126,7 @@ class SchokoladenOverviewPageScraper {
         subtitle: String?,
         info: Element?
     ): Boolean =
-        TITLE_NOTE.findAll(title).any { SOLD_OUT_NOTE.containsMatchIn(it.groupValues[1]) } ||
+        hasSoldOutMarker(title) ||
             SOLD_OUT_BANNER.containsMatchIn(subtitle.orEmpty()) ||
             info?.select(".event-description p")?.any { SOLD_OUT_BANNER.containsMatchIn(it.text()) } == true
 
@@ -274,9 +275,6 @@ class SchokoladenOverviewPageScraper {
 
         /** A quoted album after `w/`: `Angela Aux w/ "Das Nichts macht Kopien von sich selbst"` names a work, not an act. */
         private val QUOTED_WORK = Regex("""\s+w/\s*["„“][^"„“”]*["“”]""", RegexOption.IGNORE_CASE)
-
-        /** A sold-out note anywhere inside a [TITLE_NOTE]. */
-        private val SOLD_OUT_NOTE = Regex("""\b(?:ausverkauft|sold\s*out)\b""", RegexOption.IGNORE_CASE)
 
         /** The sold-out banner, at the start of the subtitle or of a description paragraph: "---> Ausverkauft / Sold Out / …". */
         private val SOLD_OUT_BANNER = Regex("""^\W*(?:ausverkauft|sold\s*out)\b""", RegexOption.IGNORE_CASE)

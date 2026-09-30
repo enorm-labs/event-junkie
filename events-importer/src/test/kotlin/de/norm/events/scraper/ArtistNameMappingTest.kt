@@ -1648,4 +1648,13 @@ class ArtistNameMappingTest {
         result.map { it.name to it.titleDerived } shouldBe listOf("The Adicts" to true, "Maid of Ace" to false, "Kaos" to false)
         ScrapedArtist("Die Nerven").titleDerived shouldBe false
     }
+
+    // #2103: a venue's sold-out marker is never billed as part of an act.
+    @Test
+    fun `headlinersFromTitle bills no sold-out marker`() {
+        headlinersFromTitle("!!AUSVERKAUFT!! Tim Vantol").map { it.name } shouldBe listOf("Tim Vantol")
+        headlinersFromTitle("SukOne [AUSVERKAUFT!]").map { it.name } shouldBe listOf("SukOne")
+        headlinersFromTitle("The Blood Arm + Please Louise [pre-sale sold out, 10 tix on the doors]").map { it.name } shouldBe
+            listOf("The Blood Arm", "Please Louise")
+    }
 }

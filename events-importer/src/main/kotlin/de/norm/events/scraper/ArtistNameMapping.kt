@@ -1259,8 +1259,8 @@ fun headlinersFromTitle(
     description: String? = null
 ): List<ScrapedArtist> {
     // The persistence boundary strips a cancellation from the title after the acts are built, so
-    // `Absage: The Act` must lose the marker here or bill it (#1560).
-    val title = stripTitleStatusMarker(rawTitle)
+    // `Absage: The Act` must lose the marker here or bill it (#1560), and so must `!!AUSVERKAUFT!! The Act` (#2103).
+    val title = stripTitleStatusMarker(stripSoldOutMarker(rawTitle))
     // A title led by a label's own name announces that label's event; nothing in it is an act.
     if (isLedByNonArtistLabel(title)) return emptyList()
     // Before the split, which would cut `Romeo + Juliet Film in Concert` into two acts.
