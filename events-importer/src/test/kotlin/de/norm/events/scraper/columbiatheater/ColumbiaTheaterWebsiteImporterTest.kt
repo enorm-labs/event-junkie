@@ -138,6 +138,15 @@ class ColumbiaTheaterWebsiteImporterTest {
         }
 
     @Test
+    fun `stores the destination a relocation notice names`() =
+        runTest {
+            val turbopaolo = event(importer.importEvents(overviewUrl), "20260928-turbopaolo")
+            val stored = turbopaolo.toEventEntity(venueId = 1L, venueSlug = "columbia-theater", eventSourceId = 1L)
+            stored.status shouldBe "RELOCATED"
+            stored.relocatedTo shouldBe "Cosmic Comedy Club"
+        }
+
+    @Test
     fun `degrades to overview data when a detail page is unavailable`() =
         runTest {
             // This event's detail page is not stubbed, so the merge falls back to the overview,

@@ -62,6 +62,7 @@ class ColumbiaTheaterDetailPageScraper {
         // ".header-date-prev" is the date a rescheduled show was moved *from* — never the event's own.
         val dateLine = content.textAt(".header-date:not(.header-date-prev)").orEmpty()
         val eventType = inferConcertVenueType(title)
+        val statusNotice = content.textAt("div.event-status")
 
         return ScrapedEvent(
             title = title,
@@ -75,7 +76,9 @@ class ColumbiaTheaterDetailPageScraper {
             sourceUrl = sourceUrl,
             sourceId = "${EventSource.COLUMBIA_THEATER.sourceIdPrefix}$slug",
             ticketUrl = content.hrefAt(".event-tickets .ticket-links a")?.let(::firstTicketUrl),
-            status = parseColumbiaTheaterStatus(content, content.textAt("div.event-status")),
+            status = parseColumbiaTheaterStatus(content, statusNotice),
+            // A relocation notice names the new house: "Das Konzert wurde ins METROPOL verlegt."
+            statusNote = statusNotice,
             artists = columbiaTheaterArtists(title, supportRows, eventType),
             promoters = parseColumbiaTheaterPresenters(content)
         )
