@@ -1,7 +1,9 @@
 package de.norm.events.scraper.huxleys
 
+import de.norm.events.scraper.DOORS_LABELS
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ISO_DATE_LENGTH
+import de.norm.events.scraper.START_LABELS
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
 import de.norm.events.scraper.attrAt
@@ -10,7 +12,7 @@ import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.inferConcertVenueType
-import de.norm.events.scraper.labelledTime
+import de.norm.events.scraper.labelledClock
 import de.norm.events.scraper.parseIsoDate
 import de.norm.events.scraper.parsePriceValue
 import de.norm.events.scraper.parseTime
@@ -76,8 +78,8 @@ class HuxleysDetailPageScraper {
             description = article.textAt(".event-content"),
             eventType = eventType,
             eventDate = parseIsoDate(slug.take(ISO_DATE_LENGTH)) ?: UNRESOLVED_EVENT_DATE,
-            doorsTime = parseTime(labelledTime(details, DETAIL_DOORS_LABEL)),
-            startTime = parseTime(labelledTime(details, DETAIL_START_LABEL)),
+            doorsTime = labelledClock(details, DOORS_LABELS),
+            startTime = labelledClock(details, START_LABELS),
             // The linked file is the full-size poster; the nested <img> is a scaled-down variant.
             imageUrl = article.hrefAt("a.event-image"),
             sourceUrl = sourceUrl,
@@ -181,12 +183,6 @@ class HuxleysDetailPageScraper {
 
         /** The sold-out badge text. */
         const val SOLD_OUT_TEXT = "ausverkauft"
-
-        /** The German doors label in the detail page's `Details` box. */
-        const val DETAIL_DOORS_LABEL = "Einlass"
-
-        /** The German start label in the detail page's `Details` box. */
-        const val DETAIL_START_LABEL = "Beginn"
 
         /** A `Details`-box line that states a price at all. */
         val PRICE_LINE = Regex("""\b(?:VVK|Vorverkauf|AK|Abendkasse)\b.*€""", RegexOption.IGNORE_CASE)

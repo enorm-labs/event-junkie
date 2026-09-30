@@ -1,7 +1,9 @@
 package de.norm.events.scraper.mikropol
 
+import de.norm.events.scraper.DOORS_LABELS
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ISO_DATE_LENGTH
+import de.norm.events.scraper.START_LABELS
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
 import de.norm.events.scraper.buildArtistsForEventType
@@ -11,7 +13,7 @@ import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.hasFreeEntryPhrase
 import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.inferConcertVenueType
-import de.norm.events.scraper.labelledTime
+import de.norm.events.scraper.labelledClock
 import de.norm.events.scraper.parseEventStatus
 import de.norm.events.scraper.parseGermanDate
 import de.norm.events.scraper.parseIsoDate
@@ -85,8 +87,8 @@ class MikropolDetailPageScraper {
                 parseIsoDate(slug.take(ISO_DATE_LENGTH))
                     ?: parseGermanDate(content.textAt("span.eventdates"))
                     ?: UNRESOLVED_EVENT_DATE,
-            doorsTime = parseTime(labelledTime(details, "Einlass")),
-            startTime = parseTime(labelledTime(details, "Beginn")),
+            doorsTime = labelledClock(details, DOORS_LABELS),
+            startTime = labelledClock(details, START_LABELS),
             imageUrl =
                 content.hrefAt("a.event-image")
                     ?: document.selectFirst("meta[property=og:image]")?.attr("content")?.takeIf { it.startsWith("http") },

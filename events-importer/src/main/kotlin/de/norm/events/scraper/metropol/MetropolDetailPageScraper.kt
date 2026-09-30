@@ -1,13 +1,16 @@
 package de.norm.events.scraper.metropol
 
+import de.norm.events.scraper.DOORS_LABELS
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ISO_DATE_LENGTH
+import de.norm.events.scraper.START_LABELS
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
 import de.norm.events.scraper.attrAt
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.hrefAt
+import de.norm.events.scraper.labelledClock
 import de.norm.events.scraper.mapEventType
 import de.norm.events.scraper.parseEventStatus
 import de.norm.events.scraper.parseIsoDate
@@ -15,6 +18,7 @@ import de.norm.events.scraper.stripRelocationPrefix
 import de.norm.events.scraper.textAt
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
+import java.time.LocalTime
 
 /**
  * Pure HTML parser for Metropol Berlin event detail pages (`/event/<iso-date-slug>`).
@@ -61,8 +65,8 @@ class MetropolDetailPageScraper {
             // The slug's ISO prefix is the canonical date; the sentinel lets the overview's rendered
             // German date backstop it via fillGapsFromOverview.
             eventDate = parseIsoDate(slug.take(ISO_DATE_LENGTH)) ?: UNRESOLVED_EVENT_DATE,
-            doorsTime = parseMetropolTime(labelledTime(timeLine, DOORS_LABEL)),
-            startTime = parseMetropolTime(labelledTime(timeLine, START_LABEL)),
+            doorsTime = labelledClock(timeLine, DOORS_LABELS)?.takeUnless { it == LocalTime.MIDNIGHT },
+            startTime = labelledClock(timeLine, START_LABELS)?.takeUnless { it == LocalTime.MIDNIGHT },
             imageUrl = parsePosterUrl(document),
             sourceUrl = sourceUrl,
             sourceId = "${EventSource.METROPOL.sourceIdPrefix}$slug",
@@ -109,21 +113,6 @@ class MetropolDetailPageScraper {
                 ?: document.attrAt(".event-image noscript img", "src")
         )?.takeIf { it.startsWith("http") }
 }
-
-/**
- * The time after [label] on the combined time line (`"Einlass: 19:00 // Beginn: 20:00"`, or
- * just `"Beginn: 20:00"` without doors). `null` when the label is absent.
- */
-private fun labelledTime(
-    timeLine: String?,
-    label: String
-): String? = Regex("""$label\s*:\s*(\d{1,2}:\d{2})""", RegexOption.IGNORE_CASE).find(timeLine.orEmpty())?.groupValues?.get(1)
-
-/** The venue's doors label on the detail page's time line. */
-private const val DOORS_LABEL = "Einlass"
-
-/** The venue's start label on the detail page's time line. */
-private const val START_LABEL = "Beginn"
 
 /** The `"… presents:"` suffix the venue appends to every promoter name. */
 private val PRESENTS_SUFFIX = Regex("""\s*presents\s*:\s*$""", RegexOption.IGNORE_CASE)

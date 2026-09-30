@@ -1,9 +1,13 @@
 package de.norm.events.scraper.badehaus
 
 import de.norm.events.event.EventStatus
+import de.norm.events.scraper.DOORS_LABELS
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.START_LABELS
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
+import de.norm.events.scraper.labelledClock
+import de.norm.events.scraper.labelledClockPattern
 import de.norm.events.scraper.mapEventType
 import de.norm.events.scraper.parseClock
 import de.norm.events.scraper.parseEventStatus
@@ -74,8 +78,8 @@ class BadehausDetailPageScraper {
             statusNote = notice.takeIf { status != EventStatus.SCHEDULED.name },
             eventDate = eventDate,
             eventType = mapEventType(document.selectFirst(".post-meta a[rel~=category]")?.text()),
-            doorsTime = EINLASS_PATTERN.find(metaText)?.let { parseClock(it.groupValues[1], it.groupValues[2]) },
-            startTime = BEGINN_PATTERN.find(metaText)?.let { parseClock(it.groupValues[1], it.groupValues[2]) },
+            doorsTime = labelledClock(metaText, DOORS_LABELS),
+            startTime = labelledClock(metaText, START_LABELS),
             priceNote = description?.let(::parseDonationNote),
             imageUrl = event.selectFirst(".single-event-image-wrap img")?.absUrl("src")?.takeIf { it.isNotBlank() },
             sourceUrl = sourceUrl,
@@ -94,7 +98,7 @@ class BadehausDetailPageScraper {
             .select(".em-event-single-content p, .em-event-single > p, .single-event-content p")
             .ifEmpty { event.select("p") }
             .map { it.text().trim() }
-            .filter { it.isNotBlank() && !EINLASS_PATTERN.containsMatchIn(it) && !BEGINN_PATTERN.containsMatchIn(it) }
+            .filter { it.isNotBlank() && !DOORS_LINE.containsMatchIn(it) && !START_LINE.containsMatchIn(it) }
             .distinct()
             .joinToString("\n")
             .takeIf { it.isNotBlank() }
@@ -164,24 +168,14 @@ class BadehausDetailPageScraper {
             .takeIf { it.isNotBlank() }
 
     private companion object {
+        /** A meta line that states the doors time ("Einlass: 19:00", "Doors: 19:00h"), dropped from the description. */
+        private val DOORS_LINE = labelledClockPattern(DOORS_LABELS)
+
+        /** A meta line that states the start time ("Beginn 20:00", "Quiz starts 20:00"), dropped from the description. */
+        private val START_LINE = labelledClockPattern(START_LABELS)
+
         /** A `DD.MM.YYYY` date. */
         private val DATE_PATTERN = Regex("""\d{2}\.\d{2}\.\d{4}""")
-
-        /**
-         * A clock and its optional English meridiem: "19:00", "11:30pm", "11:30 p.m.". The
-         * lookahead keeps a word that merely starts with "am"/"pm" out of the meridiem.
-         */
-        private const val CLOCK = """(\d{1,2}:\d{2})(?:\s*([ap])\.?\s?m\.?(?![a-z]))?"""
-
-        /** The doors time: "Einlass: 19:00", "Einlass 19:00" or, on the pages that label in English, "Doors: 19:00h" (#1497). */
-        private val EINLASS_PATTERN = Regex("""(?:Einlass|Doors):?\s*$CLOCK""", RegexOption.IGNORE_CASE)
-
-        /**
-         * The start time: "Beginn: 20:00", "Beginn 20:00", "Start 20:00h", "Start: 11:30 pm", and the
-         * venue's own phrasing for a recurring night, "Doors 19:30 / Quiz starts 20:00" — there the
-         * verb is the label, so the word is matched to its end (#1681).
-         */
-        private val BEGINN_PATTERN = Regex("""(?:Beginn\w*|Start\w*):?\s*$CLOCK""", RegexOption.IGNORE_CASE)
 
         /** A sentence about what to pay where no ticket is sold: "The event is donation-based.", "Spende erwünscht". */
         private val DONATION_MARKER = Regex("""\bdonation|\bspende""", RegexOption.IGNORE_CASE)

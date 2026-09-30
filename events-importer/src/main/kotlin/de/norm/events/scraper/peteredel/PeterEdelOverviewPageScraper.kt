@@ -2,7 +2,9 @@ package de.norm.events.scraper.peteredel
 
 import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
+import de.norm.events.scraper.DOORS_LABELS
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.START_LABELS
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.attrAt
 import de.norm.events.scraper.buildArtistList
@@ -10,6 +12,7 @@ import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.extractSupportFromSubtitle
 import de.norm.events.scraper.inferUnmarkedTitleType
 import de.norm.events.scraper.inferVenueFormatType
+import de.norm.events.scraper.labelledClock
 import de.norm.events.scraper.parseGermanMonthAbbreviation
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.parseTitleStatus
@@ -286,7 +289,7 @@ class PeterEdelOverviewPageScraper {
             val time = parseTime(it.groupValues[1])
             return time to time
         }
-        return parseTime(DOORS_TIME.find(info)?.groupValues?.get(1)) to parseTime(START_TIME.find(info)?.groupValues?.get(1))
+        return labelledClock(info, DOORS_LABELS) to labelledClock(info, START_LABELS)
     }
 
     /**
@@ -337,9 +340,6 @@ class PeterEdelOverviewPageScraper {
 
         /** `Beginn & Einlass: 18:00 Uhr` in either word order — one time for both. */
         private val COMBINED_TIME = Regex("""(?:Beginn|Einlass)\s*&\s*(?:Einlass|Beginn)\s*:\s*(\d{1,2}:\d{2})""", RegexOption.IGNORE_CASE)
-
-        private val DOORS_TIME = Regex("""Einlass\s*:\s*(\d{1,2}:\d{2})""", RegexOption.IGNORE_CASE)
-        private val START_TIME = Regex("""Beginn\s*:\s*(\d{1,2}:\d{2})""", RegexOption.IGNORE_CASE)
 
         /**
          * The promoter in a `Präsentiert von: Loft Concerts` credit, up to the next `Tickets:` or

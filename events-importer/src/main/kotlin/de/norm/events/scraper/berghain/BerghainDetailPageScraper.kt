@@ -1,11 +1,14 @@
 package de.norm.events.scraper.berghain
 
 import de.norm.events.event.EventType
+import de.norm.events.scraper.DOORS_LABELS
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.START_LABELS
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.imgSrcAt
+import de.norm.events.scraper.labelledClock
 import de.norm.events.scraper.parseGermanDate
 import de.norm.events.scraper.parsePriceValue
 import de.norm.events.scraper.parseTime
@@ -74,8 +77,8 @@ class BerghainDetailPageScraper {
             description = parseDescription(content),
             eventType = floorsToEventType(floors),
             eventDate = eventDate,
-            doorsTime = parseTime(BERGHAIN_DOORS_PATTERN.find(lineText)?.groupValues?.get(1)),
-            startTime = parseTime(BERGHAIN_START_PATTERN.find(lineText)?.groupValues?.get(1)),
+            doorsTime = labelledClock(lineText, DOORS_LABELS),
+            startTime = labelledClock(lineText, START_LABELS),
             genre = floorsToGenre(floors),
             imageUrl = content.imgSrcAt("figure img"),
             sourceUrl = sourceUrl,

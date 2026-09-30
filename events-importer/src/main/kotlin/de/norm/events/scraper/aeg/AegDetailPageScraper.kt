@@ -1,9 +1,11 @@
 package de.norm.events.scraper.aeg
 
+import de.norm.events.scraper.DOORS_LABELS
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
 import de.norm.events.scraper.extractEventSlug
+import de.norm.events.scraper.labelledClock
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.textAt
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -84,8 +86,5 @@ class AegDetailPageScraper {
      * The doors time from the `", Einlass 18:30 Uhr"` line, the only place one appears. `null`
      * when the page states none.
      */
-    private fun parseDoorsTime(text: String?): LocalTime? = parseTime(DOORS_PATTERN.find(text.orEmpty())?.groupValues?.get(1))
+    private fun parseDoorsTime(text: String?): LocalTime? = labelledClock(text, DOORS_LABELS)
 }
-
-/** The venues' `"Einlass HH:mm Uhr"` doors line. */
-private val DOORS_PATTERN = Regex("""Einlass\s+(\d{1,2}:\d{2})""", RegexOption.IGNORE_CASE)

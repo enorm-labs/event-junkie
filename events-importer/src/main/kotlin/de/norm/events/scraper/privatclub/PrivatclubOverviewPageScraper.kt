@@ -1,11 +1,14 @@
 package de.norm.events.scraper.privatclub
 
+import de.norm.events.scraper.DOORS_LABELS
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.START_LABELS
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.attrAt
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.jsonLdNodes
+import de.norm.events.scraper.labelledClock
 import de.norm.events.scraper.mapEventType
 import de.norm.events.scraper.parseEventStatus
 import de.norm.events.scraper.parseIsoDate
@@ -281,13 +284,10 @@ class PrivatclubOverviewPageScraper(
     ): Pair<LocalTime?, LocalTime?> {
         val zeitText = detail?.textAt(".zeit_einlass").orEmpty()
 
-        val doorsMatch = EINLASS_PATTERN.find(zeitText)
-        val startMatch = BEGINN_PATTERN.find(zeitText)
-
         val doorsTime =
-            parseTime(doorsMatch?.groupValues?.get(1))
+            labelledClock(zeitText, DOORS_LABELS)
                 ?: parseTime(header.textAt(".einlass")) // Fallback: header shows doors time
-        val startTime = parseTime(startMatch?.groupValues?.get(1))
+        val startTime = labelledClock(zeitText, START_LABELS)
 
         return doorsTime to startTime
     }
@@ -431,12 +431,6 @@ class PrivatclubOverviewPageScraper(
     companion object {
         /** Day number from "Sa. 16." */
         private val DAY_NUMBER_PATTERN = Regex("""\d+""")
-
-        /** "Einlass: HH:mm" */
-        private val EINLASS_PATTERN = Regex("""Einlass:\s*(\d{1,2}:\d{2})""")
-
-        /** "Beginn: HH:mm" */
-        private val BEGINN_PATTERN = Regex("""Beginn:\s*(\d{1,2}:\d{2})""")
 
         /** First price value ("25€", "25,50 €", "25.00€"). */
         private val PRICE_PATTERN = Regex("""(\d+(?:[.,]\d{1,2})?)\s*€""")

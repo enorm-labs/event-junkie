@@ -1,7 +1,9 @@
 package de.norm.events.scraper.huxleys
 
+import de.norm.events.scraper.DOORS_LABELS
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ISO_DATE_LENGTH
+import de.norm.events.scraper.START_LABELS
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
 import de.norm.events.scraper.attrAt
@@ -9,7 +11,7 @@ import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.inferConcertVenueType
-import de.norm.events.scraper.labelledTime
+import de.norm.events.scraper.labelledClock
 import de.norm.events.scraper.parseEventStatus
 import de.norm.events.scraper.parseIsoDate
 import de.norm.events.scraper.parseTime
@@ -87,8 +89,8 @@ class HuxleysOverviewPageScraper {
             // The `.date` cell prints day and month abbreviation but no year; the slug's ISO prefix is
             // the only per-card date that states one.
             eventDate = parseIsoDate(slug.take(ISO_DATE_LENGTH)) ?: UNRESOLVED_EVENT_DATE,
-            doorsTime = parseTime(labelledTime(times, DOORS_LABEL)),
-            startTime = parseTime(labelledTime(times, START_LABEL)),
+            doorsTime = labelledClock(times, DOORS_LABELS),
+            startTime = labelledClock(times, START_LABELS),
             sourceUrl = sourceUrl,
             sourceId = "${EventSource.HUXLEYS.sourceIdPrefix}$slug",
             soldOut = card.hasClass(SOLD_OUT_CLASS),
@@ -104,12 +106,6 @@ internal const val EVENT_PATH_PREFIX = "/event/"
 
 /** The CSS class on a sold-out card's `li` (and its badge text). */
 private const val SOLD_OUT_CLASS = "Ausverkauft"
-
-/** The German doors label on the card's time line ("… | Einlass: 19:00"). */
-private const val DOORS_LABEL = "Einlass"
-
-/** The German start label on the card's time line ("Beginn: 20:00 | …"). */
-private const val START_LABEL = "Beginn"
 
 /**
  * A card's status from all three places the venue expresses one: the status word as a CSS

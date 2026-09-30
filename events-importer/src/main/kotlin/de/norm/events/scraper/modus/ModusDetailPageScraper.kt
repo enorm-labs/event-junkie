@@ -1,5 +1,6 @@
 package de.norm.events.scraper.modus
 
+import de.norm.events.scraper.DOORS_LABELS
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
@@ -9,6 +10,7 @@ import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.imgSrcAt
 import de.norm.events.scraper.inferConcertVenueType
+import de.norm.events.scraper.labelledClock
 import de.norm.events.scraper.parseEventStatus
 import de.norm.events.scraper.parseGermanDate
 import de.norm.events.scraper.parseTime
@@ -81,14 +83,8 @@ class ModusDetailPageScraper {
      * while a `"Start"` / `"Beginn"` line is ignored because the `h2` already carries the start in
      * markup. `null` when the prose names no doors time, the common case.
      */
-    private fun parseDoorsFromDescription(description: String?): LocalTime? {
-        val match = DOORS_PATTERN.find(description.orEmpty()) ?: return null
-        return parseTime(match.groupValues[1])
-    }
+    private fun parseDoorsFromDescription(description: String?): LocalTime? = labelledClock(description, DOORS_LABELS)
 }
-
-/** The doors line venues write into Modus's description prose (`"Doors: 19:30"`, `"Einlass 19:30"`). */
-private val DOORS_PATTERN = Regex("""(?:doors|einlass)\s*:?\s*(\d{1,2}:\d{2})""", RegexOption.IGNORE_CASE)
 
 /** The separator the detail `h2` puts between the date and the start time (`"24.09.2026 - 20:00"`). */
 private const val DATE_TIME_SEPARATOR = " - "

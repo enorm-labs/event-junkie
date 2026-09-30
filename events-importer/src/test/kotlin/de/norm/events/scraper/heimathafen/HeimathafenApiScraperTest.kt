@@ -215,6 +215,20 @@ class HeimathafenApiScraperTest {
     }
 
     @Test
+    fun `reads a single-digit doors hour and a doubled qualifier`() {
+        fun doorsOf(note: String) =
+            scraper
+                .scrape(payloadWith("""{"performance_date_time":"11/27/2026 8:00 p.m.","performance_description":"$note"}"""))
+                .events
+                .single()
+                .doorsTime
+
+        // The old HH:mm parse dropped a one-digit hour.
+        doorsOf("Einlass ab 9:00 Uhr") shouldBe LocalTime.of(9, 0)
+        doorsOf("Einlass ab ca. 18:45 (Studio)") shouldBe LocalTime.of(18, 45)
+    }
+
+    @Test
     fun `flags a free-entry performance from its status`() {
         val gossip = event("30866-2026-09-15-1830")
         gossip.free shouldBe true

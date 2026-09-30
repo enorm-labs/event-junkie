@@ -2,8 +2,10 @@ package de.norm.events.scraper.insel
 
 import de.norm.events.event.EventType
 import de.norm.events.scraper.BERLIN
+import de.norm.events.scraper.DOORS_LABELS
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FREE_ENTRY_PHRASE
+import de.norm.events.scraper.START_LABELS
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.blankToNull
@@ -13,6 +15,8 @@ import de.norm.events.scraper.hasFreeEntryPhrase
 import de.norm.events.scraper.headlinersFromTitle
 import de.norm.events.scraper.inferConcertVenueType
 import de.norm.events.scraper.isNonArtistName
+import de.norm.events.scraper.labelledClock
+import de.norm.events.scraper.labelledClockPattern
 import de.norm.events.slug.SlugGenerator
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.Jsoup
@@ -193,8 +197,8 @@ class InselApiScraper(
         wholeDay: Boolean
     ): Pair<LocalTime?, LocalTime?> {
         if (wholeDay) return null to null
-        val doors = lines.firstNotNullOfOrNull { DOORS_PATTERN.find(it)?.let(::toLocalTime) }
-        val start = lines.firstNotNullOfOrNull { START_PATTERN.find(it)?.let(::toLocalTime) }
+        val doors = lines.firstNotNullOfOrNull { labelledClock(it, DOORS_LABELS) }
+        val start = lines.firstNotNullOfOrNull { labelledClock(it, START_LABELS) }
         return doors to (start ?: fallbackStart.takeIf { doors == null })
     }
 
@@ -318,16 +322,6 @@ private val SOLD_OUT_PREFIX = Regex("""^\s*!*\s*(?:sold\s*out|ausverkauft)\s*!*\
 /** The venue's German sold-out notice, written as its own description line. */
 private val SOLD_OUT_LINE_PATTERN = Regex("""\bausverkauft\b""", RegexOption.IGNORE_CASE)
 
-/** `Einlass 19.00 Uhr` / `Einlass: 19 Uhr` — the doors time; the minutes are optional. */
-private val DOORS_PATTERN = Regex("""Einlass\s*:?\s*(\d{1,2})(?:[.,:](\d{2}))?\s*Uhr""", RegexOption.IGNORE_CASE)
-
-/** `Beginn 20.00 Uhr` / `Beginn: 20 Uhr` — the start time; the venue also mistypes the separator as a comma. */
-private val START_PATTERN = Regex("""Beginn\s*:?\s*(\d{1,2})(?:[.,:](\d{2}))?\s*Uhr""", RegexOption.IGNORE_CASE)
-
-/** Builds the [LocalTime] a [DOORS_PATTERN] / [START_PATTERN] match names, or null when the hour is out of range. */
-private fun toLocalTime(match: MatchResult): LocalTime? =
-    runCatching { LocalTime.of(match.groupValues[1].toInt(), match.groupValues[2].ifBlank { "0" }.toInt()) }.getOrNull()
-
 /**
  * The support billing and the acts after it: `Support: Alles Karo`, `+ support: Karwendel`, the
  * run-together `Marlin BeachSupport: Mellow Ma`. The colon is required: a bare `support`
@@ -381,8 +375,8 @@ private fun isClosedFunction(
 private val METADATA_LINE_PATTERNS =
     listOf(
         PROMOTER_PATTERN,
-        DOORS_PATTERN,
-        START_PATTERN,
+        labelledClockPattern(DOORS_LABELS),
+        labelledClockPattern(START_LABELS),
         FREE_ENTRY_PHRASE,
         SUPPORT_PATTERN,
         Regex("""\bticket""", RegexOption.IGNORE_CASE),

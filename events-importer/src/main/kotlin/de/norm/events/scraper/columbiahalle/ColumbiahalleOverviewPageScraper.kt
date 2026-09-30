@@ -1,12 +1,14 @@
 package de.norm.events.scraper.columbiahalle
 
+import de.norm.events.scraper.DOORS_LABELS
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.START_LABELS
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.inferConcertVenueType
-import de.norm.events.scraper.labelledTime
+import de.norm.events.scraper.labelledClock
 import de.norm.events.scraper.parseEventStatus
 import de.norm.events.scraper.parsePriceValue
 import de.norm.events.scraper.parseTime
@@ -115,8 +117,8 @@ class ColumbiahalleOverviewPageScraper {
             description = card.textAt(".bandinfo"),
             eventType = eventType,
             eventDate = eventDate,
-            doorsTime = parseTime(labelledTime(times, DOORS_LABEL)),
-            startTime = parseTime(labelledTime(times, START_LABEL)),
+            doorsTime = labelledClock(times, DOORS_LABELS),
+            startTime = labelledClock(times, START_LABELS),
             imageUrl = parseImageUrl(card, baseUrl),
             // No per-event page; the venue's own iCal export keys the event on the same Contao id and
             // points back at this listing anchor.
@@ -192,12 +194,6 @@ class ColumbiahalleOverviewPageScraper {
 
         /** The Contao event id on `div.event_inhalt` — the event's only stable identity. */
         private val EVENT_ID_PATTERN = Regex("""^$EVENT_ID_PREFIX(\d+)$""")
-
-        /** The German doors label in the `.zeit` column ("Einlass: 18:30 Uhr"). */
-        private const val DOORS_LABEL = "Einlass"
-
-        /** The German start label in the `.zeit` column ("Beginn: 20:00 Uhr"). */
-        private const val START_LABEL = "Beginn"
 
         /** The `.stoerer` sticker text marking a sold-out show (rendered in either case). */
         private const val SOLD_OUT_TEXT = "ausverkauft"
