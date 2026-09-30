@@ -66,6 +66,8 @@ app:
     # adds a rule (#795).
     robots-enforced: true
     robots-cache-ttl: 24h
+    # A host's Crawl-delay spaces our requests to it. Above this, the host reads as a complete disallow.
+    max-crawl-delay: 300s
   translation:
     # `none` or `anthropic`. Off until an operator chooses both an engine and a key: translating
     # sends a venue's text to a third party and is billed per character (ADR-026). A source also

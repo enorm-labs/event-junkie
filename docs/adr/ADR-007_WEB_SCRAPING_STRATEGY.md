@@ -428,7 +428,9 @@ consecutive requests, especially when fetching many detail pages for a single ve
 
 **`PerHostThrottlingFilter`** is a WebClient `ExchangeFilterFunction` registered on `HtmlFetcher`'s WebClient instance. It enforces a minimum delay
 (`ScraperProperties.politeDelayMillis`, default:
-200ms) between consecutive HTTP requests to the **same host**, while allowing requests to different hosts to proceed concurrently.
+200ms) between consecutive HTTP requests to the **same host**, while allowing requests to different hosts to proceed concurrently. A host whose
+`robots.txt` sets a longer `Crawl-delay` gets that delay instead. `RobotsTxtFilter` runs first and puts the delay on the request as the
+`CRAWL_DELAY_ATTRIBUTE`, so the throttle needs no access to the rules cache.
 
 ```
 Cassiopeia detail pages:  ──[200ms]──▶ req1 ──[200ms]──▶ req2 ──[200ms]──▶ req3
@@ -623,8 +625,8 @@ web scraping pitfalls documented in industry literature (see References).
    VPS. The scraper must put a delay between requests and never overload the server. `PerHostThrottlingFilter`
    enforces that globally. It is a WebClient `ExchangeFilterFunction` (see
    [Per-Host Politeness Throttling](#per-host-politeness-throttling)). It waits a configurable time (200ms by default)
-   between consecutive requests to the same host. With change detection (ETag / Last-Modified) on top, the load on a
-   venue server stays negligible. A scraper implementation manages no delays of its own.
+   between consecutive requests to the same host. A host's longer `Crawl-delay` replaces that time. With change
+   detection (ETag / Last-Modified) on top, the load on a venue server stays negligible. A scraper implementation manages no delays of its own.
 
 3. **Set a descriptive `User-Agent` header**: configure WebClient to send a transparent, identifying
    `User-Agent` string. A venue operator can then recognise the bot and contact us. Do not masquerade as a browser. The

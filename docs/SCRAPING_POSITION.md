@@ -178,6 +178,12 @@ host's rules and writes the answer to `event_source`. A forbidden URL raises an 
 failure carries its own tag, rather than being filed with ordinary scraper breakage. `robots_disallowed` is a rule the
 venue published. `robots_unreadable` is a server that could not answer (#887).
 
+**`Crawl-delay` is honoured in full.** `crawler-commons` reads it with the rest of the file. `PerHostThrottlingFilter`
+then spaces our requests to that host by the longer of its own 200 ms and the host's delay (#2171). We never wait less
+than a host asks. A delay above `app.scraper.max-crawl-delay` (300 s) reads as a complete disallow, so that source
+fails as `robots_disallowed` and logs a WARN that names the delay. On 2026-09-30, one of 83 source hosts set a delay
+that applies to us: Eschschloraque, 10 s. radar.squat.net sets 20 s.
+
 **The claim is measured, and the measurement changed on 2026-08-30.** Production's first full import read 71 hosts'
 `robots.txt`. It could not read 27 more. Of those 27, 26 answered 4xx, which means no rules exist and everything is
 permitted. One answered 503. RFC 9309 makes an unreadable file a complete disallow, so that source did not import.
@@ -199,7 +205,8 @@ the disallowed calendar links. Those notes say **why a URL is not fetched**, whi
 **Our position:** the load we cause is too small to be an interference.
 
 Once a day, we read each source's overview page, its further pages where the list continues, and the detail pages
-they link to. There is a 200 ms delay between requests to a host. For a source that is one page, a conditional request
+they link to. There is a 200 ms delay between requests to a host. A host that sets a longer `Crawl-delay` gets that
+delay instead (§3.3). For a source that is one page, a conditional request
 often gets a `304`. A venue with a weekly programme serves us less traffic than one visitor with an open browser
 tab.
 

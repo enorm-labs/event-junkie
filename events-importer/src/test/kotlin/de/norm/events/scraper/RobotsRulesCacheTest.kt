@@ -14,6 +14,8 @@ import java.time.Clock
 import java.time.Duration
 import java.time.Instant
 import java.time.ZoneOffset
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * Tests for [RobotsRulesCache] against a local [MockWebServer].
@@ -38,9 +40,10 @@ class RobotsRulesCacheTest {
 
     private fun cache(
         clock: Clock = Clock.fixed(Instant.EPOCH, ZoneOffset.UTC),
-        ttl: Duration = Duration.ofHours(24)
+        ttl: Duration = Duration.ofHours(24),
+        maxCrawlDelay: Duration = Duration.ofSeconds(300)
     ): RobotsRulesCache {
-        val properties = ScraperProperties(politeDelayMillis = 0, robotsCacheTtl = ttl)
+        val properties = ScraperProperties(politeDelayMillis = 0, robotsCacheTtl = ttl, maxCrawlDelay = maxCrawlDelay)
         val config = ScraperHttpClientConfig()
         return RobotsRulesCache(
             webClient =
@@ -107,6 +110,75 @@ class RobotsRulesCacheTest {
                 enqueueRobots("User-agent: *\nDisallow:\n")
 
                 cache().check(url("/events")).robotsTxtUrl shouldBe "${server.url("/")}robots.txt"
+            }
+    }
+
+    @Nested
+    inner class CrawlDelay {
+        @Test
+        fun `reads a Crawl-delay from the wildcard group`() =
+            runTest {
+                enqueueRobots("User-agent: *\nCrawl-delay: 20\nDisallow: /admin/\n")
+
+                cache().check(url("/api/events")).crawlDelay shouldBe 20.seconds
+            }
+
+        @Test
+        fun `prefers the delay in the group that names us`() =
+            runTest {
+                enqueueRobots("User-agent: *\nCrawl-delay: 20\n\nUser-agent: EventJunkie\nCrawl-delay: 5\n")
+
+                cache().check(url("/events")).crawlDelay shouldBe 5.seconds
+            }
+
+        @Test
+        fun `ignores a delay set only for another user agent`() =
+            runTest {
+                enqueueRobots("User-agent: Googlebot\nCrawl-delay: 30\n\nUser-agent: *\nDisallow: /admin/\n")
+
+                cache().check(url("/events")).crawlDelay shouldBe null
+            }
+
+        @Test
+        fun `reads a fractional delay`() =
+            runTest {
+                enqueueRobots("User-agent: *\nCrawl-delay: 0.5\n")
+
+                cache().check(url("/events")).crawlDelay shouldBe 500.milliseconds
+            }
+
+        @Test
+        fun `reports no delay where the file sets none`() =
+            runTest {
+                enqueueRobots("User-agent: *\nDisallow: /private\n")
+
+                cache().check(url("/events")).crawlDelay shouldBe null
+            }
+
+        @Test
+        fun `honours a delay up to the configured maximum in full`() =
+            runTest {
+                enqueueRobots("User-agent: *\nCrawl-delay: 60\n")
+
+                cache(maxCrawlDelay = Duration.ofSeconds(60)).check(url("/events")).crawlDelay shouldBe 60.seconds
+            }
+
+        @Test
+        fun `reads a delay above the maximum as a complete disallow`() =
+            runTest {
+                // Waiting less than the host asks is not honouring it, so a delay we will not wait
+                // is a delay we do not fetch under.
+                enqueueRobots("User-agent: *\nCrawl-delay: 3600\n")
+
+                cache().check(url("/events")).allowed shouldBe false
+            }
+
+        @Test
+        fun `reports no delay where robots txt could not be read`() =
+            runTest {
+                server.enqueue(MockResponse.Builder().code(503).build())
+
+                cache().check(url("/events")).crawlDelay shouldBe null
             }
     }
 

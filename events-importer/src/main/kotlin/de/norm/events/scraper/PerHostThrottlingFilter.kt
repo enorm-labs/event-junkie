@@ -83,25 +83,30 @@ class PerHostThrottlingFilter internal constructor(
         next: ExchangeFunction
     ): Mono<ClientResponse> {
         val host = request.url().host ?: return next.exchange(request)
+        val crawlDelay = request.attribute(CRAWL_DELAY_ATTRIBUTE).orElse(null) as? Duration
 
         // Bridge into a coroutine so we can use Mutex + delay, then
         // flatMap into the actual HTTP exchange which stays fully reactive.
-        return mono { awaitThrottle(host) }
+        return mono { awaitThrottle(host, crawlDelay) }
             .then(next.exchange(request))
     }
 
     /**
-     * Acquires the per-host mutex and suspends if the elapsed time since
-     * the last request to [host] is shorter than [politeDelayMillis].
-     * Records the current timestamp before releasing the mutex so the
-     * next caller sees the correct baseline.
+     * Acquires the per-host mutex and suspends if the elapsed time since the last request to [host]
+     * is shorter than [politeDelayMillis], or than the host's [crawlDelay] where that is longer.
+     * Records the current timestamp before releasing the mutex so the next caller sees the correct
+     * baseline.
      */
-    private suspend fun awaitThrottle(host: String) {
+    private suspend fun awaitThrottle(
+        host: String,
+        crawlDelay: Duration?
+    ) {
         val throttle = hostThrottles.computeIfAbsent(host) { HostThrottle() }
+        val gap = maxOf(politeDelayMillis.milliseconds, crawlDelay ?: Duration.ZERO)
 
         throttle.mutex.withLock {
             throttle.lastRequestMark?.let { mark ->
-                val remaining = politeDelayMillis.milliseconds - mark.elapsedNow()
+                val remaining = gap - mark.elapsedNow()
                 if (remaining.isPositive()) {
                     logger.debug { "Throttling $host: waiting $remaining before next request" }
                     clock.wait(remaining)
@@ -113,6 +118,12 @@ class PerHostThrottlingFilter internal constructor(
         }
     }
 }
+
+/**
+ * The request attribute that carries the host's `Crawl-delay` as a [Duration]. [RobotsTxtFilter] sets
+ * it, and a request without it waits the plain politeness delay: the `robots.txt` fetch itself is one.
+ */
+const val CRAWL_DELAY_ATTRIBUTE = "de.norm.events.scraper.crawlDelay"
 
 /**
  * Per-host throttle state holding a [Mutex] to serialize requests and
