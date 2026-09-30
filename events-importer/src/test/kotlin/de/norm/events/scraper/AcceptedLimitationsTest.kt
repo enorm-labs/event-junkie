@@ -1,6 +1,7 @@
 package de.norm.events.scraper
 
 import io.kotest.matchers.collections.shouldBeEmpty
+import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
 import java.io.File
@@ -25,6 +26,14 @@ class AcceptedLimitationsTest {
         AcceptedLimitations.declarations
             .filter { it.limitations.isNotEmpty() && it.sources.isEmpty() }
             .shouldBeEmpty()
+    }
+
+    @Test
+    fun `a house genre is given only to a music event that names no genre`() {
+        AcceptedLimitations.houseGenre(EventSource.TRESOR, "PARTY") shouldBe "Techno"
+        AcceptedLimitations.houseGenre(EventSource.KATER, "SCREENING").shouldBeNull()
+        AcceptedLimitations.houseGenre(EventSource.TRESOR, null).shouldBeNull()
+        AcceptedLimitations.houseGenre(EventSource.CASSIOPEIA, "PARTY").shouldBeNull()
     }
 
     @Test

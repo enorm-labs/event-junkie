@@ -1,5 +1,6 @@
 package de.norm.events.scraper.ritterbutzke
 
+import de.norm.events.scraper.AcceptedLimitations
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
@@ -62,11 +63,11 @@ class RitterButzkeWebsiteImporterTest {
     }
 
     @Test
-    fun `keeps the listing's Techno, House default through the merge with the event page`() =
+    fun `stores every merged night with the club's Techno, House house genre`() =
         runTest {
             val result = importer.importEvents(sourceUrl)
             result.shouldBeInstanceOf<ImportResult.Success>()
-            result.events.map { it.genre }.distinct() shouldBe listOf("Techno, House")
+            AcceptedLimitations.withHouseGenre(EventSource.RITTER_BUTZKE, result.events).map { it.genre }.distinct() shouldBe listOf("Techno, House")
         }
 
     @Test

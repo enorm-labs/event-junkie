@@ -1,5 +1,7 @@
 package de.norm.events.scraper.clubost
 
+import de.norm.events.scraper.AcceptedLimitations
+import de.norm.events.scraper.EventSource
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
@@ -32,8 +34,8 @@ class ClubOstOverviewPageScraperTest {
             .readText()
 
     @Test
-    fun `tags every night Techno, the club's sound, since the venue names no style`() {
-        scrapeFixture().map { it.genre }.distinct() shouldBe listOf("Techno")
+    fun `stores every night Techno, the club's sound, since the venue names no style`() {
+        AcceptedLimitations.withHouseGenre(EventSource.CLUB_OST, scrapeFixture()).map { it.genre }.distinct() shouldBe listOf("Techno")
     }
 
     @Test

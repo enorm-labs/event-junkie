@@ -74,5 +74,6 @@ val ROSA_LIMITATIONS =
         AcceptedLimitation(LimitedAspect.PROMOTERS, "the site credits no promoter beside the party name"),
         AcceptedLimitation(LimitedAspect.SOLD_OUT, "the site links to the ticket shop rather than stating a status"),
         AcceptedLimitation(LimitedAspect.CANCELLATION, "the site drops a cancelled night instead of marking it"),
-        AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "the whole programme is one page with an anchor per night")
+        AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "the whole programme is one page with an anchor per night"),
+        houseGenre = "Techno"
     )

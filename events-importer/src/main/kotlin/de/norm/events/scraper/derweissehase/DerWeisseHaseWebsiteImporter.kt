@@ -76,5 +76,6 @@ val DER_WEISSE_HASE_LIMITATIONS =
             "the club states no category anywhere and programmes nothing but DJ nights, so the type is fixed rather than inferred"
         ),
         AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "the club sells through Resident Advisor and the listing links off-site"),
-        AcceptedLimitation(LimitedAspect.CANCELLATION, "a cancelled night is taken off the page rather than labelled")
+        AcceptedLimitation(LimitedAspect.CANCELLATION, "a cancelled night is taken off the page rather than labelled"),
+        houseGenre = "Techno"
     )

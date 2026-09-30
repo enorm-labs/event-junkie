@@ -1,5 +1,6 @@
 package de.norm.events.scraper
 
+import de.norm.events.event.EventType
 import de.norm.events.scraper.admiralspalast.ADMIRALSPALAST_LIMITATIONS
 import de.norm.events.scraper.aeden.AEDEN_LIMITATIONS
 import de.norm.events.scraper.aeg.AEG_LIMITATIONS
@@ -179,6 +180,27 @@ object AcceptedLimitations {
 
     /** What [source] does not publish. Empty for a source with nothing to declare. */
     fun forSource(source: EventSource): List<AcceptedLimitation> = declarations.filter { source in it.sources }.flatMap { it.limitations }
+
+    /**
+     * [source]'s [VenueLimitations.houseGenre] for an event of [eventType], or null. A screening,
+     * an exhibition, a reading or a quiz at a techno club is not a techno night, so it gets none.
+     */
+    fun houseGenre(
+        source: EventSource,
+        eventType: String?
+    ): String? =
+        declarations
+            .firstOrNull { source in it.sources }
+            ?.houseGenre
+            ?.takeIf { eventType != null && eventType !in NON_MUSIC_TYPES }
+
+    /** [events] with [source]'s house genre filled in where an event names no genre of its own. */
+    fun withHouseGenre(
+        source: EventSource,
+        events: List<ScrapedEvent>
+    ): List<ScrapedEvent> = events.map { event -> event.genre?.let { event } ?: houseGenre(source, event.eventType)?.let { event.copy(genre = it) } ?: event }
+
+    private val NON_MUSIC_TYPES = setOf(EventType.SCREENING, EventType.EXHIBITION, EventType.READING, EventType.QUIZ).map { it.name }
 
     /** Whether [source] declares [aspect] — the lookup the audit runs per finding. */
     fun declares(

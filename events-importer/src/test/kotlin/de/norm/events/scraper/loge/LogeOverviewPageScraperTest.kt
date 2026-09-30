@@ -1,6 +1,8 @@
 package de.norm.events.scraper.loge
 
 import de.norm.events.event.EventType
+import de.norm.events.scraper.AcceptedLimitations
+import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedEvent
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
@@ -33,8 +35,8 @@ class LogeOverviewPageScraperTest {
     private fun event(sourceId: String): ScrapedEvent = events.first { it.sourceId == sourceId }
 
     @Test
-    fun `tags every show Punk, the venue's sound, since it names no style`() {
-        events.map { it.genre }.distinct() shouldBe listOf("Punk")
+    fun `stores every show Punk, the venue's sound, since it names no style`() {
+        AcceptedLimitations.withHouseGenre(EventSource.LOGE, events).map { it.genre }.distinct() shouldBe listOf("Punk")
     }
 
     @Test

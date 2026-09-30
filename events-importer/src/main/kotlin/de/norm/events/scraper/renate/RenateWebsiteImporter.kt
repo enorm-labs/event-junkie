@@ -69,5 +69,6 @@ val RENATE_LIMITATIONS =
             LimitedAspect.PRICE,
             "the club sells through Resident Advisor and prints no figure; a night is flagged free only when its blurb says so"
         ),
-        AcceptedLimitation(LimitedAspect.IMAGE, "the programme rows carry no flyer, only icons and a Resident Advisor ticket link")
+        AcceptedLimitation(LimitedAspect.IMAGE, "the programme rows carry no flyer, only icons and a Resident Advisor ticket link"),
+        houseGenre = "Techno, House"
     )

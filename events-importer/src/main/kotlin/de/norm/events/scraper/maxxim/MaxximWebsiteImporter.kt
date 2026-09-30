@@ -64,5 +64,6 @@ class MaxximWebsiteImporter(
 val MAXXIM_LIMITATIONS =
     VenueLimitations(
         EventSource.MAXXIM,
-        AcceptedLimitation(LimitedAspect.EVENT_TYPE, "the club publishes no categories; every night is a DJ dance party")
+        AcceptedLimitation(LimitedAspect.EVENT_TYPE, "the club publishes no categories; every night is a DJ dance party"),
+        houseGenre = "Disco, Charts"
     )

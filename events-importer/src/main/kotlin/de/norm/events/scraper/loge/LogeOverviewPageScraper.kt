@@ -82,7 +82,6 @@ class LogeOverviewPageScraper {
             // boundary (see ScrapedEvent.resolveEventType).
             eventType = EventType.CONCERT.name,
             // The venue names no style but books punk and post-punk bands, so the venue is the default.
-            genre = "Punk",
             // Sentinel for a rare to-be-decided date; the detail page (schema.org startDate) supplies it
             // via LogeWebsiteImporter.fillGapsFromOverview.
             eventDate = schedule.date ?: UNRESOLVED_EVENT_DATE,

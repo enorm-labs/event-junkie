@@ -1,6 +1,8 @@
 package de.norm.events.scraper.heidegluehen
 
 import de.norm.events.event.EventType
+import de.norm.events.scraper.AcceptedLimitations
+import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
 import io.kotest.matchers.collections.shouldBeEmpty
@@ -35,8 +37,8 @@ class HeidegluehenMonthPageScraperTest {
     private fun event(date: LocalDate): ScrapedEvent = events.first { it.eventDate == date }
 
     @Test
-    fun `tags every night Techno, House, the club's sound, since the venue names no style`() {
-        events.map { it.genre }.distinct() shouldBe listOf("Techno, House")
+    fun `stores every night Techno, House, the club's sound, since the venue names no style`() {
+        AcceptedLimitations.withHouseGenre(EventSource.HEIDEGLUEHEN, events).map { it.genre }.distinct() shouldBe listOf("Techno, House")
     }
 
     @Test

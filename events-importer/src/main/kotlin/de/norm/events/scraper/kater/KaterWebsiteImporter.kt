@@ -66,5 +66,6 @@ val KATER_LIMITATIONS =
             LimitedAspect.PRICE,
             "the club sells at the door and prints no figure; a night is flagged free only when its title or blurb says so"
         ),
-        AcceptedLimitation(LimitedAspect.IMAGE, "the venue prints a flyer on almost no night; the programme is text with a Resident Advisor link")
+        AcceptedLimitation(LimitedAspect.IMAGE, "the venue prints a flyer on almost no night; the programme is text with a Resident Advisor link"),
+        houseGenre = "Techno, House"
     )
