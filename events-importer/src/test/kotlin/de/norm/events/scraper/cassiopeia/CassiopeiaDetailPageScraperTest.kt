@@ -72,6 +72,26 @@ class CassiopeiaDetailPageScraperTest {
     }
 
     @Test
+    fun `scrape reads a plus line as support, and not at a party`() {
+        // jolle, 28 September 2026: the relocation notice, then the support on a line of its own.
+        val concert =
+            buildDetailHtml(
+                "jolle",
+                descriptionParagraphs = listOf("Hinweis: das Konzert wurde vom Lido in das cassiopeia verlegt!", "+ Dani Lia", "Bio text.")
+            )
+        scraper
+            .scrape(Jsoup.parse(concert, "https://cassiopeia-berlin.de/event/jolle-111687604"), "https://cassiopeia-berlin.de/event/jolle-111687604")!!
+            .artists
+            .map { it.name to it.role } shouldContainExactly listOf("jolle" to "HEADLINER", "Dani Lia" to "SUPPORT")
+
+        val party = buildDetailHtml("Forever Young Party", category = "Party", descriptionParagraphs = listOf("+ free Kicker... garden.... und vieles mehr!"))
+        scraper
+            .scrape(Jsoup.parse(party, "https://cassiopeia-berlin.de/event/forever-young-1"), "https://cassiopeia-berlin.de/event/forever-young-1")!!
+            .artists
+            .shouldBeEmpty()
+    }
+
+    @Test
     fun `scrape extracts title as headliner from concert without support line`() {
         val html = buildDetailHtml("Pharmakon", descriptionParagraphs = listOf("Bio text, no support line."))
         val doc = Jsoup.parse(html, "https://cassiopeia-berlin.de/event/pharmakon-123")
