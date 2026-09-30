@@ -1,5 +1,6 @@
 package de.norm.events.scraper
 
+import de.norm.events.common.foldTypedApostrophes
 import de.norm.events.event.EventStatus
 import java.math.BigDecimal
 import java.time.LocalDate
@@ -200,10 +201,16 @@ private val TITLE_NOISE_PATTERN =
  * the heading or a double space in the CMS is presentation, not the name ("Adventurous Juan
  * (DJ-Set)", "Lucas Lauriente – Stand Up 2026"), and the tail patterns key on a single space. A
  * [ZERO_WIDTH] character reaches a title when an editor pastes one (MAAYA's "HOMECOMING DJ
- * WORKSHOP"); `\s` does not match it, so it is dropped.
+ * WORKSHOP"); `\s` does not match it, so it is dropped. A backtick typed as an apostrophe is folded
+ * ([foldTypedApostrophes]).
  */
 fun cleanEventTitle(title: String): String {
-    val collapsed = title.replace(ZERO_WIDTH, "").trim().replace(WHITESPACE_RUN, " ")
+    val collapsed =
+        title
+            .replace(ZERO_WIDTH, "")
+            .trim()
+            .replace(WHITESPACE_RUN, " ")
+            .foldTypedApostrophes()
     val stripped = collapsed.replace(TITLE_NOISE_PATTERN, "").trim()
     return stripped.ifBlank { collapsed }
 }

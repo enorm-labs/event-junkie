@@ -122,3 +122,13 @@ private val ACRONYMS: Set<String> =
         "BRT",
         "TC"
     )
+
+/**
+ * An apostrophe typed as a backtick or an acute accent, folded to `'`: `Dingo`s Dream`,
+ * `pris´n break`, `Rock`n`Roll` (#2174). Only between two letters, so a lone accent or a leading
+ * `´s` stays. `'` is the form every stored name used before this. The slug is unchanged, because
+ * the slugger turns all three characters into `-`.
+ */
+fun String.foldTypedApostrophes(): String = replace(TYPED_APOSTROPHE, "'")
+
+private val TYPED_APOSTROPHE = Regex("""(?<=\p{L})[`\u00B4](?=\p{L})""")

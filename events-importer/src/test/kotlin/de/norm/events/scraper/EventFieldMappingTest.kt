@@ -12,6 +12,11 @@ class EventFieldMappingTest {
     // --- cleanEventTitle ---
 
     @Test
+    fun `cleanEventTitle folds a backtick typed as an apostrophe`() {
+        cleanEventTitle("MissVergnügen presents Dingo`s Dream - live!") shouldBe "MissVergnügen presents Dingo's Dream - live!"
+    }
+
+    @Test
     fun `cleanEventTitle strips a stray dash but keeps a scheduling note for the status`() {
         cleanEventTitle("Some Show -") shouldBe "Some Show"
         // The note carries the status; only stripTitleStatusMarker removes it, once it is read (#2008).

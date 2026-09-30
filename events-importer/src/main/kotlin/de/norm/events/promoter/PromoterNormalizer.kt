@@ -1,6 +1,7 @@
 package de.norm.events.promoter
 
 import de.norm.events.common.deshoutWord
+import de.norm.events.common.foldTypedApostrophes
 
 // Promoter-name canonicalization. One promoter is written many ways ("LOFT", "Loft Concerts
 // GmbH"), so slugging the raw name fragments it; [canonicalPromoterName] reduces variants to one
@@ -30,6 +31,7 @@ fun canonicalPromoterName(raw: String): String {
     val withoutAnnotation =
         raw
             .trim()
+            .foldTypedApostrophes()
             .replace(TRAILING_PAREN_REGEX, "")
             .trim()
             .ifBlank { raw.trim() }

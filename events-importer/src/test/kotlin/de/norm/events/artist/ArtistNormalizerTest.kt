@@ -22,6 +22,11 @@ class ArtistNormalizerTest {
     }
 
     @Test
+    fun `folds a backtick typed as an apostrophe`() {
+        canonicalArtistName("Dingo`s Dream") shouldBe "Dingo's Dream"
+    }
+
+    @Test
     fun `preserves intentional mixed casing`() {
         assertSoftly {
             canonicalArtistName("Green Lung") shouldBe "Green Lung"

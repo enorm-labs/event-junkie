@@ -48,6 +48,11 @@ class PromoterNormalizerTest {
     }
 
     @Test
+    fun `folds a backtick typed as an apostrophe`() {
+        canonicalPromoterName("Luv`n Musiq") shouldBe "Luv'n Musiq"
+    }
+
+    @Test
     fun `de-shouts all-caps labels but preserves intentional mixed casing`() {
         assertSoftly {
             canonicalPromoterName("SIMPLY QUIZ") shouldBe "Simply Quiz"

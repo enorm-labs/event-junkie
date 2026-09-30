@@ -176,8 +176,8 @@ class EschschloraqueOverviewPageScraperTest {
         val nights = scrape("eschschloraque-overview-two-djs.html").filter { " presents " in it.title }
         val frauke = nights.first { it.title == "MissVergnügen presents FRAUKE 400 - live!" }
         frauke.artists.map { it.name to it.role } shouldBe listOf("FRAUKE 400" to "HEADLINER", "MissVergnügen" to "DJ")
-        // `live!!` and a backtick inside the act's name read the same way.
-        nights.map { it.artists.first().name } shouldBe listOf("AUGELEKTRIK", "FRAUKE 400", "Dingo`s Dream")
+        // `live!!` reads the same way, and the title's typed backtick is folded to an apostrophe (#2174).
+        nights.map { it.artists.first().name } shouldBe listOf("AUGELEKTRIK", "FRAUKE 400", "Dingo's Dream")
     }
 
     @Test
