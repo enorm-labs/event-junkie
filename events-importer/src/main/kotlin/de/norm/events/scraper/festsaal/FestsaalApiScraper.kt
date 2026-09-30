@@ -15,6 +15,7 @@ import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.splitSupportActs
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.github.oshai.kotlinlogging.Level
+import org.jsoup.Jsoup
 import tools.jackson.databind.JsonNode
 import tools.jackson.databind.PropertyNamingStrategies
 import tools.jackson.databind.json.JsonMapper
@@ -45,7 +46,7 @@ private const val FESTSAAL_PROGRAMM_BASE = "https://$FESTSAAL_PUBLIC_HOST/de/pro
  * Each `items[]` entry carries `title`, `sub_title`, `date`, `doors`, `start`, `ticket`,
  * `price`, a nested `genre.title` and `preview_image.download_url`, a `support` act line, and
  * a `status` code (`sold_out`, `moved_date`, `moved_unknown`, `transferred`, `cancelled`,
- * `custom`, or absent). No event-category field, so the type is inferred from title/subtitle like
+ * `custom`, or absent), the `presenters` and the page's text `layouts`. No event-category field, so the type is inferred from title/subtitle like
  * Bi Nuu ([inferEventType]).
  *
  * @see FestsaalWebsiteImporter for the HTTP fetch orchestrator.
@@ -165,9 +166,29 @@ class FestsaalApiScraper {
             pricePresale = parsePrice(node.price.blankToNull()),
             soldOut = statusCode == STATUS_SOLD_OUT,
             status = mapStatus(statusCode, sourceId),
-            artists = buildArtists(title, node.support.blankToNull(), eventType)
+            artists = buildArtists(title, node.support.blankToNull(), eventType),
+            description = parseDescription(node.layouts),
+            promoters = node.presenters.mapNotNull { it.name.blankToNull() }
         )
     }
+
+    /**
+     * The description from the page's `item_text` blocks (`layouts[].value.items[]`), one line per
+     * paragraph or heading. The `präsentiert von` heading above a partner logo names no text of its
+     * own and is dropped; the presenters themselves come from `presenters`.
+     */
+    private fun parseDescription(layouts: JsonNode?): String? =
+        layouts
+            ?.flatMap { layout -> layout.path("value").path("items") }
+            ?.filter { it.path("type").asString("") == TEXT_ITEM }
+            ?.flatMap { item ->
+                Jsoup
+                    .parseBodyFragment(item.path("value").path("text").asString(""))
+                    .select("p, h1, h2, h3, h4, h5, h6, li")
+                    .map { it.text().replace('\u00A0', ' ').trim() }
+            }?.filter { it.isNotBlank() && !PRESENTED_BY_HEADING.matches(it) }
+            ?.joinToString("\n")
+            .blankToNull()
 
     /**
      * Maps the `status` code to a domain [EventStatus][de.norm.events.event.EventStatus] name.
@@ -350,7 +371,14 @@ private data class FestsaalEventNode(
     val previewImage: FestsaalImage? = null,
     val ticket: String? = null,
     val price: String? = null,
-    val support: String? = null
+    val support: String? = null,
+    val presenters: List<FestsaalPresenter> = emptyList(),
+    val layouts: JsonNode? = null
+)
+
+/** A presenting promoter (`presenters[]`), e.g. `All Rooms Concerts`; only its [name] is used. */
+private data class FestsaalPresenter(
+    val name: String? = null
 )
 
 /** Wagtail page metadata: the URL [slug] and the CMS-rendered [htmlUrl] (on the admin host). */
@@ -368,3 +396,9 @@ private data class FestsaalGenre(
 private data class FestsaalImage(
     val downloadUrl: String? = null
 )
+
+/** The Wagtail block type of a rich-text block inside a layout. */
+private const val TEXT_ITEM = "item_text"
+
+/** A heading that introduces the partner logos: `präsentiert von`, `presented by`. */
+private val PRESENTED_BY_HEADING = Regex("""(?:präsentiert\s+von|presented\s+by)\s*:?""", RegexOption.IGNORE_CASE)

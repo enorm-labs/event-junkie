@@ -1,0 +1,280 @@
+{
+  "meta": {
+    "total_count": 3
+  },
+  "items": [
+    {
+      "id": 780,
+      "meta": {
+        "type": "home.EventPage",
+        "detail_url": "https://admin.festsaal-kreuzberg.de/api/v2/pages/780/",
+        "html_url": "https://admin.festsaal-kreuzberg.de/de/programm/Ok-kid-2026/",
+        "slug": "Ok-kid-2026",
+        "first_published_at": "2026-03-17T12:03:34.775000Z",
+        "locale": "de"
+      },
+      "title": "OK KID",
+      "url": "/de/programm/Ok-kid-2026/",
+      "preview_image": {
+        "id": 1231,
+        "title": "okkid_pressefoto_3_by_kristina_wolf",
+        "download_url": "https://v2.files.funkhaus.io/fsk-1170-media/original_images/okkid_pressefoto_3_by_kristina_wolf.png"
+      },
+      "preview_text": "",
+      "sub_title": "\"Komm, wir bleiben stehen\" Tour 2026",
+      "date": "2026-09-30",
+      "doors": "18:30:00",
+      "start": "19:30:00",
+      "changed_date": null,
+      "changed_doors": null,
+      "changed_start": null,
+      "ticket": "https://landstreicher-konzerte.de/konzerte/ok-kid-b-26",
+      "price": null,
+      "genre": {
+        "id": 104,
+        "meta": {
+          "type": "home.Genre",
+          "detail_url": "https://admin.festsaal-kreuzberg.de/api/v2/genre/104/"
+        },
+        "title": "German Hip Hop"
+      },
+      "layouts": [
+        {
+          "type": "layout_simple",
+          "value": {
+            "items": [
+              {
+                "type": "item_text",
+                "value": {
+                  "text": "<p data-block-key=\"aihr3\">OK KID „Komm, wir bleiben stehen“ Tour 2026</p><p data-block-key=\"6scib\">OK KID sind zurück! Erst kündigten sie ihr neues Album „Komm, wir bleiben stehen“ für Ende Mai an, nun bestätigten sie ihre langerwartete gleichnamige Tournee für den Herbst: Auf der „Komm, wir bleiben stehen“-Tour 2026 besucht das Trio sechs A-Städte in Deutschland und Österreich. Der bandeigene Mix aus hybriden Garage-Drums, Shoegaze-Gitarren, Jungle-Anleihen und ausgetüftelten Sample-Chops wurde gekonnt geupdatet, worauf sich die OK-KID-Crowd freuen kann. Live ist OK KID eine unbestreitbare Instanz in der deutschsprachigen Musiklandschaft, und die Vorfreude auf die Shows ist jetzt schon riesig!</p><p data-block-key=\"l2tk\"><br/>OK KID trafen 2013 mit ihrem Debütalbum den Nerv der Zeit, ihr intelligenter Indie mit gerappter Gesellschaftskritik wurde schnell als außerordentlich relevante Popkultur eingestuft. Nach drei Top-Ten-Alben und zehn Jahren „Vollgas“-Bandleben, wie das Trio resümiert, melden sich Jonas Schubert, Raffael Kühle und Moritz Rech im Frühjahr 2024 auf unbestimmte Zeit in eine notwendige Pause ab: kein Social Media, keine Konzerte, keine Releases. Und das in Zeiten, in denen das Füttern des Algorithmus und Aufmerksamkeit die wichtigsten Währungen zu sein scheinen – aus damaliger Sicht ein waghalsiges Unterfangen.<br/><br/> Aus heutiger Sicht: ein Segen für die Platte, die in der Off-Zeit entstand. „Komm, wir bleiben stehen“ heißt das fünfte Studioalbum von OK KID, erscheint Ende Mai 2026 und sticht aus ihrem bisherigen Werk heraus – das macht schon der Track „Hoffnung stirbt 1–3“ klar: OK KID treffen das JETZT im wundesten Punkt. Auch live gibt die Band ein Lebenszeichen: Ein Guerilla-Gig im Februar in ihrer Heimatstadt Gießen, bei dem sie die News vom neuen Album droppen, gibt der Community Gewissheit: OK KID sind zurück. „Komm, wir bleiben stehen“ zeigt, was passieren kann, wenn Musiker politische, gesellschaftliche und persönliche Irrungen aufsaugen und in musikalisch-kunstvolle Statements gießen. OK KID gelingt das authentisch – Haltung war ihrer Musik immer wichtig. So ehrlich, ungefiltert, wütend und verletzt hat man sie jedoch selten gehört. Besonders deutlich wird das in der intensiven Ode ans Außenseiter- und Rebellentum „Rave On“: „Solang wir uns noch haben, ham die andern nicht gewonnen“, schreit Jonas Schubert fast ins Mikrofon und macht unmissverständlich klar: Wenn es überhaupt noch Hoffnung dieser Tage gibt, dann ist das die Gemeinschaft - es lohnt sich, für seine Ideale und Werte einzustehen.</p><p data-block-key=\"bu4uo\"><br/>Der Band geht es darum, sich nicht vom toxischen Strudel der Gegenwart mitreißen zu lassen. Das Album ist eine Suche nach Geborgenheit in einem dystopischen Umfeld, gespiegelt in Wortbeiträgen von Luisa Neubauer im „Rave On“-Intro und Max Richard Leßmann in „Hoffnung stirbt 1“. „Komm, wir bleiben stehen“ will hat nicht den Anspruch, das wichtigste politische Popalbum der letzten Jahre zu sein, ist vielmehr ein Gegenstück zu leicht verdaulichen Pophäppchen: chansoneske Skits, verspulte Gedanken und Banger für die Festival-Bühne im aktuellen OK KID-Sound: Der bandeigene Mix aus Garage-Drums, Shoegaze-Gitarren, Jungle-Anleihen, Sample-Chops und neu gedachten 808s ist 2026 zum Alleinstellungsmerkmal gereift.</p><p data-block-key=\"87n1m\"></p><p data-block-key=\"4hco5\">Vor allem aber ist die Platte dafür gemacht, live erlebt zu werden. Wie gut, dass das Trio endlich auf die Bühne zurückkehrt – Tickets für die OK KID „Komm, wir bleiben stehen“-Tour 2026 sind überall erhältlich!</p>"
+                },
+                "id": "839ee82e-6db9-4861-aa13-9f5285014874"
+              }
+            ]
+          },
+          "id": "c4a08049-dbe3-45aa-a53f-27635d8ad27d"
+        },
+        {
+          "type": "layout_simple",
+          "value": {
+            "items": [
+              {
+                "type": "item_iframe",
+                "value": {
+                  "url": "https://www.youtube.com/embed/3kZ8TmCut0M?si=jRQTmm26mXr8b5z2",
+                  "aspect_ratio": "video"
+                },
+                "id": "1d3be54e-16b6-4a92-8c20-3d9ee211c40b"
+              }
+            ]
+          },
+          "id": "4ed8a94f-b82f-495b-8baa-05c55e7e8e05"
+        },
+        {
+          "type": "layout_simple",
+          "value": {
+            "items": [
+              {
+                "type": "item_text",
+                "value": {
+                  "text": "<p data-block-key=\"bqmcx\"><b>präsentiert von </b></p>"
+                },
+                "id": "027a89ec-a3a4-4256-af55-fe6e095646cd"
+              },
+              {
+                "type": "item_partner",
+                "value": {
+                  "logo": {
+                    "title": "selective artists",
+                    "id": 900,
+                    "alt": "selective artists",
+                    "download_url_big": "https://v2.files.funkhaus.io/fsk-1170-media/images/SA_Logo_Medium_schwarz_rgb_.min-2100x2100.jpegquality-75.png",
+                    "download_url_medium": "https://v2.files.funkhaus.io/fsk-1170-media/images/SA_Logo_Medium_schwarz_rgb_.min-1450x1450.jpegquality-75.png",
+                    "download_url_small": "https://v2.files.funkhaus.io/fsk-1170-media/images/SA_Logo_Medium_schwarz_rgb_.min-1000x1000.jpegquality-75.png",
+                    "width": 1625,
+                    "height": 196,
+                    "focal": null
+                  },
+                  "link": ""
+                },
+                "id": "31b5100a-2305-42ba-8042-9d3edf9247ff"
+              },
+              {
+                "type": "item_partner",
+                "value": {
+                  "logo": {
+                    "title": "Landstreicher Logo",
+                    "id": 568,
+                    "alt": "Landstreicher Logo",
+                    "download_url_big": "https://v2.files.funkhaus.io/fsk-1170-media/images/Landstreicher_Logo_RGB_Lock.min-2100x2100.jpegquality-75.png",
+                    "download_url_medium": "https://v2.files.funkhaus.io/fsk-1170-media/images/Landstreicher_Logo_RGB_Lock.min-1450x1450.jpegquality-75.png",
+                    "download_url_small": "https://v2.files.funkhaus.io/fsk-1170-media/images/Landstreicher_Logo_RGB_Lock.min-1000x1000.jpegquality-75.png",
+                    "width": 2525,
+                    "height": 3114,
+                    "focal": null
+                  },
+                  "link": ""
+                },
+                "id": "15ba77dd-d8ed-4513-8463-2fc8b2e3e821"
+              }
+            ]
+          },
+          "id": "db332c9c-f386-4635-9544-5ffd8ccc5fa9"
+        }
+      ],
+      "status": "sold_out",
+      "support": null,
+      "presenters": []
+    },
+    {
+      "id": 790,
+      "meta": {
+        "type": "home.EventPage",
+        "detail_url": "https://admin.festsaal-kreuzberg.de/api/v2/pages/790/",
+        "html_url": "https://admin.festsaal-kreuzberg.de/de/programm/nand-2026/",
+        "slug": "nand-2026",
+        "first_published_at": "2026-03-26T17:46:11.105000Z",
+        "locale": "de"
+      },
+      "title": "nand",
+      "url": "/de/programm/nand-2026/",
+      "preview_image": {
+        "id": 1244,
+        "title": "nand_drei-kreuze-gemacht_bts_013",
+        "download_url": "https://v2.files.funkhaus.io/fsk-1170-media/original_images/nand_drei-kreuze-gemacht_bts_013.JPG"
+      },
+      "preview_text": "",
+      "sub_title": "\"Es wäre schön\" - Tour",
+      "date": "2026-10-22",
+      "doors": "19:00:00",
+      "start": "20:00:00",
+      "changed_date": null,
+      "changed_doors": null,
+      "changed_start": null,
+      "ticket": null,
+      "price": null,
+      "genre": {
+        "id": 6,
+        "meta": {
+          "type": "home.Genre",
+          "detail_url": "https://admin.festsaal-kreuzberg.de/api/v2/genre/6/"
+        },
+        "title": "Indie Pop"
+      },
+      "layouts": [
+        {
+          "type": "layout_simple",
+          "value": {
+            "items": [
+              {
+                "type": "item_text",
+                "value": {
+                  "text": "<h4 data-block-key=\"2fa6u\">präsentiert von</h4>"
+                },
+                "id": "58b2ca2f-c936-4103-af8c-c6587e2c87ed"
+              },
+              {
+                "type": "item_partner",
+                "value": {
+                  "logo": {
+                    "title": "Logo_Schoneberg",
+                    "id": 1243,
+                    "alt": "Logo_Schoneberg",
+                    "download_url_big": "https://v2.files.funkhaus.io/fsk-1170-media/images/Logo_Schoneberg.min-2100x2100.jpegquality-75.png",
+                    "download_url_medium": "https://v2.files.funkhaus.io/fsk-1170-media/images/Logo_Schoneberg.min-1450x1450.jpegquality-75.png",
+                    "download_url_small": "https://v2.files.funkhaus.io/fsk-1170-media/images/Logo_Schoneberg.min-1000x1000.jpegquality-75.png",
+                    "width": 369,
+                    "height": 85,
+                    "focal": null
+                  },
+                  "link": ""
+                },
+                "id": "be84b66c-c69f-4959-b5b1-881e88e6c289"
+              }
+            ]
+          },
+          "id": "f2487cff-a185-4526-ab25-e80ad224f55d"
+        }
+      ],
+      "status": "transferred",
+      "support": null,
+      "presenters": []
+    },
+    {
+      "id": 885,
+      "meta": {
+        "type": "home.EventPage",
+        "detail_url": "https://admin.festsaal-kreuzberg.de/api/v2/pages/885/",
+        "html_url": "https://admin.festsaal-kreuzberg.de/de/programm/kontrollverlust/",
+        "slug": "kontrollverlust",
+        "first_published_at": "2026-08-07T13:23:02.734000Z",
+        "locale": "de"
+      },
+      "title": "Kontrollverlust",
+      "url": "/de/programm/kontrollverlust/",
+      "preview_image": {
+        "id": 1368,
+        "title": "Kontrollverlust",
+        "download_url": "https://v2.files.funkhaus.io/fsk-1170-media/original_images/Kontrollverlust-Pressefoto-Web_hochauflosend-034.jpg"
+      },
+      "preview_text": "",
+      "sub_title": "Märchen schreit die Zeit Tour 2026",
+      "date": "2026-11-09",
+      "doors": "19:00:00",
+      "start": "20:00:00",
+      "changed_date": null,
+      "changed_doors": null,
+      "changed_start": null,
+      "ticket": "https://www.eventim.de/event/kontrollverlust-maerchen-schreit-die-zeit-tour-2026-festsaal-kreuzberg-21281779/",
+      "price": null,
+      "genre": {
+        "id": 113,
+        "meta": {
+          "type": "home.Genre",
+          "detail_url": "https://admin.festsaal-kreuzberg.de/api/v2/genre/113/"
+        },
+        "title": "Pop-Punk"
+      },
+      "layouts": [
+        {
+          "type": "layout_simple",
+          "value": {
+            "items": [
+              {
+                "type": "item_text",
+                "value": {
+                  "text": "<p data-block-key=\"x87xa\">KONTROLLVERLUST verwandeln Songs aus Anime, Film und TV in ekstatische Clubshows, in denen Nostalgie und Moshpit nahtlos verschmelzen. Nach zwei ausverkauften Tourneen kehrt die Band im November 2026 mit neuem Album und neuer Show zurück auf die Bühne.</p><p data-block-key=\"a0f77\">Märchen schreit die Zeit ist kein gewöhnliches Konzert, sondern ein energiegeladenes Gesamterlebnis: Vier erfahrene Live-Performer, durchdachte Showelemente, ein detailverliebtes Bühnenbild und ein Frontman mit kompromissloser Crowd-Control. Humor, Spontanität und Eskalation haben KONTROLLVERLUST zu einem der relevantesten Live-Acts der Anime-, Gaming- und Punkrock-Nische gemacht.</p><p data-block-key=\"7c29v\">Musikalisch treffen Disney-Klassiker und ikonische Songs aus fast 70 Jahren Popkultur auf den unverkennbaren Stil der Band – vertraut und neu zugleich, aber immer mit maximaler Wucht. Hier werden Regeln neu geschrieben: Wall of Death zu Käpt’n Balu, Circlepit zur Gummibärenbande.</p><p data-block-key=\"4h1mu\">Der Erfolg spricht für sich: Bis zu 250.000 monatliche Spotify-Hörer, zehntausende Follower auf YouTube, TikTok und Instagram sowie eine hochaktive Community inklusive Fanclub. Auch die Presse feiert die Shows als Konzerthighlights.</p><p data-block-key=\"5vh50\">Bei aller Eskalation bleibt der Safespace-Gedanke zentral. Die Konzerte sind ein generationenübergreifender Treffpunkt für Fans von Anime, Film, Gaming und Musik – laut, respektvoll und gemeinschaftlich.</p><p data-block-key=\"4254h\">Parallel zur Tour erscheint das Album „Märchen schreit die Zeit“, dessen Songs live zu kollektiven Hymnen werden. Besonderes Highlight 2026: die erste KONTROLLVERLUST-Show in der Schweiz.</p><p data-block-key=\"20un6\"></p><p data-block-key=\"dup67\">Wer einmal da war, weiß:</p><p data-block-key=\"9f5qv\">Kein Ohrwurm hält so lang wie die Erinnerung an diesen Abend.</p>"
+                },
+                "id": "6365e5a9-ff2d-4078-aba3-0db3ce9c2277"
+              }
+            ]
+          },
+          "id": "c6e22877-cd77-4c21-80e2-9668b3a4775e"
+        }
+      ],
+      "status": null,
+      "support": null,
+      "presenters": [
+        {
+          "id": 9,
+          "name": "All Rooms Concerts",
+          "logo": {
+            "title": "allrooms_concerts_orange",
+            "id": 1190,
+            "alt": "allrooms_concerts_orange",
+            "download_url_big": "https://v2.files.funkhaus.io/fsk-1170-media/images/allrooms_concerts_orange.min-2100x2100.jpegquality-75.png",
+            "download_url_medium": "https://v2.files.funkhaus.io/fsk-1170-media/images/allrooms_concerts_orange.min-1450x1450.jpegquality-75.png",
+            "download_url_small": "https://v2.files.funkhaus.io/fsk-1170-media/images/allrooms_concerts_orange.min-1000x1000.jpegquality-75.png",
+            "width": 800,
+            "height": 235,
+            "focal": null
+          },
+          "grayscale": true,
+          "inverted": false,
+          "more_contrast": false,
+          "website": "https://allrooms-agency.com/concerts/"
+        }
+      ]
+    }
+  ]
+}

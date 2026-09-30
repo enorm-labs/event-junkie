@@ -69,7 +69,8 @@ class FestsaalWebsiteImporter(
     private companion object {
         /** Wagtail API fields the scraper reads; `genre(title)` / nested `preview_image` are expanded inline by the API. */
         const val FIELDS =
-            "title,sub_title,date,doors,start,changed_date,changed_doors,changed_start,status,ticket,price,genre(title),preview_image,support"
+            "title,sub_title,date,doors,start,changed_date,changed_doors,changed_start,status,ticket,price,genre(title),preview_image,support," +
+                "presenters,layouts"
 
         /** Upper bound on events fetched in the single request; comfortably above ~80 upcoming shows. */
         const val LIMIT = 100
