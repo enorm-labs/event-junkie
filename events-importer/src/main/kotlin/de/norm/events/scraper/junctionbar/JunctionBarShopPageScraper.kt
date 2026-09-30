@@ -1,7 +1,7 @@
 package de.norm.events.scraper.junctionbar
 
 import de.norm.events.scraper.ScrapedEvent
-import de.norm.events.scraper.parseEurCodePrice
+import de.norm.events.scraper.parsePriceValue
 import de.norm.events.scraper.textAt
 import org.jsoup.nodes.Document
 import java.math.BigDecimal
@@ -20,7 +20,7 @@ class JunctionBarShopPageScraper {
     /** Parses the ticket price and the sold-out badge from one shop page. */
     fun scrape(document: Document): JunctionBarShopOffer =
         JunctionBarShopOffer(
-            pricePresale = parseEurCodePrice(document.textAt("$PRODUCT_DETAILS .current-price-container")),
+            pricePresale = parsePriceValue(document.textAt("$PRODUCT_DETAILS .current-price-container")),
             soldOut = document.selectFirst("$PRODUCT_DETAILS .ribbon-sold-out") != null
         )
 

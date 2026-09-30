@@ -4,8 +4,10 @@ import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.euroAmounts
 import de.norm.events.scraper.imgSrcAt
 import de.norm.events.scraper.isNonArtistName
+import de.norm.events.scraper.parsePriceValue
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.splitSupportActs
 import de.norm.events.scraper.textAt
@@ -220,20 +222,13 @@ class MatrixOverviewPageScraper {
             } else {
                 descriptionLines
                     .drop(headingIndex + 1)
-                    .takeWhile { PRICE_VALUE.containsMatchIn(it) }
+                    .takeWhile { euroAmounts(it).isNotEmpty() }
             }
-        val values =
-            tiers.mapNotNull { tier ->
-                PRICE_VALUE
-                    .find(tier)
-                    ?.groupValues
-                    ?.get(1)
-                    ?.let { BigDecimal(it.replace(",", ".")) }
-            }
+        val values = tiers.mapNotNull { parsePriceValue(it) }
         val note =
             listOfNotNull(
                 tiers.joinToString(", ").takeIf { it.isNotBlank() },
-                promo?.takeIf { PRICE_VALUE.containsMatchIn(it) }
+                promo?.takeIf { euroAmounts(it).isNotEmpty() }
             ).joinToString("; ")
         return values.minOrNull() to note.takeIf { it.isNotBlank() }
     }
@@ -274,9 +269,6 @@ class MatrixOverviewPageScraper {
 
         /** The bare `► Entry :` / `Eintritt:` heading line that opens the door-price block. */
         private val ENTRY_HEADING = Regex("""[►>\s]*(?:entry|eintritt)\s*:?\s*""", RegexOption.IGNORE_CASE)
-
-        /** A single monetary value on an admission-tier line, German or dot decimal separator. */
-        private val PRICE_VALUE = Regex("""(\d+(?:[.,]\d{1,2})?)\s*€""")
     }
 }
 

@@ -10,6 +10,7 @@ import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.cleanEventTitle
+import de.norm.events.scraper.isBoxOfficeLabel
 import de.norm.events.scraper.labelledClock
 import de.norm.events.scraper.mapEventType
 import de.norm.events.scraper.parsePriceValue
@@ -230,7 +231,7 @@ class HeimathafenApiScraper(
         if (entries.isEmpty()) return Triple(null, null, null)
 
         val general = entries.filterNot { CONCESSION_LABEL.containsMatchIn(it.first) }
-        val boxOffice = general.firstOrNull { BOX_OFFICE_LABEL.containsMatchIn(it.first) }
+        val boxOffice = general.firstOrNull { isBoxOfficeLabel(it.first) }
         val presale = general.firstOrNull { PRESALE_LABEL.containsMatchIn(it.first) } ?: general.firstOrNull { it != boxOffice }
         val note = entries.joinToString(" · ") { (label, value) -> listOf(label, value).filter { it.isNotBlank() }.joinToString(": ") }
 
@@ -392,10 +393,7 @@ class HeimathafenApiScraper(
                 RegexOption.IGNORE_CASE
             )
 
-        /** Price labels naming the general box-office (door) tier — anchored, so a concession that merely mentions the channel cannot match. */
-        val BOX_OFFICE_LABEL = Regex("""^\s*(?:abendkasse|ak)\b""", RegexOption.IGNORE_CASE)
-
-        /** Price labels naming a general-admission presale tier — anchored for the same reason. */
+        /** Price labels naming a general-admission presale tier — anchored, so a label that merely mentions the channel cannot match. */
         val PRESALE_LABEL = Regex("""^\s*(?:vvk|vorverkauf|tickets?|regul(?:ä|ae)r)\b""", RegexOption.IGNORE_CASE)
 
         /** A booking-fee qualifier, which makes even a single-tier price worth keeping as a note. */

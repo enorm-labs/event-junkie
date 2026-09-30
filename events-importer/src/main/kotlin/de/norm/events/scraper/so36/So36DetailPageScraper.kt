@@ -12,6 +12,7 @@ import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
 import de.norm.events.scraper.hasFreeEntryPhrase
 import de.norm.events.scraper.headlinersFromTitle
 import de.norm.events.scraper.hrefAt
+import de.norm.events.scraper.isBoxOfficeLabel
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.labelledClock
 import de.norm.events.scraper.mapEventType
@@ -143,7 +144,7 @@ class So36DetailPageScraper {
         if (offers.isEmpty()) {
             return document.select("[itemprop=price][content]").mapNotNull { it.attr("content").toBigDecimalOrNull() }.minOrNull() to null
         }
-        val (door, online) = offers.partition { (category, _) -> BOX_OFFICE_CATEGORY.containsMatchIn(category) }
+        val (door, online) = offers.partition { (category, _) -> isBoxOfficeLabel(category) }
         val presale = online.filterNot { (category, _) -> CONCESSION_CATEGORY.containsMatchIn(category) }.minOfOrNull { it.second }
         return presale to door.minOfOrNull { it.second }
     }
@@ -301,9 +302,6 @@ private val PANEL_PREFIX = Regex("""^\s*panel\s*:""", RegexOption.IGNORE_CASE)
 
 /** The characters that join a subtitle's acts to the headliner when they open it. */
 private val SUPPORT_JOINERS = setOf('+', '&')
-
-/** The box-office category: `Abendkasse`, `AK`, `Tageskasse`. */
-private val BOX_OFFICE_CATEGORY = Regex("""\b(?:abendkasse|tageskasse|ak)\b""", RegexOption.IGNORE_CASE)
 
 /** A concession category: `ermäßigt`, `erm.`, `reduced`, `Schüler`, `Student`. */
 private val CONCESSION_CATEGORY = Regex("""erm(?:äßigt|aessigt|\.)|\breduced\b|\bconcession|sch(?:ü|ue)ler|\bstudent""", RegexOption.IGNORE_CASE)

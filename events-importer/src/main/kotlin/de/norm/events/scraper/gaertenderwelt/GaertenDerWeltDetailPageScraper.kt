@@ -148,12 +148,15 @@ class GaertenDerWeltDetailPageScraper {
     /**
      * Splits the pricing paragraph: its first line is the presale price ("ab 60,00 €", "Tickets ab
      * 47,00€"); an `Abendkasse:` line, below it or in its own paragraph, is the box-office one.
-     * Either may be absent, and an absent price is unknown rather than free.
+     * Either may be absent, and an absent price is unknown rather than free. A free event's line
+     * names only the park's own ticket (`kostenfrei (zzgl. Parkeintritt: … 5,50 Euro)`), which is not
+     * the event's price.
      */
     private fun Map<String, List<String>>.prices(): Pair<BigDecimal?, BigDecimal?> {
         val (inlineBoxOffice, presale) = this[TICKETS_LABEL].orEmpty().partition { it.startsWith(BOX_OFFICE_LABEL, ignoreCase = true) }
         val boxOffice = inlineBoxOffice + this[BOX_OFFICE_LABEL].orEmpty()
-        return presale.firstNotNullOfOrNull { parsePriceValue(it) } to boxOffice.firstNotNullOfOrNull { parsePriceValue(it) }
+        val eventPresale = presale.filterNot { PARK_ENTRY_ONLY.containsMatchIn(it) }
+        return eventPresale.firstNotNullOfOrNull { parsePriceValue(it) } to boxOffice.firstNotNullOfOrNull { parsePriceValue(it) }
     }
 
     /**
@@ -204,6 +207,9 @@ class GaertenDerWeltDetailPageScraper {
 
         /** A clock time inside the `Einlass:` prose, with the minutes the park often leaves off ("18 Uhr"). */
         private val DOORS_TIME_PATTERN = Regex("""(\d{1,2})(?::(\d{2}))?\s*Uhr""", RegexOption.IGNORE_CASE)
+
+        /** A ticket line for a free event that prices only the park entry on top. */
+        private val PARK_ENTRY_ONLY = Regex("""kostenfrei.*zzgl\.?\s*Parkeintritt""", RegexOption.IGNORE_CASE)
 
         /** The gender-inclusive ending on a label, as in `Veranstalter*in:` / `Veranstalter_in:`. */
         private val GENDER_INCLUSIVE_SUFFIX = Regex("""^[*_:/]in\b""", RegexOption.IGNORE_CASE)

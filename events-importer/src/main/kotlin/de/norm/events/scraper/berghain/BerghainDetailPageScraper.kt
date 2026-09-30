@@ -8,6 +8,7 @@ import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.imgSrcAt
+import de.norm.events.scraper.isBoxOfficeLabel
 import de.norm.events.scraper.labelledClock
 import de.norm.events.scraper.parseGermanDate
 import de.norm.events.scraper.parsePriceValue
@@ -152,7 +153,7 @@ class BerghainDetailPageScraper {
         var boxOffice: BigDecimal? = null
         for (line in block.select("p")) {
             val text = line.text().trim()
-            if (text.contains(BOX_OFFICE_MARKER, ignoreCase = true)) {
+            if (isBoxOfficeLabel(text)) {
                 boxOffice = boxOffice ?: parsePriceValue(text)
             } else {
                 presale = presale ?: parsePriceValue(text)
@@ -188,9 +189,6 @@ class BerghainDetailPageScraper {
     companion object {
         /** Heading text of the ticket/price block. */
         private const val TICKETS_HEADING = "Tickets"
-
-        /** German label marking the box-office (door) price line. */
-        private const val BOX_OFFICE_MARKER = "Abendkasse"
 
         /** A running-order slot's name span; its own text is the performers. */
         private const val SLOT_NAME_SELECTOR = ".running-order-set__info span.font-bold"

@@ -129,6 +129,14 @@ class GretchenOverviewPageScraperTest {
             event.pricePresale shouldBe BigDecimal("10")
             event.priceBoxOffice.shouldBeNull()
         }
+
+        @Test
+        fun `stores the cheaper early-entry tier of a time-banded door`() {
+            val event = eventWithId("3541")
+
+            event.priceBoxOffice shouldBe BigDecimal("15")
+            event.priceNote shouldBe "Abendkasse 18 € (bis 23 Uhr 15 €)"
+        }
     }
 
     @Nested

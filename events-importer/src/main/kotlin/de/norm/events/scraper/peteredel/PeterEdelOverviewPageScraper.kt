@@ -14,6 +14,8 @@ import de.norm.events.scraper.inferUnmarkedTitleType
 import de.norm.events.scraper.inferVenueFormatType
 import de.norm.events.scraper.labelledClock
 import de.norm.events.scraper.parseGermanMonthAbbreviation
+import de.norm.events.scraper.parseLabelledPrices
+import de.norm.events.scraper.parsePriceValue
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.parseTitleStatus
 import de.norm.events.scraper.peteredel.PeterEdelOverviewPageScraper.Companion.VENUE_FORMAT_KEYWORDS
@@ -226,8 +228,8 @@ class PeterEdelOverviewPageScraper {
             sourceUrl = baseUrl,
             sourceId = "${EventSource.PETER_EDEL.sourceIdPrefix}$eventDate-${SlugGenerator.slugify(title)}",
             ticketUrl = heading.selectFirst("a")?.absUrl("href")?.takeIf { it.isNotBlank() },
-            pricePresale = ticketColumn?.textAt("h3")?.let(::parseEuroAmount),
-            priceBoxOffice = note?.let { BOX_OFFICE_PRICE.find(it)?.groupValues?.get(1) }?.let(::parseEuroAmount),
+            pricePresale = parsePriceValue(ticketColumn?.textAt("h3")),
+            priceBoxOffice = parseLabelledPrices(note).boxOffice,
             priceNote = note,
             soldOut = ticketColumn?.text()?.contains(SOLD_OUT_MARKER, ignoreCase = true) == true,
             status = resolveStatus(rawTitle, ticketColumn),
@@ -310,14 +312,6 @@ class PeterEdelOverviewPageScraper {
     ): String = parseTitleStatus(rawTitle) ?: ticketColumn?.text()?.let(::parseTitleStatus) ?: EventStatus.SCHEDULED.name
 
     private companion object {
-        /** Parses a `25,00€` or `32 Euro` amount, in either decimal notation. */
-        private fun parseEuroAmount(text: String): BigDecimal? =
-            EURO_AMOUNT
-                .find(text)
-                ?.groupValues
-                ?.get(1)
-                ?.let { runCatching { BigDecimal(it.replace(',', '.')) }.getOrNull() }
-
         /** The Umbraco grid class wrapping exactly one event. */
         private const val EVENT_BOX_CLASS = "box-rc-dark-grey"
 
@@ -347,17 +341,6 @@ class PeterEdelOverviewPageScraper {
          * the event, and once a festival note appended to it became a promoter of its own (#328).
          */
         private val PROMOTER = Regex("""Präsentiert von\s*:\s*(.+?)(?:\s*(?:Tickets|Hinweis)\s*:|$)""", RegexOption.IGNORE_CASE)
-
-        /** A monetary amount in either notation, with a `€` sign or the word `Euro`. */
-        private val EURO_AMOUNT = Regex("""(\d+(?:[.,]\d{1,2})?)\s*(?:€|Euro)""", RegexOption.IGNORE_CASE)
-
-        /**
-         * The box-office price behind `Abendkasse`/`Tageskasse`, tolerating the optional colon and the
-         * `Ab` (from) qualifier. Requires digits, so the frequent `Abendkasse TBA` yields no price rather
-         * than a wrong one.
-         */
-        private val BOX_OFFICE_PRICE =
-            Regex("""(?:Abendkasse|Tageskasse)\s*:?\s*(?:Ab\s+)?(\d+(?:[.,]\d{1,2})?\s*(?:€|Euro))""", RegexOption.IGNORE_CASE)
 
         /** The ticket column's trailing call to action, dropped from the price note. */
         private val CALL_TO_ACTION = Regex("""\s*Für mehr Infos\s*hier klicken\s*:?\s*(?:Details)?\s*$""", RegexOption.IGNORE_CASE)
