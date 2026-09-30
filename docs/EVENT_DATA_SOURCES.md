@@ -7,8 +7,10 @@ remaining work is visible at a glance.
 
 Four tables, one per import status, and the counts below are the state of the work. **[Ready](#-ready-to-implement) is
 the one to read** — those rows are the next `/scaffold-importer` runs. Everything in
-[Blocked](#-blocked--deferred) names what would unblock it. Two of those blockers are worth more than the rest.
-**Resident Advisor as a source**, and **resolving a venue per event** so a promoter listing can be imported.
+[Blocked](#-blocked--deferred) names what would unblock it. One of those blockers is worth more than the rest:
+**resolving a venue per event**, so a promoter listing can be imported. **Resident Advisor is not a source.** Its
+terms forbid automated access, and [Blocked](#-blocked--deferred) says what that means for a venue that publishes only
+there.
 
 **This document answers _which venues_.** For _which kinds of event_, see [EVENT_SCOPE.md](EVENT_SCOPE.md). That is
 the standing reference for scope. It records what is in, what is deliberately excluded — sport, participation formats,
@@ -22,7 +24,7 @@ repairing live in the [issue tracker](https://github.com/enorm-labs/event-junkie
 | ----------------------------------- | ------------------------------------------------------------------------------------ | ----: |
 | ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |    88 |
 | 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |    13 |
-| ⛔ [Blocked](#-blocked--deferred)   | Website analyzed, but no usable listings (no programme page, JS-only, or too sparse) |   104 |
+| ⛔ [Blocked](#-blocked--deferred)   | Website analyzed, but no usable listings (no programme page, JS-only, or too sparse) |   105 |
 | ❓ [Unanalyzed](#-not-analyzed-yet) | URL recorded, but the website still needs a first look                               |    21 |
 
 "Website analyzed" also means the [data model](DATA_MODEL.md) was checked against that source, and no source needed a
@@ -205,6 +207,22 @@ Analyzed, but there is nothing worth importing today. Revisit when the blocker c
 website, a headless browser (deferred per [ADR-007](adr/ADR-007_WEB_SCRAPING_STRATEGY.md)), or the Havanna-style
 derived-occurrence approach applied to undated recurring nights.
 
+**Resident Advisor is not a source, and it does not become one without RA's written permission (#356).** RA's
+[terms of use](https://ra.co/terms) forbid access by any means that RA did not authorise in writing. They name scripts,
+bots, crawlers and scrapers (§4.4(f)). §4.4(a) also forbids automated extraction of content or data for commercial
+purposes. English law governs the terms. The database right may also protect RA's event listings as a whole. RA has no
+public API. The GraphQL endpoint behind the site is internal, and `robots.txt` disallows `/api/`. The terms decide
+the question, not `robots.txt`. The rule covers candidate sweeps too. Read RA by hand in a browser, never by script.
+
+A venue that publishes only on RA still has four routes:
+
+1. Ask the venue for a feed of its own, for example an iCal link or a shared calendar.
+2. Enter its events by hand, as #334 plans.
+3. Link to the venue's RA page. A plain link copies no data.
+4. Ask RA for written permission or a data partnership. That is the only route to RA's own data.
+
+The **Unblocked by** column reads `Site change / manual entry` for these venues.
+
 **The RBB Sendesaal is blocked on scope, not on scraping**, and it is the one entry worth explaining. Its concerts sit
 in a ROC calendar that is server-rendered and venue-attributed, so the scraping works. It is an orchestral house.
 Classical is **wanted but deferred** until `ArtistRole` and the genre vocabulary can represent an orchestra with a
@@ -253,8 +271,8 @@ each is cheap to recognise before spending time on a candidate:
 - **The busiest venue on RA has no usable website.** Minimal Bar tops the Berlin listing with 58 events, and
   `minimal-berlin.de` 303-redirects to `minimal-berlin.geo.io`. That is a generic business-directory page with a stock
   bar photo and no programme. Its operator site, `birgit.club/minimal`, carries a stale Christmas note and no
-  programme either. This is the sharpest case for RA as a source: the club's entire published programme exists only
-  there.
+  programme either. This is the sharpest case for manual entry (#334). The club's entire published programme exists
+  only on RA, and RA is not a source.
 - **Squarespace accounts for three of them.** Bar Neun, Unkompress and Weekend all serve a large page whose event
   content is client-side only. Bar Neun's 1.1 MB of HTML yields no event text at all. Prachtwerk above is the same
   story.
@@ -285,8 +303,8 @@ each is cheap to recognise before spending time on a candidate:
 - **Four recorded domains are dead.** `bredouille-bar.com` no longer resolves, `tausendberlin.de` is parked and for
   sale, and `kulturbrauerei-berlin.de` answers 523 from Cloudflare. Wendel's `nstp.de` serves plain HTTP only, and its
   TLS handshake fails outright.
-- **A site is not a listing.** 8MM, YSY, FOUND, Golden Flamingo, Coco Boule, Atelier Rooftop, Emma Pea and Beach
-  Neukölln all render fine and publish no events. Marmorbar's Wix Events widget says "No events at the moment" in as
+- **A site is not a listing.** 8MM, YSY, FOUND, Golden Flamingo, Coco Boule, Atelier Rooftop, Emma Pea, Beach
+  Neukölln and Komplex Berlin all render fine and publish no events. Marmorbar's Wix Events widget says "No events at the moment" in as
   many words. Funkhaus Berlin's EVENTS page is an archive that stops in 2019.
 - **Two listings are simply behind.** The Door Club's weekly grid and Backsteinboot's Cargo programme both trail their
   own RA listings by weeks. Both are well-structured and worth re-checking rather than rewriting.
@@ -305,16 +323,16 @@ the empty Next.js payload rather than the WAF, and a 403 is not evidence that a 
 
 | Name                             | URL                                            | Type         | Blocker                                                   | Unblocked by               |
 | -------------------------------- | ---------------------------------------------- | ------------ | --------------------------------------------------------- | -------------------------- |
-| DNA. CLUB — urban Space          | https://www.dna-artclub.com/events             | Club         | Elfsight calendar is cross-location classes and workshops | RA as a source             |
-| Giri                             | https://giri.berlin/                           | Bar          | Programme calendar is empty in HTML; RSVP goes to RA      | RA as a source             |
+| DNA. CLUB — urban Space          | https://www.dna-artclub.com/events             | Club         | Elfsight calendar is cross-location classes and workshops | Site change / manual entry |
+| Giri                             | https://giri.berlin/                           | Bar          | Programme calendar is empty in HTML; RSVP goes to RA      | Site change / manual entry |
 | Birgit (Birgit & Bier)           | https://www.birgit.club/                       | Techno Club  | Wix one-pager; only undated weekly series                 | Havanna-style occurrences  |
-| Prisma                           | —                                              | Club         | No own site; Instagram and RA only                        | RA as a source             |
-| Spielbank Berlin                 | https://www.spielbank-berlin.de                | Other        | Casino promotions; `/events` 404s                         | Site change / RA           |
-| Haus der Visionäre               | —                                              | Bar          | No own site; not in the CdV listing either                | RA as a source             |
+| Prisma                           | —                                              | Club         | No own site; Instagram and RA only                        | Site change / manual entry |
+| Spielbank Berlin                 | https://www.spielbank-berlin.de                | Other        | Casino promotions; `/events` 404s                         | Site change                |
+| Haus der Visionäre               | —                                              | Bar          | No own site; not in the CdV listing either                | Site change / manual entry |
 | 8MM                              | https://www.8mmbar.de/program                  | Bar          | Squarespace; the Program page carries no events           | Site change                |
 | Marmorbar                        | https://www.marmorbar.com/en                   | Bar          | Wix Events reports "No events at the moment"              | Site change                |
-| Ikii                             | https://ikiiberlin.com/                        | Bar          | GoDaddy splash page; no programme                         | Site change / RA           |
-| Atemporal                        | —                                              | Club         | No own site; RA and DICE only                             | RA as a source             |
+| Ikii                             | https://ikiiberlin.com/                        | Bar          | GoDaddy splash page; no programme                         | Site change                |
+| Atemporal                        | —                                              | Club         | No own site; RA and DICE only                             | Site change / manual entry |
 | Süss war gestern                 | —                                              | Bar          | Facebook only; the `.de` domain is an unrelated blog      | Site change                |
 | Wendel                           | http://www.nstp.de/nstp/frameset-wendel.htm    | Bar          | Café one-pager, no programme; HTTPS handshake fails       | Site change                |
 | Funkhaus Berlin                  | https://www.funkhaus-berlin.net/               | Concert Hall | Blogger site; the events archive ends in 2019             | Site change / promoter     |
@@ -323,42 +341,42 @@ the empty Next.js payload rather than the WAF, and a 403 is not evidence that a 
 | Backsteinboot                    | https://backsteinboot.org/                     | Club         | Cargo; the programme page still shows July                | Site change / re-check     |
 | Œlgarten                         | https://www.oelgarten.com/en                   | Open Air     | Wix Events; two open-ended weekly series, no occurrences  | Havanna-style occurrences  |
 | Rough Trade Berlin               | https://www.roughtrade.com/en-de/events/berlin | Other        | Next.js store; the events page carries no event data      | Headless browser           |
-| Rosie's Bar                      | —                                              | Bar          | Bar of The Circus Hostel; no listing of its own           | RA as a source             |
+| Rosie's Bar                      | —                                              | Bar          | Bar of The Circus Hostel; no listing of its own           | Site change / manual entry |
 | Kulturbrauerei Open Air          | https://www.kulturbrauerei.de/                 | Open Air     | Grounds site links out to each house; no own programme    | Covered by the houses      |
 | Tausend                          | http://www.tausendberlin.de/                   | Bar          | Domain parked and offered for sale                        | New site                   |
 | Emma Pea                         | https://emmapea.com/                           | Bar          | Restaurant site; no programme                             | Site change                |
 | HÖR Berlin                       | https://hoer.berlin/                           | Other        | Shopify merch shop; its "events" are broadcasts           | Scope decision             |
 | Bredouille                       | —                                              | Bar          | Domain no longer resolves                                 | New site                   |
-| Mena Berlin                      | —                                              | Club         | No own site; Facebook and RA only                         | RA as a source             |
+| Mena Berlin                      | —                                              | Club         | No own site; Facebook and RA only                         | Site change / manual entry |
 | Atelier Rooftop                  | https://atelierrooftop.de/                     | Club         | Rental one-pager; no programme                            | Site change / promoter     |
 | Coco Boule                       | https://cocoboule.com/                         | Bar          | One-pager; no dated content                               | Site change                |
 | YSY                              | https://www.ysyberlin.de/calendar              | Club         | `/calendar` says to follow Instagram instead              | Site change                |
-| Phantom Bar Berlin               | —                                              | Bar          | No own site; RA only                                      | RA as a source             |
+| Phantom Bar Berlin               | —                                              | Bar          | No own site; RA only                                      | Site change / manual entry |
 | The Door Club                    | https://thedoor.club/events/                   | Club         | Weekly grid is stale; nothing after 1 August              | Site change / re-check     |
 | KINDL                            | https://www.kindl-berlin.com/news              | Concert Hall | Art centre calendar is tours and openings, not concerts   | Promoter feed              |
-| Containerhafen                   | —                                              | Open Air     | No own site; RA only                                      | RA as a source             |
+| Containerhafen                   | —                                              | Open Air     | No own site; RA only                                      | Site change / manual entry |
 | Golden Flamingo                  | http://goldenflamingo.de/                      | Open Air     | Restaurant page; "Website befindet sich im Aufbau"        | Site change                |
-| FOUND                            | https://foundberlin.com/                       | Club         | Splash page; address and e-mail only                      | Site change / RA           |
+| FOUND                            | https://foundberlin.com/                       | Club         | Splash page; address and e-mail only                      | Site change                |
 | Beach Neukölln                   | https://www.beach-neukoelln.de/                | Open Air     | Rental and public-viewing marketing, not a programme      | Promoter feed              |
 | RAW-Gelände                      | —                                              | Open Air     | Compound, not a venue; `raw-gelaende.de` is gone          | Covered by the houses      |
 | Genezarethkirche                 | https://www.mlg-neukoelln.de/events            | Concert Hall | Parish calendar: services, rehearsals, courses            | Promoter feed              |
-| Minimal Bar                      | https://minimal-berlin.geo.io/                 | Techno Club  | No own site; redirects to a geo.io business page          | RA as a source             |
-| Sensorium                        | http://www.sensorium-club.com                  | Techno Club  | Domain serves a 229-byte stub page                        | Site change / RA           |
-| Insomnia                         | http://www.insomnia-berlin.de                  | Club         | WAF returns 403 with an empty body to scripts             | Request headers / RA       |
+| Minimal Bar                      | https://minimal-berlin.geo.io/                 | Techno Club  | No own site; redirects to a geo.io business page          | Site change / manual entry |
+| Sensorium                        | http://www.sensorium-club.com                  | Techno Club  | Domain serves a 229-byte stub page                        | Site change                |
+| Insomnia                         | http://www.insomnia-berlin.de                  | Club         | WAF returns 403 with an empty body to scripts             | Request headers            |
 | Hafenbar Berlin                  | https://www.hafenbar-berlin.de                 | Bar          | WordPress blog of _past_ parties; no programme            | Site change                |
-| Bulbul Berlin                    | https://www.bulbulberlin.de                    | Club         | Own site links out to RA for the programme                | RA as a source             |
+| Bulbul Berlin                    | https://www.bulbulberlin.de                    | Club         | Own site links out to RA for the programme                | Site change / manual entry |
 | Bar Neun                         | http://barneun.de                              | Bar          | Squarespace; 1.1 MB of HTML, no event text                | Headless browser           |
 | Unkompress                       | https://www.unkompress.berlin/                 | Club         | Squarespace; event content is client-side only            | Headless browser           |
 | Weekend                          | https://www.weekendclub.berlin/                | Club         | Squarespace; event content is client-side only            | Headless browser           |
-| M-BIA                            | http://www.m-bia.de                            | Techno Club  | WordPress, but no dated content is rendered               | Site change / RA           |
-| KREUZWERK                        | https://kreuzwerk.club/                        | Techno Club  | Address and hours only; no dated content                  | Site change / RA           |
+| M-BIA                            | http://www.m-bia.de                            | Techno Club  | WordPress, but no dated content is rendered               | Site change                |
+| KREUZWERK                        | https://kreuzwerk.club/                        | Techno Club  | Address and hours only; no dated content                  | Site change                |
 | ACUD MACHT NEU                   | https://acudmachtneu.de/programm/              | Club         | Renders 2 exhibitions; club nights are JS-only            | Headless browser           |
 | Neue Nationalgalerie             | https://www.smb.museum/                        | Concert Hall | SMB calendar is tours and workshops, not concerts         | Promoter feed              |
 | Gestrandet a. d. Jannowitzbrücke | https://www.gestrandet-in-berlin.de/           | Open Air     | Site returns 502                                          | Site change                |
 | Fluxbau                          | https://www.fluxfm.de/fluxbau                  | Club         | Server-rendered now, but 2 dated events + series          | More events / occurrences  |
 | Sage Club                        | https://www.sage-club.de/                      | Club         | TYPO3; `/programm/` renders navigation only               | Headless browser           |
 | The Pearl                        | https://thepearl-berlin.de/                    | Club         | `/programm/` renders now, but holds one event             | More events                |
-| Prince Charles                   | https://princecharlesberlin.com/               | Club         | No own listings; links out to Resident Advisor            | RA as a source             |
+| Prince Charles                   | https://princecharlesberlin.com/               | Club         | No own listings; links out to Resident Advisor            | Site change / manual entry |
 | Artliners Berlin                 | —                                              | Club         | Domain no longer resolves; site gone                      | New site                   |
 | Prachtwerk                       | https://www.prachtwerkberlin.com/              | Bar          | Has a Programm page now, but it is empty                  | Site change                |
 | Wiener Blut                      | https://www.wienerblut.org/                    | Bar          | Impressum-only page                                       | Site change                |
@@ -377,38 +395,39 @@ the empty Next.js payload rather than the WAF, and a 403 is not evidence that a 
 | Theater des Westens              | https://www.stage-entertainment.de/            | Theater      | Stage portal; one musical, dates in ticket shop           | Scope decision             |
 | RBB Sendesaal                    | https://www.roc-berlin.de/kalender/            | Concert Hall | Scrapable; deferred pending the classical scope decision  | Scope decision             |
 | Zentraler Festplatz              | https://berliner-festplatz.de/                 | Open Air     | Rental ground; "Events" page is social embeds             | Site change                |
-| ://about blank                   | https://aboutblank.li/                         | Techno Club  | `/next` carries no events in the HTML                     | Site change / RA           |
+| ://about blank                   | https://aboutblank.li/                         | Techno Club  | `/next` carries no events in the HTML                     | Site change                |
 | Bohnengold                       | https://bohnengold.de/                         | Bar          | Domain redirects to Facebook                              | Site change                |
-| C115                             | https://www.c115.club/                         | Techno Club  | Mailing-list splash page; no programme                    | Site change / RA           |
-| ELSE                             | —                                              | Techno Club  | No own website; listings only on RA                       | RA as a source             |
+| C115                             | https://www.c115.club/                         | Techno Club  | Mailing-list splash page; no programme                    | Site change                |
+| ELSE                             | —                                              | Techno Club  | No own website; listings only on RA                       | Site change / manual entry |
 | Hamburger Bahnhof                | https://www.smb.museum/                        | Open Air     | Museum programme is guided tours, not concerts            | Promoter feed              |
 | KitKatClub                       | https://www.kitkatclub.org/                    | Techno Club  | News-style prose; series live on external sites           | Site change                |
 | Lokschuppen                      | https://lokschuppen-berlin.com/                | Techno Club  | Readymag site; the content is JS-only                     | Headless browser           |
 | OXI & OXI Garten                 | https://oxi-club.de/                           | Techno Club  | Domain redirects to Instagram                             | Site change                |
-| RSO                              | https://rso.berlin/                            | Techno Club  | Domain returns 404; no own site found                     | Site change / RA           |
+| RSO                              | https://rso.berlin/                            | Techno Club  | Domain returns 404; no own site found                     | Site change                |
 | SchwuZ                           | https://www.schwuz.de/                         | Techno Club  | Between locations; ~2 guest events listed                 | New venue / site change    |
 | Sisyfass                         | —                                              | Bar          | No website; Instagram and RA only                         | Site change                |
 | Strandbad Grünau                 | https://strandbadgruenau.de/                   | Open Air     | `/events/` is rental marketing, not a programme           | Promoter feed              |
 | Zuckerzauber                     | https://zuckerzauber.info/                     | Bar          | Domain redirects to Facebook                              | Site change                |
-| Sameheads                        | http://www.sameheads.com                       | Bar          | Headless WordPress; label and art pages, no programme     | RA as a source             |
-| 90mil                            | —                                              | Open Air     | No own site; Instagram and RA only                        | RA as a source             |
-| Taborkirche                      | https://www.taborkirche.de                     | Concert Hall | Church; RA's own link is a Leipzig parish site            | Site change / RA           |
+| Sameheads                        | http://www.sameheads.com                       | Bar          | Headless WordPress; label and art pages, no programme     | Site change / manual entry |
+| 90mil                            | —                                              | Open Air     | No own site; Instagram and RA only                        | Site change / manual entry |
+| Taborkirche                      | https://www.taborkirche.de                     | Concert Hall | Church; RA's own link is a Leipzig parish site            | Site change                |
 | Orangerie Neukölln               | https://www.orangerie-nk.de/events             | Bar          | `/events` is rental marketing, not a programme            | Site change / promoter     |
-| West Germany                     | —                                              | Club         | No own site; RA only                                      | RA as a source             |
+| West Germany                     | —                                              | Club         | No own site; RA only                                      | Site change / manual entry |
 | YAAM                             | https://yaam.de/programm/                      | Club         | WordPress + EventON; calendar says no upcoming events     | Site change / re-check     |
-| Torte Bar                        | —                                              | Bar          | No own site; Instagram and RA only                        | RA as a source             |
-| Ipse                             | —                                              | Open Air     | No own site; `ipse-berlin.de` is parked                   | RA as a source             |
+| Torte Bar                        | —                                              | Bar          | No own site; Instagram and RA only                        | Site change / manual entry |
+| Ipse                             | —                                              | Open Air     | No own site; `ipse-berlin.de` is parked                   | Site change / manual entry |
 | Musikbrauerei                    | https://musikbrauerei.com/events/              | Concert Hall | Hand-edited Kadence page; 2025 entries kept, 2 upcoming   | More events / re-check     |
 | P61 Gallery                      | https://www.p61gallery.com/programm            | Other        | Digital-art museum; programme is exhibitions              | Scope decision             |
 | Chausseestrasse 131              | https://www.chausseestrasse131.com/            | Club         | Wix; "WEBSITE UNDER CONSTRUCTION"                         | Site change                |
-| SaltyAcid Space                  | http://saltyacid.space/                        | Open Air     | One-pager with a video; PROGRAM link goes nowhere         | Site change / RA           |
-| Lauschangriff                    | —                                              | Bar          | No own site; Facebook and RA only                         | RA as a source             |
-| The Cloud                        | —                                              | Bar          | No own site; Instagram and RA only                        | RA as a source             |
-| Studiodb                         | —                                              | Other        | No own site; Instagram and RA only                        | RA as a source             |
-| PKH Warehouse                    | —                                              | Other        | No own site; RA only                                      | RA as a source             |
+| SaltyAcid Space                  | http://saltyacid.space/                        | Open Air     | One-pager with a video; PROGRAM link goes nowhere         | Site change                |
+| Lauschangriff                    | —                                              | Bar          | No own site; Facebook and RA only                         | Site change / manual entry |
+| The Cloud                        | —                                              | Bar          | No own site; Instagram and RA only                        | Site change / manual entry |
+| Studiodb                         | —                                              | Other        | No own site; Instagram and RA only                        | Site change / manual entry |
+| PKH Warehouse                    | —                                              | Other        | No own site; RA only                                      | Site change / manual entry |
 | Studio1111                       | http://studio1111.de/                          | Club         | Impressum-only page                                       | Site change                |
 | Badenscher Hof Jazzclub          | https://www.badenscher-hof.de/                 | Club         | Duda one-pager; programme only as monthly PNG images      | Site change                |
 | Mokum                            | —                                              | Bar          | No own site; Facebook only                                | Site change                |
+| Komplex Berlin                   | https://komplex.berlin/                        | Other        | Adobe Portfolio rental site; no programme                 | Site change / manual entry |
 
 ## ❓ Not analyzed yet
 
@@ -448,11 +467,11 @@ page, and its events are a section of the home page.
 
 Where candidates come from, and what is deliberately left out:
 
-- **Resident Advisor** (<https://de.ra.co/events/de/berlin>), read from the site's own `eventListings` GraphQL query
-  (Berlin is `areas.eq: 34`). One eight-week window carried 1142 events at 201 distinct venues, **66 of them new to
-  this document**. RA's own busiest Berlin room — Minimal Bar, 58 events — was not recorded here at all, and it has no
-  website of its own. That makes it the strongest single argument for importing RA directly. It sits in
-  [Blocked](#-blocked--deferred).
+- **Resident Advisor** (<https://de.ra.co/events/de/berlin>). One eight-week window carried 1142 events at 201
+  distinct venues, **66 of them new to this document**. RA's own busiest Berlin room — Minimal Bar, 58 events — was not
+  recorded here at all, and it has no website of its own. It sits in [Blocked](#-blocked--deferred). That sweep read
+  RA's `eventListings` GraphQL query by script, and RA's terms forbid that. A later sweep reads RA by hand, in a
+  browser.
 - **The promoter listings** — Loft, Puschen, Landstreicher Booking and Trinity Music. They add venues RA does not
   surface, and they are seated or open-air houses rather than clubs. Chasing down the Gärten der Welt URL surfaced
   **Landstreicher Konzerte**, a separate outfit from Landstreicher Booking, now filed under
@@ -480,12 +499,10 @@ Two source lists were worked through completely and are no longer reproduced her
   source itself is deferred (see [Blocked](#-blocked--deferred)), and a venue site usually yields richer data than a
   promoter listing anyway.
 - The **techno-club cluster** — 26 clubs and bars, of which 13 turned out to be scrapable. The other 13 publish only
-  through Instagram, Facebook or Resident Advisor. That makes **Resident Advisor as a source** the single biggest
-  unblocker left on this list. RA names five [Blocked](#-blocked--deferred) venues whose blocker is precisely "no own
-  site": ://about blank, ELSE, KitKatClub, OXI and RSO. Beside them it carries 66 venues that this document does not
-  record at all. Note that RA is one source, not 66. Importing it means one `event_source` spanning every venue, so it
-  runs
-  into **the same per-event venue resolution** the promoter listings are deferred on.
+  through Instagram, Facebook or Resident Advisor. RA is not a source (see [Blocked](#-blocked--deferred)), so those 13
+  wait for a site of their own or for manual entry. RA names five [Blocked](#-blocked--deferred) venues whose blocker
+  is precisely "no own site": ://about blank, ELSE, KitKatClub, OXI and RSO. Beside them it carries 66 venues that
+  this document does not record at all.
 
 ---
 

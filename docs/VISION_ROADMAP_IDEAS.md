@@ -140,7 +140,8 @@ Turn discovery into a network and open the data up. → **[Phase 4 — Social & 
   a thin review count reads worse than none.
 - Integrations with Spotify, Deezer, SoundCloud and Resident Advisor, to notify when a favourite artist plays. That
   includes **importing the artists someone already follows there** in one step, which is the fastest way to make a new
-  account useful. Facebook Events and Pages were in the original idea list, from the era when the Graph API was open.
+  account useful. Resident Advisor has no public API, and its terms forbid automated access (#356), so that part needs
+  RA's permission. Facebook Events and Pages were in the original idea list, from the era when the Graph API was open.
   Check what Facebook still permits before planning anything on it.
 - A club map showing events nearby. An iCal export, and **calendar subscriptions that stay in sync**. That is an ICS
   feed per follow or saved search, so a new matching event lands in Google Calendar without a manual export. And a
