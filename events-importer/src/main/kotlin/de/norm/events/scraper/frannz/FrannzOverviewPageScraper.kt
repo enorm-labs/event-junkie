@@ -5,6 +5,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.cleanEventTitle
+import de.norm.events.scraper.hasSoldOutMarker
 import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.imgSrcAt
 import de.norm.events.scraper.mapEventType
@@ -41,7 +42,7 @@ import java.util.Locale
  * - **No structured status markers.** The *description* is deliberately not read for one:
  * "ausverkauft" turns up in ordinary prose ("ihrer restlos *ausverkauften* Tour"), a false
  * positive. The **title** is different — the venue appends the note tersely ("MAD TSAI -verlegt
- * ins Gretchen-", "Haken -ausverkauft-"), so the status and [SOLD_OUT_NOTE] are read from the raw
+ * ins Gretchen-", "Haken -ausverkauft-"), so the status and the sold-out marker ([hasSoldOutMarker]) are read from the raw
  * title before [cleanEventTitle] strips that note, the way Metropol reads its `"Verlegt ins
  * <venue> –"` prefix. A show that moved *out* is stored `RELOCATED` rather than `SCHEDULED` at a
  * venue it will not play.
@@ -149,7 +150,7 @@ class FrannzOverviewPageScraper(
             priceBoxOffice = priceBoxOffice,
             status = status,
             statusNote = statusNote,
-            soldOut = SOLD_OUT_NOTE.containsMatchIn(rawTitle),
+            soldOut = hasSoldOutMarker(rawTitle),
             artists = buildArtistsForEventType(title, subtitle, eventType),
             promoters = parsePromoters(article.textAt("h4.event-otitle"))
         )
@@ -366,12 +367,6 @@ class FrannzOverviewPageScraper(
         /** Captures the promoter names preceding a "präsentiert:" / "präsentieren:" marker. */
         private val PRESENTER_PATTERN =
             Regex("""(.+?)\s+präsentier(?:t|en)\s*:?\s*$""", RegexOption.IGNORE_CASE)
-
-        /**
-         * The venue's sold-out note at the end of a title, set off by a dash or a bracket:
-         * "Haken -ausverkauft-", "Singalong (ausverkauft)".
-         */
-        private val SOLD_OUT_NOTE = Regex("""[-–—(]\s*ausverkauft!?\s*[-–—)]?\s*$""", RegexOption.IGNORE_CASE)
 
         /** Splits a multi-promoter presenter string on comma / `&` / `/` / "und". */
         private val PROMOTER_SEPARATOR = Regex("""\s*(?:,|&|/|\bund\b)\s*""", RegexOption.IGNORE_CASE)

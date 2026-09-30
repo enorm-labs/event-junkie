@@ -190,7 +190,8 @@ data class ScrapedEvent(
             pricePresale = pricePresale?.normalizeMoneyScale(),
             priceBoxOffice = priceBoxOffice?.normalizeMoneyScale(),
             priceNote = priceNote,
-            soldOut = soldOut,
+            // A marker in the title or subtitle is the venue's word, whether or not its scraper reads it (#2103).
+            soldOut = soldOut || hasSoldOutMarker(title) || hasSoldOutMarker(subtitle),
             // Honour an explicit scraper flag, otherwise derive from prices/note/title.
             free = free || detectFree(pricePresale, priceBoxOffice, priceNote, storedTitle)
         )

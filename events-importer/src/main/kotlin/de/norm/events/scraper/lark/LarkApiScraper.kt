@@ -8,6 +8,7 @@ import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.WHITESPACE
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.decodeHtmlEntities
+import de.norm.events.scraper.hasSoldOutMarker
 import de.norm.events.scraper.headlinersFromTitle
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.mapEventType
@@ -173,7 +174,7 @@ internal class LarkApiScraper(
             return null
         }
 
-        val soldOut = SOLD_OUT_MARKER.containsMatchIn(rawTitle)
+        val soldOut = hasSoldOutMarker(rawTitle)
         val cancelled = CANCELLED_MARKER.containsMatchIn(rawTitle)
         val title = cleanEventTitle(stripStatusMarkers(rawTitle))
 
@@ -280,9 +281,6 @@ internal class LarkApiScraper(
                 "dance" to EventType.PARTY.name,
                 "seminar" to EventType.OTHER.name
             )
-
-        /** A sold-out marker the venue writes into the title. */
-        val SOLD_OUT_MARKER = Regex("""\bsold\s?out\b|\bausverkauft\b""", RegexOption.IGNORE_CASE)
 
         /** A cancellation marker the venue writes into the title. */
         val CANCELLED_MARKER = Regex("""\bcancell?ed\b|\babgesagt\b""", RegexOption.IGNORE_CASE)

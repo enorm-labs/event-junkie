@@ -455,4 +455,16 @@ class ScrapedEventTest {
 
         rows.collapseExhibitionRuns { null } shouldBe rows
     }
+
+    // #2103: every venue's title or subtitle marker counts, whether or not its scraper reads one.
+    @Test
+    fun `toEventEntity marks a row sold out when its title or subtitle carries a marker`() {
+        scrapedEvent(title = "SukOne [AUSVERKAUFT!]").toEntity().soldOut shouldBe true
+        scrapedEvent(title = "KAYLA SHYX", subtitle = "DAS KONZERT IST RESTLOS AUSVERKAUFT UND ES WIRD KEINE TICKETS AN DER ABENDKASSE GEBEN!")
+            .toEntity()
+            .soldOut shouldBe true
+        // The title is stored as the scraper wrote it; only the flag is added.
+        scrapedEvent(title = "SukOne [AUSVERKAUFT!]").toEntity().title shouldBe "SukOne [AUSVERKAUFT!]"
+        scrapedEvent(title = "The Act (Sold Out Tour)").toEntity().soldOut shouldBe false
+    }
 }
