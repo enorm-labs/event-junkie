@@ -39,6 +39,17 @@ const showRoles = computed(() => lineup.value.some((entry) => entry.role !== 'HE
 // Floors and set times where the venue published a running order (#2002); null for the rest.
 const floors = computed(() => runningOrder(lineup.value))
 
+/** The host of the page the lineup came from when it is not the venue's, credited under it (ADR-036). */
+const lineupCredit = computed(() => {
+  const url = event.value?.lineupSourceUrl
+  if (!url || !lineup.value.length) return null
+  try {
+    return { url, host: new URL(url).host }
+  } catch {
+    return null
+  }
+})
+
 /** `Sun 08:30–12:30`: the weekday only where a new night begins, the end only where it is known. */
 function setTimeLabel(set: RunningOrderSet): string {
   const day = set.opensNight ? `${formatWeekday(set.opensNight)} ` : ''
@@ -305,6 +316,17 @@ useStructuredData((): JsonLd[] => {
           </li>
         </ul>
       </section>
+
+      <p v-if="lineupCredit" class="text-xs text-muted-foreground">
+        {{ t('events.detail.lineupFrom') }}
+        <a
+          class="underline underline-offset-2"
+          :href="lineupCredit.url"
+          rel="noopener"
+          target="_blank"
+          >{{ lineupCredit.host }}</a
+        >
+      </p>
 
       <section class="grid grid-cols-1 gap-6 sm:grid-cols-2">
         <div v-if="event.venue" class="space-y-1">

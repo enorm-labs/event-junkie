@@ -1,0 +1,1849 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="See the past, current and next timetables and lineups for the Techno club Sisyphos in Berlin.">
+    <title>Sisyphos Berlin Timetable (Unofficial)</title>
+    <link rel="icon" href="https://sisy.fan/duck.svg">
+    <link rel="preload" as="style" href="https://sisy.fan/build/assets/app-BvJOtWQp.css" /><link rel="modulepreload" href="https://sisy.fan/build/assets/app-CAiCLEjY.js" /><link rel="stylesheet" href="https://sisy.fan/build/assets/app-BvJOtWQp.css" data-navigate-track="reload" /><script type="module" src="https://sisy.fan/build/assets/app-CAiCLEjY.js" data-navigate-track="reload"></script>        <!-- Livewire Styles --><style >[wire\:loading][wire\:loading], [wire\:loading\.delay][wire\:loading\.delay], [wire\:loading\.inline-block][wire\:loading\.inline-block], [wire\:loading\.inline][wire\:loading\.inline], [wire\:loading\.block][wire\:loading\.block], [wire\:loading\.flex][wire\:loading\.flex], [wire\:loading\.table][wire\:loading\.table], [wire\:loading\.grid][wire\:loading\.grid], [wire\:loading\.inline-flex][wire\:loading\.inline-flex] {display: none;}[wire\:loading\.delay\.none][wire\:loading\.delay\.none], [wire\:loading\.delay\.shortest][wire\:loading\.delay\.shortest], [wire\:loading\.delay\.shorter][wire\:loading\.delay\.shorter], [wire\:loading\.delay\.short][wire\:loading\.delay\.short], [wire\:loading\.delay\.default][wire\:loading\.delay\.default], [wire\:loading\.delay\.long][wire\:loading\.delay\.long], [wire\:loading\.delay\.longer][wire\:loading\.delay\.longer], [wire\:loading\.delay\.longest][wire\:loading\.delay\.longest] {display: none;}[wire\:offline][wire\:offline] {display: none;}[wire\:dirty]:not(textarea):not(input):not(select) {display: none;}:root {--livewire-progress-bar-color: #2299dd;}[x-cloak] {display: none !important;}[wire\:cloak] {display: none !important;}</style>
+    <style>
+        @keyframes duckWiggle {
+            0% { transform: rotate(0deg); }
+            10% { transform: rotate(-15deg); }
+            20% { transform: rotate(15deg); }
+            30% { transform: rotate(-10deg); }
+            40% { transform: rotate(10deg); }
+            50% { transform: rotate(-5deg); }
+            60% { transform: rotate(5deg); }
+            70% { transform: rotate(-3deg); }
+            80% { transform: rotate(3deg); }
+            90% { transform: rotate(-1deg); }
+            100% { transform: rotate(0deg); }
+        }
+        .duck-logo {
+            animation: duckWiggle 2.5s ease-in-out infinite;
+        }
+    </style>
+</head>
+<body class="flex flex-col min-h-full bg-white dark:bg-gray-900">
+    <div class="flex-grow flex flex-col bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200">
+      <header class="text-white shadow-sm bg-white dark:bg-gray-800 border-b dark:border-gray-700">
+        <div class="container mx-auto px-4 h-16 flex items-center justify-between">
+          <div class="flex items-center">
+            <a href="https://sisy.fan">
+                <img src="https://sisy.fan/duck.svg" alt="Logo" class="h-12 duck-logo">
+            </a>
+            <span class="ml-4 text-xl font-semibold text-black dark:text-white">Sisyphos Timetable</span>
+          </div>
+          <div class="w-2/5">
+            <div wire:snapshot="{&quot;data&quot;:{&quot;searchTerm&quot;:&quot;&quot;},&quot;memo&quot;:{&quot;id&quot;:&quot;Padh3RPs1zSZ8IyjiEjw&quot;,&quot;name&quot;:&quot;combined-search&quot;,&quot;path&quot;:&quot;\/&quot;,&quot;method&quot;:&quot;GET&quot;,&quot;children&quot;:[],&quot;scripts&quot;:[],&quot;assets&quot;:[],&quot;errors&quot;:[],&quot;locale&quot;:&quot;en&quot;},&quot;checksum&quot;:&quot;fixture&quot;}" wire:effects="[]" wire:id="Padh3RPs1zSZ8IyjiEjw"
+    wire:key="combined-search-root"
+    class="relative"
+    x-data="{
+        open: false,
+        index: -1,
+        options() { return Array.from($root.querySelectorAll('[role=option]')); },
+        reset() { this.open = true; this.index = -1; },
+        move(step) {
+            const count = this.options().length;
+            if (count === 0) return;
+            this.open = true;
+            this.index = (this.index + step + count) % count;
+            this.$nextTick(() => this.options()[this.index]?.scrollIntoView({ block: 'nearest' }));
+        },
+        choose() {
+            const opts = this.options();
+            const el = this.index >= 0 ? opts[this.index] : opts[0];
+            if (el) window.location.href = el.getAttribute('href');
+        },
+    }"
+    @keydown.escape.window="open = false"
+    @click.outside="open = false"
+>
+    <div class="relative">
+        <input
+            type="text"
+            wire:model.live.debounce.300ms="searchTerm"
+            @focus="open = true"
+            x-on:input="reset()"
+            @keydown.arrow-down.prevent="move(1)"
+            @keydown.arrow-up.prevent="move(-1)"
+            @keydown.enter.prevent="choose()"
+            @keydown.escape.stop="open = false"
+            placeholder="Search events, dates or artists"
+            role="combobox"
+            aria-autocomplete="list"
+            aria-controls="combined-search-results"
+            :aria-expanded="open.toString()"
+            autocomplete="off"
+            spellcheck="false"
+            class="w-full px-3 py-1 pr-8 text-black dark:text-gray-100 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
+        >
+
+        <span
+            wire:loading.delay
+            wire:target="searchTerm"
+            class="absolute inset-y-0 right-2 flex items-center text-gray-400 dark:text-gray-500"
+            aria-hidden="true"
+        >
+            <svg class="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+            </svg>
+        </span>
+    </div>
+
+    <div
+        x-show="open"
+        x-cloak
+        x-transition.opacity.duration.100ms
+        id="combined-search-results"
+        role="listbox"
+        aria-label="Search results"
+        class="absolute right-0 z-50 mt-1 w-[90vw] sm:w-full sm:min-w-[24rem] max-h-[70vh] overflow-y-auto bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg"
+    >
+        <!--[if BLOCK]><![endif]-->            
+            
+            <!--[if BLOCK]><![endif]-->                <div role="group" aria-label="Events">
+                    <p class="px-3 pt-2 pb-1 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">
+                        Events
+                    </p>
+
+                    <!--[if BLOCK]><![endif]-->                        <a
+                            href="https://sisy.fan/events/from/25.09.2026/to/28.09.2026"
+                            role="option"
+                            wire:key="event-104"
+                            :aria-selected="(index === 0).toString()"
+                            :class="index === 0 ? 'bg-gray-100 dark:bg-gray-700' : ''"
+                            @mouseenter="index = 0"
+                            class="flex items-start gap-3 px-3 py-2 cursor-pointer focus:outline-none"
+                        >
+                            <span class="min-w-0 flex-1">
+                                <span class="block text-sm text-black dark:text-gray-100 break-words">HAPPY RAVE HAPPY LIFE</span>
+                                <!--[if BLOCK]><![endif]-->                                    <span class="block text-xs text-gray-500 dark:text-gray-400">25.09.2026 – 28.09.2026</span>
+                                <!--[if ENDBLOCK]><![endif]-->
+                            </span>
+                            <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
+                        </a>
+                                                                    <a
+                            href="https://sisy.fan/events/from/18.09.2026/to/21.09.2026"
+                            role="option"
+                            wire:key="event-103"
+                            :aria-selected="(index === 1).toString()"
+                            :class="index === 1 ? 'bg-gray-100 dark:bg-gray-700' : ''"
+                            @mouseenter="index = 1"
+                            class="flex items-start gap-3 px-3 py-2 cursor-pointer focus:outline-none"
+                        >
+                            <span class="min-w-0 flex-1">
+                                <span class="block text-sm text-black dark:text-gray-100 break-words">ENTERNET: world weit weg</span>
+                                <!--[if BLOCK]><![endif]-->                                    <span class="block text-xs text-gray-500 dark:text-gray-400">18.09.2026 – 21.09.2026</span>
+                                <!--[if ENDBLOCK]><![endif]-->
+                            </span>
+                            <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
+                        </a>
+                                                                    <a
+                            href="https://sisy.fan/events/from/11.09.2026/to/14.09.2026"
+                            role="option"
+                            wire:key="event-101"
+                            :aria-selected="(index === 2).toString()"
+                            :class="index === 2 ? 'bg-gray-100 dark:bg-gray-700' : ''"
+                            @mouseenter="index = 2"
+                            class="flex items-start gap-3 px-3 py-2 cursor-pointer focus:outline-none"
+                        >
+                            <span class="min-w-0 flex-1">
+                                <span class="block text-sm text-black dark:text-gray-100 break-words">DUCK TALES</span>
+                                <!--[if BLOCK]><![endif]-->                                    <span class="block text-xs text-gray-500 dark:text-gray-400">11.09.2026 – 14.09.2026</span>
+                                <!--[if ENDBLOCK]><![endif]-->
+                            </span>
+                            <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
+                        </a>
+                                                                    <a
+                            href="https://sisy.fan/events/from/04.09.2026/to/07.09.2026"
+                            role="option"
+                            wire:key="event-100"
+                            :aria-selected="(index === 3).toString()"
+                            :class="index === 3 ? 'bg-gray-100 dark:bg-gray-700' : ''"
+                            @mouseenter="index = 3"
+                            class="flex items-start gap-3 px-3 py-2 cursor-pointer focus:outline-none"
+                        >
+                            <span class="min-w-0 flex-1">
+                                <span class="block text-sm text-black dark:text-gray-100 break-words">HIGHTER WEITER</span>
+                                <!--[if BLOCK]><![endif]-->                                    <span class="block text-xs text-gray-500 dark:text-gray-400">04.09.2026 – 07.09.2026</span>
+                                <!--[if ENDBLOCK]><![endif]-->
+                            </span>
+                            <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
+                        </a>
+                                                                    <a
+                            href="https://sisy.fan/events/from/28.08.2026/to/31.08.2026"
+                            role="option"
+                            wire:key="event-99"
+                            :aria-selected="(index === 4).toString()"
+                            :class="index === 4 ? 'bg-gray-100 dark:bg-gray-700' : ''"
+                            @mouseenter="index = 4"
+                            class="flex items-start gap-3 px-3 py-2 cursor-pointer focus:outline-none"
+                        >
+                            <span class="min-w-0 flex-1">
+                                <span class="block text-sm text-black dark:text-gray-100 break-words">Sisyphos invites eZo Festival, Morevi &amp; Friends</span>
+                                <!--[if BLOCK]><![endif]-->                                    <span class="block text-xs text-gray-500 dark:text-gray-400">28.08.2026 – 31.08.2026</span>
+                                <!--[if ENDBLOCK]><![endif]-->
+                            </span>
+                            <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
+                        </a>
+                                            <!--[if ENDBLOCK]><![endif]-->
+                </div>
+            <!--[if ENDBLOCK]><![endif]-->
+
+            <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
+        <!--[if ENDBLOCK]><![endif]-->
+    </div>
+</div>
+          </div>
+        </div>
+      </header>
+
+      <main class="container mx-auto px-4 py-8 flex-grow">
+              <div class="bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 mb-6 shadow-sm mx-auto max-w-2xl text-center">
+        <p class="text-gray-800 dark:text-gray-200">
+            <a href="https://t.me/sisyphosclub" class="text-blue-500 dark:text-blue-400 underline" target="_blank">
+                <img src="https://sisy.fan/img/telegram-icon.svg" alt="Telegram Icon" class="inline-block w-6 h-6 mr-2">
+                Join our Telegram group!
+            </a>
+        </p>
+    </div>
+
+    <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
+
+<div wire:snapshot="{&quot;data&quot;:{&quot;event&quot;:[null,{&quot;class&quot;:&quot;App\\Models\\Event&quot;,&quot;key&quot;:104,&quot;s&quot;:&quot;mdl&quot;}],&quot;currentlyPlayingDancefloors&quot;:[[],{&quot;s&quot;:&quot;arr&quot;}]},&quot;memo&quot;:{&quot;id&quot;:&quot;Oni767OfbQUQHgDvCf9w&quot;,&quot;name&quot;:&quot;event-display&quot;,&quot;path&quot;:&quot;\/&quot;,&quot;method&quot;:&quot;GET&quot;,&quot;children&quot;:[],&quot;scripts&quot;:[],&quot;assets&quot;:[],&quot;errors&quot;:[],&quot;locale&quot;:&quot;en&quot;},&quot;checksum&quot;:&quot;fixture&quot;}" wire:effects="[]" wire:id="Oni767OfbQUQHgDvCf9w" wire:key="event-display" class="relative">
+    <style>
+        @keyframes pulse-bg {
+            0%, 100% { background-color: rgba(255, 237, 213, 0.3); }
+            50% { background-color: rgba(254, 215, 170, 0.7); }
+        }
+        @keyframes pulse-bg-dark {
+            0%, 100% { background-color: rgba(255, 140, 0, 0.2); }
+            50% { background-color: rgba(255, 140, 0, 0.35); }
+        }
+        .pulsate-bg {
+            animation: pulse-bg 1.5s ease-in-out infinite;
+        }
+        @media (prefers-color-scheme: dark) {
+            .pulsate-bg {
+                animation: pulse-bg-dark 1.5s ease-in-out infinite;
+            }
+        }
+        .sticky-header {
+            position: sticky;
+            top: 0;
+            background-color: white;
+            z-index: 10;
+        }
+        @media (prefers-color-scheme: dark) {
+            .sticky-header {
+                background-color: rgb(17, 24, 39); /* gray-900 */
+            }
+        }
+    </style>
+
+    <!--[if BLOCK]><![endif]-->        <div class="mb-8" wire:key="event-104-1790798350">
+            <div class="sticky-header">
+                <h2 class="text-2xl font-semibold mb-4 pt-4 text-gray-900 dark:text-gray-100">HAPPY RAVE HAPPY LIFE (25.09.2026 - 28.09.2026)</h2>
+                <div class="mb-4">
+                    <div class="flex flex-wrap border-b border-gray-200 dark:border-gray-700 overflow-x-auto" x-data="{
+                        activeTabId: (() => {
+                            const storedTabId = parseInt(localStorage.getItem('activeDancefloorTabId'));
+                            const validIds = [1,2,3,4,5];
+                            return validIds.includes(storedTabId) ? storedTabId : validIds[0];
+                        })(),
+                        setActiveTab(id) {
+                            this.activeTabId = id;
+                            localStorage.setItem('activeDancefloorTabId', id);
+                        }
+                    }">
+                        <!--[if BLOCK]><![endif]-->                            <button @click="setActiveTab(1); $dispatch('change-tab', 1)"
+                                    :class="{ 'border-b-2 border-sisy-orange dark:border-sisy-orange-dark': activeTabId === 1 }"
+                                    class="px-2 py-1 font-semibold relative z-20 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+                                Hammahalle
+                                <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
+                            </button>
+                                                    <button @click="setActiveTab(2); $dispatch('change-tab', 2)"
+                                    :class="{ 'border-b-2 border-sisy-orange dark:border-sisy-orange-dark': activeTabId === 2 }"
+                                    class="px-2 py-1 font-semibold relative z-20 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+                                Wintergarten
+                                <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
+                            </button>
+                                                    <button @click="setActiveTab(3); $dispatch('change-tab', 3)"
+                                    :class="{ 'border-b-2 border-sisy-orange dark:border-sisy-orange-dark': activeTabId === 3 }"
+                                    class="px-2 py-1 font-semibold relative z-20 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+                                Strand
+                                <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
+                            </button>
+                                                    <button @click="setActiveTab(4); $dispatch('change-tab', 4)"
+                                    :class="{ 'border-b-2 border-sisy-orange dark:border-sisy-orange-dark': activeTabId === 4 }"
+                                    class="px-2 py-1 font-semibold relative z-20 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+                                Dampfer
+                                <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
+                            </button>
+                                                    <button @click="setActiveTab(5); $dispatch('change-tab', 5)"
+                                    :class="{ 'border-b-2 border-sisy-orange dark:border-sisy-orange-dark': activeTabId === 5 }"
+                                    class="px-2 py-1 font-semibold relative z-20 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+                                Tunnel
+                                <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
+                            </button>
+                        <!--[if ENDBLOCK]><![endif]-->
+                    </div>
+                </div>
+            </div>
+
+            <div x-data="{
+                activeTabId: (() => {
+                    const storedTabId = parseInt(localStorage.getItem('activeDancefloorTabId'));
+                    const validIds = [1,2,3,4,5];
+                    return validIds.includes(storedTabId) ? storedTabId : validIds[0];
+                })(),
+                serverTime: '2026-09-30T21:59:10+02:00',
+                isCurrentTimeslot(start, end, dancefloorId) {
+                    if (this.activeTabId !== dancefloorId) return false;
+                    const now = new Date(this.serverTime);
+                    return now >= new Date(start) && now < new Date(end);
+                },
+                updateServerTime() {
+                    const now = new Date(this.serverTime);
+                    now.setMinutes(now.getMinutes() + 1);
+                    this.serverTime = now.toISOString();
+                    this.$nextTick(() => this.scrollToCurrentTimeslot());
+                },
+                scrollToCurrentTimeslot() {
+                    const currentTimeslot = document.querySelector(`#dancefloor-${this.activeTabId} #current-timeslot`);
+                    if (currentTimeslot) {
+                        currentTimeslot.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                },
+                setActiveTab(id) {
+                    this.activeTabId = id;
+                    localStorage.setItem('activeDancefloorTabId', id);
+                }
+            }"
+            x-init="
+                $nextTick(() => {
+                    setInterval(() => updateServerTime(), 60000);
+                    scrollToCurrentTimeslot();
+                });
+            "
+            @change-tab.window="setActiveTab($event.detail); $nextTick(() => scrollToCurrentTimeslot())"
+            >
+                <!--[if BLOCK]><![endif]-->                    <div id="dancefloor-1" x-show="activeTabId === 1" class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                            <thead class="bg-gray-50 dark:bg-gray-800">
+                                <tr>
+                                    <th scope="col" class="w-1/3 px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Timeslot</th>
+                                    <th scope="col" class="w-2/3 px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Artists</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
+                                                                <!--[if BLOCK]><![endif]-->                                                                        <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
+                                    <tr
+                                        x-data="{
+                                            currentStart: '2026-09-26T00:00:00+02:00',
+                                            currentEnd: '2026-09-26T03:00:00+02:00'
+                                        }"
+                                        :class="{
+                                            'pulsate-bg font-medium': isCurrentTimeslot(currentStart, currentEnd, 1)
+                                        }"
+                                        :id="isCurrentTimeslot(currentStart, currentEnd, 1) ? 'current-timeslot' : null"
+                                    >
+                                        <td class="w-1/3 px-3 py-4 whitespace-nowrap">
+                                            <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                                Sat, 00:00 - 03:00
+                                            </div>
+                                        </td>
+                                        <td class="w-2/3 px-3 py-4">
+                                            <div class="flex flex-wrap items-center">
+                                                                                                    <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
+                                                    <a href="https://sisy.fan/artists/micha-stahl" class="text-sm font-medium text-gray-900 dark:text-gray-100 hover:text-sisy-orange dark:hover:text-sisy-orange-dark mr-2 mb-1 underline">
+                                                        Micha Stahl
+                                                    </a>
+                                                <!--[if ENDBLOCK]><![endif]-->
+                                            </div>
+                                        </td>
+                                    </tr>
+                                                                                                        <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
+                                    <tr
+                                        x-data="{
+                                            currentStart: '2026-09-26T03:00:00+02:00',
+                                            currentEnd: '2026-09-26T06:00:00+02:00'
+                                        }"
+                                        :class="{
+                                            'pulsate-bg font-medium': isCurrentTimeslot(currentStart, currentEnd, 1)
+                                        }"
+                                        :id="isCurrentTimeslot(currentStart, currentEnd, 1) ? 'current-timeslot' : null"
+                                    >
+                                        <td class="w-1/3 px-3 py-4 whitespace-nowrap">
+                                            <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                                Sat, 03:00 - 06:00
+                                            </div>
+                                        </td>
+                                        <td class="w-2/3 px-3 py-4">
+                                            <div class="flex flex-wrap items-center">
+                                                                                                    <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
+                                                    <a href="https://sisy.fan/artists/stallo" class="text-sm font-medium text-gray-900 dark:text-gray-100 hover:text-sisy-orange dark:hover:text-sisy-orange-dark mr-2 mb-1 underline">
+                                                        Stallo
+                                                    </a>
+                                                <!--[if ENDBLOCK]><![endif]-->
+                                            </div>
+                                        </td>
+                                    </tr>
+                                                                                                        <!--[if BLOCK]><![endif]-->                                        <tr class="bg-gray-100 dark:bg-gray-800">
+                                            <td class="w-1/3 px-3 py-4"></td>
+                                            <td class="w-2/3 px-3 py-4 text-left text-sm font-medium text-gray-500 dark:text-gray-400">
+                                                Break (16h)
+                                            </td>
+                                        </tr>
+                                    <!--[if ENDBLOCK]><![endif]-->
+                                    <tr
+                                        x-data="{
+                                            currentStart: '2026-09-26T22:00:00+02:00',
+                                            currentEnd: '2026-09-26T23:00:00+02:00'
+                                        }"
+                                        :class="{
+                                            'pulsate-bg font-medium': isCurrentTimeslot(currentStart, currentEnd, 1)
+                                        }"
+                                        :id="isCurrentTimeslot(currentStart, currentEnd, 1) ? 'current-timeslot' : null"
+                                    >
+                                        <td class="w-1/3 px-3 py-4 whitespace-nowrap">
+                                            <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                                Sat, 22:00 - 23:00
+                                            </div>
+                                        </td>
+                                        <td class="w-2/3 px-3 py-4">
+                                            <div class="flex flex-wrap items-center">
+                                                                                                    <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
+                                                    <a href="https://sisy.fan/artists/an-on-bast-live" class="text-sm font-medium text-gray-900 dark:text-gray-100 hover:text-sisy-orange dark:hover:text-sisy-orange-dark mr-2 mb-1 underline">
+                                                        An On Bast - Live
+                                                    </a>
+                                                <!--[if ENDBLOCK]><![endif]-->
+                                            </div>
+                                        </td>
+                                    </tr>
+                                                                                                        <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
+                                    <tr
+                                        x-data="{
+                                            currentStart: '2026-09-26T23:00:00+02:00',
+                                            currentEnd: '2026-09-27T01:30:00+02:00'
+                                        }"
+                                        :class="{
+                                            'pulsate-bg font-medium': isCurrentTimeslot(currentStart, currentEnd, 1)
+                                        }"
+                                        :id="isCurrentTimeslot(currentStart, currentEnd, 1) ? 'current-timeslot' : null"
+                                    >
+                                        <td class="w-1/3 px-3 py-4 whitespace-nowrap">
+                                            <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                                Sat, 23:00 - 01:30
+                                            </div>
+                                        </td>
+                                        <td class="w-2/3 px-3 py-4">
+                                            <div class="flex flex-wrap items-center">
+                                                                                                    <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
+                                                    <a href="https://sisy.fan/artists/patrick-malessa" class="text-sm font-medium text-gray-900 dark:text-gray-100 hover:text-sisy-orange dark:hover:text-sisy-orange-dark mr-2 mb-1 underline">
+                                                        Patrick Malessa
+                                                    </a>
+                                                <!--[if ENDBLOCK]><![endif]-->
+                                            </div>
+                                        </td>
+                                    </tr>
+                                                                                                        <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
+                                    <tr
+                                        x-data="{
+                                            currentStart: '2026-09-27T01:30:00+02:00',
+                                            currentEnd: '2026-09-27T04:00:00+02:00'
+                                        }"
+                                        :class="{
+                                            'pulsate-bg font-medium': isCurrentTimeslot(currentStart, currentEnd, 1)
+                                        }"
+                                        :id="isCurrentTimeslot(currentStart, currentEnd, 1) ? 'current-timeslot' : null"
+                                    >
+                                        <td class="w-1/3 px-3 py-4 whitespace-nowrap">
+                                            <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                                Sun, 01:30 - 04:00
+                                            </div>
+                                        </td>
+                                        <td class="w-2/3 px-3 py-4">
+                                            <div class="flex flex-wrap items-center">
+                                                                                                    <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
+                                                    <a href="https://sisy.fan/artists/audio-units" class="text-sm font-medium text-gray-900 dark:text-gray-100 hover:text-sisy-orange dark:hover:text-sisy-orange-dark mr-2 mb-1 underline">
+                                                        Audio Units
+                                                    </a>
+                                                <!--[if ENDBLOCK]><![endif]-->
+                                            </div>
+                                        </td>
+                                    </tr>
+                                                                                                        <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
+                                    <tr
+                                        x-data="{
+                                            currentStart: '2026-09-27T04:00:00+02:00',
+                                            currentEnd: '2026-09-27T07:00:00+02:00'
+                                        }"
+                                        :class="{
+                                            'pulsate-bg font-medium': isCurrentTimeslot(currentStart, currentEnd, 1)
+                                        }"
+                                        :id="isCurrentTimeslot(currentStart, currentEnd, 1) ? 'current-timeslot' : null"
+                                    >
+                                        <td class="w-1/3 px-3 py-4 whitespace-nowrap">
+                                            <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                                Sun, 04:00 - 07:00
+                                            </div>
+                                        </td>
+                                        <td class="w-2/3 px-3 py-4">
+                                            <div class="flex flex-wrap items-center">
+                                                                                                    <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
+                                                    <a href="https://sisy.fan/artists/oliver-deutschmann" class="text-sm font-medium text-gray-900 dark:text-gray-100 hover:text-sisy-orange dark:hover:text-sisy-orange-dark mr-2 mb-1 underline">
+                                                        Oliver Deutschmann
+                                                    </a>
+                                                <!--[if ENDBLOCK]><![endif]-->
+                                            </div>
+                                        </td>
+                                    </tr>
+                                                                                                        <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
+                                    <tr
+                                        x-data="{
+                                            currentStart: '2026-09-27T07:00:00+02:00',
+                                            currentEnd: '2026-09-27T10:00:00+02:00'
+                                        }"
+                                        :class="{
+                                            'pulsate-bg font-medium': isCurrentTimeslot(currentStart, currentEnd, 1)
+                                        }"
+                                        :id="isCurrentTimeslot(currentStart, currentEnd, 1) ? 'current-timeslot' : null"
+                                    >
+                                        <td class="w-1/3 px-3 py-4 whitespace-nowrap">
+                                            <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                                Sun, 07:00 - 10:00
+                                            </div>
+                                        </td>
+                                        <td class="w-2/3 px-3 py-4">
+                                            <div class="flex flex-wrap items-center">
+                                                                                                    <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
+                                                    <a href="https://sisy.fan/artists/tienoko" class="text-sm font-medium text-gray-900 dark:text-gray-100 hover:text-sisy-orange dark:hover:text-sisy-orange-dark mr-2 mb-1 underline">
+                                                        Tiénoko
+                                                    </a>
+                                                <!--[if ENDBLOCK]><![endif]-->
+                                            </div>
+                                        </td>
+                                    </tr>
+                                                                                                        <!--[if BLOCK]><![endif]-->                                        <tr class="bg-gray-100 dark:bg-gray-800">
+                                            <td class="w-1/3 px-3 py-4"></td>
+                                            <td class="w-2/3 px-3 py-4 text-left text-sm font-medium text-gray-500 dark:text-gray-400">
+                                                Break (12h)
+                                            </td>
+                                        </tr>
+                                    <!--[if ENDBLOCK]><![endif]-->
+                                    <tr
+                                        x-data="{
+                                            currentStart: '2026-09-27T22:00:00+02:00',
+                                            currentEnd: '2026-09-28T01:00:00+02:00'
+                                        }"
+                                        :class="{
+                                            'pulsate-bg font-medium': isCurrentTimeslot(currentStart, currentEnd, 1)
+                                        }"
+                                        :id="isCurrentTimeslot(currentStart, currentEnd, 1) ? 'current-timeslot' : null"
+                                    >
+                                        <td class="w-1/3 px-3 py-4 whitespace-nowrap">
+                                            <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                                Sun, 22:00 - 01:00
+                                            </div>
+                                        </td>
+                                        <td class="w-2/3 px-3 py-4">
+                                            <div class="flex flex-wrap items-center">
+                                                                                                    <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
+                                                    <a href="https://sisy.fan/artists/yazmin" class="text-sm font-medium text-gray-900 dark:text-gray-100 hover:text-sisy-orange dark:hover:text-sisy-orange-dark mr-2 mb-1 underline">
+                                                        Yazmin
+                                                    </a>
+                                                <!--[if ENDBLOCK]><![endif]-->
+                                            </div>
+                                        </td>
+                                    </tr>
+                                                                                                        <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
+                                    <tr
+                                        x-data="{
+                                            currentStart: '2026-09-28T01:00:00+02:00',
+                                            currentEnd: '2026-09-28T04:00:00+02:00'
+                                        }"
+                                        :class="{
+                                            'pulsate-bg font-medium': isCurrentTimeslot(currentStart, currentEnd, 1)
+                                        }"
+                                        :id="isCurrentTimeslot(currentStart, currentEnd, 1) ? 'current-timeslot' : null"
+                                    >
+                                        <td class="w-1/3 px-3 py-4 whitespace-nowrap">
+                                            <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                                Mon, 01:00 - 04:00
+                                            </div>
+                                        </td>
+                                        <td class="w-2/3 px-3 py-4">
+                                            <div class="flex flex-wrap items-center">
+                                                                                                    <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
+                                                    <a href="https://sisy.fan/artists/vilchezz" class="text-sm font-medium text-gray-900 dark:text-gray-100 hover:text-sisy-orange dark:hover:text-sisy-orange-dark mr-2 mb-1 underline">
+                                                        Vilchezz
+                                                    </a>
+                                                <!--[if ENDBLOCK]><![endif]-->
+                                            </div>
+                                        </td>
+                                    </tr>
+                                                                                                        <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
+                                    <tr
+                                        x-data="{
+                                            currentStart: '2026-09-28T04:00:00+02:00',
+                                            currentEnd: '2026-09-28T07:00:00+02:00'
+                                        }"
+                                        :class="{
+                                            'pulsate-bg font-medium': isCurrentTimeslot(currentStart, currentEnd, 1)
+                                        }"
+                                        :id="isCurrentTimeslot(currentStart, currentEnd, 1) ? 'current-timeslot' : null"
+                                    >
+                                        <td class="w-1/3 px-3 py-4 whitespace-nowrap">
+                                            <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                                Mon, 04:00 - 07:00
+                                            </div>
+                                        </td>
+                                        <td class="w-2/3 px-3 py-4">
+                                            <div class="flex flex-wrap items-center">
+                                                                                                    <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
+                                                    <a href="https://sisy.fan/artists/mython" class="text-sm font-medium text-gray-900 dark:text-gray-100 hover:text-sisy-orange dark:hover:text-sisy-orange-dark mr-2 mb-1 underline">
+                                                        Mython
+                                                    </a>
+                                                <!--[if ENDBLOCK]><![endif]-->
+                                            </div>
+                                        </td>
+                                    </tr>
+                                <!--[if ENDBLOCK]><![endif]-->
+                            </tbody>
+                        </table>
+                    </div>
+                                    <div id="dancefloor-2" x-show="activeTabId === 2" class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                            <thead class="bg-gray-50 dark:bg-gray-800">
+                                <tr>
+                                    <th scope="col" class="w-1/3 px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Timeslot</th>
+                                    <th scope="col" class="w-2/3 px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Artists</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
+                                                                <!--[if BLOCK]><![endif]-->                                                                        <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
+                                    <tr
+                                        x-data="{
+                                            currentStart: '2026-09-25T22:00:00+02:00',
+                                            currentEnd: '2026-09-26T01:00:00+02:00'
+                                        }"
+                                        :class="{
+                                            'pulsate-bg font-medium': isCurrentTimeslot(currentStart, currentEnd, 2)
+                                        }"
+                                        :id="isCurrentTimeslot(currentStart, currentEnd, 2) ? 'current-timeslot' : null"
+                                    >
+                                        <td class="w-1/3 px-3 py-4 whitespace-nowrap">
+                                            <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                                Fri, 22:00 - 01:00
+                                            </div>
+                                        </td>
+                                        <td class="w-2/3 px-3 py-4">
+                                            <div class="flex flex-wrap items-center">
+                                                                                                    <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
+                                                    <a href="https://sisy.fan/artists/nimue" class="text-sm font-medium text-gray-900 dark:text-gray-100 hover:text-sisy-orange dark:hover:text-sisy-orange-dark mr-2 mb-1 underline">
+                                                        Nimue
+                                                    </a>
+                                                <!--[if ENDBLOCK]><![endif]-->
+                                            </div>
+                                        </td>
+                                    </tr>
+                                                                                                        <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
+                                    <tr
+                                        x-data="{
+                                            currentStart: '2026-09-26T01:00:00+02:00',
+                                            currentEnd: '2026-09-26T04:00:00+02:00'
+                                        }"
+                                        :class="{
+                                            'pulsate-bg font-medium': isCurrentTimeslot(currentStart, currentEnd, 2)
+                                        }"
+                                        :id="isCurrentTimeslot(currentStart, currentEnd, 2) ? 'current-timeslot' : null"
+                                    >
+                                        <td class="w-1/3 px-3 py-4 whitespace-nowrap">
+                                            <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                                Sat, 01:00 - 04:00
+                                            </div>
+                                        </td>
+                                        <td class="w-2/3 px-3 py-4">
+                                            <div class="flex flex-wrap items-center">
+                                                                                                    <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
+                                                    <a href="https://sisy.fan/artists/il-bosco" class="text-sm font-medium text-gray-900 dark:text-gray-100 hover:text-sisy-orange dark:hover:text-sisy-orange-dark mr-2 mb-1 underline">
+                                                        Il Bosco
+                                                    </a>
+                                                <!--[if ENDBLOCK]><![endif]-->
+                                            </div>
+                                        </td>
+                                    </tr>
+                                                                                                        <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
+                                    <tr
+                                        x-data="{
+                                            currentStart: '2026-09-26T04:00:00+02:00',
+                                            currentEnd: '2026-09-26T07:00:00+02:00'
+                                        }"
+                                        :class="{
+                                            'pulsate-bg font-medium': isCurrentTimeslot(currentStart, currentEnd, 2)
+                                        }"
+                                        :id="isCurrentTimeslot(currentStart, currentEnd, 2) ? 'current-timeslot' : null"
+                                    >
+                                        <td class="w-1/3 px-3 py-4 whitespace-nowrap">
+                                            <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                                Sat, 04:00 - 07:00
+                                            </div>
+                                        </td>
+                                        <td class="w-2/3 px-3 py-4">
+                                            <div class="flex flex-wrap items-center">
+                                                                                                    <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
+                                                    <a href="https://sisy.fan/artists/javier-anxiety" class="text-sm font-medium text-gray-900 dark:text-gray-100 hover:text-sisy-orange dark:hover:text-sisy-orange-dark mr-2 mb-1 underline">
+                                                        Javier Anxiety
+                                                    </a>
+                                                <!--[if ENDBLOCK]><![endif]-->
+                                            </div>
+                                        </td>
+                                    </tr>
+                                                                                                        <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
+                                    <tr
+                                        x-data="{
+                                            currentStart: '2026-09-26T07:00:00+02:00',
+                                            currentEnd: '2026-09-26T10:00:00+02:00'
+                                        }"
+                                        :class="{
+                                            'pulsate-bg font-medium': isCurrentTimeslot(currentStart, currentEnd, 2)
+                                        }"
+                                        :id="isCurrentTimeslot(currentStart, currentEnd, 2) ? 'current-timeslot' : null"
+                                    >
+                                        <td class="w-1/3 px-3 py-4 whitespace-nowrap">
+                                            <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                                Sat, 07:00 - 10:00
+                                            </div>
+                                        </td>
+                                        <td class="w-2/3 px-3 py-4">
+                                            <div class="flex flex-wrap items-center">
+                                                                                                    <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
+                                                    <a href="https://sisy.fan/artists/gzardin" class="text-sm font-medium text-gray-900 dark:text-gray-100 hover:text-sisy-orange dark:hover:text-sisy-orange-dark mr-2 mb-1 underline">
+                                                        Gzardin
+                                                    </a>
+                                                <!--[if ENDBLOCK]><![endif]-->
+                                            </div>
+                                        </td>
+                                    </tr>
+                                                                                                        <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
+                                    <tr
+                                        x-data="{
+                                            currentStart: '2026-09-26T10:00:00+02:00',
+                                            currentEnd: '2026-09-26T13:00:00+02:00'
+                                        }"
+                                        :class="{
+                                            'pulsate-bg font-medium': isCurrentTimeslot(currentStart, currentEnd, 2)
+                                        }"
+                                        :id="isCurrentTimeslot(currentStart, currentEnd, 2) ? 'current-timeslot' : null"
+                                    >
+                                        <td class="w-1/3 px-3 py-4 whitespace-nowrap">
+                                            <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                                Sat, 10:00 - 13:00
+                                            </div>
+                                        </td>
+                                        <td class="w-2/3 px-3 py-4">
+                                            <div class="flex flex-wrap items-center">
+                                                                                                    <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
+                                                    <a href="https://sisy.fan/artists/superlounge" class="text-sm font-medium text-gray-900 dark:text-gray-100 hover:text-sisy-orange dark:hover:text-sisy-orange-dark mr-2 mb-1 underline">
+                                                        Superlounge
+                                                    </a>
+                                                <!--[if ENDBLOCK]><![endif]-->
+                                            </div>
+                                        </td>
+                                    </tr>
+                                                                                                        <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
+                                    <tr
+                                        x-data="{
+                                            currentStart: '2026-09-26T13:00:00+02:00',
+                                            currentEnd: '2026-09-26T16:00:00+02:00'
+                                        }"
+                                        :class="{
+                                            'pulsate-bg font-medium': isCurrentTimeslot(currentStart, currentEnd, 2)
+                                        }"
+                                        :id="isCurrentTimeslot(currentStart, currentEnd, 2) ? 'current-timeslot' : null"
+                                    >
+                                        <td class="w-1/3 px-3 py-4 whitespace-nowrap">
+                                            <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                                Sat, 13:00 - 16:00
+                                            </div>
+                                        </td>
+                                        <td class="w-2/3 px-3 py-4">
+                                            <div class="flex flex-wrap items-center">
+                                                                                                    <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
+                                                    <a href="https://sisy.fan/artists/giselle-soundsystem" class="text-sm font-medium text-gray-900 dark:text-gray-100 hover:text-sisy-orange dark:hover:text-sisy-orange-dark mr-2 mb-1 underline">
+                                                        Giselle Soundsystem
+                                                    </a>
+                                                <!--[if ENDBLOCK]><![endif]-->
+                                            </div>
+                                        </td>
+                                    </tr>
+                                                                                                        <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
+                                    <tr
+                                        x-data="{
+                                            currentStart: '2026-09-26T16:00:00+02:00',
+                                            currentEnd: '2026-09-26T19:00:00+02:00'
+                                        }"
+                                        :class="{
+                                            'pulsate-bg font-medium': isCurrentTimeslot(currentStart, currentEnd, 2)
+                                        }"
+                                        :id="isCurrentTimeslot(currentStart, currentEnd, 2) ? 'current-timeslot' : null"
+                                    >
+                                        <td class="w-1/3 px-3 py-4 whitespace-nowrap">
+                                            <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                                Sat, 16:00 - 19:00
+                                            </div>
+                                        </td>
+                                        <td class="w-2/3 px-3 py-4">
+                                            <div class="flex flex-wrap items-center">
+                                                                                                    <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
+                                                    <a href="https://sisy.fan/artists/tuxe" class="text-sm font-medium text-gray-900 dark:text-gray-100 hover:text-sisy-orange dark:hover:text-sisy-orange-dark mr-2 mb-1 underline">
+                                                        Tuxe
+                                                    </a>
+                                                <!--[if ENDBLOCK]><![endif]-->
+                                            </div>
+                                        </td>
+                                    </tr>
+                                                                                                        <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
+                                    <tr
+                                        x-data="{
+                                            currentStart: '2026-09-26T19:00:00+02:00',
+                                            currentEnd: '2026-09-26T22:00:00+02:00'
+                                        }"
+                                        :class="{
+                                            'pulsate-bg font-medium': isCurrentTimeslot(currentStart, currentEnd, 2)
+                                        }"
+                                        :id="isCurrentTimeslot(currentStart, currentEnd, 2) ? 'current-timeslot' : null"
+                                    >
+                                        <td class="w-1/3 px-3 py-4 whitespace-nowrap">
+                                            <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                                Sat, 19:00 - 22:00
+                                            </div>
+                                        </td>
+                                        <td class="w-2/3 px-3 py-4">
+                                            <div class="flex flex-wrap items-center">
+                                                                                                    <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
+                                                    <a href="https://sisy.fan/artists/niklas-schweig" class="text-sm font-medium text-gray-900 dark:text-gray-100 hover:text-sisy-orange dark:hover:text-sisy-orange-dark mr-2 mb-1 underline">
+                                                        Niklas Schweig
+                                                    </a>
+                                                <!--[if ENDBLOCK]><![endif]-->
+                                            </div>
+                                        </td>
+                                    </tr>
+                                                                                                        <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
+                                    <tr
+                                        x-data="{
+                                            currentStart: '2026-09-26T22:00:00+02:00',
+                                            currentEnd: '2026-09-27T01:00:00+02:00'
+                                        }"
+                                        :class="{
+                                            'pulsate-bg font-medium': isCurrentTimeslot(currentStart, currentEnd, 2)
+                                        }"
+                                        :id="isCurrentTimeslot(currentStart, currentEnd, 2) ? 'current-timeslot' : null"
+                                    >
+                                        <td class="w-1/3 px-3 py-4 whitespace-nowrap">
+                                            <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                                Sat, 22:00 - 01:00
+                                            </div>
+                                        </td>
+                                        <td class="w-2/3 px-3 py-4">
+                                            <div class="flex flex-wrap items-center">
+                                                                                                    <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
+                                                    <a href="https://sisy.fan/artists/robert-owens" class="text-sm font-medium text-gray-900 dark:text-gray-100 hover:text-sisy-orange dark:hover:text-sisy-orange-dark mr-2 mb-1 underline">
+                                                        Robert Owens
+                                                    </a>
+                                                <!--[if ENDBLOCK]><![endif]-->
+                                            </div>
+                                        </td>
+                                    </tr>
+                                                                                                        <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
+                                    <tr
+                                        x-data="{
+                                            currentStart: '2026-09-27T01:00:00+02:00',
+                                            currentEnd: '2026-09-27T04:00:00+02:00'
+                                        }"
+                                        :class="{
+                                            'pulsate-bg font-medium': isCurrentTimeslot(currentStart, currentEnd, 2)
+                                        }"
+                                        :id="isCurrentTimeslot(currentStart, currentEnd, 2) ? 'current-timeslot' : null"
+                                    >
+                                        <td class="w-1/3 px-3 py-4 whitespace-nowrap">
+                                            <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                                Sun, 01:00 - 04:00
+                                            </div>
+                                        </td>
+                                        <td class="w-2/3 px-3 py-4">
+                                            <div class="flex flex-wrap items-center">
+                                                                                                    <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
+                                                    <a href="https://sisy.fan/artists/dj-jauche" class="text-sm font-medium text-gray-900 dark:text-gray-100 hover:text-sisy-orange dark:hover:text-sisy-orange-dark mr-2 mb-1 underline">
+                                                        DJ Jauche
+                                                    </a>
+                                                <!--[if ENDBLOCK]><![endif]-->
+                                            </div>
+                                        </td>
+                                    </tr>
+                                                                                                        <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
+                                    <tr
+                                        x-data="{
+                                            currentStart: '2026-09-27T04:00:00+02:00',
+                                            currentEnd: '2026-09-27T07:00:00+02:00'
+                                        }"
+                                        :class="{
+                                            'pulsate-bg font-medium': isCurrentTimeslot(currentStart, currentEnd, 2)
+                                        }"
+                                        :id="isCurrentTimeslot(currentStart, currentEnd, 2) ? 'current-timeslot' : null"
+                                    >
+                                        <td class="w-1/3 px-3 py-4 whitespace-nowrap">
+                                            <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                                Sun, 04:00 - 07:00
+                                            </div>
+                                        </td>
+                                        <td class="w-2/3 px-3 py-4">
+                                            <div class="flex flex-wrap items-center">
+                                                                                                    <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
+                                                    <a href="https://sisy.fan/artists/habibi-grooves" class="text-sm font-medium text-gray-900 dark:text-gray-100 hover:text-sisy-orange dark:hover:text-sisy-orange-dark mr-2 mb-1 underline">
+                                                        Habibi Grooves
+                                                    </a>
+                                                <!--[if ENDBLOCK]><![endif]-->
+                                            </div>
+                                        </td>
+                                    </tr>
+                                                                                                        <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
+                                    <tr
+                                        x-data="{
+                                            currentStart: '2026-09-27T07:00:00+02:00',
+                                            currentEnd: '2026-09-27T10:00:00+02:00'
+                                        }"
+                                        :class="{
+                                            'pulsate-bg font-medium': isCurrentTimeslot(currentStart, currentEnd, 2)
+                                        }"
+                                        :id="isCurrentTimeslot(currentStart, currentEnd, 2) ? 'current-timeslot' : null"
+                                    >
+                                        <td class="w-1/3 px-3 py-4 whitespace-nowrap">
+                                            <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                                Sun, 07:00 - 10:00
+                                            </div>
+                                        </td>
+                                        <td class="w-2/3 px-3 py-4">
+                                            <div class="flex flex-wrap items-center">
+                                                                                                    <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
+                                                    <a href="https://sisy.fan/artists/ida-daugaard" class="text-sm font-medium text-gray-900 dark:text-gray-100 hover:text-sisy-orange dark:hover:text-sisy-orange-dark mr-2 mb-1 underline">
+                                                        Ida Daugaard
+                                                    </a>
+                                                <!--[if ENDBLOCK]><![endif]-->
+                                            </div>
+                                        </td>
+                                    </tr>
+                                                                                                        <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
+                                    <tr
+                                        x-data="{
+                                            currentStart: '2026-09-27T10:00:00+02:00',
+                                            currentEnd: '2026-09-27T13:00:00+02:00'
+                                        }"
+                                        :class="{
+                                            'pulsate-bg font-medium': isCurrentTimeslot(currentStart, currentEnd, 2)
+                                        }"
+                                        :id="isCurrentTimeslot(currentStart, currentEnd, 2) ? 'current-timeslot' : null"
+                                    >
+                                        <td class="w-1/3 px-3 py-4 whitespace-nowrap">
+                                            <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                                Sun, 10:00 - 13:00
+                                            </div>
+                                        </td>
+                                        <td class="w-2/3 px-3 py-4">
+                                            <div class="flex flex-wrap items-center">
+                                                                                                    <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
+                                                    <a href="https://sisy.fan/artists/jack-d" class="text-sm font-medium text-gray-900 dark:text-gray-100 hover:text-sisy-orange dark:hover:text-sisy-orange-dark mr-2 mb-1 underline">
+                                                        Jack D
+                                                    </a>
+                                                <!--[if ENDBLOCK]><![endif]-->
+                                            </div>
+                                        </td>
+                                    </tr>
+                                                                                                        <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
+                                    <tr
+                                        x-data="{
+                                            currentStart: '2026-09-27T13:00:00+02:00',
+                                            currentEnd: '2026-09-27T16:00:00+02:00'
+                                        }"
+                                        :class="{
+                                            'pulsate-bg font-medium': isCurrentTimeslot(currentStart, currentEnd, 2)
+                                        }"
+                                        :id="isCurrentTimeslot(currentStart, currentEnd, 2) ? 'current-timeslot' : null"
+                                    >
+                                        <td class="w-1/3 px-3 py-4 whitespace-nowrap">
+                                            <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                                Sun, 13:00 - 16:00
+                                            </div>
+                                        </td>
+                                        <td class="w-2/3 px-3 py-4">
+                                            <div class="flex flex-wrap items-center">
+                                                                                                    <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
+                                                    <a href="https://sisy.fan/artists/menta-sauce" class="text-sm font-medium text-gray-900 dark:text-gray-100 hover:text-sisy-orange dark:hover:text-sisy-orange-dark mr-2 mb-1 underline">
+                                                        Menta Sauce
+                                                    </a>
+                                                <!--[if ENDBLOCK]><![endif]-->
+                                            </div>
+                                        </td>
+                                    </tr>
+                                                                                                        <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
+                                    <tr
+                                        x-data="{
+                                            currentStart: '2026-09-27T16:00:00+02:00',
+                                            currentEnd: '2026-09-27T19:00:00+02:00'
+                                        }"
+                                        :class="{
+                                            'pulsate-bg font-medium': isCurrentTimeslot(currentStart, currentEnd, 2)
+                                        }"
+                                        :id="isCurrentTimeslot(currentStart, currentEnd, 2) ? 'current-timeslot' : null"
+                                    >
+                                        <td class="w-1/3 px-3 py-4 whitespace-nowrap">
+                                            <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                                Sun, 16:00 - 19:00
+                                            </div>
+                                        </td>
+                                        <td class="w-2/3 px-3 py-4">
+                                            <div class="flex flex-wrap items-center">
+                                                                                                    <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
+                                                    <a href="https://sisy.fan/artists/robert-drewek" class="text-sm font-medium text-gray-900 dark:text-gray-100 hover:text-sisy-orange dark:hover:text-sisy-orange-dark mr-2 mb-1 underline">
+                                                        Robert Drewek
+                                                    </a>
+                                                <!--[if ENDBLOCK]><![endif]-->
+                                            </div>
+                                        </td>
+                                    </tr>
+                                                                                                        <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
+                                    <tr
+                                        x-data="{
+                                            currentStart: '2026-09-27T19:00:00+02:00',
+                                            currentEnd: '2026-09-27T22:00:00+02:00'
+                                        }"
+                                        :class="{
+                                            'pulsate-bg font-medium': isCurrentTimeslot(currentStart, currentEnd, 2)
+                                        }"
+                                        :id="isCurrentTimeslot(currentStart, currentEnd, 2) ? 'current-timeslot' : null"
+                                    >
+                                        <td class="w-1/3 px-3 py-4 whitespace-nowrap">
+                                            <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                                Sun, 19:00 - 22:00
+                                            </div>
+                                        </td>
+                                        <td class="w-2/3 px-3 py-4">
+                                            <div class="flex flex-wrap items-center">
+                                                                                                    <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
+                                                    <a href="https://sisy.fan/artists/ruff-stuff" class="text-sm font-medium text-gray-900 dark:text-gray-100 hover:text-sisy-orange dark:hover:text-sisy-orange-dark mr-2 mb-1 underline">
+                                                        Ruff Stuff
+                                                    </a>
+                                                <!--[if ENDBLOCK]><![endif]-->
+                                            </div>
+                                        </td>
+                                    </tr>
+                                                                                                        <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
+                                    <tr
+                                        x-data="{
+                                            currentStart: '2026-09-27T22:00:00+02:00',
+                                            currentEnd: '2026-09-28T01:00:00+02:00'
+                                        }"
+                                        :class="{
+                                            'pulsate-bg font-medium': isCurrentTimeslot(currentStart, currentEnd, 2)
+                                        }"
+                                        :id="isCurrentTimeslot(currentStart, currentEnd, 2) ? 'current-timeslot' : null"
+                                    >
+                                        <td class="w-1/3 px-3 py-4 whitespace-nowrap">
+                                            <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                                Sun, 22:00 - 01:00
+                                            </div>
+                                        </td>
+                                        <td class="w-2/3 px-3 py-4">
+                                            <div class="flex flex-wrap items-center">
+                                                                                                    <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
+                                                    <a href="https://sisy.fan/artists/vio-prg" class="text-sm font-medium text-gray-900 dark:text-gray-100 hover:text-sisy-orange dark:hover:text-sisy-orange-dark mr-2 mb-1 underline">
+                                                        Vio PRG
+                                                    </a>
+                                                <!--[if ENDBLOCK]><![endif]-->
+                                            </div>
+                                        </td>
+                                    </tr>
+                                                                                                        <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
+                                    <tr
+                                        x-data="{
+                                            currentStart: '2026-09-28T01:00:00+02:00',
+                                            currentEnd: '2026-09-28T04:00:00+02:00'
+                                        }"
+                                        :class="{
+                                            'pulsate-bg font-medium': isCurrentTimeslot(currentStart, currentEnd, 2)
+                                        }"
+                                        :id="isCurrentTimeslot(currentStart, currentEnd, 2) ? 'current-timeslot' : null"
+                                    >
+                                        <td class="w-1/3 px-3 py-4 whitespace-nowrap">
+                                            <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                                Mon, 01:00 - 04:00
+                                            </div>
+                                        </td>
+                                        <td class="w-2/3 px-3 py-4">
+                                            <div class="flex flex-wrap items-center">
+                                                                                                    <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
+                                                    <a href="https://sisy.fan/artists/hisham-zahran" class="text-sm font-medium text-gray-900 dark:text-gray-100 hover:text-sisy-orange dark:hover:text-sisy-orange-dark mr-2 mb-1 underline">
+                                                        Hisham Zahran
+                                                    </a>
+                                                <!--[if ENDBLOCK]><![endif]-->
+                                            </div>
+                                        </td>
+                                    </tr>
+                                                                                                        <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
+                                    <tr
+                                        x-data="{
+                                            currentStart: '2026-09-28T04:00:00+02:00',
+                                            currentEnd: '2026-09-28T07:00:00+02:00'
+                                        }"
+                                        :class="{
+                                            'pulsate-bg font-medium': isCurrentTimeslot(currentStart, currentEnd, 2)
+                                        }"
+                                        :id="isCurrentTimeslot(currentStart, currentEnd, 2) ? 'current-timeslot' : null"
+                                    >
+                                        <td class="w-1/3 px-3 py-4 whitespace-nowrap">
+                                            <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                                Mon, 04:00 - 07:00
+                                            </div>
+                                        </td>
+                                        <td class="w-2/3 px-3 py-4">
+                                            <div class="flex flex-wrap items-center">
+                                                                                                    <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
+                                                    <a href="https://sisy.fan/artists/cesare-vs-disorder" class="text-sm font-medium text-gray-900 dark:text-gray-100 hover:text-sisy-orange dark:hover:text-sisy-orange-dark mr-2 mb-1 underline">
+                                                        Cesare vs Disorder
+                                                    </a>
+                                                <!--[if ENDBLOCK]><![endif]-->
+                                            </div>
+                                        </td>
+                                    </tr>
+                                                                                                        <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
+                                    <tr
+                                        x-data="{
+                                            currentStart: '2026-09-28T07:00:00+02:00',
+                                            currentEnd: '2026-09-28T10:00:00+02:00'
+                                        }"
+                                        :class="{
+                                            'pulsate-bg font-medium': isCurrentTimeslot(currentStart, currentEnd, 2)
+                                        }"
+                                        :id="isCurrentTimeslot(currentStart, currentEnd, 2) ? 'current-timeslot' : null"
+                                    >
+                                        <td class="w-1/3 px-3 py-4 whitespace-nowrap">
+                                            <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                                Mon, 07:00 - 10:00
+                                            </div>
+                                        </td>
+                                        <td class="w-2/3 px-3 py-4">
+                                            <div class="flex flex-wrap items-center">
+                                                                                                    <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
+                                                    <a href="https://sisy.fan/artists/minimal-listig" class="text-sm font-medium text-gray-900 dark:text-gray-100 hover:text-sisy-orange dark:hover:text-sisy-orange-dark mr-2 mb-1 underline">
+                                                        Minimal Listig
+                                                    </a>
+                                                <!--[if ENDBLOCK]><![endif]-->
+                                            </div>
+                                        </td>
+                                    </tr>
+                                <!--[if ENDBLOCK]><![endif]-->
+                            </tbody>
+                        </table>
+                    </div>
+                                    <div id="dancefloor-3" x-show="activeTabId === 3" class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                            <thead class="bg-gray-50 dark:bg-gray-800">
+                                <tr>
+                                    <th scope="col" class="w-1/3 px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Timeslot</th>
+                                    <th scope="col" class="w-2/3 px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Artists</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
+                                                                <!--[if BLOCK]><![endif]-->                                                                        <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
+                                    <tr
+                                        x-data="{
+                                            currentStart: '2026-09-26T10:00:00+02:00',
+                                            currentEnd: '2026-09-26T13:30:00+02:00'
+                                        }"
+                                        :class="{
+                                            'pulsate-bg font-medium': isCurrentTimeslot(currentStart, currentEnd, 3)
+                                        }"
+                                        :id="isCurrentTimeslot(currentStart, currentEnd, 3) ? 'current-timeslot' : null"
+                                    >
+                                        <td class="w-1/3 px-3 py-4 whitespace-nowrap">
+                                            <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                                Sat, 10:00 - 13:30
+                                            </div>
+                                        </td>
+                                        <td class="w-2/3 px-3 py-4">
+                                            <div class="flex flex-wrap items-center">
+                                                                                                    <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
+                                                    <a href="https://sisy.fan/artists/noor-sanchez" class="text-sm font-medium text-gray-900 dark:text-gray-100 hover:text-sisy-orange dark:hover:text-sisy-orange-dark mr-2 mb-1 underline">
+                                                        Noor Sanchez
+                                                    </a>
+                                                <!--[if ENDBLOCK]><![endif]-->
+                                            </div>
+                                        </td>
+                                    </tr>
+                                                                                                        <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
+                                    <tr
+                                        x-data="{
+                                            currentStart: '2026-09-26T13:30:00+02:00',
+                                            currentEnd: '2026-09-26T17:00:00+02:00'
+                                        }"
+                                        :class="{
+                                            'pulsate-bg font-medium': isCurrentTimeslot(currentStart, currentEnd, 3)
+                                        }"
+                                        :id="isCurrentTimeslot(currentStart, currentEnd, 3) ? 'current-timeslot' : null"
+                                    >
+                                        <td class="w-1/3 px-3 py-4 whitespace-nowrap">
+                                            <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                                Sat, 13:30 - 17:00
+                                            </div>
+                                        </td>
+                                        <td class="w-2/3 px-3 py-4">
+                                            <div class="flex flex-wrap items-center">
+                                                                                                    <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
+                                                    <a href="https://sisy.fan/artists/ouimori" class="text-sm font-medium text-gray-900 dark:text-gray-100 hover:text-sisy-orange dark:hover:text-sisy-orange-dark mr-2 mb-1 underline">
+                                                        Oui.Mori
+                                                    </a>
+                                                <!--[if ENDBLOCK]><![endif]-->
+                                            </div>
+                                        </td>
+                                    </tr>
+                                                                                                        <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
+                                    <tr
+                                        x-data="{
+                                            currentStart: '2026-09-26T17:00:00+02:00',
+                                            currentEnd: '2026-09-26T20:30:00+02:00'
+                                        }"
+                                        :class="{
+                                            'pulsate-bg font-medium': isCurrentTimeslot(currentStart, currentEnd, 3)
+                                        }"
+                                        :id="isCurrentTimeslot(currentStart, currentEnd, 3) ? 'current-timeslot' : null"
+                                    >
+                                        <td class="w-1/3 px-3 py-4 whitespace-nowrap">
+                                            <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                                Sat, 17:00 - 20:30
+                                            </div>
+                                        </td>
+                                        <td class="w-2/3 px-3 py-4">
+                                            <div class="flex flex-wrap items-center">
+                                                                                                    <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
+                                                    <a href="https://sisy.fan/artists/freudenthal" class="text-sm font-medium text-gray-900 dark:text-gray-100 hover:text-sisy-orange dark:hover:text-sisy-orange-dark mr-2 mb-1 underline">
+                                                        Freudenthal
+                                                    </a>
+                                                                                                    <!--[if BLOCK]><![endif]-->                                                        <span class="text-xs text-gray-500 dark:text-gray-400 italic mr-2">b2b</span>
+                                                    <!--[if ENDBLOCK]><![endif]-->
+                                                    <a href="https://sisy.fan/artists/saeuer" class="text-sm font-medium text-gray-900 dark:text-gray-100 hover:text-sisy-orange dark:hover:text-sisy-orange-dark mr-2 mb-1 underline">
+                                                        Saeuer
+                                                    </a>
+                                                <!--[if ENDBLOCK]><![endif]-->
+                                            </div>
+                                        </td>
+                                    </tr>
+                                                                                                        <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
+                                    <tr
+                                        x-data="{
+                                            currentStart: '2026-09-26T20:30:00+02:00',
+                                            currentEnd: '2026-09-26T23:30:00+02:00'
+                                        }"
+                                        :class="{
+                                            'pulsate-bg font-medium': isCurrentTimeslot(currentStart, currentEnd, 3)
+                                        }"
+                                        :id="isCurrentTimeslot(currentStart, currentEnd, 3) ? 'current-timeslot' : null"
+                                    >
+                                        <td class="w-1/3 px-3 py-4 whitespace-nowrap">
+                                            <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                                Sat, 20:30 - 23:30
+                                            </div>
+                                        </td>
+                                        <td class="w-2/3 px-3 py-4">
+                                            <div class="flex flex-wrap items-center">
+                                                                                                    <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
+                                                    <a href="https://sisy.fan/artists/tamada-live" class="text-sm font-medium text-gray-900 dark:text-gray-100 hover:text-sisy-orange dark:hover:text-sisy-orange-dark mr-2 mb-1 underline">
+                                                        TAMADA (live)
+                                                    </a>
+                                                <!--[if ENDBLOCK]><![endif]-->
+                                            </div>
+                                        </td>
+                                    </tr>
+                                                                                                        <!--[if BLOCK]><![endif]-->                                        <tr class="bg-gray-100 dark:bg-gray-800">
+                                            <td class="w-1/3 px-3 py-4"></td>
+                                            <td class="w-2/3 px-3 py-4 text-left text-sm font-medium text-gray-500 dark:text-gray-400">
+                                                Break (9h)
+                                            </td>
+                                        </tr>
+                                    <!--[if ENDBLOCK]><![endif]-->
+                                    <tr
+                                        x-data="{
+                                            currentStart: '2026-09-27T09:00:00+02:00',
+                                            currentEnd: '2026-09-27T12:00:00+02:00'
+                                        }"
+                                        :class="{
+                                            'pulsate-bg font-medium': isCurrentTimeslot(currentStart, currentEnd, 3)
+                                        }"
+                                        :id="isCurrentTimeslot(currentStart, currentEnd, 3) ? 'current-timeslot' : null"
+                                    >
+                                        <td class="w-1/3 px-3 py-4 whitespace-nowrap">
+                                            <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                                Sun, 09:00 - 12:00
+                                            </div>
+                                        </td>
+                                        <td class="w-2/3 px-3 py-4">
+                                            <div class="flex flex-wrap items-center">
+                                                                                                    <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
+                                                    <a href="https://sisy.fan/artists/kubebe" class="text-sm font-medium text-gray-900 dark:text-gray-100 hover:text-sisy-orange dark:hover:text-sisy-orange-dark mr-2 mb-1 underline">
+                                                        Kubebe
+                                                    </a>
+                                                <!--[if ENDBLOCK]><![endif]-->
+                                            </div>
+                                        </td>
+                                    </tr>
+                                                                                                        <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
+                                    <tr
+                                        x-data="{
+                                            currentStart: '2026-09-27T12:00:00+02:00',
+                                            currentEnd: '2026-09-27T15:00:00+02:00'
+                                        }"
+                                        :class="{
+                                            'pulsate-bg font-medium': isCurrentTimeslot(currentStart, currentEnd, 3)
+                                        }"
+                                        :id="isCurrentTimeslot(currentStart, currentEnd, 3) ? 'current-timeslot' : null"
+                                    >
+                                        <td class="w-1/3 px-3 py-4 whitespace-nowrap">
+                                            <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                                Sun, 12:00 - 15:00
+                                            </div>
+                                        </td>
+                                        <td class="w-2/3 px-3 py-4">
+                                            <div class="flex flex-wrap items-center">
+                                                                                                    <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
+                                                    <a href="https://sisy.fan/artists/dj-filburt" class="text-sm font-medium text-gray-900 dark:text-gray-100 hover:text-sisy-orange dark:hover:text-sisy-orange-dark mr-2 mb-1 underline">
+                                                        DJ Filburt
+                                                    </a>
+                                                <!--[if ENDBLOCK]><![endif]-->
+                                            </div>
+                                        </td>
+                                    </tr>
+                                                                                                        <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
+                                    <tr
+                                        x-data="{
+                                            currentStart: '2026-09-27T15:00:00+02:00',
+                                            currentEnd: '2026-09-27T16:00:00+02:00'
+                                        }"
+                                        :class="{
+                                            'pulsate-bg font-medium': isCurrentTimeslot(currentStart, currentEnd, 3)
+                                        }"
+                                        :id="isCurrentTimeslot(currentStart, currentEnd, 3) ? 'current-timeslot' : null"
+                                    >
+                                        <td class="w-1/3 px-3 py-4 whitespace-nowrap">
+                                            <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                                Sun, 15:00 - 16:00
+                                            </div>
+                                        </td>
+                                        <td class="w-2/3 px-3 py-4">
+                                            <div class="flex flex-wrap items-center">
+                                                                                                    <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
+                                                    <a href="https://sisy.fan/artists/tegel-boys-konzert" class="text-sm font-medium text-gray-900 dark:text-gray-100 hover:text-sisy-orange dark:hover:text-sisy-orange-dark mr-2 mb-1 underline">
+                                                        Tegel Boys *KONZERT*
+                                                    </a>
+                                                <!--[if ENDBLOCK]><![endif]-->
+                                            </div>
+                                        </td>
+                                    </tr>
+                                                                                                        <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
+                                    <tr
+                                        x-data="{
+                                            currentStart: '2026-09-27T16:00:00+02:00',
+                                            currentEnd: '2026-09-27T19:00:00+02:00'
+                                        }"
+                                        :class="{
+                                            'pulsate-bg font-medium': isCurrentTimeslot(currentStart, currentEnd, 3)
+                                        }"
+                                        :id="isCurrentTimeslot(currentStart, currentEnd, 3) ? 'current-timeslot' : null"
+                                    >
+                                        <td class="w-1/3 px-3 py-4 whitespace-nowrap">
+                                            <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                                Sun, 16:00 - 19:00
+                                            </div>
+                                        </td>
+                                        <td class="w-2/3 px-3 py-4">
+                                            <div class="flex flex-wrap items-center">
+                                                                                                    <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
+                                                    <a href="https://sisy.fan/artists/panthera-krause" class="text-sm font-medium text-gray-900 dark:text-gray-100 hover:text-sisy-orange dark:hover:text-sisy-orange-dark mr-2 mb-1 underline">
+                                                        Panthera Krause
+                                                    </a>
+                                                <!--[if ENDBLOCK]><![endif]-->
+                                            </div>
+                                        </td>
+                                    </tr>
+                                                                                                        <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
+                                    <tr
+                                        x-data="{
+                                            currentStart: '2026-09-27T19:00:00+02:00',
+                                            currentEnd: '2026-09-27T22:00:00+02:00'
+                                        }"
+                                        :class="{
+                                            'pulsate-bg font-medium': isCurrentTimeslot(currentStart, currentEnd, 3)
+                                        }"
+                                        :id="isCurrentTimeslot(currentStart, currentEnd, 3) ? 'current-timeslot' : null"
+                                    >
+                                        <td class="w-1/3 px-3 py-4 whitespace-nowrap">
+                                            <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                                Sun, 19:00 - 22:00
+                                            </div>
+                                        </td>
+                                        <td class="w-2/3 px-3 py-4">
+                                            <div class="flex flex-wrap items-center">
+                                                                                                    <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
+                                                    <a href="https://sisy.fan/artists/wannadosomething" class="text-sm font-medium text-gray-900 dark:text-gray-100 hover:text-sisy-orange dark:hover:text-sisy-orange-dark mr-2 mb-1 underline">
+                                                        wannadosomething?
+                                                    </a>
+                                                <!--[if ENDBLOCK]><![endif]-->
+                                            </div>
+                                        </td>
+                                    </tr>
+                                <!--[if ENDBLOCK]><![endif]-->
+                            </tbody>
+                        </table>
+                    </div>
+                                    <div id="dancefloor-4" x-show="activeTabId === 4" class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                            <thead class="bg-gray-50 dark:bg-gray-800">
+                                <tr>
+                                    <th scope="col" class="w-1/3 px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Timeslot</th>
+                                    <th scope="col" class="w-2/3 px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Artists</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
+                                                                <!--[if BLOCK]><![endif]-->                                                                        <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
+                                    <tr
+                                        x-data="{
+                                            currentStart: '2026-09-26T02:00:00+02:00',
+                                            currentEnd: '2026-09-26T05:00:00+02:00'
+                                        }"
+                                        :class="{
+                                            'pulsate-bg font-medium': isCurrentTimeslot(currentStart, currentEnd, 4)
+                                        }"
+                                        :id="isCurrentTimeslot(currentStart, currentEnd, 4) ? 'current-timeslot' : null"
+                                    >
+                                        <td class="w-1/3 px-3 py-4 whitespace-nowrap">
+                                            <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                                Sat, 02:00 - 05:00
+                                            </div>
+                                        </td>
+                                        <td class="w-2/3 px-3 py-4">
+                                            <div class="flex flex-wrap items-center">
+                                                                                                    <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
+                                                    <a href="https://sisy.fan/artists/nici-palm" class="text-sm font-medium text-gray-900 dark:text-gray-100 hover:text-sisy-orange dark:hover:text-sisy-orange-dark mr-2 mb-1 underline">
+                                                        Nici Palm
+                                                    </a>
+                                                <!--[if ENDBLOCK]><![endif]-->
+                                            </div>
+                                        </td>
+                                    </tr>
+                                                                                                        <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
+                                    <tr
+                                        x-data="{
+                                            currentStart: '2026-09-26T05:00:00+02:00',
+                                            currentEnd: '2026-09-26T08:00:00+02:00'
+                                        }"
+                                        :class="{
+                                            'pulsate-bg font-medium': isCurrentTimeslot(currentStart, currentEnd, 4)
+                                        }"
+                                        :id="isCurrentTimeslot(currentStart, currentEnd, 4) ? 'current-timeslot' : null"
+                                    >
+                                        <td class="w-1/3 px-3 py-4 whitespace-nowrap">
+                                            <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                                Sat, 05:00 - 08:00
+                                            </div>
+                                        </td>
+                                        <td class="w-2/3 px-3 py-4">
+                                            <div class="flex flex-wrap items-center">
+                                                                                                    <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
+                                                    <a href="https://sisy.fan/artists/traumamia" class="text-sm font-medium text-gray-900 dark:text-gray-100 hover:text-sisy-orange dark:hover:text-sisy-orange-dark mr-2 mb-1 underline">
+                                                        TraumaMia
+                                                    </a>
+                                                <!--[if ENDBLOCK]><![endif]-->
+                                            </div>
+                                        </td>
+                                    </tr>
+                                                                                                        <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
+                                    <tr
+                                        x-data="{
+                                            currentStart: '2026-09-26T08:00:00+02:00',
+                                            currentEnd: '2026-09-26T11:00:00+02:00'
+                                        }"
+                                        :class="{
+                                            'pulsate-bg font-medium': isCurrentTimeslot(currentStart, currentEnd, 4)
+                                        }"
+                                        :id="isCurrentTimeslot(currentStart, currentEnd, 4) ? 'current-timeslot' : null"
+                                    >
+                                        <td class="w-1/3 px-3 py-4 whitespace-nowrap">
+                                            <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                                Sat, 08:00 - 11:00
+                                            </div>
+                                        </td>
+                                        <td class="w-2/3 px-3 py-4">
+                                            <div class="flex flex-wrap items-center">
+                                                                                                    <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
+                                                    <a href="https://sisy.fan/artists/mrtn" class="text-sm font-medium text-gray-900 dark:text-gray-100 hover:text-sisy-orange dark:hover:text-sisy-orange-dark mr-2 mb-1 underline">
+                                                        Mrtn
+                                                    </a>
+                                                <!--[if ENDBLOCK]><![endif]-->
+                                            </div>
+                                        </td>
+                                    </tr>
+                                                                                                        <!--[if BLOCK]><![endif]-->                                        <tr class="bg-gray-100 dark:bg-gray-800">
+                                            <td class="w-1/3 px-3 py-4"></td>
+                                            <td class="w-2/3 px-3 py-4 text-left text-sm font-medium text-gray-500 dark:text-gray-400">
+                                                Break (10h)
+                                            </td>
+                                        </tr>
+                                    <!--[if ENDBLOCK]><![endif]-->
+                                    <tr
+                                        x-data="{
+                                            currentStart: '2026-09-26T21:00:00+02:00',
+                                            currentEnd: '2026-09-27T00:00:00+02:00'
+                                        }"
+                                        :class="{
+                                            'pulsate-bg font-medium': isCurrentTimeslot(currentStart, currentEnd, 4)
+                                        }"
+                                        :id="isCurrentTimeslot(currentStart, currentEnd, 4) ? 'current-timeslot' : null"
+                                    >
+                                        <td class="w-1/3 px-3 py-4 whitespace-nowrap">
+                                            <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                                Sat, 21:00 - 00:00
+                                            </div>
+                                        </td>
+                                        <td class="w-2/3 px-3 py-4">
+                                            <div class="flex flex-wrap items-center">
+                                                                                                    <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
+                                                    <a href="https://sisy.fan/artists/oelex" class="text-sm font-medium text-gray-900 dark:text-gray-100 hover:text-sisy-orange dark:hover:text-sisy-orange-dark mr-2 mb-1 underline">
+                                                        Oelex
+                                                    </a>
+                                                <!--[if ENDBLOCK]><![endif]-->
+                                            </div>
+                                        </td>
+                                    </tr>
+                                                                                                        <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
+                                    <tr
+                                        x-data="{
+                                            currentStart: '2026-09-27T00:00:00+02:00',
+                                            currentEnd: '2026-09-27T03:00:00+02:00'
+                                        }"
+                                        :class="{
+                                            'pulsate-bg font-medium': isCurrentTimeslot(currentStart, currentEnd, 4)
+                                        }"
+                                        :id="isCurrentTimeslot(currentStart, currentEnd, 4) ? 'current-timeslot' : null"
+                                    >
+                                        <td class="w-1/3 px-3 py-4 whitespace-nowrap">
+                                            <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                                Sun, 00:00 - 03:00
+                                            </div>
+                                        </td>
+                                        <td class="w-2/3 px-3 py-4">
+                                            <div class="flex flex-wrap items-center">
+                                                                                                    <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
+                                                    <a href="https://sisy.fan/artists/bonnie-spacey" class="text-sm font-medium text-gray-900 dark:text-gray-100 hover:text-sisy-orange dark:hover:text-sisy-orange-dark mr-2 mb-1 underline">
+                                                        Bonnie Spacey
+                                                    </a>
+                                                <!--[if ENDBLOCK]><![endif]-->
+                                            </div>
+                                        </td>
+                                    </tr>
+                                                                                                        <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
+                                    <tr
+                                        x-data="{
+                                            currentStart: '2026-09-27T03:00:00+02:00',
+                                            currentEnd: '2026-09-27T06:00:00+02:00'
+                                        }"
+                                        :class="{
+                                            'pulsate-bg font-medium': isCurrentTimeslot(currentStart, currentEnd, 4)
+                                        }"
+                                        :id="isCurrentTimeslot(currentStart, currentEnd, 4) ? 'current-timeslot' : null"
+                                    >
+                                        <td class="w-1/3 px-3 py-4 whitespace-nowrap">
+                                            <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                                Sun, 03:00 - 06:00
+                                            </div>
+                                        </td>
+                                        <td class="w-2/3 px-3 py-4">
+                                            <div class="flex flex-wrap items-center">
+                                                                                                    <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
+                                                    <a href="https://sisy.fan/artists/highcocoon" class="text-sm font-medium text-gray-900 dark:text-gray-100 hover:text-sisy-orange dark:hover:text-sisy-orange-dark mr-2 mb-1 underline">
+                                                        High.Co.Coon
+                                                    </a>
+                                                <!--[if ENDBLOCK]><![endif]-->
+                                            </div>
+                                        </td>
+                                    </tr>
+                                                                                                        <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
+                                    <tr
+                                        x-data="{
+                                            currentStart: '2026-09-27T06:00:00+02:00',
+                                            currentEnd: '2026-09-27T09:00:00+02:00'
+                                        }"
+                                        :class="{
+                                            'pulsate-bg font-medium': isCurrentTimeslot(currentStart, currentEnd, 4)
+                                        }"
+                                        :id="isCurrentTimeslot(currentStart, currentEnd, 4) ? 'current-timeslot' : null"
+                                    >
+                                        <td class="w-1/3 px-3 py-4 whitespace-nowrap">
+                                            <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                                Sun, 06:00 - 09:00
+                                            </div>
+                                        </td>
+                                        <td class="w-2/3 px-3 py-4">
+                                            <div class="flex flex-wrap items-center">
+                                                                                                    <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
+                                                    <a href="https://sisy.fan/artists/stella-stellar" class="text-sm font-medium text-gray-900 dark:text-gray-100 hover:text-sisy-orange dark:hover:text-sisy-orange-dark mr-2 mb-1 underline">
+                                                        Stella Stellar
+                                                    </a>
+                                                <!--[if ENDBLOCK]><![endif]-->
+                                            </div>
+                                        </td>
+                                    </tr>
+                                                                                                        <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
+                                    <tr
+                                        x-data="{
+                                            currentStart: '2026-09-27T09:00:00+02:00',
+                                            currentEnd: '2026-09-27T12:00:00+02:00'
+                                        }"
+                                        :class="{
+                                            'pulsate-bg font-medium': isCurrentTimeslot(currentStart, currentEnd, 4)
+                                        }"
+                                        :id="isCurrentTimeslot(currentStart, currentEnd, 4) ? 'current-timeslot' : null"
+                                    >
+                                        <td class="w-1/3 px-3 py-4 whitespace-nowrap">
+                                            <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                                Sun, 09:00 - 12:00
+                                            </div>
+                                        </td>
+                                        <td class="w-2/3 px-3 py-4">
+                                            <div class="flex flex-wrap items-center">
+                                                                                                    <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
+                                                    <a href="https://sisy.fan/artists/vakabular" class="text-sm font-medium text-gray-900 dark:text-gray-100 hover:text-sisy-orange dark:hover:text-sisy-orange-dark mr-2 mb-1 underline">
+                                                        Vakabular
+                                                    </a>
+                                                <!--[if ENDBLOCK]><![endif]-->
+                                            </div>
+                                        </td>
+                                    </tr>
+                                                                                                        <!--[if BLOCK]><![endif]-->                                        <tr class="bg-gray-100 dark:bg-gray-800">
+                                            <td class="w-1/3 px-3 py-4"></td>
+                                            <td class="w-2/3 px-3 py-4 text-left text-sm font-medium text-gray-500 dark:text-gray-400">
+                                                Break (10h)
+                                            </td>
+                                        </tr>
+                                    <!--[if ENDBLOCK]><![endif]-->
+                                    <tr
+                                        x-data="{
+                                            currentStart: '2026-09-27T22:00:00+02:00',
+                                            currentEnd: '2026-09-28T00:00:00+02:00'
+                                        }"
+                                        :class="{
+                                            'pulsate-bg font-medium': isCurrentTimeslot(currentStart, currentEnd, 4)
+                                        }"
+                                        :id="isCurrentTimeslot(currentStart, currentEnd, 4) ? 'current-timeslot' : null"
+                                    >
+                                        <td class="w-1/3 px-3 py-4 whitespace-nowrap">
+                                            <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                                Sun, 22:00 - 00:00
+                                            </div>
+                                        </td>
+                                        <td class="w-2/3 px-3 py-4">
+                                            <div class="flex flex-wrap items-center">
+                                                                                                    <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
+                                                    <a href="https://sisy.fan/artists/the-magic-touch-konzert" class="text-sm font-medium text-gray-900 dark:text-gray-100 hover:text-sisy-orange dark:hover:text-sisy-orange-dark mr-2 mb-1 underline">
+                                                        The Magic Touch *KONZERT*
+                                                    </a>
+                                                <!--[if ENDBLOCK]><![endif]-->
+                                            </div>
+                                        </td>
+                                    </tr>
+                                <!--[if ENDBLOCK]><![endif]-->
+                            </tbody>
+                        </table>
+                    </div>
+                                    <div id="dancefloor-5" x-show="activeTabId === 5" class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                            <thead class="bg-gray-50 dark:bg-gray-800">
+                                <tr>
+                                    <th scope="col" class="w-1/3 px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Timeslot</th>
+                                    <th scope="col" class="w-2/3 px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Artists</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
+                                                                <!--[if BLOCK]><![endif]-->                                                                        <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
+                                    <tr
+                                        x-data="{
+                                            currentStart: '2026-09-26T16:00:00+02:00',
+                                            currentEnd: '2026-09-26T19:00:00+02:00'
+                                        }"
+                                        :class="{
+                                            'pulsate-bg font-medium': isCurrentTimeslot(currentStart, currentEnd, 5)
+                                        }"
+                                        :id="isCurrentTimeslot(currentStart, currentEnd, 5) ? 'current-timeslot' : null"
+                                    >
+                                        <td class="w-1/3 px-3 py-4 whitespace-nowrap">
+                                            <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                                Sat, 16:00 - 19:00
+                                            </div>
+                                        </td>
+                                        <td class="w-2/3 px-3 py-4">
+                                            <div class="flex flex-wrap items-center">
+                                                                                                    <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
+                                                    <a href="https://sisy.fan/artists/antic-soul" class="text-sm font-medium text-gray-900 dark:text-gray-100 hover:text-sisy-orange dark:hover:text-sisy-orange-dark mr-2 mb-1 underline">
+                                                        Antic Soul
+                                                    </a>
+                                                <!--[if ENDBLOCK]><![endif]-->
+                                            </div>
+                                        </td>
+                                    </tr>
+                                                                                                        <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
+                                    <tr
+                                        x-data="{
+                                            currentStart: '2026-09-26T19:00:00+02:00',
+                                            currentEnd: '2026-09-26T22:00:00+02:00'
+                                        }"
+                                        :class="{
+                                            'pulsate-bg font-medium': isCurrentTimeslot(currentStart, currentEnd, 5)
+                                        }"
+                                        :id="isCurrentTimeslot(currentStart, currentEnd, 5) ? 'current-timeslot' : null"
+                                    >
+                                        <td class="w-1/3 px-3 py-4 whitespace-nowrap">
+                                            <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                                Sat, 19:00 - 22:00
+                                            </div>
+                                        </td>
+                                        <td class="w-2/3 px-3 py-4">
+                                            <div class="flex flex-wrap items-center">
+                                                                                                    <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
+                                                    <a href="https://sisy.fan/artists/penelope" class="text-sm font-medium text-gray-900 dark:text-gray-100 hover:text-sisy-orange dark:hover:text-sisy-orange-dark mr-2 mb-1 underline">
+                                                        Peneløpe
+                                                    </a>
+                                                <!--[if ENDBLOCK]><![endif]-->
+                                            </div>
+                                        </td>
+                                    </tr>
+                                                                                                        <!--[if BLOCK]><![endif]-->                                        <tr class="bg-gray-100 dark:bg-gray-800">
+                                            <td class="w-1/3 px-3 py-4"></td>
+                                            <td class="w-2/3 px-3 py-4 text-left text-sm font-medium text-gray-500 dark:text-gray-400">
+                                                Break (15h)
+                                            </td>
+                                        </tr>
+                                    <!--[if ENDBLOCK]><![endif]-->
+                                    <tr
+                                        x-data="{
+                                            currentStart: '2026-09-27T13:00:00+02:00',
+                                            currentEnd: '2026-09-27T16:00:00+02:00'
+                                        }"
+                                        :class="{
+                                            'pulsate-bg font-medium': isCurrentTimeslot(currentStart, currentEnd, 5)
+                                        }"
+                                        :id="isCurrentTimeslot(currentStart, currentEnd, 5) ? 'current-timeslot' : null"
+                                    >
+                                        <td class="w-1/3 px-3 py-4 whitespace-nowrap">
+                                            <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                                Sun, 13:00 - 16:00
+                                            </div>
+                                        </td>
+                                        <td class="w-2/3 px-3 py-4">
+                                            <div class="flex flex-wrap items-center">
+                                                                                                    <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
+                                                    <a href="https://sisy.fan/artists/hgr" class="text-sm font-medium text-gray-900 dark:text-gray-100 hover:text-sisy-orange dark:hover:text-sisy-orange-dark mr-2 mb-1 underline">
+                                                        HGR
+                                                    </a>
+                                                <!--[if ENDBLOCK]><![endif]-->
+                                            </div>
+                                        </td>
+                                    </tr>
+                                                                                                        <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
+                                    <tr
+                                        x-data="{
+                                            currentStart: '2026-09-27T16:00:00+02:00',
+                                            currentEnd: '2026-09-27T19:00:00+02:00'
+                                        }"
+                                        :class="{
+                                            'pulsate-bg font-medium': isCurrentTimeslot(currentStart, currentEnd, 5)
+                                        }"
+                                        :id="isCurrentTimeslot(currentStart, currentEnd, 5) ? 'current-timeslot' : null"
+                                    >
+                                        <td class="w-1/3 px-3 py-4 whitespace-nowrap">
+                                            <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                                Sun, 16:00 - 19:00
+                                            </div>
+                                        </td>
+                                        <td class="w-2/3 px-3 py-4">
+                                            <div class="flex flex-wrap items-center">
+                                                                                                    <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
+                                                    <a href="https://sisy.fan/artists/vy-tran" class="text-sm font-medium text-gray-900 dark:text-gray-100 hover:text-sisy-orange dark:hover:text-sisy-orange-dark mr-2 mb-1 underline">
+                                                        VY Tran
+                                                    </a>
+                                                <!--[if ENDBLOCK]><![endif]-->
+                                            </div>
+                                        </td>
+                                    </tr>
+                                                                                                        <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
+                                    <tr
+                                        x-data="{
+                                            currentStart: '2026-09-27T19:00:00+02:00',
+                                            currentEnd: '2026-09-27T22:00:00+02:00'
+                                        }"
+                                        :class="{
+                                            'pulsate-bg font-medium': isCurrentTimeslot(currentStart, currentEnd, 5)
+                                        }"
+                                        :id="isCurrentTimeslot(currentStart, currentEnd, 5) ? 'current-timeslot' : null"
+                                    >
+                                        <td class="w-1/3 px-3 py-4 whitespace-nowrap">
+                                            <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                                Sun, 19:00 - 22:00
+                                            </div>
+                                        </td>
+                                        <td class="w-2/3 px-3 py-4">
+                                            <div class="flex flex-wrap items-center">
+                                                                                                    <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
+                                                    <a href="https://sisy.fan/artists/mike-konstantinidis" class="text-sm font-medium text-gray-900 dark:text-gray-100 hover:text-sisy-orange dark:hover:text-sisy-orange-dark mr-2 mb-1 underline">
+                                                        Mike Konstantinidis
+                                                    </a>
+                                                <!--[if ENDBLOCK]><![endif]-->
+                                            </div>
+                                        </td>
+                                    </tr>
+                                <!--[if ENDBLOCK]><![endif]-->
+                            </tbody>
+                        </table>
+                    </div>
+                <!--[if ENDBLOCK]><![endif]-->
+            </div>
+        </div>
+    <!--[if ENDBLOCK]><![endif]-->
+</div>
+      </main>
+
+      <footer class="bg-gray-100 dark:bg-gray-800 py-4 border-t dark:border-gray-700">
+          <div class="container mx-auto px-4 flex items-center justify-between">
+              <div class="flex items-center">
+                  <img src="https://sisy.fan/duck.svg" alt="Logo" class="h-8">
+                  <span class="ml-2 text-sm text-gray-600 dark:text-gray-400">made with ducks by <a href="https://shayan.eu" class="text-blue-500 dark:text-blue-400 hover:underline">Shayan</a></span>
+              </div>
+          </div>
+      </footer>
+
+            <script >
+    console.warn('Livewire: The published Livewire assets are out of date\n See: https://livewire.laravel.com/docs/installation#publishing-livewires-frontend-assets')
+</script>
+<script src="https://sisy.fan/vendor/livewire/livewire.min.js?id=cc800bf4"   data-csrf="fixture" data-update-uri="/livewire/update" data-navigate-once="true"></script>
+    </div>
+    <script>
+        document.addEventListener('livewire:initialized', () => {
+            Livewire.on('updateEvent', (eventId) => {
+                Livewire.dispatch('$refresh');
+            });
+        });
+    </script>
+    <script data-host="https://app.analyzati.com" data-dnt="false" src="https://app.analyzati.com/js/script.js" id="ZwSg9rf6GA" async defer></script>
+</body>
+</html>

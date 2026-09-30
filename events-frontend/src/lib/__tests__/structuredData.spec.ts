@@ -171,6 +171,14 @@ describe('eventJsonLd', () => {
     ])
   })
 
+  it('leaves out performers whose lineup came from a page it cannot credit', () => {
+    const credited = {
+      ...event,
+      lineupSourceUrl: 'https://sisy.fan/events/from/25.09.2026/to/28.09.2026',
+    }
+    expect(eventJsonLd(credited, 'en')!.performer).toBeUndefined()
+  })
+
   it('names promoters as the organizer', () => {
     expect(eventJsonLd(event, 'en')!.organizer).toEqual([
       { '@type': 'Organization', name: 'Trinity Music' },

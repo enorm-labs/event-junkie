@@ -53,6 +53,8 @@ data class EventEntity(
     /** True when the source had an image and its licence kept it out (#2130). */
     val imageWithheld: Boolean = false,
     val sourceUrl: String? = null,
+    /** The page the line-up was taken from when that is not [sourceUrl], shown as its credit (ADR-036). */
+    val lineupSourceUrl: String? = null,
     val sourceId: String,
     val ticketUrl: String? = null,
     val facebookEventUrl: String? = null,

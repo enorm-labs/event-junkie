@@ -213,9 +213,9 @@ says so.
 | `SILENT_GREEN`         | `GENRE`            | the venue publishes no genre                                                                                                                     | —     |
 | `SILENT_GREEN`         | `PROMOTERS`        | the venue credits itself as the organiser on its own nights, so the stored promoter is the venue                                                 | —     |
 | `SISYPHOS`             | `EVENT_TYPE`       | the shop files every night as a ticket product with no category; each is stored as a party                                                       | —     |
-| `SISYPHOS`             | `DOORS_TIME`       | a ticket product names a day and never a time                                                                                                    | —     |
-| `SISYPHOS`             | `START_TIME`       | a ticket product names a day and never a time                                                                                                    | —     |
-| `SISYPHOS`             | `ARTISTS`          | the shop names no DJ anywhere; a night is sold under its series name                                                                             | —     |
+| `SISYPHOS`             | `DOORS_TIME`       | a ticket product names a day and never a time, and sisy.fan times only the sets                                                                  | —     |
+| `SISYPHOS`             | `START_TIME`       | a ticket product names a day and never a time; a shop night keeps no start even when sisy.fan times its weekend's first set                      | —     |
+| `SISYPHOS`             | `ARTISTS`          | the shop names no DJ anywhere; the line-up comes from sisy.fan, which posts a weekend on Friday night or Saturday and is read only then          | —     |
 | `SISYPHOS`             | `GENRE`            | the shop names no musical style; every night takes the club's Techno, House default                                                              | —     |
 | `SISYPHOS`             | `PRICE_BOX_OFFICE` | the shop sells online only and states no door price                                                                                              | —     |
 | `SISYPHOS`             | `CANCELLATION`     | a cancelled night is removed from the shop rather than marked                                                                                    | —     |

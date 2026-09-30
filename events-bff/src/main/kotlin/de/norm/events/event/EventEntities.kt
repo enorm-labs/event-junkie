@@ -45,6 +45,8 @@ data class EventEntity(
     /** Set by the importer when the source's licence kept an image out (#2130). */
     val imageWithheld: Boolean = false,
     val sourceUrl: String? = null,
+    /** The page the line-up was taken from when that is not [sourceUrl] (ADR-036). */
+    val lineupSourceUrl: String? = null,
     val ticketUrl: String? = null,
     val facebookEventUrl: String? = null,
     val genre: String? = null,

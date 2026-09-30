@@ -162,6 +162,11 @@ const { t } = useI18n()
         “Discogs” is a trademark of Zink Media, LLC.
       </p>
       <p>
+        The line-ups and set times of the weekends at Sisyphos come from sisy.fan, an unofficial
+        timetable run by fans, which its developer allows us to use. We only fetch its page; nothing
+        about you is sent to it.
+      </p>
+      <p>
         <strong>Purpose:</strong> informing the public about publicly announced cultural events.
       </p>
       <p>

@@ -4428,7 +4428,7 @@ Content-Type: application/json
     "url": "https://www.sisyphos-berlin.net/collections/tickets/products.json",
     "sourceType": "SISYPHOS",
     "enabled": true,
-    "importIntervalMinutes": 1440,
+    "importIntervalMinutes": 120,
     "maxRetries": 3
 }
 

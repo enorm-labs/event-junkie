@@ -105,6 +105,9 @@ class FixtureTest : BaseControllerTest() {
                 .doesNotExist()
                 .jsonPath("$.lineup[2].setStart")
                 .doesNotExist()
+                // The running order's page, credited beside it (ADR-036).
+                .jsonPath("$.lineupSourceUrl")
+                .isEqualTo("https://timetable.example/sommerlaune")
                 .jsonPath("$.promoters[0].slug")
                 .isEqualTo("sommerlaune-festival")
             // On the calendar it is present on its middle day, which is not its event_date.

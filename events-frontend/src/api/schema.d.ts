@@ -38,6 +38,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/sitemaps/{kind}.xml": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the detail pages of one kind worth crawling, in both locales, as a sitemap */
+        get: operations["sitemap"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/promoters": {
         parameters: {
             query?: never;
@@ -951,6 +968,11 @@ export interface components {
             descriptionWithheld?: boolean;
             /** @description Original URL on the source venue's website */
             sourceUrl?: string | null;
+            /**
+             * @description The page the lineup was taken from when it is not `sourceUrl`, such as a fan-run timetable. The page must credit it beside the lineup (ADR-036). Null for almost every event.
+             * @example https://sisy.fan/events/from/25.09.2026/to/28.09.2026
+             */
+            lineupSourceUrl?: string | null;
             /** @description URL to the external ticket shop */
             ticketUrl?: string | null;
             /** @description Direct link to the Facebook event page */
@@ -1326,6 +1348,28 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["VenueDetailResponse"];
+                };
+            };
+        };
+    };
+    sitemap: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                kind: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/xml": string;
                 };
             };
         };
