@@ -57,6 +57,17 @@ class CosmicComedyApiScraperTest {
     }
 
     @Test
+    fun `reads a sold-out marker in the title and keeps the title as published`() {
+        val json =
+            readFixture("cosmiccomedy-events-showcase-special.json")
+                .replace("IL POLIZIOTTO DEL FORMAGGIO 2026", "IL POLIZIOTTO DEL FORMAGGIO 2026 (SOLD OUT!!!)")
+        val turbopaolo = scraper.scrapePage(json).events.single { it.title.startsWith("TURBOPAOLO") }
+        turbopaolo.title shouldBe "TURBOPAOLO – IL POLIZIOTTO DEL FORMAGGIO 2026 (SOLD OUT!!!)"
+        turbopaolo.soldOut shouldBe true
+        showcaseSpecial.none { it.soldOut } shouldBe true
+    }
+
+    @Test
     fun `maps a fully populated event`() {
         val friday = event("cosmic_comedy:comedy-pizza-and-shots-showcase-friday-17")
         friday.title shouldBe "Comedy, Pizza and Shots – SHOWCASE FRIDAY"

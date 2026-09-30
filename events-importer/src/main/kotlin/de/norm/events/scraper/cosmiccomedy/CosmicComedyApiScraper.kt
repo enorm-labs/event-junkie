@@ -40,6 +40,7 @@ data class CosmicComedyPage(
  * - **The programme is mostly one recurring house night.** 57 events resolve to 11 distinct
  * titles; the `slug` is unique per date and identifies an event.
  * - **No prices anywhere.** `cost` and `cost_details` are empty on every event.
+ * - **Sold out is only in the title** (`LATE SHOW (SOLD OUT!!!)`): the API has no stock field.
  * - **Titles and taxonomy names are HTML-escaped** (`&#8211;`, `&#8217;`) and the description is
  * raw HTML opening with an embedded ticket-widget `<script>`, so both are decoded before use.
  *
@@ -112,6 +113,7 @@ class CosmicComedyApiScraper {
             sourceUrl = event.path("url").asString(""),
             sourceId = "${EventSource.COSMIC_COMEDY.sourceIdPrefix}$slug",
             ticketUrl = ticketUrl(event),
+            soldOut = SOLD_OUT_MARKER.containsMatchIn(title),
             artists = headlinerOf(title, categories),
             promoters = event.path("organizer").orEmptyNodes().mapNotNull { decode(it.path("organizer").asString("")) }
         )
@@ -201,6 +203,9 @@ private const val SPECIAL_CATEGORY = "Comedy Special"
 
 /** The category of the club's recurring house night, which names a format and never an act. */
 private const val SHOWCASE_CATEGORY = "Showcase"
+
+/** A sold-out marker in a title, "LATE SHOW (SOLD OUT!!!)". */
+private val SOLD_OUT_MARKER = Regex("""\b(?:sold\s*out|ausverkauft)\b""", RegexOption.IGNORE_CASE)
 
 /** The dashes the club separates a performer from their show title with. */
 private val TITLE_DASHES = Regex("[–—]")
