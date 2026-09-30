@@ -63,12 +63,6 @@ internal fun floorsToEventType(floors: List<String>): String? =
 /** Floor label identifying the adjacent concert hall (vs. the Berghain building's club floors). */
 private const val KANTINE_MARKER = "Kantine"
 
-/** Doors time in the date line, e.g. "tür 19:00" (German "Tür" = door). */
-internal val BERGHAIN_DOORS_PATTERN = Regex("""tür\s+(\d{1,2}:\d{2})""", RegexOption.IGNORE_CASE)
-
-/** Show start time in the date line, e.g. "beginn 21:00". */
-internal val BERGHAIN_START_PATTERN = Regex("""beginn\s+(\d{1,2}:\d{2})""", RegexOption.IGNORE_CASE)
-
 /**
  * The performers one lineup slot names: `Agata B2B Cunt Remember` is two acts, `Booty Carrell DJ
  * (Vinyl) Warm-up` is one. Shared by the programme and the event page, so a running-order slot

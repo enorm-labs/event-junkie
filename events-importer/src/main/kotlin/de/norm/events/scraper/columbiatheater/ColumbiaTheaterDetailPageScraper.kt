@@ -1,5 +1,6 @@
 package de.norm.events.scraper.columbiatheater
 
+import de.norm.events.scraper.DOORS_LABELS
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
@@ -8,6 +9,7 @@ import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.imgSrcAt
 import de.norm.events.scraper.inferConcertVenueType
+import de.norm.events.scraper.labelledClock
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.textAt
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -70,8 +72,8 @@ class ColumbiaTheaterDetailPageScraper {
             description = content.textAt("div.event-text"),
             eventType = eventType,
             eventDate = parseColumbiaTheaterSlugDate(slug) ?: UNRESOLVED_EVENT_DATE,
-            doorsTime = parseTime(labelledTime(dateLine, DOORS_LABEL)),
-            startTime = parseTime(labelledTime(dateLine, START_LABEL)),
+            doorsTime = labelledClock(dateLine, DOORS_LABELS),
+            startTime = labelledClock(dateLine, START_LABEL),
             imageUrl = content.imgSrcAt("img.event-image-img"),
             sourceUrl = sourceUrl,
             sourceId = "${EventSource.COLUMBIA_THEATER.sourceIdPrefix}$slug",
@@ -85,21 +87,8 @@ class ColumbiaTheaterDetailPageScraper {
     }
 }
 
-/** The German doors label on the header date line ("… / Einlass 19:00"). */
-private const val DOORS_LABEL = "Einlass"
-
 /** The German start-time preposition on the header date line ("… um 20:00 …"). */
 private const val START_LABEL = "um"
-
-/**
- * The `HH:mm` after [label] on the header date line (`"So. 16.08. um 20:00 / Einlass 19:00"`),
- * or `null` — a relocated show renders "Mo. 28.09. / Verlegt" with no times. The label is
- * word-anchored so the short `um` cannot match inside another word.
- */
-private fun labelledTime(
-    text: String,
-    label: String
-): String? = Regex("""\b$label\s*:?\s*(\d{1,2}:\d{2})""", RegexOption.IGNORE_CASE).find(text)?.groupValues?.get(1)
 
 /** A URL scheme, used to find where a doubled ticket `href` restarts. */
 private val URL_SCHEME = Regex("""https?://""")

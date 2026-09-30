@@ -1,5 +1,6 @@
 package de.norm.events.scraper.morphine
 
+import de.norm.events.scraper.labelledClock
 import de.norm.events.scraper.parseGermanShortDate
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.stripArtistSuffix
@@ -114,14 +115,14 @@ private const val MAX_MEMBER_HEAD_WORDS = 2
  */
 private val DAY_LINE_DATE = Regex("""\d{1,2}\.\d{1,2}\.\d{2}\b""")
 
-/** The door time in the same header line — the venue labels it `door`, never `Einlass`. */
-private val DAY_LINE_DOORS = Regex("""doors?\s*:?\s*(\d{1,2}:\d{2})""", RegexOption.IGNORE_CASE)
-
 /** The event date from a `.block.day` header line, or `null`. */
 internal fun parseDayLineDate(dayLine: String?): LocalDate? = parseGermanShortDate(dayLine?.let { DAY_LINE_DATE.find(it)?.value })
 
+/** The venue's own door label in the `.block.day` header line: `door`, never `Einlass`. */
+private const val DAY_LINE_DOORS_LABEL = "doors?"
+
 /** The door time from a `.block.day` header line, or `null`. */
-internal fun parseDayLineDoors(dayLine: String?): LocalTime? = parseTime(dayLine?.let { DAY_LINE_DOORS.find(it)?.groupValues?.get(1) })
+internal fun parseDayLineDoors(dayLine: String?): LocalTime? = labelledClock(dayLine, DAY_LINE_DOORS_LABEL)
 
 /**
  * Markers identifying the first `.block.priceevent` paragraph as a **pricing** line.

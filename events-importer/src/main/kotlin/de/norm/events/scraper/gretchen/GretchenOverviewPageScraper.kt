@@ -2,7 +2,9 @@ package de.norm.events.scraper.gretchen
 
 import de.norm.events.event.EventType
 import de.norm.events.scraper.DJ_SET_PARTY_KEYWORDS
+import de.norm.events.scraper.DOORS_LABELS
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.START_LABELS
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.WHITESPACE
@@ -14,6 +16,7 @@ import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.inferConcertVenueType
 import de.norm.events.scraper.isFestivalTitle
 import de.norm.events.scraper.isNonArtistName
+import de.norm.events.scraper.labelledClock
 import de.norm.events.scraper.parseEventStatus
 import de.norm.events.scraper.parseGermanDate
 import de.norm.events.scraper.parsePriceValue
@@ -170,8 +173,8 @@ class GretchenOverviewPageScraper {
      */
     private fun parseTimes(gig: Element): Pair<LocalTime?, LocalTime?> {
         val dateText = gig.textAt(".date").orEmpty()
-        val doorsTime = parseTime(DOORS_PATTERN.find(dateText)?.let { "${it.groupValues[1]}:${it.groupValues[2]}" })
-        val startTime = parseTime(SHOW_PATTERN.find(dateText)?.let { "${it.groupValues[1]}:${it.groupValues[2]}" })
+        val doorsTime = labelledClock(dateText, DOORS_LABELS)
+        val startTime = labelledClock(dateText, START_LABELS)
         return doorsTime to startTime
     }
 
@@ -356,12 +359,6 @@ class GretchenOverviewPageScraper {
     }
 
     companion object {
-        /** Captures the "Doors: HH.MM" time from the `.date` cell (dot separator). */
-        private val DOORS_PATTERN = Regex("""Doors:\s*(\d{1,2})\.(\d{2})""")
-
-        /** Captures the "Show: HH.MM" time from the `.date` cell (dot separator). */
-        private val SHOW_PATTERN = Regex("""Show:\s*(\d{1,2})\.(\d{2})""")
-
         /** A pricing `<em>` is the one carrying a "Vorverkauf" or "Abendkasse" marker. */
         private val PRICE_MARKER_PATTERN = Regex("""Vorverkauf|Abendkasse|freier?\s+Eintritt|Eintritt\s+frei""", RegexOption.IGNORE_CASE)
 

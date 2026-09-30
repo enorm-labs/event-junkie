@@ -1,6 +1,7 @@
 package de.norm.events.scraper.wildatheart
 
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.START_LABELS
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.hasFreeEntryPhrase
@@ -8,6 +9,7 @@ import de.norm.events.scraper.headlinersFromTitle
 import de.norm.events.scraper.inferConcertVenueType
 import de.norm.events.scraper.inferYearForWeekday
 import de.norm.events.scraper.isNonArtistName
+import de.norm.events.scraper.labelledClock
 import de.norm.events.scraper.parseGermanWeekdayAbbreviation
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.textAt
@@ -183,11 +185,7 @@ class WildAtHeartOverviewPageScraper(
      * [WILD_AT_HEART_LIMITATIONS]).
      */
     private fun parseBannerStart(headline: String): LocalTime? =
-        BEGINN_PATTERN
-            .find(headline)
-            ?.groupValues
-            ?.get(1)
-            ?.let { parseTime(it) }
+        labelledClock(headline, START_LABELS)
             ?: AB_UHR_PATTERN.find(headline)?.let { match ->
                 val minute = match.groupValues[2].toIntOrNull() ?: 0
                 runCatching { LocalTime.of(match.groupValues[1].toInt(), minute) }.getOrNull()
@@ -208,9 +206,6 @@ class WildAtHeartOverviewPageScraper(
 
         /** A `Tickets:<url>` presale link embedded in a `.headlines` banner. */
         private val TICKETS_PATTERN = Regex("""Tickets:\s*(https?://\S+)""", RegexOption.IGNORE_CASE)
-
-        /** A "Beginn HH:MM" start time in a `.headlines` banner. */
-        private val BEGINN_PATTERN = Regex("""Beginn\s*:?\s*(\d{1,2}:\d{2})""", RegexOption.IGNORE_CASE)
 
         /** An "ab HH Uhr" / "ab HH:MM Uhr" start time in a `.headlines` banner. */
         private val AB_UHR_PATTERN = Regex("""\bab\s+(\d{1,2})(?:[:.](\d{2}))?\s*Uhr\b""", RegexOption.IGNORE_CASE)

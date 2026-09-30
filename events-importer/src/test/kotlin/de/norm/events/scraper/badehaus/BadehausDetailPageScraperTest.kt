@@ -123,6 +123,16 @@ class BadehausDetailPageScraperTest {
     }
 
     @Test
+    fun `reads a dot-separated doors and start time and keeps them out of the description`() {
+        val url = "https://badehaus-berlin.com/events/forager/"
+        val event = scraper.scrape(fixture("badehaus-detail-relocated.html", url), url).shouldNotBeNull()
+
+        event.doorsTime shouldBe LocalTime.of(19, 0)
+        event.startTime shouldBe LocalTime.of(20, 0)
+        event.description.orEmpty() shouldNotContain "Einlass: 19.00"
+    }
+
+    @Test
     fun `keeps a show scheduled when the notice moved it to this very date`() {
         val url = "https://badehaus-berlin.com/events/futurebae/"
         val event = scraper.scrape(fixture("badehaus-detail-moved-here.html", url), url).shouldNotBeNull()

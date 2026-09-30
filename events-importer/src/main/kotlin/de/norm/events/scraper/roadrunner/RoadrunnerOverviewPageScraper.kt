@@ -1,9 +1,12 @@
 package de.norm.events.scraper.roadrunner
 
+import de.norm.events.scraper.DOORS_LABELS
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.inferConcertVenueType
 import de.norm.events.scraper.inferYearForWeekday
+import de.norm.events.scraper.labelledClock
+import de.norm.events.scraper.labelledClockPattern
 import de.norm.events.scraper.parseGermanWeekday
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.resolveUrl
@@ -167,10 +170,7 @@ class RoadrunnerOverviewPageScraper(
                 ?.takeIf { it.isNotBlank() }
 
     /** Doors time from the "Einlass: HH:mm Uhr" paragraph. */
-    private fun parseDoorsTime(block: List<Element>): LocalTime? {
-        val einlass = block.map { it.text() }.firstOrNull { EINLASS_PATTERN.containsMatchIn(it) } ?: return null
-        return parseTime(EINLASS_PATTERN.find(einlass)?.groupValues?.get(1))
-    }
+    private fun parseDoorsTime(block: List<Element>): LocalTime? = block.firstNotNullOfOrNull { labelledClock(it.text(), DOORS_LABELS) }
 
     /**
      * The block's prose paragraphs joined into the description, minus the structural lines (date,
@@ -189,7 +189,7 @@ class RoadrunnerOverviewPageScraper(
             .filter { it.selectFirst("a[href^=http]") == null } // ticket-link line
             .map { it.text().trim() }
             .filter { it.isNotBlank() && !isDotsOnly(it) }
-            .filterNot { EINLASS_PATTERN.containsMatchIn(it) }
+            .filterNot { DOORS_LINE.containsMatchIn(it) }
             .filterNot { it == title }
             .joinToString("\n")
             .takeIf { it.isNotBlank() }
@@ -249,8 +249,8 @@ class RoadrunnerOverviewPageScraper(
                 RegexOption.IGNORE_CASE
             )
 
-        /** "Einlass: HH:mm" (the "Uhr" suffix is ignored). */
-        private val EINLASS_PATTERN = Regex("""Einlass:\s*(\d{1,2}:\d{2})""", RegexOption.IGNORE_CASE)
+        /** The "Einlass: HH:mm Uhr" line, dropped from the description. */
+        private val DOORS_LINE = labelledClockPattern(DOORS_LABELS)
 
         /** Parses "29. Mai" using full German month names, case-insensitively. */
         private val GERMAN_DAY_MONTH_FORMATTER: DateTimeFormatter =

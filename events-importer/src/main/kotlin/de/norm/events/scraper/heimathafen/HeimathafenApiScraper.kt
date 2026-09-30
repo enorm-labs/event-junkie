@@ -4,11 +4,13 @@ import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
 import de.norm.events.genretag.isGenreLabel
 import de.norm.events.scraper.BERLIN
+import de.norm.events.scraper.DOORS_LABELS
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.cleanEventTitle
+import de.norm.events.scraper.labelledClock
 import de.norm.events.scraper.mapEventType
 import de.norm.events.scraper.parsePriceValue
 import de.norm.events.scraper.parseTime
@@ -187,7 +189,7 @@ class HeimathafenApiScraper(
             description = shared.description,
             eventType = shared.eventType,
             eventDate = startedAt.toLocalDate(),
-            doorsTime = parseTime(DOORS_PATTERN.find(note)?.groupValues?.get(1)),
+            doorsTime = labelledClock(note, DOORS_LABELS),
             startTime = startedAt.toLocalTime(),
             imageUrl = shared.imageUrl,
             sourceUrl = shared.sourceUrl,
@@ -375,13 +377,6 @@ class HeimathafenApiScraper(
 
         /** `HH:mm` rendering used inside the `sourceId`, without the colon. */
         val HH_MM: DateTimeFormatter = DateTimeFormatter.ofPattern("HHmm")
-
-        /**
-         * The doors time inside a performance note. Three qualifier spellings — "Einlass ab 19:00 Uhr
-         * (Saal)", "Einlass ca. 18:30 Uhr", plain "Einlass 19:00 Uhr (Saal)" — so a short run of
-         * non-digits is allowed between label and time rather than enumerating them.
-         */
-        val DOORS_PATTERN = Regex("""Einlass\b[^\d]{0,10}(\d{1,2}:\d{2})""", RegexOption.IGNORE_CASE)
 
         /**
          * Price labels naming a **concession** rather than a general-admission tier, excluded from

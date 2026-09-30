@@ -1,8 +1,10 @@
 package de.norm.events.scraper.so36
 
 import de.norm.events.event.EventType
+import de.norm.events.scraper.DOORS_LABELS
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ROLE_LABEL_PREFIX
+import de.norm.events.scraper.START_LABELS
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
@@ -10,6 +12,7 @@ import de.norm.events.scraper.hasFreeEntryPhrase
 import de.norm.events.scraper.headlinersFromTitle
 import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.isNonArtistName
+import de.norm.events.scraper.labelledClock
 import de.norm.events.scraper.mapEventType
 import de.norm.events.scraper.parseIsoDate
 import de.norm.events.scraper.parseSchemaEventStatus
@@ -103,8 +106,8 @@ class So36DetailPageScraper {
                 .firstOrNull { it.selectFirst("i.fa-clock-o") != null }
                 ?.text()
                 .orEmpty()
-        val doorsTime = parseTime(EINLASS_PATTERN.find(clockText)?.groupValues?.get(1))
-        val startTime = parseTime(BEGINN_PATTERN.find(clockText)?.groupValues?.get(1))
+        val doorsTime = labelledClock(clockText, DOORS_LABELS)
+        val startTime = labelledClock(clockText, START_LABELS)
         return doorsTime to startTime
     }
 
@@ -236,12 +239,6 @@ class So36DetailPageScraper {
     ): String? = Regex(""""$field"\s*:\s*"([^"]+)"""").find(json)?.groupValues?.get(1)
 
     private companion object {
-        /** "Einlass: HH:mm" from the clock line. */
-        private val EINLASS_PATTERN = Regex("""Einlass:\s*(\d{1,2}:\d{2})""")
-
-        /** "Beginn: HH:mm" from the clock line. */
-        private val BEGINN_PATTERN = Regex("""Beginn:\s*(\d{1,2}:\d{2})""")
-
         /** The numeric product id from a `/produkte/<id>-…` path. */
         private val PRODUCT_ID_PATTERN = Regex("""/produkte/(\d+)""")
     }

@@ -64,15 +64,49 @@ fun parseClock(
 fun parseClockPrefix(raw: String?): LocalTime? = parseTime(raw?.trim()?.take(HH_MM_LENGTH)?.takeIf { it.isNotBlank() })
 
 /**
- * Extracts the `HH:mm` time that [label] introduces in [text], or `null` when the label is absent.
- *
- * Venues flatten doors and start onto one line, so the label is the only thing separating them
- * (`"Einlass: 19:00 Beginn: 20:00"`). The colon is optional and the match ignores case.
+ * The words a venue puts before its doors time: "Einlass", "Doors", "Door", "Doors open", and
+ * Berghain's "Tür". For [labelledClock].
  */
-fun labelledTime(
-    text: String,
-    label: String
-): String? = Regex("""$label\s*:?\s*(\d{1,2}:\d{2})""", RegexOption.IGNORE_CASE).find(text)?.groupValues?.get(1)
+const val DOORS_LABELS = """einlass|doors?(?:\s+open)?|tür"""
+
+/**
+ * The words a venue puts before its start time: "Beginn" and a compound ending in it
+ * ("Konzertbeginn"), "Start", "Starts", "Show", "Showtime". For [labelledClock].
+ */
+const val START_LABELS = """\p{L}*beginn|start|show"""
+
+/**
+ * The clock after a label, in every spelling the venues print: `19:30`, `19.30`, `20,00` (Insel's
+ * typo), `19 Uhr`,
+ * `19h`, `7pm`, `7.30 p.m.`, optionally led by a colon and up to two of "ab", "ca.", "um" ("Einlass ab ca. 18:45"). A bare hour
+ * needs "Uhr", "h" or a meridiem, so "Beginn 1. Oktober" is not a clock, and a date such as
+ * "19.10.2026" is not one either.
+ */
+private const val CLOCK_AFTER_LABEL =
+    """\p{L}*\s*:?\s*(?:(?:ab|ca\.?|um|from|at)\s+){0,2}(\d{1,2})""" +
+        """(?:(?:[:.,](\d{2}))(?!\.?\d)\s*(?:uhr|h)?(?!\p{L})|\s*(?:uhr|h)(?!\p{L})|(?=\s*[ap]\.?\s?m))""" +
+        """(?:\s*([ap])\.?\s?m\.?(?!\p{L}))?"""
+
+/**
+ * The clock that one of [labels] (a regex alternation such as [DOORS_LABELS]) introduces in
+ * [text], or `null` when none does. Venues flatten doors and start onto one line (`"Einlass:
+ * 19:00 Beginn: 20:00"`), so the label is the only thing separating them. Case is ignored, the
+ * label may carry a suffix ("Beginnt", "Startzeit"), and the clock is read leniently
+ * ([CLOCK_AFTER_LABEL]); a 12-hour clock takes its meridiem ([parseClock]).
+ */
+fun labelledClock(
+    text: String?,
+    labels: String
+): LocalTime? =
+    text?.let { labelledClockPattern(labels).find(it) }?.destructured?.let { (hour, minute, meridiem) ->
+        parseClock("$hour:${minute.ifEmpty { "00" }}", meridiem.ifEmpty { null })
+    }
+
+/**
+ * The pattern [labelledClock] matches, for a scraper that drops the time line from a description
+ * or finds the line that carries it.
+ */
+fun labelledClockPattern(labels: String): Regex = Regex("""(?<!\p{L})(?:$labels)$CLOCK_AFTER_LABEL""", RegexOption.IGNORE_CASE)
 
 /**
  * Parses the time portion from an ISO 8601 date-time string.
