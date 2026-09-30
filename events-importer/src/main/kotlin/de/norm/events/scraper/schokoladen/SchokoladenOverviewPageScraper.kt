@@ -189,19 +189,26 @@ class SchokoladenOverviewPageScraper {
     }
 
     /**
-     * The promoters from the header's `span.promoter`, minus a trailing "presents:" / "prsnts:"
-     * flourish. Co-promoters share one span, joined by "," and "&" (`"beav boloney, wild wax &
-     * little league shows prsnt:"`), each its own promoter row — a joined name was one row per
-     * billing (#328).
+     * The promoters from the header's `span.promoter`. The span is cut at its "presents" word or at a
+     * ": " tagline, because the night's own billing may follow (`"m:soundtrack prsnts: Falling into
+     * Autumn: Dreamy Indie"`). Co-promoters are joined by ",", "&" and "+" (`"beav boloney, wild wax &
+     * little league shows prsnt:"`), each its own promoter row (#328). [JOINED_PROMOTERS] carry an
+     * "&" in their name and stay whole.
      */
-    private fun parsePromoters(block: Element): List<String> =
-        block
-            .textAt("span.promoter")
-            ?.replace(PRESENTS_SUFFIX, "")
-            ?.split(CO_PROMOTER_SEPARATOR)
-            ?.map { it.trim() }
-            ?.filter { it.isNotBlank() }
-            .orEmpty()
+    private fun parsePromoters(block: Element): List<String> {
+        val credit =
+            block
+                .textAt("span.promoter")
+                ?.replace(PRESENTS_TAIL, "")
+                ?.replace(TAGLINE_TAIL, "")
+                ?: return emptyList()
+        return PROMOTER_TOKEN
+            .findAll(credit)
+            .map { it.value.trim() }
+            .filter { it.isNotBlank() }
+            .map { PROMOTER_ABBREVIATIONS[it.lowercase()] ?: it }
+            .toList()
+    }
 
     /**
      * Artist entries from the title (headliner) plus any support acts. A "(genre, origin)"
@@ -259,11 +266,20 @@ class SchokoladenOverviewPageScraper {
         /** The sold-out banner, at the start of the subtitle or of a description paragraph: "---> Ausverkauft / Sold Out / …". */
         private val SOLD_OUT_BANNER = Regex("""^\W*(?:ausverkauft|sold\s*out)\b""", RegexOption.IGNORE_CASE)
 
-        /** What the venue joins co-promoters with inside one `span.promoter`. */
-        private val CO_PROMOTER_SEPARATOR = Regex("""\s*(?:,|&)\s*""")
+        /** Promoters whose own name carries an "&", which would otherwise split them. */
+        private val JOINED_PROMOTERS = listOf("""thirsty\s*&\s*miserable""")
 
-        /** A trailing "presents:" / "prsnts:" / "pres.:" promoter flourish. */
-        private val PRESENTS_SUFFIX = Regex("""\s*(?:presents|prsnts?|pres\.?)\s*:?\s*$""", RegexOption.IGNORE_CASE)
+        /** One promoter inside a span: a [JOINED_PROMOTERS] name, or a run between ",", "&" and "+". */
+        private val PROMOTER_TOKEN = Regex("""\s*(?:${JOINED_PROMOTERS.joinToString("|")})|[^,&+]+""", RegexOption.IGNORE_CASE)
+
+        /** The venue's short forms for a promoter it credits in full elsewhere. */
+        private val PROMOTER_ABBREVIATIONS = mapOf("lls" to "little league shows")
+
+        /** The "presents" word and anything after it — "prsnts:", "present:", "pres.:", "prsnts a … festival:". */
+        private val PRESENTS_TAIL = Regex("""\s*\b(?:presents?|prsnts?|pres\.?)(?!\w).*$""", RegexOption.IGNORE_CASE)
+
+        /** A tagline after the name, "m:soundtrack: bridging the psychedelic traditions …"; a colon inside a name has no space after it. */
+        private val TAGLINE_TAIL = Regex(""":(?:[\s\u00A0].*)?$""")
 
         /** The words the venue labels its doors time with. */
         private const val DOORS_WORDS = """(?:doors|einlass)"""

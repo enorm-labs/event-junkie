@@ -2,6 +2,7 @@ package de.norm.events.scraper.schokoladen
 
 import de.norm.events.genretag.normalizeGenre
 import de.norm.events.scraper.ScrapedArtist
+import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
@@ -250,6 +251,44 @@ class SchokoladenOverviewPageScraperTest {
                     .readText()
             val event = scraper.scrape(Jsoup.parse(autumn, baseUrl), baseUrl).first { it.sourceId == "schokoladen:e20260910" }
             event.promoters shouldContainExactly listOf("beav boloney", "wild wax", "little league shows")
+        }
+
+        @Test
+        fun `cuts the promoter span at its presents word or tagline and splits every co-promoter`() {
+            // Spans as the venue printed them on 2026-09-30.
+            fun promotersOf(span: String): List<String> =
+                scraper
+                    .scrape(
+                        Jsoup.parse(
+                            """
+                            <div class="event"><span class="promoter">$span</span><h2 class="fw-bold">Some Act</h2>
+                              <div class="event-info" id="e20261001" data-event-date="2026-10-01"></div></div>
+                            """.trimIndent(),
+                            baseUrl
+                        ),
+                        baseUrl
+                    ).single()
+                    .promoters
+
+            assertSoftly {
+                promotersOf("m:soundtrack prsnts a friends celebrating friends festival:") shouldContainExactly listOf("m:soundtrack")
+                promotersOf("m:soundtrack prsnts: Falling into Autumn: Dreamy Indie &amp; Late-Night Happenings &nbsp;") shouldContainExactly
+                    listOf("m:soundtrack")
+                promotersOf("m:soundtrack: bridging the psychedelic traditions of Latin America") shouldContainExactly listOf("m:soundtrack")
+                promotersOf("little league shows present: &nbsp;") shouldContainExactly listOf("little league shows")
+                promotersOf("bricks agency &amp; little league shows present: &nbsp;") shouldContainExactly
+                    listOf("bricks agency", "little league shows")
+                promotersOf("thirsty &amp; miserable + crunch tapes presents: &nbsp;") shouldContainExactly
+                    listOf("thirsty & miserable", "crunch tapes")
+                promotersOf("Trust + thirsty &amp; miserable presents: &nbsp;") shouldContainExactly listOf("Trust", "thirsty & miserable")
+                promotersOf("punkfilmfest berlin booking + the living proof prsnt: &nbsp;") shouldContainExactly
+                    listOf("punkfilmfest berlin booking", "the living proof")
+                promotersOf("amadis, dynamite konzerte &amp; lls prsnt: &nbsp;") shouldContainExactly
+                    listOf("amadis", "dynamite konzerte", "little league shows")
+                promotersOf("n.e.s.t.a. &amp; little league shows prsnt: &nbsp;") shouldContainExactly listOf("n.e.s.t.a.", "little league shows")
+                promotersOf("offbeatclub prsnts &nbsp;") shouldContainExactly listOf("offbeatclub")
+                promotersOf("Sonic Boom &nbsp;") shouldContainExactly listOf("Sonic Boom")
+            }
         }
 
         @Test
