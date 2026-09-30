@@ -1507,6 +1507,8 @@ private fun soloBillOf(title: String): List<ScrapedArtist> =
  * classification defect: `PARTY_TITLE_KEYWORDS` matched a bare `club`, typing Columbiahalle's
  * `Two Door Cinema Club` as `PARTY`. The `"<night> curated by / invites / hosted by <act>"`
  * idiom is #339.
+ *
+ * @param unpackWithFrame forwarded to [headlinersFromTitle] for a concert.
  */
 
 @Suppress("ReturnCount") // Guard clauses for the event-type branches are clearer than nesting
@@ -1514,7 +1516,8 @@ fun buildArtistsForEventType(
     title: String,
     subtitle: String?,
     eventType: String?,
-    description: String? = null
+    description: String? = null,
+    unpackWithFrame: Boolean = false
 ): List<ScrapedArtist> {
     if (eventType == EventType.FESTIVAL.name || eventType == EventType.PARTY.name) return emptyList()
 
@@ -1529,5 +1532,5 @@ fun buildArtistsForEventType(
             .map { ScrapedArtist(name = it, role = "SUPPORT") }
     // The subtitle goes in as well as being read for support: a `"<X> presents"` credit beside a
     // title that opens with `<X>` means the title is the label's night, not the act.
-    return headlinersFromTitle(title, subtitle = subtitle, description = description) + supportActs
+    return headlinersFromTitle(title, unpackWithFrame = unpackWithFrame, subtitle = subtitle, description = description) + supportActs
 }

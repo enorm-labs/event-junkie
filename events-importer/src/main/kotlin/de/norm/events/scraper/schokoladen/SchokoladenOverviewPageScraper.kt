@@ -215,9 +215,11 @@ class SchokoladenOverviewPageScraper {
      * annotation follows each act (`"MOLOCH (punk, bln) + PINK WONDER (scumpunk, bln)"`), stripped
      * before the shared [buildArtistsForEventType][de.norm.events.scraper.buildArtistsForEventType]
      * co-bill splitter runs, so headliners come out clean (`MOLOCH`, `PINK WONDER`). A bracketed
-     * note ("[ausverkauft]") is the venue's, not the act's, and goes the same way. The title is
-     * stored verbatim — only the derived names are cleaned. Non-concert events (readings,
-     * specials) yield no artists unless a "Support:" line is present.
+     * note ("[ausverkauft]") is the venue's, not the act's, and goes the same way, as does a
+     * trailing "& more". A `"<night> mit <acts>"` / `"<night> w/ <acts>"` title bills the acts only
+     * (`15 Jahre Gut Drauf – … mit mOck & Petula`). The title is stored verbatim — only the derived
+     * names are cleaned. Non-concert events (readings, specials) yield no artists unless a
+     * "Support:" line is present.
      */
     private fun parseArtists(
         title: String,
@@ -229,8 +231,9 @@ class SchokoladenOverviewPageScraper {
                 .replace(GENRE_PARENTHETICAL, " ")
                 .replace(TITLE_NOTE, " ")
                 .replace(WHITESPACE, " ")
+                .replace(MORE_ACTS_TAIL, "")
                 .trim()
-        return buildArtistsForEventType(artistTitle, subtitle, eventType)
+        return buildArtistsForEventType(artistTitle, subtitle, eventType, unpackWithFrame = true)
     }
 
     /**
@@ -259,6 +262,9 @@ class SchokoladenOverviewPageScraper {
 
         /** A bracketed venue note in a title — "[ausverkauft]", "[pre-sale sold out, 10 tix on the doors]". */
         private val TITLE_NOTE = Regex("""\s*\[([^\]]*)]""")
+
+        /** A trailing "& more" / "+ more": the co-bill split takes the joiner and would bill "more", which is also a band's name. */
+        private val MORE_ACTS_TAIL = Regex("""\s*[&+]\s*more\s*$""", RegexOption.IGNORE_CASE)
 
         /** A sold-out note anywhere inside a [TITLE_NOTE]. */
         private val SOLD_OUT_NOTE = Regex("""\b(?:ausverkauft|sold\s*out)\b""", RegexOption.IGNORE_CASE)
