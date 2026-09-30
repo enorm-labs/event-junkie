@@ -384,7 +384,7 @@ images:
       # Pinned by digest, like the JRE base (ADR-017): a third-party image we cannot rebuild. **Read the
       # whole tag list before bumping**: GHCR paginates, and the first page ends two majors behind at a tag
       # carrying 94 fixable findings (#1273).
-      digest: "sha256:4ec770c72bffea108ba404dc86d3be88e6bf4fd58958782770ff890cca4c7a82"
+      digest: "sha256:db0b4b9cd690c8b3590203dea300fb759a18c4ec2af7b37424f0bdef23ce317d"
       pullPolicy: IfNotPresent
     # A Secret holding IMGPROXY_KEY and IMGPROXY_SALT, both hex.
     existingSecret: "event-junkie-imgproxy"
