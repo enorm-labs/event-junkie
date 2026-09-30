@@ -138,7 +138,7 @@ class SchokoladenOverviewPageScraperTest {
         }
 
         @Test
-        fun `bills the acts of a night title, not the night, and no placeholder for more`() {
+        fun `bills the acts of a night title, not the night, its album or a placeholder for more`() {
             fun artistsOf(title: String): List<String> =
                 scraper
                     .scrape(
@@ -159,6 +159,9 @@ class SchokoladenOverviewPageScraperTest {
                 "15 Jahre Gut Drauf – Jubiläum der Jubiläen mit mOck (math-rock, comeback!) &amp; Petula (lofi-indie-pop, 25 years!)"
             ) shouldContainExactly listOf("mOck", "Petula")
             artistsOf("halloween special w/ Nothing Works (post-hc, bln) &amp; more") shouldContainExactly listOf("Nothing Works")
+            // 9 December 2026: the act follows "Release Show von", and the quoted part after "w/" is the album (#2099).
+            artistsOf("Berlin Release Show von Angela Aux w/ \"Das Nichts macht Kopien von sich selbst\" + TBA") shouldContainExactly
+                listOf("Angela Aux")
         }
 
         @Test
