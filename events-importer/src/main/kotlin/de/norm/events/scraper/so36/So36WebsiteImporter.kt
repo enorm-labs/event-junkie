@@ -66,7 +66,7 @@ val SO36_LIMITATIONS =
         EventSource.SO36,
         AcceptedLimitation(
             LimitedAspect.PRICE,
-            "the shop exposes only a presale price as microdata, so a door-only event carries no figure at all"
+            "the shop exposes prices only as ticket categories, so a door-only event without an Abendkasse category carries no figure"
         ),
         AcceptedLimitation(
             LimitedAspect.SOLD_OUT,

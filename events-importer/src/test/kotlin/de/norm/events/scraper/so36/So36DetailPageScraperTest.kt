@@ -86,6 +86,32 @@ class So36DetailPageScraperTest {
     }
 
     @Test
+    fun `reads the presale from the regular category and the box-office price from Abendkasse`() {
+        // (TH)INK ABOUT THAT, 27 September 2026: regulär 10,00 €, ermäßigt 6,00 €, Abendkasse 12,00 €.
+        fun offer(
+            name: String,
+            price: String
+        ) = """<tr itemprop="offers" itemscope itemtype="http://schema.org/Offer"><td class="title"><span itemprop="name">$name</span></td>""" +
+            """<td class="price"><span class="hidden" content="$price" itemprop="price"></span></td></tr>"""
+
+        fun prices(vararg offers: String): Pair<BigDecimal?, BigDecimal?> {
+            val document = fixture("so36-detail-concert.html", concertUrl)
+            document.selectFirst("table.variants-listing tbody")!!.html(offers.joinToString(""))
+            val event = scraper.scrape(document, concertUrl)!!
+            return event.pricePresale to event.priceBoxOffice
+        }
+
+        prices(
+            offer("(TH)INK ABOUT THAT | regulär", "10.0"),
+            offer("(TH)INK ABOUT THAT | ermäßigt", "6.0"),
+            offer("(TH)INK ABOUT THAT | Abendkasse", "12.0")
+        ) shouldBe (BigDecimal("10.0") to BigDecimal("12.0"))
+        // After the presale closed, only the door category was left.
+        prices(offer("(TH)INK ABOUT THAT | Abendkasse", "12.0")) shouldBe (null to BigDecimal("12.0"))
+        prices(offer("SADSVIT | Ticket", "49.0")) shouldBe (BigDecimal("49.0") to null)
+    }
+
+    @Test
     fun `extracts the concert lineup with the title as headliner and plus-prefixed support acts`() {
         val event = scraper.scrape(fixture("so36-detail-concert.html", concertUrl), concertUrl)
         event.shouldNotBeNull()
