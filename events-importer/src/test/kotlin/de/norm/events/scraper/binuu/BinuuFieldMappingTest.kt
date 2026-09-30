@@ -86,4 +86,10 @@ class BinuuFieldMappingTest {
         // (Gutalax is death metal; "Shit On The Dancefloor" is the tour name).
         inferBinuuEventType("Gutalax", "Shit On The Dancefloor Mini-Tour 2026") shouldBe "CONCERT"
     }
+
+    @Test
+    fun `types a band whose name holds rave as a concert`() {
+        inferBinuuEventType("GRAVE DIGGER", "Opener: Warwolf") shouldBe "CONCERT"
+        inferBinuuEventType("Kytes", "Indie Rave Tour 2026") shouldBe "CONCERT"
+    }
 }

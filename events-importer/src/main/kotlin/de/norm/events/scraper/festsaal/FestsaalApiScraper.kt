@@ -1,12 +1,14 @@
 package de.norm.events.scraper.festsaal
 
 import de.norm.events.event.EventType
+import de.norm.events.scraper.DJ_SET_PARTY_KEYWORDS
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.LogFields
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.headlinersFromTitle
+import de.norm.events.scraper.inferConcertVenueType
 import de.norm.events.scraper.isFestivalTitle
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.mapEventType
@@ -237,33 +239,19 @@ class FestsaalApiScraper {
      * (`genre` is a *musical* genre, not an event kind — the one exception, an event kind filed
      * as the genre, is read before this runs).
      *
-     * A live-music venue, so the default is `CONCERT`; only unambiguous signals flip it — a quiz
-     * keyword → `QUIZ`, a wrestling show → `SHOW`, a market or open-air series → `OTHER`, a
-     * festival title → `FESTIVAL`, a party/DJ-night keyword (including a Brazilian "festa") →
-     * `PARTY`. Flipping away from `CONCERT` also stops a non-artist title being minted as a
-     * headliner ([buildArtists]). Mirrors Bi Nuu's `inferBinuuEventType`; reactive like every
-     * curated heuristic — a new non-concert series reads as `CONCERT` until a keyword catches it.
-     *
-     * The event-name markers (`wrestling` and [NON_CONCERT_EVENT_KEYWORDS]) match the **title
-     * only** — they identify an event whose *name* is the show/market/open-air, not an act. The
-     * same marker in the *subtitle* is a format note on a real concert (an act billed "¡Wepa!
-     * Bunny" playing an open air) and must not strip the headliner.
+     * A live-music venue, so the shared concert-venue rule with [FESTSAAL_KEYWORDS]; a concert
+     * whose title names a festival is a `FESTIVAL`. Flipping away from `CONCERT` also stops a
+     * non-artist title being minted as a headliner ([buildArtists]). The event-name markers (a
+     * show, a market, an open air) count only in the **title**: in the subtitle they are a format
+     * note on a real concert (an act billed "¡Wepa! Bunny" playing an open air).
      */
     private fun inferEventType(
         title: String,
         subtitle: String?
-    ): String {
-        val titleLower = title.lowercase()
-        val haystack = "$titleLower ${subtitle.orEmpty().lowercase()}"
-        return when {
-            "quiz" in haystack -> EventType.QUIZ.name
-            "wrestling" in titleLower -> EventType.SHOW.name
-            NON_CONCERT_EVENT_KEYWORDS.any { it in titleLower } -> EventType.OTHER.name
-            isFestivalTitle(title) -> EventType.FESTIVAL.name
-            PARTY_KEYWORDS.any { it in haystack } -> EventType.PARTY.name
-            else -> EventType.CONCERT.name
+    ): String =
+        inferConcertVenueType(title, subtitle, FESTSAAL_KEYWORDS).let {
+            if (it == EventType.CONCERT.name && isFestivalTitle(title)) EventType.FESTIVAL.name else it
         }
-    }
 
     /**
      * The lineup: for concerts the title carries the headliner(s) (co-bills via
@@ -324,31 +312,12 @@ class FestsaalApiScraper {
         const val STATUS_CUSTOM = "custom"
 
         /**
-         * Party/DJ-night phrases that, in a title or subtitle, mark a non-concert night at this
-         * concert-leaning venue. Includes the Brazilian `festa` ("Festa Junina"), a party.
+         * Festsaal's own cues beside the shared ones: a DJ set and the Brazilian `festa` ("Festa
+         * Junina") are parties, an open-air series ("Berlin Indie Open Air") names the event, not
+         * an act, and is `OTHER`.
          */
-        val PARTY_KEYWORDS =
-            listOf(
-                "afterparty",
-                "after-party",
-                "after party",
-                "party",
-                "festa",
-                "dj set",
-                "dj-set",
-                "rave",
-                "karaoke",
-                "club night",
-                "clubnight"
-            )
-
-        /**
-         * Title markers for non-music, non-party events whose **title** names the event, not an
-         * artist: a market ("24. Japanmarkt") or an open-air series ("Berlin Indie Open Air"). Title
-         * only (see [inferEventType]) so a subtitle "Open Air" note on a real concert keeps its
-         * headliner. Mapped to `OTHER` so no headliner is minted. Curated/reactive.
-         */
-        val NON_CONCERT_EVENT_KEYWORDS = listOf("markt", "open air")
+        val FESTSAAL_KEYWORDS =
+            DJ_SET_PARTY_KEYWORDS + mapOf("festa" to EventType.PARTY.name, "open air" to EventType.OTHER.name)
     }
 }
 

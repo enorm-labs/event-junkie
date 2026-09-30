@@ -144,6 +144,44 @@ class EventTypeMappingTest {
     }
 
     @Test
+    fun `inferConcertVenueType keeps a band whose name holds rave or night as a concert`() {
+        val venueKeywords = mapOf("night" to "PARTY")
+        inferConcertVenueType("GRAVE DIGGER", null, venueKeywords) shouldBe "CONCERT"
+        inferConcertVenueType("Luca Ravenna", null, venueKeywords) shouldBe "CONCERT"
+        inferConcertVenueType("Nightwish", null, venueKeywords) shouldBe "CONCERT"
+        inferConcertVenueType("SKELER - Nightfall World Tour", null, venueKeywords) shouldBe "CONCERT"
+    }
+
+    @Test
+    fun `inferConcertVenueType types a venue keyword as a whole word`() {
+        val venueKeywords = mapOf("night" to "PARTY", "90s" to "PARTY", "world cup" to "SCREENING")
+        inferConcertVenueType("Golden Era Dancehall Night", null, venueKeywords) shouldBe "PARTY"
+        // A keyword starting with a digit may touch a word on that side.
+        inferConcertVenueType("TOP90s * Bad Taste Special *", null, venueKeywords) shouldBe "PARTY"
+        inferConcertVenueType("World Cup Final", null, venueKeywords) shouldBe "SCREENING"
+        // The shared cues come first.
+        inferConcertVenueType("Quiz Night", null, venueKeywords) shouldBe "QUIZ"
+    }
+
+    @Test
+    fun `inferConcertVenueType reads only a party or quiz cue from the subtitle`() {
+        inferConcertVenueType("Erobique", "NEUJAHRS PARTY") shouldBe "PARTY"
+        inferConcertVenueType("Some Night", "DJ Set till late", DJ_SET_PARTY_KEYWORDS) shouldBe "PARTY"
+        inferConcertVenueType("KENNEN SIE KINO", "Das 1. Berliner Filmtablequiz") shouldBe "SCREENING"
+        // A show or market word in the subtitle describes a real act's evening.
+        inferConcertVenueType("¡Wepa! Bunny", "Open Air", mapOf("open air" to "OTHER")) shouldBe "CONCERT"
+        inferConcertVenueType("ANDREAS KÜMMERT", "with circus artists") shouldBe "CONCERT"
+    }
+
+    @Test
+    fun `inferConcertVenueType ignores a tour name or an after-show in the subtitle`() {
+        inferConcertVenueType("Kytes", "Indie Rave Tour 2026") shouldBe "CONCERT"
+        inferConcertVenueType("GOLDIE BOUTILIER", "Party Tour ‘26") shouldBe "CONCERT"
+        inferConcertVenueType("DIE VERLIERER + SCHIMMEL ÜBER BERLIN", "+ Aftershow: FISH'N'CANDY") shouldBe "CONCERT"
+        inferConcertVenueType("The Valkyrians", "Ska Matinee. After-Party with DJ Selekta Bebek") shouldBe "CONCERT"
+    }
+
+    @Test
     fun `inferConcertVenueType keeps an act whose name merely ends in Club as a concert`() {
         // The trade made when the bare `club` keyword was dropped, stated as a test so it is a
         // decision rather than a drift. At a dedicated live-music venue a title ending in the word
