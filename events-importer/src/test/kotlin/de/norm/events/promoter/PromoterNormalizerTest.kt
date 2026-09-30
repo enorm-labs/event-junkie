@@ -320,6 +320,17 @@ class PromoterNormalizerTest {
         }
     }
 
+    // Berghain credits the festival as "CTM" on one night and "CTM Festival" on another (#2176).
+    @Test
+    fun `folds both spellings of CTM Festival onto one promoter`() {
+        assertSoftly {
+            canonicalPromoterName("CTM") shouldBe "CTM Festival"
+            canonicalPromoterName("CTM Festival") shouldBe "CTM Festival"
+            canonicalPromoterName("Ctm Festival") shouldBe "CTM Festival"
+            canonicalPromoterName("CTM FESTIVAL") shouldBe "CTM Festival"
+        }
+    }
+
     @Test
     fun `restores a trading name whose descriptor the strip took`() {
         assertSoftly {

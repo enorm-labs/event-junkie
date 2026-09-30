@@ -14,7 +14,7 @@ import java.sql.Connection
 import java.sql.DriverManager
 
 /**
- * Runs the promoter data migrations — V023, V025, V026, V027, V029, V030, V031, V032, V065, V066 — against the rows each names, planted on a
+ * Runs the promoter data migrations — V023, V025, V026, V027, V029, V030, V031, V032, V065, V066, V072 — against the rows each names, planted on a
  * database migrated to just before it.
  *
  * The migrations are keyed on slugs read from staging, and a misspelt one updates no row while
@@ -95,6 +95,8 @@ class MergeDuplicatePromotersMigrationTest {
         flyway("65").migrate()
         plantSchokoladenSpans()
         flyway("66").migrate()
+        plantCtmSpellings()
+        flyway("72").migrate()
     }
 
     @AfterAll
@@ -242,6 +244,13 @@ class MergeDuplicatePromotersMigrationTest {
     }
 
     @Test
+    fun `V072 folds the CTM row into CTM Festival and restores that row's capitals`() {
+        promoters().containsKey("ctm") shouldBe false
+        promoters()["ctm-festival"] shouldBe "CTM Festival"
+        eventsOf("ctm-festival") shouldContainExactlyInAnyOrder listOf("c1", "c2", "c3")
+    }
+
+    @Test
     fun `V026 deletes a row that names no promoter and leaves its event with its other promoter`() {
         promoters().containsKey("kneipenabend") shouldBe false
         eventsOf("schokoladen") shouldContainExactlyInAnyOrder listOf("j1")
@@ -281,6 +290,17 @@ class MergeDuplicatePromotersMigrationTest {
             plantEvent(statement, "sk2", "m-soundtrack", "m-soundtrack-prsnts-falling-into-autumn-dreamy-indie")
             plantEvent(statement, "sk4", "thirsty")
             plantEvent(statement, "sk5", "trust-thirsty")
+        }
+    }
+
+    /** V072: both spellings of one festival, each on a night of its own and both on a third. */
+    private fun plantCtmSpellings() {
+        connection.createStatement().use { statement ->
+            plantPromoter(statement, "CTM", "ctm")
+            plantPromoter(statement, "Ctm Festival", "ctm-festival")
+            plantEvent(statement, "c1", "ctm")
+            plantEvent(statement, "c2", "ctm-festival")
+            plantEvent(statement, "c3", "ctm", "ctm-festival")
         }
     }
 
