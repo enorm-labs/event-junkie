@@ -257,6 +257,10 @@ private val NAME_CORRECTIONS: Map<String, String> =
         "prkdreamhouse" to "PRK DreamHaus",
         "rausgeganger" to "Rausgegangen",
         "punkfilmfestivalberlin" to "punkfilmfest berlin",
+        // Berghain credits the festival as both "CTM" and "CTM Festival"; the de-shouter lowers the
+        // latter to "Ctm Festival" (#2176).
+        "ctm" to "CTM Festival",
+        "ctmfestival" to "CTM Festival",
         // The spelling each promoter uses on its own site (#328, docs/promoters/REVIEWED.tsv), with a
         // stripped descriptor restored where it is part of the brand.
         "11freunde" to "11FREUNDE",
