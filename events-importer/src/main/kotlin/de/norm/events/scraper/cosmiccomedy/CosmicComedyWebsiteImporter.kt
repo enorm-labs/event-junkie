@@ -6,9 +6,11 @@ import de.norm.events.scraper.EventImporter
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.LimitedAspect
+import de.norm.events.scraper.ListingPage
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.VenueLimitations
 import de.norm.events.scraper.querySeparator
+import de.norm.events.scraper.walkListingPages
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
 
@@ -44,20 +46,13 @@ class CosmicComedyWebsiteImporter(
         etag: String?,
         lastModified: String?
     ): ImportResult {
-        val events = mutableListOf<ScrapedEvent>()
-        var nextUrl: String? = "$url${url.querySeparator()}per_page=$PER_PAGE"
-        var pages = 0
+        val firstUrl = "$url${url.querySeparator()}per_page=$PER_PAGE"
+        val fetchPage: suspend (String) -> CosmicComedyPage = { apiScraper.scrapePage(apiClient.fetchJson(it)) }
+        val listing =
+            walkListingPages(eventSource, fetchPage(firstUrl), firstUrl, MAX_PAGES, fetchPage) { page, _ -> ListingPage(page.events, page.nextPageUrl) }
+        logger.info { "Scraped ${listing.items.size} event(s) from Cosmic Comedy Berlin across ${listing.pages} page(s)" }
 
-        while (nextUrl != null && pages < MAX_PAGES) {
-            val parsed = apiScraper.scrapePage(apiClient.fetchJson(nextUrl))
-            events += parsed.events
-            nextUrl = parsed.nextPageUrl
-            pages++
-        }
-        if (nextUrl != null) logger.warn { "Cosmic Comedy paging stopped at the $MAX_PAGES-page cap; later pages were not read" }
-        logger.info { "Scraped ${events.size} event(s) from Cosmic Comedy Berlin across $pages page(s)" }
-
-        return ImportResult.Success(events = events, etag = null, lastModified = null)
+        return ImportResult.Success(events = listing.items, etag = null, lastModified = null, complete = listing.complete)
     }
 
     companion object {

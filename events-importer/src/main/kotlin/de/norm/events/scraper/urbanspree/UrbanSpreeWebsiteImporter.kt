@@ -7,11 +7,15 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.LimitedAspect
+import de.norm.events.scraper.ListingPage
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.VenueLimitations
+import de.norm.events.scraper.pageNumber
 import de.norm.events.scraper.querySeparator
 import de.norm.events.scraper.urbanspree.UrbanSpreeWebsiteImporter.Companion.MAX_PAGES
+import de.norm.events.scraper.walkListingPages
 import io.github.oshai.kotlinlogging.KotlinLogging
+import org.jsoup.nodes.Document
 import org.springframework.stereotype.Component
 import java.time.Clock
 import java.time.LocalDate
@@ -52,41 +56,33 @@ class UrbanSpreeWebsiteImporter(
         etag: String?,
         lastModified: String?
     ): ImportResult {
-        val upcoming = collectUpcomingCards(url)
-        val events = upcoming.map { enrichFromDetailPage(it) }
-        logger.info { "Scraped ${events.size} Urban Spree event(s)" }
-        return ImportResult.Success(events = events, etag = null, lastModified = null)
+        val today = LocalDate.now(clock)
+        val listing =
+            walkListingPages(eventSource, htmlFetcher.fetchDocument(url), url, MAX_PAGES, htmlFetcher::fetchDocument) { document, pageUrl ->
+                readListingPage(document, pageUrl, url, today)
+            }
+        val events = listing.items.distinctBy { it.sourceId }.map { enrichFromDetailPage(it) }
+        logger.info { "Scraped ${events.size} Urban Spree event(s) across ${listing.pages} listing page(s)" }
+        return ImportResult.Success(events = events, etag = null, lastModified = null, complete = listing.complete)
     }
 
     /**
-     * Walks `?page=N` forward from [entryUrl], collecting every card dated today or later, stopping
-     * at the first page with a past-dated card: newest-first, so everything beyond is archive. Past
-     * cards on the boundary page are dropped here, sparing a detail fetch.
+     * One `?page=N` listing page: its cards dated today or later, and the next page unless this one
+     * reaches the past. The listing is newest-first, so everything beyond a past-dated card is
+     * archive, and an empty page means it ran out. Past cards are dropped here, sparing a detail fetch.
      */
-    private suspend fun collectUpcomingCards(entryUrl: String): List<ScrapedEvent> {
-        val today = LocalDate.now(clock)
-        val collected = mutableListOf<ScrapedEvent>()
-        var page = 1
-        var listingContinues = true
-
-        while (listingContinues && page <= MAX_PAGES) {
-            val pageUrl = pageUrl(entryUrl, page)
-            val cards = overviewPageScraper.scrape(htmlFetcher.fetchDocument(pageUrl), pageUrl)
-            val (upcoming, past) = cards.partition { !it.eventDate.isBefore(today) }
-            collected += upcoming
-
-            // An empty page means the listing ran out; a past-dated card means the boundary.
-            listingContinues = cards.isNotEmpty() && past.isEmpty()
-            if (!listingContinues) {
-                logger.info { "Ending Urban Spree pagination at page $page (${cards.size} card(s), ${past.size} already past)" }
-            }
-            page++
-        }
-
-        if (listingContinues) {
-            logger.warn { "Urban Spree pagination hit the $MAX_PAGES-page cap before reaching the past; some events may be missing" }
-        }
-        return collected.distinctBy { it.sourceId }
+    private fun readListingPage(
+        document: Document,
+        pageUrl: String,
+        entryUrl: String,
+        today: LocalDate
+    ): ListingPage<ScrapedEvent> {
+        val cards = overviewPageScraper.scrape(document, pageUrl)
+        val (upcoming, past) = cards.partition { !it.eventDate.isBefore(today) }
+        val page = pageUrl.pageNumber(PAGE_QUERY_PARAM)
+        val next = pageUrl(entryUrl, page + 1).takeIf { cards.isNotEmpty() && past.isEmpty() }
+        if (next == null) logger.info { "Ending Urban Spree pagination at page $page (${cards.size} card(s), ${past.size} already past)" }
+        return ListingPage(upcoming, next)
     }
 
     /**

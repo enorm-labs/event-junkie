@@ -4,9 +4,12 @@ import de.norm.events.scraper.ApiClient
 import de.norm.events.scraper.EventImporter
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.ListingPage
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.VenueLimitations
+import de.norm.events.scraper.pageNumber
 import de.norm.events.scraper.querySeparator
+import de.norm.events.scraper.walkListingPages
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
 
@@ -49,18 +52,17 @@ class HeimathafenWebsiteImporter(
         etag: String?,
         lastModified: String?
     ): ImportResult {
-        val events = mutableListOf<ScrapedEvent>()
-        for (page in 1..MAX_PAGES) {
-            val parsed = apiScraper.scrape(apiClient.fetchJson(buildRequestUrl(url, page)))
-            events += parsed.events
-            // A short page is the last one: asking for the next would 400 (`rest_post_invalid_page_number`).
-            if (parsed.postCount < PER_PAGE) break
-            if (page == MAX_PAGES) logger.warn { "Heimathafen paging stopped at the $MAX_PAGES-page cap; later pages were not read" }
-        }
+        val firstUrl = buildRequestUrl(url, 1)
+        val fetchPage: suspend (String) -> HeimathafenApiScraper.HeimathafenPage = { apiScraper.scrape(apiClient.fetchJson(it)) }
+        val listing =
+            walkListingPages(eventSource, fetchPage(firstUrl), firstUrl, MAX_PAGES, fetchPage) { page, pageUrl ->
+                // A short page is the last one: asking for the next would 400 (`rest_post_invalid_page_number`).
+                ListingPage(page.events, buildRequestUrl(url, pageUrl.pageNumber() + 1).takeIf { page.postCount >= PER_PAGE })
+            }
 
-        val distinct = events.distinctBy { it.sourceId }
+        val distinct = listing.items.distinctBy { it.sourceId }
         logger.info { "Scraped ${distinct.size} upcoming event(s) from Heimathafen" }
-        return ImportResult.Success(events = distinct, etag = null, lastModified = null)
+        return ImportResult.Success(events = distinct, etag = null, lastModified = null, complete = listing.complete)
     }
 
     /**

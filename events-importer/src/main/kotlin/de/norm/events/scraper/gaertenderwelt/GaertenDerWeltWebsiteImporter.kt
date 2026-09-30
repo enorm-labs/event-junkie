@@ -12,6 +12,7 @@ import de.norm.events.scraper.VenueLimitations
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.collapseExhibitionRuns
 import de.norm.events.scraper.gaertenderwelt.GaertenDerWeltWebsiteImporter.Companion.MAX_PAGES
+import de.norm.events.scraper.scrapeListingPages
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
 
@@ -51,36 +52,23 @@ class GaertenDerWeltWebsiteImporter(
         etag: String?,
         lastModified: String?
     ): ImportResult {
+        val listing =
+            htmlFetcher.scrapeListingPages(
+                eventSource,
+                htmlFetcher.fetchDocument(url),
+                url,
+                MAX_PAGES,
+                overviewPageScraper::nextPageUrl,
+                overviewPageScraper::scrape
+            )
         // An exhibition is folded first, so its page is fetched once (ADR-029, #337).
         val rows =
-            collectListingRows(url).collapseExhibitionRuns { row ->
+            listing.events.collapseExhibitionRuns { row ->
                 parseEventPath(row.sourceUrl)?.let { "${EventSource.GAERTEN_DER_WELT.sourceIdPrefix}${it.slug}" }
             }
         val events = rows.map { enrichFromDetailPage(it) }
         logger.info { "Scraped ${events.size} Gärten der Welt event(s)" }
-        return ImportResult.Success(events = events, etag = null, lastModified = null)
-    }
-
-    /**
-     * Walks the listing from [entryUrl], following each page's "nächste" link. [MAX_PAGES] is a
-     * runaway guard; hitting it means the paginator stopped ending, logged as a warning.
-     */
-    private suspend fun collectListingRows(entryUrl: String): List<ScrapedEvent> {
-        val collected = mutableListOf<ScrapedEvent>()
-        var pageUrl: String? = entryUrl
-        var page = 0
-
-        while (pageUrl != null && page < MAX_PAGES) {
-            val document = htmlFetcher.fetchDocument(pageUrl)
-            collected += overviewPageScraper.scrape(document, pageUrl)
-            pageUrl = overviewPageScraper.nextPageUrl(document, pageUrl)
-            page++
-        }
-
-        if (pageUrl != null) {
-            logger.warn { "Gärten der Welt pagination hit the $MAX_PAGES-page cap before the listing ended; later pages were not read" }
-        }
-        return collected.distinctBy { it.sourceId }
+        return ImportResult.Success(events = events, etag = null, lastModified = null, complete = listing.complete)
     }
 
     /**

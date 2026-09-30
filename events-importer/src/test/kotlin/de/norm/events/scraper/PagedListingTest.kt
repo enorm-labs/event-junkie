@@ -88,6 +88,38 @@ class PagedListingTest {
         }
 
     @Test
+    fun `walkListingPages reads any page type and stops at a failed page`() =
+        runTest {
+            val pages = mapOf("p2" to listOf("b"), "p3" to listOf("c"))
+            val walked =
+                walkListingPages(EventSource.MATRIX, listOf("a"), "p1", 10, { url -> pages[url] ?: error("unreachable $url") }) { items, url ->
+                    ListingPage(items, mapOf("p1" to "p2", "p2" to "p3", "p3" to "p4")[url])
+                }
+
+            walked.items shouldContainExactly listOf("a", "b", "c")
+            walked.pages shouldBe 3
+            walked.complete shouldBe false
+        }
+
+    @Test
+    fun `walkListingPages ends as complete when the next link points back to a page already read`() =
+        runTest {
+            val walked =
+                walkListingPages(EventSource.MATRIX, listOf("a"), "p1", 10, { listOf("b") }) { items, url ->
+                    ListingPage(items, if (url == "p1") "p2" else "p1")
+                }
+
+            walked.items shouldContainExactly listOf("a", "b")
+            walked.complete shouldBe true
+        }
+
+    @Test
+    fun `pageNumber reads the page parameter and defaults to the first page`() {
+        "https://x.test/events?page=3&per_page=10".pageNumber() shouldBe 3
+        "https://x.test/program/".pageNumber() shouldBe 1
+    }
+
+    @Test
     fun `nextPageUrl resolves a relative link against the page URL`() {
         page("$entryUrl?page=2", next = "?page=3").nextPageUrl("a.next") shouldBe "$entryUrl?page=3"
     }

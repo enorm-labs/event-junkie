@@ -6,11 +6,13 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.LimitedAspect
+import de.norm.events.scraper.ListingPage
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.VenueLimitations
 import de.norm.events.scraper.attrAt
 import de.norm.events.scraper.collapseExhibitionRuns
 import de.norm.events.scraper.resolveUrl
+import de.norm.events.scraper.walkListingPages
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.springframework.stereotype.Component
@@ -48,27 +50,20 @@ class SilentGreenWebsiteImporter(
         etag: String?,
         lastModified: String?
     ): ImportResult {
-        val events = mutableListOf<ScrapedEvent>()
-        val visited = mutableSetOf<String>()
-        var pageUrl: String? = url
-
-        while (pageUrl != null && visited.size < MAX_MONTH_PAGES && visited.add(pageUrl)) {
-            val document = htmlFetcher.fetchDocument(pageUrl)
-            val monthEvents = monthPageScraper.scrape(document, pageUrl)
-            // An empty month ends the programme: the venue keeps offering a next-month link forever.
-            if (monthEvents.isEmpty()) break
-            events += monthEvents
-            pageUrl = nextMonthUrl(document, pageUrl)
-        }
-
-        val distinct = events.distinctBy { it.sourceId }
-        logger.info { "Scraped ${distinct.size} silent green event(s) across ${visited.size} month page(s) from $url" }
+        val listing =
+            walkListingPages(eventSource, htmlFetcher.fetchDocument(url), url, MAX_MONTH_PAGES, htmlFetcher::fetchDocument) { document, pageUrl ->
+                val monthEvents = monthPageScraper.scrape(document, pageUrl)
+                // An empty month ends the programme: the venue keeps offering a next-month link forever.
+                ListingPage(monthEvents, nextMonthUrl(document, pageUrl).takeIf { monthEvents.isNotEmpty() })
+            }
+        val distinct = listing.items.distinctBy { it.sourceId }
+        logger.info { "Scraped ${distinct.size} silent green event(s) across ${listing.pages} month page(s) from $url" }
         // An exhibition's days share one page, and the page's date block is the run (ADR-029, #337).
         val runs =
             enrichFromDetailPages(distinct).collapseExhibitionRuns { event ->
                 "${EventSource.SILENT_GREEN.sourceIdPrefix}${silentGreenDetailSlug(event.sourceUrl)}"
             }
-        return ImportResult.Success(events = runs, etag = null, lastModified = null)
+        return ImportResult.Success(events = runs, etag = null, lastModified = null, complete = listing.complete)
     }
 
     /** Resolves the next-month link — the right-hand arrow of the month switcher — dropping its anchor fragment. */

@@ -56,19 +56,22 @@ class MigasWebsiteImporter(
         lastModified: String?
     ): ImportResult {
         val document = htmlFetcher.fetchDocument(url)
-        val pages = appendLaterPages(document, url)
+        val (pages, complete) = appendLaterPages(document, url)
         val events = overviewPageScraper.scrape(document)
         logger.info { "Scraped ${events.size} event(s) from $pages migas page(s)" }
 
-        return ImportResult.Success(events = events, etag = null, lastModified = null)
+        return ImportResult.Success(events = events, etag = null, lastModified = null, complete = complete)
     }
 
-    /** Adds pages `2..data-pages` to [document]'s list and returns how many pages it now holds. */
+    /**
+     * Adds pages `2..data-pages` to [document]'s list. Returns how many pages it now holds, and whether
+     * that is all of them: a failed page leaves the walk incomplete, which skips the stale cleanup (#1980).
+     */
     @Suppress("TooGenericExceptionCaught") // Intentional: keep the pages already read if a later one fails
     private suspend fun appendLaterPages(
         document: Document,
         url: String
-    ): Int {
+    ): Pair<Int, Boolean> {
         val list = document.selectFirst(EVENTS_LIST_SELECTOR)
         val pageCount =
             document
@@ -91,7 +94,7 @@ class MigasWebsiteImporter(
             list?.append(fragment)
             read = page
         }
-        return read
+        return read to (read == pageCount)
     }
 
     private companion object {

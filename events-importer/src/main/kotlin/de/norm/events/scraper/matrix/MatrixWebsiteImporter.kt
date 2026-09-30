@@ -9,6 +9,7 @@ import de.norm.events.scraper.VenueLimitations
 import de.norm.events.scraper.attrAt
 import de.norm.events.scraper.matrix.MatrixWebsiteImporter.Companion.MAX_MONTH_PAGES
 import de.norm.events.scraper.resolveUrl
+import de.norm.events.scraper.scrapeListingPages
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.springframework.stereotype.Component
@@ -50,19 +51,17 @@ class MatrixWebsiteImporter(
         etag: String?,
         lastModified: String?
     ): ImportResult {
-        val events = mutableListOf<ScrapedEvent>()
-        val visited = mutableSetOf<String>()
-        var pageUrl: String? = url
-
-        while (pageUrl != null && visited.size < MAX_MONTH_PAGES && visited.add(pageUrl)) {
-            val document = htmlFetcher.fetchDocument(pageUrl)
-            events += overviewPageScraper.scrape(document, pageUrl)
-            pageUrl = nextMonthUrl(document, pageUrl)
-        }
-
-        val distinct = events.distinctBy { it.sourceId }
-        logger.info { "Scraped ${distinct.size} Matrix event(s) across ${visited.size} month page(s) from $url" }
-        return ImportResult.Success(events = distinct, etag = null, lastModified = null)
+        val listing =
+            htmlFetcher.scrapeListingPages(
+                eventSource,
+                htmlFetcher.fetchDocument(url),
+                url,
+                MAX_MONTH_PAGES,
+                ::nextMonthUrl,
+                overviewPageScraper::scrape
+            )
+        logger.info { "Scraped ${listing.events.size} Matrix event(s) from $url" }
+        return ImportResult.Success(events = listing.events, etag = null, lastModified = null, complete = listing.complete)
     }
 
     /**
