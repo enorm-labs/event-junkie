@@ -139,6 +139,9 @@ class So36DetailPageScraper {
      * The venue names a night and its acts as `"<night> mit <acts>"` ("SADTEMBER mit TAHA, JOHNBOY
      * M.IKARUS"), so the shared billing frame is switched on: the acts after the marker are the
      * headliners and the night's name is never one (#1132).
+     *
+     * A ` | ` splits the billing from a tag the venue adds (`SADSVIT | HYPHEN DASH`, whose ticket
+     * line is `SADSVIT | Ticket`), so only the part before it is read.
      */
     private fun parseArtists(
         title: String,
@@ -149,7 +152,7 @@ class So36DetailPageScraper {
 
         val supportActs =
             parseSupportActs(subtitle).map { ScrapedArtist(name = it, role = "SUPPORT") }
-        return headlinersFromTitle(title, unpackWithFrame = true) + supportActs
+        return headlinersFromTitle(title.substringBefore(" | "), unpackWithFrame = true) + supportActs
     }
 
     /**
