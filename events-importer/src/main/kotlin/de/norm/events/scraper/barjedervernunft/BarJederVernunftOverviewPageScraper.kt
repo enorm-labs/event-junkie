@@ -1,12 +1,14 @@
 package de.norm.events.scraper.barjedervernunft
 
 import de.norm.events.scraper.EventSource
-import de.norm.events.scraper.HH_MM_LENGTH
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.hrefAt
-import de.norm.events.scraper.parseIsoDate
-import de.norm.events.scraper.parseTime
+import de.norm.events.scraper.jsonLdEvents
 import de.norm.events.scraper.queryParameter
+import de.norm.events.scraper.schemaDate
+import de.norm.events.scraper.schemaImageUrl
+import de.norm.events.scraper.schemaSoldOut
+import de.norm.events.scraper.schemaTime
 import de.norm.events.scraper.stringOrNull
 import de.norm.events.scraper.textAt
 import de.norm.events.scraper.withQueryParameter
@@ -15,9 +17,7 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import org.jsoup.parser.Parser
 import tools.jackson.databind.JsonNode
-import tools.jackson.databind.json.JsonMapper
 import java.net.URI
-import java.time.LocalTime
 
 /**
  * Pure HTML parser for Bar jeder Vernunft's Neos-CMS calendar page (`/de/programm/kalender.html`).
@@ -40,8 +40,6 @@ import java.time.LocalTime
  */
 class BarJederVernunftOverviewPageScraper {
     private val logger = KotlinLogging.logger {}
-
-    private val jsonMapper: JsonMapper = JsonMapper.builder().build()
 
     /**
      * Parses every dated performance from the calendar page. Takes no base URL, unlike the other
@@ -119,8 +117,7 @@ class BarJederVernunftOverviewPageScraper {
             return null
         }
 
-        val startDate = eventNode.stringOrNull("startDate")
-        val eventDate = startDate?.let { parseIsoDate(it) }
+        val eventDate = eventNode.schemaDate("startDate")
         if (eventDate == null) {
             logger.warn { "Could not parse event date for '$title', skipping" }
             return null
@@ -134,12 +131,12 @@ class BarJederVernunftOverviewPageScraper {
             // "&amp;" survives into the JSON string.
             description = eventNode.stringOrNull("description")?.let { Parser.unescapeEntities(it, false) },
             eventDate = eventDate,
-            startTime = parseOffsetTime(startDate),
-            imageUrl = eventNode.stringOrNull("image")?.takeIf { it.startsWith("http") },
+            startTime = eventNode.schemaTime("startDate"),
+            imageUrl = eventNode.schemaImageUrl(),
             sourceUrl = sourceUrl,
             sourceId = "${EventSource.BAR_JEDER_VERNUNFT.sourceIdPrefix}$eventDate-${showSlug(sourceUrl)}",
             ticketUrl = card.hrefAt("a[data-ticketing]"),
-            soldOut = isSoldOut(eventNode)
+            soldOut = eventNode.schemaSoldOut()
         )
     }
 
@@ -148,40 +145,11 @@ class BarJederVernunftOverviewPageScraper {
      * a sibling or when unparseable. Only the **immediate** next sibling: scanning further would
      * let a card missing its block silently adopt the next card's date and title.
      */
-    @Suppress(
-        "TooGenericExceptionCaught", // A malformed block must degrade to null, never abort the import
-        "ReturnCount" // Guard clauses for the missing and non-Event block are clearer than nesting
-    )
-    private fun parseJsonLd(card: Element): JsonNode? {
-        val script =
-            card.nextElementSibling()?.takeIf {
-                it.tagName() == "script" && it.attr("type") == "application/ld+json"
-            } ?: return null
-
-        val root =
-            try {
-                jsonMapper.readTree(script.data())
-            } catch (e: Exception) {
-                logger.warn(e) { "Failed to parse Bar jeder Vernunft JSON-LD block" }
-                return null
-            }
-        return root.takeIf { it.isObject && it.stringOrNull("@type") == "Event" }
-    }
-
-    /** Whether the schema.org `offers.availability` marks the date as sold out. */
-    private fun isSoldOut(eventNode: JsonNode): Boolean {
-        val availability = eventNode.path("offers").stringOrNull("availability").orEmpty()
-        return SOLD_OUT_AVAILABILITY.any { availability.endsWith(it, ignoreCase = true) }
-    }
-
-    /**
-     * The wall-clock start time from the site's `startDate` (`"2026-07-31T20:00:00+0200"`).
-     *
-     * Not [de.norm.events.scraper.parseIsoTime]: Neos emits a **colon-less** UTC offset, which
-     * neither an `HH:mm` parse nor `OffsetDateTime.parse` accepts. The venue is in Berlin and the
-     * offset always states local time, so the leading `HH:mm` is taken verbatim.
-     */
-    private fun parseOffsetTime(dateTimeStr: String): LocalTime? = parseTime(dateTimeStr.substringAfter('T', "").take(HH_MM_LENGTH))
+    private fun parseJsonLd(card: Element): JsonNode? =
+        card
+            .nextElementSibling()
+            ?.takeIf { it.tagName() == "script" && it.attr("type") == "application/ld+json" }
+            ?.let { jsonLdEvents(it.data()).firstOrNull() }
 
     /**
      * The show's stable identity, the last path segment of its canonical URL
@@ -206,8 +174,5 @@ class BarJederVernunftOverviewPageScraper {
         const val BATCH_LIST_SELECTOR = ".partial-render[data-render-partial-url]"
         const val BATCH_URL_ATTRIBUTE = "data-render-partial-url"
         const val CURRENT_PAGE_PARAMETER = "currentPage"
-
-        /** schema.org availability values that mean no tickets are left. */
-        val SOLD_OUT_AVAILABILITY = listOf("SoldOut", "OutOfStock")
     }
 }

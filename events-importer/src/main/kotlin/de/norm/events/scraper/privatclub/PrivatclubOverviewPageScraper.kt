@@ -8,23 +8,24 @@ import de.norm.events.scraper.attrAt
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.euroAmounts
 import de.norm.events.scraper.hrefAt
-import de.norm.events.scraper.jsonLdNodes
+import de.norm.events.scraper.jsonLdEvents
 import de.norm.events.scraper.labelledClock
 import de.norm.events.scraper.mapEventType
 import de.norm.events.scraper.parseEventStatus
-import de.norm.events.scraper.parseIsoDate
-import de.norm.events.scraper.parseIsoTime
 import de.norm.events.scraper.parsePriceValue
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.privatclub.PrivatclubOverviewPageScraper.Companion.GERMAN_DATE_FORMATTER
 import de.norm.events.scraper.resolveUrl
+import de.norm.events.scraper.schemaDate
+import de.norm.events.scraper.schemaImageUrl
+import de.norm.events.scraper.schemaOffers
+import de.norm.events.scraper.schemaTime
 import de.norm.events.scraper.stringOrNull
 import de.norm.events.scraper.textAt
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import tools.jackson.databind.JsonNode
-import tools.jackson.databind.json.JsonMapper
 import java.math.BigDecimal
 import java.net.URI
 import java.time.Clock
@@ -57,8 +58,6 @@ class PrivatclubOverviewPageScraper(
     private val clock: Clock = Clock.systemDefaultZone()
 ) {
     private val logger = KotlinLogging.logger {}
-
-    private val jsonMapper: JsonMapper = JsonMapper.builder().build()
 
     /**
      * Parses all events: each lives in `.event_wrapper.skewed`, followed by its JSON-LD script.
@@ -203,47 +202,25 @@ class PrivatclubOverviewPageScraper(
                 .firstOrNull { it.tagName() == "script" && it.attr("type") == "application/ld+json" }
                 ?: return null
 
-        val eventNode = parseEventNode(jsonLdScript.data()) ?: return null
+        val eventNode = jsonLdEvents(jsonLdScript.data()).firstOrNull() ?: return null
 
-        val startDateStr = eventNode.stringOrNull("startDate")
         return JsonLdData(
-            eventDate = startDateStr?.let { parseIsoDate(it) },
-            startTime = startDateStr?.let { parseIsoTime(it) },
-            doorsTime = eventNode.stringOrNull("doorTime")?.let { parseTime(it) },
-            imageUrl = eventNode.stringOrNull("image")?.takeIf { it.startsWith("http") },
+            eventDate = eventNode.schemaDate("startDate"),
+            startTime = eventNode.schemaTime("startDate"),
+            doorsTime = eventNode.schemaTime("doorTime"),
+            imageUrl = eventNode.schemaImageUrl(),
             url = eventNode.stringOrNull("url")?.takeIf { it.startsWith("http") },
             ticketUrl = extractOfferUrl(eventNode)
         )
     }
 
-    /**
-     * Returns the event object node, or null. One `MusicEvent` per block; [jsonLdNodes] unwraps
-     * an array or `@graph` container, and the first object node in it wins.
-     */
-    @Suppress(
-        "TooGenericExceptionCaught", // A malformed block must degrade to null, never abort the import.
-        "ReturnCount" // Guard clause for the unparseable body is clearer than nesting.
-    )
-    private fun parseEventNode(json: String): JsonNode? {
-        val root =
-            try {
-                jsonMapper.readTree(json)
-            } catch (e: Exception) {
-                logger.warn(e) { "Failed to parse Privatclub JSON-LD block" }
-                return null
-            }
-        return root.jsonLdNodes().firstOrNull { it.isObject }
-    }
-
     /** First ticket-shop URL from `offers[].url`, or null. */
-    private fun extractOfferUrl(eventNode: JsonNode): String? {
-        val offers = eventNode.path("offers")
-        val offerNodes = if (offers.isArray) offers.toList() else listOf(offers)
-        return offerNodes
+    private fun extractOfferUrl(eventNode: JsonNode): String? =
+        eventNode
+            .schemaOffers()
             .asSequence()
             .mapNotNull { it.stringOrNull("url") }
             .firstOrNull { it.startsWith("http") }
-    }
 
     // -- HTML fallback parsers --------------------------------------------
 

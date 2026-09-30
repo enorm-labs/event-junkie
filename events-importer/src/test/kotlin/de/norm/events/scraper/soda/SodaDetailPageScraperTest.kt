@@ -118,7 +118,7 @@ class SodaDetailPageScraperTest {
     }
 
     @Test
-    fun `falls back to the JSON-LD name when the page renders no heading`() {
+    fun `falls back to the JSON-LD name and start time when the page renders neither`() {
         val event =
             parseHtml(
                 """
@@ -132,6 +132,7 @@ class SodaDetailPageScraperTest {
 
         event.title shouldBe "Halloween in der Kulturbrauerei - Samstag"
         event.eventDate shouldBe LocalDate.of(2026, 10, 31)
+        event.startTime shouldBe LocalTime.of(22, 0)
     }
 
     @Test

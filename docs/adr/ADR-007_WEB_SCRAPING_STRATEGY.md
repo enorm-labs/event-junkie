@@ -532,6 +532,20 @@ venue's field mapping stays in its own scraper.
 | `JsonNode.stringOrNull(field)`            | Trimmed string field → null when missing, JSON `null`, or blank                                |
 | `parseWixSchedule(config)`                | UTC `startDate` + `timeZoneId` → Berlin-local `(LocalDate, LocalTime)`                         |
 
+**`JsonLdEvents.kt`** — the one reader for a page's schema.org `Event` JSON-LD (priority 1 below). Venues wrap the block
+in different ways: a bare object, an array, an `@graph`, or a nesting of these. The reader unwraps every shape, so a
+venue that changes its wrapping keeps working. The venue's own rules, such as which price it stores, stay in its scraper.
+
+| Extension / Function                            | Purpose                                                                                        |
+| ----------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| `Element.jsonLdEvents()` / `jsonLdEvents(json)` | Every `Event` node (any subtype) in the scripts, or in one block; a malformed block is skipped |
+| `JsonNode.schemaName()`                         | `name`, with HTML entities decoded                                                             |
+| `JsonNode.schemaDate(field)`                    | The date of `startDate` or `endDate`                                                           |
+| `JsonNode.schemaTime(field)`                    | The Berlin wall-clock `HH:mm` of a timestamp or a bare `doorTime`; the offset is ignored       |
+| `JsonNode.schemaStatus()`                       | `eventStatus` → `EventStatus`, through `parseSchemaEventStatus`                                |
+| `JsonNode.schemaImageUrl()`                     | `image` as a string, an `ImageObject`, or an array of either                                   |
+| `JsonNode.schemaOffers()` / `schemaSoldOut()`   | `offers` as a list; sold out when every offer is `SoldOut` or `OutOfStock`                     |
+
 **Design rationale**: a declarative selector map, from field names to CSS selectors, is rejected here. Each scraped
 field needs different extraction logic: sibling traversal, regex extraction from a `style` attribute, multi-element
 date assembly, visibility checks, fallback chains. A selector map covers only the simplest cases, about 3 of the 10

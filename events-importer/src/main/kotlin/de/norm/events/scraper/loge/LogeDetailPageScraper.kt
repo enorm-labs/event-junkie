@@ -1,21 +1,20 @@
 package de.norm.events.scraper.loge
 
 import de.norm.events.scraper.EventSource
-import de.norm.events.scraper.HH_MM_LENGTH
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
 import de.norm.events.scraper.extractEventSlug
-import de.norm.events.scraper.jsonLdNodes
-import de.norm.events.scraper.parseIsoDate
-import de.norm.events.scraper.parseSchemaEventStatus
-import de.norm.events.scraper.parseTime
+import de.norm.events.scraper.jsonLdEvents
+import de.norm.events.scraper.schemaDate
+import de.norm.events.scraper.schemaImageUrl
+import de.norm.events.scraper.schemaName
+import de.norm.events.scraper.schemaStatus
+import de.norm.events.scraper.schemaTime
 import de.norm.events.scraper.stringOrNull
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import tools.jackson.databind.JsonNode
-import tools.jackson.databind.json.JsonMapper
 import java.math.BigDecimal
-import java.time.LocalTime
 
 /**
  * Pure parser for Loge event detail pages (`/event-details/<slug>`).
@@ -33,8 +32,6 @@ import java.time.LocalTime
 class LogeDetailPageScraper {
     private val logger = KotlinLogging.logger {}
 
-    private val jsonMapper: JsonMapper = JsonMapper.builder().build()
-
     /**
      * Parses a detail page into a [ScrapedEvent], or `null` without parseable schema.org `Event`
      * JSON-LD or a title.
@@ -46,54 +43,28 @@ class LogeDetailPageScraper {
         document: Document,
         sourceUrl: String
     ): ScrapedEvent? {
-        val event = parseEventNode(document)
+        val event = document.jsonLdEvents().firstOrNull()
         if (event == null) {
             logger.warn { "Detail page has no schema.org Event JSON-LD, skipping" }
             return null
         }
-        val title = event.stringOrNull("name")
+        val title = event.schemaName()
         if (title == null) {
             logger.warn { "Detail page has no event name, skipping" }
             return null
         }
 
-        val startDate = event.stringOrNull("startDate")
         return ScrapedEvent(
             title = title,
             // Detail pages always carry the real date; sentinel only if absent (then fillGapsFromOverview).
-            eventDate = startDate?.let { parseIsoDate(it) } ?: UNRESOLVED_EVENT_DATE,
-            startTime = startDate?.let { parseJsonLdTime(it) },
-            imageUrl = event.path("image").stringOrNull("url"),
+            eventDate = event.schemaDate("startDate") ?: UNRESOLVED_EVENT_DATE,
+            startTime = event.schemaTime("startDate"),
+            imageUrl = event.schemaImageUrl(),
             sourceUrl = sourceUrl,
             sourceId = "${EventSource.LOGE.sourceIdPrefix}${extractEventSlug(sourceUrl, "/event-details/")}",
             pricePresale = parsePresalePrice(event.path("offers")),
-            status = parseSchemaEventStatus(event.stringOrNull("eventStatus"))
+            status = event.schemaStatus()
         )
-    }
-
-    /**
-     * The JSON-LD block's schema.org `Event` object node, or `null` when absent or unparseable.
-     * Picks the first object node with a `startDate` from whatever [jsonLdNodes] unwraps.
-     */
-    @Suppress(
-        "TooGenericExceptionCaught", // A malformed block must degrade to null, never abort the import
-        "ReturnCount" // Guard clauses for the missing/unparseable block are clearer than nesting
-    )
-    private fun parseEventNode(document: Document): JsonNode? {
-        val jsonLd =
-            document
-                .select("script[type=application/ld+json]")
-                .map { it.data() }
-                .firstOrNull { it.contains("\"startDate\"") }
-                ?: return null
-        val root =
-            try {
-                jsonMapper.readTree(jsonLd)
-            } catch (e: Exception) {
-                logger.warn(e) { "Failed to parse Loge JSON-LD block" }
-                return null
-            }
-        return root.jsonLdNodes().firstOrNull { it.isObject && it.stringOrNull("startDate") != null }
     }
 
     /**
@@ -110,16 +81,5 @@ class LogeDetailPageScraper {
                 offers.path("offers").firstOrNull()?.stringOrNull("price")
             )
         return candidates.firstNotNullOfOrNull { it?.toBigDecimalOrNull() }
-    }
-
-    /**
-     * The `HH:mm` start time from a schema.org `startDate` such as `"2026-07-17T19:00:00+02:00"`.
-     * The offset already expresses Berlin-local time, so only the leading `HH:mm` is read (the
-     * shared [parseIsoTime][de.norm.events.scraper.parseIsoTime] rejects the trailing
-     * seconds/offset). `null` without a time component.
-     */
-    private fun parseJsonLdTime(startDate: String): LocalTime? {
-        val timePart = startDate.substringAfter("T", "").take(HH_MM_LENGTH)
-        return parseTime(timePart.takeIf { it.isNotBlank() })
     }
 }

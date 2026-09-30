@@ -24,8 +24,8 @@ and the importers already there.
    (Astra, Privatclub). **A clean JSON source wins.**
 3. **Save the real listing** (and one or two detail pages for list+detail, including an edge case — cancelled, sold out, free, missing date) as the fixture:
    `curl -sSL -A 'EventJunkie/1.0 (+https://github.com/enorm-labs/event-junkie)' '<url>' -o events-importer/src/test/resources/scraper/<venue>/<venue>-overview.html`.
-4. **Classify**: JSON / API → `ApiClient.fetchJson` + a pure JSON scraper; JSON-LD → `HtmlFetcher`, parse the structured data; server-rendered HTML → Jsoup;
-   **JS-rendered with no API → stop and flag** (Playwright is not in the project, ADR-007 §3, and adding it is a separate decision).
+4. **Classify**: JSON / API → `ApiClient.fetchJson` + a pure JSON scraper; JSON-LD → `HtmlFetcher`, read with `jsonLdEvents()` and the `schema*` readers;
+   server-rendered HTML → Jsoup; **JS-rendered with no API → stop and flag** (Playwright is not in the project, ADR-007 §3, and adding it is a separate decision).
 5. **Page pattern**: single page, list+detail or paginated. **First page only** (ADR-007 § Pagination); a venue that truly needs more loops inside
    `importEvents()`, never a changed interface.
 
@@ -71,8 +71,9 @@ it into every music event that names no genre of its own.
 
 `ScrapingExtensions.kt` (`textAt`, `attrAt`, `imgSrcAt`, `hrefAt`, `resolveUrl`), `DateParsingExtensions.kt` (`parseTime`, `parseIsoDate`, `parseIsoTime`),
 `EventTypeMapping.kt` (`mapEventType`, `refineConcertVenueType`, `isFestivalTitle`), `ArtistNameMapping.kt` (`isPlaceholderName`, `isNonArtistName`,
-`buildArtistList`, `extractSupportFromSubtitle`), `EventFieldMapping.kt` (`parseEventStatus`, `orderDoorsBeforeStart`, `cleanEventTitle`, `detectFree`). A
-helper two venues need goes into the extension file and ADR-007's utility table, not the venue package.
+`buildArtistList`, `extractSupportFromSubtitle`), `EventFieldMapping.kt` (`parseEventStatus`, `orderDoorsBeforeStart`, `cleanEventTitle`, `detectFree`),
+`JsonLdEvents.kt` (`jsonLdEvents`, `schemaDate`, `schemaTime`, `schemaImageUrl`, `schemaSoldOut`). A helper two venues need
+goes into the extension file and ADR-007's utility table, not the venue package.
 
 Selectors in ADR-007's order: JSON-LD > semantic HTML5 (`article`, `time[datetime]`, headings) > ARIA > `data-*` > meaningful classes > **never** positional
 (`div:nth-child(3)`, `.col-md-4`). Scope to the narrowest container; `:has()` for context.
