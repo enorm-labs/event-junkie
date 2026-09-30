@@ -14,7 +14,7 @@ import java.sql.Connection
 import java.sql.DriverManager
 
 /**
- * Runs the promoter data migrations — V023, V025, V026, V027, V029, V030, V031, V032 — against the rows each names, planted on a
+ * Runs the promoter data migrations — V023, V025, V026, V027, V029, V030, V031, V032, V065 — against the rows each names, planted on a
  * database migrated to just before it.
  *
  * The migrations are keyed on slugs read from staging, and a misspelt one updates no row while
@@ -90,7 +90,17 @@ class MergeDuplicatePromotersMigrationTest {
             plantEvent(statement, "m1", "mfp")
             statement.execute("UPDATE promoter SET website_url = 'http://www.MFPConcerts.com' WHERE slug = 'mfp'")
         }
-        flyway("32").migrate()
+        flyway("64").migrate()
+        connection.createStatement().use { statement ->
+            // V065: one row renamed onto a free slug, one whose survivor the next import already minted.
+            plantPromoter(statement, "Schubert", "schubert")
+            plantEvent(statement, "k1", "schubert")
+            plantPromoter(statement, "Bliss", "bliss")
+            plantPromoter(statement, "Bliss Music", "bliss-music")
+            plantEvent(statement, "k2", "bliss")
+            plantEvent(statement, "k3", "bliss", "bliss-music")
+        }
+        flyway("65").migrate()
     }
 
     @AfterAll
@@ -210,6 +220,15 @@ class MergeDuplicatePromotersMigrationTest {
                 rows.getString(1) shouldBe "http://www.MFPConcerts.com"
             }
         }
+    }
+
+    @Test
+    fun `V065 restores the trading names, renaming one row and merging the other into its survivor`() {
+        promoters().containsKey("schubert") shouldBe false
+        promoters()["schubert-music"] shouldBe "Schubert Music"
+        eventsOf("schubert-music") shouldContainExactlyInAnyOrder listOf("k1")
+        promoters().containsKey("bliss") shouldBe false
+        eventsOf("bliss-music") shouldContainExactlyInAnyOrder listOf("k2", "k3")
     }
 
     @Test
