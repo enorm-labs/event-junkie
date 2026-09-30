@@ -115,5 +115,10 @@ private val ACRONYMS: Set<String> =
         // of the Anschutz group, "AEG Presents".
         "KKT",
         "AEG",
-        "FKP"
+        "FKP",
+        // Act names that are initialisms and lose their capitals as a shouted word (#2082): `UVB`
+        // (Berghain), `Joe BRT` (Club der Visionäre), `DJ TC` (Matrix).
+        "UVB",
+        "BRT",
+        "TC"
     )

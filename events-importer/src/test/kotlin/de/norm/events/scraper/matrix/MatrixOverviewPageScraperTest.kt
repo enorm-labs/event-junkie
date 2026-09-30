@@ -3,6 +3,7 @@ package de.norm.events.scraper.matrix
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedArtist
 import io.kotest.matchers.collections.shouldBeEmpty
+import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
@@ -43,6 +44,15 @@ class MatrixOverviewPageScraperTest {
     private val julyEvents by lazy { scraper.scrape(monthPage("matrix-month-july.html", entryUrl), entryUrl) }
     private val augustEvents by lazy { scraper.scrape(monthPage("matrix-month-august.html", augustUrl), augustUrl) }
     private val septemberEvents by lazy { scraper.scrape(monthPage("matrix-month-september.html", septemberUrl), septemberUrl) }
+
+    @Test
+    fun `reads the venue's Deejay spelling as DJ`() {
+        // 4 August 2026 lists "Deejay TC"; other nights write "DJ TC" (#2082).
+        val names = augustEvents.flatMap { event -> event.artists.map { it.name } }
+        names.filter { it.startsWith("Deejay", ignoreCase = true) }.shouldBeEmpty()
+        names shouldContain "DJ TC"
+        names shouldContain "DJ LITO BOLTON"
+    }
 
     @Test
     fun `parses every night on a month page`() {

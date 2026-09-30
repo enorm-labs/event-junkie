@@ -108,6 +108,20 @@ class ArtistNormalizerTest {
         }
     }
 
+    // #2082: initialisms the acronym list lacked, a colon inside a token, a stylisation, and `$`.
+    @Test
+    fun `keeps the capitals the plausibility check found flattened`() {
+        assertSoftly {
+            canonicalArtistName("UVB") shouldBe "UVB"
+            canonicalArtistName("Joe BRT") shouldBe "Joe BRT"
+            canonicalArtistName("DJ TC (Blactro)") shouldBe "DJ TC (Blactro)"
+            canonicalArtistName("FORMAT:B") shouldBe "Format:B"
+            canonicalArtistName("CCOSMO") shouldBe "CCOSMO"
+            canonicalArtistName("A\$AP Rocky") shouldBe "A\$AP Rocky"
+            canonicalArtistName("DJ LITO BOLTON") shouldBe "DJ Lito Bolton"
+        }
+    }
+
     @Test
     fun `never strips a word from a band name`() {
         assertSoftly {

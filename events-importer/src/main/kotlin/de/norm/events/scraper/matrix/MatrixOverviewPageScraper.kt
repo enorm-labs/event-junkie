@@ -177,7 +177,11 @@ class MatrixOverviewPageScraper {
             ?.filterNot { isNonArtistName(it) }
             .orEmpty()
 
-    /** Strips the `<small>` affiliation and the trailing `•`-separated genre run off one lineup `<li>`. */
+    /**
+     * Strips the `<small>` affiliation and the trailing `•`-separated genre run off one lineup `<li>`.
+     * The venue writes a resident as `Deejay TC` on some nights and `DJ TC` on others, so a leading
+     * `Deejay` reads as `DJ` and both give one artist.
+     */
     private fun performerName(item: Element): String? {
         val stripped = item.clone()
         stripped.select("small").remove()
@@ -185,6 +189,7 @@ class MatrixOverviewPageScraper {
             .text()
             .substringBefore(BULLET)
             .trim()
+            .replace(DEEJAY_PREFIX, "DJ ")
             .takeIf { it.isNotBlank() }
     }
 
@@ -274,3 +279,6 @@ class MatrixOverviewPageScraper {
         private val PRICE_VALUE = Regex("""(\d+(?:[.,]\d{1,2})?)\s*€""")
     }
 }
+
+/** The spelled-out `Deejay` in front of a DJ's name. */
+private val DEEJAY_PREFIX = Regex("""^deejay\s+""", RegexOption.IGNORE_CASE)
