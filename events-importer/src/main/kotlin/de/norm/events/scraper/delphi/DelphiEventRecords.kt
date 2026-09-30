@@ -25,7 +25,7 @@ private val logger = KotlinLogging.logger {}
  * @property priceNote the published range as rendered for display ("15–25 €"), or `null`.
  * @property free whether the venue flagged the performance as free entry.
  */
-data class DelphiEventRecord(
+internal data class DelphiEventRecord(
     val pricePresale: BigDecimal?,
     val priceNote: String?,
     val free: Boolean
@@ -37,7 +37,7 @@ data class DelphiEventRecord(
  * block *before* the programme table, not beside each row, so the join is on
  * `(production id, start instant)` rather than document order.
  */
-fun parseDelphiEventRecords(document: Document): Map<String, DelphiEventRecord> =
+internal fun parseDelphiEventRecords(document: Document): Map<String, DelphiEventRecord> =
     document
         .select("*")
         .flatMap { element -> element.childNodes().filterIsInstance<Comment>() }
@@ -50,7 +50,7 @@ fun parseDelphiEventRecords(document: Document): Map<String, DelphiEventRecord> 
  * these — the rendered row from its `?prod=` link and date heading plus clock, the leaked
  * record from `event_FK_production` and `event_Zeit`.
  */
-fun delphiPerformanceKey(
+internal fun delphiPerformanceKey(
     productionId: String,
     start: LocalDateTime
 ): String = "$productionId@$start"

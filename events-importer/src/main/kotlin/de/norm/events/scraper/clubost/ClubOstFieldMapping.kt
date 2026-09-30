@@ -26,7 +26,7 @@ private val PLACEHOLDER_VALUES =
 /**
  * [text] trimmed, or `null` when blank or one of [PLACEHOLDER_VALUES].
  */
-fun withoutPlaceholder(text: String?): String? =
+internal fun withoutPlaceholder(text: String?): String? =
     text
         ?.trim()
         ?.takeIf { it.isNotBlank() && it.lowercase() !in PLACEHOLDER_VALUES }
@@ -75,7 +75,7 @@ private const val HALF_DAY_HOURS = 12
  * Parses a date as Django's `N j, Y` renders it; the year is always stated. `null` for a
  * differently shaped or impossible input ("Feb. 30, 2026").
  */
-fun parseClubOstDate(text: String?): LocalDate? {
+internal fun parseClubOstDate(text: String?): LocalDate? {
     val match = DJANGO_DATE_PATTERN.find(text?.trim().orEmpty()) ?: return null
     val (monthName, day, year) = match.destructured
     return DJANGO_MONTH_NAMES[monthName.lowercase()]?.let { month ->
@@ -92,7 +92,7 @@ fun parseClubOstDate(text: String?): LocalDate? {
  * the words midnight and noon for 12 a.m. and 12 p.m., matched before the numeric pattern; a
  * club whose nights start at midnight makes that a live case.
  */
-fun parseClubOstTime(text: String?): LocalTime? {
+internal fun parseClubOstTime(text: String?): LocalTime? {
     val normalized = text?.trim()?.lowercase().orEmpty()
     return when {
         normalized.isBlank() -> null

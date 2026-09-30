@@ -40,7 +40,7 @@ private fun floorToGenre(floor: String): String? {
  *
  * @see floorToGenre for the per-floor mapping and its stereotype caveat.
  */
-fun floorsToGenre(floors: List<String>): String? =
+internal fun floorsToGenre(floors: List<String>): String? =
     floors
         .mapNotNull(::floorToGenre)
         .distinct()

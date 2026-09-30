@@ -21,7 +21,7 @@ import de.norm.events.scraper.mapEventType
  * concert-venue default: this house programmes exhibitions, talks and festivals as readily as
  * gigs.
  */
-fun silentGreenEventType(
+internal fun silentGreenEventType(
     categories: String?,
     title: String
 ): String =
@@ -39,7 +39,7 @@ fun silentGreenEventType(
  * any other sub-line, which may be a genuine sub-title (`"Zukunft. Sicher. Gestalten."`) that
  * [silentGreenSubtitle] keeps.
  */
-fun silentGreenPresenters(subLine: String?): List<String> =
+internal fun silentGreenPresenters(subLine: String?): List<String> =
     presenterNames(subLine)
         ?.split(PRESENTER_SEPARATOR)
         ?.map { it.trim() }
@@ -47,7 +47,7 @@ fun silentGreenPresenters(subLine: String?): List<String> =
         .orEmpty()
 
 /** The calendar's sub-line as a subtitle, or `null` when it is the [silentGreenPresenters] credit line. */
-fun silentGreenSubtitle(subLine: String?): String? = subLine?.takeIf { presenterNames(it) == null }
+internal fun silentGreenSubtitle(subLine: String?): String? = subLine?.takeIf { presenterNames(it) == null }
 
 /**
  * The billed acts as [ScrapedArtist] entries in the [hall] the evening runs in, via
@@ -56,7 +56,7 @@ fun silentGreenSubtitle(subLine: String?): String? = subLine?.takeIf { presenter
  * is the model's only room field, as the multi-floor clubs use it; an evening with no lineup
  * records no hall.
  */
-fun silentGreenArtists(
+internal fun silentGreenArtists(
     title: String,
     eventType: String,
     hall: String?

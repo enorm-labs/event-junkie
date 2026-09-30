@@ -21,7 +21,7 @@ import java.time.format.DateTimeFormatter
  * its own ("Live Streaming", "Art Fair"). "Workshops" is absent, so it falls through to `null`
  * and the `OTHER` default.
  */
-val URBAN_SPREE_CATEGORY_SYNONYMS: Map<String, String> =
+internal val URBAN_SPREE_CATEGORY_SYNONYMS: Map<String, String> =
     mapOf(
         "concerts" to EventType.CONCERT.name,
         "events" to EventType.OTHER.name,
@@ -36,7 +36,7 @@ val URBAN_SPREE_CATEGORY_SYNONYMS: Map<String, String> =
  * original names ("FLUXO invites EBONY.jpeg"), and Jsoup's `absUrl` resolves the path verbatim,
  * which `URI.create` rejects. `null` for a null or blank input.
  */
-fun normalizeAssetUrl(url: String?): String? = url?.takeIf { it.isNotBlank() }?.replace(" ", "%20")
+internal fun normalizeAssetUrl(url: String?): String? = url?.takeIf { it.isNotBlank() }?.replace(" ", "%20")
 
 /**
  * A leading status marker, the venue's only cancellation signal ("CANCELLED - SOM - Berlin -
@@ -88,7 +88,7 @@ private val BILLING_NOTE_PATTERN =
  * which parses it with [extractSupportFromSubtitle][de.norm.events.scraper.extractSupportFromSubtitle].
  * Unchanged with a `null` note when there is none.
  */
-fun splitUrbanSpreeBilling(title: String): Pair<String, String?> {
+internal fun splitUrbanSpreeBilling(title: String): Pair<String, String?> {
     val match = BILLING_NOTE_PATTERN.find(title)
     val headline = match?.let { title.substring(0, it.range.first).trim() }
     // A title that is *only* a billing note has no headliner to salvage — keep it whole.
@@ -98,14 +98,14 @@ fun splitUrbanSpreeBilling(title: String): Pair<String, String?> {
 /**
  * The [EventStatus] a title's leading marker announces, defaulting to [EventStatus.SCHEDULED].
  */
-fun urbanSpreeStatus(title: String): String =
+internal fun urbanSpreeStatus(title: String): String =
     STATUS_PREFIX_PATTERN
         .find(title)
         ?.let { parseEventStatus(it.groupValues[1]) }
         ?: EventStatus.SCHEDULED.name
 
 /** Whether the title leads with the venue's `SOLD OUT -` marker (`SOLD OUT - Otha`). */
-fun urbanSpreeSoldOut(title: String): Boolean =
+internal fun urbanSpreeSoldOut(title: String): Boolean =
     STATUS_PREFIX_PATTERN
         .find(title)
         ?.groupValues
@@ -120,7 +120,7 @@ private val SOLD_OUT_MARKER = Regex("""sold\s+out|ausverkauft""", RegexOption.IG
  * because the venue chains tokens ("Coilguns - Berlin - Urban Spree"), each pass guarded so a
  * title that is only decoration is returned unchanged.
  */
-fun cleanUrbanSpreeTitle(title: String): String {
+internal fun cleanUrbanSpreeTitle(title: String): String {
     var current = title.replaceFirst(STATUS_PREFIX_PATTERN, "").trim().ifBlank { title.trim() }
     while (true) {
         val stripped = current.replace(VENUE_TAIL_PATTERN, "").trim()
@@ -134,7 +134,7 @@ fun cleanUrbanSpreeTitle(title: String): String {
  * The start both `data-dateStart` and the detail hero give a late club night (#1904). It is a
  * placeholder there, not a time, unless the prose says the same ("Doors open at 23:59").
  */
-val URBAN_SPREE_LATE_PLACEHOLDER: LocalTime = LocalTime.of(23, 59)
+internal val URBAN_SPREE_LATE_PLACEHOLDER: LocalTime = LocalTime.of(23, 59)
 
 /**
  * A `dd.mm.yy HH:MM` stamp, as a club night's description opens: `25.09.26 21:00 — LATE`.
@@ -151,7 +151,7 @@ private const val HEADER_SCAN_LENGTH = 120
  * The start a description's opening stamp states, when the stamp names [eventDate]; `null`
  * otherwise. The date must match, because a blurb can quote another show's time.
  */
-fun urbanSpreeHeaderStart(
+internal fun urbanSpreeHeaderStart(
     description: String?,
     eventDate: LocalDate
 ): LocalTime? {
@@ -169,7 +169,7 @@ fun urbanSpreeHeaderStart(
 private val DJ_SET_ENTRY = Regex("""(?:\d{1,2}:\d{2}|DJ set)\s+([^\s\d—–→][^\d—–→]*?)\s+[—–]\s+(?=DJ set\b)""", RegexOption.IGNORE_CASE)
 
 /** The DJs a description bills as `<name> — DJ set`, in order, each once. */
-fun urbanSpreeDjSets(description: String?): List<String> =
+internal fun urbanSpreeDjSets(description: String?): List<String> =
     description
         ?.let { text ->
             DJ_SET_ENTRY

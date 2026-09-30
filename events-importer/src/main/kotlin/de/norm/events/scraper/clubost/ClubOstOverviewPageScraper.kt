@@ -142,7 +142,7 @@ class ClubOstOverviewPageScraper {
  * their first digits, losing two of ten September cards (#1131). `null` otherwise, the signal to
  * skip the card.
  */
-fun extractClubOstEventId(href: String): String? = EVENT_ID_PATTERN.find(href)?.groupValues?.get(1)
+internal fun extractClubOstEventId(href: String): String? = EVENT_ID_PATTERN.find(href)?.groupValues?.get(1)
 
 /** The id segment of a Club OST detail path — a UUID or the older numeric key — with or without the trailing slash. */
 private val EVENT_ID_PATTERN = Regex("""/event/([0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}|\d+)/?(?:$|[?#/])""", RegexOption.IGNORE_CASE)

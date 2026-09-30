@@ -25,7 +25,7 @@ import java.math.BigDecimal
  * Urania-Garten`, `Kiezspaziergang`): their leaders teach or guide rather than speak to an
  * audience, so they are `OTHER` (#1906, #1927).
  */
-fun uraniaEventType(format: String?): String =
+internal fun uraniaEventType(format: String?): String =
     mapEventType(format, URANIA_FORMAT_SYNONYMS)
         ?: EventType.OTHER.name.takeIf { NON_TALK_MARKERS.any { marker -> format.orEmpty().contains(marker, ignoreCase = true) } }
         ?: EventType.READING.name
@@ -38,7 +38,7 @@ fun uraniaEventType(format: String?): String =
  * a note about the evening (`"Yoshua Yaffa - in englischer Sprache"`), and `"et al."` standing
  * in for unnamed panellists. An `OTHER` event bills nobody: a workshop leader or a walk's guide is not a performer.
  */
-fun uraniaSpeakers(
+internal fun uraniaSpeakers(
     billing: String?,
     eventType: String
 ): List<ScrapedArtist> =
@@ -62,7 +62,7 @@ fun uraniaSpeakers(
  * stored and the whole line kept as the note. A free event states `"Eintritt frei"` with no
  * figure, yielding no price and left to the shared free-entry detection.
  */
-fun uraniaPrice(admissionLine: String?): BigDecimal? =
+internal fun uraniaPrice(admissionLine: String?): BigDecimal? =
     admissionLine
         ?.substringAfter(ADMISSION_LABEL, admissionLine)
         ?.let { parsePriceValue(it) }

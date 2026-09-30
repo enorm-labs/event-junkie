@@ -23,7 +23,7 @@ import java.time.format.DateTimeFormatter
  * listing ("Sport & Tanz" vs. "Sport/Tanz"), so both are covered. "Unser Tipp" is an editorial
  * highlight, not a format, and falls through to title-based inference.
  */
-val GAERTEN_DER_WELT_CATEGORY_SYNONYMS: Map<String, String> =
+internal val GAERTEN_DER_WELT_CATEGORY_SYNONYMS: Map<String, String> =
     mapOf(
         "konzerte" to EventType.CONCERT.name,
         "bühne/theater" to EventType.SHOW.name,
@@ -54,7 +54,7 @@ private val PARK_ACTIVITY_PATTERN =
  * Whether a row's raw [category] text is staged programme rather than a participation format
  * ([PARK_ACTIVITY_PATTERN]). A blank category is in scope.
  */
-fun isProgrammeCategory(category: String?): Boolean = category.isNullOrBlank() || !PARK_ACTIVITY_PATTERN.containsMatchIn(category)
+internal fun isProgrammeCategory(category: String?): Boolean = category.isNullOrBlank() || !PARK_ACTIVITY_PATTERN.containsMatchIn(category)
 
 /**
  * A leading badge the park writes into the title, having no status field: `AUSGEBUCHT:` for
@@ -77,21 +77,21 @@ private fun titleBadge(title: String): String? =
         ?.lowercase()
 
 /** Whether [title] is badged as fully booked. */
-fun isSoldOutTitle(title: String): Boolean = titleBadge(title) in SOLD_OUT_BADGES
+internal fun isSoldOutTitle(title: String): Boolean = titleBadge(title) in SOLD_OUT_BADGES
 
 /**
  * Reads the [EventStatus] a title badge announces, defaulting to [EventStatus.SCHEDULED]. A
  * sold-out badge is a flag, not a status ([parseEventStatus]), and `NEUER TERMIN!` announces a
  * move that has already happened, so neither changes the status.
  */
-fun gaertenDerWeltStatus(title: String): String = titleBadge(title)?.let { parseEventStatus(it) } ?: EventStatus.SCHEDULED.name
+internal fun gaertenDerWeltStatus(title: String): String = titleBadge(title)?.let { parseEventStatus(it) } ?: EventStatus.SCHEDULED.name
 
 /**
  * Strips the leading [TITLE_BADGE_PATTERN] and applies [cleanEventTitle], so the stored title
  * and the headliner derived from it is the act alone. A title that is nothing but a badge is
  * returned unchanged.
  */
-fun cleanGaertenDerWeltTitle(title: String): String {
+internal fun cleanGaertenDerWeltTitle(title: String): String {
     val stripped = title.replaceFirst(TITLE_BADGE_PATTERN, "").trim().ifBlank { title.trim() }
     return cleanEventTitle(stripped).ifBlank { title.trim() }
 }
@@ -103,7 +103,7 @@ fun cleanGaertenDerWeltTitle(title: String): String {
  * @property startTime the time it starts.
  * @property identity the `<stamp>/<slug>` pair the `sourceId` is built from.
  */
-data class GaertenDerWeltEventPath(
+internal data class GaertenDerWeltEventPath(
     val date: LocalDate,
     val startTime: LocalTime?,
     val identity: String,
@@ -126,7 +126,7 @@ data class GaertenDerWeltEventPath(
  * event changes stamp and therefore `sourceId`: the old row is cleaned up as stale, the correct
  * outcome for a different date.
  */
-fun parseEventPath(sourceUrl: String): GaertenDerWeltEventPath? =
+internal fun parseEventPath(sourceUrl: String): GaertenDerWeltEventPath? =
     EVENT_PATH_PATTERN.find(URI(sourceUrl).path)?.destructured?.let { (stamp, time, slug) ->
         parseIsoDate(stamp)?.let { date ->
             GaertenDerWeltEventPath(date = date, startTime = parseTime(time, STAMP_TIME_FORMATTER), identity = "${stamp}_$time/$slug", slug = slug)

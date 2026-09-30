@@ -31,7 +31,7 @@ private val LIVE_RECORDING_SUFFIX = Regex("""\s*[-–—]?\s*live\s+recording\s*
  * Strips a trailing [LIVE_RECORDING_SUFFIX] from a billed name; unchanged without such a tail
  * or when stripping would leave nothing.
  */
-fun stripLiveRecordingSuffix(name: String): String {
+internal fun stripLiveRecordingSuffix(name: String): String {
     val stripped = name.trim().replace(LIVE_RECORDING_SUFFIX, "").trim()
     return stripped.ifBlank { name.trim() }
 }
@@ -47,7 +47,7 @@ fun stripLiveRecordingSuffix(name: String): String {
  * through [stripArtistSuffix]; the caller bills it through `headlinersFromTitle`, whose co-bill
  * split is what a member list must not reach.
  */
-fun morphineSetLineActs(
+internal fun morphineSetLineActs(
     line: String,
     title: String
 ): List<String> {
@@ -118,10 +118,10 @@ private val DAY_LINE_DATE = Regex("""\d{1,2}\.\d{1,2}\.\d{2}\b""")
 private val DAY_LINE_DOORS = Regex("""doors?\s*:?\s*(\d{1,2}:\d{2})""", RegexOption.IGNORE_CASE)
 
 /** The event date from a `.block.day` header line, or `null`. */
-fun parseDayLineDate(dayLine: String?): LocalDate? = parseGermanShortDate(dayLine?.let { DAY_LINE_DATE.find(it)?.value })
+internal fun parseDayLineDate(dayLine: String?): LocalDate? = parseGermanShortDate(dayLine?.let { DAY_LINE_DATE.find(it)?.value })
 
 /** The door time from a `.block.day` header line, or `null`. */
-fun parseDayLineDoors(dayLine: String?): LocalTime? = parseTime(dayLine?.let { DAY_LINE_DOORS.find(it)?.groupValues?.get(1) })
+internal fun parseDayLineDoors(dayLine: String?): LocalTime? = parseTime(dayLine?.let { DAY_LINE_DOORS.find(it)?.groupValues?.get(1) })
 
 /**
  * Markers identifying the first `.block.priceevent` paragraph as a **pricing** line.
@@ -141,7 +141,7 @@ private val PRICE_MARKER =
  * The `.block.priceevent` [text] when it reads as a pricing line ([PRICE_MARKER]), or `null`
  * when blank or without a pricing signal.
  */
-fun readPriceNote(text: String?): String? = text?.trim()?.takeIf { it.isNotBlank() && PRICE_MARKER.containsMatchIn(it) }
+internal fun readPriceNote(text: String?): String? = text?.trim()?.takeIf { it.isNotBlank() && PRICE_MARKER.containsMatchIn(it) }
 
 /** Any amount in a pricing line — an integer with an optional two-digit decimal part. */
 private val PRICE_AMOUNT = Regex("""\d+(?:[.,]\d{1,2})?""")
