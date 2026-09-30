@@ -26,10 +26,14 @@ data class Relocation(
  * Kreuzberg`.
  */
 fun parseRelocation(text: String): Relocation? {
-    if (!RELOCATION_WORD.containsMatchIn(text)) return null
-    val to = RELOCATION_TO.find(text) ?: RELOCATION_TO_BARE.find(text)
+    // A tour name in quotes is not a house: "„Soul to SØL World Tour 2026“ HOCHVERLEGT IN DAS COLUMBIA THEATER".
+    val unquoted = text.replace(QUOTED, " ")
+    if (!RELOCATION_WORD.containsMatchIn(unquoted)) {
+        return MOVED_HERE_INSTEAD.find(unquoted)?.let { Relocation(from = null, to = venueName(it.groupValues[1])) }
+    }
+    val to = RELOCATION_TO.find(unquoted) ?: RELOCATION_TO_BARE.find(unquoted)
     return Relocation(
-        from = RELOCATION_FROM.find(text)?.let { venueName(it.groupValues[1]) },
+        from = RELOCATION_FROM.find(unquoted)?.let { venueName(it.groupValues[1]) },
         to = to?.let { venueName(it.groupValues[1]) }
     )
 }
@@ -93,6 +97,21 @@ private val RELOCATION_TO_BARE = Regex("""\bin\s+$NAME_BODY""", RegexOption.IGNO
  */
 private val RELOCATION_FROM =
     Regex("""\b(?:vom|von\s+(?:der|dem)|aus\s+(?:dem|der)|from\s+the|from)\s+$NAME_BODY""", RegexOption.IGNORE_CASE)
+
+/** A quoted span — a tour or album name — in German or English quotes. */
+private val QUOTED = Regex("""[„“"][^„“”"\n]*[“”"]""")
+
+/**
+ * A move written without a relocation word: "…, das am 30. September in der Uber Eats Music Hall
+ * stattfinden sollte, findet nun am 17. Februar 2027 im Huxleys Neue Welt statt." The `nun` /
+ * `jetzt` / `stattdessen` is required, because prose says "findet im … statt" everywhere. It
+ * only counts on a row whose badge already says `RELOCATED` ([resolveRelocation]).
+ */
+private val MOVED_HERE_INSTEAD =
+    Regex(
+        """\bfindet\s+(?:nun|jetzt|stattdessen)\b[^!?\n]{0,60}?\s(?:im|ins|in\s+(?:der|dem|den|das))\s+(\p{L}[^,.!?;:()\n]*?)\s+statt\b""",
+        RegexOption.IGNORE_CASE
+    )
 
 /** Articles a note may leave in front of the name — "in das Huxleys" writes the article the pattern did not eat. */
 private val LEADING_ARTICLE = Regex("""^(?:das|den|die|der|dem|the)\s+""", RegexOption.IGNORE_CASE)
