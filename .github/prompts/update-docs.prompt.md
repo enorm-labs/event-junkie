@@ -83,6 +83,7 @@ Where a script already checks a pair, run the script. A check that exists and wa
 [`agent-docs.yml`](../workflows/agent-docs.yml) invokes this prompt as `/update-docs --unattended`. #387 is explicit that this workload comes last and starts
 narrow: _"start with detecting staleness and reporting it, before letting anything rewrite prose."_ That is what the fence encodes.
 
+- **You have no subagent tool, and you work serially.** Check one `docs/` subtree, then the next, in this one turn. Do not plan work for helpers.
 - **Rows 1 to 4 only.** A path that does not resolve, a command that fails, a number that disagrees with its named source of truth, an issue whose state is
   wrong. Each is provable in one command and checkable by a reviewer in one glance.
 - **Rows 5 and 6 are reported, never applied.** "This shipped" and "a later ADR contradicts this" both need a judgement about what the author meant. Report the
@@ -96,8 +97,9 @@ narrow: _"start with detecting staleness and reporting it, before letting anythi
 **Your final message is the report, and there is no second turn.** The run ends the moment you stop calling tools, so a closing line like _"I'll compile the
 report once the checks finish"_ ends it with that sentence as the whole deliverable — and the job still reports success. There is nobody to hand off to and
 nothing to wait for: no reviewer reads the transcript, no follow-up prompt arrives, and any work you plan but do not do in this turn is simply lost. Finish the
-work, then write the Output section below as your last message. This has already happened once, on a `--all` sweep that ended waiting for classification agents
-it had no tool to spawn.
+work, then write the Output section below as your last message. It has happened four
+times, each on a run that handed work to helper agents and ended its turn waiting for them. The workflow leaves out the subagent tool, so do the work
+yourself, one part after another (#2102).
 
 **Every count in the report carries the command that produced it.** A bucket line reading `DELETE 0` with nothing behind it is an assertion, and an assertion is
 exactly what cannot be checked after the fact. Show the command and its output — a `git grep -c`, a script's summary line, a test name — so a reviewer, or the

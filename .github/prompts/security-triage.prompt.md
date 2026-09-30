@@ -55,8 +55,9 @@ dismissing_, and keeps the evidence either way.
 **Your final message is the report, and there is no second turn.** The run ends the moment you stop calling tools, so a closing line like _"I'll compile the
 report once the checks finish"_ ends it with that sentence as the whole deliverable — and the job still reports success. There is nobody to hand off to and
 nothing to wait for: no reviewer reads the transcript, no follow-up prompt arrives, and any work you plan but do not do in this turn is simply lost. Finish the
-work, then write the Output section below as your last message. This has already happened once, on a `--all` sweep that ended waiting for classification agents
-it had no tool to spawn.
+work, then write the Output section below as your last message. It has happened four
+times, each on a run that handed work to helper agents and ended its turn waiting for them. The workflow leaves out the subagent tool, so do the work
+yourself, one part after another (#2102).
 
 **Every count in the report carries the command that produced it, and a zero needs its evidence like every other number.** A run that proved each of
 its zeros and left its one non-zero count unproved reported three candidates where the tree held fifty-seven; two runs minutes apart once disagreed about

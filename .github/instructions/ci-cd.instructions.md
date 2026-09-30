@@ -128,7 +128,9 @@ never pushing to `main`. Decisions shared by all six:
 
 - **`--unattended` is a clause in each prompt**, not a hint: the "ask first" tier has nobody to ask, so unattended dismisses, files and rewrites nothing it
   is not sure of. **`--allowedTools` is load-bearing** — the prompts carry no frontmatter, so without it the agent has no shell and reads the tree and does
-  nothing. **`github_token` is never passed**, so the action authenticates as the Claude App: a PR pushed on `GITHUB_TOKEN` starts no check run and sits
+  nothing. **`--tools` carries the same list**, because `--allowedTools` only skips the permission prompt: without `--tools` the agent
+  keeps `Agent`, `WebFetch` and the rest, hands work to helpers, and ends its turn waiting for them (#2102). **`github_token` is never passed**, so the action
+  authenticates as the Claude App: a PR pushed on `GITHUB_TOKEN` starts no check run and sits
   Pending forever. **`ACTIONS_GITHUB_TOKEN`** carries `${{ github.token }}` under a name the action leaves alone, because the action overwrites `GITHUB_TOKEN`
   and `GH_TOKEN` with the App token, which cannot read code scanning — every run before #1021 inventoried nothing and reported clean. The two names must
   agree, and nothing fails loudly if they stop. Dependabot alerts `403` for both tokens.
