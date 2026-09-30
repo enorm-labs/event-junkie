@@ -227,6 +227,7 @@ Slash commands under `.claude/skills/`, each a one-line `@` pointer into `.githu
 - `/update-dependencies` — bump backend and frontend dependencies safely
 - `/update-docs` — find documentation that stopped being true; correct, delete or leave it, with the proving check
 - `/verify` — the full pre-PR sequence; the prompt is the check list, and it runs every gate the diff touches
+- `/wrap-up` — before a session closes: what the conversation promised, what still runs, what git and GitHub hold; proposes, changes nothing
 - `/write-adr` — the record of a decision already made; claims the next ADR number by writing the file
   `scripts/skill-parity.sh` fails when this list, `.claude/skills/` and `.claude/commands/` disagree; it greps for the bullet shape above.
 
