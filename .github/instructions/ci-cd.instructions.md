@@ -65,7 +65,8 @@ is the map and the traps.
 
 - `release.yml` — **the only workflow that publishes the product.** Four images and the chart from one computed version, Trivy before push, a snapshot on every
   push to `main`, a release on a `v*` tag. It does not deploy; Flux pulls. Deliberate and easy to "fix" wrongly: **no path filters** (the chart's
-  `appVersion` names all image tags, so a chart without all images is broken), **no tests** (the PR gates), **two builds per image** (a multi-platform image
+  `appVersion` names all image tags, so a chart without all images is broken), **no tests** (the PR gates) except `migration-versions.sh` before any
+  build, because the PR gate misses two migrations merged minutes apart (#2183), **two builds per image** (a multi-platform image
   cannot be loaded for scanning before it is pushed), **publishes on an allowlist** (`push`, or a dispatch with `publish` ticked — never "everything but the
   dry run"), and **tests itself on PRs that change it**, because the dispatch button does not exist until the merge that publishes. Uploads the Trivy tables
   as a `trivy-reports` artifact for `publish-failure-issue.yml`.
