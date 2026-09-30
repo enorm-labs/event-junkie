@@ -11,7 +11,8 @@ The version scheme itself is in [DEVELOPMENT.md §Versions](../DEVELOPMENT.md#ve
 
 ```sh
 # Ship a change: merge to main. That is the whole of it.
-#   release.yml builds and publishes a snapshot; Flux notices and reconciles within minutes.
+#   release.yml builds, waits for both build workflows to pass on the commit, and publishes a snapshot;
+#   Flux notices and reconciles within minutes.
 
 flux --context event-junkie-staging get helmreleases -A          # did it land?
 flux --context event-junkie-staging reconcile helmrelease event-junkie -n flux-system --with-source   # impatient
@@ -104,6 +105,12 @@ chart therefore pulls `repo:VERSION@sha256:…`: the bytes the run built and sig
 | `workflow_dispatch`                          | as above                                | nothing, unless `publish` is ticked            | —               |
 
 Publishing is decided by an **allowlist** (`push`, `release`, or a dispatch that asks), so a trigger added later cannot silently become a publishing one.
+
+**A push publishes only a commit both build workflows passed** (#2185). `scripts/await-builds.sh` runs after the image build and scan, and before the
+first push. It waits for `Build & Test Backend` and `Build & Test Frontend` on the commit. A workflow whose path filter skipped the push has no run on it.
+Then the latest finished run on an earlier `main` commit decides, so a docs-only commit on top of a red `main` stays unpublished as well. A red build fails
+the publish at that step, and `publish-failure-issue.yml` opens its blocker issue. The wait overlaps the image build, so it rarely adds time. A release is
+gated by `cut-release.yml` instead, and a dispatch is the operator's call.
 
 **Releases are cut through GitHub Releases, not by pushing a tag.** The workflow triggers on `release: published`, so a hand-pushed tag publishes nothing — which
 keeps the Releases page the single record of what shipped.
