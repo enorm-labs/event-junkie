@@ -23,8 +23,8 @@ repairing live in the [issue tracker](https://github.com/enorm-labs/event-junkie
 | Status                              | Meaning                                                                              | Count |
 | ----------------------------------- | ------------------------------------------------------------------------------------ | ----: |
 | ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |    91 |
-| 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |    13 |
-| ⛔ [Blocked](#-blocked--deferred)   | Website analyzed, but no usable listings (no programme page, JS-only, or too sparse) |   107 |
+| 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |    14 |
+| ⛔ [Blocked](#-blocked--deferred)   | Website analyzed, but no usable listings (no programme page, JS-only, or too sparse) |   106 |
 | ❓ [Unanalyzed](#-not-analyzed-yet) | URL recorded, but the website still needs a first look                               |    24 |
 
 "Website analyzed" also means the [data model](DATA_MODEL.md) was checked against that source, and no source needed a
@@ -162,6 +162,7 @@ least as heavily as an RA count when the next batch is prioritised.
 | ZIMMER 16          | https://zimmer16.com/                          | Other        | Medium   | Divi + YesTicket cards; time and price on YesTicket         |
 | Ballhaus Wedding   | https://www.ballhauswedding.de/veranstaltungen | Other        | Medium   | Wix rich text; 117 entries with year-less dates; no images  |
 | Soulcat            | https://soulcat-berlin.com/programm/           | Bar          | Low      | TEC REST API; one week ahead; titles only                   |
+| Erreichbar         | https://radar.squat.net/en/node/6653           | Other        | Low      | radar group 6653; a fortnightly punk bar night; no site     |
 
 **Fitzroy** needs one decision made once, rather than per event. It is on its summer break: the ACF API holds a dense
 July programme and resumes on 12 September. Only 2 events are upcoming today, so a fixture captured now would be
@@ -431,7 +432,6 @@ the empty Next.js payload rather than the WAF, and a 403 is not evidence that a 
 | Badenscher Hof Jazzclub          | https://www.badenscher-hof.de/                 | Club         | Duda one-pager; programme only as monthly PNG images      | Site change                |
 | Mokum                            | —                                              | Bar          | No own site; Facebook only                                | Site change                |
 | Komplex Berlin                   | https://komplex.berlin/                        | Other        | Adobe Portfolio rental site; no programme                 | Site change / manual entry |
-| Erreichbar                       | —                                              | Other        | radar only; one fortnightly punk bar night                | Scope decision             |
 | Zielona Góra                     | —                                              | Bar          | radar only; anniversary nights, no running programme      | More events                |
 
 ## ❓ Not analyzed yet
@@ -475,8 +475,8 @@ WABE's own building is closed for renovation. Its events run at Schönfließer S
 page, and its events are a section of the home page.
 
 The three radar rows each post their programme to their own radar.squat.net group too, and so does Baiz. Look at the
-venue's own site first. If it is thin, `scraper/radar/` reads the group. On radar, Café Köpenick posts only its Open Jam
-and Sama32 mostly karaoke nights, so neither group is a programme on its own.
+venue's own site first. If it is thin, `scraper/radar/` reads the group. On radar, Café Köpenick posts a weekly Open Jam
+and Sama32 mostly karaoke nights. A recurring night is in scope ([EVENT_SCOPE.md §5](EVENT_SCOPE.md)).
 
 Where candidates come from, and what is deliberately left out:
 
