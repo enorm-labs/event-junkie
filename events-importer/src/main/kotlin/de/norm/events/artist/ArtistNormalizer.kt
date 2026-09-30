@@ -1,6 +1,7 @@
 package de.norm.events.artist
 
 import de.norm.events.common.deshoutWord
+import de.norm.events.common.foldTypedApostrophes
 import de.norm.events.common.isShortInitialism
 
 // Artist-name canonicalization for the scraper pipeline.
@@ -10,7 +11,8 @@ import de.norm.events.common.isShortInitialism
 // row first also fixes its *display name*, so an act can be stored SHOUTING forever.
 // [canonicalArtistName] de-shouts the name to a stable display form before it is persisted.
 //
-// Unlike promoters, the transform is casing-only: no word is ever stripped, because every word in a
+// Unlike promoters, the transform is casing-only, beside one apostrophe fold
+// ([foldTypedApostrophes]): no word is ever stripped, because every word in a
 // band name can be load-bearing ("The The", "Wolf Alice", "Arcade Fire Concerts"). Each shouted
 // ALL-CAPS word is title-cased by [deshoutWord], which `common` shares with the promoter
 // normalizer and which documents the tokens it leaves alone. One rule is applied here rather than
@@ -25,7 +27,7 @@ import de.norm.events.common.isShortInitialism
  * trimmed input when normalization would leave nothing.
  */
 fun canonicalArtistName(raw: String): String {
-    val trimmed = raw.trim()
+    val trimmed = raw.trim().foldTypedApostrophes()
     val tokens = trimmed.split(WHITESPACE_REGEX).filter { it.isNotBlank() }
     // A whole name that is a single short all-caps token is an initialism/stylisation
     // ("JJ", "MØ"), not a shouted word — keep it verbatim rather than minting "Jj"/"Mø".
