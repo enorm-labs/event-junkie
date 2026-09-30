@@ -136,6 +136,9 @@ _verschoben_ / _postponed_, a `€` amount, the date, and the acts (heading bill
 - **NOT COMPARABLE** — the page is rendered by JavaScript, answered with a consent wall, or the field is simply absent from the text. Say which.
 - **SOURCE GONE** — `404` or a redirect to the programme.
 
+**A tiered price is a MATCH when the row stores the lowest tier and the note names every tier** (#2083). A door priced by group or
+time (`10,00 € Ladies / 12,00 € Gents`) has no single figure, and the lowest one is read as a "from" price, as a presale "ab" price is.
+
 **The page is the reference, and not always right** (last year's date on a recurring event is a known pattern). The finding is the disagreement; say when
 the page looks wrong too.
 
