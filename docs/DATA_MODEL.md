@@ -252,35 +252,37 @@ correction to one language must be carried to the other by hand.
 
 Core entity representing a single music event at a venue on a specific date.
 
-| Field                | Type            | Nullable | Description                                                     | Example                                                    |
-| -------------------- | --------------- | -------- | --------------------------------------------------------------- | ---------------------------------------------------------- |
-| `id`                 | `BIGINT`        | No       | Auto-generated primary key                                      | `101`                                                      |
-| `venue_id`           | `BIGINT` FK     | No       | References `venue.id`                                           | `42`                                                       |
-| `title`              | `TEXT`          | No       | Event headline                                                  | `THE ADICTS`                                               |
-| `subtitle`           | `TEXT`          | Yes      | Tour name or support acts line                                  | `„Adios Amigos Tour 2026" + Support: MAID OF ACE + KAOS`   |
-| `description`        | `TEXT`          | Yes      | Longer description / artist bio                                 | `Formed in Ipswich in the late 1970s…`                     |
-| `event_type`         | `TEXT`          | No       | Event category (see `EventType` enum)                           | `CONCERT`                                                  |
-| `status`             | `TEXT`          | No       | Scheduling status (see `EventStatus` enum, default `SCHEDULED`) | `SCHEDULED`                                                |
-| `relocated_to`       | `TEXT`          | Yes      | Where a `RELOCATED` show moved to, as its note says (ADR-030)   | `Hole44`                                                   |
-| `slug`               | `TEXT`          | No       | URL-friendly identifier                                         | `2026-06-12-the-adicts`                                    |
-| `event_date`         | `DATE`          | No       | Calendar date of the event                                      | `2026-06-12`                                               |
-| `doors_time`         | `TIME`          | Yes      | When doors open                                                 | `19:00`                                                    |
-| `start_time`         | `TIME`          | Yes      | When the show starts                                            | `20:00`                                                    |
-| `end_date`           | `DATE`          | Yes      | Last day, only when the venue states one (ADR-029)              | `2026-06-15`                                               |
-| `end_time`           | `TIME`          | Yes      | When it ends on `end_date`, never without `end_date`            | `10:00`                                                    |
-| `image_url`          | `TEXT`          | Yes      | Event poster / flyer URL                                        | `https://example.com/adicts-poster.jpg`                    |
-| `source_url`         | `TEXT`          | Yes      | Original URL on the venue website                               | `https://www.astra-berlin.de/events/2026-06-12-the-adicts` |
-| `source_id`          | `TEXT` (UQ)     | No       | Unique import key for idempotent upserts                        | `astra:2026-06-12-the-adicts`                              |
-| `ticket_url`         | `TEXT`          | Yes      | External ticket shop URL (eventim, dice, etc.)                  | `https://www.eventim.de/event/...`                         |
-| `facebook_event_url` | `TEXT`          | Yes      | Direct link to the Facebook event page                          | `https://fb.me/e/60JFqXAUr`                                |
-| `genre`              | `TEXT`          | Yes      | Raw music genre/style text from the source venue (display only) | `Punk`                                                     |
-| `price_presale`      | `DECIMAL(10,2)` | Yes      | Presale ticket price (Vorverkauf)                               | `38.00`                                                    |
-| `price_box_office`   | `DECIMAL(10,2)` | Yes      | Box office ticket price (Abendkasse)                            | `45.00`                                                    |
-| `price_currency`     | `TEXT`          | No       | ISO 4217 currency code (default EUR)                            | `EUR`                                                      |
-| `price_note`         | `TEXT`          | Yes      | Free-form pricing info for non-standard pricing                 | `donation 2-5€`                                            |
-| `sold_out`           | `BOOLEAN`       | No       | Whether all tickets are sold out                                | `false`                                                    |
-| `created_at`         | `TIMESTAMPTZ`   | No       | Record creation timestamp                                       |                                                            |
-| `updated_at`         | `TIMESTAMPTZ`   | No       | Last modification timestamp                                     |                                                            |
+| Field                  | Type            | Nullable | Description                                                         | Example                                                    |
+| ---------------------- | --------------- | -------- | ------------------------------------------------------------------- | ---------------------------------------------------------- |
+| `id`                   | `BIGINT`        | No       | Auto-generated primary key                                          | `101`                                                      |
+| `venue_id`             | `BIGINT` FK     | No       | References `venue.id`                                               | `42`                                                       |
+| `title`                | `TEXT`          | No       | Event headline                                                      | `THE ADICTS`                                               |
+| `subtitle`             | `TEXT`          | Yes      | Tour name or support acts line                                      | `„Adios Amigos Tour 2026" + Support: MAID OF ACE + KAOS`   |
+| `description`          | `TEXT`          | Yes      | Longer description / artist bio                                     | `Formed in Ipswich in the late 1970s…`                     |
+| `description_withheld` | `BOOLEAN`       | No       | The licence kept a description out; nothing of it is stored (#2130) | `false`                                                    |
+| `event_type`           | `TEXT`          | No       | Event category (see `EventType` enum)                               | `CONCERT`                                                  |
+| `status`               | `TEXT`          | No       | Scheduling status (see `EventStatus` enum, default `SCHEDULED`)     | `SCHEDULED`                                                |
+| `relocated_to`         | `TEXT`          | Yes      | Where a `RELOCATED` show moved to, as its note says (ADR-030)       | `Hole44`                                                   |
+| `slug`                 | `TEXT`          | No       | URL-friendly identifier                                             | `2026-06-12-the-adicts`                                    |
+| `event_date`           | `DATE`          | No       | Calendar date of the event                                          | `2026-06-12`                                               |
+| `doors_time`           | `TIME`          | Yes      | When doors open                                                     | `19:00`                                                    |
+| `start_time`           | `TIME`          | Yes      | When the show starts                                                | `20:00`                                                    |
+| `end_date`             | `DATE`          | Yes      | Last day, only when the venue states one (ADR-029)                  | `2026-06-15`                                               |
+| `end_time`             | `TIME`          | Yes      | When it ends on `end_date`, never without `end_date`                | `10:00`                                                    |
+| `image_url`            | `TEXT`          | Yes      | Event poster / flyer URL                                            | `https://example.com/adicts-poster.jpg`                    |
+| `image_withheld`       | `BOOLEAN`       | No       | The licence kept an image out (#2130)                               | `false`                                                    |
+| `source_url`           | `TEXT`          | Yes      | Original URL on the venue website                                   | `https://www.astra-berlin.de/events/2026-06-12-the-adicts` |
+| `source_id`            | `TEXT` (UQ)     | No       | Unique import key for idempotent upserts                            | `astra:2026-06-12-the-adicts`                              |
+| `ticket_url`           | `TEXT`          | Yes      | External ticket shop URL (eventim, dice, etc.)                      | `https://www.eventim.de/event/...`                         |
+| `facebook_event_url`   | `TEXT`          | Yes      | Direct link to the Facebook event page                              | `https://fb.me/e/60JFqXAUr`                                |
+| `genre`                | `TEXT`          | Yes      | Raw music genre/style text from the source venue (display only)     | `Punk`                                                     |
+| `price_presale`        | `DECIMAL(10,2)` | Yes      | Presale ticket price (Vorverkauf)                                   | `38.00`                                                    |
+| `price_box_office`     | `DECIMAL(10,2)` | Yes      | Box office price (Abendkasse); a tiered door stores its lowest tier | `45.00`                                                    |
+| `price_currency`       | `TEXT`          | No       | ISO 4217 currency code (default EUR)                                | `EUR`                                                      |
+| `price_note`           | `TEXT`          | Yes      | Free-form pricing info for non-standard pricing                     | `donation 2-5€`                                            |
+| `sold_out`             | `BOOLEAN`       | No       | Whether all tickets are sold out                                    | `false`                                                    |
+| `created_at`           | `TIMESTAMPTZ`   | No       | Record creation timestamp                                           |                                                            |
+| `updated_at`           | `TIMESTAMPTZ`   | No       | Last modification timestamp                                         |                                                            |
 
 ### Artist
 
@@ -429,6 +431,8 @@ Pricing is embedded directly on the `event` table as `price_presale`, `price_box
 
 - Berlin venue websites consistently show at most two price types: presale (Vorverkauf) and box office (Abendkasse)
 - Some venues use non-standard pricing (e.g. "donation 2-5€") captured by `price_note`
+- A door priced by tier (`10,00 € Ladies / 12,00 € Gents`, early and late entry) has no single figure. The lowest tier is the
+  price, read as a "from" figure like a presale "ab" price. `price_note` names every tier (#2083).
 - A 1:1 relationship between event and its price record adds unnecessary join overhead
 - Nullable `DECIMAL` columns cleanly express "no price information available"
 - Keeps queries simple — no joins needed to display event listings with prices
