@@ -50,6 +50,11 @@ data class ScrapedEvent(
     val imageUrl: String? = null,
     val sourceUrl: String,
     /**
+     * The page the [artists] were read from when that is not [sourceUrl]. The event page credits it
+     * (ADR-036).
+     */
+    val lineupSourceUrl: String? = null,
+    /**
      * Unique identifier from the import source, for idempotent upserts:
      * `"<source-slug>:<event-identifier>"`, e.g. `"privatclub:2026-06-12-the-adicts"`.
      */
@@ -112,6 +117,7 @@ data class ScrapedEvent(
             endDate = endDate ?: fallback.endDate,
             endTime = endTime ?: fallback.endTime,
             imageUrl = imageUrl ?: fallback.imageUrl,
+            lineupSourceUrl = lineupSourceUrl ?: fallback.lineupSourceUrl,
             ticketUrl = ticketUrl ?: fallback.ticketUrl,
             genre = genre ?: fallback.genre
         )
@@ -232,6 +238,7 @@ data class ScrapedEvent(
             // What the licence took out is recorded as a fact, so the page can say so (#2130).
             imageWithheld = licences.withholdsImage() && !imageUrl.isNullOrBlank(),
             sourceUrl = sourceUrl,
+            lineupSourceUrl = lineupSourceUrl,
             ticketUrl = ticketUrl,
             genre = genre,
             pricePresale = pricePresale?.normalizeMoneyScale(),

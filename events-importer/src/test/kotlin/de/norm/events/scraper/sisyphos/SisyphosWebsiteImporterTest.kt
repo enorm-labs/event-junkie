@@ -1,7 +1,10 @@
 package de.norm.events.scraper.sisyphos
 
 import de.norm.events.scraper.ApiClient
+import de.norm.events.scraper.BERLIN
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.HtmlFetcher
+import de.norm.events.scraper.HttpFetchException
 import de.norm.events.scraper.ImportResult
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
@@ -11,12 +14,16 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
+import org.jsoup.Jsoup
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import java.time.Clock
+import java.time.LocalDateTime
 
 class SisyphosWebsiteImporterTest {
     private lateinit var importer: SisyphosWebsiteImporter
     private val apiClient: ApiClient = mockk()
+    private val htmlFetcher: HtmlFetcher = mockk()
     private val feedUrl = "https://www.sisyphos-berlin.net/collections/tickets/products.json"
 
     private val fixtureJson: String =
@@ -25,10 +32,26 @@ class SisyphosWebsiteImporterTest {
             .bufferedReader()
             .readText()
 
+    private val sisyfanPage =
+        Jsoup.parse(
+            javaClass.classLoader
+                .getResourceAsStream("scraper/sisyphos/sisyfan-home.html")!!
+                .bufferedReader()
+                .readText(),
+            "https://sisy.fan/"
+        )
+
+    /** A Wednesday, outside the sisy.fan window and before the fixture's 10 October night. */
+    private val wednesday = LocalDateTime.of(2026, 9, 30, 12, 0)
+
+    private fun importerAt(time: LocalDateTime): SisyphosWebsiteImporter =
+        SisyphosWebsiteImporter(apiClient, htmlFetcher, Clock.fixed(time.atZone(BERLIN).toInstant(), BERLIN))
+
     @BeforeEach
     fun setUp() {
-        importer = SisyphosWebsiteImporter(apiClient)
+        importer = importerAt(wednesday)
         coEvery { apiClient.fetchJson(feedUrl) } returns fixtureJson
+        coEvery { htmlFetcher.fetchDocument("https://sisy.fan/") } returns sisyfanPage
     }
 
     @Test
@@ -64,4 +87,37 @@ class SisyphosWebsiteImporterTest {
     fun `eventSource matches expected enum value`() {
         importer.eventSource shouldBe EventSource.SISYPHOS
     }
+
+    @Test
+    fun `outside the window sisy fan is not read`() =
+        runTest {
+            importer.importEvents(feedUrl)
+            coVerify(exactly = 0) { htmlFetcher.fetchDocument(any()) }
+        }
+
+    @Test
+    fun `outside the window a shop night dated today or earlier is left out`() =
+        runTest {
+            val result = importerAt(LocalDateTime.of(2026, 10, 11, 5, 0)).importEvents(feedUrl)
+            result.shouldBeInstanceOf<ImportResult.Success>()
+            result.events shouldHaveSize 0
+        }
+
+    @Test
+    fun `inside the window the shop nights and the sisy fan weekends are both returned`() =
+        runTest {
+            val result = importerAt(LocalDateTime.of(2026, 9, 26, 12, 0)).importEvents(feedUrl)
+            result.shouldBeInstanceOf<ImportResult.Success>()
+            result.events.map { it.sourceId } shouldBe listOf("sisyphos:generations-10-okt-2026", "sisyphos:weekend-2026-09-25")
+            coVerify(exactly = 1) { htmlFetcher.fetchDocument("https://sisy.fan/") }
+        }
+
+    @Test
+    fun `a failed sisy fan fetch keeps the shop's later nights`() =
+        runTest {
+            coEvery { htmlFetcher.fetchDocument(any()) } throws HttpFetchException(503, "https://sisy.fan/")
+            val result = importerAt(LocalDateTime.of(2026, 10, 10, 12, 0)).importEvents(feedUrl)
+            result.shouldBeInstanceOf<ImportResult.Success>()
+            result.events shouldHaveSize 0
+        }
 }

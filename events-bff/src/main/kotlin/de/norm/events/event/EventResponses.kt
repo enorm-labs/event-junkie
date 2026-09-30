@@ -245,6 +245,13 @@ data class EventDetailResponse(
     val descriptionWithheld: Boolean,
     @Schema(description = "Original URL on the source venue's website")
     val sourceUrl: String?,
+    @Schema(
+        description =
+            "The page the lineup was taken from when it is not `sourceUrl`, such as a fan-run timetable. The page " +
+                "must credit it beside the lineup (ADR-036). Null for almost every event.",
+        example = "https://sisy.fan/events/from/25.09.2026/to/28.09.2026"
+    )
+    val lineupSourceUrl: String?,
     @Schema(description = "URL to the external ticket shop")
     val ticketUrl: String?,
     @Schema(description = "Direct link to the Facebook event page")
@@ -310,6 +317,7 @@ data class EventDetailResponse(
                 imageWithheld = imageWithheld,
                 descriptionWithheld = descriptionWithheld,
                 sourceUrl = entity.sourceUrl,
+                lineupSourceUrl = entity.lineupSourceUrl,
                 ticketUrl = entity.ticketUrl,
                 facebookEventUrl = entity.facebookEventUrl,
                 genre = entity.genre,

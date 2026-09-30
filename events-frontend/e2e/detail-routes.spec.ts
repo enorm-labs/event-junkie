@@ -350,6 +350,23 @@ test.describe('a past event', () => {
     await expect(page.getByRole('heading', { name: 'Lineup' })).toHaveCount(0)
   })
 
+  test('a lineup from a fan-run timetable credits it as a plain link', async ({ page }) => {
+    const credited = {
+      ...eventBody,
+      lineupSourceUrl: 'https://sisy.fan/events/from/25.09.2026/to/28.09.2026',
+      lineup: [
+        { artist: { slug: 'micha', name: 'Micha Stahl' }, role: 'HEADLINER', billingOrder: 0 },
+      ],
+    }
+    await page.route(/\/api\/events\/[^/?]+/, (route) => json(route, credited))
+
+    await page.goto('/en/events/mock-event')
+
+    const credit = page.getByRole('link', { name: 'sisy.fan' })
+    await expect(credit).toHaveAttribute('href', credited.lineupSourceUrl)
+    await expect(page.getByText('Lineup and set times from')).toBeVisible()
+  })
+
   test('a mixed lineup labels every act', async ({ page }) => {
     const mixed = {
       ...eventBody,

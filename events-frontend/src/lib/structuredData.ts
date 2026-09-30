@@ -106,6 +106,8 @@ function offers(event: EventDetail, url: string): JsonLd | undefined {
  * data. Google accepts either for `performer`.
  */
 function performers(event: EventDetail): JsonLd[] | undefined {
+  // A lineup from someone else's page is shown only beside its credit, which JSON-LD cannot carry (ADR-036).
+  if (event.lineupSourceUrl) return undefined
   const names = (event.lineup ?? [])
     .map((entry) => entry.artist?.name)
     .filter((name): name is string => Boolean(name))

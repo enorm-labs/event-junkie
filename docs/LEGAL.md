@@ -246,6 +246,13 @@ read-only lookup of a public database is not processing on our behalf, for the r
 there is no Art. 28 contract to conclude, and the Hetzner AVV is untouched. The Discogs API terms forbid storing more,
 and nothing more is stored. The fourth sentence of the notice paragraph names the source.
 
+**sisy.fan is a source of the same kind** (ADR-036, [#2187](https://github.com/enorm-labs/event-junkie/issues/2187)).
+The Sisyphos importer reads the fan-run timetable at sisy.fan on weekends. It takes the line-up, the floors and the set
+times of each Sisyphos weekend. Nothing leaves the stack but the page request, and that request carries no personal data.
+So it is not processing on our behalf, there is no Art. 28 contract to conclude, and the Hetzner AVV is untouched. The
+developer of the site allows the use on two conditions: a credit beside the line-up, and few requests. The notice names
+the source in a paragraph of its own, after the MusicBrainz paragraph.
+
 **The role mailboxes hold email, and the Hetzner AVV covers them.** `hello@`, `security@` and `alerts@` are mailboxes
 on Hetzner Webhosting S, under the same Hetzner account as the servers ([`ops/EMAIL.md`](ops/EMAIL.md)). The AVV is
 account-level, so the mailboxes add no processor. A mailbox holds the sender's address, the message and whatever the

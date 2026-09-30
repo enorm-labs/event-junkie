@@ -197,6 +197,9 @@ FROM events.event e
          JOIN events.artist a ON a.slug = r.slug
 WHERE e.source_id = 'fixture-festival';
 
+-- The running order comes from a page that is not the event's own, so the event page credits it (ADR-036).
+UPDATE events.event SET lineup_source_url = 'https://timetable.example/sommerlaune' WHERE source_id = 'fixture-festival';
+
 INSERT INTO events.event_genre_tag (event_id, genre_tag_id)
 SELECT e.id, g.id FROM events.event e, events.genre_tag g WHERE e.source_id = 'fixture-festival' AND g.slug = 'techno';
 

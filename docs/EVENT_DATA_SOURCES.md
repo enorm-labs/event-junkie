@@ -106,7 +106,7 @@ schema change.
 | Säälchen                         | https://www.holzmarkt.com/kalender                          | Concert Hall | Drupal; shared calendar filtered by location           |
 | Schokoladen                      | https://www.schokoladen-mitte.de/                           | Club         | Laravel; anchor-based events; genre inside title       |
 | silent green                     | https://www.silent-green.net/programm                       | Concert Hall | TYPO3 news; month walk; a run listed per open day      |
-| Sisyphos                         | https://www.sisyphos-berlin.net/collections/tickets         | Techno Club  | Shopify `products.json`; ticketed specials only        |
+| Sisyphos                         | https://www.sisyphos-berlin.net/collections/tickets         | Techno Club  | Shopify `products.json` + sisy.fan weekends (ADR-036)  |
 | SO36                             | https://www.so36.com/tickets                                | Club         | Cookie wall bypassed via Ticket-Toaster shop           |
 | Soda Club                        | https://www.soda-berlin.de/events                           | Club         | disco2app CMS; `MusicEvent` JSON-LD on details         |
 | Sonnenraum                       | https://clubdervisionaere.com/programm                      | Club         | Shares the CdV listing; Monday live residency          |
@@ -261,13 +261,14 @@ are at venues already imported. Unblocking them means resolving a venue per even
 venue-level sources. Until then the promoter data reaches us anyway, as the `promoter` field on the venues' own
 events.
 
-**A handful of tickets is not a programme.** Sisyphos is the case to reason from. Its only web presence is a Shopify
-merch shop. Its `TICKETS` collection carries one recurring series beside the T-shirts: `generationS`, one night a
-month. The club actually runs a programme every weekend. That is not a thin-but-truthful import like OHM's, where the
+**A handful of tickets is not a programme.** Sisyphos is the case to reason from. Its only own web presence is a
+Shopify merch shop. Its `TICKETS` collection carries one recurring series beside the T-shirts: `generationS`, one night
+a month. The club runs a programme every weekend. The shop alone is not a thin-but-truthful import like OHM's, where the
 venue publishes its real programme on a short rolling horizon. It presents one series per month as if it were the
 whole programme. The bar for a candidate is whether the source reflects what the venue is doing, not whether it yields
-a non-zero count. Sisyphos itself is [imported](#-imported) anyway, by decision. The ticketed specials are real
-nights, the feed is structured JSON, and the importer's limitations record says what the count means.
+a non-zero count. Sisyphos clears the bar only with a second site. The fan-run timetable at sisy.fan supplies every
+weekend's line-up and set times, with its developer's permission (ADR-036). The importer reads it only from Friday
+22:00 to Sunday 04:00.
 
 **The blockers repeat, and not one of them is "the venue is too small".** They are worth reading as a group, because
 each is cheap to recognise before spending time on a candidate:

@@ -272,6 +272,7 @@ Core entity representing a single music event at a venue on a specific date.
 | `image_url`            | `TEXT`          | Yes      | Event poster / flyer URL                                            | `https://example.com/adicts-poster.jpg`                    |
 | `image_withheld`       | `BOOLEAN`       | No       | The licence kept an image out (#2130)                               | `false`                                                    |
 | `source_url`           | `TEXT`          | Yes      | Original URL on the venue website                                   | `https://www.astra-berlin.de/events/2026-06-12-the-adicts` |
+| `lineup_source_url`    | `TEXT`          | Yes      | The page the line-up came from, credited on the page (ADR-036)      | `https://sisy.fan/events/from/25.09.2026/to/28.09.2026`    |
 | `source_id`            | `TEXT` (UQ)     | No       | Unique import key for idempotent upserts                            | `astra:2026-06-12-the-adicts`                              |
 | `ticket_url`           | `TEXT`          | Yes      | External ticket shop URL (eventim, dice, etc.)                      | `https://www.eventim.de/event/...`                         |
 | `facebook_event_url`   | `TEXT`          | Yes      | Direct link to the Facebook event page                              | `https://fb.me/e/60JFqXAUr`                                |

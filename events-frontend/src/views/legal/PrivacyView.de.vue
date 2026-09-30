@@ -175,6 +175,11 @@ const { t } = useI18n()
         ist eine Marke der Zink Media, LLC.
       </p>
       <p>
+        Die Line-ups und Spielzeiten der Wochenenden im Sisyphos stammen von sisy.fan, einem
+        inoffiziellen, von Fans betriebenen Timetable, dessen Entwickler uns die Nutzung erlaubt.
+        Wir rufen nur die Seite ab; Daten über dich werden dabei nicht übermittelt.
+      </p>
+      <p>
         <strong>Zweck:</strong> Information der Öffentlichkeit über öffentlich angekündigte
         kulturelle Veranstaltungen.
       </p>
