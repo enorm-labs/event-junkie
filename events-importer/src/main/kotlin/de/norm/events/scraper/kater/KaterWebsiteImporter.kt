@@ -62,5 +62,9 @@ val KATER_LIMITATIONS =
         EventSource.KATER,
         AcceptedLimitation(LimitedAspect.EVENT_TYPE, "the club has no category field; only an unambiguous title keyword overrides the party default"),
         AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "the per-event page carries nothing the homepage listing lacks"),
-        AcceptedLimitation(LimitedAspect.PRICE, "the club sells at the door and prints no figure; a night is flagged free only when its title or blurb says so")
+        AcceptedLimitation(
+            LimitedAspect.PRICE,
+            "the club sells at the door and prints no figure; a night is flagged free only when its title or blurb says so"
+        ),
+        AcceptedLimitation(LimitedAspect.IMAGE, "the venue prints a flyer on almost no night; the programme is text with a Resident Advisor link")
     )

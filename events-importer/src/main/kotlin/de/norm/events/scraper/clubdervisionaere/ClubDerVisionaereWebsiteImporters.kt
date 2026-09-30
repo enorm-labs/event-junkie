@@ -146,6 +146,8 @@ val CLUB_DER_VISIONAERE_LIMITATIONS =
                         "for the ten nights it shows"
                 ),
                 AcceptedLimitation(LimitedAspect.EVENT_TYPE, "the venue publishes no category of its own; every listing is a club night"),
-                AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "the programme page is the source for every night")
+                AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "the programme page is the source for every night"),
+                AcceptedLimitation(LimitedAspect.PRICE, "the programme lists times and the line-up only, never an admission price"),
+                AcceptedLimitation(LimitedAspect.IMAGE, "the programme is text only; the site's only images are its logos")
             )
     )

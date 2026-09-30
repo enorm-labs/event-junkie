@@ -60,5 +60,6 @@ class DunckerWebsiteImporter(
 val DUNCKER_LIMITATIONS =
     VenueLimitations(
         EventSource.DUNCKER,
-        AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "the whole programme is one hand-coded page")
+        AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "the whole programme is one hand-coded page"),
+        AcceptedLimitation(LimitedAspect.PRICE, "the listing gives a night, a genre string and an hour range, never a figure")
     )

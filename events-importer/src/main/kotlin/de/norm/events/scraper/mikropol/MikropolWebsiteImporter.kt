@@ -76,5 +76,6 @@ class MikropolWebsiteImporter(
 val MIKROPOL_LIMITATIONS =
     VenueLimitations(
         EventSource.MIKROPOL,
-        AcceptedLimitation(LimitedAspect.GENRE, "the site names no musical style; its only category is Konzert or Club")
+        AcceptedLimitation(LimitedAspect.GENRE, "the site names no musical style; its only category is Konzert or Club"),
+        AcceptedLimitation(LimitedAspect.PRICE, "the venue prints no figure; tickets are sold through a Dice link")
     )

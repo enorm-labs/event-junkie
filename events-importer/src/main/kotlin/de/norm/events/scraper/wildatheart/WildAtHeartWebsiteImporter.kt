@@ -68,5 +68,6 @@ val WILD_AT_HEART_LIMITATIONS =
         AcceptedLimitation(
             LimitedAspect.START_TIME,
             "a start appears only inside a banner (Beginn 21:00, ab 14 Uhr); a row without one stores the house doors from info.htm (20:00), no start"
-        )
+        ),
+        AcceptedLimitation(LimitedAspect.PRICE, "the venue prints no ticket price; it marks only free-entry nights and links a few shows to a shop")
     )

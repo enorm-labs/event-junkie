@@ -1,10 +1,12 @@
 package de.norm.events.scraper.privatclub
 
+import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.EventImporter
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.VenueLimitations
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
@@ -54,5 +56,8 @@ class PrivatclubWebsiteImporter(
         }
 }
 
-/** Nothing this source withholds needs declaring (#715). */
-val PRIVATCLUB_LIMITATIONS = VenueLimitations(EventSource.PRIVATCLUB)
+val PRIVATCLUB_LIMITATIONS =
+    VenueLimitations(
+        EventSource.PRIVATCLUB,
+        AcceptedLimitation(LimitedAspect.PRICE, "about half the nights print a genre line and a start time but no price")
+    )

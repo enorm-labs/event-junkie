@@ -119,5 +119,6 @@ class AdmiralspalastWebsiteImporter(
 val ADMIRALSPALAST_LIMITATIONS =
     VenueLimitations(
         EventSource.ADMIRALSPALAST,
-        AcceptedLimitation(LimitedAspect.GENRE, "the house classifies by staging format (Konzert, Lesung) and names no musical style anywhere")
+        AcceptedLimitation(LimitedAspect.GENRE, "the house classifies by staging format (Konzert, Lesung) and names no musical style anywhere"),
+        AcceptedLimitation(LimitedAspect.PRICE, "the house prints no figure; tickets are sold through an Eventim link")
     )

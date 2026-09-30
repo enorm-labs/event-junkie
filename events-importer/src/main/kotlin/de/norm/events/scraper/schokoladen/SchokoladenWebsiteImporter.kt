@@ -1,10 +1,12 @@
 package de.norm.events.scraper.schokoladen
 
+import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.EventImporter
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.VenueLimitations
 import de.norm.events.scraper.nextPageUrl
 import de.norm.events.scraper.scrapeListingPages
@@ -74,5 +76,8 @@ class SchokoladenWebsiteImporter(
     }
 }
 
-/** Nothing this source withholds needs declaring (#715). */
-val SCHOKOLADEN_LIMITATIONS = VenueLimitations(EventSource.SCHOKOLADEN)
+val SCHOKOLADEN_LIMITATIONS =
+    VenueLimitations(
+        EventSource.SCHOKOLADEN,
+        AcceptedLimitation(LimitedAspect.PRICE, "the venue prints doors, show time and a ticket link, never a figure")
+    )

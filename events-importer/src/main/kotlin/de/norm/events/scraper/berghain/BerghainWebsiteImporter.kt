@@ -1,8 +1,10 @@
 package de.norm.events.scraper.berghain
 
 import de.norm.events.scraper.AbstractTwoPageWebsiteImporter
+import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
+import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.VenueLimitations
 import de.norm.events.scraper.queryParameter
@@ -107,5 +109,11 @@ class BerghainWebsiteImporter(
     }
 }
 
-/** Nothing this source withholds needs declaring (#715). */
-val BERGHAIN_LIMITATIONS = VenueLimitations(EventSource.BERGHAIN)
+val BERGHAIN_LIMITATIONS =
+    VenueLimitations(
+        EventSource.BERGHAIN,
+        AcceptedLimitation(
+            LimitedAspect.GENRE,
+            "the Kantine and Halle pages name only the room and have no genre field, and the concerts there vary"
+        )
+    )

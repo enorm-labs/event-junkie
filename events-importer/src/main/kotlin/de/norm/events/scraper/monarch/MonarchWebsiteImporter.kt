@@ -58,5 +58,8 @@ class MonarchWebsiteImporter(
 val MONARCH_LIMITATIONS =
     VenueLimitations(
         EventSource.MONARCH,
-        AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "the site is hand-coded PHP with no per-event URLs")
+        AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "the site is hand-coded PHP with no per-event URLs"),
+        AcceptedLimitation(LimitedAspect.PRICE, "the page prints a Ticket Vorverkauf link, never an amount"),
+        AcceptedLimitation(LimitedAspect.GENRE, "the page lists only date, title and ticket link; a \"(KONZERT)\" marker is its only classification"),
+        AcceptedLimitation(LimitedAspect.IMAGE, "the venue prints no image per night, only one monthly programme poster")
     )

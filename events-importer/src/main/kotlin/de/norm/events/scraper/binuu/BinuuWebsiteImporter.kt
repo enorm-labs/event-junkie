@@ -66,5 +66,6 @@ val BINUU_LIMITATIONS =
     VenueLimitations(
         EventSource.BINUU,
         AcceptedLimitation(LimitedAspect.EVENT_TYPE, "the SvelteKit payload carries no category field, and neither does anywhere else on the site"),
-        AcceptedLimitation(LimitedAspect.PRICE, "the payload carries no price field and the pages print no figure; tickets are sold through outside shops")
+        AcceptedLimitation(LimitedAspect.PRICE, "the payload carries no price field and the pages print no figure; tickets are sold through outside shops"),
+        AcceptedLimitation(LimitedAspect.GENRE, "the payload and JSON-LD carry no genre; style appears only in the description")
     )
