@@ -3,6 +3,7 @@ package de.norm.events.scraper.columbiatheater
 import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.SUPPORT_LABELS
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
@@ -196,7 +197,7 @@ private const val SUBTITLE_SEPARATOR = " | "
  * with the word — the venue bills a "Support: DJ OSI" — keeps it.
  */
 private val SUPPORT_ROW_LABEL =
-    Regex("""^\s*(supports?|openers?|special\s+guests?|djs?)\s*:\s*""", RegexOption.IGNORE_CASE)
+    Regex("""^\s*($SUPPORT_LABELS|djs?)\s*:\s*""", RegexOption.IGNORE_CASE)
 
 /** The `DJ:` billing label, which bills a DJ rather than a support act. */
 private const val DJ_LABEL = "dj"

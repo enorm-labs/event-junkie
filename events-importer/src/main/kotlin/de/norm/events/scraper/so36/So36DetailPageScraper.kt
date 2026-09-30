@@ -5,6 +5,7 @@ import de.norm.events.scraper.DOORS_LABELS
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ROLE_LABEL_PREFIX
 import de.norm.events.scraper.START_LABELS
+import de.norm.events.scraper.SUPPORT_ROLE_PREFIX
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
@@ -284,7 +285,7 @@ private fun refineBySubtitle(
 }
 
 /** Whether a subtitle is a support line: it opens with a joiner or a support label. */
-private fun isSupportLine(line: String): Boolean = line.firstOrNull() in SUPPORT_JOINERS || SUPPORT_LABEL_OPENER.containsMatchIn(line)
+private fun isSupportLine(line: String): Boolean = line.firstOrNull() in SUPPORT_JOINERS || SUPPORT_ROLE_PREFIX.containsMatchIn(line)
 
 /** A festival named in the subtitle: `Punk- und Hardcore-Festival - Tag 1`. */
 private val FESTIVAL_WORD = Regex("""festival\b""", RegexOption.IGNORE_CASE)
@@ -300,10 +301,6 @@ private val PANEL_PREFIX = Regex("""^\s*panel\s*:""", RegexOption.IGNORE_CASE)
 
 /** The characters that join a subtitle's acts to the headliner when they open it. */
 private val SUPPORT_JOINERS = setOf('+', '&')
-
-/** The support labels of [ROLE_LABEL_PREFIX] opening a subtitle, colon required. */
-private val SUPPORT_LABEL_OPENER =
-    Regex("""^(?:div\.?\s*supports?|special\s+guests?|supports?|openers?)\s*:""", RegexOption.IGNORE_CASE)
 
 /** The box-office category: `Abendkasse`, `AK`, `Tageskasse`. */
 private val BOX_OFFICE_CATEGORY = Regex("""\b(?:abendkasse|tageskasse|ak)\b""", RegexOption.IGNORE_CASE)

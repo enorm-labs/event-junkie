@@ -3,6 +3,7 @@ package de.norm.events.scraper.lark
 import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.SUPPORT_LABELS
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.WHITESPACE
@@ -295,10 +296,10 @@ internal class LarkApiScraper(
             )
 
         /** The venue's own support-act marker, trailing the act it belongs to. */
-        val SUPPORT_ACT_MARKER = Regex("""\s*\(\s*supports?\s*\)\s*""", RegexOption.IGNORE_CASE)
+        val SUPPORT_ACT_MARKER = Regex("""\s*\(\s*(?:$SUPPORT_LABELS)\s*\)\s*""", RegexOption.IGNORE_CASE)
 
         /** A support act joined with `+` and marked by [SUPPORT_ACT_MARKER]: `+ Lily Seabird (support)`. */
-        val SUPPORT_TAIL = Regex("""\s*\+\s*([^+]+?)\s*\(\s*supports?\s*\)\s*""", RegexOption.IGNORE_CASE)
+        val SUPPORT_TAIL = Regex("""\s*\+\s*([^+]+?)\s*\(\s*(?:$SUPPORT_LABELS)\s*\)\s*""", RegexOption.IGNORE_CASE)
 
         /** An epithet in typographic or straight single quotes, eight characters or more. */
         val QUOTED_EPITHET = Regex("""\s*[’‘'][^’‘']{8,}[’‘']\s*""")

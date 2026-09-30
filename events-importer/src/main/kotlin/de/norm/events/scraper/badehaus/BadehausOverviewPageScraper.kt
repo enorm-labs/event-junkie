@@ -5,6 +5,7 @@ import de.norm.events.event.EventType
 import de.norm.events.genretag.isGenreLabel
 import de.norm.events.genretag.normalizeGenre
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.SUPPORT_LABELS
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.inferConcertVenueType
@@ -176,7 +177,7 @@ class BadehausOverviewPageScraper {
 
     private companion object {
         /** A `Support:` part of the subtitle line, which names acts, not a style. */
-        private val SUPPORT_PART = Regex("""^support\b""", RegexOption.IGNORE_CASE)
+        private val SUPPORT_PART = Regex("""^(?:$SUPPORT_LABELS)(?!\p{L})""", RegexOption.IGNORE_CASE)
 
         /** A part of the subtitle line that names a tour: "Wolkenjäger-Tour 2026", "BLOCK BLADI GANGSTER TOUR". */
         private val TOUR_PART = Regex("""\btour\b""", RegexOption.IGNORE_CASE)

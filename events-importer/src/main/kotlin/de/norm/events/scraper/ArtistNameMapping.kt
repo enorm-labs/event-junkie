@@ -31,13 +31,20 @@ fun extractSupportFromSubtitle(subtitle: String?): List<String> =
         .map { it.replaceFirst(ROLE_LABEL_PREFIX, "").trim() }
         .filter { it.isNotBlank() }
 
-/** A support-billing marker and its colon: `Support:`, `Support Act:`, `Opener:`, `Special Guest:`. */
-private const val SUPPORT_MARKER = """(?:supports?|openers?|opening|special\s+guests?)(?:\s+acts?)?\s*:\s*"""
-
 /**
- * The first support-billing marker in one subtitle line, capturing the acts after it to the end
- * of that line. The optional `Act` is how Velomax spells both markers (#1680).
+ * The words that bill a support act, as a regex alternation for a scraper's own pattern:
+ * `Support`, `div. Support`, `Support Act`, `Opener`, `Opening Act`, `Special Guest`, `Vorband`.
+ * A bare `Opening` is left out: `Opening: <exhibition>` is how a gallery bills a vernissage.
+ * Each pattern that uses it decides whether a colon must follow. The optional `Act` is how
+ * Velomax spells the markers (#1680).
  */
+const val SUPPORT_LABELS =
+    """div\.?\s*supports?|(?:supports?|openers?|special\s+guests?)(?:\s+acts?)?|opening\s+acts?|vorbands?"""
+
+/** A support-billing marker and its colon: `Support:`, `Support Act:`, `Opener:`, `Special Guest:`. */
+private const val SUPPORT_MARKER = """(?:$SUPPORT_LABELS)\s*:\s*"""
+
+/** The first support-billing marker in one subtitle line, capturing the acts after it to the end of that line. */
 private val SUPPORT_INTRO_PATTERN = Regex("""$SUPPORT_MARKER(.+)""", RegexOption.IGNORE_CASE)
 
 /**
@@ -99,7 +106,7 @@ fun isPlaceholderName(name: String): Boolean {
  */
 val ROLE_LABEL_PREFIX =
     Regex(
-        """^(?:(?:div\.?\s*supports?|special\s+guests?|supports?|openers?)\s*:|(?:feat\.?|featuring|w/)\s*:?)\s*""",
+        """^(?:(?:$SUPPORT_LABELS)\s*:|(?:feat\.?|featuring|w/)\s*:?)\s*""",
         RegexOption.IGNORE_CASE
     )
 
@@ -113,7 +120,7 @@ fun isNonArtistLabel(name: String): Boolean = BARE_ROLE_LABEL.matches(name.trim(
 
 /** A whole string that is a role label, with or without its colon. */
 private val BARE_ROLE_LABEL =
-    Regex("""^(?:div\.?\s*supports?|special\s+guests?|supports?|openers?|feat\.?|featuring|w/)\s*:?\s*$""", RegexOption.IGNORE_CASE)
+    Regex("""^(?:$SUPPORT_LABELS|feat\.?|featuring|w/)\s*:?\s*$""", RegexOption.IGNORE_CASE)
 
 /**
  * Curated event-segment labels, an aftershow/afterparty/warm-up/event-start slot listed in the lineup, with
@@ -1212,8 +1219,7 @@ private fun stripFramingPrefix(name: String): String {
  * A leading role label that specifically marks a support billing, narrower than
  * [ROLE_LABEL_PREFIX], to decide a title segment's role before its label is stripped.
  */
-private val SUPPORT_ROLE_PREFIX =
-    Regex("""^(?:div\.?\s*supports?|special\s+guests?|supports?|openers?)\s*:""", RegexOption.IGNORE_CASE)
+val SUPPORT_ROLE_PREFIX = Regex("""^(?:$SUPPORT_LABELS)\s*:""", RegexOption.IGNORE_CASE)
 
 /**
  * A leading role or event-format label in front of the billed act (`Support:`, `Opener:`,
@@ -1225,7 +1231,7 @@ private val SUPPORT_ROLE_PREFIX =
  */
 private val ARTIST_LABEL_PREFIX =
     Regex(
-        """^(?:div\.?\s*supports?|special\s+guests?|supports?(?:\s+acts?)?|openers?|opening\s+acts?""" +
+        """^(?:$SUPPORT_LABELS""" +
             """|listening\s+session|record\s+release|record\s+launch|album\s+release|release\s+show|live)\s*:\s*""",
         RegexOption.IGNORE_CASE
     )

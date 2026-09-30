@@ -5,6 +5,7 @@ import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
 import de.norm.events.scraper.BERLIN
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.SUPPORT_LABELS
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.WHITESPACE
@@ -370,7 +371,7 @@ private fun djsFromWithFrame(title: String): List<ScrapedArtist> {
 }
 
 /** The `", support: <acts>"` tail Zenner appends to a concert title — "Erland Cooper, support: Meredi". */
-private val SUPPORT_TAIL_PATTERN = Regex(""",?\s*\bsupport\s*:\s*""", RegexOption.IGNORE_CASE)
+private val SUPPORT_TAIL_PATTERN = Regex(""",?\s*\b(?:$SUPPORT_LABELS)\s*:\s*""", RegexOption.IGNORE_CASE)
 
 /**
  * Splits a title on `", support:"` into the headline and the support acts; unchanged with none.
