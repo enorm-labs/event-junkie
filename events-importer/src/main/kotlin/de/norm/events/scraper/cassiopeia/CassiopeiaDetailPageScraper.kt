@@ -181,7 +181,8 @@ class CassiopeiaDetailPageScraper {
      * Artists from a concert's title and description. For a `CONCERT` the [title] is the headliner,
      * co-bills split, added unconditionally; event-name titles ("Grey City Fest Opener") and
      * placeholders are filtered by [isNonArtistName]. Support acts are paragraphs prefixed
-     * "Support: " (`"Support: Aska"`), after the headliner. Non-concert events extract nothing.
+     * "Support: " (`"Support: Aska"`) or "+ " (`"+ Dani Lia"`), after the headliner. Non-concert
+     * events extract nothing, which also keeps a party's `+ free Kicker…` line out.
      */
     private fun parseArtists(
         title: String,
@@ -191,14 +192,16 @@ class CassiopeiaDetailPageScraper {
         // Only concert events use the "title = headliner" naming convention.
         if (eventType != "CONCERT") return emptyList()
 
-        // Support acts from "Support: <name>" description paragraphs, in listing order.
         val supportActs =
             content
                 .select(".paragraph-wrapper .paragraph.events")
-                .map { it.text().trim() }
-                .filter { it.startsWith(SUPPORT_PREFIX, ignoreCase = true) }
-                .map { it.drop(SUPPORT_PREFIX.length).trim() }
-                .filter { it.isNotBlank() && !isNonArtistName(it) }
+                .mapNotNull {
+                    SUPPORT_LINE
+                        .matchEntire(it.text().trim())
+                        ?.groupValues
+                        ?.get(1)
+                        ?.trim()
+                }.filter { it.isNotBlank() && !isNonArtistName(it) }
                 .map { ScrapedArtist(name = it, role = "SUPPORT") }
 
         return headlinersFromTitle(title) + supportActs
@@ -220,8 +223,8 @@ class CassiopeiaDetailPageScraper {
         /** German label for show start time. */
         private const val START_LABEL = "Beginn"
 
-        /** Prefix used in description paragraphs to identify support acts. */
-        private const val SUPPORT_PREFIX = "Support: "
+        /** A description paragraph naming a support act: `Support: Aska`, `+ Dani Lia`. */
+        private val SUPPORT_LINE = Regex("""(?:support:|\+)\s+(.+)""", RegexOption.IGNORE_CASE)
     }
 }
 
