@@ -17,6 +17,7 @@ import de.norm.events.scraper.textAt
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
+import org.jsoup.nodes.TextNode
 import java.net.URI
 import java.time.LocalDate
 import java.time.LocalTime
@@ -222,7 +223,8 @@ class EschschloraqueOverviewPageScraper {
      * The lineup from the `.redsubtitle` spans of the [billingParagraphs], each act once. Each span
      * is one billing line and its leading label decides the role: `Live:` bills headliners, every
      * other line (`Dj:`, `on the couch:`, or an unlabelled list of DJ names) bills DJs. The label
-     * is stripped so it cannot enter a name.
+     * is stripped so it cannot enter a name. [billingLabel] reads it from the markup, so a label in
+     * any wording is stripped ("erstmals zusammen auf der Couch:", #2173).
      *
      * The event *title* is not read here: it names the night ("Hot Tunes for Cool Cats"), and
      * [presentedLiveActs] reads the one title form that bills a performer.
@@ -232,9 +234,22 @@ class EschschloraqueOverviewPageScraper {
             .flatMap { it.select(".redsubtitle") }
             .flatMap { line ->
                 val text = line.text().trim()
-                val role = if (LIVE_LABEL.containsMatchIn(text)) "HEADLINER" else "DJ"
-                splitActs(text.replaceFirst(BILLING_LABEL, "")).map { ScrapedArtist(name = it, role = role) }
+                val label = billingLabel(line)
+                val role = if (LIVE_LABEL.containsMatchIn(label ?: text)) "HEADLINER" else "DJ"
+                val names = if (label != null) text.removePrefix(label).trim() else text.replaceFirst(BILLING_LABEL, "")
+                splitActs(names).map { ScrapedArtist(name = it, role = role) }
             }.distinctBy { it.name.lowercase() }
+
+    /**
+     * The label the venue sets apart at the head of a billing line: a first child `<span>` whose
+     * text ends in a colon, with nothing before it. The colon is what tells it from a name prefix in
+     * the same span: `DJ ` in "DJ VELA" has none and stays on the name. `null` for a line typed
+     * without the span, which [BILLING_LABEL] then strips by wording.
+     */
+    private fun billingLabel(line: Element): String? {
+        val first = line.childNodes().firstOrNull { it !is TextNode || !it.isBlank } as? Element ?: return null
+        return first.text().trim().takeIf { first.normalName() == "span" && it.endsWith(":") }
+    }
 
     /**
      * Splits one billing line into act names: the venue's `|` separator first, then each segment
@@ -268,8 +283,8 @@ class EschschloraqueOverviewPageScraper {
             ".field-type-text-with-summary p:has(.redsubtitle), .field-type-text-long p:has(.redsubtitle)"
 
         /**
-         * A leading role/format label on a billing line — the slot, not the performer, stripped
-         * before the names are read. "on the couch" is the venue's phrase for the DJ seat in its
+         * A leading role/format label on a billing line typed without its own span (see
+         * [billingLabel]) — the slot, not the performer, stripped before the names are read. "on the couch" is the venue's phrase for the DJ seat in its
          * front room. Anchored and **colon-terminated**, so the unlabelled "DJ VELA & DJ Sky Deep"
          * keeps the `DJ` that is part of each name. `djs` precedes `dj` so the longer label wins.
          */
