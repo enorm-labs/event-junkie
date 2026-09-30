@@ -73,7 +73,9 @@ internal fun silentGreenArtists(
  * A bare `"<series>: <acts>"` colon is far weaker (`"The I in the Mirror: Reflection"` is a
  * title), so it is stripped only when the remainder still bills more than one act (`"Psychic
  * Liberation Night: Niloofar Asghary + Júlia Koffler"`, `"15 YEARS zweikommasieben: Anna Homler
- * + Steven Warwick + zweikommasieben DJs"`). Only the derived artist names are affected.
+ * + Steven Warwick + zweikommasieben DJs"`). An en dash sets a series off the same way (`"HALF LIGHT – Abul
+ * Mogard, Marja de Sanctis, …"`), and a series the house names at the end is in [HOUSE_SERIES] (#2072). Only the derived
+ * artist names are affected.
  */
 private fun stripHostPrefix(title: String): String {
     val withoutHost =
@@ -82,8 +84,10 @@ private fun stripHostPrefix(title: String): String {
             .replaceFirst(PRESENTED_BY_PREFIX, "")
             .trim()
             .ifBlank { title.trim() }
-    val withoutSeries = withoutHost.replaceFirst(SERIES_PREFIX, "").trim()
-    return if (withoutSeries != withoutHost && CO_BILL_SEPARATOR.containsMatchIn(withoutSeries)) withoutSeries else withoutHost
+    val named = withoutHost.replace(HOUSE_SERIES, "").trim().ifBlank { withoutHost }
+    // A series in front of the acts, set off by a colon or an en dash, goes only when more than one act follows it.
+    val withoutSeries = named.replaceFirst(SERIES_PREFIX, "").trim()
+    return if (withoutSeries != named && CO_BILL_SEPARATOR.containsMatchIn(withoutSeries)) withoutSeries else named
 }
 
 /** The credit line's names, or `null` when [subLine] is not a "… präsentiert/präsentieren" line. */
@@ -140,7 +144,13 @@ private val PRESENTED_BY_PREFIX =
     Regex("""^(?:silent\s+green\s+pres\.|.{2,60}?\s+(?:presents|präsentiert))\s+""", RegexOption.IGNORE_CASE)
 
 /** A `"<series>: "` lead-in — no colon or `+` inside it, so only the outermost one is taken. */
-private val SERIES_PREFIX = Regex("""^[^:+]{2,60}:\s+""")
+private val SERIES_PREFIX = Regex("""^[^:+,–—]{2,60}(?::|\s[–—])\s+""")
 
-/** The space-padded `+` with which this venue separates co-billed acts. */
-private val CO_BILL_SEPARATOR = Regex("""\s\+\s""")
+/**
+ * The house's own series, billed beside the act: `"Reg Meuross – Sonic Morgue"`. A per-venue list, as
+ * Klunkerkranich's duo names are, because nothing in the title tells a series from an act (#2072).
+ */
+private val HOUSE_SERIES = Regex("""\s*[–—]\s*sonic\s+morgue\s*$""", RegexOption.IGNORE_CASE)
+
+/** What separates co-billed acts here: a space-padded `+`, or a comma in a list after a series. */
+private val CO_BILL_SEPARATOR = Regex("""\s\+\s|,\s""")
