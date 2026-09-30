@@ -93,6 +93,8 @@ class TresorWebsiteImporterTest {
             klubnacht.eventDate shouldBe LocalDate.of(2026, 8, 1)
             klubnacht.artists.map { it.stage }.distinct() shouldBe listOf("Tresor", "Globus")
             klubnacht.genre shouldBe "Techno"
+            klubnacht.imageUrl shouldBe
+                "https://tresorberlin.com/wp-content/uploads/2026/06/aspiration-180x140-oil-on-canvas-2024-ch-e1782818421888-1536x1536.jpg"
             // The listing's lineup takes the event page's set times (#2002).
             klubnacht.artists.first { it.name == "Janina" }.setStart shouldBe Instant.parse("2026-08-01T22:00:00Z")
         }

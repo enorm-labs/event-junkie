@@ -76,6 +76,7 @@ class TresorDetailPageScraper {
             eventDate = eventDate ?: UNRESOLVED_EVENT_DATE,
             // No doors or start time is stated; the night's opening set is the only clock.
             startTime = parseTime(OPENING_TIME.find(content.textAt(".lineup-time").orEmpty())?.value),
+            imageUrl = parsePoster(document),
             sourceUrl = sourceUrl,
             sourceId = "${EventSource.TRESOR.sourceIdPrefix}$slug",
             artists = parseRunningOrder(content, eventDate)
@@ -116,6 +117,20 @@ class TresorDetailPageScraper {
     }
 
     /**
+     * The night's poster. `og:image` names it at 1536 px, well under the image cap, where the page's
+     * own `<img>` in the `aside.hero-outer` above the main content serves the 2880 px original. The
+     * `<img>` is the fallback, its lazy `data-src` before a `src` that can be a placeholder.
+     */
+    private fun parsePoster(document: Document): String? {
+        val hero = document.selectFirst(HERO)
+        return listOfNotNull(
+            document.selectFirst("meta[property=og:image]")?.attr("content"),
+            hero?.selectFirst("img[data-src]")?.attr("data-src"),
+            hero?.selectFirst("img[src]")?.attr("src")
+        ).map { it.trim() }.firstOrNull { it.startsWith("http") }
+    }
+
+    /**
      * The event's name from the document title with the site suffix stripped — the page renders no
      * heading. Only when this page stands alone; a successful merge keeps the listing's `.event-title`.
      */
@@ -146,6 +161,9 @@ class TresorDetailPageScraper {
     private companion object {
         /** The event's own section; the page's footer repeats the whole programme below it. */
         const val MAIN_CONTENT = "main.main-content"
+
+        /** The block above the main content that shows the night's poster. */
+        const val HERO = "aside.hero-outer"
 
         /** The separator WordPress puts between the event name and the site name. */
         const val SITE_TITLE_SEPARATOR = " | "
