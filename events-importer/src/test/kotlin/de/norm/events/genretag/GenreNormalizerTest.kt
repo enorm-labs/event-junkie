@@ -222,6 +222,7 @@ class GenreNormalizerTest {
     @Test
     fun `near-duplicate genres merge into existing canonical tags`() {
         normalizeGenre("Deutschpop").shouldContainExactly("Pop")
+        normalizeGenre("Deutschrock").shouldContainExactly("Rock")
         normalizeGenre("Pop-Rock").shouldContainExactly("Rock")
         normalizeGenre("Trap").shouldContainExactly("Hip Hop")
     }

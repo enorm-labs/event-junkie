@@ -31,6 +31,7 @@ internal val GENRE_SYNONYMS: Map<String, String> =
         "kuschelrock" to "Rock",
         "poprock" to "Rock",
         "bluesrock" to "Rock",
+        "deutschrock" to "Rock",
         "experimentalrock" to "Rock",
         "rawknroll" to "Rock",
         "garagernr" to "Garage-Rock",
