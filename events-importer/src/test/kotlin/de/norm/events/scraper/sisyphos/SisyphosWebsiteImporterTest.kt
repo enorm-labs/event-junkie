@@ -6,6 +6,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.HttpFetchException
 import de.norm.events.scraper.ImportResult
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
@@ -119,5 +120,43 @@ class SisyphosWebsiteImporterTest {
             val result = importerAt(LocalDateTime.of(2026, 10, 10, 12, 0)).importEvents(feedUrl)
             result.shouldBeInstanceOf<ImportResult.Success>()
             result.events shouldHaveSize 0
+        }
+
+    @Test
+    fun `inside the window a shop failure still imports the sisy fan weekends, as an incomplete run`() =
+        runTest {
+            coEvery { apiClient.fetchJson(feedUrl) } throws HttpFetchException(429, feedUrl)
+            val result = importerAt(LocalDateTime.of(2026, 9, 26, 12, 0)).importEvents(feedUrl)
+            result.shouldBeInstanceOf<ImportResult.Success>()
+            result.events.map { it.sourceId } shouldBe listOf("sisyphos:weekend-2026-09-25")
+            result.complete shouldBe false
+        }
+
+    @Test
+    fun `a shop failure in the window merges into the shop nights of the last run`() =
+        runTest {
+            val saturday = importerAt(LocalDateTime.of(2026, 9, 26, 12, 0))
+            saturday.importEvents(feedUrl)
+            coEvery { apiClient.fetchJson(feedUrl) } throws HttpFetchException(429, feedUrl)
+
+            val result = saturday.importEvents(feedUrl)
+            result.shouldBeInstanceOf<ImportResult.Success>()
+            result.events.map { it.sourceId } shouldBe listOf("sisyphos:generations-10-okt-2026", "sisyphos:weekend-2026-09-25")
+        }
+
+    @Test
+    fun `outside the window a shop failure fails the run`() =
+        runTest {
+            coEvery { apiClient.fetchJson(feedUrl) } throws HttpFetchException(429, feedUrl)
+            shouldThrow<HttpFetchException> { importer.importEvents(feedUrl) }
+        }
+
+    @Test
+    fun `a run where both sites fail fails with the shop's error`() =
+        runTest {
+            coEvery { apiClient.fetchJson(feedUrl) } throws HttpFetchException(429, feedUrl)
+            coEvery { htmlFetcher.fetchDocument(any()) } throws HttpFetchException(503, "https://sisy.fan/")
+            val error = shouldThrow<HttpFetchException> { importerAt(LocalDateTime.of(2026, 9, 26, 12, 0)).importEvents(feedUrl) }
+            error.statusCode shouldBe 429
         }
 }
