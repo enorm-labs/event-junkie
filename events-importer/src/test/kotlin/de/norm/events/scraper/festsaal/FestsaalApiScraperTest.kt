@@ -12,6 +12,7 @@ import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldStartWith
 import org.junit.jupiter.api.Test
 import org.slf4j.LoggerFactory
 import java.math.BigDecimal
@@ -38,6 +39,23 @@ class FestsaalApiScraperTest {
     }
 
     private fun event(sourceId: String): ScrapedEvent = events.first { it.sourceId == sourceId }
+
+    @Test
+    fun `reads the presenters as promoters and the text blocks as the description`() {
+        // Three events from the API on 2026-09-30, with `presenters` and `layouts` requested.
+        val json =
+            javaClass.classLoader
+                .getResourceAsStream("scraper/festsaal/festsaal-api-presenters.json")!!
+                .bufferedReader()
+                .readText()
+        val byTitle = scraper.scrape(json).associateBy { it.title }
+
+        byTitle.getValue("Kontrollverlust").promoters shouldBe listOf("All Rooms Concerts")
+        byTitle.getValue("OK KID").promoters shouldBe emptyList()
+        byTitle.getValue("OK KID").description!! shouldStartWith "OK KID „Komm, wir bleiben stehen“ Tour 2026"
+        // nand has only the heading over a partner logo: no description, and the heading is not one.
+        byTitle.getValue("nand").description.shouldBeNull()
+    }
 
     @Test
     fun `parses every event in the API response`() {
