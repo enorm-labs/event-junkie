@@ -66,6 +66,7 @@ class So36DetailPageScraper {
             refineBySubtitle(refineConcertVenueType(mapEventType(document.textAt("small.supertitle:not(.ticketsfor)")), title), title, subtitle)
         val jsonLd = document.parseEventJsonLd()
         val (doorsTime, startTime) = parseTimes(document)
+        val (presale, boxOffice) = parsePrices(document)
 
         return ScrapedEvent(
             title = title,
@@ -81,7 +82,8 @@ class So36DetailPageScraper {
             sourceUrl = sourceUrl,
             sourceId = "${EventSource.SO36.sourceIdPrefix}${extractProductId(sourceUrl)}",
             ticketUrl = document.hrefAt(".variants-listing a.btn-buyme"),
-            pricePresale = parsePresalePrice(document),
+            pricePresale = presale,
+            priceBoxOffice = boxOffice,
             free = document.isFreeAdmission(),
             status = mapSchemaStatus(jsonLd.eventStatus),
             artists = parseArtists(title, subtitle, eventType),
@@ -122,15 +124,24 @@ class So36DetailPageScraper {
             .takeIf { it.isNotBlank() }
 
     /**
-     * The lowest ticket price from the schema.org offer microdata (`[itemprop=price]` `content`, a
-     * clean machine-readable value). The online price is a presale (Vorverkauf) price; the
-     * box-office price is not exposed structurally. Events without online sales yield `null`.
+     * The presale and box-office prices from the schema.org offers, one table row per category, named
+     * `<night> | <category>` (`| regulär`, `| ermäßigt`, `| Abendkasse`). An `Abendkasse` row is the
+     * box-office price and a concession row is skipped; the presale is the cheapest of the rest.
+     * Without offer rows, the lowest `[itemprop=price]` on the page is the presale.
      */
-    private fun parsePresalePrice(document: Document): BigDecimal? =
-        document
-            .select("[itemprop=price][content]")
-            .mapNotNull { it.attr("content").toBigDecimalOrNull() }
-            .minOrNull()
+    private fun parsePrices(document: Document): Pair<BigDecimal?, BigDecimal?> {
+        val offers =
+            document.select("[itemprop=offers]").mapNotNull { offer ->
+                val price = offer.selectFirst("[itemprop=price][content]")?.attr("content")?.toBigDecimalOrNull()
+                price?.let { offer.textAt("[itemprop=name]").orEmpty().substringAfterLast("|") to it }
+            }
+        if (offers.isEmpty()) {
+            return document.select("[itemprop=price][content]").mapNotNull { it.attr("content").toBigDecimalOrNull() }.minOrNull() to null
+        }
+        val (door, online) = offers.partition { (category, _) -> BOX_OFFICE_CATEGORY.containsMatchIn(category) }
+        val presale = online.filterNot { (category, _) -> CONCESSION_CATEGORY.containsMatchIn(category) }.minOfOrNull { it.second }
+        return presale to door.minOfOrNull { it.second }
+    }
 
     /**
      * The artist list for concerts: the title is the headliner (unless a placeholder like "TBA"),
@@ -312,3 +323,9 @@ private val SUPPORT_JOINERS = setOf('+', '&')
 /** The support labels of [ROLE_LABEL_PREFIX] opening a subtitle, colon required. */
 private val SUPPORT_LABEL_OPENER =
     Regex("""^(?:div\.?\s*supports?|special\s+guests?|supports?|openers?)\s*:""", RegexOption.IGNORE_CASE)
+
+/** The box-office category: `Abendkasse`, `AK`, `Tageskasse`. */
+private val BOX_OFFICE_CATEGORY = Regex("""\b(?:abendkasse|tageskasse|ak)\b""", RegexOption.IGNORE_CASE)
+
+/** A concession category: `ermäßigt`, `erm.`, `reduced`, `Schüler`, `Student`. */
+private val CONCESSION_CATEGORY = Regex("""erm(?:äßigt|aessigt|\.)|\breduced\b|\bconcession|sch(?:ü|ue)ler|\bstudent""", RegexOption.IGNORE_CASE)
