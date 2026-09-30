@@ -209,6 +209,7 @@ class EventImportService(
 
                 is ImportResult.Success -> {
                     logger.info { "Scraped ${result.events.size} event(s) from '${runningSource.slug}'" }
+                    val scraped = result.copy(events = AcceptedLimitations.withHouseGenre(importer.eventSource, result.events))
 
                     // Look up the venue slug for inclusion in event slugs (ensures cross-venue uniqueness).
                     val venue =
@@ -217,9 +218,9 @@ class EventImportService(
 
                     // PROHIBITED means the field is never stored (#807).
                     val licences = runningSource.licences()
-                    val upsert = upsertInTransaction(runningSource, venue.slug, result.events, licences, staleCleanup(importer, result))
+                    val upsert = upsertInTransaction(runningSource, venue.slug, scraped.events, licences, staleCleanup(importer, scraped))
 
-                    afterCommit(runningSource, venue.name, result, upsert, licences)
+                    afterCommit(runningSource, venue.name, scraped, upsert, licences)
 
                     // Nothing is kept that this source will never send (#2020).
                     val keepValidators = !importer.fetchesBeyondEntryPage

@@ -1,5 +1,7 @@
 package de.norm.events.scraper.roadrunner
 
+import de.norm.events.scraper.AcceptedLimitations
+import de.norm.events.scraper.EventSource
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
@@ -39,8 +41,8 @@ class RoadrunnerOverviewPageScraperTest {
         )
 
     @Test
-    fun `tags every night Rock, the venue's sound, since it names no style`() {
-        scraper.scrape(programme(), baseUrl).map { it.genre }.distinct() shouldBe listOf("Rock")
+    fun `stores every night Rock, the venue's sound, since it names no style`() {
+        AcceptedLimitations.withHouseGenre(EventSource.ROADRUNNER, scraper.scrape(programme(), baseUrl)).map { it.genre }.distinct() shouldBe listOf("Rock")
     }
 
     @Test

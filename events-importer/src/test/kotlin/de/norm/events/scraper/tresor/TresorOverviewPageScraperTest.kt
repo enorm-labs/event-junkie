@@ -1,5 +1,7 @@
 package de.norm.events.scraper.tresor
 
+import de.norm.events.scraper.AcceptedLimitations
+import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import io.kotest.matchers.collections.shouldBeEmpty
@@ -53,8 +55,8 @@ class TresorOverviewPageScraperTest {
     }
 
     @Test
-    fun `tags every night Techno, since every room programmes it and the site names no style`() {
-        events.map { it.genre }.distinct() shouldBe listOf("Techno")
+    fun `stores every night Techno, since every room programmes it and the site names no style`() {
+        AcceptedLimitations.withHouseGenre(EventSource.TRESOR, events).map { it.genre }.distinct() shouldBe listOf("Techno")
     }
 
     @Test

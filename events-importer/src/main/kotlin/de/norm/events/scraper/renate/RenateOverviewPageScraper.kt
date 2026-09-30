@@ -98,7 +98,6 @@ class RenateOverviewPageScraper(
             // kind of event.
             eventType = EventType.PARTY.name,
             // The venue names no style but programmes techno and house, so the venue is the default, as at Tresor.
-            genre = "Techno, House",
             eventDate = eventDate,
             // No per-event page, so every night points at the programme and takes its identity from date
             // plus slugified title.

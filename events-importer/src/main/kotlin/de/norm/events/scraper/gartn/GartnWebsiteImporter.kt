@@ -67,5 +67,6 @@ val GARTN_LIMITATIONS =
         AcceptedLimitation(LimitedAspect.DESCRIPTION, "the venue publishes no per-event text"),
         AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "the Carrd page emits no per-event URL, and removes an event once it has passed"),
         AcceptedLimitation(LimitedAspect.DOORS_TIME, "the venue states one time per night and no separate doors time"),
-        AcceptedLimitation(LimitedAspect.EVENT_TYPE, "the venue states no category; every night here is a DJ party")
+        AcceptedLimitation(LimitedAspect.EVENT_TYPE, "the venue states no category; every night here is a DJ party"),
+        houseGenre = "Techno"
     )

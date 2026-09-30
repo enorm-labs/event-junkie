@@ -21,6 +21,7 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.coVerifyOrder
 import io.mockk.mockk
+import io.mockk.slot
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
@@ -263,6 +264,31 @@ class EventImportServiceTest {
                 result.eventCount shouldBe 1
                 result.sourceSlug shouldBe "test-source"
                 result.error shouldBe null
+            }
+
+        @Test
+        fun `stores a source's house genre on a music event that names none, before coverage is measured`() =
+            runTest {
+                val src = source(sourceType = "TRESOR")
+                coEvery { cassiopeiaImporter.eventSource } returns EventSource.TRESOR
+                val events =
+                    listOf(
+                        scrapedEvent(title = "Klubnacht", sourceId = "tresor:klubnacht", eventType = "PARTY"),
+                        scrapedEvent(title = "Film", sourceId = "tresor:film", eventType = "SCREENING"),
+                        scrapedEvent(title = "Dub Night", sourceId = "tresor:dub", eventType = "PARTY").copy(genre = "Dub")
+                    )
+                coEvery { cassiopeiaImporter.importEvents(any(), any(), any()) } returns
+                    ImportResult.Success(events = events, etag = null, lastModified = null)
+
+                service.importFromSource(src)
+
+                val genres = mapOf("tresor:klubnacht" to "Techno", "tresor:film" to null, "tresor:dub" to "Dub")
+                val recorded = slot<Collection<ScrapedEvent>>()
+                coVerify { fieldCoverageService.record(any(), capture(recorded)) }
+                recorded.captured.associate { it.sourceId to it.genre } shouldBe genres
+                coVerify {
+                    eventRepository.saveAll(match<Iterable<EventEntity>> { entities -> entities.associate { it.sourceId to it.genre } == genres })
+                }
             }
 
         @Test

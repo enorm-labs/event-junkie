@@ -1,5 +1,7 @@
 package de.norm.events.scraper.gartn
 
+import de.norm.events.scraper.AcceptedLimitations
+import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedEvent
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
@@ -44,8 +46,8 @@ class GartnOverviewPageScraperTest {
     private fun event(title: String): ScrapedEvent = events.first { it.title == title }
 
     @Test
-    fun `tags every night Techno, the club's sound, since the venue names no style`() {
-        events.map { it.genre }.distinct() shouldBe listOf("Techno")
+    fun `stores every night Techno, the club's sound, since the venue names no style`() {
+        AcceptedLimitations.withHouseGenre(EventSource.GARTN, events).map { it.genre }.distinct() shouldBe listOf("Techno")
     }
 
     @Test

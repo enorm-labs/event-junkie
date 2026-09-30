@@ -1,5 +1,7 @@
 package de.norm.events.scraper.rosa
 
+import de.norm.events.scraper.AcceptedLimitations
+import de.norm.events.scraper.EventSource
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
@@ -29,8 +31,8 @@ class RosaOverviewPageScraperTest {
     private fun scrape(name: String) = scraper.scrape(Jsoup.parse(fixture(name), baseUrl), baseUrl)
 
     @Test
-    fun `tags every night Techno, the club's sound, since it names no style`() {
-        scrape("rosa-overview.html").map { it.genre }.distinct() shouldBe listOf("Techno")
+    fun `stores every night Techno, the club's sound, since it names no style`() {
+        AcceptedLimitations.withHouseGenre(EventSource.ROSA, scrape("rosa-overview.html")).map { it.genre }.distinct() shouldBe listOf("Techno")
     }
 
     @Test

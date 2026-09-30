@@ -64,7 +64,8 @@ val <VENUE>_LIMITATIONS =
 
 One `AcceptedLimitation` per withheld thing, the reason a property of the _site_, lowercase, one sentence, no full stop. A venue that publishes everything
 declares `VenueLimitations(EventSource.<VENUE>)` — a statement, not an omission. `/data-quality-audit` reads these; a limitation left in prose is re-reported
-every run.
+every run. A single-sound club that names no style declares it here as `houseGenre = "Techno"`, never as a `genre` constant in the scraper: the import fills
+it into every music event that names no genre of its own.
 
 ## 4. Shared helpers, selectors, fields
 

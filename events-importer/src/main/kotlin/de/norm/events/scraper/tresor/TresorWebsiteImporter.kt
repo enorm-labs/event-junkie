@@ -54,7 +54,7 @@ class TresorWebsiteImporter(
      * source of start time, blurb and set times. The **title** keeps the listing's value, because
      * the event page renders no heading and its document title carries the site name; the lineup
      * prefers the listing's too, as the one the venue curates as the programme, and takes the event
-     * page's set times. The genre is the listing's venue default.
+     * page's set times.
      */
     override fun fillGapsFromOverview(
         primary: ScrapedEvent,
@@ -77,5 +77,6 @@ val TRESOR_LIMITATIONS =
             "the venue states no doors or start time; the night's opening set is the only clock it gives, and that is stored as the start"
         ),
         AcceptedLimitation(LimitedAspect.EVENT_TYPE, "the club states no category; every listing is a club night"),
-        AcceptedLimitation(LimitedAspect.PRICE, "the club sells at the door and prints no figure on its programme")
+        AcceptedLimitation(LimitedAspect.PRICE, "the club sells at the door and prints no figure on its programme"),
+        houseGenre = "Techno"
     )

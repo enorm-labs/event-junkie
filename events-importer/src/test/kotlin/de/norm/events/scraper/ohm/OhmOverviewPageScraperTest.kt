@@ -2,6 +2,8 @@ package de.norm.events.scraper.ohm
 
 import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
+import de.norm.events.scraper.AcceptedLimitations
+import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedEvent
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
@@ -64,8 +66,8 @@ class OhmOverviewPageScraperTest {
     }
 
     @Test
-    fun `tags every night Techno, since the club programmes it and the site names no style`() {
-        events.map { it.genre }.distinct() shouldBe listOf("Techno")
+    fun `stores every night Techno, since the club programmes it and the site names no style`() {
+        AcceptedLimitations.withHouseGenre(EventSource.OHM, events).map { it.genre }.distinct() shouldBe listOf("Techno")
     }
 
     @Test

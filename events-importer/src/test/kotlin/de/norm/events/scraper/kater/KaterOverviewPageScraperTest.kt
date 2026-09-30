@@ -1,5 +1,7 @@
 package de.norm.events.scraper.kater
 
+import de.norm.events.scraper.AcceptedLimitations
+import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import io.kotest.matchers.collections.shouldBeEmpty
@@ -46,9 +48,10 @@ class KaterOverviewPageScraperTest {
     private fun event(id: String): ScrapedEvent = events.first { it.sourceId == "kater:$id" }
 
     @Test
-    fun `tags every club night Techno, House and leaves a screening untagged`() {
-        events.filter { it.eventType == "PARTY" }.map { it.genre }.distinct() shouldBe listOf("Techno, House")
-        events.filter { it.eventType == "SCREENING" }.all { it.genre == null } shouldBe true
+    fun `stores every club night Techno, House and leaves a screening untagged`() {
+        val stored = AcceptedLimitations.withHouseGenre(EventSource.KATER, events)
+        stored.filter { it.eventType == "PARTY" }.map { it.genre }.distinct() shouldBe listOf("Techno, House")
+        stored.filter { it.eventType == "SCREENING" }.all { it.genre == null } shouldBe true
     }
 
     @Test

@@ -66,5 +66,6 @@ val ROADRUNNER_LIMITATIONS =
         AcceptedLimitation(
             LimitedAspect.EVENT_TYPE,
             "the retro programme carries no category field; a live-music venue, so an unmarked title defaults to a concert"
-        )
+        ),
+        houseGenre = "Rock"
     )

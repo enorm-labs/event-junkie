@@ -24,7 +24,8 @@ data class AcceptedLimitation(
 )
 
 /**
- * One venue package's declaration: which sources it serves, and what those sources withhold.
+ * One venue package's declaration: which sources it serves, what those sources withhold, and the
+ * [houseGenre] that stands in for a genre they never name.
  *
  * **[sources] is why this is not a bare list.** An empty [limitations] means the venue publishes
  * everything the model stores; an undeclared venue means the audit has no idea either way. Naming
@@ -32,10 +33,19 @@ data class AcceptedLimitation(
  */
 data class VenueLimitations(
     val sources: Set<EventSource>,
-    val limitations: List<AcceptedLimitation> = emptyList()
+    val limitations: List<AcceptedLimitation> = emptyList(),
+    /**
+     * The style a single-sound venue plays, as the genre text a scraped event would carry (`Techno, House`).
+     * [AcceptedLimitations.withHouseGenre] gives it to a music event that names no genre.
+     */
+    val houseGenre: String? = null
 ) {
     /** One package, one source. A package serving several uses the primary constructor and names them all. */
-    constructor(source: EventSource, vararg limitations: AcceptedLimitation) : this(setOf(source), limitations.toList())
+    constructor(
+        source: EventSource,
+        vararg limitations: AcceptedLimitation,
+        houseGenre: String? = null
+    ) : this(setOf(source), limitations.toList(), houseGenre)
 }
 
 /**
