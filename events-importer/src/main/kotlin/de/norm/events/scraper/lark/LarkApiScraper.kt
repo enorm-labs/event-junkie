@@ -8,10 +8,10 @@ import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.WHITESPACE
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.decodeHtmlEntities
+import de.norm.events.scraper.headlinersFromTitle
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.mapEventType
 import de.norm.events.scraper.refineConcertVenueType
-import de.norm.events.scraper.splitHeadlinerTitle
 import de.norm.events.scraper.stringOrNull
 import de.norm.events.scraper.stripArtistSuffix
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -210,23 +210,40 @@ internal class LarkApiScraper(
     }
 
     /**
-     * The acts billed in a concert title. LARK is a live-music club whose title names the act, so
-     * a `CONCERT` title is split on the shared co-bill separators, each part an artist —
-     * [SUPPORT][de.norm.events.event.ArtistRole.SUPPORT] with the venue's `(support)` marker,
-     * otherwise a headliner. A party or other non-concert format names an event, not a performer,
-     * so it yields none (mirroring `buildArtistsForEventType`).
+     * The acts billed in a concert title. LARK is a live-music club whose title names the act. A
+     * `+ <act> (support)` part is a [SUPPORT][de.norm.events.event.ArtistRole.SUPPORT]; the rest
+     * goes through the shared [headlinersFromTitle], with the `<series> w/ <acts>` frame on, so a DJ
+     * night (`Hum w/ Kyle Hall b2b K15, …`) bills its acts and not the series. An epithet in quotes
+     * (`Mamalia’The first lady of modern funk’`) is dropped, and `b2b` and `ft.` split a name,
+     * because LARK writes `ft.` without a space. A party or other non-concert format names an event,
+     * not a performer, so it yields none (mirroring `buildArtistsForEventType`).
      */
     private fun artistsFrom(
         title: String,
         eventType: String
     ): List<ScrapedArtist> {
         if (eventType != EventType.CONCERT.name) return emptyList()
-        return splitHeadlinerTitle(title)
-            .map { act ->
-                val support = SUPPORT_ACT_MARKER.containsMatchIn(act)
-                val name = stripArtistSuffix(act.replace(SUPPORT_ACT_MARKER, "").trim())
-                ScrapedArtist(name = name, role = if (support) "SUPPORT" else "HEADLINER")
-            }.filterNot { it.name.isBlank() || isNonArtistName(it.name) }
+        val supportActs =
+            SUPPORT_TAIL
+                .findAll(title)
+                .map { ScrapedArtist(name = stripArtistSuffix(it.groupValues[1].trim()), role = "SUPPORT") }
+                .toList()
+        val billing =
+            title
+                .replace(SUPPORT_TAIL, " ")
+                .replace(SUPPORT_ACT_MARKER, " ")
+                .replace(QUOTED_EPITHET, " ")
+                .replace(WHITESPACE, " ")
+                .trim()
+        val headliners =
+            headlinersFromTitle(billing, unpackWithFrame = true).flatMap { act ->
+                act.name
+                    .split(NAME_JOINER)
+                    .map { it.trim() }
+                    .filter { it.isNotBlank() }
+                    .map { act.copy(name = it) }
+            }
+        return (headliners + supportActs).filterNot { it.name.isBlank() || isNonArtistName(it.name) }
     }
 
     /** Removes the in-title status markers (and any note parenthesised right after one). */
@@ -283,6 +300,15 @@ internal class LarkApiScraper(
 
         /** The venue's own support-act marker, trailing the act it belongs to. */
         val SUPPORT_ACT_MARKER = Regex("""\s*\(\s*supports?\s*\)\s*""", RegexOption.IGNORE_CASE)
+
+        /** A support act joined with `+` and marked by [SUPPORT_ACT_MARKER]: `+ Lily Seabird (support)`. */
+        val SUPPORT_TAIL = Regex("""\s*\+\s*([^+]+?)\s*\(\s*supports?\s*\)\s*""", RegexOption.IGNORE_CASE)
+
+        /** An epithet in typographic or straight single quotes, eight characters or more. */
+        val QUOTED_EPITHET = Regex("""\s*[’‘'][^’‘']{8,}[’‘']\s*""")
+
+        /** What joins two acts inside one name: `Kyle Hall b2b K15`, `Mamalia ft.Mauricio Fleury`. */
+        val NAME_JOINER = Regex("""\s+b2b\s+|\s*\bft\.\s*""", RegexOption.IGNORE_CASE)
     }
 }
 

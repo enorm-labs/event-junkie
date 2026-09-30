@@ -39,6 +39,18 @@ class LarkApiScraperTest {
 
     private fun eventTitled(title: String): ScrapedEvent = events.first { it.title == title }
 
+    /** One `Live` post with [title] as the API renders it, entities included. */
+    private fun liveEventTitled(title: String): ScrapedEvent =
+        scraper
+            .scrapePage(
+                """
+                [{"id":9,"link":"https://larkberlin.com/event/x/","date":"2026-09-27T19:00:00",
+                  "title":{"rendered":"$title"},"acf":{"event_type":"Live"},"featured_media":0}]
+                """.trimIndent()
+            ).entries
+            .single()
+            .event
+
     @Test
     fun `scrapePage keeps only upcoming events and reports the page's shape`() {
         // The captured page holds 100 posts spanning 2026-02-19 … 2027-02-27; 20 are upcoming.
@@ -110,6 +122,23 @@ class LarkApiScraperTest {
 
         event.artists.map { it.name } shouldContainExactly listOf("Stu Larsen", "Tim Hart")
         event.artists.map { it.role } shouldContainExactly listOf(ArtistRole.HEADLINER.name, ArtistRole.SUPPORT.name)
+    }
+
+    @Test
+    fun `scrapePage bills the acts of a DJ night, not its series, epithet or joiners`() {
+        // 27 September 2026, as the API renders the title.
+        val event = liveEventTitled("Hum w/ Kyle Hall b2b K15, Mamalia&#8217;The first lady of modern funk&#8217;ft.Mauricio Fleury, Bulma Brief")
+
+        event.artists.map { it.name } shouldContainExactly listOf("Kyle Hall", "K15", "Mamalia", "Mauricio Fleury", "Bulma Brief")
+        event.artists.map { it.role }.toSet() shouldBe setOf(ArtistRole.HEADLINER.name)
+    }
+
+    @Test
+    fun `scrapePage keeps a support act after a tour tail`() {
+        val event = liveEventTitled("Greg Mendez &#8211; BEAUTY LAND TOUR +  Lily Seabird (support)")
+
+        event.artists.map { it.name to it.role } shouldContainExactly
+            listOf("Greg Mendez" to ArtistRole.HEADLINER.name, "Lily Seabird" to ArtistRole.SUPPORT.name)
     }
 
     @Test
