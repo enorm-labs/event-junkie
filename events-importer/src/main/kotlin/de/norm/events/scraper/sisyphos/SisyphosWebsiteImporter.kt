@@ -40,6 +40,10 @@ import kotlin.coroutines.cancellation.CancellationException
  * scrape's (`AssociationSyncService`). Inside the window a shop failure, such as Shopify's 429, does
  * not cost the weekends: they merge into the shop's nights from the last run that read them. After a
  * restart there are none, so a ticketed weekend can then appear twice until the shop answers again.
+ *
+ * The shop's bot protection answers the importer `429` from a hosting address, while
+ * curl from the same node gets `200` (#2199). That is a block on our client, and we do not disguise the
+ * client (`docs/SCRAPING_POSITION.md` §3.4), so the source stays enabled and recovers if it is lifted.
  */
 @Component
 class SisyphosWebsiteImporter(
@@ -184,6 +188,14 @@ val SISYPHOS_LIMITATIONS =
         ),
         AcceptedLimitation(LimitedAspect.GENRE, "the shop names no musical style; every night takes the club's Techno, House default"),
         AcceptedLimitation(LimitedAspect.PRICE_BOX_OFFICE, "the shop sells online only and states no door price"),
+        AcceptedLimitation(
+            LimitedAspect.TICKET_URL,
+            "the shop's bot protection answers the importer 429 from a hosting address, and we do not disguise the client to pass it"
+        ),
+        AcceptedLimitation(
+            LimitedAspect.PRICE_PRESALE,
+            "the shop's bot protection answers the importer 429 from a hosting address, and we do not disguise the client to pass it"
+        ),
         AcceptedLimitation(LimitedAspect.CANCELLATION, "a cancelled night is removed from the shop rather than marked"),
         houseGenre = "Techno, House"
     )

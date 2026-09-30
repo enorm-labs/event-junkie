@@ -218,6 +218,8 @@ says so.
 | `SISYPHOS`             | `ARTISTS`          | the shop names no DJ anywhere; the line-up comes from sisy.fan, which posts a weekend on Friday night or Saturday and is read only then          | —     |
 | `SISYPHOS`             | `GENRE`            | the shop names no musical style; every night takes the club's Techno, House default                                                              | —     |
 | `SISYPHOS`             | `PRICE_BOX_OFFICE` | the shop sells online only and states no door price                                                                                              | —     |
+| `SISYPHOS`             | `TICKET_URL`       | the shop's bot protection answers the importer 429 from a hosting address, and we do not disguise the client to pass it                          | —     |
+| `SISYPHOS`             | `PRICE_PRESALE`    | the shop's bot protection answers the importer 429 from a hosting address, and we do not disguise the client to pass it                          | —     |
 | `SISYPHOS`             | `CANCELLATION`     | a cancelled night is removed from the shop rather than marked                                                                                    | —     |
 | `SO36`                 | `PRICE`            | the shop exposes prices only as ticket categories, so a door-only event without an Abendkasse category carries no figure                         | —     |
 | `SO36`                 | `SOLD_OUT`         | the JSON-LD offer reports `SoldOut` for the external shops most events sell through, even when those shops still have tickets, so it is not read | —     |
