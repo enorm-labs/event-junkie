@@ -138,11 +138,18 @@ internal fun JsonNode.stringList(field: String): List<String> =
 /**
  * The absolute image URL from the nested `image.url`, prefixing the PocketBase file base for a
  * relative path. `null` without an image.
+ *
+ * A PocketBase file is the venue's print original, up to 18 MB, above the image fetch's 8 MiB cap
+ * (#2092). The URL asks for [BINUU_THUMB] instead, the size the venue's own `og:image` uses.
  */
 internal fun JsonNode.binuuImageUrl(): String? {
     val url = path("image").stringOrNull("url") ?: return null
-    return if (url.startsWith("http")) url else BINUU_IMAGE_BASE_URL + url
+    val absolute = if (url.startsWith("http")) url else BINUU_IMAGE_BASE_URL + url
+    return if (absolute.startsWith(BINUU_IMAGE_BASE_URL) && '?' !in absolute) "$absolute?thumb=$BINUU_THUMB" else absolute
 }
+
+/** PocketBase's thumb size for a poster: fit inside 1200 × 1600 without cropping. */
+private const val BINUU_THUMB = "1200x1600f"
 
 /**
  * The Berlin date of a timestamp like `"2026-07-19 19:00:00.000Z"`.
