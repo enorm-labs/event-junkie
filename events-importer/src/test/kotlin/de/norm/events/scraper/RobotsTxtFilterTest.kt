@@ -5,6 +5,7 @@ import io.kotest.matchers.shouldBe
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.slot
 import io.mockk.verify
 import kotlinx.coroutines.reactor.awaitSingle
 import kotlinx.coroutines.test.runTest
@@ -18,6 +19,8 @@ import org.springframework.web.reactive.function.client.ExchangeFunction
 import reactor.core.publisher.Mono
 import java.net.URI
 import java.time.Instant
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * Unit tests for [RobotsTxtFilter].
@@ -37,7 +40,8 @@ class RobotsTxtFilterTest {
 
     private fun cacheAnswering(
         allowed: Boolean,
-        robotsTxtUrl: String? = "https://venue.example/robots.txt"
+        robotsTxtUrl: String? = "https://venue.example/robots.txt",
+        crawlDelay: Duration? = null
     ): RobotsRulesCache =
         mockk<RobotsRulesCache>().also {
             coEvery { it.check(any()) } returns
@@ -45,7 +49,8 @@ class RobotsTxtFilterTest {
                     host = "venue.example",
                     robotsTxtUrl = robotsTxtUrl,
                     allowed = allowed,
-                    checkedAt = Instant.EPOCH
+                    checkedAt = Instant.EPOCH,
+                    crawlDelay = crawlDelay
                 )
         }
 
@@ -65,6 +70,30 @@ class RobotsTxtFilterTest {
 
                 response.statusCode() shouldBe HttpStatus.OK
                 verify(exactly = 1) { next.exchange(any()) }
+            }
+
+        @Test
+        fun `hands the host's crawl delay to the throttle behind it`() =
+            runTest {
+                val sent = slot<ClientRequest>()
+                every { next.exchange(capture(sent)) } returns Mono.just(ClientResponse.create(HttpStatus.OK).build())
+                val filter = RobotsTxtFilter(cacheAnswering(allowed = true, crawlDelay = 20.seconds), enforced = true)
+
+                filter.filter(request("https://venue.example/events"), next).awaitSingle()
+
+                sent.captured.attribute(CRAWL_DELAY_ATTRIBUTE).orElse(null) shouldBe 20.seconds
+            }
+
+        @Test
+        fun `sets no attribute where the host sets no crawl delay`() =
+            runTest {
+                val sent = slot<ClientRequest>()
+                every { next.exchange(capture(sent)) } returns Mono.just(ClientResponse.create(HttpStatus.OK).build())
+                val filter = RobotsTxtFilter(cacheAnswering(allowed = true), enforced = true)
+
+                filter.filter(request("https://venue.example/events"), next).awaitSingle()
+
+                sent.captured.attribute(CRAWL_DELAY_ATTRIBUTE).isPresent shouldBe false
             }
     }
 

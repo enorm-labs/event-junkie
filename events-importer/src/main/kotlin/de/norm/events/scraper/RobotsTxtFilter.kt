@@ -60,7 +60,8 @@ private fun describe(
  * builder, so the `robots.txt` fetch that [RobotsRulesCache] performs travels through a client that
  * still throttles per host and still sends the identifying `User-Agent` — while never re-entering
  * this filter, because [RobotsRulesCache] holds the separate [SCRAPER_BASE_WEB_CLIENT]. Reversing the two
- * would leave the `robots.txt` fetches unthrottled.
+ * would leave the `robots.txt` fetches unthrottled. The order also carries the host's `Crawl-delay` to the
+ * throttle, as the [CRAWL_DELAY_ATTRIBUTE] of the request it passes on.
  */
 class RobotsTxtFilter(
     private val rulesCache: RobotsRulesCache,
@@ -77,7 +78,7 @@ class RobotsTxtFilter(
         return mono { rulesCache.check(url) }
             .flatMap { check ->
                 if (check.allowed) {
-                    next.exchange(request)
+                    next.exchange(request.withCrawlDelay(check))
                 } else if (enforced) {
                     logger.warn { "Blocked by robots.txt: $url" }
                     Mono.error(RobotsDisallowedException(url, check.robotsTxtUrl, check.unreadableStatus))
@@ -85,8 +86,11 @@ class RobotsTxtFilter(
                     // Report-only. The line is the finding; the request still goes out, because the
                     // alternative is discovering the blast radius in production.
                     logger.warn { "robots.txt disallows $url — sending it anyway (enforcement is off)" }
-                    next.exchange(request)
+                    next.exchange(request.withCrawlDelay(check))
                 }
             }
     }
 }
+
+private fun ClientRequest.withCrawlDelay(check: RobotsCheck): ClientRequest =
+    check.crawlDelay?.let { ClientRequest.from(this).attribute(CRAWL_DELAY_ATTRIBUTE, it).build() } ?: this

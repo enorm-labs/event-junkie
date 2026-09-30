@@ -16,6 +16,7 @@ import reactor.core.publisher.Mono
 import java.net.URI
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 import kotlin.time.TestTimeSource
 import kotlin.time.TimeMark
 
@@ -85,6 +86,15 @@ class PerHostThrottlingFilterTest {
     /** Runs one request through the filter, exactly as the WebClient would. */
     private fun fetch(url: String) {
         filter.filter(request(url), mockExchange).block()
+    }
+
+    /** As [fetch], with the host's crawl delay attached the way [RobotsTxtFilter] attaches it. */
+    private fun fetch(
+        url: String,
+        crawlDelay: Duration
+    ) {
+        val withDelay = ClientRequest.from(request(url)).attribute(CRAWL_DELAY_ATTRIBUTE, crawlDelay).build()
+        filter.filter(withDelay, mockExchange).block()
     }
 
     @Nested
@@ -225,6 +235,48 @@ class PerHostThrottlingFilterTest {
         // critical section in `awaitThrottle`, which is visible in five lines of code — and the
         // observable consequence, the spacing between requests, is asserted exactly above. A test
         // that fails 7% of the time is worth less than an honest note about what is not checked.
+    }
+
+    @Nested
+    inner class CrawlDelay {
+        @Test
+        fun `a crawl delay longer than the politeness delay sets the gap`() =
+            runTest {
+                fetch("https://radar.example/1", 20.seconds)
+                fetch("https://radar.example/2", 20.seconds)
+
+                clock.waits.shouldContainExactly(20.seconds)
+            }
+
+        @Test
+        fun `a crawl delay shorter than the politeness delay changes nothing`() =
+            runTest {
+                fetch("https://example.com/1", 50.milliseconds)
+                fetch("https://example.com/2", 50.milliseconds)
+
+                clock.waits.shouldContainExactly(politeDelay.milliseconds)
+            }
+
+        @Test
+        fun `a request arriving part-way through a crawl delay waits only the remainder`() =
+            runTest {
+                fetch("https://radar.example/1", 20.seconds)
+                clock.elapse(5.seconds)
+
+                fetch("https://radar.example/2", 20.seconds)
+
+                clock.waits.shouldContainExactly(15.seconds)
+            }
+
+        @Test
+        fun `one host's crawl delay does not slow another host`() =
+            runTest {
+                fetch("https://radar.example/1", 20.seconds)
+                fetch("https://example.com/1")
+                fetch("https://example.com/2")
+
+                clock.waits.shouldContainExactly(politeDelay.milliseconds)
+            }
     }
 
     @Nested

@@ -38,11 +38,19 @@ data class ScraperProperties(
      * re-reads the file it just read, any longer and a venue's edit takes more than one cycle to
      * reach us.
      */
-    val robotsCacheTtl: Duration = Duration.ofHours(DEFAULT_ROBOTS_CACHE_TTL_HOURS)
+    val robotsCacheTtl: Duration = Duration.ofHours(DEFAULT_ROBOTS_CACHE_TTL_HOURS),
+    /**
+     * The longest `Crawl-delay` we wait between two requests to one host. A host that asks for more is
+     * read as disallowing everything, because waiting less than it asks is not honouring it. Five
+     * minutes is the `crawler-commons` default. A list-and-detail source at that pace outlasts the
+     * staleness timeout after six pages, which is why the WARN names the host.
+     */
+    val maxCrawlDelay: Duration = Duration.ofSeconds(DEFAULT_MAX_CRAWL_DELAY_SECONDS)
 ) {
     companion object {
         private const val DEFAULT_RESPONSE_TIMEOUT_SECONDS = 30L
         private const val DEFAULT_POLITE_DELAY_MILLIS = 200L
         private const val DEFAULT_ROBOTS_CACHE_TTL_HOURS = 24L
+        private const val DEFAULT_MAX_CRAWL_DELAY_SECONDS = 300L
     }
 }

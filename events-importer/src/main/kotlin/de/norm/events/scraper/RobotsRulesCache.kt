@@ -1,5 +1,6 @@
 package de.norm.events.scraper
 
+import crawlercommons.robots.BaseRobotRules
 import crawlercommons.robots.SimpleRobotRules
 import crawlercommons.robots.SimpleRobotRulesParser
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -15,6 +16,7 @@ import java.time.Clock
 import java.time.Duration
 import java.time.Instant
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.time.Duration.Companion.milliseconds
 
 /** What a host's `robots.txt` says about one URL, and where the answer came from. */
 data class RobotsCheck(
@@ -32,7 +34,12 @@ data class RobotsCheck(
      * Set only on the error-status path. It is what separates a venue that forbids us from one whose
      * server is broken, and the two want different responses (#887).
      */
-    val unreadableStatus: Int? = null
+    val unreadableStatus: Int? = null,
+    /**
+     * The host's `Crawl-delay`, or `null` where it sets none. [PerHostThrottlingFilter] spaces requests
+     * to the host by this, when it is longer than its own delay.
+     */
+    val crawlDelay: kotlin.time.Duration? = null
 )
 
 /**
@@ -61,7 +68,13 @@ class RobotsRulesCache(
     private val clock: Clock = Clock.systemUTC()
 ) {
     private val logger = KotlinLogging.logger {}
-    private val parser = SimpleRobotRulesParser()
+
+    /**
+     * A `Crawl-delay` above [ScraperProperties.maxCrawlDelay] makes `crawler-commons` return a complete
+     * disallow. We wait no less than a host asks, so a delay we will not wait is a delay we do not fetch under.
+     */
+    private val parser =
+        SimpleRobotRulesParser(scraperProperties.maxCrawlDelay.toMillis(), SimpleRobotRulesParser.DEFAULT_MAX_WARNINGS)
 
     /**
      * Per-host state, kept for the application lifetime. The host set is bounded by the number of
@@ -90,7 +103,8 @@ class RobotsRulesCache(
                 robotsTxtUrl = cached.robotsTxtUrl,
                 allowed = cached.rules.isAllowed(url),
                 checkedAt = cached.fetchedAt,
-                unreadableStatus = cached.unreadableStatus
+                unreadableStatus = cached.unreadableStatus,
+                crawlDelay = cached.crawlDelay
             )
         }.getOrElse { error ->
             // This never throws, and owning that promise here is what lets the import pipeline call
@@ -168,10 +182,19 @@ class RobotsRulesCache(
                             .map { it.toString() }
                             .orElse(PLAIN_TEXT)
                     val rules = parser.parseContent(robotsUrl, body, contentType, ROBOT_NAMES)
-                    logger.info { "Read robots.txt for $host (${body.size} bytes, allowAll=${rules.isAllowAll})" }
-                    CachedRules(rules, robotsTxtUrl = robotsUrl, fetchedAt = now())
+                    val crawlDelay = crawlDelayOf(rules)
+                    if (rules.isAllowNone) {
+                        logger.warn { "robots.txt for $host sets a Crawl-delay above ${scraperProperties.maxCrawlDelay}, read as a complete disallow" }
+                    }
+                    logger.info {
+                        "Read robots.txt for $host (${body.size} bytes, allowAll=${rules.isAllowAll}, crawlDelay=${crawlDelay ?: "none"})"
+                    }
+                    CachedRules(rules, robotsTxtUrl = robotsUrl, fetchedAt = now(), crawlDelay = crawlDelay)
                 }
             }
+
+    private fun crawlDelayOf(rules: SimpleRobotRules): kotlin.time.Duration? =
+        rules.crawlDelay.takeIf { it != BaseRobotRules.UNSET_CRAWL_DELAY && it > 0 }?.milliseconds
 
     private fun now(): Instant = Instant.now(clock)
 
@@ -198,7 +221,9 @@ internal data class CachedRules(
     val robotsTxtUrl: String?,
     val fetchedAt: Instant,
     /** The status behind [rules] where they came from a failed fetch rather than a parsed file. */
-    val unreadableStatus: Int? = null
+    val unreadableStatus: Int? = null,
+    /** The `Crawl-delay` of a parsed file, or `null` where it sets none. */
+    val crawlDelay: kotlin.time.Duration? = null
 )
 
 /** Per-host cache slot: the rules, and the lock that stops a stampede of concurrent fetches. */
