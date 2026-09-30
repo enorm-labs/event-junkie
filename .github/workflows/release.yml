@@ -56,6 +56,8 @@ permissions:
   attestations: write
   # The attest action also registers each image on the organisation's artifacts page; metadata only.
   artifact-metadata: write
+  # `await-builds.sh` reads the build workflows' runs on this commit (#2185).
+  actions: read
 
 env:
   IMAGE_PREFIX: ghcr.io/enorm-labs/event-junkie
@@ -70,7 +72,7 @@ jobs:
   publish:
     name: Build, scan and publish
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    timeout-minutes: 50
 
     steps:
       # The whole history and every tag: the version is read from the last release tag and the commits
@@ -277,6 +279,15 @@ jobs:
             echo "::endgroup::"
           done
           exit $status
+
+      # A push to `main` publishes only a commit both build workflows passed (#2185). Here, after the build
+      # and the scan, so the wait overlaps the build rather than adding to it. A tag is gated by
+      # `cut-release.yml`, and a dispatch is the operator's call.
+      - name: Wait for the builds on this commit
+        if: github.event_name == 'push' && steps.version.outputs.publish == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: scripts/await-builds.sh "$GITHUB_SHA" build-backend.yml build-frontend.yml
 
       # `sbom: true` (#443): buildx generates one per image and attaches it to the index, so a consumer can
       # ask "is this image affected by CVE-X" without scanning. Chosen over `actions/attest-sbom`, which
