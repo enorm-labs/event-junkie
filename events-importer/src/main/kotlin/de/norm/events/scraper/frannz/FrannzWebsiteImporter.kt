@@ -62,5 +62,6 @@ val FRANNZ_LIMITATIONS =
         AcceptedLimitation(
             LimitedAspect.PRICE,
             "most nights name the ticket seller instead of a figure; only the venue's own party nights carry a structured Abendkasse item, which is read"
-        )
+        ),
+        AcceptedLimitation(LimitedAspect.GENRE, "the venue tags each event only with a type (Konzert, Party, Lesung), never a genre")
     )

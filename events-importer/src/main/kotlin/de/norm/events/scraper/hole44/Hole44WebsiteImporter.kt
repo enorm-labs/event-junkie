@@ -2,8 +2,10 @@ package de.norm.events.scraper.hole44
 
 import de.norm.events.event.EventStatus
 import de.norm.events.scraper.AbstractTwoPageWebsiteImporter
+import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
+import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
 import de.norm.events.scraper.VenueLimitations
@@ -70,5 +72,8 @@ class Hole44WebsiteImporter(
         )
 }
 
-/** Nothing this source withholds needs declaring (#715). */
-val HOLE44_LIMITATIONS = VenueLimitations(EventSource.HOLE44)
+val HOLE44_LIMITATIONS =
+    VenueLimitations(
+        EventSource.HOLE44,
+        AcceptedLimitation(LimitedAspect.PRICE, "the venue prints no figure; tickets are sold through an Eventim button")
+    )

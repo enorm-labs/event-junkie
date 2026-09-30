@@ -2,8 +2,10 @@ package de.norm.events.scraper.cassiopeia
 
 import de.norm.events.event.EventType
 import de.norm.events.scraper.AbstractTwoPageWebsiteImporter
+import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
+import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.VenueLimitations
 import de.norm.events.scraper.nextPageUrl
@@ -81,5 +83,8 @@ class CassiopeiaWebsiteImporter(
     }
 }
 
-/** Nothing this source withholds needs declaring (#715). */
-val CASSIOPEIA_LIMITATIONS = VenueLimitations(EventSource.CASSIOPEIA)
+val CASSIOPEIA_LIMITATIONS =
+    VenueLimitations(
+        EventSource.CASSIOPEIA,
+        AcceptedLimitation(LimitedAspect.PRICE, "the venue prints no figure on its listing or its event pages")
+    )

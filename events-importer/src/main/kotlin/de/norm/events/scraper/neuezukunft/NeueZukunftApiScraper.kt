@@ -16,8 +16,11 @@ import de.norm.events.scraper.parseTime
 import io.github.oshai.kotlinlogging.KotlinLogging
 import tools.jackson.databind.json.JsonMapper
 
-/** Public landing page every event links back to — the widget exposes no per-event URLs. */
-private const val NEUE_ZUKUNFT_URL = "https://neue-zukunft.org/"
+/**
+ * The programme page every event links back to, where the calendar widget renders: the widget exposes
+ * no per-event URLs. The site's root is a splash page with only a link to it.
+ */
+private const val NEUE_ZUKUNFT_URL = "https://neue-zukunft.org/konzerte.html"
 
 /**
  * Pure parser for Neue Zukunft's concert programme, from the JSON boot response of the

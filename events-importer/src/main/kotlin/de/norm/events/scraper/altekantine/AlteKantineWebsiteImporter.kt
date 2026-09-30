@@ -1,8 +1,10 @@
 package de.norm.events.scraper.altekantine
 
 import de.norm.events.scraper.AbstractTwoPageWebsiteImporter
+import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
+import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
 import de.norm.events.scraper.VenueLimitations
@@ -85,5 +87,8 @@ class AlteKantineWebsiteImporter(
     }
 }
 
-/** Nothing this source withholds needs declaring (#715). */
-val ALTE_KANTINE_LIMITATIONS = VenueLimitations(EventSource.ALTE_KANTINE)
+val ALTE_KANTINE_LIMITATIONS =
+    VenueLimitations(
+        EventSource.ALTE_KANTINE,
+        AcceptedLimitation(LimitedAspect.PRICE, "some nights leave the Eintritt field empty (\"Eintritt: €\"), so no figure is published")
+    )

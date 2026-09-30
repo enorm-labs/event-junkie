@@ -63,5 +63,6 @@ val ZUR_KLAPPE_LIMITATIONS =
         AcceptedLimitation(LimitedAspect.PRICE, "the site prints no price for a night"),
         AcceptedLimitation(LimitedAspect.PROMOTERS, "the site credits no promoter beside the party name"),
         AcceptedLimitation(LimitedAspect.SOLD_OUT, "the site states no ticket status"),
-        AcceptedLimitation(LimitedAspect.CANCELLATION, "the site has no cancelled marker for a night")
+        AcceptedLimitation(LimitedAspect.CANCELLATION, "the site has no cancelled marker for a night"),
+        AcceptedLimitation(LimitedAspect.IMAGE, "the venue sets no cover image; its only image is a generated title card for link previews")
     )

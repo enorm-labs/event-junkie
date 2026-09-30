@@ -53,7 +53,7 @@ class NeueZukunftApiScraperTest {
         backengrillen.soldOut shouldBe false
         backengrillen.status shouldBe "SCHEDULED"
         backengrillen.imageUrl.shouldBeNull()
-        backengrillen.sourceUrl shouldBe "https://neue-zukunft.org/"
+        backengrillen.sourceUrl shouldBe "https://neue-zukunft.org/konzerte.html"
         backengrillen.artists shouldContainExactly
             listOf(
                 ScrapedArtist("Backengrillen", "HEADLINER", titleDerived = true),

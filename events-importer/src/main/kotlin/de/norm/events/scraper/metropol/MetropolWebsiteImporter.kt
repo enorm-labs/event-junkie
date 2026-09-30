@@ -1,8 +1,10 @@
 package de.norm.events.scraper.metropol
 
 import de.norm.events.scraper.AbstractTwoPageWebsiteImporter
+import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
+import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
 import de.norm.events.scraper.VenueLimitations
@@ -68,5 +70,8 @@ class MetropolWebsiteImporter(
     }
 }
 
-/** Nothing this source withholds needs declaring (#715). */
-val METROPOL_LIMITATIONS = VenueLimitations(EventSource.METROPOL)
+val METROPOL_LIMITATIONS =
+    VenueLimitations(
+        EventSource.METROPOL,
+        AcceptedLimitation(LimitedAspect.PRICE, "the venue prints no figure; tickets are sold through an Eventim link")
+    )

@@ -60,5 +60,8 @@ class NeueZukunftWebsiteImporter(
 val NEUE_ZUKUNFT_LIMITATIONS =
     VenueLimitations(
         EventSource.NEUE_ZUKUNFT,
-        AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "the calendar widget exposes no per-event URLs")
+        AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "the calendar widget exposes no per-event URLs"),
+        AcceptedLimitation(LimitedAspect.PRICE, "the calendar widget prints no figure; each show links out to an external ticket shop"),
+        AcceptedLimitation(LimitedAspect.GENRE, "the calendar's categories are rooms (Saal, Garage, Jazzbar) and its tags are blank"),
+        AcceptedLimitation(LimitedAspect.IMAGE, "the calendar widget sets no cover image on upcoming shows")
     )

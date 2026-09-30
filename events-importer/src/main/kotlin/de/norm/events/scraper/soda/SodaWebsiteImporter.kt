@@ -72,5 +72,6 @@ val SODA_LIMITATIONS =
         EventSource.SODA,
         AcceptedLimitation(LimitedAspect.DOORS_TIME, "the Einlass info box states an age limit, not a doors time"),
         AcceptedLimitation(LimitedAspect.ARTISTS, "the JSON-LD performer is the placeholder Unbekannt on every night"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "the JSON-LD `organizer` is the venue itself on every night")
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the JSON-LD `organizer` is the venue itself on every night"),
+        AcceptedLimitation(LimitedAspect.IMAGE, "flyers are hosted on soda.disco2app.com, whose robots.txt forbids fetching, so none can be cached")
     )

@@ -71,5 +71,6 @@ val SO36_LIMITATIONS =
         AcceptedLimitation(
             LimitedAspect.SOLD_OUT,
             "the JSON-LD offer reports `SoldOut` for the external shops most events sell through, even when those shops still have tickets, so it is not read"
-        )
+        ),
+        AcceptedLimitation(LimitedAspect.GENRE, "the shop tags each event only as Konzert, Party or Event, never a genre")
     )

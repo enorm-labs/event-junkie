@@ -1,8 +1,10 @@
 package de.norm.events.scraper.aeg
 
 import de.norm.events.scraper.AbstractTwoPageWebsiteImporter
+import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
+import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
@@ -121,5 +123,13 @@ val AEG_LIMITATIONS =
             setOf(
                 EventSource.UBER_ARENA,
                 EventSource.UBER_EATS_MUSIC_HALL
+            ),
+        limitations =
+            listOf(
+                AcceptedLimitation(
+                    LimitedAspect.PRICE,
+                    "the listing shows a from-price only once presale opens; cancelled, moved and unannounced shows have none"
+                ),
+                AcceptedLimitation(LimitedAspect.GENRE, "the platform files events only as Konzert, Comedy, Show or Sport, never a genre")
             )
     )

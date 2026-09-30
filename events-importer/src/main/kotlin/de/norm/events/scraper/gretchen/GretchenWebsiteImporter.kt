@@ -97,5 +97,6 @@ val GRETCHEN_LIMITATIONS =
         AcceptedLimitation(
             LimitedAspect.DESCRIPTION,
             "the text is only on each night's detail page; the import reads the homepage and the ticket popups, not those pages"
-        )
+        ),
+        AcceptedLimitation(LimitedAspect.PRICE, "club nights print no price, and a cancelled show loses its line; presale concerts list theirs")
     )

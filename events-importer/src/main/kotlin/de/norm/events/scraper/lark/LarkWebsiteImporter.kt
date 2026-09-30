@@ -130,5 +130,7 @@ class LarkWebsiteImporter(
 val LARK_LIMITATIONS =
     VenueLimitations(
         EventSource.LARK,
-        AcceptedLimitation(LimitedAspect.START_TIME, "the venue renders its one time as Doors and publishes no separate start time")
+        AcceptedLimitation(LimitedAspect.START_TIME, "the venue renders its one time as Doors and publishes no separate start time"),
+        AcceptedLimitation(LimitedAspect.PRICE, "the venue prints no figure; tickets link to hum-berlin.com"),
+        AcceptedLimitation(LimitedAspect.GENRE, "the venue leaves its genre fields empty on every event; style appears only in the description")
     )
