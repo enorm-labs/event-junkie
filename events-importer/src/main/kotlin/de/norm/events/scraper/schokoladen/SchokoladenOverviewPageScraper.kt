@@ -91,7 +91,7 @@ class SchokoladenOverviewPageScraper {
         val eventType = mapEventType(block.textAt("h6.category"), CATEGORY_SYNONYMS)
         val subtitle = block.textAt("h6.subtitle")
         val (doorsTime, startTime) = parseTimes(info, block)
-        val soldOut = isSoldOut(subtitle, info)
+        val soldOut = isSoldOut(title, subtitle, info)
 
         return ScrapedEvent(
             title = title,
@@ -114,16 +114,19 @@ class SchokoladenOverviewPageScraper {
     }
 
     /**
-     * Whether the venue put its sold-out banner on the entry — "---> Ausverkauft / Sold Out / 10
-     * Tickets on the Doors at 19:00 <---" as the subtitle, repeated as a description paragraph
-     * (#1495). Each is matched at its own start, so a bio mentioning a record that "sold out in a
-     * record 3 months" does not mark the night sold out.
+     * Whether the venue marked the entry sold out — "---> Ausverkauft / Sold Out / 10 Tickets on
+     * the Doors at 19:00 <---" as the subtitle, repeated as a description paragraph (#1495), or a
+     * bracketed title note, "[ausverkauft]" / "[pre-sale sold out, 10 tix on the doors]". The banner
+     * is matched at its own start, so a bio mentioning a record that "sold out in a record 3 months"
+     * does not mark the night sold out.
      */
     private fun isSoldOut(
+        title: String,
         subtitle: String?,
         info: Element?
     ): Boolean =
-        SOLD_OUT_BANNER.containsMatchIn(subtitle.orEmpty()) ||
+        TITLE_NOTE.findAll(title).any { SOLD_OUT_NOTE.containsMatchIn(it.groupValues[1]) } ||
+            SOLD_OUT_BANNER.containsMatchIn(subtitle.orEmpty()) ||
             info?.select(".event-description p")?.any { SOLD_OUT_BANNER.containsMatchIn(it.text()) } == true
 
     /**
@@ -204,7 +207,8 @@ class SchokoladenOverviewPageScraper {
      * Artist entries from the title (headliner) plus any support acts. A "(genre, origin)"
      * annotation follows each act (`"MOLOCH (punk, bln) + PINK WONDER (scumpunk, bln)"`), stripped
      * before the shared [buildArtistsForEventType][de.norm.events.scraper.buildArtistsForEventType]
-     * co-bill splitter runs, so headliners come out clean (`MOLOCH`, `PINK WONDER`). The title is
+     * co-bill splitter runs, so headliners come out clean (`MOLOCH`, `PINK WONDER`). A bracketed
+     * note ("[ausverkauft]") is the venue's, not the act's, and goes the same way. The title is
      * stored verbatim — only the derived names are cleaned. Non-concert events (readings,
      * specials) yield no artists unless a "Support:" line is present.
      */
@@ -213,7 +217,12 @@ class SchokoladenOverviewPageScraper {
         subtitle: String?,
         eventType: String?
     ): List<ScrapedArtist> {
-        val artistTitle = title.replace(GENRE_PARENTHETICAL, " ").replace(WHITESPACE, " ").trim()
+        val artistTitle =
+            title
+                .replace(GENRE_PARENTHETICAL, " ")
+                .replace(TITLE_NOTE, " ")
+                .replace(WHITESPACE, " ")
+                .trim()
         return buildArtistsForEventType(artistTitle, subtitle, eventType)
     }
 
@@ -240,6 +249,12 @@ class SchokoladenOverviewPageScraper {
 
         /** A "(genre, origin)" annotation appended to each act in a title, stripped before artist derivation and read for [parseGenre]. */
         private val GENRE_PARENTHETICAL = Regex("""\s*\(([^)]*)\)""")
+
+        /** A bracketed venue note in a title — "[ausverkauft]", "[pre-sale sold out, 10 tix on the doors]". */
+        private val TITLE_NOTE = Regex("""\s*\[([^\]]*)]""")
+
+        /** A sold-out note anywhere inside a [TITLE_NOTE]. */
+        private val SOLD_OUT_NOTE = Regex("""\b(?:ausverkauft|sold\s*out)\b""", RegexOption.IGNORE_CASE)
 
         /** The sold-out banner, at the start of the subtitle or of a description paragraph: "---> Ausverkauft / Sold Out / …". */
         private val SOLD_OUT_BANNER = Regex("""^\W*(?:ausverkauft|sold\s*out)\b""", RegexOption.IGNORE_CASE)
