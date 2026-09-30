@@ -4,6 +4,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
 import io.kotest.matchers.collections.shouldHaveSize
+import io.kotest.matchers.collections.shouldNotBeEmpty
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
@@ -84,6 +85,18 @@ class SilentGreenWebsiteImporterTest {
             coVerify(exactly = 1) { htmlFetcher.fetchDocument(entryUrl) }
             coVerify(exactly = 1) { htmlFetcher.fetchDocument(septemberUrl) }
             coVerify(exactly = 1) { htmlFetcher.fetchDocument(octoberUrl) }
+        }
+
+    @Test
+    fun `importEvents keeps the entry month when a later month page fails`() =
+        runTest {
+            coEvery { htmlFetcher.fetchDocument(septemberUrl) } throws RuntimeException("connection reset")
+
+            val result = importer.importEvents(entryUrl).shouldBeInstanceOf<ImportResult.Success>()
+
+            result.events.shouldNotBeEmpty()
+            result.complete shouldBe false
+            coVerify(exactly = 0) { htmlFetcher.fetchDocument(octoberUrl) }
         }
 
     @Test

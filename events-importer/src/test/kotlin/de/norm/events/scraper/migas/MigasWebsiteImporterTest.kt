@@ -69,7 +69,7 @@ class MigasWebsiteImporterTest {
         }
 
     @Test
-    fun `a later page that fails keeps the first page's events`() =
+    fun `a later page that fails keeps the first page's events and reports the walk incomplete`() =
         runTest {
             coEvery { htmlFetcher.postForm(ajaxUrl, page(2)) } throws HttpFetchException(503, ajaxUrl)
 
@@ -77,6 +77,8 @@ class MigasWebsiteImporterTest {
 
             result.shouldBeInstanceOf<ImportResult.Success>()
             result.events shouldHaveSize 10
+            // The unread page's events must survive the stale cleanup.
+            result.complete shouldBe false
         }
 
     @Test

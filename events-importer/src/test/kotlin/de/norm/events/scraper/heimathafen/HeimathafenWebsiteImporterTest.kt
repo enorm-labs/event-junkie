@@ -5,6 +5,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ImportResult
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
+import io.kotest.matchers.collections.shouldNotBeEmpty
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
@@ -74,6 +75,21 @@ class HeimathafenWebsiteImporterTest {
             result.events.isNotEmpty() shouldBe true
             result.etag.shouldBeNull()
             result.lastModified.shouldBeNull()
+        }
+
+    @Test
+    fun `keeps the first page when a later page fails`() =
+        runTest {
+            coEvery { apiClient.fetchJson(pageUrl(1)) } returns fixture("heimathafen-events-page1.json")
+            coEvery { apiClient.fetchJson(pageUrl(2)) } returns "[]"
+            val firstPageOnly = importer.importEvents(baseUrl).shouldBeInstanceOf<ImportResult.Success>()
+            coEvery { apiClient.fetchJson(pageUrl(2)) } throws RuntimeException("connection reset")
+
+            val result = importer.importEvents(baseUrl).shouldBeInstanceOf<ImportResult.Success>()
+
+            result.events.shouldNotBeEmpty()
+            result.events shouldBe firstPageOnly.events
+            result.complete shouldBe false
         }
 
     @Test

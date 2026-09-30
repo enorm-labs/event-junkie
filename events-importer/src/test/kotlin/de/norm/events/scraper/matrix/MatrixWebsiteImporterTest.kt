@@ -76,6 +76,18 @@ class MatrixWebsiteImporterTest {
         }
 
     @Test
+    fun `importEvents keeps the entry month when a later month page fails`() =
+        runTest {
+            coEvery { htmlFetcher.fetchDocument(monthUrl(8)) } throws RuntimeException("connection reset")
+
+            val result = importer.importEvents(entryUrl)
+
+            result.shouldBeInstanceOf<ImportResult.Success>()
+            result.events shouldHaveSize 2
+            result.complete shouldBe false
+        }
+
+    @Test
     fun `importEvents stops at the first month the venue offers no next link for`() =
         runTest {
             importer.importEvents(entryUrl)

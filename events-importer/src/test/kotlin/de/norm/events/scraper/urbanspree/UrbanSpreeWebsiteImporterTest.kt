@@ -92,6 +92,18 @@ class UrbanSpreeWebsiteImporterTest {
         }
 
     @Test
+    fun `importEvents keeps the first page when a later listing page fails`() =
+        runTest {
+            coEvery { htmlFetcher.fetchDocument(page2Url) } throws RuntimeException("connection reset")
+
+            val result = importer.importEvents(entryUrl).shouldBeInstanceOf<ImportResult.Success>()
+
+            result.events shouldHaveSize 9
+            result.complete shouldBe false
+            coVerify(exactly = 0) { htmlFetcher.fetchDocument(page3Url) }
+        }
+
+    @Test
     fun `importEvents stops paginating at the boundary page instead of walking the archive`() =
         runTest {
             importer.importEvents(entryUrl)

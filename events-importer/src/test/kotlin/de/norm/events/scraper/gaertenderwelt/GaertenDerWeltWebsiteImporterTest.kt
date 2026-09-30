@@ -81,6 +81,19 @@ class GaertenDerWeltWebsiteImporterTest {
         }
 
     @Test
+    fun `importEvents keeps the first page when a later listing page fails`() =
+        runTest {
+            coEvery { htmlFetcher.fetchDocument(PAGE2_URL) } throws RuntimeException("connection reset")
+
+            val result = importer.importEvents(ENTRY_URL).shouldBeInstanceOf<ImportResult.Success>()
+
+            // The one in-scope row on page 1.
+            result.events shouldHaveSize 1
+            result.complete shouldBe false
+            coVerify(exactly = 0) { htmlFetcher.fetchDocument(PAGE3_URL) }
+        }
+
+    @Test
     fun `importEvents never fetches a detail page for a filtered-out row`() =
         runTest {
             importer.importEvents(ENTRY_URL)

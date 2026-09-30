@@ -4,6 +4,7 @@ import de.norm.events.scraper.ApiClient
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ImportResult
 import io.kotest.matchers.collections.shouldHaveSize
+import io.kotest.matchers.collections.shouldNotBeEmpty
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
@@ -106,6 +107,19 @@ class LarkWebsiteImporterTest {
 
             // The captured page is full (100 posts) but reaches back to 2026-02-19, so page 2 is never asked for.
             listingCalls shouldBe 1
+        }
+
+    @Test
+    fun `importEvents keeps the first page when a later page fails`() =
+        runTest {
+            // Before the captured page's oldest date, so the full page 1 asks for page 2.
+            val early = LarkWebsiteImporter(apiClient, Clock.fixed(LocalDate.of(2026, 1, 1).atStartOfDay(BERLIN).toInstant(), BERLIN))
+            coEvery { apiClient.fetchJson(match { "page=2" in it }) } throws RuntimeException("connection reset")
+
+            val result = early.importEvents(baseUrl).shouldBeInstanceOf<ImportResult.Success>()
+
+            result.events.shouldNotBeEmpty()
+            result.complete shouldBe false
         }
 
     @Test

@@ -6,9 +6,12 @@ import de.norm.events.scraper.EventImporter
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.LimitedAspect
+import de.norm.events.scraper.ListingPage
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.VenueLimitations
+import de.norm.events.scraper.pageNumber
 import de.norm.events.scraper.querySeparator
+import de.norm.events.scraper.walkListingPages
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
 import java.time.Clock
@@ -55,22 +58,20 @@ class LarkWebsiteImporter(
         etag: String?,
         lastModified: String?
     ): ImportResult {
-        val entries = mutableListOf<LarkEntry>()
         val today = LocalDate.now(clock)
+        val firstUrl = buildListingUrl(url, 1)
+        val fetchPage: suspend (String) -> LarkPage = { apiScraper.scrapePage(apiClient.fetchJson(it)) }
+        val listing =
+            walkListingPages(eventSource, fetchPage(firstUrl), firstUrl, MAX_PAGES, fetchPage) { page, pageUrl ->
+                // Ordered by event date, so a page reaching the past holds no more upcoming events — and a
+                // short page is the last one (WordPress 400s beyond it).
+                val lastPage = page.postCount < PER_PAGE || page.oldestDate?.let { it < today } == true
+                ListingPage(page.entries, buildListingUrl(url, pageUrl.pageNumber() + 1).takeUnless { lastPage })
+            }
 
-        for (page in 1..MAX_PAGES) {
-            val parsed = apiScraper.scrapePage(apiClient.fetchJson(buildListingUrl(url, page)))
-            entries += parsed.entries
-            // Ordered by event date, so a page reaching the past holds no more upcoming events — and a
-            // short page is the last one (WordPress 400s beyond it).
-            val lastPage = parsed.postCount < PER_PAGE || parsed.oldestDate?.let { it < today } == true
-            if (lastPage) break
-            if (page == MAX_PAGES) logger.warn { "LARK paging stopped at the $MAX_PAGES-page cap; later pages were not read" }
-        }
-
-        val events = withPosters(entries.distinctBy { it.event.sourceId }, url)
+        val events = withPosters(listing.items.distinctBy { it.event.sourceId }, url)
         logger.info { "Scraped ${events.size} upcoming event(s) from LARK" }
-        return ImportResult.Success(events = events, etag = null, lastModified = null)
+        return ImportResult.Success(events = events, etag = null, lastModified = null, complete = listing.complete)
     }
 
     /** Resolves the entries' `featured_media` ids in one request and applies the URLs to the events. */

@@ -61,6 +61,17 @@ class CosmicComedyWebsiteImporterTest {
         }
 
     @Test
+    fun `importEvents keeps the first page when a later page fails`() =
+        runTest {
+            coEvery { apiClient.fetchJson(secondPageUrl) } throws RuntimeException("connection reset")
+
+            val result = importer.importEvents(sourceUrl).shouldBeInstanceOf<ImportResult.Success>()
+
+            result.events shouldHaveSize 50
+            result.complete shouldBe false
+        }
+
+    @Test
     fun `importEvents asks for the largest page the plugin allows`() =
         runTest {
             importer.importEvents(sourceUrl)
