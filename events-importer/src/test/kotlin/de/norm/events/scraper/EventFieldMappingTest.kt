@@ -296,6 +296,25 @@ class EventFieldMappingTest {
     }
 
     @Test
+    fun `parseRelocation reads no destination inside a quoted tour name`() {
+        parseRelocation(
+            "„Soul to SØL World Tour 2026\" HOCHVERLEGT IN DAS COLUMBIA THEATER. BEREITS GEKAUFTE TICKETS BEHALTEN IHRE GÜLTIGKEIT!"
+        ) shouldBe Relocation(from = null, to = "COLUMBIA THEATER")
+        parseRelocation("\"Welcome to the Real World\"-Tour HOCHVERLEGT INS COLUMBIA THEATER. BEREITS GEKAUFTE TICKETS BEHALTEN IHRE GÜLTIGKEIT!") shouldBe
+            Relocation(from = null, to = "COLUMBIA THEATER")
+    }
+
+    @Test
+    fun `parseRelocation reads a move written as the show now taking place elsewhere`() {
+        parseRelocation(
+            "Das Konzert von Masego, das am 30. September 2026 in der Uber Eats Music Hall stattfinden sollte, " +
+                "findet nun am 17. Februar 2027 im Huxleys Neue Welt statt."
+        ) shouldBe Relocation(from = null, to = "Huxleys Neue Welt")
+        // Without "nun", "jetzt" or "stattdessen" it is prose about the venue.
+        parseRelocation("Das Konzert findet im Rahmen des Festivals im Großen Saal statt.").shouldBeNull()
+    }
+
+    @Test
     fun `resolveRelocation makes the row at the house the show left the origin, and the other one a plain event`() {
         val move = Relocation(from = "Huxleys", to = "Hole44")
         resolveRelocation("RELOCATED", move, "huxleys-neue-welt") shouldBe ("RELOCATED" to "Hole44")
