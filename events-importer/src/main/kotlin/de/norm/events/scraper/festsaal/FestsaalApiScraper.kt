@@ -11,6 +11,7 @@ import de.norm.events.scraper.isFestivalTitle
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.mapEventType
 import de.norm.events.scraper.parseClockPrefix
+import de.norm.events.scraper.parseRelocation
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.splitSupportActs
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -46,7 +47,8 @@ private const val FESTSAAL_PROGRAMM_BASE = "https://$FESTSAAL_PUBLIC_HOST/de/pro
  * Each `items[]` entry carries `title`, `sub_title`, `date`, `doors`, `start`, `ticket`,
  * `price`, a nested `genre.title` and `preview_image.download_url`, a `support` act line, and
  * a `status` code (`sold_out`, `moved_date`, `moved_unknown`, `transferred`, `cancelled`,
- * `custom`, or absent), the `presenters` and the page's text `layouts`. No event-category field, so the type is inferred from title/subtitle like
+ * `custom`, or absent), the `presenters`, the page's text `layouts`, and a moved show's
+ * `changed_text` and `new_location` ([relocationNote]). No event-category field, so the type is inferred from title/subtitle like
  * Bi Nuu ([inferEventType]).
  *
  * @see FestsaalWebsiteImporter for the HTTP fetch orchestrator.
@@ -168,6 +170,7 @@ class FestsaalApiScraper {
             status = mapStatus(statusCode, sourceId),
             artists = buildArtists(title, node.support.blankToNull(), eventType),
             description = parseDescription(node.layouts),
+            statusNote = relocationNote(node.changedText, node.newLocation),
             promoters = node.presenters.mapNotNull { it.name.blankToNull() }
         )
     }
@@ -350,6 +353,22 @@ class FestsaalApiScraper {
 }
 
 /**
+ * The note [parseRelocation] reads a move's destination from: `changed_text`, the sentence under
+ * the red `verlegt` label, as plain text. When that sentence names no destination, the structured
+ * `new_location` is phrased as one. The note only matters on a `transferred` row;
+ * `resolveRelocation` ignores it on any other status, so the stale template text some pages keep
+ * in the field is harmless.
+ */
+private fun relocationNote(
+    changedText: String?,
+    newLocation: String?
+): String? {
+    val note = changedText?.let { Jsoup.parseBodyFragment(it).text().trim() }.blankToNull()
+    val destination = newLocation.blankToNull() ?: return note
+    return note?.takeIf { parseRelocation(it)?.to != null } ?: "verlegt ins $destination"
+}
+
+/**
  * One event in the Wagtail listing (`items[]`), mapped by Jackson. Only the fields Festsaal
  * populates are declared; `SNAKE_CASE` maps `sub_title`, `changed_date`, `preview_image` onto
  * these camelCase properties, unknown keys ignored. Every field is nullable/defaulted so a
@@ -373,7 +392,9 @@ private data class FestsaalEventNode(
     val price: String? = null,
     val support: String? = null,
     val presenters: List<FestsaalPresenter> = emptyList(),
-    val layouts: JsonNode? = null
+    val layouts: JsonNode? = null,
+    val changedText: String? = null,
+    val newLocation: String? = null
 )
 
 /** A presenting promoter (`presenters[]`), e.g. `All Rooms Concerts`; only its [name] is used. */
