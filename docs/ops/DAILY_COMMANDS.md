@@ -28,6 +28,27 @@ each for the importer admin API, the BFF's Swagger UI and OpenObserve. The ports
   the node's own disk, and `deploy/dashboards/apply.sh --diff` and `deploy/alerts/apply.sh --diff` are their check.
 - **Never `tofu plan/apply/destroy/import` on your own initiative.** [`infra/AGENTS.md`](../../infra/AGENTS.md) opens with that rule.
 
+## Start of the day
+
+```sh
+scripts/ej.sh status && scripts/ej.sh versions     # both clusters whole, and on the expected versions
+scripts/daily-check.sh | jq '.failed_runs, .release_main.conclusion, [.reports[] | select(.unanswered) | .url]'
+gh pr list --state open                            # bot pull requests to read and merge, and your own
+```
+
+`/daily-check` does all of this and more, and writes one report with an action list. Without an agent, check these in this order:
+
+1. **Both clusters.** `ej.sh status` shows no pod that is not Ready. `ej.sh versions` shows staging on the newest snapshot and production on the latest release.
+2. **Failed workflows.** A red `release.yml` on `main` blocks every release. See [RELEASING.md § Publishing is blocked](RELEASING.md#publishing-is-blocked).
+   A scheduled workflow starts 4.5 to 7 hours after its cron time. A nightly run that is missing before midday UTC is late, not failed.
+3. **Issues that a workflow opened.** These are the reminders, a publish failure and seed drift. Each issue names its action.
+4. **The reports.** Read the newest plausibility comment on the monthly issue and the weekly OWASP comment. Answer each with the issues you filed.
+5. **Security.** Look at new code-scanning alerts, Dependabot alerts and Code Quality findings. `/security-report` gives the detail.
+6. **Bot pull requests.** Read each diff. Merge the green ones with `gh pr merge <n> --rebase`. A `claude[bot]` pull request needs your approval first.
+7. **Logs.** `/log-check` sorts both clusters' logs and alerts into noise, known, explained and new.
+8. **The two places no command reads.** Look at the `alerts@` mailbox and the healthchecks.io dashboard ([HEALTHCHECKS.md](HEALTHCHECKS.md)).
+9. **A release.** If `main` has product commits since the last release, cut one. See [RELEASING.md](RELEASING.md).
+
 ## Get in
 
 ```sh

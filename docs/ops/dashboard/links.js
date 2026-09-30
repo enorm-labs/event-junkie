@@ -1031,6 +1031,23 @@ window.EJ_LINKS = {
       ]
     },
     {
+      "heading": "Start of the day",
+      "commands": [
+        {
+          "command": "scripts/ej.sh status && scripts/ej.sh versions",
+          "note": "both clusters whole, and on the expected versions"
+        },
+        {
+          "command": "scripts/daily-check.sh | jq '.failed_runs, .release_main.conclusion, [.reports[] | select(.unanswered) | .url]'",
+          "note": ""
+        },
+        {
+          "command": "gh pr list --state open",
+          "note": "bot pull requests to read and merge, and your own"
+        }
+      ]
+    },
+    {
       "heading": "Get in",
       "commands": [
         {
