@@ -222,6 +222,13 @@ class LarkApiScraperTest {
     }
 
     @Test
+    fun `scrapePage reads every status word the shared title rule knows`() {
+        liveEventTitled("Olga Myko fällt leider aus").status shouldBe EventStatus.CANCELLED.name
+        liveEventTitled("ABSAGE: Le Volume Courbe").status shouldBe EventStatus.CANCELLED.name
+        liveEventTitled("Le Volume Courbe - verschoben").status shouldBe EventStatus.POSTPONED.name
+    }
+
+    @Test
     fun `scrapePage records the promoter the venue names`() {
         val json =
             """

@@ -7,10 +7,10 @@ import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
 import de.norm.events.scraper.attrAt
 import de.norm.events.scraper.imgSrcAt
-import de.norm.events.scraper.parseEventStatus
 import de.norm.events.scraper.parseIsoDate
 import de.norm.events.scraper.parseIsoTime
 import de.norm.events.scraper.parsePriceValue
+import de.norm.events.scraper.parseSchemaEventStatus
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.resolveUrl
 import de.norm.events.scraper.stringOrNull
@@ -97,9 +97,7 @@ class SodaDetailPageScraper {
             // A €0 admission is the free-entry marker; keep it explicit even when the price is not
             // stored as a box-office price.
             free = prices.admission?.signum() == 0,
-            // The schema.org URL uses `EventScheduled` / `EventCancelled` / `EventPostponed`, whose
-            // keywords parseEventStatus already recognizes.
-            status = parseEventStatus(jsonLd?.stringOrNull("eventStatus").orEmpty())
+            status = parseSchemaEventStatus(jsonLd?.stringOrNull("eventStatus"))
         )
     }
 

@@ -1,5 +1,6 @@
 package de.norm.events.scraper.peteredel
 
+import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedEvent
@@ -11,6 +12,7 @@ import de.norm.events.scraper.inferUnmarkedTitleType
 import de.norm.events.scraper.inferVenueFormatType
 import de.norm.events.scraper.parseGermanMonthAbbreviation
 import de.norm.events.scraper.parseTime
+import de.norm.events.scraper.parseTitleStatus
 import de.norm.events.scraper.peteredel.PeterEdelOverviewPageScraper.Companion.VENUE_FORMAT_KEYWORDS
 import de.norm.events.scraper.resolveUrl
 import de.norm.events.scraper.textAt
@@ -298,16 +300,11 @@ class PeterEdelOverviewPageScraper {
             ?.trim()
             ?.takeIf { it.startsWith(TICKETS_LABEL, ignoreCase = true) }
 
-    /** `CANCELLED` when the title marker or the ticket column says so, otherwise `SCHEDULED`. */
+    /** The status the title marker or the ticket column states ([parseTitleStatus]), otherwise `SCHEDULED`. */
     private fun resolveStatus(
         rawTitle: String,
         ticketColumn: Element?
-    ): String {
-        val cancelled =
-            rawTitle.contains(CANCELLED_MARKER, ignoreCase = true) ||
-                ticketColumn?.text()?.contains(CANCELLED_MARKER, ignoreCase = true) == true
-        return if (cancelled) "CANCELLED" else "SCHEDULED"
-    }
+    ): String = parseTitleStatus(rawTitle) ?: ticketColumn?.text()?.let(::parseTitleStatus) ?: EventStatus.SCHEDULED.name
 
     private companion object {
         /** Parses a `25,00€` or `32 Euro` amount, in either decimal notation. */
@@ -370,9 +367,6 @@ class PeterEdelOverviewPageScraper {
 
         /** The `[Abgesagt!]` marker on a cancelled event's title, stripped from the stored title. */
         private val CANCELLED_TITLE_MARKER = Regex("""\s*\[\s*Abgesagt!?\s*]""", RegexOption.IGNORE_CASE)
-
-        /** The German cancellation word, in the title marker and the ticket column's "Leider abgesagt!". */
-        private const val CANCELLED_MARKER = "abgesagt"
 
         /** The German sold-out word the ticket column shows instead of a price. */
         private const val SOLD_OUT_MARKER = "ausverkauft"

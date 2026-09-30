@@ -7,6 +7,7 @@ import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.jsonLdNodes
 import de.norm.events.scraper.mapEventType
+import de.norm.events.scraper.parseEventStatus
 import de.norm.events.scraper.parseIsoDate
 import de.norm.events.scraper.parseIsoTime
 import de.norm.events.scraper.parseTime
@@ -142,7 +143,7 @@ class PrivatclubOverviewPageScraper(
         val soldOut =
             statusLabel.contains("ausverkauft") || statusLabel.contains("sold out") ||
                 (detail?.selectFirst(".tickets_vkk.soldout") != null)
-        val status = parseStatus(statusLabel)
+        val status = parseEventStatus(statusLabel)
 
         val (pricePresale, priceBoxOffice, priceNote) = parsePrices(detail)
 
@@ -269,17 +270,6 @@ class PrivatclubOverviewPageScraper(
         val candidate = monthDay.atYear(now.year)
         return if (candidate.isBefore(now)) candidate.plusYears(1) else candidate
     }
-
-    /**
-     * Maps the status label text to an event status string.
-     */
-    private fun parseStatus(statusLabel: String): String =
-        when {
-            statusLabel.contains("abgesagt") || statusLabel.contains("canceled") -> "CANCELLED"
-            statusLabel.contains("verschoben") || statusLabel.contains("rescheduled") -> "POSTPONED"
-            statusLabel.contains("verlegt") || statusLabel.contains("relocated") -> "RELOCATED"
-            else -> "SCHEDULED"
-        }
 
     /**
      * Doors and start from "Einlass: 19:00 Beginn: 20:00" in `.zeit_einlass`, else the

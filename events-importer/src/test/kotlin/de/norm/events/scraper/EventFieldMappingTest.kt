@@ -214,6 +214,15 @@ class EventFieldMappingTest {
         parseEventStatus("RELOCATED") shouldBe "RELOCATED"
     }
 
+    @Test
+    fun `parseEventStatus reads every spelling a venue badge used`() {
+        // Privatclub's badge said "rescheduled"; its private mapper knew no "cancelled" or "fällt aus".
+        parseEventStatus("rescheduled") shouldBe "POSTPONED"
+        parseEventStatus("cancelled") shouldBe "CANCELLED"
+        parseEventStatus("Absage") shouldBe "CANCELLED"
+        parseEventStatus("fällt leider aus") shouldBe "CANCELLED"
+    }
+
     // Sold-out is a separate flag on the event, not a status, so it must leave the status alone.
     @Test
     fun `parseEventStatus leaves a sold-out badge scheduled`() {
