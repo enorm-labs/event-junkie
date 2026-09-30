@@ -50,23 +50,6 @@ class MorphineWebsiteImporter(
         document: Document,
         url: String
     ): ScrapedEvent? = detailPageScraper.scrape(document, url)
-
-    /**
-     * Merges detail-page data ([primary]) with overview data ([fallback]). The detail page is
-     * authoritative: it carries every field the listing lacks and states the same date in the same
-     * spelling. Only the date and the title-derived artists fall back — the date because a detail
-     * page whose `.block.day` header cannot be parsed would otherwise be dropped despite the listing
-     * knowing when the night is, the artists because a page with no `ul.lineup` still has a billed
-     * act in its title.
-     */
-    override fun fillGapsFromOverview(
-        primary: ScrapedEvent,
-        fallback: ScrapedEvent
-    ): ScrapedEvent =
-        primary.copy(
-            eventDate = primary.eventDate.takeIf { it != UNRESOLVED_EVENT_DATE } ?: fallback.eventDate,
-            artists = primary.artists.ifEmpty { fallback.artists }
-        )
 }
 
 val MORPHINE_LIMITATIONS =

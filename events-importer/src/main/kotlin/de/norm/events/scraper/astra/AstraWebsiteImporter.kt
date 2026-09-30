@@ -55,20 +55,10 @@ class AstraWebsiteImporter(
         primary: ScrapedEvent,
         fallback: ScrapedEvent
     ): ScrapedEvent =
-        primary.copy(
-            // Detail pages carry the real date; fall back only if absent (sentinel).
-            eventDate = primary.eventDate.takeIf { it != UNRESOLVED_EVENT_DATE } ?: fallback.eventDate,
+        primary.withGapsFrom(fallback).copy(
             // Overview is authoritative for the type (it normalizes mislabeled festival days); the detail
             // kind only when the overview had no label.
-            eventType = fallback.eventType ?: primary.eventType,
-            subtitle = primary.subtitle ?: fallback.subtitle,
-            doorsTime = primary.doorsTime ?: fallback.doorsTime,
-            startTime = primary.startTime ?: fallback.startTime,
-            imageUrl = primary.imageUrl ?: fallback.imageUrl,
-            soldOut = primary.soldOut || fallback.soldOut,
-            status = primary.status.takeIf { it != "SCHEDULED" } ?: fallback.status,
-            // Artists come from the overview only (needs subtitle + kind).
-            artists = primary.artists.ifEmpty { fallback.artists }
+            eventType = fallback.eventType ?: primary.eventType
         )
 }
 

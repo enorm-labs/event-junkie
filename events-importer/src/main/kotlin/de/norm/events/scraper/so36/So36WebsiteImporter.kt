@@ -45,20 +45,6 @@ class So36WebsiteImporter(
         document: Document,
         url: String
     ): ScrapedEvent? = detailPageScraper.scrape(document, url)
-
-    /**
-     * Merges detail-page data ([primary]) with overview data ([fallback]). The detail page is
-     * authoritative for every field; the overview only backstops the date: when the detail page
-     * has no parseable `startDate` (the [UNRESOLVED_EVENT_DATE] sentinel), the date from the
-     * product URL is used.
-     */
-    override fun fillGapsFromOverview(
-        primary: ScrapedEvent,
-        fallback: ScrapedEvent
-    ): ScrapedEvent =
-        primary.copy(
-            eventDate = primary.eventDate.takeIf { it != UNRESOLVED_EVENT_DATE } ?: fallback.eventDate
-        )
 }
 
 val SO36_LIMITATIONS =

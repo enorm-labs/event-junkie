@@ -60,14 +60,12 @@ class TresorWebsiteImporter(
         primary: ScrapedEvent,
         fallback: ScrapedEvent
     ): ScrapedEvent =
-        primary.copy(
+        primary.withGapsFrom(fallback).copy(
             title = fallback.title,
-            eventDate = primary.eventDate.takeIf { it != UNRESOLVED_EVENT_DATE } ?: fallback.eventDate,
             artists =
                 fallback.artists.ifEmpty { primary.artists }.withSetTimesFrom(primary.artists) {
                     logger.warn { "Running-order slot '${it.name}' matches no act on the listing; its set time is dropped" }
-                },
-            genre = fallback.genre
+                }
         )
 }
 

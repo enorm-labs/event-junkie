@@ -53,12 +53,9 @@ class ClubOstWebsiteImporter(
         primary: ScrapedEvent,
         fallback: ScrapedEvent
     ): ScrapedEvent =
-        fallback.copy(
+        fallback.withGapsFrom(primary).copy(
             title = primary.title,
-            description = primary.description ?: fallback.description,
-            // The end is on the detail page alone (#1408).
-            endDate = primary.endDate,
-            endTime = primary.endTime
+            description = primary.description ?: fallback.description
         )
 }
 

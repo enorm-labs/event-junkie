@@ -41,25 +41,6 @@ class BinuuWebsiteImporter(
         document: Document,
         url: String
     ): ScrapedEvent? = detailPageScraper.scrape(document, url)
-
-    /**
-     * Merges detail data ([primary]) over overview data ([fallback]): the detail payload wins for
-     * every field; the overview backstops date, image, subtitle, start time, status and the
-     * relocation note, and the sold-out flag is OR-ed.
-     */
-    override fun fillGapsFromOverview(
-        primary: ScrapedEvent,
-        fallback: ScrapedEvent
-    ): ScrapedEvent =
-        primary.copy(
-            eventDate = primary.eventDate.takeIf { it != UNRESOLVED_EVENT_DATE } ?: fallback.eventDate,
-            subtitle = primary.subtitle ?: fallback.subtitle,
-            startTime = primary.startTime ?: fallback.startTime,
-            imageUrl = primary.imageUrl ?: fallback.imageUrl,
-            soldOut = primary.soldOut || fallback.soldOut,
-            status = primary.status.takeIf { it != "SCHEDULED" } ?: fallback.status,
-            statusNote = primary.statusNote ?: fallback.statusNote
-        )
 }
 
 val BINUU_LIMITATIONS =

@@ -56,12 +56,8 @@ class WuhlheideWebsiteImporter(
         primary: ScrapedEvent,
         fallback: ScrapedEvent
     ): ScrapedEvent =
-        primary.copy(
+        primary.withGapsFrom(fallback).copy(
             subtitle = fallback.subtitle,
-            eventDate = primary.eventDate.takeIf { it != UNRESOLVED_EVENT_DATE } ?: fallback.eventDate,
-            imageUrl = primary.imageUrl ?: fallback.imageUrl,
-            ticketUrl = primary.ticketUrl ?: fallback.ticketUrl,
-            eventType = primary.eventType ?: fallback.eventType,
             soldOut = fallback.soldOut,
             artists = buildArtistsForEventType(primary.title, fallback.subtitle, primary.eventType ?: fallback.eventType)
         )

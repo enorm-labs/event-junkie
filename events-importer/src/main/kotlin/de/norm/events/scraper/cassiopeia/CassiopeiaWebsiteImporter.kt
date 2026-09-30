@@ -62,20 +62,9 @@ class CassiopeiaWebsiteImporter(
         primary: ScrapedEvent,
         fallback: ScrapedEvent
     ): ScrapedEvent =
-        primary.copy(
-            doorsTime = primary.doorsTime ?: fallback.doorsTime,
-            startTime = primary.startTime ?: fallback.startTime,
+        primary.withGapsFrom(fallback).copy(
             // The detail page's "OTHER" is a weak signal: a more specific overview type wins over it.
-            eventType = primary.eventType?.takeIf { it != EventType.OTHER.name } ?: fallback.eventType,
-            genre = primary.genre ?: fallback.genre,
-            promoters = primary.promoters.ifEmpty { fallback.promoters },
-            imageUrl = primary.imageUrl ?: fallback.imageUrl,
-            soldOut = primary.soldOut || fallback.soldOut,
-            status = primary.status.takeIf { it != "SCHEDULED" } ?: fallback.status,
-            description = primary.description ?: fallback.description,
-            ticketUrl = primary.ticketUrl ?: fallback.ticketUrl,
-            // Detail artists include support acts; the overview has only the headliner.
-            artists = primary.artists.ifEmpty { fallback.artists }
+            eventType = primary.eventType?.takeIf { it != EventType.OTHER.name } ?: fallback.eventType
         )
 
     private companion object {

@@ -58,15 +58,9 @@ abstract class AbstractAegVenueImporter(
         primary: ScrapedEvent,
         fallback: ScrapedEvent
     ): ScrapedEvent =
-        primary.copy(
+        primary.withGapsFrom(fallback).copy(
             title = fallback.title,
             status = fallback.status,
-            eventDate = primary.eventDate.takeIf { it != UNRESOLVED_EVENT_DATE } ?: fallback.eventDate,
-            startTime = primary.startTime ?: fallback.startTime,
-            eventType = primary.eventType ?: fallback.eventType,
-            imageUrl = primary.imageUrl ?: fallback.imageUrl,
-            pricePresale = primary.pricePresale ?: fallback.pricePresale,
-            priceNote = primary.priceNote ?: fallback.priceNote,
             artists = billedActs(primary, fallback)
         )
 

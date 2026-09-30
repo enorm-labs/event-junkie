@@ -44,15 +44,16 @@ abstract class AbstractTwoPageWebsiteImporter(
     ): ScrapedEvent?
 
     /**
-     * Fills missing fields in [primary] (detail page data) from [fallback] (overview data).
-     *
-     * Only called when [scrapeDetail] succeeds. Implementations should fill only fields
-     * that the detail page cannot supply (e.g. image URL).
+     * Merges [primary] (detail page data) with [fallback] (overview data), only when [scrapeDetail]
+     * succeeds. By default the detail page wins and every gap is filled from the overview
+     * ([ScrapedEvent.withGapsFrom]), so a field either page adds is kept without naming it here
+     * (#1408). A venue overrides this only for a field where the overview is authoritative, as
+     * `primary.withGapsFrom(fallback).copy(…)`.
      */
-    protected abstract fun fillGapsFromOverview(
+    protected open fun fillGapsFromOverview(
         primary: ScrapedEvent,
         fallback: ScrapedEvent
-    ): ScrapedEvent
+    ): ScrapedEvent = primary.withGapsFrom(fallback)
 
     /**
      * The absolute URL of the listing page after [document], or null when it is the last. Null by

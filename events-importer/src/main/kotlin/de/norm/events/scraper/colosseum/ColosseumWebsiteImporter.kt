@@ -68,7 +68,7 @@ class ColosseumWebsiteImporter(
         primary: ScrapedEvent,
         fallback: ScrapedEvent
     ): ScrapedEvent =
-        fallback.copy(
+        fallback.withGapsFrom(primary).copy(
             doorsTime = primary.doorsTime ?: fallback.doorsTime,
             startTime = primary.startTime ?: fallback.startTime,
             // The ticket's own price wins over the listing's checkout total; the note follows it.

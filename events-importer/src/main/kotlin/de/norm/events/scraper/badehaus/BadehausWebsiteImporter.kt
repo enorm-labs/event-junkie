@@ -64,27 +64,13 @@ class BadehausWebsiteImporter(
         primary: ScrapedEvent,
         fallback: ScrapedEvent
     ): ScrapedEvent =
-        primary.copy(
-            // The detail page carries the real date; fall back only if absent (sentinel).
-            eventDate = primary.eventDate.takeIf { it != UNRESOLVED_EVENT_DATE } ?: fallback.eventDate,
-            // Overview-only fields (the detail scraper leaves these unset).
-            subtitle = primary.subtitle ?: fallback.subtitle,
-            genre = primary.genre ?: fallback.genre,
-            eventType = primary.eventType ?: fallback.eventType,
+        primary.withGapsFrom(fallback).copy(
             // The detail page has no roster: the artists come from the card's title and subtitle, typed
             // by the category when the page has one.
             artists =
                 primary.eventType
                     ?.let { buildArtistsForEventType(fallback.title, fallback.subtitle, it) }
-                    ?: primary.artists.ifEmpty { fallback.artists },
-            doorsTime = primary.doorsTime ?: fallback.doorsTime,
-            imageUrl = primary.imageUrl ?: fallback.imageUrl,
-            ticketUrl = primary.ticketUrl ?: fallback.ticketUrl,
-            soldOut = primary.soldOut || fallback.soldOut,
-            // The card's one VERLEGT class covers a date move and a house move alike; the detail page's
-            // notice tells them apart, so it wins and the class is the fallback (#1578).
-            status = primary.status.takeIf { it != EventStatus.SCHEDULED.name } ?: fallback.status,
-            statusNote = primary.statusNote ?: fallback.statusNote
+                    ?: primary.artists.ifEmpty { fallback.artists }
         )
 }
 

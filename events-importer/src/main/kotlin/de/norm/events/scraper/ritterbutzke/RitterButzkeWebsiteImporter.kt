@@ -44,23 +44,6 @@ class RitterButzkeWebsiteImporter(
         document: Document,
         url: String
     ): ScrapedEvent? = detailPageScraper.scrape(document, url)
-
-    /**
-     * Merges detail-page data ([primary]) with listing data ([fallback]). Both render the same
-     * rendered-date-wins title and date, so the detail page wins and the listing backstops it —
-     * including the poster, served at the same URL.
-     */
-    override fun fillGapsFromOverview(
-        primary: ScrapedEvent,
-        fallback: ScrapedEvent
-    ): ScrapedEvent =
-        primary.copy(
-            eventDate = primary.eventDate.takeIf { it != UNRESOLVED_EVENT_DATE } ?: fallback.eventDate,
-            imageUrl = primary.imageUrl ?: fallback.imageUrl,
-            eventType = primary.eventType ?: fallback.eventType,
-            genre = primary.genre ?: fallback.genre,
-            artists = primary.artists.ifEmpty { fallback.artists }
-        )
 }
 
 val RITTER_BUTZKE_LIMITATIONS =

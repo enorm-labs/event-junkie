@@ -48,23 +48,6 @@ class SodaWebsiteImporter(
         document: Document,
         url: String
     ): ScrapedEvent? = detailPageScraper.scrape(document, url)
-
-    /**
-     * Merges detail-page data ([primary]) with overview data ([fallback]). The detail page is
-     * authoritative and carries everything the overview lacks (start time, prices, description,
-     * status). Only the date (year-inferred there, exact here), flyer and ticket link fall back,
-     * so a detail page missing one still yields a complete event. Type is `PARTY` on both pages
-     * and neither derives artists or promoters, so nothing else to reconcile.
-     */
-    override fun fillGapsFromOverview(
-        primary: ScrapedEvent,
-        fallback: ScrapedEvent
-    ): ScrapedEvent =
-        primary.copy(
-            eventDate = primary.eventDate.takeIf { it != UNRESOLVED_EVENT_DATE } ?: fallback.eventDate,
-            imageUrl = primary.imageUrl ?: fallback.imageUrl,
-            ticketUrl = primary.ticketUrl ?: fallback.ticketUrl
-        )
 }
 
 val SODA_LIMITATIONS =

@@ -109,15 +109,10 @@ class GaertenDerWeltWebsiteImporter(
         row: ScrapedEvent
     ): ScrapedEvent {
         val subtitle = detail.subtitle ?: row.subtitle
-        return detail.copy(
+        return detail.withGapsFrom(row).copy(
             eventDate = row.eventDate,
             startTime = row.startTime,
             eventType = row.eventType,
-            subtitle = subtitle,
-            imageUrl = detail.imageUrl ?: row.imageUrl,
-            ticketUrl = detail.ticketUrl ?: row.ticketUrl,
-            soldOut = detail.soldOut || row.soldOut,
-            status = detail.status.takeIf { it != EventStatus.SCHEDULED.name } ?: row.status,
             artists = buildArtistsForEventType(detail.title, subtitle = subtitle, eventType = row.eventType)
         )
     }

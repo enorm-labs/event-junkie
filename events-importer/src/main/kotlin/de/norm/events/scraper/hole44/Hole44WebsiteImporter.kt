@@ -44,32 +44,6 @@ class Hole44WebsiteImporter(
         document: Document,
         url: String
     ): ScrapedEvent? = detailPageScraper.scrape(document, url)
-
-    /**
-     * Merges detail-page data ([primary]) with overview data ([fallback]). The detail page is
-     * authoritative and carries what the overview lacks (description, image, promoter, doors
-     * time); shared fields (date, start time, genre, status, artists) prefer the detail value and
-     * fall back to the overview.
-     */
-    override fun fillGapsFromOverview(
-        primary: ScrapedEvent,
-        fallback: ScrapedEvent
-    ): ScrapedEvent =
-        primary.copy(
-            eventDate = primary.eventDate.takeIf { it != UNRESOLVED_EVENT_DATE } ?: fallback.eventDate,
-            subtitle = primary.subtitle ?: fallback.subtitle,
-            description = primary.description ?: fallback.description,
-            doorsTime = primary.doorsTime ?: fallback.doorsTime,
-            startTime = primary.startTime ?: fallback.startTime,
-            imageUrl = primary.imageUrl ?: fallback.imageUrl,
-            genre = primary.genre ?: fallback.genre,
-            // A relocation/cancellation note may render on the overview but not the detail header, so keep
-            // any non-scheduled overview status when the detail page reports plain SCHEDULED.
-            status = primary.status.takeIf { it != EventStatus.SCHEDULED.name } ?: fallback.status,
-            statusNote = primary.statusNote ?: fallback.statusNote,
-            promoters = primary.promoters.ifEmpty { fallback.promoters },
-            artists = primary.artists.ifEmpty { fallback.artists }
-        )
 }
 
 val HOLE44_LIMITATIONS =

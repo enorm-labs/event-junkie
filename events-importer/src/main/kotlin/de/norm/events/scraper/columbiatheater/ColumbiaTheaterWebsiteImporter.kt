@@ -48,26 +48,6 @@ class ColumbiaTheaterWebsiteImporter(
         document: Document,
         url: String
     ): ScrapedEvent? = detailPageScraper.scrape(document, url)
-
-    /**
-     * Merges detail-page data ([primary]) with overview data ([fallback]). The detail page is
-     * authoritative and carries the fields the overview lacks (times, description, ticket URL,
-     * presenters); shared fields (date, subtitle, image, status, artists) prefer the detail value
-     * and fall back to the listing.
-     */
-    override fun fillGapsFromOverview(
-        primary: ScrapedEvent,
-        fallback: ScrapedEvent
-    ): ScrapedEvent =
-        primary.copy(
-            eventDate = primary.eventDate.takeIf { it != UNRESOLVED_EVENT_DATE } ?: fallback.eventDate,
-            subtitle = primary.subtitle ?: fallback.subtitle,
-            imageUrl = primary.imageUrl ?: fallback.imageUrl,
-            // A cancellation/relocation/reschedule may be flagged on only one page: keep the non-default status.
-            status = primary.status.takeIf { it != EventStatus.SCHEDULED.name } ?: fallback.status,
-            artists = primary.artists.ifEmpty { fallback.artists },
-            promoters = primary.promoters.ifEmpty { fallback.promoters }
-        )
 }
 
 val COLUMBIA_THEATER_LIMITATIONS =

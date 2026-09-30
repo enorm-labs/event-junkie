@@ -54,20 +54,11 @@ class LogeWebsiteImporter(
         primary: ScrapedEvent,
         fallback: ScrapedEvent
     ): ScrapedEvent =
-        primary.copy(
-            // Detail pages carry the real date; fall back only if absent (sentinel).
-            eventDate = primary.eventDate.takeIf { it != UNRESOLVED_EVENT_DATE } ?: fallback.eventDate,
-            startTime = primary.startTime ?: fallback.startTime,
+        primary.withGapsFrom(fallback).copy(
             // Overview mainImage.url is the canonical original; prefer it over the JSON-LD resized variant.
             imageUrl = fallback.imageUrl ?: primary.imageUrl,
             // Event type and artists are derived on the overview only.
-            eventType = fallback.eventType ?: primary.eventType,
-            // The genre is the overview's venue default; the detail page sets none.
-            genre = fallback.genre,
-            artists = primary.artists.ifEmpty { fallback.artists },
-            // The end is in the overview JSON alone (#1408).
-            endDate = fallback.endDate,
-            endTime = fallback.endTime
+            eventType = fallback.eventType ?: primary.eventType
         )
 }
 

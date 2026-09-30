@@ -40,23 +40,6 @@ class ModusWebsiteImporter(
         document: Document,
         url: String
     ): ScrapedEvent? = detailPageScraper.scrape(document, url)
-
-    /**
-     * Merges detail-page data ([primary]) with listing data ([fallback]). Both render the same
-     * date and title, so the detail page wins and the listing backstops it. The poster comes from
-     * the listing when the detail page has none; the listing's date fills in only if the detail
-     * `h2` was unparseable.
-     */
-    override fun fillGapsFromOverview(
-        primary: ScrapedEvent,
-        fallback: ScrapedEvent
-    ): ScrapedEvent =
-        primary.copy(
-            eventDate = primary.eventDate.takeIf { it != UNRESOLVED_EVENT_DATE } ?: fallback.eventDate,
-            imageUrl = primary.imageUrl ?: fallback.imageUrl,
-            eventType = primary.eventType ?: fallback.eventType,
-            artists = primary.artists.ifEmpty { fallback.artists }
-        )
 }
 
 /** Nothing this source withholds needs declaring (#715). */
