@@ -22,6 +22,9 @@ gh api repos/enorm-labs/event-junkie/deployments --jq '.[0] | {environment, ref,
 scripts/version.sh deserved                                                # what the commits since the last tag earn
 gh run list --workflow=release.yml --branch main --limit 1                 # green? the cut refuses a red one
 gh workflow run cut-release.yml -f dry_run=false
+
+# After it deploys, in any agent session: /post-release production
+#   runs the checks, forced imports and scripts that merged pull requests left under "## After deploy".
 ```
 
 **Nothing here deploys from CI, and nothing can.** A green Actions run means "the artifact was published", not "it is live" — those are minutes apart. §When a

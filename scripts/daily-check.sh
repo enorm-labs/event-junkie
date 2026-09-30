@@ -12,7 +12,9 @@
 # --hours defaults to 24 and sets what counts as new. The keys: `failed_runs` (per workflow, whether
 # the latest finished run is still red), `release_main` (the latest release.yml on main, whatever its
 # age), `bot_issues` (every open issue automation opened), `reports` (whether the latest plausibility
-# and OWASP report was answered or filed), `security`, `pull_requests`, `release` and `unclosed`. An
+# and OWASP report was answered or filed), `security`, `pull_requests`, `release`, `unclosed` and
+# `after_deploy` (merged pull requests whose after-deploy steps are still unticked, and whether the
+# latest release carries them). An
 # API that refuses answers `{"error": …}` in place of its key, never an empty list. Exit code: 0, or 2
 # on bad arguments.
 set -euo pipefail
@@ -166,6 +168,26 @@ unclosed() {
     done <<<"$merged" | jq -s .
 }
 
+# A merged pull request labelled `after-deploy` keeps its label until `/post-release` ticks every step.
+# `released`: whether the latest release tag contains its merge commit, so production runs it.
+after_deploy() {
+    local tag prs number sha
+    tag=$(gh release view -R "$REPO" --json tagName -q .tagName 2>/dev/null || true)
+    prs=$(gh pr list -R "$REPO" --state merged --label after-deploy --limit 100 --json number,title,mergeCommit,body)
+    printf '%s' "$prs" | jq -r '.[] | "\(.number) \(.mergeCommit.oid)"' | while read -r number sha; do
+        [ -n "$sha" ] || continue
+        local released=false
+        if [ -n "$tag" ] && gh api "repos/$REPO/compare/$tag...$sha" --jq '.status' 2>/dev/null | grep -qE '^(behind|identical)$'; then
+            released=true
+        fi
+        printf '%s' "$prs" | jq -c --argjson n "$number" --argjson released "$released" --arg tag "$tag" '
+            .[] | select(.number == $n) |
+            {pr: .number, title, released: $released, release: $tag,
+             unticked: [(.body | capture("(?s)## After deploy[^\n]*\n(?<s>.*?)(\n## |$)").s // "")
+                        | split("\n")[] | select(test("^ *- \\[ \\] ")) | .[0:160]]}'
+    done | jq -s .
+}
+
 jq -n --arg repo "$REPO" --arg since "$SINCE" --argjson hours "$HOURS" \
     --argjson failed_runs "$(failed_runs)" \
     --argjson release_main "$(release_main)" \
@@ -177,6 +199,8 @@ jq -n --arg repo "$REPO" --arg since "$SINCE" --argjson hours "$HOURS" \
     --argjson renovate_dashboard "$(renovate_dashboard)" \
     --argjson release "$(release)" \
     --argjson unclosed "$(unclosed)" \
+    --argjson after_deploy "$(after_deploy)" \
     '{repo: $repo, since: $since, hours: $hours, failed_runs: $failed_runs, release_main: $release_main,
       bot_issues: $bot_issues, reports: [$plausibility, $owasp], security: $security,
-      pull_requests: $pull_requests, renovate_dashboard: $renovate_dashboard, release: $release, unclosed: $unclosed}'
+      pull_requests: $pull_requests, renovate_dashboard: $renovate_dashboard, release: $release, unclosed: $unclosed,
+      after_deploy: $after_deploy}'
