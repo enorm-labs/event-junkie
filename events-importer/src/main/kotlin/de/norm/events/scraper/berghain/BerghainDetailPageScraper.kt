@@ -84,9 +84,24 @@ class BerghainDetailPageScraper {
             pricePresale = tickets.presale,
             priceBoxOffice = tickets.boxOffice,
             soldOut = tickets.soldOut,
-            artists = parseRunningOrder(content)
+            artists = parseRunningOrder(content),
+            promoters = parsePromoters(content)
         )
     }
+
+    /**
+     * The organiser line a hired night ends with, `Eine Veranstaltung von Dynamite Konzerte` (or the
+     * English `An event by …`), split into co-promoters at `, `, `&`, `und` and `and`. The club's own
+     * nights carry no such line.
+     */
+    private fun parsePromoters(content: Element): List<String> =
+        content
+            .select("p")
+            .firstNotNullOfOrNull { ORGANISER_LINE.matchEntire(it.text().trim())?.groupValues?.get(1) }
+            ?.split(CO_PROMOTER_SEPARATOR)
+            ?.map { it.trim() }
+            ?.filter { it.isNotBlank() }
+            .orEmpty()
 
     /**
      * Every act of the running order with its set's start and end (#2002), or none before the venue
@@ -181,3 +196,9 @@ class BerghainDetailPageScraper {
         private const val SOLD_OUT_MARKER = "ausverkauft"
     }
 }
+
+/** The organiser line: `Eine Veranstaltung von Sumpfjungs`, `An event by …`. */
+private val ORGANISER_LINE = Regex("""(?:eine\s+veranstaltung\s+von|an\s+event\s+by)\s+(.+?)\.?""", RegexOption.IGNORE_CASE)
+
+/** What joins co-promoters in the organiser line. */
+private val CO_PROMOTER_SEPARATOR = Regex("""\s*(?:,|&|\bund\b|\band\b)\s*""", RegexOption.IGNORE_CASE)

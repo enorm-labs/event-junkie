@@ -33,6 +33,30 @@ class BerghainDetailPageScraperTest {
             .readText()
 
     @Test
+    fun `reads the organiser line of a hired night as its promoter`() {
+        // Aircraft at Kantine am Berghain, fetched 2026-09-30: "Eine Veranstaltung von Dynamite Konzerte".
+        val url = "https://www.berghain.berlin/de/event/82605/"
+        val event = scraper.scrape(Jsoup.parse(loadFixture("scraper/berghain/berghain-detail-organiser.html"), url), url)!!
+
+        event.promoters shouldBe listOf("Dynamite Konzerte")
+    }
+
+    @Test
+    fun `splits co-promoters in the organiser line and reads none on a club night`() {
+        fun promotersOf(line: String): List<String> {
+            val html =
+                loadFixture("scraper/berghain/berghain-detail-organiser.html")
+                    .replace("Eine Veranstaltung von <a href=\"https://dynamitekonzerte.com\">Dynamite Konzerte</a>", line)
+            return scraper.scrape(Jsoup.parse(html, "https://www.berghain.berlin/de/event/1/"), "https://www.berghain.berlin/de/event/1/")!!.promoters
+        }
+
+        promotersOf("Eine Veranstaltung von Sumpfjungs") shouldBe listOf("Sumpfjungs")
+        promotersOf("An event by Loft &amp; Trinity Music und Greyzone") shouldBe listOf("Loft", "Trinity Music", "Greyzone")
+        val url = "https://www.berghain.berlin/de/event/80835/"
+        scraper.scrape(Jsoup.parse(loadFixture("scraper/berghain/berghain-detail-full.html"), url), url)!!.promoters.shouldBeEmpty()
+    }
+
+    @Test
     fun `parses a fully-populated detail page`() {
         val url = "https://www.berghain.berlin/de/event/80835/"
         val event = scraper.scrape(Jsoup.parse(loadFixture("scraper/berghain/berghain-detail-full.html"), url), url)!!
