@@ -7,6 +7,7 @@ import de.norm.events.genretag.normalizeGenre
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.buildArtistsForEventType
+import de.norm.events.scraper.inferConcertVenueType
 import de.norm.events.scraper.parseGermanDate
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.resolveUrl
@@ -113,24 +114,15 @@ class BadehausOverviewPageScraper {
      *
      * **The listing card carries no category**; the detail page does, and its category wins in
      * [BadehausWebsiteImporter.fillGapsFromOverview] (#1950). This is the fallback for a page
-     * without one: a best-effort heuristic on the name — pub quizzes, parties/themed club
-     * nights and screenings by keyword, everything else `CONCERT` — a live-music venue where
-     * concerts are by far the most common event. A themed night classified `PARTY` matters beyond
+     * without one: the shared concert-venue rule with [BADEHAUS_KEYWORDS], everything else
+     * `CONCERT` — a live-music venue where concerts are by far the most common event. A themed night classified `PARTY` matters beyond
      * the label: a `PARTY` extracts no artists, so its event-name title is not minted as a fake act
      * (see [buildArtistsForEventType]).
      */
     private fun inferEventType(
         title: String,
         slug: String
-    ): String {
-        val haystack = "$title $slug".lowercase()
-        return when {
-            QUIZ_KEYWORDS.any { it in haystack } -> EventType.QUIZ.name
-            PARTY_KEYWORDS.any { it in haystack } -> EventType.PARTY.name
-            SCREENING_KEYWORDS.any { it in haystack } -> EventType.SCREENING.name
-            else -> EventType.CONCERT.name
-        }
-    }
+    ): String = inferConcertVenueType("$title $slug", null, BADEHAUS_KEYWORDS)
 
     /**
      * The subtitle line — the card's `<p>` that is neither the `.eventinfo` line nor the "MORE"
@@ -196,18 +188,16 @@ class BadehausOverviewPageScraper {
         private const val CANCELLED_CLASS = "ABGESAGT"
         private const val RELOCATED_CLASS = "VERLEGT"
 
-        private val QUIZ_KEYWORDS = listOf("quiz")
-
         /**
-         * Party signals in the title/slug. Beyond `party`/`karaoke`, these catch themed club nights
-         * whose titles are event names, not acts — a themed `… Night`, a decade night (`TOP90s …`),
-         * party-décor words (`Konfetti`, `Glitzer`). Kept narrow to avoid flipping a real band to PARTY
-         * (which would drop its headliner): no `jam` (would hit "Pearl Jam"), no `allstars` (a real
-         * act, "Heavy Hands Allstars").
+         * Badehaus's own cues beside the shared ones: themed club nights whose titles are event
+         * names, not acts — a themed `… Night`, a decade night (`TOP90s …`), party-décor words
+         * (`Konfetti`, `Glitzer`) — and a World Cup screening. Kept narrow to avoid flipping a
+         * real band to PARTY (which would drop its headliner): no `jam` (would hit "Pearl Jam"),
+         * no `allstars` (a real act, "Heavy Hands Allstars").
          */
-        private val PARTY_KEYWORDS =
-            listOf("party", "karaoke", "night", "konfetti", "glitzer", "90s", "2000s", "2010s")
-        private val SCREENING_KEYWORDS = listOf("screening", "public viewing", "world cup", "live-screening")
+        private val BADEHAUS_KEYWORDS =
+            listOf("night", "nights", "konfetti", "glitzer", "90s", "2000s", "2010s").associateWith { EventType.PARTY.name } +
+                ("world cup" to EventType.SCREENING.name)
 
         /** A `DD.MM.YYYY` date in the event-info line. */
         private val DATE_PATTERN = Regex("""\d{2}\.\d{2}\.\d{4}""")

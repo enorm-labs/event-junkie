@@ -2,7 +2,9 @@ package de.norm.events.scraper.binuu
 
 import de.norm.events.event.EventType
 import de.norm.events.scraper.BERLIN
+import de.norm.events.scraper.DJ_SET_PARTY_KEYWORDS
 import de.norm.events.scraper.WHITESPACE
+import de.norm.events.scraper.inferConcertVenueType
 import de.norm.events.scraper.stringOrNull
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
@@ -238,26 +240,17 @@ private val RELOCATION_CODES = setOf("r", "rp")
 
 /**
  * Best-effort [EventType][de.norm.events.event.EventType] from title/subtitle, since Bi Nuu has
- * no category field anywhere. A live-music venue, so `CONCERT` by default; in priority order,
- * `quiz` to `QUIZ`; a known recurring party series ([BINUU_PARTY_SERIES]: GrooveJet, Ultra Night,
- * Boheme Sauvage, which list their own name as title and sole performer, edition number
- * ignored) to `PARTY`; a keyword (`party`, `karaoke`, `dj set`, `club night`, `rave`) to
- * `PARTY`. The description is not sniffed: at this metal/rock-leaning venue `dancefloor`/`disco`
- * show up in tour names (Gutalax's "Shit On The Dancefloor" tour is a death-metal gig). Reactive,
- * consistent with Badehaus's `inferEventType` and `NON_ARTIST_NAMES`.
+ * no category field anywhere. A known recurring party series ([BINUU_PARTY_SERIES]: GrooveJet,
+ * Ultra Night, Boheme Sauvage, which list their own name as title and sole performer, edition
+ * number ignored) is a `PARTY`; everything else goes by the shared concert-venue rule with DJ
+ * sets as parties. The description is not sniffed: at this metal/rock-leaning venue
+ * `dancefloor`/`disco` show up in tour names (Gutalax's "Shit On The Dancefloor" tour is a
+ * death-metal gig).
  */
 internal fun inferBinuuEventType(
     title: String,
     subtitle: String?
-): String {
-    val nameHaystack = "$title ${subtitle.orEmpty()}".lowercase()
-    return when {
-        "quiz" in nameHaystack -> EventType.QUIZ.name
-        isBinuuPartySeries(title) -> EventType.PARTY.name
-        PARTY_NAME_KEYWORDS.any { it in nameHaystack } -> EventType.PARTY.name
-        else -> EventType.CONCERT.name
-    }
-}
+): String = if (isBinuuPartySeries(title)) EventType.PARTY.name else inferConcertVenueType(title, subtitle, DJ_SET_PARTY_KEYWORDS)
 
 /**
  * Recurring party series that name themselves as the event and sole performer; lowercase,
@@ -274,8 +267,5 @@ private fun isBinuuPartySeries(title: String): Boolean =
         .replace(WHITESPACE, " ")
         .lowercase()
         .replace(BINUU_TRAILING_EDITION, "") in BINUU_PARTY_SERIES
-
-/** Party/DJ-night phrases that, in a title or subtitle, mark a non-concert night. */
-private val PARTY_NAME_KEYWORDS = listOf("party", "karaoke", "dj set", "dj-set", "club night", "clubnight", "rave")
 
 private const val DATE_LENGTH = 10

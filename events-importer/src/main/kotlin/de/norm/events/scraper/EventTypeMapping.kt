@@ -189,6 +189,58 @@ private fun classifyByTitleKeyword(title: String): String? {
 fun inferConcertVenueType(title: String): String = classifyByTitleKeyword(title) ?: EventType.CONCERT.name
 
 /**
+ * [inferConcertVenueType] for a venue with its own title vocabulary or a subtitle line. The
+ * [venueKeywords] map a keyword to its type and are checked after the shared cues, so a
+ * "Quiz Night" stays a quiz where `night` marks a party. Each is matched as a whole word
+ * ([containsVenueKeyword]).
+ *
+ * The [subtitle] is a format note beside the name, so only a party or quiz cue in it types the
+ * night: a market or show word there describes a real act's evening. A subtitle naming a tour
+ * ("Indie Rave Tour 2026") is the act's tour title and types nothing, and an after-show there
+ * ("+ Aftershow: FISH'N'CANDY") follows the concert without replacing it.
+ */
+fun inferConcertVenueType(
+    title: String,
+    subtitle: String?,
+    venueKeywords: Map<String, String> = emptyMap()
+): String {
+    fun classify(text: String): String? =
+        classifyByTitleKeyword(text) ?: venueKeywords.entries.firstOrNull { (keyword, _) -> containsVenueKeyword(text, keyword) }?.value
+    return classify(title)
+        ?: subtitle
+            ?.takeUnless { TOUR_NAME.containsMatchIn(it) }
+            ?.let { classify(AFTER_PARTY.replace(it, "")) }
+            ?.takeIf { it in SUBTITLE_CUE_TYPES }
+        ?: EventType.CONCERT.name
+}
+
+/** Title keywords of a venue that bills DJ sets under the act's name as club nights. */
+val DJ_SET_PARTY_KEYWORDS: Map<String, String> = mapOf("dj set" to EventType.PARTY.name, "dj-set" to EventType.PARTY.name)
+
+/** The types a subtitle cue may set on its own ([inferConcertVenueType]). */
+private val SUBTITLE_CUE_TYPES = setOf(EventType.PARTY.name, EventType.QUIZ.name)
+
+/** A tour named in a subtitle: "Indie Rave Tour 2026", "World Tour". */
+private val TOUR_NAME = Regex("""\btour\b""", RegexOption.IGNORE_CASE)
+
+/** An after-show or after-party named in a subtitle. */
+private val AFTER_PARTY = Regex("""after[\s-]?(?:show|party)""", RegexOption.IGNORE_CASE)
+
+/**
+ * Whether [text] holds [keyword] as a whole word. The boundary applies only on a side where the
+ * keyword has a letter: `night` misses "Nightwish" and "Midnight", while `90s` still finds
+ * "TOP90s".
+ */
+private fun containsVenueKeyword(
+    text: String,
+    keyword: String
+): Boolean {
+    val before = if (keyword.first().isLetter()) """(?<!\p{L})""" else ""
+    val after = if (keyword.last().isLetter()) """(?!\p{L})""" else ""
+    return Regex(before + Regex.escape(keyword) + after, RegexOption.IGNORE_CASE).containsMatchIn(text)
+}
+
+/**
  * Title-based inference for a venue that categorises only some events: Monarch flags concerts
  * with a "(KONZERT)" suffix and emits nothing for its DJ nights. An unmarked event goes by
  * [classifyByTitleKeyword], falling back to [OTHER][EventType.OTHER], deliberately not CONCERT:

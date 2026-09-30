@@ -1,16 +1,18 @@
 package de.norm.events.scraper.gretchen
 
 import de.norm.events.event.EventType
+import de.norm.events.scraper.DJ_SET_PARTY_KEYWORDS
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.WHITESPACE
 import de.norm.events.scraper.gretchen.GretchenOverviewPageScraper.Companion.COLLAB_SEPARATOR
 import de.norm.events.scraper.gretchen.GretchenOverviewPageScraper.Companion.DROP_LINE_PATTERN
-import de.norm.events.scraper.gretchen.GretchenOverviewPageScraper.Companion.PARTY_TITLE_KEYWORDS
 import de.norm.events.scraper.gretchen.GretchenOverviewPageScraper.Companion.PRESENTS_PREFIX
 import de.norm.events.scraper.gretchen.GretchenOverviewPageScraper.Companion.RESIDUAL_DASH
 import de.norm.events.scraper.hrefAt
+import de.norm.events.scraper.inferConcertVenueType
+import de.norm.events.scraper.isFestivalTitle
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.parseEventStatus
 import de.norm.events.scraper.parseGermanDate
@@ -140,23 +142,22 @@ class GretchenOverviewPageScraper {
 
     /**
      * Best-effort [EventType] from the title, since Gretchen exposes no machine-readable category
-     * (like Bi Nuu and Badehaus). A live-music-leaning club, so `CONCERT` by default; only clear
-     * signals flip it: `quiz` to `QUIZ`; a word-anchored `festival` to `FESTIVAL` (`AFRO LATIN
-     * FESTIVAL`, `Berlin Folk Festival …`, the boundary keeping `WRESTLEFEST` out); a
-     * [PARTY_TITLE_KEYWORDS] hit (`party`, `club night`, `rave`, `karaoke`, `dj set`) to `PARTY`
-     * (`… CLUB NIGHT`, `BALKANBEATS - Robert Soko DJ-Set`). Only the title, never the genre list,
-     * which carries literal tokens (`90's Rave`, `House`) that would mislabel a concert. Reactive:
-     * `AFRO HAUS` and `TESTOSTERONE` stay `CONCERT` until a signal is added.
+     * (like Bi Nuu and Badehaus). A live-music-leaning club, so the shared concert-venue rule, with
+     * a DJ set (`BALKANBEATS - Robert Soko DJ-Set`) as a party; a concert whose title names a
+     * festival is a `FESTIVAL`. Only
+     * the title, never the genre list, which carries literal tokens (`90's Rave`, `House`) that
+     * would mislabel a concert.
      */
-    private fun inferEventType(title: String): String {
-        val haystack = title.lowercase()
-        return when {
-            "quiz" in haystack -> EventType.QUIZ.name
-            FESTIVAL_MARKER.containsMatchIn(haystack) -> EventType.FESTIVAL.name
-            PARTY_TITLE_KEYWORDS.any { it in haystack } -> EventType.PARTY.name
-            else -> EventType.CONCERT.name
+    private fun inferEventType(title: String): String =
+        inferConcertVenueType(title, null, DJ_SET_PARTY_KEYWORDS).let {
+            if (it == EventType.CONCERT.name &&
+                isFestivalTitle(title)
+            ) {
+                EventType.FESTIVAL.name
+            } else {
+                it
+            }
         }
-    }
 
     /**
      * Parses the date from the `.date` cell's `<strong>`, a full `DD.MM.YYYY` ("10.07.2026").
@@ -381,12 +382,6 @@ class GretchenOverviewPageScraper {
 
         /** A trailing `+<tag>` stylisation on a lineup line (e.g. `OKVSHO +experience`). */
         private val TRAILING_PLUS_TAG = Regex("""\s*\+\s*\S+\s*$""")
-
-        /** A word-anchored `festival` marker in a title → a festival (keeps `WRESTLEFEST` out). */
-        private val FESTIVAL_MARKER = Regex("""\bfestival\b""", RegexOption.IGNORE_CASE)
-
-        /** Party/club-night phrases that, in a title, mark a non-concert night. */
-        private val PARTY_TITLE_KEYWORDS = listOf("party", "club night", "clubnight", "rave", "karaoke", "dj set", "dj-set")
 
         /**
          * An inline collaboration credit: `feat.` / `ft.` / `featuring` / `with` need surrounding
