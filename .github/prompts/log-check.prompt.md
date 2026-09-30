@@ -51,7 +51,7 @@ One JSON object per environment, with these keys:
 | `totals`       | Lines per component and severity. A component far above its usual volume is a signal of its own                |
 | `errors`       | `ERROR` lines grouped by component, logger, error type and message; digits in the message read `N`             |
 | `warnings`     | The same for `WARN`                                                                                            |
-| `unstructured` | Lines that are not JSON (`severity = '0'`: nginx, Flux, helm test pods, k6) and name a failure                 |
+| `unstructured` | Non-JSON lines (`severity = '0'`: nginx, Flux, helm tests, k6) that name a failure. Access lines only at 5xx   |
 | `http5xx`      | Answers with `httpstatus >= 500`                                                                               |
 | `k8s_warnings` | Kubernetes `Warning` events by reason and note; `n` counts occurrences, not re-sends                           |
 | `alerts`       | Every row in `alert_history`: each firing, with its rule and value. Since #877 each one is a mail to `alerts@` |
