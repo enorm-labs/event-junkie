@@ -6,6 +6,7 @@ import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
 import de.norm.events.scraper.imgSrcAt
 import de.norm.events.scraper.parsePriceValue
 import de.norm.events.scraper.textAt
+import de.norm.events.scraper.textLines
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
@@ -66,13 +67,28 @@ class AlteKantineDetailPageScraper(
             sourceId = "${EventSource.ALTE_KANTINE.sourceIdPrefix}$postId",
             // A clean numeric door price maps to the box office; otherwise the raw label is a note
             // ("frei", "mit Passwort") that free-entry detection and the frontend can still use. A value
-            // with no letter or digit (a lone "€") is noise and dropped.
+            // with no letter or digit (a lone "€") is noise and dropped. A night that leaves the field empty
+            // may still say it in the text: the Beer Pong nights' "Freier Eintritt für Alle".
             priceBoxOffice = boxOffice,
-            priceNote = eintritt?.takeIf { boxOffice == null && it.any(Char::isLetterOrDigit) },
+            priceNote =
+                eintritt?.takeIf { boxOffice == null && it.any(Char::isLetterOrDigit) }
+                    ?: freeEntryLine(content).takeIf { boxOffice == null },
             artists = buildAlteKantineArtists(title, detailField(content, "DJ"), eventType)
         )
     }
 }
+
+/** A description line that states free entry: "Freier Eintritt für Alle", "Eintritt frei". */
+private val FREE_ENTRY_LINE = Regex("""\bfreier?\s+eintritt\b|\beintritt\s+frei\b""", RegexOption.IGNORE_CASE)
+
+/** The description's own line stating free entry, read per `<br>` line rather than per paragraph. */
+private fun freeEntryLine(content: Element): String? =
+    content
+        .selectFirst("div.line-height-28")
+        ?.select("p")
+        ?.flatMap { it.textLines() }
+        ?.map { it.trim() }
+        ?.firstOrNull { FREE_ENTRY_LINE.containsMatchIn(it) }
 
 /** Trailing " – Alte Kantine" site name on the page `<title>`, stripped to leave the event title. */
 private val SITE_TITLE_SUFFIX = Regex("""\s*[–—-]\s*Alte Kantine\s*$""", RegexOption.IGNORE_CASE)
