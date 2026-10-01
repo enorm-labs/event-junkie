@@ -9,8 +9,10 @@ import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.attrAt
 import de.norm.events.scraper.cleanEventTitle
+import de.norm.events.scraper.euroAmounts
 import de.norm.events.scraper.inferUnmarkedTitleType
 import de.norm.events.scraper.parseIsoDate
+import de.norm.events.scraper.parseLabelledPrices
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.textAt
 import de.norm.events.scraper.textLines
@@ -18,6 +20,7 @@ import de.norm.events.slug.SlugGenerator
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
+import java.math.BigDecimal
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
@@ -49,7 +52,8 @@ import java.time.LocalTime
  *
  * Those links also type the event: no category is published, and titles are series names
  * rather than formats, so a billed DJ lineup is the best evidence of a club night. See [eventTypeOf].
-
+ *
+ * The price is a body line that opens with its own label, in no fixed form; see [parsePankePrice].
  *
  * @see PankeWebsiteImporter for the HTTP fetch orchestrator.
  */
@@ -100,6 +104,7 @@ class PankeProgrammePageScraper {
         }
         val lineup = withTimetable(residentAdvisorLineup(article), article, eventDate)
         val times = parseTimes(article)
+        val price = parsePankePrice(article.select("$BODY_COLUMN p").flatMap { it.textLines() })
 
         return ScrapedEvent(
             title = title,
@@ -109,6 +114,9 @@ class PankeProgrammePageScraper {
             doorsTime = times.doors,
             startTime = times.start,
             imageUrl = parseBackgroundImageUrl(article.attr("style")),
+            pricePresale = price.presale,
+            priceBoxOffice = price.boxOffice,
+            priceNote = price.note,
             sourceUrl = sourceUrl,
             // No per-event page, so the WordPress post id is the identity.
             sourceId = "${EventSource.PANKE.sourceIdPrefix}$postId",
@@ -211,6 +219,58 @@ private data class EventTimes(
 )
 
 /**
+ * The price from the first of [lines] that opens with a price label and names a figure.
+ *
+ * `Tickets: 20€`, `ENTRY 15€/18€/20€/25€`, `Cost: 12 euro`; a line without its label, such as
+ * `15€ (link in bio)`, is prose. A labelled presale or door figure wins. Otherwise `Tickets` is
+ * the presale and every other label the door, as at the venues that print `Eintritt`. A tier
+ * stores its lowest figure and keeps the line as the note (#2083). A donation is only a note.
+ */
+internal fun parsePankePrice(lines: List<String>): PankePrice {
+    val line =
+        lines
+            .map { it.trim() }
+            .firstOrNull { PRICE_LINE.containsMatchIn(it) && euroAmounts(it).isNotEmpty() }
+            ?: return PankePrice()
+    val labelled = parseLabelledPrices(line)
+    val tiered = TIER.containsMatchIn(line)
+    val donation = DONATION.containsMatchIn(line)
+    val note = line.takeIf { euroAmounts(it).size > 1 || tiered || donation }
+    return when {
+        labelled.presale != null || labelled.boxOffice != null -> {
+            PankePrice(labelled.presale, labelled.boxOffice, note)
+        }
+
+        donation -> {
+            PankePrice(note = line)
+        }
+
+        else -> {
+            val lowest = (if (tiered) tierFigures(line) else euroAmounts(line)).minOrNull()
+            if (line.startsWith(TICKETS_LABEL, ignoreCase = true)) {
+                PankePrice(presale = lowest, note = note)
+            } else {
+                PankePrice(boxOffice = lowest, note = note)
+            }
+        }
+    }
+}
+
+/** An event's price as the body states it; every part may be absent. */
+internal data class PankePrice(
+    val presale: BigDecimal? = null,
+    val boxOffice: BigDecimal? = null,
+    val note: String? = null
+)
+
+/** Every figure of a `10/15 euro` tier, where only the last one carries the currency. */
+private fun tierFigures(line: String): List<BigDecimal> =
+    TIER_FIGURE
+        .findAll(line)
+        .mapNotNull { it.value.replace(',', '.').toBigDecimalOrNull() }
+        .toList()
+
+/**
  * The poster out of an article's inline `background-image: url(…)`, the only place the listing
  * carries one — the template renders no `<img>` for an event.
  */
@@ -258,6 +318,28 @@ private const val CLOCK_LENGTH = 5
 
 /** The expanded body's prose column, where the pair is printed; the first column repeats the date. */
 private const val BODY_COLUMN = ".post-content-full .et_pb_column_3_4"
+
+/**
+ * A body line that opens with a price label. The label may run straight into the figure, as the
+ * venue's `<strong>ENTRY</strong>15€` does once flattened.
+ */
+private val PRICE_LINE =
+    Regex(
+        """^(?:tickets?|entry|eintritt|admission|cost|pre-?sale|vvk|recommended\s+donation|donation)(?!\p{L})""",
+        RegexOption.IGNORE_CASE
+    )
+
+/** The label that makes an unlabelled figure the presale price, as `Tickets: 20€` does. */
+private const val TICKETS_LABEL = "ticket"
+
+/** Two figures joined by a slash, `15€/18€` or `10/15 euro`: a tiered price. */
+private val TIER = Regex("""\d\s*€?\s*/\s*\d""")
+
+/** One figure in a [TIER] line. */
+private val TIER_FIGURE = Regex("""\d+(?:[.,]\d{1,2})?""")
+
+/** A suggested amount rather than a price. */
+private val DONATION = Regex("""\bdonation\b""", RegexOption.IGNORE_CASE)
 
 /** A Resident Advisor artist profile, the page's one unambiguous artist marker. */
 private val RESIDENT_ADVISOR_PROFILE = Regex("""^https?://(?:www\.)?ra\.co/(?:dj|artist)/""", RegexOption.IGNORE_CASE)

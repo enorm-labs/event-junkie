@@ -11,6 +11,7 @@ import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldStartWith
 import org.jsoup.Jsoup
 import org.junit.jupiter.api.Test
+import java.math.BigDecimal
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
@@ -170,14 +171,35 @@ class PankeProgrammePageScraperTest {
     }
 
     @Test
-    fun `publishes no price, the prose stating them in no fixed form`() {
-        // "Cost: 12 euro" on one event, "ENTRY 15€/18€/20€/25€" on another.
-        events.forEach {
-            it.pricePresale.shouldBeNull()
-            it.priceBoxOffice.shouldBeNull()
-            it.priceNote.shouldBeNull()
-            it.ticketUrl.shouldBeNull()
-        }
+    fun `stores a tiered entry line as its lowest figure and keeps the tiers in the note`() {
+        val crave = event("panke:17365")
+        crave.priceBoxOffice shouldBe BigDecimal("15")
+        crave.pricePresale.shouldBeNull()
+        crave.priceNote shouldBe "ENTRY15€/18€/20€/25€" // <strong>ENTRY</strong>15€…, flattened
+    }
+
+    @Test
+    fun `reads a door figure from every cost line and nothing from an event without one`() {
+        // "cost 15 euro", "Cost: 12 euro", "Cost 15 euro" and the tiered ENTRY line; the rest print none.
+        events.associate { it.sourceId to it.priceBoxOffice } shouldBe
+            mapOf(
+                "panke:17378" to null,
+                "panke:17224" to BigDecimal("15"),
+                "panke:17227" to BigDecimal("12"),
+                "panke:17337" to null,
+                "panke:17348" to null,
+                "panke:17361" to null,
+                "panke:17314" to BigDecimal("15"),
+                "panke:17363" to null,
+                "panke:17365" to BigDecimal("15")
+            )
+        events.forEach { it.pricePresale.shouldBeNull() }
+        events.filter { it.sourceId != "panke:17365" }.forEach { it.priceNote.shouldBeNull() }
+    }
+
+    @Test
+    fun `stores no ticket link, the venue linking only Resident Advisor`() {
+        events.forEach { it.ticketUrl.shouldBeNull() }
     }
 
     @Test
