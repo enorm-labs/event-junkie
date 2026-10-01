@@ -249,6 +249,9 @@ enum class EventSource {
     /** Theater im Delphi Berlin – a 1929 silent-cinema building in Weißensee, run as a theatre and concert hall for dance, music theatre and talks. */
     THEATER_IM_DELPHI,
 
+    /** Tiffany Club – a club and event space on Rosmarinstraße in Mitte, behind Unter den Linden: party nights, stand-up comedy and the odd concert. */
+    TIFFANY_CLUB,
+
     /** Tresor Berlin – the techno institution in a disused power plant on Köpenicker Straße, with the Tresor vault, the Globus floor and the Aurora Bar. */
     TRESOR,
 

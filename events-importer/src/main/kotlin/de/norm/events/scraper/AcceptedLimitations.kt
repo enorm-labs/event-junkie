@@ -76,6 +76,7 @@ import de.norm.events.scraper.so36.SO36_LIMITATIONS
 import de.norm.events.scraper.soda.SODA_LIMITATIONS
 import de.norm.events.scraper.supamolly.SUPAMOLLY_LIMITATIONS
 import de.norm.events.scraper.tempodrom.TEMPODROM_LIMITATIONS
+import de.norm.events.scraper.tiffanyclub.TIFFANY_CLUB_LIMITATIONS
 import de.norm.events.scraper.tresor.TRESOR_LIMITATIONS
 import de.norm.events.scraper.urania.URANIA_LIMITATIONS
 import de.norm.events.scraper.urbanspree.URBAN_SPREE_LIMITATIONS
@@ -172,6 +173,7 @@ object AcceptedLimitations {
             SUPAMOLLY_LIMITATIONS,
             TEMPODROM_LIMITATIONS,
             THEATER_IM_DELPHI_LIMITATIONS,
+            TIFFANY_CLUB_LIMITATIONS,
             TRESOR_LIMITATIONS,
             URANIA_LIMITATIONS,
             URBAN_SPREE_LIMITATIONS,

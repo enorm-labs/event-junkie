@@ -22,9 +22,9 @@ repairing live in the [issue tracker](https://github.com/enorm-labs/event-junkie
 
 | Status                              | Meaning                                                                              | Count |
 | ----------------------------------- | ------------------------------------------------------------------------------------ | ----: |
-| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |    91 |
-| 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |    16 |
-| ⛔ [Blocked](#-blocked--deferred)   | Website analyzed, but no usable listings (no programme page, JS-only, or too sparse) |   118 |
+| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |    92 |
+| 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |    14 |
+| ⛔ [Blocked](#-blocked--deferred)   | Website analyzed, but no usable listings (no programme page, JS-only, or too sparse) |   119 |
 | ❓ [Unanalyzed](#-not-analyzed-yet) | URL recorded, but the website still needs a first look                               |    24 |
 
 "Website analyzed" also means the [data model](DATA_MODEL.md) was checked against that source, and no source needed a
@@ -113,6 +113,7 @@ schema change.
 | Supamolly                        | https://www.supamolly.de/?p=programm                        | Club         | Retro PHP; row id is the date stamp; no prices         |
 | Tempodrom                        | https://www.tempodrom.de/programm-und-tickets/              | Concert Hall | schema.org `Event` JSON-LD; whole programme            |
 | Theater im Delphi                | https://theater-im-delphi.de/programm/                      | Concert Hall | One row per performance; prices only in a leak         |
+| Tiffany Club                     | https://tiffany-berlin.de/upcoming-events/                  | Club         | Elementor; year from the weekday; blurb per event page |
 | Tresor                           | https://tresorberlin.com/club/events/                       | Techno Club  | WordPress; floor-grouped lineup; detail pages          |
 | Uber Arena                       | https://www.uber-arena.de/events/all                        | Arena        | AEG CMS; list + detail; no sport imported              |
 | Uber Eats Music Hall             | https://www.uber-eats-music-hall.de/events/all              | Concert Hall | Shares the Uber Arena parsers; month names, no cats    |
@@ -163,8 +164,6 @@ least as heavily as an RA count when the next batch is prioritised.
 | Ballhaus Wedding   | https://www.ballhauswedding.de/veranstaltungen | Other        | Medium   | Wix rich text; 117 entries with year-less dates; no images  |
 | Soulcat            | https://soulcat-berlin.com/programm/           | Bar          | Low      | TEC REST API; one week ahead; titles only                   |
 | Erreichbar         | https://radar.squat.net/en/node/6653           | Other        | Low      | radar group 6653; a fortnightly punk bar night; no site     |
-| Ballhaus Berlin    | https://ballhaus-berlin.de/de/termine/         | Club         | High     | Hand-built CMS; one page since 2019; ISO date attribute     |
-| Tiffany Club       | https://tiffany-berlin.de/upcoming-events/     | Club         | Medium   | Elementor list; year only in the detail URL; ticket links   |
 
 **Fitzroy** needs one decision made once, rather than per event. It is on its summer break: the ACF API holds a dense
 July programme and resumes on 12 September. Only 2 events are upcoming today, so a fixture captured now would be
@@ -192,16 +191,6 @@ handle:
   and dance socials. Ballhaus Wedding's dates have no year, so take it from the month headings. Its entries have no
   fixed shape, so that parser is the most brittle of the ten.
 - **Soulcat** publishes one week ahead, and four of its seven events are one recurring bar night.
-
-**The last two rows came from the Tag der Clubkultur sweep on 2026-10-01:**
-
-- **Ballhaus Berlin** keeps every event since 2019 on one `/de/termine/` page, 492 entries in all. Keep only the
-  future ones, 33 on 2026-10-01. Each `li.termin` carries an ISO `data-olddatum`, and its id `termin_N__datum_M` is
-  stable. The folded body gives doors, start, advance and box-office prices, and a ticket link. The programme mixes
-  swing, jazz, cabaret and club nights. It is not Clärchens Ballhaus or Ballhaus Wedding.
-- **Tiffany Club** shows weekday, day and month without a year. Each detail URL starts with `dd-MM-yyyy`, so take the
-  year from there. The WordPress `event` REST type gives only the title. Drop the "Private Event" placeholders. Most
-  nights are student, Latin and K-pop parties, plus stand-up comedy.
 
 **Gärten der Welt** set the precedent for the next park- or campus-like source when it was
 [imported](#-imported). The row's category decides whether it is programme at all. Its guided tours, workshops, yoga
@@ -282,6 +271,11 @@ resolution exists, this source is easy to parse. Until then, use the programme t
 **Alte Feuerwache THF** is a seasonal interim use at Tempelhof airport. Its 2026 season ends on 17 October. The
 calendar is server-rendered, with dates, categories and line-ups, so it is easy to parse. Look at it again when the
 next season is announced.
+
+**Ballhaus Berlin** is easy to parse but cannot be fetched. Its `robots.txt` answers HTTP 500, and so does every missing
+path, because the server's error page is broken too. RFC 9309 reads a 5xx as a complete disallow, and `RobotsTxtFilter`
+enforces that (#887). The `/de/termine/` page lists every event since 2019, with an ISO date attribute, prices and a
+ticket link. Scaffold it once `robots.txt` answers 200 or 404.
 
 **A handful of tickets is not a programme.** Sisyphos is the case to reason from. Its only own web presence is a
 Shopify merch shop. Its `TICKETS` collection carries one recurring series beside the T-shirts: `generationS`, one night
@@ -468,6 +462,7 @@ the empty Next.js payload rather than the WAF, and a 403 is not evidence that a 
 | Zemin                            | https://www.zeminberlin.de/                    | Other        | Art space; the programme block shows July to September    | Site change                |
 | Slap'd                           | https://slapd.de/                              | Club         | Event-agency site, rendered in the browser; no programme  | Site change                |
 | Alte Feuerwache THF              | https://alte-feuerwache-thf.de/calendar        | Other        | Clean Next.js list, but the season ends on 2026-10-17     | Next season                |
+| Ballhaus Berlin                  | https://ballhaus-berlin.de/de/termine/         | Club         | `robots.txt` answers 500, so every fetch is refused       | Site change                |
 
 ## ❓ Not analyzed yet
 
@@ -540,7 +535,7 @@ Where candidates come from, and what is deliberately left out:
   (#2166). The other 61 came only through the Stressfaktor group, at one-off locations. Schokoladen, Loge, Supamolly, SO36, Clash, Neue Zukunft, ausland and ://about blank were already
   recorded.
 - **Tag der Clubkultur** (<https://tagderclubkultur.berlin/programm/>), the Clubcommission festival week. The 2026
-  programme on 2026-10-01 held 130 events at about 80 places. It gave two Ready rows and eleven Blocked rows.
+  programme on 2026-10-01 held 130 events at about 80 places. It gave one imported venue and twelve Blocked rows.
   These places were left out as out of scope: two cinemas, a comedy club, a museum and a youth dance theatre. Also
   two galleries, a healing space, a hammam, a radio station and a headphone shop. Two more places have no fixed
   address, and no search identified one more.
