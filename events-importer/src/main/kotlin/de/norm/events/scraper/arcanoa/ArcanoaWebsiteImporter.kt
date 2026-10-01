@@ -69,6 +69,10 @@ val ARCANOA_LIMITATIONS =
         AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "the whole programme is one hand-coded page"),
         AcceptedLimitation(LimitedAspect.PRICE, "a night is one line — a date, the act and a genre string — and the page prints no figure anywhere"),
         AcceptedLimitation(LimitedAspect.TICKET_URL, "entry is paid at the door, and the page's only links point at partner sites"),
+        AcceptedLimitation(
+            LimitedAspect.GENRE,
+            "the style tail mixes run-together genre words with support acts and notes, so it stays the subtitle rather than seeding junk tags"
+        ),
         AcceptedLimitation(LimitedAspect.IMAGE, "the page carries no image element at all"),
         AcceptedLimitation(LimitedAspect.DESCRIPTION, "the one line per night is the whole entry, with no blurb after it")
     )
