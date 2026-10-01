@@ -122,7 +122,28 @@ class JunctionBarMusicOverviewPageScraperTest {
             )
         val night = scraper.scrape(october, octoberUrl).single { it.eventDate == LocalDate.of(2026, 10, 1) }
 
-        night.title shouldBe "LA RONY acoustic set"
-        night.artists shouldContainExactly listOf(ScrapedArtist(name = "LA RONY", role = "HEADLINER"))
+        // The second act's block carries `.Stil12221`, not `.Stil1222` (#2267).
+        night.title shouldBe "LA RONY acoustic set + LUX"
+        night.artists shouldContainExactly
+            listOf(ScrapedArtist(name = "LA RONY", role = "HEADLINER"), ScrapedArtist(name = "LUX", role = "HEADLINER"))
+    }
+
+    @Test
+    fun `bills the photographed band where the heading names the night`() {
+        val octoberUrl = "https://www.junction-bar.de/program/10_2026/10_26.html"
+        val october =
+            Jsoup.parse(
+                javaClass.classLoader
+                    .getResourceAsStream("scraper/junctionbar/junctionbar-music-10_2026.html")!!
+                    .bufferedReader()
+                    .readText(),
+                octoberUrl
+            )
+        val friday = scraper.scrape(october, octoberUrl).single { it.eventDate == LocalDate.of(2026, 10, 2) }
+
+        // "Tag der Gelben Einheit" is the night; the photo and the bio name the band, Yellow Snow (#2267).
+        friday.title shouldBe "Tag der Gelben Einheit + sunflowerstarfish"
+        friday.artists shouldContainExactly
+            listOf(ScrapedArtist(name = "Yellow Snow", role = "HEADLINER"), ScrapedArtist(name = "sunflowerstarfish", role = "HEADLINER"))
     }
 }
