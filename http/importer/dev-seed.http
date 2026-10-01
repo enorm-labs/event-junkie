@@ -106,6 +106,7 @@
 ###   VOID Club            — https://www.void-club.de/
 ###   Wild at Heart        — https://www.wildatheartberlin.de/concerts.php
 ###   Zenner               — https://zenner.berlin/programm
+###   Zig Zag Hall         — https://www.zigzag-jazzclub.berlin/programmneu
 ###   Zig Zag Jazz Club    — https://www.zigzag-jazzclub.berlin/programmneu
 ###   Zitadelle            — https://citadel-music-festival.de/events
 ###   Zur Klappe           — https://zurklappe.org/events
@@ -5567,6 +5568,68 @@ Accept: application/json
     });
 %}
 
+
+### ————————————————————————————————————————————————————————————
+### Zig Zag Hall (EUREF-Campus 26, Berlin-Schöneberg)
+### ————————————————————————————————————————————————————————————
+
+### --- Create Zig Zag Hall venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Zig Zag Hall",
+    "address": "EUREF-Campus 26",
+    "city": "Berlin",
+    "postalCode": "10829",
+    "district": "schoeneberg",
+    "latitude": 52.48021,
+    "longitude": 13.35459,
+    "websiteUrl": "https://www.zigzag-jazzclub.berlin",
+    "description": "The Zig Zag Jazz Club's concert hall on the EUREF-Campus, with seated concerts by international jazz, soul and gospel stars.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Der Konzertsaal des Zig Zag Jazz Club auf dem EUREF-Campus, mit bestuhlten Konzerten internationaler Jazz-, Soul- und Gospelstars.",
+    "descriptionAltLanguage": "de"
+}
+
+> {%
+    client.global.set("zigzaghall_venue_id", response.body.id);
+    client.test("Zig Zag Hall venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Create Zig Zag Hall event source ---
+# Links the venue to the ZigZagHallWebsiteImporter.
+# The sourceType "ZIG_ZAG_HALL" matches EventSource.ZIG_ZAG_HALL.
+POST {{importer-host}}/api/admin/event-sources
+Content-Type: application/json
+
+{
+    "venueId": {{zigzaghall_venue_id}},
+    "name": "Zig Zag Hall",
+    "url": "https://www.zigzag-jazzclub.berlin/programmneu",
+    "sourceType": "ZIG_ZAG_HALL",
+    "enabled": true,
+    "importIntervalMinutes": 1440,
+    "maxRetries": 3
+}
+
+> {%
+    client.test("Zig Zag Hall event source created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Trigger initial Zig Zag Hall import ---
+POST {{importer-host}}/api/admin/event-sources/zig-zag-hall/import
+Accept: application/json
+
+> {%
+    client.test("Zig Zag Hall import triggered", function () {
+        client.assert(response.status === 202, "Expected 202 but got " + response.status);
+    });
+%}
 
 ### ————————————————————————————————————————————————————————————
 ### Zig Zag Jazz Club (Hauptstr. 89, Berlin-Schöneberg)

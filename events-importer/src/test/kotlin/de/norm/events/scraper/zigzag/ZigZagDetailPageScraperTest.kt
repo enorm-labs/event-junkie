@@ -9,9 +9,9 @@ import org.junit.jupiter.api.Test
 import java.math.BigDecimal
 import java.time.LocalTime
 
-/** Unit tests for [ZigZagJazzClubDetailPageScraper]. */
-class ZigZagJazzClubDetailPageScraperTest {
-    private val scraper = ZigZagJazzClubDetailPageScraper()
+/** Unit tests for [ZigZagDetailPageScraper]. */
+class ZigZagDetailPageScraperTest {
+    private val scraper = ZigZagDetailPageScraper()
 
     private fun page(name: String) =
         scraper.scrape(
@@ -55,6 +55,18 @@ class ZigZagJazzClubDetailPageScraperTest {
         detail.elsewhere shouldBe true
         detail.startTime shouldBe LocalTime.of(18, 0)
         detail.price shouldBe BigDecimal("45")
+    }
+
+    @Test
+    fun `reads a hall page, whose location is an image`() {
+        val detail = page("zigzag-hall-detail.html")
+
+        detail.startTime shouldBe LocalTime.of(20, 0)
+        detail.doorsTime shouldBe LocalTime.of(19, 0)
+        detail.price shouldBe BigDecimal("35")
+        detail.ticketUrl shouldBe "https://www.eventim-light.com/de/a/665710997ed5f05a0e32f0e9/e/6a9a94a74d592f671999091d"
+        detail.elsewhere shouldBe true
+        detail.description!! shouldStartWith "Seit seinem eindrucksvollen Auftauchen"
     }
 
     @Test

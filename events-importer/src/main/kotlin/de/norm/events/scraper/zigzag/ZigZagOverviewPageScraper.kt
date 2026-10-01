@@ -21,14 +21,16 @@ import java.util.Locale
  * featured one, listing the events collection under `/program-mai/`.
  *
  * Each item prints the title, an English date with its year (`October 1, 2026`), a thumbnail and an
- * excerpt whose first paragraph is the style in brackets (`(Soul, Jazz)`). The collection also
- * carries the Zig Zag Hall's concerts, titled `ZIG ZAG HALL: …`, which belong to that venue and are
- * left out here. The featured block repeats a night and can still show yesterday's, so a night is
- * kept once and a past one is dropped.
+ * excerpt whose first paragraph is the style in brackets (`(Soul, Jazz)`). The collection carries
+ * both venues: items titled `ZIG ZAG HALL: …` are the hall's, the rest the club's. [eventSource]
+ * keeps one venue's items, and the hall's lose the prefix. The featured block repeats a night and
+ * can still show yesterday's, so a night is kept once and a past one is dropped.
  */
-class ZigZagJazzClubOverviewPageScraper(
+class ZigZagOverviewPageScraper(
+    private val eventSource: EventSource,
     private val clock: Clock = Clock.systemDefaultZone()
 ) {
+    private val hall = eventSource == EventSource.ZIG_ZAG_HALL
     private val logger = KotlinLogging.logger {}
 
     fun scrape(
@@ -58,8 +60,9 @@ class ZigZagJazzClubOverviewPageScraper(
         sourceUrl: String
     ): ScrapedEvent? {
         val link = item.selectFirst("a.summary-title-link[href]") ?: error("No event link found")
-        val title = link.text().trim().ifEmpty { error("No title found") }
-        if (title.startsWith(HALL_PREFIX, ignoreCase = true)) return null
+        val listed = link.text().trim().ifEmpty { error("No title found") }
+        if (listed.startsWith(HALL_PREFIX, ignoreCase = true) != hall) return null
+        val title = if (hall) listed.substring(HALL_PREFIX.length).trim() else listed
 
         val eventDate = parseDate(item.textAt("time.summary-metadata-item--date"))
         if (eventDate == null) {
@@ -73,11 +76,11 @@ class ZigZagJazzClubOverviewPageScraper(
             eventDate = eventDate,
             imageUrl = item.attrAt("img.summary-thumbnail-image", "data-src")?.takeIf { it.startsWith("http") },
             sourceUrl = url,
-            sourceId = "${EventSource.ZIG_ZAG_JAZZ_CLUB.sourceIdPrefix}${extractEventSlug(url, EVENT_PATH)}",
+            sourceId = "${eventSource.sourceIdPrefix}${extractEventSlug(url, EVENT_PATH)}",
             genre =
                 item
                     .textAt(".summary-excerpt p")
-                    ?.let { STYLE.matchEntire(it.trim()) }
+                    ?.let { STYLE.find(it.trim()) }
                     ?.groupValues
                     ?.get(1)
                     ?.trim(),
@@ -85,7 +88,10 @@ class ZigZagJazzClubOverviewPageScraper(
         )
     }
 
-    /** The act before a programme name: `Mirna Bogdanovic - Glimmerence`, `Ingrid Arthur & Band: Too hot to handle`. */
+    /**
+     * The act before a programme name: `Mirna Bogdanovic - Glimmerence`, `Ingrid Arthur & Band: Too hot to handle`,
+     * `Jason Moran Plays Duke Ellington`.
+     */
     private fun actOf(title: String): String = title.split(PROGRAMME_SEPARATOR, limit = 2).first().trim()
 
     private fun parseDate(text: String?): LocalDate? =
@@ -100,8 +106,10 @@ class ZigZagJazzClubOverviewPageScraper(
         const val HALL_PREFIX = "ZIG ZAG HALL:"
 
         val DATE_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern("MMMM d, yyyy", Locale.ENGLISH)
-        val STYLE = Regex("""^\((.+)\)$""")
-        val PROGRAMME_SEPARATOR = Regex("""\s+-\s+|:\s+""")
+
+        /** A paragraph of its own, or one the blurb runs straight on from: `(Jazz)Tradition trifft …`. */
+        val STYLE = Regex("""^\(([^()]+)\)""")
+        val PROGRAMME_SEPARATOR = Regex("""\s+-\s+|:\s+|\s+(?:plays|celebrates?)\s+""", RegexOption.IGNORE_CASE)
 
         /** The weekly jam and the tribute nights name a format or an honoree, not the band on stage. */
         val NO_ACT = Regex("""jam session|tribute""", RegexOption.IGNORE_CASE)

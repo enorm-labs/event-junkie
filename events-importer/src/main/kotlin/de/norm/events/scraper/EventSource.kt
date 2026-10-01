@@ -288,6 +288,9 @@ enum class EventSource {
     /** Zenner Berlin – a riverside venue in Treptower Park with a historic Saal, a club, a beer garden and a wine garden. */
     ZENNER,
 
+    /** Zig Zag Hall – the Zig Zag Jazz Club's concert hall on the EUREF-Campus in Schöneberg, where the club books its bigger concerts. */
+    ZIG_ZAG_HALL,
+
     /** Zig Zag Jazz Club – a jazz club on Hauptstraße in Schöneberg, by Innsbrucker Platz, with a concert most nights and a weekly jam session. */
     ZIG_ZAG_JAZZ_CLUB,
 

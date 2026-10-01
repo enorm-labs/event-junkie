@@ -21,11 +21,12 @@ import java.time.Instant
 import java.time.LocalTime
 import java.time.ZoneId
 
-/** Unit tests for [ZigZagJazzClubWebsiteImporter]: one listing fetch, then one event page per night. */
-class ZigZagJazzClubWebsiteImporterTest {
+/** Unit tests for [ZigZagJazzClubWebsiteImporter] and [ZigZagHallWebsiteImporter]: one listing fetch, then one event page per night. */
+class ZigZagWebsiteImportersTest {
     private val htmlFetcher: HtmlFetcher = mockk()
     private val clock: Clock = Clock.fixed(Instant.parse("2026-10-01T10:00:00Z"), ZoneId.of("Europe/Berlin"))
     private val importer = ZigZagJazzClubWebsiteImporter(htmlFetcher, clock)
+    private val hallImporter = ZigZagHallWebsiteImporter(htmlFetcher, clock)
     private val listingUrl = "https://www.zigzag-jazzclub.berlin/programmneu"
 
     private fun fixture(name: String): String =
@@ -47,6 +48,26 @@ class ZigZagJazzClubWebsiteImporterTest {
     fun `eventSource matches expected enum value`() {
         importer.eventSource shouldBe EventSource.ZIG_ZAG_JAZZ_CLUB
     }
+
+    @Test
+    fun `hall importer has its own enum value`() {
+        hallImporter.eventSource shouldBe EventSource.ZIG_ZAG_HALL
+    }
+
+    @Test
+    fun `keeps every hall night, although its page points away from the club`() =
+        runTest {
+            stubListing()
+            coEvery { htmlFetcher.fetchDocument(any()) } answers { Jsoup.parse(fixture("zigzag-hall-detail.html"), firstArg<String>()) }
+
+            val result = hallImporter.importEvents(listingUrl)
+
+            result.shouldBeInstanceOf<ImportResult.Success>()
+            result.events shouldHaveSize 20
+            result.events.first().pricePresale shouldBe BigDecimal("35")
+            result.events.first().startTime shouldBe LocalTime.of(20, 0)
+            coVerify(exactly = 20) { htmlFetcher.fetchDocument(any()) }
+        }
 
     @Test
     fun `returns NotModified when the listing is unchanged`() =

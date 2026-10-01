@@ -276,8 +276,12 @@ says so.
 | `ZENNER`               | `DOORS_TIME`       | the venue publishes no doors times                                                                                                               | —     |
 | `ZENNER`               | `SOLD_OUT`         | the venue publishes no sold-out state                                                                                                            | —     |
 | `ZENNER`               | `PER_EVENT_PAGE`   | the venue publishes no per-event pages                                                                                                           | —     |
+| `ZIG_ZAG_HALL`         | `END_TIME`         | the end time is a calendar default, 23:59 on most nights                                                                                         | —     |
+| `ZIG_ZAG_HALL`         | `PROMOTERS`        | the club presents every night itself, in both houses                                                                                             | —     |
+| `ZIG_ZAG_HALL`         | `SOLD_OUT`         | the site states no ticket status                                                                                                                 | —     |
+| `ZIG_ZAG_HALL`         | `CANCELLATION`     | the site has no cancelled marker for a night                                                                                                     | —     |
 | `ZIG_ZAG_JAZZ_CLUB`    | `END_TIME`         | the end time is a calendar default, 23:59 on most nights                                                                                         | —     |
-| `ZIG_ZAG_JAZZ_CLUB`    | `PROMOTERS`        | the club presents every night itself                                                                                                             | —     |
+| `ZIG_ZAG_JAZZ_CLUB`    | `PROMOTERS`        | the club presents every night itself, in both houses                                                                                             | —     |
 | `ZIG_ZAG_JAZZ_CLUB`    | `SOLD_OUT`         | the site states no ticket status                                                                                                                 | —     |
 | `ZIG_ZAG_JAZZ_CLUB`    | `CANCELLATION`     | the site has no cancelled marker for a night                                                                                                     | —     |
 | `ZUR_KLAPPE`           | `SUBTITLE`         | the site states one title per night and no second line                                                                                           | —     |

@@ -10,7 +10,7 @@ import java.math.BigDecimal
 import java.time.LocalTime
 
 /** What an event page adds to its listing row. */
-data class ZigZagJazzClubDetail(
+data class ZigZagDetail(
     val description: String?,
     val startTime: LocalTime?,
     val doorsTime: LocalTime?,
@@ -26,15 +26,16 @@ data class ZigZagJazzClubDetail(
  * "Beginn: 20:00 Uhr (Einlass ab 19:00 Uhr)", "Eintritt: 25€", "Mitglieder: 12,50€" and a
  * "Location:" line. Times and prices are read from that block only, so a blurb's "show" or "€" is
  * never one. The JSON-LD `startDate` is the doors time, so it is not read. A two-show night prints
- * two "Beginn" lines, and the first is kept.
+ * two "Beginn" lines, and the first is kept. A hall page names its location only in an image, so
+ * [ZigZagDetail.elsewhere] means something on a club page only.
  */
-class ZigZagJazzClubDetailPageScraper {
-    fun scrape(document: Document): ZigZagJazzClubDetail {
+class ZigZagDetailPageScraper {
+    fun scrape(document: Document): ZigZagDetail {
         val paragraphs = document.select(".eventitem-column-content p")
         val ticketsAt = paragraphs.indexOfFirst { TICKETS_HEADING.matches(it.text().trim()) }
         val blurb = if (ticketsAt >= 0) paragraphs.take(ticketsAt) else paragraphs.toList()
         val tickets = if (ticketsAt >= 0) paragraphs.drop(ticketsAt).joinToString(" ") { it.text() } else ""
-        return ZigZagJazzClubDetail(
+        return ZigZagDetail(
             description = blurb.texts().joinToString("\n").ifEmpty { null },
             startTime = labelledClock(tickets, START_LABELS),
             doorsTime = labelledClock(tickets, DOORS_LABELS),
