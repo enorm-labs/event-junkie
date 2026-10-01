@@ -22,8 +22,8 @@ repairing live in the [issue tracker](https://github.com/enorm-labs/event-junkie
 
 | Status                              | Meaning                                                                              | Count |
 | ----------------------------------- | ------------------------------------------------------------------------------------ | ----: |
-| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |    95 |
-| 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |    11 |
+| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |    96 |
+| 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |    10 |
 | ⛔ [Blocked](#-blocked--deferred)   | Website analyzed, but no usable listings (no programme page, JS-only, or too sparse) |   119 |
 | ❓ [Unanalyzed](#-not-analyzed-yet) | URL recorded, but the website still needs a first look                               |    24 |
 
@@ -60,6 +60,7 @@ schema change.
 | Duncker Club                     | https://www.dunckerclub.de/                                 | Club         |                                                        |
 | Eschschloraque Rümschrümp        | https://www.eschschloraque.de/                              | Bar          | Drupal 7; front page = full nodes; RDFa datetimes      |
 | Festsaal Kreuzberg               | https://festsaal-kreuzberg.de/de                            | Concert Hall | Nuxt/Wagtail SSR; `ld+json` empty; no prices           |
+| Fitzroy                          | https://fitzroy-berlin.de/events/                           | Club         | Shares the LARK parser; every event typed `Party`      |
 | Frannz Club                      | https://frannz.eu/                                          | Club         |                                                        |
 | gART.n                           | https://www.gartn.xyz/                                      | Techno Club  | Carrd one-pager; year from weekday; no prices          |
 | Gärten der Welt                  | https://www.gaertenderwelt.de/events/veranstaltungen/       | Open Air     | TYPO3 events2; paged; park activities excluded         |
@@ -153,7 +154,6 @@ least as heavily as an RA count when the next batch is prioritised.
 
 | Name               | URL                                            | Type        | Priority | Comment                                                     |
 | ------------------ | ---------------------------------------------- | ----------- | -------- | ----------------------------------------------------------- |
-| Fitzroy            | https://fitzroy-berlin.de/events/              | Club        | Medium   | WP REST `event` + ACF — the Madame Claude / LARK codebase   |
 | KAOS Berlin        | https://kaosberlin.de/veranstaltungen/         | Techno Club | Low      | The Events Calendar REST API, as Cosmic Comedy; 4 upcoming  |
 | DSTRKT Club Berlin | https://www.dstrkt.de/                         | Club        | Low      | Wix one-pager; 2 dated events, which is the whole programme |
 | Kunstfabrik Schlot | https://kunstfabrik-schlot.de/programm/        | Club        | High     | WordPress list; year, time and price only on detail pages   |
@@ -164,10 +164,6 @@ least as heavily as an RA count when the next batch is prioritised.
 | Ballhaus Wedding   | https://www.ballhauswedding.de/veranstaltungen | Other       | Medium   | Wix rich text; 117 entries with year-less dates; no images  |
 | Soulcat            | https://soulcat-berlin.com/programm/           | Bar         | Low      | TEC REST API; one week ahead; titles only                   |
 | Erreichbar         | https://radar.squat.net/en/node/6653           | Other       | Low      | radar group 6653; a fortnightly punk bar night; no site     |
-
-**Fitzroy** needs one decision made once, rather than per event. It is on its summer break: the ACF API holds a dense
-July programme and resumes on 12 September. Only 2 events are upcoming today, so a fixture captured now would be
-unrepresentative. Scaffold it in September, when the listing is representative again.
 
 **The seven rows below DSTRKT came from the tipBerlin sweep on 2026-09-30.** Each has a quirk that the importer must
 handle:

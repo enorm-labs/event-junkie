@@ -1,4 +1,4 @@
-package de.norm.events.scraper.lark
+package de.norm.events.scraper.bogen47
 
 import de.norm.events.scraper.ApiClient
 import de.norm.events.scraper.EventSource
@@ -21,12 +21,12 @@ import java.time.LocalDate
 import java.time.ZoneId
 
 /**
- * Unit tests for [LarkWebsiteImporter].
+ * Unit tests for [LarkWebsiteImporter] and [FitzroyWebsiteImporter].
  *
  * Uses the saved WordPress REST fixtures and a mocked [ApiClient], so no real HTTP happens. The
  * clock is pinned to the capture date because the importer drops past-dated events.
  */
-class LarkWebsiteImporterTest {
+class Bogen47WebsiteImportersTest {
     private lateinit var importer: LarkWebsiteImporter
     private val apiClient: ApiClient = mockk()
     private val clock: Clock = Clock.fixed(LocalDate.of(2026, 8, 1).atStartOfDay(BERLIN).toInstant(), BERLIN)
@@ -34,7 +34,7 @@ class LarkWebsiteImporterTest {
 
     private fun fixture(name: String): String =
         javaClass.classLoader
-            .getResourceAsStream("scraper/lark/$name")!!
+            .getResourceAsStream("scraper/bogen47/$name")!!
             .bufferedReader()
             .readText()
 
@@ -168,6 +168,30 @@ class LarkWebsiteImporterTest {
     fun `eventSource matches expected enum value`() {
         importer.eventSource shouldBe EventSource.LARK
     }
+
+    @Test
+    fun `Fitzroy imports its upcoming nights with posters from its own host`() =
+        runTest {
+            val fitzroyUrl = "https://fitzroy-berlin.de/wp-json/wp/v2/event"
+            val fitzroy = FitzroyWebsiteImporter(apiClient, Clock.fixed(LocalDate.of(2026, 10, 1).atStartOfDay(BERLIN).toInstant(), BERLIN))
+            val urls = mutableListOf<String>()
+            coEvery { apiClient.fetchJson(capture(urls)) } answers {
+                if ("/media?" in firstArg<String>()) fixture("fitzroy-media.json") else fixture("fitzroy-events.json")
+            }
+
+            val result = fitzroy.importEvents(fitzroyUrl).shouldBeInstanceOf<ImportResult.Success>()
+
+            fitzroy.eventSource shouldBe EventSource.FITZROY
+            result.events shouldHaveSize 7
+            result.events.all { it.sourceId.startsWith(EventSource.FITZROY.sourceIdPrefix) } shouldBe true
+            // The media endpoint does not return Hüft & Beinbruch's attachment 2480, so that night keeps no poster.
+            result.events.count { it.imageUrl?.startsWith("https://fitzroy-berlin.de/wp-content/uploads/") == true } shouldBe 6
+            result.events
+                .first { it.title == "Hüft & Beinbruch" }
+                .imageUrl
+                .shouldBeNull()
+            urls.last() shouldStartWith "https://fitzroy-berlin.de/wp-json/wp/v2/media?include="
+        }
 
     private companion object {
         val BERLIN: ZoneId = ZoneId.of("Europe/Berlin")

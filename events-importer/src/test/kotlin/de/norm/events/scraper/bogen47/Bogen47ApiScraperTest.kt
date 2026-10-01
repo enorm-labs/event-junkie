@@ -1,8 +1,9 @@
-package de.norm.events.scraper.lark
+package de.norm.events.scraper.bogen47
 
 import de.norm.events.event.ArtistRole
 import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
+import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedEvent
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
@@ -19,22 +20,22 @@ import java.time.LocalTime
 import java.time.ZoneId
 
 /**
- * Unit tests for [LarkApiScraper], parsing the saved WordPress REST fixtures.
+ * Unit tests for [Bogen47ApiScraper], parsing the saved WordPress REST fixtures of LARK and Fitzroy.
  *
  * The scraper drops past-dated events, so every test runs against a fixed clock pinned to the day
  * the fixture was captured (2026-08-01).
  */
-class LarkApiScraperTest {
+class Bogen47ApiScraperTest {
     private val clock: Clock = Clock.fixed(LocalDate.of(2026, 8, 1).atStartOfDay(BERLIN).toInstant(), BERLIN)
-    private val scraper = LarkApiScraper(clock)
+    private val scraper = Bogen47ApiScraper(EventSource.LARK, "https://larkberlin.com/events/", LARK_EVENT_TYPES, clock)
 
     private fun fixture(name: String): String =
         javaClass.classLoader
-            .getResourceAsStream("scraper/lark/$name")!!
+            .getResourceAsStream("scraper/bogen47/$name")!!
             .bufferedReader()
             .readText()
 
-    private val page: LarkPage by lazy { scraper.scrapePage(fixture("lark-events.json")) }
+    private val page: Bogen47Page by lazy { scraper.scrapePage(fixture("lark-events.json")) }
     private val events: List<ScrapedEvent> by lazy { page.entries.map { it.event } }
 
     private fun eventTitled(title: String): ScrapedEvent = events.first { it.title == title }
@@ -270,6 +271,34 @@ class LarkApiScraperTest {
     fun `parseMedia degrades to an empty map for a malformed body`() {
         scraper.parseMedia("not json").size shouldBe 0
         scraper.parseMedia("""{"code":"rest_forbidden"}""").size shouldBe 0
+    }
+
+    private val fitzroy: List<ScrapedEvent> by lazy {
+        val fitzroyClock = Clock.fixed(LocalDate.of(2026, 10, 1).atStartOfDay(BERLIN).toInstant(), BERLIN)
+        Bogen47ApiScraper(EventSource.FITZROY, "https://fitzroy-berlin.de/events/", emptyMap(), fitzroyClock)
+            .scrapePage(fixture("fitzroy-events.json"))
+            .entries
+            .map { it.event }
+    }
+
+    @Test
+    fun `parses Fitzroy's upcoming nights from the same theme`() {
+        // 100 posts, newest first; seven are on or after the capture day.
+        fitzroy shouldHaveSize 7
+        fitzroy.map { it.eventType }.distinct() shouldContainExactly listOf(EventType.PARTY.name)
+
+        val night = fitzroy.first { it.title == "SLANG with Shy One, IG Culture & NothingDoing" }
+        night.eventDate shouldBe LocalDate.of(2026, 10, 30)
+        night.doorsTime shouldBe LocalTime.of(22, 0)
+        night.sourceId shouldBe "fitzroy:5060"
+        night.sourceUrl shouldBe "https://fitzroy-berlin.de/event/slang-with-shy-one-ig-culture-nothingdoing/"
+        night.ticketUrl shouldBe "https://fr.ra.co/events/2533576"
+        night.description.shouldNotBeNull() shouldContain "London OG Shy One"
+    }
+
+    @Test
+    fun `drops a description that only says TBA`() {
+        fitzroy.first { it.title == "Essential Delights" }.description.shouldBeNull()
     }
 
     private companion object {

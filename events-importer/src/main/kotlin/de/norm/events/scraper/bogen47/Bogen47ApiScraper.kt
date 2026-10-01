@@ -1,4 +1,4 @@
-package de.norm.events.scraper.lark
+package de.norm.events.scraper.bogen47
 
 import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
@@ -29,37 +29,37 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeParseException
 
 /**
- * One upcoming LARK event plus the WordPress attachment id of its poster. The listing carries
- * only a `featured_media` id, so the URL is resolved separately ([LarkApiScraper.parseMedia])
- * and applied by [LarkWebsiteImporter]; keeping the id beside the event keeps the parser I/O-free.
+ * One upcoming event plus the WordPress attachment id of its poster. The listing carries only a
+ * `featured_media` id, so the URL is resolved separately ([Bogen47ApiScraper.parseMedia]) and
+ * applied by [AbstractBogen47WebsiteImporter]; keeping the id beside the event keeps the parser
+ * I/O-free.
  */
-internal data class LarkEntry(
+internal data class Bogen47Entry(
     val event: ScrapedEvent,
     val featuredMediaId: Long?
 )
 
 /**
- * One parsed page of the LARK listing. [postCount] and [oldestDate] drive paging: the listing
- * is ordered newest-first *by event date* (see [LarkApiScraper]), so a page whose oldest event
+ * One parsed page of the `event` listing. [postCount] and [oldestDate] drive paging: the listing
+ * is ordered newest-first *by event date* (see [Bogen47ApiScraper]), so a page whose oldest event
  * is past is the last one worth reading.
  */
-internal data class LarkPage(
-    val entries: List<LarkEntry>,
+internal data class Bogen47Page(
+    val entries: List<Bogen47Entry>,
     val postCount: Int,
     val oldestDate: LocalDate?
 )
 
 /**
- * Pure parser for LARK's programme from its WordPress REST API (`/wp-json/wp/v2/event`): an
- * Advanced Custom Fields `event` post type exposed in full, so no HTML is scraped (ADR-007
- * §"Selector Strategy" priority 1).
+ * Pure parser for the programme of a BOGEN47 venue (LARK, Fitzroy) from its WordPress REST API
+ * (`/wp-json/wp/v2/event`): an Advanced Custom Fields `event` post type exposed in full, so no HTML
+ * is scraped (ADR-007 §"Selector Strategy" priority 1). Both sites run the same theme.
  *
- * **The post date *is* the event date.** LARK overloads `post.date` with the show's date and
- * time, leaving `date_gmt` as the publish instant — see [LarkWebsiteImporter] for what that buys
- * — and past ones are dropped here rather than minted and discarded. Its time is what the venue
- * renders as `Doors`, so it becomes [ScrapedEvent.doorsTime]; `acf.event_doors_time` is *not*
- * used, reading `19:00` on almost every post whatever the real time, which would put doors after
- * an 18:30 start.
+ * **The post date *is* the event date.** The theme overloads `post.date` with the show's date and
+ * time, leaving `date_gmt` as the publish instant, and past ones are dropped here rather than
+ * minted and discarded. Its time is what the site renders as `Doors`, so it becomes
+ * [ScrapedEvent.doorsTime]; `acf.event_doors_time` is *not* used, reading `19:00` on almost every
+ * post whatever the real time, which would put doors after an 18:30 start.
  *
  * **Status is written into the title.** `acf.event_status` reads `Scheduled` on every post; the
  * real marker is appended or prefixed — `Flower Face SOLD OUT`, `DOTAN (ausverkauft)`,
@@ -73,14 +73,18 @@ internal data class LarkPage(
  * classifier turned `LEILA – 20 SOMETHING CLUB TOUR` into a `PARTY` that lost its headliner.
  *
  * The remaining ACF fields are unused defaults: `event_entrance_fee` is `None` throughout, and
- * `event_music_genre`, `event_card_subtitle` and the act repeater are all but always empty.
+ * `event_music_genre`, `event_card_subtitle` and the act repeater are all but always empty. A
+ * description of just `TBA` is dropped.
  *
- * @param clock supplies "today"; override in tests for determinism.
- * @see LARK_LIMITATIONS for what the source does not publish.
- * @see LarkWebsiteImporter for the HTTP fetch orchestrator.
+ * @param eventsUrl the venue's events page, the [ScrapedEvent.sourceUrl] of a post without a permalink.
+ * @param eventTypes the venue's `acf.event_type` vocabulary beyond the shared synonyms.
+ * @see AbstractBogen47WebsiteImporter for the HTTP fetch orchestrator.
  */
-@Suppress("LongComment") // 26 lines: the venue writes the date, the status and the billing all into fields meant for something else.
-internal class LarkApiScraper(
+@Suppress("LongComment") // 26 lines: the theme writes the date, the status and the billing all into fields meant for something else.
+internal class Bogen47ApiScraper(
+    private val eventSource: EventSource,
+    private val eventsUrl: String,
+    private val eventTypes: Map<String, String>,
     private val clock: Clock = Clock.systemDefaultZone()
 ) {
     private val logger = KotlinLogging.logger {}
@@ -100,17 +104,17 @@ internal class LarkApiScraper(
      * empty page, which stops paging.
      */
     @Suppress("TooGenericExceptionCaught") // A malformed payload must degrade to an empty page, never abort the import.
-    fun scrapePage(json: String): LarkPage {
+    fun scrapePage(json: String): Bogen47Page {
         val posts =
             try {
                 jsonMapper.readTree(json).takeIf { it.isArray }?.toList()
             } catch (e: Exception) {
-                logger.warn(e) { "Failed to parse LARK event listing page" }
+                logger.warn(e) { "Failed to parse the $eventSource event listing page" }
                 null
             }
         if (posts == null) {
-            logger.warn { "LARK event listing page is not a JSON array; stopping" }
-            return LarkPage(entries = emptyList(), postCount = 0, oldestDate = null)
+            logger.warn { "$eventSource event listing page is not a JSON array; stopping" }
+            return Bogen47Page(entries = emptyList(), postCount = 0, oldestDate = null)
         }
 
         val today = LocalDate.now(clock)
@@ -121,12 +125,12 @@ internal class LarkApiScraper(
                 try {
                     parsePost(post, today)
                 } catch (e: Exception) {
-                    logger.warn(e) { "Failed to parse LARK event, skipping" }
+                    logger.warn(e) { "Failed to parse a $eventSource event, skipping" }
                     null
                 }
             }
 
-        return LarkPage(entries = entries, postCount = posts.size, oldestDate = dates.minOrNull()?.toLocalDate())
+        return Bogen47Page(entries = entries, postCount = posts.size, oldestDate = dates.minOrNull()?.toLocalDate())
     }
 
     /**
@@ -151,7 +155,7 @@ internal class LarkApiScraper(
                 }?.toMap()
                 .orEmpty()
         } catch (e: Exception) {
-            logger.warn(e) { "Failed to parse LARK media response; events keep no poster" }
+            logger.warn(e) { "Failed to parse the $eventSource media response; events keep no poster" }
             emptyMap()
         }
 
@@ -159,12 +163,12 @@ internal class LarkApiScraper(
     private fun parsePost(
         post: JsonNode,
         today: LocalDate
-    ): LarkEntry? {
+    ): Bogen47Entry? {
         val id = post.path("id").asLong(0L).takeIf { it > 0 } ?: return null
 
         val startedAt = parseDateTime(post.path("date").asString(""))
         if (startedAt == null) {
-            logger.warn { "LARK event $id has no parseable date, skipping" }
+            logger.warn { "$eventSource event $id has no parseable date, skipping" }
             return null
         }
         // The archive reaches back to 2022; only upcoming shows are worth minting.
@@ -172,7 +176,7 @@ internal class LarkApiScraper(
 
         val rawTitle = decodeHtmlEntities(post.path("title").path("rendered").asString(""))
         if (rawTitle.isBlank()) {
-            logger.warn { "LARK event $id has no title, skipping" }
+            logger.warn { "$eventSource event $id has no title, skipping" }
             return null
         }
 
@@ -184,24 +188,28 @@ internal class LarkApiScraper(
         // Classify the act, not the tour: "LEILA – 20 SOMETHING CLUB TOUR" is a gig, but the shared
         // keyword classifier sees the "club" in its tour name and calls it a party.
         val actTitle = stripArtistSuffix(title)
-        val eventType = refineConcertVenueType(mapEventType(acf.stringOrNull("event_type"), LARK_EVENT_TYPES), actTitle)
+        val eventType = refineConcertVenueType(mapEventType(acf.stringOrNull("event_type"), eventTypes), actTitle)
 
-        return LarkEntry(
+        return Bogen47Entry(
             event =
                 ScrapedEvent(
                     title = title,
-                    description = acf.stringOrNull("event_description")?.let(::htmlToPlainText)?.takeIf { it.isNotBlank() },
+                    description =
+                        acf
+                            .stringOrNull("event_description")
+                            ?.let(::htmlToPlainText)
+                            ?.takeIf { it.isNotBlank() && !it.equals(PLACEHOLDER_DESCRIPTION, ignoreCase = true) },
                     eventType = eventType,
                     eventDate = startedAt.toLocalDate(),
-                    // The venue renders this time as "Doors"; it publishes no separate start time.
+                    // The site renders this time as "Doors"; it publishes no separate start time.
                     doorsTime = startedAt.toLocalTime(),
                     sourceUrl =
                         post
                             .path("link")
                             .asString("")
                             .trim()
-                            .ifBlank { LARK_EVENTS_URL },
-                    sourceId = "${EventSource.LARK.sourceIdPrefix}$id",
+                            .ifBlank { eventsUrl },
+                    sourceId = "${eventSource.sourceIdPrefix}$id",
                     ticketUrl = acf.stringOrNull("event_tickets_url")?.takeIf { it.startsWith("http") },
                     soldOut = soldOut,
                     status = status,
@@ -213,7 +221,7 @@ internal class LarkApiScraper(
     }
 
     /**
-     * The acts billed in a concert title. LARK is a live-music club whose title names the act. A
+     * The acts billed in a concert title, which names the act. A
      * `+ <act> (support)` part is a [SUPPORT][de.norm.events.event.ArtistRole.SUPPORT]; the rest
      * goes through the shared [headlinersFromTitle], with the `<series> w/ <acts>` frame on, so a DJ
      * night (`Hum w/ Kyle Hall b2b K15, …`) bills its acts and not the series. An epithet in quotes
@@ -268,21 +276,7 @@ internal class LarkApiScraper(
     }
 
     private companion object {
-        /** Landing page used as [ScrapedEvent.sourceUrl] when a post carries no permalink. */
-        const val LARK_EVENTS_URL = "https://larkberlin.com/events/"
-
-        /**
-         * LARK's `acf.event_type` vocabulary beyond the shared synonyms. `Live` is the venue's word
-         * for a gig; `Club` and `Dance` are both DJ nights; `Seminar` is a workshop with no closer
-         * type than `OTHER`.
-         */
-        val LARK_EVENT_TYPES: Map<String, String> =
-            mapOf(
-                "live" to EventType.CONCERT.name,
-                "club" to EventType.PARTY.name,
-                "dance" to EventType.PARTY.name,
-                "seminar" to EventType.OTHER.name
-            )
+        const val PLACEHOLDER_DESCRIPTION = "TBA"
 
         /**
          * Either marker as punctuated in a title — optionally led by a separating dash or pipe,

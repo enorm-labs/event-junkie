@@ -92,6 +92,11 @@ says so.
 | `ESCHSCHLORAQUE`       | `DOORS_TIME`       | the date field carries one ab-HH-Uhr time; a doors time exists only where the prose labels a pair, which is read                                 | —     |
 | `FESTSAAL`             | `EVENT_TYPE`       | the API exposes no category field; its `genre` node is a musical genre, and only an event kind filed there (Festival) types the night            | —     |
 | `FESTSAAL`             | `PRICE`            | the API names no figure; tickets are sold through a vvk.link shop                                                                                | —     |
+| `FITZROY`              | `START_TIME`       | the venue renders its one time as Doors and publishes no separate start time                                                                     | —     |
+| `FITZROY`              | `PRICE`            | the venue prints no figure; tickets link to Resident Advisor                                                                                     | —     |
+| `FITZROY`              | `GENRE`            | the venue leaves its genre fields empty on every event; style appears only in the description                                                    | —     |
+| `FITZROY`              | `EVENT_TYPE`       | the venue types every event Party, a live show included                                                                                          | —     |
+| `FITZROY`              | `PROMOTERS`        | the organiser field is empty on every event; a collective is named only in the title                                                             | —     |
 | `FRANNZ`               | `PER_EVENT_PAGE`   | nothing on the site links a `/events/<slug>/` page                                                                                               | —     |
 | `FRANNZ`               | `PRICE`            | most nights name the ticket seller instead of a figure; only the venue's own party nights carry a structured Abendkasse item, which is read      | —     |
 | `FRANNZ`               | `GENRE`            | the venue tags each event only with a type (Konzert, Party, Lesung), never a genre                                                               | —     |

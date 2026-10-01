@@ -14,6 +14,8 @@ import de.norm.events.scraper.badehaus.BADEHAUS_LIMITATIONS
 import de.norm.events.scraper.barjedervernunft.BAR_JEDER_VERNUNFT_LIMITATIONS
 import de.norm.events.scraper.berghain.BERGHAIN_LIMITATIONS
 import de.norm.events.scraper.binuu.BINUU_LIMITATIONS
+import de.norm.events.scraper.bogen47.FITZROY_LIMITATIONS
+import de.norm.events.scraper.bogen47.LARK_LIMITATIONS
 import de.norm.events.scraper.cassiopeia.CASSIOPEIA_LIMITATIONS
 import de.norm.events.scraper.clash.CLASH_LIMITATIONS
 import de.norm.events.scraper.clubdervisionaere.CLUB_DER_VISIONAERE_LIMITATIONS
@@ -45,7 +47,6 @@ import de.norm.events.scraper.junctionbar.JUNCTION_BAR_LIMITATIONS
 import de.norm.events.scraper.kater.KATER_LIMITATIONS
 import de.norm.events.scraper.klunkerkranich.KLUNKERKRANICH_LIMITATIONS
 import de.norm.events.scraper.koepi.KOEPI_LIMITATIONS
-import de.norm.events.scraper.lark.LARK_LIMITATIONS
 import de.norm.events.scraper.lido.LIDO_LIMITATIONS
 import de.norm.events.scraper.loge.LOGE_LIMITATIONS
 import de.norm.events.scraper.maaya.MAAYA_LIMITATIONS
@@ -127,6 +128,7 @@ object AcceptedLimitations {
             DUNCKER_LIMITATIONS,
             ESCHSCHLORAQUE_LIMITATIONS,
             FESTSAAL_LIMITATIONS,
+            FITZROY_LIMITATIONS,
             FRANNZ_LIMITATIONS,
             GAERTEN_DER_WELT_LIMITATIONS,
             GARTN_LIMITATIONS,
