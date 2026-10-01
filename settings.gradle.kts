@@ -20,7 +20,10 @@ pluginManagement {
         kotlin("plugin.spring") version "2.4.10"
         id("org.springframework.boot") version "4.1.1"
         id("io.spring.dependency-management") version "1.1.7"
-        id("org.jetbrains.kotlinx.kover") version "0.9.9"
+        // At least 0.9.10: before it, parallel report and verify tasks shared the reporter's state, and
+        // koverVerify failed a module on another module's filters (Kover #822, #657). 0.9.10 itself
+        // reads 0% under the configuration cache (Kover #831), so 0.9.11.
+        id("org.jetbrains.kotlinx.kover") version "0.9.11"
         id("org.jlleitschuh.gradle.ktlint") version "14.2.0"
         // check this compatibility table: https://detekt.dev/docs/introduction/compatibility/
         id("dev.detekt") version "2.0.0-alpha.6"
