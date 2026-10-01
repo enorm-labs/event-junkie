@@ -109,7 +109,7 @@ schema change.
 | Säälchen                         | https://www.holzmarkt.com/kalender                          | Concert Hall | Drupal; shared calendar filtered by location           |
 | Schokoladen                      | https://www.schokoladen-mitte.de/                           | Club         | Laravel; anchor-based events; genre inside title       |
 | silent green                     | https://www.silent-green.net/programm                       | Concert Hall | TYPO3 news; month walk; a run listed per open day      |
-| Sisyphos                         | https://www.sisyphos-berlin.net/collections/tickets         | Techno Club  | Shopify `products.json` + sisy.fan weekends (ADR-036)  |
+| Sisyphos                         | https://www.sisyphos-berlin.net/                            | Techno Club  | Calendar JSON + shop + sisy.fan line-ups (ADR-038)     |
 | SO36                             | https://www.so36.com/tickets                                | Club         | Cookie wall bypassed via Ticket-Toaster shop           |
 | Soda Club                        | https://www.soda-berlin.de/events                           | Club         | disco2app CMS; `MusicEvent` JSON-LD on details         |
 | Sonnenraum                       | https://clubdervisionaere.com/programm                      | Club         | Shares the CdV listing; Monday live residency          |
@@ -263,14 +263,14 @@ ticket link. Scaffold it once `robots.txt` answers 200 or 404.
 only a placeholder. The Events Calendar REST API and iCal are switched off, and the `Product` JSON-LD on an event page
 carries a price of `0` USD. Scaffold it once `robots.txt` allows `/programm/` and `/event/`.
 
-**A handful of tickets is not a programme.** Sisyphos is the case to reason from. Its only own web presence is a
-Shopify merch shop. Its `TICKETS` collection carries one recurring series beside the T-shirts: `generationS`, one night
-a month. The club runs a programme every weekend. The shop alone is not a thin-but-truthful import like OHM's, where the
-venue publishes its real programme on a short rolling horizon. It presents one series per month as if it were the
-whole programme. The bar for a candidate is whether the source reflects what the venue is doing, not whether it yields
-a non-zero count. Sisyphos clears the bar only with a second site. The fan-run timetable at sisy.fan supplies every
-weekend's line-up and set times, with its developer's permission (ADR-036). The importer reads it only from Friday
-22:00 to Sunday 04:00.
+**A handful of tickets is not a programme.** The bar for a candidate is whether the source reflects what the venue is
+doing, not whether it yields a non-zero count. A shop that sells one series a month presents that series as if it were
+the whole programme. Sisyphos looked like that case. Its shop sells `generationS`, one night a month, beside the
+T-shirts. The real programme is on the homepage, in iframes that a script fills from
+`dashboard.sisyphos-berlin.net/kalender-media/events.json`. A plain fetch of the homepage shows none of it. So look
+inside the iframes before you call a venue's programme missing. The importer reads that calendar first (ADR-038). The
+shop adds prices, and the fan-run sisy.fan adds each weekend's line-up and set times, with its developer's permission
+(ADR-036). The importer reads sisy.fan only from Friday 22:00 to Sunday 04:00.
 
 **The blockers repeat, and not one of them is "the venue is too small".** They are worth reading as a group, because
 each is cheap to recognise before spending time on a candidate:

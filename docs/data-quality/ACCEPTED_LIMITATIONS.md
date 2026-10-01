@@ -233,15 +233,15 @@ says so.
 | `SILENT_GREEN`         | `GENRE`            | the venue publishes no genre                                                                                                                     | —     |
 | `SILENT_GREEN`         | `START_TIME`       | a multi-day festival entry prints its date span only and names no time                                                                           | —     |
 | `SILENT_GREEN`         | `PROMOTERS`        | the venue credits itself as the organiser on its own nights, so the stored promoter is the venue                                                 | —     |
-| `SISYPHOS`             | `EVENT_TYPE`       | the shop files every night as a ticket product with no category; each is stored as a party                                                       | —     |
-| `SISYPHOS`             | `DOORS_TIME`       | a ticket product names a day and never a time, and sisy.fan times only the sets                                                                  | —     |
-| `SISYPHOS`             | `START_TIME`       | a ticket product names a day and never a time; a shop night keeps no start even when sisy.fan times its weekend's first set                      | —     |
-| `SISYPHOS`             | `ARTISTS`          | the shop names no DJ anywhere; the line-up comes from sisy.fan, which posts a weekend on Friday night or Saturday and is read only then          | —     |
-| `SISYPHOS`             | `GENRE`            | the shop names no musical style; every night takes the club's Techno, House default                                                              | —     |
-| `SISYPHOS`             | `PRICE_BOX_OFFICE` | the shop sells online only and states no door price                                                                                              | —     |
-| `SISYPHOS`             | `TICKET_URL`       | the shop's bot protection answers the importer 429 from a hosting address, and we do not disguise the client to pass it                          | —     |
-| `SISYPHOS`             | `PRICE_PRESALE`    | the shop's bot protection answers the importer 429 from a hosting address, and we do not disguise the client to pass it                          | —     |
-| `SISYPHOS`             | `CANCELLATION`     | a cancelled night is removed from the shop rather than marked                                                                                    | —     |
+| `SISYPHOS`             | `EVENT_TYPE`       | the calendar files nights with no category; each is stored as a party, the market and the open day included                                      | —     |
+| `SISYPHOS`             | `DOORS_TIME`       | the calendar gives the opening, stored as the start, and no separate doors time                                                                  | —     |
+| `SISYPHOS`             | `START_TIME`       | a night the calendar does not list yet comes from the shop alone, whose product names a day and never a time                                     | —     |
+| `SISYPHOS`             | `ARTISTS`          | the calendar and the shop name no DJ; the line-up comes from sisy.fan, which posts a weekend on Friday night or Saturday and is read only then   | —     |
+| `SISYPHOS`             | `GENRE`            | neither the calendar nor the shop names a musical style; every night takes the club's Techno, House default                                      | —     |
+| `SISYPHOS`             | `PRICE_BOX_OFFICE` | neither the calendar nor the shop states a door price                                                                                            | —     |
+| `SISYPHOS`             | `TICKET_URL`       | the shop sells few nights, and its bot protection answers the importer 429 from a hosting address; we do not disguise the client                 | —     |
+| `SISYPHOS`             | `PRICE_PRESALE`    | the shop sells few nights, and its bot protection answers the importer 429 from a hosting address; we do not disguise the client                 | —     |
+| `SISYPHOS`             | `CANCELLATION`     | neither the calendar nor the shop marks a cancelled night                                                                                        | —     |
 | `SO36`                 | `PRICE`            | the shop exposes prices only as ticket categories, so a door-only event without an Abendkasse category carries no figure                         | —     |
 | `SO36`                 | `SOLD_OUT`         | the JSON-LD offer reports `SoldOut` for the external shops most events sell through, even when those shops still have tickets, so it is not read | —     |
 | `SO36`                 | `GENRE`            | the shop tags each event only as Konzert, Party or Event, never a genre                                                                          | —     |
