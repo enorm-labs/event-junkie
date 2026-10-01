@@ -96,10 +96,10 @@
     "stream_name": "importer_source_has_succeeded",
     "is_real_time": false,
     "enabled": true,
-    "description": "A source has been enabled long enough to be counted and has never once completed a run. Different from stale and needing a different response: fix the scraper, do not wait for the retry. Blind spot closed by #618.",
+    "description": "A source has been enabled for two hours and has never once completed a run. Different from stale and needing a different response: fix the scraper, do not wait for the retry. Blind spot closed by #618.",
     "query_condition": {
       "type": "promql",
-      "promql": "sum(max by (source) (importer_source_has_succeeded) == bool 0)",
+      "promql": "sum((max by (source) (importer_source_has_succeeded) == bool 0) * (max by (source) (importer_source_has_succeeded offset 2h) == bool 0))",
       "promql_condition": {
         "column": "value",
         "operator": ">",

@@ -125,7 +125,7 @@ loses its silence window and can fire again immediately.
 | `ej-site-down`                 | an application Deployment has zero available replicas                                                                                        | site down          |
 | `ej-importer-stale`            | the stalest source not known to be blocked passes 36h against a 24h interval                                                                 | importer failing   |
 | `ej-importer-stale-blocked`    | a source known to be blocked has not succeeded for 8 days ([#2201](https://github.com/enorm-labs/event-junkie/issues/2201))                  | importer failing   |
-| `ej-source-never-succeeded`    | a source has never once completed a run ([#618](https://github.com/enorm-labs/event-junkie/issues/618))                                      | importer failing   |
+| `ej-source-never-succeeded`    | a source enabled for two hours has never once completed a run ([#618](https://github.com/enorm-labs/event-junkie/issues/618))                | importer failing   |
 | `ej-catalogue-emptying`        | future events fall below 500, from a normal ~3,000                                                                                           | zero events        |
 | `ej-source-emptied`            | one source holds zero future events after holding more than twenty this week ([#700](https://github.com/enorm-labs/event-junkie/issues/700)) | zero events        |
 | `ej-source-quiet`              | a source not known to be quiet has held zero future events for 30 days ([#1498](https://github.com/enorm-labs/event-junkie/issues/1498))     | zero events        |
