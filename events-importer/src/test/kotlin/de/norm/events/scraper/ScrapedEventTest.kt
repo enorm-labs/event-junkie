@@ -212,6 +212,35 @@ class ScrapedEventTest {
         scrapedEvent(status = "RELOCATED", description = "Mad Tsai *live* verlegt vom Frannz").toEntity().status shouldBe "SCHEDULED"
     }
 
+    // A "verschoben" note sits on both dates of a move; the row it moved to takes place (#2206).
+    @Test
+    fun `toEventEntity schedules the row whose own date the note names as the new date`() {
+        val note = "Hinweis: Das Konzert wurde vom 06.03.2026 auf den 01.10.2026 verschoben!"
+        val replacement = scrapedEvent(title = "Sampagne", status = "POSTPONED", statusNote = note, eventDate = LocalDate.of(2026, 10, 1))
+        replacement.toEntity().status shouldBe "SCHEDULED"
+
+        // Masego at Huxleys: a new date and a new house in one note, read on the new date's row.
+        val masego = "Achtung: Die Show wird vom 30.09.2026 auf den 17.02.2027 verschoben und aus der Uber Eats Music Hall in das Huxleys verlegt!"
+        scrapedEvent(status = "POSTPONED", statusNote = masego, eventDate = LocalDate.of(2027, 2, 17)).toEntity().status shouldBe "SCHEDULED"
+
+        // A two-digit year, and "auf" without its article.
+        scrapedEvent(status = "POSTPONED", statusNote = "VERSCHOBEN AUF DEN 08.05.27", eventDate = LocalDate.of(2027, 5, 8)).toEntity().status shouldBe
+            "SCHEDULED"
+        scrapedEvent(status = "POSTPONED", description = "verschoben auf 04.11.2026", eventDate = LocalDate.of(2026, 11, 4)).toEntity().status shouldBe
+            "SCHEDULED"
+    }
+
+    @Test
+    fun `toEventEntity keeps POSTPONED on the date the show left`() {
+        val note = "Das Konzert wurde auf den 27.02.2027 verschoben"
+        scrapedEvent(status = "POSTPONED", statusNote = note, eventDate = LocalDate.of(2026, 10, 7)).toEntity().status shouldBe "POSTPONED"
+        // A badge that names no new date stays postponed.
+        scrapedEvent(status = "POSTPONED", statusNote = "VERSCHOBEN (FRÜHLING 2027)", eventDate = LocalDate.of(2026, 10, 2)).toEntity().status shouldBe
+            "POSTPONED"
+        // Only POSTPONED is read: a cancelled row naming its own date stays cancelled.
+        scrapedEvent(status = "CANCELLED", statusNote = "auf den 30.12.2026 verschoben, dann abgesagt").toEntity().status shouldBe "CANCELLED"
+    }
+
     @Test
     fun `toEventEntity reads the destination off the title, the subtitle or the description when there is no note`() {
         scrapedEvent(title = "Zoh Amba - Verlegt ins Bi Nuu", status = "RELOCATED").toEntity().relocatedTo shouldBe "Bi Nuu"

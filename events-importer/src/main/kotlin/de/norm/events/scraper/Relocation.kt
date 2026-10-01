@@ -1,8 +1,9 @@
 package de.norm.events.scraper
 
 import de.norm.events.event.EventStatus
+import java.time.LocalDate
 
-// Which end of a move a `RELOCATED` row is, read from the venue's own note (#1551, ADR-030).
+// Which end of a move a `RELOCATED` or `POSTPONED` row is, read from the venue's own note (#1551, ADR-030).
 // The badge-to-status mapping stays in EventFieldMapping.kt.
 
 /**
@@ -63,6 +64,36 @@ fun resolveRelocation(
         arrived -> EventStatus.SCHEDULED.name to null
         else -> EventStatus.RELOCATED.name to null
     }
+}
+
+/**
+ * Decides what a `POSTPONED` status means for the row dated [eventDate]: the date the show left,
+ * or the date it moved to.
+ *
+ * Huxleys prints "vom 06.03.2026 auf den 01.10.2026 verschoben" on the new date's row. A note
+ * that names [eventDate] after "auf" makes this row the replacement, so the show happens here:
+ * `SCHEDULED`. Any other status, or notes naming another date or none, pass through (#2206).
+ */
+fun resolvePostponement(
+    status: String,
+    notes: List<String>,
+    eventDate: LocalDate
+): String {
+    if (status != EventStatus.POSTPONED.name) return status
+    val movedHere = notes.any { note -> POSTPONED_TO_DATE.findAll(note).any { targetDate(it) == eventDate } }
+    return if (movedHere) EventStatus.SCHEDULED.name else status
+}
+
+/** The new date of a move: "auf den 01.10.2026", "auf 04.11.2026", "auf den 08.10.26". */
+private val POSTPONED_TO_DATE = Regex("""\bauf\s+(?:den\s+)?(\d{1,2})\.(\d{1,2})\.(\d{4}|\d{2})(?!\d)""", RegexOption.IGNORE_CASE)
+
+/** A two-digit year in a note is this century's. */
+private const val CENTURY = 2000
+
+private fun targetDate(match: MatchResult): LocalDate? {
+    val (day, month, year) = match.destructured
+    val fullYear = year.toInt().let { if (year.length == 2) CENTURY + it else it }
+    return runCatching { LocalDate.of(fullYear, month.toInt(), day.toInt()) }.getOrNull()
 }
 
 /**
