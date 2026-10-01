@@ -24,8 +24,8 @@ repairing live in the [issue tracker](https://github.com/enorm-labs/event-junkie
 | ----------------------------------- | ------------------------------------------------------------------------------------ | ----: |
 | ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |    91 |
 | 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |    14 |
-| ⛔ [Blocked](#-blocked--deferred)   | Website analyzed, but no usable listings (no programme page, JS-only, or too sparse) |   106 |
-| ❓ [Unanalyzed](#-not-analyzed-yet) | URL recorded, but the website still needs a first look                               |    24 |
+| ⛔ [Blocked](#-blocked--deferred)   | Website analyzed, but no usable listings (no programme page, JS-only, or too sparse) |   111 |
+| ❓ [Unanalyzed](#-not-analyzed-yet) | URL recorded, but the website still needs a first look                               |    33 |
 
 "Website analyzed" also means the [data model](DATA_MODEL.md) was checked against that source, and no source needed a
 schema change.
@@ -261,6 +261,12 @@ are at venues already imported. Unblocking them means resolving a venue per even
 venue-level sources. Until then the promoter data reaches us anyway, as the `promoter` field on the venues' own
 events.
 
+**Tag der Clubkultur** has the same blocker, and it runs only once a year. The Clubcommission festival week in October
+2026 listed 130 events at about 80 places. About half of these places are already imported. Many events are panels,
+workshops, exhibitions or screenings, which are out of scope. The listing is server-rendered WordPress. Each event page
+gives labelled fields for date, time, venue with address, ticket price, link and line-up. When per-event venue
+resolution exists, this source is easy to parse. Until then, use the programme to find new venues.
+
 **A handful of tickets is not a programme.** Sisyphos is the case to reason from. Its only own web presence is a
 Shopify merch shop. Its `TICKETS` collection carries one recurring series beside the T-shirts: `generationS`, one night
 a month. The club runs a programme every weekend. The shop alone is not a thin-but-truthful import like OHM's, where the
@@ -392,6 +398,7 @@ the empty Next.js payload rather than the WAF, and a 403 is not evidence that a 
 | Landstreicher Konzerte           | https://landstreicher-konzerte.de/             | Promoter     | Cross-venue, cross-city; also has `/venue/` pages         | Per-event venue resolution |
 | Puschen                          | https://puschen.net/berlin/                    | Promoter     | Cross-venue; one venue per source (see note)              | Per-event venue resolution |
 | Trinity Music                    | https://trinitymusic.de/                       | Promoter     | Cross-venue; one venue per source (see note)              | Per-event venue resolution |
+| Tag der Clubkultur               | https://tagderclubkultur.berlin/programm/      | Promoter     | Cross-venue; one festival week a year (see note)          | Per-event venue resolution |
 | Arena Berlin                     | https://www.arena.berlin/veranstaltungen/      | Concert Hall | Tribe calendar now, but trade fairs only                  | Site change / promoter     |
 | Frannz Salon                     | https://frannz.eu/                             | Club         | Not a separate listing; a floor of Frannz nights          | Covered by FRANNZ          |
 | Kesselhaus                       | https://www.kesselhaus.net/                    | Concert Hall | Angular PWA app shell; no JSON endpoint found             | Headless browser           |
@@ -434,6 +441,10 @@ the empty Next.js payload rather than the WAF, and a 403 is not evidence that a 
 | Mokum                            | —                                              | Bar          | No own site; Facebook only                                | Site change                |
 | Komplex Berlin                   | https://komplex.berlin/                        | Other        | Adobe Portfolio rental site; no programme                 | Site change / manual entry |
 | Zielona Góra                     | —                                              | Bar          | radar only; anniversary nights, no running programme      | More events                |
+| ciao ciao Bar                    | —                                              | Bar          | No own site; Instagram and RA only                        | Site change / manual entry |
+| JIWAR                            | —                                              | Other        | No own site; Instagram only                               | Site change / manual entry |
+| Ashawo Cafe                      | —                                              | Other        | No own site; events on Eventbrite                         | Site change / manual entry |
+| SaliGari Bar                     | —                                              | Bar          | No own site; Facebook only; mostly comedy nights          | Site change / manual entry |
 
 ## ❓ Not analyzed yet
 
@@ -441,8 +452,9 @@ New candidates land here first. Check for a server-rendered programme, then move
 [Ready](#-ready-to-implement) or [Blocked](#-blocked--deferred). A row belongs here only until someone opens it — the
 URL is recorded, nothing more.
 
-Every row below came from a sweep on 2026-09-30. The first 21 came from tipBerlin, and the last three from
-radar.squat.net. The URL was confirmed to answer, and nothing else was checked. A venue's type is a first guess.
+The first 24 rows came from a sweep on 2026-09-30. Of these, 21 came from tipBerlin and three from radar.squat.net.
+The last nine came from the Tag der Clubkultur 2026 programme on 2026-10-01. The URL was confirmed to answer, and
+nothing else was checked. A venue's type is a first guess.
 Correct it against the venue's own site when the row is opened.
 
 | Name                              | URL                                                       | Type         |
@@ -471,6 +483,15 @@ Correct it against the venue's own site when the row is opened.
 | Jugendclub Café Köpenick          | https://www.cafe-hdjk.de/                                 | Club         |
 | Sama32                            | https://www.sama32.squat.net/                             | Bar          |
 | KuBiZ                             | https://www.kubiz-wallenberg.de/                          | Other        |
+| Ballhaus Berlin                   | https://ballhaus-berlin.de/                               | Club         |
+| Tiffany Club                      | https://tiffany-berlin.de/                                | Club         |
+| Slap'd                            | https://slapd.de/                                         | Club         |
+| 800A Bar & Cabaret                | https://www.800aberlin.com/                               | Bar          |
+| Tipsy Bear                        | https://www.tipsybearberlin.com/                          | Bar          |
+| Pastiche                          | https://pasticheinternational.com/                        | Bar          |
+| SOLID                             | https://solid.stadtlandladen.org/                         | Bar          |
+| Zemin                             | https://www.zeminberlin.de/                               | Other        |
+| Alte Feuerwache THF               | https://alte-feuerwache-thf.de/                           | Other        |
 
 WABE's own building is closed for renovation. Its events run at Schönfließer Str. 7 for now. Kühlspot has no programme
 page, and its events are a section of the home page.
@@ -505,6 +526,11 @@ Where candidates come from, and what is deliberately left out:
   group, and those groups gave the eight new rows. KØPI, Abstand and Drugstore import through the radar reader
   (#2166). The other 61 came only through the Stressfaktor group, at one-off locations. Schokoladen, Loge, Supamolly, SO36, Clash, Neue Zukunft, ausland and ://about blank were already
   recorded.
+- **Tag der Clubkultur** (<https://tagderclubkultur.berlin/programm/>), the Clubcommission festival week. The 2026
+  programme on 2026-10-01 held 130 events at about 80 places. It gave nine Unanalyzed rows and four Blocked rows.
+  These places were left out as out of scope: two cinemas, a comedy club, a museum and a youth dance theatre. Also
+  two galleries, a healing space, a hammam, a radio station and a headphone shop. Two more places have no fixed
+  address, and no search identified one more.
 
 **Excluded on purpose, so a later sweep does not re-litigate them.** An RA venue with a single event in the window,
 unless a promoter listed it too. A one-off booking is not evidence of a programme, and the
