@@ -11,8 +11,9 @@
 [![Build & Test Frontend](https://github.com/enorm-labs/event-junkie/actions/workflows/build-frontend.yml/badge.svg)](https://github.com/enorm-labs/event-junkie/actions/workflows/build-frontend.yml)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](./LICENSE)
 [![Status](https://img.shields.io/badge/Status-Beta-orange.svg)](#status)
-[![Kotlin](https://img.shields.io/badge/Kotlin-2.4.10-7F52FF.svg?logo=kotlin&logoColor=white)](https://kotlinlang.org)
-[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.1.1-6DB33F.svg?logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot)
+[![Uptime](https://uptime.betterstack.com/status-badges/v3/monitor/2wivp.svg)](./docs/ops/HEALTHCHECKS.md#the-readme-publishes-it)
+[![Kotlin](https://img.shields.io/badge/Kotlin-7F52FF.svg?logo=kotlin&logoColor=white)](https://kotlinlang.org)
+[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4-6DB33F.svg?logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot)
 [![Java](https://img.shields.io/badge/Java-25-ED8B00.svg?logo=openjdk&logoColor=white)](https://openjdk.org)
 [![Vue.js](https://img.shields.io/badge/Vue.js-3-4FC08D.svg?logo=vuedotjs&logoColor=white)](https://vuejs.org)
 
@@ -21,15 +22,19 @@ One filterable feed of what is on across Berlin's venues, collected automaticall
 > **The event app Berlin deserves.**
 
 <p align="center">
-  <img alt="The events list: a filter bar over a grid of Berlin events, each with its poster, venue, time and genre tags" src="./docs/screenshots/events-dark.png" width="900" />
+  <picture>
+    <source media="(prefers-color-scheme: light)" srcset="./docs/screenshots/events-light.png" />
+    <img alt="The events list: a filter bar over a grid of Berlin events, each with its poster, venue, time and genre tags" src="./docs/screenshots/events-dark.png" width="900" />
+  </picture>
 </p>
 
 <p align="center">
-  <sub>The events list, in the dark theme new visitors get by default — real data, scraped from the venues' own sites. September 2026; see <a href="./docs/screenshots/">docs/screenshots</a>.</sub>
+  <sub>The events list, in your GitHub theme — real data, scraped from the venues' own sites. September 2026; see <a href="./docs/screenshots/">docs/screenshots</a>.</sub>
 </p>
 
 ## Contents
 
+- [What it does](#what-it-does)
 - [Background](#background)
 - [Status](#status)
 - [Built with AI](#built-with-ai)
@@ -42,6 +47,15 @@ One filterable feed of what is on across Berlin's venues, collected automaticall
 - [Support](#support)
 - [Maintainers](#maintainers)
 - [License](#license)
+
+## What it does
+
+- **One events feed** for every source, filtered by date, type, genre, venue and price, with a _free only_ switch and full-text search.
+- **A calendar** for planning a month ahead.
+- **A venues map** that finds the venues near you and pulses the ones with something on right now.
+- **A page for every venue, artist and promoter**, with everything coming up there.
+- **German and English**, with no tracking and no third-party requests.
+- **Always a link back** to the venue's own page for tickets and the final word.
 
 ## Background
 
@@ -80,7 +94,7 @@ which coverage questions are still open is in
 
 🚧 **Public beta.** The site is live at <https://event-junkie.de>.
 
-87 Berlin sources are imported on a schedule. Production and staging run on Hetzner and are reconciled by Flux; staging has no public address. The site
+More than 90 Berlin sources are imported on a schedule. Production and staging run on Hetzner and are reconciled by Flux; staging has no public address. The site
 carries a `beta` badge until `1.0.0`, because coverage is incomplete and some details can be stale. `1.0.0` comes when the criteria on
 [#295](https://github.com/enorm-labs/event-junkie/issues/295) hold.
 
@@ -99,8 +113,8 @@ The vision, the product ideas, the architecture decisions and the priorities are
 before it lands.
 
 This is also _why_ the project exists in this form. I wanted to build it for years and started several times, and as a hobby project alongside everything else
-every attempt was too much work for one person. AI agents are what made it possible. A real application with real constraints is then also where you find out what this way of working is good at, and where it
-still needs a human paying attention.
+every attempt was too much work for one person. AI agents are what made it possible. A real application with real constraints is then also where you find out
+what this way of working is good at, and where it still needs a human paying attention.
 
 ## Install
 
