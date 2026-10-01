@@ -32,26 +32,13 @@ class CassiopeiaWebsiteImporter(
     htmlFetcher: HtmlFetcher,
     /** Clock for the overview scraper's past-event cutoff. Defaults to the system clock; override in tests. */
     clock: Clock = Clock.systemDefaultZone()
-) : AbstractTwoPageWebsiteImporter(htmlFetcher) {
+) : AbstractTwoPageWebsiteImporter(htmlFetcher, CassiopeiaOverviewPageScraper(clock)::scrape, CassiopeiaDetailPageScraper()::scrape) {
     override val eventSource: EventSource = EventSource.CASSIOPEIA
-
-    private val overviewPageScraper = CassiopeiaOverviewPageScraper(clock)
-    private val detailPageScraper = CassiopeiaDetailPageScraper()
-
-    override fun scrapeOverview(
-        document: Document,
-        url: String
-    ): List<ScrapedEvent> = overviewPageScraper.scrape(document, url)
 
     override fun nextOverviewPage(
         document: Document,
         url: String
     ): String? = document.nextPageUrl(NEXT_PAGE_SELECTOR)
-
-    override fun scrapeDetail(
-        document: Document,
-        url: String
-    ): ScrapedEvent? = detailPageScraper.scrape(document, url)
 
     /**
      * Fills missing fields in the [primary] detail event from the [fallback] overview event. The

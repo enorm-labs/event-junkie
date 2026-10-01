@@ -4,9 +4,7 @@ import de.norm.events.scraper.AbstractTwoPageWebsiteImporter
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ScrapedEvent
-import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
 import de.norm.events.scraper.VenueLimitations
-import org.jsoup.nodes.Document
 import org.springframework.stereotype.Component
 
 /**
@@ -25,22 +23,9 @@ import org.springframework.stereotype.Component
 @Component
 class AstraWebsiteImporter(
     htmlFetcher: HtmlFetcher
-) : AbstractTwoPageWebsiteImporter(htmlFetcher) {
+) : AbstractTwoPageWebsiteImporter(htmlFetcher, AstraOverviewPageScraper()::scrape, AstraDetailPageScraper()::scrape) {
     override val eventSource: EventSource = EventSource.ASTRA
     override val listsWholeProgramme: Boolean = true
-
-    private val overviewPageScraper = AstraOverviewPageScraper()
-    private val detailPageScraper = AstraDetailPageScraper()
-
-    override fun scrapeOverview(
-        document: Document,
-        url: String
-    ): List<ScrapedEvent> = overviewPageScraper.scrape(document, url)
-
-    override fun scrapeDetail(
-        document: Document,
-        url: String
-    ): ScrapedEvent? = detailPageScraper.scrape(document, url)
 
     /**
      * Merges detail-page data ([primary]) with overview data ([fallback]). The detail page is

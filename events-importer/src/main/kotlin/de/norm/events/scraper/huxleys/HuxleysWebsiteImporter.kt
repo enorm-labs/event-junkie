@@ -7,10 +7,8 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.ScrapedEvent
-import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
 import de.norm.events.scraper.VenueLimitations
 import de.norm.events.scraper.buildArtistsForEventType
-import org.jsoup.nodes.Document
 import org.springframework.stereotype.Component
 
 /**
@@ -31,22 +29,9 @@ import org.springframework.stereotype.Component
 @Component
 class HuxleysWebsiteImporter(
     htmlFetcher: HtmlFetcher
-) : AbstractTwoPageWebsiteImporter(htmlFetcher) {
+) : AbstractTwoPageWebsiteImporter(htmlFetcher, HuxleysOverviewPageScraper()::scrape, HuxleysDetailPageScraper()::scrape) {
     override val eventSource: EventSource = EventSource.HUXLEYS
     override val listsWholeProgramme: Boolean = true
-
-    private val overviewPageScraper = HuxleysOverviewPageScraper()
-    private val detailPageScraper = HuxleysDetailPageScraper()
-
-    override fun scrapeOverview(
-        document: Document,
-        url: String
-    ): List<ScrapedEvent> = overviewPageScraper.scrape(document, url)
-
-    override fun scrapeDetail(
-        document: Document,
-        url: String
-    ): ScrapedEvent? = detailPageScraper.scrape(document, url)
 
     /**
      * Merges detail-page data ([primary]) with overview data ([fallback]). The detail page is

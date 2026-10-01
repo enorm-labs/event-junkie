@@ -6,11 +6,9 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.ScrapedEvent
-import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
 import de.norm.events.scraper.VenueLimitations
 import de.norm.events.scraper.withSetTimesFrom
 import io.github.oshai.kotlinlogging.KotlinLogging
-import org.jsoup.nodes.Document
 import org.springframework.stereotype.Component
 
 /**
@@ -31,23 +29,11 @@ import org.springframework.stereotype.Component
 @Component
 class TresorWebsiteImporter(
     htmlFetcher: HtmlFetcher
-) : AbstractTwoPageWebsiteImporter(htmlFetcher) {
+) : AbstractTwoPageWebsiteImporter(htmlFetcher, TresorOverviewPageScraper()::scrape, TresorDetailPageScraper()::scrape) {
     override val eventSource: EventSource = EventSource.TRESOR
     override val listsWholeProgramme: Boolean = true
 
     private val logger = KotlinLogging.logger {}
-    private val overviewPageScraper = TresorOverviewPageScraper()
-    private val detailPageScraper = TresorDetailPageScraper()
-
-    override fun scrapeOverview(
-        document: Document,
-        url: String
-    ): List<ScrapedEvent> = overviewPageScraper.scrape(document, url)
-
-    override fun scrapeDetail(
-        document: Document,
-        url: String
-    ): ScrapedEvent? = detailPageScraper.scrape(document, url)
 
     /**
      * Merges event-page data ([primary]) with listing data ([fallback]). The event page is the only

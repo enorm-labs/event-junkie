@@ -1,15 +1,12 @@
 package de.norm.events.scraper.velomax
 
-import de.norm.events.event.EventStatus
 import de.norm.events.scraper.AbstractTwoPageWebsiteImporter
 import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.ScrapedEvent
-import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
 import de.norm.events.scraper.VenueLimitations
-import org.jsoup.nodes.Document
 import org.springframework.stereotype.Component
 
 /**
@@ -26,22 +23,13 @@ import org.springframework.stereotype.Component
 abstract class AbstractVelomaxHallImporter(
     htmlFetcher: HtmlFetcher,
     private val hall: VelomaxHall
-) : AbstractTwoPageWebsiteImporter(htmlFetcher) {
+) : AbstractTwoPageWebsiteImporter(
+        htmlFetcher,
+        { document, url -> OVERVIEW_SCRAPER.scrape(document, url, hall) },
+        { document, url -> DETAIL_SCRAPER.scrape(document, url, hall) }
+    ) {
     override val eventSource: EventSource get() = hall.eventSource
     override val listsWholeProgramme: Boolean = true
-
-    private val overviewPageScraper = VelomaxOverviewPageScraper()
-    private val detailPageScraper = VelomaxDetailPageScraper()
-
-    override fun scrapeOverview(
-        document: Document,
-        url: String
-    ): List<ScrapedEvent> = overviewPageScraper.scrape(document, url, hall)
-
-    override fun scrapeDetail(
-        document: Document,
-        url: String
-    ): ScrapedEvent? = detailPageScraper.scrape(document, url, hall)
 
     /**
      * Merges detail-page data ([primary]) with listing data ([fallback]).
@@ -105,3 +93,7 @@ val VELOMAX_LIMITATIONS =
                 AcceptedLimitation(LimitedAspect.PRICE, "the listing and the event pages print no figure; tickets are sold through outside shops")
             )
     )
+
+// Stateless, so every importer in this file shares one of each.
+private val OVERVIEW_SCRAPER = VelomaxOverviewPageScraper()
+private val DETAIL_SCRAPER = VelomaxDetailPageScraper()

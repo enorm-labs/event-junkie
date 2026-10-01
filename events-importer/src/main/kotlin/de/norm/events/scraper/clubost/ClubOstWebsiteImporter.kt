@@ -7,7 +7,6 @@ import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.VenueLimitations
-import org.jsoup.nodes.Document
 import org.springframework.stereotype.Component
 
 /**
@@ -27,22 +26,9 @@ import org.springframework.stereotype.Component
 @Component
 class ClubOstWebsiteImporter(
     htmlFetcher: HtmlFetcher
-) : AbstractTwoPageWebsiteImporter(htmlFetcher) {
+) : AbstractTwoPageWebsiteImporter(htmlFetcher, ClubOstOverviewPageScraper()::scrape, ClubOstDetailPageScraper()::scrape) {
     override val eventSource: EventSource = EventSource.CLUB_OST
     override val listsWholeProgramme: Boolean = true
-
-    private val overviewPageScraper = ClubOstOverviewPageScraper()
-    private val detailPageScraper = ClubOstDetailPageScraper()
-
-    override fun scrapeOverview(
-        document: Document,
-        url: String
-    ): List<ScrapedEvent> = overviewPageScraper.scrape(document, url)
-
-    override fun scrapeDetail(
-        document: Document,
-        url: String
-    ): ScrapedEvent? = detailPageScraper.scrape(document, url)
 
     /**
      * Merges the detail page's [primary] data over the overview's [fallback]. The card wins

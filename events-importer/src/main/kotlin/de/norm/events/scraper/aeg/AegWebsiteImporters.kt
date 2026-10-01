@@ -7,10 +7,8 @@ import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
-import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
 import de.norm.events.scraper.VenueLimitations
 import de.norm.events.scraper.buildArtistsForEventType
-import org.jsoup.nodes.Document
 import org.springframework.stereotype.Component
 
 /**
@@ -27,21 +25,12 @@ import org.springframework.stereotype.Component
 abstract class AbstractAegVenueImporter(
     htmlFetcher: HtmlFetcher,
     override val eventSource: EventSource
-) : AbstractTwoPageWebsiteImporter(htmlFetcher) {
+) : AbstractTwoPageWebsiteImporter(
+        htmlFetcher,
+        { document, url -> OVERVIEW_SCRAPER.scrape(document, url, eventSource) },
+        { document, url -> DETAIL_SCRAPER.scrape(document, url, eventSource) }
+    ) {
     override val listsWholeProgramme: Boolean = true
-
-    private val overviewPageScraper = AegOverviewPageScraper()
-    private val detailPageScraper = AegDetailPageScraper()
-
-    override fun scrapeOverview(
-        document: Document,
-        url: String
-    ): List<ScrapedEvent> = overviewPageScraper.scrape(document, url, eventSource)
-
-    override fun scrapeDetail(
-        document: Document,
-        url: String
-    ): ScrapedEvent? = detailPageScraper.scrape(document, url, eventSource)
 
     /**
      * Merges detail-page data ([primary]) with listing data ([fallback]). The **listing wins on
@@ -127,3 +116,7 @@ val AEG_LIMITATIONS =
                 AcceptedLimitation(LimitedAspect.GENRE, "the platform files events only as Konzert, Comedy, Show or Sport, never a genre")
             )
     )
+
+// Stateless, so every importer in this file shares one of each.
+private val OVERVIEW_SCRAPER = AegOverviewPageScraper()
+private val DETAIL_SCRAPER = AegDetailPageScraper()

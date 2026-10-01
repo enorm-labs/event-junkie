@@ -5,10 +5,7 @@ import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.LimitedAspect
-import de.norm.events.scraper.ScrapedEvent
-import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
 import de.norm.events.scraper.VenueLimitations
-import org.jsoup.nodes.Document
 import org.springframework.stereotype.Component
 import java.time.Clock
 
@@ -32,22 +29,9 @@ class SodaWebsiteImporter(
     htmlFetcher: HtmlFetcher,
     /** Clock for the overview scraper's weekday-based year inference; override in tests. */
     clock: Clock = Clock.systemDefaultZone()
-) : AbstractTwoPageWebsiteImporter(htmlFetcher) {
+) : AbstractTwoPageWebsiteImporter(htmlFetcher, SodaOverviewPageScraper(clock)::scrape, SodaDetailPageScraper()::scrape) {
     override val eventSource: EventSource = EventSource.SODA
     override val listsWholeProgramme: Boolean = true
-
-    private val overviewPageScraper = SodaOverviewPageScraper(clock)
-    private val detailPageScraper = SodaDetailPageScraper()
-
-    override fun scrapeOverview(
-        document: Document,
-        url: String
-    ): List<ScrapedEvent> = overviewPageScraper.scrape(document, url)
-
-    override fun scrapeDetail(
-        document: Document,
-        url: String
-    ): ScrapedEvent? = detailPageScraper.scrape(document, url)
 }
 
 val SODA_LIMITATIONS =

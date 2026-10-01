@@ -5,10 +5,7 @@ import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.LimitedAspect
-import de.norm.events.scraper.ScrapedEvent
-import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
 import de.norm.events.scraper.VenueLimitations
-import org.jsoup.nodes.Document
 import org.springframework.stereotype.Component
 
 /**
@@ -29,22 +26,9 @@ import org.springframework.stereotype.Component
 @Component
 class So36WebsiteImporter(
     htmlFetcher: HtmlFetcher
-) : AbstractTwoPageWebsiteImporter(htmlFetcher) {
+) : AbstractTwoPageWebsiteImporter(htmlFetcher, So36OverviewPageScraper()::scrape, So36DetailPageScraper()::scrape) {
     override val eventSource: EventSource = EventSource.SO36
     override val listsWholeProgramme: Boolean = true
-
-    private val overviewPageScraper = So36OverviewPageScraper()
-    private val detailPageScraper = So36DetailPageScraper()
-
-    override fun scrapeOverview(
-        document: Document,
-        url: String
-    ): List<ScrapedEvent> = overviewPageScraper.scrape(document, url)
-
-    override fun scrapeDetail(
-        document: Document,
-        url: String
-    ): ScrapedEvent? = detailPageScraper.scrape(document, url)
 }
 
 val SO36_LIMITATIONS =
