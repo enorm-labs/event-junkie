@@ -1,6 +1,7 @@
 package de.norm.events.scraper.zigzag
 
 import de.norm.events.event.EventType
+import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedEvent
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
@@ -13,11 +14,12 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 
-/** Unit tests for [ZigZagJazzClubOverviewPageScraper], against a snapshot taken on 2026-10-01. */
-class ZigZagJazzClubOverviewPageScraperTest {
+/** Unit tests for [ZigZagOverviewPageScraper], against a snapshot taken on 2026-10-01. */
+class ZigZagOverviewPageScraperTest {
     private val clock: Clock = Clock.fixed(Instant.parse("2026-10-01T10:00:00Z"), ZoneId.of("Europe/Berlin"))
     private val sourceUrl = "https://www.zigzag-jazzclub.berlin/programmneu"
-    private val events = ZigZagJazzClubOverviewPageScraper(clock).scrape(Jsoup.parse(fixture(), sourceUrl), sourceUrl)
+    private val events = ZigZagOverviewPageScraper(EventSource.ZIG_ZAG_JAZZ_CLUB, clock).scrape(Jsoup.parse(fixture(), sourceUrl), sourceUrl)
+    private val hall = ZigZagOverviewPageScraper(EventSource.ZIG_ZAG_HALL, clock).scrape(Jsoup.parse(fixture(), sourceUrl), sourceUrl)
 
     private fun fixture(): String =
         javaClass.classLoader
@@ -70,8 +72,33 @@ class ZigZagJazzClubOverviewPageScraperTest {
     }
 
     @Test
+    fun `reads the style when the blurb runs straight on from it`() {
+        // The Hiromi Trio's excerpt is one paragraph: "(Jazz)Von Chick Corea entdeckt, …".
+        hall.single { it.eventDate == LocalDate.of(2026, 11, 5) }.genre shouldBe "Jazz"
+    }
+
+    @Test
+    fun `keeps only the hall's items for the hall, without their prefix`() {
+        hall shouldHaveSize 20
+        hall.minOf { it.eventDate } shouldBe LocalDate.of(2026, 10, 9)
+        hall.maxOf { it.eventDate } shouldBe LocalDate.of(2026, 12, 2)
+        hall.filter { it.title.startsWith("ZIG ZAG", ignoreCase = true) }.shouldBeEmpty()
+
+        val night = hall.first()
+        night.title shouldBe "Jason Moran Plays Duke Ellington"
+        night.sourceId shouldBe "zig_zag_hall:jasmorduk"
+        night.genre shouldBe "Jazz"
+        night.artists.map { it.name } shouldBe listOf("Jason Moran")
+    }
+
+    @Test
+    fun `names the act before what it plays or celebrates`() {
+        hall.single { it.eventDate == LocalDate.of(2026, 10, 30) }.artists.map { it.name } shouldBe listOf("Kurt Elling & The Yellowjackets")
+    }
+
+    @Test
     fun `returns nothing for a page without items`() {
-        ZigZagJazzClubOverviewPageScraper(clock)
+        ZigZagOverviewPageScraper(EventSource.ZIG_ZAG_JAZZ_CLUB, clock)
             .scrape(Jsoup.parse("<html><body></body></html>", sourceUrl), sourceUrl)
             .shouldBeEmpty()
     }
@@ -85,6 +112,6 @@ class ZigZagJazzClubOverviewPageScraperTest {
               <time class="summary-metadata-item summary-metadata-item--date">soon</time>
             </div>
             """.trimIndent()
-        ZigZagJazzClubOverviewPageScraper(clock).scrape(Jsoup.parse(html, sourceUrl), sourceUrl).shouldBeEmpty()
+        ZigZagOverviewPageScraper(EventSource.ZIG_ZAG_JAZZ_CLUB, clock).scrape(Jsoup.parse(html, sourceUrl), sourceUrl).shouldBeEmpty()
     }
 }
