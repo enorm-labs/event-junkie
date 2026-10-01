@@ -162,14 +162,9 @@ class EventService(
         val venue = venueRepository.findById(request.venueId) ?: throw VenueNotFoundException(request.venueId)
 
         val slug = SlugGenerator.slugify("${request.eventDate}-${venue.slug}-${request.title}")
-        // Remap via the shared factory, then carry over the identity and audit fields the request never
-        // owns.
-        val updated =
-            request.toEventEntity(slug).copy(
-                id = existing.id,
-                eventSourceId = existing.eventSourceId,
-                createdAt = existing.createdAt
-            )
+        // Remap via the shared factory, then keep what the request never owns: identity, audit, and
+        // the columns the importer derives (#2249).
+        val updated = request.toEventEntity(slug).keepingDerivedFrom(existing)
         val saved = eventRepository.save(updated)
 
         // Replace artist associations: delete existing, insert new
@@ -332,6 +327,34 @@ class EventService(
 
         return EventResponse.fromEntity(entity, artists, promoters, genreTags)
     }
+}
+
+/**
+ * This update with the columns [EventRequest] does not carry taken from [existing]: the identity,
+ * the audit date, and what the importer derives from the source, the licence or the translator.
+ * The translation stays only while the description is unchanged, and the end only while it is not
+ * before the new date, which `event_end_after_start` would refuse.
+ */
+internal fun EventEntity.keepingDerivedFrom(existing: EventEntity): EventEntity {
+    val sameDescription = description == existing.description
+    val endStillValid = existing.endDate?.let { !it.isBefore(eventDate) } ?: false
+    return copy(
+        id = existing.id,
+        eventSourceId = existing.eventSourceId,
+        createdAt = existing.createdAt,
+        room = existing.room,
+        relocatedTo = existing.relocatedTo,
+        lineupSourceUrl = existing.lineupSourceUrl,
+        descriptionWithheld = existing.descriptionWithheld,
+        imageWithheld = existing.imageWithheld,
+        descriptionAlt = existing.descriptionAlt.takeIf { sameDescription },
+        descriptionAltLanguage = existing.descriptionAltLanguage.takeIf { sameDescription },
+        descriptionAltOrigin = existing.descriptionAltOrigin.takeIf { sameDescription },
+        descriptionAltEngine = existing.descriptionAltEngine.takeIf { sameDescription },
+        descriptionAltSourceHash = existing.descriptionAltSourceHash.takeIf { sameDescription },
+        endDate = existing.endDate.takeIf { endStillValid },
+        endTime = existing.endTime.takeIf { endStillValid }
+    )
 }
 
 /**
