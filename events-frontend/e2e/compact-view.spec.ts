@@ -82,9 +82,15 @@ const toPoster = /switch to the poster view/i
 
 test('the toggle swaps the posters for text rows, and requests no images', async ({ page }) => {
   await mockBff(page)
+  // A visible poster is not a requested one: the lazy posters can still be fetching when the first
+  // shows, and those requests are the poster view's. Count from after all three have arrived (#2311).
+  const postersLoaded = Promise.all(
+    events.map((e) => page.waitForResponse((r) => r.url().endsWith(`/api/images/${e.slug}/192.png`))),
+  )
   await page.goto('/en/events')
   await expect(page.getByRole('heading', { name: 'Event One' })).toBeVisible()
   await expectPosters(page)
+  await postersLoaded
 
   const posters = collectPosterRequests(page)
   await page.getByRole('button', { name: toCompact }).click()
