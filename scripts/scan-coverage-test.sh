@@ -36,7 +36,7 @@ trap 'rm -rf "$WORK"' EXIT
 
 # A baseline of its own, so the assertions do not move when the repository's floors do.
 BASELINE="$WORK/scan-coverage-baseline.txt"
-printf 'zizmor-ignored\t11\nzizmor-suppressed\t64\nflux-clusters-resources\t141\nflux-clusters-files\t41\n' >"$BASELINE"
+printf 'zizmor-ignored\t11\nzizmor-suppressed\t64\nflux-clusters-resources\t141\nflux-clusters-files\t2\n' >"$BASELINE"
 printf 'zap-k3d-full-urls\t40\nzap-k3d-full-rules\t60\n' >>"$BASELINE"
 printf 'nuclei-k3d-templates\t5000\n' >>"$BASELINE"
 
@@ -78,16 +78,25 @@ run 2 "output the extraction cannot read is an error, not a pass" baseline zizmo
 run 2 "an unknown key is an error" baseline zizmor-nonsense "$WORK/zizmor-clean.txt"
 run 2 "a missing file is an error" baseline zizmor-suppressed "$WORK/nope.txt"
 
+# Two origins against a floor of two; base/ appears once per overlay, and a repeat is still one file.
 cat >"$WORK/flux-ok.txt" <<'EOF'
-Summary: 141 resources found in 41 files - Valid: 135, Invalid: 0, Skipped: 6
+deploy/clusters/base - v1/Namespace/a is valid (origin: deploy/clusters/base/namespace.yaml)
+deploy/clusters/staging - v1/Namespace/a is valid (origin: deploy/clusters/base/namespace.yaml)
+deploy/clusters/staging - v1/Secret/b is valid (origin: deploy/clusters/staging/secret.yaml)
+Summary: 141 resources found in 2 files - Valid: 141, Invalid: 0, Skipped: 0
 EOF
 cat >"$WORK/flux-fewer-files.txt" <<'EOF'
-Summary: 141 resources found in 30 files - Valid: 135, Invalid: 0, Skipped: 6
+deploy/clusters/base - v1/Namespace/a is valid (origin: deploy/clusters/base/namespace.yaml)
+deploy/clusters/staging - v1/Namespace/a is valid (origin: deploy/clusters/base/namespace.yaml)
+Summary: 141 resources found in 2 files - Valid: 141, Invalid: 0, Skipped: 0
 EOF
+printf 'Summary: 141 resources found in 41 files - Valid: 135, Invalid: 0, Skipped: 6\n' >"$WORK/flux-no-origin.txt"
 
 echo "flux schema, cluster manifests"
 run 0 "today's counts pass" baseline flux-clusters-resources "$WORK/flux-ok.txt"
+run 0 "distinct origins are the file count" baseline flux-clusters-files "$WORK/flux-ok.txt"
 run 1 "fewer files fails even when the resource count holds" baseline flux-clusters-files "$WORK/flux-fewer-files.txt"
+run 2 "output without origins is an error, not a zero" baseline flux-clusters-files "$WORK/flux-no-origin.txt"
 
 cat >"$WORK/render-ok.txt" <<'EOF'
 Summary: 25 resources found parsing stdin - Valid: 25, Invalid: 0, Skipped: 0

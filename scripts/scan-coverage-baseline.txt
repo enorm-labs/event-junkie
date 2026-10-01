@@ -24,8 +24,8 @@
 # The Nuclei template count is exact for the pinned templates release and its filters, and the
 # floor sits 133 under it on purpose: a templates bump that retires a handful of templates is the
 # normal week, a bump that drops the count by 2.5% is one to read before merging.
-flux-clusters-files	44
-flux-clusters-resources	145
+flux-clusters-files	38
+flux-clusters-resources	173
 zizmor-ignored	17
 zizmor-suppressed	81
 zap-k3d-api-rules	118

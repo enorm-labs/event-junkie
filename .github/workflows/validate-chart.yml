@@ -56,7 +56,7 @@ env:
   # `flux schema validate` replaced kubeconform (#414). Strings in YAML, invisible to Dependabot, so
   # Renovate's `customManagers` watch them (ADR-024).
   FLUX_VERSION: 2.9.6
-  FLUX_SCHEMA_VERSION: 0.14.0
+  FLUX_SCHEMA_VERSION: 0.15.0
   # `ubuntu-latest` preinstalls an older ShellCheck than a local install, old enough to disagree about
   # SC2015. **This pin appears in three workflows** and they move together.
   SHELLCHECK_VERSION: v0.11.0
@@ -180,20 +180,20 @@ jobs:
           done
 
       # The Flux custom resources (#414), which nothing else here can see: a typo in `spec.ref.semver` is an
-      # environment that silently stops updating. `kustomization.yaml` is skipped by kind (a build file,
-      # legitimately without `metadata.name`). `--skip-json-path v1/Secret:/sops` strips the block SOPS adds,
-      # which Flux removes at apply time (#416). DELIBERATELY NOT `--skip-kind v1/Secret`, which would switch
-      # the gate off for every Secret; stripping one path keeps the Secret validated.
+      # environment that silently stops updating. Each directory with a `kustomization.yaml` is built as an
+      # overlay, so `base/` is validated once on its own and once inside every cluster. `--skip-json-path
+      # v1/Secret:/sops` strips the block SOPS adds, which Flux removes at apply time (#416). DELIBERATELY NOT
+      # `--skip-kind v1/Secret`, which would switch the gate off for every Secret; stripping one path keeps the
+      # Secret validated.
       - name: Validate the Flux manifests
         run: |
           set -euo pipefail
           flux schema validate deploy/clusters -s ecosystem --verbose \
-            --skip-kind kustomize.config.k8s.io/v1beta1/Kustomization \
             --skip-json-path v1/Secret:/sops \
             | tee "${RUNNER_TEMP}/flux-clusters.txt"
 
       # The step above passes on a `deploy/clusters` that has quietly stopped being read — every such case
-      # reports `Invalid: 0` (#1087). These two are how much it read.
+      # reports `Invalid: 0` (#1087). These two are how much it read: resources, and the distinct source files they came from.
       - name: Assert the Flux manifests are all still being read
         run: |
           scripts/scan-coverage.sh baseline flux-clusters-resources "${RUNNER_TEMP}/flux-clusters.txt"
