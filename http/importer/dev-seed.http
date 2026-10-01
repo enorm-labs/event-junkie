@@ -22,6 +22,7 @@
 ###   Alte Kantine         — https://alte-kantine.eu/
 ###   AMT                  — https://www.club-amt.berlin/events
 ###   Arcanoa              — https://www.ssi-media.com/arcanoa/veranst.htm
+###   ART Stalker          — https://art-stalker.reservix.de/
 ###   Astra Kulturhaus     — https://www.astra-berlin.de/
 ###   Badehaus             — https://badehaus-berlin.com/events/
 ###   Bar jeder Vernunft   — https://www.bar-jeder-vernunft.de/de/programm/kalender.html
@@ -481,6 +482,68 @@ Accept: application/json
 
 > {%
     client.test("Arcanoa import triggered", function () {
+        client.assert(response.status === 202, "Expected 202 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
+### ART Stalker (Kaiser-Friedrich-Str. 67, Berlin-Charlottenburg)
+### ————————————————————————————————————————————————————————————
+
+### --- Create ART Stalker venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "ART Stalker",
+    "address": "Kaiser-Friedrich-Str. 67",
+    "city": "Berlin",
+    "postalCode": "10627",
+    "district": "charlottenburg",
+    "latitude": 52.50929,
+    "longitude": 13.30216,
+    "websiteUrl": "https://www.art-stalker.de/",
+    "description": "An event bar on Kaiser-Friedrich-Straße that doubles as a gallery where artists exhibit and sell their own work, with a stage for young and established acts: blues and rock concerts, a weekly open session, quizzes and poetry slams.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Eine Event-Bar in der Kaiser-Friedrich-Straße, die zugleich Galerie ist, in der Künstler ihre Werke selbst ausstellen und verkaufen, mit einer Bühne für junge und etablierte Acts: Blues- und Rockkonzerte, eine wöchentliche offene Session, Quizabende und Poetry Slams.",
+    "descriptionAltLanguage": "de"
+}
+
+> {%
+    client.global.set("art_stalker_venue_id", response.body.id);
+    client.test("ART Stalker venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Create ART Stalker event source ---
+# Links the venue to the ArtStalkerWebsiteImporter.
+# The sourceType "ART_STALKER" matches EventSource.ART_STALKER.
+POST {{importer-host}}/api/admin/event-sources
+Content-Type: application/json
+
+{
+    "venueId": {{art_stalker_venue_id}},
+    "name": "ART Stalker",
+    "url": "https://art-stalker.reservix.de/",
+    "sourceType": "ART_STALKER",
+    "enabled": true,
+    "importIntervalMinutes": 1440,
+    "maxRetries": 3
+}
+
+> {%
+    client.test("ART Stalker event source created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Trigger initial ART Stalker import ---
+POST {{importer-host}}/api/admin/event-sources/art-stalker/import
+Accept: application/json
+
+> {%
+    client.test("ART Stalker import triggered", function () {
         client.assert(response.status === 202, "Expected 202 but got " + response.status);
     });
 %}

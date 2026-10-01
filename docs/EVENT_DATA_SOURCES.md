@@ -22,8 +22,8 @@ repairing live in the [issue tracker](https://github.com/enorm-labs/event-junkie
 
 | Status                              | Meaning                                                                              | Count |
 | ----------------------------------- | ------------------------------------------------------------------------------------ | ----: |
-| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |    96 |
-| 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |    10 |
+| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |    97 |
+| 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |     9 |
 | ⛔ [Blocked](#-blocked--deferred)   | Website analyzed, but no usable listings (no programme page, JS-only, or too sparse) |   119 |
 | ❓ [Unanalyzed](#-not-analyzed-yet) | URL recorded, but the website still needs a first look                               |    24 |
 
@@ -41,6 +41,7 @@ schema change.
 | Alte Kantine Kulturbrauerei      | https://alte-kantine.eu/                                    | Concert Hall |                                                        |
 | AMT                              | https://www.club-amt.berlin                                 | Techno Club  | Webflow; month pages; calendar stale since August      |
 | Arcanoa                          | https://www.ssi-media.com/arcanoa/veranst.htm               | Bar          | 1990s HTML; title/date only; year from weekday         |
+| ART Stalker                      | https://art-stalker.reservix.de/                            | Bar          | Reservix shop root; robots bars `/events`, 25 events   |
 | Astra Kulturhaus                 | https://www.astra-berlin.de/                                | Concert Hall | schema.org `MusicEvent`; presale + door prices         |
 | Badehaus                         | https://badehaus-berlin.com/                                | Club         | "AUSVERKAUFT"/"VERLEGT" labels; ticket + FB links      |
 | Bar jeder Vernunft               | https://www.bar-jeder-vernunft.de/de/programm/kalender.html | Bar          | Neos; per-date JSON-LD; one show page per run          |
@@ -158,25 +159,22 @@ least as heavily as an RA count when the next batch is prioritised.
 | DSTRKT Club Berlin | https://www.dstrkt.de/                         | Club        | Low      | Wix one-pager; 2 dated events, which is the whole programme |
 | Kunstfabrik Schlot | https://kunstfabrik-schlot.de/programm/        | Club        | High     | WordPress list; year, time and price only on detail pages   |
 | ufaFabrik          | https://ufafabrik.de/spielplan.html            | Theater     | High     | Drupal calendar; `/program/YYYYMM` month pages; prices      |
-| ART Stalker        | https://art-stalker.reservix.de/events         | Bar         | High     | Reservix shop; `/events/N` pages; 56 upcoming; prices       |
 | Orania.Berlin      | https://orania.berlin/concerts                 | Bar         | Medium   | TYPO3; `/concerts/page/N`; `Event` JSON-LD; always free     |
 | ZIMMER 16          | https://zimmer16.com/                          | Other       | Medium   | Divi + YesTicket cards; time and price on YesTicket         |
 | Ballhaus Wedding   | https://www.ballhauswedding.de/veranstaltungen | Other       | Medium   | Wix rich text; 117 entries with year-less dates; no images  |
 | Soulcat            | https://soulcat-berlin.com/programm/           | Bar         | Low      | TEC REST API; one week ahead; titles only                   |
 | Erreichbar         | https://radar.squat.net/en/node/6653           | Other       | Low      | radar group 6653; a fortnightly punk bar night; no site     |
 
-**The seven rows below DSTRKT came from the tipBerlin sweep on 2026-09-30.** Each has a quirk that the importer must
+**The six rows below DSTRKT, Erreichbar aside, came from the tipBerlin sweep on 2026-09-30.** Each has a quirk that the importer must
 handle:
 
 - **Kunstfabrik Schlot** is the real site. `schlot.de` shows only a placeholder. The Events Calendar REST API and iCal
   are switched off. Ignore the `Product` JSON-LD on the detail page, because its price is `0` USD.
 - **ufaFabrik** is about 29 % music, 48 % cabaret, comedy and theatre, and 23 % children's shows. Filter on the genre
   label, as Gärten der Welt does with `isProgrammeCategory`.
-- **ART Stalker**'s own site carries no events. Its programme link goes to the Reservix white-label shop. `?page=2`
-  returns page 1, so follow `/events/2`.
 - **ZIMMER 16** and **Ballhaus Wedding** are small mixed stages. Music is one part of a programme with improv, readings
   and dance socials. Ballhaus Wedding's dates have no year, so take it from the month headings. Its entries have no
-  fixed shape, so that parser is the most brittle of the eight.
+  fixed shape, so that parser is the most brittle of the six.
 - **Soulcat** publishes one week ahead, and four of its seven events are one recurring bar night.
 
 **Gärten der Welt** set the precedent for the next park- or campus-like source when it was
