@@ -23,6 +23,7 @@ import org.junit.jupiter.api.Test
 import java.math.BigDecimal
 import java.time.Clock
 import java.time.Instant
+import java.time.LocalDate
 import java.time.ZoneOffset
 
 /**
@@ -224,4 +225,33 @@ class BerghainWebsiteImporterTest {
     fun `eventSource matches the expected enum value`() {
         importer.eventSource shouldBe EventSource.BERGHAIN
     }
+
+    @Test
+    fun `folds a Halle exhibition's days into one run and bills no act`() =
+        runTest {
+            val days = listOf("83113" to "02.10.2026", "83114" to "03.10.2026", "83115" to "04.10.2026")
+            val overview =
+                days.joinToString("") { (id, date) ->
+                    """<a href="/de/event/$id/" class="upcoming-event"><p>Freitag <span class="font-bold">$date</span> beginn 17:00</p>""" +
+                        """<h2>A SHROUD WOVEN OF SOLAR THREADS</h2><h3>Halle</h3>""" +
+                        """<h4><span class="font-bold"><span>A Shroud Woven of Solar Threads</span></span></h4></a>"""
+                }
+            coEvery { htmlFetcher.fetch(sourceUrl, any(), any()) } returns
+                FetchResult.Success(document = Jsoup.parse("<html><body>$overview</body></html>", sourceUrl), etag = null, lastModified = null)
+            val detail = loadFixture("scraper/berghain/berghain-detail-exhibition.html")
+            days.forEach { (id, date) ->
+                val url = "https://www.berghain.berlin/de/event/$id/"
+                coEvery { htmlFetcher.fetchDocument(url) } returns Jsoup.parse(detail.replace("02.10.2026", date), url)
+            }
+
+            val result = importer.importEvents(sourceUrl, null, null)
+
+            result.shouldBeInstanceOf<ImportResult.Success>()
+            val run = result.events.single()
+            run.eventType shouldBe "EXHIBITION"
+            run.sourceId shouldBe "berghain:exhibition-a-shroud-woven-of-solar-threads"
+            run.eventDate shouldBe LocalDate.of(2026, 10, 2)
+            run.endDate shouldBe LocalDate.of(2026, 10, 4)
+            run.artists shouldBe emptyList()
+        }
 }

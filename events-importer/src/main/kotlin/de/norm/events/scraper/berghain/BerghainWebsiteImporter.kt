@@ -1,15 +1,19 @@
 package de.norm.events.scraper.berghain
 
+import de.norm.events.event.EventType
 import de.norm.events.scraper.AbstractTwoPageWebsiteImporter
 import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
+import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.VenueLimitations
+import de.norm.events.scraper.collapseExhibitionRuns
 import de.norm.events.scraper.queryParameter
 import de.norm.events.scraper.withQueryParameter
 import de.norm.events.scraper.withSetTimesFrom
+import de.norm.events.slug.SlugGenerator
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.springframework.stereotype.Component
@@ -73,11 +77,40 @@ class BerghainWebsiteImporter(
     ): ScrapedEvent =
         primary.withGapsFrom(fallback).copy(
             // The overview's lineup is authoritative; the detail page's artists carry only set times.
+            // An exhibition's slot repeats its title, which is no act (#2265).
             artists =
-                fallback.artists.withSetTimesFrom(primary.artists) {
-                    logger.warn { "Running-order slot '${it.name}' matches no act on the programme; its set time is dropped" }
+                if (primary.eventType == EventType.EXHIBITION.name) {
+                    emptyList()
+                } else {
+                    fallback.artists.withSetTimesFrom(primary.artists) {
+                        logger.warn { "Running-order slot '${it.name}' matches no act on the programme; its set time is dropped" }
+                    }
                 }
         )
+
+    /**
+     * A Halle exhibition is listed once per open day, each day its own event page, so the days fold
+     * into one run from the first listed day to the last (ADR-029, #2265), keyed on the show's title.
+     */
+    override suspend fun importEvents(
+        url: String,
+        etag: String?,
+        lastModified: String?
+    ): ImportResult =
+        when (val result = super.importEvents(url, etag, lastModified)) {
+            is ImportResult.Success -> {
+                result.copy(
+                    events =
+                        result.events.collapseExhibitionRuns { event ->
+                            "${EventSource.BERGHAIN.sourceIdPrefix}exhibition-${SlugGenerator.slugify(event.title)}"
+                        }
+                )
+            }
+
+            else -> {
+                result
+            }
+        }
 
     private companion object {
         const val LOAD_MORE_SELECTOR = "button#load-more-events"

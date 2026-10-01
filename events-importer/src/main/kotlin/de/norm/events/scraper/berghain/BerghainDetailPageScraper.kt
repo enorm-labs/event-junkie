@@ -72,11 +72,12 @@ class BerghainDetailPageScraper {
         val lineText = dateLine?.text().orEmpty()
         val floors = content.select("[data-set-floor] h2").mapNotNull { it.text().trim().takeIf(String::isNotBlank) }
         val tickets = parseTickets(content)
+        val description = parseDescription(content)
 
         return ScrapedEvent(
             title = title,
-            description = parseDescription(content),
-            eventType = floorsToEventType(floors),
+            description = description,
+            eventType = if (isHalleExhibition(floors, description)) EventType.EXHIBITION.name else floorsToEventType(floors),
             eventDate = eventDate,
             doorsTime = labelledClock(lineText, DOORS_LABELS),
             startTime = labelledClock(lineText, START_LABELS),
