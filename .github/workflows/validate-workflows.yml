@@ -12,6 +12,7 @@ on:
     paths:
       - '.github/workflows/**'
       - 'zizmor.yml'
+      - '.github/actionlint.yaml'
       # The audit-coverage floors. A baseline edited without a run lowers a floor unnoticed.
       - 'scripts/scan-coverage.sh'
       - 'scripts/scan-coverage-baseline.txt'

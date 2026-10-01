@@ -36,8 +36,8 @@ is the map and the traps.
   not a lag; it was held at 3.x on a lapsed premise until #1006, and Helm 3's `--strict` misses what 4's rejects. Reaches no cluster.
 - `validate-infra.yml` — `tofu fmt -check`, `init -backend=false` + `validate` per stack in a matrix, ShellCheck on cloud-init, `check_user_data.py`. **Never
   `plan`** — nothing outside the cluster holds a credential (PLATFORM_SETUP.md §4), so no drift detection.
-- `validate-workflows.yml` — actionlint and zizmor at `--min-severity medium`; suppressions in `zizmor.yml` or inline `# zizmor: ignore[…]`, each with a reason
-  and a date. `unpinned-uses: hash-pin` since #443.
+- `validate-workflows.yml` — actionlint, configured in `.github/actionlint.yaml`, and zizmor at `--min-severity medium`; suppressions in `zizmor.yml` or
+  inline `# zizmor: ignore[…]`, each with a reason and a date. `unpinned-uses: hash-pin` since #443.
 - `validate-docs.yml` — `scripts/format-markdown.sh check` over every `.md`, plus `skill-parity.sh` and `rules-parity.sh`. Checks, never writes (a push-back
   would need write access on fork PRs). Installs the frontend's lockfile for the **pinned** oxfmt; `package-lock.json` is in its filter because an oxfmt bump
   reformats every document.
