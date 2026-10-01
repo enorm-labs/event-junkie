@@ -86,6 +86,7 @@ import de.norm.events.scraper.voidclub.VOID_CLUB_LIMITATIONS
 import de.norm.events.scraper.wildatheart.WILD_AT_HEART_LIMITATIONS
 import de.norm.events.scraper.wuhlheide.WUHLHEIDE_LIMITATIONS
 import de.norm.events.scraper.zenner.ZENNER_LIMITATIONS
+import de.norm.events.scraper.zigzag.ZIG_ZAG_JAZZ_CLUB_LIMITATIONS
 import de.norm.events.scraper.zitadelle.ZITADELLE_LIMITATIONS
 import de.norm.events.scraper.zurklappe.ZUR_KLAPPE_LIMITATIONS
 
@@ -184,6 +185,7 @@ object AcceptedLimitations {
             WILD_AT_HEART_LIMITATIONS,
             WUHLHEIDE_LIMITATIONS,
             ZENNER_LIMITATIONS,
+            ZIG_ZAG_JAZZ_CLUB_LIMITATIONS,
             ZITADELLE_LIMITATIONS,
             ZUR_KLAPPE_LIMITATIONS
         )

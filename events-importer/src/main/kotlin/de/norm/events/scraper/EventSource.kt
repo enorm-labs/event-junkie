@@ -288,6 +288,9 @@ enum class EventSource {
     /** Zenner Berlin – a riverside venue in Treptower Park with a historic Saal, a club, a beer garden and a wine garden. */
     ZENNER,
 
+    /** Zig Zag Jazz Club – a jazz club on Hauptstraße in Schöneberg, by Innsbrucker Platz, with a concert most nights and a weekly jam session. */
+    ZIG_ZAG_JAZZ_CLUB,
+
     /** Zitadelle Spandau – the Renaissance fortress whose courtyard hosts the Citadel Music Festival, an open-air concert series each summer. */
     ZITADELLE,
 
