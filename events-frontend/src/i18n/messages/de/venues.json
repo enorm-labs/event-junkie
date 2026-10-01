@@ -13,5 +13,11 @@
   },
   "pickPin": "Tippe auf einen Pin, um die Location zu sehen.",
   "whatsOn": "Was hier läuft, auf der Karte",
-  "unpinned": "{count} weitere ohne Standort, in der Liste"
+  "unpinned": "{count} weitere ohne Standort, in der Liste",
+  "near": {
+    "denied": "Der Standortzugriff ist für diese Seite aus. Such stattdessen nach Name oder Bezirk.",
+    "unavailable": "Dein Standort ließ sich nicht bestimmen. Such stattdessen nach Name oder Bezirk.",
+    "resultCount": "{count} Location, die nächste zuerst | {count} Locations, die nächste zuerst",
+    "empty": "In diesem Umkreis gibt es keine Location. Versuch einen größeren."
+  }
 }

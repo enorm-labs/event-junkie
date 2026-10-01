@@ -13,5 +13,11 @@
   },
   "pickPin": "Pick a pin to see the venue.",
   "whatsOn": "What is on here, on the map",
-  "unpinned": "{count} more without a location, in the list"
+  "unpinned": "{count} more without a location, in the list",
+  "near": {
+    "denied": "Location access is off for this site. Search by name or district instead.",
+    "unavailable": "Your location could not be found. Search by name or district instead.",
+    "resultCount": "{count} venue, nearest first | {count} venues, nearest first",
+    "empty": "No venue within this radius. Try a larger one."
+  }
 }

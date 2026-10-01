@@ -11,6 +11,8 @@ const props = withDefaults(
     venue: VenueSummary
     /** Heading level, which belongs to the page rather than to the row — see `EventCard.vue`. */
     as?: 'h2' | 'h3' | 'h4'
+    /** How far the venue is from the visitor's chosen origin, already formatted. */
+    distance?: string
   }>(),
   { as: 'h3' },
 )
@@ -32,6 +34,9 @@ const localePath = useLocalePath()
       >
         {{ venue.name }}
       </component>
+      <span v-if="distance" class="shrink-0 text-meta text-muted-foreground tabular-nums">
+        {{ distance }}
+      </span>
     </div>
     <p v-if="location || venue.city" class="truncate text-meta text-muted-foreground">
       {{ location || venue.city }}
