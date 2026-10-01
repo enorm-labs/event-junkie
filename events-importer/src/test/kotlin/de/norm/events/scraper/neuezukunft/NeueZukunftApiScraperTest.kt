@@ -179,5 +179,8 @@ class NeueZukunftApiScraperTest {
         herbstfest.ticketUrl.shouldBeNull()
         herbstfest.imageUrl shouldBe "https://files.elfsightcdn.com/eafe4a4d/9dbf9c61/Herbstsfest-2026.jpg"
         herbstfest.toEventEntity(venueId = 1L, venueSlug = "neue-zukunft", eventSourceId = 1L).free shouldBe true
+        // The house's own fest is a party, and its name is not an act (#2271).
+        herbstfest.eventType shouldBe "PARTY"
+        herbstfest.artists.shouldBeEmpty()
     }
 }
