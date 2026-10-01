@@ -61,5 +61,9 @@ val DUNCKER_LIMITATIONS =
     VenueLimitations(
         EventSource.DUNCKER,
         AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "the whole programme is one hand-coded page"),
+        AcceptedLimitation(
+            LimitedAspect.DOORS_TIME,
+            "the time cell is the night's opening hours, stored as start and end, and no doors time is printed"
+        ),
         AcceptedLimitation(LimitedAspect.PRICE, "the listing gives a night, a genre string and an hour range, never a figure")
     )
