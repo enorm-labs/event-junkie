@@ -466,6 +466,9 @@ frontend can display appropriate badges and the importer can update events witho
 persistence boundary and stores the destination's name in `relocated_to`. The row at the house the show moved to is a plain `SCHEDULED` event
 ([ADR-030](adr/ADR-030_RELOCATED_IS_THE_ORIGIN.md)).
 
+`POSTPONED` means the show moved **away** from this row's date. A "verschoben" note also sits on the new date's row. When the note names this row's
+own date after "auf", the importer stores `SCHEDULED`, because the show takes place on that date ([#2206](https://github.com/enorm-labs/event-junkie/issues/2206)).
+
 ### `slug` Fields on All Main Entities
 
 URL-friendly slugs are stored on venues, artists, promoters, genre tags, and events. These are used for:

@@ -181,8 +181,11 @@ data class ScrapedEvent(
         val badgeStatus = if (badge == EventStatus.SCHEDULED) parseTitleStatus(title) ?: badge.name else badge.name
         // A "verlegt" badge sits on both ends of a move; which end this row is, only this boundary knows
         // (#1551).
-        val relocation = listOfNotNull(statusNote, title, subtitle, description).firstNotNullOfOrNull(::parseRelocation)
-        val (storedStatus, relocatedTo) = resolveRelocation(badgeStatus, relocation, venueSlug)
+        val notes = listOfNotNull(statusNote, title, subtitle, description)
+        val relocation = notes.firstNotNullOfOrNull(::parseRelocation)
+        val (relocatedStatus, relocatedTo) = resolveRelocation(badgeStatus, relocation, venueSlug)
+        // A "verschoben" note sits on both dates of a move too; the row the show moved to takes place (#2206).
+        val storedStatus = resolvePostponement(relocatedStatus, notes, eventDate)
         val storedTitle = storedTitle()
         // Presale dearer than the door is a misread price (#1583); named so the nightly log says which
         // source, stored as read because the fix is per parser.
