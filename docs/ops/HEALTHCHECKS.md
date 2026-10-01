@@ -412,24 +412,21 @@ metrics in the Object Storage bucket under a retention policy ([ADR-015](../adr/
 healthchecks.io ping stays a bare `GET` to an opaque UUID with no body. The monitor fetches a public page and receives
 no personal data. Sending a number to either as a payload **would** re-open it.
 
-### It is measured, not published
+### The README publishes it
 
-Availability is for operators. There is no public status page and no uptime badge, and that is a
-decision rather than an omission. Publishing a number is a transparency commitment to venues and
-visitors, and it is worth making deliberately rather than discovering it when somebody asks.
-
-**Decided at launch: not now** (#1936). A figure nobody reads yet is a poor basis for a public promise.
-
-**Better Stack makes publishing a one-line change, which is the reason to decide it on purpose.** The monitor offers a
-README badge that renders live uptime:
+The README carries the production monitor's uptime badge. The badge is a public claim to venues and visitors, not a
+decoration. It also tells every reader which vendor watches the site. See #1936.
 
 ```markdown
-[![Better Stack Badge](https://uptime.betterstack.com/status-badges/v3/monitor/2wivp.svg)](https://uptime.betterstack.com/?utm_source=status_badge)
+[![Uptime](https://uptime.betterstack.com/status-badges/v3/monitor/2wivp.svg)](./docs/ops/HEALTHCHECKS.md#the-readme-publishes-it)
 ```
 
-Pasting that into a public README publishes the number. **It is a commitment to venues and visitors, not a
-decoration**, and it also tells every reader which vendor watches the site. Decide it at launch, and record the
-decision either way.
+The badge is the monitor's SVG, not the status-page badge. The status-page badge is an iframe, and GitHub does not render
+an iframe. There is no public status page. GitHub fetches the image through its own image proxy, so the badge sends no
+visitor data to Better Stack, and the privacy notice is unaffected.
+
+**Remove the badge before the monitor is deleted or replaced.** A deleted monitor leaves a broken image in the README.
+A new monitor gets a new badge URL.
 
 ## The two ways this quietly stops working
 
