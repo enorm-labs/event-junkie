@@ -115,6 +115,35 @@ class ColumbiahalleOverviewPageScraperTest {
         event("9715").artists.filter { it.role == "SUPPORT" }.map { it.name } shouldContainExactly listOf("Those Damn Crows")
     }
 
+    private val teaserEvents by lazy {
+        scraper.scrape(
+            Jsoup.parse(
+                javaClass.classLoader
+                    .getResourceAsStream("scraper/columbiahalle/columbiahalle-overview-teaser.html")!!
+                    .bufferedReader()
+                    .readText(),
+                baseUrl
+            ),
+            baseUrl
+        )
+    }
+
+    @Test
+    fun `reads a bare comma list under a title as the bill, and does not mint the title`() {
+        val unity = teaserEvents.first { it.sourceId == "columbiahalle:9711" }
+        unity.title shouldBe "Unity"
+        unity.artists.map { it.name } shouldBe listOf("VNV Nation", "IAMX", "Northern Lite", "Zeromancer")
+    }
+
+    @Test
+    fun `bills a support line in the teaser, and ignores a notice or a credit there`() {
+        teaserEvents.first { it.title == "Betontod" }.artists.map { it.name to it.role } shouldBe
+            listOf("Betontod" to "HEADLINER", "Rogers" to "SUPPORT")
+        // The h3 and the teaser both name Rose Gray; she is billed once.
+        teaserEvents.first { it.title == "Tove Lo" }.artists.map { it.name.lowercase() } shouldBe listOf("tove lo", "rose gray")
+        teaserEvents.first { it.title == "OG Keemo" }.artists.map { it.name } shouldBe listOf("OG Keemo")
+    }
+
     @Test
     fun `splits a co-billed title into one headliner per act`() {
         val metric = event("9729")

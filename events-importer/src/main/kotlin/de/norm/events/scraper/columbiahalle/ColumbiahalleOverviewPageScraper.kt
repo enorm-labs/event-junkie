@@ -3,11 +3,13 @@ package de.norm.events.scraper.columbiahalle
 import de.norm.events.scraper.DOORS_LABELS
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.START_LABELS
+import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.inferConcertVenueType
+import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.labelledClock
 import de.norm.events.scraper.parseEventStatus
 import de.norm.events.scraper.parseLabelledPrices
@@ -34,7 +36,7 @@ import java.util.Locale
  * [YearMonth] carried along.
  *
  * Each card is self-contained: the act (`h2`), up to two `h3` lines — a tour name, a support
- * line, or both, the support line second (#1953) — the
+ * line, or both, the support line second (#1953) — an optional `p.teaser` line, the
  * booking agency (`.veranstalter`), `Einlass`/`Beginn` times (`.zeit`), `VVK`/`AK` prices
  * (`.preis`), a ticket-shop link, a poster, an optional `.stoerer` status sticker, and the
  * untruncated blurb in the collapsed `.bandinfo` panel — no detail page is fetched (the
@@ -110,6 +112,7 @@ class ColumbiahalleOverviewPageScraper {
         val sticker = card.textAt(".stoerer").orEmpty()
         val eventType = inferConcertVenueType(title)
         val (presale, boxOffice, priceNote) = parsePrices(card)
+        val teaser = card.textAt("p.teaser")
 
         return ScrapedEvent(
             title = title,
@@ -132,9 +135,35 @@ class ColumbiahalleOverviewPageScraper {
             status = parseEventStatus(sticker),
             // A relocation sticker names the new house: "in das huxleys verlegt".
             statusNote = sticker.ifBlank { null },
-            artists = buildArtistsForEventType(title, subtitleLines.joinToString("\n"), eventType),
+            artists = billedArtists(title, subtitleLines, teaser, eventType),
             promoters = listOfNotNull(card.textAt(".veranstalter a"))
         )
+    }
+
+    /**
+     * The acts a card bills. The `p.teaser` line carries a notice, a credit or a billing: a support
+     * line in it ("Special Guest: Rogers") is read like the `h3` one, and the shared parser skips
+     * the rest. On a card with no `h3`, a teaser that is a bare comma list is the bill itself and
+     * the title is the event's name (`Unity` over `VNV Nation, IAMX, Northern Lite, Zeromancer`, #2266).
+     */
+    private fun billedArtists(
+        title: String,
+        subtitleLines: List<String>,
+        teaser: String?,
+        eventType: String
+    ): List<ScrapedArtist> {
+        val bill = teaser?.takeIf { subtitleLines.isEmpty() && BARE_BILL.matches(it) }
+        val artists =
+            if (bill != null) {
+                bill
+                    .split(',')
+                    .map { it.trim() }
+                    .filter { it.isNotBlank() && !isNonArtistName(it) }
+                    .map { ScrapedArtist(name = it) }
+            } else {
+                buildArtistsForEventType(title, (subtitleLines + listOfNotNull(teaser)).joinToString("\n"), eventType)
+            }
+        return artists.distinctBy { it.name.lowercase() }
     }
 
     /** The card's day-of-month text against the month heading, or `null` when not a valid day. */
@@ -182,6 +211,9 @@ class ColumbiahalleOverviewPageScraper {
     }
 
     private companion object {
+        /** Two or more names in a comma list, with no label, date or figure among them. */
+        val BARE_BILL = Regex("""[^:\d,]+(?:,[^:\d,]+)+""")
+
         /** Class marking a `.eventlist_monat` month heading in the event stream. */
         private const val MONTH_HEADING_CLASS = "eventlist_monat"
 
