@@ -137,6 +137,9 @@ class KlunkerkranichOverviewPageScraperTest {
         // Same shape on the same programme, and the page's prose calls them two residents.
         billing("DUSTY BALLROOM w. Cane Cattivo *live, Ilo Pan & Elmo Lewis").map { it.name } shouldContainExactly
             listOf("Cane Cattivo", "Ilo Pan", "Elmo Lewis")
+        // The shared rule keeps an "& the" tail as part of one name (#2269).
+        billing("BAERBEL'S BELLEZ w. Kitty & the Cat *live, bisu bisu").map { it.name } shouldContainExactly
+            listOf("Kitty & the Cat", "bisu bisu")
     }
 
     @Test

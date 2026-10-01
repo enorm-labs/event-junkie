@@ -191,7 +191,9 @@ class KlunkerkranichOverviewPageScraper(
      * lineup block prints one act per line, and it puts `Überhaupt & Außerdem` — a duo — on one
      * line exactly as it puts `Ilo Pan & Elmo Lewis`, two residents billed together. So the split
      * stays, and [isKnownSingleAct] is what holds a named duo together; what it does not name is
-     * this source's declared `ARTISTS` limitation.
+     * this source's declared `ARTISTS` limitation. One shape is settled: a lowercase `the` after the
+     * conjunction is a band's own article, so `Kitty & the Cat` is one name (#2269). The venue
+     * shouts its billings, so `BATILA & THE DREAMBUS` gives no such tell and still splits.
      *
      * A collective may be billed with its members after a colon — "In Limbo Audio: Sven Howland
      * & Niklas Gietmann & Nicolai Toma" — and the page names both, so the collective is an act
@@ -261,9 +263,9 @@ class KlunkerkranichOverviewPageScraper(
 
         /**
          * Act boundaries inside one billing: a space-padded `&` / `and` / `und` joining two separately
-         * billed acts, and `b2b` joining two DJs into one slot.
+         * billed acts, unless a lowercase `the` follows, and `b2b` joining two DJs into one slot.
          */
-        val ACT_SEPARATOR = Regex("""\s+(?:&|and|und|b2b)\s+""", RegexOption.IGNORE_CASE)
+        val ACT_SEPARATOR = Regex("""\s+(?:&|and|und)\s+(?!(?-i:the)\s)|\s+b2b\s+""", RegexOption.IGNORE_CASE)
 
         /**
          * A collective's name before the colon introducing its members. Anchored, and the name may not
