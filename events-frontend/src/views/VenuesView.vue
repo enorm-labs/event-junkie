@@ -76,7 +76,9 @@ function clearSearch() {
 const showMap = computed(() => queryString('view') === 'map')
 
 function setView(view: 'list' | 'map') {
-  router.push({ query: { ...route.query, view: view === 'map' ? 'map' : undefined, page: undefined } })
+  router.push({
+    query: { ...route.query, view: view === 'map' ? 'map' : undefined, page: undefined },
+  })
 }
 
 const mapVenues = shallowRef<VenueSummary[]>([])

@@ -93,6 +93,9 @@ jobs:
       - name: Lint
         run: npm run check:lint
 
+      - name: Check formatting
+        run: npm run check:format
+
       # Every production npm dependency against config/allowed-licenses-npm.json. `./gradlew checkLicense`
       # sees only the JVM tree, and dependency-review looks only at newly introduced dependencies.
       - name: Check dependency licences

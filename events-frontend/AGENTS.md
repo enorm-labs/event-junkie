@@ -9,7 +9,7 @@ Node 24).
 ```sh
 npm run dev                                       # Vite on 5173; /api proxies to the BFF, which must be on 8080
 npm run type-check && npm run lint && npm run test:unit && npm run test:e2e   # the gate, before any PR
-npm run format                                    # oxfmt; reformatting is intentional, never revert it
+npm run format                                    # oxfmt; reformatting is intentional, never revert it. CI runs check:format
 npm run generate:api                              # regenerate schema.d.ts — whenever the BFF's API changes
 npm run test:a11y                                 # the axe/WCAG sweep alone (a filter over test:e2e)
 ```

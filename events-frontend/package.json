@@ -20,6 +20,8 @@
     "check:licenses": "node scripts/check-licenses.mjs",
     "//check:lint": "What CI runs: `lint` without `--fix`, so a finding with an automatic fix fails instead of being rewritten on the runner and passing (#2037). Not `lint:ci`, which `lint:*` would match. `npm run lint` repairs what this reports.",
     "check:lint": "oxlint && eslint",
+    "//check:format": "What CI runs: `format` without writing, so a file the pinned oxfmt would change fails the build (#2243). `npm run format` repairs what this reports. An oxfmt bump that changes the output fails it too, until the bump's PR carries the reformat.",
+    "check:format": "oxfmt --check src",
     "type-check": "vue-tsc --build",
     "lint": "run-s lint:*",
     "lint:oxlint": "oxlint --fix",
