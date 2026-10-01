@@ -18,6 +18,8 @@ const maskId = useId()
 </script>
 
 <template>
+  <!-- Drawn artwork: oxfmt would put every path attribute on its own line, over a thousand lines per file. -->
+  <!-- prettier-ignore -->
   <svg
     aria-hidden="true"
     class="w-auto"
