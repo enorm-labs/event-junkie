@@ -16,7 +16,10 @@ import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.ints.shouldBeGreaterThanOrEqual
 import io.kotest.matchers.shouldBe
+import kotlinx.coroutines.reactor.awaitSingle
+import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
+import org.springframework.r2dbc.core.await
 import org.springframework.test.web.reactive.server.expectBody
 
 class EventControllerTest : BaseControllerTest() {
@@ -183,6 +186,42 @@ class EventControllerTest : BaseControllerTest() {
                 event.artists shouldHaveSize 2
                 event.artists.map { it.artistId } shouldContain supportArtist.id
             }
+    }
+
+    @Test
+    fun `PUT event keeps the columns the importer derived`() {
+        val venue = createVenue(VenueRequestFixtures.create(name = "Derived Venue"))
+        val request = EventRequestFixtures.create(venueId = venue.id, sourceId = "test:put-derived")
+        val created = createEvent(request)
+        runBlocking {
+            databaseClient
+                .sql(
+                    "UPDATE events.event SET room = 'Saal', end_date = event_date + 1, relocated_to = 'Hole44', " +
+                        "description_withheld = true WHERE id = ${created.id}"
+                ).await()
+        }
+
+        webTestClient
+            .put()
+            .uri("/api/admin/events/${created.id}")
+            .bodyValue(request.copy(title = "Edited title"))
+            .exchange()
+            .expectStatus()
+            .isOk
+
+        val row =
+            runBlocking {
+                databaseClient
+                    .sql("SELECT title, room, end_date - event_date AS nights, relocated_to, description_withheld FROM events.event WHERE id = ${created.id}")
+                    .fetch()
+                    .one()
+                    .awaitSingle()
+            }
+        row["title"] shouldBe "Edited title"
+        row["room"] shouldBe "Saal"
+        row["nights"] shouldBe 1
+        row["relocated_to"] shouldBe "Hole44"
+        row["description_withheld"] shouldBe true
     }
 
     @Test
