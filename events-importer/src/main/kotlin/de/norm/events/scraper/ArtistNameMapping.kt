@@ -700,9 +700,10 @@ private val BARE_NUMBER = Regex("""\d+""")
 
 /**
  * Acts whose whole name is a number, kept against [isBareNumber]. Name by name, like
- * [KNOWN_SINGLE_ACTS]: Columbiahalle bills `Support: 255 & BLUMENGARTEN` (#1953).
+ * [KNOWN_SINGLE_ACTS]: Columbiahalle bills `Support: 255 & BLUMENGARTEN` (#1953), and Huxleys
+ * bills `+ Support: 234` (#2207).
  */
-private val KNOWN_NUMERIC_ACTS: Set<String> = setOf("255")
+private val KNOWN_NUMERIC_ACTS: Set<String> = setOf("234", "255")
 
 /** A digits-only name is the tail of a `<show> 1 & 2` billing, never an act (#1556), unless it is a [KNOWN_NUMERIC_ACTS] name. */
 fun isBareNumber(name: String): Boolean = BARE_NUMBER.matches(name.trim()) && name.trim() !in KNOWN_NUMERIC_ACTS
