@@ -1,4 +1,5 @@
 import { expect, type Page, type Route, test } from '@playwright/test'
+import { sectionLink } from './header-nav'
 
 /**
  * The compact view (#1371): the lists as text rows, with the posters gone.
@@ -116,7 +117,7 @@ test('the choice survives a reload and a navigation, and stays out of the URL', 
   expect(posters, 'a reload in the compact view must not fetch posters either').toEqual([])
 
   // The header link, not the footer's copy of it — this is the client-side navigation path.
-  await page.getByRole('link', { name: 'Venues' }).first().click()
+  await (await sectionLink(page, 'Venues')).click()
   await expect(page.getByRole('heading', { level: 2, name: 'Lido' })).toBeVisible()
   await expect(page.locator('img')).toHaveCount(0)
 })

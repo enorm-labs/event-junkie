@@ -1,4 +1,5 @@
 import { expect, type Route, test } from '@playwright/test'
+import { sectionLink } from './header-nav'
 
 /**
  * Page titles: every view sets `document.title` as `<page> · Event Junkie`, except home, which
@@ -39,11 +40,10 @@ test('updates the title when navigating between static routes', async ({ page })
   await page.goto('/')
   await expect(page).toHaveTitle(HOME_TITLE)
 
-  const nav = page.getByRole('navigation', { name: 'Main' })
-  await nav.getByRole('link', { name: 'Events', exact: true }).click()
+  await (await sectionLink(page, 'Events')).click()
   await expect(page).toHaveTitle(`Events · ${APP_NAME}`)
 
-  await nav.getByRole('link', { name: 'Calendar', exact: true }).click()
+  await (await sectionLink(page, 'Calendar')).click()
   await expect(page).toHaveTitle(`Calendar · ${APP_NAME}`)
 })
 
@@ -56,13 +56,7 @@ test('announces route changes in an aria-live region for screen readers', async 
   await expect(announcer).toHaveText('')
 
   // A client-side navigation populates it with the new page title.
-  await page
-    .getByRole('navigation', { name: 'Main' })
-    .getByRole('link', {
-      name: 'Events',
-      exact: true,
-    })
-    .click()
+  await (await sectionLink(page, 'Events')).click()
   await expect(announcer).toHaveText(`Events · ${APP_NAME}`)
 })
 
@@ -72,13 +66,7 @@ test('keeps og:title and the meta description in sync', async ({ page }) => {
   await expect(page.locator('meta[name="description"]')).toHaveAttribute('content', /Berlin/)
 
   // The social title tracks the active view, not just the static landing value.
-  await page
-    .getByRole('navigation', { name: 'Main' })
-    .getByRole('link', {
-      name: 'About',
-      exact: true,
-    })
-    .click()
+  await (await sectionLink(page, 'About')).click()
   await expect(page.locator('meta[property="og:title"]')).toHaveAttribute(
     'content',
     `About · ${APP_NAME}`,

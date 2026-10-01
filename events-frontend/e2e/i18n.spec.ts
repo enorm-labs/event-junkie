@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test'
+import { sectionLink } from './header-nav'
 
 /**
  * Locale routing and the content that is locale-specific. The other suites are pinned to `/en`
@@ -74,7 +75,7 @@ test('an unpublished locale is treated as an unknown path, not as a locale', asy
 test('navigating within the app keeps the locale prefix', async ({ page }) => {
   await page.goto('/en')
 
-  await page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'Venues' }).click()
+  await (await sectionLink(page, 'Venues')).click()
 
   await expect(page).toHaveURL(/\/en\/venues$/)
 })

@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test'
+import { sectionLink } from './header-nav'
 
 /**
  * The crawler-facing surface: `/sitemap.xml`, `/sitemap-pages.xml`, `/robots.txt`, and the
@@ -89,7 +90,7 @@ test('rewrites the annotations on in-app navigation without accumulating them', 
 }) => {
   // An SPA never clears the head between routes. Two canonical tags are worse than none.
   await page.goto('/en')
-  await page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'Venues' }).click()
+  await (await sectionLink(page, 'Venues')).click()
   await expect(page).toHaveURL(/\/en\/venues$/)
 
   await expect(page.locator('link[rel="canonical"]')).toHaveCount(1)
@@ -194,7 +195,7 @@ test('leaves no structured data behind when the view changes', async ({ page }) 
   await page.goto('/en')
   expect(await jsonLd(page)).not.toEqual([])
 
-  await page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'About' }).click()
+  await (await sectionLink(page, 'About')).click()
   await expect(page).toHaveURL(/\/en\/about$/)
 
   expect(await jsonLd(page)).toEqual([])

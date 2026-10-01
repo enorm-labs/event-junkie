@@ -8,6 +8,7 @@ import AppFooter from '@/components/AppFooter.vue'
 import BaseBadge from '@/components/BaseBadge.vue'
 import BrandLogo from '@/components/BrandLogo.vue'
 import GitHubMark from '@/components/GitHubMark.vue'
+import HeaderMenu from '@/components/HeaderMenu.vue'
 import LocaleSwitcher from '@/components/LocaleSwitcher.vue'
 import { pageTitle } from '@/composables/usePageMeta'
 import { useCompactView } from '@/composables/useCompactView'
@@ -62,6 +63,14 @@ const compactToggleLabel = computed(() =>
 const betaLabel = computed(() => t('common.nav.betaLabel'))
 
 const localePath = useLocalePath()
+
+// One list for the inline row and the phone sheet, so the two cannot drift.
+const sectionLinks = computed(() =>
+  (['events', 'calendar', 'map', 'venues', 'promoters', 'about'] as const).map((section) => ({
+    to: localePath(`/${section}`),
+    label: t(`common.nav.${section}`),
+  })),
+)
 </script>
 
 <template>
@@ -105,56 +114,31 @@ const localePath = useLocalePath()
         </RouterLink>
         <!-- Order is deliberate: /events, /calendar and /map are three views of the same data, /venues and
              /promoters the other entities, /about is meta. e2e/smoke.spec.ts pins it. -->
-        <!-- The row wraps below `lg` so "Über das Projekt" never breaks across two lines. -->
+        <!-- The row wraps below `lg` so "Über das Projekt" never breaks across two lines. Below `md`
+             the links move into HeaderMenu's sheet (#2291). -->
         <div
-          class="order-last flex w-full flex-wrap items-center gap-x-4 gap-y-1 lg:order-none lg:w-auto lg:flex-nowrap lg:gap-6"
+          class="order-last hidden w-full flex-wrap items-center gap-x-4 gap-y-1 md:flex lg:order-none lg:w-auto lg:flex-nowrap lg:gap-6"
         >
           <RouterLink
-            :to="localePath('/events')"
+            v-for="link in sectionLinks"
+            :key="link.to"
+            :to="link.to"
             class="whitespace-nowrap text-muted-foreground hover:text-foreground [&.router-link-exact-active]:text-foreground"
           >
-            {{ t('common.nav.events') }}
-          </RouterLink>
-          <RouterLink
-            :to="localePath('/calendar')"
-            class="whitespace-nowrap text-muted-foreground hover:text-foreground [&.router-link-exact-active]:text-foreground"
-          >
-            {{ t('common.nav.calendar') }}
-          </RouterLink>
-          <RouterLink
-            :to="localePath('/map')"
-            class="whitespace-nowrap text-muted-foreground hover:text-foreground [&.router-link-exact-active]:text-foreground"
-          >
-            {{ t('common.nav.map') }}
-          </RouterLink>
-          <RouterLink
-            :to="localePath('/venues')"
-            class="whitespace-nowrap text-muted-foreground hover:text-foreground [&.router-link-exact-active]:text-foreground"
-          >
-            {{ t('common.nav.venues') }}
-          </RouterLink>
-          <RouterLink
-            :to="localePath('/promoters')"
-            class="whitespace-nowrap text-muted-foreground hover:text-foreground [&.router-link-exact-active]:text-foreground"
-          >
-            {{ t('common.nav.promoters') }}
-          </RouterLink>
-          <RouterLink
-            :to="localePath('/about')"
-            class="whitespace-nowrap text-muted-foreground hover:text-foreground [&.router-link-exact-active]:text-foreground"
-          >
-            {{ t('common.nav.about') }}
+            {{ link.label }}
           </RouterLink>
         </div>
         <div class="ml-auto flex items-center gap-2">
           <!-- Compact, and inside this nav rather than its own landmark — see LocaleSwitcher. -->
           <LocaleSwitcher class="mr-1" compact />
-          <!-- `title` is the hover tooltip only; `aria-label` wins for the accessible name. -->
+          <!-- `title` is the hover tooltip only; `aria-label` wins for the accessible name. Below
+               `md` the link is in HeaderMenu's sheet. -->
           <Button
             :aria-label="t('common.nav.sourceOnGitHub')"
             :href="REPOSITORY_URL"
             :title="t('common.nav.sourceOnGitHub')"
             as="a"
+            class="hidden md:inline-flex"
             rel="noopener"
             size="icon"
             target="_blank"
@@ -184,6 +168,7 @@ const localePath = useLocalePath()
             <Moon v-if="isDark" />
             <Sun v-else />
           </Button>
+          <HeaderMenu :links="sectionLinks" class="md:hidden" />
         </div>
       </nav>
     </header>
