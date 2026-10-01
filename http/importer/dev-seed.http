@@ -106,6 +106,7 @@
 ###   VOID Club            — https://www.void-club.de/
 ###   Wild at Heart        — https://www.wildatheartberlin.de/concerts.php
 ###   Zenner               — https://zenner.berlin/programm
+###   Zig Zag Jazz Club    — https://www.zigzag-jazzclub.berlin/programmneu
 ###   Zitadelle            — https://citadel-music-festival.de/events
 ###   Zur Klappe           — https://zurklappe.org/events
 ### ============================================================
@@ -5566,6 +5567,68 @@ Accept: application/json
     });
 %}
 
+
+### ————————————————————————————————————————————————————————————
+### Zig Zag Jazz Club (Hauptstr. 89, Berlin-Schöneberg)
+### ————————————————————————————————————————————————————————————
+
+### --- Create Zig Zag Jazz Club venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Zig Zag Jazz Club",
+    "address": "Hauptstr. 89",
+    "city": "Berlin",
+    "postalCode": "12159",
+    "district": "schoeneberg",
+    "latitude": 52.47497,
+    "longitude": 13.33982,
+    "websiteUrl": "https://www.zigzag-jazzclub.berlin",
+    "description": "A jazz club by Innsbrucker Platz with international bands most nights from Tuesday to Sunday and a jam session every Tuesday.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Ein Jazzclub am Innsbrucker Platz mit internationalen Bands an den meisten Abenden von Dienstag bis Sonntag und einer Jamsession an jedem Dienstag.",
+    "descriptionAltLanguage": "de"
+}
+
+> {%
+    client.global.set("zigzag_venue_id", response.body.id);
+    client.test("Zig Zag Jazz Club venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Create Zig Zag Jazz Club event source ---
+# Links the venue to the ZigZagJazzClubWebsiteImporter.
+# The sourceType "ZIG_ZAG_JAZZ_CLUB" matches EventSource.ZIG_ZAG_JAZZ_CLUB.
+POST {{importer-host}}/api/admin/event-sources
+Content-Type: application/json
+
+{
+    "venueId": {{zigzag_venue_id}},
+    "name": "Zig Zag Jazz Club",
+    "url": "https://www.zigzag-jazzclub.berlin/programmneu",
+    "sourceType": "ZIG_ZAG_JAZZ_CLUB",
+    "enabled": true,
+    "importIntervalMinutes": 1440,
+    "maxRetries": 3
+}
+
+> {%
+    client.test("Zig Zag Jazz Club event source created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Trigger initial Zig Zag Jazz Club import ---
+POST {{importer-host}}/api/admin/event-sources/zig-zag-jazz-club/import
+Accept: application/json
+
+> {%
+    client.test("Zig Zag Jazz Club import triggered", function () {
+        client.assert(response.status === 202, "Expected 202 but got " + response.status);
+    });
+%}
 
 ### ————————————————————————————————————————————————————————————
 ### Zitadelle (Am Juliusturm 64, Berlin-Spandau)

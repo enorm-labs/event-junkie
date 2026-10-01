@@ -22,8 +22,8 @@ repairing live in the [issue tracker](https://github.com/enorm-labs/event-junkie
 
 | Status                              | Meaning                                                                              | Count |
 | ----------------------------------- | ------------------------------------------------------------------------------------ | ----: |
-| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |    93 |
-| 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |    13 |
+| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |    94 |
+| 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |    12 |
 | ⛔ [Blocked](#-blocked--deferred)   | Website analyzed, but no usable listings (no programme page, JS-only, or too sparse) |   119 |
 | ❓ [Unanalyzed](#-not-analyzed-yet) | URL recorded, but the website still needs a first look                               |    24 |
 
@@ -125,6 +125,7 @@ schema change.
 | VOID Club                        | https://www.void-club.de/                                   | Techno Club  | Hand-coded Bootstrap; year from weekday; 2 rooms       |
 | Wild at Heart                    | https://www.wildatheartberlin.de/                           | Bar          | Retro frameset; concerts.php; year from weekday        |
 | Zenner                           | https://zenner.berlin/programm                              | Club         | Gatsby/Sanity page-data JSON; UTC dates; archive       |
+| Zig Zag Jazz Club                | https://www.zigzag-jazzclub.berlin/programmneu              | Club         | Squarespace list + event pages; Hall items dropped     |
 | Zitadelle                        | https://citadel-music-festival.de/events                    | Open Air     | Festival site; WordPress/EM; summer season only        |
 | Zur Klappe                       | https://zurklappe.org/events                                | Techno Club  | Next.js flight payload; no genre or prices             |
 
@@ -155,8 +156,7 @@ least as heavily as an RA count when the next batch is prioritised.
 | KAOS Berlin        | https://kaosberlin.de/veranstaltungen/         | Techno Club  | Low      | The Events Calendar REST API, as Cosmic Comedy; 4 upcoming  |
 | DSTRKT Club Berlin | https://www.dstrkt.de/                         | Club         | Low      | Wix one-pager; 2 dated events, which is the whole programme |
 | Kunstfabrik Schlot | https://kunstfabrik-schlot.de/programm/        | Club         | High     | WordPress list; year, time and price only on detail pages   |
-| Zig Zag Jazz Club  | https://www.zigzag-jazzclub.berlin/program-mai | Club         | High     | Squarespace `?format=json` month pages; prices in body      |
-| Zig Zag Hall       | https://www.zigzag-jazzclub.berlin/program-mai | Concert Hall | High     | Zig Zag feed, only items titled `ZIG ZAG HALL: …`           |
+| Zig Zag Hall       | https://www.zigzag-jazzclub.berlin/programmneu | Concert Hall | High     | Zig Zag list, only items titled `ZIG ZAG HALL: …`           |
 | ufaFabrik          | https://ufafabrik.de/spielplan.html            | Theater      | High     | Drupal calendar; `/program/YYYYMM` month pages; prices      |
 | ART Stalker        | https://art-stalker.reservix.de/events         | Bar          | High     | Reservix shop; `/events/N` pages; 56 upcoming; prices       |
 | Orania.Berlin      | https://orania.berlin/concerts                 | Bar          | Medium   | TYPO3; `/concerts/page/N`; `Event` JSON-LD; always free     |
@@ -169,24 +169,22 @@ least as heavily as an RA count when the next batch is prioritised.
 July programme and resumes on 12 September. Only 2 events are upcoming today, so a fixture captured now would be
 unrepresentative. Scaffold it in September, when the listing is representative again.
 
-**The nine rows below DSTRKT came from the tipBerlin sweep on 2026-09-30.** Each has a quirk that the importer must
+**The eight rows below DSTRKT came from the tipBerlin sweep on 2026-09-30.** Each has a quirk that the importer must
 handle:
 
 - **Kunstfabrik Schlot** is the real site. `schlot.de` shows only a placeholder. The Events Calendar REST API and iCal
   are switched off. Ignore the `Product` JSON-LD on the detail page, because its price is `0` USD.
-- **Zig Zag Jazz Club** gives the doors time as `startDate`. The start time is in the body text. Some items hold two
-  shows.
-- **Zig Zag Hall** is a separate venue, and the club's feed carries its programme. Items titled `ZIG ZAG HALL: …` belong
-  to the hall, and 20 of the items fetched carry that prefix. Filter the shared feed per venue, as Säälchen filters
-  the Holzmarkt calendar by location. The club importer drops the prefixed items, and the hall importer keeps
-  only those. The feed gives no address for the hall, so confirm it before seeding the venue.
+- **Zig Zag Hall** is a separate venue, and the club's `/programmneu` list carries its programme. Items titled
+  `ZIG ZAG HALL: …` belong to the hall, and 20 of the 56 items carry that prefix. The club importer drops them, so the
+  hall importer reads the same list and keeps only those. `robots.txt` disallows `?format=json`, so read the HTML.
+  The list gives no address for the hall, so confirm it before seeding the venue.
 - **ufaFabrik** is about 29 % music, 48 % cabaret, comedy and theatre, and 23 % children's shows. Filter on the genre
   label, as Gärten der Welt does with `isProgrammeCategory`.
 - **ART Stalker**'s own site carries no events. Its programme link goes to the Reservix white-label shop. `?page=2`
   returns page 1, so follow `/events/2`.
 - **ZIMMER 16** and **Ballhaus Wedding** are small mixed stages. Music is one part of a programme with improv, readings
   and dance socials. Ballhaus Wedding's dates have no year, so take it from the month headings. Its entries have no
-  fixed shape, so that parser is the most brittle of the nine.
+  fixed shape, so that parser is the most brittle of the eight.
 - **Soulcat** publishes one week ahead, and four of its seven events are one recurring bar night.
 
 **Gärten der Welt** set the precedent for the next park- or campus-like source when it was
