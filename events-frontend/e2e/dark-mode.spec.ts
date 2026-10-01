@@ -1,4 +1,5 @@
 import { expect, type Page, test } from '@playwright/test'
+import { sectionLink } from './header-nav'
 
 /**
  * The dark-mode toggle lives in the app shell (App.vue), which is not remounted by
@@ -10,8 +11,6 @@ import { expect, type Page, test } from '@playwright/test'
 
 const html = (page: Page) => page.locator('html')
 const toggle = (page: Page) => page.getByRole('button', { name: /switch to (dark|light) mode/i })
-const navLink = (page: Page, name: string) =>
-  page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name, exact: true })
 
 test('defaults to dark for a new visitor', async ({ page }) => {
   // Fresh context = no stored preference, so the pre-paint script opts into dark.
@@ -28,11 +27,11 @@ test('theme choice persists across in-app navigation', async ({ page }) => {
   await toggle(page).click()
   await expect(html(page)).not.toHaveClass(/dark/)
 
-  await navLink(page, 'Events').click()
+  await (await sectionLink(page, 'Events')).click()
   await expect(page).toHaveURL(/\/events$/)
   await expect(html(page)).not.toHaveClass(/dark/)
 
-  await navLink(page, 'About').click()
+  await (await sectionLink(page, 'About')).click()
   await expect(page).toHaveURL(/\/about$/)
   await expect(html(page)).not.toHaveClass(/dark/)
 
@@ -41,7 +40,10 @@ test('theme choice persists across in-app navigation', async ({ page }) => {
   await expect(html(page)).toHaveClass(/dark/)
 
   // The logo is the home link. Home is the locale root — `/en`, not `/` (ADR-013 §Decision 2).
-  await navLink(page, 'Event Junkie').click()
+  await page
+    .getByRole('navigation', { name: 'Main' })
+    .getByRole('link', { name: 'Event Junkie', exact: true })
+    .click()
   await expect(page).toHaveURL(/\/en$/)
   await expect(html(page)).toHaveClass(/dark/)
 })

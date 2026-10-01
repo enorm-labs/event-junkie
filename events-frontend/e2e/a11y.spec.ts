@@ -66,6 +66,9 @@ test('both themes pass contrast, not just the default', async ({ page }) => {
   await page.goto('/about')
   await page.getByRole('button', { name: /switch to light mode/i }).click()
   await expect(page.locator('html')).not.toHaveClass(/dark/)
+  // Buttons carry `transition-all`, so a labelled one is mid-fade from the dark text colour for a
+  // moment, and axe measures that intermediate grey.
+  await page.waitForFunction(() => document.getAnimations().length === 0)
 
   const results = await buildScan(page).analyze()
 

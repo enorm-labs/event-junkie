@@ -1,4 +1,5 @@
 import { expect, type Page, test } from '@playwright/test'
+import { sectionLink } from './header-nav'
 
 /**
  * Resilient smoke suite, deliberately shallow: the app boots, the router mounts each static view,
@@ -65,10 +66,19 @@ test('navigates between static routes via the nav bar', async ({ page }) => {
   await page.goto('/')
   const nav = page.getByRole('navigation', { name: 'Main' })
 
-  for (const route of staticRoutes) {
-    await nav.getByRole('link', { name: route.nav, exact: true }).click()
+  const expectRoute = async (route: (typeof staticRoutes)[number]) => {
     await expect(page).toHaveURL(new RegExp(`${route.url.replaceAll('/', '\\/')}$`))
     await expect(page.getByRole('heading', { level: 1, name: route.heading })).toBeVisible()
+  }
+
+  // Home is the brand logo, which stays in the header row at every width.
+  const [home, ...sections] = staticRoutes
+  await nav.getByRole('link', { name: home.nav, exact: true }).click()
+  await expectRoute(home)
+
+  for (const route of sections) {
+    await (await sectionLink(page, route.nav)).click()
+    await expectRoute(route)
   }
 
   expect(errors, 'unexpected uncaught exceptions').toEqual([])
@@ -81,6 +91,7 @@ test('header nav lists the sections in the intended order', async ({ page }) => 
   await page.goto('/about')
 
   const nav = page.getByRole('navigation', { name: 'Main' })
+  await expect(await sectionLink(page, 'About')).toBeVisible()
   const labels = await nav.getByRole('link').allInnerTexts()
 
   // Filtered to the section links: the header also carries the brand, the beta badge, the locale
@@ -138,9 +149,7 @@ test('app shell marks the app as beta and explains what that means', async ({ pa
 test('app shell links to the source repository on GitHub', async ({ page }) => {
   await page.goto('/about')
 
-  const link = page
-    .getByRole('navigation', { name: 'Main' })
-    .getByRole('link', { name: 'Source code on GitHub' })
+  const link = await sectionLink(page, 'Source code on GitHub')
   await expect(link).toBeVisible()
   await expect(link).toHaveAttribute('href', 'https://github.com/enorm-labs/event-junkie')
   await expect(link).toHaveAttribute('title', 'Source code on GitHub')
