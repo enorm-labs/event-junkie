@@ -97,6 +97,12 @@ class GoldenGateOverviewPageScraperTest {
     }
 
     @Test
+    fun `splits a b2b slot into two DJs`() {
+        val parsed = scraper.scrape(headings("Do. 01. Oktober 2026 - 23:59", "Cura", "Thor Rixon<br>Anaté b2b Shira Kela"), baseUrl)
+        parsed.single().artists.map { it.name } shouldContainExactly listOf("Thor Rixon", "Anaté", "Shira Kela")
+    }
+
+    @Test
     fun `distinguishes two nights that share a title by their date`() {
         val klubnaechte = events.filter { it.title == "Klubnacht" }
         klubnaechte shouldHaveSize 2
