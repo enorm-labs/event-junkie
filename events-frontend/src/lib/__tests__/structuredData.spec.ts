@@ -112,6 +112,7 @@ describe('eventJsonLd', () => {
   it('picks the specific schema.org type where one is accurate', () => {
     expect(eventJsonLd({ ...event, eventType: 'CONCERT' }, 'en')!['@type']).toBe('MusicEvent')
     expect(eventJsonLd({ ...event, eventType: 'SCREENING' }, 'en')!['@type']).toBe('ScreeningEvent')
+    expect(eventJsonLd({ ...event, eventType: 'COMEDY' }, 'en')!['@type']).toBe('ComedyEvent')
     // READING has no accurate subtype — TheaterEvent would assert a form we do not know.
     expect(eventJsonLd({ ...event, eventType: 'READING' }, 'en')!['@type']).toBe('Event')
   })

@@ -108,9 +108,10 @@ class AegOverviewPageScraperTest {
     @Test
     fun `types the arena's own category names`() {
         arenaEvents.map { it.eventType }.toSet() shouldBe
-            setOf(EventType.CONCERT.name, EventType.SHOW.name)
-        // 15 "show" + 9 "comedy" rows both resolve to SHOW; the rest are concerts.
-        arenaEvents.count { it.eventType == EventType.SHOW.name } shouldBe 24
+            setOf(EventType.CONCERT.name, EventType.SHOW.name, EventType.COMEDY.name)
+        // 15 "show" rows, 9 "comedy" rows; the rest are concerts.
+        arenaEvents.count { it.eventType == EventType.SHOW.name } shouldBe 15
+        arenaEvents.count { it.eventType == EventType.COMEDY.name } shouldBe 9
         arenaEvents.count { it.eventType == EventType.CONCERT.name } shouldBe 64
     }
 
@@ -119,7 +120,8 @@ class AegOverviewPageScraperTest {
         // This venue publishes no `data-categoryname`, only the id: 47x konzert, 14x show,
         // 4x comedy — and one row filed under no category at all.
         musicHallEvents.count { it.eventType == EventType.CONCERT.name } shouldBe 47
-        musicHallEvents.count { it.eventType == EventType.SHOW.name } shouldBe 18
+        musicHallEvents.count { it.eventType == EventType.SHOW.name } shouldBe 14
+        musicHallEvents.count { it.eventType == EventType.COMEDY.name } shouldBe 4
     }
 
     @Test

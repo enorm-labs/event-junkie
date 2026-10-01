@@ -112,7 +112,7 @@ class AdmiralspalastDetailPageScraperTest {
     @Test
     fun `maps the venue's category onto an event type`() {
         val comedy = scrape("admiralspalast-detail-single.html", "bodo-wartke-antigone", "Comedy").first()
-        comedy.eventType shouldBe EventType.SHOW.name
+        comedy.eventType shouldBe EventType.COMEDY.name
         // "Comedy" is the venue's own category and is never stored as a genre.
         comedy.genre shouldBe null
 

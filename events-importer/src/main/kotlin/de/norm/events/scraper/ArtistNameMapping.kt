@@ -1512,8 +1512,8 @@ private fun soloBillOf(title: String): List<ScrapedArtist> =
 
 /**
  * Builds an artist list from the source's own event type, for venues with a clean `kind` label
- * (Astra, Lido): festivals and parties extract none; a show with no support line bills its solo
- * act via [SOLO_BILL] (#315); concerts always add the title plus the subtitle's support acts;
+ * (Astra, Lido): festivals and parties extract none; a show or comedy night with no support line
+ * bills its solo act via [SOLO_BILL] (#315); concerts always add the title plus the subtitle's support acts;
  * unknown falls back to [buildArtistList].
  *
  * The `FESTIVAL`/`PARTY` guard is unconditional, and narrowing it is the trap: measured across
@@ -1540,7 +1540,7 @@ fun buildArtistsForEventType(
     if (eventType == EventType.FESTIVAL.name || eventType == EventType.PARTY.name) return emptyList()
 
     val supportNames = extractSupportFromSubtitle(subtitle)
-    if (eventType == EventType.SHOW.name && supportNames.isEmpty()) return soloBillOf(title)
+    if ((eventType == EventType.SHOW.name || eventType == EventType.COMEDY.name) && supportNames.isEmpty()) return soloBillOf(title)
     if (eventType != EventType.CONCERT.name) return buildArtistList(title, supportNames, subtitle, description)
 
     // Concert: the title carries the headliner(s) (co-bills split out), then support acts in listing order.

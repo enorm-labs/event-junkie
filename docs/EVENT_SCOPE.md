@@ -36,17 +36,18 @@ Ten values on [`EventType`](../events-core/src/main/kotlin/de/norm/events/event/
 and this is not an aspirational list. The counts come from the development database and illustrate the _mix_, not the
 coverage:
 
-| Type         | Share | What it covers                                                     | Where it comes from                             |
-| ------------ | ----: | ------------------------------------------------------------------ | ----------------------------------------------- |
-| `CONCERT`    |  ~62% | Live music with a billed lineup, from back rooms to arenas         | `konzert` / `concert`, and most venues' default |
-| `PARTY`      |  ~19% | Club nights and parties, one-off or recurring                      | `party`                                         |
-| `SHOW`       |  ~11% | Staged performance — cabaret, burlesque, comedy, musicals, variety | `show`                                          |
-| `OTHER`      |   ~3% | The genuine remainder, plus anything a venue labels `sonstiges`    | fallback                                        |
-| `READING`    |   ~2% | Literary readings, spoken word, poetry slams                       | `lesung` / `reading`                            |
-| `FESTIVAL`   |   ~1% | Multi-day or multi-stage events                                    | `festival`                                      |
-| `EXHIBITION` |   ~1% | A run, opening day to closing day; the vernissage is its evening   | `ausstellung` / `exhibition` / `vernissage`     |
-| `QUIZ`       |   <1% | Pub quizzes and game nights                                        | `quiz`                                          |
-| `SCREENING`  |   <1% | Film screenings, open-air cinema, football "public viewing"        | `screening`, `public viewing`                   |
+| Type         | Share | What it covers                                                   | Where it comes from                             |
+| ------------ | ----: | ---------------------------------------------------------------- | ----------------------------------------------- |
+| `CONCERT`    |  ~62% | Live music with a billed lineup, from back rooms to arenas       | `konzert` / `concert`, and most venues' default |
+| `PARTY`      |  ~19% | Club nights and parties, one-off or recurring                    | `party`                                         |
+| `SHOW`       |   ~9% | Staged performance — cabaret, burlesque, musicals, variety       | `show`                                          |
+| `COMEDY`     |   ~2% | Stand-up, comedy shows and comedy theatre                        | `comedy` / `stand-up`                           |
+| `OTHER`      |   ~3% | The genuine remainder, plus anything a venue labels `sonstiges`  | fallback                                        |
+| `READING`    |   ~2% | Literary readings, spoken word, poetry slams                     | `lesung` / `reading`                            |
+| `FESTIVAL`   |   ~1% | Multi-day or multi-stage events                                  | `festival`                                      |
+| `EXHIBITION` |   ~1% | A run, opening day to closing day; the vernissage is its evening | `ausstellung` / `exhibition` / `vernissage`     |
+| `QUIZ`       |   <1% | Pub quizzes and game nights                                      | `quiz`                                          |
+| `SCREENING`  |   <1% | Film screenings, open-air cinema, football "public viewing"      | `screening`, `public viewing`                   |
 
 **`OTHER` is a fallback, not a bin.** `parseOrDefault` logs a warning whenever it resolves to `OTHER`. An
 unrecognised label is therefore a signal to extend the mapping, not something that silently accumulates. The 3% share

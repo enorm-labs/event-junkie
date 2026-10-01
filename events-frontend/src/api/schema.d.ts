@@ -673,7 +673,7 @@ export interface components {
              * @example CONCERT
              * @enum {string}
              */
-            eventType?: "CONCERT" | "FESTIVAL" | "PARTY" | "QUIZ" | "SHOW" | "SCREENING" | "EXHIBITION" | "READING" | "OTHER";
+            eventType?: "CONCERT" | "FESTIVAL" | "PARTY" | "QUIZ" | "SHOW" | "COMEDY" | "SCREENING" | "EXHIBITION" | "READING" | "OTHER";
             /**
              * @description Scheduling status of the event
              * @example SCHEDULED
@@ -906,7 +906,7 @@ export interface components {
              * @example CONCERT
              * @enum {string}
              */
-            eventType?: "CONCERT" | "FESTIVAL" | "PARTY" | "QUIZ" | "SHOW" | "SCREENING" | "EXHIBITION" | "READING" | "OTHER";
+            eventType?: "CONCERT" | "FESTIVAL" | "PARTY" | "QUIZ" | "SHOW" | "COMEDY" | "SCREENING" | "EXHIBITION" | "READING" | "OTHER";
             /**
              * @description Scheduling status of the event
              * @example SCHEDULED

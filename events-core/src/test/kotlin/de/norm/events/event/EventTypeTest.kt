@@ -29,6 +29,7 @@ class EventTypeTest {
         EventType.parseOrDefault("PARTY") shouldBe EventType.PARTY
         EventType.parseOrDefault("QUIZ") shouldBe EventType.QUIZ
         EventType.parseOrDefault("SHOW") shouldBe EventType.SHOW
+        EventType.parseOrDefault("COMEDY") shouldBe EventType.COMEDY
         EventType.parseOrDefault("SCREENING") shouldBe EventType.SCREENING
         EventType.parseOrDefault("EXHIBITION") shouldBe EventType.EXHIBITION
         EventType.parseOrDefault("READING") shouldBe EventType.READING

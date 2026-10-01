@@ -1655,6 +1655,12 @@ class ArtistNameMappingTest {
         hostedActsFromTitle("FOREVER 25 curated by TBA").shouldBeEmpty()
     }
 
+    @Test
+    fun `buildArtistsForEventType reads a solo bill off a comedy title as it does a show's`() {
+        buildArtistsForEventType("Arnd Schimkat - LACHEN MACHEN", null, "COMEDY").map { it.name } shouldBe listOf("Arnd Schimkat")
+        buildArtistsForEventType("Comedy, Pizza and Shots – SHOWCASE FRIDAY", null, "COMEDY").shouldBeEmpty()
+    }
+
     // #315 — a variety or comedy house bills a solo act as `<Performer> – <Show>`.
     @Test
     fun `buildArtistsForEventType reads a solo bill off a show title and leaves a production alone`() {

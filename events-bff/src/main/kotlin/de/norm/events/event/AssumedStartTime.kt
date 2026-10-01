@@ -1,5 +1,6 @@
 package de.norm.events.event
 
+import de.norm.events.event.EventType.COMEDY
 import de.norm.events.event.EventType.CONCERT
 import de.norm.events.event.EventType.EXHIBITION
 import de.norm.events.event.EventType.FESTIVAL
@@ -19,7 +20,8 @@ import java.time.LocalTime
  *
  * The medians of the events that carry a start (3711 on staging, measured in #1384), with one
  * exception: `PARTY` sits at the top of its p75, because the parties without a time are the
- * clubs, whose doors are 23:00–00:00.
+ * clubs, whose doors are 23:00–00:00. `COMEDY` was split out of `SHOW` later (#2261) and was
+ * measured on the local database.
  *
  * | type       | rows | median | p25–p75     |
  * |------------|------|--------|-------------|
@@ -29,6 +31,7 @@ import java.time.LocalTime
  * | OTHER      |  165 | 19:00  | 17:00–20:00 |
  * | QUIZ       |   22 | 19:30  | 19:00–20:30 |
  * | READING    |   72 | 19:30  | 19:30–20:00 |
+ * | COMEDY     |   27 | 20:00  | 19:00–20:00 |
  * | CONCERT    | 1815 | 20:00  | 19:30–20:00 |
  * | SCREENING  |   13 | 20:00  | 19:00–20:30 |
  * | PARTY      |  893 | 22:00  | 19:00–22:30 |
@@ -42,6 +45,7 @@ object AssumedStartTime {
             OTHER to LocalTime.of(19, 0),
             QUIZ to LocalTime.of(19, 30),
             READING to LocalTime.of(19, 30),
+            COMEDY to LocalTime.of(20, 0),
             CONCERT to LocalTime.of(20, 0),
             SCREENING to LocalTime.of(20, 0),
             PARTY to LocalTime.of(23, 0)

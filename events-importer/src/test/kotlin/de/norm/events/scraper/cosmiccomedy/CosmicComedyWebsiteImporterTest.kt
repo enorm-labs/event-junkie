@@ -97,7 +97,7 @@ class CosmicComedyWebsiteImporterTest {
             val friday = result.events.first { it.sourceId == "cosmic_comedy:comedy-pizza-and-shots-showcase-friday-17" }
 
             friday.title shouldBe "Comedy, Pizza and Shots – SHOWCASE FRIDAY"
-            friday.eventType shouldBe EventType.SHOW.name
+            friday.eventType shouldBe EventType.COMEDY.name
             friday.eventDate shouldBe LocalDate.of(2026, 8, 7)
             friday.pricePresale.shouldBeNull()
         }

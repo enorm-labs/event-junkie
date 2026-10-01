@@ -50,6 +50,23 @@ class EventTypeMappingTest {
         mapEventType("Vernissage") shouldBe "EXHIBITION"
     }
 
+    @Test
+    fun `mapEventType maps comedy and stand-up labels to COMEDY`() {
+        mapEventType("Comedy") shouldBe "COMEDY"
+        mapEventType("Stand-up") shouldBe "COMEDY"
+        mapEventType("Standup") shouldBe "COMEDY"
+        mapEventType("Kabarett").shouldBeNull()
+    }
+
+    @Test
+    fun `a stand-up or comedy-night phrase in a title is COMEDY, a bare comedy is not`() {
+        inferConcertVenueType("Stand-Up Night mit Freunden") shouldBe "COMEDY"
+        inferConcertVenueType("KAMISI - Die 80er Jahre Comedy Show") shouldBe "COMEDY"
+        inferConcertVenueType("English Comedy Night") shouldBe "COMEDY"
+        inferConcertVenueType("The Divine Comedy") shouldBe "CONCERT"
+        inferConcertVenueType("Stand Up - Tribute Night") shouldBe "CONCERT"
+    }
+
     // --- inferConcertVenueType ---
 
     @Test

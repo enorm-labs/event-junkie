@@ -66,6 +66,7 @@ const EVENT_TYPES = [
   'PARTY',
   'QUIZ',
   'SHOW',
+  'COMEDY',
   'SCREENING',
   'EXHIBITION',
   'READING',

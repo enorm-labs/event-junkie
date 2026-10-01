@@ -78,6 +78,7 @@ const EVENT_TYPES: Record<string, string> = {
   FESTIVAL: 'MusicEvent',
   PARTY: 'SocialEvent',
   QUIZ: 'SocialEvent',
+  COMEDY: 'ComedyEvent',
   SCREENING: 'ScreeningEvent',
   EXHIBITION: 'ExhibitionEvent',
 }

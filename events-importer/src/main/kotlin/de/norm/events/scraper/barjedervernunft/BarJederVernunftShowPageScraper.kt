@@ -132,15 +132,16 @@ data class BarJederVernunftShow(
  * curated from the venue's programme; add a new music style when one appears, otherwise a
  * genuine concert is filed as a show and its performer is lost.
  */
-private fun resolveEventType(genre: String?): String = mapEventType(genre, BAR_JEDER_VERNUNFT_GENRES) ?: EventType.SHOW.name
+internal fun resolveEventType(genre: String?): String = mapEventType(genre, BAR_JEDER_VERNUNFT_GENRES) ?: EventType.SHOW.name
 
 /** Music styles the venue programmes — the billed name is the act. */
 private val MUSIC_GENRES = listOf("chanson", "a cappella", "swing", "singer/songwriter")
 
 /** Staged formats the venue programmes — the billed name is the production, not a performer. */
-private val STAGE_FORMAT_GENRES = listOf("musik-show", "musik-kabarett", "musik-comedy", "kabarett", "musical", "show")
+private val STAGE_FORMAT_GENRES = listOf("musik-show", "musik-kabarett", "kabarett", "musical", "show")
 
-/** Venue-specific genre synonyms handed to [mapEventType]; see [resolveEventType]. */
+/** Venue-specific genre synonyms handed to [mapEventType]; see [resolveEventType]. Kabarett stays a show, comedy is its own type. */
 private val BAR_JEDER_VERNUNFT_GENRES: Map<String, String> =
     MUSIC_GENRES.associateWith { EventType.CONCERT.name } +
-        STAGE_FORMAT_GENRES.associateWith { EventType.SHOW.name }
+        STAGE_FORMAT_GENRES.associateWith { EventType.SHOW.name } +
+        mapOf("musik-comedy" to EventType.COMEDY.name)
