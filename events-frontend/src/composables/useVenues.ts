@@ -28,17 +28,14 @@ export function useVenueSearch(
 }
 
 /**
- * Loads every venue (name-sorted) to populate the events filter dropdown. The list endpoint is
- * paged; we request a size large enough to hold all tracked venues in a single call.
+ * Every venue, name-sorted, for the events filter dropdown. Page by page: one large `size` is
+ * capped at 100, and venue 101 would be missing without a sign (#2246).
  */
 export function useAllVenues() {
   return useAsync<VenueSummary[]>(
-    async () => {
-      const page = await unwrap(api.GET('/api/venues', { params: { query: { size: 500 } } }))
-      return page.content ?? []
-    },
+    () => fetchAllVenues({}),
     'errors.subject.venues',
-    () => '/api/venues?size=500',
+    () => '/api/venues?all',
   )
 }
 
