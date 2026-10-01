@@ -61,18 +61,11 @@ jobs:
     name: Frontend build
     needs: detect-changes
     if: needs.detect-changes.outputs.relevant == 'true'
-    # Pinned off `ubuntu-latest`: on the Ubuntu 26 image `playwright install-deps` took 25 and 12 minutes
-    # in two runs, the apt mirror serving ~93 kB/s; Ubuntu 24 installs the same set in about 30 seconds.
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: events-frontend
-    # **30, not 15, because 15 could not fit a cache-miss run — and that made the miss permanent.**
-    # `actions/cache` writes only in its post-job step, so a timeout kills the job before anything is
-    # saved, and the run reports `cancelled` rather than `failure`. Measured: a hit is ≈9 min, a miss
-    # 17–23 min (a 519–875s Playwright install). A miss is a normal event — every Playwright bump changes
-    # the key — so the budget has to fit one, while still failing fast against the 6h default.
-    timeout-minutes: 30
+    timeout-minutes: 15
 
     steps:
       # The whole history and every tag: the image label reads the version from them (ADR-032).
@@ -129,43 +122,6 @@ jobs:
             echo "_No coverage report generated._" >> $GITHUB_STEP_SUMMARY
           fi
 
-      - name: Get Playwright version
-        id: playwright-version
-        run: |
-          echo "PLAYWRIGHT_VERSION=$(npx playwright --version | awk '{print $2}')" >> $GITHUB_OUTPUT
-          . /etc/os-release && echo "OS_RELEASE=${ID}-${VERSION_ID}" >> $GITHUB_OUTPUT
-
-      - name: Cache Playwright browsers
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        id: playwright-cache
-        with:
-          path: ~/.cache/ms-playwright
-          # The distro release, not `runner.os`: an Ubuntu 24 WebKit restored on Ubuntu 26 dies on `libicudata.so.74`.
-          key: playwright-${{ steps.playwright-version.outputs.OS_RELEASE }}-${{ steps.playwright-version.outputs.PLAYWRIGHT_VERSION }}
-
-      - name: Install Playwright browsers
-        if: steps.playwright-cache.outputs.cache-hit != 'true'
-        run: npx playwright install --with-deps
-
-      - name: Install Playwright system dependencies only
-        if: steps.playwright-cache.outputs.cache-hit == 'true'
-        run: npx playwright install-deps
-
-      - name: Run e2e tests
-        run: npm run test:e2e
-
-      # An axe violation is a rule id plus a CSS selector; the HTML report carries the DOM snapshot and the
-      # trace that make it actionable. Failure only: a green run's report is noise, and these are not small.
-      - name: Upload Playwright report
-        if: failure()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        with:
-          name: playwright-report
-          path: |
-            events-frontend/playwright-report/
-            events-frontend/test-results/
-          retention-days: 7
-
       # Build the container image and do not push it: this runs on fork pull requests, and pushing belongs
       # to release.yml, which builds the same image on every push to `main` (#264). `npm run build` above
       # produced `dist/`, which the Dockerfile copies — no builder stage. The version comes from
@@ -211,13 +167,93 @@ jobs:
             VERSION=${{ steps.version.outputs.value }}
             REVISION=${{ github.sha }}
 
+  # The image's tag is the installed `@playwright/test`, read from the lockfile `npm ci` installs, so a
+  # Dependabot bump moves both at once. A mismatch makes Playwright refuse the image's browsers.
+  playwright-image:
+    name: Resolve the Playwright image
+    needs: detect-changes
+    if: needs.detect-changes.outputs.relevant == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      image: ${{ steps.resolve.outputs.image }}
+    steps:
+      - name: Checkout the lockfile
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          sparse-checkout: events-frontend/package-lock.json
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+
+      - name: Read the Playwright version
+        id: resolve
+        run: |
+          set -euo pipefail
+          version="$(jq -r '.packages["node_modules/@playwright/test"].version' events-frontend/package-lock.json)"
+          [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "::error::no @playwright/test version in the lockfile: $version"; exit 1; }
+          echo "image=mcr.microsoft.com/playwright:v${version}-noble" >> "$GITHUB_OUTPUT"
+
+  # In Playwright's own image (#2309): it carries the system packages and all five browsers. Installing
+  # the packages ran on every build, cache hit or not, so a slow Ubuntu mirror (126 kB/s, 17 minutes)
+  # could time out the job.
+  e2e:
+    name: Frontend e2e
+    needs: [ detect-changes, playwright-image ]
+    if: needs.detect-changes.outputs.relevant == 'true'
+    runs-on: ubuntu-latest
+    container:
+      # An exact version, not a digest: pinning the digest needs a second bot, and a Playwright bump
+      # would then arrive as two pull requests that pass only together.
+      image: ${{ needs.playwright-image.outputs.image }} # zizmor: ignore[unpinned-images]
+      options: --user 1001
+    defaults:
+      run:
+        working-directory: events-frontend
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # The image's Node is older than the floor in package.json.
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24' # should match the version specified in .nvmrc
+          cache: 'npm'
+          cache-dependency-path: events-frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      # On CI the suite runs against `vite preview`, which serves `dist/`.
+      - name: Build
+        run: npm run build
+
+      - name: Run e2e tests
+        run: npm run test:e2e
+
+      # An axe violation is a rule id plus a CSS selector; the HTML report carries the DOM snapshot and the
+      # trace that make it actionable. Failure only: a green run's report is noise, and these are not small.
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: playwright-report
+          path: |
+            events-frontend/playwright-report/
+            events-frontend/test-results/
+          retention-days: 7
+
   # **The required context, and the only job here that always runs.** A conditional job cannot be a
   # required check — GitHub leaves an unreported context Pending forever (#443, #494) — so the
   # requirement sits on a job that always reports and fails when the build failed, without relying on
   # "a skipped job counts as success".
   gate:
     name: Build & Test (frontend)
-    needs: [ detect-changes, build ]
+    needs: [ detect-changes, playwright-image, build, e2e ]
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -225,17 +261,20 @@ jobs:
       - name: Report the build's result
         env:
           CHANGES_RESULT: ${{ needs.detect-changes.result }}
+          IMAGE_RESULT: ${{ needs.playwright-image.result }}
           BUILD_RESULT: ${{ needs.build.result }}
+          E2E_RESULT: ${{ needs.e2e.result }}
         run: |
           set -euo pipefail
-          echo "detect-changes: $CHANGES_RESULT · build: $BUILD_RESULT"
+          echo "detect-changes: $CHANGES_RESULT · image: $IMAGE_RESULT · build: $BUILD_RESULT · e2e: $E2E_RESULT"
           # A failed detection must not be reported as a pass — it would silently gate nothing.
           if [ "$CHANGES_RESULT" != 'success' ]; then
             echo "::error::change detection did not succeed ($CHANGES_RESULT); refusing to report a pass"
             exit 1
           fi
-          case "$BUILD_RESULT" in
-            success) echo 'The frontend build ran and passed.' ;;
-            skipped) echo 'No frontend files changed; there was nothing to build.' ;;
-            *)       echo "::error::frontend build result: $BUILD_RESULT"; exit 1 ;;
+          # All three ran and passed, or none ran. Any mix means something was cancelled or failed.
+          case "$IMAGE_RESULT $BUILD_RESULT $E2E_RESULT" in
+            'success success success') echo 'The frontend build and e2e ran and passed.' ;;
+            'skipped skipped skipped') echo 'No frontend files changed; there was nothing to build.' ;;
+            *) echo "::error::frontend results: image $IMAGE_RESULT, build $BUILD_RESULT, e2e $E2E_RESULT"; exit 1 ;;
           esac
