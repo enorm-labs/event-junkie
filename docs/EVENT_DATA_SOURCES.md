@@ -22,8 +22,8 @@ repairing live in the [issue tracker](https://github.com/enorm-labs/event-junkie
 
 | Status                              | Meaning                                                                              | Count |
 | ----------------------------------- | ------------------------------------------------------------------------------------ | ----: |
-| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |    92 |
-| 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |    14 |
+| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |    93 |
+| 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |    13 |
 | ⛔ [Blocked](#-blocked--deferred)   | Website analyzed, but no usable listings (no programme page, JS-only, or too sparse) |   119 |
 | ❓ [Unanalyzed](#-not-analyzed-yet) | URL recorded, but the website still needs a first look                               |    24 |
 
@@ -34,6 +34,7 @@ schema change.
 
 | Name                             | URL                                                         | Type         | Comment                                                |
 | -------------------------------- | ----------------------------------------------------------- | ------------ | ------------------------------------------------------ |
+| A-Trane                          | https://a-trane.de/                                         | Club         | EventON cards: JSON-LD, style tags, ticket prices      |
 | Abstand                          | https://radar.squat.net/en/node/1608                        | Bar          | radar group API; bands only in prose                   |
 | ÆDEN                             | https://aedenberlin.com/                                    | Techno Club  | WordPress; /events → month pages; no prices            |
 | Admiralspalast                   | https://www.admiralspalast.theater/                         | Theater      | Contao; one event per performance row; no prices       |
@@ -153,7 +154,6 @@ least as heavily as an RA count when the next batch is prioritised.
 | Fitzroy            | https://fitzroy-berlin.de/events/              | Club         | Medium   | WP REST `event` + ACF — the Madame Claude / LARK codebase   |
 | KAOS Berlin        | https://kaosberlin.de/veranstaltungen/         | Techno Club  | Low      | The Events Calendar REST API, as Cosmic Comedy; 4 upcoming  |
 | DSTRKT Club Berlin | https://www.dstrkt.de/                         | Club         | Low      | Wix one-pager; 2 dated events, which is the whole programme |
-| A-Trane            | https://a-trane.de/programm/                   | Club         | High     | EventON; 62 `Event` JSON-LD blocks on one page; no prices   |
 | Kunstfabrik Schlot | https://kunstfabrik-schlot.de/programm/        | Club         | High     | WordPress list; year, time and price only on detail pages   |
 | Zig Zag Jazz Club  | https://www.zigzag-jazzclub.berlin/program-mai | Club         | High     | Squarespace `?format=json` month pages; prices in body      |
 | Zig Zag Hall       | https://www.zigzag-jazzclub.berlin/program-mai | Concert Hall | High     | Zig Zag feed, only items titled `ZIG ZAG HALL: …`           |
@@ -169,12 +169,9 @@ least as heavily as an RA count when the next batch is prioritised.
 July programme and resumes on 12 September. Only 2 events are upcoming today, so a fixture captured now would be
 unrepresentative. Scaffold it in September, when the listing is representative again.
 
-**The ten rows below DSTRKT came from the tipBerlin sweep on 2026-09-30.** Each has a quirk that the importer must
+**The nine rows below DSTRKT came from the tipBerlin sweep on 2026-09-30.** Each has a quirk that the importer must
 handle:
 
-- **A-Trane** writes dates without zero padding, as in `2026-11-1T20:00+2:00`. The offset is always `+2:00`, also in
-  winter. Parse the date leniently and apply Europe/Berlin. The name field holds the lineup, split by escaped `<br>`.
-  Drop "HEUTE GESCHLOSSEN" and the shows it presents at other venues.
 - **Kunstfabrik Schlot** is the real site. `schlot.de` shows only a placeholder. The Events Calendar REST API and iCal
   are switched off. Ignore the `Product` JSON-LD on the detail page, because its price is `0` USD.
 - **Zig Zag Jazz Club** gives the doors time as `startDate`. The start time is in the body text. Some items hold two
@@ -189,7 +186,7 @@ handle:
   returns page 1, so follow `/events/2`.
 - **ZIMMER 16** and **Ballhaus Wedding** are small mixed stages. Music is one part of a programme with improv, readings
   and dance socials. Ballhaus Wedding's dates have no year, so take it from the month headings. Its entries have no
-  fixed shape, so that parser is the most brittle of the ten.
+  fixed shape, so that parser is the most brittle of the nine.
 - **Soulcat** publishes one week ahead, and four of its seven events are one recurring bar night.
 
 **Gärten der Welt** set the precedent for the next park- or campus-like source when it was

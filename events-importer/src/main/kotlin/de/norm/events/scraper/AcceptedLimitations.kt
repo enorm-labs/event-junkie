@@ -9,6 +9,7 @@ import de.norm.events.scraper.altekantine.ALTE_KANTINE_LIMITATIONS
 import de.norm.events.scraper.amt.AMT_LIMITATIONS
 import de.norm.events.scraper.arcanoa.ARCANOA_LIMITATIONS
 import de.norm.events.scraper.astra.ASTRA_LIMITATIONS
+import de.norm.events.scraper.atrane.A_TRANE_LIMITATIONS
 import de.norm.events.scraper.badehaus.BADEHAUS_LIMITATIONS
 import de.norm.events.scraper.barjedervernunft.BAR_JEDER_VERNUNFT_LIMITATIONS
 import de.norm.events.scraper.berghain.BERGHAIN_LIMITATIONS
@@ -98,6 +99,7 @@ import de.norm.events.scraper.zurklappe.ZUR_KLAPPE_LIMITATIONS
 object AcceptedLimitations {
     val declarations: List<VenueLimitations> =
         listOf(
+            A_TRANE_LIMITATIONS,
             ABSTAND_LIMITATIONS,
             ADMIRALSPALAST_LIMITATIONS,
             AEDEN_LIMITATIONS,
