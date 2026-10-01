@@ -404,8 +404,9 @@ cmd_diff_snapshot() {
     local before="${1:?usage: diff-snapshot <before.tsv> <after.tsv>}"
     local after="${2:?usage: diff-snapshot <before.tsv> <after.tsv>}"
     mkdir -p "$RUN_DIR"
+    # Not `NR == FNR`: an empty baseline has no records, so the idiom would load the second file as it (#391).
     awk -F'\t' '
-        NR == FNR { was[$1] = $2; next }
+        FILENAME == ARGV[1] { was[$1] = $2; next }
         { now[$1] = $2 }
         END {
             for (s in was) {
