@@ -43,7 +43,8 @@ private const val NEUE_ZUKUNFT_URL = "https://neue-zukunft.org/konzerte.html"
  * `start.{date,time}`, an HTML `description`, a `coverImage.url`, and `actions[]` (a "Get
  * Tickets" link, or a "Sold Out!" marker with an empty link). A live-music venue with no
  * category field, so the type defaults to `CONCERT`, flipping to `FESTIVAL` only for an
- * unambiguous festival title ([isFestivalTitle]).
+ * unambiguous festival title ([isFestivalTitle]) and to `PARTY` for the house's own seasonal
+ * fest ([HOUSE_PARTY_TITLE]).
  *
  * The widget returns the **whole calendar**, past shows included; those are dropped centrally
  * at persistence (`EventUpsertService`), so every entry is returned as-is.
@@ -112,7 +113,13 @@ class NeueZukunftApiScraper(
         val startTime = if (node.isAllDay) null else parseTime(node.start?.time.blankToNull())
 
         val festival = isFestivalTitle(title)
-        val eventType = if (festival) EventType.FESTIVAL.name else EventType.CONCERT.name
+        val houseParty = HOUSE_PARTY_TITLE.containsMatchIn(title)
+        val eventType =
+            when {
+                festival -> EventType.FESTIVAL.name
+                houseParty -> EventType.PARTY.name
+                else -> EventType.CONCERT.name
+            }
 
         val recurring = node.repeats()
         return elfsightOccurrenceDates(node, seriesStart, LocalDate.now(clock), VENUE_NAME, id).map { eventDate ->
@@ -132,8 +139,8 @@ class NeueZukunftApiScraper(
                 // A button that names the entry instead of a shop ("Eintritt frei!") is the price note.
                 priceNote = node.actions.firstNotNullOfOrNull { action -> action.text.blankToNull()?.takeIf { ENTRY_NOTE.containsMatchIn(it) } },
                 soldOut = node.actions.any { it.text.blankToNull()?.contains("sold out", ignoreCase = true) == true },
-                // A festival title names an event, not a performer; only concerts mint headliners from the title.
-                artists = if (festival) emptyList() else headlinersFromTitle(title)
+                // A festival or house-party title names an event, not a performer; only concerts mint headliners from the title.
+                artists = if (festival || houseParty) emptyList() else headlinersFromTitle(title)
             )
         }
     }
@@ -146,3 +153,10 @@ class NeueZukunftApiScraper(
         val ENTRY_NOTE = Regex("""\b(?:eintritt|entry|admission)\b""", RegexOption.IGNORE_CASE)
     }
 }
+
+/**
+ * The house's own party, named for a season or the house: `Herbstfest!`, `Hoffest`, `Sommerfest`
+ * (#2271). A closed list, because a bare `…fest` ending is also a band name (`Manifest`).
+ */
+private val HOUSE_PARTY_TITLE =
+    Regex("""\b(?:herbst|sommer|winter|frühlings|fruehlings|haus|hof|kiez|jubiläums|jubilaeums)fest\b""", RegexOption.IGNORE_CASE)
