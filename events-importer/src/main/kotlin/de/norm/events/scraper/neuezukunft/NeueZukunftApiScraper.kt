@@ -5,16 +5,21 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.elfsight.ElfsightEventNode
+import de.norm.events.scraper.elfsight.OCCURRENCE_HORIZON_WEEKS
 import de.norm.events.scraper.elfsight.elfsightActionUrl
 import de.norm.events.scraper.elfsight.elfsightJsonMapper
+import de.norm.events.scraper.elfsight.elfsightOccurrenceDates
 import de.norm.events.scraper.elfsight.parseElfsightDate
 import de.norm.events.scraper.elfsight.parseElfsightEventNodes
+import de.norm.events.scraper.elfsight.repeats
 import de.norm.events.scraper.headlinersFromTitle
 import de.norm.events.scraper.htmlParagraphText
 import de.norm.events.scraper.isFestivalTitle
 import de.norm.events.scraper.parseTime
 import io.github.oshai.kotlinlogging.KotlinLogging
 import tools.jackson.databind.json.JsonMapper
+import java.time.Clock
+import java.time.LocalDate
 
 /**
  * The programme page every event links back to, where the calendar widget renders: the widget exposes
@@ -43,10 +48,17 @@ private const val NEUE_ZUKUNFT_URL = "https://neue-zukunft.org/konzerte.html"
  * The widget returns the **whole calendar**, past shows included; those are dropped centrally
  * at persistence (`EventUpsertService`), so every entry is returned as-is.
  *
+ * **Recurring nights are expanded.** Jazz After Dark and Future Bash Reloaded are each two
+ * entries with a monthly nth-Wednesday rule and a long-past start date. Each becomes one event per
+ * occurrence over the rolling [OCCURRENCE_HORIZON_WEEKS] ([elfsightOccurrenceDates]), and only
+ * those carry the date in their `sourceId`; a one-off entry keeps the plain widget id (#333).
+ *
  * @see NeueZukunftWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://neue-zukunft.org/">Neue Zukunft</a>
  */
-class NeueZukunftApiScraper {
+class NeueZukunftApiScraper(
+    private val clock: Clock = Clock.systemDefaultZone()
+) {
     private val logger = KotlinLogging.logger {}
 
     private val jsonMapper: JsonMapper = elfsightJsonMapper()
@@ -55,7 +67,8 @@ class NeueZukunftApiScraper {
      * Parses every event from the Elfsight widget boot response [json].
      *
      * @param json the raw JSON body of the `p/boot/?w=<widgetId>` response.
-     * @return one [ScrapedEvent] per calendar entry; empty if absent, unparseable or without events.
+     * @return one [ScrapedEvent] per calendar entry, or per occurrence of a recurring one; empty if
+     *   absent, unparseable or without events.
      */
     fun scrape(json: String): List<ScrapedEvent> {
         val eventNodes = parseElfsightEventNodes(jsonMapper, json, VENUE_NAME) ?: return emptyList()
@@ -63,12 +76,12 @@ class NeueZukunftApiScraper {
 
         @Suppress("TooGenericExceptionCaught") // Intentional: skip individual malformed events without aborting the import.
         val parsed =
-            eventNodes.mapNotNull { node ->
+            eventNodes.flatMap { node ->
                 try {
                     parseEvent(jsonMapper.treeToValue(node, ElfsightEventNode::class.java))
                 } catch (e: Exception) {
                     logger.warn(e) { "Failed to parse Neue Zukunft event, skipping" }
-                    null
+                    emptyList()
                 }
             }
 
@@ -76,23 +89,23 @@ class NeueZukunftApiScraper {
     }
 
     @Suppress("ReturnCount") // Guard clauses for the required id, title, and date are clearer than nesting.
-    private fun parseEvent(node: ElfsightEventNode): ScrapedEvent? {
+    private fun parseEvent(node: ElfsightEventNode): List<ScrapedEvent> {
         val id = node.id.blankToNull()
         if (id == null) {
             logger.warn { "Neue Zukunft event has no id, skipping" }
-            return null
+            return emptyList()
         }
 
         val title = node.name.blankToNull()
         if (title == null) {
             logger.warn { "Neue Zukunft event '$id' has no name, skipping" }
-            return null
+            return emptyList()
         }
 
-        val eventDate = parseElfsightDate(node.start?.date)
-        if (eventDate == null) {
+        val seriesStart = parseElfsightDate(node.start?.date)
+        if (seriesStart == null) {
             logger.warn { "Neue Zukunft event '$id' has no parseable date, skipping" }
-            return null
+            return emptyList()
         }
 
         // All-day entries carry a placeholder time; only a real clock value becomes a start time.
@@ -101,25 +114,28 @@ class NeueZukunftApiScraper {
         val festival = isFestivalTitle(title)
         val eventType = if (festival) EventType.FESTIVAL.name else EventType.CONCERT.name
 
-        return ScrapedEvent(
-            title = title,
-            description = htmlParagraphText(node.description),
-            eventType = eventType,
-            eventDate = eventDate,
-            startTime = startTime,
-            // The cover is unset on almost every show; a gallery image is the fallback (Herbstfest 2026).
-            imageUrl =
-                (listOfNotNull(node.coverImage) + node.images)
-                    .firstNotNullOfOrNull { image -> image.url.blankToNull()?.takeIf { it.startsWith("http") } },
-            sourceUrl = NEUE_ZUKUNFT_URL,
-            sourceId = "${EventSource.NEUE_ZUKUNFT.sourceIdPrefix}$id",
-            ticketUrl = elfsightActionUrl(node.actions),
-            // A button that names the entry instead of a shop ("Eintritt frei!") is the price note.
-            priceNote = node.actions.firstNotNullOfOrNull { action -> action.text.blankToNull()?.takeIf { ENTRY_NOTE.containsMatchIn(it) } },
-            soldOut = node.actions.any { it.text.blankToNull()?.contains("sold out", ignoreCase = true) == true },
-            // A festival title names an event, not a performer; only concerts mint headliners from the title.
-            artists = if (festival) emptyList() else headlinersFromTitle(title)
-        )
+        val recurring = node.repeats()
+        return elfsightOccurrenceDates(node, seriesStart, LocalDate.now(clock), VENUE_NAME, id).map { eventDate ->
+            ScrapedEvent(
+                title = title,
+                description = htmlParagraphText(node.description),
+                eventType = eventType,
+                eventDate = eventDate,
+                startTime = startTime,
+                // The cover is unset on almost every show; a gallery image is the fallback (Herbstfest 2026).
+                imageUrl =
+                    (listOfNotNull(node.coverImage) + node.images)
+                        .firstNotNullOfOrNull { image -> image.url.blankToNull()?.takeIf { it.startsWith("http") } },
+                sourceUrl = NEUE_ZUKUNFT_URL,
+                sourceId = "${EventSource.NEUE_ZUKUNFT.sourceIdPrefix}$id" + if (recurring) "-$eventDate" else "",
+                ticketUrl = elfsightActionUrl(node.actions),
+                // A button that names the entry instead of a shop ("Eintritt frei!") is the price note.
+                priceNote = node.actions.firstNotNullOfOrNull { action -> action.text.blankToNull()?.takeIf { ENTRY_NOTE.containsMatchIn(it) } },
+                soldOut = node.actions.any { it.text.blankToNull()?.contains("sold out", ignoreCase = true) == true },
+                // A festival title names an event, not a performer; only concerts mint headliners from the title.
+                artists = if (festival) emptyList() else headlinersFromTitle(title)
+            )
+        }
     }
 
     private companion object {

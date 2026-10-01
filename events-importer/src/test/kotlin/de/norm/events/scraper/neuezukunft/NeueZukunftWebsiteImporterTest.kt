@@ -14,18 +14,23 @@ import io.mockk.slot
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import java.time.Clock
+import java.time.LocalDate
+import java.time.ZoneId
 
 /**
  * Unit tests for [NeueZukunftWebsiteImporter].
  *
  * Uses a saved JSON fixture and a mocked [ApiClient] for deterministic,
- * offline-safe testing without real HTTP requests. The importer is time-independent:
- * it returns every event in the fixture, and dropping past-dated events is the
- * persistence layer's concern (`EventUpsertService`).
+ * offline-safe testing without real HTTP requests. The clock is pinned so the recurrence
+ * horizon is reproducible; dropping past-dated events is the persistence layer's concern
+ * (`EventUpsertService`).
  */
 class NeueZukunftWebsiteImporterTest {
     private lateinit var importer: NeueZukunftWebsiteImporter
     private val apiClient: ApiClient = mockk()
+    private val berlin = ZoneId.of("Europe/Berlin")
+    private val clock: Clock = Clock.fixed(LocalDate.of(2026, 10, 1).atStartOfDay(berlin).toInstant(), berlin)
     private val bootUrl = "https://core.service.elfsight.com/p/boot/?w=e767cbbe-0026-4173-a511-5aaa105ed563"
 
     private val fixtureJson: String =
@@ -36,7 +41,7 @@ class NeueZukunftWebsiteImporterTest {
 
     @BeforeEach
     fun setUp() {
-        importer = NeueZukunftWebsiteImporter(apiClient)
+        importer = NeueZukunftWebsiteImporter(apiClient, clock)
         coEvery { apiClient.fetchJson(any()) } returns fixtureJson
     }
 
@@ -45,7 +50,8 @@ class NeueZukunftWebsiteImporterTest {
         runTest {
             val result = importer.importEvents(bootUrl)
             result.shouldBeInstanceOf<ImportResult.Success>()
-            result.events shouldHaveSize 44
+            // 40 one-off entries plus 6 occurrences of each of the 4 monthly series.
+            result.events shouldHaveSize 64
         }
 
     @Test
