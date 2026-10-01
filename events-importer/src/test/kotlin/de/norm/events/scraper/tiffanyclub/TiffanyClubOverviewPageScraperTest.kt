@@ -65,8 +65,8 @@ class TiffanyClubOverviewPageScraperTest {
     }
 
     @Test
-    fun `types a comedy night as a show and a concert by its act`() {
-        on(LocalDate.of(2026, 10, 10), "Lachkater").eventType shouldBe EventType.SHOW.name
+    fun `types a comedy night as comedy and a concert by its act`() {
+        on(LocalDate.of(2026, 10, 10), "Lachkater").eventType shouldBe EventType.COMEDY.name
         on(LocalDate.of(2026, 10, 16), "Comedyflash").artists.shouldBeEmpty()
 
         val concert = on(LocalDate.of(2026, 11, 7), "QUEST PISTOLS")

@@ -18,6 +18,10 @@ private val BASE_EVENT_TYPE_SYNONYMS: Map<String, String> =
         "party" to EventType.PARTY.name,
         "quiz" to EventType.QUIZ.name,
         "show" to EventType.SHOW.name,
+        "comedy" to EventType.COMEDY.name,
+        "stand-up" to EventType.COMEDY.name,
+        "standup" to EventType.COMEDY.name,
+        "stand-up comedy" to EventType.COMEDY.name,
         // A football/match screening (Lido labels these "Public Viewing") is a SCREENING, not a concert.
         "public viewing" to EventType.SCREENING.name,
         // A literary reading / spoken-word evening, and a gallery exhibition / opening.
@@ -45,6 +49,16 @@ fun mapEventType(
 
 /** Title keywords marking a non-music variety show (mapped to [EventType.SHOW]). */
 private val SHOW_TITLE_KEYWORDS = listOf("wrestling", "burlesque", "circus")
+
+/**
+ * Title phrases marking a comedy night ([EventType.COMEDY]). A bare "comedy" is not one, nor a
+ * spaced "stand up" alone: The Divine Comedy is a band, and "Stand Up" a song title.
+ */
+private val COMEDY_TITLE_PATTERN =
+    Regex(
+        """\bstand-?up\b|\bstand\s+up\s+comedy\b|\bcomedy[\s-]+(?:show|night|club|special|abend|mixed[\s-]+show)\b|\bopen[\s-]+mic[\s-]+comedy\b""",
+        RegexOption.IGNORE_CASE
+    )
 
 /**
  * Title keywords marking a screening on their own ([EventType.SCREENING]), long enough for a
@@ -152,7 +166,8 @@ private val PARTY_TITLE_WORD_PATTERN = Regex("""\brave\b""", RegexOption.IGNORE_
 
 /**
  * Classifies an event by unambiguous title keywords, or `null`: quiz to [QUIZ][EventType.QUIZ],
- * wrestling/burlesque/circus to [SHOW][EventType.SHOW], football screening or cinema to
+ * a stand-up or comedy-night phrase to [COMEDY][EventType.COMEDY], wrestling/burlesque/circus to
+ * [SHOW][EventType.SHOW], football screening or cinema to
  * [SCREENING][EventType.SCREENING], reading/slam to [READING][EventType.READING],
  * exhibition/vernissage to [EXHIBITION][EventType.EXHIBITION], market to
  * [OTHER][EventType.OTHER], party/club-night keyword to [PARTY][EventType.PARTY].
@@ -161,6 +176,8 @@ private fun classifyByTitleKeyword(title: String): String? {
     val haystack = title.lowercase()
     return when {
         "quiz" in haystack -> EventType.QUIZ.name
+
+        COMEDY_TITLE_PATTERN.containsMatchIn(title) -> EventType.COMEDY.name
 
         SHOW_TITLE_KEYWORDS.any { it in haystack } -> EventType.SHOW.name
 

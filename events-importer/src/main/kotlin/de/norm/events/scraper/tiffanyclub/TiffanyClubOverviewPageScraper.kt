@@ -137,7 +137,7 @@ class TiffanyClubOverviewPageScraper(
 
         val DAY_MONTH_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern("d MMMM", Locale.GERMAN)
 
-        val VENUE_FORMATS = linkedMapOf("comedy" to EventType.SHOW.name, "concert" to EventType.CONCERT.name, "konzert" to EventType.CONCERT.name)
+        val VENUE_FORMATS = linkedMapOf("comedy" to EventType.COMEDY.name, "concert" to EventType.CONCERT.name, "konzert" to EventType.CONCERT.name)
 
         val NOT_PROGRAMME = Regex("""^(private event|matching night)$""", RegexOption.IGNORE_CASE)
     }

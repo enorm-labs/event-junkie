@@ -147,6 +147,14 @@ class BarJederVernunftShowPageScraperTest {
         sourceId = "bar_jeder_vernunft:2026-08-24-a-show"
     )
 
+    @Test
+    fun `a comedy genre is comedy, and Kabarett stays a show`() {
+        resolveEventType("Musik-Comedy") shouldBe "COMEDY"
+        resolveEventType("Comedy") shouldBe "COMEDY"
+        resolveEventType("Musik-Kabarett") shouldBe "SHOW"
+        resolveEventType("Kabarett") shouldBe "SHOW"
+    }
+
     private companion object {
         const val SHOW_URL = "https://www.bar-jeder-vernunft.de/de/programm/programmuebersicht/a-show.html"
     }

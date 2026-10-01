@@ -73,9 +73,11 @@ class UfaFabrikMonthPageScraperTest {
     }
 
     @Test
-    fun `types stage formats before music`() {
+    fun `types comedy first, then stage formats before music`() {
         genreType("Musikkabarett") shouldBe EventType.SHOW.name
-        genreType("Comedy/Puppenspiel") shouldBe EventType.SHOW.name
+        genreType("Comedy/Puppenspiel") shouldBe EventType.COMEDY.name
+        genreType("Comedy-Theater") shouldBe EventType.COMEDY.name
+        genreType("Türkische Comedy") shouldBe EventType.COMEDY.name
         genreType("Autorinnen Lesung") shouldBe EventType.READING.name
         genreType("Jazz & Poetry") shouldBe EventType.READING.name
         genreType("Filmpremiere & Crossover-Performance") shouldBe EventType.SCREENING.name

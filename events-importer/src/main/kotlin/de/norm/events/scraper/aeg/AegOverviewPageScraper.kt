@@ -98,7 +98,7 @@ class AegOverviewPageScraper {
             logger.warn { "$eventSource row '$slug' has no title, skipping" }
             return null
         }
-        val eventType = mapEventType(categoryOf(row), EXTRA_CATEGORY_SYNONYMS)
+        val eventType = mapEventType(categoryOf(row))
         val price = row.textAt(".buttons .price")
 
         return ScrapedEvent(
@@ -177,9 +177,6 @@ private val AEG_CATEGORY_IDS =
  * team and no such rows, but shares the filter.
  */
 private val SPORT_CATEGORIES = setOf("eishockey", "basketball", "sport")
-
-/** Category labels the shared table does not carry. A comedy night is a staged show. */
-private val EXTRA_CATEGORY_SYNONYMS = mapOf("comedy" to EventType.SHOW.name)
 
 /** The trailing `Uhr` the venues append to their start time. */
 private const val CLOCK_SUFFIX = "Uhr"

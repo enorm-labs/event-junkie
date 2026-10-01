@@ -91,7 +91,7 @@ class AdmiralspalastWebsiteImporterTest {
             val antigone = result.events.first { it.sourceUrl == antigoneUrl }
             // The category types the production; it is not stored as a genre.
             antigone.genre shouldBe null
-            antigone.eventType shouldBe EventType.SHOW.name
+            antigone.eventType shouldBe EventType.COMEDY.name
         }
 
     @Test

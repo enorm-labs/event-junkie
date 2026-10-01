@@ -71,7 +71,7 @@ class CosmicComedyApiScraperTest {
     fun `maps a fully populated event`() {
         val friday = event("cosmic_comedy:comedy-pizza-and-shots-showcase-friday-17")
         friday.title shouldBe "Comedy, Pizza and Shots – SHOWCASE FRIDAY"
-        friday.eventType shouldBe EventType.SHOW.name
+        friday.eventType shouldBe EventType.COMEDY.name
         friday.eventDate shouldBe LocalDate.of(2026, 8, 7)
         friday.startTime shouldBe LocalTime.of(19, 0)
         friday.sourceUrl shouldBe "https://comedyclubberlin.com/event/comedy-pizza-and-shots-showcase-friday-17/"
@@ -98,8 +98,8 @@ class CosmicComedyApiScraperTest {
     }
 
     @Test
-    fun `types every event as a show, the club programming nothing but comedy`() {
-        events.all { it.eventType == EventType.SHOW.name } shouldBe true
+    fun `types every event as comedy, the club programming nothing else`() {
+        events.all { it.eventType == EventType.COMEDY.name } shouldBe true
         events shouldHaveSize 57
     }
 

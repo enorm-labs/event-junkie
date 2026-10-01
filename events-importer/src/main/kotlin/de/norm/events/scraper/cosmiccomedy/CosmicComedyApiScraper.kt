@@ -101,8 +101,8 @@ class CosmicComedyApiScraper {
         return ScrapedEvent(
             title = title,
             description = htmlToText(event.path("description").asString("")),
-            // The club programmes nothing but comedy, which the model files as a staged show.
-            eventType = EventType.SHOW.name,
+            // The club programmes nothing but comedy.
+            eventType = EventType.COMEDY.name,
             eventDate = start.toLocalDate(),
             startTime = start.toLocalTime(),
             imageUrl =

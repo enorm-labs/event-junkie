@@ -223,15 +223,15 @@ class AdmiralspalastDetailPageScraper {
 
         /**
          * The venue's categories mapped onto the model's types. A variety theatre, so anything staged
-         * rather than played — musical, dance, magic, theatre — is a [SHOW][EventType.SHOW], and the
-         * music categories collapse onto [CONCERT][EventType.CONCERT]. `Kultur`, `Diskussion` and
+         * rather than played — musical, dance, magic, theatre — is a [SHOW][EventType.SHOW], comedy is
+         * [COMEDY][EventType.COMEDY], and the music categories collapse onto [CONCERT][EventType.CONCERT]. `Kultur`, `Diskussion` and
          * `Podcast` are deliberately absent: they name a framing, not a form, and fall through to
          * the theatre default.
          */
         val GENRE_EVENT_TYPES: Map<String, String> =
             mapOf(
                 "ausstellung" to EventType.EXHIBITION.name,
-                "comedy" to EventType.SHOW.name,
+                "comedy" to EventType.COMEDY.name,
                 "elektro" to EventType.CONCERT.name,
                 "hardrock" to EventType.CONCERT.name,
                 "jazz" to EventType.CONCERT.name,

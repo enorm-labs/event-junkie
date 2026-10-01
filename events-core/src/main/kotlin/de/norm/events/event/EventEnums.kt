@@ -17,6 +17,7 @@ enum class EventType {
     PARTY,
     QUIZ,
     SHOW,
+    COMEDY,
     SCREENING,
     EXHIBITION,
     READING,
