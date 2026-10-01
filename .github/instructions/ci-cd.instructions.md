@@ -23,7 +23,8 @@ is the map and the traps.
   test, Kover to the summary and a sticky PR comment, an informational OWASP scan. Sets `ORG_GRADLE_PROJECT_warningsAsErrors=true`, so a Kotlin warning fails
   here and nowhere else. Also builds both container images for `linux/amd64` and `linux/arm64` with `type=cacheonly` and **never pushes** — it runs on fork PRs.
   `build-frontend.yml` — `npm ci`, lint, `oxfmt --check src` (so an oxfmt bump that changes the output fails until its PR carries the reformat), build, unit,
-  Playwright e2e, the frontend image from its own `dist/`. Both build images on PRs only, since `release.yml` builds them on every push to `main`. Both declare
+  the frontend image from its own `dist/`, and Playwright e2e as a parallel job inside `mcr.microsoft.com/playwright`, tagged with the lockfile's
+  `@playwright/test` version so no `apt` install runs (#2309). Both build images on PRs only, since `release.yml` builds them on every push to `main`. Both declare
   `workflow_dispatch` (`gh workflow run build-backend.yml --ref <branch>`), which ignores the path filters — and only exists for workflows on the default
   branch, so one added in a PR is unusable until it merges.
 - `codeql.yml` — advanced setup, not default setup, because default setup produces no run on a fork PR and the required context sat Pending forever (#581).
