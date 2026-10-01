@@ -2,7 +2,8 @@
 import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import type { EventSummary } from '@/api/types'
-import { eventLabel, formatPrice, isPastEvent, isRunningEvent, todayIso } from '@/lib/format'
+import { eventLabel, formatPrice } from '@/lib/format'
+import { useEventState } from '@/composables/useEventState'
 import { useFormat } from '@/composables/useFormat'
 import { useLocalePath } from '@/composables/useLocalePath'
 import { useI18n } from 'vue-i18n'
@@ -23,46 +24,11 @@ const props = withDefaults(
   { as: 'h3' },
 )
 
-const {
-  formatShortDate,
-  formatEventTime,
-  eventTimeHint,
-  formatEventType,
-  formatEventStatus,
-  formatWeekday,
-} = useFormat()
-const timeHint = computed(() => eventTimeHint(props.event))
+const { formatShortDate, formatEventTime } = useFormat()
 const { t } = useI18n()
 const localePath = useLocalePath()
 
-const isPast = computed(() => isPastEvent(props.event))
-const isRunning = computed(() => isRunningEvent(props.event))
-const status = computed(() => formatEventStatus(props.event.status, props.event.relocatedTo))
-const isLive = computed(
-  () =>
-    !status.value &&
-    ((Boolean(props.event.eventDate) && props.event.eventDate === todayIso()) || isRunning.value),
-)
-
-// The same one word, chosen the same way as on the card: past beats status beats running beats sold out beats free.
-const state = computed(() => {
-  if (isPast.value) return { label: t('events.card.past'), class: 'text-muted-foreground' }
-  if (status.value) return { label: status.value, class: 'text-destructive' }
-  if (isRunning.value)
-    return {
-      label: t('events.card.runningSince', { day: formatWeekday(props.event.eventDate) }),
-      class: 'text-primary',
-    }
-  if (props.event.soldOut) return { label: t('events.card.soldOut'), class: 'text-destructive' }
-  if (props.event.free) return { label: t('events.card.free'), class: 'text-success' }
-  return null
-})
-
-const eventType = computed(() =>
-  props.event.eventType && props.event.eventType !== 'OTHER'
-    ? formatEventType(props.event.eventType)
-    : null,
-)
+const { eventType, isLive, state, timeHint } = useEventState(() => props.event)
 
 // Venue, kind of night and genres read as one list, as they do on the card (#1248).
 const meta = computed(() =>

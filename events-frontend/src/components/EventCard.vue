@@ -4,7 +4,8 @@ import { RouterLink } from 'vue-router'
 import type { EventSummary } from '@/api/types'
 import CachedImage from '@/components/CachedImage.vue'
 import EventPoster from '@/components/EventPoster.vue'
-import { eventLabel, formatPrice, isPastEvent, isRunningEvent, todayIso } from '@/lib/format'
+import { eventLabel, formatPrice } from '@/lib/format'
+import { useEventState } from '@/composables/useEventState'
 import { useFormat } from '@/composables/useFormat'
 import { useLocalePath } from '@/composables/useLocalePath'
 import { useI18n } from 'vue-i18n'
@@ -27,56 +28,9 @@ const props = withDefaults(
   { as: 'h3', priority: false },
 )
 
-const {
-  formatEventDates,
-  formatEventTime,
-  eventTimeHint,
-  formatEventType,
-  formatEventStatus,
-  formatWeekday,
-} = useFormat()
+const { formatEventDates, formatEventTime } = useFormat()
 
-// Set only when the time shown is the BFF's guess (#1384); the card carries it as a title.
-const timeHint = computed(() => eventTimeHint(props.event))
-
-// `OTHER` is the importers' catch-all and tells a reader nothing, so it earns no pill.
-const eventType = computed(() =>
-  props.event.eventType && props.event.eventType !== 'OTHER'
-    ? formatEventType(props.event.eventType)
-    : null,
-)
-
-const isPast = computed(() => isPastEvent(props.event))
-// A weekender in its second night: started, not over (ADR-029).
-const isRunning = computed(() => isRunningEvent(props.event))
-
-// An event on today gets a pulsing "live" dot, self-contained so any caller gets it. A running
-// weekender is on today too; a cancelled or moved one is not live.
-const status = computed(() => formatEventStatus(props.event.status, props.event.relocatedTo))
-const isLive = computed(
-  () =>
-    !status.value &&
-    ((Boolean(props.event.eventDate) && props.event.eventDate === todayIso()) || isRunning.value),
-)
-
-/**
- * The one word on a card that changes what the reader does next, and the only coloured thing in
- * the meta line. Past wins the slot ("Sold out" on last month's gig is stale); a cancelled,
- * postponed or relocated night next (#1550); then running, because "since Friday" is what a
- * Sunday reader needs first. Colour is emphasis on top of the word, never instead (WCAG 1.4.1).
- */
-const state = computed(() => {
-  if (isPast.value) return { label: t('events.card.past'), class: 'text-muted-foreground' }
-  if (status.value) return { label: status.value, class: 'text-destructive' }
-  if (isRunning.value)
-    return {
-      label: t('events.card.runningSince', { day: formatWeekday(props.event.eventDate) }),
-      class: 'text-primary',
-    }
-  if (props.event.soldOut) return { label: t('events.card.soldOut'), class: 'text-destructive' }
-  if (props.event.free) return { label: t('events.card.free'), class: 'text-success' }
-  return null
-})
+const { eventType, isLive, state, timeHint } = useEventState(() => props.event)
 
 // Type and genre are different taxonomies, but both are filter values in the query string, so
 // they read as one list (#1248).
