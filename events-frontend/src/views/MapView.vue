@@ -25,7 +25,16 @@ import { fetchAllVenues } from '@/composables/useVenues'
 import { districtLabel } from '@/lib/districts'
 import { addDays, isOnNow, todayIso } from '@/lib/format'
 import { formatDistance, type Position } from '@/lib/geo'
-import { groupByVenue, type MapPin, nearby, venuePin, venuePosition } from '@/lib/mapPins'
+import {
+  DEFAULT_RADIUS,
+  groupByVenue,
+  type MapPin,
+  nearby,
+  RADII,
+  radiusFromQuery,
+  venuePin,
+  venuePosition,
+} from '@/lib/mapPins'
 import { CARD_LIST_CLASS } from '@/lib/utils'
 
 // MapLibre is the heaviest dependency the site has; only this route and the venues map pay for it.
@@ -33,9 +42,6 @@ const VenueMap = defineAsyncComponent(() => import('@/components/VenueMap.vue'))
 
 /** The BFF's calendar endpoint refuses a range longer than this. */
 const MAX_RANGE_DAYS = 92
-/** The radii "near" offers, in kilometres: a walk, a short ride, across a district. */
-const RADII = [1, 2, 5] as const
-const DEFAULT_RADIUS = 2
 /** The map's own query keys. Not event filters: the list link and the API never see them. */
 const MAP_KEYS = ['radius', 'now'] as const
 
@@ -80,10 +86,7 @@ async function load() {
 // Keyed on what the request depends on, so a radius or "on now" change filters without a reload.
 watch(() => JSON.stringify([range.value, filters.value]), load, { immediate: true })
 
-const radiusKm = computed(() => {
-  const radius = Number(queryString('radius'))
-  return (RADII as readonly number[]).includes(radius) ? radius : DEFAULT_RADIUS
-})
+const radiusKm = computed(() => radiusFromQuery(queryString('radius')))
 const onNowOnly = computed(() => queryString('now') === '1')
 
 /** "On now" narrows to what is running at this moment; the day's other events drop off the map. */
@@ -99,7 +102,7 @@ const pinnedEventCount = computed(() =>
 /** Events at a venue without a coordinate: said out loud, so a missing pin is not mistaken for no event. */
 const unpinnedEventCount = computed(() => shown.value.length - pinnedEventCount.value)
 
-// The live dot is not the only carrier: the pin's name says "on now" in words.
+// The pulse is not the only carrier: the pin's name says "on now" in words.
 const pins = computed<MapPin[]>(() =>
   groups.value
     .map(({ venue, events: atVenue }) => {

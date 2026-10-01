@@ -91,11 +91,8 @@ const BADGE_SIZE_CLASS = 'h-7 min-w-7 px-1.5'
 const DOT_SIZE_CLASS = 'size-4'
 
 const DIMMED_CLASS = 'opacity-40'
-/** The same live dot as `EventRow` and `EventCard`, on the marker's corner. */
-const LIVE_DOT_HTML =
-  '<span aria-hidden="true" class="absolute -top-1 -right-1 flex size-2.5">' +
-  '<span class="absolute inline-flex size-full rounded-full bg-primary opacity-75 motion-safe:animate-ping"></span>' +
-  '<span class="relative inline-flex size-2.5 rounded-full border border-background bg-primary"></span></span>'
+/** The pin itself pulses: a corner dot in the pin's own colour was easy to miss. */
+const LIVE_CLASS = 'is-live'
 const ORIGIN_CLASS =
   'size-4 rounded-full border-2 border-background bg-foreground ring-4 ring-foreground/25'
 
@@ -124,7 +121,7 @@ function renderMarkers() {
     element.title = pin.label
     element.setAttribute('aria-label', pin.label)
     element.textContent = pin.badge ?? ''
-    if (pin.live) element.insertAdjacentHTML('beforeend', LIVE_DOT_HTML)
+    if (pin.live) element.classList.add(LIVE_CLASS)
     element.addEventListener('click', (event) => {
       event.stopPropagation()
       selected.value = selected.value === pin.slug ? null : pin.slug
@@ -338,6 +335,32 @@ onBeforeUnmount(() => {
 
 .venue-map :deep(.maplibregl-ctrl-attrib a) {
   color: inherit;
+}
+
+/*
+ * A live pin pulses through its shadow: outside the box, so a count pill keeps its text and the
+ * marker keeps its position. Slow, because a Friday night lights up dozens of pins at once.
+ * Without motion a still ring carries the same meaning.
+ */
+.venue-map :deep(.is-live) {
+  box-shadow: 0 0 0 3px color-mix(in oklch, var(--primary) 45%, transparent);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .venue-map :deep(.is-live) {
+    animation: live-pulse 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+  }
+}
+
+/* One wave, then a rest: a pause between waves reads calmer than a constant throb. */
+@keyframes live-pulse {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in oklch, var(--primary) 80%, transparent);
+  }
+  60%,
+  100% {
+    box-shadow: 0 0 0 12px color-mix(in oklch, var(--primary) 0%, transparent);
+  }
 }
 
 /* Picking a point: the cursor says the next tap places something. */

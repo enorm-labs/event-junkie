@@ -10,7 +10,7 @@ export interface MapPin {
   label: string
   /** Short visible text inside the marker, such as an event count. */
   badge?: string
-  /** Something is on there now: the marker carries the live dot. The label must say so too. */
+  /** Something is on there now: the marker pulses. The label must say so too. */
   live?: boolean
   /** Outside the chosen radius: drawn faintly rather than removed, so the map keeps its context. */
   dimmed?: boolean
@@ -63,26 +63,31 @@ export function venuePin(
   return { slug: venue.slug, ...position, label, badge, ...extra }
 }
 
-/** A venue's events with how far the venue is from the visitor's chosen origin. */
-export interface NearbyVenueEvents extends VenueEvents {
-  distanceKm: number
+/** The radii "near" offers, in kilometres: a walk, a short ride, across a district. */
+export const RADII = [1, 2, 5] as const
+export const DEFAULT_RADIUS = 2
+
+/** The `radius` query value when it is one of `RADII`, otherwise the default. */
+export function radiusFromQuery(value: string): number {
+  const radius = Number(value)
+  return (RADII as readonly number[]).includes(radius) ? radius : DEFAULT_RADIUS
 }
 
 /**
- * The groups within `radiusKm` of `origin`, nearest first. Only pinnable venues reach here
- * (`groupByVenue`), so every group has a coordinate; a venue without one is counted by the view.
+ * The items within `radiusKm` of `origin`, nearest first. An item whose venue has no coordinate
+ * drops out; the view counts those itself.
  */
-export function nearby(
-  groups: readonly VenueEvents[],
+export function nearby<T extends { venue: VenueSummary }>(
+  items: readonly T[],
   origin: Position,
   radiusKm: number,
-): NearbyVenueEvents[] {
-  return groups
-    .flatMap((group) => {
-      const position = venuePosition(group.venue)
+): (T & { distanceKm: number })[] {
+  return items
+    .flatMap((item) => {
+      const position = venuePosition(item.venue)
       if (!position) return []
       const distance = distanceKm(origin, position)
-      return distance <= radiusKm ? [{ ...group, distanceKm: distance }] : []
+      return distance <= radiusKm ? [{ ...item, distanceKm: distance }] : []
     })
     .sort((a, b) => a.distanceKm - b.distanceKm)
 }

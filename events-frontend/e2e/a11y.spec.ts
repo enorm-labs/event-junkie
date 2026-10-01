@@ -249,6 +249,9 @@ for (const route of dataRoutes) {
  * The two maps, each with a pin selected: the panel below the map is the markup a visitor reads, and
  * the pins are buttons MapLibre positions. Without WebGL the view shows its fallback instead, which
  * the static pass already covers.
+ *
+ * The clock sits at 18:00 Berlin on the mocked night. From 21:00 the Tonight Show is on now and the
+ * pin's name gains ", 1 on now", so a real clock failed this test every evening.
  */
 const mapRoutes = [
   { name: 'the events map', path: '/en/map', pin: 'Mock Venue: 1 event' },
@@ -259,6 +262,7 @@ for (const route of mapRoutes) {
   test(`${route.name}, with a pin selected, has no detectable accessibility violations`, async ({
     page,
   }) => {
+    await page.clock.setFixedTime(new Date('2026-08-15T16:00:00Z'))
     await mockBff(page)
     await page.goto(route.path)
 
@@ -285,7 +289,7 @@ for (const route of mapRoutes) {
 
 /**
  * "Near me" located (#358): the radius controls, the "you are here" marker, the nearby list, and a
- * pin with the live dot. The clock sits at 22:00 Berlin on the mocked night, so the 21:00 show is on
+ * pulsing pin. The clock sits at 22:00 Berlin on the mocked night, so the 21:00 show is on
  * now whatever the real time is.
  */
 test('the events map near me, with a show on now, has no detectable accessibility violations', async ({

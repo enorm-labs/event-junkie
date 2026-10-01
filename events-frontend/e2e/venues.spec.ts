@@ -120,3 +120,44 @@ test('paginates when there is more than one page', async ({ page }) => {
   await expect(page).toHaveURL(/\/venues\?page=1$/)
   await expect(page.getByText('Page 2 of 2')).toBeVisible()
 })
+
+test('the venues map lists the venues near me, nearest first, and sends the position nowhere', async ({
+  page,
+  context,
+}) => {
+  const requested: string[] = []
+  page.on('request', (request) => {
+    if (request.url().includes('/api/')) requested.push(request.url())
+  })
+  await page.route(venuesList, (route) =>
+    json(route, {
+      content: [
+        { ...venue('far', 'Far Venue'), latitude: 52.535, longitude: 13.2 },
+        { ...venue('astra', 'Astra'), latitude: 52.5072, longitude: 13.4518 },
+        { ...venue('lido', 'Lido'), latitude: 52.4995, longitude: 13.4448 },
+      ],
+      page: 0,
+      size: 100,
+      totalElements: 3,
+      totalPages: 1,
+    }),
+  )
+  await context.grantPermissions(['geolocation'])
+  // At Lido's door: Astra is about 1 km away, the far venue about 17 km.
+  await context.setGeolocation({ latitude: 52.4995, longitude: 13.4448 })
+  await page.goto('/en/venues?view=map')
+
+  await page.getByRole('button', { name: 'Use my location' }).click()
+
+  await expect(page.getByRole('heading', { level: 2, name: 'Within 2 km' })).toBeVisible()
+  await expect(page.getByText('2 venues, nearest first')).toBeVisible()
+  await expect(page.getByRole('heading', { level: 3 })).toHaveText(['Lido', 'Astra'])
+  await expect(page.getByText('50 m')).toBeVisible()
+
+  await page.getByRole('button', { name: '5 km' }).click()
+  await expect(page).toHaveURL(/radius=5/)
+  await expect(page.getByRole('heading', { level: 3 })).toHaveCount(2)
+
+  expect(page.url()).not.toMatch(/52\.4995|13\.4448|lat|lng/)
+  expect(requested.filter((url) => /52\.4995|13\.4448|lat|lng/.test(url))).toEqual([])
+})

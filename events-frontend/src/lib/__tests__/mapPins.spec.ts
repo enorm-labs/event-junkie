@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import type { EventSummary, VenueSummary } from '@/api/types'
-import { groupByVenue, nearby, venuePin } from '@/lib/mapPins'
+import { groupByVenue, nearby, radiusFromQuery, venuePin } from '@/lib/mapPins'
 
 const ASTRA: VenueSummary = {
   slug: 'astra',
@@ -74,5 +74,18 @@ describe('nearby', () => {
   it('leaves out a venue beyond the radius', () => {
     const groups = groupByVenue([event('a', ASTRA), event('b', LIDO)])
     expect(nearby(groups, origin, 1).map((group) => group.venue.slug)).toEqual(['lido'])
+  })
+
+  it('takes bare venues too, and drops one without a coordinate', () => {
+    const venues = [ASTRA, NOWHERE, LIDO].map((venue) => ({ venue }))
+    expect(nearby(venues, origin, 2).map((item) => item.venue.slug)).toEqual(['lido', 'astra'])
+  })
+})
+
+describe('radiusFromQuery', () => {
+  it('keeps an offered radius and falls back to the default for anything else', () => {
+    expect(radiusFromQuery('5')).toBe(5)
+    expect(radiusFromQuery('3')).toBe(2)
+    expect(radiusFromQuery('')).toBe(2)
   })
 })
