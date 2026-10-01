@@ -241,15 +241,20 @@ test('filters by a date range, applying each bound as it is picked', async ({ pa
   await page.goto('/events')
   await expect(eventHeading(page, 'Default Event A')).toBeVisible()
 
-  // Native date inputs apply on change, so the earliest bound alone already narrows the list.
-  await page.getByLabel('Earliest event date').fill('2026-09-01')
+  // Relative to today: a fixed `to` in the past turns into the past-range case the mock answers
+  // with "Gig Last Month".
+  const from = isoDaysFromNow(1)
+  const to = isoDaysFromNow(30)
 
-  await expect(page).toHaveURL(/[?&]from=2026-09-01\b/)
+  // Native date inputs apply on change, so the earliest bound alone already narrows the list.
+  await page.getByLabel('Earliest event date').fill(from)
+
+  await expect(page).toHaveURL(new RegExp(`[?&]from=${from}\\b`))
   await expect(eventHeading(page, 'Gig From Date')).toBeVisible()
 
-  await page.getByLabel('Latest event date').fill('2026-09-30')
+  await page.getByLabel('Latest event date').fill(to)
 
-  await expect(page).toHaveURL(/[?&]to=2026-09-30\b/)
+  await expect(page).toHaveURL(new RegExp(`[?&]to=${to}\\b`))
   await expect(eventHeading(page, 'Gig In Range')).toBeVisible()
   await expect(eventHeading(page, 'Default Event A')).toHaveCount(0)
 })
