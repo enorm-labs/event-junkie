@@ -63,7 +63,7 @@ env:
   # Installed onto the Helm above rather than run from the `helmunittest/helm-unittest` image (#430):
   # the image pins a Helm and a plugin together, and its plugin has no `--values` flag, which is how
   # `scripts/cluster-assertions.sh` feeds each cluster's `spec.values` in. Watched by Renovate.
-  HELM_UNITTEST_VERSION: v1.1.2
+  HELM_UNITTEST_VERSION: 1.2.0
 
 jobs:
   lint:
