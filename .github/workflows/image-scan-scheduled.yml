@@ -53,7 +53,7 @@ env:
   HELM_VERSION: 4.3.0
   # **Must match release.yml's**, so a finding here the publish gate did not raise means the advisory is
   # new, not the scanner. Renovate groups both copies into one pull request (ADR-024).
-  TRIVY_VERSION: 0.74.0
+  TRIVY_VERSION: 0.75.0
 
 jobs:
   scan:
