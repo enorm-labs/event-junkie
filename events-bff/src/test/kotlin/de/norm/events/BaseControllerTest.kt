@@ -99,13 +99,17 @@ abstract class BaseControllerTest {
         address: String? = null,
         imageUrl: String? = null,
         district: String? = null,
-        description: String? = null
+        description: String? = null,
+        latitude: BigDecimal? = null,
+        longitude: BigDecimal? = null
     ): Long =
         databaseClient
             .sql(
                 "INSERT INTO events.venue " +
-                    "(name, slug, city, address, image_url, image_attribution, image_licence_id, image_source_url, district, description) " +
-                    "VALUES (:name, :slug, :city, :address, :imageUrl, :attribution, :licenceId, :sourceUrl, :district, :description) RETURNING id"
+                    "(name, slug, city, address, image_url, image_attribution, image_licence_id, image_source_url, district, description, " +
+                    "latitude, longitude) " +
+                    "VALUES (:name, :slug, :city, :address, :imageUrl, :attribution, :licenceId, :sourceUrl, :district, :description, " +
+                    ":latitude, :longitude) RETURNING id"
             ).bind("name", name)
             .bind("slug", slug)
             .bind("city", city)
@@ -114,6 +118,8 @@ abstract class BaseControllerTest {
             .bindCredit(imageUrl)
             .bindOrNull("district", district)
             .bindOrNull("description", description)
+            .bindOrNull("latitude", latitude, BigDecimal::class.java)
+            .bindOrNull("longitude", longitude, BigDecimal::class.java)
             .mapId()
 
     protected suspend fun insertArtist(

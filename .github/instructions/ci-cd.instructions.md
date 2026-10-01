@@ -75,6 +75,9 @@ is the map and the traps.
   copies registry to registry, so both architectures survive, and the job fails when a copy's per-platform manifests differ from the source's. **Its
   `source` annotation names this repository**, because GHCR links a package through it, and the link makes a new copy public like the repository: CI and
   forks pull it anonymously (checked on the first run, #1859); MinIO's source (AGPL-3.0) is in `url` and the description.
+- `publish-map-assets.yml` (#357, ADR-037) — cuts Berlin out of a Protomaps daily build with `scripts/map-assets.sh build` and pushes the tiles, fonts and
+  sprites as a `FROM scratch` image, both platforms, because a multi-platform `COPY --from` resolves its source per platform. **By hand**: Protomaps keeps a
+  build for a week, so `events-frontend/Dockerfile` pins the image by digest, and the summary prints the line to paste. Its `source` index annotation links the package to this repository.
 - `cut-release.yml` (#868) — publishes the GitHub Release that `release.yml` keys on; `workflow_dispatch` only, `dry_run` default. **Refuses a commit whose
   snapshot publish is not green** (v0.3.10 left an empty tag, #1117). **The version is never typed and never chosen**: no file carries it (ADR-032), and
   `scripts/version.sh deserved` reads the commits since the last release tag — a `feat` in a product scope is a minor, a break a major (a minor before

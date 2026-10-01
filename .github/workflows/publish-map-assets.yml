@@ -1,0 +1,91 @@
+name: Publish Map Assets
+
+# Cuts Berlin out of a Protomaps daily build and publishes it, with the fonts and sprites, as a
+# `FROM scratch` image the frontend Dockerfile copies `/map/` from (#357). By hand: Protomaps keeps
+# a build for a week, so the frontend pins this image by digest instead of a download URL.
+#
+# **Not part of `release.yml`.** A refresh is a run of this workflow, then a pull request that moves
+# the digest in `events-frontend/Dockerfile`; the summary prints the line to paste. The `source`
+# annotation links the package to this public repository, so CI and the clusters pull it anonymously.
+
+on:
+  workflow_dispatch:
+    inputs:
+      build:
+        description: Protomaps build date, YYYYMMDD; empty takes the newest
+        required: false
+        default: ''
+
+permissions:
+  contents: read
+
+concurrency:
+  group: publish-map-assets
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: Publish the map assets
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Check out
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Cut the tiles and collect the fonts and sprites
+        id: cut
+        env:
+          BUILD: ${{ inputs.build }}
+        run: |
+          set -euo pipefail
+          scripts/map-assets.sh build "$RUNNER_TEMP/map-assets" "$BUILD"
+          build="$(jq -r '.protomapsBuild | rtrimstr(".pmtiles")' "$RUNNER_TEMP/map-assets/map/source.json")"
+          echo "build=$build" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@594f3bf4285d9ea8dc53c9a0c9c4092420091003 # v4.4.0
+
+      - name: Log in to GHCR
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Both platforms, though the files are identical: a multi-platform `COPY --from` resolves the
+      # source image per platform, and a single-platform source fails the arm64 half.
+      - name: Build and push
+        id: push
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: ${{ runner.temp }}/map-assets
+          file: events-frontend/docker/map-assets.Dockerfile
+          platforms: linux/amd64,linux/arm64
+          build-args: PROTOMAPS_BUILD=${{ steps.cut.outputs.build }}
+          tags: ghcr.io/${{ github.repository_owner }}/event-junkie-map-assets:${{ steps.cut.outputs.build }}
+          # On the index, as mirror-test-images.yml does: a label on each platform's config did not link
+          # the first, hand-pushed copy to this repository.
+          annotations: |
+            index:org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            index:org.opencontainers.image.licenses=ODbL-1.0 AND OFL-1.1 AND MIT
+          push: true
+
+      - name: Print the Dockerfile line
+        env:
+          OWNER: ${{ github.repository_owner }}
+          BUILD: ${{ steps.cut.outputs.build }}
+          DIGEST: ${{ steps.push.outputs.digest }}
+        run: |
+          {
+            echo "Paste into events-frontend/Dockerfile:"
+            echo
+            echo '```dockerfile'
+            echo "COPY --from=ghcr.io/${OWNER}/event-junkie-map-assets:${BUILD}@${DIGEST} /map/ /usr/share/nginx/html/map/"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"

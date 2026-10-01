@@ -315,7 +315,7 @@ ADR-032 is the one to know unprompted — no file carries the version, it is com
 | Helm chart (bff · importer · frontend)  | `deploy/charts/event-junkie/` — read `deploy/AGENTS.md` first; exercised on k3d, never on a real cluster                                  |
 | Flux resources (one dir per cluster)    | `deploy/clusters/` — read `deploy/AGENTS.md` first; the semver range is on the OCIRepository                                              |
 | Backend container images                | `events-bff/Dockerfile`, `events-importer/Dockerfile` — no build-work `RUN`, context is each module's `build/docker`                      |
-| Frontend container image                | `events-frontend/Dockerfile` + `events-frontend/docker/nginx.conf` — nginx on 8080, context is the module                                 |
+| Frontend container image                | `events-frontend/Dockerfile` + `docker/nginx.conf` — nginx on 8080, context is the module, `/map/` from its own image (ADR-037)           |
 | Chart ↔ image UID                       | `scripts/uid-consistency.sh` — the `USER` line of all three Dockerfiles against what the chart resolves; floor >10000 (#448)              |
 | CI: build, scan and publish to GHCR     | `.github/workflows/release.yml` — the only workflow that publishes the product; it does not deploy                                        |
 | CI: mirror third-party test images      | `.github/workflows/mirror-test-images.yml` — dispatch only; copies MinIO and its client, pinned by digest                                 |

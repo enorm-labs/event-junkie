@@ -1,0 +1,17 @@
+{
+  "title": "Map",
+  "subtitle": "What is on, and where. Pick a pin to see a venue's events.",
+  "label": "Map of Berlin",
+  "pinLabel": "{venue}: {count} event | {venue}: {count} events",
+  "resultCount": "{events} events at {venues} venues",
+  "unpinned": "{count} more at a venue without a location, in the list | {count} more at venues without a location, in the list",
+  "empty": "Nothing on the map for these filters. Try another day or fewer filters.",
+  "pickPin": "Pick a pin to see what is on there.",
+  "unavailable": "This browser cannot draw the map. The list shows the same events.",
+  "showList": "Show the list",
+  "zoomIn": "Zoom in",
+  "zoomOut": "Zoom out",
+  "gestureHelpDesktop": "Use Ctrl + scroll to zoom the map",
+  "gestureHelpMac": "Use ⌘ + scroll to zoom the map",
+  "gestureHelpMobile": "Use two fingers to move the map"
+}

@@ -5,5 +5,13 @@
   "empty": "Zu dieser Suche gibt es keine Location. Versuch es mit einem anderen Namen.",
   "byDistrict": "Nach Bezirk filtern",
   "allDistricts": "Alle Bezirke",
-  "resultCount": "{count} Location gefunden | {count} Locations gefunden"
+  "resultCount": "{count} Location gefunden | {count} Locations gefunden",
+  "view": {
+    "label": "Ansicht",
+    "list": "Liste",
+    "map": "Karte"
+  },
+  "pickPin": "Tippe auf einen Pin, um die Location zu sehen.",
+  "whatsOn": "Was hier läuft, auf der Karte",
+  "unpinned": "{count} weitere ohne Standort, in der Liste"
 }

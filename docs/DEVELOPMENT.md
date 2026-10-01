@@ -19,9 +19,11 @@ scripts/dev-env.sh seed-all               # register all event sources (needs ij
 scripts/dev-env.sh import <slug>          # import one source, polling until it settles
 scripts/dev-env.sh status                 # database / importer / bff / frontend
 scripts/dev-env.sh down all               # add --db to stop Postgres too
+scripts/map-assets.sh dev                 # once: the map's tiles, fonts and icons into events-frontend/public/map/ (needs docker)
 ```
 
 Ports: frontend `5173`, BFF `8080`, importer `8081`, Postgres `56298`. Postgres is started for you by `bootRun` — there is no separate database setup step.
+Without `scripts/map-assets.sh dev` the two maps show their pins on an empty background ([ADR-037](adr/ADR-037_SELF_HOSTED_MAP.md)).
 
 **Before opening a PR** — or run `/verify`, which does all of it plus the infra and chart gates when the diff touches them:
 

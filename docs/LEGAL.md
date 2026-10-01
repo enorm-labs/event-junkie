@@ -639,6 +639,19 @@ Two specifics. Prefer **OpenSearch** (Apache-2.0) over Elasticsearch if that ste
 **FullCalendar's premium plugins** out: the standard packages are MIT, and the premium ones are commercially
 licensed.
 
+### 9.3 The map's data, fonts and icons
+
+The maps use three things that are not packages, so `notices.json` does not list them. [ADR-037](adr/ADR-037_SELF_HOSTED_MAP.md) says where they come from.
+
+| What                            | Licence  | How the obligation is met                                                          |
+| ------------------------------- | -------- | ---------------------------------------------------------------------------------- |
+| Berlin tiles (`berlin.pmtiles`) | ODbL-1.0 | The map shows `© OpenStreetMap · Protomaps`, with a link to the OSM copyright page |
+| Noto Sans glyphs                | OFL-1.1  | `map/fonts/OFL.txt` ships beside the glyphs                                        |
+| Map icons (sprites)             | MIT      | `map/sprites/LICENSE.md` ships beside the sprites                                  |
+
+The tiles are a Produced Work of OpenStreetMap. The ODbL asks for credit where the data is shown. It asks for nothing more while we do not publish the
+extract as a database. Two venues, AMT and Sonnenraum, hold coordinates from Google and not from OpenStreetMap. The map shows them as pins, not as map data.
+
 ## 12. Accessibility (WCAG 2.1 Level AA)
 
 **Target: WCAG 2.1 Level AA** — the level German and EU law reference (BFSG / EN 301 549).

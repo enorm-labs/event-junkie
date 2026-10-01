@@ -21,6 +21,7 @@ const PATHS = [
   '/venues',
   '/promoters',
   '/calendar',
+  '/map',
   '/about',
   '/legal/imprint',
   '/legal/privacy',
@@ -104,7 +105,7 @@ const eventSummaries = [
     subtitle: 'With a support act',
     eventDate: '2026-08-15',
     startTime: '21:00',
-    venue: { slug: 'mock-venue', name: 'Mock Venue' },
+    venue: { slug: 'mock-venue', name: 'Mock Venue', latitude: 52.5, longitude: 13.45 },
   },
   { slug: 'second-show', title: 'Second Show', eventDate: '2026-08-16' },
 ]
@@ -169,6 +170,8 @@ async function mockBff(page: Page): Promise<void> {
             name: 'Mock Venue',
             city: 'Berlin',
             district: 'kreuzberg',
+            latitude: 52.5,
+            longitude: 13.45,
           },
           { slug: 'other-venue', name: 'Other Venue', city: 'Berlin' },
         ],
@@ -228,6 +231,44 @@ for (const route of dataRoutes) {
         .or(page.getByRole('link', { name: /Tonight Show/ }))
         .first(),
     ).toBeVisible()
+
+    const results = await buildScan(page).analyze()
+
+    expect(
+      results.violations.map((v) => ({
+        rule: v.id,
+        impact: v.impact,
+        help: v.help,
+        nodes: v.nodes.map((n) => n.target.join(' ')),
+      })),
+    ).toEqual([])
+  })
+}
+
+/**
+ * The two maps, each with a pin selected: the panel below the map is the markup a visitor reads, and
+ * the pins are buttons MapLibre positions. Without WebGL the view shows its fallback instead, which
+ * the static pass already covers.
+ */
+const mapRoutes = [
+  { name: 'the events map', path: '/en/map', pin: 'Mock Venue: 1 event' },
+  { name: 'the venues map', path: '/en/venues?view=map', pin: 'Mock Venue' },
+]
+
+for (const route of mapRoutes) {
+  test(`${route.name}, with a pin selected, has no detectable accessibility violations`, async ({
+    page,
+  }) => {
+    await mockBff(page)
+    await page.goto(route.path)
+
+    const pin = page.getByRole('button', { name: route.pin, exact: true })
+    const unavailable = page.getByText(/cannot draw the map/)
+    await expect(pin.or(unavailable)).toBeVisible()
+    test.skip(await unavailable.isVisible(), 'no WebGL in this browser')
+
+    await pin.click()
+    await expect(page.getByRole('heading', { level: 2, name: 'Mock Venue' })).toBeVisible()
 
     const results = await buildScan(page).analyze()
 
