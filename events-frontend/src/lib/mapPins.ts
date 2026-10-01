@@ -1,4 +1,5 @@
 import type { EventSummary, VenueSummary } from '@/api/types'
+import { distanceKm, type Position } from '@/lib/geo'
 
 /** One marker on a `VenueMap`: a venue, where it is, and what the marker says about it. */
 export interface MapPin {
@@ -9,6 +10,10 @@ export interface MapPin {
   label: string
   /** Short visible text inside the marker, such as an event count. */
   badge?: string
+  /** Something is on there now: the marker carries the live dot. The label must say so too. */
+  live?: boolean
+  /** Outside the chosen radius: drawn faintly rather than removed, so the map keeps its context. */
+  dimmed?: boolean
 }
 
 /** A venue together with the events it has in the requested range. */
@@ -51,8 +56,33 @@ export function venuePin(
   venue: VenueSummary,
   label: string,
   badge?: string,
+  extra: Pick<MapPin, 'live' | 'dimmed'> = {},
 ): MapPin | null {
   const position = venuePosition(venue)
   if (!venue.slug || !position) return null
-  return { slug: venue.slug, ...position, label, badge }
+  return { slug: venue.slug, ...position, label, badge, ...extra }
+}
+
+/** A venue's events with how far the venue is from the visitor's chosen origin. */
+export interface NearbyVenueEvents extends VenueEvents {
+  distanceKm: number
+}
+
+/**
+ * The groups within `radiusKm` of `origin`, nearest first. Only pinnable venues reach here
+ * (`groupByVenue`), so every group has a coordinate; a venue without one is counted by the view.
+ */
+export function nearby(
+  groups: readonly VenueEvents[],
+  origin: Position,
+  radiusKm: number,
+): NearbyVenueEvents[] {
+  return groups
+    .flatMap((group) => {
+      const position = venuePosition(group.venue)
+      if (!position) return []
+      const distance = distanceKm(origin, position)
+      return distance <= radiusKm ? [{ ...group, distanceKm: distance }] : []
+    })
+    .sort((a, b) => a.distanceKm - b.distanceKm)
 }

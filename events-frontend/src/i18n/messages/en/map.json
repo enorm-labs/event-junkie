@@ -13,5 +13,28 @@
   "zoomOut": "Zoom out",
   "gestureHelpDesktop": "Use Ctrl + scroll to zoom the map",
   "gestureHelpMac": "Use ⌘ + scroll to zoom the map",
-  "gestureHelpMobile": "Use two fingers to move the map"
+  "gestureHelpMobile": "Use two fingers to move the map",
+  "pinOnNow": "{count} on now | {count} on now",
+  "onNowOnly": "On now",
+  "near": {
+    "label": "Near",
+    "useLocation": "Use my location",
+    "pickOnMap": "Pick on the map",
+    "nearVenue": "Near a venue…",
+    "pickHint": "Tap the map where you want to start.",
+    "useCentre": "Use the map's centre",
+    "locating": "Finding your location…",
+    "denied": "Location access is off for this site. Pick a point on the map or a venue instead.",
+    "unavailable": "Your location could not be found. Pick a point on the map or a venue instead.",
+    "from": "Around {origin}",
+    "yourLocation": "your location",
+    "pickedPoint": "the point you picked",
+    "origin": "Where “near” is measured from",
+    "radius": "Radius",
+    "clear": "Clear",
+    "coarse": "Your device places you only to within {accuracy}, so some of these may be further away.",
+    "heading": "Within {radius}",
+    "resultCount": "{events} events at {venues} venues, nearest first",
+    "empty": "Nothing on within this radius. Try a larger one or another day."
+  }
 }

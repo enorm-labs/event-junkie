@@ -49,6 +49,12 @@ const localePath = useLocalePath()
 const { t } = useI18n()
 // The compact view is a global display preference — see `useCompactView`.
 const { compact } = useCompactView()
+
+// "Near me" lives on the map, which measures distance on the device (#358); the filters go with it.
+const mapLink = computed(() => ({
+  path: localePath('/map'),
+  query: { ...route.query, page: undefined },
+}))
 </script>
 
 <template>
@@ -79,9 +85,14 @@ const { compact } = useCompactView()
       </div>
     </div>
     <template v-else>
-      <p class="text-sm text-muted-foreground">
-        {{ t('events.resultCount', { count: page.totalElements }) }}
-      </p>
+      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1 text-sm">
+        <p class="text-muted-foreground">
+          {{ t('events.resultCount', { count: page.totalElements }) }}
+        </p>
+        <RouterLink :to="mapLink" class="text-primary hover:underline">
+          {{ t('events.nearMe') }}
+        </RouterLink>
+      </div>
       <!-- No section heading sits between the page `h1` and the grid here (unlike the home and
            detail pages), so the cards are the second level of the outline. The compact view swaps
            the whole grid rather than hiding the posters: a hidden image is still downloaded. -->

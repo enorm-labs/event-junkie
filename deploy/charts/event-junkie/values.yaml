@@ -289,7 +289,8 @@ ingress:
     # setting as much as a security one.
     referrerPolicy: "strict-origin-when-cross-origin"
     # ingress.securityHeaders.permissionsPolicy denies browser features the site never asks for (#1442).
-    permissionsPolicy: "camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()"
+    # Geolocation is this origin's only, for the map's "near me" (#358), which asks on a click.
+    permissionsPolicy: "camera=(), microphone=(), geolocation=(self), payment=(), usb=(), interest-cohort=()"
     # ingress.securityHeaders.crossOriginResourcePolicy: no other origin may load the cached images (ADR-019).
     crossOriginResourcePolicy: "same-origin"
     # `credentialless`, not `require-corp`: with serving off, images are venue URLs without CORP, and `require-corp` would blank them (#1464).

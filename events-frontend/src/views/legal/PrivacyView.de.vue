@@ -39,7 +39,8 @@ const { t } = useI18n()
         Nichts von dem, was du hier tust, wird getrackt oder zu einem Profil verarbeitet. Übrig
         bleibt das unvermeidbare Minimum: Ein Webserver protokolliert Anfragen, damit die Seite
         ausgeliefert und geschützt werden kann, und dein Browser merkt sich, welche Sprache, welches
-        Farbschema und welche Ansicht du gewählt hast.
+        Farbschema und welche Ansicht du gewählt hast. Fragst du die Karte, was in deiner Nähe
+        läuft, bleibt dein Standort in deinem Browser.
       </p>
       <p>
         <strong>Auch die Bilder kommen von uns.</strong> Event Junkie lädt sie einmal herunter und
@@ -143,6 +144,22 @@ const { t } = useI18n()
       <p>
         Sollten jemals Cookies eingesetzt werden, dann ausschließlich unbedingt erforderliche: kein
         Tracking, keine Analyse-Tools, keine Social-Media-Plugins, keine Werbe-Tracker.
+      </p>
+      <!-- LEGAL.md §7.4a: the position is used in the browser and nowhere else. -->
+      <h3>Dein Standort für „In der Nähe“</h3>
+      <p>
+        Die Karte kann zeigen, was in deiner Nähe läuft. Erst wenn du
+        <strong>Meinen Standort verwenden</strong> wählst, fragt dein Browser, ob er deine Position
+        teilen soll, und du entscheidest. Erlaubst du es, wird die Position
+        <strong>nur in deinem Browser</strong> verwendet, um die Entfernung zu jeder Location zu
+        berechnen. Sie wird weder an uns noch an Dritte übermittelt, erscheint in keiner Adresse und
+        keinem Protokoll und wird nicht gespeichert: Sie ist weg, sobald du die Seite neu lädst oder
+        den Tab schließt. Stattdessen kannst du auch einen Punkt auf der Karte oder eine Location
+        wählen, mit demselben Ergebnis.
+      </p>
+      <p>
+        Weil die Position dein Gerät nie verlässt, haben wir keine Kopie davon, und es gibt nichts,
+        was wir löschen oder herausgeben könnten.
       </p>
     </section>
 

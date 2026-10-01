@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import type { EventSummary, VenueSummary } from '@/api/types'
-import { groupByVenue, venuePin } from '@/lib/mapPins'
+import { groupByVenue, nearby, venuePin } from '@/lib/mapPins'
 
 const ASTRA: VenueSummary = {
   slug: 'astra',
@@ -56,5 +56,23 @@ describe('venuePin', () => {
 
   it('is null for a venue without a coordinate', () => {
     expect(venuePin(NOWHERE, 'Nowhere')).toBeNull()
+  })
+})
+
+describe('nearby', () => {
+  // Astra and Lido are about 1.06 km apart in Friedrichshain-Kreuzberg; the origin sits on Lido.
+  const origin = { latitude: LIDO.latitude!, longitude: LIDO.longitude! }
+
+  it('keeps the venues within the radius, nearest first, with the distance', () => {
+    const groups = groupByVenue([event('a', ASTRA), event('b', LIDO)])
+    const result = nearby(groups, origin, 2)
+    expect(result.map((group) => group.venue.slug)).toEqual(['lido', 'astra'])
+    expect(result[0]!.distanceKm).toBe(0)
+    expect(result[1]!.distanceKm).toBeCloseTo(1.06, 2)
+  })
+
+  it('leaves out a venue beyond the radius', () => {
+    const groups = groupByVenue([event('a', ASTRA), event('b', LIDO)])
+    expect(nearby(groups, origin, 1).map((group) => group.venue.slug)).toEqual(['lido'])
   })
 })

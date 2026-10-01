@@ -37,7 +37,8 @@ const { t } = useI18n()
         widgets or advertising, and has no user accounts. Nothing you do here is tracked or
         profiled. What remains is the unavoidable minimum: a web server records requests so the site
         can be delivered and defended, and your browser remembers which language, colour scheme and
-        list view you chose.
+        list view you chose. If you ask the map what is near you, your position stays in your
+        browser.
       </p>
       <p>
         <strong>Images come from us too.</strong> Event Junkie downloads them once and serves them
@@ -133,6 +134,20 @@ const { t } = useI18n()
       <p>
         Should cookies ever be introduced, they will be strictly necessary (essential) ones only: no
         tracking, no analytics tools, no social-media plugins, no advertising trackers.
+      </p>
+      <!-- LEGAL.md §7.4a: the position is used in the browser and nowhere else. -->
+      <h3>Your location, for “near me”</h3>
+      <p>
+        The map can show what is on near you. Only when you choose
+        <strong>Use my location</strong> does your browser ask whether to share your position, and
+        you decide. If you allow it, the position is used <strong>only in your browser</strong>, to
+        measure the distance to each venue. It is not sent to us or to anyone else, it appears in no
+        address and no log, and it is not stored: it is gone when you reload the page or close the
+        tab. You can pick a point on the map or a venue instead, with the same result.
+      </p>
+      <p>
+        Because the position never leaves your device, we hold no copy of it, and there is nothing
+        for us to delete or disclose.
       </p>
     </section>
 

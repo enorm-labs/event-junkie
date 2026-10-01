@@ -6,6 +6,7 @@ import {
   formatShortDate,
   humaniseEventType,
   isPastEvent,
+  isOnNow,
   isRunningEvent,
   todayIso,
   tomorrowIso,
@@ -222,5 +223,71 @@ describe('isPastEvent', () => {
     vi.setSystemTime(new Date('2026-07-06T23:30:00Z'))
 
     expect(isPastEvent(on('2026-07-06', { startTime: '20:00:00' }))).toBe(true)
+  })
+})
+
+describe('isOnNow', () => {
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  const on = (eventDate: string, rest: Partial<EventSpan> = {}) => ({ eventDate, ...rest })
+
+  it("starts today's event at its effective start, Berlin time", () => {
+    vi.useFakeTimers()
+    // 20:30 Berlin on the 7th (18:30 UTC in July).
+    vi.setSystemTime(new Date('2026-07-07T18:30:00Z'))
+
+    expect(isOnNow(on('2026-07-07', { startTime: '20:00:00' }))).toBe(true)
+    expect(isOnNow(on('2026-07-07', { startTime: '20:30:00' }))).toBe(true)
+    expect(isOnNow(on('2026-07-07', { startTime: '21:00:00' }))).toBe(false)
+    // Doors, then the BFF's slot, stand in for a missing start.
+    expect(isOnNow(on('2026-07-07', { doorsTime: '19:00:00', startTime: '21:00:00' }))).toBe(false)
+    expect(isOnNow(on('2026-07-07', { doorsTime: '19:00:00' }))).toBe(true)
+    expect(isOnNow(on('2026-07-07', { assumedStartTime: '23:00:00' }))).toBe(false)
+    // Tomorrow's event has not started, whatever its time.
+    expect(isOnNow(on('2026-07-08', { startTime: '00:00:00' }))).toBe(false)
+  })
+
+  it('is false for today with no time at all, since nothing says it has started', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-07-07T18:30:00Z'))
+
+    expect(isOnNow(on('2026-07-07'))).toBe(false)
+  })
+
+  it('ends with a stated end time today', () => {
+    vi.useFakeTimers()
+    // 23:30 Berlin.
+    vi.setSystemTime(new Date('2026-07-07T21:30:00Z'))
+
+    const show = on('2026-07-07', {
+      startTime: '20:00:00',
+      endDate: '2026-07-07',
+      endTime: '23:00:00',
+    })
+    expect(isOnNow(show)).toBe(false)
+  })
+
+  it("keeps last night's party on until the grace ends at six", () => {
+    vi.useFakeTimers()
+    // 03:00 Berlin on the 7th.
+    vi.setSystemTime(new Date('2026-07-07T01:00:00Z'))
+
+    expect(isOnNow(on('2026-07-06', { startTime: '23:00:00' }))).toBe(true)
+    // A 20:00 gig was over at midnight.
+    expect(isOnNow(on('2026-07-06', { startTime: '20:00:00' }))).toBe(false)
+
+    // 06:00 Berlin: past the grace window.
+    vi.setSystemTime(new Date('2026-07-07T04:00:00Z'))
+    expect(isOnNow(on('2026-07-06', { startTime: '23:00:00' }))).toBe(false)
+  })
+
+  it("counts a weekender's second night as on now", () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-07-07T12:00:00Z'))
+
+    expect(isOnNow(on('2026-07-05', { endDate: '2026-07-08' }))).toBe(true)
+    expect(isOnNow(on('2026-07-03', { endDate: '2026-07-06' }))).toBe(false)
   })
 })

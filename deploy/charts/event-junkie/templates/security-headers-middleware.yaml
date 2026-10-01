@@ -15,7 +15,8 @@
      once someone links to an embed.
    - **Referrer-Policy** is named in the privacy notice: event slugs describe what somebody was
      looking at, and without it the full URL goes to every third-party host they navigate to.
-   - **Permissions-Policy** denies the browser features nothing here uses.
+   - **Permissions-Policy** denies the browser features nothing here uses, and keeps geolocation to
+     this origin for the map's "near me" (#358).
    - **Cross-Origin-Resource-Policy: same-origin** keeps another origin from loading the assets and
      cached venue images (#1442); no Traefik field, so it goes through `customResponseHeaders`.
    - **COEP: credentialless** and **COOP: same-origin** complete the isolation trio (#1464).

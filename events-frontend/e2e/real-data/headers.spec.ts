@@ -33,7 +33,9 @@ test('the other security headers are on the response', async ({ page }) => {
   expect(headers['x-frame-options']).toBe('DENY')
   expect(headers['x-content-type-options']).toBe('nosniff')
   expect(headers['referrer-policy']).toBe('strict-origin-when-cross-origin')
-  expect(headers['permissions-policy']).toContain('geolocation=()')
+  expect(headers['permissions-policy']).toContain('camera=()')
+  // The map's "near me" asks for the position, and only this origin may (#358).
+  expect(headers['permissions-policy']).toContain('geolocation=(self)')
 })
 
 test('this environment tells crawlers to stay away, by header and by robots.txt', async ({ page, request }) => {
