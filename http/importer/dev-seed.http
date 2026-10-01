@@ -1431,9 +1431,9 @@ Content-Type: application/json
     "latitude": 52.54703,
     "longitude": 13.42116,
     "websiteUrl": "https://www.dunckerclub.de",
-    "description": "A long-running goth, wave and indie club in a historic building in Prenzlauer Berg, best known for its dark-alternative DJ nights and occasional live concerts.",
+    "description": "A club since 1989 in a listed red-brick building of 1914 by Ludwig Hoffmann in Prenzlauer Berg, with indie and alternative-rock dance nights on Fridays and Saturdays and the dark-wave Montagsduncker every Monday since 1993.",
     "descriptionLanguage": "en",
-    "descriptionAlt": "Ein langjähriger Goth-, Wave- und Indieclub in einem historischen Gebäude in Prenzlauer Berg, bekannt vor allem für seine dunklen Alternative-DJ-Nächte und gelegentliche Konzerte.",
+    "descriptionAlt": "Seit 1989 ein Club in einem denkmalgeschützten Backsteinbau von Ludwig Hoffmann aus dem Jahr 1914 in Prenzlauer Berg, mit Indie- und Alternative-Rock-Tanznächten am Freitag und Samstag und seit 1993 jeden Montag mit dem Dark-Wave-Abend Montagsduncker.",
     "descriptionAltLanguage": "de"
 }
 
@@ -3167,9 +3167,9 @@ Content-Type: application/json
     "latitude": 52.49894,
     "longitude": 13.352705,
     "websiteUrl": "https://metropol-berlin.de",
-    "description": "A historic concert hall at Nollendorfplatz, programming touring concerts alongside occasional club parties.",
+    "description": "Built in 1906 as a theatre on Nollendorfplatz, later a cinema and a well-known 1980s disco, and now a concert hall for touring acts that also holds club parties.",
     "descriptionLanguage": "en",
-    "descriptionAlt": "Ein historischer Konzertsaal am Nollendorfplatz, mit Konzerten auf Tour und gelegentlichen Clubpartys.",
+    "descriptionAlt": "1906 als Theater am Nollendorfplatz erbaut, später Kino und in den 1980ern eine bekannte Diskothek, heute ein Konzertsaal für Tourneekonzerte, in dem auch Clubpartys stattfinden.",
     "descriptionAltLanguage": "de"
 }
 
@@ -4655,9 +4655,9 @@ Content-Type: application/json
     "latitude": 52.496224,
     "longitude": 13.453188,
     "websiteUrl": "https://clubdervisionaere.com/sonnenraum/",
-    "description": "The indoor concert room run by Club der Visionäre, hosting the resident Monday live-band night alongside occasional jazz concerts and label parties.",
+    "description": "Club der Visionäre's indoor concert room, home to a resident live-band night every Monday, with jazz concerts and label parties on other nights.",
     "descriptionLanguage": "en",
-    "descriptionAlt": "Der Innenkonzertraum des Club der Visionäre, mit der Livebandnacht am Montag als Resident sowie gelegentlichen Jazzkonzerten und Labelpartys.",
+    "descriptionAlt": "Der Innenkonzertraum des Club der Visionäre, Heimat einer Livebandnacht an jedem Montag, an anderen Abenden mit Jazzkonzerten und Labelpartys.",
     "descriptionAltLanguage": "de"
 }
 
@@ -4903,9 +4903,9 @@ Content-Type: application/json
     "latitude": 52.51617,
     "longitude": 13.38987,
     "websiteUrl": "https://tiffany-berlin.de",
-    "description": "A club and event space just off Unter den Linden, with student, Latin and K-pop party nights, stand-up comedy and the odd concert.",
+    "description": "A club behind Unter den Linden, five minutes from the Brandenburg Gate, with student, Latin and K-pop party nights alongside stand-up comedy and concerts.",
     "descriptionLanguage": "en",
-    "descriptionAlt": "Ein Club und Eventraum nahe Unter den Linden, mit Studenten-, Latin- und K-Pop-Partys, Stand-up-Comedy und gelegentlichen Konzerten.",
+    "descriptionAlt": "Ein Club hinter Unter den Linden, fünf Minuten vom Brandenburger Tor, mit Studenten-, Latin- und K-Pop-Partys sowie Stand-up-Comedy und Konzerten.",
     "descriptionAltLanguage": "de"
 }
 

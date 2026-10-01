@@ -97,6 +97,12 @@ Sources are runtime rows, not Flyway (ADR-007). In `http/importer/dev-seed.http`
 `Sources (alphabetical)` list at the top as `Name — URL`. The only comments in a block are the two naming the wiring. The import slug is derived from the
 source **name** (`Astra Kulturhaus` → `astra-kulturhaus`).
 
+**The venue's `description` and `descriptionAlt`** are our own prose, English and German, one sentence each. Take the facts from the venue's own About or
+history page, not from the listing. Open with what sets the venue apart — the building, its history, who programmes it, a house rule such as smoke-free —
+then name its formats plainly. **No hedged tail**: "and the odd concert", "occasional club parties", "gelegentliche Konzerte" fit nearly any club and tell a
+visitor nothing. A minor format is either named without the hedge or left out. The same holds for the one-line `EventSource` KDoc. A description already on
+a cluster changes only through a guarded data migration, as V078 does; the seed alone never reaches it.
+
 **And a row in `docs/licence-review/RESULTS.tsv`**, keyed on the same name: `scripts/seed-sources.py --enable` refuses to switch on a source without a
 verdict, so a source missing here can be created on a cluster and never import. Read the venue's legal and press pages; an agent records `UNCLEAR`, and a
 person confirms `PERMITTED` or `PROHIBITED` (`docs/licence-review/README.md` §3).
@@ -123,4 +129,5 @@ Then `/verify`, then [`/importer-smoke`](importer-smoke.prompt.md) against the l
 - [ ] `<VENUE>_LIMITATIONS` at the foot of the importer, registered in `AcceptedLimitations.declarations`; `ACCEPTED_LIMITATIONS.md` regenerated
 - [ ] Fixtures under `src/test/resources/scraper/<venue>/`; scraper + importer tests cover happy path, edge cases, NotModified, empty page
 - [ ] `dev-seed.http` updated, list at the top refreshed; a `docs/licence-review/RESULTS.tsv` row under the same name
+- [ ] Venue description read against the venue's own About page; opens with what sets it apart, no "the odd …" tail
 - [ ] `ktlintCheck`, detekt, `ModularityTests`, new tests green; `/verify` clean
