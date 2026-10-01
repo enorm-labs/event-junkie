@@ -7,7 +7,6 @@ import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.VenueLimitations
-import org.jsoup.nodes.Document
 import org.springframework.stereotype.Component
 
 /**
@@ -41,21 +40,8 @@ import org.springframework.stereotype.Component
 @Component
 class ColosseumWebsiteImporter(
     htmlFetcher: HtmlFetcher
-) : AbstractTwoPageWebsiteImporter(htmlFetcher) {
+) : AbstractTwoPageWebsiteImporter(htmlFetcher, ColosseumOverviewPageScraper()::scrape, ColosseumDetailPageScraper()::scrape) {
     override val eventSource: EventSource = EventSource.COLOSSEUM
-
-    private val overviewPageScraper = ColosseumOverviewPageScraper()
-    private val detailPageScraper = ColosseumDetailPageScraper()
-
-    override fun scrapeOverview(
-        document: Document,
-        url: String
-    ): List<ScrapedEvent> = overviewPageScraper.scrape(document, url)
-
-    override fun scrapeDetail(
-        document: Document,
-        url: String
-    ): ScrapedEvent? = detailPageScraper.scrape(document, url)
 
     /**
      * Keeps the listing's record whole and takes the two times from the event's own page.

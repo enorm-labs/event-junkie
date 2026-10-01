@@ -6,7 +6,6 @@ import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
 import de.norm.events.scraper.VenueLimitations
-import org.jsoup.nodes.Document
 import org.springframework.stereotype.Component
 
 /**
@@ -27,22 +26,9 @@ import org.springframework.stereotype.Component
 @Component
 class UraniaWebsiteImporter(
     htmlFetcher: HtmlFetcher
-) : AbstractTwoPageWebsiteImporter(htmlFetcher) {
+) : AbstractTwoPageWebsiteImporter(htmlFetcher, UraniaCalendarPageScraper()::scrape, UraniaEventPageScraper()::scrape) {
     override val eventSource: EventSource get() = EventSource.URANIA
     override val listsWholeProgramme: Boolean = true
-
-    private val calendarPageScraper = UraniaCalendarPageScraper()
-    private val eventPageScraper = UraniaEventPageScraper()
-
-    override fun scrapeOverview(
-        document: Document,
-        url: String
-    ): List<ScrapedEvent> = calendarPageScraper.scrape(document, url)
-
-    override fun scrapeDetail(
-        document: Document,
-        url: String
-    ): ScrapedEvent? = eventPageScraper.scrape(document, url)
 
     /**
      * Merges event-page data ([primary]) with calendar data ([fallback]). The event page is richer

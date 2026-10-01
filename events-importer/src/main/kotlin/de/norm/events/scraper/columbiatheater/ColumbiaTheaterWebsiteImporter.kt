@@ -1,15 +1,11 @@
 package de.norm.events.scraper.columbiatheater
 
-import de.norm.events.event.EventStatus
 import de.norm.events.scraper.AbstractTwoPageWebsiteImporter
 import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.LimitedAspect
-import de.norm.events.scraper.ScrapedEvent
-import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
 import de.norm.events.scraper.VenueLimitations
-import org.jsoup.nodes.Document
 import org.springframework.stereotype.Component
 
 /**
@@ -32,22 +28,9 @@ import org.springframework.stereotype.Component
 @Component
 class ColumbiaTheaterWebsiteImporter(
     htmlFetcher: HtmlFetcher
-) : AbstractTwoPageWebsiteImporter(htmlFetcher) {
+) : AbstractTwoPageWebsiteImporter(htmlFetcher, ColumbiaTheaterOverviewPageScraper()::scrape, ColumbiaTheaterDetailPageScraper()::scrape) {
     override val eventSource: EventSource = EventSource.COLUMBIA_THEATER
     override val listsWholeProgramme: Boolean = true
-
-    private val overviewPageScraper = ColumbiaTheaterOverviewPageScraper()
-    private val detailPageScraper = ColumbiaTheaterDetailPageScraper()
-
-    override fun scrapeOverview(
-        document: Document,
-        url: String
-    ): List<ScrapedEvent> = overviewPageScraper.scrape(document, url)
-
-    override fun scrapeDetail(
-        document: Document,
-        url: String
-    ): ScrapedEvent? = detailPageScraper.scrape(document, url)
 }
 
 val COLUMBIA_THEATER_LIMITATIONS =

@@ -47,7 +47,7 @@ SO36,
   `ImportResult.Success(events, null, null)` (most APIs send no validators; idempotent `sourceId` upserts do the work). Single-page HTML:
   extend `AbstractSinglePageWebsiteImporter(htmlFetcher, "<Venue>", <Venue>OverviewPageScraper()::scrape)`, which owns the conditional fetch and the
   `NotModified` case; override `postProcess` only to enrich the parsed events. List+detail: extend `AbstractTwoPageWebsiteImporter`,
-  implement `scrapeOverview` and `scrapeDetail`. Override `fillGapsFromOverview` only where the listing is authoritative for a field, as `primary.withGapsFrom(fallback).copy(…)`; the default fills every gap from the listing. `override val eventSource = EventSource.<VENUE>`.
+  pass `<Venue>OverviewPageScraper()::scrape` and `<Venue>DetailPageScraper()::scrape` to its constructor. Override `fillGapsFromOverview` only where the listing is authoritative for a field, as `primary.withGapsFrom(fallback).copy(…)`; the default fills every gap from the listing. `override val eventSource = EventSource.<VENUE>`.
 
 **The importer's and scrapers' KDoc is the one home for the source** — platform, pages read and why, the traps, why a selector was chosen. Under 20 comment
 lines on the importer, under 10 per scraper; **do not copy the boilerplate an existing scraper still carries** (purity, fixture setup, `@param document the

@@ -5,9 +5,7 @@ import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.LimitedAspect
-import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.VenueLimitations
-import org.jsoup.nodes.Document
 import org.springframework.stereotype.Component
 
 /**
@@ -22,21 +20,12 @@ import org.springframework.stereotype.Component
 @Component
 class ArtStalkerWebsiteImporter(
     htmlFetcher: HtmlFetcher
-) : AbstractTwoPageWebsiteImporter(htmlFetcher) {
+) : AbstractTwoPageWebsiteImporter(
+        htmlFetcher,
+        { document, _ -> OVERVIEW_SCRAPER.scrape(document) },
+        ArtStalkerDetailPageScraper()::scrape
+    ) {
     override val eventSource: EventSource = EventSource.ART_STALKER
-
-    private val overviewPageScraper = ArtStalkerOverviewPageScraper()
-    private val detailPageScraper = ArtStalkerDetailPageScraper()
-
-    override fun scrapeOverview(
-        document: Document,
-        url: String
-    ): List<ScrapedEvent> = overviewPageScraper.scrape(document)
-
-    override fun scrapeDetail(
-        document: Document,
-        url: String
-    ): ScrapedEvent? = detailPageScraper.scrape(document, url)
 }
 
 val ART_STALKER_LIMITATIONS =
@@ -46,3 +35,5 @@ val ART_STALKER_LIMITATIONS =
         AcceptedLimitation(LimitedAspect.GENRE, "the style is only a free-text tagline after the act's name"),
         AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself")
     )
+
+private val OVERVIEW_SCRAPER = ArtStalkerOverviewPageScraper()

@@ -13,8 +13,8 @@ import kotlin.time.Duration.Companion.seconds
  * 2. For each discovered event, fetch its detail page for richer data.
  * 3. Merge detail and overview data, preferring the detail page.
  *
- * Subclasses provide venue-specific scrapers and a gap-filling strategy;
- * this class owns the shared fetch orchestration.
+ * Subclasses pass their scrapers to the constructor, as `VenueOverviewPageScraper()::scrape`, and may
+ * override the gap-filling strategy; this class owns the shared fetch orchestration.
  *
  * **This is the only class in the package that performs I/O.** Every `*PageScraper` / `*ApiScraper`
  * takes a pre-fetched [Document] or response body, which is what makes them testable against a
@@ -22,7 +22,11 @@ import kotlin.time.Duration.Companion.seconds
  * KDoc.
  */
 abstract class AbstractTwoPageWebsiteImporter(
-    private val htmlFetcher: HtmlFetcher
+    private val htmlFetcher: HtmlFetcher,
+    /** Parses all events from the overview page HTML. */
+    private val scrapeOverview: (Document, String) -> List<ScrapedEvent>,
+    /** Parses the detail page for a single event, or null if the page cannot be parsed. */
+    private val scrapeDetail: (Document, String) -> ScrapedEvent?
 ) : EventImporter {
     // Use javaClass.name so logs identify the concrete subclass
     // (Cassiopeia / MadameClaude) rather than this abstract base.
@@ -31,21 +35,9 @@ abstract class AbstractTwoPageWebsiteImporter(
     /** Every run fetches the detail pages, which the overview's validators do not cover. */
     final override val fetchesBeyondEntryPage: Boolean get() = true
 
-    /** Parses all events from the overview page HTML. */
-    protected abstract fun scrapeOverview(
-        document: Document,
-        url: String
-    ): List<ScrapedEvent>
-
-    /** Parses the detail page for a single event, or null if the page cannot be parsed. */
-    protected abstract fun scrapeDetail(
-        document: Document,
-        url: String
-    ): ScrapedEvent?
-
     /**
-     * Merges [primary] (detail page data) with [fallback] (overview data), only when [scrapeDetail]
-     * succeeds. By default the detail page wins and every gap is filled from the overview
+     * Merges [primary] (detail page data) with [fallback] (overview data), only when the detail
+     * scraper succeeds. By default the detail page wins and every gap is filled from the overview
      * ([ScrapedEvent.withGapsFrom]), so a field either page adds is kept without naming it here
      * (#1408). A venue overrides this only for a field where the overview is authoritative, as
      * `primary.withGapsFrom(fallback).copy(…)`.
@@ -83,7 +75,7 @@ abstract class AbstractTwoPageWebsiteImporter(
                         url,
                         MAX_OVERVIEW_PAGES,
                         ::nextOverviewPage,
-                        ::scrapeOverview
+                        scrapeOverview
                     )
                 logger.info { "Scraped ${overview.events.size} event(s) from ${eventSource.name} overview" }
                 val merged = overview.events.map { parseDetailOrFallback(it) }

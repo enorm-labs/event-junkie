@@ -1,15 +1,11 @@
 package de.norm.events.scraper.lido
 
-import de.norm.events.event.EventStatus
 import de.norm.events.scraper.AbstractTwoPageWebsiteImporter
 import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.LimitedAspect
-import de.norm.events.scraper.ScrapedEvent
-import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
 import de.norm.events.scraper.VenueLimitations
-import org.jsoup.nodes.Document
 import org.springframework.stereotype.Component
 
 /**
@@ -29,22 +25,9 @@ import org.springframework.stereotype.Component
 @Component
 class LidoWebsiteImporter(
     htmlFetcher: HtmlFetcher
-) : AbstractTwoPageWebsiteImporter(htmlFetcher) {
+) : AbstractTwoPageWebsiteImporter(htmlFetcher, LidoOverviewPageScraper()::scrape, LidoDetailPageScraper()::scrape) {
     override val eventSource: EventSource = EventSource.LIDO
     override val listsWholeProgramme: Boolean = true
-
-    private val overviewPageScraper = LidoOverviewPageScraper()
-    private val detailPageScraper = LidoDetailPageScraper()
-
-    override fun scrapeOverview(
-        document: Document,
-        url: String
-    ): List<ScrapedEvent> = overviewPageScraper.scrape(document, url)
-
-    override fun scrapeDetail(
-        document: Document,
-        url: String
-    ): ScrapedEvent? = detailPageScraper.scrape(document, url)
 }
 
 val LIDO_LIMITATIONS =

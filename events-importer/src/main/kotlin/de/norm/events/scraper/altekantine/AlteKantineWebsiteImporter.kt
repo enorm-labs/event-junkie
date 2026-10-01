@@ -5,8 +5,6 @@ import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.LimitedAspect
-import de.norm.events.scraper.ScrapedEvent
-import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
 import de.norm.events.scraper.VenueLimitations
 import de.norm.events.scraper.withQueryParameter
 import org.jsoup.nodes.Document
@@ -32,17 +30,9 @@ class AlteKantineWebsiteImporter(
     htmlFetcher: HtmlFetcher,
     /** Clock for year inference on the year-less dates; override in tests. */
     clock: Clock = Clock.systemDefaultZone()
-) : AbstractTwoPageWebsiteImporter(htmlFetcher) {
+) : AbstractTwoPageWebsiteImporter(htmlFetcher, AlteKantineOverviewPageScraper(clock)::scrape, AlteKantineDetailPageScraper(clock)::scrape) {
     override val eventSource: EventSource = EventSource.ALTE_KANTINE
     override val listsWholeProgramme: Boolean = true
-
-    private val overviewPageScraper = AlteKantineOverviewPageScraper(clock)
-    private val detailPageScraper = AlteKantineDetailPageScraper(clock)
-
-    override fun scrapeOverview(
-        document: Document,
-        url: String
-    ): List<ScrapedEvent> = overviewPageScraper.scrape(document, url)
 
     /**
      * The grid shows ten events a page. Its paginator states the current and total page numbers,
@@ -57,11 +47,6 @@ class AlteKantineWebsiteImporter(
         val total = paginator?.attr("data-totalpages")?.toIntOrNull()
         return if (current != null && total != null && current < total) url.withQueryParameter(PAGE_PARAMETER, current + 1) else null
     }
-
-    override fun scrapeDetail(
-        document: Document,
-        url: String
-    ): ScrapedEvent? = detailPageScraper.scrape(document, url)
 
     private companion object {
         const val PAGINATOR_SELECTOR = "ul.pt-cv-pagination"

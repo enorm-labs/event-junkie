@@ -42,18 +42,11 @@ class BerghainWebsiteImporter(
     htmlFetcher: HtmlFetcher,
     /** Clock for the overview scraper's past-event cutoff; override in tests. */
     clock: Clock = Clock.systemDefaultZone()
-) : AbstractTwoPageWebsiteImporter(htmlFetcher) {
+) : AbstractTwoPageWebsiteImporter(htmlFetcher, BerghainOverviewPageScraper(clock)::scrape, BerghainDetailPageScraper()::scrape) {
     override val eventSource: EventSource = EventSource.BERGHAIN
     override val listsWholeProgramme: Boolean = true
 
     private val logger = KotlinLogging.logger {}
-    private val overviewPageScraper = BerghainOverviewPageScraper(clock)
-    private val detailPageScraper = BerghainDetailPageScraper()
-
-    override fun scrapeOverview(
-        document: Document,
-        url: String
-    ): List<ScrapedEvent> = overviewPageScraper.scrape(document, url)
 
     /**
      * The main programme shows about three weeks, and its "Mehr" button loads `?page=N+1`. Page 2
@@ -68,11 +61,6 @@ class BerghainWebsiteImporter(
         val page = url.queryParameter(PAGE_PARAMETER)?.toIntOrNull() ?: 1
         return url.withQueryParameter(PAGE_PARAMETER, page + 1)
     }
-
-    override fun scrapeDetail(
-        document: Document,
-        url: String
-    ): ScrapedEvent? = detailPageScraper.scrape(document, url)
 
     /**
      * Fills what the detail page could not supply from the overview event. The detail page is

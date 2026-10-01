@@ -3,10 +3,7 @@ package de.norm.events.scraper.zitadelle
 import de.norm.events.scraper.AbstractTwoPageWebsiteImporter
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
-import de.norm.events.scraper.ScrapedEvent
-import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
 import de.norm.events.scraper.VenueLimitations
-import org.jsoup.nodes.Document
 import org.springframework.stereotype.Component
 
 /**
@@ -25,22 +22,9 @@ import org.springframework.stereotype.Component
 @Component
 class ZitadelleWebsiteImporter(
     htmlFetcher: HtmlFetcher
-) : AbstractTwoPageWebsiteImporter(htmlFetcher) {
+) : AbstractTwoPageWebsiteImporter(htmlFetcher, ZitadelleOverviewPageScraper()::scrape, ZitadelleDetailPageScraper()::scrape) {
     override val eventSource: EventSource get() = EventSource.ZITADELLE
     override val listsWholeProgramme: Boolean = true
-
-    private val overviewPageScraper = ZitadelleOverviewPageScraper()
-    private val detailPageScraper = ZitadelleDetailPageScraper()
-
-    override fun scrapeOverview(
-        document: Document,
-        url: String
-    ): List<ScrapedEvent> = overviewPageScraper.scrape(document, url)
-
-    override fun scrapeDetail(
-        document: Document,
-        url: String
-    ): ScrapedEvent? = detailPageScraper.scrape(document, url)
 }
 
 /** Nothing this source withholds needs declaring (#715). */

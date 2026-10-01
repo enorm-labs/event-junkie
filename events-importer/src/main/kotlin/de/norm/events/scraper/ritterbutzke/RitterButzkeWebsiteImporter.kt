@@ -5,10 +5,7 @@ import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.LimitedAspect
-import de.norm.events.scraper.ScrapedEvent
-import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
 import de.norm.events.scraper.VenueLimitations
-import org.jsoup.nodes.Document
 import org.springframework.stereotype.Component
 
 /**
@@ -28,22 +25,9 @@ import org.springframework.stereotype.Component
 @Component
 class RitterButzkeWebsiteImporter(
     htmlFetcher: HtmlFetcher
-) : AbstractTwoPageWebsiteImporter(htmlFetcher) {
+) : AbstractTwoPageWebsiteImporter(htmlFetcher, RitterButzkeOverviewPageScraper()::scrape, RitterButzkeDetailPageScraper()::scrape) {
     override val eventSource: EventSource = EventSource.RITTER_BUTZKE
     override val listsWholeProgramme: Boolean = true
-
-    private val overviewPageScraper = RitterButzkeOverviewPageScraper()
-    private val detailPageScraper = RitterButzkeDetailPageScraper()
-
-    override fun scrapeOverview(
-        document: Document,
-        url: String
-    ): List<ScrapedEvent> = overviewPageScraper.scrape(document, url)
-
-    override fun scrapeDetail(
-        document: Document,
-        url: String
-    ): ScrapedEvent? = detailPageScraper.scrape(document, url)
 }
 
 val RITTER_BUTZKE_LIMITATIONS =

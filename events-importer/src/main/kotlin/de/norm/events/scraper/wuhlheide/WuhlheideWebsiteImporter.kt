@@ -6,10 +6,8 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.ScrapedEvent
-import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
 import de.norm.events.scraper.VenueLimitations
 import de.norm.events.scraper.buildArtistsForEventType
-import org.jsoup.nodes.Document
 import org.springframework.stereotype.Component
 
 /**
@@ -28,22 +26,9 @@ import org.springframework.stereotype.Component
 @Component
 class WuhlheideWebsiteImporter(
     htmlFetcher: HtmlFetcher
-) : AbstractTwoPageWebsiteImporter(htmlFetcher) {
+) : AbstractTwoPageWebsiteImporter(htmlFetcher, WuhlheideOverviewPageScraper()::scrape, WuhlheideDetailPageScraper()::scrape) {
     override val eventSource: EventSource = EventSource.WUHLHEIDE
     override val listsWholeProgramme: Boolean = true
-
-    private val overviewPageScraper = WuhlheideOverviewPageScraper()
-    private val detailPageScraper = WuhlheideDetailPageScraper()
-
-    override fun scrapeOverview(
-        document: Document,
-        url: String
-    ): List<ScrapedEvent> = overviewPageScraper.scrape(document, url)
-
-    override fun scrapeDetail(
-        document: Document,
-        url: String
-    ): ScrapedEvent? = detailPageScraper.scrape(document, url)
 
     /**
      * Merges detail-page data ([primary]) with listing data ([fallback]). The detail page owns
