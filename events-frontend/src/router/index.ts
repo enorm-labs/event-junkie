@@ -64,6 +64,12 @@ const router = createRouter({
           component: () => import('../views/CalendarView.vue'),
         },
         {
+          path: 'map',
+          name: 'map',
+          meta: { titleKey: 'pageTitle.map', descriptionKey: 'pageDescription.map' },
+          component: () => import('../views/MapView.vue'),
+        },
+        {
           path: 'events',
           name: 'events',
           meta: { titleKey: 'pageTitle.events', descriptionKey: 'pageDescription.events' },

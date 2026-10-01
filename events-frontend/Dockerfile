@@ -48,6 +48,10 @@ LABEL org.opencontainers.image.source="https://github.com/enorm-labs/event-junki
 COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
 COPY dist/ /usr/share/nginx/html/
 
+# The self-hosted map's tiles, fonts and icons (ADR-037). A data-only `FROM scratch` image, so this
+# copies files and runs nothing. Refreshed by `publish-map-assets.yml`, whose summary prints this line.
+COPY --from=ghcr.io/enorm-labs/event-junkie-map-assets:20261001@sha256:9cd081db9cca4455a77fde5bbcceabcdbf2c484097b9cd0ca947d15864e8b911 /map/ /usr/share/nginx/html/map/
+
 # UID 10001 to match the chart's `security.runAsUser` (`scripts/uid-consistency.sh`), above
 # 10000 per #448. Verified rather than assumed, since `nginxinc/nginx-unprivileged` is built
 # around one user: at 10001 with `--read-only --tmpfs /tmp` it starts clean and serves 200,

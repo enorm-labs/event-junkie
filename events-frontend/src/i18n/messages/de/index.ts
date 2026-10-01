@@ -7,6 +7,7 @@ import eventType from './eventType.json'
 import events from './events.json'
 import footer from './footer.json'
 import home from './home.json'
+import map from './map.json'
 import legal from './legal.json'
 import pageDescription from './pageDescription.json'
 import pageTitle from './pageTitle.json'
@@ -28,6 +29,7 @@ export default {
   events,
   footer,
   home,
+  map,
   legal,
   pageDescription,
   pageTitle,

@@ -23,6 +23,7 @@ const staticRoutes = [
     nav: 'Calendar',
     heading: 'Calendar',
   },
+  { path: '/map', url: '/en/map', name: 'map', nav: 'Map', heading: 'Map' },
   { path: '/venues', url: '/en/venues', name: 'venues', nav: 'Venues', heading: 'Venues' },
   {
     path: '/promoters',
@@ -74,7 +75,7 @@ test('navigates between static routes via the nav bar', async ({ page }) => {
 })
 
 test('header nav lists the sections in the intended order', async ({ page }) => {
-  // The order is a product decision: Events and Calendar are two views of the same data, Venues a
+  // The order is a product decision: Events, Calendar and Map are three views of the same data, Venues a
   // different entity, About is meta. Every other test addresses links by name, so without this an
   // edit could reshuffle it silently.
   await page.goto('/about')
@@ -84,7 +85,7 @@ test('header nav lists the sections in the intended order', async ({ page }) => 
 
   // Filtered to the section links: the header also carries the brand, the beta badge, the locale
   // links and an icon-only GitHub button.
-  const sections = ['Events', 'Calendar', 'Venues', 'Promoters', 'About']
+  const sections = ['Events', 'Calendar', 'Map', 'Venues', 'Promoters', 'About']
   const rendered = labels.map((label) => label.trim()).filter((label) => sections.includes(label))
 
   expect(rendered).toEqual(sections)

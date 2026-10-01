@@ -30,6 +30,7 @@ export const INDEXABLE_PATHS = [
   '/venues',
   '/promoters',
   '/calendar',
+  '/map',
   '/about',
   '/legal/imprint',
   '/legal/privacy',

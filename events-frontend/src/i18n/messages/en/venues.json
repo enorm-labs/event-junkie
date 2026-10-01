@@ -5,5 +5,13 @@
   "empty": "No venues match that search. Try a different name.",
   "byDistrict": "Filter by district",
   "allDistricts": "All districts",
-  "resultCount": "{count} venue found | {count} venues found"
+  "resultCount": "{count} venue found | {count} venues found",
+  "view": {
+    "label": "View",
+    "list": "List",
+    "map": "Map"
+  },
+  "pickPin": "Pick a pin to see the venue.",
+  "whatsOn": "What is on here, on the map",
+  "unpinned": "{count} more without a location, in the list"
 }

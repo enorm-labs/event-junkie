@@ -103,7 +103,7 @@ const localePath = useLocalePath()
         >
           <BaseBadge variant="outline">{{ t('common.nav.beta') }}</BaseBadge>
         </RouterLink>
-        <!-- Order is deliberate: /events and /calendar are two views of the same data, /venues and
+        <!-- Order is deliberate: /events, /calendar and /map are three views of the same data, /venues and
              /promoters the other entities, /about is meta. e2e/smoke.spec.ts pins it. -->
         <!-- The row wraps below `lg` so "Über das Projekt" never breaks across two lines. -->
         <div
@@ -120,6 +120,12 @@ const localePath = useLocalePath()
             class="whitespace-nowrap text-muted-foreground hover:text-foreground [&.router-link-exact-active]:text-foreground"
           >
             {{ t('common.nav.calendar') }}
+          </RouterLink>
+          <RouterLink
+            :to="localePath('/map')"
+            class="whitespace-nowrap text-muted-foreground hover:text-foreground [&.router-link-exact-active]:text-foreground"
+          >
+            {{ t('common.nav.map') }}
           </RouterLink>
           <RouterLink
             :to="localePath('/venues')"

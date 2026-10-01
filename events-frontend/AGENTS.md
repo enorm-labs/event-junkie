@@ -150,6 +150,19 @@ npm run generate:notices                                   # … merged with npm
 or the theme tokens in `main.css` — [`docs/screenshots/README.md`](../docs/screenshots/README.md) has the procedure. Not on a schedule, and not when the data
 changes.
 
+## The maps
+
+`/map` (tonight's events) and the venues page's map view share `components/VenueMap.vue`, which takes pins and knows nothing about events
+([ADR-037](../docs/adr/ADR-037_SELF_HOSTED_MAP.md)).
+
+- **Every map request goes to this site.** Tiles, glyphs and sprites are served from `/map/`, copied into the image from `event-junkie-map-assets`.
+  A style, tile or font URL on another origin is a new processor and a privacy-notice change — rule 2 above.
+- **The CSP shapes the code.** The worker is a same-origin file (`?worker&url`), not a `blob:`; the zoom buttons are ours, because MapLibre's draw `data:`
+  icons. A MapLibre control added later is checked in `npm run preview`, which sends the production CSP.
+- **Style a marker through `classList`, never `className`**: MapLibre positions it with classes of its own.
+- **Locally**, `scripts/map-assets.sh dev` fills `public/map/` (git-ignored). Without it the pins draw on an empty background, which is also what CI's
+  Playwright run sees.
+
 ## Testing
 
 [testing.instructions.md](../.github/instructions/testing.instructions.md) carries Vitest and Playwright conventions and the locale strategy, loaded with

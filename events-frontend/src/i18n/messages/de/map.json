@@ -1,0 +1,17 @@
+{
+  "title": "Karte",
+  "subtitle": "Was läuft, und wo. Tippe auf einen Pin, um die Events einer Location zu sehen.",
+  "label": "Karte von Berlin",
+  "pinLabel": "{venue}: {count} Event | {venue}: {count} Events",
+  "resultCount": "{events} Events in {venues} Locations",
+  "unpinned": "{count} weiteres an Orten ohne Standort, in der Liste | {count} weitere an Orten ohne Standort, in der Liste",
+  "empty": "Für diese Filter ist nichts auf der Karte. Versuch einen anderen Tag oder weniger Filter.",
+  "pickPin": "Tippe auf einen Pin, um zu sehen, was dort läuft.",
+  "unavailable": "Dieser Browser kann die Karte nicht darstellen. Die Liste zeigt dieselben Events.",
+  "showList": "Liste zeigen",
+  "zoomIn": "Hineinzoomen",
+  "zoomOut": "Herauszoomen",
+  "gestureHelpDesktop": "Strg + Scrollen zoomt die Karte",
+  "gestureHelpMac": "⌘ + Scrollen zoomt die Karte",
+  "gestureHelpMobile": "Zwei Finger bewegen die Karte"
+}

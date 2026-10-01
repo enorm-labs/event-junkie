@@ -1,5 +1,5 @@
 {
-  "componentCount": 326,
+  "componentCount": 354,
   "licenses": [
     {
       "license": "Apache-2.0",
@@ -15,6 +15,12 @@
           "name": "@internationalized/number",
           "version": "3.6.7",
           "url": "https://github.com/adobe/react-spectrum",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "@maplibre/mlt",
+          "version": "1.3.0",
+          "url": "https://github.com/maplibre/maplibre-tile-spec",
           "ecosystem": "frontend"
         },
         {
@@ -1374,6 +1380,24 @@
           "ecosystem": "frontend"
         },
         {
+          "name": "@mapbox/jsonlint-lines-primitives",
+          "version": "2.0.3",
+          "url": "https://github.com/mapbox/jsonlint",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "@maplibre/mlt",
+          "version": "1.3.0",
+          "url": "https://github.com/maplibre/maplibre-tile-spec",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "@maplibre/vt-pbf",
+          "version": "4.3.2",
+          "url": "https://github.com/maplibre/vt-pbf",
+          "ecosystem": "frontend"
+        },
+        {
           "name": "@tanstack/virtual-core",
           "version": "3.17.8",
           "url": "https://github.com/TanStack/virtual",
@@ -1383,6 +1407,12 @@
           "name": "@tanstack/vue-virtual",
           "version": "3.13.36",
           "url": "https://github.com/TanStack/virtual",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "@types/geojson",
+          "version": "7946.0.16",
+          "url": "https://github.com/DefinitelyTyped/DefinitelyTyped",
           "ecosystem": "frontend"
         },
         {
@@ -1518,6 +1548,12 @@
           "ecosystem": "frontend"
         },
         {
+          "name": "bidi-js",
+          "version": "1.1.0",
+          "url": "https://github.com/lojjic/bidi-js",
+          "ecosystem": "frontend"
+        },
+        {
           "name": "birpc",
           "version": "2.9.0",
           "url": "https://github.com/antfu-collective/birpc",
@@ -1596,9 +1632,27 @@
           "ecosystem": "frontend"
         },
         {
+          "name": "fflate",
+          "version": "0.8.3",
+          "url": "https://github.com/101arrowz/fflate",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "gl-matrix",
+          "version": "3.4.4",
+          "url": "https://github.com/toji/gl-matrix",
+          "ecosystem": "frontend"
+        },
+        {
           "name": "hookable",
           "version": "5.5.3",
           "url": "https://github.com/unjs/hookable",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "json-stringify-pretty-compact",
+          "version": "4.0.0",
+          "url": "https://github.com/lydell/json-stringify-pretty-compact",
           "ecosystem": "frontend"
         },
         {
@@ -1620,6 +1674,12 @@
           "ecosystem": "frontend"
         },
         {
+          "name": "minimist",
+          "version": "1.2.8",
+          "url": "https://github.com/minimistjs/minimist",
+          "ecosystem": "frontend"
+        },
+        {
           "name": "mlly",
           "version": "1.8.2",
           "url": "https://github.com/unjs/mlly",
@@ -1629,6 +1689,12 @@
           "name": "muggle-string",
           "version": "0.4.1",
           "url": "https://github.com/johnsoncodehk/muggle-string",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "murmurhash-js",
+          "version": "1.0.0",
+          "url": "https://github.com/mikolalysenko/murmurhash-js",
           "ecosystem": "frontend"
         },
         {
@@ -1734,6 +1800,12 @@
           "ecosystem": "frontend"
         },
         {
+          "name": "protocol-buffers-schema",
+          "version": "3.6.1",
+          "url": "https://github.com/mafintosh/protocol-buffers-schema",
+          "ecosystem": "frontend"
+        },
+        {
           "name": "quansync",
           "version": "0.2.11",
           "url": "https://github.com/quansync-dev/quansync",
@@ -1749,6 +1821,18 @@
           "name": "reka-ui",
           "version": "2.10.5",
           "url": "https://github.com/unovue/reka-ui",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "require-from-string",
+          "version": "2.0.2",
+          "url": "https://github.com/floatdrop/require-from-string",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "resolve-protobuf-schema",
+          "version": "2.1.0",
+          "url": "https://github.com/mafintosh/resolve-protobuf-schema",
           "ecosystem": "frontend"
         },
         {
@@ -1838,9 +1922,87 @@
       ]
     },
     {
+      "license": "ISC",
+      "url": "https://opensource.org/license/isc-license-txt",
+      "components": [
+        {
+          "name": "@lucide/vue",
+          "version": "1.47.0",
+          "url": "https://github.com/lucide-icons/lucide",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "@mapbox/point-geometry",
+          "version": "1.1.0",
+          "url": "https://github.com/mapbox/point-geometry",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "@maplibre/geojson-vt",
+          "version": "6.1.1",
+          "url": "https://github.com/maplibre/geojson-vt",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "@maplibre/maplibre-gl-style-spec",
+          "version": "26.4.4",
+          "url": "https://github.com/maplibre/maplibre-style-spec",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "earcut",
+          "version": "3.2.4",
+          "url": "https://github.com/mapbox/earcut",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "kdbush",
+          "version": "4.1.0",
+          "url": "https://github.com/mourner/kdbush",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "picocolors",
+          "version": "1.1.1",
+          "url": "https://github.com/alexeyraspopov/picocolors",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "potpack",
+          "version": "2.1.0",
+          "url": "https://github.com/mapbox/potpack",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "quickselect",
+          "version": "3.0.0",
+          "url": "https://github.com/mourner/quickselect",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "tinyqueue",
+          "version": "3.0.0",
+          "url": "https://github.com/mourner/tinyqueue",
+          "ecosystem": "frontend"
+        }
+      ]
+    },
+    {
       "license": "BSD-2-Clause",
       "url": "https://opensource.org/license/bsd-2-clause",
       "components": [
+        {
+          "name": "@mapbox/tiny-sdf",
+          "version": "2.2.0",
+          "url": "https://github.com/mapbox/tiny-sdf",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "@mapbox/unitbezier",
+          "version": "1.0.0",
+          "url": "https://github.com/mapbox/unitbezier",
+          "ecosystem": "frontend"
+        },
         {
           "name": "com.ongres.scram:scram-client",
           "version": "3.4",
@@ -1886,6 +2048,66 @@
       ]
     },
     {
+      "license": "BSD-3-Clause",
+      "url": "https://opensource.org/license/bsd-3-clause",
+      "components": [
+        {
+          "name": "@mapbox/vector-tile",
+          "version": "3.0.0",
+          "url": "https://github.com/mapbox/vector-tile-js",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "@protomaps/basemaps",
+          "version": "5.7.2",
+          "url": "https://github.com/protomaps/basemaps",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "jakarta.activation:jakarta.activation-api",
+          "version": "2.1.4",
+          "url": "https://github.com/jakartaee/jaf-api",
+          "ecosystem": "backend"
+        },
+        {
+          "name": "jakarta.xml.bind:jakarta.xml.bind-api",
+          "version": "4.0.5",
+          "url": "https://www.eclipse.org",
+          "ecosystem": "backend"
+        },
+        {
+          "name": "maplibre-gl",
+          "version": "6.11.2",
+          "url": "https://github.com/maplibre/maplibre-gl-js",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "org.antlr:antlr4-runtime",
+          "version": "4.13.1",
+          "url": "https://www.antlr.org/",
+          "ecosystem": "backend"
+        },
+        {
+          "name": "pbf",
+          "version": "5.1.2",
+          "url": "https://github.com/mapbox/pbf",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "pmtiles",
+          "version": "4.5.0",
+          "url": null,
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "source-map-js",
+          "version": "1.2.1",
+          "url": "https://github.com/7rulnik/source-map-js",
+          "ecosystem": "frontend"
+        }
+      ]
+    },
+    {
       "license": "EPL-2.0",
       "url": "https://www.eclipse.org/legal/epl-2.0/",
       "components": [
@@ -1924,36 +2146,6 @@
           "version": "4.0.5",
           "url": "https://www.eclipse.org",
           "ecosystem": "backend"
-        }
-      ]
-    },
-    {
-      "license": "BSD-3-Clause",
-      "url": "https://opensource.org/license/bsd-3-clause",
-      "components": [
-        {
-          "name": "jakarta.activation:jakarta.activation-api",
-          "version": "2.1.4",
-          "url": "https://github.com/jakartaee/jaf-api",
-          "ecosystem": "backend"
-        },
-        {
-          "name": "jakarta.xml.bind:jakarta.xml.bind-api",
-          "version": "4.0.5",
-          "url": "https://www.eclipse.org",
-          "ecosystem": "backend"
-        },
-        {
-          "name": "org.antlr:antlr4-runtime",
-          "version": "4.13.1",
-          "url": "https://www.antlr.org/",
-          "ecosystem": "backend"
-        },
-        {
-          "name": "source-map-js",
-          "version": "1.2.1",
-          "url": "https://github.com/7rulnik/source-map-js",
-          "ecosystem": "frontend"
         }
       ]
     },
@@ -2079,24 +2271,6 @@
           "name": "tslib",
           "version": "2.8.1",
           "url": "https://github.com/Microsoft/tslib",
-          "ecosystem": "frontend"
-        }
-      ]
-    },
-    {
-      "license": "ISC",
-      "url": "https://opensource.org/license/isc-license-txt",
-      "components": [
-        {
-          "name": "@lucide/vue",
-          "version": "1.47.0",
-          "url": "https://github.com/lucide-icons/lucide",
-          "ecosystem": "frontend"
-        },
-        {
-          "name": "picocolors",
-          "version": "1.1.1",
-          "url": "https://github.com/alexeyraspopov/picocolors",
           "ecosystem": "frontend"
         }
       ]

@@ -321,6 +321,16 @@ export interface components {
              * @example kreuzberg
              */
             district?: string | null;
+            /**
+             * @description Geographic latitude for map display
+             * @example 52.507242
+             */
+            latitude?: number | null;
+            /**
+             * @description Geographic longitude for map display
+             * @example 13.451803
+             */
+            longitude?: number | null;
             /** @description URL of the venue's logo or photo */
             imageUrl?: string | null;
             /**
