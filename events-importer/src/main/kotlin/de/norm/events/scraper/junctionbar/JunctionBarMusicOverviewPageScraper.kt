@@ -114,7 +114,7 @@ class JunctionBarMusicOverviewPageScraper {
             ticketUrl = ticketUrl,
             genre = parseGenre(night.dateBar, night.content),
             artists =
-                bands
+                photographedBands(bands, night.content)
                     .map { stripArtistSuffix(it) }
                     .filterNot { isNonArtistName(it) }
                     .map { ScrapedArtist(name = it, role = "HEADLINER") }
@@ -136,13 +136,13 @@ class JunctionBarMusicOverviewPageScraper {
     }
 
     /**
-     * Band name(s) for the night. Each `.Stil1222` holds one act name; the nested
-     * `.two_bands_musikstil` genre span is removed first, and empty shells (a genre-only wrapper
-     * span) and "PRIVAT PARTY" placeholders are dropped.
+     * Band name(s) for the night. Each `.Stil1222` holds one act name, and a second or third act's
+     * block carries `.Stil12221` instead (#2267); the nested `.two_bands_musikstil` genre span is
+     * removed first, and empty shells (a genre-only wrapper span) and "PRIVAT PARTY" placeholders are dropped.
      */
     private fun parseBands(content: Elements): List<String> =
         content
-            .select(".Stil1222")
+            .select(".Stil1222, .Stil12221")
             .map { el ->
                 el
                     .clone()
@@ -151,6 +151,33 @@ class JunctionBarMusicOverviewPageScraper {
                     .trim()
             }.filter { it.isNotBlank() && !it.equals(PRIVAT_PARTY, ignoreCase = true) }
             .distinct()
+
+    /**
+     * The acts to bill. A heading can name the night rather than the band (`Tag der Gelben Einheit`,
+     * whose band, Yellow Snow, only the bio and the photo name). Every band photo's `alt` opens
+     * `Bandfoto <name>:`, so a heading that names no photographed band is billed as the one
+     * photographed band no heading names, in the bio's spelling (#2267). Anything less clear-cut
+     * keeps the headings.
+     */
+    private fun photographedBands(
+        bands: List<String>,
+        content: Elements
+    ): List<String> {
+        val pictured =
+            content.select("img[alt^=Bandfoto ]").map {
+                it
+                    .attr("alt")
+                    .removePrefix("Bandfoto ")
+                    .substringBefore(':')
+                    .trim()
+            }
+        val unpictured = bands.filter { band -> pictured.none { it.equals(band, ignoreCase = true) } }
+        val unnamed = pictured.filter { photo -> bands.none { it.equals(photo, ignoreCase = true) } }
+        if (unpictured.size != 1 || unnamed.size != 1) return bands
+        val bio = content.select("p.text").text()
+        val name = Regex(Regex.escape(unnamed.single()), RegexOption.IGNORE_CASE).find(bio)?.value ?: unnamed.single()
+        return bands.map { if (it == unpictured.single()) name else it }
+    }
 
     /** The band bios (`p.text`), joined into one description. */
     private fun parseDescription(content: Elements): String? =
