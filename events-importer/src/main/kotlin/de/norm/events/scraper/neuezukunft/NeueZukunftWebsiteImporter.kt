@@ -9,6 +9,7 @@ import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.VenueLimitations
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
+import java.time.Clock
 
 /**
  * Website importer for Neue Zukunft Berlin.
@@ -33,14 +34,16 @@ import org.springframework.stereotype.Component
  */
 @Component
 class NeueZukunftWebsiteImporter(
-    private val apiClient: ApiClient
+    private val apiClient: ApiClient,
+    /** Clock anchoring the rolling recurrence horizon; override in tests. */
+    clock: Clock = Clock.systemDefaultZone()
 ) : EventImporter {
     private val logger = KotlinLogging.logger {}
 
     override val eventSource: EventSource = EventSource.NEUE_ZUKUNFT
     override val listsWholeProgramme: Boolean = true
 
-    private val apiScraper = NeueZukunftApiScraper()
+    private val apiScraper = NeueZukunftApiScraper(clock)
 
     override suspend fun importEvents(
         url: String,

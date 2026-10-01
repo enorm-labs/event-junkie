@@ -178,13 +178,12 @@ class HumboldthainApiScraperTest {
 
     @Test
     fun `scrape keeps only the start date of a recurrence rule it cannot expand`() {
-        // Elfsight files a monthly "nth weekday" rule as repeatFrequency daily/monthly; guessing
-        // at its semantics would invent dates, so such an entry contributes its start date alone.
+        // Guessing at a yearly rule no venue publishes would invent dates, so it contributes its start date alone.
         val json =
             """
             {"data":{"widgets":{"w1":{"data":{"settings":{"events":[
-              {"id":"m","name":"Monthly","start":{"date":"2026-09-02","time":"20:30"},
-               "repeatPeriod":"nthDayInMonth","repeatFrequency":"daily","repeatInterval":1,
+              {"id":"m","name":"Yearly","start":{"date":"2026-09-02","time":"20:30"},
+               "repeatPeriod":"custom","repeatFrequency":"yearly","repeatInterval":1,
                "repeatWeeklyOnDays":["we"],"repeatEnds":"never"}
             ]}}}}}}
             """.trimIndent()

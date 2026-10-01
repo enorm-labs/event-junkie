@@ -8,8 +8,10 @@ import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.elfsight.ElfsightAction
 import de.norm.events.scraper.elfsight.ElfsightEventNode
+import de.norm.events.scraper.elfsight.OCCURRENCE_HORIZON_WEEKS
 import de.norm.events.scraper.elfsight.elfsightActionUrl
 import de.norm.events.scraper.elfsight.elfsightJsonMapper
+import de.norm.events.scraper.elfsight.elfsightOccurrenceDates
 import de.norm.events.scraper.elfsight.parseElfsightDate
 import de.norm.events.scraper.elfsight.parseElfsightEventNodes
 import de.norm.events.scraper.headlinersFromTitle
@@ -20,12 +22,9 @@ import de.norm.events.scraper.parseTime
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
-import tools.jackson.databind.JsonNode
 import tools.jackson.databind.json.JsonMapper
 import java.time.Clock
-import java.time.DayOfWeek
 import java.time.LocalDate
-import java.time.temporal.TemporalAdjusters
 
 /** Public landing page every event links back to — the widget exposes no per-event URLs. */
 private const val HUMBOLDTHAIN_URL = "https://www.humboldthain.com/"
@@ -42,8 +41,8 @@ private const val HUMBOLDTHAIN_URL = "https://www.humboldthain.com/"
  * rule the widget expands in the browser, so reading only `start.date` would import it once at
  * the series' long-past opening date and lose every upcoming occurrence. Weekly rules become one
  * event per occurrence over a rolling [OCCURRENCE_HORIZON_WEEKS] horizon, bounded further by the
- * rule's own end date or count, which is why `sourceId` combines the widget id with the
- * occurrence date. Elfsight's `nthDayInMonth` month rules are not expanded; the venue uses none.
+ * rule's own end date or count ([elfsightOccurrenceDates]), which is why `sourceId` combines the
+ * widget id with the occurrence date.
  *
  * **Artists come from the description's links, not its prose.** The roster is `ra.co/dj/<slug>`
  * anchors whose text is the DJ's name; the prose around them varies ("Lineup/Musik", "Line-up
@@ -121,7 +120,7 @@ class HumboldthainApiScraper(
         val artists = (if (concert) headlinersFromTitle(title) else emptyList()) + djArtists(description)
         val descriptionText = htmlParagraphText(descriptionHtml)
 
-        return occurrenceDates(node, id, seriesStart).map { date ->
+        return elfsightOccurrenceDates(node, seriesStart, LocalDate.now(clock), VENUE_NAME, id).map { date ->
             ScrapedEvent(
                 title = title,
                 description = descriptionText,
@@ -140,56 +139,6 @@ class HumboldthainApiScraper(
                 artists = artists
             )
         }
-    }
-
-    /**
-     * The dates this entry happens on: its own start date when it does not repeat, otherwise every
-     * occurrence of its weekly rule from today over the rolling horizon. Only weekly rules, the
-     * only kind the venue uses. Elfsight files a monthly rule as `repeatFrequency: "daily"`/
-     * `"monthly"` with a `nthDayInMonth` period, and guessing at its "second Wednesday" semantics
-     * would invent dates the venue never announced — such an entry keeps its start date and is logged.
-     */
-    @Suppress("ReturnCount") // Guard clauses for the non-repeating and non-weekly cases are clearer than nesting.
-    private fun occurrenceDates(
-        node: ElfsightEventNode,
-        id: String,
-        seriesStart: LocalDate
-    ): List<LocalDate> {
-        val period = node.repeatPeriod.blankToNull()?.lowercase()
-        if (period == null || period == NO_REPEAT) return listOf(seriesStart)
-        if (!node.repeatFrequency.equals(WEEKLY_FREQUENCY, ignoreCase = true)) {
-            logger.warn {
-                "Humboldthain event '$id' repeats '${node.repeatFrequency}' ($period), which is not expanded; keeping its start date only"
-            }
-            return listOf(seriesStart)
-        }
-
-        val weekdays =
-            node.repeatWeeklyOnDays
-                .mapNotNull { WEEKDAY_CODES[it.trim().lowercase()] }
-                .ifEmpty { listOf(seriesStart.dayOfWeek) }
-                .distinct()
-                .sortedBy { it.value }
-        val today = LocalDate.now(clock)
-        // The horizon bounds an open-ended ("never") rule; an explicit end date shortens it.
-        val limit = minOf(parseElfsightDate(node.repeatEndsDate?.date) ?: LocalDate.MAX, today.plusWeeks(OCCURRENCE_HORIZON_WEEKS))
-        val interval = node.repeatInterval.coerceAtLeast(1).toLong()
-        val skipped = node.exceptions.mapNotNull { exceptionDate(it) }.toSet()
-
-        val occurrences =
-            generateSequence(seriesStart.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))) { it.plusWeeks(interval) }
-                .takeWhile { it <= limit }
-                .flatMap { weekStart -> weekdays.asSequence().map { weekStart.plusDays(it.value - 1L) } }
-                .filter { it in seriesStart..limit }
-        // An "after <n> occurrences" rule counts slots from the series start — the cap applies to the
-        // raw schedule, before a cancelled date is removed and the past is dropped.
-        val capped =
-            if (node.repeatEnds.equals(ENDS_AFTER_OCCURRENCES, ignoreCase = true)) {
-                occurrences.take(node.repeatEndsOccurrences.coerceAtLeast(1))
-            } else {
-                occurrences
-            }
-        return capped.filter { it !in skipped && it >= today }.toList()
     }
 
     /**
@@ -222,46 +171,9 @@ class HumboldthainApiScraper(
                 ?.map { it.attr("href").trim() }
                 ?.firstOrNull { it.startsWith("http") && TICKET_URL_PATTERN.containsMatchIn(it) }
 
-    /**
-     * The date a recurrence exception skips. Elfsight leaves `exceptions` empty on every entry
-     * this venue publishes, so both plausible spellings are accepted — a bare ISO date string, or
-     * the `{date, time}` object every other moment uses — rather than betting the import on one.
-     */
-    private fun exceptionDate(node: JsonNode): LocalDate? = parseElfsightDate(if (node.isString) node.asString("") else node.path("date").asString(""))
-
     companion object {
         /** Names the venue in the shared payload reader's warnings. */
         private const val VENUE_NAME = "Humboldthain"
-
-        /**
-         * How far ahead an open-ended weekly rule is expanded (~6 months). Deep enough that the
-         * resident night shows up in any month-ahead view, shallow enough that the derived occurrences
-         * stay a plausible reading of the venue's rule. Every import regenerates the same rolling
-         * window; the stable `sourceId` (`humboldthain:<id>-<date>`) makes that idempotent, and
-         * occurrences rolling out of the window are cleaned up as stale by `EventUpsertService`.
-         */
-        const val OCCURRENCE_HORIZON_WEEKS: Long = 26
-
-        /** Elfsight's `repeatPeriod` value for a one-off entry. */
-        private const val NO_REPEAT = "norepeat"
-
-        /** The only `repeatFrequency` this parser expands — see [occurrenceDates]. */
-        private const val WEEKLY_FREQUENCY = "weekly"
-
-        /** Elfsight's `repeatEnds` value capping a rule at a fixed number of occurrences. */
-        private const val ENDS_AFTER_OCCURRENCES = "afterOccurrences"
-
-        /** Elfsight's two-letter `repeatWeeklyOnDays` codes. */
-        private val WEEKDAY_CODES: Map<String, DayOfWeek> =
-            mapOf(
-                "mo" to DayOfWeek.MONDAY,
-                "tu" to DayOfWeek.TUESDAY,
-                "we" to DayOfWeek.WEDNESDAY,
-                "th" to DayOfWeek.THURSDAY,
-                "fr" to DayOfWeek.FRIDAY,
-                "sa" to DayOfWeek.SATURDAY,
-                "su" to DayOfWeek.SUNDAY
-            )
 
         /** The venue's one category marker, opening a title it wants read as a concert rather than a party. */
         private val CONCERT_TITLE_PREFIX = Regex("""^konzert\s*[:\-–—]\s*""", RegexOption.IGNORE_CASE)

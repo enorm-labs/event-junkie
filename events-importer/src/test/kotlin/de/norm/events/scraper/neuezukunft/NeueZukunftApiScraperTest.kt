@@ -10,20 +10,23 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldStartWith
 import org.junit.jupiter.api.Test
+import java.time.Clock
 import java.time.LocalDate
 import java.time.LocalTime
+import java.time.ZoneId
 
 /**
  * Unit tests for [NeueZukunftApiScraper].
  *
  * Parses a saved snapshot of Neue Zukunft's Elfsight Event Calendar boot response
  * (`core.service.elfsight.com/p/boot/?w=<widgetId>`) for deterministic, offline-safe
- * testing without HTTP fetching. The parser is time-independent — it returns the whole
- * calendar as-is; dropping past-dated events is the persistence layer's concern
- * (`EventUpsertService`) and is tested there.
+ * testing without HTTP fetching. One-off entries come back as-is, past ones included; dropping
+ * past-dated events is the persistence layer's concern (`EventUpsertService`) and is tested there.
+ * Only the recurring entries depend on the date, so the clock is fixed at 2026-10-01.
  */
 class NeueZukunftApiScraperTest {
-    private val scraper = NeueZukunftApiScraper()
+    private val berlin = ZoneId.of("Europe/Berlin")
+    private val scraper = NeueZukunftApiScraper(Clock.fixed(LocalDate.of(2026, 10, 1).atStartOfDay(berlin).toInstant(), berlin))
 
     private val rawJson: String by lazy {
         javaClass.classLoader
@@ -38,7 +41,34 @@ class NeueZukunftApiScraperTest {
 
     @Test
     fun `parses every event in the widget response`() {
-        events shouldHaveSize 44
+        // 40 one-off entries, and 4 monthly series with 6 occurrences each in the 26-week horizon.
+        events shouldHaveSize 64
+    }
+
+    @Test
+    fun `expands each monthly series onto the nth Wednesday the widget renders`() {
+        // The dates the live widget showed for October and November 2026, matching the descriptions:
+        // "every 1st and 3rd Wednesday" and "every 2nd and 4th Wednesday" (#333).
+        fun dates(title: String) =
+            events
+                .filter { it.title == title }
+                .map { it.eventDate }
+                .filter { it < LocalDate.of(2026, 12, 1) }
+                .sorted()
+
+        dates("Jazz After Dark") shouldContainExactly
+            listOf(LocalDate.of(2026, 10, 7), LocalDate.of(2026, 10, 21), LocalDate.of(2026, 11, 4), LocalDate.of(2026, 11, 18))
+        dates("Future Bash Reloaded") shouldContainExactly
+            listOf(LocalDate.of(2026, 10, 14), LocalDate.of(2026, 10, 28), LocalDate.of(2026, 11, 11), LocalDate.of(2026, 11, 25))
+    }
+
+    @Test
+    fun `gives a series occurrence a dated sourceId and drops the past ones`() {
+        val first = events.filter { it.title == "Jazz After Dark" }.minBy { it.eventDate }
+
+        first.sourceId shouldBe "neue_zukunft:161c9267-49e6-43a1-9bf9-8bb6805d10ca-2026-10-07"
+        first.startTime shouldBe LocalTime.of(20, 30)
+        events.filter { it.title == "Future Bash Reloaded" }.map { it.eventDate }.last() shouldBe LocalDate.of(2027, 3, 24)
     }
 
     @Test
