@@ -23,9 +23,9 @@ repairing live in the [issue tracker](https://github.com/enorm-labs/event-junkie
 | Status                              | Meaning                                                                              | Count |
 | ----------------------------------- | ------------------------------------------------------------------------------------ | ----: |
 | ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |    91 |
-| 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |    14 |
-| ⛔ [Blocked](#-blocked--deferred)   | Website analyzed, but no usable listings (no programme page, JS-only, or too sparse) |   111 |
-| ❓ [Unanalyzed](#-not-analyzed-yet) | URL recorded, but the website still needs a first look                               |    33 |
+| 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |    16 |
+| ⛔ [Blocked](#-blocked--deferred)   | Website analyzed, but no usable listings (no programme page, JS-only, or too sparse) |   118 |
+| ❓ [Unanalyzed](#-not-analyzed-yet) | URL recorded, but the website still needs a first look                               |    24 |
 
 "Website analyzed" also means the [data model](DATA_MODEL.md) was checked against that source, and no source needed a
 schema change.
@@ -163,6 +163,8 @@ least as heavily as an RA count when the next batch is prioritised.
 | Ballhaus Wedding   | https://www.ballhauswedding.de/veranstaltungen | Other        | Medium   | Wix rich text; 117 entries with year-less dates; no images  |
 | Soulcat            | https://soulcat-berlin.com/programm/           | Bar          | Low      | TEC REST API; one week ahead; titles only                   |
 | Erreichbar         | https://radar.squat.net/en/node/6653           | Other        | Low      | radar group 6653; a fortnightly punk bar night; no site     |
+| Ballhaus Berlin    | https://ballhaus-berlin.de/de/termine/         | Club         | High     | Hand-built CMS; one page since 2019; ISO date attribute     |
+| Tiffany Club       | https://tiffany-berlin.de/upcoming-events/     | Club         | Medium   | Elementor list; year only in the detail URL; ticket links   |
 
 **Fitzroy** needs one decision made once, rather than per event. It is on its summer break: the ACF API holds a dense
 July programme and resumes on 12 September. Only 2 events are upcoming today, so a fixture captured now would be
@@ -190,6 +192,16 @@ handle:
   and dance socials. Ballhaus Wedding's dates have no year, so take it from the month headings. Its entries have no
   fixed shape, so that parser is the most brittle of the ten.
 - **Soulcat** publishes one week ahead, and four of its seven events are one recurring bar night.
+
+**The last two rows came from the Tag der Clubkultur sweep on 2026-10-01:**
+
+- **Ballhaus Berlin** keeps every event since 2019 on one `/de/termine/` page, 492 entries in all. Keep only the
+  future ones, 33 on 2026-10-01. Each `li.termin` carries an ISO `data-olddatum`, and its id `termin_N__datum_M` is
+  stable. The folded body gives doors, start, advance and box-office prices, and a ticket link. The programme mixes
+  swing, jazz, cabaret and club nights. It is not Clärchens Ballhaus or Ballhaus Wedding.
+- **Tiffany Club** shows weekday, day and month without a year. Each detail URL starts with `dd-MM-yyyy`, so take the
+  year from there. The WordPress `event` REST type gives only the title. Drop the "Private Event" placeholders. Most
+  nights are student, Latin and K-pop parties, plus stand-up comedy.
 
 **Gärten der Welt** set the precedent for the next park- or campus-like source when it was
 [imported](#-imported). The row's category decides whether it is programme at all. Its guided tours, workshops, yoga
@@ -266,6 +278,10 @@ events.
 workshops, exhibitions or screenings, which are out of scope. The listing is server-rendered WordPress. Each event page
 gives labelled fields for date, time, venue with address, ticket price, link and line-up. When per-event venue
 resolution exists, this source is easy to parse. Until then, use the programme to find new venues.
+
+**Alte Feuerwache THF** is a seasonal interim use at Tempelhof airport. Its 2026 season ends on 17 October. The
+calendar is server-rendered, with dates, categories and line-ups, so it is easy to parse. Look at it again when the
+next season is announced.
 
 **A handful of tickets is not a programme.** Sisyphos is the case to reason from. Its only own web presence is a
 Shopify merch shop. Its `TICKETS` collection carries one recurring series beside the T-shirts: `generationS`, one night
@@ -445,6 +461,13 @@ the empty Next.js payload rather than the WAF, and a 403 is not evidence that a 
 | JIWAR                            | —                                              | Other        | No own site; Instagram only                               | Site change / manual entry |
 | Ashawo Cafe                      | —                                              | Other        | No own site; events on Eventbrite                         | Site change / manual entry |
 | SaliGari Bar                     | —                                              | Bar          | No own site; Facebook only; mostly comedy nights          | Site change / manual entry |
+| 800A Bar & Cabaret               | https://www.800aberlin.com/                    | Bar          | Two dated shows on the home page; the rest on Instagram   | More events                |
+| Tipsy Bear                       | https://www.tipsybearberlin.com/events         | Bar          | Squarespace; one highlight, then weekly bingo and karaoke | More events                |
+| Pastiche                         | https://pasticheinternational.com/             | Bar          | Cargo month pages; one event in October                   | More events                |
+| SOLID                            | https://solid.stadtlandladen.org/events        | Bar          | Wix Events; talks, films and food nights, no music        | Scope decision             |
+| Zemin                            | https://www.zeminberlin.de/                    | Other        | Art space; the programme block shows July to September    | Site change                |
+| Slap'd                           | https://slapd.de/                              | Club         | Event-agency site, rendered in the browser; no programme  | Site change                |
+| Alte Feuerwache THF              | https://alte-feuerwache-thf.de/calendar        | Other        | Clean Next.js list, but the season ends on 2026-10-17     | Next season                |
 
 ## ❓ Not analyzed yet
 
@@ -452,9 +475,8 @@ New candidates land here first. Check for a server-rendered programme, then move
 [Ready](#-ready-to-implement) or [Blocked](#-blocked--deferred). A row belongs here only until someone opens it — the
 URL is recorded, nothing more.
 
-The first 24 rows came from a sweep on 2026-09-30. Of these, 21 came from tipBerlin and three from radar.squat.net.
-The last nine came from the Tag der Clubkultur 2026 programme on 2026-10-01. The URL was confirmed to answer, and
-nothing else was checked. A venue's type is a first guess.
+Every row below came from a sweep on 2026-09-30. The first 21 came from tipBerlin, and the last three from
+radar.squat.net. The URL was confirmed to answer, and nothing else was checked. A venue's type is a first guess.
 Correct it against the venue's own site when the row is opened.
 
 | Name                              | URL                                                       | Type         |
@@ -483,15 +505,6 @@ Correct it against the venue's own site when the row is opened.
 | Jugendclub Café Köpenick          | https://www.cafe-hdjk.de/                                 | Club         |
 | Sama32                            | https://www.sama32.squat.net/                             | Bar          |
 | KuBiZ                             | https://www.kubiz-wallenberg.de/                          | Other        |
-| Ballhaus Berlin                   | https://ballhaus-berlin.de/                               | Club         |
-| Tiffany Club                      | https://tiffany-berlin.de/                                | Club         |
-| Slap'd                            | https://slapd.de/                                         | Club         |
-| 800A Bar & Cabaret                | https://www.800aberlin.com/                               | Bar          |
-| Tipsy Bear                        | https://www.tipsybearberlin.com/                          | Bar          |
-| Pastiche                          | https://pasticheinternational.com/                        | Bar          |
-| SOLID                             | https://solid.stadtlandladen.org/                         | Bar          |
-| Zemin                             | https://www.zeminberlin.de/                               | Other        |
-| Alte Feuerwache THF               | https://alte-feuerwache-thf.de/                           | Other        |
 
 WABE's own building is closed for renovation. Its events run at Schönfließer Str. 7 for now. Kühlspot has no programme
 page, and its events are a section of the home page.
@@ -527,7 +540,7 @@ Where candidates come from, and what is deliberately left out:
   (#2166). The other 61 came only through the Stressfaktor group, at one-off locations. Schokoladen, Loge, Supamolly, SO36, Clash, Neue Zukunft, ausland and ://about blank were already
   recorded.
 - **Tag der Clubkultur** (<https://tagderclubkultur.berlin/programm/>), the Clubcommission festival week. The 2026
-  programme on 2026-10-01 held 130 events at about 80 places. It gave nine Unanalyzed rows and four Blocked rows.
+  programme on 2026-10-01 held 130 events at about 80 places. It gave two Ready rows and eleven Blocked rows.
   These places were left out as out of scope: two cinemas, a comedy club, a museum and a youth dance theatre. Also
   two galleries, a healing space, a hammam, a radio station and a headphone shop. Two more places have no fixed
   address, and no search identified one more.
