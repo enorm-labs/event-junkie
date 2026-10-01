@@ -171,7 +171,7 @@ enum class EventSource {
     /** MAXXIM Berlin – a party club off the Ku'damm, open nightly with a 90s/2000s, pop and house DJ programme. */
     MAXXIM,
 
-    /** Metropol Berlin – the historic concert hall at Nollendorfplatz, programming touring concerts alongside occasional club parties. */
+    /** Metropol Berlin – a 1906 theatre on Nollendorfplatz, later a cinema and a 1980s disco, now a concert hall for touring acts. */
     METROPOL,
 
     /** migas Berlin – a Wedding listening bar where booked selectors play records to a seated audience, alongside full-album playback nights. */
@@ -255,7 +255,7 @@ enum class EventSource {
     /** Theater im Delphi Berlin – a 1929 silent-cinema building in Weißensee, run as a theatre and concert hall for dance, music theatre and talks. */
     THEATER_IM_DELPHI,
 
-    /** Tiffany Club – a club and event space on Rosmarinstraße in Mitte, behind Unter den Linden: party nights, stand-up comedy and the odd concert. */
+    /** Tiffany Club – a club on Rosmarinstraße in Mitte, behind Unter den Linden, with student, Latin and K-pop nights, stand-up comedy and concerts. */
     TIFFANY_CLUB,
 
     /** Tresor Berlin – the techno institution in a disused power plant on Köpenicker Straße, with the Tresor vault, the Globus floor and the Aurora Bar. */
