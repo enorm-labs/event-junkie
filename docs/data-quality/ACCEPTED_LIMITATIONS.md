@@ -32,6 +32,9 @@ says so.
 | `ARCANOA`              | `GENRE`            | the style tail mixes run-together genre words with support acts and notes, so it stays the subtitle rather than seeding junk tags                | —     |
 | `ARCANOA`              | `IMAGE`            | the page carries no image element at all                                                                                                         | —     |
 | `ARCANOA`              | `DESCRIPTION`      | the one line per night is the whole entry, with no blurb after it                                                                                | —     |
+| `ART_STALKER`          | `PAGINATION`       | robots.txt disallows the shop's paged listing, so only the first 25 events are read                                                              | —     |
+| `ART_STALKER`          | `GENRE`            | the style is only a free-text tagline after the act's name                                                                                       | —     |
+| `ART_STALKER`          | `PROMOTERS`        | the venue presents every night itself                                                                                                            | —     |
 | `BAR_JEDER_VERNUNFT`   | `DOORS_TIME`       | the calendar and the show pages state one Beginn time and never an Einlass                                                                       | —     |
 | `BERGHAIN`             | `GENRE`            | the Kantine and Halle pages name only the room and have no genre field, and the concerts there vary                                              | —     |
 | `BADEHAUS`             | `ARTISTS`          | the venue publishes no roster; for a concert the title is taken as the act and a Support: subtitle as the rest                                   | —     |

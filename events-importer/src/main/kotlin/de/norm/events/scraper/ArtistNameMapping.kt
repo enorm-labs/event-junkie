@@ -749,7 +749,8 @@ private val KNOWN_SINGLE_ACTS: Set<String> =
         "scala & kolacny brothers",
         "chase & status",
         "überhaupt & außerdem",
-        "haute & freddy"
+        "haute & freddy",
+        "2mädchen & uwe"
     )
 
 /**

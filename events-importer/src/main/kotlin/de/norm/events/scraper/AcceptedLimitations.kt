@@ -8,6 +8,7 @@ import de.norm.events.scraper.aeg.AEG_LIMITATIONS
 import de.norm.events.scraper.altekantine.ALTE_KANTINE_LIMITATIONS
 import de.norm.events.scraper.amt.AMT_LIMITATIONS
 import de.norm.events.scraper.arcanoa.ARCANOA_LIMITATIONS
+import de.norm.events.scraper.artstalker.ART_STALKER_LIMITATIONS
 import de.norm.events.scraper.astra.ASTRA_LIMITATIONS
 import de.norm.events.scraper.atrane.A_TRANE_LIMITATIONS
 import de.norm.events.scraper.badehaus.BADEHAUS_LIMITATIONS
@@ -109,6 +110,7 @@ object AcceptedLimitations {
             ALTE_KANTINE_LIMITATIONS,
             AMT_LIMITATIONS,
             ARCANOA_LIMITATIONS,
+            ART_STALKER_LIMITATIONS,
             ASTRA_LIMITATIONS,
             BADEHAUS_LIMITATIONS,
             BAR_JEDER_VERNUNFT_LIMITATIONS,

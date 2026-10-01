@@ -28,6 +28,9 @@ enum class EventSource {
     /** Arcanoa Berlin – a tiny Kreuzberg bar running since 1988: independent live acts at the weekend, open stages and jam sessions midweek. */
     ARCANOA,
 
+    /** ART Stalker Berlin – a Charlottenburg event bar that doubles as a gallery, with a stage for young and established acts. */
+    ART_STALKER,
+
     /** Astra Kulturhaus Berlin – a large concert venue on the RAW-Gelände hosting touring rock, pop, indie and electronic acts. */
     ASTRA,
 
