@@ -87,6 +87,7 @@ class MorphineDetailPageScraper {
         return ScrapedEvent(
             title = title,
             description = readDescription(overlay),
+            promoters = readPresenters(overlay),
             eventType = inferConcertVenueType(title),
             eventDate = eventDate ?: UNRESOLVED_EVENT_DATE,
             doorsTime = parseDayLineDoors(dayLine),
@@ -105,7 +106,7 @@ class MorphineDetailPageScraper {
                         .withIndex()
                         .filter { it.value.name.isNotBlank() }
                         .flatMap { (index, set) ->
-                            morphineSetLineActs(stripLiveRecordingSuffix(set.name), title)
+                            morphineSetLineActs(stripFormatTail(set.name), title)
                                 .flatMap { headlinersFromTitle(it) }
                                 .map { it.copy(setStart = starts[index]) }
                         }.distinctBy { it.name.lowercase() }
@@ -126,6 +127,20 @@ class MorphineDetailPageScraper {
         val clock = RunningOrderClock(eventDate ?: return lineup.map { null })
         return lineup.map { set -> parseTime(set.startTime)?.let { clock.slot(it).first } }
     }
+
+    /** The promoter a `Presented by <name>` line in the programme text credits (#2268). */
+    private fun readPresenters(overlay: Element): List<String> =
+        overlay
+            .select("div.block.paragraph p")
+            .flatMap { it.textLines() }
+            .mapNotNull {
+                PRESENTED_BY
+                    .matchEntire(it.trim())
+                    ?.groupValues
+                    ?.get(1)
+                    ?.trim()
+            }.filter { it.isNotBlank() }
+            .distinct()
 
     /**
      * The performers of an ensemble piece from the first `.block.paragraph` whose every line is a
@@ -209,6 +224,9 @@ class MorphineDetailPageScraper {
         private const val SPANS_PER_ENTRY = 2
         private const val TIME_SPAN = 0
         private const val NAME_SPAN = 1
+
+        /** A whole line crediting the night's promoter: `Presented by Radical Sounds Latin America`. */
+        val PRESENTED_BY = Regex("""presented\s+by\s+(.{2,80})""", RegexOption.IGNORE_CASE)
 
         /** The blank line between two `.block.paragraph` boxes in the joined description. */
         private const val PARAGRAPH_SEPARATOR = "\n\n"

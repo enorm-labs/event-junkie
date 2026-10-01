@@ -16,7 +16,8 @@ import java.time.LocalTime
 // MorphineFieldMappingTest, where the examples live.
 
 /**
- * Morphine's "… - Live Recording" billing framing, stripped from a **derived artist name** only.
+ * Morphine's format tails, "… - Live Recording" and "… Listening Session", stripped from a
+ * **derived artist name** only.
  *
  * The room records most concerts for the label and bills that in both the title and the lineup
  * entry ("Invisible Weather - Live Recording", "Raphael Rogiński – Qırım - Live Recording"). It
@@ -27,15 +28,35 @@ import java.time.LocalTime
  * Every dash spelling is accepted (`-`, `–`, `—`), as is a bare space, and the tail is
  * end-anchored so an act whose name contains the words mid-string is untouched.
  */
-private val LIVE_RECORDING_SUFFIX = Regex("""\s*[-–—]?\s*live\s+recording\s*$""", RegexOption.IGNORE_CASE)
+private val FORMAT_TAIL = Regex("""\s*[-–—]?\s*(?:live\s+recording|listening\s+session)\s*$""", RegexOption.IGNORE_CASE)
 
 /**
- * Strips a trailing [LIVE_RECORDING_SUFFIX] from a billed name; unchanged without such a tail
- * or when stripping would leave nothing.
+ * Strips a trailing [FORMAT_TAIL] from a billed name; unchanged without such a tail or when
+ * stripping would leave nothing.
  */
-internal fun stripLiveRecordingSuffix(name: String): String {
-    val stripped = name.trim().replace(LIVE_RECORDING_SUFFIX, "").trim()
+internal fun stripFormatTail(name: String): String {
+    val stripped = name.trim().replace(FORMAT_TAIL, "").trim()
     return stripped.ifBlank { name.trim() }
+}
+
+/**
+ * The billing a title names its acts in. A title with a [FORMAT_TAIL] bills `<act> – <work> –
+ * <format>`, so a dash left after the tail comes off leads into the work, and the act is the head:
+ * `Gibrana Cervantes — verdad y error Listening Session` is Gibrana Cervantes (#2268). A title
+ * without the tail keeps its dash for #302's sync-time head rule, which knows whether the head is
+ * an act.
+ */
+internal fun titleBilling(title: String): String {
+    val stripped = stripFormatTail(title)
+    return if (stripped == title.trim()) {
+        stripped
+    } else {
+        stripped
+            .split(DASH, limit = 2)
+            .first()
+            .trim()
+            .ifBlank { stripped }
+    }
 }
 
 /**
