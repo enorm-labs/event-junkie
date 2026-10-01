@@ -60,6 +60,20 @@ internal fun floorsToEventType(floors: List<String>): String? =
         else -> null
     }
 
+/**
+ * Whether a Halle row is an exhibition: the event page's text calls it an `Ausstellung` or an
+ * `exhibition` (#2265). The listing gives no other tell, since it bills the show's title in the
+ * lineup slot of a club night.
+ */
+internal fun isHalleExhibition(
+    floors: List<String>,
+    description: String?
+): Boolean = floors.any { it.contains(HALLE_FLOOR, ignoreCase = true) } && description != null && EXHIBITION_WORD.containsMatchIn(description)
+
+private const val HALLE_FLOOR = "Halle"
+
+private val EXHIBITION_WORD = Regex("""\b(?:ausstellung|exhibition)\b""", RegexOption.IGNORE_CASE)
+
 /** Floor label identifying the adjacent concert hall (vs. the Berghain building's club floors). */
 private const val KANTINE_MARKER = "Kantine"
 
