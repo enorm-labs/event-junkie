@@ -231,6 +231,12 @@ const PRIVACY_ELEMENTS: Element[] = [
     en: /removed or corrected/i,
     de: /entfernt oder korrigiert/i,
   },
+  {
+    // #358: "near me" measures on the device. A server-side radius would make this false.
+    what: 'that the location for "near me" never leaves the browser',
+    en: /used only in your browser.*It is not sent to us or to anyone else/s,
+    de: /nur in deinem Browser verwendet.*weder an uns noch an Dritte übermittelt/s,
+  },
 ]
 
 // docs/SCRAPING_POSITION.md §5 is four steps and a deadline, published here; the steps are pinned

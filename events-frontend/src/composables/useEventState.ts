@@ -2,7 +2,7 @@ import { computed } from 'vue'
 
 import type { EventSummary } from '@/api/types'
 import { useFormat } from '@/composables/useFormat'
-import { isPastEvent, isRunningEvent, todayIso } from '@/lib/format'
+import { isOnNow, isPastEvent, isRunningEvent, todayIso } from '@/lib/format'
 import { useI18n } from 'vue-i18n'
 
 /**
@@ -40,7 +40,8 @@ export function useEventState(event: () => EventSummary) {
    * The one word that changes what the reader does next, and the only coloured thing in the meta
    * line. Past wins the slot ("Sold out" on last month's gig is stale); a cancelled, postponed or
    * relocated night next (#1550); then running, because "since Friday" is what a Sunday reader
-   * needs first. Colour is emphasis on top of the word, never instead (WCAG 1.4.1).
+   * needs first; then "on now" for tonight's once it has started (#358). Colour is emphasis on top
+   * of the word, never instead (WCAG 1.4.1).
    */
   const state = computed(() => {
     if (isPast.value) return { label: t('events.card.past'), class: 'text-muted-foreground' }
@@ -50,6 +51,7 @@ export function useEventState(event: () => EventSummary) {
         label: t('events.card.runningSince', { day: formatWeekday(event().eventDate) }),
         class: 'text-primary',
       }
+    if (isOnNow(event())) return { label: t('events.card.onNow'), class: 'text-primary' }
     if (event().soldOut) return { label: t('events.card.soldOut'), class: 'text-destructive' }
     if (event().free) return { label: t('events.card.free'), class: 'text-success' }
     return null

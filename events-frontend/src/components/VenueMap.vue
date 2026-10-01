@@ -12,6 +12,7 @@ import { layers, namedFlavor } from '@protomaps/basemaps'
 import {
   addProtocol,
   AttributionControl,
+  type GeoJSONSource,
   LngLatBounds,
   Map as MapLibreMap,
   Marker,
@@ -23,11 +24,19 @@ import { Protocol } from 'pmtiles'
 import { markRaw, onBeforeUnmount, onMounted, ref, shallowRef, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Button } from '@/components/ui/button'
+import { circlePolygon, type Position } from '@/lib/geo'
 import type { MapPin } from '@/lib/mapPins'
 
-const props = defineProps<{ pins: MapPin[] }>()
+const props = defineProps<{
+  pins: MapPin[]
+  /** Where "near" is measured from: drawn as a marker, with the radius around it. */
+  origin?: Position | null
+  radiusKm?: number | null
+  /** The next tap on the map sets the origin instead of clearing the selection. */
+  picking?: boolean
+}>()
 const selected = defineModel<string | null>('selected', { default: null })
-const emit = defineEmits<{ unavailable: [] }>()
+const emit = defineEmits<{ unavailable: []; pick: [Position] }>()
 
 /** The importer's validation range (`VenueRequest.kt`), which is also the area the tiles cover. */
 const BERLIN: [[number, number], [number, number]] = [
@@ -42,6 +51,7 @@ const { t, locale } = useI18n()
 const container = ref<HTMLElement | null>(null)
 const map = shallowRef<MapLibreMap | null>(null)
 const markers = new Map<string, { marker: Marker; element: HTMLButtonElement }>()
+let originMarker: Marker | null = null
 
 // A same-origin worker file: the site's CSP has no `blob:`, which MapLibre's default worker needs.
 let protocolRegistered = false
@@ -80,6 +90,15 @@ const MARKER_CLASS =
 const BADGE_SIZE_CLASS = 'h-7 min-w-7 px-1.5'
 const DOT_SIZE_CLASS = 'size-4'
 
+const DIMMED_CLASS = 'opacity-40'
+/** The same live dot as `EventRow` and `EventCard`, on the marker's corner. */
+const LIVE_DOT_HTML =
+  '<span aria-hidden="true" class="absolute -top-1 -right-1 flex size-2.5">' +
+  '<span class="absolute inline-flex size-full rounded-full bg-primary opacity-75 motion-safe:animate-ping"></span>' +
+  '<span class="relative inline-flex size-2.5 rounded-full border border-background bg-primary"></span></span>'
+const ORIGIN_CLASS =
+  'size-4 rounded-full border-2 border-background bg-foreground ring-4 ring-foreground/25'
+
 const SELECTED_CLASSES = ['bg-foreground', 'text-background']
 const UNSELECTED_CLASSES = ['bg-primary', 'text-primary-foreground']
 
@@ -100,10 +119,12 @@ function renderMarkers() {
     const element = document.createElement('button')
     element.type = 'button'
     element.className = `${MARKER_CLASS} ${pin.badge ? BADGE_SIZE_CLASS : DOT_SIZE_CLASS}`
+    if (pin.dimmed) element.classList.add(DIMMED_CLASS)
     styleMarker(element, pin.slug)
     element.title = pin.label
     element.setAttribute('aria-label', pin.label)
     element.textContent = pin.badge ?? ''
+    if (pin.live) element.insertAdjacentHTML('beforeend', LIVE_DOT_HTML)
     element.addEventListener('click', (event) => {
       event.stopPropagation()
       selected.value = selected.value === pin.slug ? null : pin.slug
@@ -113,13 +134,96 @@ function renderMarkers() {
   }
 }
 
+/** The circle when there is one, so "near me" opens on what is near; otherwise every pin. */
 function frame() {
   const instance = map.value
-  if (!instance || !props.pins.length) return
+  if (!instance) return
   const bounds = new LngLatBounds()
-  for (const pin of props.pins) bounds.extend([pin.longitude, pin.latitude])
+  const circle = radiusRing()
+  if (circle) for (const point of circle) bounds.extend(point)
+  else if (props.pins.length)
+    for (const pin of props.pins) bounds.extend([pin.longitude, pin.latitude])
+  else return
   instance.fitBounds(bounds, { padding: 48, maxZoom: MAX_FIT_ZOOM, animate: false })
 }
+
+const RADIUS_SOURCE = 'near-radius'
+
+function radiusRing(): [number, number][] | null {
+  return props.origin && props.radiusKm ? circlePolygon(props.origin, props.radiusKm) : null
+}
+
+/**
+ * A CSS custom property as `rgb()`. The tokens are `oklch()`, which MapLibre's style colours do not
+ * parse; a canvas converts any colour the browser knows.
+ */
+function tokenColor(name: string): string {
+  const canvas = document.createElement('canvas').getContext('2d')
+  const value = getComputedStyle(document.documentElement).getPropertyValue(name).trim()
+  if (!canvas || !value) return 'grey'
+  canvas.fillStyle = value
+  canvas.fillRect(0, 0, 1, 1)
+  const [r, g, b] = canvas.getImageData(0, 0, 1, 1).data
+  return `rgb(${r}, ${g}, ${b})`
+}
+
+// A style swap (theme, language) drops every added layer, so this runs on each `style.load`.
+function addRadiusLayers() {
+  const instance = map.value
+  if (!instance || instance.getSource(RADIUS_SOURCE)) return
+  const color = tokenColor('--primary')
+  instance.addSource(RADIUS_SOURCE, { type: 'geojson', data: radiusData() })
+  instance.addLayer({
+    id: `${RADIUS_SOURCE}-fill`,
+    type: 'fill',
+    source: RADIUS_SOURCE,
+    paint: { 'fill-color': color, 'fill-opacity': 0.08 },
+  })
+  instance.addLayer({
+    id: `${RADIUS_SOURCE}-line`,
+    type: 'line',
+    source: RADIUS_SOURCE,
+    paint: { 'line-color': color, 'line-width': 2, 'line-dasharray': [2, 2] },
+  })
+}
+
+function radiusData(): Parameters<GeoJSONSource['setData']>[0] {
+  const ring = radiusRing()
+  return {
+    type: 'FeatureCollection',
+    features: ring
+      ? [{ type: 'Feature', properties: {}, geometry: { type: 'Polygon', coordinates: [ring] } }]
+      : [],
+  }
+}
+
+function renderOrigin() {
+  const instance = map.value
+  if (!instance) return
+  ;(instance.getSource(RADIUS_SOURCE) as GeoJSONSource | undefined)?.setData(radiusData())
+  if (!props.origin) {
+    originMarker?.remove()
+    originMarker = null
+    return
+  }
+  if (!originMarker) {
+    const element = document.createElement('div')
+    element.className = ORIGIN_CLASS
+    element.setAttribute('role', 'img')
+    element.setAttribute('aria-label', t('map.near.origin'))
+    element.title = t('map.near.origin')
+    originMarker = new Marker({ element })
+  }
+  originMarker.setLngLat([props.origin.longitude, props.origin.latitude]).addTo(instance)
+}
+
+/** The map's centre, for choosing an origin without a pointer. */
+function center(): Position | null {
+  const point = map.value?.getCenter()
+  return point ? { latitude: point.lat, longitude: point.lng } : null
+}
+
+defineExpose({ center })
 
 function restyleSelection() {
   for (const [slug, { element }] of markers) styleMarker(element, slug)
@@ -158,10 +262,13 @@ onMounted(() => {
     return
   }
   map.value.addControl(new AttributionControl({ compact: false }), 'bottom-right')
-  map.value.on('click', () => {
-    selected.value = null
+  map.value.on('click', (event) => {
+    if (props.picking) emit('pick', { latitude: event.lngLat.lat, longitude: event.lngLat.lng })
+    else selected.value = null
   })
+  map.value.on('style.load', addRadiusLayers)
   renderMarkers()
+  renderOrigin()
   frame()
   themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
 })
@@ -173,6 +280,13 @@ watch(
     frame()
   },
 )
+watch(
+  () => [props.origin, props.radiusKm],
+  () => {
+    renderOrigin()
+    frame()
+  },
+)
 watch(selected, restyleSelection)
 watch(locale, () => map.value?.setStyle(style(), { diff: false }))
 
@@ -180,6 +294,7 @@ onBeforeUnmount(() => {
   themeObserver.disconnect()
   map.value?.remove()
   markers.clear()
+  originMarker = null
 })
 </script>
 
@@ -188,6 +303,7 @@ onBeforeUnmount(() => {
   <div class="relative -mx-4 sm:mx-0">
     <div
       ref="container"
+      :class="{ 'is-picking': picking }"
       class="venue-map h-112 overflow-hidden border-y border-border sm:rounded-lg sm:border-x lg:h-144"
     />
     <div class="absolute top-3 right-3 flex flex-col gap-1">
@@ -222,5 +338,10 @@ onBeforeUnmount(() => {
 
 .venue-map :deep(.maplibregl-ctrl-attrib a) {
   color: inherit;
+}
+
+/* Picking a point: the cursor says the next tap places something. */
+.venue-map.is-picking :deep(.maplibregl-canvas) {
+  cursor: crosshair;
 }
 </style>

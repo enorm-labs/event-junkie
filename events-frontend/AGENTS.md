@@ -160,6 +160,10 @@ changes.
 - **The CSP shapes the code.** The worker is a same-origin file (`?worker&url`), not a `blob:`; the zoom buttons are ours, because MapLibre's draw `data:`
   icons. A MapLibre control added later is checked in `npm run preview`, which sends the production CSP.
 - **Style a marker through `classList`, never `className`**: MapLibre positions it with classes of its own.
+- **"Near me" measures in the browser and sends nothing** (LEGAL.md §7.4a). The position from `useLocation.ts` lives in memory only: never in a
+  query, a URL or storage. A radius on the BFF, or sending the nearby venues' slugs, is a privacy-notice change, not a refactor.
+- **MapLibre's paint properties do not parse `oklch()`**, which every token is. `VenueMap.vue`'s `tokenColor` converts through a canvas, and a
+  layer added with a token colour re-adds on `style.load`, because a theme swap drops it.
 - **Locally**, `scripts/map-assets.sh dev` fills `public/map/` (git-ignored). Without it the pins draw on an empty background, which is also what CI's
   Playwright run sees.
 

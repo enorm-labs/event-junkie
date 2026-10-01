@@ -53,7 +53,8 @@
     "assumed": "~{time}",
     "assumedHint": "Not announced, estimated from the event type",
     "runningSince": "Running since {day}",
-    "until": "Until {time}"
+    "until": "Until {time}",
+    "onNow": "On now"
   },
   "detail": {
     "notFound": "Event not found",
@@ -87,5 +88,6 @@
     "CANCELLED": "Cancelled",
     "POSTPONED": "Postponed",
     "movedTo": "Moved to {venue}"
-  }
+  },
+  "nearMe": "Near me, on the map"
 }

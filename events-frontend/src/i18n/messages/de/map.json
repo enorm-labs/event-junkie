@@ -13,5 +13,28 @@
   "zoomOut": "Herauszoomen",
   "gestureHelpDesktop": "Strg + Scrollen zoomt die Karte",
   "gestureHelpMac": "⌘ + Scrollen zoomt die Karte",
-  "gestureHelpMobile": "Zwei Finger bewegen die Karte"
+  "gestureHelpMobile": "Zwei Finger bewegen die Karte",
+  "pinOnNow": "{count} läuft gerade | {count} laufen gerade",
+  "onNowOnly": "Läuft gerade",
+  "near": {
+    "label": "In der Nähe",
+    "useLocation": "Meinen Standort verwenden",
+    "pickOnMap": "Auf der Karte wählen",
+    "nearVenue": "In der Nähe einer Location …",
+    "pickHint": "Tippe auf die Karte, wo du startest.",
+    "useCentre": "Kartenmitte verwenden",
+    "locating": "Standort wird ermittelt …",
+    "denied": "Der Standortzugriff ist für diese Seite aus. Wähle stattdessen einen Punkt auf der Karte oder eine Location.",
+    "unavailable": "Dein Standort ließ sich nicht ermitteln. Wähle stattdessen einen Punkt auf der Karte oder eine Location.",
+    "from": "Rund um {origin}",
+    "yourLocation": "deinen Standort",
+    "pickedPoint": "den gewählten Punkt",
+    "origin": "Ausgangspunkt für „in der Nähe“",
+    "radius": "Umkreis",
+    "clear": "Zurücksetzen",
+    "coarse": "Dein Gerät ortet dich nur auf {accuracy} genau, manches hier kann also weiter weg sein.",
+    "heading": "Im Umkreis von {radius}",
+    "resultCount": "{events} Events in {venues} Locations, die nächsten zuerst",
+    "empty": "In diesem Umkreis ist nichts los. Versuch einen größeren oder einen anderen Tag."
+  }
 }

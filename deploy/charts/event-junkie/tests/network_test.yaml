@@ -309,7 +309,7 @@ tests:
       # other.
       - equal:
           path: spec.headers.permissionsPolicy
-          value: camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()
+          value: camera=(), microphone=(), geolocation=(self), payment=(), usb=(), interest-cohort=()
       - equal:
           path: spec.headers.customResponseHeaders["Cross-Origin-Resource-Policy"]
           value: same-origin

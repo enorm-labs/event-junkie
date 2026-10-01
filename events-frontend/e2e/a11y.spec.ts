@@ -284,6 +284,41 @@ for (const route of mapRoutes) {
 }
 
 /**
+ * "Near me" located (#358): the radius controls, the "you are here" marker, the nearby list, and a
+ * pin with the live dot. The clock sits at 22:00 Berlin on the mocked night, so the 21:00 show is on
+ * now whatever the real time is.
+ */
+test('the events map near me, with a show on now, has no detectable accessibility violations', async ({
+  page,
+  context,
+}) => {
+  await context.grantPermissions(['geolocation'])
+  await context.setGeolocation({ latitude: 52.501, longitude: 13.451 })
+  await page.clock.setFixedTime(new Date('2026-08-15T20:00:00Z'))
+  await mockBff(page)
+  await page.goto('/en/map')
+
+  const pin = page.getByRole('button', { name: 'Mock Venue: 1 event, 1 on now', exact: true })
+  const unavailable = page.getByText(/cannot draw the map/)
+  await expect(pin.or(unavailable)).toBeVisible()
+  test.skip(await unavailable.isVisible(), 'no WebGL in this browser')
+
+  await page.getByRole('button', { name: 'Use my location' }).click()
+  await expect(page.getByRole('heading', { level: 2, name: 'Within 2 km' })).toBeVisible()
+
+  const results = await buildScan(page).analyze()
+
+  expect(
+    results.violations.map((v) => ({
+      rule: v.id,
+      impact: v.impact,
+      help: v.help,
+      nodes: v.nodes.map((n) => n.target.join(' ')),
+    })),
+  ).toEqual([])
+})
+
+/**
  * The compact view is a second rendering of the same routes (#1371): rows carry the headings the
  * cards carried, and the header gains a pressed-state toggle.
  */

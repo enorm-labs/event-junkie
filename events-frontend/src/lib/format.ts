@@ -191,3 +191,15 @@ export function isPastEvent(event: EventSpan): boolean {
 export function isRunningEvent(event: EventSpan): boolean {
   return !!event.eventDate && event.eventDate < todayIso() && !isPastEvent(event)
 }
+
+/**
+ * Whether an event has started and is not over: a running weekender or last night's party, or
+ * today's event once its effective start (start, else doors, else the BFF's slot) has passed in
+ * Berlin. An estimate, since few events state an end: it ends where `isPastEvent` says.
+ */
+export function isOnNow(event: EventSpan): boolean {
+  if (isRunningEvent(event)) return true
+  if (event.eventDate !== todayIso() || isPastEvent(event)) return false
+  const start = event.startTime ?? event.doorsTime ?? event.assumedStartTime
+  return !!start && start.slice(0, 5) <= berlinTimeIso()
+}

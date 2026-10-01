@@ -366,6 +366,25 @@ notices, and `legalViews.spec.ts` pins the count the prose states.
 That is a property worth defending deliberately. The first non-essential stored item makes a banner mandatory. It is a
 product decision, not an implementation detail, so escalate rather than implement.
 
+### 7.4a Location — measured in the browser, never sent
+
+The map's "near me" (#358) uses the visitor's position. The position stays in the browser. The design keeps it there,
+so that the notice can say so.
+
+- **The browser asks, on a click only.** `useLocation.ts` calls the Geolocation API when the visitor chooses "Use my
+  location". The browser's own prompt is the consent. Nothing asks on page load.
+- **The distance is computed on the device.** The map loads `/events/calendar`, which is the same for every visitor.
+  `lib/mapPins.ts` filters and sorts that response by distance in the browser.
+- **The position goes nowhere.** It is not in a request, a URL, a log or `localStorage`. It is held in memory and goes
+  when the page reloads.
+- **The header allows it for this origin only.** The chart's `permissionsPolicy` sets `geolocation=(self)`.
+
+**Two designs were rejected for this reason.** A BFF parameter such as `near=lat,lng` puts a precise position into
+access logs and response-cache keys. A list of the venue slugs within the radius is a coarse position too.
+
+**If distance moves to the server, this section and §3 of both notices become false.** `legalViews.spec.ts` pins the
+notice's claim, but no test can see where the code sends the position. Read this section in the review of such a change.
+
 ### 7.5 Logging
 
 > Log data is declared to processors as in scope regardless of how this lands — see §7.3a. A processor agreement
