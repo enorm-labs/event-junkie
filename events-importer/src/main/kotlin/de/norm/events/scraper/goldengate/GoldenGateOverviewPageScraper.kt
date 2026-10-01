@@ -7,6 +7,7 @@ import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.goldengate.GoldenGateOverviewPageScraper.Companion.DATE_LINE_PATTERN
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.parseTime
+import de.norm.events.scraper.splitBackToBack
 import de.norm.events.scraper.splitSegmentOnConjunctions
 import de.norm.events.scraper.textLines
 import de.norm.events.slug.SlugGenerator
@@ -115,14 +116,15 @@ class GoldenGateOverviewPageScraper {
 
     /**
      * The DJs billed for the night, in listing order: one heading, names `<br>`-separated, each
-     * line split further at safe `&`/`and`/`und` boundaries ([splitSegmentOnConjunctions]), so a
-     * back-to-back billing ("Nyna Curtis & Kisling") becomes two DJs while a name whose spelling
-     * contains a conjunction tail stays whole. Placeholders and non-artists are dropped.
+     * line split at `b2b` ([splitBackToBack]) and at safe `&`/`and`/`und` boundaries
+     * ([splitSegmentOnConjunctions]), so a back-to-back billing ("Nyna Curtis & Kisling", "Anaté
+     * b2b Shira Kela") becomes two DJs while a name whose spelling contains a conjunction tail stays whole. Placeholders and non-artists are dropped.
      */
     private fun parseLineup(lineupHeading: Element?): List<ScrapedArtist> =
         lineupHeading
             ?.textLines()
             .orEmpty()
+            .flatMap(::splitBackToBack)
             .flatMap(::splitSegmentOnConjunctions)
             .map { it.trim() }
             .filter { it.isNotBlank() && !isNonArtistName(it) }
