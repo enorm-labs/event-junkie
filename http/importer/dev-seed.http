@@ -101,6 +101,7 @@
 ###   Tresor               — https://tresorberlin.com/club/events/
 ###   Uber Arena           — https://www.uber-arena.de/events/all
 ###   Uber Eats Music Hall — https://www.uber-eats-music-hall.de/events/all
+###   ufaFabrik            — https://ufafabrik.de/spielplan.html
 ###   UFO im Velodrom      — https://www.velomax.de/events
 ###   Urania               — https://www.urania.de/kalender/
 ###   Urban Spree          — https://www.urbanspree.com/program/
@@ -5256,6 +5257,68 @@ Accept: application/json
 
 > {%
     client.test("Uber Eats Music Hall import triggered", function () {
+        client.assert(response.status === 202, "Expected 202 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
+### ufaFabrik (Viktoriastr. 10-18, Berlin-Tempelhof)
+### ————————————————————————————————————————————————————————————
+
+### --- Create ufaFabrik venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "ufaFabrik",
+    "address": "Viktoriastr. 10-18",
+    "city": "Berlin",
+    "postalCode": "12105",
+    "district": "tempelhof",
+    "latitude": 52.45468,
+    "longitude": 13.38180,
+    "websiteUrl": "https://ufafabrik.de/",
+    "description": "A live-and-work community that has run the former UFA film copying works in Tempelhof since 1979, with three stages in its international culture centre for concerts, cabaret, comedy, theatre and readings.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Ein Lebens- und Arbeitsprojekt, das seit 1979 die ehemaligen UFA-Kopierwerke in Tempelhof belebt, mit drei Bühnen im Internationalen Kulturcentrum für Konzerte, Kabarett, Comedy, Theater und Lesungen.",
+    "descriptionAltLanguage": "de"
+}
+
+> {%
+    client.global.set("ufa_fabrik_venue_id", response.body.id);
+    client.test("ufaFabrik venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Create ufaFabrik event source ---
+# Links the venue to the UfaFabrikWebsiteImporter.
+# The sourceType "UFA_FABRIK" matches EventSource.UFA_FABRIK.
+POST {{importer-host}}/api/admin/event-sources
+Content-Type: application/json
+
+{
+    "venueId": {{ufa_fabrik_venue_id}},
+    "name": "ufaFabrik",
+    "url": "https://ufafabrik.de/spielplan.html",
+    "sourceType": "UFA_FABRIK",
+    "enabled": true,
+    "importIntervalMinutes": 1440,
+    "maxRetries": 3
+}
+
+> {%
+    client.test("ufaFabrik event source created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Trigger initial ufaFabrik import ---
+POST {{importer-host}}/api/admin/event-sources/ufafabrik/import
+Accept: application/json
+
+> {%
+    client.test("ufaFabrik import triggered", function () {
         client.assert(response.status === 202, "Expected 202 but got " + response.status);
     });
 %}
