@@ -10,6 +10,12 @@ says so.
 
 | Source                 | Aspect             | Why the source is silent                                                                                                                         | Issue |
 | ---------------------- | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------ | ----- |
+| `A_TRANE`              | `DOORS_TIME`       | the site prints one start time per night                                                                                                         | —     |
+| `A_TRANE`              | `END_TIME`         | the end time is a calendar default, 23:50 on most nights                                                                                         | —     |
+| `A_TRANE`              | `PRICE_BOX_OFFICE` | the site sells one price online and holds reserved seats at that price                                                                           | —     |
+| `A_TRANE`              | `TICKET_URL`       | tickets sell in a shop inside the venue's own event card                                                                                         | —     |
+| `A_TRANE`              | `PROMOTERS`        | the club presents every night itself                                                                                                             | —     |
+| `A_TRANE`              | `SOLD_OUT`         | the sold-out line is printed on every night, booked out or not                                                                                   | —     |
 | `ABSTAND`              | `ARTISTS`          | the bands are named only in free prose of no fixed shape                                                                                         | —     |
 | `ABSTAND`              | `IMAGE`            | radar serves its poster files behind an anti-bot wall, which we do not pass                                                                      | —     |
 | `ABSTAND`              | `TICKET_URL`       | the bar sells no tickets online                                                                                                                  | —     |

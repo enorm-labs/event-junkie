@@ -1,6 +1,6 @@
 # Venue images
 
-Which of the 90 venues has a photograph, where it came from, and who said so.
+Which of the 91 venues has a photograph, where it came from, and who said so.
 
 `REVIEWED.tsv` is the record. `scripts/venue-images.py` reads it and writes the confirmed rows through the admin API. Everything below is why the file
 exists rather than what it contains.

@@ -7,6 +7,9 @@ package de.norm.events.scraper
  * scrapers in `scraper/<venue>/`.
  */
 enum class EventSource {
+    /** A-Trane – the jazz club on Bleibtreustraße in Charlottenburg, open since 1992, with a concert most nights. */
+    A_TRANE,
+
     /** Abstand Berlin – a punk bar at Rigaer Straße 78 in Friedrichshain, with concerts and solidarity nights. */
     ABSTAND,
 
