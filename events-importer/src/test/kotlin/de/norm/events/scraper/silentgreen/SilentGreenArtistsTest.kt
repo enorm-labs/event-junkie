@@ -4,7 +4,7 @@ import io.kotest.matchers.collections.shouldContainExactly
 import org.junit.jupiter.api.Test
 
 class SilentGreenArtistsTest {
-    private fun actsOf(title: String) = silentGreenArtists(title, "CONCERT", hall = null).map { it.name }
+    private fun actsOf(title: String) = silentGreenArtists(title, "CONCERT").map { it.name }
 
     @Test
     fun `drops a series set off by an en dash in front of several acts`() {

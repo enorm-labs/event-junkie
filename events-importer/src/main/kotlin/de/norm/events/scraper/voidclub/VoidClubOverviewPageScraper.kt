@@ -126,7 +126,8 @@ class VoidClubOverviewPageScraper(
             // The ticket button is prefixed "Free" for a free night and no prices print anywhere, so the
             // button's wording is the only free-entry signal.
             free = ticketLink?.text()?.startsWith("Free", ignoreCase = true) == true,
-            artists = parseLineup(billings.firstOrNull(), roomOf(card))
+            room = roomOf(card),
+            artists = parseLineup(billings.firstOrNull())
         )
     }
 
@@ -178,10 +179,7 @@ class VoidClubOverviewPageScraper(
      * An act billed twice would produce two `event_artist` rows for one (event, artist) pair and
      * hit the unique constraint, failing the whole import, so the first billing wins.
      */
-    private fun parseLineup(
-        paragraph: Element?,
-        stage: String?
-    ): List<ScrapedArtist> {
+    private fun parseLineup(paragraph: Element?): List<ScrapedArtist> {
         if (paragraph == null) return emptyList()
         return paragraph
             .clone()
@@ -190,15 +188,21 @@ class VoidClubOverviewPageScraper(
             .split(',')
             .flatMap(::splitActs)
             .distinctBy { it.lowercase() }
-            .map { ScrapedArtist(name = it, role = "DJ", stage = stage) }
+            .map { ScrapedArtist(name = it, role = "DJ") }
     }
 
     /**
-     * The room the night's acts play in, or `null` across both. `.void-event-venue` names `VOID
-     * CLUB`, `VOID HALL`, or `VOID CLUB & HALL`. A single-room night puts every act in that room;
-     * a two-room night does not say who plays where, so no act is attributed.
+     * The room the whole night is in: `.void-event-venue` names `VOID CLUB`, `VOID HALL` or `VOID
+     * CLUB & HALL`, stored as `Club`, `Hall` or `Club & Hall` because the venue's name already says
+     * VOID. A two-room night does not say who plays where, so no act carries a stage.
      */
-    private fun roomOf(card: Element): String? = card.textAt(".void-event-venue")?.takeIf { '&' !in it }
+    private fun roomOf(card: Element): String? =
+        card
+            .textAt(".void-event-venue")
+            ?.replace(VENUE_PREFIX, "")
+            ?.split(' ')
+            ?.joinToString(" ") { word -> word.lowercase().replaceFirstChar(Char::uppercase) }
+            ?.takeIf { it.isNotBlank() }
 
     /**
      * Splits one comma segment into its acts, dropping placeholders. An unfinished billing closes
@@ -232,6 +236,9 @@ class VoidClubOverviewPageScraper(
             }.toMap()
 
     private companion object {
+        /** The house name in front of each room on `.void-event-venue`. */
+        val VENUE_PREFIX = Regex("""^\s*VOID\s+""", RegexOption.IGNORE_CASE)
+
         /** The calendar block's accessible label, e.g. `Friday, August 7`. */
         val LABEL_DATE_FORMATTER: DateTimeFormatter =
             DateTimeFormatterBuilder()

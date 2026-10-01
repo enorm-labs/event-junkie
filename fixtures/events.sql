@@ -246,12 +246,11 @@ SELECT v.id, 'Offene Bühne', 'SHOW', 'fixture-no-genre-' || to_char(CURRENT_DAT
        v.website_url || '/events/offene-buehne', 'fixture-no-genre', 5.00
 FROM events.venue v WHERE v.slug = 'jazzkeller-kreuzberg';
 
--- Two rooms of one venue on one night: one venue row, two events, the room in the subtitle, as the
--- importers store a house with two floors. Past the generated fortnight, so that night has exactly
--- these two rows under the venue.
-INSERT INTO events.event (venue_id, title, subtitle, event_type, slug, event_date, start_time, end_date, end_time, source_url, source_id, genre,
-                          price_presale)
-SELECT v.id, r.title, r.subtitle, 'PARTY', 'fixture-' || r.shape || '-' || to_char(CURRENT_DATE + 15, 'YYYY-MM-DD'), CURRENT_DATE + 15, r.start_time,
+-- Two rooms of one venue on one night: one venue row, two events, each in its own room (#316). Past
+-- the generated fortnight, so that night has exactly these two rows under the venue.
+INSERT INTO events.event (venue_id, title, subtitle, room, event_type, slug, event_date, start_time, end_date, end_time, source_url, source_id,
+                          genre, price_presale)
+SELECT v.id, r.title, r.subtitle, r.subtitle, 'PARTY', 'fixture-' || r.shape || '-' || to_char(CURRENT_DATE + 15, 'YYYY-MM-DD'), CURRENT_DATE + 15, r.start_time,
        CURRENT_DATE + 16, TIME '08:00', v.website_url || '/events/' || r.shape, 'fixture-' || r.shape, 'Techno', 15.00
 FROM events.venue v
          CROSS JOIN (VALUES ('room-floor', 'Nachtschicht Floor', 'Floor 1', TIME '23:00'),

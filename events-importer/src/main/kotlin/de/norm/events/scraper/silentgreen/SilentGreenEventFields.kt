@@ -51,19 +51,15 @@ internal fun silentGreenPresenters(subLine: String?): List<String> =
 internal fun silentGreenSubtitle(subLine: String?): String? = subLine?.takeIf { presenterNames(it) == null }
 
 /**
- * The billed acts as [ScrapedArtist] entries in the [hall] the evening runs in, via
- * [buildArtistsForEventType], so only a `CONCERT` turns its title into headliners; the title
- * passes through [stripHostPrefix] first. The [hall] rides on the lineup entries because `stage`
- * is the model's only room field, as the multi-floor clubs use it; an evening with no lineup
- * records no hall.
+ * The billed acts as [ScrapedArtist] entries, via [buildArtistsForEventType], so only a `CONCERT`
+ * turns its title into headliners; the title passes through [stripHostPrefix] first. An evening
+ * runs in one hall, so the hall is the event's [room][de.norm.events.scraper.ScrapedEvent.room],
+ * not a stage on each act.
  */
 internal fun silentGreenArtists(
     title: String,
-    eventType: String,
-    hall: String?
-): List<ScrapedArtist> =
-    buildArtistsForEventType(stripHostPrefix(title), subtitle = null, eventType = eventType)
-        .map { it.copy(stage = hall) }
+    eventType: String
+): List<ScrapedArtist> = buildArtistsForEventType(stripHostPrefix(title), subtitle = null, eventType = eventType)
 
 /**
  * Strips the label or series hosting a night from the front of its title. A spelled-out

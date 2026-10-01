@@ -15,6 +15,8 @@ import java.time.LocalTime
 data class EventEntity(
     @Id val id: Long? = null,
     val venueId: Long,
+    /** The room the whole event is in, as the venue names it (#316). */
+    val room: String? = null,
     /**
      * The source that produced this event, or `null` where it has been deleted (`ON DELETE SET
      * NULL`). Read only for the per-source licence gate (#283).
@@ -70,7 +72,7 @@ data class EventArtistEntity(
     val artistId: Long,
     val role: String = "HEADLINER",
     val billingOrder: Int = 0,
-    /** Room / stage the artist plays at this event (e.g. "Panorama Bar"). Null for single-room venues. */
+    /** The room or floor the act plays (e.g. "Panorama Bar") when the lineup is split across rooms. A whole event's room is [EventEntity.room] (#316). */
     val stage: String? = null,
     /** When the act's set starts, where the venue publishes a running order. */
     val setStart: Instant? = null,

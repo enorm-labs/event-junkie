@@ -99,7 +99,6 @@ class SilentGreenMonthPageScraper {
 
         val title = cleanEventTitle(rawTitle)
         val eventType = silentGreenEventType(row.textAt(".eventList-event-cat"), title)
-        val hall = row.textAt(".eventList-event-location")
         val subLine =
             row
                 .textAt("$TITLE_SELECTOR p")
@@ -114,12 +113,13 @@ class SilentGreenMonthPageScraper {
             eventDate = eventDate,
             // The calendar's start time is the show's own start ("Beginn"); doors are on the detail page.
             startTime = parseTime(row.textAt(".eventList-event-starttime")),
+            room = row.textAt(".eventList-event-location"),
             sourceUrl = sourceUrl,
             sourceId = "${EventSource.SILENT_GREEN.sourceIdPrefix}$eventDate-${detailSlug(sourceUrl)}",
             ticketUrl = row.hrefAt(".eventList-event-ticket a"),
             soldOut = rawTitle.contains(SOLD_OUT_MARKER, ignoreCase = true),
             status = parseEventStatus(rawTitle),
-            artists = silentGreenArtists(title, eventType, hall),
+            artists = silentGreenArtists(title, eventType),
             promoters = silentGreenPresenters(subLine)
         )
     }

@@ -20,6 +20,8 @@ import java.time.LocalTime
 data class EventEntity(
     @Id val id: Long? = null,
     val venueId: Long,
+    /** The room the whole event is in, as the venue names it. A lineup split across rooms uses `stage` instead (#316). */
+    val room: String? = null,
     /** FK to [de.norm.events.scraper.EventSourceEntity] that imported this event, or null for manually created events. */
     val eventSourceId: Long? = null,
     val title: String,
@@ -83,7 +85,7 @@ data class EventArtistEntity(
     val artistId: Long,
     val role: String = ArtistRole.HEADLINER.name,
     val billingOrder: Int = 0,
-    /** Room / stage the artist plays at this event (e.g. "Panorama Bar"). Null for single-room venues. */
+    /** The room or floor the act plays (e.g. "Panorama Bar") when the lineup is split across rooms. A whole event's room is [EventEntity.room] (#316). */
     val stage: String? = null,
     /** The name was read off the event title (#1145); see `ScrapedArtist.titleDerived`. */
     val titleDerived: Boolean = false,

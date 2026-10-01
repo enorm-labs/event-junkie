@@ -256,6 +256,7 @@ Core entity representing a single music event at a venue on a specific date.
 | ---------------------- | --------------- | -------- | ------------------------------------------------------------------- | ---------------------------------------------------------- |
 | `id`                   | `BIGINT`        | No       | Auto-generated primary key                                          | `101`                                                      |
 | `venue_id`             | `BIGINT` FK     | No       | References `venue.id`                                               | `42`                                                       |
+| `room`                 | `TEXT`          | Yes      | The room the whole event is in, as the venue names it (#316)        | `Saal`                                                     |
 | `title`                | `TEXT`          | No       | Event headline                                                      | `THE ADICTS`                                               |
 | `subtitle`             | `TEXT`          | Yes      | Tour name or support acts line                                      | `„Adios Amigos Tour 2026" + Support: MAID OF ACE + KAOS`   |
 | `description`          | `TEXT`          | Yes      | Longer description / artist bio                                     | `Formed in Ipswich in the late 1970s…`                     |
@@ -345,7 +346,7 @@ Links events to artists with role and billing order to model the lineup. Each ap
 | `artist_id`     | `BIGINT` FK   | No       | References `artist.id`                                                             | `7`                   |
 | `role`          | `TEXT`        | No       | `HEADLINER`, `SUPPORT`, or `DJ`                                                    | `HEADLINER`           |
 | `billing_order` | `INT`         | No       | Position in lineup (0 = top-billed)                                                | `0`                   |
-| `stage`         | `TEXT`        | Yes      | The room or floor of the set, at a venue with more than one                        | `Panorama Bar`        |
+| `stage`         | `TEXT`        | Yes      | The room or floor of the set, on a lineup split across rooms; else `event.room`    | `Panorama Bar`        |
 | `title_derived` | `BOOLEAN`     | No       | The importer read the name from the event title, not from a lineup element (#1145) | `false`               |
 | `set_start`     | `TIMESTAMPTZ` | Yes      | Start of the set, from the venue's running order (#2002)                           | `2026-09-26 23:59+02` |
 | `set_end`       | `TIMESTAMPTZ` | Yes      | End of the set. Null when the running order gives only the start                   | `2026-09-27 04:30+02` |
