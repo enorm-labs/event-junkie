@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import EventCard from '@/components/EventCard.vue'
 import { CARD_GRID_CLASS, CARD_LIST_CLASS } from '@/lib/utils'
 import ClubStamp from '@/components/ClubStamp'
+import ClubkulturNotice from '@/components/ClubkulturNotice.vue'
 import SectionLabel from '@/components/SectionLabel.vue'
 import EventRow from '@/components/EventRow.vue'
 import { useCompactView } from '@/composables/useCompactView'
@@ -69,6 +70,10 @@ const { compact } = useCompactView()
         </div>
       </div>
     </section>
+
+    <!-- Pulled up into the hero's bottom padding: with the section rhythm on top it sat about
+         100px below the buttons, further from them than from the list it introduces. -->
+    <ClubkulturNotice class="-mt-8 sm:-mt-10" />
 
     <section class="space-y-4">
       <SectionLabel>{{ t('home.tonight') }}</SectionLabel>

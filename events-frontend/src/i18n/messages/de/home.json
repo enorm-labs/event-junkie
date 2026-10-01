@@ -3,5 +3,11 @@
   "tonightEmpty": "Heute Abend nichts los? In Berlin? Eher unwahrscheinlich. Schau in den Kalender.",
   "upcoming": "Demnächst",
   "seeAllUpcoming": "Alle kommenden Events",
-  "upcomingEmpty": "Gerade steht nichts an. Schau bald wieder vorbei."
+  "upcomingEmpty": "Gerade steht nichts an. Schau bald wieder vorbei.",
+  "clubkultur": {
+    "name": "Tag der Clubkultur",
+    "dates": "3.–11. Oktober",
+    "body": "Neun Tage lang zeigen rund 80 Berliner Clubs und Kollektive, was Clubkultur ist. Viele der Abende stehen auch bei uns.",
+    "link": "Zum Programm"
+  }
 }
