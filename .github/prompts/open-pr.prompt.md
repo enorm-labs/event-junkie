@@ -60,7 +60,25 @@ This is the standard "ship it" flow — the manual equivalent of
       sitting in `In review`, and nobody looks, because this instruction tells you to stop here. **If a card does not move after a merge, check that workflow
       before assuming anything about the issue.**
 
-8. **Report.** Print the branch name, commit subject, and the PR URL that `gh` returns.
+8. **Watch the checks in the background.** Start the watcher right after `gh pr create`, as a background task (in Claude Code, `run_in_background`), and
+   carry on; the notification brings you back when CI settles. Do not call the PR green, and do not hand it over as done, before that notification arrives.
+
+    ```sh
+    until gh pr checks <n> --json bucket --jq 'length > 0 and all(.bucket != "pending")' 2>/dev/null | grep -qx true; do sleep 30; done
+    gh pr checks <n>
+    ```
+
+    - **Do not use `gh pr checks --watch`.** It exits 0 when its connection drops, so a dropped network reads as a finished run. The loop above treats a
+      failed call as "not yet", and `length > 0` waits out the seconds before the first check registers.
+    - **A row can stay `pending` after its job finished.** If one check is the only thing still pending long after the others, read its job:
+      `gh api repos/{owner}/{repo}/actions/jobs/<id> --jq '.status, .conclusion'`, with `<id>` from `gh pr checks <n> --json name,link`. `gh run rerun <id>`
+      clears a stuck row.
+    - **On red**, read the failing job's log (`gh run view <run-id> --log-failed`), say which check failed and why, and fix it on the branch — amend and
+      `--force-with-lease`, then start the watcher again.
+    - **The watcher only observes.** No checkout, commit or push inside the background task; those stay in the foreground.
+    - `Backend build` is the long pole, at about eight minutes. Everything else reports inside a minute.
+
+9. **Report.** Print the branch name, commit subject, the PR URL that `gh` returns, and the check result — or that the watcher is still running.
 
 ## Notes
 
@@ -70,6 +88,6 @@ This is the standard "ship it" flow — the manual equivalent of
 - **Multiple logical changes.** If the diff spans clearly unrelated concerns, say so and offer to split them across commits (or PRs) rather than bundling
   everything into one.
 - **Re-running on an existing PR branch.** If the branch already has an open PR, don't open a duplicate — **amend the existing commit**, push it with
-  `git push --force-with-lease`, and bring the PR title and body back in step with the diff. A branch normally lands as one commit here, because `main` allows
+  `git push --force-with-lease`, bring the PR title and body back in step with the diff, and start the step 8 watcher again. A branch normally lands as one commit here, because `main` allows
   only **Rebase and merge** and replays every commit as written. See AGENTS.md § Agent Instructions.
 - **Draft PRs.** Add `--draft` when the user wants early feedback or CI signal before the work is final.
