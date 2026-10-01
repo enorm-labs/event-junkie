@@ -36,11 +36,12 @@ import kotlin.coroutines.cancellation.CancellationException
  *
  * A run that did not read sisy.fan leaves out the nights dated today or earlier. Otherwise a run
  * early on Sunday would store a merged weekend again without its line-up, because the line-up is
- * replaced by the scrape's (`AssociationSyncService`). A run that lost the calendar or the shop is
- * incomplete, so the stale cleanup cannot remove the nights it did not read. A failed shop is
- * replaced by its nights from the last run that read them; after a restart there are none, and
- * the calendar nights go without a price until the shop answers again. The run fails only when
- * the calendar, the shop and sisy.fan all deliver nothing.
+ * replaced by the scrape's (`AssociationSyncService`). A run without the calendar is incomplete,
+ * so the stale cleanup cannot remove the nights it did not read. A run without the shop stays
+ * complete: the shop answers the cluster 429 on every run, and the cleanup ends at the last
+ * scraped date, before the shop-only nights. A failed shop is replaced by its nights from the
+ * last run that read them; after a restart there are none, and the calendar nights go without a
+ * price until the shop answers again. The run fails only when all three sites deliver nothing.
  *
  * The shop's bot protection answers the importer `429` from a hosting address, while
  * curl from the same node gets `200` (#2199). That is a block on our client, and we do not disguise the
@@ -81,7 +82,7 @@ class SisyphosWebsiteImporter(
             "Scraped ${calendar.getOrNull()?.size ?: "no"} calendar night(s), ${shop.getOrNull()?.size ?: "no"} shop night(s) " +
                 "and ${weekends?.size ?: "no"} sisy.fan weekend(s) for Sisyphos; importing ${events.size} event(s)"
         }
-        return ImportResult.Success(events = events, etag = null, lastModified = null, complete = calendar.isSuccess && shop.isSuccess)
+        return ImportResult.Success(events = events, etag = null, lastModified = null, complete = calendar.isSuccess)
     }
 
     /** One site's nights, or its failure, logged: the other sites are still worth importing without it. */
