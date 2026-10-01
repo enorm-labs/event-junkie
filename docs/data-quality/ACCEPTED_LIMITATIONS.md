@@ -32,9 +32,11 @@ says so.
 | `ARCANOA`              | `GENRE`            | the style tail mixes run-together genre words with support acts and notes, so it stays the subtitle rather than seeding junk tags                | —     |
 | `ARCANOA`              | `IMAGE`            | the page carries no image element at all                                                                                                         | —     |
 | `ARCANOA`              | `DESCRIPTION`      | the one line per night is the whole entry, with no blurb after it                                                                                | —     |
+| `ARCANOA`              | `ARTISTS`          | a night is one line with no separator between the act and the night's name, so a billing like `Arcana A Night Of Flow` cannot be split           | —     |
 | `ART_STALKER`          | `PAGINATION`       | robots.txt disallows the shop's paged listing, so only the first 25 events are read                                                              | —     |
 | `ART_STALKER`          | `GENRE`            | the style is only a free-text tagline after the act's name                                                                                       | —     |
 | `ART_STALKER`          | `PROMOTERS`        | the venue presents every night itself                                                                                                            | —     |
+| `ASTRA`                | `GENRE`            | the event page carries no genre field                                                                                                            | —     |
 | `BAR_JEDER_VERNUNFT`   | `DOORS_TIME`       | the calendar and the show pages state one Beginn time and never an Einlass                                                                       | —     |
 | `BERGHAIN`             | `GENRE`            | the Kantine and Halle pages name only the room and have no genre field, and the concerts there vary                                              | —     |
 | `BADEHAUS`             | `ARTISTS`          | the venue publishes no roster; for a concert the title is taken as the act and a Support: subtitle as the rest                                   | —     |
@@ -68,6 +70,7 @@ says so.
 | `COLUMBIA_THEATER`     | `PRICE`            | the venue prints no figure; tickets are sold through an Eventim link                                                                             | —     |
 | `COLUMBIA_THEATER`     | `GENRE`            | the venue publishes no genre or category; style appears only in the description                                                                  | —     |
 | `COLUMBIAHALLE`        | `PER_EVENT_PAGE`   | the venue's own iCal export keys the event on the same Contao id and points back at the listing anchor                                           | —     |
+| `COLUMBIAHALLE`        | `GENRE`            | the listing names support, promoter, times and prices, and no musical style                                                                      | —     |
 | `COSMIC_COMEDY`        | `PRICE`            | `cost` and `cost_details` are empty on every event                                                                                               | —     |
 | `CRACK_BELLMER`        | `EVENT_TYPE`       | the venue emits no category at all; the type is read from the title and then the genre line                                                      | —     |
 | `CRACK_BELLMER`        | `DOORS_TIME`       | the venue publishes no doors time                                                                                                                | —     |
@@ -171,6 +174,7 @@ says so.
 | `MIGAS`                | `CANCELLATION`     | the listing carries no cancellation badge                                                                                                        | —     |
 | `MIKROPOL`             | `GENRE`            | the site names no musical style; its only category is Konzert or Club                                                                            | —     |
 | `MIKROPOL`             | `PRICE`            | the venue prints no figure; tickets are sold through a Dice link                                                                                 | —     |
+| `MODUS`                | `PRICE`            | the event page prints no figure and sends buyers to the ticket shop                                                                              | —     |
 | `MONARCH`              | `PER_EVENT_PAGE`   | the site is hand-coded PHP with no per-event URLs                                                                                                | —     |
 | `MONARCH`              | `PRICE`            | the page prints a Ticket Vorverkauf link, never an amount                                                                                        | —     |
 | `MONARCH`              | `GENRE`            | the page lists only date, title and ticket link; a "(KONZERT)" marker is its only classification                                                 | —     |
@@ -227,6 +231,7 @@ says so.
 | `SCHOKOLADEN`          | `PRICE`            | the venue prints doors, show time and a ticket link, never a figure                                                                              | —     |
 | `SILENT_GREEN`         | `PRICE`            | the venue names no prices anywhere — an event either links out to a ticket shop or says nothing                                                  | —     |
 | `SILENT_GREEN`         | `GENRE`            | the venue publishes no genre                                                                                                                     | —     |
+| `SILENT_GREEN`         | `START_TIME`       | a multi-day festival entry prints its date span only and names no time                                                                           | —     |
 | `SILENT_GREEN`         | `PROMOTERS`        | the venue credits itself as the organiser on its own nights, so the stored promoter is the venue                                                 | —     |
 | `SISYPHOS`             | `EVENT_TYPE`       | the shop files every night as a ticket product with no category; each is stored as a party                                                       | —     |
 | `SISYPHOS`             | `DOORS_TIME`       | a ticket product names a day and never a time, and sisy.fan times only the sets                                                                  | —     |
@@ -308,4 +313,4 @@ says so.
 
 These publish everything the model stores, as of the last review:
 
-`ASTRA`, `HEIMATHAFEN`, `MADAME_CLAUDE`, `MATRIX`, `MODUS`, `QUASIMODO`, `TEMPODROM`, `THEATER_IM_DELPHI`, `URANIA`, `ZITADELLE`
+`HEIMATHAFEN`, `MADAME_CLAUDE`, `MATRIX`, `QUASIMODO`, `TEMPODROM`, `THEATER_IM_DELPHI`, `URANIA`, `ZITADELLE`

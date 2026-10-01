@@ -1,8 +1,10 @@
 package de.norm.events.scraper.modus
 
 import de.norm.events.scraper.AbstractTwoPageWebsiteImporter
+import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
+import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.VenueLimitations
 import org.springframework.stereotype.Component
 
@@ -26,5 +28,8 @@ class ModusWebsiteImporter(
     override val listsWholeProgramme: Boolean = true
 }
 
-/** Nothing this source withholds needs declaring (#715). */
-val MODUS_LIMITATIONS = VenueLimitations(EventSource.MODUS)
+val MODUS_LIMITATIONS =
+    VenueLimitations(
+        EventSource.MODUS,
+        AcceptedLimitation(LimitedAspect.PRICE, "the event page prints no figure and sends buyers to the ticket shop")
+    )

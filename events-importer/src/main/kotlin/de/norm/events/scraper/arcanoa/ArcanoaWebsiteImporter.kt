@@ -45,5 +45,9 @@ val ARCANOA_LIMITATIONS =
             "the style tail mixes run-together genre words with support acts and notes, so it stays the subtitle rather than seeding junk tags"
         ),
         AcceptedLimitation(LimitedAspect.IMAGE, "the page carries no image element at all"),
-        AcceptedLimitation(LimitedAspect.DESCRIPTION, "the one line per night is the whole entry, with no blurb after it")
+        AcceptedLimitation(LimitedAspect.DESCRIPTION, "the one line per night is the whole entry, with no blurb after it"),
+        AcceptedLimitation(
+            LimitedAspect.ARTISTS,
+            "a night is one line with no separator between the act and the night's name, so a billing like `Arcana A Night Of Flow` cannot be split"
+        )
     )
