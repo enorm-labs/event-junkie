@@ -1,5 +1,7 @@
 package de.norm.events.scraper
 
+import de.norm.events.common.deshoutWord
+import de.norm.events.common.isShortInitialism
 import de.norm.events.event.EventStatus
 import java.time.LocalDate
 
@@ -7,7 +9,7 @@ import java.time.LocalDate
 // The badge-to-status mapping stays in EventFieldMapping.kt.
 
 /**
- * The two houses a relocation note names, as written: [from] after "vom"/"aus dem"/"from",
+ * The two houses a relocation note names, as written but de-shouted: [from] after "vom"/"aus dem"/"from",
  * [to] after "ins"/"in den"/"nach"/"to". Either may be missing — Badehaus writes only
  * `Verlegt ins Mikropol`, Gretchen only `verlegt vom Frannz`, Columbia Theater neither.
  */
@@ -42,7 +44,7 @@ fun parseRelocation(text: String): Relocation? {
 /**
  * Decides what a `RELOCATED` badge means for the row at [venueSlug]: moved away, or arrived.
  *
- * Returns the status to store and the destination as the note wrote it. A destination that is
+ * Returns the status to store and the destination as [parseRelocation] read it. A destination that is
  * another house makes this the origin — `RELOCATED`, with the name; a destination that is this
  * house, or an origin that is another, makes this the destination — `SCHEDULED`, the show
  * happens here. A note naming nothing keeps `RELOCATED` and no destination. A status other
@@ -153,6 +155,15 @@ private fun venueName(raw: String): String? =
         .replace(LEADING_ARTICLE, "")
         .trim()
         .ifBlank { null }
+        ?.let(::deshoutHouse)
+
+/**
+ * Title-cases a name set wholly in capitals — Lido's "HOCHVERLEGT IN DAS COLUMBIA THEATER" names
+ * `Columbia Theater` (#2213). A name with any lowercase letter is the venue's own styling and stays,
+ * so "RAW Gelände" keeps its capitals; so does a short initialism and a token with a digit ("SO36").
+ */
+private fun deshoutHouse(name: String): String =
+    if (name.any { it.isLowerCase() } || name.isShortInitialism()) name else name.split(' ').joinToString(" ") { it.deshoutWord() }
 
 /** A name reduced to what two spellings of one house share: lower case, letters and digits only. */
 private fun compactName(name: String): String = name.lowercase().filter { it.isLetterOrDigit() }
