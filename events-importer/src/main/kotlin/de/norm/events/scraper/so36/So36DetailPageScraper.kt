@@ -27,6 +27,7 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import java.math.BigDecimal
 import java.time.LocalTime
+import java.util.Locale
 
 /**
  * Pure HTML parser for SO36 event detail (`/produkte/…`) pages — the **primary data source**.
@@ -73,7 +74,7 @@ class So36DetailPageScraper {
             refineBySubtitle(refineConcertVenueType(mapEventType(document.textAt("small.supertitle:not(.ticketsfor)")), title), title, subtitle)
         val jsonLd = document.jsonLdEvents().firstOrNull()
         val (doorsTime, startTime) = parseTimes(document)
-        val (presale, boxOffice) = parsePrices(document)
+        val (presale, boxOffice, priceNote) = parsePrices(document)
 
         return ScrapedEvent(
             title = title,
@@ -88,9 +89,10 @@ class So36DetailPageScraper {
             imageUrl = parseImageUrl(document),
             sourceUrl = sourceUrl,
             sourceId = "${EventSource.SO36.sourceIdPrefix}${extractProductId(sourceUrl)}",
-            ticketUrl = document.hrefAt(".variants-listing a.btn-buyme"),
+            ticketUrl = parseTicketUrl(document, sourceUrl),
             pricePresale = presale,
             priceBoxOffice = boxOffice,
+            priceNote = priceNote,
             free = document.isFreeAdmission(),
             status = jsonLd?.schemaStatus() ?: EventStatus.SCHEDULED.name,
             artists = parseArtists(title, subtitle, eventType),
@@ -131,24 +133,52 @@ class So36DetailPageScraper {
             .takeIf { it.isNotBlank() }
 
     /**
+     * The ticket link: an outside shop's, or this page itself when it sells through the venue's own
+     * cart (`/cart/add/<id>`), since the page is then the place to buy (#2274).
+     */
+    private fun parseTicketUrl(
+        document: Document,
+        sourceUrl: String
+    ): String? =
+        document.hrefAt(".variants-listing a.btn-buyme")
+            ?: sourceUrl.takeIf { document.selectFirst(".variants-listing a.btn-buyme[href^=/cart/add/]") != null }
+
+    /**
      * The presale and box-office prices from the schema.org offers, one table row per category, named
      * `<night> | <category>` (`| regulär`, `| ermäßigt`, `| Abendkasse`). An `Abendkasse` row is the
      * box-office price and a concession row is skipped; the presale is the cheapest of the rest.
-     * Without offer rows, the lowest `[itemprop=price]` on the page is the presale.
+     * Without offer rows, the lowest `[itemprop=price]` on the page is the presale. Presale tiers at
+     * different prices (`Ticket social` / `regular` / `support`) keep the cheapest and name every
+     * tier in the note, so the dearer ones stay visible (docs/DATA_MODEL.md, #2274).
      */
-    private fun parsePrices(document: Document): Pair<BigDecimal?, BigDecimal?> {
+    private fun parsePrices(document: Document): Triple<BigDecimal?, BigDecimal?, String?> {
         val offers =
             document.select("[itemprop=offers]").mapNotNull { offer ->
                 val price = offer.selectFirst("[itemprop=price][content]")?.attr("content")?.toBigDecimalOrNull()
-                price?.let { offer.textAt("[itemprop=name]").orEmpty().substringAfterLast("|") to it }
+                price?.let {
+                    offer
+                        .textAt("[itemprop=name]")
+                        .orEmpty()
+                        .substringAfterLast("|")
+                        .trim() to it
+                }
             }
         if (offers.isEmpty()) {
-            return document.select("[itemprop=price][content]").mapNotNull { it.attr("content").toBigDecimalOrNull() }.minOrNull() to null
+            val lowest = document.select("[itemprop=price][content]").mapNotNull { it.attr("content").toBigDecimalOrNull() }.minOrNull()
+            return Triple(lowest, null, null)
         }
         val (door, online) = offers.partition { (category, _) -> isBoxOfficeLabel(category) }
-        val presale = online.filterNot { (category, _) -> CONCESSION_CATEGORY.containsMatchIn(category) }.minOfOrNull { it.second }
-        return presale to door.minOfOrNull { it.second }
+        val tiers = online.filterNot { (category, _) -> CONCESSION_CATEGORY.containsMatchIn(category) }
+        val note =
+            tiers
+                .takeIf { t ->
+                    t.map { it.second.stripTrailingZeros() }.distinct().size > 1
+                }?.joinToString(" / ") { (category, price) -> "$category ${euros(price)}" }
+        return Triple(tiers.minOfOrNull { it.second }, door.minOfOrNull { it.second }, note)
     }
+
+    /** A price as the venue prints it: `24,50 €`. */
+    private fun euros(price: BigDecimal): String = "%.2f €".format(Locale.GERMANY, price)
 
     /**
      * The artist list for concerts: the title is the headliner (unless a placeholder like "TBA"),
