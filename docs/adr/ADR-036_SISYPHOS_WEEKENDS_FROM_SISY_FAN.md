@@ -8,6 +8,10 @@ only from Friday 22:00 to Sunday 04:00, Berlin time. A weekend that the ticket s
 
 **Implemented in [#2187](https://github.com/enorm-labs/event-junkie/issues/2187) on 2026-09-30.**
 
+**Amended by [ADR-038](ADR-038_SISYPHOS_PROGRAMME_FROM_THE_CLUB_CALENDAR.md).** The club publishes its programme in a calendar on its homepage. That
+calendar is now the primary site, and its titles and times win. The premise below that Sisyphos publishes no programme is false. The sisy.fan permission,
+the window and the credit stay.
+
 **Does not supersede anything.** [ADR-007](ADR-007_WEB_SCRAPING_STRATEGY.md) decided how a page is fetched and parsed. It did not decide which kinds of
 site may be a source. [ADR-008](ADR-008_IMPORT_JOB_SCHEDULING.md) decided that a source runs on a fixed interval. This ADR keeps the scheduler as it
 is. The window is in the Sisyphos importer, not in the scheduler.

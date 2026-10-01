@@ -19,27 +19,28 @@ import java.time.ZonedDateTime
 import kotlin.coroutines.cancellation.CancellationException
 
 /**
- * Website importer for Sisyphos: its Shopify ticket shop, and on weekends the fan-run timetable
- * at sisy.fan (ADR-036).
+ * Website importer for Sisyphos: the club's own calendar, its Shopify ticket shop, and on weekends
+ * the fan-run timetable at sisy.fan (ADR-036, ADR-038).
  *
- * The club publishes no programme. Its only site is the merch shop, whose `TICKETS` collection
- * carries the few nights sold in advance — one `generationS` a month beside the T-shirts. Shopify
- * exposes every collection as JSON at `/collections/<handle>/products.json`, so one [ApiClient]
- * request feeds [SisyphosApiScraper]. The endpoint answers with a weak `ETag` that [ApiClient]
- * does not read, so every import returns [ImportResult.Success] and the idempotent `sourceId`
- * upsert absorbs the repeat.
+ * The calendar is the programme: one JSON feed, read by [SisyphosCalendarScraper], with every
+ * night's opening and closing. The shop's `TICKETS` collection, read by [SisyphosApiScraper],
+ * adds the presale price, the sold-out state and the product link, joined by the calendar's
+ * `ticketLink`, else by date. A shop night the calendar does not list yet stays an event of its
+ * own. No validators are read: a 304 on the calendar would also skip the shop and sisy.fan.
  *
- * The weekend programme comes from sisy.fan, whose developer allows it on two conditions: the site
+ * The weekend line-up comes from sisy.fan, whose developer allows it on two conditions: the site
  * is credited, and it is read as little as possible. So sisy.fan is read only inside
  * [inSisyfanWindow], whichever path started the import — scheduler, manual, forced or retry. A
- * shop night inside a sisy.fan weekend keeps its own title, date and ticket, and takes the
- * weekend's line-up and end; any other weekend is an event of its own.
+ * night that contains a sisy.fan weekend's first set takes its line-up; any other weekend is an
+ * event of its own.
  *
- * A shop-only run leaves out the nights dated today or earlier. Otherwise a run early on Sunday
- * would store a merged Saturday again without its line-up, because the line-up is replaced by the
- * scrape's (`AssociationSyncService`). Inside the window a shop failure, such as Shopify's 429, does
- * not cost the weekends: they merge into the shop's nights from the last run that read them. After a
- * restart there are none, so a ticketed weekend can then appear twice until the shop answers again.
+ * A run that did not read sisy.fan leaves out the nights dated today or earlier. Otherwise a run
+ * early on Sunday would store a merged weekend again without its line-up, because the line-up is
+ * replaced by the scrape's (`AssociationSyncService`). A run that lost the calendar or the shop is
+ * incomplete, so the stale cleanup cannot remove the nights it did not read. A failed shop is
+ * replaced by its nights from the last run that read them; after a restart there are none, and
+ * the calendar nights go without a price until the shop answers again. The run fails only when
+ * the calendar, the shop and sisy.fan all deliver nothing.
  *
  * The shop's bot protection answers the importer `429` from a hosting address, while
  * curl from the same node gets `200` (#2199). That is a block on our client, and we do not disguise the
@@ -55,10 +56,11 @@ class SisyphosWebsiteImporter(
 
     override val eventSource: EventSource = EventSource.SISYPHOS
 
+    private val calendarScraper = SisyphosCalendarScraper()
     private val apiScraper = SisyphosApiScraper()
     private val timetableScraper = SisyfanTimetableScraper()
 
-    /** The shop's nights from the last run that read them, merged into when the shop fails in the window. */
+    /** The shop's nights from the last run that read them, joined into the calendar when the shop fails. */
     @Volatile
     private var lastShopNights: List<ScrapedEvent> = emptyList()
 
@@ -68,59 +70,44 @@ class SisyphosWebsiteImporter(
         lastModified: String?
     ): ImportResult {
         val now = ZonedDateTime.ofInstant(clock.instant(), BERLIN)
-        if (!inSisyfanWindow(now)) return shopOnly(fetchShop(url), now)
-        val shop = tryFetchShop(url)
-        val weekends = fetchWeekends()
-        return when {
-            weekends == null -> {
-                shopOnly(shop.getOrThrow(), now)
-            }
+        val calendar = attempt("calendar") { calendarScraper.scrape(apiClient.fetchJson(SisyphosCalendarScraper.FEED_URL)) }
+        val shop = attempt("ticket shop") { apiScraper.scrape(apiClient.fetchJson(url), url).also { lastShopNights = it } }
+        val weekends = if (inSisyfanWindow(now)) fetchWeekends() else null
+        if (calendar.isFailure && shop.isFailure && weekends == null) throw checkNotNull(shop.exceptionOrNull())
 
-            shop.isSuccess -> {
-                val nights = shop.getOrThrow()
-                logger.info { "Scraped ${nights.size} event(s) from the Sisyphos ticket shop and ${weekends.size} weekend(s) from sisy.fan" }
-                ImportResult.Success(events = mergeWeekends(nights, weekends), etag = null, lastModified = null)
-            }
-
-            else -> {
-                logger.warn(shop.exceptionOrNull()) {
-                    "Sisyphos ticket shop failed; importing ${weekends.size} sisy.fan weekend(s) with ${lastShopNights.size} shop night(s) from the last run"
-                }
-                // Incomplete, so the stale cleanup cannot remove shop nights this run did not read.
-                ImportResult.Success(events = mergeWeekends(lastShopNights, weekends), etag = null, lastModified = null, complete = false)
-            }
+        val nights = joinShop(calendar.getOrDefault(emptyList()), shop.getOrDefault(lastShopNights))
+        val events = weekends?.let { mergeWeekends(nights, it) } ?: nights.filter { it.eventDate.isAfter(now.toLocalDate()) }
+        logger.info {
+            "Scraped ${calendar.getOrNull()?.size ?: "no"} calendar night(s), ${shop.getOrNull()?.size ?: "no"} shop night(s) " +
+                "and ${weekends?.size ?: "no"} sisy.fan weekend(s) for Sisyphos; importing ${events.size} event(s)"
         }
+        return ImportResult.Success(events = events, etag = null, lastModified = null, complete = calendar.isSuccess && shop.isSuccess)
     }
 
-    private suspend fun fetchShop(url: String): List<ScrapedEvent> = apiScraper.scrape(apiClient.fetchJson(url), url).also { lastShopNights = it }
-
-    /** The shop's nights, or its failure: inside the window the weekends are still worth importing without them. */
-    @Suppress("TooGenericExceptionCaught") // A shop failure must not cost the weekends; outside the window it still fails the run
-    private suspend fun tryFetchShop(url: String): Result<List<ScrapedEvent>> =
+    /** One site's nights, or its failure, logged: the other sites are still worth importing without it. */
+    @Suppress("TooGenericExceptionCaught") // A failed site must not cost the others; the caller decides whether the run fails
+    private suspend fun attempt(
+        site: String,
+        fetch: suspend () -> List<ScrapedEvent>
+    ): Result<List<ScrapedEvent>> =
         try {
-            Result.success(fetchShop(url))
+            Result.success(fetch())
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
+            logger.warn(e) { "Failed to read the Sisyphos $site; importing the other sites" }
             Result.failure(e)
         }
 
-    /** A run without sisy.fan: the shop's nights after today, so a merged line-up is never stored again without its weekend. */
-    private fun shopOnly(
-        nights: List<ScrapedEvent>,
-        now: ZonedDateTime
-    ): ImportResult {
-        logger.info { "Scraped ${nights.size} event(s) from the Sisyphos ticket shop; sisy.fan not read" }
-        return ImportResult.Success(events = nights.filter { it.eventDate.isAfter(now.toLocalDate()) }, etag = null, lastModified = null)
-    }
-
-    /** The weekends on sisy.fan, or null when the page failed, which makes the run shop-only. */
-    @Suppress("TooGenericExceptionCaught") // A failed sisy.fan fetch must not cost the shop's nights
+    /** The weekends on sisy.fan, or null when the page failed. */
+    @Suppress("TooGenericExceptionCaught") // A failed sisy.fan fetch must not cost the calendar and the shop
     private suspend fun fetchWeekends(): List<ScrapedEvent>? =
         try {
             timetableScraper.scrape(htmlFetcher.fetchDocument(SISYFAN_URL))
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
-            logger.warn(e) { "Failed to read sisy.fan; importing the Sisyphos ticket shop only" }
+            logger.warn(e) { "Failed to read sisy.fan; importing without the weekend line-ups" }
             null
         }
 
@@ -130,28 +117,75 @@ class SisyphosWebsiteImporter(
 }
 
 /**
- * The shop's nights with each sisy.fan weekend merged into the night it contains, then the weekends
- * no shop night claimed. A merged night keeps its date, because the slug contains it.
+ * The calendar's nights, each with the shop night it sells joined in, then the shop nights the
+ * calendar does not list. A shop night joins the calendar night whose `ticketLink` names the same
+ * product, else the one on the same date. The calendar keeps its title and times, and takes the
+ * shop's price, sold-out state and product link.
+ */
+internal fun joinShop(
+    calendar: List<ScrapedEvent>,
+    shop: List<ScrapedEvent>
+): List<ScrapedEvent> {
+    val unclaimed = shop.toMutableList()
+    val nights =
+        calendar.map { night ->
+            val handle = night.ticketUrl?.let(::shopHandle)
+            val sold =
+                unclaimed.firstOrNull { handle != null && it.ticketUrl?.let(::shopHandle) == handle }
+                    ?: unclaimed.firstOrNull { it.eventDate == night.eventDate }
+                    ?: return@map night
+            unclaimed -= sold
+            night.copy(pricePresale = sold.pricePresale, soldOut = sold.soldOut, ticketUrl = sold.ticketUrl)
+        }
+    val listed = nights.map { it.sourceId }.toSet()
+    return nights + unclaimed.filter { it.sourceId !in listed }
+}
+
+/** The product handle in a shop link `…/products/<handle>`, or null for any other page. */
+private fun shopHandle(url: String): String? = SHOP_PRODUCT.find(url)?.groupValues?.get(1)
+
+private val SHOP_PRODUCT = Regex("""/products/([^/?#]+)""")
+
+/**
+ * The nights with each sisy.fan weekend merged into the night with its key or the night that
+ * contains its first set, then the weekends no night claimed. A merged night keeps its date and times, because the slug contains
+ * the date and the calendar's times are the club's; a night without times, which only the shop
+ * sold, takes the weekend's end.
  */
 internal fun mergeWeekends(
-    shop: List<ScrapedEvent>,
+    nights: List<ScrapedEvent>,
     weekends: List<ScrapedEvent>
 ): List<ScrapedEvent> {
     val claimed = mutableSetOf<String>()
-    val nights =
-        shop.map { night ->
-            val weekend =
-                weekends.firstOrNull { night.eventDate in it.eventDate..(it.endDate ?: it.eventDate) }
-                    ?: return@map night
+    val merged =
+        nights.map { night ->
+            val weekend = weekends.firstOrNull { it.sourceId == night.sourceId || night.contains(it) } ?: return@map night
             claimed += weekend.sourceId
             night.copy(
                 artists = weekend.artists,
-                endDate = weekend.endDate,
-                endTime = weekend.endTime,
+                endDate = night.endDate ?: weekend.endDate,
+                endTime = night.endTime ?: weekend.endTime,
                 lineupSourceUrl = weekend.lineupSourceUrl
             )
         }
-    return nights + weekends.filter { it.sourceId !in claimed }
+    val listed = merged.map { it.sourceId }.toSet()
+    return merged + weekends.filter { it.sourceId !in claimed && it.sourceId !in listed }
+}
+
+/**
+ * Whether [weekend]'s first set falls inside this night. A timed night compares the instant, so a
+ * Thursday night ending on Friday at 03:00 does not take the Friday weekend; a night without times
+ * falls back to its date lying within the weekend's days.
+ */
+private fun ScrapedEvent.contains(weekend: ScrapedEvent): Boolean {
+    val opens = startTime?.let { eventDate.atTime(it) }
+    val closes = endTime?.let { (endDate ?: eventDate).atTime(it) }
+    val firstSet = weekend.startTime?.let { weekend.eventDate.atTime(it) }
+    return if (opens != null && closes != null && firstSet != null) {
+        firstSet in opens..closes
+    } else {
+        eventDate in weekend.eventDate..(weekend.endDate ?: weekend.eventDate)
+    }
 }
 
 /**
@@ -176,26 +210,29 @@ private val SISYFAN_WINDOW_CLOSES: LocalTime = LocalTime.of(4, 0)
 val SISYPHOS_LIMITATIONS =
     VenueLimitations(
         EventSource.SISYPHOS,
-        AcceptedLimitation(LimitedAspect.EVENT_TYPE, "the shop files every night as a ticket product with no category; each is stored as a party"),
-        AcceptedLimitation(LimitedAspect.DOORS_TIME, "a ticket product names a day and never a time, and sisy.fan times only the sets"),
+        AcceptedLimitation(
+            LimitedAspect.EVENT_TYPE,
+            "the calendar files nights with no category; each is stored as a party, the market and the open day included"
+        ),
+        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the calendar gives the opening, stored as the start, and no separate doors time"),
         AcceptedLimitation(
             LimitedAspect.START_TIME,
-            "a ticket product names a day and never a time; a shop night keeps no start even when sisy.fan times its weekend's first set"
+            "a night the calendar does not list yet comes from the shop alone, whose product names a day and never a time"
         ),
         AcceptedLimitation(
             LimitedAspect.ARTISTS,
-            "the shop names no DJ anywhere; the line-up comes from sisy.fan, which posts a weekend on Friday night or Saturday and is read only then"
+            "the calendar and the shop name no DJ; the line-up comes from sisy.fan, which posts a weekend on Friday night or Saturday and is read only then"
         ),
-        AcceptedLimitation(LimitedAspect.GENRE, "the shop names no musical style; every night takes the club's Techno, House default"),
-        AcceptedLimitation(LimitedAspect.PRICE_BOX_OFFICE, "the shop sells online only and states no door price"),
+        AcceptedLimitation(LimitedAspect.GENRE, "neither the calendar nor the shop names a musical style; every night takes the club's Techno, House default"),
+        AcceptedLimitation(LimitedAspect.PRICE_BOX_OFFICE, "neither the calendar nor the shop states a door price"),
         AcceptedLimitation(
             LimitedAspect.TICKET_URL,
-            "the shop's bot protection answers the importer 429 from a hosting address, and we do not disguise the client to pass it"
+            "the shop sells few nights, and its bot protection answers the importer 429 from a hosting address; we do not disguise the client"
         ),
         AcceptedLimitation(
             LimitedAspect.PRICE_PRESALE,
-            "the shop's bot protection answers the importer 429 from a hosting address, and we do not disguise the client to pass it"
+            "the shop sells few nights, and its bot protection answers the importer 429 from a hosting address; we do not disguise the client"
         ),
-        AcceptedLimitation(LimitedAspect.CANCELLATION, "a cancelled night is removed from the shop rather than marked"),
+        AcceptedLimitation(LimitedAspect.CANCELLATION, "neither the calendar nor the shop marks a cancelled night"),
         houseGenre = "Techno, House"
     )

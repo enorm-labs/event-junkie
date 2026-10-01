@@ -35,7 +35,7 @@ class SisyfanTimetableScraperTest {
     fun `the weekend is one party keyed on its Friday`() {
         weekend.title shouldBe "HAPPY RAVE HAPPY LIFE"
         weekend.eventType shouldBe EventType.PARTY.name
-        weekend.sourceId shouldBe "sisyphos:weekend-2026-09-25"
+        weekend.sourceId shouldBe "sisyphos:2026-09-25"
     }
 
     @Test

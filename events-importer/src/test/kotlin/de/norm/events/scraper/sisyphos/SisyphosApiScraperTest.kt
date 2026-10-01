@@ -38,7 +38,7 @@ class SisyphosApiScraperTest {
     @Test
     fun `keeps only the tickets that name a date`() {
         events shouldHaveSize 1
-        events.single().sourceId shouldBe "sisyphos:generations-10-okt-2026"
+        events.single().sourceId shouldBe "sisyphos:2026-10-10"
     }
 
     @Test

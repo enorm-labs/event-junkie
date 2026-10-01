@@ -2,6 +2,7 @@ package de.norm.events.scraper.sisyphos
 
 import de.norm.events.event.EventType
 import de.norm.events.scraper.BERLIN
+import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -22,7 +23,8 @@ import java.time.format.DateTimeParseException
  * `b2b` slot links both. Break rows carry no `x-data` and are skipped.
  *
  * The weekend becomes one event from its first set to its last. Its `sourceId` is keyed on the
- * Friday, so it stays the same whatever id sisy.fan gives the weekend.
+ * Friday, the day the club's calendar opens the weekend, so it stays the same whatever id sisy.fan
+ * gives the weekend, and a weekend the calendar did not deliver keeps the calendar's key.
  */
 class SisyfanTimetableScraper {
     private val logger = KotlinLogging.logger {}
@@ -66,7 +68,7 @@ class SisyfanTimetableScraper {
             endTime = last.toLocalTime(),
             sourceUrl = page,
             lineupSourceUrl = page,
-            sourceId = "sisyphos:weekend-$from",
+            sourceId = "${EventSource.SISYPHOS.sourceIdPrefix}$from",
             artists = artists
         )
     }

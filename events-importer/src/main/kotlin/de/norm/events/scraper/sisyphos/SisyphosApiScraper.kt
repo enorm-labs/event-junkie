@@ -25,7 +25,8 @@ import java.time.LocalDate
  * only date is in the title (`generationS 10. OKT 2026`). A product with no date in its title
  * or `body_html` — the Sauniphos sauna weekend names only weekdays — is skipped rather than
  * stored on a guessed day. A night whose every variant is unavailable is sold out, and the
- * lowest variant price is the online (presale) price.
+ * lowest variant price is the online (presale) price. The `sourceId` is keyed on the date, like
+ * the calendar's, so a shop night and its calendar entry are one event.
  */
 class SisyphosApiScraper {
     private val logger = KotlinLogging.logger {}
@@ -83,7 +84,7 @@ class SisyphosApiScraper {
             logger.warn { "Sisyphos product '$handle' has no title, skipping" }
             return null
         }
-        val description = htmlToText(node.stringOrNull("body_html"))
+        val description = sisyphosHtmlToText(node.stringOrNull("body_html"))
         val (title, eventDate) = splitTitleAndDate(rawTitle, description)
         if (eventDate == null) {
             logger.warn { "Sisyphos product '$handle' names no date, skipping" }
@@ -105,7 +106,7 @@ class SisyphosApiScraper {
                     ?.stringOrNull("src")
                     ?.takeIf { it.startsWith("http") },
             sourceUrl = productUrl,
-            sourceId = "${EventSource.SISYPHOS.sourceIdPrefix}$handle",
+            sourceId = "${EventSource.SISYPHOS.sourceIdPrefix}$eventDate",
             ticketUrl = productUrl,
             pricePresale = variants.mapNotNull { it.stringOrNull("price")?.toBigDecimalOrNull() }.minOrNull(),
             soldOut = variants.isNotEmpty() && variants.none { it.path("available").asBoolean(false) }
@@ -143,17 +144,6 @@ class SisyphosApiScraper {
         }
     }
 
-    /** Flattens the Shopify `body_html` blurb to trimmed plain text, keeping the shop's own line breaks. */
-    private fun htmlToText(html: String?): String? =
-        html
-            ?.let { Jsoup.parseBodyFragment(it).wholeText() }
-            ?.replace('\u00A0', ' ')
-            ?.lines()
-            ?.map { it.trim() }
-            ?.filter { it.isNotEmpty() }
-            ?.joinToString("\n")
-            .blankToNull()
-
     private fun String.toBigDecimalOrNull(): BigDecimal? = runCatching { BigDecimal(this) }.getOrNull()
 
     private companion object {
@@ -166,3 +156,20 @@ class SisyphosApiScraper {
         const val MONTH_ABBREVIATION_LENGTH = 3
     }
 }
+
+/**
+ * Flattens a Sisyphos HTML blurb to trimmed plain text, one line per block or `<br>`. The shop
+ * breaks lines with `<br>`, the calendar with paragraphs and headings.
+ */
+internal fun sisyphosHtmlToText(html: String?): String? =
+    html
+        ?.replace(LINE_BREAK, "$0\n")
+        ?.let { Jsoup.parseBodyFragment(it).wholeText() }
+        ?.replace('\u00A0', ' ')
+        ?.lines()
+        ?.map { it.trim() }
+        ?.filter { it.isNotEmpty() }
+        ?.joinToString("\n")
+        .blankToNull()
+
+private val LINE_BREAK = Regex("""(?i)</(?:p|h[1-6]|li|div)>|<br\s*/?>""")
