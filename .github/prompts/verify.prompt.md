@@ -75,7 +75,7 @@ scripts/cluster-assertions.sh
 scripts/uid-consistency.sh
 scripts/architecture-diagram.sh check
 helm template t deploy/charts/event-junkie --values deploy/charts/event-junkie/values-k3d.yaml | flux schema validate - -s ecosystem --verbose
-flux schema validate deploy/clusters -s ecosystem --verbose --skip-kind kustomize.config.k8s.io/v1beta1/Kustomization
+flux schema validate deploy/clusters -s ecosystem --verbose --skip-json-path v1/Secret:/sops
 ```
 
 `helm unittest` needs the plugin: `helm plugin install https://github.com/helm-unittest/helm-unittest --version <HELM_UNITTEST_VERSION from validate-chart.yml> --verify=false`

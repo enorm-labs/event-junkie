@@ -65,13 +65,20 @@ nuclei_templates() {
     grep -oE 'Templates loaded for current scan: [0-9]+' "$1" | tail -1 | grep -oE '[0-9]+$' || true
 }
 
+# flux-schema builds every kustomize overlay (0.15.0), so its Summary counts overlays, not files. Each
+# resource line names the manifest it came from as `(origin: <path>)`; the distinct paths are the files.
+# Prints nothing when no line carries an origin, so a changed format is an error and not a zero.
+flux_origins() {
+    { grep -oE '\(origin: [^)]+\)' "$1" || true; } | sort -u | awk 'END { if (NR) print NR }'
+}
+
 extract() {
     local key="$1" file="$2"
     case "$key" in
         zizmor-ignored) count ignored "$file" ;;
         zizmor-suppressed) count suppressed "$file" ;;
         flux-clusters-resources) sed -nE 's/^Summary: ([0-9]+) resources found.*/\1/p' "$file" | tail -1 ;;
-        flux-clusters-files) sed -nE 's/^Summary: [0-9]+ resources found in ([0-9]+) files.*/\1/p' "$file" | tail -1 ;;
+        flux-clusters-files) flux_origins "$file" ;;
         zap-*-urls) zap_urls "$file" ;;
         zap-*-rules) zap_rules "$file" ;;
         nuclei-*-templates) nuclei_templates "$file" ;;
