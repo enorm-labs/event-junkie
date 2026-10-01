@@ -270,6 +270,9 @@ enum class EventSource {
     /** Uber Eats Music Hall Berlin – the arena's smaller neighbour, programming touring bands, comedy and staged shows. */
     UBER_EATS_MUSIC_HALL,
 
+    /** ufaFabrik Berlin – a live-and-work community in Tempelhof's former UFA film works since 1979, with three stages for concerts, cabaret and theatre. */
+    UFA_FABRIK,
+
     /** UFO im Velodrom Berlin – the smaller hall configured inside the Velodrom, listed as its own venue on the shared Velomax programme. */
     UFO_IM_VELODROM,
 

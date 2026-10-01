@@ -81,6 +81,7 @@ import de.norm.events.scraper.supamolly.SUPAMOLLY_LIMITATIONS
 import de.norm.events.scraper.tempodrom.TEMPODROM_LIMITATIONS
 import de.norm.events.scraper.tiffanyclub.TIFFANY_CLUB_LIMITATIONS
 import de.norm.events.scraper.tresor.TRESOR_LIMITATIONS
+import de.norm.events.scraper.ufafabrik.UFA_FABRIK_LIMITATIONS
 import de.norm.events.scraper.urania.URANIA_LIMITATIONS
 import de.norm.events.scraper.urbanspree.URBAN_SPREE_LIMITATIONS
 import de.norm.events.scraper.velomax.VELOMAX_LIMITATIONS
@@ -182,6 +183,7 @@ object AcceptedLimitations {
             THEATER_IM_DELPHI_LIMITATIONS,
             TIFFANY_CLUB_LIMITATIONS,
             TRESOR_LIMITATIONS,
+            UFA_FABRIK_LIMITATIONS,
             URANIA_LIMITATIONS,
             URBAN_SPREE_LIMITATIONS,
             VELOMAX_LIMITATIONS,

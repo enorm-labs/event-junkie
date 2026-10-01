@@ -67,7 +67,7 @@ the importer, so silent green's 23 rows are one row. A festival's days are not f
 
 ## 3. What is deliberately excluded
 
-Four exclusions, each implemented in exactly one place so it can be revisited without archaeology.
+Five exclusions, each implemented in exactly one place so it can be revisited without archaeology.
 
 ### 3.1 Sport
 
@@ -115,6 +115,17 @@ honestly.
 concert to a venue, so `.ConcertListItem-location` is the only filter needed. It sits in _Blocked_ on **scope, not on
 scraping**. Answer §5's first question and the importer is a short job.
 
+### 3.5 Children's shows
+
+**Not imported.** A puppet show for a Kita group at 10:00 is not an evening on a stage for an adult audience. The same
+holds for a family sing-along on a Saturday afternoon. A show for teenagers with a minimum age, such as "ab 13 Jahre",
+stays in scope.
+
+**ufaFabrik** set the precedent. It prices a children's show per child, per Kita child or per accompanying
+Erzieher\*in, and no evening show carries one of these labels. One predicate holds the rule:
+`UfaFabrikMonthPageScraper.isChildrensShow`. A venue with children's shows and no such price label needs its own
+signal. Decide it in that importer's PR, and record the signal here.
+
 ## 4. What is in scope, and sometimes surprises people
 
 - **Not just live music.** A theatre, a comedy club or an arena-scale room is in scope. **Bar jeder Vernunft** set that precedent: its programme is imported,
@@ -130,17 +141,18 @@ scraping**. Answer §5's first question and the importer is a short job.
 ## 5. Coverage decisions
 
 Each of these changes what the app _is_, so **none may be settled by an importer PR.** The first five were decided on
-2026-08-08, and the recurring nights on 2026-09-30. The one that is still open is open on _sequencing_, not on
+2026-08-08, the recurring nights on 2026-09-30, and the children's shows on 2026-10-01. The one that is still open is open on _sequencing_, not on
 principle.
 
 | Question                                                                                     | Decision                      | Blocked on       | What it costs                                                                                                            |
 | -------------------------------------------------------------------------------------------- | ----------------------------- | ---------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| **Comedy clubs?** (Comedy Café Berlin, Quatsch Comedy Club, …)                               | ✅ **Yes**                    | nothing          | Cheapest of the six. Cosmic Comedy is already imported, so this is more venues in a category that exists                 |
+| **Comedy clubs?** (Comedy Café Berlin, Quatsch Comedy Club, …)                               | ✅ **Yes**                    | nothing          | Cheapest of the seven. Cosmic Comedy is already imported, so this is more venues in a category that exists               |
 | **Theatres?** (Volksbühne, Schaubühne, Berliner Ensemble, …)                                 | ✅ **Yes**                    | nothing          | Low. Theater im Delphi, Heimathafen and Bar jeder Vernunft are already imported — coverage, not a new category           |
 | **Classical / orchestras?** (Konzerthaus, Philharmonie, RBB Sendesaal, Berliner Symphoniker) | ⏸ **Deferred** — not rejected | the artist model | Medium. `ArtistRole` and the genre vocabulary need extending **first**; the scraping is already solved for RBB Sendesaal |
 | **Exhibitions as first-class runs?**                                                         | ✅ **Yes** — done (#337)      | nothing          | Done. ADR-029 gave the row an end; an exhibition is one row from opening to closing day — see §2                         |
 | **Sport?**                                                                                   | ❌ **No**                     | —                | Settled. Different venues, different audience, and past the point where this is a music app                              |
 | **Recurring bar nights?** (a punk Tresen, an Open Jam, a karaoke night)                      | ✅ **Yes** — if not daily     | nothing          | Low. A night that recurs weekly or fortnightly is programme. A bar that is the same every evening is opening hours       |
+| **Children's shows?** (Kita mornings, family afternoons)                                     | ❌ **No**                     | —                | Settled. Not an evening programme for an adult audience; §3.5 holds the rule                                             |
 
 **What the two yeses unlock.** A comedy or theatre venue can be moved out of [Blocked](EVENT_DATA_SOURCES.md) and
 scaffolded like any other source. No ADR, no model change, no further discussion. Prioritise them by programme richness

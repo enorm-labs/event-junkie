@@ -22,8 +22,8 @@ repairing live in the [issue tracker](https://github.com/enorm-labs/event-junkie
 
 | Status                              | Meaning                                                                              | Count |
 | ----------------------------------- | ------------------------------------------------------------------------------------ | ----: |
-| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |    97 |
-| 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |     9 |
+| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |    98 |
+| 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |     8 |
 | ⛔ [Blocked](#-blocked--deferred)   | Website analyzed, but no usable listings (no programme page, JS-only, or too sparse) |   119 |
 | ❓ [Unanalyzed](#-not-analyzed-yet) | URL recorded, but the website still needs a first look                               |    24 |
 
@@ -120,6 +120,7 @@ schema change.
 | Tresor                           | https://tresorberlin.com/club/events/                       | Techno Club  | WordPress; floor-grouped lineup; detail pages          |
 | Uber Arena                       | https://www.uber-arena.de/events/all                        | Arena        | AEG CMS; list + detail; no sport imported              |
 | Uber Eats Music Hall             | https://www.uber-eats-music-hall.de/events/all              | Concert Hall | Shares the Uber Arena parsers; month names, no cats    |
+| ufaFabrik                        | https://ufafabrik.de/spielplan.html                         | Theater      | Drupal month pages; this month + next; no kids' shows  |
 | UFO im Velodrom                  | https://www.velomax.de/events                               | Concert Hall | Shares the VELOMAX listing                             |
 | Urania                           | https://www.urania.de/kalender/                             | Concert Hall | One house; no source attributes an event to a hall     |
 | Urban Spree                      | https://www.urbanspree.com/program/                         | Club         | MODX; listing descending + paginated; walks pages      |
@@ -158,23 +159,20 @@ least as heavily as an RA count when the next batch is prioritised.
 | KAOS Berlin        | https://kaosberlin.de/veranstaltungen/         | Techno Club | Low      | The Events Calendar REST API, as Cosmic Comedy; 4 upcoming  |
 | DSTRKT Club Berlin | https://www.dstrkt.de/                         | Club        | Low      | Wix one-pager; 2 dated events, which is the whole programme |
 | Kunstfabrik Schlot | https://kunstfabrik-schlot.de/programm/        | Club        | High     | WordPress list; year, time and price only on detail pages   |
-| ufaFabrik          | https://ufafabrik.de/spielplan.html            | Theater     | High     | Drupal calendar; `/program/YYYYMM` month pages; prices      |
 | Orania.Berlin      | https://orania.berlin/concerts                 | Bar         | Medium   | TYPO3; `/concerts/page/N`; `Event` JSON-LD; always free     |
 | ZIMMER 16          | https://zimmer16.com/                          | Other       | Medium   | Divi + YesTicket cards; time and price on YesTicket         |
 | Ballhaus Wedding   | https://www.ballhauswedding.de/veranstaltungen | Other       | Medium   | Wix rich text; 117 entries with year-less dates; no images  |
 | Soulcat            | https://soulcat-berlin.com/programm/           | Bar         | Low      | TEC REST API; one week ahead; titles only                   |
 | Erreichbar         | https://radar.squat.net/en/node/6653           | Other       | Low      | radar group 6653; a fortnightly punk bar night; no site     |
 
-**The six rows below DSTRKT, Erreichbar aside, came from the tipBerlin sweep on 2026-09-30.** Each has a quirk that the importer must
+**The five rows below DSTRKT, Erreichbar aside, came from the tipBerlin sweep on 2026-09-30.** Each has a quirk that the importer must
 handle:
 
 - **Kunstfabrik Schlot** is the real site. `schlot.de` shows only a placeholder. The Events Calendar REST API and iCal
   are switched off. Ignore the `Product` JSON-LD on the detail page, because its price is `0` USD.
-- **ufaFabrik** is about 29 % music, 48 % cabaret, comedy and theatre, and 23 % children's shows. Filter on the genre
-  label, as Gärten der Welt does with `isProgrammeCategory`.
 - **ZIMMER 16** and **Ballhaus Wedding** are small mixed stages. Music is one part of a programme with improv, readings
   and dance socials. Ballhaus Wedding's dates have no year, so take it from the month headings. Its entries have no
-  fixed shape, so that parser is the most brittle of the six.
+  fixed shape, so that parser is the most brittle of the five.
 - **Soulcat** publishes one week ahead, and four of its seven events are one recurring bar night.
 
 **Gärten der Welt** set the precedent for the next park- or campus-like source when it was
