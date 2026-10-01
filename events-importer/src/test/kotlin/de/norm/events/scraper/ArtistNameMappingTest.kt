@@ -1661,6 +1661,17 @@ class ArtistNameMappingTest {
         buildArtistsForEventType("Comedy, Pizza and Shots – SHOWCASE FRIDAY", null, "COMEDY").shouldBeEmpty()
     }
 
+    @Test
+    fun `a head-count is not an act, a name that starts with a number is`() {
+        isNonArtistName("20 DJ's") shouldBe true
+        isNonArtistName("20 DJs") shouldBe true
+        isNonArtistName("3 Bands") shouldBe true
+        isNonArtistName("12 Künstlerinnen") shouldBe true
+        isNonArtistName("2 Many DJs") shouldBe false
+        isNonArtistName("2raumwohnung") shouldBe false
+        isNonArtistName("UFO 361") shouldBe false
+    }
+
     // #315 — a variety or comedy house bills a solo act as `<Performer> – <Show>`.
     @Test
     fun `buildArtistsForEventType reads a solo bill off a show title and leaves a production alone`() {

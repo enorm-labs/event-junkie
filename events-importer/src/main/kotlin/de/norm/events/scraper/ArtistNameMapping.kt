@@ -676,13 +676,23 @@ fun isGuestSlotLabel(name: String): Boolean = GUEST_SLOT_PATTERN.matches(name.tr
 /**
  * True when [name] must never be stored as an artist: a placeholder ("TBA"), a bare role label
  * ("Special Guest"), a segment ("Acid Aftershow"), an event ("Shred Fest"), a "DJ set" label, a
- * guest slot ("+ Guest"), a curated title ("The Revival Tour"), or a name that slugs to nothing
- * ("-"). The single predicate applied wherever names are resolved.
+ * guest slot ("+ Guest"), a curated title ("The Revival Tour"), a head-count ("20 DJ's"), or a
+ * name that slugs to nothing ("-"). The single predicate applied wherever names are resolved.
  */
 fun isNonArtistName(name: String): Boolean =
     isPlaceholderName(name) || isNonArtistLabel(name) || isEventSegmentLabel(name) ||
         isNonArtistEvent(name) || isScoreConcertTitle(name) || isDjSetFormatLabel(name) || isGuestSlotLabel(name) || isDenylistedNonArtist(name) ||
-        isTitleFragment(name) || isSlugless(name) || isBareNumber(name) || isTimeRange(name) || isNumberedVolume(name)
+        isTitleFragment(name) || isSlugless(name) || isBareNumber(name) || isTimeRange(name) || isNumberedVolume(name) ||
+        isHeadCount(name)
+
+/**
+ * A number of performers rather than a performer: Gretchen bills `Afro Haus Soundsystem / + 20 DJ's`
+ * (#2270). The number comes first and the noun directly after, so `2 Many DJs` is still an act.
+ */
+private val HEAD_COUNT = Regex("""\d+\s*(?:dj'?s?|djanes?|acts?|bands?|artists?|künstler(?:innen)?|musiker(?:innen)?)""", RegexOption.IGNORE_CASE)
+
+/** Whether [name] is only a [HEAD_COUNT]. */
+fun isHeadCount(name: String): Boolean = HEAD_COUNT.matches(name.trim())
 
 /** A `Vol 5` / `Vol. 12` / `Volume 3` ending: a series edition, never a performer (#1952). */
 private val NUMBERED_VOLUME = Regex("""\bvol(?:\.|ume)?\s*\d+$""", RegexOption.IGNORE_CASE)
