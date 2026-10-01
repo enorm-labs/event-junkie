@@ -61,7 +61,9 @@ jobs:
     name: Frontend build
     needs: detect-changes
     if: needs.detect-changes.outputs.relevant == 'true'
-    runs-on: ubuntu-latest
+    # Pinned off `ubuntu-latest`: on the Ubuntu 26 image `playwright install-deps` took 25 and 12 minutes
+    # in two runs, the apt mirror serving ~93 kB/s; Ubuntu 24 installs the same set in about 30 seconds.
+    runs-on: ubuntu-24.04
     defaults:
       run:
         working-directory: events-frontend
@@ -129,14 +131,17 @@ jobs:
 
       - name: Get Playwright version
         id: playwright-version
-        run: echo "PLAYWRIGHT_VERSION=$(npx playwright --version | awk '{print $2}')" >> $GITHUB_OUTPUT
+        run: |
+          echo "PLAYWRIGHT_VERSION=$(npx playwright --version | awk '{print $2}')" >> $GITHUB_OUTPUT
+          . /etc/os-release && echo "OS_RELEASE=${ID}-${VERSION_ID}" >> $GITHUB_OUTPUT
 
       - name: Cache Playwright browsers
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         id: playwright-cache
         with:
           path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ steps.playwright-version.outputs.PLAYWRIGHT_VERSION }}
+          # The distro release, not `runner.os`: an Ubuntu 24 WebKit restored on Ubuntu 26 dies on `libicudata.so.74`.
+          key: playwright-${{ steps.playwright-version.outputs.OS_RELEASE }}-${{ steps.playwright-version.outputs.PLAYWRIGHT_VERSION }}
 
       - name: Install Playwright browsers
         if: steps.playwright-cache.outputs.cache-hit != 'true'

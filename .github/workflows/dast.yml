@@ -293,7 +293,8 @@ jobs:
   # five-minute browser suite to it makes either failure the other's problem.
   e2e-k3d:
     name: Un-mocked e2e against k3d
-    runs-on: ubuntu-latest
+    # Pinned for its Playwright install, as `build-frontend.yml`'s `build` job is.
+    runs-on: ubuntu-24.04
     # Measured locally: flux-up 4 minutes, the suite 5 seconds. The margin is the cluster, not the tests.
     timeout-minutes: 30
     if: >-
