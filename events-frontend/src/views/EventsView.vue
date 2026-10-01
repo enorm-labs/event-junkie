@@ -7,6 +7,7 @@ import EventRow from '@/components/EventRow.vue'
 import { useCompactView } from '@/composables/useCompactView'
 import { CARD_GRID_CLASS, CARD_LIST_CLASS } from '@/lib/utils'
 import EventFilterBar from '@/components/EventFilterBar.vue'
+import PaginationControls from '@/components/PaginationControls.vue'
 import { type EventSearchParams, useEventSearch } from '@/composables/useEvents'
 import { useEventFilters } from '@/composables/useEventFilters'
 import { usePagedList } from '@/composables/usePagedList'
@@ -97,21 +98,7 @@ const { compact } = useCompactView()
         />
       </div>
 
-      <div v-if="totalPages > 1" class="flex items-center justify-between gap-3 pt-2">
-        <Button :disabled="currentPage <= 0" variant="outline" @click="goToPage(currentPage - 1)">
-          {{ t('common.actions.previous') }}
-        </Button>
-        <span class="text-sm text-muted-foreground">
-          {{ t('common.pagination.pageOf', { current: currentPage + 1, total: totalPages }) }}
-        </span>
-        <Button
-          :disabled="currentPage >= totalPages - 1"
-          variant="outline"
-          @click="goToPage(currentPage + 1)"
-        >
-          {{ t('common.actions.next') }}
-        </Button>
-      </div>
+      <PaginationControls :current-page="currentPage" :total-pages="totalPages" @goto="goToPage" />
     </template>
   </main>
 </template>

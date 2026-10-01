@@ -4,6 +4,7 @@ import { type LocationQueryRaw, useRoute, useRouter } from 'vue-router'
 import { Button } from '@/components/ui/button'
 import BaseInput from '@/components/BaseInput.vue'
 import BaseSelect from '@/components/BaseSelect.vue'
+import PaginationControls from '@/components/PaginationControls.vue'
 import VenueCard from '@/components/VenueCard.vue'
 import VenueRow from '@/components/VenueRow.vue'
 import { useCompactView } from '@/composables/useCompactView'
@@ -118,21 +119,7 @@ const { compact } = useCompactView()
         <VenueCard v-for="venue in page.content" :key="venue.slug" :venue="venue" as="h2" />
       </div>
 
-      <div v-if="totalPages > 1" class="flex items-center justify-between gap-3 pt-2">
-        <Button :disabled="currentPage <= 0" variant="outline" @click="goToPage(currentPage - 1)">
-          {{ t('common.actions.previous') }}
-        </Button>
-        <span class="text-sm text-muted-foreground">
-          {{ t('common.pagination.pageOf', { current: currentPage + 1, total: totalPages }) }}
-        </span>
-        <Button
-          :disabled="currentPage >= totalPages - 1"
-          variant="outline"
-          @click="goToPage(currentPage + 1)"
-        >
-          {{ t('common.actions.next') }}
-        </Button>
-      </div>
+      <PaginationControls :current-page="currentPage" :total-pages="totalPages" @goto="goToPage" />
     </template>
   </main>
 </template>
