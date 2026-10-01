@@ -101,6 +101,10 @@ source **name** (`Astra Kulturhaus` → `astra-kulturhaus`).
 verdict, so a source missing here can be created on a cluster and never import. Read the venue's legal and press pages; an agent records `UNCLEAR`, and a
 person confirms `PERMITTED` or `PROHIBITED` (`docs/licence-review/README.md` §3).
 
+**And the onboarding steps in the pull request**, under `## After deploy` with the `after-deploy` label: the new-venue block from
+[`/post-release`](post-release.prompt.md#the-format-a-pull-request-writes), copied as written, so a session that runs it after the release seeds, reviews
+and enables the source in the order the licence gate needs.
+
 ## 7. Verify
 
 ```bash
