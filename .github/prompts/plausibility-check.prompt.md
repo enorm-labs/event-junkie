@@ -48,8 +48,8 @@ The list endpoint pages, and defaults to twenty rows:
 curl -fsS "$ORIGIN/api/events?from=$FROM&to=$TO&size=200&page=0"   # PageResponseEventSummaryResponse: content, totalPages, totalElements
 ```
 
-Loop over `totalPages` into one JSON file under `temp/`, then `GET /api/events/{slug}` per row for `sourceUrl`, `ticketUrl`, `description`, `lineup`. Our own
-API; sequential is throttling enough. Pull the default listing too (`GET /api/events?size=200`, no dates) and keep rows dated before `$FROM` — the site's
+Loop over `totalPages` into one JSON file under `temp/`, then `GET /api/events/{slug}` per row for `sourceUrl`, `ticketUrl`, `description`, `lineup`,
+`imageWithheld` and `descriptionWithheld`. Our own API; sequential is throttling enough. Pull the default listing too (`GET /api/events?size=200`, no dates) and keep rows dated before `$FROM` — the site's
 _Running since_ rows, which the last Step 3 check tests.
 
 Report the shape first: rows in the window, rows per venue, venues with zero rows against the count the site registers. **A venue that always has events and
@@ -138,6 +138,9 @@ _verschoben_ / _postponed_, a `€` amount, the date, and the acts (heading bill
 
 **A tiered price is a MATCH when the row stores the lowest tier and the note names every tier** (#2083). A door priced by group or
 time (`10,00 € Ladies / 12,00 € Gents`) has no single figure, and the lowest one is read as a "from" price, as a presale "ab" price is.
+
+**A withheld field is a MATCH, whatever the page shows.** `imageWithheld` or `descriptionWithheld` true means the licence gate kept the field out on
+purpose ([SCRAPING_POSITION.md](../../docs/SCRAPING_POSITION.md) §3). A poster on the page and none in the row is that rule working (#2211).
 
 **The page is the reference, and not always right** (last year's date on a recurring event is a known pattern). The finding is the disagreement; say when
 the page looks wrong too.
