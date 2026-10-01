@@ -75,7 +75,10 @@ shows "05. August 2027".
 
 - **Every existing Sisyphos row changes its `sourceId`.** The stale cleanup removes the old rows from tomorrow on, and the next run inserts new ones. A row
   dated today keeps its slug and blocks its replacement. So deploy the change on a day with no Sisyphos event dated today.
-- **A run that loses the calendar or the shop is incomplete.** The stale cleanup does not run, so it cannot remove the nights that the run did not read.
+- **A run that loses the calendar is incomplete.** The stale cleanup does not run, so it cannot remove the nights that the run did not read.
+- **A run that loses only the shop is complete.** The shop answers the cluster 429 on every run (#2199). If that made the run incomplete, the cleanup
+  would never run, and a night the club removes would stay on the site. The cleanup ends at the last scraped date, so it does not reach the shop-only
+  nights after the calendar's last night.
 - **A run that does not read sisy.fan leaves out the nights dated today or earlier.** This applies to the calendar nights too.
 - **`SISYPHOS_LIMITATIONS` changes.** The start time is a limitation only for a shop night that the calendar does not list.
 - **`docs/EVENT_DATA_SOURCES.md` changes its Sisyphos row and the passage "A handful of tickets is not a programme".**

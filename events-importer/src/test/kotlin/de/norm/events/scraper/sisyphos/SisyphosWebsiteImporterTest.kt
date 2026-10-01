@@ -169,14 +169,19 @@ class SisyphosWebsiteImporterTest {
         }
 
     @Test
-    fun `a shop failure imports the calendar without prices as an incomplete run`() =
+    fun `a shop failure imports the calendar without prices as a complete run`() =
         runTest {
             coEvery { apiClient.fetchJson(feedUrl) } throws HttpFetchException(429, feedUrl)
             val result = importer.run()
             result.events shouldHaveSize 6
             result.events.mapNotNull { it.pricePresale }.shouldBeEmpty()
-            result.complete shouldBe false
+            result.complete shouldBe true
         }
+
+    @Test
+    fun `the stale cleanup stays windowed, so a complete run without the shop spares the shop-only nights`() {
+        importer.listsWholeProgramme shouldBe false
+    }
 
     @Test
     fun `a shop failure joins the shop nights of the last run`() =
