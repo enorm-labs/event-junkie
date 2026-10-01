@@ -1,11 +1,9 @@
 package de.norm.events.scraper.tiffanyclub
 
+import de.norm.events.scraper.AbstractSinglePageWebsiteImporter
 import de.norm.events.scraper.AcceptedLimitation
-import de.norm.events.scraper.EventImporter
 import de.norm.events.scraper.EventSource
-import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
-import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.VenueLimitations
@@ -27,37 +25,16 @@ import java.time.Clock
 class TiffanyClubWebsiteImporter(
     private val htmlFetcher: HtmlFetcher,
     clock: Clock = Clock.systemDefaultZone()
-) : EventImporter {
+) : AbstractSinglePageWebsiteImporter(htmlFetcher, "the Tiffany Club listing", TiffanyClubOverviewPageScraper(clock)::scrape) {
     private val logger = KotlinLogging.logger {}
 
     override val eventSource: EventSource = EventSource.TIFFANY_CLUB
     override val listsWholeProgramme: Boolean = true
     override val fetchesBeyondEntryPage: Boolean = true
 
-    private val overviewPageScraper = TiffanyClubOverviewPageScraper(clock)
     private val detailPageScraper = TiffanyClubDetailPageScraper()
 
-    override suspend fun importEvents(
-        url: String,
-        etag: String?,
-        lastModified: String?
-    ): ImportResult =
-        when (val fetchResult = htmlFetcher.fetch(url, etag, lastModified)) {
-            is FetchResult.NotModified -> {
-                ImportResult.NotModified
-            }
-
-            is FetchResult.Success -> {
-                val events = overviewPageScraper.scrape(fetchResult.document, url)
-                logger.info { "Scraped ${events.size} event(s) from the Tiffany Club listing" }
-
-                ImportResult.Success(
-                    events = events.map { addDescription(it) },
-                    etag = fetchResult.etag,
-                    lastModified = fetchResult.lastModified
-                )
-            }
-        }
+    override suspend fun postProcess(events: List<ScrapedEvent>): List<ScrapedEvent> = events.map { addDescription(it) }
 
     @Suppress("TooGenericExceptionCaught") // Intentional: a broken event page must not fail the whole import
     private suspend fun addDescription(event: ScrapedEvent): ScrapedEvent =

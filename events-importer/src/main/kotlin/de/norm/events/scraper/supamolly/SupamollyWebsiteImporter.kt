@@ -1,14 +1,11 @@
 package de.norm.events.scraper.supamolly
 
+import de.norm.events.scraper.AbstractSinglePageWebsiteImporter
 import de.norm.events.scraper.AcceptedLimitation
-import de.norm.events.scraper.EventImporter
 import de.norm.events.scraper.EventSource
-import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
-import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.VenueLimitations
-import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
 
 /**
@@ -28,35 +25,9 @@ import org.springframework.stereotype.Component
  */
 @Component
 class SupamollyWebsiteImporter(
-    private val htmlFetcher: HtmlFetcher
-) : EventImporter {
-    private val logger = KotlinLogging.logger {}
-
+    htmlFetcher: HtmlFetcher
+) : AbstractSinglePageWebsiteImporter(htmlFetcher, "Supamolly", SupamollyOverviewPageScraper()::scrape) {
     override val eventSource: EventSource = EventSource.SUPAMOLLY
-
-    private val overviewPageScraper = SupamollyOverviewPageScraper()
-
-    override suspend fun importEvents(
-        url: String,
-        etag: String?,
-        lastModified: String?
-    ): ImportResult =
-        when (val fetchResult = htmlFetcher.fetch(url, etag, lastModified)) {
-            is FetchResult.NotModified -> {
-                ImportResult.NotModified
-            }
-
-            is FetchResult.Success -> {
-                val events = overviewPageScraper.scrape(fetchResult.document, url)
-                logger.info { "Scraped ${events.size} event(s) from Supamolly" }
-
-                ImportResult.Success(
-                    events = events,
-                    etag = fetchResult.etag,
-                    lastModified = fetchResult.lastModified
-                )
-            }
-        }
 }
 
 val SUPAMOLLY_LIMITATIONS =

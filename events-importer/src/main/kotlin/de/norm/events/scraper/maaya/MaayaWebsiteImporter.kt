@@ -1,14 +1,11 @@
 package de.norm.events.scraper.maaya
 
+import de.norm.events.scraper.AbstractSinglePageWebsiteImporter
 import de.norm.events.scraper.AcceptedLimitation
-import de.norm.events.scraper.EventImporter
 import de.norm.events.scraper.EventSource
-import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
-import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.VenueLimitations
-import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
 import java.time.Clock
 
@@ -33,37 +30,11 @@ import java.time.Clock
  */
 @Component
 class MaayaWebsiteImporter(
-    private val htmlFetcher: HtmlFetcher,
+    htmlFetcher: HtmlFetcher,
     /** Clock for the scraper's year inference on a year-less date; override in tests. */
     clock: Clock = Clock.systemDefaultZone()
-) : EventImporter {
-    private val logger = KotlinLogging.logger {}
-
+) : AbstractSinglePageWebsiteImporter(htmlFetcher, "MAAYA", MaayaOverviewPageScraper(clock)::scrape) {
     override val eventSource: EventSource = EventSource.MAAYA
-
-    private val overviewPageScraper = MaayaOverviewPageScraper(clock)
-
-    override suspend fun importEvents(
-        url: String,
-        etag: String?,
-        lastModified: String?
-    ): ImportResult =
-        when (val fetchResult = htmlFetcher.fetch(url, etag, lastModified)) {
-            is FetchResult.NotModified -> {
-                ImportResult.NotModified
-            }
-
-            is FetchResult.Success -> {
-                val events = overviewPageScraper.scrape(fetchResult.document, url)
-                logger.info { "Scraped ${events.size} event(s) from MAAYA" }
-
-                ImportResult.Success(
-                    events = events,
-                    etag = fetchResult.etag,
-                    lastModified = fetchResult.lastModified
-                )
-            }
-        }
 }
 
 val MAAYA_LIMITATIONS =
