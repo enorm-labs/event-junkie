@@ -118,6 +118,14 @@ class MorphineDetailPageScraperTest {
     }
 
     @Test
+    fun `credits the promoter a Presented by line names`() {
+        val url = "http://www.morphinerecords.com/events/gibrana-cervantes-verdad-y-error-listening-session"
+        val event = parse("morphine-detail-listening-session.html", url).shouldNotBeNull()
+
+        event.promoters shouldBe listOf("Radical Sounds Latin America")
+    }
+
+    @Test
     fun `joins several paragraph blocks and keeps their line breaks`() {
         val url = "http://www.morphinerecords.com/events/all-about-birds-jon-rose-hinterland"
         val event = parse("morphine-detail-paypal.html", url).shouldNotBeNull()

@@ -14,33 +14,47 @@ import java.time.LocalTime
  * pricing, and which price is too ambiguous to store.
  */
 class MorphineFieldMappingTest {
-    // --- stripLiveRecordingSuffix ---
+    // --- stripFormatTail ---
 
     @Test
     fun `strips the Live Recording billing tail from a derived artist name`() {
-        stripLiveRecordingSuffix("Invisible Weather - Live Recording") shouldBe "Invisible Weather"
+        stripFormatTail("Invisible Weather - Live Recording") shouldBe "Invisible Weather"
     }
 
     @Test
     fun `accepts every dash spelling the venue uses, and a bare space`() {
-        stripLiveRecordingSuffix("Raphael Rogiński – Qırım - Live Recording") shouldBe "Raphael Rogiński – Qırım"
-        stripLiveRecordingSuffix("Invisible Weather — Live Recording") shouldBe "Invisible Weather"
-        stripLiveRecordingSuffix("Invisible Weather Live Recording") shouldBe "Invisible Weather"
+        stripFormatTail("Raphael Rogiński – Qırım - Live Recording") shouldBe "Raphael Rogiński – Qırım"
+        stripFormatTail("Invisible Weather — Live Recording") shouldBe "Invisible Weather"
+        stripFormatTail("Invisible Weather Live Recording") shouldBe "Invisible Weather"
+    }
+
+    @Test
+    fun `strips a Listening Session tail too`() {
+        stripFormatTail("Gibrana Cervantes — verdad y error Listening Session") shouldBe "Gibrana Cervantes — verdad y error"
+    }
+
+    @Test
+    fun `a format-tailed title bills the act before the dash, and only then`() {
+        titleBilling("Gibrana Cervantes — verdad y error Listening Session") shouldBe "Gibrana Cervantes"
+        titleBilling("Raphael Rogiński – Qırım - Live Recording") shouldBe "Raphael Rogiński"
+        titleBilling("PICI - Clémence Manachère & Polina Pohozha - Live Recording") shouldBe "PICI"
+        titleBilling("Tony Buck & Flo Stoffner - Live Recording") shouldBe "Tony Buck & Flo Stoffner"
+        titleBilling("Alister Spence – Within Without") shouldBe "Alister Spence – Within Without"
     }
 
     @Test
     fun `leaves a name that carries no billing tail unchanged`() {
-        stripLiveRecordingSuffix("VINYL REDUCTION") shouldBe "VINYL REDUCTION"
+        stripFormatTail("VINYL REDUCTION") shouldBe "VINYL REDUCTION"
     }
 
     @Test
     fun `matches the tail only at the end, so an act named for it survives`() {
-        stripLiveRecordingSuffix("Live Recording Ensemble") shouldBe "Live Recording Ensemble"
+        stripFormatTail("Live Recording Ensemble") shouldBe "Live Recording Ensemble"
     }
 
     @Test
     fun `keeps the input when stripping would leave nothing`() {
-        stripLiveRecordingSuffix("Live Recording") shouldBe "Live Recording"
+        stripFormatTail("Live Recording") shouldBe "Live Recording"
     }
 
     // --- parseDayLineDate ---

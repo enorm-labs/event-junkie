@@ -28,7 +28,7 @@ import org.jsoup.nodes.Element
  * The overview carries discovery list, date and title; door and start times, lineup,
  * description, image and pricing live on the detail page. [MorphineWebsiteImporter] falls back
  * to this data when a detail page fails, so headliners are still derived from the title here,
- * with the "Live Recording" framing stripped off the derived name ([stripLiveRecordingSuffix]).
+ * with the "Live Recording" framing stripped off the derived name ([stripFormatTail]).
  *
  * @see MorphineDetailPageScraper for the detail-page data source (times, lineup, prices, image).
  * @see MorphineWebsiteImporter for the HTTP fetch orchestrator.
@@ -83,7 +83,7 @@ class MorphineOverviewPageScraper {
             eventDate = eventDate,
             sourceUrl = sourceUrl,
             sourceId = "${EventSource.MORPHINE.sourceIdPrefix}${extractEventSlug(sourceUrl)}",
-            artists = headlinersFromTitle(stripLiveRecordingSuffix(title))
+            artists = headlinersFromTitle(titleBilling(title))
         )
     }
 
