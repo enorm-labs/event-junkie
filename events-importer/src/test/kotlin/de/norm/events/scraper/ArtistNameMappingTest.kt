@@ -894,6 +894,10 @@ class ArtistNameMappingTest {
     fun `stripArtistSuffix strips a bare non-parenthesized DJ-Set tail`() {
         stripArtistSuffix("Acid Arab DJ-Set") shouldBe "Acid Arab"
         stripArtistSuffix("Paty Vapor DJ Set") shouldBe "Paty Vapor"
+        stripArtistSuffix("LA RONY acoustic set") shouldBe "LA RONY"
+        stripArtistSuffix("Some Band Akustik-Set") shouldBe "Some Band"
+        // An acoustic act's own name keeps its word.
+        stripArtistSuffix("Current Swell Acoustic Trio") shouldBe "Current Swell Acoustic Trio"
         // A bare "DJ-Set" with no preceding name is left for the non-artist filter to drop.
         stripArtistSuffix("DJ-Set") shouldBe "DJ-Set"
         // "DJ <handle>" acts are not a DJ-Set tail and stay intact.

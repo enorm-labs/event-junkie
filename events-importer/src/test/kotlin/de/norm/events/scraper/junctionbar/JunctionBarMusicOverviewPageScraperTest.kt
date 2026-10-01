@@ -107,4 +107,22 @@ class JunctionBarMusicOverviewPageScraperTest {
         val emptyDoc = Jsoup.parse("<html><body><p>Baustelle</p></body></html>", baseUrl)
         scraper.scrape(emptyDoc, baseUrl).shouldBeEmpty()
     }
+
+    @Test
+    fun `drops a format phrase from the act and keeps the billing as the title`() {
+        // October 2026 page: `LA RONY <span>acoustic set</span> <span>Soul, Rnb, Pop</span>` (#2208).
+        val octoberUrl = "https://www.junction-bar.de/program/10_2026/10_26.html"
+        val october =
+            Jsoup.parse(
+                javaClass.classLoader
+                    .getResourceAsStream("scraper/junctionbar/junctionbar-music-10_2026.html")!!
+                    .bufferedReader()
+                    .readText(),
+                octoberUrl
+            )
+        val night = scraper.scrape(october, octoberUrl).single { it.eventDate == LocalDate.of(2026, 10, 1) }
+
+        night.title shouldBe "LA RONY acoustic set"
+        night.artists shouldContainExactly listOf(ScrapedArtist(name = "LA RONY", role = "HEADLINER"))
+    }
 }
