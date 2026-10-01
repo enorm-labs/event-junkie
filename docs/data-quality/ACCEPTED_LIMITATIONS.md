@@ -237,6 +237,13 @@ says so.
 | `SONNENRAUM`           | `IMAGE`            | the programme is text only; the site's only images are its logos                                                                                 | —     |
 | `SUPAMOLLY`            | `PRICE`            | the venue publishes no prices                                                                                                                    | —     |
 | `SUPAMOLLY`            | `TICKET_URL`       | the venue runs no ticket shop                                                                                                                    | —     |
+| `TIFFANY_CLUB`         | `EVENT_TYPE`       | the site names no category; the type is read from the title and defaults to a party                                                              | —     |
+| `TIFFANY_CLUB`         | `DOORS_TIME`       | the site prints one start time per night                                                                                                         | —     |
+| `TIFFANY_CLUB`         | `GENRE`            | the site names no musical style                                                                                                                  | —     |
+| `TIFFANY_CLUB`         | `PRICE`            | the site prints no ticket price, only a guest-list discount inside a form                                                                        | —     |
+| `TIFFANY_CLUB`         | `PROMOTERS`        | the site credits no promoter beside the night's name                                                                                             | —     |
+| `TIFFANY_CLUB`         | `SOLD_OUT`         | the site states no ticket status                                                                                                                 | —     |
+| `TIFFANY_CLUB`         | `CANCELLATION`     | the site has no cancelled marker for a night                                                                                                     | —     |
 | `TRESOR`               | `DOORS_TIME`       | the venue states no doors or start time; the night's opening set is the only clock it gives, and that is stored as the start                     | —     |
 | `TRESOR`               | `EVENT_TYPE`       | the club states no category; every listing is a club night                                                                                       | —     |
 | `TRESOR`               | `PRICE`            | the club sells at the door and prints no figure on its programme                                                                                 | —     |
