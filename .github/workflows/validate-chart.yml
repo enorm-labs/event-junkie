@@ -55,7 +55,7 @@ env:
   HELM_VERSION: 4.3.0
   # `flux schema validate` replaced kubeconform (#414). Strings in YAML, invisible to Dependabot, so
   # Renovate's `customManagers` watch them (ADR-024).
-  FLUX_VERSION: 2.9.5
+  FLUX_VERSION: 2.9.6
   FLUX_SCHEMA_VERSION: 0.14.0
   # `ubuntu-latest` preinstalls an older ShellCheck than a local install, old enough to disagree about
   # SC2015. **This pin appears in three workflows** and they move together.
