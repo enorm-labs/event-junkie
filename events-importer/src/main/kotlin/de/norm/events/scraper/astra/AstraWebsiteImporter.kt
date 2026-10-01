@@ -1,8 +1,10 @@
 package de.norm.events.scraper.astra
 
 import de.norm.events.scraper.AbstractTwoPageWebsiteImporter
+import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
+import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.VenueLimitations
 import org.springframework.stereotype.Component
@@ -47,5 +49,8 @@ class AstraWebsiteImporter(
         )
 }
 
-/** Nothing this source withholds needs declaring (#715). */
-val ASTRA_LIMITATIONS = VenueLimitations(EventSource.ASTRA)
+val ASTRA_LIMITATIONS =
+    VenueLimitations(
+        EventSource.ASTRA,
+        AcceptedLimitation(LimitedAspect.GENRE, "the event page carries no genre field")
+    )
