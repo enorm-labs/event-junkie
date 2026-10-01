@@ -320,7 +320,7 @@ class EventFieldMappingTest {
         parseRelocation("Verlegt ins Mikropol") shouldBe Relocation(from = null, to = "Mikropol")
         parseRelocation("Zoh Amba - Verlegt ins Bi Nuu") shouldBe Relocation(from = null, to = "Bi Nuu")
         parseRelocation("Trinity präsentiert: MAD TSAI -verlegt ins Gretchen- **The BITE BACK Tour**") shouldBe Relocation(from = null, to = "Gretchen")
-        parseRelocation("HOCHVERLEGT IN DAS COLUMBIA THEATER") shouldBe Relocation(from = null, to = "COLUMBIA THEATER")
+        parseRelocation("HOCHVERLEGT IN DAS COLUMBIA THEATER") shouldBe Relocation(from = null, to = "Columbia Theater")
         parseRelocation("Mad Tsai (US) *live* verlegt vom Frannz *Vorverkauf 29,45 €") shouldBe Relocation(from = "Frannz", to = null)
         parseRelocation("Verlegt / Relocated") shouldBe Relocation(from = null, to = null)
         parseRelocation("GENESIS OWUSU VERLEGT") shouldBe Relocation(from = null, to = null)
@@ -350,9 +350,19 @@ class EventFieldMappingTest {
     fun `parseRelocation reads no destination inside a quoted tour name`() {
         parseRelocation(
             "„Soul to SØL World Tour 2026\" HOCHVERLEGT IN DAS COLUMBIA THEATER. BEREITS GEKAUFTE TICKETS BEHALTEN IHRE GÜLTIGKEIT!"
-        ) shouldBe Relocation(from = null, to = "COLUMBIA THEATER")
+        ) shouldBe Relocation(from = null, to = "Columbia Theater")
         parseRelocation("\"Welcome to the Real World\"-Tour HOCHVERLEGT INS COLUMBIA THEATER. BEREITS GEKAUFTE TICKETS BEHALTEN IHRE GÜLTIGKEIT!") shouldBe
-            Relocation(from = null, to = "COLUMBIA THEATER")
+            Relocation(from = null, to = "Columbia Theater")
+    }
+
+    @Test
+    fun `parseRelocation de-shouts a destination set in capitals and keeps a styled one`() {
+        parseRelocation("VERLEGT INS ASTRA KULTURHAUS") shouldBe Relocation(from = null, to = "Astra Kulturhaus")
+        parseRelocation("VERLEGT VOM LIDO INS DJ PALAST") shouldBe Relocation(from = "Lido", to = "DJ Palast")
+        parseRelocation("VERLEGT INS SO36") shouldBe Relocation(from = null, to = "SO36")
+        parseRelocation("VERLEGT INS BI") shouldBe Relocation(from = null, to = "BI")
+        parseRelocation("Verlegt ins RAW Gelände") shouldBe Relocation(from = null, to = "RAW Gelände")
+        resolveRelocation("RELOCATED", parseRelocation("HOCHVERLEGT IN DAS COLUMBIA THEATER"), "lido") shouldBe ("RELOCATED" to "Columbia Theater")
     }
 
     @Test

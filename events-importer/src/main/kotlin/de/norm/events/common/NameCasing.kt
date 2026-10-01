@@ -1,6 +1,6 @@
 package de.norm.events.common
 
-// De-shouting shared by the artist and promoter normalizers (#304).
+// De-shouting shared by the artist and promoter normalizers (#304) and the relocation note reader (#2213).
 //
 // A venue website writes the same name "GREEN LUNG" or "Green Lung", "TV NOIR" or "TV Noir".
 // Slugs are case-insensitive, so both spellings resolve to one row — but whichever import creates
