@@ -12,7 +12,7 @@ and the importers already there.
   [EVENT_DATA_SOURCES.md](../../docs/EVENT_DATA_SOURCES.md) for platform and quirks; it is not a field mapping — analyse the live site and map it onto
   [DATA_MODEL.md](../../docs/DATA_MODEL.md) yourself.
 - Copy the closest existing importer: **JSON / API source** — `scraper/festsaal/`, `scraper/neuezukunft/`, `scraper/madameclaude/` (`EventImporter` directly,
-  `ApiClient`, one `*ApiScraper.kt`); **single listing page** — `scraper/privatclub/` (`EventImporter` directly); **list + detail** — `scraper/cassiopeia/`,
+  `ApiClient`, one `*ApiScraper.kt`); **single listing page** — `scraper/privatclub/` (`AbstractSinglePageWebsiteImporter`); **list + detail** — `scraper/cassiopeia/`,
   `scraper/astra/` (`AbstractTwoPageWebsiteImporter`). New code looks like the code around it; the shared helpers in `scraper/` are used, not reimplemented.
 
 ## 1. Reconnaissance
@@ -45,7 +45,8 @@ SO36,
 - **`<Venue>DetailPageScraper.kt`** — list+detail only; `ScrapedEvent?` for one page.
 - **`<Venue>WebsiteImporter.kt`** — the `@Component` that fetches and wires. JSON: inject `ApiClient`, `fetchJson(url)`, return
   `ImportResult.Success(events, null, null)` (most APIs send no validators; idempotent `sourceId` upserts do the work). Single-page HTML:
-  `HtmlFetcher.fetch(url, etag, lastModified)`, `FetchResult.NotModified` → `ImportResult.NotModified`. List+detail: extend `AbstractTwoPageWebsiteImporter`,
+  extend `AbstractSinglePageWebsiteImporter(htmlFetcher, "<Venue>", <Venue>OverviewPageScraper()::scrape)`, which owns the conditional fetch and the
+  `NotModified` case; override `postProcess` only to enrich the parsed events. List+detail: extend `AbstractTwoPageWebsiteImporter`,
   implement `scrapeOverview` and `scrapeDetail`. Override `fillGapsFromOverview` only where the listing is authoritative for a field, as `primary.withGapsFrom(fallback).copy(…)`; the default fills every gap from the listing. `override val eventSource = EventSource.<VENUE>`.
 
 **The importer's and scrapers' KDoc is the one home for the source** — platform, pages read and why, the traps, why a selector was chosen. Under 20 comment

@@ -1,11 +1,10 @@
 package de.norm.events.scraper.crackbellmer
 
+import de.norm.events.scraper.AbstractSinglePageWebsiteImporter
 import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.EventImporter
 import de.norm.events.scraper.EventSource
-import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
-import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.VenueLimitations
@@ -39,37 +38,16 @@ class CrackBellmerWebsiteImporter(
     private val htmlFetcher: HtmlFetcher,
     /** Clock for the listing scraper's past-event cutoff; override in tests. */
     clock: Clock = Clock.systemDefaultZone()
-) : EventImporter {
+) : AbstractSinglePageWebsiteImporter(htmlFetcher, "the Crack Bellmer listing", CrackBellmerOverviewPageScraper(clock)::scrape) {
     private val logger = KotlinLogging.logger {}
 
     override val eventSource: EventSource = EventSource.CRACK_BELLMER
     override val listsWholeProgramme: Boolean = true
     override val fetchesBeyondEntryPage: Boolean = true
 
-    private val overviewPageScraper = CrackBellmerOverviewPageScraper(clock)
     private val detailPageScraper = CrackBellmerDetailPageScraper()
 
-    override suspend fun importEvents(
-        url: String,
-        etag: String?,
-        lastModified: String?
-    ): ImportResult =
-        when (val fetchResult = htmlFetcher.fetch(url, etag, lastModified)) {
-            is FetchResult.NotModified -> {
-                ImportResult.NotModified
-            }
-
-            is FetchResult.Success -> {
-                val events = overviewPageScraper.scrape(fetchResult.document, url)
-                logger.info { "Scraped ${events.size} upcoming event(s) from the Crack Bellmer listing" }
-
-                ImportResult.Success(
-                    events = events.map { addDescription(it) },
-                    etag = fetchResult.etag,
-                    lastModified = fetchResult.lastModified
-                )
-            }
-        }
+    override suspend fun postProcess(events: List<ScrapedEvent>): List<ScrapedEvent> = events.map { addDescription(it) }
 
     /** Fetches one event page for its blurb, degrading to the listing data so a broken page costs only the description. */
     @Suppress("TooGenericExceptionCaught") // Intentional: a broken event page must not fail the whole import
