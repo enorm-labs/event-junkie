@@ -23,8 +23,8 @@ repairing live in the [issue tracker](https://github.com/enorm-labs/event-junkie
 | Status                              | Meaning                                                                              | Count |
 | ----------------------------------- | ------------------------------------------------------------------------------------ | ----: |
 | ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |    98 |
-| 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |     8 |
-| ⛔ [Blocked](#-blocked--deferred)   | Website analyzed, but no usable listings (no programme page, JS-only, or too sparse) |   119 |
+| 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |     7 |
+| ⛔ [Blocked](#-blocked--deferred)   | Website analyzed, but no usable listings (no programme page, JS-only, or too sparse) |   120 |
 | ❓ [Unanalyzed](#-not-analyzed-yet) | URL recorded, but the website still needs a first look                               |    24 |
 
 "Website analyzed" also means the [data model](DATA_MODEL.md) was checked against that source, and no source needed a
@@ -158,21 +158,18 @@ least as heavily as an RA count when the next batch is prioritised.
 | ------------------ | ---------------------------------------------- | ----------- | -------- | ----------------------------------------------------------- |
 | KAOS Berlin        | https://kaosberlin.de/veranstaltungen/         | Techno Club | Low      | The Events Calendar REST API, as Cosmic Comedy; 4 upcoming  |
 | DSTRKT Club Berlin | https://www.dstrkt.de/                         | Club        | Low      | Wix one-pager; 2 dated events, which is the whole programme |
-| Kunstfabrik Schlot | https://kunstfabrik-schlot.de/programm/        | Club        | High     | WordPress list; year, time and price only on detail pages   |
 | Orania.Berlin      | https://orania.berlin/concerts                 | Bar         | Medium   | TYPO3; `/concerts/page/N`; `Event` JSON-LD; always free     |
 | ZIMMER 16          | https://zimmer16.com/                          | Other       | Medium   | Divi + YesTicket cards; time and price on YesTicket         |
 | Ballhaus Wedding   | https://www.ballhauswedding.de/veranstaltungen | Other       | Medium   | Wix rich text; 117 entries with year-less dates; no images  |
 | Soulcat            | https://soulcat-berlin.com/programm/           | Bar         | Low      | TEC REST API; one week ahead; titles only                   |
 | Erreichbar         | https://radar.squat.net/en/node/6653           | Other       | Low      | radar group 6653; a fortnightly punk bar night; no site     |
 
-**The five rows below DSTRKT, Erreichbar aside, came from the tipBerlin sweep on 2026-09-30.** Each has a quirk that the importer must
+**The four rows below DSTRKT, Erreichbar aside, came from the tipBerlin sweep on 2026-09-30.** Each has a quirk that the importer must
 handle:
 
-- **Kunstfabrik Schlot** is the real site. `schlot.de` shows only a placeholder. The Events Calendar REST API and iCal
-  are switched off. Ignore the `Product` JSON-LD on the detail page, because its price is `0` USD.
 - **ZIMMER 16** and **Ballhaus Wedding** are small mixed stages. Music is one part of a programme with improv, readings
   and dance socials. Ballhaus Wedding's dates have no year, so take it from the month headings. Its entries have no
-  fixed shape, so that parser is the most brittle of the five.
+  fixed shape, so that parser is the most brittle of the four.
 - **Soulcat** publishes one week ahead, and four of its seven events are one recurring bar night.
 
 **Gärten der Welt** set the precedent for the next park- or campus-like source when it was
@@ -259,6 +256,12 @@ next season is announced.
 path, because the server's error page is broken too. RFC 9309 reads a 5xx as a complete disallow, and `RobotsTxtFilter`
 enforces that (#887). The `/de/termine/` page lists every event since 2019, with an ISO date attribute, prices and a
 ticket link. Scaffold it once `robots.txt` answers 200 or 404.
+
+**Kunstfabrik Schlot** is easy to parse but may not be fetched. Its `robots.txt` reads `User-agent: *` and
+`Disallow: *`, which disallows every path, and `RobotsTxtFilter` refuses every request. The WordPress list at
+`/programm/` links one page per event, and the year, the time and the price are only on those pages. `schlot.de` shows
+only a placeholder. The Events Calendar REST API and iCal are switched off, and the `Product` JSON-LD on an event page
+carries a price of `0` USD. Scaffold it once `robots.txt` allows `/programm/` and `/event/`.
 
 **A handful of tickets is not a programme.** Sisyphos is the case to reason from. Its only own web presence is a
 Shopify merch shop. Its `TICKETS` collection carries one recurring series beside the T-shirts: `generationS`, one night
@@ -446,6 +449,7 @@ the empty Next.js payload rather than the WAF, and a 403 is not evidence that a 
 | Slap'd                           | https://slapd.de/                              | Club         | Event-agency site, rendered in the browser; no programme  | Site change                |
 | Alte Feuerwache THF              | https://alte-feuerwache-thf.de/calendar        | Other        | Clean Next.js list, but the season ends on 2026-10-17     | Next season                |
 | Ballhaus Berlin                  | https://ballhaus-berlin.de/de/termine/         | Club         | `robots.txt` answers 500, so every fetch is refused       | Site change                |
+| Kunstfabrik Schlot               | https://kunstfabrik-schlot.de/programm/        | Club         | `robots.txt` disallows every path (`Disallow: *`)         | Site change                |
 
 ## ❓ Not analyzed yet
 
