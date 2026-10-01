@@ -7,6 +7,7 @@ import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.resolveUrl
+import de.norm.events.scraper.stripArtistSuffix
 import de.norm.events.slug.SlugGenerator
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
@@ -114,6 +115,7 @@ class JunctionBarMusicOverviewPageScraper {
             genre = parseGenre(night.dateBar, night.content),
             artists =
                 bands
+                    .map { stripArtistSuffix(it) }
                     .filterNot { isNonArtistName(it) }
                     .map { ScrapedArtist(name = it, role = "HEADLINER") }
         )
