@@ -275,4 +275,14 @@ class So36DetailPageScraperTest {
         val html = "<html><body><div>Not a product page</div></body></html>"
         scraper.scrape(Jsoup.parse(html, concertUrl), concertUrl) shouldBe null
     }
+
+    @Test
+    fun `keeps the cheapest of several tiers, names every tier, and links its own shop page`() {
+        val url = "https://www.so36.com/produkte/100165-tickets-15-years-of-mash-up-so36-berlin-am-02-10-2026"
+        val event = scraper.scrape(fixture("so36-detail-tiers.html", url), url).shouldNotBeNull()
+
+        event.pricePresale shouldBe BigDecimal("24.5")
+        event.priceNote shouldBe "Ticket social 24,50 € / Ticket regular 29,50 € / Ticket support 34,50 €"
+        event.ticketUrl shouldBe url
+    }
 }
