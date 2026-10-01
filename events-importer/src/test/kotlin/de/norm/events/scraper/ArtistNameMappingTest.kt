@@ -361,8 +361,9 @@ class ArtistNameMappingTest {
         isNonArtistName(" 2027 ") shouldBe true
         isNonArtistName("100 Kilo Herz") shouldBe false
         isNonArtistName("1-800-Mikey") shouldBe false
-        // A known act whose name is a number (#1953).
+        // Known acts whose name is a number (#1953, #2207).
         isNonArtistName("255") shouldBe false
+        isNonArtistName("234") shouldBe false
     }
 
     // --- isNonArtistName title fragment (#1494) ---
@@ -1025,6 +1026,16 @@ class ArtistNameMappingTest {
             listOf(
                 ScrapedArtist(name = "TOTAL CHAOS", role = "HEADLINER", titleDerived = true),
                 ScrapedArtist(name = "The Dollheads", role = "SUPPORT")
+            )
+    }
+
+    @Test
+    fun `buildArtistsForEventType reads a numeric support act from the Huxleys merged subtitle`() {
+        // The detail page's tour name and the listing's support line, joined by " | " (#2207).
+        buildArtistsForEventType("Sampagne", subtitle = "TV TOUR 2026 | + Support: 234", eventType = "CONCERT") shouldContainExactly
+            listOf(
+                ScrapedArtist(name = "Sampagne", role = "HEADLINER", titleDerived = true),
+                ScrapedArtist(name = "234", role = "SUPPORT")
             )
     }
 
