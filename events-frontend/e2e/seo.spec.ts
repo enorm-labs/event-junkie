@@ -260,6 +260,9 @@ test('every static page carries its own description', async ({ page }) => {
 
   for (const path of ['/en', '/en/events', '/en/venues', '/en/about', '/en/legal/privacy']) {
     await page.goto(path)
+    // The head holds index.html's site description until `router.afterEach` writes the route's, and
+    // `goto` can resolve before that. The view's h1 renders after it (#2235).
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
     const description = await meta(page, 'meta[name="description"]')
     expect(description, `${path} has no description`).toBeTruthy()
     seen.add(description!)
