@@ -1021,6 +1021,11 @@ export interface components {
             free?: boolean;
             /** @description The venue where this event takes place */
             venue?: components["schemas"]["VenueSummaryResponse"];
+            /**
+             * @description The room of the venue the whole event is in, as the venue names it. Null when the venue names none, and on a lineup split across rooms, where each entry's `stage` says it instead.
+             * @example Saal
+             */
+            room?: string | null;
             /** @description Lineup in billing order (headliner first) */
             lineup?: components["schemas"]["LineupEntryResponse"][];
             /** @description Promoters or presenters responsible for this event */
@@ -1050,7 +1055,7 @@ export interface components {
              */
             billingOrder?: number;
             /**
-             * @description Room / stage the artist plays (multi-room venues), or null
+             * @description The room or floor the act plays when the lineup is split across rooms, or null
              * @example Panorama Bar
              */
             stage?: string | null;

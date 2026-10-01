@@ -367,6 +367,16 @@ test.describe('a past event', () => {
     await expect(page.getByText('Lineup and set times from')).toBeVisible()
   })
 
+  test('an event in one room of a venue names the room beside the venue', async ({ page }) => {
+    await page.route(/\/api\/events\/[^/?]+/, (route) =>
+      json(route, { ...eventBody, room: 'Saal' }),
+    )
+
+    await page.goto('/en/events/mock-event')
+
+    await expect(page.locator('header').getByText('· Saal')).toBeVisible()
+  })
+
   test('a mixed lineup labels every act', async ({ page }) => {
     const mixed = {
       ...eventBody,

@@ -4,6 +4,7 @@ import de.norm.events.scraper.ScrapedEvent
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
+import io.kotest.matchers.collections.shouldNotBeEmpty
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import org.jsoup.Jsoup
@@ -140,11 +141,19 @@ class VoidClubOverviewPageScraperTest {
     }
 
     @Test
-    fun `puts a single-room night's acts in that room and leaves a two-room night unattributed`() {
-        event("STOIC MUSIC X BREAKOUT DNB").artists.map { it.stage }.distinct() shouldContainExactly listOf("VOID HALL")
-        event("TORQUE").artists.map { it.stage }.distinct() shouldContainExactly listOf("VOID CLUB")
-        // "VOID CLUB & HALL" does not say which act plays where.
-        event("FREE PARTY").artists.map { it.stage }.distinct() shouldContainExactly listOf(null)
+    fun `gives every night its room and no act a stage`() {
+        event("STOIC MUSIC X BREAKOUT DNB").room shouldBe "Hall"
+        event("TORQUE").room shouldBe "Club"
+        event("FREE PARTY").room shouldBe "Club & Hall"
+        events.flatMap { it.artists }.all { it.stage == null } shouldBe true
+    }
+
+    @Test
+    fun `keeps the room of a night with no lineup yet`() {
+        val unannounced = events.filter { it.artists.isEmpty() }
+
+        unannounced.shouldNotBeEmpty()
+        unannounced.all { it.room != null } shouldBe true
     }
 
     @Test

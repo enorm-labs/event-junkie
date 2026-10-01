@@ -56,7 +56,16 @@ class SilentGreenMonthPageScraperTest {
         concert.status shouldBe "SCHEDULED"
         concert.promoters shouldContainExactly listOf("Berlin Atonal", "silent green")
         concert.artists.map { it.name } shouldContainExactly listOf("HTRK", "Loraine James")
-        concert.artists.map { it.stage }.distinct() shouldContainExactly listOf("Kuppelhalle")
+        concert.room shouldBe "Kuppelhalle"
+        concert.artists.map { it.stage }.distinct() shouldContainExactly listOf(null)
+    }
+
+    @Test
+    fun `scrape gives an event with no lineup its hall`() {
+        val exhibitions = august.filter { it.eventType == EventType.EXHIBITION.name }
+
+        exhibitions.all { it.artists.isEmpty() } shouldBe true
+        exhibitions.mapNotNull { it.room }.toSet() shouldBe setOf("Betonhalle", "Atelier 2+3", "Kuppelhalle", "Kuppelhalle, Ateliers 2+3")
     }
 
     @Test

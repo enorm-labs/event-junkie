@@ -78,7 +78,7 @@ import java.time.LocalTime
  * [inferUnmarkedTitleType] over title and subtitle, else `OTHER` — never `CONCERT`, which would
  * also mint the event's name as a headliner. For the same reason [buildArtistList] takes an act
  * only where a support billing confirms one, so "Tanztee im PETER EDEL" is not an artist. Seating
- * badges ("Bestuhlt", "Freie Platzwahl") are dropped: no field for them, see #303.
+ * badges ("Bestuhlt", "Freie Platzwahl") are dropped on purpose: seating is not part of the event model.
  *
  * @see PETER_EDEL_LIMITATIONS for what the venue does not publish.
  * @see PeterEdelWebsiteImporter for the HTTP fetch orchestrator.

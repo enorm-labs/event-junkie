@@ -159,6 +159,8 @@ useStructuredData((): JsonLd[] => {
           <span>· {{ formatEventTime(event) }}</span>
           <span v-if="timeHint">· {{ timeHint }}</span>
           <span v-if="event.venue?.name">· {{ event.venue.name }}</span>
+          <!-- The room as the venue names it (#316): a proper name, so never translated. -->
+          <span v-if="event.room">· {{ event.room }}</span>
           <!-- The one exception #1248 left: a cancelled event must not read as a word in a grey row. -->
           <BaseBadge
             v-if="formatEventStatus(event.status, event.relocatedTo)"

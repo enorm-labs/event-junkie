@@ -45,7 +45,8 @@ import java.util.Locale
  * ```
  *
  * so each performance is its own [ScrapedEvent], sharing the post's title, blurb, image, prices
- * and promoter. The identity is `<postId>-<date>-<HHmm>`: the **time is part of the key** because
+ * and promoter. The doors note names the [room][ScrapedEvent.room] in brackets, since a post can
+ * play the Saal one night and the Studio the next. The identity is `<postId>-<date>-<HHmm>`: the **time is part of the key** because
  * a run legitimately plays twice a day (matinee plus evening), which a date-only key collapses.
  *
  * The API returns the whole archive — 400+ posts, 800+ performances, fewer than a hundred
@@ -191,6 +192,7 @@ class HeimathafenApiScraper(
             eventType = shared.eventType,
             eventDate = startedAt.toLocalDate(),
             doorsTime = labelledClock(note, DOORS_LABELS),
+            room = ROOM.find(note)?.groupValues?.get(1),
             startTime = startedAt.toLocalTime(),
             imageUrl = shared.imageUrl,
             sourceUrl = shared.sourceUrl,
@@ -395,6 +397,12 @@ class HeimathafenApiScraper(
 
         /** Price labels naming a general-admission presale tier — anchored, so a label that merely mentions the channel cannot match. */
         val PRESALE_LABEL = Regex("""^\s*(?:vvk|vorverkauf|tickets?|regul(?:ä|ae)r)\b""", RegexOption.IGNORE_CASE)
+
+        /**
+         * The room in the doors note, `(Saal)` anywhere in it. A closed list: the same field carries
+         * `(ohne Pause)`, `(mit Pause)` and `(unser Support Ticket)`.
+         */
+        val ROOM = Regex("""\((Saal|Studio|Hinterhof)\)""")
 
         /** A booking-fee qualifier, which makes even a single-tier price worth keeping as a note. */
         val FEE_NOTE = Regex("""geb(?:ü|ue)hr""", RegexOption.IGNORE_CASE)

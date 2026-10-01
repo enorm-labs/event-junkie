@@ -170,6 +170,9 @@ class FixtureTest : BaseControllerTest() {
                 .value<List<String>> { assert(it.toSet() == setOf("kesselhaus-nord")) }
                 .jsonPath("$.content[*].subtitle")
                 .value<List<String>> { assert(it.toSet() == setOf("Floor 1", "Garten")) }
+            get("/events/${slug("room-garden", 15)}")
+                .jsonPath("$.room")
+                .isEqualTo("Garten")
         }
 
     @Test

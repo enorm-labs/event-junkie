@@ -272,6 +272,13 @@ data class EventDetailResponse(
     val free: Boolean,
     @Schema(description = "The venue where this event takes place")
     val venue: VenueSummaryResponse,
+    @Schema(
+        description =
+            "The room of the venue the whole event is in, as the venue names it. Null when the venue names none, " +
+                "and on a lineup split across rooms, where each entry's `stage` says it instead.",
+        example = "Saal"
+    )
+    val room: String?,
     @Schema(description = "Lineup in billing order (headliner first)")
     val lineup: List<LineupEntryResponse>,
     @Schema(description = "Promoters or presenters responsible for this event")
@@ -318,6 +325,7 @@ data class EventDetailResponse(
                 descriptionWithheld = descriptionWithheld,
                 sourceUrl = entity.sourceUrl,
                 lineupSourceUrl = entity.lineupSourceUrl,
+                room = entity.room,
                 ticketUrl = entity.ticketUrl,
                 facebookEventUrl = entity.facebookEventUrl,
                 genre = entity.genre,
@@ -348,7 +356,7 @@ data class LineupEntryResponse(
     val role: ArtistRole,
     @Schema(description = "Position in the lineup — lower numbers appear first", example = "0")
     val billingOrder: Int,
-    @Schema(description = "Room / stage the artist plays (multi-room venues), or null", example = "Panorama Bar")
+    @Schema(description = "The room or floor the act plays when the lineup is split across rooms, or null", example = "Panorama Bar")
     val stage: String? = null,
     @Schema(description = "Start of the set in Berlin time, from the venue's running order, or null", example = "2026-09-26T23:59:00+02:00")
     val setStart: OffsetDateTime? = null,

@@ -229,6 +229,27 @@ class HeimathafenApiScraperTest {
     }
 
     @Test
+    fun `reads the room out of the doors note and nothing else in brackets`() {
+        fun roomOf(note: String) =
+            scraper
+                .scrape(payloadWith("""{"performance_date_time":"11/27/2026 8:00 p.m.","performance_description":"$note"}"""))
+                .events
+                .single()
+                .room
+
+        roomOf("Einlass ab 19:00 Uhr (Saal)") shouldBe "Saal"
+        roomOf("Kein Nacheinlass (Studio) / nicht barrierefrei") shouldBe "Studio"
+        roomOf("Einlass ab 18:00 (Hinterhof)") shouldBe "Hinterhof"
+        roomOf("Einlass ab 19:00 Uhr (ohne Pause)").shouldBeNull()
+        roomOf("Einlass ab 19:00 Uhr").shouldBeNull()
+    }
+
+    @Test
+    fun `gives the archive page's performances their rooms`() {
+        page.events.mapNotNull { it.room }.toSet() shouldBe setOf("Saal", "Studio")
+    }
+
+    @Test
     fun `flags a free-entry performance from its status`() {
         val gossip = event("30866-2026-09-15-1830")
         gossip.free shouldBe true

@@ -46,6 +46,12 @@ data class ScrapedEvent(
     val endDate: LocalDate? = null,
     /** Time the event ends on [endDate], when the venue states one. Requires [endDate]. */
     val endTime: LocalTime? = null,
+    /**
+     * The room the whole event is in, as the venue names it ("Saal", "Kuppelhalle"). A lineup
+     * split across rooms leaves this null and sets [ScrapedArtist.stage] per act instead; one
+     * event never uses both (#316).
+     */
+    val room: String? = null,
     /** URL of the event's poster or flyer image. */
     val imageUrl: String? = null,
     val sourceUrl: String,
@@ -116,6 +122,7 @@ data class ScrapedEvent(
             startTime = startTime ?: fallback.startTime,
             endDate = endDate ?: fallback.endDate,
             endTime = endTime ?: fallback.endTime,
+            room = room ?: fallback.room,
             imageUrl = imageUrl ?: fallback.imageUrl,
             lineupSourceUrl = lineupSourceUrl ?: fallback.lineupSourceUrl,
             ticketUrl = ticketUrl ?: fallback.ticketUrl,
@@ -208,6 +215,7 @@ data class ScrapedEvent(
             sourceId = existing?.sourceId ?: sourceId,
             createdAt = existing?.createdAt,
             venueId = venueId,
+            room = room,
             eventSourceId = eventSourceId,
             title = storedTitle,
             subtitle = subtitle,
@@ -345,7 +353,10 @@ data class ScrapedArtist(
     val name: String,
     /** Role in the lineup (e.g. "HEADLINER", "SUPPORT", "DJ"). Defaults to headliner. */
     val role: String = "HEADLINER",
-    /** Room / stage the artist plays at this event (e.g. "Panorama Bar"). Null for single-room venues. */
+    /**
+     * The room or floor the act plays (e.g. "Panorama Bar") when the lineup is split across rooms.
+     * An event in one room puts it on [ScrapedEvent.room] instead (#316).
+     */
     val stage: String? = null,
     /**
      * The name was read off the event title by [headlinersFromTitle], not a line-up element.
