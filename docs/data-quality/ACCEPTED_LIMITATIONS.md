@@ -75,6 +75,7 @@ says so.
 | `DRUGSTORE`            | `TICKET_URL`       | the youth centre sells no tickets online                                                                                                         | —     |
 | `DRUGSTORE`            | `DOORS_TIME`       | radar gives one time per night, and the prose names the doors where it differs                                                                   | —     |
 | `DUNCKER`              | `PER_EVENT_PAGE`   | the whole programme is one hand-coded page                                                                                                       | —     |
+| `DUNCKER`              | `DOORS_TIME`       | the time cell is the night's opening hours, stored as start and end, and no doors time is printed                                                | —     |
 | `DUNCKER`              | `PRICE`            | the listing gives a night, a genre string and an hour range, never a figure                                                                      | —     |
 | `ESCHSCHLORAQUE`       | `PRICE`            | entry is settled at the door and the venue names no figure                                                                                       | —     |
 | `ESCHSCHLORAQUE`       | `TICKET_URL`       | the venue runs no ticket shop                                                                                                                    | —     |
