@@ -271,13 +271,15 @@ rule(
 
 # The #618 gauge. A source that has never succeeded has no `last_success` series
 # at all, so the rule above is structurally blind to it — which is the whole
-# reason `has_succeeded` exists.
+# reason `has_succeeded` exists. The `offset 2h` half drops a source younger than
+# two hours, which reads 0 until its first run (#2256).
 rule(
     "ej-source-never-succeeded",
-    "A source has been enabled long enough to be counted and has never once completed a "
+    "A source has been enabled for two hours and has never once completed a "
     "run. Different from stale and needing a different response: fix the scraper, do not "
     "wait for the retry. Blind spot closed by #618.",
-    "sum(max by (source) (importer_source_has_succeeded) == bool 0)",
+    "sum((max by (source) (importer_source_has_succeeded) == bool 0)"
+    " * (max by (source) (importer_source_has_succeeded offset 2h) == bool 0))",
     ">",
     0,
     stream_name="importer_source_has_succeeded",
