@@ -337,6 +337,66 @@ class FrannzOverviewPageScraperTest {
             // Sidebar facts never leak into the blurb.
             event.description shouldNotContain "Ort: Club"
         }
+
+        // The CMS emphasis reached the subtitle and the description as literal markers, and the
+        // bullet strip ate one `*` of a leading `**_…_**` (#2328). Lines taken from the live page.
+        @Test
+        fun `strips Markdown emphasis from the subtitle and the description, and keeps the gender star`() {
+            val html =
+                """
+                <article id="post-1" class="events event_typ-konzert">
+                    <h2 class="event-title">THE CORONAS</h2>
+                    <h4 class="event-utitle">**Germany Tour 2027**</h4>
+                    <div class="event-day">10</div>
+                    <div class="event-month">Dezember</div>
+                    <div class="entry-content">
+                        <div class="entry-content-wrap">
+                            <div class="content">
+                                **THE CORONAS** kündigen Deutschlandtour an<br />
+                                **_Unfortunately, I have some difficult news to share._**<br />
+                                _Nach fünf Jahren schlagen_&nbsp;**_Maël &amp; Jonas_**&nbsp;_ein Kapitel auf: ihre_&nbsp;**_sechste Tour_**_._<br />
+                                Ihr Album _Pull Like A Dog,_ erscheint 2026.<br />
+                                Die Energie, die beim Singen entsteht**.**<br />
+                                Für Schüler*innen und Hörer*innen, per utm_medium.<br />
+                                __________________________________________________________________<br />
+                                * **LINKS**
+                            </div>
+                        </div>
+                    </div>
+                </article>
+                """.trimIndent()
+
+            val event = scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl).single()
+
+            event.subtitle shouldBe "Germany Tour 2027"
+            event.description shouldBe
+                listOf(
+                    "THE CORONAS kündigen Deutschlandtour an",
+                    "Unfortunately, I have some difficult news to share.",
+                    // Jsoup hands the &nbsp; on as a plain space.
+                    "Nach fünf Jahren schlagen Maël & Jonas ein Kapitel auf: ihre sechste Tour.",
+                    "Ihr Album Pull Like A Dog, erscheint 2026.",
+                    "Die Energie, die beim Singen entsteht.",
+                    "Für Schüler*innen und Hörer*innen, per utm_medium.",
+                    "LINKS"
+                ).joinToString("\n")
+        }
+
+        @Test
+        fun `strips single-underscore emphasis from the subtitle`() {
+            val html =
+                """
+                <article id="post-1" class="events event_typ-konzert">
+                    <h2 class="event-title">Soffie</h2>
+                    <h4 class="event-utitle">_Präsentiert von eskapaden booking &amp; Rausgegangen_</h4>
+                    <div class="event-day">10</div>
+                    <div class="event-month">Dezember</div>
+                </article>
+                """.trimIndent()
+
+            scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl).single().subtitle shouldBe
+                "Präsentiert von eskapaden booking & Rausgegangen"
+        }
     }
 
     @Nested
