@@ -48,4 +48,15 @@ describe('VenueRow', () => {
 
     expect(wrapper.get('a').attributes('href')).toBe('/en/venues/lido')
   })
+
+  it('shows the upcoming count when the venue list sent one, and nothing when it did not', () => {
+    const counted = mount(VenueRow, {
+      props: { venue: { ...venue, upcomingEventCount: 3 } },
+      global: { stubs },
+    })
+    const embedded = mount(VenueRow, { props: { venue }, global: { stubs } })
+
+    expect(counted.text()).toContain('3 upcoming events')
+    expect(embedded.text()).not.toContain('upcoming')
+  })
 })

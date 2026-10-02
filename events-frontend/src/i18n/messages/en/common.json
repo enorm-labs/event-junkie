@@ -35,6 +35,14 @@
     "loadingPromoters": "Looking up who books the nights…"
   },
   "upcomingEvents": "Upcoming events",
+  "upcomingCount": "No upcoming events | {count} upcoming event | {count} upcoming events",
+  "sort": {
+    "label": "Sort",
+    "name": "A–Z",
+    "upcoming": "Most upcoming",
+    "earliest": "Earliest first",
+    "latest": "Latest first"
+  },
   "pastEvents": "Past events",
   "pastEventsNote": "Our archive starts when we started watching. Earlier nights never made it into the books.",
   "locale": {

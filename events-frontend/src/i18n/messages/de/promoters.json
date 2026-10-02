@@ -3,9 +3,5 @@
   "subtitle": "Wer die Abende bucht: die Agenturen, Kollektive und Labels hinter den Events, die wir im Blick haben.",
   "searchPlaceholder": "Veranstalter durchsuchen …",
   "empty": "Zu dieser Suche gibt es keinen Veranstalter. Versuch es mit einem anderen Namen.",
-  "sortBy": "Sortieren nach",
-  "sortName": "Name",
-  "sortUpcoming": "Anstehende Events",
-  "resultCount": "{count} Veranstalter gefunden | {count} Veranstalter gefunden",
-  "upcomingCount": "Keine anstehenden Events | {count} anstehendes Event | {count} anstehende Events"
+  "resultCount": "{count} Veranstalter gefunden | {count} Veranstalter gefunden"
 }

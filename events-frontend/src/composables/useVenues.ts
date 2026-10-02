@@ -1,5 +1,5 @@
 import { api, unwrap } from '@/api/client'
-import type { VenuePage, VenueSummary } from '@/api/types'
+import type { VenueListItem, VenuePage } from '@/api/types'
 import type { ErrorSubjectKey } from '@/i18n'
 import { useAsync } from './useAsync'
 
@@ -9,6 +9,7 @@ export interface VenueSearchParams {
   district?: string
   page?: number
   size?: number
+  /** `name` or `upcomingEvents`, with a direction: `upcomingEvents,desc`. */
   sort?: string[]
 }
 
@@ -32,7 +33,7 @@ export function useVenueSearch(
  * capped at 100, and venue 101 would be missing without a sign (#2246).
  */
 export function useAllVenues() {
-  return useAsync<VenueSummary[]>(
+  return useAsync<VenueListItem[]>(
     () => fetchAllVenues({}),
     'errors.subject.venues',
     () => '/api/venues?all',
@@ -49,8 +50,8 @@ const MAX_PAGE_SIZE = 100
  */
 export async function fetchAllVenues(
   params: Omit<VenueSearchParams, 'page' | 'size'>,
-): Promise<VenueSummary[]> {
-  const venues = new Map<string, VenueSummary>()
+): Promise<VenueListItem[]> {
+  const venues = new Map<string, VenueListItem>()
   for (let page = 0; ; page++) {
     const result = await unwrap(
       api.GET('/api/venues', { params: { query: { ...params, page, size: MAX_PAGE_SIZE } } }),

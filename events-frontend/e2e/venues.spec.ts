@@ -7,7 +7,7 @@ import { expect, type Page, type Route, test } from '@playwright/test'
  * intercepted with Playwright's request routing — happy path, search, empty state, and
  * pagination are all exercised deterministically without a running backend.
  *
- * Endpoint: GET /api/venues?q=&page=&size= → PageResponseVenueSummaryResponse
+ * Endpoint: GET /api/venues?q=&district=&sort=&page=&size= → PageResponseVenueListItemResponse
  */
 
 /** Collect uncaught exceptions — the "the app broke" signal, as in the smoke suite. */
@@ -25,8 +25,8 @@ function json(route: Route, body: unknown, status = 200): Promise<void> {
 /** Matches the venue list (`/api/venues?…` or bare `/api/venues`), not `/api/venues/:slug`. */
 const venuesList = /\/api\/venues(\?|$)/
 
-function venue(slug: string, name: string) {
-  return { slug, name, city: 'Berlin', district: 'kreuzberg' }
+function venue(slug: string, name: string, upcomingEventCount = 0) {
+  return { slug, name, city: 'Berlin', district: 'kreuzberg', upcomingEventCount }
 }
 
 function pageBody(content: ReturnType<typeof venue>[], page = 0, totalPages = 1) {
@@ -78,6 +78,35 @@ test('filtering by district updates the URL query and re-requests', async ({ pag
   await expect(page).toHaveURL(/\/venues\?district=mitte$/)
   await expect(page.getByRole('link', { name: /Berghain/ })).toBeVisible()
   await expect(page.getByRole('link', { name: /Lido/ })).toHaveCount(0)
+})
+
+test('sorting by upcoming events puts the sort in the URL, sends it, and shows the counts', async ({
+  page,
+}) => {
+  await page.route(venuesList, (route) => {
+    const sort = new URL(route.request().url()).searchParams.get('sort')
+    json(
+      route,
+      pageBody(
+        sort === 'upcomingEvents,desc'
+          ? [venue('lido', 'Lido', 12), venue('astra', 'Astra', 1)]
+          : [venue('astra', 'Astra', 1), venue('lido', 'Lido', 12)],
+      ),
+    )
+  })
+
+  await page.goto('/venues')
+  await expect(page.getByRole('heading', { level: 2 }).first()).toHaveText('Astra')
+  await expect(page.getByText('12 upcoming events')).toBeVisible()
+
+  const sort = page.getByRole('group', { name: 'Sort' })
+  await sort.getByRole('button', { name: 'Most upcoming' }).click()
+
+  await expect(page).toHaveURL(/\/venues\?sort=upcomingEvents,desc$/)
+  await expect(page.getByRole('heading', { level: 2 }).first()).toHaveText('Lido')
+
+  await sort.getByRole('button', { name: 'A–Z' }).click()
+  await expect(page).toHaveURL(/\/venues$/)
 })
 
 test('shows an empty state when no venues match', async ({ page }) => {

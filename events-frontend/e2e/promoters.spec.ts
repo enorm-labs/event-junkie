@@ -109,13 +109,19 @@ test('sorting by upcoming events puts the sort in the URL and sends it to the AP
   await page.goto('/promoters')
   await expect(page.getByRole('heading', { level: 2 }).first()).toHaveText('Goodlive')
 
-  await page.getByLabel('Sort by').selectOption('upcomingEvents,desc')
+  const sort = page.getByRole('group', { name: 'Sort' })
+  await expect(sort.getByRole('button', { name: 'A–Z' })).toHaveAttribute('aria-pressed', 'true')
+  await sort.getByRole('button', { name: 'Most upcoming' }).click()
 
   await expect(page).toHaveURL(/\/promoters\?sort=upcomingEvents,desc$/)
   await expect(page.getByRole('heading', { level: 2 }).first()).toHaveText('Trinity Music')
+  await expect(sort.getByRole('button', { name: 'Most upcoming' })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  )
 
   // Back to the name order: the default leaves the URL clean.
-  await page.getByLabel('Sort by').selectOption('')
+  await sort.getByRole('button', { name: 'A–Z' }).click()
   await expect(page).toHaveURL(/\/promoters$/)
 })
 

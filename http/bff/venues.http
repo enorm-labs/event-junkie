@@ -2,7 +2,8 @@
 ### BFF: Venues — public read API
 ###
 ### Read-only, no auth. `q` is a case-insensitive substring
-### match on the venue name. Sortable: name, slug, city.
+### match on the venue name; `district` is an exact district slug.
+### Sortable: name, upcomingEvents (events from today on).
 ### ============================================================
 
 ### List venues (default page 0, size 20, sort name)
@@ -20,6 +21,10 @@ Accept: application/json
 
 ### List venues — pagination + sort (name desc)
 GET {{bff-host}}/api/venues?page=0&size=5&sort=name,desc
+Accept: application/json
+
+### List venues — most upcoming events first
+GET {{bff-host}}/api/venues?sort=upcomingEvents,desc
 Accept: application/json
 
 ### Search venues by name (case-insensitive substring)

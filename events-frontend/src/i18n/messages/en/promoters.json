@@ -3,9 +3,5 @@
   "subtitle": "Who books the nights: the agencies, collectives and labels behind the events we track.",
   "searchPlaceholder": "Search promoters…",
   "empty": "No promoters match that search. Try a different name.",
-  "sortBy": "Sort by",
-  "sortName": "Name",
-  "sortUpcoming": "Upcoming events",
-  "resultCount": "{count} promoter found | {count} promoters found",
-  "upcomingCount": "No upcoming events | {count} upcoming event | {count} upcoming events"
+  "resultCount": "{count} promoter found | {count} promoters found"
 }

@@ -11,7 +11,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List venues with pagination and optional name search */
+        /** List venues with pagination, optional name search and district filter, sorted by name or by upcoming events */
         get: operations["list"];
         put?: never;
         post?: never;
@@ -260,9 +260,9 @@ export interface components {
             srcset?: string;
         };
         /** @description A page of results with pagination metadata */
-        PageResponseVenueSummaryResponse: {
+        PageResponseVenueListItemResponse: {
             /** @description The items on this page */
-            content?: components["schemas"]["VenueSummaryResponse"][];
+            content?: components["schemas"]["VenueListItemResponse"][];
             /**
              * Format: int32
              * @description Zero-based index of this page
@@ -288,8 +288,8 @@ export interface components {
              */
             totalPages?: number;
         };
-        /** @description Compact venue summary */
-        VenueSummaryResponse: {
+        /** @description Venue on the venue list */
+        VenueListItemResponse: {
             /**
              * Format: int64
              * @description Database primary key
@@ -362,6 +362,12 @@ export interface components {
              * @example 630
              */
             intrinsicHeight?: number | null;
+            /**
+             * Format: int32
+             * @description Events from today on at this venue
+             * @example 12
+             */
+            upcomingEventCount?: number;
         };
         /** @description Full venue detail */
         VenueDetailResponse: {
@@ -692,11 +698,13 @@ export interface components {
              */
             eventDate?: string;
             /**
+             * Format: time-local
              * @description Time when doors open to the public
              * @example 19:00
              */
             doorsTime?: string | null;
             /**
+             * Format: time-local
              * @description Time when the show/performance starts
              * @example 20:00
              */
@@ -708,11 +716,13 @@ export interface components {
              */
             endDate?: string | null;
             /**
+             * Format: time-local
              * @description Time the event ends on `endDate`, only when the venue stated one. Never set without `endDate`.
              * @example 10:00
              */
             endTime?: string | null;
             /**
+             * Format: time-local
              * @description Our guess at the start, from the kind of event, when the venue published neither `startTime` nor `doorsTime`; null whenever either is set. The list sorts by it, and a page must show it as a guess.
              * @example 23:00
              */
@@ -811,6 +821,81 @@ export interface components {
              * @example 7
              */
             totalPages?: number;
+        };
+        /** @description Compact venue summary */
+        VenueSummaryResponse: {
+            /**
+             * Format: int64
+             * @description Database primary key
+             * @example 42
+             */
+            id?: number;
+            /**
+             * @description URL-friendly identifier
+             * @example astra-kulturhaus
+             */
+            slug?: string;
+            /**
+             * @description Display name of the venue
+             * @example Astra Kulturhaus
+             */
+            name?: string;
+            /**
+             * @description City where the venue is located
+             * @example Berlin
+             */
+            city?: string;
+            /**
+             * @description Street address of the venue
+             * @example Revaler Str. 99
+             */
+            address?: string | null;
+            /**
+             * @description Berlin district (one of the 23 pre-2001 Bezirke) as a canonical slug
+             * @example kreuzberg
+             */
+            district?: string | null;
+            /**
+             * @description Geographic latitude for map display
+             * @example 52.507242
+             */
+            latitude?: number | null;
+            /**
+             * @description Geographic longitude for map display
+             * @example 13.451803
+             */
+            longitude?: number | null;
+            /** @description URL of the venue's logo or photo */
+            imageUrl?: string | null;
+            /**
+             * @description Who to credit for `imageUrl`, worded as the archive publishes it. Present whenever `imageUrl` is, and it must be shown beside the image.
+             * @example Photographer Name, via Wikimedia Commons
+             */
+            imageAttribution?: string | null;
+            /**
+             * @description SPDX identifier of the licence `imageUrl` is published under, or `PD` where no identifier applies. Example values: `CC0-1.0`, `CC-BY-4.0`, `CC-BY-SA-4.0`.
+             * @example CC-BY-SA-4.0
+             */
+            imageLicenceId?: string | null;
+            /**
+             * @description The image's description page, which the rendered credit links to
+             * @example https://commons.wikimedia.org/wiki/File:Example.jpg
+             */
+            imageSourceUrl?: string | null;
+            /** @description Alternative formats of the same image, best first, for a <picture> element. Empty when the image is not cached, in which case `imageUrl` is all there is. */
+            imageSources?: components["schemas"]["ImageSourceResponse"][];
+            /**
+             * Format: int32
+             * @description Pixel width of the original image, for the `width` attribute. Null together with `intrinsicHeight` when the dimensions are unknown.
+             * @example 1200
+             */
+            intrinsicWidth?: number | null;
+            /**
+             * Format: int32
+             * @description Pixel height of the original image, for the `height` attribute
+             * @example 630
+             */
+            intrinsicHeight?: number | null;
         };
         /** @description Compact artist summary */
         ArtistSummaryResponse: {
@@ -925,11 +1010,13 @@ export interface components {
              */
             eventDate?: string;
             /**
+             * Format: time-local
              * @description Time when doors open to the public
              * @example 19:00
              */
             doorsTime?: string | null;
             /**
+             * Format: time-local
              * @description Time when the show/performance starts
              * @example 20:00
              */
@@ -941,11 +1028,13 @@ export interface components {
              */
             endDate?: string | null;
             /**
+             * Format: time-local
              * @description Time the event ends on `endDate`, only when the venue stated one. Never set without `endDate`.
              * @example 10:00
              */
             endTime?: string | null;
             /**
+             * Format: time-local
              * @description Our guess at the start, from the kind of event, when the venue published neither `startTime` nor `doorsTime`; null whenever either is set. The list sorts by it, and a page must show it as a guess.
              * @example 23:00
              */
@@ -1336,7 +1425,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["PageResponseVenueSummaryResponse"];
+                    "*/*": components["schemas"]["PageResponseVenueListItemResponse"];
                 };
             };
         };

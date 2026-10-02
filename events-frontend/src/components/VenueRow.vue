@@ -1,14 +1,16 @@
 <script lang="ts" setup>
 import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
-import type { VenueSummary } from '@/api/types'
+import type { VenueListItem, VenueSummary } from '@/api/types'
+import { useI18n } from 'vue-i18n'
 import { districtLabel } from '@/lib/districts'
 import { useLocalePath } from '@/composables/useLocalePath'
 
 /** One venue as a line of text, for the compact view — the counterpart to `EventRow`. */
 const props = withDefaults(
   defineProps<{
-    venue: VenueSummary
+    /** The count shows when the venue list sent one and no distance takes its place. */
+    venue: VenueSummary & Pick<VenueListItem, 'upcomingEventCount'>
     /** Heading level, which belongs to the page rather than to the row — see `EventCard.vue`. */
     as?: 'h2' | 'h3' | 'h4'
     /** How far the venue is from the visitor's chosen origin, already formatted. */
@@ -22,6 +24,7 @@ const location = computed(() =>
 )
 
 const localePath = useLocalePath()
+const { t } = useI18n()
 </script>
 
 <template>
@@ -36,6 +39,12 @@ const localePath = useLocalePath()
       </component>
       <span v-if="distance" class="shrink-0 text-meta text-muted-foreground tabular-nums">
         {{ distance }}
+      </span>
+      <span
+        v-else-if="venue.upcomingEventCount !== undefined"
+        class="shrink-0 text-meta text-muted-foreground tabular-nums"
+      >
+        {{ t('common.upcomingCount', { count: venue.upcomingEventCount }) }}
       </span>
     </div>
     <p v-if="location || venue.city" class="truncate text-meta text-muted-foreground">

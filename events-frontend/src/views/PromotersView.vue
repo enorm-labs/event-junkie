@@ -3,13 +3,13 @@ import { computed, ref, watch } from 'vue'
 import { type LocationQueryRaw, useRoute, useRouter } from 'vue-router'
 import { Button } from '@/components/ui/button'
 import BaseInput from '@/components/BaseInput.vue'
-import BaseSelect from '@/components/BaseSelect.vue'
 import PaginationControls from '@/components/PaginationControls.vue'
 import PromoterCard from '@/components/PromoterCard.vue'
+import SortControl, { type SortOption } from '@/components/SortControl.vue'
 import { usePagedList } from '@/composables/usePagedList'
 import { usePromoterSearch, type PromoterSearchParams } from '@/composables/usePromoters'
 import { useI18n } from 'vue-i18n'
-import { CARD_GRID_CLASS, PANEL_CLASS } from '@/lib/utils'
+import { CARD_GRID_CLASS, PANEL_CLASS, RESULTS_BAR_CLASS } from '@/lib/utils'
 
 const PAGE_SIZE = 24
 
@@ -70,10 +70,16 @@ const isFiltered = computed(() =>
 
 function clearSearch() {
   search.value = ''
-  router.push({ query: {} })
+  // The order is not a filter, so clearing keeps it.
+  router.push({ query: { sort: sort.value || undefined } })
 }
 
 const { t } = useI18n()
+
+const sortOptions = computed<SortOption[]>(() => [
+  { value: '', label: t('common.sort.name') },
+  { value: SORT_UPCOMING, label: t('common.sort.upcoming') },
+])
 </script>
 
 <template>
@@ -95,15 +101,6 @@ const { t } = useI18n()
           @change="applySearch"
         />
       </form>
-
-      <BaseSelect
-        :aria-label="t('promoters.sortBy')"
-        :model-value="sort"
-        @change="applyFilters({ sort: ($event.target as HTMLSelectElement).value })"
-      >
-        <option value="">{{ t('promoters.sortName') }}</option>
-        <option :value="SORT_UPCOMING">{{ t('promoters.sortUpcoming') }}</option>
-      </BaseSelect>
     </div>
 
     <p v-if="loading" class="text-body text-muted-foreground">
@@ -118,9 +115,16 @@ const { t } = useI18n()
       </Button>
     </div>
     <template v-else>
-      <p class="text-body text-muted-foreground">
-        {{ t('promoters.resultCount', { count: page.totalElements }) }}
-      </p>
+      <div :class="RESULTS_BAR_CLASS">
+        <p class="text-body text-muted-foreground">
+          {{ t('promoters.resultCount', { count: page.totalElements }) }}
+        </p>
+        <SortControl
+          :model-value="sort"
+          :options="sortOptions"
+          @update:model-value="applyFilters({ sort: $event })"
+        />
+      </div>
       <div :class="CARD_GRID_CLASS">
         <!-- Second level of the outline: nothing sits between the page `h1` and this grid. -->
         <PromoterCard
