@@ -45,8 +45,6 @@ class VenueService(
     suspend fun findById(id: Long): VenueResponse = VenueResponse.fromDomain(venueRepository.findById(id)?.toDomain() ?: throw VenueNotFoundException(id))
 
     /**
-     * Creates a new venue.
-     *
      * The slug is auto-generated from the venue name
      * (e.g. `"Astra Kulturhaus"` → `"astra-kulturhaus"`).
      */

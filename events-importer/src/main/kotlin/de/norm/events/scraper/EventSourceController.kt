@@ -91,8 +91,6 @@ class EventSourceController(
     ): PageResponse<EventSourceResponse> = eventSourceService.findAll(pageable)
 
     /**
-     * Creates a new event source.
-     *
      * The slug is auto-generated from the source name using [de.norm.events.slug.SlugGenerator].
      * The source starts in IDLE status, ready for the scheduler to pick up.
      *
