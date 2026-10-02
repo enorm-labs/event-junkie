@@ -7,12 +7,12 @@ import org.junit.jupiter.api.Test
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver
 
 /**
- * The BFF's half of the swagger-ui pin (#491), a twin of `events-importer`'s
- * `SwaggerUiWebjarTest`: change both or neither. The constraint lives in each module's
- * `build.gradle.kts` separately, so dropping it from one would ship DOMPurify 3.4.12
- * (GHSA-55q2-fjhq-7xh7) while the other module's test passed. This is the cheap half, reading
- * the classpath only; the importer's twin also boots a context and fetches
- * `/webjars/swagger-ui/index.html`. `gradle.properties` has why the pin exists and what removes it.
+ * The BFF's half of the DOMPurify check (#491), a twin of `events-importer`'s
+ * `SwaggerUiWebjarTest`: change both or neither. Each module resolves the springdoc webjar
+ * separately, so a regression in one would ship DOMPurify 3.4.12 (GHSA-55q2-fjhq-7xh7) while the
+ * other module's test passed. This is the cheap half, reading the classpath only; the importer's
+ * twin also boots a context and fetches `/webjars/swagger-ui/index.html`, and its KDoc has the
+ * advisory.
  */
 class SwaggerUiWebjarTest {
     @Test

@@ -32,9 +32,8 @@ was wrong. Every count in the summary carries the command that produced it.
 
 ## Step 2: What we manage
 
-- **`gradle.properties` `*.version` properties** — `jsoup`, `kotest`, `kotlin-logging`, `mockk`, `slugify`, `spring-modulith` (BOM), `springdoc`,
-  `swagger-ui`. **`settings.gradle.kts` `pluginManagement`** — Kotlin, Spring Boot, dependency-management, Kover, ktlint, `dev.detekt`, versions plugin,
-  OWASP. The ktlint _tool_ version is `version = "…"` in the root `build.gradle.kts` `configure<KtlintExtension>` block.
+- **`gradle.properties` `*.version` properties** — `jsoup`, `kotest`, `kotlin-logging`, `mockk`, `slugify`, `spring-modulith` (BOM), `springdoc`.
+  **`settings.gradle.kts` `pluginManagement`** — Kotlin, Spring Boot, dependency-management, Kover, ktlint, `dev.detekt`, versions plugin, OWASP. The ktlint _tool_ version is `version = "…"` in the root `build.gradle.kts` `configure<KtlintExtension>` block.
 - **Bumping `dev.detekt` needs no second edit**: `:detekt-rules` follows the plugin (`./gradlew :detekt-rules:detektToolVersion`). A 2.0 alpha can move its API,
   so a bump that fails that module is the rule needing an update, not a bad version.
 - **Anything declared without a version string comes from a BOM and is not touched**: `spring-boot-starter-*`, `spring-*`, `kotlin-*`, `kotlinx-coroutines-*`,
@@ -69,10 +68,6 @@ re-resolve:
 
 BOM version ≥ pin: delete the override — kept past its purpose it holds the project _behind_ the BOM invisibly. Otherwise keep it and name the CVE. These are
 upper-bound removals, never bumps; raising an override belongs to `/security-triage`.
-
-**`swagger-ui.version` is overtaken by springdoc, not Boot**: after a `springdoc.version` bump, `./gradlew -q :events-bff:dependencyInsight --dependency swagger-ui
---configuration runtimeClasspath`; resolved ≥ pin means delete the pin and both modules' `constraints` for it. `SwaggerUiWebjarTest` keeps asserting the
-bundle's DOMPurify version either way.
 
 ## Step 6: Verify
 
