@@ -17,7 +17,7 @@ retake, and leave the old one visible in the history rather than pretending it w
 emptiness depends on which day of the month you look. A screenshot that chased the content would churn constantly, for
 reasons that have nothing to do with the product.
 
-They go stale when the **design** changes. Concretely, retake `events-dark.png` after any change to:
+They go stale when the **design** changes. Retake them after a release that changes:
 
 - `src/App.vue` — the header and footer are in every shot
 - `src/components/EventCard.vue`, `EventPoster.vue`, `EventFilterBar.vue` — the things the events shot is actually of
@@ -26,23 +26,20 @@ They go stale when the **design** changes. Concretely, retake `events-dark.png` 
 
 ## How to retake
 
-**Take them from the live site**, `https://event-junkie.de/en/events`. It has real data and no development overlay,
-and it needs nothing running locally.
+Run the script after the release that carries the design change:
 
-Four things are easy to get wrong, and each one shipped a worse picture the first time:
+```sh
+scripts/readme-screenshots.sh                        # production into docs/screenshots, and sets the dates
+scripts/readme-screenshots.sh <origin> <output-dir>  # another origin or directory, as a dry run
+```
 
-1. **Clear the stored theme, do not toggle it.** `localStorage.removeItem('theme')` and reload. Toggling gives you
-   whatever this machine was last set to. Clearing gives you what a first-time visitor gets, which is dark by default
-   (BRANDING §5.2). The light shot is the exception and needs `localStorage.setItem('theme', 'light')` before the
-   first paint, because nothing else reaches that palette.
-2. **Load the posters at the bottom edge.** The posters below the fold load lazily. The strip of the third row in
-   the frame stays empty until the page scrolls. Scroll down and back, then wait until every image in and just
-   below the frame is complete. A card whose event has no image shows the placeholder on purpose.
-3. **Capture at 2×** — `deviceScaleFactor: 2`, so 1400×900 becomes 2800×1800. The 1× version saves about 38 kB and
-   looks soft on every retina display. That is a poor trade for a README's one image.
-4. **From a local dev server, hide the Vue devtools overlay.** It injects `#__vue-devtools-container__` and
-   `#vue-inspector-container`, and both render a floating button into the middle of the frame. Set `display: none` on
-   them before capturing. The BFF also has to run, or the list renders its error state.
+**Take them from production**, not from a local dev server. Production has real data and no development overlay. A
+design change reaches production only with a release. Install the frontend first: `npm ci` and
+`npx playwright install chromium` in `events-frontend/`.
+
+The script sets the theme before the first paint, loads the posters at the bottom edge and captures at 2×. Its header
+gives the reasons. Look at every file before you commit it. A card without an event image shows the placeholder
+on purpose.
 
 **Captions carry no counts.** `PRODUCT_OVERVIEW.md` already warns against restating the source count because it drifts, and the event total drifts faster. The
 screenshot shows its own numbers, and asserting them in prose beside it only creates something else to keep in
