@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { LocateFixed, X } from '@lucide/vue'
-import { computed, defineAsyncComponent, ref, shallowRef, watch } from 'vue'
+import { computed, defineAsyncComponent, ref, shallowRef, useTemplateRef, watch } from 'vue'
 import { type LocationQueryRaw, RouterLink, useRoute, useRouter } from 'vue-router'
 import type { VenueSummary } from '@/api/types'
 import { describeError } from '@/api/client'
@@ -18,8 +18,8 @@ import { useLocation } from '@/composables/useLocation'
 import { usePagedList } from '@/composables/usePagedList'
 import { useFilterOptions } from '@/composables/useFilterOptions'
 import { fetchAllVenues, useVenueSearch, type VenueSearchParams } from '@/composables/useVenues'
-import { DISTRICTS } from '@/lib/districts'
-import { formatDistance } from '@/lib/geo'
+import { DISTRICTS, districtLabel } from '@/lib/districts'
+import { formatDistance, type Position } from '@/lib/geo'
 import {
   DEFAULT_RADIUS,
   type MapPin,
@@ -35,6 +35,9 @@ const PAGE_SIZE = 24
 
 // Loaded only when the map is shown: MapLibre is the heaviest dependency the site has.
 const VenueMap = defineAsyncComponent(() => import('@/components/VenueMap.vue'))
+const venueMap = useTemplateRef<{ center(): Position | null; focusPin(slug: string): void }>(
+  'venueMap',
+)
 
 const route = useRoute()
 const router = useRouter()
@@ -217,6 +220,18 @@ const selectedVenue = computed(
   () => mapVenues.value.find((venue) => venue.slug === selected.value) ?? null,
 )
 
+const selectedLocation = computed(() => {
+  const venue = selectedVenue.value
+  return [venue?.address, districtLabel(venue?.district)].filter(Boolean).join(' · ')
+})
+
+// The panel goes with the click, so focus goes back to the pin that opened it.
+function closePanel() {
+  const slug = selected.value
+  selected.value = null
+  if (slug) venueMap.value?.focusPin(slug)
+}
+
 // The compact view is a global display preference — see `useCompactView`.
 const { compact } = useCompactView()
 const localePath = useLocalePath()
@@ -382,26 +397,56 @@ const localePath = useLocalePath()
       </div>
       <VenueMap
         v-else
+        ref="venueMap"
         v-model:selected="selected"
         :origin="origin"
         :pins="pins"
         :radius-km="origin ? radiusKm : null"
         @unavailable="mapUnavailable = true"
-      />
-
-      <section v-if="selectedVenue" aria-live="polite" class="space-y-2">
-        <div :class="CARD_LIST_CLASS">
-          <VenueRow :venue="selectedVenue" as="h2" />
-        </div>
-        <RouterLink
-          :to="{ path: localePath('/map'), query: { venue: selectedVenue.slug } }"
-          class="inline-block text-body text-primary hover:underline"
+      >
+        <!-- Over the map, as on the events map: the filters and "near me" above push the map's
+             lower edge to the fold, so a panel under it changed nothing in view (#2391). -->
+        <section
+          v-if="selectedVenue"
+          aria-live="polite"
+          class="absolute inset-x-2 bottom-8 z-20 max-h-56 space-y-2 overflow-y-auto rounded-lg border border-border bg-background/95 p-3 sm:inset-x-auto sm:bottom-3 sm:left-3 sm:max-h-80 sm:w-96"
         >
-          {{ t('venues.whatsOn') }}
-        </RouterLink>
-      </section>
+          <div class="flex items-start gap-2">
+            <div class="min-w-0 flex-1">
+              <h2 class="truncate text-card-title font-bold tracking-tight">
+                <RouterLink
+                  :to="localePath(`/venues/${selectedVenue.slug}`)"
+                  class="hover:text-primary"
+                >
+                  {{ selectedVenue.name }}
+                </RouterLink>
+              </h2>
+              <p v-if="selectedLocation" class="truncate text-meta text-muted-foreground">
+                {{ selectedLocation }}
+              </p>
+            </div>
+            <Button
+              :aria-label="t('map.closePanel')"
+              :title="t('map.closePanel')"
+              size="icon-xs"
+              type="button"
+              variant="ghost"
+              @click="closePanel"
+            >
+              <X aria-hidden="true" />
+            </Button>
+          </div>
+          <RouterLink
+            :to="{ path: localePath('/map'), query: { venue: selectedVenue.slug } }"
+            class="inline-block text-body text-primary hover:underline"
+          >
+            {{ t('venues.whatsOn') }}
+          </RouterLink>
+        </section>
+      </VenueMap>
+
       <p
-        v-else-if="pins.length && !mapUnavailable && !near"
+        v-if="!selectedVenue && pins.length && !mapUnavailable && !near"
         class="text-body text-muted-foreground"
       >
         {{ t('venues.pickPin') }}

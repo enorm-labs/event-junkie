@@ -217,3 +217,46 @@ test('the venues map lists the venues near me, nearest first, and sends the posi
   expect(page.url()).not.toMatch(/52\.4995|13\.4448|lat|lng/)
   expect(requested.filter((url) => /52\.4995|13\.4448|lat|lng/.test(url))).toEqual([])
 })
+
+test('a pin opens its venue over the map, and closing returns to the pin', async ({ page }) => {
+  await page.route(venuesList, (route) =>
+    json(route, {
+      content: [
+        {
+          ...venue('lido', 'Lido'),
+          address: 'Cuvrystraße 7',
+          latitude: 52.4995,
+          longitude: 13.4448,
+        },
+        { ...venue('astra', 'Astra'), latitude: 52.5072, longitude: 13.4518 },
+      ],
+      page: 0,
+      size: 100,
+      totalElements: 2,
+      totalPages: 1,
+    }),
+  )
+  await page.goto('/en/venues?view=map')
+
+  const pin = page.getByRole('button', { name: 'Lido', exact: true })
+  const unavailable = page.getByText(/cannot draw the map/)
+  await expect(pin.or(unavailable)).toBeVisible()
+  test.skip(await unavailable.isVisible(), 'no WebGL in this browser')
+  await expect(page.getByText('Pick a pin to see the venue.')).toBeVisible()
+
+  await pin.click()
+  const panel = page.locator('section', { has: page.getByRole('heading', { name: 'Lido' }) })
+  await expect(panel.getByRole('link', { name: 'Lido' })).toHaveAttribute('href', '/en/venues/lido')
+  await expect(panel.getByText('Cuvrystraße 7 · Kreuzberg')).toBeVisible()
+  await expect(panel.getByRole('link', { name: 'What is on here, on the map' })).toHaveAttribute(
+    'href',
+    '/en/map?venue=lido',
+  )
+  // Inside the map, not after it: the panel is what a pin click brings into view.
+  await expect(page.locator('div:has(> .venue-map) section')).toHaveCount(1)
+  await expect(page.getByText('Pick a pin to see the venue.')).toHaveCount(0)
+
+  await panel.getByRole('button', { name: 'Close' }).click()
+  await expect(panel).toHaveCount(0)
+  await expect(pin).toBeFocused()
+})
