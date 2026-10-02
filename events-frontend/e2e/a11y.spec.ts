@@ -249,7 +249,7 @@ for (const route of dataRoutes) {
 }
 
 /**
- * The two maps, each with a pin selected: the panel below the map is the markup a visitor reads, and
+ * The two maps, each with a pin selected: the panel over the map is the markup a visitor reads, and
  * the pins are buttons MapLibre positions. Without WebGL the view shows its fallback instead, which
  * the static pass already covers.
  *
