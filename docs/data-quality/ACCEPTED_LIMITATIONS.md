@@ -220,6 +220,7 @@ says so.
 | `RITTER_BUTZKE`        | `PRICE`            | the club sells through a third party and prints no figure; a night is flagged free only when its title says so                                   | —     |
 | `ROADRUNNER`           | `PER_EVENT_PAGE`   | the whole programme lives on one hand-coded page                                                                                                 | —     |
 | `ROADRUNNER`           | `EVENT_TYPE`       | the retro programme carries no category field; a live-music venue, so an unmarked title defaults to a concert                                    | —     |
+| `ROADRUNNER`           | `ARTISTS`          | a night with no line-up label names only its title, which is as often a band battle as an act with its tour run on                               | —     |
 | `ROSA`                 | `SUBTITLE`         | the site states one title per night and no second line                                                                                           | —     |
 | `ROSA`                 | `DOORS_TIME`       | the site publishes an opening range, not a doors time                                                                                            | —     |
 | `ROSA`                 | `GENRE`            | the venue names no musical style anywhere; every night takes the club's Techno default                                                           | —     |

@@ -43,7 +43,8 @@ import java.util.Locale
  * `Record Hop:` the night's rock'n'roll DJ (#2332). A block with a headliner label is a named
  * night ("40 Jahre Louisiana Rebs Berlin"), so its title is that name, read from the line in
  * front of the first label. A block without one keeps the first `Stil11` line as its title (see
- * [billing] for its acts). `Special guests:` is not read: on the one page that used it, it named a
+ * [billing] for its acts). A block with no label at all bills no act, an accepted `ARTISTS`
+ * limitation (#2369). `Special guests:` is not read: on the one page that used it, it named a
  * video artist and a DJ in one unseparated line.
  *
  * The `sourceId` is the date plus the first `Stil11` line, which was the title before #2332. A
@@ -184,7 +185,9 @@ class RoadrunnerOverviewPageScraper(
      * The event's acts. A named night bills its labelled acts. A `Support:` label without a
      * headliner label confirms that the title is the act, the "title = headliner + Support:"
      * convention. A block with neither bills only its DJ, if any: an unlabelled title is as often
-     * a night ("BOWIE 10", a band battle) as an act with its tour name run on.
+     * a night ("BOWIE 10", a band battle) as an act with its tour name run on, and the shared title
+     * rules bill both whole. Even a stripped tour tail leaves a misspelled act ("PHIL CAMPELL'S
+     * BASTARD SONS"), so `ROADRUNNER_LIMITATIONS` declares the gap instead (#2369).
      */
     private fun billing(
         title: String,
