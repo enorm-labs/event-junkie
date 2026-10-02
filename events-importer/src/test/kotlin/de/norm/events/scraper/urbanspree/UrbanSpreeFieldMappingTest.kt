@@ -144,4 +144,32 @@ class UrbanSpreeFieldMappingTest {
     fun `urbanSpreeDjSets finds nothing in prose that only mentions a DJ set`() {
         urbanSpreeDjSets("The night closes with a DJ set by the band's drummer.").shouldBeEmpty()
     }
+
+    // --- urbanSpreeFeaturedActs (#2350) ---
+
+    @Test
+    fun `urbanSpreeFeaturedActs reads a Featuring sentence's list up to the clause after it`() {
+        urbanSpreeFeaturedActs(
+            "Human Tree takes over Urban Spree for a special Klubnacht. Featuring Bam Bam’s Boogie, Delta Division and N Ska, " +
+                "the programme unfolds as a continuous musical journey."
+        ) shouldContainExactly listOf("Bam Bam’s Boogie", "Delta Division", "N Ska")
+    }
+
+    @Test
+    fun `urbanSpreeFeaturedActs reads a list that ends the sentence`() {
+        urbanSpreeFeaturedActs("Featuring Architect and Daniel Myer.") shouldContainExactly listOf("Architect", "Daniel Myer")
+    }
+
+    @Test
+    fun `urbanSpreeFeaturedActs ignores featuring in the middle of a sentence`() {
+        // Alice Gift's biography on the Flame Parade page.
+        urbanSpreeFeaturedActs("He played on a compilation featuring artists such as The KVB and Twin Tribes.").shouldBeEmpty()
+    }
+
+    @Test
+    fun `urbanSpreeFeaturedActs rejects a list with an item that is prose`() {
+        urbanSpreeFeaturedActs("Featuring 2 Berlin-based cutting-edge bands, exploring between funk and electro.").shouldBeEmpty()
+        urbanSpreeFeaturedActs("Featuring Architect and a rare live set by someone special.").shouldBeEmpty()
+        urbanSpreeFeaturedActs(null).shouldBeEmpty()
+    }
 }
