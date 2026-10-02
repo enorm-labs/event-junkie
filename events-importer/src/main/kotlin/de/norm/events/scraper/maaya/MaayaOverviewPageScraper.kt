@@ -1,7 +1,9 @@
 package de.norm.events.scraper.maaya
 
+import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.detectFree
 import de.norm.events.scraper.endOn
@@ -43,11 +45,13 @@ import java.time.MonthDay
  * ticketed, the venue's own wording otherwise ("FREE ENTRY"); see [entryNoteOf]. Taken as
  * stated, mistakes included: both halves of a two-part night can share a shop page.
  *
- * **No artists are minted.** Titles are series and party names ("SUPAFLY", "RIPPLES W/ AMINE
- * K"), not acts, so a derived headliner would file party names as artists. For the same reason
- * the type falls back to `OTHER` via [inferUnmarkedTitleType] rather than `PARTY`: a
- * multi-format house — gallery, garden, pool and market — so a cue-less title is genuinely
- * unknown, not presumed a club night the way Crack Bellmer's is.
+ * **Artists are minted only for a concert.** Titles are series and party names ("SUPAFLY",
+ * "RIPPLES W/ AMINE K"), not acts, so a derived headliner would file party names as artists. For
+ * the same reason the type falls back to `OTHER` via [inferUnmarkedTitleType] rather than
+ * `PARTY`: a multi-format house — gallery, garden, pool and market — so a cue-less title is
+ * genuinely unknown, not presumed a club night the way Crack Bellmer's is. The exception is the
+ * venue's own concert prefix, "CONCERT JIZZLE": the night is a `CONCERT` and the rest of the
+ * title is the act (#2315).
  *
  * @see MAAYA_LIMITATIONS for what the venue does not publish.
  * @see MaayaWebsiteImporter for the HTTP fetch orchestrator.
@@ -121,9 +125,10 @@ class MaayaOverviewPageScraper(
         val endDate = lastDay ?: endTime?.let { endOn(eventDate, startTime, it) }
 
         val entryNote = entryNoteOf(card)
+        val concertAct = CONCERT_PREFIX.find(title)?.groupValues?.get(1)
         return ScrapedEvent(
             title = title,
-            eventType = inferUnmarkedTitleType(title),
+            eventType = if (concertAct != null) EventType.CONCERT.name else inferUnmarkedTitleType(title),
             eventDate = eventDate,
             endDate = endDate,
             startTime = startTime,
@@ -136,7 +141,8 @@ class MaayaOverviewPageScraper(
             // A bare "FREE ENTRY" is fully carried by the free flag, so storing it as a note would repeat
             // it; a qualified one is not, and is kept verbatim.
             priceNote = entryNote?.takeUnless { it.equals(FREE_ENTRY_LABEL, ignoreCase = true) },
-            free = detectFree(priceNote = entryNote, title = title)
+            free = detectFree(priceNote = entryNote, title = title),
+            artists = concertAct?.let { buildArtistsForEventType(it, subtitle = null, eventType = EventType.CONCERT.name) }.orEmpty()
         )
     }
 
@@ -213,6 +219,9 @@ class MaayaOverviewPageScraper(
         const val POSTER = ".elementor-widget-image img"
         const val BUTTON = ".elementor-widget-button a.elementor-button"
         const val BUTTON_LABEL = ".elementor-widget-button .elementor-button-text"
+
+        /** The venue's concert billing, "CONCERT JIZZLE" or "Konzert: Agnes Nunes"; the group is the act. */
+        val CONCERT_PREFIX = Regex("""^(?:concert|konzert)\s*:?\s+(\S.*)$""", RegexOption.IGNORE_CASE)
 
         /** Button labels that name the link rather than the entry terms, so carry no pricing information. */
         val CALL_TO_ACTION_LABELS = setOf("TICKETS", "RESERVATIONS")
