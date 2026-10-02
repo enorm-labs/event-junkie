@@ -250,6 +250,23 @@ class MaayaOverviewPageScraperTest {
             events.none { it.imageUrl == null } shouldBe true
         }
 
+        // MAAYA bills a concert as "CONCERT <act>"; the September fixture carries none, so one title is renamed.
+        @Test
+        fun `types a CONCERT-prefixed night as a concert and bills the act`() {
+            val html =
+                javaClass.classLoader
+                    .getResourceAsStream("scraper/maaya/maaya-overview-2026-09.html")!!
+                    .bufferedReader()
+                    .readText()
+            val doc = Jsoup.parse(html, sourceUrl)
+            doc.select(".elementor-heading-title").first { it.text() == "AFROECLIPSE" }.text("CONCERT AGNES NUNES")
+
+            val concert = scraper.scrape(doc, sourceUrl).first { it.title == "CONCERT AGNES NUNES" }
+
+            concert.eventType shouldBe EventType.CONCERT.name
+            concert.artists.map { it.name to it.role } shouldContainExactly listOf("AGNES NUNES" to "HEADLINER")
+        }
+
         @Test
         fun `fails when the cards state schedules and none yields a date`() {
             val doc =
