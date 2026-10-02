@@ -1,5 +1,7 @@
 package de.norm.events.scraper.supamolly
 
+import de.norm.events.genretag.isGenreLabel
+import de.norm.events.genretag.normalizeGenre
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
@@ -42,6 +44,9 @@ import java.time.format.DateTimeParseException
  * billed like an act; a name carrying an inline `HH:MM Uhr` ([isScheduleNote]) is a programme
  * note, so it stays the title but is never an artist — which types the night via
  * [inferUnmarkedTitleType] instead of defaulting to a concert.
+ * - **An act's note is sometimes its style.** `.beschr` holds `Punk Rock` as often as
+ * `Kaffee & Kuchen ab 19:30`, so only the genres the vocabulary knows become the night's
+ * [ScrapedEvent.genre] ([parseGenre]); the whole note stays the description.
  *
  * @see SUPAMOLLY_LIMITATIONS for what the venue does not publish.
  * @see SupamollyWebsiteImporter for the HTTP fetch orchestrator.
@@ -111,6 +116,7 @@ class SupamollyOverviewPageScraper {
         return ScrapedEvent(
             title = title,
             description = blocks.mapNotNull { it.description }.joinToString("\n").takeIf { it.isNotBlank() },
+            genre = parseGenre(blocks.mapNotNull { it.description }),
             // Artist-less nights are the venue's socials and film/quiz evenings, not gigs — see class KDoc.
             eventType = if (artists.isEmpty()) inferUnmarkedTitleType(title) else inferConcertVenueType(title),
             eventDate = eventDate,
@@ -123,6 +129,18 @@ class SupamollyOverviewPageScraper {
             artists = artists
         )
     }
+
+    /**
+     * The known genres in the acts' notes, in billing order. The normalizer keeps an unknown short
+     * token as a new genre, so only [isGenreLabel] ones pass, as for Badehaus's subtitle (#2127).
+     */
+    private fun parseGenre(notes: List<String>): String? =
+        notes
+            .flatMap { normalizeGenre(it) }
+            .filter(::isGenreLabel)
+            .distinct()
+            .joinToString(", ")
+            .ifEmpty { null }
 
     /**
      * One `div.even` block as act name and note. Both are read off a clone with the block's two

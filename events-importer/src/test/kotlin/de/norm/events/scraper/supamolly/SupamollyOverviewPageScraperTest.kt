@@ -120,6 +120,39 @@ class SupamollyOverviewPageScraperTest {
         }
 
         @Test
+        fun `reads the genre from the acts' style notes, in billing order`() {
+            val document =
+                Jsoup.parse(
+                    """<table><tr class="event" id="202610102130"><td class="evcont">
+                       <div class="even"><div class="tit"><b>Circus Rhapsody</b></div><div class="beschr">Folk Punk</div></div>
+                       <div class="even"><div class="tit"><b>FONA</b></div><div class="beschr">Emo / Alternative</div></div>
+                       <div class="even"><div class="tit"><b>Missstand</b></div><div class="beschr">Punk Rock</div></div>
+                       </td></tr></table>""",
+                    baseUrl
+                )
+
+            scraper.scrape(document, baseUrl).single().genre shouldBe "Folk, Punk, Emo, Alternative"
+        }
+
+        @Test
+        fun `keeps the notes as the description when they carry a style`() {
+            val document =
+                Jsoup.parse(
+                    """<table><tr class="event" id="202610102130"><td class="evcont">
+                       <div class="even"><div class="tit"><b>Missstand</b></div><div class="beschr">Punk Rock</div></div>
+                       </td></tr></table>""",
+                    baseUrl
+                )
+
+            scraper.scrape(document, baseUrl).single().description shouldBe "Punk Rock"
+        }
+
+        @Test
+        fun `leaves the genre unset when no act has a note`() {
+            eventWithStamp("202609112130").genre.shouldBeNull()
+        }
+
+        @Test
         fun `excludes the reference urls from the description`() {
             // Every `.even` block on this row carries a Bandcamp/Instagram link and no note.
             eventWithStamp("202609112130").description.shouldBeNull()
@@ -146,6 +179,11 @@ class SupamollyOverviewPageScraperTest {
         @Test
         fun `keeps the accompanying note as the description`() {
             eventWithStamp("202609061530").description shouldContain "Pizza (Alles auch vegan)"
+        }
+
+        @Test
+        fun `reads no genre from a prose note`() {
+            eventWithStamp("202609061530").genre.shouldBeNull()
         }
 
         @Test
