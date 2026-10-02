@@ -52,6 +52,8 @@ test('renders the tonight and upcoming feeds', async ({ page }) => {
 
   await expect(page.getByRole('heading', { level: 2, name: 'Tonight' })).toBeVisible()
   await expect(page.getByRole('heading', { level: 2, name: 'Upcoming' })).toBeVisible()
+  // The count sits beside the heading, not in its name.
+  await expect(page.getByText('1 event', { exact: true })).toBeVisible()
 
   await expect(eventHeading(page, 'Tonight Show')).toBeVisible()
   await expect(eventHeading(page, 'Upcoming One')).toBeVisible()

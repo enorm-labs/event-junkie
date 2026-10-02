@@ -1,5 +1,6 @@
 {
   "tonight": "Tonight",
+  "eventCount": "{count} event | {count} events",
   "tonightEmpty": "Nothing on tonight? In Berlin? Unlikely. Try the calendar.",
   "showAllTonight": "Show all {count} events tonight",
   "upcoming": "Upcoming",

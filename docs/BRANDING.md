@@ -683,13 +683,14 @@ A sequence that also captures the §3–§5 design ideas not tracked in the chec
 - [x] Home hero — ambient violet glow, animated pulse mark, wordmark + tagline — and mono eyebrow section labels (`PulseMark`, `SectionLabel`, motion keyframes
       in `main.css`). _(§5.5, §5.6)_
 - [x] **Superseded 2026-08-23 (#475).** The glow, the pulse mark and its keyframes are gone; the hero is the club stamp, per locale, over nothing. The line
-      above stays because it records what was true when it was ticked — the eyebrow labels it also names are untouched and still shipping.
+      above stays because it records what was true when it was ticked — the eyebrow labels it also names still ship on the detail pages.
 - [x] Refined event cards + a pulsing "live tonight" dot + hover-lift, gated by reduced-motion. _(§5.5)_
 - [x] Events & Calendar: eyebrow headers, filter-forward polish, accent-branded day markers. _(§5.6)_
 - [x] **Superseded 2026-09-09 (#1239).** The eyebrow headers are gone from Events, Venues and Calendar: each page now opens on its `h1`. The device was
       spending itself four times on the way down a page, and a tracked-out kicker above a headline that says the same thing in more words is the single
-      most-named sign of generated design. `SectionLabel` itself is untouched and still separates the two feeds on the home page, labels the detail-page
-      sections, and names the entity kind above a venue or artist title, which is where it does real work.
+      most-named sign of generated design. `SectionLabel` itself labels the detail-page sections and names the entity kind above a venue or artist title,
+      which is where it does real work. The home page's two feeds took `text-section` headings instead (#2347): at 14 px, "Upcoming" read as one more row
+      of cards.
 - [x] Detail pages: editorial layout + eyebrow section labels; desaturate-on-rest image treatment. _(§4, §5.4)_
 - [x] Empty / 404 / loading microcopy in the brand voice. _(§3)_
 
