@@ -19,6 +19,8 @@ CLAUDE.local.md
 
 # Throwaway venv for scripts/outline-text.sh — rebuilt on demand, never shared.
 .venv-fonts/
+# Throwaway venv for scripts/build-stickers.sh — rebuilt on demand, never shared.
+.venv-stickers/
 
 # Python bytecode from the OpenObserve helper scripts in deploy/alerts and deploy/dashboards.
 # Eight of these were tracked until 2026-08-24; every local run of the scripts re-dirtied the tree.

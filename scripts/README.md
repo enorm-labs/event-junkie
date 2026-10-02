@@ -12,8 +12,8 @@ file that does not exist, when anything in the tree references a `scripts/<name>
   `case` arm, the same in every file; `dev-env.sh` is the shortest example. The exception is `shell-aliases.sh`, which is sourced and defines functions.
 - **A header is the documentation.** Name, one-line purpose, `Usage:`, then what it requires and what it reaches. The rows below quote those headers.
 - **Python is standard library only, with `argparse`.** `ste_lint.py` and the `deploy/dashboards/` and `deploy/alerts/` scripts are copied to a node and run
-  there, where nothing is installed. `outline_text.py` is the one exception, and its wrapper builds the venv it needs. ruff at a pinned
-  version is the gate, in the commit hook and in `validate-python.yml`, from the root `ruff.toml`.
+  there, where nothing is installed. `outline_text.py` and `build_stickers.py` are the exceptions. They run only on a contributor's machine, and each
+  one's wrapper builds the venv it needs. ruff at a pinned version is the gate, in the commit hook and in `validate-python.yml`, from the root `ruff.toml`.
 
 ## What was decided against
 
@@ -66,18 +66,19 @@ Run by CI, by the commit hook, or by `/verify`. Each fails a build.
 
 Run by an agent or a developer. No cluster, no tunnel; `k3d-rehearsal.sh` makes its own.
 
-| Script                                | What it does                                                                                                      | Used by                                                 |
-| ------------------------------------- | ----------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
-| `dev-env.sh`                          | Local dev environment control: start and stop the stack, seed sources, trigger imports, inspect and diff the data | `/importer-smoke`, `/next-importer`, README.md          |
-| `k3d-rehearsal.sh`                    | The whole stack on a local Kubernetes, proven end to end, then torn down                                          | `/k3d-rehearsal`                                        |
-| `issue-board.sh`                      | Read and set an issue's Status and Priority on the project board — fields, not labels                             | `/start-issue`, `/new-issue`, `/open-pr`, two workflows |
-| `jdk-fetch.sh`                        | Fetch one page with the JVM's HTTP client and the importer's User-Agent, for a host that refuses curl             | `/plausibility-check`                                   |
-| `daily-check.sh`                      | The GitHub half of the start of day as one JSON: red runs, bot issues, unread reports, alerts, open PRs, release  | `/daily-check`                                          |
-| `generate-backlog-snapshot.sh`        | Every open issue rendered into `build/BACKLOG.md`, for grepping instead of a network round trip                   | `/new-issue`, `/next-issue`, `/milestone-plan`          |
-| `geocode-venues.py`                   | Venue addresses to coordinates with the Google Geocoding API, and an audit of the 86 seeded ones (#357)           | `/scaffold-importer`                                    |
-| `map-assets.sh`                       | The self-hosted map: cut Berlin's tiles, fonts and icons, or copy the pinned set (ADR-037)                        | `publish-map-assets.yml`, DEVELOPMENT.md                |
-| `outline-text.sh` + `outline_text.py` | A string set in a font, printed as an SVG path — brand artwork carries outlined glyphs, never `<text>`            | `docs/branding/`                                        |
-| `readme-screenshots.sh`               | The README's four screenshots of the events list, desktop and phone in both themes, from production               | `docs/screenshots/`                                     |
+| Script                                    | What it does                                                                                                      | Used by                                                 |
+| ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
+| `dev-env.sh`                              | Local dev environment control: start and stop the stack, seed sources, trigger imports, inspect and diff the data | `/importer-smoke`, `/next-importer`, README.md          |
+| `k3d-rehearsal.sh`                        | The whole stack on a local Kubernetes, proven end to end, then torn down                                          | `/k3d-rehearsal`                                        |
+| `issue-board.sh`                          | Read and set an issue's Status and Priority on the project board — fields, not labels                             | `/start-issue`, `/new-issue`, `/open-pr`, two workflows |
+| `jdk-fetch.sh`                            | Fetch one page with the JVM's HTTP client and the importer's User-Agent, for a host that refuses curl             | `/plausibility-check`                                   |
+| `daily-check.sh`                          | The GitHub half of the start of day as one JSON: red runs, bot issues, unread reports, alerts, open PRs, release  | `/daily-check`                                          |
+| `generate-backlog-snapshot.sh`            | Every open issue rendered into `build/BACKLOG.md`, for grepping instead of a network round trip                   | `/new-issue`, `/next-issue`, `/milestone-plan`          |
+| `geocode-venues.py`                       | Venue addresses to coordinates with the Google Geocoding API, and an audit of the 86 seeded ones (#357)           | `/scaffold-importer`                                    |
+| `map-assets.sh`                           | The self-hosted map: cut Berlin's tiles, fonts and icons, or copy the pinned set (ADR-037)                        | `publish-map-assets.yml`, DEVELOPMENT.md                |
+| `outline-text.sh` + `outline_text.py`     | A string set in a font, printed as an SVG path — brand artwork carries outlined glyphs, never `<text>`            | `docs/branding/`                                        |
+| `build-stickers.sh` + `build_stickers.py` | Launch stickers as CMYK print PDFs, every QR code decoded first                                                   | `docs/branding/stickers/`                               |
+| `readme-screenshots.sh`                   | The README's four screenshots of the events list, desktop and phone in both themes, from production               | `docs/screenshots/`                                     |
 
 ## Ops
 
