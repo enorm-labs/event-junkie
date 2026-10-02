@@ -20,10 +20,11 @@ import org.springframework.stereotype.Component
  * (`?get_month=<m>&get_year=<yyyy>`).
  *
  * The entry URL serves the **current** month, listing only the days still to come; the importer
- * follows the page's own next-month link until the venue stops offering one — the month after
- * the last announced night renders "Bisher keine Events eingetragen" and drops the link, so the
- * walk ends on the venue's own signal, not a guessed horizon. [MAX_MONTH_PAGES] caps it
- * regardless, so a self-referential link cannot spin.
+ * follows the page's own next-month link to the first month that renders "Bisher keine Events
+ * eingetragen". That page still offers a next link, to every month ahead, so the walk ends on the
+ * marker and not on the link (#2319). Matrix is open every night, so an empty month is the end of
+ * the programme, not a gap. [MAX_MONTH_PAGES] caps the walk regardless, so a self-referential link
+ * cannot spin.
  *
  * Per-event `/parties/<date>-matrix-<weekday>/` pages exist but carry nothing the month view
  * lacks — walking ~4 month pages replaces ~90 detail fetches per run.
@@ -71,7 +72,12 @@ class MatrixWebsiteImporter(
     private fun nextMonthUrl(
         document: Document,
         pageUrl: String
-    ): String? = document.attrAt("a:has(i.fa-chevron-right)", "href")?.let { resolveUrl(pageUrl, it) }
+    ): String? =
+        if (document.selectFirst(EMPTY_MONTH) != null) {
+            null
+        } else {
+            document.attrAt("a:has(i.fa-chevron-right)", "href")?.let { resolveUrl(pageUrl, it) }
+        }
 
     private companion object {
         /**
@@ -79,6 +85,9 @@ class MatrixWebsiteImporter(
          * runaway guard rather than a horizon — it bites only if next-month links stop terminating.
          */
         private const val MAX_MONTH_PAGES = 12
+
+        /** The heading a month without a programme renders in place of its nights. */
+        private const val EMPTY_MONTH = "h2:containsOwn(Bisher keine Events eingetragen)"
     }
 }
 
