@@ -31,4 +31,9 @@ object LogFields {
 
     /** The venue's id for an event, not ours. On a duplicate skipped and a stale removal (#984). */
     const val EVENT_SOURCE_ID = "eventSourceId"
+
+    /** The three fields of the line [dateCheckedAgainstWeekday] writes when a weekday disagrees with its date. */
+    const val DATE_HEADING = "dateHeading"
+    const val PARSED_DATE = "parsedDate"
+    const val CORRECTED_DATE = "correctedDate"
 }

@@ -2,6 +2,7 @@ package de.norm.events.scraper.derweissehase
 
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.withWeekdayWarnings
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
@@ -201,5 +202,16 @@ class DerWeisseHaseOverviewPageScraperTest {
     @Test
     fun `returns no events for a page without a programme`() {
         scraper.scrape(Jsoup.parse("<html><body><main></main></body></html>", baseUrl), baseUrl).shouldBeEmpty()
+    }
+
+    @Test
+    fun `moves a night whose weekday names the neighbouring month`() {
+        // 3 September 2026 is a Thursday; the Saturday the heading names is 3 October.
+        val (events, warnings) =
+            withWeekdayWarnings { scraper.scrape(block("""<p class="dater">Samstag 03.09.2026 23:00</p><h1>Klubnacht</h1>"""), baseUrl) }
+
+        events.single().eventDate shouldBe LocalDate.of(2026, 10, 3)
+        events.single().sourceId shouldBe "der_weisse_hase:2026-10-03-klubnacht"
+        warnings shouldHaveSize 1
     }
 }

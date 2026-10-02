@@ -9,6 +9,7 @@ import de.norm.events.scraper.SUPPORT_LABELS
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.WHITESPACE
+import de.norm.events.scraper.dateCheckedAgainstWeekday
 import de.norm.events.scraper.gretchen.GretchenOverviewPageScraper.Companion.COLLAB_SEPARATOR
 import de.norm.events.scraper.gretchen.GretchenOverviewPageScraper.Companion.DROP_LINE_PATTERN
 import de.norm.events.scraper.gretchen.GretchenOverviewPageScraper.Companion.PRESENTS_PREFIX
@@ -20,6 +21,7 @@ import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.labelledClock
 import de.norm.events.scraper.parseEventStatus
 import de.norm.events.scraper.parseGermanDate
+import de.norm.events.scraper.parseGermanWeekdayAbbreviation
 import de.norm.events.scraper.parseLabelledPrices
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.resolveUrl
@@ -165,9 +167,15 @@ class GretchenOverviewPageScraper {
         }
 
     /**
-     * Parses the date from the `.date` cell's `<strong>`, a full `DD.MM.YYYY` ("10.07.2026").
+     * Parses the date from the `.date` cell's `<strong>`, a full `DD.MM.YYYY` ("10.07.2026"),
+     * checked against the weekday the cell opens with ("Fr.", [dateCheckedAgainstWeekday]).
      */
-    private fun parseEventDate(gig: Element): LocalDate? = parseGermanDate(gig.textAt(".date strong"))
+    private fun parseEventDate(gig: Element): LocalDate? {
+        val date = parseGermanDate(gig.textAt(".date strong")) ?: return null
+        val cell = gig.textAt(".date").orEmpty()
+        val weekday = parseGermanWeekdayAbbreviation(LEADING_WEEKDAY.find(cell)?.groupValues?.get(1))
+        return dateCheckedAgainstWeekday(date, weekday, cell)
+    }
 
     /**
      * Parses doors and show times from the `.date` cell, dot-separated ("Doors: 19.30", "Show:
@@ -376,6 +384,9 @@ class GretchenOverviewPageScraper {
 
         /** Splits a `.lineup` block's whole text into its `<br>`-delimited lines. */
         private val LINE_BREAK = Regex("""\r?\n""")
+
+        /** The two-letter weekday the `.date` cell opens with: "Fr. 10.07.2026 Doors: 19.30". */
+        private val LEADING_WEEKDAY = Regex("""^\s*(\p{L}{2})\.""")
 
         /** A `*…*` decoration on a lineup line (e.g. `*live*`). */
         private val STAR_MARKER = Regex("""\*[^*]*\*""")

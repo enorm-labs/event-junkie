@@ -7,11 +7,13 @@ import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
 import de.norm.events.scraper.attrAt
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.cleanEventTitle
+import de.norm.events.scraper.dateCheckedAgainstWeekday
 import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.imgSrcAt
 import de.norm.events.scraper.mapEventType
 import de.norm.events.scraper.parseEventStatus
 import de.norm.events.scraper.parseGermanMonthAbbreviation
+import de.norm.events.scraper.parseGermanWeekday
 import de.norm.events.scraper.parsePriceValue
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.resolveUrl
@@ -135,16 +137,17 @@ class AegOverviewPageScraper {
     /**
      * The date from the `.m-date__day` / `.m-date__month` / `.m-date__year` spans, each with its
      * own punctuation (`21.`, `08.` or `Sep. `, `2026,`). `null` when a part is missing or the
-     * combination is not a real date.
+     * combination is not a real date. The `.m-date__weekday` span ("Dienstag,") checks the result
+     * ([dateCheckedAgainstWeekday]).
      */
     private fun parseRenderedDate(row: Element): LocalDate? {
         val day = row.textAt(".m-date__day")?.trim('.', ' ')?.toIntOrNull()
         val month = parseMonth(row.textAt(".m-date__month"))
         val year = row.textAt(".m-date__year")?.trim(',', ' ')?.toIntOrNull()
-        return if (day == null || month == null || year == null) {
-            null
-        } else {
-            runCatching { LocalDate.of(year, month, day) }.getOrNull()
+        val date = if (day == null || month == null || year == null) null else runCatching { LocalDate.of(year, month, day) }.getOrNull()
+        return date?.let {
+            val weekday = parseGermanWeekday(row.textAt(".m-date__weekday")?.trim(',', ' '))
+            dateCheckedAgainstWeekday(it, weekday, row.textAt(".m-date__singleDate") ?: it.toString())
         }
     }
 

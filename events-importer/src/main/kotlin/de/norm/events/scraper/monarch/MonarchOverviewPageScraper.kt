@@ -4,10 +4,12 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.WHITESPACE
 import de.norm.events.scraper.buildArtistsForEventType
+import de.norm.events.scraper.dateCheckedAgainstWeekday
 import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.inferUnmarkedTitleType
 import de.norm.events.scraper.mapEventType
 import de.norm.events.scraper.parseEventStatus
+import de.norm.events.scraper.parseGermanWeekday
 import de.norm.events.slug.SlugGenerator
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
@@ -31,7 +33,7 @@ import java.time.LocalTime
  *
  * Parsing anchors on the one stable handle: the title cell's `id=td1`. The enclosing block is
  * its nearest `<div>` ancestor, supplying date line and ticket link. The date carries a full
- * four-digit year, so no weekday inference. Stale past events stay listed and are dropped
+ * four-digit year, so the weekday only checks it ([dateCheckedAgainstWeekday]). Stale past events stay listed and are dropped
  * centrally at persistence (`EventUpsertService`), so every dated block is returned as-is.
  *
  * The secondary `td.tom` cell mixes real support lineups with pay-at-door notes ("Abendkasse")
@@ -129,16 +131,12 @@ class MonarchOverviewPageScraper {
             ?.trim()
             .orEmpty()
 
-    /** The calendar date from a "Weekday DD/MM/YYYY-HH:MM" line, or `null` when absent/invalid. */
-    @Suppress("ReturnCount") // Early exits per date component are clearer than nested lets
+    /** The calendar date from a "Weekday DD/MM/YYYY-HH:MM" line, checked against its weekday, or `null` when absent/invalid. */
     private fun parseDate(dateText: String): LocalDate? {
-        val match = DATE_TIME_PATTERN.find(dateText) ?: return null
-        val (day, month, year) = match.destructured
-        return try {
-            LocalDate.of(year.toInt(), month.toInt(), day.toInt())
-        } catch (_: DateTimeException) {
-            null
-        }
+        val (day, month, year) = DATE_TIME_PATTERN.find(dateText)?.destructured ?: return null
+        return runCatching { LocalDate.of(year.toInt(), month.toInt(), day.toInt()) }
+            .getOrNull()
+            ?.let { dateCheckedAgainstWeekday(it, parseGermanWeekday(LEADING_WEEKDAY.find(dateText)?.value), dateText) }
     }
 
     /** The start time from a "Weekday DD/MM/YYYY-HH:MM" line, or `null` when absent/invalid. */
@@ -165,10 +163,13 @@ class MonarchOverviewPageScraper {
     companion object {
         /**
          * The block's date line "<Weekday> DD/MM/YYYY-HH:MM", capturing day, month, year, hour and
-         * minute. The weekday prefix is redundant (the year is explicit) and ignored. The time is
-         * optional, but the dash is not, so only the date line matches.
+         * minute. The weekday prefix is read by [LEADING_WEEKDAY]. The time is optional, but the
+         * dash is not, so only the date line matches.
          */
         private val DATE_TIME_PATTERN = Regex("""(\d{1,2})/(\d{1,2})/(\d{4})-(?:(\d{1,2}):(\d{2}))?""")
+
+        /** The weekday the date line opens with: "Samstag" in "Samstag 11/07/2026-18:30". */
+        private val LEADING_WEEKDAY = Regex("""^\p{L}+""")
         private const val HOUR_GROUP = 4
         private const val MINUTE_GROUP = 5
 

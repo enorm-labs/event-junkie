@@ -4,8 +4,10 @@ import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.cleanEventTitle
+import de.norm.events.scraper.dateCheckedAgainstWeekday
 import de.norm.events.scraper.imgSrcAt
 import de.norm.events.scraper.parseGermanMonthAbbreviation
+import de.norm.events.scraper.parseGermanWeekday
 import de.norm.events.scraper.parseGermanWeekdayAbbreviation
 import de.norm.events.scraper.textLines
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -123,12 +125,16 @@ internal data class HeidegluehenSchedule(
 /**
  * Parses one of the venue's prose date lines, or `null`. Both spellings are accepted: the
  * month page's `"Samstag, 1. August 2026, 12 Uhr (bis Sonntag, 6 Uhr)"` and the week page's
- * `"Samstag, 6. Juni 2026, 12 Uhr,"` with its closing time on the following line.
+ * `"Samstag, 6. Juni 2026, 12 Uhr,"` with its closing time on the following line. The date is
+ * checked against the weekday before it ([dateCheckedAgainstWeekday]).
  */
 internal fun parseSchedule(line: String): HeidegluehenSchedule? {
     val groups = GERMAN_PROSE_DATE.find(line)?.groupValues ?: return null
     val month = parseGermanMonthAbbreviation(groups[MONTH_GROUP].take(GERMAN_MONTH_PREFIX))
-    val date = month?.let { runCatching { LocalDate.of(groups[YEAR_GROUP].toInt(), it, groups[DAY_GROUP].toInt()) }.getOrNull() }
+    val date =
+        month
+            ?.let { runCatching { LocalDate.of(groups[YEAR_GROUP].toInt(), it, groups[DAY_GROUP].toInt()) }.getOrNull() }
+            ?.let { dateCheckedAgainstWeekday(it, parseGermanWeekday(groups[WEEKDAY_GROUP]), line.trim()) }
 
     return date?.let {
         // "bis Sonntag" from a Saturday is the next day; "bis Samstag, 22 Uhr" from a Saturday noon is the same day.
@@ -157,8 +163,8 @@ private fun parseHour(text: String): LocalTime? =
 /** The month's artwork: the one centred photo inside the page's content column. */
 internal const val MONTH_ARTWORK = "#pagecontent .fl-photo-align-center img"
 
-/** `"Samstag, 1. August 2026, 12 Uhr"` — weekday and anything after the hour are ignored. */
-private val GERMAN_PROSE_DATE = Regex("""(\d{1,2})\.\s*([A-Za-zÄÖÜäöüß]+)\s+(\d{4}),?\s*(\d{1,2})\s*Uhr""")
+/** `"Samstag, 1. August 2026, 12 Uhr"`; the weekday is optional and anything after the hour is ignored. */
+private val GERMAN_PROSE_DATE = Regex("""(?:([A-Za-zÄÖÜäöüß]+),?\s+)?(\d{1,2})\.\s*([A-Za-zÄÖÜäöüß]+)\s+(\d{4}),?\s*(\d{1,2})\s*Uhr""")
 
 /** The `"(bis Sonntag, 6 Uhr)"` tail stating when the party ends: the weekday it closes on, and the hour. */
 private val CLOSING_NOTE = Regex("""bis\s+([A-Za-zÄÖÜäöüß]+),?\s*(\d{1,2})\s*Uhr""", RegexOption.IGNORE_CASE)
@@ -171,10 +177,11 @@ private const val CLOSING_HOUR_GROUP = 2
 private const val WEEKDAY_ABBREVIATION = 2
 
 /** Capture groups of [GERMAN_PROSE_DATE]. */
-private const val DAY_GROUP = 1
-private const val MONTH_GROUP = 2
-private const val YEAR_GROUP = 3
-private const val HOUR_GROUP = 4
+private const val WEEKDAY_GROUP = 1
+private const val DAY_GROUP = 2
+private const val MONTH_GROUP = 3
+private const val YEAR_GROUP = 4
+private const val HOUR_GROUP = 5
 
 /** German abbreviates every month to three letters, so the full names resolve through their prefix. */
 private const val GERMAN_MONTH_PREFIX = 3

@@ -120,6 +120,9 @@ fun parseGermanWeekday(text: String?): DayOfWeek? = GERMAN_WEEKDAYS[text?.lowerc
  */
 fun parseEnglishWeekdayAbbreviation(text: String?): DayOfWeek? = ENGLISH_WEEKDAY_ABBREVIATIONS[text?.lowercase()]
 
+/** Maps a full English weekday name ("Friday", as Morphine writes it) onto its [DayOfWeek]. */
+fun parseEnglishWeekday(text: String?): DayOfWeek? = DayOfWeek.entries.firstOrNull { it.name.equals(text?.trim(), ignoreCase = true) }
+
 private val GERMAN_WEEKDAY_ABBREVIATIONS: Map<String, DayOfWeek> =
     mapOf(
         "mo" to DayOfWeek.MONDAY,

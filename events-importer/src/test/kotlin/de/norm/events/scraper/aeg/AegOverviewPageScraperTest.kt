@@ -5,6 +5,7 @@ import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
+import de.norm.events.scraper.withWeekdayWarnings
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
@@ -235,5 +236,19 @@ class AegOverviewPageScraperTest {
     fun `returns an empty list for a page without rows`() {
         val document = Jsoup.parse("<html><body><div id='content'></div></body></html>", arenaUrl)
         scraper.scrape(document, arenaUrl, EventSource.UBER_ARENA).shouldBeEmpty()
+    }
+
+    @Test
+    fun `moves a row whose weekday names the neighbouring month`() {
+        // 3 September 2026 is a Thursday; the Saturday the heading names is 3 October.
+        val row =
+            """<div data-category="3" data-categoryname="konzert"><span class="m-date__singleDate">""" +
+                """<span class="m-date__weekday">Samstag, </span><span class="m-date__day">03.</span>""" +
+                """<span class="m-date__month">09.</span><span class="m-date__year">2026, </span></span>""" +
+                """<h3 class="event-title"><a href="https://www.uber-arena.de/events/detail/show/2026-10-03-2000">Show</a></h3></div>"""
+        val (events, warnings) = withWeekdayWarnings { scraper.scrape(Jsoup.parse(row, arenaUrl), arenaUrl, EventSource.UBER_ARENA) }
+
+        events.single().eventDate shouldBe LocalDate.of(2026, 10, 3)
+        warnings shouldHaveSize 1
     }
 }

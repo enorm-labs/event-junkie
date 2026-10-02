@@ -1,6 +1,7 @@
 package de.norm.events.scraper.velomax
 
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.withWeekdayWarnings
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
@@ -140,5 +141,19 @@ class VelomaxOverviewPageScraperTest {
         scraper
             .scrape(Jsoup.parse("<html><body><main></main></body></html>", baseUrl), baseUrl, VelomaxHall.VELODROM)
             .shouldBeEmpty()
+    }
+
+    @Test
+    fun `moves an entry whose weekday names the neighbouring month`() {
+        // 3 September 2026 is a Thursday; the Saturday the heading names is 3 October.
+        val entry =
+            """<a class="ticketWrap velodrom concert" data-type="concert" href="https://www.velodrom.de/events/event/show-velodrom-2026-10-03">""" +
+                """<span class="date-output"><span class="weekday">Samstag,</span><span class="day">3</span>""" +
+                """<span class="month">Sep</span><span class="year">'26</span></span>""" +
+                """<span class="event-title"><span class="title">Show</span></span></a>"""
+        val (events, warnings) = withWeekdayWarnings { scraper.scrape(Jsoup.parse(entry, baseUrl), baseUrl, VelomaxHall.VELODROM) }
+
+        events.single().eventDate shouldBe LocalDate.of(2026, 10, 3)
+        warnings shouldHaveSize 1
     }
 }

@@ -2,7 +2,9 @@ package de.norm.events.scraper.morphine
 
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.withWeekdayWarnings
 import io.kotest.matchers.collections.shouldBeEmpty
+import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
@@ -239,5 +241,17 @@ class MorphineDetailPageScraperTest {
         // The page repeats the full /events listing as navigation; nothing from it may leak in.
         event.title shouldBe "Neumann Schick Voglsinger - Live Recording"
         event.eventDate shouldBe LocalDate.of(2026, 8, 31)
+    }
+
+    @Test
+    fun `moves a night whose English weekday names the neighbouring month`() {
+        // 3 September 2026 is a Thursday; the Saturday the heading names is 3 October.
+        val html =
+            """<section class="content overlay"><div class="title">Late Night</div>""" +
+                """<div class="block day">Saturday, 03.09.26, door 20:00</div></section>"""
+        val (event, warnings) = withWeekdayWarnings { scraper.scrape(Jsoup.parse(html), "http://www.morphinerecords.com/events/late-night") }
+
+        event.shouldNotBeNull().eventDate shouldBe LocalDate.of(2026, 10, 3)
+        warnings shouldHaveSize 1
     }
 }

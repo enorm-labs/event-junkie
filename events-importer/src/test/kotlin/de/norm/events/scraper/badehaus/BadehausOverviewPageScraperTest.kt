@@ -3,6 +3,7 @@ package de.norm.events.scraper.badehaus
 import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedArtist
+import de.norm.events.scraper.withWeekdayWarnings
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
@@ -138,5 +139,17 @@ class BadehausOverviewPageScraperTest {
 
         genres shouldBe
             listOf("Metalcore", "Rock", "Indie", "Metal", "Hip Hop", "Rock", "Rock, Alternative", null)
+    }
+
+    @Test
+    fun `moves a card whose weekday names the neighbouring month`() {
+        // 3 September 2026 is a Thursday; the Saturday the heading names is 3 October.
+        val card =
+            """<div><div class="eventlistimg"></div><div class="nomargin"><h2><a href="/events/show/">Show</a></h2>""" +
+                """<p class="eventinfo">Sa. 03.09.2026 | 19:00 UHR</p></div></div>"""
+        val (events, warnings) = withWeekdayWarnings { scraper.scrape(Jsoup.parse("<html><body>$card</body></html>", baseUrl), baseUrl) }
+
+        events.single().eventDate shouldBe LocalDate.of(2026, 10, 3)
+        warnings shouldHaveSize 1
     }
 }

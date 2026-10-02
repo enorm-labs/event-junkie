@@ -1,5 +1,6 @@
 package de.norm.events.scraper.monarch
 
+import de.norm.events.scraper.withWeekdayWarnings
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
@@ -178,5 +179,15 @@ class MonarchOverviewPageScraperTest {
     fun `returns no events when the page has no event blocks`() {
         val html = "<html><body><p>Monarch – no programme yet</p></body></html>"
         scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl) shouldHaveSize 0
+    }
+
+    @Test
+    fun `moves an event whose weekday names the neighbouring month`() {
+        // 3 September 2026 is a Thursday; the Saturday the heading names is 3 October.
+        val (events, warnings) = withWeekdayWarnings { scraper.scrape(block("Samstag 03/09/2026-20:00", "Klubnacht"), baseUrl) }
+
+        events.single().eventDate shouldBe LocalDate.of(2026, 10, 3)
+        events.single().sourceId shouldBe "monarch:2026-10-03-klubnacht"
+        warnings shouldHaveSize 1
     }
 }
