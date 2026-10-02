@@ -7,10 +7,10 @@
  * That is the failure this project is most exposed to, because WebFlux hides it well until it
  * doesn't.
  *
- * The mix mirrors how the site is actually used rather than hitting endpoints uniformly. Most
- * visitors land, look at what's on, open one or two things, and leave; almost nobody enumerates
- * promoters. Uniform traffic would spend most of its budget on the endpoints nobody calls and
- * report a p95 that means nothing.
+ * The mix mirrors how the site is actually used rather than hitting endpoints uniformly: home and
+ * the events list carry most sessions, a visitor from outside lands on one event, and the
+ * calendar and venues are minor. Uniform traffic would spend most of its budget on the endpoints
+ * nobody calls and report a p95 that means nothing.
  *
  *   k6 run perf/load.js
  *   k6 run -e VUS=50 -e DURATION=5m perf/load.js
@@ -44,6 +44,17 @@ export function setup() {
     return discover()
 }
 
+/** The SPA's first request: build info for the footer, once per app start. */
+function startApp() {
+    checkOk(api.meta(), 'GET /meta')
+}
+
+/** The filter bar on the events list and the calendar loads both dropdowns as it mounts. */
+function loadFilterBar() {
+    checkOk(api.genres(), 'GET /genres')
+    checkPage(api.listVenues('?page=0&size=100'), 'GET /venues (filter bar)')
+}
+
 /** Land on the home page: two independent feeds, fired together on mount. */
 function visitHome() {
     group('home', () => {
@@ -52,19 +63,34 @@ function visitHome() {
     })
 }
 
-/** Browse the events list, then open something. The most common session by a wide margin. */
+/** Open one event from a feed or a list. */
+function openEvent(data) {
+    const event = pick(data.events)
+    if (event) group('event detail', () => checkOk(api.event(event), 'GET /events/{slug}'))
+}
+
+/**
+ * Arrive on an event's own page from a link outside the site. nginx asks the injector for the
+ * page's head, and the injector reads the event once; the SPA then reads it again as it mounts.
+ */
+function landOnEvent(data) {
+    const event = pick(data.events)
+    if (!event) return
+    group('event detail', () => {
+        checkOk(api.event(event), 'GET /events/{slug} (injector)')
+        checkOk(api.event(event), 'GET /events/{slug}')
+    })
+}
+
+/** Browse the events list, narrow it, then open something. */
 function browseEvents(data) {
     group('events list', () => {
         checkPage(api.searchEvents('?size=20'), 'GET /events')
-        // The filter bar loads its dropdowns alongside the results.
-        checkOk(api.genres(), 'GET /genres')
+        loadFilterBar()
 
         // A filtered follow-up, as a visitor narrowing results would produce.
         const venue = pick(data.venues)
         if (venue) checkPage(api.searchEvents(`?venue=${venue}&size=20`), 'GET /events?venue=')
-
-        const event = pick(data.events)
-        if (event) checkOk(api.event(event), 'GET /events/{slug}')
     })
 }
 
@@ -84,22 +110,29 @@ function browseVenues(data) {
 function openCalendar() {
     group('calendar', () => {
         checkOk(api.calendar(0, 30), 'GET /events/calendar')
+        loadFilterBar()
     })
 }
 
 export default function (data) {
-    // Weights approximate a session distribution: home is the entry point, the events list is the
-    // main destination, the calendar and venues are secondary. **This is a considered guess, not a
-    // measurement**, and the value of a "realistic" mix depends entirely on the mix being realistic —
-    // so it is tracked as issue #297 rather than left to be believed. Re-derive it from real traffic
-    // once there is any.
+    // The weights come from one week of production traffic, 2026-09-25 to 2026-10-02 (#297).
+    // Each page has one request only it makes on mount, so counting that request counts the
+    // page: /events/today for home, /events/calendar for the calendar, and /genres for the
+    // events list plus the calendar. Event-detail landings are human page loads in the nginx log,
+    // because the injector and Baiduspider swamp the detail endpoint. perf/README.md has the queries.
     const roll = Math.random()
 
-    visitHome()
-    sleep(1)
-
-    if (roll < 0.55) browseEvents(data)
-    else if (roll < 0.8) openCalendar()
+    startApp()
+    if (roll < 0.3) {
+        visitHome()
+        sleep(1)
+        openEvent(data)
+    } else if (roll < 0.65) {
+        browseEvents(data)
+        sleep(1)
+        openEvent(data)
+    } else if (roll < 0.8) landOnEvent(data)
+    else if (roll < 0.9) openCalendar()
     else browseVenues(data)
 
     // Think time. Without it a VU is a tight loop, which measures how fast the client can spin

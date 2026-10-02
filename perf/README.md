@@ -107,8 +107,34 @@ compresses since #1206, so a run before that change and a run after it are not c
 that an ordinary machine under ordinary background load does not trip them, tight enough that an accidental N+1 or a dropped index does.
 
 Production exists ([ADR-012](../docs/adr/ADR-012_CLOUD_PLATFORM.md), accepted) and the thresholds have not moved since they were set against a laptop.
-**Re-baselining against real infrastructure is a deliberate act**, and #297 is the issue that does it from real traffic. Raising a threshold because a run
-went red is how a performance suite becomes decorative.
+**Re-baselining against real infrastructure is a deliberate act.** Raising a threshold because a run went red is how a performance suite becomes decorative.
+
+## Where the session mix comes from
+
+A load test's p95 only describes traffic that can occur, so `load.js` weights its sessions from production traffic: one week, 2026-09-25 to 2026-10-02
+(#297). Every session starts with `GET /meta`, as the SPA does.
+
+| Session                                | Weight | Measured as                                                       |
+| -------------------------------------- | ------ | ----------------------------------------------------------------- |
+| Home, then one event                   | 30 %   | `GET /events/today`, 241 calls                                    |
+| Events list, filtered, then one event  | 35 %   | `GET /genres` minus the calendar, about 275                       |
+| Land on an event from outside the site | 15 %   | human page loads of `/<lang>/events/<slug>` in the nginx log, 113 |
+| Calendar                               | 10 %   | `GET /events/calendar`, 94 calls                                  |
+| Venues list, one venue                 | 10 %   | `GET /venues` minus the filter bar's calls, about 100             |
+
+**Count a page by the request only that page makes on mount.** The detail endpoints are useless for this: the injector reads an event for every detail page
+nginx serves, and Baiduspider runs the SPA, so `/api/events/{slug}` and `/api/artists/{slug}` showed tens of thousands of calls against about a hundred human
+landings. Human page loads come from the nginx log with the `NOT_A_PERSON` pattern in `scripts/o2-query.sh`, plus three user agents it does not catch:
+`Nexus 5X Build/MMB29P` (Google's renderer), `moto g power (2022)` (Lighthouse mobile) and `Chrome/48.` (an old crawler). Artist and promoter pages had
+under ten human landings in the week, so `load.js` leaves them out.
+
+**The numbers are small and still carry noise.** A few hundred sessions a week, and Lighthouse desktop runs share a user agent with real Mac Chrome. To
+re-derive the mix, count the mount requests over the 14 days OpenObserve keeps, count event landings with the `PAGE_LOAD` and `NOT_A_PERSON` patterns
+of `scripts/o2-query.sh` plus the three user agents above, and replace this table and the comment in `load.js` together:
+
+```bash
+scripts/o2-query.sh production sql "SELECT path, COUNT(*) AS n FROM default WHERE k8s_app_component = 'bff' AND path IN ('/api/events/today','/api/events/calendar','/api/genres','/api/venues') GROUP BY path" --hours 336
+```
 
 ## Lighthouse baseline
 
@@ -212,7 +238,7 @@ Considered, and deliberately not added, for the two suites that measure. Three r
    a workflow. → _Wire it into monitoring when monitoring exists._
 
 Until then these run on demand, locally, against a real database. Tracked in
-[issues #297 and #298](https://github.com/enorm-labs/event-junkie/issues/298).
+[#298](https://github.com/enorm-labs/event-junkie/issues/298).
 
 ## Adding a scenario
 
