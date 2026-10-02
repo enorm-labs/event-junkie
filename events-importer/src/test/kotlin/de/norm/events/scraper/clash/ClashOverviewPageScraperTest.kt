@@ -6,8 +6,11 @@ import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
+import io.kotest.matchers.string.shouldStartWith
 import org.jsoup.Jsoup
 import org.junit.jupiter.api.Test
+import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.LocalTime
 
@@ -45,7 +48,13 @@ class ClashOverviewPageScraperTest {
 
         event.subtitle shouldBe "Live: Cheb Balowski / Cuatro Pesos de Propina"
         event.eventDate shouldBe LocalDate.of(2026, 9, 11)
-        event.startTime shouldBe LocalTime.of(20, 0)
+        // The header's "Fri 20:00" is the doors time; the panel's "Doors 20:00 / Show 21:00" says so.
+        event.doorsTime shouldBe LocalTime.of(20, 0)
+        event.startTime shouldBe LocalTime.of(21, 0)
+        event.pricePresale shouldBe BigDecimal("42")
+        event.priceBoxOffice.shouldBeNull()
+        event.priceNote.shouldBeNull()
+        event.description shouldStartWith "2-DAYS TICKET VVK 42 € ohne Gebühren in der Milchbar"
         event.imageUrl shouldBe "https://clash-berlin.de/wp-content/uploads/2026/02/25luchaamada.jpg"
         event.ticketUrl shouldBe "https://clash.stager.co/shop/tickets/events/111622409"
         event.sourceUrl shouldBe "https://clash-berlin.de/#1109202619407"
@@ -70,6 +79,55 @@ class ClashOverviewPageScraperTest {
                 ScrapedArtist("Hausvabot", "SUPPORT"),
                 ScrapedArtist("Ad Nauseam", "SUPPORT")
             )
+    }
+
+    @Test
+    fun `scrape reads presale and door prices from the panel`() {
+        val event = parseFixture().first { it.title == "POPPERKLOPPER (New Album Release Show)" }
+
+        event.pricePresale shouldBe BigDecimal("17")
+        event.priceBoxOffice shouldBe BigDecimal("20")
+    }
+
+    @Test
+    fun `scrape keeps an unlabelled amount as the price note`() {
+        val quiz = parseFixture().first { it.title == "Kneipenquiz" }
+
+        quiz.pricePresale.shouldBeNull()
+        quiz.priceBoxOffice.shouldBeNull()
+        quiz.priceNote shouldBe "Mitmachspende: 3 Euro / Person"
+        quiz.description shouldContain "Teamanmeldung unter: clashquiz@systemli.org"
+    }
+
+    @Test
+    fun `scrape reads the genre from a style line and the door price after a no-presale note`() {
+        val event =
+            scraper
+                .scrape(
+                    Jsoup.parse(
+                        panelItem(
+                            "<p>Dance Until You Drop Dj-set night with DJs<br/>Michele Barox<br/>Punk//Post Punk//New Wave//Synth<br/>From 21:00 / 5 €</p>" +
+                                "<p>Kein VVK, nur Abendkasse! 20 €</p>"
+                        ),
+                        baseUrl
+                    ),
+                    baseUrl
+                ).single()
+
+        event.genre shouldBe "Punk, Post-Punk, New Wave, Synthpop"
+        event.priceBoxOffice shouldBe BigDecimal("20")
+        event.pricePresale.shouldBeNull()
+        event.priceNote.shouldBeNull()
+    }
+
+    @Test
+    fun `scrape reads no genre, price or doors from a panel of prose`() {
+        val event = parseFixture().first { it.title == "BAU PAUSE" }
+
+        event.genre.shouldBeNull()
+        event.priceNote.shouldBeNull()
+        event.doorsTime.shouldBeNull()
+        event.description shouldStartWith "it's time to change a 120 years old pipe"
     }
 
     @Test
@@ -119,6 +177,18 @@ class ClashOverviewPageScraperTest {
         event.ticketUrl.shouldBeNull()
         event.imageUrl shouldBe "https://clash-berlin.de/wp-content/uploads/2026/06/Bauarbeiten-A3.jpg"
     }
+
+    private fun panelItem(paragraphs: String) =
+        """
+        <div class="gigs-container"><div class="item"><div class="gig-info"><div class="info-content">
+          <h3 class="gig-title">DANCE UNTIL YOU DROP</h3>
+          <div class="meta"><ul class="meta-list"><li class="time">Sat 21:00</li></ul></div>
+          <div class="collapse infofull" id="0310202619516"><div class="row"><div class="info-extra">
+            <span class="dateTwo">03.10.26</span>$paragraphs
+            <p class="fb-event"><a href="https://fb.me/e/4PKoc4RuH">EVENT ON FACEBOOK</a></p>
+          </div></div></div>
+        </div></div></div></div>
+        """.trimIndent()
 
     @Test
     fun `scrape returns empty list for a page without events`() {
