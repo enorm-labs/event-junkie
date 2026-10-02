@@ -2,6 +2,7 @@ package de.norm.events.scraper.badehaus
 
 import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
+import de.norm.events.scraper.withWeekdayWarnings
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
@@ -194,5 +195,16 @@ class BadehausDetailPageScraperTest {
         val url = "https://badehaus-berlin.com/events/whatever/"
         val html = "<html><body><div class='content'><p>Not an event</p></div></body></html>"
         scraper.scrape(Jsoup.parse(html, url), url) shouldBe null
+    }
+
+    @Test
+    fun `moves a page whose weekday names the neighbouring month`() {
+        // 3 September 2026 is a Thursday; the Saturday the heading names is 3 October.
+        val url = "https://badehaus-berlin.com/events/show/"
+        val html = """<div class="em-event-single"><h1>Show</h1><h3>Sa. 03.09.2026 | 19:00 UHR</h3></div>"""
+        val (event, warnings) = withWeekdayWarnings { scraper.scrape(Jsoup.parse(html, url), url) }
+
+        event.shouldNotBeNull().eventDate shouldBe LocalDate.of(2026, 10, 3)
+        warnings shouldHaveSize 1
     }
 }

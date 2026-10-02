@@ -5,6 +5,7 @@ import de.norm.events.scraper.AcceptedLimitations
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
+import de.norm.events.scraper.withWeekdayWarnings
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
@@ -136,5 +137,19 @@ class HeidegluehenMonthPageScraperTest {
     fun `returns an empty list for a page without a programme`() {
         val document = Jsoup.parse("<html><body><div class='fl-rich-text'><p>~~~</p></div></body></html>", sourceUrl)
         scraper.scrape(document, sourceUrl).shouldBeEmpty()
+    }
+
+    @Test
+    fun `moves a party whose weekday names the neighbouring month`() {
+        // 3 September 2026 is a Thursday; the Saturday the heading names is 3 October.
+        val paragraph = "<p>Samstag, 3. September 2026, 12 Uhr (bis Sonntag, 6 Uhr)<br><mark>Klubnacht</mark></p>"
+        val document = Jsoup.parse("<html><body><div class='fl-rich-text'>$paragraph</div></body></html>", sourceUrl)
+        val (events, warnings) = withWeekdayWarnings { scraper.scrape(document, sourceUrl) }
+
+        val event = events.single()
+        event.eventDate shouldBe LocalDate.of(2026, 10, 3)
+        event.endDate shouldBe LocalDate.of(2026, 10, 4)
+        event.sourceId shouldBe "heidegluehen:2026-10-03"
+        warnings shouldHaveSize 1
     }
 }

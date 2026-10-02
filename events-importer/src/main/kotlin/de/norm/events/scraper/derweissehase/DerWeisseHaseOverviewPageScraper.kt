@@ -7,12 +7,14 @@ import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.WHITESPACE
 import de.norm.events.scraper.attrAt
 import de.norm.events.scraper.cleanEventTitle
+import de.norm.events.scraper.dateCheckedAgainstWeekday
 import de.norm.events.scraper.derweissehase.DerWeisseHaseOverviewPageScraper.Companion.LINEUP_SEPARATOR
 import de.norm.events.scraper.derweissehase.DerWeisseHaseOverviewPageScraper.Companion.LINE_UP_HEADING
 import de.norm.events.scraper.derweissehase.DerWeisseHaseOverviewPageScraper.Companion.RA_EVENT_URL
 import de.norm.events.scraper.derweissehase.DerWeisseHaseOverviewPageScraper.Companion.UNANNOUNCED_SLOT_PATTERN
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.parseGermanDate
+import de.norm.events.scraper.parseGermanWeekday
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.resolveUrl
 import de.norm.events.scraper.textAt
@@ -131,11 +133,14 @@ class DerWeisseHaseOverviewPageScraper {
         )
     }
 
-    /** The date part of a `"Donnerstag 06.08.2026 23:00"` line; the weekday is redundant given the full year. */
-    private fun parseDateLine(dateLine: String): LocalDate? = parseGermanDate(DATE_LINE_PATTERN.find(dateLine)?.groupValues?.get(1))
+    /** The date part of a `"Donnerstag 06.08.2026 23:00"` line, checked against its weekday ([dateCheckedAgainstWeekday]). */
+    private fun parseDateLine(dateLine: String): LocalDate? {
+        val groups = DATE_LINE_PATTERN.find(dateLine)?.groupValues ?: return null
+        return parseGermanDate(groups[DATE_GROUP])?.let { dateCheckedAgainstWeekday(it, parseGermanWeekday(groups[WEEKDAY_GROUP]), dateLine) }
+    }
 
     /** The time part of a `"Donnerstag 06.08.2026 23:00"` line — when the doors open and the night starts. */
-    private fun parseStartTime(dateLine: String): LocalTime? = parseTime(DATE_LINE_PATTERN.find(dateLine)?.groupValues?.get(2))
+    private fun parseStartTime(dateLine: String): LocalTime? = parseTime(DATE_LINE_PATTERN.find(dateLine)?.groupValues?.get(TIME_GROUP))
 
     /** True when [element] is the `LINE UP` heading that introduces the roster. */
     private fun isLineUpHeading(element: Element): Boolean = LINE_UP_HEADING.matches(element.text().trim())
@@ -179,11 +184,14 @@ class DerWeisseHaseOverviewPageScraper {
 
     private companion object {
         /**
-         * A date line — `"Donnerstag 06.08.2026 23:00"` — capturing the dotted date (group 1) and the
-         * time (group 2). Anchored at the weekday so a line merely mentioning a date in prose cannot
-         * be read as one.
+         * A date line — `"Donnerstag 06.08.2026 23:00"` — capturing the weekday, the dotted date and
+         * the time. Anchored at the weekday so a line merely mentioning a date in prose cannot be
+         * read as one.
          */
-        private val DATE_LINE_PATTERN = Regex("""^\s*\p{L}+\s+(\d{1,2}\.\d{1,2}\.\d{4})(?:\s+(\d{1,2}:\d{2}))?""")
+        private val DATE_LINE_PATTERN = Regex("""^\s*(\p{L}+)\s+(\d{1,2}\.\d{1,2}\.\d{4})(?:\s+(\d{1,2}:\d{2}))?""")
+        private const val WEEKDAY_GROUP = 1
+        private const val DATE_GROUP = 2
+        private const val TIME_GROUP = 3
 
         /** The heading the club puts above every roster; matched whole and case-insensitively so `Line Up` works too. */
         private val LINE_UP_HEADING = Regex("""line\s*-?\s*up:?""", RegexOption.IGNORE_CASE)

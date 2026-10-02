@@ -2,6 +2,7 @@ package de.norm.events.scraper.gretchen
 
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.withWeekdayWarnings
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
@@ -505,5 +506,17 @@ class GretchenOverviewPageScraperTest {
         night.priceNote shouldBe "freier Eintritt // Anmeldung erforderlich"
         night.pricePresale.shouldBeNull()
         night.toEventEntity(venueId = 1L, venueSlug = "gretchen", eventSourceId = 1L).free shouldBe true
+    }
+
+    @Test
+    fun `moves a gig whose weekday names the neighbouring month`() {
+        // 3 September 2026 is a Thursday; the Saturday the heading names is 3 October.
+        val gig =
+            """<div class="gig"><span class="date">Sa. <strong>03.09.2026</strong><br> Doors: 19.30</span>""" +
+                """<span class="title">Rap<h2><a href="detail.php?id=9002">Show</a></h2></span></div>"""
+        val (events, warnings) = withWeekdayWarnings { scraper.scrape(Jsoup.parse(gig, baseUrl), baseUrl) }
+
+        events.single().eventDate shouldBe LocalDate.of(2026, 10, 3)
+        warnings shouldHaveSize 1
     }
 }

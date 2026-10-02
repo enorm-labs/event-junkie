@@ -5,9 +5,11 @@ import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.cleanEventTitle
+import de.norm.events.scraper.dateCheckedAgainstWeekday
 import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.mapEventType
 import de.norm.events.scraper.parseGermanMonthAbbreviation
+import de.norm.events.scraper.parseGermanWeekday
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.resolveUrl
 import de.norm.events.scraper.textAt
@@ -122,16 +124,20 @@ class VelomaxOverviewPageScraper {
     /**
      * The date from the separate day / month / year spans — `29`, `Aug`, `'26`. The two-digit
      * year has a leading apostrophe and the month is a German abbreviation, so each part is
-     * normalised and looked up separately, not parsed from the rendered text.
+     * normalised and looked up separately, not parsed from the rendered text. The `.weekday`
+     * span ("Samstag,") checks the result ([dateCheckedAgainstWeekday]).
      */
     @Suppress("ReturnCount") // Guard clauses for each missing date part are clearer than nesting
     private fun parseListingDate(entry: Element): LocalDate? {
         val day = entry.textAt(".day")?.trim(',', '.', ' ')?.toIntOrNull() ?: return null
         val month = parseGermanMonthAbbreviation(entry.textAt(".month")) ?: return null
         val year = entry.textAt(".year")?.trim('\'', ' ')?.toIntOrNull() ?: return null
-        return runCatching { LocalDate.of(TWENTY_FIRST_CENTURY + year, month, day) }
-            .onFailure { logger.warn { "Unparseable Velomax listing date '$day $month $year'" } }
-            .getOrNull()
+        val date =
+            runCatching { LocalDate.of(TWENTY_FIRST_CENTURY + year, month, day) }
+                .onFailure { logger.warn { "Unparseable Velomax listing date '$day $month $year'" } }
+                .getOrNull() ?: return null
+        val weekday = parseGermanWeekday(entry.textAt(".weekday")?.trim(',', ' '))
+        return dateCheckedAgainstWeekday(date, weekday, entry.textAt(".date-output") ?: "$day $month $year")
     }
 
     private companion object {

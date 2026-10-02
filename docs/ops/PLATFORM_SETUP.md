@@ -727,6 +727,9 @@ code writes — see the warning below the table:
 | `httpmethod`, `path`         | `httpMethod`, `path`        | the BFF's access line, one per request                          |
 | `eventid`                    | `eventId`                   | our id — a removal, or the event a translation line is about    |
 | `eventsourceid`              | `eventSourceId`             | the venue's id — a duplicate skipped, and a stale removal       |
+| `dateheading`                | `dateHeading`               | a date heading whose weekday disagrees with its date            |
+| `parseddate`                 | `parsedDate`                | the date read from that heading                                 |
+| `correcteddate`              | `correctedDate`             | the date stored for it: a neighbouring month, or the same date  |
 | `storagekey`                 | `storageKey`                | the object the BFF could not read — two lines only, see below   |
 
 **`eventid` never means "an event we wrote" (#984).** As a payload it is written on two lines. The

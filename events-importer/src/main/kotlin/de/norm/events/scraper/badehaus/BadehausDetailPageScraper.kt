@@ -147,10 +147,7 @@ class BadehausDetailPageScraper {
             .distinct()
 
     /** The `DD.MM.YYYY` date from the event header (e.g. "Fr. 04.12.2026 | 19:00 UHR"). */
-    private fun parseDate(event: Element): LocalDate? {
-        val header = event.selectFirst("h3")?.text().orEmpty()
-        return parseGermanDate(DATE_PATTERN.find(header)?.value)
-    }
+    private fun parseDate(event: Element): LocalDate? = parseBadehausDate(event.selectFirst("h3")?.text().orEmpty())
 
     /**
      * What the description says about paying at the door, or `null` when it says nothing.
@@ -173,9 +170,6 @@ class BadehausDetailPageScraper {
 
         /** A meta line that states the start time ("Beginn 20:00", "Quiz starts 20:00"), dropped from the description. */
         private val START_LINE = labelledClockPattern(START_LABELS)
-
-        /** A `DD.MM.YYYY` date. */
-        private val DATE_PATTERN = Regex("""\d{2}\.\d{2}\.\d{4}""")
 
         /** A sentence about what to pay where no ticket is sold: "The event is donation-based.", "Spende erwünscht". */
         private val DONATION_MARKER = Regex("""\bdonation|\bspende""", RegexOption.IGNORE_CASE)

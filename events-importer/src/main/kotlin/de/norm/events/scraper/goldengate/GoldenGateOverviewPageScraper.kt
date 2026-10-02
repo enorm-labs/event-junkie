@@ -4,9 +4,9 @@ import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.dateCheckedAgainstWeekday
 import de.norm.events.scraper.goldengate.GoldenGateOverviewPageScraper.Companion.DATE_LINE_PATTERN
 import de.norm.events.scraper.isNonArtistName
-import de.norm.events.scraper.neighbouringMonthOnWeekday
 import de.norm.events.scraper.parseGermanWeekdayAbbreviation
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.splitBackToBack
@@ -45,8 +45,8 @@ import kotlin.math.abs
  * ("Tickets only available at the door.", "enter", "SHOPPING") without enumerating them.
  *
  * The date lines are typed by hand, and the weekday is the check on them: "Sa. 03. September
- * 2026" stood for Saturday 3 October (#2349). [resolveDate] moves such a night to the
- * neighbouring month its weekday names, or drops it when no month fits the block.
+ * 2026" stood for Saturday 3 October (#2349). [resolveDate] moves a night to the month its
+ * weekday names only when that month fits the block.
  *
  * Passed nights stay on the page until the block rolls over; parsed here, dropped centrally at
  * persistence by [EventUpsertService][de.norm.events.scraper.EventUpsertService], so an import
@@ -85,12 +85,10 @@ class GoldenGateOverviewPageScraper {
     }
 
     /**
-     * The night's date, checked against the weekday printed beside it. When the two disagree, the
-     * same day in a neighbouring month that falls on the weekday replaces the date, but only when
-     * it sits within [BLOCK_SPAN_DAYS] of a date in the block whose weekday agrees. Otherwise the
-     * night is dropped, because neither reading can be trusted.
+     * The night's date, checked against the weekday printed beside it ([dateCheckedAgainstWeekday]).
+     * A neighbouring month replaces the date only when it sits within [BLOCK_SPAN_DAYS] of a date
+     * in the block whose weekday agrees.
      */
-    @Suppress("ReturnCount") // One guard per outcome reads clearer than a nested when
     private fun resolveDate(
         line: DateLine,
         confirmedDates: List<LocalDate>
@@ -100,22 +98,9 @@ class GoldenGateOverviewPageScraper {
             logger.warn { "Unparseable Golden Gate date line '${line.text}', skipping night" }
             return null
         }
-        val weekday = line.weekday
-        if (weekday == null || date.dayOfWeek == weekday) return date
-
-        val corrected =
-            neighbouringMonthOnWeekday(date, weekday)?.takeIf { candidate ->
-                confirmedDates.any { abs(ChronoUnit.DAYS.between(candidate, it)) <= BLOCK_SPAN_DAYS }
-            }
-        if (corrected == null) {
-            logger.warn {
-                "Golden Gate date line '${line.text}' names a $weekday but $date is a ${date.dayOfWeek}, " +
-                    "and no neighbouring month fits the block, skipping night"
-            }
-            return null
+        return dateCheckedAgainstWeekday(date, line.weekday, line.text) { candidate ->
+            confirmedDates.any { abs(ChronoUnit.DAYS.between(candidate, it)) <= BLOCK_SPAN_DAYS }
         }
-        logger.warn { "Golden Gate date line '${line.text}' names a $weekday but $date is a ${date.dayOfWeek}, reading it as $corrected" }
-        return corrected
     }
 
     /**

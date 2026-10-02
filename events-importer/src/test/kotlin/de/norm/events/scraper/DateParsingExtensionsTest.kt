@@ -1,7 +1,10 @@
 package de.norm.events.scraper
 
+import io.kotest.matchers.collections.shouldBeEmpty
+import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
 import org.junit.jupiter.api.Test
 import java.time.Clock
 import java.time.DayOfWeek
@@ -277,5 +280,64 @@ class DateParsingExtensionsTest {
     fun `neighbouringMonthOnWeekday skips a neighbouring month that has no such day`() {
         // 31 March 2026 is a Tuesday. February has no 31st, and 31 April does not exist.
         neighbouringMonthOnWeekday(LocalDate.of(2026, 3, 31), DayOfWeek.TUESDAY).shouldBeNull()
+    }
+
+    // --- dateCheckedAgainstWeekday ---
+
+    @Test
+    fun `dateCheckedAgainstWeekday keeps a date its weekday agrees with, and logs nothing`() {
+        val (date, warnings) = withWeekdayWarnings { dateCheckedAgainstWeekday(LocalDate.of(2026, 10, 3), DayOfWeek.SATURDAY, "Sa. 03.10.2026") }
+        date shouldBe LocalDate.of(2026, 10, 3)
+        warnings.shouldBeEmpty()
+    }
+
+    @Test
+    fun `dateCheckedAgainstWeekday keeps a date printed without a weekday`() {
+        val (date, warnings) = withWeekdayWarnings { dateCheckedAgainstWeekday(LocalDate.of(2026, 9, 3), null, "03.09.2026") }
+        date shouldBe LocalDate.of(2026, 9, 3)
+        warnings.shouldBeEmpty()
+    }
+
+    @Test
+    fun `dateCheckedAgainstWeekday moves a mistyped month and logs the heading and both dates`() {
+        // 3 September 2026 is a Thursday, 3 October the Saturday the heading names.
+        val (date, warnings) =
+            withWeekdayWarnings { dateCheckedAgainstWeekday(LocalDate.of(2026, 9, 3), DayOfWeek.SATURDAY, "Sa. 03.09.2026") }
+        date shouldBe LocalDate.of(2026, 10, 3)
+        val warning = warnings.single()
+        warning.formattedMessage shouldContain "Sa. 03.09.2026"
+        warning.keyValuePairs.associate { it.key to it.value } shouldBe
+            mapOf(
+                LogFields.DATE_HEADING to "Sa. 03.09.2026",
+                LogFields.PARSED_DATE to "2026-09-03",
+                LogFields.CORRECTED_DATE to "2026-10-03"
+            )
+    }
+
+    @Test
+    fun `dateCheckedAgainstWeekday keeps the printed date when only the weekday is mistyped`() {
+        // 5 November 2026 is a Thursday. 5 October is a Monday and 5 December a Saturday, so no month fits a Wednesday.
+        val (date, warnings) =
+            withWeekdayWarnings { dateCheckedAgainstWeekday(LocalDate.of(2026, 11, 5), DayOfWeek.WEDNESDAY, "Mittwoch, 5. Nov. 2026") }
+        date shouldBe LocalDate.of(2026, 11, 5)
+        warnings.single().keyValuePairs.associate { it.key to it.value }[LogFields.CORRECTED_DATE] shouldBe "2026-11-05"
+    }
+
+    @Test
+    fun `dateCheckedAgainstWeekday keeps the printed date when the caller refuses the correction`() {
+        val (date, warnings) =
+            withWeekdayWarnings { dateCheckedAgainstWeekday(LocalDate.of(2026, 9, 3), DayOfWeek.SATURDAY, "Sa. 03.09.2026") { false } }
+        date shouldBe LocalDate.of(2026, 9, 3)
+        warnings shouldHaveSize 1
+    }
+
+    // --- parseEnglishWeekday ---
+
+    @Test
+    fun `parseEnglishWeekday reads a full English weekday in any case`() {
+        parseEnglishWeekday("Friday") shouldBe DayOfWeek.FRIDAY
+        parseEnglishWeekday(" sunday ") shouldBe DayOfWeek.SUNDAY
+        parseEnglishWeekday("Fri").shouldBeNull()
+        parseEnglishWeekday(null).shouldBeNull()
     }
 }

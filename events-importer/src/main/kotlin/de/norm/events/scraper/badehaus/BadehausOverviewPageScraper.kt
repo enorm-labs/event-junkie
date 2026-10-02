@@ -8,8 +8,10 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.SUPPORT_LABELS
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.buildArtistsForEventType
+import de.norm.events.scraper.dateCheckedAgainstWeekday
 import de.norm.events.scraper.inferConcertVenueType
 import de.norm.events.scraper.parseGermanDate
+import de.norm.events.scraper.parseGermanWeekdayAbbreviation
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.resolveUrl
 import de.norm.events.scraper.textAt
@@ -82,7 +84,7 @@ class BadehausOverviewPageScraper {
 
         val eventInfo = card.textAt(".eventinfo").orEmpty()
         val eventDate =
-            parseDate(eventInfo) ?: run {
+            parseBadehausDate(eventInfo) ?: run {
                 logger.warn { "Could not parse date for '$title' from '$eventInfo', skipping" }
                 return null
             }
@@ -155,9 +157,6 @@ class BadehausOverviewPageScraper {
             ?.joinToString(", ")
             ?.ifBlank { null }
 
-    /** The `DD.MM.YYYY` date from the `.eventinfo` line (e.g. "Mi. 23.09.2026 | 19:00 UHR"). */
-    private fun parseDate(eventInfo: String): LocalDate? = parseGermanDate(DATE_PATTERN.find(eventInfo)?.value)
-
     /** The doors time (`HH:mm` before "UHR") from the `.eventinfo` line. */
     private fun parseDoorsTime(eventInfo: String): LocalTime? = parseTime(TIME_PATTERN.find(eventInfo)?.groupValues?.get(1))
 
@@ -200,9 +199,6 @@ class BadehausOverviewPageScraper {
             listOf("night", "nights", "konfetti", "glitzer", "90s", "2000s", "2010s").associateWith { EventType.PARTY.name } +
                 ("world cup" to EventType.SCREENING.name)
 
-        /** A `DD.MM.YYYY` date in the event-info line. */
-        private val DATE_PATTERN = Regex("""\d{2}\.\d{2}\.\d{4}""")
-
         /** The `HH:mm` doors time before the "UHR" suffix. */
         private val TIME_PATTERN = Regex("""(\d{1,2}:\d{2})\s*UHR""", RegexOption.IGNORE_CASE)
     }
@@ -213,3 +209,17 @@ class BadehausOverviewPageScraper {
  * `sourceId` from it and must agree.
  */
 internal fun badehausEventSlug(url: String): String = URI(url).path.trim('/').substringAfterLast('/')
+
+/**
+ * The date of a Badehaus date line, "Fr. 25.09.2026 | 19:00 UHR" on the card and on the detail
+ * page alike, checked against the weekday before it ([dateCheckedAgainstWeekday]).
+ */
+internal fun parseBadehausDate(line: String): LocalDate? {
+    val match = BADEHAUS_DATE.find(line) ?: return null
+    return parseGermanDate(match.groupValues[2])?.let { date ->
+        dateCheckedAgainstWeekday(date, parseGermanWeekdayAbbreviation(match.groupValues[1]), line.trim())
+    }
+}
+
+/** A `DD.MM.YYYY` date, after the two-letter weekday ("Fr.") when the line prints one. */
+private val BADEHAUS_DATE = Regex("""(?:\b(\p{L}{2})\.?\s+)?(\d{2}\.\d{2}\.\d{4})""")

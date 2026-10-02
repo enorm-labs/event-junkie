@@ -1,7 +1,9 @@
 package de.norm.events.scraper.morphine
 
 import de.norm.events.scraper.PRESENTS_VERBS
+import de.norm.events.scraper.dateCheckedAgainstWeekday
 import de.norm.events.scraper.labelledClock
+import de.norm.events.scraper.parseEnglishWeekday
 import de.norm.events.scraper.parseGermanShortDate
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.stripArtistSuffix
@@ -137,8 +139,16 @@ private const val MAX_MEMBER_HEAD_WORDS = 2
  */
 private val DAY_LINE_DATE = Regex("""\d{1,2}\.\d{1,2}\.\d{2}\b""")
 
-/** The event date from a `.block.day` header line, or `null`. */
-internal fun parseDayLineDate(dayLine: String?): LocalDate? = parseGermanShortDate(dayLine?.let { DAY_LINE_DATE.find(it)?.value })
+/** The weekday the `.block.day` header line opens with, in English: `"Friday"`. */
+private val DAY_LINE_WEEKDAY = Regex("""^\s*(\p{L}+),""")
+
+/** The event date from a `.block.day` header line, checked against its weekday ([dateCheckedAgainstWeekday]), or `null`. */
+internal fun parseDayLineDate(dayLine: String?): LocalDate? {
+    val line = dayLine?.trim().orEmpty()
+    return parseGermanShortDate(DAY_LINE_DATE.find(line)?.value)?.let {
+        dateCheckedAgainstWeekday(it, parseEnglishWeekday(DAY_LINE_WEEKDAY.find(line)?.groupValues?.get(1)), line)
+    }
+}
 
 /** The venue's own door label in the `.block.day` header line: `door`, never `Einlass`. */
 private const val DAY_LINE_DOORS_LABEL = "doors?"
