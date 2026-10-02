@@ -387,8 +387,8 @@ spec:
         namespace: flux-system
       interval: 1h
 
-  # The same credential, injected the same way (#598). Both exporters, although the agent uses only the
-  # first: the chart hands every collector the whole `exporters` map.
+  # The same credential, injected the same way (#598), for every exporter: the chart hands every collector
+  # the whole `exporters` map.
   valuesFrom:
     - kind: Secret
       name: openobserve-credentials
@@ -398,6 +398,10 @@ spec:
       name: openobserve-credentials
       valuesKey: O2_BASIC_AUTH_HEADER
       targetPath: exporters.otlphttp/openobserve_k8s_events.headers.Authorization
+    - kind: Secret
+      name: openobserve-credentials
+      valuesKey: O2_BASIC_AUTH_HEADER
+      targetPath: exporters.otlphttp/openobserve_smoke_test.headers.Authorization
 
   # **Giving the agent somewhere to remember how far it read (#950).** Without it, `filelog` re-reads
   # every container log from line one on a restart: the part older than 24h is refused by OpenObserve
@@ -466,6 +470,11 @@ spec:
         endpoint: http://openobserve-openobserve-standalone.observability.svc.cluster.local:5080/api/default/
         headers:
           stream-name: k8s_events
+      # The smoke hook's rows, kept 60 days by deploy/streams/ (#2393).
+      otlphttp/openobserve_smoke_test:
+        endpoint: http://openobserve-openobserve-standalone.observability.svc.cluster.local:5080/api/default/
+        headers:
+          stream-name: smoke_test
     # **The agent, unchanged by the move** (#709); the memory table above still covers its 640Mi limit.
     agent:
       # The offsets. `directory` is the mount added by the postRenderer above; the two halves are useless apart.
@@ -499,6 +508,18 @@ spec:
       # both load-bearing**: most containers log plain text, and without them a failed statement takes the
       # whole pipeline — the only thing shipping logs — with it.
       processors:
+        # The two halves of the `smoke_test` split (#2393), exact complements. The keep-filter matches
+        # container AND namespace: a visitor's line in that 60-day stream breaks the notice's 14 days.
+        filter/drop_smoke_test:
+          error_mode: ignore
+          logs:
+            log_record:
+              - 'resource.attributes["k8s.container.name"] == "smoke-test" and resource.attributes["k8s.namespace.name"] == "event-junkie"'
+        filter/only_smoke_test:
+          error_mode: ignore
+          logs:
+            log_record:
+              - 'resource.attributes["k8s.container.name"] != "smoke-test" or resource.attributes["k8s.namespace.name"] != "event-junkie"'
         # **What is left of the log volume once the application stops logging its own health checks
         # (#959).** Both are a control loop reporting that it did nothing, on a timer: 198 an hour from
         # coredns (100% of its output), 88 of 132 from flux, against a ~406-row baseline on production.
@@ -588,8 +609,22 @@ spec:
               - attributes
               - k8sattributes
               # After `k8sattributes`, so the dropped records are the only thing this ordering costs; before `batch`.
+              - filter/drop_smoke_test
               - filter/drop_log_noise
               - batch
+          # The same receiver, so every record reaches both filters.
+          logs/smoke_test:
+            receivers:
+              - filelog/std
+            processors:
+              - memory_limiter
+              - resourcedetection
+              - attributes
+              - k8sattributes
+              - filter/only_smoke_test
+              - batch
+            exporters:
+              - otlphttp/openobserve_smoke_test
       resources:
         requests:
           memory: "128Mi"
