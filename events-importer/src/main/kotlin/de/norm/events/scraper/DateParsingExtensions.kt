@@ -4,13 +4,12 @@ import java.time.Clock
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.Month
-import java.time.MonthDay
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
-import kotlin.math.abs
 
-// Shared date parsing for venue scrapers; the clock readers are in TimeParsingExtensions. Berlin
+// Shared date parsing for venue scrapers; the clock readers are in TimeParsingExtensions, and the
+// dates a printed weekday decides are in WeekdayDateExtensions. Berlin
 // venue websites write a date three ways: ISO 8601 in schema.org JSON-LD ([parseIsoDate]),
 // `DD/MM/YY` on some WordPress sites ([parseShortDate]), and German dotted `DD.MM.YYYY` /
 // `DD.MM.YY` ([parseGermanDate], [parseGermanShortDate]). Every function returns null for
@@ -185,28 +184,4 @@ private fun parseGerman(
     } catch (_: DateTimeParseException) {
         null
     }
-}
-
-/**
- * Picks the calendar year for a year-less [monthDay], using [weekday] as the disambiguator.
- * Retro listings ("Fr 03.07.") leave recently-passed events on the page, so "assume this year,
- * roll to next if past" guesses wrong for a stale event. Among the years in `today ±
- * [yearWindow]`, only those whose date lands on [weekday] qualify, and the closest to today
- * wins; with [weekday] `null`, the nearest occurrence. Shared by Roadrunner and Duncker.
- */
-fun inferYearForWeekday(
-    monthDay: MonthDay,
-    weekday: DayOfWeek?,
-    clock: Clock,
-    yearWindow: Int = 2
-): LocalDate {
-    val today = LocalDate.now(clock)
-    val candidates =
-        ((today.year - yearWindow)..(today.year + yearWindow)).mapNotNull { year ->
-            // MonthDay.atYear normalises 29 Feb to 28 Feb in common years, which is acceptable here.
-            runCatching { monthDay.atYear(year) }.getOrNull()
-        }
-    val eligible = if (weekday != null) candidates.filter { it.dayOfWeek == weekday } else candidates
-    val pool = eligible.ifEmpty { candidates }
-    return pool.minByOrNull { abs(it.toEpochDay() - today.toEpochDay()) } ?: monthDay.atYear(today.year)
 }

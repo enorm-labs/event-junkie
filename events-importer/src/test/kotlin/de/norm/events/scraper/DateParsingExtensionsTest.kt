@@ -250,4 +250,32 @@ class DateParsingExtensionsTest {
         val resolved = inferYearForWeekday(MonthDay.of(7, 3), DayOfWeek.FRIDAY, clockAt("2026-07-09"), yearWindow = 0)
         resolved shouldBe LocalDate.of(2026, 7, 3)
     }
+
+    // --- neighbouringMonthOnWeekday ---
+
+    @Test
+    fun `neighbouringMonthOnWeekday moves a mistyped month to the one the weekday names`() {
+        // Golden Gate printed "Sa. 03. September 2026": 3 September is a Thursday, 3 October a Saturday.
+        neighbouringMonthOnWeekday(LocalDate.of(2026, 9, 3), DayOfWeek.SATURDAY) shouldBe LocalDate.of(2026, 10, 3)
+        // 3 August 2026 is a Monday.
+        neighbouringMonthOnWeekday(LocalDate.of(2026, 9, 3), DayOfWeek.MONDAY) shouldBe LocalDate.of(2026, 8, 3)
+    }
+
+    @Test
+    fun `neighbouringMonthOnWeekday crosses the year boundary`() {
+        // 2 January 2027 is a Saturday; 2 November 2026 a Monday.
+        neighbouringMonthOnWeekday(LocalDate.of(2026, 12, 2), DayOfWeek.SATURDAY) shouldBe LocalDate.of(2027, 1, 2)
+    }
+
+    @Test
+    fun `neighbouringMonthOnWeekday returns null when no neighbouring month fits`() {
+        // 3 August is a Monday and 3 October a Saturday, so a Friday fits neither.
+        neighbouringMonthOnWeekday(LocalDate.of(2026, 9, 3), DayOfWeek.FRIDAY).shouldBeNull()
+    }
+
+    @Test
+    fun `neighbouringMonthOnWeekday skips a neighbouring month that has no such day`() {
+        // 31 March 2026 is a Tuesday. February has no 31st, and 31 April does not exist.
+        neighbouringMonthOnWeekday(LocalDate.of(2026, 3, 31), DayOfWeek.TUESDAY).shouldBeNull()
+    }
 }

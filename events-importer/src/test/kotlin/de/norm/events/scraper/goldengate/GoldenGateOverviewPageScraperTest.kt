@@ -1,5 +1,9 @@
 package de.norm.events.scraper.goldengate
 
+import ch.qos.logback.classic.Level
+import ch.qos.logback.classic.Logger
+import ch.qos.logback.classic.spi.ILoggingEvent
+import ch.qos.logback.core.read.ListAppender
 import de.norm.events.scraper.AcceptedLimitations
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
@@ -9,9 +13,11 @@ import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
 import org.jsoup.Jsoup
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.slf4j.LoggerFactory
 import java.time.LocalDate
 import java.time.LocalTime
 
@@ -31,13 +37,17 @@ class GoldenGateOverviewPageScraperTest {
 
     @BeforeEach
     fun setUp() {
-        val html =
-            javaClass.classLoader
-                .getResourceAsStream("scraper/goldengate/goldengate-overview.html")!!
-                .bufferedReader()
-                .readText()
-        events = scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl)
+        events = scraper.scrape(fixture("goldengate-overview.html"), baseUrl)
     }
+
+    private fun fixture(name: String) =
+        Jsoup.parse(
+            javaClass.classLoader
+                .getResourceAsStream("scraper/goldengate/$name")!!
+                .bufferedReader()
+                .readText(),
+            baseUrl
+        )
 
     private fun headings(vararg texts: String) =
         Jsoup.parse(
@@ -140,5 +150,62 @@ class GoldenGateOverviewPageScraperTest {
     @Test
     fun `returns no events for a page without headings`() {
         scraper.scrape(Jsoup.parse("<html><body><main></main></body></html>", baseUrl), baseUrl).shouldBeEmpty()
+    }
+
+    @Test
+    fun `moves a night whose weekday names the neighbouring month, as on the live page of 2 October 2026`() {
+        // The page printed "Sa. 03. September 2026": 3 September is a Thursday, 3 October the Saturday of the block.
+        val (parsed, warnings) = withWarnings { scraper.scrape(fixture("goldengate-overview-month-typo.html"), baseUrl) }
+        parsed.map { it.sourceId } shouldContainExactly
+            listOf(
+                "golden_gate:2026-10-01-cura",
+                "golden_gate:2026-10-02-wohnzimmer030-afterhour",
+                "golden_gate:2026-10-03-nightshade-family"
+            )
+        parsed.last().eventDate shouldBe LocalDate.of(2026, 10, 3)
+        val warning = warnings.single().formattedMessage
+        warning shouldContain "Sa. 03. September 2026 - 23:59"
+        warning shouldContain "2026-09-03"
+        warning shouldContain "2026-10-03"
+    }
+
+    @Test
+    fun `logs nothing for headings whose weekday agrees with the date`() {
+        withWarnings { scraper.scrape(fixture("goldengate-overview.html"), baseUrl) }.second.shouldBeEmpty()
+    }
+
+    @Test
+    fun `drops a night whose weekday fits no neighbouring month`() {
+        // 3 October 2026 is a Saturday; neither 3 September (Thursday) nor 3 November (Tuesday) is a Friday.
+        val (parsed, warnings) =
+            withWarnings {
+                scraper.scrape(headings("Do. 01. Oktober 2026 - 23:59", "Cura", "Fr. 03. Oktober 2026 - 23:59", "Klubnacht"), baseUrl)
+            }
+        parsed.map { it.title } shouldContainExactly listOf("Cura")
+        warnings.single().formattedMessage shouldContain "Fr. 03. Oktober 2026 - 23:59"
+    }
+
+    @Test
+    fun `drops a night whose corrected date sits outside the block`() {
+        // 3 October fits the weekday, but the block's confirmed night is in late July.
+        val parsed = scraper.scrape(headings("Do. 30. Juli 2026 - 23:59", "Donnerdogge", "Sa. 03. September 2026 - 23:59", "Klubnacht"), baseUrl)
+        parsed.map { it.title } shouldContainExactly listOf("Donnerdogge")
+    }
+
+    @Test
+    fun `drops a lone night with a mismatched weekday, since nothing confirms the correction`() {
+        scraper.scrape(headings("Sa. 03. September 2026 - 23:59", "Klubnacht"), baseUrl).shouldBeEmpty()
+    }
+
+    private fun <T> withWarnings(block: () -> T): Pair<T, List<ILoggingEvent>> {
+        val logger = LoggerFactory.getLogger(GoldenGateOverviewPageScraper::class.java) as Logger
+        val appender = ListAppender<ILoggingEvent>().apply { start() }
+        logger.addAppender(appender)
+        return try {
+            block() to appender.list.filter { it.level == Level.WARN }
+        } finally {
+            logger.detachAppender(appender)
+            appender.stop()
+        }
     }
 }
