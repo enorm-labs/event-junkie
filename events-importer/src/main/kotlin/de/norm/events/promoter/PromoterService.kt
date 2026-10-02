@@ -52,8 +52,6 @@ class PromoterService(
         PromoterResponse.fromDomain(promoterRepository.findById(id)?.toDomain() ?: throw PromoterNotFoundException(id))
 
     /**
-     * Creates a new promoter.
-     *
      * The slug is auto-generated from the promoter name
      * (e.g. `"36 Concerts"` → `"36-concerts"`).
      */

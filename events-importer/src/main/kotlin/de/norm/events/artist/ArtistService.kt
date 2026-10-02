@@ -44,8 +44,6 @@ class ArtistService(
     suspend fun findById(id: Long): ArtistResponse = ArtistResponse.fromDomain(artistRepository.findById(id)?.toDomain() ?: throw ArtistNotFoundException(id))
 
     /**
-     * Creates a new artist.
-     *
      * The slug is auto-generated from the artist name
      * (e.g. `"The Adicts"` → `"the-adicts"`).
      */
