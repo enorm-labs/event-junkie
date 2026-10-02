@@ -571,7 +571,7 @@ Needs `helm`, `yq` and `flux` with its schema plugin, plus the helm-unittest plu
 
 ```bash
 brew install helm yq fluxcd/tap/flux && flux plugin install schema
-helm plugin install https://github.com/helm-unittest/helm-unittest --version v1.1.2 --verify=false
+helm plugin install https://github.com/helm-unittest/helm-unittest --version 1.2.0 --verify=false
 ```
 
 `--verify=false` is a Helm 4 requirement. Helm 4 refuses an unverifiable plugin source without it, and the local
