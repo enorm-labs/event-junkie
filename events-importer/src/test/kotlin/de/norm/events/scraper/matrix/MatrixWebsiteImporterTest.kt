@@ -97,6 +97,21 @@ class MatrixWebsiteImporterTest {
             coVerify(exactly = 0) { htmlFetcher.fetchDocument(monthUrl(12)) }
         }
 
+    // The live site keeps the next-month chevron on an empty month, so the walk must end on the marker (#2319).
+    @Test
+    fun `importEvents stops at the first empty month even when it still links the next one`() =
+        runTest {
+            coEvery { htmlFetcher.fetchDocument(monthUrl(11)) } returns
+                fixture("matrix-month-empty-keeps-next-link.html", monthUrl(11))
+
+            val result = importer.importEvents(entryUrl)
+
+            result.shouldBeInstanceOf<ImportResult.Success>()
+            result.events shouldHaveSize 90
+            result.complete shouldBe true
+            coVerify(exactly = 0) { htmlFetcher.fetchDocument(match { it.contains("get_year=2027") }) }
+        }
+
     @Test
     fun `importEvents returns the entry page alone when it links no further month`() =
         runTest {
