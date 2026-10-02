@@ -2,14 +2,19 @@ package de.norm.events.scraper.roadrunner
 
 import de.norm.events.scraper.DOORS_LABELS
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.headlinersFromTitle
 import de.norm.events.scraper.inferConcertVenueType
 import de.norm.events.scraper.inferYearForWeekday
+import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.labelledClock
 import de.norm.events.scraper.labelledClockPattern
 import de.norm.events.scraper.parseGermanWeekday
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.resolveUrl
+import de.norm.events.scraper.splitSupportActs
+import de.norm.events.scraper.stripArtistSuffix
 import de.norm.events.slug.SlugGenerator
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
@@ -32,6 +37,17 @@ import java.util.Locale
  * Parsing anchors on the one thing that carries meaning: the **German date line** ("Freitag,
  * 29. Mai:"). An event starts at a date line and runs until the next date line or a dotted
  * separator; the paragraphs between supply title, doors time, ticket link, flyer and description.
+ *
+ * The line-up sits under hand-typed labels, each on its own paragraph or in front of its acts
+ * (see [parseLineup]): `Live:` and `Featuring:` bill headliners, `Support:` support acts, and
+ * `Record Hop:` the night's rock'n'roll DJ (#2332). A block with a headliner label is a named
+ * night ("40 Jahre Louisiana Rebs Berlin"), so its title is that name, read from the line in
+ * front of the first label. A block without one keeps the first `Stil11` line as its title (see
+ * [billing] for its acts). `Special guests:` is not read: on the one page that used it, it named a
+ * video artist and a DJ in one unseparated line.
+ *
+ * The `sourceId` is the date plus the first `Stil11` line, which was the title before #2332. A
+ * named night keeps the key it had when its act line was the title, so the change re-keys no row.
  *
  * Dates carry a weekday but **no year**, so the year comes from the weekday: among nearby
  * candidate years, the one whose 29 May falls on the stated Friday and lands closest to today
@@ -120,11 +136,18 @@ class RoadrunnerOverviewPageScraper(
                 return null
             }
 
-        val title = parseTitle(block)
-        if (title.isNullOrBlank()) {
+        val keyLine = parseTitle(block)
+        if (keyLine.isNullOrBlank()) {
             logger.warn { "Event on $eventDate has no title, skipping" }
             return null
         }
+
+        val lineup = parseLineup(block)
+        val billedActs = lineup.flatMap { it.acts }
+        val hasHeadliner = billedActs.any { it.role == HEADLINER }
+        val nightName = if (hasHeadliner) parseNightName(block, dateLine, lineup) else null
+        val title = nightName?.text()?.trim() ?: keyLine
+        val eventType = inferConcertVenueType(title)
 
         val doorsTime = parseDoorsTime(block)
         val ticketUrl = block.firstNotNullOfOrNull { it.selectFirst("a[href^=http]")?.attr("href") }
@@ -136,24 +159,43 @@ class RoadrunnerOverviewPageScraper(
                 ?.attr("src")
                 ?.takeIf { it.isNotBlank() }
                 ?.let { runCatching { resolveUrl(baseUrl, it.replace(" ", "%20")) }.getOrNull() }
-        val description = parseDescription(block, dateLine, title)
+        val lineupParagraphs = lineup.flatMap { it.paragraphs } + listOfNotNull(nightName)
+        val description = parseDescription(block, dateLine, title, lineupParagraphs)
 
         return ScrapedEvent(
             title = title,
             description = description,
             // No category field; infer from the title (concert by default for this live-music venue). See
             // inferConcertVenueType.
-            eventType = inferConcertVenueType(title),
+            eventType = eventType,
             // The venue names no style but books rock'n'roll, rockabilly and blues-rock, so the venue is the default.
             eventDate = eventDate,
             doorsTime = doorsTime,
             imageUrl = imageUrl,
             // No per-event URLs on this single-page site — the programme page is the source.
             sourceUrl = baseUrl,
-            sourceId = "${EventSource.ROADRUNNER.sourceIdPrefix}$eventDate-${SlugGenerator.slugify(title)}",
-            ticketUrl = ticketUrl
+            sourceId = "${EventSource.ROADRUNNER.sourceIdPrefix}$eventDate-${SlugGenerator.slugify(keyLine)}",
+            ticketUrl = ticketUrl,
+            artists = billing(title, description, billedActs)
         )
     }
+
+    /**
+     * The event's acts. A named night bills its labelled acts. A `Support:` label without a
+     * headliner label confirms that the title is the act, the "title = headliner + Support:"
+     * convention. A block with neither bills only its DJ, if any: an unlabelled title is as often
+     * a night ("BOWIE 10", a band battle) as an act with its tour name run on.
+     */
+    private fun billing(
+        title: String,
+        description: String?,
+        billedActs: List<ScrapedArtist>
+    ): List<ScrapedArtist> =
+        when {
+            billedActs.any { it.role == HEADLINER } -> billedActs
+            billedActs.any { it.role == SUPPORT } -> headlinersFromTitle(title, description = description) + billedActs
+            else -> billedActs
+        }
 
     /** The event title, in the first `Stil11` element, with the plain bold title as fallback. */
     private fun parseTitle(block: List<Element>): String? =
@@ -168,21 +210,100 @@ class RoadrunnerOverviewPageScraper(
                 ?.trim()
                 ?.takeIf { it.isNotBlank() }
 
+    /**
+     * The labelled line-up, one [LineupEntry] per label in page order. A label's acts follow it on
+     * the same paragraph (`Live: UNSTRUT, BOXI BARRÉ`) or fill the next paragraph with text
+     * (`Live:` then `THE JETS (UK) + SMOKESTACK LIGHTNIN’`). A paragraph that opens with `+` after
+     * that continues the list. A bracketed note on its own line ("(Celtic Punk from Australia)")
+     * is not an act.
+     */
+    private fun parseLineup(block: List<Element>): List<LineupEntry> {
+        val entries = mutableListOf<LineupEntry>()
+        var index = 0
+        while (index < block.size) {
+            val match = LINEUP_LABEL.matchEntire(block[index].text().trim())
+            if (match == null) {
+                index++
+                continue
+            }
+            val paragraphs = mutableListOf(block[index])
+            val inline = match.groupValues[2].trim()
+            index++
+            if (inline.isEmpty()) {
+                block.getOrNull(index)?.takeIf { isActLine(it) }?.let {
+                    paragraphs.add(it)
+                    index++
+                }
+            }
+            while (index < block.size && block[index].text().trim().startsWith("+")) {
+                paragraphs.add(block[index++])
+            }
+            val role = LINEUP_ROLES.getValue(match.groupValues[1].lowercase().replace(WHITESPACE, " "))
+            val text = (listOf(inline) + paragraphs.drop(1).map { it.text() }).joinToString(" + ")
+            entries += LineupEntry(paragraphs, splitActs(text).map { ScrapedArtist(name = it, role = role) })
+        }
+        return entries
+    }
+
+    /** A paragraph that can carry a bare label's acts: text that is no label, doors line, link, flyer or note. */
+    private fun isActLine(p: Element): Boolean {
+        val text = p.text().trim()
+        return text.isNotBlank() && !isDotsOnly(text) && !LINEUP_LABEL.matches(text) && !DOORS_LINE.containsMatchIn(text) &&
+            !text.startsWith("(") && p.selectFirst("a[href^=http], img") == null
+    }
+
+    /**
+     * Splits one label's acts. The page often runs two acts together with only an origin tag
+     * between them (`KEITH DUNN (USA) SAUDIA YOUNG (USA)`), so a closing bracket ends an act too.
+     * The origin tag and any dee-jay prefix (`Dee-jay: Red Rockin'`) come off the name.
+     */
+    private fun splitActs(text: String): List<String> =
+        text
+            .split(AFTER_BRACKET)
+            .flatMap { splitSupportActs(it) }
+            .map { stripArtistSuffix(it.replace(DJ_PREFIX, "").replace(SINGLE_LETTER_ORIGIN, "").trim()) }
+            .filter { it.isNotBlank() && !isNonArtistName(it) }
+
+    /**
+     * The night's name in front of the first label: the last text line between the date and that
+     * label ("40 Jahre Louisiana Rebs Berlin"). Null when the label follows the date directly.
+     */
+    private fun parseNightName(
+        block: List<Element>,
+        dateLine: Element,
+        lineup: List<LineupEntry>
+    ): Element? {
+        val firstLabel = block.indexOfFirst { it === lineup.first().paragraphs.first() }
+        val start = block.indexOfFirst { it === dateLine } + 1
+        if (firstLabel <= start) return null
+        return block
+            .subList(start, firstLabel)
+            .lastOrNull { it.text().isNotBlank() && !isDotsOnly(it.text()) && it.selectFirst("a[href^=http], img") == null }
+    }
+
+    /** One label's paragraphs (the label and its act lines) and the acts read from them. */
+    private class LineupEntry(
+        val paragraphs: List<Element>,
+        val acts: List<ScrapedArtist>
+    )
+
     /** Doors time from the "Einlass: HH:mm Uhr" paragraph. */
     private fun parseDoorsTime(block: List<Element>): LocalTime? = block.firstNotNullOfOrNull { labelledClock(it.text(), DOORS_LABELS) }
 
     /**
      * The block's prose paragraphs joined into the description, minus the structural lines (date,
-     * title, "Einlass…", the ticket-link line, dot separators) and image-only paragraphs.
+     * title, the line-up, "Einlass…", the ticket-link line, dot separators) and image-only paragraphs.
      */
     private fun parseDescription(
         block: List<Element>,
         dateLine: Element,
-        title: String
+        title: String,
+        lineupParagraphs: List<Element>
     ): String? =
         block
             .asSequence()
             .filter { it !== dateLine }
+            .filter { p -> lineupParagraphs.none { it === p } }
             .filter { titleElement(it) == null } // title line
             .filter { it.selectFirst("img") == null } // flyer-only line
             .filter { it.selectFirst("a[href^=http]") == null } // ticket-link line
@@ -247,6 +368,27 @@ class RoadrunnerOverviewPageScraper(
                     """(Januar|Februar|März|April|Mai|Juni|Juli|August|September|Oktober|November|Dezember)""",
                 RegexOption.IGNORE_CASE
             )
+
+        private const val HEADLINER = "HEADLINER"
+        private const val SUPPORT = "SUPPORT"
+        private const val DJ = "DJ"
+
+        /** A line-up label at the start of a paragraph, capturing the label and the acts after its colon. */
+        private val LINEUP_LABEL = Regex("""^(live|featuring|support|record\s+hop)\s*:\s*(.*)$""", RegexOption.IGNORE_CASE)
+
+        /** The role each [LINEUP_LABEL] bills. A record hop is a rock'n'roll DJ set. */
+        private val LINEUP_ROLES = mapOf("live" to HEADLINER, "featuring" to HEADLINER, "support" to SUPPORT, "record hop" to DJ)
+
+        private val WHITESPACE = Regex("""\s+""")
+
+        /** The gap after a closing bracket that has more text behind it: the end of an act. */
+        private val AFTER_BRACKET = Regex("""(?<=\))\s+(?=\S)""")
+
+        /** A `Dee-jay:` or `DJ:` in front of a record hop's name. */
+        private val DJ_PREFIX = Regex("""^\s*(?:dee-?jay|dj)\s*:\s*""", RegexOption.IGNORE_CASE)
+
+        /** A one-letter origin tag (`(D)`), which the shared origin rule leaves alone. */
+        private val SINGLE_LETTER_ORIGIN = Regex("""\s*\(\p{Lu}\)$""")
 
         /** The "Einlass: HH:mm Uhr" line, dropped from the description. */
         private val DOORS_LINE = labelledClockPattern(DOORS_LABELS)
