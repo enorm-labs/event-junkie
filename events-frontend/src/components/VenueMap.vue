@@ -21,7 +21,7 @@ import {
 } from 'maplibre-gl'
 import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url'
 import { Protocol } from 'pmtiles'
-import { markRaw, onBeforeUnmount, onMounted, ref, shallowRef, watch } from 'vue'
+import { markRaw, nextTick, onBeforeUnmount, onMounted, ref, shallowRef, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Button } from '@/components/ui/button'
 import { circlePolygon, type Position } from '@/lib/geo'
@@ -49,9 +49,11 @@ const ATTRIBUTION =
 
 const { t, locale } = useI18n()
 const container = ref<HTMLElement | null>(null)
+const overlay = ref<HTMLElement | null>(null)
 const map = shallowRef<MapLibreMap | null>(null)
-const markers = new Map<string, { marker: Marker; element: HTMLButtonElement }>()
+const markers = new Map<string, { marker: Marker; element: HTMLButtonElement; pin: MapPin }>()
 let originMarker: Marker | null = null
+let nameMarker: Marker | null = null
 
 // A same-origin worker file: the site's CSP has no `blob:`, which MapLibre's default worker needs.
 let protocolRegistered = false
@@ -85,10 +87,23 @@ function style(): StyleSpecification {
 }
 
 const MARKER_CLASS =
-  'flex cursor-pointer items-center justify-center rounded-full border-2 border-background text-meta font-semibold outline-none focus-visible:ring-3 focus-visible:ring-ring/50'
-/** A pin with a count needs room for it; a bare pin is a dot, so 90 venues do not bury the map. */
-const BADGE_SIZE_CLASS = 'h-7 min-w-7 px-1.5'
-const DOT_SIZE_CLASS = 'size-4'
+  'flex cursor-pointer items-center justify-center rounded-full border-2 border-background font-semibold outline-none focus-visible:ring-3 focus-visible:ring-ring/50'
+/**
+ * A pin with a count needs room for it; an empty badge is a plain disc still large enough to tap;
+ * a pin without a badge is a dot, so 90 venues do not bury the map. The selected pin grows a step,
+ * so it reads as chosen without its colour (#2347).
+ */
+const SIZE_CLASSES = {
+  count: {
+    rest: ['h-7', 'min-w-7', 'px-1.5', 'text-meta'],
+    selected: ['h-9', 'min-w-9', 'px-2', 'text-body'],
+  },
+  disc: { rest: ['size-6'], selected: ['size-8'] },
+  dot: { rest: ['size-4'], selected: ['size-6'] },
+}
+/** The selected venue's name beside its pin; the panel says it to a screen reader. */
+const NAME_CLASS =
+  'pointer-events-none rounded-sm bg-background/90 px-1.5 text-meta font-semibold whitespace-nowrap text-foreground'
 
 const DIMMED_CLASS = 'opacity-40'
 /** The pin itself pulses: a corner dot in the pin's own colour was easy to miss. */
@@ -96,15 +111,44 @@ const LIVE_CLASS = 'is-live'
 const ORIGIN_CLASS =
   'size-4 rounded-full border-2 border-background bg-foreground ring-4 ring-foreground/25'
 
-const SELECTED_CLASSES = ['bg-foreground', 'text-background']
+// On top of its neighbours: in a dense Kreuzberg block the chosen pin was often under another one.
+const SELECTED_CLASSES = ['bg-foreground', 'text-background', 'z-10']
 const UNSELECTED_CLASSES = ['bg-primary', 'text-primary-foreground']
 
 // classList, never className: MapLibre positions a marker through classes of its own on the element.
-function styleMarker(element: HTMLButtonElement, slug: string) {
-  const isSelected = slug === selected.value
-  element.classList.remove(...(isSelected ? UNSELECTED_CLASSES : SELECTED_CLASSES))
-  element.classList.add(...(isSelected ? SELECTED_CLASSES : UNSELECTED_CLASSES))
+function styleMarker(element: HTMLButtonElement, pin: MapPin) {
+  const isSelected = pin.slug === selected.value
+  const size = SIZE_CLASSES[pin.badge === undefined ? 'dot' : pin.badge ? 'count' : 'disc']
+  element.classList.remove(
+    ...(isSelected ? UNSELECTED_CLASSES : SELECTED_CLASSES),
+    ...(isSelected ? size.rest : size.selected),
+  )
+  element.classList.add(
+    ...(isSelected ? SELECTED_CLASSES : UNSELECTED_CLASSES),
+    ...(isSelected ? size.selected : size.rest),
+  )
   element.setAttribute('aria-pressed', String(isSelected))
+}
+
+/** Half the selected badge's width plus a gap, so the name starts clear of the pin. */
+const NAME_OFFSET: [number, number] = [22, 0]
+
+function renderName() {
+  const instance = map.value
+  const pin = selected.value ? markers.get(selected.value)?.pin : undefined
+  if (!instance || !pin?.name) {
+    nameMarker?.remove()
+    nameMarker = null
+    return
+  }
+  if (!nameMarker) {
+    const element = document.createElement('div')
+    element.className = NAME_CLASS
+    element.setAttribute('aria-hidden', 'true')
+    nameMarker = new Marker({ element, anchor: 'left', offset: NAME_OFFSET })
+  }
+  nameMarker.getElement().textContent = pin.name
+  nameMarker.setLngLat([pin.longitude, pin.latitude]).addTo(instance)
 }
 
 function renderMarkers() {
@@ -115,9 +159,9 @@ function renderMarkers() {
   for (const pin of props.pins) {
     const element = document.createElement('button')
     element.type = 'button'
-    element.className = `${MARKER_CLASS} ${pin.badge ? BADGE_SIZE_CLASS : DOT_SIZE_CLASS}`
+    element.className = MARKER_CLASS
     if (pin.dimmed) element.classList.add(DIMMED_CLASS)
-    styleMarker(element, pin.slug)
+    styleMarker(element, pin)
     element.title = pin.label
     element.setAttribute('aria-label', pin.label)
     element.textContent = pin.badge ?? ''
@@ -127,8 +171,9 @@ function renderMarkers() {
       selected.value = selected.value === pin.slug ? null : pin.slug
     })
     const marker = new Marker({ element }).setLngLat([pin.longitude, pin.latitude]).addTo(instance)
-    markers.set(pin.slug, { marker, element })
+    markers.set(pin.slug, { marker, element, pin })
   }
+  renderName()
 }
 
 /** The circle when there is one, so "near me" opens on what is near; otherwise every pin. */
@@ -220,10 +265,44 @@ function center(): Position | null {
   return point ? { latitude: point.lat, longitude: point.lng } : null
 }
 
-defineExpose({ center })
+/** Moves focus to a pin, for a panel that closes under the keyboard. */
+function focusPin(slug: string) {
+  markers.get(slug)?.element.focus()
+}
+
+defineExpose({ center, focusPin })
 
 function restyleSelection() {
-  for (const [slug, { element }] of markers) styleMarker(element, slug)
+  for (const { element, pin } of markers.values()) styleMarker(element, pin)
+  renderName()
+}
+
+/** Room left between a pin and the overlay once the map has moved it clear. */
+const REVEAL_MARGIN = 16
+
+/**
+ * Pans the selected pin out from under the view's overlay, the shorter way: up on a phone, where
+ * the panel spans the map, and right or up beside it. `essential: false` lets MapLibre skip the
+ * animation under reduced motion.
+ */
+async function revealSelection() {
+  await nextTick()
+  const element = selected.value ? markers.get(selected.value)?.element : undefined
+  const panel = overlay.value?.firstElementChild?.getBoundingClientRect()
+  if (!map.value || !element || !panel) return
+  const pin = element.getBoundingClientRect()
+  const covered =
+    pin.right > panel.left &&
+    pin.left < panel.right &&
+    pin.bottom > panel.top &&
+    pin.top < panel.bottom
+  if (!covered) return
+  const up = pin.bottom - panel.top + REVEAL_MARGIN
+  const right = panel.right - pin.left + REVEAL_MARGIN
+  const width = container.value?.clientWidth ?? 0
+  map.value.panBy(right < up && panel.right + pin.width < width ? [-right, 0] : [0, up], {
+    essential: false,
+  })
 }
 
 // The theme toggle flips a class on <html>, so the basemap follows it without an event bus.
@@ -284,7 +363,10 @@ watch(
     frame()
   },
 )
-watch(selected, restyleSelection)
+watch(selected, () => {
+  restyleSelection()
+  void revealSelection()
+})
 watch(locale, () => map.value?.setStyle(style(), { diff: false }))
 
 onBeforeUnmount(() => {
@@ -292,6 +374,7 @@ onBeforeUnmount(() => {
   map.value?.remove()
   markers.clear()
   originMarker = null
+  nameMarker = null
 })
 </script>
 
@@ -322,6 +405,11 @@ onBeforeUnmount(() => {
       >
         <Minus aria-hidden="true" />
       </Button>
+    </div>
+    <!-- Whatever the view lays over the map, such as the selected venue's panel. The wrapper is
+         static, so its child still positions against the map. -->
+    <div ref="overlay">
+      <slot />
     </div>
   </div>
 </template>

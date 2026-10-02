@@ -51,7 +51,9 @@ const { filters, dateRange, queryString, applyFilters } = useEventFilters()
 const localePath = useLocalePath()
 const { t, locale } = useI18n()
 const { origin, state: locateState, locate, set: setOrigin, clear: clearOrigin } = useLocation()
-const venueMap = useTemplateRef<{ center(): Position | null }>('venueMap')
+const venueMap = useTemplateRef<{ center(): Position | null; focusPin(slug: string): void }>(
+  'venueMap',
+)
 
 /**
  * The URL's range, or today when it names none. Today is not written into the URL, so a shared
@@ -117,10 +119,11 @@ const pins = computed<MapPin[]>(() =>
     .map(({ venue, events: atVenue }) => {
       const live = atVenue.filter(isOnNow).length
       const label = t('map.pinLabel', { venue: venue.name ?? '', count: atVenue.length })
+      // A lone "1" on most of 72 pins said nothing; one event keeps the pin's size, not the digit.
       return venuePin(
         venue,
         live ? `${label}, ${t('map.pinOnNow', { count: live })}` : label,
-        String(atVenue.length),
+        atVenue.length > 1 ? String(atVenue.length) : '',
         { live: live > 0, dimmed: !!near.value && !nearSlugs.value.has(venue.slug) },
       )
     })
@@ -142,6 +145,28 @@ const location = computed(() => {
   const venue = selectedGroup.value?.venue
   return [venue?.address, districtLabel(venue?.district)].filter(Boolean).join(' · ')
 })
+
+/** What the panel over the map lists; the rest is one link away. */
+const PANEL_PREVIEW = 3
+const preview = computed(() => selectedGroup.value?.events.slice(0, PANEL_PREVIEW) ?? [])
+
+/** The venue's events over the map's own range, in the list. */
+const venueListLink = computed(() => ({
+  ...listLink.value,
+  query: {
+    ...listLink.value.query,
+    venue: selectedGroup.value?.venue.slug,
+    from: range.value.from,
+    to: range.value.to,
+  },
+}))
+
+// The panel goes with the click, so focus goes back to the pin that opened it.
+function closePanel() {
+  const slug = selected.value
+  selected.value = null
+  if (slug) venueMap.value?.focusPin(slug)
+}
 
 const isFiltered = computed(() => Object.keys(route.query).length > 0)
 const listLink = computed(() => {
@@ -350,23 +375,54 @@ function distance(km: number): string {
       :radius-km="origin ? radiusKm : null"
       @pick="pick"
       @unavailable="unavailable = true"
-    />
-
-    <section v-if="selectedGroup" aria-live="polite" class="space-y-2">
-      <h2 class="text-section font-bold tracking-tight">
+    >
+      <!-- Over the map, not below it: at 1280×900 the map ends near the fold, so a pin's events
+           under it changed nothing a visitor could see (#2347). -->
+      <section
+        v-if="selectedGroup"
+        aria-live="polite"
+        class="absolute inset-x-2 bottom-8 z-20 max-h-56 space-y-2 overflow-y-auto rounded-lg border border-border bg-background/95 p-3 sm:inset-x-auto sm:bottom-3 sm:left-3 sm:max-h-80 sm:w-96"
+      >
+        <div class="flex items-start gap-2">
+          <div class="min-w-0 flex-1">
+            <h2 class="truncate text-card-title font-bold tracking-tight">
+              <RouterLink
+                :to="localePath(`/venues/${selectedGroup.venue.slug}`)"
+                class="hover:text-primary"
+              >
+                {{ selectedGroup.venue.name }}
+              </RouterLink>
+            </h2>
+            <p v-if="location" class="truncate text-meta text-muted-foreground">{{ location }}</p>
+          </div>
+          <Button
+            :aria-label="t('map.closePanel')"
+            :title="t('map.closePanel')"
+            size="icon-xs"
+            type="button"
+            variant="ghost"
+            @click="closePanel"
+          >
+            <X aria-hidden="true" />
+          </Button>
+        </div>
+        <div :class="CARD_LIST_CLASS">
+          <EventRow v-for="event in preview" :key="event.slug" :event="event" />
+        </div>
         <RouterLink
-          :to="localePath(`/venues/${selectedGroup.venue.slug}`)"
-          class="hover:text-primary"
+          v-if="selectedGroup.events.length > preview.length"
+          :to="venueListLink"
+          class="inline-block text-body text-primary hover:underline"
         >
-          {{ selectedGroup.venue.name }}
+          {{ t('map.allEvents', { count: selectedGroup.events.length }) }}
         </RouterLink>
-      </h2>
-      <p v-if="location" class="text-body text-muted-foreground">{{ location }}</p>
-      <div :class="CARD_LIST_CLASS">
-        <EventRow v-for="event in selectedGroup.events" :key="event.slug" :event="event" />
-      </div>
-    </section>
-    <p v-else-if="pins.length && !unavailable && !near" class="text-sm text-muted-foreground">
+      </section>
+    </VenueMap>
+
+    <p
+      v-if="!selectedGroup && pins.length && !unavailable && !near"
+      class="text-sm text-muted-foreground"
+    >
       {{ t('map.pickPin') }}
     </p>
 

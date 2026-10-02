@@ -7,6 +7,8 @@
   "unpinned": "{count} weiteres an Orten ohne Standort, in der Liste | {count} weitere an Orten ohne Standort, in der Liste",
   "empty": "Für diese Filter ist nichts auf der Karte. Versuch einen anderen Tag oder weniger Filter.",
   "pickPin": "Tippe auf einen Pin, um zu sehen, was dort läuft.",
+  "allEvents": "Alle {count} Events hier",
+  "closePanel": "Schließen",
   "unavailable": "Dieser Browser kann die Karte nicht darstellen. Die Liste zeigt dieselben Events.",
   "showList": "Liste zeigen",
   "zoomIn": "Hineinzoomen",

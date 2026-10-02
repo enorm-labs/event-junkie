@@ -8,7 +8,12 @@ export interface MapPin {
   longitude: number
   /** The marker's accessible name, which also is its tooltip. */
   label: string
-  /** Short visible text inside the marker, such as an event count. */
+  /** The venue's name, shown beside the marker while it is selected. */
+  name?: string
+  /**
+   * Short visible text inside the marker, such as an event count. An empty string keeps the
+   * badge's size without text; no badge at all makes the marker a dot.
+   */
   badge?: string
   /** Something is on there now: the marker pulses. The label must say so too. */
   live?: boolean
@@ -60,7 +65,7 @@ export function venuePin(
 ): MapPin | null {
   const position = venuePosition(venue)
   if (!venue.slug || !position) return null
-  return { slug: venue.slug, ...position, label, badge, ...extra }
+  return { slug: venue.slug, ...position, name: venue.name ?? undefined, label, badge, ...extra }
 }
 
 /** The radii "near" offers, in kilometres: a walk, a short ride, across a district. */
