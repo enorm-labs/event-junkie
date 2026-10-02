@@ -50,6 +50,25 @@ test('switching language keeps the filters', async ({ page }) => {
   await expect(page).toHaveURL(/type=PARTY/)
 })
 
+test('the header never links from the start location while the view loads', async ({ page }) => {
+  // #2356: the app mounted before the first route resolved, so while the view's chunk was in
+  // flight the switcher's "Deutsch" pointed at `/de` and the nav was in English. Holding the chunk
+  // back makes that window wide enough to see; the first href read must already be the real one.
+  await page.route(/VenuesView[^/]*\.(?:vue|js)(?:\?|$)/, async (route) => {
+    await new Promise((resolve) => setTimeout(resolve, 1500))
+    await route.continue()
+  })
+  await page.goto('/de/venues', { waitUntil: 'commit' })
+
+  // Polled every frame, so this is the href the link is first painted with; a retrying
+  // `toHaveAttribute` would wait out the bug and pass.
+  const firstHref = await page.waitForFunction(() =>
+    document.querySelector('a[hreflang="en"]')?.getAttribute('href'),
+  )
+  expect(await firstHref.jsonValue()).toBe('/en/venues')
+  await expect(page.getByRole('navigation', { name: 'Hauptnavigation' })).toBeVisible()
+})
+
 test('an unknown path under a published locale does not loop', async ({ page }) => {
   // The catch-all prefixes unprefixed paths; without a guard an unmatched prefixed path becomes
   // `/en/en/nonsense` and redirects forever.

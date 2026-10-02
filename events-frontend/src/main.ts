@@ -20,4 +20,7 @@ const app = createApp(App)
 app.use(i18n)
 app.use(router)
 
-app.mount('#app')
+// Mount once the first route resolves. Before that `useRoute()` is the start location `/`, so the
+// header painted in the default language and the locale switcher linked to `/de` from any page
+// (#2356). The view's chunk is on the critical path either way; only the header waits for it.
+void router.isReady().then(() => app.mount('#app'))
