@@ -88,13 +88,13 @@ What settled it: the two refused options each trade the admin API's only protect
   unissued certificate on staging is found by a person on the tunnel, as today. Production verifies.
 - **A staging-only failure that a hook cannot express stays a manual find.** A visual regression, a translation, a slow page. The k3d suite covers the build,
   and a person on the tunnel covers the rest.
-- **Trend data comes from the log pipeline, not from a store this ADR adds.** Each hook writes one JSON line to stdout, and the collector ships it. [#298][298]
-  step 2, a metric store for durations, is still open.
+- **Trend data comes from the log pipeline, not from a store this ADR adds.** Each hook writes one JSON line to stdout, and the collector ships it. OpenObserve
+  keeps it 14 days. Keeping those rows longer is [#2393][2393].
 - **A check that runs from Actions has no trend store at all.** The line above works for a hook because the hook runs beside the collector. OpenObserve is
   `ClusterIP` on both clusters with no Ingress, so a runner cannot write to it. Two changes would open that path. One is a credential into a cluster. The
   other is a public route to the store that holds every log line in the system. This ADR refuses both. So [#1698][1698] keeps its reports as 30-day artifacts and
-  [#1699][1699] keeps none, and both said so rather than inventing a second store. This is the cost of the decision, and [#298][298] step 2 is where it is
-  paid.
+  [#1699][1699] keeps none, and both said so rather than inventing a second store. This is the cost of the decision. On 2026-10-02 it was accepted rather than paid
+  ([#298][298]): neither suite gets a second store.
 - **If staging is ever made reachable for a person**, PLATFORM_SETUP §4a names the two shapes, a WireGuard config or a `basicAuth` Ingress. Neither of those
   is a route for Actions, and this ADR is the reason.
 
@@ -119,6 +119,7 @@ What settled it: the two refused options each trade the admin API's only protect
 [265]: https://github.com/enorm-labs/event-junkie/issues/265
 [267]: https://github.com/enorm-labs/event-junkie/issues/267
 [298]: https://github.com/enorm-labs/event-junkie/issues/298
+[2393]: https://github.com/enorm-labs/event-junkie/issues/2393
 [414]: https://github.com/enorm-labs/event-junkie/issues/414
 [443]: https://github.com/enorm-labs/event-junkie/issues/443
 [1421]: https://github.com/enorm-labs/event-junkie/issues/1421
