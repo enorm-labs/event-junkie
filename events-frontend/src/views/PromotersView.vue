@@ -47,6 +47,10 @@ watch(
   },
 )
 
+function applySearch() {
+  if (search.value !== queryString('q')) applyFilters({ q: search.value })
+}
+
 // Paging, the clamp on an out-of-range `?page=`, and the reload on any query change.
 const { currentPage, totalPages, goToPage } = usePagedList(page, run)
 
@@ -80,14 +84,16 @@ const { t } = useI18n()
     </header>
 
     <div :class="PANEL_CLASS">
-      <form class="flex gap-2" @submit.prevent="applyFilters({ q: search })">
+      <!-- One field, so Enter submits without a button; leaving the field applies it too, as on
+           the events bar. -->
+      <form role="search" @submit.prevent="applySearch">
         <BaseInput
           v-model="search"
           :placeholder="t('promoters.searchPlaceholder')"
           class="px-3"
           type="search"
+          @change="applySearch"
         />
-        <Button type="submit" variant="outline">{{ t('common.actions.search') }}</Button>
       </form>
 
       <BaseSelect
@@ -100,19 +106,19 @@ const { t } = useI18n()
       </BaseSelect>
     </div>
 
-    <p v-if="loading" class="text-sm text-muted-foreground">
+    <p v-if="loading" class="text-body text-muted-foreground">
       {{ t('common.states.loadingPromoters') }}
     </p>
-    <p v-else-if="error" class="text-sm text-destructive">{{ error }}</p>
+    <p v-else-if="error" class="text-body text-destructive">{{ error }}</p>
     <!-- An empty result offers a control, not only a sentence (#1266). -->
     <div v-else-if="!page?.content?.length" class="space-y-3">
-      <p class="text-sm text-muted-foreground">{{ t('promoters.empty') }}</p>
+      <p class="text-body text-muted-foreground">{{ t('promoters.empty') }}</p>
       <Button v-if="isFiltered" variant="outline" @click="clearSearch">
         {{ t('common.actions.clearSearch') }}
       </Button>
     </div>
     <template v-else>
-      <p class="text-sm text-muted-foreground">
+      <p class="text-body text-muted-foreground">
         {{ t('promoters.resultCount', { count: page.totalElements }) }}
       </p>
       <div :class="CARD_GRID_CLASS">

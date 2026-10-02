@@ -104,7 +104,7 @@ const descriptionCredit = computed(() =>
     :ready="Boolean(artist)"
   >
     <template #meta>
-      <div v-if="links.length" class="flex flex-wrap gap-3 text-sm">
+      <div v-if="links.length" class="flex flex-wrap gap-3 text-body">
         <a
           v-for="link in links"
           :key="link.label"
@@ -116,7 +116,7 @@ const descriptionCredit = computed(() =>
           {{ link.label }}
         </a>
       </div>
-      <p v-if="discogsCredit" class="mt-2 text-xs text-muted-foreground">
+      <p v-if="discogsCredit" class="mt-2 text-meta text-muted-foreground">
         <a
           class="underline underline-offset-2"
           href="https://www.discogs.com"

@@ -134,10 +134,10 @@ useStructuredData((): JsonLd[] => {
 
 <template>
   <main class="mx-auto max-w-3xl space-y-8 p-4 sm:p-8">
-    <p v-if="loading" class="text-sm text-muted-foreground">{{ t('common.states.loading') }}</p>
+    <p v-if="loading" class="text-body text-muted-foreground">{{ t('common.states.loading') }}</p>
 
     <div v-else-if="notFound" class="space-y-3">
-      <h1 class="text-section font-bold tracking-tight">{{ t('events.detail.notFound') }}</h1>
+      <h1 class="text-page font-bold tracking-tight">{{ t('events.detail.notFound') }}</h1>
       <p class="text-muted-foreground">
         {{ t('events.detail.notFoundBody') }}
       </p>
@@ -146,7 +146,7 @@ useStructuredData((): JsonLd[] => {
       </Button>
     </div>
 
-    <p v-else-if="error" class="text-sm text-destructive">{{ error }}</p>
+    <p v-else-if="error" class="text-body text-destructive">{{ error }}</p>
 
     <article v-else-if="event" class="space-y-8">
       <!-- The poster belongs to the title, so it sits closer than the article's stride. `mb-5` wins
@@ -154,7 +154,7 @@ useStructuredData((): JsonLd[] => {
       <header class="mb-5 space-y-3">
         <h1 class="text-page font-bold tracking-tight">{{ event.title }}</h1>
         <p v-if="event.subtitle" class="text-lede text-muted-foreground">{{ event.subtitle }}</p>
-        <div class="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+        <div class="flex flex-wrap items-center gap-2 text-body text-muted-foreground">
           <span>{{ formatEventDates(event) }}</span>
           <span>· {{ formatEventTime(event) }}</span>
           <span v-if="timeHint">· {{ timeHint }}</span>
@@ -184,7 +184,7 @@ useStructuredData((): JsonLd[] => {
           venue's own site as the nearest onward link (#1268), so the sentence carries one that stays
           here: the venue if we know it, the list otherwise.
         -->
-        <p v-if="isPast" class="text-sm text-muted-foreground">
+        <p v-if="isPast" class="text-body text-muted-foreground">
           {{ t('events.detail.hasTakenPlace') }}
           <RouterLink
             v-if="event.venue?.slug"
@@ -233,7 +233,7 @@ useStructuredData((): JsonLd[] => {
         {{ description.text }}
       </p>
       <!-- Machine output is never presented as the venue's own words. -->
-      <p v-if="description?.machine" class="text-sm text-muted-foreground">
+      <p v-if="description?.machine" class="text-body text-muted-foreground">
         {{ t('events.detail.machineTranslated') }}
         <a
           v-if="event.sourceUrl"
@@ -250,7 +250,7 @@ useStructuredData((): JsonLd[] => {
         where the text is and nothing about what the venue wants: both prohibitions were read off an
         Impressum, not sent to us (#809).
       -->
-      <p v-if="!description && event.descriptionWithheld" class="text-sm text-muted-foreground">
+      <p v-if="!description && event.descriptionWithheld" class="text-body text-muted-foreground">
         {{ t('events.detail.descriptionElsewhere') }}
       </p>
 
@@ -319,7 +319,7 @@ useStructuredData((): JsonLd[] => {
         </ul>
       </section>
 
-      <p v-if="lineupCredit" class="text-xs text-muted-foreground">
+      <p v-if="lineupCredit" class="text-meta text-muted-foreground">
         {{ t('events.detail.lineupFrom') }}
         <a
           class="underline underline-offset-2"
@@ -341,7 +341,7 @@ useStructuredData((): JsonLd[] => {
             {{ event.venue.name }}
           </RouterLink>
           <p v-else class="font-medium">{{ event.venue.name }}</p>
-          <p v-if="event.venue.address" class="text-sm text-muted-foreground">
+          <p v-if="event.venue.address" class="text-body text-muted-foreground">
             {{ event.venue.address
             }}<template v-if="event.venue.city">, {{ event.venue.city }}</template>
           </p>
@@ -356,21 +356,23 @@ useStructuredData((): JsonLd[] => {
           class="space-y-1"
         >
           <SectionLabel>{{ t('events.detail.tickets') }}</SectionLabel>
-          <p v-if="formatPrice(event.pricePresale, event.priceCurrency)" class="text-sm">
+          <p v-if="formatPrice(event.pricePresale, event.priceCurrency)" class="text-body">
             {{ t('events.detail.presale') }}:
             {{ formatPrice(event.pricePresale, event.priceCurrency) }}
           </p>
-          <p v-if="formatPrice(event.priceBoxOffice, event.priceCurrency)" class="text-sm">
+          <p v-if="formatPrice(event.priceBoxOffice, event.priceCurrency)" class="text-body">
             {{ t('events.detail.boxOffice') }}:
             {{ formatPrice(event.priceBoxOffice, event.priceCurrency) }}
           </p>
-          <p v-if="event.priceNote" class="text-sm text-muted-foreground">{{ event.priceNote }}</p>
+          <p v-if="event.priceNote" class="text-body text-muted-foreground">
+            {{ event.priceNote }}
+          </p>
         </div>
       </section>
 
       <section v-if="event.promoters?.length" class="space-y-1">
         <SectionLabel>{{ t('events.detail.promoters') }}</SectionLabel>
-        <p class="flex flex-wrap gap-x-1 text-sm">
+        <p class="flex flex-wrap gap-x-1 text-body">
           <template
             v-for="(promoter, index) in event.promoters"
             :key="promoter.slug ?? promoter.name"

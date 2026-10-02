@@ -299,24 +299,28 @@ function distance(km: number): string {
         </BaseSelect>
       </div>
 
-      <p v-if="picking" class="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+      <p v-if="picking" class="flex flex-wrap items-center gap-2 text-body text-muted-foreground">
         {{ t('map.near.pickHint') }}
         <Button size="xs" type="button" variant="link" @click="pickCenter">
           {{ t('map.near.useCentre') }}
         </Button>
       </p>
-      <p v-if="locateState === 'locating'" aria-live="polite" class="text-sm text-muted-foreground">
+      <p
+        v-if="locateState === 'locating'"
+        aria-live="polite"
+        class="text-body text-muted-foreground"
+      >
         {{ t('map.near.locating') }}
       </p>
       <p
         v-else-if="locateState === 'denied' || locateState === 'unavailable'"
         aria-live="polite"
-        class="text-sm text-muted-foreground"
+        class="text-body text-muted-foreground"
       >
         {{ t(`map.near.${locateState}`) }}
       </p>
 
-      <div v-if="origin" class="flex flex-wrap items-center gap-2 text-sm">
+      <div v-if="origin" class="flex flex-wrap items-center gap-2 text-body">
         <span>{{ t('map.near.from', { origin: originLabel }) }}</span>
         <div :aria-label="t('map.near.radius')" class="flex gap-1" role="group">
           <Button
@@ -338,23 +342,23 @@ function distance(km: number): string {
           {{ t('map.near.clear') }}
         </Button>
       </div>
-      <p v-if="coarse" class="text-sm text-muted-foreground">
+      <p v-if="coarse" class="text-body text-muted-foreground">
         {{ t('map.near.coarse', { accuracy: coarse }) }}
       </p>
     </section>
 
-    <p v-if="loading" class="text-sm text-muted-foreground">
+    <p v-if="loading" class="text-body text-muted-foreground">
       {{ t('common.states.loading') }}
     </p>
-    <p v-else-if="error" class="text-sm text-destructive">{{ error }}</p>
+    <p v-else-if="error" class="text-body text-destructive">{{ error }}</p>
     <!-- An empty result offers a control, not only a sentence (#1266). -->
     <div v-else-if="!pins.length" class="space-y-3">
-      <p class="text-sm text-muted-foreground">{{ t('map.empty') }}</p>
+      <p class="text-body text-muted-foreground">{{ t('map.empty') }}</p>
       <Button v-if="isFiltered" variant="outline" @click="router.push({ query: {} })">
         {{ t('common.actions.clearFilters') }}
       </Button>
     </div>
-    <p v-else class="text-sm text-muted-foreground">
+    <p v-else class="text-body text-muted-foreground">
       {{ t('map.resultCount', { events: pinnedEventCount, venues: pins.length }) }}
       <template v-if="unpinnedEventCount">
         ·
@@ -365,7 +369,7 @@ function distance(km: number): string {
     </p>
 
     <div v-if="unavailable" class="space-y-3">
-      <p class="text-sm text-muted-foreground">{{ t('map.unavailable') }}</p>
+      <p class="text-body text-muted-foreground">{{ t('map.unavailable') }}</p>
       <Button as-child variant="outline">
         <RouterLink :to="listLink">{{ t('map.showList') }}</RouterLink>
       </Button>
@@ -426,7 +430,7 @@ function distance(km: number): string {
 
     <p
       v-if="!selectedGroup && pins.length && !unavailable && !near"
-      class="text-sm text-muted-foreground"
+      class="text-body text-muted-foreground"
     >
       {{ t('map.pickPin') }}
     </p>
@@ -435,7 +439,7 @@ function distance(km: number): string {
       <h2 class="text-section font-bold tracking-tight">
         {{ t('map.near.heading', { radius: distance(radiusKm), origin: originLabel }) }}
       </h2>
-      <p class="text-sm text-muted-foreground">
+      <p class="text-body text-muted-foreground">
         {{
           near.length
             ? t('map.near.resultCount', { events: nearEventCount, venues: near.length })

@@ -10,7 +10,7 @@ import { cva, type VariantProps } from 'class-variance-authority'
 import type { HTMLAttributes } from 'vue'
 import { cn } from '@/lib/utils'
 
-const badgeVariants = cva('rounded-full px-2 py-0.5 text-xs font-medium', {
+const badgeVariants = cva('rounded-full px-2 py-0.5 text-meta font-medium', {
   variants: {
     variant: {
       /** Outlined, for a pill that is a link rather than a state. */

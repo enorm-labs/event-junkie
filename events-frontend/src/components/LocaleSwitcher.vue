@@ -33,7 +33,7 @@ const LOCALE_NAMES: Record<Locale, string> = {
 }
 
 /**
- * `EN`/`DE` stays legible at `text-xs` but is a poor accessible name, so the link keeps the full
+ * `EN`/`DE` stays legible at `text-meta` but is a poor accessible name, so the link keeps the full
  * native name as `aria-label` and `title`, as the header's icon controls do.
  */
 const shortName = (locale: Locale) => locale.toUpperCase()
@@ -67,7 +67,7 @@ function pathIn(locale: Locale): string {
        no landmark. `aria-current` marks the active language in both. -->
   <component
     :is="props.compact ? 'span' : 'nav'"
-    :class="['flex items-center', props.compact ? 'gap-1 text-xs' : 'gap-2 text-sm']"
+    :class="['flex items-center', props.compact ? 'gap-1 text-meta' : 'gap-2 text-body']"
     v-bind="props.compact ? {} : { 'aria-label': $t('common.locale.label') }"
   >
     <template v-for="(locale, index) in LOCALES" :key="locale">

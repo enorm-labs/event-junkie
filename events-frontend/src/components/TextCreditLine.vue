@@ -12,7 +12,7 @@ const { t } = useI18n()
 </script>
 
 <template>
-  <p class="text-xs text-muted-foreground">
+  <p class="text-meta text-muted-foreground">
     {{ t('common.textCredit.text') }}
     <a :href="credit.sourceUrl" class="underline underline-offset-2" rel="noopener" target="_blank">
       {{ credit.attribution }}

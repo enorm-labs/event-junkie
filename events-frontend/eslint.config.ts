@@ -163,6 +163,17 @@ export default defineConfigWithVueTs(
   },
 
   {
+    // The type scale is six tokens (design.instructions.md §3). Tailwind's own sizes still compile, and
+    // 104 of them had crept in beside the tokens, three identical to one under another name (#2347).
+    name: 'app/type-scale',
+    files: ['src/**/*.vue'],
+    ignores: ['src/components/ui/**'],
+    rules: {
+      'vue/no-restricted-class': ['error', '/^(?:[\\w-]+:)*text-(?:xs|sm|base|lg|xl|[2-9]xl)$/'],
+    },
+  },
+
+  {
     // Vendored shadcn-vue, which the forbidden list exempts.
     name: 'app/design-system-vendored',
     files: ['src/components/ui/**'],

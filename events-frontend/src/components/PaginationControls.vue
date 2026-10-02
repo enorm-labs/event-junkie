@@ -20,7 +20,7 @@ const { t } = useI18n()
     <Button :disabled="currentPage <= 0" variant="outline" @click="emit('goto', currentPage - 1)">
       {{ t('common.actions.previous') }}
     </Button>
-    <span class="text-sm text-muted-foreground">
+    <span class="text-body text-muted-foreground">
       {{ t('common.pagination.pageOf', { current: currentPage + 1, total: totalPages }) }}
     </span>
     <Button

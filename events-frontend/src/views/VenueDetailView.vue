@@ -117,7 +117,7 @@ const credit = computed(() => imageCredit(venue.value))
       <a
         v-if="venue?.websiteUrl"
         :href="venue.websiteUrl"
-        class="text-sm text-primary underline-offset-4 hover:underline"
+        class="text-body text-primary underline-offset-4 hover:underline"
         rel="noopener noreferrer"
         target="_blank"
       >

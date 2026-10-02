@@ -245,7 +245,7 @@ onMounted(() => {
         @change="applyFilters({ from: ($event.target as HTMLInputElement).value })"
         @click="openDatePicker"
       />
-      <span class="text-sm text-muted-foreground">–</span>
+      <span class="text-body text-muted-foreground">–</span>
       <BaseInput
         :aria-label="t('events.filters.latestDate')"
         :min="queryString('from') || undefined"
@@ -362,7 +362,7 @@ onMounted(() => {
           @change="applyPrice"
           @keydown.enter="applyPrice"
         />
-        <span class="text-sm text-muted-foreground">–</span>
+        <span class="text-body text-muted-foreground">–</span>
         <BaseInput
           v-model="maxPrice"
           :aria-label="t('events.filters.maxPrice')"
