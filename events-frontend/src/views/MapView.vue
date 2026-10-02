@@ -23,6 +23,7 @@ import { useLocalePath } from '@/composables/useLocalePath'
 import { useLocation } from '@/composables/useLocation'
 import { fetchAllVenues } from '@/composables/useVenues'
 import { districtLabel } from '@/lib/districts'
+import { tonight } from '@/lib/dateRanges'
 import { addDays, isOnNow, isPastEvent, todayIso } from '@/lib/format'
 import { formatDistance, type Position } from '@/lib/geo'
 import {
@@ -247,7 +248,20 @@ function distance(km: number): string {
       <p class="text-muted-foreground">{{ t('map.subtitle') }}</p>
     </header>
 
-    <EventFilterBar />
+    <!-- With no dates in the URL the map shows today, so Tonight reads as pressed. -->
+    <EventFilterBar :default-range="tonight()">
+      <template #time>
+        <Button
+          :aria-pressed="onNowOnly"
+          :variant="onNowOnly ? 'default' : 'outline'"
+          size="sm"
+          type="button"
+          @click="applyFilters({ now: onNowOnly ? undefined : '1' })"
+        >
+          {{ t('map.onNowOnly') }}
+        </Button>
+      </template>
+    </EventFilterBar>
 
     <section :aria-label="t('map.near.label')" class="space-y-3">
       <div class="flex flex-wrap items-center gap-2">
@@ -283,15 +297,6 @@ function distance(km: number): string {
             {{ venue.name }}
           </option>
         </BaseSelect>
-        <Button
-          :aria-pressed="onNowOnly"
-          :variant="onNowOnly ? 'default' : 'outline'"
-          size="sm"
-          type="button"
-          @click="applyFilters({ now: onNowOnly ? undefined : '1' })"
-        >
-          {{ t('map.onNowOnly') }}
-        </Button>
       </div>
 
       <p v-if="picking" class="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">

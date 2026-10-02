@@ -41,7 +41,10 @@
     "minPricePlaceholder": "ab €",
     "maxPricePlaceholder": "bis €",
     "hideSoldOut": "Ausverkaufte ausblenden",
-    "freeOnly": "Nur kostenlose"
+    "freeOnly": "Nur kostenlose",
+    "more": "Mehr Filter",
+    "moreCount": "Mehr Filter ({n})",
+    "clearAll": "Alles zurücksetzen"
   },
   "card": {
     "liveTonight": "Heute Abend live",

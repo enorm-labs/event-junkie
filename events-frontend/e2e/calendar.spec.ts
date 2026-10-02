@@ -1,4 +1,5 @@
 import { expect, type Page, type Route, test } from '@playwright/test'
+import { openMoreFilters } from './filter-bar'
 
 /**
  * Calendar view e2e tests with a mocked BFF. The calendar refetches
@@ -178,6 +179,7 @@ test('omits the date-range filter, whose job the visible window already does', a
   await page.goto('/calendar')
   await expect(page.getByRole('link', { name: /Calendar Gig/ })).toBeVisible()
 
+  await openMoreFilters(page)
   // The rest of the shared bar is there; only the date range is suppressed here.
   await expect(selectWithOption(page, 'All venues')).toBeVisible()
   await expect(page.getByLabel('Earliest event date')).toHaveCount(0)
@@ -191,6 +193,7 @@ test('refetches the visible range with a filter from the shared filter bar', asy
   await page.goto('/calendar')
   await expect(page.getByRole('link', { name: /Calendar Gig/ })).toBeVisible()
 
+  await openMoreFilters(page)
   await selectWithOption(page, 'All venues').selectOption('lido')
 
   await expect(page).toHaveURL(/[?&]venue=lido\b/)

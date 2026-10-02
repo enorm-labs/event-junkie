@@ -169,3 +169,20 @@ test('a pin opens its venue over the map, three events deep, and closing returns
   await expect(panel).toHaveCount(0)
   await expect(pin).toBeFocused()
 })
+
+test('with no dates in the URL the map shows today, so Tonight reads as pressed', async ({
+  page,
+}) => {
+  await mockBff(page)
+  await page.goto('/en/map')
+  await expect(page.getByText('3 events at 3 venues')).toBeVisible()
+
+  await expect(page.getByRole('button', { name: 'Tonight' })).toHaveAttribute('aria-pressed', 'true')
+  await expect(page.getByRole('button', { name: 'This weekend' })).toHaveAttribute(
+    'aria-pressed',
+    'false',
+  )
+  // "On now" is a time, so it sits with the presets rather than with the location controls.
+  const times = page.locator('div', { has: page.getByRole('button', { name: 'Tonight' }) }).last()
+  await expect(times.getByRole('button', { name: 'On now', exact: true })).toBeVisible()
+})
