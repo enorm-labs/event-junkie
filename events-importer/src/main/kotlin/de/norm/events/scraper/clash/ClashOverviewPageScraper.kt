@@ -1,18 +1,26 @@
 package de.norm.events.scraper.clash
 
 import de.norm.events.event.EventType
+import de.norm.events.genretag.isGenreLabel
+import de.norm.events.genretag.normalizeGenre
+import de.norm.events.scraper.DOORS_LABELS
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.START_LABELS
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.euroAmounts
 import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.imgSrcAt
 import de.norm.events.scraper.inferConcertVenueType
 import de.norm.events.scraper.isNonArtistName
+import de.norm.events.scraper.labelledClock
 import de.norm.events.scraper.parseGermanShortDate
+import de.norm.events.scraper.parseLabelledPrices
 import de.norm.events.scraper.resolveUrl
 import de.norm.events.scraper.splitSupportActs
 import de.norm.events.scraper.stripArtistSuffix
 import de.norm.events.scraper.textAt
+import de.norm.events.scraper.textLines
 import de.norm.events.slug.SlugGenerator
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
@@ -29,10 +37,14 @@ import java.time.LocalTime
  * `DD.MM.YY` date in a `.dateTwo` span, a title, an optional lineup subtitle, a start time, a
  * poster, and for ticketed shows a Stager ticket-shop link.
  *
+ * The collapsed `.info-extra` panel holds free prose paragraphs ([Panel]): the blurb, the ticket
+ * text (`VVK am Tresen 17 € … AK 20 €`), sometimes `Doors 20:00` / `Show 21:00`, and on some DJ
+ * nights a `Punk//Post Punk//New Wave` style line. The header time is the doors time on a night
+ * whose panel names a show time, so the panel's start wins.
+ *
  * A live-music (punk/ska) club that also hosts quiz, party and festival nights, so the type is
  * inferred from the title ([inferConcertVenueType] — CONCERT by default). Acts come from the
- * lineup subtitle (see [parseArtists]); the rest is sparse — no doors time, prices, genre or
- * promoters — so those fields stay unset.
+ * lineup subtitle (see [parseArtists]).
  *
  * @see ClashWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://clash-berlin.de/">Clash Berlin</a>
@@ -91,7 +103,8 @@ class ClashOverviewPageScraper {
         val slug = collapseId ?: "$eventDate-${SlugGenerator.slugify(title)}"
 
         val subtitle = item.textAt("h4.sub-title")
-        val startTime = parseTime(item.textAt(".meta .time"))
+        val panel = Panel.of(item)
+        val prices = parseLabelledPrices(panel.text)
         val imageUrl = item.imgSrcAt(".flyer img")
         // The per-event ticket link points at the Stager shop's `/events/<id>` page; the bare
         // `/shop/tickets/` link in the section header is not inside an `.item`.
@@ -104,16 +117,48 @@ class ClashOverviewPageScraper {
         return ScrapedEvent(
             title = title,
             subtitle = subtitle,
+            description = panel.description,
             eventType = eventType,
             eventDate = eventDate,
-            startTime = startTime,
+            doorsTime = labelledClock(panel.text, DOORS_LABELS),
+            startTime = labelledClock(panel.text, START_LABELS) ?: parseTime(item.textAt(".meta .time")),
             imageUrl = imageUrl,
             // No per-event pages — deep-link to the expanded event on the homepage listing.
             sourceUrl = resolveUrl(baseUrl, "#$slug"),
             sourceId = "${EventSource.CLASH.sourceIdPrefix}$slug",
             ticketUrl = ticketUrl,
+            genre = panel.genre(),
+            pricePresale = prices.presale,
+            priceBoxOffice = prices.boxOffice,
+            // An amount with no presale or door label (`Mitmachspende: 3 Euro / Person`) is kept as worded.
+            priceNote = panel.lines.firstOrNull { euroAmounts(it).isNotEmpty() }.takeIf { prices.presale == null && prices.boxOffice == null },
             artists = parseArtists(subtitle, eventType)
         )
+    }
+
+    /** The prose paragraphs of an item's `.info-extra` panel, without the Facebook link. */
+    private class Panel(
+        paragraphs: List<List<String>>
+    ) {
+        val lines = paragraphs.flatten()
+        val text = lines.joinToString("\n")
+        val description = paragraphs.joinToString("\n\n") { it.joinToString("\n") }.ifBlank { null }
+
+        /** The known genres on a `//`-separated style line; a line of prose holds none. */
+        fun genre(): String? =
+            lines
+                .filter { STYLE_SEPARATOR in it }
+                .flatMap { normalizeGenre(it) }
+                .filter(::isGenreLabel)
+                .distinct()
+                .joinToString(", ")
+                .ifEmpty { null }
+
+        companion object {
+            private const val STYLE_SEPARATOR = "//"
+
+            fun of(item: Element) = Panel(item.select(".info-extra > p:not(.fb-event)").map { it.textLines() }.filter { it.isNotEmpty() })
+        }
     }
 
     /**

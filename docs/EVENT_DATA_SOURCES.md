@@ -48,7 +48,7 @@ schema change.
 | Berghain / Panorama Bar          | https://www.berghain.berlin/de/program/                     | Techno Club  | Server-rendered; list + detail                         |
 | Bi Nuu                           | https://binuu.de/                                           | Club         | No genre or prices on site; only via ticket link       |
 | Cassiopeia                       | https://cassiopeia-berlin.de/                               | Club         | Webflow; genre tags, badges; walks all pages           |
-| Clash Club                       | https://clash-berlin.de/                                    | Club         | WordPress; sparse — no times, prices or text           |
+| Clash Club                       | https://clash-berlin.de/                                    | Club         | WordPress; prices, doors and blurb only as prose       |
 | Club der Visionäre               | https://clubdervisionaere.com/programm                      | Techno Club  | WordPress; one listing, 3 rooms by CSS class           |
 | Club OST                         | https://clubost.de/                                         | Techno Club  | Django; homepage is the programme; RA tickets          |
 | Colosseum                        | https://www.colosseumberlin.com/event                       | Concert Hall | Wix Events warmup JSON; external shops feign sold-out  |

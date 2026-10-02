@@ -46,9 +46,7 @@ says so.
 | `BINUU`                | `GENRE`            | the payload and JSON-LD carry no genre; style appears only in the description                                                                    | —     |
 | `CASSIOPEIA`           | `PRICE`            | the venue prints no figure on its listing or its event pages                                                                                     | —     |
 | `CLASH`                | `PER_EVENT_PAGE`   | the `event` post type is not exposed over the WordPress REST API and the numeric permalinks 404                                                  | —     |
-| `CLASH`                | `DOORS_TIME`       | the homepage listing is the whole source and carries no doors time                                                                               | —     |
-| `CLASH`                | `PRICE`            | the homepage listing is the whole source and carries no price                                                                                    | —     |
-| `CLASH`                | `GENRE`            | the homepage listing is the whole source and carries no genre; every music night takes the house's Punk                                          | —     |
+| `CLASH`                | `GENRE`            | only an occasional DJ night names its styles in the prose; every other music night takes the house's Punk                                        | —     |
 | `CLASH`                | `PROMOTERS`        | the homepage listing is the whole source and names no promoter                                                                                   | —     |
 | `CLASH`                | `EVENT_TYPE`       | the site has no category field; the type is inferred from the title, defaulting to a concert                                                     | —     |
 | `CLUB_DER_VISIONAERE`  | `START_TIME`       | the listing prints one only where an act line carries a slot time; the homepage's NEXT box prints the rest, for the ten nights it shows          | —     |

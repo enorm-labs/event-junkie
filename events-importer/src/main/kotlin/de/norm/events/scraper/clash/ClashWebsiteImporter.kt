@@ -30,9 +30,7 @@ val CLASH_LIMITATIONS =
     VenueLimitations(
         EventSource.CLASH,
         AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "the `event` post type is not exposed over the WordPress REST API and the numeric permalinks 404"),
-        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the homepage listing is the whole source and carries no doors time"),
-        AcceptedLimitation(LimitedAspect.PRICE, "the homepage listing is the whole source and carries no price"),
-        AcceptedLimitation(LimitedAspect.GENRE, "the homepage listing is the whole source and carries no genre; every music night takes the house's Punk"),
+        AcceptedLimitation(LimitedAspect.GENRE, "only an occasional DJ night names its styles in the prose; every other music night takes the house's Punk"),
         AcceptedLimitation(LimitedAspect.PROMOTERS, "the homepage listing is the whole source and names no promoter"),
         AcceptedLimitation(LimitedAspect.EVENT_TYPE, "the site has no category field; the type is inferred from the title, defaulting to a concert"),
         houseGenre = "Punk"
