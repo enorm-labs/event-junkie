@@ -11,6 +11,8 @@ import org.springframework.boot.micrometer.metrics.test.autoconfigure.AutoConfig
 import org.springframework.r2dbc.core.await
 import org.springframework.r2dbc.core.awaitSingle
 import org.springframework.test.web.reactive.server.expectBody
+import java.time.LocalDate
+import java.time.ZoneOffset
 
 /**
  * `importer.source.events_future` against a real database and a real exposition (#700).
@@ -147,8 +149,9 @@ class PerSourceEventsGaugeIntegrationTest : BaseControllerTest() {
     //
     // Raw SQL rather than the repositories, for the reason DataQualityReportIntegrationTest gives:
     // seeding through the mapping layer this test is meant to verify would let one bug hide another.
-    // Dates are relative to the database's CURRENT_DATE because the running application's clock is
-    // the system one, and a fixed date would stop being "future" on its own.
+    // Dates are relative to today in UTC, the clock MetricsRefreshService counts in, because a fixed
+    // date stops being "future" on its own. Not CURRENT_DATE: the session takes the JVM's zone, and
+    // between midnight in Berlin and midnight UTC the two disagree by a day (#2408).
 
     private suspend fun insertVenue(): Long =
         databaseClient
@@ -178,8 +181,8 @@ class PerSourceEventsGaugeIntegrationTest : BaseControllerTest() {
         .sql(
             """
             INSERT INTO events.event (venue_id, event_source_id, title, event_type, slug, event_date, source_id)
-            VALUES ($venueId, ${sourceId ?: "NULL"}, '$slug', 'CONCERT', '$slug',
-                    CURRENT_DATE + ($daysFromToday), '$slug')
+            VALUES ($venueId, ${sourceId ?: "NULL"}, '$slug', 'CONCERT', '$slug', :eventDate, '$slug')
             """.trimIndent()
-        ).await()
+        ).bind("eventDate", LocalDate.now(ZoneOffset.UTC).plusDays(daysFromToday))
+        .await()
 }
