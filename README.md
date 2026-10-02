@@ -24,12 +24,16 @@ One filterable feed of what is on across Berlin's venues, collected automaticall
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: light)" srcset="./docs/screenshots/events-light.png" />
-    <img alt="The events list: a filter bar over a grid of Berlin events, each with its poster, venue, time and genre tags" src="./docs/screenshots/events-dark.png" width="900" />
+    <img alt="The events list on a desktop: a filter bar over a grid of Berlin events, each with its poster, venue, time and genre tags" src="./docs/screenshots/events-dark.png" width="700" />
+  </picture>
+  <picture>
+    <source media="(prefers-color-scheme: light)" srcset="./docs/screenshots/events-mobile-light.png" />
+    <img alt="The same events list on a phone: search and dates on top, one event per row" src="./docs/screenshots/events-mobile-dark.png" width="208" />
   </picture>
 </p>
 
 <p align="center">
-  <sub>The events list, in your GitHub theme — real data, scraped from the venues' own sites. September 2026; see <a href="./docs/screenshots/">docs/screenshots</a>.</sub>
+  <sub>The events list on a desktop and on a phone, in your GitHub theme — real data, scraped from the venues' own sites. October 2026; see <a href="./docs/screenshots/">docs/screenshots</a>.</sub>
 </p>
 
 ## Contents

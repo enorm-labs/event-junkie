@@ -2,10 +2,12 @@
 
 Pictures of the running product, for the README and anywhere else a reader needs to see it rather than read about it.
 
-| File                                   | What it shows                                                               | Taken      |
-| -------------------------------------- | --------------------------------------------------------------------------- | ---------- |
-| [`events-dark.png`](events-dark.png)   | The events list — filter bar over the poster grid, dark theme, 1400×900 @2× | 2026-09-24 |
-| [`events-light.png`](events-light.png) | The same list in the light theme, which the toggle is the only way into     | 2026-09-24 |
+| File                                                 | What it shows                                                               | Taken      |
+| ---------------------------------------------------- | --------------------------------------------------------------------------- | ---------- |
+| [`events-dark.png`](events-dark.png)                 | The events list — filter bar over the poster grid, dark theme, 1400×900 @2× | 2026-10-02 |
+| [`events-light.png`](events-light.png)               | The same list in the light theme, which the toggle is the only way into     | 2026-10-02 |
+| [`events-mobile-dark.png`](events-mobile-dark.png)   | The same list on a phone, dark theme, 390×844 @2×                           | 2026-10-02 |
+| [`events-mobile-light.png`](events-mobile-light.png) | The phone list in the light theme                                           | 2026-10-02 |
 
 **The date is the point of the table.** Nothing here can go stale loudly. A screenshot of last year's UI renders
 exactly as well as one of today's. The date next to it is the only signal a reader gets. Update the date when you
