@@ -10,6 +10,7 @@ import argparse
 import json
 import subprocess
 import sys
+import time
 
 
 def curl(auth, *args):
@@ -73,7 +74,12 @@ def main():
             json.dumps({"data_retention": days}),
             "%s/%s/settings?type=%s" % (base, name, kind),
         )
-        after = current(args.auth, base, name, kind) or {}
+        # The stream listing is cached and lags the write by a few seconds.
+        for _ in range(10):
+            after = current(args.auth, base, name, kind) or {}
+            if after.get("data_retention") == days:
+                break
+            time.sleep(1)
         if after.get("data_retention") != days:
             print("  %s: FAILED, the server answered %s" % (name, out.strip()[:200]))
             status = 1

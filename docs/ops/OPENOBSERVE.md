@@ -216,8 +216,8 @@ cd deploy/streams
 EJ_NODE=ops@10.10.0.1 ./apply.sh            # the same, against production
 ```
 
-**One stream has a retention of its own: `smoke_test`, 60 days** (#2393). The agent collector sends the smoke hook's rows there, on staging through a
-patch in `deploy/clusters/staging/kustomization.yaml`. Every other stream keeps the global 14 days.
+**One stream has a retention of its own: `smoke_test`, 60 days** (#2393). The agent collector sends the smoke hook's rows there on both clusters
+(`deploy/clusters/base/collector.yaml`). Every other stream keeps the global 14 days.
 
 **A retention above 14 days is a privacy statement.** Only a stream that holds no personal data can have one, and `docs/LEGAL.md` §7.5 names each. **The
 ceiling is 90 days**: the `o2` bucket's lifecycle rule deletes older files under the index, which corrupts the store.

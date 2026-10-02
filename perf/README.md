@@ -219,7 +219,7 @@ Three things differ from a run on a laptop, and each is a value in the chart:
   verifies, because an unissued certificate is exactly what a post-deploy check should catch.
 
 The pod prints k6's text summary only when the run failed. After every run, `lib/summary-line.js` prints the summary export on one line without `setup_data`, the discovered slugs. It parses the export, because k6 writes its keys in a random order (#2392). The collector ships
-every container's stdout, so each reconcile leaves one JSON row in OpenObserve under `k8s_container_name = 'smoke-test'`. On staging the row lands in the stream `smoke_test`, kept 60 days; on production it is still in `default`, kept 14 (#2393). ADR-033 says why the hook runs in
+every container's stdout, so each reconcile leaves one JSON row in OpenObserve under `k8s_container_name = 'smoke-test'`. The row lands in the stream `smoke_test`, kept 60 days (#2393). ADR-033 says why the hook runs in
 the cluster and not from Actions.
 
 ## Why there is no CI workflow (yet)

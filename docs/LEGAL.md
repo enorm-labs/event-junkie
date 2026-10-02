@@ -491,8 +491,8 @@ needs the maximum, so the notice leads with 14 days. The rotation comes second.
 without changing the privacy notice and the notice becomes false. `legalViews.spec.ts` asserts the number in both
 languages, so the two cannot drift apart quietly.
 
-**One stream keeps its rows longer, and it holds no personal data.** On staging, `smoke_test` keeps the results of the
-post-deploy smoke test for 60 days (#2393). Production follows when the routing moves into `deploy/clusters/base/`.
+**One stream keeps its rows longer, and it holds no personal data.** On both clusters, `smoke_test` keeps the results of
+the post-deploy smoke test for 60 days (#2393).
 The rows hold k6 metrics and check names. The collector sends a record there only when its container is `smoke-test`
 and its namespace is `event-junkie`. Thus no visitor log line can get into it. Only a stream like this one can have a
 retention above 14 days. `deploy/streams/streams.json` lists each of these streams, and this paragraph names each one.
