@@ -28,7 +28,7 @@ Four states, and they are different questions:
 | `WOULD FIRE` | the query crosses its threshold right now                                                                      |
 | `ok`         | returns data, below the threshold                                                                              |
 
-**`quiet` needs the mark.** `gen_alerts.py` passes `failure_only=True` for the five rules whose series a failure creates, and
+**`quiet` needs the mark.** `gen_alerts.py` passes `failure_only=True` for the six rules whose series a failure creates, and
 `gen_alerts.py --failure-only` lists them for the check. Unmarked, the same silence stays `NO DATA`, because a typo in a metric name looks exactly like a
 counter that has not incremented yet — the #1964 defect. The mark is a claim, and a drill is what backs it.
 
@@ -120,25 +120,27 @@ loses its silence window and can fire again immediately.
 
 ## The rules
 
-| Rule                           | Fires when                                                                                                                                   | #271 item          |
-| ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------- | ------------------ |
-| `ej-site-down`                 | an application Deployment has zero available replicas                                                                                        | site down          |
-| `ej-importer-stale`            | the stalest source not known to be blocked passes 36h against a 24h interval                                                                 | importer failing   |
-| `ej-importer-stale-blocked`    | a source known to be blocked has not succeeded for 8 days ([#2201](https://github.com/enorm-labs/event-junkie/issues/2201))                  | importer failing   |
-| `ej-source-never-succeeded`    | a source enabled for two hours has never once completed a run ([#618](https://github.com/enorm-labs/event-junkie/issues/618))                | importer failing   |
-| `ej-catalogue-emptying`        | future events fall below 500, from a normal ~3,000                                                                                           | zero events        |
-| `ej-source-emptied`            | one source holds zero future events after holding more than twenty this week ([#700](https://github.com/enorm-labs/event-junkie/issues/700)) | zero events        |
-| `ej-source-quiet`              | a source not known to be quiet has held zero future events for 30 days ([#1498](https://github.com/enorm-labs/event-junkie/issues/1498))     | zero events        |
-| `ej-node-disk-filling`         | less than 15% of the node's filesystem is free                                                                                               | disk filling       |
-| `ej-certificate-expiry`        | the soonest certificate is inside 14 days                                                                                                    | certificate expiry |
-| `ej-ingest-shedding`           | OpenObserve is rejecting writes ([#625](https://github.com/enorm-labs/event-junkie/issues/625))                                              | —                  |
-| `ej-ingest-queue-saturated`    | the collector's export queue is over 80% full                                                                                                | —                  |
-| `ej-dns-fanout`                | three or more sources are FAILED on a name lookup at once ([#708](https://github.com/enorm-labs/event-junkie/issues/708))                    | importer failing   |
-| `ej-musicbrainz-failing`       | more than a quarter of 24 hours' MusicBrainz lookups failed ([#1900](https://github.com/enorm-labs/event-junkie/issues/1900))                | —                  |
-| `ej-musicbrainz-backlog-stuck` | the lookup or entity-read backlog has not reached zero in two days ([#1900](https://github.com/enorm-labs/event-junkie/issues/1900))         | —                  |
-| `ej-discogs-failing`           | more than a quarter of 24 hours' Discogs lookups failed ([#2043](https://github.com/enorm-labs/event-junkie/issues/2043))                    | —                  |
-| `ej-discogs-backlog-stuck`     | the Discogs lookup backlog has not reached zero in two days ([#2043](https://github.com/enorm-labs/event-junkie/issues/2043))                | —                  |
-| `ej-artist-lookup-tick-stale`  | the artist lookup tick has not finished in an hour ([#2059](https://github.com/enorm-labs/event-junkie/issues/2059))                         | —                  |
+| Rule                           | Fires when                                                                                                                                         | #271 item          |
+| ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------ |
+| `ej-site-down`                 | an application Deployment has zero available replicas                                                                                              | site down          |
+| `ej-importer-stale`            | the stalest source not known to be blocked passes 36h against a 24h interval                                                                       | importer failing   |
+| `ej-importer-stale-blocked`    | a source known to be blocked has not succeeded for 8 days ([#2201](https://github.com/enorm-labs/event-junkie/issues/2201))                        | importer failing   |
+| `ej-source-never-succeeded`    | a source enabled for two hours has never once completed a run ([#618](https://github.com/enorm-labs/event-junkie/issues/618))                      | importer failing   |
+| `ej-catalogue-emptying`        | future events fall below 500, from a normal ~3,000                                                                                                 | zero events        |
+| `ej-source-emptied`            | one source holds zero future events after holding more than twenty this week ([#700](https://github.com/enorm-labs/event-junkie/issues/700))       | zero events        |
+| `ej-source-quiet`              | a source not known to be quiet has held zero future events for 30 days ([#1498](https://github.com/enorm-labs/event-junkie/issues/1498))           | zero events        |
+| `ej-node-disk-filling`         | less than 15% of the node's filesystem is free                                                                                                     | disk filling       |
+| `ej-certificate-expiry`        | the soonest certificate is inside 14 days                                                                                                          | certificate expiry |
+| `ej-ingest-shedding`           | OpenObserve is rejecting writes ([#625](https://github.com/enorm-labs/event-junkie/issues/625))                                                    | —                  |
+| `ej-ingest-queue-saturated`    | the collector's export queue is over 80% full                                                                                                      | —                  |
+| `ej-dns-fanout`                | three or more sources are FAILED on a name lookup at once ([#708](https://github.com/enorm-labs/event-junkie/issues/708))                          | importer failing   |
+| `ej-musicbrainz-failing`       | more than a quarter of 24 hours' MusicBrainz lookups failed ([#1900](https://github.com/enorm-labs/event-junkie/issues/1900))                      | —                  |
+| `ej-musicbrainz-backlog-stuck` | the lookup or entity-read backlog has not reached zero in two days ([#1900](https://github.com/enorm-labs/event-junkie/issues/1900))               | —                  |
+| `ej-discogs-failing`           | more than a quarter of 24 hours' Discogs lookups failed ([#2043](https://github.com/enorm-labs/event-junkie/issues/2043))                          | —                  |
+| `ej-discogs-backlog-stuck`     | the Discogs lookup backlog has not reached zero in two days ([#2043](https://github.com/enorm-labs/event-junkie/issues/2043))                      | —                  |
+| `ej-artist-lookup-tick-stale`  | the artist lookup tick has not finished in an hour ([#2059](https://github.com/enorm-labs/event-junkie/issues/2059))                               | —                  |
+| `ej-rate-limit-storm`          | Traefik's rate limits rejected more than 100 requests in 15 minutes ([#1455](https://github.com/enorm-labs/event-junkie/issues/1455))              | —                  |
+| `ej-4xx-flood`                 | client errors other than 429 and 499 average more than 5 a second for 30 minutes ([#1455](https://github.com/enorm-labs/event-junkie/issues/1455)) | —                  |
 
 **The zero-events failure is two rules, and keeping both is deliberate.** ADR-015's criterion 1 is per-source — a venue whose scraper still returns 200 while
 writing nothing — and `ej-source-emptied` is that rule at last, on the `importer_source_events_future` gauge
@@ -267,9 +269,9 @@ are the zeros, so a "down for the whole window" test still passes.
 available by definition, and zero available replicas is what "the site is down" actually means. Checked against the 13:07 deploy on 2026-08-23 — 61 samples
 across the hour, every one of them zero-unavailable, while `up` went to 0 twice.
 
-## Seven traps these rules are written around
+## Eight traps these rules are written around
 
-All seven were established by running things against the live instance, and every one of them fails **silently** — a rule that looks configured and does nothing.
+All eight were established by running things against the live instance, and every one of them fails **silently** — a rule that looks configured and does nothing.
 
 1. **`time()` is frozen at the query window's start.** An age is `timestamp(x) - x`. The `time()` form under-reports by the whole window width and goes negative
    for anything newer than the window start.
@@ -298,6 +300,10 @@ All seven were established by running things against the live instance, and ever
    before the first tick. Over a range where the gauge was 0 for two minutes and then set, the query returned the left side at every step, the whole epoch
    in minutes where the gauge was 0. The rule fired on a pod's first two minutes. A right side that is false at **every** step does empty the result, which
    is why a test against a constant looked right. Guard by arithmetic instead: `age * (max(gauge) > bool 0)` is 0 where the guard is false (#2059).
+8. **`increase` misses the first sample of a counter that appears on failure, and `or vector(0)` cannot fill it.** Traefik exports its 429 counter at the
+   first rejection. A staging drill put all 949 rejections into that first sample, and `increase(…[15m])` read 0. The usual fix,
+   `x - (x offset 15m or vector(0))`, returns an empty result here: OpenObserve answers any `or vector(0)` with nothing, although `vector(0)` alone works.
+   `ej-rate-limit-storm` therefore misses a burst shorter than one scrape, and counts every later storm in full (#1455).
 
 **What a working firing looks like**, from `alert_history` on 2026-08-23:
 

@@ -24,6 +24,8 @@ it produces an alert that never fires rather than an error.
     a node waiting for a reboot    -> ej-reboot-pending            (#419)
     a node not being patched       -> ej-patching-stalled          (#419)
     many sources failing on DNS    -> ej-dns-fanout                 (#708)
+    the rate limiter rejecting     -> ej-rate-limit-storm           (#1455)
+    someone enumerating paths      -> ej-4xx-flood                  (#1455)
 
 **The zero-events failure is two rules, not one, and they see different things.**
 ADR-015's criterion 1 is per-source: a venue whose scraper still returns 200 while
@@ -698,6 +700,53 @@ rule(
     frequency_minutes=15,
     silence_minutes=24 * 60,
     failure_only=True,
+)
+
+# --- The edge, as Traefik counts it --------------------------------------------
+#
+# The per-source rate limit is generous for carrier-NAT visitors, and nothing said
+# when that assumption broke (#1455). The entrypoint counter sits outside every
+# middleware, so it carries the limiter's 429s. The gateway overwrites `service`
+# with `traefik`, so `code` is the label to scope by; `code="999"` returns nothing.
+#
+# Traefik exports the 429 series at its first rejection, so `increase` misses the
+# first scrape: a staging drill put all 949 rejections in one sample and read 0. A
+# second drill read 2445. `offset … or vector(0)` would count the first sample, but
+# OpenObserve returns nothing for `or vector(0)`.
+rule(
+    "ej-rate-limit-storm",
+    "Traefik's rate limits rejected more than 100 requests in 15 minutes: 50/s per source, or "
+    "100 in flight per host, which answer the same bare 429. Production rejected none in the "
+    "week before this rule, and one first visit spends about 30 of a 250-request burst. Either "
+    "a client is being stopped, which is the limit working, or a shared carrier-NAT address is "
+    "over it and visitors get half-loaded pages. Find the address before changing "
+    "`ingress.rateLimit`.",
+    'sum(increase(traefik_entrypoint_requests_total{code="429"}[15m]))',
+    ">",
+    100,
+    stream_name="traefik_entrypoint_requests_total",
+    period_minutes=15,
+    frequency_minutes=5,
+    silence_minutes=6 * 60,
+    failure_only=True,
+)
+
+# A week of production as a 30-minute rate: 99th percentile 2.0/s, maximum 2.6/s, the
+# weekly DAST scan. Scanners bursting at 11.7/s for five minutes come several times a
+# day, and the 30-minute window averages them out. 5/s is twice the worst half hour.
+rule(
+    "ej-4xx-flood",
+    "More than 5 client errors a second for 30 minutes, against a week's worst of 2.6/s "
+    "(the weekly DAST scan). Mostly 404: something is enumerating paths for longer than the "
+    "background scanners do. 429 and 499 are left out. Nothing is broken by this alone: "
+    "find the source and the paths, and check whether any probe got a 200.",
+    'sum(rate(traefik_entrypoint_requests_total{code=~"4..",code!~"429|499"}[30m]))',
+    ">",
+    5,
+    stream_name="traefik_entrypoint_requests_total",
+    period_minutes=30,
+    frequency_minutes=10,
+    silence_minutes=6 * 60,
 )
 
 # --- Whose DNS broke, ours or the venue's ----------------------------------------
