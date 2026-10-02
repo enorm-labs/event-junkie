@@ -77,6 +77,7 @@ Run by an agent or a developer. No cluster, no tunnel; `k3d-rehearsal.sh` makes 
 | `geocode-venues.py`                   | Venue addresses to coordinates with the Google Geocoding API, and an audit of the 86 seeded ones (#357)           | `/scaffold-importer`                                    |
 | `map-assets.sh`                       | The self-hosted map: cut Berlin's tiles, fonts and icons, or copy the pinned set (ADR-037)                        | `publish-map-assets.yml`, DEVELOPMENT.md                |
 | `outline-text.sh` + `outline_text.py` | A string set in a font, printed as an SVG path — brand artwork carries outlined glyphs, never `<text>`            | `docs/branding/`                                        |
+| `readme-screenshots.sh`               | The README's four screenshots of the events list, desktop and phone in both themes, from production               | `docs/screenshots/`                                     |
 
 ## Ops
 
