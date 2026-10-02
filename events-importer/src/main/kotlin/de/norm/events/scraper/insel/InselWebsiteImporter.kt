@@ -96,6 +96,10 @@ val INSEL_LIMITATIONS =
         EventSource.INSEL,
         AcceptedLimitation(LimitedAspect.PRICE, "the venue names no prices anywhere; only an Eintritt-frei note on the free Sunday matinées"),
         AcceptedLimitation(LimitedAspect.GENRE, "the venue publishes no genre"),
+        AcceptedLimitation(
+            LimitedAspect.START_TIME,
+            "a night billed with a doors time only, as `Doors 19:00`, names no start, so it stores the doors time and no start"
+        ),
         AcceptedLimitation(LimitedAspect.CANCELLATION, "a dropped show is removed from the CMS rather than flagged"),
         AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "every event points at the programme page and takes its identity from its date plus its title"),
         AcceptedLimitation(
