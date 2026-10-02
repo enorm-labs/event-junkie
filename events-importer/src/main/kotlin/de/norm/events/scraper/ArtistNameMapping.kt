@@ -788,7 +788,9 @@ private val KNOWN_SINGLE_ACTS: Set<String> =
         "chase & status",
         "überhaupt & außerdem",
         "haute & freddy",
-        "2mädchen & uwe"
+        "2mädchen & uwe",
+        // A duo that releases under the ` x ` join, so [splitCrossBilled] must leave it whole (#2365).
+        "noah x petter"
     )
 
 /**
@@ -862,15 +864,51 @@ fun splitBackToBack(line: String): List<String> =
     }
 
 /**
- * Splits a title segment into acts at its conjunctions, per boundary, so a real co-bill still
- * splits beside a band-name tail: a comma anywhere suppresses splitting ("Earth, Wind & Fire"),
+ * Splits a title segment into acts at a ` x ` join ([splitCrossBilled]) and then at its
+ * conjunctions, per boundary, so a real co-bill still splits beside a band-name tail: a comma anywhere suppresses splitting ("Earth, Wind & Fire"),
  * and a boundary whose right-hand side opens with a [tail marker][CONJUNCTION_TAIL_MARKERS]
  * stays joined, so `CARL CARLTON & MELANIE WIEGMANN AND THE GREAT BAND` cuts only at the `&`.
  * Never on `/` or `+`, so a venue can pre-split its co-bills and hand each segment here;
  * [splitSupportActs] and [splitHeadlinerTitle] apply it after their hard-separator split.
  */
+fun splitSegmentOnConjunctions(segment: String): List<String> = splitCrossBilled(segment).flatMap(::splitOnConjunctionsOnly)
+
+/**
+ * The ` x ` two acts are co-billed with: `Hatebreed x Life Of Agony`, `Fhionn x Cathal` (#2365).
+ * Both sides need two characters, and the right side must open with a letter or a digit, so
+ * `Sadat X & Grand Agent` and `Symphony X + …` keep the `X` that ends a name.
+ */
+private val CROSS_BILL_SEPARATOR = Regex("""(?<=\S{2})\s+x\s+(?=[\p{L}\p{N}]{2})""", RegexOption.IGNORE_CASE)
+
+/** Words that cannot open the second act of a ` x ` join, because they continue the first: `Sadat X and Grand Agent`. */
+private val CROSS_BILL_CONTINUATIONS: Set<String> = setOf("and", "und", "feat.", "feat", "ft.", "featuring", "with", "mit")
+
+/**
+ * Splits [segment] at each [CROSS_BILL_SEPARATOR] outside brackets, leaving a [KNOWN_SINGLE_ACTS]
+ * duo that releases under the join whole (`Noah X Petter`). A co-brand of a series is not split
+ * here: [headlinersFromTitle] drops it first ([isCoBrandedSeriesTitle]). Public because a venue
+ * parser that reads its line-up line by line asks the same question (Gretchen).
+ */
+@Suppress("ReturnCount") // Guard clauses for the known duo and the no-cut case are clearer than nesting
+fun splitCrossBilled(segment: String): List<String> {
+    if (isKnownSingleAct(segment)) return listOf(segment)
+    val cuts =
+        CROSS_BILL_SEPARATOR
+            .findAll(segment)
+            .filter { !isInsideBrackets(segment, it.range.first) }
+            .filter { match ->
+                segment
+                    .substring(match.range.last + 1)
+                    .substringBefore(' ')
+                    .lowercase() !in CROSS_BILL_CONTINUATIONS
+            }.map { it.range }
+            .toList()
+    if (cuts.isEmpty()) return listOf(segment)
+    return cutAt(segment, cuts).map { it.trim() }.filter { it.isNotBlank() }.ifEmpty { listOf(segment) }
+}
+
 @Suppress("ReturnCount") // Guard clauses for the comma and no-cut cases are clearer than nesting
-fun splitSegmentOnConjunctions(segment: String): List<String> {
+private fun splitOnConjunctionsOnly(segment: String): List<String> {
     if (isKnownSingleAct(segment)) return listOf(segment)
     if (segment.contains(',')) return listOf(segment)
     // `Einzige und Exklusive Orchester-Show in Europa!` is billing prose, not two acts (#1580).
@@ -1320,6 +1358,7 @@ fun headlinersFromTitle(
     // A `Vorprogramm:` names the support act, so it bills like `+ Support:` (#1841).
     val (billing, guests) = splitFeaturedGuests(title.replace(VORPROGRAMM_MARKER, " + Support: "))
     presentsFrameActs(billing)?.let { return it + guests }
+    coPresentedNightActs(billing)?.let { return it + guests }
     return splitHeadlinerTitle(stripConjoinedTail(stripSeriesPrefix(billedSideOfPres(billing, splitOnSlash))), splitOnSlash, description)
         .map { segment ->
             // The role is decided from the *raw* segment, before its label is stripped: a title
@@ -1450,6 +1489,26 @@ private fun presentsFrameActs(title: String): List<ScrapedArtist>? {
         .map { ScrapedArtist(name = it, role = "HEADLINER", titleDerived = true) }
         .ifEmpty { null }
 }
+
+/**
+ * `<partner> x <partner>: <night> with <acts>`: two promoters that join forces on a night name
+ * its acts after `with` (#2365). Urban Spree bills `Process Party x Effetto Notte: Hall of Bats
+ * with Lovataraxx, Hysteric Helen, Olgha`, and neither the promoters nor the night are acts. All
+ * three parts are required, so a plain ` x ` co-bill is left to [splitCrossBilled].
+ */
+private val CO_PRESENTED_NIGHT = Regex("""^[^:]+?\s+x\s+[^:]+?:\s+[^:]+?\s+with\s+(.+)$""", RegexOption.IGNORE_CASE)
+
+/** The acts of a [CO_PRESENTED_NIGHT] title, or `null` when the title has no such frame. */
+private fun coPresentedNightActs(title: String): List<ScrapedArtist>? =
+    CO_PRESENTED_NIGHT
+        .find(title.trim())
+        ?.groupValues
+        ?.get(1)
+        ?.let(::splitSupportActs)
+        ?.map { stripArtistSuffix(it) }
+        ?.filterNot(::isNonArtistName)
+        ?.map { ScrapedArtist(name = it, role = "HEADLINER", titleDerived = true) }
+        ?.ifEmpty { null }
 
 /**
  * The side of a `pres.` / `pres:` title that bills the acts (#1581).
