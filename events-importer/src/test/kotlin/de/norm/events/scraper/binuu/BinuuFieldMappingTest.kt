@@ -79,6 +79,8 @@ class BinuuFieldMappingTest {
         inferBinuuEventType("GrooveJet Berlin", "") shouldBe "PARTY"
         inferBinuuEventType("Ultra Night", "Depeche Mode Special") shouldBe "PARTY"
         inferBinuuEventType("Boheme Sauvage N°141", null) shouldBe "PARTY"
+        // A salsa night with a live house band, billed under its own name (#2316).
+        inferBinuuEventType("FUEGO36", null) shouldBe "PARTY"
         // Party/DJ-night phrasing in the title/subtitle.
         inferBinuuEventType("Karaoke Night", null) shouldBe "PARTY"
         inferBinuuEventType("Some Night", "DJ Set till late") shouldBe "PARTY"

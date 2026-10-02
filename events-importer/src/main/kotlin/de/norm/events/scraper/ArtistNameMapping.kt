@@ -490,6 +490,8 @@ private val NON_ARTIST_NAMES: Set<String> =
         "groovejet",
         "ultra night",
         "boheme sauvage",
+        // Bi Nuu's salsa party with a live house band; the night's acts are only in its prose (#2316).
+        "fuego36",
         "jazz after dark",
         "future bash reloaded",
         "a dead moon night",
