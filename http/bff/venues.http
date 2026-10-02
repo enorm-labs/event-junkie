@@ -3,6 +3,8 @@
 ###
 ### Read-only, no auth. `q` is a case-insensitive substring
 ### match on the venue name; `district` is an exact district slug.
+### `type`, `family` and `eventType` repeat: any value within one
+### matches, every one across them must.
 ### Sortable: name, upcomingEvents (events from today on).
 ### ============================================================
 
@@ -29,6 +31,10 @@ Accept: application/json
 
 ### Search venues by name (case-insensitive substring)
 GET {{bff-host}}/api/venues?q=astra
+Accept: application/json
+
+### Filter by venue type, genre family and event type (#327)
+GET {{bff-host}}/api/venues?type=club&type=live-venue&family=electronic&eventType=PARTY
 Accept: application/json
 
 ### Unknown/malicious sort is ignored (falls back to default order, not a 500)

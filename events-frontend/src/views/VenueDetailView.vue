@@ -1,7 +1,9 @@
 <script lang="ts" setup>
 import { computed, onMounted, watch } from 'vue'
-import { useRoute } from 'vue-router'
+import { RouterLink, useRoute } from 'vue-router'
 import BaseDetailView from '@/components/BaseDetailView.vue'
+import { useFormat } from '@/composables/useFormat'
+import { useLocalePath } from '@/composables/useLocalePath'
 import { usePageMeta } from '@/composables/usePageMeta'
 import { APP_NAME, notFoundPageMeta, placeholderPageMeta, venuePageMeta } from '@/lib/pageMeta'
 import { useEventSearch } from '@/composables/useEvents'
@@ -90,6 +92,36 @@ usePageMeta(() =>
 )
 
 const credit = computed(() => imageCredit(venue.value))
+
+const { formatEventType, formatFamily, formatVenueFacts } = useFormat()
+const facts = computed(() => (venue.value ? formatVenueFacts(venue.value) : ''))
+const localePath = useLocalePath()
+
+/** What the venue mostly plays and hosts, each a link to its events of that kind. */
+const programme = computed(() => {
+  const v = venue.value
+  if (!v?.slug) return []
+  const link = (key: string, value: string) => ({
+    path: localePath('/events'),
+    query: { venue: v.slug, [key]: value },
+  })
+  return [
+    {
+      term: t('detail.venue.plays'),
+      items: (v.programmeFamilies ?? []).map((f) => ({
+        label: formatFamily(f),
+        to: link('family', f),
+      })),
+    },
+    {
+      term: t('detail.venue.hosts'),
+      items: (v.programmeEventTypes ?? []).map((e) => ({
+        label: formatEventType(e),
+        to: link('eventType', e),
+      })),
+    },
+  ].filter((row) => row.items.length)
+})
 </script>
 
 <template>
@@ -114,6 +146,7 @@ const credit = computed(() => imageCredit(venue.value))
   >
     <template #meta>
       <p v-if="addressLine" class="text-muted-foreground">{{ addressLine }}</p>
+      <p v-if="facts" class="text-muted-foreground">{{ facts }}</p>
       <a
         v-if="venue?.websiteUrl"
         :href="venue.websiteUrl"
@@ -132,5 +165,22 @@ const credit = computed(() => imageCredit(venue.value))
     >
       {{ description.text }}
     </p>
+
+    <section v-if="programme.length" class="space-y-1 text-body">
+      <dl class="space-y-1">
+        <div v-for="row in programme" :key="row.term" class="flex flex-wrap gap-x-2">
+          <dt class="text-muted-foreground">{{ row.term }}</dt>
+          <dd>
+            <template v-for="(item, i) in row.items" :key="item.label">
+              <template v-if="i">{{ ' · ' }}</template>
+              <RouterLink :to="item.to" class="text-primary underline-offset-4 hover:underline">
+                {{ item.label }}
+              </RouterLink>
+            </template>
+          </dd>
+        </div>
+      </dl>
+      <p class="text-meta text-muted-foreground">{{ t('detail.venue.programmeNote') }}</p>
+    </section>
   </BaseDetailView>
 </template>

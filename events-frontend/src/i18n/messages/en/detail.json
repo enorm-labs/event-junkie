@@ -3,7 +3,10 @@
   "venue": {
     "kind": "Venue",
     "notFound": "That venue isn't in our little black book.",
-    "empty": "No upcoming nights here yet. Check back soon."
+    "empty": "No upcoming nights here yet. Check back soon.",
+    "plays": "Mostly plays",
+    "hosts": "Hosts",
+    "programmeNote": "From its events over the past year and ahead."
   },
   "artist": {
     "kind": "Artist",

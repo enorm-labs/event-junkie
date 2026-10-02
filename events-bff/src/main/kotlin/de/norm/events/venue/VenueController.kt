@@ -12,7 +12,6 @@ import org.springframework.data.web.PageableDefault
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.server.ServerWebExchange
 
@@ -27,25 +26,18 @@ class VenueController(
     private val cache: ResponseCache
 ) {
     @GetMapping
-    @Operation(summary = "List venues with pagination, optional name search and district filter, sorted by name or by upcoming events")
+    @Operation(summary = "List venues with pagination, name search and filters, sorted by name or by upcoming events")
     suspend fun list(
-        @Parameter(description = "Case-insensitive substring filter on the venue name. Omitted/blank returns all venues.")
-        @RequestParam(required = false)
-        q: String?,
-        @Parameter(
-            description =
-                "District filter — only venues in the matching Berlin district, one of the 23 pre-2001 districts (e.g. kreuzberg). " +
-                    "Omitted/blank returns all districts."
-        )
-        @RequestParam(required = false)
-        district: String?,
+        @ParameterObject
+        filters: VenueFilterParams,
         @ParameterObject
         @PageableDefault(size = 20, sort = ["name"])
         pageable: Pageable,
         exchange: ServerWebExchange
     ): PageResponse<VenueListItemResponse> {
         LIST_PARAMS.rejectUnknownIn(exchange)
-        return cache.get(VenueListKey(q, district, pageable)) { venueService.list(q, district, pageable) }
+        val filter = filters.toFilter()
+        return cache.get(VenueListKey(filter, pageable)) { venueService.list(filter, pageable) }
     }
 
     @GetMapping("/{slug}")
@@ -56,15 +48,14 @@ class VenueController(
     ): VenueDetailResponse = cache.get(VenueDetailKey(slug)) { venueService.findBySlug(slug) }
 
     private companion object {
-        /** Declared rather than derived: these parameters are on the method, not on a filter object. */
-        val LIST_PARAMS = QueryParameters.accepting(QueryParameters.PAGEABLE, QueryParameters.named("q", "district"))
+        /** The filter fields come from [VenueFilterParams]; paging is declared here. */
+        val LIST_PARAMS = QueryParameters.accepting(VenueFilterParams::class.java, QueryParameters.PAGEABLE)
     }
 }
 
 /** The cache keys this controller owns. Separate types, so no endpoint can collide with another. */
 private data class VenueListKey(
-    val query: String?,
-    val district: String?,
+    val filter: VenueFilter,
     val pageable: Pageable
 )
 

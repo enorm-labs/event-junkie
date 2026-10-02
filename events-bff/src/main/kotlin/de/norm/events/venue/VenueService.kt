@@ -21,18 +21,14 @@ class VenueService(
     private val cachedImageGate: CachedImageGate,
     private val clock: Clock
 ) {
-    /**
-     * Lists venues, optionally filtered by a case-insensitive name [query] and/or an exact
-     * [district] slug, sorted by name or by how many events each still has to come (#360).
-     */
+    /** Lists the venues that match [filter], sorted by name or by how many events each still has to come (#360). */
     @Transactional(readOnly = true)
     suspend fun list(
-        query: String?,
-        district: String?,
+        filter: VenueFilter,
         pageable: Pageable
     ): PageResponse<VenueListItemResponse> {
         val safePageable = pageable.sanitizeSort(SORTABLE_PROPERTIES, DEFAULT_SORT)
-        val page = venueSearchRepository.search(query, district, LocalDate.now(clock), safePageable)
+        val page = venueSearchRepository.search(filter, LocalDate.now(clock), safePageable)
         val entities = venueRepository.findByIdIn(page.rows.map { it.id }).toList().associateBy { it.id }
         val images = cachedImageGate.forUrls(entities.values.map { it.imageUrl })
         return PageResponse.of(

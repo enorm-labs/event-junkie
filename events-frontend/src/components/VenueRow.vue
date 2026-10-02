@@ -4,13 +4,15 @@ import { RouterLink } from 'vue-router'
 import type { VenueListItem, VenueSummary } from '@/api/types'
 import { useI18n } from 'vue-i18n'
 import { districtLabel } from '@/lib/districts'
+import { useFormat } from '@/composables/useFormat'
 import { useLocalePath } from '@/composables/useLocalePath'
 
 /** One venue as a line of text, for the compact view — the counterpart to `EventRow`. */
 const props = withDefaults(
   defineProps<{
     /** The count shows when the venue list sent one and no distance takes its place. */
-    venue: VenueSummary & Pick<VenueListItem, 'upcomingEventCount'>
+    venue: VenueSummary &
+      Partial<Pick<VenueListItem, 'upcomingEventCount' | 'venueTypes' | 'capacity'>>
     /** Heading level, which belongs to the page rather than to the row — see `EventCard.vue`. */
     as?: 'h2' | 'h3' | 'h4'
     /** How far the venue is from the visitor's chosen origin, already formatted. */
@@ -21,6 +23,12 @@ const props = withDefaults(
 
 const location = computed(() =>
   [props.venue.address, districtLabel(props.venue.district)].filter(Boolean).join(' · '),
+)
+
+const { formatVenueFacts } = useFormat()
+// One meta line, as on the card: where it is, then what it is.
+const line = computed(() =>
+  [location.value || props.venue.city, formatVenueFacts(props.venue)].filter(Boolean).join(' · '),
 )
 
 const localePath = useLocalePath()
@@ -47,8 +55,6 @@ const { t } = useI18n()
         {{ t('common.upcomingCount', { count: venue.upcomingEventCount }) }}
       </span>
     </div>
-    <p v-if="location || venue.city" class="truncate text-meta text-muted-foreground">
-      {{ location || venue.city }}
-    </p>
+    <p v-if="line" class="truncate text-meta text-muted-foreground">{{ line }}</p>
   </RouterLink>
 </template>

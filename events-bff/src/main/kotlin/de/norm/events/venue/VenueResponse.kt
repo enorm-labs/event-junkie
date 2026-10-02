@@ -110,7 +110,15 @@ data class VenueListItemResponse(
     @Schema(description = INTRINSIC_HEIGHT_DESCRIPTION, example = "630")
     val intrinsicHeight: Int?,
     @Schema(description = "Events from today on at this venue", example = "12")
-    val upcomingEventCount: Int
+    val upcomingEventCount: Int,
+    @Schema(description = VENUE_TYPES_DESCRIPTION, example = "[\"live-venue\", \"club\"]")
+    val venueTypes: List<String>,
+    @Schema(description = CAPACITY_DESCRIPTION, example = "1500")
+    val capacity: Int?,
+    @Schema(description = PROGRAMME_FAMILIES_DESCRIPTION, example = "[\"rock\", \"punk\"]")
+    val programmeFamilies: List<String>,
+    @Schema(description = PROGRAMME_EVENT_TYPES_DESCRIPTION, example = "[\"CONCERT\", \"PARTY\"]")
+    val programmeEventTypes: List<String>
 ) {
     companion object {
         fun fromEntity(
@@ -134,7 +142,11 @@ data class VenueListItemResponse(
                 imageSources = image.sources,
                 intrinsicWidth = image.intrinsicWidth,
                 intrinsicHeight = image.intrinsicHeight,
-                upcomingEventCount = upcomingEventCount
+                upcomingEventCount = upcomingEventCount,
+                venueTypes = entity.venueTypes,
+                capacity = entity.capacity,
+                programmeFamilies = entity.programmeFamilies,
+                programmeEventTypes = entity.programmeEventTypes
             )
     }
 }
@@ -193,7 +205,15 @@ data class VenueDetailResponse(
     )
     val descriptionAlt: String?,
     @Schema(description = "Language of `descriptionAlt`: `de` or `en`. Null exactly when `descriptionAlt` is.", example = "de")
-    val descriptionAltLanguage: String?
+    val descriptionAltLanguage: String?,
+    @Schema(description = VENUE_TYPES_DESCRIPTION, example = "[\"live-venue\", \"club\"]")
+    val venueTypes: List<String>,
+    @Schema(description = CAPACITY_DESCRIPTION, example = "1500")
+    val capacity: Int?,
+    @Schema(description = PROGRAMME_FAMILIES_DESCRIPTION, example = "[\"rock\", \"punk\"]")
+    val programmeFamilies: List<String>,
+    @Schema(description = PROGRAMME_EVENT_TYPES_DESCRIPTION, example = "[\"CONCERT\", \"PARTY\"]")
+    val programmeEventTypes: List<String>
 ) {
     companion object {
         fun fromEntity(
@@ -221,7 +241,18 @@ data class VenueDetailResponse(
                 description = entity.description,
                 descriptionLanguage = entity.descriptionLanguage,
                 descriptionAlt = entity.descriptionAlt,
-                descriptionAltLanguage = entity.descriptionAltLanguage
+                descriptionAltLanguage = entity.descriptionAltLanguage,
+                venueTypes = entity.venueTypes,
+                capacity = entity.capacity,
+                programmeFamilies = entity.programmeFamilies,
+                programmeEventTypes = entity.programmeEventTypes
             )
     }
 }
+
+private const val VENUE_TYPES_DESCRIPTION = "What kind of place this is, as venue type slugs, curated by hand. Empty until curated."
+private const val CAPACITY_DESCRIPTION = "How many visitors the largest room holds, as the venue publishes it. Null where it does not."
+private const val PROGRAMME_FAMILIES_DESCRIPTION =
+    "Genre family slugs the venue mostly programmes, most frequent first, derived from its events of the last year and ahead."
+private const val PROGRAMME_EVENT_TYPES_DESCRIPTION =
+    "Event types the venue hosts, most frequent first, derived from its events like `programmeFamilies`."

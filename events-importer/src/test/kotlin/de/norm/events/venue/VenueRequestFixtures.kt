@@ -25,7 +25,9 @@ object VenueRequestFixtures {
         longitude: BigDecimal? = null,
         websiteUrl: String? = "https://www.astra-berlin.de",
         imageUrl: String? = null,
-        description: String? = "A large concert hall on the RAW-Gelände in Friedrichshain."
+        description: String? = "A large concert hall on the RAW-Gelände in Friedrichshain.",
+        venueTypes: List<VenueType> = listOf(VenueType.LIVE_VENUE, VenueType.CLUB),
+        capacity: Int? = 1500
     ): VenueRequest =
         VenueRequest(
             name = name,
@@ -37,7 +39,9 @@ object VenueRequestFixtures {
             longitude = longitude,
             websiteUrl = websiteUrl,
             imageUrl = imageUrl,
-            description = description
+            description = description,
+            venueTypes = venueTypes,
+            capacity = capacity
         )
 
     /** Creates a [VenueRequest] with minimal defaults. */

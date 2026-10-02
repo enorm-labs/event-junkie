@@ -34,6 +34,15 @@ describe('VenueRow', () => {
     expect(wrapper.text()).not.toContain('kreuzberg')
   })
 
+  it('appends the types and capacity to the where line', () => {
+    const wrapper = mount(VenueRow, {
+      props: { venue: { ...venue, venueTypes: ['bar'], capacity: 80 } },
+      global: { stubs },
+    })
+
+    expect(wrapper.text()).toContain('Cuvrystr. 7 · Kreuzberg · Bar · ~80 people')
+  })
+
   it('falls back to the city when there is no address or district', () => {
     const wrapper = mount(VenueRow, {
       props: { venue: { ...venue, address: null, district: null } },

@@ -6,6 +6,7 @@ import CachedImage from '@/components/CachedImage.vue'
 import EventPoster from '@/components/EventPoster.vue'
 import { districtLabel } from '@/lib/districts'
 import { imageCredit } from '@/lib/imageCredit'
+import { useFormat } from '@/composables/useFormat'
 import { useLocalePath } from '@/composables/useLocalePath'
 import { CARD_CLASS, CARD_POSTER_CLASS } from '@/lib/utils'
 import { useViewportFocus } from '@/composables/useViewportFocus'
@@ -13,8 +14,9 @@ import { useI18n } from 'vue-i18n'
 
 const props = withDefaults(
   defineProps<{
-    /** The count shows when the venue list sent one; an event's embedded venue has none. */
-    venue: VenueSummary & Pick<VenueListItem, 'upcomingEventCount'>
+    /** The count, types and capacity show when the venue list sent them; an event's embedded venue has none. */
+    venue: VenueSummary &
+      Partial<Pick<VenueListItem, 'upcomingEventCount' | 'venueTypes' | 'capacity'>>
     /** Heading level for the card's name — see the same prop on `EventCard.vue` for why. */
     as?: 'h2' | 'h3' | 'h4'
   }>(),
@@ -27,6 +29,8 @@ const location = computed(() =>
 )
 
 const { t } = useI18n()
+const { formatVenueFacts } = useFormat()
+const facts = computed(() => formatVenueFacts(props.venue))
 
 // The credit belongs on the image itself, so it travels with it wherever the card is reused.
 const creditTitle = computed(() => {
@@ -68,6 +72,7 @@ const { el: posterEl, focused: posterFocused } = useViewportFocus()
       <p v-else-if="venue.city" class="truncate text-body text-muted-foreground">
         {{ venue.city }}
       </p>
+      <p v-if="facts" class="truncate text-body text-muted-foreground">{{ facts }}</p>
       <p v-if="venue.upcomingEventCount !== undefined" class="text-body text-muted-foreground">
         {{ t('common.upcomingCount', { count: venue.upcomingEventCount }) }}
       </p>

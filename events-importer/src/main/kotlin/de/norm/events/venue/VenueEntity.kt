@@ -34,6 +34,10 @@ data class VenueEntity(
     val descriptionLanguage: String? = null,
     val descriptionAlt: String? = null,
     val descriptionAltLanguage: String? = null,
+    val venueTypes: List<String> = emptyList(),
+    val capacity: Int? = null,
+    val programmeFamilies: List<String> = emptyList(),
+    val programmeEventTypes: List<String> = emptyList(),
     @CreatedDate val createdAt: Instant? = null,
     @LastModifiedDate val updatedAt: Instant? = null
 ) {
@@ -57,6 +61,10 @@ data class VenueEntity(
             descriptionLanguage = descriptionLanguage,
             descriptionAlt = descriptionAlt,
             descriptionAltLanguage = descriptionAltLanguage,
+            venueTypes = venueTypes,
+            capacity = capacity,
+            programmeFamilies = programmeFamilies,
+            programmeEventTypes = programmeEventTypes,
             createdAt = createdAt,
             updatedAt = updatedAt
         )
@@ -82,6 +90,10 @@ data class VenueEntity(
                 descriptionLanguage = venue.descriptionLanguage,
                 descriptionAlt = venue.descriptionAlt,
                 descriptionAltLanguage = venue.descriptionAltLanguage,
+                venueTypes = venue.venueTypes,
+                capacity = venue.capacity,
+                programmeFamilies = venue.programmeFamilies,
+                programmeEventTypes = venue.programmeEventTypes,
                 createdAt = venue.createdAt,
                 updatedAt = venue.updatedAt
             )

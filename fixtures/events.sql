@@ -22,12 +22,14 @@
 -- or waive the column in `FixtureTest.WAIVED` with a reason.
 
 INSERT INTO events.venue (name, slug, address, postal_code, district, latitude, longitude, website_url, description, description_language,
-                          description_alt, description_alt_language)
+                          description_alt, description_alt_language, venue_types, capacity, programme_families, programme_event_types)
 VALUES
     ('Kesselhaus Nord', 'kesselhaus-nord', 'Prenzlauer Allee 1', '10405', 'prenzlauer-berg', 52.531000, 13.421000, 'https://kesselhaus-nord.example', 'Ein Club im alten Kesselhaus. Zwei Floors, ein Garten.', 'de',
-     'A club in the old boiler house. Two floors and a garden.', 'en'),
-    ('Salon Zur Wilden Renate & Co.', 'salon-zur-wilden-renate-co', 'Alt-Stralau 70', '10245', 'friedrichshain', 52.497000, 13.470000, 'https://renate.example', NULL, NULL, NULL, NULL),
-    ('Jazzkeller $& Kreuzberg', 'jazzkeller-kreuzberg', 'Oranienstraße 12', '10999', 'kreuzberg', 52.501000, 13.421000, 'https://jazzkeller.example', 'Small basement stage. Jazz on weekdays, blues at the weekend.', 'en', NULL, NULL);
+     'A club in the old boiler house. Two floors and a garden.', 'en', '{club,open-air}', 800, '{electronic}', '{PARTY}'),
+    ('Salon Zur Wilden Renate & Co.', 'salon-zur-wilden-renate-co', 'Alt-Stralau 70', '10245', 'friedrichshain', 52.497000, 13.470000, 'https://renate.example', NULL, NULL, NULL, NULL,
+     '{bar}', NULL, '{punk}', '{CONCERT}'),
+    ('Jazzkeller $& Kreuzberg', 'jazzkeller-kreuzberg', 'Oranienstraße 12', '10999', 'kreuzberg', 52.501000, 13.421000, 'https://jazzkeller.example', 'Small basement stage. Jazz on weekdays, blues at the weekend.', 'en', NULL, NULL,
+     '{live-venue,bar}', 60, '{jazz-blues}', '{CONCERT}');
 
 INSERT INTO events.promoter (name, slug, website_url)
 VALUES ('Nachtschicht Kollektiv', 'nachtschicht-kollektiv', 'https://nachtschicht.example');

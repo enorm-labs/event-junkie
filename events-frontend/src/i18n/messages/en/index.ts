@@ -12,6 +12,7 @@ import legal from './legal.json'
 import pageDescription from './pageDescription.json'
 import pageTitle from './pageTitle.json'
 import promoters from './promoters.json'
+import venueType from './venueType.json'
 import venues from './venues.json'
 
 /**
@@ -41,5 +42,6 @@ export default {
   pageDescription,
   pageTitle,
   promoters,
+  venueType,
   venues,
 }

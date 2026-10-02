@@ -11,7 +11,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List venues with pagination, optional name search and district filter, sorted by name or by upcoming events */
+        /** List venues with pagination, name search and filters, sorted by name or by upcoming events */
         get: operations["list"];
         put?: never;
         post?: never;
@@ -368,6 +368,36 @@ export interface components {
              * @example 12
              */
             upcomingEventCount?: number;
+            /**
+             * @description What kind of place this is, as venue type slugs, curated by hand. Empty until curated.
+             * @example [
+             *       "live-venue",
+             *       "club"
+             *     ]
+             */
+            venueTypes?: string[];
+            /**
+             * Format: int32
+             * @description How many visitors the largest room holds, as the venue publishes it. Null where it does not.
+             * @example 1500
+             */
+            capacity?: number | null;
+            /**
+             * @description Genre family slugs the venue mostly programmes, most frequent first, derived from its events of the last year and ahead.
+             * @example [
+             *       "rock",
+             *       "punk"
+             *     ]
+             */
+            programmeFamilies?: string[];
+            /**
+             * @description Event types the venue hosts, most frequent first, derived from its events like `programmeFamilies`.
+             * @example [
+             *       "CONCERT",
+             *       "PARTY"
+             *     ]
+             */
+            programmeEventTypes?: string[];
         };
         /** @description Full venue detail */
         VenueDetailResponse: {
@@ -467,6 +497,36 @@ export interface components {
              * @example de
              */
             descriptionAltLanguage?: string | null;
+            /**
+             * @description What kind of place this is, as venue type slugs, curated by hand. Empty until curated.
+             * @example [
+             *       "live-venue",
+             *       "club"
+             *     ]
+             */
+            venueTypes?: string[];
+            /**
+             * Format: int32
+             * @description How many visitors the largest room holds, as the venue publishes it. Null where it does not.
+             * @example 1500
+             */
+            capacity?: number | null;
+            /**
+             * @description Genre family slugs the venue mostly programmes, most frequent first, derived from its events of the last year and ahead.
+             * @example [
+             *       "rock",
+             *       "punk"
+             *     ]
+             */
+            programmeFamilies?: string[];
+            /**
+             * @description Event types the venue hosts, most frequent first, derived from its events like `programmeFamilies`.
+             * @example [
+             *       "CONCERT",
+             *       "PARTY"
+             *     ]
+             */
+            programmeEventTypes?: string[];
         };
         /** @description A page of results with pagination metadata */
         PageResponsePromoterListItemResponse: {
@@ -1406,6 +1466,12 @@ export interface operations {
                 q?: string;
                 /** @description District filter — only venues in the matching Berlin district, one of the 23 pre-2001 districts (e.g. kreuzberg). Omitted/blank returns all districts. */
                 district?: string;
+                /** @description Venue type slug (e.g. club). Repeatable: a venue of any given type matches. An unknown type matches nothing. */
+                type?: string[];
+                /** @description Genre family slug (e.g. electronic). Repeatable: a venue that mostly programmes any given family matches. */
+                family?: string[];
+                /** @description Event type, e.g. CONCERT (case-insensitive). Repeatable: a venue that hosts any given type matches. */
+                eventType?: string[];
                 /** @description Zero-based page index (0..N) */
                 page?: number;
                 /** @description The size of the page to be returned */
