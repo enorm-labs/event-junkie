@@ -135,7 +135,9 @@ Content-Type: application/json
     "description": "A jazz club near Savignyplatz, open since 1992, with a concert almost every night and a free Monday session hosted by pianist Andreas Schmidt.",
     "descriptionLanguage": "en",
     "descriptionAlt": "Ein Jazzclub nahe dem Savignyplatz, seit 1992 geöffnet, mit fast täglich einem Konzert und einer freien Montagssession mit dem Pianisten Andreas Schmidt.",
-    "descriptionAltLanguage": "de"
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["live-venue"],
+    "capacity": 100
 }
 
 > {%
@@ -197,7 +199,9 @@ Content-Type: application/json
     "description": "The Friedrichstrasse variety theatre — musicals, comedy, concerts and dance in an entertainment palace of 1911, a revue house since 1923.",
     "descriptionLanguage": "en",
     "descriptionAlt": "Das Varietétheater in der Friedrichstraße — Musicals, Comedy, Konzerte und Tanz in einem Vergnügungspalast von 1911, seit 1923 ein Revuehaus.",
-    "descriptionAltLanguage": "de"
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["theatre", "live-venue"],
+    "capacity": 1737
 }
 
 > {%
@@ -259,7 +263,8 @@ Content-Type: application/json
     "description": "A techno club on the Spree in Kreuzberg with two floors and a garden, programming house, techno and trance nights alongside queer and collective-run parties.",
     "descriptionLanguage": "en",
     "descriptionAlt": "Ein Technoclub an der Spree in Kreuzberg mit zwei Floors und Garten, mit House-, Techno- und Trance-Nächten neben queeren und kollektiv organisierten Partys.",
-    "descriptionAltLanguage": "de"
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["club", "open-air"]
 }
 
 > {%
@@ -321,7 +326,9 @@ Content-Type: application/json
     "description": "A club and concert space in the Kulturbrauerei in Prenzlauer Berg, with a programme spanning live gigs, club nights and themed parties across many styles.",
     "descriptionLanguage": "en",
     "descriptionAlt": "Ein Club und Konzertraum in der Kulturbrauerei in Prenzlauer Berg, mit Livekonzerten, Clubnächten und Mottopartys quer durch viele Stile.",
-    "descriptionAltLanguage": "de"
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["club", "live-venue"],
+    "capacity": 450
 }
 
 > {%
@@ -383,7 +390,8 @@ Content-Type: application/json
     "description": "A techno club tucked into the S-Bahn arches near Alexanderplatz, running late-night electronic nights focused on techno and house.",
     "descriptionLanguage": "en",
     "descriptionAlt": "Ein Technoclub in den S-Bahn-Bögen am Alexanderplatz, mit späten elektronischen Nächten rund um Techno und House.",
-    "descriptionAltLanguage": "de"
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["club"]
 }
 
 > {%
@@ -445,7 +453,8 @@ Content-Type: application/json
     "description": "A tiny Kreuzberg bar near Platz der Luftbrücke, running since 1988 and billing itself as the discovery bar for musicians: independent live acts on Fridays and Saturdays plus open stages and jam sessions the rest of the week.",
     "descriptionLanguage": "en",
     "descriptionAlt": "Eine winzige Kreuzberger Bar am Platz der Luftbrücke, seit 1988 in Betrieb und selbst erklärte Entdeckerbar für Musiker: freitags und samstags unabhängige Livekonzerte, in der übrigen Woche offene Bühnen und Jamsessions.",
-    "descriptionAltLanguage": "de"
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["bar"]
 }
 
 > {%
@@ -507,7 +516,8 @@ Content-Type: application/json
     "description": "An event bar on Kaiser-Friedrich-Straße that doubles as a gallery where artists exhibit and sell their own work, with a stage for young and established acts: blues and rock concerts, a weekly open session, quizzes and poetry slams.",
     "descriptionLanguage": "en",
     "descriptionAlt": "Eine Event-Bar in der Kaiser-Friedrich-Straße, die zugleich Galerie ist, in der Künstler ihre Werke selbst ausstellen und verkaufen, mit einer Bühne für junge und etablierte Acts: Blues- und Rockkonzerte, eine wöchentliche offene Session, Quizabende und Poetry Slams.",
-    "descriptionAltLanguage": "de"
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["bar", "gallery"]
 }
 
 > {%
@@ -569,7 +579,8 @@ Content-Type: application/json
     "description": "One of Berlin's larger concert venues, set in a converted hall on the RAW-Gelände in Friedrichshain. It hosts touring rock, pop, indie and electronic acts alongside club nights.",
     "descriptionLanguage": "en",
     "descriptionAlt": "Einer der größeren Konzertorte Berlins, in einer umgebauten Halle auf dem RAW-Gelände in Friedrichshain. Hier spielen Rock-, Pop-, Indie- und Elektronik-Acts auf Tour, dazu kommen Clubnächte.",
-    "descriptionAltLanguage": "de"
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["live-venue"]
 }
 
 > {%
@@ -631,7 +642,9 @@ Content-Type: application/json
     "description": "An intimate live-music venue and club on the RAW-Gelände in Friedrichshain, mixing concerts, singer-songwriter sessions and eclectic DJ nights.",
     "descriptionLanguage": "en",
     "descriptionAlt": "Ein intimer Livemusik-Ort und Club auf dem RAW-Gelände in Friedrichshain, mit Konzerten, Singer-Songwriter-Sessions und vielseitigen DJ-Nächten.",
-    "descriptionAltLanguage": "de"
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["live-venue", "club"],
+    "capacity": 450
 }
 
 > {%
@@ -693,7 +706,9 @@ Content-Type: application/json
     "description": "A 1912 mirror tent (Spiegelzelt) in Wilmersdorf staging cabaret, chanson, musical revues and variety shows around candlelit café tables.",
     "descriptionLanguage": "en",
     "descriptionAlt": "Ein Spiegelzelt von 1912 in Wilmersdorf mit Kabarett, Chanson, Musicalrevuen und Varieté an Tischen bei Kerzenlicht.",
-    "descriptionAltLanguage": "de"
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["theatre"],
+    "capacity": 300
 }
 
 > {%
@@ -755,7 +770,8 @@ Content-Type: application/json
     "description": "Berlin's most renowned techno institution, housed in a former power plant near Ostbahnhof. The main floor and the upstairs Panorama Bar host marathon weekend parties centred on techno and house.",
     "descriptionLanguage": "en",
     "descriptionAlt": "Berlins bekannteste Techno-Institution, in einem früheren Heizkraftwerk am Ostbahnhof. Auf dem Hauptfloor und in der Panorama Bar darüber laufen Wochenendpartys im Marathonformat, vor allem Techno und House.",
-    "descriptionAltLanguage": "de"
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["club"]
 }
 
 > {%
@@ -817,7 +833,9 @@ Content-Type: application/json
     "description": "A live-music club beneath the U-Bahn viaduct at Schlesisches Tor in Kreuzberg, presenting concerts and club nights across indie, rock, hip-hop and electronic styles.",
     "descriptionLanguage": "en",
     "descriptionAlt": "Ein Livemusik-Club unter dem U-Bahn-Viadukt am Schlesischen Tor in Kreuzberg, mit Konzerten und Clubnächten zwischen Indie, Rock, Hip-Hop und Elektronik.",
-    "descriptionAltLanguage": "de"
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["live-venue", "club"],
+    "capacity": 500
 }
 
 > {%
@@ -879,7 +897,9 @@ Content-Type: application/json
     "description": "A multi-room club and cultural venue on the RAW-Gelände in Friedrichshain, covering everything from reggae, hip-hop and drum & bass to indie and electronic nights.",
     "descriptionLanguage": "en",
     "descriptionAlt": "Ein Club mit mehreren Räumen und ein Kulturort auf dem RAW-Gelände in Friedrichshain, von Reggae, Hip-Hop und Drum & Bass bis zu Indie- und Elektronik-Nächten.",
-    "descriptionAltLanguage": "de"
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["club", "live-venue"],
+    "capacity": 700
 }
 
 > {%
@@ -941,7 +961,8 @@ Content-Type: application/json
     "description": "A punk, ska and rock'n'roll bar and concert spot near Mehringdamm in Kreuzberg, hosting loud, no-frills live shows and DJ nights.",
     "descriptionLanguage": "en",
     "descriptionAlt": "Eine Punk-, Ska- und Rock'n'Roll-Bar mit Konzerten nahe dem Mehringdamm in Kreuzberg, mit lauten Shows ohne Schnickschnack und DJ-Nächten.",
-    "descriptionAltLanguage": "de"
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["bar", "live-venue"]
 }
 
 > {%
@@ -1003,7 +1024,8 @@ Content-Type: application/json
     "description": "A tiny open-air shack and terrace on the Flutgraben canal, a long-running summer institution for house and minimal techno that runs from the afternoon into the next morning.",
     "descriptionLanguage": "en",
     "descriptionAlt": "Eine winzige Open-Air-Hütte mit Terrasse am Flutgraben, seit vielen Jahren eine Sommerinstitution für House und Minimal Techno, vom Nachmittag bis in den nächsten Morgen.",
-    "descriptionAltLanguage": "de"
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["club", "open-air"]
 }
 
 > {%
@@ -1065,7 +1087,8 @@ Content-Type: application/json
     "description": "A techno and house club on the Spree at the Ostkreuz end of the Stralau peninsula, programming raves and club nights that run from late evening into the next morning.",
     "descriptionLanguage": "en",
     "descriptionAlt": "Ein Techno- und House-Club an der Spree am Ostkreuz-Ende der Halbinsel Stralau, mit Raves und Clubnächten vom späten Abend bis in den nächsten Morgen.",
-    "descriptionAltLanguage": "de"
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["club"]
 }
 
 > {%
@@ -1127,7 +1150,8 @@ Content-Type: application/json
     "description": "A Prenzlauer Berg cinema of 1924 on Gleimstraße that still screens films, its halls also run as an event house for readings, book premieres, talks and live podcast recordings.",
     "descriptionLanguage": "en",
     "descriptionAlt": "Ein Kino von 1924 in der Gleimstraße in Prenzlauer Berg, das noch Filme zeigt. Seine Säle laufen zugleich als Eventhaus für Lesungen, Buchpremieren, Talks und Live-Podcasts.",
-    "descriptionAltLanguage": "de"
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["cinema"]
 }
 
 > {%
@@ -1189,7 +1213,8 @@ Content-Type: application/json
     "description": "A mid-sized concert hall at Tempelhofer Feld, next door to the Columbiahalle, programming touring rock, metal, hip hop and pop acts.",
     "descriptionLanguage": "en",
     "descriptionAlt": "Ein mittelgroßer Konzertsaal am Tempelhofer Feld, direkt neben der Columbiahalle, mit Rock, Metal, Hip-Hop und Pop auf Tour.",
-    "descriptionAltLanguage": "de"
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["live-venue"]
 }
 
 > {%
@@ -1251,7 +1276,9 @@ Content-Type: application/json
     "description": "A 3,500-capacity concert hall at Tempelhofer Feld, next door to the Columbia Theater, hosting touring rock, metal, hip hop and pop acts.",
     "descriptionLanguage": "en",
     "descriptionAlt": "Ein Konzertsaal für 3.500 Leute am Tempelhofer Feld, direkt neben dem Columbia Theater, mit Rock, Metal, Hip-Hop und Pop auf Tour.",
-    "descriptionAltLanguage": "de"
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["live-venue"],
+    "capacity": 3500
 }
 
 > {%
@@ -1313,7 +1340,8 @@ Content-Type: application/json
     "description": "One of Berlin's longest-running English-language stand-up clubs, running showcase and open-mic nights alongside touring comedy specials.",
     "descriptionLanguage": "en",
     "descriptionAlt": "Einer der ältesten englischsprachigen Stand-up-Clubs Berlins, mit Showcase- und Open-Mic-Abenden sowie Comedy-Specials auf Tour.",
-    "descriptionAltLanguage": "de"
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["theatre"]
 }
 
 > {%
@@ -1375,7 +1403,8 @@ Content-Type: application/json
     "description": "A microclub and dance bar on the RAW-Gelände, programming house and techno nights alongside drag shows, swing dance parties and live jazz.",
     "descriptionLanguage": "en",
     "descriptionAlt": "Ein Mikroclub und eine Tanzbar auf dem RAW-Gelände, mit House- und Techno-Nächten neben Dragshows, Swing-Partys und Livejazz.",
-    "descriptionAltLanguage": "de"
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["club", "bar"]
 }
 
 > {%
@@ -1437,7 +1466,8 @@ Content-Type: application/json
     "description": "A techno club on the RAW-Gelände on Revaler Straße, running raves, DJ nights and an open-air garden.",
     "descriptionLanguage": "en",
     "descriptionAlt": "Ein Technoclub auf dem RAW-Gelände an der Revaler Straße, mit Raves, DJ-Nächten und einem Open-Air-Garten.",
-    "descriptionAltLanguage": "de"
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["club"]
 }
 
 > {%
@@ -1499,7 +1529,9 @@ Content-Type: application/json
     "description": "A club since 1989 in a listed red-brick building of 1914 by Ludwig Hoffmann in Prenzlauer Berg, with indie and alternative-rock dance nights on Fridays and Saturdays and the dark-wave Montagsduncker every Monday since 1993.",
     "descriptionLanguage": "en",
     "descriptionAlt": "Seit 1989 ein Club in einem denkmalgeschützten Backsteinbau von Ludwig Hoffmann aus dem Jahr 1914 in Prenzlauer Berg, mit Indie- und Alternative-Rock-Tanznächten am Freitag und Samstag und seit 1993 jeden Montag mit dem Dark-Wave-Abend Montagsduncker.",
-    "descriptionAltLanguage": "de"
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["club"],
+    "capacity": 250
 }
 
 > {%
@@ -1561,7 +1593,8 @@ Content-Type: application/json
     "description": "A Künstlerclub and bar in the Haus Schwarzenberg courtyard off Rosenthaler Straße, open daily from 14:00, with an evening programme of DJ nights, live sets and variety shows.",
     "descriptionLanguage": "en",
     "descriptionAlt": "Ein Künstlerclub und eine Bar im Hof des Haus Schwarzenberg an der Rosenthaler Straße, täglich ab 14 Uhr geöffnet, abends mit DJ-Nächten, Livesets und Varieté.",
-    "descriptionAltLanguage": "de"
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["bar", "club"]
 }
 
 > {%
@@ -1623,7 +1656,9 @@ Content-Type: application/json
     "description": "A concert hall and event space by the Flutgraben on the Spree in Treptow, with a wide-ranging programme of concerts, club nights and cultural events.",
     "descriptionLanguage": "en",
     "descriptionAlt": "Ein Konzertsaal und Veranstaltungsort am Flutgraben an der Spree in Treptow, mit einem weiten Programm aus Konzerten, Clubnächten und Kulturveranstaltungen.",
-    "descriptionAltLanguage": "de"
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["live-venue", "club"],
+    "capacity": 1500
 }
 
 > {%
@@ -1685,7 +1720,8 @@ Content-Type: application/json
     "description": "LARK's sister club, opened in 2018 in a former warehouse on the Spree: smoke-free, step-free, and booked largely by DIY collectives for club nights, concerts and fundraisers.",
     "descriptionLanguage": "en",
     "descriptionAlt": "Der Schwesterclub des LARK, 2018 in einer ehemaligen Lagerhalle an der Spree eröffnet: rauchfrei, barrierefrei und vor allem von DIY-Kollektiven bespielt, mit Clubnächten, Konzerten und Benefizabenden.",
-    "descriptionAltLanguage": "de"
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["club", "live-venue"]
 }
 
 > {%
@@ -1747,7 +1783,8 @@ Content-Type: application/json
     "description": "A club and concert venue in the Kulturbrauerei in Prenzlauer Berg, presenting live gigs and party nights across pop, indie, hip-hop and electronic music.",
     "descriptionLanguage": "en",
     "descriptionAlt": "Ein Club und Konzertort in der Kulturbrauerei in Prenzlauer Berg, mit Livekonzerten und Partynächten zwischen Pop, Indie, Hip-Hop und Elektronik.",
-    "descriptionAltLanguage": "de"
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["live-venue", "club"]
 }
 
 > {%
@@ -1809,7 +1846,8 @@ Content-Type: application/json
     "description": "An open-air garden club on the Rummelsburger Bucht, running daytime techno and house parties on Saturdays and Sundays through the summer.",
     "descriptionLanguage": "en",
     "descriptionAlt": "Ein Open-Air-Gartenclub an der Rummelsburger Bucht, mit Techno- und House-Partys am Tag, samstags und sonntags durch den Sommer.",
-    "descriptionAltLanguage": "de"
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["open-air", "club"]
 }
 
 > {%
@@ -1871,7 +1909,9 @@ Content-Type: application/json
     "description": "Marzahn landscape park of international themed gardens, whose open-air Arena stages concerts, park festivals and open-air cinema.",
     "descriptionLanguage": "en",
     "descriptionAlt": "Ein Marzahner Landschaftspark mit internationalen Themengärten, dessen Open-Air-Arena Konzerte, Parkfestivals und Freiluftkino zeigt.",
-    "descriptionAltLanguage": "de"
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["open-air"],
+    "capacity": 5000
 }
 
 > {%
@@ -1933,7 +1973,8 @@ Content-Type: application/json
     "description": "A small, long-running techno club in the S-Bahn arches at Jannowitzbrücke, open Thursday to Saturday with house and techno DJ nights and door-only entry.",
     "descriptionLanguage": "en",
     "descriptionAlt": "Ein kleiner, alteingesessener Technoclub in den S-Bahn-Bögen an der Jannowitzbrücke, donnerstags bis samstags geöffnet, mit House- und Techno-Nächten und Eintritt nur an der Tür.",
-    "descriptionAltLanguage": "de"
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["club"]
 }
 
 > {%
@@ -1995,7 +2036,8 @@ Content-Type: application/json
     "description": "A club set in the vaulted former stables of a 19th-century barracks in Kreuzberg, known for bass-driven electronic nights — drum & bass, house, techno and hip-hop — plus live shows.",
     "descriptionLanguage": "en",
     "descriptionAlt": "Ein Club in den Gewölbeställen einer Kaserne aus dem 19. Jahrhundert in Kreuzberg, bekannt für bassbetonte elektronische Nächte — Drum & Bass, House, Techno und Hip-Hop — dazu Livekonzerte.",
-    "descriptionAltLanguage": "de"
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["club", "live-venue"]
 }
 
 > {%
@@ -2057,7 +2099,8 @@ Content-Type: application/json
     "description": "A large Latin dance club in Schöneberg spread over several floors, running the same resident nights every week — salsa, merengue and bachata alongside reggaeton, hip hop and chart floors — plus dance lessons before the party.",
     "descriptionLanguage": "en",
     "descriptionAlt": "Ein großer Latin-Tanzclub in Schöneberg über mehrere Etagen, jede Woche mit denselben Residentnächten — Salsa, Merengue und Bachata neben Reggaeton, Hip-Hop und Charts — dazu Tanzkurse vor der Party.",
-    "descriptionAltLanguage": "de"
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["club"]
 }
 
 > {%
@@ -2119,7 +2162,8 @@ Content-Type: application/json
     "description": "A house club by the Westhafen in Wedding with a large garden, running long Saturday-into-Sunday sessions through the season.",
     "descriptionLanguage": "en",
     "descriptionAlt": "Ein House-Club am Westhafen in Wedding mit großem Garten, mit langen Sessions von Samstag bis Sonntag durch die Saison.",
-    "descriptionAltLanguage": "de"
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["club", "open-air"]
 }
 
 > {%
@@ -2181,7 +2225,9 @@ Content-Type: application/json
     "description": "A Neukölln Saal and Studio venue in a historic ballroom, programming concerts, theatre, comedy, readings and its own productions.",
     "descriptionLanguage": "en",
     "descriptionAlt": "Ein Neuköllner Veranstaltungsort mit Saal und Studio in einem historischen Ballhaus, mit Konzerten, Theater, Comedy, Lesungen und eigenen Produktionen.",
-    "descriptionAltLanguage": "de"
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["theatre", "live-venue"],
+    "capacity": 800
 }
 
 > {%
@@ -2243,7 +2289,9 @@ Content-Type: application/json
     "description": "A concert hall in Neukölln geared towards touring bands, with a programme leaning on rock, metal, punk and alternative live acts.",
     "descriptionLanguage": "en",
     "descriptionAlt": "Ein Konzertsaal in Neukölln für Bands auf Tour, mit einem Programm aus Rock, Metal, Punk und Alternative.",
-    "descriptionAltLanguage": "de"
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["live-venue"],
+    "capacity": 650
 }
 
 > {%
@@ -2305,7 +2353,8 @@ Content-Type: application/json
     "description": "A techno club in Wedding with an indoor floor and a large garden, running collective-booked house, techno and trance nights.",
     "descriptionLanguage": "en",
     "descriptionAlt": "Ein Technoclub in Wedding mit Innenfloor und großem Garten, mit kollektiv gebuchten House-, Techno- und Trance-Nächten.",
-    "descriptionAltLanguage": "de"
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["club", "open-air"]
 }
 
 > {%
@@ -2367,7 +2416,9 @@ Content-Type: application/json
     "description": "A 1,600-capacity concert hall in the former Neue Welt beer palace on the Hasenheide in Neukölln, hosting touring rock, metal, hip hop, pop and electronic acts.",
     "descriptionLanguage": "en",
     "descriptionAlt": "Ein Konzertsaal für 1.600 Leute im früheren Bierpalast Neue Welt an der Hasenheide in Neukölln, mit Rock, Metal, Hip-Hop, Pop und Elektronik auf Tour.",
-    "descriptionAltLanguage": "de"
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["live-venue"],
+    "capacity": 1600
 }
 
 > {%
@@ -2429,7 +2480,8 @@ Content-Type: application/json
     "description": "A basement live-music and DJ bar near Mehringdamm in Kreuzberg, offering nightly concerts and DJ sets across jazz, soul, funk, rock and pop.",
     "descriptionLanguage": "en",
     "descriptionAlt": "Eine Livemusik- und DJ-Bar im Keller nahe dem Mehringdamm in Kreuzberg, mit Konzerten und DJ-Sets an jedem Abend, von Jazz und Soul über Funk bis Rock und Pop.",
-    "descriptionAltLanguage": "de"
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["bar", "live-venue"]
 }
 
 > {%
@@ -2491,7 +2543,8 @@ Content-Type: application/json
     "description": "The concert hall adjoining Berghain near Ostbahnhof in Friedrichshain, hosting live shows across a broad musical range, separate from the club's techno floors.",
     "descriptionLanguage": "en",
     "descriptionAlt": "Der Konzertsaal neben dem Berghain am Ostbahnhof in Friedrichshain, mit Livekonzerten quer durch viele Stile, getrennt von den Technofloors des Clubs.",
-    "descriptionAltLanguage": "de"
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["live-venue"]
 }
 
 > {%
@@ -2553,7 +2606,8 @@ Content-Type: application/json
     "description": "A techno club and garden on the Spree at Holzmarkt, formerly Kater Blau, with several floors and long weekend-spanning parties.",
     "descriptionLanguage": "en",
     "descriptionAlt": "Ein Technoclub mit Garten an der Spree am Holzmarkt, früher Kater Blau, mit mehreren Floors und langen Partys über das Wochenende.",
-    "descriptionAltLanguage": "de"
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["club", "open-air"]
 }
 
 > {%
@@ -2615,7 +2669,8 @@ Content-Type: application/json
     "description": "The rooftop culture garden above the Neukoelln Arcaden: a bar, stage and club running a nightly programme.",
     "descriptionLanguage": "en",
     "descriptionAlt": "Der Dachgarten über den Neukölln Arcaden: Bar, Bühne und Club mit einem Programm an jedem Abend.",
-    "descriptionAltLanguage": "de"
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["open-air", "club", "bar"]
 }
 
 > {%
@@ -2677,7 +2732,9 @@ Content-Type: application/json
     "description": "The concert house on the Insel der Jugend, a Spree island in Treptower Park, with a hall, a summer garden and a free Sunday matinee series.",
     "descriptionLanguage": "en",
     "descriptionAlt": "Das Konzerthaus auf der Insel der Jugend, einer Spreeinsel im Treptower Park, mit Saal, Sommergarten und einer kostenlosen Matineereihe am Sonntag.",
-    "descriptionAltLanguage": "de"
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["live-venue", "open-air", "cultural-centre"],
+    "capacity": 250
 }
 
 > {%
@@ -2739,7 +2796,9 @@ Content-Type: application/json
     "description": "The Bildungs- und Kulturzentrum in Weissensee, programming concerts, comedy, theatre, readings, children's shows and dance teas.",
     "descriptionLanguage": "en",
     "descriptionAlt": "Das Bildungs- und Kulturzentrum in Weißensee, mit Konzerten, Comedy, Theater, Lesungen, Kinderprogramm und Tanztees.",
-    "descriptionAltLanguage": "de"
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["cultural-centre"],
+    "capacity": 350
 }
 
 > {%
@@ -2801,7 +2860,8 @@ Content-Type: application/json
     "description": "A live-music club in the railway arches on Holzmarktstrasse, programming indie, folk, pop and singer-songwriter shows.",
     "descriptionLanguage": "en",
     "descriptionAlt": "Ein Livemusik-Club in den Bahnbögen an der Holzmarktstraße, mit Indie-, Folk-, Pop- und Singer-Songwriter-Konzerten.",
-    "descriptionAltLanguage": "de"
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["live-venue", "club"]
 }
 
 > {%
@@ -2863,7 +2923,8 @@ Content-Type: application/json
     "description": "A former 1950s cinema turned concert venue in Kreuzberg's Wrangelkiez, staging touring indie, rock and electronic acts as well as club nights.",
     "descriptionLanguage": "en",
     "descriptionAlt": "Ein früheres Kino der 1950er, heute Konzertort im Kreuzberger Wrangelkiez, mit Indie-, Rock- und Elektronik-Acts auf Tour sowie Clubnächten.",
-    "descriptionAltLanguage": "de"
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["live-venue", "club"]
 }
 
 > {%
@@ -2925,7 +2986,9 @@ Content-Type: application/json
     "description": "A collectively run bar and events space in Friedrichshain, programming punk, rock and hip hop concerts alongside readings, discussions and DJ nights.",
     "descriptionLanguage": "en",
     "descriptionAlt": "Eine kollektiv geführte Bar und ein Veranstaltungsort in Friedrichshain, mit Punk-, Rock- und Hip-Hop-Konzerten neben Lesungen, Diskussionen und DJ-Nächten.",
-    "descriptionAltLanguage": "de"
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["bar", "live-venue"],
+    "capacity": 130
 }
 
 > {%
@@ -2987,7 +3050,8 @@ Content-Type: application/json
     "description": "An Afro-diasporic cultural venue on the RAW-Gelände built around a heated open-air pool, combining a gallery, garden, backyard market and a programme of club nights, concerts and workshops.",
     "descriptionLanguage": "en",
     "descriptionAlt": "Ein afrodiasporischer Kulturort auf dem RAW-Gelände rund um ein beheiztes Freibecken, mit Galerie, Garten, Hofmarkt und einem Programm aus Clubnächten, Konzerten und Workshops.",
-    "descriptionAltLanguage": "de"
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["cultural-centre", "open-air", "gallery"]
 }
 
 > {%
@@ -3049,7 +3113,8 @@ Content-Type: application/json
     "description": "A cosy, upside-down-themed bar and live venue near Schlesisches Tor in Kreuzberg, hosting free-entry concerts and DJ nights with an experimental, indie bent.",
     "descriptionLanguage": "en",
     "descriptionAlt": "Eine gemütliche Bar mit kopfüber eingerichtetem Raum und Livebühne nahe dem Schlesischen Tor in Kreuzberg, mit Konzerten bei freiem Eintritt und DJ-Nächten mit experimentellem, indielastigem Einschlag.",
-    "descriptionAltLanguage": "de"
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["bar", "live-venue"]
 }
 
 > {%
@@ -3111,7 +3176,8 @@ Content-Type: application/json
     "description": "A large multi-floor mainstream club in the railway arches at Warschauer Straße, open every night of the week with resident DJs playing hip hop, house, afrobeats, reggaeton and chart music.",
     "descriptionLanguage": "en",
     "descriptionAlt": "Ein großer Mainstreamclub über mehrere Floors in den Bahnbögen an der Warschauer Straße, an jedem Abend geöffnet, mit Resident-DJs zwischen Hip-Hop, House, Afrobeats, Reggaeton und Charts.",
-    "descriptionAltLanguage": "de"
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["club"]
 }
 
 > {%
@@ -3173,7 +3239,9 @@ Content-Type: application/json
     "description": "A multi-purpose arena at Falkplatz in Prenzlauer Berg, hosting arena concerts alongside the handball and volleyball fixtures that are not imported.",
     "descriptionLanguage": "en",
     "descriptionAlt": "Eine Mehrzweckarena am Falkplatz in Prenzlauer Berg, mit Arenakonzerten neben den Handball- und Volleyballspielen, die wir nicht importieren.",
-    "descriptionAltLanguage": "de"
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["arena"],
+    "capacity": 11900
 }
 
 > {%
@@ -3235,7 +3303,8 @@ Content-Type: application/json
     "description": "A party club off the Ku'damm, open every night since 2007 with a DJ programme built around disco, house and hip hop.",
     "descriptionLanguage": "en",
     "descriptionAlt": "Ein Partyclub abseits des Ku'damms, seit 2007 an jedem Abend geöffnet, mit einem DJ-Programm aus Disco, House und Hip-Hop.",
-    "descriptionAltLanguage": "de"
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["club"]
 }
 
 > {%
@@ -3297,7 +3366,9 @@ Content-Type: application/json
     "description": "Built in 1906 as a theatre on Nollendorfplatz, later a cinema and a well-known 1980s disco, and now a concert hall for touring acts that also holds club parties.",
     "descriptionLanguage": "en",
     "descriptionAlt": "1906 als Theater am Nollendorfplatz erbaut, später Kino und in den 1980ern eine bekannte Diskothek, heute ein Konzertsaal für Tourneekonzerte, in dem auch Clubpartys stattfinden.",
-    "descriptionAltLanguage": "de"
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["live-venue", "club"],
+    "capacity": 1298
 }
 
 > {%
@@ -3359,7 +3430,8 @@ Content-Type: application/json
     "description": "A listening bar in Wedding where booked selectors play records to a seated audience, alongside nights spent listening to a single album from start to finish.",
     "descriptionLanguage": "en",
     "descriptionAlt": "Eine Listening Bar in Wedding, in der eingeladene Gäste vor sitzendem Publikum Platten auflegen, dazu Abende, an denen ein einzelnes Album von vorn bis hinten läuft.",
-    "descriptionAltLanguage": "de"
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["bar"]
 }
 
 > {%
@@ -3421,7 +3493,9 @@ Content-Type: application/json
     "description": "A 250-capacity concert room and club opened in 2025 in the former carriage passage of the Metropol at Nollendorfplatz, with punk, rap and indie concerts, readings and house and techno nights.",
     "descriptionLanguage": "en",
     "descriptionAlt": "Ein Konzertraum und Club für 250 Leute, 2025 in der früheren Durchfahrt des Metropol am Nollendorfplatz eröffnet, mit Punk-, Rap- und Indiekonzerten, Lesungen sowie House- und Techno-Nächten.",
-    "descriptionAltLanguage": "de"
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["live-venue", "club"],
+    "capacity": 250
 }
 
 > {%
@@ -3483,7 +3557,8 @@ Content-Type: application/json
     "description": "A Kreuzberg club and concert room on the Ritter Butzke grounds, programming touring acts and spoken-word nights.",
     "descriptionLanguage": "en",
     "descriptionAlt": "Ein Kreuzberger Club und Konzertraum auf dem Gelände des Ritter Butzke, mit Acts auf Tour und Spoken-Word-Abenden.",
-    "descriptionAltLanguage": "de"
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["live-venue"]
 }
 
 > {%
@@ -3545,7 +3620,9 @@ Content-Type: application/json
     "description": "A bar and club overlooking Kottbusser Tor in Kreuzberg. Behind an unassuming entrance it hosts DJ nights and live sets spanning electronic, indie and experimental music.",
     "descriptionLanguage": "en",
     "descriptionAlt": "Eine Bar und ein Club mit Blick auf das Kottbusser Tor in Kreuzberg. Hinter einem unscheinbaren Eingang laufen DJ-Nächte und Livesets zwischen elektronischer, Indie- und experimenteller Musik.",
-    "descriptionAltLanguage": "de"
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["bar", "club"],
+    "capacity": 200
 }
 
 > {%
@@ -3607,7 +3684,9 @@ Content-Type: application/json
     "description": "A Friedrichshain karaoke bar with a big open stage and private karaoke boxes. Drag and cabaret MCs host a different singalong night every evening of the week.",
     "descriptionLanguage": "en",
     "descriptionAlt": "Eine Karaokebar in Friedrichshain mit großer offener Bühne und privaten Karaokeboxen. Drag- und Varieté-MCs moderieren an jedem Abend der Woche eine andere Singalong-Nacht.",
-    "descriptionAltLanguage": "de"
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["bar"],
+    "capacity": 75
 }
 
 > {%
@@ -3669,7 +3748,8 @@ Content-Type: application/json
     "description": "The Morphine Records label's studio and project room on the first floor of a Kreuzberg backyard, staging experimental, improvised and electronic concerts, many played as live recording sessions.",
     "descriptionLanguage": "en",
     "descriptionAlt": "Studio und Projektraum des Labels Morphine Records im ersten Stock eines Kreuzberger Hinterhauses, mit experimentellen, improvisierten und elektronischen Konzerten, viele davon als Live-Aufnahmesessions.",
-    "descriptionAltLanguage": "de"
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["live-venue"]
 }
 
 > {%
@@ -3731,7 +3811,8 @@ Content-Type: application/json
     "description": "A moored Spree salon boat run by Club der Visionäre as its winter location, with a lower-deck club floor and an upper-deck bar programming house and minimal techno.",
     "descriptionLanguage": "en",
     "descriptionAlt": "Ein festgemachtes Salonschiff auf der Spree, das der Club der Visionäre als Winterort betreibt, mit Clubfloor im Unterdeck und Bar im Oberdeck, dazu House und Minimal Techno.",
-    "descriptionAltLanguage": "de"
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["club"]
 }
 
 > {%
@@ -3793,7 +3874,8 @@ Content-Type: application/json
     "description": "An arthouse cinema, pub and concert room next door to Renate on the Stralau peninsula in Friedrichshain, the successor of the Zukunft am Ostkreuz, with film, live music, theatre and a summer open-air cinema.",
     "descriptionLanguage": "en",
     "descriptionAlt": "Ein Programmkino, eine Kneipe und ein Konzertraum neben der Renate auf der Halbinsel Stralau in Friedrichshain, Nachfolger der Zukunft am Ostkreuz, mit Film, Livemusik, Theater und Freiluftkino im Sommer.",
-    "descriptionAltLanguage": "de"
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["cinema", "bar", "live-venue"]
 }
 
 > {%
@@ -3855,7 +3937,8 @@ Content-Type: application/json
     "description": "A small bass and techno club in the Tresor power-station complex, programming a short rolling window of DJ nights.",
     "descriptionLanguage": "en",
     "descriptionAlt": "Ein kleiner Bass- und Technoclub im Kraftwerkskomplex des Tresor, mit einem kurzen, rollierenden Fenster an DJ-Nächten.",
-    "descriptionAltLanguage": "de"
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["club"]
 }
 
 > {%
@@ -3917,7 +4000,8 @@ Content-Type: application/json
     "description": "A club, café and gallery in a Wedding backyard, programming club nights, live music, markets and exhibitions.",
     "descriptionLanguage": "en",
     "descriptionAlt": "Ein Club, Café und eine Galerie in einem Hinterhof in Wedding, mit Clubnächten, Livemusik, Märkten und Ausstellungen.",
-    "descriptionAltLanguage": "de"
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["club", "bar", "gallery"]
 }
 
 > {%
@@ -3979,7 +4063,9 @@ Content-Type: application/json
     "description": "A large open-air amphitheatre in the Wuhlheide park, running a seasonal summer programme of touring concerts.",
     "descriptionLanguage": "en",
     "descriptionAlt": "Ein großes Open-Air-Amphitheater im Park Wuhlheide, mit einem saisonalen Sommerprogramm aus Konzerten auf Tour.",
-    "descriptionAltLanguage": "de"
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["open-air", "live-venue"],
+    "capacity": 17000
 }
 
 > {%
@@ -4041,7 +4127,8 @@ Content-Type: application/json
     "description": "A club in the basement of a former post office on Skalitzer Straße near Schlesisches Tor in Kreuzberg, presenting concerts and DJ nights across soul, funk, indie, hip-hop and electronic music.",
     "descriptionLanguage": "en",
     "descriptionAlt": "Ein Club im Keller eines früheren Postamts an der Skalitzer Straße nahe dem Schlesischen Tor in Kreuzberg, mit Konzerten und DJ-Nächten zwischen Soul, Funk, Indie, Hip-Hop und Elektronik.",
-    "descriptionAltLanguage": "de"
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["live-venue", "club"]
 }
 
 > {%
@@ -4103,7 +4190,8 @@ Content-Type: application/json
     "description": "Berlin's oldest jazz cellar, off the Ku'damm, programming jazz, blues and soul concerts alongside themed DJ nights.",
     "descriptionLanguage": "en",
     "descriptionAlt": "Berlins ältester Jazzkeller, abseits des Ku'damms, mit Jazz-, Blues- und Soulkonzerten sowie thematischen DJ-Nächten.",
-    "descriptionAltLanguage": "de"
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["live-venue", "club"]
 }
 
 > {%
@@ -4165,7 +4253,8 @@ Content-Type: application/json
     "description": "A warren of a techno club in a derelict Friedrichshain apartment house, with several named floors and a garden that opens in summer.",
     "descriptionLanguage": "en",
     "descriptionAlt": "Ein verwinkelter Technoclub in einem verfallenen Friedrichshainer Wohnhaus, mit mehreren benannten Floors und einem Garten, der im Sommer öffnet.",
-    "descriptionAltLanguage": "de"
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["club", "open-air"]
 }
 
 > {%
@@ -4227,7 +4316,8 @@ Content-Type: application/json
     "description": "A long-running Kreuzberg techno club in a former factory, running several floors a night.",
     "descriptionLanguage": "en",
     "descriptionAlt": "Ein alteingesessener Kreuzberger Technoclub in einer früheren Fabrik, mit mehreren Floors pro Nacht.",
-    "descriptionAltLanguage": "de"
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["club"]
 }
 
 > {%
@@ -4289,7 +4379,9 @@ Content-Type: application/json
     "description": "A rock'n'roll club in the former boiler house of the old Königstadt brewery in Prenzlauer Berg, specialising in rockabilly, psychobilly, punk and garage live shows and parties.",
     "descriptionLanguage": "en",
     "descriptionAlt": "Ein Rock'n'Roll-Club im früheren Kesselhaus der alten Königstadt-Brauerei in Prenzlauer Berg, spezialisiert auf Rockabilly, Psychobilly, Punk und Garage, live und als Party.",
-    "descriptionAltLanguage": "de"
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["club", "live-venue"],
+    "capacity": 350
 }
 
 > {%
@@ -4351,7 +4443,8 @@ Content-Type: application/json
     "description": "A sex-positive club and cultural venue built around consent and community, with queer party nights and an 18+ door.",
     "descriptionLanguage": "en",
     "descriptionAlt": "Ein sexpositiver Club und Kulturort, der um Konsens und Community herum gebaut ist, mit queeren Partynächten und Einlass ab 18.",
-    "descriptionAltLanguage": "de"
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["club"]
 }
 
 > {%
@@ -4413,7 +4506,8 @@ Content-Type: application/json
     "description": "The concert hall on the Holzmarkt riverside grounds, programming concerts and cultural events beside the Spree.",
     "descriptionLanguage": "en",
     "descriptionAlt": "Der Konzertsaal auf dem Holzmarkt-Gelände am Ufer, mit Konzerten und Kulturveranstaltungen direkt an der Spree.",
-    "descriptionAltLanguage": "de"
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["live-venue"]
 }
 
 > {%
@@ -4475,7 +4569,8 @@ Content-Type: application/json
     "description": "A historic, collectively run cultural venue in Mitte with roots in the post-Wende squat scene, hosting intimate concerts, readings and club nights across many styles.",
     "descriptionLanguage": "en",
     "descriptionAlt": "Ein historischer, kollektiv geführter Kulturort in Mitte mit Wurzeln in der Hausbesetzerszene nach der Wende, mit intimen Konzerten, Lesungen und Clubnächten quer durch viele Stile.",
-    "descriptionAltLanguage": "de"
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["live-venue", "cultural-centre"]
 }
 
 > {%
@@ -4537,7 +4632,8 @@ Content-Type: application/json
     "description": "A cultural quarter in a 1912 crematorium in Wedding, programming experimental concerts, exhibitions, film and talks across its Kuppelhalle, Betonhalle and ateliers.",
     "descriptionLanguage": "en",
     "descriptionAlt": "Ein Kulturquartier in einem Krematorium von 1912 in Wedding, mit experimentellen Konzerten, Ausstellungen, Film und Talks in Kuppelhalle, Betonhalle und Ateliers.",
-    "descriptionAltLanguage": "de"
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["cultural-centre"]
 }
 
 > {%
@@ -4599,7 +4695,8 @@ Content-Type: application/json
     "description": "A sprawling garden club in a former dog-biscuit factory in Rummelsburg, running weekend-long techno and house parties across several floors and open-air areas.",
     "descriptionLanguage": "en",
     "descriptionAlt": "Ein weitläufiger Gartenclub in einer ehemaligen Hundekuchenfabrik in Rummelsburg, mit Techno- und House-Partys über ganze Wochenenden auf mehreren Floors und Open-Air-Flächen.",
-    "descriptionAltLanguage": "de"
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["club", "open-air"]
 }
 
 > {%
@@ -4661,7 +4758,8 @@ Content-Type: application/json
     "description": "A legendary Kreuzberg club on Oranienstraße, central to Berlin's punk and new-wave history since the late 1970s. Today it runs a diverse programme of punk, rock, queer parties and club nights.",
     "descriptionLanguage": "en",
     "descriptionAlt": "Ein legendärer Kreuzberger Club an der Oranienstraße, seit den späten 1970ern zentral für Berlins Punk- und New-Wave-Geschichte. Heute läuft hier ein vielfältiges Programm aus Punk, Rock, queeren Partys und Clubnächten.",
-    "descriptionAltLanguage": "de"
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["club", "live-venue"]
 }
 
 > {%
@@ -4723,7 +4821,8 @@ Content-Type: application/json
     "description": "A large discotheque in the Kulturbrauerei in Prenzlauer Berg, running resident nights across five floors — R'n'B, urban dance, charts and 90s/2000s — plus salsa evenings and summer open airs.",
     "descriptionLanguage": "en",
     "descriptionAlt": "Eine große Diskothek in der Kulturbrauerei in Prenzlauer Berg, mit Residentnächten auf fünf Floors — R'n'B, Urban Dance, Charts und 90er/2000er — dazu Salsaabende und Open Airs im Sommer.",
-    "descriptionAltLanguage": "de"
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["club"]
 }
 
 > {%
@@ -4785,7 +4884,8 @@ Content-Type: application/json
     "description": "Club der Visionäre's indoor concert room, home to a resident live-band night every Monday, with jazz concerts and label parties on other nights.",
     "descriptionLanguage": "en",
     "descriptionAlt": "Der Innenkonzertraum des Club der Visionäre, Heimat einer Livebandnacht an jedem Montag, an anderen Abenden mit Jazzkonzerten und Labelpartys.",
-    "descriptionAltLanguage": "de"
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["live-venue"]
 }
 
 > {%
@@ -4847,7 +4947,8 @@ Content-Type: application/json
     "description": "A former squat turned collectively run venue near Traveplatz in Friedrichshain, with a donation-based programme of punk, ska, hardcore and experimental concerts alongside theatre, film and neighbourhood socials.",
     "descriptionLanguage": "en",
     "descriptionAlt": "Ein früher besetztes Haus, heute ein kollektiv geführter Ort nahe dem Traveplatz in Friedrichshain, mit einem Programm auf Spendenbasis aus Punk-, Ska-, Hardcore- und experimentellen Konzerten neben Theater, Film und Kiezabenden.",
-    "descriptionAltLanguage": "de"
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["live-venue", "bar", "cultural-centre"]
 }
 
 > {%
@@ -4909,7 +5010,9 @@ Content-Type: application/json
     "description": "A tented concert hall by the former Anhalter Bahnhof, with a Grosse and a Kleine Arena hosting concerts, comedy, shows and congresses.",
     "descriptionLanguage": "en",
     "descriptionAlt": "Ein Konzertzelt am früheren Anhalter Bahnhof, mit Großer und Kleiner Arena für Konzerte, Comedy, Shows und Kongresse.",
-    "descriptionAltLanguage": "de"
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["arena"],
+    "capacity": 4200
 }
 
 > {%
@@ -4971,7 +5074,8 @@ Content-Type: application/json
     "description": "A 1929 silent-cinema building in Weißensee, run as a theatre and concert hall for dance, music theatre, chamber music and talks.",
     "descriptionLanguage": "en",
     "descriptionAlt": "Ein Stummfilmkino von 1929 in Weißensee, heute Theater und Konzertsaal für Tanz, Musiktheater, Kammermusik und Gespräche.",
-    "descriptionAltLanguage": "de"
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["theatre", "live-venue"]
 }
 
 > {%
@@ -5033,7 +5137,9 @@ Content-Type: application/json
     "description": "A club behind Unter den Linden, five minutes from the Brandenburg Gate, with student, Latin and K-pop party nights alongside stand-up comedy and concerts.",
     "descriptionLanguage": "en",
     "descriptionAlt": "Ein Club hinter Unter den Linden, fünf Minuten vom Brandenburger Tor, mit Studenten-, Latin- und K-Pop-Partys sowie Stand-up-Comedy und Konzerten.",
-    "descriptionAltLanguage": "de"
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["club"],
+    "capacity": 650
 }
 
 > {%
@@ -5095,7 +5201,9 @@ Content-Type: application/json
     "description": "The techno institution in a disused power plant on Koepenicker Strasse, with the Tresor vault floor, the Globus floor above it and the Aurora Bar.",
     "descriptionLanguage": "en",
     "descriptionAlt": "Die Techno-Institution in einem stillgelegten Kraftwerk an der Köpenicker Straße, mit dem Tresor-Floor im Gewölbe, dem Globus darüber und der Aurora Bar.",
-    "descriptionAltLanguage": "de"
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["club"],
+    "capacity": 700
 }
 
 > {%
@@ -5157,7 +5265,9 @@ Content-Type: application/json
     "description": "Berlin's largest indoor arena on the Spree, hosting touring concerts, shows and comedy alongside its resident sport teams.",
     "descriptionLanguage": "en",
     "descriptionAlt": "Berlins größte Halle an der Spree, mit Konzerten, Shows und Comedy auf Tour neben den Spielen der ansässigen Sportteams.",
-    "descriptionAltLanguage": "de"
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["arena"],
+    "capacity": 17000
 }
 
 > {%
@@ -5219,7 +5329,9 @@ Content-Type: application/json
     "description": "Mid-size concert hall across Uber Platz from the Uber Arena, programming touring bands, comedy and staged shows.",
     "descriptionLanguage": "en",
     "descriptionAlt": "Ein mittelgroßer Konzertsaal gegenüber der Uber Arena am Uber Platz, mit Bands auf Tour, Comedy und Bühnenshows.",
-    "descriptionAltLanguage": "de"
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["arena"],
+    "capacity": 4500
 }
 
 > {%
@@ -5281,7 +5393,9 @@ Content-Type: application/json
     "description": "A live-and-work community that has run the former UFA film copying works in Tempelhof since 1979, with three stages in its international culture centre for concerts, cabaret, comedy, theatre and readings.",
     "descriptionLanguage": "en",
     "descriptionAlt": "Ein Lebens- und Arbeitsprojekt, das seit 1979 die ehemaligen UFA-Kopierwerke in Tempelhof belebt, mit drei Bühnen im Internationalen Kulturcentrum für Konzerte, Kabarett, Comedy, Theater und Lesungen.",
-    "descriptionAltLanguage": "de"
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["cultural-centre", "theatre"],
+    "capacity": 500
 }
 
 > {%
@@ -5343,7 +5457,9 @@ Content-Type: application/json
     "description": "The smaller hall configured inside the Velodrom, used for mid-sized concerts and listed as its own venue on the Velomax programme.",
     "descriptionLanguage": "en",
     "descriptionAlt": "Der kleinere Saal im Velodrom, genutzt für mittelgroße Konzerte und im Velomax-Programm als eigener Ort geführt.",
-    "descriptionAltLanguage": "de"
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["live-venue"],
+    "capacity": 5000
 }
 
 > {%
@@ -5405,7 +5521,9 @@ Content-Type: application/json
     "description": "A science and culture house in Schöneberg, programming lectures, panel discussions and talks across its Humboldtsaal and Kleistsaal.",
     "descriptionLanguage": "en",
     "descriptionAlt": "Ein Haus für Wissenschaft und Kultur in Schöneberg, mit Vorträgen, Podiumsgesprächen und Talks im Humboldtsaal und im Kleistsaal.",
-    "descriptionAltLanguage": "de"
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["theatre"],
+    "capacity": 866
 }
 
 > {%
@@ -5467,7 +5585,8 @@ Content-Type: application/json
     "description": "An artist space on the RAW-Gelände combining a gallery, shop and beer garden with a concert hall, programming post-punk, dark wave, metal and indie shows alongside exhibitions.",
     "descriptionLanguage": "en",
     "descriptionAlt": "Ein Künstlerort auf dem RAW-Gelände aus Galerie, Laden und Biergarten, dazu ein Konzertsaal mit Post-Punk, Dark Wave, Metal und Indie neben Ausstellungen.",
-    "descriptionAltLanguage": "de"
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["gallery", "live-venue"]
 }
 
 > {%
@@ -5529,7 +5648,9 @@ Content-Type: application/json
     "description": "A cycling arena at S-Bahnhof Landsberger Allee that doubles as one of Berlin's larger concert venues.",
     "descriptionLanguage": "en",
     "descriptionAlt": "Eine Radrennbahn am S-Bahnhof Landsberger Allee, die zugleich einer der größeren Konzertorte Berlins ist.",
-    "descriptionAltLanguage": "de"
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["arena"],
+    "capacity": 12000
 }
 
 > {%
@@ -5591,7 +5712,8 @@ Content-Type: application/json
     "description": "A multi-floor techno and bass club in a Lichtenberg backyard, open since 2015, programming drum & bass, hardtechno and trance nights across the VOID Club floors and the VOID Hall added in 2023.",
     "descriptionLanguage": "en",
     "descriptionAlt": "Ein Techno- und Bassclub über mehrere Floors in einem Lichtenberger Hinterhof, seit 2015 geöffnet, mit Drum & Bass, Hardtechno und Trance auf den VOID-Club-Floors und in der 2023 ergänzten VOID Hall.",
-    "descriptionAltLanguage": "de"
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["club"]
 }
 
 > {%
@@ -5653,7 +5775,8 @@ Content-Type: application/json
     "description": "A rock'n'roll bar and live club near Görlitzer Bahnhof in Kreuzberg, hosting raucous concerts and DJ nights spanning rockabilly, punk, garage and surf.",
     "descriptionLanguage": "en",
     "descriptionAlt": "Eine Rock'n'Roll-Bar und ein Liveclub nahe dem Görlitzer Bahnhof in Kreuzberg, mit lauten Konzerten und DJ-Nächten zwischen Rockabilly, Punk, Garage und Surf.",
-    "descriptionAltLanguage": "de"
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["bar", "live-venue"]
 }
 
 > {%
@@ -5715,7 +5838,9 @@ Content-Type: application/json
     "description": "A riverside venue in Treptower Park combining a historic ballroom (Saal), a club, a beer garden and a wine garden, programming electronic concerts, club nights and open-air day parties.",
     "descriptionLanguage": "en",
     "descriptionAlt": "Ein Ort am Wasser im Treptower Park aus historischem Saal, Club, Biergarten und Weingarten, mit elektronischen Konzerten, Clubnächten und Open-Air-Partys am Tag.",
-    "descriptionAltLanguage": "de"
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["club", "open-air", "live-venue"],
+    "capacity": 800
 }
 
 > {%
@@ -5778,7 +5903,8 @@ Content-Type: application/json
     "description": "The Zig Zag Jazz Club's concert hall on the EUREF-Campus, with seated concerts by international jazz, soul and gospel stars.",
     "descriptionLanguage": "en",
     "descriptionAlt": "Der Konzertsaal des Zig Zag Jazz Club auf dem EUREF-Campus, mit bestuhlten Konzerten internationaler Jazz-, Soul- und Gospelstars.",
-    "descriptionAltLanguage": "de"
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["live-venue"]
 }
 
 > {%
@@ -5840,7 +5966,8 @@ Content-Type: application/json
     "description": "A jazz club by Innsbrucker Platz with international bands most nights from Tuesday to Sunday and a jam session every Tuesday.",
     "descriptionLanguage": "en",
     "descriptionAlt": "Ein Jazzclub am Innsbrucker Platz mit internationalen Bands an den meisten Abenden von Dienstag bis Sonntag und einer Jamsession an jedem Dienstag.",
-    "descriptionAltLanguage": "de"
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["live-venue"]
 }
 
 > {%
@@ -5902,7 +6029,8 @@ Content-Type: application/json
     "description": "Renaissance fortress in Spandau whose courtyard hosts the Citadel Music Festival, an open-air concert series running through the summer.",
     "descriptionLanguage": "en",
     "descriptionAlt": "Eine Renaissancefestung in Spandau, in deren Hof das Citadel Music Festival stattfindet, eine Open-Air-Konzertreihe durch den Sommer.",
-    "descriptionAltLanguage": "de"
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["open-air"]
 }
 
 > {%
@@ -5964,7 +6092,8 @@ Content-Type: application/json
     "description": "A former public toilet at the corner of Yorckstrasse and Mehringdamm, now a one-room club with a Funktion-One sound system, hosting club nights, live performances and art events.",
     "descriptionLanguage": "en",
     "descriptionAlt": "Eine ehemalige öffentliche Toilette an der Ecke Yorckstraße und Mehringdamm, heute ein Club mit einem Raum und einer Funktion-One-Anlage, für Clubnächte, Live-Auftritte und Kunstveranstaltungen.",
-    "descriptionAltLanguage": "de"
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["club"]
 }
 
 > {%
@@ -6021,7 +6150,8 @@ Content-Type: application/json
     "postalCode": "10247",
     "district": "friedrichshain",
     "latitude": 52.516843,
-    "longitude": 13.464298
+    "longitude": 13.464298,
+    "venueTypes": ["bar"]
 }
 
 > {%
@@ -6079,7 +6209,8 @@ Content-Type: application/json
     "district": "lichtenberg",
     "latitude": 52.509567,
     "longitude": 13.490187,
-    "websiteUrl": "https://drugstore-berlin.de"
+    "websiteUrl": "https://drugstore-berlin.de",
+    "venueTypes": ["cultural-centre"]
 }
 
 > {%
@@ -6137,7 +6268,8 @@ Content-Type: application/json
     "district": "mitte",
     "latitude": 52.507695,
     "longitude": 13.426116,
-    "websiteUrl": "https://koepi137.net"
+    "websiteUrl": "https://koepi137.net",
+    "venueTypes": ["cultural-centre"]
 }
 
 > {%

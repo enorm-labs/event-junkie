@@ -7,6 +7,12 @@ import { useAsync } from './useAsync'
 export interface VenueSearchParams {
   q?: string
   district?: string
+  /** Venue type slugs; a venue of any of them matches. */
+  type?: string[]
+  /** Genre family slugs the venue mostly programmes; any of them matches. */
+  family?: string[]
+  /** Event types the venue hosts; any of them matches. */
+  eventType?: string[]
   page?: number
   size?: number
   /** `name` or `upcomingEvents`, with a direction: `upcomingEvents,desc`. */

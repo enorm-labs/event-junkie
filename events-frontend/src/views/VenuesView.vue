@@ -7,6 +7,7 @@ import { describeError } from '@/api/client'
 import { Button } from '@/components/ui/button'
 import BaseInput from '@/components/BaseInput.vue'
 import BaseSelect from '@/components/BaseSelect.vue'
+import MultiSelectFilter from '@/components/MultiSelectFilter.vue'
 import PaginationControls from '@/components/PaginationControls.vue'
 import SortControl, { type SortOption } from '@/components/SortControl.vue'
 import VenueCard from '@/components/VenueCard.vue'
@@ -15,6 +16,7 @@ import { useCompactView } from '@/composables/useCompactView'
 import { useLocalePath } from '@/composables/useLocalePath'
 import { useLocation } from '@/composables/useLocation'
 import { usePagedList } from '@/composables/usePagedList'
+import { useFilterOptions } from '@/composables/useFilterOptions'
 import { fetchAllVenues, useVenueSearch, type VenueSearchParams } from '@/composables/useVenues'
 import { DISTRICTS } from '@/lib/districts'
 import { formatDistance } from '@/lib/geo'
@@ -47,10 +49,27 @@ function queryString(key: string): string {
 const SORT_UPCOMING = 'upcomingEvents,desc'
 const sort = computed(() => (queryString('sort') === SORT_UPCOMING ? SORT_UPCOMING : ''))
 
+function queryList(key: string): string[] {
+  const value = route.query[key]
+  return (Array.isArray(value) ? value : [value]).filter(
+    (v): v is string => typeof v === 'string' && v !== '',
+  )
+}
+
+/** The multi-value filters, undefined when empty so they drop out of the request. */
+function listParam(key: string): string[] | undefined {
+  const values = queryList(key)
+  return values.length ? values : undefined
+}
+
 const params = computed<VenueSearchParams>(() => ({
   q: queryString('q') || undefined,
   district: queryString('district') || undefined,
   sort: sort.value ? [sort.value] : undefined,
+
+  type: listParam('type'),
+  family: listParam('family'),
+  eventType: listParam('eventType'),
   page: queryString('page') ? Number(queryString('page')) : 0,
   size: PAGE_SIZE,
 }))
@@ -77,7 +96,9 @@ function applyFilters(patch: LocationQueryRaw) {
   // Any filter change resets to the first page; empty values drop out of the URL.
   const next: LocationQueryRaw = { ...route.query, ...patch, page: undefined }
   for (const key of Object.keys(next)) {
-    if (next[key] === '' || next[key] === undefined) delete next[key]
+    const value = next[key]
+    if (value === '' || value === undefined || (Array.isArray(value) && !value.length))
+      delete next[key]
   }
   router.push({ query: next })
 }
@@ -102,6 +123,15 @@ function setView(view: 'list' | 'map') {
   })
 }
 
+/** The list's filters without its paging: the map shows every match. */
+const mapFilters = computed(() => ({
+  q: params.value.q,
+  district: params.value.district,
+  type: params.value.type,
+  family: params.value.family,
+  eventType: params.value.eventType,
+}))
+
 const mapVenues = shallowRef<VenueSummary[]>([])
 const mapLoading = ref(false)
 const mapError = ref<string | null>(null)
@@ -112,7 +142,7 @@ async function loadMap() {
   if (!showMap.value) return
   mapLoading.value = true
   try {
-    mapVenues.value = await fetchAllVenues({ q: params.value.q, district: params.value.district })
+    mapVenues.value = await fetchAllVenues(mapFilters.value)
     mapError.value = null
   } catch (e) {
     mapVenues.value = []
@@ -122,7 +152,9 @@ async function loadMap() {
   }
 }
 
-watch(() => [showMap.value, params.value.q, params.value.district], loadMap, { immediate: true })
+watch(() => [showMap.value, JSON.stringify({ ...params.value, page: undefined })], loadMap, {
+  immediate: true,
+})
 
 const { t, locale } = useI18n()
 
@@ -130,6 +162,10 @@ const sortOptions = computed<SortOption[]>(() => [
   { value: '', label: t('common.sort.name') },
   { value: SORT_UPCOMING, label: t('common.sort.upcoming') },
 ])
+
+const { venueTypeOptions, familyOptions, eventTypeOptions } = useFilterOptions()
+// OTHER is no type a venue is chosen by; the derivation never stores it.
+const hostOptions = computed(() => eventTypeOptions.value.filter(({ value }) => value !== 'OTHER'))
 
 // The same origin as the events map's "near me": a position chosen there is still chosen here.
 const { origin, state: locateState, locate, clear: clearOrigin } = useLocation()
@@ -214,6 +250,34 @@ const localePath = useLocalePath()
         <option value="">{{ t('venues.allDistricts') }}</option>
         <option v-for="d in DISTRICTS" :key="d.slug" :value="d.slug">{{ d.label }}</option>
       </BaseSelect>
+
+      <MultiSelectFilter
+        :all-label="t('venues.allTypes')"
+        :clear-label="t('venues.clearTypes')"
+        :count-label="(n) => t('venues.typesSelected', { n })"
+        :label="t('venues.byType')"
+        :options="venueTypeOptions"
+        :selected="queryList('type')"
+        @change="applyFilters({ type: $event })"
+      />
+      <MultiSelectFilter
+        :all-label="t('venues.allGenres')"
+        :clear-label="t('venues.clearFamilies')"
+        :count-label="(n) => t('venues.familiesSelected', { n })"
+        :label="t('venues.byGenre')"
+        :options="familyOptions"
+        :selected="queryList('family')"
+        @change="applyFilters({ family: $event })"
+      />
+      <MultiSelectFilter
+        :all-label="t('venues.allEventTypes')"
+        :clear-label="t('venues.clearEventTypes')"
+        :count-label="(n) => t('venues.eventTypesSelected', { n })"
+        :label="t('venues.byEventType')"
+        :options="hostOptions"
+        :selected="queryList('eventType')"
+        @change="applyFilters({ eventType: $event })"
+      />
 
       <div :aria-label="t('venues.view.label')" class="flex gap-2" role="group">
         <Button

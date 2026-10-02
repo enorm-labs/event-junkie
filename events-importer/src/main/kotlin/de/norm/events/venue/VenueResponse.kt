@@ -51,6 +51,14 @@ data class VenueResponse(
     val descriptionAlt: String?,
     @Schema(description = "Language of `descriptionAlt`: `de` or `en`. Null exactly when `descriptionAlt` is.", example = "de")
     val descriptionAltLanguage: String?,
+    @Schema(description = "What kind of place this is, as `VenueType` slugs, curated by hand", example = "[\"live-venue\", \"club\"]")
+    val venueTypes: List<String>,
+    @Schema(description = "How many visitors the largest room holds, where the venue publishes it", example = "1500")
+    val capacity: Int?,
+    @Schema(description = "Genre family slugs the venue mostly programmes, derived from its events; read-only", example = "[\"rock\", \"punk\"]")
+    val programmeFamilies: List<String>,
+    @Schema(description = "Event type names the venue hosts, derived from its events; read-only", example = "[\"CONCERT\", \"PARTY\"]")
+    val programmeEventTypes: List<String>,
     @Schema(description = "Timestamp when this record was first created")
     val createdAt: Instant?,
     @Schema(description = "Timestamp when this record was last modified")
@@ -77,6 +85,10 @@ data class VenueResponse(
                 descriptionLanguage = venue.descriptionLanguage,
                 descriptionAlt = venue.descriptionAlt,
                 descriptionAltLanguage = venue.descriptionAltLanguage,
+                venueTypes = venue.venueTypes,
+                capacity = venue.capacity,
+                programmeFamilies = venue.programmeFamilies,
+                programmeEventTypes = venue.programmeEventTypes,
                 createdAt = venue.createdAt,
                 updatedAt = venue.updatedAt
             )

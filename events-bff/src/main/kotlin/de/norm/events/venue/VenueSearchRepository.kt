@@ -9,6 +9,43 @@ import org.springframework.r2dbc.core.DatabaseClient
 import org.springframework.stereotype.Repository
 import java.time.LocalDate
 
+/**
+ * The venue list's criteria, normalised so that two orders of the same values share a cache entry.
+ * Within one list any value matches; across lists every list must match.
+ */
+data class VenueFilter(
+    val query: String? = null,
+    val district: String? = null,
+    val types: List<String> = emptyList(),
+    val families: List<String> = emptyList(),
+    val eventTypes: List<String> = emptyList()
+) {
+    companion object {
+        /** Blank values drop out; lists are trimmed, de-duplicated and sorted, event types upper-cased. */
+        fun of(
+            query: String?,
+            district: String?,
+            types: List<String>?,
+            families: List<String>?,
+            eventTypes: List<String>?
+        ): VenueFilter =
+            VenueFilter(
+                query = query?.trim()?.takeIf { it.isNotEmpty() },
+                district = district?.trim()?.takeIf { it.isNotEmpty() },
+                types = types.normalized(),
+                families = families.normalized(),
+                eventTypes = eventTypes.orEmpty().map { it.uppercase() }.normalized()
+            )
+
+        private fun List<String>?.normalized(): List<String> =
+            orEmpty()
+                .map { it.trim() }
+                .filter { it.isNotEmpty() }
+                .distinct()
+                .sorted()
+    }
+}
+
 /** One venue on a list page: its id and how many of its events are still to come. */
 data class VenueListRow(
     val id: Long,
@@ -22,8 +59,8 @@ data class VenueListPage(
 )
 
 /**
- * The venue list query: a name search and a district filter, ordered by name or by upcoming
- * events (#360). The same shape as `PromoterSearchRepository`, for the same reasons: the count is a
+ * The venue list query: a name search, a district and the array filters of [VenueFilter], ordered
+ * by name or by upcoming events (#360). The same shape as `PromoterSearchRepository`, for the same reasons: the count is a
  * correlated subquery from [today] on, every order ends in `name, id`, and names sort case-folded
  * because the database collation is `C`.
  */
@@ -32,24 +69,30 @@ class VenueSearchRepository(
     private val databaseClient: DatabaseClient
 ) {
     suspend fun search(
-        query: String?,
-        district: String?,
+        filter: VenueFilter,
         today: LocalDate,
         pageable: Pageable
     ): VenueListPage {
-        val name = query?.trim()?.takeIf { it.isNotEmpty() }
-        val districtSlug = district?.trim()?.takeIf { it.isNotEmpty() }
+        val params = mutableMapOf<String, Any>()
+        filter.query?.let { params["name"] = "%${it.escapeLike()}%" }
+        filter.district?.let { params["district"] = it }
         val conditions =
             listOfNotNull(
-                "v.name ILIKE :name".takeIf { name != null },
-                "v.district = :district".takeIf { districtSlug != null }
-            )
+                "v.name ILIKE :name".takeIf { filter.query != null },
+                "v.district = :district".takeIf { filter.district != null }
+            ) +
+                ARRAY_FILTERS.mapNotNull { (column, param, values) ->
+                    values(filter).takeIf { it.isNotEmpty() }?.let {
+                        params[param] = it.toTypedArray()
+                        "v.$column && :$param"
+                    }
+                }
         val where = if (conditions.isEmpty()) "" else "WHERE ${conditions.joinToString(" AND ")}"
 
         val total =
             databaseClient
                 .sql("SELECT COUNT(*) FROM $EVENTS_SCHEMA.venue v $where")
-                .bindFilters(name, districtSlug)
+                .bindAll(params)
                 .map { row: Readable -> row.get(0, Long::class.javaObjectType) ?: 0L }
                 .one()
                 .awaitSingle()
@@ -61,7 +104,7 @@ class VenueSearchRepository(
                 .sql(
                     "SELECT v.id, ($UPCOMING_COUNT) AS upcoming FROM $EVENTS_SCHEMA.venue v $where " +
                         "${orderBy(pageable)} LIMIT :limit OFFSET :offset"
-                ).bindFilters(name, districtSlug)
+                ).bindAll(params)
                 .bind("today", today)
                 .bind("limit", pageable.pageSize)
                 .bind("offset", pageable.offset)
@@ -77,15 +120,8 @@ class VenueSearchRepository(
         return VenueListPage(rows, total)
     }
 
-    private fun DatabaseClient.GenericExecuteSpec.bindFilters(
-        name: String?,
-        district: String?
-    ): DatabaseClient.GenericExecuteSpec {
-        var spec = this
-        if (name != null) spec = spec.bind("name", "%${name.escapeLike()}%")
-        if (district != null) spec = spec.bind("district", district)
-        return spec
-    }
+    private fun DatabaseClient.GenericExecuteSpec.bindAll(params: Map<String, Any>): DatabaseClient.GenericExecuteSpec =
+        params.entries.fold(this) { spec, (key, value) -> spec.bind(key, value) }
 
     /** Whitelists the sort properties to known expressions; anything else falls back to the name. */
     private fun orderBy(pageable: Pageable): String {
@@ -104,6 +140,14 @@ class VenueSearchRepository(
             mapOf(
                 "name" to "lower(v.name)",
                 "upcomingEvents" to "upcoming"
+            )
+
+        /** Each array column, its bind name, and the filter list it overlaps with. */
+        private val ARRAY_FILTERS: List<Triple<String, String, (VenueFilter) -> List<String>>> =
+            listOf(
+                Triple("venue_types", "types", VenueFilter::types),
+                Triple("programme_families", "families", VenueFilter::families),
+                Triple("programme_event_types", "eventTypes", VenueFilter::eventTypes)
             )
 
         private val TIEBREAKER = listOf("lower(v.name) ASC", "v.id ASC")

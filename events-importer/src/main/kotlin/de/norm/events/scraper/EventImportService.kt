@@ -1,6 +1,7 @@
 package de.norm.events.scraper
 
 import de.norm.events.licence.SourceLicences
+import de.norm.events.venue.VenueProgrammeStore
 import de.norm.events.venue.VenueRepository
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.async
@@ -17,6 +18,7 @@ import org.springframework.transaction.reactive.TransactionalOperator
 import org.springframework.transaction.reactive.executeAndAwait
 import java.time.Clock
 import java.time.Instant
+import java.time.LocalDate
 import kotlin.time.Duration.Companion.nanoseconds
 
 /**
@@ -52,6 +54,8 @@ class EventImportService(
      * this source's entry URL (#790). A map read, not a fetch: the filter has already read the file.
      */
     private val robotsRulesCache: RobotsRulesCache,
+    /** Re-derives the venue's genre families and event types from its events (#327). */
+    private val venueProgrammeStore: VenueProgrammeStore,
     /** Injected clock for deterministic time in tests. Defaults to system UTC clock in production. */
     private val clock: Clock = Clock.systemUTC(),
     /**
@@ -324,7 +328,8 @@ class EventImportService(
      * the scraper extracted, not the stored rows, where a selector that stopped matching is invisible
      * until old rows age out (#472); it runs before `markSuccess` and is unguarded because `record`
      * never throws. The translation pass is guarded: derived text, so an engine that is down must
-     * never fail a scrape that worked (ADR-026). The artist lookups are only queued, in [afterSuccess].
+     * never fail a scrape that worked (ADR-026). The venue's programme is derived data and guarded the
+     * same way. The artist lookups are only queued, in [afterSuccess].
      */
     private suspend fun afterCommit(
         source: EventSourceEntity,
@@ -337,6 +342,8 @@ class EventImportService(
         fieldCoverageService.record(source, result.events)
         runCatching { descriptionTranslationService.translateFor(source, venueName, licences) }
             .onFailure { logger.warn(it) { "TranslationRequest pass failed for '${source.slug}'" } }
+        runCatching { venueProgrammeStore.refresh(source.venueId, LocalDate.now(clock).minusDays(VenueProgrammeStore.WINDOW_DAYS)) }
+            .onFailure { logger.warn(it) { "Venue programme refresh failed for '${source.slug}'" } }
     }
 
     /**

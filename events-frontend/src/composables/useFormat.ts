@@ -108,6 +108,33 @@ export function useFormat() {
       return te(key) ? t(key) : humaniseEventType(eventType)
     },
 
+    /** The label for a venue type slug; the slug itself for one the frontend has not been taught. */
+    formatVenueType: (slug: string) => (te(`venueType.${slug}`) ? t(`venueType.${slug}`) : slug),
+
+    /** The label for a genre family slug, with the same fallback as `formatVenueType`. */
+    formatFamily: (slug: string) =>
+      te(`events.filters.families.${slug}`) ? t(`events.filters.families.${slug}`) : slug,
+
+    /**
+     * A venue's types and capacity as one meta line: "Live venue · Club · ~1,700 people". The capacity
+     * is rounded to two significant figures, because venues state it loosely and seated and standing differ.
+     */
+    formatVenueFacts: (venue: { venueTypes?: string[]; capacity?: number | null }) =>
+      [
+        ...(venue.venueTypes ?? []).map((slug) =>
+          te(`venueType.${slug}`) ? t(`venueType.${slug}`) : slug,
+        ),
+        venue.capacity
+          ? t('venues.capacity', {
+              count: new Intl.NumberFormat(intlLocale(), { maximumSignificantDigits: 2 }).format(
+                venue.capacity,
+              ),
+            })
+          : '',
+      ]
+        .filter(Boolean)
+        .join(' · '),
+
     /**
      * The one word for a status that changes whether the reader goes, `''` for `SCHEDULED`. A
      * relocated event that knows where it went says so ("Moved to Hole44"). Same fallback as

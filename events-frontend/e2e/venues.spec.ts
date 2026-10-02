@@ -109,6 +109,33 @@ test('sorting by upcoming events puts the sort in the URL, sends it, and shows t
   await expect(page).toHaveURL(/\/venues$/)
 })
 
+test('filtering by venue type, genre and event type writes each to the URL and the request', async ({
+  page,
+}) => {
+  await page.route(venuesList, (route) => {
+    const params = new URL(route.request().url()).searchParams
+    const narrowed = params.getAll('type').includes('club') && params.get('family') === 'electronic'
+    json(route, pageBody(narrowed ? [venue('berghain', 'Berghain')] : [venue('lido', 'Lido')]))
+  })
+
+  await page.goto('/venues')
+  await page.getByRole('button', { name: 'Filter by venue type: All venue types' }).click()
+  await page.getByRole('checkbox', { name: 'Club' }).check()
+  await page.keyboard.press('Escape')
+  await page.getByRole('button', { name: 'Filter by genre: All genres' }).click()
+  await page.getByRole('checkbox', { name: 'Electronic' }).check()
+  await page.keyboard.press('Escape')
+
+  await expect(page).toHaveURL(/[?&]type=club\b/)
+  await expect(page).toHaveURL(/[?&]family=electronic\b/)
+  await expect(page.getByRole('link', { name: /Berghain/ })).toBeVisible()
+
+  await page.getByRole('button', { name: 'Filter by event type: All event types' }).click()
+  await expect(page.getByRole('checkbox', { name: 'Other' })).toHaveCount(0)
+  await page.getByRole('checkbox', { name: 'Party' }).check()
+  await expect(page).toHaveURL(/[?&]eventType=PARTY\b/)
+})
+
 test('shows an empty state when no venues match', async ({ page }) => {
   await page.route(venuesList, (route) => json(route, pageBody([])))
 

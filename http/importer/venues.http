@@ -50,7 +50,8 @@ Content-Type: application/json
     "postalCode": "10245",
     "latitude": 52.507242,
     "longitude": 13.451803,
-    "websiteUrl": "https://www.astra-berlin.de"
+    "websiteUrl": "https://www.astra-berlin.de",
+    "venueTypes": ["live-venue"]
 }
 
 > {%
@@ -69,7 +70,8 @@ Content-Type: application/json
     "address": "Oranienstraße 190",
     "city": "Berlin",
     "postalCode": "10999",
-    "websiteUrl": "https://so36.com"
+    "websiteUrl": "https://so36.com",
+    "venueTypes": ["live-venue", "club"]
 }
 
 > {%
@@ -91,7 +93,8 @@ Content-Type: application/json
     "latitude": 52.507242,
     "longitude": 13.451803,
     "websiteUrl": "https://www.astra-berlin.de",
-    "imageUrl": "https://example.com/astra-logo.jpg"
+    "imageUrl": "https://example.com/astra-logo.jpg",
+    "venueTypes": ["live-venue", "club"]
 }
 
 > {%

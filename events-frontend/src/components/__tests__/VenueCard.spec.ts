@@ -25,6 +25,19 @@ describe('VenueCard', () => {
     expect(wrapper.text()).toContain('Cuvrystr. 7')
   })
 
+  it('names its types and capacity in one meta line', () => {
+    const wrapper = mount(VenueCard, {
+      props: { venue: { ...venue, venueTypes: ['live-venue', 'club'], capacity: 1737 } },
+      global: { stubs },
+    })
+    expect(wrapper.text()).toContain('Live venue · Club · ~1,700 people')
+  })
+
+  it('draws no facts line for a venue with neither', () => {
+    const wrapper = mount(VenueCard, { props: { venue }, global: { stubs } })
+    expect(wrapper.findAll('p')).toHaveLength(1)
+  })
+
   it('shows the human-readable district label, not the slug', () => {
     const wrapper = mount(VenueCard, { props: { venue }, global: { stubs } })
     expect(wrapper.text()).toContain('Kreuzberg')

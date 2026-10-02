@@ -33,6 +33,8 @@ classical.
 - **Browse and search** upcoming events, with a **calendar view** and a **today** view.
 - **Filter** by what you actually care about: date range, event type, **Berlin district** (23 pre-2001 districts),
   **genre**, **price range**, **free-only** and **exclude sold-out**. Plus free-text search over titles.
+- **Find a venue** by name, district, **venue type** (club, live venue, bar, …), the **genres it mostly plays** and the
+  **event types it hosts**. Each venue shows its type and capacity.
 - **Drill into details:** dedicated pages for each **event, venue, artist and promoter**. They are cross-linked, so
   you can jump from an artist to all their Berlin dates, or from a venue to its full programme.
 - **See the signal at a glance:** "Free" and "Sold Out" badges, event status (e.g. cancelled/postponed), door/start times, prices, line-ups and genre tags.
@@ -60,7 +62,8 @@ public launch — hosting, domain, auth, legal — is tracked in
 
 - Event search with the full filter set above, **plus artist and promoter** filters, pagination and sorting. Plus
   **today** and **date-range calendar** endpoints, the calendar accepting the same filter set, and per-slug detail.
-- List + detail endpoints for **venues, artists, promoters and genres**.
+- List + detail endpoints for **venues, artists, promoters and genres**. The venue list filters by name, district, venue
+  type, genre family and event type.
 
 **Automated data aggregation — Importer**
 

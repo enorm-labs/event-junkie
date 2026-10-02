@@ -42,6 +42,17 @@ data class Venue(
     val descriptionAlt: String? = null,
     /** Language of [descriptionAlt]: `de` or `en`. Null exactly when [descriptionAlt] is. */
     val descriptionAltLanguage: String? = null,
+    /** What kind of place this is, curated by hand, as `VenueType` slugs; one or more. Example: `["live-venue", "club"]` */
+    val venueTypes: List<String> = emptyList(),
+    /** How many visitors the largest room holds, as the venue publishes it; `null` where it does not. */
+    val capacity: Int? = null,
+    /**
+     * `GenreFamily` slugs this venue mostly programmes, most frequent first. Derived from its events, never
+     * written by hand. Strings, like [district], because the venue module depends on no other.
+     */
+    val programmeFamilies: List<String> = emptyList(),
+    /** `EventType` names this venue hosts, most frequent first, derived like [programmeFamilies]. Example: `"CONCERT"` */
+    val programmeEventTypes: List<String> = emptyList(),
     /** Timestamp when this record was first created. Set by the database. */
     val createdAt: Instant? = null,
     /** Timestamp when this record was last modified. Set by the database. */

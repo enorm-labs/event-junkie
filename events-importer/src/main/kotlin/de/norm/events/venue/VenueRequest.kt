@@ -7,6 +7,7 @@ import jakarta.validation.constraints.DecimalMax
 import jakarta.validation.constraints.DecimalMin
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Pattern
+import jakarta.validation.constraints.Positive
 import jakarta.validation.constraints.Size
 import java.math.BigDecimal
 
@@ -92,5 +93,11 @@ data class VenueRequest(
     val descriptionAlt: String? = null,
     @field:Pattern(regexp = "de|en", message = "Alternate description language must be 'de' or 'en'")
     @Schema(description = "Language of `descriptionAlt`: `de` or `en`", example = "de")
-    val descriptionAltLanguage: String? = null
+    val descriptionAltLanguage: String? = null,
+    // Typed like district, so an unknown type is a 400 rather than a venue no filter finds.
+    @Schema(description = "What kind of place this is; one or more", example = "[\"live-venue\", \"club\"]")
+    val venueTypes: List<VenueType> = emptyList(),
+    @field:Positive(message = "Capacity must be positive")
+    @Schema(description = "How many visitors the largest room holds, as the venue publishes it", example = "1500")
+    val capacity: Int? = null
 ) : AttributableImage

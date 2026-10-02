@@ -57,6 +57,9 @@ class VenueControllerTest : BaseControllerTest() {
                 venue.district shouldBe "kreuzberg"
                 // Description round-trips through create → persist → read.
                 venue.description shouldBe "A large concert hall on the RAW-Gelände in Friedrichshain."
+                venue.venueTypes shouldBe listOf("live-venue", "club")
+                venue.capacity shouldBe 1500
+                venue.programmeFamilies shouldBe emptyList()
             }
 
         // Update
@@ -249,6 +252,57 @@ class VenueControllerTest : BaseControllerTest() {
             .isArray
             .jsonPath("$.errors[?(@.field == 'name')]")
             .exists()
+    }
+
+    @Test
+    fun `POST venue with an unknown venue type returns 400`() {
+        webTestClient
+            .post()
+            .uri("/api/admin/venues")
+            .header("Content-Type", "application/json")
+            .bodyValue("""{"name": "Test Venue", "venueTypes": ["stadium"]}""")
+            .exchange()
+            .expectStatus()
+            .isBadRequest
+    }
+
+    @Test
+    fun `POST venue with a capacity of zero returns 400`() {
+        webTestClient
+            .post()
+            .uri("/api/admin/venues")
+            .bodyValue(VenueRequestFixtures.astra(capacity = 0))
+            .exchange()
+            .expectStatus()
+            .isBadRequest
+            .expectBody()
+            .jsonPath("$.errors[?(@.field == 'capacity')]")
+            .exists()
+    }
+
+    @Test
+    fun `PUT venue keeps the derived programme it does not carry`() {
+        val created = createVenue()
+        databaseClient
+            .sql("UPDATE events.venue SET programme_families = '{rock,punk}', programme_event_types = '{CONCERT}' WHERE id = :id")
+            .bind("id", created.id)
+            .then()
+            .block()
+
+        webTestClient
+            .put()
+            .uri("/api/admin/venues/${created.id}")
+            .bodyValue(VenueRequestFixtures.astra(venueTypes = listOf(VenueType.LIVE_VENUE)))
+            .exchange()
+            .expectStatus()
+            .isOk
+            .expectBody<VenueResponse>()
+            .consumeWith { result ->
+                val venue = result.responseBody!!
+                venue.venueTypes shouldBe listOf("live-venue")
+                venue.programmeFamilies shouldBe listOf("rock", "punk")
+                venue.programmeEventTypes shouldBe listOf("CONCERT")
+            }
     }
 
     @Test

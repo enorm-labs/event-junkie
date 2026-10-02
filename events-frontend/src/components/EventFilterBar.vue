@@ -11,14 +11,13 @@ import { useRoute, useRouter } from 'vue-router'
 import { Button } from '@/components/ui/button'
 import BaseInput from '@/components/BaseInput.vue'
 import BaseSelect from '@/components/BaseSelect.vue'
-import MultiSelectFilter, { type FilterOption } from '@/components/MultiSelectFilter.vue'
+import MultiSelectFilter from '@/components/MultiSelectFilter.vue'
 import { useEventFilters } from '@/composables/useEventFilters'
 import { useGenres } from '@/composables/useGenres'
 import { useAllVenues } from '@/composables/useVenues'
 import { DATE_PRESETS, type DateRange } from '@/lib/dateRanges'
 import { DISTRICTS } from '@/lib/districts'
-import { GENRE_FAMILIES } from '@/lib/genreFamilies'
-import { useFormat } from '@/composables/useFormat'
+import { useFilterOptions } from '@/composables/useFilterOptions'
 import { useI18n } from 'vue-i18n'
 import { PANEL_CLASS } from '@/lib/utils'
 
@@ -75,31 +74,8 @@ const venues = useAllVenues()
 const SELECT_ROW_CLASS = 'grid w-full grid-cols-2 gap-3 sm:flex sm:w-auto sm:flex-wrap'
 const SELECT_CLASS = 'w-full min-w-0 truncate sm:w-auto'
 
-const EVENT_TYPES = [
-  'CONCERT',
-  'FESTIVAL',
-  'PARTY',
-  'QUIZ',
-  'SHOW',
-  'COMEDY',
-  'SCREENING',
-  'EXHIBITION',
-  'READING',
-  'OTHER',
-]
-
 const { t } = useI18n()
-const { formatEventType } = useFormat()
-
-const typeOptions = computed<FilterOption[]>(() =>
-  EVENT_TYPES.map((type) => ({ value: type, label: formatEventType(type) })),
-)
-const familyOptions = computed<FilterOption[]>(() =>
-  GENRE_FAMILIES.map((family) => ({
-    value: family,
-    label: t(`events.filters.families.${family}`),
-  })),
-)
+const { eventTypeOptions: typeOptions, familyOptions } = useFilterOptions()
 
 /**
  * The families the bar shows as chosen: the URL's, or, for a link from before families existed

@@ -11,6 +11,7 @@ import de.norm.events.genretag.EventGenreTagRepository
 import de.norm.events.genretag.GenreTagRepository
 import de.norm.events.promoter.PromoterRepository
 import de.norm.events.venue.VenueEntity
+import de.norm.events.venue.VenueProgrammeStore
 import de.norm.events.venue.VenueRepository
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.ints.shouldBeLessThanOrEqual
@@ -102,6 +103,9 @@ class EventImportServiceTest {
 
     /** Takes the touched artists; the lookups run on its own tick (#2051). */
     private val artistLookupSweep: ArtistLookupSweep = mockk(relaxed = true)
+
+    /** Relaxed: the derivation itself is `VenueProgrammeStoreTest`'s. */
+    private val venueProgrammeStore: VenueProgrammeStore = mockk(relaxed = true)
 
     /**
      * Stubbed: the cache would reach the network for a `robots.txt`. [RobotsRulesCacheTest] covers it.
@@ -196,6 +200,7 @@ class EventImportServiceTest {
                 descriptionTranslationService = descriptionTranslationService,
                 artistLookupSweep = artistLookupSweep,
                 robotsRulesCache = robotsRulesCache,
+                venueProgrammeStore = venueProgrammeStore,
                 maxConcurrency = EventImportService.DEFAULT_MAX_CONCURRENCY
             )
     }
@@ -264,6 +269,20 @@ class EventImportServiceTest {
                 result.eventCount shouldBe 1
                 result.sourceSlug shouldBe "test-source"
                 result.error shouldBe null
+            }
+
+        @Test
+        fun `re-derives the venue's programme after the commit, and a failure there does not fail the import`() =
+            runTest {
+                val src = source()
+                coEvery { cassiopeiaImporter.importEvents(any(), any(), any()) } returns
+                    ImportResult.Success(events = listOf(scrapedEvent(title = "Show A", sourceId = "cassiopeia:show-a")), etag = null, lastModified = null)
+                coEvery { venueProgrammeStore.refresh(any(), any()) } throws IllegalStateException("database gone")
+
+                val result = service.importFromSource(src)
+
+                result.imported shouldBe true
+                coVerify { venueProgrammeStore.refresh(src.venueId, any()) }
             }
 
         @Test
@@ -373,6 +392,7 @@ class EventImportServiceTest {
                         descriptionTranslationService = descriptionTranslationService,
                         artistLookupSweep = artistLookupSweep,
                         robotsRulesCache = robotsRulesCache,
+                        venueProgrammeStore = venueProgrammeStore,
                         maxConcurrency = EventImportService.DEFAULT_MAX_CONCURRENCY
                     )
 
@@ -1319,6 +1339,7 @@ class EventImportServiceTest {
                         descriptionTranslationService = descriptionTranslationService,
                         artistLookupSweep = artistLookupSweep,
                         robotsRulesCache = robotsRulesCache,
+                        venueProgrammeStore = venueProgrammeStore,
                         maxConcurrency = maxConcurrency
                     )
 

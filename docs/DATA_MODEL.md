@@ -45,6 +45,10 @@ classDiagram
         String? descriptionLanguage
         String? descriptionAlt
         String? descriptionAltLanguage
+        List venueTypes
+        Int? capacity
+        List programmeFamilies
+        List programmeEventTypes
         Instant? createdAt
         Instant? updatedAt
     }
@@ -223,24 +227,42 @@ every event. The shared model carries neither, and a property there would give t
 
 Represents a physical venue where music events take place (e.g. Astra Kulturhaus, Badehaus Berlin, SO36).
 
-| Field                      | Type           | Nullable | Description                                      | Example                                           |
-| -------------------------- | -------------- | -------- | ------------------------------------------------ | ------------------------------------------------- |
-| `id`                       | `BIGINT`       | No       | Auto-generated primary key                       | `42`                                              |
-| `name`                     | `TEXT`         | No       | Display name of the venue                        | `Astra Kulturhaus`                                |
-| `slug`                     | `TEXT` (UQ)    | No       | URL-friendly identifier                          | `astra-kulturhaus`                                |
-| `address`                  | `TEXT`         | Yes      | Street address                                   | `Revaler Str. 99`                                 |
-| `city`                     | `TEXT`         | No       | City (defaults to `Berlin`)                      | `Berlin`                                          |
-| `postal_code`              | `TEXT`         | Yes      | Postal code                                      | `10245`                                           |
-| `latitude`                 | `DECIMAL(9,6)` | Yes      | Geographic latitude                              | `52.507242`                                       |
-| `longitude`                | `DECIMAL(9,6)` | Yes      | Geographic longitude                             | `13.451803`                                       |
-| `website_url`              | `TEXT`         | Yes      | Venue's official website                         | `https://www.astra-berlin.de`                     |
-| `image_url`                | `TEXT`         | Yes      | Venue logo or photo                              | `https://example.com/astra.jpg`                   |
-| `description`              | `TEXT`         | Yes      | Short prose description shown on the detail page | `A former power plant turned techno institution…` |
-| `description_language`     | `TEXT`         | Yes      | Language of `description`: `de` or `en`          | `en`                                              |
-| `description_alt`          | `TEXT`         | Yes      | The same text in the other language              | `Ein früheres Kraftwerk…`                         |
-| `description_alt_language` | `TEXT`         | Yes      | Language of `description_alt`                    | `de`                                              |
-| `created_at`               | `TIMESTAMPTZ`  | No       | Record creation timestamp                        |                                                   |
-| `updated_at`               | `TIMESTAMPTZ`  | No       | Last modification timestamp                      |                                                   |
+| Field                      | Type           | Nullable | Description                                                     | Example                                           |
+| -------------------------- | -------------- | -------- | --------------------------------------------------------------- | ------------------------------------------------- |
+| `id`                       | `BIGINT`       | No       | Auto-generated primary key                                      | `42`                                              |
+| `name`                     | `TEXT`         | No       | Display name of the venue                                       | `Astra Kulturhaus`                                |
+| `slug`                     | `TEXT` (UQ)    | No       | URL-friendly identifier                                         | `astra-kulturhaus`                                |
+| `address`                  | `TEXT`         | Yes      | Street address                                                  | `Revaler Str. 99`                                 |
+| `city`                     | `TEXT`         | No       | City (defaults to `Berlin`)                                     | `Berlin`                                          |
+| `postal_code`              | `TEXT`         | Yes      | Postal code                                                     | `10245`                                           |
+| `district`                 | `TEXT`         | Yes      | One of the 23 pre-2001 Berlin districts, as a slug (V021 CHECK) | `kreuzberg`                                       |
+| `latitude`                 | `DECIMAL(9,6)` | Yes      | Geographic latitude                                             | `52.507242`                                       |
+| `longitude`                | `DECIMAL(9,6)` | Yes      | Geographic longitude                                            | `13.451803`                                       |
+| `website_url`              | `TEXT`         | Yes      | Venue's official website                                        | `https://www.astra-berlin.de`                     |
+| `image_url`                | `TEXT`         | Yes      | Venue logo or photo                                             | `https://example.com/astra.jpg`                   |
+| `image_attribution`        | `TEXT`         | Yes      | Who to credit for `image_url`. Null exactly when `image_url` is | `Photographer Name, via Wikimedia Commons`        |
+| `image_licence_id`         | `TEXT`         | Yes      | SPDX identifier of the image licence                            | `CC-BY-SA-4.0`                                    |
+| `image_source_url`         | `TEXT`         | Yes      | The image's description page                                    | `https://commons.wikimedia.org/wiki/File:…`       |
+| `description`              | `TEXT`         | Yes      | Short prose description shown on the detail page                | `A former power plant turned techno institution…` |
+| `description_language`     | `TEXT`         | Yes      | Language of `description`: `de` or `en`                         | `en`                                              |
+| `description_alt`          | `TEXT`         | Yes      | The same text in the other language                             | `Ein früheres Kraftwerk…`                         |
+| `description_alt_language` | `TEXT`         | Yes      | Language of `description_alt`                                   | `de`                                              |
+| `venue_types`              | `TEXT[]`       | No       | `VenueType` slugs, curated by hand. Empty until curated         | `{live-venue,club}`                               |
+| `capacity`                 | `INTEGER`      | Yes      | Visitors the largest room holds, as the venue publishes it      | `1500`                                            |
+| `programme_families`       | `TEXT[]`       | No       | `GenreFamily` slugs, derived from the venue's events            | `{rock,punk}`                                     |
+| `programme_event_types`    | `TEXT[]`       | No       | `EventType` names, derived from the venue's events              | `{CONCERT,PARTY}`                                 |
+| `created_at`               | `TIMESTAMPTZ`  | No       | Record creation timestamp                                       |                                                   |
+| `updated_at`               | `TIMESTAMPTZ`  | No       | Last modification timestamp                                     |                                                   |
+
+**Venue types and capacity are curated. The programme columns are derived (#327).** An operator sets `venue_types` and
+`capacity` through the admin API or a guarded data migration. A venue can have more than one type. `capacity` stays null
+when the venue does not publish a figure. `VenueProgrammeStore` writes the two `programme_*` columns after each import of
+the venue, and `VenueProgrammeSweep` writes them for every venue each night. Do not write them by hand: the next pass
+overwrites them.
+
+The derivation reads the venue's events from 365 days back, plus all future events. Cancelled events do not count. A
+value counts when it is on at least 15 % of those events and on at least 3 of them. The top three values are kept, most
+frequent first. `OTHER` never counts as an event type. A family share counts only events that carry a genre family.
 
 **Both descriptions are our own prose, in two languages (#1210).** The English was written by hand and read against
 each venue in #1124. The German says the same thing and was read the same way. So there is no origin column and no

@@ -3,7 +3,10 @@
   "venue": {
     "kind": "Location",
     "notFound": "Diese Location steht nicht in unserem kleinen schwarzen Buch.",
-    "empty": "Hier steht noch nichts an. Schau bald wieder vorbei."
+    "empty": "Hier steht noch nichts an. Schau bald wieder vorbei.",
+    "plays": "Vor allem",
+    "hosts": "Formate",
+    "programmeNote": "Aus den Veranstaltungen des letzten Jahres und der kommenden."
   },
   "artist": {
     "kind": "Act",

@@ -94,7 +94,8 @@ scraper infers the year.
 
 ## 6. Register the source
 
-Sources are runtime rows, not Flyway (ADR-007). In `http/importer/dev-seed.http`: a `POST /api/admin/venues` (with `district`) capturing the id, a
+Sources are runtime rows, not Flyway (ADR-007). In `http/importer/dev-seed.http`: a `POST /api/admin/venues` (with `district`, `venueTypes` and, where
+the venue publishes one, `capacity`) capturing the id, a
 `POST /api/admin/event-sources` with `"sourceType": "<VENUE>"` and the listing `url`, a `POST /api/admin/event-sources/<slug>/import`; the venue in the
 `Sources (alphabetical)` list at the top as `Name — URL`. The only comments in a block are the two naming the wiring. The import slug is derived from the
 source **name** (`Astra Kulturhaus` → `astra-kulturhaus`).
@@ -132,4 +133,5 @@ Then `/verify`, then [`/importer-smoke`](importer-smoke.prompt.md) against the l
 - [ ] Fixtures under `src/test/resources/scraper/<venue>/`; scraper + importer tests cover happy path, edge cases, NotModified, empty page
 - [ ] `dev-seed.http` updated, list at the top refreshed; a `docs/licence-review/RESULTS.tsv` row under the same name
 - [ ] Venue description read against the venue's own About page; opens with what sets it apart, no "the odd …" tail
+- [ ] `venueTypes` from the venue's own site, one or more; `capacity` only from a figure the venue or its operator publishes
 - [ ] `ktlintCheck`, detekt, `ModularityTests`, new tests green; `/verify` clean
