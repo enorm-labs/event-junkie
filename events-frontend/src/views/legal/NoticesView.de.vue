@@ -43,8 +43,8 @@ const { componentCount, groups, openGroups, toggle, versionSuffix } = useNotices
     <section>
       <h2>Unser eigener Code</h2>
       <p>
-        Der Quellcode von Event Junkie steht unter der Apache License 2.0 und ist vollständig
-        verfügbar unter
+        Der Quellcode von Event Junkie steht unter der Business Source License 1.1 und ist
+        vollständig verfügbar unter
         <a href="https://github.com/enorm-labs/event-junkie" rel="noopener" target="_blank">
           github.com/enorm-labs/event-junkie</a
         >.

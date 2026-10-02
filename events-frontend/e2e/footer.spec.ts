@@ -48,7 +48,7 @@ test('distinguishes the copyright from the code licence', async ({ page }) => {
   await page.goto('/about')
   const footer = page.getByRole('contentinfo')
 
-  const licence = footer.getByRole('link', { name: 'Code under Apache-2.0' })
+  const licence = footer.getByRole('link', { name: 'Code under BUSL-1.1' })
   await expect(licence).toHaveAttribute('href', /\/blob\/main\/LICENSE$/)
 })
 

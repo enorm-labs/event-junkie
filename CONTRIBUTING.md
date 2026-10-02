@@ -167,11 +167,13 @@ For an importer change it also asks whether existing rows need a `--full` re-see
 
 ## Licensing
 
-Contributions are accepted under the [Apache License 2.0](./LICENSE), the same licence the project is released under. There is no CLA — opening a pull request
-is taken as agreeing that your contribution may be distributed under that licence.
+Event Junkie is published under the [Business Source License 1.1](./LICENSE): you may read, fork, change and run it locally, but not run it in production
+without a licence from the maintainer. Contributions are accepted under the [Contributor Licence Agreement](./CLA.md). It lets the maintainer license your
+contribution together with the rest of the project, including commercially; you keep the copyright. Tick the CLA box in the pull request template to accept
+it.
 
 If you add a dependency, its licence has to clear the policy in [config/](./config): permissive or weak copyleft. AGPL, GPL without the Classpath Exception, and
-source-available licences (SSPL, BUSL, Elastic) are not acceptable for a public network service — see the
+source-available licences (SSPL, BUSL, Elastic) are not acceptable for a production network service — see the
 [development guide](./docs/DEVELOPMENT.md#licences-and-open-source-notices).
 
 ## Built with AI

@@ -20,7 +20,7 @@ point, such as INWX or the Hetzner status page. The obvious console URL is fille
 
 | Link                                                                                        | What it is                                                                       |
 | ------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
-| <https://github.com/enorm-labs/event-junkie>                                                | The repository. Public, Apache-2.0                                               |
+| <https://github.com/enorm-labs/event-junkie>                                                | The repository. Public, BUSL-1.1                                                 |
 | <https://github.com/enorm-labs>                                                             | The organisation — deploy keys are enabled here, not per repository              |
 | <https://github.com/enorm-labs/event-junkie/issues>                                         | The backlog                                                                      |
 | <https://github.com/enorm-labs/event-junkie/milestones>                                     | `v0.2 — Deployable`, `v0.3 — Launch-ready`, `v1.0 — Go-live`                     |

@@ -66,8 +66,8 @@ const IMPRINT_ELEMENTS: Element[] = [
   },
   {
     what: 'our code licence, separated from third-party rights in the event data',
-    en: /Apache License 2\.0.*remain the property of their respective rights holders/s,
-    de: /Apache License 2\.0.*bleiben Eigentum der jeweiligen Rechteinhaber/s,
+    en: /Business Source License 1\.1.*remain the property of their respective rights holders/s,
+    de: /Business Source License 1\.1.*bleiben Eigentum der jeweiligen Rechteinhaber/s,
   },
   {
     what: 'the country in its own language',

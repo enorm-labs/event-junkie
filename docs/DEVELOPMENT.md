@@ -804,8 +804,7 @@ Policies: [`config/allowed-licenses-jvm.json`](../config/allowed-licenses-jvm.js
 [`dependency-review.yml`](../.github/workflows/dependency-review.yml), carries a deny-list applied to _newly introduced_ dependencies at PR time.
 
 > **Do not widen an allow-list to make a build pass.** AGPL, GPL without the Classpath Exception, and
-> source-available licences (SSPL, BUSL, Elastic-2.0) are not acceptable for a public network service whose own
-> source is Apache-2.0. **AGPL is the one to watch**: its § 13 obligation fires on _network interaction_, not
+> source-available licences (SSPL, BUSL, Elastic-2.0) are not acceptable for this public network service. **AGPL is the one to watch**: its § 13 obligation fires on _network interaction_, not
 > distribution. See [LEGAL.md §9.2](LEGAL.md).
 
 **Regenerating the notices page.** `events-frontend/src/assets/notices.json` is generated and committed — never hand-edited. Regenerate it whenever dependencies

@@ -100,7 +100,7 @@ const { t } = useI18n()
     <section>
       <h2>Copyright</h2>
       <p>
-        The source code of this project is published under the Apache License 2.0; see the
+        The source code of this project is published under the Business Source License 1.1; see the
         <a
           href="https://github.com/enorm-labs/event-junkie/blob/main/LICENSE"
           rel="noopener"

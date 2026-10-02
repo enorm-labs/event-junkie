@@ -15,8 +15,8 @@ window.EJ_LINKS = {
         {
           "url": "https://github.com/enorm-labs/event-junkie",
           "label": "github.com/enorm-labs/event-junkie",
-          "what": "The repository. Public, Apache-2.0",
-          "whatText": "The repository. Public, Apache-2.0",
+          "what": "The repository. Public, BUSL-1.1",
+          "whatText": "The repository. Public, BUSL-1.1",
           "status": "",
           "statusText": ""
         },

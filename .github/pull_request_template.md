@@ -37,6 +37,10 @@ widget, an analytics snippet, or anything newly stored on the visitor's device.
 - [ ] This change does **not** affect data processing, third-party requests, or storage on the visitor's device — **or** it does, this description says so,
       and the privacy notice (both languages) and `docs/LEGAL.md` §7 are updated in this PR.
 
+## Contributor Licence Agreement
+
+- [ ] I agree to the [Contributor Licence Agreement](https://github.com/enorm-labs/event-junkie/blob/main/CLA.md) for this contribution.
+
 ## Accessibility
 
 <!-- Only relevant for frontend changes. See "Accessibility" in .github/instructions/vue.instructions.md. -->
