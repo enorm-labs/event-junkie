@@ -14,7 +14,7 @@ import java.sql.Connection
 import java.sql.DriverManager
 
 /**
- * Runs the promoter data migrations — V023, V025, V026, V027, V029, V030, V031, V032, V065, V066, V073 — against the rows each names, planted on a
+ * Runs the promoter data migrations — V023, V025, V026, V027, V029, V030, V031, V032, V065, V066, V073, V079 — against the rows each names, planted on a
  * database migrated to just before it.
  *
  * The migrations are keyed on slugs read from staging, and a misspelt one updates no row while
@@ -96,7 +96,9 @@ class MergeDuplicatePromotersMigrationTest {
         plantSchokoladenSpans()
         flyway("66").migrate()
         plantCtmSpellings()
-        flyway("73").migrate()
+        flyway("78").migrate()
+        plantAdmiralspalastFragments()
+        flyway("79").migrate()
     }
 
     @AfterAll
@@ -259,6 +261,26 @@ class MergeDuplicatePromotersMigrationTest {
                 rows.next()
                 rows.getInt(1) shouldBe 1
             }
+        }
+    }
+
+    @Test
+    fun `V079 renames the Aufgeigen fragment onto its brand and deletes the re-minted Insel row`() {
+        promoters().containsKey("aufgeigen-at-kunstler-und") shouldBe false
+        promoters()["aufgeigen-at"] shouldBe "Aufgeigen.at"
+        eventsOf("aufgeigen-at") shouldContainExactlyInAnyOrder listOf("af1")
+        promoters().containsKey("das-forgotten-female-composers") shouldBe false
+        eventsOf("insel") shouldContainExactlyInAnyOrder listOf("ff1")
+    }
+
+    /** V079: the Admiralspalast row as production stores it, and the row Insel minted after V026, with an event that must stay. */
+    private fun plantAdmiralspalastFragments() {
+        connection.createStatement().use { statement ->
+            plantPromoter(statement, "„Aufgeigen.at“ Künstler und", "aufgeigen-at-kunstler-und")
+            plantEvent(statement, "af1", "aufgeigen-at-kunstler-und")
+            plantPromoter(statement, "Das forgotten female* composers", "das-forgotten-female-composers")
+            plantPromoter(statement, "Insel", "insel")
+            plantEvent(statement, "ff1", "das-forgotten-female-composers", "insel")
         }
     }
 

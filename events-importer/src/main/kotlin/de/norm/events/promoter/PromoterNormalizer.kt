@@ -6,8 +6,9 @@ import de.norm.events.common.foldTypedApostrophes
 // Promoter-name canonicalization. One promoter is written many ways ("LOFT", "Loft Concerts
 // GmbH"), so slugging the raw name fragments it; [canonicalPromoterName] reduces variants to one
 // form before slugging, conservatively and deterministically:
-// 1. Strip a trailing run of legal-form and descriptor words (GmbH, UG, "Concerts", "Konzerte",
-// "Music", "Events", …). Trailing only, so "Concert Concept" stays intact.
+// 1. Drop double quotes ("„Aufgeigen.at“"), then strip a trailing run of legal-form and descriptor
+// words (GmbH, UG, "Concerts", "Konzerte", "Music", "Events", …) and the conjunction that joined
+// them. Trailing only, so "Concert Concept" stays intact.
 // 2. De-shout ALL-CAPS words ("SIMPLY QUIZ" to "Simply Quiz") with the artist normalizer's
 // [deshoutWord], so its acronym list applies ("TV NOIR" to "TV Noir") and "GreyZone" survives.
 // 3. Fold known typos and spacing variants via a curated map ("Trinty" to "Trinity", "Allrooms"
@@ -33,6 +34,7 @@ fun canonicalPromoterName(raw: String): String {
             .trim()
             .foldTypedApostrophes()
             .replace(TRAILING_PAREN_REGEX, "")
+            .replace(DOUBLE_QUOTE_REGEX, "")
             .trim()
             .ifBlank { raw.trim() }
     val tokens =
@@ -112,6 +114,9 @@ private val WHITESPACE_REGEX = Regex("""\s+""")
 /** A trailing parenthetical annotation (" (wf)", " (GSA)") appended to a promoter name. */
 private val TRAILING_PAREN_REGEX = Regex("""\s*\([^)]*\)\s*$""")
 
+/** Straight and typographic double quotes, which a credit wraps a brand in and no promoter keeps in its name. */
+private val DOUBLE_QUOTE_REGEX = Regex("[\"„“”«»]")
+
 /** Everything except letters (incl. German umlauts) and digits — used to normalize a token for lookup. */
 private val NON_WORD_REGEX = Regex("""[^a-z0-9äöüß]""")
 
@@ -168,6 +173,9 @@ private val STRIP_WORDS: Set<String> =
             "konzertagentur",
             "konzertdirektion",
             "einzelunternehmer",
+            // The conjunction a stripped pair leaves dangling: "Künstler und Veranstaltungs GmbH" (#2331).
+            "und",
+            "and",
             // Presenter verbs a promoter appends to its own name ("porcupine records & little league shows
             // prsnt:"); the colon is stripped before lookup. The English "presents" is absent: "AEG
             // Presents" is the company's name, and stripping it would leave "Aeg".
@@ -320,5 +328,8 @@ private val NAME_CORRECTIONS: Map<String, String> =
         "itd" to "ITD Events",
         "mfp" to "MFP Concerts",
         "spirit" to "Spirit Events",
-        "leasingrent" to "LEASING&RENT OÜ"
+        "leasingrent" to "LEASING&RENT OÜ",
+        // Admiralspalast credits "„Aufgeigen.at“ Künstler und Veranstaltungs GmbH"; the brand is the
+        // domain (#2331).
+        "aufgeigenatkünstler" to "Aufgeigen.at"
     )

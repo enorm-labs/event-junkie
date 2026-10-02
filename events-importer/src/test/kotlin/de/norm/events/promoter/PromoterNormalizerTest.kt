@@ -166,6 +166,9 @@ class PromoterNormalizerTest {
             isNonPromoterName("Peter Edel & www.stummfilmkonzerte.de") shouldBe true
             isNonPromoterName("Das forgotten female* composers") shouldBe true
             isNonPromoterName("Das forgotten female* composers präsentieren:") shouldBe true
+            // Insel's capture keeps the legal form. The guard before #1361 read the whole credit, missed
+            // this one, and the next import minted the row V026 had deleted (#2331).
+            isNonPromoterName("Das forgotten female* composers e.V.") shouldBe true
             // Short real names stay.
             isNonPromoterName("Echo") shouldBe false
             isNonPromoterName("Join") shouldBe false
@@ -371,6 +374,18 @@ class PromoterNormalizerTest {
             canonicalPromoterName("Atoc Live") shouldBe "ATOC Soundlab"
             canonicalPromoterName("Atoc") shouldBe "ATOC Soundlab"
             canonicalPromoterName("ATOC Soundlab") shouldBe "ATOC Soundlab"
+        }
+    }
+
+    @Test
+    fun `drops the quotes and the conjunction a stripped legal name leaves behind`() {
+        assertSoftly {
+            canonicalPromoterName("„Aufgeigen.at“ Künstler und Veranstaltungs GmbH") shouldBe "Aufgeigen.at"
+            canonicalPromoterName("Aufgeigen.at") shouldBe "Aufgeigen.at"
+            canonicalPromoterName("\"Foo\" Konzert und Event GmbH") shouldBe "Foo"
+            canonicalPromoterName("Rock and Roll Events") shouldBe "Rock and Roll"
+            // A conjunction inside the name is not trailing, and stays.
+            canonicalPromoterName("Kunst und Krawall") shouldBe "Kunst und Krawall"
         }
     }
 }
