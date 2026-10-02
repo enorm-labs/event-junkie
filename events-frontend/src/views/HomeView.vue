@@ -119,13 +119,13 @@ async function expandTonight() {
           {{ t('home.eventCount', { count: tonightTotal }) }}
         </span>
       </div>
-      <p v-if="today.loading.value" class="text-sm text-muted-foreground">
+      <p v-if="today.loading.value" class="text-body text-muted-foreground">
         {{ t('common.states.loading') }}
       </p>
-      <p v-else-if="today.error.value" class="text-sm text-destructive">
+      <p v-else-if="today.error.value" class="text-body text-destructive">
         {{ today.error.value }}
       </p>
-      <p v-else-if="!today.data.value?.length" class="text-sm text-muted-foreground">
+      <p v-else-if="!today.data.value?.length" class="text-body text-muted-foreground">
         {{ t('home.tonightEmpty') }}
       </p>
       <template v-else>
@@ -143,13 +143,13 @@ async function expandTonight() {
 
     <section class="space-y-4 border-t border-border pt-8">
       <h2 :class="HEADING_CLASS">{{ t('home.upcoming') }}</h2>
-      <p v-if="upcoming.loading.value" class="text-sm text-muted-foreground">
+      <p v-if="upcoming.loading.value" class="text-body text-muted-foreground">
         {{ t('common.states.loading') }}
       </p>
-      <p v-else-if="upcoming.error.value" class="text-sm text-destructive">
+      <p v-else-if="upcoming.error.value" class="text-body text-destructive">
         {{ upcoming.error.value }}
       </p>
-      <p v-else-if="!upcoming.data.value?.length" class="text-sm text-muted-foreground">
+      <p v-else-if="!upcoming.data.value?.length" class="text-body text-muted-foreground">
         {{ t('home.upcomingEmpty') }}
       </p>
       <template v-else>

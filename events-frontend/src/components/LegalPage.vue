@@ -33,10 +33,10 @@ const { t } = useI18n()
     <header class="space-y-2">
       <h1 class="text-page font-bold tracking-tight">{{ title }}</h1>
       <p v-if="intro" class="text-muted-foreground">{{ intro }}</p>
-      <p v-if="showReviewDate" class="text-sm text-muted-foreground">
+      <p v-if="showReviewDate" class="text-body text-muted-foreground">
         {{ t('legal.lastReviewed') }} <time :datetime="LAST_REVIEWED">{{ LAST_REVIEWED }}</time>
       </p>
-      <p v-if="showAuthoritativeVersion" class="text-sm text-muted-foreground">
+      <p v-if="showAuthoritativeVersion" class="text-body text-muted-foreground">
         {{ t('legal.authoritativeVersion') }}
       </p>
     </header>
@@ -44,7 +44,7 @@ const { t } = useI18n()
     <!-- `[&_x]` selectors rather than a class on every element: the page bodies below are plain
          semantic markup, which keeps them readable as documents and easy to translate later. -->
     <div
-      class="space-y-6 text-muted-foreground [&_a]:text-foreground [&_a]:underline [&_a]:underline-offset-4 [&_dt]:font-medium [&_dt]:text-foreground [&_h2]:text-xl [&_h2]:font-semibold [&_h2]:tracking-tight [&_h2]:text-foreground [&_h3]:font-medium [&_h3]:text-foreground [&_li]:my-1 [&_ol]:list-decimal [&_ol]:space-y-1 [&_ol]:pl-6 [&_p]:my-2 [&_section]:space-y-2 [&_ul]:list-disc [&_ul]:space-y-1 [&_ul]:pl-6"
+      class="space-y-6 text-muted-foreground [&_a]:text-foreground [&_a]:underline [&_a]:underline-offset-4 [&_dt]:font-medium [&_dt]:text-foreground [&_h2]:text-lede [&_h2]:font-semibold [&_h2]:tracking-tight [&_h2]:text-foreground [&_h3]:font-medium [&_h3]:text-foreground [&_li]:my-1 [&_ol]:list-decimal [&_ol]:space-y-1 [&_ol]:pl-6 [&_p]:my-2 [&_section]:space-y-2 [&_ul]:list-disc [&_ul]:space-y-1 [&_ul]:pl-6"
     >
       <slot />
     </div>

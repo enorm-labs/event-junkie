@@ -59,7 +59,7 @@ const websiteHost = computed(() => {
       <a
         v-if="websiteHost"
         :href="promoter.websiteUrl ?? undefined"
-        class="block truncate text-sm text-primary underline-offset-4 hover:underline"
+        class="block truncate text-body text-primary underline-offset-4 hover:underline"
         rel="noopener noreferrer"
         target="_blank"
       >

@@ -64,7 +64,7 @@ const { componentCount, groups, openGroups, toggle, versionSuffix } = useNotices
           </span>
         </summary>
 
-        <p v-if="group.url" class="mt-2 text-sm">
+        <p v-if="group.url" class="mt-2 text-body">
           <a :href="group.url" rel="noopener" target="_blank"
             >Read the {{ group.license }} licence</a
           >
@@ -72,7 +72,7 @@ const { componentCount, groups, openGroups, toggle, versionSuffix } = useNotices
 
         <!-- Rendered only while open: mounting every row up front is ~640 list items and a visible
              hitch on the first paint of this route. -->
-        <ul v-if="openGroups.has(group.license)" class="mt-3 text-sm">
+        <ul v-if="openGroups.has(group.license)" class="mt-3 text-body">
           <li v-for="component in group.components" :key="`${component.name}@${component.version}`">
             <a v-if="component.url" :href="component.url" rel="noopener" target="_blank">{{
               component.name

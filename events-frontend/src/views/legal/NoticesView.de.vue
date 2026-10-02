@@ -67,7 +67,7 @@ const { componentCount, groups, openGroups, toggle, versionSuffix } = useNotices
           </span>
         </summary>
 
-        <p v-if="group.url" class="mt-2 text-sm">
+        <p v-if="group.url" class="mt-2 text-body">
           <a :href="group.url" rel="noopener" target="_blank"
             >Lizenztext {{ group.license }} lesen</a
           >
@@ -75,7 +75,7 @@ const { componentCount, groups, openGroups, toggle, versionSuffix } = useNotices
 
         <!-- Nur im aufgeklappten Zustand gerendert: alle Zeilen vorab zu mounten sind ~640
              Listenelemente und ein sichtbarer Ruckler beim ersten Aufbau dieser Route. -->
-        <ul v-if="openGroups.has(group.license)" class="mt-3 text-sm">
+        <ul v-if="openGroups.has(group.license)" class="mt-3 text-body">
           <li v-for="component in group.components" :key="`${component.name}@${component.version}`">
             <a v-if="component.url" :href="component.url" rel="noopener" target="_blank">{{
               component.name

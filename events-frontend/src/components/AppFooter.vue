@@ -49,12 +49,12 @@ const localePath = useLocalePath()
       <div class="grid gap-8 sm:grid-cols-2 md:grid-cols-3">
         <div class="space-y-3">
           <BrandLogo always-show-wordmark />
-          <p class="text-sm text-muted-foreground">{{ t('footer.tagline') }}</p>
+          <p class="text-body text-muted-foreground">{{ t('footer.tagline') }}</p>
           <!-- "Alle Angaben ohne Gewähr", in the register the brand actually speaks (§7.6). -->
-          <p class="max-w-prose text-sm text-muted-foreground">{{ t('footer.disclaimer') }}</p>
+          <p class="max-w-prose text-body text-muted-foreground">{{ t('footer.disclaimer') }}</p>
         </div>
 
-        <nav aria-labelledby="footer-project-heading" class="space-y-3 text-sm">
+        <nav aria-labelledby="footer-project-heading" class="space-y-3 text-body">
           <h2 id="footer-project-heading" class="font-medium text-foreground">
             {{ t('footer.project') }}
           </h2>
@@ -82,7 +82,7 @@ const localePath = useLocalePath()
           </ul>
         </nav>
 
-        <nav aria-labelledby="footer-legal-heading" class="space-y-3 text-sm">
+        <nav aria-labelledby="footer-legal-heading" class="space-y-3 text-body">
           <h2 id="footer-legal-heading" class="font-medium text-foreground">
             {{ t('footer.legal') }}
           </h2>
@@ -112,7 +112,7 @@ const localePath = useLocalePath()
       </div>
 
       <div
-        class="mt-8 border-t border-border pt-6 text-sm text-muted-foreground sm:flex sm:items-center sm:justify-between"
+        class="mt-8 border-t border-border pt-6 text-body text-muted-foreground sm:flex sm:items-center sm:justify-between"
       >
         <!-- Two clauses: the copyright covers this site's design and text, the licence the code.
              Event data is neither ours to licence nor covered (§3). -->
@@ -127,7 +127,7 @@ const localePath = useLocalePath()
 
         <!-- Renders nothing until /meta resolves: a version must never cost a layout shift or an
              error state (§4.4). -->
-        <p v-if="meta?.version" class="mt-4 font-mono text-xs sm:mt-0" data-testid="app-version">
+        <p v-if="meta?.version" class="mt-4 font-mono text-meta sm:mt-0" data-testid="app-version">
           <component
             :is="releaseUrl ? 'a' : 'span'"
             :class="releaseUrl ? linkClass : ''"

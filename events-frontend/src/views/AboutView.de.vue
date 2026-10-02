@@ -15,7 +15,7 @@ const localePath = useLocalePath()
 
 <template>
   <main class="mx-auto max-w-3xl space-y-6 p-4 sm:p-8">
-    <h1 class="text-3xl font-bold tracking-tight">Über das Projekt</h1>
+    <h1 class="text-page font-bold tracking-tight">Über das Projekt</h1>
     <p class="text-muted-foreground">
       Event Junkie ist dein Überblick über das, was in Berlins Locations läuft: ein Feed mit
       Live-Events jeder Art, auf großen Bühnen und in kleinen Hinterzimmern.
@@ -26,7 +26,7 @@ const localePath = useLocalePath()
     </p>
 
     <section class="space-y-4 pt-4">
-      <h2 class="text-2xl font-bold tracking-tight">Was du hier findest</h2>
+      <h2 class="text-section font-bold tracking-tight">Was du hier findest</h2>
       <p class="text-muted-foreground">
         Die Regel ist einfach:
         <strong class="font-medium text-foreground"
@@ -53,7 +53,7 @@ const localePath = useLocalePath()
     </section>
 
     <section class="space-y-4 pt-4">
-      <h2 class="text-2xl font-bold tracking-tight">Warum es das gibt</h2>
+      <h2 class="text-section font-bold tracking-tight">Warum es das gibt</h2>
       <p class="text-muted-foreground">
         Weil ich
         <strong class="font-medium text-foreground"
@@ -102,7 +102,7 @@ const localePath = useLocalePath()
     </section>
 
     <section class="space-y-4 pt-4">
-      <h2 class="text-2xl font-bold tracking-tight">Warum Berlin</h2>
+      <h2 class="text-section font-bold tracking-tight">Warum Berlin</h2>
       <p class="text-muted-foreground">
         Berlin ist eine der besten Städte der Welt. Nicht immer sauber, ziemlich verrückt, arm, aber
         sexy. Vor allem ist es ein Ort, an dem man frei leben und der Mensch sein kann, der man ist.
@@ -168,7 +168,7 @@ const localePath = useLocalePath()
     </section>
 
     <section class="space-y-4 pt-4">
-      <h2 class="text-2xl font-bold tracking-tight">Und zum Lernen</h2>
+      <h2 class="text-section font-bold tracking-tight">Und zum Lernen</h2>
       <p class="text-muted-foreground">
         Der andere ehrliche Grund: Ich habe das gebaut, um zu lernen, vor allem über
         <strong class="font-medium text-foreground">KI-gestützte Entwicklung</strong>. Der größte
@@ -203,7 +203,7 @@ const localePath = useLocalePath()
          Header, wenn der Anker angesprungen wird. Die id muss `beta` bleiben: sie ist in beiden
          Sprachfassungen dasselbe Ziel. -->
     <section id="beta" class="scroll-mt-8 space-y-4 pt-4">
-      <h2 class="text-2xl font-bold tracking-tight">Warum da beta steht</h2>
+      <h2 class="text-section font-bold tracking-tight">Warum da beta steht</h2>
       <p class="text-muted-foreground">
         Event Junkie ist noch jung. Es funktioniert, und wir nutzen es selbst jede Woche. Aber es
         ist noch nicht fertig, und das solltest du wissen, bevor du deinen Abend danach planst.

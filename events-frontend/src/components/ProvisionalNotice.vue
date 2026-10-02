@@ -30,7 +30,7 @@ const { t } = useI18n()
     v-if="
       CONTACT_DETAILS_ARE_PROVISIONAL || INFRASTRUCTURE_IS_PROPOSED || PROCESSOR_CONTRACTS_PENDING
     "
-    class="rounded-lg border border-border bg-muted/50 p-4 text-sm"
+    class="rounded-lg border border-border bg-muted/50 p-4 text-body"
   >
     <p class="font-medium text-foreground">{{ t('legal.notFinal') }}</p>
     <ul class="mt-2 list-disc space-y-1 pl-5">

@@ -78,7 +78,7 @@ Six steps, named for the role rather than the size, declared as `@theme` tokens 
 | `text-section`    | 24 / 30 px     | `h2`                                               |
 | `text-page`       | 30 / 36 px     | `h1`                                               |
 
-**A seventh step needs an argument, not a `text-4xl`.** The faces are Geist and Geist Mono, both self-hosted; the mono is the eyebrow device and the footer's
+**Tailwind's own sizes are refused** — `text-sm`, `text-2xl` and the rest fail `npm run lint` outside `components/ui/` (`vue/no-restricted-class`, #2347); three of them were the tokens under another name. **A seventh step needs an argument, not a `text-4xl`.** The faces are Geist and Geist Mono, both self-hosted; the mono is the eyebrow device and the footer's
 version string, not decoration (BRANDING §5.3).
 
 ## 4. Space

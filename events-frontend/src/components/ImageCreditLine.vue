@@ -26,8 +26,8 @@ const { t } = useI18n()
   <p
     :class="
       overlay
-        ? 'absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/55 to-transparent px-3 pb-2 pt-10 text-xs text-white'
-        : 'text-xs text-muted-foreground'
+        ? 'absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/55 to-transparent px-3 pb-2 pt-10 text-meta text-white'
+        : 'text-meta text-muted-foreground'
     "
   >
     {{ t('common.imageCredit.photo') }}

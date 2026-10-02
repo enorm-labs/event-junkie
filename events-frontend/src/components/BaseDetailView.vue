@@ -65,12 +65,12 @@ const { compact } = useCompactView()
 
 <template>
   <main class="mx-auto max-w-3xl space-y-8 p-4 sm:p-8">
-    <p v-if="loading" class="text-sm text-muted-foreground">{{ t('common.states.loading') }}</p>
+    <p v-if="loading" class="text-body text-muted-foreground">{{ t('common.states.loading') }}</p>
 
     <div v-else-if="notFound" class="space-y-3">
       <!-- Interpolated rather than concatenated: German puts the negation last ("Location nicht
            gefunden"), so the two halves cannot be separate strings. -->
-      <h1 class="text-section font-bold tracking-tight">
+      <h1 class="text-page font-bold tracking-tight">
         {{ t('detail.notFoundHeading', { kind }) }}
       </h1>
       <p class="text-muted-foreground">{{ notFoundText }}</p>
@@ -79,7 +79,7 @@ const { compact } = useCompactView()
       </Button>
     </div>
 
-    <p v-else-if="error" class="text-sm text-destructive">{{ error }}</p>
+    <p v-else-if="error" class="text-body text-destructive">{{ error }}</p>
 
     <template v-else-if="ready">
       <!--
@@ -117,11 +117,11 @@ const { compact } = useCompactView()
 
       <section class="space-y-4">
         <SectionLabel>{{ t('common.upcomingEvents') }}</SectionLabel>
-        <p v-if="eventsLoading" class="text-sm text-muted-foreground">
+        <p v-if="eventsLoading" class="text-body text-muted-foreground">
           {{ t('common.states.loading') }}
         </p>
-        <p v-else-if="eventsError" class="text-sm text-destructive">{{ eventsError }}</p>
-        <p v-else-if="!events?.content?.length" class="text-sm text-muted-foreground">
+        <p v-else-if="eventsError" class="text-body text-destructive">{{ eventsError }}</p>
+        <p v-else-if="!events?.content?.length" class="text-body text-muted-foreground">
           {{ emptyText }}
         </p>
         <div v-else-if="compact" :class="CARD_LIST_CLASS">
@@ -138,7 +138,7 @@ const { compact } = useCompactView()
         <summary class="cursor-pointer">
           <SectionLabel as="span">{{ t('common.pastEvents') }}</SectionLabel>
         </summary>
-        <p class="pt-3 text-sm text-muted-foreground">{{ t('common.pastEventsNote') }}</p>
+        <p class="pt-3 text-body text-muted-foreground">{{ t('common.pastEventsNote') }}</p>
         <div v-if="compact" :class="[CARD_LIST_CLASS, 'mt-3']">
           <EventRow v-for="event in pastEvents.content" :key="event.slug" :event="event" />
         </div>

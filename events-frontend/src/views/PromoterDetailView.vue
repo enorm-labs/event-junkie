@@ -90,7 +90,7 @@ const credit = computed(() => imageCredit(promoter.value))
       <a
         v-if="promoter?.websiteUrl"
         :href="promoter.websiteUrl"
-        class="text-sm text-primary underline-offset-4 hover:underline"
+        class="text-body text-primary underline-offset-4 hover:underline"
         rel="noopener noreferrer"
         target="_blank"
       >

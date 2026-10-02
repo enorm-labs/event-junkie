@@ -65,7 +65,7 @@ const { t } = useI18n()
     </header>
     <!-- No date range here: FullCalendar's visible window already is the range. -->
     <EventFilterBar :show-date-range="false" />
-    <p v-if="error" class="text-sm text-destructive">{{ error }}</p>
+    <p v-if="error" class="text-body text-destructive">{{ error }}</p>
     <EventCalendar :events="events" @dates-set="loadRange" @event-click="openEvent" />
   </main>
 </template>

@@ -84,7 +84,7 @@ test('searching updates the URL query and re-requests', async ({ page }) => {
 
   await page.goto('/promoters')
   await page.getByPlaceholder('Search promoters…').fill('trinity')
-  await page.getByRole('button', { name: 'Search' }).click()
+  await page.getByPlaceholder('Search promoters…').press('Enter')
 
   await expect(page).toHaveURL(/\/promoters\?q=trinity$/)
   await expect(page.getByRole('link', { name: 'Trinity Music' })).toBeVisible()

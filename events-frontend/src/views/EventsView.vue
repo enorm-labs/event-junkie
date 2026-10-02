@@ -66,15 +66,15 @@ const mapLink = computed(() => ({
 
     <EventFilterBar />
 
-    <p v-if="loading" class="text-sm text-muted-foreground">{{ t('common.states.loading') }}</p>
-    <p v-else-if="error" class="text-sm text-destructive">{{ error }}</p>
+    <p v-if="loading" class="text-body text-muted-foreground">{{ t('common.states.loading') }}</p>
+    <p v-else-if="error" class="text-body text-destructive">{{ error }}</p>
     <!--
       An empty result has to offer something to do. It used to be one sentence and no control at
       all, under a filter bar six rows tall on a phone — the visitor had to work out which of eight
       inputs to undo (#1266).
     -->
     <div v-else-if="!page?.content?.length" class="space-y-3">
-      <p class="text-sm text-muted-foreground">{{ t('events.empty') }}</p>
+      <p class="text-body text-muted-foreground">{{ t('events.empty') }}</p>
       <div class="flex flex-wrap gap-3">
         <Button v-if="isFiltered" variant="outline" @click="clearFilters">
           {{ t('common.actions.clearFilters') }}
@@ -85,7 +85,7 @@ const mapLink = computed(() => ({
       </div>
     </div>
     <template v-else>
-      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1 text-sm">
+      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1 text-body">
         <p class="text-muted-foreground">
           {{ t('events.resultCount', { count: page.totalElements }) }}
         </p>

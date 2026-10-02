@@ -60,6 +60,10 @@ watch(
   },
 )
 
+function applySearch() {
+  if (search.value !== queryString('q')) applyFilters({ q: search.value })
+}
+
 // Paging, the clamp on an out-of-range `?page=`, and the reload on any query change.
 const { currentPage, totalPages, goToPage } = usePagedList(page, run)
 
@@ -178,14 +182,16 @@ const localePath = useLocalePath()
     </header>
 
     <div :class="PANEL_CLASS">
-      <form class="flex gap-2" @submit.prevent="applyFilters({ q: search })">
+      <!-- One field, so Enter submits without a button; leaving the field applies it too, as on
+           the events bar. -->
+      <form role="search" @submit.prevent="applySearch">
         <BaseInput
           v-model="search"
           :placeholder="t('venues.searchPlaceholder')"
           class="px-3"
           type="search"
+          @change="applySearch"
         />
-        <Button type="submit" variant="outline">{{ t('common.actions.search') }}</Button>
       </form>
 
       <BaseSelect
@@ -220,17 +226,17 @@ const localePath = useLocalePath()
     </div>
 
     <template v-if="showMap">
-      <p v-if="mapLoading" class="text-sm text-muted-foreground">
+      <p v-if="mapLoading" class="text-body text-muted-foreground">
         {{ t('common.states.loadingVenues') }}
       </p>
-      <p v-else-if="mapError" class="text-sm text-destructive">{{ mapError }}</p>
+      <p v-else-if="mapError" class="text-body text-destructive">{{ mapError }}</p>
       <div v-else-if="!pins.length" class="space-y-3">
-        <p class="text-sm text-muted-foreground">{{ t('venues.empty') }}</p>
+        <p class="text-body text-muted-foreground">{{ t('venues.empty') }}</p>
         <Button v-if="isFiltered" variant="outline" @click="clearSearch">
           {{ t('common.actions.clearSearch') }}
         </Button>
       </div>
-      <p v-else class="text-sm text-muted-foreground">
+      <p v-else class="text-body text-muted-foreground">
         {{ t('venues.resultCount', { count: pins.length }) }}
         <template v-if="unpinnedCount">
           ·
@@ -241,7 +247,7 @@ const localePath = useLocalePath()
       </p>
 
       <section :aria-label="t('map.near.label')" class="space-y-3">
-        <div class="flex flex-wrap items-center gap-2 text-sm">
+        <div class="flex flex-wrap items-center gap-2 text-body">
           <Button
             :disabled="locateState === 'locating'"
             size="sm"
@@ -278,24 +284,24 @@ const localePath = useLocalePath()
         <p
           v-if="locateState === 'locating'"
           aria-live="polite"
-          class="text-sm text-muted-foreground"
+          class="text-body text-muted-foreground"
         >
           {{ t('map.near.locating') }}
         </p>
         <p
           v-else-if="locateState === 'denied' || locateState === 'unavailable'"
           aria-live="polite"
-          class="text-sm text-muted-foreground"
+          class="text-body text-muted-foreground"
         >
           {{ t(`venues.near.${locateState}`) }}
         </p>
-        <p v-if="coarse" class="text-sm text-muted-foreground">
+        <p v-if="coarse" class="text-body text-muted-foreground">
           {{ t('map.near.coarse', { accuracy: coarse }) }}
         </p>
       </section>
 
       <div v-if="mapUnavailable" class="space-y-3">
-        <p class="text-sm text-muted-foreground">{{ t('map.unavailable') }}</p>
+        <p class="text-body text-muted-foreground">{{ t('map.unavailable') }}</p>
         <Button variant="outline" @click="setView('list')">{{ t('map.showList') }}</Button>
       </div>
       <VenueMap
@@ -318,7 +324,10 @@ const localePath = useLocalePath()
           {{ t('venues.whatsOn') }}
         </RouterLink>
       </section>
-      <p v-else-if="pins.length && !mapUnavailable && !near" class="text-sm text-muted-foreground">
+      <p
+        v-else-if="pins.length && !mapUnavailable && !near"
+        class="text-body text-muted-foreground"
+      >
         {{ t('venues.pickPin') }}
       </p>
 
@@ -326,7 +335,7 @@ const localePath = useLocalePath()
         <h2 class="text-section font-bold tracking-tight">
           {{ t('map.near.heading', { radius: distance(radiusKm) }) }}
         </h2>
-        <p class="text-sm text-muted-foreground">
+        <p class="text-body text-muted-foreground">
           {{
             near.length
               ? t('venues.near.resultCount', { count: near.length })
@@ -345,19 +354,19 @@ const localePath = useLocalePath()
       </section>
     </template>
 
-    <p v-else-if="loading" class="text-sm text-muted-foreground">
+    <p v-else-if="loading" class="text-body text-muted-foreground">
       {{ t('common.states.loadingVenues') }}
     </p>
-    <p v-else-if="error" class="text-sm text-destructive">{{ error }}</p>
+    <p v-else-if="error" class="text-body text-destructive">{{ error }}</p>
     <!-- An empty result offers a control, not only a sentence (#1266). -->
     <div v-else-if="!page?.content?.length" class="space-y-3">
-      <p class="text-sm text-muted-foreground">{{ t('venues.empty') }}</p>
+      <p class="text-body text-muted-foreground">{{ t('venues.empty') }}</p>
       <Button v-if="isFiltered" variant="outline" @click="clearSearch">
         {{ t('common.actions.clearSearch') }}
       </Button>
     </div>
     <template v-else>
-      <p class="text-sm text-muted-foreground">
+      <p class="text-body text-muted-foreground">
         {{ t('venues.resultCount', { count: page.totalElements }) }}
       </p>
       <!-- Second level of the outline: nothing sits between the page `h1` and this grid. -->

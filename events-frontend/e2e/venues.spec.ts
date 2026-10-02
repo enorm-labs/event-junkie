@@ -56,7 +56,7 @@ test('searching updates the URL query and re-requests', async ({ page }) => {
 
   await page.goto('/venues')
   await page.getByPlaceholder('Search venues…').fill('lido')
-  await page.getByRole('button', { name: 'Search' }).click()
+  await page.getByPlaceholder('Search venues…').press('Enter')
 
   await expect(page).toHaveURL(/\/venues\?q=lido$/)
   await expect(page.getByRole('link', { name: /Lido/ })).toBeVisible()

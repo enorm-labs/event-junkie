@@ -12,7 +12,7 @@ const localePath = useLocalePath()
 
 <template>
   <main class="mx-auto max-w-3xl space-y-6 p-4 sm:p-8">
-    <h1 class="text-3xl font-bold tracking-tight">About</h1>
+    <h1 class="text-page font-bold tracking-tight">About</h1>
     <p class="text-muted-foreground">
       Event Junkie is your guide to what's on across Berlin's venues: one feed of live events of
       every kind, on big stages and in small back rooms.
@@ -23,7 +23,7 @@ const localePath = useLocalePath()
     </p>
 
     <section class="space-y-4 pt-4">
-      <h2 class="text-2xl font-bold tracking-tight">What you'll find here</h2>
+      <h2 class="text-section font-bold tracking-tight">What you'll find here</h2>
       <p class="text-muted-foreground">
         The rule is simple:
         <strong class="font-medium text-foreground"
@@ -50,7 +50,7 @@ const localePath = useLocalePath()
     </section>
 
     <section class="space-y-4 pt-4">
-      <h2 class="text-2xl font-bold tracking-tight">Why this exists</h2>
+      <h2 class="text-section font-bold tracking-tight">Why this exists</h2>
       <p class="text-muted-foreground">
         Because I wanted to build
         <strong class="font-medium text-foreground">the event app Berlin deserves.</strong>
@@ -92,7 +92,7 @@ const localePath = useLocalePath()
     </section>
 
     <section class="space-y-4 pt-4">
-      <h2 class="text-2xl font-bold tracking-tight">Why Berlin</h2>
+      <h2 class="text-section font-bold tracking-tight">Why Berlin</h2>
       <p class="text-muted-foreground">
         Berlin is one of the best cities on this planet. Not always clean, more than a little mad,
         poor but sexy. Above all it is a place where you can live freely and be the person you
@@ -157,7 +157,7 @@ const localePath = useLocalePath()
     </section>
 
     <section class="space-y-4 pt-4">
-      <h2 class="text-2xl font-bold tracking-tight">And to learn</h2>
+      <h2 class="text-section font-bold tracking-tight">And to learn</h2>
       <p class="text-muted-foreground">
         The other honest reason: I built this to learn, above all about
         <strong class="font-medium text-foreground">AI-assisted development</strong>. Most of the
@@ -191,7 +191,7 @@ const localePath = useLocalePath()
     <!-- The header's beta badge links here. `scroll-mt` keeps the heading clear of the
          sticky-ish header when the anchor is followed. -->
     <section id="beta" class="scroll-mt-8 space-y-4 pt-4">
-      <h2 class="text-2xl font-bold tracking-tight">Why it says beta</h2>
+      <h2 class="text-section font-bold tracking-tight">Why it says beta</h2>
       <p class="text-muted-foreground">
         Event Junkie is early. It works and we use it every week, but it is still finding its feet,
         and you should know what that means before you plan a night around it.

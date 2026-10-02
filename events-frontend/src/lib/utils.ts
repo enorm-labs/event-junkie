@@ -25,7 +25,7 @@ export function cn(...inputs: ClassValue[]) {
  * only two that should reference it), here rather than duplicated or turned into an `@apply` rule.
  */
 export const FIELD_CLASS =
-  'h-8 rounded-lg border border-border bg-background px-2 text-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/50'
+  'h-8 rounded-lg border border-border bg-background px-2 text-body outline-none focus-visible:ring-3 focus-visible:ring-ring/50'
 
 /**
  * An interactive card: the event and venue tiles, which are links. No border, fill, shadow or

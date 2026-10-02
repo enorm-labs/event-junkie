@@ -19,8 +19,6 @@
     "toDarkMode": "Zum dunklen Modus wechseln"
   },
   "actions": {
-    "search": "Suchen",
-    "apply": "Anwenden",
     "clearFilters": "Filter zurücksetzen",
     "clearSearch": "Suche zurücksetzen",
     "browseTonight": "Schau, was heute läuft",

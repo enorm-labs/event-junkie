@@ -19,8 +19,6 @@
     "toDarkMode": "Switch to dark mode"
   },
   "actions": {
-    "search": "Search",
-    "apply": "Apply",
     "clearFilters": "Clear filters",
     "clearSearch": "Clear the search",
     "browseTonight": "See what is on tonight",
