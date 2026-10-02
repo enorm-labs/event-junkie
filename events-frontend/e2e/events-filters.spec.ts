@@ -1,4 +1,5 @@
 import { expect, type Page, type Route, test } from '@playwright/test'
+import { openMoreFilters } from './filter-bar'
 
 /**
  * Events list-page filtering with a mocked BFF. The view keeps every filter in the URL query and
@@ -124,7 +125,7 @@ test('filters by search query', async ({ page }) => {
   await expect(eventHeading(page, 'Default Event A')).toBeVisible()
 
   await page.getByRole('searchbox').fill('jazz')
-  await page.getByRole('button', { name: 'Search' }).click()
+  await page.getByRole('searchbox').press('Enter')
 
   await expect(page).toHaveURL(/[?&]q=jazz\b/)
   await expect(eventHeading(page, 'Jazz Night')).toBeVisible()
@@ -136,6 +137,7 @@ test('filters by event type', async ({ page }) => {
   await page.goto('/events')
   await expect(eventHeading(page, 'Default Event A')).toBeVisible()
 
+  await openMoreFilters(page)
   await page.getByRole('button', { name: 'Filter by event type: All types' }).click()
   await page.getByRole('checkbox', { name: 'Festival' }).check()
 
@@ -157,6 +159,7 @@ test('filters by venue', async ({ page }) => {
   await page.goto('/events')
   await expect(eventHeading(page, 'Default Event A')).toBeVisible()
 
+  await openMoreFilters(page)
   await selectWithOption(page, 'All venues').selectOption('lido')
 
   await expect(page).toHaveURL(/[?&]venue=lido\b/)
@@ -166,6 +169,7 @@ test('filters by venue', async ({ page }) => {
 test('filters by genre family, then by a style inside it', async ({ page }) => {
   await page.goto('/events')
   await expect(eventHeading(page, 'Default Event A')).toBeVisible()
+  await openMoreFilters(page)
   // No family chosen: the style select does not exist yet.
   await expect(selectWithOption(page, 'All styles')).toHaveCount(0)
 
@@ -210,6 +214,11 @@ test('a link from before families carries only genre, and both controls still sh
   await page.goto('/events?genre=techno')
   await expect(eventHeading(page, 'Techno Rave')).toBeVisible()
 
+  // A genre in the URL opens the section on a phone too, and the toggle counts it.
+  await expect(page.getByRole('button', { name: 'More filters (1)' })).toHaveAttribute(
+    'aria-expanded',
+    'true',
+  )
   await expect(page.getByRole('button', { name: 'Filter by genre: Electronic' })).toBeVisible()
   await expect(selectWithOption(page, 'All styles')).toHaveValue('techno')
 })
@@ -218,6 +227,7 @@ test('filters by district', async ({ page }) => {
   await page.goto('/events')
   await expect(eventHeading(page, 'Default Event A')).toBeVisible()
 
+  await openMoreFilters(page)
   await selectWithOption(page, 'All districts').selectOption('neukoelln')
 
   await expect(page).toHaveURL(/[?&]district=neukoelln\b/)
@@ -228,9 +238,11 @@ test('filters by price range', async ({ page }) => {
   await page.goto('/events')
   await expect(eventHeading(page, 'Default Event A')).toBeVisible()
 
+  // A bound applies on Enter or when it is left; there is no Apply button any more.
+  await openMoreFilters(page)
   await page.getByLabel('Minimum presale price').fill('10')
   await page.getByLabel('Maximum presale price').fill('30')
-  await page.getByRole('button', { name: 'Apply' }).click()
+  await page.getByLabel('Maximum presale price').press('Enter')
 
   await expect(page).toHaveURL(/[?&]minPrice=10\b/)
   await expect(page).toHaveURL(/[?&]maxPrice=30\b/)
@@ -331,26 +343,63 @@ test('browses past events from an explicit range', async ({ page }) => {
   expect(errors, 'unexpected uncaught exceptions').toEqual([])
 })
 
-test('hides sold-out events when the toggle is checked', async ({ page }) => {
+test('hides sold-out events when the toggle is pressed', async ({ page }) => {
   await page.goto('/events')
   await expect(eventHeading(page, 'Default Event A')).toBeVisible()
 
-  await page.getByLabel('Hide sold out').check()
+  await openMoreFilters(page)
+  const toggle = page.getByRole('button', { name: 'Hide sold out' })
+  await toggle.click()
 
+  await expect(toggle).toHaveAttribute('aria-pressed', 'true')
   await expect(page).toHaveURL(/[?&]excludeSoldOut=true\b/)
   await expect(eventHeading(page, 'Available Only')).toBeVisible()
   await expect(eventHeading(page, 'Default Event A')).toHaveCount(0)
 })
 
-test('shows only free events when the toggle is checked', async ({ page }) => {
+test('shows only free events when the toggle is pressed, and not on a second press', async ({
+  page,
+}) => {
   await page.goto('/events')
   await expect(eventHeading(page, 'Default Event A')).toBeVisible()
 
-  await page.getByLabel('Free only').check()
+  await openMoreFilters(page)
+  const toggle = page.getByRole('button', { name: 'Free only' })
+  await toggle.click()
 
   await expect(page).toHaveURL(/[?&]free=true\b/)
   await expect(eventHeading(page, 'Free Show')).toBeVisible()
   await expect(eventHeading(page, 'Default Event A')).toHaveCount(0)
+
+  await toggle.click()
+  await expect(page).not.toHaveURL(/free=/)
+  await expect(toggle).toHaveAttribute('aria-pressed', 'false')
+})
+
+test('clear all empties the query, and only appears when something is set', async ({ page }) => {
+  await page.goto('/events')
+  await expect(eventHeading(page, 'Default Event A')).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Clear all' })).toHaveCount(0)
+
+  await page.goto('/events?venue=lido&free=true&from=2099-09-01')
+  await expect(page.getByRole('button', { name: 'More filters (2)' })).toBeVisible()
+  await page.getByRole('button', { name: 'Clear all' }).click()
+
+  await expect(page).toHaveURL(/\/events$/)
+  await expect(page.getByRole('button', { name: 'More filters', exact: true })).toBeVisible()
+})
+
+test('the second-tier filters start closed, and the toggle opens them', async ({ page }) => {
+  await page.goto('/events')
+  await expect(eventHeading(page, 'Default Event A')).toBeVisible()
+
+  const toggle = page.getByRole('button', { name: 'More filters' })
+  await expect(toggle).toHaveAttribute('aria-expanded', 'false')
+  await expect(selectWithOption(page, 'All venues')).toBeHidden()
+
+  await toggle.click()
+  await expect(toggle).toHaveAttribute('aria-expanded', 'true')
+  await expect(selectWithOption(page, 'All venues')).toBeVisible()
 })
 
 test('shows the empty state when no events match', async ({ page }) => {
@@ -358,7 +407,7 @@ test('shows the empty state when no events match', async ({ page }) => {
   await expect(eventHeading(page, 'Default Event A')).toBeVisible()
 
   await page.getByRole('searchbox').fill('nothing')
-  await page.getByRole('button', { name: 'Search' }).click()
+  await page.getByRole('searchbox').press('Enter')
 
   // Brand-voice empty state; match a stable substring so the wording can flex.
   await expect(page.getByText(/nothing matches/i)).toBeVisible()
@@ -414,7 +463,7 @@ test('counts the results, with the plural agreeing with the count', async ({ pag
   await expect(page.getByText('21 events found', { exact: true })).toBeVisible()
 
   await page.getByRole('searchbox').fill('jazz')
-  await page.getByRole('button', { name: 'Search' }).click()
+  await page.getByRole('searchbox').press('Enter')
 
   await expect(page.getByText('1 event found', { exact: true })).toBeVisible()
 })

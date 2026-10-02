@@ -1,12 +1,13 @@
 <script lang="ts" setup>
 /**
- * The shared event filter bar for the events list and the calendar. Every control writes
+ * The shared event filter bar for the events list, the calendar and the map. Every control writes
  * straight to the URL query via `useEventFilters` and reads its value back from there, so the
- * component holds no filter state; the only local state is the two free-text drafts (search,
- * price range), applied on submit.
+ * component holds no filter state; the local state is the two free-text drafts (search, price
+ * range), applied on Enter or when the field is left, and whether "More filters" is open.
  */
+import { ChevronDown, X } from '@lucide/vue'
 import { computed, onMounted, ref, watch } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { Button } from '@/components/ui/button'
 import BaseInput from '@/components/BaseInput.vue'
 import BaseSelect from '@/components/BaseSelect.vue'
@@ -21,9 +22,17 @@ import { useFormat } from '@/composables/useFormat'
 import { useI18n } from 'vue-i18n'
 import { PANEL_CLASS } from '@/lib/utils'
 
-withDefaults(defineProps<{ showDateRange?: boolean }>(), { showDateRange: true })
+const props = withDefaults(
+  defineProps<{
+    showDateRange?: boolean
+    /** The range the view shows when the URL names none; the preset that matches reads as pressed. */
+    defaultRange?: DateRange
+  }>(),
+  { showDateRange: true, defaultRange: undefined },
+)
 
 const route = useRoute()
+const router = useRouter()
 const { queryString, queryList, applyFilters } = useEventFilters()
 
 /**
@@ -44,9 +53,15 @@ function togglePreset(range: DateRange) {
   applyFilters({ from: active ? '' : range.from, to: active ? '' : range.to })
 }
 
-/** True when the URL's range is exactly this preset — it renders as the pressed button. */
+/**
+ * True when the URL's range is exactly this preset — it renders as the pressed button. With no
+ * range in the URL, the view's own default stands in, so the map's "today" shows Tonight pressed.
+ */
 function isPresetActive(range: DateRange): boolean {
-  return queryString('from') === range.from && queryString('to') === range.to
+  const from = queryString('from')
+  const to = queryString('to')
+  const shown = !from && !to && props.defaultRange ? props.defaultRange : { from, to }
+  return shown.from === range.from && shown.to === range.to
 }
 
 const genres = useGenres()
@@ -134,6 +149,49 @@ watch(
   },
 )
 
+function applySearch() {
+  if (search.value !== queryString('q')) applyFilters({ q: search.value })
+}
+
+function applyPrice() {
+  if (minPrice.value !== queryString('minPrice') || maxPrice.value !== queryString('maxPrice')) {
+    applyFilters({ minPrice: minPrice.value, maxPrice: maxPrice.value })
+  }
+}
+
+function toggleFlag(key: 'free' | 'excludeSoldOut') {
+  applyFilters({ [key]: queryString(key) === 'true' ? '' : 'true' })
+}
+
+/**
+ * How many of the filters behind "More filters" are set, so a closed section still says it is
+ * narrowing the list. Each counts once, however many values it holds. Read from the URL alone: a
+ * count that waited for the genre list would open the section late, or not at all.
+ */
+const moreCount = computed(
+  () =>
+    [
+      queryList('eventType').length,
+      queryList('family').length || queryString('genre'),
+      queryString('venue'),
+      queryString('district'),
+      queryString('minPrice') || queryString('maxPrice'),
+      queryString('free'),
+      queryString('excludeSoldOut'),
+    ].filter(Boolean).length,
+)
+
+/** Anything in the URL but the page narrows what the view shows. */
+const isFiltered = computed(() => Object.keys(route.query).some((key) => key !== 'page'))
+
+/**
+ * On a phone the bar stood about 500 px tall before the first event, and the map's own row pushed
+ * the map below the fold (#2347). The second tier starts closed unless the URL already sets one of
+ * its filters. Open on a desktop it took the bar from three rows to five, so it starts closed there
+ * too.
+ */
+const moreOpen = ref(moreCount.value > 0)
+
 onMounted(() => {
   genres.run()
   venues.run()
@@ -142,15 +200,35 @@ onMounted(() => {
 
 <template>
   <div :class="PANEL_CLASS">
-    <form class="flex gap-2" @submit.prevent="applyFilters({ q: search })">
-      <BaseInput
-        v-model="search"
-        :placeholder="t('events.filters.searchPlaceholder')"
-        class="px-3"
-        type="search"
-      />
-      <Button type="submit" variant="outline">{{ t('common.actions.search') }}</Button>
-    </form>
+    <div class="flex w-full flex-wrap items-center gap-2">
+      <!-- One field, so Enter submits without a button; leaving the field applies it too. -->
+      <form class="min-w-0 flex-1 basis-48" role="search" @submit.prevent="applySearch">
+        <BaseInput
+          v-model="search"
+          :placeholder="t('events.filters.searchPlaceholder')"
+          class="w-full px-3"
+          type="search"
+          @change="applySearch"
+        />
+      </form>
+      <Button
+        :aria-expanded="moreOpen"
+        aria-controls="more-filters"
+        type="button"
+        variant="outline"
+        @click="moreOpen = !moreOpen"
+      >
+        {{ moreCount ? t('events.filters.moreCount', { n: moreCount }) : t('events.filters.more') }}
+        <ChevronDown
+          :class="['transition-transform', { 'rotate-180': moreOpen }]"
+          aria-hidden="true"
+        />
+      </Button>
+      <Button v-if="isFiltered" type="button" variant="ghost" @click="router.push({ query: {} })">
+        <X aria-hidden="true" />
+        {{ t('events.filters.clearAll') }}
+      </Button>
+    </div>
 
     <!--
       Two native date inputs rather than a range picker: the value is already the ISO date the BFF
@@ -189,82 +267,89 @@ onMounted(() => {
       >
         {{ t(preset.key) }}
       </Button>
+      <!-- A view's own time toggle, such as the map's "On now", sits with the other times. -->
+      <slot name="time" />
     </div>
 
     <!--
-      A funnel: when, then what, then where, then how much. Each pair wraps as one, since with real
-      venue names the type filter used to trail the date row. "Free only" is the price axis at
-      zero, so it stays with the price range.
+      A funnel: what, then where, then how much, one line each. Sharing lines, a select that grew
+      when its options arrived re-wrapped the rows under it and moved the grid 44 px (#1830, #2347);
+      on its own line it can only grow sideways.
     -->
-    <div :class="SELECT_ROW_CLASS">
-      <MultiSelectFilter
-        :all-label="t('events.filters.allTypes')"
-        :class="SELECT_CLASS"
-        :clear-label="t('events.filters.clearTypes')"
-        :count-label="(n) => t('events.filters.typesSelected', { n })"
-        :label="t('events.filters.byType')"
-        :options="typeOptions"
-        :selected="queryList('eventType')"
-        @change="applyFilters({ eventType: $event })"
-      />
+    <div v-show="moreOpen" id="more-filters" class="flex w-full flex-col items-start gap-3">
+      <div :class="SELECT_ROW_CLASS">
+        <MultiSelectFilter
+          :all-label="t('events.filters.allTypes')"
+          :class="SELECT_CLASS"
+          :clear-label="t('events.filters.clearTypes')"
+          :count-label="(n) => t('events.filters.typesSelected', { n })"
+          :label="t('events.filters.byType')"
+          :options="typeOptions"
+          :selected="queryList('eventType')"
+          @change="applyFilters({ eventType: $event })"
+        />
+
+        <!--
+          Genre is two levels: any of thirteen families, then the styles when exactly one is chosen.
+          The family list is the constant, so a family link never lands on an empty list; style
+          options carry the tag slug, so older `genre=` links keep working.
+        -->
+        <MultiSelectFilter
+          :all-label="t('events.filters.allGenres')"
+          :class="SELECT_CLASS"
+          :clear-label="t('events.filters.clearFamilies')"
+          :count-label="(n) => t('events.filters.familiesSelected', { n })"
+          :label="t('events.filters.byGenre')"
+          :options="familyOptions"
+          :selected="activeFamilies"
+          @change="applyFamilies"
+        />
+
+        <!-- Shown once the URL names one family, not once its styles load, so it cannot appear late. -->
+        <BaseSelect
+          v-if="soleFamily"
+          :aria-label="t('events.filters.bySubgenre')"
+          :class="[SELECT_CLASS, 'col-span-2']"
+          :model-value="queryString('genre')"
+          @change="applyFilters({ genre: ($event.target as HTMLSelectElement).value })"
+        >
+          <option value="">{{ t('events.filters.allSubgenres') }}</option>
+          <option v-for="tag in stylesInFamily" :key="tag.slug" :value="tag.slug ?? ''">
+            {{ tag.name }}
+          </option>
+        </BaseSelect>
+      </div>
+
+      <div :class="SELECT_ROW_CLASS">
+        <BaseSelect
+          :aria-label="t('events.filters.byVenue')"
+          :class="SELECT_CLASS"
+          :model-value="queryString('venue')"
+          @change="applyFilters({ venue: ($event.target as HTMLSelectElement).value })"
+        >
+          <option value="">{{ t('events.filters.allVenues') }}</option>
+          <option v-for="v in venues.data.value ?? []" :key="v.slug" :value="v.slug ?? ''">
+            {{ v.name }}
+          </option>
+        </BaseSelect>
+
+        <BaseSelect
+          :aria-label="t('events.filters.byDistrict')"
+          :class="SELECT_CLASS"
+          :model-value="queryString('district')"
+          @change="applyFilters({ district: ($event.target as HTMLSelectElement).value })"
+        >
+          <option value="">{{ t('events.filters.allDistricts') }}</option>
+          <option v-for="d in DISTRICTS" :key="d.slug" :value="d.slug">{{ d.label }}</option>
+        </BaseSelect>
+      </div>
 
       <!--
-        Genre is two levels: any of thirteen families, then the styles when exactly one is chosen.
-        The family list is the constant, so a family link never lands on an empty list; style
-        options carry the tag slug, so older `genre=` links keep working.
+        The price range applies when a bound is left or on Enter, so it needs no button. "Free
+        only" is the price axis at zero, so it stays beside the range; both flags are toggles in
+        the presets' style rather than checkboxes, as the map's "On now" already was.
       -->
-      <MultiSelectFilter
-        :all-label="t('events.filters.allGenres')"
-        :class="SELECT_CLASS"
-        :clear-label="t('events.filters.clearFamilies')"
-        :count-label="(n) => t('events.filters.familiesSelected', { n })"
-        :label="t('events.filters.byGenre')"
-        :options="familyOptions"
-        :selected="activeFamilies"
-        @change="applyFamilies"
-      />
-
-      <!-- Shown once the URL names one family, not once its styles load, so it cannot appear late. -->
-      <BaseSelect
-        v-if="soleFamily"
-        :aria-label="t('events.filters.bySubgenre')"
-        :class="[SELECT_CLASS, 'col-span-2']"
-        :model-value="queryString('genre')"
-        @change="applyFilters({ genre: ($event.target as HTMLSelectElement).value })"
-      >
-        <option value="">{{ t('events.filters.allSubgenres') }}</option>
-        <option v-for="tag in stylesInFamily" :key="tag.slug" :value="tag.slug ?? ''">
-          {{ tag.name }}
-        </option>
-      </BaseSelect>
-    </div>
-
-    <div :class="SELECT_ROW_CLASS">
-      <BaseSelect
-        :aria-label="t('events.filters.byVenue')"
-        :class="SELECT_CLASS"
-        :model-value="queryString('venue')"
-        @change="applyFilters({ venue: ($event.target as HTMLSelectElement).value })"
-      >
-        <option value="">{{ t('events.filters.allVenues') }}</option>
-        <option v-for="v in venues.data.value ?? []" :key="v.slug" :value="v.slug ?? ''">
-          {{ v.name }}
-        </option>
-      </BaseSelect>
-
-      <BaseSelect
-        :aria-label="t('events.filters.byDistrict')"
-        :class="SELECT_CLASS"
-        :model-value="queryString('district')"
-        @change="applyFilters({ district: ($event.target as HTMLSelectElement).value })"
-      >
-        <option value="">{{ t('events.filters.allDistricts') }}</option>
-        <option v-for="d in DISTRICTS" :key="d.slug" :value="d.slug">{{ d.label }}</option>
-      </BaseSelect>
-    </div>
-
-    <div class="flex flex-wrap items-center gap-3">
-      <form class="flex items-center gap-2" @submit.prevent="applyFilters({ minPrice, maxPrice })">
+      <div class="flex flex-wrap items-center gap-2">
         <BaseInput
           v-model="minPrice"
           :aria-label="t('events.filters.minPrice')"
@@ -274,6 +359,8 @@ onMounted(() => {
           min="0"
           step="0.01"
           type="number"
+          @change="applyPrice"
+          @keydown.enter="applyPrice"
         />
         <span class="text-sm text-muted-foreground">–</span>
         <BaseInput
@@ -285,35 +372,28 @@ onMounted(() => {
           min="0"
           step="0.01"
           type="number"
+          @change="applyPrice"
+          @keydown.enter="applyPrice"
         />
-        <Button type="submit" variant="outline">{{ t('common.actions.apply') }}</Button>
-      </form>
-
-      <label class="flex h-8 items-center gap-2 text-sm text-muted-foreground">
-        <input
-          :checked="queryString('free') === 'true'"
-          class="size-4 rounded border-border accent-primary outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
-          type="checkbox"
-          @change="
-            applyFilters({ free: ($event.target as HTMLInputElement).checked ? 'true' : '' })
-          "
-        />
-        {{ t('events.filters.freeOnly') }}
-      </label>
+        <Button
+          :aria-pressed="queryString('free') === 'true'"
+          :variant="queryString('free') === 'true' ? 'default' : 'outline'"
+          size="sm"
+          type="button"
+          @click="toggleFlag('free')"
+        >
+          {{ t('events.filters.freeOnly') }}
+        </Button>
+        <Button
+          :aria-pressed="queryString('excludeSoldOut') === 'true'"
+          :variant="queryString('excludeSoldOut') === 'true' ? 'default' : 'outline'"
+          size="sm"
+          type="button"
+          @click="toggleFlag('excludeSoldOut')"
+        >
+          {{ t('events.filters.hideSoldOut') }}
+        </Button>
+      </div>
     </div>
-
-    <label class="flex h-8 items-center gap-2 text-sm text-muted-foreground">
-      <input
-        :checked="queryString('excludeSoldOut') === 'true'"
-        class="size-4 rounded border-border accent-primary outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
-        type="checkbox"
-        @change="
-          applyFilters({
-            excludeSoldOut: ($event.target as HTMLInputElement).checked ? 'true' : '',
-          })
-        "
-      />
-      {{ t('events.filters.hideSoldOut') }}
-    </label>
   </div>
 </template>

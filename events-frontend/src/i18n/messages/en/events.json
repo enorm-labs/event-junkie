@@ -41,7 +41,10 @@
     "minPricePlaceholder": "Min €",
     "maxPricePlaceholder": "Max €",
     "hideSoldOut": "Hide sold out",
-    "freeOnly": "Free only"
+    "freeOnly": "Free only",
+    "more": "More filters",
+    "moreCount": "More filters ({n})",
+    "clearAll": "Clear all"
   },
   "card": {
     "liveTonight": "Live tonight",

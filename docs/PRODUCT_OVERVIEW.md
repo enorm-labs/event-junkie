@@ -52,8 +52,9 @@ public launch — hosting, domain, auth, legal — is tracked in
 - Home, **calendar**, and event **search/list** pages, plus **event / venue / artist / promoter** detail pages and an About page.
 - Filtering by date range, event type, venue, district (the 23 pre-2001 districts), genre, price range, free-only and
   exclude-sold-out. The date range has **Tonight / This weekend / Next 7 days** shortcuts. Plus free-text search, and
-  "Free" and "Sold Out" badges. One shared filter bar serves both the **list and the calendar**. The date range is the exception, because
-  the calendar's window is one already. Every filter lives in the URL, so a narrowed view is shareable.
+  "Free" and "Sold Out" badges. One shared filter bar serves the **list, the calendar and the map**. The calendar has no date range, because
+  its window is one already. Search and dates are always in view. The other filters are behind "More filters", which opens when the URL sets
+  one of them. Every filter lives in the URL, so a narrowed view is shareable.
 
 **Public read API — BFF** (`/api/…`, OpenAPI/Swagger documented)
 
