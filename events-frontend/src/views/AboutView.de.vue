@@ -194,7 +194,7 @@ const localePath = useLocalePath()
           rel="noopener"
           target="_blank"
         >
-          Open Source</a
+          öffentlich auf GitHub</a
         >, Konventionen und Prompts inklusive, falls du sehen willst, wie es gemacht wurde.
       </p>
     </section>
