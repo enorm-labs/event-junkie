@@ -130,6 +130,7 @@ says so.
 | `HUXLEYS`              | `PRICE`            | most shows sell through Eventim and print no price at all — one of eleven sampled pages carried one                                              | —     |
 | `INSEL`                | `PRICE`            | the venue names no prices anywhere; only an Eintritt-frei note on the free Sunday matinées                                                       | —     |
 | `INSEL`                | `GENRE`            | the venue publishes no genre                                                                                                                     | —     |
+| `INSEL`                | `START_TIME`       | a night billed with a doors time only, as `Doors 19:00`, names no start, so it stores the doors time and no start                                | —     |
 | `INSEL`                | `CANCELLATION`     | a dropped show is removed from the CMS rather than flagged                                                                                       | —     |
 | `INSEL`                | `PER_EVENT_PAGE`   | every event points at the programme page and takes its identity from its date plus its title                                                     | —     |
 | `INSEL`                | `EVENT_TYPE`       | the venue publishes no category, so a title that is an event name rather than an act is minted as a concert                                      | —     |
@@ -167,6 +168,7 @@ says so.
 | `MAX_SCHMELING_HALLE`  | `PRICE`            | the listing and the event pages print no figure; tickets are sold through outside shops                                                          | —     |
 | `MAXXIM`               | `EVENT_TYPE`       | the club publishes no categories; every night is a DJ dance party                                                                                | —     |
 | `METROPOL`             | `PRICE`            | the venue prints no figure; tickets are sold through an Eventim link                                                                             | —     |
+| `METROPOL`             | `GENRE`            | the detail page's TAGS field is empty, and its one category names the event type (Konzert, Party), not a style                                   | —     |
 | `MIGAS`                | `PRICE`            | entry arrangements are not stated on the site at all                                                                                             | —     |
 | `MIGAS`                | `TICKET_URL`       | entry arrangements are not stated on the site at all                                                                                             | —     |
 | `MIGAS`                | `DOORS_TIME`       | the listing carries no door time                                                                                                                 | —     |

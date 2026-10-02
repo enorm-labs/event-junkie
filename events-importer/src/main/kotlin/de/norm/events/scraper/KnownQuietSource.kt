@@ -9,6 +9,9 @@ import java.time.LocalDate
  * rather than broken. It is not a limitation: `AcceptedLimitations.kt` is per aspect, and
  * "publishes nothing" is not an aspect. Delete the entry when the venue publishes again — the gauge
  * drops to zero on its own, and a stale entry is only a source nobody watches.
+ *
+ * An entry is for a silence longer than the rule's 30 days. A venue that posts one week at a time
+ * is empty for a few days between posts and never reaches the rule, so it gets no entry (#2329).
  */
 data class KnownQuietSource(
     val since: LocalDate,
@@ -27,10 +30,5 @@ val KNOWN_QUIET_SOURCES: Map<String, KnownQuietSource> =
             KnownQuietSource(
                 LocalDate.of(2026, 9, 30),
                 "the season closed on 27 September, and the venue has posted nothing since (#2085)"
-            ),
-        "golden-gate" to
-            KnownQuietSource(
-                LocalDate.of(2026, 9, 30),
-                "the venue lists only the current week's nights and has posted nothing after 26 September (#2085)"
             )
     )

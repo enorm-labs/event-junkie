@@ -20,6 +20,10 @@ import org.springframework.stereotype.Component
  * persistence by [EventUpsertService][de.norm.events.scraper.EventUpsertService], so a run late
  * in the week legitimately stores fewer events than the page shows — as few as one.
  *
+ * Between two blocks the source can hold no future night for days. That is not a
+ * `KNOWN_QUIET_SOURCES` entry: `ej-source-quiet` waits 30 days, and an entry would hide a venue
+ * that really stopped (#1901, #2329).
+ *
  * @see GoldenGateOverviewPageScraper for the HTML parsing logic.
  * @see <a href="https://goldengate-berlin.de/">Golden Gate Berlin</a>
  */
