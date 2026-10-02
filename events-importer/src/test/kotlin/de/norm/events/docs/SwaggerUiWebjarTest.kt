@@ -8,24 +8,20 @@ import org.junit.jupiter.api.Test
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver
 
 /**
- * Holds the Swagger UI webjar ahead of springdoc, and proves the UI still works when it is (#491).
+ * Proves the Swagger UI webjar that ships carries a fixed DOMPurify, and that the UI still works (#491).
  *
  * OWASP Dependency-Check raises GHSA-55q2-fjhq-7xh7 against the JavaScript bundled inside the
  * `swagger-ui` webjar: DOMPurify's `IN_PLACE` hook removal leaves a detached subtree executable,
- * causing XSS. Affects DOMPurify <= 3.4.12, fixed in 3.4.13. The chain is
- * `springdoc-openapi-starter-webflux-ui:3.1.0` → `org.webjars:swagger-ui:5.32.11` →
- * `swagger-ui-bundle.js`, and springdoc 3.1.0 is its latest release, so there is nothing to bump on
- * that side. Pinning the webjar ahead of springdoc is safe on its own — 5.32.13 is two patch
- * releases inside the same 5.32.x line — which beats suppressing the finding.
+ * causing XSS. Affects DOMPurify <= 3.4.12, fixed in 3.4.13, which the webjar first carries in
+ * 5.32.13. The webjar is a pure transitive of `springdoc-openapi-starter-webflux-ui`, so springdoc
+ * chooses its version; springdoc 3.1.1 names 5.32.14.
  *
- * **Why a test rather than the constraint alone.** A dependency constraint is silent when it stops
- * applying. springdoc shipping a release that names 5.32.13 or later makes it a harmless no-op, and
- * that direction is fine; a change that drops the constraint, or a webjar that regresses, would put
- * a vulnerable bundle back in the image with nothing saying so. This reads the bytes that ship.
+ * **Why a test rather than trusting springdoc.** A springdoc release that regresses the webjar, or
+ * a second webjar on the classpath, would put a vulnerable bundle back in the image with nothing
+ * saying so. This reads the bytes that ship.
  *
- * It deliberately does **not** hardcode the webjar version: discovering it by glob means bumping the
- * pin needs no edit here, and keeps the assertion about DOMPurify — the thing the advisory is about
- * — rather than about a number that has to be kept in sync in two places.
+ * It deliberately does **not** hardcode the webjar version: discovering it by glob means a springdoc
+ * bump needs no edit here, and keeps the assertion about DOMPurify — the thing the advisory is about.
  */
 class SwaggerUiWebjarTest : BaseControllerTest() {
     /**
@@ -67,12 +63,12 @@ class SwaggerUiWebjarTest : BaseControllerTest() {
     }
 
     /**
-     * The pin is only safe if the docs still render, and springdoc resolves the webjar's *versioned*
-     * resource path — so moving that version is precisely the change that could break it. This is
-     * why the test boots a context rather than staying a classpath unit test.
+     * springdoc resolves the webjar's *versioned* resource path, so a webjar version springdoc does
+     * not expect is the change that could break the UI. This is why the test boots a context rather
+     * than staying a classpath unit test.
      */
     @Test
-    fun `Swagger UI still serves after the webjar is pinned ahead of springdoc`() {
+    fun `Swagger UI serves from the bundled webjar`() {
         webTestClient
             .get()
             .uri("/webjars/swagger-ui/index.html")

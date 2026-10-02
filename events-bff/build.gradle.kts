@@ -73,14 +73,6 @@ dependencies {
     // See: https://springdoc.org/#getting-started
     implementation("org.springdoc:springdoc-openapi-starter-webflux-ui:${property("springdoc.version")}")
 
-    // Swagger UI's webjar, constrained for the same reason as scram: a pure transitive of the
-    // springdoc starter (gradle.properties has why the pin exists and what removes it).
-    constraints {
-        implementation("org.webjars:swagger-ui:${property("swagger-ui.version")}") {
-            because("5.32.11 bundles DOMPurify 3.4.12, affected by GHSA-55q2-fjhq-7xh7; 5.32.13 bundles 3.4.13")
-        }
-    }
-
     // Object storage for the cached venue images (ADR-019). `apache-client` excluded as in the
     // importer: the async client uses Netty, and the unused implementation still takes findings.
     implementation("software.amazon.awssdk:s3:${property("awssdk.version")}") {

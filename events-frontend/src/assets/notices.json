@@ -1,5 +1,5 @@
 {
-  "componentCount": 354,
+  "componentCount": 355,
   "licenses": [
     {
       "license": "Apache-2.0",
@@ -7,13 +7,13 @@
       "components": [
         {
           "name": "@internationalized/date",
-          "version": "3.12.3",
+          "version": "3.12.4",
           "url": "https://github.com/adobe/react-spectrum.git#main",
           "ecosystem": "frontend"
         },
         {
           "name": "@internationalized/number",
-          "version": "3.6.7",
+          "version": "3.6.8",
           "url": "https://github.com/adobe/react-spectrum",
           "ecosystem": "frontend"
         },
@@ -451,19 +451,19 @@
         },
         {
           "name": "io.swagger.core.v3:swagger-annotations-jakarta",
-          "version": "2.2.52",
+          "version": "2.2.55",
           "url": "https://github.com/swagger-api/swagger-core/modules/swagger-annotations",
           "ecosystem": "backend"
         },
         {
           "name": "io.swagger.core.v3:swagger-core-jakarta",
-          "version": "2.2.52",
+          "version": "2.2.55",
           "url": "https://github.com/swagger-api/swagger-core/modules/swagger-core",
           "ecosystem": "backend"
         },
         {
           "name": "io.swagger.core.v3:swagger-models-jakarta",
-          "version": "2.2.52",
+          "version": "2.2.55",
           "url": "https://github.com/swagger-api/swagger-core/modules/swagger-models",
           "ecosystem": "backend"
         },
@@ -643,19 +643,19 @@
         },
         {
           "name": "org.springdoc:springdoc-openapi-starter-common",
-          "version": "3.1.0",
+          "version": "3.1.1",
           "url": null,
           "ecosystem": "backend"
         },
         {
           "name": "org.springdoc:springdoc-openapi-starter-webflux-api",
-          "version": "3.1.0",
+          "version": "3.1.1",
           "url": null,
           "ecosystem": "backend"
         },
         {
           "name": "org.springdoc:springdoc-openapi-starter-webflux-ui",
-          "version": "3.1.0",
+          "version": "3.1.1",
           "url": null,
           "ecosystem": "backend"
         },
@@ -997,37 +997,37 @@
         },
         {
           "name": "org.springframework.modulith:spring-modulith-api",
-          "version": "2.1.0",
+          "version": "2.1.1",
           "url": "https://spring.io/projects/spring-modulith/spring-modulith-api",
           "ecosystem": "backend"
         },
         {
           "name": "org.springframework.modulith:spring-modulith-apt",
-          "version": "2.1.0",
+          "version": "2.1.1",
           "url": "https://spring.io/projects/spring-modulith/spring-modulith-apt",
           "ecosystem": "backend"
         },
         {
           "name": "org.springframework.modulith:spring-modulith-core",
-          "version": "2.1.0",
+          "version": "2.1.1",
           "url": "https://spring.io/projects/spring-modulith/spring-modulith-core",
           "ecosystem": "backend"
         },
         {
           "name": "org.springframework.modulith:spring-modulith-moments",
-          "version": "2.1.0",
+          "version": "2.1.1",
           "url": "https://spring.io/projects/spring-modulith/spring-modulith-moments",
           "ecosystem": "backend"
         },
         {
           "name": "org.springframework.modulith:spring-modulith-starter-core",
-          "version": "2.1.0",
+          "version": "2.1.1",
           "url": "https://spring.io/projects/spring-modulith/spring-modulith-starters/spring-modulith-starter-core",
           "ecosystem": "backend"
         },
         {
           "name": "org.webjars:swagger-ui",
-          "version": "5.32.13",
+          "version": "5.32.14",
           "url": "https://www.webjars.org",
           "ecosystem": "backend"
         },
@@ -1039,181 +1039,181 @@
         },
         {
           "name": "software.amazon.awssdk:annotations",
-          "version": "2.54.7",
+          "version": "2.55.10",
           "url": null,
           "ecosystem": "backend"
         },
         {
           "name": "software.amazon.awssdk:apache5-client",
-          "version": "2.54.7",
+          "version": "2.55.10",
           "url": null,
           "ecosystem": "backend"
         },
         {
           "name": "software.amazon.awssdk:arns",
-          "version": "2.54.7",
+          "version": "2.55.10",
           "url": "https://aws.amazon.com/sdkforjava",
           "ecosystem": "backend"
         },
         {
           "name": "software.amazon.awssdk:auth",
-          "version": "2.54.7",
+          "version": "2.55.10",
           "url": "https://aws.amazon.com/sdkforjava",
           "ecosystem": "backend"
         },
         {
           "name": "software.amazon.awssdk:aws-core",
-          "version": "2.54.7",
+          "version": "2.55.10",
           "url": "https://aws.amazon.com/sdkforjava",
           "ecosystem": "backend"
         },
         {
           "name": "software.amazon.awssdk:aws-query-protocol",
-          "version": "2.54.7",
+          "version": "2.55.10",
           "url": "https://aws.amazon.com/sdkforjava",
           "ecosystem": "backend"
         },
         {
           "name": "software.amazon.awssdk:aws-xml-protocol",
-          "version": "2.54.7",
+          "version": "2.55.10",
           "url": "https://aws.amazon.com/sdkforjava",
           "ecosystem": "backend"
         },
         {
           "name": "software.amazon.awssdk:checksums",
-          "version": "2.54.7",
+          "version": "2.55.10",
           "url": "https://aws.amazon.com/sdkforjava",
           "ecosystem": "backend"
         },
         {
           "name": "software.amazon.awssdk:checksums-spi",
-          "version": "2.54.7",
+          "version": "2.55.10",
           "url": "https://aws.amazon.com/sdkforjava",
           "ecosystem": "backend"
         },
         {
           "name": "software.amazon.awssdk:crt-core",
-          "version": "2.54.7",
+          "version": "2.55.10",
           "url": "https://aws.amazon.com/sdkforjava",
           "ecosystem": "backend"
         },
         {
           "name": "software.amazon.awssdk:endpoints-spi",
-          "version": "2.54.7",
+          "version": "2.55.10",
           "url": null,
           "ecosystem": "backend"
         },
         {
           "name": "software.amazon.awssdk:http-auth",
-          "version": "2.54.7",
+          "version": "2.55.10",
           "url": "https://aws.amazon.com/sdkforjava",
           "ecosystem": "backend"
         },
         {
           "name": "software.amazon.awssdk:http-auth-aws",
-          "version": "2.54.7",
+          "version": "2.55.10",
           "url": "https://aws.amazon.com/sdkforjava",
           "ecosystem": "backend"
         },
         {
           "name": "software.amazon.awssdk:http-auth-aws-eventstream",
-          "version": "2.54.7",
+          "version": "2.55.10",
           "url": "https://aws.amazon.com/sdkforjava",
           "ecosystem": "backend"
         },
         {
           "name": "software.amazon.awssdk:http-auth-spi",
-          "version": "2.54.7",
+          "version": "2.55.10",
           "url": "https://aws.amazon.com/sdkforjava",
           "ecosystem": "backend"
         },
         {
           "name": "software.amazon.awssdk:http-client-spi",
-          "version": "2.54.7",
+          "version": "2.55.10",
           "url": null,
           "ecosystem": "backend"
         },
         {
           "name": "software.amazon.awssdk:identity-spi",
-          "version": "2.54.7",
+          "version": "2.55.10",
           "url": "https://aws.amazon.com/sdkforjava",
           "ecosystem": "backend"
         },
         {
           "name": "software.amazon.awssdk:json-utils",
-          "version": "2.54.7",
+          "version": "2.55.10",
           "url": "https://aws.amazon.com/sdkforjava",
           "ecosystem": "backend"
         },
         {
           "name": "software.amazon.awssdk:metrics-spi",
-          "version": "2.54.7",
+          "version": "2.55.10",
           "url": null,
           "ecosystem": "backend"
         },
         {
           "name": "software.amazon.awssdk:netty-nio-client",
-          "version": "2.54.7",
+          "version": "2.55.10",
           "url": null,
           "ecosystem": "backend"
         },
         {
           "name": "software.amazon.awssdk:profiles",
-          "version": "2.54.7",
+          "version": "2.55.10",
           "url": "https://aws.amazon.com/sdkforjava",
           "ecosystem": "backend"
         },
         {
           "name": "software.amazon.awssdk:protocol-core",
-          "version": "2.54.7",
+          "version": "2.55.10",
           "url": "https://aws.amazon.com/sdkforjava",
           "ecosystem": "backend"
         },
         {
           "name": "software.amazon.awssdk:regions",
-          "version": "2.54.7",
+          "version": "2.55.10",
           "url": null,
           "ecosystem": "backend"
         },
         {
           "name": "software.amazon.awssdk:retries",
-          "version": "2.54.7",
+          "version": "2.55.10",
           "url": null,
           "ecosystem": "backend"
         },
         {
           "name": "software.amazon.awssdk:retries-spi",
-          "version": "2.54.7",
+          "version": "2.55.10",
           "url": null,
           "ecosystem": "backend"
         },
         {
           "name": "software.amazon.awssdk:s3",
-          "version": "2.54.7",
+          "version": "2.55.10",
           "url": "https://aws.amazon.com/sdkforjava",
           "ecosystem": "backend"
         },
         {
           "name": "software.amazon.awssdk:sdk-core",
-          "version": "2.54.7",
+          "version": "2.55.10",
           "url": "https://aws.amazon.com/sdkforjava",
           "ecosystem": "backend"
         },
         {
           "name": "software.amazon.awssdk:third-party-jackson-core",
-          "version": "2.54.7",
+          "version": "2.55.10",
           "url": "https://aws.amazon.com/sdkforjava",
           "ecosystem": "backend"
         },
         {
           "name": "software.amazon.awssdk:utils",
-          "version": "2.54.7",
+          "version": "2.55.10",
           "url": null,
           "ecosystem": "backend"
         },
         {
           "name": "software.amazon.awssdk:utils-lite",
-          "version": "2.54.7",
+          "version": "2.55.10",
           "url": "https://aws.amazon.com/sdkforjava",
           "ecosystem": "backend"
         },
@@ -1273,7 +1273,7 @@
         },
         {
           "name": "@babel/parser",
-          "version": "7.29.8",
+          "version": "7.29.9",
           "url": "https://github.com/babel/babel",
           "ecosystem": "frontend"
         },
@@ -1399,13 +1399,13 @@
         },
         {
           "name": "@tanstack/virtual-core",
-          "version": "3.17.8",
+          "version": "3.17.11",
           "url": "https://github.com/TanStack/virtual",
           "ecosystem": "frontend"
         },
         {
           "name": "@tanstack/vue-virtual",
-          "version": "3.13.36",
+          "version": "3.13.39",
           "url": "https://github.com/TanStack/virtual",
           "ecosystem": "frontend"
         },
@@ -1602,6 +1602,12 @@
           "ecosystem": "frontend"
         },
         {
+          "name": "confbox",
+          "version": "0.3.1",
+          "url": "https://github.com/unjs/confbox",
+          "ecosystem": "frontend"
+        },
+        {
           "name": "csstype",
           "version": "3.2.3",
           "url": "https://github.com/frenic/csstype",
@@ -1699,13 +1705,13 @@
         },
         {
           "name": "nanoid",
-          "version": "3.3.18",
+          "version": "3.3.19",
           "url": "https://github.com/ai/nanoid",
           "ecosystem": "frontend"
         },
         {
           "name": "nostics",
-          "version": "1.2.0",
+          "version": "1.3.0",
           "url": "https://github.com/vercel-labs/nostics",
           "ecosystem": "frontend"
         },
@@ -1783,7 +1789,7 @@
         },
         {
           "name": "pkg-types",
-          "version": "2.3.1",
+          "version": "2.3.3",
           "url": "https://github.com/unjs/pkg-types",
           "ecosystem": "frontend"
         },
@@ -1879,7 +1885,7 @@
         },
         {
           "name": "unplugin",
-          "version": "3.3.0",
+          "version": "3.4.0",
           "url": "https://github.com/unjs/unplugin",
           "ecosystem": "frontend"
         },
@@ -1927,7 +1933,7 @@
       "components": [
         {
           "name": "@lucide/vue",
-          "version": "1.47.0",
+          "version": "1.49.0",
           "url": "https://github.com/lucide-icons/lucide",
           "ecosystem": "frontend"
         },
@@ -2101,7 +2107,7 @@
         },
         {
           "name": "source-map-js",
-          "version": "1.2.1",
+          "version": "1.2.2",
           "url": "https://github.com/7rulnik/source-map-js",
           "ecosystem": "frontend"
         }
