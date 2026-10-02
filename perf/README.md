@@ -218,7 +218,7 @@ Three things differ from a run on a laptop, and each is a value in the chart:
 - **Staging does not verify the certificate.** Let's Encrypt's staging CA is untrusted on purpose, so `tests.smoke.verifyTls` is false there. Production
   verifies, because an unissued certificate is exactly what a post-deploy check should catch.
 
-The pod prints the summary export on one line after the run, without `setup_data`, and k6's text summary only when the run failed. The collector ships
+The pod prints k6's text summary only when the run failed. After every run, `lib/summary-line.js` prints the summary export on one line without `setup_data`, the discovered slugs. It parses the export, because k6 writes its keys in a random order (#2392). The collector ships
 every container's stdout, so each reconcile leaves one JSON row in OpenObserve under `k8s_container_name = 'smoke-test'`. OpenObserve keeps it 14 days; #2393 keeps it longer. ADR-033 says why the hook runs in
 the cluster and not from Actions.
 

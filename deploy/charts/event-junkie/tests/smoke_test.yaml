@@ -49,7 +49,8 @@ tests:
         equal:
           path: metadata.annotations["helm.sh/hook-weight"]
           value: "-5"
-      # The three files `smoke.js` needs, under the keys the volume maps back to `lib/`.
+      # The three files `smoke.js` needs, and the pass that turns its summary into one row, under the
+      # keys the volume maps back to `lib/`.
       - documentIndex: 0
         exists:
           path: data["smoke.js"]
@@ -59,6 +60,9 @@ tests:
       - documentIndex: 0
         exists:
           path: data["lib__config.js"]
+      - documentIndex: 0
+        exists:
+          path: data["lib__summary-line.js"]
       - documentIndex: 1
         isKind:
           of: Pod
@@ -81,6 +85,12 @@ tests:
           content:
             key: lib__api.js
             path: lib/api.js
+      - documentIndex: 1
+        contains:
+          path: spec.volumes[0].configMap.items
+          content:
+            key: lib__summary-line.js
+            path: lib/summary-line.js
       - documentIndex: 1
         contains:
           path: spec.volumes[0].configMap.items
