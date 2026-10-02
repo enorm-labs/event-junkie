@@ -382,6 +382,42 @@ class FrannzOverviewPageScraperTest {
                 ).joinToString("\n")
         }
 
+        // The CMS writes a link list as headings, and the `#` reached the description (#2367).
+        // Lines taken from the live page.
+        @Test
+        fun `strips a leading heading marker and keeps a hash that is text`() {
+            val html =
+                """
+                <article id="post-1" class="events event_typ-konzert">
+                    <h2 class="event-title">D/TROIT</h2>
+                    <div class="event-day">10</div>
+                    <div class="event-month">Dezember</div>
+                    <div class="entry-content">
+                        <div class="entry-content-wrap">
+                            <div class="content">
+                                Platz #1 der iTunes-Charts.<br />
+                                # Home : [<a href="https://dtroit.dk/">dtroit.dk</a>](<a href="https://dtroit.dk/">dtroit.dk</a>) <br />
+                                # Facebook : [<a href="https://www.facebook.com/dtroitcph/">www.facebook.com</a>](<a href="https://www.facebook.com/dtroitcph/">www.facebook.com</a>) <br />
+                                VIDEOS: <br />
+                                ### D/troit - Roll With The Punches (Official Music Video) <br />
+                                #1 on the iTunes Top Alternative Albums Chart
+                            </div>
+                        </div>
+                    </div>
+                </article>
+                """.trimIndent()
+
+            scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl).single().description shouldBe
+                listOf(
+                    "Platz #1 der iTunes-Charts.",
+                    "Home : dtroit.dk",
+                    "Facebook : www.facebook.com",
+                    "VIDEOS:",
+                    "D/troit - Roll With The Punches (Official Music Video)",
+                    "#1 on the iTunes Top Alternative Albums Chart"
+                ).joinToString("\n")
+        }
+
         @Test
         fun `strips single-underscore emphasis from the subtitle`() {
             val html =
