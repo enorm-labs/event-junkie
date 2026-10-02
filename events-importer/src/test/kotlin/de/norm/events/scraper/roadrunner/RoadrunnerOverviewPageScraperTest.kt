@@ -2,10 +2,12 @@ package de.norm.events.scraper.roadrunner
 
 import de.norm.events.scraper.AcceptedLimitations
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.ScrapedEvent
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
+import io.kotest.matchers.string.shouldNotContain
 import io.kotest.matchers.string.shouldStartWith
 import org.jsoup.Jsoup
 import org.junit.jupiter.api.Test
@@ -98,6 +100,97 @@ class RoadrunnerOverviewPageScraperTest {
         blutUndEisen.title shouldBe "BLUT & EISEN 30 JAHRE"
         blutUndEisen.doorsTime shouldBe LocalTime.of(20, 0)
         events.last().title shouldBe "PHIL CAMPELL'S BASTARD SONS The Phil Forever Tour"
+    }
+
+    private fun october(): List<ScrapedEvent> =
+        RoadrunnerOverviewPageScraper(Clock.fixed(Instant.parse("2026-10-02T10:00:00Z"), ZoneOffset.UTC)).scrape(
+            Jsoup.parse(
+                javaClass.classLoader
+                    .getResourceAsStream("scraper/roadrunner/roadrunner-programm-october.html")!!
+                    .bufferedReader()
+                    .readText(),
+                baseUrl
+            ),
+            baseUrl
+        )
+
+    private fun ScrapedEvent.billing() = artists.map { it.name to it.role }
+
+    @Test
+    fun `bills a named night's Live acts and its Record Hop DJ, under the night's name`() {
+        val night = october().first()
+
+        night.title shouldBe "40 Jahre Louisiana Rebs Berlin"
+        night.billing() shouldBe
+            listOf("THE JETS" to "HEADLINER", "SMOKESTACK LIGHTNIN’" to "HEADLINER", "The Louisiana Wax Team" to "DJ")
+        night.description.shouldNotBeNull() shouldStartWith "Qua Alter schon fast"
+        night.description shouldNotContain "Live:"
+        night.description shouldNotContain "Record Hop:"
+    }
+
+    @Test
+    fun `bills a Support act under its label and keeps a bracketed note out of the line-up`() {
+        val samhain = october().single { it.eventDate == LocalDate.of(2026, 10, 31) }
+
+        samhain.title shouldBe "AT THE NIGHT OF SAMHAIN"
+        samhain.billing() shouldBe listOf("THE CLOVERHEARTS" to "HEADLINER", "The STINKY PINKY’S" to "SUPPORT")
+        samhain.description shouldNotContain "Support:"
+    }
+
+    @Test
+    fun `splits acts run together behind origin tags and reads a continued line and a dee-jay prefix`() {
+        val jukeJoint = october().single { it.eventDate == LocalDate.of(2026, 10, 16) }
+
+        jukeJoint.title shouldBe "THE JUKE JOINT DANCE PARTY"
+        jukeJoint.billing() shouldBe
+            listOf(
+                "KEITH DUNN" to "HEADLINER",
+                "SAUDIA YOUNG" to "HEADLINER",
+                "LARS VEGAS & BAND" to "HEADLINER",
+                "Red Rockin'" to "DJ"
+            )
+    }
+
+    @Test
+    fun `bills no act for a block with no line-up label`() {
+        val unlabelled = october().filter { it.eventDate in setOf(LocalDate.of(2026, 10, 9), LocalDate.of(2026, 11, 11)) }
+
+        unlabelled.map { it.title } shouldBe listOf("BOWIE 10", "PHIL CAMPELL'S BASTARD SONS The Phil Forever Tour")
+        unlabelled.flatMap { it.artists } shouldBe emptyList()
+    }
+
+    @Test
+    fun `keeps every sourceId it had when the act line was the title, so no row is re-keyed`() {
+        october().map { it.sourceId } shouldBe
+            listOf(
+                "roadrunner:2026-10-03-the-jets-uk-smokestack-lightnin",
+                "roadrunner:2026-10-09-bowie-10",
+                "roadrunner:2026-10-16-the-juke-joint-dance-party",
+                "roadrunner:2026-10-31-the-cloverhearts",
+                "roadrunner:2026-11-11-phil-campell-s-bastard-sons-the-phil-forever-tour"
+            )
+    }
+
+    @Test
+    fun `reads an inline Live list, and a Support line as confirming the title is the act`() {
+        val autumnClock = Clock.fixed(Instant.parse("2026-09-05T10:00:00Z"), ZoneOffset.UTC)
+        val events =
+            RoadrunnerOverviewPageScraper(autumnClock).scrape(
+                Jsoup.parse(
+                    javaClass.classLoader
+                        .getResourceAsStream("scraper/roadrunner/roadrunner-programm-autumn.html")!!
+                        .bufferedReader()
+                        .readText(),
+                    baseUrl
+                ),
+                baseUrl
+            )
+
+        events[0].billing() shouldBe listOf("UNSTRUT" to "HEADLINER", "BOXI BARRÉ" to "HEADLINER", "NERVE CENTER" to "HEADLINER")
+        events[1].billing() shouldBe listOf("HERBST IN PEKING" to "HEADLINER", "TARWATER" to "HEADLINER")
+        val lazys = events[2]
+        lazys.billing() shouldBe listOf("THE LAZYS" to "HEADLINER", "SWEET ELECTRIC" to "SUPPORT")
+        lazys.artists.first().titleDerived shouldBe true
     }
 
     @Test
