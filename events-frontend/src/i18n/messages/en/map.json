@@ -3,7 +3,9 @@
   "subtitle": "What is on, and where. Pick a pin to see a venue's events.",
   "label": "Map of Berlin",
   "pinLabel": "{venue}: {count} event | {venue}: {count} events",
-  "resultCount": "{events} events at {venues} venues",
+  "resultCount": "{events} at {venues}",
+  "eventCount": "{count} event | {count} events",
+  "venueCount": "{count} venue | {count} venues",
   "unpinned": "{count} more at a venue without a location, in the list | {count} more at venues without a location, in the list",
   "empty": "Nothing on the map for these filters. Try another day or fewer filters.",
   "pickPin": "Pick a pin to see what is on there.",
@@ -36,7 +38,7 @@
     "clear": "Clear",
     "coarse": "Your device places you only to within {accuracy}, so some of these may be further away.",
     "heading": "Within {radius}",
-    "resultCount": "{events} events at {venues} venues, nearest first",
+    "resultCount": "{events} at {venues}, nearest first",
     "empty": "Nothing on within this radius. Try a larger one or another day."
   }
 }
