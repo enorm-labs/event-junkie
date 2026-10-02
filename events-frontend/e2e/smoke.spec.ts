@@ -131,6 +131,25 @@ for (const locale of ['en', 'de']) {
   })
 }
 
+test('the Menu button shows on phones only', async ({ page }) => {
+  // HeaderMenu's root rendered no element, so App.vue's `md:hidden` was dropped and the button sat
+  // beside the inline links on every desktop.
+  await page.goto('/about')
+  const menu = page.getByRole('navigation', { name: 'Main' }).getByRole('button', {
+    name: 'Menu',
+    exact: true,
+  })
+
+  for (const width of [390, 767]) {
+    await page.setViewportSize({ width, height: 800 })
+    await expect(menu, `at ${width}px`).toBeVisible()
+  }
+  for (const width of [768, 1280]) {
+    await page.setViewportSize({ width, height: 800 })
+    await expect(menu, `at ${width}px`).toBeHidden()
+  }
+})
+
 test('app shell marks the app as beta and explains what that means', async ({ page }) => {
   await page.goto('/venues')
 
