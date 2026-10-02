@@ -375,8 +375,8 @@ jobs:
         env:
           E2E_BASE_URL: http://event-junkie.localhost:8080
 
-      # Failure and success alike: the durations are the trend #298 asks for, and the artifact is
-      # where they live — a runner cannot reach the cluster's OpenObserve (ADR-033).
+      # Failure and success alike: the artifact is the only record of the run's durations — a runner
+      # cannot reach the cluster's OpenObserve (ADR-033).
       - name: Upload the report
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1

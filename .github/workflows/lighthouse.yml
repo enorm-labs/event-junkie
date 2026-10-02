@@ -13,7 +13,7 @@
 # **Nothing here is stored over time.** The JSON reports are artifacts for 30 days and the medians are
 # in the step summary. OpenObserve is `ClusterIP` on both clusters with no Ingress, so a runner cannot
 # write to it, and #1698 shipped with that done-when **not delivered** rather than with a store that is
-# not OpenObserve. #298 step 2 owns the trend.
+# not OpenObserve. #298 closed on that cost.
 name: Lighthouse
 
 on:

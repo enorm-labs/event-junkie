@@ -114,7 +114,7 @@ is the map and the traps.
   the JSON as a 30-day artifact. Called by `deployment-status.yml` after a successful production deployment, plus a Wednesday cron and `workflow_dispatch`;
   never Sunday, when the two production scans already load that host. The gate is `scripts/lighthouse.sh`: accessibility, best practices and SEO, with
   `is-crawlable` asserted against the `X-Robots-Tag` header rather than waived (#286). Performance and the vitals are reported only, and **nothing is stored
-  over time** — OpenObserve has no Ingress, so #298 step 2 still owns the trend (ADR-033).
+  over time** — OpenObserve has no Ingress, and #298 closed without a second store (ADR-033).
 - `site-probe.yml` — the daily outer half of #271's alerting, against `SITE_URL` with the apex fallback (ADR-021 says why Better Stack is the other half).
   `mail-probe.yml` (#637) — proves `hello@` and `security@` still receive, because a dead mailbox looks exactly like a quiet week.
 
