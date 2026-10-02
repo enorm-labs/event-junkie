@@ -55,8 +55,8 @@ class JunctionBarDjOverviewPageScraperTest {
         event.eventType shouldBe EventType.PARTY.name
         // "5.6. fri" with no year → 2026 (5 June falls on a Friday nearest today).
         event.eventDate shouldBe LocalDate.of(2026, 6, 5)
-        // "24:00" (midnight) folds to 00:00.
-        event.startTime shouldBe LocalTime.of(0, 0)
+        // "24:00" is midnight at the end of the dated night, not the start of its morning (#2313).
+        event.startTime shouldBe LocalTime.of(23, 59)
         event.sourceUrl shouldBe baseUrl
         event.sourceId shouldBe "junction_bar:dj-2026-06-05-djane-b-b"
         event.artists shouldContainExactly listOf(ScrapedArtist(name = "DJane B.B.", role = "DJ"))
