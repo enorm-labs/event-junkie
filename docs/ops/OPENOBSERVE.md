@@ -207,6 +207,24 @@ most time. `time()` is frozen at the window start, `sort_desc` is unimplemented,
 
 **Re-import after any rebuild.** Dashboards are metadata, and metadata is on the PVC.
 
+## Stream settings are in git, and pushed the same way
+
+```sh
+cd deploy/streams
+./apply.sh                                  # set every stream in streams.json, on staging
+./apply.sh --check                          # compare the cluster's settings to streams.json, change nothing
+EJ_NODE=ops@10.10.0.1 ./apply.sh            # the same, against production
+```
+
+**One stream has a retention of its own: `smoke_test`, 60 days** (#2393). The agent collector sends the smoke hook's rows there, on staging through a
+patch in `deploy/clusters/staging/kustomization.yaml`. Every other stream keeps the global 14 days.
+
+**A retention above 14 days is a privacy statement.** Only a stream that holds no personal data can have one, and `docs/LEGAL.md` §7.5 names each. **The
+ceiling is 90 days**: the `o2` bucket's lifecycle rule deletes older files under the index, which corrupts the store.
+
+**OpenObserve makes a stream on its first row.** The script refuses a stream that does not exist yet. Apply after the first row arrives in it, and
+again after any rebuild, because stream settings are metadata on the PVC.
+
 ## Alert rules are in git too, and have the same seam
 
 ```sh

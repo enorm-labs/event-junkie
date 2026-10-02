@@ -402,7 +402,7 @@ requests driven through the real ingress, and the resulting log lines read out o
 | --- | ------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
 | 1   | Do Traefik and the nginx container log real client IPs? | **Traefik: no, it logs nothing at all.** **nginx: it logged an address field, and no longer does** |
 | 2   | Is any logged IP truncated?                             | **Moot — none is logged.** Truncation was rejected as the weaker lever                             |
-| 3   | What is the retention period per stream?                | **14 days** in the log store; a size bound on the node, which usually bites first                  |
+| 3   | What is the retention period per stream?                | **14 days** for each stream with visitor data; a size bound on the node, which usually bites first |
 | 4   | Where is retention actually enforced?                   | The kubelet on the node, and OpenObserve's compactor in **both** clusters (#271, #880)             |
 
 **On 1 — the mechanism was not the one this section predicted, and the difference matters.** The earlier text reasoned
@@ -490,6 +490,12 @@ needs the maximum, so the notice leads with 14 days. The rotation comes second.
 **`ZO_COMPACT_DATA_RETENTION_DAYS` is a published claim.** Its own comment in `openobserve.yaml` says so. Change it
 without changing the privacy notice and the notice becomes false. `legalViews.spec.ts` asserts the number in both
 languages, so the two cannot drift apart quietly.
+
+**One stream keeps its rows longer, and it holds no personal data.** On staging, `smoke_test` keeps the results of the
+post-deploy smoke test for 60 days (#2393). Production follows when the routing moves into `deploy/clusters/base/`.
+The rows hold k6 metrics and check names. The collector sends a record there only when its container is `smoke-test`
+and its namespace is `event-junkie`. Thus no visitor log line can get into it. Only a stream like this one can have a
+retention above 14 days. `deploy/streams/streams.json` lists each of these streams, and this paragraph names each one.
 
 **The trap this replaces, recorded because it nearly shipped.** #877's body says production does not run OpenObserve.
 That was true when written, and #880 closed it a day later. Reading the issue instead of the tree gave a notice that

@@ -1,0 +1,6 @@
+{
+  "smoke_test": {
+    "type": "logs",
+    "data_retention": 60
+  }
+}
