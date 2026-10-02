@@ -1532,6 +1532,20 @@ class ArtistNameMappingTest {
         headlinersFromTitle("Methods of Dance II").shouldBeEmpty()
     }
 
+    // #2350 — a partner co-brands a series night or the venue with ` x `; neither side is an act.
+    @Test
+    fun `a title co-branded with a series or the venue after x yields no artist`() {
+        headlinersFromTitle("Human Tree x Urban Spree Klubnacht").shouldBeEmpty()
+        headlinersFromTitle("Human Tree x Urban Spree KLUBNACHT 006").shouldBeEmpty()
+        headlinersFromTitle("aufnahme + wiedergabe X Urban Spree").shouldBeEmpty()
+    }
+
+    @Test
+    fun `a co-bill joined with x that ends in no series is still read as acts`() {
+        headlinersFromTitle("Pyrexia x Relics of Humanity").map { it.name } shouldBe listOf("Pyrexia x Relics of Humanity")
+        headlinersFromTitle("Urban Spree Klubnacht x Some Act").map { it.name } shouldBe listOf("Urban Spree Klubnacht x Some Act")
+    }
+
     // #305 — a `feat.` guest mid-title is support, and the act keeps its year-ended night name off.
     @Test
     fun `headlinersFromTitle bills a featured guest as support and keeps the act`() {

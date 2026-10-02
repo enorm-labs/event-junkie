@@ -2,6 +2,7 @@ package de.norm.events.scraper.urbanspree
 
 import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
+import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
@@ -57,6 +58,32 @@ class UrbanSpreeDetailPageScraperTest {
         document.selectFirst(".rte.tv-content p:contains(25.09.26)")!!.text("26.09.26 21:00 — LATE")
 
         scraper.scrape(document, klubnachtUrl).shouldNotBeNull().startTime shouldBe LocalTime.of(23, 59)
+    }
+
+    private val coBrandedUrl = "https://www.urbanspree.com/program/concerts/human-tree-x-urban-spree-klubnacht.html"
+
+    @Test
+    fun `scrape bills a co-branded Klubnacht's featured acts instead of its title`() {
+        val event = scraper.scrape(fixture("urbanspree-detail-cobranded-klubnacht.html", coBrandedUrl), coBrandedUrl).shouldNotBeNull()
+
+        event.title shouldBe "Human Tree x Urban Spree Klubnacht"
+        event.sourceId shouldBe "urban_spree:concerts/human-tree-x-urban-spree-klubnacht"
+        event.eventType shouldBe EventType.CONCERT.name
+        event.promoters shouldContainExactly listOf("Human Tree", "Urban Spree")
+        event.artists.map { it.name to it.role } shouldContainExactly
+            listOf("Bam Bam’s Boogie" to "HEADLINER", "Delta Division" to "HEADLINER", "N Ska" to "HEADLINER")
+    }
+
+    @Test
+    fun `scrape bills nobody for a co-branded Klubnacht whose description names no line-up`() {
+        val document = fixture("urbanspree-detail-cobranded-klubnacht.html", coBrandedUrl)
+        document.selectFirst(".rte.tv-content")!!.text("A night of live music and club culture.")
+
+        scraper
+            .scrape(document, coBrandedUrl)
+            .shouldNotBeNull()
+            .artists
+            .shouldBeEmpty()
     }
 
     private fun scrapeConcert() = scraper.scrape(fixture("urbanspree-detail-concert.html", concertUrl), concertUrl)

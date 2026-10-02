@@ -4,6 +4,7 @@ import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
 import de.norm.events.scraper.SUPPORT_LABELS
 import de.norm.events.scraper.cleanEventTitle
+import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.parseEventStatus
 import de.norm.events.scraper.parseTime
 import java.time.LocalDate
@@ -179,3 +180,30 @@ internal fun urbanSpreeDjSets(description: String?): List<String> =
                 .distinct()
                 .toList()
         }.orEmpty()
+
+/**
+ * A description sentence that opens with `Featuring` and lists the night's acts (#2350): `…
+ * Klubnacht. Featuring Bam Bam’s Boogie, Delta Division and N Ska, the programme unfolds …`. The
+ * capital `F` after a sentence end is required, so `… featuring artists such as …` in a band's
+ * biography is not read. The list ends at a full stop or at a comma before a lowercase word.
+ */
+private val FEATURING_SENTENCE = Regex("""(?:^|[.!?]\s+)Featuring\s+(.+?)(?=\.|,\s+\p{Ll}|$)""")
+
+/** The separators of a `Featuring` list: a comma, or the `and` before its last act. */
+private val FEATURING_LIST_SEPARATOR = Regex(""",\s+|\s+and\s+""")
+
+/** The most words an act in a `Featuring` list may have; a longer item is a clause, not a name. */
+private const val FEATURING_MAX_WORDS = 4
+
+/**
+ * The acts of a description's `Featuring A, B and C` sentence ([FEATURING_SENTENCE]), or none.
+ * The list must name two acts or more, and each must open with a capital letter or a digit and
+ * stay short. Otherwise the whole list is rejected: `Featuring 2 Berlin-based bands, exploring …`
+ * describes the night and names nobody.
+ */
+internal fun urbanSpreeFeaturedActs(description: String?): List<String> {
+    val list = description?.let { FEATURING_SENTENCE.find(it) }?.groupValues?.get(1) ?: return emptyList()
+    val acts = list.split(FEATURING_LIST_SEPARATOR).map { it.trim() }
+    val isLineUp = acts.all { act -> act.firstOrNull()?.let { it.isUpperCase() || it.isDigit() } == true && act.split(' ').size <= FEATURING_MAX_WORDS }
+    return if (acts.size > 1 && isLineUp) acts.filterNot(::isNonArtistName).distinct() else emptyList()
+}

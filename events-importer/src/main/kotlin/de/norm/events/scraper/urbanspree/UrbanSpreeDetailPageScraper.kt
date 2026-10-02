@@ -37,7 +37,11 @@ import java.util.Locale
  * A late club night is the exception on both counts (#1904). Its hero says 23:59
  * ([URBAN_SPREE_LATE_PLACEHOLDER]), the description opens with the real start stamped with the
  * night's own date, and the DJs appear only there, as `<name> — DJ set`. Such a night is typed
- * `PARTY`, although the venue files it under Concerts.
+ * `PARTY`, although the venue files it under Concerts. A night co-branded with a partner
+ * (`Human Tree x Urban Spree Klubnacht`) may have no running order at all and name its acts in
+ * one `Featuring A, B and C` sentence instead (#2350); that sentence is read only when neither the
+ * title nor a running order bills anyone. Only that wording is read, because the venue's other
+ * uses of `featuring` are prose about a band, not a line-up.
  *
  * @see UrbanSpreeOverviewPageScraper for discovery and the authoritative date.
  * @see UrbanSpreeWebsiteImporter for the fetch orchestrator and the merge.
@@ -85,6 +89,8 @@ class UrbanSpreeDetailPageScraper {
         val titleArtists = buildArtistsForEventType(title, subtitle = supportNote, eventType = eventType, description = description)
         // A club night filed under Concerts names no act in its title; its DJs are in the running order.
         val djSets = if (titleArtists.isEmpty()) urbanSpreeDjSets(description) else emptyList()
+        // A co-branded night with no running order names its acts in one prose sentence (#2350).
+        val featured = if (titleArtists.isEmpty() && djSets.isEmpty()) urbanSpreeFeaturedActs(description) else emptyList()
         return ScrapedEvent(
             title = title,
             subtitle = supportNote,
@@ -102,7 +108,10 @@ class UrbanSpreeDetailPageScraper {
             free = detectFree(pricePresale = price, priceNote = priceText),
             status = urbanSpreeStatus(rawTitle),
             soldOut = urbanSpreeSoldOut(rawTitle),
-            artists = titleArtists.ifEmpty { djSets.map { ScrapedArtist(name = it, role = "DJ") } },
+            artists =
+                titleArtists
+                    .ifEmpty { djSets.map { ScrapedArtist(name = it, role = "DJ") } }
+                    .ifEmpty { featured.map { ScrapedArtist(name = it, role = "HEADLINER") } },
             promoters = infoValue(document, PROMOTER_LABEL)?.let(::splitPromoters).orEmpty()
         )
     }

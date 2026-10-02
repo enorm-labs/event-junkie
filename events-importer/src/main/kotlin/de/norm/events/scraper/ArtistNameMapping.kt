@@ -470,6 +470,20 @@ private fun stripShoutedTourTail(name: String): String {
 }
 
 /**
+ * Series billed under their own name with the acts on the page body only (#1581), and the venue
+ * name a partner co-brands its night with (`aufnahme + wiedergabe X Urban Spree`). Part of
+ * [NON_ARTIST_NAMES]; [isCoBrandedSeriesTitle] also reads them after a partner's ` x ` (#2350).
+ * Declared first, because [NON_ARTIST_NAMES] reads it while the file initialises.
+ */
+private val BILLED_SERIES_NAMES: Set<String> =
+    setOf(
+        "berlin beat invasion",
+        "urban spree klubnacht",
+        "urban spree",
+        "methods of dance"
+    )
+
+/**
  * Curated one-off titles that are not performers and no structural rule catches: a warm-up slot
  * at a room, a package-tour name, a themed night, a venue's own series its structured data
  * lists as the performer (Bi Nuu). Entries are lowercase, accent-free, whitespace-collapsed; a
@@ -508,10 +522,6 @@ private val NON_ARTIST_NAMES: Set<String> =
         "poetry",
         "hip hop",
         "hip-hop",
-        // Series billed under their own name with the acts on the page body only (#1581).
-        "berlin beat invasion",
-        "urban spree klubnacht",
-        "methods of dance",
         // What a split leaves of a note, a format word or a guest tail (#301): `verschoben – Black
         // River Delta`, `PANEL: …`, the `Friends` of `Emorine, Bandidas & Friends`. A whole `Feo &
         // Friends` billing stays one act (Supamolly); only the split-off word is dropped.
@@ -523,7 +533,7 @@ private val NON_ARTIST_NAMES: Set<String> =
         "thrash talk",
         "in the mountains",
         "rockstar girlfriends"
-    )
+    ) + BILLED_SERIES_NAMES
 
 /**
  * A trailing edition number on a recurring title, ignored when matching [NON_ARTIST_NAMES]: the
@@ -636,13 +646,29 @@ private fun String.startsWithPresenter(presenter: String): Boolean {
     }
 }
 
-private fun isDenylistedNonArtist(name: String): Boolean =
+private fun isDenylistedNonArtist(name: String): Boolean = denylistKey(name) in NON_ARTIST_NAMES
+
+/** [name] as the denylists spell their entries, with a trailing edition number or `Berlin` dropped. */
+private fun denylistKey(name: String): String =
     Normalizer
         .normalize(name.trim().replace(WHITESPACE, " ").lowercase(), Normalizer.Form.NFD)
         .replace(DIACRITICS, "")
         .replace(TRAILING_EDITION, "")
         .replace(TRAILING_CITY, "")
-        .trim() in NON_ARTIST_NAMES
+        .trim()
+
+/** The ` x ` a partner joins its name to a series with: `Human Tree x Urban Spree Klubnacht`. */
+private val CO_BRAND_SEPARATOR = Regex("""\s+x\s+""", RegexOption.IGNORE_CASE)
+
+/**
+ * True when [title] ends in a [BILLED_SERIES_NAMES] entry after ` x ` (#2350). The partner on
+ * the left is a promoter or a label that co-hosts the series night, so neither side is an act.
+ * A co-bill such as `Pyrexia x Relics of Humanity` does not end in a series and is not matched.
+ */
+private fun isCoBrandedSeriesTitle(title: String): Boolean {
+    val separator = CO_BRAND_SEPARATOR.findAll(title).lastOrNull() ?: return false
+    return denylistKey(title.substring(separator.range.last + 1)) in BILLED_SERIES_NAMES
+}
 
 /**
  * A bare "DJ set" format label, optionally with a `/ <origin>` tail (`DJ-Set`, `DJ Set`, `DJ-Set
@@ -1283,6 +1309,7 @@ fun headlinersFromTitle(
     val title = stripTitleStatusMarker(stripSoldOutMarker(rawTitle))
     // A title led by a label's own name announces that label's event; nothing in it is an act.
     if (isLedByNonArtistLabel(title)) return emptyList()
+    if (isCoBrandedSeriesTitle(title)) return emptyList()
     // Before the split, which would cut `Romeo + Juliet Film in Concert` into two acts.
     if (isScoreConcertTitle(title)) return emptyList()
     // Same conclusion, reached structurally: the subtitle credits the label and the title repeats it.
