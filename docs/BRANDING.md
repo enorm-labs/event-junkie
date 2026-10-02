@@ -6,14 +6,14 @@
 
 ## 1. Brand foundation
 
-|                      |                                                                                                                                                                           |
-| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Public name**      | **Event Junkie** (domain: `event-junkie.de`)                                                                                                                              |
-| **Identifier form**  | **`event-junkie`** (repository, config, infrastructure — one name everywhere, see the naming rule below)                                                                  |
-| **Tagline**          | _Can't get enough of Berlin_ · DE: _Von Berlin kriegst du nie genug_ — the German line is **shipping but not signed off**; see [§8](#8-localisation--the-german-register) |
-| **Positioning line** | _The event app Berlin deserves_ — **not the tagline**; see below                                                                                                          |
-| **One-liner**        | Your always-fresh feed of what's on across Berlin's venues — concerts, club nights, festivals, and the odd quiz night.                                                    |
-| **Scope**            | All music, every genre and room size — not just techno. Berlin-only for now. Which _kinds_ of event: [EVENT_SCOPE.md](EVENT_SCOPE.md)                                     |
+|                      |                                                                                                                                                          |
+| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Public name**      | **Event Junkie** (domain: `event-junkie.de`)                                                                                                             |
+| **Identifier form**  | **`event-junkie`** (repository, config, infrastructure — one name everywhere, see the naming rule below)                                                 |
+| **Tagline**          | _Can't get enough of Berlin_ · DE: _Von Berlin kriegst du nie genug_ — the German line is **signed off**; see [§8](#8-localisation--the-german-register) |
+| **Positioning line** | _The event app Berlin deserves_ — **not the tagline**; see below                                                                                         |
+| **One-liner**        | Your always-fresh feed of what's on across Berlin's venues — concerts, club nights, festivals, and the odd quiz night.                                   |
+| **Scope**            | All music, every genre and room size — not just techno. Berlin-only for now. Which _kinds_ of event: [EVENT_SCOPE.md](EVENT_SCOPE.md)                    |
 
 ### Tagline vs. positioning line
 
@@ -613,6 +613,29 @@ conflict, a model sides with the vibe.
   `src/components/BrandLogo.vue` (the header lockup — badge below `sm`, wordmark from `sm`).
 - **Fonts** → self-hosted `@fontsource-variable/geist`, imported in `src/main.ts`; `--font-*` tokens in
   `main.css`.
+- **Stickers** → `docs/branding/stickers/`, built by `scripts/build-stickers.sh` (#481). Five Flyeralarm products, each sized to its datasheet. Flyeralarm
+  sells fixed formats only, so a size change means a different format, not a different number:
+    - **Main, four motifs** — _Outdoor-Aufkleber_, rectangle 85 × 55 mm, white film, 4/0, 3 mm bleed, 3 mm safe zone. English and German, each in
+      _ink_ (black on white) and _night_ (white on black). QR codes `sei`, `sen`, `sdi`, `sdn`.
+    - **Neon, two motifs** — _Neon-Aufkleber_, 85 × 55 mm, red fluorescent paper, black only (1/0). The main layout in black, in English and German.
+      The paper glows under club UV light and the black stays dark. Paper, so indoors only. QR codes `ne`, `nd`.
+    - **Glow in the dark, two motifs** — _Leuchtaufkleber_, 85 × 55 mm, pale yellow phosphorescent film, 4/0. The night layout with every light element
+      left unprinted: unprinted film is what glows, so in the dark only the stamp, the type and the QR panel show. QR codes `ge`, `gd`. The preview
+      shows day and dark side by side.
+    - **Clear series, eight captions** — _Outdoor-Aufkleber_, rectangle 105 × 35 mm, 90 µm clear film, 4/0. The stamp in violet with its caption re-set per
+      sticker, at the adopted caption settings (Geist 700, size 10, tracking 3.4). QR codes `ce1`–`ce4`, `cd1`–`cd4`. The clear film takes no white ink:
+      the ink is translucent, so these read on light surfaces only (tiles, mirrors, glass). The German captions are signed off.
+      _Feed the habit_, _Highly addictive_ and _Macht süchtig_ play on the name, as the tagline alternatives in §3 do. They are kept on purpose: the
+      joke is the name, and none of them names a substance.
+    - **Die-cut sheet** — _Selbstklebefolie Freiform_, one DIN A3 sheet with fifteen 80 mm stamps, five per colourway (black, violet, night). The caption
+      is the URL, so there is no QR code. Each cut sits 2.5 mm outside the tilted outer frame, in the spot colour `CutContour`, 100 % magenta, overprinting,
+      1 pt. The datasheet's other limits hold: 10 mm between cuts, 4 mm of artwork past each cut, at most fifteen cuts.
+    - **Colour.** The PDFs are DeviceCMYK with set values, not converted ones. Text, stamp and QR code are pure K, so small type does not depend on register.
+      The night ground is a rich black, 40/30/30/100. The violet is 65/80/0/0 on white and clear, 40/60/0/0 on black. It is outside the CMYK gamut, so
+      expect it duller than on screen.
+    - **Counting.** Every QR code points at `https://event-junkie.de/?s=<code>`. The nginx access log keeps the query string, so the #1126 traffic panel
+      can count scans per design without a cookie or an identifier.
+    - **Transparency.** The stamp's frame wear is live transparency. If the print shop's file check rejects it, flatten the file to PDF/X-4.
 
 **The plan that carried out the 2026-08 replacement is gone, deliberately.** `BRAND_REFRESH_PLAN.md` ran from the collision (§4a) to the last shipped asset and
 was deleted when it finished, on its own instruction: an all-ticked plan is a worse record than none, because the next reader cannot tell which unticked boxes
@@ -705,18 +728,17 @@ Informal throughout, **including the imprint and the privacy notice**. Two pages
 from a generator, which is the impression a legal page can least afford. Nothing requires the formal register — Art. 12 (1) DSGVO asks for _klare und einfache
 Sprache_, and `du` is that. If this ever changes it changes on every page at once.
 
-### The tagline — shipping, not signed off
+### The tagline — signed off
 
 _Can't get enough of Berlin_ is a pun on the brand premise (§2), and a literal German rendering loses it. Three options were considered:
 
-| Option                                | Reading                                                                                                                    |
-| ------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| _**Von Berlin kriegst du nie genug**_ | **Currently shipping.** Keeps the "you can't get enough" flattery and the `du` register; idiomatic rather than translated. |
-| _Berlin macht süchtig_                | Closer to the junkie metaphor, further from flattering the user — it praises the city, not the reader.                     |
-| Keep the English line on `/de` too    | Legitimate, and common for Berlin brands. Costs the German reader the joke.                                                |
+| Option                                | Reading                                                                                                            |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| _**Von Berlin kriegst du nie genug**_ | **Signed off.** Keeps the "you can't get enough" flattery and the `du` register; idiomatic rather than translated. |
+| _Berlin macht süchtig_                | Closer to the junkie metaphor, further from flattering the user — it praises the city, not the reader.             |
+| Keep the English line on `/de` too    | Legitimate, and common for Berlin brands. Costs the German reader the joke.                                        |
 
-**Still the owner's call.** It ships because a German page needs _a_ tagline, not because the question is closed — changing it is one line in
-`src/i18n/messages/de/footer.json` plus one e2e assertion.
+The site, the German hero stamp and the German stickers carry it. It lives in `src/i18n/messages/de/footer.json`, with one e2e assertion on it.
 
 ### Gendered nouns: the asterisk form
 

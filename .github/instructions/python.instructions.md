@@ -11,8 +11,8 @@ The scripts under `scripts/`, `deploy/alerts/` and `deploy/dashboards/`, plus `i
 `pyproject.toml`, no venv, no test runner. `scripts/README.md` § The short version carries the decisions; this is what they mean when you edit a `.py` file.
 
 - **Standard library only, with `argparse`.** `ste_lint.py` and everything under `deploy/` are copied to a node and run under the `python3` there, where
-  nothing is installed. `outline_text.py` is the one exception, and its wrapper builds the venv it needs. A CLI library (click, typer) is the same
-  decision as a shell framework, and `scripts/README.md` records both as decided against.
+  nothing is installed. `outline_text.py` and `build_stickers.py` are the exceptions. They run only on a contributor's machine, and each one's wrapper
+  builds the venv it needs. A CLI library (click, typer) is the same decision as a shell framework, and `scripts/README.md` records both as decided against.
 - **`ruff check` and `ruff format`, from the root `ruff.toml`**: line length 120, `target-version = "py312"` (the `python3` on an Ubuntu 24.04 node), rules
   `E`, `F`, `W`, `B`, `I`. The pin is `RUFF_VERSION` in `validate-python.yml`; the commit hook uses the `ruff` on `$PATH` (`brew install ruff`), the
   way ShellCheck does. Without one, `uvx ruff@<RUFF_VERSION>` runs the pinned release. **Not selected on purpose:** `UP031`, because `%`-formatting is
