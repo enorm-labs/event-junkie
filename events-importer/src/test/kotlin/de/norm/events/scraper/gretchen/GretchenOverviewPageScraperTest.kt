@@ -313,6 +313,27 @@ class GretchenOverviewPageScraperTest {
             event.artists.map { it.name } shouldContainExactly listOf("The Bug", "Slimzee", "Grandmixxer")
         }
 
+        // Production stored `Marthe X Pilani Bubu` as one act; `NOAH X PETTER` is the duo's own credit (#2365).
+        @Test
+        fun `splits an x co-bill and keeps a duo that releases under the join`() {
+            val html =
+                """
+                <div class="gig">
+                    <div class="gig_top">
+                        <span class="date">Mo. <strong>16.11.2026</strong><br> Doors: 20.00</span>
+                    </div>
+                    <div class="gig_main"><div class="scroll nano"><div class="text nano-content">
+                        <span class="title">Jazz<h2><a href="detail.php?id=3592">L'Oreille en friche presents: MARTHE X PILANI BUBU</a></h2></span>
+                        <span class="box"></span><span class="lineup"><p>Marthe X Pilani Bubu (L'Oreille en Friche/FR/ZA) *live*<br />NOAH X PETTER (LEITER/D) *live*<br /></p></span>
+                    </div></div></div>
+                </div>
+                """.trimIndent()
+
+            val event = scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl).single()
+
+            event.artists.map { it.name } shouldContainExactly listOf("Marthe", "Pilani Bubu", "NOAH X PETTER")
+        }
+
         // Production stored three sentences of a cancellation notice as support acts (#2167).
         @Test
         fun `reads a lineup block that holds a notice sentence as no acts`() {

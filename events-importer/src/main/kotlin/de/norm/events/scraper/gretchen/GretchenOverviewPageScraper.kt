@@ -24,6 +24,7 @@ import de.norm.events.scraper.parseLabelledPrices
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.resolveUrl
 import de.norm.events.scraper.splitBackToBack
+import de.norm.events.scraper.splitCrossBilled
 import de.norm.events.scraper.stripArtistSuffix
 import de.norm.events.scraper.textAt
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -239,8 +240,9 @@ class GretchenOverviewPageScraper {
      * instrument-credited member list, a bare "+ guests"); stripped of a role prefix
      * ([stripCreditPrefix]: "Support:", "+ Show:", "Opening DJ-Set by"); split on `feat.`/`ft.`
      * ([splitFeaturedActs]: "Mop Mop ft. Anthony Joseph"); cleaned of country/`*live*`/`+tag`
-     * decorations; stripped of a format suffix ([stripArtistSuffix]: "Acid Arab DJ-Set"); and
-     * dropped if [isNonArtistName] or [isProseNote]. First survivor is headliner, the rest support.
+     * decorations; split at a ` x ` co-bill ([splitCrossBilled]: "Marthe X Pilani Bubu"); stripped
+     * of a format suffix ([stripArtistSuffix]: "Acid Arab DJ-Set"); and dropped if [isNonArtistName]
+     * or [isProseNote]. First survivor is headliner, the rest support.
      */
     private fun parseArtists(gig: Element): List<ScrapedArtist> {
         val names =
@@ -263,7 +265,9 @@ class GretchenOverviewPageScraper {
                 .flatMap { it.split(PADDED_PLUS) }
                 .flatMap { splitFeaturedActs(it) }
                 .flatMap(::splitBackToBack)
-                .map { stripArtistSuffix(cleanArtistName(it)) }
+                .map(::cleanArtistName)
+                .flatMap(::splitCrossBilled)
+                .map(::stripArtistSuffix)
                 .filter { it.isNotBlank() && !isNonArtistName(it) && !isProseNote(it) }
                 .distinct()
 

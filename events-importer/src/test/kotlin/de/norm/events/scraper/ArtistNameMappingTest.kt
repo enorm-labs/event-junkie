@@ -1542,8 +1542,42 @@ class ArtistNameMappingTest {
 
     @Test
     fun `a co-bill joined with x that ends in no series is still read as acts`() {
-        headlinersFromTitle("Pyrexia x Relics of Humanity").map { it.name } shouldBe listOf("Pyrexia x Relics of Humanity")
-        headlinersFromTitle("Urban Spree Klubnacht x Some Act").map { it.name } shouldBe listOf("Urban Spree Klubnacht x Some Act")
+        headlinersFromTitle("Pyrexia x Relics of Humanity").map { it.name } shouldBe listOf("Pyrexia", "Relics of Humanity")
+        headlinersFromTitle("Urban Spree Klubnacht x Some Act").map { it.name } shouldBe listOf("Some Act")
+    }
+
+    // #2365 — ` x ` joins two acts the way ` + ` does; each side is billed on its own.
+    @Test
+    fun `a title joining two acts with x bills both`() {
+        headlinersFromTitle("Hatebreed x Life Of Agony").map { it.name to it.role } shouldBe
+            listOf("Hatebreed" to "HEADLINER", "Life Of Agony" to "HEADLINER")
+        headlinersFromTitle("TMARO x PapaRaZzle").map { it.name } shouldBe listOf("TMARO", "PapaRaZzle")
+        headlinersFromTitle("IFA x Never Back Down").map { it.name } shouldBe listOf("IFA", "Never Back Down")
+        headlinersFromTitle("Schwindel x Nancy & the Jam Fancys").map { it.name } shouldBe listOf("Schwindel", "Nancy & the Jam Fancys")
+    }
+
+    @Test
+    fun `an X that ends a name is not a join`() {
+        headlinersFromTitle("Malcolm X").map { it.name } shouldBe listOf("Malcolm X")
+        headlinersFromTitle("Symphony X + Firewind").map { it.name } shouldBe listOf("Symphony X", "Firewind")
+        headlinersFromTitle("Sadat X & Grand Agent").map { it.name } shouldBe listOf("Sadat X", "Grand Agent")
+        headlinersFromTitle("Sadat X and Grand Agent").map { it.name } shouldBe listOf("Sadat X", "Grand Agent")
+        headlinersFromTitle("X-Ray Spex").map { it.name } shouldBe listOf("X-Ray Spex")
+        headlinersFromTitle("Max x Y").map { it.name } shouldBe listOf("Max x Y")
+    }
+
+    @Test
+    fun `a duo that releases under its x join stays one act`() {
+        splitCrossBilled("NOAH X PETTER") shouldBe listOf("NOAH X PETTER")
+        splitCrossBilled("Marthe X Pilani Bubu") shouldBe listOf("Marthe", "Pilani Bubu")
+        splitSegmentOnConjunctions("Fhionn x Cathal") shouldBe listOf("Fhionn", "Cathal")
+        splitCrossBilled("Los Refrescos (A x B)") shouldBe listOf("Los Refrescos (A x B)")
+    }
+
+    @Test
+    fun `two promoters presenting a night bill only the acts after with`() {
+        headlinersFromTitle("Process Party x Effetto Notte: Hall of Bats with Lovataraxx, Hysteric Helen, Olgha").map { it.name } shouldBe
+            listOf("Lovataraxx", "Hysteric Helen", "Olgha")
     }
 
     // #305 — a `feat.` guest mid-title is support, and the act keeps its year-ended night name off.
