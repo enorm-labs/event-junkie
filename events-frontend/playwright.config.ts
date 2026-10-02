@@ -62,7 +62,9 @@ export default defineConfig({
     actionTimeout: 0,
     baseURL: process.env.CI ? 'http://localhost:4173' : 'http://localhost:5173',
     trace: 'on-first-retry',
-    headless: !!process.env.CI,
+    // Headless everywhere: a headed run opens a window per worker and steals focus on every one.
+    // `--headed`, `--ui` or `--debug` shows the browser when you want to watch.
+    headless: true,
   },
 
   projects: [
