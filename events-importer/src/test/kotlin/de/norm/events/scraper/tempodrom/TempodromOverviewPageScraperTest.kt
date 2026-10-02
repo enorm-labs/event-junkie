@@ -48,6 +48,17 @@ class TempodromOverviewPageScraperTest {
     }
 
     @Test
+    fun `types a night whose format line says comedy as COMEDY and keeps the performer`() {
+        val polak = event("oliver_polak_2026-11-28_20")
+        polak.subtitle shouldBe "COMEDY - Clubtour 2026 | Kleine Arena"
+        polak.eventType shouldBe "COMEDY"
+        polak.artists.map { it.name } shouldContainExactly listOf("Oliver Polak")
+
+        event("gazelle_2026-10-23_20").eventType shouldBe "COMEDY"
+        event("dr-pop_2027-11-12_20").eventType shouldBe "COMEDY"
+    }
+
+    @Test
     fun `parses every field of a dated concert`() {
         val babyKeem = event("baby_keem_2026-09-01_20")
         babyKeem.title shouldBe "Baby Keem"

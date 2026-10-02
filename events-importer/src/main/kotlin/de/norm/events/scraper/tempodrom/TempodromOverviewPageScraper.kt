@@ -1,6 +1,8 @@
 package de.norm.events.scraper.tempodrom
 
+import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.cleanEventTitle
@@ -32,6 +34,12 @@ import java.math.BigDecimal
  * not an act, so it is ignored and artists derive from the title as for any concert hall. And
  * `location.name` is always "Tempodrom Berlin", so the Große / Kleine Arena split — nowhere in
  * the listing — is not represented.
+ *
+ * Tempodrom publishes no category, and about a third of its programme is comedy or Kabarett. The
+ * `description` line names the format when the venue bills it as comedy ("COMEDY - Clubtour 2026",
+ * "“Comedy Perle”"), so a whole-word "comedy" there types the night [EventType.COMEDY]
+ * ([tempodromEventType], #2314). A comedian billed by name alone ("Dieter Nuhr" / "Live 2026")
+ * carries no cue anywhere on the site and stays `CONCERT`.
  *
  * The JSON-LD strings are HTML-escaped and script content is not decoded by Jsoup, so `name`
  * and `description` go through [decodeHtmlEntities] before anything touches them — see that
@@ -79,7 +87,7 @@ class TempodromOverviewPageScraper {
                 .asString(null)
                 ?.let(::decodeHtmlEntities)
                 ?.takeIf { it.isNotBlank() }
-        val eventType = inferConcertVenueType(title)
+        val eventType = tempodromEventType(title, subtitle)
         val offers = event.path("offers")
         val (presale, priceNote) = parsePrices(offers)
 
@@ -104,7 +112,7 @@ class TempodromOverviewPageScraper {
             priceNote = priceNote,
             soldOut = event.schemaSoldOut(),
             status = event.schemaStatus(),
-            artists = buildArtistsForEventType(title, subtitle, eventType)
+            artists = tempodromArtists(title, subtitle, eventType)
         )
     }
 
@@ -137,3 +145,37 @@ class TempodromOverviewPageScraper {
         const val DEFAULT_CURRENCY = "EUR"
     }
 }
+
+/**
+ * [EventType.COMEDY] when the venue's format line says "comedy" as a word, else the shared
+ * concert-hall rule on the title. Only a comedy cue is read from the subtitle: the line is also
+ * a tour name, and "Die beste Wolfgang Petry Party" is a tribute show, not a party.
+ */
+internal fun tempodromEventType(
+    title: String,
+    subtitle: String?
+): String =
+    if (subtitle != null && COMEDY_FORMAT.containsMatchIn(subtitle)) {
+        EventType.COMEDY.name
+    } else {
+        inferConcertVenueType(title)
+    }
+
+/**
+ * The title is the act at Tempodrom, comedy included: "Oliver Polak" / "COMEDY - Clubtour 2026".
+ * A comedy night is billed like a concert without the format line, which names no support act.
+ * The shared comedy rule wants "<Performer> – <Show>" in the title, and Tempodrom never writes it.
+ */
+private fun tempodromArtists(
+    title: String,
+    subtitle: String?,
+    eventType: String
+): List<ScrapedArtist> =
+    if (eventType == EventType.COMEDY.name) {
+        buildArtistsForEventType(title, subtitle = null, eventType = EventType.CONCERT.name)
+    } else {
+        buildArtistsForEventType(title, subtitle, eventType)
+    }
+
+/** "comedy" as a word in Tempodrom's format line: "Comedy Perle", "MUSIK-COMEDY-STAND-UP-SHOW". */
+private val COMEDY_FORMAT = Regex("""\bcomedy\b""", RegexOption.IGNORE_CASE)
