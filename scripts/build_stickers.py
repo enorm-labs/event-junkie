@@ -7,6 +7,7 @@ Three Flyeralarm products, each built to its own datasheet:
   neon     Neon-Aufkleber, 85 x 55 mm, red fluorescent paper, black only (1/0). The main layout; the paper glows in UV.
   glow     Leuchtaufkleber, 85 x 55 mm, glow-in-the-dark film, 4/0. The night layout with every light element left
            unprinted, so in the dark only the stamp, the type and the QR panel glow.
+  mini     Outdoor-Aufkleber, square 50 x 50 mm, white film, 4/0. The stamp badge, a QR code and the URL; ink and night.
   clear    Outdoor-Aufkleber, rectangle 105 x 35 mm, 90 um clear film, 4/0. A series of eight caption lines. The film
            takes no white ink, so the ink is translucent and the QR code reads on light surfaces only.
   diecut   Selbstklebefolie Freiform, one DIN A3 sheet with fifteen stamps, each cut along its tilted frame.
@@ -66,6 +67,7 @@ class Sheet:
 
 MAIN = Sheet(85, 55, 3, 3, corner=2)
 CLEAR = Sheet(105, 35, 3, 3, corner=2)
+MINI = Sheet(50, 50, 1, 4, corner=2)
 A3 = Sheet(297, 420, 5, 5)
 
 EN_STAMP, DE_STAMP = "lockup-club-stamp-tagline-en.svg", "lockup-club-stamp-tagline-de.svg"
@@ -207,6 +209,27 @@ def side_by_side(sheet, left, right, gap=6.0):
         f'viewBox="0 0 {2 * s.w + gap} {s.h}">{clip}<g clip-path="url(#trim)">{left}</g>'
         f'<g transform="translate({s.w + gap} 0)"><g clip-path="url(#trim)">{right}</g></g></svg>'
     )
+
+
+def mini_motif(name, code, way):
+    """The stamp badge beside a QR code, the URL beneath. For the gaps between other stickers."""
+    s, badge, qs, gap = MINI, 18.0, 18.5, 4.5
+    top = 10.5
+    x = s.safe
+    qx = x + badge + gap
+    qr, module = qr_path(BASE_URL + code, qx, top, qs)
+    panel = ""
+    if way["qr_panel"]:
+        quiet = 4 * module
+        box = f'x="{qx - quiet:.3f}" y="{top - quiet:.3f}" width="{qs + 2 * quiet:.3f}" height="{qs + 2 * quiet:.3f}"'
+        panel = f'<rect {box} rx="1" fill="{PAPER}"/>'
+    art = (
+        ground(s, way["ground"])
+        + nest(stamp_source("mark-ej-badge-stamp.svg"), x, top + (qs - badge) / 2, badge, way["ink"], name)
+        + f'{panel}<path d="{qr}" fill="{INK}"/>'
+        + f'<path d="{text_path("event-junkie.de", 4.6, s.w / 2, top + qs + 8.5, 600, "middle")}" fill="{way["ink"]}"/>'
+    )
+    return document(s, art), trimmed(s, art), BASE_URL + code
 
 
 def clear_motif(name, code, lockup, caption):
@@ -373,6 +396,9 @@ def designs():
     for name, (code, language, way) in MAIN_MOTIFS.items():
         bled, preview, url = main_motif(name, code, language, way)
         yield f"sticker-{name}-85x55", MAIN, bled, preview, url, ()
+    for name, code, way in (("ink", "mi", INK_WAY), ("night", "mn", NIGHT_WAY)):
+        bled, preview, url = mini_motif(f"mini-{name}", code, way)
+        yield f"sticker-mini-{name}-50x50", MINI, bled, preview, url, ()
     for lang, captions in CLEAR_SERIES.items():
         lockup = EN_STAMP if lang == "en" else DE_STAMP
         for i, caption in enumerate(captions, 1):
