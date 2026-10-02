@@ -125,7 +125,7 @@ class FrannzOverviewPageScraper(
             return null
         }
 
-        val subtitle = article.textAt("h4.event-utitle")
+        val subtitle = article.textAt("h4.event-utitle")?.let { stripMarkdownEmphasis(it).trim() }?.takeIf { it.isNotBlank() }
         val eventType = refineConcertVenueType(parseEventType(article), title)
 
         val doorsTime = parseTime(article.textAt("ul.event-times li.event-entrance .value"))
@@ -289,16 +289,38 @@ class FrannzOverviewPageScraper(
     /**
      * Cleans one `<br>`-delimited line of the raw Markdown the copilot.events CMS emits. Frannz
      * renders it literally, so a line arrives as `-Tickets im VVK gibt es bei
-     * [www.eventim.de](www.eventim.de) -`. Strips a leading/trailing list bullet and unwraps inline
-     * `[label](url)` links to their label (URL dropped), so `[www.eventim.de](www.eventim.de)`
-     * becomes `www.eventim.de`. Callers still drop the "Tickets im VVK …" line and bullet residue.
+     * [www.eventim.de](www.eventim.de) -`. Strips [emphasis][stripMarkdownEmphasis] and a
+     * leading/trailing list bullet, and unwraps inline `[label](url)` links to their label (URL
+     * dropped), so `[www.eventim.de](www.eventim.de)` becomes `www.eventim.de`. Callers still drop
+     * the "Tickets im VVK …" line and bullet residue.
+     *
+     * Emphasis goes first: the bullet strip otherwise takes one `*` of a leading `**_…_**` and
+     * leaves `*_…_**` (#2328).
      */
     private fun cleanDescriptionLine(raw: String): String =
-        raw
+        stripMarkdownEmphasis(raw)
             .replaceFirst(LEADING_BULLET, "")
             .replace(TRAILING_BULLET, "")
             .replace(MARKDOWN_LINK) { it.groupValues[1] }
             .trim()
+
+    /**
+     * Removes the `*` / `_` runs that open or close Markdown emphasis (`**Germany Tour 2027**`,
+     * `**_…_**`, `_Mind Yourself_`, `entsteht**.**`). A run between two letters or digits stays,
+     * because there it is text: the gender star in `Hörer*innen`, the `_` in `utm_medium`. A run
+     * with whitespace on both sides stays too; it opens nothing, and a lone line of them is a rule
+     * the caller drops as residue.
+     */
+    private fun stripMarkdownEmphasis(text: String): String =
+        EMPHASIS_RUN.replace(text) { run ->
+            val before = text.getOrNull(run.range.first - 1)
+            val after = text.getOrNull(run.range.last + 1)
+            val intraword = before?.isLetterOrDigit() == true && after?.isLetterOrDigit() == true
+            val detached = before.isBlankOrEdge() && after.isBlankOrEdge()
+            if (intraword || detached) run.value else ""
+        }
+
+    private fun Char?.isBlankOrEdge(): Boolean = this == null || isWhitespace()
 
     /**
      * Promoter names from an `.event-otitle` presenter line: "<names> präsentiert:" / "<names>
@@ -342,8 +364,11 @@ class FrannzOverviewPageScraper(
         /** A trailing detached bullet/dash (requires leading space, so hyphenated words are safe). */
         private val TRAILING_BULLET = Regex("""\s+[-–—*•]\s*$""")
 
-        /** A description line that is only bullet/dash residue after cleaning. */
-        private val BULLET_ONLY = Regex("""^[-–—*•\s]*$""")
+        /** A description line that is only bullet/dash residue, or a `___` rule, after cleaning. */
+        private val BULLET_ONLY = Regex("""^[-–—*•_\s]*$""")
+
+        /** A run of Markdown emphasis delimiters; [stripMarkdownEmphasis] decides whether it is one. */
+        private val EMPHASIS_RUN = Regex("""[*_]+""")
 
         /** Inline Markdown link `[label](url)` — kept as its visible label, the URL dropped. */
         private val MARKDOWN_LINK = Regex("""\[([^\]]+)]\(([^)]*)\)""")
