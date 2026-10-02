@@ -48,7 +48,7 @@ says so.
 | `CLASH`                | `PER_EVENT_PAGE`   | the `event` post type is not exposed over the WordPress REST API and the numeric permalinks 404                                                  | —     |
 | `CLASH`                | `DOORS_TIME`       | the homepage listing is the whole source and carries no doors time                                                                               | —     |
 | `CLASH`                | `PRICE`            | the homepage listing is the whole source and carries no price                                                                                    | —     |
-| `CLASH`                | `GENRE`            | the homepage listing is the whole source and carries no genre                                                                                    | —     |
+| `CLASH`                | `GENRE`            | the homepage listing is the whole source and carries no genre; every music night takes the house's Punk                                          | —     |
 | `CLASH`                | `PROMOTERS`        | the homepage listing is the whole source and names no promoter                                                                                   | —     |
 | `CLASH`                | `EVENT_TYPE`       | the site has no category field; the type is inferred from the title, defaulting to a concert                                                     | —     |
 | `CLUB_DER_VISIONAERE`  | `START_TIME`       | the listing prints one only where an act line carries a slot time; the homepage's NEXT box prints the rest, for the ten nights it shows          | —     |
@@ -142,7 +142,7 @@ says so.
 | `KATER`                | `IMAGE`            | the venue prints a flyer on almost no night; the programme is text with a Resident Advisor link                                                  | —     |
 | `KLUNKERKRANICH`       | `EVENT_TYPE`       | the venue publishes no category, so every night is stored as a party — which mislabels the occasional concert                                    | —     |
 | `KLUNKERKRANICH`       | `DOORS_TIME`       | the venue states when the roof opens, not when a show starts                                                                                     | —     |
-| `KLUNKERKRANICH`       | `GENRE`            | nothing on the site names a genre                                                                                                                | —     |
+| `KLUNKERKRANICH`       | `GENRE`            | nothing on the site names a genre; every night takes the house's House                                                                           | —     |
 | `KLUNKERKRANICH`       | `TICKET_URL`       | entry is paid at the door; an occasional advance-RSVP link is written into a blurb rather than published as a field                              | —     |
 | `KLUNKERKRANICH`       | `SOLD_OUT`         | nothing flags a night sold out                                                                                                                   | —     |
 | `KLUNKERKRANICH`       | `CANCELLATION`     | nothing flags a night cancelled                                                                                                                  | —     |
@@ -164,7 +164,7 @@ says so.
 | `MAAYA`                | `ARTISTS`          | there is no lineup field, and the titles are series and party names rather than acts                                                             | —     |
 | `MAAYA`                | `DOORS_TIME`       | the venue publishes no doors time                                                                                                                | —     |
 | `MAAYA`                | `EVENT_TYPE`       | the programme carries a name, a date and a time and no category; the type comes from a title keyword, else OTHER                                 | —     |
-| `MAAYA`                | `GENRE`            | the venue publishes no genre                                                                                                                     | —     |
+| `MAAYA`                | `GENRE`            | the venue publishes no genre; every music night takes the house's Afrobeats, Latin                                                               | —     |
 | `MAX_SCHMELING_HALLE`  | `PRICE`            | the listing and the event pages print no figure; tickets are sold through outside shops                                                          | —     |
 | `MAXXIM`               | `EVENT_TYPE`       | the club publishes no categories; every night is a DJ dance party                                                                                | —     |
 | `METROPOL`             | `PRICE`            | the venue prints no figure; tickets are sold through an Eventim link                                                                             | —     |
@@ -183,7 +183,7 @@ says so.
 | `MONARCH`              | `IMAGE`            | the venue prints no image per night, only one monthly programme poster                                                                           | —     |
 | `MONSTER_RONSONS`      | `DOORS_TIME`       | the venue states one time per night, which is taken as the start                                                                                 | —     |
 | `MONSTER_RONSONS`      | `PRICE`            | the price lives in prose and is often a time-banded tariff, which the model has no field for                                                     | —     |
-| `MONSTER_RONSONS`      | `GENRE`            | the venue publishes no genre                                                                                                                     | —     |
+| `MONSTER_RONSONS`      | `GENRE`            | the venue publishes no genre; every night takes the house's Karaoke                                                                              | —     |
 | `MONSTER_RONSONS`      | `ARTISTS`          | the venue bills no lineup beyond the host named in the title                                                                                     | —     |
 | `MORPHINE`             | `GENRE`            | the venue publishes no genre                                                                                                                     | —     |
 | `MORPHINE`             | `SOLD_OUT`         | the venue flags nothing sold out                                                                                                                 | —     |
@@ -197,7 +197,7 @@ says so.
 | `MS_HOPPETOSSE`        | `IMAGE`            | the programme is text only; the site's only images are its logos                                                                                 | —     |
 | `NEUE_ZUKUNFT`         | `PER_EVENT_PAGE`   | the calendar widget exposes no per-event URLs                                                                                                    | —     |
 | `NEUE_ZUKUNFT`         | `PRICE`            | the calendar widget prints no figure; each show links out to an external ticket shop                                                             | —     |
-| `NEUE_ZUKUNFT`         | `GENRE`            | the calendar's categories are rooms (Saal, Garage, Jazzbar) and its tags are blank                                                               | —     |
+| `NEUE_ZUKUNFT`         | `GENRE`            | the calendar's categories are rooms (Saal, Garage, Jazzbar) and its tags are blank; every music night takes the house's Psychedelic              | —     |
 | `NEUE_ZUKUNFT`         | `IMAGE`            | the calendar widget sets no cover image on upcoming shows                                                                                        | —     |
 | `OHM`                  | `PER_EVENT_PAGE`   | the venue's whole programme is one page                                                                                                          | —     |
 | `OHM`                  | `PRICE`            | the programme page carries no price                                                                                                              | —     |

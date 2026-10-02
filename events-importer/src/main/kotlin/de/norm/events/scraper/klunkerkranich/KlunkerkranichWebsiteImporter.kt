@@ -106,7 +106,7 @@ val KLUNKERKRANICH_LIMITATIONS =
             "the venue publishes no category, so every night is stored as a party — which mislabels the occasional concert"
         ),
         AcceptedLimitation(LimitedAspect.DOORS_TIME, "the venue states when the roof opens, not when a show starts"),
-        AcceptedLimitation(LimitedAspect.GENRE, "nothing on the site names a genre"),
+        AcceptedLimitation(LimitedAspect.GENRE, "nothing on the site names a genre; every night takes the house's House"),
         AcceptedLimitation(
             LimitedAspect.TICKET_URL,
             "entry is paid at the door; an occasional advance-RSVP link is written into a blurb rather than published as a field"
@@ -120,5 +120,6 @@ val KLUNKERKRANICH_LIMITATIONS =
         AcceptedLimitation(
             LimitedAspect.PRICE,
             "entry is a time-banded range (`5-9€`) the model has no field for, so the wording is kept verbatim as the note and only a lone figure is stored"
-        )
+        ),
+        houseGenre = "House"
     )

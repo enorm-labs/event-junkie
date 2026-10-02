@@ -125,6 +125,7 @@ val MONSTER_RONSONS_LIMITATIONS =
         EventSource.MONSTER_RONSONS,
         AcceptedLimitation(LimitedAspect.DOORS_TIME, "the venue states one time per night, which is taken as the start"),
         AcceptedLimitation(LimitedAspect.PRICE, "the price lives in prose and is often a time-banded tariff, which the model has no field for"),
-        AcceptedLimitation(LimitedAspect.GENRE, "the venue publishes no genre"),
-        AcceptedLimitation(LimitedAspect.ARTISTS, "the venue bills no lineup beyond the host named in the title")
+        AcceptedLimitation(LimitedAspect.GENRE, "the venue publishes no genre; every night takes the house's Karaoke"),
+        AcceptedLimitation(LimitedAspect.ARTISTS, "the venue bills no lineup beyond the host named in the title"),
+        houseGenre = "Karaoke"
     )

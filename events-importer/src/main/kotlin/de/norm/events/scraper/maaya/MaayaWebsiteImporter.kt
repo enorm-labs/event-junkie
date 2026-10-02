@@ -49,5 +49,6 @@ val MAAYA_LIMITATIONS =
             LimitedAspect.EVENT_TYPE,
             "the programme carries a name, a date and a time and no category; the type comes from a title keyword, else OTHER"
         ),
-        AcceptedLimitation(LimitedAspect.GENRE, "the venue publishes no genre")
+        AcceptedLimitation(LimitedAspect.GENRE, "the venue publishes no genre; every music night takes the house's Afrobeats, Latin"),
+        houseGenre = "Afrobeats, Latin"
     )
