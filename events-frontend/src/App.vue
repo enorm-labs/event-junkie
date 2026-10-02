@@ -100,7 +100,10 @@ const sectionLinks = computed(() =>
         :aria-label="t('common.nav.label')"
         class="mx-auto flex max-w-5xl flex-wrap items-center gap-x-4 gap-y-3 p-4 text-sm font-medium lg:flex-nowrap lg:gap-6"
       >
-        <RouterLink :to="localePath('/')" class="rounded-sm transition-opacity hover:opacity-80">
+        <RouterLink
+          :to="localePath('/')"
+          class="shrink-0 rounded-sm transition-opacity hover:opacity-80"
+        >
           <BrandLogo />
         </RouterLink>
 
