@@ -88,8 +88,8 @@ What settled it: the two refused options each trade the admin API's only protect
   unissued certificate on staging is found by a person on the tunnel, as today. Production verifies.
 - **A staging-only failure that a hook cannot express stays a manual find.** A visual regression, a translation, a slow page. The k3d suite covers the build,
   and a person on the tunnel covers the rest.
-- **Trend data comes from the log pipeline, not from a store this ADR adds.** Each hook writes one JSON line to stdout, and the collector ships it. OpenObserve
-  keeps it 14 days. Keeping those rows longer is [#2393][2393].
+- **Trend data comes from the log pipeline, not from a store this ADR adds.** Each hook writes one JSON line to stdout, and the collector ships it. The rows go
+  to the stream `smoke_test`, kept 60 days ([#2393][2393]). The storage bucket's 90-day expiry is the ceiling.
 - **A check that runs from Actions has no trend store at all.** The line above works for a hook because the hook runs beside the collector. OpenObserve is
   `ClusterIP` on both clusters with no Ingress, so a runner cannot write to it. Two changes would open that path. One is a credential into a cluster. The
   other is a public route to the store that holds every log line in the system. This ADR refuses both. So [#1698][1698] keeps its reports as 30-day artifacts and

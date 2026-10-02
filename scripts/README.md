@@ -11,7 +11,7 @@ file that does not exist, when anything in the tree references a `scripts/<name>
   block is the lines from `# Usage:` to the next blank comment line, so it holds what a caller types and nothing else. Reasoning goes above it. The idiom is one
   `case` arm, the same in every file; `dev-env.sh` is the shortest example. The exception is `shell-aliases.sh`, which is sourced and defines functions.
 - **A header is the documentation.** Name, one-line purpose, `Usage:`, then what it requires and what it reaches. The rows below quote those headers.
-- **Python is standard library only, with `argparse`.** `ste_lint.py` and the `deploy/dashboards/` and `deploy/alerts/` scripts are copied to a node and run
+- **Python is standard library only, with `argparse`.** `ste_lint.py` and the `deploy/dashboards/`, `deploy/alerts/` and `deploy/streams/` scripts are copied to a node and run
   there, where nothing is installed. `outline_text.py` and `build_stickers.py` are the exceptions. They run only on a contributor's machine, and each
   one's wrapper builds the venv it needs. ruff at a pinned version is the gate, in the commit hook and in `validate-python.yml`, from the root `ruff.toml`.
 
@@ -106,5 +106,6 @@ look. None of them wraps `tofu`, `helm upgrade`, or anything that writes to prod
 | `restore-drill.sh`           | Runs the restore drill on the database node: replay from the bucket, PITR past a drop, cleanup, timings (#862)                  | `docs/ops/RESTORE_RUNBOOK.md`, `docs/ops/BACKUPS.md` §9 |
 | `deploy/dashboards/apply.sh` | Import the OpenObserve dashboards, and check their panels return data                                                           | `docs/ops/OPENOBSERVE.md`                               |
 | `deploy/alerts/apply.sh`     | Push the alert rules into OpenObserve, or check that they can fire at all                                                       | `docs/ops/OPENOBSERVE.md`, `docs/ops/DAILY_COMMANDS.md` |
+| `deploy/streams/apply.sh`    | Set each OpenObserve stream's retention from `streams.json`, or check the cluster against it (#2393)                            | `docs/ops/OPENOBSERVE.md`                               |
 | `infra/check-capacity.sh`    | Can Hetzner deliver the server the plan orders? Only `--probe` answers                                                          | `infra/README.md`, `docs/ops/DAILY_COMMANDS.md`         |
 | `infra/check_user_data.py`   | Render both cloud-init roles with sample values and measure them against Hetzner's 32 KiB `user_data` cap (#1482)               | `infra/AGENTS.md`                                       |
