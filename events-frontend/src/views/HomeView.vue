@@ -1,5 +1,13 @@
+<script lang="ts">
+import { ref } from 'vue'
+
+// Module scope, not component state: going back from an event page remounts the view, and a list
+// that collapsed again would put #1111's restored scroll position past its end.
+const tonightExpanded = ref(false)
+</script>
+
 <script lang="ts" setup>
-import { onMounted } from 'vue'
+import { computed, nextTick, onMounted, useTemplateRef } from 'vue'
 import { RouterLink } from 'vue-router'
 import { CalendarDays, Compass } from '@lucide/vue'
 import { Button } from '@/components/ui/button'
@@ -36,6 +44,31 @@ const { t, locale } = useI18n()
 useStructuredData(() => websiteJsonLd(locale.value as Locale))
 // The compact view is a global display preference — see `useCompactView`.
 const { compact } = useCompactView()
+
+// A teaser, not the night's whole list: on a busy day a phone scrolled for minutes (#2321). Even, so
+// the two-column grid ends on a full row. A compact row is about a sixth of a card's height.
+const TONIGHT_CAP = { poster: 6, compact: 12 }
+const tonightCap = computed(() => (compact.value ? TONIGHT_CAP.compact : TONIGHT_CAP.poster))
+const tonightTotal = computed(() => today.data.value?.length ?? 0)
+const tonightCapped = computed(
+  () => !tonightExpanded.value && tonightTotal.value > tonightCap.value,
+)
+const tonightVisible = computed(() =>
+  tonightCapped.value ? today.data.value?.slice(0, tonightCap.value) : today.data.value,
+)
+
+const tonightList = useTemplateRef<HTMLElement>('tonightList')
+
+// The button disappears with the click, so focus moves to the first event it revealed rather than
+// falling back to the document.
+async function expandTonight() {
+  const firstHidden = tonightCap.value
+  tonightExpanded.value = true
+  await nextTick()
+  // Each card and row is itself the link.
+  const revealed = tonightList.value?.children.item(firstHidden)
+  if (revealed instanceof HTMLElement) revealed.focus()
+}
 </script>
 
 <template>
@@ -86,12 +119,17 @@ const { compact } = useCompactView()
       <p v-else-if="!today.data.value?.length" class="text-sm text-muted-foreground">
         {{ t('home.tonightEmpty') }}
       </p>
-      <div v-else-if="compact" :class="CARD_LIST_CLASS">
-        <EventRow v-for="event in today.data.value" :key="event.slug" :event="event" />
-      </div>
-      <div v-else :class="CARD_GRID_CLASS">
-        <EventCard v-for="event in today.data.value" :key="event.slug" :event="event" />
-      </div>
+      <template v-else>
+        <div v-if="compact" ref="tonightList" :class="CARD_LIST_CLASS">
+          <EventRow v-for="event in tonightVisible" :key="event.slug" :event="event" />
+        </div>
+        <div v-else ref="tonightList" :class="CARD_GRID_CLASS">
+          <EventCard v-for="event in tonightVisible" :key="event.slug" :event="event" />
+        </div>
+        <Button v-if="tonightCapped" variant="outline" @click="expandTonight">
+          {{ t('home.showAllTonight', { count: tonightTotal }) }}
+        </Button>
+      </template>
     </section>
 
     <section class="space-y-4">

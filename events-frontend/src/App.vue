@@ -89,7 +89,9 @@ const sectionLinks = computed(() =>
       {{ t('common.skipToContent') }}
     </a>
 
-    <header class="border-b border-border">
+    <!-- Sticky so the navigation stays in reach on a long feed (#2321). Opaque, so cards do not show
+         through, and z-30: below HeaderMenu's overlay and sheet and the skip link. -->
+    <header class="sticky top-0 z-30 border-b border-border bg-background">
       <!-- Below `lg` the links drop to a second line: one row needs about 810px in German, and the
            guard in e2e/smoke.spec.ts checks the widths in between in both languages. -->
       <!-- Named because the footer contributes a second navigation landmark; e2e selectors address

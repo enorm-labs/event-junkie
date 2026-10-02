@@ -152,3 +152,75 @@ test('long titles truncate inside the feed instead of widening the page', async 
   const viewport = page.viewportSize()
   expect(box && viewport && box.x + box.width).toBeLessThanOrEqual(viewport!.width)
 })
+
+/** Tonight on a busy day: more events than the section's cap of six cards, or twelve rows (#2321). */
+const busyNight = Array.from({ length: 15 }, (_, i) => ({
+  slug: `night-${i + 1}`,
+  title: `Night ${i + 1}`,
+  eventDate: '2026-07-01',
+  startTime: '21:00',
+}))
+
+test('a busy Tonight shows six cards, and the button reveals the rest', async ({ page }) => {
+  await page.route(todayFeed, (route) => json(route, busyNight))
+  await page.goto('/')
+
+  await expect(eventHeading(page, 'Night 6')).toBeVisible()
+  await expect(eventHeading(page, 'Night 7')).toHaveCount(0)
+
+  await page.getByRole('button', { name: 'Show all 15 events tonight' }).click()
+
+  await expect(eventHeading(page, 'Night 15')).toBeVisible()
+  await expect(page.getByRole('button', { name: /show all/i })).toHaveCount(0)
+  // The button is gone, so focus lands on the first event it revealed.
+  await expect(page.getByRole('link', { name: /Night 7\b/ })).toBeFocused()
+})
+
+test('the compact view caps Tonight at twelve rows', async ({ page }) => {
+  await page.route(todayFeed, (route) => json(route, busyNight))
+  await page.addInitScript(() => localStorage.setItem('view', 'compact'))
+  await page.goto('/')
+
+  await expect(page.getByRole('link', { name: /Night 12\b/ })).toBeVisible()
+  await expect(page.getByRole('link', { name: /Night 13\b/ })).toHaveCount(0)
+  await expect(page.getByRole('button', { name: 'Show all 15 events tonight' })).toBeVisible()
+})
+
+test('Tonight at the cap shows every event and no button', async ({ page }) => {
+  await page.route(todayFeed, (route) => json(route, busyNight.slice(0, 6)))
+  await page.goto('/')
+
+  await expect(eventHeading(page, 'Night 6')).toBeVisible()
+  await expect(page.getByRole('button', { name: /show all/i })).toHaveCount(0)
+})
+
+test('the header stays on screen after scrolling down a long feed', async ({ page }) => {
+  await page.route(todayFeed, (route) => json(route, busyNight))
+  await page.goto('/')
+  await page.getByRole('button', { name: 'Show all 15 events tonight' }).click()
+  await eventHeading(page, 'Night 15').scrollIntoViewIfNeeded()
+
+  expect(await page.evaluate(() => window.scrollY)).toBeGreaterThan(0)
+  const box = await page.getByRole('navigation', { name: 'Main' }).boundingBox()
+  expect(box?.y, 'the header nav scrolled away').toBeGreaterThanOrEqual(0)
+  expect(box?.y).toBeLessThan(20)
+})
+
+test('the scroll padding clears the sticky header at every width', async ({ page }) => {
+  // main.css fixes `scroll-padding-top` rather than measuring the header. The header is tallest at
+  // 320px, where the controls wrap, and in German from `lg`, where the links are longest.
+  for (const [locale, width] of [
+    ['en', 320],
+    ['en', 768],
+    ['de', 1024],
+    ['de', 1280],
+  ] as const) {
+    await page.setViewportSize({ width, height: 800 })
+    await page.goto(`/${locale}/about`)
+    const { header, padding } = await page.evaluate(() => ({
+      header: document.querySelector('header')!.getBoundingClientRect().height,
+      padding: parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop),
+    }))
+    expect(padding, `${locale} at ${width}px`).toBeGreaterThanOrEqual(header)
+  }
+})
