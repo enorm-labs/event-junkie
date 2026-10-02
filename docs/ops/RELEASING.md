@@ -83,7 +83,7 @@ flowchart TB
 **Every arrow crossing into the cluster is dashed, and they all start inside it.** That is the entire security argument: CI holds no cluster credential because
 there is nothing for it to hold.
 
-**Every published artifact carries a cosign signature, keyless, on its digest** (#1425). Fulcio issues a certificate for the workflow's own identity —
+**Every artifact that `release.yml` publishes carries a cosign signature, keyless, on its digest** (#1425). Fulcio issues a certificate for the workflow's own identity —
 `https://github.com/enorm-labs/event-junkie/.github/workflows/release.yml@<ref>` — and Rekor logs it. Anyone can check one from a laptop with no key:
 
 ```sh
@@ -94,6 +94,9 @@ cosign verify ghcr.io/enorm-labs/charts/event-junkie:<version> \
 
 The signature is separate from the provenance attestation (#443), which `gh attestation verify` reads and Flux cannot. Flux verifies cosign
 signatures and nothing else, so the signature is the half a cluster can enforce through `spec.verify` on its OCIRepository.
+
+One more package in GHCR has no signature. `publish-map-assets.yml` publishes the map data by hand ([ADR-037](../adr/ADR-037_SELF_HOSTED_MAP.md)).
+No cluster pulls it. The frontend Dockerfile copies it by digest, so the signature on the frontend image covers the map files.
 
 **The chart names its images by digest** (#1473). After the pushes, the same run stamps each image's digest into the chart's `values.yaml`. A verified
 chart therefore pulls `repo:VERSION@sha256:…`: the bytes the run built and signed, whatever a tag on GHCR points at later. A missing digest fails the run.

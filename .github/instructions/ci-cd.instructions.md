@@ -80,6 +80,7 @@ is the map and the traps.
 - `publish-map-assets.yml` (#357, ADR-037) — cuts Berlin out of a Protomaps daily build with `scripts/map-assets.sh build` and pushes the tiles, fonts and
   sprites as a `FROM scratch` image, both platforms, because a multi-platform `COPY --from` resolves its source per platform. **By hand**: Protomaps keeps a
   build for a week, so `events-frontend/Dockerfile` pins the image by digest, and the summary prints the line to paste. Its `source` index annotation links the package to this repository.
+  **Unsigned and unattested, on purpose** (#2360): no cluster pulls it, and the digest pin plus the frontend image's own signature cover the copied files.
 - `cut-release.yml` (#868) — publishes the GitHub Release that `release.yml` keys on; `workflow_dispatch` only, `dry_run` default. **Refuses a commit whose
   snapshot publish is not green** (v0.3.10 left an empty tag, #1117). **The version is never typed and never chosen**: no file carries it (ADR-032), and
   `scripts/version.sh deserved` reads the commits since the last release tag — a `feat` in a product scope is a minor, a break a major (a minor before
@@ -209,7 +210,7 @@ validate`), a property (every rendered resource valid, none skipped, count posit
   cost of a key on every machine and every agent. The condition that changes this is a second committer.
 - **Releases are immutable** (#443), and publishing one triggers a production publish (#264) — a release published by mistake is fixed by shipping forward,
   never by reusing the tag. `repos/{owner}/{repo}/immutable-releases`.
-- **Every published image carries a buildx SBOM (`sbom: true`), a signed provenance attestation, and a keyless cosign signature on the digest** (#443,
+- **Every image `release.yml` publishes carries a buildx SBOM (`sbom: true`), a signed provenance attestation, and a keyless cosign signature on the digest** (#443,
   #1425); the chart carries the signature too. Provenance says where it came from (`gh attestation verify oci://… --repo enorm-labs/event-junkie`, quiet on
   success); the SBOM says what is inside; the cosign signature is the one a cluster enforces (`spec.verify`, identity `…/release.yml@<ref>`), and a signing
   failure leaves a verifying cluster on its last artifact until a re-run signs the same digest.

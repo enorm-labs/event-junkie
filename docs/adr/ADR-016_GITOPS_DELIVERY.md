@@ -127,7 +127,7 @@ costs.
 
 - **CI holds no cluster credential, because there is none to hold.** A repository compromise no longer implies a _credentialled_ path into the cluster.
 - **Rollback is `git revert`**, and drift is corrected rather than merely detected.
-- **The cluster trusts a signature, not a registry** (#1425). `release.yml` signs every image and the chart with cosign, keyless, under the
+- **The cluster trusts a signature, not a registry** (#1425). `release.yml` signs every image it publishes and the chart with cosign, keyless, under the
   workflow's own identity, and each OCIRepository carries `spec.verify` matching that identity. A chart pushed to GHCR by any other path — a person
   with `packages: write`, a compromised token — never reconciles. Production took its `verify:` once `v0.16.1`, the first signed release, was
   what its range resolved. The verified chart names its images by digest (#1473), so the trust reaches the bytes a node pulls and not only a tag.
