@@ -52,8 +52,9 @@ This is the standard "ship it" flow — the manual equivalent of
     - **Set the milestone to the issue's own** (`gh pr edit <pr> --milestone '…'`). Every closed PR in this repo carries a milestone — the 255 that predate the
       tracker were backfilled into `Phase 0 — Foundation` — and a PR without one is the exception that makes the milestone view stop meaning anything.
     - **Say what has to happen after it deploys**, if anything: a forced import so a parser fix reaches stored rows, a check that a migration ran, a
-      script to run. Write it under `## After deploy` in the format [`/post-release`](post-release.prompt.md) reads, and add the label:
-      `gh pr edit <pr> --add-label after-deploy`. The queue then lives on the pull request, so no session has to stay open waiting for the release.
+      script to run. Write it under `## After deploy` in the format [`/post-release`](post-release.prompt.md) reads, one `- [ ]` line per step.
+      `label-pr.yml` sets the `after-deploy` label from an unticked step, and fails a section with no step. The queue then lives on the pull request, so no
+      session has to stay open waiting for the release.
     - **Move the issue on the board**: `scripts/issue-board.sh status <n> 'In review'`. Merging the PR closes the issue, and the board follows — but that
       last part is a **project setting, not a property of GitHub**, so it is worth knowing where it lives. The `Item closed` workflow (Project → ⋯ →
       Workflows) is what sets `Status: Done`. It was silently off until 2026-08-18, and the failure mode is quiet in both directions: closed issues keep

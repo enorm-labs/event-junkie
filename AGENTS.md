@@ -256,8 +256,8 @@ write to — is in [ci-cd.instructions.md](.github/instructions/ci-cd.instructio
     Empty: open the PR in a browser or attempt the merge instead of hunting for a rule that is gone.
 
 - **Pace bulk mutations**: `sleep 0.45` between calls. The _secondary_ rate limit bites long before the hourly one.
-- **No `--label` on `gh pr create`.** `label-pr.yml` sets a PR's labels from the title, an added `*Importer.kt` and the `!`/footer, and removes a managed label
-  set by hand. On a PR `importer` means one thing, a new venue, and `release.yml` files it under "New Event Sources" (#1546).
+- **No `--label` on `gh pr create`.** `label-pr.yml` sets a PR's labels from the title, an added `*Importer.kt`, the `!`/footer and an unticked `## After deploy`
+  step, and removes a managed label set by hand. On a PR `importer` means one thing, a new venue, and `release.yml` files it under "New Event Sources" (#1546).
 - **`gh issue create` takes `--label`; `gh issue edit` takes `--add-label` / `--remove-label`**, and an update must reconcile both directions.
 - **Project view grouping and sorting cannot be set through the API** (`ProjectV2ViewConfigurationInput` exposes only `visibleFieldIds`). Manual UI step.
 - **gitleaks fires on `key:` with a high-entropy value.** Prefer `slug`, `id` or `name` for identifier fields; widening `.gitleaks.toml` costs coverage.

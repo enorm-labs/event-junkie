@@ -106,7 +106,8 @@ environments in the arguments.
 - Tick each step that passed, by rewriting the body: `gh pr view <n> --json body --jq .body`, change `- [ ]` to `- [x]` on that line, then
   `gh pr edit <n> --body-file <file>`.
 - One comment per pull request and run (`gh pr comment`): the environment, the version, and what each step showed. Numbers, not adjectives.
-- When every box is ticked, `gh pr edit <n> --remove-label after-deploy`. A pull request with an unticked box keeps the label, so the next run finds it.
+- The label follows the boxes: `label-pr.yml` drops `after-deploy` on the edit that ticks the last one. A pull request with an unticked box keeps the label,
+  so the next run finds it.
 
 ## Step 5 — The report
 
