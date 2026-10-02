@@ -1,6 +1,7 @@
 {
   "tonight": "Tonight",
   "tonightEmpty": "Nothing on tonight? In Berlin? Unlikely. Try the calendar.",
+  "showAllTonight": "Show all {count} events tonight",
   "upcoming": "Upcoming",
   "seeAllUpcoming": "See all upcoming events",
   "upcomingEmpty": "Nothing upcoming right now. Check back soon.",

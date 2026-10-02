@@ -181,10 +181,13 @@ const router = createRouter({
   // Legal pages are reached from the footer of a scrolled page; without this the imprint opens
   // mid-document. A history traversal returns to where the visitor left: a scrollBehavior switches
   // the browser's restoration off, and the views repaint from useAsync's cache in the same tick, so
-  // the document has its height (#1111).
+  // the document has its height (#1111). The router scrolls with coordinates, which ignore
+  // `scroll-padding-top`, so an anchor applies main.css's clearance for the sticky header (#2321).
   scrollBehavior(to, _from, savedPosition) {
     if (savedPosition) return savedPosition
-    return to.hash ? { el: to.hash, behavior: 'smooth' } : { top: 0 }
+    if (!to.hash) return { top: 0 }
+    const clearance = parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop) || 0
+    return { el: to.hash, top: clearance, behavior: 'smooth' }
   },
 })
 
