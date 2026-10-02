@@ -44,11 +44,12 @@ describe('groupByVenue', () => {
 })
 
 describe('venuePin', () => {
-  it('carries the label and the badge the view chose', () => {
+  it('carries the venue name, and the label and the badge the view chose', () => {
     expect(venuePin(ASTRA, 'Astra: 3 events', '3')).toEqual({
       slug: 'astra',
       latitude: 52.507242,
       longitude: 13.451803,
+      name: 'Astra',
       label: 'Astra: 3 events',
       badge: '3',
     })

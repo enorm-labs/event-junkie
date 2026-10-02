@@ -129,3 +129,43 @@ test('a show that ended earlier today leaves the map; the archive keeps it', asy
   await page.goto('/en/map?from=2026-08-14&to=2026-08-15')
   await expect(page.getByText('4 events at 3 venues')).toBeVisible()
 })
+
+test('a pin opens its venue over the map, three events deep, and closing returns to the pin', async ({
+  page,
+}) => {
+  await mockBff(page)
+  const late = ['One', 'Two', 'Three', 'Four'].map((n, i) => ({
+    slug: `lido-late-${i}`,
+    title: `Lido Late ${n}`,
+    eventDate: '2026-08-15',
+    startTime: '23:45',
+    venue: LIDO,
+  }))
+  await page.route(/\/api\/events\/calendar(\?|$)/, (route) => json(route, [...events, ...late]))
+  await page.goto('/en/map')
+
+  // Five at Lido carry a count; Astra's single show keeps the pin's size without a digit.
+  const pin = page.getByRole('button', { name: /^Lido: 5 events/ })
+  const unavailable = page.getByText(/cannot draw the map/)
+  await expect(pin.or(unavailable)).toBeVisible()
+  test.skip(await unavailable.isVisible(), 'no WebGL in this browser')
+  await expect(pin).toHaveText('5')
+  await expect(page.getByRole('button', { name: 'Astra: 1 event', exact: true })).toHaveText('')
+
+  await pin.click()
+  const panel = page.locator('section', { has: page.getByRole('heading', { name: 'Lido' }) })
+  await expect(panel.getByRole('heading', { level: 3 })).toHaveCount(3)
+  // The list over the map's own day, not every date the venue has.
+  const href = await panel.getByRole('link', { name: 'All 5 events here' }).getAttribute('href')
+  const url = new URL(href ?? '', 'http://x')
+  expect(url.pathname).toBe('/en/events')
+  expect(Object.fromEntries(url.searchParams)).toEqual({
+    venue: 'lido',
+    from: '2026-08-15',
+    to: '2026-08-15',
+  })
+
+  await panel.getByRole('button', { name: 'Close' }).click()
+  await expect(panel).toHaveCount(0)
+  await expect(pin).toBeFocused()
+})

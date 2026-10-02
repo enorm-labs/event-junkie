@@ -7,6 +7,8 @@
   "unpinned": "{count} more at a venue without a location, in the list | {count} more at venues without a location, in the list",
   "empty": "Nothing on the map for these filters. Try another day or fewer filters.",
   "pickPin": "Pick a pin to see what is on there.",
+  "allEvents": "All {count} events here",
+  "closePanel": "Close",
   "unavailable": "This browser cannot draw the map. The list shows the same events.",
   "showList": "Show the list",
   "zoomIn": "Zoom in",
