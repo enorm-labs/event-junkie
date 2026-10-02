@@ -2,7 +2,9 @@ package de.norm.events.scraper.roadrunner
 
 import de.norm.events.scraper.AcceptedLimitations
 import de.norm.events.scraper.EventSource
+import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.ScrapedEvent
+import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
@@ -152,11 +154,13 @@ class RoadrunnerOverviewPageScraperTest {
     }
 
     @Test
-    fun `bills no act for a block with no line-up label`() {
+    fun `bills no act for a block with no line-up label, and declares that as a limitation`() {
+        // The title alone bills a band battle (`BOWIE 10`) or a misspelled act with its tour run on (#2369).
         val unlabelled = october().filter { it.eventDate in setOf(LocalDate.of(2026, 10, 9), LocalDate.of(2026, 11, 11)) }
 
         unlabelled.map { it.title } shouldBe listOf("BOWIE 10", "PHIL CAMPELL'S BASTARD SONS The Phil Forever Tour")
         unlabelled.flatMap { it.artists } shouldBe emptyList()
+        AcceptedLimitations.forSource(EventSource.ROADRUNNER).map { it.aspect } shouldContain LimitedAspect.ARTISTS
     }
 
     @Test
