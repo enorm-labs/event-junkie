@@ -135,14 +135,15 @@ Likelihood and impact are each `low`, `medium` or `high`, judged for this system
 
 ### B1 · Internet → Traefik
 
-| Threat                                   | STRIDE | Likelihood | Impact | Status                                                                                                                  |
-| ---------------------------------------- | ------ | ---------- | ------ | ----------------------------------------------------------------------------------------------------------------------- |
-| A request flood exhausts the BFF pods    | D      | medium     | medium | Mitigated. `rate-limit-middleware.yaml`: 100 in flight, 50/s per source, burst 250. Real source addresses since #1013   |
-| Plaintext first request, TLS stripped    | T, I   | low        | low    | Mitigated. HSTS for one year, `security-headers-middleware.yaml`. The redirect host is not pinned, on purpose           |
-| A certificate expires unnoticed          | D      | low        | high   | Mitigated. cert-manager renews. `site-probe.yml` and Better Stack fail on an untrusted certificate                      |
-| A port other than 80 and 443 answers     | E      | low        | high   | Mitigated. `firewall.tf`. Nothing tests it from outside. `dast.yml` talks to 443 only, so a port probe stays open       |
-| The node's SSH accepts a password        | S      | low        | high   | Mitigated. `harden.sh`: `PasswordAuthentication no`, `PermitRootLogin no`, and port 22 is closed by the firewall        |
-| Traefik or nginx carries a published CVE | E      | medium     | high   | Mitigated. Renovate and Dependabot propose, Trivy blocks a publish, `image-scan-scheduled.yml` rescans what is deployed |
+| Threat                                   | STRIDE | Likelihood | Impact | Status                                                                                                                                                                                      |
+| ---------------------------------------- | ------ | ---------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| A request flood exhausts the BFF pods    | D      | medium     | medium | Mitigated. `rate-limit-middleware.yaml`: 100 in flight, 50/s per source, burst 250. Real source addresses since #1013. `ej-rate-limit-storm` mails `alerts@` when the limits reject (#1455) |
+| A scanner enumerates paths, unseen       | I      | high       | low    | Mitigated. `ej-4xx-flood` mails `alerts@` when client errors pass 5 a second for 30 minutes (#1455)                                                                                         |
+| Plaintext first request, TLS stripped    | T, I   | low        | low    | Mitigated. HSTS for one year, `security-headers-middleware.yaml`. The redirect host is not pinned, on purpose                                                                               |
+| A certificate expires unnoticed          | D      | low        | high   | Mitigated. cert-manager renews. `site-probe.yml` and Better Stack fail on an untrusted certificate                                                                                          |
+| A port other than 80 and 443 answers     | E      | low        | high   | Mitigated. `firewall.tf`. Nothing tests it from outside. `dast.yml` talks to 443 only, so a port probe stays open                                                                           |
+| The node's SSH accepts a password        | S      | low        | high   | Mitigated. `harden.sh`: `PasswordAuthentication no`, `PermitRootLogin no`, and port 22 is closed by the firewall                                                                            |
+| Traefik or nginx carries a published CVE | E      | medium     | high   | Mitigated. Renovate and Dependabot propose, Trivy blocks a publish, `image-scan-scheduled.yml` rescans what is deployed                                                                     |
 
 ### B2 · Traefik → frontend, Traefik → BFF
 

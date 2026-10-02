@@ -600,6 +600,66 @@
     ]
   },
   {
+    "name": "ej-rate-limit-storm",
+    "org_id": "default",
+    "stream_type": "metrics",
+    "stream_name": "traefik_entrypoint_requests_total",
+    "is_real_time": false,
+    "enabled": true,
+    "description": "Traefik's rate limits rejected more than 100 requests in 15 minutes: 50/s per source, or 100 in flight per host, which answer the same bare 429. Production rejected none in the week before this rule, and one first visit spends about 30 of a 250-request burst. Either a client is being stopped, which is the limit working, or a shared carrier-NAT address is over it and visitors get half-loaded pages. Find the address before changing `ingress.rateLimit`.",
+    "query_condition": {
+      "type": "promql",
+      "promql": "sum(increase(traefik_entrypoint_requests_total{code=\"429\"}[15m]))",
+      "promql_condition": {
+        "column": "value",
+        "operator": ">",
+        "value": 100
+      }
+    },
+    "trigger_condition": {
+      "period": 15,
+      "frequency": 5,
+      "frequency_type": "minutes",
+      "operator": ">=",
+      "threshold": 1,
+      "silence": 360
+    },
+    "destinations": [
+      "record-only",
+      "email"
+    ]
+  },
+  {
+    "name": "ej-4xx-flood",
+    "org_id": "default",
+    "stream_type": "metrics",
+    "stream_name": "traefik_entrypoint_requests_total",
+    "is_real_time": false,
+    "enabled": true,
+    "description": "More than 5 client errors a second for 30 minutes, against a week's worst of 2.6/s (the weekly DAST scan). Mostly 404: something is enumerating paths for longer than the background scanners do. 429 and 499 are left out. Nothing is broken by this alone: find the source and the paths, and check whether any probe got a 200.",
+    "query_condition": {
+      "type": "promql",
+      "promql": "sum(rate(traefik_entrypoint_requests_total{code=~\"4..\",code!~\"429|499\"}[30m]))",
+      "promql_condition": {
+        "column": "value",
+        "operator": ">",
+        "value": 5
+      }
+    },
+    "trigger_condition": {
+      "period": 30,
+      "frequency": 10,
+      "frequency_type": "minutes",
+      "operator": ">=",
+      "threshold": 1,
+      "silence": 360
+    },
+    "destinations": [
+      "record-only",
+      "email"
+    ]
+  },
+  {
     "name": "ej-dns-fanout",
     "org_id": "default",
     "stream_type": "metrics",
