@@ -54,3 +54,9 @@ export const CARD_LIST_CLASS = 'divide-y divide-border border-y border-border'
  * because the page's own `p-4 sm:p-8` sets that edge.
  */
 export const PANEL_CLASS = 'flex flex-wrap items-end gap-3 border-b border-border pb-4'
+
+/**
+ * The line between a filter bar and its results: the count on the left, the sort control on the
+ * right. Sort sits here, not in the bar, because it orders the list and narrows nothing (#360).
+ */
+export const RESULTS_BAR_CLASS = 'flex flex-wrap items-center justify-between gap-x-3 gap-y-2'

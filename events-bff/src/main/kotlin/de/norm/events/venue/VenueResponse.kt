@@ -12,7 +12,7 @@ import io.swagger.v3.oas.annotations.media.Schema
 import java.math.BigDecimal
 
 /**
- * Compact venue representation embedded in event responses and returned by the venue list.
+ * Compact venue representation embedded in event responses.
  */
 @Schema(description = "Compact venue summary")
 data class VenueSummaryResponse(
@@ -68,6 +68,73 @@ data class VenueSummaryResponse(
                 imageSources = image.sources,
                 intrinsicWidth = image.intrinsicWidth,
                 intrinsicHeight = image.intrinsicHeight
+            )
+    }
+}
+
+/**
+ * One venue on the venue list: the summary fields plus its upcoming events, the count the list
+ * can sort by (#360). Separate from [VenueSummaryResponse] so an event's embedded venue does not
+ * carry a count it never computes.
+ */
+@Schema(description = "Venue on the venue list")
+data class VenueListItemResponse(
+    @Schema(description = "Database primary key", example = "42")
+    val id: Long,
+    @Schema(description = "URL-friendly identifier", example = "astra-kulturhaus")
+    val slug: String,
+    @Schema(description = "Display name of the venue", example = "Astra Kulturhaus")
+    val name: String,
+    @Schema(description = "City where the venue is located", example = "Berlin")
+    val city: String,
+    @Schema(description = "Street address of the venue", example = "Revaler Str. 99")
+    val address: String?,
+    @Schema(description = "Berlin district (one of the 23 pre-2001 Bezirke) as a canonical slug", example = "kreuzberg")
+    val district: String?,
+    @Schema(description = "Geographic latitude for map display", example = "52.507242")
+    val latitude: BigDecimal?,
+    @Schema(description = "Geographic longitude for map display", example = "13.451803")
+    val longitude: BigDecimal?,
+    @Schema(description = "URL of the venue's logo or photo")
+    val imageUrl: String?,
+    @Schema(description = IMAGE_ATTRIBUTION_DESCRIPTION, example = "Photographer Name, via Wikimedia Commons")
+    val imageAttribution: String?,
+    @Schema(description = IMAGE_LICENCE_ID_DESCRIPTION, example = "CC-BY-SA-4.0")
+    val imageLicenceId: String?,
+    @Schema(description = IMAGE_SOURCE_URL_DESCRIPTION, example = "https://commons.wikimedia.org/wiki/File:Example.jpg")
+    val imageSourceUrl: String?,
+    @Schema(description = IMAGE_SOURCES_DESCRIPTION)
+    val imageSources: List<ImageSourceResponse>,
+    @Schema(description = INTRINSIC_WIDTH_DESCRIPTION, example = "1200")
+    val intrinsicWidth: Int?,
+    @Schema(description = INTRINSIC_HEIGHT_DESCRIPTION, example = "630")
+    val intrinsicHeight: Int?,
+    @Schema(description = "Events from today on at this venue", example = "12")
+    val upcomingEventCount: Int
+) {
+    companion object {
+        fun fromEntity(
+            entity: VenueEntity,
+            image: ServedImage,
+            upcomingEventCount: Int
+        ): VenueListItemResponse =
+            VenueListItemResponse(
+                id = requireNotNull(entity.id) { "Persisted venue must have an ID" },
+                slug = entity.slug,
+                name = entity.name,
+                city = entity.city,
+                address = entity.address,
+                district = entity.district,
+                latitude = entity.latitude,
+                longitude = entity.longitude,
+                imageUrl = image.url,
+                imageAttribution = entity.imageAttribution,
+                imageLicenceId = entity.imageLicenceId,
+                imageSourceUrl = entity.imageSourceUrl,
+                imageSources = image.sources,
+                intrinsicWidth = image.intrinsicWidth,
+                intrinsicHeight = image.intrinsicHeight,
+                upcomingEventCount = upcomingEventCount
             )
     }
 }

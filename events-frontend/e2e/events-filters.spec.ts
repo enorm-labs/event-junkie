@@ -343,6 +343,39 @@ test('browses past events from an explicit range', async ({ page }) => {
   expect(errors, 'unexpected uncaught exceptions').toEqual([])
 })
 
+test('a past range reads latest first, and the visitor can flip it', async ({ page }) => {
+  const sorts: (string | null)[] = []
+  page.on('request', (request) => {
+    const url = new URL(request.url())
+    if (url.pathname.endsWith('/api/events')) sorts.push(url.searchParams.get('sort'))
+  })
+  const range = `from=${isoDaysFromNow(-60)}&to=${isoDaysFromNow(-30)}`
+  await page.goto(`/events?${range}`)
+
+  const sort = page.getByRole('group', { name: 'Sort' })
+  await expect(sort.getByRole('button', { name: 'Latest first' })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  )
+  expect(sorts.at(-1)).toBe('eventDate,desc')
+
+  await sort.getByRole('button', { name: 'Earliest first' }).click()
+  await expect(page).toHaveURL(new RegExp(`\\?${range}&sort=eventDate,asc$`))
+  await expect(sort.getByRole('button', { name: 'Earliest first' })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  )
+  // Earliest first is the API's default, so the request carries no sort.
+  await expect.poll(() => sorts.at(-1)).toBeNull()
+})
+
+test('the upcoming list offers no sort, because date is the only order', async ({ page }) => {
+  await page.goto('/events')
+
+  await expect(eventHeading(page, 'Default Event A')).toBeVisible()
+  await expect(page.getByRole('group', { name: 'Sort' })).toHaveCount(0)
+})
+
 test('hides sold-out events when the toggle is pressed', async ({ page }) => {
   await page.goto('/events')
   await expect(eventHeading(page, 'Default Event A')).toBeVisible()

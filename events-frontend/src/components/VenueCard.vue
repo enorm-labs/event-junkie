@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
-import type { VenueSummary } from '@/api/types'
+import type { VenueListItem, VenueSummary } from '@/api/types'
 import CachedImage from '@/components/CachedImage.vue'
 import EventPoster from '@/components/EventPoster.vue'
 import { districtLabel } from '@/lib/districts'
@@ -13,7 +13,8 @@ import { useI18n } from 'vue-i18n'
 
 const props = withDefaults(
   defineProps<{
-    venue: VenueSummary
+    /** The count shows when the venue list sent one; an event's embedded venue has none. */
+    venue: VenueSummary & Pick<VenueListItem, 'upcomingEventCount'>
     /** Heading level for the card's name — see the same prop on `EventCard.vue` for why. */
     as?: 'h2' | 'h3' | 'h4'
   }>(),
@@ -66,6 +67,9 @@ const { el: posterEl, focused: posterFocused } = useViewportFocus()
       <p v-if="location" class="truncate text-body text-muted-foreground">{{ location }}</p>
       <p v-else-if="venue.city" class="truncate text-body text-muted-foreground">
         {{ venue.city }}
+      </p>
+      <p v-if="venue.upcomingEventCount !== undefined" class="text-body text-muted-foreground">
+        {{ t('common.upcomingCount', { count: venue.upcomingEventCount }) }}
       </p>
     </div>
   </RouterLink>

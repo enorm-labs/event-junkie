@@ -3,6 +3,7 @@ package de.norm.events.venue
 import de.norm.events.BaseControllerTest
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
+import java.time.LocalDate
 
 class VenueControllerTest : BaseControllerTest() {
     @Test
@@ -125,6 +126,72 @@ class VenueControllerTest : BaseControllerTest() {
                 .expectBody()
                 .jsonPath("$.content[0].slug")
                 .isEqualTo("lido")
+        }
+
+    // The collation is `C`; without case-folding "tipi" would sort after "Zenner".
+    @Test
+    fun `GET venues sorts names case-insensitively`(): Unit =
+        runBlocking {
+            insertVenue("Zenner", "zenner")
+            insertVenue("tipi am Kanzleramt", "tipi")
+
+            webTestClient
+                .get()
+                .uri("/venues")
+                .exchange()
+                .expectStatus()
+                .isOk
+                .expectBody()
+                .jsonPath("$.content[0].slug")
+                .isEqualTo("tipi")
+        }
+
+    // #360: the count is events from today on; a venue with only past events sits at 0, and the
+    // filters still apply under the count sort.
+    @Test
+    fun `GET venues sorts by upcoming events and counts only events from today on`(): Unit =
+        runBlocking {
+            val busy = insertVenue("Lido", "lido", district = "kreuzberg")
+            val spent = insertVenue("Astra", "astra", district = "friedrichshain")
+            val quiet = insertVenue("Bi Nuu", "bi-nuu", district = "kreuzberg")
+            val today = LocalDate.now()
+            insertEvent(busy, "Tonight", "tonight", today)
+            insertEvent(busy, "Next week", "next-week", today.plusDays(7))
+            insertEvent(busy, "Last year", "last-year", today.minusYears(1))
+            insertEvent(spent, "Yesterday", "yesterday", today.minusDays(1))
+            insertEvent(quiet, "Tomorrow", "tomorrow", today.plusDays(1))
+
+            webTestClient
+                .get()
+                .uri("/venues?sort=upcomingEvents,desc")
+                .exchange()
+                .expectStatus()
+                .isOk
+                .expectBody()
+                .jsonPath("$.content[0].slug")
+                .isEqualTo("lido")
+                .jsonPath("$.content[0].upcomingEventCount")
+                .isEqualTo(2)
+                .jsonPath("$.content[1].slug")
+                .isEqualTo("bi-nuu")
+                .jsonPath("$.content[1].upcomingEventCount")
+                .isEqualTo(1)
+                .jsonPath("$.content[2].slug")
+                .isEqualTo("astra")
+                .jsonPath("$.content[2].upcomingEventCount")
+                .isEqualTo(0)
+
+            webTestClient
+                .get()
+                .uri("/venues?sort=upcomingEvents,desc&district=kreuzberg&q=nuu")
+                .exchange()
+                .expectStatus()
+                .isOk
+                .expectBody()
+                .jsonPath("$.totalElements")
+                .isEqualTo(1)
+                .jsonPath("$.content[0].slug")
+                .isEqualTo("bi-nuu")
         }
 
     @Test

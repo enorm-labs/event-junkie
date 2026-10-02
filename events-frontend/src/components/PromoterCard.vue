@@ -47,7 +47,7 @@ const websiteHost = computed(() => {
         </RouterLink>
       </component>
       <p class="text-body text-muted-foreground">
-        {{ t('promoters.upcomingCount', { count: promoter.upcomingEventCount ?? 0 }) }}
+        {{ t('common.upcomingCount', { count: promoter.upcomingEventCount ?? 0 }) }}
       </p>
       <p
         v-if="description"

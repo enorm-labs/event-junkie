@@ -27,7 +27,7 @@ class VenueController(
     private val cache: ResponseCache
 ) {
     @GetMapping
-    @Operation(summary = "List venues with pagination and optional name search")
+    @Operation(summary = "List venues with pagination, optional name search and district filter, sorted by name or by upcoming events")
     suspend fun list(
         @Parameter(description = "Case-insensitive substring filter on the venue name. Omitted/blank returns all venues.")
         @RequestParam(required = false)
@@ -43,7 +43,7 @@ class VenueController(
         @PageableDefault(size = 20, sort = ["name"])
         pageable: Pageable,
         exchange: ServerWebExchange
-    ): PageResponse<VenueSummaryResponse> {
+    ): PageResponse<VenueListItemResponse> {
         LIST_PARAMS.rejectUnknownIn(exchange)
         return cache.get(VenueListKey(q, district, pageable)) { venueService.list(q, district, pageable) }
     }

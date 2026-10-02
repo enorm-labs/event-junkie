@@ -35,6 +35,14 @@
     "loadingPromoters": "Wir schauen nach, wer die Abende bucht …"
   },
   "upcomingEvents": "Kommende Events",
+  "upcomingCount": "Keine anstehenden Events | {count} anstehendes Event | {count} anstehende Events",
+  "sort": {
+    "label": "Sortieren",
+    "name": "A–Z",
+    "upcoming": "Meiste Events",
+    "earliest": "Früheste zuerst",
+    "latest": "Späteste zuerst"
+  },
   "pastEvents": "Vergangene Events",
   "pastEventsNote": "Unser Archiv beginnt an dem Tag, an dem wir angefangen haben mitzuschreiben. Was davor lief, steht nicht in den Büchern.",
   "locale": {

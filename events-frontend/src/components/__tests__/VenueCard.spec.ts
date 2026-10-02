@@ -113,4 +113,15 @@ describe('VenueCard', () => {
     })
     expect(wrapper.text()).toContain('Berlin')
   })
+
+  it('shows the upcoming count when the venue list sent one, and nothing when it did not', () => {
+    const counted = mount(VenueCard, {
+      props: { venue: { ...venue, upcomingEventCount: 3 } },
+      global: { stubs },
+    })
+    const embedded = mount(VenueCard, { props: { venue }, global: { stubs } })
+
+    expect(counted.text()).toContain('3 upcoming events')
+    expect(embedded.text()).not.toContain('upcoming')
+  })
 })

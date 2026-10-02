@@ -8,6 +8,8 @@ import org.springframework.data.domain.Pageable
 import org.springframework.data.domain.Sort
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.time.Clock
+import java.time.LocalDate
 
 /**
  * Read service for venues backing the venue list and detail pages.
@@ -15,47 +17,32 @@ import org.springframework.transaction.annotation.Transactional
 @Service
 class VenueService(
     private val venueRepository: VenueRepository,
-    private val cachedImageGate: CachedImageGate
+    private val venueSearchRepository: VenueSearchRepository,
+    private val cachedImageGate: CachedImageGate,
+    private val clock: Clock
 ) {
     /**
      * Lists venues, optionally filtered by a case-insensitive name [query] and/or an exact
-     * [district] slug; the two combine independently.
+     * [district] slug, sorted by name or by how many events each still has to come (#360).
      */
     @Transactional(readOnly = true)
     suspend fun list(
         query: String?,
         district: String?,
         pageable: Pageable
-    ): PageResponse<VenueSummaryResponse> {
+    ): PageResponse<VenueListItemResponse> {
         val safePageable = pageable.sanitizeSort(SORTABLE_PROPERTIES, DEFAULT_SORT)
-        val name = query?.takeIf { it.isNotBlank() }
-        val districtSlug = district?.takeIf { it.isNotBlank() }
-        val (entities, total) =
-            when {
-                name != null && districtSlug != null -> {
-                    venueRepository.findByNameContainingIgnoreCaseAndDistrict(name, districtSlug, safePageable).toList() to
-                        venueRepository.countByNameContainingIgnoreCaseAndDistrict(name, districtSlug)
-                }
-
-                name != null -> {
-                    venueRepository.findByNameContainingIgnoreCase(name, safePageable).toList() to
-                        venueRepository.countByNameContainingIgnoreCase(name)
-                }
-
-                districtSlug != null -> {
-                    venueRepository.findByDistrict(districtSlug, safePageable).toList() to
-                        venueRepository.countByDistrict(districtSlug)
-                }
-
-                else -> {
-                    venueRepository.findAllBy(safePageable).toList() to venueRepository.count()
-                }
-            }
-        val images = cachedImageGate.forUrls(entities.map { it.imageUrl })
+        val page = venueSearchRepository.search(query, district, LocalDate.now(clock), safePageable)
+        val entities = venueRepository.findByIdIn(page.rows.map { it.id }).toList().associateBy { it.id }
+        val images = cachedImageGate.forUrls(entities.values.map { it.imageUrl })
         return PageResponse.of(
-            entities.map { VenueSummaryResponse.fromEntity(it, images.serve(it.imageUrl, POSTER_WIDTH)) },
+            page.rows.mapNotNull { row ->
+                entities[row.id]?.let {
+                    VenueListItemResponse.fromEntity(it, images.serve(it.imageUrl, POSTER_WIDTH), row.upcomingEventCount)
+                }
+            },
             safePageable,
-            total
+            page.total
         )
     }
 
@@ -80,8 +67,8 @@ class VenueService(
         private const val POSTER_WIDTH = 480
         private const val DETAIL_WIDTH = 704
 
-        /** Entity properties a client may sort the venue list by; anything else is ignored. */
-        private val SORTABLE_PROPERTIES = setOf("name", "slug", "city")
+        /** Properties a client may sort the venue list by; anything else is ignored. */
+        private val SORTABLE_PROPERTIES = VenueSearchRepository.SORT_COLUMNS.keys
         private val DEFAULT_SORT = Sort.by("name")
     }
 }

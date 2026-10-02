@@ -2,7 +2,8 @@
 ### BFF: Promoters — public read API
 ###
 ### Read-only, no auth. `q` is a case-insensitive substring
-### match on the promoter name. Sortable: name, slug.
+### match on the promoter name. Sortable: name, upcomingEvents
+### (events from today on).
 ### ============================================================
 
 ### List promoters (default page 0, size 20, sort name)
@@ -20,6 +21,10 @@ Accept: application/json
 
 ### List promoters — pagination + sort (name desc)
 GET {{bff-host}}/api/promoters?page=0&size=5&sort=name,desc
+Accept: application/json
+
+### List promoters — most upcoming events first
+GET {{bff-host}}/api/promoters?sort=upcomingEvents,desc
 Accept: application/json
 
 ### Search promoters by name (case-insensitive substring)

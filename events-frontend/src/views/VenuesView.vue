@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import BaseInput from '@/components/BaseInput.vue'
 import BaseSelect from '@/components/BaseSelect.vue'
 import PaginationControls from '@/components/PaginationControls.vue'
+import SortControl, { type SortOption } from '@/components/SortControl.vue'
 import VenueCard from '@/components/VenueCard.vue'
 import VenueRow from '@/components/VenueRow.vue'
 import { useCompactView } from '@/composables/useCompactView'
@@ -26,7 +27,7 @@ import {
   venuePin,
 } from '@/lib/mapPins'
 import { useI18n } from 'vue-i18n'
-import { CARD_GRID_CLASS, CARD_LIST_CLASS, PANEL_CLASS } from '@/lib/utils'
+import { CARD_GRID_CLASS, CARD_LIST_CLASS, PANEL_CLASS, RESULTS_BAR_CLASS } from '@/lib/utils'
 
 const PAGE_SIZE = 24
 
@@ -42,9 +43,14 @@ function queryString(key: string): string {
   return typeof value === 'string' ? value : ''
 }
 
+/** The name order is the API's default and stays out of the URL, as on the promoters list. */
+const SORT_UPCOMING = 'upcomingEvents,desc'
+const sort = computed(() => (queryString('sort') === SORT_UPCOMING ? SORT_UPCOMING : ''))
+
 const params = computed<VenueSearchParams>(() => ({
   q: queryString('q') || undefined,
   district: queryString('district') || undefined,
+  sort: sort.value ? [sort.value] : undefined,
   page: queryString('page') ? Number(queryString('page')) : 0,
   size: PAGE_SIZE,
 }))
@@ -78,12 +84,13 @@ function applyFilters(patch: LocationQueryRaw) {
 
 /** Whether anything narrows the list, which is what a "clear" control has to have to offer. */
 const isFiltered = computed(() =>
-  Object.keys(route.query).some((key) => !['page', 'view', 'radius'].includes(key)),
+  Object.keys(route.query).some((key) => !['page', 'view', 'radius', 'sort'].includes(key)),
 )
 
 function clearSearch() {
   search.value = ''
-  router.push({ query: showMap.value ? { view: 'map' } : {} })
+  // The order is not a filter, so clearing keeps it.
+  router.push({ query: { view: showMap.value ? 'map' : undefined, sort: sort.value || undefined } })
 }
 
 // The map is a second view of the same search, in the URL so a shared link opens on it.
@@ -118,6 +125,11 @@ async function loadMap() {
 watch(() => [showMap.value, params.value.q, params.value.district], loadMap, { immediate: true })
 
 const { t, locale } = useI18n()
+
+const sortOptions = computed<SortOption[]>(() => [
+  { value: '', label: t('common.sort.name') },
+  { value: SORT_UPCOMING, label: t('common.sort.upcoming') },
+])
 
 // The same origin as the events map's "near me": a position chosen there is still chosen here.
 const { origin, state: locateState, locate, clear: clearOrigin } = useLocation()
@@ -366,9 +378,16 @@ const localePath = useLocalePath()
       </Button>
     </div>
     <template v-else>
-      <p class="text-body text-muted-foreground">
-        {{ t('venues.resultCount', { count: page.totalElements }) }}
-      </p>
+      <div :class="RESULTS_BAR_CLASS">
+        <p class="text-body text-muted-foreground">
+          {{ t('venues.resultCount', { count: page.totalElements }) }}
+        </p>
+        <SortControl
+          :model-value="sort"
+          :options="sortOptions"
+          @update:model-value="applyFilters({ sort: $event })"
+        />
+      </div>
       <!-- Second level of the outline: nothing sits between the page `h1` and this grid. -->
       <div v-if="compact" :class="CARD_LIST_CLASS">
         <VenueRow v-for="venue in page.content" :key="venue.slug" :venue="venue" as="h2" />
