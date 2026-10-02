@@ -32,6 +32,7 @@ class AcceptedLimitationsTest {
     fun `a house genre is given only to a music event that names no genre`() {
         AcceptedLimitations.houseGenre(EventSource.TRESOR, "PARTY") shouldBe "Techno"
         AcceptedLimitations.houseGenre(EventSource.KATER, "SCREENING").shouldBeNull()
+        AcceptedLimitations.houseGenre(EventSource.TRESOR, "COMEDY").shouldBeNull()
         AcceptedLimitations.houseGenre(EventSource.TRESOR, null).shouldBeNull()
         AcceptedLimitations.houseGenre(EventSource.CASSIOPEIA, "PARTY").shouldBeNull()
     }

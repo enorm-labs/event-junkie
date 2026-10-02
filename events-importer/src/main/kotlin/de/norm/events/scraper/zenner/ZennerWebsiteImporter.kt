@@ -55,5 +55,6 @@ val ZENNER_LIMITATIONS =
         AcceptedLimitation(LimitedAspect.PRICE, "the venue publishes no prices"),
         AcceptedLimitation(LimitedAspect.DOORS_TIME, "the venue publishes no doors times"),
         AcceptedLimitation(LimitedAspect.SOLD_OUT, "the venue publishes no sold-out state"),
-        AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "the venue publishes no per-event pages")
+        AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "the venue publishes no per-event pages"),
+        houseGenre = "Electronic"
     )

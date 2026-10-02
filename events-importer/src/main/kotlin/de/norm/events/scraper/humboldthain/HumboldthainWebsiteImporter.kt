@@ -69,5 +69,6 @@ val HUMBOLDTHAIN_LIMITATIONS =
         AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "the calendar widget exposes no per-event URLs"),
         AcceptedLimitation(LimitedAspect.PRICE, "prices appear only in the prose, in too many spellings to parse"),
         AcceptedLimitation(LimitedAspect.SOLD_OUT, "nothing in the payload marks a night sold out"),
-        AcceptedLimitation(LimitedAspect.CANCELLATION, "nothing in the payload marks a night cancelled or moved")
+        AcceptedLimitation(LimitedAspect.CANCELLATION, "nothing in the payload marks a night cancelled or moved"),
+        houseGenre = "Techno, House"
     )

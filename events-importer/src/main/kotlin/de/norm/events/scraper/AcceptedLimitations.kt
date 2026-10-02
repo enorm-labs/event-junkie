@@ -201,7 +201,7 @@ object AcceptedLimitations {
 
     /**
      * [source]'s [VenueLimitations.houseGenre] for an event of [eventType], or null. A screening,
-     * an exhibition, a reading or a quiz at a techno club is not a techno night, so it gets none.
+     * an exhibition, a reading, a quiz or a comedy night at a techno club is not a techno night, so it gets none.
      */
     fun houseGenre(
         source: EventSource,
@@ -218,7 +218,7 @@ object AcceptedLimitations {
         events: List<ScrapedEvent>
     ): List<ScrapedEvent> = events.map { event -> event.genre?.let { event } ?: houseGenre(source, event.eventType)?.let { event.copy(genre = it) } ?: event }
 
-    private val NON_MUSIC_TYPES = setOf(EventType.SCREENING, EventType.EXHIBITION, EventType.READING, EventType.QUIZ).map { it.name }
+    private val NON_MUSIC_TYPES = setOf(EventType.SCREENING, EventType.EXHIBITION, EventType.READING, EventType.QUIZ, EventType.COMEDY).map { it.name }
 
     /** Whether [source] declares [aspect] — the lookup the audit runs per finding. */
     fun declares(
