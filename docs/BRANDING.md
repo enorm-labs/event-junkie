@@ -613,10 +613,12 @@ conflict, a model sides with the vibe.
   `src/components/BrandLogo.vue` (the header lockup — badge below `sm`, wordmark from `sm`).
 - **Fonts** → self-hosted `@fontsource-variable/geist`, imported in `src/main.ts`; `--font-*` tokens in
   `main.css`.
-- **Stickers** → `docs/branding/stickers/`, built by `scripts/build-stickers.sh` (#481). Five Flyeralarm products, each sized to its datasheet. Flyeralarm
+- **Stickers** → `docs/branding/stickers/`, built by `scripts/build-stickers.sh` (#481). Six designs on four Flyeralarm products, each sized to its datasheet. Flyeralarm
   sells fixed formats only, so a size change means a different format, not a different number:
     - **Main, four motifs** — _Outdoor-Aufkleber_, rectangle 85 × 55 mm, white film, 4/0, 3 mm bleed, 3 mm safe zone. English and German, each in
       _ink_ (black on white) and _night_ (white on black). QR codes `sei`, `sen`, `sdi`, `sdn`.
+    - **Mini badge, two motifs** — _Outdoor-Aufkleber_, square 50 × 50 mm, white film, 4/0, 1 mm bleed, 4 mm safe zone. The stamp badge beside a
+      QR code, the URL beneath, in _ink_ and _night_. For the gaps between other stickers. QR codes `mi`, `mn`.
     - **Neon, two motifs** — _Neon-Aufkleber_, 85 × 55 mm, red fluorescent paper, black only (1/0). The main layout in black, in English and German.
       The paper glows under club UV light and the black stays dark. Paper, so indoors only. QR codes `ne`, `nd`.
     - **Glow in the dark, two motifs** — _Leuchtaufkleber_, 85 × 55 mm, pale yellow phosphorescent film, 4/0. The night layout with every light element
