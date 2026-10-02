@@ -289,16 +289,21 @@ class FrannzOverviewPageScraper(
     /**
      * Cleans one `<br>`-delimited line of the raw Markdown the copilot.events CMS emits. Frannz
      * renders it literally, so a line arrives as `-Tickets im VVK gibt es bei
-     * [www.eventim.de](www.eventim.de) -`. Strips [emphasis][stripMarkdownEmphasis] and a
-     * leading/trailing list bullet, and unwraps inline `[label](url)` links to their label (URL
-     * dropped), so `[www.eventim.de](www.eventim.de)` becomes `www.eventim.de`. Callers still drop
-     * the "Tickets im VVK …" line and bullet residue.
+     * [www.eventim.de](www.eventim.de) -`. Strips [emphasis][stripMarkdownEmphasis], a leading
+     * heading marker and a leading/trailing list bullet, and unwraps inline `[label](url)` links to
+     * their label (URL dropped), so `[www.eventim.de](www.eventim.de)` becomes `www.eventim.de`.
+     * Callers still drop the "Tickets im VVK …" line and bullet residue.
      *
      * Emphasis goes first: the bullet strip otherwise takes one `*` of a leading `**_…_**` and
      * leaves `*_…_**` (#2328).
+     *
+     * A link list written as headings (`# Home : [dtroit.dk](…)`) keeps its lines without the
+     * marker (#2367). The venue writes the same list in several other shapes, as `Band: …`, as a
+     * `LINKS` header over bare hosts, so dropping only this one would leave the rest.
      */
     private fun cleanDescriptionLine(raw: String): String =
         stripMarkdownEmphasis(raw)
+            .replaceFirst(LEADING_HEADING, "")
             .replaceFirst(LEADING_BULLET, "")
             .replace(TRAILING_BULLET, "")
             .replace(MARKDOWN_LINK) { it.groupValues[1] }
@@ -357,6 +362,9 @@ class FrannzOverviewPageScraper(
 
         /** Where a promo line that only spells [EVENTIM_HOST] points: the seller's front page. */
         private const val EVENTIM_URL = "https://www.eventim.de/"
+
+        /** A leading Markdown heading marker. Without the space it is text: `#1 on the iTunes …`. */
+        private val LEADING_HEADING = Regex("""^\s*#{1,6}\s+""")
 
         /** A leading Markdown list-item bullet ("- ", "* ", "• ") to strip from a description line. */
         private val LEADING_BULLET = Regex("""^\s*[-–—*•]\s*""")
