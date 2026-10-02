@@ -36,7 +36,7 @@ flowchart LR
     subgraph github["GitHub"]
         repo["Repository · main"]
         actions["Actions"]
-        ghcr["GHCR · images and chart"]
+        ghcr["GHCR · images, chart, map data"]
         apps["Apps · claude · renovate · release"]
     end
 
@@ -84,17 +84,18 @@ flowchart LR
 
 ### Assets
 
-| Asset                          | Why it matters                                                                                                                             | Where it is                                                    |
-| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------- |
-| `main`                         | What lands there is what runs on the cluster, after `release.yml` and Flux                                                                 | GitHub, ruleset `main`                                         |
-| The published chart and images | Flux pulls them by semver range, anonymously, and runs what it gets                                                                        | `ghcr.io/enorm-labs/`                                          |
-| The database                   | Every event, venue and artist. A `--full` re-seed rebuilds it from the venues, [RESTORE_RUNBOOK.md](../ops/RESTORE_RUNBOOK.md) restores it | PostgreSQL on the private network, backups in Object Storage   |
-| The eleven cluster secrets     | Each has its own exposure cost, listed in [SECRETS.md](../ops/SECRETS.md)                                                                  | Per cluster. `events-db` in git under SOPS, the rest hand-made |
-| The Hetzner token              | Read and write on every server, volume and firewall in the project                                                                         | Staging's `cert-manager` namespace, the operator's Keychain    |
-| `github-dispatch`              | `contents: write` on this repository. The one secret that cannot be regenerated                                                            | `flux-system` on each cluster                                  |
-| The domain and its certificate | `event-junkie.de`, HSTS pinned for a year                                                                                                  | Hetzner DNS, cert-manager                                      |
-| Availability                   | One node and one Traefik pod. Two BFF and two frontend replicas on production. Better Stack notices in about six minutes                   | [ADR-021](../adr/ADR-021_PUBLIC_SITE_MONITORING.md)            |
-| Visitor privacy                | No account, no cookie, no third-party script. The access log carries no client address and expires after 14 days                           | `RequestLoggingFilter.kt`, `openobserve.yaml`                  |
+| Asset                          | Why it matters                                                                                                                                                    | Where it is                                                                                    |
+| ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| `main`                         | What lands there is what runs on the cluster, after `release.yml` and Flux                                                                                        | GitHub, ruleset `main`                                                                         |
+| The published chart and images | Flux pulls them by semver range, anonymously, and runs what it gets                                                                                               | `ghcr.io/enorm-labs/`                                                                          |
+| The map data                   | Every tile, glyph and icon of the map. The tiles come from a Protomaps daily build, which publishes no digest to check                                            | `ghcr.io/enorm-labs/event-junkie-map-assets`, pinned by digest in `events-frontend/Dockerfile` |
+| The database                   | Every event, venue and artist. A `--full` re-seed rebuilds it from the venues, [RESTORE_RUNBOOK.md](../ops/RESTORE_RUNBOOK.md) restores it                        | PostgreSQL on the private network, backups in Object Storage                                   |
+| The eleven cluster secrets     | Each has its own exposure cost, listed in [SECRETS.md](../ops/SECRETS.md)                                                                                         | Per cluster. `events-db` in git under SOPS, the rest hand-made                                 |
+| The Hetzner token              | Read and write on every server, volume and firewall in the project                                                                                                | Staging's `cert-manager` namespace, the operator's Keychain                                    |
+| `github-dispatch`              | `contents: write` on this repository. The one secret that cannot be regenerated                                                                                   | `flux-system` on each cluster                                                                  |
+| The domain and its certificate | `event-junkie.de`, HSTS pinned for a year                                                                                                                         | Hetzner DNS, cert-manager                                                                      |
+| Availability                   | One node and one Traefik pod. Two BFF and two frontend replicas on production. Better Stack notices in about six minutes                                          | [ADR-021](../adr/ADR-021_PUBLIC_SITE_MONITORING.md)                                            |
+| Visitor privacy                | No account, no cookie, no third-party script. The access log carries no client address and expires after 14 days. The position for "near me" stays in the browser | `RequestLoggingFilter.kt`, `openobserve.yaml`, `useLocation.ts`                                |
 
 ### Inbound entry points
 
@@ -145,16 +146,17 @@ Likelihood and impact are each `low`, `medium` or `high`, judged for this system
 
 ### B2 · Traefik → frontend, Traefik → BFF
 
-| Threat                                                         | STRIDE | Likelihood | Impact | Status                                                                                                                                  |
-| -------------------------------------------------------------- | ------ | ---------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------- |
-| Scraped text carries a script and the page renders it          | T      | medium     | medium | Mitigated. Vue escapes by default and the tree has no `v-html`. The injector escapes every value. CSP allows one script hash (#854)     |
-| A venue title with `$'` or `` $` `` corrupts the injected head | T, D   | low        | low    | Mitigated. `rewrite.ts` replaces through a function, so `$` patterns are inserted as they are (#1426). `rewrite.spec.ts` asserts it     |
-| An expensive query holds a connection                          | D      | medium     | medium | Mitigated. Page size ≤ 100 (`application.yaml`), calendar range ≤ `MAX_CALENDAR_DAYS` (`EventService.kt`), unknown parameters are a 400 |
-| A 500 leaks a stack trace or a query                           | I      | low        | low    | Mitigated. `GlobalExceptionHandler.kt` answers with a `ProblemDetail`. #1421 tests the body                                             |
-| Another site's script reads the API                            | I      | low        | low    | Accepted. The data is public. CORS allows `GET` for the listed origins only (`WebFluxConfiguration.kt`), and is not an access control   |
-| A path under `/api/images` reaches an arbitrary object         | I      | low        | low    | Mitigated. `CachedImageController.kt` resolves the key from the database, never from the path                                           |
-| The admin API or Actuator becomes routable                     | E      | low        | high   | Mitigated. `tests/ingress_test.yaml` fails the build. ADR-023 makes an admin surface without a middleware a breach of the decision      |
-| A crawler or a scraper copies the whole dataset                | I      | high       | low    | Accepted. The data is public and aggregated from public pages. #268 records why the API cannot be made frontend-only                    |
+| Threat                                                         | STRIDE | Likelihood | Impact | Status                                                                                                                                                                                                                  |
+| -------------------------------------------------------------- | ------ | ---------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Scraped text carries a script and the page renders it          | T      | medium     | medium | Mitigated. Vue escapes by default and the tree has no `v-html`. The injector escapes every value. CSP allows one script hash (#854)                                                                                     |
+| A venue title with `$'` or `` $` `` corrupts the injected head | T, D   | low        | low    | Mitigated. `rewrite.ts` replaces through a function, so `$` patterns are inserted as they are (#1426). `rewrite.spec.ts` asserts it                                                                                     |
+| An expensive query holds a connection                          | D      | medium     | medium | Mitigated. Page size ≤ 100 (`application.yaml`), calendar range ≤ `MAX_CALENDAR_DAYS` (`EventService.kt`), unknown parameters are a 400                                                                                 |
+| A 500 leaks a stack trace or a query                           | I      | low        | low    | Mitigated. `GlobalExceptionHandler.kt` answers with a `ProblemDetail`. #1421 tests the body                                                                                                                             |
+| Another site's script reads the API                            | I      | low        | low    | Accepted. The data is public. CORS allows `GET` for the listed origins only (`WebFluxConfiguration.kt`), and is not an access control                                                                                   |
+| A script on the page reads the visitor's position              | I      | low        | medium | Mitigated. `Permissions-Policy` allows `geolocation=(self)` only (`values.yaml`). The browser asks the visitor first. The CSP allows one script hash. The position goes into no request ([LEGAL.md](../LEGAL.md) §7.4a) |
+| A path under `/api/images` reaches an arbitrary object         | I      | low        | low    | Mitigated. `CachedImageController.kt` resolves the key from the database, never from the path                                                                                                                           |
+| The admin API or Actuator becomes routable                     | E      | low        | high   | Mitigated. `tests/ingress_test.yaml` fails the build. ADR-023 makes an admin surface without a middleware a breach of the decision                                                                                      |
+| A crawler or a scraper copies the whole dataset                | I      | high       | low    | Accepted. The data is public and aggregated from public pages. #268 records why the API cannot be made frontend-only                                                                                                    |
 
 ### B3 · BFF and importer → PostgreSQL
 
@@ -201,16 +203,18 @@ reads a picture from Wikidata and Commons, and an ensemble's lead from Wikipedia
 
 ### B6 · GitHub Actions → GHCR → Flux → cluster
 
-| Threat                                                | STRIDE | Likelihood | Impact | Status                                                                                                                                                          |
-| ----------------------------------------------------- | ------ | ---------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| A pull request from a fork runs with secrets          | E      | low        | high   | Mitigated. `pull_request` triggers, `persist-credentials: false`, zizmor in `validate-workflows.yml`. The two `pull_request_target` workflows check out nothing |
-| A bot branch runs a hostile install script            | E      | low        | medium | Mitigated. `fix-notices-on-bot-prs.yml` mints the App token only at the push step, after `npm ci`                                                               |
-| A dependency ships malware                            | T      | medium     | high   | Mitigated in part. Dependency review on each PR, Dependency-Check nightly, Trivy on each image. Nothing checks a package's provenance                           |
-| A chart or image in GHCR is replaced and Flux runs it | T, E   | low        | high   | Mitigated. `release.yml` signs the chart and the images, keyless, on the digest; every cluster's `spec.verify` matches the workflow's identity (#1425)          |
-| A tag on GHCR is repointed after the chart verified   | T, E   | low        | high   | Mitigated. The chart names each image `repo:tag@sha256:…`, stamped by `release.yml` from its own push; the node pulls the digest (#1473)                        |
-| A chart fails verification and nobody hears of it     | R      | low        | medium | Mitigated. The `source-failure` Alert sends each OCIRepository error to `flux-source-failure.yml`. It goes red unless the chart verifies 60 s later (#2031)     |
-| A commit reaches `main` without a review              | T      | low        | high   | Mitigated. `merge-gate.yml`, a required check on `pull_request_target`, fails an unlisted App's pull request until a person approves its head (#1424)           |
-| A tag or an action is unpinned                        | T      | low        | medium | Mitigated. Every action is pinned by SHA, every tool by version. zizmor and Dependabot keep it so                                                               |
+| Threat                                                | STRIDE | Likelihood | Impact | Status                                                                                                                                                                                               |
+| ----------------------------------------------------- | ------ | ---------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| A pull request from a fork runs with secrets          | E      | low        | high   | Mitigated. `pull_request` triggers, `persist-credentials: false`, zizmor in `validate-workflows.yml`. The two `pull_request_target` workflows check out nothing                                      |
+| A bot branch runs a hostile install script            | E      | low        | medium | Mitigated. `fix-notices-on-bot-prs.yml` mints the App token only at the push step, after `npm ci`                                                                                                    |
+| A dependency ships malware                            | T      | medium     | high   | Mitigated in part. Dependency review on each PR, Dependency-Check nightly, Trivy on each image. Nothing checks a package's provenance                                                                |
+| A chart or image in GHCR is replaced and Flux runs it | T, E   | low        | high   | Mitigated. `release.yml` signs the chart and its four images, keyless, on the digest. Every cluster's `spec.verify` matches the workflow's identity (#1425)                                          |
+| A tag on GHCR is repointed after the chart verified   | T, E   | low        | high   | Mitigated. The chart names each image `repo:tag@sha256:…`, stamped by `release.yml` from its own push; the node pulls the digest (#1473)                                                             |
+| The map-assets image in GHCR is replaced              | T      | low        | low    | Accepted. `publish-map-assets.yml` pushes it by hand, with no signature and no attestation. The frontend Dockerfile copies it by digest, so a new image changes the site only through a pull request |
+| A Protomaps build carries hostile tiles               | T      | low        | low    | Accepted. `scripts/map-assets.sh` checks `go-pmtiles` and `basemaps-assets` by SHA-256. Protomaps publishes no digest for the tiles, so TLS and the review of the digest change are the only checks  |
+| A chart fails verification and nobody hears of it     | R      | low        | medium | Mitigated. The `source-failure` Alert sends each OCIRepository error to `flux-source-failure.yml`. It goes red unless the chart verifies 60 s later (#2031)                                          |
+| A commit reaches `main` without a review              | T      | low        | high   | Mitigated. `merge-gate.yml`, a required check on `pull_request_target`, fails an unlisted App's pull request until a person approves its head (#1424)                                                |
+| A tag or an action is unpinned                        | T      | low        | medium | Mitigated. Every action is pinned by SHA, every tool by version. zizmor and Dependabot keep it so                                                                                                    |
 
 ### B7 · Operator → cluster
 
@@ -282,6 +286,9 @@ Each of these is a choice. A reviewer who disagrees with one changes the row and
   bucket policy narrows it, and this repository applies none.
 - The database backups are not encrypted. Whoever holds a key of the project can read them.
 - Venue text can steer a translation. The result is text, rendered escaped.
+- The map-assets image has no signature. The frontend image copies it by digest, and the signature on the frontend image covers the copied files.
+- The map tiles are not checked against a digest, because Protomaps publishes none. TLS to `build.protomaps.com` and the review of the pull request
+  that moves the digest are the checks.
 - One operator, so repudiation is not a threat this system defends against.
 - The collector agent runs `privileged`. Reading every container log means mounting the node, and Pod Security has no per-workload exemption. So it
   has a namespace to itself, and nothing else lives there (#709).
@@ -308,6 +315,7 @@ Change this document in the same pull request as any of these:
 - a new namespace, or a Pod Security level below `restricted`
 - a login, a session or a form that accepts input
 - a new GitHub App installation, or a change to the `main` ruleset
+- a new artifact published to GHCR, or a new build-time upstream
 
 Update the **Last reviewed** date after a full read of the model against the tree, not after a change to one row.
 
