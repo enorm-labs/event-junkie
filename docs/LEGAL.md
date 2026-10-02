@@ -68,9 +68,9 @@ holds that property.
 
 ## 3. Copyright and licence line
 
-The footer states `© <year> Event Junkie` and that the code is under **Apache-2.0**, linking the licence text in the repository.
+The footer states `© <year> Event Junkie` and that the code is under **BUSL-1.1**, linking the licence text in the repository.
 
-The distinction that matters, and which the imprint repeats: **our code is Apache-2.0, and the event data is not ours
+The distinction that matters, and which the imprint repeats: **our code is BUSL-1.1, and the event data is not ours
 to license.** Event descriptions, images and
 other material originating from venues, promoters and artists remain their rights holders' property. Conflating the two would be a licensing claim over other
 people's material.
@@ -643,16 +643,16 @@ an SPDX id there produces a false failure.
 
 ### 9.2 Which licences to avoid
 
-The question is not "compatible with Apache-2.0" in the abstract, but **"compatible with a publicly reachable network service whose source is public under
-Apache-2.0"**.
+The question is not "compatible with BUSL-1.1" in the abstract, but **"compatible with a publicly reachable network service whose own code is under
+BUSL-1.1"**. The maintainer must be able to license that code commercially, and each version must become available under Apache-2.0 on its Change Date.
 
 | Category                   | Examples                                         | Verdict                                                                                                                                                  |
 | -------------------------- | ------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Permissive                 | MIT, BSD-2/3, Apache-2.0, ISC, Unlicense, Zlib   | ✅ Use freely. Attribution only — the notices page satisfies it.                                                                                         |
 | Weak copyleft              | MPL-2.0, EPL-2.0, CDDL, LGPL                     | ⚠️ Acceptable for unmodified library use; file-level or relinking obligations. Prefer an alternative; record why if used.                                |
-| Strong copyleft            | GPL-2.0, GPL-3.0                                 | ❌ Avoid. GPL-2.0-only is outright incompatible with Apache-2.0.                                                                                         |
+| Strong copyleft            | GPL-2.0, GPL-3.0                                 | ❌ Avoid. GPL would require the whole work under GPL, which BUSL-1.1 cannot be.                                                                          |
 | **Network copyleft**       | **AGPL-3.0**                                     | ❌ **The one to watch.** § 13 fires on _network interaction_, not distribution — this project is the trigger case. It would relicense the combined work. |
-| Source-available           | BUSL/BSL, SSPL, Elastic 2.0, FSL, Commons Clause | ❌ Not OSI-approved; several forbid exactly "offer this as a service".                                                                                   |
+| Source-available           | BUSL/BSL, SSPL, Elastic 2.0, FSL, Commons Clause | ❌ Not OSI-approved; several forbid exactly "offer this as a service", the use this project makes of them.                                               |
 | Unknown / missing / custom | no metadata, bespoke terms                       | ❌ Treat as a build failure until resolved. The largest real category in npm trees.                                                                      |
 
 Two specifics. Prefer **OpenSearch** (Apache-2.0) over Elasticsearch if that step is ever taken. And keep

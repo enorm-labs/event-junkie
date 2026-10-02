@@ -107,7 +107,7 @@ const { t } = useI18n()
     <section>
       <h2>Urheberrecht</h2>
       <p>
-        Der Quellcode dieses Projekts steht unter der Apache License 2.0; siehe den
+        Der Quellcode dieses Projekts steht unter der Business Source License 1.1; siehe den
         <a
           href="https://github.com/enorm-labs/event-junkie/blob/main/LICENSE"
           rel="noopener"

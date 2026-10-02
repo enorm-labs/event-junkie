@@ -5,7 +5,7 @@
 
 export const REPOSITORY_URL = 'https://github.com/enorm-labs/event-junkie'
 
-/** The Apache-2.0 licence text this project is released under. */
+/** The BUSL-1.1 licence text this project is released under. */
 export const LICENSE_URL = `${REPOSITORY_URL}/blob/main/LICENSE`
 
 /** Issue list — where "report wrong data" sends people. */

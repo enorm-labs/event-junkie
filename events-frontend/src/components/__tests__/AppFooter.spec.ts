@@ -23,17 +23,17 @@ describe('AppFooter', () => {
   })
 
   it('separates the copyright from the code licence', () => {
-    // The two clauses must stay distinct: a bare "© Event Junkie · Apache-2.0" would imply the
+    // The two clauses must stay distinct: a bare "© Event Junkie · BUSL-1.1" would imply the
     // event data is ours to license, which it is not (docs/LEGAL.md §3).
     const wrapper = mount_()
     expect(wrapper.text()).toContain('© 2026 Event Junkie')
-    expect(wrapper.text()).toContain('Code under Apache-2.0')
+    expect(wrapper.text()).toContain('Code under BUSL-1.1')
   })
 
   it('links the licence line to the LICENSE file rather than the repository root', () => {
     const wrapper = mount_()
     const licence = wrapper.get('a[href$="/blob/main/LICENSE"]')
-    expect(licence.text()).toContain('Apache-2.0')
+    expect(licence.text()).toContain('BUSL-1.1')
   })
 
   it('points every external link at the project repository', () => {

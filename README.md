@@ -9,7 +9,7 @@
 
 [![Build & Test Backend](https://github.com/enorm-labs/event-junkie/actions/workflows/build-backend.yml/badge.svg)](https://github.com/enorm-labs/event-junkie/actions/workflows/build-backend.yml)
 [![Build & Test Frontend](https://github.com/enorm-labs/event-junkie/actions/workflows/build-frontend.yml/badge.svg)](https://github.com/enorm-labs/event-junkie/actions/workflows/build-frontend.yml)
-[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](./LICENSE)
+[![License](https://img.shields.io/badge/License-BUSL--1.1-blue.svg)](./LICENSE)
 [![Status](https://img.shields.io/badge/Status-Beta-orange.svg)](#status)
 [![Uptime](https://uptime.betterstack.com/status-badges/v3/monitor/2wivp.svg)](./docs/ops/HEALTHCHECKS.md#the-readme-publishes-it)
 [![Kotlin](https://img.shields.io/badge/Kotlin-7F52FF.svg?logo=kotlin&logoColor=white)](https://kotlinlang.org)
@@ -263,9 +263,10 @@ Norman Lange ([@enorm](https://github.com/enorm)), publishing as [enorm-labs](ht
 
 ## License
 
-[Apache-2.0](./LICENSE) © Norman Lange.
+[Business Source License 1.1](./LICENSE) © Norman Lange. The source is public: read it, fork it, change it and run it locally. Running an instance
+that others can reach, or any other production use, needs a licence from the maintainer. Each version becomes available under the Apache License 2.0 four years
+after it is published. Commits published before the switch to BUSL-1.1 remain available under the Apache License 2.0.
 
-Contributions are accepted under the same licence. There is no CLA — opening a pull request is taken as agreeing that your contribution may be distributed under
-it. Third-party dependency licences are published at
+Contributions are welcome under the [Contributor Licence Agreement](./CLA.md); you keep the copyright in your work. Third-party dependency licences are published at
 `/legal/notices` and enforced by a policy in [`config/`](./config); see
 [docs/DEVELOPMENT.md](./docs/DEVELOPMENT.md#licences-and-open-source-notices).

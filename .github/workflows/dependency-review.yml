@@ -27,7 +27,7 @@ jobs:
 
           # Licence policy (docs/LEGAL.md §9.2). A deny-list rather than an allow-list: an allow-list fails on
           # every unrecognised-but-fine SPDX spelling and trains people to bypass the gate. Named here are the
-          # licences incompatible with shipping a public network service under Apache-2.0: AGPL (§ 13 fires on
+          # licences incompatible with shipping a public network service under BUSL-1.1: AGPL (§ 13 fires on
           # network interaction — this project is the exact case), GPL-2.0-only, GPL-3.0 (compatible only in
           # the direction that makes the whole work GPL), SSPL / BUSL / Elastic-2.0 / Commons Clause (restrict
           # "offer this as a service"). Newly introduced dependencies only; the notices page surfaces the rest.

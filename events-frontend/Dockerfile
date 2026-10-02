@@ -41,7 +41,7 @@ ARG REVISION=unknown
 LABEL org.opencontainers.image.source="https://github.com/enorm-labs/event-junkie" \
       org.opencontainers.image.title="event-junkie-frontend" \
       org.opencontainers.image.description="The Event Junkie web app, served as static files" \
-      org.opencontainers.image.licenses="Apache-2.0" \
+      org.opencontainers.image.licenses="BUSL-1.1" \
       org.opencontainers.image.version="${VERSION}" \
       org.opencontainers.image.revision="${REVISION}"
 
