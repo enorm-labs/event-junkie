@@ -236,6 +236,14 @@ const nearEventCount = computed(
   () => near.value?.reduce((sum, group) => sum + group.events.length, 0) ?? 0,
 )
 
+/** Two counts in one line: each is pluralised on its own, since a message picks one plural form. */
+function counts(events: number, venues: number) {
+  return {
+    events: t('map.eventCount', { count: events }),
+    venues: t('map.venueCount', { count: venues }),
+  }
+}
+
 function distance(km: number): string {
   return formatDistance(km, locale.value)
 }
@@ -359,7 +367,7 @@ function distance(km: number): string {
       </Button>
     </div>
     <p v-else class="text-body text-muted-foreground">
-      {{ t('map.resultCount', { events: pinnedEventCount, venues: pins.length }) }}
+      {{ t('map.resultCount', counts(pinnedEventCount, pins.length)) }}
       <template v-if="unpinnedEventCount">
         ·
         <RouterLink :to="listLink" class="text-primary hover:underline">
@@ -442,7 +450,7 @@ function distance(km: number): string {
       <p class="text-body text-muted-foreground">
         {{
           near.length
-            ? t('map.near.resultCount', { events: nearEventCount, venues: near.length })
+            ? t('map.near.resultCount', counts(nearEventCount, near.length))
             : t('map.near.empty')
         }}
       </p>

@@ -3,7 +3,9 @@
   "subtitle": "Was läuft, und wo. Tippe auf einen Pin, um die Events einer Location zu sehen.",
   "label": "Karte von Berlin",
   "pinLabel": "{venue}: {count} Event | {venue}: {count} Events",
-  "resultCount": "{events} Events in {venues} Locations",
+  "resultCount": "{events} in {venues}",
+  "eventCount": "{count} Event | {count} Events",
+  "venueCount": "{count} Location | {count} Locations",
   "unpinned": "{count} weiteres an Orten ohne Standort, in der Liste | {count} weitere an Orten ohne Standort, in der Liste",
   "empty": "Für diese Filter ist nichts auf der Karte. Versuch einen anderen Tag oder weniger Filter.",
   "pickPin": "Tippe auf einen Pin, um zu sehen, was dort läuft.",
@@ -36,7 +38,7 @@
     "clear": "Zurücksetzen",
     "coarse": "Dein Gerät ortet dich nur auf {accuracy} genau, manches hier kann also weiter weg sein.",
     "heading": "Im Umkreis von {radius}",
-    "resultCount": "{events} Events in {venues} Locations, die nächsten zuerst",
+    "resultCount": "{events} in {venues}, die nächsten zuerst",
     "empty": "In diesem Umkreis ist nichts los. Versuch einen größeren oder einen anderen Tag."
   }
 }

@@ -186,3 +186,19 @@ test('with no dates in the URL the map shows today, so Tonight reads as pressed'
   const times = page.locator('div', { has: page.getByRole('button', { name: 'Tonight' }) }).last()
   await expect(times.getByRole('button', { name: 'On now', exact: true })).toBeVisible()
 })
+
+test('a single event at a single venue reads in the singular, in both languages', async ({
+  page,
+}) => {
+  // #2370: two counts shared one message, so one event read "1 events at 1 venues".
+  await mockBff(page)
+  await page.route(/\/api\/events\/calendar(\?|$)/, (route) => json(route, [events[0]]))
+
+  await page.goto('/en/map')
+  await expect(page.getByText('1 event at 1 venue', { exact: true })).toBeVisible()
+  await page.getByRole('combobox', { name: 'Near a venue…' }).selectOption('lido')
+  await expect(page.getByText('1 event at 1 venue, nearest first')).toBeVisible()
+
+  await page.goto('/de/map')
+  await expect(page.getByText('1 Event in 1 Location', { exact: true })).toBeVisible()
+})
