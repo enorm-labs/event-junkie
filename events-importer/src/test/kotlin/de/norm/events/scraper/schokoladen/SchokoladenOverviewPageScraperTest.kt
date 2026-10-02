@@ -184,16 +184,22 @@ class SchokoladenOverviewPageScraperTest {
             genreOf("OCCRASY (SWE) + Social Torsten (Alternative-Punkrock/ Bernau)") shouldBe "Alternative-Punkrock"
             genreOf("BELAKO (Post-Punk/New-Wave, Basque Country) + Ghosts of Berlin (neo grunge)") shouldBe "Post-Punk/New-Wave, neo grunge"
             genreOf("Karaoke Night w/ KJ Der Käpt'n").shouldBeNull()
+            // A three-letter genre is not a code, and Leipzig is a place (#2327).
+            genreOf("The Groovy Cellar (Beat/Mod)") shouldBe "Beat/Mod"
+            genreOf("Awesome Scampis (ska- + pop-punk) + Buster Beat (Ska)") shouldBe "ska- + pop-punk, Ska"
+            genreOf("SOKO LiNX - PUNK FÜR LEUTE, DIE PUNK HASZEN - TOUR 2026 + leavr (Leipzig)").shouldBeNull()
         }
 
         @Test
         fun `derives headliner artists from co-billed title, stripping genre annotations`() {
             val concert = scrape().first { it.sourceId == "schokoladen:e20260711" }
 
+            // The subtitle's "& after 22h: No Tears For The Creatures Of The Night DJs (punk, …)" is the aftershow.
             concert.artists shouldContainExactly
                 listOf(
                     ScrapedArtist(name = "MOLOCH", role = "HEADLINER", titleDerived = true),
-                    ScrapedArtist(name = "PINK WONDER", role = "HEADLINER", titleDerived = true)
+                    ScrapedArtist(name = "PINK WONDER", role = "HEADLINER", titleDerived = true),
+                    ScrapedArtist(name = "No Tears For The Creatures Of The Night", role = "DJ")
                 )
         }
 
@@ -201,7 +207,56 @@ class SchokoladenOverviewPageScraperTest {
         fun `strips a set-count note from a title-derived headliner`() {
             val event = scrape().first { it.sourceId == "schokoladen:e20260715" }
             event.title shouldBe "Toshìn & The Teleporters - 2 Sets!"
-            event.artists shouldContainExactly listOf(ScrapedArtist(name = "Toshìn & The Teleporters", role = "HEADLINER", titleDerived = true))
+            // The subtitle "+ DJ Calamidades Lola" bills the DJ after the show.
+            event.artists shouldContainExactly
+                listOf(
+                    ScrapedArtist(name = "Toshìn & The Teleporters", role = "HEADLINER", titleDerived = true),
+                    ScrapedArtist(name = "Calamidades Lola", role = "DJ")
+                )
+        }
+
+        @Test
+        fun `bills the aftershow DJs a subtitle names after its lead-in`() {
+            fun djsOf(subtitle: String): List<String> =
+                scraper
+                    .scrape(
+                        Jsoup.parse(
+                            """
+                            <div class="event"><h6 class="category">Musik</h6><h2 class="fw-bold">Some Band (punk, bln)</h2>
+                              <h6 class="subtitle">$subtitle</h6>
+                              <div class="event-info" id="e20261003" data-event-date="2026-10-03"></div></div>
+                            """.trimIndent(),
+                            baseUrl
+                        ),
+                        baseUrl
+                    ).single()
+                    .artists
+                    .filter { it.role == "DJ" }
+                    .map { it.name }
+
+            // Subtitles as the venue printed them between 2026-09-05 and 2026-10-02 (#2327).
+            assertSoftly {
+                djsOf("&amp; after 22h: DJ Mietze Fiebels (post-punk / new wave / disco / indie / mutant pop)") shouldContainExactly
+                    listOf("Mietze Fiebels")
+                djsOf("&amp; after 22h: Kreuzgut.Disko &amp; DJ Monophonic (post-punk / britpop / indie / 60s ...)") shouldContainExactly
+                    listOf("Kreuzgut.Disko", "Monophonic")
+                djsOf("&amp; after 22h: Under the Wires w/ DJs Mr Cigarette Butt &amp; Moppi Galoppi (punk, wave, garage, sex-beat)") shouldContainExactly
+                    listOf("Mr Cigarette Butt", "Moppi Galoppi")
+                djsOf("&amp; after 22h: DJs N'Djinn &amp; Lou Raw (funk / disco / house)") shouldContainExactly listOf("N'Djinn", "Lou Raw")
+                djsOf("&amp; after 22h: DJs Suzy Creamcheese &amp; Dörte Linke") shouldContainExactly listOf("Suzy Creamcheese", "Dörte Linke")
+                djsOf("&amp; after 22h: DJ Suzy Creamcheese (Berlin Beat Invasion) &amp; Guests (psych, garage, beat)") shouldContainExactly
+                    listOf("Suzy Creamcheese")
+                djsOf("&amp; after 22h: Everything Crash DJ-Set (ska, rocksteady, early reggae, rare soul &amp; funk)") shouldContainExactly
+                    listOf("Everything Crash")
+                djsOf("&amp; after 22h: fragil/stabil DJ night (indie-rock, punk, new wave, ndw ...)") shouldContainExactly listOf("fragil/stabil")
+                djsOf("&amp; after 22h: Fish'n'Candy DJ-Team (wave, punk, tanz)") shouldContainExactly listOf("Fish'n'Candy")
+                djsOf("&amp; after 22h: DJ Don Kamisi aka Schapur (punk, post-punk, ndw… )") shouldContainExactly listOf("Don Kamisi")
+                djsOf("&amp; after 22h: DJs Whywolf (sonic sisters) &amp; guest") shouldContainExactly listOf("Whywolf")
+                djsOf("&amp; after 22h: DJ TBA").shouldBeEmpty()
+                // No lead-in, no lineup: a cancellation note and the sold-out banner are not DJs.
+                djsOf("[unfortunately Cool Sorcery had to cancel their EU-Tour]").shouldBeEmpty()
+                djsOf("---&gt; Ausverkauft / Sold Out / 10 Tickets on the Doors at 19:00 &lt;---").shouldBeEmpty()
+            }
         }
 
         @Test
@@ -257,7 +312,8 @@ class SchokoladenOverviewPageScraperTest {
             special.title shouldContain "SHEENA IS"
             special.eventType.shouldBeNull()
             special.ticketUrl.shouldBeNull()
-            special.artists.shouldBeEmpty()
+            // The title is a night, not an act; the subtitle's "& after 22h: DJ Anita Drink" is the one billed name.
+            special.artists shouldContainExactly listOf(ScrapedArtist(name = "Anita Drink", role = "DJ"))
         }
     }
 

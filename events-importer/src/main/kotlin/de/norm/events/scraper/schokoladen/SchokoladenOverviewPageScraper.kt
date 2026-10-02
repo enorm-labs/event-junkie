@@ -8,9 +8,11 @@ import de.norm.events.scraper.attrAt
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.hasSoldOutMarker
 import de.norm.events.scraper.hrefAt
+import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.mapEventType
 import de.norm.events.scraper.parseIsoDate
 import de.norm.events.scraper.resolveUrl
+import de.norm.events.scraper.splitSegmentOnConjunctions
 import de.norm.events.scraper.textAt
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
@@ -220,7 +222,7 @@ class SchokoladenOverviewPageScraper {
      * trailing "& more". A `"<night> mit <acts>"` / `"<night> w/ <acts>"` title bills the acts only
      * (`15 Jahre Gut Drauf – … mit mOck & Petula`). The title is stored verbatim — only the derived
      * names are cleaned. Non-concert events (readings, specials) yield no artists unless a
-     * "Support:" line is present.
+     * "Support:" line is present. The subtitle's aftershow DJs follow, from [aftershowDjs].
      */
     private fun parseArtists(
         title: String,
@@ -236,7 +238,7 @@ class SchokoladenOverviewPageScraper {
                 .replace(RELEASE_SHOW_OF, "")
                 .replace(QUOTED_WORK, "")
                 .trim()
-        return buildArtistsForEventType(artistTitle, subtitle, eventType, unpackWithFrame = true)
+        return buildArtistsForEventType(artistTitle, subtitle, eventType, unpackWithFrame = true) + aftershowDjs(subtitle)
     }
 
     /**
@@ -340,11 +342,73 @@ private fun genresFromAnnotation(annotation: String): List<String> {
         }.filter { it.isNotBlank() }
 }
 
-/** A two- or three-letter country or city code, possibly two of them ("bln/aus"), or a place the venue spells out. */
-private fun isOrigin(part: String): Boolean = ORIGIN_CODE.matches(part) || part.lowercase() in ORIGIN_PLACES
+/**
+ * A two- or three-letter country or city code, possibly two of them ("bln/aus"), or a place the
+ * venue spells out. A [SHORT_GENRES] word has the shape of a code and is not one: `Beat/Mod` lost
+ * its `Mod` (#2327).
+ */
+private fun isOrigin(part: String): Boolean = (ORIGIN_CODE.matches(part) && part.lowercase() !in SHORT_GENRES) || part.lowercase() in ORIGIN_PLACES
 
 /** A country or city code inside an annotation — "uk", "bln", "aus", "bln/tlv". */
 private val ORIGIN_CODE = Regex("""[a-z]{2,3}(?:\s*/\s*[a-z]{2,3})*""", RegexOption.IGNORE_CASE)
 
+/** Genres of two or three letters, which [ORIGIN_CODE] would take for a code: `(Beat/Mod)`, `(Ska)`. */
+private val SHORT_GENRES = setOf("mod", "ska", "emo", "pop", "dub", "rap")
+
 /** The places the venue spells out instead of coding, as met in its titles. */
-private val ORIGIN_PLACES = setOf("berlin", "hamburg", "bernau", "aachen", "warsaw", "basque country", "ho chi minh city")
+private val ORIGIN_PLACES = setOf("berlin", "hamburg", "bernau", "aachen", "leipzig", "warsaw", "basque country", "ho chi minh city")
+
+/**
+ * The DJs a subtitle bills after the show (#2327): `& after 22h: DJ Mietze Fiebels (post-punk /
+ * …)`, `& after 22h: Under the Wires w/ DJs Mr Cigarette Butt & Moppi Galoppi`, `+ DJ
+ * Calamidades Lola`. The `(genre)` notes go, and so does a night's name before `w/`. Each name
+ * loses its `DJ`/`DJs` label or its `DJ-Set`/`DJ night`/`DJ-Team`/`DJs` suffix
+ * (`Everything Crash DJ-Set`), and an `aka` alias. A `/` stays inside a name: `fragil/stabil`
+ * is one night. A subtitle without the lead-in is not read.
+ */
+private fun aftershowDjs(subtitle: String?): List<ScrapedArtist> {
+    val lineup = AFTERSHOW_LEAD_IN.find(subtitle.orEmpty())?.groupValues?.get(1) ?: return emptyList()
+    val names =
+        lineup
+            .replace(DJ_NOTE, "")
+            .replace(GUEST_TAIL, "")
+            .let { it.substringAfter(NIGHT_WITH, it) }
+    return names
+        .split(DJ_HARD_SEPARATOR)
+        .flatMap { splitSegmentOnConjunctions(it) }
+        .map { name ->
+            name
+                .split(ALIAS)
+                .first()
+                .replace(DJ_LABEL, "")
+                .replace(DJ_SUFFIX, "")
+                .trim()
+        }.filterNot { it.isBlank() || isNonArtistName(it) }
+        .distinct()
+        .map { ScrapedArtist(name = it, role = "DJ") }
+}
+
+/** The aftershow lead-in, capturing the lineup after it: `& after 22h:`, or a `+` straight before a `DJ` label. */
+private val AFTERSHOW_LEAD_IN =
+    Regex("""^\W*(?:after\s+\d{1,2}(?::\d{2})?\s*h?\s*:|\+\s*(?=djs?\s))\s*(.+)$""", RegexOption.IGNORE_CASE)
+
+/** A `(genre)` note after a DJ, closed or cut off by the subtitle's end. */
+private val DJ_NOTE = Regex("""\s*\([^)]*(?:\)|$)""")
+
+/** An unnamed guest slot at the end of the lineup, `& Guests`; a collective rule would keep it on the name before. */
+private val GUEST_TAIL = Regex("""\s*[&+]\s*guests?\s*$""", RegexOption.IGNORE_CASE)
+
+/** A night's name before its DJs: `Under the Wires w/ DJs …`. */
+private const val NIGHT_WITH = " w/ "
+
+/** Comma and plus always part two DJs; a slash does not, because `fragil/stabil` is one name. */
+private val DJ_HARD_SEPARATOR = Regex("""\s*[,+]\s*""")
+
+/** The `DJ` / `DJs` label in front of a name. */
+private val DJ_LABEL = Regex("""^djs?\s+""", RegexOption.IGNORE_CASE)
+
+/** A format word after a name: `Everything Crash DJ-Set`, `fragil/stabil DJ night`, `Fish'n'Candy DJ-Team`, `Kreuzgut.Disko DJs`. */
+private val DJ_SUFFIX = Regex("""\s+dj(?:s|[\s-]?(?:set|team|night))?$""", RegexOption.IGNORE_CASE)
+
+/** A second name for the same DJ, `DJ Don Kamisi aka Schapur`; the first one is kept. */
+private val ALIAS = Regex("""\s+a\.k\.a\.?\s*|\s+aka\s+""", RegexOption.IGNORE_CASE)
