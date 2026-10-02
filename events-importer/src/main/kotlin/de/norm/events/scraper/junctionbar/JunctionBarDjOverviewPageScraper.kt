@@ -134,12 +134,20 @@ class JunctionBarDjOverviewPageScraper(
         return inferYearForWeekday(monthDay, weekday, clock)
     }
 
-    /** The start time from the date bar; the venue's "24:00" (midnight) folds to 00:00. */
+    /**
+     * The start time from the date bar. The venue's "24:00" is midnight at the end of the dated
+     * night, so it becomes 23:59 on that date (#2313): 00:00 would be the start of the same
+     * morning, and the site would show the night as on now all day. The late-night grace (#299)
+     * keeps a 23:59 start running past midnight.
+     */
     private fun parseStartTime(dateBar: Element): LocalTime? {
         val match = TIME_PATTERN.find(dateBar.text()) ?: return null
         val (hour, minute) = match.destructured
-        val normalizedHour = hour.toInt() % HOURS_PER_DAY
-        return runCatching { LocalTime.of(normalizedHour, minute.toInt()) }.getOrNull()
+        return if (hour.toInt() >= HOURS_PER_DAY) {
+            END_OF_NIGHT_DATE
+        } else {
+            runCatching { LocalTime.of(hour.toInt(), minute.toInt()) }.getOrNull()
+        }
     }
 
     companion object {
@@ -156,5 +164,8 @@ class JunctionBarDjOverviewPageScraper(
         private const val THEME_SUFFIX = "with"
         private const val TITLE_SEPARATOR = " + "
         private const val HOURS_PER_DAY = 24
+
+        /** The last minute of the dated night, which stands for the venue's "24:00". */
+        private val END_OF_NIGHT_DATE: LocalTime = LocalTime.of(23, 59)
     }
 }
