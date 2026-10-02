@@ -6,6 +6,8 @@ import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.goldengate.GoldenGateOverviewPageScraper.Companion.DATE_LINE_PATTERN
 import de.norm.events.scraper.isNonArtistName
+import de.norm.events.scraper.neighbouringMonthOnWeekday
+import de.norm.events.scraper.parseGermanWeekdayAbbreviation
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.splitBackToBack
 import de.norm.events.scraper.splitSegmentOnConjunctions
@@ -14,10 +16,13 @@ import de.norm.events.slug.SlugGenerator
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
+import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
+import java.time.temporal.ChronoUnit
 import java.util.Locale
+import kotlin.math.abs
 
 /**
  * Pure HTML parser for Golden Gate Berlin's homepage programme.
@@ -38,6 +43,10 @@ import java.util.Locale
  * **content**: a heading matching [DATE_LINE_PATTERN] opens a night, the next two are its title
  * and lineup, the next date heading closes it. That also skips the trailing non-event headings
  * ("Tickets only available at the door.", "enter", "SHOPPING") without enumerating them.
+ *
+ * The date lines are typed by hand, and the weekday is the check on them: "Sa. 03. September
+ * 2026" stood for Saturday 3 October (#2349). [resolveDate] moves such a night to the
+ * neighbouring month its weekday names, or drops it when no month fits the block.
  *
  * Passed nights stay on the page until the block rolls over; parsed here, dropped centrally at
  * persistence by [EventUpsertService][de.norm.events.scraper.EventUpsertService], so an import
@@ -60,38 +69,70 @@ class GoldenGateOverviewPageScraper {
         baseUrl: String
     ): List<ScrapedEvent> {
         val headings = document.select(".elementor-heading-title")
+        val dateLines =
+            headings.withIndex().mapNotNull { (index, heading) ->
+                DATE_LINE_PATTERN.find(heading.text())?.let { DateLine.of(index, heading.text(), it) }
+            }
+        val confirmedDates = dateLines.mapNotNull { line -> line.date?.takeIf { line.weekday == null || it.dayOfWeek == line.weekday } }
         val events =
-            headings
-                .withIndex()
-                .filter { (_, heading) -> DATE_LINE_PATTERN.containsMatchIn(heading.text()) }
-                .mapNotNull { (index, heading) -> parseNight(heading, headings.getOrNull(index + 1), headings.getOrNull(index + 2), baseUrl) }
+            dateLines.mapNotNull { line ->
+                resolveDate(line, confirmedDates)?.let { eventDate ->
+                    parseNight(line, eventDate, headings.getOrNull(line.index + 1), headings.getOrNull(line.index + 2), baseUrl)
+                }
+            }
         logger.info { "Scraped ${events.size} night(s) from Golden Gate homepage" }
         return events
     }
 
     /**
-     * One night from its date heading and the two headings after it. [titleHeading] and
+     * The night's date, checked against the weekday printed beside it. When the two disagree, the
+     * same day in a neighbouring month that falls on the weekday replaces the date, but only when
+     * it sits within [BLOCK_SPAN_DAYS] of a date in the block whose weekday agrees. Otherwise the
+     * night is dropped, because neither reading can be trusted.
+     */
+    @Suppress("ReturnCount") // One guard per outcome reads clearer than a nested when
+    private fun resolveDate(
+        line: DateLine,
+        confirmedDates: List<LocalDate>
+    ): LocalDate? {
+        val date = line.date
+        if (date == null) {
+            logger.warn { "Unparseable Golden Gate date line '${line.text}', skipping night" }
+            return null
+        }
+        val weekday = line.weekday
+        if (weekday == null || date.dayOfWeek == weekday) return date
+
+        val corrected =
+            neighbouringMonthOnWeekday(date, weekday)?.takeIf { candidate ->
+                confirmedDates.any { abs(ChronoUnit.DAYS.between(candidate, it)) <= BLOCK_SPAN_DAYS }
+            }
+        if (corrected == null) {
+            logger.warn {
+                "Golden Gate date line '${line.text}' names a $weekday but $date is a ${date.dayOfWeek}, " +
+                    "and no neighbouring month fits the block, skipping night"
+            }
+            return null
+        }
+        logger.warn { "Golden Gate date line '${line.text}' names a $weekday but $date is a ${date.dayOfWeek}, reading it as $corrected" }
+        return corrected
+    }
+
+    /**
+     * One night from its date line and the two headings after it. [titleHeading] and
      * [lineupHeading] are used only when *not* themselves a date line — a night announced without
      * a lineup (or as the last heading) yields no artists rather than absorbing the next night's date.
      */
-    @Suppress("ReturnCount") // Guard clauses for the unparseable date / missing title are clearer than nesting
     private fun parseNight(
-        dateHeading: Element,
+        line: DateLine,
+        eventDate: LocalDate,
         titleHeading: Element?,
         lineupHeading: Element?,
         baseUrl: String
     ): ScrapedEvent? {
-        val dateLine = dateHeading.text()
-        val match = DATE_LINE_PATTERN.find(dateLine) ?: return null
-        val eventDate = parseGermanDate(match.groupValues[1])
-        if (eventDate == null) {
-            logger.warn { "Unparseable Golden Gate date line '$dateLine', skipping night" }
-            return null
-        }
-
         val title = nonDateHeading(titleHeading)?.text()?.trim()?.takeIf { it.isNotBlank() }
         if (title == null) {
-            logger.warn { "No title heading after Golden Gate date line '$dateLine', skipping night" }
+            logger.warn { "No title heading after Golden Gate date line '${line.text}', skipping night" }
             return null
         }
 
@@ -102,7 +143,7 @@ class GoldenGateOverviewPageScraper {
             eventType = EventType.PARTY.name,
             // The venue names no style but programmes techno and house, so the venue is the default, as at Tresor.
             eventDate = eventDate,
-            startTime = parseTime(match.groupValues[2].takeIf { it.isNotBlank() }),
+            startTime = parseTime(line.doorTime),
             // No per-event page, so every night points at the homepage and takes its identity from date
             // plus slugified title.
             sourceUrl = baseUrl,
@@ -130,21 +171,46 @@ class GoldenGateOverviewPageScraper {
             .filter { it.isNotBlank() && !isNonArtistName(it) }
             .map { ScrapedArtist(name = it, role = "DJ") }
 
+    /** A date heading: its position in the heading stream, its text, and the parts read from it. */
+    private data class DateLine(
+        val index: Int,
+        val text: String,
+        val date: LocalDate?,
+        val weekday: DayOfWeek?,
+        val doorTime: String?
+    ) {
+        companion object {
+            fun of(
+                index: Int,
+                text: String,
+                match: MatchResult
+            ) = DateLine(
+                index = index,
+                text = text,
+                date = parseLongGermanDate(match.groupValues[2]),
+                weekday = parseGermanWeekdayAbbreviation(match.groupValues[1]),
+                doorTime = match.groupValues[3].takeIf { it.isNotBlank() }
+            )
+        }
+    }
+
     private companion object {
         /**
-         * A date heading — `"Do. 30. Juli 2026 - 23:59"`. Captures the date without its weekday
-         * (group 1, the only part needing parsing — the weekday is redundant given the full year)
-         * and the optional door time (group 2). Anchored at the start so a heading merely mentioning
-         * a date in prose cannot open a night.
+         * A date heading — `"Do. 30. Juli 2026 - 23:59"`. Captures the weekday (group 1), the date
+         * (group 2) and the optional door time (group 3). Anchored at the start so a heading merely
+         * mentioning a date in prose cannot open a night.
          */
         private val DATE_LINE_PATTERN =
-            Regex("""^\s*\p{L}{2,3}\.?\s+(\d{1,2}\.\s+\p{L}+\s+\d{4})(?:\s*[-–—]\s*(\d{1,2}:\d{2}))?""")
+            Regex("""^\s*(\p{L}{2,3})\.?\s+(\d{1,2}\.\s+\p{L}+\s+\d{4})(?:\s*[-–—]\s*(\d{1,2}:\d{2}))?""")
+
+        /** How far a corrected date may sit from a confirmed date; the block runs Thursday to Saturday. */
+        private const val BLOCK_SPAN_DAYS = 6L
 
         /** The date format inside a heading, e.g. "30. Juli 2026". */
         private val GERMAN_DATE_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern("d. MMMM yyyy", Locale.GERMAN)
 
         /** Parses the German day/month/year part of a date heading, or `null` when it is not one. */
-        private fun parseGermanDate(text: String): LocalDate? =
+        private fun parseLongGermanDate(text: String): LocalDate? =
             try {
                 LocalDate.parse(text.trim(), GERMAN_DATE_FORMATTER)
             } catch (_: DateTimeParseException) {
