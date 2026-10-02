@@ -120,6 +120,14 @@ for (const locale of ['en', 'de']) {
         box.client,
       )
 
+      // A flex row out of room shrinks the logo first, so "Event Junkie" broke onto two lines and
+      // nothing overflowed (#2357): one line, by its own line height.
+      const mark = await nav.locator('.font-wordmark').evaluate((el) => ({
+        height: el.getBoundingClientRect().height,
+        line: parseFloat(getComputedStyle(el).lineHeight),
+      }))
+      expect(mark.height, `wordmark wraps at ${width}px`).toBeLessThan(mark.line * 1.5)
+
       // The right-most control must land inside the viewport, not merely inside a clipped nav.
       const toggle = nav.getByRole('button').last()
       const toggleBox = await toggle.boundingBox()

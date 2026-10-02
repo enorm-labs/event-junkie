@@ -29,10 +29,11 @@ withDefaults(
     <!-- Uppercase via CSS rather than in the markup, so the DOM text stays "Event Junkie" and the
          link's accessible name is read naturally rather than spelled out. No `tracking` utility: the
          default is what the club stamp's own wordmark is set at, and `tracking-tight` was a
-         lowercase setting that cramps caps. -->
+         lowercase setting that cramps caps. Never wraps: a header row out of room folded it onto two
+         lines instead of overflowing, which the overflow guard could not see (#2357). -->
     <span
       :class="alwaysShowWordmark ? '' : 'sr-only sm:not-sr-only'"
-      class="font-wordmark text-lg font-bold text-foreground uppercase"
+      class="font-wordmark text-lg font-bold whitespace-nowrap text-foreground uppercase"
     >
       Event <span class="text-primary">Junkie</span>
     </span>
