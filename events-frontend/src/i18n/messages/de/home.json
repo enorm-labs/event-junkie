@@ -1,5 +1,6 @@
 {
   "tonight": "Heute Abend",
+  "eventCount": "{count} Event | {count} Events",
   "tonightEmpty": "Heute Abend nichts los? In Berlin? Eher unwahrscheinlich. Schau in den Kalender.",
   "showAllTonight": "Alle {count} Events von heute Abend zeigen",
   "upcoming": "Demnächst",

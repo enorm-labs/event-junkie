@@ -116,3 +116,16 @@ test('on now keeps only what is running, and marks it', async ({ page }) => {
   await expect(page.getByRole('heading', { level: 3 })).toHaveText([/Lido/])
   await expect(page.getByRole('link', { name: /Lido Show/ })).toContainText('On now')
 })
+
+test('a show that ended earlier today leaves the map; the archive keeps it', async ({ page }) => {
+  await mockBff(page)
+  // Registered last, so it answers first. Over at 18:00, four hours before the clock.
+  const ended = { ...events[1], slug: 'matinee', title: 'Matinee', endTime: '18:00' }
+  await page.route(/\/api\/events\/calendar(\?|$)/, (route) => json(route, [...events, ended]))
+
+  await page.goto('/en/map')
+  await expect(page.getByText('3 events at 3 venues')).toBeVisible()
+
+  await page.goto('/en/map?from=2026-08-14&to=2026-08-15')
+  await expect(page.getByText('4 events at 3 venues')).toBeVisible()
+})

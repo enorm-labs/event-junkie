@@ -23,7 +23,7 @@ import { useLocalePath } from '@/composables/useLocalePath'
 import { useLocation } from '@/composables/useLocation'
 import { fetchAllVenues } from '@/composables/useVenues'
 import { districtLabel } from '@/lib/districts'
-import { addDays, isOnNow, todayIso } from '@/lib/format'
+import { addDays, isOnNow, isPastEvent, todayIso } from '@/lib/format'
 import { formatDistance, type Position } from '@/lib/geo'
 import {
   DEFAULT_RADIUS,
@@ -89,8 +89,17 @@ watch(() => JSON.stringify([range.value, filters.value]), load, { immediate: tru
 const radiusKm = computed(() => radiusFromQuery(queryString('radius')))
 const onNowOnly = computed(() => queryString('now') === '1')
 
-/** "On now" narrows to what is running at this moment; the day's other events drop off the map. */
-const shown = computed(() => (onNowOnly.value ? events.value.filter(isOnNow) : events.value))
+/**
+ * The range reaches back to last night's spans, so a 01:00 finish still counted on a pin at noon
+ * (#2347). A range that starts in the past is the archive and keeps them. "On now" narrows further,
+ * to what is running at this moment.
+ */
+const current = computed(() =>
+  range.value.from < todayIso()
+    ? events.value
+    : events.value.filter((event) => !isPastEvent(event)),
+)
+const shown = computed(() => (onNowOnly.value ? current.value.filter(isOnNow) : current.value))
 const groups = computed(() => groupByVenue(shown.value))
 const near = computed(() =>
   origin.value ? nearby(groups.value, origin.value, radiusKm.value) : null,

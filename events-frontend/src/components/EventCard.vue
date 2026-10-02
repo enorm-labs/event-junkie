@@ -17,7 +17,7 @@ const props = withDefaults(
     event: EventSummary
     /**
      * Heading level for the card's title: which level is a property of the page, not the card. On
-     * the home and detail pages a `SectionLabel` `h2` sits above the grid, so `h3`; on `/events` the
+     * the home and detail pages a section `h2` sits above the grid, so `h3`; on `/events` the
      * cards hang off the page `h1`, so `h2`, or axe's `heading-order` trips. Sets the heading
      * element, not the card's root.
      */

@@ -15,7 +15,6 @@ import EventCard from '@/components/EventCard.vue'
 import { CARD_GRID_CLASS, CARD_LIST_CLASS } from '@/lib/utils'
 import ClubStamp from '@/components/ClubStamp'
 import ClubkulturNotice from '@/components/ClubkulturNotice.vue'
-import SectionLabel from '@/components/SectionLabel.vue'
 import EventRow from '@/components/EventRow.vue'
 import { useCompactView } from '@/composables/useCompactView'
 import { useTodayEvents, useUpcomingEvents } from '@/composables/useEvents'
@@ -56,6 +55,9 @@ const tonightCapped = computed(
 const tonightVisible = computed(() =>
   tonightCapped.value ? today.data.value?.slice(0, tonightCap.value) : today.data.value,
 )
+
+/** The section heading style, at the size of the map's and the venues' `h2`. */
+const HEADING_CLASS = 'text-section font-bold tracking-tight'
 
 const tonightList = useTemplateRef<HTMLElement>('tonightList')
 
@@ -108,8 +110,15 @@ async function expandTonight() {
          100px below the buttons, further from them than from the list it introduces. -->
     <ClubkulturNotice class="-mt-8 sm:-mt-10" />
 
+    <!-- Headings by scale, not the mono eyebrow: at 14 px "Upcoming" sat in the grid's own rhythm
+         and read as one more row of cards (#2347). The count stays outside the heading's name. -->
     <section class="space-y-4">
-      <SectionLabel>{{ t('home.tonight') }}</SectionLabel>
+      <div class="flex items-baseline gap-3">
+        <h2 :class="HEADING_CLASS">{{ t('home.tonight') }}</h2>
+        <span v-if="tonightTotal" class="text-body text-muted-foreground tabular-nums">
+          {{ t('home.eventCount', { count: tonightTotal }) }}
+        </span>
+      </div>
       <p v-if="today.loading.value" class="text-sm text-muted-foreground">
         {{ t('common.states.loading') }}
       </p>
@@ -132,8 +141,8 @@ async function expandTonight() {
       </template>
     </section>
 
-    <section class="space-y-4">
-      <SectionLabel>{{ t('home.upcoming') }}</SectionLabel>
+    <section class="space-y-4 border-t border-border pt-8">
+      <h2 :class="HEADING_CLASS">{{ t('home.upcoming') }}</h2>
       <p v-if="upcoming.loading.value" class="text-sm text-muted-foreground">
         {{ t('common.states.loading') }}
       </p>
