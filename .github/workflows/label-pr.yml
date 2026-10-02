@@ -15,6 +15,11 @@
 # scopes carry infrastructure work too (#1162) — and a new venue is a `*Importer.kt` added in its
 # own package under `scraper/`.
 #
+# `after-deploy` comes from the body: an `## After deploy` section with an unticked `- [ ] ` step is the
+# queue `/post-release` reads, and the label is how it finds the queue. Unticked, not merely present —
+# `/post-release` ticks steps by editing the body, and the last tick must drop the label, not keep it.
+# A section with no `- [ ]` step at all fails this check, because `/post-release` could tick nothing.
+#
 # **`feat` is reserved for what a visitor can see, and this check goes red on any other.** A `feat`
 # is a minor (`scripts/version.sh deserved`) and opens the release notes; `feat(ci)` once made
 # v0.17.0 a minor for five scanners. A CI capability is `ci`, a chart change `chore(deploy)` or
@@ -61,6 +66,7 @@ jobs:
             const MANAGED = {
               'breaking-change': { color: 'b60205', description: 'Contains a breaking change' },
               importer:          { color: '5319e7', description: 'Adds a venue event importer' },
+              'after-deploy':    { color: 'd4c5f9', description: 'Unticked steps under ## After deploy wait for a release' },
               feat:              { color: '0e8a16', description: 'New feature' },
               fix:               { color: 'd73a4a', description: 'Bug fix' },
               perf:              { color: 'fbca04', description: 'Performance improvement' },
@@ -108,6 +114,14 @@ jobs:
             // Either the `!` marker or a BREAKING CHANGE footer marks a breaking change.
             const breaking = Boolean(bang) || /^BREAKING[ -]CHANGE:/m.test(pr.body ?? '');
 
+            // The `## After deploy` section, up to the next `## ` heading.
+            const afterDeploy = /^## After deploy[^\n]*\n([\s\S]*?)(?=^## |(?![\s\S]))/m.exec(pr.body ?? '')?.[1];
+            const pendingSteps = Boolean(afterDeploy) && /^\s*- \[ \] /m.test(afterDeploy);
+            if (afterDeploy !== undefined && !/^\s*- \[[ xX]\] /m.test(afterDeploy)) {
+              core.setFailed('The `## After deploy` section has no step `/post-release` can tick. Write each step as a ' +
+                             '`- [ ] <staging|production|both>: …` line (post-release.prompt.md); the check re-runs on the edit.');
+            }
+
             // Paths and statuses only, paginated because a venue lands with its fixtures.
             const files = await github.paginate(github.rest.pulls.listFiles, {
               owner: context.repo.owner, repo: context.repo.repo, pull_number: pr.number, per_page: 100,
@@ -118,6 +132,7 @@ jobs:
             if (TYPES.has(type)) wanted.add(type);
             if (breaking) wanted.add('breaking-change');
             if (addsImporter) wanted.add('importer');
+            if (pendingSteps) wanted.add('after-deploy');
 
             if (wanted.size === 0) {
               core.notice(`Unknown Conventional Commits type "${type}" — no labels applied.`);
