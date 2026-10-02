@@ -5,8 +5,9 @@
 # like `.trivyignore` — one without is a review finding. A `#` line is a comment to ZAP too.
 #
 # FAIL is what the chart guarantees or what no site should ever show: the headers
-# `security-headers-middleware.yaml` sets on every response, no CSP missing, no server banner, no
-# stack trace, no injection. A rule was promoted to FAIL only after it passed once, on 2026-09-14.
+# `security-headers-middleware.yaml` sets on every response, no CSP missing or weakened, no server
+# banner, no stack trace, no injection. A rule was promoted to FAIL only after it passed once, on
+# 2026-09-14, and 10055 (CSP) on 2026-09-27 (#2361).
 # A WARN with a note names the issue that will promote it.
 #
 # The ids and names come from the pinned image's `-g` output. A new rule in a newer image arrives
@@ -47,7 +48,7 @@
 10050	WARN	(Retrieved from Cache)
 10052	FAIL	(X-ChromeLogger-Data (XCOLD) Header Information Leak)
 10054	WARN	(Cookie without SameSite Attribute)
-10055	WARN	(CSP)
+10055	FAIL	(CSP)
 10056	FAIL	(X-Debug-Token Information Leak)
 10057	WARN	(Username Hash Found)
 10061	FAIL	(X-AspNet-Version Response Header)
