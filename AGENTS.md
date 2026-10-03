@@ -60,6 +60,9 @@ local `CLAUDE.md` holding just `@AGENTS.md`.
 
 ## Agent Instructions
 
+- **An ambiguous request gets one clarifying question first.** When a request can be read in more than one way, and the readings lead to different work,
+  ask one clarifying question before doing anything. Ask the question whose answer decides the most. A request that the code, the docs or a conventional
+  default already settles is not ambiguous.
 - **Git without a pager**: `git --no-pager <command>` or `GIT_PAGER=cat`, on every command that may page (`log`, `diff`, `show`, `branch`).
 - **ktlint auto-format first**: on a ktlint finding run `./gradlew ktlintFormat`; edit by hand only what it cannot fix.
 - **Reformatting is intentional — keep it.** Files are reformatted on purpose (IDE reformat-on-save, `ktlintFormat`, `npm run format`). Never revert,
