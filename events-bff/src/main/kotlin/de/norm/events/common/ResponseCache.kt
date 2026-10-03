@@ -4,9 +4,13 @@ import com.github.benmanes.caffeine.cache.Caffeine
 import com.github.benmanes.caffeine.cache.Weigher
 import io.micrometer.core.instrument.MeterRegistry
 import io.micrometer.core.instrument.binder.cache.CaffeineCacheMetrics
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.completeWith
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 import java.time.Duration
+import java.util.concurrent.ConcurrentHashMap
 
 /**
  * Keeps assembled read responses in memory, so a repeated question reaches the database once:
@@ -24,10 +28,15 @@ import java.time.Duration
  * cost 14MB. This is why it is not `@Cacheable`, which gives one cache per method and a bound
  * kept in step by hand.
  *
- * Two concurrent misses on one key both load, as [de.norm.events.image.ImageObjectCache] and
- * Spring's own caching do. `cache_puts_total` stays at zero: Micrometer derives it from
- * Caffeine's load count, which only moves with a loader. `cache_gets_total` and its `result`
- * tag report whether this is working.
+ * Concurrent misses on one key load once (#2529). Without that, every request waiting when the
+ * calendar expired ran the query itself, and its p95 on staging swung from 49 ms to 1.4 s. The
+ * first miss loads in its own coroutine, so the transaction, the log context and cancellation
+ * stay the caller's; Caffeine's `AsyncCache` would run the load outside it. The others wait for
+ * that result without holding a connection. A failed load fails every waiter and caches nothing.
+ * A cancelled one hands the load to the next waiter still running.
+ *
+ * `cache_puts_total` stays at zero: Micrometer derives it from Caffeine's load count, which only
+ * moves with a loader. `cache_gets_total` and its `result` tag report whether this is working.
  */
 @Component
 class ResponseCache(
@@ -49,6 +58,8 @@ class ResponseCache(
             NAME
         )
 
+    private val loading = ConcurrentHashMap<Any, CompletableDeferred<Any>>()
+
     /**
      * Returns [key]'s response, calling [load] only when this process does not hold one. [key] is a
      * data class declared by its endpoint, so two endpoints cannot collide. [load] runs in the
@@ -61,8 +72,39 @@ class ResponseCache(
         load: suspend () -> V
     ): V {
         cache.getIfPresent(key)?.let { return it as V }
-        return load().also { cache.put(key, it) }
+        val mine = CompletableDeferred<Any>()
+        val running = loading.putIfAbsent(key, mine)
+        return when {
+            running == null -> loadAs(key, mine, load)
+
+            // The loader's visitor left: ask again, and one of the waiters becomes the loader.
+            running.joinedCancelled() -> get(key, load)
+
+            else -> running.await() as V
+        }
     }
+
+    @Suppress("UNCHECKED_CAST")
+    private suspend fun <V : Any> loadAs(
+        key: Any,
+        mine: CompletableDeferred<Any>,
+        load: suspend () -> V
+    ): V =
+        // A load that finished between the miss and the claim left its value behind.
+        runCatching { (cache.getIfPresent(key) as V?) ?: load().also { cache.put(key, it) } }
+            .also { result ->
+                mine.completeWith(result)
+                loading.remove(key, mine)
+            }.getOrThrow()
+
+    /** Waits for the load without taking on its failure; only this caller's cancellation throws. */
+    private suspend fun Deferred<*>.joinedCancelled(): Boolean {
+        join()
+        return isCancelled
+    }
+
+    /** Keys being loaded right now, for the tests. */
+    internal fun loadingCount(): Int = loading.size
 
     /**
      * Entries currently held, for the tests. Caffeine evicts on its own schedule, so this settles
