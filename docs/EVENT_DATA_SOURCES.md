@@ -165,19 +165,17 @@ least as heavily as an RA count when the next batch is prioritised.
 
 | Name               | URL                                            | Type        | Priority | Comment                                                     |
 | ------------------ | ---------------------------------------------- | ----------- | -------- | ----------------------------------------------------------- |
-| KAOS Berlin        | https://kaosberlin.de/veranstaltungen/         | Techno Club | Low      | The Events Calendar REST API, as Cosmic Comedy; 4 upcoming  |
+| KAOS Berlin        | https://kaosberlin.de/veranstaltungen/         | Techno Club | Low      | TEC REST API; 16 events in 2026, none upcoming on 10-03     |
 | DSTRKT Club Berlin | https://www.dstrkt.de/                         | Club        | Low      | Wix one-pager; 2 dated events, which is the whole programme |
 | ZIMMER 16          | https://zimmer16.com/                          | Other       | Medium   | Divi + YesTicket cards; time and price on YesTicket         |
 | Ballhaus Wedding   | https://www.ballhauswedding.de/veranstaltungen | Other       | Medium   | Wix rich text; 117 entries with year-less dates; no images  |
-| Soulcat            | https://soulcat-berlin.com/programm/           | Bar         | Low      | TEC REST API; one week ahead; titles only                   |
 
-**The three rows below DSTRKT came from the tipBerlin sweep on 2026-09-30.** Each has a quirk that the importer must
+**The two rows below DSTRKT came from the tipBerlin sweep on 2026-09-30.** Each has a quirk that the importer must
 handle:
 
 - **ZIMMER 16** and **Ballhaus Wedding** are small mixed stages. Music is one part of a programme with improv, readings
   and dance socials. Ballhaus Wedding's dates have no year, so take it from the month headings. Its entries have no
-  fixed shape, so that parser is the most brittle of the four.
-- **Soulcat** publishes one week ahead, and four of its seven events are one recurring bar night.
+  fixed shape, so that parser is the more brittle of the two.
 
 **Gärten der Welt** set the precedent for the next park- or campus-like source when it was
 [imported](#-imported). The row's category decides whether it is programme at all. Its guided tours, workshops, yoga
@@ -457,6 +455,7 @@ the empty Next.js payload rather than the WAF, and a 403 is not evidence that a 
 | Alte Feuerwache THF              | https://alte-feuerwache-thf.de/calendar        | Other        | Clean Next.js list, but the season ends on 2026-10-17     | Next season                |
 | Ballhaus Berlin                  | https://ballhaus-berlin.de/de/termine/         | Club         | `robots.txt` answers 500, so every fetch is refused       | Site change                |
 | Kunstfabrik Schlot               | https://kunstfabrik-schlot.de/programm/        | Club         | `robots.txt` disallows every path (`Disallow: *`)         | Site change                |
+| Soulcat                          | https://soulcat-berlin.com/programm/           | Bar          | TEC calendar lists only its opening nights, one vinyl bar | Site change / manual entry |
 
 ## ❓ Not analyzed yet
 
