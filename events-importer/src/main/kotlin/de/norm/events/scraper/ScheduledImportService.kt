@@ -14,10 +14,10 @@ import kotlin.math.pow
 
 /**
  * Periodic scheduler: a tick every 60 seconds finds due sources and delegates each to
- * [EventImportService.importFromSource]. Per-source `importIntervalMinutes`; retry with capped
- * exponential backoff, never exceeding six hours, and a source past its budget returns to its
- * normal interval rather than leaving the schedule; sources stuck RUNNING for >30 min reset to
- * FAILED; RUNNING and MISCONFIGURED sources are skipped.
+ * [EventImportService.importFromSource]. A source starts inside its [ImportWindow], once its
+ * `importIntervalMinutes` has passed. A retry backs off exponentially, capped at six hours, and
+ * ignores the window; a source past its budget returns to its normal schedule. Sources stuck
+ * RUNNING for >30 min reset to FAILED; RUNNING and MISCONFIGURED sources are skipped.
  *
  * `app.scheduling.enabled=false` disables it. The `@ConditionalOnProperty` below is belt and
  * braces beside [de.norm.events.SchedulingConfiguration]; it stays because removing the bean is
@@ -31,9 +31,17 @@ class ScheduledImportService(
     private val clock: Clock = Clock.systemUTC(),
     /** Configurable staleness timeout — sources stuck in RUNNING longer than this are reset to FAILED. */
     @Value($$"${app.scheduling.staleness-timeout:30m}")
-    private val stalenessTimeout: Duration = DEFAULT_STALENESS_TIMEOUT
+    private val stalenessTimeout: Duration = DEFAULT_STALENESS_TIMEOUT,
+    importWindowProperties: ImportWindowProperties = ImportWindowProperties()
 ) {
     private val logger = KotlinLogging.logger {}
+
+    /** The window a source without its own `import_window_*` columns uses. */
+    private val defaultWindow: ImportWindow = importWindowProperties.window
+
+    init {
+        logger.info { "Scheduled imports start inside $defaultWindow unless a source sets its own window" }
+    }
 
     /**
      * Main tick, every 60 seconds. Spring Framework 7 supports `suspend` in `@Scheduled`, so no
@@ -45,10 +53,7 @@ class ScheduledImportService(
         importDueSources()
     }
 
-    /**
-     * Imports all sources that are due: `lastImportAt` + `importIntervalMinutes` in the past, with
-     * exponential backoff for failed ones.
-     */
+    /** Imports all sources that are due, by [isDue]. */
     private suspend fun importDueSources() {
         // One timestamp for the whole tick, so every source is evaluated against the same moment.
         val now = Instant.now(clock)
@@ -59,7 +64,7 @@ class ScheduledImportService(
 
         if (dueSources.isEmpty()) return
 
-        logger.info { "Scheduler tick: ${dueSources.size} source(s) due for import" }
+        logger.info { "Scheduler tick: ${dueSources.size} source(s) due for import (default window $defaultWindow)" }
 
         // Concurrent execution is safe: per-host politeness is PerHostThrottlingFilter's, the artist
         // cache is per call, each source has its own transaction.
@@ -67,9 +72,9 @@ class ScheduledImportService(
     }
 
     /**
-     * Whether a source is due: never imported, or the interval has passed since the last. A
-     * retrying source uses [retryInterval]; one whose budget is spent falls back to its plain
-     * interval, which keeps it on the schedule (#659).
+     * Whether a source is due. Never imported, or IDLE after a manual retry, is due at once: a new
+     * source is not held back until the next window. A retrying source waits out [retryInterval]
+     * at any hour. Every other source waits for its window and its interval, see [isDueInWindow].
      *
      * @param now the tick's reference timestamp.
      */
@@ -77,8 +82,6 @@ class ScheduledImportService(
         source: EventSourceEntity,
         now: Instant
     ): Boolean {
-        // No history or IDLE (after a manual retry) is always due, so retry() triggers immediate pickup
-        // without clearing lastImportAt.
         val lastImport = source.lastImportAt
         if (lastImport == null || source.status == ImportStatus.IDLE.name) return true
 
@@ -87,9 +90,37 @@ class ScheduledImportService(
             source.status == ImportStatus.FAILED.name &&
                 source.retryCount > 0 &&
                 source.retryCount < source.maxRetries
-        val effectiveInterval = if (isRetrying) retryInterval(baseInterval, source.retryCount) else baseInterval
+        return if (isRetrying) {
+            now.isAfter(lastImport.plus(retryInterval(baseInterval, source.retryCount)))
+        } else {
+            isDueInWindow(windowFor(source), lastImport, baseInterval, now)
+        }
+    }
 
-        return now.isAfter(lastImport.plus(effectiveInterval))
+    /**
+     * Inside the window, an interval under a day is a plain floor. An interval of a day or more
+     * counts in window openings, so a daily source starts once per window and cannot drift out of
+     * it. A day less than the interval must lie between the last import and this opening.
+     */
+    private fun isDueInWindow(
+        window: ImportWindow,
+        lastImport: Instant,
+        interval: Duration,
+        now: Instant
+    ): Boolean {
+        val floorPassed = now.isAfter(lastImport.plus(interval))
+        return when {
+            window.isWholeDay -> floorPassed
+            !window.contains(now) -> false
+            interval < ONE_DAY -> floorPassed
+            else -> lastImport.plus(interval.minus(ONE_DAY)).isBefore(window.lastOpening(now))
+        }
+    }
+
+    private fun windowFor(source: EventSourceEntity): ImportWindow {
+        val start = source.importWindowStart
+        val end = source.importWindowEnd
+        return if (start != null && end != null) ImportWindow(start, end, defaultWindow.zone) else defaultWindow
     }
 
     /**
@@ -150,5 +181,7 @@ class ScheduledImportService(
 
         /** Default staleness timeout: sources stuck in RUNNING for longer than this are reset to FAILED. */
         private val DEFAULT_STALENESS_TIMEOUT: Duration = Duration.ofMinutes(30)
+
+        private val ONE_DAY: Duration = Duration.ofDays(1)
     }
 }

@@ -9,6 +9,9 @@ Accepted
 model and the alternatives is unaffected. Only the retry cadence and the OPEN state changed. The reasoning is in
 §Circuit Breaker.
 
+**Amended: a scheduled import starts inside a time-of-day window** ([#791](https://github.com/enorm-labs/event-junkie/issues/791)).
+The interval stays, as the floor. §Import window has the rule.
+
 ## Context
 
 The event importer needs to periodically scrape ~40 venue websites to keep event data up to date. The scraping infrastructure (ADR-007) provides the pipeline —
@@ -61,11 +64,13 @@ The `event_source` table already tracks most job metadata (status, last run, err
   for clarity and ease of querying.
 - **`retry_count`** — number of consecutive failures (reset to 0 on success).
 - **`max_retries`** — maximum retry attempts before giving up (defaults to 3).
+- **`import_window_start`, `import_window_end`** — this source's own import window, or `NULL` for the global one. Both are set,
+  or neither.
 
 A single `@Scheduled` method ("tick") runs every 60 seconds and:
 
-1. Queries for **enabled sources** that are **due for import**. A source is due when `last_import_at` is older than
-   `import_interval_minutes`, or `null`.
+1. Queries for **enabled sources** that are **due for import**. A source with a `null` `last_import_at` is due. Any
+   other source is due inside its import window, once its interval is over (§Import window).
 2. Skips sources with `status = RUNNING` to prevent overlapping imports.
 3. Skips sources with `status = MISCONFIGURED`. Their configuration errors are permanent — an unknown source type, no
    importer registered — and need a person.
@@ -89,6 +94,37 @@ A single `@Scheduled` method ("tick") runs every 60 seconds and:
 > **Excluding a spent source made exhaustion invisible.** Capping the wait alone was a regression rather
 > than a fix. A broken daily source spent its budget in 18 hours instead of 14 days, and then vanished from the
 > schedule. See §Circuit Breaker for why absence is the one state this system cannot afford.
+
+### Import window
+
+ADR-007 best practice 7 asks for imports when a venue's site is quiet. A scheduled import therefore starts only inside a
+window of local time:
+
+- **The global window** is `app.scheduling.import-window`: `02:00` to `06:00` in `Europe/Berlin`. The end is exclusive.
+- **A source's own window** replaces the start and the end. `PATCH /api/admin/event-sources/{slug}` sets
+  `importWindowStart` and `importWindowEnd` together, and `useDefaultImportWindow: true` removes them. The zone is
+  always the global one.
+- **Equal start and end mean the whole day.** The plain interval then applies, as before the window existed.
+- **A start after the end wraps past midnight**, so `22:00` to `01:00` is one window.
+
+Inside the window, the interval is the floor:
+
+- **An interval under a day** is compared with `last_import_at`, as before. Outside the window the source waits.
+- **An interval of a day or more counts in windows.** A daily source starts once in each window: it is due when its
+  last import is older than the current window's opening. A two-day source starts in every second window. A strict
+  24-hour floor would let a source that started late drift out of the window and skip a night.
+
+These ignore the window:
+
+- **A new source** (`last_import_at` is `null`) imports on the next tick. It has no events yet, and one fetch outside
+  the window costs a venue less than a day without listings.
+- **A source set to `IDLE`** by `POST …/{slug}/retry` imports on the next tick.
+- **A retry** keeps the backoff above, at any hour. A daily source that fails at 02:00 is retried at 08:00, 14:00 and
+  20:00. When the budget is spent, the source waits for the next window.
+- **A manual or forced import** (`POST …/import`, `POST …/{slug}/import`) does not go through the scheduler.
+
+**DST.** The window is local time. On the spring change 02:00 does not exist, and the window opens at 03:00. On the
+autumn change the hour from 02:00 repeats, and a source that started in the first one does not start again.
 
 ### Scheduling is enabled by default
 
@@ -204,8 +240,8 @@ failure (503, a timeout) within one import attempt. That is a complementary conc
   (`event_source`), which makes a dashboard or an API easy to build on top.
 - **Negative**: not as feature-rich as JobRunr's built-in dashboard, though we are building our own Vue frontend. No
   cron expressions, only fixed intervals — enough for venue scraping, where "every N hours" is the typical pattern.
-- More sophisticated scheduling would make JobRunr the natural upgrade: time-of-day constraints, complex cron
-  patterns, or distributed job processing. That needs a JDBC DataSource alongside R2DBC (see below).
+- More sophisticated scheduling would make JobRunr the natural upgrade: complex cron patterns, or distributed job
+  processing. That needs a JDBC DataSource alongside R2DBC (see below).
 
 ### JobRunr Dual-DataSource Feasibility
 

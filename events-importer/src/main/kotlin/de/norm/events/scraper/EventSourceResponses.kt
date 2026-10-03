@@ -2,6 +2,7 @@ package de.norm.events.scraper
 
 import io.swagger.v3.oas.annotations.media.Schema
 import java.time.Instant
+import java.time.LocalTime
 
 /**
  * Response DTO for event source status information.
@@ -24,6 +25,10 @@ data class EventSourceResponse(
     val enabled: Boolean,
     @Schema(description = "Import interval in minutes (1440 = daily)", example = "1440")
     val importIntervalMinutes: Int,
+    @Schema(description = "This source's own import window start, or null for the global window", example = "03:00:00")
+    val importWindowStart: LocalTime?,
+    @Schema(description = "This source's own import window end, exclusive, or null for the global window", example = "05:00:00")
+    val importWindowEnd: LocalTime?,
     @Schema(description = "Current import status", example = "SUCCESS")
     val status: String,
     @Schema(description = "Timestamp of the last completed import, successful or not")
@@ -106,6 +111,8 @@ data class EventSourceResponse(
                 sourceType = entity.sourceType,
                 enabled = entity.enabled,
                 importIntervalMinutes = entity.importIntervalMinutes,
+                importWindowStart = entity.importWindowStart,
+                importWindowEnd = entity.importWindowEnd,
                 status = entity.status,
                 lastImportAt = entity.lastImportAt,
                 lastSuccessAt = entity.lastSuccessAt,

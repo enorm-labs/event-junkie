@@ -131,6 +131,12 @@ app:
   scheduling:
     # Reset sources stuck in RUNNING longer than this to FAILED (Duration format, e.g. 30m, 1h)
     staleness-timeout: 30m
+    # When a scheduled import may start, because a venue's site is quietest early in the morning
+    # (ADR-007 best practice 7). A source's own window replaces start and end; the zone is shared.
+    import-window:
+      start: "02:00"
+      end: "06:00"
+      zone: Europe/Berlin
   artists:
     # The MusicBrainz lookup, its enrichment and the Discogs lookup run on this tick, not after
     # each import (#2051). Off stops all three; the per-service switches still apply when on.

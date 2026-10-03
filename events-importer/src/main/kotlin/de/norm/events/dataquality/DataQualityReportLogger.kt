@@ -34,8 +34,9 @@ class DataQualityReportLogger(
      * rather than 24 hours after whenever the process last started — otherwise a restart shifts the
      * series and two rows can fall on one date while another day gets none.
      *
-     * 03:00 UTC: after the 02:30 base backup and comfortably after the nightly import window, so it
-     * measures a settled corpus rather than one mid-write.
+     * 03:00 UTC: after the 02:30 base backup, and two to three hours after the daily sources start
+     * at the import window's 02:00 Berlin opening. It usually measures a settled corpus, not one
+     * mid-write; a late retry can still overlap it.
      *
      * **Failures are caught, not propagated**, for the same reason `MetricsRefreshService` catches
      * its own: this shares the scheduler that runs the imports, and a measurement job able to kill

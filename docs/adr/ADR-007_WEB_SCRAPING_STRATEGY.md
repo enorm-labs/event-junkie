@@ -674,12 +674,11 @@ web scraping pitfalls documented in industry literature (see References).
    parameter or a locale prefix is enough. Normalise a URL before the deduplication check. The `sourceId`-based upsert
    already prevents duplicate events, but a canonical URL also saves the network request.
 
-7. **Schedule scrapes during off-peak hours** — wanted, and **not implemented**. Berlin venue websites see most traffic
-   in the evening, so early-morning imports would cost a venue least. `ScheduledImportService` fires when a source's
-   `lastImportAt` plus its `import_interval_minutes` expires, which is an interval and not a time of day. The hour
-   therefore drifts. `import_interval_minutes` alone cannot express a window, so a time-of-day column or a cron
-   expression is the change this needs (ADR-008). The load stays small either way: one entry page per source per day,
-   with conditional requests on top.
+7. **Schedule scrapes during off-peak hours.** Berlin venue websites see most traffic in the evening, so a scheduled
+   import starts between 02:00 and 06:00 Europe/Berlin (`app.scheduling.import-window`). A source can have its own
+   window, set through `PATCH /api/admin/event-sources/{slug}`. The interval stays the floor, and a daily source starts
+   once in each window. A retry, a new source and a manual or forced import ignore the window. ADR-008 has the rule.
+   The load stays small either way: one entry page per source per day, with conditional requests on top.
 
 8. **Be aware of honeypot traps**: some sites embed invisible links to detect a bot. CSS `display: none` or the
    background colour hides them. Be careful with any link the scraper discovers at run time. The current design is

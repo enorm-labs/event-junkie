@@ -108,7 +108,8 @@ mismatch`** — the pod never goes Ready and `remediateLastFailure` rolls the re
       conditional requests off (Havanna; **never for a venue that publishes dates**). The shared helpers — `ScrapingExtensions.kt`, `DateParsingExtensions.kt`,
       `EventTypeMapping.kt`, `ArtistNameMapping.kt`, `EventFieldMapping.kt` — are used, not reimplemented.
 - **Scheduled imports** (ADR-008): one `@Scheduled(fixedDelay = 60s)` tick finds due sources (`import_interval_minutes`, default 1440) and imports them
-  concurrently. Retries back off exponentially **capped at six hours** — doubling a daily interval produced a retry slower than the healthy cadence (#659) —
+  concurrently, starting only inside the import window (`app.scheduling.import-window`, 02:00–06:00 Berlin, per source `import_window_*`); a daily source
+  starts once per window, and a new source, a retry and a manual import ignore it (#791). Retries back off exponentially **capped at six hours** — doubling a daily interval produced a retry slower than the healthy cadence (#659) —
   and a source that spends its budget returns to its interval, never dropped, because a source not attempted is indistinguishable from one with nothing to
   import. RUNNING for >30 min resets to FAILED. `app.scheduling.enabled: false` in tests.
 - **OWASP Dependency-Check** (`dependencyCheckAggregate`, fails on CVSS ≥ 7, suppressions in `owasp-suppressions.xml`):

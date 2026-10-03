@@ -13,6 +13,9 @@ import org.junit.jupiter.api.Test
 import java.time.Clock
 import java.time.Duration
 import java.time.Instant
+import java.time.LocalDateTime
+import java.time.LocalTime
+import java.time.ZoneId
 import java.time.ZoneOffset
 
 /**
@@ -29,7 +32,21 @@ class ScheduledImportServiceTest {
 
     /** Fixed clock pinned to [now] so tick() uses the same reference time as the test fixtures. */
     private val fixedClock: Clock = Clock.fixed(now, ZoneOffset.UTC)
-    private val service = ScheduledImportService(eventSourceRepository, eventImportService, fixedClock)
+
+    /** A whole-day window, so the interval and backoff tests below read no hour of day. */
+    private val service =
+        ScheduledImportService(
+            eventSourceRepository,
+            eventImportService,
+            fixedClock,
+            Duration.ofMinutes(30),
+            ImportWindowProperties(start = "00:00", end = "00:00")
+        )
+
+    /** The shipped default, 02:00–06:00 Europe/Berlin. */
+    private val windowed = ScheduledImportService(eventSourceRepository, eventImportService, fixedClock)
+
+    private fun berlin(local: String): Instant = LocalDateTime.parse(local).atZone(BERLIN).toInstant()
 
     /** Creates a base [EventSourceEntity] with sensible defaults for testing. */
     private fun source(
@@ -39,7 +56,9 @@ class ScheduledImportServiceTest {
         importIntervalMinutes: Int = 60,
         retryCount: Int = 0,
         maxRetries: Int = 3,
-        lastImportAt: Instant? = null
+        lastImportAt: Instant? = null,
+        importWindowStart: LocalTime? = null,
+        importWindowEnd: LocalTime? = null
     ) = EventSourceEntity(
         id = id,
         venueId = 1L,
@@ -52,6 +71,8 @@ class ScheduledImportServiceTest {
         retryCount = retryCount,
         maxRetries = maxRetries,
         lastImportAt = lastImportAt,
+        importWindowStart = importWindowStart,
+        importWindowEnd = importWindowEnd,
         status = status
     )
 
@@ -249,6 +270,136 @@ class ScheduledImportServiceTest {
     }
 
     @Nested
+    inner class InsideTheImportWindow {
+        private fun daily(lastImportAt: Instant?) = source(importIntervalMinutes = 1440, lastImportAt = lastImportAt)
+
+        @Test
+        fun `a daily source waits for the window to open, which includes its first minute`() {
+            val source = daily(berlin("2026-10-02T02:10"))
+
+            windowed.isDue(source, berlin("2026-10-03T01:59")) shouldBe false
+            windowed.isDue(source, berlin("2026-10-03T02:00")) shouldBe true
+        }
+
+        @Test
+        fun `the window end is exclusive`() {
+            val source = daily(berlin("2026-10-01T02:10"))
+
+            windowed.isDue(source, berlin("2026-10-03T05:59")) shouldBe true
+            windowed.isDue(source, berlin("2026-10-03T06:00")) shouldBe false
+            windowed.isDue(source, berlin("2026-10-03T19:00")) shouldBe false
+        }
+
+        @Test
+        fun `a daily source imported late in last night's window starts at this opening, so it cannot drift out`() {
+            windowed.isDue(daily(berlin("2026-10-02T05:50")), berlin("2026-10-03T02:00")) shouldBe true
+        }
+
+        @Test
+        fun `a daily source runs once per window`() {
+            windowed.isDue(daily(berlin("2026-10-03T02:01")), berlin("2026-10-03T05:00")) shouldBe false
+        }
+
+        @Test
+        fun `a forced import in the afternoon does not cost the next night's run`() {
+            val source = daily(berlin("2026-10-02T15:00"))
+
+            windowed.isDue(source, berlin("2026-10-02T22:00")) shouldBe false
+            windowed.isDue(source, berlin("2026-10-03T02:00")) shouldBe true
+        }
+
+        @Test
+        fun `a two-day interval skips every second window`() {
+            val source = source(importIntervalMinutes = 2880, lastImportAt = berlin("2026-10-01T02:05"))
+
+            windowed.isDue(source, berlin("2026-10-02T03:00")) shouldBe false
+            windowed.isDue(source, berlin("2026-10-03T02:00")) shouldBe true
+        }
+
+        @Test
+        fun `an interval under a day is a plain floor inside the window`() {
+            val hourly = source(importIntervalMinutes = 60, lastImportAt = berlin("2026-10-03T02:30"))
+
+            windowed.isDue(hourly, berlin("2026-10-03T03:00")) shouldBe false
+            windowed.isDue(hourly, berlin("2026-10-03T03:31")) shouldBe true
+            windowed.isDue(hourly.copy(lastImportAt = berlin("2026-10-03T05:00")), berlin("2026-10-03T07:00")) shouldBe false
+        }
+
+        @Test
+        fun `a new source and a manual retry are due at any hour`() {
+            windowed.isDue(daily(null), berlin("2026-10-03T14:00")) shouldBe true
+            windowed.isDue(
+                source(importIntervalMinutes = 1440, lastImportAt = berlin("2026-10-03T13:00"), status = ImportStatus.IDLE.name),
+                berlin("2026-10-03T14:00")
+            ) shouldBe true
+        }
+
+        @Test
+        fun `a retry keeps its backoff outside the window`() {
+            val failed = source(importIntervalMinutes = 1440, status = ImportStatus.FAILED.name, retryCount = 1)
+
+            windowed.isDue(failed.copy(lastImportAt = berlin("2026-10-03T02:10")), berlin("2026-10-03T08:11")) shouldBe true
+            windowed.isDue(failed.copy(lastImportAt = berlin("2026-10-03T02:10")), berlin("2026-10-03T08:09")) shouldBe false
+        }
+
+        @Test
+        fun `a source past its retry budget waits for the window again`() {
+            val spent =
+                source(
+                    importIntervalMinutes = 1440,
+                    status = ImportStatus.FAILED.name,
+                    retryCount = 3,
+                    maxRetries = 3,
+                    lastImportAt = berlin("2026-10-02T20:10")
+                )
+
+            windowed.isDue(spent, berlin("2026-10-03T01:00")) shouldBe false
+            windowed.isDue(spent, berlin("2026-10-03T02:00")) shouldBe true
+        }
+
+        @Test
+        fun `on the spring DST change the window opens at 03 00, because 02 00 does not exist`() {
+            val source = daily(Instant.parse("2026-03-28T01:05:00Z")) // 02:05 CET
+
+            windowed.isDue(source, Instant.parse("2026-03-29T00:59:00Z")) shouldBe false // 01:59 CET
+            windowed.isDue(source, Instant.parse("2026-03-29T01:00:00Z")) shouldBe true // 03:00 CEST
+        }
+
+        @Test
+        fun `on the autumn DST change the repeated hour does not import twice`() {
+            val importedAtFirstTwoOClock = daily(Instant.parse("2026-10-25T00:00:00Z")) // 02:00 CEST
+
+            windowed.isDue(daily(Instant.parse("2026-10-24T00:05:00Z")), Instant.parse("2026-10-25T00:00:00Z")) shouldBe true
+            windowed.isDue(importedAtFirstTwoOClock, Instant.parse("2026-10-25T01:30:00Z")) shouldBe false // 02:30 CET
+        }
+
+        @Test
+        fun `a source's own window replaces the global one and may wrap past midnight`() {
+            val evening =
+                daily(berlin("2026-10-01T23:00")).copy(
+                    importWindowStart = LocalTime.of(22, 0),
+                    importWindowEnd = LocalTime.of(1, 0)
+                )
+
+            windowed.isDue(evening, berlin("2026-10-02T23:30")) shouldBe true
+            windowed.isDue(evening, berlin("2026-10-03T00:30")) shouldBe true
+            windowed.isDue(evening, berlin("2026-10-03T02:30")) shouldBe false
+        }
+
+        @Test
+        fun `a source's whole-day window falls back to the plain interval`() {
+            val allDay =
+                daily(berlin("2026-10-02T13:00")).copy(
+                    importWindowStart = LocalTime.MIDNIGHT,
+                    importWindowEnd = LocalTime.MIDNIGHT
+                )
+
+            windowed.isDue(allDay, berlin("2026-10-03T12:59")) shouldBe false
+            windowed.isDue(allDay, berlin("2026-10-03T13:01")) shouldBe true
+        }
+    }
+
+    @Nested
     inner class ResetStuckSources {
         @BeforeEach
         fun setUp() {
@@ -328,5 +479,9 @@ class ScheduledImportServiceTest {
 
                 coVerify(exactly = 0) { eventImportService.importConcurrently(any()) }
             }
+    }
+
+    private companion object {
+        val BERLIN: ZoneId = ZoneId.of("Europe/Berlin")
     }
 }

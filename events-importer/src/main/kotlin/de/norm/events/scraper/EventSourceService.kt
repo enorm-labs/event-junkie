@@ -14,6 +14,7 @@ import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.Instant
+import java.time.LocalTime
 
 /**
  * Event source CRUD. Slugs are always generated from the name by [SlugGenerator].
@@ -108,11 +109,14 @@ class EventSourceService(
         // with it rather than being sent separately, where the two could disagree.
         val licenceReviewed =
             request.descriptionLicence != null || request.imageLicence != null || request.translationLicence != null
+        val (windowStart, windowEnd) = importWindowAfter(request, source)
         val updated =
             source.copy(
                 enabled = request.enabled ?: source.enabled,
                 importIntervalMinutes = request.importIntervalMinutes ?: source.importIntervalMinutes,
                 maxRetries = request.maxRetries ?: source.maxRetries,
+                importWindowStart = windowStart,
+                importWindowEnd = windowEnd,
                 descriptionLicence = request.descriptionLicence?.name ?: source.descriptionLicence,
                 imageLicence = request.imageLicence?.name ?: source.imageLicence,
                 translationLicence = request.translationLicence?.name ?: source.translationLicence,
@@ -131,6 +135,17 @@ class EventSourceService(
         logger.info { "Updated event source '${saved.name}' (id=${saved.id})" }
         return EventSourceResponse.fromEntity(saved)
     }
+
+    /** The window columns after [request]: reset, replaced whole, or kept. The request validates the pairing. */
+    private fun importWindowAfter(
+        request: EventSourceUpdateRequest,
+        source: EventSourceEntity
+    ): Pair<LocalTime?, LocalTime?> =
+        when {
+            request.useDefaultImportWindow == true -> null to null
+            request.importWindowStart != null -> request.importWindowStart to request.importWindowEnd
+            else -> source.importWindowStart to source.importWindowEnd
+        }
 
     /**
      * Deletes stored content the source now forbids. Withholding and storing are different acts,

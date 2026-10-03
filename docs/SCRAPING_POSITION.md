@@ -14,8 +14,8 @@
 3. **We display the venue's description, and we keep a copy of the venue's event image.** §3.1 and §3.6 explain why
    those two are the weakest parts of this position. The copy is a reproduction, which embedding was not. **A source
    can now forbid either one**, and §3.1 says what we do until a source is reviewed.
-4. **We are polite.** One entry page per source, once per day, with a delay between requests. A source that is one page
-   also gets conditional requests.
+4. **We are polite.** One entry page per source, once per day, early in the morning, with a delay between requests. A
+   source that is one page also gets conditional requests.
 5. **A venue can ask us to stop, and we stop.** §5 is the route.
 6. **The database right in §3.2 is the argument we would most likely lose.** We say so rather than hide it.
 
@@ -39,6 +39,7 @@ no longer exists.
 | Identifying agent    | `ScraperHttpClientConfig.kt`                                           | Names the product and links the repository         |
 | Conditional requests | `HtmlFetcher`, ETag and Last-Modified on the `event_source` row        | A `304` response costs the venue almost nothing    |
 | Import frequency     | `ScheduledImportService.kt`, `EventSourceEntity.importIntervalMinutes` | Once per day for each source, by default           |
+| Import hour          | `ImportWindow.kt`, `app.scheduling.import-window`                      | Starts between 02:00 and 06:00 Berlin time         |
 | Page depth           | ADR-007 § Pagination — First Page Only                                 | The overview pages to the list's end, plus details |
 | No arbitrary crawl   | Each `EventImporter` parses one known structure                        | The scraper follows no link it discovers at random |
 
@@ -205,7 +206,8 @@ the disallowed calendar links. Those notes say **why a URL is not fetched**, whi
 **Our position:** the load we cause is too small to be an interference.
 
 Once a day, we read each source's overview page, its further pages where the list continues, and the detail pages
-they link to. There is a 200 ms delay between requests to a host. A host that sets a longer `Crawl-delay` gets that
+they link to. A scheduled import starts between 02:00 and 06:00 Berlin time, when a venue's site is quiet. A retry after a failure
+does not wait for that window. There is a 200 ms delay between requests to a host. A host that sets a longer `Crawl-delay` gets that
 delay instead (§3.3). For a source that is one page, a conditional request
 often gets a `304`. A venue with a weekly programme serves us less traffic than one visitor with an open browser
 tab.
@@ -263,7 +265,7 @@ something that should be withheld.
 
 ## 4. The gaps we know about
 
-Three things weaken the position above. Each has an owner or needs one.
+Two things weaken the position above. Each has an owner or needs one.
 
 1. **The description is displayed without a per-source justification** (§3.1). **Narrowed, not closed.** The
    per-source field and the rule that reads it now exist. An unreviewed source displays, which was the decision. The
@@ -275,8 +277,6 @@ Three things weaken the position above. Each has an owner or needs one.
    covers all four `image_url` columns ([#833](https://github.com/enorm-labs/event-junkie/issues/833)). What remains
    is a rollout. `images.serving.enabled` is off everywhere, so the API still hands out the venue's own URL. Owned by
    [#843](https://github.com/enorm-labs/event-junkie/issues/843).
-3. **Import time is an interval, not a window.** ADR-007 best-practice #7 asks for early-morning scrapes.
-   `ScheduledImportService` fires when `lastImportAt` plus the interval expires, which drifts across the day.
 
 ## 5. The venue opt-out route
 

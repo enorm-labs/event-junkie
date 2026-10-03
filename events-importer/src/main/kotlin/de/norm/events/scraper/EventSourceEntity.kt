@@ -6,6 +6,7 @@ import org.springframework.data.annotation.LastModifiedDate
 import org.springframework.data.annotation.Version
 import org.springframework.data.relational.core.mapping.Table
 import java.time.Instant
+import java.time.LocalTime
 
 /**
  * R2DBC entity for the `event_source` table: which URL to scrape, which [EventImporter] to use,
@@ -28,6 +29,13 @@ data class EventSourceEntity(
     val enabled: Boolean = true,
     /** How often to import, in minutes. Defaults to 1440 (daily). */
     val importIntervalMinutes: Int = DEFAULT_IMPORT_INTERVAL_MINUTES,
+    /**
+     * This source's own [ImportWindow] start, or `null` for the global one. Set with [importWindowEnd]
+     * or not at all, which a CHECK constraint enforces.
+     */
+    val importWindowStart: LocalTime? = null,
+    /** The end of that window, exclusive. */
+    val importWindowEnd: LocalTime? = null,
     /** Number of consecutive failures. Reset to 0 on success. */
     val retryCount: Int = 0,
     /** Maximum retry attempts before giving up. */

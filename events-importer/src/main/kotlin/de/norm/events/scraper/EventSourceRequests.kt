@@ -1,13 +1,16 @@
 package de.norm.events.scraper
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import de.norm.events.licence.SourceLicence
 import io.swagger.v3.oas.annotations.media.Schema
+import jakarta.validation.constraints.AssertTrue
 import jakarta.validation.constraints.Min
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotNull
 import jakarta.validation.constraints.Pattern
 import jakarta.validation.constraints.Size
 import org.hibernate.validator.constraints.URL
+import java.time.LocalTime
 
 /**
  * Request body for creating a new event source.
@@ -64,6 +67,17 @@ data class EventSourceUpdateRequest(
     val maxRetries: Int? = null,
     @Schema(
         description =
+            "Local time, in the global zone, from which a scheduled import of this source may start. " +
+                "Sent with importWindowEnd. Equal values mean the whole day (#791)",
+        example = "03:00"
+    )
+    val importWindowStart: LocalTime? = null,
+    @Schema(description = "Local time, exclusive, at which this source's import window closes", example = "05:00")
+    val importWindowEnd: LocalTime? = null,
+    @Schema(description = "True drops this source's own window, so the global one applies again", example = "true")
+    val useDefaultImportWindow: Boolean? = null,
+    @Schema(
+        description =
             "Whether this source's event descriptions may be republished. PROHIBITED withholds them " +
                 "from every public response. Null leaves the current value unchanged (#283)",
         example = "UNCLEAR"
@@ -88,4 +102,14 @@ data class EventSourceUpdateRequest(
     val licenceSourceUrl: String? = null,
     @Schema(description = "The sentence that decided it", example = "Pressefotos zur honorarfreien Verwendung")
     val licenceNote: String? = null
-)
+) {
+    /** A window is set whole or reset, never half set: one half has no partner to pair with. */
+    @get:JsonIgnore
+    @get:Schema(hidden = true)
+    @get:AssertTrue(message = "Send importWindowStart and importWindowEnd together, or useDefaultImportWindow alone")
+    val importWindowComplete: Boolean
+        get() {
+            val halves = listOfNotNull(importWindowStart, importWindowEnd).size
+            return if (useDefaultImportWindow == true) halves == 0 else halves != 1
+        }
+}

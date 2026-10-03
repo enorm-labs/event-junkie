@@ -134,8 +134,10 @@ class EventSourceController(
     /**
      * Partially updates an event source's configuration.
      *
-     * Accepts `enabled`, `importIntervalMinutes`, `maxRetries`, and the four licence fields added
-     * by #283: `descriptionLicence`, `imageLicence`, `licenceSourceUrl` and `licenceNote`.
+     * Accepts `enabled`, `importIntervalMinutes`, `maxRetries`, the import window
+     * (`importWindowStart` and `importWindowEnd` together, or `useDefaultImportWindow`), and the
+     * licence fields: `descriptionLicence`, `imageLicence`, `translationLicence`,
+     * `licenceSourceUrl` and `licenceNote`.
      * `licenceReviewedAt` is **not** accepted — it is stamped server-side when a licence verdict
      * arrives, so the timestamp cannot disagree with the verdict it belongs to.
      *
@@ -146,7 +148,7 @@ class EventSourceController(
      * @throws EventSourceNotFoundException if no source with the given slug exists.
      */
     @PatchMapping("/{slug}")
-    @Operation(summary = "Update event source configuration (enable/disable, interval, retries, licence verdicts)")
+    @Operation(summary = "Update event source configuration (enable/disable, interval, import window, retries, licence verdicts)")
     suspend fun updateSource(
         @PathVariable slug: String,
         @Valid @RequestBody request: EventSourceUpdateRequest

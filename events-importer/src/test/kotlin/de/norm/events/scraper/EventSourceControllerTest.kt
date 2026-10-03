@@ -19,6 +19,7 @@ import mockwebserver3.MockWebServer
 import mockwebserver3.RecordedRequest
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.http.MediaType
 import org.springframework.test.web.reactive.server.expectBody
 import java.time.Instant
 
@@ -336,6 +337,61 @@ class EventSourceControllerTest : BaseControllerTest() {
             .exchange()
             .expectStatus()
             .isNotFound
+    }
+
+    @Test
+    fun `PATCH sets a source's own import window and useDefaultImportWindow drops it again`() {
+        val slug = createSource(EventSourceRequestFixtures.cassiopeia(venueId = createVenue().id)).slug
+
+        webTestClient
+            .patch()
+            .uri("/api/admin/event-sources/$slug")
+            .contentType(MediaType.APPLICATION_JSON)
+            .bodyValue("""{"importWindowStart":"03:00","importWindowEnd":"05:30"}""")
+            .exchange()
+            .expectStatus()
+            .isOk
+            .expectBody()
+            .jsonPath("$.importWindowStart")
+            .isEqualTo("03:00:00")
+            .jsonPath("$.importWindowEnd")
+            .isEqualTo("05:30:00")
+
+        val reset =
+            webTestClient
+                .patch()
+                .uri("/api/admin/event-sources/$slug")
+                .bodyValue(EventSourceUpdateRequest(useDefaultImportWindow = true))
+                .exchange()
+                .expectStatus()
+                .isOk
+                .expectBody<EventSourceResponse>()
+                .returnResult()
+                .responseBody!!
+
+        reset.importWindowStart shouldBe null
+        reset.importWindowEnd shouldBe null
+    }
+
+    @Test
+    fun `PATCH with half an import window is a 400 and writes nothing`() {
+        val slug = createSource(EventSourceRequestFixtures.cassiopeia(venueId = createVenue().id)).slug
+
+        webTestClient
+            .patch()
+            .uri("/api/admin/event-sources/$slug")
+            .contentType(MediaType.APPLICATION_JSON)
+            .bodyValue("""{"importWindowStart":"03:00","importIntervalMinutes":720}""")
+            .exchange()
+            .expectStatus()
+            .isBadRequest
+            .expectBody()
+            .jsonPath("$.errors[?(@.field == 'importWindowComplete')]")
+            .exists()
+
+        val stored = runBlocking { eventSourceRepository.findBySlug(slug) }.shouldNotBeNull()
+        stored.importWindowStart shouldBe null
+        stored.importIntervalMinutes shouldBe EventSourceEntity.DEFAULT_IMPORT_INTERVAL_MINUTES
     }
 
     @Test

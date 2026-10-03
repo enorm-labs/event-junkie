@@ -138,6 +138,41 @@ Accept: application/json
     });
 %}
 
+### Give one source its own import window (#791)
+# Local times in the global zone (Europe/Berlin). Both together; equal values mean the whole day, and a
+# start after the end wraps past midnight. A new source and a manual or forced import ignore the window.
+PATCH {{importer-host}}/api/admin/event-sources/{{source_slug}}
+Content-Type: application/json
+Accept: application/json
+
+{
+    "importWindowStart": "03:00",
+    "importWindowEnd": "05:00"
+}
+
+> {%
+    client.test("should store the window", function () {
+        client.assert(response.status === 200, "Expected 200 but got " + response.status);
+        client.assert(response.body.importWindowStart === "03:00:00", "Expected 03:00:00 but got " + response.body.importWindowStart);
+    });
+%}
+
+### Return one source to the global import window (app.scheduling.import-window)
+PATCH {{importer-host}}/api/admin/event-sources/{{source_slug}}
+Content-Type: application/json
+Accept: application/json
+
+{
+    "useDefaultImportWindow": true
+}
+
+> {%
+    client.test("should clear the window", function () {
+        client.assert(response.status === 200, "Expected 200 but got " + response.status);
+        client.assert(response.body.importWindowStart === null, "Expected no own window");
+    });
+%}
+
 ### Record a licence review for one source (#283)
 # Sending either licence field stamps `licenceReviewedAt` server-side, so the status and the
 # timestamp cannot disagree. Record `licenceSourceUrl` even when the answer is UNCLEAR — it is what
