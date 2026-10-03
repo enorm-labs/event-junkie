@@ -50,8 +50,9 @@ mismatch`** — the pod never goes Ready and `remediateLastFailure` rolls the re
   Controllers take `*Request` and return `*Response`, never a domain object (`EventResponse.fromEntity()` is the exception, because the aggregate resolves
   associations at the entity level). ADR-003.
 - **Changing the BFF's public API means regenerating the frontend's types in the same PR** — `events-frontend/src/api/schema.d.ts` is generated from
-  `/v3/api-docs` and nothing checks it is current. `cd events-frontend && npm run generate:api` with the BFF running; the traps are in
-  [events-frontend/AGENTS.md](../../events-frontend/AGENTS.md) § API Communication.
+  `/v3/api-docs`, and `build-backend.yml` fails when it is stale (#370). `./gradlew :events-bff:test --tests '*OpenApiDocumentTest' &&
+scripts/api-schema-parity.sh` regenerates it without a running BFF; the traps are in [events-frontend/AGENTS.md](../../events-frontend/AGENTS.md) § API
+  Communication.
 - **Metrics** (`micrometer-registry-prometheus`, `health,info,prometheus` exposed, #415), four decisions that fail silently if reversed:
     - **Meter names are an interface.** Dashboards and alert rules are written against the exact strings in `ImporterMetrics` and `BffMetrics`, and the tests
       assert the literals rather than the constants, so a rename fails the test instead of a panel.

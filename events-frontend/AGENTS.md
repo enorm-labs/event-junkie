@@ -10,7 +10,7 @@ Node 24).
 npm run dev                                       # Vite on 5173; /api proxies to the BFF, which must be on 8080
 npm run type-check && npm run lint && npm run test:unit && npm run test:e2e   # the gate, before any PR
 npm run format                                    # oxfmt; reformatting is intentional, never revert it. CI runs check:format
-npm run generate:api                              # regenerate schema.d.ts — whenever the BFF's API changes
+npm run generate:api                              # schema.d.ts from a running BFF; § API Communication has the route without one
 npm run test:a11y                                 # the axe/WCAG sweep alone (a filter over test:e2e)
 ```
 
@@ -19,8 +19,8 @@ npm run test:a11y                                 # the axe/WCAG sweep alone (a 
 1. **A legal or About page is a document per language, not translated strings.** Edit both languages or neither — [docs/LEGAL.md](../docs/LEGAL.md) §6.1.
 2. **A change that adds a third-party request or stores anything on the visitor's device needs the privacy notice updated in the same PR, in both languages.**
 3. **Accessibility is WCAG 2.1 AA and it is linted** — [vue.instructions.md](../.github/instructions/vue.instructions.md) has the target and the two checks.
-4. **`schema.d.ts` is generated and committed, and nothing checks that it is current.** A BFF API change that skips `npm run generate:api` leaves the frontend
-   type-checking against an API that no longer exists.
+4. **`schema.d.ts` is generated and committed, and a BFF API change regenerates it in the same PR.** `Build & Test (backend)` fails on a stale file and
+   prints the command; [§ API Communication](#api-communication) has it.
 
 Stack: Vue 3 (`<script setup lang="ts">` only, no Options API), TypeScript 6 strict, Vite 8, Vue Router, Tailwind CSS v4 + shadcn-vue (ADR-010), oxlint +
 eslint + oxfmt, Vitest (jsdom), Playwright. **Do not add Prettier.** Path alias `@/` → `src/`; no semicolons, single quotes, no file extensions on imports
@@ -61,15 +61,17 @@ Calls go through `src/api/client.ts` (`openapi-fetch`), typed from the generated
 `src/api/types.ts` aliases the generated schemas (`EventSummary`, `VenueDetail`, …); use those, not `components['schemas'][…]`. Every generated field is
 **optional**, because the BFF emits no `required` metadata — guard with optional chaining and defaults.
 
-**Regenerating `schema.d.ts`** reads the _running_ BFF's OpenAPI document; there is no offline mode:
+**Regenerating `schema.d.ts`** needs no running BFF. `OpenApiDocumentTest` boots it in the test suite and writes its OpenAPI document, and
+`scripts/api-schema-parity.sh` generates from that file with the version `generate:api` pins. `build-backend.yml` runs the same script with `check` and fails
+on any difference (#370):
 
 ```bash
-./gradlew :events-bff:bootRun          # or scripts/dev-env.sh up bff — restart it after editing a controller or DTO
-npm run generate:api                   # events-frontend/
-git diff src/api/schema.d.ts && npm run type-check
+./gradlew :events-bff:test --tests '*OpenApiDocumentTest' && scripts/api-schema-parity.sh   # repository root
+git diff events-frontend/src/api/schema.d.ts && npm --prefix events-frontend run type-check
 ```
 
-- **A running but stale BFF succeeds and writes the schema for the API you didn't change.** Restart first.
+- **`npm run generate:api` reads a running BFF on `:8080` instead, and a stale one succeeds** — it writes the schema for the API you didn't change. Restart
+  it after editing a controller or DTO.
 - **The committed file is the generator's raw output — double quotes, semicolons — and oxfmt ignores it** (`.oxfmtrc.json`). Never format it: the diff
   of a regeneration is then the API change alone, and a formatted copy turns two changed lines into a 3,000-line rewrite.
 - **A rename lands as a delete plus an add**, and surfaces as a type error in `types.ts` — fix the alias, don't widen it. **Removing or narrowing a field is

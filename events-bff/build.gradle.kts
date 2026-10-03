@@ -143,4 +143,9 @@ tasks.withType<Test> {
     // **Declared as an input, or editing the fixture leaves the task UP-TO-DATE** and the last run's
     // verdict is reported for a file that has changed. A system property is not an input by itself.
     inputs.file(fixture).withPropertyName("fixture.sql").withPathSensitivity(PathSensitivity.RELATIVE)
+    // `OpenApiDocumentTest` writes it and `scripts/api-schema-parity.sh` reads it (#370). An output,
+    // so a build-cache hit restores the file instead of skipping the test that writes it.
+    val openApiDocument = layout.buildDirectory.file("openapi/api-docs.json")
+    systemProperty("openapi.document", openApiDocument.get().asFile.absolutePath)
+    outputs.file(openApiDocument).withPropertyName("openapi.document")
 }

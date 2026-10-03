@@ -20,7 +20,8 @@ is the map and the traps.
 **Gates on pull requests**
 
 - `build-backend.yml` — `ktlintCheck`, the three detekt analyses (nine SARIF reports in **one** upload, kept apart by `runAutomationDetails.id`, #1394), build,
-  test, Kover to the summary and a sticky PR comment, an informational OWASP scan. Sets `ORG_GRADLE_PROJECT_warningsAsErrors=true`, so a Kotlin warning fails
+  test, Kover to the summary and a sticky PR comment, an informational OWASP scan, and `scripts/api-schema-parity.sh check`: the frontend's committed
+  `schema.d.ts` against the document `OpenApiDocumentTest` writes (#370), so an API change without the regeneration fails on its own PR, not after merge. Sets `ORG_GRADLE_PROJECT_warningsAsErrors=true`, so a Kotlin warning fails
   here and nowhere else. Also builds both container images for `linux/amd64` and `linux/arm64` with `type=cacheonly` and **never pushes** — it runs on fork PRs.
   `build-frontend.yml` — `npm ci`, lint, `oxfmt --check src` (so an oxfmt bump that changes the output fails until its PR carries the reformat), build, unit,
   the frontend image from its own `dist/`, and Playwright e2e as a parallel job inside `mcr.microsoft.com/playwright`, tagged with the lockfile's
