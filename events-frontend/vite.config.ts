@@ -6,8 +6,8 @@ import vueDevTools from 'vite-plugin-vue-devtools'
 import tailwindcss from '@tailwindcss/vite'
 import vueI18n from '@intlify/unplugin-vue-i18n/vite'
 
-// Explicit `.ts`, unlike the rest of the repo: Vite's config loader is moving to
-// `configLoader: 'native'`, Node's own resolver, which follows ESM rules. Transitive, so
+// Explicit `.ts`, unlike the rest of the repo: the npm scripts load this file with
+// `--configLoader native`, Node's own resolver, which follows ESM rules. Transitive, so
 // `scripts/seoFiles.ts` and `src/lib/seo.ts` carry one too (events-frontend/AGENTS.md
 // §Config-loader imports).
 import { seoFiles } from './scripts/seoFiles.ts'

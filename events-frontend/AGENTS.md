@@ -50,11 +50,14 @@ ESLint rules in `eslint-rules/`, on the ESLint side because oxlint reads only th
 
 ### Config-loader imports (the `.ts` exception)
 
-Four imports carry an explicit `.ts` extension: `vite.config.ts` → `./scripts/seoFiles.ts`, `vitest.config.ts` → `./vite.config.ts`, `scripts/seoFiles.ts` →
-`../src/lib/seo.ts`, `src/lib/seo.ts` → `../i18n/locales.ts`. Vite's config loader is moving to `configLoader: 'native'`, Node's ESM resolver, where a
-specifier means exactly what it says — transitively, down the whole chain a config file can reach. **Keep the chain short**: `src/lib/seo.ts` is the only
-`src/` module in it, which is why it is documented as free of browser globals. `allowImportingTsExtensions` (from `@vue/tsconfig`, explicit in
-`tsconfig.node.json`) is what lets TypeScript accept them. The default loader is still `bundle`; `--configLoader native` works on Node 24 and fails on 22.
+Every npm script that runs Vite or Vitest passes `--configLoader native`: Node's own ESM loader reads the config, not Vite's default Rolldown bundle (#382).
+A specifier then means exactly what it says — transitively, down the whole chain a config file can reach. So eight imports carry an explicit `.ts`
+extension: `vite.config.ts` → `./scripts/seoFiles.ts`, `./scripts/pageMetaText.ts`, `./scripts/csp.ts`; `vitest.config.ts` → `./vite.config.ts`;
+`vite.injector.config.ts` → `./scripts/pageMetaText.ts`; `scripts/seoFiles.ts` → `../src/lib/seo.ts`; `scripts/pageMetaText.ts` and `src/lib/seo.ts` →
+`locales.ts`. No `@/` alias in the chain either: `resolve.alias` does not exist yet when the config loads. **Keep the chain short**: `src/lib/seo.ts` is
+the only `src/` module in it besides `locales.ts`, which is why it is documented as free of browser globals. `allowImportingTsExtensions` (from
+`@vue/tsconfig`, explicit in `tsconfig.node.json`) is what lets TypeScript accept them. A bare `npx vite` uses the `bundle` loader and still works; go
+through the npm scripts so the loader CI runs is the one you test.
 
 ## API Communication
 
