@@ -9,6 +9,8 @@
  */
 import { RouterLink } from 'vue-router'
 import { useLocalePath } from '@/composables/useLocalePath'
+import { feedbackMailto } from '@/lib/feedback'
+import { CONTROLLER } from '@/lib/legal'
 
 const localePath = useLocalePath()
 </script>
@@ -233,14 +235,20 @@ const localePath = useLocalePath()
         >.
       </p>
       <p class="text-muted-foreground">
-        Etwas gefunden, das nicht stimmt? Sag uns Bescheid, dann ist es am schnellsten korrigiert:
+        Etwas gefunden, das nicht stimmt? Sag uns Bescheid, dann ist es am schnellsten korrigiert.
+        Schreib an
+        <a
+          :href="feedbackMailto('Feedback zu Event Junkie')"
+          class="text-foreground underline underline-offset-4"
+          >{{ CONTROLLER.email }}</a
+        >, ganz ohne Konto, oder
         <a
           class="text-foreground underline underline-offset-4"
           href="https://github.com/enorm-labs/event-junkie/issues/new/choose"
           rel="noopener"
           target="_blank"
         >
-          Fehler auf GitHub melden</a
+          melde den Fehler auf GitHub</a
         >. Was sich zuletzt geändert hat, steht auf der
         <a
           class="text-foreground underline underline-offset-4"

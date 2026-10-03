@@ -10,6 +10,7 @@ import { RouterLink } from 'vue-router'
 import BrandLogo from '@/components/BrandLogo.vue'
 import LocaleSwitcher from '@/components/LocaleSwitcher.vue'
 import { useAppMeta } from '@/composables/useAppMeta'
+import { feedbackMailto } from '@/lib/feedback'
 import {
   commitUrl,
   CONTRIBUTING_URL,
@@ -65,8 +66,13 @@ const localePath = useLocalePath()
               </a>
             </li>
             <li>
+              <a :class="linkClass" :href="feedbackMailto(t('footer.feedbackSubject'))">
+                {{ t('footer.feedbackByEmail') }}
+              </a>
+            </li>
+            <li>
               <a :class="linkClass" :href="NEW_ISSUE_URL" rel="noopener" target="_blank">
-                {{ t('footer.reportAnIssue') }}
+                {{ t('footer.reportOnGitHub') }}
               </a>
             </li>
             <li>

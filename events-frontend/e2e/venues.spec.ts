@@ -48,6 +48,17 @@ test('lists venues returned by the API', async ({ page }) => {
   expect(errors, 'unexpected uncaught exceptions').toEqual([])
 })
 
+test('offers a prefilled mail to report a missing venue', async ({ page }) => {
+  await page.route(venuesList, (route) => json(route, pageBody([venue('lido', 'Lido')])))
+  await page.goto('/en/venues')
+
+  const link = page.getByRole('link', { name: 'hello@event-junkie.de' })
+  const url = new URL((await link.getAttribute('href')) ?? '')
+  expect(url.protocol).toBe('mailto:')
+  expect(url.searchParams.get('subject')).toBe('Missing venue')
+  expect(url.searchParams.get('body')).toContain('Venue name:')
+})
+
 test('searching updates the URL query and re-requests', async ({ page }) => {
   await page.route(venuesList, (route) => {
     const q = new URL(route.request().url()).searchParams.get('q')

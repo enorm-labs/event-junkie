@@ -18,7 +18,9 @@ import { usePagedList } from '@/composables/usePagedList'
 import { useFilterOptions } from '@/composables/useFilterOptions'
 import { fetchAllVenues, useVenueSearch, type VenueSearchParams } from '@/composables/useVenues'
 import { districtLabel } from '@/lib/districts'
+import { feedbackMailto } from '@/lib/feedback'
 import { formatDistance, type Position } from '@/lib/geo'
+import { CONTROLLER } from '@/lib/legal'
 import {
   DEFAULT_RADIUS,
   type MapPin,
@@ -241,6 +243,14 @@ const localePath = useLocalePath()
     <header class="space-y-1">
       <h1 class="text-page font-bold tracking-tight">{{ t('venues.title') }}</h1>
       <p class="text-muted-foreground">{{ t('venues.subtitle') }}</p>
+      <p class="text-body text-muted-foreground">
+        {{ t('venues.missing') }}
+        <a
+          :href="feedbackMailto(t('venues.missingSubject'), t('venues.missingBody'))"
+          class="text-foreground underline underline-offset-4"
+          >{{ CONTROLLER.email }}</a
+        >
+      </p>
     </header>
 
     <div :class="PANEL_CLASS">

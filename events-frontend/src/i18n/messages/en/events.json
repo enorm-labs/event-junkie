@@ -81,7 +81,10 @@
     "boxOffice": "Box office",
     "hasTakenPlace": "This event has already taken place.",
     "upcomingAtVenue": "See what is coming up at {venue}.",
-    "browseUpcoming": "See what is on now."
+    "browseUpcoming": "See what is on now.",
+    "reportWrong": "Something wrong with this event? Report it by email:",
+    "reportSubject": "Wrong data: {title}",
+    "reportBody": "Event: {url}\n\nWhat is wrong:\n"
   },
   "role": {
     "HEADLINER": "Headliner",

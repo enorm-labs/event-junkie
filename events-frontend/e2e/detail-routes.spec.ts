@@ -394,6 +394,17 @@ test.describe('a past event', () => {
   })
 })
 
+test('an event page offers a prefilled mail to report wrong data', async ({ page }) => {
+  await page.route(/\/api\/events\/[^/?]+/, (route) => json(route, eventBody))
+  await page.goto('/en/events/mock-event')
+
+  const link = page.getByRole('link', { name: 'hello@event-junkie.de' })
+  const url = new URL((await link.getAttribute('href')) ?? '')
+  expect(url.protocol).toBe('mailto:')
+  expect(url.searchParams.get('subject')).toBe('Wrong data: Mock Fest')
+  expect(url.searchParams.get('body')).toContain('https://event-junkie.de/en/events/mock-event')
+})
+
 test('serves the venue description in the page language', async ({ page }) => {
   // Our own prose in both languages (#1210), neither disclosed as machine-made; `lang` is what a
   // screen reader reads it with.

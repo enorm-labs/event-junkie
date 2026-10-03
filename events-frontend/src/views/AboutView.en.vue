@@ -6,6 +6,8 @@
  */
 import { RouterLink } from 'vue-router'
 import { useLocalePath } from '@/composables/useLocalePath'
+import { feedbackMailto } from '@/lib/feedback'
+import { CONTROLLER } from '@/lib/legal'
 
 const localePath = useLocalePath()
 </script>
@@ -216,14 +218,19 @@ const localePath = useLocalePath()
         >, in its short version.
       </p>
       <p class="text-muted-foreground">
-        Found something wrong? Telling us is the fastest way to get it fixed:
+        Found something wrong? Telling us is the fastest way to get it fixed. Write to
+        <a
+          :href="feedbackMailto('Feedback on Event Junkie')"
+          class="text-foreground underline underline-offset-4"
+          >{{ CONTROLLER.email }}</a
+        >, no account needed, or
         <a
           class="text-foreground underline underline-offset-4"
           href="https://github.com/enorm-labs/event-junkie/issues/new/choose"
           rel="noopener"
           target="_blank"
         >
-          open an issue</a
+          open an issue on GitHub</a
         >. What has changed lately is on the
         <a
           class="text-foreground underline underline-offset-4"
