@@ -23,8 +23,9 @@ which helper lives where — is not repeated; `grep` answers that.
   migration pins itself to a schema the configuration no longer controls). **Editing an applied migration is a `FlywayValidateException: Migration checksum
 mismatch`** — the pod never goes Ready and `remediateLastFailure` rolls the release back, presenting as "the deploy reverted" two layers from the cause.
     - **Two branches can each take the next version**, and git conflicts only on one path, so rebase-and-merge lands both and Flyway refuses to start
-      (`V021`, then `V072`, #2183). `scripts/migration-versions.sh` fails on a duplicate in `build-backend.yml` and again before `release.yml` builds. The
-      PR check misses two PRs whose checks both ran before either merged; the publish check does not. Take the number from `origin/main` right before
+      (`V021`, then `V072`, #2183). `scripts/migration-versions.sh` fails on a duplicate in `build-backend.yml` and again before `release.yml` builds.
+      `migration-versions.yml` re-checks every open PR when a migration lands on `main` and turns its `Migration versions` status red (#2442). Only two
+      colliding PRs merged within one of its runs pass both; the publish check stops that tree. Take the number from `origin/main` right before
       merging, and when one has already reached a cluster, renumber the other.
     - **A `slug` literal in a data migration is checked, because a wrong one fails open**: `UPDATE … WHERE slug = 'mispelt'` updates nothing and Flyway records
       it applied. `MigrationSlugTest` asserts every venue slug literal under `db/migration/` is one `SlugGenerator` derives from `dev-seed.http`; a renamed or

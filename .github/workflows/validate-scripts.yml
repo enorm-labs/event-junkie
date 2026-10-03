@@ -85,6 +85,10 @@ jobs:
       - name: Assert what migration-versions.sh refuses
         run: scripts/migration-versions-test.sh
 
+      # A rule that passes every PR looks like one that works until a sibling merges its number (#2442).
+      - name: Assert what migration-collisions.sh rules
+        run: scripts/migration-collisions-test.sh
+
       # Gated on the step it explains; otherwise a failing assertion above sends the reader to ShellCheck.
       - name: Explain the fix
         if: failure() && steps.shellcheck.outcome == 'failure'

@@ -1,0 +1,61 @@
+name: Migration Versions
+
+# Sets the `Migration versions` commit status on each open pull request: red when a migration it adds
+# takes a version `main` already holds (#2442). `build-backend.yml` checks the merge ref once per push,
+# so a sibling that merges the same number later leaves that check green (#2183). A push to `main` that
+# touches a migration re-checks every open PR. The race left open is two colliding PRs merged within one
+# run; `release.yml` stops that tree before a cluster. The logic is `scripts/migration-collisions.sh`.
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'events-importer/src/main/resources/db/migration/**'
+  # No `paths:` filter: a PR without a migration still gets `success`, so the context is never pending.
+  pull_request:
+    branches: [ main ]
+    types: [ opened, synchronize, reopened ]
+  # Re-checks every open PR, e.g. a fork PR whose own run could not write its status.
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: migration-versions-${{ github.event.pull_request.number || 'all' }}
+  cancel-in-progress: true
+
+jobs:
+  status:
+    name: Migration versions
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: read
+      statuses: write
+
+    steps:
+      # The script only; every migration name comes from the API, so `main` is read as it stands now.
+      - name: Checkout the script
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          sparse-checkout: scripts/migration-collisions.sh
+          sparse-checkout-cone-mode: false
+
+      # A fork PR's token is read-only, so it writes no status and fails this job on a collision instead.
+      - name: Set the status
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVENT_NAME: ${{ github.event_name }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          FORK: ${{ github.event.pull_request.head.repo.fork }}
+        run: |
+          set -euo pipefail
+          if [ "$EVENT_NAME" != "pull_request" ]; then
+            scripts/migration-collisions.sh --write
+          elif [ "$FORK" != "true" ]; then
+            scripts/migration-collisions.sh --write "$PR_NUMBER"
+          else
+            scripts/migration-collisions.sh "$PR_NUMBER"
+          fi
