@@ -180,6 +180,9 @@ enum class EventSource {
     /** MAXXIM Berlin – a party club off the Ku'damm, open nightly with a 90s/2000s, pop and house DJ programme. */
     MAXXIM,
 
+    /** Mehringhof-Theater – a 230-seat Kreuzberg Kabarett stage since 1985, a first address for German-language political Kabarett and stand-up. */
+    MEHRINGHOF,
+
     /** Metropol Berlin – a 1906 theatre on Nollendorfplatz, later a cinema and a 1980s disco, now a concert hall for touring acts. */
     METROPOL,
 

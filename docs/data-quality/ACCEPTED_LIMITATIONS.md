@@ -174,6 +174,11 @@ says so.
 | `MAAYA`                | `GENRE`            | the venue publishes no genre; every music night takes the house's Afrobeats, Latin                                                               | —     |
 | `MAX_SCHMELING_HALLE`  | `PRICE`            | the listing and the event pages print no figure; tickets are sold through outside shops                                                          | —     |
 | `MAXXIM`               | `EVENT_TYPE`       | the club publishes no categories; every night is a DJ dance party                                                                                | —     |
+| `MEHRINGHOF`           | `DOORS_TIME`       | the programme states one time per performance                                                                                                    | —     |
+| `MEHRINGHOF`           | `END_TIME`         | the ticket shop gives every performance the same 6 a.m. end                                                                                      | —     |
+| `MEHRINGHOF`           | `EVENT_TYPE`       | the programme names no format; Kabarett, comedy, readings and song evenings share one table                                                      | —     |
+| `MEHRINGHOF`           | `GENRE`            | the programme names no genre                                                                                                                     | —     |
+| `MEHRINGHOF`           | `PROMOTERS`        | the theatre presents every performance itself                                                                                                    | —     |
 | `METROPOL`             | `PRICE`            | the venue prints no figure; tickets are sold through an Eventim link                                                                             | —     |
 | `METROPOL`             | `GENRE`            | the detail page's TAGS field is empty, and its one category names the event type (Konzert, Party), not a style                                   | —     |
 | `MIGAS`                | `PRICE`            | entry arrangements are not stated on the site at all                                                                                             | —     |

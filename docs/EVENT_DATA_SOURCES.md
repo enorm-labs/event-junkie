@@ -91,6 +91,7 @@ schema change.
 | Matrix Club Berlin               | https://www.matrix-berlin.de/                               | Club         | WordPress; month pages walked; DJs + door prices       |
 | Max-Schmeling-Halle              | https://www.velomax.de/events                               | Arena        | Shared VELOMAX listing; no sport imported              |
 | Maxxim Club                      | https://www.maxxim-berlin.de/partys                         | Club         | Wix Events warmup JSON; UTC dates; prices inline       |
+| Mehringhof-Theater               | https://www.mehringhoftheater.de/programm/                  | Theater      | IONOS month tables; tickettoaster JSON-LD              |
 | Metropol                         | https://metropol-berlin.de/events                           | Concert Hall | Events-Manager list + detail; no prices; "Verlegt"     |
 | migas                            | https://migas.berlin/program/                               | Bar          | WordPress; per-event modal; lazy imgs; POSTs page 2+   |
 | Mikropol                         | https://mikropol-berlin.de/                                 | Club         | Events-Manager list + detail; "verlegt in den …"       |
@@ -497,7 +498,6 @@ Correct it against the venue's own site when the row is opened.
 | PUNCH L!NE Club                   | https://punchlineberlin.com/de                            | Comedy Club  |
 | Downstairs Comedy Club            | https://www.downstairscomedy.shop/home                    | Comedy Club  |
 | Kabarett-Theater DISTEL           | https://distel-berlin.de/spielplan/kalender/              | Theater      |
-| Mehringhof-Theater                | https://www.mehringhoftheater.de/                         | Theater      |
 | Scheinbar Varieté                 | https://www.scheinbar.de/                                 | Theater      |
 | Mein Freund Harvey                | https://www.meinfreundharvey.com/                         | Bar          |
 
