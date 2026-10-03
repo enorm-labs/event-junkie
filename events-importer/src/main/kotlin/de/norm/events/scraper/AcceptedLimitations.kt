@@ -76,6 +76,7 @@ import de.norm.events.scraper.peteredel.PETER_EDEL_LIMITATIONS
 import de.norm.events.scraper.privatclub.PRIVATCLUB_LIMITATIONS
 import de.norm.events.scraper.punchline.PUNCHLINE_LIMITATIONS
 import de.norm.events.scraper.quasimodo.QUASIMODO_LIMITATIONS
+import de.norm.events.scraper.quatsch.QUATSCH_LIMITATIONS
 import de.norm.events.scraper.renate.RENATE_LIMITATIONS
 import de.norm.events.scraper.ritterbutzke.RITTER_BUTZKE_LIMITATIONS
 import de.norm.events.scraper.roadrunner.ROADRUNNER_LIMITATIONS
@@ -188,6 +189,7 @@ object AcceptedLimitations {
             PRIVATCLUB_LIMITATIONS,
             PUNCHLINE_LIMITATIONS,
             QUASIMODO_LIMITATIONS,
+            QUATSCH_LIMITATIONS,
             RENATE_LIMITATIONS,
             RITTER_BUTZKE_LIMITATIONS,
             ROADRUNNER_LIMITATIONS,

@@ -244,6 +244,11 @@ says so.
 | `PUNCHLINE`            | `PRICE`            | the club publishes no price; Ticketmaster states it                                                                                              | —     |
 | `PUNCHLINE`            | `GENRE`            | the date list names no genre                                                                                                                     | —     |
 | `PUNCHLINE`            | `PROMOTERS`        | the date list names no promoter                                                                                                                  | —     |
+| `QUATSCH`              | `END_TIME`         | the calendar states no end                                                                                                                       | —     |
+| `QUATSCH`              | `PRICE`            | prices appear only in the box-office shop, per seat category                                                                                     | —     |
+| `QUATSCH`              | `GENRE`            | the calendar names no genre                                                                                                                      | —     |
+| `QUATSCH`              | `PROMOTERS`        | the calendar names no producer of a guest show                                                                                                   | —     |
+| `QUATSCH`              | `SOLD_OUT`         | the calendar marks no show as sold out                                                                                                           | —     |
 | `RENATE`               | `EVENT_TYPE`       | the club states no category; its `.cat-btn` names the spaces in use, not a kind of event                                                         | —     |
 | `RENATE`               | `PER_EVENT_PAGE`   | every night points at the programme page                                                                                                         | —     |
 | `RENATE`               | `START_TIME`       | the club prints a time for its GARDEN and GREEN rooms inside the floor heading and none for a CLUB-only night                                    | —     |
