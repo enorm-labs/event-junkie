@@ -26,6 +26,7 @@ import de.norm.events.scraper.clubost.CLUB_OST_LIMITATIONS
 import de.norm.events.scraper.colosseum.COLOSSEUM_LIMITATIONS
 import de.norm.events.scraper.columbiahalle.COLUMBIAHALLE_LIMITATIONS
 import de.norm.events.scraper.columbiatheater.COLUMBIA_THEATER_LIMITATIONS
+import de.norm.events.scraper.comedycafe.COMEDY_CAFE_LIMITATIONS
 import de.norm.events.scraper.cosmiccomedy.COSMIC_COMEDY_LIMITATIONS
 import de.norm.events.scraper.crackbellmer.CRACK_BELLMER_LIMITATIONS
 import de.norm.events.scraper.delphi.THEATER_IM_DELPHI_LIMITATIONS
@@ -128,6 +129,7 @@ object AcceptedLimitations {
             COLOSSEUM_LIMITATIONS,
             COLUMBIAHALLE_LIMITATIONS,
             COLUMBIA_THEATER_LIMITATIONS,
+            COMEDY_CAFE_LIMITATIONS,
             COSMIC_COMEDY_LIMITATIONS,
             CRACK_BELLMER_LIMITATIONS,
             DER_WEISSE_HASE_LIMITATIONS,

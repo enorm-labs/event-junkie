@@ -35,6 +35,7 @@
 ###   Colosseum            — https://www.colosseumberlin.com/event
 ###   Columbia Theater     — https://columbia-theater.de/
 ###   Columbiahalle        — https://www.columbiahalle.berlin/veranstaltungen.html
+###   Comedy Café Berlin   — https://www.comedycafeberlin.com/wp-json/tribe/events/v1/events
 ###   Cosmic Comedy Club   — https://comedyclubberlin.com/wp-json/tribe/events/v1/events
 ###   Crack Bellmer        — https://www.crackbellmer.de/program/this-month
 ###   Der Weiße Hase       — https://derweissehase.club/events
@@ -1317,6 +1318,70 @@ Accept: application/json
 
 > {%
     client.test("Columbiahalle import triggered", function () {
+        client.assert(response.status === 202, "Expected 202 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
+### Comedy Café Berlin (Roseggerstr. 17, Berlin-Neukölln)
+### ————————————————————————————————————————————————————————————
+
+### --- Create Comedy Café Berlin venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Comedy Café Berlin",
+    "address": "Roseggerstr. 17",
+    "city": "Berlin",
+    "postalCode": "12059",
+    "district": "neukoelln",
+    "latitude": 52.48024,
+    "longitude": 13.44689,
+    "websiteUrl": "https://www.comedycafeberlin.com",
+    "description": "A comedy theatre, school and bar run by Noah Telson and Leah Katz, with a soundproof 60-seat room for improv, stand-up, sketch and storytelling in English and German.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Ein Comedy-Theater mit Schule und Bar, betrieben von Noah Telson und Leah Katz, mit einem schallisolierten Saal für 60 Gäste für Impro, Stand-up, Sketch und Storytelling auf Englisch und Deutsch.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["theatre", "bar"],
+    "capacity": 60
+}
+
+> {%
+    client.global.set("comedy_cafe_venue_id", response.body.id);
+    client.test("Comedy Café Berlin venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Create Comedy Café Berlin event source ---
+# Links the venue to the ComedyCafeWebsiteImporter.
+# The sourceType "COMEDY_CAFE" matches EventSource.COMEDY_CAFE.
+POST {{importer-host}}/api/admin/event-sources
+Content-Type: application/json
+
+{
+    "venueId": {{comedy_cafe_venue_id}},
+    "name": "Comedy Café Berlin",
+    "url": "https://www.comedycafeberlin.com/wp-json/tribe/events/v1/events",
+    "sourceType": "COMEDY_CAFE",
+    "enabled": true,
+    "importIntervalMinutes": 1440,
+    "maxRetries": 3
+}
+
+> {%
+    client.test("Comedy Café Berlin event source created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Trigger initial Comedy Café Berlin import ---
+POST {{importer-host}}/api/admin/event-sources/comedy-cafe-berlin/import
+Accept: application/json
+
+> {%
+    client.test("Comedy Café Berlin import triggered", function () {
         client.assert(response.status === 202, "Expected 202 but got " + response.status);
     });
 %}

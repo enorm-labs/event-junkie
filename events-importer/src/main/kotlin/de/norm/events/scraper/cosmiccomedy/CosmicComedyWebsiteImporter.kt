@@ -6,11 +6,8 @@ import de.norm.events.scraper.EventImporter
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.LimitedAspect
-import de.norm.events.scraper.ListingPage
-import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.VenueLimitations
-import de.norm.events.scraper.querySeparator
-import de.norm.events.scraper.walkListingPages
+import de.norm.events.scraper.walkTecEvents
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
 
@@ -46,19 +43,13 @@ class CosmicComedyWebsiteImporter(
         etag: String?,
         lastModified: String?
     ): ImportResult {
-        val firstUrl = "$url${url.querySeparator()}per_page=$PER_PAGE"
-        val fetchPage: suspend (String) -> CosmicComedyPage = { apiScraper.scrapePage(apiClient.fetchJson(it)) }
-        val listing =
-            walkListingPages(eventSource, fetchPage(firstUrl), firstUrl, MAX_PAGES, fetchPage) { page, _ -> ListingPage(page.events, page.nextPageUrl) }
+        val listing = apiClient.walkTecEvents(eventSource, url, MAX_PAGES, apiScraper::scrapePage)
         logger.info { "Scraped ${listing.items.size} event(s) from Cosmic Comedy Berlin across ${listing.pages} page(s)" }
 
         return ImportResult.Success(events = listing.items, etag = null, lastModified = null, complete = listing.complete)
     }
 
     companion object {
-        /** The plugin's maximum page size, so the programme needs the fewest requests. */
-        private const val PER_PAGE = 50
-
         /**
          * Safety bound on the cursor walk. The upcoming programme is two pages today; the cap only
          * stops a runaway if the API ever returns a cursor that does not terminate.

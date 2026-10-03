@@ -69,6 +69,10 @@ says so.
 | `COLUMBIA_THEATER`     | `GENRE`            | the venue publishes no genre or category; style appears only in the description                                                                  | —     |
 | `COLUMBIAHALLE`        | `PER_EVENT_PAGE`   | the venue's own iCal export keys the event on the same Contao id and points back at the listing anchor                                           | —     |
 | `COLUMBIAHALLE`        | `GENRE`            | the listing names support, promoter, times and prices, and no musical style                                                                      | —     |
+| `COMEDY_CAFE`          | `ARTISTS`          | an improv night bills a team or a format, and its performers appear only in prose                                                                | —     |
+| `COMEDY_CAFE`          | `TICKET_URL`       | the API carries no ticket link; the shop is a widget on each event page                                                                          | —     |
+| `COMEDY_CAFE`          | `PRICE_BOX_OFFICE` | the bar sells leftover tickets at a surcharge the site states once for every show                                                                | —     |
+| `COMEDY_CAFE`          | `PROMOTERS`        | the club organises every show itself                                                                                                             | —     |
 | `COSMIC_COMEDY`        | `PRICE`            | `cost` and `cost_details` are empty on every event                                                                                               | —     |
 | `CRACK_BELLMER`        | `EVENT_TYPE`       | the venue emits no category at all; the type is read from the title and then the genre line                                                      | —     |
 | `CRACK_BELLMER`        | `DOORS_TIME`       | the venue publishes no doors time                                                                                                                | —     |
