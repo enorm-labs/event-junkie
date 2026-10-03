@@ -69,7 +69,8 @@ is the map and the traps.
 - `merge-gate.yml` (#1424) — required; fails when the author is a Bot outside `dependabot[bot]`, `renovate[bot]`, `event-junkie-release[bot]` **unless a
   User has approved the current head**. A push after approval turns it red again; the `claude` App's approval does not count. Runs on `pull_request_target`
   and `pull_request_review` **on purpose**: the file executes as it stands on `main`, so an App with `workflows: write` cannot edit it green from the PR it
-  gates. It checks out nothing.
+  gates. It checks out nothing. **An approval does not clear an earlier red run**: the failed `synchronize` run stays on the same head beside the passing
+  review run, and the ruleset counts both. `gh run rerun <run id> --failed` replaces it.
 
 **Publishing and what follows it**
 

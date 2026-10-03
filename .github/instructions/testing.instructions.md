@@ -33,6 +33,9 @@ Extend what is already here rather than repeating its boilerplate.
 - **MockWebServer** (`ApiClientTest`, `HtmlFetcherTest`) drives the real `WebClient` pipeline: the `com.squareup.okhttp3:mockwebserver3` artifact, never the
   legacy `mockwebserver`, whose `MockWebServer` extends JUnit 4's `ExternalResource` and drags `junit:junit` in. `MockResponse.Builder()`, `close()` not
   `shutdown()`, `RecordedRequest.target` (includes the query string).
+- **A change to a shared name rule (`ArtistNameMapping`) is proven on real titles, not only on cases.** Export the distinct titles read-only
+  (`SELECT DISTINCT title FROM event`), run the rule on `main` and on the branch through a throwaway test that writes `title → result`, and diff the two.
+  Over 3,303 production titles this found three regressions the unit tests missed.
 - `FullLifecycleIntegrationTest` walks create → list → get → update → delete across every entity, mirroring `full-lifecycle.http`; extend it for a new
   cross-entity flow. `ModularityTests` in each module verify Modulith structure and write docs to `build/spring-modulith-docs/`.
 

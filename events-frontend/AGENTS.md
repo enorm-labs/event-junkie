@@ -40,7 +40,8 @@ ESLint rules in `eslint-rules/`, on the ESLint side because oxlint reads only th
 ## Agent Instructions
 
 - **No unsolicited git commits, pushes or rebases.** Only when the user asks.
-- **`npm run build` after an implementation** (vue-tsc + Vite), and `npm run lint` and `npm run format` before finishing.
+- **`npm run build` after an implementation** (vue-tsc + Vite), and `npm run lint` and `npm run format` before finishing. `npm run format` is `oxfmt src`:
+  `e2e/` is outside the formatter and keeps its hand wrapping, so never run oxfmt on a spec. It rewraps lines nobody touched (#2370).
 - **Layout**: `src/{views,components,composables,lib,i18n,api,router,assets}`, `components/ui/` is vendored shadcn-vue (`npx shadcn-vue add`), tests colocated
   in `__tests__/`, `e2e/` for Playwright, `injector/` for the meta-injection sidecar (ADR-014: Node, no DOM, no Vue), `scripts/` for build-time generators.
   Composables are `use*`, one per file, returning `readonly(ref)` where consumers must not mutate; `ref` for primitives, `reactive` for records (never

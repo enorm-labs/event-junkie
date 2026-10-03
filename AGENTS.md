@@ -298,7 +298,8 @@ its `## After deploy` steps wait for a release, and [`/post-release`](.github/pr
 unscheduled. Reasoning in [docs/VISION_ROADMAP_IDEAS.md](docs/VISION_ROADMAP_IDEAS.md).
 
 **Closing.** `Closes #NNN` in the **PR body**, one line per issue, `Closes` not `Fixes`. A commit message would work too under rebase-merge, but the body
-survives amending and is one line to fix. Give the PR the issue's milestone; every closed PR here carries one.
+survives amending and is one line to fix. Give the PR the issue's milestone; every closed PR here carries one. **A negated keyword still closes**: GitHub
+reads `close #N` without the words around it, so "does not close #877" closed #877 when #1805 merged. A PR that leaves an issue open says `Part of #N`.
 
 ## Key Files
 

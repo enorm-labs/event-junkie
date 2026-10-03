@@ -47,6 +47,11 @@ snapshot versions; production takes releases only, and serves a rehearsal hostna
 has only met k3d is "installed and exercised locally", and what is unproven is the chart under real traffic. The rehearsal uses its **own database**
 (`event_junkie_k3d`), never the development one, because installing the chart runs Flyway; [docs/DEVELOPMENT.md](../docs/DEVELOPMENT.md) is the runbook.
 
+**A cluster values key and the chart key that accepts it go in separate pull requests.** A file under `deploy/clusters/` applies on merge, and a chart change
+reaches production only with a release. Under `bff.autoscaling`, `importer.translation` and `importer.discogs` the schema sets `additionalProperties: false`,
+so production refuses every upgrade until the release that declares the key: 34 minutes of failed reconciles after #1221. Elsewhere the key passes and does
+nothing until then. Land the chart and its schema, cut the release, then land the values.
+
 ## Layout
 
 ```
