@@ -176,6 +176,20 @@ class EventService(
     }
 
     /**
+     * Up to [RELATED_LIMIT] upcoming events like the one at [slug]: the same artists, venue or genre
+     * tags, best match first (#359). Through [summariesFor], so the licence gate and the image
+     * rewrite apply as on every list.
+     *
+     * @throws EventNotFoundException if no event with the given slug exists.
+     */
+    @Transactional(readOnly = true)
+    suspend fun related(slug: String): List<EventSummaryResponse> {
+        val event = eventRepository.findBySlug(slug) ?: throw EventNotFoundException(slug)
+        val eventId = requireNotNull(event.id) { "Persisted event must have an ID" }
+        return summariesFor(hydrateOrdered(eventSearchRepository.related(eventId, event.venueId, RELATED_LIMIT)))
+    }
+
+    /**
      * Re-fetches events by ID, preserving the order of [ids]. Ordering only: the licence gate and
      * the image rewrite live in [summariesFor], because `today` does not come through here.
      */
@@ -282,6 +296,9 @@ class EventService(
     companion object {
         /** Maximum span (inclusive) the calendar endpoint will return in a single request. */
         private const val MAX_CALENDAR_DAYS = 92L
+
+        /** How many related events an event page shows: two rows of its two-column card grid. */
+        private const val RELATED_LIMIT = 4
 
         /** The zone a set time is shown in: the venue's clock, whatever the server's. */
         private val BERLIN: ZoneId = ZoneId.of("Europe/Berlin")

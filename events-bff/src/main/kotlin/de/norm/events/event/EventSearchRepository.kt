@@ -144,6 +144,42 @@ class EventSearchRepository(
                 .awaitSingle()
         }
 
+    /**
+     * Up to [limit] events that are not over and share something with the event [eventId] at
+     * [venueId], best match first (#359). An event scores [ARTIST_WEIGHT] per shared artist,
+     * [VENUE_WEIGHT] for the same venue and [GENRE_WEIGHT] per shared genre tag. Each branch of the
+     * union starts from an index on its join column, so no branch reads the whole table. Ties fall
+     * to the earliest date, then to the list's own order.
+     */
+    suspend fun related(
+        eventId: Long,
+        venueId: Long,
+        limit: Int
+    ): List<Long> {
+        val params = mutableMapOf<String, Any>("eventId" to eventId, "venueId" to venueId)
+        val where = buildWhereClause(EventFilter(), params, bySimilarity = false)
+        val matches =
+            listOf(
+                "SELECT other.event_id AS id, $ARTIST_WEIGHT AS weight FROM $EVENTS_SCHEMA.event_artist own " +
+                    "JOIN $EVENTS_SCHEMA.event_artist other ON other.artist_id = own.artist_id WHERE own.event_id = :eventId",
+                "SELECT x.id, $VENUE_WEIGHT FROM $EVENTS_SCHEMA.event x WHERE x.venue_id = :venueId",
+                "SELECT other.event_id, $GENRE_WEIGHT FROM $EVENTS_SCHEMA.event_genre_tag own " +
+                    "JOIN $EVENTS_SCHEMA.event_genre_tag other ON other.genre_tag_id = own.genre_tag_id WHERE own.event_id = :eventId"
+            ).joinToString(" UNION ALL ")
+        // Grouped by the primary key, so the ORDER BY may read the row's other columns.
+        return databaseClient
+            .sql(
+                "SELECT e.id FROM ($matches) m JOIN $EVENTS_SCHEMA.event e ON e.id = m.id $where AND e.id <> :eventId " +
+                    "GROUP BY e.id ORDER BY SUM(m.weight) DESC, e.event_date ASC, $START_TIME_TIEBREAKER, $TIEBREAK LIMIT :limit"
+            ).bindAll(params)
+            .bind("seed", tiebreakSeed())
+            .bind("limit", limit)
+            .map { row: Readable -> row.requiredEventId() }
+            .all()
+            .collectList()
+            .awaitSingle()
+    }
+
     /** Assembles the `WHERE` clause for the present filters, registering bound values in [params]. */
     private fun buildWhereClause(
         filter: EventFilter,
@@ -379,6 +415,11 @@ class EventSearchRepository(
     companion object {
         /** The day an event is over after: its stated end, else its date (ADR-029). */
         private const val EFFECTIVE_END = "COALESCE(e.end_date, e.event_date)"
+
+        /** What one shared artist, the shared venue and one shared genre tag add to a related event's score. */
+        private const val ARTIST_WEIGHT = 3
+        private const val VENUE_WEIGHT = 2
+        private const val GENRE_WEIGHT = 1
 
         /** An event starting at or after this is a night, and gets the grace (#299). */
         private const val LATE_START = "22:00"
