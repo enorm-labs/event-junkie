@@ -6,6 +6,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.ScrapedField
 import de.norm.events.scraper.VenueLimitations
 import org.springframework.stereotype.Component
 
@@ -26,6 +27,9 @@ import org.springframework.stereotype.Component
 class AstraWebsiteImporter(
     htmlFetcher: HtmlFetcher
 ) : AbstractTwoPageWebsiteImporter(htmlFetcher, AstraOverviewPageScraper()::scrape, AstraDetailPageScraper()::scrape) {
+    /** The listing carries the banner notice alone; the event page adds the prose (#2505). */
+    override val detailPageOwns: Set<ScrapedField> = setOf(ScrapedField.IMAGE, ScrapedField.DESCRIPTION)
+
     override val eventSource: EventSource = EventSource.ASTRA
     override val listsWholeProgramme: Boolean = true
 

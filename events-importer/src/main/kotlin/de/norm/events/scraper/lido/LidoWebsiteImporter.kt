@@ -5,6 +5,7 @@ import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.LimitedAspect
+import de.norm.events.scraper.ScrapedField
 import de.norm.events.scraper.VenueLimitations
 import org.springframework.stereotype.Component
 
@@ -26,6 +27,9 @@ import org.springframework.stereotype.Component
 class LidoWebsiteImporter(
     htmlFetcher: HtmlFetcher
 ) : AbstractTwoPageWebsiteImporter(htmlFetcher, LidoOverviewPageScraper()::scrape, LidoDetailPageScraper()::scrape) {
+    /** The listing's type is a guess from the title; the event page names the venue's category (#2505). */
+    override val detailPageOwns: Set<ScrapedField> = setOf(ScrapedField.IMAGE, ScrapedField.EVENT_TYPE)
+
     override val eventSource: EventSource = EventSource.LIDO
     override val listsWholeProgramme: Boolean = true
 }

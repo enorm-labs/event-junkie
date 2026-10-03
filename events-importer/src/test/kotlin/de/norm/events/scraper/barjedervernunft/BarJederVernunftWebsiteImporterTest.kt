@@ -5,6 +5,7 @@ import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.ScrapedArtist
+import de.norm.events.scraper.ScrapedField
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
@@ -174,6 +175,7 @@ class BarJederVernunftWebsiteImporterTest {
             // The JSON-LD teaser survives as the description when the full text is unavailable.
             show.description.shouldNotBeNull() shouldContain "Oh What A Night: Ein musikalischer Showhit"
             result.events.forEach { it.detailUnavailable shouldBe true }
+            result.events.forEach { it.detailPageOwns shouldBe setOf(ScrapedField.EVENT_TYPE, ScrapedField.DESCRIPTION) }
         }
 
     @Test

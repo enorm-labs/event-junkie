@@ -7,6 +7,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.ScrapedField
 import de.norm.events.scraper.VenueLimitations
 import de.norm.events.scraper.buildArtistsForEventType
 import org.springframework.stereotype.Component
@@ -30,6 +31,9 @@ import org.springframework.stereotype.Component
 class HuxleysWebsiteImporter(
     htmlFetcher: HtmlFetcher
 ) : AbstractTwoPageWebsiteImporter(htmlFetcher, HuxleysOverviewPageScraper()::scrape, HuxleysDetailPageScraper()::scrape) {
+    /** The listing's subtitle is the support line alone; the event page adds the tour name (#2505). */
+    override val detailPageOwns: Set<ScrapedField> = setOf(ScrapedField.IMAGE, ScrapedField.SUBTITLE)
+
     override val eventSource: EventSource = EventSource.HUXLEYS
     override val listsWholeProgramme: Boolean = true
 

@@ -6,6 +6,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.ScrapedField
 import de.norm.events.scraper.VenueLimitations
 import de.norm.events.scraper.buildArtistsForEventType
 import org.springframework.stereotype.Component
@@ -30,6 +31,9 @@ import org.springframework.stereotype.Component
 class BadehausWebsiteImporter(
     htmlFetcher: HtmlFetcher
 ) : AbstractTwoPageWebsiteImporter(htmlFetcher, BadehausOverviewPageScraper()::scrape, BadehausDetailPageScraper()::scrape) {
+    /** The listing's type is a guess from the title; the event page names the venue's category (#2505). */
+    override val detailPageOwns: Set<ScrapedField> = setOf(ScrapedField.IMAGE, ScrapedField.EVENT_TYPE)
+
     override val eventSource: EventSource = EventSource.BADEHAUS
     override val listsWholeProgramme: Boolean = true
 

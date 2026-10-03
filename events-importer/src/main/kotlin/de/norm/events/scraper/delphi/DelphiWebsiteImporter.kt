@@ -5,6 +5,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.ScrapedField
 import de.norm.events.scraper.VenueLimitations
 import de.norm.events.scraper.enrichFromSharedPages
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -62,7 +63,13 @@ class DelphiWebsiteImporter(
                 logger.info { "Scraped ${events.size} performance date(s) from Theater im Delphi" }
 
                 ImportResult.Success(
-                    events = htmlFetcher.enrichFromSharedPages(events, productionPageScraper::scrape, DelphiProduction::applyTo, pageOwnsImage = true),
+                    events =
+                        htmlFetcher.enrichFromSharedPages(
+                            events,
+                            productionPageScraper::scrape,
+                            DelphiProduction::applyTo,
+                            pageOwns = setOf(ScrapedField.IMAGE, ScrapedField.DESCRIPTION)
+                        ),
                     etag = fetchResult.etag,
                     lastModified = fetchResult.lastModified
                 )

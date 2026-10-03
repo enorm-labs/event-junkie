@@ -5,6 +5,7 @@ import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.ScrapedField
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
@@ -177,6 +178,7 @@ class UrbanSpreeWebsiteImporterTest {
             val event = result.events.single { it.sourceUrl == TWIN_NOIR_URL }
 
             event.detailUnavailable shouldBe true
+            event.detailPageOwns shouldBe setOf(ScrapedField.TITLE, ScrapedField.SUBTITLE, ScrapedField.EVENT_TYPE)
             event.description.shouldBeNull()
         }
 

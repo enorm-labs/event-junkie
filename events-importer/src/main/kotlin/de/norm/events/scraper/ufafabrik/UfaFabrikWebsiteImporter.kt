@@ -6,6 +6,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.ScrapedField
 import de.norm.events.scraper.VenueLimitations
 import org.jsoup.nodes.Document
 import org.springframework.stereotype.Component
@@ -26,7 +27,7 @@ class UfaFabrikWebsiteImporter(
         UfaFabrikEventPageScraper()::scrape
     ) {
     override val eventSource: EventSource = EventSource.UFA_FABRIK
-    override val detailPageOwnsImage: Boolean = false
+    override val detailPageOwns: Set<ScrapedField> = emptySet()
 
     /** The month after the source page; a `/program/` URL is already that month, and ends the walk. */
     override fun nextOverviewPage(

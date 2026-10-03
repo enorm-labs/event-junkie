@@ -6,6 +6,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.ScrapedField
 import de.norm.events.scraper.VenueLimitations
 import org.springframework.stereotype.Component
 
@@ -27,7 +28,7 @@ class LogeWebsiteImporter(
     htmlFetcher: HtmlFetcher
 ) : AbstractTwoPageWebsiteImporter(htmlFetcher, LogeOverviewPageScraper()::scrape, LogeDetailPageScraper()::scrape) {
     override val eventSource: EventSource = EventSource.LOGE
-    override val detailPageOwnsImage: Boolean = false
+    override val detailPageOwns: Set<ScrapedField> = emptySet()
 
     /**
      * Merges detail-page data ([primary]) with overview data ([fallback]). The detail page

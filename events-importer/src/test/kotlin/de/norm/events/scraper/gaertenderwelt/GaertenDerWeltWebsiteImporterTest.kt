@@ -4,6 +4,7 @@ import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.ScrapedField
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
@@ -157,7 +158,7 @@ class GaertenDerWeltWebsiteImporterTest {
 
             val screening = result.events.single { it.title.startsWith("Wanderkino") }
             screening.detailUnavailable shouldBe true
-            screening.listingImageStandsIn shouldBe true
+            screening.detailPageOwns shouldBe setOf(ScrapedField.IMAGE, ScrapedField.SUBTITLE)
         }
 
     @Test

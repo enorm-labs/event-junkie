@@ -8,6 +8,7 @@ import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.ScrapedField
 import de.norm.events.scraper.VenueLimitations
 import de.norm.events.scraper.enrichFromSharedPages
 import de.norm.events.scraper.scrapeListingPages
@@ -66,7 +67,7 @@ class DistelWebsiteImporter(
                 logger.info { "Scraped ${listing.events.size} DISTEL performance(s) from the calendar" }
 
                 ImportResult.Success(
-                    events = htmlFetcher.enrichFromSharedPages(listing.events, showScraper::scrape, ::withShow, pageOwnsImage = true),
+                    events = htmlFetcher.enrichFromSharedPages(listing.events, showScraper::scrape, ::withShow, pageOwns = setOf(ScrapedField.IMAGE)),
                     etag = fetchResult.etag,
                     lastModified = fetchResult.lastModified,
                     complete = listing.complete

@@ -3,6 +3,7 @@ package de.norm.events.scraper.silentgreen
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.ScrapedField
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.collections.shouldNotBeEmpty
 import io.kotest.matchers.nulls.shouldBeNull
@@ -157,6 +158,7 @@ class SilentGreenWebsiteImporterTest {
             concert.title shouldBe "HTRK + Loraine James"
             concert.doorsTime.shouldBeNull()
             concert.detailUnavailable shouldBe true
+            concert.detailPageOwns shouldBe setOf(ScrapedField.RUN_DATES)
             result.events.first { it.sourceUrl == detailUrl("bjoern-melhus-lost-in-finity") }.detailUnavailable shouldBe false
         }
 

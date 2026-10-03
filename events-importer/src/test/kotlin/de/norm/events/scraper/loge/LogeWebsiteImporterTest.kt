@@ -113,7 +113,7 @@ class LogeWebsiteImporterTest {
             moriBlau.artists.map { it.name } shouldBe listOf("MORI BLAU")
             moriBlau.detailUnavailable shouldBe true
             // The listing's image is the canonical original, so it does not yield to a stored one (#2465).
-            moriBlau.listingImageStandsIn shouldBe false
+            moriBlau.detailPageOwns shouldBe emptySet()
         }
 
     @Test

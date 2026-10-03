@@ -5,6 +5,7 @@ import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.LimitedAspect
+import de.norm.events.scraper.ScrapedField
 import de.norm.events.scraper.VenueLimitations
 import de.norm.events.scraper.withQueryParameter
 import org.jsoup.nodes.Document
@@ -31,6 +32,9 @@ class AlteKantineWebsiteImporter(
     /** Clock for year inference on the year-less dates; override in tests. */
     clock: Clock = Clock.systemDefaultZone()
 ) : AbstractTwoPageWebsiteImporter(htmlFetcher, AlteKantineOverviewPageScraper(clock)::scrape, AlteKantineDetailPageScraper(clock)::scrape) {
+    /** The listing's type is a guess from the title; the event page names the venue's category (#2505). */
+    override val detailPageOwns: Set<ScrapedField> = setOf(ScrapedField.IMAGE, ScrapedField.EVENT_TYPE)
+
     override val eventSource: EventSource = EventSource.ALTE_KANTINE
     override val listsWholeProgramme: Boolean = true
 

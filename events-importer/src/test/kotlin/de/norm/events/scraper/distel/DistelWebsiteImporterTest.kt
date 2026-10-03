@@ -5,6 +5,7 @@ import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.HttpFetchException
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.ScrapedField
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
@@ -73,7 +74,7 @@ class DistelWebsiteImporterTest {
             event.description.shouldBeNull()
             event.ticketUrl.shouldNotBeNull()
             event.detailUnavailable shouldBe true
-            event.listingImageStandsIn shouldBe true
+            event.detailPageOwns shouldBe setOf(ScrapedField.IMAGE)
             result.events.filter { it.sourceUrl != show }.forEach { it.detailUnavailable shouldBe false }
         }
 

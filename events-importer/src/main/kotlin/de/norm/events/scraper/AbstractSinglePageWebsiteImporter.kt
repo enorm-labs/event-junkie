@@ -26,8 +26,8 @@ abstract class AbstractSinglePageWebsiteImporter(
      */
     protected open val enrichFromEventPage: ((ScrapedEvent, Document) -> ScrapedEvent?)? = null
 
-    /** Whether a good run stores the event page's image over the listing's, see [withEventPageOrFlagged]. */
-    protected open val eventPageOwnsImage: Boolean = false
+    /** The fields a good run takes from the event page over the listing's, see [withEventPageOrFlagged]. */
+    protected open val eventPageOwns: Set<ScrapedField> = emptySet()
 
     /** Cookies sent with the listing fetch, for a venue that serves its programme only to a request carrying one. */
     protected open val cookies: Map<String, String> = emptyMap()
@@ -79,6 +79,6 @@ abstract class AbstractSinglePageWebsiteImporter(
 
     private suspend fun withEventPages(events: List<ScrapedEvent>): List<ScrapedEvent> {
         val enrich = enrichFromEventPage ?: return events
-        return events.map { event -> htmlFetcher.withEventPageOrFlagged(event, eventPageOwnsImage) { document -> enrich(event, document) } }
+        return events.map { event -> htmlFetcher.withEventPageOrFlagged(event, eventPageOwns) { document -> enrich(event, document) } }
     }
 }

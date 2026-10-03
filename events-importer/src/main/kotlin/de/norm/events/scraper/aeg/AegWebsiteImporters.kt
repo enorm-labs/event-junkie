@@ -7,6 +7,7 @@ import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.ScrapedField
 import de.norm.events.scraper.VenueLimitations
 import de.norm.events.scraper.buildArtistsForEventType
 import org.springframework.stereotype.Component
@@ -31,7 +32,7 @@ abstract class AbstractAegVenueImporter(
         { document, url -> DETAIL_SCRAPER.scrape(document, url, eventSource) }
     ) {
     override val listsWholeProgramme: Boolean = true
-    override val detailPageOwnsImage: Boolean = false
+    override val detailPageOwns: Set<ScrapedField> = emptySet()
 
     /**
      * Merges detail-page data ([primary]) with listing data ([fallback]). The **listing wins on

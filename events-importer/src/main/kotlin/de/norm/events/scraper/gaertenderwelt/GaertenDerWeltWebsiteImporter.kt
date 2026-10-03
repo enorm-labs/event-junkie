@@ -8,6 +8,7 @@ import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.ScrapedField
 import de.norm.events.scraper.VenueLimitations
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.collapseExhibitionRuns
@@ -78,7 +79,7 @@ class GaertenDerWeltWebsiteImporter(
      * [ScrapedEvent.detailUnavailable]. Its poster is a thumbnail, so a stored one wins (#2465).
      */
     private suspend fun enrichFromDetailPage(row: ScrapedEvent): ScrapedEvent =
-        htmlFetcher.withEventPageOrFlagged(row, eventPageOwnsImage = true) { document ->
+        htmlFetcher.withEventPageOrFlagged(row, eventPageOwns = setOf(ScrapedField.IMAGE, ScrapedField.SUBTITLE)) { document ->
             detailPageScraper.scrape(document, row.sourceUrl)?.let { merge(detail = it, row = row) }
         }
 

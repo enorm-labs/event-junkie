@@ -6,6 +6,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.ScrapedField
 import de.norm.events.scraper.VenueLimitations
 import org.jsoup.nodes.Document
 import org.springframework.stereotype.Component
@@ -52,7 +53,7 @@ class KlunkerkranichWebsiteImporter(
     override val enrichFromEventPage: (ScrapedEvent, Document) -> ScrapedEvent? = ::addEventPageFields
 
     /** A failed page leaves the card's thumbnail, which yields to a stored full-size poster (#2465). */
-    override val eventPageOwnsImage: Boolean = true
+    override val eventPageOwns: Set<ScrapedField> = setOf(ScrapedField.IMAGE)
 
     /**
      * The event with the page's blurb, price and full-size poster. A page without a blurb still
