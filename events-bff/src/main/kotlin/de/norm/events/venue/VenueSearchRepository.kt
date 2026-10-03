@@ -15,7 +15,7 @@ import java.time.LocalDate
  */
 data class VenueFilter(
     val query: String? = null,
-    val district: String? = null,
+    val districts: List<String> = emptyList(),
     val types: List<String> = emptyList(),
     val families: List<String> = emptyList(),
     val eventTypes: List<String> = emptyList()
@@ -24,14 +24,14 @@ data class VenueFilter(
         /** Blank values drop out; lists are trimmed, de-duplicated and sorted, event types upper-cased. */
         fun of(
             query: String?,
-            district: String?,
+            districts: List<String>?,
             types: List<String>?,
             families: List<String>?,
             eventTypes: List<String>?
         ): VenueFilter =
             VenueFilter(
                 query = query?.trim()?.takeIf { it.isNotEmpty() },
-                district = district?.trim()?.takeIf { it.isNotEmpty() },
+                districts = districts.normalized(),
                 types = types.normalized(),
                 families = families.normalized(),
                 eventTypes = eventTypes.orEmpty().map { it.uppercase() }.normalized()
@@ -59,7 +59,7 @@ data class VenueListPage(
 )
 
 /**
- * The venue list query: a name search, a district and the array filters of [VenueFilter], ordered
+ * The venue list query: a name search, the districts and the array filters of [VenueFilter], ordered
  * by name or by upcoming events (#360). The same shape as `PromoterSearchRepository`, for the same reasons: the count is a
  * correlated subquery from [today] on, every order ends in `name, id`, and names sort case-folded
  * because the database collation is `C`.
@@ -75,11 +75,10 @@ class VenueSearchRepository(
     ): VenueListPage {
         val params = mutableMapOf<String, Any>()
         filter.query?.let { params["name"] = "%${it.escapeLike()}%" }
-        filter.district?.let { params["district"] = it }
         val conditions =
             listOfNotNull(
                 "v.name ILIKE :name".takeIf { filter.query != null },
-                "v.district = :district".takeIf { filter.district != null }
+                "v.district IN (:districts)".takeIf { filter.districts.isNotEmpty() }
             ) +
                 ARRAY_FILTERS.mapNotNull { (column, param, values) ->
                     values(filter).takeIf { it.isNotEmpty() }?.let {
@@ -87,6 +86,7 @@ class VenueSearchRepository(
                         "v.$column && :$param"
                     }
                 }
+        if (filter.districts.isNotEmpty()) params["districts"] = filter.districts
         val where = if (conditions.isEmpty()) "" else "WHERE ${conditions.joinToString(" AND ")}"
 
         val total =

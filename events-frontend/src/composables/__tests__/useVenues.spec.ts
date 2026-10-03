@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-type Query = { page: number; size: number; district?: string; q?: string }
+type Query = { page: number; size: number; district?: string[]; q?: string }
 
 const { getMock } = vi.hoisted(() => ({
   getMock: vi.fn<(path: string, init: { params: { query: Query } }) => Promise<unknown>>(),
@@ -30,13 +30,13 @@ describe('fetchAllVenues', () => {
       page([`venue-${init.params.query.page}`], init.params.query.page, 3),
     )
 
-    const venues = await fetchAllVenues({ district: 'mitte' })
+    const venues = await fetchAllVenues({ district: ['mitte'] })
 
     expect(venues.map((venue) => venue.slug)).toEqual(['venue-0', 'venue-1', 'venue-2'])
     expect(getMock.mock.calls.map(([, init]) => init.params.query)).toEqual([
-      { district: 'mitte', page: 0, size: 100 },
-      { district: 'mitte', page: 1, size: 100 },
-      { district: 'mitte', page: 2, size: 100 },
+      { district: ['mitte'], page: 0, size: 100 },
+      { district: ['mitte'], page: 1, size: 100 },
+      { district: ['mitte'], page: 2, size: 100 },
     ])
   })
 

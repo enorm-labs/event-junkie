@@ -6,7 +6,8 @@ import { useAsync } from './useAsync'
 /** Query parameters accepted by the venue list endpoint (`GET /venues`). */
 export interface VenueSearchParams {
   q?: string
-  district?: string
+  /** District slugs; a venue in any of them matches. */
+  district?: string[]
   /** Venue type slugs; a venue of any of them matches. */
   type?: string[]
   /** Genre family slugs the venue mostly programmes; any of them matches. */

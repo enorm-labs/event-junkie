@@ -16,7 +16,6 @@ import { useEventFilters } from '@/composables/useEventFilters'
 import { useGenres } from '@/composables/useGenres'
 import { useAllVenues } from '@/composables/useVenues'
 import { DATE_PRESETS, type DateRange } from '@/lib/dateRanges'
-import { DISTRICTS } from '@/lib/districts'
 import { useFilterOptions } from '@/composables/useFilterOptions'
 import { useI18n } from 'vue-i18n'
 import { PANEL_CLASS } from '@/lib/utils'
@@ -75,7 +74,7 @@ const SELECT_ROW_CLASS = 'grid w-full grid-cols-2 gap-3 sm:flex sm:w-auto sm:fle
 const SELECT_CLASS = 'w-full min-w-0 truncate sm:w-auto'
 
 const { t } = useI18n()
-const { eventTypeOptions: typeOptions, familyOptions } = useFilterOptions()
+const { eventTypeOptions: typeOptions, familyOptions, districtOptions } = useFilterOptions()
 
 /**
  * The families the bar shows as chosen: the URL's, or, for a link from before families existed
@@ -150,7 +149,7 @@ const moreCount = computed(
       queryList('eventType').length,
       queryList('family').length || queryString('genre'),
       queryString('venue'),
-      queryString('district'),
+      queryList('district').length,
       queryString('minPrice') || queryString('maxPrice'),
       queryString('free'),
       queryString('excludeSoldOut'),
@@ -309,15 +308,16 @@ onMounted(() => {
           </option>
         </BaseSelect>
 
-        <BaseSelect
-          :aria-label="t('events.filters.byDistrict')"
+        <MultiSelectFilter
+          :all-label="t('events.filters.allDistricts')"
           :class="SELECT_CLASS"
-          :model-value="queryString('district')"
-          @change="applyFilters({ district: ($event.target as HTMLSelectElement).value })"
-        >
-          <option value="">{{ t('events.filters.allDistricts') }}</option>
-          <option v-for="d in DISTRICTS" :key="d.slug" :value="d.slug">{{ d.label }}</option>
-        </BaseSelect>
+          :clear-label="t('events.filters.clearDistricts')"
+          :count-label="(n) => t('events.filters.districtsSelected', { n })"
+          :label="t('events.filters.byDistrict')"
+          :options="districtOptions"
+          :selected="queryList('district')"
+          @change="applyFilters({ district: $event })"
+        />
       </div>
 
       <!--

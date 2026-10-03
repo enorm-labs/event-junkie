@@ -6,7 +6,6 @@ import type { VenueSummary } from '@/api/types'
 import { describeError } from '@/api/client'
 import { Button } from '@/components/ui/button'
 import BaseInput from '@/components/BaseInput.vue'
-import BaseSelect from '@/components/BaseSelect.vue'
 import MultiSelectFilter from '@/components/MultiSelectFilter.vue'
 import PaginationControls from '@/components/PaginationControls.vue'
 import SortControl, { type SortOption } from '@/components/SortControl.vue'
@@ -18,7 +17,7 @@ import { useLocation } from '@/composables/useLocation'
 import { usePagedList } from '@/composables/usePagedList'
 import { useFilterOptions } from '@/composables/useFilterOptions'
 import { fetchAllVenues, useVenueSearch, type VenueSearchParams } from '@/composables/useVenues'
-import { DISTRICTS, districtLabel } from '@/lib/districts'
+import { districtLabel } from '@/lib/districts'
 import { formatDistance, type Position } from '@/lib/geo'
 import {
   DEFAULT_RADIUS,
@@ -67,7 +66,7 @@ function listParam(key: string): string[] | undefined {
 
 const params = computed<VenueSearchParams>(() => ({
   q: queryString('q') || undefined,
-  district: queryString('district') || undefined,
+  district: listParam('district'),
   sort: sort.value ? [sort.value] : undefined,
 
   type: listParam('type'),
@@ -166,7 +165,7 @@ const sortOptions = computed<SortOption[]>(() => [
   { value: SORT_UPCOMING, label: t('common.sort.upcoming') },
 ])
 
-const { venueTypeOptions, familyOptions, eventTypeOptions } = useFilterOptions()
+const { venueTypeOptions, familyOptions, eventTypeOptions, districtOptions } = useFilterOptions()
 // OTHER is no type a venue is chosen by; the derivation never stores it.
 const hostOptions = computed(() => eventTypeOptions.value.filter(({ value }) => value !== 'OTHER'))
 
@@ -257,14 +256,15 @@ const localePath = useLocalePath()
         />
       </form>
 
-      <BaseSelect
-        :aria-label="t('venues.byDistrict')"
-        :model-value="queryString('district')"
-        @change="applyFilters({ district: ($event.target as HTMLSelectElement).value })"
-      >
-        <option value="">{{ t('venues.allDistricts') }}</option>
-        <option v-for="d in DISTRICTS" :key="d.slug" :value="d.slug">{{ d.label }}</option>
-      </BaseSelect>
+      <MultiSelectFilter
+        :all-label="t('venues.allDistricts')"
+        :clear-label="t('venues.clearDistricts')"
+        :count-label="(n) => t('venues.districtsSelected', { n })"
+        :label="t('venues.byDistrict')"
+        :options="districtOptions"
+        :selected="queryList('district')"
+        @change="applyFilters({ district: $event })"
+      />
 
       <MultiSelectFilter
         :all-label="t('venues.allTypes')"

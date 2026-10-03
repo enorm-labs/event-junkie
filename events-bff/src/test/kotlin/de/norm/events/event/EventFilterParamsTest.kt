@@ -26,4 +26,13 @@ class EventFilterParamsTest {
         first.familySlugs shouldBe listOf("electronic", "hip-hop")
         first shouldBe second
     }
+
+    @Test
+    fun `two orders of the same districts are one filter`() {
+        val first = EventFilterParams(district = listOf("neukoelln", " kreuzberg", "neukoelln", "")).toFilter()
+        val second = EventFilterParams(district = listOf("kreuzberg", "neukoelln")).toFilter()
+
+        first.districts shouldBe listOf("kreuzberg", "neukoelln")
+        first shouldBe second
+    }
 }
