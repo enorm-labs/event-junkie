@@ -4,27 +4,19 @@ import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.TecPage
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.hasSoldOutMarker
+import de.norm.events.scraper.parseTecPage
+import de.norm.events.scraper.stringOrNull
+import de.norm.events.scraper.tecDateTime
+import de.norm.events.scraper.tecDescription
+import de.norm.events.scraper.tecImageUrl
+import de.norm.events.scraper.tecOrganizerNames
+import de.norm.events.scraper.tecTermNames
+import de.norm.events.scraper.tecText
 import io.github.oshai.kotlinlogging.KotlinLogging
-import org.jsoup.Jsoup
-import org.jsoup.parser.Parser
 import tools.jackson.databind.JsonNode
-import tools.jackson.databind.json.JsonMapper
-import tools.jackson.module.kotlin.kotlinModule
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
-
-/**
- * One page of Cosmic Comedy's events endpoint.
- *
- * @property events the page's events, already mapped.
- * @property nextPageUrl the API's own cursor to the next page, or `null` on the last one.
- */
-data class CosmicComedyPage(
-    val events: List<ScrapedEvent>,
-    val nextPageUrl: String?
-)
 
 /**
  * Pure JSON parser for Cosmic Comedy Berlin's **The Events Calendar** REST API
@@ -42,81 +34,44 @@ data class CosmicComedyPage(
  * titles; the `slug` is unique per date and identifies an event.
  * - **No prices anywhere.** `cost` and `cost_details` are empty on every event.
  * - **Sold out is only in the title** (`LATE SHOW (SOLD OUT!!!)`): the API has no stock field.
- * - **Titles and taxonomy names are HTML-escaped** (`&#8211;`, `&#8217;`) and the description is
- * raw HTML opening with an embedded ticket-widget `<script>`, so both are decoded before use.
+ * - **The description opens with an embedded Universe ticket widget**, whose target id is the
+ * ticket link where the event sets no `website`.
  *
  * @see CosmicComedyWebsiteImporter for the HTTP fetch orchestrator.
+ * @see de.norm.events.scraper.parseTecPage for the page shape and the field readers.
  */
 class CosmicComedyApiScraper {
     private val logger = KotlinLogging.logger {}
 
-    private val jsonMapper: JsonMapper =
-        JsonMapper
-            .builder()
-            .addModule(kotlinModule())
-            .build()
-
-    /**
-     * Parses one page of the events endpoint. An unparseable body yields an empty page with no
-     * cursor, which stops paging rather than aborting an import that may already hold earlier pages.
-     */
-    @Suppress("TooGenericExceptionCaught") // A malformed payload must degrade to an empty page, never abort the import.
-    fun scrapePage(json: String): CosmicComedyPage {
-        val root =
-            try {
-                jsonMapper.readTree(json)
-            } catch (e: Exception) {
-                logger.warn(e) { "Failed to parse Cosmic Comedy events page" }
-                return CosmicComedyPage(events = emptyList(), nextPageUrl = null)
-            }
-
-        val events =
-            root.path("events").takeIf { it.isArray }.orEmptyNodes().mapNotNull { event ->
-                @Suppress("TooGenericExceptionCaught") // Skip one malformed event without losing the page.
-                try {
-                    toScrapedEvent(event)
-                } catch (e: Exception) {
-                    logger.warn(e) { "Failed to parse Cosmic Comedy event, skipping" }
-                    null
-                }
-            }
-        return CosmicComedyPage(
-            events = events,
-            nextPageUrl = root.path("next_rest_url").asString("").takeIf { it.isNotBlank() }
-        )
-    }
+    /** Parses one page of the events endpoint; [parseTecPage] says how a malformed page or event degrades. */
+    fun scrapePage(json: String): TecPage = parseTecPage(json, EventSource.COSMIC_COMEDY, ::toScrapedEvent)
 
     /** Maps one API event, or `null` when it lacks the slug or start date that identify it. */
     @Suppress("ReturnCount") // Guard clauses for the required slug/date are clearer than nesting
     private fun toScrapedEvent(event: JsonNode): ScrapedEvent? {
-        val slug = event.path("slug").asString("").takeIf { it.isNotBlank() } ?: return null
-        val start = parseLocalDateTime(event.path("start_date").asString("")) ?: return null
-        val title = decode(event.path("title").asString(""))?.let { cleanEventTitle(it) }
+        val slug = event.stringOrNull("slug") ?: return null
+        val start = event.tecDateTime("start_date") ?: return null
+        val title = event.tecText("title")?.let { cleanEventTitle(it) }
         if (title.isNullOrBlank()) {
             logger.warn { "Cosmic Comedy event '$slug' has no title, skipping" }
             return null
         }
-        val categories = event.path("categories").orEmptyNodes().mapNotNull { decode(it.path("name").asString("")) }
+        val categories = event.tecTermNames("categories")
 
         return ScrapedEvent(
             title = title,
-            description = htmlToText(event.path("description").asString("")),
+            description = event.tecDescription(),
             // The club programmes nothing but comedy.
             eventType = EventType.COMEDY.name,
             eventDate = start.toLocalDate(),
             startTime = start.toLocalTime(),
-            imageUrl =
-                event
-                    .path("image")
-                    .path("url")
-                    .asString("")
-                    .takeIf { it.isNotBlank() },
+            imageUrl = event.tecImageUrl(),
             sourceUrl = event.path("url").asString(""),
             sourceId = "${EventSource.COSMIC_COMEDY.sourceIdPrefix}$slug",
             ticketUrl = ticketUrl(event),
             soldOut = hasSoldOutMarker(title),
             artists = headlinerOf(title, categories),
-            promoters = event.path("organizer").orEmptyNodes().mapNotNull { decode(it.path("organizer").asString("")) }
+            promoters = event.tecOrganizerNames()
         )
     }
 
@@ -166,38 +121,7 @@ class CosmicComedyApiScraper {
                 ?.groupValues
                 ?.get(1)
                 ?.let { "$UNIVERSE_EVENT_BASE$it" }
-
-    /** Parses the API's local `"yyyy-MM-dd HH:mm:ss"` start, already in the venue's zone. */
-    private fun parseLocalDateTime(text: String): LocalDateTime? =
-        text.takeIf { it.isNotBlank() }?.let {
-            runCatching { LocalDateTime.parse(it.trim(), API_DATE_TIME) }.getOrNull()
-        }
-
-    /** Decodes the HTML entities WordPress leaves in its titles and taxonomy names. */
-    private fun decode(text: String): String? =
-        Parser
-            .unescapeEntities(text, false)
-            .trim()
-            .takeIf { it.isNotEmpty() }
-
-    /**
-     * Flattens the description's HTML to text. Parsing rather than stripping tags matters: the
-     * field opens with an embedded ticket-widget `<script>` whose body would otherwise land in the
-     * stored description.
-     */
-    private fun htmlToText(html: String): String? =
-        html
-            .takeIf { it.isNotBlank() }
-            ?.let { Jsoup.parseBodyFragment(it).body().text() }
-            ?.trim()
-            ?.takeIf { it.isNotEmpty() }
 }
-
-/** An array node's elements, or nothing at all for a missing or non-array field. */
-private fun JsonNode?.orEmptyNodes(): List<JsonNode> = this?.takeIf { it.isArray }?.toList().orEmpty()
-
-/** The plugin's local date-time format, stated in the venue's own timezone. */
-private val API_DATE_TIME: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
 
 /** The category the club puts on a night with a named act rather than its house showcase. */
 private const val SPECIAL_CATEGORY = "Comedy Special"

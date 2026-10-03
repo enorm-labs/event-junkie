@@ -558,6 +558,19 @@ venue that changes its wrapping keeps working. The venue's own rules, such as wh
 | `JsonNode.schemaImageUrl()`                     | `image` as a string, an `ImageObject`, or an array of either                                   |
 | `JsonNode.schemaOffers()` / `schemaSoldOut()`   | `offers` as a list; sold out when every offer is `SoldOut` or `OutOfStock`                     |
 
+**`TheEventsCalendar.kt`** — the reader for a WordPress venue on The Events Calendar. Its REST API
+(`/wp-json/tribe/events/v1/events`) returns the whole upcoming programme. Cosmic Comedy and Comedy Café Berlin use it today.
+The page shape, the cursor walk and the field readers live here. The venue maps each event in its own scraper.
+
+| Extension / Function                                   | Purpose                                                                                   |
+| ------------------------------------------------------ | ----------------------------------------------------------------------------------------- |
+| `parseTecPage(json, source, toEvent)`                  | One page as `TecPage`: mapped events and `next_rest_url`; a malformed body is a last page |
+| `ApiClient.walkTecEvents(source, url, max, scrape)`    | Fifty events a page, following the API's own cursor; a hand-built `page=2` answers 404    |
+| `JsonNode.tecDateTime(field)`                          | The local `start_date` or `end_date`                                                      |
+| `JsonNode.tecText(field)` / `tecDescription()`         | A field with HTML entities decoded; the description HTML as text, scripts dropped         |
+| `JsonNode.tecTermNames(field)` / `tecOrganizerNames()` | The names of `categories` or `tags`; the organizers' names                                |
+| `JsonNode.tecImageUrl()`                               | The featured image's full-size URL                                                        |
+
 **Design rationale**: a declarative selector map, from field names to CSS selectors, is rejected here. Each scraped
 field needs different extraction logic: sibling traversal, regex extraction from a `style` attribute, multi-element
 date assembly, visibility checks, fallback chains. A selector map covers only the simplest cases, about 3 of the 10

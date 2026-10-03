@@ -73,6 +73,9 @@ enum class EventSource {
     /** Columbiahalle Berlin – the 3,500-capacity hall at Tempelhofer Feld, hosting touring rock, metal, hip hop and pop acts. */
     COLUMBIAHALLE,
 
+    /** Comedy Café Berlin – a Neukölln comedy theatre, school and bar with a 60-seat room for improv, stand-up and sketch in English and German. */
+    COMEDY_CAFE,
+
     /** Cosmic Comedy Berlin – one of the city's longest-running English-language stand-up clubs. */
     COSMIC_COMEDY,
 

@@ -2,6 +2,7 @@ package de.norm.events.scraper.cosmiccomedy
 
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.TecPage
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
@@ -29,8 +30,8 @@ class CosmicComedyApiScraperTest {
             .bufferedReader()
             .readText()
 
-    private val pageOne: CosmicComedyPage by lazy { scraper.scrapePage(readFixture("cosmiccomedy-events-page1.json")) }
-    private val pageTwo: CosmicComedyPage by lazy { scraper.scrapePage(readFixture("cosmiccomedy-events-page2.json")) }
+    private val pageOne: TecPage by lazy { scraper.scrapePage(readFixture("cosmiccomedy-events-page1.json")) }
+    private val pageTwo: TecPage by lazy { scraper.scrapePage(readFixture("cosmiccomedy-events-page2.json")) }
     private val events: List<ScrapedEvent> by lazy { pageOne.events + pageTwo.events }
 
     /**
