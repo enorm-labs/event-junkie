@@ -174,3 +174,22 @@ kotlin {
 tasks.withType<Test> {
     useJUnitPlatform()
 }
+
+// The one command that rewrites docs/architecture/schema.sql. It is the same test, told to write
+// instead of fail, so the output cannot disagree with what the build then asserts.
+tasks.register<Test>("updateSchemaDump") {
+    group = "documentation"
+    description = "Regenerate docs/architecture/schema.sql from a freshly migrated database."
+
+    testClassesDirs =
+        sourceSets.test
+            .get()
+            .output.classesDirs
+    classpath = sourceSets.test.get().runtimeClasspath
+    useJUnitPlatform()
+    filter { includeTestsMatching("de.norm.events.docs.SchemaDumpTest") }
+    systemProperty("updateSchemaDump", "true")
+
+    // It writes a file Gradle does not know it writes, so a second run must not be skipped.
+    outputs.upToDateWhen { false }
+}

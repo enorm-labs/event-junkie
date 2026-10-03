@@ -22,6 +22,8 @@ which helper lives where — is not repeated; `grep` answers that.
 - **Migrations live in `events-importer` only** (ADR-005), `V001__…` closed, every change its own file, unqualified (Flyway sets `search_path`; a qualified
   migration pins itself to a schema the configuration no longer controls). **Editing an applied migration is a `FlywayValidateException: Migration checksum
 mismatch`** — the pod never goes Ready and `remediateLastFailure` rolls the release back, presenting as "the deploy reverted" two layers from the cause.
+    - **A migration that changes the schema regenerates `docs/architecture/schema.sql`** with `./gradlew :events-importer:updateSchemaDump`, in the
+      same pull request. `SchemaDumpTest` fails the build otherwise (#2477). The file is the current schema in one place, so read it before the migrations.
     - **Two branches can each take the next version**, and git conflicts only on one path, so rebase-and-merge lands both and Flyway refuses to start
       (`V021`, then `V072`, #2183). `scripts/migration-versions.sh` fails on a duplicate in `build-backend.yml` and again before `release.yml` builds.
       `migration-versions.yml` re-checks every open PR when a migration lands on `main` and turns its `Migration versions` status red (#2442). Only two
