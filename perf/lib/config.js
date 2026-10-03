@@ -52,7 +52,7 @@ export const WAIT_FOR_ORIGIN_SECONDS = Number(__ENV.WAIT_FOR_ORIGIN_SECONDS || 0
  * rounded up to 50 ms; `perf/README.md` holds the runs and says when to change the rule.
  *
  * They are regression detectors, not SLOs, and they measure a cached BFF. A laptop run sets its own
- * with the variables. `calendar` keeps its old value until #2529 stops the cache stampede.
+ * with the variables. `calendar` was measured again after #2529, and the rule gives 1200 again.
  */
 export const THRESHOLD_MS = {
     /** Single-row lookups by slug. Indexed, small payload; anything else is a regression. */
