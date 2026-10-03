@@ -222,6 +222,9 @@ enum class EventSource {
     /** Orania.Berlin – the bar of a Kreuzberg hotel in the 1912 Oranienpalast, with free jazz, piano and soul concerts booked by pianist Matti Klein. */
     ORANIA,
 
+    /** PANDA platforma – a non-profit Kulturbrauerei art space for East European artists: jazz, experimental music, theatre and readings. */
+    PANDA_PLATFORMA,
+
     /** Panke Culture Berlin – a club, café and gallery in a Wedding backyard: club nights, live music, markets and exhibitions. */
     PANKE,
 
