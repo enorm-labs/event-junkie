@@ -204,6 +204,9 @@ enum class EventSource {
     /** OHM Berlin – a small bass and techno club inside the Tresor power-station complex. */
     OHM,
 
+    /** Orania.Berlin – the bar of a Kreuzberg hotel in the 1912 Oranienpalast, with free jazz, piano and soul concerts booked by pianist Matti Klein. */
+    ORANIA,
+
     /** Panke Culture Berlin – a club, café and gallery in a Wedding backyard: club nights, live music, markets and exhibitions. */
     PANKE,
 

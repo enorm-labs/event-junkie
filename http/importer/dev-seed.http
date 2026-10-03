@@ -79,6 +79,7 @@
 ###   MS Hoppetosse        — https://hoppetosse.berlin/program/
 ###   Neue Zukunft         — https://neue-zukunft.org/
 ###   OHM                  — https://ohmberlin.com/
+###   Orania.Berlin        — https://orania.berlin/concerts
 ###   Panke Culture        — https://www.pankeculture.com/programme/
 ###   Parkbühne Wuhlheide  — https://www.wuhlheide.de/programm
 ###   Privatclub           — https://privatclub-berlin.de/
@@ -3976,6 +3977,69 @@ Accept: application/json
 
 > {%
     client.test("OHM import triggered", function () {
+        client.assert(response.status === 202, "Expected 202 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
+### Orania.Berlin (Oranienstr. 40, Berlin-Kreuzberg — the hotel bar's stage)
+### ————————————————————————————————————————————————————————————
+
+### --- Create Orania.Berlin venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Orania.Berlin",
+    "address": "Oranienstr. 40",
+    "city": "Berlin",
+    "postalCode": "10999",
+    "district": "kreuzberg",
+    "latitude": 52.50206,
+    "longitude": 13.41690,
+    "websiteUrl": "https://orania.berlin",
+    "description": "A hotel bar in the 1912 Oranienpalast building, where pianist Matti Klein books Berlin musicians for free jazz, piano, soul and funk concerts.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Eine Hotelbar im Oranienpalast von 1912, in der der Pianist Matti Klein Berliner Musiker für kostenlose Jazz-, Piano-, Soul- und Funkkonzerte bucht.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["bar"]
+}
+
+> {%
+    client.global.set("orania_venue_id", response.body.id);
+    client.test("Orania.Berlin venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Create Orania.Berlin event source ---
+# Links the venue to the OraniaWebsiteImporter.
+# The sourceType "ORANIA" matches EventSource.ORANIA.
+POST {{importer-host}}/api/admin/event-sources
+Content-Type: application/json
+
+{
+    "venueId": {{orania_venue_id}},
+    "name": "Orania.Berlin",
+    "url": "https://orania.berlin/concerts",
+    "sourceType": "ORANIA",
+    "enabled": true,
+    "importIntervalMinutes": 1440,
+    "maxRetries": 3
+}
+
+> {%
+    client.test("Orania.Berlin event source created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Trigger initial Orania.Berlin import ---
+POST {{importer-host}}/api/admin/event-sources/orania-berlin/import
+Accept: application/json
+
+> {%
+    client.test("Orania.Berlin import triggered", function () {
         client.assert(response.status === 202, "Expected 202 but got " + response.status);
     });
 %}
