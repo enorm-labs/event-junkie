@@ -9,7 +9,7 @@ import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.VenueLimitations
-import de.norm.events.scraper.readEventPage
+import de.norm.events.scraper.enrichFromSharedPages
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
 
@@ -58,13 +58,10 @@ class ScheinbarWebsiteImporter(
             }
         }
 
-    private suspend fun withProgrammePages(events: List<ScrapedEvent>): List<ScrapedEvent> {
-        val programmes = events.distinctBy { it.sourceUrl }.associate { it.sourceUrl to htmlFetcher.readEventPage(it, detailScraper::scrape) }
-        return events.map { event ->
-            programmes[event.sourceUrl]?.let { event.copy(description = it.description, imageUrl = it.imageUrl) }
-                ?: event.copy(detailUnavailable = true)
-        }
-    }
+    private suspend fun withProgrammePages(events: List<ScrapedEvent>): List<ScrapedEvent> =
+        htmlFetcher.enrichFromSharedPages(events, detailScraper::scrape, { programme, event ->
+            event.copy(description = programme.description, imageUrl = programme.imageUrl)
+        })
 }
 
 val SCHEINBAR_LIMITATIONS =

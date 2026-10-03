@@ -7,8 +7,8 @@ import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.LimitedAspect
-import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.VenueLimitations
+import de.norm.events.scraper.enrichFromSharedPages
 import de.norm.events.scraper.nextPageUrl
 import de.norm.events.scraper.scrapeListingPages
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -33,7 +33,8 @@ import java.time.Clock
  * card instead of superseding it: the base class treats the detail page as primary and merges
  * the overview into its gaps, the wrong way round here — the card is the only place the date is
  * stated in full, and a failed night page must not blank it. Such a page is not fatal: the date
- * keeps its card data and loses only description, price and ticket link.
+ * keeps its card data and is flagged, so the upsert keeps the description, price and ticket link
+ * stored last time. The CMS recycles entries, so two cards may link one page, which is read once.
  *
  * **Not published**: no doors time (one time per night, taken as the start), no presale price,
  * no genre, no lineup beyond the host in the title. The private karaoke boxes running all
@@ -80,35 +81,17 @@ class MonsterRonsonsWebsiteImporter(
                 logger.info { "Scraped ${listing.events.size} karaoke night(s) from Monster Ronson's listing" }
 
                 ImportResult.Success(
-                    events = enrichFromNightPages(listing.events),
+                    events =
+                        htmlFetcher.enrichFromSharedPages(
+                            listing.events,
+                            { detailPageScraper.scrape(it, it.location()) },
+                            MonsterRonsonsNightDetail::applyTo
+                        ),
                     etag = fetchResult.etag,
                     lastModified = fetchResult.lastModified,
                     complete = listing.complete
                 )
             }
-        }
-
-    /**
-     * Fetches each distinct night page once and applies it to the events linking to it. The CMS
-     * recycles entries, so two cards may link one URL, although no page did when #1884 was measured;
-     * per distinct URL keeps that from re-requesting.
-     */
-    private suspend fun enrichFromNightPages(events: List<ScrapedEvent>): List<ScrapedEvent> {
-        val nightUrls = events.map { it.sourceUrl }.distinct()
-        logger.info { "Fetching ${nightUrls.size} night page(s) for ${events.size} event(s)" }
-
-        val detailsByUrl = nightUrls.associateWith { fetchNight(it) }
-        return events.map { event -> detailsByUrl[event.sourceUrl]?.applyTo(event) ?: event }
-    }
-
-    /** Fetches and parses one night page, degrading to `null` so the date keeps its card data. */
-    @Suppress("TooGenericExceptionCaught") // Intentional: a broken night page must not fail the whole import
-    private suspend fun fetchNight(url: String): MonsterRonsonsNightDetail? =
-        try {
-            detailPageScraper.scrape(htmlFetcher.fetchDocument(url), url)
-        } catch (e: Exception) {
-            logger.warn(e) { "Failed to fetch night page $url, keeping listing data only" }
-            null
         }
 
     private companion object {

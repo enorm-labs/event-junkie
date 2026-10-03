@@ -5,8 +5,8 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
-import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.VenueLimitations
+import de.norm.events.scraper.enrichFromSharedPages
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
 
@@ -27,8 +27,8 @@ import org.springframework.stereotype.Component
  * same page eight times, which the per-host politeness throttle would rightly serialise into a
  * slow, pointless crawl.
  *
- * A production page that cannot be fetched or parsed is not fatal: those dates keep the row's
- * teaser and thumbnail, losing only the fuller text and photo.
+ * A production page that cannot be fetched or parsed is not fatal: its dates keep the row's teaser
+ * and are flagged, so the upsert keeps the text and photo the page stored last time.
  *
  * @see DelphiProgrammePageScraper for the programme parsing logic.
  * @see DelphiProductionPageScraper for the production-page parsing logic.
@@ -62,33 +62,11 @@ class DelphiWebsiteImporter(
                 logger.info { "Scraped ${events.size} performance date(s) from Theater im Delphi" }
 
                 ImportResult.Success(
-                    events = enrichFromProductionPages(events),
+                    events = htmlFetcher.enrichFromSharedPages(events, productionPageScraper::scrape, DelphiProduction::applyTo, pageOwnsImage = true),
                     etag = fetchResult.etag,
                     lastModified = fetchResult.lastModified
                 )
             }
-        }
-
-    /**
-     * Fetches each distinct production page once and applies it to every date of that production.
-     * The de-duplication is the point: `sourceUrl` is the production's page, shared by all its dates.
-     */
-    private suspend fun enrichFromProductionPages(events: List<ScrapedEvent>): List<ScrapedEvent> {
-        val productionUrls = events.map { it.sourceUrl }.distinct()
-        logger.info { "Fetching ${productionUrls.size} distinct production page(s) for ${events.size} performance date(s)" }
-
-        val productionsByUrl = productionUrls.associateWith { fetchProduction(it) }
-        return events.map { event -> productionsByUrl[event.sourceUrl]?.applyTo(event) ?: event }
-    }
-
-    /** Fetches and parses one production page, degrading to `null` so its dates keep the row data. */
-    @Suppress("TooGenericExceptionCaught") // Intentional: a broken production page must not fail the whole import
-    private suspend fun fetchProduction(url: String): DelphiProduction? =
-        try {
-            productionPageScraper.scrape(htmlFetcher.fetchDocument(url))
-        } catch (e: Exception) {
-            logger.warn(e) { "Failed to fetch production page $url, keeping programme-row data only" }
-            null
         }
 }
 

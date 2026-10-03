@@ -113,6 +113,7 @@ class DelphiWebsiteImporterTest {
 
             ballet shouldHaveSize 8
             ballet.forEach { it.description!! shouldContain "Live-Streichquartett" }
+            ballet.forEach { it.detailUnavailable shouldBe false }
             // Each date keeps its own clock, price and identity.
             val matinee = ballet.first { it.sourceId == "theater_im_delphi:488/2026-09-27-15:00" }
             matinee.eventDate shouldBe LocalDate.of(2026, 9, 27)
@@ -135,6 +136,19 @@ class DelphiWebsiteImporterTest {
             stokes.description!!.isNotBlank() shouldBe true
             stokes.imageUrl!!.isNotBlank() shouldBe true
             stokes.pricePresale shouldBe BigDecimal("29")
+            // Flagged, so the upsert keeps the text the page stored; the page's photo wins over the thumbnail.
+            stokes.detailUnavailable shouldBe true
+            stokes.listingImageStandsIn shouldBe true
+        }
+
+    @Test
+    fun `flags the programme row when a production page parses to nothing`() =
+        runTest {
+            coEvery { htmlFetcher.fetchDocument(productionUrl("525")) } returns Jsoup.parse("<html><body></body></html>", productionUrl("525"))
+
+            val result = importer.importEvents(sourceUrl).shouldBeInstanceOf<ImportResult.Success>()
+
+            result.events.first { it.sourceId == "theater_im_delphi:525/2026-11-14-19:30" }.detailUnavailable shouldBe true
         }
 
     @Test

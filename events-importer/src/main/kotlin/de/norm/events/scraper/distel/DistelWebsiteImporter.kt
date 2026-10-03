@@ -9,6 +9,7 @@ import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.VenueLimitations
+import de.norm.events.scraper.enrichFromSharedPages
 import de.norm.events.scraper.scrapeListingPages
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
@@ -20,8 +21,8 @@ import org.springframework.stereotype.Component
  * `/spielplan/kalender/` shows the current month; its navigation links the next as `?month=YYYYMM`,
  * and every month links a next one, so the walk stops at the first month with no performance:
  * about five months today. Each show page is then read once, for its text and photo, and applied
- * to every performance of the show; a failed show page leaves its performances with the calendar's
- * fields.
+ * to every performance of the show; a failed show page flags its performances, so the upsert keeps
+ * the text and photo stored last time.
  *
  * A calendar page weighs about 7 MB, almost all of it an animated SVG ticket icon inlined per
  * performance. The ticket shop has no listing to read instead, and its `robots.txt` disallows it.
@@ -65,7 +66,7 @@ class DistelWebsiteImporter(
                 logger.info { "Scraped ${listing.events.size} DISTEL performance(s) from the calendar" }
 
                 ImportResult.Success(
-                    events = enrichFromShowPages(listing.events),
+                    events = htmlFetcher.enrichFromSharedPages(listing.events, showScraper::scrape, ::withShow, pageOwnsImage = true),
                     etag = fetchResult.etag,
                     lastModified = fetchResult.lastModified,
                     complete = listing.complete
@@ -85,21 +86,10 @@ class DistelWebsiteImporter(
                 ?.substringBefore('#')
         }
 
-    private suspend fun enrichFromShowPages(events: List<ScrapedEvent>): List<ScrapedEvent> {
-        val shows = events.map { it.sourceUrl }.distinct().associateWith { fetchShow(it) }
-        return events.map { event ->
-            shows[event.sourceUrl]?.let { show -> event.copy(description = show.description, imageUrl = show.imageUrl) } ?: event
-        }
-    }
-
-    @Suppress("TooGenericExceptionCaught") // Intentional: a failed show page keeps the calendar's fields
-    private suspend fun fetchShow(url: String): DistelShow? =
-        try {
-            showScraper.scrape(htmlFetcher.fetchDocument(url))
-        } catch (e: Exception) {
-            logger.warn(e) { "Failed to fetch DISTEL show page $url, keeping the calendar's fields" }
-            null
-        }
+    private fun withShow(
+        show: DistelShow,
+        event: ScrapedEvent
+    ): ScrapedEvent = event.copy(description = show.description, imageUrl = show.imageUrl)
 
     private companion object {
         /** A runaway guard; the calendar runs about five months ahead. */

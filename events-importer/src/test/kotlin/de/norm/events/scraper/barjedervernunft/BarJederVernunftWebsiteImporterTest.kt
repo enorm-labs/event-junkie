@@ -173,6 +173,7 @@ class BarJederVernunftWebsiteImporterTest {
             show.eventType shouldBe null
             // The JSON-LD teaser survives as the description when the full text is unavailable.
             show.description.shouldNotBeNull() shouldContain "Oh What A Night: Ein musikalischer Showhit"
+            result.events.forEach { it.detailUnavailable shouldBe true }
         }
 
     @Test

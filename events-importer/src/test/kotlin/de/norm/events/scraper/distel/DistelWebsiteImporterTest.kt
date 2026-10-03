@@ -72,6 +72,9 @@ class DistelWebsiteImporterTest {
             val event = result.events.first { it.sourceUrl == show }
             event.description.shouldBeNull()
             event.ticketUrl.shouldNotBeNull()
+            event.detailUnavailable shouldBe true
+            event.listingImageStandsIn shouldBe true
+            result.events.filter { it.sourceUrl != show }.forEach { it.detailUnavailable shouldBe false }
         }
 
     @Test

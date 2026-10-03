@@ -9,6 +9,7 @@ import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
 import org.jsoup.Jsoup
@@ -18,7 +19,7 @@ import org.junit.jupiter.api.Test
 import org.slf4j.LoggerFactory
 import java.time.LocalDate
 
-/** Unit tests for [withEventPageOrFlagged] and [readEventPage], the one failure path for an event page. */
+/** Unit tests for [withEventPageOrFlagged], [readEventPage] and [enrichFromSharedPages], the one failure path for an event page. */
 class EventPageTest {
     private val htmlFetcher: HtmlFetcher = mockk()
     private val event =
@@ -113,5 +114,75 @@ class EventPageTest {
             coEvery { htmlFetcher.fetchDocument(event.sourceUrl) } throws RuntimeException("boom")
 
             htmlFetcher.readEventPage(event) { "parsed" }.shouldBeNull()
+        }
+
+    private val otherPage = "https://venue.example/events/matinee"
+    private val evening = event.copy(sourceId = "venue:late-night-jazz/evening")
+    private val matinee = event.copy(sourceId = "venue:matinee", sourceUrl = otherPage)
+
+    private suspend fun enrich(
+        vararg events: ScrapedEvent,
+        pageOwnsImage: Boolean = false
+    ) = htmlFetcher.enrichFromSharedPages(
+        events.toList(),
+        { it.selectFirst("p")?.text() },
+        { blurb, row -> row.copy(description = blurb) },
+        pageOwnsImage = pageOwnsImage
+    )
+
+    @Test
+    fun `reads each shared page once and applies it to every row that links it`() =
+        runTest {
+            stubPage("<p>A blurb</p>")
+            coEvery { htmlFetcher.fetchDocument(otherPage) } returns Jsoup.parse("<p>Another</p>", otherPage)
+
+            val result = enrich(event, evening, matinee)
+
+            result.map { it.description } shouldBe listOf("A blurb", "A blurb", "Another")
+            result.map { it.detailUnavailable } shouldBe listOf(false, false, false)
+            coVerify(exactly = 1) { htmlFetcher.fetchDocument(event.sourceUrl) }
+        }
+
+    @Test
+    fun `flags every row of a failed shared page, and only those`() =
+        runTest {
+            coEvery { htmlFetcher.fetchDocument(event.sourceUrl) } throws RuntimeException("boom")
+            coEvery { htmlFetcher.fetchDocument(otherPage) } returns Jsoup.parse("<p>Another</p>", otherPage)
+
+            val result = enrich(event, evening, matinee, pageOwnsImage = true)
+
+            result shouldBe
+                listOf(
+                    event.copy(detailUnavailable = true, listingImageStandsIn = true),
+                    evening.copy(detailUnavailable = true, listingImageStandsIn = true),
+                    matinee.copy(description = "Another")
+                )
+            warnings() shouldHaveSize 1
+        }
+
+    @Test
+    fun `flags the rows of a shared page that parses to nothing`() =
+        runTest {
+            stubPage("<div></div>")
+
+            enrich(event, evening).map { it.detailUnavailable } shouldBe listOf(true, true)
+        }
+
+    @Test
+    fun `groups rows by the given key rather than the page url`() =
+        runTest {
+            stubPage("<p>A blurb</p>")
+            val sameShowElsewhere = matinee.copy(title = event.title)
+
+            val result =
+                htmlFetcher.enrichFromSharedPages(
+                    listOf(event, sameShowElsewhere),
+                    { it.selectFirst("p")?.text() },
+                    { blurb, row -> row.copy(description = blurb) },
+                    key = ScrapedEvent::title
+                )
+
+            result.map { it.description } shouldBe listOf("A blurb", "A blurb")
+            coVerify(exactly = 0) { htmlFetcher.fetchDocument(otherPage) }
         }
 }
