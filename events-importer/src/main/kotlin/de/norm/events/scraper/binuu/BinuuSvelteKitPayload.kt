@@ -241,7 +241,7 @@ private val RELOCATION_CODES = setOf("r", "rp")
 /**
  * Best-effort [EventType][de.norm.events.event.EventType] from title/subtitle, since Bi Nuu has
  * no category field anywhere. A known recurring party series ([BINUU_PARTY_SERIES]: GrooveJet,
- * Ultra Night, Boheme Sauvage, the Fuego36 salsa night, which list their own name as title and sole performer, edition
+ * Ultra Night, Boheme Sauvage, the Fuego36 salsa night, the Abraxas Party, which list their own name as title and sole performer, edition
  * number ignored) is a `PARTY`; everything else goes by the shared concert-venue rule with DJ
  * sets as parties. The description is not sniffed: at this metal/rock-leaning venue
  * `dancefloor`/`disco` show up in tour names (Gutalax's "Shit On The Dancefloor" tour is a
@@ -256,7 +256,7 @@ internal fun inferBinuuEventType(
  * Recurring party series that name themselves as the event and sole performer; lowercase,
  * whitespace-collapsed, edition number stripped. Also on `NON_ARTIST_NAMES`; keep the two in sync.
  */
-private val BINUU_PARTY_SERIES = setOf("groovejet berlin", "ultra night", "boheme sauvage", "fuego36")
+private val BINUU_PARTY_SERIES = setOf("groovejet berlin", "ultra night", "boheme sauvage", "fuego36", "abraxas party")
 
 /** Trailing edition number (`… 5`, `N°141`) ignored when matching [BINUU_PARTY_SERIES]. */
 private val BINUU_TRAILING_EDITION = Regex("""\s+(?:n[°º]\s*)?\d+$""", RegexOption.IGNORE_CASE)

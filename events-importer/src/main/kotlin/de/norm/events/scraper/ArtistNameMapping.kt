@@ -506,6 +506,10 @@ private val NON_ARTIST_NAMES: Set<String> =
         "boheme sauvage",
         // Bi Nuu's salsa party with a live house band; the night's acts are only in its prose (#2316).
         "fuego36",
+        // Bi Nuu's party named for the old Abraxas club; it names no DJ (#2416).
+        "abraxas party",
+        // Heimathafen's classical concert format by klassix; only the prose names the performer (#2416).
+        "auf takt! das podcast-konzert",
         "jazz after dark",
         "future bash reloaded",
         "a dead moon night",

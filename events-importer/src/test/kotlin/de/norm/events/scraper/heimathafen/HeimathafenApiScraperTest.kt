@@ -100,6 +100,15 @@ class HeimathafenApiScraperTest {
         events.single().artists.map { it.name } shouldContainExactly listOf("KAE TEMPEST")
     }
 
+    // A klassix concert format, billed under its own name; only the prose names the performer (#2416).
+    @Test
+    fun `bills no act for a concert format billed under its own name`() {
+        val events = scraper.scrape(payloadWithCast("AUF TAKT! DAS PODCAST-KONZERT", "")).events
+
+        events.single().eventType shouldBe "CONCERT"
+        events.single().artists.shouldBeEmpty()
+    }
+
     @Test
     fun `reports the page's post count so the caller can page`() {
         page.postCount shouldBe 100

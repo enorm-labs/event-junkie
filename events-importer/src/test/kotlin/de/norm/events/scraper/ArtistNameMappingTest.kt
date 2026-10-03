@@ -390,6 +390,9 @@ class ArtistNameMappingTest {
         isNonArtistName("GrooveJet Berlin") shouldBe true
         isNonArtistName("Ultra Night") shouldBe true
         isNonArtistName("FUEGO36") shouldBe true
+        isNonArtistName("Abraxas Party") shouldBe true
+        // Heimathafen's concert format, billed under its own name (#2416).
+        isNonArtistName("AUF TAKT! DAS PODCAST-KONZERT") shouldBe true
         // Recurring series: any edition number matches — both the plain and the N°<n> form.
         isNonArtistName("FEMALE-FRONTED IS NOT A GENRE 5") shouldBe true
         isNonArtistName("FEMALE-FRONTED IS NOT A GENRE 6") shouldBe true
