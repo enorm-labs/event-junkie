@@ -58,6 +58,13 @@ is the map and the traps.
   `pull_request_target`, no checkout, `github-script`. `milestone-dependabot.yml` — same shape; gives every bot PR (Dependabot, Renovate, the release App
   should it open one again) the **oldest open milestone**, never overwrites one, and its dispatch sweeps the backlog. Both match on the bot's login, so a new
   bot joins `BOTS` or arrives without a milestone.
+- `migration-versions.yml` (#2442) — the `Migration versions` commit status on each open PR's head: red when a migration it adds takes a version `main`
+  holds, naming that file and the next free number above `main` and every open PR. `build-backend.yml`'s `migration-versions.sh` step sees `main` only as
+  of the PR's last push, so a `push` to `main` touching `db/migration/` re-checks every open PR; `pull_request` checks the one. **No `paths:` on
+  `pull_request`**, so a PR without a migration gets `success` and the context is never pending. `scripts/migration-collisions.sh` holds the rule and reads
+  only the API; the checkout is that one script. A fork PR's read-only token writes no status, so its run fails on a collision instead, and the status
+  arrives with the next push sweep or `workflow_dispatch`. **Residual race**: two colliding PRs merged within one run both stay green; `release.yml`'s
+  `migration-versions.sh` stops that tree before a cluster.
 - `merge-gate.yml` (#1424) — required; fails when the author is a Bot outside `dependabot[bot]`, `renovate[bot]`, `event-junkie-release[bot]` **unless a
   User has approved the current head**. A push after approval turns it red again; the `claude` App's approval does not count. Runs on `pull_request_target`
   and `pull_request_review` **on purpose**: the file executes as it stands on `main`, so an App with `workflows: write` cannot edit it green from the PR it
@@ -68,7 +75,7 @@ is the map and the traps.
 - `release.yml` — **the only workflow that publishes the product.** Four images and the chart from one computed version, Trivy before push, a snapshot on every
   push to `main`, a release on a `v*` tag. It does not deploy; Flux pulls. Deliberate and easy to "fix" wrongly: **no path filters** (the chart's
   `appVersion` names all image tags, so a chart without all images is broken), **no tests** (the PR gates), but a push waits for both build workflows to pass on the commit (`await-builds.sh`, #2185), and `migration-versions.sh` runs before any
-  build, because the PR gate misses two migrations merged minutes apart (#2183), **two builds per image** (a multi-platform image
+  build, because `migration-versions.yml` misses two colliding PRs merged within one of its runs (#2183, #2442), **two builds per image** (a multi-platform image
   cannot be loaded for scanning before it is pushed), **publishes on an allowlist** (`push`, or a dispatch with `publish` ticked — never "everything but the
   dry run"), and **tests itself on PRs that change it**, because the dispatch button does not exist until the merge that publishes. Uploads the Trivy tables
   as a `trivy-reports` artifact for `publish-failure-issue.yml`.

@@ -9,9 +9,10 @@
 #
 # Two branches can each add the next number under different file names. Git conflicts only on one
 # path, so rebase-and-merge lands both, and Flyway then refuses to start: `Found more than one
-# migration with version 072` (#2183). `release.yml` runs this before it builds, so that tree is never
-# published. `build-backend.yml` runs it on a pull request's merge ref, which catches every duplicate
-# except two PRs whose checks both ran before either merged.
+# migration with version 072` (#2183). `build-backend.yml` runs this on a pull request's merge ref,
+# frozen at its last push. `migration-versions.yml` re-checks every open PR whenever a migration lands
+# on `main` (`migration-collisions.sh`). Two colliding PRs merged within one of its runs still pass both;
+# `release.yml` runs this before it builds, so that tree is never published.
 #
 # A name that does not match `V<digits>__<description>.sql` fails too: Flyway skips it without a word,
 # so `V072_fold.sql` with one underscore would never run.

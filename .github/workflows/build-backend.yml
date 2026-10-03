@@ -102,8 +102,8 @@ jobs:
           persist-credentials: false
 
       # Seconds, before any Gradle. A pull request is checked out as its merge ref, so this sees every
-      # migration `main` holds now. It misses only two PRs whose checks ran before either merged, which
-      # the same step in `release.yml` stops before a cluster (#2183).
+      # migration `main` holds at this push. `migration-versions.yml` re-checks the PR when a later
+      # migration lands; `release.yml` runs this again before it builds (#2183).
       - name: No two migrations share a version
         run: scripts/migration-versions.sh
 
