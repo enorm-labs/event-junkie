@@ -40,18 +40,23 @@ This is the standard "ship it" flow — the manual equivalent of
 
 6. **Push.** `git push -u origin <branch>` to set upstream on first push.
 
-7. **Open the PR.** Use `gh pr create` targeting `main`. Title = the commit subject. Body should have a short **Summary** (what and why) and a **Testing**
-   section stating what was verified (tests run, `/verify` results, or
-   "not tested" if nothing was run — never claim tests that didn't run). Append any PR footer your harness requires. Pass the body via
-   `--body "$(cat <<'EOF' … EOF)"` to preserve formatting.
+7. **Open the PR.** Use `gh pr create` targeting `main`. Title = the commit subject. **The body is
+   [`.github/pull_request_template.md`](../pull_request_template.md), filled in**: `--body` replaces the template, so read it and keep its headings in its
+   order. Pass the body via `--body "$(cat <<'EOF' … EOF)"` to preserve formatting, and append any PR footer your harness requires.
 
-    - **If the change closes an issue, put `Closes #<n>` in the PR body** — on its own line, near the top of the Summary. This repo allows only
+    - `## What and why`: what changed and why; for a larger change, a short list.
+    - `## Checks`: the `/verify` result block, or what ran instead, or "not tested" with the reason. Never claim a check that did not run.
+    - **Delete every section that does not apply**, as the template's comments say. An empty `## After deploy` fails `label-pr.yml`.
+    - `## Privacy & legal`: tick the box, or name the AGENTS.md § Privacy category the change is in and what this PR updates for it.
+    - `## Contributor Licence Agreement`: delete it. The section is for a contributor from a fork; the maintainer's own PRs, and an agent's working for
+      the maintainer, do not carry it.
+    - **If the change closes an issue, put `Closes #<n>` in the PR body** — on its own line, near the top of `## What and why`. This repo allows only
       **Rebase and merge** (squash and merge commits are both disabled), so a closing keyword in a commit message would work too — but the PR body is one line
       to fix when the number changes, whereas a commit means rewriting history, and it survives the amending a branch goes through during review. Use `Closes`
       rather than `Fixes`/`Resolves`, one line per issue.
     - **Set the milestone to the issue's own** (`gh pr edit <pr> --milestone '…'`). Every closed PR in this repo carries a milestone — the 255 that predate the
       tracker were backfilled into `Phase 0 — Foundation` — and a PR without one is the exception that makes the milestone view stop meaning anything.
-    - **If a visitor can see the change, attach before and after screenshots.** Reference each under `## Screenshots` as `![<what it shows>](./<file>.png)`
+    - **If a visitor can see the change, attach before and after screenshots.** Reference each under the template's `## Screenshots` as `![<what it shows>](./<file>.png)`
       and pass the same path with `--attach`; `gh` uploads the file and rewrites the link. A design rule change needs the picture
       ([design.instructions.md](../instructions/design.instructions.md) § How a rule leaves this list). Mechanics: the [`gh` skill](../../.claude/skills/gh/SKILL.md).
     - **Say what has to happen after it deploys**, if anything: a forced import so a parser fix reaches stored rows, a check that a migration ran, a
@@ -87,7 +92,7 @@ This is the standard "ship it" flow — the manual equivalent of
 ## Notes
 
 - **Verify before shipping (optional but encouraged).** If the change touches code (not just Markdown), consider running [`/verify`](verify.prompt.md) — or at
-  least the relevant subset — before step 5, and record the outcome in the PR's Testing section. If the user asked to skip verification, honour that but say the
+  least the relevant subset — before step 5, and record the outcome in the PR's `## Checks` section. If the user asked to skip verification, honour that but say the
   PR is unverified.
 - **Multiple logical changes.** If the diff spans clearly unrelated concerns, say so and offer to split them across commits (or PRs) rather than bundling
   everything into one.
