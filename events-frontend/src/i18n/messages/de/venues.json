@@ -1,6 +1,9 @@
 {
   "title": "Locations",
   "subtitle": "Jede Bühne, jeder Club und jeder Saal, die wir in Berlin im Blick haben.",
+  "missing": "Fehlt eine Location? Schlag sie per E-Mail vor:",
+  "missingSubject": "Fehlende Location",
+  "missingBody": "Name der Location:\nWebsite:\n",
   "searchPlaceholder": "Locations durchsuchen …",
   "empty": "Zu dieser Suche gibt es keine Location. Versuch es mit einem anderen Namen.",
   "byDistrict": "Nach Bezirk filtern",

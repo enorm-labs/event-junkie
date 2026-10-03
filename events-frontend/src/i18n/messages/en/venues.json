@@ -1,6 +1,9 @@
 {
   "title": "Venues",
   "subtitle": "Every stage, club, and hall we track across Berlin.",
+  "missing": "Missing a venue? Suggest it by email:",
+  "missingSubject": "Missing venue",
+  "missingBody": "Venue name:\nWebsite:\n",
   "searchPlaceholder": "Search venues…",
   "empty": "No venues match that search. Try a different name.",
   "byDistrict": "Filter by district",

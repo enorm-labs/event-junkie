@@ -26,7 +26,7 @@ test('states the data disclaimer without needing a click', async ({ page }) => {
   )
 })
 
-test('links to the repository, the issue tracker and the releases', async ({ page }) => {
+test('links the repository, the mailbox, the tracker and the releases', async ({ page }) => {
   await page.goto('/about')
   const footer = page.getByRole('contentinfo')
 
@@ -34,7 +34,11 @@ test('links to the repository, the issue tracker and the releases', async ({ pag
     'href',
     'https://github.com/enorm-labs/event-junkie',
   )
-  await expect(footer.getByRole('link', { name: 'Report an issue' })).toHaveAttribute(
+  await expect(footer.getByRole('link', { name: 'Feedback by email' })).toHaveAttribute(
+    'href',
+    /^mailto:hello@event-junkie\.de\?subject=/,
+  )
+  await expect(footer.getByRole('link', { name: 'Report on GitHub' })).toHaveAttribute(
     'href',
     /\/issues\/new/,
   )

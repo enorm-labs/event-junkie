@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import { mount, type VueWrapper } from '@vue/test-utils'
 import AppFooter from '@/components/AppFooter.vue'
+import { CONTROLLER } from '@/lib/legal'
 import { REPOSITORY_URL } from '@/lib/links'
 
 /** Stub RouterLink to a plain anchor so in-app routes are assertable without a full router. */
@@ -11,9 +12,9 @@ const stubs = {
 
 const mount_ = () => mount(AppFooter, { global: { stubs } })
 
-/** Links that leave the site — everything except the in-app `/legal/*` routes. */
+/** Links that open another site: neither the in-app `/legal/*` routes nor the mail link. */
 const external = (wrapper: VueWrapper) =>
-  wrapper.findAll('a').filter((a) => !a.attributes('href')?.startsWith('/'))
+  wrapper.findAll('a').filter((a) => /^https?:/.test(a.attributes('href') ?? ''))
 
 describe('AppFooter', () => {
   it('renders the disclaimer, which is the point of the footer body', () => {
@@ -63,6 +64,13 @@ describe('AppFooter', () => {
     ])
     // A RouterLink, so no full page reload and no new tab.
     for (const link of legal) expect(link.attributes('target')).toBeUndefined()
+  })
+
+  it('offers feedback by mail, which needs no GitHub account', () => {
+    const wrapper = mount_()
+    const mail = wrapper.get(`a[href^="mailto:${CONTROLLER.email}"]`)
+    expect(mail.text()).toBe('Feedback by email')
+    expect(mail.attributes('target')).toBeUndefined()
   })
 
   it('links the contribution guide', () => {

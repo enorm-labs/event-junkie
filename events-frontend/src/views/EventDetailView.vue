@@ -7,6 +7,9 @@ import CachedImage from '@/components/CachedImage.vue'
 import SectionLabel from '@/components/SectionLabel.vue'
 import { useEvent } from '@/composables/useEvent'
 import { descriptionFor } from '@/lib/description'
+import { feedbackMailto } from '@/lib/feedback'
+import { CONTROLLER } from '@/lib/legal'
+import { canonicalUrl } from '@/lib/seo'
 import { usePageMeta } from '@/composables/usePageMeta'
 import { APP_NAME, eventPageMeta, notFoundPageMeta, placeholderPageMeta } from '@/lib/pageMeta'
 import { useStructuredData } from '@/composables/useStructuredData'
@@ -83,6 +86,18 @@ const { formatEventDates, formatEventTime, eventTimeHint, formatEventStatus, for
 const timeHint = computed(() => (event.value ? eventTimeHint(event.value) : null))
 
 const { t, te, locale } = useI18n()
+
+// The page's URL in the body, so a report names its event without the visitor copying anything.
+const reportMailto = computed(() =>
+  event.value?.slug
+    ? feedbackMailto(
+        t('events.detail.reportSubject', { title: event.value.title ?? event.value.slug }),
+        t('events.detail.reportBody', {
+          url: canonicalUrl(locale.value as Locale, `/events/${event.value.slug}`),
+        }),
+      )
+    : null,
+)
 
 // The text for this locale, its language, and whether a machine wrote it, shared with the page
 // meta, the structured data and the injector (lib/description.ts). Below `useI18n()` as
@@ -418,6 +433,14 @@ useStructuredData((): JsonLd[] => {
           }}</a>
         </Button>
       </section>
+
+      <!-- The address is the link text, so a visitor without a mail client can still copy it. -->
+      <p v-if="reportMailto" class="text-body text-muted-foreground">
+        {{ t('events.detail.reportWrong') }}
+        <a :href="reportMailto" class="text-foreground underline underline-offset-4">{{
+          CONTROLLER.email
+        }}</a>
+      </p>
     </article>
   </main>
 </template>
