@@ -89,5 +89,5 @@
   "engines": {
     "node": ">=24.15.0"
   },
-  "//version": "Mirrors `version` in the root gradle.properties, which is the single source of truth. Deliberately WITHOUT the -SNAPSHOT suffix (npm SemVer has no such convention), so the two files are intentionally not byte-identical. Kept in step by hand — see docs/LEGAL.md §4.6. The version the site displays comes from GET /meta, never from here."
+  "//version": "A placeholder. No file carries the version (ADR-032), and no release changes this field. The version the site displays comes from GET /meta, never from here. See docs/LEGAL.md §4.6."
 }

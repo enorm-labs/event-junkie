@@ -96,7 +96,7 @@ Applied to the current catalogue:
 
 | Rank | Issue                             | Dimension    | Impact | Prevalence   | Fix path                                               |
 | ---- | --------------------------------- | ------------ | ------ | ------------ | ------------------------------------------------------ |
-| 1    | Missing headliner                 | Completeness | 🔴     | ~40%         | Deterministic — **Pillar 3, ready now**                |
+| 1    | Missing headliner                 | Completeness | 🔴     | 3.5%         | Deterministic — **Pillar 3, done**                     |
 | 2    | `eventType = OTHER`               | Validity     | 🟠     | high         | Measure → heuristic / AI (Pillar 4)                    |
 | 3    | Non-artist title as artist        | Accuracy     | 🟠     | low          | Classifier (Pillar 4) + curation queue                 |
 | 4    | Promoter/artist residual variants | Consistency  | 🟠     | low          | Promoters: done by review (#328); artists: curated map |
@@ -141,12 +141,14 @@ the canonicalizers). Borrow three ideas:
 2. **DQ-dimensions taxonomy** (§2.1) — for categorizing and reporting.
 3. **Quality-as-observability** — track metrics _over time_, not just a snapshot.
 
-For **dashboards & trends**, reuse an external BI/observability tool rather than building a bespoke UI (this is [issue #386](https://github.com/enorm-labs/event-junkie/issues/386), _"A dashboard for analysing
-the data"_):
+For **dashboards and trends**, use an existing tool and do not build a bespoke UI. [Issue #386](https://github.com/enorm-labs/event-junkie/issues/386) is
+_"A dashboard for analysing the data"_.
 
-- **SQL-based BI** (Apache Superset / Metabase) pointed straight at the Postgres
-  `events` schema and a metrics-snapshot table — best for data-level dashboards.
-- **Metrics observability** (Micrometer → Prometheus → Grafana via the Actuator already in the importer) — best for operational trend lines and alerting.
+- **Metrics observability in OpenObserve** ([ADR-015](adr/ADR-015_OBSERVABILITY_STACK.md)). The importer exports the
+  `data_quality{source,metric}` gauges through Micrometer and its Actuator. `deploy/dashboards/gen_dashboard.py`
+  generates the OpenObserve dashboard that charts them. This is best for operational trend lines and alerting.
+- **SQL-based BI** (Apache Superset or Metabase) on the Postgres `events` schema and the `data_quality_snapshot` table.
+  This is best for data-level dashboards.
 
 See the Pillar 1 plan for how the metrics are exposed to feed these.
 
@@ -167,7 +169,7 @@ The keystone. Everything else is judged against these numbers.
   growing `NON_ARTIST_NAMES`, `NAME_CORRECTIONS` and the genre synonym map. No bespoke frontend yet (see §7). A
   steward acts on the worklist through the existing `PUT /api/admin/events/{id}` API, Swagger and `.http` files.
 
-_Exit criterion:_ a per-source number for each headline metric, chartable in an external BI tool (§4). Pillars 3–4 are
+_Exit criterion:_ a per-source number for each headline metric, chartable in an external tool (§4). Pillars 3–4 are
 then judged by whether those numbers move.
 
 _Shipped 2026-08-19_ as `de.norm.events.dataquality` in `events-importer`, closing
@@ -210,11 +212,12 @@ they are excluded rather than counted as unreviewed.
 
 ### Pillar 3 — Fix (recover missing / bad data) 🔴 highest user-visible payoff
 
-- **Title-as-headliner extraction** for Privatclub, Cassiopeia, and Badehaus — the
-  work in [issue #321](https://github.com/enorm-labs/event-junkie/issues/321) that reclaims the ~40% of artist-less concerts. Now safe:
-  `isNonArtistName` + `stripArtistSuffix` guard against non-artist titles, and Astra/Lido already do exactly this via `buildArtistsForEventType`.
-- **One-off backfill pass** over existing rows for the same recoverable fields — artist from title, event type from
-  title heuristics. Run it once after the extraction ships, so historical rows benefit too.
+- **Title-as-headliner extraction** ([issue #321](https://github.com/enorm-labs/event-junkie/issues/321)). `buildArtistsForEventType` and
+  `headlinersFromTitle` take the headliner from the title in 49 scrapers. `isNonArtistName` and `stripArtistSuffix`
+  guard against non-artist titles. §1 measures what is left: 3.5% of concerts carry no artist.
+- **One backfill pass** over the existing rows, done under [#1632](https://github.com/enorm-labs/event-junkie/issues/1632). On 2026-09-21 it force-imported
+  all 86 sources on production, and the artist rows went from 4,933 to 5,006. Upcoming rows re-import every
+  day. Slug-keyed data migrations repair past rows.
 
 ### Pillar 4 — Systematize (escape the curated-list treadmill) 🔵 biggest lever
 
@@ -247,8 +250,9 @@ These are recorded, not yet resolved — settle them before the pillar that need
   the existing `PUT /api/admin/events/{id}` API, Swagger and `.http` files. A dedicated review frontend is deferred to
   the backlogged _"Admin frontend to review, enrich & fix event data"_ item. The DQ work provides the _signal_, and
   that frontend will provide the _fix surface_. Avoid building a second admin app.
-- **Dashboard — external BI tool, not a bespoke UI** (§4). Reuse the backlogged Superset/Grafana/Kibana item. Pillar 1
-  exposes metrics in a shape those tools consume.
+- **Dashboard — an existing tool, not a bespoke UI** (§4). The OpenObserve dashboard charts the metrics, and #386
+  adds the remaining `data_quality` panels. Pillar 1 exposes the metrics in a shape that OpenObserve and SQL-based BI
+  consume.
 
 ## 7. Sequencing
 
@@ -262,7 +266,7 @@ These are recorded, not yet resolved — settle them before the pillar that need
 
 ## 8. Success metrics
 
-Tracked via the Pillar 1 report, per source and overall, and charted over time in an external BI tool (§4):
+Tracked via the Pillar 1 report, per source and overall, and charted over time in an external tool (§4):
 
 - **Concert headliner coverage** — % of `CONCERT` events with ≥1 artist. The measured baseline is **96.5%** (§1), not
   the ~60% this section carried before anything was counted.
@@ -275,6 +279,6 @@ Tracked via the Pillar 1 report, per source and overall, and charted over time i
 The four pillars are issues [#319](https://github.com/enorm-labs/event-junkie/issues/319) (Measure),
 [#320](https://github.com/enorm-labs/event-junkie/issues/320) (Prevent), [#321](https://github.com/enorm-labs/event-junkie/issues/321) (Fix) and
 [#322](https://github.com/enorm-labs/event-junkie/issues/322) (Systematize). The admin review frontend and imports-status dashboard are
-[#340](https://github.com/enorm-labs/event-junkie/issues/340) and its sub-issues. The Superset/Grafana dashboard (§4)
-is [#386](https://github.com/enorm-labs/event-junkie/issues/386). This doc is the _why and in what order_, and the
+[#340](https://github.com/enorm-labs/event-junkie/issues/340) and its sub-issues. The data-quality panels in the OpenObserve dashboard (§4)
+are [#386](https://github.com/enorm-labs/event-junkie/issues/386). This doc is the _why and in what order_, and the
 issues are the _what_.

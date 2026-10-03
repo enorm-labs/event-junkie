@@ -99,27 +99,24 @@ exposes as a `BuildProperties` bean.
 `/actuator/info` is for operators and is **not** publicly routed. `GET /meta` is the public endpoint the frontend
 calls. An actuator endpoint on the public ingress is a larger surface than one JSON route.
 
-### 4.6 `package.json` mirrors it by hand
+### 4.6 `package.json` carries a placeholder
 
-**`package.json`'s `version` mirrors the Gradle version by hand**, without the `-SNAPSHOT` suffix. Automating it was
-considered and rejected as more machinery than the problem deserves. The convention is recorded in both `AGENTS.md`
-files.
+**`package.json`'s `version` is `0.0.0`, and no release changes it.** The site reads its version from `GET /meta`, never
+from this field.
 
 ### 4.7 Versioning scheme
 
-First public version **`0.1.1`**, and `main` carries `0.1.1-SNAPSHOT`. Reaching `1.0.0` and dropping the beta badge
-(§5) are **one decision, not two**.
+**No file carries the version** ([ADR-032](adr/ADR-032_VERSION_FROM_TAGS.md)). `cut-release.yml` writes each release as a
+`vX.Y.Z` tag. `X.Y.Z` is the number that the commits since the last tag deserve, by the rule of
+[ADR-025](adr/ADR-025_RELEASE_VERSION_FROM_COMMITS.md). A build of a release tag reports `X.Y.Z`. A build of any other
+commit reports `X.Y.Z-snapshot.<timestamp>.g<sha>`, a prerelease of the coming release. Reaching `1.0.0` and dropping
+the beta badge (§5) are **one decision, not two**.
 
 **The footer links a version to its release page only when it is a released `X.Y.Z` triple.** It shows every other
 version as plain text: the number is always displayed, and only the link is withheld. That is stated positively on
-purpose, matching the `semverFilter` production's `OCIRepository` uses to answer the same question. The negative form
-(`-SNAPSHOT`) is a spelling that exists only in the `gradle.properties` placeholder, while a deployed build reports a computed version
-(`0.1.1-snapshot.20260817180146.g787d7d0`). Snapshots are published to GHCR and never tagged in git, so there is
-nothing for those links to point at.
-
-`0.1.0` was skipped and never published. It was spent on snapshots, and the base version had to move past them for
-ordering reasons. docs/DEVELOPMENT.md §Versions has the SemVer rule. Nothing depends on the first public number being
-`.0`.
+purpose, matching the `semverFilter` production's `OCIRepository` uses to answer the same question. A snapshot is
+published to GHCR but never tagged, so there is no release page for its link. A local build without `-Pversion`
+reports the `0.0.0-SNAPSHOT` placeholder from `gradle.properties`, and the footer shows it without a link.
 
 ## 5. The beta marker
 
@@ -701,8 +698,8 @@ Settled questions, so they are not re-litigated. The reasoning is in the section
 | --- | ---------------------- | ----------------------------------------------------------------------------------------------------------------- | -------------------- |
 | 1   | Imprint address        | A rented _ladungsfähige Anschrift_ from Postflex, €39.90/yr. `c/o` is its own field                               | §8.3                 |
 | 2   | Legal-page language    | English and German, German authoritative                                                                          | §6.1                 |
-| 3   | First public version   | `0.1.1`; `main` carries `0.1.1-SNAPSHOT`; only a released `X.Y.Z` links; `0.1.0` skipped                          | §4.7                 |
-| 4   | `package.json` version | Mirrors the Gradle version, kept in step by hand, without `-SNAPSHOT`                                             | §4.6                 |
+| 3   | Version scheme         | Computed from the release tags and commits, and no file carries it. Only a released `X.Y.Z` links                 | §4.7                 |
+| 4   | `package.json` version | A `0.0.0` placeholder. The site reads `GET /meta`                                                                 | §4.6                 |
 | 5   | Actuator               | `/actuator/info` internally **and** `GET /meta` publicly — same bean, different consumers                         | §4.4                 |
 | 6   | Code of Conduct        | Contributor Covenant **3.0** (not GitHub's built-in 2.1 template)                                                 | `CODE_OF_CONDUCT.md` |
 | 7   | Donations              | Possible later. `FUNDING.yml` first; on the site link out, never embed                                            | §8.4                 |
