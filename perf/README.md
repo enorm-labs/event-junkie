@@ -124,13 +124,13 @@ A load test's p95 only describes traffic that can occur, so `load.js` weights it
 
 **Count a page by the request only that page makes on mount.** The detail endpoints are useless for this: the injector reads an event for every detail page
 nginx serves, and Baiduspider runs the SPA, so `/api/events/{slug}` and `/api/artists/{slug}` showed tens of thousands of calls against about a hundred human
-landings. Human page loads come from the nginx log with the `NOT_A_PERSON` pattern in `scripts/o2-query.sh`, plus three user agents it does not catch:
-`Nexus 5X Build/MMB29P` (Google's renderer), `moto g power (2022)` (Lighthouse mobile) and `Chrome/48.` (an old crawler). Artist and promoter pages had
+landings. Human page loads come from the nginx log with the `NOT_A_PERSON` pattern in `scripts/o2-query.sh`. It also removes three user agents with no bot
+word: `Nexus 5X Build/MMB29P` (Google's renderer), `moto g power` (Lighthouse mobile) and `Chrome/48.0.2564.116` (an old crawler). Artist and promoter pages had
 under ten human landings in the week, so `load.js` leaves them out.
 
 **The numbers are small and still carry noise.** A few hundred sessions a week, and Lighthouse desktop runs share a user agent with real Mac Chrome. To
 re-derive the mix, count the mount requests over the 14 days OpenObserve keeps, count event landings with the `PAGE_LOAD` and `NOT_A_PERSON` patterns
-of `scripts/o2-query.sh` plus the three user agents above, and replace this table and the comment in `load.js` together:
+of `scripts/o2-query.sh`, and replace this table and the comment in `load.js` together:
 
 ```bash
 scripts/o2-query.sh production sql "SELECT path, COUNT(*) AS n FROM default WHERE k8s_app_component = 'bff' AND path IN ('/api/events/today','/api/events/calendar','/api/genres','/api/venues') GROUP BY path" --hours 336
