@@ -5,10 +5,10 @@ remaining work is visible at a glance.
 
 ## The short version
 
-Four tables, one per import status, and the counts below are the state of the work. **[Ready](#-ready-to-implement) is
-the one to read** — those rows are the next `/scaffold-importer` runs. Everything in
-[Blocked](#-blocked--deferred) names what would unblock it. One of those blockers is worth more than the rest:
-**resolving a venue per event**, so a promoter listing can be imported. **Resident Advisor is not a source.** Its
+Four tables, one per import status, and a fifth for promoters. The counts below are the state of the work.
+**[Ready](#-ready-to-implement) is the one to read** — those rows are the next `/scaffold-importer` runs. Everything in
+[Blocked](#-blocked--deferred) names what would unblock it. One blocker is worth more than the rest: **resolving a
+venue per event**, so a [promoter](#-promoters) listing can be imported. **Resident Advisor is not a source.** Its
 terms forbid automated access, and [Blocked](#-blocked--deferred) says what that means for a venue that publishes only
 there.
 
@@ -24,7 +24,8 @@ repairing live in the [issue tracker](https://github.com/enorm-labs/event-junkie
 | ----------------------------------- | ------------------------------------------------------------------------------------ | ----: |
 | ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   111 |
 | 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |    16 |
-| ⛔ [Blocked](#-blocked--deferred)   | Website analyzed, but no usable listings (no programme page, JS-only, or too sparse) |   150 |
+| ⛔ [Blocked](#-blocked--deferred)   | Website analyzed, but no usable listings (no programme page, JS-only, or too sparse) |   140 |
+| 📣 [Promoters](#-promoters)         | Cross-venue listings; none is importable until a venue is resolved per event (#324)  |    10 |
 | ❓ [Unanalyzed](#-not-analyzed-yet) | URL recorded, but the website still needs a first look                               |    26 |
 
 A count is the number of rows in its table. `scripts/sources-parity.sh` checks each count, in CI and in the
@@ -254,26 +255,10 @@ them:
 - **Prachtwerk** gained a Programm page that is empty (Squarespace reports `itemCount: 0`). Its gigs are real, and
   they reach the web only through Loft's listing, which names Prachtwerk more often than any other house.
 - **Loft** was blocked on thin, year-less dates. Its redesign turned it into a full cross-venue promoter listing, so
-  it now shares the promoter blocker below.
+  it is now in [Promoters](#-promoters).
 
 **Artliners Berlin**'s domain stopped resolving altogether. Bohnengold, OXI and Zuckerzauber still redirect to Facebook
 or Instagram. Their HTTPS is broken, so they answer only over `http://`.
-
-**Promoter sources are deferred on a model limitation, not a scraping one.** Puschen, Trinity Music, Landstreicher
-Booking, Landstreicher Konzerte and Loft all publish clean, well-structured listings that name the venue per event.
-Puschen's 35 upcoming shows are spread over about 20 houses, and Loft's 135 over about the same. But an event's venue
-comes from its `event_source` row (`EventUpsertService.upsertAndCleanup(events, venueId, …)`), one venue per source.
-A promoter's events therefore cannot be attached to the houses they actually play. Importing one today would file
-every show under a pseudo-venue, _and_ duplicate what the venues' own importers already hold. About 30 of Puschen's 35
-are at venues already imported. Unblocking them means resolving a venue per event and de-duplicating against the
-venue-level sources. Until then the promoter data reaches us anyway, as the `promoter` field on the venues' own
-events.
-
-**Tag der Clubkultur** has the same blocker, and it runs only once a year. The Clubcommission festival week in October
-2026 listed 130 events at about 80 places. About half of these places are already imported. Many events are panels,
-workshops, exhibitions or screenings, which are out of scope. The listing is server-rendered WordPress. Each event page
-gives labelled fields for date, time, venue with address, ticket price, link and line-up. When per-event venue
-resolution exists, this source is easy to parse. Until then, use the programme to find new venues.
 
 **Alte Feuerwache THF** is a seasonal interim use at Tempelhof airport. Its 2026 season ends on 17 October. The
 calendar is server-rendered, with dates, categories and line-ups, so it is easy to parse. Look at it again when the
@@ -416,14 +401,6 @@ the empty Next.js payload rather than the WAF, and a 403 is not evidence that a 
 | Prachtwerk                       | https://www.prachtwerkberlin.com/              | Bar          | Has a Programm page now, but it is empty                  | Site change                |
 | Wiener Blut                      | https://www.wienerblut.org/                    | Bar          | Impressum-only page                                       | Site change                |
 | Paloma                           | https://www.palomabar.de/                      | Bar          | Party names + DJ lineups but **no dates**                 | Havanna-style occurrences  |
-| Loft                             | https://loft.de/                               | Promoter     | Cross-venue; one venue per source (see note)              | Per-event venue resolution |
-| Greyzone Tickets                 | https://www.greyzone-tickets.de/               | Promoter     | Contact info only; ticket service, not a listing          | —                          |
-| Landstreicher Booking            | https://landstreicher-booking.de/              | Promoter     | Cross-venue; one venue per source (see note)              | Per-event venue resolution |
-| Landstreicher Konzerte           | https://landstreicher-konzerte.de/             | Promoter     | Cross-venue, cross-city; also has `/venue/` pages         | Per-event venue resolution |
-| Puschen                          | https://puschen.net/berlin/                    | Promoter     | Cross-venue; one venue per source (see note)              | Per-event venue resolution |
-| Trinity Music                    | https://trinitymusic.de/                       | Promoter     | Cross-venue; one venue per source (see note)              | Per-event venue resolution |
-| Sofar Sounds                     | https://www.sofarsounds.com/cities/berlin      | Promoter     | Secret venues; only the district is published             | Not importable             |
-| Tag der Clubkultur               | https://tagderclubkultur.berlin/programm/      | Promoter     | Cross-venue; one festival week a year (see note)          | Per-event venue resolution |
 | Arena Berlin                     | https://www.arena.berlin/veranstaltungen/      | Concert Hall | Tribe calendar now, but trade fairs only                  | Site change / promoter     |
 | Frannz Salon                     | https://frannz.eu/                             | Club         | Not a separate listing; a floor of Frannz nights          | Covered by FRANNZ          |
 | Kesselhaus                       | https://www.kesselhaus.net/                    | Concert Hall | Angular PWA app shell; no JSON endpoint found             | Headless browser           |
@@ -445,7 +422,6 @@ the empty Next.js payload rather than the WAF, and a 403 is not evidence that a 
 | Golgatha                         | https://golgatha-berlin.de/                    | Open Air     | Beer garden; no programme page; winter break              | Not importable             |
 | Guesstimate                      | https://guesstimate.de/                        | Other        | Music agency and studio, not a venue                      | Not importable             |
 | Interkosmos                      | https://www.interkosmos.cc/                    | Bar          | WP REST `events`; 2 stale entries without dates           | More events / re-check     |
-| Jazz am Helmholtzplatz           | http://www.jazzamhelmholtzplatz.com/           | Promoter     | Cross-venue; venue only in free text                      | Per-event venue resolution |
 | Kumpelnest 3000                  | http://www.kumpelnest3000.com/                 | Bar          | Static site; last event 2017; news on Facebook            | Site change                |
 | Nuke Club                        | http://nukeclub.berlin/                        | Club         | Lost its venue in 2021; TEC API returns 0 events          | Not importable             |
 | Per Aspera                       | https://per-aspera.net/                        | Theater      | Production company, not a venue; last event 2013          | Not importable             |
@@ -455,7 +431,6 @@ the empty Next.js payload rather than the WAF, and a 403 is not evidence that a 
 | Silverwings                      | https://silverwings.de/program.html            | Club         | Contao list empty; programme only on Facebook             | Site change                |
 | solar                            | https://solar-berlin.de/                       | Bar          | Sky bar; the only event is a Christmas brunch             | More events / re-check     |
 | Taff Club                        | https://www.taff-club.de/                      | Club         | Holding page; new site promised for 2026-10-08            | More events / re-check     |
-| Tränenpalast                     | https://traenenpalast.tickettoaster.de/tickets | Promoter     | Talk-show agency; all dates at other venues               | Not importable             |
 | Trompete                         | https://www.trompete-berlin.de/                | Club         | Squarespace; weekly Thu/Sat hours, no dates               | Site change / manual entry |
 | Village Berlin                   | https://wearevillage.org/kalender              | Other        | Queer community centre; workshops, no music               | Not importable             |
 | Zu Mir Oder Zu Dir               | https://www.zumiroderzudir.com/                | Bar          | Archived one-pager; opening hours only                    | Site change / manual entry |
@@ -507,6 +482,41 @@ the empty Next.js payload rather than the WAF, and a 403 is not evidence that a 
 | Ballhaus Berlin                  | https://ballhaus-berlin.de/de/termine/         | Club         | `robots.txt` answers 500, so every fetch is refused       | Site change                |
 | Kunstfabrik Schlot               | https://kunstfabrik-schlot.de/programm/        | Club         | `robots.txt` disallows every path (`Disallow: *`)         | Site change                |
 | Soulcat                          | https://soulcat-berlin.com/programm/           | Bar          | TEC calendar lists only its opening nights, one vinyl bar | Site change / manual entry |
+
+## 📣 Promoters
+
+A promoter is a different kind of source from a venue. It lists events at many houses and has no house of its own.
+None of these rows is importable today. A row moves to [Ready](#-ready-to-implement) only when the blocker below is
+gone.
+
+**Promoter sources are deferred on a model limitation, not a scraping one.** Puschen, Trinity Music, Landstreicher
+Booking, Landstreicher Konzerte and Loft all publish clean, well-structured listings that name the venue per event.
+Puschen's 35 upcoming shows are spread over about 20 houses, and Loft's 135 over about the same. But an event's venue
+comes from its `event_source` row (`EventUpsertService.upsertAndCleanup(events, venueId, …)`), one venue per source.
+A promoter's events therefore cannot be attached to the houses they actually play. Importing one today would file
+every show under a pseudo-venue, _and_ duplicate what the venues' own importers already hold. About 30 of Puschen's 35
+are at venues already imported. Unblocking them means resolving a venue per event and de-duplicating against the
+venue-level sources (#324). Until then the promoter data reaches us anyway, as the `promoter` field on the venues' own
+events.
+
+**Tag der Clubkultur** has the same blocker, and it runs only once a year. The Clubcommission festival week in October
+2026 listed 130 events at about 80 places. About half of these places are already imported. Many events are panels,
+workshops, exhibitions or screenings, which are out of scope. The listing is server-rendered WordPress. Each event page
+gives labelled fields for date, time, venue with address, ticket price, link and line-up. When per-event venue
+resolution exists, this source is easy to parse. Until then, use the programme to find new venues.
+
+| Name                   | URL                                            | Blocker                                           | Unblocked by               |
+| ---------------------- | ---------------------------------------------- | ------------------------------------------------- | -------------------------- |
+| Loft                   | https://loft.de/                               | Cross-venue; one venue per source (see note)      | Per-event venue resolution |
+| Greyzone Tickets       | https://www.greyzone-tickets.de/               | Contact info only; ticket service, not a listing  | —                          |
+| Landstreicher Booking  | https://landstreicher-booking.de/              | Cross-venue; one venue per source (see note)      | Per-event venue resolution |
+| Landstreicher Konzerte | https://landstreicher-konzerte.de/             | Cross-venue, cross-city; also has `/venue/` pages | Per-event venue resolution |
+| Puschen                | https://puschen.net/berlin/                    | Cross-venue; one venue per source (see note)      | Per-event venue resolution |
+| Trinity Music          | https://trinitymusic.de/                       | Cross-venue; one venue per source (see note)      | Per-event venue resolution |
+| Sofar Sounds           | https://www.sofarsounds.com/cities/berlin      | Secret venues; only the district is published     | Not importable             |
+| Tag der Clubkultur     | https://tagderclubkultur.berlin/programm/      | Cross-venue; one festival week a year (see note)  | Per-event venue resolution |
+| Jazz am Helmholtzplatz | http://www.jazzamhelmholtzplatz.com/           | Cross-venue; venue only in free text              | Per-event venue resolution |
+| Tränenpalast           | https://traenenpalast.tickettoaster.de/tickets | Talk-show agency; all dates at other venues       | Not importable             |
 
 ## ❓ Not analyzed yet
 
@@ -569,7 +579,7 @@ Where candidates come from, and what is deliberately left out:
 - **The promoter listings** — Loft, Puschen, Landstreicher Booking and Trinity Music. They add venues RA does not
   surface, and they are seated or open-air houses rather than clubs. Chasing down the Gärten der Welt URL surfaced
   **Landstreicher Konzerte**, a separate outfit from Landstreicher Booking, now filed under
-  [Blocked](#-blocked--deferred) on the same per-event-venue limitation.
+  [Promoters](#-promoters) on the same per-event-venue limitation.
 - **tipBerlin** (<https://www.tip-berlin.de/ausgehen/konzerteclubs/>), the city magazine's calendar. It is a
   WordPress site, and `/wp-json/wp/v2/event` returns every event with a `location-<slug>` class. Cloudflare Turnstile
   answers curl with 403, so the sweep ran in a browser. It held 6209 events at 363 locations with a music category.
@@ -603,7 +613,7 @@ Two source lists were worked through completely and are no longer reproduced her
 
 - The 48 venues of the **Trinity Music location directory** (<https://trinitymusic.de/locations>). 17 were already
   imported, and the other 31 are filed above. The venue-level rows carry this list now. The **Trinity Music** promoter
-  source itself is deferred (see [Blocked](#-blocked--deferred)), and a venue site usually yields richer data than a
+  source itself is deferred (see [Promoters](#-promoters)), and a venue site usually yields richer data than a
   promoter listing anyway.
 - The **techno-club cluster** — 26 clubs and bars, of which 13 turned out to be scrapable. The other 13 publish only
   through Instagram, Facebook or Resident Advisor. RA is not a source (see [Blocked](#-blocked--deferred)), so those 13
