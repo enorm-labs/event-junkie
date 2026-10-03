@@ -42,25 +42,38 @@ after _n_ pull requests, or `until <HH:MM>` to stop starting new issues at that 
     >
     > 1. Follow `.github/prompts/start-issue.prompt.md` steps 1–6: read, check, claim, branch, plan. Branch with
     >    `git fetch origin && git checkout -b <type>/<N>-<slug> <base>`; `git checkout main` fails in a worktree. Skip step 7: no approval comes.
-    > 2. Implement. Run the `/verify` gates the diff touches (`.github/prompts/verify.prompt.md`). Run `/importer-smoke` for an importer change.
+    > 2. Implement. Run the `/verify` gates the diff touches (`.github/prompts/verify.prompt.md`), except the Playwright e2e suite: CI runs it.
+    >    Run `/importer-smoke` for an importer change. A parity script without an argument fixes files; pass `check`.
     > 3. Open the PR by `.github/prompts/open-pr.prompt.md`, with `--draft`. Add `--base <parent-branch>` if the base is not `origin/main`. Add these
     >    sections after `## What and why`, and delete each one that is empty:
     >     - `## Decisions I made`: one line each. What I chose, the alternative, how to reverse it.
     >     - `## Open questions`: what the user has to answer before this can merge.
     >     - `## Stacked on`: `#<parent PR>`. Merge that one first.
-    > 4. Watch the checks as open-pr step 8 says. On red, fix, amend, `--force-with-lease`, and watch again. Stop after two failed fixes and report the
-    >    PR as red.
+    > 4. Do not watch the checks. After the PR opens, run `git checkout --detach origin/main` and report the checks as pending.
     >
     > Decide reversible choices yourself: take the option that changes less, and write it under `## Decisions I made`. If the issue needs something
     > irreversible, a product or legal call, a cluster, or a Privacy & GDPR category from AGENTS.md, park it: open no PR. Leave the branch pushed if it holds
     > useful work. Never: merge, mark ready, auto-merge, close or comment on an issue, run tofu/flux/cluster commands, start another issue.
     >
-    > Report: PR URL or "parked", the branch, the check result, the decisions, the open questions, and the reason if parked.
+    > Report: PR URL or "parked", the branch and its head sha, the decisions, the open questions, and the reason if parked.
 
 5. **After each subagent returns, update the handover** before starting the next issue. Then check the stop conditions: `max`, `until`, and an empty
    queue.
 
-6. **End the run.**
+6. **Check CI on every PR of this run, once, after the last issue.** Nothing waits for CI per issue: CI takes about eight minutes, and the next issue
+   starts while it runs.
+
+    ```sh
+    gh pr checks <n> --json name,bucket,link --jq '.[] | select(.bucket != "pass" and .bucket != "skipping")'
+    ```
+
+    - Pending: wait with the loop from [`/open-pr`](open-pr.prompt.md) step 8, in the background.
+    - Red: read the log (`gh run view <run-id> --log-failed`). A GitHub outage, such as a 5xx or "No server is currently available", gets
+      `gh run rerun <run-id> --failed` and no commit.
+    - Red because of the change: one subagent per PR checks out the branch, fixes, amends and pushes with `--force-with-lease`. After two failed fixes,
+      the PR goes into the handover as red, under "Needs you". A stacked child goes after its parent.
+
+7. **End the run.**
     - `git checkout --detach origin/main` so the checkout holds no branch of this run. Stop anything this run started: `scripts/dev-env.sh down`, and every
       background watcher.
     - Finish the handover's summary, then run `scripts/format-markdown.sh temp/afk-handover-<date>.md`.
