@@ -817,6 +817,26 @@ rule(
     silence_minutes=24 * 60,
 )
 
+# needrestart restarts a service onto an updated library, except the ones `harden.sh`
+# excludes because a restart cuts every connection on the node: k3s, systemd-networkd and
+# PostgreSQL (#2318). Those keep the old library until a reboot, and the timer writes
+# how long one has been waiting as `node_service_restart_pending_age_seconds`. Same
+# three days as the reboot rule, for the same reason.
+rule(
+    "ej-service-restart-pending",
+    "A node has had a service waiting more than three days for a restart onto an updated "
+    "library. needrestart does not restart k3s, systemd-networkd or PostgreSQL, so the old "
+    "library stays loaded until a reboot. `sudo needrestart -b -r l` on that node lists them; "
+    "reboot it as `docs/ops/PLATFORM_SETUP.md` §8b says. Which node: the `node` label.",
+    "sum(max by (node) (node_service_restart_pending_age_seconds) > bool 3 * 86400)",
+    ">",
+    0,
+    stream_name="node_service_restart_pending_age_seconds",
+    period_minutes=60,
+    frequency_minutes=60,
+    silence_minutes=24 * 60,
+)
+
 # The updater's own silence looks exactly like a fully patched node, which is the
 # fourth line of #419. `apt.systemd.daily` touches the stamp after every run, so an age
 # past two days is a timer that stopped or a run that has failed daily since — and a

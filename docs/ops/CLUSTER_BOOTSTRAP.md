@@ -755,7 +755,8 @@ ran. Run the same line again: it installs nothing the second time, so dbus stays
 curl -s "$(. /etc/event-junkie/bootstrap.env; echo "$PRIVATE_IPV4"):9100/metrics" | grep ^node_
 ```
 
-Three lines: `node_reboot_required_age_seconds`, `node_unattended_upgrades_last_run_age_seconds`, `node_patch_state_timestamp_seconds`. Then, from the
+Four lines: `node_reboot_required_age_seconds`, `node_service_restart_pending_age_seconds`, `node_unattended_upgrades_last_run_age_seconds`,
+`node_patch_state_timestamp_seconds`. Then, from the
 repository, `deploy/alerts/apply.sh --check` says `ok` or `WOULD FIRE` for `ej-reboot-pending`, not `NO DATA`. `NO DATA` means the gateway is not reaching 9100. The place to look is the `node-patch-state` job in `up`.
 
 ### Upgrading k3s is not a rebuild

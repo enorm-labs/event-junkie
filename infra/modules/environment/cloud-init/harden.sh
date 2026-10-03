@@ -54,20 +54,21 @@ cat >/etc/needrestart/conf.d/50-event-junkie.conf <<'EOF'
 # Restart services automatically when a library they depend on is updated.
 $nrconf{restart} = 'a';
 
-# Except k3s: restarting it disrupts every workload, and a deliberate reboot covers it anyway.
-# PostgreSQL is not excluded: a second of dropped connections the pool reconnects through, against
-# running a vulnerable library until somebody remembers to reboot.
-$nrconf{override_rc} = {
-    qr(^k3s) => 0,
-};
+# Keys added to Ubuntu's own exclusions, never a new hash: assigning one dropped dbus, docker and the
+# apt units from the defaults. These three cut every connection on the node when restarted (#2318);
+# the next deliberate reboot loads the new library, and `node_service_restart_pending_age_seconds`
+# says when one is waiting.
+$nrconf{override_rc}{qr(^k3s)} = 0;
+$nrconf{override_rc}{qr(^systemd-networkd)} = 0;
+$nrconf{override_rc}{qr(^postgresql)} = 0;
 EOF
 
 systemctl enable --now unattended-upgrades
 
 # Kernel and k3s updates still need a reboot, and nothing here does it. `/var/run/reboot-required`
-# is the flag; a timer writes its age, and the updater's last-run age, as node_exporter textfile
-# metrics on the private address, where the collector gateway scrapes them (#419). Textfile only:
-# hostmetrics already covers the k3s node.
+# is the flag; a timer writes its age, the age of a service restart needrestart left waiting, and
+# the updater's last-run age, as node_exporter textfile metrics on the private address, where the
+# collector gateway scrapes them (#419). Textfile only: hostmetrics already covers the k3s node.
 # shellcheck source=/dev/null
 source /etc/event-junkie/bootstrap.env
 apt-get install -y --no-install-recommends prometheus-node-exporter
@@ -81,8 +82,17 @@ cat >/usr/local/sbin/ej-patch-state <<'EOF'
 #!/bin/sh
 d=/var/lib/prometheus/node-exporter; now=$(date +%s)
 age() { if [ -e "$1" ]; then echo $((now - $(stat -c %Y "$1"))); else echo "$2"; fi; }
+# needrestart lists an excluded service it did not restart as NEEDRESTART-SVC. The stamp marks the
+# first run that saw one, so the age grows until a reboot clears the list.
+pending="$d/.restart-pending-since"
+if needrestart -b -r l 2>/dev/null | grep -q '^NEEDRESTART-SVC:'; then
+  [ -e "$pending" ] || touch "$pending"
+else
+  rm -f "$pending"
+fi
 {
   echo "node_reboot_required_age_seconds $(age /var/run/reboot-required 0)"
+  echo "node_service_restart_pending_age_seconds $(age "$pending" 0)"
   echo "node_unattended_upgrades_last_run_age_seconds $(age /var/lib/apt/periodic/unattended-upgrades-stamp "$now")"
   echo "node_patch_state_timestamp_seconds $now"
 } >"$d/.patch-state.prom" && mv "$d/.patch-state.prom" "$d/patch-state.prom"
