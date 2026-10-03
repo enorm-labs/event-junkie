@@ -459,8 +459,7 @@ helm unittest --strict deploy/charts/event-junkie
 scripts/cluster-assertions.sh
 ```
 
-`helm unittest` needs the plugin
-(`helm plugin install https://github.com/helm-unittest/helm-unittest --version v1.1.2 --verify=false`);
+`helm unittest` needs the plugin at the version `validate-chart.yml` pins (`scripts/plugin-parity.sh` prints the install command);
 the rest need nothing. All four are pure functions of the working tree and reach no cluster. CI runs them plus
 `flux schema validate` in [`validate-chart.yml`](../../../.github/workflows/validate-chart.yml), and `/verify`
 runs them on any diff touching `deploy/`. See [`../../AGENTS.md`](../../AGENTS.md) for what is safe

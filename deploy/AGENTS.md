@@ -17,7 +17,7 @@ helm unittest --strict deploy/charts/event-junkie     # renders in-process; a pl
 scripts/cluster-assertions.sh                         # the same suites against every HelmRelease's spec.values
 ```
 
-- `helm unittest` is not installed by default: `helm plugin install https://github.com/helm-unittest/helm-unittest --version <HELM_UNITTEST_VERSION> --verify=false`.
+- `helm unittest` is not installed by default: `scripts/plugin-parity.sh` prints the install command for it and for the flux `schema` plugin.
   Pin what `validate-chart.yml` pins, for the plugin and for Helm itself (`HELM_VERSION`); a version that floats is a gate whose verdict floats, and
   `--strict` is where Helm 3 and 4 diverge most. **Trust the local failure when a hook and a check disagree.**
 - The base `values.yaml` cannot render alone — `database.host` and `database.existingSecret` are `required`. Add

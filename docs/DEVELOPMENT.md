@@ -570,13 +570,13 @@ runs on **no real cluster**. Those are different claims, and the section above i
 Needs `helm`, `yq` and `flux` with its schema plugin, plus the helm-unittest plugin:
 
 ```bash
-brew install helm yq fluxcd/tap/flux && flux plugin install schema
-helm plugin install https://github.com/helm-unittest/helm-unittest --version 1.2.0 --verify=false
+brew install helm yq fluxcd/tap/flux
+scripts/plugin-parity.sh    # prints the install command for each plugin that is missing or differs from CI
 ```
 
-`--verify=false` is a Helm 4 requirement. Helm 4 refuses an unverifiable plugin source without it, and the local
-binary is v4. CI pins Helm 4 too (`HELM_VERSION`) and installs the plugin with the same flag. Pin whatever
-`HELM_UNITTEST_VERSION` in `validate-chart.yml` pins: a gate whose plugin version floats is a gate whose verdict floats.
+Install the two plugins at the versions that `validate-chart.yml` pins (`FLUX_SCHEMA_VERSION`, `HELM_UNITTEST_VERSION`).
+A gate whose plugin version floats is a gate whose verdict floats. `plugin-parity.sh` compares the local plugins with
+those pins. The helm-unittest command has `--verify=false`, because Helm 4 refuses an unverifiable plugin source without it.
 
 Everything below reaches no cluster and needs no kubeconfig, and is what `validate-chart.yml` runs in CI:
 
