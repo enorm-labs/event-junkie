@@ -225,6 +225,9 @@ enum class EventSource {
     /** Privatclub Berlin – a club below the Markthalle near Schlesisches Tor, across soul, funk, indie, hip-hop and electronic music. */
     PRIVATCLUB,
 
+    /** PUNCH L!NE Club Berlin – a comedy club at Potsdamer Platz with German and international stand-up tours, mixed shows and concerts. */
+    PUNCHLINE,
+
     /** Quasimodo Berlin – the city's oldest jazz cellar, off the Ku'damm, programming jazz, blues and soul concerts plus themed DJ nights. */
     QUASIMODO,
 

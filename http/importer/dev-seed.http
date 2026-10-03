@@ -87,6 +87,7 @@
 ###   Panke Culture        — https://www.pankeculture.com/programme/
 ###   Parkbühne Wuhlheide  — https://www.wuhlheide.de/programm
 ###   Privatclub           — https://privatclub-berlin.de/
+###   PUNCH L!NE Club      — https://punchlineberlin.com/de/tickets
 ###   Quasimodo            — https://quasimodo.club/events
 ###   Renate               — https://www.renate.cc/
 ###   Ritter Butzke        — https://club.ritterbutzke.com/events
@@ -4496,6 +4497,71 @@ Accept: application/json
 
 > {%
     client.test("Privatclub import triggered", function () {
+        client.assert(response.status === 202, "Expected 202 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
+### PUNCH L!NE Club (Marlene-Dietrich-Platz 1, Berlin-Tiergarten — at Potsdamer Platz)
+### ————————————————————————————————————————————————————————————
+
+### --- Create PUNCH L!NE Club venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "PUNCH L!NE Club",
+    "address": "Marlene-Dietrich-Platz 1",
+    "city": "Berlin",
+    "postalCode": "10785",
+    "district": "mitte",
+    "latitude": 52.50722,
+    "longitude": 13.37212,
+    "websiteUrl": "https://punchlineberlin.com",
+    "description": "A comedy club at Potsdamer Platz that books German and international stand-up tours, mixed comedy nights and live concerts.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Ein Comedy-Club am Potsdamer Platz mit deutschen und internationalen Stand-up-Tourneen, Mixed-Comedy-Abenden und Live-Konzerten.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": [
+        "theatre"
+    ]
+}
+
+> {%
+    client.global.set("punchline_venue_id", response.body.id);
+    client.test("PUNCH L!NE Club venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Create PUNCH L!NE Club event source ---
+# Links the venue to the PunchlineWebsiteImporter.
+# The sourceType "PUNCHLINE" matches EventSource.PUNCHLINE.
+POST {{importer-host}}/api/admin/event-sources
+Content-Type: application/json
+
+{
+    "venueId": {{punchline_venue_id}},
+    "name": "PUNCH L!NE Club",
+    "url": "https://punchlineberlin.com/de/tickets",
+    "sourceType": "PUNCHLINE",
+    "enabled": true,
+    "importIntervalMinutes": 1440,
+    "maxRetries": 3
+}
+
+> {%
+    client.test("PUNCH L!NE Club event source created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Trigger initial PUNCH L!NE Club import ---
+POST {{importer-host}}/api/admin/event-sources/punch-l-ne-club/import
+Accept: application/json
+
+> {%
+    client.test("PUNCH L!NE Club import triggered", function () {
         client.assert(response.status === 202, "Expected 202 but got " + response.status);
     });
 %}

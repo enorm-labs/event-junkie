@@ -106,6 +106,7 @@ schema change.
 | Panke Culture                    | https://www.pankeculture.com/programme/                     | Club         | WordPress/Divi; upcoming list only; no event pages     |
 | Parkbühne Wuhlheide              | https://www.wuhlheide.de/programm                           | Open Air     | October CMS; ISO date in URL; seasonal, sold-out       |
 | Privatclub                       | https://privatclub-berlin.de/                               | Club         | Rich detail pages; genre, presale + AK prices          |
+| PUNCH L!NE Club                  | https://punchlineberlin.com/de/tickets                      | Comedy Club  | Next.js flight payload; all dates on one page          |
 | Quasimodo                        | https://quasimodo.club/events                               | Club         | Events-Manager; .club domain; genre tags + prices      |
 | Renate                           | https://www.renate.cc/                                      | Techno Club  | Homepage programme; per-floor lineups, no times        |
 | Ritter Butzke                    | https://club.ritterbutzke.com/events                        | Techno Club  | Modus codebase, own template; stale slug dates         |
@@ -495,7 +496,6 @@ Correct it against the venue's own site when the row is opened.
 | KuBiZ                             | https://www.kubiz-wallenberg.de/                          | Other        |
 | Quatsch Comedy Club               | https://quatsch-comedy-club.de/                           | Comedy Club  |
 | Mad Monkey Room                   | https://mad-monkey.de/                                    | Comedy Club  |
-| PUNCH L!NE Club                   | https://punchlineberlin.com/de                            | Comedy Club  |
 | Downstairs Comedy Club            | https://www.downstairscomedy.shop/home                    | Comedy Club  |
 | Kabarett-Theater DISTEL           | https://distel-berlin.de/spielplan/kalender/              | Theater      |
 | Scheinbar Varieté                 | https://www.scheinbar.de/                                 | Theater      |
