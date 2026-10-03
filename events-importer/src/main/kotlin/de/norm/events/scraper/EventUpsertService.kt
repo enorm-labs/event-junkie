@@ -96,7 +96,7 @@ class EventUpsertService(
      * debug log, and `skipped` is the `unchanged` partition change detection produces (#415).
      */
     private suspend fun upsertEvents(
-        scrapedEvents: List<ScrapedEvent>,
+        incomingEvents: List<ScrapedEvent>,
         venueId: Long,
         venueSlug: String,
         eventSourceId: Long,
@@ -104,9 +104,10 @@ class EventUpsertService(
     ): UpsertOutcome {
         val existingBySourceId =
             eventRepository
-                .findBySourceIdIn(scrapedEvents.map { it.sourceId })
+                .findBySourceIdIn(incomingEvents.map { it.sourceId })
                 .toList()
                 .associateBy { it.sourceId }
+        val scrapedEvents = keepStoredDetail(incomingEvents, existingBySourceId, eventSourceId)
 
         val discriminators = slugDiscriminators(scrapedEvents)
         val build = { scraped: ScrapedEvent, existing: EventEntity? ->
@@ -144,6 +145,27 @@ class EventUpsertService(
             droppedSlugConflict = resolved.droppedSlugConflict,
             touchedArtistIds = touchedArtistIds
         )
+    }
+
+    /**
+     * Fills the empty fields of each [ScrapedEvent.detailUnavailable] row from its stored row. Runs
+     * before the entities are built, so the genre tags sync from the kept genre too (#2421).
+     */
+    private fun keepStoredDetail(
+        scrapedEvents: List<ScrapedEvent>,
+        existingBySourceId: Map<String, EventEntity>,
+        eventSourceId: Long
+    ): List<ScrapedEvent> {
+        val filled =
+            scrapedEvents.map { scraped ->
+                val stored = existingBySourceId[scraped.sourceId]?.takeIf { scraped.detailUnavailable }
+                if (stored != null) scraped.withGapsFromStored(stored) else scraped
+            }
+        val kept = scrapedEvents.count { it.detailUnavailable && it.sourceId in existingBySourceId }
+        if (kept > 0) {
+            logger.info { "Kept the stored detail fields of $kept event(s) on event source $eventSourceId: their detail page yielded nothing" }
+        }
+        return filled
     }
 
     /**

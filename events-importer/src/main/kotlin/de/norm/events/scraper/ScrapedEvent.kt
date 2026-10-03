@@ -98,7 +98,12 @@ data class ScrapedEvent(
      * The website a venue links each promoter credit to, keyed by the raw name in [promoters]. Fills
      * `promoter.website_url` where the row has none (#1319).
      */
-    val promoterWebsites: Map<String, String> = emptyMap()
+    val promoterWebsites: Map<String, String> = emptyMap(),
+    /**
+     * The event's detail page yielded nothing this run, so this row holds the listing's fields alone.
+     * Never stored: the upsert keeps what the stored row holds where this row has nothing (#2421).
+     */
+    val detailUnavailable: Boolean = false
 ) {
     /**
      * This event with every gap filled from [fallback]: a null field takes the fallback's value, the
@@ -142,6 +147,40 @@ data class ScrapedEvent(
             artists = artists.ifEmpty { fallback.artists },
             promoters = promoters.ifEmpty { fallback.promoters },
             promoterWebsites = promoterWebsites.ifEmpty { fallback.promoterWebsites }
+        )
+
+    /**
+     * This event with every empty field the detail page fills taken from [stored], for a row whose
+     * detail page yielded nothing ([detailUnavailable]). A transient redirect would otherwise blank
+     * the start time and image the last run stored (#2421). The end date and time move as a pair,
+     * because the database refuses a time without a date.
+     */
+    fun withGapsFromStored(stored: EventEntity): ScrapedEvent = withScheduleGapsFromStored(stored).withLinkAndPriceGapsFromStored(stored)
+
+    /** [withGapsFromStored] for the text, the times and the room. */
+    private fun withScheduleGapsFromStored(stored: EventEntity): ScrapedEvent {
+        val (end, endAt) = if (endDate == null) stored.endDate to stored.endTime else endDate to endTime
+        return copy(
+            subtitle = subtitle ?: stored.subtitle,
+            description = description ?: stored.description,
+            doorsTime = doorsTime ?: stored.doorsTime,
+            startTime = startTime ?: stored.startTime,
+            endDate = end,
+            endTime = endAt,
+            room = room ?: stored.room
+        )
+    }
+
+    /** [withGapsFromStored] for the image, the links, the genre and the prices. */
+    private fun withLinkAndPriceGapsFromStored(stored: EventEntity): ScrapedEvent =
+        copy(
+            imageUrl = imageUrl ?: stored.imageUrl,
+            lineupSourceUrl = lineupSourceUrl ?: stored.lineupSourceUrl,
+            ticketUrl = ticketUrl ?: stored.ticketUrl,
+            genre = genre ?: stored.genre,
+            pricePresale = pricePresale ?: stored.pricePresale,
+            priceBoxOffice = priceBoxOffice ?: stored.priceBoxOffice,
+            priceNote = priceNote ?: stored.priceNote
         )
 
     /**

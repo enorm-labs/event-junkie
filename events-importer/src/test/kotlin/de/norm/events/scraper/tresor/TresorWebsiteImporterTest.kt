@@ -105,5 +105,19 @@ class TresorWebsiteImporterTest {
             other.title shouldBe "Tresor New Faces hosted by E2NMN"
             other.eventDate shouldBe LocalDate.of(2026, 8, 5)
             other.artists.isNotEmpty() shouldBe true
+            // The upsert then keeps the start time and image the last run stored (#2421).
+            other.detailUnavailable shouldBe true
+            event(importer.importEvents(listingUrl), "20260801-tresor-klubnacht").detailUnavailable shouldBe false
+        }
+
+    @Test
+    fun `marks the listing row when the event page fetch fails`() =
+        runTest {
+            coEvery { htmlFetcher.fetchDocument(klubnachtUrl) } throws IllegalStateException("connection reset")
+
+            val klubnacht = event(importer.importEvents(listingUrl), "20260801-tresor-klubnacht")
+
+            klubnacht.detailUnavailable shouldBe true
+            klubnacht.startTime shouldBe null
         }
 }
