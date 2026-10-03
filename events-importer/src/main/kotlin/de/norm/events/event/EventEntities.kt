@@ -43,6 +43,10 @@ data class EventEntity(
     val eventType: String = EventType.CONCERT.name,
     /** True when [eventType] is the scraper's default, so a comedian headliner may retype it (#2314). */
     val typeIsFallback: Boolean = false,
+    /** ISO 639-1 codes of what is said on stage, where the source states it; never derived from [descriptionLanguage] (#2523). */
+    val spokenLanguages: List<String>? = null,
+    /** ISO 639-1 code of a screening's subtitles: `de` for OmU. */
+    val subtitleLanguage: String? = null,
     val status: String = EventStatus.SCHEDULED.name,
     /** Where a `RELOCATED` event moved to, as the venue's note names it; null when the note names nothing (#1551). */
     val relocatedTo: String? = null,

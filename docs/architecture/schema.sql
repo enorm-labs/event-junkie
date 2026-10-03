@@ -168,12 +168,16 @@ CREATE TABLE events.event (
     title_search text GENERATED ALWAYS AS (events.search_text(title)) STORED,
     subtitle_search text GENERATED ALWAYS AS (events.search_text(subtitle)) STORED,
     type_is_fallback boolean DEFAULT false NOT NULL,
+    spoken_languages text[],
+    subtitle_language text,
     CONSTRAINT event_description_alt_complete CHECK ((((description_alt IS NULL) AND (description_alt_language IS NULL) AND (description_alt_origin IS NULL)) OR ((description_alt IS NOT NULL) AND (description_alt_language IS NOT NULL) AND (description_alt_origin IS NOT NULL)))),
     CONSTRAINT event_description_alt_language_valid CHECK (((description_alt_language IS NULL) OR (description_alt_language = ANY (ARRAY['de'::text, 'en'::text])))),
     CONSTRAINT event_description_alt_origin_valid CHECK (((description_alt_origin IS NULL) OR (description_alt_origin = ANY (ARRAY['PUBLISHER'::text, 'MACHINE'::text])))),
     CONSTRAINT event_description_language_valid CHECK (((description_language IS NULL) OR (description_language = ANY (ARRAY['de'::text, 'en'::text])))),
     CONSTRAINT event_end_after_start CHECK (((end_date IS NULL) OR (end_date >= event_date))),
-    CONSTRAINT event_end_time_has_date CHECK (((end_time IS NULL) OR (end_date IS NOT NULL)))
+    CONSTRAINT event_end_time_has_date CHECK (((end_time IS NULL) OR (end_date IS NOT NULL))),
+    CONSTRAINT event_spoken_languages_valid CHECK (((spoken_languages IS NULL) OR ((cardinality(spoken_languages) > 0) AND (spoken_languages <@ ARRAY['de'::text, 'en'::text, 'fr'::text, 'es'::text, 'it'::text, 'tr'::text, 'ru'::text, 'pl'::text])))),
+    CONSTRAINT event_subtitle_language_valid CHECK (((subtitle_language IS NULL) OR (subtitle_language = ANY (ARRAY['de'::text, 'en'::text, 'fr'::text, 'es'::text, 'it'::text, 'tr'::text, 'ru'::text, 'pl'::text]))))
 );
 
 --

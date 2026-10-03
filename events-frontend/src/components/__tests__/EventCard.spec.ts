@@ -86,6 +86,22 @@ describe('EventCard', () => {
     expect(wrapper.get('[aria-hidden="true"]').text()).toContain('Tonight Show')
   })
 
+  it('puts the languages in the meta line, spoken first, then the subtitles (#2523)', () => {
+    const wrapper = mount(EventCard, {
+      props: {
+        event: {
+          ...event,
+          eventType: 'SCREENING',
+          spokenLanguages: ['de', 'en'],
+          subtitleLanguage: 'en',
+        },
+      },
+      global: { stubs },
+    })
+
+    expect(wrapper.text()).toContain('Screening · German & English · English subtitles · Punk')
+  })
+
   it('links to the event detail route', () => {
     const wrapper = mount(EventCard, { props: { event }, global: { stubs } })
     // Locale-prefixed: every in-app link carries the active locale (ADR-013 §Decision 2).

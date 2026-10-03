@@ -38,6 +38,15 @@ data class EventSummaryResponse(
         example = "Hole44"
     )
     val relocatedTo: String? = null,
+    @Schema(
+        description =
+            "What is said on stage or on screen, as ISO 639-1 codes, where the venue states it. Absent means unknown, " +
+                "never German by default. Not the language of the description.",
+        example = "[\"en\"]"
+    )
+    val spokenLanguages: List<String>? = null,
+    @Schema(description = "The subtitles of a screening shown in the original, as an ISO 639-1 code: `de` for OmU", example = "de")
+    val subtitleLanguage: String? = null,
     @Schema(description = "Calendar date of the event", example = "2026-06-12")
     val eventDate: LocalDate,
     @Schema(description = "Time when doors open to the public", example = "19:00")
@@ -120,6 +129,8 @@ data class EventSummaryResponse(
                 eventType = EventType.parseOrDefault(entity.eventType),
                 status = EventStatus.parseOrDefault(entity.status),
                 relocatedTo = entity.relocatedTo,
+                spokenLanguages = entity.spokenLanguages,
+                subtitleLanguage = entity.subtitleLanguage,
                 eventDate = entity.eventDate,
                 doorsTime = entity.doorsTime,
                 startTime = entity.startTime,
@@ -191,6 +202,15 @@ data class EventDetailResponse(
         example = "Hole44"
     )
     val relocatedTo: String? = null,
+    @Schema(
+        description =
+            "What is said on stage or on screen, as ISO 639-1 codes, where the venue states it. Absent means unknown, " +
+                "never German by default. Not the language of the description.",
+        example = "[\"en\"]"
+    )
+    val spokenLanguages: List<String>? = null,
+    @Schema(description = "The subtitles of a screening shown in the original, as an ISO 639-1 code: `de` for OmU", example = "de")
+    val subtitleLanguage: String? = null,
     @Schema(description = "Calendar date of the event", example = "2026-06-12")
     val eventDate: LocalDate,
     @Schema(description = "Time when doors open to the public", example = "19:00")
@@ -311,6 +331,8 @@ data class EventDetailResponse(
                 eventType = EventType.parseOrDefault(entity.eventType),
                 status = EventStatus.parseOrDefault(entity.status),
                 relocatedTo = entity.relocatedTo,
+                spokenLanguages = entity.spokenLanguages,
+                subtitleLanguage = entity.subtitleLanguage,
                 eventDate = entity.eventDate,
                 doorsTime = entity.doorsTime,
                 startTime = entity.startTime,

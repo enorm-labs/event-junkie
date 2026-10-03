@@ -249,6 +249,14 @@ INSERT INTO events.event (venue_id, title, event_type, slug, event_date, start_t
 SELECT v.id, 'Offene Bühne', 'SHOW', 'fixture-no-genre-' || to_char(CURRENT_DATE + 7, 'YYYY-MM-DD'), CURRENT_DATE + 7, TIME '19:30',
        v.website_url || '/events/offene-buehne', 'fixture-no-genre', 5.00
 FROM events.venue v WHERE v.slug = 'jazzkeller-kreuzberg';
+-- The open stage is bilingual by the venue's word (#2523).
+UPDATE events.event SET spoken_languages = '{de,en}' WHERE source_id = 'fixture-no-genre';
+
+-- A screening in the original with German subtitles: the spoken language and the subtitles are two facts (#2523).
+INSERT INTO events.event (venue_id, title, event_type, slug, event_date, start_time, source_url, source_id, spoken_languages, subtitle_language)
+SELECT v.id, 'Paris, Texas (OmU)', 'SCREENING', 'fixture-screening-' || to_char(CURRENT_DATE + 8, 'YYYY-MM-DD'), CURRENT_DATE + 8, TIME '21:00',
+       v.website_url || '/events/paris-texas', 'fixture-screening', '{en}', 'de'
+FROM events.venue v WHERE v.slug = 'jazzkeller-kreuzberg';
 
 -- Two rooms of one venue on one night: one venue row, two events, each in its own room (#316). Past
 -- the generated fortnight, so that night has exactly these two rows under the venue.

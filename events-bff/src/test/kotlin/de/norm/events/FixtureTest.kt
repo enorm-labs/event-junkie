@@ -43,8 +43,8 @@ class FixtureTest : BaseControllerTest() {
         runBlocking {
             loadFixture()
 
-            // 30 generated + 12 named upcoming; the past row is the one the default window leaves out.
-            get("/events?size=1").jsonPath("$.totalElements").isEqualTo(42)
+            // 30 generated + 13 named upcoming; the past row is the one the default window leaves out.
+            get("/events?size=1").jsonPath("$.totalElements").isEqualTo(43)
             get("/events?size=100").jsonPath("$.content[?(@.slug == '${slug("past", -3)}')]").doesNotExist()
             webTestClient
                 .get()
@@ -155,6 +155,21 @@ class FixtureTest : BaseControllerTest() {
                     .jsonPath("$.content[?(@.slug == '${slug("no-genre", 7)}')]")
                     .doesNotExist()
             }
+        }
+
+    @Test
+    fun `the screening says what is spoken and what is subtitled, in the list and on the detail`(): Unit =
+        runBlocking {
+            loadFixture()
+
+            get("/events/${slug("screening", 8)}")
+                .jsonPath("$.spokenLanguages")
+                .isEqualTo(listOf("en"))
+                .jsonPath("$.subtitleLanguage")
+                .isEqualTo("de")
+            get("/events?size=100")
+                .jsonPath("$.content[?(@.slug == '${slug("no-genre", 7)}')].spokenLanguages[*]")
+                .isEqualTo(listOf("de", "en"))
         }
 
     @Test

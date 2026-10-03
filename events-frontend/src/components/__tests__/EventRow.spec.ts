@@ -56,6 +56,17 @@ describe('EventRow', () => {
     expect(wrapper.text()).toContain('25')
   })
 
+  it('names the spoken language beside the type, and nothing when the venue did not say (#2523)', () => {
+    const english = mount(EventRow, {
+      props: { event: { ...event, eventType: 'COMEDY', spokenLanguages: ['en'] } },
+      global: { stubs },
+    })
+    expect(english.text()).toContain('Comedy · English · Punk')
+
+    const unsaid = mount(EventRow, { props: { event }, global: { stubs } })
+    expect(unsaid.text()).not.toContain('English')
+  })
+
   it('sets the date without the year, which the title needs the room for', () => {
     const wrapper = mount(EventRow, { props: { event }, global: { stubs } })
 

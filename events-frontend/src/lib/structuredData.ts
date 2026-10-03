@@ -145,9 +145,11 @@ export function eventJsonLd(event: EventDetail, locale: Locale): JsonLd | null {
 
   if (!event.title || !startDate || !location) return null
 
-  // The language of the text shown, not of the page: a German description on /en/ says `de`, an
-  // unclassified one says nothing (ADR-026).
   const description = descriptionFor(event, locale)
+  // What is said on stage where the venue states it (ADR-040). Otherwise the language of the text
+  // shown, not of the page: a German description on /en/ says `de` (ADR-026).
+  const spoken = event.spokenLanguages ?? []
+  const inLanguage = spoken.length > 1 ? spoken : (spoken[0] ?? description?.lang ?? undefined)
 
   return {
     '@context': 'https://schema.org',
@@ -158,7 +160,9 @@ export function eventJsonLd(event: EventDetail, locale: Locale): JsonLd | null {
     location,
     url,
     description: description?.text ?? event.subtitle ?? undefined,
-    inLanguage: description?.lang ?? undefined,
+    inLanguage,
+    subtitleLanguage:
+      event.eventType === 'SCREENING' ? (event.subtitleLanguage ?? undefined) : undefined,
     image: absoluteImageUrl(event.imageUrl),
     eventStatus: (event.status && EVENT_STATUS[event.status]) ?? undefined,
     // Every event in scope is a physical one; we list nothing online-only.

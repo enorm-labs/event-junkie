@@ -136,6 +136,22 @@ export function useFormat() {
         .join(' · '),
 
     /**
+     * What is said on stage and what a screening is subtitled in, as one meta item: "English",
+     * "German & English", "English · German subtitles". `''` when the venue said neither (#2523).
+     * The language names come from `Intl`, so a new code needs no catalogue entry.
+     */
+    formatSpokenLanguage: (spoken?: string[] | null, subtitle?: string | null) => {
+      const names = new Intl.DisplayNames(intlLocale(), { type: 'language' })
+      const name = (code: string) => names.of(code) ?? code
+      return [
+        (spoken ?? []).map(name).join(' & '),
+        subtitle ? t('events.language.subtitles', { language: name(subtitle) }) : '',
+      ]
+        .filter(Boolean)
+        .join(' · ')
+    },
+
+    /**
      * The one word for a status that changes whether the reader goes, `''` for `SCHEDULED`. A
      * relocated event that knows where it went says so ("Moved to Hole44"). Same fallback as
      * `formatEventType`.
