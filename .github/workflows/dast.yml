@@ -293,8 +293,7 @@ jobs:
   # five-minute browser suite to it makes either failure the other's problem.
   e2e-k3d:
     name: Un-mocked e2e against k3d
-    # Pinned for its Playwright install, as `build-frontend.yml`'s `build` job is.
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
     # Measured locally: flux-up 4 minutes, the suite 5 seconds. The margin is the cluster, not the tests.
     timeout-minutes: 30
     if: >-
@@ -330,9 +329,17 @@ jobs:
         working-directory: events-frontend
         run: npm ci
 
-      - name: Install Playwright chromium
-        working-directory: events-frontend
-        run: npx playwright install --with-deps chromium
+      # The browser and its system packages come from Playwright's image, so no `apt` mirror can stall the
+      # job (#2306). The tag is the lockfile's `@playwright/test`, read as `build-frontend.yml` reads it.
+      - name: Pull the Playwright image
+        id: playwright
+        run: |
+          set -euo pipefail
+          version="$(jq -r '.packages["node_modules/@playwright/test"].version' events-frontend/package-lock.json)"
+          [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "::error::no @playwright/test version in the lockfile: $version"; exit 1; }
+          image="mcr.microsoft.com/playwright:v${version}-noble"
+          docker pull -q "$image"
+          echo "image=$image" >> "$GITHUB_OUTPUT"
 
       # The same two commands `dast-k3d` runs: the newest signed snapshot from GHCR, through the
       # controllers that run on Hetzner, so cosign verification is exercised here too (#1425).
@@ -369,11 +376,24 @@ jobs:
 
       # `--host-resolver-rules` in the project config points the Ingress name at the published port,
       # which is what carries the right `Host` on a navigation; `extraHTTPHeaders` cannot.
+      #
+      # A `docker run`, not a container job: k3d needs the runner's Docker, and `--network host` puts
+      # Traefik's :8080 on the browser's loopback. The runner's Node is mounted in, because the image's is
+      # below the floor in package.json; the runner's uid keeps the report uploadable.
       - name: Run the un-mocked suite through Traefik
-        working-directory: events-frontend
-        run: npm run test:e2e -- --project=real-data
+        run: |
+          set -euo pipefail
+          # The install root, not `bin/`: `npm` there is a symlink into `lib/`.
+          node_bin="$(dirname "$(command -v node)")"
+          node_home="$(dirname "$node_bin")"
+          docker run --rm --network host --ipc host --init \
+            --user "$(id -u):$(id -g)" -e HOME=/tmp -e CI -e E2E_BASE_URL \
+            -e PATH="$node_bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" \
+            -v "$node_home:$node_home:ro" -v "$PWD:$PWD" -w "$PWD/events-frontend" \
+            "$PLAYWRIGHT_IMAGE" npm run test:e2e -- --project=real-data
         env:
           E2E_BASE_URL: http://event-junkie.localhost:8080
+          PLAYWRIGHT_IMAGE: ${{ steps.playwright.outputs.image }}
 
       # Failure and success alike: the artifact is the only record of the run's durations — a runner
       # cannot reach the cluster's OpenObserve (ADR-033).
