@@ -22,8 +22,8 @@ repairing live in the [issue tracker](https://github.com/enorm-labs/event-junkie
 
 | Status                              | Meaning                                                                              | Count |
 | ----------------------------------- | ------------------------------------------------------------------------------------ | ----: |
-| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |    99 |
-| 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |    17 |
+| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   111 |
+| 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |    16 |
 | ⛔ [Blocked](#-blocked--deferred)   | Website analyzed, but no usable listings (no programme page, JS-only, or too sparse) |   150 |
 | ❓ [Unanalyzed](#-not-analyzed-yet) | URL recorded, but the website still needs a first look                               |    26 |
 
@@ -124,6 +124,7 @@ schema change.
 | SO36                             | https://www.so36.com/tickets                                | Club         | Cookie wall bypassed via Ticket-Toaster shop              |
 | Soda Club                        | https://www.soda-berlin.de/events                           | Club         | disco2app CMS; `MusicEvent` JSON-LD on details            |
 | Sonnenraum                       | https://clubdervisionaere.com/programm                      | Club         | Shares the CdV listing; Monday live residency             |
+| Speakeazy                        | https://www.speakeazyberlin.de/events                       | Bar          | Squarespace HTML, robots bars `?format=json`; door prices |
 | Supamolly                        | https://www.supamolly.de/?p=programm                        | Club         | Retro PHP; row id is the date stamp; no prices            |
 | Tempodrom                        | https://www.tempodrom.de/programm-und-tickets/              | Concert Hall | schema.org `Event` JSON-LD; whole programme               |
 | The Wall Comedy Club             | https://thewallcomedy.com/                                  | Comedy Club  | Spotagig JSON-LD; HTMX "Show more" partials               |
@@ -145,7 +146,7 @@ schema change.
 | Zitadelle                        | https://citadel-music-festival.de/events                    | Open Air     | Festival site; WordPress/EM; summer season only           |
 | Zur Klappe                       | https://zurklappe.org/events                                | Techno Club  | Next.js flight payload; no genre or prices                |
 
-99 importer classes cover 100 sources. Only Kantine am Berghain has no class of its own, and it shares the Berghain
+110 importer classes cover 111 sources. Only Kantine am Berghain has no class of its own, and it shares the Berghain
 importer outright. Three other groups share a _listing and parser_ while keeping one thin `@Component` per venue, so
 they do not reduce the count. They are Club der Visionäre with Sonnenraum and MS Hoppetosse, the three Velomax halls,
 and Uber Arena with the Uber Eats Music Hall.
@@ -172,7 +173,6 @@ least as heavily as an RA count when the next batch is prioritised.
 | ZIMMER 16                      | https://zimmer16.com/                                                    | Other        | Medium   | Divi + YesTicket cards; time and price on YesTicket         |
 | Ballhaus Wedding               | https://www.ballhauswedding.de/veranstaltungen                           | Other        | Medium   | Wix rich text; 117 entries with year-less dates; no images  |
 | Richten25                      | https://richten25.de/events                                              | Other        | Medium   | Hostinger builder; ~25 dated titles in the page JSON        |
-| Speakeazy                      | https://www.speakeazyberlin.de/events                                    | Bar          | High     | Squarespace `?format=json`; 10 upcoming with times, images  |
 | 808 Berlin                     | https://808.berlin/                                                      | Club         | Medium   | Astro one-pager; dated lineups; no times, prices, images    |
 | House of Music                 | https://www.houseofmusic.berlin/                                         | Concert Hall | Medium   | Wix Events warmup JSON; 11 upcoming; some quiz nights       |
 | Pfefferberg Haus 13            | https://haus13.pfefferwerk.de/veranstaltungen/                           | Concert Hall | Medium   | Event Organiser iCal; 8 upcoming; talks need a filter       |
@@ -185,7 +185,7 @@ least as heavily as an RA count when the next batch is prioritised.
 | Torhaus Berlin                 | https://torhausberlin.de/                                                | Other        | Low      | Next.js RSC; 3 events; `www.` hits a Vercel checkpoint      |
 | Weltwirtschaft                 | https://weltwirtschaft.berlin/                                           | Bar          | Low      | TEC REST API; monthly DJ nights among closure notices       |
 
-**The 12 rows below Richten25 came from the [Clubcommission member list](https://www.clubcommission.de/members/)
+**The 11 rows below Richten25 came from the [Clubcommission member list](https://www.clubcommission.de/members/)
 on 2026-10-03.** Its 187 members also gave 26 rows in [Blocked](#-blocked--deferred). The rest are party collectives,
 festivals, agencies and associations, or are recorded already.
 

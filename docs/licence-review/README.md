@@ -14,20 +14,21 @@ the record. `scripts/apply-licence-review.py` writes it to a database.
    remains to hold a verdict. **Zur Klappe was read on 2026-09-28**, when its importer was added. It is
    `UNCLEAR`. **KØPI, Abstand and Drugstore were read on 2026-09-30**, when the radar.squat.net reader imported them (#2166). All
    three are `UNCLEAR`. **PANDA platforma was read on 2026-10-03**, when its importer was added. It is
-   `PROHIBITED`, and a person confirmed it. The file now carries 110 rows.
+   `PROHIBITED`, and a person confirmed it. **Speakeazy was read on the same day**, for its importer. It is
+   `PROHIBITED` as well, and a person confirmed it. The file now carries 111 rows.
 2. **No source grants a reuse we can rely on.** `PERMITTED` is zero in this review, which reads what
    the venues published. It is not zero on the clusters: ADR-027 sets `translation_licence` to
    `PERMITTED` wherever a venue does not prohibit the description. That is our reading of silence,
    and it is not a grant.
 3. **The standard German copyright boilerplate is `UNCLEAR`, not `PROHIBITED`.** §2 says why, and it
    decides most of the corpus.
-4. **The three prohibitions are venues whose own wording names texts and images**, without the
+4. **The four prohibitions are venues whose own wording names texts and images**, without the
    statutory carve-out the boilerplate carries.
 5. **This file is evidence, not a decision.** The display rule lives in
    [SCRAPING_POSITION.md](../SCRAPING_POSITION.md) §3.1.
 6. [#808](https://github.com/enorm-labs/event-junkie/issues/808) is how an `UNCLEAR` becomes a
    `PERMITTED`. Nothing else moves it. [ENQUIRY.md](ENQUIRY.md) is the mail it sends. It also holds
-   the first batch of thirteen, and how an answer is written back.
+   the first batch of fourteen, and how an answer is written back.
 
 ## 1. What was read, per source
 
@@ -77,9 +78,9 @@ Most German venue sites carry a version of this, usually from the e-recht24 Impr
 **An agent may set `UNCLEAR`. A person confirms `PERMITTED` and `PROHIBITED`.** One removes material
 from the site. The other is a claim we would rely on if a venue ever asked.
 
-## 4. The three prohibitions
+## 4. The four prohibitions
 
-All three name texts **and** image material, and none carries the statutory carve-out.
+All four name texts **and** image material, and none carries the statutory carve-out.
 
 **Der Weiße Hase**, <https://derweissehase.club/impressum>:
 
@@ -99,10 +100,17 @@ All three name texts **and** image material, and none carries the statutory carv
 > Die Übernahme, Veröffentlichung oder Nutzung von Texten, Bildern oder anderen Daten bedarf der
 > ausdrücklichen und schriftlichen Zustimmung der zuvor aufgeführten Firmen und Personen.
 
+**Speakeazy**, <https://www.speakeazyberlin.de/disclaimer-1>:
+
+> Eine Vervielfältigung oder Verwendung solcher Grafiken, Tondokumente, Videosequenzen und Texte in
+> anderen elektronischen oder gedruckten Publikationen ist ohne ausdrückliche Zustimmung des Autors
+> nicht gestattet.
+
 **The caveat belongs here rather than nowhere.** The first two are near-identical, so they are probably a
 second and older template rather than anything bespoke. They are stronger than the e-recht24 text.
-PANDA platforma's text is a different template, and it names any use, not only copying. None of the
-three is a venue that wrote a rule about us.
+PANDA platforma's text is a different template, and it names any use, not only copying. Speakeazy's
+is an older disclaimer template that names graphics and texts. None of the four is a venue that wrote
+a rule about us.
 
 ## 5. Three near-misses, so nobody re-checks them
 
