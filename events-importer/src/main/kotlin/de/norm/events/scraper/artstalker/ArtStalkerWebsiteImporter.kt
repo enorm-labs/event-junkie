@@ -32,7 +32,7 @@ val ART_STALKER_LIMITATIONS =
     VenueLimitations(
         EventSource.ART_STALKER,
         AcceptedLimitation(LimitedAspect.PAGINATION, "robots.txt disallows the shop's paged listing, so only the first 25 events are read"),
-        AcceptedLimitation(LimitedAspect.GENRE, "the style is only a free-text tagline after the act's name"),
+        AcceptedLimitation(LimitedAspect.GENRE, "the style is only a free-text tagline after the act's name, so only the genre words in it become the genre"),
         AcceptedLimitation(LimitedAspect.PROMOTERS, "the venue presents every night itself")
     )
 

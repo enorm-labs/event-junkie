@@ -8,6 +8,7 @@ import de.norm.events.scraper.arcanoa.ArcanoaOverviewPageScraper.Companion.RECUR
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.inferConcertVenueType
 import de.norm.events.scraper.inferYearForWeekday
+import de.norm.events.scraper.knownGenresInStyleTail
 import de.norm.events.scraper.parseGermanWeekdayAbbreviation
 import de.norm.events.slug.SlugGenerator
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -160,9 +161,10 @@ class ArcanoaOverviewPageScraper(
 
         return ScrapedEvent(
             title = title,
-            // The style tail ("HellCountryBlues", "Rock mit Sounds von Jazz u. Funk") is display prose,
-            // not a normalizable genre — kept as a subtitle so it never seeds junk tags.
+            // The style tail ("HellCountryBlues", "Rock mit Sounds von Jazz u. Funk") is display prose, so it
+            // stays the subtitle, and only the genre words it holds become the genre.
             subtitle = subtitle,
+            genre = knownGenresInStyleTail(subtitle),
             eventType = eventType,
             eventDate = eventDate,
             startTime = startTime,
