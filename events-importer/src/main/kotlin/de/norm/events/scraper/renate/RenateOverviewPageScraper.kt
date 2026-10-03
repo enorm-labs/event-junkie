@@ -209,7 +209,9 @@ class RenateOverviewPageScraper(
      * - a clock time is a schedule line ("Workshops starting from 16:00"), not a performer;
      * - a `hosted by …` line credits the collective curating a floor — both as a heading
      * continuation and inside a run of `<br>`-split lines;
-     * - the venue's "+ more tba" placeholder names nobody yet.
+     * - the venue's "+ more tba" placeholder names nobody yet;
+     * - a line ending in `:` is a lead-in label (`Performances by:`, #2418). A floor heading that
+     * ends in one (`RED:`) never reaches this check.
      *
      * The cost: an unusually wordy billing is dropped rather than mangled.
      */
@@ -218,6 +220,7 @@ class RenateOverviewPageScraper(
             line.split(WHITESPACE).size <= MAX_ACT_WORDS &&
             !CLOCK_TIME.containsMatchIn(line) &&
             !HOST_CREDIT.containsMatchIn(line) &&
+            !line.trimEnd().endsWith(':') &&
             !isUnannouncedAct(line)
 
     /** True when [line] is the venue's "more acts to come" placeholder rather than a name. */

@@ -179,6 +179,31 @@ class RenateOverviewPageScraperTest {
     }
 
     @Test
+    fun `drops a lead-in label and keeps the acts it introduces`() {
+        // The 2026-10-03 Klubnacht, as renate.cc published it (#2418), cut to the RED floor.
+        val html =
+            """
+            <div class="prog-row">
+              <div class="prog-day">Sat.</div><div class="prog-date">03.10.</div>
+              <div class="prog-title">Renate Klubnacht with Fairies, Fluid Vision &#038; CUNTCORE</div>
+              <span class="cat-btn">CLUB</span>
+              <div class="prog-text">
+                <p><strong>RED hosted by Fluid Vision (from 01:00)<br /> </strong></p>
+                <p>Merlin Cum</p>
+                <p>Performances by: </p>
+                <p>Tallest Woman Alive</p>
+                <p>Sasha Seduction</p>
+                <p><strong>RED:</strong></p>
+                <p>DJ Trade Trainer</p>
+              </div>
+            </div>
+            """.trimIndent()
+        val night = scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl).single()
+        stageOf(night, "RED") shouldContainExactly
+            listOf("Merlin Cum", "Tallest Woman Alive", "Sasha Seduction", "DJ Trade Trainer")
+    }
+
+    @Test
     fun `infers the year from the weekday and keeps the listing chronological`() {
         events.map { it.eventDate } shouldBe events.map { it.eventDate }.sorted()
         events.first().eventDate shouldBe LocalDate.of(2026, 8, 1)
