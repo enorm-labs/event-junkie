@@ -88,6 +88,9 @@ enum class EventSource {
     /** Kabarett-Theater DISTEL – Germany's largest ensemble Kabarett, in the front building of the Admiralspalast at Friedrichstraße station. */
     DISTEL,
 
+    /** Downstairs Comedy Club – Felix Lobrecht's stand-up club on Oranienburger Straße, with house showcases most nights and guest solo shows. */
+    DOWNSTAIRS,
+
     /** Drugstore Berlin – the city's oldest self-run youth centre, founded in 1972, with punk and hardcore concerts in the Rockhaus. */
     DRUGSTORE,
 

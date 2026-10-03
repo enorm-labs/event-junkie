@@ -40,6 +40,7 @@
 ###   Crack Bellmer        — https://www.crackbellmer.de/program/this-month
 ###   Der Weiße Hase       — https://derweissehase.club/events
 ###   Die Wühlmäuse        — https://wuehlmaeuse.de/wp-json/wc/store/v1/products
+###   Downstairs Comedy Club — https://www.downstairscomedy.shop/catalog/tickets?limit=100&use_sold=true&use_pagy=true&view_type=list
 ###   Drugstore            — https://drugstore-berlin.de/veranstaltungen/
 ###   Duncker Club         — https://www.dunckerclub.de/start.html
 ###   Erreichbar           — https://radar.squat.net/en/node/6653
@@ -1644,6 +1645,72 @@ Accept: application/json
 
 > {%
     client.test("Die Wühlmäuse import triggered", function () {
+        client.assert(response.status === 202, "Expected 202 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
+### Downstairs Comedy Club (Oranienburger Str. 67, Berlin-Mitte)
+### ————————————————————————————————————————————————————————————
+
+### --- Create Downstairs Comedy Club venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Downstairs Comedy Club",
+    "address": "Oranienburger Str. 67",
+    "city": "Berlin",
+    "postalCode": "10117",
+    "district": "mitte",
+    "latitude": 52.52504,
+    "longitude": 13.39204,
+    "websiteUrl": "https://www.downstairscomedy.shop",
+    "description": "Felix Lobrecht's comedy club in Mitte, where the Downstairs Allstars showcase mixes established German-language comedians with newcomers most nights, beside an open mic and solo shows.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Der Comedy-Club von Felix Lobrecht in Mitte, in dem die Downstairs-Allstars-Show an den meisten Abenden etablierte deutschsprachige Comedians mit Newcomern mischt, dazu ein Open Mic und Soloshows.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": [
+        "theatre",
+        "bar"
+    ]
+}
+
+> {%
+    client.global.set("downstairs_venue_id", response.body.id);
+    client.test("Downstairs Comedy Club venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Create Downstairs Comedy Club event source ---
+# Links the venue to the DownstairsWebsiteImporter.
+# The sourceType "DOWNSTAIRS" matches EventSource.DOWNSTAIRS.
+POST {{importer-host}}/api/admin/event-sources
+Content-Type: application/json
+
+{
+    "venueId": {{downstairs_venue_id}},
+    "name": "Downstairs Comedy Club",
+    "url": "https://www.downstairscomedy.shop/catalog/tickets?limit=100&use_sold=true&use_pagy=true&view_type=list",
+    "sourceType": "DOWNSTAIRS",
+    "enabled": true,
+    "importIntervalMinutes": 1440,
+    "maxRetries": 3
+}
+
+> {%
+    client.test("Downstairs Comedy Club event source created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Trigger initial Downstairs Comedy Club import ---
+POST {{importer-host}}/api/admin/event-sources/downstairs-comedy-club/import
+Accept: application/json
+
+> {%
+    client.test("Downstairs Comedy Club import triggered", function () {
         client.assert(response.status === 202, "Expected 202 but got " + response.status);
     });
 %}

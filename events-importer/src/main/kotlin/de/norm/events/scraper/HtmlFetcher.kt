@@ -101,6 +101,19 @@ class HtmlFetcher(
     }
 
     /**
+     * GETs [url] as the Turbo frame [frameId] asks for it and parses the answer. A Rails shop on
+     * Hotwire (tickettoaster) renders its listing only into the frame that sends the `Turbo-Frame`
+     * header, and answers a plain GET with the empty page around it (Downstairs).
+     */
+    suspend fun fetchTurboFrame(
+        url: String,
+        frameId: String
+    ): Document {
+        val body = fetchRawBody(url, webClient.get().uri(URI.create(url)).header("Turbo-Frame", frameId))
+        return parseHtml(body, url)
+    }
+
+    /**
      * POSTs [form] to [url] as `application/x-www-form-urlencoded` and returns the decoded answer, for
      * a listing whose "Load More" button asks a WordPress `admin-ajax.php` for the next page (migas).
      * The answer is usually a fragment, which the caller adds to the page it already holds.

@@ -290,6 +290,29 @@ class HtmlFetcherTest {
     }
 
     @Nested
+    inner class TurboFrame {
+        @Test
+        fun `fetchTurboFrame names the frame in the Turbo-Frame header and parses the answer`() =
+            runTest {
+                server.enqueue(
+                    MockResponse
+                        .Builder()
+                        .code(200)
+                        .addHeader("Content-Type", "text/html; charset=UTF-8")
+                        .body("<turbo-frame id=\"tickets\"><div class=\"col\">Allstars</div></turbo-frame>")
+                        .build()
+                )
+
+                val document = fetcher.fetchTurboFrame(baseUrl() + "/catalog/tickets?page=2", "tickets")
+
+                document.selectFirst("turbo-frame#tickets .col")!!.text() shouldBe "Allstars"
+                val recorded = server.takeRequest()
+                recorded.target shouldBe "/catalog/tickets?page=2"
+                recorded.headers["Turbo-Frame"] shouldBe "tickets"
+            }
+    }
+
+    @Nested
     inner class ErrorHandling {
         @Test
         fun `fetchHtml throws HttpFetchException on a 404`() =
