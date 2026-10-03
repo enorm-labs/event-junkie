@@ -150,8 +150,11 @@ case "$VERB" in
         BURST=600
         # User agents that are not a person: crawlers, our own monitors and tests, scanners, and a
         # missing agent. An agent that names a URL is a scanner probing for WordPress.
-        NOT_A_PERSON='(?i)bot|spider|crawl|slurp|facebookexternalhit|Better Stack|Uptime|lighthouse|Headless|curl|python|Go-http|"node"|k6|zgrab|nuclei|ZAP|wget|scan|http://|injector|akiaenvgo|"-"$'
-        OURS='(?i)Better Stack|lighthouse|Headless|"node"|nuclei|ZAP|injector'
+        # Three carry no bot word: `Nexus 5X Build/MMB29P` is Google's renderer, `moto g power` is
+        # Lighthouse mobile (ours or PageSpeed Insights), and `Chrome/48.0.2564.116` is an old crawler.
+        # Lighthouse desktop sends the user agent of real Mac Chrome, so no pattern can remove it.
+        NOT_A_PERSON='(?i)bot|spider|crawl|slurp|facebookexternalhit|Better Stack|Uptime|lighthouse|Headless|curl|python|Go-http|"node"|k6|zgrab|nuclei|ZAP|wget|scan|http://|injector|akiaenvgo|Nexus 5X Build/MMB29P|moto g power|Chrome/48\.0\.2564\.116|"-"$'
+        OURS='(?i)Better Stack|lighthouse|moto g power|Headless|"node"|nuclei|ZAP|injector'
         # A page load is a GET for an HTML route that answers 200. Assets, probes and 404s are not.
         PAGE_LOAD='^\[[^]]+\] "GET /(|de|en|de/[^ .]*|en/[^ .]*)(\?[^ ]*)? HTTP/[0-9.]+" 200 '
         DETAIL_PAGE='^\[[^]]+\] "GET /(de|en)/(events|venues|artists|promoters)/[^ /?]+/?(\?[^ ]*)? HTTP/[0-9.]+" 200 '
