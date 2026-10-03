@@ -480,10 +480,22 @@ class ArtistNameMappingTest {
     }
 
     @Test
+    fun `isGuestSlotLabel drops a secret lineup and a guest slot with a tba tail`() {
+        // OHM's spelling, "tab" for "tba" (#2439).
+        isNonArtistName("+ Secret Lineup") shouldBe true
+        isNonArtistName("+ Secret Guest tab") shouldBe true
+        isGuestSlotLabel("Secret Line-Up") shouldBe true
+        isGuestSlotLabel("Mystery Guest TBA") shouldBe true
+        isGuestSlotLabel("Guests tbc.") shouldBe true
+    }
+
+    @Test
     fun `isGuestSlotLabel keeps a real act whose name only contains guest`() {
         // Anchored: a real band is untouched even when a guest word appears inside the name.
         isGuestSlotLabel("Guns N' Roses") shouldBe false
         isGuestSlotLabel("Special Guest DJ Foo") shouldBe false
+        isGuestSlotLabel("Secret Rhythms") shouldBe false
+        isGuestSlotLabel("Lineup") shouldBe false
         isNonArtistName("Guns N' Roses") shouldBe false
     }
 
