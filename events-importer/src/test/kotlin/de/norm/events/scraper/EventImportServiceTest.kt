@@ -277,12 +277,12 @@ class EventImportServiceTest {
                 val src = source()
                 coEvery { cassiopeiaImporter.importEvents(any(), any(), any()) } returns
                     ImportResult.Success(events = listOf(scrapedEvent(title = "Show A", sourceId = "cassiopeia:show-a")), etag = null, lastModified = null)
-                coEvery { venueProgrammeStore.refresh(any(), any()) } throws IllegalStateException("database gone")
+                coEvery { venueProgrammeStore.refresh(any(), any(), any()) } throws IllegalStateException("database gone")
 
                 val result = service.importFromSource(src)
 
                 result.imported shouldBe true
-                coVerify { venueProgrammeStore.refresh(src.venueId, any()) }
+                coVerify { venueProgrammeStore.refresh(src.venueId, any(), any()) }
             }
 
         @Test

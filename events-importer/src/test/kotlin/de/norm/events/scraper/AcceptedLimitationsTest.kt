@@ -38,6 +38,14 @@ class AcceptedLimitationsTest {
     }
 
     @Test
+    fun `a house genre maps to its genre families, once each, keyed by source type`() {
+        AcceptedLimitations.houseFamilies["GARTN"] shouldBe listOf("electronic")
+        AcceptedLimitations.houseFamilies["RENATE"] shouldBe listOf("electronic")
+        AcceptedLimitations.houseFamilies["CLASH"] shouldBe listOf("punk")
+        AcceptedLimitations.houseFamilies["CASSIOPEIA"].shouldBeNull()
+    }
+
+    @Test
     fun `no source declares the same aspect twice`() {
         val duplicates =
             EventSource.entries.flatMap { source ->

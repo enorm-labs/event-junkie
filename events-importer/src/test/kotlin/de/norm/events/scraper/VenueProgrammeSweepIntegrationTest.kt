@@ -87,6 +87,23 @@ class VenueProgrammeSweepIntegrationTest : BaseControllerTest() {
         }
 
     @Test
+    fun `keeps a declared house genre's family without the thresholds, and puts it first`(): Unit =
+        runBlocking {
+            val gardenClub = insertVenue("garden-club")
+            insertSource(gardenClub, "GARTN")
+            // Two of nine nights tagged: under the count, as at the end of a short open-air season.
+            repeat(9) { i -> insertEvent(gardenClub, "PARTY", tags = if (i < 2) listOf("techno") else emptyList()) }
+            insertSource(rockClub, "CLASH")
+
+            val houseFamilies = mapOf("GARTN" to listOf("electronic"), "CLASH" to listOf("punk"), "TRESOR" to listOf("electronic"))
+            venueProgrammeStore.refreshAll(SINCE, houseFamilies)
+
+            programme(gardenClub).first shouldBe listOf("electronic")
+            programme(rockClub).first shouldBe listOf("punk", "rock")
+            programme(emptyHall).first shouldBe emptyList()
+        }
+
+    @Test
     fun `does nothing while an import runs`(): Unit =
         runBlocking {
             databaseClient
@@ -107,6 +124,17 @@ class VenueProgrammeSweepIntegrationTest : BaseControllerTest() {
             .sql("INSERT INTO events.venue (name, slug) VALUES ('$slug', '$slug') RETURNING id")
             .map { row, _ -> row.get("id", Number::class.java)!!.toLong() }
             .awaitSingle()
+
+    private suspend fun insertSource(
+        venueId: Long,
+        sourceType: String
+    ) {
+        databaseClient
+            .sql(
+                "INSERT INTO events.event_source (venue_id, name, slug, url, source_type) " +
+                    "VALUES ($venueId, '$sourceType', '${sourceType.lowercase()}', 'https://example.org/$sourceType', '$sourceType')"
+            ).await()
+    }
 
     private suspend fun insertEvent(
         venueId: Long,
