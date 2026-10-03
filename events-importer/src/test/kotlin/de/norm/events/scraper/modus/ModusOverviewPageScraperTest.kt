@@ -76,6 +76,22 @@ class ModusOverviewPageScraperTest {
     }
 
     @Test
+    fun `types the venue's comedy series and bills nobody from its name`() {
+        val html =
+            """
+            <div class="event-tiles"><div class="event-item">
+              <a class="event-link" href="/event/211026-ModusComedy"><figure><img src="/img/comedy.png">
+                <figcaption><div>21.10.2026</div><h2>Modus Comedy</h2></figcaption></figure></a>
+            </div></div>
+            """.trimIndent()
+
+        val comedy = scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl).single()
+
+        comedy.eventType shouldBe EventType.COMEDY.name
+        comedy.artists.shouldBeEmpty()
+    }
+
+    @Test
     fun `leaves the listing-only fields empty for the detail page to supply`() {
         val c4rl = event("modus:240926-c4rl")
         c4rl.startTime.shouldBeNull()

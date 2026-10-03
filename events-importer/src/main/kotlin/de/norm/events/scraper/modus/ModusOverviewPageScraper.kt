@@ -8,7 +8,6 @@ import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.imgSrcAt
-import de.norm.events.scraper.inferConcertVenueType
 import de.norm.events.scraper.parseEventStatus
 import de.norm.events.scraper.parseGermanDate
 import de.norm.events.scraper.resolveUrl
@@ -70,7 +69,7 @@ class ModusOverviewPageScraper {
 
         val rawTitle = tile.textAt("figcaption h2") ?: return null
         val title = cleanEventTitle(rawTitle)
-        val eventType = inferConcertVenueType(title)
+        val eventType = modusEventType(title)
 
         return ScrapedEvent(
             title = title,
@@ -85,7 +84,8 @@ class ModusOverviewPageScraper {
             // cleanEventTitle strips — so the status is read from the raw title.
             status = parseEventStatus(rawTitle),
             statusNote = rawTitle,
-            artists = buildArtistsForEventType(title, subtitle = null, eventType = eventType)
+            // The comedy series bills its lineup only on the detail page; its name is never an act.
+            artists = if (isModusComedySeries(title)) emptyList() else buildArtistsForEventType(title, subtitle = null, eventType = eventType)
         )
     }
 }

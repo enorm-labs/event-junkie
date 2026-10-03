@@ -3,6 +3,7 @@ package de.norm.events.scraper.panke
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
+import io.kotest.assertions.withClue
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
@@ -101,6 +102,32 @@ class PankeProgrammePageScraperTest {
         // A series name is not a format, so these stay OTHER rather than being guessed a concert.
         event("panke:17378").eventType shouldBe EventType.OTHER.name
         events.count { it.eventType == EventType.OTHER.name } shouldBe 5
+    }
+
+    @Test
+    fun `types a title that names a live show as a concert`() {
+        listOf(
+            "SOULFUL SKA DANCE MIT LIVE BANDS",
+            "Herr Kuchen – Süß und Salzig Tour",
+            "Sadat X & Grand Agent Live at Panke"
+        ).forEach { title -> withClue(title) { articleTitled(title).eventType shouldBe EventType.CONCERT.name } }
+    }
+
+    @Test
+    fun `leaves a series title with no live word untyped`() {
+        articleTitled("Disko International").eventType shouldBe EventType.OTHER.name
+        // `Deliverance` holds `live` only inside a word, which is not a live show.
+        articleTitled("Deliverance Night").eventType shouldBe EventType.OTHER.name
+    }
+
+    private fun articleTitled(title: String): ScrapedEvent {
+        val html =
+            """
+            <div class="et_pb_events_0"><article id="post-1">
+              <div class="event-content-wrapper" data-date="2026-10-17"><h2 class="entry-title">$title</h2></div>
+            </article></div>
+            """.trimIndent()
+        return scraper.scrape(Jsoup.parse(html, sourceUrl), sourceUrl).single()
     }
 
     @Test
