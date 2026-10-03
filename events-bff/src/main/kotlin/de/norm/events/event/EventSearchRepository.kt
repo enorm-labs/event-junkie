@@ -35,6 +35,8 @@ data class EventFilter(
     val venueSlug: String? = null,
     /** Any of these districts; empty imposes no constraint. [EventFilterParams] normalizes them. */
     val districts: List<String> = emptyList(),
+    /** Any of these venue types; empty imposes no constraint. [EventFilterParams] normalizes them. */
+    val venueTypes: List<String> = emptyList(),
     val artistSlug: String? = null,
     val promoterSlug: String? = null,
     val genreSlug: String? = null,
@@ -195,7 +197,7 @@ class EventSearchRepository(
         return "($notEnded$grace)"
     }
 
-    /** Applies filters on columns of the `event` table itself (event type, venue). */
+    /** Applies filters on columns of the `event` table and its venue (type, venue, district, venue type). */
     private fun appendColumnFilters(
         filter: EventFilter,
         conditions: MutableList<String>,
@@ -212,6 +214,11 @@ class EventSearchRepository(
         if (filter.districts.isNotEmpty()) {
             conditions += "e.venue_id IN (SELECT id FROM $EVENTS_SCHEMA.venue WHERE district IN (:districts))"
             params["districts"] = filter.districts
+        }
+        // `&&` is array overlap, served by the GIN index on `venue_types`.
+        if (filter.venueTypes.isNotEmpty()) {
+            conditions += "e.venue_id IN (SELECT id FROM $EVENTS_SCHEMA.venue WHERE venue_types && :venueTypes)"
+            params["venueTypes"] = filter.venueTypes.toTypedArray()
         }
         if (filter.excludeSoldOut) {
             conditions += "e.sold_out = FALSE"

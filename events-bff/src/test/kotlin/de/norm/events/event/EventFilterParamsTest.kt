@@ -35,4 +35,13 @@ class EventFilterParamsTest {
         first.districts shouldBe listOf("kreuzberg", "neukoelln")
         first shouldBe second
     }
+
+    @Test
+    fun `two orders of the same venue types are one filter`() {
+        val first = EventFilterParams(venueType = listOf("club", " bar", "club", "")).toFilter()
+        val second = EventFilterParams(venueType = listOf("bar", "club")).toFilter()
+
+        first.venueTypes shouldBe listOf("bar", "club")
+        first shouldBe second
+    }
 }

@@ -40,6 +40,10 @@ Accept: application/json
 GET {{bff-host}}/api/events?district=kreuzberg&district=neukoelln
 Accept: application/json
 
+### Filter by venue type (the curated venue type slugs); repeat it for any of several
+GET {{bff-host}}/api/events?venueType=club&venueType=bar
+Accept: application/json
+
 ### Filter by artist slug
 GET {{bff-host}}/api/events?artist=actors
 Accept: application/json

@@ -29,11 +29,13 @@ export function useEventFilters() {
     const eventTypes = queryList('eventType')
     const families = queryList('family')
     const districts = queryList('district')
+    const venueTypes = queryList('venueType')
     return {
       q: queryString('q') || undefined,
       eventType: eventTypes.length ? eventTypes : undefined,
       venue: queryString('venue') || undefined,
       district: districts.length ? districts : undefined,
+      venueType: venueTypes.length ? venueTypes : undefined,
       genre: queryString('genre') || undefined,
       family: families.length ? families : undefined,
       minPrice: queryString('minPrice') ? Number(queryString('minPrice')) : undefined,

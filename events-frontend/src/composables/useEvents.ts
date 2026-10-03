@@ -12,6 +12,8 @@ export interface EventSearchParams {
   venue?: string
   /** Any of these districts; sent as a repeated parameter. */
   district?: string[]
+  /** Any of these venue types (`VENUE_TYPES`); sent as a repeated parameter. */
+  venueType?: string[]
   artist?: string
   promoter?: string
   genre?: string
@@ -45,6 +47,7 @@ export type EventFilterValues = Pick<
   | 'eventType'
   | 'venue'
   | 'district'
+  | 'venueType'
   | 'genre'
   | 'family'
   | 'minPrice'
