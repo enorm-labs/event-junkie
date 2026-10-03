@@ -156,11 +156,30 @@ class So36DetailPageScraperTest {
         event.subtitle shouldBe "Support: GRENZER & BIERTOIFEL"
         event.artists.map { it.name to it.role } shouldBe
             listOf(
-                "PÖBEL" to "HEADLINER",
-                "GESOCKS" to "HEADLINER",
+                "PÖBEL & GESOCKS" to "HEADLINER",
                 "GRENZER" to "SUPPORT",
                 "BIERTOIFEL" to "SUPPORT"
             )
+    }
+
+    @Test
+    fun `keeps a band with an ampersand in its name whole and splits a co-billed title`() {
+        // The concert titles with "&" on the listing on 2026-10-03 (#2414).
+        fun headliners(title: String): List<String> {
+            val document = fixture("so36-detail-concert.html", concertUrl)
+            document.selectFirst("h1 [itemprop=name]")!!.text(title)
+            return scraper
+                .scrape(document, concertUrl)!!
+                .artists
+                .filter { it.role == "HEADLINER" }
+                .map { it.name }
+        }
+
+        headliners("PÖBEL & GESOCKS") shouldBe listOf("PÖBEL & GESOCKS")
+        headliners("TITO & TARANTULA") shouldBe listOf("TITO & TARANTULA")
+        headliners("BOOZE & GLORY") shouldBe listOf("BOOZE & GLORY")
+        headliners("Kai & Funky von TON STEINE SCHERBEN") shouldBe listOf("Kai & Funky von TON STEINE SCHERBEN")
+        headliners("MASTER BOOT RECORD & FULCI") shouldBe listOf("MASTER BOOT RECORD", "FULCI")
     }
 
     @Test

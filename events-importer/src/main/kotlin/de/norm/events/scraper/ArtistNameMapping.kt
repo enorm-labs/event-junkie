@@ -789,6 +789,11 @@ private val KNOWN_SINGLE_ACTS: Set<String> =
         "überhaupt & außerdem",
         "haute & freddy",
         "2mädchen & uwe",
+        // Bands SO36 bills as the whole title, beside real co-bills like `MASTER BOOT RECORD & FULCI` (#2414).
+        "pöbel & gesocks",
+        "tito & tarantula",
+        "booze & glory",
+        "kai & funky von ton steine scherben",
         // A duo that releases under the ` x ` join, so [splitCrossBilled] must leave it whole (#2365).
         "noah x petter"
     )

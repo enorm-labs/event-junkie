@@ -212,9 +212,9 @@ class So36DetailPageScraper {
      * `feat.` included, because "feat. Birte Volta mit Special-Guests" bills the headliner's guest,
      * not a support act (#1903).
      *
-     * An "&" line is support, not a co-bill: SO36 puts co-headliners in the title ("PÖBEL &
-     * GESOCKS"), and the NASTY page names only NASTY on its ticket and the "&" acts as "mit dabei"
-     * (#1928).
+     * An "&" line is support, not a co-bill: SO36 puts co-headliners in the title ("MASTER BOOT
+     * RECORD & FULCI"), and the NASTY page names only NASTY on its ticket and the "&" acts as "mit
+     * dabei" (#1928). A band with "&" in its name ("PÖBEL & GESOCKS") is a `KNOWN_SINGLE_ACTS` pin.
      *
      * [splitSupportActs] cuts on commas, `+` and `/` and handles `&` / `and` /
      * `und` per boundary — "Earth Tongue und Scott Hepple & The Sun Band" yields "Earth Tongue"
