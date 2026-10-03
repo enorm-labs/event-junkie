@@ -59,7 +59,7 @@ class TempodromWebsiteImporterTest {
             stubListing()
             val result = importer.importEvents(listingUrl)
             result.shouldBeInstanceOf<ImportResult.Success>()
-            result.events shouldHaveSize 144
+            result.events shouldHaveSize 143
             result.lastModified shouldBe "Sat, 01 Aug 2026 11:45:00 GMT"
         }
 

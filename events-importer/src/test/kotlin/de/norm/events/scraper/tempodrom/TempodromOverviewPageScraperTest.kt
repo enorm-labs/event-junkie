@@ -43,9 +43,9 @@ class TempodromOverviewPageScraperTest {
 
     @Test
     fun `extracts the whole programme from one JSON-LD block`() {
-        // 145 objects, less the one sport fixture.
-        events shouldHaveSize 144
-        events.map { it.sourceId }.distinct() shouldHaveSize 144
+        // 145 objects, less the snooker and the esports fixture.
+        events shouldHaveSize 143
+        events.map { it.sourceId }.distinct() shouldHaveSize 143
     }
 
     @Test
@@ -97,7 +97,7 @@ class TempodromOverviewPageScraperTest {
     @Test
     fun `keeps the offer's range in the note so the low price is not read as the price`() {
         val ranged = events.filter { it.priceNote != null }
-        ranged shouldHaveSize 67
+        ranged shouldHaveSize 66
         ranged.all { it.pricePresale != null } shouldBe true
     }
 
@@ -136,7 +136,7 @@ class TempodromOverviewPageScraperTest {
     fun `derives the headliner from the title, not the placeholder performer`() {
         // `performer.name` is a copy of the event name on all 145 events, so it names no act. Three
         // of the rest are score concerts (`The Witcher in Concert`), which bill no act (#1829).
-        events.count { it.artists.isNotEmpty() } shouldBe 139
+        events.count { it.artists.isNotEmpty() } shouldBe 138
         events.flatMap { it.artists }.all { it.role == "HEADLINER" } shouldBe true
     }
 
@@ -166,10 +166,26 @@ class TempodromOverviewPageScraperTest {
     }
 
     @Test
-    fun `drops the snooker tournament and nothing else`() {
-        // 145 objects on the page; "Snooker" / "German Masters 2027" is the one sport row (#2470).
+    fun `drops the snooker and the esports tournament`() {
+        // "Snooker" / "German Masters 2027" (#2470) and "GeoGuessr" / "World Championship - 4" (#2478).
         events.none { it.sourceId.startsWith("tempodrom:snooker") } shouldBe true
         events.none { it.title.contains("Masters", ignoreCase = true) } shouldBe true
+        events.none { it.sourceId.startsWith("tempodrom:geoguessr") } shouldBe true
+    }
+
+    @Test
+    fun `drops an esports format line and keeps a world championship that names no game`() {
+        val html =
+            """
+            <html><body><script type="application/ld+json">[
+              {"@type": "Event", "name": "Berlin Major", "description": "E-Sport Finals 2027",
+               "startDate": "2027-04-04T19:00:00+02:00", "url": "https://www.tempodrom.de/event/bm_2027-04-04_19/"},
+              {"@type": "Event", "name": "Showdance", "description": "World Championship 2027",
+               "startDate": "2027-04-05T20:00:00+02:00", "url": "https://www.tempodrom.de/event/sd_2027-04-05_20/"}
+            ]</script></body></html>
+            """.trimIndent()
+
+        scraper.scrape(Jsoup.parse(html, baseUrl)).map { it.title } shouldContainExactly listOf("Showdance")
     }
 
     @Test
