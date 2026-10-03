@@ -90,7 +90,7 @@ In `docs/EVENT_DATA_SOURCES.md`:
 
 ### 7. Ship, or stop
 
-**PASS** → run [`/open-pr`](open-pr.prompt.md). Conventional Commits scope `importer` or `scraper`; the Testing section must state the smoke-test numbers (event
+**PASS** → run [`/open-pr`](open-pr.prompt.md). Conventional Commits scope `importer` or `scraper`; the `## Checks` section must state the smoke-test numbers (event
 count, date range, what you compared against the live site). Then report the PR URL and stop.
 
 **Blocked** (site unscrapable) → move the row to **⛔ Blocked / deferred** with the reason and what it would need (e.g. "Headless browser"), update the counts,
