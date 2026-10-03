@@ -48,6 +48,13 @@ abstract class AbstractTwoPageWebsiteImporter(
     ): ScrapedEvent = primary.withGapsFrom(fallback)
 
     /**
+     * Whether a good run stores the detail page's image over the listing's. True by default, so a
+     * degraded row's listing image yields to the stored one ([ScrapedEvent.listingImageStandsIn],
+     * #2465). False where [fillGapsFromOverview] keeps the listing's image, or the detail page has none.
+     */
+    protected open val detailPageOwnsImage: Boolean = true
+
+    /**
      * The absolute URL of the listing page after [document], or null when it is the last. Null by
      * default: most listings are one page. A subclass that returns one has its later pages fetched
      * and scraped too, up to [MAX_OVERVIEW_PAGES] (ADR-007 §"Pagination — First Page Only").
@@ -135,8 +142,10 @@ abstract class AbstractTwoPageWebsiteImporter(
                 if (!last) delay(RETRY_PAUSE)
             }
         }
-        return overview.copy(detailUnavailable = true)
+        return degraded(overview)
     }
+
+    private fun degraded(overview: ScrapedEvent): ScrapedEvent = overview.copy(detailUnavailable = true, listingImageStandsIn = detailPageOwnsImage)
 
     private suspend fun mergeDetail(overview: ScrapedEvent): ScrapedEvent {
         val detailDoc = htmlFetcher.fetchDocument(overview.sourceUrl)
@@ -145,7 +154,7 @@ abstract class AbstractTwoPageWebsiteImporter(
         // inside is the scraper's own parsing, which is what needed the URL and never had it.
         return withContext(LogContext.forPage(overview.sourceUrl)) {
             val detail = scrapeDetail(detailDoc, overview.sourceUrl)
-            if (detail != null) fillGapsFromOverview(primary = detail, fallback = overview) else overview.copy(detailUnavailable = true)
+            if (detail != null) fillGapsFromOverview(primary = detail, fallback = overview) else degraded(overview)
         }
     }
 

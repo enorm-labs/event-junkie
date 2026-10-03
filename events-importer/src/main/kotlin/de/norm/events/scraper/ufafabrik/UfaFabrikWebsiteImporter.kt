@@ -26,6 +26,7 @@ class UfaFabrikWebsiteImporter(
         UfaFabrikEventPageScraper()::scrape
     ) {
     override val eventSource: EventSource = EventSource.UFA_FABRIK
+    override val detailPageOwnsImage: Boolean = false
 
     /** The month after the source page; a `/program/` URL is already that month, and ends the walk. */
     override fun nextOverviewPage(

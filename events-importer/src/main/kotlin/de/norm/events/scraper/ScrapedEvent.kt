@@ -106,7 +106,13 @@ data class ScrapedEvent(
      * The event's detail page yielded nothing this run, so this row holds the listing's fields alone.
      * Never stored: the upsert keeps what the stored row holds where this row has nothing (#2421).
      */
-    val detailUnavailable: Boolean = false
+    val detailUnavailable: Boolean = false,
+    /**
+     * The image is the listing's stand-in for the event page's own, which this run did not get —
+     * often a thumbnail of the poster a good run stores. Never stored: the upsert of a
+     * [detailUnavailable] row keeps a stored image over it (#2465).
+     */
+    val listingImageStandsIn: Boolean = false
 ) {
     /**
      * This event with every gap filled from [fallback]: a null field takes the fallback's value, the
@@ -159,7 +165,8 @@ data class ScrapedEvent(
      * This event with every empty field the detail page fills taken from [stored], for a row whose
      * detail page yielded nothing ([detailUnavailable]). A transient redirect would otherwise blank
      * the start time and image the last run stored (#2421). The end date and time move as a pair,
-     * because the database refuses a time without a date.
+     * because the database refuses a time without a date. A [listingImageStandsIn] image yields to a
+     * stored one (#2465).
      */
     fun withGapsFromStored(stored: EventEntity): ScrapedEvent = withScheduleGapsFromStored(stored).withLinkAndPriceGapsFromStored(stored)
 
@@ -180,7 +187,7 @@ data class ScrapedEvent(
     /** [withGapsFromStored] for the image, the links, the genre and the prices. */
     private fun withLinkAndPriceGapsFromStored(stored: EventEntity): ScrapedEvent =
         copy(
-            imageUrl = imageUrl ?: stored.imageUrl,
+            imageUrl = if (listingImageStandsIn) stored.imageUrl ?: imageUrl else imageUrl ?: stored.imageUrl,
             lineupSourceUrl = lineupSourceUrl ?: stored.lineupSourceUrl,
             ticketUrl = ticketUrl ?: stored.ticketUrl,
             genre = genre ?: stored.genre,

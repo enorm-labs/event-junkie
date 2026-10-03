@@ -33,6 +33,7 @@ class EventUpsertServiceDetailUnavailableTest {
     private val eventSourceId = 1L
     private val sourceId = "tresor:20261010-tresor-klubnacht"
     private val poster = "https://tresorberlin.com/wp-content/uploads/2026/09/klubnacht-1536x1536.jpg"
+    private val thumbnail = "https://tresorberlin.com/wp-content/uploads/2026/09/klubnacht-520x320.jpg"
 
     private lateinit var service: EventUpsertService
 
@@ -111,5 +112,42 @@ class EventUpsertServiceDetailUnavailableTest {
 
             written.startTime shouldBe LocalTime.of(22, 0)
             written.imageUrl shouldBe poster
+        }
+
+    @Test
+    fun `a listing image that stands in for the event page's yields to the stored poster`() =
+        runTest {
+            val written = upsertAndCapture(listingRow(detailUnavailable = true).copy(imageUrl = thumbnail, listingImageStandsIn = true))
+
+            written.imageUrl shouldBe poster
+        }
+
+    @Test
+    fun `a listing image the listing owns replaces the stored one`() =
+        runTest {
+            val written = upsertAndCapture(listingRow(detailUnavailable = true).copy(imageUrl = thumbnail))
+
+            written.imageUrl shouldBe thumbnail
+        }
+
+    @Test
+    fun `a stand-in listing image is kept when no image is stored`() =
+        runTest {
+            coEvery { eventRepository.findBySourceIdIn(any()) } returns listOf(stored.copy(imageUrl = null)).asFlow()
+
+            val written = upsertAndCapture(listingRow(detailUnavailable = true).copy(imageUrl = thumbnail, listingImageStandsIn = true))
+
+            written.imageUrl shouldBe thumbnail
+        }
+
+    @Test
+    fun `a first import keeps the stand-in listing image`() =
+        runTest {
+            coEvery { eventRepository.findBySourceIdIn(any()) } returns emptyFlow()
+
+            val written = upsertAndCapture(listingRow(detailUnavailable = true).copy(imageUrl = thumbnail, listingImageStandsIn = true))
+
+            written.id.shouldBeNull()
+            written.imageUrl shouldBe thumbnail
         }
 }

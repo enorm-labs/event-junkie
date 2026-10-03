@@ -31,6 +31,7 @@ abstract class AbstractAegVenueImporter(
         { document, url -> DETAIL_SCRAPER.scrape(document, url, eventSource) }
     ) {
     override val listsWholeProgramme: Boolean = true
+    override val detailPageOwnsImage: Boolean = false
 
     /**
      * Merges detail-page data ([primary]) with listing data ([fallback]). The **listing wins on

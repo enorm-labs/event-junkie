@@ -10,12 +10,14 @@ private val logger = KotlinLogging.logger {}
 /**
  * [event] enriched from its own page by [enrich], or [event] flagged [ScrapedEvent.detailUnavailable]
  * when the page yields nothing. The flag makes the upsert keep the fields the page stored last time.
+ * [eventPageOwnsImage] marks the listing's image a stand-in, so a stored one wins over it (#2465).
  * An importer that fetches event pages calls this, or [AbstractSinglePageWebsiteImporter.enrichFromEventPage].
  */
 suspend fun HtmlFetcher.withEventPageOrFlagged(
     event: ScrapedEvent,
+    eventPageOwnsImage: Boolean = false,
     enrich: (Document) -> ScrapedEvent?
-): ScrapedEvent = readEventPage(event, enrich) ?: event.copy(detailUnavailable = true)
+): ScrapedEvent = readEventPage(event, enrich) ?: event.copy(detailUnavailable = true, listingImageStandsIn = eventPageOwnsImage)
 
 /**
  * [event]'s own page read by [parse], or null when the fetch or the parse fails or [parse] returns null.

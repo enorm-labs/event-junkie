@@ -155,7 +155,9 @@ class GaertenDerWeltWebsiteImporterTest {
         runTest {
             val result = importer.importEvents(ENTRY_URL).shouldBeInstanceOf<ImportResult.Success>()
 
-            result.events.single { it.title.startsWith("Wanderkino") }.detailUnavailable shouldBe true
+            val screening = result.events.single { it.title.startsWith("Wanderkino") }
+            screening.detailUnavailable shouldBe true
+            screening.listingImageStandsIn shouldBe true
         }
 
     @Test

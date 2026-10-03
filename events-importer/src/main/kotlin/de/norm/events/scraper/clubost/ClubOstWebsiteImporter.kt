@@ -28,6 +28,7 @@ class ClubOstWebsiteImporter(
     htmlFetcher: HtmlFetcher
 ) : AbstractTwoPageWebsiteImporter(htmlFetcher, ClubOstOverviewPageScraper()::scrape, ClubOstDetailPageScraper()::scrape) {
     override val eventSource: EventSource = EventSource.CLUB_OST
+    override val detailPageOwnsImage: Boolean = false
     override val listsWholeProgramme: Boolean = true
 
     /**
