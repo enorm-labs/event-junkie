@@ -2,8 +2,10 @@ package de.norm.events.artist
 
 import de.norm.events.common.PageResponse
 import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
+import org.springdoc.core.annotations.ParameterObject
 import org.springframework.data.domain.Pageable
 import org.springframework.data.web.PageableDefault
 import org.springframework.http.HttpStatus
@@ -29,12 +31,14 @@ class ArtistController(
     @GetMapping
     @Operation(summary = "List all artists with pagination")
     suspend fun findAll(
+        @ParameterObject
         @PageableDefault(size = 20, sort = ["name"]) pageable: Pageable
     ): PageResponse<ArtistResponse> = artistService.findAll(pageable)
 
     @GetMapping("/{id}")
     @Operation(summary = "Get a single artist by ID")
     suspend fun findById(
+        @Parameter(description = "Database ID of the artist.", example = "1")
         @PathVariable id: Long
     ): ArtistResponse = artistService.findById(id)
 
@@ -48,6 +52,7 @@ class ArtistController(
     @PutMapping("/{id}")
     @Operation(summary = "Update an existing artist")
     suspend fun update(
+        @Parameter(description = "Database ID of the artist.", example = "1")
         @PathVariable id: Long,
         @Valid @RequestBody request: ArtistRequest
     ): ArtistResponse = artistService.update(id, request)
@@ -56,6 +61,7 @@ class ArtistController(
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(summary = "Delete an artist by ID")
     suspend fun delete(
+        @Parameter(description = "Database ID of the artist.", example = "1")
         @PathVariable id: Long
     ) {
         artistService.delete(id)

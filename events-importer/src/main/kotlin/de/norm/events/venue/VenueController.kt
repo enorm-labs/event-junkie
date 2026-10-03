@@ -2,8 +2,10 @@ package de.norm.events.venue
 
 import de.norm.events.common.PageResponse
 import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
+import org.springdoc.core.annotations.ParameterObject
 import org.springframework.data.domain.Pageable
 import org.springframework.data.web.PageableDefault
 import org.springframework.http.HttpStatus
@@ -33,6 +35,7 @@ class VenueController(
     @GetMapping
     @Operation(summary = "List all venues with pagination")
     suspend fun findAll(
+        @ParameterObject
         @PageableDefault(size = 20, sort = ["name"]) pageable: Pageable
     ): PageResponse<VenueResponse> = venueService.findAll(pageable)
 
@@ -40,6 +43,7 @@ class VenueController(
     @GetMapping("/{id}")
     @Operation(summary = "Get a single venue by ID")
     suspend fun findById(
+        @Parameter(description = "Database ID of the venue.", example = "1")
         @PathVariable id: Long
     ): VenueResponse = venueService.findById(id)
 
@@ -54,6 +58,7 @@ class VenueController(
     @PutMapping("/{id}")
     @Operation(summary = "Update an existing venue")
     suspend fun update(
+        @Parameter(description = "Database ID of the venue.", example = "1")
         @PathVariable id: Long,
         @Valid @RequestBody request: VenueRequest
     ): VenueResponse = venueService.update(id, request)
@@ -63,6 +68,7 @@ class VenueController(
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(summary = "Delete a venue by ID")
     suspend fun delete(
+        @Parameter(description = "Database ID of the venue.", example = "1")
         @PathVariable id: Long
     ) {
         venueService.delete(id)
