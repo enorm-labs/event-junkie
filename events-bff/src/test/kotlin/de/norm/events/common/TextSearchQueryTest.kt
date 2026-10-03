@@ -8,7 +8,7 @@ import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
 
-/** The `q` rule of [TextSearch] against the real `search_norm` (V087), through each list endpoint. */
+/** The `q` rule of [TextSearch] against the real `search_norm` (V090), through each list endpoint. */
 class TextSearchQueryTest : BaseControllerTest() {
     @Test
     fun `a name list folds accents, umlaut spellings, spaces and case, and forgives a typo`(): Unit =
