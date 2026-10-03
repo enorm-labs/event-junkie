@@ -282,7 +282,7 @@ class SchokoladenOverviewPageScraper {
         private val SOLD_OUT_BANNER = Regex("""^\W*(?:ausverkauft|sold\s*out)\b""", RegexOption.IGNORE_CASE)
 
         /** Promoters whose own name carries an "&", which would otherwise split them. */
-        private val JOINED_PROMOTERS = listOf("""thirsty\s*&\s*miserable""")
+        private val JOINED_PROMOTERS = listOf("""thirsty\s*&\s*miserable""", """old\s*&\s*fast\b""")
 
         /** One promoter inside a span: a [JOINED_PROMOTERS] name, or a run between ",", "&" and "+". */
         private val PROMOTER_TOKEN = Regex("""\s*(?:${JOINED_PROMOTERS.joinToString("|")})|[^,&+]+""", RegexOption.IGNORE_CASE)

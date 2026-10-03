@@ -338,7 +338,7 @@ class SchokoladenOverviewPageScraperTest {
 
         @Test
         fun `cuts the promoter span at its presents word or tagline and splits every co-promoter`() {
-            // Spans as the venue printed them on 2026-09-30.
+            // Spans as the venue printed them on 2026-09-30 and 2026-10-03.
             fun promotersOf(span: String): List<String> =
                 scraper
                     .scrape(
@@ -364,6 +364,7 @@ class SchokoladenOverviewPageScraperTest {
                 promotersOf("thirsty &amp; miserable + crunch tapes presents: &nbsp;") shouldContainExactly
                     listOf("thirsty & miserable", "crunch tapes")
                 promotersOf("Trust + thirsty &amp; miserable presents: &nbsp;") shouldContainExactly listOf("Trust", "thirsty & miserable")
+                promotersOf("old &amp; fast prsnts: &nbsp;") shouldContainExactly listOf("old & fast")
                 promotersOf("punkfilmfest berlin booking + the living proof prsnt: &nbsp;") shouldContainExactly
                     listOf("punkfilmfest berlin booking", "the living proof")
                 promotersOf("amadis, dynamite konzerte &amp; lls prsnt: &nbsp;") shouldContainExactly
