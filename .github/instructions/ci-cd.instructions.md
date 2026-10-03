@@ -131,6 +131,8 @@ is the map and the traps.
 - `restore-drill-reminder.yml` — quarterly, and on any push to `main` touching `backups.sh` or `postgres.sh`; idempotent by listing open issues, not search.
 - `credential-expiry-reminder.yml` (#569) — 30 days before a credential expires, louder once it has. **The dates are a literal `CREDENTIALS` table in the
   workflow, duplicated in `docs/CREDENTIALS.md` §2**; reading them from GitHub would need `admin:org`, a stronger expiring token watching a weaker one.
+  Its daily `dispatch-records` job (#1003) opens an issue per environment when the newest green publish older than two hours has no deployment record after
+  it, and closes it once one appears: the effect of a `github-dispatch` PAT that cannot write, which Actions cannot probe because it does not hold the PAT.
 - `node-pin-reminder.yml` (#1068) — when `k3s_version` or `walg_version` falls behind upstream. **Refuses to open a PR, load-bearing**: both pins feed
   `user_data`, so a bump replaces the node, and `walg_checksums` must move with the version or `backups.sh` aborts the boot. `scripts/upstream-node-pins.sh`
   holds the comparison (exit 0 current, 1 behind, 2 could not check — only 2 fails the job); titles carry the pinned version so upstream moving cannot pile

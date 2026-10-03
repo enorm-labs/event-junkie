@@ -98,6 +98,12 @@ Adding a credential means one line there and one row here. Rotating one means ed
 says explicitly. The name encodes its cluster, because there will eventually be one per cluster per provider, and the
 list sorts into pairs that way.
 
+**A token that cannot write fails as silently, and it has no date.** Revocation, or a regeneration without _Contents: write_,
+causes it. The same workflow's `dispatch-records` job watches for it every day
+([#1003](https://github.com/enorm-labs/event-junkie/issues/1003)). Actions does not hold the PAT, so the job reads the
+effect: a publish with no deployment record after it. It opens one issue per environment and closes it when a record
+appears. It covers #15 and #15a, and the source-failure path, which uses the same token.
+
 **#25 is the first GitHub App here, and it exists because `GITHUB_TOKEN` cannot do this job.** GitHub suppresses the
 events its own token raises. A release created with it fires no `release: published`, so
 [`release.yml`](../.github/workflows/release.yml) never runs and nothing is published, with every job green. A pull
