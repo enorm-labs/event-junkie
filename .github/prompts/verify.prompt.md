@@ -69,6 +69,7 @@ All three stacks even for a one-line change — they share `modules/environment`
 ### Helm chart (only when the diff touches `deploy/`)
 
 ```bash
+scripts/plugin-parity.sh       # first; on ✗ stop the chart gate and hand over the printed install command
 helm lint --strict deploy/charts/event-junkie --set database.host=10.0.1.2 --set database.existingSecret=events-db
 helm lint --strict deploy/charts/event-junkie --values deploy/charts/event-junkie/values-k3d.yaml
 helm unittest --strict deploy/charts/event-junkie
@@ -79,10 +80,12 @@ helm template t deploy/charts/event-junkie --values deploy/charts/event-junkie/v
 flux schema validate deploy/clusters -s ecosystem --verbose --skip-json-path v1/Secret:/sops
 ```
 
-`helm unittest` needs the plugin: `helm plugin install https://github.com/helm-unittest/helm-unittest --version <HELM_UNITTEST_VERSION from validate-chart.yml> --verify=false`
-(Helm 4 refuses an unverifiable plugin source without the flag). `cluster-assertions.sh` re-runs the invariant suites against each cluster's `spec.values`,
-so the gate covers what Flux deploys. `architecture-diagram.sh check` fails when a chart change moved what an environment deploys without
-`docs/architecture/` following; `write` is the fix, and then read the diagrams in PLATFORM_SETUP.md §1.4 (ADR-034).
+**A plugin version that differs from CI's is a stop, not a warning.** `plugin-parity.sh` compares the local flux `schema` and helm `unittest` plugins
+with `FLUX_SCHEMA_VERSION` and `HELM_UNITTEST_VERSION` in `validate-chart.yml`, and on a mismatch prints the command that installs CI's version. Run the rest
+of the block only after it passes: schema plugin 0.12.1 reported six Invalid on a clean `main` (#2412). `cluster-assertions.sh` re-runs the
+invariant suites against each cluster's `spec.values`, so the gate covers what Flux deploys.
+`architecture-diagram.sh check` fails when a chart change moved what an environment deploys without `docs/architecture/` following; `write` is the
+fix, and then read the diagrams in PLATFORM_SETUP.md §1.4 (ADR-034).
 **Watch `Skipped:`, not just `Invalid:`** — a resource with no schema is skipped, not failed. **Never `helm install`,
 `upgrade`, `uninstall`, `rollback` or `install --dry-run`** ([deploy/AGENTS.md](../../deploy/AGENTS.md)).
 
@@ -113,7 +116,7 @@ histories) and `scripts/version-test.sh` (snapshot versions still order — a ve
     Always:   comment-lint ✓  skill ✓  rules ✓  collector ✓  scope ✓  index ✓
     Markdown: format ✓  ste-lint ✓                        (omit when no .md moved)
     Infra:    fmt ✓  validate ×3 ✓  shellcheck ✓  user_data ✓   (omit when infra/ untouched)
-    Chart:    lint ×2 ✓  unittest ✓  assertions ✓  uid ✓  schema ✓   (omit when deploy/ untouched)
+    Chart:    plugins ✓  lint ×2 ✓  unittest ✓  assertions ✓  uid ✓  schema ✓   (omit when deploy/ untouched)
     ```
 
     On failure, ✗ on the failing step, the rest skipped, the first useful error line below.
@@ -124,6 +127,7 @@ histories) and `scripts/version-test.sh` (snapshot versions still order — a ve
 - **`Executable doesn't exist`** on the first e2e run: `npx playwright install chromium` from `events-frontend/`.
 - **Two Gradle daemons clobber `build/classes`**: a full test run while `dev-env.sh` is up fails with `NoClassDefFoundError` in untouched packages.
   `./gradlew --stop`, then build from clean.
-- **A missing tool is a skipped check, never a passed one**: `brew install opentofu shellcheck helm yq fluxcd/tap/flux`, `flux plugin install schema`.
+- **A missing tool is a skipped check, never a passed one**: `brew install opentofu shellcheck helm yq fluxcd/tap/flux`; the chart plugins at the
+  versions `scripts/plugin-parity.sh` prints.
 - **The chart gate proves nothing about a running cluster.** Report it as "renders and passes assertions"; [`/k3d-rehearsal`](k3d-rehearsal.prompt.md) is the
   runtime counterpart.
