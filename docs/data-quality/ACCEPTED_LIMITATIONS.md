@@ -29,12 +29,12 @@ says so.
 | `ARCANOA`              | `PER_EVENT_PAGE`   | the whole programme is one hand-coded page                                                                                                       | —     |
 | `ARCANOA`              | `PRICE`            | a night is one line — a date, the act and a genre string — and the page prints no figure anywhere                                                | —     |
 | `ARCANOA`              | `TICKET_URL`       | entry is paid at the door, and the page's only links point at partner sites                                                                      | —     |
-| `ARCANOA`              | `GENRE`            | the style tail mixes run-together genre words with support acts and notes, so it stays the subtitle rather than seeding junk tags                | —     |
+| `ARCANOA`              | `GENRE`            | the style tail runs genre words together with support acts and notes, so only the words the vocabulary knows become the genre                    | —     |
 | `ARCANOA`              | `IMAGE`            | the page carries no image element at all                                                                                                         | —     |
 | `ARCANOA`              | `DESCRIPTION`      | the one line per night is the whole entry, with no blurb after it                                                                                | —     |
 | `ARCANOA`              | `ARTISTS`          | a night is one line with no separator between the act and the night's name, so a billing like `Arcana A Night Of Flow` cannot be split           | —     |
 | `ART_STALKER`          | `PAGINATION`       | robots.txt disallows the shop's paged listing, so only the first 25 events are read                                                              | —     |
-| `ART_STALKER`          | `GENRE`            | the style is only a free-text tagline after the act's name                                                                                       | —     |
+| `ART_STALKER`          | `GENRE`            | the style is only a free-text tagline after the act's name, so only the genre words in it become the genre                                       | —     |
 | `ART_STALKER`          | `PROMOTERS`        | the venue presents every night itself                                                                                                            | —     |
 | `ASTRA`                | `GENRE`            | the event page carries no genre field                                                                                                            | —     |
 | `BAR_JEDER_VERNUNFT`   | `DOORS_TIME`       | the calendar and the show pages state one Beginn time and never an Einlass                                                                       | —     |

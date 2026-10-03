@@ -58,9 +58,9 @@ class ArcanoaOverviewPageScraperTest {
             val event = scraper.scrape(programme(), baseUrl).single { it.eventDate == LocalDate.of(2026, 8, 15) }
 
             event.title shouldBe "Jesse Cotton Stone"
-            // The style tail stays a subtitle — "HellCountryBlues" would be a junk genre tag.
+            // The style tail stays the subtitle; only the genre words it runs together become the genre (#2397).
             event.subtitle shouldBe "HellCountryBlues"
-            event.genre.shouldBeNull()
+            event.genre shouldBe "Blues"
             event.eventType shouldBe EventType.CONCERT.name
             // The page publishes one time for the whole month block ("Veranstaltungsbeginn: 20 Uhr").
             event.startTime shouldBe LocalTime.of(20, 0)

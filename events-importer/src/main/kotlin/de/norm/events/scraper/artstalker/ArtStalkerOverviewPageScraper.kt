@@ -6,6 +6,7 @@ import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.imgSrcAt
 import de.norm.events.scraper.inferConcertVenueType
+import de.norm.events.scraper.knownGenresInStyleTail
 import de.norm.events.scraper.parseClockPrefix
 import de.norm.events.scraper.parseIsoDate
 import de.norm.events.scraper.parsePriceValue
@@ -49,6 +50,7 @@ class ArtStalkerOverviewPageScraper {
         return ScrapedEvent(
             title = title,
             subtitle = subtitle,
+            genre = knownGenresInStyleTail(subtitle),
             eventType = eventType,
             eventDate = date,
             startTime = parseClockPrefix(dateTime.substringAfter("T")),

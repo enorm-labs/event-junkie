@@ -6,6 +6,7 @@ import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.euroAmounts
 import de.norm.events.scraper.hasFreeEntryPhrase
 import de.norm.events.scraper.imgSrcAt
+import de.norm.events.scraper.knownGenresInStyleTail
 import de.norm.events.scraper.labelledClock
 import de.norm.events.scraper.parseClockPrefix
 import de.norm.events.scraper.parseIsoDate
@@ -43,6 +44,7 @@ class ArtStalkerDetailPageScraper {
         return ScrapedEvent(
             title = title,
             subtitle = subtitle,
+            genre = knownGenresInStyleTail(subtitle),
             description =
                 blurb
                     .filterNot { CREDIT_OR_LINK.matches(it) }

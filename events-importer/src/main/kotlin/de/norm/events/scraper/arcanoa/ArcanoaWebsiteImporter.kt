@@ -42,7 +42,7 @@ val ARCANOA_LIMITATIONS =
         AcceptedLimitation(LimitedAspect.TICKET_URL, "entry is paid at the door, and the page's only links point at partner sites"),
         AcceptedLimitation(
             LimitedAspect.GENRE,
-            "the style tail mixes run-together genre words with support acts and notes, so it stays the subtitle rather than seeding junk tags"
+            "the style tail runs genre words together with support acts and notes, so only the words the vocabulary knows become the genre"
         ),
         AcceptedLimitation(LimitedAspect.IMAGE, "the page carries no image element at all"),
         AcceptedLimitation(LimitedAspect.DESCRIPTION, "the one line per night is the whole entry, with no blurb after it"),
