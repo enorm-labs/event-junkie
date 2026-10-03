@@ -181,6 +181,44 @@ class OhmOverviewPageScraperTest {
         event.artists.map { it.name } shouldBe listOf("Audrey Danza", "Ceasul", "ELSA", "Laima Adelaide")
     }
 
+    // BRAINDANCE, 03/10, and NICE 2 BE NICE, 17/10, as printed (#2417).
+    @Test
+    fun `splits a back-to-back billing and drops a bracketed set note`() {
+        val html =
+            """
+            <ul class="event-list"><li class="event-item">
+                <div class="event-date"><h2>03/10</h2></div>
+                <div class="event-time">23:59</div>
+                <h2 class="event-title">BRAINDANCE</h2>
+                <div class="event-lineup medium-type">Makam b2b Tafkamp<br />
+            [ All Night Long ]<br />
+            </div>
+            </li><li class="event-item">
+                <div class="event-date"><h2>17/10</h2></div>
+                <div class="event-time">23:59</div>
+                <h2 class="event-title">NICE 2 BE NICE</h2>
+                <div class="event-lineup medium-type">Asphalt DJ<br />
+            Jesse G b2b DJ Heartbreak<br />
+            Reduks (LIVE) <br />
+            Shuray &amp; Walle b2b Naomi <br />
+            </div>
+            </li></ul>
+            """.trimIndent()
+
+        val (braindance, nice) = OhmOverviewPageScraper(captureClock).scrape(Jsoup.parse(html, baseUrl), baseUrl)
+
+        braindance.artists.map { it.name to it.role } shouldBe listOf("Makam" to "DJ", "Tafkamp" to "DJ")
+        nice.artists.map { it.name to it.role } shouldBe
+            listOf(
+                "Asphalt DJ" to "DJ",
+                "Jesse G" to "DJ",
+                "DJ Heartbreak" to "DJ",
+                "Reduks (LIVE)" to "HEADLINER",
+                "Shuray & Walle" to "DJ",
+                "Naomi" to "DJ"
+            )
+    }
+
     // The fixtures predate the posters, which the venue added in September 2026 (#1777).
     @Test
     fun `reads the night's poster and leaves the image empty where there is none`() {
