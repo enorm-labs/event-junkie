@@ -16,7 +16,8 @@ import java.time.Clock
  *
  * `/upcoming-events/` lists the whole programme, months ahead, and supplies every field but the
  * blurb ([TiffanyClubOverviewPageScraper]). Each night's `/event/<slug>/` page adds that blurb
- * ([TiffanyClubDetailPageScraper]); a failed page costs only the description. The WordPress
+ * ([TiffanyClubDetailPageScraper]). A failed or blurb-less page keeps the listing row, flagged
+ * `detailUnavailable` so the upsert keeps the stored description (see #2425). The WordPress
  * `event` REST type carries the title and nothing else, so the HTML is the source.
  *
  * @see <a href="https://tiffany-berlin.de/upcoming-events/">Tiffany Club upcoming events</a>
@@ -39,10 +40,13 @@ class TiffanyClubWebsiteImporter(
     @Suppress("TooGenericExceptionCaught") // Intentional: a broken event page must not fail the whole import
     private suspend fun addDescription(event: ScrapedEvent): ScrapedEvent =
         try {
-            event.copy(description = detailPageScraper.scrapeDescription(htmlFetcher.fetchDocument(event.sourceUrl)))
+            detailPageScraper
+                .scrapeDescription(htmlFetcher.fetchDocument(event.sourceUrl))
+                ?.let { event.copy(description = it) }
+                ?: event.copy(detailUnavailable = true)
         } catch (e: Exception) {
             logger.warn(e) { "Failed to fetch event page for '${event.title}' (${event.sourceUrl}), keeping listing data" }
-            event
+            event.copy(detailUnavailable = true)
         }
 }
 

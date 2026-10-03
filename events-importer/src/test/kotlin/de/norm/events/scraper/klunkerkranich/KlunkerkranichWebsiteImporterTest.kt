@@ -98,6 +98,7 @@ class KlunkerkranichWebsiteImporterTest {
             night.priceBoxOffice.shouldBeNull()
             // The listing's thumbnail is a 520x320 crop; the event page links the original.
             night.imageUrl shouldBe "https://klunkerkranich.org/wp-content/uploads/2025/10/Klunkerkranich-kunst-10.Oct25.jpg"
+            night.detailUnavailable shouldBe false
         }
 
     @Test
@@ -141,6 +142,30 @@ class KlunkerkranichWebsiteImporterTest {
             night.priceNote.shouldBeNull()
             night.imageUrl shouldBe
                 "https://klunkerkranich.org/wp-content/uploads/2026/07/Klunkerkranich-deko-su-hda-18.Jun26-520x320.jpg"
+        }
+
+    @Test
+    fun `marks the listing row when the event page fetch fails`() =
+        runTest {
+            stubListing()
+            coEvery { htmlFetcher.fetchDocument(any()) } throws IllegalStateException("connection reset")
+
+            val result = importer.importEvents(listingUrl) as ImportResult.Success
+
+            result.events.map { it.detailUnavailable }.distinct() shouldBe listOf(true)
+        }
+
+    @Test
+    fun `marks the listing row when the event page yields no blurb`() =
+        runTest {
+            stubListing()
+            coEvery { htmlFetcher.fetchDocument(any()) } answers { Jsoup.parse("<html><body></body></html>", firstArg<String>()) }
+
+            val result = importer.importEvents(listingUrl) as ImportResult.Success
+            val night = result.events.first()
+
+            night.description.shouldBeNull()
+            night.detailUnavailable shouldBe true
         }
 
     @Test
