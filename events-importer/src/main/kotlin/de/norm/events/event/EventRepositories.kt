@@ -24,6 +24,28 @@ interface EventRepository : CoroutineCrudRepository<EventEntity, Long> {
     fun findBySlugIn(slugs: Collection<String>): Flow<EventEntity>
 
     /**
+     * Types `COMEDY` every night not over by [today] whose type is a scraper default and whose
+     * headliner Wikidata names a comedian (ADR-039). The import applies the same rule as it writes,
+     * so this reaches the rows imported before their artist was read.
+     */
+    @Modifying
+    @Query(
+        """
+        UPDATE $EVENTS_SCHEMA.event e
+        SET event_type = 'COMEDY'
+        WHERE e.type_is_fallback
+          AND e.event_type <> 'COMEDY'
+          AND COALESCE(e.end_date, e.event_date) >= :today
+          AND EXISTS (
+              SELECT 1 FROM $EVENTS_SCHEMA.event_artist ea
+              JOIN $EVENTS_SCHEMA.artist a ON a.id = ea.artist_id
+              WHERE ea.event_id = e.id AND ea.role = 'HEADLINER' AND a.comedian
+          )
+        """
+    )
+    suspend fun retypeComedianNights(today: LocalDate): Int
+
+    /**
      * Events dated [date] or later — the `db.events.future` gauge (#415).
      *
      * **A future count trending to zero is a broken pipeline seen from the other end**, and it

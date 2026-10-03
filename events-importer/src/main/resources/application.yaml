@@ -128,6 +128,8 @@ app:
     thumb-width: 1600
     # `images.fetch.max-bytes`: a larger original is refused here rather than by the fetcher later.
     max-bytes: 8388608
+    # P106 reads per artist lookup tick, one request each; the comedian flag of ADR-039.
+    occupation-max-per-run: 100
   scheduling:
     # Reset sources stuck in RUNNING longer than this to FAILED (Duration format, e.g. 30m, 1h)
     staleness-timeout: 30m

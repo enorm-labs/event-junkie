@@ -40,8 +40,8 @@ coverage:
 | ------------ | ----: | ---------------------------------------------------------------- | ----------------------------------------------- |
 | `CONCERT`    |  ~62% | Live music with a billed lineup, from back rooms to arenas       | `konzert` / `concert`, and most venues' default |
 | `PARTY`      |  ~19% | Club nights and parties, one-off or recurring                    | `party`                                         |
-| `SHOW`       |   ~9% | Staged performance — cabaret, burlesque, musicals, variety       | `show`                                          |
-| `COMEDY`     |   ~2% | Stand-up, comedy shows and comedy theatre                        | `comedy` / `stand-up`                           |
+| `SHOW`       |   ~9% | Staged performance — burlesque, musicals, variety                | `show`                                          |
+| `COMEDY`     |   ~2% | Stand-up, Kabarett, comedy shows and comedy theatre              | `comedy` / `stand-up` / `kabarett`, a comedian  |
 | `OTHER`      |   ~3% | The genuine remainder, plus anything a venue labels `sonstiges`  | fallback                                        |
 | `READING`    |   ~2% | Literary readings, spoken word, poetry slams                     | `lesung` / `reading`                            |
 | `FESTIVAL`   |   ~1% | Multi-day or multi-stage events                                  | `festival`                                      |
@@ -65,6 +65,10 @@ from opening day to closing day, with `end_date` set and `end_time` empty. The v
 when the venue states one. A gallery that lists the show once per open day is folded by `collapseExhibitionRuns` in
 the importer, so silent green's 23 rows are one row. A festival's days are not folded: each has its own lineup
 (issue #337).
+
+**`COMEDY` can come from the act.** Tempodrom gives no category for a night billed by a name only. When the headliner is
+a comedian or a cabaret performer on Wikidata, the night is `COMEDY`. A cue from the venue always wins.
+[ADR-039](adr/ADR-039_A_COMEDIAN_HEADLINER_TYPES_AN_UNTYPED_NIGHT.md) has the rule.
 
 ## 3. What is deliberately excluded
 

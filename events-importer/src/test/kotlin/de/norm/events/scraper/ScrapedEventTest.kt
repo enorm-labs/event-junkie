@@ -267,6 +267,25 @@ class ScrapedEventTest {
     }
 
     @Test
+    fun `toEventEntity keeps a fallback type a fallback only while no festival or genre cue changed it`() {
+        scrapedEvent(eventType = "CONCERT").copy(typeIsFallback = true).toEntity().typeIsFallback shouldBe true
+        scrapedEvent(title = "Lunatic Festival", eventType = "CONCERT").copy(typeIsFallback = true).toEntity().typeIsFallback shouldBe false
+        scrapedEvent(eventType = "CONCERT", genre = "Lesung").copy(typeIsFallback = true).toEntity().typeIsFallback shouldBe false
+        scrapedEvent(eventType = "CONCERT").toEntity().typeIsFallback shouldBe false
+    }
+
+    @Test
+    fun `withGapsFrom takes the fallback flag with the type it fills`() {
+        val listing = listingRow.copy(typeIsFallback = true)
+        ScrapedEvent(title = "Detail", eventDate = listing.eventDate, sourceUrl = "u", sourceId = "d")
+            .withGapsFrom(listing)
+            .typeIsFallback shouldBe true
+        ScrapedEvent(title = "Detail", eventType = "COMEDY", eventDate = listing.eventDate, sourceUrl = "u", sourceId = "d")
+            .withGapsFrom(listing)
+            .typeIsFallback shouldBe false
+    }
+
+    @Test
     fun `toEventEntity does not override an explicit non-festival type or a plain title`() {
         // A source that says PARTY is trusted even with "festival" in the title …
         scrapedEvent(title = "Freedom Festival Party", eventType = "PARTY").toEntity().eventType shouldBe "PARTY"

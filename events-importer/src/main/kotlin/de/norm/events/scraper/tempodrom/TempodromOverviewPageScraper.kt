@@ -39,7 +39,7 @@ import java.math.BigDecimal
  * `description` line names the format when the venue bills it as comedy ("COMEDY - Clubtour 2026",
  * "“Comedy Perle”"), so a whole-word "comedy" there types the night [EventType.COMEDY]
  * ([tempodromEventType], #2314). A comedian billed by name alone ("Dieter Nuhr" / "Live 2026")
- * carries no cue anywhere on the site and stays `CONCERT`.
+ * carries no cue, so the night is a fallback `CONCERT` its comedian headliner retypes (ADR-039).
  *
  * **Sport is dropped** (`docs/EVENT_SCOPE.md` §3.1): the snooker German Masters plays here every
  * January, and without a category it would default to `CONCERT`. With no taxonomy to read, the
@@ -107,6 +107,8 @@ class TempodromOverviewPageScraper {
             // Edition"), not a blurb — it belongs in the subtitle.
             subtitle = subtitle,
             eventType = eventType,
+            // CONCERT is only ever the default here: no cue typed the night (ADR-039).
+            typeIsFallback = eventType == EventType.CONCERT.name,
             eventDate = eventDate,
             // `doorTime` is a full timestamp of its own; only its clock part is wanted.
             doorsTime = event.schemaTime("doorTime"),

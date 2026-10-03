@@ -34,6 +34,11 @@ data class ScrapedEvent(
     val description: String? = null,
     /** Kind of event as categorized by the source (e.g. "CONCERT", "PARTY"). Null means the source provided no category. */
     val eventType: String? = null,
+    /**
+     * [eventType] is the scraper's default, because the venue gave no cue for this night. A headliner
+     * whose stored occupation is comedy then types it `COMEDY` ([PerformerTyping], #2314).
+     */
+    val typeIsFallback: Boolean = false,
     val eventDate: LocalDate,
     val doorsTime: LocalTime? = null,
     val startTime: LocalTime? = null,
@@ -112,7 +117,10 @@ data class ScrapedEvent(
      * kept without naming it in every merge (#1408). A venue whose listing is authoritative for a
      * field overrides it with `copy` after the merge.
      */
-    fun withGapsFrom(fallback: ScrapedEvent): ScrapedEvent = withScheduleAndTextGapsFrom(fallback).withTicketAndLineupGapsFrom(fallback)
+    fun withGapsFrom(fallback: ScrapedEvent): ScrapedEvent =
+        withScheduleAndTextGapsFrom(fallback)
+            .withTicketAndLineupGapsFrom(fallback)
+            .copy(typeIsFallback = if (eventType == null) fallback.typeIsFallback else typeIsFallback)
 
     /** [withGapsFrom] for the text, the date and times, and the links. */
     private fun withScheduleAndTextGapsFrom(fallback: ScrapedEvent): ScrapedEvent =
@@ -196,6 +204,9 @@ data class ScrapedEvent(
      */
     fun resolvedEventType(): EventType = resolveEventType(eventType, storedTitle(), genre)
 
+    /** [typeIsFallback] unless a festival title or a genre cue changed the type: that is the venue's word. */
+    private fun storedTypeIsFallback(): Boolean = typeIsFallback && resolvedEventType().name == eventType
+
     /**
      * Converts this scraped event into an [EventEntity]; pure, no I/O. The slug is regenerated from
      * the event date, venue slug and title, plus [slugDiscriminator]. On updates [existing]'s `id`,
@@ -272,6 +283,7 @@ data class ScrapedEvent(
             // festival title to FESTIVAL, or recover a reading/exhibition/screening filed under the genre
             // field.
             eventType = resolvedEventType().name,
+            typeIsFallback = storedTypeIsFallback(),
             status = storedStatus,
             relocatedTo = relocatedTo,
             slug = SlugGenerator.slugify(listOfNotNull(eventDate, venueSlug, storedTitle, slugDiscriminator).joinToString("-")),

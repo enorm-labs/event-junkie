@@ -125,6 +125,8 @@ class EventUpdateKeepsDerivedColumnsTest {
                 "descriptionLanguage",
                 "descriptionLanguageConfidence",
                 "eventType",
+                // A type a person sets is no scraper default, so an edit clears the flag (ADR-039).
+                "typeIsFallback",
                 "status",
                 "slug",
                 "eventDate",
