@@ -3,6 +3,7 @@ package de.norm.events.scraper.aeden
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
+import de.norm.events.scraper.HttpFetchException
 import de.norm.events.scraper.ImportResult
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
@@ -98,5 +99,17 @@ class AedenWebsiteImporterTest {
 
             result.shouldBeInstanceOf<ImportResult.Success>()
             result.events shouldHaveSize 0
+        }
+
+    @Test
+    fun `importEvents keeps the other months when one fails, and reports the run incomplete`() =
+        runTest {
+            coEvery { htmlFetcher.fetchDocument(monthUrl("2026-08")) } throws HttpFetchException(503, monthUrl("2026-08"))
+
+            val result = importer.importEvents(entryUrl).shouldBeInstanceOf<ImportResult.Success>()
+
+            // 10 July + 1 September + 1 October nights.
+            result.events shouldHaveSize 12
+            result.complete shouldBe false
         }
 }

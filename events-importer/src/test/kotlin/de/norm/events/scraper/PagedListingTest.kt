@@ -1,11 +1,13 @@
 package de.norm.events.scraper
 
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.test.runTest
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
@@ -128,4 +130,35 @@ class PagedListingTest {
     fun `nextPageUrl is null on the last page`() {
         page(entryUrl, "a").nextPageUrl("a.next").shouldBeNull()
     }
+
+    @Test
+    fun `walkListingPages rethrows a cancellation from a later page instead of logging it as a failed page`() =
+        runTest {
+            coEvery { htmlFetcher.fetchDocument("$entryUrl?page=2") } throws CancellationException("shutting down")
+
+            shouldThrow<CancellationException> { walk(page(entryUrl, "a", next = "?page=2")) }
+        }
+
+    @Test
+    fun `readEach keeps the inputs that were read when one fails, and reports the result incomplete`() =
+        runTest {
+            val result = readEach(listOf(1, 2, 3), { "input $it failed" }) { if (it == 2) throw HttpFetchException(503, "x") else listOf(it, it * 10) }
+
+            result.items shouldContainExactly listOf(1, 10, 3, 30)
+            result.complete shouldBe false
+        }
+
+    @Test
+    fun `readEach is complete when every input was read`() =
+        runTest {
+            readEach(listOf(1, 2), { "input $it failed" }) { listOf(it) } shouldBe ReadEach(listOf(1, 2), complete = true)
+        }
+
+    @Test
+    fun `readEach rethrows a cancellation instead of skipping the input`() =
+        runTest {
+            shouldThrow<CancellationException> {
+                readEach<Int, Int>(listOf(1, 2), { "input $it failed" }) { throw CancellationException("shutting down") }
+            }
+        }
 }

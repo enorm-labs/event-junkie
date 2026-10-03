@@ -1,15 +1,11 @@
 package de.norm.events.scraper.thewall
 
+import de.norm.events.scraper.AbstractSinglePageWebsiteImporter
 import de.norm.events.scraper.AcceptedLimitation
-import de.norm.events.scraper.EventImporter
 import de.norm.events.scraper.EventSource
-import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
-import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.VenueLimitations
-import de.norm.events.scraper.scrapeListingPages
-import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.springframework.stereotype.Component
 
@@ -26,48 +22,16 @@ import org.springframework.stereotype.Component
  */
 @Component
 class TheWallWebsiteImporter(
-    private val htmlFetcher: HtmlFetcher
-) : EventImporter {
-    private val logger = KotlinLogging.logger {}
-
+    htmlFetcher: HtmlFetcher
+) : AbstractSinglePageWebsiteImporter(htmlFetcher, "The Wall Comedy Club", TheWallEventsPageScraper()::scrape) {
     override val eventSource: EventSource = EventSource.THE_WALL
-    override val fetchesBeyondEntryPage: Boolean = true
-
-    private val pageScraper = TheWallEventsPageScraper()
-
-    override suspend fun importEvents(
-        url: String,
-        etag: String?,
-        lastModified: String?
-    ): ImportResult =
-        when (val fetchResult = htmlFetcher.fetch(url, etag, lastModified)) {
-            is FetchResult.NotModified -> {
-                ImportResult.NotModified
-            }
-
-            is FetchResult.Success -> {
-                val listing =
-                    htmlFetcher.scrapeListingPages(
-                        eventSource,
-                        fetchResult.document,
-                        url,
-                        MAX_PAGES,
-                        { document, _ -> nextPartial(document) },
-                        pageScraper::scrape
-                    )
-                logger.info { "Scraped ${listing.events.size} event(s) from The Wall Comedy Club" }
-
-                ImportResult.Success(
-                    events = listing.events,
-                    etag = fetchResult.etag,
-                    lastModified = fetchResult.lastModified,
-                    complete = listing.complete
-                )
-            }
-        }
+    override val maxListingPages: Int = MAX_PAGES
 
     /** The "Show more" button's partial, or null on the last page. */
-    private fun nextPartial(document: Document): String? = document.selectFirst(NEXT_PARTIAL_SELECTOR)?.absUrl("hx-get")?.takeIf { it.isNotEmpty() }
+    override fun nextListingPage(
+        document: Document,
+        url: String
+    ): String? = document.selectFirst(NEXT_PARTIAL_SELECTOR)?.absUrl("hx-get")?.takeIf { it.isNotEmpty() }
 
     private companion object {
         /** A runaway guard on the page walk; the programme runs to four pages. */

@@ -4,10 +4,10 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 
 /**
- * Base class for a venue whose whole programme is one listing page: fetch it conditionally, parse it
+ * Base class for a venue whose whole programme is one listing: fetch it conditionally, parse it
  * with [scrape], return the events with the page's validators. The one-page counterpart of
- * [AbstractTwoPageWebsiteImporter]; a venue that needs more than one fetch per run implements
- * [EventImporter] directly.
+ * [AbstractTwoPageWebsiteImporter]. A listing paged by a next link sets [maxListingPages] and
+ * [nextListingPage]; a venue that needs any other fetch implements [EventImporter] directly.
  *
  * [venueName] is how the log line names the source, kept as each venue wrote it.
  */
@@ -29,29 +29,52 @@ abstract class AbstractSinglePageWebsiteImporter(
     /** Whether a good run stores the event page's image over the listing's, see [withEventPageOrFlagged]. */
     protected open val eventPageOwnsImage: Boolean = false
 
-    /** A run that reads event pages cannot be skipped on the listing's validators. */
-    override val fetchesBeyondEntryPage: Boolean get() = enrichFromEventPage != null
+    /** Cookies sent with the listing fetch, for a venue that serves its programme only to a request carrying one. */
+    protected open val cookies: Map<String, String> = emptyMap()
+
+    /** A runaway guard on [nextListingPage]; 1 reads the entry page alone. */
+    protected open val maxListingPages: Int = 1
+
+    /** The absolute URL of the listing page after [document], or null on the last. */
+    protected open fun nextListingPage(
+        document: Document,
+        url: String
+    ): String? = null
+
+    /** A run that reads event pages or later listing pages cannot be skipped on the entry page's validators. */
+    override val fetchesBeyondEntryPage: Boolean get() = enrichFromEventPage != null || maxListingPages > 1
 
     final override suspend fun importEvents(
         url: String,
         etag: String?,
         lastModified: String?
     ): ImportResult =
-        when (val fetchResult = htmlFetcher.fetch(url, etag, lastModified)) {
+        when (val fetchResult = htmlFetcher.fetch(url, etag, lastModified, cookies)) {
             is FetchResult.NotModified -> {
                 ImportResult.NotModified
             }
 
             is FetchResult.Success -> {
-                val events = scrape(fetchResult.document, url)
-                logger.info { "Scraped ${events.size} event(s) from $venueName" }
+                val listing = readListing(fetchResult.document, url)
+                logger.info { "Scraped ${listing.events.size} event(s) from $venueName" }
 
                 ImportResult.Success(
-                    events = withEventPages(events),
+                    events = withEventPages(listing.events),
                     etag = fetchResult.etag,
-                    lastModified = fetchResult.lastModified
+                    lastModified = fetchResult.lastModified,
+                    complete = listing.complete
                 )
             }
+        }
+
+    private suspend fun readListing(
+        document: Document,
+        url: String
+    ): ListingPages =
+        if (maxListingPages > 1) {
+            htmlFetcher.scrapeListingPages(eventSource, document, url, maxListingPages, ::nextListingPage, scrape)
+        } else {
+            ListingPages(scrape(document, url), complete = true)
         }
 
     private suspend fun withEventPages(events: List<ScrapedEvent>): List<ScrapedEvent> {

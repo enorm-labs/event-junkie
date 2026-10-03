@@ -8,6 +8,7 @@ import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.VenueLimitations
+import de.norm.events.scraper.readEach
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
 import java.time.Clock
@@ -50,27 +51,22 @@ class HavannaWebsiteImporter(
         val nightLinks = overviewPageScraper.scrape(overview, url)
         logger.info { "Found ${nightLinks.size} weekly night page(s) linked from Havanna $url" }
 
-        val nights = nightLinks.map { scrapeNight(it) }
-        val events = nights.flatMap { it.orEmpty() }.distinctBy { it.sourceId }
+        val nights = readEach(nightLinks, { "Failed to import Havanna night page ${it.url}, skipping" }) { scrapeNight(it) }
+        val events = nights.items.distinctBy { it.sourceId }
         logger.info { "Generated ${events.size} Havanna event(s) from ${nightLinks.size} weekly night(s)" }
         // A failed night page would otherwise read as a cancelled weekday (#1980).
-        return ImportResult.Success(events = events, etag = null, lastModified = null, complete = nights.none { it == null })
+        return ImportResult.Success(events = events, etag = null, lastModified = null, complete = nights.complete)
     }
 
-    /** Fetches one night page and expands it into its weekly occurrences; null when the page is unreachable. */
-    @Suppress("TooGenericExceptionCaught") // Intentional: one unreachable night page must not abort the other nights.
-    private suspend fun scrapeNight(link: HavannaNightLink): List<ScrapedEvent>? =
-        try {
-            val night = detailPageScraper.scrape(htmlFetcher.fetchDocument(link.url), link.url)
-            night
-                // The night pages carry their own poster; the overview teaser is the fallback.
-                ?.copy(imageUrl = night.imageUrl ?: link.imageUrl)
-                ?.toScrapedEvents(clock)
-                .orEmpty()
-        } catch (e: Exception) {
-            logger.warn(e) { "Failed to import Havanna night page ${link.url}, skipping" }
-            null
-        }
+    /** Fetches one night page and expands it into its weekly occurrences. */
+    private suspend fun scrapeNight(link: HavannaNightLink): List<ScrapedEvent> {
+        val night = detailPageScraper.scrape(htmlFetcher.fetchDocument(link.url), link.url)
+        return night
+            // The night pages carry their own poster; the overview teaser is the fallback.
+            ?.copy(imageUrl = night.imageUrl ?: link.imageUrl)
+            ?.toScrapedEvents(clock)
+            .orEmpty()
+    }
 }
 
 val HAVANNA_LIMITATIONS =

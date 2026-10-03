@@ -7,8 +7,8 @@ import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.LimitedAspect
-import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.VenueLimitations
+import de.norm.events.scraper.readEach
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.springframework.stereotype.Component
@@ -59,15 +59,18 @@ class AdmiralspalastWebsiteImporter(
             is FetchResult.Success -> {
                 val productionUrls = listingPageScraper.scrapeProductionUrls(fetchResult.document, url)
                 val genres = resolveGenres(fetchResult.document, url)
-                val productions = productionUrls.map { scrapeProduction(it, genres[it]) }
-                val events = productions.flatMap { it.orEmpty() }
+                val productions =
+                    readEach(productionUrls, { "Failed to load the Admiralspalast production page $it, skipping" }) { productionUrl ->
+                        detailPageScraper.scrape(htmlFetcher.fetchDocument(productionUrl), productionUrl, genres[productionUrl])
+                    }
+                val events = productions.items
                 logger.info { "Scraped ${events.size} performance(s) from ${productionUrls.size} Admiralspalast production(s)" }
 
                 ImportResult.Success(
                     events = events,
                     etag = fetchResult.etag,
                     lastModified = fetchResult.lastModified,
-                    complete = productions.none { it == null }
+                    complete = productions.complete
                 )
             }
         }
@@ -101,19 +104,6 @@ class AdmiralspalastWebsiteImporter(
         logger.info { "Resolved a category for ${genres.size} Admiralspalast production(s) from ${genreUrls.size} filter page(s)" }
         return genres
     }
-
-    /** Fetches one production page and reads its performances; null when the page is unreachable. */
-    private suspend fun scrapeProduction(
-        productionUrl: String,
-        genre: String?
-    ): List<ScrapedEvent>? =
-        @Suppress("TooGenericExceptionCaught") // Intentional: one unreachable production must not fail the import
-        try {
-            detailPageScraper.scrape(htmlFetcher.fetchDocument(productionUrl), productionUrl, genre)
-        } catch (e: Exception) {
-            logger.warn(e) { "Failed to load the Admiralspalast production page $productionUrl, skipping" }
-            null
-        }
 }
 
 val ADMIRALSPALAST_LIMITATIONS =

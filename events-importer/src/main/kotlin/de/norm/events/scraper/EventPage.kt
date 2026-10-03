@@ -2,6 +2,7 @@ package de.norm.events.scraper
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.github.oshai.kotlinlogging.Level
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.withContext
 import org.jsoup.nodes.Document
 
@@ -33,6 +34,8 @@ suspend fun <T : Any> HtmlFetcher.readEventPage(
         val document = fetchDocument(event.sourceUrl)
         // After the fetch: the fetch and the WARN below write `url` as a payload, and a line cannot carry it twice (#982).
         withContext(LogContext.forPage(event.sourceUrl)) { parse(document) }
+    } catch (e: CancellationException) {
+        throw e
     } catch (e: Exception) {
         logger.at(Level.WARN) {
             message = "Failed to read the event page for '${event.title}', keeping listing data"

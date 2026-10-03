@@ -1,16 +1,11 @@
 package de.norm.events.scraper.amt
 
+import de.norm.events.scraper.AbstractMonthPagesWebsiteImporter
 import de.norm.events.scraper.AcceptedLimitation
-import de.norm.events.scraper.EventImporter
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
-import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.VenueLimitations
-import de.norm.events.scraper.absoluteLinksAt
-import de.norm.events.scraper.resolveUrl
-import io.github.oshai.kotlinlogging.KotlinLogging
-import org.jsoup.nodes.Document
 import org.springframework.stereotype.Component
 
 /**
@@ -37,31 +32,9 @@ import org.springframework.stereotype.Component
  */
 @Component
 class AmtWebsiteImporter(
-    private val htmlFetcher: HtmlFetcher
-) : EventImporter {
-    private val logger = KotlinLogging.logger {}
-
+    htmlFetcher: HtmlFetcher
+) : AbstractMonthPagesWebsiteImporter(htmlFetcher, "AMT", MONTH_LINK_SELECTOR, AmtOverviewPageScraper()::scrape) {
     override val eventSource: EventSource = EventSource.AMT
-    override val fetchesBeyondEntryPage: Boolean = true
-
-    private val overviewPageScraper = AmtOverviewPageScraper()
-
-    override suspend fun importEvents(
-        url: String,
-        etag: String?,
-        lastModified: String?
-    ): ImportResult {
-        val entry = htmlFetcher.fetchDocument(url)
-        val monthUrls = entry.absoluteLinksAt(MONTH_LINK_SELECTOR, url)
-        logger.info { "Found ${monthUrls.size} month page(s) linked from AMT entry $url" }
-
-        val events =
-            monthUrls
-                .flatMap { monthUrl -> overviewPageScraper.scrape(htmlFetcher.fetchDocument(monthUrl), monthUrl) }
-                .distinctBy { it.sourceId }
-        logger.info { "Scraped ${events.size} AMT event(s) across ${monthUrls.size} month page(s)" }
-        return ImportResult.Success(events = events, etag = null, lastModified = null)
-    }
 
     private companion object {
         /** The entry page's `/month/<name>` links, one per published month. */

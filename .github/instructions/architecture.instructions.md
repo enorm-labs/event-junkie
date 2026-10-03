@@ -107,7 +107,7 @@ scripts/api-schema-parity.sh` regenerates it without a running BFF; the traps ar
       `DataIntegrityViolationException` for concurrent safety, join tables diffed). Sources are rows created through `POST /api/admin/event-sources`, never
       Flyway.
     - **Shapes**: `AbstractTwoPageWebsiteImporter` for overview → detail (the common case; `grep -rl 'AbstractTwoPageWebsiteImporter('` is the list, and
-      subclasses pass their two scrapers to the constructor as `<Scraper>()::scrape`, and override `fillGapsFromOverview` only for a field the listing owns — the default, `ScrapedEvent.withGapsFrom`, fills every gap, #2139); `AbstractSinglePageWebsiteImporter` for one listing page, given its scraper as `<Scraper>()::scrape` (#2242);
+      subclasses pass their two scrapers to the constructor as `<Scraper>()::scrape`, and override `fillGapsFromOverview` only for a field the listing owns — the default, `ScrapedEvent.withGapsFrom`, fills every gap, #2139); `AbstractSinglePageWebsiteImporter` for one listing, given its scraper as `<Scraper>()::scrape` (#2242), paged by a next link through `maxListingPages` and `nextListingPage`; `AbstractMonthPagesWebsiteImporter` for an entry page that only links month pages;
       `EventImporter` directly for a single page that needs more than one fetch or its own result, for JSON feeds via
       `ApiClient` with one pure `*ApiScraper.kt` (**prefer a JSON source over HTML when one exists**), for a list whose rows share a detail page (`enrichFromSharedPages`
       fetches each distinct URL once — Bar jeder Vernunft resolves 28 cards to 2 pages), and for an undated weekly programme expanded over a rolling horizon with

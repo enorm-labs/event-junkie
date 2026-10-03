@@ -2,6 +2,7 @@ package de.norm.events.scraper
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.github.oshai.kotlinlogging.Level
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import org.jsoup.nodes.Document
@@ -127,6 +128,8 @@ abstract class AbstractTwoPageWebsiteImporter(
         repeat(attempts) { attempt ->
             try {
                 return mergeDetail(overview)
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 val last = attempt == attempts - 1
                 logger.at(Level.WARN) {
