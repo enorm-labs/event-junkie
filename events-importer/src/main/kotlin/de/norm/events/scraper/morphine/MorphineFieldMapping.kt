@@ -1,8 +1,10 @@
 package de.norm.events.scraper.morphine
 
+import de.norm.events.scraper.DOORS_LABELS
 import de.norm.events.scraper.PRESENTS_VERBS
 import de.norm.events.scraper.dateCheckedAgainstWeekday
 import de.norm.events.scraper.labelledClock
+import de.norm.events.scraper.parseClock
 import de.norm.events.scraper.parseEnglishWeekday
 import de.norm.events.scraper.parseGermanShortDate
 import de.norm.events.scraper.parseTime
@@ -155,6 +157,31 @@ private const val DAY_LINE_DOORS_LABEL = "doors?"
 
 /** The door time from a `.block.day` header line, or `null`. */
 internal fun parseDayLineDoors(dayLine: String?): LocalTime? = labelledClock(dayLine, DAY_LINE_DOORS_LABEL)
+
+/** `Listening session + intervention: 19:30`: a line that is a label, a colon and one clock. */
+private val LABELLED_LINE_CLOCK = Regex("""^(.{1,60}?)\s*:\s*(\d{1,2})[:.](\d{2})\s*(?:uhr|h)?$""", RegexOption.IGNORE_CASE)
+
+/** A label that names the doors or the end, so its clock is not the start. */
+private val NOT_A_START_LABEL = Regex("""(?<!\p{L})(?:$DOORS_LABELS|end|ende|until|bis|curfew|close)(?!\p{L})""", RegexOption.IGNORE_CASE)
+
+/**
+ * The start the programme text labels with the night's format, or `null` (#2419).
+ *
+ * The venue repeats the day line in the prose and puts the start on the line under it:
+ * `Friday, 02.10.2026, doors 19:00` then `Listening session + intervention: 19:30`. Only the line
+ * right after a doors line is read, so a clock elsewhere in the prose is never the start.
+ */
+internal fun parseProgrammeStart(lines: List<String>): LocalTime? {
+    val texts = lines.map { it.trim() }.filter { it.isNotBlank() }
+    val doorsLine = texts.indexOfFirst { labelledClock(it, DOORS_LABELS) != null }
+    val (label, hour, minute) =
+        texts
+            .getOrNull(doorsLine + 1)
+            ?.takeIf { doorsLine >= 0 }
+            ?.let { LABELLED_LINE_CLOCK.matchEntire(it) }
+            ?.destructured ?: return null
+    return if (NOT_A_START_LABEL.containsMatchIn(label)) null else parseClock("$hour:$minute")
+}
 
 /**
  * Markers identifying the first `.block.priceevent` paragraph as a **pricing** line.

@@ -184,6 +184,30 @@ class MorphineDetailPageScraperTest {
     }
 
     @Test
+    fun `reads the start the programme labels when the set entry repeats the door time`() {
+        // "door 19:00" over a "19:00 Event start" entry; the prose says "Listening session + intervention: 19:30" (#2419).
+        val url = "http://www.morphinerecords.com/events/gibrana-cervantes-verdad-y-error-listening-session"
+        val event = parse("morphine-detail-listening-session.html", url).shouldNotBeNull()
+
+        event.doorsTime shouldBe LocalTime.of(19, 0)
+        event.startTime shouldBe LocalTime.of(19, 30)
+    }
+
+    @Test
+    fun `keeps a set start after the doors over a start the programme labels`() {
+        val url = "http://www.morphinerecords.com/events/two-starts"
+        val html =
+            """
+            <section class="content overlay"><div class="title">Two Starts</div>
+            <div class="block day">Friday, 02.10.26, door 19:00
+            <ul class="lineup"><li><span>20:00</span><span>Sardy Fardy</span></li></ul></div>
+            <div class="block paragraph"><p>doors 19:00<br>Concert: 19:30</p></div></section>
+            """.trimIndent()
+
+        scraper.scrape(Jsoup.parse(html, url), url).shouldNotBeNull().startTime shouldBe LocalTime.of(20, 0)
+    }
+
+    @Test
     fun `gives each act the start of its own set`() {
         // Two sets an hour apart (#2002). The venue prints no end, so none is stored.
         val url = "http://www.morphinerecords.com/events/bnnt-radwan"

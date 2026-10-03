@@ -84,15 +84,15 @@ class MorphineDetailPageScraper {
         val priceNote = readPriceNote(overlay.textAt("div.block.priceevent > p"))
 
         val eventDate = parseDayLineDate(dayLine)
+        val doorsTime = parseDayLineDoors(dayLine)
         return ScrapedEvent(
             title = title,
             description = readDescription(overlay),
             promoters = readPresenters(overlay),
             eventType = inferConcertVenueType(title),
             eventDate = eventDate ?: UNRESOLVED_EVENT_DATE,
-            doorsTime = parseDayLineDoors(dayLine),
-            // The first set's time is when the night starts; later entries are sets within it.
-            startTime = parseTime(lineup.firstOrNull()?.startTime),
+            doorsTime = doorsTime,
+            startTime = readStart(overlay, lineup, doorsTime),
             imageUrl = overlay.imgSrcAt("div.block.image img"),
             sourceUrl = sourceUrl,
             sourceId = "${EventSource.MORPHINE.sourceIdPrefix}${extractEventSlug(sourceUrl)}",
@@ -112,6 +112,22 @@ class MorphineDetailPageScraper {
                         }.distinctBy { it.name.lowercase() }
                 }
         )
+    }
+
+    /**
+     * The first set's time, which is when the night starts; later entries are sets within it.
+     * A first entry that repeats the door time is a placeholder (`19:00 Event start`), so a start
+     * the programme text labels ([parseProgrammeStart]) replaces it (#2419).
+     */
+    private fun readStart(
+        overlay: Element,
+        lineup: List<LineupEntry>,
+        doorsTime: LocalTime?
+    ): LocalTime? {
+        val lineupStart = parseTime(lineup.firstOrNull()?.startTime)
+        if (lineupStart != null && (doorsTime == null || lineupStart > doorsTime)) return lineupStart
+        val lines = overlay.select("div.block.paragraph p").flatMap { it.textLines() }
+        return parseProgrammeStart(lines) ?: lineupStart
     }
 
     /**
