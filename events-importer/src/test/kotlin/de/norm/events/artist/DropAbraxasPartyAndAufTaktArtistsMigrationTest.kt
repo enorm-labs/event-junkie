@@ -12,7 +12,7 @@ import java.sql.DriverManager
 import java.sql.Statement
 
 /**
- * Runs V087 (#2416) against planted artist rows on a database migrated to before it. One series
+ * Runs V090 (#2416) against planted artist rows on a database migrated to before it. One series
  * row bills only its own source and goes; the other is also billed by a second venue and stays.
  */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -24,7 +24,7 @@ class DropAbraxasPartyAndAufTaktArtistsMigrationTest {
     fun migrateAndPlant() {
         postgres.start()
         connection = DriverManager.getConnection(postgres.jdbcUrl, postgres.username, postgres.password)
-        flyway("86").migrate()
+        flyway("89").migrate()
         connection.createStatement().use { statement ->
             statement.execute("SET search_path TO events")
             statement.execute("INSERT INTO venue (name, slug) VALUES ('Fixture', 'fixture')")
@@ -37,7 +37,7 @@ class DropAbraxasPartyAndAufTaktArtistsMigrationTest {
             plantEvent(statement, "so36:1", "auf-takt-das-podcast-konzert")
             plantEvent(statement, "binuu:archenemy", "arch-enemy")
         }
-        flyway("87").migrate()
+        flyway("90").migrate()
     }
 
     @AfterAll
