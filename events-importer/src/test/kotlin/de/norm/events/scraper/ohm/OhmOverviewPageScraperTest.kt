@@ -219,6 +219,40 @@ class OhmOverviewPageScraperTest {
             )
     }
 
+    // Awkwardly Social, 09/10, subglow, 18/10, and Objekt, 01/11, as printed (#2439).
+    @Test
+    fun `strips a set length from an act and drops a secret lineup slot`() {
+        val html =
+            """
+            <ul class="event-list"><li class="event-item">
+                <div class="event-date"><h2>09/10</h2></div>
+                <div class="event-time">22:00</div>
+                <h2 class="event-title">Awkwardly Social</h2>
+                <div class="event-lineup medium-type">Pariah (4h set)<br />
+            Katiusha <br />
+            cheng nwsh</div>
+            </li><li class="event-item">
+                <div class="event-date"><h2>18/10</h2></div>
+                <div class="event-time">15:00</div>
+                <h2 class="event-title">subglow &#8211; Special Anniversary 12 hour Edition</h2>
+                <div class="event-lineup medium-type">CCL <br />
+            + Secret Lineup</div>
+            </li><li class="event-item">
+                <div class="event-date"><h2>01/11</h2></div>
+                <div class="event-time">15:00</div>
+                <h2 class="event-title">Objekt&#8217;s Miraculous Kaleidoscopic Psychedelic Technicolor Wormhole</h2>
+                <div class="event-lineup medium-type">Objekt<br />
+            + Secret Guest tab</div>
+            </li></ul>
+            """.trimIndent()
+
+        val (awkward, subglow, objekt) = OhmOverviewPageScraper(captureClock).scrape(Jsoup.parse(html, baseUrl), baseUrl)
+
+        awkward.artists.map { it.name to it.role } shouldBe listOf("Pariah" to "DJ", "Katiusha" to "DJ", "cheng nwsh" to "DJ")
+        subglow.artists.map { it.name } shouldBe listOf("CCL")
+        objekt.artists.map { it.name } shouldBe listOf("Objekt")
+    }
+
     // The fixtures predate the posters, which the venue added in September 2026 (#1777).
     @Test
     fun `reads the night's poster and leaves the image empty where there is none`() {

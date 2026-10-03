@@ -125,6 +125,7 @@ class OhmOverviewPageScraper(
      *
      * `Makam b2b Tafkamp` bills two DJs, so a line splits at `b2b`. A line wholly in square
      * brackets (`[ All Night Long ]`) is a set note on the line above, never a performer (#2417).
+     * A set length in round brackets (`Pariah (4h set)`) comes off the act, or it mints a second one (#2439).
      */
     private fun parseLineup(item: Element): List<ScrapedArtist> {
         var inTalk = false
@@ -136,6 +137,7 @@ class OhmOverviewPageScraper(
                 !heading && !inTalk
             }.filterNot { SET_NOTE.matches(it) }
             .flatMap(::splitBackToBack)
+            .map { it.replace(SET_LENGTH_NOTE, "").trim() }
             .filterNot { isNonArtistName(it) || NON_MUSIC_ANNOTATION.containsMatchIn(it) }
             .map { ScrapedArtist(name = it, role = if (LIVE_ANNOTATION.containsMatchIn(it)) "HEADLINER" else "DJ") }
     }
@@ -146,6 +148,13 @@ private val NON_MUSIC_ANNOTATION = Regex("""\([^()]*\b(?:painting|visuals?|insta
 
 /** A line wholly in square brackets: `[ All Night Long ]`, a note on the set billed above it. */
 private val SET_NOTE = Regex("""\s*\[[^\[\]]*]\s*""")
+
+/** A trailing set length: `(4h set)`, `(4 hours)`, `(all night long)`. */
+private val SET_LENGTH_NOTE =
+    Regex(
+        """\s*\(\s*(?:\d+(?:[.,]\d+)?\s*(?:h|hrs?|hours?|std\.?|stunden)(?:\s+set)?|all\s+(?:night|day)\s+long)\s*\)\s*$""",
+        RegexOption.IGNORE_CASE
+    )
 
 /** A line heading one part of the night with its start time: `Club [ 22:00 ]`. */
 private val SECTION_HEADING = Regex("""\[\s*\d{1,2}[:.]\d{2}\s*]\s*$""")
