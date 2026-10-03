@@ -55,6 +55,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The first matches of each kind for a search term */
+        get: operations["search"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/promoters": {
         parameters: {
             query?: never;
@@ -545,97 +562,25 @@ export interface components {
              */
             programmeEventTypes?: string[];
         };
-        /** @description A page of results with pagination metadata */
-        PageResponsePromoterListItemResponse: {
-            /** @description The items on this page */
-            content?: components["schemas"]["PromoterListItemResponse"][];
-            /**
-             * Format: int32
-             * @description Zero-based index of this page
-             * @example 0
-             */
-            page?: number;
-            /**
-             * Format: int32
-             * @description Requested page size
-             * @example 20
-             */
-            size?: number;
+        /** @description Compact artist summary */
+        ArtistSummaryResponse: {
             /**
              * Format: int64
-             * @description Total number of matching items across all pages
-             * @example 137
-             */
-            totalElements?: number;
-            /**
-             * Format: int32
-             * @description Total number of pages
+             * @description Database primary key
              * @example 7
              */
-            totalPages?: number;
-        };
-        /** @description Promoter list row */
-        PromoterListItemResponse: {
-            /**
-             * Format: int64
-             * @description Database primary key
-             * @example 3
-             */
             id?: number;
             /**
              * @description URL-friendly identifier
-             * @example 36-concerts
+             * @example the-adicts
              */
             slug?: string;
             /**
-             * @description Display name of the promoter
-             * @example 36 Concerts
+             * @description Stage name or band name
+             * @example The Adicts
              */
             name?: string;
-            /** @description URL of the promoter's website or social page */
-            websiteUrl?: string | null;
-            /** @description Short prose description of the promoter */
-            description?: string | null;
-            /**
-             * @description Language of `description`: `de` or `en`. Null when the language is unknown.
-             * @example en
-             */
-            descriptionLanguage?: string | null;
-            /** @description The same description in the other language, written by hand (#328). */
-            descriptionAlt?: string | null;
-            /**
-             * @description Language of `descriptionAlt`: `de` or `en`. Null exactly when `descriptionAlt` is.
-             * @example de
-             */
-            descriptionAltLanguage?: string | null;
-            /**
-             * Format: int32
-             * @description Events from today on that credit this promoter
-             * @example 12
-             */
-            upcomingEventCount?: number;
-        };
-        /** @description Full promoter detail */
-        PromoterDetailResponse: {
-            /**
-             * Format: int64
-             * @description Database primary key
-             * @example 3
-             */
-            id?: number;
-            /**
-             * @description URL-friendly identifier
-             * @example 36-concerts
-             */
-            slug?: string;
-            /**
-             * @description Display name of the promoter
-             * @example 36 Concerts
-             */
-            name?: string;
-            /** @description URL of the promoter's website or social page */
-            websiteUrl?: string | null;
-            /** @description URL of the promoter's logo image */
+            /** @description URL of the artist's photo or band logo */
             imageUrl?: string | null;
             /**
              * @description Who to credit for `imageUrl`, worded as the archive publishes it. Present whenever `imageUrl` is, and it must be shown beside the image.
@@ -666,70 +611,6 @@ export interface components {
              * @example 630
              */
             intrinsicHeight?: number | null;
-            /** @description Short prose description of the promoter */
-            description?: string | null;
-            /**
-             * @description Language of `description`: `de` or `en`. Null when the language is unknown.
-             * @example en
-             */
-            descriptionLanguage?: string | null;
-            /**
-             * @description The same description in the other language. Written by hand, not machine-translated, so it carries no origin and needs no disclosure (#328).
-             * @example Die Hausagentur von Lido, Astra und Bi Nuu.
-             */
-            descriptionAlt?: string | null;
-            /**
-             * @description Language of `descriptionAlt`: `de` or `en`. Null exactly when `descriptionAlt` is.
-             * @example de
-             */
-            descriptionAltLanguage?: string | null;
-        };
-        /** @description Version and commit of the running backend, for the frontend footer */
-        MetaResponse: {
-            /**
-             * @description Application version. `dev` when the build did not stamp one — i.e. running from the IDE or `bootRun`.
-             * @example 0.1.0
-             */
-            version?: string;
-            /**
-             * @description Full commit SHA the running artifact was built from; null when unavailable.
-             * @example 9f1a2b3c4d5e6f708192a3b4c5d6e7f809a1b2c3
-             */
-            commit?: string | null;
-            /**
-             * @description First seven characters of `commit`, for display; null when the commit is unavailable.
-             * @example 9f1a2b3
-             */
-            commitShort?: string | null;
-            /**
-             * @description When the running artifact was built (ISO-8601); null when the build did not stamp one.
-             * @example 2026-08-07T12:49:19Z
-             */
-            buildTime?: string | null;
-        };
-        /** @description A normalized genre tag */
-        GenreTagResponse: {
-            /**
-             * Format: int64
-             * @description Database primary key
-             * @example 1
-             */
-            id?: number;
-            /**
-             * @description URL-friendly identifier
-             * @example hip-hop
-             */
-            slug?: string;
-            /**
-             * @description Canonical display name
-             * @example Hip Hop
-             */
-            name?: string;
-            /**
-             * @description Slug of the filter family the tag belongs to; null means the tag is offered in neither select
-             * @example hip-hop
-             */
-            family?: string | null;
         };
         /** @description Compact event summary for lists and calendar */
         EventSummaryResponse: {
@@ -870,34 +751,101 @@ export interface components {
              */
             genreTags?: string[];
         };
-        /** @description A page of results with pagination metadata */
-        PageResponseEventSummaryResponse: {
-            /** @description The items on this page */
-            content?: components["schemas"]["EventSummaryResponse"][];
-            /**
-             * Format: int32
-             * @description Zero-based index of this page
-             * @example 0
-             */
-            page?: number;
-            /**
-             * Format: int32
-             * @description Requested page size
-             * @example 20
-             */
-            size?: number;
+        /** @description Promoter list row */
+        PromoterListItemResponse: {
             /**
              * Format: int64
-             * @description Total number of matching items across all pages
-             * @example 137
+             * @description Database primary key
+             * @example 3
              */
-            totalElements?: number;
+            id?: number;
+            /**
+             * @description URL-friendly identifier
+             * @example 36-concerts
+             */
+            slug?: string;
+            /**
+             * @description Display name of the promoter
+             * @example 36 Concerts
+             */
+            name?: string;
+            /** @description URL of the promoter's website or social page */
+            websiteUrl?: string | null;
+            /** @description Short prose description of the promoter */
+            description?: string | null;
+            /**
+             * @description Language of `description`: `de` or `en`. Null when the language is unknown.
+             * @example en
+             */
+            descriptionLanguage?: string | null;
+            /** @description The same description in the other language, written by hand (#328). */
+            descriptionAlt?: string | null;
+            /**
+             * @description Language of `descriptionAlt`: `de` or `en`. Null exactly when `descriptionAlt` is.
+             * @example de
+             */
+            descriptionAltLanguage?: string | null;
             /**
              * Format: int32
-             * @description Total number of pages
-             * @example 7
+             * @description Events from today on that credit this promoter
+             * @example 12
              */
-            totalPages?: number;
+            upcomingEventCount?: number;
+        };
+        /** @description The first matches of one kind, and how many there are in all */
+        SearchGroupArtistSummaryResponse: {
+            /** @description At most `limit` items */
+            items?: components["schemas"]["ArtistSummaryResponse"][];
+            /**
+             * Format: int64
+             * @description Total number of matches of this kind
+             * @example 12
+             */
+            total?: number;
+        };
+        /** @description The first matches of one kind, and how many there are in all */
+        SearchGroupEventSummaryResponse: {
+            /** @description At most `limit` items */
+            items?: components["schemas"]["EventSummaryResponse"][];
+            /**
+             * Format: int64
+             * @description Total number of matches of this kind
+             * @example 12
+             */
+            total?: number;
+        };
+        /** @description The first matches of one kind, and how many there are in all */
+        SearchGroupPromoterListItemResponse: {
+            /** @description At most `limit` items */
+            items?: components["schemas"]["PromoterListItemResponse"][];
+            /**
+             * Format: int64
+             * @description Total number of matches of this kind
+             * @example 12
+             */
+            total?: number;
+        };
+        /** @description The first matches of one kind, and how many there are in all */
+        SearchGroupVenueListItemResponse: {
+            /** @description At most `limit` items */
+            items?: components["schemas"]["VenueListItemResponse"][];
+            /**
+             * Format: int64
+             * @description Total number of matches of this kind
+             * @example 12
+             */
+            total?: number;
+        };
+        /** @description The first matches of each kind, for the header search */
+        SearchResponse: {
+            /** @description Upcoming events, by date */
+            events?: components["schemas"]["SearchGroupEventSummaryResponse"];
+            /** @description Venues, best match first */
+            venues?: components["schemas"]["SearchGroupVenueListItemResponse"];
+            /** @description Artists, best match first */
+            artists?: components["schemas"]["SearchGroupArtistSummaryResponse"];
+            /** @description Promoters, best match first */
+            promoters?: components["schemas"]["SearchGroupPromoterListItemResponse"];
         };
         /** @description Compact venue summary */
         VenueSummaryResponse: {
@@ -974,25 +922,56 @@ export interface components {
              */
             intrinsicHeight?: number | null;
         };
-        /** @description Compact artist summary */
-        ArtistSummaryResponse: {
+        /** @description A page of results with pagination metadata */
+        PageResponsePromoterListItemResponse: {
+            /** @description The items on this page */
+            content?: components["schemas"]["PromoterListItemResponse"][];
+            /**
+             * Format: int32
+             * @description Zero-based index of this page
+             * @example 0
+             */
+            page?: number;
+            /**
+             * Format: int32
+             * @description Requested page size
+             * @example 20
+             */
+            size?: number;
+            /**
+             * Format: int64
+             * @description Total number of matching items across all pages
+             * @example 137
+             */
+            totalElements?: number;
+            /**
+             * Format: int32
+             * @description Total number of pages
+             * @example 7
+             */
+            totalPages?: number;
+        };
+        /** @description Full promoter detail */
+        PromoterDetailResponse: {
             /**
              * Format: int64
              * @description Database primary key
-             * @example 7
+             * @example 3
              */
             id?: number;
             /**
              * @description URL-friendly identifier
-             * @example the-adicts
+             * @example 36-concerts
              */
             slug?: string;
             /**
-             * @description Stage name or band name
-             * @example The Adicts
+             * @description Display name of the promoter
+             * @example 36 Concerts
              */
             name?: string;
-            /** @description URL of the artist's photo or band logo */
+            /** @description URL of the promoter's website or social page */
+            websiteUrl?: string | null;
+            /** @description URL of the promoter's logo image */
             imageUrl?: string | null;
             /**
              * @description Who to credit for `imageUrl`, worded as the archive publishes it. Present whenever `imageUrl` is, and it must be shown beside the image.
@@ -1023,6 +1002,99 @@ export interface components {
              * @example 630
              */
             intrinsicHeight?: number | null;
+            /** @description Short prose description of the promoter */
+            description?: string | null;
+            /**
+             * @description Language of `description`: `de` or `en`. Null when the language is unknown.
+             * @example en
+             */
+            descriptionLanguage?: string | null;
+            /**
+             * @description The same description in the other language. Written by hand, not machine-translated, so it carries no origin and needs no disclosure (#328).
+             * @example Die Hausagentur von Lido, Astra und Bi Nuu.
+             */
+            descriptionAlt?: string | null;
+            /**
+             * @description Language of `descriptionAlt`: `de` or `en`. Null exactly when `descriptionAlt` is.
+             * @example de
+             */
+            descriptionAltLanguage?: string | null;
+        };
+        /** @description Version and commit of the running backend, for the frontend footer */
+        MetaResponse: {
+            /**
+             * @description Application version. `dev` when the build did not stamp one — i.e. running from the IDE or `bootRun`.
+             * @example 0.1.0
+             */
+            version?: string;
+            /**
+             * @description Full commit SHA the running artifact was built from; null when unavailable.
+             * @example 9f1a2b3c4d5e6f708192a3b4c5d6e7f809a1b2c3
+             */
+            commit?: string | null;
+            /**
+             * @description First seven characters of `commit`, for display; null when the commit is unavailable.
+             * @example 9f1a2b3
+             */
+            commitShort?: string | null;
+            /**
+             * @description When the running artifact was built (ISO-8601); null when the build did not stamp one.
+             * @example 2026-08-07T12:49:19Z
+             */
+            buildTime?: string | null;
+        };
+        /** @description A normalized genre tag */
+        GenreTagResponse: {
+            /**
+             * Format: int64
+             * @description Database primary key
+             * @example 1
+             */
+            id?: number;
+            /**
+             * @description URL-friendly identifier
+             * @example hip-hop
+             */
+            slug?: string;
+            /**
+             * @description Canonical display name
+             * @example Hip Hop
+             */
+            name?: string;
+            /**
+             * @description Slug of the filter family the tag belongs to; null means the tag is offered in neither select
+             * @example hip-hop
+             */
+            family?: string | null;
+        };
+        /** @description A page of results with pagination metadata */
+        PageResponseEventSummaryResponse: {
+            /** @description The items on this page */
+            content?: components["schemas"]["EventSummaryResponse"][];
+            /**
+             * Format: int32
+             * @description Zero-based index of this page
+             * @example 0
+             */
+            page?: number;
+            /**
+             * Format: int32
+             * @description Requested page size
+             * @example 20
+             */
+            size?: number;
+            /**
+             * Format: int64
+             * @description Total number of matching items across all pages
+             * @example 137
+             */
+            totalElements?: number;
+            /**
+             * Format: int32
+             * @description Total number of pages
+             * @example 7
+             */
+            totalPages?: number;
         };
         /** @description Full event detail with embedded associations */
         EventDetailResponse: {
@@ -1557,6 +1629,34 @@ export interface operations {
                 };
                 content: {
                     "application/xml": string;
+                };
+            };
+        };
+    };
+    search: {
+        parameters: {
+            query: {
+                /** @description Search term, at least 2 characters: ignores case, accents and spaces, and forgives small typos. */
+                q: string;
+                /**
+                 * @description Most items per kind, 1 to 20.
+                 * @example 5
+                 */
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SearchResponse"];
                 };
             };
         };

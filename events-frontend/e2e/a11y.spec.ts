@@ -1,5 +1,6 @@
 import AxeBuilder from '@axe-core/playwright'
 import { expect, type Page, type Route, test } from '@playwright/test'
+import { compactToggle } from './header-nav'
 
 /**
  * Automated accessibility sweep, the runtime half of the WCAG 2.1 AA target (docs/LEGAL.md §12);
@@ -201,6 +202,14 @@ async function mockBff(page: Page): Promise<void> {
       ),
     ),
   )
+  await page.route(/\/api\/search(\?|$)/, (route) =>
+    json(route, {
+      events: { items: eventSummaries, total: 2 },
+      venues: { items: [{ slug: 'mock-venue', name: 'Mock Venue', upcomingEventCount: 2 }], total: 1 },
+      artists: { items: [{ slug: 'mock-artist', name: 'Mock Artist' }], total: 1 },
+      promoters: { items: [{ slug: 'mock-promoter', name: 'Mock Promoter', upcomingEventCount: 3 }], total: 1 },
+    }),
+  )
   await page.route(/\/api\/genres/, (route) =>
     json(route, [
       { slug: 'techno', name: 'Techno', family: 'electronic' },
@@ -215,6 +224,7 @@ const dataRoutes = [
   { name: 'venues list, with results', path: '/en/venues' },
   { name: 'promoters list, with results', path: '/en/promoters' },
   { name: 'an event detail page', path: '/en/events/tonight-show' },
+  { name: 'search results, all four kinds', path: '/en/search?q=mock' },
   // The calendar is the only widget whose markup we do not write, and the static pass reaches it
   // with an empty grid, which scans almost nothing.
   { name: 'the calendar, with a populated month grid', path: '/en/calendar' },
@@ -247,6 +257,26 @@ for (const route of dataRoutes) {
     ).toEqual([])
   })
 }
+
+/** The header search, open over the page with every kind of result: a dialog the static pass never opens. */
+test('the header search, open with results, has no detectable accessibility violations', async ({ page }) => {
+  await mockBff(page)
+  await page.goto('/en/events')
+  await page.getByRole('button', { name: 'Search events, venues, artists and promoters' }).click()
+  await page.getByRole('dialog').getByRole('textbox').fill('mock')
+  await expect(page.getByRole('option', { name: /Mock Artist/ })).toBeVisible()
+
+  const results = await buildScan(page).analyze()
+
+  expect(
+    results.violations.map((v) => ({
+      rule: v.id,
+      impact: v.impact,
+      help: v.help,
+      nodes: v.nodes.map((n) => n.target.join(' ')),
+    })),
+  ).toEqual([])
+})
 
 /**
  * The two maps, each with a pin selected: the panel over the map is the markup a visitor reads, and
@@ -332,7 +362,7 @@ test('the events map near me, with a show on now, has no detectable accessibilit
 test('the compact view has no detectable accessibility violations', async ({ page }) => {
   await mockBff(page)
   await page.goto('/en/events')
-  await page.getByRole('button', { name: /switch to the compact list/i }).click()
+  await (await compactToggle(page, /switch to the compact list/i)).click()
 
   await expect(page.getByRole('heading', { name: 'Tonight Show' })).toBeVisible()
   await expect(page.locator('img')).toHaveCount(0)
@@ -363,6 +393,8 @@ for (const path of [
   '/de/events',
   '/de/venues',
   '/de/promoters',
+  '/en/search?q=mock',
+  '/de/search?q=mock',
 ]) {
   test(`${path} has a heading outline with no skipped levels`, async ({ page }) => {
     await mockBff(page)

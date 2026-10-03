@@ -1,5 +1,5 @@
 import { expect, type Page, type Route, test } from '@playwright/test'
-import { sectionLink } from './header-nav'
+import { compactToggle, sectionLink } from './header-nav'
 
 /**
  * The compact view (#1371): the lists as text rows, with the posters gone.
@@ -93,7 +93,7 @@ test('the toggle swaps the posters for text rows, and requests no images', async
   await postersLoaded
 
   const posters = collectPosterRequests(page)
-  await page.getByRole('button', { name: toCompact }).click()
+  await (await compactToggle(page, toCompact)).click()
 
   // Every event is still listed, and its link still works — this is a second view, not a filter.
   await expect(page.getByRole('heading', { name: 'Event One' })).toBeVisible()
@@ -109,7 +109,7 @@ test('the toggle swaps the posters for text rows, and requests no images', async
 test('the choice survives a reload and a navigation, and stays out of the URL', async ({ page }) => {
   await mockBff(page)
   await page.goto('/en/events')
-  await page.getByRole('button', { name: toCompact }).click()
+  await (await compactToggle(page, toCompact)).click()
   await expect(page.locator('img')).toHaveCount(0)
   expect(new URL(page.url()).search, 'a display preference does not belong in a shared link').toBe(
     '',
@@ -132,7 +132,7 @@ test('a first-time visitor gets the poster view', async ({ page }) => {
   await mockBff(page)
   await page.goto('/en/events')
 
-  await expect(page.getByRole('button', { name: toCompact })).toBeVisible()
+  await expect(await compactToggle(page, toCompact)).toBeVisible()
   await expectPosters(page)
 })
 
@@ -140,10 +140,10 @@ test('the toggle reports its own state', async ({ page }) => {
   await mockBff(page)
   await page.goto('/en/events')
 
-  const toggle = page.getByRole('button', { name: toCompact })
+  const toggle = await compactToggle(page, toCompact)
   await expect(toggle).toHaveAttribute('aria-pressed', 'false')
   await toggle.click()
-  await expect(page.getByRole('button', { name: toPoster })).toHaveAttribute(
+  await expect(await compactToggle(page, toPoster)).toHaveAttribute(
     'aria-pressed',
     'true',
   )

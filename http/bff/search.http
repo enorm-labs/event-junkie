@@ -1,0 +1,36 @@
+### ============================================================
+### BFF: Search — the header search across all four kinds
+###
+### Read-only, no auth. `q` (at least 2 characters) runs each
+### kind's own name search; `limit` (1–20, default 5) caps each
+### group. Events are upcoming only. Not response-cached.
+### ============================================================
+
+### Search everything for a venue name
+GET {{bff-host}}/api/search?q=berghain
+Accept: application/json
+
+> {%
+    client.test("status is 200", function () {
+        client.assert(response.status === 200, "Expected 200 OK");
+    });
+    client.test("one group per kind", function () {
+        ["events", "venues", "artists", "promoters"].forEach(function (kind) {
+            client.assert(Array.isArray(response.body[kind].items), "Missing group " + kind);
+        });
+    });
+%}
+
+### Folded and typo-tolerant: finds ÆDEN and Berghain
+GET {{bff-host}}/api/search?q=berghian&limit=3
+Accept: application/json
+
+### A one-character term is a 400
+GET {{bff-host}}/api/search?q=b
+Accept: application/json
+
+> {%
+    client.test("status is 400", function () {
+        client.assert(response.status === 400, "Expected 400");
+    });
+%}
