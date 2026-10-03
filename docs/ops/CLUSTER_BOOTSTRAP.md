@@ -275,8 +275,9 @@ something else.
 **Re-run this after every regeneration, not only at first creation.** Regeneration of a fine-grained PAT can reset its permissions. #872's token was correct
 when it was checked before regeneration. The regenerated one was read-only, and GitHub's interface does not make that obvious.
 
-**This is a different failure from expiry**, which `credential-expiry-reminder.yml` already watches. An expired token stops working on a known date. A
-wrongly scoped one never worked, and it has no date attached.
+**This is a different failure from expiry.** An expired token stops working on a known date. A wrongly scoped one never worked, and it has no date attached.
+`credential-expiry-reminder.yml` watches both. Its `check` job reads the dates in its `CREDENTIALS` table. Its `dispatch-records` job opens an issue when a publish gets no
+deployment record, and that issue points back to this probe.
 
 **What `204` does not prove:** that the token is scoped to this repository alone. Nor that it is this cluster's own PAT and not a copy of the other
 cluster's. Both matter, because per-cluster tokens keep "which cluster wrote that" answerable at the API level. Only the token's page in the GitHub UI shows
@@ -438,15 +439,23 @@ because CI cannot reach here (ADR-033). It reads `1 test hook` while `tests.smok
 **Then check that the reconcile reached GitHub**, which is the half that has no evidence inside the cluster (#565):
 
 ```sh
-flux --context event-junkie-staging get alerts -A                                # github-dispatch and source-failure: Ready
-gh api repos/enorm-labs/event-junkie/deployments --jq '.[0] | {environment, ref, created_at}'
+gh api 'repos/enorm-labs/event-junkie/deployments?environment=staging' --jq '.[0] | {environment, ref, created_at}'
 ```
 
-A Provider that is not Ready almost always means one of two things. Either the `github-dispatch` Secret from §8 is missing, or its PAT expired — see
-[CREDENTIALS.md](../CREDENTIALS.md) #16 for the expiry date.
+A deployment record from the last few minutes is the evidence. **`flux get alerts` is not.** `Provider` and `Alert` in
+`notification.toolkit.fluxcd.io/v1beta3` have no `status` field, so no condition shows a rejected dispatch.
 
-There is exactly one Provider per cluster, so a not-Ready one is unambiguous. **Do not add a second one to post commit statuses**
-([#567](https://github.com/enorm-labs/event-junkie/issues/567)): a HelmRelease reports a chart version, not a commit, so it cannot work.
+No record usually means one of three things:
+
+1. The `github-dispatch` Secret from §8 is missing.
+2. Its PAT expired. [CREDENTIALS.md](../CREDENTIALS.md) #15 and #15a list both PATs.
+3. Its PAT cannot write. Run the probe in §8.
+
+After bootstrap, the `dispatch-records` job in `credential-expiry-reminder.yml` makes this check every day. It opens an issue when a publish has no record
+after it ([#1003](https://github.com/enorm-labs/event-junkie/issues/1003)).
+
+There is exactly one Provider per cluster. **Do not add a second one to post commit statuses** ([#567](https://github.com/enorm-labs/event-junkie/issues/567)): a
+HelmRelease reports a chart version, not a commit, so it cannot work.
 
 ## 11 · Verify the certificate
 
