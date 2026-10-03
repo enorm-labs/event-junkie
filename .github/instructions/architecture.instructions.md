@@ -27,6 +27,10 @@ mismatch`** — the pod never goes Ready and `remediateLastFailure` rolls the re
       `migration-versions.yml` re-checks every open PR when a migration lands on `main` and turns its `Migration versions` status red (#2442). Only two
       colliding PRs merged within one of its runs pass both; the publish check stops that tree. Take the number from `origin/main` right before
       merging, and when one has already reached a cluster, renumber the other.
+    - **A data fix is a `V` migration too**, because nothing re-seeds staging or production and a past event is never re-imported (ADR-005 § Data fixes).
+      A named slug or a per-source junk row stays a migration for good: the stored name has lost the context the parser decided on. A global name rule
+      applied again to old rows (V045, V055, V067, V068, V072) is rule-shaped, and the next one builds the `ArtistNormalizer` repair pass instead of a
+      migration. No baseline until a fresh database takes over 5 s to migrate.
     - **A `slug` literal in a data migration is checked, because a wrong one fails open**: `UPDATE … WHERE slug = 'mispelt'` updates nothing and Flyway records
       it applied. `MigrationSlugTest` asserts every venue slug literal under `db/migration/` is one `SlugGenerator` derives from `dev-seed.http`; a renamed or
       removed venue goes into `RETIRED_VENUE_SLUGS` with a reason, and a second assertion deletes the entry once stale. Never `@Disabled` (#987).
