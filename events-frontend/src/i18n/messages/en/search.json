@@ -1,0 +1,19 @@
+{
+  "open": "Search",
+  "label": "Search events, venues, artists and promoters",
+  "placeholder": "Event, venue, artist or promoter …",
+  "close": "Close search",
+  "hint": "Type at least two characters.",
+  "loading": "Searching …",
+  "empty": "Nothing found for “{q}”.",
+  "allResults": "All results for “{q}”",
+  "showAll": "Show all {count}",
+  "resultsFor": "Results for “{q}”",
+  "status": "No results | One result | {count} results",
+  "groups": {
+    "events": "Events",
+    "venues": "Venues",
+    "artists": "Artists",
+    "promoters": "Promoters"
+  }
+}

@@ -45,5 +45,8 @@ class BffMetrics(
 
         /** `GET /events/feed` — the RSS feed of new events, which says whether anyone subscribes (#368). */
         const val ENDPOINT_FEED = "feed"
+
+        /** `GET /search` — the header search, its event group only (#2514). */
+        const val ENDPOINT_GLOBAL_SEARCH = "global-search"
     }
 }

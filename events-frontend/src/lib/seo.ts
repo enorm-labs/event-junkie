@@ -39,10 +39,10 @@ export const INDEXABLE_PATHS = [
 ] as const
 
 /**
- * Static routes intentionally out of the sitemap. Empty today; the drift guard records a
- * deliberate exclusion here instead of being weakened.
+ * Static routes intentionally out of the sitemap; the drift guard records a deliberate exclusion
+ * here instead of being weakened. `/search` is one page per query, and its route meta says noindex.
  */
-export const NON_INDEXABLE_PATHS: readonly string[] = []
+export const NON_INDEXABLE_PATHS: readonly string[] = ['/search']
 
 /**
  * Open Graph wants `language_TERRITORY` with an underscore, neither the UI locale (`en`) nor the

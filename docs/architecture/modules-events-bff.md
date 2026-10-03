@@ -17,6 +17,7 @@ flowchart TD
     licence["licence"]
     meta["meta"]
     promoter["promoter"]
+    search["search"]
     sitemap["sitemap"]
     sourcelicence["sourcelicence"]
     venue["venue"]
@@ -37,6 +38,11 @@ flowchart TD
     genretag --> common
     promoter --> common
     promoter --> image
+    search --> artist
+    search --> common
+    search --> event
+    search --> promoter
+    search --> venue
     sitemap --> common
     sourcelicence --> licence
     venue --> common

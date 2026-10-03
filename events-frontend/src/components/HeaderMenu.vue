@@ -1,10 +1,10 @@
 <script lang="ts" setup>
 /**
- * The header's section links and GitHub link on a phone (#2291): a burger button and a side sheet. Rendered
+ * The header's section links, view toggle and GitHub link on a phone (#2291): a burger and a side sheet. Rendered
  * without a portal, so the sheet stays inside the header's navigation landmark and its links are
  * still "Main" navigation to assistive tech and to the e2e selectors.
  */
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { RouterLink, useRoute } from 'vue-router'
 import {
@@ -15,15 +15,27 @@ import {
   DialogTitle,
   DialogTrigger,
 } from 'reka-ui'
-import { Menu, X } from '@lucide/vue'
+import { LayoutGrid, Menu, Rows3, X } from '@lucide/vue'
 import { Button } from '@/components/ui/button'
 import GitHubMark from '@/components/GitHubMark.vue'
+import { useCompactView } from '@/composables/useCompactView'
 import { REPOSITORY_URL } from '@/lib/links'
 
 defineProps<{ links: { to: string; label: string }[] }>()
 
 const { t } = useI18n()
 const open = ref(false)
+
+const { compact, toggle } = useCompactView()
+const compactLabel = computed(() =>
+  compact.value ? t('common.nav.toPosterView') : t('common.nav.toCompactView'),
+)
+
+// The visitor chose a view to look at, and the sheet covers it.
+function toggleCompact() {
+  toggle()
+  open.value = false
+}
 
 // A link to another page closes the sheet through the route change; a tap on the current page's
 // own link changes nothing, so the link closes it too.
@@ -79,11 +91,21 @@ watch(
             </RouterLink>
           </li>
         </ul>
-        <!-- The header row has no room left for the GitHub button below `md`, so it lives here. -->
+        <!-- The header row has no room for these two below `md`, so they live here. -->
+        <button
+          :aria-pressed="compact"
+          class="flex items-center gap-2 border-t border-border pt-4 text-left text-body text-muted-foreground hover:text-foreground"
+          type="button"
+          @click="toggleCompact"
+        >
+          <LayoutGrid v-if="compact" aria-hidden="true" class="size-4 shrink-0" />
+          <Rows3 v-else aria-hidden="true" class="size-4 shrink-0" />
+          {{ compactLabel }}
+        </button>
         <a
           :href="REPOSITORY_URL"
           :title="t('common.nav.sourceOnGitHub')"
-          class="flex items-center gap-2 border-t border-border pt-4 text-body text-muted-foreground hover:text-foreground"
+          class="flex items-center gap-2 text-body text-muted-foreground hover:text-foreground"
           rel="noopener"
           target="_blank"
         >

@@ -18,3 +18,15 @@ export async function sectionLink(
   }
   return header.getByRole('link', { name, exact: true })
 }
+
+/**
+ * The compact-view toggle. Below `md` it is in HeaderMenu's sheet, which leaves the header row room for the search
+ * button (#2514), so the burger is opened first.
+ */
+export async function compactToggle(page: Page, name: RegExp, { menu = 'Menu' }: { menu?: string } = {}): Promise<Locator> {
+  const header = page.getByRole('navigation', { name: 'Main' })
+  if ((page.viewportSize()?.width ?? MD_PX) < MD_PX) {
+    await header.getByRole('button', { name: menu, exact: true }).click()
+  }
+  return header.getByRole('button', { name })
+}

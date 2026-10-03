@@ -26,6 +26,8 @@ declare module 'vue-router' {
     // (usePageMeta).
     titleKey?: string
     descriptionKey?: string
+    /** One page per query, so none is worth a crawler's time. */
+    noindex?: boolean
   }
 }
 
@@ -106,6 +108,12 @@ const router = createRouter({
           path: 'promoters/:slug',
           name: 'promoter',
           component: () => import('../views/PromoterDetailView.vue'),
+        },
+        {
+          path: 'search',
+          name: 'search',
+          meta: { titleKey: 'pageTitle.search', noindex: true },
+          component: () => import('../views/SearchView.vue'),
         },
         // The five long-form pages have one component per language (views/localisedView.ts), the
         // exception to user-facing text living in the message catalogue.
@@ -201,12 +209,13 @@ router.beforeEach((to) => {
 // Static views get their title and description from route meta; detail views supply their own
 // from the loaded entity after this, so they overwrite rather than race.
 router.afterEach((to) => {
-  applyPageMeta(
-    staticPageMeta(
+  applyPageMeta({
+    ...staticPageMeta(
       to.meta.titleKey ? i18n.global.t(to.meta.titleKey) : null,
       to.meta.descriptionKey ? i18n.global.t(to.meta.descriptionKey) : null,
     ),
-  )
+    noindex: to.meta.noindex,
+  })
   // Canonical, hreflang and og:locale follow the resolved route, so a redirect annotates the
   // destination. `to.path` excludes the query on purpose (updateSeoTags).
   updateSeoTags(localeOf(to), stripLocale(to.path))

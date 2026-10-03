@@ -1,0 +1,19 @@
+{
+  "open": "Suchen",
+  "label": "Events, Locations, Acts und Veranstalter durchsuchen",
+  "placeholder": "Event, Location, Act oder Veranstalter …",
+  "close": "Suche schließen",
+  "hint": "Gib mindestens zwei Zeichen ein.",
+  "loading": "Wird gesucht …",
+  "empty": "Zu „{q}“ haben wir nichts gefunden.",
+  "allResults": "Alle Ergebnisse für „{q}“",
+  "showAll": "Alle {count} anzeigen",
+  "resultsFor": "Ergebnisse für „{q}“",
+  "status": "Keine Treffer | Ein Treffer | {count} Treffer",
+  "groups": {
+    "events": "Events",
+    "venues": "Locations",
+    "artists": "Acts",
+    "promoters": "Veranstalter"
+  }
+}
