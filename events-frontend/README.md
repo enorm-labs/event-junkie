@@ -69,27 +69,23 @@ npm run dev
 
 ### Regenerate the API types after a BFF change
 
-`src/api/schema.d.ts` is **generated from the BFF's OpenAPI document and committed**. It is not produced by the build, and
-nothing checks that it is current — so if you changed the BFF's public API (new endpoint, renamed or added response field,
-changed type), regenerate it as part of the same change. Otherwise the frontend keeps type-checking against an API that no
-longer exists.
+`src/api/schema.d.ts` is **generated from the BFF's OpenAPI document and committed**. It is not produced by the build, so
+if you changed the BFF's public API (new endpoint, renamed or added response field, changed type), regenerate it as part of
+the same change. The backend build fails on a stale file and prints the command below.
 
-The generator reads the document over HTTP from a **running BFF**:
+The BFF's test suite writes the document, so no running BFF is needed:
 
 ```sh
-# 1. Start the BFF first — from the repository root
-./gradlew :events-bff:bootRun      # or: scripts/dev-env.sh up bff
+# 1. Write the document and regenerate — from the repository root
+./gradlew :events-bff:test --tests '*OpenApiDocumentTest' && scripts/api-schema-parity.sh
 
-# 2. Regenerate (from events-frontend/)
-npm run generate:api
-
-# 3. Review and follow the change through
+# 2. Review and follow the change through (from events-frontend/)
 git diff src/api/schema.d.ts
 npm run type-check
 ```
 
-Restart the BFF after editing a controller or DTO: with a stale BFF running, the command succeeds and quietly writes the
-_old_ API. Never edit `schema.d.ts` by hand — the next run discards the edit. Friendly aliases for the generated schemas
+`npm run generate:api` reads a running BFF on `:8080` instead. Restart the BFF after editing a controller or DTO: with a
+stale BFF running, that command succeeds and quietly writes the _old_ API. Never edit `schema.d.ts` by hand — the next run discards the edit. Friendly aliases for the generated schemas
 live in [`src/api/types.ts`](src/api/types.ts); use those in views and composables.
 
 ### Format code
