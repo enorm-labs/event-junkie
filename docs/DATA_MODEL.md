@@ -263,6 +263,9 @@ overwrites them.
 The derivation reads the venue's events from 365 days back, plus all future events. Cancelled events do not count. A
 value counts when it is on at least 15 % of those events and on at least 3 of them. The top three values are kept, most
 frequent first. `OTHER` never counts as an event type. A family share counts only events that carry a genre family.
+A venue whose importer declares a house genre always gets the families of that genre, and they come first. The
+thresholds do not apply to them, because a short season can leave too few tagged events. The venue needs at least one
+event in the window.
 
 **Both descriptions are our own prose, in two languages (#1210).** The English was written by hand and read against
 each venue in #1124. The German says the same thing and was read the same way. So there is no origin column and no

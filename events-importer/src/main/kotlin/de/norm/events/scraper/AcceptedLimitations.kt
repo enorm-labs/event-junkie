@@ -1,6 +1,8 @@
 package de.norm.events.scraper
 
 import de.norm.events.event.EventType
+import de.norm.events.genretag.genreFamily
+import de.norm.events.genretag.normalizeGenre
 import de.norm.events.scraper.abstand.ABSTAND_LIMITATIONS
 import de.norm.events.scraper.admiralspalast.ADMIRALSPALAST_LIMITATIONS
 import de.norm.events.scraper.aeden.AEDEN_LIMITATIONS
@@ -92,6 +94,7 @@ import de.norm.events.scraper.zenner.ZENNER_LIMITATIONS
 import de.norm.events.scraper.zigzag.ZIG_ZAG_LIMITATIONS
 import de.norm.events.scraper.zitadelle.ZITADELLE_LIMITATIONS
 import de.norm.events.scraper.zurklappe.ZUR_KLAPPE_LIMITATIONS
+import de.norm.events.slug.SlugGenerator
 
 /**
  * Every venue's [VenueLimitations] in one place, and the lookups the data-quality audit runs (#715).
@@ -217,6 +220,19 @@ object AcceptedLimitations {
         source: EventSource,
         events: List<ScrapedEvent>
     ): List<ScrapedEvent> = events.map { event -> event.genre?.let { event } ?: houseGenre(source, event.eventType)?.let { event.copy(genre = it) } ?: event }
+
+    /**
+     * The genre families each source's house genre maps to, keyed by [EventSource] name (`event_source.source_type`).
+     * `VenueProgrammeStore` keeps these families without the event thresholds: the house genre is already a
+     * judgement about the whole programme, and a short season can leave too few tagged events to show it (#2389).
+     */
+    val houseFamilies: Map<String, List<String>> by lazy {
+        declarations
+            .flatMap { declaration ->
+                val families = normalizeGenre(declaration.houseGenre).mapNotNull { genreFamily(SlugGenerator.slugify(it))?.slug }.distinct()
+                if (families.isEmpty()) emptyList() else declaration.sources.map { it.name to families }
+            }.toMap()
+    }
 
     private val NON_MUSIC_TYPES = setOf(EventType.SCREENING, EventType.EXHIBITION, EventType.READING, EventType.QUIZ, EventType.COMEDY).map { it.name }
 

@@ -342,8 +342,13 @@ class EventImportService(
         fieldCoverageService.record(source, result.events)
         runCatching { descriptionTranslationService.translateFor(source, venueName, licences) }
             .onFailure { logger.warn(it) { "TranslationRequest pass failed for '${source.slug}'" } }
-        runCatching { venueProgrammeStore.refresh(source.venueId, LocalDate.now(clock).minusDays(VenueProgrammeStore.WINDOW_DAYS)) }
-            .onFailure { logger.warn(it) { "Venue programme refresh failed for '${source.slug}'" } }
+        runCatching {
+            venueProgrammeStore.refresh(
+                source.venueId,
+                LocalDate.now(clock).minusDays(VenueProgrammeStore.WINDOW_DAYS),
+                AcceptedLimitations.houseFamilies
+            )
+        }.onFailure { logger.warn(it) { "Venue programme refresh failed for '${source.slug}'" } }
     }
 
     /**

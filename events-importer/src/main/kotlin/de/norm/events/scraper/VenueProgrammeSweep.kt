@@ -43,7 +43,7 @@ class VenueProgrammeSweep(
             return null
         }
         logger.info { "Venue programme sweep started" }
-        val changed = venueProgrammeStore.refreshAll(LocalDate.now(clock).minusDays(VenueProgrammeStore.WINDOW_DAYS))
+        val changed = venueProgrammeStore.refreshAll(LocalDate.now(clock).minusDays(VenueProgrammeStore.WINDOW_DAYS), AcceptedLimitations.houseFamilies)
         logger.info { "Venue programme sweep changed $changed venue(s)" }
         return changed
     }
