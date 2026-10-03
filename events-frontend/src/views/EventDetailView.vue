@@ -4,6 +4,7 @@ import { RouterLink, useRoute } from 'vue-router'
 import { Button } from '@/components/ui/button'
 import BaseBadge from '@/components/BaseBadge.vue'
 import CachedImage from '@/components/CachedImage.vue'
+import EventShareActions from '@/components/EventShareActions.vue'
 import SectionLabel from '@/components/SectionLabel.vue'
 import { useEvent } from '@/composables/useEvent'
 import { descriptionFor } from '@/lib/description'
@@ -433,6 +434,8 @@ useStructuredData((): JsonLd[] => {
           }}</a>
         </Button>
       </section>
+
+      <EventShareActions :event="event" />
 
       <!-- The address is the link text, so a visitor without a mail client can still copy it. -->
       <p v-if="reportMailto" class="text-body text-muted-foreground">
