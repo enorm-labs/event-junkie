@@ -29,7 +29,8 @@ import java.time.LocalDate
  * the first page that reaches the past, bounded by [MAX_PAGES] in case the ordering changes.
  *
  * Each card is enriched from its detail page, since the listing truncates titles and carries no
- * promoter, ticket link or description; a failed detail fetch degrades to the card. Conditional
+ * promoter, ticket link or description. A failed or unparseable detail page degrades to the card,
+ * flagged so the upsert keeps the stored detail fields (see #2425). Conditional
  * requests are not used: the site answers `Cache-Control: no-store` with neither `ETag` nor
  * `Last-Modified`, so [ImportResult.Success] returns `null` cache headers and the run relies on
  * idempotent `sourceId` upserts.
@@ -100,16 +101,17 @@ class UrbanSpreeWebsiteImporter(
 
     /**
      * Fetches and parses the card's detail page, merging it over the card; any failure degrades to
-     * the card, which carries title, date, type, price and poster.
+     * the card, which carries title, date, type, price and poster, flagged [ScrapedEvent.detailUnavailable].
      */
     @Suppress("TooGenericExceptionCaught") // Intentional: degrade to overview data if the detail page is unavailable
     private suspend fun enrichFromDetailPage(card: ScrapedEvent): ScrapedEvent =
         try {
             val document = htmlFetcher.fetchDocument(card.sourceUrl)
-            detailPageScraper.scrape(document, card.sourceUrl)?.let { merge(detail = it, card = card) } ?: card
+            detailPageScraper.scrape(document, card.sourceUrl)?.let { merge(detail = it, card = card) }
+                ?: card.copy(detailUnavailable = true)
         } catch (e: Exception) {
             logger.warn(e) { "Failed to fetch Urban Spree detail page for '${card.title}' (${card.sourceUrl}), using listing data" }
-            card
+            card.copy(detailUnavailable = true)
         }
 
     /**

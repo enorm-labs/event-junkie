@@ -26,8 +26,9 @@ import java.time.Clock
  *
  * Step 3 is why this class implements [EventImporter] directly: the event page adds a
  * description and nothing else, and spells its date without a year, so it is not the primary
- * source the base class's detail scraper must be. A failed event page is not fatal — the night
- * keeps its listing data, losing only the blurb.
+ * source the base class's detail scraper must be. A failed or blurb-less event page is not fatal —
+ * the night keeps its listing data, flagged `detailUnavailable` so the upsert keeps the stored
+ * blurb (see #2425).
  *
  * @see CrackBellmerOverviewPageScraper for the listing parsing logic.
  * @see CrackBellmerDetailPageScraper for the event-page blurb.
@@ -49,14 +50,17 @@ class CrackBellmerWebsiteImporter(
 
     override suspend fun postProcess(events: List<ScrapedEvent>): List<ScrapedEvent> = events.map { addDescription(it) }
 
-    /** Fetches one event page for its blurb, degrading to the listing data so a broken page costs only the description. */
+    /** Fetches one event page for its blurb, degrading to the flagged listing row so a broken page costs nothing stored. */
     @Suppress("TooGenericExceptionCaught") // Intentional: a broken event page must not fail the whole import
     private suspend fun addDescription(event: ScrapedEvent): ScrapedEvent =
         try {
-            event.copy(description = detailPageScraper.scrapeDescription(htmlFetcher.fetchDocument(event.sourceUrl)))
+            detailPageScraper
+                .scrapeDescription(htmlFetcher.fetchDocument(event.sourceUrl))
+                ?.let { event.copy(description = it) }
+                ?: event.copy(detailUnavailable = true)
         } catch (e: Exception) {
             logger.warn(e) { "Failed to fetch event page for '${event.title}' (${event.sourceUrl}), keeping listing data" }
-            event
+            event.copy(detailUnavailable = true)
         }
 }
 

@@ -65,13 +65,14 @@ class TiffanyClubWebsiteImporterTest {
             result.shouldBeInstanceOf<ImportResult.Success>()
             result.events shouldHaveSize 32
             result.events.first().description shouldStartWith "🔥 LATIN HELL"
+            result.events.first().detailUnavailable shouldBe false
             result.etag shouldBe "\"tiffany-etag\""
             result.lastModified shouldBe "Thu, 01 Oct 2026 08:00:00 GMT"
             coVerify(exactly = 32) { htmlFetcher.fetchDocument(any()) }
         }
 
     @Test
-    fun `keeps the listing data when an event page cannot be fetched`() =
+    fun `marks the listing row when the event page fetch fails`() =
         runTest {
             stubListing()
             coEvery { htmlFetcher.fetchDocument(any()) } throws RuntimeException("boom")
@@ -84,6 +85,23 @@ class TiffanyClubWebsiteImporterTest {
                 .first()
                 .description
                 .shouldBeNull()
+            result.events.first().detailUnavailable shouldBe true
+        }
+
+    @Test
+    fun `marks the listing row when the event page has no blurb`() =
+        runTest {
+            stubListing()
+            coEvery { htmlFetcher.fetchDocument(any()) } answers { Jsoup.parse(fixture("tiffanyclub-detail-private.html"), firstArg<String>()) }
+
+            val result = importer.importEvents(listingUrl)
+
+            result.shouldBeInstanceOf<ImportResult.Success>()
+            result.events
+                .first()
+                .description
+                .shouldBeNull()
+            result.events.first().detailUnavailable shouldBe true
         }
 
     @Test

@@ -26,9 +26,9 @@ import org.springframework.stereotype.Component
  * last one and answers `200`.
  *
  * Each row is enriched from its detail page (description, prices, doors, promoter); a failure
- * degrades to the row's own data. Conditional requests are not used: the entry page's `ETag`
- * covers page 1 alone, and a `304` would freeze the pages behind it. The park's participation
- * formats are not imported ([isProgrammeCategory]). An exhibition is one run: listed once per
+ * degrades to the row's own data, flagged so the upsert keeps the stored detail fields (see #2425).
+ * Conditional requests are not used: the entry page's `ETag` covers page 1 alone, and a `304`
+ * would freeze the pages behind it. The park's participation formats are not imported ([isProgrammeCategory]). An exhibition is one run: listed once per
  * open day under one slug, folded from first day to last ([collapseExhibitionRuns], ADR-029,
  * #337); a drone show over three nights keeps its nights, since only `EXHIBITION` rows fold.
  *
@@ -73,16 +73,18 @@ class GaertenDerWeltWebsiteImporter(
 
     /**
      * Fetches and parses the row's detail page, merging it over the row. Any failure degrades to the
-     * row alone, which carries title, date, start time, category, teaser, poster and ticket link.
+     * row alone, which carries title, date, start time, category, teaser, poster and ticket link,
+     * flagged [ScrapedEvent.detailUnavailable].
      */
     @Suppress("TooGenericExceptionCaught") // Intentional: degrade to listing data if the detail page is unavailable
     private suspend fun enrichFromDetailPage(row: ScrapedEvent): ScrapedEvent =
         try {
             val document = htmlFetcher.fetchDocument(row.sourceUrl)
-            detailPageScraper.scrape(document, row.sourceUrl)?.let { merge(detail = it, row = row) } ?: row
+            detailPageScraper.scrape(document, row.sourceUrl)?.let { merge(detail = it, row = row) }
+                ?: row.copy(detailUnavailable = true)
         } catch (e: Exception) {
             logger.warn(e) { "Failed to fetch Gärten der Welt detail page for '${row.title}' (${row.sourceUrl}), using listing data" }
-            row
+            row.copy(detailUnavailable = true)
         }
 
     /**

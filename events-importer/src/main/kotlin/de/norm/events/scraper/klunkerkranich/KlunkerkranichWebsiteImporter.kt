@@ -26,7 +26,7 @@ import java.time.Clock
  * Step 3 runs in [postProcess] rather than through [de.norm.events.scraper.AbstractTwoPageWebsiteImporter]:
  * the event page restates the listing and adds only those three, so it is not the primary source
  * that base class's detail scraper must be. An unfetchable or unparseable event page is not fatal —
- * the night keeps its listing data, losing only blurb, price and larger image.
+ * the night keeps its listing data, flagged so the upsert keeps the stored blurb and price (see #2425).
  *
  * **What the source does not carry** is declared in [KLUNKERKRANICH_LIMITATIONS].
  *
@@ -55,23 +55,25 @@ class KlunkerkranichWebsiteImporter(
     override suspend fun postProcess(events: List<ScrapedEvent>): List<ScrapedEvent> = events.map { addEventPageFields(it) }
 
     /**
-     * Fetches one event page for blurb, price and full-size poster, degrading to the listing data
-     * so a broken page costs only those three fields.
+     * Fetches one event page for blurb, price and full-size poster, degrading to the flagged listing
+     * row when the fetch fails or the page yields no blurb.
      */
     @Suppress("TooGenericExceptionCaught") // Intentional: a broken event page must not fail the whole import
     private suspend fun addEventPageFields(event: ScrapedEvent): ScrapedEvent =
         try {
             val document = htmlFetcher.fetchDocument(event.sourceUrl)
             val (priceBoxOffice, priceNote) = detailPageScraper.scrapePrice(document)
+            val description = detailPageScraper.scrapeDescription(document, event.title)
             event.copy(
-                description = detailPageScraper.scrapeDescription(document, event.title),
+                description = description,
                 imageUrl = detailPageScraper.scrapeImageUrl(document) ?: event.imageUrl,
                 priceBoxOffice = priceBoxOffice,
-                priceNote = priceNote
+                priceNote = priceNote,
+                detailUnavailable = description == null
             )
         } catch (e: Exception) {
             logger.warn(e) { "Failed to fetch event page for '${event.title}' (${event.sourceUrl}), keeping listing data" }
-            event
+            event.copy(detailUnavailable = true)
         }
 }
 

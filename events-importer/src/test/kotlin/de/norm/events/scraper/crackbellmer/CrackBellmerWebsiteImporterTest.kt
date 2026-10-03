@@ -90,6 +90,7 @@ class CrackBellmerWebsiteImporterTest {
 
             result.shouldBeInstanceOf<ImportResult.Success>()
             result.events.first().description shouldStartWith "We're standing at the peak of summer"
+            result.events.first().detailUnavailable shouldBe false
         }
 
     @Test
@@ -105,7 +106,7 @@ class CrackBellmerWebsiteImporterTest {
         }
 
     @Test
-    fun `keeps the listing data when an event page cannot be fetched`() =
+    fun `marks the listing row when the event page fetch fails`() =
         runTest {
             stubListing()
             coEvery { htmlFetcher.fetchDocument(any()) } throws RuntimeException("boom")
@@ -119,6 +120,23 @@ class CrackBellmerWebsiteImporterTest {
                 .description
                 .shouldBeNull()
             result.events.first().title shouldBe "BELLMER BALBOA"
+            result.events.first().detailUnavailable shouldBe true
+        }
+
+    @Test
+    fun `marks the listing row when the event page has no blurb`() =
+        runTest {
+            stubListing()
+            stubEventPages("crackbellmer-detail-no-blurb.html")
+
+            val result = importer.importEvents(listingUrl)
+
+            result.shouldBeInstanceOf<ImportResult.Success>()
+            result.events
+                .first()
+                .description
+                .shouldBeNull()
+            result.events.first().detailUnavailable shouldBe true
         }
 
     @Test

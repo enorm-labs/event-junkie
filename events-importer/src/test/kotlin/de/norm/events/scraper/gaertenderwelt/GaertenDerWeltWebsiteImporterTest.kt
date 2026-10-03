@@ -117,6 +117,7 @@ class GaertenDerWeltWebsiteImporterTest {
             concert.eventDate shouldBe LocalDate.of(2026, 8, 15)
             concert.startTime shouldBe LocalTime.of(19, 0)
             concert.eventType shouldBe EventType.CONCERT.name
+            concert.detailUnavailable shouldBe false
         }
 
     @Test
@@ -147,6 +148,26 @@ class GaertenDerWeltWebsiteImporterTest {
             screening.startTime shouldBe LocalTime.of(21, 0)
             screening.eventType shouldBe EventType.SCREENING.name
             screening.description.shouldBeNull()
+        }
+
+    @Test
+    fun `marks the listing row when the detail page fetch fails`() =
+        runTest {
+            val result = importer.importEvents(ENTRY_URL).shouldBeInstanceOf<ImportResult.Success>()
+
+            result.events.single { it.title.startsWith("Wanderkino") }.detailUnavailable shouldBe true
+        }
+
+    @Test
+    fun `marks the listing row when the detail page parses to nothing`() =
+        runTest {
+            coEvery { htmlFetcher.fetchDocument(CONCERT_URL) } returns Jsoup.parse("<html><body></body></html>", CONCERT_URL)
+
+            val result = importer.importEvents(ENTRY_URL).shouldBeInstanceOf<ImportResult.Success>()
+            val concert = result.events.single { it.sourceUrl == CONCERT_URL }
+
+            concert.detailUnavailable shouldBe true
+            concert.description.shouldBeNull()
         }
 
     @Test

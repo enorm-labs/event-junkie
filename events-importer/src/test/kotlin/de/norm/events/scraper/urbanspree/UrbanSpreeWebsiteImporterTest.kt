@@ -136,6 +136,7 @@ class UrbanSpreeWebsiteImporterTest {
             event.eventDate shouldBe LocalDate.of(2026, 12, 12)
             event.startTime shouldBe LocalTime.of(20, 0)
             event.imageUrl shouldBe "https://www.urbanspree.com/assets/project/urbanspree/mediasource/IMG_1389.JPG"
+            event.detailUnavailable shouldBe false
         }
 
     @Test
@@ -157,6 +158,26 @@ class UrbanSpreeWebsiteImporterTest {
             event.eventDate shouldBe LocalDate.of(2026, 12, 5)
             event.description.shouldBeNull()
             event.promoters shouldHaveSize 0
+        }
+
+    @Test
+    fun `marks the listing card when the detail page fetch fails`() =
+        runTest {
+            val result = importer.importEvents(entryUrl).shouldBeInstanceOf<ImportResult.Success>()
+
+            result.events.single { it.sourceId == "urban_spree:concerts/coilguns-berlin-urban-spree" }.detailUnavailable shouldBe true
+        }
+
+    @Test
+    fun `marks the listing card when the detail page parses to nothing`() =
+        runTest {
+            coEvery { htmlFetcher.fetchDocument(TWIN_NOIR_URL) } returns Jsoup.parse("<html><body></body></html>", TWIN_NOIR_URL)
+
+            val result = importer.importEvents(entryUrl).shouldBeInstanceOf<ImportResult.Success>()
+            val event = result.events.single { it.sourceUrl == TWIN_NOIR_URL }
+
+            event.detailUnavailable shouldBe true
+            event.description.shouldBeNull()
         }
 
     @Test
