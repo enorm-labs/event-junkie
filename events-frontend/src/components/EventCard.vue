@@ -7,6 +7,7 @@ import EventPoster from '@/components/EventPoster.vue'
 import { eventLabel, formatPrice } from '@/lib/format'
 import { useEventState } from '@/composables/useEventState'
 import { useFormat } from '@/composables/useFormat'
+import { useGenreFamilies } from '@/composables/useGenreFamilies'
 import { useLocalePath } from '@/composables/useLocalePath'
 import { useI18n } from 'vue-i18n'
 import { CARD_CLASS, CARD_POSTER_CLASS } from '@/lib/utils'
@@ -28,7 +29,10 @@ const props = withDefaults(
   { as: 'h3', priority: false },
 )
 
-const { formatEventDates, formatEventTime } = useFormat()
+const { formatEventDates, formatEventTime, formatShortDate } = useFormat()
+
+const posterDate = computed(() => formatShortDate(props.event.eventDate))
+const genreFamilies = useGenreFamilies()
 
 const { eventType, isLive, state, timeHint } = useEventState(() => props.event)
 
@@ -59,7 +63,13 @@ const { el: posterEl, focused: posterFocused } = useViewportFocus()
         sizes="(min-width: 640px) 474px, 100vw"
         img-class="grayscale transition duration-300 group-hover:grayscale-0 group-data-focus/poster:grayscale-0"
       />
-      <EventPoster v-else :title="event.title" />
+      <EventPoster
+        v-else
+        :title="event.title"
+        :eyebrow="posterDate"
+        :event-type="event.eventType"
+        :families="genreFamilies(event.genreTags)"
+      />
     </div>
     <div class="min-w-0 space-y-1">
       <div class="flex min-w-0 items-center gap-2">

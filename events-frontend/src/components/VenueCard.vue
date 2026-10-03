@@ -16,7 +16,9 @@ const props = withDefaults(
   defineProps<{
     /** The count, types and capacity show when the venue list sent them; an event's embedded venue has none. */
     venue: VenueSummary &
-      Partial<Pick<VenueListItem, 'upcomingEventCount' | 'venueTypes' | 'capacity'>>
+      Partial<
+        Pick<VenueListItem, 'upcomingEventCount' | 'venueTypes' | 'capacity' | 'programmeFamilies'>
+      >
     /** Heading level for the card's name — see the same prop on `EventCard.vue` for why. */
     as?: 'h2' | 'h3' | 'h4'
   }>(),
@@ -62,7 +64,13 @@ const { el: posterEl, focused: posterFocused } = useViewportFocus()
         sizes="(min-width: 640px) 474px, 100vw"
         img-class="grayscale transition duration-300 group-hover:grayscale-0 group-data-focus/poster:grayscale-0"
       />
-      <EventPoster v-else :title="venue.name" />
+      <EventPoster
+        v-else
+        :title="venue.name"
+        :eyebrow="districtLabel(venue.district)"
+        :families="venue.programmeFamilies"
+        :venue-types="venue.venueTypes"
+      />
     </div>
     <div class="min-w-0 space-y-1">
       <component :is="as" class="truncate text-lede font-semibold">
