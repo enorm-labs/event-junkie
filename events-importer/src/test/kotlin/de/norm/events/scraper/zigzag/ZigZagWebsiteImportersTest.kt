@@ -91,6 +91,7 @@ class ZigZagWebsiteImportersTest {
             first.doorsTime shouldBe LocalTime.of(19, 0)
             first.pricePresale shouldBe BigDecimal("25")
             first.priceBoxOffice shouldBe BigDecimal("25")
+            first.detailUnavailable shouldBe false
             result.etag shouldBe "\"zigzag-etag\""
             result.lastModified shouldBe "Thu, 01 Oct 2026 08:00:00 GMT"
             coVerify(exactly = 35) { htmlFetcher.fetchDocument(any()) }
@@ -136,10 +137,23 @@ class ZigZagWebsiteImportersTest {
 
             result.shouldBeInstanceOf<ImportResult.Success>()
             result.events shouldHaveSize 35
-            result.events
-                .first()
-                .startTime
-                .shouldBeNull()
+            val first = result.events.first()
+            first.startTime.shouldBeNull()
+            // The upsert then keeps the times, admission, ticket link and blurb the last run stored.
+            first.detailUnavailable shouldBe true
+        }
+
+    @Test
+    fun `marks the listing row when an event page renders without its content`() =
+        runTest {
+            stubListing()
+            coEvery { htmlFetcher.fetchDocument(any()) } answers { Jsoup.parse("<html><body></body></html>", firstArg<String>()) }
+
+            val result = importer.importEvents(listingUrl)
+
+            result.shouldBeInstanceOf<ImportResult.Success>()
+            result.events shouldHaveSize 35
+            result.events.all { it.detailUnavailable } shouldBe true
         }
 
     @Test

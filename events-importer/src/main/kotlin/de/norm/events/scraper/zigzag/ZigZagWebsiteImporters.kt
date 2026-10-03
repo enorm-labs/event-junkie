@@ -18,7 +18,8 @@ import java.time.Clock
  *
  * `/programmneu` lists both venues' programmes ([ZigZagOverviewPageScraper] keeps one); each event
  * page adds the start and doors times, the admission, the ticket link and the blurb
- * ([ZigZagDetailPageScraper]). A failed page costs only those fields. The collection's
+ * ([ZigZagDetailPageScraper]). A failed or empty page keeps the listing row, flagged so the upsert
+ * keeps the stored fields (see #2471). The collection's
  * `?format=json` and month views are disallowed by `robots.txt`, so the HTML is the source.
  *
  * @see <a href="https://www.zigzag-jazzclub.berlin/programmneu">Zig Zag programme</a>
@@ -68,8 +69,9 @@ abstract class AbstractZigZagWebsiteImporter(
                 detailPageScraper.scrape(htmlFetcher.fetchDocument(event.sourceUrl))
             } catch (e: Exception) {
                 logger.warn(e) { "Failed to fetch event page for '${event.title}' (${event.sourceUrl}), keeping listing data" }
-                return event
+                null
             }
+        if (detail == null || detail.isEmpty()) return event.copy(detailUnavailable = true)
         val dropped = detail.elsewhere && !keepsElsewhere
         if (dropped) logger.info { "Dropping '${event.title}': its page names another location" }
         return detail.takeUnless { dropped }?.let {
@@ -120,3 +122,6 @@ val ZIG_ZAG_LIMITATIONS =
                 AcceptedLimitation(LimitedAspect.CANCELLATION, "the site has no cancelled marker for a night")
             )
     )
+
+/** A page that rendered without its content block, the shape a redirect to the programme leaves. */
+private fun ZigZagDetail.isEmpty(): Boolean = !elsewhere && listOf(description, startTime, doorsTime, price, ticketUrl).all { it == null }
