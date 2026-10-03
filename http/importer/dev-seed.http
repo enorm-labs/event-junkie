@@ -91,6 +91,7 @@
 ###   Privatclub           — https://privatclub-berlin.de/
 ###   PUNCH L!NE Club      — https://punchlineberlin.com/de/tickets
 ###   Quasimodo            — https://quasimodo.club/events
+###   Quatsch Comedy Club  — https://quatsch-comedy-club.de/tickets/
 ###   Renate               — https://www.renate.cc/
 ###   Ritter Butzke        — https://club.ritterbutzke.com/events
 ###   Roadrunner's Paradise — http://www.roadrunners-paradise.de/programm.html
@@ -4759,6 +4760,73 @@ Accept: application/json
 
 > {%
     client.test("Quasimodo import triggered", function () {
+        client.assert(response.status === 202, "Expected 202 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
+### Quatsch Comedy Club (Friedrichstr. 107, Berlin-Mitte — under the Friedrichstadt-Palast)
+### ————————————————————————————————————————————————————————————
+
+### --- Create Quatsch Comedy Club venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Quatsch Comedy Club",
+    "address": "Friedrichstr. 107",
+    "city": "Berlin",
+    "postalCode": "10117",
+    "district": "mitte",
+    "latitude": 52.52362,
+    "longitude": 13.38862,
+    "websiteUrl": "https://quatsch-comedy-club.de",
+    "description": "Thomas Hermanns' stand-up club in the former Kleine Revue under the Friedrichstadt-Palast, where Die Live Show has put four comedians and a host on stage for over 30 years, beside a newcomer night, a late-night show, guest solo shows and an open mic in the BAR92.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Der Stand-up-Club von Thomas Hermanns in der ehemaligen Kleinen Revue im Souterrain des Friedrichstadt-Palasts, in dem die Live Show seit über 30 Jahren vier Comedians und eine Moderation auf die Bühne bringt, dazu eine Newcomer-Show, eine Late-Night-Show, Gastspiele und ein Open Mic in der BAR92.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": [
+        "theatre",
+        "bar"
+    ],
+    "capacity": 300
+}
+
+> {%
+    client.global.set("quatsch_venue_id", response.body.id);
+    client.test("Quatsch Comedy Club venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Create Quatsch Comedy Club event source ---
+# Links the venue to the QuatschWebsiteImporter.
+# The sourceType "QUATSCH" matches EventSource.QUATSCH.
+POST {{importer-host}}/api/admin/event-sources
+Content-Type: application/json
+
+{
+    "venueId": {{quatsch_venue_id}},
+    "name": "Quatsch Comedy Club",
+    "url": "https://quatsch-comedy-club.de/tickets/",
+    "sourceType": "QUATSCH",
+    "enabled": true,
+    "importIntervalMinutes": 1440,
+    "maxRetries": 3
+}
+
+> {%
+    client.test("Quatsch Comedy Club event source created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Trigger initial Quatsch Comedy Club import ---
+POST {{importer-host}}/api/admin/event-sources/quatsch-comedy-club/import
+Accept: application/json
+
+> {%
+    client.test("Quatsch Comedy Club import triggered", function () {
         client.assert(response.status === 202, "Expected 202 but got " + response.status);
     });
 %}

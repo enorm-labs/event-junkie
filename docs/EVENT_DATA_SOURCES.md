@@ -110,6 +110,7 @@ schema change.
 | Privatclub                       | https://privatclub-berlin.de/                               | Club         | Rich detail pages; genre, presale + AK prices          |
 | PUNCH L!NE Club                  | https://punchlineberlin.com/de/tickets                      | Comedy Club  | Next.js flight payload; all dates on one page          |
 | Quasimodo                        | https://quasimodo.club/events                               | Club         | Events-Manager; .club domain; genre tags + prices      |
+| Quatsch Comedy Club              | https://quatsch-comedy-club.de/tickets/                     | Comedy Club  | Eventim calendar plugin; one admin-ajax POST per day   |
 | Renate                           | https://www.renate.cc/                                      | Techno Club  | Homepage programme; per-floor lineups, no times        |
 | Ritter Butzke                    | https://club.ritterbutzke.com/events                        | Techno Club  | Modus codebase, own template; stale slug dates         |
 | Roadrunner's Paradise            | http://www.roadrunners-paradise.de/                         | Bar          | Retro HTML; rich data; year missing on some dates      |
@@ -143,7 +144,7 @@ schema change.
 | Zitadelle                        | https://citadel-music-festival.de/events                    | Open Air     | Festival site; WordPress/EM; summer season only        |
 | Zur Klappe                       | https://zurklappe.org/events                                | Techno Club  | Next.js flight payload; no genre or prices             |
 
-97 importer classes cover 98 sources. Only Kantine am Berghain has no class of its own, and it shares the Berghain
+98 importer classes cover 99 sources. Only Kantine am Berghain has no class of its own, and it shares the Berghain
 importer outright. Three other groups share a _listing and parser_ while keeping one thin `@Component` per venue, so
 they do not reduce the count. They are Club der Visionäre with Sonnenraum and MS Hoppetosse, the three Velomax halls,
 and Uber Arena with the Uber Eats Music Hall.
@@ -160,8 +161,7 @@ reading the events out of it, with no headless browser, per [ADR-007](adr/ADR-00
 with 2 RA events and publishes 39 upcoming on its own site. Der Weiße Hase's 17 understate a listing that runs two
 months out with full DJ lineups. Three of the richest finds carried no RA count at all: Kulturhaus Peter Edel,
 Colosseum and Gärten der Welt. They reached this document only through Loft, Puschen and Landstreicher Konzerte. In
-the
-other direction, DNA. CLUB's 23 RA events appear nowhere in the venue's own calendar. Weight a promoter mention at
+the other direction, DNA. CLUB's 23 RA events appear nowhere in the venue's own calendar. Weight a promoter mention at
 least as heavily as an RA count when the next batch is prioritised.
 
 | Name               | URL                                            | Type        | Priority | Comment                                                     |
@@ -464,7 +464,7 @@ New candidates land here first. Check for a server-rendered programme, then move
 [Ready](#-ready-to-implement) or [Blocked](#-blocked--deferred). A row belongs here only until someone opens it — the
 URL is recorded, nothing more.
 
-The first 24 rows came from a sweep on 2026-09-30: 21 from tipBerlin, then three from radar.squat.net. The last 3 came
+The first 24 rows came from a sweep on 2026-09-30: 21 from tipBerlin, then three from radar.squat.net. The last 2 came
 from a comedy sweep on 2026-10-03 of comedyinenglish.de, berlinmagazine.de and fritzguide.com. The URL was confirmed to
 answer, and nothing else was checked. A venue's type is a first guess.
 Correct it against the venue's own site when the row is opened.
@@ -495,7 +495,6 @@ Correct it against the venue's own site when the row is opened.
 | Jugendclub Café Köpenick          | https://www.cafe-hdjk.de/                                 | Club         |
 | Sama32                            | https://www.sama32.squat.net/                             | Bar          |
 | KuBiZ                             | https://www.kubiz-wallenberg.de/                          | Other        |
-| Quatsch Comedy Club               | https://quatsch-comedy-club.de/                           | Comedy Club  |
 | Mad Monkey Room                   | https://mad-monkey.de/                                    | Comedy Club  |
 | Mein Freund Harvey                | https://www.meinfreundharvey.com/                         | Bar          |
 

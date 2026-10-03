@@ -237,6 +237,9 @@ enum class EventSource {
     /** Quasimodo Berlin – the city's oldest jazz cellar, off the Ku'damm, programming jazz, blues and soul concerts plus themed DJ nights. */
     QUASIMODO,
 
+    /** Quatsch Comedy Club – Thomas Hermanns' stand-up club in the former Kleine Revue under the Friedrichstadt-Palast. */
+    QUATSCH,
+
     /** Renate (Wilde Renate) Berlin – a warren of a techno club in a derelict Friedrichshain apartment house, with several floors and a summer garden. */
     RENATE,
 
