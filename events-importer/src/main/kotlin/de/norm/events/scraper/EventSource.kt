@@ -264,6 +264,9 @@ enum class EventSource {
     /** Theater im Delphi Berlin – a 1929 silent-cinema building in Weißensee, run as a theatre and concert hall for dance, music theatre and talks. */
     THEATER_IM_DELPHI,
 
+    /** The Wall Comedy Club – a Friedrichshain stand-up club named for the fall of the Berlin Wall, with English-language shows most nights. */
+    THE_WALL,
+
     /** Tiffany Club – a club on Rosmarinstraße in Mitte, behind Unter den Linden, with student, Latin and K-pop nights, stand-up comedy and concerts. */
     TIFFANY_CLUB,
 
