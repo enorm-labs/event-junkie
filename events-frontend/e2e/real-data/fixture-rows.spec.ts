@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test'
+import { openMoreFilters } from '../filter-bar'
 
 /**
  * The rows `fixtures/events.sql` seeds (#272), read back through the real BFF, nginx and Traefik.
@@ -18,6 +19,7 @@ function fixtureSlug(shape: string, offsetDays: number): string {
 
 test('the events list shows the seeded venues', async ({ page }) => {
   await page.goto('/en/events')
+  await openMoreFilters(page)
 
   const venues = page.getByLabel('Filter by venue')
   await expect(venues.getByRole('option', { name: 'Kesselhaus Nord' })).toBeAttached()
@@ -52,7 +54,7 @@ test('the festival runs across days and names its stages and promoter', async ({
 test('sold out and free are marked on the card, and the free filter selects one of them', async ({ page }) => {
   await page.goto('/en/events')
 
-  await expect(page.getByText('Sold out').first()).toBeVisible()
+  await expect(page.getByRole('link', { name: /Ausverkauft/ }).getByText('Sold out')).toBeVisible()
 
   // The filter is the BFF's `free=true`, and the donation row (`price_note`, not free) must not join it.
   await page.goto('/en/events?free=true')
