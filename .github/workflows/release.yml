@@ -467,7 +467,7 @@ jobs:
       # fresh runner has none (#430).
       - name: Lint and assert on the stamped chart
         env:
-          HELM_UNITTEST_VERSION: 1.2.0
+          HELM_UNITTEST_VERSION: 1.2.1
         run: |
           helm lint --strict "$CHART" \
             --set database.host=10.0.1.2 --set database.existingSecret=events-db
