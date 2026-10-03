@@ -35,6 +35,9 @@ mismatch`** — the pod never goes Ready and `remediateLastFailure` rolls the re
       wildcard, and a missing guard deletes a row another venue bills. A global name rule
       applied again to old rows (V045, V055, V067, V068, V072) is rule-shaped, and the next one builds the `ArtistNormalizer` repair pass instead of a
       migration. No baseline until a fresh database takes over 5 s to migrate.
+    - **`updated_at` is not a change signal.** The `set_updated_at` triggers (V001) move it on every UPDATE, a bookkeeping write included, and their
+      `now()` comes after a time the JVM stamped for that write, so "changed since checked" reads true after every check (#1567). Such a check needs a column of its own, set by a trigger
+      with a `WHEN` on the watched column, as `name_changed_at` is (V062, #2053).
     - **A `slug` literal in a data migration is checked, because a wrong one fails open**: `UPDATE … WHERE slug = 'mispelt'` updates nothing and Flyway records
       it applied. `MigrationSlugTest` asserts every venue slug literal under `db/migration/` is one `SlugGenerator` derives from `dev-seed.http`; a renamed or
       removed venue goes into `RETIRED_VENUE_SLUGS` with a reason, and a second assertion deletes the entry once stale. Never `@Disabled` (#987).
