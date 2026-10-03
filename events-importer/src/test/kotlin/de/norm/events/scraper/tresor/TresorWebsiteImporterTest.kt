@@ -118,6 +118,7 @@ class TresorWebsiteImporterTest {
             val klubnacht = event(importer.importEvents(listingUrl), "20260801-tresor-klubnacht")
 
             klubnacht.detailUnavailable shouldBe true
+            klubnacht.listingImageStandsIn shouldBe true
             klubnacht.startTime shouldBe null
         }
 }

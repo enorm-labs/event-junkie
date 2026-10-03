@@ -75,10 +75,10 @@ class GaertenDerWeltWebsiteImporter(
     /**
      * The row's detail page merged over the row. A page that yields nothing leaves the row, which
      * carries title, date, start time, category, teaser, poster and ticket link, flagged
-     * [ScrapedEvent.detailUnavailable].
+     * [ScrapedEvent.detailUnavailable]. Its poster is a thumbnail, so a stored one wins (#2465).
      */
     private suspend fun enrichFromDetailPage(row: ScrapedEvent): ScrapedEvent =
-        htmlFetcher.withEventPageOrFlagged(row) { document ->
+        htmlFetcher.withEventPageOrFlagged(row, eventPageOwnsImage = true) { document ->
             detailPageScraper.scrape(document, row.sourceUrl)?.let { merge(detail = it, row = row) }
         }
 

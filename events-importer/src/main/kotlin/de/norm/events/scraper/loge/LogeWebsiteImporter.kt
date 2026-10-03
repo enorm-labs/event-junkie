@@ -27,6 +27,7 @@ class LogeWebsiteImporter(
     htmlFetcher: HtmlFetcher
 ) : AbstractTwoPageWebsiteImporter(htmlFetcher, LogeOverviewPageScraper()::scrape, LogeDetailPageScraper()::scrape) {
     override val eventSource: EventSource = EventSource.LOGE
+    override val detailPageOwnsImage: Boolean = false
 
     /**
      * Merges detail-page data ([primary]) with overview data ([fallback]). The detail page

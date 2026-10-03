@@ -153,6 +153,8 @@ class KlunkerkranichWebsiteImporterTest {
             val result = importer.importEvents(listingUrl) as ImportResult.Success
 
             result.events.map { it.detailUnavailable }.distinct() shouldBe listOf(true)
+            // The card's thumbnail stands in for the poster, so a stored poster wins over it (#2465).
+            result.events.map { it.listingImageStandsIn }.distinct() shouldBe listOf(true)
         }
 
     @Test
@@ -166,6 +168,7 @@ class KlunkerkranichWebsiteImporterTest {
 
             night.description.shouldBeNull()
             night.detailUnavailable shouldBe true
+            night.listingImageStandsIn shouldBe false
         }
 
     @Test

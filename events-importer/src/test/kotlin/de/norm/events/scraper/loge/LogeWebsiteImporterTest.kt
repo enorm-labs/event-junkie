@@ -111,6 +111,9 @@ class LogeWebsiteImporterTest {
             moriBlau.eventDate shouldBe LocalDate.of(2026, 7, 18)
             moriBlau.pricePresale shouldBe null
             moriBlau.artists.map { it.name } shouldBe listOf("MORI BLAU")
+            moriBlau.detailUnavailable shouldBe true
+            // The listing's image is the canonical original, so it does not yield to a stored one (#2465).
+            moriBlau.listingImageStandsIn shouldBe false
         }
 
     @Test

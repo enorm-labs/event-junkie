@@ -51,6 +51,9 @@ class KlunkerkranichWebsiteImporter(
 
     override val enrichFromEventPage: (ScrapedEvent, Document) -> ScrapedEvent? = ::addEventPageFields
 
+    /** A failed page leaves the card's thumbnail, which yields to a stored full-size poster (#2465). */
+    override val eventPageOwnsImage: Boolean = true
+
     /**
      * The event with the page's blurb, price and full-size poster. A page without a blurb still
      * gives its price and poster, so the row is flagged rather than dropped back to the listing.

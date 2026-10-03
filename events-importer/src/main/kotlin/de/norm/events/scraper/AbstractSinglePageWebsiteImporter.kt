@@ -26,6 +26,9 @@ abstract class AbstractSinglePageWebsiteImporter(
      */
     protected open val enrichFromEventPage: ((ScrapedEvent, Document) -> ScrapedEvent?)? = null
 
+    /** Whether a good run stores the event page's image over the listing's, see [withEventPageOrFlagged]. */
+    protected open val eventPageOwnsImage: Boolean = false
+
     /** A run that reads event pages cannot be skipped on the listing's validators. */
     override val fetchesBeyondEntryPage: Boolean get() = enrichFromEventPage != null
 
@@ -53,6 +56,6 @@ abstract class AbstractSinglePageWebsiteImporter(
 
     private suspend fun withEventPages(events: List<ScrapedEvent>): List<ScrapedEvent> {
         val enrich = enrichFromEventPage ?: return events
-        return events.map { event -> htmlFetcher.withEventPageOrFlagged(event) { document -> enrich(event, document) } }
+        return events.map { event -> htmlFetcher.withEventPageOrFlagged(event, eventPageOwnsImage) { document -> enrich(event, document) } }
     }
 }

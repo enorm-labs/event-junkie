@@ -42,6 +42,7 @@ class ColosseumWebsiteImporter(
     htmlFetcher: HtmlFetcher
 ) : AbstractTwoPageWebsiteImporter(htmlFetcher, ColosseumOverviewPageScraper()::scrape, ColosseumDetailPageScraper()::scrape) {
     override val eventSource: EventSource = EventSource.COLOSSEUM
+    override val detailPageOwnsImage: Boolean = false
 
     /**
      * Keeps the listing's record whole and takes the two times from the event's own page.
