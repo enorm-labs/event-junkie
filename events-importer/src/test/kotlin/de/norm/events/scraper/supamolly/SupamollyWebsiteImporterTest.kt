@@ -27,7 +27,7 @@ class SupamollyWebsiteImporterTest {
         importer = SupamollyWebsiteImporter(htmlFetcher)
         val html =
             javaClass.classLoader
-                .getResourceAsStream("scraper/supamolly/supamolly-overview.html")!!
+                .getResourceAsStream("scraper/supamolly/supamolly-overview-2026-10.html")!!
                 .bufferedReader()
                 .readText()
         val document = Jsoup.parse(html, sourceUrl)
@@ -45,7 +45,7 @@ class SupamollyWebsiteImporterTest {
         runTest {
             val result = importer.importEvents(sourceUrl)
             result.shouldBeInstanceOf<ImportResult.Success>()
-            result.events shouldHaveSize 8
+            result.events shouldHaveSize 10
         }
 
     @Test

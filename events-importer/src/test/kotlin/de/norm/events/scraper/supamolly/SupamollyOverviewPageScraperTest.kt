@@ -9,7 +9,6 @@ import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import org.jsoup.Jsoup
-import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
@@ -18,32 +17,38 @@ import java.time.LocalTime
 /**
  * Unit tests for [SupamollyOverviewPageScraper].
  *
- * Uses a saved snapshot of the real Supamolly programme page as a regression
- * fixture. Every row id carries a full `YYYYMMDDHHMM` stamp, so no clock injection
- * is needed for date inference.
+ * Uses saved snapshots of the real Supamolly programme page as regression fixtures: September
+ * 2026 bills the café social with its time in the name, October 2026 without. Every row id
+ * carries a full `YYYYMMDDHHMM` stamp, so no clock injection is needed for date inference.
  */
 class SupamollyOverviewPageScraperTest {
     private val baseUrl = "https://www.supamolly.de/?p=programm"
     private val scraper = SupamollyOverviewPageScraper()
-    private lateinit var html: String
 
-    @BeforeEach
-    fun setUp() {
-        html =
+    private fun scrape(fixture: String = SEPTEMBER): List<ScrapedEvent> {
+        val html =
             javaClass.classLoader
-                .getResourceAsStream("scraper/supamolly/supamolly-overview.html")!!
+                .getResourceAsStream("scraper/supamolly/$fixture")!!
                 .bufferedReader()
                 .readText()
+        return scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl)
     }
 
-    private fun scrape(): List<ScrapedEvent> = scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl)
-
-    private fun eventWithStamp(stamp: String) = scrape().first { it.sourceId == "supamolly:$stamp" }
+    private fun eventWithStamp(
+        stamp: String,
+        fixture: String = SEPTEMBER
+    ) = scrape(fixture).first { it.sourceId == "supamolly:$stamp" }
 
     @Test
     fun `scrape extracts every event row except the monthly programme posters`() {
         // 10 rows carry an event id; two of them announce the month's printed programme.
         scrape() shouldHaveSize 8
+    }
+
+    @Test
+    fun `scrape extracts every row of the current page except its programme poster`() {
+        // 11 rows carry an event id; one announces the month's printed programme.
+        scrape(OCTOBER) shouldHaveSize 10
     }
 
     @Nested
@@ -187,11 +192,63 @@ class SupamollyOverviewPageScraperTest {
         }
 
         @Test
+        fun `types the cafe social billed without a time as OTHER`() {
+            val event = eventWithStamp("202610041530", OCTOBER)
+
+            event.title shouldBe "Kuchen & Kaffee"
+            event.eventType shouldBe "OTHER"
+            event.eventDate shouldBe LocalDate.of(2026, 10, 4)
+            event.startTime shouldBe LocalTime.of(15, 30)
+        }
+
+        @Test
+        fun `never mints the cafe social billed without a time as an artist`() {
+            eventWithStamp("202610041530", OCTOBER).artists.shouldBeEmpty()
+        }
+
+        @Test
+        fun `keeps the cafe social's note as the description and reads no genre from it`() {
+            val event = eventWithStamp("202610041530", OCTOBER)
+
+            event.description shouldBe "Kaffee & Kuchen ab 19:30 Pizza (alles auch vegan)"
+            event.genre.shouldBeNull()
+        }
+
+        @Test
+        fun `recognises the cafe social in either word order`() {
+            val document =
+                Jsoup.parse(
+                    """<table><tr class="event" id="202610111530"><td class="evcont">
+                       <div class="even"><div class="tit"><b>Kaffee und Kuchen</b></div></div></td></tr></table>""",
+                    baseUrl
+                )
+
+            val event = scraper.scrape(document, baseUrl).single()
+
+            event.eventType shouldBe "OTHER"
+            event.artists.shouldBeEmpty()
+        }
+
+        @Test
+        fun `keeps an act whose name only contains the cafe words`() {
+            val document =
+                Jsoup.parse(
+                    """<table><tr class="event" id="202610112130"><td class="evcont">
+                       <div class="even"><div class="tit"><b>Kaffee & Kuchen Kollektiv</b></div></div></td></tr></table>""",
+                    baseUrl
+                )
+
+            scraper.scrape(document, baseUrl).single().artists shouldContainExactly
+                listOf(ScrapedArtist("Kaffee & Kuchen Kollektiv", "HEADLINER"))
+        }
+
+        @Test
         fun `skips the monthly programme poster rows`() {
             val stamps = scrape().map { it.sourceId }
 
             stamps.contains("supamolly:202609022359") shouldBe false
             stamps.contains("supamolly:202609172359") shouldBe false
+            scrape(OCTOBER).map { it.sourceId }.contains("supamolly:202610022359") shouldBe false
         }
     }
 
@@ -251,5 +308,13 @@ class SupamollyOverviewPageScraperTest {
 
             scraper.scrape(document, baseUrl).single().startTime shouldBe LocalTime.of(21, 30)
         }
+    }
+
+    private companion object {
+        /** The café social billed as "Kuchen & Kaffee 15:30 Uhr", time in the name. */
+        const val SEPTEMBER = "supamolly-overview-2026-09.html"
+
+        /** The café social billed as "Kuchen & Kaffee", time only in the date cell. */
+        const val OCTOBER = "supamolly-overview-2026-10.html"
     }
 }

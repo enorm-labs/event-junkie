@@ -40,10 +40,10 @@ import java.time.format.DateTimeParseException
  * link for the act above, not an act, and dropped.
  * - **Monthly programme posters are rows.** A flyer-only row titled "September Programm 2026"
  * ([PROGRAMME_POSTER_TITLE]) announces the printed programme, not an event.
- * - **Service notes sit in an act slot.** The weekly "Kuchen & Kaffee 15:30 Uhr" social is
- * billed like an act; a name carrying an inline `HH:MM Uhr` ([isScheduleNote]) is a programme
- * note, so it stays the title but is never an artist — which types the night via
- * [inferUnmarkedTitleType] instead of defaulting to a concert.
+ * - **Service notes sit in an act slot.** The weekly "Kuchen & Kaffee" social is billed like an
+ * act, its time only in `td.date .uhr`. A programme note ([isProgrammeNote]) stays the title but
+ * is never an artist, so [inferUnmarkedTitleType] types the night instead of defaulting to a
+ * concert. It is the social's name, or any name with an inline `HH:MM Uhr`, which no performer states.
  * - **An act's note is sometimes its style.** `.beschr` holds `Punk Rock` as often as
  * `Kaffee & Kuchen ab 19:30`, so only the genres the vocabulary knows become the night's
  * [ScrapedEvent.genre] ([parseGenre]); the whole note stays the description.
@@ -158,13 +158,13 @@ class SupamollyOverviewPageScraper {
      * The billed act names as artist entries, in billing order. Each is stripped of a leading
      * co-bill conjunction (`"& Support"` → `"Support"`, so the shared [isNonArtistName] recognises
      * the bare role label) and a trailing tour/live/format tail ([stripArtistSuffix]), then dropped
-     * if not a performer ([isNonArtistName]) or a programme note ([isScheduleNote]). First survivor
+     * if not a performer ([isNonArtistName]) or a programme note ([isProgrammeNote]). First survivor
      * is headliner, the rest support.
      */
     private fun buildArtists(actNames: List<String>): List<ScrapedArtist> =
         actNames
             .map { stripArtistSuffix(stripArtistPrefix(it.replaceFirst(LEADING_CONJUNCTION, ""))) }
-            .filter { it.isNotBlank() && !isNonArtistName(it) && !isScheduleNote(it) }
+            .filter { it.isNotBlank() && !isNonArtistName(it) && !isProgrammeNote(it) }
             .distinct()
             .mapIndexed { index, name ->
                 ScrapedArtist(name = name, role = if (index == 0) "HEADLINER" else "SUPPORT")
@@ -206,11 +206,10 @@ class SupamollyOverviewPageScraper {
         }
 
     /**
-     * True when an act name is a programme note — an inline `HH:MM Uhr` schedule (`"Kuchen &
-     * Kaffee 15:30 Uhr"`, the weekly café social). A performer never states their own start time,
-     * so this keeps service listings out of the artist table while leaving them as the title.
+     * True when an act name is a programme note: the café social's name ([CAFE_SOCIAL_PATTERN]) or
+     * an inline `HH:MM Uhr` schedule. It keeps service listings out of the artist table.
      */
-    private fun isScheduleNote(name: String): Boolean = SCHEDULE_NOTE_PATTERN.containsMatchIn(name)
+    private fun isProgrammeNote(name: String): Boolean = CAFE_SOCIAL_PATTERN.matches(name.trim()) || SCHEDULE_NOTE_PATTERN.containsMatchIn(name)
 
     /** One billed `div.even` block: the act name and its note, either of which may be absent. */
     private data class ActBlock(
@@ -243,6 +242,13 @@ class SupamollyOverviewPageScraper {
 
         /** A leading `&` / `+` co-bill conjunction on an act name ("& Support" → "Support"). */
         private val LEADING_CONJUNCTION = Regex("""^\s*[&+]\s*""")
+
+        /**
+         * The weekly café social as a whole act name, in either order: "Kuchen & Kaffee",
+         * "Kaffee und Kuchen". Anchored, so a band name that merely contains the words keeps its artist.
+         */
+        private val CAFE_SOCIAL_PATTERN =
+            Regex("""(?:kuchen\s*(?:&|\+|und)\s*kaffee|kaffee\s*(?:&|\+|und)\s*kuchen)""", RegexOption.IGNORE_CASE)
 
         /** An inline `HH:MM Uhr` schedule in an act name — the signature of a programme note, not a performer. */
         private val SCHEDULE_NOTE_PATTERN = Regex("""\d{1,2}[:.]\d{2}\s*uhr""", RegexOption.IGNORE_CASE)
