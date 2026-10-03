@@ -35,9 +35,7 @@ data class ScrapedEvent(
     /** Kind of event as categorized by the source (e.g. "CONCERT", "PARTY"). Null means the source provided no category. */
     val eventType: String? = null,
     val eventDate: LocalDate,
-    /** Time when doors open to the public. */
     val doorsTime: LocalTime? = null,
-    /** Time when the show/performance starts. */
     val startTime: LocalTime? = null,
     /**
      * Last day of the event, when the venue states one (ADR-029). A scraper with an end time but
