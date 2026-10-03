@@ -60,7 +60,7 @@ A worktree checks out tracked files only, so each one needs its own environment:
 
 ```bash
 sdk env                                  # .sdkmanrc is tracked — this just works
-cd events-frontend && npm ci             # only if you need the frontend; dev-env.sh refuses to start it without node_modules
+cd events-frontend && npm ci             # for the frontend and for scripts/format-markdown.sh; both refuse to start without node_modules
 ```
 
 - Gradle's `build/` directories are per worktree, so the first build there compiles from scratch.
