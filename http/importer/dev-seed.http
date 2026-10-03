@@ -94,6 +94,7 @@
 ###   Roadrunner's Paradise — http://www.roadrunners-paradise.de/programm.html
 ###   ROSA                 — https://www.rosaclub.de/dates
 ###   Säälchen             — https://www.holzmarkt.com/kalender
+###   Scheinbar Varieté    — https://www.scheinbar.de/programm/
 ###   Schokoladen          — https://www.schokoladen-mitte.de/
 ###   silent green         — https://www.silent-green.net/programm
 ###   Sisyphos             — https://www.sisyphos-berlin.net/collections/tickets/products.json
@@ -4941,6 +4942,71 @@ Accept: application/json
 
 > {%
     client.test("Säälchen import triggered", function () {
+        client.assert(response.status === 202, "Expected 202 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
+### Scheinbar Varieté (Monumentenstr. 9, Berlin-Schöneberg)
+### ————————————————————————————————————————————————————————————
+
+### --- Create Scheinbar Varieté venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Scheinbar Varieté",
+    "address": "Monumentenstr. 9",
+    "city": "Berlin",
+    "postalCode": "10829",
+    "district": "schoeneberg",
+    "latitude": 52.48806,
+    "longitude": 13.36657,
+    "websiteUrl": "https://www.scheinbar.de",
+    "description": "Germany's smallest variety theatre, founded in 1984 and run as a non-profit, where professionals and newcomers try seven-minute acts of comedy, magic, music and artistry at the Open Stage.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Das kleinste Varieté Deutschlands, 1984 gegründet und heute ein gemeinnütziger Verein, in dem Profis und Neulinge auf der Open Stage Sieben-Minuten-Nummern aus Comedy, Zauberei, Musik und Artistik zeigen.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": [
+        "theatre"
+    ]
+}
+
+> {%
+    client.global.set("scheinbar_venue_id", response.body.id);
+    client.test("Scheinbar Varieté venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Create Scheinbar Varieté event source ---
+# Links the venue to the ScheinbarWebsiteImporter.
+# The sourceType "SCHEINBAR" matches EventSource.SCHEINBAR.
+POST {{importer-host}}/api/admin/event-sources
+Content-Type: application/json
+
+{
+    "venueId": {{scheinbar_venue_id}},
+    "name": "Scheinbar Varieté",
+    "url": "https://www.scheinbar.de/programm/",
+    "sourceType": "SCHEINBAR",
+    "enabled": true,
+    "importIntervalMinutes": 1440,
+    "maxRetries": 3
+}
+
+> {%
+    client.test("Scheinbar Varieté event source created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Trigger initial Scheinbar Varieté import ---
+POST {{importer-host}}/api/admin/event-sources/scheinbar-variete/import
+Accept: application/json
+
+> {%
+    client.test("Scheinbar Varieté import triggered", function () {
         client.assert(response.status === 202, "Expected 202 but got " + response.status);
     });
 %}

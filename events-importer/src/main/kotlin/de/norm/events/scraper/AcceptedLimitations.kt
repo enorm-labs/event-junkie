@@ -79,6 +79,7 @@ import de.norm.events.scraper.ritterbutzke.RITTER_BUTZKE_LIMITATIONS
 import de.norm.events.scraper.roadrunner.ROADRUNNER_LIMITATIONS
 import de.norm.events.scraper.rosa.ROSA_LIMITATIONS
 import de.norm.events.scraper.saalchen.SAALCHEN_LIMITATIONS
+import de.norm.events.scraper.scheinbar.SCHEINBAR_LIMITATIONS
 import de.norm.events.scraper.schokoladen.SCHOKOLADEN_LIMITATIONS
 import de.norm.events.scraper.silentgreen.SILENT_GREEN_LIMITATIONS
 import de.norm.events.scraper.sisyphos.SISYPHOS_LIMITATIONS
@@ -188,6 +189,7 @@ object AcceptedLimitations {
             ROADRUNNER_LIMITATIONS,
             ROSA_LIMITATIONS,
             SAALCHEN_LIMITATIONS,
+            SCHEINBAR_LIMITATIONS,
             SCHOKOLADEN_LIMITATIONS,
             SILENT_GREEN_LIMITATIONS,
             SISYPHOS_LIMITATIONS,

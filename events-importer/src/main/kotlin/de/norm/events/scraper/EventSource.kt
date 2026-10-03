@@ -246,6 +246,9 @@ enum class EventSource {
     /** Säälchen Berlin – the concert hall on the Holzmarkt riverside grounds beside the Spree. */
     SAALCHEN,
 
+    /** Scheinbar Varieté – Germany's smallest variety theatre, founded in Schöneberg in 1984, with an Open Stage of seven-minute acts four nights a week. */
+    SCHEINBAR,
+
     /** Schokoladen Mitte Berlin – a collectively run cultural venue with roots in the post-Wende squat scene: intimate concerts, readings and club nights. */
     SCHOKOLADEN,
 
