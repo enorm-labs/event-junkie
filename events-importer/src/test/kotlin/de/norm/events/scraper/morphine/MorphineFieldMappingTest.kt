@@ -118,6 +118,31 @@ class MorphineFieldMappingTest {
         parseDayLineDoors(null) shouldBe null
     }
 
+    // --- parseProgrammeStart ---
+
+    @Test
+    fun `reads the start the line under the doors labels with the format`() {
+        val lines =
+            listOf(
+                "Gibrana Cervantes — verdad y error Listening Session",
+                "Presented by Radical Sounds Latin America",
+                "Friday, 02.10.2026, doors 19:00",
+                "Listening session + intervention: 19:30"
+            )
+        parseProgrammeStart(lines) shouldBe LocalTime.of(19, 30)
+        parseProgrammeStart(listOf("doors 20:00", "", "Concert: 9.30")) shouldBe LocalTime.of(9, 30)
+    }
+
+    @Test
+    fun `reads no start from a doors or end label, or a clock away from the doors line`() {
+        parseProgrammeStart(listOf("door 19:00", "Doors open: 19:30")) shouldBe null
+        parseProgrammeStart(listOf("doors 19:00", "End: 23:00")) shouldBe null
+        parseProgrammeStart(listOf("Listening session: 19:30", "doors 19:00")) shouldBe null
+        parseProgrammeStart(listOf("doors 19:00", "Concert (two sets!) starts at 20:00 sharp.")) shouldBe null
+        parseProgrammeStart(listOf("Listening session: 19:30")) shouldBe null
+        parseProgrammeStart(emptyList()) shouldBe null
+    }
+
     // --- readPriceNote ---
 
     @Test
