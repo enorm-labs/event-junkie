@@ -191,6 +191,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/events/{slug}/related": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get upcoming events like one event
+         * @description Up to four events that have not ended and share artists, the venue or genre tags with the event, best match first. A shared artist counts most, then the venue, then each shared genre tag. Empty when nothing matches; 404 when the slug is unknown.
+         */
+        get: operations["related"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/events/today": {
         parameters: {
             query?: never;
@@ -1895,6 +1915,32 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["EventDetailResponse"];
+                };
+            };
+        };
+    };
+    related: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description Slug of the event to match.
+                 * @example 2026-06-18-lido-sam-prekop-john-mcentire
+                 */
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["EventSummaryResponse"][];
                 };
             };
         };

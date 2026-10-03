@@ -4,9 +4,13 @@ import { RouterLink, useRoute } from 'vue-router'
 import { Button } from '@/components/ui/button'
 import BaseBadge from '@/components/BaseBadge.vue'
 import CachedImage from '@/components/CachedImage.vue'
+import EventCard from '@/components/EventCard.vue'
+import EventRow from '@/components/EventRow.vue'
 import EventShareActions from '@/components/EventShareActions.vue'
 import SectionLabel from '@/components/SectionLabel.vue'
+import { useCompactView } from '@/composables/useCompactView'
 import { useEvent } from '@/composables/useEvent'
+import { useRelatedEvents } from '@/composables/useRelatedEvents'
 import { descriptionFor } from '@/lib/description'
 import { feedbackMailto } from '@/lib/feedback'
 import { CONTROLLER } from '@/lib/legal'
@@ -18,7 +22,7 @@ import { breadcrumbJsonLd, eventJsonLd, type JsonLd } from '@/lib/structuredData
 import type { Locale } from '@/i18n/locales'
 import { formatPrice, isPastEvent, isRunningEvent } from '@/lib/format'
 import { runningOrder, type RunningOrderSet } from '@/lib/runningOrder'
-import { CARD_LIST_CLASS, cn } from '@/lib/utils'
+import { CARD_GRID_CLASS, CARD_LIST_CLASS, cn } from '@/lib/utils'
 import { useFormat } from '@/composables/useFormat'
 import { useLocalePath } from '@/composables/useLocalePath'
 import { useI18n } from 'vue-i18n'
@@ -26,7 +30,12 @@ import { useI18n } from 'vue-i18n'
 const route = useRoute()
 const slug = computed(() => String(route.params.slug))
 
-const { data: event, error, notFound, loading, run } = useEvent(() => slug.value)
+const { data: event, error, notFound, loading, run: loadEvent } = useEvent(() => slug.value)
+
+// "More like this" (#359): an extra, so a failure or an empty answer leaves no trace on the page.
+const { data: relatedData, run: loadRelated } = useRelatedEvents(() => slug.value)
+const related = computed(() => (Array.isArray(relatedData.value) ? relatedData.value : []))
+const { compact } = useCompactView()
 
 // Lineup arrives in billing order already, but sort defensively so headliners stay first.
 const lineup = computed(() =>
@@ -77,8 +86,13 @@ function lineupNameClass(role: string | undefined): string {
 const isPast = computed(() => !!event.value && isPastEvent(event.value))
 const isRunning = computed(() => !!event.value && isRunningEvent(event.value))
 
-onMounted(run)
-watch(slug, run)
+function load() {
+  loadEvent()
+  loadRelated()
+}
+
+onMounted(load)
+watch(slug, load)
 
 const localePath = useLocalePath()
 const {
@@ -467,5 +481,16 @@ useStructuredData((): JsonLd[] => {
         }}</a>
       </p>
     </article>
+
+    <!-- Outside the article: these are other events, not facts about this one. -->
+    <section v-if="event && related.length" class="space-y-4" data-testid="related-events">
+      <SectionLabel>{{ t('events.detail.related') }}</SectionLabel>
+      <div v-if="compact" :class="CARD_LIST_CLASS">
+        <EventRow v-for="other in related" :key="other.slug" :event="other" />
+      </div>
+      <div v-else :class="CARD_GRID_CLASS">
+        <EventCard v-for="other in related" :key="other.slug" :event="other" />
+      </div>
+    </section>
   </main>
 </template>

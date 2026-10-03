@@ -43,6 +43,9 @@ class BffMetrics(
         /** `GET /events/{slug}` — one event, so this advances by one or throws. */
         const val ENDPOINT_DETAIL = "detail"
 
+        /** `GET /events/{slug}/related` — the "more like this" list under an event (#359). */
+        const val ENDPOINT_RELATED = "related"
+
         /** `GET /events/feed` — the RSS feed of new events, which says whether anyone subscribes (#368). */
         const val ENDPOINT_FEED = "feed"
 

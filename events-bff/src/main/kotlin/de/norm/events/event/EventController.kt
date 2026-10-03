@@ -102,6 +102,25 @@ class EventController(
             .get(DetailKey(slug)) { eventService.findBySlug(slug) }
             .also { metrics.recordServed(BffMetrics.ENDPOINT_DETAIL, 1) }
 
+    @GetMapping("/{slug}/related")
+    @Operation(
+        summary = "Get upcoming events like one event",
+        description =
+            "Up to four events that have not ended and share artists, the venue or genre tags with the event, " +
+                "best match first. A shared artist counts most, then the venue, then each shared genre tag. " +
+                "Empty when nothing matches; 404 when the slug is unknown."
+    )
+    suspend fun related(
+        @Parameter(description = "Slug of the event to match.", example = "2026-06-18-lido-sam-prekop-john-mcentire", required = true)
+        @PathVariable slug: String,
+        exchange: ServerWebExchange
+    ): List<EventSummaryResponse> {
+        NO_PARAMS.rejectUnknownIn(exchange)
+        return cache
+            .get(RelatedKey(slug)) { eventService.related(slug) }
+            .also { metrics.recordServed(BffMetrics.ENDPOINT_RELATED, it.size) }
+    }
+
     private companion object {
         /** The filter fields come from [EventFilterParams]; `from`/`to` and paging are declared here. */
         val SEARCH_PARAMS =
@@ -118,7 +137,7 @@ class EventController(
                 QueryParameters.named("from", "to")
             )
 
-        /** `/today` takes no parameters at all, so any is a mistake worth reporting. */
+        /** `/today` and `/{slug}/related` take no parameters at all, so any is a mistake worth reporting. */
         val NO_PARAMS = QueryParameters.accepting()
     }
 }
@@ -143,5 +162,9 @@ private data class CalendarKey(
 )
 
 private data class DetailKey(
+    val slug: String
+)
+
+private data class RelatedKey(
     val slug: String
 )
