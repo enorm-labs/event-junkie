@@ -1,11 +1,9 @@
 package de.norm.events.scraper.klunkerkranich
 
+import de.norm.events.scraper.AbstractSinglePageWebsiteImporter
 import de.norm.events.scraper.AcceptedLimitation
-import de.norm.events.scraper.EventImporter
 import de.norm.events.scraper.EventSource
-import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
-import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.VenueLimitations
@@ -25,10 +23,10 @@ import java.time.Clock
  * 3. Each night's `/events/<slug>` page for the three fields the listing omits — blurb, entry
  * charge, full-size poster ([KlunkerkranichDetailPageScraper]).
  *
- * Step 3 is why this class implements [EventImporter] directly: the event page restates the
- * listing and adds only those three, so it is not the primary source the base class's detail
- * scraper must be. An unfetchable or unparseable event page is not fatal — the night keeps its
- * listing data, losing only blurb, price and larger image.
+ * Step 3 runs in [postProcess] rather than through [de.norm.events.scraper.AbstractTwoPageWebsiteImporter]:
+ * the event page restates the listing and adds only those three, so it is not the primary source
+ * that base class's detail scraper must be. An unfetchable or unparseable event page is not fatal —
+ * the night keeps its listing data, losing only blurb, price and larger image.
  *
  * **What the source does not carry** is declared in [KLUNKERKRANICH_LIMITATIONS].
  *
@@ -46,36 +44,15 @@ class KlunkerkranichWebsiteImporter(
     private val htmlFetcher: HtmlFetcher,
     /** Clock for the listing scraper's year inference; override in tests. */
     clock: Clock = Clock.systemDefaultZone()
-) : EventImporter {
+) : AbstractSinglePageWebsiteImporter(htmlFetcher, "the Klunkerkranich programme", KlunkerkranichOverviewPageScraper(clock)::scrape) {
     private val logger = KotlinLogging.logger {}
 
     override val eventSource: EventSource = EventSource.KLUNKERKRANICH
     override val fetchesBeyondEntryPage: Boolean = true
 
-    private val overviewPageScraper = KlunkerkranichOverviewPageScraper(clock)
     private val detailPageScraper = KlunkerkranichDetailPageScraper()
 
-    override suspend fun importEvents(
-        url: String,
-        etag: String?,
-        lastModified: String?
-    ): ImportResult =
-        when (val fetchResult = htmlFetcher.fetch(url, etag, lastModified)) {
-            is FetchResult.NotModified -> {
-                ImportResult.NotModified
-            }
-
-            is FetchResult.Success -> {
-                val events = overviewPageScraper.scrape(fetchResult.document, url)
-                logger.info { "Scraped ${events.size} event(s) from the Klunkerkranich programme" }
-
-                ImportResult.Success(
-                    events = events.map { addEventPageFields(it) },
-                    etag = fetchResult.etag,
-                    lastModified = fetchResult.lastModified
-                )
-            }
-        }
+    override suspend fun postProcess(events: List<ScrapedEvent>): List<ScrapedEvent> = events.map { addEventPageFields(it) }
 
     /**
      * Fetches one event page for blurb, price and full-size poster, degrading to the listing data
