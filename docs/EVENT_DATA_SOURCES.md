@@ -406,7 +406,7 @@ the empty Next.js payload rather than the WAF, and a 403 is not evidence that a 
 | Kesselhaus                       | https://www.kesselhaus.net/                    | Concert Hall | Angular PWA app shell; no JSON endpoint found             | Headless browser           |
 | Maschinenhaus                    | https://www.kesselhaus.net/                    | Concert Hall | Shares the Kesselhaus app — same blocker                  | Headless browser           |
 | Passionskirche                   | —                                              | Concert Hall | No own website (akanthus.de lapsed to spam)               | Site change / promoter     |
-| Theater des Westens              | https://www.stage-entertainment.de/            | Theater      | Stage portal; one musical, dates in ticket shop           | Scope decision             |
+| Theater des Westens              | https://www.stage-entertainment.de/            | Theater      | Stage portal; one musical, dates in ticket shop           | Site change                |
 | RBB Sendesaal                    | https://www.roc-berlin.de/kalender/            | Concert Hall | Scrapable; deferred pending the classical scope decision  | Scope decision             |
 | Zentraler Festplatz              | https://berliner-festplatz.de/                 | Open Air     | Rental ground; "Events" page is social embeds             | Site change                |
 | ://about blank                   | https://aboutblank.li/                         | Techno Club  | `/next` carries no events in the HTML                     | Site change                |
@@ -537,9 +537,10 @@ Where candidates come from, and what is deliberately left out:
   recorded.
 - **Tag der Clubkultur** (<https://tagderclubkultur.berlin/programm/>), the Clubcommission festival week. The 2026
   programme on 2026-10-01 held 130 events at about 80 places. It gave one imported venue and twelve Blocked rows.
-  These places were left out as out of scope: two cinemas, a comedy club, a museum and a youth dance theatre. Also
-  two galleries, a healing space, a hammam, a radio station and a headphone shop. Two more places have no fixed
-  address, and no search identified one more.
+  These places were left out as out of scope: two cinemas, a museum and a youth dance theatre. Also two galleries, a
+  healing space, a hammam, a radio station and a headphone shop. A comedy club was also left out, but comedy is in
+  scope (`docs/EVENT_SCOPE.md` §5). See #352. Two more places have no fixed address, and no search identified one
+  more.
 
 **Excluded on purpose, so a later sweep does not re-litigate them.** An RA venue with a single event in the window,
 unless a promoter listed it too. A one-off booking is not evidence of a programme, and the
