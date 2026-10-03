@@ -76,7 +76,7 @@ Five exclusions, each implemented in exactly one place so it can be revisited wi
 
 ### 3.1 Sport
 
-**Not imported.** There is no `SPORT` event type, and mapping fixtures to `OTHER` would bury the concerts they sit among. The arenas force the question rather
+**Not imported.** Esports is sport. There is no `SPORT` event type, and mapping fixtures to `OTHER` would bury the concerts they sit among. The arenas force the question rather
 than avoid it:
 
 - **Uber Arena / Uber Eats Music Hall** — home to ALBA Berlin and the Eisbären. Roughly a third of the listing is
@@ -85,7 +85,9 @@ than avoid it:
 - **The three Velomax halls** — handball, volleyball and basketball are the biggest strand. `VENUE_EVENT_TYPES`
   simply omits `sport`, so an unmapped row is skipped rather than filed.
 - **Tempodrom** — the snooker German Masters plays here each January. The venue publishes no category. The scraper drops a
-  row when its title or format line names a sport, for example `Snooker` or `Darts`.
+  row when its title or format line names a sport, for example `Snooker` or `Darts`. An esports tournament is sport, so
+  `GeoGuessr` and `E-Sport` also drop a row. `World Championship` alone does not, because a music or dance contest can
+  use it.
 
 The consequence is worth stating plainly. **An arena's imported event count is well below what its own programme page
 shows**, and that is correct rather than a bug.

@@ -41,9 +41,9 @@ import java.math.BigDecimal
  * ([tempodromEventType], #2314). A comedian billed by name alone ("Dieter Nuhr" / "Live 2026")
  * carries no cue, so the night is a fallback `CONCERT` its comedian headliner retypes (ADR-039).
  *
- * **Sport is dropped** (`docs/EVENT_SCOPE.md` §3.1): the snooker German Masters plays here every
- * January, and without a category it would default to `CONCERT`. With no taxonomy to read, the
- * title or format line naming a sport is the cue ([isTempodromSport], #2470).
+ * **Sport is dropped** (`docs/EVENT_SCOPE.md` §3.1), esports included: the snooker German Masters
+ * and a GeoGuessr championship would default to `CONCERT`. With no taxonomy to read, the title or
+ * format line naming a sport is the cue ([isTempodromSport], #2470, #2478).
  *
  * The JSON-LD strings are HTML-escaped and script content is not decoded by Jsoup, so `name`
  * and `description` go through [decodeHtmlEntities] before anything touches them — see that
@@ -151,7 +151,8 @@ class TempodromOverviewPageScraper {
 
     /**
      * Whether the title or the format line names a sport: "Snooker" / "German Masters 2027". Whole
-     * words only, and no tournament word on its own — "Masters" also bills music ("Masters of Rock").
+     * words only, and no tournament word on its own — "Masters" also bills music ("Masters of Rock"),
+     * and "World Championship" a dance or a choir contest.
      */
     private fun isTempodromSport(event: ScrapedEvent): Boolean = listOfNotNull(event.title, event.subtitle).any { SPORT.containsMatchIn(it) }
 
@@ -162,8 +163,15 @@ class TempodromOverviewPageScraper {
         /** Currency assumed when an offer omits one; every Tempodrom offer states EUR. */
         const val DEFAULT_CURRENCY = "EUR"
 
-        /** A sport the Tempodrom hosts or could host, as a word: the venue publishes no category to read instead. */
-        val SPORT = Regex("""\b(?:snooker|darts|billard|boxen|boxkampf|tischtennis)\b""", RegexOption.IGNORE_CASE)
+        /**
+         * A sport the Tempodrom hosts or could host, as a word: the venue publishes no category to read
+         * instead. Esports is sport, named by the word or by a game that is only ever a tournament here.
+         */
+        val SPORT =
+            Regex(
+                """\b(?:snooker|darts|billard|boxen|boxkampf|tischtennis|e-?sports?|geoguessr)\b""",
+                RegexOption.IGNORE_CASE
+            )
     }
 }
 
