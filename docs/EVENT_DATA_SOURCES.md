@@ -112,6 +112,7 @@ schema change.
 | Roadrunner's Paradise            | http://www.roadrunners-paradise.de/                         | Bar          | Retro HTML; rich data; year missing on some dates      |
 | ROSA                             | https://www.rosaclub.de/dates                               | Club         | Next.js; age-gate cookie; events in the flight payload |
 | Säälchen                         | https://www.holzmarkt.com/kalender                          | Concert Hall | Drupal; shared calendar filtered by location           |
+| Scheinbar Varieté                | https://www.scheinbar.de/programm/                          | Theater      | ProcessWire list by month; one show a night            |
 | Schokoladen                      | https://www.schokoladen-mitte.de/                           | Club         | Laravel; anchor-based events; genre inside title       |
 | silent green                     | https://www.silent-green.net/programm                       | Concert Hall | TYPO3 news; month walk; a run listed per open day      |
 | Sisyphos                         | https://www.sisyphos-berlin.net/                            | Techno Club  | Calendar JSON + shop + sisy.fan line-ups (ADR-038)     |
@@ -139,7 +140,7 @@ schema change.
 | Zitadelle                        | https://citadel-music-festival.de/events                    | Open Air     | Festival site; WordPress/EM; summer season only        |
 | Zur Klappe                       | https://zurklappe.org/events                                | Techno Club  | Next.js flight payload; no genre or prices             |
 
-91 importer classes cover 92 sources. Only Kantine am Berghain has no class of its own, and it shares the Berghain
+94 importer classes cover 95 sources. Only Kantine am Berghain has no class of its own, and it shares the Berghain
 importer outright. Three other groups share a _listing and parser_ while keeping one thin `@Component` per venue, so
 they do not reduce the count. They are Club der Visionäre with Sonnenraum and MS Hoppetosse, the three Velomax halls,
 and Uber Arena with the Uber Eats Music Hall.
@@ -461,9 +462,8 @@ New candidates land here first. Check for a server-rendered programme, then move
 [Ready](#-ready-to-implement) or [Blocked](#-blocked--deferred). A row belongs here only until someone opens it — the
 URL is recorded, nothing more.
 
-The first 24 rows came from a sweep on 2026-09-30: 21 from tipBerlin, then three from radar.squat.net. The last 8 came
-from a comedy sweep on 2026-10-03 of comedyinenglish.de, berlinmagazine.de and fritzguide.com. Scheinbar Varieté
-was added by hand. The URL was confirmed to
+The first 24 rows came from a sweep on 2026-09-30: 21 from tipBerlin, then three from radar.squat.net. The last 6 came
+from a comedy sweep on 2026-10-03 of comedyinenglish.de, berlinmagazine.de and fritzguide.com. The URL was confirmed to
 answer, and nothing else was checked. A venue's type is a first guess.
 Correct it against the venue's own site when the row is opened.
 
@@ -498,7 +498,6 @@ Correct it against the venue's own site when the row is opened.
 | PUNCH L!NE Club                   | https://punchlineberlin.com/de                            | Comedy Club  |
 | Downstairs Comedy Club            | https://www.downstairscomedy.shop/home                    | Comedy Club  |
 | Kabarett-Theater DISTEL           | https://distel-berlin.de/spielplan/kalender/              | Theater      |
-| Scheinbar Varieté                 | https://www.scheinbar.de/                                 | Theater      |
 | Mein Freund Harvey                | https://www.meinfreundharvey.com/                         | Bar          |
 
 WABE's own building is closed for renovation. Its events run at Schönfließer Str. 7 for now. Kühlspot has no programme

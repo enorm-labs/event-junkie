@@ -248,6 +248,10 @@ says so.
 | `ROSA`                 | `CANCELLATION`     | the site drops a cancelled night instead of marking it                                                                                           | —     |
 | `ROSA`                 | `PER_EVENT_PAGE`   | the whole programme is one page with an anchor per night                                                                                         | —     |
 | `SAALCHEN`             | `GENRE`            | the venue publishes no genre field of its own                                                                                                    | —     |
+| `SCHEINBAR`            | `DOORS_TIME`       | the programme states one time per evening                                                                                                        | —     |
+| `SCHEINBAR`            | `PRICE_PRESALE`    | tickets are reserved online and paid at the box office, at one price                                                                             | —     |
+| `SCHEINBAR`            | `GENRE`            | the house names no genre; an Open Stage night mixes comedy, magic, music and artistry                                                            | —     |
+| `SCHEINBAR`            | `PROMOTERS`        | the house presents every evening itself                                                                                                          | —     |
 | `SCHOKOLADEN`          | `PRICE`            | the venue prints doors, show time and a ticket link, never a figure                                                                              | —     |
 | `SILENT_GREEN`         | `PRICE`            | the venue names no prices anywhere — an event either links out to a ticket shop or says nothing                                                  | —     |
 | `SILENT_GREEN`         | `GENRE`            | the venue publishes no genre                                                                                                                     | —     |
