@@ -101,4 +101,41 @@ class AssociationSyncSetTimesIntegrationTest : BaseControllerTest() {
             stored shouldBe act.toEventArtistEntity(stored.eventId, stored.artistId, billingOrder = 0).copy(id = stored.id)
         }
     }
+
+    @Test
+    fun `a run whose detail page yielded nothing keeps the stored set times`() {
+        runBlocking {
+            val sourceId = "set-times:3"
+            val event = persistEvent(sourceId)
+            val eventIds = listOf(requireNotNull(event.id))
+            val act = ScrapedArtist(name = "Janina", role = "DJ", stage = "Tresor")
+            associationSyncService.resolveAndSyncAssociations(listOf(event), listOf(scraped(sourceId, act.copy(setStart = start, setEnd = end))))
+
+            // The listing names the act but not its slot (#2421).
+            associationSyncService.resolveAndSyncAssociations(listOf(event), listOf(scraped(sourceId, act).copy(detailUnavailable = true)))
+            val after = eventArtistRepository.findByEventIdIn(eventIds).toList().single()
+
+            after.setStart shouldBe start
+            after.setEnd shouldBe end
+        }
+    }
+
+    @Test
+    fun `a run whose detail page yielded nothing and whose listing names no act keeps the stored lineup`() {
+        runBlocking {
+            val sourceId = "set-times:4"
+            val event = persistEvent(sourceId)
+            val act = ScrapedArtist(name = "Surgeon", role = "DJ", setStart = start)
+            associationSyncService.resolveAndSyncAssociations(listOf(event), listOf(scraped(sourceId, act)))
+
+            val listingOnly = scraped(sourceId, act).copy(artists = emptyList(), detailUnavailable = true)
+            associationSyncService.resolveAndSyncAssociations(listOf(event), listOf(listingOnly))
+
+            eventArtistRepository
+                .findByEventIdIn(listOf(requireNotNull(event.id)))
+                .toList()
+                .single()
+                .setStart shouldBe start
+        }
+    }
 }

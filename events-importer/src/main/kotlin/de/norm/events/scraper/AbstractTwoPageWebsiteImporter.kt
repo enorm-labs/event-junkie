@@ -111,6 +111,8 @@ abstract class AbstractTwoPageWebsiteImporter(
      * Degrades to the overview row when the detail page is unavailable — except for a row that has
      * no date without it (a Kulturhäuser featured teaser, #312), which is dropped rather than
      * degraded, so that one gets a second fetch after [RETRY_PAUSE] before the run gives up on it.
+     * A degraded row is marked [ScrapedEvent.detailUnavailable], so the upsert keeps the fields the
+     * detail page stored last time.
      */
     @Suppress("TooGenericExceptionCaught") // Intentional: degrade to overview data if detail page is unavailable
     private suspend fun parseDetailOrFallback(overview: ScrapedEvent): ScrapedEvent {
@@ -133,7 +135,7 @@ abstract class AbstractTwoPageWebsiteImporter(
                 if (!last) delay(RETRY_PAUSE)
             }
         }
-        return overview
+        return overview.copy(detailUnavailable = true)
     }
 
     private suspend fun mergeDetail(overview: ScrapedEvent): ScrapedEvent {
@@ -143,7 +145,7 @@ abstract class AbstractTwoPageWebsiteImporter(
         // inside is the scraper's own parsing, which is what needed the URL and never had it.
         return withContext(LogContext.forPage(overview.sourceUrl)) {
             val detail = scrapeDetail(detailDoc, overview.sourceUrl)
-            if (detail != null) fillGapsFromOverview(primary = detail, fallback = overview) else overview
+            if (detail != null) fillGapsFromOverview(primary = detail, fallback = overview) else overview.copy(detailUnavailable = true)
         }
     }
 

@@ -60,10 +60,11 @@ class AssociationSyncService(
     ): Set<Long> {
         val (billed, unverified) = billedArtists(scrapedEvents)
         val artistCache = resolveAllArtists(billed.values.flatten() + unverified)
-        syncArtistAssociations(savedEvents, billed, artistCache)
+        val detailless = scrapedEvents.filter { it.detailUnavailable }.mapTo(mutableSetOf()) { it.sourceId }
+        syncArtistAssociations(savedEvents, billed, artistCache, detailless)
 
         val promoterCache = resolveAllPromoters(scrapedEvents)
-        syncPromoterAssociations(savedEvents, scrapedEvents, promoterCache)
+        syncPromoterAssociations(savedEvents, scrapedEvents, promoterCache, detailless)
 
         val genreTagCache = resolveAllGenreTags(scrapedEvents)
         syncGenreTagAssociations(savedEvents, scrapedEvents, genreTagCache)
@@ -230,11 +231,15 @@ class AssociationSyncService(
      * Synchronizes artist associations by diff, matched on `(eventId, artistId)`: inserts new,
      * updates changed role, billing order, floor or set times, deletes removed, skips the rest. Deleting and
      * re-creating on every import wastes auto-increment IDs.
+     *
+     * An event in [detailless] keeps its stored lineup when the listing names no act, and an act's
+     * stored set times when the listing gives none: the detail page is their source (#2421).
      */
     private suspend fun syncArtistAssociations(
         savedEvents: List<EventEntity>,
         artistsBySourceId: Map<String, List<ScrapedArtist>>,
-        artistCache: Map<String, ArtistEntity>
+        artistCache: Map<String, ArtistEntity>,
+        detailless: Set<String>
     ) {
         val existingByEventId =
             fetchExistingAssociationsByEventId(
@@ -247,11 +252,12 @@ class AssociationSyncService(
         val toUpdate = mutableListOf<EventArtistEntity>()
         val toDeleteIds = mutableListOf<Long>()
 
-        for (saved in savedEvents) {
+        for (saved in savedEvents.filterNot { keepsStoredLineup(it.sourceId, artistsBySourceId, detailless) }) {
             val (eventId, existingByArtistId, existing) =
                 eventAssociationContext(saved, existingByEventId, EventArtistEntity::artistId)
 
             val desiredArtists = artistsBySourceId[saved.sourceId].orEmpty()
+            val keepsSetTimes = saved.sourceId in detailless
             val desiredArtistIds = mutableSetOf<Long>()
 
             for ((index, scrapedArtist) in desiredArtists.withIndex()) {
@@ -270,7 +276,7 @@ class AssociationSyncService(
                     toInsert.add(desired)
                 } else {
                     // The row keeps its id; everything the scrape decides is compared at once.
-                    val updated = desired.copy(id = current.id)
+                    val updated = desired.onRowOf(current, keepsSetTimes)
                     if (updated != current) toUpdate.add(updated)
                 }
             }
@@ -291,6 +297,24 @@ class AssociationSyncService(
             eventArtistRepository.saveAll(toInsert).toList()
         }
     }
+
+    /** A detail-less event whose listing names no act: its stored lineup stands (#2421). */
+    private fun keepsStoredLineup(
+        sourceId: String,
+        artistsBySourceId: Map<String, List<ScrapedArtist>>,
+        detailless: Set<String>
+    ): Boolean = sourceId in detailless && artistsBySourceId[sourceId].isNullOrEmpty()
+
+    /** This association on [current]'s row; an untimed act keeps the stored set times when [keepsSetTimes]. */
+    private fun EventArtistEntity.onRowOf(
+        current: EventArtistEntity,
+        keepsSetTimes: Boolean
+    ): EventArtistEntity =
+        if (keepsSetTimes && setStart == null && setEnd == null) {
+            copy(id = current.id, setStart = current.setStart, setEnd = current.setEnd)
+        } else {
+            copy(id = current.id)
+        }
 
     // -- Promoter resolution --
 
@@ -372,7 +396,8 @@ class AssociationSyncService(
     private suspend fun syncPromoterAssociations(
         savedEvents: List<EventEntity>,
         scrapedEvents: List<ScrapedEvent>,
-        promoterCache: Map<String, PromoterEntity>
+        promoterCache: Map<String, PromoterEntity>,
+        detailless: Set<String>
     ) {
         val existingByEventId =
             fetchExistingAssociationsByEventId(
@@ -398,6 +423,8 @@ class AssociationSyncService(
                 eventAssociationContext(saved, existingByEventId, EventPromoterEntity::promoterId)
 
             val desiredPromoterNames = promotersBySourceId[saved.sourceId].orEmpty()
+            // The detail page credits the promoters, so a listing that names none proves nothing (#2421).
+            if (saved.sourceId in detailless && desiredPromoterNames.isEmpty()) continue
             val desiredPromoterIds = mutableSetOf<Long>()
 
             for (promoterName in desiredPromoterNames) {
