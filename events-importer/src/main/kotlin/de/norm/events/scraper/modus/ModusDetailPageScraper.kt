@@ -9,7 +9,6 @@ import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.imgSrcAt
-import de.norm.events.scraper.inferConcertVenueType
 import de.norm.events.scraper.labelledClock
 import de.norm.events.scraper.parseEventStatus
 import de.norm.events.scraper.parseGermanDate
@@ -56,7 +55,7 @@ class ModusDetailPageScraper {
         }
         val slug = extractEventSlug(sourceUrl, "/event/")
         val title = cleanEventTitle(rawTitle)
-        val eventType = inferConcertVenueType(title)
+        val eventType = modusEventType(title)
         val dateLine = document.textAt(".event-view-right h2")
         val description = document.textAt(".event-description")
 
@@ -73,7 +72,12 @@ class ModusDetailPageScraper {
             ticketUrl = document.hrefAt(".all-events-button a"),
             status = parseEventStatus(rawTitle),
             statusNote = rawTitle,
-            artists = buildArtistsForEventType(title, subtitle = null, eventType = eventType)
+            artists =
+                if (isModusComedySeries(title)) {
+                    comedySeriesLineup(document.selectFirst(".event-description"))
+                } else {
+                    buildArtistsForEventType(title, subtitle = null, eventType = eventType)
+                }
         )
     }
 

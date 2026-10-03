@@ -33,7 +33,10 @@ val PANKE_LIMITATIONS =
     VenueLimitations(
         EventSource.PANKE,
         AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "the venue expands each event's full text inline and publishes no page per event"),
-        AcceptedLimitation(LimitedAspect.EVENT_TYPE, "the venue publishes no category, and its titles are series names rather than formats"),
+        AcceptedLimitation(
+            LimitedAspect.EVENT_TYPE,
+            "no category is published and titles name a series; a format word or live show in the title, or a Resident Advisor lineup, types an event"
+        ),
         AcceptedLimitation(
             LimitedAspect.DOORS_TIME,
             "only an event whose body prints a `Doors … · Concert …` line states two clocks; for the rest the venue publishes one and calls it the start"

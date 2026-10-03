@@ -2,6 +2,7 @@ package de.norm.events.scraper.modus
 
 import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
+import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
@@ -105,5 +106,19 @@ class ModusDetailPageScraperTest {
         val sourceUrl = "https://modus-berlin.de/event/240926-c4rl"
         val document = Jsoup.parse("<html><body><main></main></body></html>", sourceUrl)
         scraper.scrape(document, sourceUrl).shouldBeNull()
+    }
+
+    @Test
+    fun `types the venue's comedy series and bills its lineup, not its name`() {
+        val comedy = scrape("modus-comedy", "211026-ModusComedy")
+
+        comedy.eventType shouldBe EventType.COMEDY.name
+        comedy.artists shouldBe
+            listOf(
+                ScrapedArtist("Till Reiners", "HEADLINER"),
+                ScrapedArtist("Rebecca Pap", "SUPPORT"),
+                ScrapedArtist("Ludwig Benecke", "SUPPORT"),
+                ScrapedArtist("Anna Bomhard", "SUPPORT")
+            )
     }
 }

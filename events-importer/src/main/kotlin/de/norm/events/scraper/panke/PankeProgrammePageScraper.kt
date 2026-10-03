@@ -129,14 +129,21 @@ class PankeProgrammePageScraper {
      * keyword wins first — a market is not a club night, a rave is. Where the title says nothing,
      * **an event that bills DJs on Resident Advisor is a club night**: the venue links a profile
      * only for the acts on its floor, a far better signal than the name, a series title rather
-     * than a format. Neither stays `OTHER` rather than being guessed a concert.
+     * than a format. Last, a title that names a live show (`… MIT LIVE BANDS`, `… Tour`, `… Live at
+     * Panke`) is a concert (#2398). An event with none of the three stays `OTHER` rather than being
+     * guessed.
      */
     private fun eventTypeOf(
         title: String,
         lineup: List<ScrapedArtist>
     ): String {
         val fromTitle = inferUnmarkedTitleType(title)
-        return if (fromTitle == EventType.OTHER.name && lineup.isNotEmpty()) EventType.PARTY.name else fromTitle
+        return when {
+            fromTitle != EventType.OTHER.name -> fromTitle
+            lineup.isNotEmpty() -> EventType.PARTY.name
+            LIVE_SHOW_TITLE.containsMatchIn(title) -> EventType.CONCERT.name
+            else -> fromTitle
+        }
     }
 
     /**
@@ -296,6 +303,9 @@ private const val HOUR_GROUP = 1
 
 /** [START_TIME]'s minute group — empty for a bare hour. */
 private const val MINUTE_GROUP = 2
+
+/** A title word that names a live show rather than a series: `live`, `tour`. */
+private val LIVE_SHOW_TITLE = Regex("""\b(?:live|tour)\b""", RegexOption.IGNORE_CASE)
 
 /**
  * The body's precise pair, "🕐 Doors 19:00 · Concert 21:00". Both labels are required and at most
