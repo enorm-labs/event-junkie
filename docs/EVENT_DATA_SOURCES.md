@@ -103,6 +103,7 @@ schema change.
 | Panke Culture                    | https://www.pankeculture.com/programme/                     | Club         | WordPress/Divi; upcoming list only; no event pages     |
 | Parkbühne Wuhlheide              | https://www.wuhlheide.de/programm                           | Open Air     | October CMS; ISO date in URL; seasonal, sold-out       |
 | Privatclub                       | https://privatclub-berlin.de/                               | Club         | Rich detail pages; genre, presale + AK prices          |
+| PUNCH L!NE Club                  | https://punchlineberlin.com/de/tickets                      | Comedy Club  | Next.js flight payload; all dates on one page          |
 | Quasimodo                        | https://quasimodo.club/events                               | Club         | Events-Manager; .club domain; genre tags + prices      |
 | Renate                           | https://www.renate.cc/                                      | Techno Club  | Homepage programme; per-floor lineups, no times        |
 | Ritter Butzke                    | https://club.ritterbutzke.com/events                        | Techno Club  | Modus codebase, own template; stale slug dates         |
@@ -136,7 +137,7 @@ schema change.
 | Zitadelle                        | https://citadel-music-festival.de/events                    | Open Air     | Festival site; WordPress/EM; summer season only        |
 | Zur Klappe                       | https://zurklappe.org/events                                | Techno Club  | Next.js flight payload; no genre or prices             |
 
-90 importer classes cover 91 sources. Only Kantine am Berghain has no class of its own, and it shares the Berghain
+91 importer classes cover 92 sources. Only Kantine am Berghain has no class of its own, and it shares the Berghain
 importer outright. Three other groups share a _listing and parser_ while keeping one thin `@Component` per venue, so
 they do not reduce the count. They are Club der Visionäre with Sonnenraum and MS Hoppetosse, the three Velomax halls,
 and Uber Arena with the Uber Eats Music Hall.
@@ -459,7 +460,7 @@ New candidates land here first. Check for a server-rendered programme, then move
 [Ready](#-ready-to-implement) or [Blocked](#-blocked--deferred). A row belongs here only until someone opens it — the
 URL is recorded, nothing more.
 
-The first 24 rows came from a sweep on 2026-09-30: 21 from tipBerlin, then three from radar.squat.net. The last 9 came
+The first 24 rows came from a sweep on 2026-09-30: 21 from tipBerlin, then three from radar.squat.net. The last 8 came
 from a comedy sweep on 2026-10-03 of comedyinenglish.de, berlinmagazine.de and fritzguide.com. Scheinbar Varieté
 was added by hand. The URL was confirmed to
 answer, and nothing else was checked. A venue's type is a first guess.
@@ -493,7 +494,6 @@ Correct it against the venue's own site when the row is opened.
 | KuBiZ                             | https://www.kubiz-wallenberg.de/                          | Other        |
 | Quatsch Comedy Club               | https://quatsch-comedy-club.de/                           | Comedy Club  |
 | Mad Monkey Room                   | https://mad-monkey.de/                                    | Comedy Club  |
-| PUNCH L!NE Club                   | https://punchlineberlin.com/de                            | Comedy Club  |
 | Downstairs Comedy Club            | https://www.downstairscomedy.shop/home                    | Comedy Club  |
 | Die Wühlmäuse                     | https://wuehlmaeuse.de/                                   | Theater      |
 | Kabarett-Theater DISTEL           | https://distel-berlin.de/spielplan/kalender/              | Theater      |

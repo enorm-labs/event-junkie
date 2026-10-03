@@ -218,6 +218,11 @@ says so.
 | `PETER_EDEL`           | `GENRE`            | the venue publishes no genre                                                                                                                     | —     |
 | `PETER_EDEL`           | `PER_EVENT_PAGE`   | the title links straight to the ticket shop                                                                                                      | —     |
 | `PRIVATCLUB`           | `PRICE`            | about half the nights print a genre line and a start time but no price                                                                           | —     |
+| `PUNCHLINE`            | `IMAGE`            | the date list carries no image                                                                                                                   | —     |
+| `PUNCHLINE`            | `TICKET_URL`       | the date list links no ticket shop; tickets sell on Ticketmaster                                                                                 | —     |
+| `PUNCHLINE`            | `PRICE`            | the club publishes no price; Ticketmaster states it                                                                                              | —     |
+| `PUNCHLINE`            | `GENRE`            | the date list names no genre                                                                                                                     | —     |
+| `PUNCHLINE`            | `PROMOTERS`        | the date list names no promoter                                                                                                                  | —     |
 | `RENATE`               | `EVENT_TYPE`       | the club states no category; its `.cat-btn` names the spaces in use, not a kind of event                                                         | —     |
 | `RENATE`               | `PER_EVENT_PAGE`   | every night points at the programme page                                                                                                         | —     |
 | `RENATE`               | `START_TIME`       | the club prints a time for its GARDEN and GREEN rooms inside the floor heading and none for a CLUB-only night                                    | —     |
