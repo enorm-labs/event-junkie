@@ -333,7 +333,11 @@ Every `.md` file in the repository is formatted by [oxfmt](https://oxc.rs/docs/g
 ```bash
 scripts/format-markdown.sh          # format in place
 scripts/format-markdown.sh check    # report drift, write nothing; exits 1 if anything is unformatted
+scripts/format-markdown.sh [check] FILE...   # only these files
 ```
+
+A relative `FILE` is relative to your current directory. The script refuses a file that does not exist or that is outside
+its own checkout. Another clone or worktree has its own copy of the script, so use that copy there.
 
 Enforced in two places: the `format-markdown` pre-commit hook, which formats on the way in, and `validate-docs.yml`,
 which runs `check` in CI. The hook is advisory by construction, because `--no-verify` skips it, as does anything
