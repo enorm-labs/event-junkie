@@ -190,7 +190,8 @@ class EventImportServiceTest {
                 eventRepository = eventRepository,
                 associationSyncService = associationSyncService,
                 // Pin "today" to the fixtures' event date so the past-event cutoff keeps them.
-                clock = Clock.fixed(LocalDate.of(2026, 6, 15).atStartOfDay().toInstant(ZoneOffset.UTC), ZoneOffset.UTC)
+                clock = Clock.fixed(LocalDate.of(2026, 6, 15).atStartOfDay().toInstant(ZoneOffset.UTC), ZoneOffset.UTC),
+                performerTyping = PerformerTyping(mockk(), eventRepository)
             )
 
         service =

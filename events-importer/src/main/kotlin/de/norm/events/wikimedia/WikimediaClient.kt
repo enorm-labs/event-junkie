@@ -28,6 +28,7 @@ class WikimediaUnavailableException(
 /**
  * The picture behind a Wikidata item: its `P18` claim, then that file's `imageinfo` on Commons. And
  * the item's Wikipedia leads: its `dewiki` / `enwiki` sitelinks, then each article's REST summary.
+ * And its `P106` occupations, which decide whether the act is a comedian (ADR-039).
  *
  * Two hosts, one pace: `wbgetclaims` on Wikidata names the file, `imageinfo` on Commons renders a
  * thumbnail at [WikimediaProperties.thumbWidth] and states the licence and the author. Both are
@@ -35,6 +36,7 @@ class WikimediaUnavailableException(
  * "no picture", never an error: most acts have no `P18`, and the row is complete without one.
  */
 @Component
+@Suppress("TooManyFunctions") // One public read per Wikimedia fact, each over the same paced GET.
 class WikimediaClient(
     @Qualifier(WIKIMEDIA_WEB_CLIENT) private val webClient: WebClient,
     private val properties: WikimediaProperties
@@ -61,6 +63,25 @@ class WikimediaClient(
         val titles = sitelinksOf(wikidataId, languages)
         return languages.filter { it in titles }.mapNotNull { language -> summaryOf(language, titles.getValue(language)) }
     }
+
+    /**
+     * The `P106` occupation items of [wikidataId] (`Q76152` → `Q15214752`, …), empty when it has none
+     * or Wikidata does not know the item; null when the read is off, so a caller stores nothing.
+     */
+    suspend fun occupationsOf(wikidataId: String): Set<String>? =
+        if (properties.enabled) {
+            claimsOf(wikidataId, P106)
+                .mapNotNull { claim ->
+                    claim
+                        .path("mainsnak")
+                        .path("datavalue")
+                        .path("value")
+                        .path("id")
+                        .textOrNull()
+                }.toSet()
+        } else {
+            null
+        }
 
     private suspend fun sitelinksOf(
         wikidataId: String,
@@ -110,31 +131,33 @@ class WikimediaClient(
         return extract
     }
 
-    private suspend fun fileOf(wikidataId: String): String? {
-        val uri =
-            UriComponentsBuilder
-                .fromUriString(properties.wikidataBaseUrl)
-                .queryParam("action", "wbgetclaims")
-                .queryParam("entity", wikidataId)
-                .queryParam("property", P18)
-                .queryParam("format", "json")
-                .build()
-                .toUri()
-        val body = get(uri, "Wikidata $wikidataId")
-        // MediaWiki answers an unknown entity with 200 and an `error` object rather than a status.
-        if (body.has("error")) {
-            logger.info { "Wikidata answered '${body.path("error").path("code").asString("")}' for $wikidataId" }
-            return null
-        }
-        return body
-            .path("claims")
-            .path(P18)
+    private suspend fun fileOf(wikidataId: String): String? =
+        claimsOf(wikidataId, P18)
             .firstOrNull()
             ?.path("mainsnak")
             ?.path("datavalue")
             ?.path("value")
             ?.asString(null)
             ?.takeIf { it.isNotBlank() }
+
+    /** The [property] claims of [wikidataId]; an empty node when Wikidata does not know the item. */
+    private suspend fun claimsOf(
+        wikidataId: String,
+        property: String
+    ): JsonNode {
+        val uri =
+            UriComponentsBuilder
+                .fromUriString(properties.wikidataBaseUrl)
+                .queryParam("action", "wbgetclaims")
+                .queryParam("entity", wikidataId)
+                .queryParam("property", property)
+                .queryParam("format", "json")
+                .build()
+                .toUri()
+        val body = get(uri, "Wikidata $wikidataId")
+        // MediaWiki answers an unknown entity with 200 and an `error` object rather than a status.
+        if (body.has("error")) logger.info { "Wikidata answered '${body.path("error").path("code").asString("")}' for $wikidataId" }
+        return body.path("claims").path(property)
     }
 
     private suspend fun imageInfo(file: String): CommonsImage? {
@@ -216,6 +239,7 @@ class WikimediaClient(
 
     companion object {
         private const val P18 = "P18"
+        private const val P106 = "P106"
 
         /** Commons appends `utm_` parameters to a thumbnail URL; the column holds the image, not the campaign. */
         fun withoutQuery(url: String): String = url.substringBefore('?')

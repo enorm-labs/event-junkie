@@ -60,6 +60,12 @@ class TempodromOverviewPageScraperTest {
     }
 
     @Test
+    fun `marks a CONCERT as the fallback a comedian headliner may retype, and a cued night not`() {
+        event("baby_keem_2026-09-01_20").typeIsFallback shouldBe true
+        event("oliver_polak_2026-11-28_20").typeIsFallback shouldBe false
+    }
+
+    @Test
     fun `parses every field of a dated concert`() {
         val babyKeem = event("baby_keem_2026-09-01_20")
         babyKeem.title shouldBe "Baby Keem"

@@ -51,11 +51,12 @@ class EventTypeMappingTest {
     }
 
     @Test
-    fun `mapEventType maps comedy and stand-up labels to COMEDY`() {
+    fun `mapEventType maps comedy, stand-up and Kabarett labels to COMEDY`() {
         mapEventType("Comedy") shouldBe "COMEDY"
         mapEventType("Stand-up") shouldBe "COMEDY"
         mapEventType("Standup") shouldBe "COMEDY"
-        mapEventType("Kabarett").shouldBeNull()
+        mapEventType("Kabarett") shouldBe "COMEDY"
+        mapEventType("Musik-Kabarett") shouldBe "COMEDY"
     }
 
     @Test

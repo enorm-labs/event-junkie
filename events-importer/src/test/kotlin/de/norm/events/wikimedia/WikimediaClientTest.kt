@@ -211,4 +211,32 @@ class WikimediaClientTest {
 
             shouldThrow<WikimediaUnavailableException> { client().extractsFor("Q27897897", listOf("de", "en")) }.message shouldContain "503"
         }
+
+    @Test
+    fun `reads every P106 occupation of an item, a cabaret performer who is also a musician`() =
+        runTest {
+            server.enqueue(json(fixture("wbgetclaims-P106-Q76152")))
+
+            client().occupationsOf("Q76152") shouldBe setOf("Q483501", "Q33231", "Q947873", "Q36180", "Q15214752", "Q28692502", "Q639669")
+
+            server.takeRequest().target shouldBe "/wikidata/api.php?action=wbgetclaims&entity=Q76152&property=P106&format=json"
+        }
+
+    @Test
+    fun `an item with no occupation, or none at all, holds no occupation`() =
+        runTest {
+            server.enqueue(json("""{"claims":{}}"""))
+            server.enqueue(json("""{"error":{"code":"no-such-entity","info":"Could not find an entity with the ID \"Q0\"."}}"""))
+
+            client().occupationsOf("Q816535").shouldBeEmpty()
+            client().occupationsOf("Q0").shouldBeEmpty()
+        }
+
+    @Test
+    fun `a switched-off read asks nothing and answers null, so nothing is stored`() =
+        runTest {
+            val properties = WikimediaProperties(enabled = false, wikidataBaseUrl = server.url("/wikidata/api.php").toString())
+            WikimediaClient(WebClient.create(), properties).occupationsOf("Q76152").shouldBeNull()
+            server.requestCount shouldBe 0
+        }
 }

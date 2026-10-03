@@ -8,7 +8,7 @@ import java.util.concurrent.ConcurrentHashMap
 
 /**
  * Runs the artist lookups on their own tick: the MusicBrainz lookup, then its enrichment, then the
- * Discogs lookup (#2051).
+ * Discogs lookup (#2051). Then the Wikidata occupations, and the comedy retype they feed (ADR-039).
  *
  * **Separate from the import on purpose.** Run after each import, the three passes turned a
  * one-second scrape into minutes, concurrent imports raced for the backfill, and a rollout killed
@@ -20,10 +20,13 @@ import java.util.concurrent.ConcurrentHashMap
  * and a renamed row waits for its next import.
  */
 @Service
+@Suppress("LongParameterList") // One service per pass of the tick, run in a fixed order.
 class ArtistLookupSweep(
     private val musicBrainzLookupService: MusicBrainzLookupService,
     private val musicBrainzEnrichmentService: MusicBrainzEnrichmentService,
     private val discogsLookupService: DiscogsLookupService,
+    private val artistOccupationService: ArtistOccupationService,
+    private val performerTyping: PerformerTyping,
     private val metrics: ImporterMetrics,
     @Value($$"${app.artists.lookup-enabled:true}")
     private val enabled: Boolean = true
@@ -61,14 +64,19 @@ class ArtistLookupSweep(
         val lookup = pass("MusicBrainz lookup") { musicBrainzLookupService.sweep(ids) }
         val enrichment = pass("MusicBrainz enrichment") { musicBrainzEnrichmentService.sweep(ids) }
         val discogs = pass("Discogs lookup") { discogsLookupService.sweep(ids) }
-        logger.info { "Artist lookup tick: ${ids.size} touched · MusicBrainz $lookup · enrichment $enrichment · Discogs $discogs" }
+        val occupations = pass("Occupation read") { artistOccupationService.sweep() }
+        val retyped = pass("Comedy retype") { performerTyping.retypeStored() }
+        logger.info {
+            "Artist lookup tick: ${ids.size} touched · MusicBrainz $lookup · enrichment $enrichment · Discogs $discogs · " +
+                "occupations $occupations · retyped $retyped"
+        }
         metrics.markArtistLookupTickSucceeded()
     }
 
     /** The pass's outcome, or `failed` after its `WARN`. */
     private suspend fun pass(
         name: String,
-        block: suspend () -> LookupPass
+        block: suspend () -> Any
     ): String =
         runCatching { block().toString() }
             .onFailure { logger.warn(it) { "$name pass failed" } }

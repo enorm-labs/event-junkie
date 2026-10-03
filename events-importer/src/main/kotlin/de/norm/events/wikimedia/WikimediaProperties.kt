@@ -23,9 +23,12 @@ data class WikimediaProperties(
     /** The thumbnail width asked of Commons. Advisory: Commons rounds up to a cached bucket. */
     val thumbWidth: Int = DEFAULT_THUMB_WIDTH,
     /** The largest file the image fetcher reads, `images.fetch.max-bytes`; a larger original is refused here rather than there. */
-    val maxBytes: Long = DEFAULT_MAX_BYTES
+    val maxBytes: Long = DEFAULT_MAX_BYTES,
+    /** How many artists' occupations one artist lookup tick reads (ADR-039). */
+    val occupationMaxPerRun: Int = DEFAULT_OCCUPATION_MAX_PER_RUN
 ) {
     companion object {
+        private const val DEFAULT_OCCUPATION_MAX_PER_RUN = 100
         private const val DEFAULT_POLITE_DELAY_MILLIS = 250L
         private const val DEFAULT_TIMEOUT_SECONDS = 30L
         private const val DEFAULT_THUMB_WIDTH = 1600

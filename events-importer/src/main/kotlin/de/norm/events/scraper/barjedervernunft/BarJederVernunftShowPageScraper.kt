@@ -125,9 +125,10 @@ data class BarJederVernunftShow(
 /**
  * Maps a `Genre` label to an [EventType] name.
  *
- * Everything here is an evening in the Spiegelzelt, so the genre only separates two cases: a
- * **music style** ([MUSIC_GENRES]) is a concert whose billed name is the performer, a **staged
- * format** ([STAGE_FORMAT_GENRES]) a show whose billed name is the production. Unrecognized or
+ * Everything here is an evening in the Spiegelzelt, so the genre separates three cases: a
+ * **music style** ([MUSIC_GENRES]) is a concert whose billed name is the performer, a **comedy
+ * format** ([COMEDY_GENRES]) a comedy night, a **staged format** ([STAGE_FORMAT_GENRES]) a show
+ * whose billed name is the production. Unrecognized or
  * missing defaults to [EventType.SHOW] — the safe side, minting no artist. The lists are
  * curated from the venue's programme; add a new music style when one appears, otherwise a
  * genuine concert is filed as a show and its performer is lost.
@@ -138,10 +139,13 @@ internal fun resolveEventType(genre: String?): String = mapEventType(genre, BAR_
 private val MUSIC_GENRES = listOf("chanson", "a cappella", "swing", "singer/songwriter")
 
 /** Staged formats the venue programmes — the billed name is the production, not a performer. */
-private val STAGE_FORMAT_GENRES = listOf("musik-show", "musik-kabarett", "kabarett", "musical", "show")
+private val STAGE_FORMAT_GENRES = listOf("musik-show", "musical", "show")
 
-/** Venue-specific genre synonyms handed to [mapEventType]; see [resolveEventType]. Kabarett stays a show, comedy is its own type. */
+/** Comedy formats, Kabarett among them (#2314). */
+private val COMEDY_GENRES = listOf("musik-comedy", "musik-kabarett", "kabarett")
+
+/** Venue-specific genre synonyms handed to [mapEventType]; see [resolveEventType]. */
 private val BAR_JEDER_VERNUNFT_GENRES: Map<String, String> =
     MUSIC_GENRES.associateWith { EventType.CONCERT.name } +
         STAGE_FORMAT_GENRES.associateWith { EventType.SHOW.name } +
-        mapOf("musik-comedy" to EventType.COMEDY.name)
+        COMEDY_GENRES.associateWith { EventType.COMEDY.name }

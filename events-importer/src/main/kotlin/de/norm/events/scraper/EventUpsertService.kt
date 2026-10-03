@@ -25,7 +25,8 @@ class EventUpsertService(
      * Injected clock; Berlin in production, because a UTC "today" dropped last night one or two
      * hours late and out of step with the BFF (#299).
      */
-    private val clock: Clock = Clock.system(BERLIN)
+    private val clock: Clock = Clock.system(BERLIN),
+    private val performerTyping: PerformerTyping
 ) {
     private val logger = KotlinLogging.logger {}
 
@@ -107,7 +108,7 @@ class EventUpsertService(
                 .findBySourceIdIn(incomingEvents.map { it.sourceId })
                 .toList()
                 .associateBy { it.sourceId }
-        val scrapedEvents = keepStoredDetail(incomingEvents, existingBySourceId, eventSourceId)
+        val scrapedEvents = performerTyping.retype(keepStoredDetail(incomingEvents, existingBySourceId, eventSourceId))
 
         val discriminators = slugDiscriminators(scrapedEvents)
         val build = { scraped: ScrapedEvent, existing: EventEntity? ->

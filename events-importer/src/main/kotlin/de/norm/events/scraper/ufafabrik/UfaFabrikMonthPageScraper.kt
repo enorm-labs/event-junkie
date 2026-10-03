@@ -112,9 +112,9 @@ internal fun isChildrensShow(priceLabels: Collection<String>): Boolean = priceLa
 private val CHILD_PRICE_LABEL = Regex("""^\s*(?:kinder|kita-kind|erzieher)""", RegexOption.IGNORE_CASE)
 
 /**
- * The type for the house's free-text genre label. Comedy is matched first, so "Comedy-Theater" is
- * comedy, then stage formats before music, so "Musikkabarett" is a show; an unknown label is
- * [EventType.OTHER].
+ * The type for the house's free-text genre label. Comedy and Kabarett are matched first, so
+ * "Comedy-Theater" and "Musikkabarett" are comedy (#2314), then stage formats before music; an
+ * unknown label is [EventType.OTHER].
  */
 internal fun genreType(genre: String?): String {
     val label = genre?.lowercase() ?: return EventType.OTHER.name
@@ -124,7 +124,7 @@ internal fun genreType(genre: String?): String {
 private val GENRE_TYPES: Map<String, String> =
     linkedMapOf(
         "comedy" to EventType.COMEDY.name,
-        "kabarett" to EventType.SHOW.name,
+        "kabarett" to EventType.COMEDY.name,
         "theater" to EventType.SHOW.name,
         "zauber" to EventType.SHOW.name,
         "magie" to EventType.SHOW.name,

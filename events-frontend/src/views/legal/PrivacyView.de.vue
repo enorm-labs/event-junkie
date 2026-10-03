@@ -186,7 +186,9 @@ const { t } = useI18n()
         Künstlerprofile werden mit MusicBrainz abgeglichen, einer offenen Musikdatenbank. Wo sie
         übereinstimmen, stammen die offiziellen Links und das Bild von dort und aus Wikidata.
         Übermittelt wird nur der Künstlername. Für Bands, Orchester und Chöre stammt die
-        Kurzbeschreibung aus der Wikipedia. Kennt MusicBrainz einen Namen nicht, fragt der Importer
+        Kurzbeschreibung aus der Wikipedia. Aus Wikidata stammt auch die Angabe, ob jemand als
+        Comedian oder Kabarettist auftritt. Danach wird ein Abend, dem die Spielstätte keine
+        Kategorie gibt, als Comedy geführt. Kennt MusicBrainz einen Namen nicht, fragt der Importer
         Discogs (Zink Media, LLC, USA) und speichert bei einem Treffer nur den Link zur
         Discogs-Seite; auch dabei wird nur der Künstlername übermittelt. Diese Website nutzt die
         Discogs-API, ist aber nicht mit Discogs verbunden und wird von Discogs weder gesponsert noch

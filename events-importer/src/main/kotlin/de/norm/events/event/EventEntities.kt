@@ -41,6 +41,8 @@ data class EventEntity(
     /** True when the source had a description and its licence kept it out (#2130); the text itself is never stored. */
     val descriptionWithheld: Boolean = false,
     val eventType: String = EventType.CONCERT.name,
+    /** True when [eventType] is the scraper's default, so a comedian headliner may retype it (#2314). */
+    val typeIsFallback: Boolean = false,
     val status: String = EventStatus.SCHEDULED.name,
     /** Where a `RELOCATED` event moved to, as the venue's note names it; null when the note names nothing (#1551). */
     val relocatedTo: String? = null,

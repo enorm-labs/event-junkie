@@ -148,11 +148,12 @@ class BarJederVernunftShowPageScraperTest {
     )
 
     @Test
-    fun `a comedy genre is comedy, and Kabarett stays a show`() {
+    fun `a comedy genre and Kabarett are comedy, a staged format is a show`() {
         resolveEventType("Musik-Comedy") shouldBe "COMEDY"
         resolveEventType("Comedy") shouldBe "COMEDY"
-        resolveEventType("Musik-Kabarett") shouldBe "SHOW"
-        resolveEventType("Kabarett") shouldBe "SHOW"
+        resolveEventType("Musik-Kabarett") shouldBe "COMEDY"
+        resolveEventType("Kabarett") shouldBe "COMEDY"
+        resolveEventType("Musik-Show") shouldBe "SHOW"
     }
 
     private companion object {

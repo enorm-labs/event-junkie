@@ -22,6 +22,10 @@ private val BASE_EVENT_TYPE_SYNONYMS: Map<String, String> =
         "stand-up" to EventType.COMEDY.name,
         "standup" to EventType.COMEDY.name,
         "stand-up comedy" to EventType.COMEDY.name,
+        // Kabarett is comedy at every venue (#2314).
+        "kabarett" to EventType.COMEDY.name,
+        "musikkabarett" to EventType.COMEDY.name,
+        "musik-kabarett" to EventType.COMEDY.name,
         // A football/match screening (Lido labels these "Public Viewing") is a SCREENING, not a concert.
         "public viewing" to EventType.SCREENING.name,
         // A literary reading / spoken-word evening, and a gallery exhibition / opening.
