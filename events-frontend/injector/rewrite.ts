@@ -1,6 +1,13 @@
 import { type Locale, LOCALES } from '../src/i18n/locales.ts'
 import type { PageMeta } from '../src/lib/pageMeta.ts'
-import { alternatesFor, canonicalUrl, OG_LOCALES } from '../src/lib/seo.ts'
+import {
+  alternatesFor,
+  canonicalUrl,
+  FEED_TITLES,
+  FEED_TYPE,
+  feedUrl,
+  OG_LOCALES,
+} from '../src/lib/seo.ts'
 import { siteDescription } from '../src/lib/staticPages.ts'
 import type { ImageSize } from './meta.ts'
 
@@ -82,6 +89,9 @@ function managedTags(locale: Locale, path: string): string {
     link(`rel="canonical" href="${escapeHtml(canonical)}"`),
     ...alternatesFor(path).map((alternate) =>
       link(`rel="alternate" hreflang="${alternate.hreflang}" href="${escapeHtml(alternate.href)}"`),
+    ),
+    link(
+      `rel="alternate" type="${FEED_TYPE}" title="${escapeHtml(FEED_TITLES[locale])}" href="${escapeHtml(feedUrl(locale))}"`,
     ),
     meta(`property="og:url" content="${escapeHtml(canonical)}"`),
     meta(`property="og:locale" content="${OG_LOCALES[locale]}"`),

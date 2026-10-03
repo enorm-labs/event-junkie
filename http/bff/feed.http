@@ -1,0 +1,30 @@
+### ============================================================
+### BFF: Feed — RSS 2.0 of newly imported events (#368)
+###
+### Read-only, no auth. The 50 events stored most recently that are
+### not over, newest first. Takes the event list's filters, so a
+### filtered URL is a saved search. An unknown parameter is a 400.
+### The public URL is /feed.xml with the same query; nginx and the
+### injector forward it here.
+### ============================================================
+
+### Everything new, in English
+GET {{bff-host}}/api/events/feed
+Accept: application/rss+xml
+
+### In German: German dates, /de/ links
+GET {{bff-host}}/api/events/feed?locale=de
+Accept: application/rss+xml
+
+### A saved search: techno in Kreuzberg or Friedrichshain
+GET {{bff-host}}/api/events/feed?genre=techno&district=kreuzberg&district=friedrichshain
+Accept: application/rss+xml
+
+### One venue's new events
+GET {{bff-host}}/api/events/feed?venue=lido
+Accept: application/rss+xml
+
+### A reader's conditional poll: paste the ETag of a previous answer, expect 304
+GET {{bff-host}}/api/events/feed
+Accept: application/rss+xml
+If-None-Match: W/"paste-the-etag-here"

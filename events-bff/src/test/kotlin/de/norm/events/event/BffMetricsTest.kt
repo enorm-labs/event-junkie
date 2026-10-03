@@ -33,11 +33,13 @@ class BffMetricsTest {
         metrics.recordServed(BffMetrics.ENDPOINT_TODAY, 7)
         metrics.recordServed(BffMetrics.ENDPOINT_CALENDAR, 130)
         metrics.recordServed(BffMetrics.ENDPOINT_DETAIL, 1)
+        metrics.recordServed(BffMetrics.ENDPOINT_FEED, 50)
 
         served("search") shouldBe 20.0
         served("today") shouldBe 7.0
         served("calendar") shouldBe 130.0
         served("detail") shouldBe 1.0
+        served("feed") shouldBe 50.0
     }
 
     @Test

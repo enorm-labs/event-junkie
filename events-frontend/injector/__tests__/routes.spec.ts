@@ -5,7 +5,13 @@ import { describe, expect, it } from 'vitest'
 
 import { LOCALES } from '@/i18n/locales'
 import { DETAIL_SITEMAPS, INDEXABLE_PATHS } from '@/lib/seo'
-import { ENTITY_KINDS, matchDetailRoute, matchSitemap, matchStaticRoute } from '../routes.ts'
+import {
+  ENTITY_KINDS,
+  matchDetailRoute,
+  matchFeed,
+  matchSitemap,
+  matchStaticRoute,
+} from '../routes.ts'
 
 /**
  * The route matcher is the injector's whole surface: what it accepts reaches the BFF as a URL, so
@@ -162,5 +168,23 @@ describe('matchSitemap', () => {
     const nginx = new RegExp(source ?? '(?!)')
     expect(DETAIL_SITEMAPS.filter((path) => !nginx.test(path))).toEqual([])
     expect(['/sitemap.xml', '/sitemap-pages.xml'].filter((path) => nginx.test(path))).toEqual([])
+  })
+})
+
+describe('matchFeed', () => {
+  it('returns the query of a feed request, or an empty one', () => {
+    expect(matchFeed('/feed.xml')).toBe('')
+    expect(matchFeed('/feed.xml?locale=de&genre=techno')).toBe('?locale=de&genre=techno')
+    expect(matchFeed('/feed.xml?locale=de#top')).toBe('?locale=de')
+  })
+
+  it('refuses any other path', () => {
+    const paths = ['/feed', '/feed.xml/x', '/en/feed.xml', '/feed.xmlx', '/api/events/feed']
+    expect(paths.map((path) => [path, matchFeed(path)])).toEqual(paths.map((path) => [path, null]))
+  })
+
+  it('agrees with the nginx location that sends the feed here', () => {
+    const conf = readFileSync(resolve(process.cwd(), 'docker/nginx.conf'), 'utf8')
+    expect(conf).toMatch(/location = \/feed\.xml \{\s*proxy_pass http:\/\/127\.0\.0\.1:3000;/)
   })
 })

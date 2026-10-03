@@ -5,7 +5,13 @@ import type { ReadableStream } from 'node:stream/web'
 
 import { bffPath, entityMeta } from './meta.ts'
 import { rewriteHead } from './rewrite.ts'
-import { type EntityKind, matchDetailRoute, matchSitemap, matchStaticRoute } from './routes.ts'
+import {
+  type EntityKind,
+  matchDetailRoute,
+  matchFeed,
+  matchSitemap,
+  matchStaticRoute,
+} from './routes.ts'
 import { staticPathMeta } from '../src/lib/staticPages.ts'
 
 /**
@@ -15,7 +21,8 @@ import { staticPathMeta } from '../src/lib/staticPages.ts'
  * does not know is a 404 and any other failure a 502: nginx's `error_page` then serves the plain
  * shell, with the 404 kept and the 502 turned into 200, so every branch that is not the happy
  * path ends in `fail()`. It also forwards the detail sitemaps from the BFF, which nginx serves at
- * the root (#367). Nothing about the visitor reaches the BFF, and nothing is logged per request. Two
+ * the root (#367), and the RSS feed with its filter query (#368). Nothing about the visitor reaches
+ * the BFF but that query, and nothing is logged per request. Two
  * in-process caches bound the BFF load: the shell changes only on deploy, and a link shared into
  * a busy group is fetched by every scraper at once.
  */
@@ -32,6 +39,8 @@ const ENTITY_CACHE_LIMIT = 500
  * gets longer than a page lookup. nginx's `proxy_read_timeout` for it is 15s.
  */
 const SITEMAP_TIMEOUT_MS = 10_000
+/** The feed is at most 50 items. nginx's `proxy_read_timeout` for it is 5s. */
+const FEED_TIMEOUT_MS = 4_000
 /** A shell or an entity larger than this is not ours; refuse it rather than buffer it. */
 const MAX_BODY_BYTES = 1024 * 1024
 
@@ -122,6 +131,52 @@ async function proxySitemap(kind: EntityKind, response: ServerResponse): Promise
   await pipeline(Readable.fromWeb(upstream.body as ReadableStream), response)
 }
 
+/**
+ * Streams the BFF's feed for `query` through. A 304 keeps the reader's copy, and a 400 tells the
+ * reader which filter is wrong; anything else but a feed is a 502.
+ */
+async function proxyFeed(
+  query: string,
+  request: IncomingMessage,
+  response: ServerResponse,
+): Promise<void> {
+  const url = `${BFF_URL}/api/events/feed${query}`
+  const ifNoneMatch = request.headers['if-none-match']
+  const upstream = await fetch(url, {
+    headers: {
+      accept: 'application/rss+xml',
+      ...(ifNoneMatch ? { 'if-none-match': ifNoneMatch } : {}),
+    },
+    signal: AbortSignal.timeout(FEED_TIMEOUT_MS),
+  }).catch((error: Error) => {
+    throw new Fail(`${url}: ${(error.cause as Error | undefined)?.message ?? error.message}`, 502)
+  })
+  // Node refuses an undefined header value, so only the headers the BFF sent are passed on.
+  const passed = (...names: string[]) =>
+    Object.fromEntries(
+      names.flatMap((name) => {
+        const value = upstream.headers.get(name)
+        return value === null ? [] : [[name, value]]
+      }),
+    )
+  if (upstream.status === 304) {
+    response.writeHead(304, passed('etag', 'cache-control')).end()
+    return
+  }
+  if (upstream.status === 400) {
+    response
+      .writeHead(400, { 'content-type': 'text/plain', ...passed('content-type') })
+      .end(await upstream.text())
+    return
+  }
+  if (!upstream.ok || !upstream.body) throw new Fail(`${url} answered ${upstream.status}`, 502)
+  response.writeHead(200, {
+    'content-type': 'application/rss+xml',
+    ...passed('content-type', 'cache-control', 'etag'),
+  })
+  await pipeline(Readable.fromWeb(upstream.body as ReadableStream), response)
+}
+
 async function handle(request: IncomingMessage, response: ServerResponse): Promise<void> {
   const url = request.url ?? '/'
   if (url === '/healthz') {
@@ -135,6 +190,16 @@ async function handle(request: IncomingMessage, response: ServerResponse): Promi
       await proxySitemap(sitemap, response)
     } catch (error) {
       fail(response, 502, `sitemap-${sitemap}: ${(error as Error).message}`)
+    }
+    return
+  }
+
+  const feedQuery = matchFeed(url)
+  if (feedQuery !== null) {
+    try {
+      await proxyFeed(feedQuery, request, response)
+    } catch (error) {
+      fail(response, 502, `feed: ${(error as Error).message}`)
     }
     return
   }

@@ -1,7 +1,7 @@
 // Explicit `.ts` on every import here: the injector is type-checked under `tsconfig.node.json`
 // and bundled by `vite.injector.config.ts`, both following Node's ESM resolver (vite.config.ts).
 import { type Locale, LOCALES } from '../src/i18n/locales.ts'
-import { INDEXABLE_PATHS } from '../src/lib/seo.ts'
+import { FEED_PATH, INDEXABLE_PATHS } from '../src/lib/seo.ts'
 import type { StaticPath } from '../src/lib/staticPages.ts'
 
 /**
@@ -80,4 +80,17 @@ export function matchSitemap(url: string): EntityKind | null {
   const pathname = url.split('#')[0]?.split('?')[0] ?? ''
   const kind = SITEMAP.exec(pathname)?.[1]
   return ENTITY_KINDS.find((candidate) => candidate === kind) ?? null
+}
+
+/**
+ * The query string of a feed request (#368), `''` when it has none, or `null` for any other path.
+ * The path to the BFF is fixed; only the query, the list's filters, is forwarded, and the BFF
+ * answers 400 to a parameter it does not know.
+ */
+export function matchFeed(url: string): string | null {
+  const [beforeFragment = ''] = url.split('#')
+  const queryStart = beforeFragment.indexOf('?')
+  const pathname = queryStart < 0 ? beforeFragment : beforeFragment.slice(0, queryStart)
+  if (pathname !== FEED_PATH) return null
+  return queryStart < 0 ? '' : beforeFragment.slice(queryStart)
 }

@@ -191,6 +191,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/events/feed": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get the newest events as an RSS 2.0 feed, at most 50, leaving out those that are over */
+        get: operations["feed"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/events/calendar": {
         parameters: {
             query?: never;
@@ -1766,6 +1783,58 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["EventSummaryResponse"][];
+                };
+            };
+        };
+    };
+    feed: {
+        parameters: {
+            query?: {
+                /**
+                 * @description Language of the feed's text and links: en or de.
+                 * @example de
+                 */
+                locale?: string;
+                /** @description Event type filter, e.g. CONCERT (case-insensitive). Repeatable: an event of any given type matches. An unknown type matches nothing. */
+                eventType?: string[];
+                /** @description Venue slug filter — only events at the matching venue. */
+                venue?: string;
+                /** @description Pre-2001 Berlin district slug (e.g. kreuzberg). Repeatable: an event at a venue in any given district matches. */
+                district?: string[];
+                /** @description Venue type slug (e.g. club). Repeatable: an event at a venue of any given type matches. An unknown type matches nothing. */
+                venueType?: string[];
+                /** @description Artist slug filter — only events featuring the matching artist. */
+                artist?: string;
+                /** @description Promoter slug filter — only events from the matching promoter. */
+                promoter?: string;
+                /** @description Genre tag slug filter — only events tagged with the matching genre. */
+                genre?: string;
+                /** @description Genre family slug filter (e.g. electronic). Repeatable: an event tagged with a genre in any given family matches. */
+                family?: string[];
+                /** @description Minimum presale price (inclusive). Excludes events with an unknown (null) price. */
+                minPrice?: number;
+                /** @description Maximum presale price (inclusive). Excludes events with an unknown (null) price. */
+                maxPrice?: number;
+                /** @description Search over the event title, subtitle, venue name and lineup: ignores case, accents and spaces, and forgives small typos. */
+                q?: string;
+                /** @description When true, excludes events flagged as sold out. Defaults to false (include all). */
+                excludeSoldOut?: boolean;
+                /** @description When true, returns only events flagged as free to attend. Defaults to false. */
+                free?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The feed */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/rss+xml": string;
                 };
             };
         };

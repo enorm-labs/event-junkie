@@ -11,6 +11,7 @@ flowchart TD
     artist["artist"]
     common["common «open»"]
     event["event"]
+    feed["feed"]
     genretag["genretag"]
     image["image"]
     licence["licence"]
@@ -30,9 +31,13 @@ flowchart TD
     event --> promoter
     event --> sourcelicence
     event --> venue
+    feed --> common
+    feed --> event
+    feed --> venue
     genretag --> common
     promoter --> common
     promoter --> image
+    sitemap --> common
     sourcelicence --> licence
     venue --> common
     venue --> image

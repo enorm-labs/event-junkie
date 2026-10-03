@@ -112,5 +112,8 @@
     "POSTPONED": "Postponed",
     "movedTo": "Moved to {venue}"
   },
-  "nearMe": "Near me, on the map"
+  "nearMe": "Near me, on the map",
+  "feed": "Feed",
+  "feedAll": "Subscribe to new events as an RSS feed",
+  "feedFiltered": "Subscribe to new events matching these filters as an RSS feed"
 }

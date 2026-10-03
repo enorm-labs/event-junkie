@@ -95,7 +95,7 @@ Make it comprehensive, discoverable and pleasant. → **[Phase 2 — Coverage & 
   venue metadata.
 - An **admin imports-status dashboard** to watch import health and failures.
 - A full UX and mobile pass, and the remaining SEO surfaces. Done already: the venues map, i18n and l10n, the sitemap,
-  `hreflang`, canonical URLs and `schema.org` structured data. RSS remains.
+  `hreflang`, canonical URLs, `schema.org` structured data and an RSS feed of new events.
 - **Server-side head tags for shared links.** Every page serves an empty `<div id="app">`. A scraper that does not run
   JavaScript shows the generic site title and description for _every_ shared link, event pages included. That covers
   Slack, WhatsApp, iMessage, Facebook and LinkedIn. Sharing a specific event is a primary way a nightlife product

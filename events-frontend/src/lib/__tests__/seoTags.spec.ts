@@ -43,6 +43,17 @@ describe('updateSeoTags', () => {
     expect(hrefs('link[rel="alternate"][hreflang="x-default"]')).toEqual([`${SITE_URL}/en/events`])
   })
 
+  it('names the feed of new events in the page locale, by an absolute URL', () => {
+    updateSeoTags('de', '/venues')
+
+    const feeds = [
+      ...document.head.querySelectorAll('link[rel="alternate"][type="application/rss+xml"]'),
+    ]
+    expect(feeds.map((link) => [link.getAttribute('title'), link.getAttribute('href')])).toEqual([
+      ['Event Junkie — neue Veranstaltungen', `${SITE_URL}/feed.xml?locale=de`],
+    ])
+  })
+
   it('sets og:url to the canonical URL and og:locale to the OG spelling', () => {
     updateSeoTags('de', '/about')
 
@@ -58,7 +69,10 @@ describe('updateSeoTags', () => {
     updateSeoTags('en', '/about')
 
     expect(hrefs('link[rel="canonical"]')).toEqual([`${SITE_URL}/en/about`])
-    expect(hrefs('link[rel="alternate"]')).toHaveLength(3)
+    expect(hrefs('link[rel="alternate"][hreflang]')).toHaveLength(3)
+    expect(hrefs('link[rel="alternate"][type="application/rss+xml"]')).toEqual([
+      `${SITE_URL}/feed.xml?locale=en`,
+    ])
     // The one that would accumulate silently: its content changes with the active locale, so it
     // cannot be found and updated by selector the way canonical can.
     expect(contents('og:locale:alternate')).toEqual(['de_DE'])

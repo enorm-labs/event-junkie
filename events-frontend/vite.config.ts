@@ -57,6 +57,12 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/sitemap-(\w+)\.xml$/, '/api/sitemaps/$1.xml'),
       },
+      // The RSS feed, which nginx sends through the injector on a cluster (#368). The query stays.
+      '^/feed\\.xml': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/feed\.xml/, '/api/events/feed'),
+      },
     },
   },
 })

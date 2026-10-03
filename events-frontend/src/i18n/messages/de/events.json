@@ -112,5 +112,8 @@
     "POSTPONED": "Verschoben",
     "movedTo": "Verlegt: {venue}"
   },
-  "nearMe": "In meiner Nähe, auf der Karte"
+  "nearMe": "In meiner Nähe, auf der Karte",
+  "feed": "Feed",
+  "feedAll": "Neue Veranstaltungen als RSS-Feed abonnieren",
+  "feedFiltered": "Neue Veranstaltungen mit diesen Filtern als RSS-Feed abonnieren"
 }

@@ -22,6 +22,7 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.server.ResponseStatusException
 import java.time.Clock
+import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 
@@ -91,6 +92,21 @@ class EventService(
         }
         val ids = eventSearchRepository.searchAll(filter.copy(from = null, runningFrom = from, to = to))
         return summariesFor(hydrateOrdered(ids))
+    }
+
+    /**
+     * The [limit] events matching [filter] that the importer stored most recently, newest first,
+     * for the event feed. [filter] carries no dates, so an event that is over is left out.
+     */
+    @Transactional(readOnly = true)
+    suspend fun newest(
+        filter: EventFilter,
+        limit: Int
+    ): List<NewEvent> {
+        val events = hydrateOrdered(eventSearchRepository.newest(filter, limit))
+        return summariesFor(events).zip(events) { summary, event ->
+            NewEvent(summary, requireNotNull(event.createdAt) { "Event ${event.id} has no created_at, a NOT NULL column" })
+        }
     }
 
     /**
@@ -281,6 +297,12 @@ class EventService(
         private const val DETAIL_WIDTH = 704
     }
 }
+
+/** An event as the feed lists it: its summary, and when the importer first stored it. */
+data class NewEvent(
+    val summary: EventSummaryResponse,
+    val firstSeenAt: Instant
+)
 
 /** The id of a genre tag read back from the database, which is never null once it is persisted. */
 private fun GenreTagEntity.requiredId(): Long = requireNotNull(id) { "Persisted genre tag must have an ID" }

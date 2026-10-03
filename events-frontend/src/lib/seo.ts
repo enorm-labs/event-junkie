@@ -80,6 +80,47 @@ export function alternatesFor(path: string): { hreflang: string; href: string }[
   ]
 }
 
+/**
+ * The RSS feed of new events (#368), one per locale, advertised in every page's head and linked
+ * from the footer and the filter bar. The BFF renders it at `/api/events/feed`; nginx and the
+ * injector serve it at {@link FEED_PATH}, the public URL, as `Site.FEED_PATH` in the BFF names it.
+ * The titles are the feed's own channel titles in `EventFeedXml.kt`; change both or neither.
+ */
+export const FEED_PATH = '/feed.xml'
+
+export const FEED_TYPE = 'application/rss+xml'
+
+export const FEED_TITLES: Record<Locale, string> = {
+  en: 'Event Junkie — new events',
+  de: 'Event Junkie — neue Veranstaltungen',
+}
+
+/** A filter value as the filter bar holds it; a list is a repeated parameter. */
+type FeedFilterValue = string | number | boolean | readonly string[] | undefined
+
+/**
+ * The site-relative feed path in `locale`, narrowed by the filter bar's `filters`, so it works on
+ * every environment. The feed takes the list's filter names and no dates, so a filtered URL is a
+ * saved search. An empty or false value is left out, as the list leaves it out of its URL.
+ */
+export function feedPath(
+  locale: Locale,
+  filters: Readonly<Record<string, FeedFilterValue>> = {},
+): string {
+  const query = new URLSearchParams({ locale })
+  for (const [name, value] of Object.entries(filters)) {
+    for (const item of Array.isArray(value) ? value : [value]) {
+      if (item !== undefined && item !== '' && item !== false) query.append(name, String(item))
+    }
+  }
+  return `${FEED_PATH}?${query}`
+}
+
+/** The absolute URL of the feed in `locale`, from {@link SITE_URL} like every other URL here. */
+export function feedUrl(locale: Locale): string {
+  return `${SITE_URL}${feedPath(locale)}`
+}
+
 const escapeXml = (value: string) =>
   value.replace(
     /[&<>"']/g,
