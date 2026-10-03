@@ -566,9 +566,9 @@ prohibited `image_url`. The exclusion is structural.
 
 ## Flyway Migration
 
-The database schema is managed by Flyway in `events-importer`:
+Flyway in `events-importer` owns the schema. The migrations are in `events-importer/src/main/resources/db/migration/`, and
+[ADR-005](adr/ADR-005_MIGRATIONS_OWNED_BY_IMPORTER.md) says which change goes into a migration.
 
-```
-events-importer/src/main/resources/db/migration/
-└── V001__create_initial_schema.sql
-```
+[architecture/schema.sql](architecture/schema.sql) shows the schema after the newest migration, in one file. It contains every table, constraint, index,
+trigger and function. `SchemaDumpTest` generates it, and the backend build fails when it is out of date. Rewrite it with
+`./gradlew :events-importer:updateSchemaDump`. Where a field table above disagrees with that file, the file is right.

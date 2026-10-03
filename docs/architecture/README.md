@@ -1,17 +1,19 @@
 # Architecture
 
-Everything here is generated. Do not edit any of it by hand. Two kinds of file, one per layer.
+Everything here is generated. Do not edit any of it by hand. Three kinds of file.
 
-| File                  | Shows                                                                 | Regenerate with                         |
-| --------------------- | --------------------------------------------------------------------- | --------------------------------------- |
-| `*.inventory.txt`     | What one environment deploys                                          | `scripts/architecture-diagram.sh write` |
-| `modules-events-*.md` | The application modules of one backend module, and their dependencies | `./gradlew updateModuleDiagrams`        |
+| File                  | Shows                                                                 | Regenerate with                               |
+| --------------------- | --------------------------------------------------------------------- | --------------------------------------------- |
+| `*.inventory.txt`     | What one environment deploys                                          | `scripts/architecture-diagram.sh write`       |
+| `modules-events-*.md` | The application modules of one backend module, and their dependencies | `./gradlew updateModuleDiagrams`              |
+| `schema.sql`          | The database schema after the newest migration                        | `./gradlew :events-importer:updateSchemaDump` |
 
 ```sh
 scripts/architecture-diagram.sh check       # CI runs this — it fails when an inventory is out of date
 scripts/architecture-diagram.sh write       # rewrite all of them after an intended chart change
 scripts/architecture-diagram.sh render      # the picture, into build/architecture/ — not committed
 ./gradlew updateModuleDiagrams              # rewrite the three module diagrams
+./gradlew :events-importer:updateSchemaDump # rewrite schema.sql after a schema migration
 ```
 
 ## The module diagrams
@@ -28,6 +30,18 @@ same time. One shared document would be a race, and the loser of the race would 
 
 Spring Modulith's own `Documenter` also runs on every test. Its output is PlantUML, which GitHub does not render, so it stays in
 `<module>/build/spring-modulith-docs/`.
+
+## The schema
+
+[schema.sql](schema.sql) is a `pg_dump --schema-only` of the `events` schema. `SchemaDumpTest` migrates a fresh database to the newest version and dumps it.
+The test fails when the committed file differs. A migration that changes the schema therefore changes this file in the same pull request, and the reviewer
+reads the result as a diff. A data-only migration changes nothing here.
+
+Some dump lines change between runs but do not change the schema. The test removes them: the version banner, the session `SET`s and the random
+`\restrict` token.
+It leaves out `flyway_schema_history`. Two runs produce the same file.
+
+A new PostgreSQL image can change the dump output without a schema change. The test then fails, and one run of the update task corrects the file.
 
 ## The inventories
 
