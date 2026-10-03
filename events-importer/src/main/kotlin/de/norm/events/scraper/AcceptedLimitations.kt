@@ -89,6 +89,7 @@ import de.norm.events.scraper.silentgreen.SILENT_GREEN_LIMITATIONS
 import de.norm.events.scraper.sisyphos.SISYPHOS_LIMITATIONS
 import de.norm.events.scraper.so36.SO36_LIMITATIONS
 import de.norm.events.scraper.soda.SODA_LIMITATIONS
+import de.norm.events.scraper.speakeazy.SPEAKEAZY_LIMITATIONS
 import de.norm.events.scraper.supamolly.SUPAMOLLY_LIMITATIONS
 import de.norm.events.scraper.tempodrom.TEMPODROM_LIMITATIONS
 import de.norm.events.scraper.thewall.THE_WALL_LIMITATIONS
@@ -203,6 +204,7 @@ object AcceptedLimitations {
             SISYPHOS_LIMITATIONS,
             SO36_LIMITATIONS,
             SODA_LIMITATIONS,
+            SPEAKEAZY_LIMITATIONS,
             SUPAMOLLY_LIMITATIONS,
             TEMPODROM_LIMITATIONS,
             THEATER_IM_DELPHI_LIMITATIONS,

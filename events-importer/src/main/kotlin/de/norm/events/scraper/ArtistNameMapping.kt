@@ -805,7 +805,9 @@ private val KNOWN_SINGLE_ACTS: Set<String> =
         "booze & glory",
         "kai & funky von ton steine scherben",
         // A duo that releases under the ` x ` join, so [splitCrossBilled] must leave it whole (#2365).
-        "noah x petter"
+        "noah x petter",
+        // A duo named for its two members, Tobi Stock and Manfred Pankow (Speakeazy).
+        "stock & pankow"
     )
 
 /**

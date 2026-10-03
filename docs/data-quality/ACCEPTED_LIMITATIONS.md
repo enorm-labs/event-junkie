@@ -302,6 +302,11 @@ says so.
 | `SONNENRAUM`           | `PER_EVENT_PAGE`   | the programme page is the source for every night                                                                                                 | —     |
 | `SONNENRAUM`           | `PRICE`            | the programme lists times and the line-up only, never an admission price                                                                         | —     |
 | `SONNENRAUM`           | `IMAGE`            | the programme is text only; the site's only images are its logos                                                                                 | —     |
+| `SPEAKEAZY`            | `DOORS_TIME`       | the listing prints a start and an end time and no doors time                                                                                     | —     |
+| `SPEAKEAZY`            | `TICKET_URL`       | the venue sells at the door and links no ticket shop                                                                                             | —     |
+| `SPEAKEAZY`            | `PRICE_PRESALE`    | the venue prints only the box-office price                                                                                                       | —     |
+| `SPEAKEAZY`            | `GENRE`            | the listing names no style, only the blurb describes one                                                                                         | —     |
+| `SPEAKEAZY`            | `PROMOTERS`        | the venue presents every night itself                                                                                                            | —     |
 | `SUPAMOLLY`            | `PRICE`            | the venue publishes no prices                                                                                                                    | —     |
 | `SUPAMOLLY`            | `TICKET_URL`       | the venue runs no ticket shop                                                                                                                    | —     |
 | `THE_WALL`             | `DOORS_TIME`       | each producer states one time per show, doors for some and the start for others                                                                  | —     |

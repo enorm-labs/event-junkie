@@ -105,6 +105,7 @@
 ###   SO36                 — https://www.so36.com/tickets
 ###   Soda Club            — https://www.soda-berlin.de/events
 ###   Sonnenraum           — https://clubdervisionaere.com/programm/
+###   Speakeazy            — https://www.speakeazyberlin.de/events
 ###   Supamolly            — https://www.supamolly.de/?p=programm
 ###   Tempodrom            — https://www.tempodrom.de/programm-und-tickets/
 ###   The Wall Comedy Club — https://thewallcomedy.com/venues/thewallcomedy/events/
@@ -5651,6 +5652,70 @@ Accept: application/json
 
 > {%
     client.test("Sonnenraum import triggered", function () {
+        client.assert(response.status === 202, "Expected 202 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
+### Speakeazy (Kulmer Str. 20A, Berlin-Schöneberg — in the backyard)
+### ————————————————————————————————————————————————————————————
+
+### --- Create Speakeazy venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Speakeazy",
+    "address": "Kulmer Str. 20A",
+    "city": "Berlin",
+    "postalCode": "10783",
+    "district": "schoeneberg",
+    "latitude": 52.492183,
+    "longitude": 13.363712,
+    "websiteUrl": "https://www.speakeazyberlin.de",
+    "description": "A former backyard theatre in Schöneberg, rebuilt as a 70-seat live stage with its own recording studios, so every show can be recorded and filmed, with folk, rock, jazz and classical concerts, cabaret, theatre and readings.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Ein ehemaliges Hinterhoftheater in Schöneberg, umgebaut zur Livebühne mit 70 Plätzen und eigenen Tonstudios, in denen jeder Auftritt aufgezeichnet und gefilmt werden kann, mit Folk-, Rock-, Jazz- und Klassikkonzerten, Kabarett, Theater und Lesungen.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["live-venue"],
+    "capacity": 70
+}
+
+> {%
+    client.global.set("speakeazy_venue_id", response.body.id);
+    client.test("Speakeazy venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Create Speakeazy event source ---
+# Links the venue to the SpeakeazyWebsiteImporter.
+# The sourceType "SPEAKEAZY" matches EventSource.SPEAKEAZY.
+POST {{importer-host}}/api/admin/event-sources
+Content-Type: application/json
+
+{
+    "venueId": {{speakeazy_venue_id}},
+    "name": "Speakeazy",
+    "url": "https://www.speakeazyberlin.de/events",
+    "sourceType": "SPEAKEAZY",
+    "enabled": true,
+    "importIntervalMinutes": 1440,
+    "maxRetries": 3
+}
+
+> {%
+    client.test("Speakeazy event source created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Trigger initial Speakeazy import ---
+POST {{importer-host}}/api/admin/event-sources/speakeazy/import
+Accept: application/json
+
+> {%
+    client.test("Speakeazy import triggered", function () {
         client.assert(response.status === 202, "Expected 202 but got " + response.status);
     });
 %}
