@@ -43,9 +43,9 @@ const { t } = useI18n()
         läuft, bleibt dein Standort in deinem Browser.
       </p>
       <p>
-        <strong>Auch die Bilder kommen von uns.</strong> Event Junkie lädt sie einmal herunter und
-        liefert sie selbst aus, sodass dein Browser beim Ansehen einer Seite keine Anfrage an Dritte
-        stellt. Abschnitt 5 sagt, was daraus folgt.
+        <strong>Auch die Bilder kommen von Event Junkie.</strong> Event Junkie lädt sie einmal
+        herunter und liefert sie selbst aus, sodass dein Browser beim Ansehen einer Seite keine
+        Anfrage an Dritte stellt. Abschnitt 5 sagt, was daraus folgt.
       </p>
     </section>
 
@@ -84,10 +84,10 @@ const { t } = useI18n()
         Sicherheit, Abwehr von Angriffen und Missbrauch sowie Fehlerdiagnose.
       </p>
       <p>
-        <strong>Rechtsgrundlage:</strong> Art. 6 Abs. 1 lit. f DSGVO. Unser berechtigtes Interesse
+        <strong>Rechtsgrundlage:</strong> Art. 6 Abs. 1 lit. f DSGVO. Mein berechtigtes Interesse
         ist der Betrieb einer funktionierenden und sicheren Website. Erwägungsgrund 49 DSGVO erkennt
-        dieses Interesse ausdrücklich an. Wir nutzen diese Daten nicht, um dich zu identifizieren
-        oder ein Profil zu bilden, und führen sie mit keinen anderen Daten zusammen.
+        dieses Interesse ausdrücklich an. Ich nutze diese Daten nicht, um dich zu identifizieren
+        oder ein Profil zu bilden, und führe sie mit keinen anderen Daten zusammen.
       </p>
       <p>
         <strong>Speicherdauer:</strong> Logdaten werden <strong>14 Tage</strong> aufbewahrt und
@@ -135,11 +135,11 @@ const { t } = useI18n()
         </li>
       </ul>
       <p>
-        Diese Werte verlassen dein Gerät nicht, werden weder an uns noch an Dritte übermittelt und
-        sind für Dritte nicht auslesbar. Alle drei sind unbedingt erforderlich, um die von dir
-        ausdrücklich gewählte Einstellung bereitzustellen, und bedürfen deshalb nach § 25 Abs. 2 Nr.
-        2 TDDDG keiner Einwilligung. Deshalb musst du hier auch kein Banner wegklicken. Du kannst
-        sie jederzeit über die Einstellungen deines Browsers löschen.
+        Diese Werte verlassen dein Gerät nicht, werden weder an Event Junkie noch an Dritte
+        übermittelt und sind für Dritte nicht auslesbar. Alle drei sind unbedingt erforderlich, um
+        die von dir ausdrücklich gewählte Einstellung bereitzustellen, und bedürfen deshalb nach §
+        25 Abs. 2 Nr. 2 TDDDG keiner Einwilligung. Deshalb musst du hier auch kein Banner
+        wegklicken. Du kannst sie jederzeit über die Einstellungen deines Browsers löschen.
       </p>
       <p>
         Sollten jemals Cookies eingesetzt werden, dann ausschließlich unbedingt erforderliche: kein
@@ -153,14 +153,14 @@ const { t } = useI18n()
         <strong>Meinen Standort verwenden</strong> wählst, fragt dein Browser, ob er deine Position
         teilen soll, und du entscheidest. Erlaubst du es, wird die Position
         <strong>nur in deinem Browser</strong> verwendet, um die Entfernung zu jeder Location zu
-        berechnen. Sie wird weder an uns noch an Dritte übermittelt, erscheint in keiner Adresse und
-        keinem Protokoll und wird nicht gespeichert: Sie ist weg, sobald du die Seite neu lädst oder
-        den Tab schließt. Auf der Eventkarte kannst du stattdessen auch einen Punkt oder eine
-        Location wählen, mit demselben Ergebnis.
+        berechnen. Sie wird weder an Event Junkie noch an Dritte übermittelt, erscheint in keiner
+        Adresse und keinem Protokoll und wird nicht gespeichert: Sie ist weg, sobald du die Seite
+        neu lädst oder den Tab schließt. Auf der Eventkarte kannst du stattdessen auch einen Punkt
+        oder eine Location wählen, mit demselben Ergebnis.
       </p>
       <p>
-        Weil die Position dein Gerät nie verlässt, haben wir keine Kopie davon, und es gibt nichts,
-        was wir löschen oder herausgeben könnten.
+        Weil die Position dein Gerät nie verlässt, habe ich keine Kopie davon, und es gibt nichts,
+        was ich löschen oder herausgeben könnte.
       </p>
     </section>
 
@@ -186,27 +186,27 @@ const { t } = useI18n()
         Künstlerprofile werden mit MusicBrainz abgeglichen, einer offenen Musikdatenbank. Wo sie
         übereinstimmen, stammen die offiziellen Links und das Bild von dort und aus Wikidata.
         Übermittelt wird nur der Künstlername. Für Bands, Orchester und Chöre stammt die
-        Kurzbeschreibung aus der Wikipedia. Kennt MusicBrainz einen Namen nicht, fragen wir Discogs
-        (Zink Media, LLC, USA) und speichern bei einem Treffer nur den Link zur Discogs-Seite; auch
-        dabei wird nur der Künstlername übermittelt. Diese Website nutzt die Discogs-API, ist aber
-        nicht mit Discogs verbunden und wird von Discogs weder gesponsert noch empfohlen. „Discogs“
-        ist eine Marke der Zink Media, LLC.
+        Kurzbeschreibung aus der Wikipedia. Kennt MusicBrainz einen Namen nicht, fragt der Importer
+        Discogs (Zink Media, LLC, USA) und speichert bei einem Treffer nur den Link zur
+        Discogs-Seite; auch dabei wird nur der Künstlername übermittelt. Diese Website nutzt die
+        Discogs-API, ist aber nicht mit Discogs verbunden und wird von Discogs weder gesponsert noch
+        empfohlen. „Discogs“ ist eine Marke der Zink Media, LLC.
       </p>
       <p>
         Die Line-ups und Spielzeiten der Wochenenden im Sisyphos stammen von sisy.fan, einem
-        inoffiziellen, von Fans betriebenen Timetable, dessen Entwickler uns die Nutzung erlaubt.
-        Wir rufen nur die Seite ab; Daten über dich werden dabei nicht übermittelt.
+        inoffiziellen, von Fans betriebenen Timetable, dessen Entwickler Event Junkie die Nutzung
+        erlaubt. Der Importer ruft nur die Seite ab; Daten über dich werden dabei nicht übermittelt.
       </p>
       <p>
         <strong>Zweck:</strong> Information der Öffentlichkeit über öffentlich angekündigte
         kulturelle Veranstaltungen.
       </p>
       <p>
-        <strong>Rechtsgrundlage:</strong> Art. 6 Abs. 1 lit. f DSGVO. Unser berechtigtes Interesse
+        <strong>Rechtsgrundlage:</strong> Art. 6 Abs. 1 lit. f DSGVO. Mein berechtigtes Interesse
         ist der Betrieb eines Veranstaltungskalenders. Die betroffenen Informationen wurden von den
         Veranstaltern bereits selbst veröffentlicht, und zwar ausdrücklich zur Bewerbung der
-        Veranstaltung; sie beschränken sich auf diesen beruflichen Kontext. Wir speichern keine
-        Kontaktdaten, keine Privatanschriften und nichts über das Privatleben.
+        Veranstaltung; sie beschränken sich auf diesen beruflichen Kontext. Event Junkie speichert
+        keine Kontaktdaten, keine Privatanschriften und nichts über das Privatleben.
       </p>
       <p>
         <strong>Speicherdauer:</strong> Veranstaltungsdaten werden nicht nach einer festen Frist
@@ -239,15 +239,15 @@ const { t } = useI18n()
         <strong>Wenn du Künstler*in bist</strong> und möchtest, dass dein Name oder eine
         Beschreibung, die dich nennt, entfernt oder korrigiert wird, schreib an
         <a :href="`mailto:${CONTROLLER.email}`">{{ CONTROLLER.email }}</a
-        >. Wir kümmern uns umgehend darum. Eine Begründung brauchst du nicht, und du musst das Thema
-        nicht öffentlich ansprechen.
+        >. Ich kümmere mich umgehend darum. Eine Begründung brauchst du nicht, und du musst das
+        Thema nicht öffentlich ansprechen.
       </p>
     </section>
 
     <section>
       <h2>5. Wer sonst beteiligt ist</h2>
       <p>
-        Wir verkaufen nichts und geben nichts zu Werbezwecken weiter. Daten werden an zwei
+        Ich verkaufe nichts und gebe nichts zu Werbezwecken weiter. Daten werden an zwei
         Dienstleister übermittelt, beide Auftragsverarbeiter mit einem Vertrag nach Art. 28 DSGVO:
       </p>
       <ul>
@@ -266,34 +266,35 @@ const { t } = useI18n()
       </ul>
       <p>
         <strong>Übermittlung in die USA.</strong> Anthropic verarbeitet diese Texte ausschließlich
-        nach unserer Weisung. Grundlage ist das Data Processing Addendum, das über die Commercial
+        nach meiner Weisung. Grundlage ist das Data Processing Addendum, das über die Commercial
         Terms of Service Bestandteil des Vertrags ist und die Standardvertragsklauseln der
         EU-Kommission einschließt (Art. 46 Abs. 2 lit. c DSGVO). Derselbe Vertrag schließt aus, dass
         die übermittelten Texte zum Training von Modellen verwendet werden.
       </p>
       <p>
         Es gibt kein Content-Delivery-Netzwerk, keinen Edge-Anbieter und keinen Proxy vor der Seite.
-        Deine Anfrage erreicht unsere Server in Deutschland direkt. An der Auslieferung dieser Seite
-        ist damit kein Drittland beteiligt. Die Übersetzung oben ist der einzige Weg, auf dem Daten
-        die EU verlassen, und sie betrifft Veranstaltungstexte, nicht deinen Besuch.
+        Deine Anfrage erreicht die Server von Event Junkie in Deutschland direkt. An der
+        Auslieferung dieser Seite ist damit kein Drittland beteiligt. Die Übersetzung oben ist der
+        einzige Weg, auf dem Daten die EU verlassen, und sie betrifft Veranstaltungstexte, nicht
+        deinen Besuch.
       </p>
       <p>
-        <strong>Für Bilder gilt das ebenso.</strong> Sie kommen von unseren Servern, weil Event
-        Junkie sie einmal herunterlädt und selbst ausliefert (Abschnitt 4). Dein Browser fragt
-        deshalb keine Location, keinen Veranstalter und keinen Ticketanbieter an, und keiner von
-        ihnen erfährt beim Ansehen einer Seite deine IP-Adresse. Wo wir ein Bild nicht speichern
-        dürfen, zeigen wir gar keines, statt es beim Anbieter zu laden.
+        <strong>Für Bilder gilt das ebenso.</strong> Sie kommen von den Servern von Event Junkie,
+        weil Event Junkie sie einmal herunterlädt und selbst ausliefert (Abschnitt 4). Dein Browser
+        fragt deshalb keine Location, keinen Veranstalter und keinen Ticketanbieter an, und keiner
+        von ihnen erfährt beim Ansehen einer Seite deine IP-Adresse. Wo Event Junkie ein Bild nicht
+        speichern darf, zeigt es gar keines, statt es beim Anbieter zu laden.
       </p>
       <p>
-        Wenn du uns per E-Mail schreibst oder ein Issue auf GitHub eröffnest, werden diese Daten zur
+        Wenn du mir per E-Mail schreibst oder ein Issue auf GitHub eröffnest, werden diese Daten zur
         Bearbeitung deines Anliegens verarbeitet (Art. 6 Abs. 1 lit. f DSGVO, bei Vertragsbezug Art.
         6 Abs. 1 lit. b DSGVO). GitHub wird von einem US-Unternehmen betrieben; ob du dort statt per
         E-Mail schreibst, entscheidest du.
       </p>
       <p>
-        <strong>Speicherdauer:</strong> Wir bewahren eine E-Mail auf, bis dein Anliegen erledigt
-        ist, und löschen sie <strong>spätestens ein Jahr danach</strong>. Das Jahr deckt Rückfragen
-        zum selben Anliegen ab.
+        <strong>Speicherdauer:</strong> Ich bewahre eine E-Mail auf, bis dein Anliegen erledigt ist,
+        und lösche sie <strong>spätestens ein Jahr danach</strong>. Das Jahr deckt Rückfragen zum
+        selben Anliegen ab.
       </p>
     </section>
 
@@ -313,21 +314,21 @@ const { t } = useI18n()
         einzelne Person aus einer Sicherung herauszulösen würde deren Zweck zerstören und wäre
         technisch nur unter Inkaufnahme neuer Risiken möglich. Die Daten laufen daher mit der
         Sicherung selbst aus, also spätestens nach 35 Tagen. Muss eine Sicherung zwischenzeitlich
-        eingespielt werden, wenden wir die Löschung danach erneut an.
+        eingespielt werden, wende ich die Löschung danach erneut an.
       </p>
       <p>
-        <strong>Widerspruchsrecht (Art. 21 DSGVO).</strong> Da wir uns auf berechtigte Interessen
-        nach Art. 6 Abs. 1 lit. f DSGVO stützen, hast du das Recht, jederzeit aus Gründen, die sich
+        <strong>Widerspruchsrecht (Art. 21 DSGVO).</strong> Da ich mich auf berechtigte Interessen
+        nach Art. 6 Abs. 1 lit. f DSGVO stütze, hast du das Recht, jederzeit aus Gründen, die sich
         aus deiner besonderen Situation ergeben, gegen die Verarbeitung deiner personenbezogenen
-        Daten Widerspruch einzulegen. Legst du Widerspruch ein, verarbeiten wir die betroffenen
-        Daten nicht mehr, es sei denn, wir können zwingende schutzwürdige Gründe nachweisen, die
-        deine Interessen, Rechte und Freiheiten überwiegen. Ein Widerspruch ist kostenlos und
-        formlos. Eine E-Mail genügt.
+        Daten Widerspruch einzulegen. Legst du Widerspruch ein, verarbeite ich die betroffenen Daten
+        nicht mehr, es sei denn, ich kann zwingende schutzwürdige Gründe nachweisen, die deine
+        Interessen, Rechte und Freiheiten überwiegen. Ein Widerspruch ist kostenlos und formlos.
+        Eine E-Mail genügt.
       </p>
       <p>
         <strong>Beschwerderecht.</strong> Du kannst dich bei einer Aufsichtsbehörde beschweren,
         insbesondere im Mitgliedstaat deines gewöhnlichen Aufenthaltsorts, deines Arbeitsplatzes
-        oder des Orts des mutmaßlichen Verstoßes. Für uns zuständig ist die
+        oder des Orts des mutmaßlichen Verstoßes. Für mich zuständig ist die
         <a :href="SUPERVISORY_AUTHORITY.url" rel="noopener" target="_blank">
           {{ SUPERVISORY_AUTHORITY.name }}</a
         >.
@@ -347,7 +348,7 @@ const { t } = useI18n()
     <section>
       <h2>8. Automatisierte Entscheidungsfindung</h2>
       <p>
-        Findet nicht statt. Wir setzen keine automatisierte Entscheidungsfindung und kein Profiling
+        Findet nicht statt. Ich setze keine automatisierte Entscheidungsfindung und kein Profiling
         im Sinne von Art. 22 DSGVO ein.
       </p>
     </section>

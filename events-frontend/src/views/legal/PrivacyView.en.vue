@@ -40,9 +40,9 @@ const { t } = useI18n()
         list view you chose. If you ask a map what is near you, your position stays in your browser.
       </p>
       <p>
-        <strong>Images come from us too.</strong> Event Junkie downloads them once and serves them
-        itself, so viewing a page sends your browser to nobody else. Section 5 says what follows
-        from that.
+        <strong>Images come from Event Junkie too.</strong> Event Junkie downloads them once and
+        serves them itself, so viewing a page sends your browser to nobody else. Section 5 says what
+        follows from that.
       </p>
     </section>
 
@@ -79,8 +79,8 @@ const { t } = useI18n()
         against attacks and abuse, and diagnosing faults.
       </p>
       <p>
-        <strong>Legal basis:</strong> Art. 6 (1) (f) GDPR. Our legitimate interest is operating a
-        functioning, secure website. Recital 49 GDPR recognises that interest. We do not use this
+        <strong>Legal basis:</strong> Art. 6 (1) (f) GDPR. My legitimate interest is operating a
+        functioning, secure website. Recital 49 GDPR recognises that interest. I do not use this
         data to identify you or to build a profile, and it is not combined with anything else.
       </p>
       <p>
@@ -124,11 +124,11 @@ const { t } = useI18n()
         </li>
       </ul>
       <p>
-        These values never leave your device, are not transmitted to us or to anyone else, and are
-        not readable by any third party. All three are strictly necessary to provide the setting you
-        explicitly chose, so under § 25 (2) 2 TDDDG they require no consent. That is why you are not
-        being asked to dismiss a banner. You can clear them at any time through your browser
-        settings.
+        These values never leave your device, are not transmitted to Event Junkie or to anyone else,
+        and are not readable by any third party. All three are strictly necessary to provide the
+        setting you explicitly chose, so under § 25 (2) 2 TDDDG they require no consent. That is why
+        you are not being asked to dismiss a banner. You can clear them at any time through your
+        browser settings.
       </p>
       <p>
         Should cookies ever be introduced, they will be strictly necessary (essential) ones only: no
@@ -141,13 +141,14 @@ const { t } = useI18n()
         Only when you choose
         <strong>Use my location</strong> does your browser ask whether to share your position, and
         you decide. If you allow it, the position is used <strong>only in your browser</strong>, to
-        measure the distance to each venue. It is not sent to us or to anyone else, it appears in no
-        address and no log, and it is not stored: it is gone when you reload the page or close the
-        tab. On the events map you can pick a point or a venue instead, with the same result.
+        measure the distance to each venue. It is not sent to Event Junkie or to anyone else, it
+        appears in no address and no log, and it is not stored: it is gone when you reload the page
+        or close the tab. On the events map you can pick a point or a venue instead, with the same
+        result.
       </p>
       <p>
-        Because the position never leaves your device, we hold no copy of it, and there is nothing
-        for us to delete or disclose.
+        Because the position never leaves your device, I hold no copy of it, and there is nothing
+        for me to delete or disclose.
       </p>
     </section>
 
@@ -171,25 +172,25 @@ const { t } = useI18n()
         Artist profiles are checked against MusicBrainz, an open music database. Where they match,
         the official links and the picture come from there and from Wikidata. Only the artist's
         stage name is sent. For bands, orchestras and choirs, the short description comes from
-        Wikipedia. Where MusicBrainz does not know a name, we ask Discogs (Zink Media, LLC, USA) and
-        store only the link to the Discogs page on a match; again only the stage name is sent. This
-        website uses the Discogs API but is not affiliated with, sponsored or endorsed by Discogs.
-        “Discogs” is a trademark of Zink Media, LLC.
+        Wikipedia. Where MusicBrainz does not know a name, the importer asks Discogs (Zink Media,
+        LLC, USA) and store only the link to the Discogs page on a match; again only the stage name
+        is sent. This website uses the Discogs API but is not affiliated with, sponsored or endorsed
+        by Discogs. “Discogs” is a trademark of Zink Media, LLC.
       </p>
       <p>
         The line-ups and set times of the weekends at Sisyphos come from sisy.fan, an unofficial
-        timetable run by fans, which its developer allows us to use. We only fetch its page; nothing
-        about you is sent to it.
+        timetable run by fans, which its developer allows Event Junkie to use. The importer only
+        fetches its page; nothing about you is sent to it.
       </p>
       <p>
         <strong>Purpose:</strong> informing the public about publicly announced cultural events.
       </p>
       <p>
-        <strong>Legal basis:</strong> Art. 6 (1) (f) GDPR. Our legitimate interest is providing an
+        <strong>Legal basis:</strong> Art. 6 (1) (f) GDPR. My legitimate interest is providing an
         events guide. The information concerned has already been published by the organiser for the
-        express purpose of promoting the event, and is limited to that professional context. We
-        store no contact details, no private addresses and no information about anyone's private
-        life.
+        express purpose of promoting the event, and is limited to that professional context. Event
+        Junkie stores no contact details, no private addresses and no information about anyone's
+        private life.
       </p>
       <p>
         <strong>Retention:</strong> event data is not deleted after a fixed period. Past events are
@@ -220,7 +221,7 @@ const { t } = useI18n()
         <strong>If you are an artist</strong> and would like your name, or a description that names
         you, removed or corrected, write to
         <a :href="`mailto:${CONTROLLER.email}`">{{ CONTROLLER.email }}</a>
-        and we will deal with it promptly. You do not need to give a reason, and you do not have to
+        and I will deal with it promptly. You do not need to give a reason, and you do not have to
         raise it in public.
       </p>
     </section>
@@ -228,7 +229,7 @@ const { t } = useI18n()
     <section>
       <h2>5. Who else is involved</h2>
       <p>
-        We sell nothing, and we share nothing for advertising. Data is disclosed to two service
+        I sell nothing, and I share nothing for advertising. Data is disclosed to two service
         providers, each a processor bound by a contract under Art. 28 GDPR:
       </p>
       <ul>
@@ -245,7 +246,7 @@ const { t } = useI18n()
         </li>
       </ul>
       <p>
-        <strong>Transfer to the USA.</strong> Anthropic processes these texts on our instruction
+        <strong>Transfer to the USA.</strong> Anthropic processes these texts on my instruction
         only. The basis is the Data Processing Addendum, which is part of the contract through the
         Commercial Terms of Service and includes the European Commission's standard contractual
         clauses (Art. 46 (2) (c) GDPR). The same contract rules out using the transmitted texts to
@@ -253,24 +254,24 @@ const { t } = useI18n()
       </p>
       <p>
         There is no content delivery network, no edge provider and no traffic proxy in front of the
-        site. Your request reaches our servers in Germany directly, so no third country is involved
-        in delivering this site to you. The translation above is the only path on which data leaves
-        the EU, and it carries event texts rather than anything about your visit.
+        site. Your request reaches Event Junkie's servers in Germany directly, so no third country
+        is involved in delivering this site to you. The translation above is the only path on which
+        data leaves the EU, and it carries event texts rather than anything about your visit.
       </p>
       <p>
-        <strong>That holds for images as well.</strong> They come from our servers, because Event
-        Junkie downloads each one and serves it itself (section 4). Your browser therefore contacts
-        no venue, promoter or ticket seller, and none of them learns your IP address when you look
-        at a page. Where we may not store an image, we show none at all rather than loading it from
-        the provider.
+        <strong>That holds for images as well.</strong> They come from Event Junkie's servers,
+        because Event Junkie downloads each one and serves it itself (section 4). Your browser
+        therefore contacts no venue, promoter or ticket seller, and none of them learns your IP
+        address when you look at a page. Where Event Junkie may not store an image, it shows none at
+        all rather than loading it from the provider.
       </p>
       <p>
-        If you contact us by email, or open an issue on GitHub, that data is processed to handle
+        If you contact me by email, or open an issue on GitHub, that data is processed to handle
         your request (Art. 6 (1) (f), or Art. 6 (1) (b) where it concerns a contract). GitHub is
         operated by a US company; choosing to write there rather than by email is yours.
       </p>
       <p>
-        <strong>Retention:</strong> we keep an email until your request is dealt with, and delete it
+        <strong>Retention:</strong> I keep an email until your request is dealt with, and delete it
         <strong>one year after that at the latest</strong>. The year covers follow-up questions
         about the same request.
       </p>
@@ -280,7 +281,7 @@ const { t } = useI18n()
       <h2>6. Your rights</h2>
       <p>Under the GDPR you have the right to:</p>
       <ul>
-        <li>access the personal data we hold about you (Art. 15)</li>
+        <li>access the personal data I hold about you (Art. 15)</li>
         <li>have inaccurate data corrected (Art. 16)</li>
         <li>have data erased (Art. 17)</li>
         <li>have processing restricted (Art. 18)</li>
@@ -291,19 +292,19 @@ const { t } = useI18n()
         the live system. Backups are not edited individually. Extracting one person from a backup
         would destroy its purpose, and would only be technically possible by accepting new risks.
         The data therefore expires with the backup itself, so within 35 days at most. If a backup
-        has to be restored in the meantime, we re-apply the erasure afterwards.
+        has to be restored in the meantime, I re-apply the erasure afterwards.
       </p>
       <p>
-        <strong>Right to object (Art. 21 GDPR).</strong> Because we rely on legitimate interests
+        <strong>Right to object (Art. 21 GDPR).</strong> Because I rely on legitimate interests
         under Art. 6 (1) (f), you have the right to object at any time, on grounds relating to your
-        particular situation, to processing of your personal data. If you object, we will stop
-        processing unless we can demonstrate compelling legitimate grounds that override your
+        particular situation, to processing of your personal data. If you object, I will stop
+        processing unless I can demonstrate compelling legitimate grounds that override your
         interests, rights and freedoms. An objection is free and informal, and an email is enough.
       </p>
       <p>
         <strong>Right to complain.</strong> You may lodge a complaint with a supervisory authority,
         in particular in the member state of your habitual residence, your place of work, or the
-        place of the alleged infringement. The authority responsible for us is the
+        place of the alleged infringement. The authority responsible for me is the
         <a :href="SUPERVISORY_AUTHORITY.url" rel="noopener" target="_blank">
           {{ SUPERVISORY_AUTHORITY.name }}</a
         >.
@@ -322,7 +323,7 @@ const { t } = useI18n()
     <section>
       <h2>8. Automated decision-making</h2>
       <p>
-        There is none. We do not use automated decision-making or profiling within the meaning of
+        There is none. I do not use automated decision-making or profiling within the meaning of
         Art. 22 GDPR.
       </p>
     </section>

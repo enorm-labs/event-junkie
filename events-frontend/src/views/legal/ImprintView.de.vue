@@ -49,7 +49,7 @@ const { t } = useI18n()
       </p>
       <p>
         Für alles, was die Seite selbst betrifft (falsche Event-Daten, ein Fehler, eine Location,
-        die wir aufnehmen sollten), erreicht uns ein Issue auf
+        die auf die Seite gehört), erreicht mich ein Issue auf
         <a href="https://github.com/enorm-labs/event-junkie/issues" rel="noopener" target="_blank">
           GitHub
         </a>
@@ -73,7 +73,7 @@ const { t } = useI18n()
         keinen Handelsregistereintrag, keine Umsatzsteuer-Identifikationsnummer nach § 27a UStG,
         keine Aufsichtsbehörde und keine reglementierte Berufsbezeichnung. Über diese Seite werden
         keine Verbraucherverträge geschlossen, daher ist § 36 VSBG nicht anwendbar. Zur Teilnahme an
-        einem Streitbeilegungsverfahren vor einer Verbraucherschlichtungsstelle sind wir weder
+        einem Streitbeilegungsverfahren vor einer Verbraucherschlichtungsstelle bin ich weder
         verpflichtet noch bereit.
       </p>
     </section>
@@ -86,21 +86,21 @@ const { t } = useI18n()
         Die Veranstaltungsdaten auf dieser Seite werden automatisiert aus öffentlich zugänglichen
         Quellen zusammengetragen. Alle Angaben erfolgen ohne Gewähr für Richtigkeit, Vollständigkeit
         und Aktualität. Veranstaltungen können verlegt, ausverkauft oder abgesagt werden, nachdem
-        wir die Quelle zuletzt gelesen haben. Prüfe Details deshalb immer bei der Location oder beim
-        offiziellen Ticketanbieter, bevor du losziehst. Für Entscheidungen, die auf Grundlage der
-        hier gezeigten Informationen getroffen werden, wird keine Haftung übernommen.
+        der Importer die Quelle zuletzt gelesen hat. Prüfe Details deshalb immer bei der Location
+        oder beim offiziellen Ticketanbieter, bevor du losziehst. Für Entscheidungen, die auf
+        Grundlage der hier gezeigten Informationen getroffen werden, wird keine Haftung übernommen.
       </p>
     </section>
 
     <section>
       <h2>Haftung für Links</h2>
       <p>
-        Diese Seite verlinkt auf externe Websites, auf deren Inhalte wir keinen Einfluss haben. Für
-        diese Inhalte ist der jeweilige Anbieter verantwortlich. Die meisten Links setzt unser
-        Import automatisch auf die Seiten der Locations und Ticketanbieter. Wir prüfen sie nicht
+        Diese Seite verlinkt auf externe Websites, auf deren Inhalte ich keinen Einfluss habe. Für
+        diese Inhalte ist der jeweilige Anbieter verantwortlich. Die meisten Links setzt der
+        Importer automatisch auf die Seiten der Locations und Ticketanbieter. Ich prüfe sie nicht
         einzeln. Eine permanente inhaltliche Kontrolle ohne konkrete Anhaltspunkte für eine
-        Rechtsverletzung ist nicht zumutbar. Sobald uns eine Rechtsverletzung bekannt wird,
-        entfernen wir den entsprechenden Link umgehend.
+        Rechtsverletzung ist nicht zumutbar. Sobald mir eine Rechtsverletzung bekannt wird, entferne
+        ich den entsprechenden Link umgehend.
       </p>
     </section>
 
@@ -117,7 +117,7 @@ const { t } = useI18n()
         >. Veranstaltungsbeschreibungen, Bilder und sonstige Materialien, die von Locations,
         Veranstaltern und Künstler*innen stammen, bleiben Eigentum der jeweiligen
         Rechteinhaber*innen und werden von dieser Lizenz nicht erfasst. Wer Rechte an hier gezeigtem
-        Material hält und dessen Entfernung wünscht, schreibt uns. Wir kümmern uns umgehend darum.
+        Material hält und dessen Entfernung wünscht, schreibt mir. Ich kümmere mich umgehend darum.
       </p>
     </section>
   </LegalPage>

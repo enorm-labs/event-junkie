@@ -181,7 +181,7 @@ const PRIVACY_ELEMENTS: Element[] = [
   {
     what: 'erasure reconciled with backups',
     en: /re-apply the erasure/i,
-    de: /wenden wir die Löschung danach erneut an/i,
+    de: /wende ich die Löschung danach erneut an/i,
   },
   { what: 'right of access', en: /Art\. 15/, de: /Art\. 15 DSGVO/ },
   { what: 'right to rectification', en: /Art\. 16/, de: /Art\. 16 DSGVO/ },
@@ -234,8 +234,8 @@ const PRIVACY_ELEMENTS: Element[] = [
   {
     // #358: "near me" measures on the device. A server-side radius would make this false.
     what: 'that the location for "near me" never leaves the browser',
-    en: /used only in your browser.*It is not sent to us or to anyone else/s,
-    de: /nur in deinem Browser verwendet.*weder an uns noch an Dritte übermittelt/s,
+    en: /used only in your browser.*It is not sent to Event Junkie or to anyone else/s,
+    de: /nur in deinem Browser verwendet.*weder an Event Junkie noch an Dritte übermittelt/s,
   },
 ]
 
@@ -245,12 +245,12 @@ const FOR_VENUES_ELEMENTS: Element[] = [
   {
     what: 'that the source is switched off',
     en: /disable the source/i,
-    de: /schalten die Quelle ab/i,
+    de: /schalte die Quelle ab/i,
   },
   {
     what: 'that the events already imported are deleted too',
     en: /remove that venue's events/i,
-    de: /löschen die Veranstaltungen/i,
+    de: /lösche die Veranstaltungen/i,
   },
   {
     what: 'the seven-day answer',
@@ -268,20 +268,20 @@ const FOR_VENUES_ELEMENTS: Element[] = [
     // #807 decided that PROHIBITED stops storage, not only display: the material is deleted, not
     // hidden behind a gate.
     what: 'that the objected-to material is deleted rather than hidden',
-    en: /delete\s+the material you objected to from our database/i,
-    de: /löschen das beanstandete Material aus der Datenbank/i,
+    en: /delete\s+the material you objected to from the database/i,
+    de: /lösche\s+das beanstandete Material aus der Datenbank/i,
   },
   // `DELETE /api/admin/images/venues/{slug}` makes this true: a stored object outlives a takedown
   // unless something deletes it, so the page may only promise this while the endpoint exists.
   {
     what: "that the stored copies of a venue's images are deleted too",
     en: /delete the stored copies of your images/i,
-    de: /löschen die gespeicherten Kopien eurer Bilder/i,
+    de: /lösche die gespeicherten Kopien eurer Bilder/i,
   },
   {
     what: 'that no reason is asked for',
     en: /do not ask for a reason/i,
-    de: /fragen nicht nach einem Grund/i,
+    de: /frage nicht nach einem Grund/i,
   },
   // The second route, cheaper for both sides. Dropping it leaves the page describing only the slow
   // half of §5.
@@ -292,8 +292,8 @@ const FOR_VENUES_ELEMENTS: Element[] = [
   },
   {
     what: 'that robots.txt is checked on every request',
-    en: /check every request against it/i,
-    de: /prüfen jede Anfrage dagegen/i,
+    en: /checks every request against it/i,
+    de: /prüft jede Anfrage dagegen/i,
   },
 ]
 

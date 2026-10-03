@@ -5,7 +5,7 @@
 **Please do not open a public issue for a security problem.**
 
 Use [GitHub's private vulnerability reporting form](https://github.com/enorm-labs/event-junkie/security/advisories/new). It is confidential, it reaches the
-maintainer directly, and it gives us a private place to discuss and fix the issue before anything is disclosed.
+maintainer directly, and it gives us both a private place to discuss and fix the issue before anything is disclosed.
 
 **security@event-junkie.de** works as an alternative. The advisory form above is still the better route for anything you would rather not put in plain SMTP:
 the form is encrypted in transit and at rest, and this mailbox is not.
@@ -18,7 +18,7 @@ This is a single-maintainer project, so there is no formal SLA. What you can exp
 - **An assessment and a plan** once the report is understood. "This is not a vulnerability" is a possible outcome, and it comes with the reasoning.
 - **Credit in the release notes** for the fix, unless you would rather stay anonymous. Say which you prefer.
 
-We will not take legal action against anyone who reports a problem in good faith, stays within the scope below, and gives us a reasonable chance to fix it
+I will not take legal action against anyone who reports a problem in good faith, stays within the scope below, and gives me a reasonable chance to fix it
 before going public.
 
 ### What is useful in a report
@@ -35,20 +35,20 @@ The public site is <https://event-junkie.de>. Staging has no public address and 
 - The three backend modules (`events-core`, `events-bff`, `events-importer`) and the frontend (`events-frontend`).
 - The Helm chart in `deploy/` and the OpenTofu in `infra/` — they are the deployment, and a misconfiguration there is as real as one in code.
 - The public site at `event-junkie.de` and its API. Read-only probing is fine; anything that degrades the service for other visitors is not.
-- Injection, authorisation gaps, unsafe deserialisation, SSRF in the scrapers, secrets committed to the repository, or a dependency vulnerability we have
+- Injection, authorisation gaps, unsafe deserialisation, SSRF in the scrapers, secrets committed to the repository, or a dependency vulnerability I have
   not noticed.
 - The scrapers are worth a particular look. They fetch and parse untrusted HTML from dozens of third-party sites, which is the largest untrusted-input surface
   in the project by a wide margin.
 
 **Out of scope**
 
-- The third-party venue websites the importer reads from. They are not ours; please do not test against them.
+- The third-party venue websites the importer reads from. They are not part of this project; please do not test against them.
 - Findings that require access to a developer's machine, to the cluster, or to the repository's secrets.
 - Denial of service, rate-limit exhaustion, or anything else whose only demonstration is making the site slow or unavailable.
-- Automated scanner output with no demonstrated impact. We already run the scanners listed below, so a report that repeats their output is not useful unless
+- Automated scanner output with no demonstrated impact. The scanners listed below already run, so a report that repeats their output is not useful unless
   you can show why it matters here.
 
-## What we already do
+## What already runs
 
 So you know what ground is covered, and where a report is most likely to find something new:
 

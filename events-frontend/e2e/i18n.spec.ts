@@ -261,7 +261,7 @@ test('the venue opt-out page is German under /de, route and all', async ({ page 
   const main = page.getByRole('main')
 
   await expect(page.getByRole('heading', { level: 1, name: 'Für Locations' })).toBeVisible()
-  await expect(main).toContainText('schalten die Quelle ab')
+  await expect(main).toContainText('schalte die Quelle ab')
   await expect(main).toContainText('innerhalb von sieben Tagen')
   await expect(main).not.toContainText('disable the source')
 })

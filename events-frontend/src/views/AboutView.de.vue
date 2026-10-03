@@ -39,9 +39,9 @@ const localePath = useLocalePath()
         Filmvorführungen und Open-Air-Kino, Ausstellungseröffnungen und ab und zu ein Kneipenquiz.
       </p>
       <p class="text-muted-foreground">
-        Wenn eine Location selbst sagt, was für ein Abend das ist, übernehmen wir das. Punk, Jazz,
-        Indie, Metal, Klassik-Crossover, Drag und Singer-Songwriter-Abende stehen im selben Feed wie
-        die Clubtermine.
+        Wenn eine Location selbst sagt, was für ein Abend das ist, übernimmt Event Junkie das. Punk,
+        Jazz, Indie, Metal, Klassik-Crossover, Drag und Singer-Songwriter-Abende stehen im selben
+        Feed wie die Clubtermine.
       </p>
       <p class="text-muted-foreground">
         <strong class="font-medium text-foreground">Ein paar Dinge fehlen mit Absicht.</strong>
@@ -207,8 +207,8 @@ const localePath = useLocalePath()
     <section id="beta" class="scroll-mt-8 space-y-4 pt-4">
       <h2 class="text-section font-bold tracking-tight">Warum da beta steht</h2>
       <p class="text-muted-foreground">
-        Event Junkie ist noch jung. Es funktioniert, und wir nutzen es selbst jede Woche. Aber es
-        ist noch nicht fertig, und das solltest du wissen, bevor du deinen Abend danach planst.
+        Event Junkie ist noch jung. Es funktioniert, und ich nutze es selbst jede Woche. Aber es ist
+        noch nicht fertig, und das solltest du wissen, bevor du deinen Abend danach planst.
       </p>
       <p class="text-muted-foreground">
         <strong class="font-medium text-foreground">Es fehlen noch Locations.</strong> Neue kommen
@@ -217,9 +217,9 @@ const localePath = useLocalePath()
         <strong class="font-medium text-foreground"
           >Details können falsch oder veraltet sein.</strong
         >
-        Wir lesen die Events automatisch von den Websites der Locations. Wird eine Show verlegt, ist
-        sie ausverkauft oder fällt sie aus, erfahren wir das erst beim nächsten Durchlauf. Frag im
-        Zweifel bei der Location nach, bevor du losziehst.
+        Der Importer liest die Events automatisch von den Websites der Locations. Wird eine Show
+        verlegt, ist sie ausverkauft oder fällt sie aus, erfährt er das erst beim nächsten
+        Durchlauf. Frag im Zweifel bei der Location nach, bevor du losziehst.
         <strong class="font-medium text-foreground">Manches ändert sich ohne Ankündigung:</strong>
         Seiten, Filter und die Daten dahinter sind noch in Bewegung.
       </p>
@@ -235,7 +235,7 @@ const localePath = useLocalePath()
         >.
       </p>
       <p class="text-muted-foreground">
-        Etwas gefunden, das nicht stimmt? Sag uns Bescheid, dann ist es am schnellsten korrigiert.
+        Etwas gefunden, das nicht stimmt? Sag mir Bescheid, dann ist es am schnellsten korrigiert.
         Schreib an
         <a
           :href="feedbackMailto('Feedback zu Event Junkie')"

@@ -34,7 +34,7 @@ contact_links:
     about: >-
       Artists and organisers — you do not need a reason and you do not have to ask in public.
       Email hello@event-junkie.de, or use this private form if you would rather not. It is
-      labelled for security because GitHub gives us one private form, not because this is one.
+      labelled for security because GitHub gives this repository one private form, not because this is one.
 
   # Questions and ideas belong in Discussions: they are conversations rather than units of work, and
   # keeping them out leaves the tracker to things that can be closed. One that turns out to be
@@ -46,4 +46,4 @@ contact_links:
   - name: 💡 Suggest a feature or an idea
     url: https://github.com/enorm-labs/event-junkie/discussions/new?category=ideas
     about: >-
-      For product ideas. To suggest a venue we should be importing, use the venue form instead.
+      For product ideas. To suggest a venue that should be on the site, use the venue form instead.
