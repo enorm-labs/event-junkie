@@ -24,13 +24,13 @@
 import http from 'k6/http'
 import {check, sleep} from 'k6'
 
-import {INSECURE, ORIGIN, WAIT_FOR_ORIGIN_SECONDS, baseThresholds, hostsOption} from './lib/config.js'
+import {INSECURE, ORIGIN, SMOKE_THRESHOLD_MS, WAIT_FOR_ORIGIN_SECONDS, baseThresholds, hostsOption} from './lib/config.js'
 import {api, checkOk, checkPage, discover, pick} from './lib/api.js'
 
 export const options = {
     vus: 1,
     iterations: 1,
-    thresholds: baseThresholds(),
+    thresholds: baseThresholds(SMOKE_THRESHOLD_MS),
     // `RESOLVE` and `INSECURE` are what reach staging over the tunnel; `lib/config.js` says how.
     hosts: hostsOption(),
     insecureSkipTLSVerify: INSECURE,
