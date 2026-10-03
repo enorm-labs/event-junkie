@@ -91,6 +91,9 @@ enum class EventSource {
     /** Duncker Club Berlin – a long-running goth, wave and indie club in Prenzlauer Berg. */
     DUNCKER,
 
+    /** Erreichbar – a bar in the back building of Reichenberger Straße 63a in Kreuzberg, with a punk bar night every second Thursday. */
+    ERREICHBAR,
+
     /** Eschschloraque Rümschrümp Berlin – a Künstlerclub in a Mitte backyard off Rosenthaler Straße, mixing DJ nights, live sets and variety evenings. */
     ESCHSCHLORAQUE,
 

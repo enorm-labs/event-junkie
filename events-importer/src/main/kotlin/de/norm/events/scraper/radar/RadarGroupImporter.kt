@@ -33,6 +33,9 @@ abstract class RadarGroupImporter(
     /** The acts and the genre a row bills. */
     protected open fun lineup(event: RadarEvent): Lineup = Lineup()
 
+    /** The row's event type; a venue whose radar category misnames its nights overrides it. */
+    protected open fun eventType(event: RadarEvent): String? = event.eventType
+
     override suspend fun importEvents(
         url: String,
         etag: String?,
@@ -55,7 +58,7 @@ abstract class RadarGroupImporter(
         return ScrapedEvent(
             title = event.title,
             description = event.description,
-            eventType = event.eventType,
+            eventType = eventType(event),
             eventDate = event.start.toLocalDate(),
             startTime = event.start.toLocalTime(),
             endDate = event.end?.toLocalDate(),

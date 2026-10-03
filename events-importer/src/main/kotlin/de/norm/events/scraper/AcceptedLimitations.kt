@@ -33,6 +33,7 @@ import de.norm.events.scraper.delphi.THEATER_IM_DELPHI_LIMITATIONS
 import de.norm.events.scraper.derweissehase.DER_WEISSE_HASE_LIMITATIONS
 import de.norm.events.scraper.drugstore.DRUGSTORE_LIMITATIONS
 import de.norm.events.scraper.duncker.DUNCKER_LIMITATIONS
+import de.norm.events.scraper.erreichbar.ERREICHBAR_LIMITATIONS
 import de.norm.events.scraper.eschschloraque.ESCHSCHLORAQUE_LIMITATIONS
 import de.norm.events.scraper.festsaal.FESTSAAL_LIMITATIONS
 import de.norm.events.scraper.frannz.FRANNZ_LIMITATIONS
@@ -136,6 +137,7 @@ object AcceptedLimitations {
             DER_WEISSE_HASE_LIMITATIONS,
             DRUGSTORE_LIMITATIONS,
             DUNCKER_LIMITATIONS,
+            ERREICHBAR_LIMITATIONS,
             ESCHSCHLORAQUE_LIMITATIONS,
             FESTSAAL_LIMITATIONS,
             FITZROY_LIMITATIONS,
