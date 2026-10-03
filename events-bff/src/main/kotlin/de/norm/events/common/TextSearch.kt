@@ -6,7 +6,7 @@ import de.norm.events.EVENTS_SCHEMA
  * The one matching rule behind every `q` the public API takes (#2428): events, venues, promoters,
  * artists.
  *
- * A searched column `x` has a stored folded twin `x_search` (V087), and the term folds through
+ * A searched column `x` has a stored folded twin `x_search` (V090), and the term folds through
  * `search_norm`, so `aeden` finds `ÆDEN` and both `neukolln` and `neukoelln` find `Neukölln`. Spaces
  * are dropped before the substring test, so `kit kat` finds `KitKatClub`.
  *
