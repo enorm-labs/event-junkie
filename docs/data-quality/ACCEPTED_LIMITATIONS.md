@@ -201,6 +201,11 @@ says so.
 | `OHM`                  | `PRICE`            | the programme page carries no price                                                                                                              | —     |
 | `OHM`                  | `TICKET_URL`       | the programme page links no ticket shop                                                                                                          | —     |
 | `OHM`                  | `EVENT_TYPE`       | the venue publishes no categories; every night is a DJ programme                                                                                 | —     |
+| `ORANIA`               | `DOORS_TIME`       | the venue states one time per concert, which is taken as the start                                                                               | —     |
+| `ORANIA`               | `END_TIME`         | every concert is billed open end                                                                                                                 | —     |
+| `ORANIA`               | `PRICE`            | entry is free to every concert                                                                                                                   | —     |
+| `ORANIA`               | `TICKET_URL`       | entry is free and the venue sells no tickets                                                                                                     | —     |
+| `ORANIA`               | `GENRE`            | the venue tags a series such as piano or grooves, never a genre; every concert takes the house's jazz                                            | —     |
 | `PANKE`                | `PER_EVENT_PAGE`   | the venue expands each event's full text inline and publishes no page per event                                                                  | —     |
 | `PANKE`                | `EVENT_TYPE`       | no category is published and titles name a series; a format word or live show in the title, or a Resident Advisor lineup, types an event         | —     |
 | `PANKE`                | `DOORS_TIME`       | only an event whose body prints a `Doors … · Concert …` line states two clocks; for the rest the venue publishes one and calls it the start      | —     |

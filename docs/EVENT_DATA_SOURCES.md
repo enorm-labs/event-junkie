@@ -98,6 +98,7 @@ schema change.
 | MS Hoppetosse                    | https://hoppetosse.berlin/                                  | Techno Club  | Shares the CdV listing; winter location only           |
 | Neue Zukunft                     | https://neue-zukunft.org/                                   | Club         | Elfsight Event Calendar widget API                     |
 | OHM                              | https://ohmberlin.com/                                      | Techno Club  | Year-less dd/MM; only 1–3 nights listed at a time      |
+| Orania.Berlin                    | https://orania.berlin/concerts                              | Bar          | TYPO3 Calendarize; three pages of ten; always free     |
 | Panke Culture                    | https://www.pankeculture.com/programme/                     | Club         | WordPress/Divi; upcoming list only; no event pages     |
 | Parkbühne Wuhlheide              | https://www.wuhlheide.de/programm                           | Open Air     | October CMS; ISO date in URL; seasonal, sold-out       |
 | Privatclub                       | https://privatclub-berlin.de/                               | Club         | Rich detail pages; genre, presale + AK prices          |
@@ -133,7 +134,7 @@ schema change.
 | Zitadelle                        | https://citadel-music-festival.de/events                    | Open Air     | Festival site; WordPress/EM; summer season only        |
 | Zur Klappe                       | https://zurklappe.org/events                                | Techno Club  | Next.js flight payload; no genre or prices             |
 
-87 importer classes cover 88 sources. Only Kantine am Berghain has no class of its own, and it shares the Berghain
+88 importer classes cover 89 sources. Only Kantine am Berghain has no class of its own, and it shares the Berghain
 importer outright. Three other groups share a _listing and parser_ while keeping one thin `@Component` per venue, so
 they do not reduce the count. They are Club der Visionäre with Sonnenraum and MS Hoppetosse, the three Velomax halls,
 and Uber Arena with the Uber Eats Music Hall.
@@ -158,13 +159,12 @@ least as heavily as an RA count when the next batch is prioritised.
 | ------------------ | ---------------------------------------------- | ----------- | -------- | ----------------------------------------------------------- |
 | KAOS Berlin        | https://kaosberlin.de/veranstaltungen/         | Techno Club | Low      | The Events Calendar REST API, as Cosmic Comedy; 4 upcoming  |
 | DSTRKT Club Berlin | https://www.dstrkt.de/                         | Club        | Low      | Wix one-pager; 2 dated events, which is the whole programme |
-| Orania.Berlin      | https://orania.berlin/concerts                 | Bar         | Medium   | TYPO3; `/concerts/page/N`; `Event` JSON-LD; always free     |
 | ZIMMER 16          | https://zimmer16.com/                          | Other       | Medium   | Divi + YesTicket cards; time and price on YesTicket         |
 | Ballhaus Wedding   | https://www.ballhauswedding.de/veranstaltungen | Other       | Medium   | Wix rich text; 117 entries with year-less dates; no images  |
 | Soulcat            | https://soulcat-berlin.com/programm/           | Bar         | Low      | TEC REST API; one week ahead; titles only                   |
 | Erreichbar         | https://radar.squat.net/en/node/6653           | Other       | Low      | radar group 6653; a fortnightly punk bar night; no site     |
 
-**The four rows below DSTRKT, Erreichbar aside, came from the tipBerlin sweep on 2026-09-30.** Each has a quirk that the importer must
+**The three rows below DSTRKT, Erreichbar aside, came from the tipBerlin sweep on 2026-09-30.** Each has a quirk that the importer must
 handle:
 
 - **ZIMMER 16** and **Ballhaus Wedding** are small mixed stages. Music is one part of a programme with improv, readings
@@ -457,8 +457,10 @@ New candidates land here first. Check for a server-rendered programme, then move
 [Ready](#-ready-to-implement) or [Blocked](#-blocked--deferred). A row belongs here only until someone opens it — the
 URL is recorded, nothing more.
 
-Every row below came from a sweep on 2026-09-30. The first 21 came from tipBerlin, and the last three from
-radar.squat.net. The URL was confirmed to answer, and nothing else was checked. A venue's type is a first guess.
+The first 24 rows came from a sweep on 2026-09-30: 21 from tipBerlin, then three from radar.squat.net. The last 11 came
+from a comedy sweep on 2026-10-03 of comedyinenglish.de, berlinmagazine.de and fritzguide.com. Scheinbar Varieté
+was added by hand. The URL was confirmed to
+answer, and nothing else was checked. A venue's type is a first guess.
 Correct it against the venue's own site when the row is opened.
 
 | Name                              | URL                                                       | Type         |
@@ -487,9 +489,24 @@ Correct it against the venue's own site when the row is opened.
 | Jugendclub Café Köpenick          | https://www.cafe-hdjk.de/                                 | Club         |
 | Sama32                            | https://www.sama32.squat.net/                             | Bar          |
 | KuBiZ                             | https://www.kubiz-wallenberg.de/                          | Other        |
+| The Wall Comedy Club              | https://thewallcomedy.com/                                | Comedy Club  |
+| Comedy Café Berlin                | https://www.comedycafeberlin.com/                         | Comedy Club  |
+| Quatsch Comedy Club               | https://quatsch-comedy-club.de/                           | Comedy Club  |
+| Mad Monkey Room                   | https://mad-monkey.de/                                    | Comedy Club  |
+| PUNCH L!NE Club                   | https://punchlineberlin.com/de                            | Comedy Club  |
+| Downstairs Comedy Club            | https://www.downstairscomedy.shop/home                    | Comedy Club  |
+| Die Wühlmäuse                     | https://wuehlmaeuse.de/                                   | Theater      |
+| Kabarett-Theater DISTEL           | https://distel-berlin.de/spielplan/kalender/              | Theater      |
+| Mehringhof-Theater                | https://www.mehringhoftheater.de/                         | Theater      |
+| Scheinbar Varieté                 | https://www.scheinbar.de/                                 | Theater      |
+| Mein Freund Harvey                | https://www.meinfreundharvey.com/                         | Bar          |
 
 WABE's own building is closed for renovation. Its events run at Schönfließer Str. 7 for now. Kühlspot has no programme
 page, and its events are a section of the home page.
+
+Mein Freund Harvey answers 403 to the importer's user agent. Three more bars host comedy several nights a week but
+have no working site to record: KARA KAS Bar, Valentin Stüberl and Z-Bar. The aggregator Comedy in English lists all
+three. Its Events Calendar API gives a venue and an address for each show.
 
 The three radar rows each post their programme to their own radar.squat.net group too, and so does Baiz. Look at the
 venue's own site first. If it is thin, `scraper/radar/` reads the group. On radar, Café Köpenick posts a weekly Open Jam
