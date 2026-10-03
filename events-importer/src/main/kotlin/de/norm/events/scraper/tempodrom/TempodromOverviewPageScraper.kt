@@ -41,6 +41,10 @@ import java.math.BigDecimal
  * ([tempodromEventType], #2314). A comedian billed by name alone ("Dieter Nuhr" / "Live 2026")
  * carries no cue anywhere on the site and stays `CONCERT`.
  *
+ * **Sport is dropped** (`docs/EVENT_SCOPE.md` §3.1): the snooker German Masters plays here every
+ * January, and without a category it would default to `CONCERT`. With no taxonomy to read, the
+ * title or format line naming a sport is the cue ([isTempodromSport], #2470).
+ *
  * The JSON-LD strings are HTML-escaped and script content is not decoded by Jsoup, so `name`
  * and `description` go through [decodeHtmlEntities] before anything touches them — see that
  * function for why decoding late would be too late.
@@ -60,14 +64,20 @@ class TempodromOverviewPageScraper {
         logger.info { "Found ${nodes.size} schema.org Event object(s) on the Tempodrom programme" }
 
         @Suppress("TooGenericExceptionCaught") // Intentional: skip individual malformed objects without aborting the whole import
-        return nodes.mapNotNull { node ->
-            try {
-                parseEvent(node)
-            } catch (e: Exception) {
-                logger.warn(e) { "Failed to parse Tempodrom event, skipping" }
-                null
+        val parsed =
+            nodes.mapNotNull { node ->
+                try {
+                    parseEvent(node)
+                } catch (e: Exception) {
+                    logger.warn(e) { "Failed to parse Tempodrom event, skipping" }
+                    null
+                }
             }
+        val (sport, ours) = parsed.partition(::isTempodromSport)
+        if (sport.isNotEmpty()) {
+            logger.info { "Skipping ${sport.size} Tempodrom sport fixture(s): ${sport.joinToString { it.sourceId }}" }
         }
+        return ours
     }
 
     /** Maps one schema.org `Event` onto a [ScrapedEvent], or `null` without a name or date. */
@@ -137,12 +147,21 @@ class TempodromOverviewPageScraper {
      */
     private fun parseDecimal(value: String?): BigDecimal? = value?.trim()?.takeIf { it.isNotBlank() }?.let { runCatching { BigDecimal(it) }.getOrNull() }
 
+    /**
+     * Whether the title or the format line names a sport: "Snooker" / "German Masters 2027". Whole
+     * words only, and no tournament word on its own — "Masters" also bills music ("Masters of Rock").
+     */
+    private fun isTempodromSport(event: ScrapedEvent): Boolean = listOfNotNull(event.title, event.subtitle).any { SPORT.containsMatchIn(it) }
+
     private companion object {
         /** Path prefix of a Tempodrom event permalink, stripped to obtain the slug identity. */
         const val EVENT_PATH_PREFIX = "/event/"
 
         /** Currency assumed when an offer omits one; every Tempodrom offer states EUR. */
         const val DEFAULT_CURRENCY = "EUR"
+
+        /** A sport the Tempodrom hosts or could host, as a word: the venue publishes no category to read instead. */
+        val SPORT = Regex("""\b(?:snooker|darts|billard|boxen|boxkampf|tischtennis)\b""", RegexOption.IGNORE_CASE)
     }
 }
 

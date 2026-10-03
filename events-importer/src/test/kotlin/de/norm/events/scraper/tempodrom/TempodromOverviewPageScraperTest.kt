@@ -43,8 +43,9 @@ class TempodromOverviewPageScraperTest {
 
     @Test
     fun `extracts the whole programme from one JSON-LD block`() {
-        events shouldHaveSize 145
-        events.map { it.sourceId }.distinct() shouldHaveSize 145
+        // 145 objects, less the one sport fixture.
+        events shouldHaveSize 144
+        events.map { it.sourceId }.distinct() shouldHaveSize 144
     }
 
     @Test
@@ -90,7 +91,7 @@ class TempodromOverviewPageScraperTest {
     @Test
     fun `keeps the offer's range in the note so the low price is not read as the price`() {
         val ranged = events.filter { it.priceNote != null }
-        ranged shouldHaveSize 68
+        ranged shouldHaveSize 67
         ranged.all { it.pricePresale != null } shouldBe true
     }
 
@@ -129,7 +130,7 @@ class TempodromOverviewPageScraperTest {
     fun `derives the headliner from the title, not the placeholder performer`() {
         // `performer.name` is a copy of the event name on all 145 events, so it names no act. Three
         // of the rest are score concerts (`The Witcher in Concert`), which bill no act (#1829).
-        events.count { it.artists.isNotEmpty() } shouldBe 140
+        events.count { it.artists.isNotEmpty() } shouldBe 139
         events.flatMap { it.artists }.all { it.role == "HEADLINER" } shouldBe true
     }
 
@@ -156,6 +157,28 @@ class TempodromOverviewPageScraperTest {
         val scala = events.first { it.title == "Scala & Kolacny Brothers" }
 
         scala.artists shouldContainExactly listOf(ScrapedArtist("Scala & Kolacny Brothers", "HEADLINER", titleDerived = true))
+    }
+
+    @Test
+    fun `drops the snooker tournament and nothing else`() {
+        // 145 objects on the page; "Snooker" / "German Masters 2027" is the one sport row (#2470).
+        events.none { it.sourceId.startsWith("tempodrom:snooker") } shouldBe true
+        events.none { it.title.contains("Masters", ignoreCase = true) } shouldBe true
+    }
+
+    @Test
+    fun `drops a row whose format line names the sport and keeps a near miss`() {
+        val html =
+            """
+            <html><body><script type="application/ld+json">[
+              {"@type": "Event", "name": "Premier League", "description": "Darts 2027",
+               "startDate": "2027-03-04T19:00:00+01:00", "url": "https://www.tempodrom.de/event/pl_2027-03-04_19/"},
+              {"@type": "Event", "name": "Masters of Rock", "description": "Boxenstopp Tour",
+               "startDate": "2027-03-05T20:00:00+01:00", "url": "https://www.tempodrom.de/event/mor_2027-03-05_20/"}
+            ]</script></body></html>
+            """.trimIndent()
+
+        scraper.scrape(Jsoup.parse(html, baseUrl)).map { it.title } shouldContainExactly listOf("Masters of Rock")
     }
 
     @Test

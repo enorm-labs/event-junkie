@@ -80,6 +80,8 @@ than avoid it:
   numeric taxonomy.
 - **The three Velomax halls** — handball, volleyball and basketball are the biggest strand. `VENUE_EVENT_TYPES`
   simply omits `sport`, so an unmapped row is skipped rather than filed.
+- **Tempodrom** — the snooker German Masters plays here each January. The venue publishes no category. The scraper drops a
+  row when its title or format line names a sport, for example `Snooker` or `Darts`.
 
 The consequence is worth stating plainly. **An arena's imported event count is well below what its own programme page
 shows**, and that is correct rather than a bug.
