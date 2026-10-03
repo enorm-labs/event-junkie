@@ -60,6 +60,7 @@ schema change.
 | Der Weiße Hase                   | https://derweissehase.club/events                           | Club         | Contao; invalid `<p>` nesting; RA ticket links         |
 | Drugstore                        | https://drugstore-berlin.de/                                | Other        | radar group API; bands only in prose                   |
 | Duncker Club                     | https://www.dunckerclub.de/                                 | Club         |                                                        |
+| Erreichbar                       | https://radar.squat.net/en/node/6653                        | Bar          | radar group API; Punkrocktresen only                   |
 | Eschschloraque Rümschrümp        | https://www.eschschloraque.de/                              | Bar          | Drupal 7; front page = full nodes; RDFa datetimes      |
 | Festsaal Kreuzberg               | https://festsaal-kreuzberg.de/de                            | Concert Hall | Nuxt/Wagtail SSR; `ld+json` empty; no prices           |
 | Fitzroy                          | https://fitzroy-berlin.de/events/                           | Club         | Shares the LARK parser; every event typed `Party`      |
@@ -136,7 +137,7 @@ schema change.
 | Zitadelle                        | https://citadel-music-festival.de/events                    | Open Air     | Festival site; WordPress/EM; summer season only        |
 | Zur Klappe                       | https://zurklappe.org/events                                | Techno Club  | Next.js flight payload; no genre or prices             |
 
-90 importer classes cover 91 sources. Only Kantine am Berghain has no class of its own, and it shares the Berghain
+91 importer classes cover 92 sources. Only Kantine am Berghain has no class of its own, and it shares the Berghain
 importer outright. Three other groups share a _listing and parser_ while keeping one thin `@Component` per venue, so
 they do not reduce the count. They are Club der Visionäre with Sonnenraum and MS Hoppetosse, the three Velomax halls,
 and Uber Arena with the Uber Eats Music Hall.
@@ -164,9 +165,8 @@ least as heavily as an RA count when the next batch is prioritised.
 | ZIMMER 16          | https://zimmer16.com/                          | Other       | Medium   | Divi + YesTicket cards; time and price on YesTicket         |
 | Ballhaus Wedding   | https://www.ballhauswedding.de/veranstaltungen | Other       | Medium   | Wix rich text; 117 entries with year-less dates; no images  |
 | Soulcat            | https://soulcat-berlin.com/programm/           | Bar         | Low      | TEC REST API; one week ahead; titles only                   |
-| Erreichbar         | https://radar.squat.net/en/node/6653           | Other       | Low      | radar group 6653; a fortnightly punk bar night; no site     |
 
-**The three rows below DSTRKT, Erreichbar aside, came from the tipBerlin sweep on 2026-09-30.** Each has a quirk that the importer must
+**The three rows below DSTRKT came from the tipBerlin sweep on 2026-09-30.** Each has a quirk that the importer must
 handle:
 
 - **ZIMMER 16** and **Ballhaus Wedding** are small mixed stages. Music is one part of a programme with improv, readings

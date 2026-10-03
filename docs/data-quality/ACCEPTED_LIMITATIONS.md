@@ -92,6 +92,11 @@ says so.
 | `DUNCKER`              | `PER_EVENT_PAGE`   | the whole programme is one hand-coded page                                                                                                       | —     |
 | `DUNCKER`              | `DOORS_TIME`       | the time cell is the night's opening hours, stored as start and end, and no doors time is printed                                                | —     |
 | `DUNCKER`              | `PRICE`            | the listing gives a night, a genre string and an hour range, never a figure                                                                      | —     |
+| `ERREICHBAR`           | `ARTISTS`          | the punk bar night plays records and bills no one                                                                                                | —     |
+| `ERREICHBAR`           | `IMAGE`            | the bar posts no image to radar                                                                                                                  | —     |
+| `ERREICHBAR`           | `TICKET_URL`       | the bar sells no tickets                                                                                                                         | —     |
+| `ERREICHBAR`           | `DOORS_TIME`       | radar gives one time per night                                                                                                                   | —     |
+| `ERREICHBAR`           | `PRICE`            | the bar names no entry price                                                                                                                     | —     |
 | `ESCHSCHLORAQUE`       | `PRICE`            | entry is settled at the door and the venue names no figure                                                                                       | —     |
 | `ESCHSCHLORAQUE`       | `TICKET_URL`       | the venue runs no ticket shop                                                                                                                    | —     |
 | `ESCHSCHLORAQUE`       | `SOLD_OUT`         | the venue flags nothing sold out                                                                                                                 | —     |

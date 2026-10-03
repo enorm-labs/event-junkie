@@ -41,6 +41,7 @@
 ###   Der Weiße Hase       — https://derweissehase.club/events
 ###   Drugstore            — https://drugstore-berlin.de/veranstaltungen/
 ###   Duncker Club         — https://www.dunckerclub.de/start.html
+###   Erreichbar           — https://radar.squat.net/en/node/6653
 ###   Eschschloraque       — https://www.eschschloraque.de/
 ###   Festsaal Kreuzberg   — https://festsaal-kreuzberg.de/de/programm/
 ###   Fitzroy              — https://fitzroy-berlin.de/wp-json/wp/v2/event
@@ -1636,6 +1637,71 @@ Accept: application/json
 
 > {%
     client.test("Duncker Club import triggered", function () {
+        client.assert(response.status === 202, "Expected 202 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
+### Erreichbar (Reichenberger Str. 63a, Berlin-Kreuzberg — Hinterhaus)
+### ————————————————————————————————————————————————————————————
+
+### --- Create Erreichbar venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Erreichbar",
+    "address": "Reichenberger Str. 63a",
+    "city": "Berlin",
+    "postalCode": "10999",
+    "district": "kreuzberg",
+    "latitude": 52.49492,
+    "longitude": 13.43044,
+    "websiteUrl": "https://radar.squat.net/en/node/6653",
+    "description": "A bar in a Kreuzberg back building, with a Punkrocktresen every second Thursday, a Wednesday Kufa with food and a free shop, and vegan soli brunches.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Eine Kneipe im Kreuzberger Hinterhaus, mit Punkrocktresen jeden zweiten Donnerstag, einer Mittwochs-Kufa mit Essen und Umsonstladen und veganen Soli-Brunches.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": [
+        "bar"
+    ]
+}
+
+> {%
+    client.global.set("erreichbar_venue_id", response.body.id);
+    client.test("Erreichbar venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Create Erreichbar event source ---
+# Links the venue to the ErreichbarWebsiteImporter.
+# The sourceType "ERREICHBAR" matches EventSource.ERREICHBAR.
+POST {{importer-host}}/api/admin/event-sources
+Content-Type: application/json
+
+{
+    "venueId": {{erreichbar_venue_id}},
+    "name": "Erreichbar",
+    "url": "https://radar.squat.net/api/1.2/search/events.json?facets%5Bgroup%5D%5B%5D=6653&limit=500",
+    "sourceType": "ERREICHBAR",
+    "enabled": true,
+    "importIntervalMinutes": 1440,
+    "maxRetries": 3
+}
+
+> {%
+    client.test("Erreichbar event source created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Trigger initial Erreichbar import ---
+POST {{importer-host}}/api/admin/event-sources/erreichbar/import
+Accept: application/json
+
+> {%
+    client.test("Erreichbar import triggered", function () {
         client.assert(response.status === 202, "Expected 202 but got " + response.status);
     });
 %}
