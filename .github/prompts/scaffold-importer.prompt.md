@@ -45,8 +45,9 @@ SO36,
 
 - **`<Venue>OverviewPageScraper.kt`** — pure, no I/O; a Jsoup `Document` + base URL in (or the raw JSON `String`), `List<ScrapedEvent>` out.
 - **`<Venue>DetailPageScraper.kt`** — list+detail only; `ScrapedEvent?` for one page.
-- **`<Venue>WebsiteImporter.kt`** — the `@Component` that fetches and wires. JSON: inject `ApiClient`, `fetchJson(url)`, return
-  `ImportResult.Success(events, null, null)` (most APIs send no validators; idempotent `sourceId` upserts do the work). Single-page HTML:
+- **`<Venue>WebsiteImporter.kt`** — the `@Component` that fetches and wires. JSON in one response: extend
+  `AbstractJsonApiImporter(apiClient, "<Venue>", <Venue>ApiScraper()::scrape)`, overriding `requestUrl` to build a query on the configured base. The
+  Events Calendar: extend `AbstractTecImporter`. A WordPress REST collection: page it with `walkWpRestPages`, never one page of 100. Single-page HTML:
   extend `AbstractSinglePageWebsiteImporter(htmlFetcher, "<Venue>", <Venue>OverviewPageScraper()::scrape)`, which owns the conditional fetch and the
   `NotModified` case; a listing paged by a next link overrides `maxListingPages` and `nextListingPage`, and an entry page that only links month pages
   extends `AbstractMonthPagesWebsiteImporter`. A loop over pages that keeps the others when one fails uses `readEach`; to add fields from each event's own page, override `enrichFromEventPage` with a parser. **Never fetch an event page

@@ -88,4 +88,18 @@ class MadameClaudeWebsiteImporterTest {
     fun `eventSource matches expected enum value`() {
         importer.eventSource shouldBe EventSource.MADAME_CLAUDE
     }
+
+    @Test
+    fun `importEvents reads the next page when the first is full, so a long programme is not cut`() =
+        runTest {
+            val fullPage = (1..100).joinToString(",", "[", "]") { "{}" }
+            coEvery { apiClient.fetchJson(match { it.endsWith("&page=1") }) } returns fullPage
+            coEvery { apiClient.fetchJson(match { it.endsWith("&page=2") }) } returns fixtureJson
+
+            val result = importer.importEvents(apiBaseUrl).shouldBeInstanceOf<ImportResult.Success>()
+
+            result.events.isNotEmpty() shouldBe true
+            result.complete shouldBe true
+            coVerify(exactly = 1) { apiClient.fetchJson(match { it.endsWith("&page=2") }) }
+        }
 }

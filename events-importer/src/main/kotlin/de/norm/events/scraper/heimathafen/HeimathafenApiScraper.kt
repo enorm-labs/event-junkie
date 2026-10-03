@@ -8,6 +8,7 @@ import de.norm.events.scraper.DOORS_LABELS
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.WpRestPage
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.isBoxOfficeLabel
@@ -307,9 +308,11 @@ class HeimathafenApiScraper(
      * upcoming performances parsed out of them.
      */
     data class HeimathafenPage(
-        val postCount: Int,
+        override val postCount: Int,
         val events: List<ScrapedEvent>
-    )
+    ) : WpRestPage<ScrapedEvent> {
+        override val items: List<ScrapedEvent> get() = events
+    }
 
     /** The post-level fields every performance of one event post shares. */
     private data class SharedPostFields(

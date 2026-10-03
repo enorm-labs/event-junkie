@@ -7,12 +7,10 @@ import de.norm.events.scraper.EventImporter
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.LimitedAspect
-import de.norm.events.scraper.ListingPage
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.VenueLimitations
-import de.norm.events.scraper.pageNumber
 import de.norm.events.scraper.querySeparator
-import de.norm.events.scraper.walkListingPages
+import de.norm.events.scraper.walkWpRestPages
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
 import java.time.Clock
@@ -58,14 +56,10 @@ abstract class AbstractBogen47WebsiteImporter(
         lastModified: String?
     ): ImportResult {
         val today = LocalDate.now(clock)
-        val firstUrl = buildListingUrl(url, 1)
-        val fetchPage: suspend (String) -> Bogen47Page = { apiScraper.scrapePage(apiClient.fetchJson(it)) }
+        // Ordered by event date, so a page reaching the past holds no more upcoming events.
         val listing =
-            walkListingPages(eventSource, fetchPage(firstUrl), firstUrl, MAX_PAGES, fetchPage) { page, pageUrl ->
-                // Ordered by event date, so a page reaching the past holds no more upcoming events — and a
-                // short page is the last one (WordPress 400s beyond it).
-                val lastPage = page.postCount < PER_PAGE || page.oldestDate?.let { it < today } == true
-                ListingPage(page.entries, buildListingUrl(url, pageUrl.pageNumber() + 1).takeUnless { lastPage })
+            apiClient.walkWpRestPages(eventSource, { buildListingUrl(url, it) }, PER_PAGE, MAX_PAGES, apiScraper::scrapePage) { page ->
+                page.oldestDate?.let { it < today } == true
             }
 
         val events = withPosters(listing.items.distinctBy { it.event.sourceId }, url)

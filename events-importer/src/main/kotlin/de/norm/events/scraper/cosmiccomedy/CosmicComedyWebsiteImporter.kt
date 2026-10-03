@@ -1,14 +1,11 @@
 package de.norm.events.scraper.cosmiccomedy
 
+import de.norm.events.scraper.AbstractTecImporter
 import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.ApiClient
-import de.norm.events.scraper.EventImporter
 import de.norm.events.scraper.EventSource
-import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.VenueLimitations
-import de.norm.events.scraper.walkTecEvents
-import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
 
 /**
@@ -30,26 +27,11 @@ import org.springframework.stereotype.Component
  */
 @Component
 class CosmicComedyWebsiteImporter(
-    private val apiClient: ApiClient
-) : EventImporter {
-    private val logger = KotlinLogging.logger {}
-
+    apiClient: ApiClient
+) : AbstractTecImporter(apiClient, "Cosmic Comedy Berlin", CosmicComedyApiScraper()::scrapePage, MAX_PAGES) {
     override val eventSource: EventSource = EventSource.COSMIC_COMEDY
 
-    private val apiScraper = CosmicComedyApiScraper()
-
-    override suspend fun importEvents(
-        url: String,
-        etag: String?,
-        lastModified: String?
-    ): ImportResult {
-        val listing = apiClient.walkTecEvents(eventSource, url, MAX_PAGES, apiScraper::scrapePage)
-        logger.info { "Scraped ${listing.items.size} event(s) from Cosmic Comedy Berlin across ${listing.pages} page(s)" }
-
-        return ImportResult.Success(events = listing.items, etag = null, lastModified = null, complete = listing.complete)
-    }
-
-    companion object {
+    private companion object {
         /**
          * Safety bound on the cursor walk. The upcoming programme is two pages today; the cap only
          * stops a runaway if the API ever returns a cursor that does not terminate.

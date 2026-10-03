@@ -6,12 +6,9 @@ import de.norm.events.scraper.EventImporter
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.LimitedAspect
-import de.norm.events.scraper.ListingPage
 import de.norm.events.scraper.VenueLimitations
-import de.norm.events.scraper.pageNumber
 import de.norm.events.scraper.querySeparator
-import de.norm.events.scraper.walkListingPages
-import de.norm.events.scraper.withQueryParameter
+import de.norm.events.scraper.walkWpRestPages
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
 
@@ -42,12 +39,8 @@ class WuehlmaeuseWebsiteImporter(
         etag: String?,
         lastModified: String?
     ): ImportResult {
-        val firstUrl = "$url${url.querySeparator()}per_page=100&page=1"
-        val fetchPage: suspend (String) -> WuehlmaeuseShopPage = { apiScraper.scrapePage(apiClient.fetchJson(it)) }
-        val walked =
-            walkListingPages(eventSource, fetchPage(firstUrl), firstUrl, MAX_PAGES, fetchPage) { page, pageUrl ->
-                ListingPage(page.tickets, if (page.full) pageUrl.withQueryParameter("page", pageUrl.pageNumber() + 1) else null)
-            }
+        val pageUrl = { page: Int -> "$url${url.querySeparator()}per_page=$WUEHLMAEUSE_PER_PAGE&page=$page" }
+        val walked = apiClient.walkWpRestPages(eventSource, pageUrl, WUEHLMAEUSE_PER_PAGE, MAX_PAGES, apiScraper::scrapePage)
         val events = apiScraper.toEvents(walked.items)
         logger.info { "Scraped ${events.size} performance(s) from ${walked.items.size} Wühlmäuse ticket(s) across ${walked.pages} page(s)" }
         return ImportResult.Success(events = events, etag = null, lastModified = null, complete = walked.complete)

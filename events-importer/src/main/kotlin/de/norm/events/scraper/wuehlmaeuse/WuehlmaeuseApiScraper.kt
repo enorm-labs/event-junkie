@@ -4,6 +4,7 @@ import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.WpRestPage
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.decodeHtmlEntities
 import de.norm.events.scraper.parseGermanDate
@@ -18,13 +19,19 @@ import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 
-/**
- * One page of the Wühlmäuse ticket shop: its products, and whether a full page says another may follow.
- */
+/** One page of the Wühlmäuse ticket shop: its ticket products, and how many products the response held. */
 data class WuehlmaeuseShopPage(
     val tickets: List<WuehlmaeuseTicket>,
-    val full: Boolean
-)
+    override val postCount: Int
+) : WpRestPage<WuehlmaeuseTicket> {
+    override val items: List<WuehlmaeuseTicket> get() = tickets
+
+    /** Whether the page is full, so another may follow. */
+    val full: Boolean get() = postCount >= WUEHLMAEUSE_PER_PAGE
+}
+
+/** The shop's page size, set in the importer's request. */
+const val WUEHLMAEUSE_PER_PAGE = 100
 
 /** One ticket product: a price category for one performance. */
 data class WuehlmaeuseTicket(
@@ -64,10 +71,10 @@ class WuehlmaeuseApiScraper {
                 mapper.readTree(json)
             } catch (e: JacksonException) {
                 logger.warn(e) { "Wühlmäuse shop page is not parseable JSON" }
-                return WuehlmaeuseShopPage(emptyList(), full = false)
+                return WuehlmaeuseShopPage(emptyList(), postCount = 0)
             }
         val products = root.takeIf { it.isArray }?.toList().orEmpty()
-        return WuehlmaeuseShopPage(products.mapNotNull(::toTicket), full = products.size >= PER_PAGE)
+        return WuehlmaeuseShopPage(products.mapNotNull(::toTicket), postCount = products.size)
     }
 
     /** One event per performance: the act, programme and time shared by its categories, the lowest price. */
@@ -136,7 +143,6 @@ class WuehlmaeuseApiScraper {
     }
 
     private companion object {
-        const val PER_PAGE = 100
         val HHMM: DateTimeFormatter = DateTimeFormatter.ofPattern("HHmm")
         const val MIN_LINES = 4
         val LINE_BREAK = Regex("""<br\s*/?>""")

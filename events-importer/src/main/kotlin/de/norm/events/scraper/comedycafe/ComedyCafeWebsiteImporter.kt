@@ -1,14 +1,11 @@
 package de.norm.events.scraper.comedycafe
 
+import de.norm.events.scraper.AbstractTecImporter
 import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.ApiClient
-import de.norm.events.scraper.EventImporter
 import de.norm.events.scraper.EventSource
-import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.VenueLimitations
-import de.norm.events.scraper.walkTecEvents
-import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
 
 /**
@@ -24,23 +21,9 @@ import org.springframework.stereotype.Component
  */
 @Component
 class ComedyCafeWebsiteImporter(
-    private val apiClient: ApiClient
-) : EventImporter {
-    private val logger = KotlinLogging.logger {}
-
+    apiClient: ApiClient
+) : AbstractTecImporter(apiClient, "Comedy Café Berlin", ComedyCafeApiScraper()::scrapePage, MAX_PAGES) {
     override val eventSource: EventSource = EventSource.COMEDY_CAFE
-
-    private val apiScraper = ComedyCafeApiScraper()
-
-    override suspend fun importEvents(
-        url: String,
-        etag: String?,
-        lastModified: String?
-    ): ImportResult {
-        val listing = apiClient.walkTecEvents(eventSource, url, MAX_PAGES, apiScraper::scrapePage)
-        logger.info { "Scraped ${listing.items.size} event(s) from Comedy Café Berlin across ${listing.pages} page(s)" }
-        return ImportResult.Success(events = listing.items, etag = null, lastModified = null, complete = listing.complete)
-    }
 
     private companion object {
         /** A runaway guard on the cursor walk; the programme is two pages. */

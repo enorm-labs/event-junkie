@@ -1,14 +1,12 @@
 package de.norm.events.scraper.zenner
 
+import de.norm.events.scraper.AbstractJsonApiImporter
 import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.ApiClient
-import de.norm.events.scraper.EventImporter
 import de.norm.events.scraper.EventSource
-import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.VenueLimitations
 import de.norm.events.scraper.gatsbyPageDataUrl
-import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
 
 /**
@@ -25,28 +23,12 @@ import org.springframework.stereotype.Component
  */
 @Component
 class ZennerWebsiteImporter(
-    private val apiClient: ApiClient
-) : EventImporter {
-    private val logger = KotlinLogging.logger {}
-
+    apiClient: ApiClient
+) : AbstractJsonApiImporter(apiClient, "Zenner", ZennerApiScraper()::scrape) {
     override val eventSource: EventSource = EventSource.ZENNER
     override val listsWholeProgramme: Boolean = true
 
-    private val apiScraper = ZennerApiScraper()
-
-    override suspend fun importEvents(
-        url: String,
-        etag: String?,
-        lastModified: String?
-    ): ImportResult {
-        val json = apiClient.fetchJson(gatsbyPageDataUrl(url))
-        val events = apiScraper.scrape(json, url)
-        logger.info { "Scraped ${events.size} event(s) from Zenner" }
-
-        // The artefact's ETag / Last-Modified track the build; change detection relies on idempotent
-        // upserts.
-        return ImportResult.Success(events = events, etag = null, lastModified = null)
-    }
+    override fun requestUrl(url: String): String = gatsbyPageDataUrl(url)
 }
 
 val ZENNER_LIMITATIONS =
