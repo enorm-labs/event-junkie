@@ -37,6 +37,7 @@ scripts/rules-parity.sh               # applyTo ↔ paths per rule, symlinks res
 scripts/collector-parity.sh           # LogFields ↔ LogContextConfiguration ↔ collector.yaml ↔ PLATFORM_SETUP §7
 scripts/scope-parity.sh               # the feat scope list, nine copies, labeller's is canonical
 scripts/secrets-parity.sh             # the secret count SECRETS.md states ↔ the rows its table lists
+scripts/sources-parity.sh             # the status counts in EVENT_DATA_SOURCES.md ↔ the rows of the tables they link to
 scripts/index-parity.sh               # scripts/README.md ↔ scripts/, every referenced script exists and answers --help
 scripts/migration-versions.sh         # no two Flyway migrations share a version (#2183); release.yml runs it before it builds
 ```

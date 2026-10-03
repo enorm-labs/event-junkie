@@ -27,6 +27,9 @@ repairing live in the [issue tracker](https://github.com/enorm-labs/event-junkie
 | ⛔ [Blocked](#-blocked--deferred)   | Website analyzed, but no usable listings (no programme page, JS-only, or too sparse) |   150 |
 | ❓ [Unanalyzed](#-not-analyzed-yet) | URL recorded, but the website still needs a first look                               |    26 |
 
+A count is the number of rows in its table. `scripts/sources-parity.sh` checks each count, in CI and in the
+commit hook.
+
 "Website analyzed" also means the [data model](DATA_MODEL.md) was checked against that source, and no source needed a
 schema change.
 
