@@ -28,7 +28,9 @@ mismatch`** — the pod never goes Ready and `remediateLastFailure` rolls the re
       colliding PRs merged within one of its runs pass both; the publish check stops that tree. Take the number from `origin/main` right before
       merging, and when one has already reached a cluster, renumber the other.
     - **A data fix is a `V` migration too**, because nothing re-seeds staging or production and a past event is never re-imported (ADR-005 § Data fixes).
-      A named slug or a per-source junk row stays a migration for good: the stored name has lost the context the parser decided on. A global name rule
+      A named slug or a per-source junk row stays a migration for good: the stored name has lost the context the parser decided on. A per-source artist
+      drop is one `SELECT drop_artist_billed_only_by('<slug>', '<source>:');` per row (V092), never a hand-written `NOT EXISTS`: `_` in a `LIKE` prefix is a
+      wildcard, and a missing guard deletes a row another venue bills. A global name rule
       applied again to old rows (V045, V055, V067, V068, V072) is rule-shaped, and the next one builds the `ArtistNormalizer` repair pass instead of a
       migration. No baseline until a fresh database takes over 5 s to migrate.
     - **A `slug` literal in a data migration is checked, because a wrong one fails open**: `UPDATE … WHERE slug = 'mispelt'` updates nothing and Flyway records
