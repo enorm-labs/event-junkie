@@ -98,6 +98,7 @@
 ###   Sonnenraum           — https://clubdervisionaere.com/programm/
 ###   Supamolly            — https://www.supamolly.de/?p=programm
 ###   Tempodrom            — https://www.tempodrom.de/programm-und-tickets/
+###   The Wall Comedy Club — https://thewallcomedy.com/venues/thewallcomedy/events/
 ###   Theater im Delphi    — https://theater-im-delphi.de/programm/
 ###   Tiffany Club         — https://tiffany-berlin.de/upcoming-events/
 ###   Tresor               — https://tresorberlin.com/club/events/
@@ -5242,6 +5243,72 @@ Accept: application/json
 
 > {%
     client.test("Theater im Delphi import triggered", function () {
+        client.assert(response.status === 202, "Expected 202 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
+### The Wall Comedy Club (Grünberger Str. 84, Berlin-Friedrichshain)
+### ————————————————————————————————————————————————————————————
+
+### --- Create The Wall Comedy Club venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "The Wall Comedy Club",
+    "address": "Grünberger Str. 84",
+    "city": "Berlin",
+    "postalCode": "10245",
+    "district": "friedrichshain",
+    "latitude": 52.51088,
+    "longitude": 13.46135,
+    "websiteUrl": "https://thewallcomedy.com",
+    "description": "A stand-up club named as a tribute to the fall of the Berlin Wall, with English-language showcases, open mics and touring specials by comedians from around the world.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Ein Stand-up-Club, benannt als Hommage an den Fall der Berliner Mauer, mit englischsprachigen Showcases, Open Mics und Tour-Specials von Comedians aus aller Welt.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": [
+        "theatre",
+        "bar"
+    ]
+}
+
+> {%
+    client.global.set("the_wall_venue_id", response.body.id);
+    client.test("The Wall Comedy Club venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Create The Wall Comedy Club event source ---
+# Links the venue to the TheWallWebsiteImporter.
+# The sourceType "THE_WALL" matches EventSource.THE_WALL.
+POST {{importer-host}}/api/admin/event-sources
+Content-Type: application/json
+
+{
+    "venueId": {{the_wall_venue_id}},
+    "name": "The Wall Comedy Club",
+    "url": "https://thewallcomedy.com/venues/thewallcomedy/events/",
+    "sourceType": "THE_WALL",
+    "enabled": true,
+    "importIntervalMinutes": 1440,
+    "maxRetries": 3
+}
+
+> {%
+    client.test("The Wall Comedy Club event source created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Trigger initial The Wall Comedy Club import ---
+POST {{importer-host}}/api/admin/event-sources/the-wall-comedy-club/import
+Accept: application/json
+
+> {%
+    client.test("The Wall Comedy Club import triggered", function () {
         client.assert(response.status === 202, "Expected 202 but got " + response.status);
     });
 %}

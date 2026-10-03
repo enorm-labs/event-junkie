@@ -1,0 +1,2525 @@
+<!DOCTYPE html>
+<html lang="en">
+
+
+<head>
+    
+    <link rel="preconnect" href="https://www.eventbrite.com">
+    <link rel="preconnect" href="https://www.universe.com">
+    <link rel="preconnect" href="https://www.googletagmanager.com">
+    <link rel="preconnect" href="https://connect.facebook.net">
+    <link rel="preconnect" href="https://cdntranscend.eventbrite.com">
+    <link rel="dns-prefetch" href="https://cdntranscend.eventbrite.com">
+
+<!-- HTMX -->
+    <script src="https://unpkg.com/htmx.org@2.0.0/dist/htmx.min.js"></script>
+    <script>
+        // Configure HTMX to include CSRF token in POST requests
+        document.addEventListener('htmx:configRequest', function(event) {
+            // Get CSRF token from cookie
+            const csrfToken = document.cookie.split('; ')
+                .find(row => row.startsWith('csrftoken='))
+                ?.split('=')[1];
+            if (csrfToken) {
+                event.detail.headers['X-CSRFToken'] = csrfToken;
+            }
+        });
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Wall Comedy - Spotagig</title>
+    
+    <!-- Tenant Meta Tags (favicon, description) -->
+    
+
+
+    
+    <!-- OpenGraph Meta Tags -->
+    
+    
+
+    
+        
+            <meta property="og:type" content="website">
+        
+    
+
+    
+        
+            <meta property="og:title" content="The Wall Comedy - Berlin">
+        
+    
+
+    
+        
+            <meta property="og:description" content="The Wall Comedy Club, Berlin was ironically based on a world with no more walls and is a tribute to the fall of the Berlin Wall in 1989. It is a place where ...">
+        
+    
+
+    
+        
+            <meta property="og:url" content="https://thewallcomedy.com/venues/thewallcomedy/">
+        
+    
+
+    
+        
+            <meta property="og:image" content="https://thewallcomedy.com/media/user_3ad6d03b-a828-477b-84db-a8d839394b0e/1763636382.42641/c4eff1_38492614bb0e4f12b2fdb_RZVVebK.avif">
+        
+    
+
+    
+        
+            <meta property="og:site_name" content="Spotagig Event Hub">
+        
+    
+
+    
+        
+            <meta property="profile:first_name" content="The">
+        
+    
+
+    
+        
+            <meta property="profile:last_name" content="Wall Comedy">
+        
+    
+
+
+    
+    <!-- Include Bootstrap 5 CSS from CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" 
+          rel="stylesheet" 
+          integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" 
+          crossorigin="anonymous">
+    <!-- Include your custom CSS file if needed -->
+    <link href="https://cdn.lineicons.com/5.0/lineicons.css"
+          rel="stylesheet"
+          integrity="sha384-QSi1wEdljpltBoEARq7p3i6POLnfxQrARLMHqjDbvKnhkjnRFEVjweOQi9lw22yY"
+          crossorigin="anonymous">
+      
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <link rel="stylesheet" href="/static/css/components.css">
+    <link rel="stylesheet" href="/static/css/utilities.css">
+    <link rel="stylesheet" href="/static/css/emails.css">
+
+    <!-- Tenant Theme CSS (custom colors and styles) -->
+    
+<style id="tenant-theme-css">
+:root {
+    --theme-primary: #080808;
+    --theme-secondary: #000000;
+    --theme-accent: #ffffff;
+    --theme-background: #6b190a;
+    --theme-text: #e6e6fa;
+    --theme-secondary-rgb: 0, 0, 0;
+    --theme-accent-rgb: 255, 255, 255;
+    --theme-text-rgb: 230, 230, 250;
+    --event-card-background: #000000;
+    --event-title-text-color: #ffffff;
+    --event-text-color: #ffffff;
+    --event-date-color: #ffffff;
+    --event-overlay-background: #000000;
+    --event-overlay-text-color: #ffffff;
+}
+</style>
+
+
+
+    
+    
+
+
+<link rel="canonical" href="https://thewallcomedy.com/venues/thewallcomedy/">
+
+
+
+    
+    <link rel="stylesheet" href="/venues/thewallcomedy/css/custom.css">
+    
+
+
+    
+    
+    
+    <script type="application/ld+json">{"@context": "https://schema.org", "@type": "ItemList", "itemListElement": [{"@type": "ListItem", "position": 1, "item": {"@type": "SiteNavigationElement", "name": "Events", "url": "https://thewallcomedy.com/venues/thewallcomedy/events/"}}, {"@type": "ListItem", "position": 2, "item": {"@type": "SiteNavigationElement", "name": "About", "url": "https://thewallcomedy.com/about-us/"}}, {"@type": "ListItem", "position": 3, "item": {"@type": "SiteNavigationElement", "name": "Apply for shows", "url": "https://thewallcomedy.com/apply-for-shows/"}}, {"@type": "ListItem", "position": 4, "item": {"@type": "SiteNavigationElement", "name": "Location", "url": "https://thewallcomedy.com/location/"}}, {"@type": "ListItem", "position": 5, "item": {"@type": "SiteNavigationElement", "name": "Imprint", "url": "https://thewallcomedy.com/imprint/"}}]}</script>
+    
+
+</head>
+<body class="bg-theme-dark text-theme-light tenant-site">
+    <!-- Include the top navbar -->
+    <!-- templates/_topbar.html -->
+
+
+
+
+
+
+
+
+
+<div class="tenant-floating-menu">
+    <div class="dropdown">
+        <button class="btn btn-tenant-menu" type="button" id="tenantMenuButton" data-bs-toggle="dropdown" aria-expanded="false" title="Menu">
+            <i class="lni lni-menu-hamburger-1"></i>
+        </button>
+        
+        <div class="dropdown-menu dropdown-menu-end hamburger-dropdown" aria-labelledby="tenantMenuButton">
+            <div class="hamburger-menu-content">
+                <div class="menu-section">
+                    <h6 class="dropdown-header">The Wall Comedy Club</h6>
+                    
+                    <a class="dropdown-item" href="/venues/thewallcomedy/events/"
+                       hx-get="/venues/thewallcomedy/events/"
+                       hx-target="#profile-section-content"
+                       hx-swap="innerHTML"
+                       hx-push-url="/">
+                        <i class="lni lni-calendar-days me-2"></i> Events
+                    </a>
+                    
+                    <a class="dropdown-item" href="/about-us/"
+                       hx-get="/about-us/"
+                       hx-target="#profile-section-content"
+                       hx-swap="innerHTML"
+                       hx-push-url="true">
+                        <i class="lni lni-user-multiple-4 me-2"></i> About
+                    </a>
+                    
+                    <a class="dropdown-item" href="/apply-for-shows/"
+                       hx-get="/apply-for-shows/"
+                       hx-target="#profile-section-content"
+                       hx-swap="innerHTML"
+                       hx-push-url="true">
+                        <i class="lni lni-ticket-1 me-2"></i> Apply for shows
+                    </a>
+                    
+                    <a class="dropdown-item" href="/location/"
+                       hx-get="/location/"
+                       hx-target="#profile-section-content"
+                       hx-swap="innerHTML"
+                       hx-push-url="true">
+                        <i class="lni lni-map-marker-5 me-2"></i> Location
+                    </a>
+                    
+                    <a class="dropdown-item" href="/imprint/"
+                       hx-get="/imprint/"
+                       hx-target="#profile-section-content"
+                       hx-swap="innerHTML"
+                       hx-push-url="true">
+                        <i class="lni lni-stamp me-2"></i> Imprint
+                    </a>
+                    
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+    <div class="container-fluid">
+        <div class="row">
+            
+
+            <!-- Main Content Area -->
+            <div class="col-12">
+                <div class="content border-theme p-md-3 p-0">
+                    <div id="messages-container" class="container mt-3">
+                        
+                    </div>
+                    
+
+<link rel="stylesheet" href="/static/css/producer_profile.css">
+
+
+
+<script type="application/ld+json" id="venue-ld">{"@context": "https://schema.org", "@type": "Place", "image": "https://spotagig.eu/media/user_3ad6d03b-a828-477b-84db-a8d839394b0e/1763636382.42641/c4eff1_38492614bb0e4f12b2fdb_RZVVebK.avif", "name": "The Wall Comedy", "url": "https://spotagig.eu/venues/thewallcomedy/", "sameAs": ["https://www.instagram.com/thewallcomedy_berlin"], "address": {"@type": "PostalAddress", "streetAddress": "Grünberger Str. 84", "addressLocality": "Berlin", "addressRegion": "Berlin", "postalCode": "10245", "addressCountry": "DE"}}</script>
+
+
+
+
+
+
+
+<section class="producer-hero text-theme" data-banner="/media/user_3ad6d03b-a828-477b-84db-a8d839394b0e/1763636382.42641/c4eff1_38492614bb0e4f12b2fdb_RZVVebK.avif">
+	<div class="producer-hero-overlay">
+		<div class="container py-3 d-flex flex-column h-100">
+			<div>
+				<h1 class="display-5 fw-bold mb-1 text-theme">The Wall Comedy</h1>
+				<p class="lead mb-3 text-theme"> Grünberger Str. 84, Berlin, Berlin, 10245, DE</p>
+				
+				<div class="producer-description-preview mb-3">
+					<div class="description-text text-theme"><p>The Wall Comedy Club, Berlin was ironically based on a world with no more walls and is a tribute to the fall of the Berlin Wall in 1989. It is a place where anyone can come visit to share in our common sense of laughter and fun with some of the best comedians and artists from all over the world!</p>
+<p>It is the perfect place for a night of laughs and great entertainment. We pride ourselves on being the go-to spot for stand-up comedy in Berlin, featuring some of the best of local and international acts. Our stage is alive with energy and laughter, giving audience members an unforgettable experience and a night of entertainment for both our open mic shows and showcase events. We hand-pick many of the best comedians from around the world, including the United States, Germany, the United Kingdom along with other places in Europe, North America, South America, parts of Asia and Australia.</p>
+<p>On top of experiencing a great show, feel free to enjoy a beer, wine, soft drink, craft beer, or cocktail from one of our lovely bartenders at the bar, and we welcome you to stick around to meet our comedians after the show or even take pictures of yourself on our famous stage!</p>
+<p>Whether you’re looking for a great night of out with friends or family, come to the Wall Comedy Club for a night of unforgettable comedy.</p></div>
+					
+					<a href="/about-us/" class="read-more-link small text-theme-muted"
+					   hx-get="/about-us/" hx-target="#profile-section-content"
+					   hx-swap="innerHTML" hx-push-url="true">Read more...</a>
+					
+				</div>
+				
+			</div>
+		</div>
+		<div class="producer-hero-curtain"></div>
+	</div>
+</section>
+
+
+
+
+
+<div class="hero-socials-bar bg-theme-dark py-2">
+	<div class="container">
+		<div class="fs-4 hero-socials"><a href="https://www.eventbrite.com/o/the-wall-comedy-33895977485" target="_blank" rel="noopener noreferrer" aria-label="Website" class="social-link"><i class="lni lni-www-cursor"></i></a><a href="https://www.instagram.com/thewallcomedy_berlin" target="_blank" rel="noopener noreferrer" aria-label="Instagram" class="social-link"><i class="lni lni-instagram"></i></a></div>
+	</div>
+</div>
+
+
+
+
+
+
+<div class="container py-3">
+    
+
+
+</div>
+
+
+<nav id="stageNav" class="bg-theme-dark py-2 sticky-md-top d-none d-md-block border-top-accent-2 border-bottom-accent-2">
+    <div class="container">
+        <div class="d-flex gap-2">
+            
+            <a href="/venues/thewallcomedy/events/"
+               class="btn btn-sm rounded-pill active"
+               hx-get="/venues/thewallcomedy/events/"
+               hx-target="#profile-section-content"
+               hx-swap="innerHTML"
+               hx-push-url="/">Events</a>
+            
+            <a href="/about-us/"
+               class="btn btn-sm rounded-pill"
+               hx-get="/about-us/"
+               hx-target="#profile-section-content"
+               hx-swap="innerHTML"
+               hx-push-url="true">About</a>
+            
+            <a href="/apply-for-shows/"
+               class="btn btn-sm rounded-pill"
+               hx-get="/apply-for-shows/"
+               hx-target="#profile-section-content"
+               hx-swap="innerHTML"
+               hx-push-url="true">Apply for shows</a>
+            
+            <a href="/location/"
+               class="btn btn-sm rounded-pill"
+               hx-get="/location/"
+               hx-target="#profile-section-content"
+               hx-swap="innerHTML"
+               hx-push-url="true">Location</a>
+            
+            <a href="/imprint/"
+               class="btn btn-sm rounded-pill"
+               hx-get="/imprint/"
+               hx-target="#profile-section-content"
+               hx-swap="innerHTML"
+               hx-push-url="true">Imprint</a>
+            
+        </div>
+    </div>
+</nav>
+
+
+<div class="container py-4" id="profile-section-content">
+    
+<section id="showtimes" class="mb-5">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <h3 class="mb-0">Coming up</h3>
+    </div>
+    <div class="row g-2 g-md-3">
+        
+            
+                <div class="col-12 col-lg-6 col-xl-3">
+                    
+
+
+
+<div class="card event-card">
+	
+
+
+	
+
+<div class="card-header p-0">
+    <div class="position-relative">
+        
+            <a href="/events/2026-10-03-the-kee-comedy-the-kee-news-news-based-comedy-show/">
+        
+        
+
+
+<img src="/media/user_23c7a631-fa54-46ff-9826-306bfe7fab9b/1790345574.80758/ChatGPT_Image_Sep_25_2026_04_12_34_PM.png"
+     class="card-img-top card-img-square"
+     alt="The Kee News — News-Based Comedy Show" loading="lazy">
+
+
+        
+            </a>
+        
+        <div class="position-absolute top-0 start-0">
+            
+                <a href="/events/2026-10-03-the-kee-comedy-the-kee-news-news-based-comedy-show/" class="text-decoration-none d-flex align-items-center justify-content-center event-date-col">
+            
+                <div class="text-center event-date-overlay">
+                    <div class="fs-2-5rem fw-bold">03</div>
+                    <div class="fs-1rem">Oct</div>
+                </div>
+            
+                </a>
+            
+        </div>
+    </div>
+    <div class="p-2">
+        <h5 class="card-title text-theme-light mb-1">The Kee News — News-Based Comedy Show</h5>
+        <p class="card-text small mb-1">
+            
+            <i class="lni lni-calendar-days text-theme-accent"></i>
+            <span class="text-theme-light">Oct 3</span>
+            <i class="lni lni-watch-beat-1 text-theme-accent ms-2"></i>
+            <span class="text-theme-light">5:30 PM</span>
+        </p>
+        
+        <p class="card-text small mb-0">
+            <i class="lni lni-megaphone-1 text-theme-accent"></i>
+            
+                <a href="/producers/thekeecomedy/"><span class="text-theme-light">The Kee Comedy</span></a>
+            
+            
+            
+            
+        </p>
+        
+    </div>
+</div>
+
+	
+	<div class="card-body d-none d-md-block">
+		
+
+<div class="description-container">
+    <p class="card-text description-preview small">Catch the wildest, funniest takes on today’s headlines live at …</p>
+    
+        <button class="btn btn-link btn-sm p-0 show-more" type="button" data-bs-toggle="collapse" data-bs-target="#description-de257db2-8a96-406c-a0b2-1ddb759ef106">
+            Show more
+        </button>
+        <div class="collapse" id="description-de257db2-8a96-406c-a0b2-1ddb759ef106">
+            <div class="card-text small markdown"><p>Catch the wildest, funniest takes on today’s headlines live at The Kee News – your new fave news comedy night!</p>
+<p>Looking for a smart, funny and slightly chaotic Saturday night in Berlin? Join us on October 3, where four international comedians turn headlines, personal drama and global madness into stand-up.<br><br>This is not just a regular comedy showcase. The comedians will bring their own takes on politics, pop culture, Berlin life, expat chaos and everything weird happening in the world right now. Then the audience gets involved: write down the news that matters to you, and we’ll discuss it live on stage.<br><br>It can be anything - politics, celebrity gossip, a strange thing that happened at work, your flatmate joining a cult, or your mum getting married for the second time. If it feels important to you, we can probably make it funny.<br><br><em><em>On stage:</em></em><br><br><strong><strong>Fitz</strong></strong> - a New Zealand comedian performing across Europe with warm, punchy and absurd comedy about identity, everyday chaos and trying to stay normal in an increasingly weird world.<br><br><strong><strong>Ludwig Benecke</strong></strong> - a Swiss-German comedian who has performed at the Edinburgh Fringe Festival, opened for Victor Patrascan on tour and brings dry, clever comedy about culture, language and the weirdness of everyday life.<br><br><strong><strong>Tom Strissel </strong></strong>- an American comedian and actor, semi-finalist of the 2024 Berlin New Standup Award and member of the sketch comedy group Fuster Clucks.<br><br><strong><strong>Steph DePrez</strong></strong> - an American comedian, emcee, singer and writer, bringing charming, sharp and personal comedy about performance, identity, social chaos and trying to connect with other humans.<br><br><strong><strong>The Kee</strong></strong> - host of the show, comedian with 15 years of experience, creator of a YouTube late-night show, arrested for jokes in Russia and now making comedy in Berlin.<br><br>The Kee News<br>Saturday, October 3, 2026<br>Time TBC<br>The Wall, Berlin<br>Show in English<br><br><em><em>Tags:</em></em><br>English stand-up comedy<br>News-based comedy<br>International Berlin comedians<br>Audience interaction<br>Smart jokes, stupid jokes, and news you can survive</p></div>
+        </div>
+    
+</div> 
+	</div>
+
+	<div class="card-footer">
+		
+<div class="d-flex flex-column gap-2">
+	<div class="d-flex align-items-center justify-content-between">
+		<div class="flex-grow-1 d-flex align-items-center">
+			
+
+
+<div data-checkout-cta
+     data-event-slug="2026-10-03-the-kee-comedy-the-kee-news-news-based-comedy-show"
+     data-event-title="The Kee News — News-Based Comedy Show"
+     data-checkout-source="eventbrite">
+	
+
+
+
+
+
+<div class="ticket-widget-embed-host">
+<div class="d-flex flex-column">
+    
+    <div class="mb-2">
+        <small class="text-theme-light">Free</small>
+    </div>
+    
+    
+    <button
+        type="button"
+        class="btn btn-primary eb-checkout-trigger"
+        data-event-id="1997986160390"
+        data-event-slug="2026-10-03-the-kee-comedy-the-kee-news-news-based-comedy-show"
+        data-wt-coupon=""
+        id="eb-trigger-1997986160390">Get Free Tickets</button>
+    
+</div>
+</div>
+
+
+
+</div>
+
+
+			
+
+
+
+		</div>
+		
+		<div class="d-flex align-items-center ms-2">
+			
+
+
+
+
+
+		</div>
+		
+	</div>
+	
+</div>
+
+	</div>
+	
+<div class="card-footer">
+    
+        <small class="text-muted">
+
+
+        
+        
+        </small>
+    
+</div>
+	
+	
+
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "Event", "eventStatus": "https://schema.org/EventScheduled", "url": "https://spotagig.eu/events/2026-10-03-the-kee-comedy-the-kee-news-news-based-comedy-show/", "image": "https://spotagig.eu/media/user_23c7a631-fa54-46ff-9826-306bfe7fab9b/1790345574.799512/ChatGPT_Image_Sep_25_2026_04_bew6R7H.png", "location": {"@type": "Place", "image": "https://spotagig.eu/media/user_3ad6d03b-a828-477b-84db-a8d839394b0e/1763636382.42641/c4eff1_38492614bb0e4f12b2fdb_RZVVebK.avif", "name": "The Wall Comedy", "url": "https://spotagig.eu/venues/thewallcomedy/", "sameAs": ["https://www.instagram.com/thewallcomedy_berlin"], "address": {"@type": "PostalAddress", "streetAddress": "Grünberger Str. 84", "addressLocality": "Berlin", "addressRegion": "Berlin", "postalCode": "10245", "addressCountry": "DE"}}, "organizer": {"@type": "Organization", "name": "The Kee Comedy", "image": "https://spotagig.eu/media/user_23c7a631-fa54-46ff-9826-306bfe7fab9b/1786491903.281228/%D0%90%D0%92-1_2.png", "url": "https://spotagig.eu/producers/thekeecomedy/", "sameAs": ["https://www.instagram.com/thekeecomedy/", "https://www.facebook.com/TheKeeWithDoubleE/", "https://x.com/thekeecomedy", "https://www.tiktok.com/@thekeecomedy"]}, "startDate": "2026-10-03T17:30:00+00:00", "endDate": "2026-10-03T19:30:00+00:00", "description": "Catch the wildest, funniest takes on today’s headlines live at The Kee News – your new fave news comedy night! Looking for a smart, funny and slightly chaotic Saturday night in Berlin? Join us on October 3, where four international comedians turn headlines, personal drama and global madness into stand-up. This is not just a regular comedy showcase. The comedians will bring their own takes on politics, pop culture, Berlin life, expat chaos and everything weird happening in the world right now. Then the audience gets involved: write down the news that matters to you, and we’ll discuss it live on stage. It can be anything - politics, celebrity gossip, a strange thing that happened at work, your flatmate joining a cult, or your mum getting married for the second time. If it feels important to you, we can probably make it funny. On stage: Fitz - a New Zealand comedian performing across Europe with warm, punchy and absurd comedy about identity, everyday chaos and trying to stay normal in an increasingly weird world. Ludwig Benecke - a Swiss-German comedian who has performed at the Edinburgh Fringe Festival, opened for Victor Patrascan on tour and brings dry, clever comedy about culture, language and the weirdness of everyday life. Tom Strissel - an American comedian and actor, semi-finalist of the 2024 Berlin New Standup Award and member of the sketch comedy group Fuster Clucks. Steph DePrez - an American comedian, emcee, singer and writer, bringing charming, sharp and personal comedy about performance, identity, social chaos and trying to connect with other humans. The Kee - host of the show, comedian with 15 years of experience, creator of a YouTube late-night show, arrested for jokes in Russia and now making comedy in Berlin. The Kee News Saturday, October 3, 2026 Time TBC The Wall, Berlin Show in English Tags: English stand-up comedy News-based comedy International Berlin comedians Audience interaction Smart jokes, stupid jokes, and news you can survive", "name": "The Kee News — News-Based Comedy Show"}</script>
+
+
+
+	
+</div>
+
+  
+                </div>
+            
+                <div class="col-12 col-lg-6 col-xl-3">
+                    
+
+
+
+<div class="card event-card">
+	
+
+
+	
+
+<div class="card-header p-0">
+    <div class="position-relative">
+        
+            <a href="/events/2026-10-03-the-wall-comedy-meanwhile-in-berlin/">
+        
+        
+
+
+<img src="/media/user_3ad6d03b-a828-477b-84db-a8d839394b0e/1788953819.233284/event_image.jpg"
+     class="card-img-top"
+     alt="Meanwhile in Berlin.." loading="lazy">
+
+
+        
+            </a>
+        
+        <div class="position-absolute top-0 start-0">
+            
+                <a href="/events/2026-10-03-the-wall-comedy-meanwhile-in-berlin/" class="text-decoration-none d-flex align-items-center justify-content-center event-date-col">
+            
+                <div class="text-center event-date-overlay">
+                    <div class="fs-2-5rem fw-bold">03</div>
+                    <div class="fs-1rem">Oct</div>
+                </div>
+            
+                </a>
+            
+        </div>
+    </div>
+    <div class="p-2">
+        <h5 class="card-title text-theme-light mb-1">Meanwhile in Berlin..</h5>
+        <p class="card-text small mb-1">
+            
+            <i class="lni lni-calendar-days text-theme-accent"></i>
+            <span class="text-theme-light">Oct 3</span>
+            <i class="lni lni-watch-beat-1 text-theme-accent ms-2"></i>
+            <span class="text-theme-light">8:45 PM</span>
+        </p>
+        
+    </div>
+</div>
+
+	
+	<div class="card-body d-none d-md-block">
+		
+
+<div class="description-container">
+    <p class="card-text description-preview small">A stand up comedy showcase - some of the best …</p>
+    
+        <button class="btn btn-link btn-sm p-0 show-more" type="button" data-bs-toggle="collapse" data-bs-target="#description-e0fba2c0-6c93-47f3-860d-412e2822269c">
+            Show more
+        </button>
+        <div class="collapse" id="description-e0fba2c0-6c93-47f3-860d-412e2822269c">
+            <div class="card-text small markdown"><p>A stand up comedy showcase - some of the best comedians Berlin has to offer in a traditional comedy club</p>
+<p>Looking for a fun weekend night out in Berlin? Join us at the Wall Comedy Club <strong><strong>in Friedrichshain</strong></strong> for one of the city’s best <strong><strong>English stand-up comedy showcases</strong></strong>.</p>
+<p>We’re bringing together some of Berlin’s top comedians, all delivering their hilariously honest takes on Berlin life, dating, expat struggles, German culture and more.  This show is hosted by a quick-witted half German, half Kiwi comedian, guaranteed to keep the energy high from start to finish.</p>
+<p><strong><strong>• English stand-up comedy</strong></strong></p>
+<p><strong><strong>• English stand-up comedy</strong></strong><br><strong><strong>• Local Berlin comedians</strong></strong><br><strong><strong>• A dedicated comedy club vibe</strong></strong><br><strong><strong>• Affordable night out</strong></strong></p>
+<p>Set inside the Wall Comedy Club — an iconic room for English stand up comedy in Berlin. This is a truly authentic club experience much like you would find in New York. Grab a tasty cocktail, sit back, and let Berlin’s funniest take care of the rest.</p>
+<p>🎟️<strong><strong> </strong></strong><strong><strong>These shows regularly sell out — book now to secure your spot!</strong></strong></p>
+<p>Please note: This show is being filmed and photographed. By entering the venue, you acknowledge that video and audio recording may take place, and you may appear in the final footage.</p></div>
+        </div>
+    
+</div> 
+	</div>
+
+	<div class="card-footer">
+		
+<div class="d-flex flex-column gap-2">
+	<div class="d-flex align-items-center justify-content-between">
+		<div class="flex-grow-1 d-flex align-items-center">
+			
+
+
+<div data-checkout-cta
+     data-event-slug="2026-10-03-the-wall-comedy-meanwhile-in-berlin"
+     data-event-title="Meanwhile in Berlin.."
+     data-checkout-source="eventbrite">
+	
+
+
+
+
+
+<div class="ticket-widget-embed-host">
+<div class="d-flex flex-column">
+    
+    <div class="mb-2">
+        <small class="text-theme-light">€12 - €17</small>
+    </div>
+    
+    
+    <button
+        type="button"
+        class="btn btn-primary eb-checkout-trigger"
+        data-event-id="2000055683389"
+        data-event-slug="2026-10-03-the-wall-comedy-meanwhile-in-berlin"
+        data-wt-coupon=""
+        id="eb-trigger-2000055683389">Buy Tickets</button>
+    
+</div>
+</div>
+
+
+
+</div>
+
+
+			
+
+
+
+		</div>
+		
+		<div class="d-flex align-items-center ms-2">
+			
+
+
+
+
+
+		</div>
+		
+	</div>
+	
+</div>
+
+	</div>
+	
+<div class="card-footer">
+    
+</div>
+	
+	
+
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "Event", "eventStatus": "https://schema.org/EventScheduled", "url": "https://spotagig.eu/events/2026-10-03-the-wall-comedy-meanwhile-in-berlin/", "image": "https://spotagig.eu/media/user_3ad6d03b-a828-477b-84db-a8d839394b0e/1788953819.233284/event_image.jpg", "location": {"@type": "Place", "image": "https://spotagig.eu/media/user_3ad6d03b-a828-477b-84db-a8d839394b0e/1763636382.42641/c4eff1_38492614bb0e4f12b2fdb_RZVVebK.avif", "name": "The Wall Comedy", "url": "https://spotagig.eu/venues/thewallcomedy/", "sameAs": ["https://www.instagram.com/thewallcomedy_berlin"], "address": {"@type": "PostalAddress", "streetAddress": "Grünberger Str. 84", "addressLocality": "Berlin", "addressRegion": "Berlin", "postalCode": "10245", "addressCountry": "DE"}}, "startDate": "2026-10-03T20:45:00+00:00", "endDate": "2026-10-03T22:45:00+00:00", "description": "A stand up comedy showcase - some of the best comedians Berlin has to offer in a traditional comedy club Looking for a fun weekend night out in Berlin? Join us at the Wall Comedy Club in Friedrichshain for one of the city’s best English stand-up comedy showcases. We’re bringing together some of Berlin’s top comedians, all delivering their hilariously honest takes on Berlin life, dating, expat struggles, German culture and more. This show is hosted by a quick-witted half German, half Kiwi comedian, guaranteed to keep the energy high from start to finish. • English stand-up comedy • English stand-up comedy • Local Berlin comedians • A dedicated comedy club vibe • Affordable night out Set inside the Wall Comedy Club — an iconic room for English stand up comedy in Berlin. This is a truly authentic club experience much like you would find in New York. Grab a tasty cocktail, sit back, and let Berlin’s funniest take care of the rest. 🎟️ These shows regularly sell out — book now to secure your spot! Please note: This show is being filmed and photographed. By entering the venue, you acknowledge that video and audio recording may take place, and you may appear in the final footage.", "name": "Meanwhile in Berlin.."}</script>
+
+
+
+	
+</div>
+
+  
+                </div>
+            
+                <div class="col-12 col-lg-6 col-xl-3">
+                    
+
+
+
+<div class="card event-card">
+	
+
+
+	
+
+<div class="card-header p-0">
+    <div class="position-relative">
+        
+            <a href="/events/2026-10-04-adults-only-comedy-by-anna-beros-after-party-comedy-stand-up-in-english-sundays-6pm-at-the-wall/">
+        
+        
+
+
+<img src="/media/user_b4a784d3-2769-44e5-b8fb-0fb4239fd084/1785850454.769341/event_image.jpg"
+     class="card-img-top"
+     alt="After Party Comedy: Stand-Up in English Sundays 6pm at The Wall" loading="lazy">
+
+
+        
+            </a>
+        
+        <div class="position-absolute top-0 start-0">
+            
+                <a href="/events/2026-10-04-adults-only-comedy-by-anna-beros-after-party-comedy-stand-up-in-english-sundays-6pm-at-the-wall/" class="text-decoration-none d-flex align-items-center justify-content-center event-date-col">
+            
+                <div class="text-center event-date-overlay">
+                    <div class="fs-2-5rem fw-bold">04</div>
+                    <div class="fs-1rem">Oct</div>
+                </div>
+            
+                </a>
+            
+        </div>
+    </div>
+    <div class="p-2">
+        <h5 class="card-title text-theme-light mb-1">After Party Comedy: Stand-Up in English Sundays 6pm at The Wall</h5>
+        <p class="card-text small mb-1">
+            
+            <i class="lni lni-calendar-days text-theme-accent"></i>
+            <span class="text-theme-light">Oct 4</span>
+            <i class="lni lni-watch-beat-1 text-theme-accent ms-2"></i>
+            <span class="text-theme-light">5:30 PM</span>
+        </p>
+        
+        <p class="card-text small mb-0">
+            <i class="lni lni-megaphone-1 text-theme-accent"></i>
+            
+                <a href="/producers/adultsonlycomedy/"><span class="text-theme-light">Adults ONLY Comedy by Anna Beros</span></a>
+            
+            
+            
+            
+        </p>
+        
+    </div>
+</div>
+
+	
+	<div class="card-body d-none d-md-block">
+		
+
+<div class="description-container">
+    <p class="card-text description-preview small">1 hour Stand-Up Comedy Show in English Sundays 6-7pm Friedrichshain …</p>
+    
+        <button class="btn btn-link btn-sm p-0 show-more" type="button" data-bs-toggle="collapse" data-bs-target="#description-94a2aadc-2769-4e19-a8cb-7e6a1741f703">
+            Show more
+        </button>
+        <div class="collapse" id="description-94a2aadc-2769-4e19-a8cb-7e6a1741f703">
+            <div class="card-text small markdown"><p>1 hour Stand-Up Comedy Show in English Sundays 6-7pm Friedrichshain</p>
+<p>Cure the comedown and celebrate humanity with 1 hour of stand-up comedy in English by local legends, rising stars and seasoned pros. At the early show on Sunday at The Wall Comedy, we got what you neeeeed. Get loose for a tight hour of distraction, vulnerability, togetherness and joy.</p>
+<p><strong><strong>Entry: FREE</strong></strong></p>
+<p>Reserve here or via annaberos.com to secure your seat.</p>
+<p>Recommended donation 7-10€ cash/card</p>
+<p>Entry is free so you can leave if nothing's making you happy. If you stay, pay.</p>
+<p>Doors: 17:30</p>
+<p><strong><strong>Show starts: 18:00</strong></strong></p>
+<p>Show ends: 19:00</p>
+<p><strong><strong>produced &amp; usually hosted by ANNA BEROS</strong></strong> (AUS)</p>
+<p>Anna’s a Kiwi born, Melbourne raised, Berlin based full-time independent stand-up comedian, YouTube host, podcaster and producer. She celebrates life’s struggles with incisive stand-up and playful audience interaction. Her 3rd stand-up solo, High Hoe enjoyed a successful full run at the Edinburgh Fringe 2025 and her previous solos, Creampie Curious and Creampie Clarity played at numerous comedy festivals through the UK and Australia in 2023 and 2024. She has written for Comedy Central DE, headlines across Europe and produces and hosts 5 weekly shows in Berlin. In 2025, she opened for Jeff Arcuri at Admiralspalast, in 2024 for April Macie on US army bases in Germany and for Ian Fidance in Berlin in 2019. She hosts the comedy channel, Ersties Nonsense, and has the podcast Adults ONLY Comedy Berlin.</p>
+<p><a href="https://www.instagram.com/afberos/" title="https://www.instagram.com/afberos/" target="_blank" rel="nofollow noopener">https://www.instagram.com/afberos/</a></p>
+<p><br></p>
+<p><strong><strong>Lineup</strong></strong> via IG @adultsonlycomedyberlin</p>
+<p><a href="https://www.instagram.com/adultsonlycomedyberlin/" target="_blank" rel="nofollow noopener">https://www.instagram.com/adultsonlycomedyberlin/</a></p>
+<p><br></p>
+
+<p><br></p>
+<p><br></p>
+<p>original artwork by Cagnaccio di San Pietro</p>
+<p>edited by Anna Beros</p></div>
+        </div>
+    
+</div> 
+	</div>
+
+	<div class="card-footer">
+		
+<div class="d-flex flex-column gap-2">
+	<div class="d-flex align-items-center justify-content-between">
+		<div class="flex-grow-1 d-flex align-items-center">
+			
+
+
+<div data-checkout-cta
+     data-event-slug="2026-10-04-adults-only-comedy-by-anna-beros-after-party-comedy-stand-up-in-english-sundays-6pm-at-the-wall"
+     data-event-title="After Party Comedy: Stand-Up in English Sundays 6pm at The Wall"
+     data-checkout-source="eventbrite">
+	
+
+
+
+
+
+<div class="ticket-widget-embed-host">
+<div class="d-flex flex-column">
+    
+    <div class="mb-2">
+        <small class="text-theme-light">Free</small>
+    </div>
+    
+    
+    <button
+        type="button"
+        class="btn btn-primary eb-checkout-trigger"
+        data-event-id="1995358813926"
+        data-event-slug="2026-10-04-adults-only-comedy-by-anna-beros-after-party-comedy-stand-up-in-english-sundays-6pm-at-the-wall"
+        data-wt-coupon=""
+        id="eb-trigger-1995358813926">Get Free Tickets</button>
+    
+</div>
+</div>
+
+
+
+</div>
+
+
+			
+
+
+
+		</div>
+		
+		<div class="d-flex align-items-center ms-2">
+			
+
+
+
+
+
+		</div>
+		
+	</div>
+	
+</div>
+
+	</div>
+	
+<div class="card-footer">
+    
+        <small class="text-muted">
+
+
+        
+        
+        </small>
+    
+</div>
+	
+	
+
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "Event", "eventStatus": "https://schema.org/EventScheduled", "url": "https://spotagig.eu/events/2026-10-04-adults-only-comedy-by-anna-beros-after-party-comedy-stand-up-in-english-sundays-6pm-at-the-wall/", "image": "https://spotagig.eu/media/user_b4a784d3-2769-44e5-b8fb-0fb4239fd084/1785850454.769341/event_image.jpg", "location": {"@type": "Place", "image": "https://spotagig.eu/media/user_3ad6d03b-a828-477b-84db-a8d839394b0e/1763636382.42641/c4eff1_38492614bb0e4f12b2fdb_RZVVebK.avif", "name": "The Wall Comedy", "url": "https://spotagig.eu/venues/thewallcomedy/", "sameAs": ["https://www.instagram.com/thewallcomedy_berlin"], "address": {"@type": "PostalAddress", "streetAddress": "Grünberger Str. 84", "addressLocality": "Berlin", "addressRegion": "Berlin", "postalCode": "10245", "addressCountry": "DE"}}, "organizer": {"@type": "Organization", "name": "Adults ONLY Comedy by Anna Beros", "image": "https://spotagig.eu/media/user_b4a784d3-2769-44e5-b8fb-0fb4239fd084/1768313412.904335/business_card_87__57mm_1080__1080px.jpg", "url": "https://spotagig.eu/producers/adultsonlycomedy/", "sameAs": ["https://www.instagram.com/adultsonlycomedyberlin/"]}, "startDate": "2026-10-04T17:30:00+00:00", "endDate": "2026-10-04T19:00:00+00:00", "description": "1 hour Stand-Up Comedy Show in English Sundays 6-7pm Friedrichshain Cure the comedown and celebrate humanity with 1 hour of stand-up comedy in English by local legends, rising stars and seasoned pros. At the early show on Sunday at The Wall Comedy, we got what you neeeeed. Get loose for a tight hour of distraction, vulnerability, togetherness and joy. Entry: FREE Reserve here or via annaberos.com to secure your seat. Recommended donation 7-10€ cash/card Entry is free so you can leave if nothing's making you happy. If you stay, pay. Doors: 17:30 Show starts: 18:00 Show ends: 19:00 produced \u0026 usually hosted by ANNA BEROS (AUS) Anna’s a Kiwi born, Melbourne raised, Berlin based full-time independent stand-up comedian, YouTube host, podcaster and producer. She celebrates life’s struggles with incisive stand-up and playful audience interaction. Her 3rd stand-up solo, High Hoe enjoyed a successful full run at the Edinburgh Fringe 2025 and her previous solos, Creampie Curious and Creampie Clarity played at numerous comedy festivals through the UK and Australia in 2023 and 2024. She has written for Comedy Central DE, headlines across Europe and produces and hosts 5 weekly shows in Berlin. In 2025, she opened for Jeff Arcuri at Admiralspalast, in 2024 for April Macie on US army bases in Germany and for Ian Fidance in Berlin in 2019. She hosts the comedy channel, Ersties Nonsense, and has the podcast Adults ONLY Comedy Berlin. https://www.instagram.com/afberos/ Lineup via IG @adultsonlycomedyberlin https://www.instagram.com/adultsonlycomedyberlin/ original artwork by Cagnaccio di San Pietro edited by Anna Beros", "name": "After Party Comedy: Stand-Up in English Sundays 6pm at The Wall"}</script>
+
+
+
+	
+</div>
+
+  
+                </div>
+            
+                <div class="col-12 col-lg-6 col-xl-3">
+                    
+
+
+
+<div class="card event-card">
+	
+
+
+	
+
+<div class="card-header p-0">
+    <div class="position-relative">
+        
+            <a href="/events/2026-10-06-200000-the-wall-comedy-productions-sasha-nezlobin-im-fine-live-in-berlin/">
+        
+        
+
+
+<img src="/media/user_3ad6d03b-a828-477b-84db-a8d839394b0e/1786629614.580208/event_image.jpg"
+     class="card-img-top"
+     alt="SASHA NEZLOBIN: “I’M FINE” - LIVE IN BERLIN" loading="lazy">
+
+
+        
+            </a>
+        
+        <div class="position-absolute top-0 start-0">
+            
+                <a href="/events/2026-10-06-200000-the-wall-comedy-productions-sasha-nezlobin-im-fine-live-in-berlin/" class="text-decoration-none d-flex align-items-center justify-content-center event-date-col">
+            
+                <div class="text-center event-date-overlay">
+                    <div class="fs-2-5rem fw-bold">06</div>
+                    <div class="fs-1rem">Oct</div>
+                </div>
+            
+                </a>
+            
+        </div>
+    </div>
+    <div class="p-2">
+        <h5 class="card-title text-theme-light mb-1">SASHA NEZLOBIN: “I’M FINE” - LIVE IN BERLIN</h5>
+        <p class="card-text small mb-1">
+            
+            <i class="lni lni-calendar-days text-theme-accent"></i>
+            <span class="text-theme-light">Oct 6</span>
+            <i class="lni lni-watch-beat-1 text-theme-accent ms-2"></i>
+            <span class="text-theme-light">8:00 PM</span>
+        </p>
+        
+        <p class="card-text small mb-0">
+            <i class="lni lni-megaphone-1 text-theme-accent"></i>
+            
+                <a href="/producers/thewallcomedy/"><span class="text-theme-light">The Wall Comedy Productions</span></a>
+            
+            
+            
+            
+        </p>
+        
+    </div>
+</div>
+
+	
+	<div class="card-body d-none d-md-block">
+		
+
+<div class="description-container">
+    <p class="card-text description-preview small">Sasha Nezlobin was one of Russia’s biggest stand-up comedians — …</p>
+    
+        <button class="btn btn-link btn-sm p-0 show-more" type="button" data-bs-toggle="collapse" data-bs-target="#description-fc59c0bd-e6be-4193-9313-0cac31d00e39">
+            Show more
+        </button>
+        <div class="collapse" id="description-fc59c0bd-e6be-4193-9313-0cac31d00e39">
+            <div class="card-text small markdown"><p>Sasha Nezlobin was one of Russia’s biggest stand-up comedians — until he left everything behind for one reason: freedom of speech. Now rebuilding his life and career in America, Sasha brings an unforgettable hour of comedy that’s sharp, fearless, personal, and surprisingly hilarious.</p>
+<p>“I’m Fine” is a story about losing everything — your country, your career, your comfort — and discovering who you really are when you have to start over from nothing.</p>
+<p>Dark, bold, honest, and deeply funny, Sasha blends cultural observations, personal stories, and hard-earned perspective into a comedy experience unlike anything else touring right now.</p>
+<p>📍 The Wall Comedy, Grünberger Str. 84, 10245
+🗓 October 6th, 20:00</p></div>
+        </div>
+    
+</div> 
+	</div>
+
+	<div class="card-footer">
+		
+<div class="d-flex flex-column gap-2">
+	<div class="d-flex align-items-center justify-content-between">
+		<div class="flex-grow-1 d-flex align-items-center">
+			
+
+
+<div data-checkout-cta
+     data-event-slug="2026-10-06-200000-the-wall-comedy-productions-sasha-nezlobin-im-fine-live-in-berlin"
+     data-event-title="SASHA NEZLOBIN: “I’M FINE” - LIVE IN BERLIN"
+     data-checkout-source="fienta">
+	
+
+
+
+
+<div class="d-flex flex-column ticket-widget-embed-host">
+    
+    <a href="https://fienta.com/sasha-nezlobin-berlin102026"
+       data-fienta-checkout
+       target="_blank"
+       rel="noopener noreferrer"
+       class="btn btn-primary">
+        Get Seats
+    </a>
+</div>
+
+
+</div>
+
+
+			
+
+
+
+		</div>
+		
+		<div class="d-flex align-items-center ms-2">
+			
+
+
+
+
+
+		</div>
+		
+	</div>
+	
+</div>
+
+	</div>
+	
+<div class="card-footer">
+    
+        <small class="text-muted">
+
+
+        
+        
+        </small>
+    
+</div>
+	
+	
+
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "Event", "eventStatus": "https://schema.org/EventScheduled", "url": "https://spotagig.eu/events/2026-10-06-200000-the-wall-comedy-productions-sasha-nezlobin-im-fine-live-in-berlin/", "image": "https://spotagig.eu/media/user_3ad6d03b-a828-477b-84db-a8d839394b0e/1786629614.580208/event_image.jpg", "location": {"@type": "Place", "image": "https://spotagig.eu/media/user_3ad6d03b-a828-477b-84db-a8d839394b0e/1763636382.42641/c4eff1_38492614bb0e4f12b2fdb_RZVVebK.avif", "name": "The Wall Comedy", "url": "https://spotagig.eu/venues/thewallcomedy/", "sameAs": ["https://www.instagram.com/thewallcomedy_berlin"], "address": {"@type": "PostalAddress", "streetAddress": "Grünberger Str. 84", "addressLocality": "Berlin", "addressRegion": "Berlin", "postalCode": "10245", "addressCountry": "DE"}}, "organizer": {"@type": "Organization", "name": "The Wall Comedy Productions", "image": "https://spotagig.eu/media/user_3ad6d03b-a828-477b-84db-a8d839394b0e/1763637435.010381/c4eff1_38492614bb0e4f12b2fd_zw7tZby.avif", "url": "https://spotagig.eu/producers/thewallcomedy/", "sameAs": null}, "startDate": "2026-10-06T20:00:00+00:00", "endDate": "2026-10-06T22:00:00+00:00", "description": "Sasha Nezlobin was one of Russia’s biggest stand-up comedians — until he left everything behind for one reason: freedom of speech. Now rebuilding his life and career in America, Sasha brings an unforgettable hour of comedy that’s sharp, fearless, personal, and surprisingly hilarious. “I’m Fine” is a story about losing everything — your country, your career, your comfort — and discovering who you really are when you have to start over from nothing. Dark, bold, honest, and deeply funny, Sasha blends cultural observations, personal stories, and hard-earned perspective into a comedy experience unlike anything else touring right now. 📍 The Wall Comedy, Grünberger Str. 84, 10245 🗓 October 6th, 20:00", "name": "SASHA NEZLOBIN: “I’M FINE” - LIVE IN BERLIN"}</script>
+
+
+
+	
+</div>
+
+  
+                </div>
+            
+                <div class="col-12 col-lg-6 col-xl-3">
+                    
+
+
+
+<div class="card event-card">
+	
+
+
+	
+
+<div class="card-header p-0">
+    <div class="position-relative">
+        
+            <a href="/events/2026-10-07-200000-the-wall-comedy-saying-the-wrong-thing-english-stand-up-comedy-in-berlin/">
+        
+        
+
+
+<img src="/media/user_3ad6d03b-a828-477b-84db-a8d839394b0e/1790690908.089288/event_image.jpg"
+     class="card-img-top"
+     alt="Saying the Wrong Thing – English Stand-Up Comedy in Berlin" loading="lazy">
+
+
+        
+            </a>
+        
+        <div class="position-absolute top-0 start-0">
+            
+                <a href="/events/2026-10-07-200000-the-wall-comedy-saying-the-wrong-thing-english-stand-up-comedy-in-berlin/" class="text-decoration-none d-flex align-items-center justify-content-center event-date-col">
+            
+                <div class="text-center event-date-overlay">
+                    <div class="fs-2-5rem fw-bold">07</div>
+                    <div class="fs-1rem">Oct</div>
+                </div>
+            
+                </a>
+            
+        </div>
+    </div>
+    <div class="p-2">
+        <h5 class="card-title text-theme-light mb-1">Saying the Wrong Thing – English Stand-Up Comedy in Berlin</h5>
+        <p class="card-text small mb-1">
+            
+            <i class="lni lni-calendar-days text-theme-accent"></i>
+            <span class="text-theme-light">Oct 7</span>
+            <i class="lni lni-watch-beat-1 text-theme-accent ms-2"></i>
+            <span class="text-theme-light">8:00 PM</span>
+        </p>
+        
+    </div>
+</div>
+
+	
+	<div class="card-body d-none d-md-block">
+		
+
+<div class="description-container">
+    <p class="card-text description-preview small">Berlin's most experienced English-speaking comedians take the stage and do …</p>
+    
+        <button class="btn btn-link btn-sm p-0 show-more" type="button" data-bs-toggle="collapse" data-bs-target="#description-742d66c8-f787-4292-ae8a-509273ad14cf">
+            Show more
+        </button>
+        <div class="collapse" id="description-742d66c8-f787-4292-ae8a-509273ad14cf">
+            <div class="card-text small markdown"><p>Berlin's most experienced English-speaking comedians take the stage and do whatever their twisted minds come up with. Welcome to stand-up comedy the way it should be!&nbsp;Nothing here is finished. New jokes get their first outing, old ones get taken apart on stage, and occasionally something goes badly in a way everyone enjoys.No filter, no safety net, just comedians chasing the biggest laughs.Saying the Wrong Thing is an English stand-up comedy show in Berlin built to give comedians exactly what they need: the freedom to speak their mind and go straight for the funniest thing they can think of.Every show is unique because these are professional comedians working on their jokes. This means that each set is usually different. We also vary the lineup to ensure each experience is it's own thing.So you can come weekly and still watch a different show!We believe stand-up comedy works best when authenticity meets creative freedom. This show aims to foster that vibe, and we'd love for you to come down and be part of it.We love this show, and after talking with people in the room at the end of the night, you seem to agree with us.Pay What You Want. Seat reservation required. Reserve your seat for just €2, and at the end of the show you decide what it was worth (suggested contribution: €10-15). Reservations are held until 20:20.This is a paid show. You just get to choose how much to pay.DOORS 19:30 | SHOW 20:30</p></div>
+        </div>
+    
+</div> 
+	</div>
+
+	<div class="card-footer">
+		
+<div class="d-flex flex-column gap-2">
+	<div class="d-flex align-items-center justify-content-between">
+		<div class="flex-grow-1 d-flex align-items-center">
+			
+
+
+<div data-checkout-cta
+     data-event-slug="2026-10-07-200000-the-wall-comedy-saying-the-wrong-thing-english-stand-up-comedy-in-berlin"
+     data-event-title="Saying the Wrong Thing – English Stand-Up Comedy in Berlin"
+     data-checkout-source="fienta">
+	
+
+
+
+
+<div class="d-flex flex-column ticket-widget-embed-host">
+    
+    <a href="https://fienta.com/saying-the-wrong-thing-202549"
+       data-fienta-checkout
+       target="_blank"
+       rel="noopener noreferrer"
+       class="btn btn-primary">
+        Get Seats
+    </a>
+</div>
+
+
+</div>
+
+
+			
+
+
+
+		</div>
+		
+		<div class="d-flex align-items-center ms-2">
+			
+
+
+
+
+
+		</div>
+		
+	</div>
+	
+</div>
+
+	</div>
+	
+<div class="card-footer">
+    
+</div>
+	
+	
+
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "Event", "eventStatus": "https://schema.org/EventScheduled", "url": "https://spotagig.eu/events/2026-10-07-200000-the-wall-comedy-saying-the-wrong-thing-english-stand-up-comedy-in-berlin/", "image": "https://spotagig.eu/media/user_3ad6d03b-a828-477b-84db-a8d839394b0e/1790690908.089288/event_image.jpg", "location": {"@type": "Place", "image": "https://spotagig.eu/media/user_3ad6d03b-a828-477b-84db-a8d839394b0e/1763636382.42641/c4eff1_38492614bb0e4f12b2fdb_RZVVebK.avif", "name": "The Wall Comedy", "url": "https://spotagig.eu/venues/thewallcomedy/", "sameAs": ["https://www.instagram.com/thewallcomedy_berlin"], "address": {"@type": "PostalAddress", "streetAddress": "Grünberger Str. 84", "addressLocality": "Berlin", "addressRegion": "Berlin", "postalCode": "10245", "addressCountry": "DE"}}, "startDate": "2026-10-07T20:00:00+00:00", "endDate": "2026-10-07T22:00:00+00:00", "description": "Berlin's most experienced English-speaking comedians take the stage and do whatever their twisted minds come up with. Welcome to stand-up comedy the way it should be! Nothing here is finished. New jokes get their first outing, old ones get taken apart on stage, and occasionally something goes badly in a way everyone enjoys.No filter, no safety net, just comedians chasing the biggest laughs.Saying the Wrong Thing is an English stand-up comedy show in Berlin built to give comedians exactly what they need: the freedom to speak their mind and go straight for the funniest thing they can think of.Every show is unique because these are professional comedians working on their jokes. This means that each set is usually different. We also vary the lineup to ensure each experience is it's own thing.So you can come weekly and still watch a different show!We believe stand-up comedy works best when authenticity meets creative freedom. This show aims to foster that vibe, and we'd love for you to come down and be part of it.We love this show, and after talking with people in the room at the end of the night, you seem to agree with us.Pay What You Want. Seat reservation required. Reserve your seat for just €2, and at the end of the show you decide what it was worth (suggested contribution: €10-15). Reservations are held until 20:20.This is a paid show. You just get to choose how much to pay.DOORS 19:30 | SHOW 20:30", "name": "Saying the Wrong Thing – English Stand-Up Comedy in Berlin"}</script>
+
+
+
+	
+</div>
+
+  
+                </div>
+            
+                <div class="col-12 col-lg-6 col-xl-3">
+                    
+
+
+
+<div class="card event-card">
+	
+
+
+	
+
+<div class="card-header p-0">
+    <div class="position-relative">
+        
+            <a href="/events/2026-10-08-the-wall-comedy-on-fire-scorching-stand-up-comedy/">
+        
+        
+
+
+<img src="/media/user_3ad6d03b-a828-477b-84db-a8d839394b0e/1787573968.117313/event_image.jpg"
+     class="card-img-top"
+     alt="On Fire ! Scorching Stand Up Comedy!" loading="lazy">
+
+
+        
+            </a>
+        
+        <div class="position-absolute top-0 start-0">
+            
+                <a href="/events/2026-10-08-the-wall-comedy-on-fire-scorching-stand-up-comedy/" class="text-decoration-none d-flex align-items-center justify-content-center event-date-col">
+            
+                <div class="text-center event-date-overlay">
+                    <div class="fs-2-5rem fw-bold">08</div>
+                    <div class="fs-1rem">Oct</div>
+                </div>
+            
+                </a>
+            
+        </div>
+    </div>
+    <div class="p-2">
+        <h5 class="card-title text-theme-light mb-1">On Fire ! Scorching Stand Up Comedy!</h5>
+        <p class="card-text small mb-1">
+            
+            <i class="lni lni-calendar-days text-theme-accent"></i>
+            <span class="text-theme-light">Oct 8</span>
+            <i class="lni lni-watch-beat-1 text-theme-accent ms-2"></i>
+            <span class="text-theme-light">8:00 PM</span>
+        </p>
+        
+    </div>
+</div>
+
+	
+	<div class="card-body d-none d-md-block">
+		
+
+<div class="description-container">
+    <p class="card-text description-preview small">On Fire! Scorching Stand Up and Crowdwork! Join us for …</p>
+    
+        <button class="btn btn-link btn-sm p-0 show-more" type="button" data-bs-toggle="collapse" data-bs-target="#description-83ee9e9c-5cb7-4f8b-bcbf-d1583908fd12">
+            Show more
+        </button>
+        <div class="collapse" id="description-83ee9e9c-5cb7-4f8b-bcbf-d1583908fd12">
+            <div class="card-text small markdown"><p>On Fire! Scorching Stand Up and Crowdwork!</p>
+<p></p>
+<p><br></p>
+<p>Join us for an unforgettable night of side-splitting comedy. From the interesting characters in the audience, to the superb comedians and the one of a kind host. We will have you in stitches with their hilarious jokes and witty one-liners.</p>
+<p>This is the perfect opportunity to gather your friends, grab a drink, and enjoy some of the best comedy that Berlin has to offer. Don't miss out on this incredible night of laughter and fun!</p>
+<p>Tickets are limited, so make sure to book yours now to secure your spot at the show. See you there!</p>
+<p>Tickets
+</p><p>It's NOT A FREE SHOW. It's Pay What You Want. You just decide the amount you want to pay AFTER the show. Artists deserve to be paid. If you plan to not pay at all, please don't come to our show!!</p><p></p>
+<p>Doors 7pm</p>
+<p>Showtime 8pm</p>
+<p>Free Entry + Donation based. We suggest a donation of 10€-20€. Students &amp; unemployed 5€-7€.</p>
+<p><br></p>
+<p>We accept cards &amp; cash</p>
+<p><br></p>
+<p><br></p>
+<p></p></div>
+        </div>
+    
+</div> 
+	</div>
+
+	<div class="card-footer">
+		
+<div class="d-flex flex-column gap-2">
+	<div class="d-flex align-items-center justify-content-between">
+		<div class="flex-grow-1 d-flex align-items-center">
+			
+
+
+<div data-checkout-cta
+     data-event-slug="2026-10-08-the-wall-comedy-on-fire-scorching-stand-up-comedy"
+     data-event-title="On Fire ! Scorching Stand Up Comedy!"
+     data-checkout-source="eventbrite">
+	
+
+
+
+
+
+<div class="ticket-widget-embed-host">
+<div class="d-flex flex-column">
+    
+    <div class="mb-2">
+        <small class="text-theme-light">Free - €10</small>
+    </div>
+    
+    
+    <button
+        type="button"
+        class="btn btn-primary eb-checkout-trigger"
+        data-event-id="1993211337767"
+        data-event-slug="2026-10-08-the-wall-comedy-on-fire-scorching-stand-up-comedy"
+        data-wt-coupon=""
+        id="eb-trigger-1993211337767">Buy Tickets</button>
+    
+</div>
+</div>
+
+
+
+</div>
+
+
+			
+
+
+
+		</div>
+		
+		<div class="d-flex align-items-center ms-2">
+			
+
+
+
+
+
+		</div>
+		
+	</div>
+	
+</div>
+
+	</div>
+	
+<div class="card-footer">
+    
+</div>
+	
+	
+
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "Event", "eventStatus": "https://schema.org/EventScheduled", "url": "https://spotagig.eu/events/2026-10-08-the-wall-comedy-on-fire-scorching-stand-up-comedy/", "image": "https://spotagig.eu/media/user_3ad6d03b-a828-477b-84db-a8d839394b0e/1787573968.117313/event_image.jpg", "location": {"@type": "Place", "image": "https://spotagig.eu/media/user_3ad6d03b-a828-477b-84db-a8d839394b0e/1763636382.42641/c4eff1_38492614bb0e4f12b2fdb_RZVVebK.avif", "name": "The Wall Comedy", "url": "https://spotagig.eu/venues/thewallcomedy/", "sameAs": ["https://www.instagram.com/thewallcomedy_berlin"], "address": {"@type": "PostalAddress", "streetAddress": "Grünberger Str. 84", "addressLocality": "Berlin", "addressRegion": "Berlin", "postalCode": "10245", "addressCountry": "DE"}}, "startDate": "2026-10-08T20:00:00+00:00", "endDate": "2026-10-08T22:00:00+00:00", "description": "On Fire! Scorching Stand Up and Crowdwork! Join us for an unforgettable night of side-splitting comedy. From the interesting characters in the audience, to the superb comedians and the one of a kind host. We will have you in stitches with their hilarious jokes and witty one-liners. This is the perfect opportunity to gather your friends, grab a drink, and enjoy some of the best comedy that Berlin has to offer. Don't miss out on this incredible night of laughter and fun! Tickets are limited, so make sure to book yours now to secure your spot at the show. See you there! Tickets It's NOT A FREE SHOW. It's Pay What You Want. You just decide the amount you want to pay AFTER the show. Artists deserve to be paid. If you plan to not pay at all, please don't come to our show!! Doors 7pm Showtime 8pm Free Entry + Donation based. We suggest a donation of 10€-20€. Students \u0026 unemployed 5€-7€. We accept cards \u0026 cash", "name": "On Fire ! Scorching Stand Up Comedy!"}</script>
+
+
+
+	
+</div>
+
+  
+                </div>
+            
+                <div class="col-12 col-lg-6 col-xl-3">
+                    
+
+
+
+<div class="card event-card">
+	
+
+
+	
+
+<div class="card-header p-0">
+    <div class="position-relative">
+        
+            <a href="/events/2026-10-10-the-wall-comedy-saturday-night-live-standup-early-comedy-showcase/">
+        
+        
+
+
+<img src="/media/user_3ad6d03b-a828-477b-84db-a8d839394b0e/1788441129.416858/event_image.jpg"
+     class="card-img-top"
+     alt="SATURDAY NIGHT LIVE STANDUP (Early Comedy Showcase)" loading="lazy">
+
+
+        
+            </a>
+        
+        <div class="position-absolute top-0 start-0">
+            
+                <a href="/events/2026-10-10-the-wall-comedy-saturday-night-live-standup-early-comedy-showcase/" class="text-decoration-none d-flex align-items-center justify-content-center event-date-col">
+            
+                <div class="text-center event-date-overlay">
+                    <div class="fs-2-5rem fw-bold">10</div>
+                    <div class="fs-1rem">Oct</div>
+                </div>
+            
+                </a>
+            
+        </div>
+    </div>
+    <div class="p-2">
+        <h5 class="card-title text-theme-light mb-1">SATURDAY NIGHT LIVE STANDUP (Early Comedy Showcase)</h5>
+        <p class="card-text small mb-1">
+            
+            <i class="lni lni-calendar-days text-theme-accent"></i>
+            <span class="text-theme-light">Oct 10</span>
+            <i class="lni lni-watch-beat-1 text-theme-accent ms-2"></i>
+            <span class="text-theme-light">6:00 PM</span>
+        </p>
+        
+    </div>
+</div>
+
+	
+	<div class="card-body d-none d-md-block">
+		
+
+<div class="description-container">
+    <p class="card-text description-preview small">The perfect pre dinner, pre drinks plan! Don't miss the …</p>
+    
+        <button class="btn btn-link btn-sm p-0 show-more" type="button" data-bs-toggle="collapse" data-bs-target="#description-9be39b3e-d0ea-4f69-b8d6-6457a48e9c15">
+            Show more
+        </button>
+        <div class="collapse" id="description-9be39b3e-d0ea-4f69-b8d6-6457a48e9c15">
+            <div class="card-text small markdown"><p>The perfect pre dinner, pre drinks plan! Don't miss the comedy pregame Saturday Night Live Standup! Quality comedy from 6:30 -7:30pm at Boxi</p>
+<p>Join us for a night of laughter in Friedrichshain at The Wall Comedy Club. Tickets start at just €10 going up to €15 at the door. A funky yet cozy comedy club located across the street from Boxhagner Platz, and just a few steps away from U Samariterstr. and Frankfurter Tor! Our comedy showcase features three of Berlin's best international comedians performing longer sets, as well as visiting comedians touring through the city.</p>
+<p><br></p>
+<p>Saturday's at 6:30pm, we bring you a high-quality stand-up comedy show, featuring American-style stand-up comedy with headliner acts. Our talented comedians will keep you laughing throughout the night, and the friendly bar staff will keep your drinks flowing with their delicious cocktail menu and wide selection of beer. Wether you're looking to have pre drinks before a night out or just have a laugh before dinner SNL Standup is the perfect way to kick off your Saturday night!!!</p>
+
+<p>This venue can fill up so be sure to buy your ticket now! Early bird tickets are €10, Student &amp; group tickets from €11, going up to 15 euro at the door.</p>
+<p><br></p>
+<p>Don't miss out on some Saturday night stand-up comedy in a relaxed and friendly atmosphere. Grab your tickets now!</p>
+<p><br></p>
+
+<p>This is a bi-monthly event, so if this week is sold-out, book your tickets for next week NOW and come join the laughter.</p>
+<p><br></p>
+<p>Event Details:</p>
+<p>* Event Type: English Comedy Showcase</p>
+<p>* Date: Check listing</p>
+<p>* Time: 6:30 PM (doors open 6pm)</p>
+<p>* Location: The Wall Comedy Club (<a href="https://www.google.com/maps/place//data=!4m2!3m1!1s0x47a84ffbf9987b47:0xcb8d69c22f3aab56?sa=X&amp;ved=1t:8290&amp;ictx=111" title="https://www.google.com/maps/place//data=!4m2!3m1!1s0x47a84ffbf9987b47:0xcb8d69c22f3aab56?sa=X&amp;ved=1t:8290&amp;ictx=111" target="_blank" rel="nofollow noopener">Grünberger Str. 84, 10245 Berlin</a>)</p>
+<p>* This is a ticketed show, with tickets starting from 10 euro and going up to 15 euro at the door.</p></div>
+        </div>
+    
+</div> 
+	</div>
+
+	<div class="card-footer">
+		
+<div class="d-flex flex-column gap-2">
+	<div class="d-flex align-items-center justify-content-between">
+		<div class="flex-grow-1 d-flex align-items-center">
+			
+
+
+<div data-checkout-cta
+     data-event-slug="2026-10-10-the-wall-comedy-saturday-night-live-standup-early-comedy-showcase"
+     data-event-title="SATURDAY NIGHT LIVE STANDUP (Early Comedy Showcase)"
+     data-checkout-source="eventbrite">
+	
+
+
+
+
+
+<div class="ticket-widget-embed-host">
+<div class="d-flex flex-column">
+    
+    <div class="mb-2">
+        <small class="text-theme-light">€10 - €13</small>
+    </div>
+    
+    
+    <button
+        type="button"
+        class="btn btn-primary eb-checkout-trigger"
+        data-event-id="1995647410125"
+        data-event-slug="2026-10-10-the-wall-comedy-saturday-night-live-standup-early-comedy-showcase"
+        data-wt-coupon=""
+        id="eb-trigger-1995647410125">Buy Tickets</button>
+    
+</div>
+</div>
+
+
+
+</div>
+
+
+			
+
+
+
+		</div>
+		
+		<div class="d-flex align-items-center ms-2">
+			
+
+
+
+
+
+		</div>
+		
+	</div>
+	
+</div>
+
+	</div>
+	
+<div class="card-footer">
+    
+</div>
+	
+	
+
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "Event", "eventStatus": "https://schema.org/EventScheduled", "url": "https://spotagig.eu/events/2026-10-10-the-wall-comedy-saturday-night-live-standup-early-comedy-showcase/", "image": "https://spotagig.eu/media/user_3ad6d03b-a828-477b-84db-a8d839394b0e/1788441129.416858/event_image.jpg", "location": {"@type": "Place", "image": "https://spotagig.eu/media/user_3ad6d03b-a828-477b-84db-a8d839394b0e/1763636382.42641/c4eff1_38492614bb0e4f12b2fdb_RZVVebK.avif", "name": "The Wall Comedy", "url": "https://spotagig.eu/venues/thewallcomedy/", "sameAs": ["https://www.instagram.com/thewallcomedy_berlin"], "address": {"@type": "PostalAddress", "streetAddress": "Grünberger Str. 84", "addressLocality": "Berlin", "addressRegion": "Berlin", "postalCode": "10245", "addressCountry": "DE"}}, "startDate": "2026-10-10T18:00:00+00:00", "endDate": "2026-10-10T19:30:00+00:00", "description": "The perfect pre dinner, pre drinks plan! Don't miss the comedy pregame Saturday Night Live Standup! Quality comedy from 6:30 -7:30pm at Boxi Join us for a night of laughter in Friedrichshain at The Wall Comedy Club. Tickets start at just €10 going up to €15 at the door. A funky yet cozy comedy club located across the street from Boxhagner Platz, and just a few steps away from U Samariterstr. and Frankfurter Tor! Our comedy showcase features three of Berlin's best international comedians performing longer sets, as well as visiting comedians touring through the city. Saturday's at 6:30pm, we bring you a high-quality stand-up comedy show, featuring American-style stand-up comedy with headliner acts. Our talented comedians will keep you laughing throughout the night, and the friendly bar staff will keep your drinks flowing with their delicious cocktail menu and wide selection of beer. Wether you're looking to have pre drinks before a night out or just have a laugh before dinner SNL Standup is the perfect way to kick off your Saturday night!!! This venue can fill up so be sure to buy your ticket now! Early bird tickets are €10, Student \u0026 group tickets from €11, going up to 15 euro at the door. Don't miss out on some Saturday night stand-up comedy in a relaxed and friendly atmosphere. Grab your tickets now! This is a bi-monthly event, so if this week is sold-out, book your tickets for next week NOW and come join the laughter. Event Details: * Event Type: English Comedy Showcase * Date: Check listing * Time: 6:30 PM (doors open 6pm) * Location: The Wall Comedy Club (Grünberger Str. 84, 10245 Berlin) * This is a ticketed show, with tickets starting from 10 euro and going up to 15 euro at the door.", "name": "SATURDAY NIGHT LIVE STANDUP (Early Comedy Showcase)"}</script>
+
+
+
+	
+</div>
+
+  
+                </div>
+            
+                <div class="col-12 col-lg-6 col-xl-3">
+                    
+
+
+
+<div class="card event-card">
+	
+
+
+	
+
+<div class="card-header p-0">
+    <div class="position-relative">
+        
+            <a href="/events/2026-10-10-the-wall-comedy-meanwhile-in-berlin/">
+        
+        
+
+
+<img src="/media/user_3ad6d03b-a828-477b-84db-a8d839394b0e/1789048967.746697/event_image.jpg"
+     class="card-img-top"
+     alt="Meanwhile in Berlin.." loading="lazy">
+
+
+        
+            </a>
+        
+        <div class="position-absolute top-0 start-0">
+            
+                <a href="/events/2026-10-10-the-wall-comedy-meanwhile-in-berlin/" class="text-decoration-none d-flex align-items-center justify-content-center event-date-col">
+            
+                <div class="text-center event-date-overlay">
+                    <div class="fs-2-5rem fw-bold">10</div>
+                    <div class="fs-1rem">Oct</div>
+                </div>
+            
+                </a>
+            
+        </div>
+    </div>
+    <div class="p-2">
+        <h5 class="card-title text-theme-light mb-1">Meanwhile in Berlin..</h5>
+        <p class="card-text small mb-1">
+            
+            <i class="lni lni-calendar-days text-theme-accent"></i>
+            <span class="text-theme-light">Oct 10</span>
+            <i class="lni lni-watch-beat-1 text-theme-accent ms-2"></i>
+            <span class="text-theme-light">8:45 PM</span>
+        </p>
+        
+    </div>
+</div>
+
+	
+	<div class="card-body d-none d-md-block">
+		
+
+<div class="description-container">
+    <p class="card-text description-preview small">A stand up comedy showcase - some of the best …</p>
+    
+        <button class="btn btn-link btn-sm p-0 show-more" type="button" data-bs-toggle="collapse" data-bs-target="#description-8732b3c8-23f8-42bc-94e4-430d1cadd8af">
+            Show more
+        </button>
+        <div class="collapse" id="description-8732b3c8-23f8-42bc-94e4-430d1cadd8af">
+            <div class="card-text small markdown"><p>A stand up comedy showcase - some of the best comedians Berlin has to offer in a traditional comedy club</p>
+<p>Looking for a fun weekend night out in Berlin? Join us at the Wall Comedy Club <strong><strong>in Friedrichshain</strong></strong> for one of the city’s best <strong><strong>English stand-up comedy showcases</strong></strong>.</p>
+<p>We’re bringing together some of Berlin’s top comedians, all delivering their hilariously honest takes on Berlin life, dating, expat struggles, German culture and more.  This show is hosted by a quick-witted half German, half Kiwi comedian, guaranteed to keep the energy high from start to finish.</p>
+<p><strong><strong>• English stand-up comedy</strong></strong></p>
+<p><strong><strong>• English stand-up comedy</strong></strong><br><strong><strong>• Local Berlin comedians</strong></strong><br><strong><strong>• A dedicated comedy club vibe</strong></strong><br><strong><strong>• Affordable night out</strong></strong></p>
+<p>Set inside the Wall Comedy Club — an iconic room for English stand up comedy in Berlin. This is a truly authentic club experience much like you would find in New York. Grab a tasty cocktail, sit back, and let Berlin’s funniest take care of the rest.</p>
+<p>🎟️<strong><strong> </strong></strong><strong><strong>These shows regularly sell out — book now to secure your spot!</strong></strong></p>
+<p>Please note: This show is being filmed and photographed. By entering the venue, you acknowledge that video and audio recording may take place, and you may appear in the final footage.</p></div>
+        </div>
+    
+</div> 
+	</div>
+
+	<div class="card-footer">
+		
+<div class="d-flex flex-column gap-2">
+	<div class="d-flex align-items-center justify-content-between">
+		<div class="flex-grow-1 d-flex align-items-center">
+			
+
+
+<div data-checkout-cta
+     data-event-slug="2026-10-10-the-wall-comedy-meanwhile-in-berlin"
+     data-event-title="Meanwhile in Berlin.."
+     data-checkout-source="eventbrite">
+	
+
+
+
+
+
+<div class="ticket-widget-embed-host">
+<div class="d-flex flex-column">
+    
+    <div class="mb-2">
+        <small class="text-theme-light">€12 - €17</small>
+    </div>
+    
+    
+    <button
+        type="button"
+        class="btn btn-primary eb-checkout-trigger"
+        data-event-id="2000282324278"
+        data-event-slug="2026-10-10-the-wall-comedy-meanwhile-in-berlin"
+        data-wt-coupon=""
+        id="eb-trigger-2000282324278">Buy Tickets</button>
+    
+</div>
+</div>
+
+
+
+</div>
+
+
+			
+
+
+
+		</div>
+		
+		<div class="d-flex align-items-center ms-2">
+			
+
+
+
+
+
+		</div>
+		
+	</div>
+	
+</div>
+
+	</div>
+	
+<div class="card-footer">
+    
+</div>
+	
+	
+
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "Event", "eventStatus": "https://schema.org/EventScheduled", "url": "https://spotagig.eu/events/2026-10-10-the-wall-comedy-meanwhile-in-berlin/", "image": "https://spotagig.eu/media/user_3ad6d03b-a828-477b-84db-a8d839394b0e/1789048967.746697/event_image.jpg", "location": {"@type": "Place", "image": "https://spotagig.eu/media/user_3ad6d03b-a828-477b-84db-a8d839394b0e/1763636382.42641/c4eff1_38492614bb0e4f12b2fdb_RZVVebK.avif", "name": "The Wall Comedy", "url": "https://spotagig.eu/venues/thewallcomedy/", "sameAs": ["https://www.instagram.com/thewallcomedy_berlin"], "address": {"@type": "PostalAddress", "streetAddress": "Grünberger Str. 84", "addressLocality": "Berlin", "addressRegion": "Berlin", "postalCode": "10245", "addressCountry": "DE"}}, "startDate": "2026-10-10T20:45:00+00:00", "endDate": "2026-10-10T22:45:00+00:00", "description": "A stand up comedy showcase - some of the best comedians Berlin has to offer in a traditional comedy club Looking for a fun weekend night out in Berlin? Join us at the Wall Comedy Club in Friedrichshain for one of the city’s best English stand-up comedy showcases. We’re bringing together some of Berlin’s top comedians, all delivering their hilariously honest takes on Berlin life, dating, expat struggles, German culture and more. This show is hosted by a quick-witted half German, half Kiwi comedian, guaranteed to keep the energy high from start to finish. • English stand-up comedy • English stand-up comedy • Local Berlin comedians • A dedicated comedy club vibe • Affordable night out Set inside the Wall Comedy Club — an iconic room for English stand up comedy in Berlin. This is a truly authentic club experience much like you would find in New York. Grab a tasty cocktail, sit back, and let Berlin’s funniest take care of the rest. 🎟️ These shows regularly sell out — book now to secure your spot! Please note: This show is being filmed and photographed. By entering the venue, you acknowledge that video and audio recording may take place, and you may appear in the final footage.", "name": "Meanwhile in Berlin.."}</script>
+
+
+
+	
+</div>
+
+  
+                </div>
+            
+                <div class="col-12 col-lg-6 col-xl-3">
+                    
+
+
+
+<div class="card event-card">
+	
+
+
+	
+
+<div class="card-header p-0">
+    <div class="position-relative">
+        
+            <a href="/events/2026-10-11-adults-only-comedy-by-anna-beros-after-party-comedy-stand-up-in-english-sundays-6pm-at-the-wall/">
+        
+        
+
+
+<img src="/media/user_b4a784d3-2769-44e5-b8fb-0fb4239fd084/1785850461.197032/event_image.jpg"
+     class="card-img-top"
+     alt="After Party Comedy: Stand-Up in English Sundays 6pm at The Wall" loading="lazy">
+
+
+        
+            </a>
+        
+        <div class="position-absolute top-0 start-0">
+            
+                <a href="/events/2026-10-11-adults-only-comedy-by-anna-beros-after-party-comedy-stand-up-in-english-sundays-6pm-at-the-wall/" class="text-decoration-none d-flex align-items-center justify-content-center event-date-col">
+            
+                <div class="text-center event-date-overlay">
+                    <div class="fs-2-5rem fw-bold">11</div>
+                    <div class="fs-1rem">Oct</div>
+                </div>
+            
+                </a>
+            
+        </div>
+    </div>
+    <div class="p-2">
+        <h5 class="card-title text-theme-light mb-1">After Party Comedy: Stand-Up in English Sundays 6pm at The Wall</h5>
+        <p class="card-text small mb-1">
+            
+            <i class="lni lni-calendar-days text-theme-accent"></i>
+            <span class="text-theme-light">Oct 11</span>
+            <i class="lni lni-watch-beat-1 text-theme-accent ms-2"></i>
+            <span class="text-theme-light">5:30 PM</span>
+        </p>
+        
+        <p class="card-text small mb-0">
+            <i class="lni lni-megaphone-1 text-theme-accent"></i>
+            
+                <a href="/producers/adultsonlycomedy/"><span class="text-theme-light">Adults ONLY Comedy by Anna Beros</span></a>
+            
+            
+            
+            
+        </p>
+        
+    </div>
+</div>
+
+	
+	<div class="card-body d-none d-md-block">
+		
+
+<div class="description-container">
+    <p class="card-text description-preview small">1 hour Stand-Up Comedy Show in English Sundays 6-7pm Friedrichshain …</p>
+    
+        <button class="btn btn-link btn-sm p-0 show-more" type="button" data-bs-toggle="collapse" data-bs-target="#description-1ae7ea85-d5b1-41e9-a974-135b74b9c215">
+            Show more
+        </button>
+        <div class="collapse" id="description-1ae7ea85-d5b1-41e9-a974-135b74b9c215">
+            <div class="card-text small markdown"><p>1 hour Stand-Up Comedy Show in English Sundays 6-7pm Friedrichshain</p>
+<p>Cure the comedown and celebrate humanity with 1 hour of stand-up comedy in English by local legends, rising stars and seasoned pros. At the early show on Sunday at The Wall Comedy, we got what you neeeeed. Get loose for a tight hour of distraction, vulnerability, togetherness and joy.</p>
+<p><strong><strong>Entry: FREE</strong></strong></p>
+<p>Reserve here or via annaberos.com to secure your seat.</p>
+<p>Recommended donation 7-10€ cash/card</p>
+<p>Entry is free so you can leave if nothing's making you happy. If you stay, pay.</p>
+<p>Doors: 17:30</p>
+<p><strong><strong>Show starts: 18:00</strong></strong></p>
+<p>Show ends: 19:00</p>
+<p><strong><strong>produced &amp; usually hosted by ANNA BEROS</strong></strong> (AUS)</p>
+<p>Anna’s a Kiwi born, Melbourne raised, Berlin based full-time independent stand-up comedian, YouTube host, podcaster and producer. She celebrates life’s struggles with incisive stand-up and playful audience interaction. Her 3rd stand-up solo, High Hoe enjoyed a successful full run at the Edinburgh Fringe 2025 and her previous solos, Creampie Curious and Creampie Clarity played at numerous comedy festivals through the UK and Australia in 2023 and 2024. She has written for Comedy Central DE, headlines across Europe and produces and hosts 5 weekly shows in Berlin. In 2025, she opened for Jeff Arcuri at Admiralspalast, in 2024 for April Macie on US army bases in Germany and for Ian Fidance in Berlin in 2019. She hosts the comedy channel, Ersties Nonsense, and has the podcast Adults ONLY Comedy Berlin.</p>
+<p><a href="https://www.instagram.com/afberos/" title="https://www.instagram.com/afberos/" target="_blank" rel="nofollow noopener">https://www.instagram.com/afberos/</a></p>
+<p><br></p>
+<p><strong><strong>Lineup</strong></strong> via IG @adultsonlycomedyberlin</p>
+<p><a href="https://www.instagram.com/adultsonlycomedyberlin/" target="_blank" rel="nofollow noopener">https://www.instagram.com/adultsonlycomedyberlin/</a></p>
+<p><br></p>
+
+<p><br></p>
+<p><br></p>
+<p>original artwork by Cagnaccio di San Pietro</p>
+<p>edited by Anna Beros</p></div>
+        </div>
+    
+</div> 
+	</div>
+
+	<div class="card-footer">
+		
+<div class="d-flex flex-column gap-2">
+	<div class="d-flex align-items-center justify-content-between">
+		<div class="flex-grow-1 d-flex align-items-center">
+			
+
+
+<div data-checkout-cta
+     data-event-slug="2026-10-11-adults-only-comedy-by-anna-beros-after-party-comedy-stand-up-in-english-sundays-6pm-at-the-wall"
+     data-event-title="After Party Comedy: Stand-Up in English Sundays 6pm at The Wall"
+     data-checkout-source="eventbrite">
+	
+
+
+
+
+
+<div class="ticket-widget-embed-host">
+<div class="d-flex flex-column">
+    
+    <div class="mb-2">
+        <small class="text-theme-light">Free</small>
+    </div>
+    
+    
+    <button
+        type="button"
+        class="btn btn-primary eb-checkout-trigger"
+        data-event-id="1995358814929"
+        data-event-slug="2026-10-11-adults-only-comedy-by-anna-beros-after-party-comedy-stand-up-in-english-sundays-6pm-at-the-wall"
+        data-wt-coupon=""
+        id="eb-trigger-1995358814929">Get Free Tickets</button>
+    
+</div>
+</div>
+
+
+
+</div>
+
+
+			
+
+
+
+		</div>
+		
+		<div class="d-flex align-items-center ms-2">
+			
+
+
+
+
+
+		</div>
+		
+	</div>
+	
+</div>
+
+	</div>
+	
+<div class="card-footer">
+    
+        <small class="text-muted">
+
+
+        
+        
+        </small>
+    
+</div>
+	
+	
+
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "Event", "eventStatus": "https://schema.org/EventScheduled", "url": "https://spotagig.eu/events/2026-10-11-adults-only-comedy-by-anna-beros-after-party-comedy-stand-up-in-english-sundays-6pm-at-the-wall/", "image": "https://spotagig.eu/media/user_b4a784d3-2769-44e5-b8fb-0fb4239fd084/1785850461.197032/event_image.jpg", "location": {"@type": "Place", "image": "https://spotagig.eu/media/user_3ad6d03b-a828-477b-84db-a8d839394b0e/1763636382.42641/c4eff1_38492614bb0e4f12b2fdb_RZVVebK.avif", "name": "The Wall Comedy", "url": "https://spotagig.eu/venues/thewallcomedy/", "sameAs": ["https://www.instagram.com/thewallcomedy_berlin"], "address": {"@type": "PostalAddress", "streetAddress": "Grünberger Str. 84", "addressLocality": "Berlin", "addressRegion": "Berlin", "postalCode": "10245", "addressCountry": "DE"}}, "organizer": {"@type": "Organization", "name": "Adults ONLY Comedy by Anna Beros", "image": "https://spotagig.eu/media/user_b4a784d3-2769-44e5-b8fb-0fb4239fd084/1768313412.904335/business_card_87__57mm_1080__1080px.jpg", "url": "https://spotagig.eu/producers/adultsonlycomedy/", "sameAs": ["https://www.instagram.com/adultsonlycomedyberlin/"]}, "startDate": "2026-10-11T17:30:00+00:00", "endDate": "2026-10-11T19:00:00+00:00", "description": "1 hour Stand-Up Comedy Show in English Sundays 6-7pm Friedrichshain Cure the comedown and celebrate humanity with 1 hour of stand-up comedy in English by local legends, rising stars and seasoned pros. At the early show on Sunday at The Wall Comedy, we got what you neeeeed. Get loose for a tight hour of distraction, vulnerability, togetherness and joy. Entry: FREE Reserve here or via annaberos.com to secure your seat. Recommended donation 7-10€ cash/card Entry is free so you can leave if nothing's making you happy. If you stay, pay. Doors: 17:30 Show starts: 18:00 Show ends: 19:00 produced \u0026 usually hosted by ANNA BEROS (AUS) Anna’s a Kiwi born, Melbourne raised, Berlin based full-time independent stand-up comedian, YouTube host, podcaster and producer. She celebrates life’s struggles with incisive stand-up and playful audience interaction. Her 3rd stand-up solo, High Hoe enjoyed a successful full run at the Edinburgh Fringe 2025 and her previous solos, Creampie Curious and Creampie Clarity played at numerous comedy festivals through the UK and Australia in 2023 and 2024. She has written for Comedy Central DE, headlines across Europe and produces and hosts 5 weekly shows in Berlin. In 2025, she opened for Jeff Arcuri at Admiralspalast, in 2024 for April Macie on US army bases in Germany and for Ian Fidance in Berlin in 2019. She hosts the comedy channel, Ersties Nonsense, and has the podcast Adults ONLY Comedy Berlin. https://www.instagram.com/afberos/ Lineup via IG @adultsonlycomedyberlin https://www.instagram.com/adultsonlycomedyberlin/ original artwork by Cagnaccio di San Pietro edited by Anna Beros", "name": "After Party Comedy: Stand-Up in English Sundays 6pm at The Wall"}</script>
+
+
+
+	
+</div>
+
+  
+                </div>
+            
+                <div class="col-12 col-lg-6 col-xl-3">
+                    
+
+
+
+<div class="card event-card">
+	
+
+
+	
+
+<div class="card-header p-0">
+    <div class="position-relative">
+        
+            <a href="/events/2026-10-14-200000-the-wall-comedy-saying-the-wrong-thing-english-stand-up-comedy-in-berlin/">
+        
+        
+
+
+<img src="/media/user_3ad6d03b-a828-477b-84db-a8d839394b0e/1790690908.227793/event_image.jpg"
+     class="card-img-top"
+     alt="Saying the Wrong Thing – English Stand-Up Comedy in Berlin" loading="lazy">
+
+
+        
+            </a>
+        
+        <div class="position-absolute top-0 start-0">
+            
+                <a href="/events/2026-10-14-200000-the-wall-comedy-saying-the-wrong-thing-english-stand-up-comedy-in-berlin/" class="text-decoration-none d-flex align-items-center justify-content-center event-date-col">
+            
+                <div class="text-center event-date-overlay">
+                    <div class="fs-2-5rem fw-bold">14</div>
+                    <div class="fs-1rem">Oct</div>
+                </div>
+            
+                </a>
+            
+        </div>
+    </div>
+    <div class="p-2">
+        <h5 class="card-title text-theme-light mb-1">Saying the Wrong Thing – English Stand-Up Comedy in Berlin</h5>
+        <p class="card-text small mb-1">
+            
+            <i class="lni lni-calendar-days text-theme-accent"></i>
+            <span class="text-theme-light">Oct 14</span>
+            <i class="lni lni-watch-beat-1 text-theme-accent ms-2"></i>
+            <span class="text-theme-light">8:00 PM</span>
+        </p>
+        
+    </div>
+</div>
+
+	
+	<div class="card-body d-none d-md-block">
+		
+
+<div class="description-container">
+    <p class="card-text description-preview small">Berlin's most experienced English-speaking comedians take the stage and do …</p>
+    
+        <button class="btn btn-link btn-sm p-0 show-more" type="button" data-bs-toggle="collapse" data-bs-target="#description-a14698cd-df5c-4d7b-9cff-8903bbc5136e">
+            Show more
+        </button>
+        <div class="collapse" id="description-a14698cd-df5c-4d7b-9cff-8903bbc5136e">
+            <div class="card-text small markdown"><p>Berlin's most experienced English-speaking comedians take the stage and do whatever their twisted minds come up with. Welcome to stand-up comedy the way it should be!&nbsp;Nothing here is finished. New jokes get their first outing, old ones get taken apart on stage, and occasionally something goes badly in a way everyone enjoys.No filter, no safety net, just comedians chasing the biggest laughs.Saying the Wrong Thing is an English stand-up comedy show in Berlin built to give comedians exactly what they need: the freedom to speak their mind and go straight for the funniest thing they can think of.Every show is unique because these are professional comedians working on their jokes. This means that each set is usually different. We also vary the lineup to ensure each experience is it's own thing.So you can come weekly and still watch a different show!We believe stand-up comedy works best when authenticity meets creative freedom. This show aims to foster that vibe, and we'd love for you to come down and be part of it.We love this show, and after talking with people in the room at the end of the night, you seem to agree with us.Pay What You Want. Seat reservation required. Reserve your seat for just €2, and at the end of the show you decide what it was worth (suggested contribution: €10-15). Reservations are held until 20:20.This is a paid show. You just get to choose how much to pay.DOORS 19:30 | SHOW 20:30</p></div>
+        </div>
+    
+</div> 
+	</div>
+
+	<div class="card-footer">
+		
+<div class="d-flex flex-column gap-2">
+	<div class="d-flex align-items-center justify-content-between">
+		<div class="flex-grow-1 d-flex align-items-center">
+			
+
+
+<div data-checkout-cta
+     data-event-slug="2026-10-14-200000-the-wall-comedy-saying-the-wrong-thing-english-stand-up-comedy-in-berlin"
+     data-event-title="Saying the Wrong Thing – English Stand-Up Comedy in Berlin"
+     data-checkout-source="fienta">
+	
+
+
+
+
+<div class="d-flex flex-column ticket-widget-embed-host">
+    
+    <a href="https://fienta.com/saying-the-wrong-thing-202550"
+       data-fienta-checkout
+       target="_blank"
+       rel="noopener noreferrer"
+       class="btn btn-primary">
+        Get Seats
+    </a>
+</div>
+
+
+</div>
+
+
+			
+
+
+
+		</div>
+		
+		<div class="d-flex align-items-center ms-2">
+			
+
+
+
+
+
+		</div>
+		
+	</div>
+	
+</div>
+
+	</div>
+	
+<div class="card-footer">
+    
+</div>
+	
+	
+
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "Event", "eventStatus": "https://schema.org/EventScheduled", "url": "https://spotagig.eu/events/2026-10-14-200000-the-wall-comedy-saying-the-wrong-thing-english-stand-up-comedy-in-berlin/", "image": "https://spotagig.eu/media/user_3ad6d03b-a828-477b-84db-a8d839394b0e/1790690908.227793/event_image.jpg", "location": {"@type": "Place", "image": "https://spotagig.eu/media/user_3ad6d03b-a828-477b-84db-a8d839394b0e/1763636382.42641/c4eff1_38492614bb0e4f12b2fdb_RZVVebK.avif", "name": "The Wall Comedy", "url": "https://spotagig.eu/venues/thewallcomedy/", "sameAs": ["https://www.instagram.com/thewallcomedy_berlin"], "address": {"@type": "PostalAddress", "streetAddress": "Grünberger Str. 84", "addressLocality": "Berlin", "addressRegion": "Berlin", "postalCode": "10245", "addressCountry": "DE"}}, "startDate": "2026-10-14T20:00:00+00:00", "endDate": "2026-10-14T22:00:00+00:00", "description": "Berlin's most experienced English-speaking comedians take the stage and do whatever their twisted minds come up with. Welcome to stand-up comedy the way it should be! Nothing here is finished. New jokes get their first outing, old ones get taken apart on stage, and occasionally something goes badly in a way everyone enjoys.No filter, no safety net, just comedians chasing the biggest laughs.Saying the Wrong Thing is an English stand-up comedy show in Berlin built to give comedians exactly what they need: the freedom to speak their mind and go straight for the funniest thing they can think of.Every show is unique because these are professional comedians working on their jokes. This means that each set is usually different. We also vary the lineup to ensure each experience is it's own thing.So you can come weekly and still watch a different show!We believe stand-up comedy works best when authenticity meets creative freedom. This show aims to foster that vibe, and we'd love for you to come down and be part of it.We love this show, and after talking with people in the room at the end of the night, you seem to agree with us.Pay What You Want. Seat reservation required. Reserve your seat for just €2, and at the end of the show you decide what it was worth (suggested contribution: €10-15). Reservations are held until 20:20.This is a paid show. You just get to choose how much to pay.DOORS 19:30 | SHOW 20:30", "name": "Saying the Wrong Thing – English Stand-Up Comedy in Berlin"}</script>
+
+
+
+	
+</div>
+
+  
+                </div>
+            
+                <div class="col-12 col-lg-6 col-xl-3">
+                    
+
+
+
+<div class="card event-card">
+	
+
+
+	
+
+<div class="card-header p-0">
+    <div class="position-relative">
+        
+            <a href="/events/2026-10-15-the-wall-comedy-on-fire-scorching-stand-up-comedy/">
+        
+        
+
+
+<img src="/media/user_3ad6d03b-a828-477b-84db-a8d839394b0e/1787573969.623945/event_image.jpg"
+     class="card-img-top"
+     alt="On Fire ! Scorching Stand Up Comedy!" loading="lazy">
+
+
+        
+            </a>
+        
+        <div class="position-absolute top-0 start-0">
+            
+                <a href="/events/2026-10-15-the-wall-comedy-on-fire-scorching-stand-up-comedy/" class="text-decoration-none d-flex align-items-center justify-content-center event-date-col">
+            
+                <div class="text-center event-date-overlay">
+                    <div class="fs-2-5rem fw-bold">15</div>
+                    <div class="fs-1rem">Oct</div>
+                </div>
+            
+                </a>
+            
+        </div>
+    </div>
+    <div class="p-2">
+        <h5 class="card-title text-theme-light mb-1">On Fire ! Scorching Stand Up Comedy!</h5>
+        <p class="card-text small mb-1">
+            
+            <i class="lni lni-calendar-days text-theme-accent"></i>
+            <span class="text-theme-light">Oct 15</span>
+            <i class="lni lni-watch-beat-1 text-theme-accent ms-2"></i>
+            <span class="text-theme-light">8:00 PM</span>
+        </p>
+        
+    </div>
+</div>
+
+	
+	<div class="card-body d-none d-md-block">
+		
+
+<div class="description-container">
+    <p class="card-text description-preview small">On Fire! Scorching Stand Up and Crowdwork! Join us for …</p>
+    
+        <button class="btn btn-link btn-sm p-0 show-more" type="button" data-bs-toggle="collapse" data-bs-target="#description-5b1ac22e-b925-4886-8cc6-bb19c57b669b">
+            Show more
+        </button>
+        <div class="collapse" id="description-5b1ac22e-b925-4886-8cc6-bb19c57b669b">
+            <div class="card-text small markdown"><p>On Fire! Scorching Stand Up and Crowdwork!</p>
+<p></p>
+<p><br></p>
+<p>Join us for an unforgettable night of side-splitting comedy. From the interesting characters in the audience, to the superb comedians and the one of a kind host. We will have you in stitches with their hilarious jokes and witty one-liners.</p>
+<p>This is the perfect opportunity to gather your friends, grab a drink, and enjoy some of the best comedy that Berlin has to offer. Don't miss out on this incredible night of laughter and fun!</p>
+<p>Tickets are limited, so make sure to book yours now to secure your spot at the show. See you there!</p>
+<p>Tickets
+</p><p>It's NOT A FREE SHOW. It's Pay What You Want. You just decide the amount you want to pay AFTER the show. Artists deserve to be paid. If you plan to not pay at all, please don't come to our show!!</p><p></p>
+<p>Doors 7pm</p>
+<p>Showtime 8pm</p>
+<p>Free Entry + Donation based. We suggest a donation of 10€-20€. Students &amp; unemployed 5€-7€.</p>
+<p><br></p>
+<p>We accept cards &amp; cash</p>
+<p><br></p>
+<p><br></p>
+<p></p></div>
+        </div>
+    
+</div> 
+	</div>
+
+	<div class="card-footer">
+		
+<div class="d-flex flex-column gap-2">
+	<div class="d-flex align-items-center justify-content-between">
+		<div class="flex-grow-1 d-flex align-items-center">
+			
+
+
+<div data-checkout-cta
+     data-event-slug="2026-10-15-the-wall-comedy-on-fire-scorching-stand-up-comedy"
+     data-event-title="On Fire ! Scorching Stand Up Comedy!"
+     data-checkout-source="eventbrite">
+	
+
+
+
+
+
+<div class="ticket-widget-embed-host">
+<div class="d-flex flex-column">
+    
+    <div class="mb-2">
+        <small class="text-theme-light">Free - €10</small>
+    </div>
+    
+    
+    <button
+        type="button"
+        class="btn btn-primary eb-checkout-trigger"
+        data-event-id="1993211338770"
+        data-event-slug="2026-10-15-the-wall-comedy-on-fire-scorching-stand-up-comedy"
+        data-wt-coupon=""
+        id="eb-trigger-1993211338770">Buy Tickets</button>
+    
+</div>
+</div>
+
+
+
+</div>
+
+
+			
+
+
+
+		</div>
+		
+		<div class="d-flex align-items-center ms-2">
+			
+
+
+
+
+
+		</div>
+		
+	</div>
+	
+</div>
+
+	</div>
+	
+<div class="card-footer">
+    
+</div>
+	
+	
+
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "Event", "eventStatus": "https://schema.org/EventScheduled", "url": "https://spotagig.eu/events/2026-10-15-the-wall-comedy-on-fire-scorching-stand-up-comedy/", "image": "https://spotagig.eu/media/user_3ad6d03b-a828-477b-84db-a8d839394b0e/1787573969.623945/event_image.jpg", "location": {"@type": "Place", "image": "https://spotagig.eu/media/user_3ad6d03b-a828-477b-84db-a8d839394b0e/1763636382.42641/c4eff1_38492614bb0e4f12b2fdb_RZVVebK.avif", "name": "The Wall Comedy", "url": "https://spotagig.eu/venues/thewallcomedy/", "sameAs": ["https://www.instagram.com/thewallcomedy_berlin"], "address": {"@type": "PostalAddress", "streetAddress": "Grünberger Str. 84", "addressLocality": "Berlin", "addressRegion": "Berlin", "postalCode": "10245", "addressCountry": "DE"}}, "startDate": "2026-10-15T20:00:00+00:00", "endDate": "2026-10-15T22:00:00+00:00", "description": "On Fire! Scorching Stand Up and Crowdwork! Join us for an unforgettable night of side-splitting comedy. From the interesting characters in the audience, to the superb comedians and the one of a kind host. We will have you in stitches with their hilarious jokes and witty one-liners. This is the perfect opportunity to gather your friends, grab a drink, and enjoy some of the best comedy that Berlin has to offer. Don't miss out on this incredible night of laughter and fun! Tickets are limited, so make sure to book yours now to secure your spot at the show. See you there! Tickets It's NOT A FREE SHOW. It's Pay What You Want. You just decide the amount you want to pay AFTER the show. Artists deserve to be paid. If you plan to not pay at all, please don't come to our show!! Doors 7pm Showtime 8pm Free Entry + Donation based. We suggest a donation of 10€-20€. Students \u0026 unemployed 5€-7€. We accept cards \u0026 cash", "name": "On Fire ! Scorching Stand Up Comedy!"}</script>
+
+
+
+	
+</div>
+
+  
+                </div>
+            
+                <div class="col-12 col-lg-6 col-xl-3">
+                    
+
+
+
+<div class="card event-card">
+	
+
+
+	
+
+<div class="card-header p-0">
+    <div class="position-relative">
+        
+            <a href="/events/2026-10-17-the-wall-comedy-saturday-night-live-standup-early-comedy-showcase/">
+        
+        
+
+
+<img src="/media/user_3ad6d03b-a828-477b-84db-a8d839394b0e/1788441130.950622/event_image.jpg"
+     class="card-img-top"
+     alt="SATURDAY NIGHT LIVE STANDUP (Early Comedy Showcase)" loading="lazy">
+
+
+        
+            </a>
+        
+        <div class="position-absolute top-0 start-0">
+            
+                <a href="/events/2026-10-17-the-wall-comedy-saturday-night-live-standup-early-comedy-showcase/" class="text-decoration-none d-flex align-items-center justify-content-center event-date-col">
+            
+                <div class="text-center event-date-overlay">
+                    <div class="fs-2-5rem fw-bold">17</div>
+                    <div class="fs-1rem">Oct</div>
+                </div>
+            
+                </a>
+            
+        </div>
+    </div>
+    <div class="p-2">
+        <h5 class="card-title text-theme-light mb-1">SATURDAY NIGHT LIVE STANDUP (Early Comedy Showcase)</h5>
+        <p class="card-text small mb-1">
+            
+            <i class="lni lni-calendar-days text-theme-accent"></i>
+            <span class="text-theme-light">Oct 17</span>
+            <i class="lni lni-watch-beat-1 text-theme-accent ms-2"></i>
+            <span class="text-theme-light">6:00 PM</span>
+        </p>
+        
+    </div>
+</div>
+
+	
+	<div class="card-body d-none d-md-block">
+		
+
+<div class="description-container">
+    <p class="card-text description-preview small">The perfect pre dinner, pre drinks plan! Don't miss the …</p>
+    
+        <button class="btn btn-link btn-sm p-0 show-more" type="button" data-bs-toggle="collapse" data-bs-target="#description-8b39ce1a-3da7-41f9-b3cd-dc86f4f0f6f5">
+            Show more
+        </button>
+        <div class="collapse" id="description-8b39ce1a-3da7-41f9-b3cd-dc86f4f0f6f5">
+            <div class="card-text small markdown"><p>The perfect pre dinner, pre drinks plan! Don't miss the comedy pregame Saturday Night Live Standup! Quality comedy from 6:30 -7:30pm at Boxi</p>
+<p>Join us for a night of laughter in Friedrichshain at The Wall Comedy Club. Tickets start at just €10 going up to €15 at the door. A funky yet cozy comedy club located across the street from Boxhagner Platz, and just a few steps away from U Samariterstr. and Frankfurter Tor! Our comedy showcase features three of Berlin's best international comedians performing longer sets, as well as visiting comedians touring through the city.</p>
+<p><br></p>
+<p>Saturday's at 6:30pm, we bring you a high-quality stand-up comedy show, featuring American-style stand-up comedy with headliner acts. Our talented comedians will keep you laughing throughout the night, and the friendly bar staff will keep your drinks flowing with their delicious cocktail menu and wide selection of beer. Wether you're looking to have pre drinks before a night out or just have a laugh before dinner SNL Standup is the perfect way to kick off your Saturday night!!!</p>
+
+<p>This venue can fill up so be sure to buy your ticket now! Early bird tickets are €10, Student &amp; group tickets from €11, going up to 15 euro at the door.</p>
+<p><br></p>
+<p>Don't miss out on some Saturday night stand-up comedy in a relaxed and friendly atmosphere. Grab your tickets now!</p>
+<p><br></p>
+
+<p>This is a bi-monthly event, so if this week is sold-out, book your tickets for next week NOW and come join the laughter.</p>
+<p><br></p>
+<p>Event Details:</p>
+<p>* Event Type: English Comedy Showcase</p>
+<p>* Date: Check listing</p>
+<p>* Time: 6:30 PM (doors open 6pm)</p>
+<p>* Location: The Wall Comedy Club (<a href="https://www.google.com/maps/place//data=!4m2!3m1!1s0x47a84ffbf9987b47:0xcb8d69c22f3aab56?sa=X&amp;ved=1t:8290&amp;ictx=111" title="https://www.google.com/maps/place//data=!4m2!3m1!1s0x47a84ffbf9987b47:0xcb8d69c22f3aab56?sa=X&amp;ved=1t:8290&amp;ictx=111" target="_blank" rel="nofollow noopener">Grünberger Str. 84, 10245 Berlin</a>)</p>
+<p>* This is a ticketed show, with tickets starting from 10 euro and going up to 15 euro at the door.</p></div>
+        </div>
+    
+</div> 
+	</div>
+
+	<div class="card-footer">
+		
+<div class="d-flex flex-column gap-2">
+	<div class="d-flex align-items-center justify-content-between">
+		<div class="flex-grow-1 d-flex align-items-center">
+			
+
+
+<div data-checkout-cta
+     data-event-slug="2026-10-17-the-wall-comedy-saturday-night-live-standup-early-comedy-showcase"
+     data-event-title="SATURDAY NIGHT LIVE STANDUP (Early Comedy Showcase)"
+     data-checkout-source="eventbrite">
+	
+
+
+
+
+
+<div class="ticket-widget-embed-host">
+<div class="d-flex flex-column">
+    
+    <div class="mb-2">
+        <small class="text-theme-light">€10 - €13</small>
+    </div>
+    
+    
+    <button
+        type="button"
+        class="btn btn-primary eb-checkout-trigger"
+        data-event-id="1995647411128"
+        data-event-slug="2026-10-17-the-wall-comedy-saturday-night-live-standup-early-comedy-showcase"
+        data-wt-coupon=""
+        id="eb-trigger-1995647411128">Buy Tickets</button>
+    
+</div>
+</div>
+
+
+
+</div>
+
+
+			
+
+
+
+		</div>
+		
+		<div class="d-flex align-items-center ms-2">
+			
+
+
+
+
+
+		</div>
+		
+	</div>
+	
+</div>
+
+	</div>
+	
+<div class="card-footer">
+    
+</div>
+	
+	
+
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "Event", "eventStatus": "https://schema.org/EventScheduled", "url": "https://spotagig.eu/events/2026-10-17-the-wall-comedy-saturday-night-live-standup-early-comedy-showcase/", "image": "https://spotagig.eu/media/user_3ad6d03b-a828-477b-84db-a8d839394b0e/1788441130.950622/event_image.jpg", "location": {"@type": "Place", "image": "https://spotagig.eu/media/user_3ad6d03b-a828-477b-84db-a8d839394b0e/1763636382.42641/c4eff1_38492614bb0e4f12b2fdb_RZVVebK.avif", "name": "The Wall Comedy", "url": "https://spotagig.eu/venues/thewallcomedy/", "sameAs": ["https://www.instagram.com/thewallcomedy_berlin"], "address": {"@type": "PostalAddress", "streetAddress": "Grünberger Str. 84", "addressLocality": "Berlin", "addressRegion": "Berlin", "postalCode": "10245", "addressCountry": "DE"}}, "startDate": "2026-10-17T18:00:00+00:00", "endDate": "2026-10-17T19:30:00+00:00", "description": "The perfect pre dinner, pre drinks plan! Don't miss the comedy pregame Saturday Night Live Standup! Quality comedy from 6:30 -7:30pm at Boxi Join us for a night of laughter in Friedrichshain at The Wall Comedy Club. Tickets start at just €10 going up to €15 at the door. A funky yet cozy comedy club located across the street from Boxhagner Platz, and just a few steps away from U Samariterstr. and Frankfurter Tor! Our comedy showcase features three of Berlin's best international comedians performing longer sets, as well as visiting comedians touring through the city. Saturday's at 6:30pm, we bring you a high-quality stand-up comedy show, featuring American-style stand-up comedy with headliner acts. Our talented comedians will keep you laughing throughout the night, and the friendly bar staff will keep your drinks flowing with their delicious cocktail menu and wide selection of beer. Wether you're looking to have pre drinks before a night out or just have a laugh before dinner SNL Standup is the perfect way to kick off your Saturday night!!! This venue can fill up so be sure to buy your ticket now! Early bird tickets are €10, Student \u0026 group tickets from €11, going up to 15 euro at the door. Don't miss out on some Saturday night stand-up comedy in a relaxed and friendly atmosphere. Grab your tickets now! This is a bi-monthly event, so if this week is sold-out, book your tickets for next week NOW and come join the laughter. Event Details: * Event Type: English Comedy Showcase * Date: Check listing * Time: 6:30 PM (doors open 6pm) * Location: The Wall Comedy Club (Grünberger Str. 84, 10245 Berlin) * This is a ticketed show, with tickets starting from 10 euro and going up to 15 euro at the door.", "name": "SATURDAY NIGHT LIVE STANDUP (Early Comedy Showcase)"}</script>
+
+
+
+	
+</div>
+
+  
+                </div>
+            
+            
+            <div class="col-12 infinite-scroll-trigger"
+                 hx-get="/venues/a6448e5e-ee32-46be-afaa-a47895adc48a/partials/events/?page=2"
+                 hx-trigger="revealed"
+                 hx-target="this"
+                 hx-swap="outerHTML">
+                <div class="text-center py-3">
+    <div class="spinner-border spinner-border-sm" role="status">
+        <span class="visually-hidden">Loading more events...</span>
+    </div>
+</div>
+
+            </div>
+            
+        
+    </div>
+</section>
+
+</div>
+
+<script src="/static/js/producer_profile.js"></script>
+
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    
+    <!-- Powered by Spotagig footer for tenant sites -->
+    <footer class="powered-by-footer text-center py-3 mt-4">
+        <small>
+            Powered by <a href="https://spotagig.eu" target="_blank" rel="noopener noreferrer">Spotagig</a>
+        </small>
+    </footer>
+    
+
+   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" 
+            integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" 
+            crossorigin="anonymous"></script>
+    <!-- Include your custom JS file if needed -->
+    <script src="/static/js/custom.js"></script>
+    <!-- Per-tenant ticket checkout scripts (Eventbrite + Fienta + Universe) -->
+    
+
+
+
+
+
+
+<script src="/static/js/checkout-modal.js"></script>
+
+
+
+
+
+
+
+<script>
+window.fientaSettings = {
+    link_selector: 'a[data-fienta-checkout]',
+    utm_source: 'spotagig',
+};
+</script>
+<script src="https://fienta.com/embed.js"></script>
+
+
+
+
+
+
+
+
+
+
+<script src="https://www.universe.com/embed2.js" data-state=""></script>
+<script src="/static/js/universe-checkout.js"></script>
+
+
+
+
+<script src="/static/js/eb-checkout-utils.js"></script>
+<script src="https://www.eventbrite.com/static/widgets/eb_widgets.js" async></script>
+<script src="/static/js/eb-checkout-legacy.js"></script>
+
+
+
+<script src="/static/js/internal-ticket-checkout.js" defer></script>
+
+    <!-- Dashboard bulk actions for multi-event editing -->
+    <script src="/static/js/dashboard-bulk-actions.js"></script>
+    
+    
+    
+
+    <!-- Analytics (GA, Meta Pixel) — end of body so main DOM is not blocked by third-party work -->
+    
+
+
+
+
+<!-- Google Consent Mode v2 - Default State (GDPR/ePrivacy Compliant) -->
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+
+  // Default: deny all tracking until user provides explicit consent
+  gtag('consent', 'default', {
+    'analytics_storage': 'denied',
+    'ad_storage': 'denied',
+    'ad_user_data': 'denied',
+    'ad_personalization': 'denied',
+    'wait_for_update': 500
+  });
+</script>
+
+
+
+    
+        <!-- Google Analytics 4 (gtag.js) — 2 measurement ID(s) -->
+        <script async src="https://www.googletagmanager.com/gtag/js?id=G-5NRVF2B3R6"></script>
+        <script>
+          gtag('js', new Date());
+          
+              gtag('config', 'G\u002D5NRVF2B3R6');
+          
+              gtag('config', 'G\u002DTQLNCVLE5W');
+          
+        </script>
+    
+
+
+
+    
+        <!-- Meta Pixel — 2 pixel(s); fbevents.js is injected with async -->
+        <script>
+          !function(f,b,e,v,n,t,s)
+          {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+          n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+          if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+          n.queue=[];t=b.createElement(e);t.async=!0;
+          t.src=v;s=b.getElementsByTagName(e)[0];
+          s.parentNode.insertBefore(t,s)}(window, document,'script',
+          'https://connect.facebook.net/en_US/fbevents.js');
+
+          // revoke consent by default
+          fbq('consent', 'revoke');
+          
+              fbq('init', '190825411512892');
+          
+              fbq('init', '2158554538047713');
+          
+        </script>
+        
+    
+
+
+
+<script>
+  window.__INITIAL_TRACKING_GROUPS__ = (function () {
+    var groups = [];
+    
+    
+    return groups;
+  })();
+  // Short-lived signed token authorizing /capi/collect/ beacons (tenant-bound).
+  window.__CAPI_COLLECT_TOKEN__ = 'eyJ0IjoidGhld2FsbGNvbWVkeS5jb20ifQ:1xCyjl:visIoxBTJ8r84weSJ3HhPsTmwGdSuQeQ0qNGZpCMqq8';
+</script>
+<script defer src="/static/js/tracking-consent.js"></script>
+<script defer src="/static/js/analytics-events.js"></script>
+
+
+
+
+
+    <!-- Cookie Consent Banner (GDPR/ePrivacy compliant) -->
+    
+
+
+
+
+<script id="cookie-consent__cookie-groups" type="application/json">[{"varname": "analytics", "name": "Analytics", "description": "We use analytics cookies to understand how visitors interact with our website. This helps us improve our services and provide a better user experience.", "is_required": false}, {"varname": "marketing", "name": "Marketing", "description": "Marketing cookies are used to track visitors across websites. The intention is to display ads that are relevant and engaging for the individual user.", "is_required": false}]</script>
+
+
+<template id="cookie-consent__cookie-bar">
+  <div class="fixed-bottom p-3 d-flex justify-content-center" role="dialog" aria-live="polite" aria-label="Cookie consent">
+    <div class="card shadow-lg border-0 w-100">
+      <div class="card-body p-4">
+        <div class="row align-items-center">
+          <div class="col-md-8">
+            <h5 class="card-title fw-bold">
+              <i class="lni lni-shield-2 me-2"></i>Your Privacy
+            </h5>
+            <p class="card-text small text-muted mb-3 mb-md-0">
+              We use cookies to analyze traffic and optimize your experience. Choose your preferences below.
+              <a href="/cookies/" class="text-decoration-underline text-primary">Cookie Settings</a>
+            </p>
+          </div>
+          <div class="col-md-4">
+            <div class="d-grid gap-2">
+              <button type="button" class="btn btn-dark cookie-consent__accept">
+                Accept All
+              </button>
+              <div class="d-flex gap-2">
+                <button type="button" class="btn btn-outline-secondary flex-grow-1 cookie-consent__decline">
+                  Reject
+                </button>
+                <a href="/cookies/" class="btn btn-light border flex-grow-1 d-flex align-items-center justify-content-center">
+                  <i class="lni lni-gear-1"></i>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+
+<div id="cookie-consent-config" 
+     data-status-url="/cookies/status/"
+     data-cookie-bar-module-url="/static/cookie_consent/cookiebar.module.js"
+     hidden></div>
+
+
+<script type="module" src="/static/js/cookie-consent-init.js"></script>
+
+
+</body>
+
+</html>
