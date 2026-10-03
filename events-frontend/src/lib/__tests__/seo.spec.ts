@@ -4,6 +4,8 @@ import {
   alternatesFor,
   canonicalUrl,
   DETAIL_SITEMAPS,
+  feedPath,
+  feedUrl,
   INDEXABLE_PATHS,
   NON_INDEXABLE_PATHS,
   robotsTxt,
@@ -144,5 +146,31 @@ describe('robots.txt', () => {
   it('lets crawlers in', () => {
     expect(robotsTxt()).toMatch(/User-agent: \*/)
     expect(robotsTxt()).not.toMatch(/Disallow: \/\s*$/m)
+  })
+})
+
+describe('the feed URL', () => {
+  it('is site-relative in the UI and absolute in the head', () => {
+    expect(feedPath('de')).toBe('/feed.xml?locale=de')
+    expect(feedUrl('en')).toBe(`${SITE_URL}/feed.xml?locale=en`)
+  })
+
+  it("carries the filter bar's values, a list as a repeated parameter", () => {
+    expect(
+      feedPath('en', {
+        genre: 'techno',
+        district: ['kreuzberg', 'friedrichshain'],
+        maxPrice: 20,
+        free: true,
+      }),
+    ).toBe(
+      '/feed.xml?locale=en&genre=techno&district=kreuzberg&district=friedrichshain&maxPrice=20&free=true',
+    )
+  })
+
+  it('leaves out what the list leaves out of its URL', () => {
+    expect(feedPath('en', { q: '', venue: undefined, excludeSoldOut: false, family: [] })).toBe(
+      '/feed.xml?locale=en',
+    )
   })
 })

@@ -4,6 +4,7 @@
  * (docs/LEGAL.md §2). The disclaimer sits here rather than only on a legal page because it is the
  * single most useful sentence for a user of an aggregator, and nobody clicks through (§7.6).
  */
+import { Rss } from '@lucide/vue'
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { RouterLink } from 'vue-router'
@@ -11,6 +12,8 @@ import BrandLogo from '@/components/BrandLogo.vue'
 import LocaleSwitcher from '@/components/LocaleSwitcher.vue'
 import { useAppMeta } from '@/composables/useAppMeta'
 import { feedbackMailto } from '@/lib/feedback'
+import { FEED_TYPE, feedPath } from '@/lib/seo'
+import type { Locale } from '@/i18n/locales'
 import {
   commitUrl,
   CONTRIBUTING_URL,
@@ -26,7 +29,7 @@ import { useLocalePath } from '@/composables/useLocalePath'
 // claim a copyright it never carried (§3).
 const COPYRIGHT_YEAR = 2026
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 
 const linkClass = 'text-muted-foreground hover:text-foreground'
 
@@ -42,6 +45,9 @@ const { meta } = useAppMeta()
 const releaseUrl = computed(() => releaseTagUrl(meta.value?.version))
 
 const localePath = useLocalePath()
+
+/** Every new event, unfiltered; the filter bar links the filtered feed (#368). */
+const feedHref = computed(() => feedPath(locale.value as Locale))
 </script>
 
 <template>
@@ -53,6 +59,16 @@ const localePath = useLocalePath()
           <p class="text-body text-muted-foreground">{{ t('footer.tagline') }}</p>
           <!-- "Alle Angaben ohne Gewähr", in the register the brand actually speaks (§7.6). -->
           <p class="max-w-prose text-body text-muted-foreground">{{ t('footer.disclaimer') }}</p>
+          <!-- Beside the visitor-facing text, not under Project: a subscription, not a project link. -->
+          <a
+            :class="[linkClass, 'inline-flex items-center gap-1.5 text-body']"
+            :href="feedHref"
+            :title="t('events.feedAll')"
+            :type="FEED_TYPE"
+          >
+            <Rss aria-hidden="true" class="size-4" />
+            {{ t('footer.feed') }}
+          </a>
         </div>
 
         <nav aria-labelledby="footer-project-heading" class="space-y-3 text-body">

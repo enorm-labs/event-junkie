@@ -1,11 +1,12 @@
-import { alternatesFor, canonicalUrl, OG_LOCALES } from '@/lib/seo'
+import { alternatesFor, canonicalUrl, FEED_TITLES, FEED_TYPE, feedUrl, OG_LOCALES } from '@/lib/seo'
 import { type Locale, LOCALES } from '@/i18n/locales'
 
 /**
- * Keeps `<link rel="canonical">`, the `hreflang` alternates and the locale-dependent Open Graph
- * tags in step with the route. Deliberately absent from `index.html`: a static canonical there
- * would name the home page as the canonical URL of every route for anything that runs no
- * scripts, and the sitemap carries the same annotations without rendering (`lib/seo.ts`). Every
+ * Keeps `<link rel="canonical">`, the `hreflang` alternates, the feed link and the
+ * locale-dependent Open Graph tags in step with the route. Deliberately absent from `index.html`:
+ * a static canonical there would name the home page as the canonical URL of every route for
+ * anything that runs no scripts, and the sitemap carries the same annotations without rendering
+ * (`lib/seo.ts`). Every
  * element written here is marked `data-seo` and the set is replaced on each navigation, because
  * `og:locale:alternate` would otherwise accumulate as the visitor switches language.
  */
@@ -39,6 +40,15 @@ export function updateSeoTags(locale: Locale, path: string): void {
       managed('link', { rel: 'alternate', hreflang: alternate.hreflang, href: alternate.href }),
     )
   }
+
+  fragment.append(
+    managed('link', {
+      rel: 'alternate',
+      type: FEED_TYPE,
+      title: FEED_TITLES[locale],
+      href: feedUrl(locale),
+    }),
+  )
 
   fragment.append(managed('meta', { property: 'og:url', content: canonical }))
   fragment.append(managed('meta', { property: 'og:locale', content: OG_LOCALES[locale] }))

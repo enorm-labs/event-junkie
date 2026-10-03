@@ -98,7 +98,8 @@ test('rewrites the annotations on in-app navigation without accumulating them', 
     'href',
     'https://event-junkie.de/en/venues',
   )
-  await expect(page.locator('link[rel="alternate"]')).toHaveCount(3)
+  await expect(page.locator('link[rel="alternate"][hreflang]')).toHaveCount(3)
+  await expect(page.locator('link[rel="alternate"][type="application/rss+xml"]')).toHaveCount(1)
   await expect(page.locator('meta[property="og:locale:alternate"]')).toHaveCount(1)
 })
 

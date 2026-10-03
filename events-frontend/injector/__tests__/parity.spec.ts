@@ -40,9 +40,12 @@ const venue: VenueDetail = { slug: 'lido', name: 'Lido', city: 'Berlin', address
 function headState() {
   const meta = (selector: string) =>
     document.head.querySelector<HTMLMetaElement>(selector)?.content ?? null
-  const links = [...document.head.querySelectorAll<HTMLLinkElement>('link[rel="alternate"]')].map(
-    (link) => `${link.hreflang}=${link.href}`,
-  )
+  const links = [
+    ...document.head.querySelectorAll<HTMLLinkElement>('link[rel="alternate"][hreflang]'),
+  ].map((link) => `${link.hreflang}=${link.href}`)
+  const feeds = [
+    ...document.head.querySelectorAll<HTMLLinkElement>('link[rel="alternate"][type]'),
+  ].map((link) => `${link.type} ${link.title}=${link.href}`)
   return {
     title: document.title,
     lang: document.documentElement.lang,
@@ -60,6 +63,7 @@ function headState() {
     twitterImage: meta('meta[name="twitter:image"]'),
     canonical: document.head.querySelector<HTMLLinkElement>('link[rel="canonical"]')?.href ?? null,
     alternates: links,
+    feeds,
   }
 }
 

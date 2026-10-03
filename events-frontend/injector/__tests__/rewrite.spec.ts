@@ -134,6 +134,9 @@ describe('rewriteHead', () => {
     expect(html).toContain('hreflang="en" href="https://event-junkie.de/en/events/x"')
     expect(html).toContain('hreflang="x-default" href="https://event-junkie.de/en/events/x"')
     expect(html).toContain(
+      '<link data-seo rel="alternate" type="application/rss+xml" title="Event Junkie — neue Veranstaltungen" href="https://event-junkie.de/feed.xml?locale=de" />',
+    )
+    expect(html).toContain(
       '<meta data-seo property="og:url" content="https://event-junkie.de/de/events/x" />',
     )
     expect(html).toContain('<meta data-seo property="og:locale" content="de_DE" />')

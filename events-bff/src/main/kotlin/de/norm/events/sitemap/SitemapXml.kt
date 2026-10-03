@@ -1,5 +1,8 @@
 package de.norm.events.sitemap
 
+import de.norm.events.common.Site
+import de.norm.events.common.XmlWriter
+
 /** The four detail route families, each with its own sitemap. [path] is the URL segment in both. */
 enum class SitemapKind(
     val path: String
@@ -18,55 +21,39 @@ enum class SitemapKind(
 /**
  * Renders a detail sitemap in the shape `sitemapXml()` in `events-frontend/src/lib/seo.ts` gives the
  * static pages: one `<url>` per locale, each carrying every alternate and `x-default`, because Google
- * ignores a one-way `hreflang`. The origin and the locales mirror that file's `SITE_URL` and
- * `LOCALES`; change both or neither. No `lastmod`: `updated_at` moves on every write, changed or not,
- * which is the untrustworthy signal Google discounts.
+ * ignores a one-way `hreflang`. The origin and the locales are [Site]'s. No `lastmod`: `updated_at`
+ * moves on every write, changed or not, which is the untrustworthy signal Google discounts.
  */
 object SitemapXml {
-    const val SITE_URL = "https://event-junkie.de"
-    val LOCALES = listOf("en", "de")
-    const val DEFAULT_LOCALE = "en"
+    private const val SITEMAP_NAMESPACE = "http://www.sitemaps.org/schemas/sitemap/0.9"
+    private const val XHTML_NAMESPACE = "http://www.w3.org/1999/xhtml"
 
     fun render(
         kind: SitemapKind,
         slugs: List<String>
     ): String =
-        buildString {
-            appendLine("""<?xml version="1.0" encoding="UTF-8"?>""")
-            appendLine(
-                """<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">"""
-            )
+        XmlWriter.document("urlset", defaultNamespace = SITEMAP_NAMESPACE, namespaces = mapOf("xhtml" to XHTML_NAMESPACE)) {
             for (slug in slugs) {
-                val path = "/${kind.path}/${escape(slug)}"
-                for (locale in LOCALES) {
-                    appendLine("  <url>")
-                    appendLine("    <loc>${url(locale, path)}</loc>")
-                    for (alternate in LOCALES) appendAlternate(alternate, url(alternate, path))
-                    appendAlternate("x-default", url(DEFAULT_LOCALE, path))
-                    appendLine("  </url>")
+                val path = "/${kind.path}/$slug"
+                for (locale in Site.LOCALES) {
+                    element("url") {
+                        element("loc", url(locale, path))
+                        for (alternate in Site.LOCALES) alternate(alternate, url(alternate, path))
+                        alternate("x-default", url(Site.DEFAULT_LOCALE, path))
+                    }
                 }
             }
-            appendLine("</urlset>")
         }
 
     private fun url(
         locale: String,
         path: String
-    ) = "$SITE_URL/$locale$path"
+    ) = "${Site.URL}/$locale$path"
 
-    private fun StringBuilder.appendAlternate(
+    private fun XmlWriter.alternate(
         hreflang: String,
         href: String
     ) {
-        appendLine("""    <xhtml:link href="$href" hreflang="$hreflang" rel="alternate"/>""")
+        emptyElement("xhtml", XHTML_NAMESPACE, "link", "href" to href, "hreflang" to hreflang, "rel" to "alternate")
     }
-
-    /** A slug is `[a-z0-9-]` by construction; escaped anyway, since one bad row would void the file. */
-    private fun escape(value: String): String =
-        value
-            .replace("&", "&amp;")
-            .replace("<", "&lt;")
-            .replace(">", "&gt;")
-            .replace("\"", "&quot;")
-            .replace("'", "&apos;")
 }

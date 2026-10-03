@@ -65,6 +65,7 @@ data class EventIdPage(
  * the `NamingStrategy`.
  */
 @Repository
+@Suppress("TooManyFunctions") // One search in three shapes, a page, every row and the newest, over one shared WHERE builder.
 class EventSearchRepository(
     private val databaseClient: DatabaseClient,
     private val clock: Clock
@@ -113,6 +114,28 @@ class EventSearchRepository(
                 .sql("SELECT e.id FROM $EVENTS_SCHEMA.event e $where $DEFAULT_ORDER")
                 .bindAll(params)
                 .bind("seed", tiebreakSeed())
+                .map { row: Readable -> row.requiredEventId() }
+                .all()
+                .collectList()
+                .awaitSingle()
+        }
+
+    /**
+     * The [limit] matching event IDs the importer first stored most recently, newest first, for the
+     * event feed. `created_at` is that moment, because an update keeps it. Ties fall to the higher
+     * id, the later insert, so the order is the same on every request.
+     */
+    suspend fun newest(
+        filter: EventFilter,
+        limit: Int
+    ): List<Long> =
+        TextSearch.strictThenSimilar(filter.query, found = { it.isNotEmpty() }) { bySimilarity ->
+            val params = mutableMapOf<String, Any>()
+            val where = buildWhereClause(filter, params, bySimilarity)
+            databaseClient
+                .sql("SELECT e.id FROM $EVENTS_SCHEMA.event e $where ORDER BY e.created_at DESC, e.id DESC LIMIT :limit")
+                .bindAll(params)
+                .bind("limit", limit)
                 .map { row: Readable -> row.requiredEventId() }
                 .all()
                 .collectList()

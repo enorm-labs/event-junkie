@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import { Rss } from '@lucide/vue'
 import { computed } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { Button } from '@/components/ui/button'
@@ -14,6 +15,8 @@ import { type EventSearchParams, useEventSearch } from '@/composables/useEvents'
 import { useEventFilters } from '@/composables/useEventFilters'
 import { usePagedList } from '@/composables/usePagedList'
 import { useI18n } from 'vue-i18n'
+import type { Locale } from '@/i18n/locales'
+import { FEED_TYPE, feedPath } from '@/lib/seo'
 import { useLocalePath } from '@/composables/useLocalePath'
 
 const PAGE_SIZE = 20
@@ -74,7 +77,7 @@ function clearFilters() {
 
 const localePath = useLocalePath()
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 
 const sortOptions = computed<SortOption[]>(() => [
   { value: EARLIEST_FIRST, label: t('common.sort.earliest') },
@@ -87,6 +90,17 @@ function applySort(value: string) {
 }
 // The compact view is a global display preference — see `useCompactView`.
 const { compact } = useCompactView()
+
+/**
+ * The feed of new events for these filters (#368), a saved search a reader polls. The feed has
+ * no dates, so the date range stays out of it.
+ */
+const feedHref = computed(() => feedPath(locale.value as Locale, filters.value))
+const feedLabel = computed(() =>
+  Object.values(filters.value).some((value) => value !== undefined)
+    ? t('events.feedFiltered')
+    : t('events.feedAll'),
+)
 
 // "Near me" lives on the map, which measures distance on the device (#358); the filters go with it.
 const mapLink = computed(() => ({
@@ -131,6 +145,16 @@ const mapLink = computed(() => ({
           <RouterLink :to="mapLink" class="text-primary hover:underline">
             {{ t('events.nearMe') }}
           </RouterLink>
+          <a
+            :aria-label="feedLabel"
+            :href="feedHref"
+            :title="feedLabel"
+            :type="FEED_TYPE"
+            class="inline-flex items-center gap-1 self-center text-primary hover:underline"
+          >
+            <Rss aria-hidden="true" class="size-4" />
+            {{ t('events.feed') }}
+          </a>
         </div>
         <SortControl
           v-if="reachesPast"

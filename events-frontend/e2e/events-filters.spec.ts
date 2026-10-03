@@ -159,6 +159,17 @@ test('filters by event type', async ({ page }) => {
   await expect(eventHeading(page, 'Default Event A')).toBeVisible()
 })
 
+test('links the feed for the filters it shows, without the dates', async ({ page }) => {
+  await page.goto('/events')
+  const feed = page.getByRole('link', { name: 'Subscribe to new events as an RSS feed' })
+  await expect(feed).toHaveAttribute('href', '/feed.xml?locale=en')
+
+  await page.goto('/events?genre=techno&district=kreuzberg&district=mitte&from=2099-09-01')
+  await expect(
+    page.getByRole('link', { name: 'Subscribe to new events matching these filters as an RSS feed' }),
+  ).toHaveAttribute('href', '/feed.xml?locale=en&district=kreuzberg&district=mitte&genre=techno')
+})
+
 test('filters by venue', async ({ page }) => {
   await page.goto('/events')
   await expect(eventHeading(page, 'Default Event A')).toBeVisible()

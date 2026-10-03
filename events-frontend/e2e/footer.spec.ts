@@ -26,7 +26,7 @@ test('states the data disclaimer without needing a click', async ({ page }) => {
   )
 })
 
-test('links the repository, the mailbox, the tracker and the releases', async ({ page }) => {
+test('links the repository, the mailbox, the tracker, the releases and the feed', async ({ page }) => {
   await page.goto('/about')
   const footer = page.getByRole('contentinfo')
 
@@ -45,6 +45,10 @@ test('links the repository, the mailbox, the tracker and the releases', async ({
   await expect(footer.getByRole('link', { name: 'Changelog' })).toHaveAttribute(
     'href',
     /\/releases$/,
+  )
+  await expect(footer.getByRole('link', { name: 'Feed', exact: true })).toHaveAttribute(
+    'href',
+    '/feed.xml?locale=en',
   )
 })
 
