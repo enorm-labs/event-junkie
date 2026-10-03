@@ -9,6 +9,7 @@ import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.VenueLimitations
+import de.norm.events.scraper.readEventPage
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
 import java.time.Clock
@@ -62,16 +63,11 @@ abstract class AbstractZigZagWebsiteImporter(
             }
         }
 
-    @Suppress("TooGenericExceptionCaught") // Intentional: a broken event page must not fail the whole import
+    /** The event with its page's fields, flagged when the page yields nothing, or null when the page moves it elsewhere. */
     private suspend fun withDetail(event: ScrapedEvent): ScrapedEvent? {
         val detail =
-            try {
-                detailPageScraper.scrape(htmlFetcher.fetchDocument(event.sourceUrl))
-            } catch (e: Exception) {
-                logger.warn(e) { "Failed to fetch event page for '${event.title}' (${event.sourceUrl}), keeping listing data" }
-                null
-            }
-        if (detail == null || detail.isEmpty()) return event.copy(detailUnavailable = true)
+            htmlFetcher.readEventPage(event) { detailPageScraper.scrape(it).takeUnless(ZigZagDetail::isEmpty) }
+                ?: return event.copy(detailUnavailable = true)
         val dropped = detail.elsewhere && !keepsElsewhere
         if (dropped) logger.info { "Dropping '${event.title}': its page names another location" }
         return detail.takeUnless { dropped }?.let {

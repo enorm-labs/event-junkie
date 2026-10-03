@@ -19,8 +19,15 @@ abstract class AbstractSinglePageWebsiteImporter(
     // javaClass.name, so the log names the concrete importer rather than this base.
     private val logger = KotlinLogging.logger(javaClass.name)
 
-    /** Runs over the parsed events before they are returned; a venue that enriches them overrides it. */
-    protected open suspend fun postProcess(events: List<ScrapedEvent>): List<ScrapedEvent> = events
+    /**
+     * Reads one event's own page into the event, or returns null when the page yields nothing.
+     * Null for a venue whose listing is the whole record. When set, every event's page is fetched
+     * through [withEventPageOrFlagged], which owns the failure path and the flag.
+     */
+    protected open val enrichFromEventPage: ((ScrapedEvent, Document) -> ScrapedEvent?)? = null
+
+    /** A run that reads event pages cannot be skipped on the listing's validators. */
+    override val fetchesBeyondEntryPage: Boolean get() = enrichFromEventPage != null
 
     final override suspend fun importEvents(
         url: String,
@@ -37,10 +44,15 @@ abstract class AbstractSinglePageWebsiteImporter(
                 logger.info { "Scraped ${events.size} event(s) from $venueName" }
 
                 ImportResult.Success(
-                    events = postProcess(events),
+                    events = withEventPages(events),
                     etag = fetchResult.etag,
                     lastModified = fetchResult.lastModified
                 )
             }
         }
+
+    private suspend fun withEventPages(events: List<ScrapedEvent>): List<ScrapedEvent> {
+        val enrich = enrichFromEventPage ?: return events
+        return events.map { event -> htmlFetcher.withEventPageOrFlagged(event) { document -> enrich(event, document) } }
+    }
 }

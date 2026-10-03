@@ -7,7 +7,7 @@ import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.VenueLimitations
-import io.github.oshai.kotlinlogging.KotlinLogging
+import org.jsoup.nodes.Document
 import org.springframework.stereotype.Component
 import java.time.Clock
 
@@ -24,30 +24,20 @@ import java.time.Clock
  */
 @Component
 class TiffanyClubWebsiteImporter(
-    private val htmlFetcher: HtmlFetcher,
+    htmlFetcher: HtmlFetcher,
     clock: Clock = Clock.systemDefaultZone()
 ) : AbstractSinglePageWebsiteImporter(htmlFetcher, "the Tiffany Club listing", TiffanyClubOverviewPageScraper(clock)::scrape) {
-    private val logger = KotlinLogging.logger {}
-
     override val eventSource: EventSource = EventSource.TIFFANY_CLUB
     override val listsWholeProgramme: Boolean = true
-    override val fetchesBeyondEntryPage: Boolean = true
 
     private val detailPageScraper = TiffanyClubDetailPageScraper()
 
-    override suspend fun postProcess(events: List<ScrapedEvent>): List<ScrapedEvent> = events.map { addDescription(it) }
+    override val enrichFromEventPage: (ScrapedEvent, Document) -> ScrapedEvent? = ::addDescription
 
-    @Suppress("TooGenericExceptionCaught") // Intentional: a broken event page must not fail the whole import
-    private suspend fun addDescription(event: ScrapedEvent): ScrapedEvent =
-        try {
-            detailPageScraper
-                .scrapeDescription(htmlFetcher.fetchDocument(event.sourceUrl))
-                ?.let { event.copy(description = it) }
-                ?: event.copy(detailUnavailable = true)
-        } catch (e: Exception) {
-            logger.warn(e) { "Failed to fetch event page for '${event.title}' (${event.sourceUrl}), keeping listing data" }
-            event.copy(detailUnavailable = true)
-        }
+    private fun addDescription(
+        event: ScrapedEvent,
+        document: Document
+    ): ScrapedEvent? = detailPageScraper.scrapeDescription(document)?.let { event.copy(description = it) }
 }
 
 val TIFFANY_CLUB_LIMITATIONS =

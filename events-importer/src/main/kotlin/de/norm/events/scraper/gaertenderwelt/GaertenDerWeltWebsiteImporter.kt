@@ -13,6 +13,7 @@ import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.collapseExhibitionRuns
 import de.norm.events.scraper.gaertenderwelt.GaertenDerWeltWebsiteImporter.Companion.MAX_PAGES
 import de.norm.events.scraper.scrapeListingPages
+import de.norm.events.scraper.withEventPageOrFlagged
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
 
@@ -72,19 +73,13 @@ class GaertenDerWeltWebsiteImporter(
     }
 
     /**
-     * Fetches and parses the row's detail page, merging it over the row. Any failure degrades to the
-     * row alone, which carries title, date, start time, category, teaser, poster and ticket link,
-     * flagged [ScrapedEvent.detailUnavailable].
+     * The row's detail page merged over the row. A page that yields nothing leaves the row, which
+     * carries title, date, start time, category, teaser, poster and ticket link, flagged
+     * [ScrapedEvent.detailUnavailable].
      */
-    @Suppress("TooGenericExceptionCaught") // Intentional: degrade to listing data if the detail page is unavailable
     private suspend fun enrichFromDetailPage(row: ScrapedEvent): ScrapedEvent =
-        try {
-            val document = htmlFetcher.fetchDocument(row.sourceUrl)
+        htmlFetcher.withEventPageOrFlagged(row) { document ->
             detailPageScraper.scrape(document, row.sourceUrl)?.let { merge(detail = it, row = row) }
-                ?: row.copy(detailUnavailable = true)
-        } catch (e: Exception) {
-            logger.warn(e) { "Failed to fetch Gärten der Welt detail page for '${row.title}' (${row.sourceUrl}), using listing data" }
-            row.copy(detailUnavailable = true)
         }
 
     /**
