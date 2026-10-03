@@ -1,13 +1,11 @@
 package de.norm.events.scraper.neuezukunft
 
+import de.norm.events.scraper.AbstractJsonApiImporter
 import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.ApiClient
-import de.norm.events.scraper.EventImporter
 import de.norm.events.scraper.EventSource
-import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.VenueLimitations
-import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
 import java.time.Clock
 
@@ -34,30 +32,12 @@ import java.time.Clock
  */
 @Component
 class NeueZukunftWebsiteImporter(
-    private val apiClient: ApiClient,
+    apiClient: ApiClient,
     /** Clock anchoring the rolling recurrence horizon; override in tests. */
     clock: Clock = Clock.systemDefaultZone()
-) : EventImporter {
-    private val logger = KotlinLogging.logger {}
-
+) : AbstractJsonApiImporter(apiClient, "Neue Zukunft", { json, _ -> NeueZukunftApiScraper(clock).scrape(json) }) {
     override val eventSource: EventSource = EventSource.NEUE_ZUKUNFT
     override val listsWholeProgramme: Boolean = true
-
-    private val apiScraper = NeueZukunftApiScraper(clock)
-
-    override suspend fun importEvents(
-        url: String,
-        etag: String?,
-        lastModified: String?
-    ): ImportResult {
-        val json = apiClient.fetchJson(url)
-        val events = apiScraper.scrape(json)
-        logger.info { "Scraped ${events.size} event(s) from Neue Zukunft" }
-
-        // No conditional-request support, so no NotModified path; ETag / Last-Modified are always
-        // null and change detection relies on idempotent upserts.
-        return ImportResult.Success(events = events, etag = null, lastModified = null)
-    }
 }
 
 val NEUE_ZUKUNFT_LIMITATIONS =

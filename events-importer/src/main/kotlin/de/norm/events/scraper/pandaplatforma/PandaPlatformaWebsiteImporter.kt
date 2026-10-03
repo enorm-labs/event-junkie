@@ -1,14 +1,11 @@
 package de.norm.events.scraper.pandaplatforma
 
+import de.norm.events.scraper.AbstractTecImporter
 import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.ApiClient
-import de.norm.events.scraper.EventImporter
 import de.norm.events.scraper.EventSource
-import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.VenueLimitations
-import de.norm.events.scraper.walkTecEvents
-import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
 
 /**
@@ -24,26 +21,11 @@ import org.springframework.stereotype.Component
  */
 @Component
 class PandaPlatformaWebsiteImporter(
-    private val apiClient: ApiClient
-) : EventImporter {
-    private val logger = KotlinLogging.logger {}
-
+    apiClient: ApiClient
+) : AbstractTecImporter(apiClient, "PANDA platforma", PandaPlatformaApiScraper()::scrapePage, MAX_PAGES) {
     override val eventSource: EventSource = EventSource.PANDA_PLATFORMA
 
-    private val apiScraper = PandaPlatformaApiScraper()
-
-    override suspend fun importEvents(
-        url: String,
-        etag: String?,
-        lastModified: String?
-    ): ImportResult {
-        val listing = apiClient.walkTecEvents(eventSource, url, MAX_PAGES, apiScraper::scrapePage)
-        logger.info { "Scraped ${listing.items.size} event(s) from PANDA platforma across ${listing.pages} page(s)" }
-
-        return ImportResult.Success(events = listing.items, etag = null, lastModified = null, complete = listing.complete)
-    }
-
-    companion object {
+    private companion object {
         /** Safety bound on the cursor walk; the programme is one page today. */
         const val MAX_PAGES = 10
     }

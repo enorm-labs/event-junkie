@@ -1,14 +1,12 @@
 package de.norm.events.scraper.festsaal
 
+import de.norm.events.scraper.AbstractJsonApiImporter
 import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.ApiClient
-import de.norm.events.scraper.EventImporter
 import de.norm.events.scraper.EventSource
-import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.VenueLimitations
 import de.norm.events.scraper.querySeparator
-import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
 
 /**
@@ -32,39 +30,17 @@ import org.springframework.stereotype.Component
  */
 @Component
 class FestsaalWebsiteImporter(
-    private val apiClient: ApiClient
-) : EventImporter {
-    private val logger = KotlinLogging.logger {}
-
+    apiClient: ApiClient
+) : AbstractJsonApiImporter(apiClient, "Festsaal Kreuzberg", { json, _ -> FestsaalApiScraper().scrape(json) }) {
     override val eventSource: EventSource = EventSource.FESTSAAL
 
-    private val apiScraper = FestsaalApiScraper()
-
-    override suspend fun importEvents(
-        url: String,
-        etag: String?,
-        lastModified: String?
-    ): ImportResult {
-        val requestUrl = buildRequestUrl(url)
-        val json = apiClient.fetchJson(requestUrl)
-        val events = apiScraper.scrape(json)
-        logger.info { "Scraped ${events.size} event(s) from Festsaal Kreuzberg" }
-
-        // No conditional-request support, so no NotModified path; ETag / Last-Modified are always
-        // null and change detection relies on idempotent upserts.
-        return ImportResult.Success(events = events, etag = null, lastModified = null)
-    }
-
     /**
-     * The Wagtail EventPage query from the configured API base [baseUrl]. Field set, page-type
+     * The Wagtail EventPage query from the configured API base [url]. Field set, page-type
      * filter, locale, ordering and page size are parsing concerns and live in code (ADR-007:
      * parsing logic in code, entry-point URL in config). The base is on the event source, e.g.
      * `https://admin.festsaal-kreuzberg.de/api/v2/pages/`.
      */
-    private fun buildRequestUrl(baseUrl: String): String {
-        val separator = baseUrl.querySeparator()
-        return "$baseUrl${separator}type=home.EventPage&fields=$FIELDS&locale=de&order=date&limit=$LIMIT"
-    }
+    override fun requestUrl(url: String): String = "$url${url.querySeparator()}type=home.EventPage&fields=$FIELDS&locale=de&order=date&limit=$LIMIT"
 
     private companion object {
         /** Wagtail API fields the scraper reads; `genre(title)` / nested `preview_image` are expanded inline by the API. */

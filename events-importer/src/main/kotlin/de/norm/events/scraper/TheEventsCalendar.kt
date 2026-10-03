@@ -75,6 +75,31 @@ suspend fun ApiClient.walkTecEvents(
     return walkListingPages(source, fetchPage(firstUrl), firstUrl, maxPages, fetchPage) { page, _ -> ListingPage(page.events, page.nextPageUrl) }
 }
 
+/**
+ * Base class for a venue on The Events Calendar: walk its events endpoint with [walkTecEvents] and
+ * return every page's events. The API sends no validators, so every run is a [ImportResult.Success].
+ * [maxPages] is the runaway guard; [venueName] is how the log line names the source.
+ */
+abstract class AbstractTecImporter(
+    private val apiClient: ApiClient,
+    private val venueName: String,
+    private val scrapePage: (String) -> TecPage,
+    private val maxPages: Int
+) : EventImporter {
+    // javaClass.name, so the log names the concrete importer rather than this base.
+    private val importLogger = KotlinLogging.logger(javaClass.name)
+
+    final override suspend fun importEvents(
+        url: String,
+        etag: String?,
+        lastModified: String?
+    ): ImportResult {
+        val listing = apiClient.walkTecEvents(eventSource, url, maxPages, scrapePage)
+        importLogger.info { "Scraped ${listing.items.size} event(s) from $venueName across ${listing.pages} page(s)" }
+        return ImportResult.Success(events = listing.items, etag = null, lastModified = null, complete = listing.complete)
+    }
+}
+
 /** The local `start_date` or `end_date`, or null when missing or malformed. */
 fun JsonNode.tecDateTime(field: String): LocalDateTime? =
     stringOrNull(field)?.let {

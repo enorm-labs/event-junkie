@@ -7,6 +7,7 @@ import de.norm.events.scraper.SUPPORT_LABELS
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.WHITESPACE
+import de.norm.events.scraper.WpRestPage
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.decodeHtmlEntities
 import de.norm.events.scraper.hasSoldOutMarker
@@ -46,9 +47,11 @@ internal data class Bogen47Entry(
  */
 internal data class Bogen47Page(
     val entries: List<Bogen47Entry>,
-    val postCount: Int,
+    override val postCount: Int,
     val oldestDate: LocalDate?
-)
+) : WpRestPage<Bogen47Entry> {
+    override val items: List<Bogen47Entry> get() = entries
+}
 
 /**
  * Pure parser for the programme of a BOGEN47 venue (LARK, Fitzroy) from its WordPress REST API

@@ -6,6 +6,7 @@ import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.WpRestPage
 import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.detectFree
@@ -72,19 +73,24 @@ class MadameClaudeApiScraper {
      * @param json the raw JSON body of the `/wp-json/wp/v2/event` response (a JSON array).
      * @return one [ScrapedEvent] per listed event; empty if absent, unparseable or not an array.
      */
-    fun scrape(json: String): List<ScrapedEvent> {
-        val root = parseRoot(json) ?: return emptyList()
+    fun scrape(json: String): List<ScrapedEvent> = scrapePage(json).events
+
+    /** [scrape], with the response's post count, which tells the page walk whether another page follows. */
+    fun scrapePage(json: String): MadameClaudePage {
+        val root = parseRoot(json) ?: return MadameClaudePage(emptyList(), postCount = 0)
         logger.info { "Found ${root.size()} event(s) in Madame Claude API response" }
 
         @Suppress("TooGenericExceptionCaught") // Intentional: skip individual malformed events without aborting the import.
-        return root.mapNotNull { node ->
-            try {
-                parseEvent(jsonMapper.treeToValue(node, MadameClaudeEventNode::class.java))
-            } catch (e: Exception) {
-                logger.warn(e) { "Failed to parse Madame Claude event, skipping" }
-                null
+        val events =
+            root.mapNotNull { node ->
+                try {
+                    parseEvent(jsonMapper.treeToValue(node, MadameClaudeEventNode::class.java))
+                } catch (e: Exception) {
+                    logger.warn(e) { "Failed to parse Madame Claude event, skipping" }
+                    null
+                }
             }
-        }
+        return MadameClaudePage(events, postCount = root.size())
     }
 
     /** The response body as a JSON array, or null if unparseable or not an array. */
@@ -356,3 +362,11 @@ internal fun djSetArtistsFromTitle(title: String): List<ScrapedArtist> =
         .filterNot { it.isBlank() || isNonArtistName(it) }
         .distinct()
         .map { ScrapedArtist(name = it, role = "DJ") }
+
+/** One page of the `event` listing: its events, and how many posts the response held. */
+data class MadameClaudePage(
+    val events: List<ScrapedEvent>,
+    override val postCount: Int
+) : WpRestPage<ScrapedEvent> {
+    override val items: List<ScrapedEvent> get() = events
+}

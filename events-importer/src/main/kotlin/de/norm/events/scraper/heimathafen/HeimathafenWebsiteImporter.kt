@@ -4,12 +4,9 @@ import de.norm.events.scraper.ApiClient
 import de.norm.events.scraper.EventImporter
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ImportResult
-import de.norm.events.scraper.ListingPage
-import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.VenueLimitations
-import de.norm.events.scraper.pageNumber
 import de.norm.events.scraper.querySeparator
-import de.norm.events.scraper.walkListingPages
+import de.norm.events.scraper.walkWpRestPages
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
 
@@ -52,13 +49,7 @@ class HeimathafenWebsiteImporter(
         etag: String?,
         lastModified: String?
     ): ImportResult {
-        val firstUrl = buildRequestUrl(url, 1)
-        val fetchPage: suspend (String) -> HeimathafenApiScraper.HeimathafenPage = { apiScraper.scrape(apiClient.fetchJson(it)) }
-        val listing =
-            walkListingPages(eventSource, fetchPage(firstUrl), firstUrl, MAX_PAGES, fetchPage) { page, pageUrl ->
-                // A short page is the last one: asking for the next would 400 (`rest_post_invalid_page_number`).
-                ListingPage(page.events, buildRequestUrl(url, pageUrl.pageNumber() + 1).takeIf { page.postCount >= PER_PAGE })
-            }
+        val listing = apiClient.walkWpRestPages(eventSource, { buildRequestUrl(url, it) }, PER_PAGE, MAX_PAGES, apiScraper::scrape)
 
         val distinct = listing.items.distinctBy { it.sourceId }
         logger.info { "Scraped ${distinct.size} upcoming event(s) from Heimathafen" }

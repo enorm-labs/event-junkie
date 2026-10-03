@@ -173,4 +173,12 @@ class MadameClaudeApiScraperTest {
 
         event.title shouldBe "Adventurous Juan (DJ-Set)"
     }
+
+    @Test
+    fun `scrapePage counts every post, including one that does not parse`() {
+        val page = scraper.scrapePage("[{}, {\"id\": \"not a number\"}]")
+
+        page.postCount shouldBe 2
+        page.events shouldBe scraper.scrape("[{}, {\"id\": \"not a number\"}]")
+    }
 }
