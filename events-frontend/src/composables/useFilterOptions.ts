@@ -1,6 +1,7 @@
 import { computed } from 'vue'
 import type { FilterOption } from '@/components/MultiSelectFilter.vue'
 import { useFormat } from '@/composables/useFormat'
+import { DISTRICTS } from '@/lib/districts'
 import { EVENT_TYPES } from '@/lib/eventTypes'
 import { GENRE_FAMILIES } from '@/lib/genreFamilies'
 import { VENUE_TYPES } from '@/lib/venueTypes'
@@ -18,5 +19,6 @@ export function useFilterOptions() {
     venueTypeOptions: computed<FilterOption[]>(() =>
       VENUE_TYPES.map((type) => ({ value: type, label: formatVenueType(type) })),
     ),
+    districtOptions: DISTRICTS.map((d): FilterOption => ({ value: d.slug, label: d.label })),
   }
 }

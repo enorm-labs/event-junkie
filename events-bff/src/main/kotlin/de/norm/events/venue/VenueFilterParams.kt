@@ -11,10 +11,10 @@ data class VenueFilterParams(
     val q: String? = null,
     @field:Parameter(
         description =
-            "District filter — only venues in the matching Berlin district, one of the 23 pre-2001 districts (e.g. kreuzberg). " +
-                "Omitted/blank returns all districts."
+            "District filter, one of the 23 pre-2001 Berlin districts (e.g. kreuzberg). " +
+                "Repeatable: a venue in any given district matches."
     )
-    val district: String? = null,
+    val district: List<String>? = null,
     @field:Parameter(description = "Venue type slug (e.g. club). Repeatable: a venue of any given type matches. An unknown type matches nothing.")
     val type: List<String>? = null,
     @field:Parameter(description = "Genre family slug (e.g. electronic). Repeatable: a venue that mostly programmes any given family matches.")

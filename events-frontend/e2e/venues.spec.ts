@@ -63,21 +63,28 @@ test('searching updates the URL query and re-requests', async ({ page }) => {
   await expect(page.getByRole('link', { name: /Astra/ })).toHaveCount(0)
 })
 
-test('filtering by district updates the URL query and re-requests', async ({ page }) => {
+test('filtering by several districts updates the URL query and re-requests', async ({ page }) => {
   await page.route(venuesList, (route) => {
-    const district = new URL(route.request().url()).searchParams.get('district')
-    json(
-      route,
-      pageBody(district === 'mitte' ? [venue('berghain', 'Berghain')] : [venue('lido', 'Lido')]),
-    )
+    const districts = new URL(route.request().url()).searchParams.getAll('district').join()
+    const body = {
+      mitte: [venue('berghain', 'Berghain')],
+      'kreuzberg,mitte': [venue('berghain', 'Berghain'), venue('lido', 'Lido')],
+    }[districts] ?? [venue('lido', 'Lido'), venue('astra', 'Astra')]
+    json(route, pageBody(body))
   })
 
   await page.goto('/venues')
-  await page.getByLabel('Filter by district').selectOption('mitte')
+  await page.getByRole('button', { name: 'Filter by district: All districts' }).click()
+  await page.getByRole('checkbox', { name: 'Mitte' }).check()
 
   await expect(page).toHaveURL(/\/venues\?district=mitte$/)
   await expect(page.getByRole('link', { name: /Berghain/ })).toBeVisible()
   await expect(page.getByRole('link', { name: /Lido/ })).toHaveCount(0)
+
+  await page.getByRole('checkbox', { name: 'Kreuzberg' }).check()
+  await expect(page).toHaveURL(/\/venues\?district=kreuzberg&district=mitte$/)
+  await expect(page.getByRole('link', { name: /Lido/ })).toBeVisible()
+  await expect(page.getByRole('link', { name: /Astra/ })).toHaveCount(0)
 })
 
 test('sorting by upcoming events puts the sort in the URL, sends it, and shows the counts', async ({

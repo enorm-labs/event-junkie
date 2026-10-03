@@ -36,8 +36,8 @@ Accept: application/json
 GET {{bff-host}}/api/events?venue=lido
 Accept: application/json
 
-### Filter by district (one of the 23 pre-2001 Berlin districts)
-GET {{bff-host}}/api/events?district=kreuzberg
+### Filter by district (the 23 pre-2001 Berlin districts); repeat it for any of several
+GET {{bff-host}}/api/events?district=kreuzberg&district=neukoelln
 Accept: application/json
 
 ### Filter by artist slug

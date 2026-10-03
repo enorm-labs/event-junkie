@@ -10,6 +10,8 @@
     "allTypes": "All types",
     "allVenues": "All venues",
     "allDistricts": "All districts",
+    "districtsSelected": "{n} districts",
+    "clearDistricts": "Clear districts",
     "allGenres": "All genres",
     "typesSelected": "{n} types",
     "clearTypes": "Clear types",

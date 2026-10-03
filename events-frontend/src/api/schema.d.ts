@@ -1464,8 +1464,8 @@ export interface operations {
             query?: {
                 /** @description Case-insensitive substring filter on the venue name. Omitted/blank returns all venues. */
                 q?: string;
-                /** @description District filter — only venues in the matching Berlin district, one of the 23 pre-2001 districts (e.g. kreuzberg). Omitted/blank returns all districts. */
-                district?: string;
+                /** @description District filter, one of the 23 pre-2001 Berlin districts (e.g. kreuzberg). Repeatable: a venue in any given district matches. */
+                district?: string[];
                 /** @description Venue type slug (e.g. club). Repeatable: a venue of any given type matches. An unknown type matches nothing. */
                 type?: string[];
                 /** @description Genre family slug (e.g. electronic). Repeatable: a venue that mostly programmes any given family matches. */
@@ -1678,8 +1678,8 @@ export interface operations {
                 eventType?: string[];
                 /** @description Venue slug filter — only events at the matching venue. */
                 venue?: string;
-                /** @description District filter — only events at venues in the matching pre-2001 Berlin district (e.g. kreuzberg). */
-                district?: string;
+                /** @description Pre-2001 Berlin district slug (e.g. kreuzberg). Repeatable: an event at a venue in any given district matches. */
+                district?: string[];
                 /** @description Artist slug filter — only events featuring the matching artist. */
                 artist?: string;
                 /** @description Promoter slug filter — only events from the matching promoter. */
@@ -1779,8 +1779,8 @@ export interface operations {
                 eventType?: string[];
                 /** @description Venue slug filter — only events at the matching venue. */
                 venue?: string;
-                /** @description District filter — only events at venues in the matching pre-2001 Berlin district (e.g. kreuzberg). */
-                district?: string;
+                /** @description Pre-2001 Berlin district slug (e.g. kreuzberg). Repeatable: an event at a venue in any given district matches. */
+                district?: string[];
                 /** @description Artist slug filter — only events featuring the matching artist. */
                 artist?: string;
                 /** @description Promoter slug filter — only events from the matching promoter. */

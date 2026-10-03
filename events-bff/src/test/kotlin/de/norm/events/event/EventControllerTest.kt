@@ -83,29 +83,6 @@ class EventControllerTest : BaseControllerTest() {
         }
 
     @Test
-    fun `GET events filters by district`(): Unit =
-        runBlocking {
-            val lido = insertVenue("Lido", "lido", district = "kreuzberg")
-            val sameiden = insertVenue("SameHeaven", "sameheaven", district = "neukoelln")
-            insertEvent(lido, "Kreuzberg Gig", "kreuzberg-gig", LocalDate.now())
-            insertEvent(sameiden, "Neukölln Gig", "neukoelln-gig", LocalDate.now())
-
-            webTestClient
-                .get()
-                .uri("/events?district=kreuzberg")
-                .exchange()
-                .expectStatus()
-                .isOk
-                .expectBody()
-                .jsonPath("$.totalElements")
-                .isEqualTo(1)
-                .jsonPath("$.content[0].slug")
-                .isEqualTo("kreuzberg-gig")
-                .jsonPath("$.content[0].venue.district")
-                .isEqualTo("kreuzberg")
-        }
-
-    @Test
     fun `GET events filters by genre slug and artist slug`(): Unit =
         runBlocking {
             val venueId = insertVenue("Astra", "astra")

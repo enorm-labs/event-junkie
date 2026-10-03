@@ -5,6 +5,8 @@
   "empty": "Zu dieser Suche gibt es keine Location. Versuch es mit einem anderen Namen.",
   "byDistrict": "Nach Bezirk filtern",
   "allDistricts": "Alle Bezirke",
+  "districtsSelected": "{n} Bezirke",
+  "clearDistricts": "Bezirke zurücksetzen",
   "byType": "Nach Art der Location filtern",
   "allTypes": "Alle Arten",
   "typesSelected": "{n} Arten",

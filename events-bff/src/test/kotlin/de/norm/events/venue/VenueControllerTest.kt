@@ -48,7 +48,7 @@ class VenueControllerTest : BaseControllerTest() {
         }
 
     @Test
-    fun `GET venues filters by district`(): Unit =
+    fun `GET venues filters by district, any of several`(): Unit =
         runBlocking {
             insertVenue("Astra", "astra", district = "kreuzberg")
             insertVenue("Lido", "lido", district = "kreuzberg")
@@ -65,6 +65,16 @@ class VenueControllerTest : BaseControllerTest() {
                 .isEqualTo(1)
                 .jsonPath("$.content[0].slug")
                 .isEqualTo("berghain")
+
+            webTestClient
+                .get()
+                .uri("/venues?district=mitte&district=kreuzberg&district=unknown")
+                .exchange()
+                .expectStatus()
+                .isOk
+                .expectBody()
+                .jsonPath("$.content[*].slug")
+                .isEqualTo(listOf("astra", "berghain", "lido"))
         }
 
     @Test

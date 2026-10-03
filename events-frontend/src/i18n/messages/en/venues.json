@@ -5,6 +5,8 @@
   "empty": "No venues match that search. Try a different name.",
   "byDistrict": "Filter by district",
   "allDistricts": "All districts",
+  "districtsSelected": "{n} districts",
+  "clearDistricts": "Clear districts",
   "byType": "Filter by venue type",
   "allTypes": "All venue types",
   "typesSelected": "{n} venue types",

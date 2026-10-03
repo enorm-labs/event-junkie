@@ -63,6 +63,8 @@ function eventsResponseFor(sp: URLSearchParams) {
   if (sp.getAll('family').join() === 'electronic,jazz-blues')
     return eventPage(['Electronic Or Jazz'])
   if (sp.get('family') === 'electronic') return eventPage(['Electronic Night'])
+  if (sp.getAll('district').join() === 'kreuzberg,neukoelln')
+    return eventPage(['Kreuzberg Or Neukölln'])
   if (sp.get('district') === 'neukoelln') return eventPage(['Neukölln Night'])
   if (sp.get('excludeSoldOut') === 'true') return eventPage(['Available Only'])
   if (sp.get('free') === 'true') return eventPage(['Free Show'])
@@ -223,15 +225,23 @@ test('a link from before families carries only genre, and both controls still sh
   await expect(selectWithOption(page, 'All styles')).toHaveValue('techno')
 })
 
-test('filters by district', async ({ page }) => {
+test('filters by several districts, any of them matching', async ({ page }) => {
   await page.goto('/events')
   await expect(eventHeading(page, 'Default Event A')).toBeVisible()
 
   await openMoreFilters(page)
-  await selectWithOption(page, 'All districts').selectOption('neukoelln')
+  await page.getByRole('button', { name: 'Filter by district: All districts' }).click()
+  await page.getByRole('checkbox', { name: 'Neukölln' }).check()
 
   await expect(page).toHaveURL(/[?&]district=neukoelln\b/)
   await expect(eventHeading(page, 'Neukölln Night')).toBeVisible()
+
+  // The URL keeps the list's alphabetical order, whatever the order of the ticks.
+  await page.getByRole('checkbox', { name: 'Kreuzberg' }).check()
+  await expect(page).toHaveURL(/district=kreuzberg&district=neukoelln\b/)
+  await expect(eventHeading(page, 'Kreuzberg Or Neukölln')).toBeVisible()
+  await page.keyboard.press('Escape')
+  await expect(page.getByRole('button', { name: 'Filter by district: 2 districts' })).toBeVisible()
 })
 
 test('filters by price range', async ({ page }) => {

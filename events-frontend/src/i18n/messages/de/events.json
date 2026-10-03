@@ -10,6 +10,8 @@
     "allTypes": "Alle Arten",
     "allVenues": "Alle Locations",
     "allDistricts": "Alle Bezirke",
+    "districtsSelected": "{n} Bezirke",
+    "clearDistricts": "Bezirke zurücksetzen",
     "allGenres": "Alle Genres",
     "typesSelected": "{n} Arten",
     "clearTypes": "Arten zurücksetzen",

@@ -10,7 +10,8 @@ export interface EventSearchParams {
   /** Any of these types; sent as a repeated parameter. */
   eventType?: string[]
   venue?: string
-  district?: string
+  /** Any of these districts; sent as a repeated parameter. */
+  district?: string[]
   artist?: string
   promoter?: string
   genre?: string
