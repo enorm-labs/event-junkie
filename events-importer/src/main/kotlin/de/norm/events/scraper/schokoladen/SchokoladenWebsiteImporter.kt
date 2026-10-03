@@ -1,16 +1,13 @@
 package de.norm.events.scraper.schokoladen
 
+import de.norm.events.scraper.AbstractSinglePageWebsiteImporter
 import de.norm.events.scraper.AcceptedLimitation
-import de.norm.events.scraper.EventImporter
 import de.norm.events.scraper.EventSource
-import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
-import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.VenueLimitations
 import de.norm.events.scraper.nextPageUrl
-import de.norm.events.scraper.scrapeListingPages
-import io.github.oshai.kotlinlogging.KotlinLogging
+import org.jsoup.nodes.Document
 import org.springframework.stereotype.Component
 
 /**
@@ -27,45 +24,15 @@ import org.springframework.stereotype.Component
  */
 @Component
 class SchokoladenWebsiteImporter(
-    private val htmlFetcher: HtmlFetcher
-) : EventImporter {
-    private val logger = KotlinLogging.logger {}
-
+    htmlFetcher: HtmlFetcher
+) : AbstractSinglePageWebsiteImporter(htmlFetcher, "Schokoladen", SchokoladenOverviewPageScraper()::scrape) {
     override val eventSource: EventSource = EventSource.SCHOKOLADEN
-    override val fetchesBeyondEntryPage: Boolean = true
+    override val maxListingPages: Int = MAX_PAGES
 
-    private val overviewPageScraper = SchokoladenOverviewPageScraper()
-
-    override suspend fun importEvents(
-        url: String,
-        etag: String?,
-        lastModified: String?
-    ): ImportResult =
-        when (val fetchResult = htmlFetcher.fetch(url, etag, lastModified)) {
-            is FetchResult.NotModified -> {
-                ImportResult.NotModified
-            }
-
-            is FetchResult.Success -> {
-                val listing =
-                    htmlFetcher.scrapeListingPages(
-                        eventSource,
-                        fetchResult.document,
-                        url,
-                        MAX_PAGES,
-                        { document, _ -> document.nextPageUrl(NEXT_PAGE_SELECTOR) },
-                        overviewPageScraper::scrape
-                    )
-                logger.info { "Scraped ${listing.events.size} event(s) from Schokoladen" }
-
-                ImportResult.Success(
-                    events = listing.events,
-                    etag = fetchResult.etag,
-                    lastModified = fetchResult.lastModified,
-                    complete = listing.complete
-                )
-            }
-        }
+    override fun nextListingPage(
+        document: Document,
+        url: String
+    ): String? = document.nextPageUrl(NEXT_PAGE_SELECTOR)
 
     private companion object {
         /** A runaway guard on the page walk; the listing runs to eight pages. */

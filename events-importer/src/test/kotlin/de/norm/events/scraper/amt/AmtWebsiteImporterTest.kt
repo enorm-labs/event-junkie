@@ -3,6 +3,7 @@ package de.norm.events.scraper.amt
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
+import de.norm.events.scraper.HttpFetchException
 import de.norm.events.scraper.ImportResult
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
@@ -62,6 +63,7 @@ class AmtWebsiteImporterTest {
             result.shouldBeInstanceOf<ImportResult.Success>()
             // 6 June nights + 5 July nights.
             result.events shouldHaveSize 11
+            result.complete shouldBe true
             result.events.all { it.eventType == EventType.PARTY.name } shouldBe true
             // Multi-page importer intentionally disables conditional caching.
             result.etag.shouldBeNull()
@@ -77,5 +79,16 @@ class AmtWebsiteImporterTest {
             val result = importer.importEvents(entryUrl)
             result.shouldBeInstanceOf<ImportResult.Success>()
             result.events shouldHaveSize 0
+        }
+
+    @Test
+    fun `importEvents keeps the other months when one fails, and reports the run incomplete`() =
+        runTest {
+            coEvery { htmlFetcher.fetchDocument(julyUrl) } throws HttpFetchException(503, julyUrl)
+
+            val result = importer.importEvents(entryUrl).shouldBeInstanceOf<ImportResult.Success>()
+
+            result.events shouldHaveSize 6
+            result.complete shouldBe false
         }
 }

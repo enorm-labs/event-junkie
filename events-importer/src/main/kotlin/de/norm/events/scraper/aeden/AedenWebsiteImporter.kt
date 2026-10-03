@@ -1,16 +1,11 @@
 package de.norm.events.scraper.aeden
 
+import de.norm.events.scraper.AbstractMonthPagesWebsiteImporter
 import de.norm.events.scraper.AcceptedLimitation
-import de.norm.events.scraper.EventImporter
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
-import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.VenueLimitations
-import de.norm.events.scraper.absoluteLinksAt
-import de.norm.events.scraper.resolveUrl
-import io.github.oshai.kotlinlogging.KotlinLogging
-import org.jsoup.nodes.Document
 import org.springframework.stereotype.Component
 
 /**
@@ -34,31 +29,10 @@ import org.springframework.stereotype.Component
  */
 @Component
 class AedenWebsiteImporter(
-    private val htmlFetcher: HtmlFetcher
-) : EventImporter {
-    private val logger = KotlinLogging.logger {}
-
+    htmlFetcher: HtmlFetcher
+) : AbstractMonthPagesWebsiteImporter(htmlFetcher, "ÆDEN", MONTH_LINK_SELECTOR, AedenOverviewPageScraper()::scrape) {
     override val eventSource: EventSource = EventSource.AEDEN
     override val listsWholeProgramme: Boolean = true
-
-    private val overviewPageScraper = AedenOverviewPageScraper()
-
-    override suspend fun importEvents(
-        url: String,
-        etag: String?,
-        lastModified: String?
-    ): ImportResult {
-        val entry = htmlFetcher.fetchDocument(url)
-        val monthUrls = entry.absoluteLinksAt(MONTH_LINK_SELECTOR, url)
-        logger.info { "Found ${monthUrls.size} month page(s) linked from ÆDEN entry $url" }
-
-        val events =
-            monthUrls
-                .flatMap { monthUrl -> overviewPageScraper.scrape(htmlFetcher.fetchDocument(monthUrl), monthUrl) }
-                .distinctBy { it.sourceId }
-        logger.info { "Scraped ${events.size} ÆDEN event(s) across ${monthUrls.size} month page(s)" }
-        return ImportResult.Success(events = events, etag = null, lastModified = null)
-    }
 
     private companion object {
         /**

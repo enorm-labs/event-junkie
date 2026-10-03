@@ -8,6 +8,7 @@ import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.VenueLimitations
+import de.norm.events.scraper.readEach
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
 import java.time.LocalDate
@@ -45,32 +46,27 @@ class QuatschWebsiteImporter(
     ): ImportResult {
         val calendar = checkNotNull(scraper.calendar(htmlFetcher.fetchDocument(url))) { "Quatsch Comedy Club tickets page carries no calendar settings" }
         val days = calendar.days.take(MAX_DAYS)
-        val answers = days.map { day -> readDay(calendar, day) }
-        val events = answers.filterNotNull().flatten().distinctBy { it.sourceId }
+        val answers = readEach(days, { "Failed to read the Quatsch Comedy Club calendar for $it, skipping it" }) { day -> readDay(calendar, day) }
+        val events = answers.items.distinctBy { it.sourceId }
         logger.info { "Scraped ${events.size} Quatsch Comedy Club show(s) from ${days.size} calendar day(s)" }
-        return ImportResult.Success(events = events, etag = null, lastModified = null, complete = answers.none { it == null })
+        return ImportResult.Success(events = events, etag = null, lastModified = null, complete = answers.complete)
     }
 
-    @Suppress("TooGenericExceptionCaught") // Intentional: keep the days already read if one fails
     private suspend fun readDay(
         calendar: QuatschCalendar,
         day: LocalDate
-    ): List<ScrapedEvent>? =
-        try {
-            val form =
-                mapOf(
-                    "action" to "eventim_calendar",
-                    "security" to calendar.nonce,
-                    "date" to "${day.dayOfMonth}.${day.monthValue}.${day.year}",
-                    "format" to "arrows",
-                    "language" to "de",
-                    "location" to calendar.city
-                )
-            scraper.scrapeDay(htmlFetcher.postForm(calendar.ajaxUrl, form))
-        } catch (e: Exception) {
-            logger.warn(e) { "Failed to read the Quatsch Comedy Club calendar for $day, skipping it" }
-            null
-        }
+    ): List<ScrapedEvent> {
+        val form =
+            mapOf(
+                "action" to "eventim_calendar",
+                "security" to calendar.nonce,
+                "date" to "${day.dayOfMonth}.${day.monthValue}.${day.year}",
+                "format" to "arrows",
+                "language" to "de",
+                "location" to calendar.city
+            )
+        return scraper.scrapeDay(htmlFetcher.postForm(calendar.ajaxUrl, form))
+    }
 
     private companion object {
         /** A runaway guard; the calendar lists about 65 days. */

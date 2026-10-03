@@ -1,6 +1,7 @@
 package de.norm.events.scraper
 
 import io.github.oshai.kotlinlogging.KotlinLogging
+import kotlinx.coroutines.CancellationException
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import org.springframework.web.util.UriComponentsBuilder
@@ -54,6 +55,8 @@ suspend fun <P, T> walkListingPages(
         val content =
             try {
                 fetch(pageUrl)
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 logger.warn(e) { "${source.name} listing page ${visited.size + 1} failed ($pageUrl); importing the ${visited.size} page(s) read" }
                 return WalkedListing(items, visited.size, complete = false)
@@ -92,6 +95,37 @@ suspend fun HtmlFetcher.scrapeListingPages(
             ::fetchDocument
         ) { document, pageUrl -> ListingPage(scrape(document, pageUrl), nextPage(document, pageUrl)) }
     return ListingPages(walked.items.distinctBy { it.sourceId }, walked.complete)
+}
+
+/** What [readEach] read: every input's items in order, and whether every input was read. */
+data class ReadEach<T>(
+    val items: List<T>,
+    val complete: Boolean
+)
+
+/**
+ * Reads each of [inputs] with [read], keeping the others when one fails: month pages, production
+ * pages, calendar days. A failure is logged with [failure]'s text and makes the result not
+ * [ReadEach.complete], which skips the stale cleanup for the run (#1980).
+ */
+@Suppress("TooGenericExceptionCaught") // Intentional: one failed input must not cost the others
+suspend fun <I, T> readEach(
+    inputs: List<I>,
+    failure: (I) -> String,
+    read: suspend (I) -> List<T>
+): ReadEach<T> {
+    val results =
+        inputs.map { input ->
+            try {
+                read(input)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                logger.warn(e) { failure(input) }
+                null
+            }
+        }
+    return ReadEach(results.filterNotNull().flatten(), complete = results.none { it == null })
 }
 
 /**
