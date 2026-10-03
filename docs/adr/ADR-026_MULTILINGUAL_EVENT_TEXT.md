@@ -18,6 +18,9 @@ Translation now follows the display rule, so silence permits it and only `PROHIB
 reasoning below is not withdrawn.** It is the case against that change, and it is kept here in full. That is why
 ADR-027 is a separate document rather than an edit to this one. Rules 1, 2 and 4 stand.
 
+**Rule 4 is narrowed by [ADR-040](ADR-040_EVENT_INLANGUAGE_IS_THE_SPOKEN_LANGUAGE.md) (2026-10-03).** An event's
+`inLanguage` is the spoken language where the venue states one. The `lang` attribute of a description is unchanged.
+
 **Partially supersedes [ADR-013](ADR-013_LOCALISATION.md).** Its §3 table put event titles and descriptions in one row,
 _"third-party content, do not translate"_. This ADR replaces that row for descriptions and keeps it for titles. The
 other rows of that table stand. Venue, artist and district names stay as written. Event types are ours and are
