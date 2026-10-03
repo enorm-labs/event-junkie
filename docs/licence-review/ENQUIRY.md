@@ -18,7 +18,7 @@ file is what the venues published. This is what we ask them.
 4. **No contact address is in this repository.** [LEGAL.md](../LEGAL.md) §7.3a says no email
    addresses are stored anywhere, and that scope is what the Hetzner AVV of 2026-08-19 declares. The
    addresses and the replies stay in the mailbox and in a local file.
-5. **Twelve first, then a decision.** The point of a first batch is the yes, no and silence ratio.
+5. **Thirteen first, then a decision.** The point of a first batch is the yes, no and silence ratio.
    All 86 at once spends the whole audience before we know what the mail achieves.
 6. **The batch links the live site.** The mail links the venue's own page on `event-junkie.de`,
    which is public since 2026-09-24. A link that fails makes the ask both weak and
@@ -134,12 +134,13 @@ Information for venues: https://event-junkie.de/en/legal/for-venues
 Imprint: https://event-junkie.de/en/legal/imprint
 ```
 
-## 3. The two venues that require prior approval
+## 3. The three venues that require prior approval
 
 Der Weiße Hase and Kulturhaus Peter Edel both write that the use of texts, parts of texts and images
-needs their prior approval. That is why they are `PROHIBITED` rather than `UNCLEAR`. Their own
-wording names the material, and it carries none of the statutory carve-out the common boilerplate
-has.
+needs their prior approval. PANDA platforma writes that any use of its texts, images or other data
+needs its express written approval. That is why the three are `PROHIBITED` rather than `UNCLEAR`.
+Their own wording names the material, and it carries none of the statutory carve-out the common
+boilerplate has.
 
 **They get a mail of their own, because their answer is the only thing that can change anything.**
 For them the enquiry is not "may we keep doing this". It is a request for the approval their terms
@@ -147,8 +148,15 @@ ask for.
 
 **What we do for them today, and the mail says it first.** `PROHIBITED` withholds at import rather
 than at display ([#807](https://github.com/enorm-labs/event-junkie/issues/807)). Nothing of theirs
-is stored: 0 descriptions and 0 image URLs across their 54 events on production. Their listings carry
-the title, the date, the time, the venue and a link.
+is stored: 0 descriptions and 0 image URLs across the first two venues' 54 events on production.
+PANDA platforma's events are stored the same way. Their listings carry the title, the date, the
+time, the venue and a link.
+
+**For PANDA platforma, change one sentence of the mail to quote its own terms.** Its imprint names
+"Texte, Bilder oder andere Daten" and asks for written approval, not for prior approval of "Textteile
+und Bildmaterial". The German mail then says "Ihr Impressum verlangt fuer die Nutzung von Texten und
+Bildern Ihre ausdrueckliche und schriftliche Zustimmung." The English mail says "Your imprint requires
+your express written approval for the use of texts and images." The rest of the mail stays as it is.
 
 <!-- ste-lint: allow German mail text, scanned as English prose it is not -->
 
@@ -234,11 +242,11 @@ Information for venues: https://event-junkie.de/en/legal/for-venues
 Imprint: https://event-junkie.de/en/legal/imprint
 ```
 
-## 4. The first batch of twelve
+## 4. The first batch of thirteen
 
 Chosen from the production event counts and the review in `RESULTS.tsv`. The mix is the point: a
 ratio from ten clubs of one kind says less than a ratio across the kinds we actually list. The last
-two are §3's, and they are here so the batch is one send rather than two.
+three are §3's, and they are here so the batch is one send rather than two.
 
 | Venue                 | Events | Why this one                                                                                       |
 | --------------------- | ------ | -------------------------------------------------------------------------------------------------- |
@@ -254,13 +262,14 @@ two are §3's, and they are here so the batch is one send rather than two.
 | Cosmic Comedy Club    | 54     | English-language programming, and the one that gets the English variant                            |
 | Der Weiße Hase        | 10     | Requires prior approval, so §3's mail. Its answer is the only thing that can change anything       |
 | Kulturhaus Peter Edel | 44     | The same, and the larger of the two listings                                                       |
+| PANDA platforma       | 21     | The same, in its own wording. A non-profit association, and the count is from the first import     |
 
 **Check the operator before you send.** Two of these may belong to the same company as another venue
 we list. Two mails into one press office read as a campaign rather than as an enquiry. The review
 already shows one such case: Admiralspalast's licence page is on `atgentertainment.de`. Confirm the
 rest by hand, the way every other venue fact here is confirmed.
 
-**The last two get §3's mail, not §1's.** Everything else about them is the same: one send, one
+**The last three get §3's mail, not §1's.** Everything else about them is the same: one send, one
 answer, one row written back.
 
 ## 5. Where the contacts and the replies live

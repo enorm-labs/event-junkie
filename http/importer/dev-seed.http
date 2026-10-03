@@ -86,6 +86,7 @@
 ###   Neue Zukunft         — https://neue-zukunft.org/
 ###   OHM                  — https://ohmberlin.com/
 ###   Orania.Berlin        — https://orania.berlin/concerts
+###   PANDA platforma      — https://panda-platforma.berlin/wp-json/tribe/events/v1/events
 ###   Panke Culture        — https://www.pankeculture.com/programme/
 ###   Parkbühne Wuhlheide  — https://www.wuhlheide.de/programm
 ###   Privatclub           — https://privatclub-berlin.de/
@@ -4442,6 +4443,70 @@ Accept: application/json
 
 > {%
     client.test("Orania.Berlin import triggered", function () {
+        client.assert(response.status === 202, "Expected 202 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
+### PANDA platforma (Knaackstr. 97, Berlin-Prenzlauer Berg — in the Kulturbrauerei's small courtyard)
+### ————————————————————————————————————————————————————————————
+
+### --- Create PANDA platforma venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "PANDA platforma",
+    "address": "Knaackstr. 97",
+    "city": "Berlin",
+    "postalCode": "10435",
+    "district": "prenzlauer-berg",
+    "latitude": 52.539837,
+    "longitude": 13.413374,
+    "websiteUrl": "https://panda-platforma.berlin",
+    "description": "A non-profit art space in the Kulturbrauerei, run since 2009 as a stage for Berlin's East European communities and their artists, with jazz, experimental and global music, theatre, readings, talks and exhibitions.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Ein gemeinnütziger Kunstraum in der Kulturbrauerei, seit 2009 eine Bühne für Berlins osteuropäische Communitys und ihre Künstler, mit Jazz, experimenteller und globaler Musik, Theater, Lesungen, Gesprächen und Ausstellungen.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["cultural-centre", "live-venue"],
+    "capacity": 110
+}
+
+> {%
+    client.global.set("panda_platforma_venue_id", response.body.id);
+    client.test("PANDA platforma venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Create PANDA platforma event source ---
+# Links the venue to the PandaPlatformaWebsiteImporter.
+# The sourceType "PANDA_PLATFORMA" matches EventSource.PANDA_PLATFORMA.
+POST {{importer-host}}/api/admin/event-sources
+Content-Type: application/json
+
+{
+    "venueId": {{panda_platforma_venue_id}},
+    "name": "PANDA platforma",
+    "url": "https://panda-platforma.berlin/wp-json/tribe/events/v1/events",
+    "sourceType": "PANDA_PLATFORMA",
+    "enabled": true,
+    "importIntervalMinutes": 1440,
+    "maxRetries": 3
+}
+
+> {%
+    client.test("PANDA platforma event source created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Trigger initial PANDA platforma import ---
+POST {{importer-host}}/api/admin/event-sources/panda-platforma/import
+Accept: application/json
+
+> {%
+    client.test("PANDA platforma import triggered", function () {
         client.assert(response.status === 202, "Expected 202 but got " + response.status);
     });
 %}

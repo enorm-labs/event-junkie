@@ -231,6 +231,9 @@ says so.
 | `ORANIA`               | `PRICE`            | entry is free to every concert                                                                                                                   | —     |
 | `ORANIA`               | `TICKET_URL`       | entry is free and the venue sells no tickets                                                                                                     | —     |
 | `ORANIA`               | `GENRE`            | the venue tags a series such as piano or grooves, never a genre; every concert takes the house's jazz                                            | —     |
+| `PANDA_PLATFORMA`      | `DOORS_TIME`       | the api carries one start time per event and no doors time                                                                                       | —     |
+| `PANDA_PLATFORMA`      | `TICKET_URL`       | most events set no ticket link of their own                                                                                                      | —     |
+| `PANDA_PLATFORMA`      | `GENRE`            | the categories name house series, and only the jazz, experimental and global ones name a style                                                   | —     |
 | `PANKE`                | `PER_EVENT_PAGE`   | the venue expands each event's full text inline and publishes no page per event                                                                  | —     |
 | `PANKE`                | `EVENT_TYPE`       | no category is published and titles name a series; a format word or live show in the title, or a Resident Advisor lineup, types an event         | —     |
 | `PANKE`                | `DOORS_TIME`       | only an event whose body prints a `Doors … · Concert …` line states two clocks; for the rest the venue publishes one and calls it the start      | —     |
