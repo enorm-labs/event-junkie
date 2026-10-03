@@ -130,9 +130,10 @@ runs here.
 **These numbers measure a cached BFF.** The medians are 1 to 4 ms because `ResponseCache` answers most reads for 60 s. A slow query shows only on the
 misses, which is why 50 VUs is faster than 20: more requests share each fill.
 
-**`calendar` stays at 1200 ms, and a staging run can fail it today.** When the cached calendar expires, every waiting request runs the calendar query
-itself. That is the 714, 718, 759 and 1428 ms runs, with a median near 30 ms throughout. #2529 loads a miss once per key. Re-measure after it lands, and set
-`calendar` by the rule then. Raising a threshold because a run went red is how a performance suite becomes decorative.
+**`calendar` is 1200 ms by the same rule, measured again after #2529.** Before it, every request that missed the expired calendar ran the
+query itself: the 714, 718, 759 and 1428 ms runs above, with a median near 30 ms. With one load per key, three 20-VU runs on 2026-10-03 gave
+784, 741 and 616 ms, max 2.2 s, no failed request. 784 × 1.5 rounds up to 1200. The p95 stays high because about 5 % of calendar requests
+are the load itself or wait for it, and the calendar query takes that long under load.
 
 **A laptop run sets its own budget**, because a laptop and the dev database are not staging:
 `k6 run -e THRESHOLD_DETAIL_MS=300 -e THRESHOLD_LIST_MS=600 perf/load.js`. Those were the defaults before this measurement.
