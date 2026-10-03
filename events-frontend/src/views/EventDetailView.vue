@@ -81,10 +81,19 @@ onMounted(run)
 watch(slug, run)
 
 const localePath = useLocalePath()
-const { formatEventDates, formatEventTime, eventTimeHint, formatEventStatus, formatWeekday } =
-  useFormat()
+const {
+  formatEventDates,
+  formatEventTime,
+  eventTimeHint,
+  formatEventStatus,
+  formatSpokenLanguage,
+  formatWeekday,
+} = useFormat()
 // The header has room for the words behind a `~` time, where the card only has a title (#1384).
 const timeHint = computed(() => (event.value ? eventTimeHint(event.value) : null))
+// A fact block beside the venue and the tickets, not a word under the title (#2523).
+const spokenLanguage = computed(() => formatSpokenLanguage(event.value?.spokenLanguages, null))
+const subtitles = computed(() => formatSpokenLanguage(null, event.value?.subtitleLanguage))
 
 const { t, te, locale } = useI18n()
 
@@ -346,7 +355,14 @@ useStructuredData((): JsonLd[] => {
         >
       </p>
 
-      <section class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+      <section
+        :class="
+          cn(
+            'grid grid-cols-1 gap-6',
+            spokenLanguage || subtitles ? 'sm:grid-cols-3' : 'sm:grid-cols-2',
+          )
+        "
+      >
         <div v-if="event.venue" class="space-y-1">
           <SectionLabel>{{ t('events.detail.venue') }}</SectionLabel>
           <RouterLink
@@ -383,6 +399,12 @@ useStructuredData((): JsonLd[] => {
           <p v-if="event.priceNote" class="text-body text-muted-foreground">
             {{ event.priceNote }}
           </p>
+        </div>
+
+        <div v-if="spokenLanguage || subtitles" class="space-y-1">
+          <SectionLabel>{{ t('events.detail.language') }}</SectionLabel>
+          <p v-if="spokenLanguage" class="text-body">{{ spokenLanguage }}</p>
+          <p v-if="subtitles" class="text-body text-muted-foreground">{{ subtitles }}</p>
         </div>
       </section>
 

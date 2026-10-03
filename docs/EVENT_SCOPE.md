@@ -70,6 +70,10 @@ the importer, so silent green's 23 rows are one row. A festival's days are not f
 a comedian or a cabaret performer on Wikidata, the night is `COMEDY`. A cue from the venue always wins.
 [ADR-039](adr/ADR-039_A_COMEDIAN_HEADLINER_TYPES_AN_UNTYPED_NIGHT.md) has the rule.
 
+**The spoken language comes only from the venue's own words.** An explicit phrase sets it: "in English", "auf Deutsch",
+"Sprache: Deutsch", "OmU". It is set for `COMEDY`, `READING`, `SCREENING`, `SHOW` and `OTHER` only. The language of the
+description is never used, because a German text often describes an English show (#2523).
+
 ## 3. What is deliberately excluded
 
 Five exclusions, each implemented in exactly one place so it can be revisited without archaeology.

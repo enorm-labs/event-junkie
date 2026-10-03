@@ -650,6 +650,18 @@ export interface components {
              */
             relocatedTo?: string | null;
             /**
+             * @description What is said on stage or on screen, as ISO 639-1 codes, where the venue states it. Absent means unknown, never German by default. Not the language of the description.
+             * @example [
+             *       "en"
+             *     ]
+             */
+            spokenLanguages?: string[] | null;
+            /**
+             * @description The subtitles of a screening shown in the original, as an ISO 639-1 code: `de` for OmU
+             * @example de
+             */
+            subtitleLanguage?: string | null;
+            /**
              * Format: date
              * @description Calendar date of the event
              * @example 2026-06-12
@@ -1152,6 +1164,18 @@ export interface components {
              * @example Hole44
              */
             relocatedTo?: string | null;
+            /**
+             * @description What is said on stage or on screen, as ISO 639-1 codes, where the venue states it. Absent means unknown, never German by default. Not the language of the description.
+             * @example [
+             *       "en"
+             *     ]
+             */
+            spokenLanguages?: string[] | null;
+            /**
+             * @description The subtitles of a screening shown in the original, as an ISO 639-1 code: `de` for OmU
+             * @example de
+             */
+            subtitleLanguage?: string | null;
             /**
              * Format: date
              * @description Calendar date of the event

@@ -73,6 +73,7 @@
     "lineupFrom": "Lineup and set times from",
     "venue": "Venue",
     "tickets": "Tickets",
+    "language": "Language",
     "promoters": "Promoters",
     "buyTickets": "Buy tickets",
     "eventPage": "Event page",
@@ -115,5 +116,8 @@
   "nearMe": "Near me, on the map",
   "feed": "Feed",
   "feedAll": "Subscribe to new events as an RSS feed",
-  "feedFiltered": "Subscribe to new events matching these filters as an RSS feed"
+  "feedFiltered": "Subscribe to new events matching these filters as an RSS feed",
+  "language": {
+    "subtitles": "{language} subtitles"
+  }
 }

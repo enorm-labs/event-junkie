@@ -24,7 +24,7 @@ test('the events list shows the seeded venues', async ({ page }) => {
   const venues = page.getByLabel('Filter by venue')
   await expect(venues.getByRole('option', { name: 'Kesselhaus Nord' })).toBeAttached()
   await expect(venues.getByRole('option', { name: 'Jazzkeller $& Kreuzberg' })).toBeAttached()
-  // 42 upcoming rows, so the first page is full at the default size rather than nearly empty.
+  // 43 upcoming rows, so the first page is full at the default size rather than nearly empty.
   await expect(page.getByRole('heading', { level: 2 }).first()).toBeVisible()
 })
 

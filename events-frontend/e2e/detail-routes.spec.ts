@@ -495,3 +495,34 @@ test('links nested entities and navigates from an event to its venue', async ({ 
   await expect(page.getByRole('heading', { level: 1, name: 'Mock Venue' })).toBeVisible()
   expect(errors, 'unexpected uncaught exceptions').toEqual([])
 })
+
+test.describe('the spoken language', () => {
+  // A fact beside the venue and the tickets, not a word under the title (#2523).
+  test('sits in its own block beside the tickets, and is absent when the venue said nothing', async ({
+    page,
+  }) => {
+    const screening = {
+      ...eventBody,
+      eventType: 'SCREENING',
+      spokenLanguages: ['en'],
+      subtitleLanguage: 'de',
+    }
+    await page.route(/\/api\/events\/[^/?]+/, (route) => json(route, screening))
+
+    await page.goto('/en/events/mock-event')
+
+    const block = page
+      .locator('div', { has: page.getByRole('heading', { name: 'Language' }) })
+      .last()
+    await expect(block).toContainText('English')
+    await expect(block).toContainText('German subtitles')
+    await expect(page.locator('article > header')).not.toContainText('English')
+
+    await page.unrouteAll()
+    await page.route(eventsFeed, (route) => json(route, emptyEventPage))
+    await page.route(/\/api\/events\/[^/?]+/, (route) => json(route, eventBody))
+    await page.goto('/en/events/mock-event')
+    await expect(page.getByRole('heading', { level: 1, name: 'Mock Fest' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Language' })).toHaveCount(0)
+  })
+})

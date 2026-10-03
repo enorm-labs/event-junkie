@@ -295,10 +295,37 @@ describe('eventJsonLd inLanguage', () => {
     expect(eventJsonLd(both, 'en')!.inLanguage).toBe('en')
   })
 
+  it('declares what is said on stage over the text, where the venue states it (ADR-040)', () => {
+    const english = {
+      ...event,
+      description: 'Ein Abend mit Aussicht',
+      descriptionLanguage: 'de',
+      spokenLanguages: ['en'],
+    }
+    expect(eventJsonLd(english, 'de')!.inLanguage).toBe('en')
+
+    const bilingual = { ...english, spokenLanguages: ['de', 'en'] }
+    expect(eventJsonLd(bilingual, 'de')!.inLanguage).toEqual(['de', 'en'])
+  })
+
   it('claims no language for an unclassified description', () => {
     const unclassified = { ...event, description: 'Doors 19:30', descriptionLanguage: undefined }
 
     expect(eventJsonLd(unclassified, 'en')!.inLanguage).toBeUndefined()
+  })
+})
+
+describe('eventJsonLd subtitleLanguage', () => {
+  it('declares the subtitles of a screening, and of nothing else', () => {
+    const screening = { ...event, eventType: 'SCREENING' as const, subtitleLanguage: 'de' }
+
+    expect(eventJsonLd(screening, 'en')).toMatchObject({
+      '@type': 'ScreeningEvent',
+      subtitleLanguage: 'de',
+    })
+    expect(
+      eventJsonLd({ ...screening, eventType: 'COMEDY' }, 'en')!.subtitleLanguage,
+    ).toBeUndefined()
   })
 })
 

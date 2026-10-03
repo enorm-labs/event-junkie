@@ -315,9 +315,18 @@ data class ScrapedEvent(
             soldOut = soldOut || hasSoldOutMarker(title) || hasSoldOutMarker(subtitle),
             // Honour an explicit scraper flag, otherwise derive from prices/note/title.
             free = free || detectFree(pricePresale, priceBoxOffice, priceNote, storedTitle)
-        )
+        ).withSpokenLanguages(spokenLanguages(storedTitle))
     }
 }
+
+/**
+ * The languages the venue states for this event. Read from [ScrapedEvent.description] even when the
+ * licence withholds it: the language is a fact, not the prose.
+ */
+private fun ScrapedEvent.spokenLanguages(storedTitle: String): SpokenLanguages = detectSpokenLanguages(storedTitle, subtitle, description, resolvedEventType())
+
+private fun EventEntity.withSpokenLanguages(languages: SpokenLanguages): EventEntity =
+    copy(spokenLanguages = languages.spoken, subtitleLanguage = languages.subtitle)
 
 /**
  * Resolves the stored [EventType] from [rawType], [title] and raw [genre]. The source's own

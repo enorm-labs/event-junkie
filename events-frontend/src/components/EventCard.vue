@@ -34,11 +34,13 @@ const { formatEventDates, formatEventTime, formatShortDate } = useFormat()
 const posterDate = computed(() => formatShortDate(props.event.eventDate))
 const genreFamilies = useGenreFamilies()
 
-const { eventType, isLive, state, timeHint } = useEventState(() => props.event)
+const { eventType, isLive, language, state, timeHint } = useEventState(() => props.event)
 
 // Type and genre are different taxonomies, but both are filter values in the query string, so
 // they read as one list (#1248).
-const taxonomy = computed(() => [eventType.value, ...(props.event.genreTags ?? [])].filter(Boolean))
+const taxonomy = computed(() =>
+  [eventType.value, language.value, ...(props.event.genreTags ?? [])].filter(Boolean),
+)
 
 const localePath = useLocalePath()
 

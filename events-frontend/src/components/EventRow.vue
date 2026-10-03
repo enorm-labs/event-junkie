@@ -28,11 +28,16 @@ const { formatShortDate, formatEventTime } = useFormat()
 const { t } = useI18n()
 const localePath = useLocalePath()
 
-const { eventType, isLive, state, timeHint } = useEventState(() => props.event)
+const { eventType, isLive, language, state, timeHint } = useEventState(() => props.event)
 
 // Venue, kind of night and genres read as one list, as they do on the card (#1248).
 const meta = computed(() =>
-  [props.event.venue?.name, eventType.value, ...(props.event.genreTags ?? [])].filter(Boolean),
+  [
+    props.event.venue?.name,
+    eventType.value,
+    language.value,
+    ...(props.event.genreTags ?? []),
+  ].filter(Boolean),
 )
 
 const price = computed(() => formatPrice(props.event.pricePresale, props.event.priceCurrency))

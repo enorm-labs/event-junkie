@@ -12,7 +12,8 @@ import { useI18n } from 'vue-i18n'
  * @param event getter for the event, so the state follows a changing prop.
  */
 export function useEventState(event: () => EventSummary) {
-  const { eventTimeHint, formatEventStatus, formatEventType, formatWeekday } = useFormat()
+  const { eventTimeHint, formatEventStatus, formatEventType, formatSpokenLanguage, formatWeekday } =
+    useFormat()
   const { t } = useI18n()
 
   const isPast = computed(() => isPastEvent(event()))
@@ -36,6 +37,11 @@ export function useEventState(event: () => EventSummary) {
     event().eventType && event().eventType !== 'OTHER' ? formatEventType(event().eventType) : null,
   )
 
+  // A fact beside the type, not a filter value: "Comedy · English" (#2523).
+  const language = computed(() =>
+    formatSpokenLanguage(event().spokenLanguages, event().subtitleLanguage),
+  )
+
   /**
    * The one word that changes what the reader does next, and the only coloured thing in the meta
    * line. Past wins the slot ("Sold out" on last month's gig is stale); a cancelled, postponed or
@@ -57,5 +63,5 @@ export function useEventState(event: () => EventSummary) {
     return null
   })
 
-  return { eventType, isLive, state, timeHint }
+  return { eventType, isLive, language, state, timeHint }
 }

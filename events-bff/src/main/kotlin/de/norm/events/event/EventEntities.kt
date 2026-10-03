@@ -34,6 +34,10 @@ data class EventEntity(
     /** Set by the importer when the source's licence kept a description out; nothing of it is stored (#2130). */
     val descriptionWithheld: Boolean = false,
     val eventType: String = "CONCERT",
+    /** ISO 639-1 codes of what is said on stage, where the source states it (#2523). */
+    val spokenLanguages: List<String>? = null,
+    /** ISO 639-1 code of a screening's subtitles. */
+    val subtitleLanguage: String? = null,
     val status: String = "SCHEDULED",
     /** Where a `RELOCATED` event moved to, as the venue's note names it (#1551). */
     val relocatedTo: String? = null,

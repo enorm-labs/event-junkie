@@ -346,6 +346,8 @@ internal fun EventEntity.keepingDerivedFrom(existing: EventEntity): EventEntity 
         relocatedTo = existing.relocatedTo,
         lineupSourceUrl = existing.lineupSourceUrl,
         descriptionWithheld = existing.descriptionWithheld,
+        spokenLanguages = existing.spokenLanguages,
+        subtitleLanguage = existing.subtitleLanguage,
         imageWithheld = existing.imageWithheld,
         descriptionAlt = existing.descriptionAlt.takeIf { sameDescription },
         descriptionAltLanguage = existing.descriptionAltLanguage.takeIf { sameDescription },

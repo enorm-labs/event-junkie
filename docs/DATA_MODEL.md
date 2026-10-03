@@ -287,6 +287,8 @@ Core entity representing a single music event at a venue on a specific date.
 | `description`          | `TEXT`          | Yes      | Longer description / artist bio                                     | `Formed in Ipswich in the late 1970s…`                     |
 | `description_withheld` | `BOOLEAN`       | No       | The licence kept a description out; nothing of it is stored (#2130) | `false`                                                    |
 | `event_type`           | `TEXT`          | No       | Event category (see `EventType` enum)                               | `CONCERT`                                                  |
+| `spoken_languages`     | `TEXT[]`        | Yes      | What is said on stage, where the venue states it (#2523)            | `{en}`                                                     |
+| `subtitle_language`    | `TEXT`          | Yes      | The subtitles of a screening in the original version                | `de`                                                       |
 | `status`               | `TEXT`          | No       | Scheduling status (see `EventStatus` enum, default `SCHEDULED`)     | `SCHEDULED`                                                |
 | `relocated_to`         | `TEXT`          | Yes      | Where a `RELOCATED` show moved to, as its note says (ADR-030)       | `Hole44`                                                   |
 | `slug`                 | `TEXT`          | No       | URL-friendly identifier                                             | `2026-06-12-the-adicts`                                    |
