@@ -16,8 +16,8 @@ Three rules, before you touch anything:
 
 1. **Do not restore in place first.** Almost every situation wants a **scratch cluster on port 5433** instead (§4). It costs nothing and risks nothing. The live
    database is evidence until you decide otherwise.
-2. **Do not stop the live cluster to "keep things from getting worse".** A running PostgreSQL keeps archiving WAL. That WAL is what shortens the window you can
-   recover to. Stopping it freezes the damage _and_ the recovery point.
+2. **Do not stop the live cluster to "keep things from getting worse".** A running PostgreSQL keeps archiving WAL. That WAL extends the recovery window
+   (BACKUPS.md §1) to a later point in time. Stopping it freezes the damage _and_ the recovery point.
 3. **Write down the time now**, and the time you first noticed. Point-in-time recovery is only as good as your estimate of when things were still right. That
    estimate degrades fast once you start working.
 
