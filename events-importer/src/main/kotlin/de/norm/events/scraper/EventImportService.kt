@@ -4,9 +4,13 @@ import de.norm.events.licence.SourceLicences
 import de.norm.events.venue.VenueProgrammeStore
 import de.norm.events.venue.VenueRepository
 import io.github.oshai.kotlinlogging.KotlinLogging
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
@@ -30,8 +34,8 @@ import kotlin.time.Duration.Companion.nanoseconds
 @Suppress(
     // Constructor injection: one parameter per collaborator; splitting the service hides the wiring.
     "LongParameterList",
-    // Twelve functions, eleven of them one named step of this pipeline; inlining `afterCommit` would
-    // push a method past the LongMethod cap.
+    // Nearly every function is one named step of this pipeline; inlining `afterCommit` would push a
+    // method past the LongMethod cap.
     "TooManyFunctions"
 )
 class EventImportService(
@@ -239,9 +243,26 @@ class EventImportService(
                         ImporterMetrics.RunOutcome.SUCCESS
                 }
             }
+        } catch (e: CancellationException) {
+            recordCancellation(runningSource, e)
         } catch (e: Exception) {
             recordFailure(runningSource, e)
         }
+    }
+
+    /**
+     * Closes a cancelled run as FAILED (#2286). In a cancelled coroutine every suspending write throws
+     * at once, so the run logged its failure and left the source RUNNING for the staleness guard.
+     * The write runs [NonCancellable]; then a cancellation of this coroutine propagates, and one that
+     * only came from inside the import, with this coroutine still active, is an ordinary failure.
+     */
+    private suspend fun recordCancellation(
+        runningSource: EventSourceEntity,
+        e: CancellationException
+    ): Pair<ImportResultResponse, ImporterMetrics.RunOutcome> {
+        val failed = withContext(NonCancellable) { recordFailure(runningSource, e) }
+        currentCoroutineContext().ensureActive()
+        return failed
     }
 
     /**

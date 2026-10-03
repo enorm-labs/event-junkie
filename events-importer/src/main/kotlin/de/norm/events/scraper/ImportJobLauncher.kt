@@ -4,11 +4,15 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancel
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeoutOrNull
 import org.springframework.beans.factory.DisposableBean
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Component
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * Launches event imports as **fire-and-forget** background jobs.
@@ -26,7 +30,8 @@ import org.springframework.stereotype.Component
  * the [EventSourceEntity] by [EventImportService] (RUNNING → SUCCESS/FAILED), so callers
  * poll `GET /api/admin/event-sources/{slug}` to observe them.
  *
- * The scope is cancelled on application shutdown via [DisposableBean.destroy].
+ * The scope is cancelled on application shutdown via [DisposableBean.destroy], which waits for
+ * each cancelled run to record its FAILED status.
  */
 @Component
 class ImportJobLauncher(
@@ -75,5 +80,18 @@ class ImportJobLauncher(
         }
     }
 
-    override fun destroy() = scope.cancel()
+    /**
+     * Cancels the running imports and waits, bounded, while each one writes its FAILED status (#2286).
+     * The R2DBC pool is destroyed after this bean, so a write that ran later would find it closed.
+     * `runBlocking` is fine here: shutdown runs on the main thread, not an event loop.
+     */
+    override fun destroy() {
+        val closed = runBlocking { withTimeoutOrNull(SHUTDOWN_GRACE) { scope.coroutineContext.job.cancelAndJoin() } }
+        if (closed == null) logger.warn { "Background imports still closing after $SHUTDOWN_GRACE at shutdown; their sources stay RUNNING" }
+    }
+
+    private companion object {
+        /** Long enough for one status write per run; Kubernetes allows 30 s for the whole shutdown. */
+        val SHUTDOWN_GRACE = 10.seconds
+    }
 }

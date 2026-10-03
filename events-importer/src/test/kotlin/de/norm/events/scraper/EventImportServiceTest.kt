@@ -23,12 +23,17 @@ import io.mockk.coVerify
 import io.mockk.coVerifyOrder
 import io.mockk.mockk
 import io.mockk.slot
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.yield
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -423,6 +428,45 @@ class EventImportServiceTest {
                 coVerify {
                     eventSourceRepository.save(match { it.status == ImportStatus.FAILED.name })
                 }
+            }
+
+        /**
+         * `yield` in the save stands for R2DBC, which checks for cancellation before it writes: a
+         * save that never suspends would pass without the fix (#2286).
+         */
+        @Test
+        fun `a run cancelled mid-import is closed as FAILED with its error, and the cancellation propagates`() =
+            runTest {
+                val importing = CompletableDeferred<Unit>()
+                coEvery { cassiopeiaImporter.importEvents(any(), any(), any()) } coAnswers {
+                    importing.complete(Unit)
+                    awaitCancellation()
+                }
+                // MockK records a call whose answer throws, so only a save that got past `yield` counts.
+                val written = mutableListOf<EventSourceEntity>()
+                coEvery { eventSourceRepository.save(any()) } coAnswers {
+                    yield()
+                    firstArg<EventSourceEntity>().also { saved -> written += saved }
+                }
+
+                val run = launch { service.importFromSource(source()) }
+                importing.await()
+                run.cancel(CancellationException("Job was cancelled"))
+                run.join()
+
+                run.isCancelled shouldBe true
+                written.map { it.status to it.lastError } shouldBe listOf(ImportStatus.FAILED.name to "Job was cancelled")
+            }
+
+        @Test
+        fun `a cancellation thrown inside the import while the run is active is an ordinary failure`() =
+            runTest {
+                coEvery { cassiopeiaImporter.importEvents(any(), any(), any()) } throws CancellationException("detail fetch cancelled")
+
+                val result = service.importFromSource(source())
+
+                result.error shouldBe "detail fetch cancelled"
+                coVerify { eventSourceRepository.save(match { it.status == ImportStatus.FAILED.name }) }
             }
 
         @Test

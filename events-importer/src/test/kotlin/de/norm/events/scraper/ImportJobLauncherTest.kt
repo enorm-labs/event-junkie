@@ -1,11 +1,17 @@
 package de.norm.events.scraper
 
 import io.kotest.assertions.throwables.shouldThrow
+import io.kotest.matchers.shouldBe
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.withContext
 import org.junit.jupiter.api.Test
 
 /**
@@ -74,7 +80,37 @@ class ImportJobLauncherTest {
         launcher.destroy()
     }
 
+    /** The closing write must land before Spring destroys the R2DBC pool (#2286). */
+    @Test
+    fun `destroy waits for a cancelled run to record its status`() =
+        runTest {
+            val source = mockk<EventSourceEntity>()
+            val importing = CompletableDeferred<Unit>()
+            var recorded = false
+            coEvery { eventSourceRepository.findBySlug("privatclub") } returns source
+            coEvery { eventImportService.importFromSource(source, any()) } coAnswers {
+                try {
+                    importing.complete(Unit)
+                    awaitCancellation()
+                } finally {
+                    withContext(NonCancellable) {
+                        delay(CLOSING_WRITE_MS)
+                        recorded = true
+                    }
+                }
+            }
+            val launcher = ImportJobLauncher(eventImportService, eventSourceRepository, Dispatchers.Default)
+
+            launcher.triggerImportBySlug("privatclub")
+            importing.await()
+            launcher.destroy()
+
+            recorded shouldBe true
+        }
+
     private companion object {
+        private const val CLOSING_WRITE_MS = 200L
+
         private const val TIMEOUT_MS = 1000L
     }
 }
