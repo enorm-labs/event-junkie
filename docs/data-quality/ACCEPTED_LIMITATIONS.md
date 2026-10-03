@@ -84,6 +84,12 @@ says so.
 | `DER_WEISSE_HASE`      | `EVENT_TYPE`       | the club states no category anywhere and programmes nothing but DJ nights, so the type is fixed rather than inferred                             | —     |
 | `DER_WEISSE_HASE`      | `PER_EVENT_PAGE`   | the club sells through Resident Advisor and the listing links off-site                                                                           | —     |
 | `DER_WEISSE_HASE`      | `CANCELLATION`     | a cancelled night is taken off the page rather than labelled                                                                                     | —     |
+| `DISTEL`               | `DOORS_TIME`       | the calendar states one time per performance                                                                                                     | —     |
+| `DISTEL`               | `PRICE`            | prices appear only inside the ticket shop, which robots.txt closes                                                                               | —     |
+| `DISTEL`               | `ARTISTS`          | the ensemble's shows name a cast only in prose                                                                                                   | —     |
+| `DISTEL`               | `EVENT_TYPE`       | the calendar names no format; ensemble Kabarett, guest shows and a talk series share one list                                                    | —     |
+| `DISTEL`               | `GENRE`            | the calendar names no genre                                                                                                                      | —     |
+| `DISTEL`               | `PROMOTERS`        | the theatre presents every performance itself                                                                                                    | —     |
 | `DRUGSTORE`            | `ARTISTS`          | the bands are named only in free prose of no fixed shape                                                                                         | —     |
 | `DRUGSTORE`            | `GENRE`            | radar files the nights under concert or party, and the style is in prose                                                                         | —     |
 | `DRUGSTORE`            | `IMAGE`            | radar serves its poster files behind an anti-bot wall, which we do not pass                                                                      | —     |

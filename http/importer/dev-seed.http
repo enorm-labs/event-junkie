@@ -58,6 +58,7 @@
 ###   Humboldthain Club    — https://core.service.elfsight.com/p/boot/?w=<widgetId>
 ###   Huxleys Neue Welt    — https://huxleysneuewelt.de/events
 ###   Junction Bar         — https://www.junction-bar.de/
+###   Kabarett-Theater DISTEL — https://distel-berlin.de/spielplan/kalender/
 ###   Kantine am Berghain  — https://www.berghain.berlin/de/program/kantine-am-berghain/
 ###   Kater                — https://www.katerclub.de/
 ###   Klunkerkranich       — https://klunkerkranich.org/events/
@@ -2722,6 +2723,71 @@ Accept: application/json
 
 > {%
     client.test("Junction Bar import triggered", function () {
+        client.assert(response.status === 202, "Expected 202 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
+### Kabarett-Theater DISTEL (Friedrichstr. 101, Berlin-Mitte — in the Admiralspalast front building)
+### ————————————————————————————————————————————————————————————
+
+### --- Create Kabarett-Theater DISTEL venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Kabarett-Theater DISTEL",
+    "address": "Friedrichstr. 101",
+    "city": "Berlin",
+    "postalCode": "10117",
+    "district": "mitte",
+    "latitude": 52.52077,
+    "longitude": 13.3889,
+    "websiteUrl": "https://distel-berlin.de",
+    "description": "Germany's largest ensemble Kabarett, playing political satire with live music for over seventy years in the front building of the Admiralspalast at Friedrichstraße station.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Das größte Ensemble-Kabarett Deutschlands, seit über sieben Jahrzehnten mit politischer Satire und Live-Musik im Vorderhaus des Admiralspalasts am Bahnhof Friedrichstraße.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": [
+        "theatre"
+    ]
+}
+
+> {%
+    client.global.set("distel_venue_id", response.body.id);
+    client.test("Kabarett-Theater DISTEL venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Create Kabarett-Theater DISTEL event source ---
+# Links the venue to the DistelWebsiteImporter.
+# The sourceType "DISTEL" matches EventSource.DISTEL.
+POST {{importer-host}}/api/admin/event-sources
+Content-Type: application/json
+
+{
+    "venueId": {{distel_venue_id}},
+    "name": "Kabarett-Theater DISTEL",
+    "url": "https://distel-berlin.de/spielplan/kalender/",
+    "sourceType": "DISTEL",
+    "enabled": true,
+    "importIntervalMinutes": 1440,
+    "maxRetries": 3
+}
+
+> {%
+    client.test("Kabarett-Theater DISTEL event source created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Trigger initial Kabarett-Theater DISTEL import ---
+POST {{importer-host}}/api/admin/event-sources/kabarett-theater-distel/import
+Accept: application/json
+
+> {%
+    client.test("Kabarett-Theater DISTEL import triggered", function () {
         client.assert(response.status === 202, "Expected 202 but got " + response.status);
     });
 %}

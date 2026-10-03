@@ -77,6 +77,7 @@ schema change.
 | Humboldthain Club                | https://www.humboldthain.com/                               | Techno Club  | Elfsight widget API; weekly night expanded             |
 | Huxleys Neue Welt                | https://huxleysneuewelt.de/events                           | Concert Hall | Events-Manager; ISO slug date; genre/promoter tags     |
 | Junction Bar                     | https://www.junction-bar.de/                                | Bar          | Static monthly pages; show times vary by weekday       |
+| Kabarett-Theater DISTEL          | https://distel-berlin.de/spielplan/kalender/                | Theater      | Contao month calendar; ~7 MB pages of inline SVG       |
 | Kantine am Berghain              | https://www.berghain.berlin/de/program/kantine-am-berghain/ | Concert Hall | Shares BERGHAIN importer                               |
 | Kater                            | https://www.katerclub.de/                                   | Techno Club  | Homepage programme; ___ floor rules mark lineups       |
 | Klunkerkranich                   | https://klunkerkranich.org/events/                          | Bar          | WordPress; ISO date in slug; ~10-day horizon           |
@@ -141,7 +142,7 @@ schema change.
 | Zitadelle                        | https://citadel-music-festival.de/events                    | Open Air     | Festival site; WordPress/EM; summer season only        |
 | Zur Klappe                       | https://zurklappe.org/events                                | Techno Club  | Next.js flight payload; no genre or prices             |
 
-94 importer classes cover 95 sources. Only Kantine am Berghain has no class of its own, and it shares the Berghain
+96 importer classes cover 97 sources. Only Kantine am Berghain has no class of its own, and it shares the Berghain
 importer outright. Three other groups share a _listing and parser_ while keeping one thin `@Component` per venue, so
 they do not reduce the count. They are Club der Visionäre with Sonnenraum and MS Hoppetosse, the three Velomax halls,
 and Uber Arena with the Uber Eats Music Hall.
@@ -463,7 +464,7 @@ New candidates land here first. Check for a server-rendered programme, then move
 [Ready](#-ready-to-implement) or [Blocked](#-blocked--deferred). A row belongs here only until someone opens it — the
 URL is recorded, nothing more.
 
-The first 24 rows came from a sweep on 2026-09-30: 21 from tipBerlin, then three from radar.squat.net. The last 6 came
+The first 24 rows came from a sweep on 2026-09-30: 21 from tipBerlin, then three from radar.squat.net. The last 4 came
 from a comedy sweep on 2026-10-03 of comedyinenglish.de, berlinmagazine.de and fritzguide.com. The URL was confirmed to
 answer, and nothing else was checked. A venue's type is a first guess.
 Correct it against the venue's own site when the row is opened.
@@ -497,7 +498,6 @@ Correct it against the venue's own site when the row is opened.
 | Quatsch Comedy Club               | https://quatsch-comedy-club.de/                           | Comedy Club  |
 | Mad Monkey Room                   | https://mad-monkey.de/                                    | Comedy Club  |
 | Downstairs Comedy Club            | https://www.downstairscomedy.shop/home                    | Comedy Club  |
-| Kabarett-Theater DISTEL           | https://distel-berlin.de/spielplan/kalender/              | Theater      |
 | Mein Freund Harvey                | https://www.meinfreundharvey.com/                         | Bar          |
 
 WABE's own building is closed for renovation. Its events run at Schönfließer Str. 7 for now. Kühlspot has no programme
