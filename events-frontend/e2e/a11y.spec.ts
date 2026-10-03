@@ -278,6 +278,24 @@ test('the header search, open with results, has no detectable accessibility viol
   ).toEqual([])
 })
 
+/** The header's language popover, open in German: the static pass never opens it. */
+test('the header language menu, open, has no detectable accessibility violations', async ({ page }) => {
+  await page.goto('/de/about')
+  await page.getByRole('button', { name: 'Sprache' }).click()
+  await expect(page.getByRole('link', { name: 'English' }).first()).toBeVisible()
+
+  const results = await buildScan(page).analyze()
+
+  expect(
+    results.violations.map((v) => ({
+      rule: v.id,
+      impact: v.impact,
+      help: v.help,
+      nodes: v.nodes.map((n) => n.target.join(' ')),
+    })),
+  ).toEqual([])
+})
+
 /**
  * The two maps, each with a pin selected: the panel over the map is the markup a visitor reads, and
  * the pins are buttons MapLibre positions. Without WebGL the view shows its fallback instead, which

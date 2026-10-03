@@ -44,7 +44,8 @@ test('switching language keeps the filters', async ({ page }) => {
   // filtered list answered in the other language with the whole catalogue.
   await page.goto('/en/events?q=Tresor&type=PARTY')
 
-  await page.getByRole('link', { name: 'Deutsch' }).first().click()
+  await page.getByRole('button', { name: 'Language' }).click()
+  await page.getByRole('list', { name: 'Language' }).getByRole('link', { name: 'Deutsch' }).click()
 
   await expect(page).toHaveURL(/\/de\/events\?.*q=Tresor/)
   await expect(page).toHaveURL(/type=PARTY/)
@@ -61,7 +62,8 @@ test('the header never links from the start location while the view loads', asyn
   await page.goto('/de/venues', { waitUntil: 'commit' })
 
   // Polled every frame, so this is the href the link is first painted with; a retrying
-  // `toHaveAttribute` would wait out the bug and pass.
+  // `toHaveAttribute` would wait out the bug and pass. The footer's link: the header's renders only
+  // when opened, and both read `useLocaleSwitch`.
   const firstHref = await page.waitForFunction(() =>
     document.querySelector('a[hreflang="en"]')?.getAttribute('href'),
   )
@@ -157,16 +159,20 @@ test('dates render in the locale format', async ({ page }) => {
   await expect(page.getByText(/12\. Juni 2026/)).toBeVisible()
 })
 
-test('the header carries a compact locale switcher', async ({ page }) => {
+test('the header switches language from an icon button', async ({ page }) => {
   await page.goto('/en/venues')
 
   const header = page.getByRole('navigation', { name: 'Main' })
-  const toGerman = header.getByRole('link', { name: 'Deutsch' })
+  // The links render only while the popover is open; the footer's are the ones always in the DOM.
+  await expect(page.getByRole('link', { name: 'Deutsch' })).toHaveCount(1)
+  await header.getByRole('button', { name: 'Language' }).click()
 
-  // `DE` is the visible label; the accessible name is the full native language name, because "DE"
-  // alone tells a screen-reader user nothing.
-  await expect(toGerman).toHaveText('DE')
+  // Portalled to the body, so it is found by its own name rather than inside the header.
+  const menu = page.getByRole('list', { name: 'Language' })
+  const toGerman = menu.getByRole('link', { name: 'Deutsch' })
   await expect(toGerman).toHaveAttribute('href', '/de/venues')
+  await expect(toGerman).toHaveAttribute('hreflang', 'de')
+  await expect(menu.getByRole('link', { name: 'English' })).toHaveAttribute('aria-current', 'true')
 
   await toGerman.click()
   await expect(page).toHaveURL(/\/de\/venues$/)
@@ -175,29 +181,17 @@ test('the header carries a compact locale switcher', async ({ page }) => {
 
 test('the header switcher adds no second Language landmark', async ({ page }) => {
   // Two navigation landmarks with the same accessible name are indistinguishable in a screen
-  // reader's landmark list; the compact switcher lives inside the header's own nav.
+  // reader's landmark list; the header's popover is a list, not a nav.
   await page.goto('/en')
+  await page
+    .getByRole('navigation', { name: 'Main' })
+    .getByRole('button', { name: 'Language' })
+    .click()
 
   await expect(page.getByRole('navigation', { name: 'Language' })).toHaveCount(1)
   await expect(
     page.getByRole('contentinfo').getByRole('navigation', { name: 'Language' }),
   ).toHaveCount(1)
-})
-
-test('both switchers mark the active language', async ({ page }) => {
-  await page.goto('/de/about')
-
-  // "Hauptnavigation", not "Main": the landmark's name is translated, which is why the other
-  // suites are pinned to /en.
-  const header = page.getByRole('navigation', { name: 'Hauptnavigation' })
-  await expect(header.getByRole('link', { name: 'Deutsch' })).toHaveAttribute(
-    'aria-current',
-    'true',
-  )
-  await expect(header.getByRole('link', { name: 'English' })).not.toHaveAttribute(
-    'aria-current',
-    'true',
-  )
 })
 
 /**
