@@ -300,6 +300,9 @@ enum class EventSource {
     /** Wild at Heart Berlin – a rock'n'roll bar and live club near Schlesisches Tor: rockabilly, punk, garage and surf. */
     WILD_AT_HEART,
 
+    /** Die Wühlmäuse – Dieter Hallervorden's 516-seat Kabarett theatre in Westend, with touring Kabarett, comedy, magic and music shows. */
+    WUEHLMAEUSE,
+
     /** Parkbühne Wuhlheide Berlin – a large open-air amphitheatre in the Wuhlheide park, running a seasonal summer concert programme. */
     WUHLHEIDE,
 

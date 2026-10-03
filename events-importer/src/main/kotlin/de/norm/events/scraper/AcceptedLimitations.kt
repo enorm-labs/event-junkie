@@ -92,6 +92,7 @@ import de.norm.events.scraper.urbanspree.URBAN_SPREE_LIMITATIONS
 import de.norm.events.scraper.velomax.VELOMAX_LIMITATIONS
 import de.norm.events.scraper.voidclub.VOID_CLUB_LIMITATIONS
 import de.norm.events.scraper.wildatheart.WILD_AT_HEART_LIMITATIONS
+import de.norm.events.scraper.wuehlmaeuse.WUEHLMAEUSE_LIMITATIONS
 import de.norm.events.scraper.wuhlheide.WUHLHEIDE_LIMITATIONS
 import de.norm.events.scraper.zenner.ZENNER_LIMITATIONS
 import de.norm.events.scraper.zigzag.ZIG_ZAG_LIMITATIONS
@@ -198,6 +199,7 @@ object AcceptedLimitations {
             VELOMAX_LIMITATIONS,
             VOID_CLUB_LIMITATIONS,
             WILD_AT_HEART_LIMITATIONS,
+            WUEHLMAEUSE_LIMITATIONS,
             WUHLHEIDE_LIMITATIONS,
             ZENNER_LIMITATIONS,
             ZIG_ZAG_LIMITATIONS,

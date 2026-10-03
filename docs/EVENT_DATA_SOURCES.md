@@ -58,6 +58,7 @@ schema change.
 | Cosmic Comedy Club               | https://comedyclubberlin.com/wp-json/tribe/events/v1/events | Comedy Club  | The Events Calendar REST API; cursor-paged; no prices  |
 | Crack Bellmer                    | https://www.crackbellmer.de/program/this-month              | Bar          | Webflow; month tabs filter one list; no prices         |
 | Der Weiße Hase                   | https://derweissehase.club/events                           | Club         | Contao; invalid `<p>` nesting; RA ticket links         |
+| Die Wühlmäuse                    | https://wuehlmaeuse.de/                                     | Theater      | WooCommerce Store API; one product per seat tier       |
 | Drugstore                        | https://drugstore-berlin.de/                                | Other        | radar group API; bands only in prose                   |
 | Duncker Club                     | https://www.dunckerclub.de/                                 | Club         |                                                        |
 | Eschschloraque Rümschrümp        | https://www.eschschloraque.de/                              | Bar          | Drupal 7; front page = full nodes; RDFa datetimes      |
@@ -136,7 +137,7 @@ schema change.
 | Zitadelle                        | https://citadel-music-festival.de/events                    | Open Air     | Festival site; WordPress/EM; summer season only        |
 | Zur Klappe                       | https://zurklappe.org/events                                | Techno Club  | Next.js flight payload; no genre or prices             |
 
-90 importer classes cover 91 sources. Only Kantine am Berghain has no class of its own, and it shares the Berghain
+91 importer classes cover 92 sources. Only Kantine am Berghain has no class of its own, and it shares the Berghain
 importer outright. Three other groups share a _listing and parser_ while keeping one thin `@Component` per venue, so
 they do not reduce the count. They are Club der Visionäre with Sonnenraum and MS Hoppetosse, the three Velomax halls,
 and Uber Arena with the Uber Eats Music Hall.
@@ -459,7 +460,7 @@ New candidates land here first. Check for a server-rendered programme, then move
 [Ready](#-ready-to-implement) or [Blocked](#-blocked--deferred). A row belongs here only until someone opens it — the
 URL is recorded, nothing more.
 
-The first 24 rows came from a sweep on 2026-09-30: 21 from tipBerlin, then three from radar.squat.net. The last 9 came
+The first 24 rows came from a sweep on 2026-09-30: 21 from tipBerlin, then three from radar.squat.net. The last 8 came
 from a comedy sweep on 2026-10-03 of comedyinenglish.de, berlinmagazine.de and fritzguide.com. Scheinbar Varieté
 was added by hand. The URL was confirmed to
 answer, and nothing else was checked. A venue's type is a first guess.
@@ -495,7 +496,6 @@ Correct it against the venue's own site when the row is opened.
 | Mad Monkey Room                   | https://mad-monkey.de/                                    | Comedy Club  |
 | PUNCH L!NE Club                   | https://punchlineberlin.com/de                            | Comedy Club  |
 | Downstairs Comedy Club            | https://www.downstairscomedy.shop/home                    | Comedy Club  |
-| Die Wühlmäuse                     | https://wuehlmaeuse.de/                                   | Theater      |
 | Kabarett-Theater DISTEL           | https://distel-berlin.de/spielplan/kalender/              | Theater      |
 | Mehringhof-Theater                | https://www.mehringhoftheater.de/                         | Theater      |
 | Scheinbar Varieté                 | https://www.scheinbar.de/                                 | Theater      |

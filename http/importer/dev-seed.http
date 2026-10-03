@@ -39,6 +39,7 @@
 ###   Cosmic Comedy Club   — https://comedyclubberlin.com/wp-json/tribe/events/v1/events
 ###   Crack Bellmer        — https://www.crackbellmer.de/program/this-month
 ###   Der Weiße Hase       — https://derweissehase.club/events
+###   Die Wühlmäuse        — https://wuehlmaeuse.de/wp-json/wc/store/v1/products
 ###   Drugstore            — https://drugstore-berlin.de/veranstaltungen/
 ###   Duncker Club         — https://www.dunckerclub.de/start.html
 ###   Eschschloraque       — https://www.eschschloraque.de/
@@ -1572,6 +1573,72 @@ Accept: application/json
 
 > {%
     client.test("Der Weiße Hase import triggered", function () {
+        client.assert(response.status === 202, "Expected 202 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
+### Die Wühlmäuse (Pommernallee 2-4, Berlin-Westend — at Theodor-Heuss-Platz)
+### ————————————————————————————————————————————————————————————
+
+### --- Create Die Wühlmäuse venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Die Wühlmäuse",
+    "address": "Pommernallee 2-4",
+    "city": "Berlin",
+    "postalCode": "14052",
+    "district": "charlottenburg",
+    "latitude": 52.50887,
+    "longitude": 13.27075,
+    "websiteUrl": "https://wuehlmaeuse.de",
+    "description": "Dieter Hallervorden's Kabarett theatre at Theodor-Heuss-Platz, a 516-seat hall for touring Kabarett, comedy, magic and music shows.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Das Kabarett-Theater von Dieter Hallervorden am Theodor-Heuss-Platz, ein Saal mit 516 Plätzen für Kabarett, Comedy, Zauberei und Musikshows auf Tournee.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": [
+        "theatre"
+    ],
+    "capacity": 516
+}
+
+> {%
+    client.global.set("wuehlmaeuse_venue_id", response.body.id);
+    client.test("Die Wühlmäuse venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Create Die Wühlmäuse event source ---
+# Links the venue to the WuehlmaeuseWebsiteImporter.
+# The sourceType "WUEHLMAEUSE" matches EventSource.WUEHLMAEUSE.
+POST {{importer-host}}/api/admin/event-sources
+Content-Type: application/json
+
+{
+    "venueId": {{wuehlmaeuse_venue_id}},
+    "name": "Die Wühlmäuse",
+    "url": "https://wuehlmaeuse.de/wp-json/wc/store/v1/products",
+    "sourceType": "WUEHLMAEUSE",
+    "enabled": true,
+    "importIntervalMinutes": 1440,
+    "maxRetries": 3
+}
+
+> {%
+    client.test("Die Wühlmäuse event source created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Trigger initial Die Wühlmäuse import ---
+POST {{importer-host}}/api/admin/event-sources/die-wuhlmause/import
+Accept: application/json
+
+> {%
+    client.test("Die Wühlmäuse import triggered", function () {
         client.assert(response.status === 202, "Expected 202 but got " + response.status);
     });
 %}
