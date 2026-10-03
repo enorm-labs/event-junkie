@@ -85,6 +85,9 @@ enum class EventSource {
     /** Der Weiße Hase Berlin – a techno club in the RAW-Gelände arches on Revaler Straße, running raves and DJ nights. */
     DER_WEISSE_HASE,
 
+    /** Kabarett-Theater DISTEL – Germany's largest ensemble Kabarett, in the front building of the Admiralspalast at Friedrichstraße station. */
+    DISTEL,
+
     /** Drugstore Berlin – the city's oldest self-run youth centre, founded in 1972, with punk and hardcore concerts in the Rockhaus. */
     DRUGSTORE,
 
