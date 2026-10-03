@@ -36,9 +36,9 @@ const localePath = useLocalePath()
         screenings and open-air cinema, exhibition openings, and the occasional pub quiz.
       </p>
       <p class="text-muted-foreground">
-        Where a venue says what kind of night it is, we take its word for it. Punk, jazz, indie,
-        metal, classical crossover, drag and singer-songwriter nights sit in the same feed as the
-        club listings.
+        Where a venue says what kind of night it is, Event Junkie takes its word for it. Punk, jazz,
+        indie, metal, classical crossover, drag and singer-songwriter nights sit in the same feed as
+        the club listings.
       </p>
       <p class="text-muted-foreground">
         <strong class="font-medium text-foreground">A few things are left out on purpose.</strong>
@@ -195,15 +195,16 @@ const localePath = useLocalePath()
     <section id="beta" class="scroll-mt-8 space-y-4 pt-4">
       <h2 class="text-section font-bold tracking-tight">Why it says beta</h2>
       <p class="text-muted-foreground">
-        Event Junkie is early. It works and we use it every week, but it is still finding its feet,
+        Event Junkie is early. It works and I use it every week, but it is still finding its feet,
         and you should know what that means before you plan a night around it.
       </p>
       <p class="text-muted-foreground">
         <strong class="font-medium text-foreground">Coverage is incomplete.</strong> New venues are
         added one at a time, so a quiet night on Event Junkie is not always a quiet night in Berlin.
         <strong class="font-medium text-foreground">Details can be wrong or stale.</strong> Events
-        are read automatically from venue websites; when a show moves, sells out or is cancelled, we
-        find out on our next read, not immediately. Always check with the venue before you go.
+        are read automatically from venue websites; when a show moves, sells out or is cancelled,
+        the importer finds out on its next read, not immediately. Always check with the venue before
+        you go.
         <strong class="font-medium text-foreground">Things change without notice:</strong> pages,
         filters and the data behind them are all still moving.
       </p>
@@ -218,7 +219,7 @@ const localePath = useLocalePath()
         >, in its short version.
       </p>
       <p class="text-muted-foreground">
-        Found something wrong? Telling us is the fastest way to get it fixed. Write to
+        Found something wrong? Telling me is the fastest way to get it fixed. Write to
         <a
           :href="feedbackMailto('Feedback on Event Junkie')"
           class="text-foreground underline underline-offset-4"

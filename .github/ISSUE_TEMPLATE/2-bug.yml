@@ -21,7 +21,7 @@ body:
   - type: textarea
     id: steps
     attributes:
-      label: How can we reproduce it?
+      label: How can I reproduce it?
       placeholder: |
         1. Go to /events
         2. Filter by genre "Techno"
@@ -34,7 +34,7 @@ body:
     attributes:
       label: Version
       description: >-
-        The version and commit from the bottom of any page, e.g. `v0.3.12 · 9f1a2b3`. This tells us
+        The version and commit from the bottom of any page, e.g. `v0.3.12 · 9f1a2b3`. This tells me
         exactly which build you saw, which is usually the difference between reproducing a bug and
         guessing at it.
       placeholder: v0.3.12 · 9f1a2b3

@@ -45,12 +45,12 @@ const { t } = useI18n()
         <a :href="`mailto:${CONTROLLER.email}`">{{ CONTROLLER.email }}</a>
       </p>
       <p>
-        For anything about the site itself (wrong event data, a bug, a venue we should be
-        importing), an issue on
+        For anything about the site itself (wrong event data, a bug, a venue that should be on the
+        site), an issue on
         <a href="https://github.com/enorm-labs/event-junkie/issues" rel="noopener" target="_blank">
           GitHub
         </a>
-        reaches us fastest and is public, so others can see it has been reported.
+        reaches me fastest and is public, so others can see it has been reported.
       </p>
     </section>
 
@@ -68,8 +68,8 @@ const { t } = useI18n()
         Event Junkie is operated by a private individual, not a company. There is no commercial
         register entry, no VAT identification number under § 27a UStG, no supervisory authority and
         no regulated professional title. No consumer contracts are concluded through this site, so §
-        36 VSBG does not apply. We are neither obliged nor willing to take part in dispute
-        resolution proceedings before a consumer arbitration board.
+        36 VSBG does not apply. I am neither obliged nor willing to take part in dispute resolution
+        proceedings before a consumer arbitration board.
       </p>
     </section>
 
@@ -80,20 +80,20 @@ const { t } = useI18n()
       <p>
         The event information on this site is aggregated automatically from publicly available
         sources. It is provided without warranty as to accuracy, completeness or timeliness. Events
-        may be moved, sold out or cancelled after we last read the source. Always confirm details
-        with the venue or the official ticket seller before travelling. No liability is accepted for
-        decisions taken on the basis of the information shown here.
+        may be moved, sold out or cancelled after the importer last read the source. Always confirm
+        details with the venue or the official ticket seller before travelling. No liability is
+        accepted for decisions taken on the basis of the information shown here.
       </p>
     </section>
 
     <section>
       <h2>Liability for links</h2>
       <p>
-        This site links to external websites over whose content we have no control. Responsibility
-        for that content lies with the respective operator. Our import sets most of these links
-        automatically to the pages of venues and ticket sellers. We do not check them one by one.
+        This site links to external websites over whose content I have no control. Responsibility
+        for that content lies with the respective operator. The importer sets most of these links
+        automatically to the pages of venues and ticket sellers. I do not check them one by one.
         Ongoing monitoring without concrete evidence of an infringement is not reasonable; such
-        links will be removed promptly once we become aware of one.
+        links will be removed promptly once I become aware of one.
       </p>
     </section>
 
@@ -109,8 +109,8 @@ const { t } = useI18n()
           licence text</a
         >. Event descriptions, images and other material originating from venues, promoters and
         artists remain the property of their respective rights holders and are not covered by that
-        licence. If you hold rights in material shown here and would like it removed, write to us
-        and we will act promptly.
+        licence. If you hold rights in material shown here and would like it removed, write to me
+        and I will act promptly.
       </p>
     </section>
   </LegalPage>

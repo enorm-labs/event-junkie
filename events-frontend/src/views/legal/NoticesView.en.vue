@@ -38,7 +38,7 @@ const { componentCount, groups, openGroups, toggle, versionSuffix } = useNotices
     </section>
 
     <section>
-      <h2>Our own code</h2>
+      <h2>Event Junkie's own code</h2>
       <p>
         Event Junkie's source is published under the Business Source License 1.1 and is available in
         full at

@@ -31,27 +31,27 @@ const localePath = useLocalePath()
       <h2>The short version</h2>
       <p>
         Event Junkie collects publicly announced events in Berlin and links every one of them back
-        to your own page. If you would rather not be listed, write to us: we disable the source and
-        remove your events. We do not ask for a reason.
+        to your own page. If you would rather not be listed, write to me: I disable the source and
+        remove your events. I do not ask for a reason.
       </p>
     </section>
 
     <section>
-      <h2>What we read from your page</h2>
+      <h2>What the importer reads from your page</h2>
       <p>
         Per event: the title, the date, the start time, the venue, the line-up and the kind of
-        event, plus the links to your page and to the ticket seller. We also read the description
+        event, plus the links to your page and to the ticket seller. It also reads the description
         and the image you publish yourself.
       </p>
       <p>
-        We download the image and keep a copy, so your server does not have to serve it again on
-        every page view. The copy sits with us rather than with a third party, and it goes when you
-        opt out.
+        Event Junkie downloads the image and keeps a copy, so your server does not have to serve it
+        again on every page view. The copy sits on Event Junkie's own servers rather than with a
+        third party, and it goes when you opt out.
       </p>
     </section>
 
     <section>
-      <h2>How we read</h2>
+      <h2>How the importer reads</h2>
       <ul>
         <li>
           Once a day, the overview page of each source, its further pages where the list continues,
@@ -64,7 +64,9 @@ const localePath = useLocalePath()
         </li>
         <li>With a user agent that names the project and links to its source code.</li>
         <li>Without arbitrary crawling: each importer knows exactly one page structure.</li>
-        <li>And according to your <code>robots.txt</code>, which we check before every request.</li>
+        <li>
+          And according to your <code>robots.txt</code>, which it checks before every request.
+        </li>
       </ul>
     </section>
 
@@ -76,21 +78,21 @@ const localePath = useLocalePath()
           <a :href="`mailto:${CONTROLLER.email}`">{{ CONTROLLER.email }}</a>
           and name the venue.
         </li>
-        <li>We disable the source. The importer stops reading it.</li>
-        <li>We remove that venue's events from the database.</li>
-        <li>We delete the stored copies of your images from our servers.</li>
-        <li>We answer to confirm, within seven days.</li>
+        <li>I disable the source. The importer stops reading it.</li>
+        <li>I remove that venue's events from the database.</li>
+        <li>I delete the stored copies of your images from Event Junkie's servers.</li>
+        <li>I answer to confirm, within seven days.</li>
       </ol>
       <p>
-        We do not ask for a reason and we do not argue the law with you. A venue that wants out gets
+        I do not ask for a reason and I do not argue the law with you. A venue that wants out gets
         out.
       </p>
       <p>
         <strong>It does not have to be everything.</strong> If it is only the images you mind, or
-        only the description texts, we remove exactly that and leave the events in place. We delete
-        the material you objected to from our database (for images, the stored copies too) and do
-        not import it again. The dates stay findable. Tell us which part you would rather we did not
-        store.
+        only the description texts, I remove exactly that and leave the events in place. I delete
+        the material you objected to from the database (for images, the stored copies too), and the
+        importer does not import it again. The dates stay findable. Tell me which part you would
+        rather the site did not store.
       </p>
     </section>
 
@@ -98,8 +100,8 @@ const localePath = useLocalePath()
       <h2>A <code>robots.txt</code> rule does the same</h2>
       <p>
         A rule in your <code>robots.txt</code> that disallows the pages in question has the same
-        effect and needs no message to us. We read the file once per host per day and check every
-        request against it. A forbidden address is not fetched: the run fails instead.
+        effect and needs no message to me. The importer reads the file once per host per day and
+        checks every request against it. A forbidden address is not fetched: the run fails instead.
       </p>
     </section>
 
@@ -107,9 +109,9 @@ const localePath = useLocalePath()
       <h2>If something is merely wrong</h2>
       <p>
         For a wrong start time, a moved show or an event that is no longer happening, the route is
-        shorter. Correct it on your own page: we read every venue once a day, and the next read
-        picks up the change. If we still show it wrong after that, write to us or report it publicly
-        on
+        shorter. Correct it on your own page: the importer reads every venue once a day, and the
+        next read picks up the change. If the site still shows it wrong after that, write to me or
+        report it publicly on
         <a href="https://github.com/enorm-labs/event-junkie/issues" rel="noopener" target="_blank">
           GitHub</a
         >.
@@ -119,15 +121,15 @@ const localePath = useLocalePath()
     <section>
       <h2>For promoters and artists</h2>
       <p>
-        We read venues, not promoters. A promoter or an artist is on this site because a venue
-        credited them. So there is no source for us to disable, but there is a page of their own,
-        and the same route applies to it as to a venue: write to
+        The importer reads venues, not promoters. A promoter or an artist is on this site because a
+        venue credited them. So there is no source to disable, but there is a page of their own, and
+        the same route applies to it as to a venue: write to
         <a :href="`mailto:${CONTROLLER.email}`">{{ CONTROLLER.email }}</a>
-        and name yourself. We correct or remove the name, the website link, the logo or the
-        description, or take the page down altogether. The description texts are our own words, not
-        copied, except for bands, orchestras and choirs: their short description comes from
-        Wikipedia and is credited to it. We do not ask for a reason and we answer within seven days.
-        The events themselves stay listed under their venue.
+        and name yourself. I correct or remove the name, the website link, the logo or the
+        description, or take the page down altogether. The description texts are written for this
+        site, not copied, except for bands, orchestras and choirs: their short description comes
+        from Wikipedia and is credited to it. I do not ask for a reason and I answer within seven
+        days. The events themselves stay listed under their venue.
       </p>
     </section>
 
@@ -138,7 +140,7 @@ const localePath = useLocalePath()
         remain the property of their respective rights holders. If you hold rights in something
         shown here and would like it removed, the
         <RouterLink :to="localePath('/legal/imprint')">imprint</RouterLink>
-        has the route. For an image, that deletes the copy on our servers as well.
+        has the route. For an image, that deletes the copy on Event Junkie's servers as well.
       </p>
     </section>
   </LegalPage>

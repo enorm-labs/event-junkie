@@ -212,8 +212,8 @@ The OpenAPI document is at `/v3/api-docs` on each port. Request files for both s
 Contributions are welcome. Full guide: [CONTRIBUTING.md](./CONTRIBUTING.md). Taking part means agreeing to the
 [Code of Conduct](./CODE_OF_CONDUCT.md).
 
-**The most valuable contribution is not code.** Event data is read automatically from venue websites, so a redesigned programme page can leave us quietly wrong
-for weeks. Nobody notices that faster than somebody who went to the show.
+**The most valuable contribution is not code.** Event data is read automatically from venue websites, so a redesigned programme page can leave the site quietly
+wrong for weeks. Nobody notices that faster than somebody who went to the show.
 
 - [Wrong or missing event data](https://github.com/enorm-labs/event-junkie/issues/new?template=1-wrong-event-data.yml)
 - [Suggest a venue](https://github.com/enorm-labs/event-junkie/issues/new?template=3-new-venue.yml)

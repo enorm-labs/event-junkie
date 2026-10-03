@@ -7,18 +7,18 @@ body:
   - type: markdown
     attributes:
       value: |
-        Thank you — this is the most useful kind of report we get. Event data is read automatically
-        from venue websites, so when a venue changes its page layout we can be quietly wrong for a
-        while without noticing.
+        Thank you — this is the most useful kind of report I get. Event data is read automatically
+        from venue websites, so when a venue changes its page layout the site can be quietly wrong
+        for a while without anyone noticing.
 
-        **The single most useful thing you can give us is the venue's own page for the event.**
-        That is what the importer reads, so it is what we compare against.
+        **The single most useful thing you can give me is the venue's own page for the event.**
+        That is what the importer reads, so it is what I compare against.
 
   - type: input
     id: event-url
     attributes:
       label: Event on Event Junkie
-      description: The page on our site showing the problem. Leave blank if the event is missing entirely.
+      description: The page on Event Junkie showing the problem. Leave blank if the event is missing entirely.
       placeholder: https://event-junkie.de/de/events/...
     validations:
       required: false

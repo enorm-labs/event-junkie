@@ -41,7 +41,7 @@ const { componentCount, groups, openGroups, toggle, versionSuffix } = useNotices
     </section>
 
     <section>
-      <h2>Unser eigener Code</h2>
+      <h2>Der eigene Code von Event Junkie</h2>
       <p>
         Der Quellcode von Event Junkie steht unter der Business Source License 1.1 und ist
         vollständig verfügbar unter

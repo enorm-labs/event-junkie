@@ -110,6 +110,21 @@ Great places to let the voice show — **microcopy**:
 - 404 / not found: _"This one's gone. Like last call — you snooze, you lose."_
 - Loading: _"Scoring the latest…"_
 
+### Who speaks
+
+One person maintains Event Junkie, and the imprint names that person. So the copy does not say "we" for a team that does not exist (see #2432).
+
+| Who acts                                      | Write                                      | Example                                                       |
+| --------------------------------------------- | ------------------------------------------ | ------------------------------------------------------------- |
+| The maintainer acts, promises or is contacted | "I" / "ich"                                | "Write to me. I disable the source."                          |
+| The system acts                               | "the importer", "Event Junkie", "the site" | "The importer checks your `robots.txt` before every request." |
+| The brand speaks in microcopy                 | the editorial "we" is correct              | "That venue isn't in our little black book."                  |
+| Visitors and the maintainer together          | the inclusive "we" is correct              | "Something we only manage together."                          |
+| A call to action                              | no pronoun                                 | "Report it by email:"                                         |
+
+Do not write "I" where the importer does the work. "I read your page" tells a venue that a person reads every page, and that is not true. When a second
+maintainer joins, change the first row back to "we".
+
 Tagline alternatives explored (kept for reference / A-B testing): _Never miss a hit_ · _Highly addictive_ · _Feed the habit_ · _Your dealer for Berlin
 nightlife_ · _Know before the crowd_.
 

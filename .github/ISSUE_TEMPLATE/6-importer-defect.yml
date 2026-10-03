@@ -14,7 +14,7 @@ body:
         venue simply does not publish, or a trade-off a parser makes deliberately — belongs in that
         scraper's own KDoc, next to the code it constrains, *not* in the tracker. See `AGENTS.md`.
         The test: if the answer is "the source never said", it is a limitation; if the answer is
-        "the source said it and we dropped it", it is this form.
+        "the source said it and the importer dropped it", it is this form.
 
   - type: input
     id: venues
@@ -39,7 +39,7 @@ body:
   - type: textarea
     id: we-store
     attributes:
-      label: What we store today
+      label: What Event Junkie stores today
       description: And what it should have been.
       placeholder: >-
         `Sonic Morgue` is kept as part of the performer name, so these never resolve to the plain

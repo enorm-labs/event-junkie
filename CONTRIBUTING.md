@@ -6,8 +6,8 @@ By taking part you agree to the [Code of Conduct](./CODE_OF_CONDUCT.md).
 
 ## The most valuable thing you can do
 
-**Tell us when the event data is wrong.** Events are read automatically from venue websites, so when a venue redesigns its programme page we can be quietly
-wrong for weeks without noticing. Nobody sees that faster than someone who went to the show.
+**Tell me when the event data is wrong.** Events are read automatically from venue websites, so when a venue redesigns its programme page the site can be
+quietly wrong for weeks without anyone noticing. Nobody sees that faster than someone who went to the show.
 
 - [Wrong or missing event data](https://github.com/enorm-labs/event-junkie/issues/new?template=1-wrong-event-data.yml) — include the venue's own page for the
   event; that is what the importer reads.
@@ -88,7 +88,7 @@ with "Rebase and merge", and a merge commit blocks the button.
 ### What CI will and will not run on your pull request
 
 Worth knowing before a red check makes you think you broke something. **Every required check runs on
-a fork's pull request** exactly as it does on ours. None of them depends on a secret, and none needs
+a fork's pull request** exactly as it does on a branch of this repository. None of them depends on a secret, and none needs
 your pull request to hold a token that can write:
 
 ```
