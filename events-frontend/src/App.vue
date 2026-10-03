@@ -10,7 +10,7 @@ import BrandLogo from '@/components/BrandLogo.vue'
 import GitHubMark from '@/components/GitHubMark.vue'
 import GlobalSearch from '@/components/GlobalSearch.vue'
 import HeaderMenu from '@/components/HeaderMenu.vue'
-import LocaleSwitcher from '@/components/LocaleSwitcher.vue'
+import LocaleMenu from '@/components/LocaleMenu.vue'
 import { pageTitle } from '@/composables/usePageMeta'
 import { useCompactView } from '@/composables/useCompactView'
 import { REPOSITORY_URL } from '@/lib/links'
@@ -136,8 +136,7 @@ const sectionLinks = computed(() =>
         </div>
         <div class="ml-auto flex items-center gap-2">
           <GlobalSearch />
-          <!-- Compact, and inside this nav rather than its own landmark — see LocaleSwitcher. -->
-          <LocaleSwitcher class="mr-1" compact />
+          <LocaleMenu />
           <!-- `title` is the hover tooltip only; `aria-label` wins for the accessible name. Below
                `md` the link is in HeaderMenu's sheet. -->
           <Button
