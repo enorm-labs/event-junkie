@@ -1,5 +1,6 @@
 package de.norm.events.event
 
+import de.norm.events.common.TextSearch
 import io.swagger.v3.oas.annotations.Parameter
 import java.math.BigDecimal
 import java.time.LocalDate
@@ -38,7 +39,7 @@ data class EventFilterParams(
     val minPrice: BigDecimal? = null,
     @field:Parameter(description = "Maximum presale price (inclusive). Excludes events with an unknown (null) price.")
     val maxPrice: BigDecimal? = null,
-    @field:Parameter(description = "Case-insensitive substring search over the event title and subtitle.")
+    @field:Parameter(description = "Search over the event title, subtitle, venue name and lineup: ignores case, accents and spaces, and forgives small typos.")
     val q: String? = null,
     @field:Parameter(description = "When true, excludes events flagged as sold out. Defaults to false (include all).")
     val excludeSoldOut: Boolean = false,
@@ -62,7 +63,7 @@ data class EventFilterParams(
             familySlugs = family.orEmpty().normalizedSlugs(),
             minPrice = minPrice,
             maxPrice = maxPrice,
-            query = q,
+            query = TextSearch.term(q),
             excludeSoldOut = excludeSoldOut,
             onlyFree = free
         )

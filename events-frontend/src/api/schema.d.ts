@@ -1462,7 +1462,7 @@ export interface operations {
     list: {
         parameters: {
             query?: {
-                /** @description Case-insensitive substring filter on the venue name. Omitted/blank returns all venues. */
+                /** @description Search on the venue name: ignores case, accents and spaces, and forgives small typos. Omitted/blank returns all venues. */
                 q?: string;
                 /** @description District filter, one of the 23 pre-2001 Berlin districts (e.g. kreuzberg). Repeatable: a venue in any given district matches. */
                 district?: string[];
@@ -1547,7 +1547,7 @@ export interface operations {
     list_1: {
         parameters: {
             query?: {
-                /** @description Case-insensitive substring filter on the promoter name. Omitted/blank returns all promoters. */
+                /** @description Search on the promoter name: ignores case, accents and spaces, and forgives small typos. Omitted/blank returns all promoters. */
                 q?: string;
                 /** @description Zero-based page index (0..N) */
                 page?: number;
@@ -1692,7 +1692,7 @@ export interface operations {
                 minPrice?: number;
                 /** @description Maximum presale price (inclusive). Excludes events with an unknown (null) price. */
                 maxPrice?: number;
-                /** @description Case-insensitive substring search over the event title and subtitle. */
+                /** @description Search over the event title, subtitle, venue name and lineup: ignores case, accents and spaces, and forgives small typos. */
                 q?: string;
                 /** @description When true, excludes events flagged as sold out. Defaults to false (include all). */
                 excludeSoldOut?: boolean;
@@ -1793,7 +1793,7 @@ export interface operations {
                 minPrice?: number;
                 /** @description Maximum presale price (inclusive). Excludes events with an unknown (null) price. */
                 maxPrice?: number;
-                /** @description Case-insensitive substring search over the event title and subtitle. */
+                /** @description Search over the event title, subtitle, venue name and lineup: ignores case, accents and spaces, and forgives small typos. */
                 q?: string;
                 /** @description When true, excludes events flagged as sold out. Defaults to false (include all). */
                 excludeSoldOut?: boolean;
@@ -1820,7 +1820,7 @@ export interface operations {
     list_4: {
         parameters: {
             query?: {
-                /** @description Case-insensitive substring filter on the artist name. Omitted/blank returns all artists. */
+                /** @description Search on the artist name: ignores case, accents and spaces, and forgives small typos. Omitted/blank returns all artists. */
                 q?: string;
                 /** @description Zero-based page index (0..N) */
                 page?: number;

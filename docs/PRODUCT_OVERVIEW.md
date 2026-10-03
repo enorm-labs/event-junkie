@@ -32,7 +32,8 @@ classical.
 
 - **Browse and search** upcoming events, with a **calendar view** and a **today** view.
 - **Filter** by what you actually care about: date range, event type, **Berlin district** (23 pre-2001 districts),
-  **genre**, **price range**, **free-only** and **exclude sold-out**. Plus free-text search over titles.
+  **genre**, **price range**, **free-only** and **exclude sold-out**. Plus free-text search over titles, venues and line-ups.
+  The search ignores accents and spaces, and finds `Berghain` from `berghian`.
 - **Find a venue** by name, district, **venue type** (club, live venue, bar, …), the **genres it mostly plays** and the
   **event types it hosts**. Each venue shows its type and capacity.
 - **Drill into details:** dedicated pages for each **event, venue, artist and promoter**. They are cross-linked, so

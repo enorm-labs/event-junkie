@@ -3,6 +3,7 @@ package de.norm.events.artist
 import de.norm.events.common.PageResponse
 import de.norm.events.common.QueryParameters
 import de.norm.events.common.ResponseCache
+import de.norm.events.common.TextSearch
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.tags.Tag
@@ -29,7 +30,7 @@ class ArtistController(
     @GetMapping
     @Operation(summary = "List artists with pagination and optional name search")
     suspend fun list(
-        @Parameter(description = "Case-insensitive substring filter on the artist name. Omitted/blank returns all artists.")
+        @Parameter(description = "Search on the artist name: ignores case, accents and spaces, and forgives small typos. Omitted/blank returns all artists.")
         @RequestParam(required = false)
         q: String?,
         @ParameterObject
@@ -38,7 +39,8 @@ class ArtistController(
         exchange: ServerWebExchange
     ): PageResponse<ArtistSummaryResponse> {
         LIST_PARAMS.rejectUnknownIn(exchange)
-        return cache.get(ArtistListKey(q, pageable)) { artistService.list(q, pageable) }
+        val term = TextSearch.term(q)
+        return cache.get(ArtistListKey(term, pageable)) { artistService.list(term, pageable) }
     }
 
     @GetMapping("/{slug}")

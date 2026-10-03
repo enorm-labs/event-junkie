@@ -22,7 +22,7 @@ class PromoterService(
     private val clock: Clock
 ) {
     /**
-     * Lists promoters with pagination, optionally filtered by a case-insensitive name [query],
+     * Lists promoters with pagination, optionally filtered by a name [query],
      * sorted by name or by how many events each still has to come (#1349).
      */
     @Transactional(readOnly = true)
