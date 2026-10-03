@@ -21,7 +21,7 @@ import java.time.format.DateTimeParseException
  * |-------------|-----------------------------------------------------------------|
  * | date + time | `data-dateStart="YYYY-MM-DD HH:mm:ss"`                          |
  * | event type  | `.card-text.cat` category label ("Concerts", "Exhibitions", …)   |
- * | title       | `.card-text.title` — **CSS-truncated**, so only a fallback      |
+ * | title       | `.card-text.title` — **cut with `&#8230;`**, so only a fallback  |
  * | price       | `li.price` ("17.00€", or "Free")                                |
  * | image       | `data-imgfeat` — the original upload, not a thumbnail           |
  * | detail page | `href` to `/program/<category>/<slug>.html`                     |
@@ -89,7 +89,7 @@ class UrbanSpreeOverviewPageScraper {
         // ellipsis usually cuts the note off.
         val (headline, supportNote) = splitUrbanSpreeBilling(rawTitle)
         return ScrapedEvent(
-            // The card title is CSS-truncated ("… + Nico Amara…"); the detail page overrides it.
+            // The card title is cut in the HTML ("… + Nico Amara…"); the detail page overrides it.
             title = cleanUrbanSpreeTitle(headline),
             subtitle = supportNote,
             eventType = mapEventType(card.textAt(".card-text.cat"), URBAN_SPREE_CATEGORY_SYNONYMS),

@@ -6,6 +6,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.ScrapedField
 import de.norm.events.scraper.VenueLimitations
 import org.springframework.stereotype.Component
 
@@ -28,7 +29,9 @@ class ClubOstWebsiteImporter(
     htmlFetcher: HtmlFetcher
 ) : AbstractTwoPageWebsiteImporter(htmlFetcher, ClubOstOverviewPageScraper()::scrape, ClubOstDetailPageScraper()::scrape) {
     override val eventSource: EventSource = EventSource.CLUB_OST
-    override val detailPageOwnsImage: Boolean = false
+
+    /** The card shouts the title in capitals; the event page spells it (#2505). */
+    override val detailPageOwns: Set<ScrapedField> = setOf(ScrapedField.TITLE)
     override val listsWholeProgramme: Boolean = true
 
     /**

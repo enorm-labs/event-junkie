@@ -8,6 +8,7 @@ import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.ListingPage
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.ScrapedField
 import de.norm.events.scraper.VenueLimitations
 import de.norm.events.scraper.attrAt
 import de.norm.events.scraper.collapseExhibitionRuns
@@ -63,7 +64,7 @@ class SilentGreenWebsiteImporter(
         // An exhibition's days share one page, and the page's date block is the run (ADR-029, #337).
         val runs =
             htmlFetcher
-                .enrichFromSharedPages(distinct, detailPageScraper::scrape, SilentGreenEventDetails::applyTo)
+                .enrichFromSharedPages(distinct, detailPageScraper::scrape, SilentGreenEventDetails::applyTo, pageOwns = setOf(ScrapedField.RUN_DATES))
                 .collapseExhibitionRuns { event ->
                     "${EventSource.SILENT_GREEN.sourceIdPrefix}${silentGreenDetailSlug(event.sourceUrl)}"
                 }

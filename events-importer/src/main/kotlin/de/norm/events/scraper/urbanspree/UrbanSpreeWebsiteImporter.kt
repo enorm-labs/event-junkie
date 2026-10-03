@@ -9,6 +9,7 @@ import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.ListingPage
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.ScrapedField
 import de.norm.events.scraper.VenueLimitations
 import de.norm.events.scraper.pageNumber
 import de.norm.events.scraper.querySeparator
@@ -105,7 +106,7 @@ class UrbanSpreeWebsiteImporter(
      * carries title, date, type, price and poster, flagged [ScrapedEvent.detailUnavailable].
      */
     private suspend fun enrichFromDetailPage(card: ScrapedEvent): ScrapedEvent =
-        htmlFetcher.withEventPageOrFlagged(card) { document ->
+        htmlFetcher.withEventPageOrFlagged(card, URBAN_SPREE_PAGE_OWNS) { document ->
             detailPageScraper.scrape(document, card.sourceUrl)?.let { merge(detail = it, card = card) }
         }
 
@@ -128,6 +129,9 @@ class UrbanSpreeWebsiteImporter(
         )
 
     private companion object {
+        /** The card cuts the title, drops the support note and misses the club-night type; the page has all three (#2505). */
+        val URBAN_SPREE_PAGE_OWNS = setOf(ScrapedField.TITLE, ScrapedField.SUBTITLE, ScrapedField.EVENT_TYPE)
+
         /**
          * Upper bound on the walk: the venue books roughly a year ahead, well under twenty pages, while
          * the archive runs to 200+. A runaway guard, logged as a warning.

@@ -11,14 +11,14 @@ private val logger = KotlinLogging.logger {}
 /**
  * [event] enriched from its own page by [enrich], or [event] flagged [ScrapedEvent.detailUnavailable]
  * when the page yields nothing. The flag makes the upsert keep the fields the page stored last time.
- * [eventPageOwnsImage] marks the listing's image a stand-in, so a stored one wins over it (#2465).
+ * [eventPageOwns] names the fields the page supplies over the listing's; a stored value wins for those (#2505).
  * An importer that fetches event pages calls this, or [AbstractSinglePageWebsiteImporter.enrichFromEventPage].
  */
 suspend fun HtmlFetcher.withEventPageOrFlagged(
     event: ScrapedEvent,
-    eventPageOwnsImage: Boolean = false,
+    eventPageOwns: Set<ScrapedField> = emptySet(),
     enrich: (Document) -> ScrapedEvent?
-): ScrapedEvent = readEventPage(event, enrich) ?: event.copy(detailUnavailable = true, listingImageStandsIn = eventPageOwnsImage)
+): ScrapedEvent = readEventPage(event, enrich) ?: event.copy(detailUnavailable = true, detailPageOwns = eventPageOwns)
 
 /**
  * [event]'s own page read by [parse], or null when the fetch or the parse fails or [parse] returns null.
@@ -55,13 +55,13 @@ suspend fun <T : Any> HtmlFetcher.enrichFromSharedPages(
     events: List<ScrapedEvent>,
     parse: (Document) -> T?,
     apply: (T, ScrapedEvent) -> ScrapedEvent,
-    pageOwnsImage: Boolean = false,
+    pageOwns: Set<ScrapedField> = emptySet(),
     key: (ScrapedEvent) -> Any = ScrapedEvent::sourceUrl
 ): List<ScrapedEvent> {
     val groups = events.groupBy(key)
     logger.info { "Fetching ${groups.size} shared page(s) for ${events.size} event(s)" }
     val pages = groups.mapValues { (_, rows) -> readEventPage(rows.first(), parse) }
     return events.map { event ->
-        pages[key(event)]?.let { apply(it, event) } ?: event.copy(detailUnavailable = true, listingImageStandsIn = pageOwnsImage)
+        pages[key(event)]?.let { apply(it, event) } ?: event.copy(detailUnavailable = true, detailPageOwns = pageOwns)
     }
 }

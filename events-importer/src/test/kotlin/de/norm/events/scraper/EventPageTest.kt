@@ -122,12 +122,12 @@ class EventPageTest {
 
     private suspend fun enrich(
         vararg events: ScrapedEvent,
-        pageOwnsImage: Boolean = false
+        pageOwns: Set<ScrapedField> = emptySet()
     ) = htmlFetcher.enrichFromSharedPages(
         events.toList(),
         { it.selectFirst("p")?.text() },
         { blurb, row -> row.copy(description = blurb) },
-        pageOwnsImage = pageOwnsImage
+        pageOwns = pageOwns
     )
 
     @Test
@@ -149,12 +149,12 @@ class EventPageTest {
             coEvery { htmlFetcher.fetchDocument(event.sourceUrl) } throws RuntimeException("boom")
             coEvery { htmlFetcher.fetchDocument(otherPage) } returns Jsoup.parse("<p>Another</p>", otherPage)
 
-            val result = enrich(event, evening, matinee, pageOwnsImage = true)
+            val result = enrich(event, evening, matinee, pageOwns = setOf(ScrapedField.IMAGE))
 
             result shouldBe
                 listOf(
-                    event.copy(detailUnavailable = true, listingImageStandsIn = true),
-                    evening.copy(detailUnavailable = true, listingImageStandsIn = true),
+                    event.copy(detailUnavailable = true, detailPageOwns = setOf(ScrapedField.IMAGE)),
+                    evening.copy(detailUnavailable = true, detailPageOwns = setOf(ScrapedField.IMAGE)),
                     matinee.copy(description = "Another")
                 )
             warnings() shouldHaveSize 1

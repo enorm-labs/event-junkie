@@ -49,11 +49,11 @@ abstract class AbstractTwoPageWebsiteImporter(
     ): ScrapedEvent = primary.withGapsFrom(fallback)
 
     /**
-     * Whether a good run stores the detail page's image over the listing's. True by default, so a
-     * degraded row's listing image yields to the stored one ([ScrapedEvent.listingImageStandsIn],
-     * #2465). False where [fillGapsFromOverview] keeps the listing's image, or the detail page has none.
+     * The fields a good run takes from the detail page over the listing's value, so a degraded row
+     * keeps the stored ones ([ScrapedEvent.detailPageOwns], #2505). The image by default (#2465).
+     * Empty where [fillGapsFromOverview] keeps the listing's image, or the detail page has none.
      */
-    protected open val detailPageOwnsImage: Boolean = true
+    protected open val detailPageOwns: Set<ScrapedField> = setOf(ScrapedField.IMAGE)
 
     /**
      * The absolute URL of the listing page after [document], or null when it is the last. Null by
@@ -148,7 +148,7 @@ abstract class AbstractTwoPageWebsiteImporter(
         return degraded(overview)
     }
 
-    private fun degraded(overview: ScrapedEvent): ScrapedEvent = overview.copy(detailUnavailable = true, listingImageStandsIn = detailPageOwnsImage)
+    private fun degraded(overview: ScrapedEvent): ScrapedEvent = overview.copy(detailUnavailable = true, detailPageOwns = detailPageOwns)
 
     private suspend fun mergeDetail(overview: ScrapedEvent): ScrapedEvent {
         val detailDoc = htmlFetcher.fetchDocument(overview.sourceUrl)

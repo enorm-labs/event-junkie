@@ -6,6 +6,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.ScrapedField
 import de.norm.events.scraper.VenueLimitations
 import org.springframework.stereotype.Component
 
@@ -25,6 +26,9 @@ import org.springframework.stereotype.Component
 class MetropolWebsiteImporter(
     htmlFetcher: HtmlFetcher
 ) : AbstractTwoPageWebsiteImporter(htmlFetcher, MetropolOverviewPageScraper()::scrape, MetropolDetailPageScraper()::scrape) {
+    /** The listing's subtitle is the support line; a good run stores the event page's tour name (#2505). */
+    override val detailPageOwns: Set<ScrapedField> = setOf(ScrapedField.IMAGE, ScrapedField.SUBTITLE)
+
     override val eventSource: EventSource = EventSource.METROPOL
     override val listsWholeProgramme: Boolean = true
 

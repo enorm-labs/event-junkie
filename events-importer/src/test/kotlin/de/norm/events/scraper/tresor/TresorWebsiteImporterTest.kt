@@ -5,6 +5,7 @@ import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.ScrapedField
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
@@ -118,7 +119,7 @@ class TresorWebsiteImporterTest {
             val klubnacht = event(importer.importEvents(listingUrl), "20260801-tresor-klubnacht")
 
             klubnacht.detailUnavailable shouldBe true
-            klubnacht.listingImageStandsIn shouldBe true
+            klubnacht.detailPageOwns shouldBe setOf(ScrapedField.IMAGE)
             klubnacht.startTime shouldBe null
         }
 }

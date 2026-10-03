@@ -2,6 +2,7 @@ package de.norm.events.scraper
 
 import de.norm.events.event.EventEntity
 import de.norm.events.event.EventRepository
+import de.norm.events.event.EventStatus
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import io.mockk.coEvery
@@ -12,6 +13,7 @@ import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import java.math.BigDecimal
 import java.time.Clock
 import java.time.LocalDate
 import java.time.LocalTime
@@ -117,7 +119,7 @@ class EventUpsertServiceDetailUnavailableTest {
     @Test
     fun `a listing image that stands in for the event page's yields to the stored poster`() =
         runTest {
-            val written = upsertAndCapture(listingRow(detailUnavailable = true).copy(imageUrl = thumbnail, listingImageStandsIn = true))
+            val written = upsertAndCapture(listingRow(detailUnavailable = true).copy(imageUrl = thumbnail, detailPageOwns = setOf(ScrapedField.IMAGE)))
 
             written.imageUrl shouldBe poster
         }
@@ -135,7 +137,7 @@ class EventUpsertServiceDetailUnavailableTest {
         runTest {
             coEvery { eventRepository.findBySourceIdIn(any()) } returns listOf(stored.copy(imageUrl = null)).asFlow()
 
-            val written = upsertAndCapture(listingRow(detailUnavailable = true).copy(imageUrl = thumbnail, listingImageStandsIn = true))
+            val written = upsertAndCapture(listingRow(detailUnavailable = true).copy(imageUrl = thumbnail, detailPageOwns = setOf(ScrapedField.IMAGE)))
 
             written.imageUrl shouldBe thumbnail
         }
@@ -145,9 +147,119 @@ class EventUpsertServiceDetailUnavailableTest {
         runTest {
             coEvery { eventRepository.findBySourceIdIn(any()) } returns emptyFlow()
 
-            val written = upsertAndCapture(listingRow(detailUnavailable = true).copy(imageUrl = thumbnail, listingImageStandsIn = true))
+            val written = upsertAndCapture(listingRow(detailUnavailable = true).copy(imageUrl = thumbnail, detailPageOwns = setOf(ScrapedField.IMAGE)))
 
             written.id.shouldBeNull()
             written.imageUrl shouldBe thumbnail
+        }
+
+    @Test
+    fun `an owned title keeps the stored title and its slug over the listing's cut one`() =
+        runTest {
+            val cut = listingRow(detailUnavailable = true).copy(title = "Tresor Klubnacht: Tresor Rec…", detailPageOwns = setOf(ScrapedField.TITLE))
+
+            val written = upsertAndCapture(cut)
+
+            written.title shouldBe "Tresor Klubnacht"
+            written.slug shouldBe stored.slug
+        }
+
+    @Test
+    fun `an owned title still reads a cancellation from the listing's title`() =
+        runTest {
+            val cancelled = listingRow(detailUnavailable = true).copy(title = "ABGESAGT: Tresor Klubnacht", detailPageOwns = setOf(ScrapedField.TITLE))
+
+            val written = upsertAndCapture(cancelled)
+
+            written.title shouldBe "Tresor Klubnacht"
+            written.status shouldBe EventStatus.CANCELLED.name
+        }
+
+    @Test
+    fun `owned text, genre and type keep the stored values over the listing's`() =
+        runTest {
+            coEvery { eventRepository.findBySourceIdIn(any()) } returns
+                listOf(stored.copy(subtitle = "Tresor Records 35 years", genre = "Techno", eventType = "CONCERT", typeIsFallback = false)).asFlow()
+            val teaser =
+                listingRow(detailUnavailable = true).copy(
+                    subtitle = "Tresor Rec…",
+                    description = "Three floors…",
+                    genre = "Electronic",
+                    eventType = "PARTY",
+                    typeIsFallback = true,
+                    detailPageOwns = setOf(ScrapedField.SUBTITLE, ScrapedField.DESCRIPTION, ScrapedField.GENRE, ScrapedField.EVENT_TYPE)
+                )
+
+            val written = upsertAndCapture(teaser)
+
+            written.subtitle shouldBe "Tresor Records 35 years"
+            written.description shouldBe "Three floors until the morning."
+            written.genre shouldBe "Techno"
+            written.eventType shouldBe "CONCERT"
+            written.typeIsFallback shouldBe false
+        }
+
+    @Test
+    fun `owned run dates keep the stored opening date and end`() =
+        runTest {
+            val firstListedDay = listingRow(detailUnavailable = true).copy(eventDate = nightDate.plusDays(3), detailPageOwns = setOf(ScrapedField.RUN_DATES))
+
+            val written = upsertAndCapture(firstListedDay)
+
+            written.eventDate shouldBe nightDate
+            written.endDate shouldBe nightDate.plusDays(1)
+            written.endTime shouldBe LocalTime.of(8, 0)
+        }
+
+    @Test
+    fun `a field the page does not own still takes the listing's value`() =
+        runTest {
+            val written =
+                upsertAndCapture(
+                    listingRow(detailUnavailable = true).copy(
+                        startTime = LocalTime.of(22, 0),
+                        pricePresale = BigDecimal("15.00"),
+                        detailPageOwns = setOf(ScrapedField.TITLE)
+                    )
+                )
+
+            written.startTime shouldBe LocalTime.of(22, 0)
+            written.pricePresale shouldBe BigDecimal("15.00")
+        }
+
+    @Test
+    fun `a row whose page answered ignores the owned set`() =
+        runTest {
+            val answered = listingRow(detailUnavailable = false).copy(detailPageOwns = setOf(ScrapedField.TITLE))
+
+            upsertAndCapture(answered).title shouldBe "Tresor Klubnacht: Tresor Records 35"
+        }
+
+    @Test
+    fun `an owned start time and prices keep the stored ones over the listing's`() =
+        runTest {
+            coEvery { eventRepository.findBySourceIdIn(any()) } returns
+                listOf(stored.copy(pricePresale = BigDecimal("19.80"), priceNote = "zzgl. Gebühren")).asFlow()
+            val checkout =
+                listingRow(detailUnavailable = true).copy(
+                    startTime = LocalTime.of(22, 0),
+                    pricePresale = BigDecimal("21.72"),
+                    detailPageOwns = setOf(ScrapedField.START_TIME, ScrapedField.PRICES)
+                )
+
+            val written = upsertAndCapture(checkout)
+
+            written.startTime shouldBe LocalTime.of(23, 0)
+            written.pricePresale shouldBe BigDecimal("19.80")
+            written.priceNote shouldBe "zzgl. Gebühren"
+        }
+
+    @Test
+    fun `owned prices yield to the listing's when none are stored`() =
+        runTest {
+            val written =
+                upsertAndCapture(listingRow(detailUnavailable = true).copy(pricePresale = BigDecimal("21.72"), detailPageOwns = setOf(ScrapedField.PRICES)))
+
+            written.pricePresale shouldBe BigDecimal("21.72")
         }
 }

@@ -5,6 +5,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.ScrapedField
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
@@ -138,7 +139,7 @@ class DelphiWebsiteImporterTest {
             stokes.pricePresale shouldBe BigDecimal("29")
             // Flagged, so the upsert keeps the text the page stored; the page's photo wins over the thumbnail.
             stokes.detailUnavailable shouldBe true
-            stokes.listingImageStandsIn shouldBe true
+            stokes.detailPageOwns shouldBe setOf(ScrapedField.IMAGE, ScrapedField.DESCRIPTION)
         }
 
     @Test

@@ -7,6 +7,7 @@ import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.LimitedAspect
+import de.norm.events.scraper.ScrapedField
 import de.norm.events.scraper.VenueLimitations
 import de.norm.events.scraper.enrichFromSharedPages
 import de.norm.events.scraper.scrapeListingPages
@@ -77,7 +78,14 @@ class BarJederVernunftWebsiteImporter(
                 logger.info { "Scraped ${calendar.events.size} performance date(s) from Bar jeder Vernunft" }
 
                 ImportResult.Success(
-                    events = htmlFetcher.enrichFromSharedPages(calendar.events, showPageScraper::scrape, BarJederVernunftShow::applyTo),
+                    events =
+                        htmlFetcher.enrichFromSharedPages(
+                            calendar.events,
+                            showPageScraper::scrape,
+                            BarJederVernunftShow::applyTo,
+                            // The calendar has no type and a cut teaser; the show page has both (#2505).
+                            pageOwns = setOf(ScrapedField.EVENT_TYPE, ScrapedField.DESCRIPTION)
+                        ),
                     etag = fetchResult.etag,
                     lastModified = fetchResult.lastModified,
                     complete = calendar.complete

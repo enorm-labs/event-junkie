@@ -6,6 +6,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.ScrapedField
 import de.norm.events.scraper.VenueLimitations
 import org.jsoup.nodes.Document
 import org.springframework.stereotype.Component
@@ -29,6 +30,9 @@ import org.springframework.stereotype.Component
 class MehringhofWebsiteImporter(
     htmlFetcher: HtmlFetcher
 ) : AbstractTwoPageWebsiteImporter(htmlFetcher, MehringhofProgrammPageScraper()::scrape, MehringhofTicketPageScraper()::scrape) {
+    /** The programme gives whole hours ("20 Uhr"); the ticket page has the minute (#2505). */
+    override val detailPageOwns: Set<ScrapedField> = setOf(ScrapedField.IMAGE, ScrapedField.START_TIME)
+
     override val eventSource: EventSource = EventSource.MEHRINGHOF
 
     override fun nextOverviewPage(

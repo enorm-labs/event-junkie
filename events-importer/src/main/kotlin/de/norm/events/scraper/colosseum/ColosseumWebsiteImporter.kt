@@ -6,6 +6,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.ScrapedField
 import de.norm.events.scraper.VenueLimitations
 import org.springframework.stereotype.Component
 
@@ -42,7 +43,9 @@ class ColosseumWebsiteImporter(
     htmlFetcher: HtmlFetcher
 ) : AbstractTwoPageWebsiteImporter(htmlFetcher, ColosseumOverviewPageScraper()::scrape, ColosseumDetailPageScraper()::scrape) {
     override val eventSource: EventSource = EventSource.COLOSSEUM
-    override val detailPageOwnsImage: Boolean = false
+
+    /** The listing's time is often the doors and its price the checkout total with fees (#2505). */
+    override val detailPageOwns: Set<ScrapedField> = setOf(ScrapedField.START_TIME, ScrapedField.PRICES)
 
     /**
      * Keeps the listing's record whole and takes the two times from the event's own page.

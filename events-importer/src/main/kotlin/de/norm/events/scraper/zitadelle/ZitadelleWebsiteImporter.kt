@@ -3,6 +3,7 @@ package de.norm.events.scraper.zitadelle
 import de.norm.events.scraper.AbstractTwoPageWebsiteImporter
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
+import de.norm.events.scraper.ScrapedField
 import de.norm.events.scraper.VenueLimitations
 import org.springframework.stereotype.Component
 
@@ -23,6 +24,9 @@ import org.springframework.stereotype.Component
 class ZitadelleWebsiteImporter(
     htmlFetcher: HtmlFetcher
 ) : AbstractTwoPageWebsiteImporter(htmlFetcher, ZitadelleOverviewPageScraper()::scrape, ZitadelleDetailPageScraper()::scrape) {
+    /** The listing types every row a concert; the event page names the category (#2505). */
+    override val detailPageOwns: Set<ScrapedField> = setOf(ScrapedField.IMAGE, ScrapedField.EVENT_TYPE)
+
     override val eventSource: EventSource get() = EventSource.ZITADELLE
     override val listsWholeProgramme: Boolean = true
 }

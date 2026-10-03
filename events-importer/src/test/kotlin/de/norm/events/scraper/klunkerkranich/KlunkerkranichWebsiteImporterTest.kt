@@ -4,6 +4,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
+import de.norm.events.scraper.ScrapedField
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
@@ -154,7 +155,7 @@ class KlunkerkranichWebsiteImporterTest {
 
             result.events.map { it.detailUnavailable }.distinct() shouldBe listOf(true)
             // The card's thumbnail stands in for the poster, so a stored poster wins over it (#2465).
-            result.events.map { it.listingImageStandsIn }.distinct() shouldBe listOf(true)
+            result.events.map { it.detailPageOwns }.distinct() shouldBe listOf(setOf(ScrapedField.IMAGE))
         }
 
     @Test
@@ -168,7 +169,7 @@ class KlunkerkranichWebsiteImporterTest {
 
             night.description.shouldBeNull()
             night.detailUnavailable shouldBe true
-            night.listingImageStandsIn shouldBe false
+            night.detailPageOwns shouldBe emptySet()
         }
 
     @Test

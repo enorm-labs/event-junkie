@@ -5,6 +5,7 @@ import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.LimitedAspect
+import de.norm.events.scraper.ScrapedField
 import de.norm.events.scraper.VenueLimitations
 import org.springframework.stereotype.Component
 
@@ -27,6 +28,9 @@ import org.springframework.stereotype.Component
 class So36WebsiteImporter(
     htmlFetcher: HtmlFetcher
 ) : AbstractTwoPageWebsiteImporter(htmlFetcher, So36OverviewPageScraper()::scrape, So36DetailPageScraper()::scrape) {
+    /** Only the event page types a night, so a failed page keeps the stored type (#2505). */
+    override val detailPageOwns: Set<ScrapedField> = setOf(ScrapedField.IMAGE, ScrapedField.EVENT_TYPE)
+
     override val eventSource: EventSource = EventSource.SO36
     override val listsWholeProgramme: Boolean = true
 }
