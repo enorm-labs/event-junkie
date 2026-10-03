@@ -14,6 +14,7 @@ import de.norm.events.scraper.pageNumber
 import de.norm.events.scraper.querySeparator
 import de.norm.events.scraper.urbanspree.UrbanSpreeWebsiteImporter.Companion.MAX_PAGES
 import de.norm.events.scraper.walkListingPages
+import de.norm.events.scraper.withEventPageOrFlagged
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.springframework.stereotype.Component
@@ -100,18 +101,12 @@ class UrbanSpreeWebsiteImporter(
     }
 
     /**
-     * Fetches and parses the card's detail page, merging it over the card; any failure degrades to
-     * the card, which carries title, date, type, price and poster, flagged [ScrapedEvent.detailUnavailable].
+     * The card's detail page merged over the card. A page that yields nothing leaves the card, which
+     * carries title, date, type, price and poster, flagged [ScrapedEvent.detailUnavailable].
      */
-    @Suppress("TooGenericExceptionCaught") // Intentional: degrade to overview data if the detail page is unavailable
     private suspend fun enrichFromDetailPage(card: ScrapedEvent): ScrapedEvent =
-        try {
-            val document = htmlFetcher.fetchDocument(card.sourceUrl)
+        htmlFetcher.withEventPageOrFlagged(card) { document ->
             detailPageScraper.scrape(document, card.sourceUrl)?.let { merge(detail = it, card = card) }
-                ?: card.copy(detailUnavailable = true)
-        } catch (e: Exception) {
-            logger.warn(e) { "Failed to fetch Urban Spree detail page for '${card.title}' (${card.sourceUrl}), using listing data" }
-            card.copy(detailUnavailable = true)
         }
 
     /**

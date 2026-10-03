@@ -2,13 +2,12 @@ package de.norm.events.scraper.crackbellmer
 
 import de.norm.events.scraper.AbstractSinglePageWebsiteImporter
 import de.norm.events.scraper.AcceptedLimitation
-import de.norm.events.scraper.EventImporter
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.VenueLimitations
-import io.github.oshai.kotlinlogging.KotlinLogging
+import org.jsoup.nodes.Document
 import org.springframework.stereotype.Component
 import java.time.Clock
 
@@ -24,9 +23,9 @@ import java.time.Clock
  * and dropping the passed nights the listing carries.
  * 3. Each remaining event's `/events/<slug>` page adds its blurb ([CrackBellmerDetailPageScraper]).
  *
- * Step 3 is why this class implements [EventImporter] directly: the event page adds a
+ * Step 3 runs in [enrichFromEventPage] rather than through that merge: the event page adds a
  * description and nothing else, and spells its date without a year, so it is not the primary
- * source the base class's detail scraper must be. A failed or blurb-less event page is not fatal —
+ * source the two-page base's detail scraper must be. A failed or blurb-less event page is not fatal —
  * the night keeps its listing data, flagged `detailUnavailable` so the upsert keeps the stored
  * blurb (see #2425).
  *
@@ -36,32 +35,21 @@ import java.time.Clock
  */
 @Component
 class CrackBellmerWebsiteImporter(
-    private val htmlFetcher: HtmlFetcher,
+    htmlFetcher: HtmlFetcher,
     /** Clock for the listing scraper's past-event cutoff; override in tests. */
     clock: Clock = Clock.systemDefaultZone()
 ) : AbstractSinglePageWebsiteImporter(htmlFetcher, "the Crack Bellmer listing", CrackBellmerOverviewPageScraper(clock)::scrape) {
-    private val logger = KotlinLogging.logger {}
-
     override val eventSource: EventSource = EventSource.CRACK_BELLMER
     override val listsWholeProgramme: Boolean = true
-    override val fetchesBeyondEntryPage: Boolean = true
 
     private val detailPageScraper = CrackBellmerDetailPageScraper()
 
-    override suspend fun postProcess(events: List<ScrapedEvent>): List<ScrapedEvent> = events.map { addDescription(it) }
+    override val enrichFromEventPage: (ScrapedEvent, Document) -> ScrapedEvent? = ::addDescription
 
-    /** Fetches one event page for its blurb, degrading to the flagged listing row so a broken page costs nothing stored. */
-    @Suppress("TooGenericExceptionCaught") // Intentional: a broken event page must not fail the whole import
-    private suspend fun addDescription(event: ScrapedEvent): ScrapedEvent =
-        try {
-            detailPageScraper
-                .scrapeDescription(htmlFetcher.fetchDocument(event.sourceUrl))
-                ?.let { event.copy(description = it) }
-                ?: event.copy(detailUnavailable = true)
-        } catch (e: Exception) {
-            logger.warn(e) { "Failed to fetch event page for '${event.title}' (${event.sourceUrl}), keeping listing data" }
-            event.copy(detailUnavailable = true)
-        }
+    private fun addDescription(
+        event: ScrapedEvent,
+        document: Document
+    ): ScrapedEvent? = detailPageScraper.scrapeDescription(document)?.let { event.copy(description = it) }
 }
 
 val CRACK_BELLMER_LIMITATIONS =
