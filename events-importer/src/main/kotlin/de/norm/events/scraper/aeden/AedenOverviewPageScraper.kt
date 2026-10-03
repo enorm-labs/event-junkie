@@ -7,6 +7,7 @@ import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.imgSrcAt
 import de.norm.events.scraper.isNonArtistName
+import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.splitBackToBack
 import de.norm.events.scraper.textAt
@@ -58,14 +59,8 @@ class AedenOverviewPageScraper {
         val items = document.select("div.single-accordion")
         logger.info { "Found ${items.size} event block(s) on ÆDEN month page $baseUrl" }
 
-        @Suppress("TooGenericExceptionCaught") // Intentional: skip individual malformed nights without aborting the whole import.
-        return items.mapNotNull { item ->
-            try {
-                parseEvent(item, baseUrl)
-            } catch (e: Exception) {
-                logger.warn(e) { "Failed to parse ÆDEN event block, skipping" }
-                null
-            }
+        return items.mapSkippingFailures(logger, "ÆDEN event block") { item ->
+            parseEvent(item, baseUrl)
         }
     }
 

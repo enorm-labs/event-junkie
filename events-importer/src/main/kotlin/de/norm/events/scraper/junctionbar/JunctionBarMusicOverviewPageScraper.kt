@@ -6,6 +6,7 @@ import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.isNonArtistName
+import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.resolveUrl
 import de.norm.events.scraper.stripArtistSuffix
 import de.norm.events.slug.SlugGenerator
@@ -69,14 +70,8 @@ class JunctionBarMusicOverviewPageScraper {
         val groups = segmentIntoNights(container, ::isDateBar)
         logger.info { "Found ${groups.size} dated night(s) on Junction Bar page $baseUrl" }
 
-        @Suppress("TooGenericExceptionCaught") // Intentional: skip individual malformed nights without aborting the whole import.
-        return groups.mapNotNull { group ->
-            try {
-                parseNight(group, year, baseUrl)
-            } catch (e: Exception) {
-                logger.warn(e) { "Failed to parse Junction Bar night, skipping" }
-                null
-            }
+        return groups.mapSkippingFailures(logger, "Junction Bar night") { group ->
+            parseNight(group, year, baseUrl)
         }
     }
 

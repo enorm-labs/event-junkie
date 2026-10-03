@@ -4,6 +4,7 @@ import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.buildArtistsForEventType
+import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseClock
 import de.norm.events.scraper.textAt
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -34,14 +35,8 @@ class OraniaOverviewPageScraper {
         val items = document.select("div.calendarize div.event-list-item")
         logger.info { "Found ${items.size} Orania listing item(s) on $baseUrl" }
 
-        @Suppress("TooGenericExceptionCaught") // Intentional: skip one malformed item without aborting the import
-        return items.mapNotNull { item ->
-            try {
-                parseItem(item)
-            } catch (e: Exception) {
-                logger.warn(e) { "Failed to parse Orania listing item, skipping" }
-                null
-            }
+        return items.mapSkippingFailures(logger, "Orania listing item") { item ->
+            parseItem(item)
         }
     }
 

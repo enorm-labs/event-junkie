@@ -11,6 +11,7 @@ import de.norm.events.scraper.attrAt
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.euroAmounts
 import de.norm.events.scraper.inferUnmarkedTitleType
+import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseIsoDate
 import de.norm.events.scraper.parseLabelledPrices
 import de.norm.events.scraper.parseTime
@@ -71,15 +72,9 @@ class PankeProgrammePageScraper {
     ): List<ScrapedEvent> {
         val articles = document.select("$UPCOMING_MODULE article[id]")
 
-        @Suppress("TooGenericExceptionCaught") // Intentional: skip individual malformed articles without aborting the import
         val events =
-            articles.mapNotNull { article ->
-                try {
-                    parseArticle(article, sourceUrl)
-                } catch (e: Exception) {
-                    logger.warn(e) { "Failed to parse Panke event article, skipping" }
-                    null
-                }
+            articles.mapSkippingFailures(logger, "Panke event article") { article ->
+                parseArticle(article, sourceUrl)
             }
         logger.info { "Found ${events.size} upcoming event(s) on the Panke programme page" }
         return events

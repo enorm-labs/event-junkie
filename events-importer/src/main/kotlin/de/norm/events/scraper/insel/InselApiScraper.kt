@@ -19,6 +19,7 @@ import de.norm.events.scraper.inferConcertVenueType
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.labelledClock
 import de.norm.events.scraper.labelledClockPattern
+import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.slug.SlugGenerator
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.Jsoup
@@ -102,15 +103,9 @@ class InselApiScraper(
         val nodes = eventNodes(json) ?: return null
         logger.info { "Found ${nodes.size()} event(s) in the Insel static-query artefact" }
 
-        @Suppress("TooGenericExceptionCaught") // Intentional: skip individual malformed events without aborting the import.
         val events =
-            nodes.mapNotNull { edge ->
-                try {
-                    parseEvent(jsonMapper.treeToValue(edge.path("node"), InselEventNode::class.java), sourceUrl)
-                } catch (e: Exception) {
-                    logger.warn(e) { "Failed to parse Insel event, skipping" }
-                    null
-                }
+            nodes.mapSkippingFailures(logger, "Insel event") { edge ->
+                parseEvent(jsonMapper.treeToValue(edge.path("node"), InselEventNode::class.java), sourceUrl)
             }
 
         return events.dropPastEvents(clock) { dropped ->

@@ -7,6 +7,7 @@ import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
 import de.norm.events.scraper.WixEventsWarmupData
 import de.norm.events.scraper.buildArtistList
+import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseWixSchedule
 import de.norm.events.scraper.resolveUrl
 import de.norm.events.scraper.stringOrNull
@@ -47,14 +48,8 @@ class LogeOverviewPageScraper {
         }
         logger.info { "Found ${events.size()} event(s) in Loge Wix warmup payload" }
 
-        @Suppress("TooGenericExceptionCaught") // Intentional: skip individual malformed events without aborting the import
-        return events.mapNotNull { node ->
-            try {
-                parseEvent(node, baseUrl)
-            } catch (e: Exception) {
-                logger.warn(e) { "Failed to parse Loge overview event, skipping" }
-                null
-            }
+        return events.mapSkippingFailures(logger, "Loge overview event") { node ->
+            parseEvent(node, baseUrl)
         }
     }
 

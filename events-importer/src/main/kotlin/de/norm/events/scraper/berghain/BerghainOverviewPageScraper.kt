@@ -8,6 +8,7 @@ import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.dropPastEvents
 import de.norm.events.scraper.labelledClock
+import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseGermanDate
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.resolveUrl
@@ -58,15 +59,9 @@ class BerghainOverviewPageScraper(
         val blocks = document.select(EVENT_LINK_SELECTOR)
         logger.info { "Found ${blocks.size} event block(s) on Berghain overview page" }
 
-        @Suppress("TooGenericExceptionCaught") // Intentional: skip individual malformed events without aborting the import
         val events =
-            blocks.mapNotNull { block ->
-                try {
-                    parseBlock(block, sourceUrl)
-                } catch (e: Exception) {
-                    logger.warn(e) { "Failed to parse Berghain event block, skipping" }
-                    null
-                }
+            blocks.mapSkippingFailures(logger, "Berghain event block") { block ->
+                parseBlock(block, sourceUrl)
             }
 
         return events.dropPastEvents(clock) { dropped ->

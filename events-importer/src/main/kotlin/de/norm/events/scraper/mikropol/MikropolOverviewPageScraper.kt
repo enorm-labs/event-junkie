@@ -8,6 +8,7 @@ import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.inferConcertVenueType
+import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseEventStatus
 import de.norm.events.scraper.parseGermanDate
 import de.norm.events.scraper.parseIsoDate
@@ -54,14 +55,8 @@ class MikropolOverviewPageScraper {
         val cards = document.select("a.event[href]")
         logger.info { "Found ${cards.size} event card(s) on Mikropol overview" }
 
-        @Suppress("TooGenericExceptionCaught") // Intentional: skip individual malformed cards without aborting the whole import
-        return cards.mapNotNull { card ->
-            try {
-                parseCard(card, baseUrl)
-            } catch (e: Exception) {
-                logger.warn(e) { "Failed to parse event card, skipping" }
-                null
-            }
+        return cards.mapSkippingFailures(logger, "event card") { card ->
+            parseCard(card, baseUrl)
         }
     }
 

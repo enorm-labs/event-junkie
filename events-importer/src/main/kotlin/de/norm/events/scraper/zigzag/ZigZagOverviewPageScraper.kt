@@ -6,6 +6,7 @@ import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.attrAt
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.extractEventSlug
+import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.textAt
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
@@ -41,15 +42,9 @@ class ZigZagOverviewPageScraper(
         logger.info { "Found ${items.size} event item(s) on the Zig Zag programme" }
         val today = LocalDate.now(clock)
 
-        @Suppress("TooGenericExceptionCaught") // Intentional: skip one malformed item without aborting the import
         return items
-            .mapNotNull { item ->
-                try {
-                    parseItem(item, sourceUrl)
-                } catch (e: Exception) {
-                    logger.warn(e) { "Failed to parse a Zig Zag event item, skipping" }
-                    null
-                }
+            .mapSkippingFailures(logger, "a Zig Zag event item") { item ->
+                parseItem(item, sourceUrl)
             }.filterNot { it.eventDate.isBefore(today) }
             .distinctBy { it.sourceId }
     }

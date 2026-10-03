@@ -8,6 +8,7 @@ import de.norm.events.scraper.dateCheckedAgainstWeekday
 import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.inferUnmarkedTitleType
 import de.norm.events.scraper.mapEventType
+import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseEventStatus
 import de.norm.events.scraper.parseGermanWeekday
 import de.norm.events.slug.SlugGenerator
@@ -58,14 +59,8 @@ class MonarchOverviewPageScraper {
         val titleCells = document.select("td#td1")
         logger.info { "Found ${titleCells.size} event block(s) on Monarch programme" }
 
-        @Suppress("TooGenericExceptionCaught") // Intentional: skip individual malformed blocks without aborting the whole import
-        return titleCells.mapNotNull { cell ->
-            try {
-                parseEvent(cell, baseUrl)
-            } catch (e: Exception) {
-                logger.warn(e) { "Failed to parse Monarch event, skipping" }
-                null
-            }
+        return titleCells.mapSkippingFailures(logger, "Monarch event") { cell ->
+            parseEvent(cell, baseUrl)
         }
     }
 

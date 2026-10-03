@@ -5,6 +5,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.headlinersFromTitle
+import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.textAt
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -40,22 +41,10 @@ class ScheinbarProgrammPageScraper {
                 logger.warn { "Scheinbar month heading '${heading.text()}' has no readable programme, skipping" }
                 emptyList()
             } else {
-                list.select("> li").mapNotNull { item -> parseItemSafely(item, month) }
+                list.select("> li").mapSkippingFailures(logger, "Scheinbar evening") { item -> parseItem(item, month) }
             }
         }
     }
-
-    @Suppress("TooGenericExceptionCaught") // Intentional: one malformed evening must not abort the page
-    private fun parseItemSafely(
-        item: Element,
-        month: Pair<Month, Int>
-    ): ScrapedEvent? =
-        try {
-            parseItem(item, month)
-        } catch (e: Exception) {
-            logger.warn(e) { "Failed to parse Scheinbar evening, skipping" }
-            null
-        }
 
     @Suppress("ReturnCount") // Guard clauses for the required fields are clearer than nesting
     private fun parseItem(

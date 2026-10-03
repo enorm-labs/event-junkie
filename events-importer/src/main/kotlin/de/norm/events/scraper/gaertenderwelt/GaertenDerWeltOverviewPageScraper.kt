@@ -6,6 +6,7 @@ import de.norm.events.scraper.attrAt
 import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.inferUnmarkedTitleType
 import de.norm.events.scraper.mapEventType
+import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.resolveUrl
 import de.norm.events.scraper.textAt
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -49,15 +50,9 @@ class GaertenDerWeltOverviewPageScraper {
         document: Document,
         baseUrl: String
     ): List<ScrapedEvent> {
-        @Suppress("TooGenericExceptionCaught") // Intentional: skip individual malformed rows without aborting the page
         val events =
-            document.select(EVENT_ROW_SELECTOR).mapNotNull { row ->
-                try {
-                    parseRow(row, baseUrl)
-                } catch (e: Exception) {
-                    logger.warn(e) { "Failed to parse Gärten der Welt listing row on $baseUrl, skipping" }
-                    null
-                }
+            document.select(EVENT_ROW_SELECTOR).mapSkippingFailures(logger, "Gärten der Welt listing row on $baseUrl") { row ->
+                parseRow(row, baseUrl)
             }
         logger.info { "Found ${events.size} in-scope event row(s) on Gärten der Welt listing $baseUrl" }
         return events

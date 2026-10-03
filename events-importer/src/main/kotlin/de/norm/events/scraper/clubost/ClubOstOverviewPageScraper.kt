@@ -8,6 +8,7 @@ import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.clubost.ClubOstOverviewPageScraper.Companion.EVENT_INFO
 import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.imgSrcAt
+import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.resolveUrl
 import de.norm.events.scraper.textAt
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -50,14 +51,8 @@ class ClubOstOverviewPageScraper {
         val cards = document.select(EVENT_CARD)
         logger.info { "Found ${cards.size} event card(s) on the Club OST homepage" }
 
-        @Suppress("TooGenericExceptionCaught") // Intentional: skip a single malformed card without aborting the import
-        return cards.mapNotNull { card ->
-            try {
-                parseCard(card, sourceUrl)
-            } catch (e: Exception) {
-                logger.warn(e) { "Failed to parse Club OST event card, skipping" }
-                null
-            }
+        return cards.mapSkippingFailures(logger, "Club OST event card") { card ->
+            parseCard(card, sourceUrl)
         }
     }
 

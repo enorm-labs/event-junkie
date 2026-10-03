@@ -11,6 +11,7 @@ import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.imgSrcAt
 import de.norm.events.scraper.inferUnmarkedTitleType
 import de.norm.events.scraper.inferYearForWeekday
+import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.textAt
 import de.norm.events.slug.SlugGenerator
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -87,15 +88,9 @@ class MaayaOverviewPageScraper(
         val cards = section.select(EVENT_CARD)
         logger.info { "Found ${cards.size} programme card(s) in the MAAYA NEXT DATES section" }
 
-        @Suppress("TooGenericExceptionCaught") // Intentional: skip individual malformed cards without aborting the import
         val events =
-            cards.mapNotNull { card ->
-                try {
-                    parseCard(card, baseUrl)
-                } catch (e: Exception) {
-                    logger.warn(e) { "Failed to parse MAAYA programme card, skipping" }
-                    null
-                }
+            cards.mapSkippingFailures(logger, "MAAYA programme card") { card ->
+                parseCard(card, baseUrl)
             }
         // A clock reading marks a schedule line; the area blurbs below the programme carry none.
         val scheduled = cards.count { TIME_PATTERN.containsMatchIn(it.textAt(SCHEDULE).orEmpty()) }

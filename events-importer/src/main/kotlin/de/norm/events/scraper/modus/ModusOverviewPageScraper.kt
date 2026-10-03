@@ -8,6 +8,7 @@ import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.imgSrcAt
+import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseEventStatus
 import de.norm.events.scraper.parseGermanDate
 import de.norm.events.scraper.resolveUrl
@@ -46,14 +47,8 @@ class ModusOverviewPageScraper {
         val tiles = document.select(".event-tiles .event-item")
         logger.info { "Found ${tiles.size} event tile(s) on Modus overview" }
 
-        @Suppress("TooGenericExceptionCaught") // Intentional: skip individual malformed tiles without aborting the import
-        return tiles.mapNotNull { tile ->
-            try {
-                parseTile(tile, baseUrl)
-            } catch (e: Exception) {
-                logger.warn(e) { "Failed to parse Modus event tile, skipping" }
-                null
-            }
+        return tiles.mapSkippingFailures(logger, "Modus event tile") { tile ->
+            parseTile(tile, baseUrl)
         }
     }
 

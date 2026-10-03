@@ -12,6 +12,7 @@ import de.norm.events.scraper.hostedActsFromTitle
 import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.inferYearForWeekday
 import de.norm.events.scraper.isNonArtistName
+import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseEnglishWeekdayAbbreviation
 import de.norm.events.scraper.parseGermanWeekdayAbbreviation
 import de.norm.events.scraper.splitSegmentOnConjunctions
@@ -68,14 +69,8 @@ class RenateOverviewPageScraper(
         val rows = document.select(".prog-row:has(.prog-date)")
         logger.info { "Found ${rows.size} event row(s) on Renate homepage" }
 
-        @Suppress("TooGenericExceptionCaught") // Intentional: skip individual malformed rows without aborting the whole import
-        return rows.mapNotNull { row ->
-            try {
-                parseRow(row, baseUrl)
-            } catch (e: Exception) {
-                logger.warn(e) { "Failed to parse Renate row, skipping" }
-                null
-            }
+        return rows.mapSkippingFailures(logger, "Renate row") { row ->
+            parseRow(row, baseUrl)
         }
     }
 

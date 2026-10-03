@@ -6,6 +6,7 @@ import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.dateCheckedAgainstWeekday
 import de.norm.events.scraper.imgSrcAt
+import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseGermanMonthAbbreviation
 import de.norm.events.scraper.parseGermanWeekday
 import de.norm.events.scraper.parseGermanWeekdayAbbreviation
@@ -55,15 +56,9 @@ class HeidegluehenMonthPageScraper {
         // right-aligned), and only the artwork is a centred photo within `#pagecontent`.
         val monthImageUrl = document.imgSrcAt(MONTH_ARTWORK)
 
-        @Suppress("TooGenericExceptionCaught") // Intentional: skip individual malformed paragraphs without aborting the import
         val events =
-            document.select(".fl-rich-text p").mapNotNull { paragraph ->
-                try {
-                    parseParagraph(paragraph, sourceUrl, monthImageUrl)
-                } catch (e: Exception) {
-                    logger.warn(e) { "Failed to parse Heideglühen paragraph, skipping" }
-                    null
-                }
+            document.select(".fl-rich-text p").mapSkippingFailures(logger, "Heideglühen paragraph") { paragraph ->
+                parseParagraph(paragraph, sourceUrl, monthImageUrl)
             }
         logger.info { "Found ${events.size} event(s) on the Heideglühen month page" }
         return events

@@ -5,6 +5,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.WHITESPACE
 import de.norm.events.scraper.buildArtistsForEventType
+import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.textAt
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -35,14 +36,8 @@ class DownstairsTicketListScraper {
         val items = document.select("div[id^=tickets_ticket_]")
         logger.info { "Found ${items.size} Downstairs ticket(s) on $baseUrl" }
 
-        @Suppress("TooGenericExceptionCaught") // Intentional: one malformed row must not abort the page
-        return items.mapNotNull { item ->
-            try {
-                parseItem(item)
-            } catch (e: Exception) {
-                logger.warn(e) { "Failed to parse Downstairs ticket, skipping" }
-                null
-            }
+        return items.mapSkippingFailures(logger, "Downstairs ticket") { item ->
+            parseItem(item)
         }
     }
 

@@ -11,6 +11,7 @@ import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.clubdervisionaere.ClubDerVisionaereProgrammePageScraper.Companion.FLOOR_LABEL_PATTERN
 import de.norm.events.scraper.inferYearForWeekday
 import de.norm.events.scraper.isNonArtistName
+import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseGermanWeekdayAbbreviation
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.splitSegmentOnConjunctions
@@ -75,17 +76,11 @@ class ClubDerVisionaereProgrammePageScraper(
         val blocks = document.select(EVENT_BLOCK_SELECTOR)
         logger.info { "Found ${blocks.size} programme block(s) on the Club der Visionäre page" }
 
-        @Suppress("TooGenericExceptionCaught") // Intentional: skip individual malformed blocks without aborting the import.
         val events =
             withCarriedDates(blocks)
                 .filter { (block, _) -> roomOf(block) == room }
-                .mapNotNull { (block, date) ->
-                    try {
-                        parseBlock(block, date, sourceUrl, room)
-                    } catch (e: Exception) {
-                        logger.warn(e) { "Failed to parse Club der Visionäre block ${block.id()}, skipping" }
-                        null
-                    }
+                .mapSkippingFailures(logger, { (block, _) -> "Club der Visionäre block ${block.id()}" }) { (block, date) ->
+                    parseBlock(block, date, sourceUrl, room)
                 }
 
         logger.info { "Parsed ${events.size} event(s) for ${room.eventSource.name}" }

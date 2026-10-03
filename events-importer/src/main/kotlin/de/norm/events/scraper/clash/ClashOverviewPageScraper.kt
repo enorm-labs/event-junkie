@@ -14,6 +14,7 @@ import de.norm.events.scraper.imgSrcAt
 import de.norm.events.scraper.inferConcertVenueType
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.labelledClock
+import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseGermanShortDate
 import de.norm.events.scraper.parseLabelledPrices
 import de.norm.events.scraper.resolveUrl
@@ -64,14 +65,8 @@ class ClashOverviewPageScraper {
         val items = document.select(".gigs-container .item")
         logger.info { "Found ${items.size} event item(s) on Clash homepage" }
 
-        @Suppress("TooGenericExceptionCaught") // Intentional: skip individual malformed events without aborting the entire import
-        return items.mapNotNull { item ->
-            try {
-                parseItem(item, baseUrl)
-            } catch (e: Exception) {
-                logger.warn(e) { "Failed to parse Clash event item, skipping" }
-                null
-            }
+        return items.mapSkippingFailures(logger, "Clash event item") { item ->
+            parseItem(item, baseUrl)
         }
     }
 

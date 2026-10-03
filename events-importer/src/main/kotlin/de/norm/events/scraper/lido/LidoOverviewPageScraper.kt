@@ -7,6 +7,7 @@ import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.mapEventType
+import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseEventStatus
 import de.norm.events.scraper.parseIsoDate
 import de.norm.events.scraper.parseRealDate
@@ -61,15 +62,9 @@ class LidoOverviewPageScraper {
         val articles = document.select("article.event-ticket")
         logger.info { "Found ${articles.size} event article(s) on overview page" }
 
-        @Suppress("TooGenericExceptionCaught") // Intentional: skip individual malformed events without aborting the entire import
         val listed =
-            articles.mapNotNull { article ->
-                try {
-                    parseArticle(article, baseUrl)
-                } catch (e: Exception) {
-                    logger.warn(e) { "Failed to parse event article, skipping" }
-                    null
-                }
+            articles.mapSkippingFailures(logger, "event article") { article ->
+                parseArticle(article, baseUrl)
             }
         val listedUrls = listed.mapTo(mutableSetOf()) { it.sourceUrl }
         return listed + parseTeaser(document, baseUrl).filterNot { it.sourceUrl in listedUrls }

@@ -4,6 +4,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.jsonLdEvents
+import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.queryParameter
 import de.norm.events.scraper.schemaDate
 import de.norm.events.scraper.schemaImageUrl
@@ -52,14 +53,8 @@ class BarJederVernunftOverviewPageScraper {
         val cards = document.select(CARD_SELECTOR)
         logger.info { "Found ${cards.size} calendar card(s) on page" }
 
-        @Suppress("TooGenericExceptionCaught") // Intentional: skip a single malformed card without aborting the import
-        return cards.mapNotNull { card ->
-            try {
-                parseCard(card)
-            } catch (e: Exception) {
-                logger.warn(e) { "Failed to parse Bar jeder Vernunft calendar card, skipping" }
-                null
-            }
+        return cards.mapSkippingFailures(logger, "Bar jeder Vernunft calendar card") { card ->
+            parseCard(card)
         }
     }
 

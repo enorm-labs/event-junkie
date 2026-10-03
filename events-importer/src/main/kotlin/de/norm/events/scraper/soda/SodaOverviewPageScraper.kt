@@ -6,6 +6,7 @@ import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.attrAt
 import de.norm.events.scraper.imgSrcAt
 import de.norm.events.scraper.inferYearForWeekday
+import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseGermanMonthAbbreviation
 import de.norm.events.scraper.parseGermanWeekday
 import de.norm.events.scraper.resolveUrl
@@ -55,14 +56,8 @@ class SodaOverviewPageScraper(
         val snippets = document.select(".event-snippet")
         logger.info { "Found ${snippets.size} event snippet(s) on overview page" }
 
-        @Suppress("TooGenericExceptionCaught") // Intentional: skip individual malformed events without aborting the entire import
-        return snippets.mapNotNull { snippet ->
-            try {
-                parseSnippet(snippet, baseUrl)
-            } catch (e: Exception) {
-                logger.warn(e) { "Failed to parse event snippet, skipping" }
-                null
-            }
+        return snippets.mapSkippingFailures(logger, "event snippet") { snippet ->
+            parseSnippet(snippet, baseUrl)
         }
     }
 

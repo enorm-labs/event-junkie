@@ -6,6 +6,7 @@ import de.norm.events.scraper.dropPastEvents
 import de.norm.events.scraper.hasVisibleWebflowFlag
 import de.norm.events.scraper.headlinersFromTitle
 import de.norm.events.scraper.mapEventType
+import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.resolveUrl
 import de.norm.events.scraper.textAt
@@ -48,15 +49,9 @@ class CassiopeiaOverviewPageScraper(
         val eventItems = document.select(".event-item")
         logger.info { "Found ${eventItems.size} event item(s) on page" }
 
-        @Suppress("TooGenericExceptionCaught") // Intentional: skip individual malformed events without aborting the entire import
         val events =
-            eventItems.mapNotNull { item ->
-                try {
-                    parseEventItem(item, sourceUrl)
-                } catch (e: Exception) {
-                    logger.warn(e) { "Failed to parse event item, skipping" }
-                    null
-                }
+            eventItems.mapSkippingFailures(logger, "event item") { item ->
+                parseEventItem(item, sourceUrl)
             }
 
         return deduplicateEvents(events).dropPastEvents(clock) { dropped ->

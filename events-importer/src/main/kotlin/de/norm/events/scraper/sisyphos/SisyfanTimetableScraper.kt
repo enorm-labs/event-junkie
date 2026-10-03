@@ -5,6 +5,7 @@ import de.norm.events.scraper.BERLIN
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.mapSkippingFailures
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
@@ -31,16 +32,10 @@ class SisyfanTimetableScraper {
 
     /** Every weekend on [document] as an event, with [ScrapedEvent.lineupSourceUrl] set for the credit. */
     fun scrape(document: Document): List<ScrapedEvent> =
-        document.select("h2").mapNotNull { heading ->
-            val match = HEADING_PATTERN.matchEntire(heading.text().trim()) ?: return@mapNotNull null
-            val block = heading.closest("div.mb-8") ?: return@mapNotNull null
-            @Suppress("TooGenericExceptionCaught") // One malformed weekend must not abort the import
-            try {
-                parseWeekend(block, match)
-            } catch (e: Exception) {
-                logger.warn(e) { "Failed to parse sisy.fan weekend '${heading.text()}', skipping" }
-                null
-            }
+        document.select("h2").mapSkippingFailures(logger, { heading -> "sisy.fan weekend '${heading.text()}'" }) { heading ->
+            val match = HEADING_PATTERN.matchEntire(heading.text().trim()) ?: return@mapSkippingFailures null
+            val block = heading.closest("div.mb-8") ?: return@mapSkippingFailures null
+            parseWeekend(block, match)
         }
 
     private fun parseWeekend(

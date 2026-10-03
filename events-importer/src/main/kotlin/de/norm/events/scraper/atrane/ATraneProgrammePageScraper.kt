@@ -7,6 +7,7 @@ import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.htmlParagraphText
 import de.norm.events.scraper.jsonLdEvents
+import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parsePriceValue
 import de.norm.events.scraper.schemaImageUrl
 import de.norm.events.scraper.schemaName
@@ -36,15 +37,9 @@ class ATraneProgrammePageScraper {
         val cards = document.select(".eventon_list_event[data-event_id]")
         logger.info { "Found ${cards.size} event card(s) on the A-Trane programme" }
 
-        @Suppress("TooGenericExceptionCaught") // Intentional: skip one malformed card without aborting the import
         return cards
-            .mapNotNull { card ->
-                try {
-                    parseCard(card)
-                } catch (e: Exception) {
-                    logger.warn(e) { "Failed to parse an A-Trane event card, skipping" }
-                    null
-                }
+            .mapSkippingFailures(logger, "an A-Trane event card") { card ->
+                parseCard(card)
             }.distinctBy { it.sourceId }
     }
 

@@ -34,7 +34,6 @@ data class TecPage(
  * not parse is an empty last page, so the walk keeps the pages it already read. An event that
  * fails to map is skipped with a warning.
  */
-@Suppress("TooGenericExceptionCaught") // One malformed event must not cost the page
 fun parseTecPage(
     json: String,
     source: EventSource,
@@ -48,13 +47,8 @@ fun parseTecPage(
             return TecPage(events = emptyList(), nextPageUrl = null)
         }
     val events =
-        root.path("events").tecNodes().mapNotNull { event ->
-            try {
-                toEvent(event)
-            } catch (e: Exception) {
-                logger.warn(e) { "Failed to parse ${source.name} event, skipping" }
-                null
-            }
+        root.path("events").tecNodes().mapSkippingFailures(logger, "${source.name} event") { event ->
+            toEvent(event)
         }
     return TecPage(events, root.stringOrNull("next_rest_url"))
 }

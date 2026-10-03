@@ -10,6 +10,7 @@ import de.norm.events.scraper.attrAt
 import de.norm.events.scraper.endOn
 import de.norm.events.scraper.inferYearForWeekday
 import de.norm.events.scraper.isNonArtistName
+import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseGermanWeekdayAbbreviation
 import de.norm.events.scraper.resolveUrl
 import de.norm.events.scraper.splitSupportActs
@@ -65,15 +66,9 @@ class DunckerOverviewPageScraper(
         val cells = document.select("table.bodytable td.tableevent")
         logger.info { "Found ${cells.size} programme row(s) on Duncker Club page" }
 
-        @Suppress("TooGenericExceptionCaught") // Intentional: skip individual malformed rows without aborting the whole import.
         val parsed =
-            cells.mapNotNull { cell ->
-                try {
-                    parseRow(cell, baseUrl)
-                } catch (e: Exception) {
-                    logger.warn(e) { "Failed to parse Duncker event row, skipping" }
-                    null
-                }
+            cells.mapSkippingFailures(logger, "Duncker event row") { cell ->
+                parseRow(cell, baseUrl)
             }
 
         return parsed

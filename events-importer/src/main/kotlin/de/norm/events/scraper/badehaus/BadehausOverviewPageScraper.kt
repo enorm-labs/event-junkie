@@ -10,6 +10,7 @@ import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.dateCheckedAgainstWeekday
 import de.norm.events.scraper.inferConcertVenueType
+import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseGermanDate
 import de.norm.events.scraper.parseGermanWeekdayAbbreviation
 import de.norm.events.scraper.parseTime
@@ -58,14 +59,8 @@ class BadehausOverviewPageScraper {
         val cards = document.select("div:has(> div.eventlistimg)")
         logger.info { "Found ${cards.size} event card(s) on Badehaus listing" }
 
-        @Suppress("TooGenericExceptionCaught") // Intentional: skip individual malformed cards without aborting the whole import
-        return cards.mapNotNull { card ->
-            try {
-                parseCard(card, baseUrl)
-            } catch (e: Exception) {
-                logger.warn(e) { "Failed to parse event card, skipping" }
-                null
-            }
+        return cards.mapSkippingFailures(logger, "event card") { card ->
+            parseCard(card, baseUrl)
         }
     }
 

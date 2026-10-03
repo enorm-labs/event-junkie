@@ -14,6 +14,7 @@ import de.norm.events.scraper.elfsight.elfsightJsonMapper
 import de.norm.events.scraper.elfsight.elfsightOccurrenceDates
 import de.norm.events.scraper.elfsight.parseElfsightDate
 import de.norm.events.scraper.elfsight.parseElfsightEventNodes
+import de.norm.events.scraper.flatMapSkippingFailures
 import de.norm.events.scraper.headlinersFromTitle
 import de.norm.events.scraper.htmlParagraphText
 import de.norm.events.scraper.humboldthain.HumboldthainApiScraper.Companion.TICKET_URL_PATTERN
@@ -74,15 +75,9 @@ class HumboldthainApiScraper(
         val eventNodes = parseElfsightEventNodes(jsonMapper, json, VENUE_NAME) ?: return emptyList()
         logger.info { "Found ${eventNodes.size} calendar entry/entries in Humboldthain widget response" }
 
-        @Suppress("TooGenericExceptionCaught") // Intentional: skip individual malformed events without aborting the import.
         val parsed =
-            eventNodes.flatMap { node ->
-                try {
-                    parseEvent(jsonMapper.treeToValue(node, ElfsightEventNode::class.java))
-                } catch (e: Exception) {
-                    logger.warn(e) { "Failed to parse Humboldthain event, skipping" }
-                    emptyList()
-                }
+            eventNodes.flatMapSkippingFailures(logger, "Humboldthain event") { node ->
+                parseEvent(jsonMapper.treeToValue(node, ElfsightEventNode::class.java))
             }
 
         // A series whose horizon overlaps a one-off entry of the same id would collide on sourceId.

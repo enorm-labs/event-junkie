@@ -9,6 +9,7 @@ import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.inferConcertVenueType
+import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseGermanDate
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.resolveUrl
@@ -51,14 +52,8 @@ class QuasimodoOverviewPageScraper {
         val items = document.select("ul.events li:has(a.event-item[href])")
         logger.info { "Found ${items.size} event card(s) on Quasimodo overview" }
 
-        @Suppress("TooGenericExceptionCaught") // Intentional: skip individual malformed cards without aborting the import
-        return items.mapNotNull { item ->
-            try {
-                parseCard(item, baseUrl)
-            } catch (e: Exception) {
-                logger.warn(e) { "Failed to parse Quasimodo event card, skipping" }
-                null
-            }
+        return items.mapSkippingFailures(logger, "Quasimodo event card") { item ->
+            parseCard(item, baseUrl)
         }
     }
 

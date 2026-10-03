@@ -6,6 +6,7 @@ import de.norm.events.scraper.attrAt
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.hrefAt
+import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.resolveUrl
 import de.norm.events.scraper.textAt
@@ -49,7 +50,6 @@ class UraniaCalendarPageScraper {
         document: Document,
         baseUrl: String
     ): List<ScrapedEvent> {
-        @Suppress("TooGenericExceptionCaught") // Intentional: skip individual malformed items without aborting the import
         val events =
             document.select("div.c-event-calendar_day[data-day]").flatMap { day ->
                 val date = parseDayToken(day.attr("data-day"))
@@ -57,13 +57,8 @@ class UraniaCalendarPageScraper {
                     logger.warn { "Urania day token '${day.attr("data-day")}' is not a date, skipping its events" }
                     emptyList()
                 } else {
-                    day.select("div.c-event-calendar-item").mapNotNull { item ->
-                        try {
-                            parseItem(item, date, baseUrl)
-                        } catch (e: Exception) {
-                            logger.warn(e) { "Failed to parse Urania calendar item, skipping" }
-                            null
-                        }
+                    day.select("div.c-event-calendar-item").mapSkippingFailures(logger, "Urania calendar item") { item ->
+                        parseItem(item, date, baseUrl)
                     }
                 }
             }

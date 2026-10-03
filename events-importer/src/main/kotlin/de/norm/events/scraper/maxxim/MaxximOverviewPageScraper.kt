@@ -6,6 +6,7 @@ import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.WIX_REGISTRATION_TICKETS
 import de.norm.events.scraper.WixEventsWarmupData
 import de.norm.events.scraper.cleanEventTitle
+import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.mapWixEventStatus
 import de.norm.events.scraper.parseWixSchedule
 import de.norm.events.scraper.parseWixTicketPrice
@@ -44,14 +45,8 @@ class MaxximOverviewPageScraper {
         val events = WixEventsWarmupData.events(document, EventSource.MAXXIM) ?: return emptyList()
         logger.info { "Found ${events.size()} event(s) in MAXXIM Wix warmup payload" }
 
-        @Suppress("TooGenericExceptionCaught") // Intentional: skip individual malformed events without aborting the import
-        return events.mapNotNull { node ->
-            try {
-                parseEvent(node, baseUrl)
-            } catch (e: Exception) {
-                logger.warn(e) { "Failed to parse MAXXIM event, skipping" }
-                null
-            }
+        return events.mapSkippingFailures(logger, "MAXXIM event") { node ->
+            parseEvent(node, baseUrl)
         }
     }
 

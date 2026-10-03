@@ -9,6 +9,7 @@ import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.inferConcertVenueType
 import de.norm.events.scraper.inferUnmarkedTitleType
 import de.norm.events.scraper.isNonArtistName
+import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseEventStatus
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.resolveUrl
@@ -66,14 +67,8 @@ class SupamollyOverviewPageScraper {
         val rows = document.select("tr.event[id]")
         logger.info { "Found ${rows.size} event row(s) on the Supamolly programme page" }
 
-        @Suppress("TooGenericExceptionCaught") // Intentional: skip individual malformed rows without aborting the import
-        return rows.mapNotNull { row ->
-            try {
-                parseEventRow(row, baseUrl)
-            } catch (e: Exception) {
-                logger.warn(e) { "Failed to parse Supamolly event row, skipping" }
-                null
-            }
+        return rows.mapSkippingFailures(logger, "Supamolly event row") { row ->
+            parseEventRow(row, baseUrl)
         }
     }
 

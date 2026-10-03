@@ -9,6 +9,7 @@ import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.decodeHtmlEntities
 import de.norm.events.scraper.isNonArtistName
+import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.splitSupportActs
 import de.norm.events.scraper.stringOrNull
 import de.norm.events.slug.SlugGenerator
@@ -58,17 +59,11 @@ class QuatschCalendarScraper {
     }
 
     /** The shows in one day's answer. A day without one answers with an object, which yields none. */
-    @Suppress("TooGenericExceptionCaught") // One malformed show must not cost the day
     fun scrapeDay(json: String): List<ScrapedEvent> =
         readTree(json)
             ?.takeIf { it.isArray }
-            ?.mapNotNull { show ->
-                try {
-                    toScrapedEvent(show)
-                } catch (e: Exception) {
-                    logger.warn(e) { "Failed to parse a Quatsch Comedy Club show, skipping" }
-                    null
-                }
+            ?.mapSkippingFailures(logger, "a Quatsch Comedy Club show") { show ->
+                toScrapedEvent(show)
             }.orEmpty()
 
     @Suppress("ReturnCount") // Guard clauses for the required fields are clearer than nesting

@@ -10,6 +10,7 @@ import de.norm.events.scraper.hasSoldOutMarker
 import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.mapEventType
+import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseIsoDate
 import de.norm.events.scraper.resolveUrl
 import de.norm.events.scraper.splitSegmentOnConjunctions
@@ -50,14 +51,8 @@ class SchokoladenOverviewPageScraper {
         val eventBlocks = document.select("div.event")
         logger.info { "Found ${eventBlocks.size} event block(s) on page" }
 
-        @Suppress("TooGenericExceptionCaught") // Intentional: skip individual malformed events without aborting the whole import
-        return eventBlocks.mapNotNull { block ->
-            try {
-                parseEvent(block, baseUrl)
-            } catch (e: Exception) {
-                logger.warn(e) { "Failed to parse Schokoladen event block, skipping" }
-                null
-            }
+        return eventBlocks.mapSkippingFailures(logger, "Schokoladen event block") { block ->
+            parseEvent(block, baseUrl)
         }
     }
 

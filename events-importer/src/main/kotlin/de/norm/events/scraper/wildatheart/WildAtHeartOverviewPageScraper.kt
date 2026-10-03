@@ -10,6 +10,7 @@ import de.norm.events.scraper.inferConcertVenueType
 import de.norm.events.scraper.inferYearForWeekday
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.labelledClock
+import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseGermanWeekdayAbbreviation
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.textAt
@@ -63,14 +64,8 @@ class WildAtHeartOverviewPageScraper(
         val rows = document.select("tr:has(.datum)")
         logger.info { "Found ${rows.size} event row(s) on Wild at Heart programme" }
 
-        @Suppress("TooGenericExceptionCaught") // Intentional: skip individual malformed rows without aborting the whole import
-        return rows.mapNotNull { row ->
-            try {
-                parseRow(row, baseUrl)
-            } catch (e: Exception) {
-                logger.warn(e) { "Failed to parse Wild at Heart event row, skipping" }
-                null
-            }
+        return rows.mapSkippingFailures(logger, "Wild at Heart event row") { row ->
+            parseRow(row, baseUrl)
         }
     }
 

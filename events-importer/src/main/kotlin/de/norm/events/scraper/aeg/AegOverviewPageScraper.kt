@@ -11,6 +11,7 @@ import de.norm.events.scraper.dateCheckedAgainstWeekday
 import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.imgSrcAt
 import de.norm.events.scraper.mapEventType
+import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseEventStatus
 import de.norm.events.scraper.parseGermanMonthAbbreviation
 import de.norm.events.scraper.parseGermanWeekday
@@ -71,14 +72,8 @@ class AegOverviewPageScraper {
         val (sport, ours) = rows.partition { isSport(it) }
         logger.info { "Found ${ours.size} event row(s) on $eventSource overview, skipping ${sport.size} sport fixture(s)" }
 
-        @Suppress("TooGenericExceptionCaught") // Intentional: skip individual malformed rows without aborting the import
-        return ours.mapNotNull { row ->
-            try {
-                parseRow(row, baseUrl, eventSource)
-            } catch (e: Exception) {
-                logger.warn(e) { "Failed to parse $eventSource event row, skipping" }
-                null
-            }
+        return ours.mapSkippingFailures(logger, "$eventSource event row") { row ->
+            parseRow(row, baseUrl, eventSource)
         }
     }
 

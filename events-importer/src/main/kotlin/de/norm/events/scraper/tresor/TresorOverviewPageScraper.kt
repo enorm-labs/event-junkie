@@ -11,6 +11,7 @@ import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.hostedActsFromTitle
 import de.norm.events.scraper.isNonArtistName
+import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.resolveUrl
 import de.norm.events.scraper.stripArtistPrefix
 import de.norm.events.scraper.textAt
@@ -61,14 +62,8 @@ class TresorOverviewPageScraper {
         val items = document.select("article.event-item")
         logger.info { "Found ${items.size} event item(s) on the Tresor listing" }
 
-        @Suppress("TooGenericExceptionCaught") // Intentional: skip individual malformed items without aborting the whole import
-        return items.mapNotNull { item ->
-            try {
-                parseItem(item, baseUrl)
-            } catch (e: Exception) {
-                logger.warn(e) { "Failed to parse Tresor event item, skipping" }
-                null
-            }
+        return items.mapSkippingFailures(logger, "Tresor event item") { item ->
+            parseItem(item, baseUrl)
         }
     }
 

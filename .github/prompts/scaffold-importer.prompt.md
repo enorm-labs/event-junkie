@@ -88,8 +88,8 @@ Selectors in ADR-007's order: JSON-LD > semantic HTML5 (`article`, `time[datetim
 (`div:nth-child(3)`, `.col-md-4`). Scope to the narrowest container; `:has()` for context.
 
 `ScrapedEvent` (`scraper/ScrapedEvent.kt`): required `title`, `eventDate`, `sourceUrl`, `sourceId` = `"${EventSource.<VENUE>.sourceIdPrefix}$slug"` derived
-from the canonical URL, never from mutable text. **Validate before returning**: skip a blank title or an unparseable date with a warning, and wrap per-event
-parsing in try/catch so one malformed event does not abort the import.
+from the canonical URL, never from mutable text. **Validate before returning**: skip a blank title or an unparseable date with a warning, and parse the rows
+with `rows.mapSkippingFailures(logger, "<Venue> event item") { … }` so one malformed event does not abort the import; never a hand-written try/catch.
 
 ## 5. Tests
 

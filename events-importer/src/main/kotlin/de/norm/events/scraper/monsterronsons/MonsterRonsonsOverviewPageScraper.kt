@@ -8,6 +8,7 @@ import de.norm.events.scraper.attrAt
 import de.norm.events.scraper.dropPastEvents
 import de.norm.events.scraper.imgSrcAt
 import de.norm.events.scraper.inferYearForWeekday
+import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseEnglishWeekdayAbbreviation
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.resolveUrl
@@ -62,15 +63,9 @@ class MonsterRonsonsOverviewPageScraper(
         val cards = document.select(CARD_SELECTOR)
         logger.info { "Found ${cards.size} event card(s) on page" }
 
-        @Suppress("TooGenericExceptionCaught") // Intentional: skip individual malformed cards without aborting the import
         val events =
-            cards.mapNotNull { card ->
-                try {
-                    parseCard(card, sourceUrl)
-                } catch (e: Exception) {
-                    logger.warn(e) { "Failed to parse event card, skipping" }
-                    null
-                }
+            cards.mapSkippingFailures(logger, "event card") { card ->
+                parseCard(card, sourceUrl)
             }
 
         // The window starts today, so this normally drops nothing; it guards a card lingering past midnight.

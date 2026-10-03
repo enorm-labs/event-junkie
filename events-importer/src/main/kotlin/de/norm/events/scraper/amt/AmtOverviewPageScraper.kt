@@ -9,6 +9,7 @@ import de.norm.events.scraper.hostedActsFromTitle
 import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.isPlaceholderName
+import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.resolveUrl
 import de.norm.events.scraper.textAt
 import de.norm.events.slug.SlugGenerator
@@ -60,14 +61,8 @@ class AmtOverviewPageScraper {
         val items = document.select("div.div-grid-dan[data-date]")
         logger.info { "Found ${items.size} event block(s) on AMT month page $baseUrl" }
 
-        @Suppress("TooGenericExceptionCaught") // Intentional: skip individual malformed nights without aborting the whole import.
-        return items.mapNotNull { item ->
-            try {
-                parseEvent(item, baseUrl)
-            } catch (e: Exception) {
-                logger.warn(e) { "Failed to parse AMT event block, skipping" }
-                null
-            }
+        return items.mapSkippingFailures(logger, "AMT event block") { item ->
+            parseEvent(item, baseUrl)
         }
     }
 

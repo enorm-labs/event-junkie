@@ -14,6 +14,7 @@ import de.norm.events.scraper.headlinersFromTitle
 import de.norm.events.scraper.imgSrcAt
 import de.norm.events.scraper.inferConcertVenueType
 import de.norm.events.scraper.isNonArtistName
+import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseEventStatus
 import de.norm.events.scraper.resolveUrl
 import de.norm.events.scraper.splitSegmentOnConjunctions
@@ -64,14 +65,8 @@ class ColumbiaTheaterOverviewPageScraper {
         val cards = document.select("a.item[href*='/event/']").filterNot(::isRescheduledPlaceholder)
         logger.info { "Found ${cards.size} event card(s) on Columbia Theater overview" }
 
-        @Suppress("TooGenericExceptionCaught") // Intentional: skip individual malformed cards without aborting the whole import
-        return cards.mapNotNull { card ->
-            try {
-                parseCard(card, baseUrl)
-            } catch (e: Exception) {
-                logger.warn(e) { "Failed to parse event card, skipping" }
-                null
-            }
+        return cards.mapSkippingFailures(logger, "event card") { card ->
+            parseCard(card, baseUrl)
         }
     }
 

@@ -11,6 +11,7 @@ import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.WpRestPage
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.cleanEventTitle
+import de.norm.events.scraper.flatMapSkippingFailures
 import de.norm.events.scraper.isBoxOfficeLabel
 import de.norm.events.scraper.labelledClock
 import de.norm.events.scraper.mapEventType
@@ -81,15 +82,9 @@ class HeimathafenApiScraper(
         val root = parseRoot(json) ?: return HeimathafenPage(postCount = 0, events = emptyList())
         val today = LocalDate.now(clock)
 
-        @Suppress("TooGenericExceptionCaught") // Intentional: skip individual malformed posts without aborting the whole import
         val events =
-            root.flatMap { post ->
-                try {
-                    parsePost(post, today)
-                } catch (e: Exception) {
-                    logger.warn(e) { "Failed to parse Heimathafen event post, skipping" }
-                    emptyList()
-                }
+            root.flatMapSkippingFailures(logger, "Heimathafen event post") { post ->
+                parsePost(post, today)
             }
         logger.info { "Parsed ${events.size} upcoming performance(s) from ${root.size()} Heimathafen post(s)" }
         return HeimathafenPage(postCount = root.size(), events = events)

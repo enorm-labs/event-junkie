@@ -7,6 +7,7 @@ import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.inferConcertVenueType
+import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseEventStatus
 import de.norm.events.scraper.parseIsoDate
 import de.norm.events.scraper.parseTime
@@ -49,14 +50,8 @@ class Hole44OverviewPageScraper {
         val items = document.select("li.event-item")
         logger.info { "Found ${items.size} event item(s) on overview page" }
 
-        @Suppress("TooGenericExceptionCaught") // Intentional: skip individual malformed events without aborting the entire import
-        return items.mapNotNull { item ->
-            try {
-                parseItem(item, baseUrl)
-            } catch (e: Exception) {
-                logger.warn(e) { "Failed to parse event item, skipping" }
-                null
-            }
+        return items.mapSkippingFailures(logger, "event item") { item ->
+            parseItem(item, baseUrl)
         }
     }
 

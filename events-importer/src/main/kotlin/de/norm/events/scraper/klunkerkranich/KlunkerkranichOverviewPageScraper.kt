@@ -15,6 +15,7 @@ import de.norm.events.scraper.imgSrcAt
 import de.norm.events.scraper.inferYearForWeekday
 import de.norm.events.scraper.isKnownSingleAct
 import de.norm.events.scraper.isNonArtistName
+import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseIsoDate
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.resolveUrl
@@ -77,14 +78,8 @@ class KlunkerkranichOverviewPageScraper(
         val cards = document.select(EVENT_CARD)
         logger.info { "Found ${cards.size} event card(s) on the Klunkerkranich programme" }
 
-        @Suppress("TooGenericExceptionCaught") // Intentional: skip individual malformed cards without aborting the whole import
-        return cards.mapNotNull { card ->
-            try {
-                parseCard(card, baseUrl)
-            } catch (e: Exception) {
-                logger.warn(e) { "Failed to parse Klunkerkranich event card, skipping" }
-                null
-            }
+        return cards.mapSkippingFailures(logger, "Klunkerkranich event card") { card ->
+            parseCard(card, baseUrl)
         }
     }
 

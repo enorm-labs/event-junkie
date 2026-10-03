@@ -18,6 +18,7 @@ import de.norm.events.scraper.inferUnmarkedTitleType
 import de.norm.events.scraper.isFestivalTitle
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.mapEventType
+import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseEventStatus
 import de.norm.events.scraper.splitHeadlinerTitle
 import de.norm.events.scraper.stripArtistSuffix
@@ -91,15 +92,9 @@ class ZennerApiScraper(
 
         val visibility = parseVisibility(data)
 
-        @Suppress("TooGenericExceptionCaught") // Intentional: skip individual malformed events without aborting the import.
         val events =
-            nodes.mapNotNull { node ->
-                try {
-                    parseEvent(jsonMapper.treeToValue(node, ZennerEventNode::class.java), sourceUrl, visibility)
-                } catch (e: Exception) {
-                    logger.warn(e) { "Failed to parse Zenner event, skipping" }
-                    null
-                }
+            nodes.mapSkippingFailures(logger, "Zenner event") { node ->
+                parseEvent(jsonMapper.treeToValue(node, ZennerEventNode::class.java), sourceUrl, visibility)
             }
 
         return events.dropPastEvents(clock) { dropped ->
