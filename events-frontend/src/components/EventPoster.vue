@@ -49,11 +49,12 @@ const art = computed(() => posterArt(props.eventType, props.families, props.venu
     ]"
     aria-hidden="true"
   >
-    <!-- Foreground at low opacity: a shade lighter than the ground in dark mode, darker in light. -->
+    <!-- Foreground at low opacity: a shade lighter than the ground in dark mode, darker in light.
+         It comes forward on hover as a flyer gains its colour; the ground keeps its tint. -->
     <component
       :is="art.icon"
       :stroke-width="1.25"
-      class="absolute -right-8 -bottom-10 size-56 text-foreground/10 sm:size-72"
+      class="absolute -right-8 -bottom-10 size-56 text-foreground/10 transition-colors duration-300 group-hover:text-foreground/20 group-data-focus/poster:text-foreground/20 sm:size-72"
     />
     <span class="relative font-mono text-meta tracking-eyebrow uppercase opacity-70">{{
       eyebrow
