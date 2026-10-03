@@ -89,6 +89,7 @@ schema change.
 | Matrix Club Berlin               | https://www.matrix-berlin.de/                               | Club         | WordPress; month pages walked; DJs + door prices       |
 | Max-Schmeling-Halle              | https://www.velomax.de/events                               | Arena        | Shared VELOMAX listing; no sport imported              |
 | Maxxim Club                      | https://www.maxxim-berlin.de/partys                         | Club         | Wix Events warmup JSON; UTC dates; prices inline       |
+| Mehringhof-Theater               | https://www.mehringhoftheater.de/programm/                  | Theater      | IONOS month tables; tickettoaster JSON-LD              |
 | Metropol                         | https://metropol-berlin.de/events                           | Concert Hall | Events-Manager list + detail; no prices; "Verlegt"     |
 | migas                            | https://migas.berlin/program/                               | Bar          | WordPress; per-event modal; lazy imgs; POSTs page 2+   |
 | Mikropol                         | https://mikropol-berlin.de/                                 | Club         | Events-Manager list + detail; "verlegt in den …"       |
@@ -136,7 +137,7 @@ schema change.
 | Zitadelle                        | https://citadel-music-festival.de/events                    | Open Air     | Festival site; WordPress/EM; summer season only        |
 | Zur Klappe                       | https://zurklappe.org/events                                | Techno Club  | Next.js flight payload; no genre or prices             |
 
-90 importer classes cover 91 sources. Only Kantine am Berghain has no class of its own, and it shares the Berghain
+91 importer classes cover 92 sources. Only Kantine am Berghain has no class of its own, and it shares the Berghain
 importer outright. Three other groups share a _listing and parser_ while keeping one thin `@Component` per venue, so
 they do not reduce the count. They are Club der Visionäre with Sonnenraum and MS Hoppetosse, the three Velomax halls,
 and Uber Arena with the Uber Eats Music Hall.
@@ -459,7 +460,7 @@ New candidates land here first. Check for a server-rendered programme, then move
 [Ready](#-ready-to-implement) or [Blocked](#-blocked--deferred). A row belongs here only until someone opens it — the
 URL is recorded, nothing more.
 
-The first 24 rows came from a sweep on 2026-09-30: 21 from tipBerlin, then three from radar.squat.net. The last 9 came
+The first 24 rows came from a sweep on 2026-09-30: 21 from tipBerlin, then three from radar.squat.net. The last 8 came
 from a comedy sweep on 2026-10-03 of comedyinenglish.de, berlinmagazine.de and fritzguide.com. Scheinbar Varieté
 was added by hand. The URL was confirmed to
 answer, and nothing else was checked. A venue's type is a first guess.
@@ -497,7 +498,6 @@ Correct it against the venue's own site when the row is opened.
 | Downstairs Comedy Club            | https://www.downstairscomedy.shop/home                    | Comedy Club  |
 | Die Wühlmäuse                     | https://wuehlmaeuse.de/                                   | Theater      |
 | Kabarett-Theater DISTEL           | https://distel-berlin.de/spielplan/kalender/              | Theater      |
-| Mehringhof-Theater                | https://www.mehringhoftheater.de/                         | Theater      |
 | Scheinbar Varieté                 | https://www.scheinbar.de/                                 | Theater      |
 | Mein Freund Harvey                | https://www.meinfreundharvey.com/                         | Bar          |
 

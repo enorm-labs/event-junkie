@@ -57,6 +57,7 @@ import de.norm.events.scraper.maaya.MAAYA_LIMITATIONS
 import de.norm.events.scraper.madameclaude.MADAME_CLAUDE_LIMITATIONS
 import de.norm.events.scraper.matrix.MATRIX_LIMITATIONS
 import de.norm.events.scraper.maxxim.MAXXIM_LIMITATIONS
+import de.norm.events.scraper.mehringhof.MEHRINGHOF_LIMITATIONS
 import de.norm.events.scraper.metropol.METROPOL_LIMITATIONS
 import de.norm.events.scraper.migas.MIGAS_LIMITATIONS
 import de.norm.events.scraper.mikropol.MIKROPOL_LIMITATIONS
@@ -162,6 +163,7 @@ object AcceptedLimitations {
             MADAME_CLAUDE_LIMITATIONS,
             MATRIX_LIMITATIONS,
             MAXXIM_LIMITATIONS,
+            MEHRINGHOF_LIMITATIONS,
             METROPOL_LIMITATIONS,
             MIGAS_LIMITATIONS,
             MIKROPOL_LIMITATIONS,
