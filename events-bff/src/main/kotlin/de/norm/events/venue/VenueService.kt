@@ -25,10 +25,11 @@ class VenueService(
     @Transactional(readOnly = true)
     suspend fun list(
         filter: VenueFilter,
-        pageable: Pageable
+        pageable: Pageable,
+        countCap: Int? = null
     ): PageResponse<VenueListItemResponse> {
         val safePageable = pageable.sanitizeSort(SORTABLE_PROPERTIES, DEFAULT_SORT)
-        val page = venueSearchRepository.search(filter, LocalDate.now(clock), safePageable)
+        val page = venueSearchRepository.search(filter, LocalDate.now(clock), safePageable, countCap)
         val entities = venueRepository.findByIdIn(page.rows.map { it.id }).toList().associateBy { it.id }
         val images = cachedImageGate.forUrls(entities.values.map { it.imageUrl })
         return PageResponse.of(

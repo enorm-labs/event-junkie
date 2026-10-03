@@ -2,6 +2,7 @@ package de.norm.events.event
 
 import de.norm.events.EVENTS_SCHEMA
 import de.norm.events.common.TextSearch
+import de.norm.events.common.countQuery
 import io.r2dbc.spi.Readable
 import kotlinx.coroutines.reactive.awaitSingle
 import org.springframework.data.domain.Pageable
@@ -72,14 +73,15 @@ class EventSearchRepository(
 ) {
     suspend fun search(
         filter: EventFilter,
-        pageable: Pageable
+        pageable: Pageable,
+        countCap: Int? = null
     ): EventIdPage =
         TextSearch.strictThenSimilar(filter.query, found = { it.total > 0 }) { bySimilarity ->
             val params = mutableMapOf<String, Any>()
             val where = buildWhereClause(filter, params, bySimilarity)
             val total =
                 databaseClient
-                    .sql("SELECT COUNT(*) FROM $EVENTS_SCHEMA.event e $where")
+                    .sql(countQuery("$EVENTS_SCHEMA.event e", where, countCap))
                     .bindAll(params)
                     .map { row: Readable -> row.get(0, Long::class.javaObjectType) ?: 0L }
                     .one()
@@ -301,16 +303,19 @@ class EventSearchRepository(
             conditions += "COALESCE(e.price_presale, e.price_box_office) <= :maxPrice"
             params["maxPrice"] = it
         }
-        TextSearch.term(filter.query)?.let {
-            val match = { column: String -> TextSearch.predicate(column, bySimilarity) }
+        TextSearch.term(filter.query)?.let { term ->
+            // One branch per searched column, so each reaches its own trigram index (V096). The same
+            // four as an `OR` on `e` read every upcoming event (#2533).
+            val match = { column: String -> TextSearch.predicate(column, term, bySimilarity) }
             conditions +=
                 listOf(
-                    match("e.title"),
-                    match("e.subtitle"),
-                    "EXISTS (SELECT 1 FROM $EVENTS_SCHEMA.venue v WHERE v.id = e.venue_id AND ${match("v.name")})",
-                    Association.ARTIST.existsWhere("name", match)
-                ).joinToString(" OR ", prefix = "(", postfix = ")")
-            params += TextSearch.params(it, bySimilarity)
+                    "SELECT x.id FROM $EVENTS_SCHEMA.event x WHERE ${match("x.title")}",
+                    "SELECT x.id FROM $EVENTS_SCHEMA.event x WHERE ${match("x.subtitle")}",
+                    "SELECT x.id FROM $EVENTS_SCHEMA.event x JOIN $EVENTS_SCHEMA.venue v ON v.id = x.venue_id WHERE ${match("v.name")}",
+                    "SELECT ea.event_id FROM $EVENTS_SCHEMA.event_artist ea " +
+                        "JOIN $EVENTS_SCHEMA.artist a ON a.id = ea.artist_id WHERE ${match("a.name")}"
+                ).joinToString(" UNION ", prefix = "e.id IN (", postfix = ")")
+            params += TextSearch.params(term, bySimilarity)
         }
     }
 

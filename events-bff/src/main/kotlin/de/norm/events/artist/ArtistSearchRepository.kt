@@ -2,6 +2,7 @@ package de.norm.events.artist
 
 import de.norm.events.EVENTS_SCHEMA
 import de.norm.events.common.TextSearch
+import de.norm.events.common.countQuery
 import io.r2dbc.spi.Readable
 import kotlinx.coroutines.reactive.awaitSingle
 import org.springframework.data.domain.Pageable
@@ -24,18 +25,20 @@ class ArtistSearchRepository(
 ) {
     suspend fun search(
         term: String,
-        pageable: Pageable
-    ): ArtistIdPage = TextSearch.strictThenSimilar(term, found = { it.total > 0 }) { bySimilarity -> search(term, bySimilarity, pageable) }
+        pageable: Pageable,
+        countCap: Int? = null
+    ): ArtistIdPage = TextSearch.strictThenSimilar(term, found = { it.total > 0 }) { bySimilarity -> search(term, bySimilarity, pageable, countCap) }
 
     private suspend fun search(
         term: String,
         bySimilarity: Boolean,
-        pageable: Pageable
+        pageable: Pageable,
+        countCap: Int?
     ): ArtistIdPage {
-        val where = "WHERE ${TextSearch.predicate("a.name", bySimilarity)}"
+        val where = "WHERE ${TextSearch.predicate("a.name", term, bySimilarity)}"
         val total =
             databaseClient
-                .sql("SELECT COUNT(*) FROM $EVENTS_SCHEMA.artist a $where")
+                .sql(countQuery("$EVENTS_SCHEMA.artist a", where, countCap))
                 .bindTerm(term, bySimilarity)
                 .map { row: Readable -> row.get(0, Long::class.javaObjectType) ?: 0L }
                 .one()

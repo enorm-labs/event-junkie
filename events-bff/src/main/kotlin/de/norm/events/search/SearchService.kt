@@ -35,12 +35,18 @@ class SearchService(
         coroutineScope {
             // `name` puts the closest match first: each repository ranks by similarity under that sort.
             val byName = PageRequest.of(0, limit, Sort.by("name"))
-            val events = async { eventService.search(EventFilter(from = LocalDate.now(clock), query = term), PageRequest.of(0, limit, Sort.by("eventDate"))) }
-            val venues = async { venueService.list(VenueFilter(query = term), byName) }
-            val artists = async { artistService.list(term, byName) }
-            val promoters = async { promoterService.list(term, byName) }
+            val byDate = PageRequest.of(0, limit, Sort.by("eventDate"))
+            val events = async { eventService.search(EventFilter(from = LocalDate.now(clock), query = term), byDate, COUNT_CAP) }
+            val venues = async { venueService.list(VenueFilter(query = term), byName, COUNT_CAP) }
+            val artists = async { artistService.list(term, byName, COUNT_CAP) }
+            val promoters = async { promoterService.list(term, byName, COUNT_CAP) }
             SearchResponse(events.await().group(), venues.await().group(), artists.await().group(), promoters.await().group())
         }
 
-    private fun <T> PageResponse<T>.group() = SearchGroup(content, totalElements)
+    private fun <T> PageResponse<T>.group() = SearchGroup(content, minOf(totalElements, COUNT_CAP.toLong()), totalCapped = totalElements > COUNT_CAP)
+
+    companion object {
+        /** Past this many matches of one kind the header says "100+"; counting further cost the most (#2533). */
+        const val COUNT_CAP = 100
+    }
 }

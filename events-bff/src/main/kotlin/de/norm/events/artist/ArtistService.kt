@@ -25,7 +25,8 @@ class ArtistService(
     @Transactional(readOnly = true)
     suspend fun list(
         query: String?,
-        pageable: Pageable
+        pageable: Pageable,
+        countCap: Int? = null
     ): PageResponse<ArtistSummaryResponse> {
         val safePageable = pageable.sanitizeSort(SORTABLE_PROPERTIES, DEFAULT_SORT)
         val term = TextSearch.term(query)
@@ -33,7 +34,7 @@ class ArtistService(
             if (term == null) {
                 artistRepository.findAllBy(safePageable).toList() to artistRepository.count()
             } else {
-                val page = artistSearchRepository.search(term, safePageable)
+                val page = artistSearchRepository.search(term, safePageable, countCap)
                 val byId = artistRepository.findByIdIn(page.ids).toList().associateBy { it.id }
                 page.ids.mapNotNull { byId[it] } to page.total
             }

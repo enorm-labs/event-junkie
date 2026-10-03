@@ -53,9 +53,10 @@ class EventService(
     @Transactional(readOnly = true)
     suspend fun search(
         filter: EventFilter,
-        pageable: Pageable
+        pageable: Pageable,
+        countCap: Int? = null
     ): PageResponse<EventSummaryResponse> {
-        val page = eventSearchRepository.search(filter, pageable)
+        val page = eventSearchRepository.search(filter, pageable, countCap)
         val events = hydrateOrdered(page.ids)
         return PageResponse.of(summariesFor(events), pageable, page.total)
     }

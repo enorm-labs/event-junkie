@@ -28,10 +28,11 @@ class PromoterService(
     @Transactional(readOnly = true)
     suspend fun list(
         query: String?,
-        pageable: Pageable
+        pageable: Pageable,
+        countCap: Int? = null
     ): PageResponse<PromoterListItemResponse> {
         val safePageable = pageable.sanitizeSort(SORTABLE_PROPERTIES, DEFAULT_SORT)
-        val page = promoterSearchRepository.search(query, LocalDate.now(clock), safePageable)
+        val page = promoterSearchRepository.search(query, LocalDate.now(clock), safePageable, countCap)
         val entities = promoterRepository.findByIdIn(page.rows.map { it.id }).toList().associateBy { it.id }
         return PageResponse.of(
             page.rows.mapNotNull { row -> entities[row.id]?.let { PromoterListItemResponse.fromEntity(it, row.upcomingEventCount) } },

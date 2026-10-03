@@ -56,12 +56,20 @@ const sections = computed(() => {
   const r = data.value
   if (!r) return []
   return [
-    { key: 'venues', total: r.venues?.total ?? 0, more: `/venues${listQuery.value}` },
-    { key: 'events', total: r.events?.total ?? 0, more: `/events${listQuery.value}` },
-    { key: 'artists', total: r.artists?.total ?? 0, more: undefined },
-    { key: 'promoters', total: r.promoters?.total ?? 0, more: `/promoters${listQuery.value}` },
-  ].filter((section) => section.total > 0)
+    { key: 'venues', group: r.venues, more: `/venues${listQuery.value}` },
+    { key: 'events', group: r.events, more: `/events${listQuery.value}` },
+    { key: 'artists', group: r.artists, more: undefined },
+    { key: 'promoters', group: r.promoters, more: `/promoters${listQuery.value}` },
+  ]
+    .map(({ key, group, more }) => ({ key, more, ...countOf(group) }))
+    .filter((section) => section.total > 0)
 })
+
+// The BFF stops counting at 100 (#2533), so a capped total reads "100+".
+function countOf(group?: { total?: number; totalCapped?: boolean }) {
+  const total = group?.total ?? 0
+  return { total, shown: group?.totalCapped ? `${total}+` : String(total) }
+}
 
 function linksOf(key: string): { to: string; name: string }[] {
   const items: NamedLink[] =
@@ -104,14 +112,14 @@ function linksOf(key: string): { to: string; name: string }[] {
         <div class="flex items-baseline justify-between gap-3">
           <SectionLabel>
             {{ t(`search.groups.${section.key}`) }}
-            <span class="text-muted-foreground tabular-nums">{{ section.total }}</span>
+            <span class="text-muted-foreground tabular-nums">{{ section.shown }}</span>
           </SectionLabel>
           <RouterLink
             v-if="section.more && section.total > LIMIT"
             :to="localePath(section.more)"
             class="text-body text-muted-foreground hover:text-foreground"
           >
-            {{ t('search.showAll', { count: section.total }) }}
+            {{ t('search.showAll', { count: section.shown }) }}
           </RouterLink>
         </div>
         <ul :class="CARD_LIST_CLASS">

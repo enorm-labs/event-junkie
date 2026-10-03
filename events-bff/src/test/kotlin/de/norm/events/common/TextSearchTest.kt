@@ -30,8 +30,20 @@ class TextSearchTest {
     }
 
     @Test
-    fun `the pattern is the escaped term, wrapped for a substring match`() {
-        TextSearch.params("50%", bySimilarity = false) shouldBe mapOf("q" to "50%", "qPattern" to "%50\\%%")
+    fun `a term with no letter or digit binds the escaped term, wrapped for a literal substring match`() {
+        TextSearch.params("%_", bySimilarity = false) shouldBe mapOf("q" to "%_", "qPattern" to "%\\%\\_%")
+    }
+
+    @Test
+    fun `a term that folds binds no pattern, because the folded match builds its own`() {
+        TextSearch.params("50%", bySimilarity = false) shouldBe mapOf("q" to "50%")
+    }
+
+    @Test
+    fun `the folded match carries no CASE, so a generic plan can still use the trigram index`() {
+        TextSearch.matches("e.title", "techno") shouldBe
+            "(replace(e.title_search, ' ', '') LIKE '%' || NULLIF(replace(events.search_norm(:q), ' ', ''), '') || '%')"
+        TextSearch.matches("e.title", "!!!") shouldBe "(e.title ILIKE :qPattern AND events.search_norm(:q) = '')"
     }
 
     @Test

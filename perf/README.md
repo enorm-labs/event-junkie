@@ -9,6 +9,7 @@ scripts/dev-env.sh up bff             # the tests need something to talk to
 k6 run perf/smoke.js                  # every endpoint once — is it all still working?
 k6 run perf/load.js                   # sustained realistic load — does latency stay flat?
 k6 run perf/spike.js                  # a sudden surge — does it recover?
+k6 run perf/search.js                 # header type-ahead — does search keep up with people typing?
 k6 run perf/ratelimit.js              # the ingress limit — deployed environments only, see below
 ```
 
@@ -22,6 +23,7 @@ They answer different questions, and reading one's output as if it were another'
 | `load.js`      | ramp to N VUs, hold       | Does latency stay flat as concurrency rises, or does something serialise?            |
 | `spike.js`     | quiet → surge → quiet     | Does it survive a sudden crowd, and — more importantly — does it recover afterwards? |
 | `ratelimit.js` | one visitor, then a flood | Does the per-source limit stop abuse without ever rejecting a visitor?               |
+| `search.js`    | ramp to N typists, hold   | Does the header search keep up when people type, at the SPA's 250 ms debounce?       |
 
 **`smoke.js` is the one to reach for by default.** It puts no meaningful load on anything, finishes in about a second, and tolerates an empty database, so it is
 safe to run anywhere at any time. Use it after a dependency bump, after a query change, or to check an environment is alive.

@@ -79,6 +79,12 @@ export const api = {
     /** `GET /genres` — an unpaged list, used to populate the filter bar's dropdown. */
     genres: () => get('/genres', {group: 'list', name: '/genres'}),
 
+    /**
+     * `GET /search?q=&limit=` — the header's type-ahead, four kinds in one response. `limit=20` is
+     * the search page. Not in `ResponseCache`, so every request reaches PostgreSQL (#2533).
+     */
+    search: (q, limit = 5) => get(`/search?q=${encodeURIComponent(q)}&limit=${limit}`, {group: 'search', name: '/search'}),
+
     /** `GET /meta` — build info for the footer. Cheap, and the best liveness probe here. */
     meta: () => get('/meta', {group: 'detail', name: '/meta'}),
 }
