@@ -44,8 +44,8 @@ A product test rather than a feature list — a plausible visitor question that 
 - Where are my friends going, and can I bring them along?
 
 The first two are answerable today, with the date-range presets and the venue, genre, district and free-text filters.
-The "near me" question waits on the venues map and a radius search (Phase 2). The last two are the whole point of
-Phases 3 and 4.
+The map answers "near me". It draws a 1, 2 or 5 km radius around a position and lists the venues inside it, nearest
+first. The last two are the whole point of Phases 3 and 4.
 
 ### Scope
 
@@ -94,8 +94,8 @@ Make it comprehensive, discoverable and pleasant. → **[Phase 2 — Coverage & 
 - Scale importer coverage toward the full venue list in [EVENT_DATA_SOURCES.md](EVENT_DATA_SOURCES.md), and enrich
   venue metadata.
 - An **admin imports-status dashboard** to watch import health and failures.
-- A venues page with a map, a full UX and mobile pass, and the remaining SEO surfaces. Done already: i18n and l10n,
-  the sitemap, `hreflang`, canonical URLs and `schema.org` structured data. RSS and the map remain.
+- A full UX and mobile pass, and the remaining SEO surfaces. Done already: the venues map, i18n and l10n, the sitemap,
+  `hreflang`, canonical URLs and `schema.org` structured data. RSS remains.
 - **Server-side head tags for shared links.** Every page serves an empty `<div id="app">`. A scraper that does not run
   JavaScript shows the generic site title and description for _every_ shared link, event pages included. That covers
   Slack, WhatsApp, iMessage, Facebook and LinkedIn. Sharing a specific event is a primary way a nightlife product
@@ -105,8 +105,7 @@ Make it comprehensive, discoverable and pleasant. → **[Phase 2 — Coverage & 
   built now, and it also closes the missing per-page `og:description`. The transport that rewrites the response waits
   for ADR-012 to be executed. Full SSR is deferred behind a named trigger, rather than anticipated: Search Console
   showing detail pages indexed poorly.
-- **Related events** on detail pages (same venue, genre or artist), and a **"near me" radius search** driven by the
-  browser's location. Both work without accounts, and both depend on venue coordinates being trustworthy first.
+- **Related events** on detail pages (same venue, genre or artist). They work without accounts.
 - "Missing event / venue" and feedback forms.
 
 ### Phase 3 — Accounts & personalization 👤 _(Expansion stage 1)_

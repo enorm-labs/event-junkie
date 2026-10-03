@@ -718,7 +718,7 @@ web scraping pitfalls documented in industry literature (see References).
 - Per-host politeness throttling via `PerHostThrottlingFilter` is transparent to scrapers. A new importer gets rate limiting without managing any delay itself.
 - Import metadata in the database enables a future scheduling dashboard.
 - Semantic selector guidelines and regression tests on HTML snapshots reduce breakage when a venue redesigns.
-- Rate limiting, a transparent User-Agent and off-peak scheduling keep the scraper ethical and sustainable.
+- Rate limiting and a transparent User-Agent keep the scraper ethical and sustainable. Off-peak scheduling is wanted and not implemented (#791).
 
 **Negative**
 
