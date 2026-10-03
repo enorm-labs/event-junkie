@@ -14,7 +14,7 @@ import java.sql.Connection
 import java.sql.DriverManager
 
 /**
- * Runs the promoter data migrations — V023, V025, V026, V027, V029, V030, V031, V032, V065, V066, V073, V079 — against the rows each names, planted on a
+ * Runs the promoter data migrations — V023, V025, V026, V027, V029, V030, V031, V032, V065, V066, V073, V079, V086 — against the rows each names, planted on a
  * database migrated to just before it.
  *
  * The migrations are keyed on slugs read from staging, and a misspelt one updates no row while
@@ -91,14 +91,19 @@ class MergeDuplicatePromotersMigrationTest {
             statement.execute("UPDATE promoter SET website_url = 'http://www.MFPConcerts.com' WHERE slug = 'mfp'")
         }
         flyway("64").migrate()
-        plantTradingNames()
-        flyway("65").migrate()
-        plantSchokoladenSpans()
-        flyway("66").migrate()
-        plantCtmSpellings()
-        flyway("78").migrate()
-        plantAdmiralspalastFragments()
-        flyway("79").migrate()
+        plantThenMigrate("65", ::plantTradingNames)
+        plantThenMigrate("66", ::plantSchokoladenSpans)
+        plantThenMigrate("78", ::plantCtmSpellings)
+        plantThenMigrate("79", ::plantAdmiralspalastFragments)
+        plantThenMigrate("86", ::plantSchokoladenOldAndFast)
+    }
+
+    private fun plantThenMigrate(
+        target: String,
+        plant: () -> Unit
+    ) {
+        plant()
+        flyway(target).migrate()
     }
 
     @AfterAll
@@ -271,6 +276,25 @@ class MergeDuplicatePromotersMigrationTest {
         eventsOf("aufgeigen-at") shouldContainExactlyInAnyOrder listOf("af1")
         promoters().containsKey("das-forgotten-female-composers") shouldBe false
         eventsOf("insel") shouldContainExactlyInAnyOrder listOf("ff1")
+    }
+
+    @Test
+    fun `V086 folds the two halves of Schokoladen's old & fast onto one row and keeps a same-slug row another venue credits`() {
+        promoters().containsKey("old") shouldBe false
+        promoters()["old-fast"] shouldBe "old & fast"
+        eventsOf("old-fast") shouldContainExactlyInAnyOrder listOf("schokoladen:e20261003")
+        promoters()["fast"] shouldBe "Fast"
+        eventsOf("fast") shouldContainExactlyInAnyOrder listOf("so36:fast")
+    }
+
+    /** V086: the two rows the split minted, both on one night, and a `fast` row another venue credits, which stays. */
+    private fun plantSchokoladenOldAndFast() {
+        connection.createStatement().use { statement ->
+            plantPromoter(statement, "old", "old")
+            plantPromoter(statement, "Fast", "fast")
+            plantEvent(statement, "schokoladen:e20261003", "old", "fast")
+            plantEvent(statement, "so36:fast", "fast")
+        }
     }
 
     /** V079: the Admiralspalast row as production stores it, and the row Insel minted after V026, with an event that must stay. */
