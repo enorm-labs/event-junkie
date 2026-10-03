@@ -1,7 +1,7 @@
 package de.norm.events.venue
 
 import de.norm.events.EVENTS_SCHEMA
-import de.norm.events.common.escapeLike
+import de.norm.events.common.TextSearch
 import io.r2dbc.spi.Readable
 import kotlinx.coroutines.reactive.awaitSingle
 import org.springframework.data.domain.Pageable
@@ -30,7 +30,7 @@ data class VenueFilter(
             eventTypes: List<String>?
         ): VenueFilter =
             VenueFilter(
-                query = query?.trim()?.takeIf { it.isNotEmpty() },
+                query = TextSearch.term(query),
                 districts = districts.normalized(),
                 types = types.normalized(),
                 families = families.normalized(),
@@ -59,7 +59,7 @@ data class VenueListPage(
 )
 
 /**
- * The venue list query: a name search, the districts and the array filters of [VenueFilter], ordered
+ * The venue list query: a name search ([TextSearch]), the districts and the array filters of [VenueFilter], ordered
  * by name or by upcoming events (#360). The same shape as `PromoterSearchRepository`, for the same reasons: the count is a
  * correlated subquery from [today] on, every order ends in `name, id`, and names sort case-folded
  * because the database collation is `C`.
@@ -72,12 +72,19 @@ class VenueSearchRepository(
         filter: VenueFilter,
         today: LocalDate,
         pageable: Pageable
+    ): VenueListPage = TextSearch.strictThenSimilar(filter.query, found = { it.total > 0 }) { bySimilarity -> search(filter, bySimilarity, today, pageable) }
+
+    private suspend fun search(
+        filter: VenueFilter,
+        bySimilarity: Boolean,
+        today: LocalDate,
+        pageable: Pageable
     ): VenueListPage {
         val params = mutableMapOf<String, Any>()
-        filter.query?.let { params["name"] = "%${it.escapeLike()}%" }
+        filter.query?.let { params += TextSearch.params(it, bySimilarity) }
         val conditions =
             listOfNotNull(
-                "v.name ILIKE :name".takeIf { filter.query != null },
+                TextSearch.predicate("v.name", bySimilarity).takeIf { filter.query != null },
                 "v.district IN (:districts)".takeIf { filter.districts.isNotEmpty() }
             ) +
                 ARRAY_FILTERS.mapNotNull { (column, param, values) ->
@@ -103,7 +110,7 @@ class VenueSearchRepository(
             databaseClient
                 .sql(
                     "SELECT v.id, ($UPCOMING_COUNT) AS upcoming FROM $EVENTS_SCHEMA.venue v $where " +
-                        "${orderBy(pageable)} LIMIT :limit OFFSET :offset"
+                        "${orderBy(pageable, filter.query, bySimilarity)} LIMIT :limit OFFSET :offset"
                 ).bindAll(params)
                 .bind("today", today)
                 .bind("limit", pageable.pageSize)
@@ -123,13 +130,21 @@ class VenueSearchRepository(
     private fun DatabaseClient.GenericExecuteSpec.bindAll(params: Map<String, Any>): DatabaseClient.GenericExecuteSpec =
         params.entries.fold(this) { spec, (key, value) -> spec.bind(key, value) }
 
-    /** Whitelists the sort properties to known expressions; anything else falls back to the name. */
-    private fun orderBy(pageable: Pageable): String {
+    /**
+     * Whitelists the sort properties to known expressions; anything else falls back to the name. A
+     * search sorted by name puts the closest matches first.
+     */
+    private fun orderBy(
+        pageable: Pageable,
+        term: String?,
+        bySimilarity: Boolean
+    ): String {
         val clauses =
             pageable.sort.toList().mapNotNull { order ->
                 SORT_COLUMNS[order.property]?.let { column -> "$column ${if (order.isAscending) "ASC" else "DESC"}" }
             }
-        return "ORDER BY ${(clauses + TIEBREAKER).joinToString(", ")}"
+        val rank = TextSearch.rank("v.name", bySimilarity).takeIf { term != null && pageable.sort.firstOrNull()?.property == "name" }
+        return "ORDER BY ${(listOfNotNull(rank) + clauses + TIEBREAKER).joinToString(", ")}"
     }
 
     companion object {

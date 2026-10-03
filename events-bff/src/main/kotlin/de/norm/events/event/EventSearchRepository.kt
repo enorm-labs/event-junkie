@@ -1,7 +1,7 @@
 package de.norm.events.event
 
 import de.norm.events.EVENTS_SCHEMA
-import de.norm.events.common.escapeLike
+import de.norm.events.common.TextSearch
 import io.r2dbc.spi.Readable
 import kotlinx.coroutines.reactive.awaitSingle
 import org.springframework.data.domain.Pageable
@@ -70,63 +70,64 @@ class EventSearchRepository(
     suspend fun search(
         filter: EventFilter,
         pageable: Pageable
-    ): EventIdPage {
-        val params = mutableMapOf<String, Any>()
-        val where = buildWhereClause(filter, params)
-
-        val total =
-            databaseClient
-                .sql("SELECT COUNT(*) FROM $EVENTS_SCHEMA.event e $where")
-                .bindAll(params)
-                .map { row: Readable -> row.get(0, Long::class.javaObjectType) ?: 0L }
-                .one()
-                .awaitSingle()
-
-        if (total == 0L) return EventIdPage(emptyList(), 0L)
-
-        val ids =
-            databaseClient
-                .sql("SELECT e.id FROM $EVENTS_SCHEMA.event e $where ${orderBy(pageable)} LIMIT :limit OFFSET :offset")
-                .bindAll(params)
-                .bind("seed", tiebreakSeed())
-                .bind("limit", pageable.pageSize)
-                .bind("offset", pageable.offset)
-                .map { row: Readable -> row.requiredEventId() }
-                .all()
-                .collectList()
-                .awaitSingle()
-
-        return EventIdPage(ids, total)
-    }
+    ): EventIdPage =
+        TextSearch.strictThenSimilar(filter.query, found = { it.total > 0 }) { bySimilarity ->
+            val params = mutableMapOf<String, Any>()
+            val where = buildWhereClause(filter, params, bySimilarity)
+            val total =
+                databaseClient
+                    .sql("SELECT COUNT(*) FROM $EVENTS_SCHEMA.event e $where")
+                    .bindAll(params)
+                    .map { row: Readable -> row.get(0, Long::class.javaObjectType) ?: 0L }
+                    .one()
+                    .awaitSingle()
+            if (total == 0L) {
+                EventIdPage(emptyList(), 0L)
+            } else {
+                val ids =
+                    databaseClient
+                        .sql("SELECT e.id FROM $EVENTS_SCHEMA.event e $where ${orderBy(pageable)} LIMIT :limit OFFSET :offset")
+                        .bindAll(params)
+                        .bind("seed", tiebreakSeed())
+                        .bind("limit", pageable.pageSize)
+                        .bind("offset", pageable.offset)
+                        .map { row: Readable -> row.requiredEventId() }
+                        .all()
+                        .collectList()
+                        .awaitSingle()
+                EventIdPage(ids, total)
+            }
+        }
 
     /**
      * Every matching event ID in default chronological order, unpaged, for the calendar view. Safe
      * because the caller bounds the range (`EventService.MAX_CALENDAR_DAYS`).
      */
-    suspend fun searchAll(filter: EventFilter): List<Long> {
-        val params = mutableMapOf<String, Any>()
-        val where = buildWhereClause(filter, params)
-
-        return databaseClient
-            .sql("SELECT e.id FROM $EVENTS_SCHEMA.event e $where $DEFAULT_ORDER")
-            .bindAll(params)
-            .bind("seed", tiebreakSeed())
-            .map { row: Readable -> row.requiredEventId() }
-            .all()
-            .collectList()
-            .awaitSingle()
-    }
+    suspend fun searchAll(filter: EventFilter): List<Long> =
+        TextSearch.strictThenSimilar(filter.query, found = { it.isNotEmpty() }) { bySimilarity ->
+            val params = mutableMapOf<String, Any>()
+            val where = buildWhereClause(filter, params, bySimilarity)
+            databaseClient
+                .sql("SELECT e.id FROM $EVENTS_SCHEMA.event e $where $DEFAULT_ORDER")
+                .bindAll(params)
+                .bind("seed", tiebreakSeed())
+                .map { row: Readable -> row.requiredEventId() }
+                .all()
+                .collectList()
+                .awaitSingle()
+        }
 
     /** Assembles the `WHERE` clause for the present filters, registering bound values in [params]. */
     private fun buildWhereClause(
         filter: EventFilter,
-        params: MutableMap<String, Any>
+        params: MutableMap<String, Any>,
+        bySimilarity: Boolean
     ): String {
         val conditions = mutableListOf<String>()
         appendDateRange(filter, conditions, params)
         appendColumnFilters(filter, conditions, params)
         appendAssociationFilters(filter, conditions, params)
-        appendPriceAndQuery(filter, conditions, params)
+        appendPriceAndQuery(filter, conditions, params, bySimilarity)
         return if (conditions.isEmpty()) "" else "WHERE " + conditions.joinToString(" AND ")
     }
 
@@ -251,14 +252,16 @@ class EventSearchRepository(
     }
 
     /**
-     * Applies the price bounds and the free-text title/subtitle search. Price bounds filter on
+     * Applies the price bounds and the free-text search. Price bounds filter on
      * `COALESCE(price_presale, price_box_office)`; an event whose price is entirely unknown does
-     * not satisfy a "min €X" filter.
+     * not satisfy a "min €X" filter. The search ([TextSearch]) reads the title, the subtitle, the
+     * venue's name and the lineup's names, so `ÆDEN` finds that venue's nights.
      */
     private fun appendPriceAndQuery(
         filter: EventFilter,
         conditions: MutableList<String>,
-        params: MutableMap<String, Any>
+        params: MutableMap<String, Any>,
+        bySimilarity: Boolean
     ) {
         filter.minPrice?.let {
             conditions += "COALESCE(e.price_presale, e.price_box_office) >= :minPrice"
@@ -268,9 +271,16 @@ class EventSearchRepository(
             conditions += "COALESCE(e.price_presale, e.price_box_office) <= :maxPrice"
             params["maxPrice"] = it
         }
-        filter.query?.takeIf { it.isNotBlank() }?.let {
-            conditions += "(e.title ILIKE :q OR e.subtitle ILIKE :q)"
-            params["q"] = "%${it.trim().escapeLike()}%"
+        TextSearch.term(filter.query)?.let {
+            val match = { column: String -> TextSearch.predicate(column, bySimilarity) }
+            conditions +=
+                listOf(
+                    match("e.title"),
+                    match("e.subtitle"),
+                    "EXISTS (SELECT 1 FROM $EVENTS_SCHEMA.venue v WHERE v.id = e.venue_id AND ${match("v.name")})",
+                    Association.ARTIST.existsWhere("name", match)
+                ).joinToString(" OR ", prefix = "(", postfix = ")")
+            params += TextSearch.params(it, bySimilarity)
         }
     }
 
@@ -319,10 +329,16 @@ class EventSearchRepository(
         fun existsClause(
             column: String = "slug",
             param: String = this.param
+        ): String = existsWhere(column) { "$it IN (:$param)" }
+
+        /** An `EXISTS` over the associated rows whose [column], qualified, satisfies [predicate]. */
+        fun existsWhere(
+            column: String,
+            predicate: (String) -> String
         ): String =
             "EXISTS (SELECT 1 FROM $EVENTS_SCHEMA.$joinTable $joinAlias " +
                 "JOIN $EVENTS_SCHEMA.$refTable $refAlias ON $refAlias.id = $joinAlias.$foreignKey " +
-                "WHERE $joinAlias.event_id = e.id AND $refAlias.$column IN (:$param))"
+                "WHERE $joinAlias.event_id = e.id AND ${predicate("$refAlias.$column")})"
     }
 
     companion object {

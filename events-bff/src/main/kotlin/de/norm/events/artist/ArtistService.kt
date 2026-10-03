@@ -1,6 +1,7 @@
 package de.norm.events.artist
 
 import de.norm.events.common.PageResponse
+import de.norm.events.common.TextSearch
 import de.norm.events.common.sanitizeSort
 import de.norm.events.image.CachedImageGate
 import kotlinx.coroutines.flow.toList
@@ -15,10 +16,11 @@ import org.springframework.transaction.annotation.Transactional
 @Service
 class ArtistService(
     private val artistRepository: ArtistRepository,
+    private val artistSearchRepository: ArtistSearchRepository,
     private val cachedImageGate: CachedImageGate
 ) {
     /**
-     * Lists artists with pagination, optionally filtered by a case-insensitive name [query].
+     * Lists artists with pagination, optionally filtered by a name [query] ([TextSearch]).
      */
     @Transactional(readOnly = true)
     suspend fun list(
@@ -26,12 +28,14 @@ class ArtistService(
         pageable: Pageable
     ): PageResponse<ArtistSummaryResponse> {
         val safePageable = pageable.sanitizeSort(SORTABLE_PROPERTIES, DEFAULT_SORT)
+        val term = TextSearch.term(query)
         val (entities, total) =
-            if (query.isNullOrBlank()) {
+            if (term == null) {
                 artistRepository.findAllBy(safePageable).toList() to artistRepository.count()
             } else {
-                artistRepository.findByNameContainingIgnoreCase(query, safePageable).toList() to
-                    artistRepository.countByNameContainingIgnoreCase(query)
+                val page = artistSearchRepository.search(term, safePageable)
+                val byId = artistRepository.findByIdIn(page.ids).toList().associateBy { it.id }
+                page.ids.mapNotNull { byId[it] } to page.total
             }
         val images = cachedImageGate.forUrls(entities.map { it.imageUrl })
         return PageResponse.of(
@@ -63,7 +67,7 @@ class ArtistService(
         private const val DETAIL_WIDTH = 704
 
         /** Entity properties a client may sort the artist list by; anything else is ignored. */
-        private val SORTABLE_PROPERTIES = setOf("name", "slug")
+        private val SORTABLE_PROPERTIES = ArtistSearchRepository.SORT_COLUMNS.keys
         private val DEFAULT_SORT = Sort.by("name")
     }
 }

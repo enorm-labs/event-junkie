@@ -8,15 +8,6 @@ interface ArtistRepository : CoroutineCrudRepository<ArtistEntity, Long> {
     /** Finds all artists with pagination and sorting applied via [pageable]. */
     fun findAllBy(pageable: Pageable): Flow<ArtistEntity>
 
-    /** Case-insensitive name search with pagination, used by the artist list/search endpoint. */
-    fun findByNameContainingIgnoreCase(
-        name: String,
-        pageable: Pageable
-    ): Flow<ArtistEntity>
-
-    /** Total count matching a case-insensitive name search, for pagination metadata. */
-    suspend fun countByNameContainingIgnoreCase(name: String): Long
-
     /** Finds a single artist by its unique slug, or null if not found. */
     suspend fun findBySlug(slug: String): ArtistEntity?
 

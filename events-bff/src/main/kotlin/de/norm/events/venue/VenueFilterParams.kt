@@ -7,7 +7,7 @@ import io.swagger.v3.oas.annotations.Parameter
  * is not here, and not paging, is a `400`; the controller derives its accepted set from this class.
  */
 data class VenueFilterParams(
-    @field:Parameter(description = "Case-insensitive substring filter on the venue name. Omitted/blank returns all venues.")
+    @field:Parameter(description = "Search on the venue name: ignores case, accents and spaces, and forgives small typos. Omitted/blank returns all venues.")
     val q: String? = null,
     @field:Parameter(
         description =
