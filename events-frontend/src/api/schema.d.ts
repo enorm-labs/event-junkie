@@ -1680,6 +1680,8 @@ export interface operations {
                 venue?: string;
                 /** @description Pre-2001 Berlin district slug (e.g. kreuzberg). Repeatable: an event at a venue in any given district matches. */
                 district?: string[];
+                /** @description Venue type slug (e.g. club). Repeatable: an event at a venue of any given type matches. An unknown type matches nothing. */
+                venueType?: string[];
                 /** @description Artist slug filter — only events featuring the matching artist. */
                 artist?: string;
                 /** @description Promoter slug filter — only events from the matching promoter. */
@@ -1781,6 +1783,8 @@ export interface operations {
                 venue?: string;
                 /** @description Pre-2001 Berlin district slug (e.g. kreuzberg). Repeatable: an event at a venue in any given district matches. */
                 district?: string[];
+                /** @description Venue type slug (e.g. club). Repeatable: an event at a venue of any given type matches. An unknown type matches nothing. */
+                venueType?: string[];
                 /** @description Artist slug filter — only events featuring the matching artist. */
                 artist?: string;
                 /** @description Promoter slug filter — only events from the matching promoter. */

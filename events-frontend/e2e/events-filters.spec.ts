@@ -66,6 +66,8 @@ function eventsResponseFor(sp: URLSearchParams) {
   if (sp.getAll('district').join() === 'kreuzberg,neukoelln')
     return eventPage(['Kreuzberg Or Neukölln'])
   if (sp.get('district') === 'neukoelln') return eventPage(['Neukölln Night'])
+  if (sp.getAll('venueType').join() === 'club,bar') return eventPage(['Club Or Bar'])
+  if (sp.get('venueType') === 'club') return eventPage(['Club Night'])
   if (sp.get('excludeSoldOut') === 'true') return eventPage(['Available Only'])
   if (sp.get('free') === 'true') return eventPage(['Free Show'])
   if (sp.get('minPrice') || sp.get('maxPrice')) return eventPage(['Cheap Gig'])
@@ -242,6 +244,28 @@ test('filters by several districts, any of them matching', async ({ page }) => {
   await expect(eventHeading(page, 'Kreuzberg Or Neukölln')).toBeVisible()
   await page.keyboard.press('Escape')
   await expect(page.getByRole('button', { name: 'Filter by district: 2 districts' })).toBeVisible()
+})
+
+test('filters by venue type, any of several', async ({ page }) => {
+  await page.goto('/events')
+  await expect(eventHeading(page, 'Default Event A')).toBeVisible()
+
+  await openMoreFilters(page)
+  await page.getByRole('button', { name: 'Filter by venue type: All venue types' }).click()
+  await page.getByRole('checkbox', { name: 'Club' }).check()
+
+  await expect(page).toHaveURL(/[?&]venueType=club\b/)
+  await expect(eventHeading(page, 'Club Night')).toBeVisible()
+
+  // The URL keeps the list's display order, whatever the order of the ticks.
+  await page.getByRole('checkbox', { name: 'Bar' }).check()
+  await expect(page).toHaveURL(/venueType=club&venueType=bar\b/)
+  await expect(eventHeading(page, 'Club Or Bar')).toBeVisible()
+  await page.keyboard.press('Escape')
+  await expect(
+    page.getByRole('button', { name: 'Filter by venue type: 2 venue types' }),
+  ).toBeVisible()
+  await expect(page.getByRole('button', { name: 'More filters (1)' })).toBeVisible()
 })
 
 test('filters by price range', async ({ page }) => {

@@ -74,7 +74,12 @@ const SELECT_ROW_CLASS = 'grid w-full grid-cols-2 gap-3 sm:flex sm:w-auto sm:fle
 const SELECT_CLASS = 'w-full min-w-0 truncate sm:w-auto'
 
 const { t } = useI18n()
-const { eventTypeOptions: typeOptions, familyOptions, districtOptions } = useFilterOptions()
+const {
+  eventTypeOptions: typeOptions,
+  familyOptions,
+  districtOptions,
+  venueTypeOptions,
+} = useFilterOptions()
 
 /**
  * The families the bar shows as chosen: the URL's, or, for a link from before families existed
@@ -150,6 +155,7 @@ const moreCount = computed(
       queryList('family').length || queryString('genre'),
       queryString('venue'),
       queryList('district').length,
+      queryList('venueType').length,
       queryString('minPrice') || queryString('maxPrice'),
       queryString('free'),
       queryString('excludeSoldOut'),
@@ -317,6 +323,17 @@ onMounted(() => {
           :options="districtOptions"
           :selected="queryList('district')"
           @change="applyFilters({ district: $event })"
+        />
+
+        <MultiSelectFilter
+          :all-label="t('events.filters.allVenueTypes')"
+          :class="SELECT_CLASS"
+          :clear-label="t('events.filters.clearVenueTypes')"
+          :count-label="(n) => t('events.filters.venueTypesSelected', { n })"
+          :label="t('events.filters.byVenueType')"
+          :options="venueTypeOptions"
+          :selected="queryList('venueType')"
+          @change="applyFilters({ venueType: $event })"
         />
       </div>
 

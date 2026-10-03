@@ -25,6 +25,10 @@ data class EventFilterParams(
         description = "Pre-2001 Berlin district slug (e.g. kreuzberg). Repeatable: an event at a venue in any given district matches."
     )
     val district: List<String>? = null,
+    @field:Parameter(
+        description = "Venue type slug (e.g. club). Repeatable: an event at a venue of any given type matches. An unknown type matches nothing."
+    )
+    val venueType: List<String>? = null,
     @field:Parameter(description = "Artist slug filter — only events featuring the matching artist.")
     val artist: String? = null,
     @field:Parameter(description = "Promoter slug filter — only events from the matching promoter.")
@@ -57,6 +61,7 @@ data class EventFilterParams(
             eventTypes = eventType.orEmpty().normalizedEventTypes(),
             venueSlug = venue,
             districts = district.orEmpty().normalizedSlugs(),
+            venueTypes = venueType.orEmpty().normalizedSlugs(),
             artistSlug = artist,
             promoterSlug = promoter,
             genreSlug = genre,
