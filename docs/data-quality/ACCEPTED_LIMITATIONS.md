@@ -90,6 +90,11 @@ says so.
 | `DISTEL`               | `EVENT_TYPE`       | the calendar names no format; ensemble Kabarett, guest shows and a talk series share one list                                                    | —     |
 | `DISTEL`               | `GENRE`            | the calendar names no genre                                                                                                                      | —     |
 | `DISTEL`               | `PROMOTERS`        | the theatre presents every performance itself                                                                                                    | —     |
+| `DOWNSTAIRS`           | `DOORS_TIME`       | the shop states one time per performance                                                                                                         | —     |
+| `DOWNSTAIRS`           | `END_TIME`         | the shop gives every performance the same 6 a.m. end                                                                                             | —     |
+| `DOWNSTAIRS`           | `ARTISTS`          | the club's own nights bill a format, and the comedians appear only in prose                                                                      | —     |
+| `DOWNSTAIRS`           | `GENRE`            | the shop names no genre                                                                                                                          | —     |
+| `DOWNSTAIRS`           | `PROMOTERS`        | the club presents every show itself                                                                                                              | —     |
 | `DRUGSTORE`            | `ARTISTS`          | the bands are named only in free prose of no fixed shape                                                                                         | —     |
 | `DRUGSTORE`            | `GENRE`            | radar files the nights under concert or party, and the style is in prose                                                                         | —     |
 | `DRUGSTORE`            | `IMAGE`            | radar serves its poster files behind an anti-bot wall, which we do not pass                                                                      | —     |

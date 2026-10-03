@@ -32,6 +32,7 @@ import de.norm.events.scraper.crackbellmer.CRACK_BELLMER_LIMITATIONS
 import de.norm.events.scraper.delphi.THEATER_IM_DELPHI_LIMITATIONS
 import de.norm.events.scraper.derweissehase.DER_WEISSE_HASE_LIMITATIONS
 import de.norm.events.scraper.distel.DISTEL_LIMITATIONS
+import de.norm.events.scraper.downstairs.DOWNSTAIRS_LIMITATIONS
 import de.norm.events.scraper.drugstore.DRUGSTORE_LIMITATIONS
 import de.norm.events.scraper.duncker.DUNCKER_LIMITATIONS
 import de.norm.events.scraper.erreichbar.ERREICHBAR_LIMITATIONS
@@ -141,6 +142,7 @@ object AcceptedLimitations {
             CRACK_BELLMER_LIMITATIONS,
             DER_WEISSE_HASE_LIMITATIONS,
             DISTEL_LIMITATIONS,
+            DOWNSTAIRS_LIMITATIONS,
             DRUGSTORE_LIMITATIONS,
             DUNCKER_LIMITATIONS,
             ERREICHBAR_LIMITATIONS,
