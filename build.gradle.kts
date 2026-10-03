@@ -156,7 +156,6 @@ subprojects {
         config.setFrom(rootProject.file("detekt.yml"))
     }
     tasks.withType<Detekt>().configureEach {
-        jvmTarget = "25"
         reports {
             html.required.set(true)
             checkstyle.required.set(false)
