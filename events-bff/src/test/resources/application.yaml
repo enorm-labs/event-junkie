@@ -8,6 +8,14 @@ spring:
   r2dbc:
     properties:
       schema: events
+    # A connection that died without the pool noticing, as when PostgreSQL restarts while the network
+    # is down, fails the first query sent on it. A round trip on acquire finds it first, and one retry
+    # per pooled connection lets every dead one be replaced before a request fails (#2318).
+    pool:
+      max-size: 10
+      validation-query: SELECT 1
+      validation-depth: remote
+      acquire-retry: 10
   flyway:
     enabled: true
     schemas: events

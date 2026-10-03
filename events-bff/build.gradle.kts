@@ -117,6 +117,8 @@ dependencies {
     // A real S3 API for the serving tests: what has to hold is that a key written by the importer
     // reads back through this client's configuration.
     testImplementation("org.testcontainers:testcontainers-minio")
+    // A TCP proxy between the BFF and PostgreSQL, so a test can reset every pooled connection (#2318).
+    testImplementation("org.testcontainers:testcontainers-toxiproxy")
 
     // Flyway (test only): the BFF owns no migrations, so integration tests run the importer's
     // against the real schema with zero DDL duplication.

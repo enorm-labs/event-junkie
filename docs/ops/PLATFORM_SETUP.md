@@ -1094,15 +1094,18 @@ installer the node booted with. [K3S_UPGRADE.md](K3S_UPGRADE.md) is the cheap pa
 
 **The trap worth knowing about is `needrestart`.** It decides whether a service running an updated library actually gets restarted, and its default is
 interactive. Run non-interactively from `unattended-upgrades`, that silently falls back to _list only_. The result is a machine that reports itself fully
-patched while every running process still has the old library mapped. `harden.sh` therefore sets `$nrconf{restart} = 'a'`, excluding k3s alone, so a patched
-library takes effect within the hour rather than at the next reboot.
+patched while every running process still has the old library mapped. `harden.sh` therefore sets `$nrconf{restart} = 'a'`, so a patched library takes effect
+within the hour rather than at the next reboot. It adds three exclusions to Ubuntu's own list, because restarting them cuts every connection on the node: k3s,
+`systemd-networkd` and PostgreSQL (#2318). The excluded services wait for the next reboot, and the timer below says when one is waiting. **Add keys to `$nrconf{override_rc}`, never assign it a new hash**: that
+replaces Ubuntu's exclusions, `dbus` and the apt units among them.
 
 **What tells you a reboot is pending, since nobody logs in for weeks at a time** ([#419](https://github.com/enorm-labs/event-junkie/issues/419)). On every
 node `harden.sh` installs `prometheus-node-exporter` bound to the private address, textfile collector only. A timer (`ej-patch-state.timer`, every ten
-minutes) writes two ages. `node_reboot_required_age_seconds` is the age of `/var/run/reboot-required`, or 0 when it is absent.
+minutes) writes three ages. `node_reboot_required_age_seconds` is the age of `/var/run/reboot-required`, or 0 when it is absent.
+`node_service_restart_pending_age_seconds` is the time since `needrestart -b -r l` first listed a service it did not restart, or 0 when it lists none.
 `node_unattended_upgrades_last_run_age_seconds` is the age of the updater's stamp file. The collector gateway scrapes both nodes on 9100: `prometheus/nodes`
-in `collector.yaml`, one target per node in each cluster's `kustomization.yaml`. Two rules in `deploy/alerts/gen_alerts.py` read them: `ej-reboot-pending`
-at three days, `ej-patching-stalled` at two. Three days of grace, because the flag appears after most kernel updates. An immediate alert is one that gets
+in `collector.yaml`, one target per node in each cluster's `kustomization.yaml`. Three rules in `deploy/alerts/gen_alerts.py` read them: `ej-reboot-pending`
+and `ej-service-restart-pending` at three days, `ej-patching-stalled` at two. Three days of grace, because the flag appears after most kernel updates. An immediate alert is one that gets
 muted. Both route where every other rule does: a mail to `alerts@` and a row in `alert_history`. A kernel CVE with no reboot is otherwise indistinguishable from
 being patched.
 

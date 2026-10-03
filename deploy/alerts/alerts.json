@@ -720,6 +720,36 @@
     ]
   },
   {
+    "name": "ej-service-restart-pending",
+    "org_id": "default",
+    "stream_type": "metrics",
+    "stream_name": "node_service_restart_pending_age_seconds",
+    "is_real_time": false,
+    "enabled": true,
+    "description": "A node has had a service waiting more than three days for a restart onto an updated library. needrestart does not restart k3s, systemd-networkd or PostgreSQL, so the old library stays loaded until a reboot. `sudo needrestart -b -r l` on that node lists them; reboot it as `docs/ops/PLATFORM_SETUP.md` \u00a78b says. Which node: the `node` label.",
+    "query_condition": {
+      "type": "promql",
+      "promql": "sum(max by (node) (node_service_restart_pending_age_seconds) > bool 3 * 86400)",
+      "promql_condition": {
+        "column": "value",
+        "operator": ">",
+        "value": 0
+      }
+    },
+    "trigger_condition": {
+      "period": 60,
+      "frequency": 60,
+      "frequency_type": "minutes",
+      "operator": ">=",
+      "threshold": 1,
+      "silence": 1440
+    },
+    "destinations": [
+      "record-only",
+      "email"
+    ]
+  },
+  {
     "name": "ej-patching-stalled",
     "org_id": "default",
     "stream_type": "metrics",
