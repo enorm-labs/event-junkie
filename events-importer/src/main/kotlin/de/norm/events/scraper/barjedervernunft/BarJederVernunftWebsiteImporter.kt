@@ -7,8 +7,8 @@ import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.LimitedAspect
-import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.VenueLimitations
+import de.norm.events.scraper.enrichFromSharedPages
 import de.norm.events.scraper.scrapeListingPages
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
@@ -32,8 +32,8 @@ import org.springframework.stereotype.Component
  * 20+ times per import, which the per-host politeness throttle would (rightly) serialise into
  * a slow, pointless crawl.
  *
- * A show page that cannot be fetched or parsed is not fatal: those dates keep the calendar
- * data, losing only genre, price and full blurb.
+ * A show page that cannot be fetched or parsed is not fatal: those dates keep the calendar data
+ * and are flagged, so the upsert keeps the genre, price and blurb stored last time.
  *
  * The venue also publishes an iCal feed, the cleaner source — but `robots.txt` disallows
  * `/de/ical/`, so it is not fetched.
@@ -77,34 +77,12 @@ class BarJederVernunftWebsiteImporter(
                 logger.info { "Scraped ${calendar.events.size} performance date(s) from Bar jeder Vernunft" }
 
                 ImportResult.Success(
-                    events = enrichFromShowPages(calendar.events),
+                    events = htmlFetcher.enrichFromSharedPages(calendar.events, showPageScraper::scrape, BarJederVernunftShow::applyTo),
                     etag = fetchResult.etag,
                     lastModified = fetchResult.lastModified,
                     complete = calendar.complete
                 )
             }
-        }
-
-    /**
-     * Fetches each distinct show page once and applies it to every date of that show. The
-     * de-duplication is the point: `sourceUrl` is the show's page, shared by all its dates.
-     */
-    private suspend fun enrichFromShowPages(events: List<ScrapedEvent>): List<ScrapedEvent> {
-        val showUrls = events.map { it.sourceUrl }.distinct()
-        logger.info { "Fetching ${showUrls.size} distinct show page(s) for ${events.size} performance date(s)" }
-
-        val showsByUrl = showUrls.associateWith { fetchShow(it) }
-        return events.map { event -> showsByUrl[event.sourceUrl]?.applyTo(event) ?: event }
-    }
-
-    /** Fetches and parses one show page, degrading to `null` so its dates keep the calendar data. */
-    @Suppress("TooGenericExceptionCaught") // Intentional: a broken show page must not fail the whole import
-    private suspend fun fetchShow(url: String): BarJederVernunftShow? =
-        try {
-            showPageScraper.scrape(htmlFetcher.fetchDocument(url))
-        } catch (e: Exception) {
-            logger.warn(e) { "Failed to fetch show page $url, keeping calendar data only" }
-            null
         }
 
     private companion object {

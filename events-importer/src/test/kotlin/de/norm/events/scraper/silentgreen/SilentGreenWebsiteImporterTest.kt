@@ -156,6 +156,8 @@ class SilentGreenWebsiteImporterTest {
             val concert = result.events.first { it.sourceId == "silent_green:2026-08-02-htrk" }
             concert.title shouldBe "HTRK + Loraine James"
             concert.doorsTime.shouldBeNull()
+            concert.detailUnavailable shouldBe true
+            result.events.first { it.sourceUrl == detailUrl("bjoern-melhus-lost-in-finity") }.detailUnavailable shouldBe false
         }
 
     @Test

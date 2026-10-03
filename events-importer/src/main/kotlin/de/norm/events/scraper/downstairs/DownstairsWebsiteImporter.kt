@@ -9,7 +9,7 @@ import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.ListingPage
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.VenueLimitations
-import de.norm.events.scraper.readEventPage
+import de.norm.events.scraper.enrichFromSharedPages
 import de.norm.events.scraper.walkListingPages
 import de.norm.events.scraper.withQueryParameter
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -60,13 +60,10 @@ class DownstairsWebsiteImporter(
         return ImportResult.Success(events = events, etag = null, lastModified = null, complete = walked.complete)
     }
 
-    private suspend fun enrichFromTicketPages(events: List<ScrapedEvent>): List<ScrapedEvent> {
-        val shows = events.groupBy { it.title }.mapValues { (_, performances) -> htmlFetcher.readEventPage(performances.first(), ticketScraper::scrape) }
-        return events.map { event ->
-            shows[event.title]?.let { show -> event.copy(description = show.description, imageUrl = show.imageUrl, pricePresale = show.price) }
-                ?: event.copy(detailUnavailable = true)
-        }
-    }
+    private suspend fun enrichFromTicketPages(events: List<ScrapedEvent>): List<ScrapedEvent> =
+        htmlFetcher.enrichFromSharedPages(events, ticketScraper::scrape, { show, event ->
+            event.copy(description = show.description, imageUrl = show.imageUrl, pricePresale = show.price)
+        }, key = ScrapedEvent::title)
 
     private companion object {
         const val FRAME = "tickets"

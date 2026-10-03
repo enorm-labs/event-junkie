@@ -11,6 +11,7 @@ import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.VenueLimitations
 import de.norm.events.scraper.attrAt
 import de.norm.events.scraper.collapseExhibitionRuns
+import de.norm.events.scraper.enrichFromSharedPages
 import de.norm.events.scraper.resolveUrl
 import de.norm.events.scraper.walkListingPages
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -28,8 +29,9 @@ import org.springframework.stereotype.Component
  * alone 23, so each page is fetched once and applied to every day ([SilentGreenEventDetails.applyTo]),
  * where a per-event fetch would be serialised by the politeness throttle; an exhibition's days
  * then fold into one event ([collapseExhibitionRuns], ADR-029, #337), a festival's stay apart.
- * A failed detail page is not fatal. Conditional requests are not used: `Cache-Control: private,
- * no-store` with neither validator, and a 304 on the entry page says nothing about later months.
+ * A failed detail page is not fatal: its days are flagged, so the upsert keeps the fields it
+ * stored. Conditional requests are not used: `Cache-Control: private, no-store` with neither
+ * validator, and a 304 on the entry page says nothing about later months.
  *
  * @see SilentGreenMonthPageScraper for the per-month calendar parsing.
  * @see SilentGreenDetailPageScraper for the run-level detail parsing.
@@ -60,9 +62,11 @@ class SilentGreenWebsiteImporter(
         logger.info { "Scraped ${distinct.size} silent green event(s) across ${listing.pages} month page(s) from $url" }
         // An exhibition's days share one page, and the page's date block is the run (ADR-029, #337).
         val runs =
-            enrichFromDetailPages(distinct).collapseExhibitionRuns { event ->
-                "${EventSource.SILENT_GREEN.sourceIdPrefix}${silentGreenDetailSlug(event.sourceUrl)}"
-            }
+            htmlFetcher
+                .enrichFromSharedPages(distinct, detailPageScraper::scrape, SilentGreenEventDetails::applyTo)
+                .collapseExhibitionRuns { event ->
+                    "${EventSource.SILENT_GREEN.sourceIdPrefix}${silentGreenDetailSlug(event.sourceUrl)}"
+                }
         return ImportResult.Success(events = runs, etag = null, lastModified = null, complete = listing.complete)
     }
 
@@ -71,28 +75,6 @@ class SilentGreenWebsiteImporter(
         document: Document,
         pageUrl: String
     ): String? = document.attrAt(".arrow-next a", "href")?.let { resolveUrl(pageUrl, it.substringBefore('#')) }
-
-    /**
-     * Fetches each distinct detail page once and applies it to every day of that run; `sourceUrl`
-     * is the run's page.
-     */
-    private suspend fun enrichFromDetailPages(events: List<ScrapedEvent>): List<ScrapedEvent> {
-        val detailUrls = events.map { it.sourceUrl }.distinct()
-        logger.info { "Fetching ${detailUrls.size} distinct detail page(s) for ${events.size} listed day(s)" }
-
-        val detailsByUrl = detailUrls.associateWith { fetchDetails(it) }
-        return events.map { event -> detailsByUrl[event.sourceUrl]?.applyTo(event) ?: event }
-    }
-
-    /** Fetches and parses one detail page, degrading to `null` so its days keep the calendar data. */
-    @Suppress("TooGenericExceptionCaught") // Intentional: a broken detail page must not fail the whole import
-    private suspend fun fetchDetails(url: String): SilentGreenEventDetails? =
-        try {
-            detailPageScraper.scrape(htmlFetcher.fetchDocument(url))
-        } catch (e: Exception) {
-            logger.warn(e) { "Failed to fetch silent green detail page $url, keeping calendar data only" }
-            null
-        }
 
     private companion object {
         /**

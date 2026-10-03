@@ -50,7 +50,8 @@ SO36,
   extend `AbstractSinglePageWebsiteImporter(htmlFetcher, "<Venue>", <Venue>OverviewPageScraper()::scrape)`, which owns the conditional fetch and the
   `NotModified` case; to add fields from each event's own page, override `enrichFromEventPage` with a parser. **Never fetch an event page
   yourself**: the hook, or `withEventPageOrFlagged` in an importer that implements `EventImporter` directly, owns the catch, the `WARN` and the
-  `detailUnavailable` flag that keeps the stored fields when the page fails. List+detail: extend `AbstractTwoPageWebsiteImporter`,
+  `detailUnavailable` flag that keeps the stored fields when the page fails. A performance listing whose rows share one page per production uses
+  `enrichFromSharedPages`, which reads each page once and flags every row of a failed one. List+detail: extend `AbstractTwoPageWebsiteImporter`,
   pass `<Venue>OverviewPageScraper()::scrape` and `<Venue>DetailPageScraper()::scrape` to its constructor. Override `fillGapsFromOverview` only where the listing is authoritative for a field, as `primary.withGapsFrom(fallback).copy(…)`; the default fills every gap from the listing. `override val eventSource = EventSource.<VENUE>`.
 
 **The importer's and scrapers' KDoc is the one home for the source** — platform, pages read and why, the traps, why a selector was chosen. Under 20 comment

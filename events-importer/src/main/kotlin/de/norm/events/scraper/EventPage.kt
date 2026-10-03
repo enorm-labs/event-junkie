@@ -41,3 +41,24 @@ suspend fun <T : Any> HtmlFetcher.readEventPage(
         }
         null
     }
+
+/**
+ * [events] enriched from the pages they share: a performance listing whose rows link one page per
+ * production. Each distinct [key] (the page URL by default) is fetched once, through its first row,
+ * with [readEventPage]; [apply] copies the page onto every row that shares it. A page that fails or
+ * parses to null flags every one of its rows, as [withEventPageOrFlagged] flags one (#2518).
+ */
+suspend fun <T : Any> HtmlFetcher.enrichFromSharedPages(
+    events: List<ScrapedEvent>,
+    parse: (Document) -> T?,
+    apply: (T, ScrapedEvent) -> ScrapedEvent,
+    pageOwnsImage: Boolean = false,
+    key: (ScrapedEvent) -> Any = ScrapedEvent::sourceUrl
+): List<ScrapedEvent> {
+    val groups = events.groupBy(key)
+    logger.info { "Fetching ${groups.size} shared page(s) for ${events.size} event(s)" }
+    val pages = groups.mapValues { (_, rows) -> readEventPage(rows.first(), parse) }
+    return events.map { event ->
+        pages[key(event)]?.let { apply(it, event) } ?: event.copy(detailUnavailable = true, listingImageStandsIn = pageOwnsImage)
+    }
+}

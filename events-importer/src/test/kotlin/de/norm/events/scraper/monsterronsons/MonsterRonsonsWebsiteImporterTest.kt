@@ -130,6 +130,7 @@ class MonsterRonsonsWebsiteImporterTest {
             val opener = result.events.first { it.sourceId == "monster_ronsons:2026-08-06-sing-with-fauxpas-2" }
             opener.title shouldBe "SING WITH IVANKA TRAMP"
             opener.description.shouldBeNull()
+            result.events.forEach { it.detailUnavailable shouldBe true }
         }
 
     @Test
