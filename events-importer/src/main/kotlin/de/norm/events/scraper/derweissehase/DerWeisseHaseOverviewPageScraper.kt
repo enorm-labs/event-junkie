@@ -13,6 +13,7 @@ import de.norm.events.scraper.derweissehase.DerWeisseHaseOverviewPageScraper.Com
 import de.norm.events.scraper.derweissehase.DerWeisseHaseOverviewPageScraper.Companion.RA_EVENT_URL
 import de.norm.events.scraper.derweissehase.DerWeisseHaseOverviewPageScraper.Companion.UNANNOUNCED_SLOT_PATTERN
 import de.norm.events.scraper.isNonArtistName
+import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseGermanDate
 import de.norm.events.scraper.parseGermanWeekday
 import de.norm.events.scraper.parseTime
@@ -78,14 +79,8 @@ class DerWeisseHaseOverviewPageScraper {
         val blocks = document.select("div.event50:has(.eventrahm)")
         logger.info { "Found ${blocks.size} event block(s) on Der Weiße Hase listing" }
 
-        @Suppress("TooGenericExceptionCaught") // Intentional: skip individual malformed blocks without aborting the whole import
-        return blocks.mapNotNull { block ->
-            try {
-                parseBlock(block, baseUrl)
-            } catch (e: Exception) {
-                logger.warn(e) { "Failed to parse Der Weiße Hase event block, skipping" }
-                null
-            }
+        return blocks.mapSkippingFailures(logger, "Der Weiße Hase event block") { block ->
+            parseBlock(block, baseUrl)
         }
     }
 

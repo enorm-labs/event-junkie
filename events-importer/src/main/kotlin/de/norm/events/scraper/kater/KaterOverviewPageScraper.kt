@@ -13,6 +13,7 @@ import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.inferYearForWeekday
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.isScreeningTitle
+import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseGermanWeekdayAbbreviation
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.splitSegmentOnConjunctions
@@ -66,14 +67,8 @@ class KaterOverviewPageScraper(
         val articles = document.select("article.event")
         logger.info { "Found ${articles.size} event article(s) on Kater homepage" }
 
-        @Suppress("TooGenericExceptionCaught") // Intentional: skip individual malformed articles without aborting the whole import
-        return articles.mapNotNull { article ->
-            try {
-                parseArticle(article, baseUrl)
-            } catch (e: Exception) {
-                logger.warn(e) { "Failed to parse event article, skipping" }
-                null
-            }
+        return articles.mapSkippingFailures(logger, "event article") { article ->
+            parseArticle(article, baseUrl)
         }
     }
 

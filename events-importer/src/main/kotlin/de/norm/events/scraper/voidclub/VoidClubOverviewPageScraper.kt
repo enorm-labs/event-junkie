@@ -10,6 +10,7 @@ import de.norm.events.scraper.attrAt
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.inferYearForWeekday
 import de.norm.events.scraper.isNonArtistName
+import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.resolveUrl
 import de.norm.events.scraper.stripArtistSuffix
 import de.norm.events.scraper.textAt
@@ -69,14 +70,8 @@ class VoidClubOverviewPageScraper(
         logger.info { "Found ${cards.size} event card(s) on VOID Club homepage" }
         val teasers = teaserImages(document, baseUrl)
 
-        @Suppress("TooGenericExceptionCaught") // Intentional: skip individual malformed cards without aborting the whole import
-        return cards.mapNotNull { card ->
-            try {
-                parseCard(card, baseUrl, teasers)
-            } catch (e: Exception) {
-                logger.warn(e) { "Failed to parse VOID Club event card, skipping" }
-                null
-            }
+        return cards.mapSkippingFailures(logger, "VOID Club event card") { card ->
+            parseCard(card, baseUrl, teasers)
         }
     }
 

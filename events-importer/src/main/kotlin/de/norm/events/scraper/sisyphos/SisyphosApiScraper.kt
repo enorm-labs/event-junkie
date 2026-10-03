@@ -5,6 +5,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.cleanEventTitle
+import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseGermanDate
 import de.norm.events.scraper.parseGermanMonthAbbreviation
 import de.norm.events.scraper.resolveUrl
@@ -41,16 +42,10 @@ class SisyphosApiScraper {
         val products = parseProducts(json) ?: return emptyList()
         logger.info { "Found ${products.size()} product(s) in Sisyphos ticket feed" }
 
-        @Suppress("TooGenericExceptionCaught") // Intentional: skip individual malformed products without aborting the import
         return products
             .filter { it.stringOrNull("product_type") == TICKET_TYPE }
-            .mapNotNull { node ->
-                try {
-                    parseProduct(node, baseUrl)
-                } catch (e: Exception) {
-                    logger.warn(e) { "Failed to parse Sisyphos product, skipping" }
-                    null
-                }
+            .mapSkippingFailures(logger, "Sisyphos product") { node ->
+                parseProduct(node, baseUrl)
             }
     }
 

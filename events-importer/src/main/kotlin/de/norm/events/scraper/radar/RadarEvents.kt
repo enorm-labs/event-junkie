@@ -3,6 +3,7 @@ package de.norm.events.scraper.radar
 import de.norm.events.event.EventType
 import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.htmlParagraphText
+import de.norm.events.scraper.mapSkippingFailures
 import io.github.oshai.kotlinlogging.KotlinLogging
 import tools.jackson.databind.JsonNode
 import tools.jackson.databind.json.JsonMapper
@@ -77,13 +78,8 @@ fun parseRadarEvents(
     val rows = root.path("result").let { if (it.isObject) it.properties().toList() else emptyList() }
     val events =
         rows
-            .mapNotNull { (key, row) ->
-                try {
-                    parseRow(key.toLongOrNull(), row, venue)
-                } catch (e: Exception) {
-                    logger.warn(e) { "Failed to parse a $venue radar row, skipping" }
-                    null
-                }
+            .mapSkippingFailures(logger, "a $venue radar row") { (key, row) ->
+                parseRow(key.toLongOrNull(), row, venue)
             }.filter { event -> event.categories.any { it in PROGRAMME_CATEGORIES } }
             .sortedBy { it.nodeId }
             .distinctBy { it.start to it.title.lowercase() }

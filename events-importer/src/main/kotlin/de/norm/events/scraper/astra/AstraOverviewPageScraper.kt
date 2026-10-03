@@ -8,6 +8,7 @@ import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.imgSrcAt
 import de.norm.events.scraper.mapEventType
+import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseEventStatus
 import de.norm.events.scraper.parseGermanShortDate
 import de.norm.events.scraper.parseRealDate
@@ -60,15 +61,9 @@ class AstraOverviewPageScraper {
         val articles = document.select("article.event")
         logger.info { "Found ${articles.size} event article(s) on overview page" }
 
-        @Suppress("TooGenericExceptionCaught") // Intentional: skip individual malformed events without aborting the entire import
         val events =
-            articles.mapNotNull { article ->
-                try {
-                    parseArticle(article, baseUrl)
-                } catch (e: Exception) {
-                    logger.warn(e) { "Failed to parse event article, skipping" }
-                    null
-                }
+            articles.mapSkippingFailures(logger, "event article") { article ->
+                parseArticle(article, baseUrl)
             }
         return normalizeFestivalDays(events)
     }

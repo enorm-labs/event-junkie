@@ -12,6 +12,7 @@ import de.norm.events.scraper.dropPastEvents
 import de.norm.events.scraper.imgSrcAt
 import de.norm.events.scraper.inferUnmarkedTitleType
 import de.norm.events.scraper.isNonArtistName
+import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.resolveUrl
 import de.norm.events.scraper.splitSupportActs
@@ -70,15 +71,9 @@ class CrackBellmerOverviewPageScraper(
         val items = document.select("[role=list] .event-item")
         logger.info { "Found ${items.size} event item(s) on Crack Bellmer programme" }
 
-        @Suppress("TooGenericExceptionCaught") // Intentional: skip individual malformed items without aborting the whole import
         val events =
-            items.mapNotNull { item ->
-                try {
-                    parseItem(item, sourceUrl)
-                } catch (e: Exception) {
-                    logger.warn(e) { "Failed to parse Crack Bellmer event item, skipping" }
-                    null
-                }
+            items.mapSkippingFailures(logger, "Crack Bellmer event item") { item ->
+                parseItem(item, sourceUrl)
             }
 
         return events.dropPastEvents(clock) { dropped ->

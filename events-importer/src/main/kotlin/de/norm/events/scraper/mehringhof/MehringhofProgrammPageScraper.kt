@@ -5,6 +5,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.WHITESPACE
 import de.norm.events.scraper.buildArtistsForEventType
+import de.norm.events.scraper.mapSkippingFailures
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
@@ -43,14 +44,8 @@ class MehringhofProgrammPageScraper {
                 ?.get(YEAR)
                 ?.toInt()
 
-        @Suppress("TooGenericExceptionCaught") // Intentional: one malformed row must not abort the month
-        return rows.mapNotNull { row ->
-            try {
-                parseRow(row, baseUrl, pageYear)
-            } catch (e: Exception) {
-                logger.warn(e) { "Failed to parse Mehringhof row, skipping" }
-                null
-            }
+        return rows.mapSkippingFailures(logger, "Mehringhof row") { row ->
+            parseRow(row, baseUrl, pageYear)
         }
     }
 

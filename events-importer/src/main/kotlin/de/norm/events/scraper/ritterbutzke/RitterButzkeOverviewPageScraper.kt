@@ -8,6 +8,7 @@ import de.norm.events.scraper.attrAt
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.imgSrcAt
+import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseGermanShortDate
 import de.norm.events.scraper.resolveUrl
 import de.norm.events.scraper.textAt
@@ -46,14 +47,8 @@ class RitterButzkeOverviewPageScraper {
         val cards = document.select("div:has(> div > a.event-link[href])")
         logger.info { "Found ${cards.size} event card(s) on Ritter Butzke overview" }
 
-        @Suppress("TooGenericExceptionCaught") // Intentional: skip individual malformed cards without aborting the import
-        return cards.mapNotNull { card ->
-            try {
-                parseCard(card, baseUrl)
-            } catch (e: Exception) {
-                logger.warn(e) { "Failed to parse Ritter Butzke event card, skipping" }
-                null
-            }
+        return cards.mapSkippingFailures(logger, "Ritter Butzke event card") { card ->
+            parseCard(card, baseUrl)
         }
     }
 

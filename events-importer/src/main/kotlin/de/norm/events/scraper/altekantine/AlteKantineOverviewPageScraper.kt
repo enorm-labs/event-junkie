@@ -10,6 +10,7 @@ import de.norm.events.scraper.inferUnmarkedTitleType
 import de.norm.events.scraper.inferYearForWeekday
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.mapEventType
+import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.resolveUrl
 import de.norm.events.scraper.textAt
@@ -62,14 +63,8 @@ class AlteKantineOverviewPageScraper(
         val items = document.select(".pt-cv-content-item")
         logger.info { "Found ${items.size} event item(s) on overview page" }
 
-        @Suppress("TooGenericExceptionCaught") // Intentional: skip individual malformed events without aborting the entire import
-        return items.mapNotNull { item ->
-            try {
-                parseItem(item, baseUrl)
-            } catch (e: Exception) {
-                logger.warn(e) { "Failed to parse event item, skipping" }
-                null
-            }
+        return items.mapSkippingFailures(logger, "event item") { item ->
+            parseItem(item, baseUrl)
         }
     }
 

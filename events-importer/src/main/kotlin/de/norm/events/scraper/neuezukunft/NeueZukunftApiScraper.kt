@@ -12,6 +12,7 @@ import de.norm.events.scraper.elfsight.elfsightOccurrenceDates
 import de.norm.events.scraper.elfsight.parseElfsightDate
 import de.norm.events.scraper.elfsight.parseElfsightEventNodes
 import de.norm.events.scraper.elfsight.repeats
+import de.norm.events.scraper.flatMapSkippingFailures
 import de.norm.events.scraper.headlinersFromTitle
 import de.norm.events.scraper.htmlParagraphText
 import de.norm.events.scraper.isFestivalTitle
@@ -75,15 +76,9 @@ class NeueZukunftApiScraper(
         val eventNodes = parseElfsightEventNodes(jsonMapper, json, VENUE_NAME) ?: return emptyList()
         logger.info { "Found ${eventNodes.size} event(s) in Neue Zukunft widget response" }
 
-        @Suppress("TooGenericExceptionCaught") // Intentional: skip individual malformed events without aborting the import.
         val parsed =
-            eventNodes.flatMap { node ->
-                try {
-                    parseEvent(jsonMapper.treeToValue(node, ElfsightEventNode::class.java))
-                } catch (e: Exception) {
-                    logger.warn(e) { "Failed to parse Neue Zukunft event, skipping" }
-                    emptyList()
-                }
+            eventNodes.flatMapSkippingFailures(logger, "Neue Zukunft event") { node ->
+                parseEvent(jsonMapper.treeToValue(node, ElfsightEventNode::class.java))
             }
 
         return parsed

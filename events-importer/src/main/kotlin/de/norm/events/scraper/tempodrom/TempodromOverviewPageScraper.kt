@@ -10,6 +10,7 @@ import de.norm.events.scraper.decodeHtmlEntities
 import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.inferConcertVenueType
 import de.norm.events.scraper.jsonLdEvents
+import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.schemaDate
 import de.norm.events.scraper.schemaImageUrl
 import de.norm.events.scraper.schemaName
@@ -63,15 +64,9 @@ class TempodromOverviewPageScraper {
         val nodes = document.jsonLdEvents()
         logger.info { "Found ${nodes.size} schema.org Event object(s) on the Tempodrom programme" }
 
-        @Suppress("TooGenericExceptionCaught") // Intentional: skip individual malformed objects without aborting the whole import
         val parsed =
-            nodes.mapNotNull { node ->
-                try {
-                    parseEvent(node)
-                } catch (e: Exception) {
-                    logger.warn(e) { "Failed to parse Tempodrom event, skipping" }
-                    null
-                }
+            nodes.mapSkippingFailures(logger, "Tempodrom event") { node ->
+                parseEvent(node)
             }
         val (sport, ours) = parsed.partition(::isTempodromSport)
         if (sport.isNotEmpty()) {

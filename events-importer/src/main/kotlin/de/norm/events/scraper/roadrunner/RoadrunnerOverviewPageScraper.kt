@@ -10,6 +10,7 @@ import de.norm.events.scraper.inferYearForWeekday
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.labelledClock
 import de.norm.events.scraper.labelledClockPattern
+import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseGermanWeekday
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.resolveUrl
@@ -78,15 +79,9 @@ class RoadrunnerOverviewPageScraper(
         val blocks = splitIntoEventBlocks(document.select("p"))
         logger.info { "Found ${blocks.size} event block(s) on Roadrunner programme" }
 
-        @Suppress("TooGenericExceptionCaught") // Intentional: skip individual malformed blocks without aborting the whole import
         val parsed =
-            blocks.mapNotNull { block ->
-                try {
-                    parseBlock(block, baseUrl)
-                } catch (e: Exception) {
-                    logger.warn(e) { "Failed to parse event block, skipping" }
-                    null
-                }
+            blocks.mapSkippingFailures(logger, "event block") { block ->
+                parseBlock(block, baseUrl)
             }
 
         return parsed

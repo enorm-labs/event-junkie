@@ -10,6 +10,7 @@ import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.imgSrcAt
 import de.norm.events.scraper.inferConcertVenueType
+import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseIsoDate
 import de.norm.events.scraper.resolveUrl
 import de.norm.events.scraper.textAt
@@ -48,14 +49,8 @@ class WuhlheideOverviewPageScraper {
         val shows = document.select(".shows .show")
         logger.info { "Found ${shows.size} show(s) on Parkbühne Wuhlheide overview" }
 
-        @Suppress("TooGenericExceptionCaught") // Intentional: skip individual malformed shows without aborting the import
-        return shows.mapNotNull { show ->
-            try {
-                parseShow(show, baseUrl)
-            } catch (e: Exception) {
-                logger.warn(e) { "Failed to parse Parkbühne Wuhlheide show, skipping" }
-                null
-            }
+        return shows.mapSkippingFailures(logger, "Parkbühne Wuhlheide show") { show ->
+            parseShow(show, baseUrl)
         }
     }
 

@@ -9,6 +9,7 @@ import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.inferYearForWeekday
 import de.norm.events.scraper.isNonArtistName
+import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseGermanWeekdayAbbreviation
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.resolveUrl
@@ -79,14 +80,8 @@ class GartnOverviewPageScraper(
         val blocks = document.select("div.container-component").filter { DATE_HEADING.matches(dateHeading(it)) }
         logger.info { "Found ${blocks.size} event block(s) on the gART.n programme" }
 
-        @Suppress("TooGenericExceptionCaught") // Intentional: skip individual malformed blocks without aborting the whole import
-        return blocks.mapNotNull { block ->
-            try {
-                parseBlock(block, baseUrl)
-            } catch (e: Exception) {
-                logger.warn(e) { "Failed to parse gART.n event block, skipping" }
-                null
-            }
+        return blocks.mapSkippingFailures(logger, "gART.n event block") { block ->
+            parseBlock(block, baseUrl)
         }
     }
 

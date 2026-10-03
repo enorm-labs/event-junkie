@@ -9,6 +9,7 @@ import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.imgSrcAt
 import de.norm.events.scraper.inferVenueFormatType
 import de.norm.events.scraper.inferYearForWeekday
+import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseGermanWeekday
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.resolveUrl
@@ -42,14 +43,8 @@ class TiffanyClubOverviewPageScraper(
         val items = document.select(".e-loop-item.type-event")
         logger.info { "Found ${items.size} event item(s) on the Tiffany Club listing" }
 
-        @Suppress("TooGenericExceptionCaught") // Intentional: skip one malformed item without aborting the import
-        return items.mapNotNull { item ->
-            try {
-                parseItem(item, sourceUrl)
-            } catch (e: Exception) {
-                logger.warn(e) { "Failed to parse a Tiffany Club event item, skipping" }
-                null
-            }
+        return items.mapSkippingFailures(logger, "a Tiffany Club event item") { item ->
+            parseItem(item, sourceUrl)
         }
     }
 

@@ -14,6 +14,7 @@ import de.norm.events.scraper.hasSoldOutMarker
 import de.norm.events.scraper.headlinersFromTitle
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.mapEventType
+import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseTitleStatus
 import de.norm.events.scraper.refineConcertVenueType
 import de.norm.events.scraper.stringOrNull
@@ -123,15 +124,7 @@ internal class Bogen47ApiScraper(
         val today = LocalDate.now(clock)
         val dates = posts.mapNotNull { parseDateTime(it.path("date").asString("")) }
         val entries =
-            posts.mapNotNull { post ->
-                @Suppress("TooGenericExceptionCaught") // Skip one malformed post without losing the page.
-                try {
-                    parsePost(post, today)
-                } catch (e: Exception) {
-                    logger.warn(e) { "Failed to parse a $eventSource event, skipping" }
-                    null
-                }
-            }
+            posts.mapSkippingFailures(logger, "a $eventSource event") { post -> parsePost(post, today) }
 
         return Bogen47Page(entries = entries, postCount = posts.size, oldestDate = dates.minOrNull()?.toLocalDate())
     }

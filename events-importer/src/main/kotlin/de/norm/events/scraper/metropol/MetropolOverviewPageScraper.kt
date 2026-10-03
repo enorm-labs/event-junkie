@@ -14,6 +14,7 @@ import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.headlinersFromTitle
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.mapEventType
+import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseEventStatus
 import de.norm.events.scraper.parseGermanMonthAbbreviation
 import de.norm.events.scraper.parseIsoDate
@@ -59,14 +60,8 @@ class MetropolOverviewPageScraper {
         val rows = document.select("ul.eventlist li.event")
         logger.info { "Found ${rows.size} event row(s) on Metropol overview" }
 
-        @Suppress("TooGenericExceptionCaught") // Intentional: skip individual malformed rows without aborting the import
-        return rows.mapNotNull { row ->
-            try {
-                parseRow(row, baseUrl)
-            } catch (e: Exception) {
-                logger.warn(e) { "Failed to parse Metropol event row, skipping" }
-                null
-            }
+        return rows.mapSkippingFailures(logger, "Metropol event row") { row ->
+            parseRow(row, baseUrl)
         }
     }
 

@@ -19,6 +19,7 @@ import de.norm.events.scraper.inferConcertVenueType
 import de.norm.events.scraper.isFestivalTitle
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.labelledClock
+import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseEventStatus
 import de.norm.events.scraper.parseGermanDate
 import de.norm.events.scraper.parseGermanWeekdayAbbreviation
@@ -70,14 +71,8 @@ class GretchenOverviewPageScraper {
         val gigs = document.select("div.gig")
         logger.info { "Found ${gigs.size} gig block(s) on Gretchen homepage" }
 
-        @Suppress("TooGenericExceptionCaught") // Intentional: skip individual malformed events without aborting the import
-        return gigs.mapNotNull { gig ->
-            try {
-                parseGig(gig, baseUrl)
-            } catch (e: Exception) {
-                logger.warn(e) { "Failed to parse Gretchen gig block, skipping" }
-                null
-            }
+        return gigs.mapSkippingFailures(logger, "Gretchen gig block") { gig ->
+            parseGig(gig, baseUrl)
         }
     }
 

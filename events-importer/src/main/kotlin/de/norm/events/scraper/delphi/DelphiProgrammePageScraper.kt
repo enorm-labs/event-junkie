@@ -10,6 +10,7 @@ import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.imgSrcAt
 import de.norm.events.scraper.mapEventType
+import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseGermanMonthAbbreviation
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.resolveUrl
@@ -57,7 +58,6 @@ class DelphiProgrammePageScraper {
     ): List<ScrapedEvent> {
         val records = parseDelphiEventRecords(document)
 
-        @Suppress("TooGenericExceptionCaught") // Intentional: skip individual malformed rows without aborting the import
         val events =
             document.select("h2.month").flatMap { heading ->
                 val month = parseMonthHeading(heading.text())
@@ -65,13 +65,8 @@ class DelphiProgrammePageScraper {
                     logger.warn { "Delphi month heading '${heading.text()}' is not a month, skipping its rows" }
                     emptyList()
                 } else {
-                    rowsUnder(heading).mapNotNull { row ->
-                        try {
-                            parseRow(row, month, baseUrl, records)
-                        } catch (e: Exception) {
-                            logger.warn(e) { "Failed to parse Delphi performance row, skipping" }
-                            null
-                        }
+                    rowsUnder(heading).mapSkippingFailures(logger, "Delphi performance row") { row ->
+                        parseRow(row, month, baseUrl, records)
                     }
                 }
             }

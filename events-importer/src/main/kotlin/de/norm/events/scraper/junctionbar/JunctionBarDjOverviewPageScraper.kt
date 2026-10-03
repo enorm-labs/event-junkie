@@ -6,6 +6,7 @@ import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.inferYearForWeekday
 import de.norm.events.scraper.isNonArtistName
+import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseEnglishWeekdayAbbreviation
 import de.norm.events.slug.SlugGenerator
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -57,14 +58,8 @@ class JunctionBarDjOverviewPageScraper(
         val groups = segmentIntoNights(container, ::isDateBar)
         logger.info { "Found ${groups.size} dated night(s) on Junction Bar DJ page" }
 
-        @Suppress("TooGenericExceptionCaught") // Intentional: skip individual malformed nights without aborting the whole import.
-        return groups.mapNotNull { group ->
-            try {
-                parseNight(group, baseUrl)
-            } catch (e: Exception) {
-                logger.warn(e) { "Failed to parse Junction Bar DJ night, skipping" }
-                null
-            }
+        return groups.mapSkippingFailures(logger, "Junction Bar DJ night") { group ->
+            parseNight(group, baseUrl)
         }
     }
 

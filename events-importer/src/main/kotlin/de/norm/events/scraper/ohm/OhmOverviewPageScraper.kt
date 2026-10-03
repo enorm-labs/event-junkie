@@ -8,6 +8,7 @@ import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.imgSrcAt
 import de.norm.events.scraper.inferYearForWeekday
 import de.norm.events.scraper.isNonArtistName
+import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.splitBackToBack
 import de.norm.events.scraper.textAt
@@ -56,14 +57,8 @@ class OhmOverviewPageScraper(
         val items = document.select("ul.event-list li.event-item")
         logger.info { "Found ${items.size} event item(s) on OHM overview" }
 
-        @Suppress("TooGenericExceptionCaught") // Intentional: skip individual malformed items without aborting the import
-        return items.mapNotNull { item ->
-            try {
-                parseItem(item, baseUrl)
-            } catch (e: Exception) {
-                logger.warn(e) { "Failed to parse OHM event item, skipping" }
-                null
-            }
+        return items.mapSkippingFailures(logger, "OHM event item") { item ->
+            parseItem(item, baseUrl)
         }
     }
 

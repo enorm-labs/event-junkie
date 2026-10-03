@@ -11,6 +11,7 @@ import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.mapEventType
+import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseEventStatus
 import de.norm.events.scraper.parseGermanMonthAbbreviation
 import de.norm.events.scraper.parseTime
@@ -79,14 +80,8 @@ class AdmiralspalastDetailPageScraper {
                     ?.takeIf { it.isNotBlank() }
             )
 
-        @Suppress("TooGenericExceptionCaught") // Intentional: skip individual malformed rows without aborting the whole import
-        return rows.mapNotNull { row ->
-            try {
-                parsePerformance(row, sourceUrl, slug, category, promoters)
-            } catch (e: Exception) {
-                logger.warn(e) { "Failed to parse an Admiralspalast performance on $sourceUrl, skipping" }
-                null
-            }
+        return rows.mapSkippingFailures(logger, "an Admiralspalast performance on $sourceUrl") { row ->
+            parsePerformance(row, sourceUrl, slug, category, promoters)
         }
     }
 

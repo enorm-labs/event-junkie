@@ -9,6 +9,7 @@ import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.inferConcertVenueType
 import de.norm.events.scraper.inferYearForWeekday
 import de.norm.events.scraper.knownGenresInStyleTail
+import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseGermanWeekdayAbbreviation
 import de.norm.events.slug.SlugGenerator
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -90,14 +91,8 @@ class ArcanoaOverviewPageScraper(
         // publishes, sitting outside the programme paragraph.
         val startTime = parseStartTime(programme)
 
-        @Suppress("TooGenericExceptionCaught") // Intentional: skip individual malformed entries without aborting the import
-        return splitIntoEntries(normalizeText(programme.text())).mapNotNull { entry ->
-            try {
-                parseEntry(entry, startTime, baseUrl)
-            } catch (e: Exception) {
-                logger.warn(e) { "Failed to parse Arcanoa entry '${entry.body}', skipping" }
-                null
-            }
+        return splitIntoEntries(normalizeText(programme.text())).mapSkippingFailures(logger, { entry -> "Arcanoa entry '${entry.body}'" }) { entry ->
+            parseEntry(entry, startTime, baseUrl)
         }
     }
 

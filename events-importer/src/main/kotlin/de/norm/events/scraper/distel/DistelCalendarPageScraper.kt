@@ -3,6 +3,7 @@ package de.norm.events.scraper.distel
 import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseGermanMonthAbbreviation
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.textAt
@@ -36,14 +37,8 @@ class DistelCalendarPageScraper {
         logger.info { "Found ${items.size} DISTEL performance(s) on $baseUrl" }
         if (heading == null) return emptyList()
 
-        @Suppress("TooGenericExceptionCaught") // Intentional: one malformed row must not abort the month
-        return items.mapNotNull { item ->
-            try {
-                parseItem(item, heading)
-            } catch (e: Exception) {
-                logger.warn(e) { "Failed to parse DISTEL performance, skipping" }
-                null
-            }
+        return items.mapSkippingFailures(logger, "DISTEL performance") { item ->
+            parseItem(item, heading)
         }
     }
 

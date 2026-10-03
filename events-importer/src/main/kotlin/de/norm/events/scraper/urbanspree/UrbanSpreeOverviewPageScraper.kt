@@ -4,6 +4,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.detectFree
 import de.norm.events.scraper.mapEventType
+import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parsePriceValue
 import de.norm.events.scraper.textAt
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -52,15 +53,9 @@ class UrbanSpreeOverviewPageScraper {
         document: Document,
         baseUrl: String
     ): List<ScrapedEvent> {
-        @Suppress("TooGenericExceptionCaught") // Intentional: skip individual malformed cards without aborting the page
         val events =
-            document.select(EVENT_CARD_SELECTOR).mapNotNull { card ->
-                try {
-                    parseCard(card)
-                } catch (e: Exception) {
-                    logger.warn(e) { "Failed to parse Urban Spree card on $baseUrl, skipping" }
-                    null
-                }
+            document.select(EVENT_CARD_SELECTOR).mapSkippingFailures(logger, "Urban Spree card on $baseUrl") { card ->
+                parseCard(card)
             }
         logger.info { "Found ${events.size} event card(s) on Urban Spree listing $baseUrl" }
         return events

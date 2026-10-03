@@ -14,6 +14,7 @@ import de.norm.events.scraper.headlinersFromTitle
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.isScreeningTitle
 import de.norm.events.scraper.mapEventType
+import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseClockPrefix
 import de.norm.events.scraper.parseEventStatus
 import de.norm.events.scraper.parseIsoDate
@@ -80,15 +81,9 @@ class MadameClaudeApiScraper {
         val root = parseRoot(json) ?: return MadameClaudePage(emptyList(), postCount = 0)
         logger.info { "Found ${root.size()} event(s) in Madame Claude API response" }
 
-        @Suppress("TooGenericExceptionCaught") // Intentional: skip individual malformed events without aborting the import.
         val events =
-            root.mapNotNull { node ->
-                try {
-                    parseEvent(jsonMapper.treeToValue(node, MadameClaudeEventNode::class.java))
-                } catch (e: Exception) {
-                    logger.warn(e) { "Failed to parse Madame Claude event, skipping" }
-                    null
-                }
+            root.mapSkippingFailures(logger, "Madame Claude event") { node ->
+                parseEvent(jsonMapper.treeToValue(node, MadameClaudeEventNode::class.java))
             }
         return MadameClaudePage(events, postCount = root.size())
     }

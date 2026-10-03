@@ -7,6 +7,7 @@ import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.euroAmounts
 import de.norm.events.scraper.imgSrcAt
 import de.norm.events.scraper.isNonArtistName
+import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parsePriceValue
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.splitSupportActs
@@ -67,14 +68,8 @@ class MatrixOverviewPageScraper {
         val items = document.select("div.toggled-item[id]")
         logger.info { "Found ${items.size} event block(s) on Matrix month page $baseUrl" }
 
-        @Suppress("TooGenericExceptionCaught") // Intentional: skip individual malformed nights without aborting the whole import.
-        return items.mapNotNull { item ->
-            try {
-                parseEvent(item, baseUrl)
-            } catch (e: Exception) {
-                logger.warn(e) { "Failed to parse Matrix event block, skipping" }
-                null
-            }
+        return items.mapSkippingFailures(logger, "Matrix event block") { item ->
+            parseEvent(item, baseUrl)
         }
     }
 

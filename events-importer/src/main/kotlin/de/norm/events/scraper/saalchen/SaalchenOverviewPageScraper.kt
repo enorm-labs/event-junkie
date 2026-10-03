@@ -15,6 +15,7 @@ import de.norm.events.scraper.imgSrcAt
 import de.norm.events.scraper.inferConcertVenueType
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.mapEventType
+import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseTime
 import de.norm.events.scraper.resolveUrl
 import de.norm.events.scraper.splitSupportActs
@@ -67,14 +68,8 @@ class SaalchenOverviewPageScraper {
         val ours = rows.filter { it.textAt(".location")?.equals(VENUE_LOCATION, ignoreCase = true) == true }
         logger.info { "Found ${ours.size} Säälchen row(s) among ${rows.size} on the Holzmarkt calendar" }
 
-        @Suppress("TooGenericExceptionCaught") // Intentional: skip individual malformed rows without aborting the import
-        return ours.mapNotNull { row ->
-            try {
-                parseRow(row, baseUrl)
-            } catch (e: Exception) {
-                logger.warn(e) { "Failed to parse Säälchen calendar row, skipping" }
-                null
-            }
+        return ours.mapSkippingFailures(logger, "Säälchen calendar row") { row ->
+            parseRow(row, baseUrl)
         }
     }
 

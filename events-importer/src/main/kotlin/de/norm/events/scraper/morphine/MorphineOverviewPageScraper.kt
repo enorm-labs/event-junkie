@@ -6,6 +6,7 @@ import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.headlinersFromTitle
 import de.norm.events.scraper.inferConcertVenueType
+import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseGermanShortDate
 import de.norm.events.scraper.resolveUrl
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -49,14 +50,8 @@ class MorphineOverviewPageScraper {
         val rows = document.select("div.list-events a.link-overlay[href]")
         logger.info { "Found ${rows.size} listing row(s) on Morphine Raum overview" }
 
-        @Suppress("TooGenericExceptionCaught") // Intentional: skip individual malformed rows without aborting the whole import
-        return rows.mapNotNull { row ->
-            try {
-                parseRow(row, baseUrl)
-            } catch (e: Exception) {
-                logger.warn(e) { "Failed to parse Morphine Raum listing row, skipping" }
-                null
-            }
+        return rows.mapSkippingFailures(logger, "Morphine Raum listing row") { row ->
+            parseRow(row, baseUrl)
         }
     }
 

@@ -8,6 +8,7 @@ import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.dateCheckedAgainstWeekday
 import de.norm.events.scraper.extractEventSlug
 import de.norm.events.scraper.mapEventType
+import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseGermanMonthAbbreviation
 import de.norm.events.scraper.parseGermanWeekday
 import de.norm.events.scraper.parseTime
@@ -70,14 +71,8 @@ class VelomaxOverviewPageScraper {
         val entries = document.select("a.ticketWrap[href].${hall.cssClass}")
         logger.info { "Found ${entries.size} ${hall.name} entry/entries on the Velomax listing" }
 
-        @Suppress("TooGenericExceptionCaught") // Intentional: skip individual malformed entries without aborting the whole import
-        return entries.mapNotNull { entry ->
-            try {
-                parseEntry(entry, baseUrl, hall)
-            } catch (e: Exception) {
-                logger.warn(e) { "Failed to parse Velomax entry, skipping" }
-                null
-            }
+        return entries.mapSkippingFailures(logger, "Velomax entry") { entry ->
+            parseEntry(entry, baseUrl, hall)
         }
     }
 

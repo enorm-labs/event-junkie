@@ -5,6 +5,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.jsonLdEvents
+import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.schemaDate
 import de.norm.events.scraper.schemaImageUrl
 import de.norm.events.scraper.schemaName
@@ -38,14 +39,8 @@ class TheWallEventsPageScraper {
         val events = document.jsonLdEvents()
         logger.info { "Found ${events.size} The Wall JSON-LD event(s) on $baseUrl" }
 
-        @Suppress("TooGenericExceptionCaught") // Intentional: one malformed event must not abort the page
-        return events.mapNotNull { event ->
-            try {
-                toScrapedEvent(event)
-            } catch (e: Exception) {
-                logger.warn(e) { "Failed to parse The Wall event, skipping" }
-                null
-            }
+        return events.mapSkippingFailures(logger, "The Wall event") { event ->
+            toScrapedEvent(event)
         }
     }
 

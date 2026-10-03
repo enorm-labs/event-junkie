@@ -5,6 +5,7 @@ import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.attrAt
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.hrefAt
+import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseEventStatus
 import de.norm.events.scraper.parseGermanMonthAbbreviation
 import de.norm.events.scraper.parseTime
@@ -54,14 +55,8 @@ class SilentGreenMonthPageScraper {
         val rows = document.select(EVENT_ROW_SELECTOR)
         logger.info { "Found ${rows.size} calendar row(s) for $month on $baseUrl" }
 
-        @Suppress("TooGenericExceptionCaught") // Intentional: skip a single malformed row without aborting the import
-        return rows.mapNotNull { row ->
-            try {
-                parseRow(row, month, baseUrl)
-            } catch (e: Exception) {
-                logger.warn(e) { "Failed to parse silent green calendar row on $baseUrl, skipping" }
-                null
-            }
+        return rows.mapSkippingFailures(logger, "silent green calendar row on $baseUrl") { row ->
+            parseRow(row, month, baseUrl)
         }
     }
 

@@ -11,6 +11,7 @@ import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.jsonLdEvents
 import de.norm.events.scraper.labelledClock
 import de.norm.events.scraper.mapEventType
+import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseEventStatus
 import de.norm.events.scraper.parsePriceValue
 import de.norm.events.scraper.parseTime
@@ -71,14 +72,8 @@ class PrivatclubOverviewPageScraper(
         val eventWrappers = document.select(".event_wrapper.skewed")
         logger.info { "Found ${eventWrappers.size} event wrapper(s) on page" }
 
-        @Suppress("TooGenericExceptionCaught") // Intentional: skip individual malformed events without aborting the entire import
-        return eventWrappers.mapNotNull { wrapper ->
-            try {
-                parseEventWrapper(wrapper, baseUrl)
-            } catch (e: Exception) {
-                logger.warn(e) { "Failed to parse event wrapper, skipping" }
-                null
-            }
+        return eventWrappers.mapSkippingFailures(logger, "event wrapper") { wrapper ->
+            parseEventWrapper(wrapper, baseUrl)
         }
     }
 

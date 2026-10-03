@@ -6,6 +6,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.hasFreeEntryPhrase
+import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.stringOrNull
 import io.github.oshai.kotlinlogging.KotlinLogging
 import tools.jackson.databind.JsonNode
@@ -36,15 +37,9 @@ class SisyphosCalendarScraper {
         val entries = parseEntries(json) ?: return emptyList()
         logger.info { "Found ${entries.size()} entry(ies) in the Sisyphos calendar" }
 
-        @Suppress("TooGenericExceptionCaught") // Intentional: skip individual malformed entries without aborting the import
         val nights =
-            entries.mapNotNull { node ->
-                try {
-                    parseEntry(node)
-                } catch (e: Exception) {
-                    logger.warn(e) { "Failed to parse Sisyphos calendar entry '${node.stringOrNull("title")}', skipping" }
-                    null
-                }
+            entries.mapSkippingFailures(logger, { node -> "Sisyphos calendar entry '${node.stringOrNull("title")}'" }) { node ->
+                parseEntry(node)
             }
         return nights
             .groupBy { it.sourceId }

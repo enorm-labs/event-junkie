@@ -13,6 +13,7 @@ import de.norm.events.scraper.inferConcertVenueType
 import de.norm.events.scraper.isFestivalTitle
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.mapEventType
+import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseClockPrefix
 import de.norm.events.scraper.parseRelocation
 import de.norm.events.scraper.parseTime
@@ -79,14 +80,8 @@ class FestsaalApiScraper {
         val items = parseItems(json) ?: return emptyList()
         logger.info { "Found ${items.size()} event(s) in Festsaal API response" }
 
-        @Suppress("TooGenericExceptionCaught") // Intentional: skip individual malformed events without aborting the import.
-        return items.mapNotNull { node ->
-            try {
-                parseEvent(jsonMapper.treeToValue(node, FestsaalEventNode::class.java))
-            } catch (e: Exception) {
-                logger.warn(e) { "Failed to parse Festsaal event, skipping" }
-                null
-            }
+        return items.mapSkippingFailures(logger, "Festsaal event") { node ->
+            parseEvent(jsonMapper.treeToValue(node, FestsaalEventNode::class.java))
         }
     }
 

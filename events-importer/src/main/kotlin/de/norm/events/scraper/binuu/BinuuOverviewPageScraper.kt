@@ -3,6 +3,7 @@ package de.norm.events.scraper.binuu
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
+import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.stringOrNull
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
@@ -39,14 +40,8 @@ class BinuuOverviewPageScraper {
         }
         logger.info { "Found ${events.size()} event(s) in Bi Nuu overview payload" }
 
-        @Suppress("TooGenericExceptionCaught") // Intentional: skip individual malformed events without aborting the import
-        return events.mapNotNull { node ->
-            try {
-                parseEvent(node, baseUrl)
-            } catch (e: Exception) {
-                logger.warn(e) { "Failed to parse Bi Nuu overview event, skipping" }
-                null
-            }
+        return events.mapSkippingFailures(logger, "Bi Nuu overview event") { node ->
+            parseEvent(node, baseUrl)
         }
     }
 

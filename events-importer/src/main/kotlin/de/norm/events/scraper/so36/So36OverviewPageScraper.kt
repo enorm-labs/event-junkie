@@ -2,6 +2,7 @@ package de.norm.events.scraper.so36
 
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.resolveUrl
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
@@ -42,15 +43,9 @@ class So36OverviewPageScraper {
     ): List<ScrapedEvent> {
         val seenProductIds = mutableSetOf<String>()
 
-        @Suppress("TooGenericExceptionCaught") // Intentional: skip individual malformed links without aborting the entire import
         val events =
-            document.select("a[href*=/produkte/]").mapNotNull { link ->
-                try {
-                    parseLink(link, baseUrl, seenProductIds)
-                } catch (e: Exception) {
-                    logger.warn(e) { "Failed to parse event link, skipping" }
-                    null
-                }
+            document.select("a[href*=/produkte/]").mapSkippingFailures(logger, "event link") { link ->
+                parseLink(link, baseUrl, seenProductIds)
             }
         logger.info { "Found ${events.size} event(s) on SO36 overview" }
         return events

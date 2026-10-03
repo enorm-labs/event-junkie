@@ -7,6 +7,7 @@ import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.flightStringOrNull
 import de.norm.events.scraper.headlinersFromTitle
 import de.norm.events.scraper.jsonArrayAt
+import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.nextFlightPayload
 import de.norm.events.scraper.parseTime
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -39,14 +40,8 @@ class PunchlineTicketsPageScraper {
         val dates = jsonArrayAt(nextFlightPayload(document), DATES_KEY)?.let { jsonMapper.readTree(it).toList() }.orEmpty()
         logger.info { "Found ${dates.size} PUNCH L!NE show date(s) on $baseUrl" }
 
-        @Suppress("TooGenericExceptionCaught") // Intentional: one malformed date must not abort the page
-        return dates.mapNotNull { date ->
-            try {
-                toScrapedEvent(date, dates, baseUrl)
-            } catch (e: Exception) {
-                logger.warn(e) { "Failed to parse PUNCH L!NE show date, skipping" }
-                null
-            }
+        return dates.mapSkippingFailures(logger, "PUNCH L!NE show date") { date ->
+            toScrapedEvent(date, dates, baseUrl)
         }
     }
 

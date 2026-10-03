@@ -10,6 +10,7 @@ import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.hasFreeEntryPhrase
 import de.norm.events.scraper.inferUnmarkedTitleType
 import de.norm.events.scraper.isNonArtistName
+import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.orderDoorsBeforeStart
 import de.norm.events.scraper.resolveUrl
 import de.norm.events.scraper.splitSupportActs
@@ -64,14 +65,8 @@ class EschschloraqueOverviewPageScraper {
         val nodes = document.select(".node-veranstaltung")
         logger.info { "Found ${nodes.size} event node(s) on Eschschloraque overview" }
 
-        @Suppress("TooGenericExceptionCaught") // Intentional: skip individual malformed nodes without aborting the import
-        return nodes.mapNotNull { node ->
-            try {
-                parseNode(node, baseUrl)
-            } catch (e: Exception) {
-                logger.warn(e) { "Failed to parse Eschschloraque event node, skipping" }
-                null
-            }
+        return nodes.mapSkippingFailures(logger, "Eschschloraque event node") { node ->
+            parseNode(node, baseUrl)
         }
     }
 

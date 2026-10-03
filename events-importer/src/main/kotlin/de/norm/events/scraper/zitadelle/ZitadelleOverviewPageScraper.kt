@@ -9,6 +9,7 @@ import de.norm.events.scraper.attrAt
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.extractEventSlug
+import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.parseEventStatus
 import de.norm.events.scraper.parseIsoDate
 import de.norm.events.scraper.parseTime
@@ -53,14 +54,8 @@ class ZitadelleOverviewPageScraper {
         val cards = document.select("article.cmf-card")
         logger.info { "Found ${cards.size} event card(s) on Zitadelle overview" }
 
-        @Suppress("TooGenericExceptionCaught") // Intentional: skip individual malformed cards without aborting the import
-        return cards.mapNotNull { card ->
-            try {
-                parseCard(card, baseUrl)
-            } catch (e: Exception) {
-                logger.warn(e) { "Failed to parse Zitadelle event card, skipping" }
-                null
-            }
+        return cards.mapSkippingFailures(logger, "Zitadelle event card") { card ->
+            parseCard(card, baseUrl)
         }
     }
 
