@@ -306,6 +306,11 @@ says so.
 | `WILD_AT_HEART`        | `EVENT_TYPE`       | the retro page has no category field; a live-music venue, so an unmarked title defaults to a concert                                             | —     |
 | `WILD_AT_HEART`        | `START_TIME`       | a start appears only inside a banner (Beginn 21:00, ab 14 Uhr); a row without one stores the house doors from info.htm (20:00), no start         | —     |
 | `WILD_AT_HEART`        | `PRICE`            | the venue prints no ticket price; it marks only free-entry nights and links a few shows to a shop                                                | —     |
+| `WUEHLMAEUSE`          | `DESCRIPTION`      | the ticket products carry no show text                                                                                                           | —     |
+| `WUEHLMAEUSE`          | `EVENT_TYPE`       | the shop files every show under its act and names no format; Kabarett, comedy and music share one stage                                          | —     |
+| `WUEHLMAEUSE`          | `GENRE`            | the shop names no genre                                                                                                                          | —     |
+| `WUEHLMAEUSE`          | `PRICE_BOX_OFFICE` | the shop sells one price per seat category and states no box-office price                                                                        | —     |
+| `WUEHLMAEUSE`          | `PROMOTERS`        | the shop names no promoter                                                                                                                       | —     |
 | `WUHLHEIDE`            | `CANCELLATION`     | the venue publishes no cancellations; its one badge, Ausverkauft, is a sold-out flag                                                             | —     |
 | `ZENNER`               | `PRICE`            | the venue publishes no prices                                                                                                                    | —     |
 | `ZENNER`               | `DOORS_TIME`       | the venue publishes no doors times                                                                                                               | —     |
