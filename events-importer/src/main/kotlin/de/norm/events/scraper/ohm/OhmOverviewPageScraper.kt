@@ -9,6 +9,7 @@ import de.norm.events.scraper.imgSrcAt
 import de.norm.events.scraper.inferYearForWeekday
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.parseTime
+import de.norm.events.scraper.splitBackToBack
 import de.norm.events.scraper.textAt
 import de.norm.events.scraper.textLinesAt
 import de.norm.events.slug.SlugGenerator
@@ -121,6 +122,9 @@ class OhmOverviewPageScraper(
      *
      * A night in parts heads each part with its start (`Panel Talk [ 20:00 ]`, `Club [ 22:00 ]`).
      * A heading is never an act, and the lines under a talk heading are speakers, not DJs.
+     *
+     * `Makam b2b Tafkamp` bills two DJs, so a line splits at `b2b`. A line wholly in square
+     * brackets (`[ All Night Long ]`) is a set note on the line above, never a performer (#2417).
      */
     private fun parseLineup(item: Element): List<ScrapedArtist> {
         var inTalk = false
@@ -130,13 +134,18 @@ class OhmOverviewPageScraper(
                 val heading = SECTION_HEADING.containsMatchIn(line)
                 if (heading) inTalk = TALK_HEADING.containsMatchIn(line)
                 !heading && !inTalk
-            }.filterNot { isNonArtistName(it) || NON_MUSIC_ANNOTATION.containsMatchIn(it) }
+            }.filterNot { SET_NOTE.matches(it) }
+            .flatMap(::splitBackToBack)
+            .filterNot { isNonArtistName(it) || NON_MUSIC_ANNOTATION.containsMatchIn(it) }
             .map { ScrapedArtist(name = it, role = if (LIVE_ANNOTATION.containsMatchIn(it)) "HEADLINER" else "DJ") }
     }
 }
 
 /** A bracket naming a contribution that is not music: `(Live Painting)`, `(Sonic Visual Installation)`. */
 private val NON_MUSIC_ANNOTATION = Regex("""\([^()]*\b(?:painting|visuals?|installation|vjs?)\b[^()]*\)""", RegexOption.IGNORE_CASE)
+
+/** A line wholly in square brackets: `[ All Night Long ]`, a note on the set billed above it. */
+private val SET_NOTE = Regex("""\s*\[[^\[\]]*]\s*""")
 
 /** A line heading one part of the night with its start time: `Club [ 22:00 ]`. */
 private val SECTION_HEADING = Regex("""\[\s*\d{1,2}[:.]\d{2}\s*]\s*$""")
