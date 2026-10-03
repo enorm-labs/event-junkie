@@ -1,6 +1,7 @@
 package de.norm.events.image
 
 import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.PathVariable
@@ -34,6 +35,7 @@ class CachedImageAdminController(
     @DeleteMapping("/venues/{venueSlug}")
     @Operation(summary = "Delete the cached images of one venue (SCRAPING_POSITION.md §5)")
     suspend fun takeDown(
+        @Parameter(description = "Slug of the venue whose cached images to delete.", example = "lido")
         @PathVariable venueSlug: String
     ): ImageRemovalResponse = ImageRemovalResponse.of(removalService.takeDown(venueSlug), deleted = true)
 

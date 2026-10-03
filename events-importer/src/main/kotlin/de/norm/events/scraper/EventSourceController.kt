@@ -2,8 +2,10 @@ package de.norm.events.scraper
 
 import de.norm.events.common.PageResponse
 import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
+import org.springdoc.core.annotations.ParameterObject
 import org.springframework.data.domain.Pageable
 import org.springframework.data.web.PageableDefault
 import org.springframework.http.HttpStatus
@@ -68,7 +70,9 @@ class EventSourceController(
     @ResponseStatus(HttpStatus.ACCEPTED)
     @Operation(summary = "Trigger a background import for a single event source by slug (?force=true skips the conditional headers)")
     suspend fun importBySlug(
+        @Parameter(description = "Slug of the event source.", example = "lido")
         @PathVariable slug: String,
+        @Parameter(description = "Fetch without the cached `ETag` and `Last-Modified`, for a parser fix at an unchanged page (#1159).")
         @RequestParam(defaultValue = "false") force: Boolean
     ): ImportTriggeredResponse {
         importJobLauncher.triggerImportBySlug(slug, force)
@@ -87,6 +91,7 @@ class EventSourceController(
     @GetMapping
     @Operation(summary = "List all event sources with their status")
     suspend fun listSources(
+        @ParameterObject
         @PageableDefault(size = 20, sort = ["name"]) pageable: Pageable
     ): PageResponse<EventSourceResponse> = eventSourceService.findAll(pageable)
 
@@ -111,6 +116,7 @@ class EventSourceController(
     @GetMapping("/{slug}")
     @Operation(summary = "Get a single event source by slug")
     suspend fun getSource(
+        @Parameter(description = "Slug of the event source.", example = "lido")
         @PathVariable slug: String
     ): EventSourceResponse = eventSourceService.findBySlug(slug)
 
@@ -127,7 +133,9 @@ class EventSourceController(
     @PostMapping("/{slug}/translate")
     @Operation(summary = "Translate this source's descriptions now, or one event's, where its licence grants it")
     suspend fun translate(
+        @Parameter(description = "Slug of the event source.", example = "lido")
         @PathVariable slug: String,
+        @Parameter(description = "Translate only this event of the source. Omit it to translate every missing description.")
         @RequestParam(required = false) eventSlug: String?
     ): TranslationRunResponse = descriptionTranslationService.translateOnDemand(slug, eventSlug)
 
@@ -148,6 +156,7 @@ class EventSourceController(
     @PatchMapping("/{slug}")
     @Operation(summary = "Update event source configuration (enable/disable, interval, retries, licence verdicts)")
     suspend fun updateSource(
+        @Parameter(description = "Slug of the event source.", example = "lido")
         @PathVariable slug: String,
         @Valid @RequestBody request: EventSourceUpdateRequest
     ): EventSourceResponse = eventSourceService.update(slug, request)
@@ -175,6 +184,7 @@ class EventSourceController(
     @PostMapping("/{slug}/retry")
     @Operation(summary = "Reset a failed event source for immediate retry")
     suspend fun retrySource(
+        @Parameter(description = "Slug of the event source.", example = "lido")
         @PathVariable slug: String
     ): EventSourceResponse = eventSourceService.retry(slug)
 
@@ -189,6 +199,7 @@ class EventSourceController(
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(summary = "Delete an event source by slug")
     suspend fun deleteSource(
+        @Parameter(description = "Slug of the event source.", example = "lido")
         @PathVariable slug: String
     ) {
         eventSourceService.delete(slug)

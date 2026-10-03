@@ -2,7 +2,9 @@ package de.norm.events.genretag
 
 import de.norm.events.common.PageResponse
 import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.tags.Tag
+import org.springdoc.core.annotations.ParameterObject
 import org.springframework.data.domain.Pageable
 import org.springframework.data.web.PageableDefault
 import org.springframework.web.bind.annotation.GetMapping
@@ -30,12 +32,14 @@ class GenreTagController(
         // are a small bounded table read to fill a dropdown, so one request usually returns all of
         // them. The envelope reports the total either way, which is what makes the difference a
         // convenience rather than a trap (#810).
+        @ParameterObject
         @PageableDefault(size = 100, sort = ["name"]) pageable: Pageable
     ): PageResponse<GenreTagResponse> = genreTagService.findAll(pageable)
 
     @GetMapping("/{id}")
     @Operation(summary = "Get a single genre tag by ID")
     suspend fun findById(
+        @Parameter(description = "Database ID of the genre tag.", example = "1")
         @PathVariable id: Long
     ): GenreTagResponse = genreTagService.findById(id)
 }

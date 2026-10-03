@@ -2,8 +2,10 @@ package de.norm.events.event
 
 import de.norm.events.common.PageResponse
 import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
+import org.springdoc.core.annotations.ParameterObject
 import org.springframework.data.domain.Pageable
 import org.springframework.data.web.PageableDefault
 import org.springframework.http.HttpStatus
@@ -38,12 +40,14 @@ class EventController(
     @GetMapping
     @Operation(summary = "List all events with pagination")
     suspend fun findAll(
+        @ParameterObject
         @PageableDefault(size = 20, sort = ["eventDate"]) pageable: Pageable
     ): PageResponse<EventResponse> = eventService.findAll(pageable)
 
     @GetMapping("/{id}")
     @Operation(summary = "Get a single event by ID")
     suspend fun findById(
+        @Parameter(description = "Database ID of the event.", example = "1")
         @PathVariable id: Long
     ): EventResponse = eventService.findById(id)
 
@@ -57,6 +61,7 @@ class EventController(
     @PutMapping("/{id}")
     @Operation(summary = "Update an existing event")
     suspend fun update(
+        @Parameter(description = "Database ID of the event.", example = "1")
         @PathVariable id: Long,
         @Valid @RequestBody request: EventRequest
     ): EventResponse = eventService.update(id, request)
@@ -75,6 +80,7 @@ class EventController(
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(summary = "Delete an event by ID")
     suspend fun delete(
+        @Parameter(description = "Database ID of the event.", example = "1")
         @PathVariable id: Long
     ) {
         eventService.delete(id)

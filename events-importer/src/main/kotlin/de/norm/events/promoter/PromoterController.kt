@@ -2,8 +2,10 @@ package de.norm.events.promoter
 
 import de.norm.events.common.PageResponse
 import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
+import org.springdoc.core.annotations.ParameterObject
 import org.springframework.data.domain.Pageable
 import org.springframework.data.web.PageableDefault
 import org.springframework.http.HttpStatus
@@ -30,13 +32,16 @@ class PromoterController(
     @GetMapping
     @Operation(summary = "List all promoters with pagination; `reviewed=false` lists the rows nobody looked at yet")
     suspend fun findAll(
+        @ParameterObject
         @PageableDefault(size = 20, sort = ["name"]) pageable: Pageable,
+        @Parameter(description = "`false` lists the promoters nobody reviewed yet, `true` the reviewed ones. Omit it to list all.")
         @RequestParam(required = false) reviewed: Boolean?
     ): PageResponse<PromoterResponse> = promoterService.findAll(pageable, reviewed)
 
     @GetMapping("/{id}")
     @Operation(summary = "Get a single promoter by ID")
     suspend fun findById(
+        @Parameter(description = "Database ID of the promoter.", example = "1")
         @PathVariable id: Long
     ): PromoterResponse = promoterService.findById(id)
 
@@ -50,6 +55,7 @@ class PromoterController(
     @PutMapping("/{id}")
     @Operation(summary = "Update an existing promoter")
     suspend fun update(
+        @Parameter(description = "Database ID of the promoter.", example = "1")
         @PathVariable id: Long,
         @Valid @RequestBody request: PromoterRequest
     ): PromoterResponse = promoterService.update(id, request)
@@ -58,6 +64,7 @@ class PromoterController(
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(summary = "Delete a promoter by ID")
     suspend fun delete(
+        @Parameter(description = "Database ID of the promoter.", example = "1")
         @PathVariable id: Long
     ) {
         promoterService.delete(id)
