@@ -47,24 +47,32 @@ export const INSECURE = __ENV.INSECURE === 'true'
 export const WAIT_FOR_ORIGIN_SECONDS = Number(__ENV.WAIT_FOR_ORIGIN_SECONDS || 0)
 
 /**
- * Latency budgets, in milliseconds, for a **local** run against a laptop.
+ * Latency budgets for `load.js` and a strict `spike.js`, in milliseconds: p95 per endpoint group,
+ * measured on **staging** from the node on 2026-10-03 (#2411). The worst run's p95 times 1.5,
+ * rounded up to 50 ms; `perf/README.md` holds the runs and says when to change the rule.
  *
- * These are deliberately not "production SLOs" — there is no production yet (ADR-012 picked the
- * platform, but nothing is provisioned). They are regression detectors: numbers loose enough that
- * an ordinary laptop under an ordinary background load does not trip them, and tight enough that
- * an accidental N+1 query or a dropped index does. Re-baseline them against real infrastructure
- * once something is deployed, and treat that as a deliberate act rather than raising them whenever
- * a run goes red.
+ * They are regression detectors, not SLOs, and they measure a cached BFF. A laptop run sets its own
+ * with the variables. `calendar` keeps its old value until #2529 stops the cache stampede.
  */
 export const THRESHOLD_MS = {
     /** Single-row lookups by slug. Indexed, small payload; anything else is a regression. */
-    detail: Number(__ENV.THRESHOLD_DETAIL_MS || 300),
+    detail: Number(__ENV.THRESHOLD_DETAIL_MS || 50),
     /** Paged list endpoints. A join and a count, so meaningfully slower than a detail read. */
-    list: Number(__ENV.THRESHOLD_LIST_MS || 600),
+    list: Number(__ENV.THRESHOLD_LIST_MS || 100),
     /**
      * The calendar range query. The heaviest read in the API: up to 92 days of events with their
      * venues, unpaged, in one response.
      */
+    calendar: Number(__ENV.THRESHOLD_CALENDAR_MS || 1200),
+}
+
+/**
+ * Budgets for `smoke.js`: one cold request per endpoint, often over the tunnel or the internet,
+ * where the round trip alone can exceed [THRESHOLD_MS]. It asks "catastrophically slow?" only.
+ */
+export const SMOKE_THRESHOLD_MS = {
+    detail: Number(__ENV.THRESHOLD_DETAIL_MS || 300),
+    list: Number(__ENV.THRESHOLD_LIST_MS || 600),
     calendar: Number(__ENV.THRESHOLD_CALENDAR_MS || 1200),
 }
 
@@ -75,15 +83,15 @@ export const THRESHOLD_MS = {
  * reports a beautiful p95 while quietly 500-ing a tenth of its requests is worse than no test.
  * Anything above 1% fails the run.
  */
-export function baseThresholds() {
+export function baseThresholds(budget = THRESHOLD_MS) {
     return {
         http_req_failed: ['rate<0.01'],
         checks: ['rate>0.99'],
         // Tagged per endpoint group in endpoints.js, so a slow calendar query cannot hide behind fast
         // detail reads in an aggregate p95 — which is exactly what an overall threshold would let it do.
-        'http_req_duration{group:detail}': [`p(95)<${THRESHOLD_MS.detail}`],
-        'http_req_duration{group:list}': [`p(95)<${THRESHOLD_MS.list}`],
-        'http_req_duration{group:calendar}': [`p(95)<${THRESHOLD_MS.calendar}`],
+        'http_req_duration{group:detail}': [`p(95)<${budget.detail}`],
+        'http_req_duration{group:list}': [`p(95)<${budget.list}`],
+        'http_req_duration{group:calendar}': [`p(95)<${budget.calendar}`],
     }
 }
 

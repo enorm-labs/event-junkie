@@ -102,12 +102,42 @@ each carry their own budget.
 
 ## Where the numbers come from
 
-The defaults are calibrated for a **local run against a laptop**, with the dev database's seeded data. k6 sends `Accept-Encoding: gzip`, and the BFF
-compresses since #1206, so a run before that change and a run after it are not comparable. They are regression detectors, not SLOs: loose enough
-that an ordinary machine under ordinary background load does not trip them, tight enough that an accidental N+1 or a dropped index does.
+The defaults describe **staging**, measured on 2026-10-03 (#2411): `load.js` from the staging node against the BFF's ClusterIP, about 3900 events.
+The BFF autoscales from one replica to two at 70 % of its 200m CPU request; the first run took it to two, and every later run ran on two. The node
+has four vCPUs and shares them with the importer and PostgreSQL. A port-forward over the tunnel measures the link, not the BFF. Node-to-pod traffic
+also skips Traefik, its rate limit and the NetworkPolicy, so the load is harsher than real traffic.
 
-Production exists ([ADR-012](../docs/adr/ADR-012_CLOUD_PLATFORM.md), accepted) and the thresholds have not moved since they were set against a laptop.
-**Re-baselining against real infrastructure is a deliberate act.** Raising a threshold because a run went red is how a performance suite becomes decorative.
+Default shape: 30 s ramp, 2 min hold. Two runs that overlapped a staging rollout were discarded and repeated; the third 20-VU run started 47 s after
+one, and the fourth ran on pods several minutes old.
+
+| VUs | detail p95 | list p95 | calendar p95 |
+| --: | ---------: | -------: | -----------: |
+|  20 |      10 ms |    20 ms |        93 ms |
+|  20 |      15 ms |    32 ms |       759 ms |
+|  20 |      20 ms |    42 ms |      1428 ms |
+|  20 |      18 ms |    37 ms |       714 ms |
+|  50 |       7 ms |    10 ms |        49 ms |
+|  50 |       5 ms |     7 ms |       718 ms |
+|  50 |       7 ms |     9 ms |        52 ms |
+
+One request of about 47,000 failed: a `GET /meta` that hit k6's 60 s timeout, with nothing logged by either BFF pod.
+
+**The rule: the worst run's p95, times 1.5, rounded up to 50 ms.** That gives `detail` 50 and `list` 100. Change the rule on purpose, and record the new
+runs here.
+
+**These numbers measure a cached BFF.** The medians are 1 to 4 ms because `ResponseCache` answers most reads for 60 s. A slow query shows only on the
+misses, which is why 50 VUs is faster than 20: more requests share each fill.
+
+**`calendar` stays at 1200 ms, and a staging run can fail it today.** When the cached calendar expires, every waiting request runs the calendar query
+itself. That is the 714, 718, 759 and 1428 ms runs, with a median near 30 ms throughout. #2529 loads a miss once per key. Re-measure after it lands, and set
+`calendar` by the rule then. Raising a threshold because a run went red is how a performance suite becomes decorative.
+
+**A laptop run sets its own budget**, because a laptop and the dev database are not staging:
+`k6 run -e THRESHOLD_DETAIL_MS=300 -e THRESHOLD_LIST_MS=600 perf/load.js`. Those were the defaults before this measurement.
+
+`smoke.js` keeps 300, 600 and 1200 ms (`SMOKE_THRESHOLD_MS`): one cold request per endpoint, often over the tunnel, where the round trip alone exceeds
+50 ms. The post-deploy smoke hook does not use either set. `tests.smoke.latencyBudgetMs` in the chart sets all three to 10 s, because a cold JVM after a
+rollout must clear it.
 
 ## Where the session mix comes from
 
