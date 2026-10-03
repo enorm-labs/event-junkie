@@ -810,10 +810,12 @@ export interface components {
             items?: components["schemas"]["ArtistSummaryResponse"][];
             /**
              * Format: int64
-             * @description Total number of matches of this kind
+             * @description Total number of matches of this kind, at most 100
              * @example 12
              */
             total?: number;
+            /** @description True when there are more than `total` matches */
+            totalCapped?: boolean;
         };
         /** @description The first matches of one kind, and how many there are in all */
         SearchGroupEventSummaryResponse: {
@@ -821,10 +823,12 @@ export interface components {
             items?: components["schemas"]["EventSummaryResponse"][];
             /**
              * Format: int64
-             * @description Total number of matches of this kind
+             * @description Total number of matches of this kind, at most 100
              * @example 12
              */
             total?: number;
+            /** @description True when there are more than `total` matches */
+            totalCapped?: boolean;
         };
         /** @description The first matches of one kind, and how many there are in all */
         SearchGroupPromoterListItemResponse: {
@@ -832,10 +836,12 @@ export interface components {
             items?: components["schemas"]["PromoterListItemResponse"][];
             /**
              * Format: int64
-             * @description Total number of matches of this kind
+             * @description Total number of matches of this kind, at most 100
              * @example 12
              */
             total?: number;
+            /** @description True when there are more than `total` matches */
+            totalCapped?: boolean;
         };
         /** @description The first matches of one kind, and how many there are in all */
         SearchGroupVenueListItemResponse: {
@@ -843,10 +849,12 @@ export interface components {
             items?: components["schemas"]["VenueListItemResponse"][];
             /**
              * Format: int64
-             * @description Total number of matches of this kind
+             * @description Total number of matches of this kind, at most 100
              * @example 12
              */
             total?: number;
+            /** @description True when there are more than `total` matches */
+            totalCapped?: boolean;
         };
         /** @description The first matches of each kind, for the header search */
         SearchResponse: {

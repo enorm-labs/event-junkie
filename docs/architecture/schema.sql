@@ -829,6 +829,12 @@ CREATE INDEX artist_musicbrainz_unchecked_idx ON events.artist USING btree (id) 
 CREATE INDEX artist_musicbrainz_unenriched_idx ON events.artist USING btree (id) WHERE ((musicbrainz_match = 'EXACT'::text) AND (musicbrainz_enriched_at IS NULL));
 
 --
+-- Name: idx_artist_name_search_trgm; Type: INDEX; Schema: events; Owner: -
+--
+
+CREATE INDEX idx_artist_name_search_trgm ON events.artist USING gin (replace(name_search, ' '::text, ''::text) events.gin_trgm_ops);
+
+--
 -- Name: idx_cached_image_content_hash; Type: INDEX; Schema: events; Owner: -
 --
 
@@ -907,6 +913,18 @@ CREATE INDEX idx_event_source_scheduling ON events.event_source USING btree (ena
 CREATE INDEX idx_event_source_venue_id ON events.event_source USING btree (venue_id);
 
 --
+-- Name: idx_event_subtitle_search_trgm; Type: INDEX; Schema: events; Owner: -
+--
+
+CREATE INDEX idx_event_subtitle_search_trgm ON events.event USING gin (replace(subtitle_search, ' '::text, ''::text) events.gin_trgm_ops);
+
+--
+-- Name: idx_event_title_search_trgm; Type: INDEX; Schema: events; Owner: -
+--
+
+CREATE INDEX idx_event_title_search_trgm ON events.event USING gin (replace(title_search, ' '::text, ''::text) events.gin_trgm_ops);
+
+--
 -- Name: idx_event_venue_id; Type: INDEX; Schema: events; Owner: -
 --
 
@@ -925,10 +943,22 @@ CREATE INDEX idx_genre_tag_family ON events.genre_tag USING btree (family);
 CREATE INDEX idx_import_run_field_stats_baseline ON events.import_run_field_stats USING btree (source_id, field, observed_at DESC);
 
 --
+-- Name: idx_promoter_name_search_trgm; Type: INDEX; Schema: events; Owner: -
+--
+
+CREATE INDEX idx_promoter_name_search_trgm ON events.promoter USING gin (replace(name_search, ' '::text, ''::text) events.gin_trgm_ops);
+
+--
 -- Name: idx_venue_district; Type: INDEX; Schema: events; Owner: -
 --
 
 CREATE INDEX idx_venue_district ON events.venue USING btree (district);
+
+--
+-- Name: idx_venue_name_search_trgm; Type: INDEX; Schema: events; Owner: -
+--
+
+CREATE INDEX idx_venue_name_search_trgm ON events.venue USING gin (replace(name_search, ' '::text, ''::text) events.gin_trgm_ops);
 
 --
 -- Name: idx_venue_programme_event_types; Type: INDEX; Schema: events; Owner: -

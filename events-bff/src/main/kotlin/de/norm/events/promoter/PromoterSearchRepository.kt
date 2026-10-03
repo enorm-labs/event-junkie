@@ -2,6 +2,7 @@ package de.norm.events.promoter
 
 import de.norm.events.EVENTS_SCHEMA
 import de.norm.events.common.TextSearch
+import de.norm.events.common.countQuery
 import io.r2dbc.spi.Readable
 import kotlinx.coroutines.reactive.awaitSingle
 import org.springframework.data.domain.Pageable
@@ -37,23 +38,26 @@ class PromoterSearchRepository(
     suspend fun search(
         query: String?,
         today: LocalDate,
-        pageable: Pageable
+        pageable: Pageable,
+        countCap: Int? = null
     ): PromoterListPage {
         val term = TextSearch.term(query)
-        return TextSearch.strictThenSimilar(term, found = { it.total > 0 }) { bySimilarity -> search(term, bySimilarity, today, pageable) }
+        return TextSearch.strictThenSimilar(term, found = { it.total > 0 }) { bySimilarity -> search(term, bySimilarity, today, pageable, countCap) }
     }
 
+    @Suppress("LongParameterList") // The public search's four, plus the pass.
     private suspend fun search(
         term: String?,
         bySimilarity: Boolean,
         today: LocalDate,
-        pageable: Pageable
+        pageable: Pageable,
+        countCap: Int?
     ): PromoterListPage {
-        val where = if (term == null) "" else "WHERE ${TextSearch.predicate("p.name", bySimilarity)}"
+        val where = if (term == null) "" else "WHERE ${TextSearch.predicate("p.name", term, bySimilarity)}"
 
         val total =
             databaseClient
-                .sql("SELECT COUNT(*) FROM $EVENTS_SCHEMA.promoter p $where")
+                .sql(countQuery("$EVENTS_SCHEMA.promoter p", where, countCap))
                 .bindTerm(term, bySimilarity)
                 .map { row: Readable -> row.get(0, Long::class.javaObjectType) ?: 0L }
                 .one()

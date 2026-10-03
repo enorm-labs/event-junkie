@@ -14,8 +14,11 @@ import de.norm.events.EVENTS_SCHEMA
  * [similarity][similar], so `berghian` finds `Berghain` while `tango` keeps its two real hits. On
  * staging data a similarity pass beside the strict one added 53 rows to `tango` and 80 to `metal`.
  *
- * A term that folds to nothing — `%`, `_`, `!!!` — would match every row as `LIKE '%%'`. It falls
- * back to the literal `ILIKE` with [escapeLike], which keeps `%` a letter (#1456).
+ * A term with no letter or digit — `%`, `_`, `!!!` — folds to nothing, so it matches literally with
+ * `ILIKE` and [escapeLike], which keeps `%` a letter (#1456). Kotlin picks the branch, not a SQL
+ * `CASE`: a `CASE` on a bind parameter survives a generic plan and keeps the trigram index (V096) out
+ * of reach (#2533). Each branch checks the fold in SQL too, so a term the two judge differently
+ * matches no row rather than every row.
  */
 object TextSearch {
     const val TERM = "q"
@@ -36,11 +39,11 @@ object TextSearch {
     /** The visitor's input trimmed with its inner whitespace collapsed, or null when blank. */
     fun term(input: String?): String? = input?.trim()?.replace(WHITESPACE, " ")?.takeIf { it.isNotEmpty() }
 
-    /** The bind values for a [term]; the [similar] pass has no literal pattern to bind. */
+    /** The bind values for a [term]; only the literal branch of [matches] has a pattern to bind. */
     fun params(
         term: String,
         bySimilarity: Boolean
-    ): Map<String, Any> = if (bySimilarity) mapOf(TERM to term) else mapOf(TERM to term, PATTERN to "%${term.escapeLike()}%")
+    ): Map<String, Any> = if (bySimilarity || folds(term)) mapOf(TERM to term) else mapOf(TERM to term, PATTERN to "%${term.escapeLike()}%")
 
     /** Whether a strict search for [term] that found nothing is worth a [similar] pass. */
     fun allowsSimilar(term: String?): Boolean = term != null && term.count { it.isLetterOrDigit() } >= SIMILARITY_MIN_LENGTH
@@ -55,19 +58,26 @@ object TextSearch {
         return if (!found(strict) && allowsSimilar(term)) search(true) else strict
     }
 
-    /** True when [column] contains the bound term, folded and with spaces dropped. */
-    fun matches(column: String): String =
-        "(CASE WHEN $TERM_NORM = '' THEN $column ILIKE :$PATTERN " +
-            "ELSE replace(${folded(column)}, ' ', '') LIKE '%' || $TERM_JOINED || '%' END)"
+    /** True when [column] contains [term], folded and with spaces dropped. */
+    fun matches(
+        column: String,
+        term: String
+    ): String =
+        if (folds(term)) {
+            "(replace(${folded(column)}, ' ', '') LIKE '%' || NULLIF($TERM_JOINED, '') || '%')"
+        } else {
+            "($column ILIKE :$PATTERN AND $TERM_NORM = '')"
+        }
 
     /** True when [column] holds a word close to the bound term. */
     fun similar(column: String): String = "(${similarity(column)} >= $SIMILARITY_THRESHOLD)"
 
-    /** The predicate for one pass: [similar] when [bySimilarity], else [matches]. */
+    /** The predicate for one pass over [term]: [similar] when [bySimilarity], else [matches]. */
     fun predicate(
         column: String,
+        term: String,
         bySimilarity: Boolean
-    ): String = if (bySimilarity) similar(column) else matches(column)
+    ): String = if (bySimilarity) similar(column) else matches(column, term)
 
     /**
      * A leading sort key for a name list: on the strict pass 0 exact, 1 prefix, 2 anywhere; on the
@@ -83,6 +93,9 @@ object TextSearch {
             "CASE WHEN $TERM_NORM = ANY(string_to_array(${folded(column)}, ' | ')) THEN 0 " +
                 "WHEN ${folded(column)} LIKE $TERM_NORM || '%' OR ${folded(column)} LIKE '% | ' || $TERM_NORM || '%' THEN 1 ELSE 2 END"
         }
+
+    /** Whether [term] keeps a letter or digit once folded; `search_norm` drops everything else. */
+    private fun folds(term: String): Boolean = term.any { it.isLetterOrDigit() }
 
     private fun similarity(column: String): String = "$EVENTS_SCHEMA.word_similarity($TERM_NORM, ${folded(column)})"
 

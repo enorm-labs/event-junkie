@@ -72,6 +72,18 @@ test('Enter opens the results page, which lists every kind and is kept out of th
   await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', 'noindex')
 })
 
+test('a kind the BFF stopped counting reads 100+', async ({ page }) => {
+  await page.route(/\/api\/search(\?|$)/, (route) =>
+    json(route, { ...answer, events: { ...answer.events, total: 100, totalCapped: true } }),
+  )
+  await page.route(/\/api\/(venues|events|artists|promoters|genres)/, (route) => json(route, {}, 404))
+  await page.goto('/en/search?q=berghain')
+
+  await expect(page.getByRole('heading', { level: 2, name: /Events/ })).toContainText('100+')
+  await expect(page.getByRole('link', { name: 'Show all 100+' })).toBeVisible()
+  await expect(page.getByRole('heading', { level: 2, name: /Venues/ })).toContainText('1')
+})
+
 test('the results page asks for a term before it searches', async ({ page }) => {
   const terms = await mockSearch(page)
   await page.goto('/en/search')

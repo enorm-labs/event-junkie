@@ -61,6 +61,39 @@ class SearchControllerTest : BaseControllerTest() {
         }
 
     @Test
+    fun `GET search stops counting a kind at 100 and says so, while the list endpoint counts them all`(): Unit =
+        runBlocking {
+            repeat(101) { insertArtist("Capped Act $it", "capped-act-$it") }
+            insertPromoter("Capped Booking", "capped-booking")
+
+            webTestClient
+                .get()
+                .uri("/search?q=capped")
+                .exchange()
+                .expectStatus()
+                .isOk
+                .expectBody()
+                .jsonPath("$.artists.total")
+                .isEqualTo(100)
+                .jsonPath("$.artists.totalCapped")
+                .isEqualTo(true)
+                .jsonPath("$.promoters.total")
+                .isEqualTo(1)
+                .jsonPath("$.promoters.totalCapped")
+                .isEqualTo(false)
+
+            webTestClient
+                .get()
+                .uri("/artists?q=capped")
+                .exchange()
+                .expectStatus()
+                .isOk
+                .expectBody()
+                .jsonPath("$.totalElements")
+                .isEqualTo(101)
+        }
+
+    @Test
     fun `GET search leaves out past events`(): Unit =
         runBlocking {
             val venue = insertVenue("Lido", "lido")

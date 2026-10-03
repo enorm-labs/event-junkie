@@ -22,6 +22,8 @@ data class SearchResponse(
 data class SearchGroup<T>(
     @Schema(description = "At most `limit` items")
     val items: List<T>,
-    @Schema(description = "Total number of matches of this kind", example = "12")
-    val total: Long
+    @Schema(description = "Total number of matches of this kind, at most 100", example = "12")
+    val total: Long,
+    @Schema(description = "True when there are more than `total` matches")
+    val totalCapped: Boolean
 )

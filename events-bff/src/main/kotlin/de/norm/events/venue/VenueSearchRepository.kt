@@ -2,6 +2,7 @@ package de.norm.events.venue
 
 import de.norm.events.EVENTS_SCHEMA
 import de.norm.events.common.TextSearch
+import de.norm.events.common.countQuery
 import io.r2dbc.spi.Readable
 import kotlinx.coroutines.reactive.awaitSingle
 import org.springframework.data.domain.Pageable
@@ -71,20 +72,24 @@ class VenueSearchRepository(
     suspend fun search(
         filter: VenueFilter,
         today: LocalDate,
-        pageable: Pageable
-    ): VenueListPage = TextSearch.strictThenSimilar(filter.query, found = { it.total > 0 }) { bySimilarity -> search(filter, bySimilarity, today, pageable) }
+        pageable: Pageable,
+        countCap: Int? = null
+    ): VenueListPage =
+        TextSearch.strictThenSimilar(filter.query, found = { it.total > 0 }) { bySimilarity -> search(filter, bySimilarity, today, pageable, countCap) }
 
+    @Suppress("LongParameterList") // The public search's four, plus the pass.
     private suspend fun search(
         filter: VenueFilter,
         bySimilarity: Boolean,
         today: LocalDate,
-        pageable: Pageable
+        pageable: Pageable,
+        countCap: Int?
     ): VenueListPage {
         val params = mutableMapOf<String, Any>()
         filter.query?.let { params += TextSearch.params(it, bySimilarity) }
         val conditions =
             listOfNotNull(
-                TextSearch.predicate("v.name", bySimilarity).takeIf { filter.query != null },
+                filter.query?.let { TextSearch.predicate("v.name", it, bySimilarity) },
                 "v.district IN (:districts)".takeIf { filter.districts.isNotEmpty() }
             ) +
                 ARRAY_FILTERS.mapNotNull { (column, param, values) ->
@@ -98,7 +103,7 @@ class VenueSearchRepository(
 
         val total =
             databaseClient
-                .sql("SELECT COUNT(*) FROM $EVENTS_SCHEMA.venue v $where")
+                .sql(countQuery("$EVENTS_SCHEMA.venue v", where, countCap))
                 .bindAll(params)
                 .map { row: Readable -> row.get(0, Long::class.javaObjectType) ?: 0L }
                 .one()
