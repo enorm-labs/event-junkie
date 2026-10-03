@@ -51,7 +51,7 @@ describe('VenueCard', () => {
     })
 
     expect(wrapper.find('picture').exists()).toBe(false)
-    expect(wrapper.get('[aria-hidden="true"]').text()).toBe('Lido')
+    expect(wrapper.get('[aria-hidden="true"]').text()).toContain('Lido')
   })
 
   it('bleeds the poster to both edges below sm, like the event card', () => {
@@ -71,7 +71,7 @@ describe('VenueCard', () => {
       global: { stubs },
     })
 
-    const poster = wrapper.get('[aria-hidden="true"]').element.parentElement?.parentElement
+    const poster = wrapper.get('[aria-hidden="true"]').element.parentElement
     expect(poster?.className).toContain('group/poster')
     expect(poster?.className).toContain('-mx-4')
   })

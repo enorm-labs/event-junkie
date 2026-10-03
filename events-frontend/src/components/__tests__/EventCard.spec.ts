@@ -83,7 +83,7 @@ describe('EventCard', () => {
     })
 
     expect(wrapper.find('picture').exists()).toBe(false)
-    expect(wrapper.get('[aria-hidden="true"]').text()).toBe('Tonight Show')
+    expect(wrapper.get('[aria-hidden="true"]').text()).toContain('Tonight Show')
   })
 
   it('links to the event detail route', () => {
@@ -256,7 +256,7 @@ describe('EventCard', () => {
     // title.
     const wrapper = mount(EventCard, { props: { event }, global: { stubs } })
 
-    const poster = wrapper.get('[aria-hidden="true"]').element.parentElement?.parentElement
+    const poster = wrapper.get('[aria-hidden="true"]').element.parentElement
     expect(poster?.className).toContain('group/poster')
     expect(poster?.className).toContain('-mx-4')
     expect(poster?.className).toContain('sm:mx-0')

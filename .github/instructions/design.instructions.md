@@ -58,7 +58,8 @@ neither flips with the theme.
 | `--border`           | `oklch(0.922 0 0)`           | `oklch(1 0 0 / 10%)`         | Every rule and edge            |
 
 **One accent, and it is violet.** Chroma lives on `primary`, `accent` and `ring`; everything else is neutral, so the accent reads as a spotlight
-(BRANDING §5.1).
+(BRANDING §5.1). **The one exception is the `--poster-*` set**: the ground of a title poster, one quiet tint per kind of night (`EventPoster.vue`). It
+never colours text or a control, and it stays at chroma 0.04 to 0.05 so the accent still reads as the only colour.
 
 **Colour is never the only carrier of meaning.** `Sold out` is the word `Sold out`; the colour is emphasis on top of it. New pairs clear 4.5:1 for text and
 3:1 for a boundary, measured against the ground they sit on rather than against the value they were picked for.
@@ -103,7 +104,9 @@ have their own edge, down parts one card's last line of text from the next card'
   the real corpus (BRANDING §5.4).
 - **Chrome is a hairline rule, not a box.** The filter bar is the only chrome on a list page.
 - **An empty state offers a control**, not only a sentence ([#1266](https://github.com/enorm-labs/event-junkie/issues/1266)).
-- **A missing image is a designed poster**, never a grey rectangle. One upcoming event in nine has no flyer.
+- **A missing image is a designed poster**, never a grey rectangle. One upcoming event in nine has no flyer. `EventPoster` sets the date and the title
+  large over an outline drawing, and `lib/posterArt.ts` picks the drawing and the `--poster-*` ground from the genre family, else the event type; a venue
+  from its programme families, else its venue type. The same kind of night always gets the same poster; nothing about it is random.
 - **Below `sm` the poster bleeds to both viewport edges** through the shell's `p-4`, with `CARD_POSTER_CLASS` — a phone shows one card per row, and ground
   either side of a picture that _is_ the card buys nothing. A title poster bleeds with it (a card with no flyer is a normal card, not a fallback); the card's
   text keeps the inset. From `sm` up the margins stand.
