@@ -131,7 +131,6 @@ interface EventRepository : CoroutineCrudRepository<EventEntity, Long> {
     @Query("SELECT * FROM $EVENTS_SCHEMA.event WHERE description IS NOT NULL AND description_language IS NULL")
     fun findWithUnclassifiedDescription(): Flow<EventEntity>
 
-    /** Finds all events with pagination and sorting applied via [pageable]. */
     fun findAllBy(pageable: Pageable): Flow<EventEntity>
 
     /**
