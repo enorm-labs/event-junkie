@@ -25,9 +25,11 @@ is the map and the traps.
   here and nowhere else. Also builds both container images for `linux/amd64` and `linux/arm64` with `type=cacheonly` and **never pushes** — it runs on fork PRs.
   `build-frontend.yml` — `npm ci`, lint, `oxfmt --check src` (so an oxfmt bump that changes the output fails until its PR carries the reformat), build, unit,
   the frontend image from its own `dist/`, and Playwright e2e as a parallel job inside `mcr.microsoft.com/playwright`, tagged with the lockfile's
-  `@playwright/test` version so no `apt` install runs (#2309). Both build images on PRs only, since `release.yml` builds them on every push to `main`. Both declare
-  `workflow_dispatch` (`gh workflow run build-backend.yml --ref <branch>`), which ignores the path filters — and only exists for workflows on the default
-  branch, so one added in a PR is unusable until it merges.
+  `@playwright/test` version so no `apt` install runs (#2309). Both build images on PRs only, since `release.yml` builds them on every push to `main`.
+  `build-admin.yml` (#2635) — `events-admin` (ADR-045): `npm ci`, type-check, `check:lint`, `check:format`, unit, `build-only`; no image, no coverage, no
+  e2e, and `release.yml` does not wait for it, because nothing publishes the admin app. All three declare `workflow_dispatch`
+  (`gh workflow run build-backend.yml --ref <branch>`), which ignores the path filters — and only exists for workflows on the default branch, so one added in
+  a PR is unusable until it merges.
 - `codeql.yml` — advanced setup, not default setup, because default setup produces no run on a fork PR and the required context sat Pending forever (#581).
   **Never move it back.** The job names are the required contexts; a new step in `analyze` needs `if: steps.relevance.outputs.value == 'true'` or it runs
   on a docs-only PR with nothing checked out.
@@ -199,7 +201,7 @@ validate`), a property (every rendered resource valid, none skipped, count posit
 - **Each required check runs on every PR**, because GitHub keeps a required-but-skipped check Pending forever (#447 never ran `Lint & render`). So: **never add a
   `paths:` filter to the `pull_request` trigger of a required workflow** (the failure looks like a hung check), and **adding a stack to `validate-infra`'s
   matrix creates a context that is not required** — add it to the ruleset in the same change.
-- **`Build & Test (backend)` and `(frontend)` are required, and neither is the job that does the work.** Each workflow is `detect-changes` (seconds, no
+- **`Build & Test (backend)`, `(frontend)` and `(admin)` are required, and none is the job that does the work.** Each workflow is `detect-changes` (seconds, no
   checkout, the PR's file list from the API), the build gated on it, and a **`gate` job that always runs and carries the context** — red when the build
   failed, green when skipped, red when detection failed (a detection bug must never read as a green build). A job skipped by a workflow-level `paths:`
   creates no check run at all, so the required context must never be the conditional job. The gate declares `contents: read` only, which is what keeps the

@@ -1,0 +1,127 @@
+name: Build & Test Admin
+
+# The operator's local app (ADR-045, #2635). No image and no publish: this only proves that a change
+# keeps it compiling, linted and tested. The same shape as build-frontend.yml.
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'events-admin/**'
+      - '.github/workflows/build-admin.yml'
+  pull_request:
+    branches: [ main ]
+    # No `paths:` here: `Build & Test (admin)` is **required**, and a required check that never runs
+    # stays Pending forever. The filtering lives in `detect-changes` below.
+  # Ignores the path filters: `gh workflow run build-admin.yml --ref <branch>`.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  # Seconds, and no checkout: the file list comes from the API, so the required context below can be
+  # unconditional while the build stays conditional.
+  detect-changes:
+    name: Detect changes
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      relevant: ${{ steps.filter.outputs.relevant }}
+    steps:
+      - name: Decide whether the admin app is affected
+        id: filter
+        env:
+          # Through `env:`, not interpolated: `${{ }}` inside `run:` is the template-injection shape zizmor rejects.
+          GH_TOKEN: ${{ github.token }}
+          EVENT_NAME: ${{ github.event_name }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          # `push` is already path-filtered above, and a manual dispatch means "build it anyway".
+          if [ "$EVENT_NAME" != "pull_request" ]; then
+            echo 'relevant=true' >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          FILES="$(gh api --paginate "repos/$REPO/pulls/$PR_NUMBER/files" --jq '.[].filename')"
+          # An empty list means the API call went wrong, not that nothing changed.
+          if [ -z "$FILES" ]; then
+            echo '::error::no changed files returned for this pull request'
+            exit 1
+          fi
+          printf '%s\n' "$FILES" | sed 's/^/  /'
+          if printf '%s\n' "$FILES" | grep -qE '^(events-admin/|\.github/workflows/build-admin\.yml$)'; then
+            echo 'relevant=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'relevant=false' >> "$GITHUB_OUTPUT"
+          fi
+
+  build:
+    name: Admin build
+    needs: detect-changes
+    if: needs.detect-changes.outputs.relevant == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: events-admin
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: events-admin/.nvmrc
+          cache: 'npm'
+          cache-dependency-path: events-admin/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type-check
+        run: npm run type-check
+
+      # `check:lint`, not `lint`: the latter runs with `--fix` and would pass on what it rewrote.
+      - name: Lint
+        run: npm run check:lint
+
+      - name: Check formatting
+        run: npm run check:format
+
+      - name: Run unit tests
+        run: npm run test:unit -- --run
+
+      # Vite's bundling is the one failure the type-check cannot see, and `npm run dev` would hit it first.
+      - name: Build
+        run: npm run build-only
+
+  # **The required context, and the only job here that always runs.** Red when the build failed or
+  # detection failed, green when the build ran and passed or had nothing to build.
+  gate:
+    name: Build & Test (admin)
+    needs: [ detect-changes, build ]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Report the build's result
+        env:
+          CHANGES_RESULT: ${{ needs.detect-changes.result }}
+          BUILD_RESULT: ${{ needs.build.result }}
+        run: |
+          set -euo pipefail
+          echo "detect-changes: $CHANGES_RESULT · build: $BUILD_RESULT"
+          # A failed detection must not be reported as a pass — it would silently gate nothing.
+          if [ "$CHANGES_RESULT" != 'success' ]; then
+            echo "::error::change detection did not succeed ($CHANGES_RESULT); refusing to report a pass"
+            exit 1
+          fi
+          case "$BUILD_RESULT" in
+            success) echo 'The admin build ran and passed.' ;;
+            skipped) echo 'No admin files changed; there was nothing to build.' ;;
+            *) echo "::error::admin build: $BUILD_RESULT"; exit 1 ;;
+          esac

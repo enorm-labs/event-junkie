@@ -92,7 +92,7 @@ a fork's pull request** exactly as it does on a branch of this repository. None 
 your pull request to hold a token that can write:
 
 ```
-Build & Test (backend | frontend)                   Gradle, and the Vite + Playwright matrix
+Build & Test (backend | frontend | admin)           Gradle, the Vite + Playwright matrix, the admin app
 Lint & render · ShellCheck deploy-story scripts     the Helm chart
 Lint & audit workflows                              actionlint + zizmor
 Format & Validate (infra/bootstrap | staging | production)
@@ -125,7 +125,7 @@ Three things behave differently on a fork, and none of them means anything is wr
   workflow rather than through GitHub's default setup — default setup produces no run at all for a
   fork, and a required check that never reports leaves a pull request unmergeable with nothing red to
   explain why. That was this repository's own bug until #479 found it.
-- **A documentation-only pull request does not pay for `Build & Test`.** Each of the two workflows
+- **A documentation-only pull request does not pay for `Build & Test`.** Each of the three workflows
   decides from your changed files whether there is anything to build; if there is not, the build is
   skipped and the check reports green anyway. So a README typo does not sit through sixteen minutes
   of Gradle and Playwright, and a change that touches code cannot merge without them.
