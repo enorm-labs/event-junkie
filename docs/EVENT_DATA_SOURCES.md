@@ -118,7 +118,7 @@ schema change.
 | PUNCH L!NE Club                  | https://punchlineberlin.com/de/tickets                      | Comedy Club  | Next.js flight payload; all dates on one page             |
 | Quasimodo                        | https://quasimodo.club/events                               | Club         | Events-Manager; .club domain; genre tags + prices         |
 | Quatsch Comedy Club              | https://quatsch-comedy-club.de/tickets/                     | Comedy Club  | Eventim calendar plugin; one admin-ajax POST per day      |
-| Renate                           | https://www.renate.cc/                                      | Techno Club  | Homepage programme; per-floor lineups, no times           |
+| Renate                           | https://www.renate.cc/                                      | Techno Club  | Homepage programme; per-floor lineups and opening times   |
 | Ritter Butzke                    | https://club.ritterbutzke.com/events                        | Techno Club  | Modus codebase, own template; stale slug dates            |
 | Roadrunner's Paradise            | http://www.roadrunners-paradise.de/                         | Bar          | Retro HTML; rich data; year missing on some dates         |
 | ROSA                             | https://www.rosaclub.de/dates                               | Club         | Next.js; age-gate cookie; events in the flight payload    |

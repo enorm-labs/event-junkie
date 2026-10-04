@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test
 import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
+import java.time.LocalTime
 import java.time.ZoneId
 
 /**
@@ -66,10 +67,66 @@ class RenateOverviewPageScraperTest {
     fun `parses a night's date, ticket link and identity`() {
         val night = event(LocalDate.of(2026, 8, 6), "Renate x Neer")
         night.eventType shouldBe "PARTY"
-        night.startTime.shouldBeNull()
         night.sourceUrl shouldBe baseUrl
         night.sourceId shouldBe "renate:2026-08-06-renate-x-neer-x-kollektiv-lost-in"
         night.ticketUrl shouldBe "https://ra.co/events/2485741"
+    }
+
+    @Test
+    fun `starts a night when its first floor opens`() {
+        // `GARDEN (from 18:00) free entry until 20:00!` opens before `GREEN (from 22:00)`.
+        val night = event(LocalDate.of(2026, 8, 6), "Renate x Neer")
+        night.startTime shouldBe LocalTime.of(18, 0)
+        night.doorsTime.shouldBeNull()
+        // A time followed by a free-entry note in the same brackets.
+        event(LocalDate.of(2026, 8, 7), "Renate Klubnacht").startTime shouldBe LocalTime.of(16, 0)
+    }
+
+    @Test
+    fun `counts a floor opening before noon as after midnight`() {
+        // The 2026-10-03 Klubnacht, as renate.cc published it (#2627), cut to its floor headings.
+        val html =
+            """
+            <div class="prog-row">
+              <div class="prog-day">Sat.</div><div class="prog-date">03.10.</div>
+              <div class="prog-title">Renate Klubnacht with Fairies, Fluid Vision &#038; CUNTCORE</div>
+              <span class="cat-btn">CLUB</span>
+              <div class="prog-text">
+                <p><strong>GREEN hosted by Fairies (from 22:00)</strong></p>
+                <p>Merlin Cum</p>
+                <p><strong>RED hosted by Fluid Vision (from 01:00)<br /> </strong></p>
+                <p>Tallest Woman Alive</p>
+              </div>
+            </div>
+            """.trimIndent()
+        scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl).single().startTime shouldBe LocalTime.of(22, 0)
+    }
+
+    @Test
+    fun `reads the OPENS-at form of a floor heading`() {
+        // The 2026-09-26 Klubnacht, as renate.cc published it, cut to its floor headings.
+        val html =
+            """
+            <div class="prog-row">
+              <div class="prog-day">Sat.</div><div class="prog-date">26.09.</div>
+              <div class="prog-title">Renate Klubnacht</div>
+              <div class="prog-text">
+                <p><strong>GREEN - OPENS @ 14:00 - FREE UNTIL 20:00</strong></p>
+                <p>Merlin Cum</p>
+                <p><strong>BLACK- OPENS @ 00:00</strong></p>
+                <p>Tallest Woman Alive</p>
+                <p><strong>RED - OPENS @ 01:00</strong></p>
+                <p>Sasha Seduction</p>
+              </div>
+            </div>
+            """.trimIndent()
+        scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl).single().startTime shouldBe LocalTime.of(14, 0)
+    }
+
+    @Test
+    fun `leaves the start time empty for a night whose headings print no time`() {
+        // SENSUS is a CLUB-only night with no floor heading at all.
+        event(LocalDate.of(2026, 9, 18), "SENSUS").startTime.shouldBeNull()
     }
 
     @Test

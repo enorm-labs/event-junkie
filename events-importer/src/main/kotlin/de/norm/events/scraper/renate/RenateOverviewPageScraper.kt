@@ -24,6 +24,7 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import java.time.Clock
 import java.time.LocalDate
+import java.time.LocalTime
 import java.time.MonthDay
 
 /**
@@ -45,6 +46,11 @@ import java.time.MonthDay
  * badge with no heading (#1582). Then the one `.cat-btn` is the stage, but only when every line
  * reads as a name: a night describing itself in prose under the same badge (House of Lunacy)
  * still yields nothing.
+ *
+ * **The start time is the earliest floor's.** A floor heading can carry its opening time —
+ * `GARDEN (from 14:00, FREE until 20:00)`, `RED hosted by Fluid Vision (from 01:00)` (#2627),
+ * `BLACK- OPENS @ 00:00` — and the night starts when its first floor opens. A night whose
+ * headings print no time, as a CLUB-only night, has no start time.
  *
  * @see RenateWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://www.renate.cc/">Renate Berlin</a>
@@ -86,6 +92,7 @@ class RenateOverviewPageScraper(
             logger.warn { "No parseable date for Renate event '$title', skipping" }
             return null
         }
+        val lines = row.selectFirst(".prog-text")?.let(::lineupLines).orEmpty()
 
         return ScrapedEvent(
             title = title,
@@ -94,12 +101,13 @@ class RenateOverviewPageScraper(
             eventType = EventType.PARTY.name,
             // The venue names no style but programmes techno and house, so the venue is the default, as at Tresor.
             eventDate = eventDate,
+            startTime = startTimeOf(lines),
             // No per-event page, so every night points at the programme and takes its identity from date
             // plus slugified title.
             sourceUrl = baseUrl,
             sourceId = "${EventSource.RENATE.sourceIdPrefix}$eventDate-${SlugGenerator.slugify(title)}",
             ticketUrl = row.hrefAt(".ticket-link"),
-            artists = parseLineup(row).ifEmpty { hostedActsFromTitle(title, role = "DJ") }
+            artists = parseLineup(row, lines).ifEmpty { hostedActsFromTitle(title, role = "DJ") }
         )
     }
 
@@ -130,9 +138,10 @@ class RenateOverviewPageScraper(
      * first two short enough to pass the act-line guard. The shared policy block (`.info-text`) is
      * excluded for the same reason.
      */
-    private fun parseLineup(row: Element): List<ScrapedArtist> {
-        val text = row.selectFirst(".prog-text") ?: return emptyList()
-        val lines = lineupLines(text)
+    private fun parseLineup(
+        row: Element,
+        lines: List<String>
+    ): List<ScrapedArtist> {
         val artists = mutableListOf<ScrapedArtist>()
         var stage: String? = if (lines.none { floorNameOf(it) != null }) bareLineupStage(row, lines) else null
 
@@ -154,6 +163,17 @@ class RenateOverviewPageScraper(
         // wins, keeping its floor.
         return artists.distinctBy { it.name.lowercase() }
     }
+
+    /**
+     * The earliest opening time in a floor heading, or `null` when no heading prints one. A time
+     * before noon is past midnight, so a RED floor `from 01:00` never beats a GREEN `from 22:00`.
+     */
+    private fun startTimeOf(lines: List<String>): LocalTime? =
+        lines
+            .filter { floorNameOf(it) != null }
+            .mapNotNull { line ->
+                FLOOR_OPENS.find(line)?.let { runCatching { LocalTime.of(it.groupValues[1].toInt(), it.groupValues[2].toInt()) }.getOrNull() }
+            }.minByOrNull { if (it < LocalTime.NOON) it.toSecondOfDay() + SECONDS_PER_DAY else it.toSecondOfDay() }
 
     /**
      * The stage for a block with no floor heading: the night's only space badge, when the block is
@@ -249,6 +269,11 @@ class RenateOverviewPageScraper(
 
         /** A `hosted by …` credit for the collective curating a floor. */
         val HOST_CREDIT = Regex("""\bhosted\s+by\b""", RegexOption.IGNORE_CASE)
+
+        /** A floor heading's opening time: `(from 14:00, FREE until 20:00)` or `OPENS @ 00:00`. */
+        val FLOOR_OPENS = Regex("""(?:\(from|\bopens\s*@)\s*(\d{1,2}):(\d{2})\b""", RegexOption.IGNORE_CASE)
+
+        const val SECONDS_PER_DAY = 86_400
 
         /** A clock time, which marks a schedule line rather than a performer. */
         val CLOCK_TIME = Regex("""\d{1,2}:\d{2}""")
