@@ -112,6 +112,22 @@ class ZigZagWebsiteImportersTest {
         }
 
     @Test
+    fun `bills a tribute night from its page and keeps a titled night's act`() =
+        runTest {
+            stubListing()
+            coEvery { htmlFetcher.fetchDocument(any()) } answers { Jsoup.parse(fixture("zigzag-detail-tribute.html"), firstArg<String>()) }
+
+            val result = importer.importEvents(listingUrl)
+
+            result.shouldBeInstanceOf<ImportResult.Success>()
+            val byUrl = result.events.associateBy { it.sourceUrl }
+            byUrl.getValue("https://www.zigzag-jazzclub.berlin/program-mai/billiemillie").artists.map { it.name } shouldBe
+                listOf("Mette Nadja Hansen", "Eldar Tsalikov", "Declan Forde", "James Banner", "Ugo Alluni")
+            byUrl.getValue("https://www.zigzag-jazzclub.berlin/program-mai/rsgolivi").artists.map { it.name } shouldBe
+                listOf("Roland Satterwhite Quartet", "Olivia Trummer")
+        }
+
+    @Test
     fun `prices a box-office-only night at the door`() =
         runTest {
             stubListing()
