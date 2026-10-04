@@ -141,16 +141,17 @@ the canonicalizers). Borrow three ideas:
 2. **DQ-dimensions taxonomy** (§2.1) — for categorizing and reporting.
 3. **Quality-as-observability** — track metrics _over time_, not just a snapshot.
 
-For **dashboards and trends**, use an existing tool and do not build a bespoke UI. [Issue #386](https://github.com/enorm-labs/event-junkie/issues/386) is
-_"A dashboard for analysing the data"_.
+For **dashboards and trends**, use an existing tool and do not build a bespoke UI.
 
-- **Metrics observability in OpenObserve** ([ADR-015](adr/ADR-015_OBSERVABILITY_STACK.md)). The importer exports the
-  `data_quality{source,metric}` gauges through Micrometer and its Actuator. `deploy/dashboards/gen_dashboard.py`
-  generates the OpenObserve dashboard that charts them. This is best for operational trend lines and alerting.
-- **SQL-based BI** (Apache Superset or Metabase) on the Postgres `events` schema and the `data_quality_snapshot` table.
-  This is best for data-level dashboards.
+- **The dashboard is OpenObserve** ([ADR-015](adr/ADR-015_OBSERVABILITY_STACK.md)). The importer exports the
+  `data_quality{source,metric}` gauge through Micrometer and its Actuator. `deploy/dashboards/gen_dashboard.py`
+  generates the _Data quality_ tab of the _Is it healthy?_ dashboard. The tab shows each metric per source and over time.
+- **The trend is the history of the gauge in OpenObserve.** The 03:00 snapshot writes the gauge once a day. Thus a
+  window of a week or more shows a trend.
+- **The `data_quality_snapshot` table keeps the same numbers in Postgres.** OpenObserve cannot read it. No BI tool
+  reads it at this time. Use SQL for a question that the gauge history cannot answer.
 
-See the Pillar 1 plan for how the metrics are exposed to feed these.
+See the Pillar 1 plan for how the metrics are exposed.
 
 ## 5. The four pillars
 
@@ -243,9 +244,8 @@ The decisions that shape the pillars, and where each is recorded.
   the existing `PUT /api/admin/events/{id}` API, Swagger and `.http` files. A dedicated review frontend is deferred to
   the backlogged _"Admin frontend to review, enrich & fix event data"_ item. The DQ work provides the _signal_, and
   that frontend will provide the _fix surface_. Avoid building a second admin app.
-- **Dashboard — an existing tool, not a bespoke UI** (§4). The OpenObserve dashboard charts the metrics, and #386
-  adds the remaining `data_quality` panels. Pillar 1 exposes the metrics in a shape that OpenObserve and SQL-based BI
-  consume.
+- **Dashboard — an existing tool, not a bespoke UI** (§4). The _Data quality_ tab of the OpenObserve dashboard
+  charts the metrics. The `data_quality_snapshot` table keeps them for SQL.
 
 ## 7. Sequencing
 

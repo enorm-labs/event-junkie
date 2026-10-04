@@ -2,7 +2,7 @@
   "version": 8,
   "dashboardId": "",
   "title": "Is it healthy?",
-  "description": "#271's one-screen answer. The top row is the answer; everything below it is why. Generated from deploy/dashboards/gen_dashboard.py \u2014 edit that, not this.",
+  "description": "#271's one-screen answer. The top row is the answer; everything below it is why. The Data quality tab charts the importer's data-quality gauges per source (#386). Generated from deploy/dashboards/gen_dashboard.py \u2014 edit that, not this.",
   "role": "",
   "owner": "",
   "created": "2026-08-20T16:00:00+00:00",
@@ -545,7 +545,7 @@
           "queryType": "promql",
           "queries": [
             {
-              "query": "topk(20, sum by (source) (data_quality{metric=\"titleDerivedSingletons\"}))",
+              "query": "topk(20, max by (source) (data_quality{metric=\"titleDerivedSingletons\"}))",
               "vrlFunctionQuery": null,
               "customQuery": true,
               "fields": {
@@ -568,7 +568,7 @@
               }
             },
             {
-              "query": "topk(20, sum by (source) (data_quality{metric=\"titleDerivedUnmatched\"}))",
+              "query": "topk(20, max by (source) (data_quality{metric=\"titleDerivedUnmatched\"}))",
               "vrlFunctionQuery": null,
               "customQuery": true,
               "fields": {
@@ -1002,6 +1002,575 @@
             "w": 80,
             "h": 16,
             "i": 19
+          }
+        }
+      ]
+    },
+    {
+      "tabId": "data-quality",
+      "name": "Data quality",
+      "panels": [
+        {
+          "id": "p_dq_share_concertsWithoutArtist",
+          "type": "metric",
+          "title": "Concerts without an artist (% of events)",
+          "description": "Every source together, as a share of every event in the database \u2014 the same ratio as the per-source `concertsWithoutArtistPct` in `GET /api/admin/data-quality`.\n\nThe 03:00 snapshot writes this gauge once a day, so a trend needs a window of a week or more. After a restart the gauge is empty until the next 03:00 run.",
+          "config": {
+            "show_legends": true,
+            "decimals": 1,
+            "unit": "percent-1"
+          },
+          "queryType": "promql",
+          "queries": [
+            {
+              "query": "sum(max by (source) (data_quality{metric=\"concertsWithoutArtist\"})) / sum(max by (source) (data_quality{metric=\"totalEvents\"}))",
+              "vrlFunctionQuery": null,
+              "customQuery": true,
+              "fields": {
+                "stream": "",
+                "stream_type": "metrics",
+                "x": [],
+                "y": [],
+                "z": [],
+                "breakdown": [],
+                "filter": {
+                  "filterType": "group",
+                  "logicalOperator": "AND",
+                  "conditions": []
+                }
+              },
+              "config": {
+                "promql_legend": "",
+                "layer_type": "scatter",
+                "weight_fixed": 1
+              }
+            }
+          ],
+          "layout": {
+            "x": 0,
+            "y": 0,
+            "w": 48,
+            "h": 10,
+            "i": 20
+          }
+        },
+        {
+          "id": "p_dq_share_eventsTypedOther",
+          "type": "metric",
+          "title": "Events typed OTHER (% of events)",
+          "description": "Every source together, as a share of every event in the database \u2014 the same ratio as the per-source `eventsTypedOtherPct` in `GET /api/admin/data-quality`.\n\nThe 03:00 snapshot writes this gauge once a day, so a trend needs a window of a week or more. After a restart the gauge is empty until the next 03:00 run.",
+          "config": {
+            "show_legends": true,
+            "decimals": 1,
+            "unit": "percent-1"
+          },
+          "queryType": "promql",
+          "queries": [
+            {
+              "query": "sum(max by (source) (data_quality{metric=\"eventsTypedOther\"})) / sum(max by (source) (data_quality{metric=\"totalEvents\"}))",
+              "vrlFunctionQuery": null,
+              "customQuery": true,
+              "fields": {
+                "stream": "",
+                "stream_type": "metrics",
+                "x": [],
+                "y": [],
+                "z": [],
+                "breakdown": [],
+                "filter": {
+                  "filterType": "group",
+                  "logicalOperator": "AND",
+                  "conditions": []
+                }
+              },
+              "config": {
+                "promql_legend": "",
+                "layer_type": "scatter",
+                "weight_fixed": 1
+              }
+            }
+          ],
+          "layout": {
+            "x": 48,
+            "y": 0,
+            "w": 48,
+            "h": 10,
+            "i": 21
+          }
+        },
+        {
+          "id": "p_dq_share_missingPrice",
+          "type": "metric",
+          "title": "Events without a price (% of events)",
+          "description": "Every source together, as a share of every event in the database \u2014 the same ratio as the per-source `missingPricePct` in `GET /api/admin/data-quality`.\n\nThe 03:00 snapshot writes this gauge once a day, so a trend needs a window of a week or more. After a restart the gauge is empty until the next 03:00 run.",
+          "config": {
+            "show_legends": true,
+            "decimals": 1,
+            "unit": "percent-1"
+          },
+          "queryType": "promql",
+          "queries": [
+            {
+              "query": "sum(max by (source) (data_quality{metric=\"missingPrice\"})) / sum(max by (source) (data_quality{metric=\"totalEvents\"}))",
+              "vrlFunctionQuery": null,
+              "customQuery": true,
+              "fields": {
+                "stream": "",
+                "stream_type": "metrics",
+                "x": [],
+                "y": [],
+                "z": [],
+                "breakdown": [],
+                "filter": {
+                  "filterType": "group",
+                  "logicalOperator": "AND",
+                  "conditions": []
+                }
+              },
+              "config": {
+                "promql_legend": "",
+                "layer_type": "scatter",
+                "weight_fixed": 1
+              }
+            }
+          ],
+          "layout": {
+            "x": 96,
+            "y": 0,
+            "w": 48,
+            "h": 10,
+            "i": 22
+          }
+        },
+        {
+          "id": "p_dq_share_unreviewedLicence",
+          "type": "metric",
+          "title": "Events from unreviewed sources (% of events)",
+          "description": "Every source together, as a share of every event in the database \u2014 the same ratio as the per-source `unreviewedLicencePct` in `GET /api/admin/data-quality`.\n\nThe 03:00 snapshot writes this gauge once a day, so a trend needs a window of a week or more. After a restart the gauge is empty until the next 03:00 run.",
+          "config": {
+            "show_legends": true,
+            "decimals": 1,
+            "unit": "percent-1"
+          },
+          "queryType": "promql",
+          "queries": [
+            {
+              "query": "sum(max by (source) (data_quality{metric=\"unreviewedLicence\"})) / sum(max by (source) (data_quality{metric=\"totalEvents\"}))",
+              "vrlFunctionQuery": null,
+              "customQuery": true,
+              "fields": {
+                "stream": "",
+                "stream_type": "metrics",
+                "x": [],
+                "y": [],
+                "z": [],
+                "breakdown": [],
+                "filter": {
+                  "filterType": "group",
+                  "logicalOperator": "AND",
+                  "conditions": []
+                }
+              },
+              "config": {
+                "promql_legend": "",
+                "layer_type": "scatter",
+                "weight_fixed": 1
+              }
+            }
+          ],
+          "layout": {
+            "x": 144,
+            "y": 0,
+            "w": 48,
+            "h": 10,
+            "i": 23
+          }
+        },
+        {
+          "id": "p_dq_trend",
+          "type": "line",
+          "title": "Data-quality counts over time, all sources",
+          "description": "Each metric summed over every source. **A step is an import or a code change**: read it against the deploy and the import history before calling it a regression. A fall is a fix landing; a rise is a scraper losing a field. `GET /api/admin/data-quality/worklist?issue=<metric>` lists the rows.\n\nThe 03:00 snapshot writes this gauge once a day, so a trend needs a window of a week or more. After a restart the gauge is empty until the next 03:00 run.",
+          "config": {
+            "show_legends": true,
+            "decimals": 0
+          },
+          "queryType": "promql",
+          "queries": [
+            {
+              "query": "sum by (metric) (max by (source, metric) (data_quality{metric=~\"concertsWithoutArtist|missingGenre|missingPrice|missingPromoter|missingStartTime|eventsTypedOther|unreviewedLicence\"}))",
+              "vrlFunctionQuery": null,
+              "customQuery": true,
+              "fields": {
+                "stream": "",
+                "stream_type": "metrics",
+                "x": [],
+                "y": [],
+                "z": [],
+                "breakdown": [],
+                "filter": {
+                  "filterType": "group",
+                  "logicalOperator": "AND",
+                  "conditions": []
+                }
+              },
+              "config": {
+                "promql_legend": "",
+                "layer_type": "scatter",
+                "weight_fixed": 1
+              }
+            }
+          ],
+          "layout": {
+            "x": 0,
+            "y": 10,
+            "w": 192,
+            "h": 16,
+            "i": 24
+          }
+        },
+        {
+          "id": "p_dq_concertsWithoutArtist",
+          "type": "bar",
+          "title": "Concerts without an artist \u2014 fifteen worst sources",
+          "description": "The headline gap: a concert nobody can find by the act they want. A tall bar is a scraper that does not read the line-up, or a venue that does not publish one. `GET /api/admin/data-quality/worklist?issue=concertsWithoutArtist&source=<slug>` lists the rows.\n\nThe 03:00 snapshot writes this gauge once a day, so a trend needs a window of a week or more. After a restart the gauge is empty until the next 03:00 run.",
+          "config": {
+            "show_legends": true,
+            "decimals": 0
+          },
+          "queryType": "promql",
+          "queries": [
+            {
+              "query": "topk(15, max by (source) (data_quality{metric=\"concertsWithoutArtist\"}))",
+              "vrlFunctionQuery": null,
+              "customQuery": true,
+              "fields": {
+                "stream": "",
+                "stream_type": "metrics",
+                "x": [],
+                "y": [],
+                "z": [],
+                "breakdown": [],
+                "filter": {
+                  "filterType": "group",
+                  "logicalOperator": "AND",
+                  "conditions": []
+                }
+              },
+              "config": {
+                "promql_legend": "",
+                "layer_type": "scatter",
+                "weight_fixed": 1
+              }
+            }
+          ],
+          "layout": {
+            "x": 0,
+            "y": 26,
+            "w": 96,
+            "h": 14,
+            "i": 25
+          }
+        },
+        {
+          "id": "p_dq_missingGenre",
+          "type": "bar",
+          "title": "Events without a genre \u2014 fifteen worst sources",
+          "description": "A tall bar is a venue that publishes no genre, or a genre vocabulary the source uses and the importer drops. `GET /api/admin/data-quality/worklist?issue=missingGenre&source=<slug>` lists the rows.\n\nThe 03:00 snapshot writes this gauge once a day, so a trend needs a window of a week or more. After a restart the gauge is empty until the next 03:00 run.",
+          "config": {
+            "show_legends": true,
+            "decimals": 0
+          },
+          "queryType": "promql",
+          "queries": [
+            {
+              "query": "topk(15, max by (source) (data_quality{metric=\"missingGenre\"}))",
+              "vrlFunctionQuery": null,
+              "customQuery": true,
+              "fields": {
+                "stream": "",
+                "stream_type": "metrics",
+                "x": [],
+                "y": [],
+                "z": [],
+                "breakdown": [],
+                "filter": {
+                  "filterType": "group",
+                  "logicalOperator": "AND",
+                  "conditions": []
+                }
+              },
+              "config": {
+                "promql_legend": "",
+                "layer_type": "scatter",
+                "weight_fixed": 1
+              }
+            }
+          ],
+          "layout": {
+            "x": 96,
+            "y": 26,
+            "w": 96,
+            "h": 14,
+            "i": 26
+          }
+        },
+        {
+          "id": "p_dq_missingPrice",
+          "type": "bar",
+          "title": "Events without a price \u2014 fifteen worst sources",
+          "description": "No presale, no box office, not free and no price note. A free event or a note-only price does not count. `GET /api/admin/data-quality/worklist?issue=missingPrice&source=<slug>` lists the rows.\n\nThe 03:00 snapshot writes this gauge once a day, so a trend needs a window of a week or more. After a restart the gauge is empty until the next 03:00 run.",
+          "config": {
+            "show_legends": true,
+            "decimals": 0
+          },
+          "queryType": "promql",
+          "queries": [
+            {
+              "query": "topk(15, max by (source) (data_quality{metric=\"missingPrice\"}))",
+              "vrlFunctionQuery": null,
+              "customQuery": true,
+              "fields": {
+                "stream": "",
+                "stream_type": "metrics",
+                "x": [],
+                "y": [],
+                "z": [],
+                "breakdown": [],
+                "filter": {
+                  "filterType": "group",
+                  "logicalOperator": "AND",
+                  "conditions": []
+                }
+              },
+              "config": {
+                "promql_legend": "",
+                "layer_type": "scatter",
+                "weight_fixed": 1
+              }
+            }
+          ],
+          "layout": {
+            "x": 0,
+            "y": 40,
+            "w": 96,
+            "h": 14,
+            "i": 27
+          }
+        },
+        {
+          "id": "p_dq_missingPromoter",
+          "type": "bar",
+          "title": "Events without a promoter \u2014 fifteen worst sources",
+          "description": "Many venues publish no promoter. Read this bar against the venue's page before it is called a defect. `GET /api/admin/data-quality/worklist?issue=missingPromoter&source=<slug>` lists the rows.\n\nThe 03:00 snapshot writes this gauge once a day, so a trend needs a window of a week or more. After a restart the gauge is empty until the next 03:00 run.",
+          "config": {
+            "show_legends": true,
+            "decimals": 0
+          },
+          "queryType": "promql",
+          "queries": [
+            {
+              "query": "topk(15, max by (source) (data_quality{metric=\"missingPromoter\"}))",
+              "vrlFunctionQuery": null,
+              "customQuery": true,
+              "fields": {
+                "stream": "",
+                "stream_type": "metrics",
+                "x": [],
+                "y": [],
+                "z": [],
+                "breakdown": [],
+                "filter": {
+                  "filterType": "group",
+                  "logicalOperator": "AND",
+                  "conditions": []
+                }
+              },
+              "config": {
+                "promql_legend": "",
+                "layer_type": "scatter",
+                "weight_fixed": 1
+              }
+            }
+          ],
+          "layout": {
+            "x": 96,
+            "y": 40,
+            "w": 96,
+            "h": 14,
+            "i": 28
+          }
+        },
+        {
+          "id": "p_dq_missingStartTime",
+          "type": "bar",
+          "title": "Events without a start time \u2014 fifteen worst sources",
+          "description": "An event with a date and no time. A tall bar usually means a changed detail-page layout. `GET /api/admin/data-quality/worklist?issue=missingStartTime&source=<slug>` lists the rows.\n\nThe 03:00 snapshot writes this gauge once a day, so a trend needs a window of a week or more. After a restart the gauge is empty until the next 03:00 run.",
+          "config": {
+            "show_legends": true,
+            "decimals": 0
+          },
+          "queryType": "promql",
+          "queries": [
+            {
+              "query": "topk(15, max by (source) (data_quality{metric=\"missingStartTime\"}))",
+              "vrlFunctionQuery": null,
+              "customQuery": true,
+              "fields": {
+                "stream": "",
+                "stream_type": "metrics",
+                "x": [],
+                "y": [],
+                "z": [],
+                "breakdown": [],
+                "filter": {
+                  "filterType": "group",
+                  "logicalOperator": "AND",
+                  "conditions": []
+                }
+              },
+              "config": {
+                "promql_legend": "",
+                "layer_type": "scatter",
+                "weight_fixed": 1
+              }
+            }
+          ],
+          "layout": {
+            "x": 0,
+            "y": 54,
+            "w": 96,
+            "h": 14,
+            "i": 29
+          }
+        },
+        {
+          "id": "p_dq_eventsTypedOther",
+          "type": "bar",
+          "title": "Events typed OTHER \u2014 fifteen worst sources",
+          "description": "`OTHER` is the classifier's fallback, so a rising bar is the classifier losing ground on that source. `GET /api/admin/data-quality/worklist?issue=eventsTypedOther&source=<slug>` lists the rows.\n\nThe 03:00 snapshot writes this gauge once a day, so a trend needs a window of a week or more. After a restart the gauge is empty until the next 03:00 run.",
+          "config": {
+            "show_legends": true,
+            "decimals": 0
+          },
+          "queryType": "promql",
+          "queries": [
+            {
+              "query": "topk(15, max by (source) (data_quality{metric=\"eventsTypedOther\"}))",
+              "vrlFunctionQuery": null,
+              "customQuery": true,
+              "fields": {
+                "stream": "",
+                "stream_type": "metrics",
+                "x": [],
+                "y": [],
+                "z": [],
+                "breakdown": [],
+                "filter": {
+                  "filterType": "group",
+                  "logicalOperator": "AND",
+                  "conditions": []
+                }
+              },
+              "config": {
+                "promql_legend": "",
+                "layer_type": "scatter",
+                "weight_fixed": 1
+              }
+            }
+          ],
+          "layout": {
+            "x": 96,
+            "y": 54,
+            "w": 96,
+            "h": 14,
+            "i": 30
+          }
+        },
+        {
+          "id": "p_dq_suspectNonArtistTitles",
+          "type": "bar",
+          "title": "Suspect artist names \u2014 fifteen worst sources",
+          "description": "Names stored as artists that look like event titles. It counts distinct names, not events, so one bad name on forty events is one, and no worklist filter exists for it.\n\nThe 03:00 snapshot writes this gauge once a day, so a trend needs a window of a week or more. After a restart the gauge is empty until the next 03:00 run.",
+          "config": {
+            "show_legends": true,
+            "decimals": 0
+          },
+          "queryType": "promql",
+          "queries": [
+            {
+              "query": "topk(15, max by (source) (data_quality{metric=\"suspectNonArtistTitles\"}))",
+              "vrlFunctionQuery": null,
+              "customQuery": true,
+              "fields": {
+                "stream": "",
+                "stream_type": "metrics",
+                "x": [],
+                "y": [],
+                "z": [],
+                "breakdown": [],
+                "filter": {
+                  "filterType": "group",
+                  "logicalOperator": "AND",
+                  "conditions": []
+                }
+              },
+              "config": {
+                "promql_legend": "",
+                "layer_type": "scatter",
+                "weight_fixed": 1
+              }
+            }
+          ],
+          "layout": {
+            "x": 0,
+            "y": 68,
+            "w": 96,
+            "h": 14,
+            "i": 31
+          }
+        },
+        {
+          "id": "p_dq_unreviewedLicence",
+          "type": "bar",
+          "title": "Events from a source with no licence review \u2014 fifteen worst sources",
+          "description": "Work of ours that has not happened, not data the venue mishandled (#283). It counts events, not sources. `GET /api/admin/data-quality/worklist?issue=unreviewedLicence&source=<slug>` lists the rows.\n\nThe 03:00 snapshot writes this gauge once a day, so a trend needs a window of a week or more. After a restart the gauge is empty until the next 03:00 run.",
+          "config": {
+            "show_legends": true,
+            "decimals": 0
+          },
+          "queryType": "promql",
+          "queries": [
+            {
+              "query": "topk(15, max by (source) (data_quality{metric=\"unreviewedLicence\"}))",
+              "vrlFunctionQuery": null,
+              "customQuery": true,
+              "fields": {
+                "stream": "",
+                "stream_type": "metrics",
+                "x": [],
+                "y": [],
+                "z": [],
+                "breakdown": [],
+                "filter": {
+                  "filterType": "group",
+                  "logicalOperator": "AND",
+                  "conditions": []
+                }
+              },
+              "config": {
+                "promql_legend": "",
+                "layer_type": "scatter",
+                "weight_fixed": 1
+              }
+            }
+          ],
+          "layout": {
+            "x": 96,
+            "y": 68,
+            "w": 96,
+            "h": 14,
+            "i": 32
           }
         }
       ]

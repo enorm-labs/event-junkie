@@ -4,7 +4,7 @@ Four, and each answers a question the others do not.
 
 | File                         | Question                                                                                        | Origin                                                                                                                         |
 | ---------------------------- | ----------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| `is-it-healthy.json`         | **Is anything wrong?** One screen, mostly this project's own signals                            | ours — [#271](https://github.com/enorm-labs/event-junkie/issues/271)                                                           |
+| `is-it-healthy.json`         | **Is anything wrong?** One screen, mostly this project's own signals, and a data-quality tab    | ours — [#271](https://github.com/enorm-labs/event-junkie/issues/271)                                                           |
 | `openobserve-internals.json` | **Why, when the answer is OpenObserve itself?** WAL, compaction, storage, ingestion, cache, API | [upstream](https://github.com/openobserve/dashboards), adapted — [#971](https://github.com/enorm-labs/event-junkie/issues/971) |
 | `kubernetes-events.json`     | **What is Kubernetes complaining about?** OOMKills, evictions, failed probes, scheduling        | upstream, adapted — [#974](https://github.com/enorm-labs/event-junkie/issues/974)                                              |
 | `kubernetes-namespaces.json` | **Which namespace is using the node?** CPU, memory and network per namespace                    | upstream, adapted — [#974](https://github.com/enorm-labs/event-junkie/issues/974)                                              |
@@ -141,6 +141,11 @@ The top row is the answer; the two rows under it are why.
 | OpenObserve memtable       | How close the ingest path is to rejecting writes                           |
 | Page loads per hour        | **Did anyone come?** Visitors' page loads, probes and crawlers out (#1126) |
 | Where page loads came from | Which channel sent them — the referrer, in aggregate                       |
+
+**The Data quality tab is the importer's `data_quality{source,metric}` gauge** (#386), written by `DataQualityReportLogger` at
+03:00 and empty after a restart until the next run. Four tiles give the share of all events with a gap, one line gives each
+count over time, and eight bars name the fifteen worst sources per metric. The trend is the gauge's history in OpenObserve:
+OpenObserve cannot read the `data_quality_snapshot` table, so a week's window is the shortest that shows a trend.
 
 **"Future events" is the panel that justifies the whole exercise.** A venue redesigns its site, the
 scraper keeps returning 200 and writing nothing, the importer reports success, and the listings
@@ -296,7 +301,3 @@ The cause is already recorded in ADR-015: **a Micrometer counter that has never 
 from `/actuator/prometheus`.** They appear once each event happens for the first time on staging.
 Add the panels then — writing them now would ship nine working panels and six blank ones, which
 teaches everyone to ignore blank panels.
-
-`data_quality{source,metric}` is the same story and belongs with
-[#386](https://github.com/enorm-labs/event-junkie/issues/386) rather than here — that issue is the
-data-quality dashboard, and #271 says to co-design rather than build two.
