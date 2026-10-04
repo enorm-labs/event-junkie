@@ -92,8 +92,8 @@
     "reportSubject": "Fehler in den Daten: {title}",
     "reportBody": "Event: {url}\n\nWas stimmt nicht:\n",
     "share": {
-      "group": "Teilen und in den Kalender eintragen",
       "share": "Teilen",
+      "nativeShare": "Teilen über…",
       "copyLink": "Link kopieren",
       "copied": "Link kopiert.",
       "copyFailed": "Der Link ließ sich nicht kopieren. Hier ist er: {url}",

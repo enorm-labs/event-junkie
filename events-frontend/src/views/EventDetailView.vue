@@ -444,16 +444,9 @@ useStructuredData((): JsonLd[] => {
 
       <!--
         No ticket CTA once the night has happened, nor on the row a show left — the house it
-        moved to sells the tickets (#1551); source and Facebook stay honest.
+        moved to sells the tickets (#1551); source and Facebook stay honest. Share closes the row.
       -->
-      <section
-        v-if="
-          (event.ticketUrl && !isPast && !event.relocatedTo) ||
-          event.sourceUrl ||
-          event.facebookEventUrl
-        "
-        class="flex flex-wrap gap-3"
-      >
+      <EventShareActions :event="event">
         <Button v-if="event.ticketUrl && !isPast && !event.relocatedTo" as-child>
           <a :href="event.ticketUrl" rel="noopener noreferrer" target="_blank">{{
             t('events.detail.buyTickets')
@@ -469,9 +462,7 @@ useStructuredData((): JsonLd[] => {
             t('events.detail.facebook')
           }}</a>
         </Button>
-      </section>
-
-      <EventShareActions :event="event" />
+      </EventShareActions>
 
       <!-- The address is the link text, so a visitor without a mail client can still copy it. -->
       <p v-if="reportMailto" class="text-body text-muted-foreground">

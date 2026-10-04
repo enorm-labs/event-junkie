@@ -92,8 +92,8 @@
     "reportSubject": "Wrong data: {title}",
     "reportBody": "Event: {url}\n\nWhat is wrong:\n",
     "share": {
-      "group": "Share and add to calendar",
       "share": "Share",
+      "nativeShare": "Share via…",
       "copyLink": "Copy link",
       "copied": "Link copied.",
       "copyFailed": "Could not copy the link. Here it is: {url}",
