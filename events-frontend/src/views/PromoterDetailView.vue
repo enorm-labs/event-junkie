@@ -101,7 +101,7 @@ const credit = computed(() => imageCredit(promoter.value))
     <p
       v-if="description"
       :lang="description.lang ?? undefined"
-      class="whitespace-pre-line wrap-anywhere text-foreground/90"
+      class="text-prose whitespace-pre-line wrap-anywhere text-foreground/90"
     >
       {{ description.text }}
     </p>

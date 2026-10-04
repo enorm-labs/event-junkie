@@ -5,7 +5,7 @@ Where the design decisions live, and which file to read for what.
 **The constraints are in [`.github/instructions/design.instructions.md`](../.github/instructions/design.instructions.md).** That file loads itself whenever an
 agent touches `events-frontend/src/`. It is the file that has to be right, because it is the file that is read while the code is written.
 
-It carries the colour tokens with their literal values, the six type steps, the spacing and widths, the component rules and the forbidden list.
+It carries the colour tokens with their literal values, the seven type steps, the spacing and widths, the component rules and the forbidden list.
 `.claude/rules/design.md` is a symlink to it, so Claude Code and GitHub Copilot read one copy.
 
 **It cannot be a pointer to this page.** An `@` include inside a rule file is expanded at launch, whatever the file's `paths:` say. A pointer-style rule

@@ -143,7 +143,7 @@ const mapLink = computed(() => ({
   <main class="mx-auto max-w-5xl space-y-6 p-4 sm:p-8">
     <header class="space-y-1">
       <h1 class="text-page font-bold tracking-tight">{{ t('events.title') }}</h1>
-      <p class="text-muted-foreground">{{ t('events.subtitle') }}</p>
+      <p class="text-body text-muted-foreground">{{ t('events.subtitle') }}</p>
     </header>
 
     <EventFilterBar show-on-now />

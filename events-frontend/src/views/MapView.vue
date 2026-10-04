@@ -256,7 +256,7 @@ function distance(km: number): string {
   <main class="mx-auto max-w-5xl space-y-6 p-4 sm:p-8">
     <header class="space-y-1">
       <h1 class="text-page font-bold tracking-tight">{{ t('map.title') }}</h1>
-      <p class="text-muted-foreground">{{ t('map.subtitle') }}</p>
+      <p class="text-body text-muted-foreground">{{ t('map.subtitle') }}</p>
     </header>
 
     <!-- With no dates in the URL the map shows today, so Tonight reads as pressed. -->

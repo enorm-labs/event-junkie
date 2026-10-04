@@ -21,7 +21,7 @@ describe('cn', () => {
   const sizes = themeTokens('text')
 
   it('finds the type scale in main.css', () => {
-    expect(sizes).toEqual(['meta', 'body', 'card-title', 'lede', 'section', 'page'])
+    expect(sizes).toEqual(['meta', 'body', 'prose', 'card-title', 'lede', 'section', 'page'])
   })
 
   it.each(sizes)('keeps text-%s beside a text colour', (size) => {

@@ -70,18 +70,19 @@ never colours text or a control, and it stays at chroma 0.04 to 0.05 so the acce
 
 ## 3. Type
 
-Six steps, named for the role rather than the size, declared as `@theme` tokens so Tailwind generates the utility (BRANDING §5.8).
+Seven steps, named for the role rather than the size, declared as `@theme` tokens so Tailwind generates the utility (BRANDING §5.8).
 
 | Utility           | Size / leading | For                                                |
 | ----------------- | -------------- | -------------------------------------------------- |
 | `text-meta`       | 12 / 16 px     | The smallest live text                             |
 | `text-body`       | 14 / 20 px     | Secondary copy, and a card's lines below its title |
+| `text-prose`      | 16 / 24 px     | Multi-paragraph reading text                       |
 | `text-card-title` | 17 / 22 px     | A card title where the card is small               |
 | `text-lede`       | 20 / 28 px     | A card title, and a detail page's subtitle         |
 | `text-section`    | 24 / 30 px     | `h2`                                               |
 | `text-page`       | 30 / 36 px     | `h1`                                               |
 
-**Tailwind's own sizes are refused** — `text-sm`, `text-2xl` and the rest fail `npm run lint` outside `components/ui/` (`vue/no-restricted-class`, #2347); three of them were the tokens under another name. **A seventh step needs an argument, not a `text-4xl`.** The faces are Geist and Geist Mono, both self-hosted; the mono is the eyebrow device and the footer's
+**Tailwind's own sizes are refused** — `text-sm`, `text-2xl` and the rest fail `npm run lint` outside `components/ui/` (`vue/no-restricted-class`, #2347); three of them were the tokens under another name. **`text-prose` is the seventh step, and its argument is length:** `text-body` is too small for several paragraphs on a phone. An eighth needs an argument too, not a `text-4xl`. **Every element of live text carries a step**: `body` sets no size on purpose, so an element without one renders at the browser's 16 / 24 and `/ui-check`'s type-scale probe reports it. The faces are Geist and Geist Mono, both self-hosted; the mono is the eyebrow device and the footer's
 version string, not decoration (BRANDING §5.3).
 
 ## 4. Space

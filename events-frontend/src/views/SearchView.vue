@@ -76,7 +76,9 @@ function linksOf(key: string): { to: string; name: string }[] {
   <main class="mx-auto max-w-5xl space-y-6 p-4 sm:p-8">
     <header class="space-y-1">
       <h1 class="text-page font-bold tracking-tight">{{ t('pageTitle.search') }}</h1>
-      <p v-if="searchable" class="text-muted-foreground">{{ t('search.resultsFor', { q }) }}</p>
+      <p v-if="searchable" class="text-body text-muted-foreground">
+        {{ t('search.resultsFor', { q }) }}
+      </p>
     </header>
 
     <div :class="PANEL_CLASS">
