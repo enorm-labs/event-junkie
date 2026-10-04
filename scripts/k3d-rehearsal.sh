@@ -508,7 +508,7 @@ cmd_verify() {
     if printf '%s' "$body" | grep -qE '^Disallow: /$'; then
       ok "/robots.txt is the mounted disallow-all, not the image's copy"
     else
-      bad "/robots.txt has no 'Disallow: /' — the image's allow-all copy is being served"
+      bad "/robots.txt has no 'Disallow: /' — the image's own copy is being served"
     fi
     if printf '%s' "$body" | grep -qi 'sitemap:'; then
       bad "/robots.txt still names a sitemap, which can only be production's"

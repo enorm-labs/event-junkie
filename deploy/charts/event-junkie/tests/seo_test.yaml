@@ -1,7 +1,7 @@
 # The body half of `ingress.noindex` (#286): a disallow-all `robots.txt` and an empty sitemap mounted
 # over the ones baked into the image. Every assertion exists because the failure is silent: a
 # `subPath` naming no ConfigMap key, a volume naming the wrong ConfigMap, a mount without `subPath` —
-# each renders and reports healthy, and serves the image's allow-all copy or a blank site.
+# each renders and reports healthy, and serves the image's own copy or a blank site.
 suite: robots.txt and sitemap overrides outside production
 
 templates:

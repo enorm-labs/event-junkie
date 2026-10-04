@@ -2,8 +2,8 @@
 {{- $args := dict "ctx" $ "component" "frontend-seo" }}
 {{- /* `robots.txt` and `sitemap.xml` for an environment that is not production: the body half of
    `ingress.noindex` (#286). The Middleware next door adds `X-Robots-Tag`, and a header cannot
-   rewrite a response body, so the image's allow-all `robots.txt` with its production `Sitemap:`
-   line would still be served.
+   rewrite a response body, so the image's `robots.txt` would still be served: open to every crawler
+   but the AI training ones, with its production `Sitemap:` line.
 
    It cannot be fixed in the build: `events-frontend/scripts/seoFiles.ts` emits both files from
    the hard-coded `SITE_URL` in `src/lib/seo.ts`, because a canonical URL exists to name ONE
@@ -25,7 +25,7 @@ metadata:
 data:
   {{- /* Keys are filenames, load-bearing: the frontend Deployment mounts each with `subPath`, and a
      `subPath` naming a missing key mounts an empty directory over the file instead of failing, so
-     the environment quietly keeps the image's allow-all copy. The render assertions check the two
+     the environment quietly keeps the image's own copy. The render assertions check the two
      lists against each other. */}}
   robots.txt: |
     # This host is not the Event Junkie site. Nothing here should be indexed.
