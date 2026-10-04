@@ -115,6 +115,11 @@ data class ScrapedEvent(
      */
     val detailPageOwns: Set<ScrapedField> = emptySet(),
     /**
+     * The `sourceId` of the exhibition run this [detailUnavailable] day belongs to if that run is
+     * stored. Only the page says EXHIBITION, so the upsert folds the day into a stored run (#2575).
+     */
+    val storedRunId: String? = null,
+    /**
      * The venue's language for all its shows ([VenueLimitations.houseLanguage]), set by the import,
      * not the scraper. Stored only where the event's own text names no language (#2584).
      */
@@ -375,6 +380,19 @@ fun List<ScrapedEvent>.collapseExhibitionRuns(key: (ScrapedEvent) -> String?): L
         )
     }
 }
+
+/**
+ * Folds each day whose [ScrapedEvent.storedRunId] is in [runIds] into that run, as
+ * [collapseExhibitionRuns] does. The day takes EXHIBITION and bills no act, as a day whose page
+ * answered does (#2575).
+ */
+fun List<ScrapedEvent>.foldIntoRuns(runIds: Set<String>): List<ScrapedEvent> =
+    if (runIds.isEmpty()) {
+        this
+    } else {
+        map { if (it.storedRunId in runIds) it.copy(eventType = EventType.EXHIBITION.name, artists = emptyList()) else it }
+            .collapseExhibitionRuns { it.storedRunId?.takeIf(runIds::contains) }
+    }
 
 /** A start at or after this is a night, and gets the grace (#299). */
 private val LATE_START: LocalTime = LocalTime.of(22, 0)

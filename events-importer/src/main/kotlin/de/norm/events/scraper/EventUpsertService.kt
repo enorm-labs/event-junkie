@@ -18,6 +18,7 @@ import java.time.format.DateTimeFormatter
  * managed by the caller.
  */
 @Service
+@Suppress("TooManyFunctions") // One private function per step of the pipeline that upsertAndCleanup runs.
 class EventUpsertService(
     private val eventRepository: EventRepository,
     private val associationSyncService: AssociationSyncService,
@@ -57,7 +58,9 @@ class EventUpsertService(
         licences: SourceLicences = SourceLicences.UNKNOWN_SOURCE,
         staleCleanup: StaleCleanup = StaleCleanup.WINDOWED
     ): UpsertOutcome {
-        val upcomingEvents = dropPastEvents(scrapedEvents, eventSourceId)
+        // Before the stale cleanup, or the stored run is not in this scrape and is deleted.
+        val foldedEvents = foldIntoStoredRuns(scrapedEvents, eventSourceId)
+        val upcomingEvents = dropPastEvents(foldedEvents, eventSourceId)
         val uniqueEvents = deduplicateScrapedEvents(upcomingEvents)
         // Cleanup BEFORE the upsert; the order is load-bearing (KDoc).
         removeStaleEvents(uniqueEvents, eventSourceId, staleCleanup)
@@ -65,9 +68,35 @@ class EventUpsertService(
             // Counted here rather than where they are dropped, because the tag needs the source slug and
             // this service holds only the numeric id (#982).
             .copy(
-                droppedPast = scrapedEvents.size - upcomingEvents.size,
+                droppedPast = foldedEvents.size - upcomingEvents.size,
                 droppedDuplicate = upcomingEvents.size - uniqueEvents.size
             )
+    }
+
+    /**
+     * Folds each day that names a stored run of this source ([ScrapedEvent.storedRunId]) into that
+     * run, before the stale cleanup could delete the run as unlisted (#2575).
+     */
+    private suspend fun foldIntoStoredRuns(
+        scrapedEvents: List<ScrapedEvent>,
+        eventSourceId: Long
+    ): List<ScrapedEvent> {
+        val candidates = scrapedEvents.mapNotNullTo(mutableSetOf()) { it.storedRunId }
+        val storedRuns =
+            if (candidates.isEmpty()) {
+                emptySet()
+            } else {
+                eventRepository
+                    .findBySourceIdIn(candidates)
+                    .toList()
+                    .filter { it.eventSourceId == eventSourceId }
+                    .mapTo(mutableSetOf()) { it.sourceId }
+            }
+        if (storedRuns.isNotEmpty()) {
+            val days = scrapedEvents.count { it.storedRunId in storedRuns }
+            logger.info { "Folded $days day(s) into ${storedRuns.size} stored exhibition run(s) on event source $eventSourceId: their pages yielded nothing" }
+        }
+        return scrapedEvents.foldIntoRuns(storedRuns)
     }
 
     /**
