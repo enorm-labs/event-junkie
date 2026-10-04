@@ -15,7 +15,7 @@ import MultiSelectFilter from '@/components/MultiSelectFilter.vue'
 import { useEventFilters } from '@/composables/useEventFilters'
 import { useGenres } from '@/composables/useGenres'
 import { useAllVenues } from '@/composables/useVenues'
-import { DATE_PRESETS, type DateRange } from '@/lib/dateRanges'
+import { activePresetKey, DATE_PRESETS, type DateRange } from '@/lib/dateRanges'
 import { useFilterOptions } from '@/composables/useFilterOptions'
 import { useI18n } from 'vue-i18n'
 import { PANEL_CLASS } from '@/lib/utils'
@@ -46,20 +46,20 @@ function openDatePicker(event: MouseEvent) {
  * A preset is the two date bounds, so it stays in the URL and is shareable. Clicking the active
  * one clears the range, the only way back to "any date" without emptying both inputs.
  */
-function togglePreset(range: DateRange) {
-  const active = isPresetActive(range)
+function togglePreset(key: string, range: DateRange) {
+  const active = isPresetActive(key)
   applyFilters({ from: active ? '' : range.from, to: active ? '' : range.to })
 }
 
 /**
- * True when the URL's range is exactly this preset — it renders as the pressed button. With no
+ * True when the URL's range reads as this preset — it renders as the pressed button. With no
  * range in the URL, the view's own default stands in, so the map's "today" shows Tonight pressed.
  */
-function isPresetActive(range: DateRange): boolean {
+function isPresetActive(key: string): boolean {
   const from = queryString('from')
   const to = queryString('to')
   const shown = !from && !to && props.defaultRange ? props.defaultRange : { from, to }
-  return shown.from === range.from && shown.to === range.to
+  return activePresetKey(shown) === key
 }
 
 const genres = useGenres()
@@ -240,11 +240,11 @@ onMounted(() => {
       <Button
         v-for="preset in DATE_PRESETS"
         :key="preset.key"
-        :aria-pressed="isPresetActive(preset.range())"
-        :variant="isPresetActive(preset.range()) ? 'default' : 'outline'"
+        :aria-pressed="isPresetActive(preset.key)"
+        :variant="isPresetActive(preset.key) ? 'default' : 'outline'"
         size="sm"
         type="button"
-        @click="togglePreset(preset.range())"
+        @click="togglePreset(preset.key, preset.range())"
       >
         {{ t(preset.key) }}
       </Button>
