@@ -106,7 +106,7 @@ is the map and the traps.
 - `dependency-check-scheduled.yml` — the authoritative nightly OWASP scan; owns the NVD cache the PR scan restores.
 - `dast.yml` (#1421, #1423, #1461) — the only scanner that sends requests; three jobs, no cluster credential. `dast-k3d` nightly: the newest signed snapshot on an
   ephemeral k3d via `k3d-rehearsal.sh flux-up`, `fixtures/events.sql`, the full scan through Traefik, the API scan past the limiter on purpose, Nuclei's `misconfig`,
-  `exposure`, `tech`, `cve` templates. `dast-production` weekly passive and `nuclei-production` weekly at a fifth of the limiter's rate, against `SITE_URL`.
+  `exposure`, `tech`, `cve` templates. `dast-production` weekly passive and `nuclei-production` weekly at 2 a second, under `ej-4xx-flood`, against `SITE_URL`.
   Red only on a `FAIL` rule in `.zap/rules-*.tsv` or a Nuclei match outside `.nuclei/waivers-<target>.tsv`; every `IGNORE` and waiver dated and reasoned.
   Reports are artifacts; nothing opens an issue; no `pull_request` trigger, decided.
 - `deployment-status.yml` (#565) — turns Flux's `repository_dispatch` (`HelmRelease/event-junkie.flux-system`) into a GitHub deployment. Parses the commit

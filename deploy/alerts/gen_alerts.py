@@ -731,9 +731,10 @@ rule(
     failure_only=True,
 )
 
-# A week of production as a 30-minute rate: 99th percentile 2.0/s, maximum 2.6/s, the
-# weekly DAST scan. Scanners bursting at 11.7/s for five minutes come several times a
-# day, and the 30-minute window averages them out. 5/s is twice the worst half hour.
+# A week of production as a 30-minute rate: 99th percentile 2.0/s, maximum 2.6/s. Scanners
+# bursting at 11.7/s for five minutes come several times a day, and the 30-minute window
+# averages them out. 5/s is twice the worst half hour. Our own weekly Nuclei pass is
+# throttled in dast.yml to stay under it; at 10 a second it fired the rule at 9.3/s.
 rule(
     "ej-4xx-flood",
     "More than 5 client errors a second for 30 minutes, against a week's worst of 2.6/s "

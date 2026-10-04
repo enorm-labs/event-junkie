@@ -9,8 +9,8 @@ name: DAST
 # runner, built the way Hetzner runs it: same chart, images and Traefik middlewares. `dast-production`
 # is passive: a spider and the passive rules against the public site, because an active scan against
 # a CX33 with visitors on it is a self-inflicted load test; staging is on the tunnel, unreachable on
-# purpose. `nuclei-production` (#1461) is the Nuclei pass against the public site, weekly, at a
-# quarter of the k3d rate — what production has that k3d does not is the surface the templates check.
+# purpose. `nuclei-production` (#1461) is the Nuclei pass against the public site, weekly, slow enough
+# to stay under `ej-4xx-flood` — what production has that k3d does not is the surface the templates check.
 # `e2e-k3d` (#1699) is not a scanner at all: it points a browser at the same ephemeral cluster and
 # runs the un-mocked Playwright suite, because CI can reach no other deployment (ADR-033).
 #
@@ -478,8 +478,9 @@ jobs:
   nuclei-production:
     name: Nuclei against production
     runs-on: ubuntu-latest
-    # Measured against prod-check at this rate: 11,967 requests in 14 minutes, 13 a second.
-    timeout-minutes: 40
+    # Measured at `-rate-limit 10`: 13,501 requests in 17 minutes, 13 a second. At 2 that is
+    # about 90 minutes.
+    timeout-minutes: 150
     if: >-
       (github.event_name == 'schedule' && github.event.schedule == '19 4 * * 0')
       || (github.event_name == 'workflow_dispatch' && (inputs.job == 'both' || inputs.job == 'production'))
@@ -506,8 +507,10 @@ jobs:
           nuclei -version 2>&1 | head -1
 
       # The `dast-k3d` step against the public hostname: same templates and filters, the same red (a match
-      # outside `.nuclei/waivers-production.tsv`), a quarter of the rate — ten a second, a fifth of the
-      # per-source limit's average. No `Host` header: the hostname is real here.
+      # outside `.nuclei/waivers-production.tsv`). No `Host` header: the hostname is real here.
+      # The rate is set by `ej-4xx-flood` (more than 5 client errors a second over 30 minutes). Since unknown
+      # pages answer 404 (a1c357b8), almost every probe is a client error, and nuclei sends about 1.3 times
+      # its limit: at 10 the rule fired at 9.3/s. At 2 the scan peaks near 3/s on top of a 0.5/s background.
       - name: Nuclei against the site
         run: |
           set -euo pipefail
@@ -517,7 +520,7 @@ jobs:
           waived=$(grep -v '^#' .nuclei/waivers-production.tsv | cut -f1 | grep . | paste -sd, - || true)
           nuclei -duc -ni -nc -stats -si 60 -t ~/nuclei-templates -type http \
             -tags misconfig,exposure,tech,cve -severity medium,high,critical \
-            -rate-limit 10 ${waived:+-exclude-id "$waived"} \
+            -rate-limit 2 ${waived:+-exclude-id "$waived"} \
             -u "$SITE_URL" \
             -jsonl -o build/nuclei/nuclei.jsonl 2>&1 | tee build/nuclei/nuclei.txt || status=$?
           touch build/nuclei/nuclei.jsonl
