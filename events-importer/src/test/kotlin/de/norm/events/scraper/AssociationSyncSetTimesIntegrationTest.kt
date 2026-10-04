@@ -138,4 +138,36 @@ class AssociationSyncSetTimesIntegrationTest : BaseControllerTest() {
                 .setStart shouldBe start
         }
     }
+
+    @Test
+    fun `a failed page that owns the lineup keeps the stored support over the listing's headliner`() {
+        runBlocking {
+            val sourceId = "set-times:5"
+            val event = persistEvent(sourceId)
+            val headliner = ScrapedArtist(name = "Pharmakon", role = "HEADLINER")
+            val support = ScrapedArtist(name = "Aska", role = "SUPPORT")
+            associationSyncService.resolveAndSyncAssociations(listOf(event), listOf(scraped(sourceId, headliner).copy(artists = listOf(headliner, support))))
+
+            // The listing builds the headliner from the title alone (#2542).
+            val listing = scraped(sourceId, headliner).copy(detailUnavailable = true, detailPageOwns = setOf(ScrapedField.ARTISTS))
+            associationSyncService.resolveAndSyncAssociations(listOf(event), listOf(listing))
+
+            eventArtistRepository.findByEventIdIn(listOf(requireNotNull(event.id))).toList().size shouldBe 2
+        }
+    }
+
+    @Test
+    fun `a failed page that does not own the lineup takes the listing's`() {
+        runBlocking {
+            val sourceId = "set-times:6"
+            val event = persistEvent(sourceId)
+            val headliner = ScrapedArtist(name = "Pharmakon", role = "HEADLINER")
+            val support = ScrapedArtist(name = "Aska", role = "SUPPORT")
+            associationSyncService.resolveAndSyncAssociations(listOf(event), listOf(scraped(sourceId, headliner).copy(artists = listOf(headliner, support))))
+
+            associationSyncService.resolveAndSyncAssociations(listOf(event), listOf(scraped(sourceId, headliner).copy(detailUnavailable = true)))
+
+            eventArtistRepository.findByEventIdIn(listOf(requireNotNull(event.id))).toList().size shouldBe 1
+        }
+    }
 }

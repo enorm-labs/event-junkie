@@ -5,6 +5,7 @@ import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.HttpFetchException
 import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.ScrapedArtist
+import de.norm.events.scraper.ScrapedField
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
@@ -251,6 +252,8 @@ class CassiopeiaWebsiteImporterTest {
             // still yields the concert headliner from its title as a fallback.
             val concert = result.events.first { it.title == "Pharmakon" }
             concert.artists shouldContainExactly listOf(ScrapedArtist(name = "Pharmakon", role = "HEADLINER", titleDerived = true))
+            // That headliner alone stands in for a bill with support, so the upsert keeps the stored lineup (#2542).
+            concert.detailPageOwns shouldBe setOf(ScrapedField.IMAGE, ScrapedField.ARTISTS)
         }
 
     @Test

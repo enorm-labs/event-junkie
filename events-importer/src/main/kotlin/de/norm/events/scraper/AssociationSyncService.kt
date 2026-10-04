@@ -58,17 +58,41 @@ class AssociationSyncService(
         savedEvents: List<EventEntity>,
         scrapedEvents: List<ScrapedEvent>
     ): Set<Long> {
-        val (billed, unverified) = billedArtists(scrapedEvents)
+        val events = withOwnedLineupsKept(savedEvents, scrapedEvents)
+        val (billed, unverified) = billedArtists(events)
         val artistCache = resolveAllArtists(billed.values.flatten() + unverified)
-        val detailless = scrapedEvents.filter { it.detailUnavailable }.mapTo(mutableSetOf()) { it.sourceId }
+        val detailless = events.filter { it.detailUnavailable }.mapTo(mutableSetOf()) { it.sourceId }
         syncArtistAssociations(savedEvents, billed, artistCache, detailless)
 
-        val promoterCache = resolveAllPromoters(scrapedEvents)
-        syncPromoterAssociations(savedEvents, scrapedEvents, promoterCache, detailless)
+        val promoterCache = resolveAllPromoters(events)
+        syncPromoterAssociations(savedEvents, events, promoterCache, detailless)
 
-        val genreTagCache = resolveAllGenreTags(scrapedEvents)
-        syncGenreTagAssociations(savedEvents, scrapedEvents, genreTagCache)
+        val genreTagCache = resolveAllGenreTags(events)
+        syncGenreTagAssociations(savedEvents, events, genreTagCache)
         return artistCache.values.mapNotNullTo(mutableSetOf()) { it.id }
+    }
+
+    /**
+     * [scraped] without the listing's acts on each failed-page row whose page owns the lineup
+     * ([ScrapedField.ARTISTS]) and whose stored lineup is not empty. [keepsStoredLineup] then keeps the
+     * stored acts, and no act only the coarser listing names is created (#2542).
+     */
+    private suspend fun withOwnedLineupsKept(
+        savedEvents: List<EventEntity>,
+        scraped: List<ScrapedEvent>
+    ): List<ScrapedEvent> {
+        val owning = scraped.filter { it.detailUnavailable && ScrapedField.ARTISTS in it.detailPageOwns && it.artists.isNotEmpty() }.map { it.sourceId }.toSet()
+        val eventIds = savedEvents.filter { it.sourceId in owning }.mapNotNull { it.id }
+        if (eventIds.isEmpty()) return scraped
+        val withLineup =
+            eventArtistRepository
+                .findByEventIdIn(eventIds)
+                .toList()
+                .map { it.eventId }
+                .toSet()
+        val kept = savedEvents.filter { it.id in withLineup }.map { it.sourceId }.toSet()
+        if (kept.isNotEmpty()) logger.info { "Kept the stored lineup of ${kept.size} event(s): their detail page yielded nothing" }
+        return scraped.map { if (it.sourceId in kept) it.copy(artists = emptyList()) else it }
     }
 
     // -- Artist resolution --
