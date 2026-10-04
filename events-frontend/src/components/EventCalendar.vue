@@ -191,19 +191,23 @@ const options = computed<CalendarOptions>(() => ({
 
 /*
  * Today's number and header; the class is set from `isToday` above because v7 hashes its own.
+ * `foreground`, not `primary`: primary on the `--fc-classic-today` tint is 3.95:1 in light mode
+ * (#2659). The tint and the weight carry "today".
  */
 .event-calendar :deep(.fc-today-number) {
-  color: var(--primary);
+  color: var(--foreground);
   font-weight: 700;
 }
 
 /*
- * A token pair, not an opacity fade (the two notes above). `:deep` because the class sits on a
- * FullCalendar descendant.
+ * A token pair on no fill, not an opacity fade: `muted-foreground` on `muted` is 4.34:1 in light
+ * mode (#2659). The hairline keeps a bar a chip; dots have no border width, so they do not change.
+ * `:deep` because the class sits on a FullCalendar descendant.
  */
 .event-calendar :deep(.fc-event-past) {
-  --fc-classic-event: var(--muted);
+  --fc-classic-event: var(--background);
   --fc-classic-event-contrast: var(--muted-foreground);
+  border-color: var(--border);
 }
 
 /*
