@@ -17,12 +17,15 @@ import {
 } from 'reka-ui'
 import { Menu, X } from '@lucide/vue'
 import { Button } from '@/components/ui/button'
+import BaseBadge from '@/components/BaseBadge.vue'
 import GitHubMark from '@/components/GitHubMark.vue'
+import { useLocalePath } from '@/composables/useLocalePath'
 import { REPOSITORY_URL } from '@/lib/links'
 
 defineProps<{ links: { to: string; label: string }[] }>()
 
 const { t } = useI18n()
+const localePath = useLocalePath()
 const open = ref(false)
 
 // A link to another page closes the sheet through the route change; a tap on the current page's
@@ -54,9 +57,21 @@ watch(
         class="fixed inset-y-0 right-0 z-50 flex w-3/4 max-w-xs flex-col gap-6 border-l border-border bg-background p-4 outline-hidden"
       >
         <div class="flex items-center justify-between">
-          <DialogTitle class="text-meta text-muted-foreground">
-            {{ t('common.nav.menu') }}
-          </DialogTitle>
+          <div class="flex items-center gap-2">
+            <DialogTitle class="text-meta text-muted-foreground">
+              {{ t('common.nav.menu') }}
+            </DialogTitle>
+            <!-- The header drops its beta badge below 360px (#2666); this is the same link there. -->
+            <RouterLink
+              :aria-label="t('common.nav.betaLabel')"
+              :title="t('common.nav.betaLabel')"
+              :to="localePath('/about#beta')"
+              class="rounded-full transition-opacity hover:opacity-80 min-[360px]:hidden"
+              @click="open = false"
+            >
+              <BaseBadge variant="outline">{{ t('common.nav.beta') }}</BaseBadge>
+            </RouterLink>
+          </div>
           <DialogClose as-child>
             <Button
               :aria-label="t('common.nav.closeMenu')"

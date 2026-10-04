@@ -83,12 +83,13 @@ const sectionLinks = computed(() =>
         </RouterLink>
 
         <!-- A link rather than a tooltip-only marker: a `title` is invisible on touch devices.
-             Targets the About page's #beta section. -->
+             Targets the About page's #beta section. Below 360px it moves into HeaderMenu's sheet, so
+             the header stays one row at 320px (#2666). -->
         <RouterLink
           :aria-label="betaLabel"
           :title="betaLabel"
           :to="localePath('/about#beta')"
-          class="mr-2 rounded-full transition-opacity hover:opacity-80"
+          class="mr-2 hidden rounded-full transition-opacity hover:opacity-80 min-[360px]:block"
         >
           <BaseBadge variant="outline">{{ t('common.nav.beta') }}</BaseBadge>
         </RouterLink>
