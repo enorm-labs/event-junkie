@@ -156,6 +156,9 @@ enum class EventSource {
     /** Kater Berlin – the techno club and garden on the Spree at Holzmarkt, formerly Kater Blau, with several floors and weekend-spanning parties. */
     KATER,
 
+    /** KitKatClub Berlin – the hedonistic dress-code club in Mitte with a pool, sex-positive techno nights and its Saturday CarneBall Bizarre. */
+    KITKATCLUB,
+
     /** Klunkerkranich Berlin – the rooftop culture garden above the Neukölln Arcaden: a bar, stage and club running a nightly programme. */
     KLUNKERKRANICH,
 

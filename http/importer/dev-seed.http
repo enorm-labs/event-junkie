@@ -62,6 +62,7 @@
 ###   Kabarett-Theater DISTEL — https://distel-berlin.de/spielplan/kalender/
 ###   Kantine am Berghain  — https://www.berghain.berlin/de/program/kantine-am-berghain/
 ###   Kater                — https://www.katerclub.de/
+###   KitKatClub           — https://kitkatclub.org/Home/Club/Index.html
 ###   Klunkerkranich       — https://klunkerkranich.org/events/
 ###   KØPI                 — https://koepi137.net/
 ###   Kulturhaus Insel Berlin — https://www.inselberlin.de/
@@ -2984,6 +2985,69 @@ Accept: application/json
 
 > {%
     client.test("Kater import triggered", function () {
+        client.assert(response.status === 202, "Expected 202 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
+### KitKatClub (Köpenicker Str. 76 / Brückenstr. 1, Berlin-Mitte)
+### ————————————————————————————————————————————————————————————
+
+### --- Create KitKatClub venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "KitKatClub",
+    "address": "Köpenicker Str. 76",
+    "city": "Berlin",
+    "postalCode": "10179",
+    "district": "mitte",
+    "latitude": 52.511407,
+    "longitude": 13.417013,
+    "websiteUrl": "https://kitkatclub.org",
+    "description": "A hedonistic techno club named after the club in the musical Cabaret, running since 1994 and now above U-Bahnhof Heinrich-Heine-Straße, with a strict dress code, a pool, its Saturday CarneBall Bizarre running into the Sunday afterhour, and Friday series by scene collectives.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Ein hedonistischer Technoclub, benannt nach dem Club aus dem Musical Cabaret, seit 1994 in Betrieb und heute über dem U-Bahnhof Heinrich-Heine-Straße, mit strengem Dresscode, Pool, dem samstäglichen CarneBall Bizarre, der in die Sonntags-Afterhour übergeht, und Freitagsreihen von Szenekollektiven.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["club"]
+}
+
+> {%
+    client.global.set("kitkatclub_venue_id", response.body.id);
+    client.test("KitKatClub venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Create KitKatClub event source ---
+# Links the venue to the KitKatClubWebsiteImporter.
+# The sourceType "KITKATCLUB" matches EventSource.KITKATCLUB.
+POST {{importer-host}}/api/admin/event-sources
+Content-Type: application/json
+
+{
+    "venueId": {{kitkatclub_venue_id}},
+    "name": "KitKatClub",
+    "url": "https://kitkatclub.org/Home/Club/Index.html",
+    "sourceType": "KITKATCLUB",
+    "enabled": true,
+    "importIntervalMinutes": 1440,
+    "maxRetries": 3
+}
+
+> {%
+    client.test("KitKatClub event source created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Trigger initial KitKatClub import ---
+POST {{importer-host}}/api/admin/event-sources/kitkatclub/import
+Accept: application/json
+
+> {%
+    client.test("KitKatClub import triggered", function () {
         client.assert(response.status === 202, "Expected 202 but got " + response.status);
     });
 %}
