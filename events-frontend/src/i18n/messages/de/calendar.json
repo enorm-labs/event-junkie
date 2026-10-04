@@ -1,6 +1,7 @@
 {
   "title": "Kalender",
   "subtitle": "Kommende Musikveranstaltungen in Berlin im Überblick.",
+  "today": "Heute",
   "view": {
     "month": "Monat",
     "week": "Woche",
