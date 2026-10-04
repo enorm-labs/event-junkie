@@ -158,6 +158,12 @@ says so.
 | `KATER`                | `PER_EVENT_PAGE`   | the per-event page carries nothing the homepage listing lacks                                                                                    | —     |
 | `KATER`                | `PRICE`            | the club sells at the door and prints no figure; a night is flagged free only when its title or blurb says so                                    | —     |
 | `KATER`                | `IMAGE`            | the venue prints a flyer on almost no night; the programme is text with a Resident Advisor link                                                  | —     |
+| `KITKATCLUB`           | `PER_EVENT_PAGE`   | every night points at the programme page                                                                                                         | —     |
+| `KITKATCLUB`           | `DOORS_TIME`       | the programme prints one opening time per night; only the weekend notes add a start after a warm-up                                              | —     |
+| `KITKATCLUB`           | `PRICE`            | the club prints no admission and refers to each night's organiser                                                                                | —     |
+| `KITKATCLUB`           | `IMAGE`            | the programme rows carry no flyer                                                                                                                | —     |
+| `KITKATCLUB`           | `PROMOTERS`        | the programme names each series but not the collective behind it                                                                                 | —     |
+| `KITKATCLUB`           | `TICKET_URL`       | a night links tickets only where its notes carry a Resident Advisor URL                                                                          | —     |
 | `KLUNKERKRANICH`       | `EVENT_TYPE`       | the venue publishes no category, so every night is stored as a party — which mislabels the occasional concert                                    | —     |
 | `KLUNKERKRANICH`       | `DOORS_TIME`       | the venue states when the roof opens, not when a show starts                                                                                     | —     |
 | `KLUNKERKRANICH`       | `GENRE`            | nothing on the site names a genre; every night takes the house's House                                                                           | —     |

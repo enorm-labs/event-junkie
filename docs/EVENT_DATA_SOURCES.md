@@ -22,9 +22,9 @@ repairing live in the [issue tracker](https://github.com/enorm-labs/event-junkie
 
 | Status                              | Meaning                                                                              | Count |
 | ----------------------------------- | ------------------------------------------------------------------------------------ | ----: |
-| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   111 |
+| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   112 |
 | 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |    38 |
-| ⛔ [Blocked](#-blocked--deferred)   | Website analyzed, but no usable listings (no programme page, JS-only, or too sparse) |   156 |
+| ⛔ [Blocked](#-blocked--deferred)   | Website analyzed, but no usable listings (no programme page, JS-only, or too sparse) |   155 |
 | 📣 [Promoters](#-promoters)         | Cross-venue listings; enrich the venues' own events, never add events (ADR-043)      |    10 |
 | ❓ [Unanalyzed](#-not-analyzed-yet) | URL recorded, but the website still needs a first look                               |    11 |
 
@@ -87,6 +87,7 @@ schema change.
 | Kabarett-Theater DISTEL          | https://distel-berlin.de/spielplan/kalender/                | Theater      | Contao month calendar; ~7 MB pages of inline SVG          |
 | Kantine am Berghain              | https://www.berghain.berlin/de/program/kantine-am-berghain/ | Concert Hall | Shares BERGHAIN importer                                  |
 | Kater                            | https://www.katerclub.de/                                   | Techno Club  | Homepage programme; ___ floor rules mark lineups          |
+| KitKatClub                       | https://kitkatclub.org/Home/Club/Index.html                 | Techno Club  | Table CMS; one week; year-less dates; rooms in line-up    |
 | Klunkerkranich                   | https://klunkerkranich.org/events/                          | Bar          | WordPress; ISO date in slug; ~10-day horizon              |
 | KØPI                             | https://koepi137.net/                                       | Club         | radar group API; bill read from the description           |
 | Kulturhaus Insel Berlin          | https://www.inselberlin.de/                                 | Concert Hall | Gatsby static-query JSON; times in the blurb              |
@@ -152,7 +153,7 @@ schema change.
 | Zitadelle                        | https://citadel-music-festival.de/events                    | Open Air     | Festival site; WordPress/EM; summer season only           |
 | Zur Klappe                       | https://zurklappe.org/events                                | Techno Club  | Next.js flight payload; no genre or prices                |
 
-110 importer classes cover 111 sources. Only Kantine am Berghain has no class of its own, and it shares the Berghain
+111 importer classes cover 112 sources. Only Kantine am Berghain has no class of its own, and it shares the Berghain
 importer outright. Its rows have their own `sourceId` prefix, `kantine_am_berghain:`. Three other groups share a _listing and parser_ while keeping one thin `@Component` per venue, so
 they do not reduce the count. They are Club der Visionäre with Sonnenraum and MS Hoppetosse, the three Velomax halls,
 and Uber Arena with the Uber Eats Music Hall.
@@ -173,7 +174,7 @@ test fixtures supply most of the "one field" rows, because a listing page usuall
   that one description holds both languages, with a marker between them.
 - **Evidence** is the page that shows the second language. A _captured page_ is a fixture that the scraper tests read.
 
-42 sources have a second language, 65 have none, and 4 are unknown. Seven translate the event text on a second page.
+42 sources have a second language, 66 have none, and 4 are unknown. Seven translate the event text on a second page.
 Ten put both languages in one field.
 
 | Name                             | Second language | How                                                          | Event text         | Evidence                                                                                                                           |
@@ -225,6 +226,7 @@ Ten put both languages in one field.
 | Kabarett-Theater DISTEL          | No              | —                                                            | —                  |                                                                                                                                    |
 | Kantine am Berghain              | Yes             | `/en/` path, `hreflang`                                      | Not on the listing | https://www.berghain.berlin/en/program/kantine-am-berghain/                                                                        |
 | Kater                            | No              | —                                                            | —                  |                                                                                                                                    |
+| KitKatClub                       | No              | —                                                            | —                  |                                                                                                                                    |
 | Klunkerkranich                   | Yes             | One field: German, `[EN]`, English                           | One field          | https://klunkerkranich.org/events/2026-10-09-trauma-mia-presents-bass-island-w-clavd-frau-kaufmann-confred-trauma-mia-resi-regelt/ |
 | KØPI                             | No              | —                                                            | —                  |                                                                                                                                    |
 | Kulturhaus Insel Berlin          | Yes             | One field: `[English below]`                                 | One field          | [captured page](../events-importer/src/test/resources/scraper/insel/insel-events.json)                                             |
@@ -613,7 +615,6 @@ the empty Next.js payload rather than the WAF, and a 403 is not evidence that a 
 | C115                              | https://www.c115.club/                              | Techno Club  | Mailing-list splash page; no programme                    | Site change                |
 | ELSE                              | —                                                   | Techno Club  | No own website; listings only on RA                       | Site change / manual entry |
 | Hamburger Bahnhof                 | https://www.smb.museum/                             | Open Air     | Museum programme is guided tours, not concerts            | Promoter feed              |
-| KitKatClub                        | https://www.kitkatclub.org/                         | Techno Club  | News-style prose; series live on external sites           | Site change                |
 | Lokschuppen                       | https://lokschuppen-berlin.com/                     | Techno Club  | Readymag site; the content is JS-only                     | Headless browser           |
 | OXI & OXI Garten                  | https://oxi-club.de/                                | Techno Club  | Domain redirects to Instagram                             | Site change                |
 | RSO                               | https://rso.berlin/                                 | Techno Club  | Domain returns 404; no own site found                     | Site change                |
@@ -816,8 +817,8 @@ Two source lists were worked through completely and are no longer reproduced her
   promoter listing anyway.
 - The **techno-club cluster** — 26 clubs and bars, of which 13 turned out to be scrapable. The other 13 publish only
   through Instagram, Facebook or Resident Advisor. RA is not a source (see [Blocked](#-blocked--deferred)), so those 13
-  wait for a site of their own or for manual entry. RA names five [Blocked](#-blocked--deferred) venues whose blocker
-  is precisely "no own site": ://about blank, ELSE, KitKatClub, OXI and RSO. Beside them it carries 66 venues that
+  wait for a site of their own or for manual entry. RA names four [Blocked](#-blocked--deferred) venues whose blocker
+  is precisely "no own site": ://about blank, ELSE, OXI and RSO. Beside them it carries 66 venues that
   this document does not record at all.
 
 ---
