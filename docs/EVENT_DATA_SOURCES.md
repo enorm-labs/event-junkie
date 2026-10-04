@@ -7,8 +7,8 @@ remaining work is visible at a glance.
 
 Four tables, one per import status, and a fifth for promoters. The counts below are the state of the work.
 **[Ready](#-ready-to-implement) is the one to read** — those rows are the next `/scaffold-importer` runs. Everything in
-[Blocked](#-blocked--deferred) names what would unblock it. One blocker is worth more than the rest: **resolving a
-venue per event**, so a [promoter](#-promoters) listing can be imported. **Resident Advisor is not a source.** Its
+[Blocked](#-blocked--deferred) names what would unblock it. Each venue has one main source, and a [promoter](#-promoters)
+only enriches the events it lists (ADR-043). **Resident Advisor is not a source.** Its
 terms forbid automated access, and [Blocked](#-blocked--deferred) says what that means for a venue that publishes only
 there.
 
@@ -25,7 +25,7 @@ repairing live in the [issue tracker](https://github.com/enorm-labs/event-junkie
 | ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   111 |
 | 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |    38 |
 | ⛔ [Blocked](#-blocked--deferred)   | Website analyzed, but no usable listings (no programme page, JS-only, or too sparse) |   156 |
-| 📣 [Promoters](#-promoters)         | Cross-venue listings; none is importable until a venue is resolved per event (#324)  |    10 |
+| 📣 [Promoters](#-promoters)         | Cross-venue listings; enrich the venues' own events, never add events (ADR-043)      |    10 |
 | ❓ [Unanalyzed](#-not-analyzed-yet) | URL recorded, but the website still needs a first look                               |    11 |
 
 A count is the number of rows in its table. `scripts/sources-parity.sh` checks each count, in CI and in the
@@ -541,37 +541,34 @@ the empty Next.js payload rather than the WAF, and a 403 is not evidence that a 
 ## 📣 Promoters
 
 A promoter is a different kind of source from a venue. It lists events at many houses and has no house of its own.
-None of these rows is importable today. A row moves to [Ready](#-ready-to-implement) only when the blocker below is
-gone.
+[ADR-043](adr/ADR-043_ONE_MAIN_SOURCE_PER_VENUE_AND_ENRICHMENT_SOURCES.md) gives a promoter two roles.
 
-**Promoter sources are deferred on a model limitation, not a scraping one.** Puschen, Trinity Music, Landstreicher
-Booking, Landstreicher Konzerte and Loft all publish clean, well-structured listings that name the venue per event.
-Puschen's 35 upcoming shows are spread over about 20 houses, and Loft's 135 over about the same. But an event's venue
-comes from its `event_source` row (`EventUpsertService.upsertAndCleanup(events, venueId, …)`), one venue per source.
-A promoter's events therefore cannot be attached to the houses they actually play. Importing one today would file
-every show under a pseudo-venue, _and_ duplicate what the venues' own importers already hold. About 30 of Puschen's 35
-are at venues already imported. Unblocking them means resolving a venue per event and de-duplicating against the
-venue-level sources (#324). Until then the promoter data reaches us anyway, as the `promoter` field on the venues' own
-events.
+**At a venue with its own importer, a promoter is an enrichment source.** It fills empty fields, such as the support
+act or the set times, on events that the venue's page lists. It never adds an event. An event matches on venue, date
+and a start time within one hour. Most promoter shows are at such venues: about 30 of Puschen's 35.
 
-**Tag der Clubkultur** has the same blocker, and it runs only once a year. The Clubcommission festival week in October
-2026 listed 130 events at about 80 places. About half of these places are already imported. Many events are panels,
-workshops, exhibitions or screenings, which are out of scope. The listing is server-rendered WordPress. Each event page
-gives labelled fields for date, time, venue with address, ticket price, link and line-up. When per-event venue
-resolution exists, this source is easy to parse. Until then, use the programme to find new venues.
+**At a venue with no own publication, a promoter can be the main source**, with permission. One thin source per venue
+keeps only that venue's shows and has its own `sourceId` prefix (#2557). Zig Zag and the Velomax halls use the same
+pattern.
 
-| Name                   | URL                                            | Blocker                                           | Unblocked by               |
-| ---------------------- | ---------------------------------------------- | ------------------------------------------------- | -------------------------- |
-| Loft                   | https://loft.de/                               | Cross-venue; one venue per source (see note)      | Per-event venue resolution |
-| Greyzone Tickets       | https://www.greyzone-tickets.de/               | Contact info only; ticket service, not a listing  | —                          |
-| Landstreicher Booking  | https://landstreicher-booking.de/              | Cross-venue; one venue per source (see note)      | Per-event venue resolution |
-| Landstreicher Konzerte | https://landstreicher-konzerte.de/             | Cross-venue, cross-city; also has `/venue/` pages | Per-event venue resolution |
-| Puschen                | https://puschen.net/berlin/                    | Cross-venue; one venue per source (see note)      | Per-event venue resolution |
-| Trinity Music          | https://trinitymusic.de/                       | Cross-venue; one venue per source (see note)      | Per-event venue resolution |
-| Sofar Sounds           | https://www.sofarsounds.com/cities/berlin      | Secret venues; only the district is published     | Not importable             |
-| Tag der Clubkultur     | https://tagderclubkultur.berlin/programm/      | Cross-venue; one festival week a year (see note)  | Per-event venue resolution |
-| Jazz am Helmholtzplatz | http://www.jazzamhelmholtzplatz.com/           | Cross-venue; venue only in free text              | Per-event venue resolution |
-| Tränenpalast           | https://traenenpalast.tickettoaster.de/tickets | Talk-show agency; all dates at other venues       | Not importable             |
+Neither role exists in the importer yet. The rows below stay here until it does.
+
+**Tag der Clubkultur** runs only once a year. The Clubcommission festival week in October 2026 listed 130 events at
+about 80 places. About half of these places are already imported. Many events are panels, workshops, exhibitions or
+screenings, which are out of scope. Use the programme to find new venues.
+
+| Name                   | URL                                            | Blocker                                           | Unblocked by       |
+| ---------------------- | ---------------------------------------------- | ------------------------------------------------- | ------------------ |
+| Loft                   | https://loft.de/                               | Cross-venue (see note)                            | Enrichment sources |
+| Greyzone Tickets       | https://www.greyzone-tickets.de/               | Contact info only; ticket service, not a listing  | —                  |
+| Landstreicher Booking  | https://landstreicher-booking.de/              | Cross-venue (see note)                            | Enrichment sources |
+| Landstreicher Konzerte | https://landstreicher-konzerte.de/             | Cross-venue, cross-city; also has `/venue/` pages | Enrichment sources |
+| Puschen                | https://puschen.net/berlin/                    | Cross-venue (see note)                            | Enrichment sources |
+| Trinity Music          | https://trinitymusic.de/                       | Cross-venue (see note)                            | Enrichment sources |
+| Sofar Sounds           | https://www.sofarsounds.com/cities/berlin      | Secret venues; only the district is published     | Not importable     |
+| Tag der Clubkultur     | https://tagderclubkultur.berlin/programm/      | Cross-venue; one festival week a year (see note)  | Not importable     |
+| Jazz am Helmholtzplatz | http://www.jazzamhelmholtzplatz.com/           | Cross-venue; venue only in free text              | Enrichment sources |
+| Tränenpalast           | https://traenenpalast.tickettoaster.de/tickets | Talk-show agency; all dates at other venues       | Not importable     |
 
 ## ❓ Not analyzed yet
 
