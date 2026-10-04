@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import type { EventPage } from '@/api/types'
 import { Button } from '@/components/ui/button'
@@ -11,6 +12,7 @@ import EventRow from '@/components/EventRow.vue'
 import { useCompactView } from '@/composables/useCompactView'
 import SectionLabel from '@/components/SectionLabel.vue'
 import type { ImageCredit } from '@/lib/imageCredit'
+import { withoutUpcoming } from '@/lib/pastEvents'
 import { CARD_GRID_CLASS, CARD_LIST_CLASS } from '@/lib/utils'
 import { useLocalePath } from '@/composables/useLocalePath'
 import { useI18n } from 'vue-i18n'
@@ -21,7 +23,7 @@ import { useI18n } from 'vue-i18n'
  * entity-specific header metadata under the name, default for content between the header and
  * the events feed.
  */
-defineProps<{
+const props = defineProps<{
   /** Entity kind label, e.g. "Artist" — shown above the name and in the not-found heading. */
   kind: string
   /** Entity fetch state (from `useAsync`). */
@@ -57,6 +59,8 @@ defineProps<{
 // description and image come from its entity (lib/pageMeta.ts, `usePageMeta` in each view).
 
 const localePath = useLocalePath()
+
+const past = computed(() => withoutUpcoming(props.pastEvents?.content, props.events?.content))
 
 const { t } = useI18n()
 // The compact view is a global display preference — see `useCompactView`.
@@ -134,16 +138,16 @@ const { compact } = useCompactView()
 
       <!-- Collapsed and content-gated: history must not bury the forecast, and the depth
            caveat on an empty list would read as an excuse. -->
-      <details v-if="pastEvents?.content?.length">
+      <details v-if="past.length">
         <summary class="cursor-pointer">
           <SectionLabel as="span">{{ t('common.pastEvents') }}</SectionLabel>
         </summary>
         <p class="pt-3 text-body text-muted-foreground">{{ t('common.pastEventsNote') }}</p>
         <div v-if="compact" :class="[CARD_LIST_CLASS, 'mt-3']">
-          <EventRow v-for="event in pastEvents.content" :key="event.slug" :event="event" />
+          <EventRow v-for="event in past" :key="event.slug" :event="event" />
         </div>
         <div v-else :class="[CARD_GRID_CLASS, 'pt-3']">
-          <EventCard v-for="event in pastEvents.content" :key="event.slug" :event="event" />
+          <EventCard v-for="event in past" :key="event.slug" :event="event" />
         </div>
       </details>
     </template>
