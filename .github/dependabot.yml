@@ -170,6 +170,34 @@ updates:
       interval: "weekly"
     versioning-strategy: "increase"
 
+  # The local admin app (ADR-045). Its pins follow `/events-frontend`; merge the two directories'
+  # bumps together or they drift. Fewer groups than the frontend: only the oxlint peer lock needs
+  # one of its own, for the reason given there. The sweep carries `"*"` for the same reason too.
+  - package-ecosystem: "npm"
+    directory: "/events-admin"
+    schedule:
+      interval: "weekly"
+    versioning-strategy: "increase"
+    # The TypeScript 7 block from `/events-frontend` above, for the same tools (#371). Remove both together.
+    ignore:
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
+    groups:
+      admin-linting:
+        patterns:
+          - "eslint"
+          - "eslint-*"
+          - "@eslint/*"
+          - "oxlint"
+          - "oxfmt"
+          - "@vitest/eslint-plugin"
+      admin-minor-patch:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+
   # Keeps the `uses:` pins in .github/workflows/ current. `/` is correct here and does not mean the
   # repository root in the usual sense — for this ecosystem Dependabot always reads .github/workflows.
   # One group, because an action bump is a one-line change and fourteen separate PRs for fourteen

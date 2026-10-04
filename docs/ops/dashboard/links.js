@@ -672,6 +672,14 @@ window.EJ_LINKS = {
           "whatText": "PostgreSQL, started by Spring Docker Compose",
           "status": "",
           "statusText": ""
+        },
+        {
+          "url": "http://localhost:5174",
+          "label": "localhost:5174",
+          "what": "<code>events-admin</code>, against one cluster's forward",
+          "whatText": "events-admin, against one cluster's forward",
+          "status": "",
+          "statusText": ""
         }
       ]
     },
@@ -1027,6 +1035,10 @@ window.EJ_LINKS = {
         {
           "command": "open docs/ops/dashboard/index.html",
           "note": "the operations page: every link above, with a dot per forward"
+        },
+        {
+          "command": "(cd events-admin && npm run dev -- --mode staging) # the admin app on localhost:5174, through the forward above",
+          "note": ""
         }
       ]
     },

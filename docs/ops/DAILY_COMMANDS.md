@@ -12,6 +12,7 @@ kubectl --context event-junkie-staging get pods -A
 scripts/cluster-state.sh staging                   # one read-only verdict: is this environment whole
 scripts/ej.sh down staging                         # the forwards it started, then the tunnel
 open docs/ops/dashboard/index.html                 # the operations page: every link above, with a dot per forward
+(cd events-admin && npm run dev -- --mode staging) # the admin app on localhost:5174, through the forward above
 ```
 
 `scripts/ej.sh` is the session. `up` is `wg-quick up` plus the handshake check and a look at `/etc/hosts`. Then it starts one `kubectl port-forward`
