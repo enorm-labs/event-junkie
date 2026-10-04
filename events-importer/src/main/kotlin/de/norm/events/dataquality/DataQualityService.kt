@@ -1,8 +1,8 @@
 package de.norm.events.dataquality
 
+import de.norm.events.scraper.EventQualityFlagRepository
 import de.norm.events.scraper.EventSourceRepository
 import de.norm.events.scraper.isNonArtistName
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.toList
 import org.springframework.stereotype.Service
 import java.time.Clock
@@ -22,6 +22,7 @@ class DataQualityService(
     private val repository: DataQualityRepository,
     private val worklistRepository: DataQualityWorklistRepository,
     private val eventSourceRepository: EventSourceRepository,
+    private val qualityFlagRepository: EventQualityFlagRepository,
     /** Injected for deterministic time in tests, as elsewhere in this module. */
     private val clock: Clock = Clock.systemUTC()
 ) {
@@ -51,11 +52,9 @@ class DataQualityService(
         limit: Int,
         offset: Int
     ): WorklistResponse {
-        val entries =
-            worklistRepository
-                .findOffenders(issue, source, limit, offset)
-                .map(WorklistEntryResponse::fromRow)
-                .toList()
+        val rows = worklistRepository.findOffenders(issue, source, limit, offset).toList()
+        val flagsByEventId = qualityFlagRepository.findByEventIds(rows.map { it.id }).groupBy { it.eventId }
+        val entries = rows.map { WorklistEntryResponse.fromRow(it, flagsByEventId[it.id].orEmpty()) }
         return WorklistResponse(issue = issue.key, source = source, count = entries.size, entries = entries)
     }
 
@@ -123,7 +122,8 @@ class DataQualityService(
         unreviewedLicence = row.unreviewedLicence,
         unreviewedLicencePct = pct(row.unreviewedLicence, row.totalEvents),
         titleDerivedSingletons = row.titleDerivedSingletons,
-        titleDerivedUnmatched = row.titleDerivedUnmatched
+        titleDerivedUnmatched = row.titleDerivedUnmatched,
+        flaggedAtImport = row.flaggedAtImport
     )
 
     private fun rollUp(perSource: List<SourceQualityMetrics>): SourceQualityMetrics {
@@ -156,7 +156,8 @@ class DataQualityService(
             unreviewedLicence = unreviewed,
             unreviewedLicencePct = pct(unreviewed, total),
             titleDerivedSingletons = perSource.sumOf { it.titleDerivedSingletons },
-            titleDerivedUnmatched = perSource.sumOf { it.titleDerivedUnmatched }
+            titleDerivedUnmatched = perSource.sumOf { it.titleDerivedUnmatched },
+            flaggedAtImport = perSource.sumOf { it.flaggedAtImport }
         )
     }
 

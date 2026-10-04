@@ -40,9 +40,9 @@ resolve:
 1. **It is reactive.** Every mechanism catches only a value we saw before. The phrasings give it away: "handled
    case-by-case as they surface", "new ones need an entry", "slip through until denylisted". Newly-seen bad data
    lands in the DB first, and is corrected later, if ever.
-2. **The feedback loop is open.** The curation signal already exists: the `Dropping non-genre token '…'` logs
-   (`GenreNormalizer.kt`), artist-less concerts, `OTHER`-typed events. Nothing routes it back to a human. The curation
-   queue is invisible, so the curated lists only grow when someone happens to notice a bad row.
+2. **The feedback loop is only partly closed.** Artist-less concerts, `OTHER`-typed events and the sync gate's
+   refusals reach the worklist, the dropped non-genre tokens included. The curated lists still grow only when someone
+   reads that worklist.
 3. **There is measurement and no gate.** `de.norm.events.dataquality` holds the numbers per source, with a `data_quality_snapshot` history. A trend is
    visible. Nothing fails when a change regresses a metric. Quality is _observed_, not _enforced_.
 
@@ -207,9 +207,19 @@ they are excluded rather than counted as unreviewed.
 - **Golden fixture tests.** Freeze real scraped HTML snippets whose current output is correct (`THE BUTLERS - 40 YEARS … → The Butlers`,
   `GREEN LUNG → Green Lung`,
   `Tango or NonTango → Tango`) so a normalizer tweak that breaks them fails CI. These become the regression net for all four normalizers.
-- **Validation gate at the boundary.** A lightweight check in the mapping boundary flags or rejects obviously-bad
-  output instead of persisting it silently. An empty artist after stripping, an artist identical to a known non-artist
-  pattern, a genre token that is a whole event title. Flagged rows feed the Pillar 1 curation queue.
+- **Validation gate at the sync boundary.** `AssociationSyncService` keeps five kinds of value out of an event:
+    - an artist name that slugs to nothing
+    - a name that `isNonArtistName` refuses
+    - a title-derived name that the event also credits as its promoter, when MusicBrainz does not confirm it as an act
+    - a genre that repeats the event title
+    - a word in the genre field that names no genre, from `GenreNormalizer`
+
+    The gate records each value in `event_quality_flag`. `?issue=flaggedAtImport` on the worklist lists these
+    events, and each entry names the kind and the value. Each import replaces the flags of the events that it imports, so
+    a fixed value leaves the queue.
+
+- **Regression gate.** A check that fails when a data-quality metric regresses. It needs a decision first, see
+  [#2604](https://github.com/enorm-labs/event-junkie/issues/2604).
 
 ### Pillar 3 — Fix (recover missing / bad data) 🔴 highest user-visible payoff
 

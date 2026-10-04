@@ -12,6 +12,8 @@ private const val TITLE_DERIVED_SINGLETON_PREDICATE = "EXISTS ($ONE_EVENT_TITLE_
 
 private const val TITLE_DERIVED_UNMATCHED_PREDICATE = "EXISTS ($ONE_EVENT_TITLE_DERIVED AND a.musicbrainz_match = 'NONE')"
 
+private const val FLAGGED_AT_IMPORT_PREDICATE = "EXISTS (SELECT 1 FROM $EVENTS_SCHEMA.event_quality_flag f WHERE f.event_id = e.id)"
+
 /**
  * The metrics this pillar measures, and the single place each one's definition lives.
  *
@@ -100,7 +102,14 @@ enum class QualityIssue(
      * The same one-event, title-derived headliner, where MusicBrainz knows no artist of that name
      * (ADR-031) instead of the name matching the title. Shorter and denser than the name test.
      */
-    TITLE_DERIVED_UNMATCHED(Dimension.ACCURACY, TITLE_DERIVED_UNMATCHED_PREDICATE);
+    TITLE_DERIVED_UNMATCHED(Dimension.ACCURACY, TITLE_DERIVED_UNMATCHED_PREDICATE),
+
+    /**
+     * Events the import's sync gate kept a value out of: an artist name it refused or held back, a
+     * genre that repeats the title, or a genre word that names no genre (#320). The worklist entry
+     * carries each flag's kind and value.
+     */
+    FLAGGED_AT_IMPORT(Dimension.VALIDITY, FLAGGED_AT_IMPORT_PREDICATE);
 
     /** The JSON name, and the `?issue=` value: `concertsWithoutArtist`. */
     val key: String =

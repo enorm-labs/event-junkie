@@ -30,7 +30,7 @@ class DataQualityServiceTest {
 
     @BeforeEach
     fun setUp() {
-        service = DataQualityService(repository, worklistRepository, sources, clock)
+        service = DataQualityService(repository, worklistRepository, sources, mockk(), clock)
         coEvery { repository.artistNamesPerSource() } returns emptyFlow()
         coEvery { sources.findAll() } returns
             listOf(source(1L, "alpha"), source(2L, "beta")).asFlow()
@@ -65,7 +65,8 @@ class DataQualityServiceTest {
         missingStartTime = 0,
         unreviewedLicence = unreviewed,
         titleDerivedSingletons = titleDerived,
-        titleDerivedUnmatched = 0
+        titleDerivedUnmatched = 0,
+        flaggedAtImport = 0
     )
 
     /**

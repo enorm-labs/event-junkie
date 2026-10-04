@@ -16,6 +16,7 @@ import de.norm.events.genretag.EventGenreTagRepository
 import de.norm.events.genretag.GenreTagEntity
 import de.norm.events.genretag.GenreTagRepository
 import de.norm.events.genretag.genreFamily
+import de.norm.events.genretag.nonGenreTokens
 import de.norm.events.genretag.normalizeGenre
 import de.norm.events.musicbrainz.MusicBrainzMatcher
 import de.norm.events.promoter.PromoterEntity
@@ -33,16 +34,23 @@ import java.net.URI
  * Resolves artists, promoters and genre tags by slug, auto-creating unknown ones, and
  * synchronizes the join-table associations for upserted events by diff: insert new, update
  * changed (artist role/billing order), delete stale. Called within the caller's transaction.
+ *
+ * It is also the gate: a value it keeps out of an event is recorded as an [EventQualityFlag], which
+ * the data-quality worklist lists (#320).
  */
 @Service
-@Suppress("TooManyFunctions") // Logically cohesive — groups artist, promoter, and genre tag association management
+@Suppress(
+    "TooManyFunctions", // Logically cohesive — groups artist, promoter, and genre tag association management
+    "LongParameterList" // One repository per table the sync writes
+)
 class AssociationSyncService(
     private val eventArtistRepository: EventArtistRepository,
     private val eventPromoterRepository: EventPromoterRepository,
     private val eventGenreTagRepository: EventGenreTagRepository,
     private val artistRepository: ArtistRepository,
     private val promoterRepository: PromoterRepository,
-    private val genreTagRepository: GenreTagRepository
+    private val genreTagRepository: GenreTagRepository,
+    private val qualityFlagRepository: EventQualityFlagRepository
 ) {
     private val logger = KotlinLogging.logger {}
 
@@ -60,7 +68,8 @@ class AssociationSyncService(
         scrapedEvents: List<ScrapedEvent>
     ): AssociationOutcome {
         val events = withOwnedLineupsKept(savedEvents, scrapedEvents)
-        val (allBilled, unverified) = billedArtists(events)
+        val (allBilled, heldBack) = billedArtists(events)
+        val unverified = heldBack.values.flatten().distinctBy { slugOf(it.name) }
         val detailless = events.filter { it.detailUnavailable }.mapTo(mutableSetOf()) { it.sourceId }
         val pins = AssociationPins(savedEvents, detailless)
         val pinsKept = keptPins(pins, allBilled, events)
@@ -80,6 +89,10 @@ class AssociationSyncService(
         val genreEvents = events.map { if (it.sourceId in genresPinned) it.copy(genre = null) else it }
         val genreTagCache = resolveAllGenreTags(genreEvents)
         syncGenreTagAssociations(pins.unpinned(PinnedField.GENRES), genreEvents, genreTagCache)
+
+        // A pinned field ignores the source, so nothing the source published there is flagged.
+        val flagEvents = genreEvents.map { if (it.sourceId in lineupPinned) it.copy(artists = emptyList()) else it }
+        syncQualityFlags(savedEvents, flagEvents, heldBack.filterKeys { it !in lineupPinned })
         return AssociationOutcome(touchedArtistIds = artistCache.values.mapNotNullTo(mutableSetOf()) { it.id }, pinsKept = pinsKept)
     }
 
@@ -187,7 +200,11 @@ class AssociationSyncService(
         savedEvents: List<EventEntity>,
         scraped: List<ScrapedEvent>
     ): List<ScrapedEvent> {
-        val owning = scraped.filter { it.detailUnavailable && ScrapedField.ARTISTS in it.detailPageOwns && it.artists.isNotEmpty() }.map { it.sourceId }.toSet()
+        val owning =
+            scraped
+                .filter { it.detailUnavailable && ScrapedField.ARTISTS in it.detailPageOwns && it.artists.isNotEmpty() }
+                .map { it.sourceId }
+                .toSet()
         val eventIds = savedEvents.filter { it.sourceId in owning }.mapNotNull { it.id }
         if (eventIds.isEmpty()) return scraped
         val withLineup =
@@ -252,9 +269,9 @@ class AssociationSyncService(
      * after the commit, and the orphan sweep's grace day outlasts the next daily import. Then
      * [unglueSeriesTails].
      *
-     * @return the billed artists by `sourceId`, and the held-back names.
+     * @return the billed artists by `sourceId`, and the held-back names by `sourceId`.
      */
-    private suspend fun billedArtists(scrapedEvents: List<ScrapedEvent>): Pair<Map<String, List<ScrapedArtist>>, List<ScrapedArtist>> {
+    private suspend fun billedArtists(scrapedEvents: List<ScrapedEvent>): Pair<Map<String, List<ScrapedArtist>>, Map<String, List<ScrapedArtist>>> {
         scrapedEvents.forEach { event ->
             event.artists
                 .filter { isSlugless(it.name) }
@@ -267,7 +284,7 @@ class AssociationSyncService(
                     event.artists
                         .flatMap { artist -> splitGuest(artist) }
                         .map { it.copy(name = stripArtistSuffix(it.name)) }
-                        .filterNot { isSlugless(it.name) || isNonArtistName(it.name) || (it.titleDerived && festival) }
+                        .filterNot { refusal(it.name) != null || (it.titleDerived && festival) }
             }
         val promoterSlugsById = scrapedEvents.associate { event -> event.sourceId to event.promoters.map(::slugOf).toSet() }
         val promoterNamed =
@@ -275,13 +292,16 @@ class AssociationSyncService(
                 artists.filter { it.titleDerived && slugOf(it.name) in promoterSlugsById.getValue(sourceId) }
             }
         val verified = exactSlugs(promoterNamed.map { slugOf(it.name) }.toSet())
-        val billed =
-            stripped.mapValues { (sourceId, artists) ->
-                artists.filterNot { it.titleDerived && slugOf(it.name) in promoterSlugsById.getValue(sourceId) && slugOf(it.name) !in verified }
-            }
-        val unverified = promoterNamed.filterNot { slugOf(it.name) in verified }.distinctBy { slugOf(it.name) }
-        unverified.forEach { logger.info { "Holding back '${it.name}': the event's promoter, and no MusicBrainz EXACT row vouches for it as an act" } }
-        return unglueSeriesTails(billed) to unverified
+        val heldBack =
+            stripped
+                .mapValues { (sourceId, artists) ->
+                    artists.filter { it.titleDerived && slugOf(it.name) in promoterSlugsById.getValue(sourceId) && slugOf(it.name) !in verified }
+                }.filterValues { it.isNotEmpty() }
+        val billed = stripped.mapValues { (sourceId, artists) -> artists - heldBack[sourceId].orEmpty().toSet() }
+        heldBack.values.flatten().distinctBy { slugOf(it.name) }.forEach {
+            logger.info { "Holding back '${it.name}': the event's promoter, and no MusicBrainz EXACT row vouches for it as an act" }
+        }
+        return unglueSeriesTails(billed) to heldBack
     }
 
     /** The subset of [slugs] whose artist row MusicBrainz matched `EXACT`. */
@@ -294,6 +314,14 @@ class AssociationSyncService(
                 .toList()
                 .filter { it.musicbrainzMatch == MusicBrainzMatch.EXACT.name }
                 .mapTo(mutableSetOf()) { it.slug }
+        }
+
+    /** Why the gate keeps [name] off a lineup, or null when the name may stay. */
+    private fun refusal(name: String): QualityFlagKind? =
+        when {
+            isSlugless(name) -> QualityFlagKind.SLUGLESS_ARTIST
+            isNonArtistName(name) -> QualityFlagKind.NON_ARTIST_NAME
+            else -> null
         }
 
     /** [splitBracketedGuest] on one billing; a headliner's guest is support, as a `feat.` title bills it (#305). */
@@ -594,7 +622,7 @@ class AssociationSyncService(
      * @return genre tag slug to persisted [GenreTagEntity].
      */
     private suspend fun resolveAllGenreTags(scrapedEvents: List<ScrapedEvent>): Map<String, GenreTagEntity> {
-        val allGenreNames = scrapedEvents.flatMap { normalizeGenre(it.genre) }.distinct()
+        val allGenreNames = scrapedEvents.flatMap { normalizeGenre(it.storedGenre()) }.distinct()
         if (allGenreNames.isEmpty()) return emptyMap()
 
         val allSlugs = allGenreNames.map { SlugGenerator.slugify(it) }.toSet()
@@ -642,7 +670,7 @@ class AssociationSyncService(
                 EventGenreTagEntity::eventId
             ) ?: return
 
-        val genresBySourceId = scrapedEvents.associate { it.sourceId to normalizeGenre(it.genre) }
+        val genresBySourceId = scrapedEvents.associate { it.sourceId to normalizeGenre(it.storedGenre()) }
         val toInsert = mutableListOf<EventGenreTagEntity>()
         val toDeleteIds = mutableListOf<Long>()
 
@@ -678,6 +706,47 @@ class AssociationSyncService(
         if (toInsert.isNotEmpty()) {
             eventGenreTagRepository.saveAll(toInsert).toList()
         }
+    }
+
+    // -- The gate's flags --
+
+    /**
+     * Replaces the flags of every saved event with what the gate kept out of it in this run. A value
+     * the venue no longer publishes leaves the worklist with the next import.
+     */
+    private suspend fun syncQualityFlags(
+        savedEvents: List<EventEntity>,
+        scrapedEvents: List<ScrapedEvent>,
+        heldBack: Map<String, List<ScrapedArtist>>
+    ) {
+        val eventIdBySourceId = savedEvents.mapNotNull { saved -> saved.id?.let { saved.sourceId to it } }.toMap()
+        val flags =
+            scrapedEvents.flatMap { event ->
+                val eventId = eventIdBySourceId[event.sourceId] ?: return@flatMap emptyList()
+                gateFlags(event, heldBack[event.sourceId].orEmpty()).map { (kind, value) -> EventQualityFlag(eventId, kind, value) }
+            }
+        qualityFlagRepository.replaceFor(eventIdBySourceId.values, flags)
+        if (flags.isNotEmpty()) {
+            logger.info { "Flagged ${flags.size} value(s) for the data-quality worklist: ${flags.groupingBy { it.kind }.eachCount()}" }
+        }
+    }
+
+    /**
+     * What the gate keeps out of [event]: refused artist names as the venue billed them, the
+     * [heldBack] promoter names, a genre that repeats the title, and the genre words that name no genre.
+     */
+    private fun gateFlags(
+        event: ScrapedEvent,
+        heldBack: List<ScrapedArtist>
+    ): List<Pair<QualityFlagKind, String>> {
+        val artists =
+            event.artists
+                .flatMap(::splitGuest)
+                .mapNotNull { artist -> refusal(stripArtistSuffix(artist.name))?.let { it to artist.name.trim() } }
+        val promoters = heldBack.map { QualityFlagKind.HELD_BACK_PROMOTER_NAME to it.name.trim() }
+        val genre = event.genre?.takeIf { event.genreRepeatsTitle() }?.let { QualityFlagKind.GENRE_EQUALS_TITLE to it.trim() }
+        val nonGenres = nonGenreTokens(event.storedGenre()).map { QualityFlagKind.NON_GENRE_TOKEN to it }
+        return artists + promoters + listOfNotNull(genre) + nonGenres
     }
 
     // -- Shared helpers for association syncing --

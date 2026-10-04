@@ -59,7 +59,9 @@ interface DataQualityRepository : CoroutineCrudRepository<EventEntity, Long> {
                 JOIN $EVENTS_SCHEMA.artist a ON a.id = ea.artist_id
                 WHERE ea.event_id = e.id AND ea.title_derived AND a.musicbrainz_match = 'NONE'
                 AND (SELECT COUNT(*) FROM $EVENTS_SCHEMA.event_artist ea2 WHERE ea2.artist_id = a.id) = 1))
-                                                                           AS title_derived_unmatched
+                                                                           AS title_derived_unmatched,
+            COUNT(*) FILTER (WHERE EXISTS (SELECT 1 FROM $EVENTS_SCHEMA.event_quality_flag f
+                WHERE f.event_id = e.id))                                  AS flagged_at_import
         FROM $EVENTS_SCHEMA.event e
         GROUP BY e.event_source_id
         """
@@ -102,7 +104,8 @@ data class SourceQualityRow(
     val missingStartTime: Long,
     val unreviewedLicence: Long,
     val titleDerivedSingletons: Long,
-    val titleDerivedUnmatched: Long
+    val titleDerivedUnmatched: Long,
+    val flaggedAtImport: Long
 )
 
 /** One `(source, artist name)` pair — see [DataQualityRepository.artistNamesPerSource]. */

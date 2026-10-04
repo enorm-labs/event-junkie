@@ -141,6 +141,15 @@ class GenreNormalizerTest {
     }
 
     @Test
+    fun `nonGenreTokens names the dropped labels as written, and not the noise`() {
+        nonGenreTokens("Immersive Ausstellung, Techno").shouldContainExactly("Immersive Ausstellung")
+        nonGenreTokens("Comedy, Soul, Comedy").shouldContainExactly("Comedy")
+        nonGenreTokens("Berlin Techno").shouldBeEmpty()
+        nonGenreTokens("from 22:00, x").shouldBeEmpty()
+        nonGenreTokens(null).shouldBeEmpty()
+    }
+
+    @Test
     fun `a real genre beside a dropped format still survives`() {
         // The stop-list must not swallow a label that also names a style.
         normalizeGenre("Berlin Techno").shouldContainExactly("Techno")

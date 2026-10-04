@@ -181,6 +181,19 @@ data class ScrapedEvent(
     fun storedTitle(): String = stripTitleStatusMarker(cleanEventTitle(title))
 
     /**
+     * The genre as stored: null when it only repeats the title, which says nothing about the music.
+     * [AssociationSyncService] flags such a genre for the data-quality worklist (#320). The type
+     * classifier still reads the raw [genre].
+     */
+    fun storedGenre(): String? = genre?.takeUnless { genreRepeatsTitle() }
+
+    /** Whether [genre] is [storedTitle] again, ignoring case and spacing. */
+    fun genreRepeatsTitle(): Boolean {
+        val stated = genre?.let(::comparable)
+        return !stated.isNullOrEmpty() && stated == comparable(storedTitle())
+    }
+
+    /**
      * The type the event is stored with — the source's own, or the festival/format override
      * [resolveEventType] applies at the boundary. Scrapers build their artists before this is
      * known; [AssociationSyncService] reads it to drop a headliner minted from a festival title (#300).
@@ -283,7 +296,7 @@ data class ScrapedEvent(
             sourceUrl = sourceUrl,
             lineupSourceUrl = lineupSourceUrl,
             ticketUrl = ticketUrl,
-            genre = genre,
+            genre = storedGenre(),
             pricePresale = pricePresale?.normalizeMoneyScale(),
             priceBoxOffice = priceBoxOffice?.normalizeMoneyScale(),
             priceNote = priceNote,
@@ -446,3 +459,6 @@ data class ScrapedArtist(
             setEnd = setEnd
         )
 }
+
+/** [text] lower-cased with its whitespace collapsed, for an equality that ignores case and spacing. */
+private fun comparable(text: String): String = text.trim().replace(WHITESPACE, " ").lowercase()
