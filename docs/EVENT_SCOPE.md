@@ -161,18 +161,19 @@ signal. Decide it in that importer's PR, and record the signal here.
 ## 5. Coverage decisions
 
 Each of these changes what the app _is_, so **none may be settled by an importer PR.** The first five were decided on
-2026-08-08, the recurring nights on 2026-09-30, and the children's shows on 2026-10-01. The one that is still open is open on _sequencing_, not on
-principle.
+2026-08-08, the recurring nights on 2026-09-30, the children's shows on 2026-10-01, and online-only livestreams on 2026-10-04.
+The one that is still open is open on _sequencing_, not on principle.
 
 | Question                                                                                     | Decision                      | Blocked on       | What it costs                                                                                                            |
 | -------------------------------------------------------------------------------------------- | ----------------------------- | ---------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| **Comedy clubs?** (Comedy Café Berlin, Quatsch Comedy Club, …)                               | ✅ **Yes**                    | nothing          | Cheapest of the seven. Cosmic Comedy is already imported, so this is more venues in a category that exists               |
+| **Comedy clubs?** (Comedy Café Berlin, Quatsch Comedy Club, …)                               | ✅ **Yes**                    | nothing          | Cheapest of the eight. Cosmic Comedy is already imported, so this is more venues in a category that exists               |
 | **Theatres?** (Volksbühne, Schaubühne, Berliner Ensemble, …)                                 | ✅ **Yes**                    | nothing          | Low. Theater im Delphi, Heimathafen and Bar jeder Vernunft are already imported — coverage, not a new category           |
 | **Classical / orchestras?** (Konzerthaus, Philharmonie, RBB Sendesaal, Berliner Symphoniker) | ⏸ **Deferred** — not rejected | the artist model | Medium. `ArtistRole` and the genre vocabulary need extending **first**; the scraping is already solved for RBB Sendesaal |
 | **Exhibitions as first-class runs?**                                                         | ✅ **Yes** — done (#337)      | nothing          | Done. ADR-029 gave the row an end; an exhibition is one row from opening to closing day — see §2                         |
 | **Sport?**                                                                                   | ❌ **No**                     | —                | Settled. Different venues, different audience, and past the point where this is a music app                              |
 | **Recurring bar nights?** (a punk Tresen, an Open Jam, a karaoke night)                      | ✅ **Yes** — if not daily     | nothing          | Low. A night that recurs weekly or fortnightly is programme. A bar that is the same every evening is opening hours       |
 | **Children's shows?** (Kita mornings, family afternoons)                                     | ❌ **No**                     | —                | Settled. Not an evening programme for an adult audience; §3.5 holds the rule                                             |
+| **Online-only livestream?**                                                                  | ❌ **No**                     | —                | Settled. There is no venue to go to. A public viewing at a venue is a `SCREENING` and stays in                           |
 
 **What the two yeses unlock.** A comedy or theatre venue can be moved out of [Blocked](EVENT_DATA_SOURCES.md) and
 scaffolded like any other source. No ADR, no model change, no further discussion. Prioritise them by programme richness
