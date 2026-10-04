@@ -2,16 +2,17 @@ package de.norm.events.event
 
 import de.norm.events.common.TextSearch
 import io.swagger.v3.oas.annotations.Parameter
+import org.springframework.format.annotation.DateTimeFormat
 import java.math.BigDecimal
 import java.time.LocalDate
 
 /**
  * The date-independent filter criteria shared by `GET /events` and `GET /events/calendar`, two
  * renderings of one search. Bound as a model attribute; `@ParameterObject` tells springdoc to
- * flatten it back into query parameters. `from`/`to` stay on the controller methods: optional on
- * the search, required and range-checked on the calendar. A name that is not here is a `400`
- * (#815); the endpoints derive their accepted set from this class
- * ([de.norm.events.common.QueryParameters]).
+ * flatten it back into query parameters. `from`/`to` are not here: the search binds them
+ * optional through [EventDateRangeParams], and the calendar requires and range-checks its own.
+ * A name that is not here is a `400` (#815); the endpoints derive their accepted set from this
+ * class ([de.norm.events.common.QueryParameters]).
  */
 @Suppress("LongParameterList")
 data class EventFilterParams(
@@ -54,14 +55,20 @@ data class EventFilterParams(
     @field:Parameter(description = "When true, returns only events flagged as free to attend. Defaults to false.")
     val free: Boolean = false
 ) {
-    /** Combines these criteria with an optional date range into the repository-level [EventFilter]. */
+    /**
+     * Combines these criteria with an optional date range into the repository-level [EventFilter].
+     * With [running], [from] means "ends on or after" rather than "starts on or after", the
+     * calendar's overlap (#2674).
+     */
     fun toFilter(
         from: LocalDate? = null,
-        to: LocalDate? = null
+        to: LocalDate? = null,
+        running: Boolean = false
     ): EventFilter =
         EventFilter(
-            from = from,
+            from = from.takeUnless { running },
             to = to,
+            runningFrom = from.takeIf { running },
             eventTypes = eventType.orEmpty().normalizedEventTypes(),
             venueSlug = venue,
             districts = district.orEmpty().normalizedSlugs(),
@@ -77,6 +84,26 @@ data class EventFilterParams(
             onlyFree = free
         )
 }
+
+/**
+ * The optional date range of `GET /events`. It is bound apart from [EventFilterParams] because
+ * the calendar requires its own `from`/`to`, and the calendar and the feed reject `running`
+ * with a `400`.
+ */
+data class EventDateRangeParams(
+    @field:Parameter(description = "Earliest event date (inclusive), ISO-8601 (e.g. 2026-06-19). Defaults to today when both from/to are omitted.")
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+    val from: LocalDate? = null,
+    @field:Parameter(description = "Latest event date (inclusive), ISO-8601 (e.g. 2026-06-30).")
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+    val to: LocalDate? = null,
+    @field:Parameter(
+        description =
+            "When true, 'from' keeps every event still running on that day: one that ends on or after 'from' and starts on or before 'to'. " +
+                "Without it, 'from' is the earliest start date. Defaults to false."
+    )
+    val running: Boolean = false
+)
 
 /**
  * Trimmed, upper-cased, de-duplicated and sorted, so two orders of the same types are one

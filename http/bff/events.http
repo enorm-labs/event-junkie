@@ -32,6 +32,10 @@ Accept: application/json
 GET {{bff-host}}/api/events?from=2026-06-19&to=2026-07-15
 Accept: application/json
 
+### Filter by date range, keeping events still running on the first day (a weekend that opened the night before)
+GET {{bff-host}}/api/events?from=2026-10-10&to=2026-10-10&running=true
+Accept: application/json
+
 ### Filter by venue slug
 GET {{bff-host}}/api/events?venue=lido
 Accept: application/json

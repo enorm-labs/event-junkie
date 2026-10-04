@@ -434,6 +434,35 @@ class EventControllerTest : BaseControllerTest() {
         }
 
     @Test
+    fun `GET events with running keeps a run that started before the range`(): Unit =
+        runBlocking {
+            val venueId = insertVenue("Kater Blau", "kater-blau")
+            val day = LocalDate.now(ClockConfiguration.BERLIN).plusDays(10)
+            insertEvent(venueId, "Weekender", "weekender", day.minusDays(1), endDate = day.plusDays(2))
+            insertEvent(venueId, "Night Before", "night-before", day.minusDays(2))
+
+            webTestClient
+                .get()
+                .uri("/events?from=$day&to=$day&running=true")
+                .exchange()
+                .expectStatus()
+                .isOk
+                .expectBody()
+                .jsonPath("$.content[*].slug")
+                .value<List<String>> { it shouldContainExactlyInAnyOrder listOf("weekender") }
+
+            webTestClient
+                .get()
+                .uri("/events?from=$day&to=$day")
+                .exchange()
+                .expectStatus()
+                .isOk
+                .expectBody()
+                .jsonPath("$.totalElements")
+                .isEqualTo(0)
+        }
+
+    @Test
     fun `GET events calendar applies the same filters as the search endpoint`(): Unit =
         runBlocking {
             val astra = insertVenue("Astra", "astra", district = "kreuzberg")

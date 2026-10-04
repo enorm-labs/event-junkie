@@ -23,7 +23,8 @@ data class EventFilter(
     val to: LocalDate? = null,
     /**
      * The first day of a window: rows whose effective end (ADR-029) is on or after it, so a run that
-     * opened earlier is still in. The calendar sets it with [to] (#1405). Wins over [from].
+     * opened earlier is still in. The calendar sets it with [to] (#1405), and so does the list with
+     * `running=true` (#2674). Wins over [from].
      */
     val runningFrom: LocalDate? = null,
     /**
