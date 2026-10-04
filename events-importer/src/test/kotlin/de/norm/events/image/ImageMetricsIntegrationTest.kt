@@ -3,6 +3,7 @@ package de.norm.events.image
 import de.norm.events.BaseControllerTest
 import io.kotest.matchers.shouldBe
 import io.micrometer.core.instrument.MeterRegistry
+import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -31,6 +32,9 @@ class ImageMetricsIntegrationTest : BaseControllerTest() {
 
     @Autowired
     private lateinit var registry: MeterRegistry
+
+    @Autowired
+    private lateinit var imageRepository: CachedImageRepository
 
     /**
      * Five image URLs, one per state plus a second pending one.
@@ -79,6 +83,17 @@ class ImageMetricsIntegrationTest : BaseControllerTest() {
     fun `the derivative backlog counts stored images short of their variants, and skips takedowns`() {
         registry.find("images.derivatives.backlog").gauge()!!.value() shouldBe 1.0
     }
+
+    /** A blank derivative (#2669) is final until new bytes arrive, so it is neither work nor backlog. */
+    @Test
+    fun `an image marked blank is skipped by the derivative pass and the backlog`(): Unit =
+        runBlocking {
+            insertImage("blank", contentHash = "'bbb'", failureReason = "'blank derivative: luminance spread 0.00'")
+            refreshService.refreshGauges()
+
+            registry.find("images.derivatives.backlog").gauge()!!.value() shouldBe 1.0
+            imageRepository.findNeedingDerivatives(expectedVariants = 15, limit = 10).toList().map { it.contentHash } shouldBe listOf("aaa")
+        }
 
     /**
      * The names an alert rule selects on, read off the wire rather than off the Kotlin constant.
@@ -145,12 +160,13 @@ class ImageMetricsIntegrationTest : BaseControllerTest() {
         slug: String,
         contentHash: String = "NULL",
         failedAt: String = "NULL",
-        deletedAt: String = "NULL"
+        deletedAt: String = "NULL",
+        failureReason: String = "NULL"
     ) = databaseClient
         .sql(
             """
-            INSERT INTO events.cached_image (source_url, content_hash, failed_at, deleted_at)
-            VALUES ('$IMAGE_HOST/$slug.jpg', $contentHash, $failedAt, $deletedAt)
+            INSERT INTO events.cached_image (source_url, content_hash, failed_at, deleted_at, failure_reason)
+            VALUES ('$IMAGE_HOST/$slug.jpg', $contentHash, $failedAt, $deletedAt, $failureReason)
             """.trimIndent()
         ).await()
 

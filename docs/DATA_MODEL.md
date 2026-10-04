@@ -590,6 +590,11 @@ so without them a dead URL is requested every night forever — load on a venue 
 `deleted_at` is set by the takedown route rather than by a `DELETE`. A removed image is therefore
 not fetched again by the next pass, which still sees the URL on the page.
 
+**A `failure_reason` without a `failed_at` marks a blank derivative.** The derivative pass sets it
+when the smallest JPEG has almost no luminance spread. The black first frame of an animated GIF is
+an example. The pass then writes no variant, and the site shows no image for that row. A fetch that
+returns new bytes clears the mark.
+
 **A source that prohibits its images has no URL here to find.**
 [#807](https://github.com/enorm-labs/event-junkie/issues/807) made the importer store `null` for a
 prohibited `image_url`. The exclusion is structural.

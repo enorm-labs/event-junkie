@@ -1,5 +1,9 @@
 package de.norm.events.image
 
+import ch.qos.logback.classic.Level
+import ch.qos.logback.classic.Logger
+import ch.qos.logback.classic.spi.ILoggingEvent
+import ch.qos.logback.core.read.ListAppender
 import io.kotest.matchers.shouldBe
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry
 import io.mockk.coEvery
@@ -10,6 +14,8 @@ import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Test
+import org.slf4j.LoggerFactory
+import java.awt.Color
 
 /**
  * What one derivative pass does, and what it refuses to do twice.
@@ -137,5 +143,88 @@ class ImageDerivativeServiceTest {
             service().generateBatch() shouldBe DerivativeOutcome()
 
             coVerify(exactly = 0) { client.render(any(), any(), any()) }
+        }
+
+    private val withJpeg = ImgproxyProperties(enabled = true, widths = listOf(192, 512), formats = listOf("webp", "jpg"))
+
+    private fun stubBatch() {
+        coEvery { repository.findNeedingDerivatives(any(), any()) } returns flowOf(stored)
+        every { variants.findByCachedImageId(1) } returns emptyFlow()
+        coEvery { repository.save(any()) } answers { firstArg() }
+        coEvery { storage.storeDerivative(any(), any(), any(), any()) } returns "k"
+    }
+
+    @Test
+    fun `rejects a blank derivative, writes nothing and marks the row`() =
+        runTest {
+            // BOXHOPPING's GIF renders as frame 0, which is black. No variant means the card shows the title poster.
+            stubBatch()
+            coEvery { client.render(any(), any(), any()) } returns flatJpeg(Color.BLACK)
+            val logged = ListAppender<ILoggingEvent>().apply { start() }
+            val logger = LoggerFactory.getLogger(ImageDerivativeService::class.java) as Logger
+            logger.addAppender(logged)
+
+            try {
+                service(withJpeg).generateBatch() shouldBe DerivativeOutcome(images = 1, blank = 1)
+            } finally {
+                logger.detachAppender(logged)
+            }
+
+            coVerify(exactly = 1) { client.render("abc123", 192, "jpg") }
+            coVerify(exactly = 1) { client.render(any(), any(), any()) }
+            coVerify(exactly = 0) { storage.storeDerivative(any(), any(), any(), any()) }
+            coVerify(exactly = 0) { variants.save(any()) }
+            coVerify(exactly = 1) {
+                repository.save(match { it.id == 1L && it.failedAt == null && it.failureReason == "blank derivative: luminance spread 0.00" })
+            }
+            logged.list.single { it.formattedMessage.startsWith("Blank derivative") }.let {
+                it.level shouldBe Level.INFO
+                it.formattedMessage shouldBe "Blank derivative rejected for image 1: luminance spread 0.00 < 2.0"
+            }
+        }
+
+    @Test
+    fun `keeps a normal derivative and stores the probe instead of rendering it twice`() =
+        runTest {
+            stubBatch()
+            coEvery { client.render(any(), any(), any()) } returns
+                testJpeg { g ->
+                    g.color = Color.WHITE
+                    g.fillRect(0, 0, 192, 108)
+                    g.color = Color.RED
+                    g.fillOval(40, 20, 100, 70)
+                }
+
+            service(withJpeg).generateBatch() shouldBe DerivativeOutcome(images = 1, variants = 4, refused = 0)
+
+            coVerify(exactly = 1) { client.render("abc123", 192, "jpg") }
+            coVerify(exactly = 4) { variants.save(any()) }
+            coVerify(exactly = 0) { repository.save(any()) }
+        }
+
+    @Test
+    fun `keeps a dark flyer whose mean is low but whose spread is normal`() =
+        runTest {
+            stubBatch()
+            coEvery { client.render(any(), any(), any()) } returns darkFlyerJpeg()
+
+            service(withJpeg).generateBatch() shouldBe DerivativeOutcome(images = 1, variants = 4, refused = 0)
+
+            coVerify(exactly = 0) { repository.save(any()) }
+        }
+
+    @Test
+    fun `does not probe an image that already has variants`() =
+        runTest {
+            // Its variants are served already, so rejecting it now would change nothing a visitor sees.
+            coEvery { repository.findNeedingDerivatives(any(), any()) } returns flowOf(stored)
+            every { variants.findByCachedImageId(1) } returns
+                flowOf(CachedImageVariantEntity(cachedImageId = 1, width = 192, format = "jpg", storageKey = "k", byteSize = 1))
+            coEvery { client.render(any(), any(), any()) } returns flatJpeg(Color.BLACK)
+            coEvery { storage.storeDerivative(any(), any(), any(), any()) } returns "k2"
+
+            service(withJpeg).generateBatch() shouldBe DerivativeOutcome(images = 1, variants = 3, refused = 0)
+
+            coVerify(exactly = 0) { client.render("abc123", 192, "jpg") }
         }
 }
