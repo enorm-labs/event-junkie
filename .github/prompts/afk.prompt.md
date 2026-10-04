@@ -16,7 +16,9 @@ after _n_ pull requests, or `until <HH:MM>` to stop starting new issues at that 
 - **Nothing waits for the user.** A question that needs the user goes into the PR and the handover, and the run moves on. The run never ends on a question.
 - **The handover file is the state.** Context is summarized during a long run, and a summary loses detail. After a compaction, read
   `temp/afk-handover-<date>.md` before doing anything else. It says which issues are done, parked and next.
-- **One issue at a time.** Gates share ports, the dev database and the Gradle daemon, and parallel gates flake. Do not run two issues at once.
+- **Two lanes.** The heavy lane runs one issue at a time, in this checkout: any issue whose gates need Gradle, `scripts/dev-env.sh` or
+  `/importer-smoke`. Those share ports, the dev database and the Gradle daemon, and parallel gates flake. The light lane runs up to three issues at once,
+  each in its own worktree: docs, scripts, workflows, prompts and frontend. See [Lanes](#lanes).
 
 ## Steps
 
@@ -26,7 +28,8 @@ after _n_ pull requests, or `until <HH:MM>` to stop starting new issues at that 
     gh issue list --label afk-ok --state open --json number,title,labels,assignees --jq 'sort_by(.number)[]'   # only when no numbers were given
     ```
 
-    Drop, and record as **skipped** with the reason: an issue assigned to someone else, or one labelled `blocked`, `needs-decision`, `needs-deployment` or
+    The list comes from search, which can miss a label added in the last minutes. Read each issue the user named with
+    `gh api repos/{owner}/{repo}/issues/<n>` instead. Drop, and record as **skipped** with the reason: an issue assigned to someone else, or one labelled `blocked`, `needs-decision`, `needs-deployment` or
     `size:XL`. These are the same checks as [`/start-issue`](start-issue.prompt.md) step 2. An empty queue ends the run: write the handover and stop.
 
 2. **Check the session can run unattended.** The working tree is clean and `gh auth status` passes. If the tree is dirty, stop and say so. A dirty tree
@@ -35,8 +38,9 @@ after _n_ pull requests, or `until <HH:MM>` to stop starting new issues at that 
 3. **Open the handover** at `temp/afk-handover-<YYYY-MM-DD>.md`, with the structure in [The handover](#the-handover). If the file exists from earlier the
    same day, continue it.
 
-4. **For each issue, start one subagent** (`general-purpose`, in the foreground, in this checkout). A fresh context per issue keeps the main session small.
-   The main session holds only the queue and the handover. Give the subagent the issue number, the base to branch from, and this brief:
+4. **Sort the queue into lanes**, then start one subagent per issue (`general-purpose`, `run_in_background`). A fresh context per issue keeps the main
+   session small. The main session holds only the queue and the handover. Give the subagent the issue number, the base to branch from, its lane, and
+   this brief:
 
     > Work issue #N to a draft PR, unattended. The user is away and answers nothing.
     >
@@ -55,10 +59,13 @@ after _n_ pull requests, or `until <HH:MM>` to stop starting new issues at that 
     > irreversible, a product or legal call, a cluster, or a Privacy & GDPR category from AGENTS.md, park it: open no PR. Leave the branch pushed if it holds
     > useful work. Never: merge, mark ready, auto-merge, close or comment on an issue, run tofu/flux/cluster commands, start another issue.
     >
+    > Light lane: you are in your own worktree. First run `ln -s <main checkout>/events-frontend/node_modules events-frontend/node_modules`. Run no
+    > Gradle task, no `scripts/dev-env.sh`, no dev or preview server and no Playwright. If the work turns out to need one, stop and report "heavy".
+    >
     > Report: PR URL or "parked", the branch and its head sha, the decisions, the open questions, and the reason if parked.
 
-5. **After each subagent returns, update the handover** before starting the next issue. Then check the stop conditions: `max`, `until`, and an empty
-   queue.
+5. **After each subagent returns, update the handover**, then start the next issue in that lane. Only the main session writes the handover. Check the
+   stop conditions before each start: `max`, `until`, and an empty queue. An issue reported "heavy" goes back into the heavy lane's queue.
 
 6. **Check CI on every PR of this run, once, after the last issue.** Nothing waits for CI per issue: CI takes about eight minutes, and the next issue
    starts while it runs.
@@ -74,11 +81,27 @@ after _n_ pull requests, or `until <HH:MM>` to stop starting new issues at that 
       the PR goes into the handover as red, under "Needs you". A stacked child goes after its parent.
 
 7. **End the run.**
-    - `git checkout --detach origin/main` so the checkout holds no branch of this run. Stop anything this run started: `scripts/dev-env.sh down`, and every
+    - `git checkout --detach origin/main` so the checkout holds no branch of this run. Remove each light-lane worktree with `git worktree remove`; its
+      branch is pushed. Stop anything this run started: `scripts/dev-env.sh down`, and every
       background watcher.
     - Finish the handover's summary, then run `scripts/format-markdown.sh temp/afk-handover-<date>.md`.
     - Send a push notification: "AFK run done: <n> PRs, <m> parked. Handover: temp/afk-handover-<date>.md".
     - Print the handover as the final message.
+
+## Lanes
+
+Sort by the files the issue will change, from its body, its `area:*` labels and the code it names.
+
+| Lane  | Files                                                                                          | At once | Where             |
+| ----- | ---------------------------------------------------------------------------------------------- | ------- | ----------------- |
+| Heavy | `events-core/`, `events-bff/`, `events-importer/`, `detekt-rules/`, `*.gradle.kts`, migrations | 1       | This checkout     |
+| Light | `docs/`, `scripts/`, `.github/`, `events-frontend/`, `deploy/` rendering only, any `.md`       | 3       | One worktree each |
+
+- **When unsure, heavy.** A wrong heavy costs time. A wrong light can break another lane's gate.
+- **Two issues that change the same file run one after the other, in one lane.** Stack the second if it needs the first; otherwise wait for the first
+  PR to open.
+- **A worktree shares the runtime.** Ports `8080`, `8081`, `5173` and `4173`, the dev Postgres and the Docker daemon are the same for every checkout.
+  That is why the light lane runs none of them.
 
 ## Stacked pull requests
 
@@ -87,6 +110,8 @@ Stack only when an issue needs code from a PR of this run that is not merged yet
 - The child branches from the parent's branch, and its PR targets that branch (`--base`). Both PRs name each other: the child under `## Stacked on`,
   the parent in one line under `## What and why`.
 - **Three deep at most.** A fourth issue that needs the stack is parked with "needs #<top> merged".
+- If the parent merges before the child's PR opens, the child rebases onto `origin/main` with `git rebase --onto origin/main <parent-head>` and
+  targets `main`.
 - After the user merges a parent, the child needs `git rebase --onto origin/main <parent-head>` and a PR base change. AFK mode does not do that. Put it in
   the handover as a step for the user, or for the next run.
 
