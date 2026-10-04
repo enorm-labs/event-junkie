@@ -3,8 +3,9 @@ import { readFile } from 'node:fs/promises'
 import { expect, type Page, test } from '@playwright/test'
 
 /**
- * Share and add-to-calendar on the event page, with the BFF mocked (#476). The share sheet and the
- * clipboard are stubbed per test, because whether a browser has either differs by engine.
+ * Share and add-to-calendar on the event page, with the BFF mocked (#476), all behind one Share
+ * menu (#2564). The share sheet and the clipboard are stubbed per test, because whether a browser
+ * has either differs by engine.
  */
 
 const todayInBerlin = () =>
@@ -61,19 +62,26 @@ async function stubNavigator(page: Page, withShare: boolean): Promise<void> {
   }, withShare)
 }
 
+/** Opens the Share menu beside the ticket buttons. */
+async function openShareMenu(page: Page): Promise<void> {
+  await page.getByRole('button', { name: 'Share', exact: true }).click()
+  await expect(page.getByRole('menu')).toBeVisible()
+}
+
 const calls = (page: Page) =>
   page.evaluate(
     () => (window as unknown as { __calls: { shared: unknown[]; copied: string[] } }).__calls,
   )
 
-test('copies the page link and says so, with no share button where there is no sheet', async ({
+test('copies the page link and says so, with no share-sheet item where there is no sheet', async ({
   page,
 }) => {
   await stubNavigator(page, false)
   await openEvent(page)
 
-  await expect(page.getByRole('button', { name: 'Share' })).toHaveCount(0)
-  await page.getByRole('button', { name: 'Copy link' }).click()
+  await openShareMenu(page)
+  await expect(page.getByRole('menuitem', { name: 'Share via…' })).toHaveCount(0)
+  await page.getByRole('menuitem', { name: 'Copy link' }).click()
 
   await expect(page.getByRole('status').filter({ hasText: 'Link copied.' })).toBeVisible()
   expect((await calls(page)).copied).toEqual([PAGE_URL])
@@ -83,7 +91,8 @@ test('opens the native share sheet where there is one', async ({ page }) => {
   await stubNavigator(page, true)
   await openEvent(page)
 
-  await page.getByRole('button', { name: 'Share', exact: true }).click()
+  await openShareMenu(page)
+  await page.getByRole('menuitem', { name: 'Share via…' }).click()
 
   await expect
     .poll(async () => (await calls(page)).shared)
@@ -95,10 +104,11 @@ test('downloads an .ics file built in the browser', async ({ page }) => {
   const requests: string[] = []
   page.on('request', (request) => requests.push(request.url()))
   await openEvent(page)
+  await openShareMenu(page)
 
   const [download] = await Promise.all([
     page.waitForEvent('download'),
-    page.getByRole('button', { name: 'Add to calendar (.ics)' }).click(),
+    page.getByRole('menuitem', { name: 'Add to calendar (.ics)' }).click(),
   ])
 
   expect(download.suggestedFilename()).toBe('mock-event.ics')
@@ -115,8 +125,9 @@ test('downloads an .ics file built in the browser', async ({ page }) => {
 
 test('links to Google Calendar without loading anything from Google', async ({ page }) => {
   await openEvent(page)
+  await openShareMenu(page)
 
-  const link = page.getByRole('link', { name: 'Google Calendar' })
+  const link = page.getByRole('menuitem', { name: 'Google Calendar' })
   const url = new URL((await link.getAttribute('href')) ?? '')
   expect(url.host).toBe('calendar.google.com')
   expect(url.searchParams.get('text')).toBe('Mock Fest')
@@ -126,8 +137,24 @@ test('links to Google Calendar without loading anything from Google', async ({ p
 
 test('offers no calendar entry for a cancelled event, but still shares it', async ({ page }) => {
   await openEvent(page, { ...eventBody, status: 'CANCELLED' })
+  await openShareMenu(page)
 
-  await expect(page.getByRole('button', { name: 'Copy link' })).toBeVisible()
-  await expect(page.getByRole('button', { name: 'Add to calendar (.ics)' })).toHaveCount(0)
-  await expect(page.getByRole('link', { name: 'Google Calendar' })).toHaveCount(0)
+  await expect(page.getByRole('menuitem', { name: 'Copy link' })).toBeVisible()
+  await expect(page.getByRole('menuitem', { name: 'Add to calendar (.ics)' })).toHaveCount(0)
+  await expect(page.getByRole('menuitem', { name: 'Google Calendar' })).toHaveCount(0)
+})
+
+test('keeps Share in the action row of a past event that lost its ticket button', async ({
+  page,
+}) => {
+  await openEvent(page, {
+    ...eventBody,
+    eventDate: isoDaysFromNow(-30),
+    ticketUrl: 'https://tickets.example/mock-fest',
+  })
+
+  await expect(page.getByRole('link', { name: 'Buy tickets' })).toHaveCount(0)
+  await openShareMenu(page)
+  await expect(page.getByRole('menuitem', { name: 'Copy link' })).toBeVisible()
+  await expect(page.getByRole('menuitem', { name: 'Add to calendar (.ics)' })).toHaveCount(0)
 })

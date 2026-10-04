@@ -1,8 +1,18 @@
-<script lang="ts" setup>
+<script setup lang="ts">
+/**
+ * The event page's action row: the page's own buttons from the slot, then one Share menu with
+ * the native share sheet, the link and the calendar entries (#2564).
+ */
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { CalendarPlus, Link as LinkIcon, Share2 } from '@lucide/vue'
+import { CalendarPlus, ExternalLink, Link as LinkIcon, Send, Share2 } from '@lucide/vue'
 import { Button } from '@/components/ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import type { EventDetail } from '@/api/types'
 import {
   eventCalendarSpan,
@@ -94,29 +104,41 @@ function downloadIcs(): void {
 </script>
 
 <template>
-  <div class="space-y-2">
-    <div :aria-label="t('events.detail.share.group')" class="flex flex-wrap gap-3" role="group">
-      <Button v-if="nativeShare" variant="outline" @click="share">
-        <Share2 aria-hidden="true" />
-        {{ t('events.detail.share.share') }}
-      </Button>
-      <Button variant="outline" @click="copy">
-        <LinkIcon aria-hidden="true" />
-        {{ t('events.detail.share.copyLink') }}
-      </Button>
-      <template v-if="calendarEntry">
-        <Button variant="outline" @click="downloadIcs">
-          <CalendarPlus aria-hidden="true" />
-          {{ t('events.detail.share.ics') }}
-        </Button>
-        <Button v-if="googleUrl" as-child variant="outline">
-          <a :href="googleUrl" rel="noopener noreferrer" target="_blank">{{
-            t('events.detail.share.google')
-          }}</a>
-        </Button>
-      </template>
+  <section class="space-y-2">
+    <div class="flex flex-wrap gap-3">
+      <slot />
+      <DropdownMenu>
+        <DropdownMenuTrigger as-child>
+          <Button variant="outline">
+            <Share2 aria-hidden="true" />
+            {{ t('events.detail.share.share') }}
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start">
+          <DropdownMenuItem v-if="nativeShare" @select="share">
+            <Send aria-hidden="true" />
+            {{ t('events.detail.share.nativeShare') }}
+          </DropdownMenuItem>
+          <DropdownMenuItem @select="copy">
+            <LinkIcon aria-hidden="true" />
+            {{ t('events.detail.share.copyLink') }}
+          </DropdownMenuItem>
+          <template v-if="calendarEntry">
+            <DropdownMenuItem @select="downloadIcs">
+              <CalendarPlus aria-hidden="true" />
+              {{ t('events.detail.share.ics') }}
+            </DropdownMenuItem>
+            <DropdownMenuItem v-if="googleUrl" as-child>
+              <a :href="googleUrl" rel="noopener noreferrer" target="_blank">
+                <ExternalLink aria-hidden="true" />
+                {{ t('events.detail.share.google') }}
+              </a>
+            </DropdownMenuItem>
+          </template>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
     <p v-if="notes.length" class="text-meta text-muted-foreground">{{ notes.join(' ') }}</p>
     <p class="text-body text-muted-foreground" role="status">{{ status }}</p>
-  </div>
+  </section>
 </template>
