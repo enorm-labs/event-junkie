@@ -1,10 +1,12 @@
 package de.norm.events.scraper
 
+import de.norm.events.event.SpokenLanguage
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
 import java.io.File
+import java.time.LocalDate
 
 private val COMMITTED_TABLE = File("../docs/data-quality/ACCEPTED_LIMITATIONS.md")
 private val REGENERATED_TABLE = File("build/accepted-limitations.md")
@@ -35,6 +37,23 @@ class AcceptedLimitationsTest {
         AcceptedLimitations.houseGenre(EventSource.TRESOR, "COMEDY").shouldBeNull()
         AcceptedLimitations.houseGenre(EventSource.TRESOR, null).shouldBeNull()
         AcceptedLimitations.houseGenre(EventSource.CASSIOPEIA, "PARTY").shouldBeNull()
+    }
+
+    @Test
+    fun `a house language reaches every event of its source and no other`() {
+        val show = ScrapedEvent(title = "Show", eventDate = LocalDate.of(2026, 10, 4), sourceUrl = "https://example.org", sourceId = "x:1")
+        AcceptedLimitations.withHouseDefaults(EventSource.MEHRINGHOF, listOf(show)).single().houseLanguage shouldBe SpokenLanguage.GERMAN
+        AcceptedLimitations
+            .withHouseDefaults(EventSource.COSMIC_COMEDY, listOf(show))
+            .single()
+            .houseLanguage
+            .shouldBeNull()
+    }
+
+    @Test
+    fun `the English and mixed comedy clubs have no house language`() {
+        val mixed = listOf(EventSource.THE_WALL, EventSource.DOWNSTAIRS, EventSource.COSMIC_COMEDY, EventSource.COMEDY_CAFE, EventSource.PUNCHLINE)
+        mixed.filter { AcceptedLimitations.houseLanguage(it) != null }.shouldBeEmpty()
     }
 
     @Test

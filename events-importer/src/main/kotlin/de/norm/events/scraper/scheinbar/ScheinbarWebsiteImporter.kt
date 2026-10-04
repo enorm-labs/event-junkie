@@ -1,5 +1,6 @@
 package de.norm.events.scraper.scheinbar
 
+import de.norm.events.event.SpokenLanguage
 import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.EventImporter
 import de.norm.events.scraper.EventSource
@@ -64,11 +65,17 @@ class ScheinbarWebsiteImporter(
         })
 }
 
+/**
+ * German is the house language because the programme is German in practice (#2584). On `2026-10-04` the
+ * production API listed 49 upcoming shows under 16 titles, and all 49 descriptions were German. No show
+ * named another language.
+ */
 val SCHEINBAR_LIMITATIONS =
     VenueLimitations(
         EventSource.SCHEINBAR,
         AcceptedLimitation(LimitedAspect.DOORS_TIME, "the programme states one time per evening"),
         AcceptedLimitation(LimitedAspect.PRICE_PRESALE, "tickets are reserved online and paid at the box office, at one price"),
         AcceptedLimitation(LimitedAspect.GENRE, "the house names no genre; an Open Stage night mixes comedy, magic, music and artistry"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "the house presents every evening itself")
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the house presents every evening itself"),
+        houseLanguage = SpokenLanguage.GERMAN
     )

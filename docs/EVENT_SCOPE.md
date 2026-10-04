@@ -74,6 +74,13 @@ a comedian or a cabaret performer on Wikidata, the night is `COMEDY`. A cue from
 "Sprache: Deutsch", "OmU". It is set for `COMEDY`, `QUIZ`, `READING`, `SCREENING`, `SHOW` and `OTHER` only. The language of the
 description is never used, because a German text often describes an English show (#2523).
 
+**A venue can have one house language for all its shows.** Its importer declares it on one of two grounds. The venue
+states the language, and the KDoc quotes the statement with its URL. Or the programme is German in practice, and the
+KDoc gives the measured share and the date. German in practice needs at least 90% German descriptions among the
+language-type events. It also needs no show in another language without an explicit phrase. A mixed programme gets no
+house language. A small sample, or one that is mostly `OTHER`, also gets none. An event whose own text states no
+language gets the house language, if the event has a language type. An explicit phrase on the event always wins (#2584).
+
 ## 3. What is deliberately excluded
 
 Five exclusions, each implemented in exactly one place so it can be revisited without archaeology.

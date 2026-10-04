@@ -1,5 +1,6 @@
 package de.norm.events.scraper.quatsch
 
+import de.norm.events.event.SpokenLanguage
 import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.EventImporter
 import de.norm.events.scraper.EventSource
@@ -74,6 +75,11 @@ class QuatschWebsiteImporter(
     }
 }
 
+/**
+ * German is the house language because the programme is German in practice (#2584): on `2026-10-04` the
+ * production API listed 87 upcoming shows, and 10 of the 11 descriptions were German. The English one
+ * says "Language: English", and that phrase wins over the default.
+ */
 val QUATSCH_LIMITATIONS =
     VenueLimitations(
         EventSource.QUATSCH,
@@ -81,5 +87,6 @@ val QUATSCH_LIMITATIONS =
         AcceptedLimitation(LimitedAspect.PRICE, "prices appear only in the box-office shop, per seat category"),
         AcceptedLimitation(LimitedAspect.GENRE, "the calendar names no genre"),
         AcceptedLimitation(LimitedAspect.PROMOTERS, "the calendar names no producer of a guest show"),
-        AcceptedLimitation(LimitedAspect.SOLD_OUT, "the calendar marks no show as sold out")
+        AcceptedLimitation(LimitedAspect.SOLD_OUT, "the calendar marks no show as sold out"),
+        houseLanguage = SpokenLanguage.GERMAN
     )

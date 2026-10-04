@@ -6,6 +6,7 @@ import de.norm.events.event.EventArtistEntity
 import de.norm.events.event.EventEntity
 import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
+import de.norm.events.event.SpokenLanguage
 import de.norm.events.event.normalizeMoneyScale
 import de.norm.events.licence.SourceLicences
 import de.norm.events.slug.SlugGenerator
@@ -112,7 +113,12 @@ data class ScrapedEvent(
      * [detailUnavailable] row. Never stored: the upsert keeps the stored value of each, where it
      * would otherwise take the listing's stand-in, a cut title or a thumbnail (#2465, #2505).
      */
-    val detailPageOwns: Set<ScrapedField> = emptySet()
+    val detailPageOwns: Set<ScrapedField> = emptySet(),
+    /**
+     * The venue's language for all its shows ([VenueLimitations.houseLanguage]), set by the import,
+     * not the scraper. Stored only where the event's own text names no language (#2584).
+     */
+    val houseLanguage: SpokenLanguage? = null
 ) {
     /**
      * This event with every gap filled from [fallback]: a null field takes the fallback's value, the
@@ -288,7 +294,8 @@ data class ScrapedEvent(
  * The languages the venue states for this event. Read from [ScrapedEvent.description] even when the
  * licence withholds it: the language is a fact, not the prose.
  */
-private fun ScrapedEvent.spokenLanguages(storedTitle: String): SpokenLanguages = detectSpokenLanguages(storedTitle, subtitle, description, resolvedEventType())
+private fun ScrapedEvent.spokenLanguages(storedTitle: String): SpokenLanguages =
+    detectSpokenLanguages(storedTitle, subtitle, description, resolvedEventType(), houseLanguage)
 
 private fun EventEntity.withSpokenLanguages(languages: SpokenLanguages): EventEntity =
     copy(spokenLanguages = languages.spoken, subtitleLanguage = languages.subtitle)

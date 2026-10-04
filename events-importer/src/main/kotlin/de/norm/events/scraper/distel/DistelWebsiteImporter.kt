@@ -1,5 +1,6 @@
 package de.norm.events.scraper.distel
 
+import de.norm.events.event.SpokenLanguage
 import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.EventImporter
 import de.norm.events.scraper.EventSource
@@ -100,6 +101,10 @@ class DistelWebsiteImporter(
     }
 }
 
+/**
+ * German is the house language because the programme is German in practice (#2584). On `2026-10-04` the
+ * production API listed 129 upcoming shows, and all 129 descriptions were German.
+ */
 val DISTEL_LIMITATIONS =
     VenueLimitations(
         EventSource.DISTEL,
@@ -108,5 +113,6 @@ val DISTEL_LIMITATIONS =
         AcceptedLimitation(LimitedAspect.ARTISTS, "the ensemble's shows name a cast only in prose"),
         AcceptedLimitation(LimitedAspect.EVENT_TYPE, "the calendar names no format; ensemble Kabarett, guest shows and a talk series share one list"),
         AcceptedLimitation(LimitedAspect.GENRE, "the calendar names no genre"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "the theatre presents every performance itself")
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the theatre presents every performance itself"),
+        houseLanguage = SpokenLanguage.GERMAN
     )

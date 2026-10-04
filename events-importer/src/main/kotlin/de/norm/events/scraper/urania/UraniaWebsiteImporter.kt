@@ -1,5 +1,6 @@
 package de.norm.events.scraper.urania
 
+import de.norm.events.event.SpokenLanguage
 import de.norm.events.scraper.AbstractTwoPageWebsiteImporter
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
@@ -46,5 +47,10 @@ class UraniaWebsiteImporter(
         )
 }
 
-/** Nothing this source withholds needs declaring (#715). */
-val URANIA_LIMITATIONS = VenueLimitations(EventSource.URANIA)
+/**
+ * Nothing this source withholds needs declaring (#715). German is the house language because the
+ * programme is German in practice (#2584): on `2026-10-04` the production API listed 27 upcoming talks,
+ * readings and workshops, and 26 of the 27 descriptions were German. The one English talk says "in
+ * englischer Sprache", and that phrase wins over the default.
+ */
+val URANIA_LIMITATIONS = VenueLimitations(EventSource.URANIA, houseLanguage = SpokenLanguage.GERMAN)

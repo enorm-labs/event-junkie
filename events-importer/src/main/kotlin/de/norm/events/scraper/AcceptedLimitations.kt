@@ -1,6 +1,7 @@
 package de.norm.events.scraper
 
 import de.norm.events.event.EventType
+import de.norm.events.event.SpokenLanguage
 import de.norm.events.genretag.genreFamily
 import de.norm.events.genretag.normalizeGenre
 import de.norm.events.scraper.abstand.ABSTAND_LIMITATIONS
@@ -246,6 +247,24 @@ object AcceptedLimitations {
         source: EventSource,
         events: List<ScrapedEvent>
     ): List<ScrapedEvent> = events.map { event -> event.genre?.let { event } ?: houseGenre(source, event.eventType)?.let { event.copy(genre = it) } ?: event }
+
+    /** [source]'s [VenueLimitations.houseLanguage], or null for a venue that states none. */
+    fun houseLanguage(source: EventSource): SpokenLanguage? = declarations.firstOrNull { source in it.sources }?.houseLanguage
+
+    /**
+     * [events] carrying [source]'s house language. Only a fallback: `detectSpokenLanguages` uses it
+     * last, for a language type, where the event's own text names no language.
+     */
+    fun withHouseLanguage(
+        source: EventSource,
+        events: List<ScrapedEvent>
+    ): List<ScrapedEvent> = houseLanguage(source)?.let { language -> events.map { it.copy(houseLanguage = language) } } ?: events
+
+    /** [events] with [source]'s house genre and house language, as the import stores them. */
+    fun withHouseDefaults(
+        source: EventSource,
+        events: List<ScrapedEvent>
+    ): List<ScrapedEvent> = withHouseLanguage(source, withHouseGenre(source, events))
 
     /**
      * The genre families each source's house genre maps to, keyed by [EventSource] name (`event_source.source_type`).

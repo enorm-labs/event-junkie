@@ -1,6 +1,7 @@
 package de.norm.events.scraper
 
 import de.norm.events.event.EventType
+import de.norm.events.event.SpokenLanguage
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
@@ -153,5 +154,21 @@ class SpokenLanguagesTest {
     @Test
     fun `the cinema abbreviation is case-sensitive`() {
         detectSpokenLanguages("Omu Spring Tour", null, null, EventType.SCREENING).subtitle shouldBe null
+    }
+
+    @Test
+    fun `the house language fills a show whose text names none`() {
+        detectSpokenLanguages("Mixed Show", null, "Five comics, one night.", EventType.COMEDY, SpokenLanguage.ENGLISH).spoken shouldBe listOf("en")
+    }
+
+    @Test
+    fun `an explicit phrase beats the house language`() {
+        detectSpokenLanguages("Laughing Matter – auf Deutsch", null, null, EventType.COMEDY, SpokenLanguage.ENGLISH).spoken shouldBe listOf("de")
+        detectSpokenLanguages("Showcase", null, "Language: German", EventType.COMEDY, SpokenLanguage.ENGLISH).spoken shouldBe listOf("de")
+    }
+
+    @Test
+    fun `a concert at a house with a language stays empty`() {
+        detectSpokenLanguages("Songs for a Sunday", null, null, EventType.CONCERT, SpokenLanguage.ENGLISH).spoken shouldBe null
     }
 }
