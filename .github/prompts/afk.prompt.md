@@ -29,8 +29,10 @@ after _n_ pull requests, or `until <HH:MM>` to stop starting new issues at that 
     ```
 
     The list comes from search, which can miss a label added in the last minutes. Read each issue the user named with
-    `gh api repos/{owner}/{repo}/issues/<n>` instead. Drop, and record as **skipped** with the reason: an issue assigned to someone else, or one labelled `blocked`, `needs-decision`, `needs-deployment` or
-    `size:XL`. These are the same checks as [`/start-issue`](start-issue.prompt.md) step 2. An empty queue ends the run: write the handover and stop.
+    `gh api repos/{owner}/{repo}/issues/<n>` instead. Drop, and record as **skipped** with the reason: an issue assigned to someone else, one another
+    session holds, or one labelled `blocked`, `needs-decision`, `needs-deployment` or `size:XL`. These are the same checks as [`/start-issue`](start-issue.prompt.md) step 2. An issue another
+    session holds is **skipped: claimed by another session**. The assignee cannot show that claim, because every session runs as the user, so read
+    the three signals in that step: board Status, a remote branch and an open PR. An empty queue ends the run: write the handover and stop.
 
 2. **Check the session can run unattended.** The working tree is clean and `gh auth status` passes. If the tree is dirty, stop and say so. A dirty tree
    belongs to the user and goes into no branch.
@@ -152,7 +154,8 @@ The one document the user reads on return. Lead with what needs the user. Rewrit
 ## Notes
 
 - **Labelling for a run**: `gh issue edit <n> --add-label afk-ok`. The label means "may be worked unattended". AFK mode never adds or removes it.
-- **Other sessions work the same backlog.** Read the assignee again just before claiming. An issue claimed meanwhile is skipped.
+- **Other sessions work the same backlog.** Just before claiming, check again for a claim by another session, using the signals in
+  [`/start-issue`](start-issue.prompt.md) step 2, not the assignee. An issue claimed meanwhile is skipped.
 - **A long gate is not a hang.** `Backend build` takes about eight minutes in CI and longer locally. Check `docker ps` and the test-result timestamps
   before calling a gate dead.
 - Fewer permission prompts make a longer run: a prompt nobody answers stops the run where it is. Run `/fewer-permission-prompts` before the first run.

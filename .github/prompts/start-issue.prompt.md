@@ -27,6 +27,9 @@ Usage: `/start-issue 313`
     - it's `needs-deployment` — it is not blocked on effort and cannot be finished locally
     - it's `size:XL` — that label is a _defect flag_, not an estimate. Split it into sub-issues first.
     - it's already assigned to someone else
+    - another session holds it. Every session runs as the user, so the assignee cannot show this. Any one of these signals is a claim: Status is
+      _In progress_ or _In review_, a remote branch exists (`git ls-remote --heads origin '*/<n>-*'`), or an open PR will close it
+      (`gh issue view <n> --json closedByPullRequestsReferences`). Continue only when the user says the claim is stale.
 
 3. **Read what it depends on.** This is the step that earns the skill its place, and the one most worth not rushing:
     - every issue named in its **Links** footer — `Blocked by`, `Related`, `Parent`
