@@ -81,6 +81,8 @@ data class Artist(
     val discogsMatch: DiscogsMatch = DiscogsMatch.UNCHECKED,
     /** When [discogsMatch] was reached. A row modified after this is looked up again. */
     val discogsCheckedAt: Instant? = null,
+    /** Whether an operator fixed [name] by hand. The MusicBrainz enrichment keeps a pinned name (ADR-042). */
+    val namePinned: Boolean = false,
     /** Timestamp when this record was first created. Set by the database. */
     val createdAt: Instant? = null,
     /** Timestamp when this record was last modified. Set by the database. */

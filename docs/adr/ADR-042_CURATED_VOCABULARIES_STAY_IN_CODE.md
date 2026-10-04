@@ -6,7 +6,8 @@
 hand on one row is pinned, and the importer does not overwrite a pinned field. A fix that applies to more than one row goes into the vocabulary.**
 
 **Implemented in [#2590](https://github.com/enorm-labs/event-junkie/issues/2590)** for events: `event.pinned_fields`, and
-`DELETE /api/admin/events/{id}/pins/{field}` removes a pin.
+`DELETE /api/admin/events/{id}/pins/{field}` removes a pin. **Implemented in [#2636](https://github.com/enorm-labs/event-junkie/issues/2636)**
+for an artist's name: `artist.name_pinned`, and `DELETE /api/admin/artists/{id}/pins/name` removes the pin.
 
 **Does not supersede anything.** [ADR-041](ADR-041_AI_ASSISTED_DATA_QUALITY.md) decides that a model only suggests. This ADR decides where an accepted
 suggestion goes.

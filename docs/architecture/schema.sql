@@ -105,6 +105,7 @@ CREATE TABLE events.artist (
     name_changed_at timestamp with time zone DEFAULT now() NOT NULL,
     name_search text GENERATED ALWAYS AS (events.search_text(name)) STORED,
     comedian boolean,
+    name_pinned boolean DEFAULT false NOT NULL,
     CONSTRAINT artist_description_alt_attributed CHECK ((((description_alt_attribution IS NULL) AND (description_alt_licence_id IS NULL) AND (description_alt_source_url IS NULL)) OR ((description_alt IS NOT NULL) AND (description_alt_attribution IS NOT NULL) AND (description_alt_licence_id IS NOT NULL) AND (description_alt_source_url IS NOT NULL)))),
     CONSTRAINT artist_description_alt_beside_wikipedia CHECK (((description_alt IS NULL) OR ((description_attribution IS NOT NULL) AND (description_language IS NOT NULL) AND (description_alt_language <> description_language)))),
     CONSTRAINT artist_description_alt_complete CHECK ((((description_alt IS NULL) AND (description_alt_language IS NULL)) OR ((description_alt IS NOT NULL) AND (description_alt_language IS NOT NULL)))),

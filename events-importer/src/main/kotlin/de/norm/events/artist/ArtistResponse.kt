@@ -93,6 +93,8 @@ data class ArtistResponse(
     val discogsMatch: DiscogsMatch,
     @Schema(description = "When the Discogs verdict was reached")
     val discogsCheckedAt: Instant?,
+    @Schema(description = "Whether a hand edit fixed the name, so the MusicBrainz enrichment keeps it until the pin is removed", example = "false")
+    val namePinned: Boolean,
     @Schema(description = "Timestamp when this record was first created")
     val createdAt: Instant?,
     @Schema(description = "Timestamp when this record was last modified")
@@ -139,6 +141,7 @@ data class ArtistResponse(
                 discogsId = artist.discogsId,
                 discogsMatch = artist.discogsMatch,
                 discogsCheckedAt = artist.discogsCheckedAt,
+                namePinned = artist.namePinned,
                 createdAt = artist.createdAt,
                 updatedAt = artist.updatedAt
             )

@@ -110,6 +110,9 @@ class MusicBrainzEnrichmentService(
             val filled = ArtistEnrichment.fill(artist, entity, image, wikimedia.maxBytes, extracts)
             store.store(id, filled.columns)
             filled.fields.forEach(metrics::recordMusicBrainzEnriched)
+            filled.pinnedNameKept?.let { spelling ->
+                logger.info { "Kept the pinned name '${artist.name}' of artist $id: MusicBrainz $mbid spells it '$spelling'" }
+            }
             filled.imageRefusal?.let { reason ->
                 metrics.recordMusicBrainzImageRefused(reason)
                 logger.info { "Commons picture for '${artist.name}' refused: $reason" }

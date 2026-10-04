@@ -96,6 +96,30 @@ Content-Type: application/json
     });
 %}
 
+### Rename artist — a changed name is pinned, so the MusicBrainz enrichment keeps it (ADR-042)
+PUT {{importer-host}}/api/admin/artists/{{artist_id}}
+Content-Type: application/json
+
+{
+    "name": "THE ADICTS"
+}
+
+> {%
+    client.test("the edited name is pinned", function () {
+        client.assert(response.status === 200, "Expected 200 but got " + response.status);
+        client.assert(response.body.namePinned === true, "Expected namePinned true");
+    });
+%}
+
+### Remove the name's pin — the next enrichment may write MusicBrainz's letter case again
+DELETE {{importer-host}}/api/admin/artists/{{artist_id}}/pins/name
+
+> {%
+    client.test("status is 204", function () {
+        client.assert(response.status === 204, "Expected 204 but got " + response.status);
+    });
+%}
+
 ### Delete artist
 DELETE {{importer-host}}/api/admin/artists/{{artist_id}}
 

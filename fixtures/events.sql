@@ -142,6 +142,8 @@ SET musicbrainz_id = '00000000-0000-4000-8000-000000000272',
     description_alt_licence_id = 'CC-BY-SA-4.0',
     description_alt_source_url = 'https://en.wikipedia.example/wiki/Møbius_Trio'
 WHERE slug = 'mobius-trio';
+-- An operator fixed its name by hand, so the enrichment keeps the `ø` and the case (ADR-042).
+UPDATE events.artist SET name_pinned = true WHERE slug = 'mobius-trio';
 
 -- `dj-uberdruck` is the row MusicBrainz does not know and Discogs does (ADR-035): the artist page
 -- shows its Discogs link with the "Data provided by Discogs." line. The id is nobody's, as above.

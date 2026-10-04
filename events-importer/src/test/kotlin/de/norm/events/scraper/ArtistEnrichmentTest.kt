@@ -32,7 +32,8 @@ class ArtistEnrichmentTest {
         websiteUrl: String? = null,
         imageUrl: String? = null,
         artistType: String? = null,
-        description: String? = null
+        description: String? = null,
+        namePinned: Boolean = false
     ) = ArtistEntity(
         id = 1L,
         name = name,
@@ -45,7 +46,8 @@ class ArtistEnrichmentTest {
         imageSourceUrl = imageUrl?.let { "https://example.test/file" },
         artistType = artistType,
         musicbrainzId = "mbid",
-        musicbrainzMatch = "EXACT"
+        musicbrainzMatch = "EXACT",
+        namePinned = namePinned
     )
 
     private fun commons(
@@ -166,6 +168,24 @@ class ArtistEnrichmentTest {
         val biji = MusicBrainzArtist(id = "biji", name = "Biji")
 
         ArtistEnrichment.fill(row(name = "Biji"), biji, image = null, maxBytes = maxBytes).isEmpty shouldBe true
+    }
+
+    @Test
+    fun `a pinned name keeps its spelling, and the fill reports MusicBrainz's (#2636)`() {
+        val nvst = MusicBrainzArtist(id = "38193b9d", name = "NVST")
+
+        val filled = ArtistEnrichment.fill(row(name = "nvst", namePinned = true), nvst, image = null, maxBytes = maxBytes)
+
+        filled.isEmpty shouldBe true
+        filled.pinnedNameKept shouldBe "NVST"
+    }
+
+    @Test
+    fun `a pinned name MusicBrainz spells the same reports nothing kept`() {
+        val filled = ArtistEnrichment.fill(row(name = "NVST", namePinned = true), MusicBrainzArtist(id = "x", name = "NVST"), image = null, maxBytes = maxBytes)
+
+        filled.pinnedNameKept shouldBe null
+        ArtistEnrichment.fill(row(name = "Nvst"), MusicBrainzArtist(id = "x", name = "NVST"), image = null, maxBytes = maxBytes).pinnedNameKept shouldBe null
     }
 
     @Test
