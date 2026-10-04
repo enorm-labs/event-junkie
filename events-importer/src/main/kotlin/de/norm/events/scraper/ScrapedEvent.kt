@@ -346,9 +346,9 @@ fun List<ScrapedEvent>.dropPastEvents(
  * Folds the days of an exhibition into one run (ADR-029, #337): a gallery lists a show once per
  * day, linking the same page. [key] names that page as the run's `sourceId`, or null for a row
  * that is not one day of a run, and every `EXHIBITION` row sharing a key becomes one event dated
- * from the first listed day to the last. A row already carrying a span widens the fold. A single
- * day stays a single day; every other kind of event passes through, since a festival's days
- * differ in lineup.
+ * from the first listed day to the last, built on the first day whose page answered. A row already
+ * carrying a span widens the fold. A single day stays a single day; every other kind of event
+ * passes through, since a festival's days differ in lineup.
  */
 fun List<ScrapedEvent>.collapseExhibitionRuns(key: (ScrapedEvent) -> String?): List<ScrapedEvent> {
     val runKey = { event: ScrapedEvent -> key(event)?.takeIf { event.eventType == EventType.EXHIBITION.name } }
@@ -360,7 +360,7 @@ fun List<ScrapedEvent>.collapseExhibitionRuns(key: (ScrapedEvent) -> String?): L
         val days = runs.getValue(k).sortedBy { it.eventDate }
         val opening = days.first().eventDate
         val closing = days.maxOf { it.endDate ?: it.eventDate }
-        days.first().copy(
+        (days.firstOrNull { !it.detailUnavailable } ?: days.first()).copy(
             sourceId = k,
             eventDate = opening,
             endDate = closing.takeIf { it > opening },

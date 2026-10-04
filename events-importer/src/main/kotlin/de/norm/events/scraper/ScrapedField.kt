@@ -17,5 +17,8 @@ enum class ScrapedField {
     PRICES,
 
     /** The event date with the end date and time, as one run: one without the others is a different run. */
-    RUN_DATES
+    RUN_DATES,
+
+    /** The lineup: a failed page keeps the stored acts where the listing's roster is coarser (#2542). */
+    ARTISTS
 }

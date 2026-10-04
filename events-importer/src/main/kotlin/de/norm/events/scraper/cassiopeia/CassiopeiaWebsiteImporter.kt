@@ -7,6 +7,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.ScrapedField
 import de.norm.events.scraper.VenueLimitations
 import de.norm.events.scraper.nextPageUrl
 import org.jsoup.nodes.Document
@@ -34,6 +35,7 @@ class CassiopeiaWebsiteImporter(
     clock: Clock = Clock.systemDefaultZone()
 ) : AbstractTwoPageWebsiteImporter(htmlFetcher, CassiopeiaOverviewPageScraper(clock)::scrape, CassiopeiaDetailPageScraper()::scrape) {
     override val eventSource: EventSource = EventSource.CASSIOPEIA
+    override val detailPageOwns: Set<ScrapedField> = setOf(ScrapedField.IMAGE, ScrapedField.ARTISTS)
 
     override fun nextOverviewPage(
         document: Document,

@@ -11,7 +11,11 @@ import de.norm.events.event.EventStatus
  * because the database refuses a time without a date.
  */
 fun ScrapedEvent.withGapsFromStored(stored: EventEntity): ScrapedEvent =
-    withOwnedTextFromStored(stored).withOwnedScheduleFromStored(stored).withScheduleGapsFromStored(stored).withLinkAndPriceGapsFromStored(stored)
+    withOwnedTextFromStored(stored)
+        .withStatusAndFlagsFromStored(stored)
+        .withOwnedScheduleFromStored(stored)
+        .withScheduleGapsFromStored(stored)
+        .withLinkAndPriceGapsFromStored(stored)
 
 /**
  * [withGapsFromStored] for the text and the type the detail page owns. A cancellation the
@@ -30,6 +34,25 @@ private fun ScrapedEvent.withOwnedTextFromStored(stored: EventEntity): ScrapedEv
         typeIsFallback = keep(ScrapedField.EVENT_TYPE, typeIsFallback, stored.typeIsFallback)
     )
 }
+
+/**
+ * [withGapsFromStored] for the status and the sold-out and free flags, which a listing states only
+ * when it has a cue: `SCHEDULED` and `false` are its silence (#2542). A cancellation in the title is the
+ * listing's word. Free yields to a listing price. `RELOCATED` stays out: its destination is stored
+ * beside it, and this row cannot carry it.
+ */
+private fun ScrapedEvent.withStatusAndFlagsFromStored(stored: EventEntity): ScrapedEvent {
+    val silent = status == EventStatus.SCHEDULED.name && parseTitleStatus(title) == null
+    val keepsStatus = silent && stored.status in REFILLED_STATUSES
+    return copy(
+        status = if (keepsStatus) stored.status else status,
+        soldOut = soldOut || stored.soldOut,
+        free = free || (stored.free && pricePresale == null && priceBoxOffice == null)
+    )
+}
+
+/** The stored statuses a silent listing keeps. */
+private val REFILLED_STATUSES = setOf(EventStatus.CANCELLED.name, EventStatus.POSTPONED.name)
 
 /** [withGapsFromStored] for the dates, the start and the prices the detail page owns. Each pair moves as one. */
 private fun ScrapedEvent.withOwnedScheduleFromStored(stored: EventEntity): ScrapedEvent {

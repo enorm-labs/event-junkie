@@ -262,4 +262,61 @@ class EventUpsertServiceDetailUnavailableTest {
 
             written.pricePresale shouldBe BigDecimal("21.72")
         }
+
+    @Test
+    fun `a stored cancellation survives a listing that states no status`() =
+        runTest {
+            coEvery { eventRepository.findBySourceIdIn(any()) } returns listOf(stored.copy(status = EventStatus.CANCELLED.name)).asFlow()
+
+            upsertAndCapture(listingRow(detailUnavailable = true)).status shouldBe EventStatus.CANCELLED.name
+        }
+
+    @Test
+    fun `a listing's own status wins over the stored one`() =
+        runTest {
+            coEvery { eventRepository.findBySourceIdIn(any()) } returns listOf(stored.copy(status = EventStatus.POSTPONED.name)).asFlow()
+
+            upsertAndCapture(listingRow(detailUnavailable = true).copy(status = EventStatus.CANCELLED.name)).status shouldBe EventStatus.CANCELLED.name
+        }
+
+    @Test
+    fun `a stored cancellation yields to a page that answered`() =
+        runTest {
+            coEvery { eventRepository.findBySourceIdIn(any()) } returns listOf(stored.copy(status = EventStatus.CANCELLED.name)).asFlow()
+
+            upsertAndCapture(listingRow(detailUnavailable = false)).status shouldBe EventStatus.SCHEDULED.name
+        }
+
+    @Test
+    fun `a stored relocation is not refilled, since its destination cannot travel with it`() =
+        runTest {
+            coEvery { eventRepository.findBySourceIdIn(any()) } returns
+                listOf(stored.copy(status = EventStatus.RELOCATED.name, relocatedTo = "Hole44")).asFlow()
+
+            upsertAndCapture(listingRow(detailUnavailable = true)).status shouldBe EventStatus.SCHEDULED.name
+        }
+
+    @Test
+    fun `a stored sold-out flag survives a listing without one`() =
+        runTest {
+            coEvery { eventRepository.findBySourceIdIn(any()) } returns listOf(stored.copy(soldOut = true)).asFlow()
+
+            upsertAndCapture(listingRow(detailUnavailable = true)).soldOut shouldBe true
+        }
+
+    @Test
+    fun `a stored free flag survives a listing without a price`() =
+        runTest {
+            coEvery { eventRepository.findBySourceIdIn(any()) } returns listOf(stored.copy(free = true)).asFlow()
+
+            upsertAndCapture(listingRow(detailUnavailable = true)).free shouldBe true
+        }
+
+    @Test
+    fun `a stored free flag yields to a listing price`() =
+        runTest {
+            coEvery { eventRepository.findBySourceIdIn(any()) } returns listOf(stored.copy(free = true)).asFlow()
+
+            upsertAndCapture(listingRow(detailUnavailable = true).copy(pricePresale = BigDecimal("12.00"))).free shouldBe false
+        }
 }

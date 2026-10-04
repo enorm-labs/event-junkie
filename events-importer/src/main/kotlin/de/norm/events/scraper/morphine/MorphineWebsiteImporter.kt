@@ -5,6 +5,7 @@ import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.LimitedAspect
+import de.norm.events.scraper.ScrapedField
 import de.norm.events.scraper.VenueLimitations
 import org.springframework.stereotype.Component
 
@@ -34,6 +35,7 @@ class MorphineWebsiteImporter(
 ) : AbstractTwoPageWebsiteImporter(htmlFetcher, MorphineOverviewPageScraper()::scrape, MorphineDetailPageScraper()::scrape) {
     override val eventSource: EventSource = EventSource.MORPHINE
     override val listsWholeProgramme: Boolean = true
+    override val detailPageOwns: Set<ScrapedField> = setOf(ScrapedField.IMAGE, ScrapedField.ARTISTS)
 }
 
 val MORPHINE_LIMITATIONS =
