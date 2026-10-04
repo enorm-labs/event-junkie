@@ -11,8 +11,8 @@ import java.time.LocalTime
 
 /**
  * Unit tests for the Gärten der Welt field mapping — the park's category vocabulary and the
- * breadth filter built on it, the badges it writes into event titles, and the date, start time
- * and identity all read out of the detail URL.
+ * breadth filter built on it, the badges it writes into event titles, the date, start time and
+ * identity all read out of the detail URL, and an exhibition's run.
  */
 class GaertenDerWeltFieldMappingTest {
     @Test
@@ -117,5 +117,26 @@ class GaertenDerWeltFieldMappingTest {
 
     private companion object {
         private const val DETAIL_BASE = "https://www.gaertenderwelt.de/events/veranstaltungen/detail"
+    }
+
+    @Test
+    fun `reads a date cell that spans days as a run`() {
+        parseDateRange(" 01.09.2026 - 01.11.2026 ") shouldBe LocalDate.of(2026, 9, 1)..LocalDate.of(2026, 11, 1)
+        parseDateRange("22.10.2026 – 24.10.2026") shouldBe LocalDate.of(2026, 10, 22)..LocalDate.of(2026, 10, 24)
+    }
+
+    @Test
+    fun `reads a single day, a reversed range or no date as no run`() {
+        parseDateRange("08.10.2026").shouldBeNull()
+        parseDateRange("01.11.2026 - 01.09.2026").shouldBeNull()
+        parseDateRange("01.11.2026 - 01.11.2026").shouldBeNull()
+        parseDateRange(null).shouldBeNull()
+    }
+
+    @Test
+    fun `keys a run on the slug, without the day`() {
+        val path = parseEventPath("https://www.gaertenderwelt.de/events/veranstaltungen/detail/2026-10-04_0900/zwischen-himmel-und-erde-ausstellung/")
+
+        path?.let(::gaertenDerWeltRunId) shouldBe "gaerten_der_welt:zwischen-himmel-und-erde-ausstellung"
     }
 }

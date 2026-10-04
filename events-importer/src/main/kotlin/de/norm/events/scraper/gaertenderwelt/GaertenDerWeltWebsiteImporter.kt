@@ -30,9 +30,12 @@ import org.springframework.stereotype.Component
  * Each row is enriched from its detail page (description, prices, doors, promoter); a failure
  * degrades to the row's own data, flagged so the upsert keeps the stored detail fields (see #2425).
  * Conditional requests are not used: the entry page's `ETag` covers page 1 alone, and a `304`
- * would freeze the pages behind it. The park's participation formats are not imported ([isProgrammeCategory]). An exhibition is one run: listed once per
- * open day under one slug, folded from first day to last ([collapseExhibitionRuns], ADR-029,
- * #337); a drone show over three nights keeps its nights, since only `EXHIBITION` rows fold.
+ * would freeze the pages behind it. The park's participation formats are not imported ([isProgrammeCategory]).
+ *
+ * An exhibition is one run under [gaertenDerWeltRunId] (ADR-029, #337). The listing shows it once,
+ * with the whole run in its date cell ([GaertenDerWeltOverviewPageScraper]). A listing that shows
+ * it once per open day is folded from first day to last ([collapseExhibitionRuns]), to the same
+ * `sourceId`. A drone show over three nights keeps its nights, since only `EXHIBITION` rows fold.
  *
  * @see GAERTEN_DER_WELT_LIMITATIONS for what the park does not publish.
  * @see GaertenDerWeltOverviewPageScraper for listing-page parsing, identity, date and pagination.
@@ -64,10 +67,7 @@ class GaertenDerWeltWebsiteImporter(
                 overviewPageScraper::scrape
             )
         // An exhibition is folded first, so its page is fetched once (ADR-029, #337).
-        val rows =
-            listing.events.collapseExhibitionRuns { row ->
-                parseEventPath(row.sourceUrl)?.let { "${EventSource.GAERTEN_DER_WELT.sourceIdPrefix}${it.slug}" }
-            }
+        val rows = listing.events.collapseExhibitionRuns { row -> parseEventPath(row.sourceUrl)?.let(::gaertenDerWeltRunId) }
         val events = rows.map { enrichFromDetailPage(it) }
         logger.info { "Scraped ${events.size} Gärten der Welt event(s)" }
         return ImportResult.Success(events = events, etag = null, lastModified = null, complete = listing.complete)
@@ -85,10 +85,11 @@ class GaertenDerWeltWebsiteImporter(
 
     /**
      * Merges a parsed [detail] page over its listing [row]. The detail page owns the description,
-     * prices, doors time, promoter and full-size poster; the row wins on date and start time (the
-     * URL stamp, where the detail page renders a year-less "Samstag, 08.08.") and on event type (the
-     * `.category` label the single view does not repeat) (ADR-007 §"Selector Strategy"). Artists
-     * are built last, because the type decides whether the title names an act.
+     * prices, doors time, promoter and full-size poster. The row wins on the dates and start time:
+     * the detail page renders a year-less "Samstag, 08.08." (ADR-007 §"Selector Strategy"). It wins
+     * on event type, the `.category` label the single view does not repeat, and on `sourceId`,
+     * where a run's row carries the stamp-less id and the page URL names one day. Artists are built
+     * last, because the type decides whether the title names an act.
      */
     private fun merge(
         detail: ScrapedEvent,
@@ -96,8 +97,10 @@ class GaertenDerWeltWebsiteImporter(
     ): ScrapedEvent {
         val subtitle = detail.subtitle ?: row.subtitle
         return detail.withGapsFrom(row).copy(
+            sourceId = row.sourceId,
             eventDate = row.eventDate,
             startTime = row.startTime,
+            endDate = row.endDate,
             eventType = row.eventType,
             artists = buildArtistsForEventType(detail.title, subtitle = subtitle, eventType = row.eventType)
         )

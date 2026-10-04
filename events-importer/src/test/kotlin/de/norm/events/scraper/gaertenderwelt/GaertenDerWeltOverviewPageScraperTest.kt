@@ -126,6 +126,39 @@ class GaertenDerWeltOverviewPageScraperTest {
         scraper.scrape(unstamped, LISTING_URL) shouldHaveSize 0
     }
 
+    @Test
+    fun `stores an exhibition listed with its whole run as one event from the first day to the last`() {
+        // Captured 4 October 2026: the row's href stamps the next open day, its date cell the run.
+        val run = scraper.scrape(fixture("gaertenderwelt-overview-runs.html"), LISTING_URL).single { it.eventType == EventType.EXHIBITION.name }
+
+        run.title shouldBe "Zwischen Himmel und Erde: Ausstellung"
+        run.eventDate shouldBe LocalDate.of(2026, 9, 1)
+        run.endDate shouldBe LocalDate.of(2026, 11, 1)
+        run.startTime shouldBe LocalTime.of(9, 0)
+        run.sourceId shouldBe "gaerten_der_welt:zwischen-himmel-und-erde-ausstellung"
+        run.sourceUrl shouldBe "$LISTING_URL/detail/2026-10-04_0900/zwischen-himmel-und-erde-ausstellung/"
+    }
+
+    @Test
+    fun `keeps a one-day row on the same page dated and keyed by its stamp`() {
+        val gamesNight = scraper.scrape(fixture("gaertenderwelt-overview-runs.html"), LISTING_URL).single { it.title == "Spieleabend" }
+
+        gamesNight.eventDate shouldBe LocalDate.of(2026, 10, 9)
+        gamesNight.endDate.shouldBeNull()
+        gamesNight.sourceId shouldBe "gaerten_der_welt:2026-10-09_1730/spieleabend-1-1"
+    }
+
+    @Test
+    fun `keeps the stamped night of a show listed over several nights`() {
+        val droneShow = scraper.scrape(fixture("gaertenderwelt-overview-runs-page2.html"), LISTING_URL).single { it.title.startsWith("Drone Art Show") }
+
+        // "22.10.2026 - 24.10.2026" under "Konzerte": each night is its own show.
+        droneShow.eventType shouldBe EventType.CONCERT.name
+        droneShow.eventDate shouldBe LocalDate.of(2026, 10, 22)
+        droneShow.endDate.shouldBeNull()
+        droneShow.sourceId shouldBe "gaerten_der_welt:2026-10-22_2000/drone-art-show-harry-potter"
+    }
+
     private companion object {
         private const val LISTING_URL = "https://www.gaertenderwelt.de/events/veranstaltungen"
     }

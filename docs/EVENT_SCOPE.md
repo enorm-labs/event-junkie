@@ -63,7 +63,8 @@ publishes no lineup. A party title names the night, not an act. That rule is tra
 **`EXHIBITION` is a _run_.** An event carries an optional end since ADR-029, and an exhibition uses it. It is one row
 from opening day to closing day, with `end_date` set and `end_time` empty. The vernissage time is its `start_time`
 when the venue states one. A gallery that lists the show once per open day is folded by `collapseExhibitionRuns` in
-the importer, so silent green's 23 rows are one row. A festival's days are not folded: each has its own lineup
+the importer, so silent green's 23 rows are one row. Gärten der Welt lists the show once, with the run as a date
+range, and the importer stores that range. A festival's days are not folded: each has its own lineup
 (issue #337).
 
 **`COMEDY` can come from the act.** Tempodrom gives no category for a night billed by a name only. When the headliner is

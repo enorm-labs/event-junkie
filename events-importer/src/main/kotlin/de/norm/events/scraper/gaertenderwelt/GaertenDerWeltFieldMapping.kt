@@ -2,9 +2,11 @@ package de.norm.events.scraper.gaertenderwelt
 
 import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
+import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.collapseExhibitionRuns
 import de.norm.events.scraper.parseEventStatus
+import de.norm.events.scraper.parseGermanDate
 import de.norm.events.scraper.parseIsoDate
 import de.norm.events.scraper.parseTime
 import java.net.URI
@@ -13,8 +15,8 @@ import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 
 // Field mapping shared by the Gärten der Welt scrapers: the park's category vocabulary and the
-// breadth filter on it, the badges it writes into titles, and the identity, date and start time
-// read out of the detail URL. Every case is asserted in GaertenDerWeltFieldMappingTest.
+// breadth filter on it, the badges it writes into titles, the identity, date and start time read
+// out of the detail URL, and an exhibition's run. Every case is asserted in GaertenDerWeltFieldMappingTest.
 
 /**
  * The park's category labels, passed to [mapEventType][de.norm.events.scraper.mapEventType].
@@ -121,10 +123,9 @@ internal data class GaertenDerWeltEventPath(
  * (`01.09.2026 - 01.11.2026`).
  *
  * The slug alone is not the identity: the park reuses one slug across every date of a recurring
- * event (`fuehrung-durch-die-gaerten-der-welt` runs monthly). The exception is an exhibition,
- * listed once per open day under one slug and folded by [collapseExhibitionRuns]. A rescheduled
- * event changes stamp and therefore `sourceId`: the old row is cleaned up as stale, the correct
- * outcome for a different date.
+ * event (`fuehrung-durch-die-gaerten-der-welt` runs monthly). The exception is an exhibition, one
+ * run under one slug ([gaertenDerWeltRunId]). A rescheduled event changes stamp and therefore
+ * `sourceId`: the old row is cleaned up as stale, the correct outcome for a different date.
  */
 internal fun parseEventPath(sourceUrl: String): GaertenDerWeltEventPath? =
     EVENT_PATH_PATTERN.find(URI(sourceUrl).path)?.destructured?.let { (stamp, time, slug) ->
@@ -138,3 +139,24 @@ private val EVENT_PATH_PATTERN = Regex("""(\d{4}-\d{2}-\d{2})_(\d{4})/([^/]+)/?$
 
 /** The stamp's bare four-digit time, e.g. `1900` or `0900`. */
 private val STAMP_TIME_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern("HHmm")
+
+/**
+ * The `sourceId` of an exhibition run: the slug without the stamp, which every open day shares.
+ * The listing's date range and [collapseExhibitionRuns] both key on it, so either layout updates
+ * one row (#337, #2655).
+ */
+internal fun gaertenDerWeltRunId(path: GaertenDerWeltEventPath): String = "${EventSource.GAERTEN_DER_WELT.sourceIdPrefix}${path.slug}"
+
+/**
+ * Reads a listing row's `.date` cell as a run (`01.09.2026 - 01.11.2026`), or `null` for a single
+ * day (`08.08.2026`). A range whose end is not after its start is not a run either.
+ */
+internal fun parseDateRange(text: String?): ClosedRange<LocalDate>? =
+    text?.let { DATE_RANGE_PATTERN.find(it) }?.destructured?.let { (from, to) ->
+        val start = parseGermanDate(from)
+        val end = parseGermanDate(to)
+        if (start != null && end != null && end > start) start..end else null
+    }
+
+/** Two dotted dates joined by a hyphen or a dash, as the listing renders a run. */
+private val DATE_RANGE_PATTERN = Regex("""(\d{1,2}\.\d{1,2}\.\d{4})\s*[-–—]\s*(\d{1,2}\.\d{1,2}\.\d{4})""")
