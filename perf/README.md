@@ -142,6 +142,20 @@ are the load itself or wait for it, and the calendar query takes that long under
 50 ms. The post-deploy smoke hook does not use either set. `tests.smoke.latencyBudgetMs` in the chart sets all three to 10 s, because a cold JVM after a
 rollout must clear it.
 
+**`search.js` has its own budget, 450 ms**, by the same rule and in the same place, on 2026-10-04 after #2533. The BFF ran two replicas from the
+first minute, and no run failed a request. `THRESHOLD_SEARCH_MS` overrides it for a laptop.
+
+| Typists |   p50 |    p95 |    max |
+| ------: | ----: | -----: | -----: |
+|      20 | 53 ms | 253 ms | 353 ms |
+|      20 | 57 ms | 266 ms |  1.3 s |
+|      20 | 44 ms | 245 ms | 328 ms |
+|      50 | 50 ms | 279 ms | 484 ms |
+|      50 | 47 ms | 268 ms | 590 ms |
+|      50 | 47 ms | 280 ms | 721 ms |
+
+Before the trigram indexes the same script measured 441 ms at 20 typists and 1.0 to 1.7 s at 50, with the database node's CPU at its limit.
+
 ## Where the session mix comes from
 
 A load test's p95 only describes traffic that can occur, so `load.js` weights its sessions from production traffic: one week, 2026-09-25 to 2026-10-02
