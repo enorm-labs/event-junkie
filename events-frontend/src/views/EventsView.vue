@@ -11,7 +11,9 @@ import { todayIso } from '@/lib/format'
 import EventFilterBar from '@/components/EventFilterBar.vue'
 import PaginationControls from '@/components/PaginationControls.vue'
 import SortControl, { type SortOption } from '@/components/SortControl.vue'
-import { type EventSearchParams, useEventSearch } from '@/composables/useEvents'
+import type { EventPage } from '@/api/types'
+import { useAsync } from '@/composables/useAsync'
+import { type EventSearchParams, fetchOnNowPage, searchEvents } from '@/composables/useEvents'
 import { useEventFilters } from '@/composables/useEventFilters'
 import { usePagedList } from '@/composables/usePagedList'
 import { useI18n } from 'vue-i18n'
@@ -31,12 +33,15 @@ const { queryString, filters, dateRange, applyFilters } = useEventFilters()
 const EARLIEST_FIRST = 'eventDate,asc'
 const LATEST_FIRST = 'eventDate,desc'
 
+const onNow = computed(() => queryString('now') === '1')
+
 /**
  * Date is the only order. A range that ends before today is an archive and reads latest first; a
  * range that reaches into the past lets the visitor flip it. Without a lower bound the BFF reads
  * back through every year, so `to` alone reaches the past too (#360).
  */
 const reachesPast = computed(() => {
+  if (onNow.value) return false
   const { from, to } = dateRange.value
   return from ? from < todayIso() : !!to
 })
@@ -61,7 +66,20 @@ const params = computed<EventSearchParams>(() => ({
   size: PAGE_SIZE,
 }))
 
-const { data: page, error, loading, run } = useEventSearch(() => params.value)
+/** On now is today's running events in one list, so it replaces the range, the sort and the paging. */
+const {
+  data: page,
+  error,
+  loading,
+  run,
+} = useAsync<EventPage>(
+  () => (onNow.value ? fetchOnNowPage(filters.value) : searchEvents(params.value)),
+  'errors.subject.events',
+  () =>
+    onNow.value
+      ? `on-now:${todayIso()}?${JSON.stringify(filters.value)}`
+      : `/api/events?${JSON.stringify(params.value)}`,
+)
 
 // Paging, the clamp on an out-of-range `?page=`, and the reload on any query change.
 const { currentPage, totalPages, goToPage } = usePagedList(page, run)
@@ -116,7 +134,7 @@ const mapLink = computed(() => ({
       <p class="text-muted-foreground">{{ t('events.subtitle') }}</p>
     </header>
 
-    <EventFilterBar />
+    <EventFilterBar show-on-now />
 
     <p v-if="loading" class="text-body text-muted-foreground">{{ t('common.states.loading') }}</p>
     <p v-else-if="error" class="text-body text-destructive">{{ error }}</p>
