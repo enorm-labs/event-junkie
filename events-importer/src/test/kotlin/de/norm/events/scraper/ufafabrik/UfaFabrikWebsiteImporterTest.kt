@@ -27,6 +27,7 @@ class UfaFabrikWebsiteImporterTest {
     private val sourceUrl = "https://ufafabrik.de/spielplan.html"
     private val novemberUrl = "https://ufafabrik.de/program/202611"
     private val elsaUrl = "https://ufafabrik.de/veranstaltung/40154/elsa"
+    private val bozkusUrl = "https://ufafabrik.de/veranstaltung/40877/ahmet-bozkus"
 
     private fun fixture(name: String): String =
         javaClass.classLoader
@@ -39,7 +40,8 @@ class UfaFabrikWebsiteImporterTest {
             FetchResult.Success(Jsoup.parse(fixture("ufafabrik-spielplan.html"), sourceUrl), "\"ufa-etag\"", null)
         coEvery { htmlFetcher.fetchDocument(novemberUrl) } returns Jsoup.parse(fixture("ufafabrik-program-202611.html"), novemberUrl)
         coEvery { htmlFetcher.fetchDocument(elsaUrl) } returns Jsoup.parse(fixture("ufafabrik-detail-elsa.html"), elsaUrl)
-        coEvery { htmlFetcher.fetchDocument(match { it != novemberUrl && it != elsaUrl }) } throws IOException("refused")
+        coEvery { htmlFetcher.fetchDocument(bozkusUrl) } returns Jsoup.parse(fixture("ufafabrik-detail-ahmet-bozkus.html"), bozkusUrl)
+        coEvery { htmlFetcher.fetchDocument(match { it !in setOf(novemberUrl, elsaUrl, bozkusUrl) }) } throws IOException("refused")
     }
 
     @Test
@@ -77,6 +79,16 @@ class UfaFabrikWebsiteImporterTest {
                 .single { it.sourceId == "ufa_fabrik:40173-2026-10-02-2000" }
                 .description
                 .shouldBeNull()
+        }
+
+    @Test
+    fun `a Ticketlink in the blurb fills only a row without its own ticket link`() =
+        runTest {
+            stubPages()
+            val result = importer.importEvents(sourceUrl, null, null)
+            result.shouldBeInstanceOf<ImportResult.Success>()
+            result.events.single { it.sourceUrl == bozkusUrl }.ticketUrl shouldBe "https://www.tickettailor.com/events/dwjmm/2315670"
+            result.events.single { it.sourceId == "ufa_fabrik:40154-2026-10-01-2000" }.ticketUrl shouldBe "https://ufafabrik.de/node/40154/booking"
         }
 
     @Test
