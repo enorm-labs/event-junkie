@@ -319,7 +319,16 @@ private val NOISE_SUFFIXES = listOf("disco floor", "floor")
  * normalizeGenre(null)                                           → []
  * ```
  */
-fun normalizeGenre(rawGenre: String?): List<String> {
+fun normalizeGenre(rawGenre: String?): List<String> = genreTokens(rawGenre).flatMap { token -> resolveGenre(token) }.distinct()
+
+/**
+ * The tokens of [rawGenre] that [normalizeGenre] drops because they name no genre ([looksLikeGenre]),
+ * as the venue wrote them. The import flags them for the data-quality worklist (#320).
+ */
+fun nonGenreTokens(rawGenre: String?): List<String> = genreTokens(rawGenre).filter { resolveGenreOrNull(it) == null }.distinct()
+
+/** [rawGenre] split on the delimiters, with the noise suffixes stripped. */
+private fun genreTokens(rawGenre: String?): List<String> {
     if (rawGenre.isNullOrBlank()) return emptyList()
 
     return preNormalize(rawGenre)
@@ -333,8 +342,6 @@ fun normalizeGenre(rawGenre: String?): List<String> {
         .flatMap { it.split(",") }
         .map { it.trim() }
         .filter { it.isNotBlank() }
-        .flatMap { token -> resolveGenre(token) }
-        .distinct()
 }
 
 /**
@@ -357,14 +364,18 @@ private fun stripNoise(token: String): String {
     return cleaned
 }
 
+/** [resolveGenreOrNull], with a log line for a token that names no genre. */
+private fun resolveGenre(token: String): List<String> =
+    resolveGenreOrNull(token) ?: emptyList<String>().also { logger.info { "Dropping non-genre token '$token'" } }
+
 /**
  * Resolves one cleaned token to canonical names, in order: direct synonym lookup; word-level
  * matching returning all matched genres ("Superheavy Funky Soul & Boogaloo" to ["Funk",
- * "Soul"]); else kept as a new genre only if it [looksLikeGenre]. Tokens that are clearly not
- * genres return an empty list.
+ * "Soul"]); else kept as a new genre only if it [looksLikeGenre]. Noise such as a lone letter or
+ * a time ("from 8pm") returns an empty list. A token that is not a genre returns null.
  */
 @Suppress("ReturnCount") // Multiple early returns improve readability for this cascading lookup
-private fun resolveGenre(token: String): List<String> {
+private fun resolveGenreOrNull(token: String): List<String>? {
     val lower = token.lowercase().trim()
 
     // Skip tokens that are clearly not genre names
@@ -395,10 +406,7 @@ private fun resolveGenre(token: String): List<String> {
 
     // No synonym match: keep as a new genre only if it plausibly names one, so format labels never
     // leak into genre_tag.
-    if (!looksLikeGenre(token)) {
-        logger.info { "Dropping non-genre token '$token'" }
-        return emptyList()
-    }
+    if (!looksLikeGenre(token)) return null
     logger.info { "No synonym match for genre token '$token', using as-is" }
     val titleCased =
         token.split(" ").joinToString(" ") { word ->

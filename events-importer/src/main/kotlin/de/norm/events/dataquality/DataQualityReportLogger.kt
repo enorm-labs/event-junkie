@@ -87,6 +87,7 @@ class DataQualityReportLogger(
                     "${overall.suspectNonArtistTitles} suspect artist names, " +
                     "${overall.titleDerivedSingletons} title-named one-event headliners " +
                     "(${overall.titleDerivedUnmatched} unknown to MusicBrainz), " +
+                    "${overall.flaggedAtImport} flagged at import, " +
                     "${overall.unreviewedLicence} from unreviewed sources (${overall.unreviewedLicencePct}%) — " +
                     "${rows.size} snapshot rows for $today across ${report.perSource.size} source(s)"
             }
@@ -119,6 +120,7 @@ class DataQualityReportLogger(
             QualityIssue.UNREVIEWED_LICENCE.key to source.unreviewedLicence,
             QualityIssue.TITLE_DERIVED_SINGLETONS.key to source.titleDerivedSingletons,
             QualityIssue.TITLE_DERIVED_UNMATCHED.key to source.titleDerivedUnmatched,
+            QualityIssue.FLAGGED_AT_IMPORT.key to source.flaggedAtImport,
             SUSPECT_NON_ARTIST_TITLES to source.suspectNonArtistTitles
         )
 

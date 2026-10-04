@@ -31,7 +31,8 @@ class DataQualityReportIntegrationTest : BaseControllerTest() {
      * Two sources and one manual event.
      *
      * `alpha` — 3 events: one clean concert, one concert with no artist, one typed OTHER.
-     * `beta`  — 2 events: both concerts with no artist, one with no start time, one free.
+     * `beta`  — 2 events: both concerts with no artist, one with no start time, one free. The import
+     *           flagged two values on the first.
      * `gamma` — 6 events: the four series-as-artist shapes #1145 was filed on, each a title-derived
      *           one-event headliner named like its event (two of them unknown to MusicBrainz), plus a
      *           title-derived act billed twice and a line-up act named like its event — neither counts.
@@ -55,7 +56,9 @@ class DataQualityReportIntegrationTest : BaseControllerTest() {
             // Typed OTHER, and therefore NOT counted by concertsWithoutArtist even though it has none.
             insertEvent(alpha, venueId, "alpha-other", eventType = "OTHER", genre = "Rock", price = "12.00", startTime = "20:00")
 
-            insertEvent(beta, venueId, "beta-one", startTime = "22:00")
+            val betaOne = insertEvent(beta, venueId, "beta-one", startTime = "22:00")
+            flag(betaOne, "NON_ARTIST_NAME", "Special Guest")
+            flag(betaOne, "GENRE_EQUALS_TITLE", "beta-one")
             // Free, so `missingPrice` must NOT count it — open decision A.
             insertEvent(beta, venueId, "beta-two", free = true)
 
@@ -108,6 +111,11 @@ class DataQualityReportIntegrationTest : BaseControllerTest() {
             gamma.titleDerivedUnmatched shouldBe 2L
             alpha.titleDerivedSingletons shouldBe 0L
             report.overall.titleDerivedSingletons shouldBe 4L
+
+            // One event with two flags is one event to open.
+            beta.flaggedAtImport shouldBe 1L
+            alpha.flaggedAtImport shouldBe 0L
+            report.overall.flaggedAtImport shouldBe 1L
         }
 
     /**
@@ -159,6 +167,24 @@ class DataQualityReportIntegrationTest : BaseControllerTest() {
 
             val unmatched = service.worklist(QualityIssue.TITLE_DERIVED_UNMATCHED, source = null, limit = 50, offset = 0)
             unmatched.entries.map { it.slug }.toSet() shouldBe setOf("gamma-night-0", "gamma-night-1")
+        }
+
+    @Test
+    fun `the flagged queue names each value the import kept out of the event`(): Unit =
+        runBlocking {
+            val list = service.worklist(QualityIssue.FLAGGED_AT_IMPORT, source = null, limit = 50, offset = 0)
+
+            list.entries.map { it.slug } shouldBe listOf("beta-one")
+            list.entries.single().flags shouldBe
+                listOf(
+                    WorklistFlagResponse(kind = "NON_ARTIST_NAME", value = "Special Guest"),
+                    WorklistFlagResponse(kind = "GENRE_EQUALS_TITLE", value = "beta-one")
+                ).sortedBy { it.kind }
+            // An entry on another issue's list carries its flags too, and an unflagged one carries none.
+            service
+                .worklist(QualityIssue.CONCERTS_WITHOUT_ARTIST, source = "beta", limit = 50, offset = 0)
+                .entries
+                .associate { it.slug to it.flags.size } shouldBe mapOf("beta-one" to 2, "beta-two" to 0)
         }
 
     @Test
@@ -251,6 +277,14 @@ class DataQualityReportIntegrationTest : BaseControllerTest() {
         titleDerived: Boolean = false
     ) = databaseClient
         .sql("INSERT INTO events.event_artist (event_id, artist_id, title_derived) VALUES ($eventId, $artistId, $titleDerived)")
+        .await()
+
+    private suspend fun flag(
+        eventId: Long,
+        kind: String,
+        value: String
+    ) = databaseClient
+        .sql("INSERT INTO events.event_quality_flag (event_id, kind, value) VALUES ($eventId, '$kind', '$value')")
         .await()
 
     private suspend fun linkPromoter(

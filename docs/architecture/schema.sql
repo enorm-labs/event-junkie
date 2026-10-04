@@ -418,6 +418,17 @@ ALTER TABLE events.event_promoter ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTI
 );
 
 --
+-- Name: event_quality_flag; Type: TABLE; Schema: events; Owner: -
+--
+
+CREATE TABLE events.event_quality_flag (
+    event_id bigint NOT NULL,
+    kind text NOT NULL,
+    value text NOT NULL,
+    CONSTRAINT event_quality_flag_kind_check CHECK ((kind = ANY (ARRAY['SLUGLESS_ARTIST'::text, 'NON_ARTIST_NAME'::text, 'HELD_BACK_PROMOTER_NAME'::text, 'GENRE_EQUALS_TITLE'::text, 'NON_GENRE_TOKEN'::text])))
+);
+
+--
 -- Name: event_source; Type: TABLE; Schema: events; Owner: -
 --
 
@@ -732,6 +743,13 @@ ALTER TABLE ONLY events.event_promoter
 
 ALTER TABLE ONLY events.event_promoter
     ADD CONSTRAINT event_promoter_pkey PRIMARY KEY (id);
+
+--
+-- Name: event_quality_flag event_quality_flag_pkey; Type: CONSTRAINT; Schema: events; Owner: -
+--
+
+ALTER TABLE ONLY events.event_quality_flag
+    ADD CONSTRAINT event_quality_flag_pkey PRIMARY KEY (event_id, kind, value);
 
 --
 -- Name: event event_slug_key; Type: CONSTRAINT; Schema: events; Owner: -
@@ -1101,6 +1119,13 @@ ALTER TABLE ONLY events.event_promoter
 
 ALTER TABLE ONLY events.event_promoter
     ADD CONSTRAINT event_promoter_promoter_id_fkey FOREIGN KEY (promoter_id) REFERENCES events.promoter(id) ON DELETE CASCADE;
+
+--
+-- Name: event_quality_flag event_quality_flag_event_id_fkey; Type: FK CONSTRAINT; Schema: events; Owner: -
+--
+
+ALTER TABLE ONLY events.event_quality_flag
+    ADD CONSTRAINT event_quality_flag_event_id_fkey FOREIGN KEY (event_id) REFERENCES events.event(id) ON DELETE CASCADE;
 
 --
 -- Name: event_source event_source_venue_id_fkey; Type: FK CONSTRAINT; Schema: events; Owner: -

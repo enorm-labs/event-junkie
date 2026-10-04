@@ -263,6 +263,11 @@ UPDATE events.event SET spoken_languages = '{de,en}' WHERE source_id = 'fixture-
 -- An operator fixed its title and lineup by hand, so the importer keeps both (ADR-042).
 UPDATE events.event SET pinned_fields = '{title,lineup}' WHERE source_id = 'fixture-no-genre';
 
+-- The genre the import kept out, because the venue repeated the title there (V100, #320). Only the
+-- importer's data-quality worklist reads it.
+INSERT INTO events.event_quality_flag (event_id, kind, value)
+SELECT e.id, 'GENRE_EQUALS_TITLE', 'Offene Bühne' FROM events.event e WHERE e.source_id = 'fixture-no-genre';
+
 -- A screening in the original with German subtitles: the spoken language and the subtitles are two facts (#2523).
 INSERT INTO events.event (venue_id, title, event_type, slug, event_date, start_time, source_url, source_id, spoken_languages, subtitle_language)
 SELECT v.id, 'Paris, Texas (OmU)', 'SCREENING', 'fixture-screening-' || to_char(timezone('Europe/Berlin', now())::date + 8, 'YYYY-MM-DD'), timezone('Europe/Berlin', now())::date + 8, TIME '21:00',

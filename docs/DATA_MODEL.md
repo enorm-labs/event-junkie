@@ -499,7 +499,8 @@ normalized genre tags for structured filtering. This approach was chosen over an
 - Events frequently have multiple genres (e.g. "Indie, Rock, Folk")
 - A fixed enum would require constant updates as new venues produce new genre labels
 - The `GenreNormalizer` maps known synonyms to canonical names while preserving unknown genres as-is
-- The raw genre text is kept on the event for display, and normalized tags enable structured filtering
+- The raw genre text is kept on the event for display, and normalized tags enable structured filtering. A genre that only repeats the event title is
+  not kept, and the data-quality worklist lists it instead (#320)
 - Genre tags are auto-created during imports — no manual curation required
 - The tags are too many to filter by directly: 173 in September 2026, 110 of them on fewer than three events. Each carries a `family` from a closed enum,
   and the filter offers the family first, then the styles inside it (#363)

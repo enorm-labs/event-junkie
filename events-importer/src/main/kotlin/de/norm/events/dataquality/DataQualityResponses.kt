@@ -1,5 +1,6 @@
 package de.norm.events.dataquality
 
+import de.norm.events.scraper.EventQualityFlag
 import io.swagger.v3.oas.annotations.media.Schema
 import java.time.Instant
 import java.time.LocalDate
@@ -97,7 +98,14 @@ data class SourceQualityMetrics(
                 "no MusicBrainz match (ADR-031). The denser half of the same queue",
         example = "2"
     )
-    val titleDerivedUnmatched: Long
+    val titleDerivedUnmatched: Long,
+    @Schema(
+        description =
+            "Events the import kept a value out of: an artist name it refused or held back, a genre " +
+                "that repeats the title, or a genre word that names no genre. The worklist entry names each value",
+        example = "5"
+    )
+    val flaggedAtImport: Long
 )
 
 /** One event failing one metric, in the shape a steward needs to decide whether to open it. */
@@ -116,10 +124,15 @@ data class WorklistEntryResponse(
     @Schema(description = "Venue id", example = "7")
     val venueId: Long,
     @Schema(description = "Source slug, or 'manual'", example = "badehaus")
-    val sourceSlug: String
+    val sourceSlug: String,
+    @Schema(description = "What the latest import kept out of this event. Empty for most events")
+    val flags: List<WorklistFlagResponse>
 ) {
     companion object {
-        fun fromRow(row: WorklistRow): WorklistEntryResponse =
+        fun fromRow(
+            row: WorklistRow,
+            flags: List<EventQualityFlag>
+        ): WorklistEntryResponse =
             WorklistEntryResponse(
                 id = row.id,
                 slug = row.slug,
@@ -127,10 +140,20 @@ data class WorklistEntryResponse(
                 eventDate = row.eventDate,
                 startTime = row.startTime,
                 venueId = row.venueId,
-                sourceSlug = row.sourceSlug
+                sourceSlug = row.sourceSlug,
+                flags = flags.map { WorklistFlagResponse(kind = it.kind.name, value = it.value) }
             )
     }
 }
+
+/** One value the import kept out of an event. */
+@Schema(description = "A value the import's sync gate kept out of the event")
+data class WorklistFlagResponse(
+    @Schema(description = "Why: SLUGLESS_ARTIST, NON_ARTIST_NAME, HELD_BACK_PROMOTER_NAME, GENRE_EQUALS_TITLE or NON_GENRE_TOKEN", example = "NON_ARTIST_NAME")
+    val kind: String,
+    @Schema(description = "The value as the venue published it", example = "Special Guest")
+    val value: String
+)
 
 /**
  * A page of the worklist.

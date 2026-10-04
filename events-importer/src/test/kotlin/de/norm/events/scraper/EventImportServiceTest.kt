@@ -182,7 +182,8 @@ class EventImportServiceTest {
                 eventGenreTagRepository = eventGenreTagRepository,
                 artistRepository = artistRepository,
                 promoterRepository = promoterRepository,
-                genreTagRepository = genreTagRepository
+                genreTagRepository = genreTagRepository,
+                qualityFlagRepository = mockk(relaxed = true)
             )
 
         eventUpsertService =

@@ -96,6 +96,18 @@ Accept: application/json
     });
 %}
 
+### What the import's sync gate kept out of each event
+### An artist name it refused or held back, or a genre value it dropped (#320). Each
+### entry's `flags` names the kind and the value; the next import replaces them.
+GET {{importer-host}}/api/admin/data-quality/worklist?issue=flaggedAtImport
+Accept: application/json
+
+> {%
+    client.test("status is 200", function () {
+        client.assert(response.status === 200, "Expected 200 but got " + response.status);
+    });
+%}
+
 ### An unknown issue is a 400 naming the valid values — NOT an empty list
 ### An empty list is the honest answer to "this metric has no offenders", so
 ### returning it for a typo would report perfect data quality for a metric

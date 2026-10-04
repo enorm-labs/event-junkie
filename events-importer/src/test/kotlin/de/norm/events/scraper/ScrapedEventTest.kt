@@ -142,6 +142,32 @@ class ScrapedEventTest {
     private fun ScrapedEvent.toEntity(existing: EventEntity? = null) = toEventEntity(venueId = 1L, venueSlug = "so36", eventSourceId = 1L, existing = existing)
 
     @Test
+    fun `a genre that repeats the title is not stored, whatever its case and spacing`() {
+        val event = scrapedEvent(title = "Berliner  Weisse", genre = " berliner weisse ")
+
+        event.genreRepeatsTitle() shouldBe true
+        event.toEntity().genre.shouldBeNull()
+    }
+
+    @Test
+    fun `a genre that differs from the title is stored as read`() {
+        val event = scrapedEvent(title = "Berliner Weisse", genre = "Berliner Weisse, Punk")
+
+        event.genreRepeatsTitle() shouldBe false
+        event.toEntity().genre shouldBe "Berliner Weisse, Punk"
+        scrapedEvent(genre = null).genreRepeatsTitle() shouldBe false
+    }
+
+    @Test
+    fun `a genre that repeats the title still types the event`() {
+        // The format cue is real even where the genre adds nothing to the title.
+        val entity = scrapedEvent(title = "Lesung", genre = "Lesung", eventType = "CONCERT").toEntity()
+
+        entity.genre.shouldBeNull()
+        entity.eventType shouldBe "READING"
+    }
+
+    @Test
     fun `toEventEntity swaps a transposed doors-after-start pair`() {
         // Source listed "Einlass: 19:30, Beginn: 19:00" — impossible, so the times are swapped back.
         val entity = scrapedEvent(doorsTime = LocalTime.of(19, 30), startTime = LocalTime.of(19, 0)).toEntity()
