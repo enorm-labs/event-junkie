@@ -2,9 +2,9 @@
 import { computed, onMounted, watch } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import { Button } from '@/components/ui/button'
-import BaseBadge from '@/components/BaseBadge.vue'
 import CachedImage from '@/components/CachedImage.vue'
 import EventCard from '@/components/EventCard.vue'
+import EventMetaLine, { type MetaItem } from '@/components/EventMetaLine.vue'
 import EventRow from '@/components/EventRow.vue'
 import EventShareActions from '@/components/EventShareActions.vue'
 import EventWhen from '@/components/EventWhen.vue'
@@ -126,6 +126,36 @@ const factColumns = computed(() => {
 
 const { t, te, locale } = useI18n()
 
+const metaItems = computed<MetaItem[]>(() => {
+  const e = event.value
+  if (!e) return []
+  const status = formatEventStatus(e.status, e.relocatedTo)
+  const items: (MetaItem | null)[] = [
+    { text: formatEventDates(e) },
+    { text: formatEventTime(e) },
+    timeHint.value ? { text: timeHint.value } : null,
+    e.venue?.name ? { text: e.venue.name } : null,
+    // The room as the venue names it (#316): a proper name, so never translated.
+    e.room ? { text: e.room } : null,
+    status ? { text: status, badge: true } : null,
+    stateItem(e),
+  ]
+  return items.filter((item): item is MetaItem => item !== null)
+})
+
+function stateItem(e: NonNullable<typeof event.value>): MetaItem | null {
+  if (isPast.value) return { text: t('events.card.past') }
+  if (isRunning.value) {
+    return {
+      text: t('events.card.runningSince', { day: formatWeekday(e.eventDate) }),
+      class: 'text-primary',
+    }
+  }
+  if (e.soldOut) return { text: t('events.card.soldOut'), class: 'font-medium text-destructive' }
+  if (e.free) return { text: t('events.card.free'), class: 'font-medium text-success' }
+  return null
+}
+
 // The page's URL in the body, so a report names its event without the visitor copying anything.
 const reportMailto = computed(() =>
   event.value?.slug
@@ -192,31 +222,7 @@ useStructuredData(() => (event.value ? eventPageJsonLd(event.value, locale.value
       <header class="mb-5 space-y-3">
         <h1 class="text-page font-bold tracking-tight">{{ event.title }}</h1>
         <p v-if="event.subtitle" class="text-lede text-muted-foreground">{{ event.subtitle }}</p>
-        <div class="flex flex-wrap items-center gap-2 text-body text-muted-foreground">
-          <span>{{ formatEventDates(event) }}</span>
-          <span>· {{ formatEventTime(event) }}</span>
-          <span v-if="timeHint">· {{ timeHint }}</span>
-          <span v-if="event.venue?.name">· {{ event.venue.name }}</span>
-          <!-- The room as the venue names it (#316): a proper name, so never translated. -->
-          <span v-if="event.room">· {{ event.room }}</span>
-          <!-- The one exception #1248 left: a cancelled event must not read as a word in a grey row. -->
-          <BaseBadge
-            v-if="formatEventStatus(event.status, event.relocatedTo)"
-            variant="destructive"
-          >
-            {{ formatEventStatus(event.status, event.relocatedTo) }}
-          </BaseBadge>
-          <span v-if="isPast">· {{ t('events.card.past') }}</span>
-          <span v-else-if="isRunning" class="text-primary">
-            · {{ t('events.card.runningSince', { day: formatWeekday(event.eventDate) }) }}
-          </span>
-          <span v-else-if="event.soldOut" class="font-medium text-destructive">
-            · {{ t('events.card.soldOut') }}
-          </span>
-          <span v-else-if="event.free" class="font-medium text-success">
-            · {{ t('events.card.free') }}
-          </span>
-        </div>
+        <EventMetaLine :items="metaItems" />
         <!--
           A past event is where a search engine sends people; saying only that it is over left the
           venue's own site as the nearest onward link (#1268), so the sentence carries one that stays
