@@ -85,7 +85,7 @@ function linksOf(key: string): { to: string; name: string }[] {
           v-model="draft"
           :aria-label="t('search.label')"
           :placeholder="t('search.placeholder')"
-          class="px-3"
+          class="w-full px-3"
           type="search"
         />
       </form>
