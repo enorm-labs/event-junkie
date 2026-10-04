@@ -32,7 +32,7 @@ abstract class AbstractAegVenueImporter(
         { document, url -> DETAIL_SCRAPER.scrape(document, url, eventSource) }
     ) {
     override val listsWholeProgramme: Boolean = true
-    override val detailPageOwns: Set<ScrapedField> = emptySet()
+    override val detailPageOwns: Set<ScrapedField> = setOf(ScrapedField.ARTISTS)
 
     /**
      * Merges detail-page data ([primary]) with listing data ([fallback]). The **listing wins on

@@ -91,6 +91,8 @@ class BerghainWebsiteImporter(
     /**
      * A Halle exhibition is listed once per open day, each day its own event page, so the days fold
      * into one run from the first listed day to the last (ADR-029, #2265), keyed on the show's title.
+     * Only the page says EXHIBITION, so a day whose page failed takes the type from another day of the
+     * same show ([withFailedExhibitionDaysTyped]).
      */
     override suspend fun importEvents(
         url: String,
@@ -101,9 +103,7 @@ class BerghainWebsiteImporter(
             is ImportResult.Success -> {
                 result.copy(
                     events =
-                        result.events.collapseExhibitionRuns { event ->
-                            "${EventSource.BERGHAIN.sourceIdPrefix}exhibition-${SlugGenerator.slugify(event.title)}"
-                        }
+                        result.events.withFailedExhibitionDaysTyped().collapseExhibitionRuns(::exhibitionRunId)
                 )
             }
 
@@ -111,6 +111,25 @@ class BerghainWebsiteImporter(
                 result
             }
         }
+
+    /**
+     * A day whose page failed carries the listing's type, a party billing the show's title as a DJ,
+     * and would be inserted beside the run under its own `sourceId`. Where another day of the same
+     * show answered EXHIBITION, the failed day takes that type and folds into the run (#2542).
+     */
+    private fun List<ScrapedEvent>.withFailedExhibitionDaysTyped(): List<ScrapedEvent> {
+        val shows = filter { it.eventType == EventType.EXHIBITION.name }.map(::exhibitionRunId).toSet()
+        return map { event ->
+            if (event.detailUnavailable && exhibitionRunId(event) in shows) {
+                event.copy(eventType = EventType.EXHIBITION.name, artists = emptyList())
+            } else {
+                event
+            }
+        }
+    }
+
+    /** The run's `sourceId`, from the show's title: every day of one show shares it. */
+    private fun exhibitionRunId(event: ScrapedEvent): String = "${EventSource.BERGHAIN.sourceIdPrefix}exhibition-${SlugGenerator.slugify(event.title)}"
 
     private companion object {
         const val LOAD_MORE_SELECTOR = "button#load-more-events"

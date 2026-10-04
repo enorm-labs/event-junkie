@@ -33,7 +33,7 @@ class AlteKantineWebsiteImporter(
     clock: Clock = Clock.systemDefaultZone()
 ) : AbstractTwoPageWebsiteImporter(htmlFetcher, AlteKantineOverviewPageScraper(clock)::scrape, AlteKantineDetailPageScraper(clock)::scrape) {
     /** The listing's type is a guess from the title; the event page names the venue's category (#2505). */
-    override val detailPageOwns: Set<ScrapedField> = setOf(ScrapedField.IMAGE, ScrapedField.EVENT_TYPE)
+    override val detailPageOwns: Set<ScrapedField> = setOf(ScrapedField.IMAGE, ScrapedField.EVENT_TYPE, ScrapedField.ARTISTS)
 
     override val eventSource: EventSource = EventSource.ALTE_KANTINE
     override val listsWholeProgramme: Boolean = true

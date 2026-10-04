@@ -5,6 +5,7 @@ import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.LimitedAspect
+import de.norm.events.scraper.ScrapedField
 import de.norm.events.scraper.VenueLimitations
 import org.springframework.stereotype.Component
 
@@ -27,6 +28,7 @@ class Hole44WebsiteImporter(
 ) : AbstractTwoPageWebsiteImporter(htmlFetcher, Hole44OverviewPageScraper()::scrape, Hole44DetailPageScraper()::scrape) {
     override val eventSource: EventSource = EventSource.HOLE44
     override val listsWholeProgramme: Boolean = true
+    override val detailPageOwns: Set<ScrapedField> = setOf(ScrapedField.IMAGE, ScrapedField.ARTISTS)
 }
 
 val HOLE44_LIMITATIONS =

@@ -29,7 +29,7 @@ class QuasimodoWebsiteImporter(
     htmlFetcher: HtmlFetcher
 ) : AbstractTwoPageWebsiteImporter(htmlFetcher, QuasimodoOverviewPageScraper()::scrape, QuasimodoDetailPageScraper()::scrape) {
     /** The listing's type is a guess from the title; the event page names the venue's category (#2505). */
-    override val detailPageOwns: Set<ScrapedField> = setOf(ScrapedField.IMAGE, ScrapedField.EVENT_TYPE)
+    override val detailPageOwns: Set<ScrapedField> = setOf(ScrapedField.IMAGE, ScrapedField.EVENT_TYPE, ScrapedField.ARTISTS)
 
     override val eventSource: EventSource = EventSource.QUASIMODO
     override val listsWholeProgramme: Boolean = true
