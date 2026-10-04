@@ -1,5 +1,5 @@
 {
-  "componentCount": 355,
+  "componentCount": 356,
   "licenses": [
     {
       "license": "Apache-2.0",
@@ -1395,6 +1395,12 @@
           "name": "@maplibre/vt-pbf",
           "version": "4.3.2",
           "url": "https://github.com/maplibre/vt-pbf",
+          "ecosystem": "frontend"
+        },
+        {
+          "name": "@phosphor-icons/vue",
+          "version": "2.2.1",
+          "url": "https://github.com/phosphor-icons/vue",
           "ecosystem": "frontend"
         },
         {
