@@ -1,6 +1,5 @@
-import type { Component } from 'vue'
+import { h, type Component, type FunctionalComponent } from 'vue'
 import {
-  AudioLines,
   AudioWaveform,
   Beer,
   BookOpen,
@@ -9,7 +8,6 @@ import {
   Disc3,
   Drama,
   Drum,
-  Frame,
   Globe,
   Guitar,
   Landmark,
@@ -19,14 +17,16 @@ import {
   Music,
   Music4,
   PartyPopper,
+  Palette,
   Piano,
   Radio,
   Skull,
-  Speaker,
+  Sparkles,
   Ticket,
   Trees,
   Zap,
 } from '@lucide/vue'
+import { PhDiscoBall } from '@phosphor-icons/vue'
 import type { EventSummary } from '@/api/types'
 
 /** The ground a title poster stands on: a `bg-poster-*` token, or `bg-muted` for `other`. */
@@ -48,6 +48,9 @@ export interface PosterArt {
 
 type EventType = NonNullable<EventSummary['eventType']>
 
+/** Lucide has no disco ball. Phosphor's Light weight comes closest to the poster's thin Lucide stroke. */
+export const DiscoBall: FunctionalComponent = () => h(PhDiscoBall, { weight: 'light' })
+
 /** One drawing per filter family (`GENRE_FAMILIES`); the thirteen share five grounds. */
 const BY_FAMILY: Record<string, PosterArt> = {
   electronic: { icon: Disc3, ground: 'electronic' },
@@ -67,26 +70,26 @@ const BY_FAMILY: Record<string, PosterArt> = {
 
 const BY_TYPE: Record<EventType, PosterArt> = {
   CONCERT: { icon: Music, ground: 'concert' },
-  PARTY: { icon: Speaker, ground: 'electronic' },
+  PARTY: { icon: DiscoBall, ground: 'electronic' },
   FESTIVAL: { icon: PartyPopper, ground: 'festival' },
   COMEDY: { icon: Laugh, ground: 'stage' },
   SHOW: { icon: Drama, ground: 'stage' },
   READING: { icon: BookOpen, ground: 'words' },
   SCREENING: { icon: Clapperboard, ground: 'words' },
   QUIZ: { icon: CircleHelp, ground: 'words' },
-  EXHIBITION: { icon: AudioLines, ground: 'words' },
-  OTHER: { icon: AudioLines, ground: 'other' },
+  EXHIBITION: { icon: Palette, ground: 'words' },
+  OTHER: { icon: Sparkles, ground: 'other' },
 }
 
 /** A venue with no programme families yet is drawn by what kind of place it is. */
 const BY_VENUE_TYPE: Record<string, PosterArt> = {
-  club: { icon: Speaker, ground: 'electronic' },
+  club: { icon: DiscoBall, ground: 'electronic' },
   'live-venue': { icon: Music, ground: 'concert' },
   arena: { icon: Ticket, ground: 'concert' },
   'open-air': { icon: Trees, ground: 'festival' },
   theatre: { icon: Drama, ground: 'stage' },
   'cultural-centre': { icon: Landmark, ground: 'words' },
-  gallery: { icon: Frame, ground: 'words' },
+  gallery: { icon: Palette, ground: 'words' },
   cinema: { icon: Clapperboard, ground: 'words' },
   bar: { icon: Beer, ground: 'other' },
 }

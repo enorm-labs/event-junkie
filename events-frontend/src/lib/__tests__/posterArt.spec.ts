@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest'
-import { Disc3, Drama, Guitar, Laugh, Music, PartyPopper, Speaker } from '@lucide/vue'
+import { Disc3, Drama, Guitar, Laugh, Music, PartyPopper } from '@lucide/vue'
 
 import { GENRE_FAMILIES } from '@/lib/genreFamilies'
-import { posterArt } from '@/lib/posterArt'
+import { DiscoBall, posterArt } from '@/lib/posterArt'
 
 describe('posterArt', () => {
   it('draws a music event by its first known genre family', () => {
@@ -15,7 +15,7 @@ describe('posterArt', () => {
 
   it('gives a concert without a known family its own ground', () => {
     expect(posterArt('CONCERT', [])).toEqual({ icon: Music, ground: 'concert' })
-    expect(posterArt('PARTY', null)).toEqual({ icon: Speaker, ground: 'electronic' })
+    expect(posterArt('PARTY', null)).toEqual({ icon: DiscoBall, ground: 'electronic' })
   })
 
   it('keeps a non-music type whatever genre it is tagged with', () => {
