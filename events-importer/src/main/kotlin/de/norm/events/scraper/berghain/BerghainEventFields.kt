@@ -2,6 +2,7 @@ package de.norm.events.scraper.berghain
 
 import de.norm.events.event.EventType
 import de.norm.events.scraper.B2B_SEPARATOR
+import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.isNonArtistName
 
 /**
@@ -55,10 +56,32 @@ internal fun floorsToGenre(floors: List<String>): String? =
  */
 internal fun floorsToEventType(floors: List<String>): String? =
     when {
-        floors.any { it.contains(KANTINE_MARKER, ignoreCase = true) } -> EventType.CONCERT.name
+        isKantine(floors) -> EventType.CONCERT.name
         floors.isNotEmpty() -> EventType.PARTY.name
         else -> null
     }
+
+private fun isKantine(floors: List<String>): Boolean = floors.any { it.contains(KANTINE_MARKER, ignoreCase = true) }
+
+/**
+ * The `sourceId` prefix of the Kantine am Berghain source. Each source has its own prefix (ADR-043), and the
+ * Kantine rows take this one, as the club's floors take [EventSource.BERGHAIN]'s.
+ */
+internal const val KANTINE_SOURCE_ID_PREFIX = "kantine_am_berghain:"
+
+/**
+ * An event's `sourceId`, from the floor it runs on. A night in the Kantine belongs to the Kantine source
+ * whichever programme page lists it, because the main programme also lists some Kantine nights (#2557).
+ */
+internal fun berghainSourceId(
+    floors: List<String>,
+    eventId: String
+): String = (if (isKantine(floors)) KANTINE_SOURCE_ID_PREFIX else EventSource.BERGHAIN.sourceIdPrefix) + eventId
+
+/** Whether [sourceUrl] is the Kantine programme page, whose source owns the Kantine nights. */
+internal fun isKantinePage(sourceUrl: String): Boolean = KANTINE_PAGE_PATH in sourceUrl
+
+private const val KANTINE_PAGE_PATH = "/kantine-am-berghain/"
 
 /**
  * Whether a Halle row is an exhibition: the event page's text calls it an `Ausstellung` or an

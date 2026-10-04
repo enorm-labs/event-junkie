@@ -112,6 +112,14 @@ class BerghainDetailPageScraperTest {
         entity.slug shouldBe "2026-09-16-kantine-am-berghain-olga-myko"
     }
 
+    @Test
+    fun `keys a Kantine night with the Kantine source's prefix`() {
+        val url = "https://www.berghain.berlin/de/event/82554/"
+        val event = scraper.scrape(Jsoup.parse(loadFixture("scraper/berghain/berghain-detail-cancelled.html"), url), url)!!
+
+        event.sourceId shouldBe "kantine_am_berghain:82554"
+    }
+
     // The CMS prints a zero for a door price nobody set (#1589).
     @Test
     fun `drops a zero door price beside a paid presale instead of calling the night free`() {

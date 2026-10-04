@@ -9,6 +9,7 @@ import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.collections.shouldNotBeEmpty
+import io.kotest.matchers.collections.shouldNotContain
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldStartWith
@@ -157,8 +158,10 @@ class BerghainWebsiteImporterTest {
             val result = importer.importEvents(sourceUrl)
             result.shouldBeInstanceOf<ImportResult.Success>()
 
-            result.events shouldHaveSize 31
+            // 31 listed; the Kantine night 82476 on page 2 is the Kantine source's.
+            result.events shouldHaveSize 30
             result.events.map { it.sourceId } shouldContain "berghain:80748"
+            result.events.map { it.sourceId } shouldNotContain "berghain:82476"
             result.complete shouldBe true
             coVerify(exactly = 1) { htmlFetcher.fetchDocument(page3) }
             coVerify(exactly = 0) { htmlFetcher.fetchDocument("$sourceUrl?page=4") }
@@ -174,6 +177,40 @@ class BerghainWebsiteImporterTest {
             importer.importEvents(kantineUrl).shouldBeInstanceOf<ImportResult.Success>()
 
             coVerify(exactly = 0) { htmlFetcher.fetchDocument(match { "page=" in it }) }
+        }
+
+    // The main programme's second page also lists Kantine nights, and both sources took the row in turn (#2557).
+    @Test
+    fun `a Kantine night on both programme pages belongs to the Kantine source alone`() =
+        runTest {
+            val kantineUrl = "https://www.berghain.berlin/de/program/kantine-am-berghain/"
+            val kantineNight =
+                """<a href="/de/event/82476/"><p>Mittwoch <span class="font-bold">28.10.2026</span> tür 19:00 beginn 20:00</p>""" +
+                    """<h2>Sound Metaphors Opening Concerts</h2><h3>Kantine am Berghain</h3>""" +
+                    """<h4><span class="font-bold"><span>Lenge</span></span></h4></a>"""
+            val clubNight =
+                """<a href="/de/event/80850/"><p>Samstag <span class="font-bold">31.10.2026</span> beginn 23:59</p>""" +
+                    """<h2>Klubnacht</h2><h3>Berghain</h3><h4><span class="font-bold"><span>Marcel Dettmann</span></span></h4></a>"""
+            coEvery { htmlFetcher.fetch(sourceUrl, any(), any()) } returns
+                FetchResult.Success(document = Jsoup.parse("<html><body>$kantineNight$clubNight</body></html>", sourceUrl), etag = null, lastModified = null)
+            coEvery { htmlFetcher.fetch(kantineUrl, any(), any()) } returns
+                FetchResult.Success(document = Jsoup.parse("<html><body>$kantineNight</body></html>", kantineUrl), etag = null, lastModified = null)
+            // A detail page with no floor block cannot tell the Kantine from the club, so the programme's floor decides.
+            val detailUrl = "https://www.berghain.berlin/de/event/82476/"
+            coEvery { htmlFetcher.fetchDocument(detailUrl) } returns
+                Jsoup.parse(
+                    """<html><body><main><h1>Sound Metaphors Opening Concerts</h1><p><span class="font-bold">28.10.2026</span></p></main></body></html>""",
+                    detailUrl
+                )
+
+            val club = importer.importEvents(sourceUrl)
+            val kantine = importer.importEvents(kantineUrl)
+
+            club.shouldBeInstanceOf<ImportResult.Success>()
+            kantine.shouldBeInstanceOf<ImportResult.Success>()
+            club.events.map { it.sourceId } shouldBe listOf("berghain:80850")
+            kantine.events.map { it.sourceId } shouldBe listOf("kantine_am_berghain:82476")
+            coVerify(exactly = 1) { htmlFetcher.fetchDocument(detailUrl) }
         }
 
     @Test

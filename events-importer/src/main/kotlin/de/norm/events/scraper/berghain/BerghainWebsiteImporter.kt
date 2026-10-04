@@ -25,6 +25,8 @@ import java.time.Clock
  * One importer serves both source rows on the identical template — the main `/de/program/`
  * page (Berghain building floors → parties) and `/de/program/kantine-am-berghain/` (concert
  * hall). Each row carries its own URL, ETag and venue; both dispatch via [EventSource.BERGHAIN].
+ * A Kantine night takes the `kantine_am_berghain:` prefix and belongs to the Kantine row on
+ * either page ([berghainSourceId], #2557).
  *
  * Inherited from [AbstractTwoPageWebsiteImporter]:
  * 1. Fetch the overview and discover events via [BerghainOverviewPageScraper] (authoritative
@@ -76,6 +78,8 @@ class BerghainWebsiteImporter(
         fallback: ScrapedEvent
     ): ScrapedEvent =
         primary.withGapsFrom(fallback).copy(
+            // The overview's floors decided the owning source; a detail page without floors must not move the night.
+            sourceId = fallback.sourceId,
             // The overview's lineup is authoritative; the detail page's artists carry only set times.
             // An exhibition's slot repeats its title, which is no act (#2265).
             artists =

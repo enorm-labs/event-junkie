@@ -2,7 +2,6 @@ package de.norm.events.scraper.berghain
 
 import de.norm.events.event.EventType
 import de.norm.events.scraper.DOORS_LABELS
-import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.START_LABELS
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
@@ -35,6 +34,9 @@ import java.time.Clock
  * with `Live` / `b2b` format markers in `uppercase` spans — `Live` bills its act a headliner,
  * `b2b` joins two DJ sets and leaves them DJs.
  *
+ * The main programme also lists some Kantine nights. Each page keeps only the nights its source
+ * owns by floor ([berghainSourceId]), so a night listed on both pages stays with one source.
+ *
  * The listing carries only upcoming events, but recently-passed dates are dropped here
  * (mirroring the persistence cutoff) to avoid wasted detail-page fetches.
  *
@@ -59,10 +61,15 @@ class BerghainOverviewPageScraper(
         val blocks = document.select(EVENT_LINK_SELECTOR)
         logger.info { "Found ${blocks.size} event block(s) on Berghain overview page" }
 
-        val events =
+        val parsed =
             blocks.mapSkippingFailures(logger, "Berghain event block") { block ->
                 parseBlock(block, sourceUrl)
             }
+        val kantinePage = isKantinePage(sourceUrl)
+        val (events, otherSource) = parsed.partition { it.sourceId.startsWith(KANTINE_SOURCE_ID_PREFIX) == kantinePage }
+        if (otherSource.isNotEmpty()) {
+            logger.info { "Left ${otherSource.size} event(s) on the Berghain listing to the other Berghain source, which owns their floor" }
+        }
 
         return events.dropPastEvents(clock) { dropped ->
             logger.info { "Dropped $dropped past event(s) from Berghain listing" }
@@ -102,7 +109,7 @@ class BerghainOverviewPageScraper(
             doorsTime = labelledClock(lineText, DOORS_LABELS),
             startTime = labelledClock(lineText, START_LABELS),
             sourceUrl = resolveUrl(sourceUrl, href),
-            sourceId = "${EventSource.BERGHAIN.sourceIdPrefix}$eventId",
+            sourceId = berghainSourceId(floors, eventId),
             genre = floorsToGenre(floors),
             artists = parseLineup(block, eventType)
         )
