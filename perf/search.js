@@ -37,8 +37,8 @@ export const options = {
     },
     thresholds: {
         http_req_failed: baseThresholds().http_req_failed,
-        // A placeholder that only catches a collapse. #2533 sets the real budget from staging runs.
-        'http_req_duration{group:search}': ['p(95)<10000'],
+        // Staging, 2026-10-04: worst p95 280 ms over six runs, times 1.5 (perf/README.md).
+        'http_req_duration{group:search}': [`p(95)<${Number(__ENV.THRESHOLD_SEARCH_MS || 450)}`],
     },
 }
 
