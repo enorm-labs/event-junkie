@@ -111,7 +111,7 @@ function linksOf(key: string): { to: string; name: string }[] {
           <RouterLink
             v-if="section.more && section.total > LIMIT"
             :to="localePath(section.more)"
-            class="text-body text-muted-foreground hover:text-foreground"
+            class="text-body text-primary underline-offset-4 hover:underline"
           >
             {{ t('search.showAll', { count: section.shown }) }}
           </RouterLink>
