@@ -9,6 +9,7 @@ import { fetchCalendarEvents } from '@/composables/useEvents'
 import { toCalendarInput } from '@/lib/calendarEvent'
 import { useEventFilters } from '@/composables/useEventFilters'
 import { useLocalePath } from '@/composables/useLocalePath'
+import { beginContentLoad } from '@/composables/useViewLoaded'
 import { useI18n } from 'vue-i18n'
 
 const route = useRoute()
@@ -32,12 +33,15 @@ function clampTo(from: string, to: string): string {
 async function load() {
   if (!range.value) return
   const { from, to } = range.value
+  const done = beginContentLoad()
   try {
     const data = await fetchCalendarEvents(from, clampTo(from, to), filters.value)
     events.value = data.map((event) => toCalendarInput(event, localePath))
     error.value = null
   } catch (e) {
     error.value = describeError(e, 'errors.subject.calendar')
+  } finally {
+    done()
   }
 }
 

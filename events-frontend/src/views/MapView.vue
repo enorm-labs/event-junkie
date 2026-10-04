@@ -21,6 +21,7 @@ import { fetchCalendarEvents } from '@/composables/useEvents'
 import { useEventFilters } from '@/composables/useEventFilters'
 import { useLocalePath } from '@/composables/useLocalePath'
 import { useLocation } from '@/composables/useLocation'
+import { beginContentLoad } from '@/composables/useViewLoaded'
 import { fetchAllVenues } from '@/composables/useVenues'
 import { districtLabel } from '@/lib/districts'
 import { tonight } from '@/lib/dateRanges'
@@ -77,6 +78,7 @@ const selected = ref<string | null>(null)
 
 async function load() {
   loading.value = true
+  const done = beginContentLoad()
   try {
     events.value = await fetchCalendarEvents(range.value.from, range.value.to, filters.value)
     error.value = null
@@ -85,6 +87,7 @@ async function load() {
     error.value = describeError(e, 'errors.subject.map')
   } finally {
     loading.value = false
+    done()
   }
 }
 

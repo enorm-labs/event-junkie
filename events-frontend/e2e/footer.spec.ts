@@ -6,7 +6,17 @@ import { expect, test } from '@playwright/test'
  * See docs/LEGAL.md §2.
  */
 
-const routes = ['/', '/events', '/venues', '/calendar', '/about'] as const
+// The footer renders once the view has loaded (#2567), so a detail page and a legal page are here
+// too: the first loads data, the second loads nothing.
+const routes = [
+  '/',
+  '/events',
+  '/events/no-such-gig',
+  '/venues',
+  '/calendar',
+  '/about',
+  '/legal/privacy',
+] as const
 
 for (const path of routes) {
   test(`renders the footer on ${path}`, async ({ page }) => {
@@ -111,14 +121,17 @@ test('shows no version line when the backend is unreachable', async ({ page }) =
   await expect(page.getByRole('contentinfo').getByTestId('app-version')).toHaveCount(0)
 })
 
-test('sits at the bottom of the viewport on a short page', async ({ page }) => {
-  // The About view is shorter than the viewport, so without the flex-column shell the footer
-  // would float mid-screen with dead space beneath it.
-  await page.goto('/about')
+test('sits directly under the content on a short page', async ({ page }) => {
+  // A screen-tall wrapper kept it below the fold here, 784 px under the content at 1440×900 (#2567).
+  await page.route(/\/api\/events\/no-such-gig$/, (route) =>
+    route.fulfill({ status: 404, contentType: 'application/json', body: '{}' }),
+  )
+  await page.goto('/events/no-such-gig')
 
   const footer = page.getByRole('contentinfo')
-  const box = await footer.boundingBox()
-  const viewport = page.viewportSize()
-
-  expect(box && viewport && box.y + box.height).toBeGreaterThanOrEqual(viewport!.height - 1)
+  await expect(footer).toBeInViewport()
+  const contentEnd = await page
+    .locator('#main-content')
+    .evaluate((element) => element.getBoundingClientRect().bottom)
+  expect((await footer.boundingBox())!.y - contentEnd).toBeLessThan(100)
 })

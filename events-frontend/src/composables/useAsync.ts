@@ -3,6 +3,8 @@ import { ref, shallowRef } from 'vue'
 import { ApiError, describeError } from '@/api/client'
 import type { ErrorSubjectKey } from '@/i18n'
 
+import { beginContentLoad } from './useViewLoaded'
+
 /**
  * The last response per request key, so a view the visitor comes back to paints what it showed
  * before while it refetches. That is what lets the router restore the scroll position: a list
@@ -40,6 +42,7 @@ export function useAsync<T>(
     const remembered = key === undefined ? undefined : (recent.get(key) as T | undefined)
     if (remembered !== undefined) data.value = remembered
     loading.value = remembered === undefined
+    const done = loading.value ? beginContentLoad() : undefined
     error.value = null
     notFound.value = false
     try {
@@ -52,6 +55,7 @@ export function useAsync<T>(
       error.value = describeError(e, subjectKey)
     } finally {
       loading.value = false
+      done?.()
     }
   }
 
