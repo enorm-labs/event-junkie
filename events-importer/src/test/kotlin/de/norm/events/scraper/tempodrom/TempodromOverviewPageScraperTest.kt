@@ -136,8 +136,16 @@ class TempodromOverviewPageScraperTest {
     fun `derives the headliner from the title, not the placeholder performer`() {
         // `performer.name` is a copy of the event name on all 145 events, so it names no act. Three
         // of the rest are score concerts (`The Witcher in Concert`), which bill no act (#1829).
-        events.count { it.artists.isNotEmpty() } shouldBe 138
+        events.count { it.artists.isNotEmpty() } shouldBe 137
         events.flatMap { it.artists }.all { it.role == "HEADLINER" } shouldBe true
+    }
+
+    @Test
+    fun `types an ice show as SHOW and mints no artist from its title`() {
+        val holidayOnIce = event("holiday_on_ice_2027-02-26_2027-03-14_00")
+        holidayOnIce.eventType shouldBe "SHOW"
+        holidayOnIce.typeIsFallback shouldBe false
+        holidayOnIce.artists.shouldBeEmpty()
     }
 
     @Test

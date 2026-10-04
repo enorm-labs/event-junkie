@@ -55,6 +55,12 @@ fun mapEventType(
 private val SHOW_TITLE_KEYWORDS = listOf("wrestling", "burlesque", "circus")
 
 /**
+ * An ice show ([EventType.SHOW]): `on ice` as a phrase (Holiday on Ice, #2598), or an `Eisrevue`
+ * / `Eisshow` word. Anchored at the start, so "Lemon Ice" and a "Preisshow" stay untouched.
+ */
+private val ICE_SHOW_TITLE_PATTERN = Regex("""\bon\s+ice\b|\beis(?:revue|show)""", RegexOption.IGNORE_CASE)
+
+/**
  * Title phrases marking a comedy night ([EventType.COMEDY]). A bare "comedy" is not one, nor a
  * spaced "stand up" alone: The Divine Comedy is a band, and "Stand Up" a song title.
  */
@@ -170,7 +176,7 @@ private val PARTY_TITLE_WORD_PATTERN = Regex("""\brave\b""", RegexOption.IGNORE_
 
 /**
  * Classifies an event by unambiguous title keywords, or `null`: quiz to [QUIZ][EventType.QUIZ],
- * a stand-up or comedy-night phrase to [COMEDY][EventType.COMEDY], wrestling/burlesque/circus to
+ * a stand-up or comedy-night phrase to [COMEDY][EventType.COMEDY], wrestling/burlesque/circus/ice show to
  * [SHOW][EventType.SHOW], football screening or cinema to
  * [SCREENING][EventType.SCREENING], reading/slam to [READING][EventType.READING],
  * exhibition/vernissage to [EXHIBITION][EventType.EXHIBITION], market to
@@ -183,7 +189,8 @@ private fun classifyByTitleKeyword(title: String): String? {
 
         COMEDY_TITLE_PATTERN.containsMatchIn(title) -> EventType.COMEDY.name
 
-        SHOW_TITLE_KEYWORDS.any { it in haystack } -> EventType.SHOW.name
+        SHOW_TITLE_KEYWORDS.any { it in haystack } ||
+            ICE_SHOW_TITLE_PATTERN.containsMatchIn(title) -> EventType.SHOW.name
 
         isScreeningTitle(title) -> EventType.SCREENING.name
 
