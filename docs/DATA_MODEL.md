@@ -310,8 +310,15 @@ Core entity representing a single music event at a venue on a specific date.
 | `price_currency`       | `TEXT`          | No       | ISO 4217 currency code (default EUR)                                | `EUR`                                                      |
 | `price_note`           | `TEXT`          | Yes      | Free-form pricing info for non-standard pricing                     | `donation 2-5€`                                            |
 | `sold_out`             | `BOOLEAN`       | No       | Whether all tickets are sold out                                    | `false`                                                    |
+| `pinned_fields`        | `TEXT[]`        | No       | Fields fixed by hand, which the importer keeps (ADR-042)            | `{title,lineup}`                                           |
 | `created_at`           | `TIMESTAMPTZ`   | No       | Record creation timestamp                                           |                                                            |
 | `updated_at`           | `TIMESTAMPTZ`   | No       | Last modification timestamp                                         |                                                            |
+
+**A hand edit pins the fields that it changes (ADR-042).** `PUT /api/admin/events/{id}` adds each changed field to
+`pinned_fields`, by its name in the request. `lineup`, `promoters` and `genres` pin the join tables. The importer keeps a
+pinned field and updates every other field. A pinned title, date or venue also keeps the slug, and a pinned date keeps
+the end. `DELETE /api/admin/events/{id}/pins/{field}` removes a pin. The next import that reads the page then writes
+the source's value.
 
 ### Artist
 

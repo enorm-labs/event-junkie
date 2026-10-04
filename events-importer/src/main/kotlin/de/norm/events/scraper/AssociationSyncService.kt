@@ -10,6 +10,7 @@ import de.norm.events.event.EventEntity
 import de.norm.events.event.EventPromoterEntity
 import de.norm.events.event.EventPromoterRepository
 import de.norm.events.event.EventType
+import de.norm.events.event.PinnedField
 import de.norm.events.genretag.EventGenreTagEntity
 import de.norm.events.genretag.EventGenreTagRepository
 import de.norm.events.genretag.GenreTagEntity
@@ -23,6 +24,7 @@ import de.norm.events.promoter.canonicalPromoterName
 import de.norm.events.promoter.isNonPromoterName
 import de.norm.events.slug.SlugGenerator
 import io.github.oshai.kotlinlogging.KotlinLogging
+import io.github.oshai.kotlinlogging.Level
 import kotlinx.coroutines.flow.toList
 import org.springframework.stereotype.Service
 import java.net.URI
@@ -46,30 +48,134 @@ class AssociationSyncService(
 
     /**
      * The single entry point [EventUpsertService] calls after upserting: resolve artists, diff-sync
-     * their associations, the same for promoters, then normalized genre tags.
+     * their associations, the same for promoters, then normalized genre tags. A join table an event
+     * pins keeps its stored rows (ADR-042).
      *
      * @param savedEvents the persisted event entities (non-null IDs).
      * @param scrapedEvents the raw scraped events.
-     * @return the ids of every artist row this run billed, new or existing, for the MusicBrainz
-     * sweep after the commit (#1567), and of every row held back unbilled until that sweep can vouch
-     * for it (#1841).
+     * @return the artist rows for the MusicBrainz sweep, and how many pinned join tables the source would have changed.
      */
     suspend fun resolveAndSyncAssociations(
         savedEvents: List<EventEntity>,
         scrapedEvents: List<ScrapedEvent>
-    ): Set<Long> {
+    ): AssociationOutcome {
         val events = withOwnedLineupsKept(savedEvents, scrapedEvents)
-        val (billed, unverified) = billedArtists(events)
-        val artistCache = resolveAllArtists(billed.values.flatten() + unverified)
+        val (allBilled, unverified) = billedArtists(events)
         val detailless = events.filter { it.detailUnavailable }.mapTo(mutableSetOf()) { it.sourceId }
-        syncArtistAssociations(savedEvents, billed, artistCache, detailless)
+        val pins = AssociationPins(savedEvents, detailless)
+        val pinsKept = keptPins(pins, allBilled, events)
 
-        val promoterCache = resolveAllPromoters(events)
-        syncPromoterAssociations(savedEvents, events, promoterCache, detailless)
+        // A pinned join table is neither resolved nor synced, so the source's names create no rows for it.
+        val lineupPinned = pins.sourceIds(PinnedField.LINEUP)
+        val promotersPinned = pins.sourceIds(PinnedField.PROMOTERS)
+        val genresPinned = pins.sourceIds(PinnedField.GENRES)
+        val billed = allBilled.filterKeys { it !in lineupPinned }
+        val artistCache = resolveAllArtists(billed.values.flatten() + unverified)
+        syncArtistAssociations(pins.unpinned(PinnedField.LINEUP), billed, artistCache, detailless)
 
-        val genreTagCache = resolveAllGenreTags(events)
-        syncGenreTagAssociations(savedEvents, events, genreTagCache)
-        return artistCache.values.mapNotNullTo(mutableSetOf()) { it.id }
+        val promoterEvents = events.map { if (it.sourceId in promotersPinned) it.copy(promoters = emptyList()) else it }
+        val promoterCache = resolveAllPromoters(promoterEvents)
+        syncPromoterAssociations(pins.unpinned(PinnedField.PROMOTERS), promoterEvents, promoterCache, detailless)
+
+        val genreEvents = events.map { if (it.sourceId in genresPinned) it.copy(genre = null) else it }
+        val genreTagCache = resolveAllGenreTags(genreEvents)
+        syncGenreTagAssociations(pins.unpinned(PinnedField.GENRES), genreEvents, genreTagCache)
+        return AssociationOutcome(touchedArtistIds = artistCache.values.mapNotNullTo(mutableSetOf()) { it.id }, pinsKept = pinsKept)
+    }
+
+    // -- Pinned join tables (ADR-042) --
+
+    /**
+     * How many pinned join tables the source would have changed, by the slugs of their rows. Each one
+     * is logged at DEBUG. A role or billing change alone is not counted.
+     */
+    private suspend fun keptPins(
+        pins: AssociationPins,
+        billed: Map<String, List<ScrapedArtist>>,
+        events: List<ScrapedEvent>
+    ): Int {
+        if (pins.isEmpty()) return 0
+        val bySourceId = events.associateBy { it.sourceId }
+        val lineup = pins.pinned(PinnedField.LINEUP)
+        val promoters = pins.pinned(PinnedField.PROMOTERS)
+        val genres = pins.pinned(PinnedField.GENRES)
+        return pins.countChanged(
+            PinnedField.LINEUP,
+            desired = lineup.associate { it.sourceId to billed[it.sourceId].orEmpty().map { a -> slugOf(a.name) }.toSet() },
+            stored =
+                storedSlugs(lineup, { eventArtistRepository.findByEventIdIn(it).toList() }, { it.eventId to it.artistId }) { ids ->
+                    artistRepository.findAllById(ids).toList().associate { it.id to it.slug }
+                }
+        ) +
+            pins.countChanged(
+                PinnedField.PROMOTERS,
+                desired = promoters.associate { it.sourceId to bySourceId[it.sourceId]?.promoterSlugs().orEmpty() },
+                stored =
+                    storedSlugs(promoters, { eventPromoterRepository.findByEventIdIn(it).toList() }, { it.eventId to it.promoterId }) { ids ->
+                        promoterRepository.findAllById(ids).toList().associate { it.id to it.slug }
+                    }
+            ) +
+            pins.countChanged(
+                PinnedField.GENRES,
+                desired = genres.associate { it.sourceId to normalizeGenre(bySourceId[it.sourceId]?.genre).map(SlugGenerator::slugify).toSet() },
+                stored =
+                    storedSlugs(genres, { eventGenreTagRepository.findByEventIdIn(it).toList() }, { it.eventId to it.genreTagId }) { ids ->
+                        genreTagRepository.findAllById(ids).toList().associate { it.id to it.slug }
+                    }
+            )
+    }
+
+    /** The slugs of the rows each of [events] links, by event id: one query for the links, one for the names. */
+    private suspend fun <T> storedSlugs(
+        events: List<EventEntity>,
+        fetchLinks: suspend (List<Long>) -> List<T>,
+        link: (T) -> Pair<Long, Long>,
+        fetchSlugs: suspend (Set<Long>) -> Map<Long?, String>
+    ): Map<Long, Set<String>> {
+        if (events.isEmpty()) return emptyMap()
+        val links = fetchLinks(events.mapNotNull { it.id }).map(link)
+        val slugById = fetchSlugs(links.mapTo(mutableSetOf()) { it.second })
+        return links.groupBy({ it.first }, { slugById[it.second] }).mapValues { (_, slugs) -> slugs.filterNotNull().toSet() }
+    }
+
+    /** The promoters this event credits, as the slugs [syncPromoterAssociations] resolves them to. */
+    private fun ScrapedEvent.promoterSlugs(): Set<String> =
+        promoters.filterNot { isNonPromoterName(it) }.mapTo(mutableSetOf()) { SlugGenerator.slugify(canonicalPromoterName(it)) }
+
+    /**
+     * Which saved events pin which join table. A detail-less event whose listing names nothing keeps
+     * its stored rows anyway (#2421), so the count does not report it.
+     */
+    private inner class AssociationPins(
+        private val savedEvents: List<EventEntity>,
+        private val detailless: Set<String>
+    ) {
+        private val pinsBySourceId = savedEvents.associate { it.sourceId to PinnedField.of(it.pinnedFields) }
+
+        fun isEmpty(): Boolean = pinsBySourceId.values.all { it.isEmpty() }
+
+        fun pinned(field: PinnedField): List<EventEntity> = savedEvents.filter { field in pinsBySourceId.getValue(it.sourceId) }
+
+        fun unpinned(field: PinnedField): List<EventEntity> = savedEvents.filterNot { field in pinsBySourceId.getValue(it.sourceId) }
+
+        fun sourceIds(field: PinnedField): Set<String> = pinned(field).mapTo(mutableSetOf()) { it.sourceId }
+
+        fun countChanged(
+            field: PinnedField,
+            desired: Map<String, Set<String>>,
+            stored: Map<Long, Set<String>>
+        ): Int =
+            pinned(field).count { event ->
+                val wanted = desired[event.sourceId].orEmpty()
+                val changed = wanted != stored[event.id].orEmpty() && !(wanted.isEmpty() && event.sourceId in detailless)
+                if (changed) {
+                    logger.at(Level.DEBUG) {
+                        message = "Kept the pinned ${field.key} of event '${event.title}': the source would change it"
+                        payload = mapOf(LogFields.EVENT_ID to event.id, LogFields.EVENT_SOURCE_ID to event.sourceId)
+                    }
+                }
+                changed
+            }
     }
 
     /**
@@ -663,3 +769,14 @@ class AssociationSyncService(
 
 /** The host of a URL, lower-cased and without a `www.` prefix; null where the string is not a URL. */
 private fun String.hostOrNull(): String? = runCatching { URI(this).host?.lowercase()?.removePrefix("www.") }.getOrNull()
+
+/** What [AssociationSyncService.resolveAndSyncAssociations] did that the upsert reports. */
+data class AssociationOutcome(
+    /**
+     * Every artist row this run billed, new or existing, for the MusicBrainz sweep after the commit
+     * (#1567), and every row held back unbilled until that sweep can vouch for it (#1841).
+     */
+    val touchedArtistIds: Set<Long>,
+    /** Pinned join tables the source would have changed (ADR-042). */
+    val pinsKept: Int = 0
+)

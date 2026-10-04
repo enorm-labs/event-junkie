@@ -5,8 +5,8 @@
 **Accepted (2026-10-04) — the denylists, synonym maps and corrections stay in Kotlin, changed by pull request with tests. A field that an operator edits by
 hand on one row is pinned, and the importer does not overwrite a pinned field. A fix that applies to more than one row goes into the vocabulary.**
 
-**Not implemented yet.** The vocabularies are already code. The pin does not exist: today the next import overwrites a hand edit made through
-`PUT /api/admin/events/{id}`.
+**Implemented in [#2590](https://github.com/enorm-labs/event-junkie/issues/2590)** for events: `event.pinned_fields`, and
+`DELETE /api/admin/events/{id}/pins/{field}` removes a pin.
 
 **Does not supersede anything.** [ADR-041](ADR-041_AI_ASSISTED_DATA_QUALITY.md) decides that a model only suggests. This ADR decides where an accepted
 suggestion goes.

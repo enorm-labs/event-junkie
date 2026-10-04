@@ -33,7 +33,8 @@ class EventService(
     private val genreTagRepository: GenreTagRepository,
     private val venueRepository: VenueRepository,
     private val artistRepository: ArtistRepository,
-    private val promoterRepository: PromoterRepository
+    private val promoterRepository: PromoterRepository,
+    private val eventPinService: EventPinService
 ) {
     private val logger = KotlinLogging.logger {}
 
@@ -165,7 +166,8 @@ class EventService(
         // Remap via the shared factory, then keep what the request never owns: identity, audit, and
         // the columns the importer derives (#2249).
         val updated = request.toEventEntity(slug).keepingDerivedFrom(existing)
-        val saved = eventRepository.save(updated)
+        val pinned = eventPinService.editedFields(id, existing, updated, request)
+        val saved = eventRepository.save(updated.copy(pinnedFields = (existing.pinnedFields + pinned.map { it.key }).distinct()))
 
         // Replace artist associations: delete existing, insert new
         eventArtistRepository.deleteByEventId(id)
@@ -180,6 +182,7 @@ class EventService(
         val genreTagNames = saveGenreTagAssociations(id, request.genre)
 
         logger.info { "Updated event '${saved.title}' (id=$id)" }
+        if (pinned.isNotEmpty()) logger.info { "Pinned ${pinned.joinToString { it.key }} on event $id: the importer keeps them" }
         return toResponse(saved, artistResponses, promoterIdResponses, genreTagNames)
     }
 
@@ -331,7 +334,7 @@ class EventService(
 
 /**
  * This update with the columns [EventRequest] does not carry taken from [existing]: the identity,
- * the audit date, and what the importer derives from the source, the licence or the translator.
+ * the audit date, the pins, and what the importer derives from the source, the licence or the translator.
  * The translation stays only while the description is unchanged, and the end only while it is not
  * before the new date, which `event_end_after_start` would refuse.
  */
@@ -342,6 +345,7 @@ internal fun EventEntity.keepingDerivedFrom(existing: EventEntity): EventEntity 
         id = existing.id,
         eventSourceId = existing.eventSourceId,
         createdAt = existing.createdAt,
+        pinnedFields = existing.pinnedFields,
         room = existing.room,
         relocatedTo = existing.relocatedTo,
         lineupSourceUrl = existing.lineupSourceUrl,

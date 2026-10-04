@@ -30,7 +30,8 @@ import org.springframework.web.bind.annotation.RestController
 @RequestMapping("/api/admin/events")
 @Tag(name = "Admin: Events", description = "Admin CRUD endpoints for managing events")
 class EventController(
-    private val eventService: EventService
+    private val eventService: EventService,
+    private val eventPinService: EventPinService
 ) {
     /**
      * Lists events with pagination. Returns a [List] instead of a `Flow` because
@@ -58,8 +59,9 @@ class EventController(
         @Valid @RequestBody request: EventRequest
     ): EventResponse = eventService.create(request)
 
+    /** Replaces the event. Each field whose value changes is pinned, and the importer keeps it (ADR-042). */
     @PutMapping("/{id}")
-    @Operation(summary = "Update an existing event")
+    @Operation(summary = "Update an existing event, pinning each field the edit changes")
     suspend fun update(
         @Parameter(description = "Database ID of the event.", example = "1")
         @PathVariable id: Long,
@@ -75,6 +77,23 @@ class EventController(
     @PostMapping("/detect-languages")
     @Operation(summary = "Classify the language of stored descriptions that carry none")
     suspend fun detectLanguages(): DescriptionLanguageBackfill = eventService.classifyStoredDescriptions()
+
+    /**
+     * Removes the pin a hand edit set on one field (ADR-042). The next import that reads the event's
+     * page writes the source's value; a one-page source whose page is unchanged answers 304 until
+     * `?force=true`.
+     */
+    @DeleteMapping("/{id}/pins/{field}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @Operation(summary = "Remove a pin, so the next import writes the source's value of that field")
+    suspend fun unpin(
+        @Parameter(description = "Database ID of the event.", example = "1")
+        @PathVariable id: Long,
+        @Parameter(description = "The pinned field, as `pinnedFields` names it.", example = "title")
+        @PathVariable field: String
+    ) {
+        eventPinService.unpin(id, field)
+    }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
