@@ -8,6 +8,8 @@ import { useAsync } from './useAsync'
 export interface EventSearchParams {
   from?: string
   to?: string
+  /** With `from`, keeps an event that started earlier and still runs on `from` (#2674). */
+  running?: boolean
   /** Any of these types; sent as a repeated parameter. */
   eventType?: string[]
   venue?: string

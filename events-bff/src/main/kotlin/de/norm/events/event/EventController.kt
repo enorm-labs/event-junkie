@@ -37,14 +37,8 @@ class EventController(
     @GetMapping
     @Operation(summary = "Search events with optional filters and pagination")
     suspend fun list(
-        @Parameter(description = "Earliest event date (inclusive), ISO-8601 (e.g. 2026-06-19). Defaults to today when both from/to are omitted.")
-        @RequestParam(required = false)
-        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
-        from: LocalDate?,
-        @Parameter(description = "Latest event date (inclusive), ISO-8601 (e.g. 2026-06-30).")
-        @RequestParam(required = false)
-        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
-        to: LocalDate?,
+        @ParameterObject
+        range: EventDateRangeParams,
         @ParameterObject
         filters: EventFilterParams,
         @ParameterObject
@@ -53,7 +47,7 @@ class EventController(
         exchange: ServerWebExchange
     ): PageResponse<EventSummaryResponse> {
         SEARCH_PARAMS.rejectUnknownIn(exchange)
-        val filter = filters.toFilter(from = from, to = to)
+        val filter = filters.toFilter(from = range.from, to = range.to, running = range.running)
         // The meter counts what is handed out, so it stays outside the cache.
         return cache.get(SearchKey(filter, pageable)) { eventService.search(filter, pageable) }.also {
             metrics.recordServed(BffMetrics.ENDPOINT_SEARCH, it.content.size)
@@ -122,12 +116,12 @@ class EventController(
     }
 
     private companion object {
-        /** The filter fields come from [EventFilterParams]; `from`/`to` and paging are declared here. */
+        /** The filter fields come from [EventFilterParams]; the names of [EventDateRangeParams] and paging are listed here. */
         val SEARCH_PARAMS =
             QueryParameters.accepting(
                 EventFilterParams::class.java,
                 QueryParameters.PAGEABLE,
-                QueryParameters.named("from", "to")
+                QueryParameters.named("from", "to", "running")
             )
 
         /** The calendar shares the filters but pages nothing, and requires its own `from`/`to`. */

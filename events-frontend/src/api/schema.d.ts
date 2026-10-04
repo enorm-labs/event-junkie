@@ -1868,6 +1868,8 @@ export interface operations {
                 from?: string;
                 /** @description Latest event date (inclusive), ISO-8601 (e.g. 2026-06-30). */
                 to?: string;
+                /** @description When true, 'from' keeps every event still running on that day: one that ends on or after 'from' and starts on or before 'to'. Without it, 'from' is the earliest start date. Defaults to false. */
+                running?: boolean;
                 /** @description Event type filter, e.g. CONCERT (case-insensitive). Repeatable: an event of any given type matches. An unknown type matches nothing. */
                 eventType?: string[];
                 /** @description Venue slug filter — only events at the matching venue. */

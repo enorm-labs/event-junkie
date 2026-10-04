@@ -59,10 +59,12 @@ const sort = computed(() => {
 })
 
 // The list owns its dates, so it merges the range in; the BFF defaults to today onwards when
-// both bounds are absent, which is the right empty state here.
+// both bounds are absent, which is the right empty state here. `running` keeps a weekend that
+// opened the night before `from` in the range (#2674).
 const params = computed<EventSearchParams>(() => ({
   ...filters.value,
   ...dateRange.value,
+  running: dateRange.value.from ? true : undefined,
   sort: sort.value === EARLIEST_FIRST ? undefined : [sort.value],
   page: queryString('page') ? Number(queryString('page')) : 0,
   size: PAGE_SIZE,
@@ -84,12 +86,13 @@ const {
 )
 
 /**
- * On now is a day list, so a run of weeks folds into "Also running" between its opening and its
- * last days (#2594). A date range needs no split: `from` keeps a run that opened earlier out of it.
+ * A run of weeks folds into "Also running" between its opening and its last days (#2594). On now
+ * folds on today, and a range folds on its first day, which a run that opened earlier reaches.
  */
+const foldDay = computed(() => (onNow.value ? todayIso() : dateRange.value.from))
 const listed = computed(() =>
-  onNow.value
-    ? splitDayList(page.value?.content ?? [], todayIso())
+  foldDay.value
+    ? splitDayList(page.value?.content ?? [], foldDay.value)
     : { cards: page.value?.content ?? [], alsoRunning: [] },
 )
 

@@ -123,3 +123,63 @@ describe('EventsView with On now', () => {
     expect(wrapper!.text()).toMatch(/Page 1 of 3/)
   })
 })
+
+describe('EventsView with a date range', () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date(NOW))
+    getMock.mockReset()
+    getMock.mockResolvedValue({ content: [], page: 0, totalPages: 0, totalElements: 0 })
+  })
+
+  afterEach(() => {
+    wrapper?.unmount()
+    wrapper = undefined
+    vi.useRealTimers()
+  })
+
+  function query(): Record<string, unknown> {
+    return getMock.mock.lastCall![1].params.query as Record<string, unknown>
+  }
+
+  it('asks for events still running on the first day of the range', async () => {
+    await mountAt('/en/events?from=2026-10-10&to=2026-10-10')
+
+    expect(query()).toMatchObject({ from: '2026-10-10', to: '2026-10-10', running: true })
+  })
+
+  it('sends no running flag without a from', async () => {
+    await mountAt('/en/events?venue=lido')
+    expect(query().running).toBeUndefined()
+
+    wrapper!.unmount()
+    await mountAt('/en/events?to=2026-10-10')
+    expect(query().running).toBeUndefined()
+  })
+
+  it('folds a run of weeks that opened before the range into Also running', async () => {
+    const exhibition: EventSummary = {
+      slug: 'exhibition',
+      title: 'Exhibition',
+      eventDate: '2026-10-03',
+      endDate: '2026-10-25',
+    }
+    const weekender: EventSummary = {
+      slug: 'weekender',
+      eventDate: '2026-10-09',
+      endDate: '2026-10-12',
+    }
+    getMock.mockResolvedValue({
+      content: [exhibition, weekender],
+      page: 0,
+      totalPages: 1,
+      totalElements: 2,
+    })
+
+    await mountAt('/en/events?from=2026-10-10&to=2026-10-11')
+
+    const folded = wrapper!.get('details').findAll('article')
+    expect(folded.map((card) => card.attributes('data-slug'))).toEqual(['exhibition'])
+    expect(slugs()).toEqual(['weekender', 'exhibition'])
+  })
+})
