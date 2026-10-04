@@ -26,7 +26,7 @@ repairing live in the [issue tracker](https://github.com/enorm-labs/event-junkie
 | 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |    38 |
 | ⛔ [Blocked](#-blocked--deferred)   | Website analyzed, but no usable listings (no programme page, JS-only, or too sparse) |   156 |
 | 📣 [Promoters](#-promoters)         | Cross-venue listings; none is importable until a venue is resolved per event (#324)  |    10 |
-| ❓ [Unanalyzed](#-not-analyzed-yet) | URL recorded, but the website still needs a first look                               |     0 |
+| ❓ [Unanalyzed](#-not-analyzed-yet) | URL recorded, but the website still needs a first look                               |    11 |
 
 A count is the number of rows in its table. `scripts/sources-parity.sh` checks each count, in CI and in the
 commit hook.
@@ -580,11 +580,39 @@ New candidates land here first. Check for a server-rendered programme, then move
 URL is recorded, nothing more. A venue's type is a first guess. Correct it against the venue's own site when the row
 is opened.
 
-The table is empty. Its 26 rows from the tipBerlin, radar and comedy sweeps were opened on 2026-10-04, and each one
-moved to Ready or Blocked.
+All rows come from the promoter sweep of 2026-10-04 (see the list below). **Found via** names the promoter site that
+showed a show there. A URL comes from a web search. Nobody opened it yet. A dash means that the search found
+no site of the venue's own.
 
-| Name | URL | Type |
-| ---- | --- | ---- |
+| Name                  | URL                                                          | Type         | Found via                      |
+| --------------------- | ------------------------------------------------------------ | ------------ | ------------------------------ |
+| Baketown              | https://baketown.berlin/                                     | Other        | ZART Agency                    |
+| Ernst-Reuter-Saal     | —                                                            | Concert Hall | New Berlin Konzerte            |
+| Friedrichstadt-Palast | https://www.palast.berlin/gastspiele/                        | Theater      | Antenne Brandenburg            |
+| Haus der Statistik    | https://hausderstatistik.org/programm/                       | Other        | Crunch Tapes                   |
+| HAU Hebbel am Ufer    | https://www.hebbel-am-ufer.de/en/programme/schedule-tickets/ | Theater      | Powerline Agency, Musikexpress |
+| K19                   | —                                                            | Club         | Patchanka Booking              |
+| Kiezkapelle           | https://www.kiezkapelle.de/programm/                         | Other        | Puschen                        |
+| Paradox Music Hall    | —                                                            | Club         | Diffus, Landstreicher Konzerte |
+| Trixxter              | —                                                            | Bar          | Metal Hammer                   |
+| Wowsville             | —                                                            | Bar          | Crunch Tapes                   |
+| Zita Club & Bar       | https://zita-club.de/                                        | Club         | Channel Music                  |
+
+Check these points when a row is opened:
+
+- **Trixxter** is the former Trickster under a new spelling. Old listings show Trickster as closed. Trixxter has
+  shows on 2026-11-05 and 2026-11-26 (Rolling Stone, Musikexpress), so it is open. One Metal Hammer event spells it
+  "Trixxxstar".
+- **Paradox Music Hall** is at Ganghoferstraße 10 in Neukölln (berlin.de). Diffus lists yola there on 2026-10-16,
+  moved up from the Prachtwerk. Landstreicher Konzerte has a venue page for it. The search found no site of its own.
+- **Ernst-Reuter-Saal** has one New Berlin Konzerte show. The page does not give the district.
+- **Zita Café & Weingarten** (<https://zita-cafe.de/>) has the same address as Zita Club & Bar. Channel Music lists
+  both. Only the club has a row.
+
+Three venues the sweep found are deliberately left out. **Narva Lounge** is the lounge room of Matrix Club Berlin, and the
+Matrix importer covers it. **arkaoda** closed (see above). Crunch Tapes still lists shows there, but the listing is
+stale. **Die Spirale**, a youth and culture centre in Wilmersdorf, is out of scope. Its own domain is dead, and its
+concerts appear only in promoter and aggregator listings.
 
 Three more bars host comedy several nights a week but have no working site to record: KARA KAS Bar, Valentin Stüberl
 and Z-Bar. The aggregator Comedy in English lists all three. Its Events Calendar API gives a venue and an address for
@@ -631,6 +659,15 @@ Where candidates come from, and what is deliberately left out:
   were three event grounds: Teufelsberg, Malzfabrik and Frachtkante at Tegel airport. The guide's black-music page names
   Auster Club, Cheshire Cat, St. Georg, Bohannon and Hangar 49. That page dates from January 2024, and no event in the
   calendar names those places. They were not checked.
+- **The promoter websites** in `docs/promoters/REVIEWED.tsv`. On 2026-10-04, 132 rows had a website, and 127 distinct
+  sites were fetched once each, plus one events page. Four rows have only an Instagram or Facebook page, and those
+  were not opened. Most Berlin venues on these pages are already recorded. The sweep gave the eleven rows above. Many
+  sites render their dates in JavaScript or give only a city, so they named no venue. These places were left out as
+  out of scope: a cinema (Kino International) and the classical halls (Philharmonie, Kammermusiksaal, UdK
+  Konzertsaal). Also the children's venues FEZ and Theater an der Parkaue (see `docs/EVENT_SCOPE.md` §3.5). Also a
+  hotel, two radio studios and the event grounds at Tempelhof and the Olympiapark. A media calendar with one event
+  was not enough for a row: BLO Kantine and OGH (one each). Milchsalon's "Audimax" date is a children's show, so it is
+  out of scope as well.
 
 **Excluded on purpose, so a later sweep does not re-litigate them.** An RA venue with a single event in the window,
 unless a promoter listed it too. A one-off booking is not evidence of a programme, and the
