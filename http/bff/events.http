@@ -92,6 +92,10 @@ Accept: application/json
 GET {{bff-host}}/api/events/{{event_slug}}
 Accept: application/json
 
+### Up to four upcoming events like it: shared artists, the venue, shared genre tags
+GET {{bff-host}}/api/events/{{event_slug}}/related
+Accept: application/json
+
 ### Get event by unknown slug (expect 404)
 GET {{bff-host}}/api/events/does-not-exist
 Accept: application/json

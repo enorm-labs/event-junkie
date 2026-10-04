@@ -3,7 +3,7 @@ import { expect, type Page, type Route, test } from '@playwright/test'
 /**
  * Detail-route e2e tests with a fully mocked BFF: Playwright's request routing intercepts it, so
  * the happy and the not-found path run with no backend. Endpoints per page:
- * /events/:slug     GET /api/events/:slug
+ * /events/:slug     GET /api/events/:slug   + GET /api/events/:slug/related
  * /venues/:slug     GET /api/venues/:slug   + GET /api/events?venue=… (feed)
  * /artists/:slug    GET /api/artists/:slug  + GET /api/events?artist=… (feed)
  * /promoters/:slug  GET /api/promoters/:slug + GET /api/events?promoter=… (feed)
@@ -524,5 +524,62 @@ test.describe('the spoken language', () => {
     await page.goto('/en/events/mock-event')
     await expect(page.getByRole('heading', { level: 1, name: 'Mock Fest' })).toBeVisible()
     await expect(page.getByRole('heading', { name: 'Language' })).toHaveCount(0)
+  })
+})
+
+test.describe('related events', () => {
+  /** Matches only the related list; registered after the detail route, so it wins for that URL. */
+  const relatedFeed = /\/api\/events\/[^/?]+\/related$/
+
+  const relatedBody = [
+    {
+      slug: 'next-mock-night',
+      title: 'Next Mock Night',
+      eventDate: isoDaysFromNow(40),
+      startTime: '23:00',
+      venue: { slug: 'mock-venue', name: 'Mock Venue', city: 'Berlin' },
+      genreTags: ['Techno'],
+    },
+  ]
+
+  test('lists events like this one, each a link to its own page', async ({ page }) => {
+    const errors = collectPageErrors(page)
+    const nextNight = { ...eventBody, slug: 'next-mock-night', title: 'Next Mock Night' }
+    await page.route(/\/api\/events\/[^/?]+/, (route) =>
+      json(route, route.request().url().includes('next-mock-night') ? nextNight : eventBody),
+    )
+    await page.route(relatedFeed, (route) => json(route, relatedBody))
+
+    await page.goto('/events/mock-event')
+
+    const section = page.getByTestId('related-events')
+    await expect(section.getByRole('heading', { level: 2, name: 'More like this' })).toBeVisible()
+    const link = section.getByRole('link', { name: /Next Mock Night/ })
+    await expect(link).toHaveAttribute('href', '/en/events/next-mock-night')
+    await link.click()
+    await expect(page).toHaveURL(/\/events\/next-mock-night$/)
+    await expect(page.getByRole('heading', { level: 1, name: 'Next Mock Night' })).toBeVisible()
+    expect(errors, 'unexpected uncaught exceptions').toEqual([])
+  })
+
+  test('leaves no trace when nothing is like it', async ({ page }) => {
+    await page.route(/\/api\/events\/[^/?]+/, (route) => json(route, eventBody))
+    await page.route(relatedFeed, (route) => json(route, []))
+
+    await page.goto('/events/mock-event')
+
+    await expect(page.getByRole('heading', { level: 1, name: 'Mock Fest' })).toBeVisible()
+    await expect(page.getByTestId('related-events')).toHaveCount(0)
+  })
+
+  test('leaves no trace when the list fails', async ({ page }) => {
+    await page.route(/\/api\/events\/[^/?]+/, (route) => json(route, eventBody))
+    await page.route(relatedFeed, (route) => json(route, { message: 'boom' }, 500))
+
+    await page.goto('/events/mock-event')
+
+    await expect(page.getByRole('heading', { level: 1, name: 'Mock Fest' })).toBeVisible()
+    await expect(page.getByTestId('related-events')).toHaveCount(0)
+    await expect(page.getByText(/couldn't load/i)).toHaveCount(0)
   })
 })

@@ -88,6 +88,7 @@
     "upcomingAtVenue": "See what is coming up at {venue}.",
     "browseUpcoming": "See what is on now.",
     "reportWrong": "Something wrong with this event? Report it by email:",
+    "related": "More like this",
     "reportSubject": "Wrong data: {title}",
     "reportBody": "Event: {url}\n\nWhat is wrong:\n",
     "share": {
