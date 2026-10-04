@@ -87,6 +87,46 @@ class SpokenLanguagesTest {
     }
 
     @Test
+    fun `a quiz that names its languages carries them`() {
+        // Badehaus, every Wednesday (#2563).
+        detectSpokenLanguages(
+            "Pubquiz with Simply Quiz",
+            "40+ challenging questions in English and German",
+            null,
+            EventType.QUIZ
+        ).spoken shouldBe listOf("de", "en")
+    }
+
+    // The phrase shapes #2563 names. No production quiz bills its language this way yet.
+    @ParameterizedTest
+    @ValueSource(strings = ["English Pub Quiz", "English quiz night", "Englischsprachiges Kneipenquiz", "Ein englischsprachiges Quiz"])
+    fun `a quiz billed as English is English`(title: String) {
+        spoken(title, type = EventType.QUIZ) shouldBe listOf("en")
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = ["Quiz auf Deutsch", "Das deutschsprachige Pubquiz"])
+    fun `a quiz billed as German is German`(title: String) {
+        spoken(title, type = EventType.QUIZ) shouldBe listOf("de")
+    }
+
+    @ParameterizedTest
+    @ValueSource(
+        strings = [
+            // Production quiz rows that state no language: the text's own language is no marker.
+            "Clever & Curious Charlottenburg!\ndas unterhaltsame Quiz mit Eavo im Art Stalker - Kneipenquiz",
+            "Music Quiz\nThe music quiz is an old favorite at Madame Claude.",
+            "Quiz Night Show\nPubquiz",
+            "11FREUNDE KNEIPENQUIZ",
+            // A quiz about England, not in English.
+            "Quiz rund um die englische Küche"
+        ]
+    )
+    fun `a quiz that states no language has none`(title: String) {
+        spoken(title, type = EventType.QUIZ) shouldBe null
+    }
+
+    @Test
     fun `the title wins over a description that quotes another show`() {
         spoken("Laughing Matter – auf Deutsch", "The English edition runs on Sundays, in English.") shouldBe listOf("de")
     }
