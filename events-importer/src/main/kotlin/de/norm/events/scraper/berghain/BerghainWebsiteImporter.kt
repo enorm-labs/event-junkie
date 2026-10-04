@@ -92,7 +92,8 @@ class BerghainWebsiteImporter(
      * A Halle exhibition is listed once per open day, each day its own event page, so the days fold
      * into one run from the first listed day to the last (ADR-029, #2265), keyed on the show's title.
      * Only the page says EXHIBITION, so a day whose page failed takes the type from another day of the
-     * same show ([withFailedExhibitionDaysTyped]).
+     * same show ([withFailedExhibitionDaysTyped]). A failed day that no day answered for names its
+     * run in [ScrapedEvent.storedRunId], and the upsert folds it in if that run is stored (#2575).
      */
     override suspend fun importEvents(
         url: String,
@@ -103,7 +104,10 @@ class BerghainWebsiteImporter(
             is ImportResult.Success -> {
                 result.copy(
                     events =
-                        result.events.withFailedExhibitionDaysTyped().collapseExhibitionRuns(::exhibitionRunId)
+                        result.events
+                            .withFailedExhibitionDaysTyped()
+                            .collapseExhibitionRuns(::exhibitionRunId)
+                            .map { if (it.detailUnavailable && it.eventType != EventType.EXHIBITION.name) it.copy(storedRunId = exhibitionRunId(it)) else it }
                 )
             }
 
