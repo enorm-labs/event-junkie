@@ -17,7 +17,7 @@ import java.net.URI
  * **A column that holds a value is never touched**, #1319's rule for promoter websites: a person's
  * edit and a venue's own link both outrank a database. The name is the one exception, and only its
  * letter case: de-shouting cannot tell `NVST` from a shouted word, and the act's own spelling can
- * (ADR-031, amended by #2317). The first relationship of each kind wins in
+ * (ADR-031, amended by #2317). A name an operator pinned is kept (ADR-042, #2636). The first relationship of each kind wins in
  * MusicBrainz's order, an ended one is skipped, and Resident Advisor has no relationship type of its
  * own, so it is read by host from `other databases` as Facebook and Instagram are from
  * `social network`. `founded` and `foundedIn` are written for an ensemble only; for a person the
@@ -25,12 +25,16 @@ import java.net.URI
  * Wikipedia lead is an ensemble's only, for the same reason, under [WikipediaLead]'s rules.
  */
 object ArtistEnrichment {
-    /** The columns to write, the fields they fill for the counter, and why a picture or a description was not written. */
+    /**
+     * The columns to write, the fields they fill for the counter, why a picture or a description was
+     * not written, and MusicBrainz's spelling of a pinned name that was kept instead.
+     */
     data class Filled(
         val columns: Map<String, String>,
         val fields: List<String>,
         val imageRefusal: String?,
-        val descriptionRefusals: List<String> = emptyList()
+        val descriptionRefusals: List<String> = emptyList(),
+        val pinnedNameKept: String? = null
     ) {
         val isEmpty: Boolean get() = columns.isEmpty()
     }
@@ -86,8 +90,9 @@ object ArtistEnrichment {
             }
         }
 
-        // The name always holds a value, so the letter-case rule stands in for the empty-column test.
-        fill("name", "name", null, letterCaseOf(artist.name, entity.name))
+        // The name always holds a value, so the letter-case rule stands in for the empty-column test, and a pinned name counts as filled.
+        val letterCase = letterCaseOf(artist.name, entity.name)
+        fill("name", "name", artist.name.takeIf { artist.namePinned }, letterCase)
         val links = linksOf(entity)
         fill("website", "website_url", artist.websiteUrl, links[Link.WEBSITE])
         fill("facebook", "facebook_url", artist.facebookUrl, links[Link.FACEBOOK])
@@ -128,7 +133,7 @@ object ArtistEnrichment {
             }
         choice?.primary?.let { lead(columns, fields, "description", it) }
         choice?.alt?.let { lead(columns, fields, "description_alt", it) }
-        return Filled(columns, fields, refusal, choice?.refusals.orEmpty())
+        return Filled(columns, fields, refusal, choice?.refusals.orEmpty(), letterCase.takeIf { artist.namePinned })
     }
 
     /** A lead and its credit under [prefix], `description` or `description_alt`. */

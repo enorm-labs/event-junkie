@@ -92,6 +92,7 @@ classDiagram
         Long? discogsId
         DiscogsMatch discogsMatch
         Instant? discogsCheckedAt
+        Boolean namePinned
         Instant? createdAt
         Instant? updatedAt
     }
@@ -344,7 +345,7 @@ Represents a musical artist or band. Normalized separately so artists can appear
 | Field                    | Type          | Nullable | Description                                                             | Example                                        |
 | ------------------------ | ------------- | -------- | ----------------------------------------------------------------------- | ---------------------------------------------- |
 | `id`                     | `BIGINT`      | No       | Auto-generated primary key                                              | `7`                                            |
-| `name`                   | `TEXT`        | No       | Stage or band name. An `EXACT` row takes MusicBrainz's letter case      | `The Adicts`                                   |
+| `name`                   | `TEXT`        | No       | Stage or band name. An unpinned `EXACT` row takes MusicBrainz's case    | `The Adicts`                                   |
 | `slug`                   | `TEXT` (UQ)   | No       | URL-friendly identifier                                                 | `the-adicts`                                   |
 | `description`            | `TEXT`        | Yes      | Artist biography                                                        | `Formed in Ipswich in the late 1970s…`         |
 | `image_url`              | `TEXT`        | Yes      | Photo or logo URL                                                       | `https://example.com/adicts.jpg`               |
@@ -361,6 +362,12 @@ Represents a musical artist or band. Normalized separately so artists can appear
 | `created_at`             | `TIMESTAMPTZ` | No       | Record creation timestamp                                               |                                                |
 | `name_changed_at`        | `TIMESTAMPTZ` | No       | When the name last changed (V062); only a rename moves it               |                                                |
 | `updated_at`             | `TIMESTAMPTZ` | No       | Last modification timestamp                                             |                                                |
+| `name_pinned`            | `BOOLEAN`     | No       | The name was fixed by hand, and the enrichment keeps it (ADR-042)       | `false`                                        |
+
+**A hand edit of the name pins it (ADR-042).** `PUT /api/admin/artists/{id}` sets `name_pinned` when the name changes.
+The MusicBrainz enrichment then keeps the name and logs the spelling that it did not write.
+`DELETE /api/admin/artists/{id}/pins/name` removes the pin and queues the row for the enrichment again.
+The next read then writes MusicBrainz's letter case on an `EXACT` row.
 
 ### Promoter
 

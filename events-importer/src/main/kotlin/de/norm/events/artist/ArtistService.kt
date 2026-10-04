@@ -82,7 +82,8 @@ class ArtistService(
     }
 
     /**
-     * Replaces all mutable fields of an existing artist.
+     * Replaces all mutable fields of an existing artist. A changed name is pinned, so the MusicBrainz
+     * enrichment keeps it (ADR-042).
      *
      * @throws ArtistNotFoundException if no artist with the given [id] exists.
      */
@@ -101,6 +102,7 @@ class ArtistService(
             ensureSlugAvailable(request.name, slug)
         }
 
+        val pinsName = request.name != existing.name
         // A licensed text keeps its language, credit and other-language lead only while it is unchanged; an edited text is the editor's own.
         val keepsDescription = request.description == existing.description
         val updated =
@@ -130,11 +132,27 @@ class ArtistService(
                 discogsUrl = request.discogsUrl,
                 wikidataUrl = request.wikidataUrl,
                 residentAdvisorUrl = request.residentAdvisorUrl,
-                spotifyUrl = request.spotifyUrl
+                spotifyUrl = request.spotifyUrl,
+                namePinned = existing.namePinned || pinsName
             )
         val saved = artistRepository.save(updated)
         logger.info { "Updated artist '${saved.name}' (id=${saved.id})" }
+        if (pinsName) logger.info { "Pinned the name of artist $id: the MusicBrainz enrichment keeps it" }
         return ArtistResponse.fromDomain(saved.toDomain())
+    }
+
+    /**
+     * Removes the pin a hand edit set on the name of artist [id] (ADR-042). The row is queued for
+     * the enrichment again, which then writes MusicBrainz's letter case on an EXACT match. Removing
+     * a pin the row does not carry changes nothing.
+     *
+     * @throws ArtistNotFoundException if no artist with the given [id] exists.
+     */
+    suspend fun unpinName(id: Long) {
+        val existing = artistRepository.findById(id) ?: throw ArtistNotFoundException(id)
+        if (!existing.namePinned) return
+        artistRepository.save(existing.copy(namePinned = false, musicbrainzEnrichedAt = null))
+        logger.info { "Unpinned the name of artist $id: the next MusicBrainz enrichment may change its letter case" }
     }
 
     /**

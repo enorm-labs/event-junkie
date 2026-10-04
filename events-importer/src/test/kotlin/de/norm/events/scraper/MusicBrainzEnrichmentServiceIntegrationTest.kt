@@ -1,9 +1,15 @@
 package de.norm.events.scraper
 
+import ch.qos.logback.classic.Level
+import ch.qos.logback.classic.Logger
+import ch.qos.logback.classic.spi.ILoggingEvent
+import ch.qos.logback.core.read.ListAppender
 import de.norm.events.BaseControllerTest
 import de.norm.events.artist.ArtistEnrichmentStore
 import de.norm.events.artist.ArtistEntity
 import de.norm.events.artist.ArtistRepository
+import de.norm.events.artist.ArtistRequestFixtures
+import de.norm.events.artist.ArtistResponse
 import de.norm.events.artist.MusicBrainzMatch
 import de.norm.events.event.EventEntity
 import de.norm.events.event.EventRepository
@@ -32,8 +38,10 @@ import io.mockk.mockk
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.dao.DataIntegrityViolationException
+import org.springframework.test.web.reactive.server.expectBody
 import java.time.LocalDate
 
 /**
@@ -212,6 +220,90 @@ class MusicBrainzEnrichmentServiceIntegrationTest : BaseControllerTest() {
 
             artistRepository.findBySlug("nvst")?.id shouldBe id
             row(id).name shouldBe "NVST"
+        }
+    }
+
+    @Test
+    fun `an admin edit pins the name against MusicBrainz's case, and after unpinning the next enrichment writes it (#2636)`() {
+        runBlocking {
+            val id = exact("Nvst")
+            coEvery { musicBrainz.artist("mbid-nvst") } returns MusicBrainzArtist(id = "mbid-nvst", name = "NVST", type = "Person")
+
+            putName(id, "nvst").namePinned shouldBe true
+            // The rename queues a fresh verdict (V062), and the lookup finds the same entity again.
+            artistRepository.storeMusicBrainzVerdict(id, MusicBrainzMatch.EXACT.name, "mbid-nvst")
+
+            val lines = capturingEnrichmentLogs { service().sweep(setOf(id)).stored shouldBe 1 }
+
+            row(id).name shouldBe "nvst"
+            row(id).musicbrainzEnrichedAt.shouldNotBeNull()
+            enriched("name") shouldBe 0.0
+            val kept = lines.single { it.formattedMessage.startsWith("Kept the pinned name") }
+            kept.level shouldBe Level.INFO
+            kept.formattedMessage shouldBe "Kept the pinned name 'nvst' of artist $id: MusicBrainz mbid-nvst spells it 'NVST'"
+
+            unpinName(id)
+            row(id).namePinned shouldBe false
+            row(id).musicbrainzEnrichedAt.shouldBeNull()
+
+            // No import touches the row: the backfill finds it again.
+            service().sweep(emptySet()).stored shouldBe 1
+
+            row(id).name shouldBe "NVST"
+            row(id).slug shouldBe "nvst"
+        }
+    }
+
+    @Test
+    fun `an edit that keeps the name pins nothing, and unpinning an unpinned row is no error`() {
+        runBlocking {
+            val id = exact("Biji")
+
+            putName(id, "Biji").namePinned shouldBe false
+            unpinName(id)
+            webTestClient
+                .delete()
+                .uri("/api/admin/artists/999999/pins/name")
+                .exchange()
+                .expectStatus()
+                .isNotFound
+        }
+    }
+
+    private fun putName(
+        id: Long,
+        name: String
+    ): ArtistResponse =
+        webTestClient
+            .put()
+            .uri("/api/admin/artists/$id")
+            .bodyValue(ArtistRequestFixtures.adicts(name = name, description = null, websiteUrl = null))
+            .exchange()
+            .expectStatus()
+            .isOk
+            .expectBody<ArtistResponse>()
+            .returnResult()
+            .responseBody!!
+
+    private fun unpinName(id: Long) {
+        webTestClient
+            .delete()
+            .uri("/api/admin/artists/$id/pins/name")
+            .exchange()
+            .expectStatus()
+            .isNoContent
+    }
+
+    /** Runs [block] with the enrichment's logger captured. */
+    private suspend fun capturingEnrichmentLogs(block: suspend () -> Unit): List<ILoggingEvent> {
+        val logger = LoggerFactory.getLogger(MusicBrainzEnrichmentService::class.java) as Logger
+        val appender = ListAppender<ILoggingEvent>().apply { start() }
+        logger.addAppender(appender)
+        try {
+            block()
+            return appender.list.toList()
+        } finally {
+            logger.detachAppender(appender)
         }
     }
 

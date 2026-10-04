@@ -148,8 +148,7 @@ enrichment of an `EXACT` row stores the MusicBrainz name when it differs from th
 becomes `NVST`. A diacritic, a space or any other difference still changes nothing. The slug never changes. Rule 4 exists
 because a verdict can be wrong. A case-only rewrite on an `EXACT` row is a small risk. Rule 1 already requires equal
 folded names. The de-shouter chose the stored case without evidence. A wrong rewrite changes the display name only, and a
-person corrects it in the admin API. That correction does not hold: the next import of the act queues a fresh verdict,
-and its read writes the MusicBrainz case again. A wrong `EXACT` match is then the defect to fix.
+person corrects it in the admin API. That edit pins the name, and the enrichment keeps a pinned name (ADR-042, #2636).
 
 What is stored per artist in step B: `musicbrainz_id` (nullable), `musicbrainz_match` (`EXACT`, `AMBIGUOUS`, `NONE`,
 `UNCHECKED`), `musicbrainz_checked_at`. Nothing else.

@@ -49,13 +49,28 @@ class ArtistController(
         @Valid @RequestBody request: ArtistRequest
     ): ArtistResponse = artistService.create(request)
 
+    /** Replaces the artist. A changed name is pinned, and the MusicBrainz enrichment keeps it (ADR-042). */
     @PutMapping("/{id}")
-    @Operation(summary = "Update an existing artist")
+    @Operation(summary = "Update an existing artist, pinning the name when the edit changes it")
     suspend fun update(
         @Parameter(description = "Database ID of the artist.", example = "1")
         @PathVariable id: Long,
         @Valid @RequestBody request: ArtistRequest
     ): ArtistResponse = artistService.update(id, request)
+
+    /**
+     * Removes the pin a hand edit set on the name (ADR-042). The next enrichment reads the row again
+     * and, on an EXACT match, writes MusicBrainz's letter case.
+     */
+    @DeleteMapping("/{id}/pins/name")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @Operation(summary = "Remove the name's pin, so the next MusicBrainz enrichment may change its letter case")
+    suspend fun unpinName(
+        @Parameter(description = "Database ID of the artist.", example = "1")
+        @PathVariable id: Long
+    ) {
+        artistService.unpinName(id)
+    }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
