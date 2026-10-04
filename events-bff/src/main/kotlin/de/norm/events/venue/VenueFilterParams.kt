@@ -24,7 +24,7 @@ data class VenueFilterParams(
     val eventType: List<String>? = null,
     @field:Parameter(
         description =
-            "Character tag slug (e.g. queer), as the venue describes itself. Repeatable: a venue with any given tag matches. " +
+            "Character tag slug (e.g. queer), as the venue describes itself. Repeatable: only a venue with every given tag matches. " +
                 "An unknown tag matches nothing."
     )
     val character: List<String>? = null

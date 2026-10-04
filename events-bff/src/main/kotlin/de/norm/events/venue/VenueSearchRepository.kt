@@ -12,7 +12,7 @@ import java.time.LocalDate
 
 /**
  * The venue list's criteria, normalised so that two orders of the same values share a cache entry.
- * Within one list any value matches; across lists every list must match.
+ * Within one list any value matches, except [characters], where a venue needs every tag; across lists every list must match.
  */
 data class VenueFilter(
     val query: String? = null,
@@ -87,7 +87,10 @@ class VenueSearchRepository(
                     }
                 }
         if (filter.districts.isNotEmpty()) params["districts"] = filter.districts
-        if (filter.characters.isNotEmpty()) params["characters"] = filter.characters
+        if (filter.characters.isNotEmpty()) {
+            params["characters"] = filter.characters
+            params["characterCount"] = filter.characters.size.toLong()
+        }
         val where = if (conditions.isEmpty()) "" else "WHERE ${conditions.joinToString(" AND ")}"
 
         val total =
@@ -145,9 +148,13 @@ class VenueSearchRepository(
         private const val UPCOMING_COUNT =
             "SELECT COUNT(*) FROM $EVENTS_SCHEMA.event e WHERE e.venue_id = v.id AND e.event_date >= :today"
 
-        /** A venue carrying any of the chosen character tags (#2379), from the side table that keeps each tag's source. */
+        /**
+         * A venue carrying every chosen character tag, because a tag is a requirement and not an alternative (#2670). The key
+         * `(venue_id, tag)` makes `count(*)` the number of distinct chosen tags; [VenueFilter.normalized] removes duplicates.
+         */
         private const val CHARACTER_FILTER =
-            "EXISTS (SELECT 1 FROM $EVENTS_SCHEMA.venue_character_tag ct WHERE ct.venue_id = v.id AND ct.tag IN (:characters))"
+            "v.id IN (SELECT ct.venue_id FROM $EVENTS_SCHEMA.venue_character_tag ct WHERE ct.tag IN (:characters) " +
+                "GROUP BY ct.venue_id HAVING count(*) = :characterCount)"
 
         val SORT_COLUMNS =
             mapOf(

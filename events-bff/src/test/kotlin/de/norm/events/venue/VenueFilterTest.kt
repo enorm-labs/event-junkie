@@ -8,7 +8,7 @@ import org.springframework.r2dbc.core.await
 
 /**
  * The venue list's type, family, event-type (#327) and character-tag (#2379) filters: any value within one, every one
- * across them.
+ * across them. Character tags are the exception: a venue needs every chosen tag (#2670).
  */
 class VenueFilterTest : BaseControllerTest() {
     @BeforeEach
@@ -17,18 +17,45 @@ class VenueFilterTest : BaseControllerTest() {
             venue("Astra", "astra", types = "{live-venue,club}", families = "{rock,punk}", eventTypes = "{CONCERT,PARTY}", capacity = 1500)
             venue("Berghain", "berghain", types = "{club}", families = "{electronic}", eventTypes = "{PARTY}")
             venue("Kneipe", "kneipe", types = "{bar}", families = "{}", eventTypes = "{QUIZ}")
+            venue("Lido", "lido", types = "{live-venue}", families = "{indie}", eventTypes = "{CONCERT}")
             tag("astra", "queer", "https://astra.example/about")
             tag("astra", "awareness-team", "https://astra.example/awareness")
+            tag("astra", "wheelchair-accessible", "https://astra.example/access")
+            tag("berghain", "queer", "https://berghain.example/info")
             tag("berghain", "awareness-team", "https://berghain.example/info")
+            tag("berghain", "no-photo-policy", "https://berghain.example/info")
+            tag("lido", "wheelchair-accessible", "https://lido.example/")
         }
 
     @Test
-    fun `filters by character tag, any of several`(): Unit =
+    fun `filters by one character tag`(): Unit =
         runBlocking {
-            expectSlugs("/venues?character=queer", "astra")
-            expectSlugs("/venues?character=queer&character=awareness-team", "astra", "berghain")
+            expectSlugs("/venues?character=queer", "astra", "berghain")
+            expectSlugs("/venues?character=wheelchair-accessible", "astra", "lido")
             expectSlugs("/venues?character=awareness-team&type=bar")
             expectSlugs("/venues?character=open-air")
+        }
+
+    @Test
+    fun `two character tags match only a venue with both`(): Unit =
+        runBlocking {
+            expectSlugs("/venues?character=queer&character=awareness-team", "astra", "berghain")
+            expectSlugs("/venues?character=awareness-team&character=wheelchair-accessible", "astra")
+            expectSlugs("/venues?character=queer&character=queer", "astra", "berghain")
+        }
+
+    @Test
+    fun `three character tags match only a venue with all three`(): Unit =
+        runBlocking {
+            expectSlugs("/venues?character=queer&character=awareness-team&character=wheelchair-accessible", "astra")
+            expectSlugs("/venues?character=queer&character=awareness-team&character=no-photo-policy", "berghain")
+        }
+
+    @Test
+    fun `character tags no venue carries together match nothing`(): Unit =
+        runBlocking {
+            expectSlugs("/venues?character=no-photo-policy&character=wheelchair-accessible")
+            expectSlugs("/venues?character=queer&character=open-air")
         }
 
     @Test
@@ -40,7 +67,7 @@ class VenueFilterTest : BaseControllerTest() {
                 .exchange()
                 .expectBody()
                 .jsonPath("$.content[0].characterTags")
-                .isEqualTo(listOf("awareness-team", "queer"))
+                .isEqualTo(listOf("awareness-team", "queer", "wheelchair-accessible"))
 
             webTestClient
                 .get()
@@ -65,7 +92,7 @@ class VenueFilterTest : BaseControllerTest() {
     fun `filters by venue type, any of several`(): Unit =
         runBlocking {
             expectSlugs("/venues?type=club", "astra", "berghain")
-            expectSlugs("/venues?type=bar&type=live-venue", "astra", "kneipe")
+            expectSlugs("/venues?type=bar&type=live-venue", "astra", "kneipe", "lido")
         }
 
     @Test

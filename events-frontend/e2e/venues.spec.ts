@@ -178,6 +178,46 @@ test('the empty state offers a way out of the search', async ({ page }) => {
   await expect(page.getByRole('link', { name: /Lido/ })).toBeVisible()
 })
 
+test('features combine with AND: the filter says so, and an empty result offers to drop one', async ({
+  page,
+}) => {
+  // The BFF does the AND (#2670); the mock answers only what it would: nobody has both features.
+  const requested: string[][] = []
+  await page.route(venuesList, (route) => {
+    const features = new URL(route.request().url()).searchParams.getAll('character')
+    requested.push(features)
+    return json(route, pageBody(features.length > 1 ? [] : [venue('so36', 'SO36')]))
+  })
+
+  await page.goto('/en/venues?character=queer&character=wheelchair-accessible')
+
+  const filter = page.getByRole('button', { name: 'Filter by feature: All 2 features' })
+  await expect(filter).toBeVisible()
+  await expect(
+    page.getByText('No venue has all the selected features. Remove one to see more.'),
+  ).toBeVisible()
+  await expect(page.getByText(/no venues match/i)).toHaveCount(0)
+
+  await filter.click()
+  await expect(page.getByText('Only venues with every feature you tick are shown.')).toBeVisible()
+  await page.keyboard.press('Escape')
+
+  await page.getByRole('button', { name: 'Remove Wheelchair accessible' }).click()
+
+  await expect(page).toHaveURL(/\/en\/venues\?character=queer$/)
+  await expect(page.getByRole('link', { name: /SO36/ })).toBeVisible()
+  expect(requested.at(-1)).toEqual(['queer'])
+})
+
+test('one feature with no match keeps the plain empty state', async ({ page }) => {
+  await page.route(venuesList, (route) => json(route, pageBody([])))
+
+  await page.goto('/en/venues?character=cash-only')
+
+  await expect(page.getByText(/no venues match/i)).toBeVisible()
+  await expect(page.getByRole('button', { name: /^Remove / })).toHaveCount(0)
+})
+
 test('paginates when there is more than one page', async ({ page }) => {
   await page.route(venuesList, (route) => {
     const pageParam = Number(new URL(route.request().url()).searchParams.get('page') ?? '0')

@@ -10,6 +10,7 @@ import MultiSelectFilter from '@/components/MultiSelectFilter.vue'
 import PaginationControls from '@/components/PaginationControls.vue'
 import SortControl, { type SortOption } from '@/components/SortControl.vue'
 import VenueCard from '@/components/VenueCard.vue'
+import VenueFeaturesEmpty from '@/components/VenueFeaturesEmpty.vue'
 import VenueRow from '@/components/VenueRow.vue'
 import { useCompactView } from '@/composables/useCompactView'
 import { useLocalePath } from '@/composables/useLocalePath'
@@ -102,6 +103,13 @@ function applyFilters(patch: LocationQueryRaw) {
 const isFiltered = computed(() =>
   Object.keys(route.query).some((key) => !['page', 'view', 'radius', 'sort'].includes(key)),
 )
+
+// Features combine with AND (#2670): with two or more chosen, an empty list names them as the cause.
+const features = computed(() => queryList('character'))
+
+function removeFeature(feature: string) {
+  applyFilters({ character: features.value.filter((value) => value !== feature) })
+}
 
 function clearSearch() {
   search.value = ''
@@ -285,9 +293,10 @@ const localePath = useLocalePath()
         :all-label="t('venues.allCharacters')"
         :clear-label="t('venues.clearCharacters')"
         :count-label="(n) => t('venues.charactersSelected', { n })"
+        :hint="t('venues.characterHint')"
         :label="t('venues.byCharacter')"
         :options="venueCharacterOptions"
-        :selected="queryList('character')"
+        :selected="features"
         @change="applyFilters({ character: $event })"
       />
       <MultiSelectFilter
@@ -337,7 +346,12 @@ const localePath = useLocalePath()
       </p>
       <p v-else-if="mapError" class="text-body text-destructive">{{ mapError }}</p>
       <div v-else-if="!pins.length" class="space-y-3">
-        <p class="text-body text-muted-foreground">{{ t('venues.empty') }}</p>
+        <VenueFeaturesEmpty
+          v-if="features.length > 1"
+          :features="features"
+          @remove="removeFeature"
+        />
+        <p v-else class="text-body text-muted-foreground">{{ t('venues.empty') }}</p>
         <Button v-if="isFiltered" variant="outline" @click="clearSearch">
           {{ t('common.actions.clearSearch') }}
         </Button>
@@ -496,7 +510,8 @@ const localePath = useLocalePath()
     <p v-else-if="error" class="text-body text-destructive">{{ error }}</p>
     <!-- An empty result offers a control, not only a sentence (#1266). -->
     <div v-else-if="!page?.content?.length" class="space-y-3">
-      <p class="text-body text-muted-foreground">{{ t('venues.empty') }}</p>
+      <VenueFeaturesEmpty v-if="features.length > 1" :features="features" @remove="removeFeature" />
+      <p v-else class="text-body text-muted-foreground">{{ t('venues.empty') }}</p>
       <Button v-if="isFiltered" variant="outline" @click="clearSearch">
         {{ t('common.actions.clearSearch') }}
       </Button>

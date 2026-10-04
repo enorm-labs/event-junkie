@@ -37,7 +37,7 @@ Accept: application/json
 GET {{bff-host}}/api/venues?type=club&type=live-venue&family=electronic&eventType=PARTY
 Accept: application/json
 
-### Filter by character tag, as the venue describes itself (#2379)
+### Filter by character tag, as the venue describes itself (#2379): only a venue with every given tag matches (#2670)
 GET {{bff-host}}/api/venues?character=queer&character=awareness-team
 Accept: application/json
 
