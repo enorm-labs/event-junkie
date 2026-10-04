@@ -113,15 +113,15 @@ they cost and which DNS records carry them: [`ops/EMAIL.md`](ops/EMAIL.md).
 
 Two layers, and the second is not optional: an alerting path that runs on the node it monitors cannot tell you the node is dead.
 
-| Link                                               | What it is                                                                                   | Status                                                                            |
-| -------------------------------------------------- | -------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
-| <https://uptime.betterstack.com>                   | **The site monitor**, off Hetzner. Polls every 3 min, alerts on a failure (ADR-021)          | Live — `site-production`, monitor `4876693`                                       |
-| <https://betterstack.com/docs/uptime/api/>         | The Uptime API. `BETTERSTACK_API_TOKEN` reads the monitor back, so CI can assert it          | Live — asserted daily by `site-probe.yml`                                         |
-| <https://healthchecks.io>                          | **The dead-man's switches.** Silence is the alarm, so it survives what it watches            | Live — `walg-staging`, `walg-production`, `site-production`                       |
-| `https://hc-ping.com/<uuid>`                       | The ping endpoint. **Every ping URL is a credential** — see CREDENTIALS.md                   | Live                                                                              |
-| <https://github.com/openobserve/openobserve>       | OpenObserve — logs, metrics, dashboards, alerting. AGPL-3.0, in-cluster, Parquet to `-o2`    | **Deployed on staging.** Operating it: [`ops/OPENOBSERVE.md`](ops/OPENOBSERVE.md) |
-| <https://github.com/bbernhard/signal-cli-rest-api> | The Signal alert bridge — OpenObserve webhook → signal-cli. The deferred alert route         | **Deployed on staging, unregistered** — deferred (#1812)                          |
-| <https://www.netdata.cloud>                        | Netdata, **self-hosted only** — connecting it to Netdata Cloud would reintroduce a processor | Optional complement                                                               |
+| Link                                               | What it is                                                                                   | Status                                                                                  |
+| -------------------------------------------------- | -------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| <https://uptime.betterstack.com>                   | **The site monitor**, off Hetzner. Polls every 3 min, alerts on a failure (ADR-021)          | Live — `site-production`, monitor `4876693`                                             |
+| <https://betterstack.com/docs/uptime/api/>         | The Uptime API. `BETTERSTACK_API_TOKEN` reads the monitor back, so CI can assert it          | Live — asserted daily by `site-probe.yml`                                               |
+| <https://healthchecks.io>                          | **The dead-man's switches.** Silence is the alarm, so it survives what it watches            | Live — `walg-staging`, `walg-production`, `site-production`                             |
+| `https://hc-ping.com/<uuid>`                       | The ping endpoint. **Every ping URL is a credential** — see CREDENTIALS.md                   | Live                                                                                    |
+| <https://github.com/openobserve/openobserve>       | OpenObserve — logs, metrics, dashboards, alerting. AGPL-3.0, in-cluster, Parquet to `-o2`    | **Deployed on both clusters.** Operating it: [`ops/OPENOBSERVE.md`](ops/OPENOBSERVE.md) |
+| <https://github.com/bbernhard/signal-cli-rest-api> | The Signal alert bridge — OpenObserve webhook → signal-cli. The deferred alert route         | **Deployed on staging, unregistered** — deferred (#1812)                                |
+| <https://www.netdata.cloud>                        | Netdata, **self-hosted only** — connecting it to Netdata Cloud would reintroduce a processor | Optional complement                                                                     |
 
 ---
 
@@ -143,7 +143,7 @@ Two layers, and the second is not optional: an alerting path that runs on the no
 | <https://charts.openobserve.ai>                                                                  | OpenObserve's Helm repository — `openobserve-standalone`, `openobserve-collector` |
 | <https://opentelemetry.io/docs/collector/>                                                       | The OTel collector. **Everything is filtered here, not at OpenObserve**           |
 | <https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/pkg/ottl/README.md> | OTTL — the language the drop rules are written in                                 |
-| <https://github.com/mittwald/cert-manager-webhook-hetzner>                                       | The DNS-01 solver staging needs, since it has no public address                   |
+| <https://github.com/hetzner/cert-manager-webhook-hetzner>                                        | The DNS-01 solver staging needs, since it has no public address                   |
 
 ---
 
