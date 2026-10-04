@@ -1,10 +1,10 @@
 name: Validate Python
 
-# ruff over every `.py` file, and the two Python tests. The pre-commit hooks are advisory; this is the
-# gate on `main`. The tests ran nowhere before (#1189): `deploy/alerts/test_diff_alerts.py` holds the
-# property that no credential appears in an alert diff, `deploy/dashboards/test_lint_dashboard.py`
-# proves the dashboard linter catches each case it claims. Plain scripts that exit non-zero, so the
-# runner's python3 is enough.
+# ruff over every `.py` file, and the Python tests. The pre-commit hooks are advisory; this is the
+# gate on `main`. `deploy/alerts/test_diff_alerts.py` holds the property that no credential appears in
+# an alert diff, `deploy/dashboards/test_lint_dashboard.py` proves the dashboard linter catches each
+# case it claims, `scripts/test_apply_licence_review.py` pins the ADR-027 translation default. Plain
+# scripts that exit non-zero, so the runner's python3 is enough.
 
 on:
   push:
@@ -60,6 +60,9 @@ jobs:
 
       - name: The dashboard linter rejects what it claims to
         run: python3 deploy/dashboards/test_lint_dashboard.py
+
+      - name: The licence review derives the ADR-027 translation licence
+        run: python3 scripts/test_apply_licence_review.py
 
       # Gated on the two steps it explains.
       - name: Explain the fix

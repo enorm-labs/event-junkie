@@ -19,7 +19,8 @@ the record. `scripts/apply-licence-review.py` writes it to a database.
 2. **No source grants a reuse we can rely on.** `PERMITTED` is zero in this review, which reads what
    the venues published. It is not zero on the clusters: ADR-027 sets `translation_licence` to
    `PERMITTED` wherever a venue does not prohibit the description. That is our reading of silence,
-   and it is not a grant.
+   and it is not a grant. `scripts/apply-licence-review.py` writes that value, so a new source gets
+   it with its review. §7 gives the rule.
 3. **The standard German copyright boilerplate is `UNCLEAR`, not `PROHIBITED`.** §2 says why, and it
    decides most of the corpus.
 4. **The four prohibitions are venues whose own wording names texts and images**, without the
@@ -138,6 +139,18 @@ a rule about us.
 python3 scripts/apply-licence-review.py                    # dry run, writes nothing
 python3 scripts/apply-licence-review.py --apply            # write it
 ```
+
+**The script also writes `translation_licence`, which this file does not hold.** ADR-027 derives it
+from the description licence:
+
+| `description_licence` | Stored `translation_licence` | The script sends                |
+| --------------------- | ---------------------------- | ------------------------------- |
+| `PROHIBITED`          | anything but `PROHIBITED`    | `PROHIBITED`                    |
+| anything else         | _null_                       | `PERMITTED`                     |
+| anything else         | a value                      | nothing, the stored value stays |
+
+A stored value can be a venue's answer through #808. The script does not overwrite it.
+`scripts/test_apply_licence_review.py` asserts the table.
 
 ### Against staging or production
 

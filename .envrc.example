@@ -31,7 +31,7 @@ export APP_TRANSLATION_API_KEY="$(keychain event-junkie-translation-api-key)"
 
 # **`none` is the default and the right value for ordinary work.** The key alone costs nothing.
 # Setting this to `anthropic` is what starts spending, and even then only for an event source whose
-# `translation_licence` is PERMITTED — no source holds that yet.
+# `translation_licence` is PERMITTED, which ADR-027 sets wherever the description may be displayed.
 export APP_TRANSLATION_ENGINE=none
 
 # An empty key produces a warning on the first translation rather than at startup, which is a long

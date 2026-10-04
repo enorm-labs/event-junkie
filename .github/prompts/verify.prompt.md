@@ -102,6 +102,7 @@ histories) and `scripts/version-test.sh` (snapshot versions still order — a ve
 | `docs/LINKS.md`, `docs/ops/DAILY_COMMANDS.md`, `docs/ops/dashboard/`             | `scripts/dashboard-parity.sh check` — needs `events-frontend/node_modules`                                                              |
 | any `.py`, `ruff.toml`                                                           | `RUFF="ruff@$(sed -n 's/^  RUFF_VERSION: //p' .github/workflows/validate-python.yml)"; uvx "$RUFF" check && uvx "$RUFF" format --check` |
 | `deploy/alerts/`, `deploy/dashboards/`                                           | also `deploy/alerts/test_diff_alerts.py` and `deploy/dashboards/test_lint_dashboard.py`                                                 |
+| `scripts/apply-licence-review.py`                                                | also `python3 scripts/test_apply_licence_review.py`                                                                                     |
 | `deploy/`, `events-frontend/index.html`, `events-frontend/scripts/csp.ts`        | `scripts/csp-parity.sh` — the policy is written twice, and the `script-src` hash follows the inline theme script (#846)                 |
 
 ## How to run the skill
