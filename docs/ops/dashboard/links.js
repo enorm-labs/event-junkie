@@ -346,8 +346,8 @@ window.EJ_LINKS = {
           "label": "github.com/openobserve/openobserve",
           "what": "OpenObserve — logs, metrics, dashboards, alerting. AGPL-3.0, in-cluster, Parquet to <code>-o2</code>",
           "whatText": "OpenObserve — logs, metrics, dashboards, alerting. AGPL-3.0, in-cluster, Parquet to -o2",
-          "status": "<strong>Deployed on staging.</strong> Operating it: [<code>ops/OPENOBSERVE.md</code>](ops/OPENOBSERVE.md)",
-          "statusText": "Deployed on staging. Operating it: ops/OPENOBSERVE.md"
+          "status": "<strong>Deployed on both clusters.</strong> Operating it: [<code>ops/OPENOBSERVE.md</code>](ops/OPENOBSERVE.md)",
+          "statusText": "Deployed on both clusters. Operating it: ops/OPENOBSERVE.md"
         },
         {
           "url": "https://github.com/bbernhard/signal-cli-rest-api",
@@ -488,8 +488,8 @@ window.EJ_LINKS = {
           "statusText": ""
         },
         {
-          "url": "https://github.com/mittwald/cert-manager-webhook-hetzner",
-          "label": "github.com/mittwald/cert-manager-webhook-hetzner",
+          "url": "https://github.com/hetzner/cert-manager-webhook-hetzner",
+          "label": "github.com/hetzner/cert-manager-webhook-hetzner",
           "what": "The DNS-01 solver staging needs, since it has no public address",
           "whatText": "The DNS-01 solver staging needs, since it has no public address",
           "status": "",
