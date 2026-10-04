@@ -76,4 +76,13 @@ describe('BaseDetailView', () => {
 
     expect(wrapper.find('details').exists()).toBe(false)
   })
+
+  // design.instructions.md §1 forbids an eyebrow above a page title (#2662).
+  it('opens the header on the h1, with no kind label above it', () => {
+    const wrapper = mountWith(page(), page())
+
+    const header = wrapper.find('header')
+    expect(header.element.firstElementChild?.tagName).toBe('H1')
+    expect(header.text()).not.toContain('Artist')
+  })
 })

@@ -24,7 +24,7 @@ import { useI18n } from 'vue-i18n'
  * the events feed.
  */
 const props = defineProps<{
-  /** Entity kind label, e.g. "Artist" — shown above the name and in the not-found heading. */
+  /** Entity kind label, e.g. "Artist" — for the not-found heading. */
   kind: string
   /** Entity fetch state (from `useAsync`). */
   loading: boolean
@@ -112,7 +112,6 @@ const { compact } = useCompactView()
       <!-- No picture, no placeholder: here the name is the content, and a full-width 3:2 void
            would push it off the screen (#811 draws one on a card). -->
       <header class="space-y-2">
-        <SectionLabel as="p">{{ kind }}</SectionLabel>
         <h1 class="text-page font-bold tracking-tight">{{ name }}</h1>
         <slot name="meta" />
       </header>
