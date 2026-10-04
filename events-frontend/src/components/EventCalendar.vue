@@ -11,11 +11,14 @@ import FullCalendar from '@fullcalendar/vue3'
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { berlinTimeIso, eventLabel, todayIso } from '@/lib/format'
+import { isLocale } from '@/i18n/locales'
 // v7 ships plugins as subpaths of the framework package; the standalone
 // @fullcalendar/daygrid et al. have no v7 release.
 import classicThemePlugin from '@fullcalendar/vue3/themes/classic'
 import dayGridPlugin from '@fullcalendar/vue3/daygrid'
 import listPlugin from '@fullcalendar/vue3/list'
+import deLocale from '@fullcalendar/vue3/locales/de'
+import enGbLocale from '@fullcalendar/vue3/locales/en-gb'
 // v7 no longer bundles its CSS; skeleton, theme and palette are opt-in. The palette is imported
 // for its non-colour defaults (dot widths, background-event opacities); every colour it defines
 // is overridden in <style> below against our design tokens.
@@ -76,7 +79,10 @@ function handleEventDidMount(arg: MountInfo<EventDisplayInfo>) {
   }
 }
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
+
+// Without a locale FullCalendar formats the title, the weekday header and the times in `en` (#2658).
+const CALENDAR_LOCALES = { en: enGbLocale, de: deLocale }
 
 // FullCalendar is encapsulated here so the rest of the app sees one on-theme component
 // (ADR-011). The week is a row of day cells, not a timetable: nearly every event starts between
@@ -84,6 +90,8 @@ const { t } = useI18n()
 const options = computed<CalendarOptions>(() => ({
   plugins: [classicThemePlugin, dayGridPlugin, listPlugin],
   initialView: props.initialView,
+  locale: isLocale(locale.value) ? CALENDAR_LOCALES[locale.value] : enGbLocale,
+  eventTimeFormat: { hour: '2-digit', minute: '2-digit', hour12: false },
   headerToolbar: {
     start: 'prev,next today',
     center: 'title',
@@ -92,6 +100,7 @@ const options = computed<CalendarOptions>(() => ({
   // v7 has no `buttonText` option and no built-in English labels. A view button with no resolvable
   // text is silently not rendered, so without this block the calendar loses its view switcher.
   buttons: {
+    today: { text: t('calendar.today') },
     dayGridMonth: { text: t('calendar.view.month') },
     dayGridWeek: { text: t('calendar.view.week') },
     listWeek: { text: t('calendar.view.list') },
