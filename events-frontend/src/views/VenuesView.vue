@@ -15,6 +15,7 @@ import { useCompactView } from '@/composables/useCompactView'
 import { useLocalePath } from '@/composables/useLocalePath'
 import { useLocation } from '@/composables/useLocation'
 import { usePagedList } from '@/composables/usePagedList'
+import { useSearchDraft } from '@/composables/useSearchDraft'
 import { useFilterOptions } from '@/composables/useFilterOptions'
 import { fetchAllVenues, useVenueSearch, type VenueSearchParams } from '@/composables/useVenues'
 import { districtLabel } from '@/lib/districts'
@@ -81,18 +82,7 @@ const params = computed<VenueSearchParams>(() => ({
 
 const { data: page, error, loading, run } = useVenueSearch(() => params.value)
 
-// The search box is a local draft applied on submit, kept in sync with the URL.
-const search = ref(queryString('q'))
-watch(
-  () => route.query.q,
-  () => {
-    search.value = queryString('q')
-  },
-)
-
-function applySearch() {
-  if (search.value !== queryString('q')) applyFilters({ q: search.value })
-}
+const { search, applySearch } = useSearchDraft()
 
 // Paging, the clamp on an out-of-range `?page=`, and the reload on any query change.
 const { currentPage, totalPages, goToPage } = usePagedList(page, run)
@@ -262,8 +252,6 @@ const localePath = useLocalePath()
     </header>
 
     <div :class="PANEL_CLASS">
-      <!-- One field, so Enter submits without a button; leaving the field applies it too, as on
-           the events bar. -->
       <form role="search" @submit.prevent="applySearch">
         <BaseInput
           v-model="search"

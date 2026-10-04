@@ -1,7 +1,7 @@
 <script lang="ts" setup>
-import { computed, ref, watch } from 'vue'
+import { computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { RouterLink, useRoute, useRouter } from 'vue-router'
+import { RouterLink, useRoute } from 'vue-router'
 import BaseInput from '@/components/BaseInput.vue'
 import EventRow from '@/components/EventRow.vue'
 import SectionLabel from '@/components/SectionLabel.vue'
@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button'
 import { useAsync } from '@/composables/useAsync'
 import { fetchSearch, MIN_SEARCH_LENGTH } from '@/composables/useGlobalSearch'
 import { useLocalePath } from '@/composables/useLocalePath'
+import { useSearchDraft } from '@/composables/useSearchDraft'
 import { CARD_LIST_CLASS, PANEL_CLASS } from '@/lib/utils'
 
 /** Enough to scan; a longer list belongs to the kind's own page, which pages and filters. */
@@ -17,7 +18,6 @@ const LIMIT = 20
 
 const { t } = useI18n()
 const route = useRoute()
-const router = useRouter()
 const localePath = useLocalePath()
 
 const q = computed(() => (typeof route.query.q === 'string' ? route.query.q.trim() : ''))
@@ -29,20 +29,14 @@ const { data, error, loading, run } = useAsync(
   () => `/api/search?${q.value}`,
 )
 
-// The field is a draft applied on submit, as on the list pages, and follows the URL.
-const draft = ref(q.value)
+const { search: draft, applySearch } = useSearchDraft()
 watch(
   q,
-  (value) => {
-    draft.value = value
+  () => {
     if (searchable.value) run()
   },
   { immediate: true },
 )
-
-function submit() {
-  router.push({ query: draft.value.trim() ? { q: draft.value.trim() } : {} })
-}
 
 const listQuery = computed(() => `?q=${encodeURIComponent(q.value)}`)
 
@@ -86,7 +80,7 @@ function linksOf(key: string): { to: string; name: string }[] {
     </header>
 
     <div :class="PANEL_CLASS">
-      <form class="w-full" role="search" @submit.prevent="submit">
+      <form class="w-full" role="search" @submit.prevent="applySearch">
         <BaseInput
           v-model="draft"
           :aria-label="t('search.label')"

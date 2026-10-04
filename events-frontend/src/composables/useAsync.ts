@@ -25,7 +25,8 @@ function remember(key: string, value: unknown) {
  * `notFound` is true when the request failed with a 404, so detail pages can show a tailored
  * empty state instead of a generic error. `subjectKey` names what failed, for {@link describeError}.
  * `cacheKey` identifies the request: when it was answered before, `run()` sets `data` from that
- * answer synchronously and leaves `loading` false while the loader refreshes it.
+ * answer synchronously and leaves `loading` false while the loader refreshes it. Only the latest
+ * `run()` writes its answer, so a slow response never paints over a newer one.
  */
 export function useAsync<T>(
   loader: () => Promise<T>,
@@ -36,8 +37,10 @@ export function useAsync<T>(
   const error = ref<string | null>(null)
   const notFound = ref(false)
   const loading = ref(false)
+  let latest = 0
 
   async function run() {
+    const call = ++latest
     const key = cacheKey?.()
     const remembered = key === undefined ? undefined : (recent.get(key) as T | undefined)
     if (remembered !== undefined) data.value = remembered
@@ -47,14 +50,16 @@ export function useAsync<T>(
     notFound.value = false
     try {
       const result = await loader()
-      data.value = result
       if (key !== undefined) remember(key, result)
+      if (call !== latest) return
+      data.value = result
     } catch (e) {
+      if (call !== latest) return
       data.value = null
       notFound.value = e instanceof ApiError && e.status === 404
       error.value = describeError(e, subjectKey)
     } finally {
-      loading.value = false
+      if (call === latest) loading.value = false
       done?.()
     }
   }

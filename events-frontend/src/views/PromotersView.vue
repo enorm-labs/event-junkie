@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { computed, ref, watch } from 'vue'
+import { computed } from 'vue'
 import { type LocationQueryRaw, useRoute, useRouter } from 'vue-router'
 import { Button } from '@/components/ui/button'
 import BaseInput from '@/components/BaseInput.vue'
@@ -8,6 +8,7 @@ import PromoterCard from '@/components/PromoterCard.vue'
 import SortControl, { type SortOption } from '@/components/SortControl.vue'
 import { usePagedList } from '@/composables/usePagedList'
 import { usePromoterSearch, type PromoterSearchParams } from '@/composables/usePromoters'
+import { useSearchDraft } from '@/composables/useSearchDraft'
 import { useI18n } from 'vue-i18n'
 import { CARD_GRID_CLASS, PANEL_CLASS, RESULTS_BAR_CLASS } from '@/lib/utils'
 
@@ -38,18 +39,7 @@ const params = computed<PromoterSearchParams>(() => ({
 
 const { data: page, error, loading, run } = usePromoterSearch(() => params.value)
 
-// The search box is a local draft applied on submit, kept in sync with the URL.
-const search = ref(queryString('q'))
-watch(
-  () => route.query.q,
-  () => {
-    search.value = queryString('q')
-  },
-)
-
-function applySearch() {
-  if (search.value !== queryString('q')) applyFilters({ q: search.value })
-}
+const { search, applySearch } = useSearchDraft()
 
 // Paging, the clamp on an out-of-range `?page=`, and the reload on any query change.
 const { currentPage, totalPages, goToPage } = usePagedList(page, run)
@@ -90,8 +80,6 @@ const sortOptions = computed<SortOption[]>(() => [
     </header>
 
     <div :class="PANEL_CLASS">
-      <!-- One field, so Enter submits without a button; leaving the field applies it too, as on
-           the events bar. -->
       <form role="search" @submit.prevent="applySearch">
         <BaseInput
           v-model="search"

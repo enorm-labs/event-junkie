@@ -1888,7 +1888,7 @@ export interface operations {
                 minPrice?: number;
                 /** @description Maximum presale price (inclusive). Excludes events with an unknown (null) price. */
                 maxPrice?: number;
-                /** @description Search over the event title, subtitle, venue name and lineup: ignores case, accents and spaces, and forgives small typos. */
+                /** @description Search over the event title, subtitle, venue name, lineup and promoters: ignores case, accents and spaces, and forgives small typos. */
                 q?: string;
                 /** @description When true, excludes events flagged as sold out. Defaults to false (include all). */
                 excludeSoldOut?: boolean;
@@ -2018,7 +2018,7 @@ export interface operations {
                 minPrice?: number;
                 /** @description Maximum presale price (inclusive). Excludes events with an unknown (null) price. */
                 maxPrice?: number;
-                /** @description Search over the event title, subtitle, venue name and lineup: ignores case, accents and spaces, and forgives small typos. */
+                /** @description Search over the event title, subtitle, venue name, lineup and promoters: ignores case, accents and spaces, and forgives small typos. */
                 q?: string;
                 /** @description When true, excludes events flagged as sold out. Defaults to false (include all). */
                 excludeSoldOut?: boolean;
@@ -2069,7 +2069,7 @@ export interface operations {
                 minPrice?: number;
                 /** @description Maximum presale price (inclusive). Excludes events with an unknown (null) price. */
                 maxPrice?: number;
-                /** @description Search over the event title, subtitle, venue name and lineup: ignores case, accents and spaces, and forgives small typos. */
+                /** @description Search over the event title, subtitle, venue name, lineup and promoters: ignores case, accents and spaces, and forgives small typos. */
                 q?: string;
                 /** @description When true, excludes events flagged as sold out. Defaults to false (include all). */
                 excludeSoldOut?: boolean;

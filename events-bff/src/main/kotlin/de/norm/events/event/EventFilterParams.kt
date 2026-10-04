@@ -43,7 +43,11 @@ data class EventFilterParams(
     val minPrice: BigDecimal? = null,
     @field:Parameter(description = "Maximum presale price (inclusive). Excludes events with an unknown (null) price.")
     val maxPrice: BigDecimal? = null,
-    @field:Parameter(description = "Search over the event title, subtitle, venue name and lineup: ignores case, accents and spaces, and forgives small typos.")
+    @field:Parameter(
+        description =
+            "Search over the event title, subtitle, venue name, lineup and promoters: " +
+                "ignores case, accents and spaces, and forgives small typos."
+    )
     val q: String? = null,
     @field:Parameter(description = "When true, excludes events flagged as sold out. Defaults to false (include all).")
     val excludeSoldOut: Boolean = false,

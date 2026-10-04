@@ -323,7 +323,7 @@ class EventSearchRepository(
      * Applies the price bounds and the free-text search. Price bounds filter on
      * `COALESCE(price_presale, price_box_office)`; an event whose price is entirely unknown does
      * not satisfy a "min €X" filter. The search ([TextSearch]) reads the title, the subtitle, the
-     * venue's name and the lineup's names, so `ÆDEN` finds that venue's nights.
+     * venue's name, the lineup's names and the promoters' names, so `ÆDEN` finds that venue's nights.
      */
     private fun appendPriceAndQuery(
         filter: EventFilter,
@@ -341,7 +341,7 @@ class EventSearchRepository(
         }
         TextSearch.term(filter.query)?.let { term ->
             // One branch per searched column, so each reaches its own trigram index (V096). The same
-            // four as an `OR` on `e` read every upcoming event (#2533).
+            // columns as an `OR` on `e` read every upcoming event (#2533).
             val match = { column: String -> TextSearch.predicate(column, term, bySimilarity) }
             conditions +=
                 listOf(
@@ -349,7 +349,9 @@ class EventSearchRepository(
                     "SELECT x.id FROM $EVENTS_SCHEMA.event x WHERE ${match("x.subtitle")}",
                     "SELECT x.id FROM $EVENTS_SCHEMA.event x JOIN $EVENTS_SCHEMA.venue v ON v.id = x.venue_id WHERE ${match("v.name")}",
                     "SELECT ea.event_id FROM $EVENTS_SCHEMA.event_artist ea " +
-                        "JOIN $EVENTS_SCHEMA.artist a ON a.id = ea.artist_id WHERE ${match("a.name")}"
+                        "JOIN $EVENTS_SCHEMA.artist a ON a.id = ea.artist_id WHERE ${match("a.name")}",
+                    "SELECT ep.event_id FROM $EVENTS_SCHEMA.event_promoter ep " +
+                        "JOIN $EVENTS_SCHEMA.promoter p ON p.id = ep.promoter_id WHERE ${match("p.name")}"
                 ).joinToString(" UNION ", prefix = "e.id IN (", postfix = ")")
             params += TextSearch.params(term, bySimilarity)
         }
