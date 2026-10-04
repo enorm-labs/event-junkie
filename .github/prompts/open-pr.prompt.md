@@ -56,8 +56,11 @@ This is the standard "ship it" flow — the manual equivalent of
       rather than `Fixes`/`Resolves`, one line per issue.
     - **Set the milestone to the issue's own** (`gh pr edit <pr> --milestone '…'`). Every closed PR in this repo carries a milestone — the 255 that predate the
       tracker were backfilled into `Phase 0 — Foundation` — and a PR without one is the exception that makes the milestone view stop meaning anything.
-    - **If a visitor can see the change, attach before and after screenshots.** Reference each under the template's `## Screenshots` as `![<what it shows>](./<file>.png)`
-      and pass the same path with `--attach`; `gh` uploads the file and rewrites the link. A design rule change needs the picture
+    - **If a visitor can see the change, attach before and after screenshots.** Take them with `scripts/pr-screenshots.sh <path>...`: before is the base
+      (`--base`, default `origin/main`), after is the branch. It builds both, serves each on a free port with production's API, and prints a before and
+      after table. It starts no dev server, so it runs in any worktree. Put the table under the template's `## Screenshots` and pass each referenced
+      `./build/pr-screenshots/<file>.png` with `--attach`, from the repository root; `gh` uploads the file and rewrites the link. `--click` opens a menu,
+      `--scroll` brings a list end into view, and `--label` keeps a second run from overwriting the first. A design rule change needs the picture
       ([design.instructions.md](../instructions/design.instructions.md) § How a rule leaves this list). Mechanics: the [`gh` skill](../../.claude/skills/gh/SKILL.md).
     - **Say what has to happen after it deploys**, if anything: a forced import so a parser fix reaches stored rows, a check that a migration ran, a
       script to run. Write it under `## After deploy` in the format [`/post-release`](post-release.prompt.md) reads, one `- [ ]` line per step.

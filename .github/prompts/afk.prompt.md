@@ -60,7 +60,9 @@ after _n_ pull requests, or `until <HH:MM>` to stop starting new issues at that 
     > useful work. Never: merge, mark ready, auto-merge, close or comment on an issue, run tofu/flux/cluster commands, start another issue.
     >
     > Light lane: you are in your own worktree. First run `ln -s <main checkout>/events-frontend/node_modules events-frontend/node_modules`. Run no
-    > Gradle task, no `scripts/dev-env.sh`, no dev or preview server and no Playwright. If the work turns out to need one, stop and report "heavy".
+    > Gradle task, no `scripts/dev-env.sh`, no dev server and no Playwright suite. If the work turns out to need one, stop and report "heavy".
+    > The exception is `scripts/pr-screenshots.sh`: it serves its own builds on free ports. A change a visitor can see gets its before and after
+    > screenshots on the PR, by `/open-pr` step 6. Do not leave them as an open question.
     >
     > Report: PR URL or "parked", the branch and its head sha, the decisions, the open questions, and the reason if parked.
 
@@ -101,7 +103,7 @@ Sort by the files the issue will change, from its body, its `area:*` labels and 
 - **Two issues that change the same file run one after the other, in one lane.** Stack the second if it needs the first; otherwise wait for the first
   PR to open.
 - **A worktree shares the runtime.** Ports `8080`, `8081`, `5173` and `4173`, the dev Postgres and the Docker daemon are the same for every checkout.
-  That is why the light lane runs none of them.
+  That is why the light lane runs none of them. `scripts/pr-screenshots.sh` is safe in it, because it takes free ports and reaches only production's API.
 
 ## Stacked pull requests
 

@@ -84,6 +84,7 @@ Run by an agent or a developer. No cluster, no tunnel; `k3d-rehearsal.sh` makes 
 | `outline-text.sh` + `outline_text.py`     | A string set in a font, printed as an SVG path — brand artwork carries outlined glyphs, never `<text>`            | `docs/branding/`                                        |
 | `build-stickers.sh` + `build_stickers.py` | Launch stickers as CMYK print PDFs, every QR code decoded first                                                   | `docs/branding/stickers/`                               |
 | `readme-screenshots.sh`                   | The README's four screenshots of the events list, desktop and phone in both themes, from production               | `docs/screenshots/`                                     |
+| `pr-screenshots.sh`                       | Before and after screenshots of a pull request's pages, from two builds served on free ports                      | `/open-pr`, `/afk`                                      |
 
 ## Ops
 
