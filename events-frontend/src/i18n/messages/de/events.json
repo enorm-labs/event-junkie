@@ -62,6 +62,7 @@
     "assumed": "~{time}",
     "assumedHint": "Nicht bekannt gegeben, geschätzt nach Veranstaltungsart",
     "runningSince": "Läuft seit {day}",
+    "closes": "Endet {day}",
     "until": "Bis {time}",
     "onNow": "Läuft gerade"
   },
@@ -118,6 +119,9 @@
     "CANCELLED": "Abgesagt",
     "POSTPONED": "Verschoben",
     "movedTo": "Verlegt: {venue}"
+  },
+  "alsoRunning": {
+    "title": "Läuft außerdem"
   },
   "nearMe": "In meiner Nähe, auf der Karte",
   "feed": "Feed",

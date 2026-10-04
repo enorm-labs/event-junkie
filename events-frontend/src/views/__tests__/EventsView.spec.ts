@@ -91,6 +91,23 @@ describe('EventsView with On now', () => {
     expect(wrapper!.text()).toContain('2 events')
   })
 
+  it('folds a run of weeks into Also running between its opening and its last days', async () => {
+    const exhibition: EventSummary = {
+      slug: 'exhibition',
+      title: 'Exhibition',
+      eventDate: '2026-10-03',
+      endDate: '2026-10-18',
+    }
+    getMock.mockImplementation(() => Promise.resolve([exhibition, lastNight, started]))
+
+    await mountAt('/en/events?now=1')
+
+    const folded = wrapper!.get('details').findAll('article')
+    expect(folded.map((card) => card.attributes('data-slug'))).toEqual(['exhibition'])
+    expect(slugs()).toEqual(['weekender', 'started', 'exhibition'])
+    expect(wrapper!.text()).toContain('3 events')
+  })
+
   it('shows one list without pagination', async () => {
     await mountAt('/en/events?now=1')
 

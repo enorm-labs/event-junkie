@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import type { EventSummary } from '@/api/types'
 import { useFormat } from '@/composables/useFormat'
 import { isOnNow, isPastEvent, isRunningEvent, todayIso } from '@/lib/format'
+import { isClosing } from '@/lib/longRuns'
 import { useI18n } from 'vue-i18n'
 
 /**
@@ -52,6 +53,12 @@ export function useEventState(event: () => EventSummary) {
   const state = computed(() => {
     if (isPast.value) return { label: t('events.card.past'), class: 'text-muted-foreground' }
     if (status.value) return { label: status.value, class: 'text-destructive' }
+    // A run of weeks names its last day instead, because "since" a month ago tells nobody anything (#2594).
+    if (isRunning.value && isClosing(event(), todayIso()))
+      return {
+        label: t('events.card.closes', { day: formatWeekday(event().endDate) }),
+        class: 'text-primary',
+      }
     if (isRunning.value)
       return {
         label: t('events.card.runningSince', { day: formatWeekday(event().eventDate) }),

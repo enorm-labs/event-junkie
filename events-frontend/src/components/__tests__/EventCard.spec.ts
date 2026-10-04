@@ -370,6 +370,16 @@ describe('EventCard', () => {
     expect(wrapper.text()).toContain('Live tonight')
   })
 
+  it('says when a run of weeks closes in its last three days', () => {
+    // The clock is Monday 15 June; a run from 1 June that ends Wednesday 17 June is in its last days.
+    const wrapper = mount(EventCard, {
+      props: { event: { ...event, eventDate: '2026-06-01', endDate: '2026-06-17' } },
+      global: { stubs },
+    })
+    expect(wrapper.text()).toContain('Closes Wed')
+    expect(wrapper.text()).not.toContain('Running since')
+  })
+
   it('treats a weekender as past only after its end date', () => {
     const wrapper = mount(EventCard, {
       props: { event: { ...event, eventDate: '2026-06-12', endDate: '2026-06-14' } },
