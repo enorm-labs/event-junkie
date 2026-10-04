@@ -28,12 +28,11 @@ import java.math.BigDecimal
  * Pure parser for Colosseum's Wix Events programme page (`/event`).
  *
  * Every field comes from the embedded `wix-warmup-data` JSON (see [WixEventsWarmupData]) — the
- * rendered cards are never read. As at MAXXIM, the payload carries prices and the sold-out flag,
- * so the single overview fetch is complete and no per-event page is fetched. The event `slug`
- * still yields the canonical [ScrapedEvent.sourceUrl] and the stable [ScrapedEvent.sourceId];
- * this site publishes its detail pages under `/details-registrierung/<slug>` rather than Wix's
- * default, and the payload's own `siteSettings.detailsPagePath` says `"details"`, not the live
- * path — so the path is a constant here.
+ * rendered cards are never read. The payload carries every event, its listing time, a price and
+ * the sold-out flag; [ColosseumDetailPageScraper] replaces the times and the price with the event
+ * page's own (#1684, #1954). The event `slug` yields the canonical [ScrapedEvent.sourceUrl] and
+ * the stable [ScrapedEvent.sourceId]. The detail path `/details-registrierung/<slug>` is a
+ * constant: the payload's `siteSettings.detailsPagePath` says `"details"`, not the live path.
  *
  * **`registration.ticketing` lies for externally ticketed events.** Three of the eighteen live
  * events sell through a promoter's shop (`registration.type == 3`); Wix still emits a

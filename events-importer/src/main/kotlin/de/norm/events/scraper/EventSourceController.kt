@@ -142,8 +142,9 @@ class EventSourceController(
     /**
      * Partially updates an event source's configuration.
      *
-     * Accepts `enabled`, `importIntervalMinutes`, `maxRetries`, and the four licence fields added
-     * by #283: `descriptionLicence`, `imageLicence`, `licenceSourceUrl` and `licenceNote`.
+     * Accepts `enabled`, `importIntervalMinutes`, `maxRetries`, the four licence fields added by
+     * #283 — `descriptionLicence`, `imageLicence`, `licenceSourceUrl` and `licenceNote` — and
+     * `translationLicence` (#2561).
      * `licenceReviewedAt` is **not** accepted — it is stamped server-side when a licence verdict
      * arrives, so the timestamp cannot disagree with the verdict it belongs to.
      *

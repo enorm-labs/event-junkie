@@ -24,8 +24,8 @@ import org.springframework.stereotype.Service
  * outcome is a log line and a counter.
  *
  * The gate is [SourceLicences.allowsTranslation], which only `PERMITTED` satisfies. Since ADR-027
- * that verdict follows the display rule, so it is set wherever a venue has not prohibited the
- * description — 84 of the 86 sources on both clusters.
+ * that verdict follows the display rule, so `scripts/apply-licence-review.py` sets it wherever a
+ * venue has not prohibited the description.
  */
 @Service
 @Suppress("LongParameterList") // Constructor injection: one parameter per collaborator.
