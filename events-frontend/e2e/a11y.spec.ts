@@ -42,6 +42,14 @@ function buildScan(page: Page): AxeBuilder {
   return new AxeBuilder({ page }).exclude('#__vue-devtools-container__').withTags(TAGS)
 }
 
+/**
+ * Buttons carry `transition-all`, so one just pressed is mid-fade between its two colours for a
+ * moment, and axe measures that intermediate value.
+ */
+async function transitionsSettled(page: Page) {
+  await page.waitForFunction(() => document.getAnimations().length === 0)
+}
+
 for (const path of staticRoutes) {
   test(`${path} has no detectable accessibility violations`, async ({ page }) => {
     await page.goto(path)
@@ -67,9 +75,7 @@ test('both themes pass contrast, not just the default', async ({ page }) => {
   await page.goto('/about')
   await (await displaySetting(page, 'Theme', 'Light')).click()
   await expect(page.locator('html')).not.toHaveClass(/dark/)
-  // Buttons carry `transition-all`, so a labelled one is mid-fade from the dark text colour for a
-  // moment, and axe measures that intermediate grey.
-  await page.waitForFunction(() => document.getAnimations().length === 0)
+  await transitionsSettled(page)
 
   const results = await buildScan(page).analyze()
 
@@ -384,6 +390,7 @@ test('the compact view has no detectable accessibility violations', async ({ pag
 
   await expect(page.getByRole('heading', { name: 'Tonight Show' })).toBeVisible()
   await expect(page.locator('img')).toHaveCount(0)
+  await transitionsSettled(page)
 
   const results = await buildScan(page).analyze()
 
