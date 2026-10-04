@@ -10,8 +10,9 @@
 -- rooms of one venue on one night, relocated, cancelled, postponed, past, a translated description,
 -- and one artist MusicBrainz verified and enriched.
 --
--- Dates are relative to CURRENT_DATE. The past row is three days back, because the BFF keeps
--- yesterday's late starts listed until 06:00 (#299). No row has an image: `image_url` needs the
+-- Dates are relative to today in Berlin, the BFF's day. CURRENT_DATE follows the session zone, which
+-- is UTC on CI (#2556). The past row is three days back, because the BFF keeps yesterday's late
+-- starts listed until 06:00 (#299). No row has an image: `image_url` needs the
 -- attribution triple (V020). Every name is schema-qualified, because psql and the BFF's R2DBC client
 -- both run this and only one of them has a session to set `search_path` on.
 --
@@ -60,11 +61,11 @@ SELECT v.id,
        CASE WHEN n % 2 = 0 THEN 'Türöffnung eine Stunde vor Beginn. Keine Fotos auf dem Floor. <b>nicht</b> HTML.' END,
        CASE WHEN n % 2 = 0 THEN 'de' END,
        CASE WHEN v.slug = 'kesselhaus-nord' THEN 'PARTY' ELSE 'CONCERT' END,
-       v.slug || '-' || n || '-' || to_char(CURRENT_DATE + n, 'YYYY-MM-DD'),
-       CURRENT_DATE + n,
+       v.slug || '-' || n || '-' || to_char(timezone('Europe/Berlin', now())::date + n, 'YYYY-MM-DD'),
+       timezone('Europe/Berlin', now())::date + n,
        TIME '19:00',
        TIME '20:00',
-       CASE WHEN v.slug = 'kesselhaus-nord' THEN CURRENT_DATE + n + 1 END,
+       CASE WHEN v.slug = 'kesselhaus-nord' THEN timezone('Europe/Berlin', now())::date + n + 1 END,
        CASE WHEN v.slug = 'kesselhaus-nord' THEN TIME '08:00' END,
        v.website_url || '/events/' || n,
        'dast-' || v.slug || '-' || n,
@@ -161,7 +162,7 @@ VALUES ('Sommerlaune Festival GmbH', 'sommerlaune-festival', 'https://sommerlaun
 INSERT INTO events.event (venue_id, title, subtitle, event_type, slug, event_date, doors_time, start_time, source_url, source_id, ticket_url,
                           facebook_event_url, genre, price_presale, price_box_office)
 SELECT v.id, 'Møbius Trio', 'Support: Anna Kessel, Rauhfaser · Afterparty: DJ Nachtfalter', 'CONCERT',
-       'fixture-multi-bill-' || to_char(CURRENT_DATE + 3, 'YYYY-MM-DD'), CURRENT_DATE + 3, TIME '19:00', TIME '20:00',
+       'fixture-multi-bill-' || to_char(timezone('Europe/Berlin', now())::date + 3, 'YYYY-MM-DD'), timezone('Europe/Berlin', now())::date + 3, TIME '19:00', TIME '20:00',
        v.website_url || '/events/multi-bill', 'fixture-multi-bill', 'https://tickets.example/multi-bill',
        'https://fb.example/e/multi-bill', 'Jazz', 18.00, 22.00
 FROM events.venue v WHERE v.slug = 'jazzkeller-kreuzberg';
@@ -184,8 +185,8 @@ SELECT e.id, g.id FROM events.event e, events.genre_tag g WHERE e.source_id = 'f
 INSERT INTO events.event (venue_id, title, subtitle, description, description_language, event_type, slug, event_date, doors_time, start_time,
                           end_date, end_time, source_url, source_id, ticket_url, genre, price_presale, price_box_office)
 SELECT v.id, 'Sommerlaune Festival', 'Drei Tage, zwei Bühnen', 'Das Festival im Garten des Kesselhauses. Camping auf der Wiese.', 'de', 'FESTIVAL',
-       'fixture-festival-' || to_char(CURRENT_DATE + 10, 'YYYY-MM-DD'), CURRENT_DATE + 10, TIME '14:00', TIME '16:00',
-       CURRENT_DATE + 12, TIME '23:00', v.website_url || '/events/sommerlaune', 'fixture-festival', 'https://tickets.example/sommerlaune',
+       'fixture-festival-' || to_char(timezone('Europe/Berlin', now())::date + 10, 'YYYY-MM-DD'), timezone('Europe/Berlin', now())::date + 10, TIME '14:00', TIME '16:00',
+       timezone('Europe/Berlin', now())::date + 12, TIME '23:00', v.website_url || '/events/sommerlaune', 'fixture-festival', 'https://tickets.example/sommerlaune',
        'Techno', 89.00, 110.00
 FROM events.venue v WHERE v.slug = 'kesselhaus-nord';
 
@@ -212,7 +213,7 @@ SELECT e.id, p.id FROM events.event e, events.promoter p WHERE e.source_id = 'fi
 
 -- Sold out, with the ticket link the venue still shows.
 INSERT INTO events.event (venue_id, title, event_type, slug, event_date, start_time, source_url, source_id, ticket_url, genre, price_presale, sold_out)
-SELECT v.id, 'Anna Kessel — Ausverkauft', 'CONCERT', 'fixture-sold-out-' || to_char(CURRENT_DATE + 4, 'YYYY-MM-DD'), CURRENT_DATE + 4, TIME '20:00',
+SELECT v.id, 'Anna Kessel — Ausverkauft', 'CONCERT', 'fixture-sold-out-' || to_char(timezone('Europe/Berlin', now())::date + 4, 'YYYY-MM-DD'), timezone('Europe/Berlin', now())::date + 4, TIME '20:00',
        v.website_url || '/events/sold-out', 'fixture-sold-out', 'https://tickets.example/sold-out', 'Punk', 25.00, true
 FROM events.venue v WHERE v.slug = 'salon-zur-wilden-renate-co';
 
@@ -224,7 +225,7 @@ SELECT e.id, g.id FROM events.event e, events.genre_tag g WHERE e.source_id = 'f
 
 -- Free: the venue says so, and there is no price to show.
 INSERT INTO events.event (venue_id, title, event_type, slug, event_date, start_time, source_url, source_id, genre, free)
-SELECT v.id, 'Jam Session — Eintritt frei', 'CONCERT', 'fixture-free-' || to_char(CURRENT_DATE + 5, 'YYYY-MM-DD'), CURRENT_DATE + 5, TIME '21:00',
+SELECT v.id, 'Jam Session — Eintritt frei', 'CONCERT', 'fixture-free-' || to_char(timezone('Europe/Berlin', now())::date + 5, 'YYYY-MM-DD'), timezone('Europe/Berlin', now())::date + 5, TIME '21:00',
        v.website_url || '/events/jam', 'fixture-free', 'Jazz', true
 FROM events.venue v WHERE v.slug = 'jazzkeller-kreuzberg';
 
@@ -233,7 +234,7 @@ SELECT e.id, g.id FROM events.event e, events.genre_tag g WHERE e.source_id = 'f
 
 -- No price, and not free either: the venue asks for a donation, and the note is all it publishes.
 INSERT INTO events.event (venue_id, title, event_type, slug, event_date, start_time, source_url, source_id, genre, price_note)
-SELECT v.id, 'Rauhfaser — Spende erbeten', 'CONCERT', 'fixture-no-price-' || to_char(CURRENT_DATE + 6, 'YYYY-MM-DD'), CURRENT_DATE + 6, TIME '20:00',
+SELECT v.id, 'Rauhfaser — Spende erbeten', 'CONCERT', 'fixture-no-price-' || to_char(timezone('Europe/Berlin', now())::date + 6, 'YYYY-MM-DD'), timezone('Europe/Berlin', now())::date + 6, TIME '20:00',
        v.website_url || '/events/spende', 'fixture-no-price', 'Punk', 'Spende 5–10 €'
 FROM events.venue v WHERE v.slug = 'salon-zur-wilden-renate-co';
 
@@ -246,7 +247,7 @@ SELECT e.id, g.id FROM events.event e, events.genre_tag g WHERE e.source_id = 'f
 -- No genre: the source names none, so the row carries no text and no tag, and no genre or family
 -- filter may return it.
 INSERT INTO events.event (venue_id, title, event_type, slug, event_date, start_time, source_url, source_id, price_presale)
-SELECT v.id, 'Offene Bühne', 'SHOW', 'fixture-no-genre-' || to_char(CURRENT_DATE + 7, 'YYYY-MM-DD'), CURRENT_DATE + 7, TIME '19:30',
+SELECT v.id, 'Offene Bühne', 'SHOW', 'fixture-no-genre-' || to_char(timezone('Europe/Berlin', now())::date + 7, 'YYYY-MM-DD'), timezone('Europe/Berlin', now())::date + 7, TIME '19:30',
        v.website_url || '/events/offene-buehne', 'fixture-no-genre', 5.00
 FROM events.venue v WHERE v.slug = 'jazzkeller-kreuzberg';
 -- The open stage is bilingual by the venue's word (#2523).
@@ -254,7 +255,7 @@ UPDATE events.event SET spoken_languages = '{de,en}' WHERE source_id = 'fixture-
 
 -- A screening in the original with German subtitles: the spoken language and the subtitles are two facts (#2523).
 INSERT INTO events.event (venue_id, title, event_type, slug, event_date, start_time, source_url, source_id, spoken_languages, subtitle_language)
-SELECT v.id, 'Paris, Texas (OmU)', 'SCREENING', 'fixture-screening-' || to_char(CURRENT_DATE + 8, 'YYYY-MM-DD'), CURRENT_DATE + 8, TIME '21:00',
+SELECT v.id, 'Paris, Texas (OmU)', 'SCREENING', 'fixture-screening-' || to_char(timezone('Europe/Berlin', now())::date + 8, 'YYYY-MM-DD'), timezone('Europe/Berlin', now())::date + 8, TIME '21:00',
        v.website_url || '/events/paris-texas', 'fixture-screening', '{en}', 'de'
 FROM events.venue v WHERE v.slug = 'jazzkeller-kreuzberg';
 
@@ -262,8 +263,8 @@ FROM events.venue v WHERE v.slug = 'jazzkeller-kreuzberg';
 -- the generated fortnight, so that night has exactly these two rows under the venue.
 INSERT INTO events.event (venue_id, title, subtitle, room, event_type, slug, event_date, start_time, end_date, end_time, source_url, source_id,
                           genre, price_presale)
-SELECT v.id, r.title, r.subtitle, r.subtitle, 'PARTY', 'fixture-' || r.shape || '-' || to_char(CURRENT_DATE + 15, 'YYYY-MM-DD'), CURRENT_DATE + 15, r.start_time,
-       CURRENT_DATE + 16, TIME '08:00', v.website_url || '/events/' || r.shape, 'fixture-' || r.shape, 'Techno', 15.00
+SELECT v.id, r.title, r.subtitle, r.subtitle, 'PARTY', 'fixture-' || r.shape || '-' || to_char(timezone('Europe/Berlin', now())::date + 15, 'YYYY-MM-DD'), timezone('Europe/Berlin', now())::date + 15, r.start_time,
+       timezone('Europe/Berlin', now())::date + 16, TIME '08:00', v.website_url || '/events/' || r.shape, 'fixture-' || r.shape, 'Techno', 15.00
 FROM events.venue v
          CROSS JOIN (VALUES ('room-floor', 'Nachtschicht Floor', 'Floor 1', TIME '23:00'),
                             ('room-garden', 'Nachtschicht Garten', 'Garten', TIME '22:00')) AS r(shape, title, subtitle, start_time)
@@ -274,13 +275,13 @@ SELECT e.id, g.id FROM events.event e, events.genre_tag g WHERE e.source_id IN (
 
 -- Relocated: the venue's note says where it went, and the row stays here (ADR-030).
 INSERT INTO events.event (venue_id, title, event_type, status, relocated_to, slug, event_date, start_time, source_url, source_id, genre, price_presale)
-SELECT v.id, 'Anna Kessel — verlegt', 'CONCERT', 'RELOCATED', 'Kesselhaus Nord', 'fixture-relocated-' || to_char(CURRENT_DATE + 9, 'YYYY-MM-DD'),
-       CURRENT_DATE + 9, TIME '20:00', v.website_url || '/events/verlegt', 'fixture-relocated', 'Punk', 20.00
+SELECT v.id, 'Anna Kessel — verlegt', 'CONCERT', 'RELOCATED', 'Kesselhaus Nord', 'fixture-relocated-' || to_char(timezone('Europe/Berlin', now())::date + 9, 'YYYY-MM-DD'),
+       timezone('Europe/Berlin', now())::date + 9, TIME '20:00', v.website_url || '/events/verlegt', 'fixture-relocated', 'Punk', 20.00
 FROM events.venue v WHERE v.slug = 'salon-zur-wilden-renate-co';
 
 -- Cancelled: still published by the venue, still listed, marked.
 INSERT INTO events.event (venue_id, title, event_type, status, slug, event_date, start_time, source_url, source_id, genre, price_presale)
-SELECT v.id, 'Rauhfaser — abgesagt', 'CONCERT', 'CANCELLED', 'fixture-cancelled-' || to_char(CURRENT_DATE + 11, 'YYYY-MM-DD'), CURRENT_DATE + 11,
+SELECT v.id, 'Rauhfaser — abgesagt', 'CONCERT', 'CANCELLED', 'fixture-cancelled-' || to_char(timezone('Europe/Berlin', now())::date + 11, 'YYYY-MM-DD'), timezone('Europe/Berlin', now())::date + 11,
        TIME '20:00', v.website_url || '/events/abgesagt', 'fixture-cancelled', 'Punk', 20.00
 FROM events.venue v WHERE v.slug = 'salon-zur-wilden-renate-co';
 
@@ -290,7 +291,7 @@ SELECT e.id, g.id FROM events.event e, events.genre_tag g WHERE e.source_id IN (
 -- Postponed: the venue says the date moves and names no new one, so the row keeps the date it had.
 -- The fourth EventStatus, and `FixtureTest` asserts all four are here.
 INSERT INTO events.event (venue_id, title, event_type, status, slug, event_date, start_time, source_url, source_id, genre, price_presale)
-SELECT v.id, 'DJ Überdruck — verschoben', 'PARTY', 'POSTPONED', 'fixture-postponed-' || to_char(CURRENT_DATE + 17, 'YYYY-MM-DD'), CURRENT_DATE + 17,
+SELECT v.id, 'DJ Überdruck — verschoben', 'PARTY', 'POSTPONED', 'fixture-postponed-' || to_char(timezone('Europe/Berlin', now())::date + 17, 'YYYY-MM-DD'), timezone('Europe/Berlin', now())::date + 17,
        TIME '23:00', v.website_url || '/events/verschoben', 'fixture-postponed', 'Techno', 15.00
 FROM events.venue v WHERE v.slug = 'kesselhaus-nord';
 
@@ -300,7 +301,7 @@ SELECT e.id, g.id FROM events.event e, events.genre_tag g WHERE e.source_id = 'f
 -- Past: three days back (see the header), so the default list, Tonight and the calendar from today
 -- leave it out, while its slug still resolves.
 INSERT INTO events.event (venue_id, title, event_type, slug, event_date, start_time, source_url, source_id, genre, price_presale)
-SELECT v.id, 'Jazz $& Blues Session — vorbei', 'CONCERT', 'fixture-past-' || to_char(CURRENT_DATE - 3, 'YYYY-MM-DD'), CURRENT_DATE - 3, TIME '20:00',
+SELECT v.id, 'Jazz $& Blues Session — vorbei', 'CONCERT', 'fixture-past-' || to_char(timezone('Europe/Berlin', now())::date - 3, 'YYYY-MM-DD'), timezone('Europe/Berlin', now())::date - 3, TIME '20:00',
        v.website_url || '/events/vorbei', 'fixture-past', 'Jazz', 12.00
 FROM events.venue v WHERE v.slug = 'jazzkeller-kreuzberg';
 
@@ -309,7 +310,7 @@ FROM events.venue v WHERE v.slug = 'jazzkeller-kreuzberg';
 INSERT INTO events.event (venue_id, title, event_type, slug, event_date, start_time, source_url, source_id, genre, price_presale,
                           description, description_language, description_language_confidence,
                           description_alt, description_alt_language, description_alt_origin, description_alt_engine, description_alt_source_hash)
-SELECT v.id, 'Møbius Trio — Albumrelease', 'CONCERT', 'fixture-translated-' || to_char(CURRENT_DATE + 13, 'YYYY-MM-DD'), CURRENT_DATE + 13, TIME '20:00',
+SELECT v.id, 'Møbius Trio — Albumrelease', 'CONCERT', 'fixture-translated-' || to_char(timezone('Europe/Berlin', now())::date + 13, 'YYYY-MM-DD'), timezone('Europe/Berlin', now())::date + 13, TIME '20:00',
        v.website_url || '/events/albumrelease', 'fixture-translated', 'Jazz', 16.00,
        'Das Trio stellt sein zweites Album vor. Im Anschluss Session mit Gästen.', 'de', 0.990,
        'The trio presents its second album. A session with guests follows.', 'en', 'MACHINE', 'deepl', 'fixture'

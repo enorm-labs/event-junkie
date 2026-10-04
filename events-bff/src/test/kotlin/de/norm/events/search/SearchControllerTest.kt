@@ -1,6 +1,7 @@
 package de.norm.events.search
 
 import de.norm.events.BaseControllerTest
+import de.norm.events.ClockConfiguration
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
@@ -11,9 +12,9 @@ class SearchControllerTest : BaseControllerTest() {
         runBlocking {
             val venue = insertVenue("Berghain", "berghain")
             val other = insertVenue("SO36", "so36")
-            insertEvent(venue, "Klubnacht", "klubnacht", LocalDate.now().plusDays(1))
-            insertEvent(other, "Berghain Afterhour", "berghain-afterhour", LocalDate.now().plusDays(2))
-            insertEvent(other, "Punk Night", "punk-night", LocalDate.now().plusDays(3))
+            insertEvent(venue, "Klubnacht", "klubnacht", LocalDate.now(ClockConfiguration.BERLIN).plusDays(1))
+            insertEvent(other, "Berghain Afterhour", "berghain-afterhour", LocalDate.now(ClockConfiguration.BERLIN).plusDays(2))
+            insertEvent(other, "Punk Night", "punk-night", LocalDate.now(ClockConfiguration.BERLIN).plusDays(3))
             insertArtist("Berghain Ostgut Ton Allstars", "berghain-ostgut-ton-allstars")
             insertArtist("Dixon", "dixon")
             insertPromoter("Berghain Booking", "berghain-booking")
@@ -97,7 +98,7 @@ class SearchControllerTest : BaseControllerTest() {
     fun `GET search leaves out past events`(): Unit =
         runBlocking {
             val venue = insertVenue("Lido", "lido")
-            insertEvent(venue, "Lido Past", "lido-past", LocalDate.now().minusDays(1))
+            insertEvent(venue, "Lido Past", "lido-past", LocalDate.now(ClockConfiguration.BERLIN).minusDays(1))
 
             webTestClient
                 .get()

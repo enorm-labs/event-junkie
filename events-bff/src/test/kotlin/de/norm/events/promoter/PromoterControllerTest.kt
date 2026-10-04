@@ -1,6 +1,7 @@
 package de.norm.events.promoter
 
 import de.norm.events.BaseControllerTest
+import de.norm.events.ClockConfiguration
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
@@ -95,7 +96,7 @@ class PromoterControllerTest : BaseControllerTest() {
             val busy = insertPromoter("Trinity Music", "trinity-music")
             val spent = insertPromoter("Bygone Concerts", "bygone-concerts")
             val quiet = insertPromoter("Quiet Agency", "quiet-agency")
-            val today = LocalDate.now()
+            val today = LocalDate.now(ClockConfiguration.BERLIN)
             linkPromoter(insertEvent(venue, "Tonight", "tonight", today), busy)
             linkPromoter(insertEvent(venue, "Next week", "next-week", today.plusDays(7)), busy)
             linkPromoter(insertEvent(venue, "Last year", "last-year", today.minusYears(1)), busy)

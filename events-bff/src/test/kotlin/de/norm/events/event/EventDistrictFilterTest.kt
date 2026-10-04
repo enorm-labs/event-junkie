@@ -1,6 +1,7 @@
 package de.norm.events.event
 
 import de.norm.events.BaseControllerTest
+import de.norm.events.ClockConfiguration
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
@@ -12,8 +13,8 @@ class EventDistrictFilterTest : BaseControllerTest() {
         runBlocking {
             val lido = insertVenue("Lido", "lido", district = "kreuzberg")
             val sameiden = insertVenue("SameHeaven", "sameheaven", district = "neukoelln")
-            insertEvent(lido, "Kreuzberg Gig", "kreuzberg-gig", LocalDate.now())
-            insertEvent(sameiden, "Neukölln Gig", "neukoelln-gig", LocalDate.now())
+            insertEvent(lido, "Kreuzberg Gig", "kreuzberg-gig", LocalDate.now(ClockConfiguration.BERLIN))
+            insertEvent(sameiden, "Neukölln Gig", "neukoelln-gig", LocalDate.now(ClockConfiguration.BERLIN))
 
             webTestClient
                 .get()
@@ -36,9 +37,9 @@ class EventDistrictFilterTest : BaseControllerTest() {
             val lido = insertVenue("Lido", "lido", district = "kreuzberg")
             val sameheaven = insertVenue("SameHeaven", "sameheaven", district = "neukoelln")
             val berghain = insertVenue("Berghain", "berghain", district = "friedrichshain")
-            insertEvent(lido, "Kreuzberg Gig", "kreuzberg-gig", LocalDate.now())
-            insertEvent(sameheaven, "Neukölln Gig", "neukoelln-gig", LocalDate.now().plusDays(1))
-            insertEvent(berghain, "Friedrichshain Gig", "friedrichshain-gig", LocalDate.now().plusDays(2))
+            insertEvent(lido, "Kreuzberg Gig", "kreuzberg-gig", LocalDate.now(ClockConfiguration.BERLIN))
+            insertEvent(sameheaven, "Neukölln Gig", "neukoelln-gig", LocalDate.now(ClockConfiguration.BERLIN).plusDays(1))
+            insertEvent(berghain, "Friedrichshain Gig", "friedrichshain-gig", LocalDate.now(ClockConfiguration.BERLIN).plusDays(2))
 
             mapOf(
                 "district=kreuzberg&district=neukoelln" to listOf("kreuzberg-gig", "neukoelln-gig"),
@@ -58,8 +59,11 @@ class EventDistrictFilterTest : BaseControllerTest() {
 
             webTestClient
                 .get()
-                .uri("/events/calendar?from=${LocalDate.now()}&to=${LocalDate.now().plusDays(7)}&district=friedrichshain&district=kreuzberg")
-                .exchange()
+                .uri(
+                    "/events/calendar?from=${LocalDate.now(
+                        ClockConfiguration.BERLIN
+                    )}&to=${LocalDate.now(ClockConfiguration.BERLIN).plusDays(7)}&district=friedrichshain&district=kreuzberg"
+                ).exchange()
                 .expectStatus()
                 .isOk
                 .expectBody()

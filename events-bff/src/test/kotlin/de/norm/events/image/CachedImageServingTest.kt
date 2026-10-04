@@ -1,6 +1,7 @@
 package de.norm.events.image
 
 import de.norm.events.BaseControllerTest
+import de.norm.events.ClockConfiguration
 import io.kotest.assertions.withClue
 import io.kotest.matchers.shouldBe
 import io.micrometer.core.instrument.MeterRegistry
@@ -181,7 +182,7 @@ class CachedImageServingTest : BaseControllerTest() {
     fun `the detail response carries our url`(): Unit =
         runBlocking {
             val venueId = insertVenue("Lido", "lido")
-            insertEvent(venueId, "Show", "show", LocalDate.now().plusDays(3), imageUrl = POSTER_URL)
+            insertEvent(venueId, "Show", "show", LocalDate.now(ClockConfiguration.BERLIN).plusDays(3), imageUrl = POSTER_URL)
             insertCachedImage(POSTER_URL, HASH, ALL_WIDTHS)
 
             webTestClient
@@ -208,7 +209,7 @@ class CachedImageServingTest : BaseControllerTest() {
     fun `the list response asks for the poster width`(): Unit =
         runBlocking {
             val venueId = insertVenue("Lido", "lido")
-            insertEvent(venueId, "Show", "show", LocalDate.now().plusDays(3), imageUrl = POSTER_URL)
+            insertEvent(venueId, "Show", "show", LocalDate.now(ClockConfiguration.BERLIN).plusDays(3), imageUrl = POSTER_URL)
             insertCachedImage(POSTER_URL, HASH, ALL_WIDTHS)
 
             webTestClient
@@ -288,7 +289,7 @@ class CachedImageServingTest : BaseControllerTest() {
             // The one an earlier draft missed: rewriting the event's image and leaving the venue summary's
             // hands out a venue URL from the endpoint that had just stopped doing that.
             val venueId = insertVenue("Lido", "lido", imageUrl = LOGO_URL)
-            insertEvent(venueId, "Show", "show", LocalDate.now().plusDays(3), imageUrl = POSTER_URL)
+            insertEvent(venueId, "Show", "show", LocalDate.now(ClockConfiguration.BERLIN).plusDays(3), imageUrl = POSTER_URL)
             insertCachedImage(POSTER_URL, HASH, ALL_WIDTHS)
             insertCachedImage(LOGO_URL, LOGO_HASH, ALL_WIDTHS)
 
@@ -310,7 +311,7 @@ class CachedImageServingTest : BaseControllerTest() {
     fun `an uncached image url is blanked`(): Unit =
         runBlocking {
             val venueId = insertVenue("Lido", "lido")
-            insertEvent(venueId, "Show", "show", LocalDate.now().plusDays(3), imageUrl = POSTER_URL)
+            insertEvent(venueId, "Show", "show", LocalDate.now(ClockConfiguration.BERLIN).plusDays(3), imageUrl = POSTER_URL)
 
             webTestClient
                 .get()
@@ -359,7 +360,7 @@ class CachedImageServingTest : BaseControllerTest() {
         runBlocking {
             insertCachedImage(POSTER_URL, HASH, ALL_WIDTHS, intrinsicWidth = 1200, intrinsicHeight = 630)
             val venueId = insertVenue("Lido", "lido")
-            insertEvent(venueId, "Show", "show", LocalDate.now().plusDays(3), imageUrl = POSTER_URL)
+            insertEvent(venueId, "Show", "show", LocalDate.now(ClockConfiguration.BERLIN).plusDays(3), imageUrl = POSTER_URL)
 
             webTestClient
                 .get()

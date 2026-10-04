@@ -17,7 +17,7 @@ import java.time.LocalDate
  * `dev-env.sh seed-fixture` and the DAST scan, would only find out later or not at all.
  */
 class FixtureTest : BaseControllerTest() {
-    private val today: LocalDate = LocalDate.now()
+    private val today: LocalDate = LocalDate.now(ClockConfiguration.BERLIN)
 
     private suspend fun loadFixture() {
         val sql = File(System.getProperty("fixture.sql")).readText()

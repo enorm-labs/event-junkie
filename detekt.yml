@@ -35,6 +35,14 @@ style:
     # source declares one, so this changes nothing for production code.
     ignoreLateinitVar: true
 
+  ForbiddenMethodCall:
+    # A date needs a zone. The BFF's day is Berlin's (ClockConfiguration), and CI runs in UTC, so a
+    # zone-less `now()` in a test seeded yesterday for two hours every night (#2556).
+    active: true
+    methods:
+      - reason: 'Pass a zone or a Clock: LocalDate.now(ClockConfiguration.BERLIN), or the service''s own clock.'
+        value: 'java.time.LocalDate.now()'
+
 # This repository's own rules, implemented in the :detekt-rules module.
 event-junkie:
   LongComment:

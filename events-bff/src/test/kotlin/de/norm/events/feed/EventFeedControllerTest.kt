@@ -1,6 +1,7 @@
 package de.norm.events.feed
 
 import de.norm.events.BaseControllerTest
+import de.norm.events.ClockConfiguration
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
@@ -84,7 +85,7 @@ class EventFeedControllerTest : BaseControllerTest() {
             val venueId = insertVenue("Lido", "lido")
             val older = insertEvent(venueId, "Older Find", "older-find", friday)
             val newer = insertEvent(venueId, "Newer Find", "newer-find", friday, startTime = LocalTime.of(20, 0))
-            val over = insertEvent(venueId, "Over", "over", LocalDate.now().minusDays(2))
+            val over = insertEvent(venueId, "Over", "over", LocalDate.now(ClockConfiguration.BERLIN).minusDays(2))
             firstSeen(older, Instant.parse("2099-01-01T10:00:00Z"))
             firstSeen(newer, Instant.parse("2099-01-02T10:00:00Z"))
             firstSeen(over, Instant.parse("2099-01-03T10:00:00Z"))

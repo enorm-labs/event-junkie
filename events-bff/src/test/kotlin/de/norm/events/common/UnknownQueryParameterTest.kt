@@ -1,6 +1,7 @@
 package de.norm.events.common
 
 import de.norm.events.BaseControllerTest
+import de.norm.events.ClockConfiguration
 import de.norm.events.event.EventFilterParams
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
@@ -107,7 +108,7 @@ class UnknownQueryParameterTest : BaseControllerTest() {
         runBlocking {
             val lido = insertVenue(name = "Lido", slug = "lido")
             val hase = insertVenue(name = "Weisse Hase", slug = "der-weisse-hase")
-            val today = LocalDate.now()
+            val today = LocalDate.now(ClockConfiguration.BERLIN)
             insertEvent(venueId = lido, title = "At Lido", slug = "at-lido", eventDate = today)
             insertEvent(venueId = hase, title = "At Hase", slug = "at-hase", eventDate = today)
 
