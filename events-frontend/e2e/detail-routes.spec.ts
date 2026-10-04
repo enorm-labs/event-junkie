@@ -394,7 +394,7 @@ test.describe('a past event', () => {
 
     await page.goto('/en/events/mock-event')
 
-    await expect(page.locator('header').getByText('· Saal')).toBeVisible()
+    await expect(page.locator('header').getByText('Saal', { exact: true })).toBeVisible()
   })
 
   test('a mixed lineup labels every act', async ({ page }) => {
