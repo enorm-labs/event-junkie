@@ -3,8 +3,8 @@
 ## Status
 
 **Accepted (2026-09-17) — every artist row is looked up in MusicBrainz on a tick of its own, outside every import. The verdict and the
-MusicBrainz id are stored. The name is never rewritten from it. Enrichment from the id is a second step, and it runs
-only for a row with an `EXACT` verdict.**
+MusicBrainz id are stored. The name is never rewritten from it, except for its letter case on an `EXACT` row (#2317).
+Enrichment from the id is a second step, and it runs only for a row with an `EXACT` verdict.**
 
 **Steps B, C and C+ implemented.** Step B is [#1567](https://github.com/enorm-labs/event-junkie/issues/1567). Step C is
 [#1568](https://github.com/enorm-labs/event-junkie/issues/1568). Step C+ is
@@ -142,6 +142,14 @@ has its own credit, because one credit links one article. A credit is all or non
 leads. An alt text stands only beside a Wikipedia description. A lead under 80 characters is refused. A lead with birth
 data is refused on an ensemble too, because MusicBrainz types some solo acts as groups. Birth data in one lead refuses both.
 A person gets no lead. Its first sentence is a birth date and a birthplace, and a rule that cuts them is never complete.
+
+Amended 2026-10-04 ([#2317](https://github.com/enorm-labs/event-junkie/issues/2317)): rule 4 gains one exception. The
+enrichment of an `EXACT` row stores the MusicBrainz name when it differs from the stored name in letter case only. `Nvst`
+becomes `NVST`. A diacritic, a space or any other difference still changes nothing. The slug never changes. Rule 4 exists
+because a verdict can be wrong. A case-only rewrite on an `EXACT` row is a small risk. Rule 1 already requires equal
+folded names. The de-shouter chose the stored case without evidence. A wrong rewrite changes the display name only, and a
+person corrects it in the admin API. That correction does not hold: the next import of the act queues a fresh verdict,
+and its read writes the MusicBrainz case again. A wrong `EXACT` match is then the defect to fix.
 
 What is stored per artist in step B: `musicbrainz_id` (nullable), `musicbrainz_match` (`EXACT`, `AMBIGUOUS`, `NONE`,
 `UNCHECKED`), `musicbrainz_checked_at`. Nothing else.
