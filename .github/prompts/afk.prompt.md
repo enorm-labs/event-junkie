@@ -155,7 +155,8 @@ The one document the user reads on return. Lead with what needs the user. Rewrit
 
 ## Notes
 
-- **Labelling for a run**: `gh issue edit <n> --add-label afk-ok`. The label means "may be worked unattended". AFK mode never adds or removes it.
+- **Labelling for a run**: `gh issue edit <n> --add-label afk-ok`. The label means "may be worked unattended", and
+  [`/new-issue`](new-issue.prompt.md) step 4 lists when an issue qualifies. AFK mode never adds or removes it.
 - **Other sessions work the same backlog.** Just before claiming, check again for a claim by another session, using the signals in
   [`/start-issue`](start-issue.prompt.md) step 2, not the assignee. An issue claimed meanwhile is skipped.
 - **A long gate is not a hang.** `Backend build` takes about eight minutes in CI and longer locally. Check `docker ps` and the test-result timestamps
