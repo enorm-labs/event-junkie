@@ -91,6 +91,9 @@ export function useFormat() {
         : start
     },
 
+    /** The end as `formatEventTime` words it, alone; null when the venue stated none. */
+    formatEventEnd: (event: EventTimes) => endLabel(event)?.text ?? null,
+
     /** The words behind a `~` time, for a `title` and a screen reader; null when the time is a fact. */
     eventTimeHint: (event: EventTimes) =>
       !event.startTime && !event.doorsTime && event.assumedStartTime

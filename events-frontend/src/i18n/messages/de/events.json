@@ -74,6 +74,11 @@
     "venue": "Location",
     "tickets": "Tickets",
     "language": "Sprache",
+    "when": {
+      "label": "Wann",
+      "start": "Beginn {time}",
+      "estimate": "unsere Schätzung"
+    },
     "promoters": "Veranstalter",
     "buyTickets": "Tickets kaufen",
     "eventPage": "Event-Seite",

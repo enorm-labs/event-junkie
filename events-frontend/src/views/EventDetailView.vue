@@ -7,6 +7,7 @@ import CachedImage from '@/components/CachedImage.vue'
 import EventCard from '@/components/EventCard.vue'
 import EventRow from '@/components/EventRow.vue'
 import EventShareActions from '@/components/EventShareActions.vue'
+import EventWhen from '@/components/EventWhen.vue'
 import SectionLabel from '@/components/SectionLabel.vue'
 import { useCompactView } from '@/composables/useCompactView'
 import { useEvent } from '@/composables/useEvent'
@@ -108,6 +109,20 @@ const timeHint = computed(() => (event.value ? eventTimeHint(event.value) : null
 // A fact block beside the venue and the tickets, not a word under the title (#2523).
 const spokenLanguage = computed(() => formatSpokenLanguage(event.value?.spokenLanguages, null))
 const subtitles = computed(() => formatSpokenLanguage(null, event.value?.subtitleLanguage))
+const hasTickets = computed(
+  () =>
+    !!event.value &&
+    !!(
+      formatPrice(event.value.pricePresale, event.value.priceCurrency) ||
+      formatPrice(event.value.priceBoxOffice, event.value.priceCurrency) ||
+      event.value.priceNote
+    ),
+)
+// When, venue, tickets, language: three share a row, and four wrap to 2×2 rather than squeeze.
+const factColumns = computed(() => {
+  const optional = [event.value?.venue, hasTickets.value, spokenLanguage.value || subtitles.value]
+  return optional.filter(Boolean).length === 2 ? 'sm:grid-cols-3' : 'sm:grid-cols-2'
+})
 
 const { t, te, locale } = useI18n()
 
@@ -369,14 +384,9 @@ useStructuredData((): JsonLd[] => {
         >
       </p>
 
-      <section
-        :class="
-          cn(
-            'grid grid-cols-1 gap-6',
-            spokenLanguage || subtitles ? 'sm:grid-cols-3' : 'sm:grid-cols-2',
-          )
-        "
-      >
+      <section :class="cn('grid grid-cols-1 gap-6', factColumns)">
+        <EventWhen :event="event" />
+
         <div v-if="event.venue" class="space-y-1">
           <SectionLabel>{{ t('events.detail.venue') }}</SectionLabel>
           <RouterLink
@@ -393,14 +403,7 @@ useStructuredData((): JsonLd[] => {
           </p>
         </div>
 
-        <div
-          v-if="
-            formatPrice(event.pricePresale, event.priceCurrency) ||
-            formatPrice(event.priceBoxOffice, event.priceCurrency) ||
-            event.priceNote
-          "
-          class="space-y-1"
-        >
+        <div v-if="hasTickets" class="space-y-1">
           <SectionLabel>{{ t('events.detail.tickets') }}</SectionLabel>
           <p v-if="formatPrice(event.pricePresale, event.priceCurrency)" class="text-body">
             {{ t('events.detail.presale') }}:
