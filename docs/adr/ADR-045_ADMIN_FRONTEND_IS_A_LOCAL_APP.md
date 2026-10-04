@@ -58,7 +58,8 @@ The rules:
   set of pull requests is merged and the other is not.
 - **The admin API types are hand-written for now.** No generated schema covers the importer. A later change can generate one from the importer's OpenAPI
   document, as `scripts/api-schema-parity.sh` does for the BFF.
-- **No CI job builds `events-admin`.** CodeQL scans it. Type-check, lint and the unit tests run only on the operator's computer until a workflow runs them.
+- **No CI job builds an image of `events-admin`.** CodeQL scans it. `build-admin.yml` runs the type-check, the lint and the unit tests on each pull request
+  that changes it ([#2635](https://github.com/enorm-labs/event-junkie/issues/2635)).
 - **The admin app is not distributed.** It runs on the operator's computer only. So its dependencies need no entry in `notices.json`.
 
 ## When to revisit

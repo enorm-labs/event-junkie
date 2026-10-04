@@ -19,7 +19,7 @@ The dev server stops with a message when the mode is not `staging` or `productio
 npm run type-check && npm run check:lint && npm run check:format && npm run test:unit -- --run && npm run build-only
 ```
 
-No CI job runs these. Run them before a pull request that changes this directory.
+`build-admin.yml` runs the same commands on each pull request that changes this directory. Its required check is `Build & Test (admin)`.
 
 ## Conventions
 
