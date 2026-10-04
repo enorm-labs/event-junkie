@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import { computed, onMounted, watch } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
+import BaseBadge from '@/components/BaseBadge.vue'
 import BaseDetailView from '@/components/BaseDetailView.vue'
 import { useFormat } from '@/composables/useFormat'
 import { useLocalePath } from '@/composables/useLocalePath'
@@ -14,6 +15,7 @@ import { useI18n } from 'vue-i18n'
 import { useStructuredData } from '@/composables/useStructuredData'
 import { venuePageJsonLd } from '@/lib/structuredData'
 import { descriptionFor } from '@/lib/description'
+import { inCharacterOrder } from '@/lib/venueCharacters'
 import type { Locale } from '@/i18n/locales'
 
 const route = useRoute()
@@ -78,8 +80,49 @@ usePageMeta(() =>
 
 const credit = computed(() => imageCredit(venue.value))
 
-const { formatEventType, formatFamily, formatVenueFacts } = useFormat()
-const facts = computed(() => (venue.value ? formatVenueFacts(venue.value) : ''))
+const { formatEventType, formatFamily, formatVenueCharacter, formatVenueFacts } = useFormat()
+// The character tags are left out here: the page lists them below, each with its source.
+const facts = computed(() =>
+  venue.value
+    ? formatVenueFacts({ venueTypes: venue.value.venueTypes, capacity: venue.value.capacity })
+    : '',
+)
+
+/**
+ * What the venue says about itself (#2379). Each tag is a pill that lists every venue with the same
+ * tag, which makes it a control rather than a fact (design.instructions.md §1).
+ */
+const characters = computed(() =>
+  inCharacterOrder(venue.value?.characterTags ?? [], (c) => c.tag ?? '').map((c) => ({
+    label: formatVenueCharacter(c.tag ?? ''),
+    to: { path: localePath('/venues'), query: { character: c.tag ?? '' } },
+  })),
+)
+
+/** What the venue plays and hosts, then what it says about itself: one block of filter pills. */
+const facets = computed(() => [
+  ...programme.value,
+  ...(characters.value.length
+    ? [{ term: t('detail.venue.character'), items: characters.value }]
+    : []),
+])
+
+/** The venue's pages the tags rest on, once each: several tags usually share one page. */
+const characterSources = computed(() => {
+  const urls = [...new Set((venue.value?.characterTags ?? []).map((c) => c.sourceUrl ?? ''))]
+  return urls.filter(Boolean).map((href) => ({ href, label: sourceLabel(href) }))
+})
+
+/** `berghain.berlin/de/awareness` for `https://www.berghain.berlin/de/awareness/`. */
+function sourceLabel(href: string): string {
+  try {
+    const url = new URL(href)
+    const path = decodeURIComponent(url.pathname).replace(/\/$/, '')
+    return url.hostname.replace(/^www\./, '') + path
+  } catch {
+    return href
+  }
+}
 const localePath = useLocalePath()
 
 /** What the venue mostly plays and hosts, each a link to its events of that kind. */
@@ -151,21 +194,45 @@ const programme = computed(() => {
       {{ description.text }}
     </p>
 
-    <section v-if="programme.length" class="space-y-1 text-body">
-      <dl class="space-y-1">
-        <div v-for="row in programme" :key="row.term" class="flex flex-wrap gap-x-2">
-          <dt class="text-muted-foreground">{{ row.term }}</dt>
-          <dd>
-            <template v-for="(item, i) in row.items" :key="item.label">
-              <template v-if="i">{{ ' · ' }}</template>
-              <RouterLink :to="item.to" class="text-primary underline-offset-4 hover:underline">
-                {{ item.label }}
-              </RouterLink>
-            </template>
+    <!-- Every pill here opens a filtered list, which makes it a control (design.instructions.md §1). -->
+    <section v-if="facets.length" class="space-y-3 text-body" data-testid="venue-facets">
+      <dl class="space-y-2">
+        <div
+          v-for="row in facets"
+          :key="row.term"
+          class="space-y-1 sm:flex sm:items-baseline sm:gap-4 sm:space-y-0"
+        >
+          <!-- One label width for every row, so the pills start on one line; wide enough for German. -->
+          <dt class="text-muted-foreground sm:w-40 sm:shrink-0">{{ row.term }}</dt>
+          <dd class="flex flex-wrap gap-2">
+            <RouterLink
+              v-for="item in row.items"
+              :key="item.label"
+              :to="item.to"
+              class="rounded-full transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+            >
+              <BaseBadge variant="outline">{{ item.label }}</BaseBadge>
+            </RouterLink>
           </dd>
         </div>
       </dl>
-      <p class="text-meta text-muted-foreground">{{ t('detail.venue.programmeNote') }}</p>
+      <div class="space-y-0.5 text-meta text-muted-foreground">
+        <p v-if="programme.length">{{ t('detail.venue.programmeNote') }}</p>
+        <p v-if="characterSources.length" class="break-words">
+          {{ t('detail.venue.characterNote') }}:
+          <template v-for="(source, i) in characterSources" :key="source.href">
+            <template v-if="i">{{ ' · ' }}</template>
+            <a
+              :href="source.href"
+              class="underline underline-offset-4 hover:text-foreground"
+              rel="noopener noreferrer"
+              target="_blank"
+            >
+              {{ source.label }}</a
+            >
+          </template>
+        </p>
+      </div>
     </section>
   </BaseDetailView>
 </template>

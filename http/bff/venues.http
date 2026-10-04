@@ -37,6 +37,10 @@ Accept: application/json
 GET {{bff-host}}/api/venues?type=club&type=live-venue&family=electronic&eventType=PARTY
 Accept: application/json
 
+### Filter by character tag, as the venue describes itself (#2379)
+GET {{bff-host}}/api/venues?character=queer&character=awareness-team
+Accept: application/json
+
 ### Unknown/malicious sort is ignored (falls back to default order, not a 500)
 GET {{bff-host}}/api/venues?sort=name;DROP TABLE events.venue;--
 Accept: application/json

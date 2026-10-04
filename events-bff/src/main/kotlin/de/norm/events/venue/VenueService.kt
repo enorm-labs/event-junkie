@@ -18,6 +18,7 @@ import java.time.LocalDate
 class VenueService(
     private val venueRepository: VenueRepository,
     private val venueSearchRepository: VenueSearchRepository,
+    private val characterTagRepository: VenueCharacterTagRepository,
     private val cachedImageGate: CachedImageGate,
     private val clock: Clock
 ) {
@@ -32,10 +33,16 @@ class VenueService(
         val page = venueSearchRepository.search(filter, LocalDate.now(clock), safePageable, countCap)
         val entities = venueRepository.findByIdIn(page.rows.map { it.id }).toList().associateBy { it.id }
         val images = cachedImageGate.forUrls(entities.values.map { it.imageUrl })
+        val tags = characterTagRepository.findByVenueIds(entities.keys.filterNotNull())
         return PageResponse.of(
             page.rows.mapNotNull { row ->
                 entities[row.id]?.let {
-                    VenueListItemResponse.fromEntity(it, images.serve(it.imageUrl, POSTER_WIDTH), row.upcomingEventCount)
+                    VenueListItemResponse.fromEntity(
+                        it,
+                        images.serve(it.imageUrl, POSTER_WIDTH),
+                        row.upcomingEventCount,
+                        tags[row.id].orEmpty().map { tag -> tag.tag }
+                    )
                 }
             },
             safePageable,
@@ -52,7 +59,8 @@ class VenueService(
     suspend fun findBySlug(slug: String): VenueDetailResponse {
         val entity = venueRepository.findBySlug(slug) ?: throw VenueNotFoundException(slug)
         val image = cachedImageGate.forUrl(entity.imageUrl, DETAIL_WIDTH)
-        return VenueDetailResponse.fromEntity(entity, image)
+        val tags = entity.id?.let { characterTagRepository.findByVenueIds(listOf(it))[it] }.orEmpty()
+        return VenueDetailResponse.fromEntity(entity, image, tags.map { VenueCharacterTagResponse(it.tag, it.sourceUrl) })
     }
 
     companion object {

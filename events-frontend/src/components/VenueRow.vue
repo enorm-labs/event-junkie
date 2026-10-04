@@ -12,7 +12,9 @@ const props = withDefaults(
   defineProps<{
     /** The count shows when the venue list sent one and no distance takes its place. */
     venue: VenueSummary &
-      Partial<Pick<VenueListItem, 'upcomingEventCount' | 'venueTypes' | 'capacity'>>
+      Partial<
+        Pick<VenueListItem, 'upcomingEventCount' | 'venueTypes' | 'characterTags' | 'capacity'>
+      >
     /** Heading level, which belongs to the page rather than to the row — see `EventCard.vue`. */
     as?: 'h2' | 'h3' | 'h4'
     /** How far the venue is from the visitor's chosen origin, already formatted. */

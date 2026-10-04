@@ -452,6 +452,27 @@ export interface components {
              *     ]
              */
             programmeEventTypes?: string[];
+            /**
+             * @description What the venue says about itself (its kind of space, its door, its access), as character tag slugs, ordered by slug. Set only where the venue's own page states it.
+             * @example [
+             *       "queer",
+             *       "awareness-team"
+             *     ]
+             */
+            characterTags?: string[];
+        };
+        /** @description A character tag and the venue's own page that states it */
+        VenueCharacterTagResponse: {
+            /**
+             * @description Character tag slug
+             * @example queer
+             */
+            tag?: string;
+            /**
+             * @description URL of the venue's own page that states the tag
+             * @example https://www.so36.com/about
+             */
+            sourceUrl?: string;
         };
         /** @description Full venue detail */
         VenueDetailResponse: {
@@ -581,6 +602,8 @@ export interface components {
              *     ]
              */
             programmeEventTypes?: string[];
+            /** @description What the venue says about itself (its kind of space, its door, its access), as character tag slugs, ordered by slug. Set only where the venue's own page states it. Each carries the URL of the venue's own page that states it. */
+            characterTags?: components["schemas"]["VenueCharacterTagResponse"][];
         };
         /** @description Compact artist summary */
         ArtistSummaryResponse: {
@@ -1613,6 +1636,8 @@ export interface operations {
                 family?: string[];
                 /** @description Event type, e.g. CONCERT (case-insensitive). Repeatable: a venue that hosts any given type matches. */
                 eventType?: string[];
+                /** @description Character tag slug (e.g. queer), as the venue describes itself. Repeatable: a venue with any given tag matches. An unknown tag matches nothing. */
+                character?: string[];
                 /** @description Zero-based page index (0..N) */
                 page?: number;
                 /** @description The size of the page to be returned */

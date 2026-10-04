@@ -604,6 +604,18 @@ CREATE TABLE events.venue (
 );
 
 --
+-- Name: venue_character_tag; Type: TABLE; Schema: events; Owner: -
+--
+
+CREATE TABLE events.venue_character_tag (
+    venue_id bigint NOT NULL,
+    tag text NOT NULL,
+    source_url text NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT venue_character_tag_source_url_check CHECK ((source_url ~ '^https?://'::text))
+);
+
+--
 -- Name: venue_id_seq; Type: SEQUENCE; Schema: events; Owner: -
 --
 
@@ -792,6 +804,13 @@ ALTER TABLE ONLY events.promoter
     ADD CONSTRAINT promoter_slug_key UNIQUE (slug);
 
 --
+-- Name: venue_character_tag venue_character_tag_pkey; Type: CONSTRAINT; Schema: events; Owner: -
+--
+
+ALTER TABLE ONLY events.venue_character_tag
+    ADD CONSTRAINT venue_character_tag_pkey PRIMARY KEY (venue_id, tag);
+
+--
 -- Name: venue venue_pkey; Type: CONSTRAINT; Schema: events; Owner: -
 --
 
@@ -950,6 +969,12 @@ CREATE INDEX idx_import_run_field_stats_baseline ON events.import_run_field_stat
 CREATE INDEX idx_promoter_name_search_trgm ON events.promoter USING gin (replace(name_search, ' '::text, ''::text) events.gin_trgm_ops);
 
 --
+-- Name: idx_venue_character_tag_tag; Type: INDEX; Schema: events; Owner: -
+--
+
+CREATE INDEX idx_venue_character_tag_tag ON events.venue_character_tag USING btree (tag);
+
+--
 -- Name: idx_venue_district; Type: INDEX; Schema: events; Owner: -
 --
 
@@ -1097,3 +1122,10 @@ ALTER TABLE ONLY events.event
 
 ALTER TABLE ONLY events.import_run_field_stats
     ADD CONSTRAINT import_run_field_stats_source_id_fkey FOREIGN KEY (source_id) REFERENCES events.event_source(id) ON DELETE CASCADE;
+
+--
+-- Name: venue_character_tag venue_character_tag_venue_id_fkey; Type: FK CONSTRAINT; Schema: events; Owner: -
+--
+
+ALTER TABLE ONLY events.venue_character_tag
+    ADD CONSTRAINT venue_character_tag_venue_id_fkey FOREIGN KEY (venue_id) REFERENCES events.venue(id) ON DELETE CASCADE;

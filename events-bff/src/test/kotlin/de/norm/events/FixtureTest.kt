@@ -173,6 +173,21 @@ class FixtureTest : BaseControllerTest() {
         }
 
     @Test
+    fun `the tagged venue carries its character tags with their sources, and the filter finds it`(): Unit =
+        runBlocking {
+            loadFixture()
+
+            get("/venues/kesselhaus-nord")
+                .jsonPath("$.characterTags[*].tag")
+                .isEqualTo(listOf("awareness-team", "queer"))
+                .jsonPath("$.characterTags[0].sourceUrl")
+                .isEqualTo("https://kesselhaus-nord.example/awareness")
+            get("/venues?character=queer")
+                .jsonPath("$.content[*].slug")
+                .isEqualTo(listOf("kesselhaus-nord"))
+        }
+
+    @Test
     fun `two rooms of one venue on one night are two rows under that venue and that day`(): Unit =
         runBlocking {
             loadFixture()

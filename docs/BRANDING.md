@@ -560,18 +560,22 @@ that away for consistency alone. If it is ever unified, unify toward the outline
 badge in the tree was put through it on 2026-09-10 (#1248), and **none failed on content** — each one is a fact. The form failed: five pills under one title
 read as decoration even when each is true, and they do not fit under a poster.
 
-| Pill                         | Where                        | Outcome                                                 |
-| ---------------------------- | ---------------------------- | ------------------------------------------------------- |
-| `Past` / `Sold out` / `Free` | Event card, detail header    | One coloured word in the meta line                      |
-| Event type                   | Event card                   | Flattened into the meta line                            |
-| Genre tags                   | Event card, several per card | Flattened into the meta line                            |
-| Stage                        | Detail page lineup           | Flattened beside the role, which was already plain text |
-| Status (`Cancelled`, …)      | Detail page header           | **Stays a pill**                                        |
-| `beta`                       | Header, beside the wordmark  | **Stays a pill**                                        |
+| Pill                         | Where                               | Outcome                                                 |
+| ---------------------------- | ----------------------------------- | ------------------------------------------------------- |
+| `Past` / `Sold out` / `Free` | Event card, detail header           | One coloured word in the meta line                      |
+| Event type                   | Event card                          | Flattened into the meta line                            |
+| Genre tags                   | Event card, several per card        | Flattened into the meta line                            |
+| Stage                        | Detail page lineup                  | Flattened beside the role, which was already plain text |
+| Status (`Cancelled`, …)      | Detail page header                  | **Stays a pill**                                        |
+| `beta`                       | Header, beside the wordmark         | **Stays a pill**                                        |
+| Filter link (#2379)          | Detail page: plays, hosts, features | **A pill**: it opens the list filtered by it            |
+| Venue feature (#2379)        | Venue card and row                  | A word in the meta line                                 |
 
-**The two survivors are the two exceptions, and both are deliberate.** A cancelled event is the one thing on its page that must not read as another word in a
+**The survivors are deliberate, and each one is a state or a control.** A cancelled event is the one thing on its page that must not read as another word in a
 grey row. The `beta` badge is a link to the paragraph that explains what beta means here, so it is a control rather than an ornament, and a pill is the right
-shape for a small link outside the navigation.
+shape for a small link outside the navigation. A filter link on a detail page is the same kind of control: on a venue page, "Mostly plays", "Hosts" and "Features" are
+three aligned rows of pills, each pill opening the list filtered by it. A feature's source is not on the pill: one line below the rows names the venue's pages
+the features rest on, each page once.
 
 **Colour is emphasis on the word, never instead of it** (WCAG 1.4.1). `Sold out` stays the word `Sold out`. The three state colours were measured as text on
 the page ground rather than assumed, since they were chosen against a tinted chip: `--success` is 5.37:1 in light and 10.24:1 in dark, `--destructive` 4.76:1

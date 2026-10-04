@@ -273,6 +273,23 @@ source hash here. On `event` those two columns exist because the second language
 text must be disclosed, and it goes stale when the venue rewrites the original. Neither applies to a venue. A
 correction to one language must be carried to the other by hand.
 
+### venue_character_tag (Side Table)
+
+What a venue says about itself, beyond its type and its programme: its kind of space, its door and its access (#2379). One row per tag on a venue.
+
+| Field        | Type          | Nullable | Description                                                   | Example                      |
+| ------------ | ------------- | -------- | ------------------------------------------------------------- | ---------------------------- |
+| `venue_id`   | `BIGINT` FK   | No       | References `venue.id`. Deleting the venue deletes its tags    | `42`                         |
+| `tag`        | `TEXT`        | No       | `VenueCharacterTag` slug, such as `queer` or `awareness-team` | `queer`                      |
+| `source_url` | `TEXT`        | No       | The venue's own page that states the tag                      | `https://www.so36.com/about` |
+| `created_at` | `TIMESTAMPTZ` | No       | When the tag was set                                          |                              |
+
+The primary key is `(venue_id, tag)`. A side table and not a `TEXT[]` beside `venue_types`, because a tag must carry its
+source URL. **A tag goes on a venue only where the venue's own page states it.** A review, a listing or an impression is
+not a source. A venue with an unclear page stays untagged. The admin API sets and removes tags under
+`/api/admin/venues/{id}/character-tags`. `scripts/venue-character-tags.py` writes the reviewed rows from
+`docs/venue-character-tags/PROPOSED.tsv`. There is no `open-air` tag, because the `open-air` venue type covers it.
+
 ### Event
 
 Core entity representing a single music event at a venue on a specific date.

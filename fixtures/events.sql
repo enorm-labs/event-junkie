@@ -32,6 +32,14 @@ VALUES
     ('Jazzkeller $& Kreuzberg', 'jazzkeller-kreuzberg', 'Oranienstraße 12', '10999', 'kreuzberg', 52.501000, 13.421000, 'https://jazzkeller.example', 'Small basement stage. Jazz on weekdays, blues at the weekend.', 'en', NULL, NULL,
      '{live-venue,bar}', 60, '{jazz-blues}', '{CONCERT}');
 
+-- Character tags (#2379): one venue with two, so the list, the detail and the filter each have a row.
+INSERT INTO events.venue_character_tag (venue_id, tag, source_url)
+SELECT v.id, t.tag, t.source_url
+FROM events.venue v
+JOIN (VALUES ('queer', 'https://kesselhaus-nord.example/about'), ('awareness-team', 'https://kesselhaus-nord.example/awareness'))
+    AS t(tag, source_url) ON true
+WHERE v.slug = 'kesselhaus-nord';
+
 INSERT INTO events.promoter (name, slug, website_url)
 VALUES ('Nachtschicht Kollektiv', 'nachtschicht-kollektiv', 'https://nachtschicht.example');
 
