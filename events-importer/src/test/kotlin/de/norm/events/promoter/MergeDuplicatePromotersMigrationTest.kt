@@ -14,8 +14,8 @@ import java.sql.Connection
 import java.sql.DriverManager
 
 /**
- * Runs the promoter data migrations — V023, V025, V026, V027, V029, V030, V031, V032, V065, V066, V073, V079, V086 — against the rows each names, planted on a
- * database migrated to just before it.
+ * Runs the promoter data migrations — V023, V025, V026, V027, V029, V030, V031, V032, V065, V066, V073, V079, V086,
+ * V103 — against the rows each names, planted on a database migrated to just before it.
  *
  * The migrations are keyed on slugs read from staging, and a misspelt one updates no row while
  * Flyway records success (#987). Nothing seeds promoters, so `MigrationSlugTest` cannot check
@@ -96,6 +96,7 @@ class MergeDuplicatePromotersMigrationTest {
         plantThenMigrate("78", ::plantCtmSpellings)
         plantThenMigrate("79", ::plantAdmiralspalastFragments)
         plantThenMigrate("86", ::plantSchokoladenOldAndFast)
+        plantThenMigrate("103", ::plantTyposAndDomainCredits)
     }
 
     private fun plantThenMigrate(
@@ -287,6 +288,70 @@ class MergeDuplicatePromotersMigrationTest {
         eventsOf("fast") shouldContainExactlyInAnyOrder listOf("so36:fast")
     }
 
+    @Test
+    fun `V103 folds the typo and duplicate rows onto their promoters, renames the domain credits and drops metal-de`() {
+        val stored = promoters()
+        stored.keys.filter { it in V103_GONE } shouldBe emptyList()
+        stored["concertburo-zahlmann"] shouldBe "Concertbüro Zahlmann"
+        eventsOf("concertburo-zahlmann") shouldContainExactlyInAnyOrder listOf("z1", "z2", "z3")
+        stored["sonic-boom"] shouldBe "Sonic Boom"
+        eventsOf("sonic-boom") shouldContainExactlyInAnyOrder listOf("b1", "b2")
+        stored["heesen-konzerte"] shouldBe "Heesen Konzerte"
+        eventsOf("heesen-konzerte") shouldContainExactlyInAnyOrder listOf("h2", "h3", "h4")
+        stored["berlinmusiker-de"] shouldBe "Berlinmusiker.de"
+        eventsOf("berlinmusiker-de") shouldContainExactlyInAnyOrder listOf("w1")
+        stored["dan-jensai"] shouldBe "Dan & Jensai"
+        eventsOf("dan-jensai") shouldContainExactlyInAnyOrder listOf("d1")
+        eventsOf("kulturnews") shouldContainExactlyInAnyOrder listOf("md1")
+        connection.createStatement().use { statement ->
+            statement.executeQuery("SELECT count(*) FROM events.event WHERE source_id = 'md1'").use { rows ->
+                rows.next()
+                rows.getInt(1) shouldBe 1
+            }
+        }
+    }
+
+    @Test
+    fun `V103 keeps the Heesen row's id and website on its new slug`() {
+        connection.createStatement().use { statement ->
+            statement.executeQuery("SELECT website_url FROM events.promoter WHERE slug = 'heesen-konzerte'").use { rows ->
+                rows.next()
+                rows.getString(1) shouldBe "https://www.heesen-konzerte.de"
+            }
+        }
+    }
+
+    /**
+     * V103: production's rows, an event crediting both sides of a pair, the two Heesen rows with no
+     * survivor, and metal.de beside another credit.
+     */
+    private fun plantTyposAndDomainCredits() {
+        connection.createStatement().use { statement ->
+            plantPromoter(statement, "Concertbüro Zahlmann", "concertburo-zahlmann")
+            plantPromoter(statement, "Concetbüro Zahlmann", "concetburo-zahlmann")
+            plantEvent(statement, "z1", "concertburo-zahlmann")
+            plantEvent(statement, "z2", "concetburo-zahlmann")
+            plantEvent(statement, "z3", "concertburo-zahlmann", "concetburo-zahlmann")
+            plantPromoter(statement, "Sonic Boom", "sonic-boom")
+            plantPromoter(statement, "Sonic Bomm", "sonic-bomm")
+            plantEvent(statement, "b1", "sonic-boom")
+            plantEvent(statement, "b2", "sonic-bomm")
+            plantPromoter(statement, "Heesen", "heesen")
+            plantPromoter(statement, "Heesen Media", "heesen-media")
+            statement.execute("UPDATE promoter SET website_url = 'https://www.heesen-konzerte.de' WHERE slug = 'heesen'")
+            plantEvent(statement, "h2", "heesen")
+            plantEvent(statement, "h3", "heesen-media")
+            plantEvent(statement, "h4", "heesen", "heesen-media")
+            plantPromoter(statement, "berlinmusiker.de", "berlinmusiker-de")
+            plantEvent(statement, "w1", "berlinmusiker-de")
+            plantPromoter(statement, "www.dundj.berlin", "www-dundj-berlin")
+            plantEvent(statement, "d1", "www-dundj-berlin")
+            plantPromoter(statement, "metal.de", "metal-de")
+            plantPromoter(statement, "kulturnews", "kulturnews")
+            plantEvent(statement, "md1", "metal-de", "kulturnews")
+        }
+    }
+
     /** V086: the two rows the split minted, both on one night, and a `fast` row another venue credits, which stays. */
     private fun plantSchokoladenOldAndFast() {
         connection.createStatement().use { statement ->
@@ -398,4 +463,8 @@ class MergeDuplicatePromotersMigrationTest {
                         "JOIN events.promoter p ON p.id = ep.promoter_id WHERE p.slug = '$slug'"
                 ).use { rows -> generateSequence { if (rows.next()) rows.getString(1) else null }.toList() }
         }
+
+    private companion object {
+        val V103_GONE = setOf("concetburo-zahlmann", "sonic-bomm", "heesen", "heesen-media", "www-dundj-berlin", "metal-de")
+    }
 }

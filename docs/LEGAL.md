@@ -310,6 +310,8 @@ jointly with the archive: keeping past events reachable is deciding not to delet
 **An artist row that no event bills is deleted.** A daily pass in the importer deletes it once the row is a day old
 (#350). Such a row holds no event history, so this deletes personal data and keeps none longer. The pass keeps a row
 with an exact MusicBrainz match or a profile, because that row names a real act that the next billing reuses.
+A second daily pass deletes a promoter row that no event credits, by the same one-day rule (#2653). It keeps a row
+with a description or an image. Its log line names the slugs it deletes.
 
 **A stored image is a different question from a stored URL, and the row above is new because of it.** Until ADR-019
 the site embedded the venue's URL and held no file. It now downloads the file and keeps it, which is a reproduction

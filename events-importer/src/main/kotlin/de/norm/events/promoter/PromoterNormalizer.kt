@@ -207,7 +207,9 @@ private val NON_PROMOTER_NAMES: Set<String> =
         "dasforgottenfemalecomposers",
         "thehilariousdeepamazingcomedy",
         "thehilariousdeepamazingberlincomedy",
-        "peteredelwwwstummfilmkonzertede"
+        "peteredelwwwstummfilmkonzertede",
+        // Columbia Theater credits the magazine as the presenter; it is a media partner (#2653).
+        "metalde"
     )
 
 /**
@@ -298,7 +300,6 @@ private val NAME_CORRECTIONS: Map<String, String> =
         "mawi" to "MAWI Concert",
         "mbkonzerte" to "MB Konzerte",
         "mct" to "MCT Agentur",
-        "metalde" to "metal.de",
         "oxfancine" to "Ox-Fanzine",
         "powerline" to "Powerline Agency",
         "radiobob" to "RADIO BOB!",
@@ -331,5 +332,15 @@ private val NAME_CORRECTIONS: Map<String, String> =
         "leasingrent" to "LEASING&RENT OÜ",
         // Admiralspalast credits "„Aufgeigen.at“ Künstler und Veranstaltungs GmbH"; the brand is the
         // domain (#2331).
-        "aufgeigenatkünstler" to "Aufgeigen.at"
+        "aufgeigenatkünstler" to "Aufgeigen.at",
+        // Admiralspalast typos, and the two Heesen companies whose concert brand is "Heesen Konzerte"
+        // (#2653). "Konzerte" is stripped, so it is restored here.
+        "concetbürozahlmann" to "Concertbüro Zahlmann",
+        "heesen" to "Heesen Konzerte",
+        "heesenmedia" to "Heesen Konzerte",
+        "sonicbomm" to "Sonic Boom",
+        // Domain credits: SO36's presenter calls itself by its domain, Peter Edel's names the DJ duo's site.
+        "berlinmusikerde" to "Berlinmusiker.de",
+        "wwwdundjberlin" to "Dan & Jensai",
+        "dundjberlin" to "Dan & Jensai"
     )
