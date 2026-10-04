@@ -5,8 +5,11 @@ import {
   breadcrumbJsonLd,
   eventJsonLd,
   eventEndDate,
+  eventPageJsonLd,
   eventStartDate,
+  jsonLdText,
   venueJsonLd,
+  venuePageJsonLd,
   websiteJsonLd,
 } from '@/lib/structuredData'
 import { SITE_URL } from '@/lib/seo'
@@ -336,5 +339,42 @@ describe('websiteJsonLd', () => {
     expect(document['@type']).toBe('WebSite')
     expect(JSON.stringify(document)).not.toContain('Organization')
     expect(document.url).toBe(`${SITE_URL}/de`)
+  })
+})
+
+describe('the page documents the view and the injector publish', () => {
+  const names = (documents: unknown[]) =>
+    (
+      documents[documents.length - 1] as { itemListElement: { name: string }[] }
+    ).itemListElement.map((item) => item.name)
+
+  it('are the event and its trail, the listing named by its page title', () => {
+    const documents = eventPageJsonLd(event, 'de')
+    expect(documents.map((document) => document['@type'])).toEqual(['MusicEvent', 'BreadcrumbList'])
+    expect(names(documents)).toEqual(['Event Junkie', 'Events', 'Test Act'])
+  })
+
+  it('are only the trail when the event lacks a required field', () => {
+    const documents = eventPageJsonLd({ ...event, eventDate: undefined }, 'en')
+    expect(documents.map((document) => document['@type'])).toEqual(['BreadcrumbList'])
+  })
+
+  it('are nothing until the entity can be named', () => {
+    expect(eventPageJsonLd({ ...event, title: undefined }, 'en')).toEqual([])
+    expect(venuePageJsonLd({ slug: 'lido' }, 'en')).toEqual([])
+  })
+
+  it('name the venue listing in the page locale', () => {
+    expect(names(venuePageJsonLd({ slug: 'lido', name: 'Lido' }, 'de'))).toEqual([
+      'Event Junkie',
+      'Locations',
+      'Lido',
+    ])
+  })
+
+  it('serialise one document bare, several as an array, and never close their script', () => {
+    expect(JSON.parse(jsonLdText([{ name: 'a' }]))).toEqual({ name: 'a' })
+    expect(JSON.parse(jsonLdText([{ name: 'a' }, { name: 'b' }]))).toHaveLength(2)
+    expect(jsonLdText([{ name: '</script>' }])).not.toContain('</script>')
   })
 })

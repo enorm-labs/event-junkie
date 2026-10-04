@@ -17,9 +17,9 @@ import { feedbackMailto } from '@/lib/feedback'
 import { CONTROLLER } from '@/lib/legal'
 import { canonicalUrl } from '@/lib/seo'
 import { usePageMeta } from '@/composables/usePageMeta'
-import { APP_NAME, eventPageMeta, notFoundPageMeta, placeholderPageMeta } from '@/lib/pageMeta'
+import { eventPageMeta, notFoundPageMeta, placeholderPageMeta } from '@/lib/pageMeta'
 import { useStructuredData } from '@/composables/useStructuredData'
-import { breadcrumbJsonLd, eventJsonLd, type JsonLd } from '@/lib/structuredData'
+import { eventPageJsonLd } from '@/lib/structuredData'
 import type { Locale } from '@/i18n/locales'
 import { formatPrice, isPastEvent, isRunningEvent } from '@/lib/format'
 import { runningOrder, type RunningOrderSet } from '@/lib/runningOrder'
@@ -166,24 +166,8 @@ usePageMeta(() =>
       : placeholderPageMeta(t('events.detail.kind')),
 )
 
-// The rich-result payload: an Event document plus the breadcrumb trail. `eventJsonLd` returns
-// null when Google's required fields are missing, hence the filter (lib/structuredData.ts).
-useStructuredData((): JsonLd[] => {
-  const current = event.value
-  if (!current?.slug || !current.title) return []
-
-  return [
-    eventJsonLd(current, locale.value as Locale),
-    breadcrumbJsonLd(
-      [
-        [APP_NAME, ''],
-        [t('common.nav.events'), '/events'],
-        [current.title, `/events/${current.slug}`],
-      ],
-      locale.value as Locale,
-    ),
-  ].filter((document): document is JsonLd => document !== null)
-})
+// The rich-result payload, the same documents the injector serves (lib/structuredData.ts).
+useStructuredData(() => (event.value ? eventPageJsonLd(event.value, locale.value as Locale) : []))
 </script>
 
 <template>

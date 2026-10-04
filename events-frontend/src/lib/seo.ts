@@ -191,9 +191,82 @@ export function sitemapXml(): string {
 }
 
 /**
- * `robots.txt`, open to everything. A hazard for any environment that is not the public site; the
- * chart overrides both files for non-production (`ingress.noindex`, #286).
+ * Crawlers that collect text to train AI models, kept out of the whole site: the venues' texts and
+ * images are shown under licence reviews that do not cover training (ADR-044). Each token is from
+ * the vendor's own documentation:
+ *
+ * - `GPTBot`: https://developers.openai.com/api/docs/bots
+ * - `ClaudeBot`: https://support.claude.com/en/articles/8896518
+ * - `Google-Extended`: https://developers.google.com/search/docs/crawling-indexing/google-common-crawlers
+ * - `Applebot-Extended`: https://support.apple.com/en-us/119829
+ * - `Meta-ExternalAgent`: https://developers.facebook.com/docs/sharing/webmasters/web-crawlers/
+ * - `CCBot`: https://commoncrawl.org/ccbot
+ *
+ * Their retrieval crawlers stay allowed under `*`, since an answer that cites a page links to it:
+ * `OAI-SearchBot`, `Claude-SearchBot`, `PerplexityBot` (https://docs.perplexity.ai/guides/bots).
+ */
+export const AI_TRAINING_CRAWLERS = [
+  'GPTBot',
+  'ClaudeBot',
+  'Google-Extended',
+  'Applebot-Extended',
+  'Meta-ExternalAgent',
+  'CCBot',
+] as const
+
+/**
+ * `robots.txt`: open to every crawler but the training crawlers. A hazard for any environment that
+ * is not the public site; the chart overrides both files for non-production (`ingress.noindex`, #286).
  */
 export function robotsTxt(): string {
-  return ['User-agent: *', 'Allow: /', '', `Sitemap: ${SITE_URL}/sitemap.xml`, ''].join('\n')
+  return [
+    'User-agent: *',
+    'Allow: /',
+    '',
+    ...AI_TRAINING_CRAWLERS.flatMap((crawler) => [`User-agent: ${crawler}`, 'Disallow: /', '']),
+    `Sitemap: ${SITE_URL}/sitemap.xml`,
+    '',
+  ].join('\n')
+}
+
+/**
+ * `/llms.txt` in the llmstxt.org format: what the site covers and where its lists, sitemaps and
+ * feeds are, for AI answer engines. Nothing per event: the sitemaps and each page's JSON-LD carry
+ * that, and a copy here would go stale between builds.
+ */
+export function llmsTxt(): string {
+  const link = (title: string, path: string, note: string) =>
+    `- [${title}](${SITE_URL}${path}): ${note}`
+  return [
+    '# Event Junkie',
+    '',
+    "> Music events in Berlin: concerts, club nights, festivals and more, collected from the venues' own websites.",
+    '',
+    'The site lists upcoming events at Berlin venues, in English under `/en/` and in German under `/de/`.',
+    'Each event and venue page carries schema.org JSON-LD in its served HTML: date, venue, address, price and line-up where the venue publishes them.',
+    '',
+    '## English',
+    '',
+    link('Events', '/en/events', 'every upcoming event'),
+    link('Venues', '/en/venues', 'the venues the site covers'),
+    link('Feed', feedPath('en'), 'RSS feed of newly listed events'),
+    link('About', '/en/about', 'what the site is and where its data comes from'),
+    '',
+    '## Deutsch',
+    '',
+    link('Events', '/de/events', 'alle kommenden Veranstaltungen'),
+    link('Locations', '/de/venues', 'die Locations, die die Seite abdeckt'),
+    link('Feed', feedPath('de'), 'RSS-Feed neu gelisteter Veranstaltungen'),
+    link('Über das Projekt', '/de/about', 'was die Seite ist und woher ihre Daten kommen'),
+    '',
+    '## Sitemaps',
+    '',
+    link('Sitemap index', '/sitemap.xml', 'every page below, in both languages'),
+    link('Pages', PAGES_SITEMAP, 'the static pages'),
+    ...DETAIL_SITEMAPS.map((path) => {
+      const kind = path.slice('/sitemap-'.length, -'.xml'.length)
+      return link(kind[0]!.toUpperCase() + kind.slice(1), path, 'one URL per page and language')
+    }),
+    '',
+  ].join('\n')
 }

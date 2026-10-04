@@ -1,6 +1,6 @@
 import { type MaybeRefOrGetter, onScopeDispose, toValue, watchEffect } from 'vue'
 
-import type { JsonLd } from '@/lib/structuredData'
+import { INJECTED_ATTRIBUTE, type JsonLd, jsonLdText } from '@/lib/structuredData'
 
 /**
  * Publishes JSON-LD documents into a `<script type="application/ld+json">` for the current view.
@@ -10,10 +10,13 @@ import type { JsonLd } from '@/lib/structuredData'
  * events keeps the same component mounted and only changes the slug, which is the case that would
  * otherwise leave the previous event's data describing the new page.
  *
- * The element is removed when the effect scope is disposed, so nothing leaks across routes.
+ * The element is removed when the effect scope is disposed, so nothing leaks across routes. A page
+ * the injector served already carries one, marked `data-injected` (ADR-044): the first view to
+ * set up takes that element over, so a booted page never holds two.
  */
 export function useStructuredData(documents: MaybeRefOrGetter<JsonLd | JsonLd[] | null>): void {
-  let script: HTMLScriptElement | null = null
+  let script = document.head.querySelector<HTMLScriptElement>(`script[${INJECTED_ATTRIBUTE}]`)
+  script?.removeAttribute(INJECTED_ATTRIBUTE)
 
   const remove = () => {
     script?.remove()
@@ -29,11 +32,8 @@ export function useStructuredData(documents: MaybeRefOrGetter<JsonLd | JsonLd[] 
     script ??= document.head.appendChild(
       Object.assign(document.createElement('script'), { type: 'application/ld+json' }),
     )
-    // JSON-LD holds event titles and descriptions scraped from venue websites — third-party text
-    // this project does not control. Setting `textContent` keeps the browser from parsing it as
-    // markup, and escaping `<` covers the serialisation paths that would not: a title containing
-    // `</script>` must not be able to close the element it lives in.
-    script.textContent = JSON.stringify(list.length === 1 ? list[0] : list).replace(/</g, '\\u003c')
+    // `textContent` keeps the browser from parsing scraped third-party text as markup.
+    script.textContent = jsonLdText(list)
   })
 
   onScopeDispose(remove)
