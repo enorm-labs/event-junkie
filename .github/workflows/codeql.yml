@@ -96,7 +96,7 @@ jobs:
             java-kotlin)
               PATTERN='^(events-core/|events-bff/|events-importer/|detekt-rules/|gradle/|gradlew|build\.gradle\.kts$|settings\.gradle\.kts$|gradle\.properties$|\.github/workflows/codeql\.yml$|\.github/codeql/)' ;;
             javascript-typescript)
-              PATTERN='^(events-frontend/|perf/|docs/ops/dashboard/|\.github/workflows/codeql\.yml$|\.github/codeql/)' ;;
+              PATTERN='^(events-frontend/|events-admin/|perf/|docs/ops/dashboard/|\.github/workflows/codeql\.yml$|\.github/codeql/)' ;;
             actions)
               PATTERN='^\.github/' ;;
             *)

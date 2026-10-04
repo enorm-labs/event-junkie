@@ -157,6 +157,8 @@ Event Junkie discovers music events in Berlin. A **Gradle multi-project build** 
   `detekt.yml`. Ships nothing, so it is out of Kover, the licence report and the OWASP scan; each exclusion sits next to its reason in `build.gradle.kts`.
 - **`events-frontend`** — Vue 3 SPA (Vite 8, TypeScript 6, Vue Router), managed by npm, not Gradle. Node `>=24.15.0`: a **patch** floor forced by jsdom 30;
   `events-frontend/AGENTS.md` records both moves.
+- **`events-admin`** — the operator's Vue app (Vite, shadcn-vue), npm-managed. Local only: never built into an image or deployed (ADR-045). Its dev server
+  proxies `/api/admin` to the forward `scripts/ej.sh up <env>` opens; `npm run dev -- --mode staging`. No CI job builds it.
 
 ## Build & Dev Commands
 

@@ -189,14 +189,15 @@ spend cap that makes that safe is set and read.
 
 ## 9. Local development
 
-Nothing here is a service you have an account with. It is the set of addresses `scripts/dev-env.sh up` produces.
+Nothing here is a service you have an account with. It is the set of addresses `scripts/dev-env.sh up` and the admin app's dev server produce.
 
-| Address                                               | What                                         |
-| ----------------------------------------------------- | -------------------------------------------- |
-| <http://localhost:5173>                               | Frontend (Vite dev server)                   |
-| <http://localhost:8080/webjars/swagger-ui/index.html> | `events-bff` Swagger UI                      |
-| <http://localhost:8081/webjars/swagger-ui/index.html> | `events-importer` Swagger UI                 |
-| `localhost:56298`                                     | PostgreSQL, started by Spring Docker Compose |
+| Address                                               | What                                          |
+| ----------------------------------------------------- | --------------------------------------------- |
+| <http://localhost:5173>                               | Frontend (Vite dev server)                    |
+| <http://localhost:8080/webjars/swagger-ui/index.html> | `events-bff` Swagger UI                       |
+| <http://localhost:8081/webjars/swagger-ui/index.html> | `events-importer` Swagger UI                  |
+| `localhost:56298`                                     | PostgreSQL, started by Spring Docker Compose  |
+| <http://localhost:5174>                               | `events-admin`, against one cluster's forward |
 
 ---
 

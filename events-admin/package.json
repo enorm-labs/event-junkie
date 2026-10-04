@@ -1,0 +1,64 @@
+{
+  "name": "events-admin",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "//dev": "Local only, never built into an image (ADR-045). The mode names the cluster: `npm run dev -- --mode staging` proxies /api/admin to the forward `scripts/ej.sh up staging` opened.",
+    "dev": "vite --configLoader native",
+    "build": "run-p type-check build-only",
+    "build-only": "vite build --configLoader native",
+    "test:unit": "vitest --configLoader native",
+    "type-check": "vue-tsc --build",
+    "check:lint": "oxlint && eslint",
+    "check:format": "oxfmt --check src",
+    "lint": "run-s lint:*",
+    "lint:oxlint": "oxlint --fix",
+    "lint:eslint": "eslint --fix --cache",
+    "format": "oxfmt src"
+  },
+  "dependencies": {
+    "@lucide/vue": "1.49.0",
+    "@tanstack/vue-table": "9.2.5",
+    "@vueuse/core": "14.4.0",
+    "class-variance-authority": "0.7.1",
+    "clsx": "2.1.1",
+    "reka-ui": "2.10.5",
+    "tailwind-merge": "3.7.0",
+    "tailwindcss": "4.3.3",
+    "vue": "3.5.43",
+    "vue-router": "5.3.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "4.3.3",
+    "@tsconfig/node24": "24.0.5",
+    "@types/jsdom": "30.0.0",
+    "@types/node": "26.6.4",
+    "@vitejs/plugin-vue": "6.0.9",
+    "@vitest/eslint-plugin": "1.6.27",
+    "@vue/eslint-config-typescript": "14.9.0",
+    "@vue/test-utils": "2.5.1",
+    "@vue/tsconfig": "0.9.1",
+    "eslint": "10.11.0",
+    "eslint-config-prettier": "10.1.8",
+    "eslint-plugin-oxlint": "1.86.0",
+    "eslint-plugin-vue": "10.11.1",
+    "eslint-plugin-vuejs-accessibility": "2.6.0",
+    "jiti": "2.7.0",
+    "jsdom": "30.1.1",
+    "npm-run-all2": "9.0.3",
+    "oxfmt": "0.71.0",
+    "oxlint": "1.86.0",
+    "shadcn-vue": "2.8.2",
+    "typescript": "6.0.3",
+    "vite": "8.3.2",
+    "vitest": "5.0.3",
+    "vue-tsc": "3.3.11"
+  },
+  "//overrides": "The same CVE-2026-45822 override as events-frontend/package.json, for the same chain through shadcn-vue; that file's note says when to drop it.",
+  "overrides": {
+    "stylus": "0.64.0"
+  },
+  "engines": {
+    "node": ">=24.15.0"
+  }
+}
