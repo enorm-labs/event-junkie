@@ -2,8 +2,8 @@
 /**
  * The shared event filter bar for the events list, the calendar and the map. Every control writes
  * straight to the URL query via `useEventFilters` and reads its value back from there, so the
- * component holds no filter state; the local state is the two free-text drafts (search, price
- * range), applied on Enter or when the field is left, and whether "More filters" is open.
+ * component holds no filter state; the local state is the two free-text drafts and whether "More
+ * filters" is open. Search applies as the visitor types, the price range on Enter or leaving the field.
  */
 import { ChevronDown, X } from '@lucide/vue'
 import { computed, onMounted, ref, watch } from 'vue'
@@ -14,6 +14,7 @@ import BaseSelect from '@/components/BaseSelect.vue'
 import MultiSelectFilter from '@/components/MultiSelectFilter.vue'
 import { useEventFilters } from '@/composables/useEventFilters'
 import { useGenres } from '@/composables/useGenres'
+import { useSearchDraft } from '@/composables/useSearchDraft'
 import { useAllVenues } from '@/composables/useVenues'
 import { activePresetKey, DATE_PRESETS, type DateRange } from '@/lib/dateRanges'
 import { useFilterOptions } from '@/composables/useFilterOptions'
@@ -125,15 +126,9 @@ function applyFamilies(families: string[]) {
   applyFilters({ family: families, genre: '' })
 }
 
-// Drafts are seeded from the URL and re-synced whenever it changes elsewhere.
-const search = ref(queryString('q'))
-watch(
-  () => route.query.q,
-  () => {
-    search.value = queryString('q')
-  },
-)
+const { search, applySearch } = useSearchDraft()
 
+// The price drafts are seeded from the URL and re-synced whenever it changes elsewhere.
 const minPrice = ref(queryString('minPrice'))
 const maxPrice = ref(queryString('maxPrice'))
 watch(
@@ -143,10 +138,6 @@ watch(
     maxPrice.value = queryString('maxPrice')
   },
 )
-
-function applySearch() {
-  if (search.value !== queryString('q')) applyFilters({ q: search.value })
-}
 
 function applyPrice() {
   if (minPrice.value !== queryString('minPrice') || maxPrice.value !== queryString('maxPrice')) {
@@ -197,7 +188,6 @@ onMounted(() => {
 <template>
   <div :class="PANEL_CLASS">
     <div class="flex w-full flex-wrap items-center gap-2">
-      <!-- One field, so Enter submits without a button; leaving the field applies it too. -->
       <form class="min-w-0 flex-1 basis-48" role="search" @submit.prevent="applySearch">
         <BaseInput
           v-model="search"

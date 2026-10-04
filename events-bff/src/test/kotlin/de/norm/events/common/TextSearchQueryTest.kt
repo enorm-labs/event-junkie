@@ -96,7 +96,7 @@ class TextSearchQueryTest : BaseControllerTest() {
         }
 
     @Test
-    fun `the event search reads the title, the subtitle, the venue and the lineup`(): Unit =
+    fun `the event search reads the title, the subtitle, the venue, the lineup and the promoters`(): Unit =
         runBlocking {
             val aeden = insertVenue("ÆDEN", "aeden")
             val astra = insertVenue("Astra", "astra")
@@ -106,6 +106,8 @@ class TextSearchQueryTest : BaseControllerTest() {
             insertEvent(astra, "Tour", "tour", day, subtitle = "with Kit Kat Band")
             val gig = insertEvent(astra, "Gig", "gig", day)
             linkArtist(gig, insertArtist("Ørlög", "orlog"))
+            val night = insertEvent(astra, "Night", "night", day)
+            linkPromoter(night, insertPromoter("Cocktail d'Amore", "cocktail-damore"))
             insertEvent(astra, "Other", "other", day)
 
             mapOf(
@@ -113,7 +115,8 @@ class TextSearchQueryTest : BaseControllerTest() {
                 "strasse" to listOf("strassenfest"),
                 "kitkat" to listOf("tour"),
                 "orlog" to listOf("gig"),
-                "astra" to listOf("strassenfest", "tour", "gig", "other"),
+                "cocktail damore" to listOf("night"),
+                "astra" to listOf("strassenfest", "tour", "gig", "night", "other"),
                 "aedenn" to listOf("open-air")
             ).forEach { (q, expected) ->
                 withClue("q=$q") { slugs("/events", q) shouldContainExactlyInAnyOrder expected }

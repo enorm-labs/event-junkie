@@ -137,6 +137,17 @@ test('filters by search query', async ({ page }) => {
   expect(errors, 'unexpected uncaught exceptions').toEqual([])
 })
 
+test('searches as the visitor types, without Enter', async ({ page }) => {
+  await page.goto('/events')
+  await expect(eventHeading(page, 'Default Event A')).toBeVisible()
+
+  await page.getByRole('searchbox').pressSequentially('jazz')
+
+  await expect(page).toHaveURL(/[?&]q=jazz\b/)
+  await expect(eventHeading(page, 'Jazz Night')).toBeVisible()
+  await expect(page.getByRole('searchbox')).toHaveValue('jazz')
+})
+
 test('filters by event type', async ({ page }) => {
   await page.goto('/events')
   await expect(eventHeading(page, 'Default Event A')).toBeVisible()

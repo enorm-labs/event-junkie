@@ -20,6 +20,24 @@ function deferred<T>() {
 }
 
 describe('useAsync', () => {
+  it('keeps the latest answer when an older one arrives after it', async () => {
+    const older = deferred<string>()
+    const newer = deferred<string>()
+    const loads = [older, newer]
+    const { data, error, loading, run } = useAsync(() => loads.shift()!.promise)
+
+    const first = run()
+    const second = run()
+    newer.resolve('berghain')
+    await second
+    older.reject(new Error('late'))
+    await first
+
+    expect(data.value).toBe('berghain')
+    expect(error.value).toBeNull()
+    expect(loading.value).toBe(false)
+  })
+
   it('reports loading until the loader answers, then exposes the data', async () => {
     const load = deferred<string[]>()
     const { data, loading, run } = useAsync(() => load.promise)
