@@ -254,7 +254,7 @@ says so.
 | `QUATSCH`              | `SOLD_OUT`         | the calendar marks no show as sold out                                                                                                           | —     |
 | `RENATE`               | `EVENT_TYPE`       | the club states no category; its `.cat-btn` names the spaces in use, not a kind of event                                                         | —     |
 | `RENATE`               | `PER_EVENT_PAGE`   | every night points at the programme page                                                                                                         | —     |
-| `RENATE`               | `START_TIME`       | the club prints a time for its GARDEN and GREEN rooms inside the floor heading and none for a CLUB-only night                                    | —     |
+| `RENATE`               | `START_TIME`       | a night with no opening time in any floor heading, as a CLUB-only night without one, has no start time                                           | —     |
 | `RENATE`               | `PRICE`            | the club sells through Resident Advisor and prints no figure; a night is flagged free only when its blurb says so                                | —     |
 | `RENATE`               | `IMAGE`            | the programme rows carry no flyer, only icons and a Resident Advisor ticket link                                                                 | —     |
 | `RITTER_BUTZKE`        | `EVENT_TYPE`       | the club publishes no categories; every night is a DJ programme                                                                                  | —     |

@@ -34,7 +34,7 @@ val RENATE_LIMITATIONS =
         AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "every night points at the programme page"),
         AcceptedLimitation(
             LimitedAspect.START_TIME,
-            "the club prints a time for its GARDEN and GREEN rooms inside the floor heading and none for a CLUB-only night"
+            "a night with no opening time in any floor heading, as a CLUB-only night without one, has no start time"
         ),
         AcceptedLimitation(
             LimitedAspect.PRICE,
