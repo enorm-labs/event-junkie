@@ -283,6 +283,26 @@ test.describe('a past event', () => {
     await expect(page.getByText('Ein Abend mit Aussicht.')).toHaveAttribute('lang', 'de')
   })
 
+  test('a long URL in the description does not widen the page at 320 px', async ({ page }) => {
+    // An unbreakable run laid the page out 339 px wide on a 320 px phone, which then zoomed out
+    // (#2660).
+    const longUrl = {
+      ...eventBody,
+      description: `Tickets: https://www.instagram.com/${'a'.repeat(34)}\n${'_'.repeat(60)}`,
+    }
+    await page.setViewportSize({ width: 320, height: 800 })
+    await page.route(/\/api\/events\/[^/?]+/, (route) => json(route, longUrl))
+
+    await page.goto('/en/events/mock-event')
+
+    await expect(page.getByText('Tickets:', { exact: false })).toBeVisible()
+    const widths = await page.evaluate(() => ({
+      scroll: document.scrollingElement!.scrollWidth,
+      inner: window.innerWidth,
+    }))
+    expect(widths.scroll).toBe(widths.inner)
+  })
+
   test('discloses a machine translation and links to the original', async ({ page }) => {
     const translated = {
       ...eventBody,
