@@ -1,13 +1,17 @@
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 
+import { mount } from '@vue/test-utils'
 import { describe, expect, it } from 'vitest'
+import { defineComponent, h } from 'vue'
 
 import type { EventDetail, VenueDetail } from '@/api/types'
 import { applyPageMeta } from '@/composables/usePageMeta'
+import { useStructuredData } from '@/composables/useStructuredData'
 import { artistPageMeta, eventPageMeta, venuePageMeta } from '@/lib/pageMeta'
 import { siteDescription, staticPathMeta } from '@/lib/staticPages'
 import { updateSeoTags } from '@/lib/seoTags'
+import { eventPageJsonLd, type JsonLd, venuePageJsonLd } from '@/lib/structuredData'
 import { rewriteHead } from '../rewrite.ts'
 
 /**
@@ -151,5 +155,57 @@ describe('the injector and the client write the same head', () => {
 
     applyPageMeta({ title: 'Somebody · Event Junkie' })
     expect(headState().ogDescription).toMatch(/^Concerts, club nights/)
+  })
+})
+
+describe('the injector and the client publish the same structured data', () => {
+  const blocks = () => [...document.head.querySelectorAll('script[type="application/ld+json"]')]
+  const payload = () => blocks().map((block) => JSON.parse(block.textContent ?? 'null') as unknown)
+
+  /** Boots the client's writer the way a detail view does, over whatever head was served. */
+  function boot(documents: () => JsonLd[]) {
+    return mount(
+      defineComponent({
+        setup() {
+          useStructuredData(documents)
+          return () => h('div')
+        },
+      }),
+    )
+  }
+
+  it.each([
+    ['an event', 'de', '/events/x', () => eventPageJsonLd(event, 'de')],
+    ['a venue', 'en', '/venues/lido', () => venuePageJsonLd(venue, 'en')],
+  ] as const)('for %s, leaving exactly one block', (_, locale, path, documents) => {
+    serve(
+      rewriteHead(shell, {
+        meta: staticPathMeta(locale, ''),
+        locale,
+        path,
+        structuredData: documents(),
+      }),
+    )
+    const served = payload()
+    // The served page carries the data a crawler that runs no JavaScript needs.
+    expect(served).toHaveLength(1)
+    expect(served[0]).toEqual(JSON.parse(JSON.stringify(documents())))
+
+    const wrapper = boot(documents)
+
+    expect(payload()).toEqual(served)
+    wrapper.unmount()
+    expect(blocks()).toEqual([])
+  })
+
+  it('writes no block for a page without structured data', () => {
+    serve(
+      rewriteHead(shell, {
+        meta: artistPageMeta({ slug: 'a', name: 'A' }),
+        locale: 'de',
+        path: '/artists/a',
+      }),
+    )
+    expect(blocks()).toEqual([])
   })
 })

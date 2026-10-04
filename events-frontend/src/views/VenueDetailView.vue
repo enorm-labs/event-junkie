@@ -5,14 +5,14 @@ import BaseDetailView from '@/components/BaseDetailView.vue'
 import { useFormat } from '@/composables/useFormat'
 import { useLocalePath } from '@/composables/useLocalePath'
 import { usePageMeta } from '@/composables/usePageMeta'
-import { APP_NAME, notFoundPageMeta, placeholderPageMeta, venuePageMeta } from '@/lib/pageMeta'
+import { notFoundPageMeta, placeholderPageMeta, venuePageMeta } from '@/lib/pageMeta'
 import { useEventSearch } from '@/composables/useEvents'
 import { yesterdayIso } from '@/lib/format'
 import { useVenue } from '@/composables/useVenue'
 import { imageCredit } from '@/lib/imageCredit'
 import { useI18n } from 'vue-i18n'
 import { useStructuredData } from '@/composables/useStructuredData'
-import { breadcrumbJsonLd, type JsonLd, venueJsonLd } from '@/lib/structuredData'
+import { venuePageJsonLd } from '@/lib/structuredData'
 import { descriptionFor } from '@/lib/description'
 import type { Locale } from '@/i18n/locales'
 
@@ -65,22 +65,7 @@ const kind = computed(() => t('detail.venue.kind'))
 // A MusicVenue carries the address and coordinates the page already displays. No rich result rides
 // on it the way it does for events, but it is accurate and it is what ties an event's `location`
 // to a real place. See lib/structuredData.ts.
-useStructuredData((): JsonLd[] => {
-  const current = venue.value
-  if (!current?.slug || !current.name) return []
-
-  return [
-    venueJsonLd(current, locale.value as Locale),
-    breadcrumbJsonLd(
-      [
-        [APP_NAME, ''],
-        [t('common.nav.venues'), '/venues'],
-        [current.name, `/venues/${current.slug}`],
-      ],
-      locale.value as Locale,
-    ),
-  ].filter((document): document is JsonLd => document !== null)
-})
+useStructuredData(() => (venue.value ? venuePageJsonLd(venue.value, locale.value as Locale) : []))
 
 // The same values the meta injector will need server-side later (ADR-014 §Decision 3).
 usePageMeta(() =>

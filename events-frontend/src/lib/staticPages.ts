@@ -48,3 +48,8 @@ export function staticPathMeta(locale: Locale, path: StaticPath): PageMeta {
     text[locale].pageDescription[keys.description],
   )
 }
+
+/** A listing's title from the catalogue, which a detail page's breadcrumb names it by. */
+export function sectionTitle(locale: Locale, section: 'events' | 'venues'): string {
+  return text[locale].pageTitle[section]
+}

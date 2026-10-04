@@ -8,6 +8,8 @@ import {
   feedUrl,
   INDEXABLE_PATHS,
   NON_INDEXABLE_PATHS,
+  AI_TRAINING_CRAWLERS,
+  llmsTxt,
   robotsTxt,
   PAGES_SITEMAP,
   SITE_URL,
@@ -144,8 +146,46 @@ describe('robots.txt', () => {
   })
 
   it('lets crawlers in', () => {
-    expect(robotsTxt()).toMatch(/User-agent: \*/)
-    expect(robotsTxt()).not.toMatch(/Disallow: \/\s*$/m)
+    const everyone = robotsTxt().split('\n\n')[0]
+    expect(everyone).toBe('User-agent: *\nAllow: /')
+  })
+
+  it('keeps the AI training crawlers out, and only those', () => {
+    // ADR-044: retrieval for answers is allowed, collection for training is not.
+    for (const crawler of AI_TRAINING_CRAWLERS) {
+      expect(robotsTxt()).toContain(`User-agent: ${crawler}\nDisallow: /\n`)
+    }
+    for (const retrieval of [
+      'OAI-SearchBot',
+      'ChatGPT-User',
+      'Claude-SearchBot',
+      'PerplexityBot',
+    ]) {
+      expect(robotsTxt()).not.toContain(retrieval)
+    }
+    expect(robotsTxt().match(/Disallow: \//g)).toHaveLength(AI_TRAINING_CRAWLERS.length)
+  })
+})
+
+describe('llms.txt', () => {
+  it('opens with the llmstxt.org header: a title and a one-line summary', () => {
+    expect(llmsTxt()).toMatch(/^# Event Junkie\n\n> .+\n/)
+  })
+
+  it('links the lists, the feeds and every sitemap at absolute URLs, in both languages', () => {
+    for (const path of [
+      '/en/events',
+      '/de/events',
+      '/en/venues',
+      '/de/venues',
+      '/sitemap.xml',
+      PAGES_SITEMAP,
+      ...DETAIL_SITEMAPS,
+    ]) {
+      expect(llmsTxt()).toContain(`](${SITE_URL}${path})`)
+    }
+    expect(llmsTxt()).toContain(`](${feedUrl('en')})`)
+    expect(llmsTxt()).toContain(`](${feedUrl('de')})`)
   })
 })
 

@@ -227,8 +227,11 @@ async function handle(request: IncomingMessage, response: ServerResponse): Promi
       loadShell(),
       loadEntity(bffPath(route.kind, route.slug)),
     ])
-    const { meta, image } = entityMeta(route.kind, entity, route.locale)
-    send(response, rewriteHead(html, { meta, image, locale: route.locale, path: route.path }))
+    const { meta, image, structuredData } = entityMeta(route.kind, entity, route.locale)
+    send(
+      response,
+      rewriteHead(html, { meta, image, structuredData, locale: route.locale, path: route.path }),
+    )
   } catch (error) {
     // A 404 from the BFF is an unknown slug, which the SPA renders as its own not-found page.
     const status = error instanceof Fail && error.status === 404 ? 404 : 502

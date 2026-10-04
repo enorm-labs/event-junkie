@@ -7,6 +7,9 @@ transport is #287: the `injector` sidecar in the frontend pod, `events-frontend/
 the four detail route families and the static pages to it (#1911). The parity test §Consequences asks for is
 `injector/__tests__/parity.spec.ts`.
 
+**The `schema.org` JSON-LD row of §Context is superseded by [ADR-044](ADR-044_AI_CRAWLERS_RETRIEVAL_YES_TRAINING_NO.md).** AI crawlers read
+structured data and run no JavaScript, so the injector now serves the JSON-LD of event and venue pages.
+
 > Closes the question [ADR-013](ADR-013_LOCALISATION.md) §Consequences deferred: _"SSR / prerendering — wanted for SEO
 > and tracked separately"_. The SEO work then ran into it. `hreflang` had to be carried by the sitemap, because a
 > script-injected annotation is unreliable for crawlers (§Context).

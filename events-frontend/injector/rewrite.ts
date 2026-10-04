@@ -9,6 +9,7 @@ import {
   OG_LOCALES,
 } from '../src/lib/seo.ts'
 import { siteDescription } from '../src/lib/staticPages.ts'
+import { INJECTED_ATTRIBUTE, type JsonLd, jsonLdText } from '../src/lib/structuredData.ts'
 import type { ImageSize } from './meta.ts'
 
 /**
@@ -17,6 +18,7 @@ import type { ImageSize } from './meta.ts'
  * `seoTags.ts`'s set, and `__tests__/parity.spec.ts` holds the two writers together. Every tag
  * rewritten here keeps its shipped value in `data-site-default`, so the client can fall back to
  * the site's description; every tag added carries `data-seo`, the marker `seoTags.ts` replaces.
+ * The JSON-LD block carries `data-injected` instead, which `useStructuredData` takes over (ADR-044).
  * String surgery rather than a DOM: the container ships one file with no parser in it.
  */
 
@@ -27,6 +29,8 @@ export interface RewriteInput {
   path: string
   /** Set when the BFF knows the image's dimensions. Ignored when `meta.image` is absent. */
   image?: ImageSize
+  /** The page's schema.org documents, from `lib/structuredData.ts`. None writes no block. */
+  structuredData?: JsonLd[]
 }
 
 const SITE_DEFAULT_ATTRIBUTE = 'data-site-default'
@@ -103,7 +107,7 @@ function managedTags(locale: Locale, path: string): string {
 
 /** The per-page head for `input`, written into the served shell. */
 export function rewriteHead(shell: string, input: RewriteInput): string {
-  const { meta, locale, path, image } = input
+  const { meta, locale, path, image, structuredData = [] } = input
   let html = localiseShell(shell, locale)
 
   html = html.replace(/<title>[^<]*<\/title>/, () => `<title>${escapeHtml(meta.title)}</title>`)
@@ -135,5 +139,9 @@ export function rewriteHead(shell: string, input: RewriteInput): string {
     }
   }
 
-  return html.replace('</head>', () => `    ${managedTags(locale, path)}\n  </head>`)
+  // Crawlers that run no JavaScript read the page's data only here, AI answer engines among them.
+  const jsonLd = structuredData.length
+    ? `\n    <script type="application/ld+json" ${INJECTED_ATTRIBUTE}>${jsonLdText(structuredData)}</script>`
+    : ''
+  return html.replace('</head>', () => `    ${managedTags(locale, path)}${jsonLd}\n  </head>`)
 }

@@ -3,6 +3,7 @@ import { descriptionFor } from '@/lib/description'
 import { absoluteImageUrl, canonicalUrl, SITE_URL } from '@/lib/seo'
 import { isPastEvent } from '@/lib/format'
 import { APP_NAME } from '@/lib/pageMeta'
+import { sectionTitle } from '@/lib/staticPages'
 import type { Locale } from '@/i18n/locales'
 
 /**
@@ -14,8 +15,14 @@ import type { Locale } from '@/i18n/locales'
  * 2. Omit rather than guess: an absent property costs a recommendation, a wrong one is a
  * misrepresentation we volunteered. Every `?? undefined` is deliberate.
  *
- * Needs no prerendering: Googlebot runs JavaScript and reads JSON-LD injected after boot.
+ * Written twice, like the page meta: the injector puts a detail page's documents into the served
+ * HTML for crawlers that run no JavaScript (ADR-044), and the client replaces that block on boot.
+ * Both call {@link eventPageJsonLd} or {@link venuePageJsonLd}, and `injector/__tests__/parity.spec.ts`
+ * holds them together.
  */
+
+/** Marks the block the injector writes into the served head, for the client to take over. */
+export const INJECTED_ATTRIBUTE = 'data-injected'
 
 /** Anything JSON-serialisable that a schema.org document can hold. */
 export type JsonLd = Record<string, unknown>
@@ -237,4 +244,47 @@ export function websiteJsonLd(locale: Locale): JsonLd {
     url: canonicalUrl(locale, ''),
     inLanguage: locale,
   }
+}
+
+/**
+ * What an event page publishes: the event and its breadcrumb trail. Empty until the entity can be
+ * named, and without the event when Google's required fields are missing.
+ */
+export function eventPageJsonLd(event: EventDetail, locale: Locale): JsonLd[] {
+  if (!event.slug || !event.title) return []
+  return [
+    eventJsonLd(event, locale),
+    breadcrumbJsonLd(
+      [
+        [APP_NAME, ''],
+        [sectionTitle(locale, 'events'), '/events'],
+        [event.title, `/events/${event.slug}`],
+      ],
+      locale,
+    ),
+  ].filter((document): document is JsonLd => document !== null)
+}
+
+/** What a venue page publishes: the venue and its breadcrumb trail. */
+export function venuePageJsonLd(venue: VenueDetail, locale: Locale): JsonLd[] {
+  if (!venue.slug || !venue.name) return []
+  return [
+    venueJsonLd(venue, locale),
+    breadcrumbJsonLd(
+      [
+        [APP_NAME, ''],
+        [sectionTitle(locale, 'venues'), '/venues'],
+        [venue.name, `/venues/${venue.slug}`],
+      ],
+      locale,
+    ),
+  ].filter((document): document is JsonLd => document !== null)
+}
+
+/**
+ * The body of the `<script type="application/ld+json">`. The documents hold text scraped from
+ * venue websites, so `<` is escaped: a title containing `</script>` must not close the element.
+ */
+export function jsonLdText(documents: JsonLd[]): string {
+  return JSON.stringify(documents.length === 1 ? documents[0] : documents).replace(/</g, '\\u003c')
 }

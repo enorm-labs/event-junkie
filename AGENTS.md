@@ -123,7 +123,7 @@ plus the privacy page in the same PR.**
   `true` until §5 of both notices has been checked against what runs (docs/LEGAL.md §14).
 - Log content, log retention or IP handling — the notice states a retention period; it must be the real one.
 - Monitoring, error tracking, uptime checks, APM or a metrics backend that receives request or user data.
-- A staging or preview environment reachable from the internet. The build's `robots.txt` allows all crawlers and its `sitemap.xml` names production, so
+- A staging or preview environment reachable from the internet. The build's `robots.txt` allows every crawler but the AI training ones, and its `sitemap.xml` names production, so
   override both per environment.
 
 **Features**

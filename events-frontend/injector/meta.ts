@@ -7,11 +7,12 @@ import {
   promoterPageMeta,
   venuePageMeta,
 } from '../src/lib/pageMeta.ts'
+import { eventPageJsonLd, type JsonLd, venuePageJsonLd } from '../src/lib/structuredData.ts'
 import type { EntityKind } from './routes.ts'
 
 /**
  * The per-kind glue between a route and `lib/pageMeta.ts`: where the entity lives on the BFF, and
- * which builder turns it into head tags.
+ * which builders turn it into head tags and structured data.
  *
  * Nothing here composes a title or a description. That is the whole point of ADR-014 §Decision 3 —
  * the client and the injector must produce identical values, and the only way to hold that is for
@@ -27,6 +28,8 @@ export interface ImageSize {
 export interface EntityMeta {
   meta: PageMeta
   image?: ImageSize
+  /** Only the kinds whose view publishes structured data: events and venues. */
+  structuredData?: JsonLd[]
 }
 
 /** The BFF path for an entity. The slug has already passed the route regex, so it needs no escaping. */
@@ -49,11 +52,19 @@ export function entityMeta(kind: EntityKind, entity: unknown, locale: Locale): E
   switch (kind) {
     case 'events': {
       const event = entity as EventDetail
-      return { meta: eventPageMeta(event, locale), image: imageSize(event) }
+      return {
+        meta: eventPageMeta(event, locale),
+        image: imageSize(event),
+        structuredData: eventPageJsonLd(event, locale),
+      }
     }
     case 'venues': {
       const venue = entity as VenueDetail
-      return { meta: venuePageMeta(venue, locale), image: imageSize(venue) }
+      return {
+        meta: venuePageMeta(venue, locale),
+        image: imageSize(venue),
+        structuredData: venuePageJsonLd(venue, locale),
+      }
     }
     case 'artists': {
       const artist = entity as ArtistDetail
