@@ -14,6 +14,7 @@ import LocaleMenu from '@/components/LocaleMenu.vue'
 import { pageTitle } from '@/composables/usePageMeta'
 import { REPOSITORY_URL } from '@/lib/links'
 import { useLocalePath } from '@/composables/useLocalePath'
+import { useViewLoaded } from '@/composables/useViewLoaded'
 
 // Screen-reader route announcer: client-side navigations do not move focus or re-read the page,
 // so the title is mirrored into an aria-live region on each change. The initial load is skipped
@@ -35,6 +36,8 @@ watch(pageTitle, (title) => {
 const betaLabel = computed(() => t('common.nav.betaLabel'))
 
 const localePath = useLocalePath()
+
+const viewLoaded = useViewLoaded()
 
 // One list for the inline row and the phone sheet, so the two cannot drift.
 const sectionLinks = computed(() =>
@@ -129,13 +132,13 @@ const sectionLinks = computed(() =>
       </nav>
     </header>
 
-    <!-- `tabindex="-1"` makes this focusable by the skip link without adding it to the tab order.
-         A screen tall, so the footer never paints above the fold. Otherwise it sits there while a
-         view's chunk and data load, then drops, and that one move is the page's layout shift (#1207). -->
-    <div id="main-content" class="min-h-screen" tabindex="-1">
+    <!-- `tabindex="-1"` makes this focusable by the skip link without adding it to the tab order. -->
+    <div id="main-content" tabindex="-1">
       <RouterView />
     </div>
 
-    <AppFooter />
+    <!-- Rendered once the view's content is in, so it appears below that content and never moves
+         after load (#1207, #2567). -->
+    <AppFooter v-if="viewLoaded" />
   </div>
 </template>

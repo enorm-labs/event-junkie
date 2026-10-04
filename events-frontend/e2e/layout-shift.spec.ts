@@ -2,8 +2,8 @@ import { expect, type Page, type Route, test } from '@playwright/test'
 
 /**
  * A page must not move while it loads. The fetch is held back so the loading state paints first,
- * as a visitor on a slow line sees it. Without the screen-tall `#main-content` in `App.vue`, the
- * footer painted above the fold and then dropped, which scored 0.3 to 0.8 (#1207).
+ * as a visitor on a slow line sees it. A footer painted before the content dropped when it arrived,
+ * which scored 0.3 to 0.8 (#1207), so `App.vue` renders it once the view has loaded (#2567).
  */
 
 // eslint-disable-next-line playwright/no-skipped-test -- the Layout Instability API is Chromium's alone
@@ -70,6 +70,11 @@ test.beforeEach(async ({ page }) => {
   await page.route(/\/api\/events\/shift-gig-1$/, (route) =>
     json(route, { ...events[0], intrinsicWidth: 800, intrinsicHeight: 1000 }, 500),
   )
+  await page.route(/\/api\/events\/no-such-gig$/, (route) =>
+    new Promise((resolve) => setTimeout(resolve, 500)).then(() =>
+      route.fulfill({ status: 404, contentType: 'application/json', body: '{}' }),
+    ),
+  )
   // After the events, as on staging: the options change the bar's size under a rendered grid.
   await page.route(/\/api\/genres/, (route) => json(route, genres, 800))
   await page.route(/\/api\/venues/, (route) =>
@@ -113,4 +118,36 @@ test('an event page does not move when its event arrives', async ({ page }) => {
   await expect(page.getByRole('heading', { level: 1, name: 'Shift Gig 1' })).toBeVisible()
 
   expect(await cumulativeShift(page)).toBeLessThan(BUDGET)
+})
+
+test.describe('a page shorter than the viewport', () => {
+  test.use({ viewport: { width: 1440, height: 900 } })
+
+  test('shows its footer once loaded, and the footer stays put', async ({ page }) => {
+    await page.goto('/events/no-such-gig')
+    await expect(page.getByRole('heading', { level: 1, name: 'Event not found' })).toBeVisible()
+
+    const footer = page.getByRole('contentinfo')
+    await expect(footer).toBeInViewport()
+    const top = (await footer.boundingBox())!.y
+
+    // eslint-disable-next-line playwright/no-wait-for-timeout -- the claim is that nothing moves in this second
+    await page.waitForTimeout(1000)
+    expect((await footer.boundingBox())!.y).toBe(top)
+    expect(await cumulativeShift(page)).toBeLessThan(BUDGET)
+  })
+
+  test('does not move when a link opens a view that loads', async ({ page }) => {
+    await page.goto('/events/no-such-gig')
+    await expect(page.getByRole('contentinfo')).toBeInViewport()
+    // Only the navigation is under test. Chrome ignores a shift within 500 ms of the click, not later.
+    await page.evaluate(() => ((window as unknown as { __shifts: number[] }).__shifts.length = 0))
+
+    const upcoming = page.waitForResponse(/\/api\/events\?/)
+    await page.getByRole('link', { name: 'Back to home' }).click()
+    await upcoming
+    await expect(page.getByRole('contentinfo')).toBeAttached()
+
+    expect(await cumulativeShift(page)).toBeLessThan(BUDGET)
+  })
 })
