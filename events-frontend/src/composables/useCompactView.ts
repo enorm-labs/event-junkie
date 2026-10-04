@@ -15,7 +15,7 @@ import { ref } from 'vue'
 const STORAGE_KEY = 'view'
 const COMPACT_CLASS = 'compact'
 
-// Module state, so every view and the header's toggle read one answer rather than one each.
+// Module state, so every view and the header's display settings read one answer rather than one each.
 const compact = ref(
   typeof document !== 'undefined' && document.documentElement.classList.contains(COMPACT_CLASS),
 )

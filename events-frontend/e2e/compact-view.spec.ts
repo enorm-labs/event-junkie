@@ -1,5 +1,5 @@
 import { expect, type Page, type Route, test } from '@playwright/test'
-import { compactToggle, sectionLink } from './header-nav'
+import { displaySetting, sectionLink } from './header-nav'
 
 /**
  * The compact view (#1371): the lists as text rows, with the posters gone.
@@ -77,8 +77,8 @@ async function mockBff(page: Page): Promise<void> {
   )
 }
 
-const toCompact = /switch to the compact list/i
-const toPoster = /switch to the poster view/i
+const toCompact = (page: Page) => displaySetting(page, 'Events', 'Compact')
+const toPoster = (page: Page) => displaySetting(page, 'Events', 'Posters')
 
 test('the toggle swaps the posters for text rows, and requests no images', async ({ page }) => {
   await mockBff(page)
@@ -93,7 +93,7 @@ test('the toggle swaps the posters for text rows, and requests no images', async
   await postersLoaded
 
   const posters = collectPosterRequests(page)
-  await (await compactToggle(page, toCompact)).click()
+  await (await toCompact(page)).click()
 
   // Every event is still listed, and its link still works — this is a second view, not a filter.
   await expect(page.getByRole('heading', { name: 'Event One' })).toBeVisible()
@@ -109,7 +109,7 @@ test('the toggle swaps the posters for text rows, and requests no images', async
 test('the choice survives a reload and a navigation, and stays out of the URL', async ({ page }) => {
   await mockBff(page)
   await page.goto('/en/events')
-  await (await compactToggle(page, toCompact)).click()
+  await (await toCompact(page)).click()
   await expect(page.locator('img')).toHaveCount(0)
   expect(new URL(page.url()).search, 'a display preference does not belong in a shared link').toBe(
     '',
@@ -132,19 +132,19 @@ test('a first-time visitor gets the poster view', async ({ page }) => {
   await mockBff(page)
   await page.goto('/en/events')
 
-  await expect(await compactToggle(page, toCompact)).toBeVisible()
+  await expect(await toPoster(page)).toHaveAttribute('aria-pressed', 'true')
   await expectPosters(page)
 })
 
-test('the toggle reports its own state', async ({ page }) => {
+test('the setting reports its own state', async ({ page }) => {
   await mockBff(page)
   await page.goto('/en/events')
 
-  const toggle = await compactToggle(page, toCompact)
-  await expect(toggle).toHaveAttribute('aria-pressed', 'false')
-  await toggle.click()
-  await expect(await compactToggle(page, toPoster)).toHaveAttribute(
-    'aria-pressed',
-    'true',
-  )
+  const compact = await toCompact(page)
+  const posters = await toPoster(page)
+  await expect(compact).toHaveAttribute('aria-pressed', 'false')
+  await expect(posters).toHaveAttribute('aria-pressed', 'true')
+  await compact.click()
+  await expect(compact).toHaveAttribute('aria-pressed', 'true')
+  await expect(posters).toHaveAttribute('aria-pressed', 'false')
 })

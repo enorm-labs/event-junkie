@@ -50,7 +50,7 @@ two of its suggestions are deliberately not: focus is not moved to the top on ro
 `App.vue`, and moving focus would interrupt it), and labels may wrap rather than use `for`/`id` (`label-has-for` accepts either).
 
 - **Every interactive element has an accessible name.** Icon-only controls carry `aria-label`; where a `title` tooltip exists too, derive both from one
-  `computed` (the theme toggle in `App.vue`).
+  `computed` (the beta badge in `App.vue`).
 - **Decorative SVGs get `aria-hidden="true"`** (`EjBadge`, `ClubStamp`, `GitHubMark`) — the brand marks are decorative even though they spell the name,
   because the adjacent text carries it, and two accessible names for one thing is worse than none. Meaningful images get a real `alt`.
 - **Exactly one `<main>` per view** (detail views inherit it from `BaseDetailView`), **one `h1`, no skipped levels.** The home hero's `h1` is `sr-only` and
