@@ -272,7 +272,7 @@ useStructuredData(() => (event.value ? eventPageJsonLd(event.value, locale.value
       <p
         v-if="description"
         :lang="description.lang ?? undefined"
-        class="whitespace-pre-line wrap-anywhere text-foreground/90"
+        class="text-prose whitespace-pre-line wrap-anywhere text-foreground/90"
       >
         {{ description.text }}
       </p>
@@ -382,11 +382,11 @@ useStructuredData(() => (event.value ? eventPageJsonLd(event.value, locale.value
           <RouterLink
             v-if="event.venue.slug"
             :to="localePath(`/venues/${event.venue.slug}`)"
-            class="font-medium text-primary underline-offset-4 hover:underline"
+            class="text-card-title font-medium text-primary underline-offset-4 hover:underline"
           >
             {{ event.venue.name }}
           </RouterLink>
-          <p v-else class="font-medium">{{ event.venue.name }}</p>
+          <p v-else class="text-card-title font-medium">{{ event.venue.name }}</p>
           <p v-if="event.venue.address" class="text-body text-muted-foreground">
             {{ event.venue.address
             }}<template v-if="event.venue.city">, {{ event.venue.city }}</template>

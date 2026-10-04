@@ -173,8 +173,8 @@ const programme = computed(() => {
     :ready="Boolean(venue)"
   >
     <template #meta>
-      <p v-if="addressLine" class="text-muted-foreground">{{ addressLine }}</p>
-      <p v-if="facts" class="text-muted-foreground">{{ facts }}</p>
+      <p v-if="addressLine" class="text-body text-muted-foreground">{{ addressLine }}</p>
+      <p v-if="facts" class="text-body text-muted-foreground">{{ facts }}</p>
       <a
         v-if="venue?.websiteUrl"
         :href="venue.websiteUrl"
@@ -189,7 +189,7 @@ const programme = computed(() => {
     <p
       v-if="description"
       :lang="description.lang ?? undefined"
-      class="whitespace-pre-line wrap-anywhere text-foreground/90"
+      class="text-prose whitespace-pre-line wrap-anywhere text-foreground/90"
     >
       {{ description.text }}
     </p>

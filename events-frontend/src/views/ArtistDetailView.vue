@@ -131,7 +131,7 @@ const descriptionCredit = computed(() =>
     <div v-if="description" class="space-y-2">
       <p
         :lang="description.lang ?? undefined"
-        class="whitespace-pre-line wrap-anywhere text-foreground/90"
+        class="text-prose whitespace-pre-line wrap-anywhere text-foreground/90"
       >
         {{ description.text }}
       </p>

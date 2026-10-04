@@ -495,22 +495,26 @@ reason, and a fourth needs one before it is added.
 
 ### 5.8 Type scale
 
-**Six steps, named for the role rather than the size**, declared as `@theme` tokens in `main.css` so Tailwind generates `text-meta`, `text-body`,
+**Seven steps, named for the role rather than the size**, declared as `@theme` tokens in `main.css` so Tailwind generates `text-meta`, `text-body`, `text-prose`,
 `text-card-title`, `text-lede`, `text-section` and `text-page` as real utilities.
 
-| Token             | Size / leading | Where                                            |
-| ----------------- | -------------- | ------------------------------------------------ |
-| `text-meta`       | 12 / 16 px     | Card meta line, the smallest live text           |
-| `text-body`       | 14 / 20 px     | Secondary copy — the role `text-sm` used to fill |
-| `text-card-title` | 17 / 22 px     | Card titles, with `font-semibold`                |
-| `text-lede`       | 20 / 28 px     | The detail-page subtitle                         |
-| `text-section`    | 24 / 30 px     | `h2`                                             |
-| `text-page`       | 30 / 36 px     | `h1`                                             |
+| Token             | Size / leading | Where                                               |
+| ----------------- | -------------- | --------------------------------------------------- |
+| `text-meta`       | 12 / 16 px     | Card meta line, the smallest live text              |
+| `text-body`       | 14 / 20 px     | Secondary copy — the role `text-sm` used to fill    |
+| `text-prose`      | 16 / 24 px     | Multi-paragraph reading text, such as a description |
+| `text-card-title` | 17 / 22 px     | Card titles, with `font-semibold`                   |
+| `text-lede`       | 20 / 28 px     | The detail-page subtitle                            |
+| `text-section`    | 24 / 30 px     | `h2`                                                |
+| `text-page`       | 30 / 36 px     | `h1`                                                |
 
 **The problem was the middle, not the ends.** The app used `text-sm` 63 times and `text-3xl` 8 times with almost nothing between them, so on an event card the
 title, the subtitle and the date line all sat within 2 px of each other and the grid read as a table. Both ends therefore keep the values they already had: 30 px
 page titles work, and 12 px is the floor for live text. What is new is a step at 17 px that a card title can take, which is a real level above 14 rather than the
 1 px nudge 15 would be.
+
+**`text-prose` is the one step argued from length.** A description runs to several paragraphs, and 14 px is too small to read that far on a phone. It
+had no class at all, so it rendered at the browser's 16 / 24 as a seventh size nobody had declared. Naming it keeps the size and makes it a decision.
 
 **Naming the role is the point.** A view says what a piece of text _is_, so the next size question has an answer other than a fresh `text-3xl`.
 

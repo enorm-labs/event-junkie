@@ -35,7 +35,7 @@ const end = computed(() => {
 <template>
   <div class="space-y-1">
     <SectionLabel>{{ t('events.detail.when.label') }}</SectionLabel>
-    <p v-if="dates" class="font-medium">{{ dates }}</p>
+    <p v-if="dates" class="text-card-title font-medium">{{ dates }}</p>
     <p v-if="doors" class="text-body">{{ doors }}</p>
     <p v-if="start" class="text-body">
       {{ start

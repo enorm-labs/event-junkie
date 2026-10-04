@@ -25,15 +25,18 @@
   --tracking-eyebrow: 0.18em;
   /* The poster box, 3:2 from crop loss across the real corpus (docs/BRANDING.md §5.4). */
   --aspect-poster: 3 / 2;
-  /* The type scale (docs/BRANDING.md §5.8). Six steps, named for the role rather than the size, so
+  /* The type scale (docs/BRANDING.md §5.8). Seven steps, named for the role rather than the size, so
      a view says what a piece of text is and the next size question has an answer that is not a
      fresh `text-3xl`. Both ends keep the values the app already used — 30 px page titles work and
      12 px is the floor for live text; the steps exist for the middle, where a card's title,
-     subtitle and meta line were all within 2 px of each other. */
+     subtitle and meta line were all within 2 px of each other. `text-prose` is for several
+     paragraphs: 14 px is too small to read at length on a phone. */
   --text-meta: 0.75rem;
   --text-meta--line-height: 1rem;
   --text-body: 0.875rem;
   --text-body--line-height: 1.25rem;
+  --text-prose: 1rem;
+  --text-prose--line-height: 1.5rem;
   --text-card-title: 1.0625rem;
   --text-card-title--line-height: 1.375rem;
   --text-lede: 1.25rem;
