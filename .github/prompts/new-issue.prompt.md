@@ -51,6 +51,20 @@ milestone and board fields.
       plus `importer` and `documentation`, which double as area labels because release-note grouping already depends on them.
     - **Size** (exactly one): `size:S` under half a day · `size:M` one to two days · `size:L` about a week · `size:XL` too big, split it.
     - **State**, only if it applies: `blocked` (another issue) · `needs-decision` (a choice) · `needs-deployment` (a live origin).
+    - **`afk-ok`**, when [`/afk`](afk.prompt.md) can take the issue to a draft PR with nobody to ask. Decide it for every issue, and add it only when all of
+      these hold:
+        - No state label above, and not `size:XL`.
+        - The body settles every choice the work needs. A choice still open is reversible, and the body says which option to take. A list of options with
+          no pick is a question, not a plan.
+        - Every done-when item can be checked without the user. "Check by eye", a venue fact only the user can confirm (an address, whether it is still
+          open), or a confirmation from a person is not.
+        - Nothing irreversible, no legal or product call, and no category from AGENTS.md § Privacy & GDPR.
+        - A cluster is touched only after the merge, as unticked `- [ ] <env>: <verb>` lines the body asks the PR to carry under `## After deploy`.
+        - The gates fit one of `/afk`'s two lanes. Neither runs the Playwright suite or a browser against a live site; `scripts/pr-screenshots.sh` is
+          the exception.
+
+        Say in the report why an issue is or is not `afk-ok`. When one condition fails, name it, so the operator can fix the body and add the label.
+
     - **Milestone**: `v0.2 — Deployable` → `v0.3 — Launch-ready` → `v1.0 — Go-live` is the path to launch; `Phase 2 — Coverage & polish` is post-launch;
       `Phase 3` / `Phase 4` hold epics. **No milestone is a valid answer** — it means unscheduled.
 
