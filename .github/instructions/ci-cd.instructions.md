@@ -50,7 +50,7 @@ is the map and the traps.
   file: `workflow_run`, not `push` (a Dependabot push gets a read-only token and no secrets); not `pull_request_target` (a writable token plus `npm ci` on
   the branch's lockfile is arbitrary code execution); the App token is minted **below** `npm ci`, with `contents: write` only; the commit author is not
   `renovate[bot]`, so both bots abandon the branch rather than force-push the fix away — at the cost that the bump stops auto-rebasing.
-- `validate-python.yml` — `ruff check` + `ruff format --check` at `RUFF_VERSION` from the pinned image, then the three Python tests (#1189). `validate-scripts.yml`
+- `validate-python.yml` — `ruff check` + `ruff format --check` at `RUFF_VERSION` from the pinned image, then the four Python tests (#1189). `validate-scripts.yml`
   — ShellCheck the same way, plus the script test suites (`version-test.sh`, `version-deserved-test.sh`, `release-highlights-test.sh`). `validate-comments.yml`
   — `scripts/comment-lint.sh check`.
 - `label-pr.yml` — type labels from the Conventional Commits title (`fix(api)!:` → `fix` + `breaking-change`), `importer` from an added `*Importer.kt` under

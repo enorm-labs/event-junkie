@@ -64,6 +64,9 @@ jobs:
       - name: The licence review derives the ADR-027 translation licence
         run: python3 scripts/test_apply_licence_review.py
 
+      - name: force-import reads every page of the source listing
+        run: python3 scripts/test_force_import.py
+
       # Gated on the two steps it explains.
       - name: Explain the fix
         if: failure() && (steps.check.outcome == 'failure' || steps.format.outcome == 'failure')

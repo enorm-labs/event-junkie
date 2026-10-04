@@ -41,6 +41,8 @@ EXIT_NOT_REFRESHED = 1
 EXIT_CANNOT_RUN = 2
 POLL_SECONDS = 10
 CALL_ATTEMPTS = 5
+PAGE_SIZE = 100
+MAX_PAGES = 20
 
 
 def parse_args() -> argparse.Namespace:
@@ -87,8 +89,20 @@ def call(base: str, env: str, path: str, method: str = "GET"):
     raise SystemExit(f"giving up on {method} {path}")
 
 
-def sources(base: str, env: str) -> dict:
-    return {s["slug"]: s for s in call(base, env, "/api/admin/event-sources?size=500")["content"]}
+def sources(base: str, env: str, fetch=call) -> dict:
+    """Every source by slug. Paged, because the API caps a page at 100 (see #2595)."""
+    out, page = {}, 0
+    while True:
+        body = fetch(base, env, f"/api/admin/event-sources?page={page}&size={PAGE_SIZE}&sort=name,asc")
+        out.update((s["slug"], s) for s in body["content"])
+        if not body["content"] or len(out) >= body["totalElements"]:
+            break
+        page += 1
+        if page >= MAX_PAGES:
+            raise SystemExit(f"Stopped after {MAX_PAGES} pages. The listing is not terminating.")
+    if len(out) != body["totalElements"]:
+        raise SystemExit(f"Read {len(out)} of {body['totalElements']} sources. Refusing to act on a partial listing.")
+    return out
 
 
 def imported_since(source: dict, moment: datetime.datetime) -> bool:
