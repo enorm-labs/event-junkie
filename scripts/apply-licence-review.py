@@ -13,6 +13,10 @@ keys on a server-generated slug, so names are resolved against the live admin AP
 guessed. Seven names differ between the document and the seeded sources; ALIASES is that list, and
 anything it does not cover is reported rather than matched approximately. A wrong match writes a
 prohibition onto the wrong venue, which is worse than doing nothing.
+
+It also writes the translation licence, which RESULTS.tsv does not hold. ADR-027 derives it from the
+description licence, and translation_licence() is that rule. Without it every source added after the
+operator's one-off PATCH stayed null, which the gate reads as "not granted" (#2561).
 """
 
 import argparse
@@ -41,6 +45,18 @@ LOCAL_HOST = "http://localhost:8081"
 LICENCE_FIELD = "descriptionLicence"
 PAGE_SIZE = 100
 MAX_PAGES = 100
+
+
+def translation_licence(description, current):
+    """The translationLicence to send, or None to leave the stored value alone (ADR-027).
+
+    A prohibited description prohibits its translation. Otherwise a null becomes PERMITTED, because
+    translation follows the display rule. A value already set is kept: it may be a venue's own answer
+    through #808, and this script has no evidence that outranks it.
+    """
+    if description == "PROHIBITED":
+        return None if current == "PROHIBITED" else "PROHIBITED"
+    return "PERMITTED" if current is None else None
 
 
 def fold(s):
@@ -115,6 +131,7 @@ def main():
         )
     by_name = {s["name"]: s["slug"] for s in sources}
     by_fold = {fold(s["name"]): s["slug"] for s in sources}
+    stored_translation = {s["slug"]: s.get("translationLicence") for s in sources}
     print(f"{len(by_name)} sources on {args.host}\n")
 
     planned, skipped, unmatched = [], [], []
@@ -128,16 +145,21 @@ def main():
             if not slug:
                 unmatched.append(name)
                 continue
-            planned.append((name, slug, row))
+            translation = translation_licence(row["description_licence"], stored_translation.get(slug))
+            planned.append((name, slug, row, translation))
 
-    for name, slug, row in planned:
-        print(f"  {row['description_licence']:<11} {row['image_licence']:<11} {slug:<28} {name}")
+    print(f"  {'DESCRIPTION':<11} {'IMAGE':<11} {'TRANSLATION':<11} {'SLUG':<28} NAME")
+    for name, slug, row, translation in planned:
+        shown = translation or "(kept)"
+        print(f"  {row['description_licence']:<11} {row['image_licence']:<11} {shown:<11} {slug:<28} {name}")
     print()
     for name, why in skipped:
         print(f"  SKIP  {name}: {why}")
     for name in unmatched:
         print(f"  UNMATCHED  {name}  <- resolve by hand or add to ALIASES")
+    translations = sum(1 for *_, translation in planned if translation)
     print(f"\n{len(planned)} to write, {len(skipped)} skipped, {len(unmatched)} unmatched")
+    print(f"{translations} of them set translationLicence; the rest keep the value stored")
 
     if unmatched and not args.allow_missing:
         sys.exit(
@@ -158,10 +180,11 @@ def main():
         )
 
     ok, wrong = 0, []
-    for _name, slug, row in planned:
+    for _name, slug, row, translation in planned:
         body = {
             "descriptionLicence": row["description_licence"],
             "imageLicence": row["image_licence"],
+            "translationLicence": translation,
             "licenceSourceUrl": row["licence_source_url"],
             "licenceNote": row["licence_note"],
         }

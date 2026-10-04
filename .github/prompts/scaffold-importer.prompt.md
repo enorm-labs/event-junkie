@@ -115,7 +115,8 @@ a cluster changes only through a guarded data migration, as V078 does; the seed 
 
 **And a row in `docs/licence-review/RESULTS.tsv`**, keyed on the same name: `scripts/seed-sources.py --enable` refuses to switch on a source without a
 verdict, so a source missing here can be created on a cluster and never import. Read the venue's legal and press pages; an agent records `UNCLEAR`, and a
-person confirms `PERMITTED` or `PROHIBITED` (`docs/licence-review/README.md` §3).
+person confirms `PERMITTED` or `PROHIBITED` (`docs/licence-review/README.md` §3). The same row gives the source its translation licence:
+`scripts/apply-licence-review.py` derives it from the description verdict (ADR-027, `docs/licence-review/README.md` §7).
 
 **And the onboarding steps in the pull request**, under `## After deploy`, which `label-pr.yml` labels `after-deploy`: the new-venue block from
 [`/post-release`](post-release.prompt.md#the-format-a-pull-request-writes), copied as written, so a session that runs it after the release seeds, reviews
