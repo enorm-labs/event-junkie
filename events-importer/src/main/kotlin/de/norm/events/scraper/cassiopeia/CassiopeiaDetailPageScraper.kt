@@ -14,6 +14,7 @@ import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.mapEventType
 import de.norm.events.scraper.parseGermanDate
 import de.norm.events.scraper.parseTime
+import de.norm.events.scraper.splitSupportActs
 import de.norm.events.scraper.textAt
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
@@ -183,7 +184,8 @@ class CassiopeiaDetailPageScraper {
      * Artists from a concert's title and description. For a `CONCERT` the [title] is the headliner,
      * co-bills split, added unconditionally; event-name titles ("Grey City Fest Opener") and
      * placeholders are filtered by [isNonArtistName]. Support acts are paragraphs prefixed
-     * "Support: " (`"Support: Aska"`) or "+ " (`"+ Dani Lia"`), after the headliner. Non-concert
+     * "Support: " (`"Support: Aska"`) or "+ " (`"+ Dani Lia"`), after the headliner, and split by [splitSupportActs] (`"Support: deshielo +
+     * la haine"` is two acts, #2623). Non-concert
      * events extract nothing, which also keeps a party's `+ free Kicker…` line out.
      */
     private fun parseArtists(
@@ -197,13 +199,9 @@ class CassiopeiaDetailPageScraper {
         val supportActs =
             content
                 .select(".paragraph-wrapper .paragraph.events")
-                .mapNotNull {
-                    SUPPORT_LINE
-                        .matchEntire(it.text().trim())
-                        ?.groupValues
-                        ?.get(1)
-                        ?.trim()
-                }.filter { it.isNotBlank() && !isNonArtistName(it) }
+                .mapNotNull { SUPPORT_LINE.matchEntire(it.text().trim())?.groupValues?.get(1) }
+                .flatMap { splitSupportActs(it) }
+                .filter { !isNonArtistName(it) }
                 .map { ScrapedArtist(name = it, role = "SUPPORT") }
 
         return headlinersFromTitle(title) + supportActs
