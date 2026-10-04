@@ -81,6 +81,16 @@ CERT_CEILING_DAYS = 400
 _next_i = iter(range(1, 1000))
 
 
+def dq(metric):
+    """One `data_quality` metric per source (`DataQualityMetrics`), pod generations collapsed."""
+    return 'max by (source) (data_quality{metric="%s"})' % metric
+
+
+def dq_share(metric):
+    """One `data_quality` metric as a fraction of every event measured, all sources together."""
+    return "sum(%s) / sum(%s)" % (dq(metric), dq("totalEvents"))
+
+
 def panel(pid, title, description, typ, promql, x, y, w, h, unit=None, decimals=2, y_axis_min=None):
     """One panel. `promql` may be a single query or a list of them."""
     queries = promql if isinstance(promql, list) else [promql]
@@ -370,8 +380,8 @@ panels = [
         "as line-up-derived.",
         "bar",
         [
-            'topk(20, sum by (source) (data_quality{metric="titleDerivedSingletons"}))',
-            'topk(20, sum by (source) (data_quality{metric="titleDerivedUnmatched"}))',
+            "topk(20, %s)" % dq("titleDerivedSingletons"),
+            "topk(20, %s)" % dq("titleDerivedUnmatched"),
         ],
         x=0,
         y=52,
@@ -527,18 +537,142 @@ panels = [
     ),
 ]
 
+# The data-quality tab (#386). One gauge, `data_quality{source,metric}`, written by the 03:00 snapshot.
+# A restart empties it until the next 03:00 run, and its trend is the gauge history, not `data_quality_snapshot`.
+DQ_WINDOW_NOTE = (
+    "\n\nThe 03:00 snapshot writes this gauge once a day, so a trend needs a window of a week or more. "
+    "After a restart the gauge is empty until the next 03:00 run."
+)
+
+# The per-source bars: (metric key, title, what a high bar means). Keys match `DataQualityReportLogger.measurements`.
+DQ_BARS = [
+    (
+        "concertsWithoutArtist",
+        "Concerts without an artist",
+        "The headline gap: a concert nobody can find by the act they want. A tall bar is a scraper that does not read "
+        "the line-up, or a venue that does not publish one.",
+    ),
+    (
+        "missingGenre",
+        "Events without a genre",
+        "A tall bar is a venue that publishes no genre, or a genre vocabulary the source uses and the importer drops.",
+    ),
+    (
+        "missingPrice",
+        "Events without a price",
+        "No presale, no box office, not free and no price note. A free event or a note-only price does not count.",
+    ),
+    (
+        "missingPromoter",
+        "Events without a promoter",
+        "Many venues publish no promoter. Read this bar against the venue's page before it is called a defect.",
+    ),
+    (
+        "missingStartTime",
+        "Events without a start time",
+        "An event with a date and no time. A tall bar usually means a changed detail-page layout.",
+    ),
+    (
+        "eventsTypedOther",
+        "Events typed OTHER",
+        "`OTHER` is the classifier's fallback, so a rising bar is the classifier losing ground on that source.",
+    ),
+    (
+        "suspectNonArtistTitles",
+        "Suspect artist names",
+        "Names stored as artists that look like event titles. It counts distinct names, not events, so one bad "
+        "name on forty events is one, and no worklist filter exists for it.",
+    ),
+    (
+        "unreviewedLicence",
+        "Events from a source with no licence review",
+        "Work of ours that has not happened, not data the venue mishandled (#283). It counts events, not sources.",
+    ),
+]
+
+
+def worklist_hint(key):
+    """The worklist call for a metric, or nothing for one `QualityIssue` does not define."""
+    if key == "suspectNonArtistTitles":
+        return ""
+    return " `GET /api/admin/data-quality/worklist?issue=%s&source=<slug>` lists the rows." % key
+
+
+DQ_TILES = [
+    ("concertsWithoutArtist", "Concerts without an artist (% of events)"),
+    ("eventsTypedOther", "Events typed OTHER (% of events)"),
+    ("missingPrice", "Events without a price (% of events)"),
+    ("unreviewedLicence", "Events from unreviewed sources (% of events)"),
+]
+
+DQ_TREND_METRICS = "|".join(key for key, _, _ in DQ_BARS if key != "suspectNonArtistTitles")
+
+dq_panels = [
+    panel(
+        "p_dq_share_%s" % key,
+        title,
+        "Every source together, as a share of every event in the database — the same ratio as the per-source "
+        "`%sPct` in `GET /api/admin/data-quality`." % key + DQ_WINDOW_NOTE,
+        "metric",
+        dq_share(key),
+        x=48 * n,
+        y=0,
+        w=48,
+        h=10,
+        unit="percent-1",
+        decimals=1,
+    )
+    for n, (key, title) in enumerate(DQ_TILES)
+]
+dq_panels.append(
+    panel(
+        "p_dq_trend",
+        "Data-quality counts over time, all sources",
+        "Each metric summed over every source. **A step is an import or a code change**: read it against the "
+        "deploy and the import history before calling it a regression. A fall is a fix landing; a rise is a "
+        "scraper losing a field. `GET /api/admin/data-quality/worklist?issue=<metric>` lists the rows."
+        + DQ_WINDOW_NOTE,
+        "line",
+        'sum by (metric) (max by (source, metric) (data_quality{metric=~"%s"}))' % DQ_TREND_METRICS,
+        x=0,
+        y=10,
+        w=192,
+        h=16,
+        decimals=0,
+    )
+)
+dq_panels += [
+    panel(
+        "p_dq_%s" % key,
+        "%s — fifteen worst sources" % title,
+        meaning + worklist_hint(key) + DQ_WINDOW_NOTE,
+        "bar",
+        "topk(15, %s)" % dq(key),
+        x=96 * (n % 2),
+        y=26 + 14 * (n // 2),
+        w=96,
+        h=14,
+        decimals=0,
+    )
+    for n, (key, title, meaning) in enumerate(DQ_BARS)
+]
+
 dashboard = {
     "version": 8,
     "dashboardId": "",
     "title": "Is it healthy?",
     "description": (
         "#271's one-screen answer. The top row is the answer; everything below it is why. "
+        "The Data quality tab charts the importer's data-quality gauges per source (#386). "
         "Generated from deploy/dashboards/gen_dashboard.py — edit that, not this."
     ),
     "role": "",
     "owner": "",
     "created": "2026-08-20T16:00:00+00:00",
-    "tabs": [{"tabId": "default", "name": "Overview", "panels": panels}],
+    "tabs": [
+        {"tabId": "default", "name": "Overview", "panels": panels},
+        {"tabId": "data-quality", "name": "Data quality", "panels": dq_panels},
+    ],
     "variables": None,
     "defaultDatetimeDuration": {
         "type": "relative",
