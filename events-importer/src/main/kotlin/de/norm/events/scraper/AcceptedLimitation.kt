@@ -1,5 +1,7 @@
 package de.norm.events.scraper
 
+import de.norm.events.event.SpokenLanguage
+
 /**
  * Something a venue does not publish, declared where its parser lives, so `/data-quality-audit` can
  * look it up rather than read it out of 213 files of prose — see #715.
@@ -25,7 +27,7 @@ data class AcceptedLimitation(
 
 /**
  * One venue package's declaration: which sources it serves, what those sources withhold, and the
- * [houseGenre] that stands in for a genre they never name.
+ * [houseGenre] and [houseLanguage] that stand in for a genre and a language they never name per event.
  *
  * **[sources] is why this is not a bare list.** An empty [limitations] means the venue publishes
  * everything the model stores; an undeclared venue means the audit has no idea either way. Naming
@@ -38,14 +40,22 @@ data class VenueLimitations(
      * The style a single-sound venue plays, as the genre text a scraped event would carry (`Techno, House`).
      * [AcceptedLimitations.withHouseGenre] gives it to a music event that names no genre.
      */
-    val houseGenre: String? = null
+    val houseGenre: String? = null,
+    /**
+     * The language all the venue's shows are in (#2584), on one of two grounds the declaration's KDoc
+     * names: the venue states it, quoted with its URL; or the programme is German in practice, with
+     * the measured share and the date. A mixed or thinly measured programme gets none.
+     * [AcceptedLimitations.withHouseLanguage] gives it to an event that states no language of its own.
+     */
+    val houseLanguage: SpokenLanguage? = null
 ) {
     /** One package, one source. A package serving several uses the primary constructor and names them all. */
     constructor(
         source: EventSource,
         vararg limitations: AcceptedLimitation,
-        houseGenre: String? = null
-    ) : this(setOf(source), limitations.toList(), houseGenre)
+        houseGenre: String? = null,
+        houseLanguage: SpokenLanguage? = null
+    ) : this(setOf(source), limitations.toList(), houseGenre, houseLanguage)
 }
 
 /**

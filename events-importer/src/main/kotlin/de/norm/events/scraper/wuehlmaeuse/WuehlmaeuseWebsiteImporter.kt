@@ -1,5 +1,6 @@
 package de.norm.events.scraper.wuehlmaeuse
 
+import de.norm.events.event.SpokenLanguage
 import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.ApiClient
 import de.norm.events.scraper.EventImporter
@@ -52,6 +53,11 @@ class WuehlmaeuseWebsiteImporter(
     }
 }
 
+/**
+ * German is the house language because the programme is German in practice (#2584). On `2026-10-04` the
+ * production API listed 402 upcoming shows under 177 titles, and no title named another language. The
+ * shop carries no show text, so the titles and the cabaret programme are the evidence.
+ */
 val WUEHLMAEUSE_LIMITATIONS =
     VenueLimitations(
         EventSource.WUEHLMAEUSE,
@@ -59,5 +65,6 @@ val WUEHLMAEUSE_LIMITATIONS =
         AcceptedLimitation(LimitedAspect.EVENT_TYPE, "the shop files every show under its act and names no format; Kabarett, comedy and music share one stage"),
         AcceptedLimitation(LimitedAspect.GENRE, "the shop names no genre"),
         AcceptedLimitation(LimitedAspect.PRICE_BOX_OFFICE, "the shop sells one price per seat category and states no box-office price"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "the shop names no promoter")
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the shop names no promoter"),
+        houseLanguage = SpokenLanguage.GERMAN
     )

@@ -2,6 +2,7 @@ package de.norm.events.scraper
 
 import de.norm.events.BaseControllerTest
 import de.norm.events.event.EventRepository
+import de.norm.events.event.SpokenLanguage
 import de.norm.events.venue.VenueEntity
 import de.norm.events.venue.VenueRepository
 import io.kotest.matchers.shouldBe
@@ -90,6 +91,24 @@ class SpokenLanguageIntegrationTest : BaseControllerTest() {
             val again = upsert(*shows)
             again.updated shouldBe 0
             again.skipped shouldBe 4
+        }
+    }
+
+    @Test
+    fun `the house language reaches the row only where the show names none`() {
+        runBlocking {
+            val shows =
+                listOf(
+                    comedy("unsaid", "Mixed Show"),
+                    comedy("german", "Laughing Matter – auf Deutsch"),
+                    comedy("gig", "Songs for a Sunday", type = "CONCERT")
+                ).map { it.copy(houseLanguage = SpokenLanguage.ENGLISH) }
+            upsert(*shows.toTypedArray()).inserted shouldBe 3
+
+            val stored = eventRepository.findAll().toList().associateBy { it.sourceId }
+            stored.getValue("the_wall:unsaid").spokenLanguages shouldBe listOf("en")
+            stored.getValue("the_wall:german").spokenLanguages shouldBe listOf("de")
+            stored.getValue("the_wall:gig").spokenLanguages shouldBe null
         }
     }
 }

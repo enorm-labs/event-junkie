@@ -1,5 +1,6 @@
 package de.norm.events.scraper.mehringhof
 
+import de.norm.events.event.SpokenLanguage
 import de.norm.events.scraper.AbstractTwoPageWebsiteImporter
 import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.EventSource
@@ -56,6 +57,11 @@ class MehringhofWebsiteImporter(
     }
 }
 
+/**
+ * German is the house language, stated by the theatre on https://www.mehringhoftheater.de/über-uns/:
+ * "Wir versuchen als Veranstalter eine permanente Bestandsaufnahme des deutschsprachigen Kabaretts/Comedy
+ * zu leisten" (#2584).
+ */
 val MEHRINGHOF_LIMITATIONS =
     VenueLimitations(
         EventSource.MEHRINGHOF,
@@ -63,5 +69,6 @@ val MEHRINGHOF_LIMITATIONS =
         AcceptedLimitation(LimitedAspect.END_TIME, "the ticket shop gives every performance the same 6 a.m. end"),
         AcceptedLimitation(LimitedAspect.EVENT_TYPE, "the programme names no format; Kabarett, comedy, readings and song evenings share one table"),
         AcceptedLimitation(LimitedAspect.GENRE, "the programme names no genre"),
-        AcceptedLimitation(LimitedAspect.PROMOTERS, "the theatre presents every performance itself")
+        AcceptedLimitation(LimitedAspect.PROMOTERS, "the theatre presents every performance itself"),
+        houseLanguage = SpokenLanguage.GERMAN
     )

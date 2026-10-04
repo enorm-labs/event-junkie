@@ -65,19 +65,23 @@ private val BILINGUAL_MARKER =
  * The languages [title], [subtitle] and [description] state, for an event of [type]. The title
  * and subtitle win over the description, which may quote another show. Never inferred from the
  * language the text is written in: a German blurb for an English show is common.
+ *
+ * [houseLanguage] comes last: the venue's language for all its shows (#2584), for an event whose
+ * own text names none. A German night at an English club stays German.
  */
 fun detectSpokenLanguages(
     title: String,
     subtitle: String?,
     description: String?,
-    type: EventType
+    type: EventType,
+    houseLanguage: SpokenLanguage? = null
 ): SpokenLanguages {
     if (type !in LANGUAGE_TYPES) return SpokenLanguages.UNKNOWN
     val heading = listOfNotNull(title, subtitle).joinToString("\n")
     val fromHeading = readLanguages(heading)
     val fromDescription = description?.let(::readLanguages) ?: SpokenLanguages.UNKNOWN
     return SpokenLanguages(
-        spoken = fromHeading.spoken ?: fromDescription.spoken,
+        spoken = fromHeading.spoken ?: fromDescription.spoken ?: houseLanguage?.let { listOf(it.code) },
         subtitle = fromHeading.subtitle ?: fromDescription.subtitle
     )
 }

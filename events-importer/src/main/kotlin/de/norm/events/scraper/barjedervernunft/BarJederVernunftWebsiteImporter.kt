@@ -1,5 +1,6 @@
 package de.norm.events.scraper.barjedervernunft
 
+import de.norm.events.event.SpokenLanguage
 import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.EventImporter
 import de.norm.events.scraper.EventSource
@@ -99,8 +100,14 @@ class BarJederVernunftWebsiteImporter(
     }
 }
 
+/**
+ * German is the house language because the programme is German in practice (#2584). On `2026-10-04` the
+ * production API listed 46 upcoming shows and comedy nights, and all 46 descriptions were German. The
+ * concerts take no language.
+ */
 val BAR_JEDER_VERNUNFT_LIMITATIONS =
     VenueLimitations(
         EventSource.BAR_JEDER_VERNUNFT,
-        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the calendar and the show pages state one Beginn time and never an Einlass")
+        AcceptedLimitation(LimitedAspect.DOORS_TIME, "the calendar and the show pages state one Beginn time and never an Einlass"),
+        houseLanguage = SpokenLanguage.GERMAN
     )

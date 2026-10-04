@@ -217,7 +217,7 @@ class EventImportService(
 
                 is ImportResult.Success -> {
                     logger.info { "Scraped ${result.events.size} event(s) from '${runningSource.slug}'" }
-                    val scraped = result.copy(events = AcceptedLimitations.withHouseGenre(importer.eventSource, result.events))
+                    val scraped = result.copy(events = AcceptedLimitations.withHouseDefaults(importer.eventSource, result.events))
 
                     // Look up the venue slug for inclusion in event slugs (ensures cross-venue uniqueness).
                     val venue =
