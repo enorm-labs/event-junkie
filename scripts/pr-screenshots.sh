@@ -12,6 +12,7 @@
 #     --views poster         poster, compact or both: the events list's view setting
 #     --click <selector>     click the first match before the shot, to open a menu or a popover
 #     --scroll <selector>    scroll the first match to the middle of the frame before the shot
+#     --focus <selector>     focus the first match as the keyboard would, so its focus-visible ring shows
 #     --label <name>         added to the file names, so a second run with --click does not overwrite the first
 #     --full-page            the whole page instead of the viewport
 #     --out <dir>            default build/pr-screenshots
@@ -45,6 +46,7 @@ THEMES="light,dark"
 VIEWS="poster"
 CLICK=""
 SCROLL=""
+FOCUS=""
 LABEL=""
 FULL_PAGE="false"
 PATHS=()
@@ -61,6 +63,7 @@ while (($#)); do
     --views) VIEWS="${2:?}"; shift 2 ;;
     --click) CLICK="${2:?}"; shift 2 ;;
     --scroll) SCROLL="${2:?}"; shift 2 ;;
+    --focus) FOCUS="${2:?}"; shift 2 ;;
     --label) LABEL="${2:?}"; shift 2 ;;
     --full-page) FULL_PAGE="true"; shift ;;
     -*) die "unknown option $1 (see --help)" ;;
@@ -153,7 +156,7 @@ echo "Serving before ($BASE_REF) on $BEFORE_URL, after ($AFTER_NAME) on $AFTER_U
 # Node resolves `@playwright/test` from the working directory when the module comes from stdin.
 cd "$TREE/events-frontend"
 OUT="$OUT" BEFORE_URL="$BEFORE_URL" AFTER_URL="$AFTER_URL" PATHS="$(printf '%s\n' "${PATHS[@]}")" \
-  WIDTHS="$WIDTHS" THEMES="$THEMES" VIEWS="$VIEWS" CLICK="$CLICK" SCROLL="$SCROLL" LABEL="$LABEL" FULL_PAGE="$FULL_PAGE" \
+  WIDTHS="$WIDTHS" THEMES="$THEMES" VIEWS="$VIEWS" CLICK="$CLICK" SCROLL="$SCROLL" FOCUS="$FOCUS" LABEL="$LABEL" FULL_PAGE="$FULL_PAGE" \
   BASE_REF="$BASE_REF" AFTER_NAME="$AFTER_NAME" REPO_ROOT="$REPO_ROOT" node --input-type=module - <<'EOF'
 import { relative } from 'node:path'
 import { chromium } from '@playwright/test'
@@ -186,7 +189,11 @@ async function act(page, kind, selector, side, path) {
     return
   }
   if (kind === 'scroll') await target.evaluate((el) => el.scrollIntoView({ block: 'center' }))
-  else await target.click()
+  else if (kind === 'focus') {
+    // A key press first makes Chromium treat the scripted focus as keyboard focus.
+    await page.keyboard.press('Shift')
+    await target.focus()
+  } else await target.click()
   await page.waitForTimeout(400)
 }
 
@@ -224,6 +231,7 @@ try {
             if (env.SCROLL) await act(page, 'scroll', env.SCROLL, side, path)
             if (env.CLICK) await act(page, 'click', env.CLICK, side, path)
             if (env.SCROLL || env.CLICK) await settle(page, viewport.height)
+            if (env.FOCUS) await act(page, 'focus', env.FOCUS, side, path)
             const file = `${env.OUT}/${side}-${name}.png`
             await page.screenshot({ path: file, fullPage: env.FULL_PAGE === 'true' })
             console.error(`  ${shown(file)}`)
