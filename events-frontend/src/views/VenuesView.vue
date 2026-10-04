@@ -18,7 +18,13 @@ import { useLocation } from '@/composables/useLocation'
 import { usePagedList } from '@/composables/usePagedList'
 import { useSearchDraft } from '@/composables/useSearchDraft'
 import { useFilterOptions } from '@/composables/useFilterOptions'
-import { fetchAllVenues, useVenueSearch, type VenueSearchParams } from '@/composables/useVenues'
+import {
+  type FeatureCounts,
+  fetchAllVenues,
+  fetchVenueFeatureCounts,
+  useVenueSearch,
+  type VenueSearchParams,
+} from '@/composables/useVenues'
 import { districtLabel } from '@/lib/districts'
 import { feedbackMailto } from '@/lib/feedback'
 import { formatDistance, type Position } from '@/lib/geo'
@@ -135,6 +141,19 @@ const mapFilters = computed(() => ({
   eventType: params.value.eventType,
   character: params.value.character,
 }))
+
+// How many venues each feature leaves (#2671). A failed request, such as a BFF without the
+// endpoint during a rollout, leaves the filter without counts and every option enabled.
+const featureCounts = shallowRef<FeatureCounts>()
+let countsCall = 0
+
+async function loadFeatureCounts() {
+  const call = ++countsCall
+  const counts = await fetchVenueFeatureCounts(mapFilters.value)
+  if (call === countsCall) featureCounts.value = counts
+}
+
+watch(() => JSON.stringify(mapFilters.value), loadFeatureCounts, { immediate: true })
 
 const mapVenues = shallowRef<VenueSummary[]>([])
 const mapLoading = ref(false)
@@ -293,6 +312,7 @@ const localePath = useLocalePath()
         :all-label="t('venues.allCharacters')"
         :clear-label="t('venues.clearCharacters')"
         :count-label="(n) => t('venues.charactersSelected', { n })"
+        :counts="featureCounts"
         :hint="t('venues.characterHint')"
         :label="t('venues.byCharacter')"
         :options="venueCharacterOptions"

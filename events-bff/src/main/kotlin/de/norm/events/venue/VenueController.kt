@@ -40,6 +40,21 @@ class VenueController(
         return cache.get(VenueListKey(filter, pageable)) { venueService.list(filter, pageable) }
     }
 
+    @GetMapping("/feature-counts")
+    @Operation(
+        summary = "For each feature (character tag), how many venues match the given filters with that feature added",
+        description = "Takes the list's filters without paging. A feature that no matching venue carries is absent, which means 0."
+    )
+    suspend fun featureCounts(
+        @ParameterObject
+        filters: VenueFilterParams,
+        exchange: ServerWebExchange
+    ): Map<String, Long> {
+        COUNT_PARAMS.rejectUnknownIn(exchange)
+        val filter = filters.toFilter()
+        return cache.get(VenueFeatureCountsKey(filter)) { venueService.featureCounts(filter) }
+    }
+
     @GetMapping("/{slug}")
     @Operation(summary = "Get a single venue by slug")
     suspend fun findBySlug(
@@ -50,6 +65,7 @@ class VenueController(
     private companion object {
         /** The filter fields come from [VenueFilterParams]; paging is declared here. */
         val LIST_PARAMS = QueryParameters.accepting(VenueFilterParams::class.java, QueryParameters.PAGEABLE)
+        val COUNT_PARAMS = QueryParameters.accepting(VenueFilterParams::class.java)
     }
 }
 
@@ -57,6 +73,10 @@ class VenueController(
 private data class VenueListKey(
     val filter: VenueFilter,
     val pageable: Pageable
+)
+
+private data class VenueFeatureCountsKey(
+    val filter: VenueFilter
 )
 
 private data class VenueDetailKey(

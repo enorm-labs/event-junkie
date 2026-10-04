@@ -64,14 +64,53 @@ class VenueSearchRepository(
     ): VenueListPage =
         TextSearch.strictThenSimilar(filter.query, found = { it.total > 0 }) { bySimilarity -> search(filter, bySimilarity, today, pageable, countCap) }
 
-    @Suppress("LongParameterList") // The public search's four, plus the pass.
-    private suspend fun search(
+    /**
+     * For each character tag, how many venues match [filter] and also carry that tag (#2671). A tag no match carries is absent.
+     * One query on the same pass the list takes: the grouping set `()` is the list's total, so a name search that only
+     * matches by similarity counts those venues, as the list shows them.
+     */
+    suspend fun featureCounts(filter: VenueFilter): Map<String, Long> =
+        TextSearch
+            .strictThenSimilar(filter.query, found = { it.total > 0 }) { bySimilarity -> featureCounts(filter, bySimilarity) }
+            .counts
+
+    private suspend fun featureCounts(
         filter: VenueFilter,
-        bySimilarity: Boolean,
-        today: LocalDate,
-        pageable: Pageable,
-        countCap: Int?
-    ): VenueListPage {
+        bySimilarity: Boolean
+    ): FeatureCounts {
+        val (where, params) = where(filter, bySimilarity)
+        val rows =
+            databaseClient
+                .sql(
+                    "SELECT t.tag, GROUPING(t.tag) AS whole, count(DISTINCT v.id) AS n FROM $EVENTS_SCHEMA.venue v " +
+                        "LEFT JOIN $EVENTS_SCHEMA.venue_character_tag t ON t.venue_id = v.id $where GROUP BY GROUPING SETS ((t.tag), ())"
+                ).bindAll(params)
+                .map { row: Readable ->
+                    Triple(
+                        row.get("tag", String::class.java),
+                        row.get("whole", Int::class.javaObjectType) == 1,
+                        row.get("n", Long::class.javaObjectType) ?: 0L
+                    )
+                }.all()
+                .collectList()
+                .awaitSingle()
+        return FeatureCounts(
+            total = rows.firstOrNull { it.second }?.third ?: 0L,
+            // A NULL tag outside the total row is the venues without any tag.
+            counts = rows.filter { !it.second && it.first != null }.associate { requireNotNull(it.first) to it.third }
+        )
+    }
+
+    private data class FeatureCounts(
+        val total: Long,
+        val counts: Map<String, Long>
+    )
+
+    /** The WHERE clause for [filter] on one pass, and its bind values; `v` is the venue. */
+    private fun where(
+        filter: VenueFilter,
+        bySimilarity: Boolean
+    ): Pair<String, Map<String, Any>> {
         val params = mutableMapOf<String, Any>()
         filter.query?.let { params += TextSearch.params(it, bySimilarity) }
         val conditions =
@@ -91,7 +130,18 @@ class VenueSearchRepository(
             params["characters"] = filter.characters
             params["characterCount"] = filter.characters.size.toLong()
         }
-        val where = if (conditions.isEmpty()) "" else "WHERE ${conditions.joinToString(" AND ")}"
+        return (if (conditions.isEmpty()) "" else "WHERE ${conditions.joinToString(" AND ")}") to params
+    }
+
+    @Suppress("LongParameterList") // The public search's four, plus the pass.
+    private suspend fun search(
+        filter: VenueFilter,
+        bySimilarity: Boolean,
+        today: LocalDate,
+        pageable: Pageable,
+        countCap: Int?
+    ): VenueListPage {
+        val (where, params) = where(filter, bySimilarity)
 
         val total =
             databaseClient

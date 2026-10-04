@@ -8,9 +8,10 @@ const options = [
   { value: 'PARTY', label: 'Party' },
 ]
 
+/** The checkbox whose label starts with `label`; a count may follow it. */
 function checkbox(label: string): HTMLInputElement {
-  const found = [...document.body.querySelectorAll('label')].find(
-    (it) => it.textContent?.trim() === label,
+  const found = [...document.body.querySelectorAll('label')].find((it) =>
+    new RegExp(`^${label}(\\s+\\d+)?$`).test(it.textContent?.trim() ?? ''),
   )
   if (!found) throw new Error(`no checkbox labelled ${label}`)
   return found.querySelector('input') as HTMLInputElement
@@ -23,7 +24,7 @@ describe('MultiSelectFilter', () => {
     wrapper.unmount()
   })
 
-  async function open(selected: string[], hint?: string) {
+  async function open(selected: string[], hint?: string, counts?: Record<string, number>) {
     wrapper = mount(MultiSelectFilter, {
       attachTo: document.body,
       props: {
@@ -34,6 +35,7 @@ describe('MultiSelectFilter', () => {
         countLabel: (n: number) => `${n} types`,
         clearLabel: 'Clear types',
         hint,
+        counts,
       },
     })
     await wrapper.get('button').trigger('click')
@@ -73,6 +75,27 @@ describe('MultiSelectFilter', () => {
 
     await open([])
     expect(document.body.querySelector('fieldset')?.hasAttribute('aria-describedby')).toBe(false)
+  })
+
+  it('shows each count and disables an option that leaves nothing, unless it is selected', async () => {
+    await open(['PARTY'], undefined, { PARTY: 4, CONCERT: 2 })
+
+    const texts = [...document.body.querySelectorAll('label')].map((it) =>
+      it.textContent?.replace(/\s+/g, ' ').trim(),
+    )
+    expect(texts).toEqual(['Concert 2', 'Festival 0', 'Party 4'])
+    expect(checkbox('Concert').disabled).toBe(false)
+    expect(checkbox('Festival').disabled).toBe(true)
+
+    await wrapper.setProps({ counts: { CONCERT: 2 } })
+    expect(checkbox('Party').checked).toBe(true)
+    expect(checkbox('Party').disabled).toBe(false)
+  })
+
+  it('enables every option and shows no count without counts', async () => {
+    await open([])
+    expect(checkbox('Festival').disabled).toBe(false)
+    expect(document.body.querySelector('label')?.textContent?.trim()).toBe('Concert')
   })
 
   it('clears every value', async () => {

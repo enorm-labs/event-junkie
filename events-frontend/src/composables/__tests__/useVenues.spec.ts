@@ -12,7 +12,8 @@ vi.mock('@/api/client', async (importOriginal) => ({
   unwrap: (promise: Promise<unknown>) => promise,
 }))
 
-const { fetchAllVenues, useAllVenues } = await import('@/composables/useVenues')
+const { fetchAllVenues, fetchVenueFeatureCounts, useAllVenues } =
+  await import('@/composables/useVenues')
 
 /** One page of the venue list, as the BFF answers it. */
 function page(slugs: string[], number: number, totalPages: number) {
@@ -69,5 +70,23 @@ describe('useAllVenues', () => {
 
     expect(venues.data.value?.map((venue) => venue.slug)).toEqual(['venue-0', 'venue-1'])
     expect(getMock.mock.calls.every(([, init]) => init.params.query.size === 100)).toBe(true)
+  })
+})
+
+describe('fetchVenueFeatureCounts', () => {
+  beforeEach(() => {
+    getMock.mockReset()
+  })
+
+  it('asks once for every feature, with the filters', async () => {
+    getMock.mockResolvedValue({ queer: 3 })
+    expect(await fetchVenueFeatureCounts({ character: ['queer'] })).toEqual({ queer: 3 })
+    expect(getMock).toHaveBeenCalledTimes(1)
+    expect(getMock.mock.calls[0]?.[0]).toBe('/api/venues/feature-counts')
+  })
+
+  it('answers undefined when the request fails, so the filter works without counts', async () => {
+    getMock.mockRejectedValue(new Error('404'))
+    expect(await fetchVenueFeatureCounts({})).toBeUndefined()
   })
 })
