@@ -16,8 +16,12 @@ data class SpokenLanguages(
     }
 }
 
-/** The event types a visitor chooses by language. A concert's lyrics are not a reason to go or stay away. */
-private val LANGUAGE_TYPES = setOf(EventType.COMEDY, EventType.READING, EventType.SCREENING, EventType.SHOW, EventType.OTHER)
+/**
+ * The event types a visitor chooses by language. A concert's lyrics are not a reason to go or stay
+ * away; a quiz's questions decide whether a team can play at all (#2563).
+ */
+private val LANGUAGE_TYPES =
+    setOf(EventType.COMEDY, EventType.QUIZ, EventType.READING, EventType.SCREENING, EventType.SHOW, EventType.OTHER)
 
 private fun phrase(pattern: String) = Regex(pattern, RegexOption.IGNORE_CASE)
 
@@ -35,7 +39,8 @@ private val SUBTITLE_MARKERS: List<Pair<Regex, SpokenLanguage>> =
  * "englischsprachig" alone is not a marker: "der englischsprachigen Szene" describes a scene, not
  * the show. Only "englischsprachige Show" and its kin say what is spoken on stage.
  */
-private const val SHOW_NOUN = """(?:show|comedy(?![\w-])|stand[\s-]?up|programm|abend|lesung|vorstellung|improv\w*|theater(?![\w-]))"""
+private const val SHOW_NOUN =
+    """(?:show|comedy(?![\w-])|stand[\s-]?up|programm|abend|lesung|vorstellung|improv\w*|theater(?![\w-])|(?:pub[\s-]?|kneipen)?quiz(?![\w-]))"""
 
 private val ENGLISH_MARKER =
     phrase(

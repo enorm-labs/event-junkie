@@ -71,7 +71,7 @@ a comedian or a cabaret performer on Wikidata, the night is `COMEDY`. A cue from
 [ADR-039](adr/ADR-039_A_COMEDIAN_HEADLINER_TYPES_AN_UNTYPED_NIGHT.md) has the rule.
 
 **The spoken language comes only from the venue's own words.** An explicit phrase sets it: "in English", "auf Deutsch",
-"Sprache: Deutsch", "OmU". It is set for `COMEDY`, `READING`, `SCREENING`, `SHOW` and `OTHER` only. The language of the
+"Sprache: Deutsch", "OmU". It is set for `COMEDY`, `QUIZ`, `READING`, `SCREENING`, `SHOW` and `OTHER` only. The language of the
 description is never used, because a German text often describes an English show (#2523).
 
 ## 3. What is deliberately excluded
