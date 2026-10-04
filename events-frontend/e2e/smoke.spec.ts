@@ -135,6 +135,15 @@ for (const locale of ['en', 'de']) {
         toggleBox!.x + toggleBox!.width,
         `last control off-screen at ${width}px`,
       ).toBeLessThanOrEqual(width)
+
+      // The controls share the brand's row at every width; only the section links may wrap below
+      // `lg`. At 320px the beta badge pushed the controls onto a second row (#2666).
+      const brandBox = await nav
+        .getByRole('link', { name: 'Event Junkie', exact: true })
+        .boundingBox()
+      expect(toggleBox!.y, `controls wrap onto a second row at ${width}px`).toBeLessThan(
+        brandBox!.y + brandBox!.height,
+      )
     }
   })
 }
