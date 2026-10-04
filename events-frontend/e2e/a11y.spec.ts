@@ -264,6 +264,32 @@ for (const route of dataRoutes) {
   })
 }
 
+/**
+ * Past chips in light mode, where their token pair failed contrast (#2659). The clock sits on the mocked night, so the
+ * mock's events on the grid's first day, 2026-07-27, are past whatever the real date is.
+ */
+test('the calendar in light mode, with past events, has no detectable accessibility violations', async ({ page }) => {
+  await page.clock.setFixedTime(new Date('2026-08-15T16:00:00Z'))
+  await mockBff(page)
+  await page.goto('/en/calendar')
+  await (await displaySetting(page, 'Theme', 'Light')).click()
+  await expect(page.locator('html')).not.toHaveClass(/dark/)
+
+  await expect(page.getByRole('link', { name: /Tonight Show/ })).toHaveClass(/\bfc-event-past\b/)
+  await transitionsSettled(page)
+
+  const results = await buildScan(page).analyze()
+
+  expect(
+    results.violations.map((v) => ({
+      rule: v.id,
+      impact: v.impact,
+      help: v.help,
+      nodes: v.nodes.map((n) => n.target.join(' ')),
+    })),
+  ).toEqual([])
+})
+
 /** The header search, open over the page with every kind of result: a dialog the static pass never opens. */
 test('the header search, open with results, has no detectable accessibility violations', async ({ page }) => {
   await mockBff(page)
