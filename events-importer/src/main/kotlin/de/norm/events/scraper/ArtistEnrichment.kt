@@ -15,7 +15,9 @@ import java.net.URI
  * (ADR-031, step C), as the columns to write. Pure: the sweep reads, this decides, the store writes.
  *
  * **A column that holds a value is never touched**, #1319's rule for promoter websites: a person's
- * edit and a venue's own link both outrank a database. The first relationship of each kind wins in
+ * edit and a venue's own link both outrank a database. The name is the one exception, and only its
+ * letter case: de-shouting cannot tell `NVST` from a shouted word, and the act's own spelling can
+ * (ADR-031, amended by #2317). The first relationship of each kind wins in
  * MusicBrainz's order, an ended one is skipped, and Resident Advisor has no relationship type of its
  * own, so it is read by host from `other databases` as Facebook and Instagram are from
  * `social network`. `founded` and `foundedIn` are written for an ensemble only; for a person the
@@ -84,6 +86,8 @@ object ArtistEnrichment {
             }
         }
 
+        // The name always holds a value, so the letter-case rule stands in for the empty-column test.
+        fill("name", "name", null, letterCaseOf(artist.name, entity.name))
         val links = linksOf(entity)
         fill("website", "website_url", artist.websiteUrl, links[Link.WEBSITE])
         fill("facebook", "facebook_url", artist.facebookUrl, links[Link.FACEBOOK])
@@ -213,3 +217,12 @@ object ArtistEnrichment {
 
     private enum class Link { WEBSITE, FACEBOOK, INSTAGRAM, YOUTUBE, BANDCAMP, SOUNDCLOUD, DISCOGS, WIKIDATA, RESIDENT_ADVISOR, SPOTIFY }
 }
+
+/**
+ * MusicBrainz's spelling of [stored] when the two differ in letter case only (#2317): `Nvst` takes
+ * `NVST`. Null when they are equal or differ in anything else, a diacritic or a space included.
+ */
+private fun letterCaseOf(
+    stored: String,
+    musicBrainz: String
+): String? = musicBrainz.takeIf { it != stored && it.equals(stored, ignoreCase = true) }

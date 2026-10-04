@@ -320,7 +320,7 @@ Represents a musical artist or band. Normalized separately so artists can appear
 | Field                    | Type          | Nullable | Description                                                             | Example                                        |
 | ------------------------ | ------------- | -------- | ----------------------------------------------------------------------- | ---------------------------------------------- |
 | `id`                     | `BIGINT`      | No       | Auto-generated primary key                                              | `7`                                            |
-| `name`                   | `TEXT`        | No       | Stage or band name                                                      | `The Adicts`                                   |
+| `name`                   | `TEXT`        | No       | Stage or band name. An `EXACT` row takes MusicBrainz's letter case      | `The Adicts`                                   |
 | `slug`                   | `TEXT` (UQ)   | No       | URL-friendly identifier                                                 | `the-adicts`                                   |
 | `description`            | `TEXT`        | Yes      | Artist biography                                                        | `Formed in Ipswich in the late 1970s…`         |
 | `image_url`              | `TEXT`        | Yes      | Photo or logo URL                                                       | `https://example.com/adicts.jpg`               |

@@ -8,9 +8,14 @@ import org.springframework.stereotype.Repository
 /**
  * Writes what the MusicBrainz enrichment filled, and only that (ADR-031, step C).
  *
- * One UPDATE over the columns the sweep decided on, never a `save`: `save` writes every column and
- * the name is never rewritten from MusicBrainz. The column names come from [COLUMNS], so the SQL is
- * assembled from a fixed vocabulary and every value is bound.
+ * One UPDATE over the columns the sweep decided on, never a `save`: `save` writes every column, and
+ * the name changes only in letter case, when [ArtistEnrichment][de.norm.events.scraper.ArtistEnrichment]
+ * says so (#2317). The column names come from [COLUMNS], so the SQL is assembled from a fixed
+ * vocabulary and every value is bound.
+ *
+ * A name write moves `musicbrainz_checked_at` to the same `now()` as `name_changed_at` (V062).
+ * Otherwise the rename queues a fresh lookup, and the fresh verdict a second read, of a row whose
+ * folded name did not change.
  */
 @Repository
 class ArtistEnrichmentStore(
@@ -23,7 +28,9 @@ class ArtistEnrichmentStore(
     ): Long {
         val unknown = columns.keys - COLUMNS
         require(unknown.isEmpty()) { "Not an enrichment column: $unknown" }
-        val assignments = columns.keys.joinToString("") { "$it = :$it, " }
+        val assignments =
+            columns.keys.joinToString("") { "$it = :$it, " } +
+                if ("name" in columns) "musicbrainz_checked_at = now(), " else ""
         var spec =
             databaseClient
                 .sql(
@@ -41,6 +48,7 @@ class ArtistEnrichmentStore(
         /** Every column the enrichment may write; the four image columns, and each text with its credit, are written together or not at all. */
         val COLUMNS =
             setOf(
+                "name",
                 "website_url",
                 "facebook_url",
                 "instagram_url",

@@ -15,10 +15,11 @@ package de.norm.events.common
 //   - nothing else: a short all-caps token ("JJ", "HB") is a word here, and the caller decides
 //     when a whole name is an initialism instead, via [isShortInitialism].
 //
-// Accepted: a genuine all-caps name of three or more letters that is not in [ACRONYMS] ("ABBA",
-// "MGMT") is title-cased like any shouted word, since nothing distinguishes the two without a
-// lookup table — extend [ACRONYMS] when a real act or promoter needs its capitals kept. Display-only
-// either way: slugs are case-insensitive, so the resolved row is unaffected.
+// A genuine all-caps name of three or more letters that is not in [ACRONYMS] ("NVST", "MGMT") is
+// title-cased here like any shouted word, since nothing here tells the two apart. MusicBrainz is the
+// lookup table: an artist with an EXACT match takes MusicBrainz's spelling when it differs from the
+// stored name in letter case only, and the slug stays (ArtistEnrichment, #2317). A promoter has no
+// such lookup. Display-only either way: slugs are case-insensitive, so the resolved row is unaffected.
 
 /**
  * Title-cases a shouted word (see [isShoutedWord]); returns any other token unchanged. A hyphen

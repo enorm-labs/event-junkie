@@ -5,6 +5,8 @@ import de.norm.events.artist.ArtistEnrichmentStore
 import de.norm.events.artist.ArtistEntity
 import de.norm.events.artist.ArtistRepository
 import de.norm.events.artist.MusicBrainzMatch
+import de.norm.events.event.EventEntity
+import de.norm.events.event.EventRepository
 import de.norm.events.musicbrainz.MusicBrainzArea
 import de.norm.events.musicbrainz.MusicBrainzArtist
 import de.norm.events.musicbrainz.MusicBrainzClient
@@ -13,6 +15,8 @@ import de.norm.events.musicbrainz.MusicBrainzProperties
 import de.norm.events.musicbrainz.MusicBrainzUnavailableException
 import de.norm.events.musicbrainz.MusicBrainzUrl
 import de.norm.events.musicbrainz.MusicBrainzUrlRelation
+import de.norm.events.venue.VenueEntity
+import de.norm.events.venue.VenueRepository
 import de.norm.events.wikimedia.CommonsImage
 import de.norm.events.wikimedia.WikimediaClient
 import de.norm.events.wikimedia.WikipediaExtract
@@ -30,6 +34,7 @@ import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.dao.DataIntegrityViolationException
+import java.time.LocalDate
 
 /**
  * Step C against a real PostgreSQL, with MusicBrainz and Wikimedia replaced by scripted clients.
@@ -42,6 +47,15 @@ class MusicBrainzEnrichmentServiceIntegrationTest : BaseControllerTest() {
 
     @Autowired
     private lateinit var store: ArtistEnrichmentStore
+
+    @Autowired
+    private lateinit var associationSyncService: AssociationSyncService
+
+    @Autowired
+    private lateinit var eventRepository: EventRepository
+
+    @Autowired
+    private lateinit var venueRepository: VenueRepository
 
     private val musicBrainz = mockk<MusicBrainzClient>()
     private val wikimedia =
@@ -157,6 +171,47 @@ class MusicBrainzEnrichmentServiceIntegrationTest : BaseControllerTest() {
             // The write left the name alone, so neither sweep owes the row (V062).
             artistRepository.findNeedingMusicBrainzLookup(setOf(id)).toList() shouldBe emptyList()
             artistRepository.findNeedingMusicBrainzEnrichment(setOf(id)).toList() shouldBe emptyList()
+        }
+    }
+
+    @Test
+    fun `a de-shouted name takes MusicBrainz's capitals, keeps its slug, and the next import does not flatten it (#2317)`() {
+        runBlocking {
+            val id = exact("Nvst")
+            coEvery { musicBrainz.artist("mbid-nvst") } returns MusicBrainzArtist(id = "mbid-nvst", name = "NVST", type = "Person")
+
+            service().sweep(setOf(id)).stored shouldBe 1
+
+            row(id).name shouldBe "NVST"
+            row(id).slug shouldBe "nvst"
+            enriched("name") shouldBe 1.0
+            // The rename moved the verdict's stamp with it, so neither sweep owes the row (V062).
+            artistRepository.findNeedingMusicBrainzLookup(setOf(id)).toList() shouldBe emptyList()
+            artistRepository.findNeedingMusicBrainzEnrichment(setOf(id)).toList() shouldBe emptyList()
+
+            // A venue bills it shouted, which de-shouts to `Nvst`: the import resolves the row by slug and leaves its name.
+            val venue = venueRepository.save(VenueEntity(name = "Tresor", slug = "tresor-2317"))
+            val event =
+                eventRepository.save(
+                    EventEntity(venueId = requireNotNull(venue.id), title = "T35", slug = "t35-2317", eventDate = LocalDate.of(2026, 10, 2), sourceId = "t35:1")
+                )
+            associationSyncService.resolveAndSyncAssociations(
+                listOf(event),
+                listOf(
+                    ScrapedEvent(
+                        title = "T35",
+                        eventDate = LocalDate.of(2026, 10, 2),
+                        sourceId = "t35:1",
+                        sourceUrl = "https://example.com/t35",
+                        eventType = "PARTY",
+                        status = "SCHEDULED",
+                        artists = listOf(ScrapedArtist(name = "NVST", role = "DJ"))
+                    )
+                )
+            )
+
+            artistRepository.findBySlug("nvst")?.id shouldBe id
+            row(id).name shouldBe "NVST"
         }
     }
 

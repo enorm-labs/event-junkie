@@ -152,6 +152,32 @@ class ArtistEnrichmentTest {
     }
 
     @Test
+    fun `a name that differs from MusicBrainz in letter case only takes MusicBrainz's spelling (#2317)`() {
+        val nvst = MusicBrainzArtist(id = "38193b9d", name = "NVST")
+
+        val filled = ArtistEnrichment.fill(row(name = "Nvst"), nvst, image = null, maxBytes = maxBytes)
+
+        filled.columns shouldContainExactly mapOf("name" to "NVST")
+        filled.fields shouldContainExactly listOf("name")
+    }
+
+    @Test
+    fun `a name MusicBrainz spells the same is not written`() {
+        val biji = MusicBrainzArtist(id = "biji", name = "Biji")
+
+        ArtistEnrichment.fill(row(name = "Biji"), biji, image = null, maxBytes = maxBytes).isEmpty shouldBe true
+    }
+
+    @Test
+    fun `a name that differs by more than letter case is left alone, a diacritic or a space included`() {
+        listOf("Motorhead" to "Motörhead", "Oxo 86" to "OXO86", "Nvst" to "NVST Live").forEach { (stored, musicBrainz) ->
+            val filled = ArtistEnrichment.fill(row(name = stored), MusicBrainzArtist(id = "x", name = musicBrainz), image = null, maxBytes = maxBytes)
+
+            filled.columns shouldNotContainKey "name"
+        }
+    }
+
+    @Test
     fun `the picture lands with its four fields, the credit as plain text`() {
         val filled = ArtistEnrichment.fill(row(), entity("hausswolff"), commons(), maxBytes)
 
