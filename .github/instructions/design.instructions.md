@@ -17,7 +17,7 @@ BRANDING.md keeps the argument; this file keeps the answer.
 
 Each line names the issue that decided it. **`npm run lint` enforces the arbitrary-value row and §2's hex and raw-palette rule**, plus classes Tailwind
 cannot generate and inline styles, through `@shadcn/lint` (the `app/design-system` block in `eslint.config.ts`, #2028). The other rows are review. A
-suppression carries its reason, as the two in `MultiSelectFilter.vue` and `HomeView.vue` do.
+suppression carries its reason, as the one in `MultiSelectFilter.vue` does.
 
 | Forbidden                                                       | Instead                                                                                 | Decided by                                                      |
 | --------------------------------------------------------------- | --------------------------------------------------------------------------------------- | --------------------------------------------------------------- |

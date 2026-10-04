@@ -9,7 +9,7 @@ const tonightExpanded = ref(false)
 <script lang="ts" setup>
 import { computed, nextTick, onMounted, useTemplateRef } from 'vue'
 import { RouterLink } from 'vue-router'
-import { CalendarDays, Compass } from '@lucide/vue'
+import { ArrowRight, CalendarDays, ChevronDown, Compass } from '@lucide/vue'
 import { Button } from '@/components/ui/button'
 import EventCard from '@/components/EventCard.vue'
 import { CARD_GRID_CLASS, CARD_LIST_CLASS } from '@/lib/utils'
@@ -137,6 +137,7 @@ async function expandTonight() {
         </div>
         <Button v-if="tonightCapped" variant="outline" @click="expandTonight">
           {{ t('home.showAllTonight', { count: tonightTotal }) }}
+          <ChevronDown aria-hidden="true" data-icon="inline-end" />
         </Button>
       </template>
     </section>
@@ -159,9 +160,12 @@ async function expandTonight() {
         <div v-else :class="CARD_GRID_CLASS">
           <EventCard v-for="event in upcoming.data.value" :key="event.slug" :event="event" />
         </div>
-        <!-- eslint-disable-next-line shadcn/no-restyle -- a text link sits flush with the column above it -->
-        <Button as-child class="px-0" variant="link">
-          <RouterLink :to="localePath('/events')">{{ t('home.seeAllUpcoming') }}</RouterLink>
+        <!-- Same family as Tonight's expand button; the arrow says this one leaves the page. -->
+        <Button as-child variant="outline">
+          <RouterLink :to="localePath('/events')">
+            {{ t('home.seeAllUpcoming') }}
+            <ArrowRight aria-hidden="true" data-icon="inline-end" />
+          </RouterLink>
         </Button>
       </template>
     </section>
