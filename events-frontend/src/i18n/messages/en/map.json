@@ -19,7 +19,6 @@
   "gestureHelpMac": "Use ⌘ + scroll to zoom the map",
   "gestureHelpMobile": "Use two fingers to move the map",
   "pinOnNow": "{count} on now | {count} on now",
-  "onNowOnly": "On now",
   "near": {
     "label": "Near",
     "useLocation": "Use my location",

@@ -25,8 +25,10 @@ const props = withDefaults(
     showDateRange?: boolean
     /** The range the view shows when the URL names none; the preset that matches reads as pressed. */
     defaultRange?: DateRange
+    /** Offers On now beside the presets; only a view that can filter to this moment opts in. */
+    showOnNow?: boolean
   }>(),
-  { showDateRange: true, defaultRange: undefined },
+  { showDateRange: true, defaultRange: undefined, showOnNow: false },
 )
 
 const route = useRoute()
@@ -44,11 +46,23 @@ function openDatePicker(event: MouseEvent) {
 
 /**
  * A preset is the two date bounds, so it stays in the URL and is shareable. Clicking the active
- * one clears the range, the only way back to "any date" without emptying both inputs.
+ * one clears the range, the only way back to "any date" without emptying both inputs. Any date
+ * choice ends On now, so one time button is pressed at most.
  */
 function togglePreset(key: string, range: DateRange) {
   const active = isPresetActive(key)
-  applyFilters({ from: active ? '' : range.from, to: active ? '' : range.to })
+  applyFilters({ from: active ? '' : range.from, to: active ? '' : range.to, now: '' })
+}
+
+function applyDate(bound: 'from' | 'to', value: string) {
+  applyFilters({ [bound]: value, now: '' })
+}
+
+/** On now already means today, so it takes the place of the range rather than narrowing it. */
+const onNow = computed(() => queryString('now') === '1')
+
+function toggleOnNow() {
+  applyFilters(onNow.value ? { now: '' } : { now: '1', from: '', to: '' })
 }
 
 /**
@@ -56,6 +70,7 @@ function togglePreset(key: string, range: DateRange) {
  * range in the URL, the view's own default stands in, so the map's "today" shows Tonight pressed.
  */
 function isPresetActive(key: string): boolean {
+  if (onNow.value) return false
   const from = queryString('from')
   const to = queryString('to')
   const shown = !from && !to && props.defaultRange ? props.defaultRange : { from, to }
@@ -223,7 +238,7 @@ onMounted(() => {
         :max="queryString('to') || undefined"
         :model-value="queryString('from')"
         type="date"
-        @change="applyFilters({ from: ($event.target as HTMLInputElement).value })"
+        @change="applyDate('from', ($event.target as HTMLInputElement).value)"
         @click="openDatePicker"
       />
       <span class="text-body text-muted-foreground">–</span>
@@ -232,10 +247,21 @@ onMounted(() => {
         :min="queryString('from') || undefined"
         :model-value="queryString('to')"
         type="date"
-        @change="applyFilters({ to: ($event.target as HTMLInputElement).value })"
+        @change="applyDate('to', ($event.target as HTMLInputElement).value)"
         @click="openDatePicker"
       />
 
+      <!-- On now first: the time buttons widen from left to right. -->
+      <Button
+        v-if="showOnNow"
+        :aria-pressed="onNow"
+        :variant="onNow ? 'default' : 'outline'"
+        size="sm"
+        type="button"
+        @click="toggleOnNow"
+      >
+        {{ t('dateRange.onNow') }}
+      </Button>
       <!-- Shortcuts that set the same from/to the inputs do, so a preset is as shareable. -->
       <Button
         v-for="preset in DATE_PRESETS"
@@ -248,8 +274,6 @@ onMounted(() => {
       >
         {{ t(preset.key) }}
       </Button>
-      <!-- A view's own time toggle, such as the map's "On now", sits with the other times. -->
-      <slot name="time" />
     </div>
 
     <!--
@@ -340,7 +364,7 @@ onMounted(() => {
       <!--
         The price range applies when a bound is left or on Enter, so it needs no button. "Free
         only" is the price axis at zero, so it stays beside the range; both flags are toggles in
-        the presets' style rather than checkboxes, as the map's "On now" already was.
+        the presets' style rather than checkboxes, as On now is.
       -->
       <div class="flex flex-wrap items-center gap-2">
         <BaseInput

@@ -112,6 +112,8 @@ test('on now keeps only what is running, and marks it', async ({ page }) => {
   await page.getByRole('button', { name: 'On now', exact: true }).click()
 
   await expect(page).toHaveURL(/now=1/)
+  // On now replaces the range, so the default Tonight no longer reads as pressed (#2605).
+  await expect(page.getByRole('button', { name: 'Tonight' })).toHaveAttribute('aria-pressed', 'false')
   // Astra's 23:00 show has not started; Lido's 21:00 one has, and its row says so.
   await expect(page.getByRole('heading', { level: 3 })).toHaveText([/Lido/])
   await expect(page.getByRole('link', { name: /Lido Show/ })).toContainText('On now')

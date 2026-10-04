@@ -19,7 +19,6 @@
   "gestureHelpMac": "⌘ + Scrollen zoomt die Karte",
   "gestureHelpMobile": "Zwei Finger bewegen die Karte",
   "pinOnNow": "{count} läuft gerade | {count} laufen gerade",
-  "onNowOnly": "Läuft gerade",
   "near": {
     "label": "In der Nähe",
     "useLocation": "Meinen Standort verwenden",

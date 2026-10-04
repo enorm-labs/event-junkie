@@ -44,11 +44,12 @@ const VenueMap = defineAsyncComponent(() => import('@/components/VenueMap.vue'))
 /** The BFF's calendar endpoint refuses a range longer than this. */
 const MAX_RANGE_DAYS = 92
 /** The map's own query keys. Not event filters: the list link and the API never see them. */
-const MAP_KEYS = ['radius', 'now'] as const
+const MAP_KEYS = ['radius'] as const
 
 const route = useRoute()
 const router = useRouter()
 const { filters, dateRange, queryString, applyFilters } = useEventFilters()
+const onNowOnly = computed(() => queryString('now') === '1')
 const localePath = useLocalePath()
 const { t, locale } = useI18n()
 const { origin, state: locateState, locate, set: setOrigin, clear: clearOrigin } = useLocation()
@@ -58,9 +59,10 @@ const venueMap = useTemplateRef<{ center(): Position | null; focusPin(slug: stri
 
 /**
  * The URL's range, or today when it names none. Today is not written into the URL, so a shared
- * link without dates means "tonight" on the day it is opened.
+ * link without dates means "tonight" on the day it is opened. On now is today, whatever the range.
  */
 const range = computed(() => {
+  if (onNowOnly.value) return { from: todayIso(), to: todayIso() }
   const from = dateRange.value.from ?? todayIso()
   const to = dateRange.value.to ?? (dateRange.value.from ? addDays(from, MAX_RANGE_DAYS) : from)
   const max = addDays(from, MAX_RANGE_DAYS)
@@ -90,7 +92,6 @@ async function load() {
 watch(() => JSON.stringify([range.value, filters.value]), load, { immediate: true })
 
 const radiusKm = computed(() => radiusFromQuery(queryString('radius')))
-const onNowOnly = computed(() => queryString('now') === '1')
 
 /**
  * The range reaches back to last night's spans, so a 01:00 finish still counted on a pin at noon
@@ -151,14 +152,13 @@ const location = computed(() => {
 const PANEL_PREVIEW = 3
 const preview = computed(() => selectedGroup.value?.events.slice(0, PANEL_PREVIEW) ?? [])
 
-/** The venue's events over the map's own range, in the list. */
+/** The venue's events over the map's own range, in the list; On now carries over as itself. */
 const venueListLink = computed(() => ({
   ...listLink.value,
   query: {
     ...listLink.value.query,
     venue: selectedGroup.value?.venue.slug,
-    from: range.value.from,
-    to: range.value.to,
+    ...(onNowOnly.value ? {} : { from: range.value.from, to: range.value.to }),
   },
 }))
 
@@ -257,19 +257,7 @@ function distance(km: number): string {
     </header>
 
     <!-- With no dates in the URL the map shows today, so Tonight reads as pressed. -->
-    <EventFilterBar :default-range="tonight()">
-      <template #time>
-        <Button
-          :aria-pressed="onNowOnly"
-          :variant="onNowOnly ? 'default' : 'outline'"
-          size="sm"
-          type="button"
-          @click="applyFilters({ now: onNowOnly ? undefined : '1' })"
-        >
-          {{ t('map.onNowOnly') }}
-        </Button>
-      </template>
-    </EventFilterBar>
+    <EventFilterBar :default-range="tonight()" show-on-now />
 
     <section :aria-label="t('map.near.label')" class="space-y-3">
       <div class="flex flex-wrap items-center gap-2">

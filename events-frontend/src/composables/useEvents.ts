@@ -1,6 +1,7 @@
 import { api, unwrap } from '@/api/client'
 import type { EventPage, EventSummary } from '@/api/types'
 import type { ErrorSubjectKey } from '@/i18n'
+import { isOnNow, todayIso } from '@/lib/format'
 import { useAsync } from './useAsync'
 
 /** Query parameters accepted by the event search endpoint (`GET /events`). */
@@ -90,6 +91,21 @@ export function fetchCalendarEvents(
   return unwrap(api.GET('/api/events/calendar', { params: { query: { ...filters, from, to } } }))
 }
 
+/** One page of the event search. */
+export function searchEvents(params: EventSearchParams): Promise<EventPage> {
+  return unwrap(api.GET('/api/events', { params: { query: params } }))
+}
+
+/**
+ * The events running at this moment, as one page. It reads the whole of today unpaged, because
+ * `isOnNow` over one page of 20 would miss most of the evening.
+ */
+export async function fetchOnNowPage(filters: EventFilterValues): Promise<EventPage> {
+  const today = todayIso()
+  const content = (await fetchCalendarEvents(today, today, filters)).filter(isOnNow)
+  return { content, page: 0, size: content.length, totalElements: content.length, totalPages: 1 }
+}
+
 /**
  * Paged event search for the events list and the venue/artist detail feeds. `params` is read
  * lazily on each `run()`, so callers re-run after changing filters or the page.
@@ -99,7 +115,7 @@ export function useEventSearch(
   subjectKey: ErrorSubjectKey = 'errors.subject.events',
 ) {
   return useAsync<EventPage>(
-    () => unwrap(api.GET('/api/events', { params: { query: params() } })),
+    () => searchEvents(params()),
     subjectKey,
     () => `/api/events?${JSON.stringify(params())}`,
   )
