@@ -2,8 +2,10 @@ package de.norm.events.scraper
 
 import de.norm.events.event.EventEntity
 import de.norm.events.event.EventRepository
+import de.norm.events.event.PinnedField
 import de.norm.events.licence.SourceLicences
 import de.norm.events.slug.SlugGenerator
+import io.github.oshai.kotlinlogging.KLogger
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.github.oshai.kotlinlogging.Level
 import kotlinx.coroutines.flow.toList
@@ -140,10 +142,13 @@ class EventUpsertService(
         val scrapedEvents = performerTyping.retype(keepStoredDetail(incomingEvents, existingBySourceId, eventSourceId))
 
         val discriminators = slugDiscriminators(scrapedEvents)
-        val build = { scraped: ScrapedEvent, existing: EventEntity? ->
+        val fromSource = { scraped: ScrapedEvent, existing: EventEntity? ->
             scraped.toEventEntity(venueId, venueSlug, eventSourceId, existing, discriminators[scraped.sourceId], licences)
         }
-        val candidates = scrapedEvents.map { scraped -> scraped to build(scraped, existingBySourceId[scraped.sourceId]) }
+        val build = { scraped: ScrapedEvent, existing: EventEntity? -> PinnedField.keepPinned(fromSource(scraped, existing), existing) }
+        val sourceRows = scrapedEvents.map { scraped -> scraped to fromSource(scraped, existingBySourceId[scraped.sourceId]) }
+        val columnPinsKept = logger.keptColumnPins(sourceRows, existingBySourceId)
+        val candidates = sourceRows.map { (scraped, row) -> scraped to PinnedField.keepPinned(row, existingBySourceId[scraped.sourceId]) }
         val resolved = resolveBySlug(candidates, existingBySourceId, eventSourceId, build)
 
         val entities = resolved.kept
@@ -155,7 +160,9 @@ class EventUpsertService(
                 unchanged
             }
 
-        val touchedArtistIds = associationSyncService.resolveAndSyncAssociations(savedEvents, scrapedEvents)
+        val associations = associationSyncService.resolveAndSyncAssociations(savedEvents, scrapedEvents)
+        val pinsKept = columnPinsKept + associations.pinsKept
+        if (pinsKept > 0) logger.info { "Kept $pinsKept pinned field(s) the source would have changed on event source $eventSourceId" }
 
         // Only changed/new events are logged here; unchanged ones already are, in partitionByChanged.
         var inserted = 0
@@ -173,7 +180,8 @@ class EventUpsertService(
             updated = changed.size - inserted,
             skipped = unchanged.size,
             droppedSlugConflict = resolved.droppedSlugConflict,
-            touchedArtistIds = touchedArtistIds
+            pinsKept = pinsKept,
+            touchedArtistIds = associations.touchedArtistIds
         )
     }
 
@@ -453,6 +461,8 @@ data class UpsertOutcome(
      * `event_slug_key` constraint exists to refuse.
      */
     val droppedSlugConflict: Int = 0,
+    /** Pinned fields the source would have changed, kept as the operator set them (ADR-042). */
+    val pinsKept: Int = 0,
     /**
      * The artist rows this run billed, created or found, for the MusicBrainz sweep that runs after
      * the commit over what the import touched (#1567).
@@ -470,6 +480,26 @@ data class UpsertOutcome(
      */
     val dropped: Int get() = droppedPast + droppedDuplicate + droppedSlugConflict
 }
+
+/**
+ * How many pinned columns the source would have changed on rows matched by `sourceId`, each
+ * logged at DEBUG (ADR-042). [sourceRows] are the rows as the source alone would write them.
+ */
+private fun KLogger.keptColumnPins(
+    sourceRows: List<Pair<ScrapedEvent, EventEntity>>,
+    existingBySourceId: Map<String, EventEntity>
+): Int =
+    sourceRows.sumOf { (scraped, row) ->
+        val stored = existingBySourceId[scraped.sourceId]
+        val overridden = stored?.let { PinnedField.of(it.pinnedFields).filter { field -> field.differs(row, it) } }.orEmpty()
+        overridden.forEach { field ->
+            at(Level.DEBUG) {
+                message = "Kept the pinned ${field.key} of event '${stored?.title}': the source would change it"
+                payload = mapOf(LogFields.EVENT_ID to stored?.id, LogFields.EVENT_SOURCE_ID to scraped.sourceId)
+            }
+        }
+        overridden.size
+    }
 
 /** How far one run's stale cleanup reaches ([EventUpsertService.upsertAndCleanup]). */
 enum class StaleCleanup {

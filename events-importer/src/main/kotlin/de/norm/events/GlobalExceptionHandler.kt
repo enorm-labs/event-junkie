@@ -3,6 +3,7 @@ package de.norm.events
 import de.norm.events.artist.ArtistNotFoundException
 import de.norm.events.artist.DuplicateArtistSlugException
 import de.norm.events.event.EventNotFoundException
+import de.norm.events.event.UnknownPinnedFieldException
 import de.norm.events.genretag.GenreTagNotFoundException
 import de.norm.events.promoter.DuplicatePromoterSlugException
 import de.norm.events.promoter.PromoterNotFoundException
@@ -116,13 +117,13 @@ class GlobalExceptionHandler {
     }
 
     /**
-     * Handles invalid source type values — the client provided a `sourceType` that doesn't
-     * match any known [de.norm.events.scraper.EventSource] enum constant.
+     * Handles a name the client sent that no known value has: a `sourceType` that is no
+     * [de.norm.events.scraper.EventSource] constant, or a pin that is no [de.norm.events.event.PinnedField].
      */
-    @ExceptionHandler(InvalidSourceTypeException::class)
-    fun handleInvalidSourceType(ex: InvalidSourceTypeException): ProblemDetail {
-        logger.debug { "Invalid source type: ${ex.message}" }
-        return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.message ?: "Invalid source type")
+    @ExceptionHandler(InvalidSourceTypeException::class, UnknownPinnedFieldException::class)
+    fun handleUnknownName(ex: RuntimeException): ProblemDetail {
+        logger.debug { "Unknown name: ${ex.message}" }
+        return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.message ?: "Unknown name")
     }
 
     /**

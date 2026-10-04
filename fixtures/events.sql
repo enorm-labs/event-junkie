@@ -252,6 +252,8 @@ SELECT v.id, 'Offene Bühne', 'SHOW', 'fixture-no-genre-' || to_char(timezone('E
 FROM events.venue v WHERE v.slug = 'jazzkeller-kreuzberg';
 -- The open stage is bilingual by the venue's word (#2523).
 UPDATE events.event SET spoken_languages = '{de,en}' WHERE source_id = 'fixture-no-genre';
+-- An operator fixed its title and lineup by hand, so the importer keeps both (ADR-042).
+UPDATE events.event SET pinned_fields = '{title,lineup}' WHERE source_id = 'fixture-no-genre';
 
 -- A screening in the original with German subtitles: the spoken language and the subtitles are two facts (#2523).
 INSERT INTO events.event (venue_id, title, event_type, slug, event_date, start_time, source_url, source_id, spoken_languages, subtitle_language)

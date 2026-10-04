@@ -337,13 +337,14 @@ class AssociationSyncDuplicateNamesIntegrationTest : BaseControllerTest() {
             val event = persistEvent(sourceId)
 
             val touched =
-                associationSyncService.resolveAndSyncAssociations(
-                    listOf(event),
-                    listOf(
-                        scraped(sourceId, artists = listOf(ScrapedArtist(name = "Unreleased Berlin", role = "HEADLINER", titleDerived = true)))
-                            .copy(title = "UNRELEASED BERLIN", promoters = listOf("Unreleased Berlin"))
-                    )
-                )
+                associationSyncService
+                    .resolveAndSyncAssociations(
+                        listOf(event),
+                        listOf(
+                            scraped(sourceId, artists = listOf(ScrapedArtist(name = "Unreleased Berlin", role = "HEADLINER", titleDerived = true)))
+                                .copy(title = "UNRELEASED BERLIN", promoters = listOf("Unreleased Berlin"))
+                        )
+                    ).touchedArtistIds
 
             // Held back, not billed: the row exists only for the MusicBrainz sweep to look at (#1841).
             eventArtistRepository.findByEventIdIn(listOf(requireNotNull(event.id))).toList().shouldBeEmpty()

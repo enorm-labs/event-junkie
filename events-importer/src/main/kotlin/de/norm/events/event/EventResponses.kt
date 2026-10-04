@@ -69,7 +69,9 @@ data class EventResponse(
     @Schema(description = "Artists performing at this event with their role and billing position")
     val artists: List<EventArtistResponse>,
     @Schema(description = "Database IDs of promoters associated with this event", example = "[3, 7]")
-    val promoterIds: List<Long>
+    val promoterIds: List<Long>,
+    @Schema(description = "Fields fixed by hand, which the importer keeps until the pin is removed", example = "[\"title\", \"lineup\"]")
+    val pinnedFields: List<String> = emptyList()
 ) {
     companion object {
         /**
@@ -114,7 +116,8 @@ data class EventResponse(
                 createdAt = entity.createdAt,
                 updatedAt = entity.updatedAt,
                 artists = artists,
-                promoterIds = promoterIds
+                promoterIds = promoterIds,
+                pinnedFields = entity.pinnedFields
             )
     }
 }

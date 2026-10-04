@@ -127,6 +127,11 @@ Content-Type: application/json
     ]
 }
 
+### Remove a pin (ADR-042)
+### The PUT above pins every field it changes; the response lists them in `pinnedFields`.
+### Once the pin is gone, the next import that reads the page writes the source's value.
+DELETE {{importer-host}}/api/admin/events/{{event_id}}/pins/title
+
 ### Delete event
 DELETE {{importer-host}}/api/admin/events/{{event_id}}
 

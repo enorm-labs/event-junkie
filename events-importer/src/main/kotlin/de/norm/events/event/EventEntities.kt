@@ -73,6 +73,8 @@ data class EventEntity(
     val priceNote: String? = null,
     val soldOut: Boolean = false,
     val free: Boolean = false,
+    /** The fields an operator fixed by hand, by their [PinnedField.key]. The importer keeps each one (ADR-042). */
+    val pinnedFields: List<String> = emptyList(),
     @CreatedDate val createdAt: Instant? = null,
     @LastModifiedDate val updatedAt: Instant? = null
 )
