@@ -54,3 +54,15 @@ export const DATE_PRESETS: readonly { key: string; range: () => DateRange }[] = 
   { key: 'dateRange.thisWeekend', range: thisWeekend },
   { key: 'dateRange.next7Days', range: nextSevenDays },
 ]
+
+/**
+ * The key of the preset a range reads as, or `undefined`. Two presets can resolve to the same
+ * range — on a Sunday Tonight and This weekend are both today alone — so the first in display
+ * order wins and at most one button is ever pressed (#2559).
+ */
+export function activePresetKey(shown: DateRange): string | undefined {
+  return DATE_PRESETS.find((preset) => {
+    const { from, to } = preset.range()
+    return from === shown.from && to === shown.to
+  })?.key
+}
