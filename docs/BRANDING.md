@@ -430,8 +430,8 @@ while the images are not in colour either. It also made the hover reveal nearly 
 full grayscale the reveal is a real event.
 
 **Full grayscale also happens to be the coherent answer**, rather than merely the safe one: monochrome artwork, monochrome imagery and a single violet accent is
-the Berlin flyer convention §5.1 describes — one spot ink on black and white. The accent already does its double duty in the live dot and the eyebrow labels,
-which is where it can be seen.
+the Berlin flyer convention §5.1 describes — one spot ink on black and white. The accent already shows in the live dot and in links, which is
+where it can be seen.
 
 Implemented in `EventCard.vue` and `VenueCard.vue`, transitioned over 300 ms.
 
@@ -468,6 +468,9 @@ mark, and a rubber stamp that animates is a contradiction.
 - **Calendar:** the signature screen (ADR-011) — brand the "has events" day markers with the accent.
 - **Detail pages:** editorial layout; big image, lineup, venue — the place to reveal full-colour imagery.
 - **Empty/404/loading:** carry the §3 voice.
+- **Section labels:** `SectionLabel` sets the eyebrow label in mono, uppercase, letter-spaced type, in `text-muted-foreground`. The type alone makes it a
+  heading. The accent is for links and interactive text. A label in the accent looks like the link below it (#2566). At 14 px, the muted token gives
+  4.73:1 on the light background and 7.63:1 on the dark background. Both values pass WCAG AA for normal text (4.5:1).
 
 ### 5.7 Spacing
 
@@ -793,8 +796,8 @@ kept because older sections still use it, not because it still exists.
   not. Files: [`branding/lockup-club-stamp.svg`](branding/lockup-club-stamp.svg) and its `-tagline` sibling. Component: `ClubStamp.vue`.
 - **EJ badge** — the logomark: the monogram in a square. Two constructions, split by size rather than taste — the **small badge** (drawn letters, no frame) for
   16–24 px, and the **stamp badge** (Rubik Distressed, framed, tilted) from 96 px. See §4b. Component: `EjBadge.vue`.
-- **Eyebrow label** — a small, mono, uppercase, letter-spaced heading in the accent, used where a section title goes (e.g. "TONIGHT"). The editorial "listings"
-  look. Component: `SectionLabel.vue`. Unrelated to the pulse mark despite the shared vocabulary, and deliberately untouched by the mark replacement.
+- **Eyebrow label** — a small, mono, uppercase, letter-spaced heading in the muted text colour, used where a section title goes (e.g. "TONIGHT"). The
+  editorial "listings" look. Component: `SectionLabel.vue`. Unrelated to the pulse mark despite the shared vocabulary, and deliberately untouched by the mark replacement.
 - **Favicon badge** — the app icon: the small badge as a **flat ink** square holding the EJ monogram — no gradient and no accent ground (decided 2026-08-23).
   File: `events-frontend/public/favicon.svg`. It needs **explicit fills** rather than the in-app knockout, or its letters take the colour of the tab strip
   behind them.

@@ -8,7 +8,7 @@ withDefaults(defineProps<{ as?: string }>(), { as: 'h2' })
 <template>
   <component
     :is="as"
-    class="font-mono text-body font-medium tracking-eyebrow text-primary uppercase"
+    class="font-mono text-body font-medium tracking-eyebrow text-muted-foreground uppercase"
   >
     <slot />
   </component>
