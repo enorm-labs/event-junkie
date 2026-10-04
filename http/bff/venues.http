@@ -41,6 +41,10 @@ Accept: application/json
 GET {{bff-host}}/api/venues?character=queer&character=awareness-team
 Accept: application/json
 
+### Feature counts: for each character tag, how many venues the current filters leave with it added; an absent tag is 0 (#2671)
+GET {{bff-host}}/api/venues/feature-counts?character=queer&type=club
+Accept: application/json
+
 ### Unknown/malicious sort is ignored (falls back to default order, not a 500)
 GET {{bff-host}}/api/venues?sort=name;DROP TABLE events.venue;--
 Accept: application/json

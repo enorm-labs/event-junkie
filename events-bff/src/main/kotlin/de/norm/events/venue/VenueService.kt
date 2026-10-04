@@ -50,6 +50,10 @@ class VenueService(
         )
     }
 
+    /** For each character tag, how many venues match [filter] with that tag added (#2671). */
+    @Transactional(readOnly = true)
+    suspend fun featureCounts(filter: VenueFilter): Map<String, Long> = venueSearchRepository.featureCounts(filter)
+
     /**
      * Finds a single venue by [slug].
      *

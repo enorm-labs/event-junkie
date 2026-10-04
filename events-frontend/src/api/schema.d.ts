@@ -38,6 +38,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/venues/feature-counts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * For each feature (character tag), how many venues match the given filters with that feature added
+         * @description Takes the list's filters without paging. A feature that no matching venue carries is absent, which means 0.
+         */
+        get: operations["featureCounts"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/sitemaps/{kind}.xml": {
         parameters: {
             query?: never;
@@ -1684,6 +1704,41 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["VenueDetailResponse"];
+                };
+            };
+        };
+    };
+    featureCounts: {
+        parameters: {
+            query?: {
+                /** @description Search on the venue name: ignores case, accents and spaces, and forgives small typos. Omitted/blank returns all venues. */
+                q?: string;
+                /** @description District filter, one of the 23 pre-2001 Berlin districts (e.g. kreuzberg). Repeatable: a venue in any given district matches. */
+                district?: string[];
+                /** @description Venue type slug (e.g. club). Repeatable: a venue of any given type matches. An unknown type matches nothing. */
+                type?: string[];
+                /** @description Genre family slug (e.g. electronic). Repeatable: a venue that mostly programmes any given family matches. */
+                family?: string[];
+                /** @description Event type, e.g. CONCERT (case-insensitive). Repeatable: a venue that hosts any given type matches. */
+                eventType?: string[];
+                /** @description Character tag slug (e.g. queer), as the venue describes itself. Repeatable: only a venue with every given tag matches. An unknown tag matches nothing. */
+                character?: string[];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": {
+                        [key: string]: number;
+                    };
                 };
             };
         };

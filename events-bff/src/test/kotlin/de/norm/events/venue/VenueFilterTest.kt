@@ -2,13 +2,15 @@ package de.norm.events.venue
 
 import de.norm.events.BaseControllerTest
 import kotlinx.coroutines.runBlocking
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.r2dbc.core.await
+import org.springframework.test.web.reactive.server.expectBody
 
 /**
  * The venue list's type, family, event-type (#327) and character-tag (#2379) filters: any value within one, every one
- * across them. Character tags are the exception: a venue needs every chosen tag (#2670).
+ * across them. Character tags are the exception: a venue needs every chosen tag (#2670), and each tag counts the venues it leaves (#2671).
  */
 class VenueFilterTest : BaseControllerTest() {
     @BeforeEach
@@ -89,6 +91,41 @@ class VenueFilterTest : BaseControllerTest() {
         }
 
     @Test
+    fun `feature counts say how many venues each tag leaves, for two selected features`(): Unit =
+        runBlocking {
+            expectCounts(
+                "/venues/feature-counts?character=queer&character=awareness-team",
+                mapOf("queer" to 2, "awareness-team" to 2, "wheelchair-accessible" to 1, "no-photo-policy" to 1)
+            )
+            expectCounts(
+                "/venues/feature-counts?character=awareness-team&character=wheelchair-accessible",
+                mapOf("queer" to 1, "awareness-team" to 1, "wheelchair-accessible" to 1)
+            )
+        }
+
+    @Test
+    fun `feature counts follow the other filters and the name search`(): Unit =
+        runBlocking {
+            expectCounts(
+                "/venues/feature-counts",
+                mapOf("queer" to 2, "awareness-team" to 2, "wheelchair-accessible" to 2, "no-photo-policy" to 1)
+            )
+            expectCounts("/venues/feature-counts?type=live-venue", mapOf("queer" to 1, "awareness-team" to 1, "wheelchair-accessible" to 2))
+            expectCounts("/venues/feature-counts?type=bar", emptyMap())
+            expectCounts("/venues/feature-counts?q=berghian", mapOf("queer" to 1, "awareness-team" to 1, "no-photo-policy" to 1))
+        }
+
+    @Test
+    fun `feature counts take no paging`() {
+        webTestClient
+            .get()
+            .uri("/venues/feature-counts?page=1")
+            .exchange()
+            .expectStatus()
+            .isBadRequest
+    }
+
+    @Test
     fun `filters by venue type, any of several`(): Unit =
         runBlocking {
             expectSlugs("/venues?type=club", "astra", "berghain")
@@ -152,6 +189,23 @@ class VenueFilterTest : BaseControllerTest() {
             .isEqualTo(slugs.size)
             .jsonPath("$.content[*].slug")
             .isEqualTo(slugs.toList())
+    }
+
+    private fun expectCounts(
+        uri: String,
+        counts: Map<String, Int>
+    ) {
+        val body =
+            webTestClient
+                .get()
+                .uri(uri)
+                .exchange()
+                .expectStatus()
+                .isOk
+                .expectBody<Map<String, Int>>()
+                .returnResult()
+                .responseBody
+        assertThat(body).isEqualTo(counts)
     }
 
     private suspend fun tag(

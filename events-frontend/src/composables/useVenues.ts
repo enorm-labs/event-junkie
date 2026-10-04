@@ -69,3 +69,20 @@ export async function fetchAllVenues(
     if (page + 1 >= (result.totalPages ?? 0)) return [...venues.values()]
   }
 }
+
+/** For each feature, how many venues the filters leave with it added; an absent feature is 0. */
+export type FeatureCounts = Readonly<Record<string, number>>
+
+/**
+ * The feature counts for `params` (#2671), or undefined when the request fails. A failure is not
+ * shown: the filter then works without counts, as before the endpoint existed.
+ */
+export async function fetchVenueFeatureCounts(
+  params: Omit<VenueSearchParams, 'page' | 'size' | 'sort'>,
+): Promise<FeatureCounts | undefined> {
+  try {
+    return await unwrap(api.GET('/api/venues/feature-counts', { params: { query: params } }))
+  } catch {
+    return undefined
+  }
+}
