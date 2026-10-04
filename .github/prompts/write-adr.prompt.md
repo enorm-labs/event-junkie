@@ -1,6 +1,6 @@
 # Write ADR
 
-Turn a decision that has been **made** into the record of why. Eighteen ADRs exist and their shape is regular enough that the format should not be re-derived
+Turn a decision that has been **made** into the record of why. The ADRs in `docs/adr/` have a shape regular enough that the format should not be re-derived
 each time — but the format is the cheap half. What this prompt is really for is the two questions an ADR is easy to get wrong on: whether one is warranted at
 all, and what the number is.
 
@@ -90,7 +90,8 @@ A Consequences section listing only benefits is a sales document. Name the new o
 
 ## Step 4 — Register it
 
-- **A row in the reference table in `AGENTS.md`.** Every ADR has one, and this step is the one that gets skipped.
+- **No row in `AGENTS.md` by default.** Its Key Files table lists a file only when it carries a rule or a trap, and names ADR-032 alone. Add a
+  row only when the new ADR is one an agent must know unprompted.
 - **Close or update the `needs-decision` issue**, and say the ADR is where the answer now lives.
 - **Any document that referred to the decision by title** now refers to it by number. Grep for the title before you finish.
 
