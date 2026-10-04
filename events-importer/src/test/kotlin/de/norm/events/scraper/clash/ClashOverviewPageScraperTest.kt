@@ -121,6 +121,45 @@ class ClashOverviewPageScraperTest {
     }
 
     @Test
+    fun `scrape reads a DJ night's DJs from the panel lines after with DJs`() {
+        val event =
+            scraper
+                .scrape(
+                    Jsoup.parse(
+                        panelItem(
+                            "<p>Dance Until You Drop Dj-set night with DJs<br/>Bolide (Zanardi &amp; Hey Mattia)<br/>Michele Barox<br/>" +
+                                "Punk//Post Punk//New Wave//Synth<br/>From 21:00 / 5 €</p>"
+                        ),
+                        baseUrl
+                    ),
+                    baseUrl
+                ).single()
+
+        event.artists shouldContainExactly listOf(ScrapedArtist("Bolide", "DJ"), ScrapedArtist("Michele Barox", "DJ"))
+        event.genre shouldBe "Punk, Post-Punk, New Wave, Synthpop"
+        event.priceNote shouldBe "From 21:00 / 5 €"
+        event.eventType shouldBe EventType.CONCERT.name
+    }
+
+    @Test
+    fun `scrape stops the panel DJ list at a line of prose`() {
+        val event =
+            scraper
+                .scrape(
+                    Jsoup.parse(
+                        panelItem(
+                            "<p>Dj-set night with DJs<br/>Michele Barox<br/>" +
+                                "Bring your friends and dance all night long to the finest records of the eighties</p>"
+                        ),
+                        baseUrl
+                    ),
+                    baseUrl
+                ).single()
+
+        event.artists shouldContainExactly listOf(ScrapedArtist("Michele Barox", "DJ"))
+    }
+
+    @Test
     fun `scrape reads no genre, price or doors from a panel of prose`() {
         val event = parseFixture().first { it.title == "BAU PAUSE" }
 

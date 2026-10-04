@@ -45,7 +45,8 @@ import java.time.LocalTime
  *
  * A live-music (punk/ska) club that also hosts quiz, party and festival nights, so the type is
  * inferred from the title ([inferConcertVenueType] — CONCERT by default). Acts come from the
- * lineup subtitle (see [parseArtists]).
+ * lineup subtitle ([parseArtists]). A DJ night has none and names its DJs in the panel, one per
+ * line after a `… with DJs` line ([parsePanelDjs]).
  *
  * @see ClashWebsiteImporter for the HTTP fetch orchestrator.
  * @see <a href="https://clash-berlin.de/">Clash Berlin</a>
@@ -127,7 +128,7 @@ class ClashOverviewPageScraper {
             priceBoxOffice = prices.boxOffice,
             // An amount with no presale or door label (`Mitmachspende: 3 Euro / Person`) is kept as worded.
             priceNote = panel.lines.firstOrNull { euroAmounts(it).isNotEmpty() }.takeIf { prices.presale == null && prices.boxOffice == null },
-            artists = parseArtists(subtitle, eventType)
+            artists = parseArtists(subtitle, eventType).ifEmpty { parsePanelDjs(panel.lines) }
         )
     }
 
@@ -150,8 +151,6 @@ class ClashOverviewPageScraper {
                 .ifEmpty { null }
 
         companion object {
-            private const val STYLE_SEPARATOR = "//"
-
             fun of(item: Element) = Panel(item.select(".info-extra > p:not(.fb-event)").map { it.textLines() }.filter { it.isNotEmpty() })
         }
     }
@@ -187,6 +186,26 @@ class ClashOverviewPageScraper {
             }
     }
 
+    /**
+     * The DJs a DJ night names in its panel: each line after a `… with DJs` line, up to the first
+     * line that is not a name — a style line (`Punk//Post Punk`), a time or price line
+     * (`From 21:00 / 5 €`), or prose. A trailing `(…)` names a duo's members, so it is dropped:
+     * `Bolide (Zanardi & Hey Mattia)` is billed as `Bolide` (#2624).
+     */
+    private fun parsePanelDjs(lines: List<String>): List<ScrapedArtist> {
+        val intro = lines.indexOfFirst { DJ_LIST_INTRO.containsMatchIn(it) }
+        if (intro < 0) return emptyList()
+        return lines
+            .drop(intro + 1)
+            .takeWhile(::isDjNameLine)
+            .map { stripArtistSuffix(it.replace(MEMBERS_NOTE, "")) }
+            .filterNot { isNonArtistName(it) }
+            .map { ScrapedArtist(name = it, role = "DJ") }
+    }
+
+    private fun isDjNameLine(line: String): Boolean =
+        line.length <= MAX_DJ_LINE_LENGTH && STYLE_SEPARATOR !in line && euroAmounts(line).isEmpty() && !TIME_PATTERN.containsMatchIn(line)
+
     /** Whether [subtitle] carries a lineup marker (a "Live:"/"DJ:" label or a `/`/`+` act separator). */
     private fun looksLikeLineup(subtitle: String): Boolean = LINEUP_LABEL_PREFIX.containsMatchIn(subtitle) || subtitle.contains('/') || subtitle.contains('+')
 
@@ -205,6 +224,17 @@ class ClashOverviewPageScraper {
     }
 
     companion object {
+        private const val STYLE_SEPARATOR = "//"
+
+        /** Longer than a DJ name with its members note; a longer line is prose. */
+        private const val MAX_DJ_LINE_LENGTH = 60
+
+        /** The panel line before a DJ night's DJs: `Dance Until You Drop Dj-set night with DJs`. */
+        private val DJ_LIST_INTRO = Regex("""with\s+djs?\s*:?\s*$""", RegexOption.IGNORE_CASE)
+
+        /** A trailing parenthetical naming the members of a duo or crew. */
+        private val MEMBERS_NOTE = Regex("""\s*\([^()]*\)\s*$""")
+
         /** An `H:mm` / `HH:mm` clock time from the meta line's "<weekday> <time>" text. */
         private val TIME_PATTERN = Regex("""(\d{1,2}):(\d{2})""")
 
