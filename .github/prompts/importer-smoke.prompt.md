@@ -86,7 +86,7 @@ that parses _something_ plausible from the wrong container passes every automate
 - 0 events imported, or status `FAILED`.
 - Every event in the past, or dates that don't match the site (a common year-inference bug on year-less German dates).
 - Event count far below what the listing shows (silently dropped events — check the WARN lines in `build/dev-env/importer.log`).
-- Placeholder or duplicated titles, HTML fragments or navigation text stored as titles, or `source_id` not prefixed with `<enum-value-lowercased>:`.
+- Placeholder or duplicated titles, HTML fragments or navigation text stored as titles, or `source_id` not prefixed with `<enum-value-lowercased>:` (Kantine am Berghain: `kantine_am_berghain:`).
 - Titles/dates don't match the live page.
 - Another source lost events.
 

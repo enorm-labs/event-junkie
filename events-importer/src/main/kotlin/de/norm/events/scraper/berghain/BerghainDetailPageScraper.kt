@@ -2,7 +2,6 @@ package de.norm.events.scraper.berghain
 
 import de.norm.events.event.EventType
 import de.norm.events.scraper.DOORS_LABELS
-import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.START_LABELS
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
@@ -70,7 +69,12 @@ class BerghainDetailPageScraper {
             }
 
         val lineText = dateLine?.text().orEmpty()
-        val floors = content.select("[data-set-floor] h2").mapNotNull { it.text().trim().takeIf(String::isNotBlank) }
+        // A Kantine page names its one room in an `<h2>` above the title, not in a floor block.
+        val floors =
+            content
+                .select("[data-set-floor] h2")
+                .mapNotNull { it.text().trim().takeIf(String::isNotBlank) }
+                .ifEmpty { listOfNotNull(titleRoom(content)) }
         val tickets = parseTickets(content)
         val description = parseDescription(content)
 
@@ -84,7 +88,7 @@ class BerghainDetailPageScraper {
             genre = floorsToGenre(floors),
             imageUrl = content.imgSrcAt("figure img"),
             sourceUrl = sourceUrl,
-            sourceId = "${EventSource.BERGHAIN.sourceIdPrefix}${extractEventId(sourceUrl)}",
+            sourceId = berghainSourceId(floors, extractEventId(sourceUrl)),
             ticketUrl = tickets.ticketUrl,
             pricePresale = tickets.presale,
             priceBoxOffice = tickets.boxOffice,
@@ -132,6 +136,15 @@ class BerghainDetailPageScraper {
                     .map { ScrapedArtist(name = it, stage = stage, setStart = start, setEnd = end) }
             }
         }
+
+    private fun titleRoom(content: Element): String? =
+        content
+            .selectFirst("h1")
+            ?.previousElementSibling()
+            ?.takeIf { it.tagName() == "h2" }
+            ?.text()
+            ?.trim()
+            ?.takeIf(String::isNotBlank)
 
     private fun parseInstant(text: String): Instant? = runCatching { Instant.parse(text) }.getOrNull()
 

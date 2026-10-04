@@ -151,7 +151,7 @@ schema change.
 | Zur Klappe                       | https://zurklappe.org/events                                | Techno Club  | Next.js flight payload; no genre or prices                |
 
 110 importer classes cover 111 sources. Only Kantine am Berghain has no class of its own, and it shares the Berghain
-importer outright. Three other groups share a _listing and parser_ while keeping one thin `@Component` per venue, so
+importer outright. Its rows have their own `sourceId` prefix, `kantine_am_berghain:`. Three other groups share a _listing and parser_ while keeping one thin `@Component` per venue, so
 they do not reduce the count. They are Club der Visionäre with Sonnenraum and MS Hoppetosse, the three Velomax halls,
 and Uber Arena with the Uber Eats Music Hall.
 

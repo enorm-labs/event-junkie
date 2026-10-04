@@ -68,7 +68,7 @@ class BerghainOverviewPageScraperTest {
         val events = scraper.scrape(Jsoup.parse(loadFixture("scraper/berghain/kantine-overview.html"), kantineUrl), kantineUrl)
         events shouldHaveSize 46
 
-        val event = events.first { it.sourceId == "berghain:82242" }
+        val event = events.first { it.sourceId == "kantine_am_berghain:82242" }
         event.title shouldBe "Lenge"
         event.eventDate shouldBe LocalDate.of(2026, 7, 17)
         event.doorsTime shouldBe LocalTime.of(19, 0)
@@ -164,7 +164,7 @@ class BerghainOverviewPageScraperTest {
               </a>
             </body></html>
             """.trimIndent()
-        val event = scraper.scrape(Jsoup.parse(html, berghainUrl), berghainUrl).single()
+        val event = scraper.scrape(Jsoup.parse(html, kantineUrl), kantineUrl).single()
 
         event.artists.map { it.name } shouldContainExactly listOf("Dicken45", "Benito")
     }
@@ -187,7 +187,7 @@ class BerghainOverviewPageScraperTest {
               </a>
             </body></html>
             """.trimIndent()
-        val event = scraper.scrape(Jsoup.parse(html, berghainUrl), berghainUrl).single()
+        val event = scraper.scrape(Jsoup.parse(html, kantineUrl), kantineUrl).single()
 
         event.artists.map { it.name } shouldContainExactly listOf("Booty Carrell")
     }
