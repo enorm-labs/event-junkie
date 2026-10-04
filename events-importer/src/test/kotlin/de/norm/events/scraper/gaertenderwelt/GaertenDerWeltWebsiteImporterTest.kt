@@ -211,10 +211,14 @@ class GaertenDerWeltWebsiteImporterTest {
                     ENTRY_URL
                 )
             coEvery { htmlFetcher.fetchDocument(ENTRY_URL) } returns listing
+            val firstDay = "${ENTRY_URL}detail/2026-09-01_0900/zwischen-himmel-und-erde/"
+            coEvery { htmlFetcher.fetchDocument(firstDay) } returns fixture("gaertenderwelt-detail-exhibition.html", firstDay)
 
             val result = importer.importEvents(ENTRY_URL).shouldBeInstanceOf<ImportResult.Success>()
 
             val run = result.events.single { it.eventType == "EXHIBITION" }
+            // The answered page names one day; the run keeps the id a ranged row also gets (#2655).
+            run.detailUnavailable shouldBe false
             run.sourceId shouldBe "gaerten_der_welt:zwischen-himmel-und-erde"
             run.eventDate shouldBe LocalDate.of(2026, 9, 1)
             run.endDate shouldBe LocalDate.of(2026, 9, 13)
@@ -223,7 +227,32 @@ class GaertenDerWeltWebsiteImporterTest {
             result.events.count { it.title == "Drohnenshow" } shouldBe 2
         }
 
+    @Test
+    fun `importEvents keeps an exhibition listed with its whole run as one event through the detail merge`() =
+        runTest {
+            coEvery { htmlFetcher.fetchDocument(ENTRY_URL) } returns fixture("gaertenderwelt-overview-runs.html", ENTRY_URL)
+            coEvery { htmlFetcher.fetchDocument(PAGE2_URL) } returns emptyListing(PAGE2_URL)
+            coEvery { htmlFetcher.fetchDocument(RUN_URL) } returns fixture("gaertenderwelt-detail-exhibition.html", RUN_URL)
+
+            val result = importer.importEvents(ENTRY_URL).shouldBeInstanceOf<ImportResult.Success>()
+            val run = result.events.single { it.sourceUrl == RUN_URL }
+
+            // The detail page answered, and its URL names 4 October; the row's run and id win.
+            run.detailUnavailable shouldBe false
+            run.description.shouldNotBeNull()
+            run.sourceId shouldBe "gaerten_der_welt:zwischen-himmel-und-erde-ausstellung"
+            run.eventType shouldBe EventType.EXHIBITION.name
+            run.eventDate shouldBe LocalDate.of(2026, 9, 1)
+            run.endDate shouldBe LocalDate.of(2026, 11, 1)
+            run.startTime shouldBe LocalTime.of(9, 0)
+            run.artists shouldHaveSize 0
+            // The one-day row beside it keeps its stamp.
+            result.events.single { it.title == "Spieleabend" }.sourceId shouldBe "gaerten_der_welt:2026-10-09_1730/spieleabend-1-1"
+        }
+
     private companion object {
+        private const val RUN_URL = "https://www.gaertenderwelt.de/events/veranstaltungen/detail/2026-10-04_0900/zwischen-himmel-und-erde-ausstellung/"
+
         private const val ENTRY_URL = "https://www.gaertenderwelt.de/events/veranstaltungen/"
         private const val PAGE2_URL = "https://www.gaertenderwelt.de/events/veranstaltungen/page2/"
         private const val PAGE3_URL = "https://www.gaertenderwelt.de/events/veranstaltungen/page3/"

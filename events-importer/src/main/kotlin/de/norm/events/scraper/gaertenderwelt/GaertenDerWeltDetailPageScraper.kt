@@ -30,9 +30,9 @@ import java.time.LocalTime
  * with or without minutes and with or without trailing entrance directions.
  *
  * The `h2` date line is not parsed: it renders weekday and day-month without a year ("Samstag,
- * 08.08.") and a multi-day run as a range, where the URL stamp
- * [the overview reads][GaertenDerWeltOverviewPageScraper] gives the start. The date stays
- * [UNRESOLVED_EVENT_DATE] and the merge takes the overview's. `.venuesList` (the Arena, the
+ * 08.08."), and a run from today rather than from its opening ("Sonntag, 04.10. - Sonntag,
+ * 01.11."). [The overview row][GaertenDerWeltOverviewPageScraper] gives the dates, so the date
+ * stays [UNRESOLVED_EVENT_DATE] and the merge takes the row's. `.venuesList` (the Arena, the
  * Saal der Empfänge, the Japanischer Garten) is left unread: an event has no room field.
  *
  * @see GaertenDerWeltOverviewPageScraper for discovery, identity and the authoritative date.

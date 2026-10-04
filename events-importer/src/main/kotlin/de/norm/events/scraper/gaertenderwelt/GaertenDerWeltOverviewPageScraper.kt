@@ -1,5 +1,6 @@
 package de.norm.events.scraper.gaertenderwelt
 
+import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.attrAt
@@ -21,6 +22,7 @@ import org.jsoup.nodes.Element
  * | Field       | Source                                                                     |
  * |-------------|----------------------------------------------------------------------------|
  * | date + time | the `YYYY-MM-DD_HHmm` stamp in the detail `href` (see [parseEventPath])     |
+ * | run         | `.date`, when an exhibition's cell is a range (see [parseDateRange])        |
  * | category    | `.category` — "Konzerte", "Führungen", "Open-Air Kino", … or empty          |
  * | title       | `h3.media-heading a`, occasionally badged ("AUSGEBUCHT: …")                 |
  * | teaser      | `p.textMedium` — one line, stored as the subtitle                           |
@@ -28,11 +30,15 @@ import org.jsoup.nodes.Element
  * | ticket shop | `a.ticket` — an absolute bookingkit / Eventim / Ticketfritz link, when sold |
  * | detail page | the `href` to `detail/<stamp>/<slug>/`                                      |
  *
- * The rendered `.date` and `.time` cells are not parsed: the stamp carries both, and `.date`
- * renders a multi-day run as a range (`01.09.2026 - 01.11.2026`), `.time` as a span (`17.30 – 21
- * Uhr`). A row whose href has no stamp is skipped with a warning: the stamp is also its identity.
- * Rows filed under a participation format are dropped before a detail fetch
- * ([isProgrammeCategory]).
+ * The stamp carries the date and the start, so `.time` is not parsed (`17.30 – 21 Uhr`). `.date`
+ * is read for one case: an exhibition lists once, its cell is the whole run (`01.09.2026 -
+ * 01.11.2026`), and its href stamps only the next open day. The row then spans the range under
+ * the stamp-less [gaertenDerWeltRunId], so each day's import updates one row. A multi-night show
+ * (`22.10.2026 - 24.10.2026`, "Konzerte") keeps the stamped night: its nights are separate shows,
+ * as in [collapseExhibitionRuns][de.norm.events.scraper.collapseExhibitionRuns].
+ *
+ * A row whose href has no stamp is skipped with a warning: the stamp is also its identity. Rows
+ * filed under a participation format are dropped before a detail fetch ([isProgrammeCategory]).
  *
  * @see GaertenDerWeltDetailPageScraper for the description, prices, doors time and promoter.
  * @see GaertenDerWeltWebsiteImporter for the paginated fetch orchestrator.
@@ -93,15 +99,18 @@ class GaertenDerWeltOverviewPageScraper {
         }
 
         val title = cleanGaertenDerWeltTitle(rawTitle)
+        val eventType = mapEventType(category, GAERTEN_DER_WELT_CATEGORY_SYNONYMS) ?: inferUnmarkedTitleType(title)
+        val run = parseDateRange(row.textAt(".date"))?.takeIf { eventType == EventType.EXHIBITION.name }
         return ScrapedEvent(
             title = title,
             subtitle = row.textAt("p.textMedium"),
-            eventType = mapEventType(category, GAERTEN_DER_WELT_CATEGORY_SYNONYMS) ?: inferUnmarkedTitleType(title),
-            eventDate = path.date,
+            eventType = eventType,
+            eventDate = run?.start ?: path.date,
             startTime = path.startTime,
+            endDate = run?.endInclusive,
             imageUrl = row.attrAt("figure img", "src")?.let { resolveUrl(baseUrl, it) },
             sourceUrl = sourceUrl,
-            sourceId = "${EventSource.GAERTEN_DER_WELT.sourceIdPrefix}${path.identity}",
+            sourceId = if (run != null) gaertenDerWeltRunId(path) else "${EventSource.GAERTEN_DER_WELT.sourceIdPrefix}${path.identity}",
             ticketUrl = row.hrefAt("a.ticket"),
             soldOut = isSoldOutTitle(rawTitle),
             status = gaertenDerWeltStatus(rawTitle)
