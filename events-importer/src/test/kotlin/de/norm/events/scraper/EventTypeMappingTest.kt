@@ -91,6 +91,21 @@ class EventTypeMappingTest {
     }
 
     @Test
+    fun `inferConcertVenueType detects an ice show`() {
+        inferConcertVenueType("Holiday on Ice") shouldBe "SHOW"
+        inferConcertVenueType("Disney On Ice präsentiert Mickys Magische Momente") shouldBe "SHOW"
+        inferConcertVenueType("Die große Eisrevue") shouldBe "SHOW"
+        inferConcertVenueType("Weihnachts-Eisshow 2026") shouldBe "SHOW"
+    }
+
+    @Test
+    fun `inferConcertVenueType keeps a concert whose title only holds the letters of an ice cue`() {
+        inferConcertVenueType("Lemon Ice") shouldBe "CONCERT"
+        inferConcertVenueType("Vanilla Ice") shouldBe "CONCERT"
+        inferConcertVenueType("Die Preisshow der Liedermacher") shouldBe "CONCERT"
+    }
+
+    @Test
     fun `inferConcertVenueType maps football and cinema formats to SCREENING`() {
         inferConcertVenueType("11FREUNDE WM-QUARTIER") shouldBe "SCREENING"
         inferConcertVenueType("Fußball Weltmeisterschaft") shouldBe "SCREENING"
