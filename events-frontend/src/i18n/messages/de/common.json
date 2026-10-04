@@ -12,11 +12,16 @@
     "about": "Über das Projekt",
     "beta": "beta",
     "betaLabel": "Event Junkie ist in der Beta. Daten können unvollständig oder veraltet sein. Hier steht, was das heißt.",
-    "sourceOnGitHub": "Quellcode auf GitHub",
-    "toCompactView": "Zur kompakten Liste wechseln",
-    "toPosterView": "Zur Poster-Ansicht wechseln",
-    "toLightMode": "Zum hellen Modus wechseln",
-    "toDarkMode": "Zum dunklen Modus wechseln"
+    "sourceOnGitHub": "Quellcode auf GitHub"
+  },
+  "display": {
+    "label": "Anzeige",
+    "theme": "Farbschema",
+    "light": "Hell",
+    "dark": "Dunkel",
+    "events": "Events",
+    "posters": "Poster",
+    "compact": "Kompakt"
   },
   "actions": {
     "clearFilters": "Filter zurücksetzen",

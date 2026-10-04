@@ -1,6 +1,6 @@
 import AxeBuilder from '@axe-core/playwright'
 import { expect, type Page, type Route, test } from '@playwright/test'
-import { compactToggle } from './header-nav'
+import { displaySetting } from './header-nav'
 
 /**
  * Automated accessibility sweep, the runtime half of the WCAG 2.1 AA target (docs/LEGAL.md §12);
@@ -62,10 +62,10 @@ for (const path of staticRoutes) {
 }
 
 test('both themes pass contrast, not just the default', async ({ page }) => {
-  // New visitors get dark; the toggle is the only way into light, a separate set of tokens no
-  // other test exercises for contrast.
+  // New visitors get dark; the display settings are the only way into light, a separate set of
+  // tokens no other test exercises for contrast.
   await page.goto('/about')
-  await page.getByRole('button', { name: /switch to light mode/i }).click()
+  await (await displaySetting(page, 'Theme', 'Light')).click()
   await expect(page.locator('html')).not.toHaveClass(/dark/)
   // Buttons carry `transition-all`, so a labelled one is mid-fade from the dark text colour for a
   // moment, and axe measures that intermediate grey.
@@ -375,12 +375,12 @@ test('the events map near me, with a show on now, has no detectable accessibilit
 
 /**
  * The compact view is a second rendering of the same routes (#1371): rows carry the headings the
- * cards carried, and the header gains a pressed-state toggle.
+ * cards carried. The display settings stay open, so their pressed-state groups are scanned too.
  */
 test('the compact view has no detectable accessibility violations', async ({ page }) => {
   await mockBff(page)
   await page.goto('/en/events')
-  await (await compactToggle(page, /switch to the compact list/i)).click()
+  await (await displaySetting(page, 'Events', 'Compact')).click()
 
   await expect(page.getByRole('heading', { name: 'Tonight Show' })).toBeVisible()
   await expect(page.locator('img')).toHaveCount(0)

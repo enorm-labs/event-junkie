@@ -20,13 +20,16 @@ export async function sectionLink(
 }
 
 /**
- * The compact-view toggle. Below `md` it is in HeaderMenu's sheet, which leaves the header row room for the search
- * button (#2514), so the burger is opened first.
+ * One option in the header's display settings (#2568): Theme (Light, Dark) or Events (Posters, Compact). The same
+ * button at every width; the popover is opened first unless it already is.
  */
-export async function compactToggle(page: Page, name: RegExp, { menu = 'Menu' }: { menu?: string } = {}): Promise<Locator> {
-  const header = page.getByRole('navigation', { name: 'Main' })
-  if ((page.viewportSize()?.width ?? MD_PX) < MD_PX) {
-    await header.getByRole('button', { name: menu, exact: true }).click()
+export async function displaySetting(page: Page, group: string, option: string): Promise<Locator> {
+  const popover = page.getByRole('dialog', { name: 'Display settings' })
+  if (!(await popover.isVisible())) {
+    await page
+      .getByRole('navigation', { name: 'Main' })
+      .getByRole('button', { name: 'Display settings', exact: true })
+      .click()
   }
-  return header.getByRole('button', { name })
+  return popover.getByRole('group', { name: group, exact: true }).getByRole('button', { name: option, exact: true })
 }

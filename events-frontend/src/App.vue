@@ -2,17 +2,16 @@
 import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { RouterLink, RouterView, useRouter } from 'vue-router'
-import { LayoutGrid, Moon, Rows3, Sun } from '@lucide/vue'
 import { Button } from '@/components/ui/button'
 import AppFooter from '@/components/AppFooter.vue'
 import BaseBadge from '@/components/BaseBadge.vue'
 import BrandLogo from '@/components/BrandLogo.vue'
+import DisplaySettings from '@/components/DisplaySettings.vue'
 import GitHubMark from '@/components/GitHubMark.vue'
 import GlobalSearch from '@/components/GlobalSearch.vue'
 import HeaderMenu from '@/components/HeaderMenu.vue'
 import LocaleMenu from '@/components/LocaleMenu.vue'
 import { pageTitle } from '@/composables/usePageMeta'
-import { useCompactView } from '@/composables/useCompactView'
 import { REPOSITORY_URL } from '@/lib/links'
 import { useLocalePath } from '@/composables/useLocalePath'
 
@@ -30,34 +29,6 @@ router.isReady().then(() => {
 watch(pageTitle, (title) => {
   if (ready) announcement.value = title
 })
-
-// The theme toggle lives in the app shell so the choice persists across routes. The preference
-// is applied before paint by an inline script in index.html; this mirrors that initial state.
-const THEME_KEY = 'theme'
-const isDark = ref<boolean>(document.documentElement.classList.contains('dark'))
-
-function toggleDark() {
-  isDark.value = !isDark.value
-  document.documentElement.classList.toggle('dark', isDark.value)
-  try {
-    localStorage.setItem(THEME_KEY, isDark.value ? 'dark' : 'light')
-  } catch {
-    // Ignore storage failures (e.g. private mode); persistence is best-effort.
-  }
-}
-
-// One source for the toggle's accessible name and its hover tooltip — they must not drift.
-const themeToggleLabel = computed(() =>
-  isDark.value ? t('common.nav.toLightMode') : t('common.nav.toDarkMode'),
-)
-
-// The compact view is a second display preference, persisted, global, applied before paint
-// (`useCompactView`).
-const { compact, toggle: toggleCompact } = useCompactView()
-
-const compactToggleLabel = computed(() =>
-  compact.value ? t('common.nav.toPosterView') : t('common.nav.toCompactView'),
-)
 
 // One string behind the beta badge's tooltip and accessible name: "beta" alone is a useless
 // link name out of context.
@@ -152,30 +123,7 @@ const sectionLinks = computed(() =>
           >
             <GitHubMark />
           </Button>
-          <!-- `aria-pressed` rather than two buttons: one control whose state a screen reader reads.
-               Below `md` it is in HeaderMenu's sheet, which leaves the search button room. -->
-          <Button
-            :aria-label="compactToggleLabel"
-            :aria-pressed="compact"
-            :title="compactToggleLabel"
-            class="hidden md:inline-flex"
-            size="icon"
-            variant="outline"
-            @click="toggleCompact"
-          >
-            <LayoutGrid v-if="compact" />
-            <Rows3 v-else />
-          </Button>
-          <Button
-            :aria-label="themeToggleLabel"
-            :title="themeToggleLabel"
-            size="icon"
-            variant="outline"
-            @click="toggleDark"
-          >
-            <Moon v-if="isDark" />
-            <Sun v-else />
-          </Button>
+          <DisplaySettings />
           <HeaderMenu :links="sectionLinks" class="md:hidden" />
         </div>
       </nav>

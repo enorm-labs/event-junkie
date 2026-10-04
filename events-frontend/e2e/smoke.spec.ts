@@ -113,7 +113,7 @@ for (const locale of ['en', 'de']) {
     const nav = page.getByRole('navigation', { name: locale === 'de' ? 'Hauptnavigation' : 'Main' })
     await expect(nav).toBeVisible()
 
-    for (const width of [390, 640, 720, 800, 900, 1024, 1280]) {
+    for (const width of [320, 390, 640, 720, 800, 900, 1024, 1280]) {
       await page.setViewportSize({ width, height: 800 })
       const box = await nav.evaluate((el) => ({ scroll: el.scrollWidth, client: el.clientWidth }))
       expect(box.scroll, `nav content is wider than the nav at ${width}px`).toBeLessThanOrEqual(
@@ -182,19 +182,39 @@ test('app shell links to the source repository on GitHub', async ({ page }) => {
   await expect(link).toHaveAttribute('title', 'Source code on GitHub')
 })
 
-test('app shell exposes a working dark-mode toggle', async ({ page }) => {
+test('app shell exposes the display settings, and only there', async ({ page }) => {
   await page.goto('/')
+  const nav = page.getByRole('navigation', { name: 'Main' })
 
-  const toggle = page.getByRole('button', { name: /switch to (dark|light) mode/i })
-  await expect(toggle).toBeVisible()
+  const settings = nav.getByRole('button', { name: 'Display settings', exact: true })
+  await expect(settings).toHaveAttribute('title', 'Display settings')
 
-  // New visitors start in dark (the default); toggling switches to light.
+  // Keyboard only: focus the trigger, open it, walk to an option.
+  await settings.focus()
+  await page.keyboard.press('Enter')
+  const popover = page.getByRole('dialog', { name: 'Display settings' })
+  const theme = popover.getByRole('group', { name: 'Theme', exact: true })
+  const events = popover.getByRole('group', { name: 'Events', exact: true })
+
+  // New visitors start in dark and posters (the defaults), and each group says so.
   await expect(page.locator('html')).toHaveClass(/dark/)
-  await expect(toggle).toHaveAttribute('title', 'Switch to light mode')
+  await expect(theme.getByRole('button', { name: 'Dark' })).toHaveAttribute('aria-pressed', 'true')
+  await expect(events.getByRole('button', { name: 'Posters' })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  )
 
-  await toggle.click()
-
+  await theme.getByRole('button', { name: 'Light' }).focus()
+  await page.keyboard.press('Enter')
   await expect(page.locator('html')).not.toHaveClass(/dark/)
-  // The tooltip tracks the theme alongside the accessible name — both read from one computed.
-  await expect(toggle).toHaveAttribute('title', 'Switch to dark mode')
+  await expect(theme.getByRole('button', { name: 'Light' })).toHaveAttribute('aria-pressed', 'true')
+
+  await page.keyboard.press('Escape')
+  await expect(popover).toBeHidden()
+  await expect(settings).toBeFocused()
+
+  // Neither preference keeps a header icon or a menu-sheet entry of its own (#2568). Asking for
+  // the GitHub link opens the sheet on a phone, so both places are checked.
+  await expect(await sectionLink(page, 'Source code on GitHub')).toBeVisible()
+  await expect(nav.getByRole('button', { name: /mode|compact|poster/i })).toHaveCount(0)
 })
