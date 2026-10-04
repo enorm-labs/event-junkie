@@ -8,10 +8,10 @@ import de.norm.events.scraper.WIX_REGISTRATION_TICKETS
 import de.norm.events.scraper.WixEventsWarmupData
 import de.norm.events.scraper.buildArtistList
 import de.norm.events.scraper.cleanEventTitle
-import de.norm.events.scraper.colosseum.ColosseumOverviewPageScraper.Companion.VENUE_FORMAT_KEYWORDS
+import de.norm.events.scraper.colosseum.ColosseumOverviewPageScraper.Companion.CINEMA_AS_PLACE
+import de.norm.events.scraper.colosseum.ColosseumOverviewPageScraper.Companion.VENUE_FORMATS
 import de.norm.events.scraper.extractSupportFromSubtitle
 import de.norm.events.scraper.inferUnmarkedTitleType
-import de.norm.events.scraper.inferVenueFormatType
 import de.norm.events.scraper.mapSkippingFailures
 import de.norm.events.scraper.mapWixEventStatus
 import de.norm.events.scraper.parseWixSchedule
@@ -46,10 +46,10 @@ import java.math.BigDecimal
  * Colosseum title is as often an event name ("Investment", "Das Betreute Singen September") as
  * a performer's, so minting it as a headliner would create artists that are not people.
  *
- * Typing: [VENUE_FORMAT_KEYWORDS] first, then [inferUnmarkedTitleType] over title and subtitle,
- * else `OTHER` — the house publishes no category (`categories` is empty on every event), and
- * `CONCERT` would be wrong for a talks-and-readings room. A talk lands on `OTHER` too: the model
- * has no `TALK` type.
+ * Typing: [VENUE_FORMATS] first, then [inferUnmarkedTitleType] over title and subtitle with
+ * [CINEMA_AS_PLACE] removed, else `OTHER` — the house publishes no category (`categories` is
+ * empty on every event), and `CONCERT` would be wrong for a talks-and-readings room. A talk lands
+ * on `OTHER` too: the model has no `TALK` type.
  *
  * @see COLOSSEUM_LIMITATIONS for what the house does not publish.
  * @see ColosseumWebsiteImporter for the HTTP fetch orchestrator.
@@ -108,7 +108,7 @@ class ColosseumOverviewPageScraper {
         return ScrapedEvent(
             title = title,
             subtitle = subtitle,
-            eventType = inferVenueFormatType(title, subtitle, VENUE_FORMAT_KEYWORDS),
+            eventType = eventType(title, subtitle),
             eventDate = eventDate,
             startTime = schedule.startTime,
             endDate = schedule.endDate,
@@ -127,26 +127,43 @@ class ColosseumOverviewPageScraper {
         )
     }
 
+    private fun eventType(
+        title: String,
+        subtitle: String?
+    ): String {
+        val text = listOfNotNull(title, subtitle).joinToString(" ")
+        return VENUE_FORMATS.entries.firstOrNull { (cue, _) -> cue.containsMatchIn(text) }?.value
+            ?: inferUnmarkedTitleType(CINEMA_AS_PLACE.replace(text, ""))
+    }
+
     private companion object {
         /** Path prefix of a Colosseum event's own page, e.g. `/details-registrierung/irvine-welsh-live`. */
         private const val DETAILS_PATH = "/details-registrierung/"
 
         /**
          * Formats this house names in its own words that the shared classifier misses: a film night as
-         * "… - Film: <title>" or its "Kinoevents" series, a book launch as a "Buchpremiere", and
-         * podcasts recorded on stage before an audience — a staged show. Checked before
-         * [inferUnmarkedTitleType], lowercase, first match wins.
+         * "… - Film: <title>" or its "Kinoevents" series, a book launch as a "Buchpremiere" or a
+         * "Roman" or "Buch" presented, a "Lesung", and podcasts recorded on stage before an audience —
+         * a staged show. Checked before [inferUnmarkedTitleType], first match wins.
          *
-         * The two screening cues come first on purpose: a film night is regularly *presented by* a
+         * The screening cues come first on purpose: a film night is regularly *presented by* a
          * podcast ("… Kinoevents 2026, presented by … Podcast & ByteFM"), and what the audience watches
-         * decides the type, not who hosts it.
+         * decides the type, not who hosts it. The book cues come before the shared cues, which would
+         * read the building's "Kino" first (#2562). `roman` and `buch` match as whole words, so
+         * "Romantik" and "Tagebuch" stay untyped; `buchpremiere` and `lesung` match inside a compound
+         * ("Kinderbuchpremiere").
          */
-        private val VENUE_FORMAT_KEYWORDS: Map<String, String> =
+        private val VENUE_FORMATS: Map<Regex, String> =
             linkedMapOf(
-                "film:" to EventType.SCREENING.name,
-                "kinoevent" to EventType.SCREENING.name,
-                "buchpremiere" to EventType.READING.name,
-                "podcast" to EventType.SHOW.name
+                Regex("""film:|kinoevent""", RegexOption.IGNORE_CASE) to EventType.SCREENING.name,
+                Regex("""buchpremiere|lesung|(?<!\p{L})(?:roman|buch)(?!\p{L})""", RegexOption.IGNORE_CASE) to EventType.READING.name,
+                Regex("""podcast""", RegexOption.IGNORE_CASE) to EventType.SHOW.name
             )
+
+        /**
+         * The house itself, named as a place: "im historischen Berliner Kino". Every event here is in a
+         * former cinema, so the word says where, not what; a film night carries a [VENUE_FORMATS] cue.
+         */
+        private val CINEMA_AS_PLACE = Regex("""\bim\s+(?:\p{L}+\s+){0,3}kino\b""", RegexOption.IGNORE_CASE)
     }
 }

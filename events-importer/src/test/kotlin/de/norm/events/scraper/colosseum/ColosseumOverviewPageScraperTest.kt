@@ -9,6 +9,9 @@ import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import org.jsoup.Jsoup
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.CsvSource
+import tools.jackson.databind.json.JsonMapper
 import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.LocalTime
@@ -40,6 +43,23 @@ class ColosseumOverviewPageScraperTest {
     private fun event(sourceId: String): ScrapedEvent = events.first { it.sourceId == sourceId }
 
     private fun edgeCaseEvent(sourceId: String): ScrapedEvent = edgeCaseEvents.first { it.sourceId == sourceId }
+
+    /** The type of a one-event payload with this [title] and [subtitle]. */
+    private fun typeOf(
+        title: String,
+        subtitle: String
+    ): String? {
+        val event =
+            mapOf(
+                "slug" to "probe",
+                "title" to title,
+                "description" to subtitle,
+                "scheduling" to mapOf("config" to mapOf("startDate" to "2026-10-05T17:00:00.000Z", "timeZoneId" to "Europe/Berlin"))
+            )
+        val payload = mapOf("appsWarmupData" to mapOf(WIX_EVENTS_APP to mapOf("widget" to mapOf("events" to mapOf("events" to listOf(event))))))
+        val html = "<script id=\"wix-warmup-data\" type=\"application/json\">${JsonMapper.builder().build().writeValueAsString(payload)}</script>"
+        return scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl).single().eventType
+    }
 
     @Test
     fun `discovers every event in the warmup payload`() {
@@ -110,6 +130,38 @@ class ColosseumOverviewPageScraperTest {
     @Test
     fun `recovers a reading from the shared Lesung cue`() {
         event("colosseum:annika-sala-interaktive-lesung").eventType shouldBe EventType.READING.name
+    }
+
+    @Test
+    fun `types a novel's premiere as a reading, not as a screening in the house's own cinema`() {
+        // The live subtitle of 2026-10-04, the venue's typo included (#2562).
+        typeOf(
+            "Christoph Kramer",
+            "Christoph Kramer ist zurück! Der Fußballspieler, TV-Experte und Autor feiert nach seinem Debüt \"Das Leben fing im " +
+                "Sommer an\" am 5. Oktober die Berlinprememiere zu seinem nächsten Roman \"Wolkenberührpunkt\" im historischen Berliner Kino."
+        ) shouldBe EventType.READING.name
+    }
+
+    @ParameterizedTest
+    @CsvSource(
+        delimiter = '|',
+        value = [
+            "Joachim Meyerhoff & Melanie Garanin: Josse | Berliner Kinderbuchpremiere | READING",
+            "Eine Autorin | stellt ihr neues Buch vor | READING",
+            "Lesung im Kino | Ein Abend mit Texten | READING",
+            "Kalkofes Zeitreise - Film: Die Abenteuer des Rabbi Jacob | nach dem Roman von Jean Halain | SCREENING",
+            "Ein Abend über Romantik | Gespräch im historischen Berliner Kino | OTHER",
+            "Ein Abend über das Tagebuch | Gespräch | OTHER",
+            "Nosaj Thing x Daito Manabe | Berlin premiere | OTHER",
+            "Freiluftkino | Sommerfilme | SCREENING"
+        ]
+    )
+    fun `reads book cues as whole words and the house's own cinema as a place`(
+        title: String,
+        subtitle: String,
+        type: String
+    ) {
+        typeOf(title, subtitle) shouldBe type
     }
 
     @Test
@@ -192,5 +244,10 @@ class ColosseumOverviewPageScraperTest {
         val free = edgeCaseEvent("colosseum:eintritt-frei")
         free.endDate.shouldBeNull()
         free.endTime.shouldBeNull()
+    }
+
+    private companion object {
+        /** Wix Events' app definition id, the key the payload files its widgets under. */
+        const val WIX_EVENTS_APP = "140603ad-af8d-84a5-2c80-a0f60cb47351"
     }
 }

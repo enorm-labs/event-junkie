@@ -273,7 +273,7 @@ fun inferUnmarkedTitleType(title: String): String = classifyByTitleKeyword(title
 
 /**
  * Title-based inference for a house that states no category but names its formats in its own
- * words: Colosseum a film night as "Kinoevents", Peter Edel a silent-film night as "Stummfilm".
+ * words: Peter Edel a silent-film night as "Stummfilm", a tea dance as "Tanztee".
  * [venueFormats] maps such a keyword to its type and is checked first, so the house's own
  * vocabulary beats the shared cues; use a [linkedMapOf] where an earlier entry has to win. Then
  * [inferUnmarkedTitleType], which falls back to [OTHER][EventType.OTHER] rather than CONCERT.
