@@ -204,3 +204,33 @@ test('a single event at a single venue reads in the singular, in both languages'
   await page.goto('/de/map')
   await expect(page.getByText('1 Event in 1 Location', { exact: true })).toBeVisible()
 })
+
+// A live pin's pulse is a box-shadow, so the focus indicator is an outline it cannot override (#2664).
+for (const reducedMotion of ['no-preference', 'reduce'] as const) {
+  test(`Tab from the map reaches a live pin and outlines it, motion ${reducedMotion}`, async ({
+    page,
+    browserName,
+  }) => {
+    // WebKit leaves buttons out of the Tab order unless macOS "Full Keyboard Access" is on.
+    // eslint-disable-next-line playwright/no-skipped-test
+    test.skip(browserName === 'webkit', 'WebKit excludes buttons from the Tab order by default')
+    await page.emulateMedia({ reducedMotion })
+    await mockBff(page)
+    await page.goto('/en/map')
+
+    const pin = page.getByRole('button', { name: 'Lido: 1 event, 1 on now', exact: true })
+    const unavailable = page.getByText(/cannot draw the map/)
+    await expect(pin.or(unavailable)).toBeVisible()
+    test.skip(await unavailable.isVisible(), 'no WebGL in this browser')
+    await expect(pin).toHaveClass(/\bis-live\b/)
+
+    // The pins follow the canvas in the Tab order; Tab on until it reaches Lido's.
+    await page.locator('canvas.maplibregl-canvas').focus()
+    await expect(async () => {
+      await page.keyboard.press('Tab')
+      await expect(pin).toBeFocused({ timeout: 250 })
+    }).toPass({ timeout: 5_000 })
+    await expect(pin).not.toHaveCSS('outline-style', 'none')
+    await expect(pin).toHaveCSS('animation-name', 'none')
+  })
+}

@@ -86,8 +86,10 @@ function style(): StyleSpecification {
   }
 }
 
+// Focus is an outline: a `ring-*` is a box-shadow, which a live pin's pulse overrides (#2664).
+// `outline-solid` is needed because `outline-none` leaves `outline-2` reading a `none` style.
 const MARKER_CLASS =
-  'flex cursor-pointer items-center justify-center rounded-full border-2 border-background font-semibold outline-none focus-visible:ring-3 focus-visible:ring-ring/50'
+  'flex cursor-pointer items-center justify-center rounded-full border-2 border-background font-semibold outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring focus-visible:outline-solid'
 /**
  * A pin with a count needs room for it; an empty badge is a plain disc still large enough to tap;
  * a pin without a badge is a dot, so 90 venues do not bury the map. The selected pin grows a step,
@@ -438,6 +440,11 @@ onBeforeUnmount(() => {
   .venue-map :deep(.is-live) {
     animation: live-pulse 2s cubic-bezier(0, 0, 0.2, 1) infinite;
   }
+}
+
+/* A wave behind the focus outline pulls the eye away from it; the still ring stays. */
+.venue-map :deep(.is-live:focus-visible) {
+  animation: none;
 }
 
 /* One wave, then a rest: a pause between waves reads calmer than a constant throb. */
