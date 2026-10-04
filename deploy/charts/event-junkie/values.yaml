@@ -258,8 +258,8 @@ ingress:
   # `X-Robots-Tag: noindex, nofollow` (#265) plus a ConfigMap mounted over the frontend's built
   # `robots.txt` and `sitemap.xml` (#286). Off here because this file is production. One value rather
   # than two, because two switches meaning "not production" can disagree — a header served beside an
-  # allow-all robots.txt naming production's sitemap. Defence in depth for the day somebody adds an A
-  # record "just to check something".
+  # robots.txt open to every crawler but the AI training ones and naming production's sitemap.
+  # Defence in depth for the day somebody adds an A record "just to check something".
   noindex: false
   # ingress.httpsRedirect sends plain HTTP on `host` to HTTPS with a 301 (#1891). It applies only with
   # `tls.enabled`, so an environment without TLS keeps serving HTTP. Off only to debug a routing problem.

@@ -307,7 +307,8 @@ is not the same as depending on it.
 ### `ingress.noindex` is four parts that must agree
 
 One value, because two values meaning "not production" can disagree and the way they disagree is an
-environment that carries the header and still serves an allow-all `robots.txt`. It renders:
+environment that carries the header and still serves the image's `robots.txt`, which admits every
+crawler but the AI training ones. It renders:
 
 |                                      |                                                        |
 | ------------------------------------ | ------------------------------------------------------ |
@@ -319,9 +320,9 @@ environment that carries the header and still serves an allow-all `robots.txt`. 
 **Every way of getting this half-right is silent.** Render only the middleware and every response
 lacks the header while the manifest looks right; render only the annotation and Traefik drops the
 route entirely. On the body half: a `subPath` naming a key the ConfigMap does not have mounts an
-empty directory over the file rather than failing, so nginx keeps serving the image's allow-all
-copy — and a mount without `subPath` at all hides `index.html` and every hashed asset, which is a
-blank site rather than a bad `robots.txt`. The render assertions in `tests/ingress_test.yaml` and
+empty directory over the file rather than failing, so nginx keeps serving the image's own copy,
+open to every crawler but the AI training ones — and a mount without `subPath` at all hides
+`index.html` and every hashed asset, which is a blank site rather than a bad `robots.txt`. The render assertions in `tests/ingress_test.yaml` and
 `tests/seo_test.yaml` check each pairing in both directions; production correctly renders none of it.
 
 **Why the body half cannot be fixed in the frontend build.** `events-frontend/scripts/seoFiles.ts`

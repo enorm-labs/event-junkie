@@ -212,8 +212,9 @@ check_noindex() {
         pass "not production, and not indexable"
       else
         fail "a non-production cluster does not set ingress.noindex" \
-          "the default is false, so this is indexable: no X-Robots-Tag, an allow-all robots.txt,
-and a sitemap naming production. Set ingress.noindex: true in spec.values."
+          "the default is false, so this is indexable: no X-Robots-Tag, the image's robots.txt open to
+every crawler but the AI training ones, and a sitemap naming production.
+Set ingress.noindex: true in spec.values."
       fi
     fi
   done
