@@ -13,6 +13,7 @@ import pageDescription from './pageDescription.json'
 import pageTitle from './pageTitle.json'
 import promoters from './promoters.json'
 import search from './search.json'
+import venueCharacter from './venueCharacter.json'
 import venueType from './venueType.json'
 import venues from './venues.json'
 
@@ -44,6 +45,7 @@ export default {
   pageTitle,
   promoters,
   search,
+  venueCharacter,
   venueType,
   venues,
 }

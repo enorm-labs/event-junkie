@@ -6,7 +6,9 @@
     "empty": "Hier steht noch nichts an. Schau bald wieder vorbei.",
     "plays": "Vor allem",
     "hosts": "Formate",
-    "programmeNote": "Aus den Veranstaltungen des letzten Jahres und der kommenden."
+    "programmeNote": "Vor allem und Formate: aus den Veranstaltungen des letzten Jahres und der kommenden.",
+    "character": "Merkmale",
+    "characterNote": "Merkmale stammen von den eigenen Seiten der Location"
   },
   "artist": {
     "kind": "Act",

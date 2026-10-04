@@ -14,6 +14,8 @@ export interface VenueSearchParams {
   family?: string[]
   /** Event types the venue hosts; any of them matches. */
   eventType?: string[]
+  /** Character tags, as the venue describes itself; any of them matches. */
+  character?: string[]
   page?: number
   size?: number
   /** `name` or `upcomingEvents`, with a direction: `upcomingEvents,desc`. */

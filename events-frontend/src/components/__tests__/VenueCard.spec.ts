@@ -33,6 +33,21 @@ describe('VenueCard', () => {
     expect(wrapper.text()).toContain('Live venue · Club · ~1,700 people')
   })
 
+  it('puts the character tags between the types and the capacity, in display order', () => {
+    const wrapper = mount(VenueCard, {
+      props: {
+        venue: {
+          ...venue,
+          venueTypes: ['club'],
+          characterTags: ['awareness-team', 'queer'],
+          capacity: 800,
+        },
+      },
+      global: { stubs },
+    })
+    expect(wrapper.text()).toContain('Club · Queer · Awareness team · ~800 people')
+  })
+
   it('draws no facts line for a venue with neither', () => {
     const wrapper = mount(VenueCard, { props: { venue }, global: { stubs } })
     expect(wrapper.findAll('p')).toHaveLength(1)

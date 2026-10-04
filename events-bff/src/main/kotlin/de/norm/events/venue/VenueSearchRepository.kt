@@ -19,27 +19,14 @@ data class VenueFilter(
     val districts: List<String> = emptyList(),
     val types: List<String> = emptyList(),
     val families: List<String> = emptyList(),
-    val eventTypes: List<String> = emptyList()
+    val eventTypes: List<String> = emptyList(),
+    val characters: List<String> = emptyList()
 ) {
     companion object {
-        /** Blank values drop out; lists are trimmed, de-duplicated and sorted, event types upper-cased. */
-        fun of(
-            query: String?,
-            districts: List<String>?,
-            types: List<String>?,
-            families: List<String>?,
-            eventTypes: List<String>?
-        ): VenueFilter =
-            VenueFilter(
-                query = TextSearch.term(query),
-                districts = districts.normalized(),
-                types = types.normalized(),
-                families = families.normalized(),
-                eventTypes = eventTypes.orEmpty().map { it.uppercase() }.normalized()
-            )
-
-        private fun List<String>?.normalized(): List<String> =
-            orEmpty()
+        /** Blank values drop out; the rest are trimmed, de-duplicated and sorted. */
+        fun normalized(values: List<String>?): List<String> =
+            values
+                .orEmpty()
                 .map { it.trim() }
                 .filter { it.isNotEmpty() }
                 .distinct()
@@ -60,7 +47,7 @@ data class VenueListPage(
 )
 
 /**
- * The venue list query: a name search ([TextSearch]), the districts and the array filters of [VenueFilter], ordered
+ * The venue list query: a name search ([TextSearch]), the districts, the character tags and the array filters of [VenueFilter], ordered
  * by name or by upcoming events (#360). The same shape as `PromoterSearchRepository`, for the same reasons: the count is a
  * correlated subquery from [today] on, every order ends in `name, id`, and names sort case-folded
  * because the database collation is `C`.
@@ -90,7 +77,8 @@ class VenueSearchRepository(
         val conditions =
             listOfNotNull(
                 filter.query?.let { TextSearch.predicate("v.name", it, bySimilarity) },
-                "v.district IN (:districts)".takeIf { filter.districts.isNotEmpty() }
+                "v.district IN (:districts)".takeIf { filter.districts.isNotEmpty() },
+                CHARACTER_FILTER.takeIf { filter.characters.isNotEmpty() }
             ) +
                 ARRAY_FILTERS.mapNotNull { (column, param, values) ->
                     values(filter).takeIf { it.isNotEmpty() }?.let {
@@ -99,6 +87,7 @@ class VenueSearchRepository(
                     }
                 }
         if (filter.districts.isNotEmpty()) params["districts"] = filter.districts
+        if (filter.characters.isNotEmpty()) params["characters"] = filter.characters
         val where = if (conditions.isEmpty()) "" else "WHERE ${conditions.joinToString(" AND ")}"
 
         val total =
@@ -155,6 +144,10 @@ class VenueSearchRepository(
     companion object {
         private const val UPCOMING_COUNT =
             "SELECT COUNT(*) FROM $EVENTS_SCHEMA.event e WHERE e.venue_id = v.id AND e.event_date >= :today"
+
+        /** A venue carrying any of the chosen character tags (#2379), from the side table that keeps each tag's source. */
+        private const val CHARACTER_FILTER =
+            "EXISTS (SELECT 1 FROM $EVENTS_SCHEMA.venue_character_tag ct WHERE ct.venue_id = v.id AND ct.tag IN (:characters))"
 
         val SORT_COLUMNS =
             mapOf(

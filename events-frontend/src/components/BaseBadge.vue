@@ -1,8 +1,8 @@
 <script lang="ts" setup>
 /**
- * The small pill, and there are two of them left: the `beta` link in the header and a non-scheduled
- * status on an event. Everything else that wore one is a word in a meta line now (#1248), because a
- * row of five pills under a title reads as decoration even when each one is a fact.
+ * The small pill, for a state that must stand out or a small control: a non-scheduled status, the
+ * `beta` link, and a filter link on a detail page. A plain fact is a word in a meta line (#1248):
+ * five pills under a title read as decoration even when each is true.
  *
  * Variants rather than per-call-site classes, so a new pill cannot invent its own colour.
  */

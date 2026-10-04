@@ -583,3 +583,34 @@ test.describe('related events', () => {
     await expect(page.getByText(/couldn't load/i)).toHaveCount(0)
   })
 })
+
+test.describe('venue character tags', () => {
+  test('are pills that list every venue with the tag, with their sources once below', async ({
+    page,
+  }) => {
+    const tagged = {
+      ...venueBody,
+      characterTags: [
+        { tag: 'awareness-team', sourceUrl: 'https://www.mock-venue.example/awareness/' },
+        { tag: 'queer', sourceUrl: 'https://www.mock-venue.example/awareness/' },
+      ],
+    }
+    await page.route(/\/api\/venues\//, (route) => json(route, tagged))
+    await page.goto('/en/venues/mock-venue')
+
+    const tags = page.getByTestId('venue-facets')
+    // Display order, not the API's slug order: queer before awareness-team.
+    await expect(tags.getByRole('link', { name: /^(Queer|Awareness team)$/ })).toHaveText([
+      'Queer',
+      'Awareness team',
+    ])
+    await expect(tags.getByRole('link', { name: 'Queer', exact: true })).toHaveAttribute(
+      'href',
+      '/en/venues?character=queer',
+    )
+    // Two tags on one page: the source is listed once.
+    const source = tags.getByRole('link', { name: 'mock-venue.example/awareness' })
+    await expect(source).toHaveCount(1)
+    await expect(source).toHaveAttribute('href', 'https://www.mock-venue.example/awareness/')
+  })
+})

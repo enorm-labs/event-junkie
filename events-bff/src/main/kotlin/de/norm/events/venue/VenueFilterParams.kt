@@ -1,5 +1,6 @@
 package de.norm.events.venue
 
+import de.norm.events.common.TextSearch
 import io.swagger.v3.oas.annotations.Parameter
 
 /**
@@ -20,7 +21,22 @@ data class VenueFilterParams(
     @field:Parameter(description = "Genre family slug (e.g. electronic). Repeatable: a venue that mostly programmes any given family matches.")
     val family: List<String>? = null,
     @field:Parameter(description = "Event type, e.g. CONCERT (case-insensitive). Repeatable: a venue that hosts any given type matches.")
-    val eventType: List<String>? = null
+    val eventType: List<String>? = null,
+    @field:Parameter(
+        description =
+            "Character tag slug (e.g. queer), as the venue describes itself. Repeatable: a venue with any given tag matches. " +
+                "An unknown tag matches nothing."
+    )
+    val character: List<String>? = null
 ) {
-    fun toFilter(): VenueFilter = VenueFilter.of(q, district, type, family, eventType)
+    /** Event types are upper-cased, so `party` and `PARTY` share a cache entry. */
+    fun toFilter(): VenueFilter =
+        VenueFilter(
+            query = TextSearch.term(q),
+            districts = VenueFilter.normalized(district),
+            types = VenueFilter.normalized(type),
+            families = VenueFilter.normalized(family),
+            eventTypes = VenueFilter.normalized(eventType?.map { it.uppercase() }),
+            characters = VenueFilter.normalized(character)
+        )
 }

@@ -74,6 +74,7 @@ const params = computed<VenueSearchParams>(() => ({
   type: listParam('type'),
   family: listParam('family'),
   eventType: listParam('eventType'),
+  character: listParam('character'),
   page: queryString('page') ? Number(queryString('page')) : 0,
   size: PAGE_SIZE,
 }))
@@ -134,6 +135,7 @@ const mapFilters = computed(() => ({
   type: params.value.type,
   family: params.value.family,
   eventType: params.value.eventType,
+  character: params.value.character,
 }))
 
 const mapVenues = shallowRef<VenueSummary[]>([])
@@ -167,7 +169,13 @@ const sortOptions = computed<SortOption[]>(() => [
   { value: SORT_UPCOMING, label: t('common.sort.upcoming') },
 ])
 
-const { venueTypeOptions, familyOptions, eventTypeOptions, districtOptions } = useFilterOptions()
+const {
+  venueTypeOptions,
+  venueCharacterOptions,
+  familyOptions,
+  eventTypeOptions,
+  districtOptions,
+} = useFilterOptions()
 // OTHER is no type a venue is chosen by; the derivation never stores it.
 const hostOptions = computed(() => eventTypeOptions.value.filter(({ value }) => value !== 'OTHER'))
 
@@ -284,6 +292,15 @@ const localePath = useLocalePath()
         :options="venueTypeOptions"
         :selected="queryList('type')"
         @change="applyFilters({ type: $event })"
+      />
+      <MultiSelectFilter
+        :all-label="t('venues.allCharacters')"
+        :clear-label="t('venues.clearCharacters')"
+        :count-label="(n) => t('venues.charactersSelected', { n })"
+        :label="t('venues.byCharacter')"
+        :options="venueCharacterOptions"
+        :selected="queryList('character')"
+        @change="applyFilters({ character: $event })"
       />
       <MultiSelectFilter
         :all-label="t('venues.allGenres')"

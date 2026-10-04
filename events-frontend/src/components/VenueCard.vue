@@ -17,7 +17,10 @@ const props = withDefaults(
     /** The count, types and capacity show when the venue list sent them; an event's embedded venue has none. */
     venue: VenueSummary &
       Partial<
-        Pick<VenueListItem, 'upcomingEventCount' | 'venueTypes' | 'capacity' | 'programmeFamilies'>
+        Pick<
+          VenueListItem,
+          'upcomingEventCount' | 'venueTypes' | 'characterTags' | 'capacity' | 'programmeFamilies'
+        >
       >
     /** Heading level for the card's name — see the same prop on `EventCard.vue` for why. */
     as?: 'h2' | 'h3' | 'h4'

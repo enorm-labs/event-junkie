@@ -6,7 +6,9 @@
     "empty": "No upcoming nights here yet. Check back soon.",
     "plays": "Mostly plays",
     "hosts": "Hosts",
-    "programmeNote": "From its events over the past year and ahead."
+    "programmeNote": "Plays and hosts: from its events over the past year and ahead.",
+    "character": "Features",
+    "characterNote": "Features come from the venue's own pages"
   },
   "artist": {
     "kind": "Artist",

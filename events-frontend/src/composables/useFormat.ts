@@ -9,6 +9,7 @@ import {
   humaniseEventType,
 } from '@/lib/format'
 import { INTL_LOCALES, isLocale } from '@/i18n/locales'
+import { inCharacterOrder } from '@/lib/venueCharacters'
 
 /** The times an event can carry: three candidates for the start, and the end the venue stated. */
 type EventTimes = {
@@ -114,18 +115,29 @@ export function useFormat() {
     /** The label for a venue type slug; the slug itself for one the frontend has not been taught. */
     formatVenueType: (slug: string) => (te(`venueType.${slug}`) ? t(`venueType.${slug}`) : slug),
 
+    /** The label for a venue character tag slug, with the same fallback as `formatVenueType`. */
+    formatVenueCharacter: (slug: string) =>
+      te(`venueCharacter.${slug}`) ? t(`venueCharacter.${slug}`) : slug,
+
     /** The label for a genre family slug, with the same fallback as `formatVenueType`. */
     formatFamily: (slug: string) =>
       te(`events.filters.families.${slug}`) ? t(`events.filters.families.${slug}`) : slug,
 
     /**
-     * A venue's types and capacity as one meta line: "Live venue · Club · ~1,700 people". The capacity
-     * is rounded to two significant figures, because venues state it loosely and seated and standing differ.
+     * A venue's types, character tags and capacity as one meta line: "Club · Queer · ~1,700 people". The
+     * capacity is rounded to two significant figures, because venues state it loosely and seated and standing differ.
      */
-    formatVenueFacts: (venue: { venueTypes?: string[]; capacity?: number | null }) =>
+    formatVenueFacts: (venue: {
+      venueTypes?: string[]
+      characterTags?: string[]
+      capacity?: number | null
+    }) =>
       [
         ...(venue.venueTypes ?? []).map((slug) =>
           te(`venueType.${slug}`) ? t(`venueType.${slug}`) : slug,
+        ),
+        ...inCharacterOrder(venue.characterTags ?? [], (slug) => slug).map((slug) =>
+          te(`venueCharacter.${slug}`) ? t(`venueCharacter.${slug}`) : slug,
         ),
         venue.capacity
           ? t('venues.capacity', {

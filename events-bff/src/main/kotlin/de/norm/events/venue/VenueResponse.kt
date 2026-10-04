@@ -118,13 +118,16 @@ data class VenueListItemResponse(
     @Schema(description = PROGRAMME_FAMILIES_DESCRIPTION, example = "[\"rock\", \"punk\"]")
     val programmeFamilies: List<String>,
     @Schema(description = PROGRAMME_EVENT_TYPES_DESCRIPTION, example = "[\"CONCERT\", \"PARTY\"]")
-    val programmeEventTypes: List<String>
+    val programmeEventTypes: List<String>,
+    @Schema(description = CHARACTER_TAGS_DESCRIPTION, example = "[\"queer\", \"awareness-team\"]")
+    val characterTags: List<String>
 ) {
     companion object {
         fun fromEntity(
             entity: VenueEntity,
             image: ServedImage,
-            upcomingEventCount: Int
+            upcomingEventCount: Int,
+            characterTags: List<String>
         ): VenueListItemResponse =
             VenueListItemResponse(
                 id = requireNotNull(entity.id) { "Persisted venue must have an ID" },
@@ -146,7 +149,8 @@ data class VenueListItemResponse(
                 venueTypes = entity.venueTypes,
                 capacity = entity.capacity,
                 programmeFamilies = entity.programmeFamilies,
-                programmeEventTypes = entity.programmeEventTypes
+                programmeEventTypes = entity.programmeEventTypes,
+                characterTags = characterTags
             )
     }
 }
@@ -213,12 +217,15 @@ data class VenueDetailResponse(
     @Schema(description = PROGRAMME_FAMILIES_DESCRIPTION, example = "[\"rock\", \"punk\"]")
     val programmeFamilies: List<String>,
     @Schema(description = PROGRAMME_EVENT_TYPES_DESCRIPTION, example = "[\"CONCERT\", \"PARTY\"]")
-    val programmeEventTypes: List<String>
+    val programmeEventTypes: List<String>,
+    @Schema(description = "$CHARACTER_TAGS_DESCRIPTION Each carries the URL of the venue's own page that states it.")
+    val characterTags: List<VenueCharacterTagResponse>
 ) {
     companion object {
         fun fromEntity(
             entity: VenueEntity,
-            image: ServedImage
+            image: ServedImage,
+            characterTags: List<VenueCharacterTagResponse>
         ): VenueDetailResponse =
             VenueDetailResponse(
                 id = requireNotNull(entity.id) { "Persisted venue must have an ID" },
@@ -245,12 +252,24 @@ data class VenueDetailResponse(
                 venueTypes = entity.venueTypes,
                 capacity = entity.capacity,
                 programmeFamilies = entity.programmeFamilies,
-                programmeEventTypes = entity.programmeEventTypes
+                programmeEventTypes = entity.programmeEventTypes,
+                characterTags = characterTags
             )
     }
 }
 
+/** A character tag on a venue and the venue's own page that states it (#2379). */
+@Schema(description = "A character tag and the venue's own page that states it")
+data class VenueCharacterTagResponse(
+    @Schema(description = "Character tag slug", example = "queer")
+    val tag: String,
+    @Schema(description = "URL of the venue's own page that states the tag", example = "https://www.so36.com/about")
+    val sourceUrl: String
+)
+
 private const val VENUE_TYPES_DESCRIPTION = "What kind of place this is, as venue type slugs, curated by hand. Empty until curated."
+private const val CHARACTER_TAGS_DESCRIPTION =
+    "What the venue says about itself (its kind of space, its door, its access), as character tag slugs, ordered by slug. Set only where the venue's own page states it."
 private const val CAPACITY_DESCRIPTION = "How many visitors the largest room holds, as the venue publishes it. Null where it does not."
 private const val PROGRAMME_FAMILIES_DESCRIPTION =
     "Genre family slugs the venue mostly programmes, most frequent first, derived from its events of the last year and ahead."
