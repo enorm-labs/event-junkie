@@ -392,6 +392,10 @@ Represents an event promoter or presenter. Shared across events and venues.
 the same language and all-or-nothing constraints V019 gave `venue`. A promoter's own site is not scraped for them: no
 `event_source` row records a promoter's terms, so the per-source licence gate never reaches a promoter.
 
+**A promoter row that no event credits is deleted (#2653).** `OrphanPromoterSweep` runs at 03:40 UTC and deletes such
+a row once it is a day old. It keeps a row with a `description` or an `image_url`. A pass does nothing while an import
+runs. `OrphanArtistSweep` does the same for `artist` at 03:30 UTC (#350).
+
 ### event_artist (Join Table)
 
 Links events to artists with role and billing order to model the lineup. Each application maps the table with its own

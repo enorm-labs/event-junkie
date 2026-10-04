@@ -47,7 +47,11 @@ day the image decision in #328 is taken.
 
 **Kinds that are not promoters stay in the table.** A magazine that presents a show is a credit
 the venue prints and a reader may search for. The kind is what a later enrichment reads to decide
-whether a row gets a description at all. Nothing deletes a row for its kind.
+whether a row gets a description at all. Only `isNonPromoterName` refuses a credit for its kind. metal.de is the one
+media partner on its list (#2653).
+
+**A row that no event credits is deleted.** `OrphanPromoterSweep` deletes it each night once the row is a day old.
+It keeps a row with a description or an image, because a person wrote that.
 
 **Resident Advisor was checked too.** Every row was searched on ra.co (promoter index, Berlin).
 31 of 246 are there, 19 under the same name. RA is an electronic-music index, and most of this

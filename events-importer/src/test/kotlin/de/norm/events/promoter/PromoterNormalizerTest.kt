@@ -311,7 +311,6 @@ class PromoterNormalizerTest {
             canonicalPromoterName("Aok. Die Gesundheitskasse") shouldBe "AOK"
             canonicalPromoterName("Unreleased") shouldBe "Unreleased Berlin"
             canonicalPromoterName("Kulturalarm") shouldBe "kulturALARM"
-            canonicalPromoterName("Metal.de") shouldBe "metal.de"
         }
     }
 
@@ -386,6 +385,37 @@ class PromoterNormalizerTest {
             canonicalPromoterName("Rock and Roll Events") shouldBe "Rock and Roll"
             // A conjunction inside the name is not trailing, and stays.
             canonicalPromoterName("Kunst und Krawall") shouldBe "Kunst und Krawall"
+        }
+    }
+
+    // #2653: a venue typo, one group's two companies, and two credits printed as a web address.
+    @Test
+    fun `folds the typo, duplicate and domain-only credits onto the promoter's own name`() {
+        assertSoftly {
+            canonicalPromoterName("Concetbüro Zahlmann GmbH") shouldBe "Concertbüro Zahlmann"
+            canonicalPromoterName("Concertbüro Zahlmann GmbH") shouldBe "Concertbüro Zahlmann"
+            canonicalPromoterName("Sonic Bomm") shouldBe "Sonic Boom"
+            canonicalPromoterName("Sonic Boom") shouldBe "Sonic Boom"
+            canonicalPromoterName("Heesen Konzerte GmbH") shouldBe "Heesen Konzerte"
+            canonicalPromoterName("Heesen Media GmbH") shouldBe "Heesen Konzerte"
+            canonicalPromoterName("Heesen") shouldBe "Heesen Konzerte"
+            canonicalPromoterName("berlinmusiker.de") shouldBe "Berlinmusiker.de"
+            canonicalPromoterName("www.dundj.berlin") shouldBe "Dan & Jensai"
+            canonicalPromoterName("dundj.berlin") shouldBe "Dan & Jensai"
+            // A domain stays a name where it is the brand; only the curated entries change.
+            canonicalPromoterName("Aufgeigen.at") shouldBe "Aufgeigen.at"
+            canonicalPromoterName("therapi.live") shouldBe "therapi.live"
+        }
+    }
+
+    @Test
+    fun `refuses the metal-de media credit and keeps the credits beside it`() {
+        assertSoftly {
+            isNonPromoterName("Metal.de") shouldBe true
+            isNonPromoterName("metal.de") shouldBe true
+            isNonPromoterName("Metal Hammer") shouldBe false
+            isNonPromoterName("berlinmusiker.de") shouldBe false
+            isNonPromoterName("www.dundj.berlin") shouldBe false
         }
     }
 }

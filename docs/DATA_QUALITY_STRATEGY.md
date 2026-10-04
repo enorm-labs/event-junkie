@@ -107,7 +107,8 @@ for Pillar 4. A source-limited item is _accepted_, not chased.
 
 Row 4 is settled for promoters. A person read every row against the promoter's own site
 (`docs/promoters/REVIEWED.tsv`). `PromoterNormalizer.NAME_CORRECTIONS` pins the spellings. Data migrations merged the
-rows that existed (V023 onward). `promoter.reviewed_at` marks the rows a person read. So "a promoter minted since
+rows that existed (V023 onward). `OrphanPromoterSweep` deletes a row that no event credits, so a correction leaves
+no public row behind. `promoter.reviewed_at` marks the rows a person read. So "a promoter minted since
 the review" is a query (`reviewed_at IS NULL`, or `scripts/promoter-duplicates.py --unreviewed`), not a hunt, and
 `/data-quality-audit` reports it as one. Artists still wait for the curated map.
 
