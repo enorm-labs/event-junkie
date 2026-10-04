@@ -227,25 +227,18 @@ genre and missing-field enrichment, and bad-value correction for artist and prom
 
 - Deterministic rules stay the fast, free, first pass. The model is the fallback, not the front door.
 - Human-in-the-loop. A steward confirms or corrects model output, through the API now and a frontend later (§7). A
-  confirmed correction feeds back into the curated vocabulary, which closes the loop Pillar 1 opened. This is where
-  the _curated-vocab storage_ decision (§6) bites: a live steward fix needs the vocab to be data.
-- **Requires its own ADR — _AI-Assisted Data Quality_**, unnumbered until written (see the numbering note in
-  [AGENTS.md](../AGENTS.md)). It introduces a new external dependency, per-import cost and latency, and
-  non-deterministic output. All three interact with the scraping-pipeline decisions in ADR-007. The ADR's scope is
-  the model and provider choice, where the stage sits in the pipeline, caching and idempotency, and cost controls. It
-  also covers how model output is reconciled with the deterministic layer and the human review step.
+  confirmed correction that applies to a pattern goes into the curated vocabulary by pull request. A correction for
+  one row is a hand edit that pins its field ([ADR-042](adr/ADR-042_CURATED_VOCABULARIES_STAY_IN_CODE.md)).
+- **[ADR-041](adr/ADR-041_AI_ASSISTED_DATA_QUALITY.md) decides the model.** Every step calls the hosted Claude model
+  through Spring AI, Haiku by default. The model only suggests. An item cap per run and a monthly workspace limit
+  bound the cost.
 
-## 6. Open decisions
+## 6. Decisions
 
-These are recorded, not yet resolved — settle them before the pillar that needs each.
+The decisions that shape the pillars, and where each is recorded.
 
-- **Curated-vocabulary storage — code vs. data (ADR candidate).** Today the denylists / synonym maps / corrections (`NON_ARTIST_NAMES`, `NAME_CORRECTIONS`,
-  genre synonyms, `ACRONYMS`) are hardcoded Kotlin `Set`/`Map`s. A steward fixing an issue therefore means a code edit + PR + redeploy.
-    - _Keep as code:_ versioned, unit-tested and PR-reviewed, but every fix is a deploy.
-    - _Promote to DB tables (steward-editable):_ a fix lands instantly and closes the loop. It loses PR review and
-      testing of vocab changes, and it adds cache invalidation.
-    - _Direction:_ undecided. Spike and write the ADR before Pillar 4's human-in-the-loop needs live editing. Blocks
-      nothing in Pillars 1–3.
+- **Curated-vocabulary storage — decided: code.** The vocabularies stay in Kotlin, and a hand edit pins its field on
+  that row ([ADR-042](adr/ADR-042_CURATED_VOCABULARIES_STAY_IN_CODE.md)).
 - **Fix / curation surface — API-only for now.** Ship the DQ report and worklist endpoints. A steward fixes through
   the existing `PUT /api/admin/events/{id}` API, Swagger and `.http` files. A dedicated review frontend is deferred to
   the backlogged _"Admin frontend to review, enrich & fix event data"_ item. The DQ work provides the _signal_, and
@@ -260,9 +253,8 @@ These are recorded, not yet resolved — settle them before the pillar that need
 2. **Pillar 2** — golden fixture tests + boundary validation gate. The safety net that de-risks touching the normalizers.
 3. **Pillar 3** — title-as-headliner extraction + backfill. The highest immediate user-visible gain, and safe once
    Pillar 2 exists.
-4. **Pillar 4** — AI-assisted enrichment + steward review. The largest lever and the most effort. Gated on the
-   _AI-Assisted Data Quality_ ADR (§5) and the §6
-   vocab-storage decision.
+4. **Pillar 4** — AI-assisted enrichment + steward review. The largest lever and the most effort. Decided by ADR-041
+   (the model) and ADR-042 (the vocabulary and the pin).
 
 ## 8. Success metrics
 
