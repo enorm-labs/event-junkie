@@ -1,5 +1,6 @@
 package de.norm.events.scraper.zigzag
 
+import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldNotContain
@@ -67,6 +68,46 @@ class ZigZagDetailPageScraperTest {
         detail.ticketUrl shouldBe "https://www.eventim-light.com/de/a/665710997ed5f05a0e32f0e9/e/6a9a94a74d592f671999091d"
         detail.elsewhere shouldBe true
         detail.description!! shouldStartWith "Seit seinem eindrucksvollen Auftauchen"
+    }
+
+    @Test
+    fun `bills a tribute night's line-up by name, without instrument or country`() {
+        val detail = page("zigzag-detail-tribute.html")
+
+        detail.artists.map { it.name } shouldBe listOf("Mette Nadja Hansen", "Eldar Tsalikov", "Declan Forde", "James Banner", "Ugo Alluni")
+        detail.artists.map { it.role }.toSet() shouldBe setOf("HEADLINER")
+    }
+
+    @Test
+    fun `reads an en-dash line-up and one broken by line breaks`() {
+        page("zigzag-detail.html").artists.map { it.name } shouldBe
+            listOf("Roland Satterwhite", "David Preston", "Olivia Trummer", "Makar Novikov", "Ivars Arutyunyan")
+        page("zigzag-detail-jam.html").artists.map { it.name } shouldBe listOf("URI GINCEL", "PAUL KLEBER", "TOBIAS BACKHAUS")
+    }
+
+    @Test
+    fun `reads a line-up without countries and with a dash against the name`() {
+        val detail =
+            scraper.scrape(
+                Jsoup.parse(
+                    """
+                    <div class="eventitem-column-content">
+                      <h3>JOHANN GIESECKE- Trombone&nbsp;</h3>
+                      <h3>Leander Neidig - keys / MusiCAL DIRECTOR</h3>
+                      <p>Freuen Sie sich auf einen Abend - mit Soul, Funk und Jazz!</p>
+                      <p>(for English please scroll down)</p>
+                      <p>Max Kietov - bass</p>
+                    </div>
+                    """.trimIndent()
+                )
+            )
+
+        detail.artists.map { it.name } shouldBe listOf("JOHANN GIESECKE", "Leander Neidig")
+    }
+
+    @Test
+    fun `bills no one from a line-up without a dash`() {
+        page("zigzag-hall-detail.html").artists.shouldBeEmpty()
     }
 
     @Test

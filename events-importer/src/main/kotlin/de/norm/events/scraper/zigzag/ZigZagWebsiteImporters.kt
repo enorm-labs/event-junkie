@@ -19,9 +19,11 @@ import java.time.Clock
  *
  * `/programmneu` lists both venues' programmes ([ZigZagOverviewPageScraper] keeps one); each event
  * page adds the start and doors times, the admission, the ticket link and the blurb
- * ([ZigZagDetailPageScraper]). A failed or empty page keeps the listing row, flagged so the upsert
- * keeps the stored fields (see #2471). The collection's
- * `?format=json` and month views are disallowed by `robots.txt`, so the HTML is the source.
+ * ([ZigZagDetailPageScraper]). Its line-up bills a night whose title names no act, such as a
+ * tribute or the jam session; a title's act stays the only one billed. A failed or empty page
+ * keeps the listing row, flagged so the upsert keeps the stored fields (see #2471). The
+ * collection's `?format=json` and month views are disallowed by `robots.txt`, so the HTML is the
+ * source.
  *
  * @see <a href="https://www.zigzag-jazzclub.berlin/programmneu">Zig Zag programme</a>
  */
@@ -77,7 +79,8 @@ abstract class AbstractZigZagWebsiteImporter(
                 doorsTime = it.doorsTime,
                 pricePresale = it.price?.takeIf { _ -> it.ticketUrl != null },
                 priceBoxOffice = it.price,
-                ticketUrl = it.ticketUrl
+                ticketUrl = it.ticketUrl,
+                artists = event.artists.ifEmpty { it.artists }
             )
         }
     }
@@ -120,4 +123,4 @@ val ZIG_ZAG_LIMITATIONS =
     )
 
 /** A page that rendered without its content block, the shape a redirect to the programme leaves. */
-private fun ZigZagDetail.isEmpty(): Boolean = !elsewhere && listOf(description, startTime, doorsTime, price, ticketUrl).all { it == null }
+private fun ZigZagDetail.isEmpty(): Boolean = !elsewhere && artists.isEmpty() && listOf(description, startTime, doorsTime, price, ticketUrl).all { it == null }
