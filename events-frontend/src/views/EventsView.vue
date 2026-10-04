@@ -3,11 +3,13 @@ import { Rss } from '@lucide/vue'
 import { computed } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { Button } from '@/components/ui/button'
+import AlsoRunning from '@/components/AlsoRunning.vue'
 import EventCard from '@/components/EventCard.vue'
 import EventRow from '@/components/EventRow.vue'
 import { useCompactView } from '@/composables/useCompactView'
 import { CARD_GRID_CLASS, CARD_LIST_CLASS, RESULTS_BAR_CLASS } from '@/lib/utils'
 import { todayIso } from '@/lib/format'
+import { splitDayList } from '@/lib/longRuns'
 import EventFilterBar from '@/components/EventFilterBar.vue'
 import PaginationControls from '@/components/PaginationControls.vue'
 import SortControl, { type SortOption } from '@/components/SortControl.vue'
@@ -79,6 +81,16 @@ const {
     onNow.value
       ? `on-now:${todayIso()}?${JSON.stringify(filters.value)}`
       : `/api/events?${JSON.stringify(params.value)}`,
+)
+
+/**
+ * On now is a day list, so a run of weeks folds into "Also running" between its opening and its
+ * last days (#2594). A date range needs no split: `from` keeps a run that opened earlier out of it.
+ */
+const listed = computed(() =>
+  onNow.value
+    ? splitDayList(page.value?.content ?? [], todayIso())
+    : { cards: page.value?.content ?? [], alsoRunning: [] },
 )
 
 // Paging, the clamp on an out-of-range `?page=`, and the reload on any query change.
@@ -185,17 +197,19 @@ const mapLink = computed(() => ({
            detail pages), so the cards are the second level of the outline. The compact view swaps
            the whole grid rather than hiding the posters: a hidden image is still downloaded. -->
       <div v-if="compact" :class="CARD_LIST_CLASS">
-        <EventRow v-for="event in page.content" :key="event.slug" :event="event" as="h2" />
+        <EventRow v-for="event in listed.cards" :key="event.slug" :event="event" as="h2" />
       </div>
       <div v-else :class="CARD_GRID_CLASS">
         <EventCard
-          v-for="(event, index) in page.content"
+          v-for="(event, index) in listed.cards"
           :key="event.slug"
           :event="event"
           :priority="index === 0"
           as="h2"
         />
       </div>
+
+      <AlsoRunning :events="listed.alsoRunning" as="h2" />
 
       <PaginationControls :current-page="currentPage" :total-pages="totalPages" @goto="goToPage" />
     </template>

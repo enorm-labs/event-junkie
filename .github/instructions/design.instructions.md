@@ -114,6 +114,11 @@ have their own edge, down parts one card's last line of text from the next card'
   is dead code on a phone. `useViewportFocus` marks the card crossing the middle tenth of the viewport, and the same utility is written again as
   `group-data-focus/poster:`. A pointer device gets `:hover` alone.
 - **A heading level belongs to the page**, not to the component — see [vue](vue.instructions.md), which owns the `as` prop rule and the `heading-order` gate.
+- **A run longer than 7 days folds out of a day list between its opening and its last days**
+  ([#2594](https://github.com/enorm-labs/event-junkie/issues/2594)). It is a card on its opening day and on its last 3 days, where its state word is
+  "Closes <weekday>". On the days between it moves into the collapsed "Also running" block at the end of the list (`AlsoRunning.vue`), as the same card
+  or row the list draws. The split is `lib/longRuns.ts`, by duration and not by type: a 5-day club weekend is that night's main event and stays a card every
+  day. The day lists are Tonight on the home page and On now; a date range needs no split, because its `from` keeps a run that opened earlier out of it.
 - **The compact view is the one place a list has no posters** ([#1371](https://github.com/enorm-labs/event-junkie/issues/1371)): `EventRow` / `VenueRow`,
   one text row each in a single column, `CARD_LIST_CLASS` drawing a hairline between rows and nothing around them, carrying what the card carries under its
   poster and no more. The poster view stays the default. **The rows render no image element at all** — a hidden `<img>` is still downloaded.

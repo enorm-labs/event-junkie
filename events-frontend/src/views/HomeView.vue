@@ -11,6 +11,7 @@ import { computed, nextTick, onMounted, useTemplateRef } from 'vue'
 import { RouterLink } from 'vue-router'
 import { ArrowRight, CalendarDays, ChevronDown, Compass } from '@lucide/vue'
 import { Button } from '@/components/ui/button'
+import AlsoRunning from '@/components/AlsoRunning.vue'
 import EventCard from '@/components/EventCard.vue'
 import { CARD_GRID_CLASS, CARD_LIST_CLASS } from '@/lib/utils'
 import ClubStamp from '@/components/ClubStamp'
@@ -18,7 +19,8 @@ import ClubkulturNotice from '@/components/ClubkulturNotice.vue'
 import EventRow from '@/components/EventRow.vue'
 import { useCompactView } from '@/composables/useCompactView'
 import { useTodayEvents, useUpcomingEvents } from '@/composables/useEvents'
-import { tomorrowIso } from '@/lib/format'
+import { todayIso, tomorrowIso } from '@/lib/format'
+import { splitDayList } from '@/lib/longRuns'
 import { useLocalePath } from '@/composables/useLocalePath'
 import { useI18n } from 'vue-i18n'
 import { useStructuredData } from '@/composables/useStructuredData'
@@ -49,11 +51,14 @@ const { compact } = useCompactView()
 const TONIGHT_CAP = { poster: 6, compact: 12 }
 const tonightCap = computed(() => (compact.value ? TONIGHT_CAP.compact : TONIGHT_CAP.poster))
 const tonightTotal = computed(() => today.data.value?.length ?? 0)
+// A run of weeks is a card only on its opening and its last days; between them it folds (#2594).
+const tonight = computed(() => splitDayList(today.data.value ?? [], todayIso()))
+const tonightCards = computed(() => tonight.value.cards)
 const tonightCapped = computed(
-  () => !tonightExpanded.value && tonightTotal.value > tonightCap.value,
+  () => !tonightExpanded.value && tonightCards.value.length > tonightCap.value,
 )
 const tonightVisible = computed(() =>
-  tonightCapped.value ? today.data.value?.slice(0, tonightCap.value) : today.data.value,
+  tonightCapped.value ? tonightCards.value.slice(0, tonightCap.value) : tonightCards.value,
 )
 
 /** The section heading style, at the size of the map's and the venues' `h2`. */
@@ -136,9 +141,10 @@ async function expandTonight() {
           <EventCard v-for="event in tonightVisible" :key="event.slug" :event="event" />
         </div>
         <Button v-if="tonightCapped" variant="outline" @click="expandTonight">
-          {{ t('home.showAllTonight', { count: tonightTotal }) }}
+          {{ t('home.showAllTonight', { count: tonightCards.length }) }}
           <ChevronDown aria-hidden="true" data-icon="inline-end" />
         </Button>
+        <AlsoRunning :events="tonight.alsoRunning" />
       </template>
     </section>
 

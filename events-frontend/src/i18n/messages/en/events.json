@@ -62,6 +62,7 @@
     "assumed": "~{time}",
     "assumedHint": "Not announced, estimated from the event type",
     "runningSince": "Running since {day}",
+    "closes": "Closes {day}",
     "until": "Until {time}",
     "onNow": "On now"
   },
@@ -118,6 +119,9 @@
     "CANCELLED": "Cancelled",
     "POSTPONED": "Postponed",
     "movedTo": "Moved to {venue}"
+  },
+  "alsoRunning": {
+    "title": "Also running"
   },
   "nearMe": "Near me, on the map",
   "feed": "Feed",
