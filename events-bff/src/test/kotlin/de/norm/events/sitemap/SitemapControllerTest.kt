@@ -1,6 +1,7 @@
 package de.norm.events.sitemap
 
 import de.norm.events.BaseControllerTest
+import de.norm.events.ClockConfiguration
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -10,7 +11,7 @@ import java.time.Duration
 import java.time.LocalDate
 
 class SitemapControllerTest : BaseControllerTest() {
-    private val today = LocalDate.now()
+    private val today = LocalDate.now(ClockConfiguration.BERLIN)
 
     private fun sitemap(kind: String): String =
         webTestClient

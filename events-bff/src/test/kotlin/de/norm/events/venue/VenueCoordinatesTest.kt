@@ -1,6 +1,7 @@
 package de.norm.events.venue
 
 import de.norm.events.BaseControllerTest
+import de.norm.events.ClockConfiguration
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 import java.math.BigDecimal
@@ -36,7 +37,7 @@ class VenueCoordinatesTest : BaseControllerTest() {
     fun `GET events calendar carries the venue's coordinate`(): Unit =
         runBlocking {
             val venueId = insertVenue("Astra", "astra", latitude = latitude, longitude = longitude)
-            val today = LocalDate.now()
+            val today = LocalDate.now(ClockConfiguration.BERLIN)
             insertEvent(venueId, "Tonight", "tonight", today)
 
             webTestClient

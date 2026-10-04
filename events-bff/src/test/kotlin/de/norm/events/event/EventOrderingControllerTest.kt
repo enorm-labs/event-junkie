@@ -2,6 +2,7 @@ package de.norm.events.event
 
 import com.jayway.jsonpath.JsonPath
 import de.norm.events.BaseControllerTest
+import de.norm.events.ClockConfiguration
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
@@ -18,7 +19,7 @@ class EventOrderingControllerTest : BaseControllerTest() {
     fun `GET events today orders a tie the way the list does`(): Unit =
         runBlocking {
             val venueId = insertVenue("Astra", "astra")
-            val today = LocalDate.now()
+            val today = LocalDate.now(ClockConfiguration.BERLIN)
             repeat(6) { insertEvent(venueId, "Night $it", "night-$it", today, startTime = LocalTime.of(23, 0)) }
 
             val tonight = slugsOf("/events/today", "$[*].slug")
@@ -32,7 +33,7 @@ class EventOrderingControllerTest : BaseControllerTest() {
     fun `GET events gives every visitor the same order for a tie`(): Unit =
         runBlocking {
             val venueId = insertVenue("Astra", "astra")
-            val date = LocalDate.now().plusDays(1)
+            val date = LocalDate.now(ClockConfiguration.BERLIN).plusDays(1)
             repeat(6) { insertEvent(venueId, "Night $it", "night-$it", date, startTime = LocalTime.of(23, 0)) }
 
             val first = slugsOf("/events", "$.content[*].slug")
@@ -64,7 +65,7 @@ class EventOrderingControllerTest : BaseControllerTest() {
     fun `GET events carries the assumed start only where the venue published no time`(): Unit =
         runBlocking {
             val venueId = insertVenue("Astra", "astra")
-            val date = LocalDate.now().plusDays(1)
+            val date = LocalDate.now(ClockConfiguration.BERLIN).plusDays(1)
             insertEvent(venueId, "Timed", "timed", date, startTime = LocalTime.of(20, 0))
             insertEvent(venueId, "Doors only", "doors-only", date, doorsTime = LocalTime.of(19, 0))
             insertEvent(venueId, "Timeless", "timeless", date, eventType = "PARTY")
@@ -95,7 +96,7 @@ class EventOrderingControllerTest : BaseControllerTest() {
     fun `GET events today carries a weekender on its second night`(): Unit =
         runBlocking {
             val venueId = insertVenue("Sisyphos", "sisyphos")
-            val yesterday = LocalDate.now().minusDays(1)
+            val yesterday = LocalDate.now(ClockConfiguration.BERLIN).minusDays(1)
             insertEvent(venueId, "Weekender", "weekender", yesterday, endDate = yesterday.plusDays(3))
             insertEvent(venueId, "Last night", "last-night", yesterday)
 

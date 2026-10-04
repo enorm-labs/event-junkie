@@ -1,6 +1,7 @@
 package de.norm.events.event
 
 import de.norm.events.BaseControllerTest
+import de.norm.events.ClockConfiguration
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -9,7 +10,7 @@ import java.time.LocalDate
 
 /** `venueType` repeats, and an event at a venue of any given type matches (#361). */
 class EventVenueTypeFilterTest : BaseControllerTest() {
-    private val today = LocalDate.now()
+    private val today = LocalDate.now(ClockConfiguration.BERLIN)
 
     @BeforeEach
     fun seed(): Unit =

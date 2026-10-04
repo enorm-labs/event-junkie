@@ -1,6 +1,7 @@
 package de.norm.events.event
 
 import de.norm.events.BaseControllerTest
+import de.norm.events.ClockConfiguration
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
@@ -15,11 +16,11 @@ class EventFamilyFilterTest : BaseControllerTest() {
             val techno = insertGenreTag("Techno", "techno", family = "electronic")
             val rap = insertGenreTag("Rap", "rap", family = "hip-hop")
             val metal = insertGenreTag("Metal", "metal", family = "metal")
-            linkGenre(insertEvent(venueId, "Rave", "rave", LocalDate.now()), techno)
-            linkGenre(insertEvent(venueId, "Cypher", "cypher", LocalDate.now().plusDays(1)), rap)
-            linkGenre(insertEvent(venueId, "Mosh", "mosh", LocalDate.now().plusDays(2)), metal)
+            linkGenre(insertEvent(venueId, "Rave", "rave", LocalDate.now(ClockConfiguration.BERLIN)), techno)
+            linkGenre(insertEvent(venueId, "Cypher", "cypher", LocalDate.now(ClockConfiguration.BERLIN).plusDays(1)), rap)
+            linkGenre(insertEvent(venueId, "Mosh", "mosh", LocalDate.now(ClockConfiguration.BERLIN).plusDays(2)), metal)
             // Tagged in both families, it is still one row.
-            val crossover = insertEvent(venueId, "Crossover", "crossover", LocalDate.now().plusDays(3))
+            val crossover = insertEvent(venueId, "Crossover", "crossover", LocalDate.now(ClockConfiguration.BERLIN).plusDays(3))
             linkGenre(crossover, techno)
             linkGenre(crossover, rap)
 
@@ -41,14 +42,17 @@ class EventFamilyFilterTest : BaseControllerTest() {
             val techno = insertGenreTag("Techno", "techno", family = "electronic")
             val rap = insertGenreTag("Rap", "rap", family = "hip-hop")
             val metal = insertGenreTag("Metal", "metal", family = "metal")
-            linkGenre(insertEvent(venueId, "Rave", "rave", LocalDate.now().plusDays(1)), techno)
-            linkGenre(insertEvent(venueId, "Cypher", "cypher", LocalDate.now().plusDays(2)), rap)
-            linkGenre(insertEvent(venueId, "Mosh", "mosh", LocalDate.now().plusDays(3)), metal)
+            linkGenre(insertEvent(venueId, "Rave", "rave", LocalDate.now(ClockConfiguration.BERLIN).plusDays(1)), techno)
+            linkGenre(insertEvent(venueId, "Cypher", "cypher", LocalDate.now(ClockConfiguration.BERLIN).plusDays(2)), rap)
+            linkGenre(insertEvent(venueId, "Mosh", "mosh", LocalDate.now(ClockConfiguration.BERLIN).plusDays(3)), metal)
 
             webTestClient
                 .get()
-                .uri("/events/calendar?from=${LocalDate.now()}&to=${LocalDate.now().plusDays(7)}&family=metal&family=electronic")
-                .exchange()
+                .uri(
+                    "/events/calendar?from=${LocalDate.now(
+                        ClockConfiguration.BERLIN
+                    )}&to=${LocalDate.now(ClockConfiguration.BERLIN).plusDays(7)}&family=metal&family=electronic"
+                ).exchange()
                 .expectStatus()
                 .isOk
                 .expectBody()
