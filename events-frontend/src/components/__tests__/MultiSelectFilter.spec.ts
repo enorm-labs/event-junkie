@@ -23,7 +23,7 @@ describe('MultiSelectFilter', () => {
     wrapper.unmount()
   })
 
-  async function open(selected: string[]) {
+  async function open(selected: string[], hint?: string) {
     wrapper = mount(MultiSelectFilter, {
       attachTo: document.body,
       props: {
@@ -33,6 +33,7 @@ describe('MultiSelectFilter', () => {
         allLabel: 'All types',
         countLabel: (n: number) => `${n} types`,
         clearLabel: 'Clear types',
+        hint,
       },
     })
     await wrapper.get('button').trigger('click')
@@ -61,6 +62,17 @@ describe('MultiSelectFilter', () => {
     concert.dispatchEvent(new Event('change'))
 
     expect(wrapper.emitted('change')).toEqual([[['CONCERT', 'PARTY']]])
+  })
+
+  it('describes the options with its hint, and has no description without one', async () => {
+    await open([], 'Only venues with every type you tick are shown.')
+    const fieldset = document.body.querySelector('fieldset') as HTMLFieldSetElement
+    const hint = document.getElementById(fieldset.getAttribute('aria-describedby') ?? '')
+    expect(hint?.textContent).toBe('Only venues with every type you tick are shown.')
+    wrapper.unmount()
+
+    await open([])
+    expect(document.body.querySelector('fieldset')?.hasAttribute('aria-describedby')).toBe(false)
   })
 
   it('clears every value', async () => {

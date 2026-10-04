@@ -4,7 +4,7 @@
  * of checkboxes and a clear action. It holds no URL logic. It emits the whole new selection in
  * option order, so the URL, and the BFF's cache key, do not depend on the order of the ticks.
  */
-import { computed } from 'vue'
+import { computed, useId } from 'vue'
 import { ChevronDown } from '@lucide/vue'
 import { Button } from '@/components/ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
@@ -25,8 +25,12 @@ const props = defineProps<{
   /** The trigger text for two or more selected values. */
   countLabel: (count: number) => string
   clearLabel: string
+  /** A line above the options that says how they combine, where that is not "any of them". */
+  hint?: string
   class?: string
 }>()
+
+const hintId = useId()
 
 const emit = defineEmits<{ change: [values: string[]] }>()
 
@@ -60,7 +64,8 @@ function toggle(value: string, checked: boolean) {
       <ChevronDown aria-hidden="true" class="size-4 shrink-0 text-muted-foreground" />
     </PopoverTrigger>
     <PopoverContent :collision-padding="8" align="start" class="w-56">
-      <fieldset class="flex flex-col gap-1">
+      <p v-if="hint" :id="hintId" class="mb-2 text-meta text-muted-foreground">{{ hint }}</p>
+      <fieldset :aria-describedby="hint ? hintId : undefined" class="flex flex-col gap-1">
         <legend class="sr-only">{{ label }}</legend>
         <label v-for="option in options" :key="option.value" class="flex h-8 items-center gap-2">
           <input

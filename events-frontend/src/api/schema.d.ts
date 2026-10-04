@@ -1636,7 +1636,7 @@ export interface operations {
                 family?: string[];
                 /** @description Event type, e.g. CONCERT (case-insensitive). Repeatable: a venue that hosts any given type matches. */
                 eventType?: string[];
-                /** @description Character tag slug (e.g. queer), as the venue describes itself. Repeatable: a venue with any given tag matches. An unknown tag matches nothing. */
+                /** @description Character tag slug (e.g. queer), as the venue describes itself. Repeatable: only a venue with every given tag matches. An unknown tag matches nothing. */
                 character?: string[];
                 /** @description Zero-based page index (0..N) */
                 page?: number;
