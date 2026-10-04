@@ -55,12 +55,16 @@ interface CachedImageRepository : CoroutineCrudRepository<CachedImageEntity, Lon
      * A left join rather than `NOT EXISTS` on a count, because an image whose generation was
      * interrupted has *some* variants and still needs the rest. Asking for images with none at all
      * would skip it forever.
+     *
+     * A `failure_reason` without a `failed_at` is a blank derivative, rejected by
+     * [ImageDerivativeService]. Rendering it again would give the same blank.
      */
     @Query(
         """
         SELECT c.* FROM $EVENTS_SCHEMA.cached_image c
         WHERE c.content_hash IS NOT NULL
           AND c.deleted_at IS NULL
+          AND NOT (c.failed_at IS NULL AND c.failure_reason IS NOT NULL)
           AND (SELECT count(*) FROM $EVENTS_SCHEMA.cached_image_variant v WHERE v.cached_image_id = c.id) < :expectedVariants
         ORDER BY c.fetched_at
         LIMIT :limit
@@ -216,6 +220,7 @@ interface CachedImageRepository : CoroutineCrudRepository<CachedImageEntity, Lon
         SELECT count(*) FROM $EVENTS_SCHEMA.cached_image c
         WHERE c.content_hash IS NOT NULL
           AND c.deleted_at IS NULL
+          AND NOT (c.failed_at IS NULL AND c.failure_reason IS NOT NULL)
           AND (SELECT count(*) FROM $EVENTS_SCHEMA.cached_image_variant v WHERE v.cached_image_id = c.id) < :expectedVariants
         """
     )

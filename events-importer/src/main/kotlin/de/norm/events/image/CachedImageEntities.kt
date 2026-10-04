@@ -29,6 +29,7 @@ data class CachedImageEntity(
     val fetchedAt: Instant? = null,
     val lastSeenAt: Instant? = null,
     val failedAt: Instant? = null,
+    /** With [failedAt] null, the derivative was blank and the site shows no image (see #2669). */
     val failureReason: String? = null,
     /** Set by the takedown route, so a removed image is not re-fetched by the next pass. */
     val deletedAt: Instant? = null,
