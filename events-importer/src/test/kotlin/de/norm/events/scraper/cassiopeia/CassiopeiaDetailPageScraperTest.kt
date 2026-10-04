@@ -72,6 +72,16 @@ class CassiopeiaDetailPageScraperTest {
     }
 
     @Test
+    fun `scrape splits a support line that names two acts`() {
+        // Loma Prieta, 4 October 2026: one labelled line, two bands (#2623).
+        val html = buildDetailHtml("Loma Prieta", descriptionParagraphs = listOf("Support: deshielo + la haine", "Bio text."))
+        val url = "https://cassiopeia-berlin.de/event/loma-prieta-111623520"
+
+        scraper.scrape(Jsoup.parse(html, url), url)!!.artists.map { it.name to it.role } shouldContainExactly
+            listOf("Loma Prieta" to "HEADLINER", "deshielo" to "SUPPORT", "la haine" to "SUPPORT")
+    }
+
+    @Test
     fun `scrape reads a plus line as support, and not at a party`() {
         // jolle, 28 September 2026: the relocation notice, then the support on a line of its own.
         val concert =
