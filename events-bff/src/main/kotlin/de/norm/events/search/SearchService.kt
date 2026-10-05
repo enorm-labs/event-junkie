@@ -33,13 +33,12 @@ class SearchService(
         limit: Int
     ): SearchResponse =
         coroutineScope {
-            // The closest match first: artists rank by similarity under `name`, venues and promoters without a sort (#2694).
-            val byName = PageRequest.of(0, limit, Sort.by("name"))
+            // Without a sort, venues, artists and promoters list the closest match first (#2694, #2704).
             val byRelevance = PageRequest.of(0, limit)
             val byDate = PageRequest.of(0, limit, Sort.by("eventDate"))
             val events = async { eventService.search(EventFilter(from = LocalDate.now(clock), query = term), byDate, COUNT_CAP) }
             val venues = async { venueService.list(VenueFilter(query = term), byRelevance, COUNT_CAP) }
-            val artists = async { artistService.list(term, byName, COUNT_CAP) }
+            val artists = async { artistService.list(term, byRelevance, COUNT_CAP) }
             val promoters = async { promoterService.list(term, byRelevance, COUNT_CAP) }
             SearchResponse(events.await().group(), venues.await().group(), artists.await().group(), promoters.await().group())
         }

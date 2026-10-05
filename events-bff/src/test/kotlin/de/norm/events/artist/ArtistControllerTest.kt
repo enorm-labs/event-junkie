@@ -86,6 +86,54 @@ class ArtistControllerTest : BaseControllerTest() {
                 .isEqualTo("the-adicts")
         }
 
+    // #2704: A–Z with a search lists by name; only a search without a sort lists the closest names first.
+    @Test
+    fun `GET artists with a search sorts by name when asked, and by relevance only without a sort`(): Unit =
+        runBlocking {
+            insertArtist("Berlinette", "berlinette")
+            insertArtist("Atom Berlin", "atom-berlin")
+
+            webTestClient
+                .get()
+                .uri("/artists?q=berlin&sort=name")
+                .exchange()
+                .expectStatus()
+                .isOk
+                .expectBody()
+                .jsonPath("$.content[*].slug")
+                .isEqualTo(listOf("atom-berlin", "berlinette"))
+
+            webTestClient
+                .get()
+                .uri("/artists?q=berlin")
+                .exchange()
+                .expectStatus()
+                .isOk
+                .expectBody()
+                .jsonPath("$.content[*].slug")
+                .isEqualTo(listOf("berlinette", "atom-berlin"))
+        }
+
+    // The collation is `C`; without case-folding "terra" would sort after "Zenker", with a search or without.
+    @Test
+    fun `GET artists sorts names case-folded`(): Unit =
+        runBlocking {
+            insertArtist("Zenker Brothers", "zenker-brothers")
+            insertArtist("terra", "terra")
+
+            for (uri in listOf("/artists", "/artists?sort=name", "/artists?q=er&sort=name")) {
+                webTestClient
+                    .get()
+                    .uri(uri)
+                    .exchange()
+                    .expectStatus()
+                    .isOk
+                    .expectBody()
+                    .jsonPath("$.content[*].slug")
+                    .isEqualTo(listOf("terra", "zenker-brothers"))
+            }
+        }
+
     @Test
     fun `GET artist by slug returns detail`(): Unit =
         runBlocking {

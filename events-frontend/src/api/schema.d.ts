@@ -295,7 +295,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List artists with pagination and optional name search */
+        /**
+         * List artists with pagination and optional name search, sorted by name
+         * @description Sort with `sort=name` (A–Z, case-folded). A chosen sort applies with a search too. Without a sort, a search lists the closest names first, else A–Z.
+         */
         get: operations["list_4"];
         put?: never;
         post?: never;
