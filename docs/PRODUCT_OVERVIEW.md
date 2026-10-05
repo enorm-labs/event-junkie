@@ -4,103 +4,176 @@
 
 **A feature inventory: what Event Junkie does today, in present tense.**
 
-This document deliberately does **not** argue the _why_. That lives in the [README](../README.md#background) and on
-the site's own About page: the motivation, the problem it answers, and how it differs from the alternatives. One place
-each, so they cannot drift into three slightly different pitches. What belongs here is the checklist of what actually exists.
+## The short version
+
+```sh
+scripts/features-parity.sh   # fails when a route, a public API path, a public file or an e2e spec is not in § Surfaces
+```
+
+- A `feat` that adds a page, an endpoint or an e2e spec adds a row to [§ Surfaces](#surfaces) in the same pull request.
+- A `feat` without a new surface still updates [§ What a visitor can do](#what-a-visitor-can-do). The check cannot see it.
+- Do not copy counts into this file. Link to the document that owns the number.
+
+This document does **not** argue the _why_. The [README](../README.md#background) and the site's About page do that.
+The README's _What it does_ is the short form of the section below.
 
 Elsewhere:
 
 - which _kinds_ of event are in scope — [EVENT_SCOPE.md](EVENT_SCOPE.md)
-- where the product is headed — [VISION_ROADMAP_IDEAS.md](VISION_ROADMAP_IDEAS.md)
+- where the product goes next — [VISION_ROADMAP_IDEAS.md](VISION_ROADMAP_IDEAS.md)
 - the backlog — [GitHub Issues](https://github.com/enorm-labs/event-junkie/issues)
 - voice and visual direction — [BRANDING.md](BRANDING.md)
-
-App name: **Event Junkie** (→ event-junkie.de), and the same name internally in `event-junkie` identifier form.
 
 ---
 
 ## In one line
 
-A **music-event discovery app for Berlin**. It collects events automatically from venue and promoter websites into
-one fast, filterable feed. It always links back to the original source for tickets and details.
+Event Junkie is an **event discovery site for Berlin**, live at <https://event-junkie.de> as a public beta. It collects
+events automatically from venue and promoter websites into one filterable feed. Each event links back to its source for
+tickets and details.
 
-Scope rule — **if a Berlin venue puts it on a stage in the evening, it is in scope.** [EVENT_SCOPE.md](EVENT_SCOPE.md)
-sets out what that includes, and what is deliberately excluded: sport, participation formats, trade fairs, and for now
-classical.
+Scope rule: **if a Berlin venue puts it on a stage in the evening, it is in scope.** [EVENT_SCOPE.md](EVENT_SCOPE.md)
+lists what that includes and what it excludes.
 
-## What it lets you do
+## What a visitor can do
 
-- **Browse and search** upcoming events, with a **calendar view** and a **today** view.
-- **Filter** by what you actually care about: date range, event type, **Berlin district** (23 pre-2001 districts),
-  **genre**, **price range**, **free-only** and **exclude sold-out**. Plus free-text search over titles, venues and line-ups.
-  The search ignores accents and spaces, and finds `Berghain` from `berghian`.
-- **Find a venue** by name, district, **venue type** (club, live venue, bar, …), the **genres it mostly plays** and the
-  **event types it hosts**. Each venue shows its type and capacity.
-- **Drill into details:** dedicated pages for each **event, venue, artist and promoter**. They are cross-linked, so
-  you can jump from an artist to all their Berlin dates, or from a venue to its full programme.
-- **See the signal at a glance:** "Free" and "Sold Out" badges, event status (e.g. cancelled/postponed), door/start times, prices, line-ups and genre tags.
+**Find events**
 
----
+- See **Tonight** and **Upcoming** on the home page. A run longer than 7 days moves into an "Also running" block.
+- Filter the events list, the calendar and the map with one filter bar. The filters are date range, event type, venue,
+  venue type, district, genre, price range, free-only and exclude-sold-out.
+- Use the **Tonight**, **This weekend** and **Next 7 days** shortcuts, or **On now** for what runs at this moment.
+- Search from the header with `/` or Ctrl/Cmd+K. The search finds events, venues, artists and promoters as you type.
+- Every search ignores accents, umlaut spellings and spaces, and tolerates typos. `berghian` finds Berghain.
+- Plan a month ahead in the **calendar**.
+- Find what is **near you** on the map. Pick a position, a 1, 2 or 5 km radius, and get the venues inside it,
+  nearest first. The position stays in the browser.
 
-## Current Status
+**Read an event**
 
-**🚧 In active development — not yet publicly deployed.** The core product works end-to-end locally. The path to a
-public launch — hosting, domain, auth, legal — is tracked in
-[the issue tracker](https://github.com/enorm-labs/event-junkie/issues).
+- See the date, doors, start and end in one **When** block, with prices and the source link.
+- See the **running order and set times** of a club night, where the venue publishes them.
+- See the **spoken language** of comedy, readings and screenings, where the venue states it.
+- See **upcoming events like this one**.
+- **Share** the event, copy its link, or **add it to a calendar** as an `.ics` file or a Google Calendar link.
+- Report wrong data by email, without a GitHub account.
 
-### Live features
+**Read a venue, artist or promoter**
 
-**Discovery frontend** (Vue 3)
+- Every venue, artist and promoter has its own page with everything coming up there. The pages link to each other.
+- A venue shows its type, capacity, district, a map link and the genres and event types it programmes.
+- A venue shows **character tags** that its own page states, for example _awareness team_ or _wheelchair accessible_.
+- Filter venues by name, district, type, genre, event type and character tag. Each tag option shows how many venues
+  it leaves.
+- Sort venues and promoters by name or by **events in the next 30 days**.
+- An artist page links to MusicBrainz or Discogs where a match exists.
 
-- Home, **calendar**, and event **search/list** pages, plus **event / venue / artist / promoter** detail pages and an About page.
-- Filtering by date range, event type, venue, district (the 23 pre-2001 districts), genre, price range, free-only and
-  exclude-sold-out. The date range has **Tonight / This weekend / Next 7 days** shortcuts. Plus free-text search, and
-  "Free" and "Sold Out" badges. One shared filter bar serves the **list, the calendar and the map**. The calendar has no date range, because
-  its window is one already. Search and dates are always in view. The other filters are behind "More filters", which opens when the URL sets
-  one of them. Every filter lives in the URL, so a narrowed view is shareable.
+**Everywhere**
 
-**Public read API — BFF** (`/api/…`, OpenAPI/Swagger documented)
+- Read the site in **German or English**, in a light or dark theme, with posters or a compact list.
+- An event with no flyer gets a drawn poster for its genre or type.
+- Every filter lives in the URL, so a filtered view is a link you can share.
+- Subscribe to the **RSS feed** of new events. A filtered feed URL is a saved search with no account.
+- The site loads nothing from a third party and does not track you. The map tiles are self-hosted.
+- A venue can opt out on the _For venues_ page.
 
-- Event search with the full filter set above, **plus artist and promoter** filters, pagination and sorting. Plus
-  **today** and **date-range calendar** endpoints, the calendar accepting the same filter set, and per-slug detail.
-- List + detail endpoints for **venues, artists, promoters and genres**. The venue list filters by name, district, venue
-  type, genre family and event type.
+## Surfaces
 
-**Automated data aggregation — Importer**
+The table lists every surface the parity check knows about. `scripts/features-parity.sh` reads the code spans in
+the first column. It fails in two cases:
 
-- **Berlin sources live** across clubs, bars, concert halls, open-air spaces, arenas, theatres and a comedy club. The
-  per-venue inventory and its status counts live in [EVENT_DATA_SOURCES.md](EVENT_DATA_SOURCES.md). Do not restate the
-  number here. Restate the link.
-- **Scheduled imports** with **change detection** (ETag / Last-Modified), **per-host politeness throttling**, deduplication, and **stale-event cleanup**.
-- **Per-source status tracking + retry**, managed via an admin API — imports trigger asynchronously (fire-and-forget) and their status is polled
-  (create/enable/trigger/retry sources).
-- **Data enrichment at import:** free-event detection, sold-out and event-status detection, and automatic creation + linking of **artists (with roles/billing
-  order), promoters and genre tags**.
-- A **`/scaffold-importer`** skill that turns adding a new venue into a guided, tested workflow.
+1. A route, a public API path, a public file or an e2e spec exists and has no row.
+2. A row names a surface that does not exist.
 
-**Data model**
+| Surface                            | What it is                                                                  |
+| ---------------------------------- | --------------------------------------------------------------------------- |
+| `/`                                | Home page: Tonight and Upcoming                                             |
+| `/events`                          | The events list and its filter bar                                          |
+| `/events/:slug`                    | Event page: When block, line-up, set times, share, calendar, related events |
+| `/calendar`                        | Month calendar with the same filters                                        |
+| `/map`                             | Events map, near me and On now                                              |
+| `/venues`                          | Venues list and venues map, with character-tag filters                      |
+| `/venues/:slug`                    | Venue page                                                                  |
+| `/artists/:slug`                   | Artist page                                                                 |
+| `/promoters`                       | Promoters list                                                              |
+| `/promoters/:slug`                 | Promoter page                                                               |
+| `/search`                          | All results for a header search, not indexed                                |
+| `/about`                           | About page                                                                  |
+| `/legal/imprint`                   | Imprint                                                                     |
+| `/legal/privacy`                   | Privacy notice                                                              |
+| `/legal/notices`                   | Open-source notices                                                         |
+| `/legal/for-venues`                | The opt-out route for venues                                                |
+| `/feed.xml`                        | RSS feed of newly imported events, with every events-list filter            |
+| `/robots.txt`                      | Allows search and answer crawlers, refuses AI training crawlers             |
+| `/api/events`                      | Event search with the full filter set, paged and sorted                     |
+| `/api/events/{slug}`               | One event                                                                   |
+| `/api/events/{slug}/related`       | Upcoming events like this one                                               |
+| `/api/events/today`                | Today's events                                                              |
+| `/api/events/calendar`             | Events in a date range, for the calendar and the map                        |
+| `/api/events/feed`                 | The RSS feed behind `/feed.xml`                                             |
+| `/api/venues`                      | Venue list with its filters                                                 |
+| `/api/venues/{slug}`               | One venue                                                                   |
+| `/api/venues/feature-counts`       | How many venues each character tag leaves                                   |
+| `/api/artists`                     | Artist list                                                                 |
+| `/api/artists/{slug}`              | One artist                                                                  |
+| `/api/promoters`                   | Promoter list                                                               |
+| `/api/promoters/{slug}`            | One promoter                                                                |
+| `/api/genres`                      | Genre tags and their families                                               |
+| `/api/search`                      | The header search across all four kinds                                     |
+| `/api/sitemaps/{kind}.xml`         | The detail sitemaps                                                         |
+| `/api/images/{contentHash}/{file}` | Cached venue images                                                         |
+| `/api/meta`                        | Version and commit of the running backend, for the footer                   |
+| `home-feeds.spec.ts`               | e2e: Tonight and Upcoming                                                   |
+| `events-filters.spec.ts`           | e2e: the filter bar                                                         |
+| `calendar.spec.ts`                 | e2e: the calendar                                                           |
+| `map-near.spec.ts`                 | e2e: near me on the map                                                     |
+| `venues.spec.ts`                   | e2e: venues list, filters and map                                           |
+| `promoters.spec.ts`                | e2e: promoters list                                                         |
+| `detail-routes.spec.ts`            | e2e: the four detail pages                                                  |
+| `search.spec.ts`                   | e2e: header search                                                          |
+| `share-calendar.spec.ts`           | e2e: share and add to calendar                                              |
+| `card-poster.spec.ts`              | e2e: drawn posters                                                          |
+| `compact-view.spec.ts`             | e2e: compact list                                                           |
+| `dark-mode.spec.ts`                | e2e: theme                                                                  |
+| `i18n.spec.ts`                     | e2e: German and English                                                     |
+| `footer.spec.ts`                   | e2e: footer, feed and feedback links                                        |
+| `legal.spec.ts`                    | e2e: legal pages                                                            |
+| `seo.spec.ts`                      | e2e: head tags, sitemaps, structured data                                   |
+| `a11y.spec.ts`                     | e2e quality check: accessibility, not a feature                             |
+| `layout-shift.spec.ts`             | e2e quality check: layout shift, not a feature                              |
+| `page-title.spec.ts`               | e2e quality check: page titles, not a feature                               |
+| `scroll-restoration.spec.ts`       | e2e quality check: scroll position, not a feature                           |
+| `smoke.spec.ts`                    | e2e quality check: every page renders, not a feature                        |
 
-- Events, venues, artists, promoters, genre tags and import sources, with many-to-many links (event↔artist, event↔promoter, event↔genre).
+## Behind the site
 
-### Engineering foundation
+**Importer**
 
-- Reactive **Kotlin + Spring Boot 4** backend (WebFlux, R2DBC, Flyway), split into a **Spring-Modulith importer** and
-  a public **BFF**, backed by **PostgreSQL**. **Vue 3** frontend.
-- Decisions captured as **ADRs**, with unit and integration tests across importer, BFF and frontend.
+- Imports Berlin sources on a schedule. [EVENT_DATA_SOURCES.md](EVENT_DATA_SOURCES.md) has the per-venue inventory
+  and the counts.
+- Skips an unchanged page (ETag / Last-Modified), throttles per host and honours `Crawl-delay`.
+- Removes duplicates and stale events.
+- Detects free entry, sold out, cancelled and postponed, the spoken language and the room at a multi-room venue.
+- Links artists with their role and billing order, promoters and genre tags. Artist lookups against MusicBrainz and
+  Discogs run on their own schedule.
+- Keeps a field that an operator edited by hand. The next import does not overwrite it.
+- Records values it refuses in a data-quality worklist.
+- An admin API creates, enables, triggers and retries sources. The local `events-admin` app is its UI.
 
-### Not there yet
+**Search engines and crawlers**
 
-User accounts and personalization, notifications, a venues map, broader venue coverage, and a public deployment.
-Those are the roadmap — see [VISION_ROADMAP_IDEAS.md](VISION_ROADMAP_IDEAS.md) and
-[the issue tracker](https://github.com/enorm-labs/event-junkie/issues).
+- A sitemap lists every upcoming event, venue, artist and promoter.
+- Each page has its own head tags, `hreflang` and canonical URL. Event and venue pages carry JSON-LD in the served
+  HTML, so crawlers that run no JavaScript can read them.
 
----
+**Engineering**
 
-## Keeping this honest
+- A reactive **Kotlin + Spring Boot 4** backend (WebFlux, R2DBC, Flyway) in two services: the importer and the public
+  read API. Both use **PostgreSQL**. The frontend is **Vue 3**.
+- Production and staging run on Hetzner. Flux reconciles both clusters.
+- Decisions are in [ADRs](adr/). Unit, integration and e2e tests cover the importer, the API and the frontend.
 
-Everything above is a claim about what exists **now**, so it goes stale in exactly one way: a feature ships and
-nobody updates the list. Two things went stale here already, and are worth not repeating:
+## Not there yet
 
-- **Counts.** This document said "eight venues live" long after there were 86. Numbers that change belong in the source that owns them —
-  [EVENT_DATA_SOURCES.md](EVENT_DATA_SOURCES.md) for coverage — and should be _linked_ from here, not copied.
-- **The pitch.** The _why_ used to live here as well as in the README. It now lives in the README and the About page only.
+Accounts, follows, saved searches with notifications and calendar subscriptions that stay in sync. These are the
+roadmap — see [VISION_ROADMAP_IDEAS.md](VISION_ROADMAP_IDEAS.md).

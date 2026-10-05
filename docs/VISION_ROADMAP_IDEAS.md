@@ -3,7 +3,7 @@
 ## The short version
 
 Four phases. **Phase 1 is launch** — hosting, legal, the shared-link head tags — and it is split across three release
-milestones. **Phase 2 is depth**: more venues, the map, related events. **Phase 3 adds accounts**, and the open
+milestones. **Phase 2 is depth**: more venues, an import-health dashboard, a UX pass. **Phase 3 adds accounts**, and the open
 question there is whether stage 1 needs one at all. **Phase 4 is the social and ecosystem layer**, and it only starts
 working once RSVP volume exists.
 
@@ -94,8 +94,9 @@ Make it comprehensive, discoverable and pleasant. → **[Phase 2 — Coverage & 
 - Scale importer coverage toward the full venue list in [EVENT_DATA_SOURCES.md](EVENT_DATA_SOURCES.md), and enrich
   venue metadata.
 - An **admin imports-status dashboard** to watch import health and failures.
-- A full UX and mobile pass, and the remaining SEO surfaces. Done already: the venues map, i18n and l10n, the sitemap,
-  `hreflang`, canonical URLs, `schema.org` structured data and an RSS feed of new events.
+- A full UX and mobile pass, and the remaining SEO surfaces. The venues map, i18n and l10n, the sitemap, `hreflang`,
+  canonical URLs and `schema.org` structured data exist. So do an RSS feed, related events and email links to report
+  wrong data.
 - **Server-side head tags for shared links.** Every page serves an empty `<div id="app">`. A scraper that does not run
   JavaScript shows the generic site title and description for _every_ shared link, event pages included. That covers
   Slack, WhatsApp, iMessage, Facebook and LinkedIn. Sharing a specific event is a primary way a nightlife product
@@ -105,8 +106,6 @@ Make it comprehensive, discoverable and pleasant. → **[Phase 2 — Coverage & 
   built now, and it also closes the missing per-page `og:description`. The transport that rewrites the response waits
   for ADR-012 to be executed. Full SSR is deferred behind a named trigger, rather than anticipated: Search Console
   showing detail pages indexed poorly.
-- **Related events** on detail pages (same venue, genre or artist). They work without accounts.
-- "Missing event / venue" and feedback forms.
 
 ### Phase 3 — Accounts & personalization 👤 _(Expansion stage 1)_
 
@@ -142,9 +141,9 @@ Turn discovery into a network and open the data up. → **[Phase 4 — Social & 
   account useful. Resident Advisor has no public API, and its terms forbid automated access (#356), so that part needs
   RA's permission. Facebook Events and Pages were in the original idea list, from the era when the Graph API was open.
   Check what Facebook still permits before planning anything on it.
-- A club map showing events nearby. An iCal export, and **calendar subscriptions that stay in sync**. That is an ICS
-  feed per follow or saved search, so a new matching event lands in Google Calendar without a manual export. And a
-  public API with API management.
+- **Calendar subscriptions that stay in sync**: an ICS feed per follow or saved search. A new matching event then
+  lands in Google Calendar without a manual export.
+- A public API with API management.
 
 ### Phase 5 — Beyond Berlin 🌍 _(bigger bets)_
 

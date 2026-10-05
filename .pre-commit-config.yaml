@@ -81,6 +81,14 @@ repos:
         files: ^(docs/EVENT_DATA_SOURCES\.md|scripts/sources-parity\.sh)$
         pass_filenames: false
 
+      # PRODUCT_OVERVIEW.md § Surfaces, against the routes, API paths, public files and e2e specs.
+      - id: features-parity
+        name: product overview parity
+        entry: scripts/features-parity.sh
+        language: system
+        files: ^(docs/PRODUCT_OVERVIEW\.md|scripts/features-parity\.sh|events-frontend/src/router/index\.ts|events-frontend/src/api/schema\.d\.ts|events-frontend/docker/nginx\.conf|events-frontend/e2e/[^/]+\.spec\.ts)$
+        pass_filenames: false
+
       # Every file under `scripts/` has a row in `scripts/README.md`, every path named there
       # exists, and every script answers `--help`. Scoped to the directory: the check's tree-wide
       # half — a `scripts/<name>` reference in a runbook that no longer resolves — is CI's job in
