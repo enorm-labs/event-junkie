@@ -468,11 +468,11 @@ test('shows only free events when the toggle is pressed, and not on a second pre
 test('clear all empties the query, and only appears when something is set', async ({ page }) => {
   await page.goto('/events')
   await expect(eventHeading(page, 'Default Event A')).toBeVisible()
-  await expect(page.getByRole('button', { name: 'Clear all' })).toHaveCount(0)
+  await expect(page.getByRole('button', { name: 'Clear all', exact: true })).toHaveCount(0)
 
   await page.goto('/events?venue=lido&free=true&from=2099-09-01')
   await expect(page.getByRole('button', { name: 'More filters (2)' })).toBeVisible()
-  await page.getByRole('button', { name: 'Clear all' }).click()
+  await page.getByRole('button', { name: 'Clear all', exact: true }).click()
 
   await expect(page).toHaveURL(/\/events$/)
   await expect(page.getByRole('button', { name: 'More filters', exact: true })).toBeVisible()
@@ -509,7 +509,7 @@ test('the empty state offers a way out of the filters', async ({ page }) => {
   await expect(page.getByText(/nothing matches/i)).toBeVisible()
 
   await expect(page.getByRole('link', { name: /tonight/i })).toBeVisible()
-  await page.getByRole('button', { name: 'Clear filters' }).click()
+  await page.getByRole('button', { name: 'Clear all filters' }).click()
 
   await expect(page).toHaveURL(/\/events$/)
   await expect(eventHeading(page, 'Default Event A')).toBeVisible()

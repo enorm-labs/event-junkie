@@ -24,8 +24,9 @@
     "compact": "Compact"
   },
   "actions": {
-    "clearFilters": "Clear filters",
-    "clearSearch": "Clear the search",
+    "clearAll": "Clear all",
+    "clearAllFilters": "Clear all filters",
+    "clearSearch": "Clear search",
     "browseTonight": "See what is on tonight",
     "previous": "Previous",
     "next": "Next",

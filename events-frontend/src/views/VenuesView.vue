@@ -5,9 +5,10 @@ import { type LocationQueryRaw, RouterLink, useRoute, useRouter } from 'vue-rout
 import type { VenueSummary } from '@/api/types'
 import { describeError } from '@/api/client'
 import { Button } from '@/components/ui/button'
-import BaseInput from '@/components/BaseInput.vue'
+import ClearAllFilters from '@/components/ClearAllFilters.vue'
 import MultiSelectFilter from '@/components/MultiSelectFilter.vue'
 import PaginationControls from '@/components/PaginationControls.vue'
+import SearchInput from '@/components/SearchInput.vue'
 import SortControl, { type SortOption } from '@/components/SortControl.vue'
 import VenueCard from '@/components/VenueCard.vue'
 import VenueFeaturesEmpty from '@/components/VenueFeaturesEmpty.vue'
@@ -105,22 +106,15 @@ function applyFilters(patch: LocationQueryRaw) {
   router.push({ query: next })
 }
 
-/** Whether anything narrows the list, which is what a "clear" control has to have to offer. */
-const isFiltered = computed(() =>
-  Object.keys(route.query).some((key) => !['page', 'view', 'radius', 'sort'].includes(key)),
-)
+/** A filter beyond the name search, so an empty list can name the filters as its cause. */
+const FILTER_KEYS = ['district', 'type', 'character', 'family', 'eventType']
+const hasFilters = computed(() => FILTER_KEYS.some((key) => queryList(key).length))
 
 // Features combine with AND (#2670): with two or more chosen, an empty list names them as the cause.
 const features = computed(() => queryList('character'))
 
 function removeFeature(feature: string) {
   applyFilters({ character: features.value.filter((value) => value !== feature) })
-}
-
-function clearSearch() {
-  search.value = ''
-  // The order is not a filter, so clearing keeps it.
-  router.push({ query: { view: showMap.value ? 'map' : undefined, sort: sort.value || undefined } })
 }
 
 // The map is a second view of the same search, in the URL so a shared link opens on it.
@@ -180,6 +174,8 @@ watch(() => [showMap.value, JSON.stringify({ ...params.value, page: undefined })
 })
 
 const { t, locale } = useI18n()
+
+const emptyText = computed(() => t(hasFilters.value ? 'venues.emptyFiltered' : 'venues.empty'))
 
 const sortOptions = computed<SortOption[]>(() => [
   { value: '', label: t('common.sort.name') },
@@ -280,12 +276,11 @@ const localePath = useLocalePath()
 
     <div :class="PANEL_CLASS">
       <form role="search" @submit.prevent="applySearch">
-        <BaseInput
+        <SearchInput
           v-model="search"
           :placeholder="t('venues.searchPlaceholder')"
-          class="px-3"
-          type="search"
           @change="applySearch"
+          @clear="applySearch"
         />
       </form>
 
@@ -337,6 +332,7 @@ const localePath = useLocalePath()
         :selected="queryList('eventType')"
         @change="applyFilters({ eventType: $event })"
       />
+      <ClearAllFilters />
 
       <div :aria-label="t('venues.view.label')" class="flex gap-2" role="group">
         <Button
@@ -371,10 +367,8 @@ const localePath = useLocalePath()
           :features="features"
           @remove="removeFeature"
         />
-        <p v-else class="text-body text-muted-foreground">{{ t('venues.empty') }}</p>
-        <Button v-if="isFiltered" variant="outline" @click="clearSearch">
-          {{ t('common.actions.clearSearch') }}
-        </Button>
+        <p v-else class="text-body text-muted-foreground">{{ emptyText }}</p>
+        <ClearAllFilters empty-state />
       </div>
       <p v-else class="text-body text-muted-foreground">
         {{ t('venues.resultCount', { count: pins.length }) }}
@@ -531,10 +525,8 @@ const localePath = useLocalePath()
     <!-- An empty result offers a control, not only a sentence (#1266). -->
     <div v-else-if="!page?.content?.length" class="space-y-3">
       <VenueFeaturesEmpty v-if="features.length > 1" :features="features" @remove="removeFeature" />
-      <p v-else class="text-body text-muted-foreground">{{ t('venues.empty') }}</p>
-      <Button v-if="isFiltered" variant="outline" @click="clearSearch">
-        {{ t('common.actions.clearSearch') }}
-      </Button>
+      <p v-else class="text-body text-muted-foreground">{{ emptyText }}</p>
+      <ClearAllFilters empty-state />
     </div>
     <template v-else>
       <div :class="RESULTS_BAR_CLASS">

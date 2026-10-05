@@ -6,6 +6,7 @@
   "missingBody": "Venue name:\nWebsite:\n",
   "searchPlaceholder": "Search venues…",
   "empty": "No venues match that search. Try a different name.",
+  "emptyFiltered": "No venues match these filters.",
   "byDistrict": "Filter by district",
   "allDistricts": "All districts",
   "districtsSelected": "{n} districts",

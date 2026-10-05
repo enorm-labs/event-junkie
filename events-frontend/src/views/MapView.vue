@@ -9,12 +9,13 @@ import {
   useTemplateRef,
   watch,
 } from 'vue'
-import { type LocationQueryRaw, RouterLink, useRoute, useRouter } from 'vue-router'
+import { type LocationQueryRaw, RouterLink, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import type { EventSummary, VenueSummary } from '@/api/types'
 import { describeError } from '@/api/client'
 import BaseSelect from '@/components/BaseSelect.vue'
 import { Button } from '@/components/ui/button'
+import ClearAllFilters from '@/components/ClearAllFilters.vue'
 import EventFilterBar from '@/components/EventFilterBar.vue'
 import EventRow from '@/components/EventRow.vue'
 import { fetchCalendarEvents } from '@/composables/useEvents'
@@ -30,6 +31,7 @@ import { formatDistance, type Position } from '@/lib/geo'
 import {
   DEFAULT_RADIUS,
   groupByVenue,
+  MAP_KEYS,
   type MapPin,
   nearby,
   RADII,
@@ -44,11 +46,8 @@ const VenueMap = defineAsyncComponent(() => import('@/components/VenueMap.vue'))
 
 /** The BFF's calendar endpoint refuses a range longer than this. */
 const MAX_RANGE_DAYS = 92
-/** The map's own query keys. Not event filters: the list link and the API never see them. */
-const MAP_KEYS = ['radius'] as const
 
 const route = useRoute()
-const router = useRouter()
 const { filters, dateRange, queryString, applyFilters } = useEventFilters()
 const onNowOnly = computed(() => queryString('now') === '1')
 const localePath = useLocalePath()
@@ -172,7 +171,6 @@ function closePanel() {
   if (slug) venueMap.value?.focusPin(slug)
 }
 
-const isFiltered = computed(() => Object.keys(route.query).length > 0)
 const listLink = computed(() => {
   const query: LocationQueryRaw = { ...route.query }
   for (const key of MAP_KEYS) delete query[key]
@@ -353,9 +351,7 @@ function distance(km: number): string {
     <!-- An empty result offers a control, not only a sentence (#1266). -->
     <div v-else-if="!pins.length" class="space-y-3">
       <p class="text-body text-muted-foreground">{{ t('map.empty') }}</p>
-      <Button v-if="isFiltered" variant="outline" @click="router.push({ query: {} })">
-        {{ t('common.actions.clearFilters') }}
-      </Button>
+      <ClearAllFilters empty-state />
     </div>
     <p v-else class="text-body text-muted-foreground">
       {{ t('map.resultCount', counts(pinnedEventCount, pins.length)) }}

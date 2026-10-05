@@ -172,7 +172,7 @@ test('the empty state offers a way out of the search', async ({ page }) => {
   await page.goto('/venues?q=nothing')
   await expect(page.getByText(/no venues match/i)).toBeVisible()
 
-  await page.getByRole('button', { name: 'Clear the search' }).click()
+  await page.getByRole('button', { name: 'Clear all filters' }).click()
 
   await expect(page).toHaveURL(/\/venues$/)
   await expect(page.getByRole('link', { name: /Lido/ })).toBeVisible()

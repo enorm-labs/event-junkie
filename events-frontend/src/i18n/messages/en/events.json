@@ -49,8 +49,7 @@
     "hideSoldOut": "Hide sold out",
     "freeOnly": "Free only",
     "more": "More filters",
-    "moreCount": "More filters ({n})",
-    "clearAll": "Clear all"
+    "moreCount": "More filters ({n})"
   },
   "card": {
     "liveTonight": "Live tonight",

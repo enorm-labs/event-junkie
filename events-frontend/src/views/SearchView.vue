@@ -2,8 +2,8 @@
 import { computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { RouterLink, useRoute } from 'vue-router'
-import BaseInput from '@/components/BaseInput.vue'
 import EventRow from '@/components/EventRow.vue'
+import SearchInput from '@/components/SearchInput.vue'
 import SectionLabel from '@/components/SectionLabel.vue'
 import VenueRow from '@/components/VenueRow.vue'
 import { Button } from '@/components/ui/button'
@@ -83,12 +83,11 @@ function linksOf(key: string): { to: string; name: string }[] {
 
     <div :class="PANEL_CLASS">
       <form class="w-full" role="search" @submit.prevent="applySearch">
-        <BaseInput
+        <SearchInput
           v-model="draft"
           :aria-label="t('search.label')"
           :placeholder="t('search.placeholder')"
-          class="w-full px-3"
-          type="search"
+          @clear="applySearch"
         />
       </form>
     </div>

@@ -6,6 +6,7 @@
   "missingBody": "Name der Location:\nWebsite:\n",
   "searchPlaceholder": "Locations durchsuchen …",
   "empty": "Zu dieser Suche gibt es keine Location. Versuch es mit einem anderen Namen.",
+  "emptyFiltered": "Zu diesen Filtern gibt es keine Location.",
   "byDistrict": "Nach Bezirk filtern",
   "allDistricts": "Alle Bezirke",
   "districtsSelected": "{n} Bezirke",

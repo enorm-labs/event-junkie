@@ -1,10 +1,10 @@
 <script lang="ts" setup>
 import { computed } from 'vue'
 import { type LocationQueryRaw, useRoute, useRouter } from 'vue-router'
-import { Button } from '@/components/ui/button'
-import BaseInput from '@/components/BaseInput.vue'
+import ClearAllFilters from '@/components/ClearAllFilters.vue'
 import PaginationControls from '@/components/PaginationControls.vue'
 import PromoterCard from '@/components/PromoterCard.vue'
+import SearchInput from '@/components/SearchInput.vue'
 import SortControl, { type SortOption } from '@/components/SortControl.vue'
 import { usePagedList } from '@/composables/usePagedList'
 import { usePromoterSearch, type PromoterSearchParams } from '@/composables/usePromoters'
@@ -53,17 +53,6 @@ function applyFilters(patch: LocationQueryRaw) {
   router.push({ query: next })
 }
 
-/** Whether anything narrows the list, which is what a "clear" control has to have to offer. */
-const isFiltered = computed(() =>
-  Object.keys(route.query).some((key) => key !== 'page' && key !== 'sort'),
-)
-
-function clearSearch() {
-  search.value = ''
-  // The order is not a filter, so clearing keeps it.
-  router.push({ query: { sort: sort.value || undefined } })
-}
-
 const { t } = useI18n()
 
 const sortOptions = computed<SortOption[]>(() => [
@@ -81,14 +70,14 @@ const sortOptions = computed<SortOption[]>(() => [
 
     <div :class="PANEL_CLASS">
       <form role="search" @submit.prevent="applySearch">
-        <BaseInput
+        <SearchInput
           v-model="search"
           :placeholder="t('promoters.searchPlaceholder')"
-          class="px-3"
-          type="search"
           @change="applySearch"
+          @clear="applySearch"
         />
       </form>
+      <ClearAllFilters />
     </div>
 
     <p v-if="loading" class="text-body text-muted-foreground">
@@ -98,9 +87,7 @@ const sortOptions = computed<SortOption[]>(() => [
     <!-- An empty result offers a control, not only a sentence (#1266). -->
     <div v-else-if="!page?.content?.length" class="space-y-3">
       <p class="text-body text-muted-foreground">{{ t('promoters.empty') }}</p>
-      <Button v-if="isFiltered" variant="outline" @click="clearSearch">
-        {{ t('common.actions.clearSearch') }}
-      </Button>
+      <ClearAllFilters empty-state />
     </div>
     <template v-else>
       <div :class="RESULTS_BAR_CLASS">
