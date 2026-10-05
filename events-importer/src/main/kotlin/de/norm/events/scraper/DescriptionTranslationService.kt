@@ -45,7 +45,8 @@ class DescriptionTranslationService(
      * Translates what this source is missing.
      *
      * Skips an event whose stored translation still matches the description it was made from, so a
-     * re-import that changed nothing costs nothing.
+     * re-import that changed nothing costs nothing. Skips a description the engine refused before, for
+     * the same reason: the same text buys the same refusal (#2714).
      *
      * @return how many descriptions were translated and stored. Zero when the source grants no
      *   translation, when nothing is stale, or when the engine declined every candidate — the three
@@ -58,10 +59,18 @@ class DescriptionTranslationService(
     ): Int {
         val id = source.id?.takeIf { licences.allowsTranslation() } ?: return 0
 
-        val stale = eventRepository.findTranslationCandidates(id).toList().filter { it.needsTranslation() }
+        val (stale, refused) =
+            eventRepository
+                .findTranslationCandidates(id)
+                .toList()
+                .filter { it.needsTranslation(retryRefused = true) }
+                .partition { it.needsTranslation(retryRefused = false) }
         val written = stale.take(properties.maxPerRun).count { translate(it, venueName) }
-        if (stale.isNotEmpty()) {
-            logger.info { "Translated $written of ${stale.size} description(s) for '${source.slug}' with ${engine.id}" }
+        if (stale.isNotEmpty() || refused.isNotEmpty()) {
+            logger.info {
+                "Translated $written of ${stale.size} description(s) for '${source.slug}' with ${engine.id}; " +
+                    "skipped ${refused.size} refused before with the text unchanged"
+            }
         }
         return written
     }
@@ -72,6 +81,9 @@ class DescriptionTranslationService(
      * The gate is the same one the import pass uses. **A manual trigger does not bypass it**: the
      * grant is a legal condition, not an operator convenience, so a source without one reports what
      * it is missing rather than translating anyway.
+     *
+     * A named event is sent even when the engine refused its text before: that is the one way to retry
+     * a refusal after the guard changed (#2714). A whole-source run skips refusals like the import pass.
      *
      * @return what the run did, including whether the source permits translation at all.
      */
@@ -91,8 +103,8 @@ class DescriptionTranslationService(
             eventRepository
                 .findTranslationCandidates(id)
                 .toList()
-                .filter { it.needsTranslation() }
                 .filter { eventSlug == null || it.slug == eventSlug }
+                .filter { it.needsTranslation(retryRefused = eventSlug != null) }
         val translated = candidates.take(properties.maxPerRun).count { translate(it, venueName) }
         logger.info { "Translated $translated of ${candidates.size} description(s) for '$slug' on request" }
         return TranslationRunResponse(
@@ -127,16 +139,28 @@ class DescriptionTranslationService(
                 engine.translate(request)
             }
         metrics.recordTranslation(result)
-        (result as? TranslationResult.Translated)?.let {
-            eventRepository.save(
-                event.copy(
-                    descriptionAlt = it.text,
-                    descriptionAltLanguage = to.code,
-                    descriptionAltOrigin = MACHINE_ORIGIN,
-                    descriptionAltEngine = engine.id,
-                    descriptionAltSourceHash = DescriptionLanguage.hash(description)
+        val hash = DescriptionLanguage.hash(description)
+        when (result) {
+            is TranslationResult.Translated -> {
+                eventRepository.save(
+                    event.copy(
+                        descriptionAlt = result.text,
+                        descriptionAltLanguage = to.code,
+                        descriptionAltOrigin = MACHINE_ORIGIN,
+                        descriptionAltEngine = engine.id,
+                        descriptionAltSourceHash = hash,
+                        descriptionAltRefusedHash = null
+                    )
                 )
-            )
+            }
+
+            // A refusal is a verdict on this text, so the next pass would buy the same one. A failed call is
+            // not: the engine was down or slow, and the next pass should try again.
+            TranslationResult.Rejected -> {
+                eventRepository.save(event.copy(descriptionAltRefusedHash = hash))
+            }
+
+            TranslationResult.Failed -> {}
         }
         return result is TranslationResult.Translated
     }
@@ -152,8 +176,15 @@ class DescriptionTranslationService(
         return (listOf(venueName) + artistNames).distinct()
     }
 
-    /** Whether the stored translation is missing or was made from a text that has since changed. */
-    private fun EventEntity.needsTranslation(): Boolean = descriptionAlt == null || descriptionAltSourceHash != description?.let(DescriptionLanguage::hash)
+    /**
+     * Whether the stored translation is missing or was made from a text that has since changed, and,
+     * unless [retryRefused], the engine has not refused this very text before.
+     */
+    private fun EventEntity.needsTranslation(retryRefused: Boolean): Boolean {
+        val hash = description?.let(DescriptionLanguage::hash)
+        val stale = descriptionAlt == null || descriptionAltSourceHash != hash
+        return stale && (retryRefused || descriptionAltRefusedHash != hash)
+    }
 
     private companion object {
         const val MACHINE_ORIGIN = "MACHINE"

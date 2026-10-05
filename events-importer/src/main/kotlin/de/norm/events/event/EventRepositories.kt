@@ -106,7 +106,7 @@ interface EventRepository : CoroutineCrudRepository<EventEntity, Long> {
     @Query(
         "UPDATE $EVENTS_SCHEMA.event SET description = NULL, description_language = NULL, description_language_confidence = NULL, " +
             "description_alt = NULL, description_alt_language = NULL, description_alt_origin = NULL, description_alt_engine = NULL, " +
-            "description_alt_source_hash = NULL, description_withheld = TRUE WHERE event_source_id = :eventSourceId AND description IS NOT NULL"
+            "description_alt_source_hash = NULL, description_alt_refused_hash = NULL, description_withheld = TRUE WHERE event_source_id = :eventSourceId AND description IS NOT NULL"
     )
     suspend fun clearDescriptions(eventSourceId: Long): Int
 

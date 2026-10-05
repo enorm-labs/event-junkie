@@ -504,6 +504,15 @@ class ScrapedEventTest {
         entity.descriptionAltSourceHash shouldBe "hash-of-old"
     }
 
+    // A refusal is derived after the import too. Rebuilt as null, the next pass bought it again (#2714).
+    @Test
+    fun `toEventEntity keeps a recorded refusal while the description is unchanged, and drops it when rewritten`() {
+        val refused = scrapedEvent(description = GERMAN_DESCRIPTION).toEntity().copy(id = 7L, descriptionAltRefusedHash = "hash-of-refused")
+
+        scrapedEvent(description = GERMAN_DESCRIPTION).toEntity(existing = refused).descriptionAltRefusedHash shouldBe "hash-of-refused"
+        scrapedEvent(description = "$GERMAN_DESCRIPTION Neu.").toEntity(existing = refused).descriptionAltRefusedHash shouldBe null
+    }
+
     @Test
     fun `toEventEntity drops the stored translation when the venue rewrote the description`() {
         val entity = scrapedEvent(description = "$GERMAN_DESCRIPTION Neu.").toEntity(existing = translated(GERMAN_DESCRIPTION))

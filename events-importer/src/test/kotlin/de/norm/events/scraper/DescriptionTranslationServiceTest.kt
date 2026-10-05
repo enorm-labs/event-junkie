@@ -135,10 +135,10 @@ class DescriptionTranslationServiceTest {
             request.captured.to shouldBe DescriptionLanguage.ENGLISH
         }
 
-    // An engine that declines is an ordinary outcome. The row keeps what it had.
+    // An engine that declines is an ordinary outcome. The row keeps no text, only which text was refused.
     @Test
-    @DisplayName("a rejected translation writes nothing and counts as rejected")
-    fun `writes nothing when the engine rejects`(): Unit =
+    @DisplayName("a rejected translation stores no text, records the refused description, and counts as rejected")
+    fun `records the refusal when the engine rejects`(): Unit =
         runBlocking {
             givenOneCandidate(event(description = GERMAN_TEXT, language = "de"))
             coEvery { engine.translate(any()) } returns TranslationResult.Rejected
@@ -146,9 +146,56 @@ class DescriptionTranslationServiceTest {
 
             service.translateFor(source(), VENUE_NAME, licences(SourceLicence.PERMITTED)) shouldBe 0
 
-            coVerify(exactly = 0) { eventRepository.save(any()) }
+            val saved = slot<EventEntity>()
+            coVerify(exactly = 1) { eventRepository.save(capture(saved)) }
+            saved.captured.descriptionAlt shouldBe null
+            saved.captured.descriptionAltSourceHash shouldBe null
+            saved.captured.descriptionAltRefusedHash shouldBe DescriptionLanguage.hash(GERMAN_TEXT)
             translations("rejected") shouldBe 1.0
             translations("failed") shouldBe 0.0
+        }
+
+    // Every refusal is a paid request. Read as "not yet translated", one refused text was bought again
+    // on every import: 100 requests for 14 events in ten days (#2714).
+    @Test
+    @DisplayName("a refused description is not sent again after a re-import, and is sent once more after an edit")
+    fun `does not buy the same refusal twice`(): Unit =
+        runBlocking {
+            var stored = event(description = GERMAN_TEXT, language = "de")
+            givenOneCandidate(stored)
+            every { eventRepository.findTranslationCandidates(SOURCE_ID) } answers { flowOf(stored) }
+            coEvery { eventRepository.save(any<EventEntity>()) } answers { firstArg<EventEntity>().also { saved -> stored = saved } }
+            coEvery { engine.translate(any()) } returns TranslationResult.Rejected
+            every { engine.id } returns "test:engine"
+
+            service.translateFor(source(), VENUE_NAME, licences(SourceLicence.PERMITTED))
+            stored = reimport(stored, GERMAN_TEXT)
+            service.translateFor(source(), VENUE_NAME, licences(SourceLicence.PERMITTED)) shouldBe 0
+
+            coVerify(exactly = 1) { engine.translate(any()) }
+
+            coEvery { engine.translate(any()) } returns TranslationResult.Translated("An evening with a new view.")
+            stored = reimport(stored, "$GERMAN_TEXT Neu: mit Gästeliste.")
+            service.translateFor(source(), VENUE_NAME, licences(SourceLicence.PERMITTED)) shouldBe 1
+
+            coVerify(exactly = 2) { engine.translate(any()) }
+            stored.descriptionAlt shouldBe "An evening with a new view."
+            stored.descriptionAltRefusedHash shouldBe null
+        }
+
+    // A failed call says nothing about the text, so the next pass tries it again.
+    @Test
+    @DisplayName("a failed call is not recorded as a refusal")
+    fun `retries a failed call`(): Unit =
+        runBlocking {
+            givenOneCandidate(event(description = GERMAN_TEXT, language = "de"))
+            coEvery { engine.translate(any()) } returns TranslationResult.Failed
+            every { engine.id } returns "test:engine"
+
+            service.translateFor(source(), VENUE_NAME, licences(SourceLicence.PERMITTED))
+            service.translateFor(source(), VENUE_NAME, licences(SourceLicence.PERMITTED))
+
+            coVerify(exactly = 2) { engine.translate(any()) }
         }
 
     // ej-translations-failing reads the share of `failed`, so a refusal must not land there (#1822).
@@ -270,6 +317,36 @@ class DescriptionTranslationServiceTest {
         }
 
     @Test
+    @DisplayName("a whole-source trigger skips a refused description")
+    fun `skips a refusal on demand`(): Unit =
+        runBlocking {
+            givenSource(SourceLicence.PERMITTED)
+            givenOneCandidate(refused())
+            every { engine.id } returns "test:engine"
+
+            val result = service.translateOnDemand("klunkerkranich", eventSlug = null)
+
+            result.candidates shouldBe 0
+            coVerify(exactly = 0) { engine.translate(any()) }
+        }
+
+    // The one way to retry a refusal once the guard has changed: an operator names the event.
+    @Test
+    @DisplayName("naming an event retries a refused description")
+    fun `retries a named refusal on demand`(): Unit =
+        runBlocking {
+            givenSource(SourceLicence.PERMITTED)
+            givenOneCandidate(refused())
+            coEvery { engine.translate(any()) } returns TranslationResult.Translated("An evening with a view.")
+            every { engine.id } returns "test:engine"
+
+            val result = service.translateOnDemand("klunkerkranich", eventSlug = EVENT_SLUG)
+
+            result.candidates shouldBe 1
+            result.translated shouldBe 1
+        }
+
+    @Test
     @DisplayName("an unknown slug is a not-found, not an empty run")
     fun `rejects an unknown source`(): Unit =
         runBlocking {
@@ -293,6 +370,21 @@ class DescriptionTranslationServiceTest {
         // A relaxed mock answers `save` with a bare Object, which the generic return type cannot hold.
         coEvery { eventRepository.save(any<EventEntity>()) } answers { firstArg() }
     }
+
+    private fun refused() = event(description = GERMAN_TEXT, language = "de").copy(descriptionAltRefusedHash = DescriptionLanguage.hash(GERMAN_TEXT))
+
+    /** The row the next import stores for this event, with the venue's [description]. */
+    private fun reimport(
+        stored: EventEntity,
+        description: String
+    ): EventEntity =
+        ScrapedEvent(
+            title = stored.title,
+            eventDate = stored.eventDate,
+            sourceUrl = "https://klunkerkranich.org/events/monday-roast",
+            sourceId = stored.sourceId,
+            description = description
+        ).toEventEntity(venueId = 1L, venueSlug = "klunkerkranich", eventSourceId = SOURCE_ID, existing = stored)
 
     private fun translations(outcome: String): Double =
         registry
@@ -322,7 +414,7 @@ class DescriptionTranslationServiceTest {
         venueId = 1L,
         eventSourceId = SOURCE_ID,
         title = "Monday Roast",
-        slug = "2026-09-07-klunkerkranich-monday-roast",
+        slug = EVENT_SLUG,
         eventDate = LocalDate.of(2026, 9, 7),
         sourceId = "klunkerkranich:1",
         description = description,
@@ -334,6 +426,7 @@ class DescriptionTranslationServiceTest {
         const val EVENT_ID = 42L
         const val ARTIST_ID = 3L
         const val VENUE_NAME = "Klunkerkranich"
+        const val EVENT_SLUG = "2026-09-07-klunkerkranich-monday-roast"
         const val GERMAN_TEXT = "Ein Abend mit Aussicht über die Dächer von Neukölln."
     }
 }

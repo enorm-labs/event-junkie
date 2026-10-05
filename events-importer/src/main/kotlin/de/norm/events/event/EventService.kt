@@ -358,6 +358,7 @@ internal fun EventEntity.keepingDerivedFrom(existing: EventEntity): EventEntity 
         descriptionAltOrigin = existing.descriptionAltOrigin.takeIf { sameDescription },
         descriptionAltEngine = existing.descriptionAltEngine.takeIf { sameDescription },
         descriptionAltSourceHash = existing.descriptionAltSourceHash.takeIf { sameDescription },
+        descriptionAltRefusedHash = existing.descriptionAltRefusedHash.takeIf { sameDescription },
         endDate = existing.endDate.takeIf { endStillValid },
         endTime = existing.endTime.takeIf { endStillValid }
     )
