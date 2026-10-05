@@ -1,8 +1,10 @@
 package de.norm.events.scraper.tempodrom
 
 import de.norm.events.scraper.AbstractSinglePageWebsiteImporter
+import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
+import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.VenueLimitations
 import org.springframework.stereotype.Component
 
@@ -26,5 +28,9 @@ class TempodromWebsiteImporter(
     override val listsWholeProgramme: Boolean = true
 }
 
-/** Nothing this source withholds needs declaring (#715). */
-val TEMPODROM_LIMITATIONS = VenueLimitations(EventSource.TEMPODROM)
+val TEMPODROM_LIMITATIONS =
+    VenueLimitations(
+        EventSource.TEMPODROM,
+        AcceptedLimitation(LimitedAspect.PRICE, "a promoter-sold event has a JSON-LD offer with no price, and its page prints no Preis line"),
+        AcceptedLimitation(LimitedAspect.GENRE, "the JSON-LD and the event pages carry no genre field")
+    )
