@@ -118,9 +118,11 @@ class ScrapedEventTest {
         statusNote: String? = null,
         subtitle: String? = null,
         pricePresale: BigDecimal? = null,
-        priceBoxOffice: BigDecimal? = null
+        priceBoxOffice: BigDecimal? = null,
+        soldOut: Boolean = false
     ) = ScrapedEvent(
         title = title,
+        soldOut = soldOut,
         subtitle = subtitle,
         pricePresale = pricePresale,
         priceBoxOffice = priceBoxOffice,
@@ -217,6 +219,23 @@ class ScrapedEventTest {
     fun `toEventEntity keeps a scraper's own status over the title, and a plain title scheduled`() {
         scrapedEvent(title = "The Act (verschoben)", status = "RELOCATED").toEntity().status shouldBe "RELOCATED"
         scrapedEvent(title = "Berliner Weisse").toEntity().status shouldBe "SCHEDULED"
+    }
+
+    @Test
+    fun `toEventEntity stores a cancelled show as not sold out, whichever cue said sold out`() {
+        val colosseum = scrapedEvent(title = "Annika Sala – Interaktive Lesung", status = "CANCELLED", soldOut = true).toEntity()
+        colosseum.status shouldBe "CANCELLED"
+        colosseum.soldOut shouldBe false
+        val marked = scrapedEvent(title = "Reimanns (ausverkauft) - Abgesagt").toEntity()
+        marked.status shouldBe "CANCELLED"
+        marked.soldOut shouldBe false
+    }
+
+    @Test
+    fun `toEventEntity keeps sold out on a show that still takes place`() {
+        scrapedEvent(soldOut = true).toEntity().soldOut shouldBe true
+        scrapedEvent(status = "POSTPONED", soldOut = true).toEntity().soldOut shouldBe true
+        scrapedEvent(subtitle = "Tour 2026 (ausverkauft)").toEntity().soldOut shouldBe true
     }
 
     // A "verlegt" badge sits on both ends of a move; the venue decides which end this row is (#1551).
