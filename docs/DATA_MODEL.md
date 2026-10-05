@@ -532,6 +532,8 @@ persistence boundary and stores the destination's name in `relocated_to`. The ro
 
 `POSTPONED` means the show moved **away** from this row's date. A "verschoben" note also sits on the new date's row. When the note names this row's
 own date after "auf", the importer stores `SCHEDULED`, because the show takes place on that date ([#2206](https://github.com/enorm-labs/event-junkie/issues/2206)).
+A note can also name a new house after the new date: "auf den 18.03.27 im Säälchen verschoben". When that house is another venue, the row that the show left
+is `RELOCATED`, with that house in `relocated_to` ([#2708](https://github.com/enorm-labs/event-junkie/issues/2708)).
 
 ### `slug` Fields on All Main Entities
 

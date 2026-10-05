@@ -288,6 +288,18 @@ class ScrapedEventTest {
         scrapedEvent(status = "CANCELLED", statusNote = "auf den 30.12.2026 verschoben, dann abgesagt").toEntity().status shouldBe "CANCELLED"
     }
 
+    // A new date in another house is a move on the date the show left (#2708).
+    @Test
+    fun `toEventEntity relocates a postponement into another house on the date the show left, and schedules the new date`() {
+        val note = "Achtung: Die Show muss vom 06.10.26 im Hole44 auf den 18.03.27 im Säälchen verschoben werden"
+        val origin = scrapedEvent(status = "POSTPONED", statusNote = note, eventDate = LocalDate.of(2026, 10, 6)).toEntity()
+        origin.status shouldBe "RELOCATED"
+        origin.relocatedTo shouldBe "Säälchen"
+        val replacement = scrapedEvent(status = "POSTPONED", statusNote = note, eventDate = LocalDate.of(2027, 3, 18)).toEntity()
+        replacement.status shouldBe "SCHEDULED"
+        replacement.relocatedTo.shouldBeNull()
+    }
+
     @Test
     fun `toEventEntity reads the destination off the title, the subtitle or the description when there is no note`() {
         scrapedEvent(title = "Zoh Amba - Verlegt ins Bi Nuu", status = "RELOCATED").toEntity().relocatedTo shouldBe "Bi Nuu"

@@ -245,7 +245,9 @@ data class ScrapedEvent(
         val relocation = notes.firstNotNullOfOrNull(::parseRelocation)
         val (relocatedStatus, relocatedTo) = resolveRelocation(badgeStatus, relocation, venueSlug)
         // A "verschoben" note sits on both dates of a move too; the row the show moved to takes place (#2206).
-        val storedStatus = resolvePostponement(relocatedStatus, notes, eventDate)
+        val postponedStatus = resolvePostponement(relocatedStatus, notes, eventDate)
+        // A new date can come with a new house; on the date the show left, that is a move (#2708).
+        val (storedStatus, postponedTo) = resolvePostponedMove(postponedStatus, notes, venueSlug)
         val storedTitle = storedTitle()
         // Presale dearer than the door is a misread price (#1583); named so the nightly log says which
         // source, stored as read because the fix is per parser.
@@ -281,7 +283,7 @@ data class ScrapedEvent(
             eventType = resolvedEventType().name,
             typeIsFallback = storedTypeIsFallback(),
             status = storedStatus,
-            relocatedTo = relocatedTo,
+            relocatedTo = relocatedTo ?: postponedTo,
             slug = SlugGenerator.slugify(listOfNotNull(eventDate, venueSlug, storedTitle, slugDiscriminator).joinToString("-")),
             eventDate = eventDate,
             doorsTime = doors,

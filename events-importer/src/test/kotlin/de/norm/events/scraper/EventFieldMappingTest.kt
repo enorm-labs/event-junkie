@@ -398,6 +398,26 @@ class EventFieldMappingTest {
     }
 
     @Test
+    fun `resolvePostponedMove relocates a postponement into another house, and keeps one in its own house postponed`() {
+        val note = "Achtung: Die Show muss vom 06.10.26 im Hole44 auf den 18.03.27 im Säälchen verschoben werden"
+        resolvePostponedMove("POSTPONED", listOf(note), "hole-44") shouldBe ("RELOCATED" to "Säälchen")
+        resolvePostponedMove("POSTPONED", listOf("Die Show wird auf den 04.11.2026 ins Metropol verschoben"), "lido") shouldBe
+            ("RELOCATED" to "Metropol")
+        // The row's own house after the new date: a plain postponement.
+        resolvePostponedMove("POSTPONED", listOf("Die Show muss auf den 18.03.27 im Hole44 verschoben werden"), "hole-44") shouldBe
+            ("POSTPONED" to null)
+    }
+
+    @Test
+    fun `resolvePostponedMove reads no house that does not follow the new date, and leaves other statuses alone`() {
+        resolvePostponedMove("POSTPONED", listOf("Verschoben. Tickets behalten im Vorverkauf ihre Gültigkeit"), "hole-44") shouldBe
+            ("POSTPONED" to null)
+        resolvePostponedMove("POSTPONED", listOf("Das Konzert im Lido wurde auf den 27.02.2027 verschoben"), "hole-44") shouldBe
+            ("POSTPONED" to null)
+        resolvePostponedMove("CANCELLED", listOf("auf den 18.03.27 im Säälchen verschoben"), "hole-44") shouldBe ("CANCELLED" to null)
+    }
+
+    @Test
     fun `stripTitleStatusMarker removes a cancellation glued to either end of a name`() {
         stripTitleStatusMarker("Olga Myko - Abgesagt") shouldBe "Olga Myko"
         stripTitleStatusMarker("The Act [ABGESAGT!]") shouldBe "The Act"
