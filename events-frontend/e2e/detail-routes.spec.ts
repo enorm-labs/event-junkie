@@ -387,6 +387,43 @@ test.describe('a past event', () => {
     await expect(page.getByText('Lineup and set times from')).toBeVisible()
   })
 
+  test('a lineup act links out to Bandcamp and SoundCloud, and loads nothing from either', async ({
+    page,
+  }) => {
+    const listenable = {
+      ...eventBody,
+      lineup: [
+        {
+          artist: {
+            slug: 'mock-artist',
+            name: 'Mock Artist',
+            bandcampUrl: 'https://mock-artist.bandcamp.com/',
+            soundcloudUrl: 'https://soundcloud.com/mock-artist',
+          },
+          role: 'HEADLINER',
+          billingOrder: 0,
+        },
+        { artist: { slug: 'quiet', name: 'Quiet Act' }, role: 'SUPPORT', billingOrder: 1 },
+      ],
+    }
+    const thirdParty: string[] = []
+    page.on('request', (request) => {
+      if (/bandcamp|soundcloud/.test(new URL(request.url()).host)) thirdParty.push(request.url())
+    })
+    await page.route(/\/api\/events\/[^/?]+/, (route) => json(route, listenable))
+
+    await page.goto('/en/events/mock-event')
+
+    await expect(
+      page.getByRole('link', { name: 'Listen to Mock Artist on Bandcamp' }),
+    ).toHaveAttribute('href', 'https://mock-artist.bandcamp.com/')
+    await expect(
+      page.getByRole('link', { name: 'Listen to Mock Artist on SoundCloud' }),
+    ).toHaveAttribute('href', 'https://soundcloud.com/mock-artist')
+    await expect(page.getByRole('link', { name: /Quiet Act on/ })).toHaveCount(0)
+    expect(thirdParty).toEqual([])
+  })
+
   test('an event in one room of a venue names the room beside the venue', async ({ page }) => {
     await page.route(/\/api\/events\/[^/?]+/, (route) =>
       json(route, { ...eventBody, room: 'Saal' }),

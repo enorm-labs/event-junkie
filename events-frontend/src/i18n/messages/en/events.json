@@ -71,6 +71,7 @@
     "lineup": "Lineup",
     "runningOrder": "Running order",
     "lineupFrom": "Lineup and set times from",
+    "listenOn": "Listen to {act} on {service}",
     "venue": "Venue",
     "tickets": "Tickets",
     "language": "Language",

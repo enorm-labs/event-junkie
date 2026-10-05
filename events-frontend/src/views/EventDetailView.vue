@@ -8,6 +8,7 @@ import EventMetaLine, { type MetaItem } from '@/components/EventMetaLine.vue'
 import EventRow from '@/components/EventRow.vue'
 import EventShareActions from '@/components/EventShareActions.vue'
 import EventWhen from '@/components/EventWhen.vue'
+import ListenLinks from '@/components/ListenLinks.vue'
 import SectionLabel from '@/components/SectionLabel.vue'
 import { useCompactView } from '@/composables/useCompactView'
 import { useEvent } from '@/composables/useEvent'
@@ -313,15 +314,16 @@ useStructuredData(() => (event.value ? eventPageJsonLd(event.value, locale.value
               <span class="w-28 shrink-0 text-meta text-muted-foreground tabular-nums">
                 {{ setTimeLabel(set) }}
               </span>
-              <RouterLink
-                v-if="set.entry.artist?.slug"
-                :to="localePath(`/artists/${set.entry.artist.slug}`)"
-                class="min-w-0 flex-1 text-card-title font-medium hover:text-primary"
-              >
-                {{ set.entry.artist.name }}
-              </RouterLink>
-              <span v-else class="min-w-0 flex-1 text-card-title font-medium">
-                {{ set.entry.artist?.name }}
+              <span class="min-w-0 flex-1 text-card-title font-medium">
+                <RouterLink
+                  v-if="set.entry.artist?.slug"
+                  :to="localePath(`/artists/${set.entry.artist.slug}`)"
+                  class="hover:text-primary"
+                >
+                  {{ set.entry.artist.name }}
+                </RouterLink>
+                <template v-else>{{ set.entry.artist?.name }}</template>
+                <ListenLinks :artist="set.entry.artist" />
               </span>
               <span
                 v-if="showRoles && set.entry.role"
@@ -342,15 +344,16 @@ useStructuredData(() => (event.value ? eventPageJsonLd(event.value, locale.value
             :key="entry.artist?.slug ?? entry.artist?.name"
             class="flex items-baseline justify-between gap-3 py-3"
           >
-            <RouterLink
-              v-if="entry.artist?.slug"
-              :to="localePath(`/artists/${entry.artist.slug}`)"
-              :class="cn(lineupNameClass(entry.role), 'font-medium hover:text-primary')"
-            >
-              {{ entry.artist.name }}
-            </RouterLink>
-            <span v-else :class="cn(lineupNameClass(entry.role), 'font-medium')">
-              {{ entry.artist?.name }}
+            <span :class="cn(lineupNameClass(entry.role), 'min-w-0 font-medium')">
+              <RouterLink
+                v-if="entry.artist?.slug"
+                :to="localePath(`/artists/${entry.artist.slug}`)"
+                class="hover:text-primary"
+              >
+                {{ entry.artist.name }}
+              </RouterLink>
+              <template v-else>{{ entry.artist?.name }}</template>
+              <ListenLinks :artist="entry.artist" />
             </span>
             <div class="flex shrink-0 items-center gap-2 text-meta text-muted-foreground">
               <span v-if="entry.stage">{{ entry.stage }}</span>
