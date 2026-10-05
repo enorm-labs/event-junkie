@@ -4,6 +4,7 @@ import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
+import io.kotest.matchers.collections.shouldNotContain
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
 
@@ -393,6 +394,11 @@ class ArtistNameMappingTest {
         isNonArtistName("Abraxas Party") shouldBe true
         // Heimathafen's concert format, billed under its own name (#2416).
         isNonArtistName("AUF TAKT! DAS PODCAST-KONZERT") shouldBe true
+        // A revue, a songwriter showcase and a numbered hip-hop series (#2709).
+        isNonArtistName("Der Blaue Montag") shouldBe true
+        isNonArtistName("Berlin Songwood Sessions") shouldBe true
+        isNonArtistName("Große Hip Hop Offensive 17") shouldBe true
+        isNonArtistName("Große Hip Hop Offensive XVII") shouldBe true
         // Recurring series: any edition number matches — both the plain and the N°<n> form.
         isNonArtistName("FEMALE-FRONTED IS NOT A GENRE 5") shouldBe true
         isNonArtistName("FEMALE-FRONTED IS NOT A GENRE 6") shouldBe true
@@ -784,6 +790,10 @@ class ArtistNameMappingTest {
         stripArtistSuffix("Jan Becker „HYPNOTIZE THE WORLD“") shouldBe "Jan Becker"
         stripArtistSuffix("Zascha HOT MESS Debut at Lark") shouldBe "Zascha"
         stripArtistSuffix("WISBORG Phantomschmerz Tour") shouldBe "WISBORG"
+        stripArtistSuffix("YASUHARU TAKANASHI TOUR") shouldBe "YASUHARU TAKANASHI"
+        // A denylisted package tour stays whole, so the denylist still drops it.
+        stripArtistSuffix("THE REVIVAL TOUR") shouldBe "THE REVIVAL TOUR"
+        stripArtistSuffix("Tour") shouldBe "Tour"
         stripArtistSuffix("schluma Heulen am Wasser 2026") shouldBe "schluma"
         stripArtistSuffix("Exofa - Altern.RockPop") shouldBe "Exofa"
         // Real names in the same shapes stay.
@@ -1047,6 +1057,17 @@ class ArtistNameMappingTest {
                 ScrapedArtist(name = "TOTAL CHAOS", role = "HEADLINER", titleDerived = true),
                 ScrapedArtist(name = "The Dollheads", role = "SUPPORT")
             )
+    }
+
+    @Test
+    fun `buildArtistsForEventType bills no show, series or tour name as the act`() {
+        // Wühlmäuse, ufaFabrik and Mikropol bill a revue, a showcase and a series; SO36 a tour (#2709).
+        buildArtistsForEventType("Der Blaue Montag – Die ganze Stadt in einer Show", null, "COMEDY") shouldBe emptyList()
+        buildArtistsForEventType("Berlin Songwood Sessions", "Hosted by Scott Hildebrand", "CONCERT").map { it.name } shouldNotContain
+            "Berlin Songwood Sessions"
+        buildArtistsForEventType("Große Hip Hop Offensive 17", null, "CONCERT") shouldBe emptyList()
+        headlinersFromTitle("YASUHARU TAKANASHI TOUR", unpackWithFrame = true).map { it.name } shouldContainExactly listOf("YASUHARU TAKANASHI")
+        headlinersFromTitle("THE REVIVAL TOUR", unpackWithFrame = true) shouldBe emptyList()
     }
 
     @Test
