@@ -16,6 +16,7 @@ import {
   stripLocale,
 } from '../i18n/locales'
 import { updateSeoTags } from '../lib/seoTags'
+import { waitForElement } from '../lib/waitForElement'
 import { i18n, setI18nLocale } from '../i18n'
 import { localisedView } from '../views/localisedView'
 import HomeView from '../views/HomeView.vue'
@@ -35,6 +36,9 @@ declare module 'vue-router' {
  * Pass-through parent for the `/:locale` segment; the app shell is still App.vue.
  */
 const LocaleShell = { render: () => h(RouterView) }
+
+/** How long a hash waits for its element; a lazy page's chunk loads well inside it. */
+const ANCHOR_WAIT_MS = 3000
 
 /** The locale of the route being navigated to. Always present on `/:locale/*` routes. */
 export function localeOf(route: RouteLocationNormalized): Locale {
@@ -191,11 +195,14 @@ const router = createRouter({
   // the browser's restoration off, and the views repaint from useAsync's cache in the same tick, so
   // the document has its height (#1111). The router scrolls with coordinates, which ignore
   // `scroll-padding-top`, so an anchor applies main.css's clearance for the sticky header (#2321).
-  scrollBehavior(to, _from, savedPosition) {
+  // About and the legal pages render after the navigation resolves (`localisedView`), so the
+  // anchor is waited for; scrolling to one that is not there yet does nothing (#2689).
+  async scrollBehavior(to, _from, savedPosition) {
     if (savedPosition) return savedPosition
     if (!to.hash) return { top: 0 }
     const clearance = parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop) || 0
-    return { el: to.hash, top: clearance, behavior: 'smooth' }
+    const target = await waitForElement(to.hash, ANCHOR_WAIT_MS)
+    return target ? { el: target, top: clearance, behavior: 'smooth' } : { top: 0 }
   },
 })
 

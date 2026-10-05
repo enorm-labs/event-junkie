@@ -29,7 +29,7 @@ test('an unprefixed path preserves its query string and hash', async ({ page }) 
 
   await page.goto('/about#beta')
   await expect(page).toHaveURL(/\/en\/about#beta$/)
-  await expect(page.getByRole('heading', { name: 'Why it says beta' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Why it says beta' })).toBeInViewport()
 })
 
 test('html lang matches the locale in the URL', async ({ page }) => {
@@ -236,7 +236,7 @@ test('the About page and its beta anchor are German under /de', async ({ page })
   await page.goto('/de/about#beta')
 
   await expect(page.getByRole('heading', { level: 1, name: 'Über das Projekt' })).toBeVisible()
-  await expect(page.getByRole('heading', { name: 'Warum da beta steht' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Warum da beta steht' })).toBeInViewport()
 })
 
 test('the notices page counts components in German too', async ({ page }) => {
