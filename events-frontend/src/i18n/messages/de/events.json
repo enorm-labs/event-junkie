@@ -22,6 +22,16 @@
     "venueTypesSelected": "{n} Location-Arten",
     "clearVenueTypes": "Location-Arten zurücksetzen",
     "byVenueType": "Nach Art der Location filtern",
+    "allTimes": "Jede Uhrzeit",
+    "timesSelected": "{n} Uhrzeiten",
+    "clearTimes": "Uhrzeiten zurücksetzen",
+    "byTime": "Nach Uhrzeit filtern",
+    "timeHint": "Ein Event zählt zu jeder Zeit, in der es läuft; ohne Ende entscheidet der Beginn. Events ohne Uhrzeit fallen weg.",
+    "timesOfDay": {
+      "daytime": "Tagsüber (6–18 Uhr)",
+      "evening": "Abends (18–22 Uhr)",
+      "late": "Nachts (22–6 Uhr)"
+    },
     "familiesSelected": "{n} Genres",
     "clearFamilies": "Genres zurücksetzen",
     "byGenre": "Nach Genre filtern",

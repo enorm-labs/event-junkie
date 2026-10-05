@@ -54,7 +54,7 @@ One filterable feed of what is on across Berlin's venues, collected automaticall
 
 ## What it does
 
-- **One events feed** for every source, filtered by date, type, genre, venue, district and price, with _On now_ and _free only_ switches.
+- **One events feed** for every source, filtered by date, time of night, type, genre, venue, district and price, with _On now_ and _free only_ switches.
 - **Search from anywhere**: events, venues, artists and promoters as you type, forgiving accents and typos.
 - **A calendar** for planning a month ahead, and **a map** that finds what is on near you and pulses what is on right now.
 - **Event pages with the details that matter**: doors and set times, the spoken language of a comedy night, related events, and **share** or

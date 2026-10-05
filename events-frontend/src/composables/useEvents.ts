@@ -27,6 +27,8 @@ export interface EventSearchParams {
   q?: string
   excludeSoldOut?: boolean
   free?: boolean
+  /** Any of these slots (`TIMES_OF_DAY`); sent as a repeated parameter. */
+  timeOfDay?: string[]
   page?: number
   size?: number
   sort?: string[]
@@ -57,6 +59,7 @@ export type EventFilterValues = Pick<
   | 'maxPrice'
   | 'excludeSoldOut'
   | 'free'
+  | 'timeOfDay'
 >
 
 /** Today's events for the Home "Tonight" section. */

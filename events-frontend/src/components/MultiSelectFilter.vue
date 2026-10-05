@@ -27,7 +27,7 @@ const props = defineProps<{
   /** The trigger text for two or more selected values. */
   countLabel: (count: number) => string
   clearLabel: string
-  /** A line above the options that says how they combine, where that is not "any of them". */
+  /** A line above the options for what they cannot say: how they combine, or what no option matches. */
   hint?: string
   /** Results per option if it is ticked; an option absent from it leaves none. Omitted: no counts. */
   counts?: Readonly<Record<string, number>>

@@ -52,6 +52,10 @@ Accept: application/json
 GET {{bff-host}}/api/events?venueType=club&venueType=bar
 Accept: application/json
 
+### Filter by time of night (daytime, evening, late): every slot an event runs through, else its start or doors time; repeat it for any of several
+GET {{bff-host}}/api/events?timeOfDay=late&timeOfDay=evening
+Accept: application/json
+
 ### Filter by artist slug
 GET {{bff-host}}/api/events?artist=actors
 Accept: application/json

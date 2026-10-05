@@ -53,7 +53,14 @@ data class EventFilterParams(
     @field:Parameter(description = "When true, excludes events flagged as sold out. Defaults to false (include all).")
     val excludeSoldOut: Boolean = false,
     @field:Parameter(description = "When true, returns only events flagged as free to attend. Defaults to false.")
-    val free: Boolean = false
+    val free: Boolean = false,
+    @field:Parameter(
+        description =
+            "Time of night by the start time, else the doors time, Berlin time: daytime (06:00-17:59), evening (18:00-21:59) " +
+                "or late (22:00-05:59). Repeatable: an event in any given slot matches. An event with neither time is left out. " +
+                "An unknown value matches nothing."
+    )
+    val timeOfDay: List<String>? = null
 ) {
     /**
      * Combines these criteria with an optional date range into the repository-level [EventFilter].
@@ -81,7 +88,8 @@ data class EventFilterParams(
             maxPrice = maxPrice,
             query = TextSearch.term(q),
             excludeSoldOut = excludeSoldOut,
-            onlyFree = free
+            onlyFree = free,
+            timesOfDay = timeOfDay.orEmpty().map { it.lowercase() }.normalizedSlugs()
         )
 }
 

@@ -119,6 +119,10 @@ export function useFormat() {
     formatVenueCharacter: (slug: string) =>
       te(`venueCharacter.${slug}`) ? t(`venueCharacter.${slug}`) : slug,
 
+    /** The label for a time-of-night slot, with the same fallback as `formatVenueType`. */
+    formatTimeOfDay: (slug: string) =>
+      te(`events.filters.timesOfDay.${slug}`) ? t(`events.filters.timesOfDay.${slug}`) : slug,
+
     /** The label for a genre family slug, with the same fallback as `formatVenueType`. */
     formatFamily: (slug: string) =>
       te(`events.filters.families.${slug}`) ? t(`events.filters.families.${slug}`) : slug,

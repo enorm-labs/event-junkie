@@ -10,6 +10,7 @@ vi.mock('@/api/client', async (importOriginal) => ({
 }))
 
 const { default: EventFilterBar } = await import('@/components/EventFilterBar.vue')
+const { default: MultiSelectFilter } = await import('@/components/MultiSelectFilter.vue')
 const { tonight } = await import('@/lib/dateRanges')
 
 const Page = defineComponent({ render: () => h('p') })
@@ -114,5 +115,36 @@ describe('EventFilterBar time options', () => {
 
     expect(pressed('On now')).toBe('true')
     expect(pressed('Tonight')).toBe('false')
+  })
+})
+
+describe('EventFilterBar time of night', () => {
+  afterEach(() => {
+    wrapper?.unmount()
+    wrapper = undefined
+  })
+
+  function timeFilter() {
+    const found = wrapper!
+      .findAllComponents(MultiSelectFilter)
+      .find((candidate) => candidate.props('label') === 'Filter by time of night')
+    if (!found) throw new Error('no time-of-night filter')
+    return found
+  }
+
+  it('reads the slots from the URL, counts them once under More filters, and says what drops out', async () => {
+    await mountAt('/events?timeOfDay=late&timeOfDay=daytime')
+    expect(timeFilter().props('selected')).toEqual(['late', 'daytime'])
+    expect(timeFilter().props('hint')).toBe(
+      'An event matches every time it runs through; without an end, its start decides. Events with no time are left out.',
+    )
+    expect(button('More filters (1)').attributes('aria-expanded')).toBe('true')
+  })
+
+  it('writes the chosen slots to the URL', async () => {
+    await mountAt('/events')
+    timeFilter().vm.$emit('change', ['evening', 'late'])
+    await flushPromises()
+    expect(router.currentRoute.value.query.timeOfDay).toEqual(['evening', 'late'])
   })
 })

@@ -1979,6 +1979,8 @@ export interface operations {
                 excludeSoldOut?: boolean;
                 /** @description When true, returns only events flagged as free to attend. Defaults to false. */
                 free?: boolean;
+                /** @description Time of night by the start time, else the doors time, Berlin time: daytime (06:00-17:59), evening (18:00-21:59) or late (22:00-05:59). Repeatable: an event in any given slot matches. An event with neither time is left out. An unknown value matches nothing. */
+                timeOfDay?: string[];
                 /** @description Zero-based page index (0..N) */
                 page?: number;
                 /** @description The size of the page to be returned */
@@ -2109,6 +2111,8 @@ export interface operations {
                 excludeSoldOut?: boolean;
                 /** @description When true, returns only events flagged as free to attend. Defaults to false. */
                 free?: boolean;
+                /** @description Time of night by the start time, else the doors time, Berlin time: daytime (06:00-17:59), evening (18:00-21:59) or late (22:00-05:59). Repeatable: an event in any given slot matches. An event with neither time is left out. An unknown value matches nothing. */
+                timeOfDay?: string[];
             };
             header?: never;
             path?: never;
@@ -2160,6 +2164,8 @@ export interface operations {
                 excludeSoldOut?: boolean;
                 /** @description When true, returns only events flagged as free to attend. Defaults to false. */
                 free?: boolean;
+                /** @description Time of night by the start time, else the doors time, Berlin time: daytime (06:00-17:59), evening (18:00-21:59) or late (22:00-05:59). Repeatable: an event in any given slot matches. An event with neither time is left out. An unknown value matches nothing. */
+                timeOfDay?: string[];
             };
             header?: never;
             path?: never;
