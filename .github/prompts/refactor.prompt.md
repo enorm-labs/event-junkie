@@ -94,7 +94,7 @@ made. Three of the rules above stop being advice and become hard limits.
 
 - **Nothing that reaches shared normalization.** The re-seed above is the only check that would catch a regression there, it needs a database and a network
   scrape, and the runner has neither. Findings in that code get reported, never applied.
-- **One concern, and a small one.** A rename, an extraction, a deduplication, a dead-code deletion. Not a class split, not a package move, not a reshaping that
+- **One concern per run — one commit, one pull request — and a small one.** Step 2's "one concern per commit" does not license several commits here. A rename, an extraction, a deduplication, a dead-code deletion. Not a class split, not a package move, not a reshaping that
   touches more than a handful of files — a large diff that nobody watched being made is one a reviewer has to re-derive from scratch, and that costs more than
   the finding was worth.
 - **The suite is the gate, not the goal.** If `./gradlew build` goes red, revert the change and report it as a finding. Do not fix the test to match the new
