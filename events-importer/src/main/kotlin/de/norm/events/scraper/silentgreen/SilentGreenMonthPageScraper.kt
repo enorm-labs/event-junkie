@@ -110,7 +110,8 @@ class SilentGreenMonthPageScraper {
             startTime = parseTime(row.textAt(".eventList-event-starttime")),
             room = row.textAt(".eventList-event-location"),
             sourceUrl = sourceUrl,
-            sourceId = "${EventSource.SILENT_GREEN.sourceIdPrefix}$eventDate-${detailSlug(sourceUrl)}",
+            // The date joins the slug because one detail URL serves every day of a run.
+            sourceId = "${EventSource.SILENT_GREEN.sourceIdPrefix}$eventDate-${silentGreenDetailSlug(sourceUrl)}",
             ticketUrl = row.hrefAt(".eventList-event-ticket a"),
             soldOut = rawTitle.contains(SOLD_OUT_MARKER, ignoreCase = true),
             status = parseEventStatus(rawTitle),
@@ -142,13 +143,6 @@ class SilentGreenMonthPageScraper {
         if (month == null || year == null) return null
         return runCatching { YearMonth.of(year, month) }.getOrNull()
     }
-
-    /**
-     * The stable identity from the last path segment of the detail URL (`/programm/detail/htrk` to
-     * `htrk`), combined with the date for the `sourceId`, since the URL is shared by every day of a
-     * run.
-     */
-    private fun detailSlug(url: String): String = silentGreenDetailSlug(url)
 
     private companion object {
         /** One calendar row, scoped to a day block so nothing else on the page can match. */
