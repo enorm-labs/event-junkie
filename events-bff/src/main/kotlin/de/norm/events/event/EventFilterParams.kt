@@ -56,9 +56,10 @@ data class EventFilterParams(
     val free: Boolean = false,
     @field:Parameter(
         description =
-            "Time of night by the start time, else the doors time, Berlin time: daytime (06:00-17:59), evening (18:00-21:59) " +
-                "or late (22:00-05:59). Repeatable: an event in any given slot matches. An event with neither time is left out. " +
-                "An unknown value matches nothing."
+            "Time of night, Berlin time: daytime (06:00-17:59), evening (18:00-21:59) or late (22:00-05:59). An event with an " +
+                "end matches every slot it runs through, and one of 24 hours or more matches all three; without an end, its start, " +
+                "else its doors time, decides. Repeatable: an event in any given slot matches. An event with neither time is left " +
+                "out. An unknown value matches nothing."
     )
     val timeOfDay: List<String>? = null
 ) {

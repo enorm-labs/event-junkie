@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { Rss } from '@lucide/vue'
+import { CalendarSync, Rss } from '@lucide/vue'
 import { computed } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import { Button } from '@/components/ui/button'
@@ -21,7 +21,7 @@ import { useEventFilters } from '@/composables/useEventFilters'
 import { usePagedList } from '@/composables/usePagedList'
 import { useI18n } from 'vue-i18n'
 import type { Locale } from '@/i18n/locales'
-import { FEED_TYPE, feedPath } from '@/lib/seo'
+import { CALENDAR_TYPE, calendarPath, FEED_TYPE, feedPath } from '@/lib/seo'
 import { useLocalePath } from '@/composables/useLocalePath'
 
 const PAGE_SIZE = 20
@@ -134,6 +134,18 @@ const feedLabel = computed(() =>
     : t('events.feedAll'),
 )
 
+/**
+ * The calendar subscription for these filters (#2719). `webcal:` hands it to the calendar app; an app
+ * that asks for an address, Google Calendar's among them, takes the `https:` one beside it.
+ */
+const calendarHref = computed(() => calendarPath(locale.value as Locale, filters.value))
+const webcalHref = computed(() => `webcal://${window.location.host}${calendarHref.value}`)
+const subscribeLabel = computed(() =>
+  Object.values(filters.value).some((value) => value !== undefined)
+    ? t('events.subscribeFiltered')
+    : t('events.subscribeAll'),
+)
+
 // "Near me" lives on the map, which measures distance on the device (#358); the filters go with it.
 const mapLink = computed(() => ({
   path: localePath('/map'),
@@ -185,6 +197,28 @@ const mapLink = computed(() => ({
             <Rss aria-hidden="true" class="size-4" />
             {{ t('events.feed') }}
           </a>
+          <span class="inline-flex items-baseline gap-1">
+            <a
+              :aria-label="subscribeLabel"
+              :href="webcalHref"
+              :title="subscribeLabel"
+              class="inline-flex items-center gap-1 self-center text-primary hover:underline"
+              data-testid="calendar-subscribe"
+            >
+              <CalendarSync aria-hidden="true" class="size-4" />
+              {{ t('events.subscribe') }}
+            </a>
+            <a
+              :aria-label="t('events.subscribeUrl')"
+              :href="calendarHref"
+              :title="t('events.subscribeUrl')"
+              :type="CALENDAR_TYPE"
+              class="text-muted-foreground hover:underline"
+              data-testid="calendar-url"
+            >
+              (URL)
+            </a>
+          </span>
         </div>
         <SortControl
           v-if="!onNow"

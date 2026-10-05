@@ -63,6 +63,12 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/feed\.xml/, '/api/events/feed'),
       },
+      // The calendar subscription, which nginx sends through the injector the same way (#2719).
+      '^/calendar\\.ics': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/calendar\.ics/, '/api/events/calendar.ics'),
+      },
     },
   },
 })

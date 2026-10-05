@@ -137,6 +137,10 @@
   "feed": "Feed",
   "feedAll": "Subscribe to new events as an RSS feed",
   "feedFiltered": "Subscribe to new events matching these filters as an RSS feed",
+  "subscribe": "Subscribe",
+  "subscribeAll": "Subscribe your calendar to the events of the next 90 days",
+  "subscribeFiltered": "Subscribe your calendar to the events matching these filters, for the next 90 days",
+  "subscribeUrl": "Calendar address, for an app that asks for a URL",
   "language": {
     "subtitles": "{language} subtitles"
   }

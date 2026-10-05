@@ -111,6 +111,23 @@ class EventService(
     }
 
     /**
+     * The first [limit] events matching [filter] that run on any day from [from] to [to], in the
+     * list's order, for the calendar subscription (#2719). [filter] carries no dates of its own.
+     */
+    @Transactional(readOnly = true)
+    suspend fun upcoming(
+        filter: EventFilter,
+        from: LocalDate,
+        to: LocalDate,
+        limit: Int
+    ): List<CalendarEvent> {
+        val events = hydrateOrdered(eventSearchRepository.searchAll(filter.copy(from = null, runningFrom = from, to = to), limit))
+        return summariesFor(events).zip(events) { summary, event ->
+            CalendarEvent(summary, event.room, requireNotNull(event.updatedAt) { "Event ${event.id} has no updated_at, a NOT NULL column" })
+        }
+    }
+
+    /**
      * Finds a single event by [slug], fully assembled with venue, lineup, promoters, and genre tags.
      *
      * @throws EventNotFoundException if no event with the given slug exists.
@@ -320,6 +337,16 @@ class EventService(
 data class NewEvent(
     val summary: EventSummaryResponse,
     val firstSeenAt: Instant
+)
+
+/**
+ * An event as the calendar subscription lists it: its summary, the room the summary leaves out, and
+ * when the importer last changed it, which a calendar client reads as the entry's revision.
+ */
+data class CalendarEvent(
+    val summary: EventSummaryResponse,
+    val room: String?,
+    val lastModified: Instant
 )
 
 /** The id of a genre tag read back from the database, which is never null once it is persisted. */

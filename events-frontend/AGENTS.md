@@ -111,6 +111,9 @@ Every page lives under `/<locale>/…`; `src/i18n/locales.ts` is the single list
 - **The RSS feed of new events is public at `/feed.xml?locale=<locale>`** (#368), and the BFF renders it at `/api/events/feed`. nginx sends `/feed.xml`
   through the injector with its query, and the dev server proxies it to the BFF. Every page's head names it through both writers (`feedUrl()` in
   `lib/seo.ts`); the footer and the filter bar link it (`feedPath()`, the filter bar's with its filters). Its titles mirror `EventFeedXml.kt`.
+- **The calendar subscription is public at `/calendar.ics?locale=<locale>`** (#2719), routed like the feed to `/api/events/calendar.ics`. The results
+  bar links it as `webcal://` on the current host, with the site-relative `https:` address beside it (`calendarPath()`). `EventCalendarIcs.kt` writes
+  the file by the rules of `lib/addToCalendar.ts`: change both or neither.
 - **The sitemap is the primary `hreflang` carrier.** The `<link>` tags in `lib/seoTags.ts` are script-injected and unreliable for crawlers; the injector
   writes them into served HTML for detail routes only, so an hreflang change that touches only the head tags has not shipped.
 - **Canonical URLs come from `SITE_URL`, never `window.location`** — otherwise every alias and preview declares itself canonical.

@@ -137,6 +137,10 @@
   "feed": "Feed",
   "feedAll": "Neue Veranstaltungen als RSS-Feed abonnieren",
   "feedFiltered": "Neue Veranstaltungen mit diesen Filtern als RSS-Feed abonnieren",
+  "subscribe": "Abonnieren",
+  "subscribeAll": "Die Veranstaltungen der nächsten 90 Tage im Kalender abonnieren",
+  "subscribeFiltered": "Die Veranstaltungen mit diesen Filtern für die nächsten 90 Tage im Kalender abonnieren",
+  "subscribeUrl": "Kalenderadresse, für eine App, die nach einer URL fragt",
   "language": {
     "subtitles": "Untertitel: {language}"
   }

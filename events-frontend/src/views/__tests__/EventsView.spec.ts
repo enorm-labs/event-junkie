@@ -124,6 +124,31 @@ describe('EventsView with On now', () => {
   })
 })
 
+describe('EventsView calendar subscription', () => {
+  beforeEach(() => {
+    getMock.mockReset()
+    getMock.mockResolvedValue({ content: [later], page: 0, totalPages: 1, totalElements: 1 })
+  })
+
+  afterEach(() => {
+    wrapper?.unmount()
+    wrapper = undefined
+  })
+
+  it('links the calendar for the filters shown, as webcal with an https address beside it', async () => {
+    await mountAt('/en/events?genre=jazz&district=neukoelln&from=2026-10-10')
+
+    const subscribe = wrapper!.get('[data-testid="calendar-subscribe"]')
+    expect(subscribe.attributes('href')).toBe(
+      `webcal://${window.location.host}/calendar.ics?locale=en&district=neukoelln&genre=jazz`,
+    )
+    expect(subscribe.text()).toBe('Subscribe')
+    expect(wrapper!.get('[data-testid="calendar-url"]').attributes('href')).toBe(
+      '/calendar.ics?locale=en&district=neukoelln&genre=jazz',
+    )
+  })
+})
+
 describe('EventsView with a date range', () => {
   beforeEach(() => {
     vi.useFakeTimers({ toFake: ['Date'] })

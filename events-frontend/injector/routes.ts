@@ -1,7 +1,7 @@
 // Explicit `.ts` on every import here: the injector is type-checked under `tsconfig.node.json`
 // and bundled by `vite.injector.config.ts`, both following Node's ESM resolver (vite.config.ts).
 import { type Locale, LOCALES } from '../src/i18n/locales.ts'
-import { FEED_PATH, INDEXABLE_PATHS } from '../src/lib/seo.ts'
+import { CALENDAR_PATH, FEED_PATH, INDEXABLE_PATHS } from '../src/lib/seo.ts'
 import type { StaticPath } from '../src/lib/staticPages.ts'
 
 /**
@@ -88,9 +88,18 @@ export function matchSitemap(url: string): EntityKind | null {
  * answers 400 to a parameter it does not know.
  */
 export function matchFeed(url: string): string | null {
+  return queryAt(FEED_PATH, url)
+}
+
+/** The query string of a calendar subscription request (#2719), as {@link matchFeed} reads a feed's. */
+export function matchCalendar(url: string): string | null {
+  return queryAt(CALENDAR_PATH, url)
+}
+
+function queryAt(path: string, url: string): string | null {
   const [beforeFragment = ''] = url.split('#')
   const queryStart = beforeFragment.indexOf('?')
   const pathname = queryStart < 0 ? beforeFragment : beforeFragment.slice(0, queryStart)
-  if (pathname !== FEED_PATH) return null
+  if (pathname !== path) return null
   return queryStart < 0 ? '' : beforeFragment.slice(queryStart)
 }

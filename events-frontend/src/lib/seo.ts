@@ -107,13 +107,38 @@ export function feedPath(
   locale: Locale,
   filters: Readonly<Record<string, FeedFilterValue>> = {},
 ): string {
+  return filteredPath(FEED_PATH, locale, filters)
+}
+
+function filteredPath(
+  path: string,
+  locale: Locale,
+  filters: Readonly<Record<string, FeedFilterValue>>,
+): string {
   const query = new URLSearchParams({ locale })
   for (const [name, value] of Object.entries(filters)) {
     for (const item of Array.isArray(value) ? value : [value]) {
       if (item !== undefined && item !== '' && item !== false) query.append(name, String(item))
     }
   }
-  return `${FEED_PATH}?${query}`
+  return `${path}?${query}`
+}
+
+/**
+ * The calendar subscription (#2719): the events from today for 90 days as iCalendar, which a
+ * calendar app polls. The BFF renders it at `/api/events/calendar.ics`; nginx and the injector
+ * serve it at {@link CALENDAR_PATH}.
+ */
+export const CALENDAR_PATH = '/calendar.ics'
+
+export const CALENDAR_TYPE = 'text/calendar'
+
+/** The site-relative calendar path in `locale`, narrowed by the filter bar's `filters`, as {@link feedPath}. */
+export function calendarPath(
+  locale: Locale,
+  filters: Readonly<Record<string, FeedFilterValue>> = {},
+): string {
+  return filteredPath(CALENDAR_PATH, locale, filters)
 }
 
 /** The absolute URL of the feed in `locale`, from {@link SITE_URL} like every other URL here. */

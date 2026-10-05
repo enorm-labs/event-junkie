@@ -62,6 +62,7 @@ One filterable feed of what is on across Berlin's venues, collected automaticall
 - **A page for every venue, artist and promoter**, with everything coming up there. Venues show their type, capacity and what they say about themselves —
   awareness team, step-free access, cash only.
 - **An RSS feed** at `/feed.xml`, which takes every filter, so a filtered feed is a saved search without an account.
+- **A calendar subscription** at `/calendar.ics`, with the same filters: the next 90 days in any calendar app.
 - **German and English**, with no tracking and no third-party requests.
 - **Always a link back** to the venue's own page for tickets and the final word.
 

@@ -291,6 +291,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/events/calendar.ics": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get the events from today for 90 days as an iCalendar (RFC 5545) subscription, at most 500, in the list's order */
+        get: operations["calendar_1"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/artists": {
         parameters: {
             query?: never;
@@ -1979,7 +1996,7 @@ export interface operations {
                 excludeSoldOut?: boolean;
                 /** @description When true, returns only events flagged as free to attend. Defaults to false. */
                 free?: boolean;
-                /** @description Time of night by the start time, else the doors time, Berlin time: daytime (06:00-17:59), evening (18:00-21:59) or late (22:00-05:59). Repeatable: an event in any given slot matches. An event with neither time is left out. An unknown value matches nothing. */
+                /** @description Time of night, Berlin time: daytime (06:00-17:59), evening (18:00-21:59) or late (22:00-05:59). An event with an end matches every slot it runs through, and one of 24 hours or more matches all three; without an end, its start, else its doors time, decides. Repeatable: an event in any given slot matches. An event with neither time is left out. An unknown value matches nothing. */
                 timeOfDay?: string[];
                 /** @description Zero-based page index (0..N) */
                 page?: number;
@@ -2111,7 +2128,7 @@ export interface operations {
                 excludeSoldOut?: boolean;
                 /** @description When true, returns only events flagged as free to attend. Defaults to false. */
                 free?: boolean;
-                /** @description Time of night by the start time, else the doors time, Berlin time: daytime (06:00-17:59), evening (18:00-21:59) or late (22:00-05:59). Repeatable: an event in any given slot matches. An event with neither time is left out. An unknown value matches nothing. */
+                /** @description Time of night, Berlin time: daytime (06:00-17:59), evening (18:00-21:59) or late (22:00-05:59). An event with an end matches every slot it runs through, and one of 24 hours or more matches all three; without an end, its start, else its doors time, decides. Repeatable: an event in any given slot matches. An event with neither time is left out. An unknown value matches nothing. */
                 timeOfDay?: string[];
             };
             header?: never;
@@ -2164,7 +2181,7 @@ export interface operations {
                 excludeSoldOut?: boolean;
                 /** @description When true, returns only events flagged as free to attend. Defaults to false. */
                 free?: boolean;
-                /** @description Time of night by the start time, else the doors time, Berlin time: daytime (06:00-17:59), evening (18:00-21:59) or late (22:00-05:59). Repeatable: an event in any given slot matches. An event with neither time is left out. An unknown value matches nothing. */
+                /** @description Time of night, Berlin time: daytime (06:00-17:59), evening (18:00-21:59) or late (22:00-05:59). An event with an end matches every slot it runs through, and one of 24 hours or more matches all three; without an end, its start, else its doors time, decides. Repeatable: an event in any given slot matches. An event with neither time is left out. An unknown value matches nothing. */
                 timeOfDay?: string[];
             };
             header?: never;
@@ -2180,6 +2197,60 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["EventSummaryResponse"][];
+                };
+            };
+        };
+    };
+    calendar_1: {
+        parameters: {
+            query?: {
+                /**
+                 * @description Language of the entries' links and notes: en or de.
+                 * @example de
+                 */
+                locale?: string;
+                /** @description Event type filter, e.g. CONCERT (case-insensitive). Repeatable: an event of any given type matches. An unknown type matches nothing. */
+                eventType?: string[];
+                /** @description Venue slug filter — only events at the matching venue. */
+                venue?: string;
+                /** @description Pre-2001 Berlin district slug (e.g. kreuzberg). Repeatable: an event at a venue in any given district matches. */
+                district?: string[];
+                /** @description Venue type slug (e.g. club). Repeatable: an event at a venue of any given type matches. An unknown type matches nothing. */
+                venueType?: string[];
+                /** @description Artist slug filter — only events featuring the matching artist. */
+                artist?: string;
+                /** @description Promoter slug filter — only events from the matching promoter. */
+                promoter?: string;
+                /** @description Genre tag slug filter — only events tagged with the matching genre. */
+                genre?: string;
+                /** @description Genre family slug filter (e.g. electronic). Repeatable: an event tagged with a genre in any given family matches. */
+                family?: string[];
+                /** @description Minimum presale price (inclusive). Excludes events with an unknown (null) price. */
+                minPrice?: number;
+                /** @description Maximum presale price (inclusive). Excludes events with an unknown (null) price. */
+                maxPrice?: number;
+                /** @description Search over the event title, subtitle, venue name, lineup and promoters: ignores case, accents and spaces, and forgives small typos. */
+                q?: string;
+                /** @description When true, excludes events flagged as sold out. Defaults to false (include all). */
+                excludeSoldOut?: boolean;
+                /** @description When true, returns only events flagged as free to attend. Defaults to false. */
+                free?: boolean;
+                /** @description Time of night, Berlin time: daytime (06:00-17:59), evening (18:00-21:59) or late (22:00-05:59). An event with an end matches every slot it runs through, and one of 24 hours or more matches all three; without an end, its start, else its doors time, decides. Repeatable: an event in any given slot matches. An event with neither time is left out. An unknown value matches nothing. */
+                timeOfDay?: string[];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The calendar */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/calendar": string;
                 };
             };
         };
