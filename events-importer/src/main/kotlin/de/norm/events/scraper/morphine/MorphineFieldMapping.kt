@@ -217,7 +217,7 @@ private val PRICE_AMOUNT = Regex("""\d+(?:[.,]\d{1,2})?""")
  * second number — a range bound, a set count — is ambiguous and returns `null`: no price rather
  * than a wrong one.
  */
-fun parseDoorPrice(note: String?): BigDecimal? {
+internal fun parseDoorPrice(note: String?): BigDecimal? {
     if (note.isNullOrBlank()) return null
     val amounts =
         PRICE_AMOUNT

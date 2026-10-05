@@ -64,7 +64,7 @@ data class RadarListing(
  * A malformed row is skipped with a warning; an unparseable body gives an empty listing.
  */
 @Suppress("TooGenericExceptionCaught") // A malformed payload or row must degrade, never abort the import.
-fun parseRadarEvents(
+internal fun parseRadarEvents(
     json: String,
     venue: String
 ): RadarListing {
