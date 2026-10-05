@@ -8,7 +8,7 @@ import type {
   MountInfo,
 } from '@fullcalendar/vue3'
 import FullCalendar from '@fullcalendar/vue3'
-import { computed } from 'vue'
+import { computed, onBeforeUnmount, ref, useTemplateRef, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { berlinTimeIso, eventLabel, todayIso } from '@/lib/format'
 import { isLocale } from '@/i18n/locales'
@@ -84,25 +84,48 @@ const { t, locale } = useI18n()
 // Without a locale FullCalendar formats the title, the weekday header and the times in `en` (#2658).
 const CALENDAR_LOCALES = { en: enGbLocale, de: deLocale }
 
+/**
+ * Below Tailwind's `md`, seven columns of titles do not fit, so the Week button shows the same week
+ * as a day-grouped list (#2693). jsdom has no `matchMedia` and counts as wide.
+ */
+const narrowQuery = window.matchMedia?.('(max-width: 767.98px)')
+const narrow = ref(narrowQuery?.matches ?? false)
+const onNarrowChange = (event: MediaQueryListEvent) => (narrow.value = event.matches)
+narrowQuery?.addEventListener('change', onNarrowChange)
+onBeforeUnmount(() => narrowQuery?.removeEventListener('change', onNarrowChange))
+
+const GRID_WEEK = 'dayGridWeek'
+const LIST_WEEK_NARROW = 'listWeekNarrow'
+const weekView = (isNarrow: boolean) => (isNarrow ? LIST_WEEK_NARROW : GRID_WEEK)
+
+const calendar = useTemplateRef<InstanceType<typeof FullCalendar>>('calendar')
+
+// The toolbar only names the views; a week already on screen is swapped when the width crosses `md`.
+watch(narrow, (isNarrow) => {
+  const api = calendar.value?.getApi()
+  if (api?.view.type === weekView(!isNarrow)) api.changeView(weekView(isNarrow))
+})
+
 // FullCalendar is encapsulated here so the rest of the app sees one on-theme component
 // (ADR-011). The week is a row of day cells, not a timetable: nearly every event starts between
 // 19:00 and 23:00, so a time axis stacks a night into slivers (#1412).
 const options = computed<CalendarOptions>(() => ({
   plugins: [classicThemePlugin, dayGridPlugin, listPlugin],
-  initialView: props.initialView,
+  initialView: props.initialView === GRID_WEEK ? weekView(narrow.value) : props.initialView,
   locale: isLocale(locale.value) ? CALENDAR_LOCALES[locale.value] : enGbLocale,
   eventTimeFormat: { hour: '2-digit', minute: '2-digit', hour12: false },
   headerToolbar: {
     start: 'prev,next today',
     center: 'title',
-    end: 'dayGridMonth,dayGridWeek,listWeek',
+    end: `dayGridMonth,${weekView(narrow.value)},listWeek`,
   },
   // v7 has no `buttonText` option and no built-in English labels. A view button with no resolvable
   // text is silently not rendered, so without this block the calendar loses its view switcher.
   buttons: {
     today: { text: t('calendar.today') },
     dayGridMonth: { text: t('calendar.view.month') },
-    dayGridWeek: { text: t('calendar.view.week') },
+    [GRID_WEEK]: { text: t('calendar.view.week') },
+    [LIST_WEEK_NARROW]: { text: t('calendar.view.week') },
     listWeek: { text: t('calendar.view.list') },
   },
   height: 'auto',
@@ -111,9 +134,13 @@ const options = computed<CalendarOptions>(() => ({
   now: () => `${todayIso()}T${berlinTimeIso()}:00`,
   dayCellTopInnerClass: (info) => (info.isToday ? 'fc-today-number' : undefined),
   dayHeaderInnerClass: (info) => (info.isToday ? 'fc-today-number' : undefined),
-  // A full cell folds into a "+N more" popover. The month takes a count: `true` sizes to the cell,
-  // and a phone-width cell fits one event.
-  views: { dayGridMonth: { dayMaxEvents: 6 }, dayGridWeek: { dayMaxEvents: true } },
+  // A full month cell folds into a "+N more" popover after six events. The week has the height to
+  // show every event, so a visitor sees the week without a click (#2693).
+  views: {
+    dayGridMonth: { dayMaxEvents: 6 },
+    [GRID_WEEK]: { dayMaxEvents: false },
+    [LIST_WEEK_NARROW]: { type: 'listWeek' },
+  },
   moreLinkText: t('calendar.more'), // rendered as `+N <more>`
   // A club night ending 06:00 is one day's entry, not a two-day bar; a run still on at 09:00 spans.
   nextDayThreshold: '09:00',
@@ -126,7 +153,7 @@ const options = computed<CalendarOptions>(() => ({
 
 <template>
   <div class="event-calendar">
-    <FullCalendar :options="options" />
+    <FullCalendar ref="calendar" :options="options" />
   </div>
 </template>
 

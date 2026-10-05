@@ -74,6 +74,10 @@ test.beforeEach(async ({ page }) => {
   })
 })
 
+/** Tailwind's `md`: below it the Week button opens a day list instead of the grid (#2693). */
+const MD_PX = 768
+const isNarrow = (page: Page) => (page.viewportSize()?.width ?? MD_PX) < MD_PX
+
 /** Today in Berlin — the clock the app reads (`todayIso` in lib/format), not the runner's. */
 const todayInBerlin = () =>
   new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Berlin' }).format(new Date())
@@ -227,20 +231,26 @@ test('shows an error state when the calendar feed fails', async ({ page }) => {
   await expect(page.getByText(/couldn't load the calendar/i)).toBeVisible()
 })
 
-test("marks today's day number in the month grid and the week header", async ({ page }) => {
+test("marks today's day number in the month grid", async ({ page }) => {
   await page.goto('/calendar')
 
   // The class comes from FullCalendar's own `isToday` (EventCalendar.vue), so the number carrying it
   // is Berlin's day.
   const todayNumber = String(Number(todayInBerlin().slice(8)))
   await expect(page.locator('.fc-today-number', { hasText: todayNumber })).toBeVisible()
+})
+
+test("marks today's day in the week grid's header", async ({ page }) => {
+  // eslint-disable-next-line playwright/no-skipped-test -- below md the Week button opens the list
+  test.skip(isNarrow(page), 'the week grid is the md-and-up view')
+  await page.goto('/calendar')
 
   await page.getByRole('tab', { name: 'Week view' }).click()
   await expect(page.locator('.fc-today-number')).toBeVisible()
 })
 
-test('folds a crowded day into a "+N more" popover instead of a timetable', async ({ page }) => {
-  // Twelve events on one day, all at 20:00 — the shape a Berlin Saturday has.
+/** Twelve events on the first visible day, all at 20:00 — the shape a Berlin Saturday has. */
+async function crowdedDay(page: Page) {
   await page.route(calendarFeed, (route) => {
     const from = new URL(route.request().url()).searchParams.get('from') ?? '2026-07-01'
     return json(
@@ -253,16 +263,39 @@ test('folds a crowded day into a "+N more" popover instead of a timetable', asyn
       })),
     )
   })
+}
+
+test('shows every event of a crowded day in the week grid', async ({ page }) => {
+  // eslint-disable-next-line playwright/no-skipped-test -- below md the Week button opens the list
+  test.skip(isNarrow(page), 'the week grid is the md-and-up view')
+  await crowdedDay(page)
 
   await page.goto('/calendar')
   await page.getByRole('tab', { name: 'Week view' }).click()
 
-  // The rest sit behind the link; sorted by title, "Gig 9" is the last of the twelve and never fits.
-  const last = page.getByRole('link', { name: /Gig 9/ })
-  // A narrow cell (the mobile projects) shortens the link to the bare `+N`.
-  const more = page.getByRole('button', { name: /^\+\d+( more)?$/ })
-  await expect(more).toBeVisible()
-  await expect(last).toHaveCount(0)
-  await more.click()
-  await expect(last).toBeVisible()
+  // Sorted by title, "Gig 9" is the last of the twelve, the one a capped cell drops first.
+  await expect(page.getByRole('link', { name: /Gig 9/ })).toBeVisible()
+  await expect(page.getByRole('link', { name: /Gig \d+/ })).toHaveCount(12)
+  await expect(page.getByRole('button', { name: /^\+\d+( more)?$/ })).toHaveCount(0)
+})
+
+test('opens the week as a day list below md', async ({ page }) => {
+  // eslint-disable-next-line playwright/no-skipped-test -- the mobile projects are where it runs
+  test.skip(!isNarrow(page), 'from md up the Week button opens the grid')
+  await crowdedDay(page)
+
+  await page.goto('/calendar')
+  await page.getByRole('tab', { name: 'Week view' }).click()
+
+  // The list gives a day and each event anchor in it `role="listitem"`; an event holds no other item.
+  const gigs = page
+    .getByRole('listitem')
+    .filter({ hasText: /Gig \d+/, hasNot: page.getByRole('listitem') })
+  await expect(page.getByRole('tab', { name: 'Week view' })).toHaveAttribute(
+    'aria-selected',
+    'true',
+  )
+  await expect(gigs.filter({ hasText: 'Gig 9' })).toBeVisible()
+  await expect(gigs).toHaveCount(12)
+  await expect(page.getByRole('button', { name: /^\+\d+( more)?$/ })).toHaveCount(0)
 })
