@@ -49,8 +49,7 @@
     "hideSoldOut": "Ausverkaufte ausblenden",
     "freeOnly": "Nur kostenlose",
     "more": "Mehr Filter",
-    "moreCount": "Mehr Filter ({n})",
-    "clearAll": "Alles zurücksetzen"
+    "moreCount": "Mehr Filter ({n})"
   },
   "card": {
     "liveTonight": "Heute Abend live",

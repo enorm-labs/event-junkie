@@ -24,8 +24,9 @@
     "compact": "Kompakt"
   },
   "actions": {
-    "clearFilters": "Filter zurücksetzen",
-    "clearSearch": "Suche zurücksetzen",
+    "clearAll": "Alles zurücksetzen",
+    "clearAllFilters": "Alle Filter zurücksetzen",
+    "clearSearch": "Suche leeren",
     "browseTonight": "Schau, was heute läuft",
     "previous": "Zurück",
     "next": "Weiter",

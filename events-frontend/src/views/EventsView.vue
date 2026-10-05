@@ -1,9 +1,10 @@
 <script lang="ts" setup>
 import { Rss } from '@lucide/vue'
 import { computed } from 'vue'
-import { RouterLink, useRoute, useRouter } from 'vue-router'
+import { RouterLink, useRoute } from 'vue-router'
 import { Button } from '@/components/ui/button'
 import AlsoRunning from '@/components/AlsoRunning.vue'
+import ClearAllFilters from '@/components/ClearAllFilters.vue'
 import EventCard from '@/components/EventCard.vue'
 import EventRow from '@/components/EventRow.vue'
 import { useCompactView } from '@/composables/useCompactView'
@@ -26,7 +27,6 @@ import { useLocalePath } from '@/composables/useLocalePath'
 const PAGE_SIZE = 20
 
 const route = useRoute()
-const router = useRouter()
 
 // Filters live in the URL query so list views are shareable and survive back/forward; the
 // filter bar writes them and `useEventFilters` reads them back (see EventFilterBar.vue).
@@ -99,15 +99,6 @@ const listed = computed(() =>
 // Paging, the clamp on an out-of-range `?page=`, and the reload on any query change.
 const { currentPage, totalPages, goToPage } = usePagedList(page, run)
 
-/** Whether anything narrows the list, which is what a "clear" control has to have to offer. */
-const isFiltered = computed(() =>
-  Object.keys(route.query).some((key) => key !== 'page' && key !== 'sort'),
-)
-
-function clearFilters() {
-  router.push({ query: {} })
-}
-
 const localePath = useLocalePath()
 
 const { t, locale } = useI18n()
@@ -161,9 +152,7 @@ const mapLink = computed(() => ({
     <div v-else-if="!page?.content?.length" class="space-y-3">
       <p class="text-body text-muted-foreground">{{ t('events.empty') }}</p>
       <div class="flex flex-wrap gap-3">
-        <Button v-if="isFiltered" variant="outline" @click="clearFilters">
-          {{ t('common.actions.clearFilters') }}
-        </Button>
+        <ClearAllFilters empty-state />
         <Button as-child variant="outline">
           <RouterLink :to="localePath('/')">{{ t('common.actions.browseTonight') }}</RouterLink>
         </Button>

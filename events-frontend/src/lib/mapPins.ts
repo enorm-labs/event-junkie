@@ -69,6 +69,9 @@ export function venuePin(
 }
 
 /** The radii "near" offers, in kilometres: a walk, a short ride, across a district. */
+/** The maps' own query keys. Not filters: the list link and the API never see them. */
+export const MAP_KEYS = ['radius'] as const
+
 export const RADII = [1, 2, 5] as const
 export const DEFAULT_RADIUS = 2
 

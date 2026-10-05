@@ -5,13 +5,15 @@
  * component holds no filter state; the local state is the two free-text drafts and whether "More
  * filters" is open. Search applies as the visitor types, the price range on Enter or leaving the field.
  */
-import { ChevronDown, X } from '@lucide/vue'
+import { ChevronDown } from '@lucide/vue'
 import { computed, onMounted, ref, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute } from 'vue-router'
 import { Button } from '@/components/ui/button'
 import BaseInput from '@/components/BaseInput.vue'
 import BaseSelect from '@/components/BaseSelect.vue'
+import ClearAllFilters from '@/components/ClearAllFilters.vue'
 import MultiSelectFilter from '@/components/MultiSelectFilter.vue'
+import SearchInput from '@/components/SearchInput.vue'
 import { useEventFilters } from '@/composables/useEventFilters'
 import { useGenres } from '@/composables/useGenres'
 import { useSearchDraft } from '@/composables/useSearchDraft'
@@ -33,7 +35,6 @@ const props = withDefaults(
 )
 
 const route = useRoute()
-const router = useRouter()
 const { queryString, queryList, applyFilters } = useEventFilters()
 
 /**
@@ -168,9 +169,6 @@ const moreCount = computed(
     ].filter(Boolean).length,
 )
 
-/** Anything in the URL but the page narrows what the view shows. */
-const isFiltered = computed(() => Object.keys(route.query).some((key) => key !== 'page'))
-
 /**
  * On a phone the bar stood about 500 px tall before the first event, and the map's own row pushed
  * the map below the fold (#2347). The second tier starts closed unless the URL already sets one of
@@ -189,12 +187,11 @@ onMounted(() => {
   <div :class="PANEL_CLASS">
     <div class="flex w-full flex-wrap items-center gap-2">
       <form class="min-w-0 flex-1 basis-48" role="search" @submit.prevent="applySearch">
-        <BaseInput
+        <SearchInput
           v-model="search"
           :placeholder="t('events.filters.searchPlaceholder')"
-          class="w-full px-3"
-          type="search"
           @change="applySearch"
+          @clear="applySearch"
         />
       </form>
       <Button
@@ -210,10 +207,7 @@ onMounted(() => {
           aria-hidden="true"
         />
       </Button>
-      <Button v-if="isFiltered" type="button" variant="ghost" @click="router.push({ query: {} })">
-        <X aria-hidden="true" />
-        {{ t('events.filters.clearAll') }}
-      </Button>
+      <ClearAllFilters />
     </div>
 
     <!--
