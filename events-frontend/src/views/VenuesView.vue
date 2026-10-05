@@ -267,7 +267,7 @@ const localePath = useLocalePath()
   <main class="mx-auto max-w-5xl space-y-6 p-4 sm:p-8">
     <header class="space-y-1">
       <h1 class="text-page font-bold tracking-tight">{{ t('venues.title') }}</h1>
-      <p class="text-muted-foreground">{{ t('venues.subtitle') }}</p>
+      <p class="text-body text-muted-foreground">{{ t('venues.subtitle') }}</p>
       <p class="text-body text-muted-foreground">
         {{ t('venues.missing') }}
         <a

@@ -59,7 +59,7 @@ const { componentCount, groups, openGroups, toggle, versionSuffix } = useNotices
         class="rounded-lg border border-border p-4"
         @toggle="toggle(group.license, ($event.target as HTMLDetailsElement).open)"
       >
-        <summary class="cursor-pointer font-medium text-foreground">
+        <summary class="cursor-pointer text-card-title font-medium text-foreground">
           {{ group.license }}
           <span class="font-normal text-muted-foreground">
             — {{ group.components.length }}

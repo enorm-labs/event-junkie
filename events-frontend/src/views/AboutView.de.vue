@@ -16,7 +16,7 @@ const localePath = useLocalePath()
 </script>
 
 <template>
-  <main class="mx-auto max-w-3xl space-y-6 p-4 sm:p-8">
+  <main class="mx-auto max-w-3xl space-y-6 p-4 text-prose sm:p-8">
     <h1 class="text-page font-bold tracking-tight">Über das Projekt</h1>
     <p class="text-muted-foreground">
       Event Junkie ist dein Überblick über das, was in Berlins Locations läuft: ein Feed mit

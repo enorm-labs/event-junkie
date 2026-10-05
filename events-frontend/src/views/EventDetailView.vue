@@ -206,7 +206,7 @@ useStructuredData(() => (event.value ? eventPageJsonLd(event.value, locale.value
 
     <div v-else-if="notFound" class="space-y-3">
       <h1 class="text-page font-bold tracking-tight">{{ t('events.detail.notFound') }}</h1>
-      <p class="text-muted-foreground">
+      <p class="text-body text-muted-foreground">
         {{ t('events.detail.notFoundBody') }}
       </p>
       <Button as-child variant="outline">

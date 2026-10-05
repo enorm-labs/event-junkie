@@ -29,7 +29,7 @@ const { t } = useI18n()
 </script>
 
 <template>
-  <main class="mx-auto max-w-3xl space-y-6 p-4 sm:p-8">
+  <main class="mx-auto max-w-3xl space-y-6 p-4 text-prose sm:p-8">
     <header class="space-y-2">
       <h1 class="text-page font-bold tracking-tight">{{ title }}</h1>
       <p v-if="intro" class="text-muted-foreground">{{ intro }}</p>
@@ -44,7 +44,7 @@ const { t } = useI18n()
     <!-- `[&_x]` selectors rather than a class on every element: the page bodies below are plain
          semantic markup, which keeps them readable as documents and easy to translate later. -->
     <div
-      class="space-y-6 text-muted-foreground [&_a]:text-foreground [&_a]:underline [&_a]:underline-offset-4 [&_dt]:font-medium [&_dt]:text-foreground [&_h2]:text-lede [&_h2]:font-semibold [&_h2]:tracking-tight [&_h2]:text-foreground [&_h3]:font-medium [&_h3]:text-foreground [&_li]:my-1 [&_ol]:list-decimal [&_ol]:space-y-1 [&_ol]:pl-6 [&_p]:my-2 [&_section]:space-y-2 [&_ul]:list-disc [&_ul]:space-y-1 [&_ul]:pl-6"
+      class="space-y-6 text-muted-foreground [&_a]:text-foreground [&_a]:underline [&_a]:underline-offset-4 [&_dt]:font-medium [&_dt]:text-foreground [&_h2]:text-lede [&_h2]:font-semibold [&_h2]:tracking-tight [&_h2]:text-foreground [&_h3]:text-card-title [&_h3]:font-medium [&_h3]:text-foreground [&_li]:my-1 [&_ol]:list-decimal [&_ol]:space-y-1 [&_ol]:pl-6 [&_p]:my-2 [&_section]:space-y-2 [&_ul]:list-disc [&_ul]:space-y-1 [&_ul]:pl-6"
     >
       <slot />
     </div>
