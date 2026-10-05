@@ -72,7 +72,7 @@ env:
   # Binary and templates are two releases with two cadences, pinned apart; `-update-templates` at run
   # time would be the unpinned dependency ADR-024 refuses. No `v`: the download URLs add it.
   NUCLEI_VERSION: 3.11.1
-  NUCLEI_TEMPLATES_VERSION: 10.4.9
+  NUCLEI_TEMPLATES_VERSION: 10.5.0
   # The public target, site-probe.yml's convention: the repository variable while production serves a
   # rehearsal hostname, the apex once it is deleted at go-live, a dispatch input over both. Never unset,
   # so never a silent permanent skip.
