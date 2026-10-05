@@ -8,9 +8,6 @@ export const REPOSITORY_URL = 'https://github.com/enorm-labs/event-junkie'
 /** The BUSL-1.1 licence text this project is released under. */
 export const LICENSE_URL = `${REPOSITORY_URL}/blob/main/LICENSE`
 
-/** Issue list — where "report wrong data" sends people. */
-export const ISSUES_URL = `${REPOSITORY_URL}/issues`
-
 /**
  * The new-issue chooser rather than a blank form, so it presents the issue templates.
  */
