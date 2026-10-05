@@ -75,6 +75,17 @@ class MorphineFieldMappingTest {
     }
 
     @Test
+    fun `a dash tail that dates a work or times it keeps the act alone`() {
+        // #2705: the work, its year, its length and its instrumentation are not acts.
+        val work = "Mads Emil Dreyer - Repeater, Quietus (2024), 35’ For 8 percussion instruments, feedback system and lights"
+        morphineSetLineActs(work, "Lorenzo Colombo & Mads Emil Dreyer") shouldBe listOf("Mads Emil Dreyer")
+        morphineSetLineActs("Lorenzo Colombo - Point 0 (2026), 15’", "x") shouldBe listOf("Lorenzo Colombo")
+        morphineSetLineActs("Mads Emil Dreyer - Repeater, 35'", "x") shouldBe listOf("Mads Emil Dreyer")
+        // A number that is neither a bracketed year nor a duration leaves the pair for #302's head rule.
+        morphineSetLineActs("Alister Spence – 4 Walls Within", "x") shouldBe listOf("Alister Spence – 4 Walls Within")
+    }
+
+    @Test
     fun `a two-word act keeps its own member list, and a co-bill is not one`() {
         // #1710: the same shape as PICI, with a duo whose name is two words.
         morphineSetLineActs("Exoteric Chamber - Gilles Aubry & Marta Zapparoli", "Exoteric Chamber") shouldBe listOf("Exoteric Chamber")
