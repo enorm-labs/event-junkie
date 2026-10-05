@@ -16,26 +16,27 @@ data class ArtistIdPage(
 )
 
 /**
- * The artist name search ([TextSearch]). Raw SQL because the rule calls `search_norm`, which a
- * derived query cannot. A search sorted by name puts the closest matches first.
+ * The artist list and its name search ([TextSearch]). Raw SQL because the rule calls `search_norm`,
+ * which a derived query cannot. Names sort case-folded: the database collation is `C`, which would
+ * put "terra" after "Zenker". The shape of `PromoterSearchRepository` (#2704).
  */
 @Repository
 class ArtistSearchRepository(
     private val databaseClient: DatabaseClient
 ) {
     suspend fun search(
-        term: String,
+        term: String?,
         pageable: Pageable,
         countCap: Int? = null
     ): ArtistIdPage = TextSearch.strictThenSimilar(term, found = { it.total > 0 }) { bySimilarity -> search(term, bySimilarity, pageable, countCap) }
 
     private suspend fun search(
-        term: String,
+        term: String?,
         bySimilarity: Boolean,
         pageable: Pageable,
         countCap: Int?
     ): ArtistIdPage {
-        val where = "WHERE ${TextSearch.predicate("a.name", term, bySimilarity)}"
+        val where = if (term == null) "" else "WHERE ${TextSearch.predicate("a.name", term, bySimilarity)}"
         val total =
             databaseClient
                 .sql(countQuery("$EVENTS_SCHEMA.artist a", where, countCap))
@@ -48,7 +49,7 @@ class ArtistSearchRepository(
 
         val ids =
             databaseClient
-                .sql("SELECT a.id FROM $EVENTS_SCHEMA.artist a $where ${orderBy(pageable, bySimilarity)} LIMIT :limit OFFSET :offset")
+                .sql("SELECT a.id FROM $EVENTS_SCHEMA.artist a $where ${orderBy(pageable, term, bySimilarity)} LIMIT :limit OFFSET :offset")
                 .bindTerm(term, bySimilarity)
                 .bind("limit", pageable.pageSize)
                 .bind("offset", pageable.offset)
@@ -61,30 +62,35 @@ class ArtistSearchRepository(
     }
 
     private fun DatabaseClient.GenericExecuteSpec.bindTerm(
-        term: String,
+        term: String?,
         bySimilarity: Boolean
-    ): DatabaseClient.GenericExecuteSpec = TextSearch.params(term, bySimilarity).entries.fold(this) { spec, (key, value) -> spec.bind(key, value) }
+    ): DatabaseClient.GenericExecuteSpec =
+        if (term == null) this else TextSearch.params(term, bySimilarity).entries.fold(this) { spec, (key, value) -> spec.bind(key, value) }
 
+    /**
+     * Whitelists the sort properties to known expressions. Without a sort, a search puts the closest
+     * matches first and the list is by name; a chosen sort, A–Z included, is never reordered by relevance.
+     */
     private fun orderBy(
         pageable: Pageable,
+        term: String?,
         bySimilarity: Boolean
     ): String {
         val clauses =
             pageable.sort.toList().mapNotNull { order ->
                 SORT_COLUMNS[order.property]?.let { column -> "$column ${if (order.isAscending) "ASC" else "DESC"}" }
             }
-        val rank = TextSearch.rank("a.name", bySimilarity).takeIf { pageable.sort.firstOrNull()?.property == "name" }
+        val rank = TextSearch.rank("a.name", bySimilarity).takeIf { term != null && clauses.isEmpty() }
         return "ORDER BY ${(listOfNotNull(rank) + clauses + TIEBREAKER).joinToString(", ")}"
     }
 
     companion object {
-        /** The derived query's columns, so a search keeps the order the unfiltered list has. */
         val SORT_COLUMNS =
             mapOf(
-                "name" to "a.name",
+                "name" to "lower(a.name)",
                 "slug" to "a.slug"
             )
 
-        private const val TIEBREAKER = "a.id ASC"
+        private val TIEBREAKER = listOf("lower(a.name) ASC", "a.id ASC")
     }
 }

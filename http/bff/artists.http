@@ -22,8 +22,12 @@ Accept: application/json
 GET {{bff-host}}/api/artists?page=0&size=5&sort=name,desc
 Accept: application/json
 
-### Search artists by name (case-insensitive substring)
+### Search artists by name, closest names first (no sort)
 GET {{bff-host}}/api/artists?q=actors
+Accept: application/json
+
+### Search artists by name, A–Z: a chosen sort is not reordered by relevance
+GET {{bff-host}}/api/artists?q=berlin&sort=name
 Accept: application/json
 
 ### Unknown/malicious sort is ignored (falls back to default order, not a 500)

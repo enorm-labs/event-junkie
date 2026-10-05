@@ -28,13 +28,18 @@ class ArtistController(
     private val cache: ResponseCache
 ) {
     @GetMapping
-    @Operation(summary = "List artists with pagination and optional name search")
+    @Operation(
+        summary = "List artists with pagination and optional name search, sorted by name",
+        description =
+            "Sort with `sort=name` (A–Z, case-folded). A chosen sort applies with a search too. " +
+                "Without a sort, a search lists the closest names first, else A–Z."
+    )
     suspend fun list(
         @Parameter(description = "Search on the artist name: ignores case, accents and spaces, and forgives small typos. Omitted/blank returns all artists.")
         @RequestParam(required = false)
         q: String?,
         @ParameterObject
-        @PageableDefault(size = 20, sort = ["name"])
+        @PageableDefault(size = 20)
         pageable: Pageable,
         exchange: ServerWebExchange
     ): PageResponse<ArtistSummaryResponse> {

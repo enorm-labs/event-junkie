@@ -20,7 +20,8 @@ class ArtistService(
     private val cachedImageGate: CachedImageGate
 ) {
     /**
-     * Lists artists with pagination, optionally filtered by a name [query] ([TextSearch]).
+     * Lists artists with pagination, optionally filtered by a name [query] ([TextSearch]), by name. Without a
+     * sort, a search lists the closest names first (#2704).
      */
     @Transactional(readOnly = true)
     suspend fun list(
@@ -28,21 +29,15 @@ class ArtistService(
         pageable: Pageable,
         countCap: Int? = null
     ): PageResponse<ArtistSummaryResponse> {
-        val safePageable = pageable.sanitizeSort(SORTABLE_PROPERTIES, DEFAULT_SORT)
-        val term = TextSearch.term(query)
-        val (entities, total) =
-            if (term == null) {
-                artistRepository.findAllBy(safePageable).toList() to artistRepository.count()
-            } else {
-                val page = artistSearchRepository.search(term, safePageable, countCap)
-                val byId = artistRepository.findByIdIn(page.ids).toList().associateBy { it.id }
-                page.ids.mapNotNull { byId[it] } to page.total
-            }
+        val safePageable = pageable.sanitizeSort(SORTABLE_PROPERTIES, Sort.unsorted())
+        val page = artistSearchRepository.search(TextSearch.term(query), safePageable, countCap)
+        val byId = artistRepository.findByIdIn(page.ids).toList().associateBy { it.id }
+        val entities = page.ids.mapNotNull { byId[it] }
         val images = cachedImageGate.forUrls(entities.map { it.imageUrl })
         return PageResponse.of(
             entities.map { ArtistSummaryResponse.fromEntity(it, images.serve(it.imageUrl, CARD_WIDTH)) },
             safePageable,
-            total
+            page.total
         )
     }
 
@@ -69,6 +64,5 @@ class ArtistService(
 
         /** Entity properties a client may sort the artist list by; anything else is ignored. */
         private val SORTABLE_PROPERTIES = ArtistSearchRepository.SORT_COLUMNS.keys
-        private val DEFAULT_SORT = Sort.by("name")
     }
 }
