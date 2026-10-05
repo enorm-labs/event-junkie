@@ -18,6 +18,7 @@ import de.norm.events.scraper.tecImageUrl
 import de.norm.events.scraper.tecOrganizerNames
 import de.norm.events.scraper.tecTermNames
 import de.norm.events.scraper.tecText
+import de.norm.events.scraper.withBilingualDescriptionSplit
 import io.github.oshai.kotlinlogging.KotlinLogging
 import tools.jackson.databind.JsonNode
 import java.math.BigDecimal
@@ -79,7 +80,7 @@ class PandaPlatformaApiScraper {
             artists = if (eventType == EventType.CONCERT.name) creditedPlayers(event) else emptyList(),
             // The association's own organizer entry is the venue, not a promoter.
             promoters = event.tecOrganizerNames().filterNot { it.startsWith(HOUSE_NAME, ignoreCase = true) }
-        )
+        ).withBilingualDescriptionSplit()
     }
 
     /** The type the series name, or null for an event filed under none. */

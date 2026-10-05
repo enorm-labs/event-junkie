@@ -177,6 +177,10 @@ test fixtures supply most of the "one field" rows, because a listing page usuall
 42 sources have a second language, 66 have none, and 4 are unknown. Seven translate the event text on a second page.
 Ten put both languages in one field.
 
+The scrapers of the one-field sources cut the description at its marker (`splitBilingualDescription`). The second half
+becomes the publisher's second language. Each half must read as German or English, so a Russian half stays in the
+whole text.
+
 | Name                             | Second language | How                                                          | Event text         | Evidence                                                                                                                           |
 | -------------------------------- | --------------- | ------------------------------------------------------------ | ------------------ | ---------------------------------------------------------------------------------------------------------------------------------- |
 | A-Trane                          | Yes             | One field: German, then `English`                            | One field          | https://a-trane.de/                                                                                                                |

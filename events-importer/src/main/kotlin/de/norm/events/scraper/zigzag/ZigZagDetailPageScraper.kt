@@ -5,6 +5,7 @@ import de.norm.events.scraper.START_LABELS
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.euroAmounts
 import de.norm.events.scraper.labelledClock
+import de.norm.events.scraper.splitBilingualDescription
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import java.math.BigDecimal
@@ -13,6 +14,8 @@ import java.time.LocalTime
 /** What an event page adds to its listing row. */
 data class ZigZagDetail(
     val description: String?,
+    /** The second-language half of a blurb the page writes in both languages. */
+    val descriptionAlt: String? = null,
     val startTime: LocalTime?,
     val doorsTime: LocalTime?,
     val price: BigDecimal?,
@@ -42,8 +45,11 @@ class ZigZagDetailPageScraper {
         val ticketsAt = paragraphs.indexOfFirst { TICKETS_HEADING.matches(it.text().trim()) }
         val blurb = if (ticketsAt >= 0) paragraphs.take(ticketsAt) else paragraphs.toList()
         val tickets = if (ticketsAt >= 0) paragraphs.drop(ticketsAt).joinToString(" ") { it.text() } else ""
+        // The pointer line stays in until the split, which needs it to know the text holds both languages.
+        val bilingual = splitBilingualDescription(blurb.map { it.text().trim() }.filter { it.isNotEmpty() }.joinToString("\n"))
         return ZigZagDetail(
-            description = blurb.texts().joinToString("\n").ifEmpty { null },
+            description = bilingual?.original ?: blurb.texts().joinToString("\n").ifEmpty { null },
+            descriptionAlt = bilingual?.alt,
             startTime = labelledClock(tickets, START_LABELS),
             doorsTime = labelledClock(tickets, DOORS_LABELS),
             price = ADMISSION.find(tickets)?.let { euroAmounts(it.value).firstOrNull() },

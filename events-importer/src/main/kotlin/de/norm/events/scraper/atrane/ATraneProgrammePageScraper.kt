@@ -13,6 +13,7 @@ import de.norm.events.scraper.schemaImageUrl
 import de.norm.events.scraper.schemaName
 import de.norm.events.scraper.schemaStatus
 import de.norm.events.scraper.stringOrNull
+import de.norm.events.scraper.withBilingualDescriptionSplit
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
@@ -74,7 +75,7 @@ class ATraneProgrammePageScraper {
             status = event.schemaStatus(),
             // The sidemen line splits names on hyphens that double-barrelled names also carry.
             artists = buildArtistsForEventType(actName(title), null, EventType.CONCERT.name)
-        )
+        ).withBilingualDescriptionSplit()
     }
 
     /** The name's lines, entities decoded and non-breaking spaces flattened, blank lines dropped. */

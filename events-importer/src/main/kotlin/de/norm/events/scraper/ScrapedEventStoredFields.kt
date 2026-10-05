@@ -16,6 +16,17 @@ fun ScrapedEvent.withGapsFromStored(stored: EventEntity): ScrapedEvent =
         .withOwnedScheduleFromStored(stored)
         .withScheduleGapsFromStored(stored)
         .withLinkAndPriceGapsFromStored(stored)
+        .withPublisherAltFromStored(stored)
+
+/** The stored second language the venue wrote, when the stored description is kept beside it (#330). */
+private fun ScrapedEvent.withPublisherAltFromStored(stored: EventEntity): ScrapedEvent {
+    val keepsStoredDescription = description != null && description == stored.description
+    return if (descriptionAlt == null && keepsStoredDescription && stored.descriptionAltOrigin == PUBLISHER_ORIGIN) {
+        copy(descriptionAlt = stored.descriptionAlt)
+    } else {
+        this
+    }
+}
 
 /**
  * [withGapsFromStored] for the text and the type the detail page owns. A cancellation the

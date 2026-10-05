@@ -11,8 +11,10 @@ import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
 import de.norm.events.scraper.hasFreeEntryPhrase
+import de.norm.events.scraper.hasLanguageMarker
 import de.norm.events.scraper.headlinersFromTitle
 import de.norm.events.scraper.hrefAt
+import de.norm.events.scraper.htmlParagraphText
 import de.norm.events.scraper.isBoxOfficeLabel
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.jsonLdEvents
@@ -21,6 +23,7 @@ import de.norm.events.scraper.mapEventType
 import de.norm.events.scraper.refineConcertVenueType
 import de.norm.events.scraper.schemaDate
 import de.norm.events.scraper.schemaStatus
+import de.norm.events.scraper.splitBilingualDescription
 import de.norm.events.scraper.splitSupportActs
 import de.norm.events.scraper.textAt
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -75,11 +78,14 @@ class So36DetailPageScraper {
         val jsonLd = document.jsonLdEvents().firstOrNull()
         val (doorsTime, startTime) = parseTimes(document)
         val (presale, boxOffice, priceNote) = parsePrices(document)
+        val description = parseDescription(document)
+        val bilingual = splitBilingualDescription(description?.takeIf(::hasLanguageMarker)?.let { lineBrokenDescription(document) })
 
         return ScrapedEvent(
             title = title,
             subtitle = subtitle,
-            description = parseDescription(document),
+            description = bilingual?.original ?: description,
+            descriptionAlt = bilingual?.alt,
             eventType = eventType,
             // The detail JSON-LD carries the authoritative date; sentinel when absent, so the overview's
             // date is used via So36WebsiteImporter.fillGapsFromOverview.
@@ -131,6 +137,14 @@ class So36DetailPageScraper {
             .filter { it.isNotBlank() }
             .joinToString("\n")
             .takeIf { it.isNotBlank() }
+
+    /** [parseDescription] with each `<br>` kept: a text in both languages is one `<p>`, broken where the halves meet (#330). */
+    private fun lineBrokenDescription(document: Document): String? =
+        document
+            .select(".product_description p")
+            .mapNotNull { htmlParagraphText(it.html()) }
+            .joinToString("\n")
+            .ifEmpty { null }
 
     /**
      * The ticket link: an outside shop's, or this page itself when it sells through the venue's own

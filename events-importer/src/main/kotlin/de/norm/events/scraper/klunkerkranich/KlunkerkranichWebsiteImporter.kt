@@ -8,6 +8,7 @@ import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.ScrapedField
 import de.norm.events.scraper.VenueLimitations
+import de.norm.events.scraper.withBilingualDescriptionSplit
 import org.jsoup.nodes.Document
 import org.springframework.stereotype.Component
 import java.time.Clock
@@ -65,13 +66,14 @@ class KlunkerkranichWebsiteImporter(
     ): ScrapedEvent {
         val (priceBoxOffice, priceNote) = detailPageScraper.scrapePrice(document)
         val description = detailPageScraper.scrapeDescription(document, event.title)
-        return event.copy(
-            description = description,
-            imageUrl = detailPageScraper.scrapeImageUrl(document) ?: event.imageUrl,
-            priceBoxOffice = priceBoxOffice,
-            priceNote = priceNote,
-            detailUnavailable = description == null
-        )
+        return event
+            .copy(
+                description = description,
+                imageUrl = detailPageScraper.scrapeImageUrl(document) ?: event.imageUrl,
+                priceBoxOffice = priceBoxOffice,
+                priceNote = priceNote,
+                detailUnavailable = description == null
+            ).withBilingualDescriptionSplit()
     }
 }
 

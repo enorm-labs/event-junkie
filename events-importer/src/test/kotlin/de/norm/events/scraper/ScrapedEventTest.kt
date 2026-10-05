@@ -510,6 +510,96 @@ class ScrapedEventTest {
         entity.descriptionAltOrigin shouldBe null
     }
 
+    // The venue's own second language is stored on the same footing as the first, and never as a translation (#330).
+    @Test
+    fun `toEventEntity stores the venue's second language as the publisher's alt text`() {
+        val entity = scrapedEvent(description = GERMAN_DESCRIPTION).copy(descriptionAlt = ENGLISH_DESCRIPTION).toEntity()
+
+        entity.description shouldBe GERMAN_DESCRIPTION
+        entity.descriptionLanguage shouldBe "de"
+        entity.descriptionAlt shouldBe ENGLISH_DESCRIPTION
+        entity.descriptionAltLanguage shouldBe "en"
+        entity.descriptionAltOrigin shouldBe PUBLISHER_ORIGIN
+        entity.descriptionAltEngine shouldBe null
+        entity.descriptionAltSourceHash shouldBe null
+    }
+
+    @Test
+    fun `toEventEntity puts the venue's second language in place of a machine translation`() {
+        val entity =
+            scrapedEvent(description = GERMAN_DESCRIPTION)
+                .copy(descriptionAlt = ENGLISH_DESCRIPTION)
+                .toEntity(existing = translated(GERMAN_DESCRIPTION))
+
+        entity.descriptionAlt shouldBe ENGLISH_DESCRIPTION
+        entity.descriptionAltOrigin shouldBe PUBLISHER_ORIGIN
+        entity.descriptionAltEngine shouldBe null
+    }
+
+    // One language twice, or a text no detection can call, would give the page nothing to choose between.
+    @Test
+    fun `toEventEntity stores no alt text in the description's own language or in none`() {
+        val sameLanguage = scrapedEvent(description = GERMAN_DESCRIPTION).copy(descriptionAlt = "$GERMAN_DESCRIPTION Noch einmal.").toEntity()
+        val unknown = scrapedEvent(description = GERMAN_DESCRIPTION).copy(descriptionAlt = "Lex Ludlow\nKaldera").toEntity()
+
+        sameLanguage.descriptionAlt shouldBe null
+        sameLanguage.descriptionAltOrigin shouldBe null
+        unknown.descriptionAlt shouldBe null
+    }
+
+    @Test
+    fun `toEventEntity drops a stored publisher alt text the venue no longer publishes`() {
+        val stored = scrapedEvent(description = GERMAN_DESCRIPTION).copy(descriptionAlt = ENGLISH_DESCRIPTION).toEntity().copy(id = 7L)
+
+        val entity = scrapedEvent(description = GERMAN_DESCRIPTION).toEntity(existing = stored)
+
+        entity.descriptionAlt shouldBe null
+        entity.descriptionAltOrigin shouldBe null
+    }
+
+    @Test
+    fun `toEventEntity stores no alt text for a description the licence withholds`() {
+        val entity =
+            scrapedEvent(description = GERMAN_DESCRIPTION)
+                .copy(descriptionAlt = ENGLISH_DESCRIPTION)
+                .toEventEntity(
+                    venueId = 1L,
+                    venueSlug = "so36",
+                    eventSourceId = 1L,
+                    licences = licensed(SourceLicence.PROHIBITED, SourceLicence.UNCLEAR)
+                )
+
+        entity.descriptionAlt shouldBe null
+        entity.descriptionAltOrigin shouldBe null
+    }
+
+    @Test
+    fun `withGapsFrom takes the alt text with the description it fills, and keeps its own beside its own`() {
+        val listing = listingRow.copy(descriptionAlt = ENGLISH_DESCRIPTION)
+
+        scrapedEvent().withGapsFrom(listing).descriptionAlt shouldBe ENGLISH_DESCRIPTION
+        scrapedEvent(description = GERMAN_DESCRIPTION).withGapsFrom(listing).descriptionAlt shouldBe null
+    }
+
+    // A failed detail page keeps the stored description, and the second language belongs to it.
+    @Test
+    fun `withGapsFromStored keeps the stored publisher alt text beside the stored description`() {
+        val stored = scrapedEvent(description = GERMAN_DESCRIPTION).copy(descriptionAlt = ENGLISH_DESCRIPTION).toEntity().copy(id = 7L)
+
+        val kept = scrapedEvent().copy(detailUnavailable = true).withGapsFromStored(stored)
+
+        kept.description shouldBe GERMAN_DESCRIPTION
+        kept.descriptionAlt shouldBe ENGLISH_DESCRIPTION
+        kept.toEntity(existing = stored).descriptionAltOrigin shouldBe PUBLISHER_ORIGIN
+    }
+
+    @Test
+    fun `withGapsFromStored keeps no machine translation as the venue's text`() {
+        val kept = scrapedEvent().copy(detailUnavailable = true).withGapsFromStored(translated(GERMAN_DESCRIPTION))
+
+        kept.descriptionAlt shouldBe null
+    }
+
     /** A stored row that the translation pass has already filled in, as the upsert reads it back. */
     private fun translated(description: String) =
         scrapedEvent(description = description).toEntity().copy(
@@ -525,6 +615,9 @@ class ScrapedEventTest {
         const val GERMAN_DESCRIPTION =
             "Die Bolschewistische Kurkapelle wurde 1986 in Ost-Berlin als Teil der politischen Untergrundszene " +
                 "gegründet, wenige Jahre vor dem Fall der Berliner Mauer."
+        const val ENGLISH_DESCRIPTION =
+            "The Bolshevik Spa Band was founded in East Berlin in 1986 as part of the political underground, " +
+                "a few years before the fall of the Berlin Wall."
     }
 
     // --- the end (ADR-029) ---
