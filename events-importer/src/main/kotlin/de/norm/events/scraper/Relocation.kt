@@ -86,8 +86,41 @@ fun resolvePostponement(
     return if (movedHere) EventStatus.SCHEDULED.name else status
 }
 
+/**
+ * Decides whether a `POSTPONED` row also changed house: Hole 44 prints "vom 06.10.26 im Hole44
+ * auf den 18.03.27 im Säälchen verschoben". The house after the new date is the destination. Another
+ * house makes this row `RELOCATED` with that name, as #1867 did for Bi Nuu's `rp`; this row's own
+ * house, or no house, leaves it `POSTPONED`. Any other status passes through (#2708).
+ *
+ * Applied after [resolvePostponement], so the row on the new date is already `SCHEDULED` and never
+ * read as a move.
+ */
+fun resolvePostponedMove(
+    status: String,
+    notes: List<String>,
+    venueSlug: String
+): Pair<String, String?> {
+    if (status != EventStatus.POSTPONED.name) return status to null
+    val to =
+        notes
+            .firstNotNullOfOrNull { POSTPONED_TO_HOUSE.find(it) }
+            ?.let { venueName(it.groupValues[1]) }
+            ?.takeUnless { namesSameHouse(compactName(it), compactName(venueSlug)) }
+    return if (to != null) EventStatus.RELOCATED.name to to else status to null
+}
+
 /** The new date of a move: "auf den 01.10.2026", "auf 04.11.2026", "auf den 08.10.26". */
 private val POSTPONED_TO_DATE = Regex("""\bauf\s+(?:den\s+)?(\d{1,2})\.(\d{1,2})\.(\d{4}|\d{2})(?!\d)""", RegexOption.IGNORE_CASE)
+
+/**
+ * The house named right after the new date: "auf den 18.03.27 im Säälchen", "auf 04.11.2026 ins
+ * Metropol". Anchored on the date, because "im" alone opens "im Vorverkauf" and "im Rahmen".
+ */
+private val POSTPONED_TO_HOUSE =
+    Regex(
+        """\bauf\s+(?:den\s+)?\d{1,2}\.\d{1,2}\.(?:\d{4}|\d{2})\s+(?:im|ins|in\s+(?:der|dem|den|das))\s+$NAME_BODY""",
+        RegexOption.IGNORE_CASE
+    )
 
 /** A two-digit year in a note is this century's. */
 private const val CENTURY = 2000
@@ -110,7 +143,7 @@ private val RELOCATION_WORD = Regex("""(?<!vor)verlegt\b|\bverlegung\b|\breloc|\
  * word needs no boundary in front, so the lazy body stops short of a glued "verlegt".
  */
 private const val NAME_BODY =
-    """(\p{L}[^,.!?;:()\[\]–—/*|<>"„“\n]*?)(?=\s*(?:[-–—,.!?;:()\[\]/*|<>"„“\n]|(?:hoch)?verlegt\b|\bins\b|\bin\b|\bnach\b|\bvom\b|\bvon\b|\baus\b|\bmoved\b|$))"""
+    """(\p{L}[^,.!?;:()\[\]–—/*|<>"„“\n]*?)(?=\s*(?:[-–—,.!?;:()\[\]/*|<>"„“\n]|(?:hoch)?verlegt\b|verschoben\b|\bins\b|\bin\b|\bnach\b|\bvom\b|\bvon\b|\baus\b|\bmoved\b|$))"""
 
 /** The destination, named with a contracted or articled preposition: "ins Metropol", "in den Privatclub", "nach Kreuzberg", "to Hole 44". */
 private val RELOCATION_TO =
