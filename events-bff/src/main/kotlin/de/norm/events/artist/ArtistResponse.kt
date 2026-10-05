@@ -35,7 +35,11 @@ data class ArtistSummaryResponse(
     @Schema(description = INTRINSIC_WIDTH_DESCRIPTION, example = "1200")
     val intrinsicWidth: Int?,
     @Schema(description = INTRINSIC_HEIGHT_DESCRIPTION, example = "630")
-    val intrinsicHeight: Int?
+    val intrinsicHeight: Int?,
+    @Schema(description = "URL of the artist's Bandcamp page, which the event page's lineup links to")
+    val bandcampUrl: String?,
+    @Schema(description = "URL of the artist's SoundCloud profile, which the event page's lineup links to")
+    val soundcloudUrl: String?
 ) {
     companion object {
         fun fromEntity(
@@ -52,7 +56,9 @@ data class ArtistSummaryResponse(
                 imageSourceUrl = entity.imageSourceUrl,
                 imageSources = image.sources,
                 intrinsicWidth = image.intrinsicWidth,
-                intrinsicHeight = image.intrinsicHeight
+                intrinsicHeight = image.intrinsicHeight,
+                bandcampUrl = entity.bandcampUrl,
+                soundcloudUrl = entity.soundcloudUrl
             )
     }
 }

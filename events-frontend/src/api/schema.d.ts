@@ -689,6 +689,10 @@ export interface components {
              * @example 630
              */
             intrinsicHeight?: number | null;
+            /** @description URL of the artist's Bandcamp page, which the event page's lineup links to */
+            bandcampUrl?: string | null;
+            /** @description URL of the artist's SoundCloud profile, which the event page's lineup links to */
+            soundcloudUrl?: string | null;
         };
         /** @description Compact event summary for lists and calendar */
         EventSummaryResponse: {
