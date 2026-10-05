@@ -34,6 +34,8 @@ const props = defineProps<{
   radiusKm?: number | null
   /** The next tap on the map sets the origin instead of clearing the selection. */
   picking?: boolean
+  /** Where the map opens centred, for a link from one venue's page. A radius circle wins. */
+  focus?: Position | null
 }>()
 const selected = defineModel<string | null>('selected', { default: null })
 const emit = defineEmits<{ unavailable: []; pick: [Position] }>()
@@ -116,17 +118,22 @@ const ORIGIN_CLASS =
 // On top of its neighbours: in a dense Kreuzberg block the chosen pin was often under another one.
 const SELECTED_CLASSES = ['bg-foreground', 'text-background', 'z-10']
 const UNSELECTED_CLASSES = ['bg-primary', 'text-primary-foreground']
+// A venue with nothing in the range stays grey even while chosen: the accent would read as "on".
+const QUIET_CLASSES = { selected: ['bg-muted-foreground', 'z-10'], rest: ['bg-muted-foreground'] }
 
 // classList, never className: MapLibre positions a marker through classes of its own on the element.
 function styleMarker(element: HTMLButtonElement, pin: MapPin) {
   const isSelected = pin.slug === selected.value
   const size = SIZE_CLASSES[pin.badge === undefined ? 'dot' : pin.badge ? 'count' : 'disc']
+  const colour = pin.quiet
+    ? QUIET_CLASSES
+    : { selected: SELECTED_CLASSES, rest: UNSELECTED_CLASSES }
   element.classList.remove(
-    ...(isSelected ? UNSELECTED_CLASSES : SELECTED_CLASSES),
+    ...(isSelected ? colour.rest : colour.selected),
     ...(isSelected ? size.rest : size.selected),
   )
   element.classList.add(
-    ...(isSelected ? SELECTED_CLASSES : UNSELECTED_CLASSES),
+    ...(isSelected ? colour.selected : colour.rest),
     ...(isSelected ? size.selected : size.rest),
   )
   element.setAttribute('aria-pressed', String(isSelected))
@@ -178,12 +185,16 @@ function renderMarkers() {
   renderName()
 }
 
-/** The circle when there is one, so "near me" opens on what is near; otherwise every pin. */
+/** The circle when there is one, so "near me" opens on what is near; then the focus; then every pin. */
 function frame() {
   const instance = map.value
   if (!instance) return
   const bounds = new LngLatBounds()
   const circle = radiusRing()
+  if (!circle && props.focus) {
+    instance.jumpTo({ center: [props.focus.longitude, props.focus.latitude], zoom: MAX_FIT_ZOOM })
+    return
+  }
   if (circle) for (const point of circle) bounds.extend(point)
   else if (props.pins.length)
     for (const pin of props.pins) bounds.extend([pin.longitude, pin.latitude])
@@ -359,7 +370,7 @@ watch(
   },
 )
 watch(
-  () => [props.origin, props.radiusKm],
+  () => [props.origin, props.radiusKm, props.focus],
   () => {
     renderOrigin()
     frame()

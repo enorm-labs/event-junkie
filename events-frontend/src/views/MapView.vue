@@ -12,7 +12,7 @@ import {
 import { type LocationQueryRaw, RouterLink, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import type { EventSummary, VenueSummary } from '@/api/types'
-import { describeError } from '@/api/client'
+import { api, describeError, unwrap } from '@/api/client'
 import BaseSelect from '@/components/BaseSelect.vue'
 import { Button } from '@/components/ui/button'
 import ClearAllFilters from '@/components/ClearAllFilters.vue'
@@ -118,7 +118,7 @@ const pinnedEventCount = computed(() =>
 const unpinnedEventCount = computed(() => shown.value.length - pinnedEventCount.value)
 
 // The pulse is not the only carrier: the pin's name says "on now" in words.
-const pins = computed<MapPin[]>(() =>
+const eventPins = computed<MapPin[]>(() =>
   groups.value
     .map(({ venue, events: atVenue }) => {
       const live = atVenue.filter(isOnNow).length
@@ -134,19 +134,76 @@ const pins = computed<MapPin[]>(() =>
     .filter((pin): pin is MapPin => pin !== null),
 )
 
-// A selection that the new data no longer contains would show an empty panel.
-watch(groups, (next) => {
-  if (selected.value && !next.some((group) => group.venue.slug === selected.value)) {
-    selected.value = null
+/** Every venue with a coordinate, by name, for "near a venue". */
+const anchors = shallowRef<VenueSummary[]>([])
+
+/**
+ * The venue a venue page's "On the map" names. The map centres on it and opens its pin once, so
+ * closing it stays closed. With nothing in the range it still gets a pin, a quiet one, because a
+ * map centred on an empty street reads as a wrong address.
+ */
+const focusSlug = computed(() => queryString('focus'))
+/** The focused venue from its own endpoint, when the venue list did not have it. */
+const fetchedFocus = shallowRef<VenueSummary | null>(null)
+const focusVenue = computed(() => {
+  const slug = focusSlug.value
+  if (!slug) return null
+  return (
+    groups.value.find((group) => group.venue.slug === slug)?.venue ??
+    anchors.value.find((venue) => venue.slug === slug) ??
+    (fetchedFocus.value?.slug === slug ? fetchedFocus.value : null)
+  )
+})
+const focusPosition = computed(() => venuePosition(focusVenue.value ?? undefined))
+const quietFocus = computed(() => {
+  const venue = focusVenue.value
+  if (loading.value || error.value || !venue?.slug) return null
+  return groups.value.some((group) => group.venue.slug === venue.slug) ? null : venue
+})
+
+const pins = computed<MapPin[]>(() => {
+  const venue = quietFocus.value
+  const pin = venue
+    ? venuePin(venue, t('map.pinNothingOn', { venue: venue.name ?? '' }), '', { quiet: true })
+    : null
+  return pin ? [...eventPins.value, pin] : eventPins.value
+})
+
+// A selection that the new pins no longer contain would show an empty panel.
+watch(pins, (next) => {
+  if (selected.value && !next.some((pin) => pin.slug === selected.value)) selected.value = null
+})
+
+let focusOpened = ''
+watch(pins, (next) => {
+  const slug = focusSlug.value
+  if (slug && slug !== focusOpened && next.some((pin) => pin.slug === slug)) {
+    selected.value = slug
+    focusOpened = slug
   }
 })
+
+async function fetchFocus(slug: string) {
+  try {
+    const venue = await unwrap(api.GET('/api/venues/{slug}', { params: { path: { slug } } }))
+    fetchedFocus.value = { ...venue, slug: venue.slug ?? slug }
+  } catch {
+    // No venue, no pin: the map frames the range as it does without a focus.
+  }
+}
 
 const selectedGroup = computed(
   () => groups.value.find((group) => group.venue.slug === selected.value) ?? null,
 )
+/** The selected venue, which may be the quiet one with nothing in the range. */
+const selectedVenue = computed(
+  () =>
+    selectedGroup.value?.venue ??
+    (quietFocus.value?.slug === selected.value ? quietFocus.value : null),
+)
 
 const location = computed(() => {
-  const venue = selectedGroup.value?.venue
+  const venue = selectedVenue.value
   return [venue?.address, districtLabel(venue?.district)].filter(Boolean).join(' · ')
 })
 
@@ -159,7 +216,7 @@ const venueListLink = computed(() => ({
   ...listLink.value,
   query: {
     ...listLink.value.query,
-    venue: selectedGroup.value?.venue.slug,
+    venue: selectedVenue.value?.slug,
     ...(onNowOnly.value ? {} : { from: range.value.from, to: range.value.to }),
   },
 }))
@@ -177,8 +234,6 @@ const listLink = computed(() => {
   return { path: localePath('/events'), query }
 })
 
-/** Every venue with a coordinate, by name, for "near a venue". */
-const anchors = shallowRef<VenueSummary[]>([])
 onMounted(async () => {
   try {
     const venues = await fetchAllVenues({})
@@ -188,6 +243,9 @@ onMounted(async () => {
   } catch {
     // The select stays hidden; the device and the map still set an origin.
   }
+  // The venue list is the map's own data; only a venue missing from it costs a request, once.
+  const slug = focusSlug.value
+  if (slug && !anchors.value.some((venue) => venue.slug === slug)) await fetchFocus(slug)
 })
 
 const picking = ref(false)
@@ -349,12 +407,12 @@ function distance(km: number): string {
     </p>
     <p v-else-if="error" class="text-body text-destructive">{{ error }}</p>
     <!-- An empty result offers a control, not only a sentence (#1266). -->
-    <div v-else-if="!pins.length" class="space-y-3">
+    <div v-else-if="!eventPins.length" class="space-y-3">
       <p class="text-body text-muted-foreground">{{ t('map.empty') }}</p>
       <ClearAllFilters empty-state />
     </div>
     <p v-else class="text-body text-muted-foreground">
-      {{ t('map.resultCount', counts(pinnedEventCount, pins.length)) }}
+      {{ t('map.resultCount', counts(pinnedEventCount, eventPins.length)) }}
       <template v-if="unpinnedEventCount">
         ·
         <RouterLink :to="listLink" class="text-primary hover:underline">
@@ -373,6 +431,7 @@ function distance(km: number): string {
       v-else
       ref="venueMap"
       v-model:selected="selected"
+      :focus="focusPosition"
       :origin="origin"
       :picking="picking"
       :pins="pins"
@@ -383,7 +442,7 @@ function distance(km: number): string {
       <!-- Over the map, not below it: at 1280×900 the map ends near the fold, so a pin's events
            under it changed nothing a visitor could see (#2347). -->
       <section
-        v-if="selectedGroup"
+        v-if="selectedVenue"
         aria-live="polite"
         class="absolute inset-x-2 bottom-8 z-20 max-h-56 space-y-2 overflow-y-auto rounded-lg border border-border bg-background/95 p-3 sm:inset-x-auto sm:bottom-3 sm:left-3 sm:max-h-80 sm:w-96"
       >
@@ -391,10 +450,10 @@ function distance(km: number): string {
           <div class="min-w-0 flex-1">
             <h2 class="truncate text-card-title font-bold tracking-tight">
               <RouterLink
-                :to="localePath(`/venues/${selectedGroup.venue.slug}`)"
+                :to="localePath(`/venues/${selectedVenue.slug}`)"
                 class="hover:text-primary"
               >
-                {{ selectedGroup.venue.name }}
+                {{ selectedVenue.name }}
               </RouterLink>
             </h2>
             <p v-if="location" class="truncate text-meta text-muted-foreground">{{ location }}</p>
@@ -410,11 +469,20 @@ function distance(km: number): string {
             <X aria-hidden="true" />
           </Button>
         </div>
-        <div :class="CARD_LIST_CLASS">
+        <div v-if="selectedGroup" :class="CARD_LIST_CLASS">
           <EventRow v-for="event in preview" :key="event.slug" :event="event" />
         </div>
+        <template v-else>
+          <p class="text-body text-muted-foreground">{{ t('map.nothingInRange') }}</p>
+          <RouterLink
+            :to="localePath(`/venues/${selectedVenue.slug}`)"
+            class="inline-block text-body text-primary hover:underline"
+          >
+            {{ t('map.venuePage') }}
+          </RouterLink>
+        </template>
         <RouterLink
-          v-if="selectedGroup.events.length > preview.length"
+          v-if="selectedGroup && selectedGroup.events.length > preview.length"
           :to="venueListLink"
           class="inline-block text-body text-primary hover:underline"
         >
@@ -424,7 +492,7 @@ function distance(km: number): string {
     </VenueMap>
 
     <p
-      v-if="!selectedGroup && pins.length && !unavailable && !near"
+      v-if="!selectedVenue && eventPins.length && !unavailable && !near"
       class="text-body text-muted-foreground"
     >
       {{ t('map.pickPin') }}

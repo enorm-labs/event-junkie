@@ -4,6 +4,8 @@
     "kind": "Location",
     "notFound": "Diese Location steht nicht in unserem kleinen schwarzen Buch.",
     "empty": "Hier steht noch nichts an. Schau bald wieder vorbei.",
+    "type": "Art",
+    "onMap": "Auf der Karte",
     "plays": "Vor allem",
     "hosts": "Formate",
     "programmeNote": "Vor allem und Formate: aus den Veranstaltungen des letzten Jahres und der kommenden.",

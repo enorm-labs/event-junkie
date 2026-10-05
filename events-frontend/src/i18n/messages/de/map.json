@@ -19,6 +19,9 @@
   "gestureHelpMac": "⌘ + Scrollen zoomt die Karte",
   "gestureHelpMobile": "Zwei Finger bewegen die Karte",
   "pinOnNow": "{count} läuft gerade | {count} laufen gerade",
+  "pinNothingOn": "{venue}: keine Veranstaltungen in diesem Zeitraum",
+  "nothingInRange": "Keine Veranstaltungen in diesem Zeitraum",
+  "venuePage": "Mehr zu dieser Location",
   "near": {
     "label": "In der Nähe",
     "useLocation": "Meinen Standort verwenden",
