@@ -212,6 +212,7 @@ Slash commands under `.claude/skills/`, each a one-line `@` pointer into `.githu
 - `/compact-comments` — classify each comment block DELETE → RENAME → EXTRACT → RELOCATE → KEEP, apply in that order, measure the drop
 - `/daily-check` — the start of the day: failed runs, bot issues, unread reports, security, logs; merges the ready bot PRs, drafts the rest
 - `/data-quality-audit` — read-only audit of the whole `events` database
+- `/feature-ideas` — features the product and the backlog lack, each checked against the code, all issues and the privacy rules; proposes, files nothing
 - `/importer-smoke` — seed, import, inspect the rows and check for regressions, for one importer
 - `/log-check` — both clusters' logs, Kubernetes events and alerts for the last day, sorted into noise, known, explained and new; drafts issues, files none
 - `/k3d-rehearsal` — the chart and all three images on a local k3d cluster, end to end, then torn down
