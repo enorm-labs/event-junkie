@@ -18,6 +18,11 @@ on:
       - 'scripts/scope-parity.sh'
       - 'scripts/secrets-parity.sh'
       - 'scripts/sources-parity.sh'
+      - 'scripts/features-parity.sh'
+      - 'events-frontend/src/router/index.ts'
+      - 'events-frontend/src/api/schema.d.ts'
+      - 'events-frontend/docker/nginx.conf'
+      - 'events-frontend/e2e/*.spec.ts'
       - '.github/workflows/label-pr.yml'
       - 'scripts/version.sh'
       - 'scripts/release-highlights.sh'
@@ -49,6 +54,11 @@ on:
       - 'scripts/scope-parity.sh'
       - 'scripts/secrets-parity.sh'
       - 'scripts/sources-parity.sh'
+      - 'scripts/features-parity.sh'
+      - 'events-frontend/src/router/index.ts'
+      - 'events-frontend/src/api/schema.d.ts'
+      - 'events-frontend/docker/nginx.conf'
+      - 'events-frontend/e2e/*.spec.ts'
       - '.github/workflows/label-pr.yml'
       - 'scripts/version.sh'
       - 'scripts/release-highlights.sh'
@@ -104,6 +114,9 @@ jobs:
 
       - name: Check the event source counts
         run: scripts/sources-parity.sh
+
+      - name: Check the product overview against the code
+        run: scripts/features-parity.sh
 
       - name: Check the scripts index
         run: scripts/index-parity.sh

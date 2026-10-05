@@ -54,12 +54,18 @@ One filterable feed of what is on across Berlin's venues, collected automaticall
 
 ## What it does
 
-- **One events feed** for every source, filtered by date, type, genre, venue and price, with a _free only_ switch and full-text search.
-- **A calendar** for planning a month ahead.
-- **A venues map** that finds the venues near you and pulses the ones with something on right now.
-- **A page for every venue, artist and promoter**, with everything coming up there.
+- **One events feed** for every source, filtered by date, type, genre, venue, district and price, with _On now_ and _free only_ switches.
+- **Search from anywhere**: events, venues, artists and promoters as you type, forgiving accents and typos.
+- **A calendar** for planning a month ahead, and **a map** that finds what is on near you and pulses what is on right now.
+- **Event pages with the details that matter**: doors and set times, the spoken language of a comedy night, related events, and **share** or
+  **add to calendar** in one menu.
+- **A page for every venue, artist and promoter**, with everything coming up there. Venues show their type, capacity and what they say about themselves —
+  awareness team, step-free access, cash only.
+- **An RSS feed** at `/feed.xml`, which takes every filter, so a filtered feed is a saved search without an account.
 - **German and English**, with no tracking and no third-party requests.
 - **Always a link back** to the venue's own page for tickets and the final word.
+
+The full inventory is [PRODUCT_OVERVIEW.md](./docs/PRODUCT_OVERVIEW.md).
 
 ## Background
 
