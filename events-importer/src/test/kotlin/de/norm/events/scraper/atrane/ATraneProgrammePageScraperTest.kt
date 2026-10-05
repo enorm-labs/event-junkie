@@ -86,6 +86,50 @@ class ATraneProgrammePageScraperTest {
         night.genre shouldBe "modern jazz"
     }
 
+    /** One weekly-session card whose JSON-LD name is [lines], `<br>`-separated. */
+    private fun session(vararg lines: String): ScrapedEvent {
+        val name = (listOf("A-TRANE PRÄSENTIERT:") + lines).joinToString("&lt;br&gt;") { it.replace("&", "&amp;") }
+        val html =
+            """
+            <div class="eventon_list_event" data-event_id="1">
+              <script type="application/ld+json">
+                {"@context": "http://schema.org", "@type": "Event", "name": "$name",
+                 "url": "https://a-trane.de/Events-Directory/andreas-schmidt/", "startDate": "2026-10-5T21:00+2:00"}
+              </script>
+            </div>
+            """.trimIndent()
+        return ATraneProgrammePageScraper().scrape(Jsoup.parse(html, sourceUrl)).single()
+    }
+
+    @Test
+    fun `keeps the weekly session's act and bills the guests it names`() {
+        // #2706: a filled "HEUTE MIT:" under the act names guests; it is not a festival's act line.
+        val night = session("ANDREAS SCHMIDT & FRIENDS", "HEUTE MIT: ROLAND SCHNEIDER- CHRISTIAN KÖGEL")
+
+        night.title shouldBe "ANDREAS SCHMIDT & FRIENDS"
+        night.subtitle shouldBe "Heute mit: Roland Schneider, Christian Kögel"
+        night.artists.map { it.name to it.role } shouldBe
+            listOf("ANDREAS SCHMIDT & FRIENDS" to "HEADLINER", "Roland Schneider" to "SUPPORT", "Christian Kögel" to "SUPPORT")
+    }
+
+    @Test
+    fun `splits guests only where a dash is followed by a space, and bills no placeholder`() {
+        // A hyphen inside a double-barrelled name is not a separator; an en dash between names is.
+        val night = session("ANDREAS SCHMIDT & FRIENDS", "HEUTE MIT: HANS-PETER MEIER- ANNA LENA – N.N.")
+
+        night.artists.filter { it.role == "SUPPORT" }.map { it.name } shouldBe listOf("Hans-Peter Meier", "Anna Lena")
+        night.subtitle shouldBe "Heute mit: Hans-Peter Meier, Anna Lena"
+    }
+
+    @Test
+    fun `keeps a line below the guests in the subtitle, after them`() {
+        val night = session("ANDREAS SCHMIDT & FRIENDS", "HEUTE MIT: ROLAND SCHNEIDER", "JAM SESSION AB 22 UHR")
+
+        night.title shouldBe "ANDREAS SCHMIDT & FRIENDS"
+        night.subtitle shouldBe "Heute mit: Roland Schneider · JAM SESSION AB 22 UHR"
+        night.artists.map { it.name } shouldBe listOf("ANDREAS SCHMIDT & FRIENDS", "Roland Schneider")
+    }
+
     @Test
     fun `names the act without its quoted album title`() {
         on(LocalDate.of(2026, 10, 11)).artists.map { it.name } shouldBe listOf("Christian Frentzen")
