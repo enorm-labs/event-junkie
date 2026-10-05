@@ -6,6 +6,7 @@ import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.arcanoa.ArcanoaOverviewPageScraper.Companion.RECURRING_FORMAT_PATTERN
 import de.norm.events.scraper.buildArtistsForEventType
+import de.norm.events.scraper.endOn
 import de.norm.events.scraper.inferConcertVenueType
 import de.norm.events.scraper.inferYearForWeekday
 import de.norm.events.scraper.knownGenresInStyleTail
@@ -87,8 +88,8 @@ class ArcanoaOverviewPageScraper(
             return emptyList()
         }
 
-        // The page states one start time per month ("Veranstaltungsbeginn: 20 Uhr"); the only time it
-        // publishes, sitting outside the programme paragraph.
+        // The page states one start time per month ("Veranstaltungsbeginn: 20 Uhr"), outside the programme
+        // paragraph. A line that leads with its own hours overrides it.
         val startTime = parseStartTime(programme)
 
         return splitIntoEntries(normalizeText(programme.text())).mapSkippingFailures(logger, { entry -> "Arcanoa entry '${entry.body}'" }) { entry ->
@@ -136,7 +137,7 @@ class ArcanoaOverviewPageScraper(
             return null
         }
 
-        val (rawTitle, rawSubtitle) = splitTitleAndSubtitle(entry.body)
+        val (rawTitle, rawSubtitle) = splitTitleAndSubtitle(entry.text)
         val title = normalizeDashSpacing(rawTitle)
         if (title.isBlank()) {
             logger.warn { "Arcanoa entry on $eventDate has no title, skipping" }
@@ -144,6 +145,7 @@ class ArcanoaOverviewPageScraper(
         }
 
         val subtitle = rawSubtitle?.let { normalizeDashSpacing(it.trimStart('+', '-', ' ')) }?.takeIf { it.isNotBlank() }
+        val start = entry.start ?: startTime
         val keywordType = inferConcertVenueType(title)
         val artists = parseArtists(title, subtitle, keywordType)
         // An unmarked night defaults to CONCERT. A standing format whose title names no act is not a concert.
@@ -162,7 +164,9 @@ class ArcanoaOverviewPageScraper(
             genre = knownGenresInStyleTail(subtitle),
             eventType = eventType,
             eventDate = eventDate,
-            startTime = startTime,
+            startTime = start,
+            endDate = entry.endDate(eventDate, start),
+            endTime = entry.end,
             // No per-event pages on this single-page site — the programme page is the source.
             sourceUrl = baseUrl,
             sourceId = "${EventSource.ARCANOA.sourceIdPrefix}$eventDate-${SlugGenerator.slugify(title)}",
@@ -220,6 +224,24 @@ class ArcanoaOverviewPageScraper(
         val month: Int,
         val body: String
     ) {
+        /** The night's own hours leading [body] ([TIME_RANGE_PREFIX]), or `null`. */
+        private val leadingHours = TIME_RANGE_PREFIX.find(body)
+
+        /** [body] without its leading hours: the title and the style tail. */
+        val text: String = leadingHours?.let { body.substring(it.range.last + 1) } ?: body
+
+        /** The start the leading hours give, or `null` for the month's start time. */
+        val start: LocalTime? = clockTime(leadingHours?.groups[1], leadingHours?.groups[2])
+
+        /** The end the leading hours give, or `null`. */
+        val end: LocalTime? = clockTime(leadingHours?.groups[3], leadingHours?.groups[4])
+
+        /** The day [end] falls on, for a night on [eventDate] that starts at [start]. */
+        fun endDate(
+            eventDate: LocalDate,
+            start: LocalTime?
+        ): LocalDate? = end?.let { endOn(eventDate, start, it) }
+
         /** The entry's date, year inferred from its weekday; `null` when day/month are invalid. */
         fun toEventDate(): LocalDate? {
             val monthDay =
@@ -233,6 +255,12 @@ class ArcanoaOverviewPageScraper(
     }
 
     companion object {
+        /** The clock time an [hour] group and an optional [minute] group name, or `null` without a valid one. */
+        private fun clockTime(
+            hour: MatchGroup?,
+            minute: MatchGroup?
+        ): LocalTime? = hour?.let { runCatching { LocalTime.of(it.value.toInt(), minute?.value?.toInt() ?: 0) }.getOrNull() }
+
         /** Collapses runs of whitespace, including the non-breaking spaces the page uses for indentation. */
         private val WHITESPACE_RUN = Regex("""[\s ]+""")
 
@@ -279,6 +307,13 @@ class ArcanoaOverviewPageScraper(
         private val START_TIME_PATTERN =
             Regex("""Veranstaltungsbeginn:\s*(\d{1,2})(?:[.:](\d{2}))?\s*Uhr""", RegexOption.IGNORE_CASE)
 
+        /**
+         * A night's own hours leading its line, `"19-21Uhr: Songwriting workshop …"`. It replaces the
+         * month's start time and is no title: the colon would otherwise make it one (#2707).
+         */
+        private val TIME_RANGE_PREFIX =
+            Regex("""^(\d{1,2})(?:[.:](\d{2}))?(?:\s*-\s*(\d{1,2})(?:[.:](\d{2}))?)?\s*Uhr\s*:\s*""", RegexOption.IGNORE_CASE)
+
         /** A dash with whitespace on both sides — the cleanest title/style separator. */
         private val SPACED_DASH_PATTERN = Regex("""\s+-\s+""")
 
@@ -291,8 +326,9 @@ class ArcanoaOverviewPageScraper(
         /**
          * Arcanoa's standing weekly formats, programmes rather than performers: the Monday/Tuesday
          * open stage (`freie Bühne`) and jam, the Wednesday `SpielleuteSession` medieval night, the Liedermacher
-         * festival, and the venue's own name leading its house nights. Venue-local rather than in the
-         * shared `ArtistNameMapping` denylist — every entry is specific to this programme. Matched as a
+         * festival, the songwriting workshop, and the venue's own name leading its house nights.
+         * Venue-local rather than in the shared `ArtistNameMapping` denylist — every entry is specific
+         * to this programme. Matched as a
          * substring on an already-split act name, so a co-billed real act survives; a title that
          * matches and leaves no act is typed OTHER, not CONCERT. `jam session`
          * beside `\bjam\b` is not redundant: the venue also writes "JamSession" run-together, where
@@ -302,7 +338,7 @@ class ArcanoaOverviewPageScraper(
         private val RECURRING_FORMAT_PATTERN =
             Regex(
                 """\barcanoa\b|open\s*stage|freie\s+bühne|\bjam[\s-]*session\b|\bjam\b|spielleute|mittelalter""" +
-                    """|liedermacherfestival|singersongwriter""",
+                    """|liedermacherfestival|singersongwriter|workshop""",
                 RegexOption.IGNORE_CASE
             )
     }

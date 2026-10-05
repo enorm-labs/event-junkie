@@ -215,6 +215,40 @@ class ArcanoaOverviewPageScraperTest {
         }
 
         @Test
+        fun `reads a leading time range as the night's hours, not its title`() {
+            val events =
+                scraper.scrape(
+                    fragment(
+                        "Di 06.10.Live: 19-21Uhr: Songwriting workshop mit Dave Benjoya - anschließend Karaoke open stage<br>" +
+                            "Di 03.11.Live: 19-21Uhr : Songwriting workshop mit Dave Benjoya - anschließend Karaoke open stage"
+                    ),
+                    baseUrl
+                )
+
+            events shouldHaveSize 2
+            events.forEach { event ->
+                event.title shouldBe "Songwriting workshop mit Dave Benjoya"
+                event.subtitle shouldBe "anschließend Karaoke open stage"
+                event.startTime shouldBe LocalTime.of(19, 0)
+                event.endDate shouldBe event.eventDate
+                event.endTime shouldBe LocalTime.of(21, 0)
+                event.eventType shouldBe EventType.OTHER.name
+                event.artists.shouldHaveSize(0)
+            }
+            events.first().sourceId shouldBe "arcanoa:2026-10-06-songwriting-workshop-mit-dave-benjoya"
+        }
+
+        @Test
+        fun `reads a leading single hour as the start and sets no end`() {
+            val event = scraper.scrape(fragment("Sa 03.10.Live: 21.30 Uhr: Some Band - Rock"), baseUrl).single()
+
+            event.title shouldBe "Some Band"
+            event.startTime shouldBe LocalTime.of(21, 30)
+            event.endDate.shouldBeNull()
+            event.endTime.shouldBeNull()
+        }
+
+        @Test
         fun `leaves startTime null when the month block publishes none`() {
             val document =
                 Jsoup.parse(
