@@ -284,13 +284,17 @@ private val CASED_TAILS: List<Regex> =
         Regex("""^(.*?\p{Ll}\S*)(?:\s+[\p{Lu}\d]{2,})*\s+[Dd]ebut\s+at\s+\S.*$"""),
         // `WISBORG Phantomschmerz Tour`: a shouted act before a tour name in mixed case.
         Regex("""^([\p{Lu}\d]{2,}(?:\s+[\p{Lu}\d]{2,})*)\s+\p{Lu}\p{Ll}.*[Tt]our$"""),
+        // `YASUHARU TAKANASHI TOUR`: a shouted act and a bare tour word (#2709).
+        Regex("""^(\P{Ll}*\p{Lu}\P{Ll}*?)\s+TOUR$"""),
         // `schluma Heulen am Wasser 2026`: a lowercase act before a capitalised work title and its year.
         Regex("""^(\p{Ll}[\p{Ll}\d]+)\s+\p{Lu}\p{Ll}.*\s(?:19|20)\d{2}$"""),
         // `Exofa - Altern.RockPop`: a genre tag abbreviated with a dot inside one word.
         Regex("""^(.+?)\s+[-–—]\s+\p{L}+\p{Ll}\.\p{Lu}\p{L}+$""")
     )
 
-private fun stripCasedTail(name: String): String = CASED_TAILS.firstNotNullOfOrNull { it.matchEntire(name)?.groupValues?.get(1) } ?: name
+/** A denylisted whole title (`THE REVIVAL TOUR`, a package tour) is left whole, so the denylist still drops it. */
+private fun stripCasedTail(name: String): String =
+    if (isDenylistedNonArtist(name)) name else CASED_TAILS.firstNotNullOfOrNull { it.matchEntire(name)?.groupValues?.get(1) } ?: name
 
 /** A footnote star after the last word: `Sweely live*`. A star inside a name (`*n8`) stays. */
 private val FOOTNOTE_STAR = Regex("""(?<=\S)\*+\s*$""")
@@ -510,6 +514,10 @@ private val NON_ARTIST_NAMES: Set<String> =
         "abraxas party",
         // Heimathafen's classical concert format by klassix; only the prose names the performer (#2416).
         "auf takt! das podcast-konzert",
+        // A Wühlmäuse revue, a ufaFabrik songwriter showcase and a Mikropol hip-hop series, each billed as the act (#2709).
+        "der blaue montag",
+        "berlin songwood sessions",
+        "große hip hop offensive",
         "jazz after dark",
         "future bash reloaded",
         "a dead moon night",
