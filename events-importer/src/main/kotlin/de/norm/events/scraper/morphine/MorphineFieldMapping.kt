@@ -69,10 +69,10 @@ internal fun titleBilling(title: String): String {
  * tail off the back, a ` - ` list is split when every segment is short enough to be an act (each
  * may carry a `Live`) and there are three or more of them, a pair whose one segment equals the
  * event [title] is a film or a work beside its performer, and a ` - ` tail that lists members
- * (`PICI - A & B`) keeps the head. A pair of names (`Alister Spence – Within Without`) stays glued
- * for the sync-time head rule of #302, which knows whether the head is an act. Each name then goes
- * through [stripArtistSuffix]; the caller bills it through `headlinersFromTitle`, whose co-bill
- * split is what a member list must not reach.
+ * (`PICI - A & B`) or dates a work ([WORK_MARKER]) keeps the head. A pair of names
+ * (`Alister Spence – Within Without`) stays glued for the sync-time head rule of #302, which knows
+ * whether the head is an act. Each name then goes through [stripArtistSuffix]; the caller bills it
+ * through `headlinersFromTitle`, whose co-bill split is what a member list must not reach.
  */
 internal fun morphineSetLineActs(
     line: String,
@@ -82,6 +82,7 @@ internal fun morphineSetLineActs(
     val segments = framed.split(DASH).map { it.trim() }.filter { it.isNotBlank() }
     val names =
         when {
+            segments.size == 2 && WORK_MARKER.containsMatchIn(segments[1]) -> segments.take(1)
             segments.size == 2 && isMemberList(segments[0], segments[1]) -> segments.take(1)
             segments.size == 2 && segments.any { it.equals(title, ignoreCase = true) } -> segments
             segments.size >= MIN_DASH_LIST && segments.all { it.split(WHITESPACE).size <= MAX_ACT_WORDS } -> segments
@@ -118,6 +119,12 @@ private val PRESENTS_FRAME = Regex("""^.{2,60}?\s+(?:$PRESENTS_VERBS|pres\.?)\s*
 
 /** `Jakob Vasak performs with the Kobophon` — the instrument is not a co-act. */
 private val PERFORMS_WITH_TAIL = Regex("""\s+performs\s+(?:with|on)\s+.*$""", RegexOption.IGNORE_CASE)
+
+/**
+ * `Repeater, Quietus (2024), 35’ For 8 percussion instruments`: a dash tail with a bracketed year
+ * or a duration in minutes is a work, so the head is the act (#2705). Neither appears in an act's name.
+ */
+private val WORK_MARKER = Regex("""\((?:19|20)\d{2}\)|\b\d+\s?[’'′]""")
 
 private val DASH = Regex("""\s+[-–—]\s+""")
 private val WHITESPACE = Regex("""\s+""")
