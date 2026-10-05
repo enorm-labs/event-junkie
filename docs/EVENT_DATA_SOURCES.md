@@ -133,7 +133,7 @@ schema change.
 | Sonnenraum                       | https://clubdervisionaere.com/programm                      | Club         | Shares the CdV listing; Monday live residency             |
 | Speakeazy                        | https://www.speakeazyberlin.de/events                       | Bar          | Squarespace HTML, robots bars `?format=json`; door prices |
 | Supamolly                        | https://www.supamolly.de/?p=programm                        | Club         | Retro PHP; row id is the date stamp; no prices            |
-| Tempodrom                        | https://www.tempodrom.de/programm-und-tickets/              | Concert Hall | schema.org `Event` JSON-LD; whole programme               |
+| Tempodrom                        | https://www.tempodrom.de/programm-und-tickets/              | Concert Hall | JSON-LD listing; promoter per event page                  |
 | The Wall Comedy Club             | https://thewallcomedy.com/                                  | Comedy Club  | Spotagig JSON-LD; HTMX "Show more" partials               |
 | Theater im Delphi                | https://theater-im-delphi.de/programm/                      | Concert Hall | One row per performance; prices only in a leak            |
 | Tiffany Club                     | https://tiffany-berlin.de/upcoming-events/                  | Club         | Elementor; year from the weekday; blurb per event page    |

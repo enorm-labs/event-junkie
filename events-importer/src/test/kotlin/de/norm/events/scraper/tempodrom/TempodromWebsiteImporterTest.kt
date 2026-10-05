@@ -18,9 +18,8 @@ import org.junit.jupiter.api.Test
 /**
  * Unit tests for [TempodromWebsiteImporter].
  *
- * Tempodrom is a single-page source whose payload is JSON-LD, so the importer must fetch the
- * listing and nothing else. The server sends `Last-Modified`, so the `NotModified` path is real
- * here rather than theoretical.
+ * Tempodrom's listing is JSON-LD, and each event's own page adds the promoter. The server sends
+ * `Last-Modified`, so the `NotModified` path is real here rather than theoretical.
  */
 class TempodromWebsiteImporterTest {
     private val htmlFetcher: HtmlFetcher = mockk()
@@ -41,6 +40,15 @@ class TempodromWebsiteImporterTest {
             )
     }
 
+    private fun stubEventPages() {
+        val html =
+            javaClass.classLoader
+                .getResourceAsStream("scraper/tempodrom/tempodrom-detail-trinity-music.html")!!
+                .bufferedReader()
+                .readText()
+        coEvery { htmlFetcher.fetchDocument(any()) } answers { Jsoup.parse(html, firstArg<String>()) }
+    }
+
     @Test
     fun `eventSource matches expected enum value`() {
         importer.eventSource shouldBe EventSource.TEMPODROM
@@ -57,6 +65,7 @@ class TempodromWebsiteImporterTest {
     fun `imports the whole programme and propagates Last-Modified`() =
         runTest {
             stubListing()
+            stubEventPages()
             val result = importer.importEvents(listingUrl)
             result.shouldBeInstanceOf<ImportResult.Success>()
             result.events shouldHaveSize 143
@@ -64,11 +73,46 @@ class TempodromWebsiteImporterTest {
         }
 
     @Test
-    fun `fetches nothing beyond the listing`() =
+    fun `adds the promoter from each event page`() =
         runTest {
             stubListing()
+            stubEventPages()
+
+            val result = importer.importEvents(listingUrl)
+
+            result.shouldBeInstanceOf<ImportResult.Success>()
+            result.events.first().promoters shouldBe listOf("Trinity Music GmbH")
+            result.events.first().promoterWebsites shouldBe mapOf("Trinity Music GmbH" to "http://www.trinitymusic.de")
+            result.events.first().detailUnavailable shouldBe false
+        }
+
+    @Test
+    fun `fetches one event page per event and is never skipped on the listing's validators`() =
+        runTest {
+            stubListing()
+            stubEventPages()
+
             importer.importEvents(listingUrl)
-            coVerify(exactly = 0) { htmlFetcher.fetchDocument(any()) }
+
+            coVerify(exactly = 143) { htmlFetcher.fetchDocument(any()) }
+            importer.fetchesBeyondEntryPage shouldBe true
+        }
+
+    @Test
+    fun `flags the listing row when the event page fetch fails`() =
+        runTest {
+            stubListing()
+            coEvery { htmlFetcher.fetchDocument(any()) } throws RuntimeException("boom")
+
+            val result = importer.importEvents(listingUrl)
+
+            result.shouldBeInstanceOf<ImportResult.Success>()
+            result.events shouldHaveSize 143
+            result.events
+                .first()
+                .promoters
+                .shouldBeEmpty()
+            result.events.first().detailUnavailable shouldBe true
         }
 
     @Test
