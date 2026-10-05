@@ -14,7 +14,7 @@ import de.norm.events.scraper.radar.RadarGroupImporter.Lineup
  * genre, and the rest, where present, the act's home town. A DJ slot names its act in the bracket:
  * `"PUNK DJs" (BALADA GANGSTER)` bills Balada Gangster as a DJ, with no genre.
  */
-fun parseKoepiBill(description: String?): Lineup {
+internal fun parseKoepiBill(description: String?): Lineup {
     if (description == null) return Lineup()
     val billed = BILLED_ACT.findAll(description).map { it.groupValues[1].trim() to it.groupValues[2].trim() }.toList()
     val artists = mutableListOf<ScrapedArtist>()
