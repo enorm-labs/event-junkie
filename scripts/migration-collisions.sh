@@ -8,8 +8,9 @@
 #
 # Requires: gh, authenticated. Reads through the REST API and checks nothing out. Without `--write` it
 # prints one verdict per pull request and exits 1 when any collides; with `--write` it sets the
-# `Migration versions` commit status on each head instead. `decide` reads three files of migration
-# file names, one per line, and reaches no network.
+# `Migration versions` commit status on each head instead. A failed API call exits 2 and names the
+# call; a pull request whose file list 404s, most likely closed since the listing, is skipped with a
+# line. `decide` reads three files of migration file names, one per line, and reaches no network.
 #
 # `migration-versions.sh` on a merge ref is frozen at the PR's last push, so a sibling that merges
 # the same number later leaves it green (#2183). `migration-versions.yml` runs this on every push to
@@ -78,21 +79,33 @@ REPO="${GITHUB_REPOSITORY:-$(gh repo view --json nameWithOwner --jq .nameWithOwn
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
 
-gh api "repos/$REPO/contents/$DIR?ref=main" --jq '.[] | select(.type == "file") | .name' >"$WORK/main"
+# api <arg>... — `gh api`, naming the call on stderr when it fails; returns 4 on a 404, 1 otherwise.
+api() {
+  local call="$*"
+  gh api "$@" 2>"$WORK/err" && return 0
+  echo "migration-collisions: gh api ${call%% --jq*} failed: $(<"$WORK/err")" >&2
+  grep -q '(HTTP 404)' "$WORK/err" && return 4
+  return 1
+}
+
+api "repos/$REPO/contents/$DIR?ref=main" --jq '.[] | select(.type == "file") | .name' >"$WORK/main" || exit 2
 # An empty listing is a failed read, not a tree without migrations; passing every PR on it would be wrong.
 [[ -s "$WORK/main" ]] || { echo "migration-collisions: no migrations listed on main" >&2; exit 2; }
 
 # added <pr> — the migration names the PR adds, a renumbering rename included.
 added() {
-  gh api --paginate "repos/$REPO/pulls/$1/files?per_page=100" \
+  api --paginate "repos/$REPO/pulls/$1/files?per_page=100" \
     --jq ".[] | select(.status == \"added\" or .status == \"renamed\" or .status == \"copied\") | .filename
       | select(startswith(\"$DIR/\")) | ltrimstr(\"$DIR/\") | select(contains(\"/\") | not)"
 }
 
-gh api --paginate "repos/$REPO/pulls?state=open&base=main&per_page=100" --jq '.[] | "\(.number) \(.head.sha)"' >"$WORK/open"
+api --paginate "repos/$REPO/pulls?state=open&base=main&per_page=100" --jq '.[] | "\(.number) \(.head.sha)"' >"$WORK/open" || exit 2
 targets=()
 if [[ $# -gt 0 ]]; then
-  for pr in "$@"; do targets+=("$pr $(gh api "repos/$REPO/pulls/$pr" --jq .head.sha)"); done
+  for pr in "$@"; do
+    sha="$(api "repos/$REPO/pulls/$pr" --jq .head.sha)" || exit 2
+    targets+=("$pr $sha")
+  done
 else
   while IFS= read -r line; do targets+=("$line"); done <"$WORK/open"
 fi
@@ -100,7 +113,16 @@ fi
 # Every open PR's added versions count toward the next free number, so two renumbered PRs do not meet again.
 : >"$WORK/taken"
 while read -r pr _; do
-  added "$pr" >"$WORK/pr-$pr"
+  # With no targets, `printf` still prints one empty line; reading `pulls//files` 404'd every push that left no open PR (#2715).
+  [[ -n "$pr" ]] || continue
+  rc=0
+  added "$pr" >"$WORK/pr-$pr" || rc=$?
+  if [[ "$rc" -eq 4 ]]; then
+    echo "#$pr skipped: its file list answered 404, most likely closed since the listing"
+    rm "$WORK/pr-$pr"
+    continue
+  fi
+  [[ "$rc" -eq 0 ]] || exit 2
   cat "$WORK/pr-$pr" >>"$WORK/taken"
 done < <({ cat "$WORK/open"; printf '%s\n' "${targets[@]}"; } | sort -u -k1,1n)
 
@@ -110,12 +132,13 @@ url=''
 collided=0
 for target in "${targets[@]}"; do
   read -r pr sha <<<"$target"
+  [[ -f "$WORK/pr-$pr" ]] || continue
   IFS=$'\t' read -r state description < <(decide "$WORK/main" "$WORK/pr-$pr" "$WORK/taken")
   printf '#%s %s %-7s %s\n' "$pr" "${sha:0:7}" "$state" "$description"
   [[ "$state" == failure ]] && collided=1
   if [[ "$write" -eq 1 ]]; then
-    gh api -X POST "repos/$REPO/statuses/$sha" -f state="$state" -f context="$CONTEXT" \
-      -f description="$description" ${url:+-f target_url="$url"} >/dev/null
+    api -X POST "repos/$REPO/statuses/$sha" -f state="$state" -f context="$CONTEXT" \
+      -f description="$description" ${url:+-f target_url="$url"} >/dev/null || exit 2
   fi
 done
 
