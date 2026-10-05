@@ -418,7 +418,7 @@ class MetricsRefreshServiceTest {
                 listOf(
                     source("busy", ImportStatus.SUCCESS, id = 7L),
                     source("emptied-out", ImportStatus.SUCCESS, id = 8L),
-                    source("amt", ImportStatus.SUCCESS, id = 9L)
+                    source("gart-n", ImportStatus.SUCCESS, id = 9L)
                 ).asFlow()
             coEvery { eventRepository.countFuturePerSource(today) } returns
                 listOf(
@@ -441,7 +441,7 @@ class MetricsRefreshServiceTest {
             // The venue-side ones are marked from KNOWN_QUIET_SOURCES, so the rule can leave them out.
             registry
                 .find(ImporterMetrics.SOURCE_DAYS_SINCE_FUTURE_EVENT)
-                .tag("source", "amt")
+                .tag("source", "gart-n")
                 .tag("known_quiet", "true")
                 .gauge()!!
                 .value() shouldBe 365.0
