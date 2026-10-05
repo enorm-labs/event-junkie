@@ -26,12 +26,17 @@ class VenueController(
     private val cache: ResponseCache
 ) {
     @GetMapping
-    @Operation(summary = "List venues with pagination, name search and filters, sorted by name or by upcoming events")
+    @Operation(
+        summary = "List venues with pagination, name search and filters, sorted by name or by events in the next 30 days",
+        description =
+            "Sort with `sort=name` (A–Z, case-folded) or `sort=upcomingEvents,desc` (events that start within the next 30 days, " +
+                "Berlin time). A chosen sort applies with a search too. Without a sort, a search lists the closest names first, else A–Z."
+    )
     suspend fun list(
         @ParameterObject
         filters: VenueFilterParams,
         @ParameterObject
-        @PageableDefault(size = 20, sort = ["name"])
+        @PageableDefault(size = 20)
         pageable: Pageable,
         exchange: ServerWebExchange
     ): PageResponse<VenueListItemResponse> {

@@ -73,8 +73,8 @@ data class VenueSummaryResponse(
 }
 
 /**
- * One venue on the venue list: the summary fields plus its upcoming events, the count the list
- * can sort by (#360). Separate from [VenueSummaryResponse] so an event's embedded venue does not
+ * One venue on the venue list: the summary fields plus its upcoming events, and those in the next
+ * 30 days, the count the list sorts by (#360, #2694). Separate from [VenueSummaryResponse] so an event's embedded venue does not
  * carry a count it never computes.
  */
 @Schema(description = "Venue on the venue list")
@@ -109,8 +109,13 @@ data class VenueListItemResponse(
     val intrinsicWidth: Int?,
     @Schema(description = INTRINSIC_HEIGHT_DESCRIPTION, example = "630")
     val intrinsicHeight: Int?,
-    @Schema(description = "Events from today on at this venue", example = "12")
+    @Schema(description = "Events from today on at this venue", example = "220")
     val upcomingEventCount: Int,
+    @Schema(
+        description = "Events at this venue that start within the next 30 days, Berlin time. The list's `upcomingEvents` sort orders by this count.",
+        example = "12"
+    )
+    val upcomingNext30DaysCount: Int,
     @Schema(description = VENUE_TYPES_DESCRIPTION, example = "[\"live-venue\", \"club\"]")
     val venueTypes: List<String>,
     @Schema(description = CAPACITY_DESCRIPTION, example = "1500")
@@ -126,7 +131,7 @@ data class VenueListItemResponse(
         fun fromEntity(
             entity: VenueEntity,
             image: ServedImage,
-            upcomingEventCount: Int,
+            row: VenueListRow,
             characterTags: List<String>
         ): VenueListItemResponse =
             VenueListItemResponse(
@@ -145,7 +150,8 @@ data class VenueListItemResponse(
                 imageSources = image.sources,
                 intrinsicWidth = image.intrinsicWidth,
                 intrinsicHeight = image.intrinsicHeight,
-                upcomingEventCount = upcomingEventCount,
+                upcomingEventCount = row.upcomingEventCount,
+                upcomingNext30DaysCount = row.upcomingNext30DaysCount,
                 venueTypes = entity.venueTypes,
                 capacity = entity.capacity,
                 programmeFamilies = entity.programmeFamilies,

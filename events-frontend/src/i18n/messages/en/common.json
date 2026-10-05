@@ -42,10 +42,11 @@
   },
   "upcomingEvents": "Upcoming events",
   "upcomingCount": "No upcoming events | {count} upcoming event | {count} upcoming events",
+  "upcomingCounts": "{next30} in the next 30 days · {upcoming} upcoming",
   "sort": {
     "label": "Sort",
     "name": "A–Z",
-    "upcoming": "Most upcoming",
+    "upcoming": "Busiest next 30 days",
     "earliest": "Earliest first",
     "latest": "Latest first"
   },

@@ -1,6 +1,7 @@
 package de.norm.events.event
 
 import de.norm.events.artist.ArtistSummaryResponse
+import de.norm.events.common.AssumedStartTime
 import de.norm.events.image.INTRINSIC_HEIGHT_DESCRIPTION
 import de.norm.events.image.INTRINSIC_WIDTH_DESCRIPTION
 import de.norm.events.image.ImageSourceResponse
@@ -136,7 +137,7 @@ data class EventSummaryResponse(
                 startTime = entity.startTime,
                 endDate = entity.endDate,
                 endTime = entity.endTime,
-                assumedStartTime = AssumedStartTime.forEntity(entity),
+                assumedStartTime = AssumedStartTime.guess(entity.startTime, entity.doorsTime, entity.eventType),
                 imageUrl = image.url,
                 imageSources = image.sources,
                 intrinsicWidth = image.intrinsicWidth,
@@ -338,7 +339,7 @@ data class EventDetailResponse(
                 startTime = entity.startTime,
                 endDate = entity.endDate,
                 endTime = entity.endTime,
-                assumedStartTime = AssumedStartTime.forEntity(entity),
+                assumedStartTime = AssumedStartTime.guess(entity.startTime, entity.doorsTime, entity.eventType),
                 imageUrl = image.url,
                 imageSources = image.sources,
                 intrinsicWidth = image.intrinsicWidth,

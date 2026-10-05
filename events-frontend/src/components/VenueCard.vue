@@ -19,7 +19,12 @@ const props = withDefaults(
       Partial<
         Pick<
           VenueListItem,
-          'upcomingEventCount' | 'venueTypes' | 'characterTags' | 'capacity' | 'programmeFamilies'
+          | 'upcomingEventCount'
+          | 'upcomingNext30DaysCount'
+          | 'venueTypes'
+          | 'characterTags'
+          | 'capacity'
+          | 'programmeFamilies'
         >
       >
     /** Heading level for the card's name — see the same prop on `EventCard.vue` for why. */
@@ -34,8 +39,9 @@ const location = computed(() =>
 )
 
 const { t } = useI18n()
-const { formatVenueFacts } = useFormat()
+const { formatVenueFacts, formatUpcoming } = useFormat()
 const facts = computed(() => formatVenueFacts(props.venue))
+const upcoming = computed(() => formatUpcoming(props.venue))
 
 // The credit belongs on the image itself, so it travels with it wherever the card is reused.
 const creditTitle = computed(() => {
@@ -84,9 +90,7 @@ const { el: posterEl, focused: posterFocused } = useViewportFocus()
         {{ venue.city }}
       </p>
       <p v-if="facts" class="truncate text-body text-muted-foreground">{{ facts }}</p>
-      <p v-if="venue.upcomingEventCount !== undefined" class="text-body text-muted-foreground">
-        {{ t('common.upcomingCount', { count: venue.upcomingEventCount }) }}
-      </p>
+      <p v-if="upcoming" class="text-body text-muted-foreground">{{ upcoming }}</p>
     </div>
   </RouterLink>
 </template>

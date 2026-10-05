@@ -157,7 +157,7 @@ class VenueControllerTest : BaseControllerTest() {
                 .isEqualTo("tipi")
         }
 
-    // #360: the count is events from today on; a venue with only past events sits at 0, and the
+    // #360: the count is events from today on, and the sort is the next 30 days (#2694); a venue with only past events sits at 0, and the
     // filters still apply under the count sort.
     @Test
     fun `GET venues sorts by upcoming events and counts only events from today on`(): Unit =
@@ -168,6 +168,7 @@ class VenueControllerTest : BaseControllerTest() {
             val today = LocalDate.now(ClockConfiguration.BERLIN)
             insertEvent(busy, "Tonight", "tonight", today)
             insertEvent(busy, "Next week", "next-week", today.plusDays(7))
+            insertEvent(busy, "In two days", "in-two-days", today.plusDays(2))
             insertEvent(busy, "Last year", "last-year", today.minusYears(1))
             insertEvent(spent, "Yesterday", "yesterday", today.minusDays(1))
             insertEvent(quiet, "Tomorrow", "tomorrow", today.plusDays(1))
@@ -182,7 +183,7 @@ class VenueControllerTest : BaseControllerTest() {
                 .jsonPath("$.content[0].slug")
                 .isEqualTo("lido")
                 .jsonPath("$.content[0].upcomingEventCount")
-                .isEqualTo(2)
+                .isEqualTo(3)
                 .jsonPath("$.content[1].slug")
                 .isEqualTo("bi-nuu")
                 .jsonPath("$.content[1].upcomingEventCount")
@@ -203,6 +204,67 @@ class VenueControllerTest : BaseControllerTest() {
                 .isEqualTo(1)
                 .jsonPath("$.content[0].slug")
                 .isEqualTo("bi-nuu")
+        }
+
+    // #2694: a venue that publishes far ahead sorts below a busier one; the sort counts the next 30 days only.
+    @Test
+    fun `GET venues sorts by events in the next 30 days, not by the whole horizon`(): Unit =
+        runBlocking {
+            val farAhead = insertVenue("Admiralspalast", "admiralspalast")
+            val busy = insertVenue("Lido", "lido")
+            val today = LocalDate.now(ClockConfiguration.BERLIN)
+            insertEvent(farAhead, "Soon", "soon", today.plusDays(3))
+            (40L..44L).forEach { insertEvent(farAhead, "Later $it", "later-$it", today.plusDays(it)) }
+            listOf(1L, 10L, 29L).forEach { insertEvent(busy, "Gig $it", "gig-$it", today.plusDays(it)) }
+            insertEvent(busy, "Past the window", "past-the-window", today.plusDays(31))
+
+            webTestClient
+                .get()
+                .uri("/venues?sort=upcomingEvents,desc")
+                .exchange()
+                .expectStatus()
+                .isOk
+                .expectBody()
+                .jsonPath("$.content[0].slug")
+                .isEqualTo("lido")
+                .jsonPath("$.content[0].upcomingNext30DaysCount")
+                .isEqualTo(3)
+                .jsonPath("$.content[0].upcomingEventCount")
+                .isEqualTo(4)
+                .jsonPath("$.content[1].slug")
+                .isEqualTo("admiralspalast")
+                .jsonPath("$.content[1].upcomingNext30DaysCount")
+                .isEqualTo(1)
+                .jsonPath("$.content[1].upcomingEventCount")
+                .isEqualTo(6)
+        }
+
+    // #2694: A–Z with a search lists by name; only a search without a sort lists the closest names first.
+    @Test
+    fun `GET venues with a search sorts by name when asked, and by relevance only without a sort`(): Unit =
+        runBlocking {
+            insertVenue("Berlinmusikhaus", "berlinmusikhaus")
+            insertVenue("ATOK Berlin", "atok-berlin")
+
+            webTestClient
+                .get()
+                .uri("/venues?q=berlin&sort=name")
+                .exchange()
+                .expectStatus()
+                .isOk
+                .expectBody()
+                .jsonPath("$.content[*].slug")
+                .isEqualTo(listOf("atok-berlin", "berlinmusikhaus"))
+
+            webTestClient
+                .get()
+                .uri("/venues?q=berlin")
+                .exchange()
+                .expectStatus()
+                .isOk
+                .expectBody()
+                .jsonPath("$.content[*].slug")
+                .isEqualTo(listOf("berlinmusikhaus", "atok-berlin"))
         }
 
     @Test

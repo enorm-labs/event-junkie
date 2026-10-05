@@ -9,7 +9,7 @@ import org.springframework.data.domain.Sort
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.Clock
-import java.time.LocalDate
+import java.time.LocalDateTime
 
 /**
  * Read service for promoters backing the promoter list and detail pages.
@@ -22,8 +22,8 @@ class PromoterService(
     private val clock: Clock
 ) {
     /**
-     * Lists promoters with pagination, optionally filtered by a name [query],
-     * sorted by name or by how many events each still has to come (#1349).
+     * Lists promoters with pagination, optionally filtered by a name [query], by name or by their
+     * events in the next 30 days (#1349, #2694). Without a sort, a search lists the closest names first.
      */
     @Transactional(readOnly = true)
     suspend fun list(
@@ -31,11 +31,11 @@ class PromoterService(
         pageable: Pageable,
         countCap: Int? = null
     ): PageResponse<PromoterListItemResponse> {
-        val safePageable = pageable.sanitizeSort(SORTABLE_PROPERTIES, DEFAULT_SORT)
-        val page = promoterSearchRepository.search(query, LocalDate.now(clock), safePageable, countCap)
+        val safePageable = pageable.sanitizeSort(SORTABLE_PROPERTIES, Sort.unsorted())
+        val page = promoterSearchRepository.search(query, LocalDateTime.now(clock), safePageable, countCap)
         val entities = promoterRepository.findByIdIn(page.rows.map { it.id }).toList().associateBy { it.id }
         return PageResponse.of(
-            page.rows.mapNotNull { row -> entities[row.id]?.let { PromoterListItemResponse.fromEntity(it, row.upcomingEventCount) } },
+            page.rows.mapNotNull { row -> entities[row.id]?.let { PromoterListItemResponse.fromEntity(it, row) } },
             safePageable,
             page.total
         )
@@ -62,6 +62,5 @@ class PromoterService(
 
         /** Properties a client may sort the promoter list by; anything else is ignored. */
         private val SORTABLE_PROPERTIES = PromoterSearchRepository.SORT_COLUMNS.keys
-        private val DEFAULT_SORT = Sort.by("name")
     }
 }

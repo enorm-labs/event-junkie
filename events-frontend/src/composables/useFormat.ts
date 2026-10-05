@@ -151,6 +151,18 @@ export function useFormat() {
         .join(' · '),
 
     /**
+     * A list tile's count line: "12 in the next 30 days · 220 upcoming" (#2694). The total alone when nothing is
+     * upcoming, or when the response has no 30-day count, as an older BFF sends; `''` when it has no count at all.
+     */
+    formatUpcoming: (item: { upcomingEventCount?: number; upcomingNext30DaysCount?: number }) => {
+      const { upcomingEventCount: upcoming, upcomingNext30DaysCount: next30 } = item
+      if (upcoming === undefined) return ''
+      return next30 === undefined || upcoming === 0
+        ? t('common.upcomingCount', { count: upcoming })
+        : t('common.upcomingCounts', { next30, upcoming })
+    },
+
+    /**
      * What is said on stage and what a screening is subtitled in, as one meta item: "English",
      * "German & English", "English · German subtitles". `''` when the venue said neither (#2523).
      * The language names come from `Intl`, so a new code needs no catalogue entry.

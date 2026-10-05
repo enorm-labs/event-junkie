@@ -9,7 +9,7 @@ import org.springframework.data.domain.Sort
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.Clock
-import java.time.LocalDate
+import java.time.LocalDateTime
 
 /**
  * Read service for venues backing the venue list and detail pages.
@@ -22,15 +22,18 @@ class VenueService(
     private val cachedImageGate: CachedImageGate,
     private val clock: Clock
 ) {
-    /** Lists the venues that match [filter], sorted by name or by how many events each still has to come (#360). */
+    /**
+     * Lists the venues that match [filter], by name or by their events in the next 30 days (#360, #2694). Without a
+     * sort, a search lists the closest names first.
+     */
     @Transactional(readOnly = true)
     suspend fun list(
         filter: VenueFilter,
         pageable: Pageable,
         countCap: Int? = null
     ): PageResponse<VenueListItemResponse> {
-        val safePageable = pageable.sanitizeSort(SORTABLE_PROPERTIES, DEFAULT_SORT)
-        val page = venueSearchRepository.search(filter, LocalDate.now(clock), safePageable, countCap)
+        val safePageable = pageable.sanitizeSort(SORTABLE_PROPERTIES, Sort.unsorted())
+        val page = venueSearchRepository.search(filter, LocalDateTime.now(clock), safePageable, countCap)
         val entities = venueRepository.findByIdIn(page.rows.map { it.id }).toList().associateBy { it.id }
         val images = cachedImageGate.forUrls(entities.values.map { it.imageUrl })
         val tags = characterTagRepository.findByVenueIds(entities.keys.filterNotNull())
@@ -40,7 +43,7 @@ class VenueService(
                     VenueListItemResponse.fromEntity(
                         it,
                         images.serve(it.imageUrl, POSTER_WIDTH),
-                        row.upcomingEventCount,
+                        row,
                         tags[row.id].orEmpty().map { tag -> tag.tag }
                     )
                 }
@@ -78,6 +81,5 @@ class VenueService(
 
         /** Properties a client may sort the venue list by; anything else is ignored. */
         private val SORTABLE_PROPERTIES = VenueSearchRepository.SORT_COLUMNS.keys
-        private val DEFAULT_SORT = Sort.by("name")
     }
 }

@@ -87,7 +87,7 @@ class PromoterControllerTest : BaseControllerTest() {
                 .isEqualTo("goodlive")
         }
 
-    // #1349: the count is events from today on; a promoter with only past events sits at 0, and a
+    // #1349: the count is events from today on, and the sort is the next 30 days (#2694); a promoter with only past events sits at 0, and a
     // name filter still applies under the count sort.
     @Test
     fun `GET promoters sorts by upcoming events and counts only events from today on`(): Unit =
@@ -99,6 +99,7 @@ class PromoterControllerTest : BaseControllerTest() {
             val today = LocalDate.now(ClockConfiguration.BERLIN)
             linkPromoter(insertEvent(venue, "Tonight", "tonight", today), busy)
             linkPromoter(insertEvent(venue, "Next week", "next-week", today.plusDays(7)), busy)
+            linkPromoter(insertEvent(venue, "In two days", "in-two-days", today.plusDays(2)), busy)
             linkPromoter(insertEvent(venue, "Last year", "last-year", today.minusYears(1)), busy)
             linkPromoter(insertEvent(venue, "Yesterday", "yesterday", today.minusDays(1)), spent)
             linkPromoter(insertEvent(venue, "Tomorrow", "tomorrow", today.plusDays(1)), quiet)
@@ -113,7 +114,7 @@ class PromoterControllerTest : BaseControllerTest() {
                 .jsonPath("$.content[0].slug")
                 .isEqualTo("trinity-music")
                 .jsonPath("$.content[0].upcomingEventCount")
-                .isEqualTo(2)
+                .isEqualTo(3)
                 .jsonPath("$.content[1].slug")
                 .isEqualTo("quiet-agency")
                 .jsonPath("$.content[1].upcomingEventCount")
@@ -134,6 +135,68 @@ class PromoterControllerTest : BaseControllerTest() {
                 .isEqualTo(1)
                 .jsonPath("$.content[0].slug")
                 .isEqualTo("quiet-agency")
+        }
+
+    // #2694: a promoter that publishes far ahead sorts below a busier one; the sort counts the next 30 days only.
+    @Test
+    fun `GET promoters sorts by events in the next 30 days, not by the whole horizon`(): Unit =
+        runBlocking {
+            val venue = insertVenue("Lido", "lido")
+            val farAhead = insertPromoter("Far Ahead Concerts", "far-ahead-concerts")
+            val busy = insertPromoter("Busy Agency", "busy-agency")
+            val today = LocalDate.now(ClockConfiguration.BERLIN)
+            linkPromoter(insertEvent(venue, "Soon", "soon", today.plusDays(3)), farAhead)
+            (40L..44L).forEach { linkPromoter(insertEvent(venue, "Later $it", "later-$it", today.plusDays(it)), farAhead) }
+            listOf(1L, 10L, 29L).forEach { linkPromoter(insertEvent(venue, "Gig $it", "gig-$it", today.plusDays(it)), busy) }
+            linkPromoter(insertEvent(venue, "Past the window", "past-the-window", today.plusDays(31)), busy)
+
+            webTestClient
+                .get()
+                .uri("/promoters?sort=upcomingEvents,desc")
+                .exchange()
+                .expectStatus()
+                .isOk
+                .expectBody()
+                .jsonPath("$.content[0].slug")
+                .isEqualTo("busy-agency")
+                .jsonPath("$.content[0].upcomingNext30DaysCount")
+                .isEqualTo(3)
+                .jsonPath("$.content[0].upcomingEventCount")
+                .isEqualTo(4)
+                .jsonPath("$.content[1].slug")
+                .isEqualTo("far-ahead-concerts")
+                .jsonPath("$.content[1].upcomingNext30DaysCount")
+                .isEqualTo(1)
+                .jsonPath("$.content[1].upcomingEventCount")
+                .isEqualTo(6)
+        }
+
+    // #2694: production listed "Berlinmusiker.de" before "ATOK Berlin" with A–Z pressed.
+    @Test
+    fun `GET promoters with a search sorts by name when asked, and by relevance only without a sort`(): Unit =
+        runBlocking {
+            insertPromoter("Berlinmusiker.de", "berlinmusiker-de")
+            insertPromoter("ATOK Berlin", "atok-berlin")
+
+            webTestClient
+                .get()
+                .uri("/promoters?q=berlin&sort=name")
+                .exchange()
+                .expectStatus()
+                .isOk
+                .expectBody()
+                .jsonPath("$.content[*].slug")
+                .isEqualTo(listOf("atok-berlin", "berlinmusiker-de"))
+
+            webTestClient
+                .get()
+                .uri("/promoters?q=berlin")
+                .exchange()
+                .expectStatus()
+                .isOk
+                .expectBody()
+                .jsonPath("$.content[*].slug")
+                .isEqualTo(listOf("berlinmusiker-de", "atok-berlin"))
         }
 
     @Test

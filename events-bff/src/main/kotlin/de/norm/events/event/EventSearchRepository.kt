@@ -1,6 +1,7 @@
 package de.norm.events.event
 
 import de.norm.events.EVENTS_SCHEMA
+import de.norm.events.common.AssumedStartTime
 import de.norm.events.common.TextSearch
 import de.norm.events.common.countQuery
 import io.r2dbc.spi.Readable

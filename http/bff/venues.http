@@ -25,7 +25,7 @@ Accept: application/json
 GET {{bff-host}}/api/venues?page=0&size=5&sort=name,desc
 Accept: application/json
 
-### List venues — most upcoming events first
+### List venues — most events in the next 30 days first
 GET {{bff-host}}/api/venues?sort=upcomingEvents,desc
 Accept: application/json
 

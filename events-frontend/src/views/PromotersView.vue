@@ -2,15 +2,14 @@
 import { computed } from 'vue'
 import { type LocationQueryRaw, useRoute, useRouter } from 'vue-router'
 import ClearAllFilters from '@/components/ClearAllFilters.vue'
+import ListFilterBar from '@/components/ListFilterBar.vue'
 import PaginationControls from '@/components/PaginationControls.vue'
 import PromoterCard from '@/components/PromoterCard.vue'
-import SearchInput from '@/components/SearchInput.vue'
 import SortControl, { type SortOption } from '@/components/SortControl.vue'
 import { usePagedList } from '@/composables/usePagedList'
 import { usePromoterSearch, type PromoterSearchParams } from '@/composables/usePromoters'
-import { useSearchDraft } from '@/composables/useSearchDraft'
 import { useI18n } from 'vue-i18n'
-import { CARD_GRID_CLASS, PANEL_CLASS, RESULTS_BAR_CLASS } from '@/lib/utils'
+import { CARD_GRID_CLASS, RESULTS_BAR_CLASS } from '@/lib/utils'
 
 const PAGE_SIZE = 24
 
@@ -24,22 +23,21 @@ function queryString(key: string): string {
 }
 
 /**
- * The two orders the page offers. The name order is the API's default and stays out of the URL;
- * the count order is `sort=upcomingEvents,desc`, which is the whole value the BFF reads (#1349).
+ * The two orders the page offers. A–Z stays out of the URL but is sent: without a sort the BFF
+ * lists a search by relevance (#2694). The count order is `sort=upcomingEvents,desc` (#1349).
  */
+const SORT_NAME = 'name,asc'
 const SORT_UPCOMING = 'upcomingEvents,desc'
 const sort = computed(() => (queryString('sort') === SORT_UPCOMING ? SORT_UPCOMING : ''))
 
 const params = computed<PromoterSearchParams>(() => ({
   q: queryString('q') || undefined,
-  sort: sort.value ? [sort.value] : undefined,
+  sort: [sort.value || SORT_NAME],
   page: queryString('page') ? Number(queryString('page')) : 0,
   size: PAGE_SIZE,
 }))
 
 const { data: page, error, loading, run } = usePromoterSearch(() => params.value)
-
-const { search, applySearch } = useSearchDraft()
 
 // Paging, the clamp on an out-of-range `?page=`, and the reload on any query change.
 const { currentPage, totalPages, goToPage } = usePagedList(page, run)
@@ -68,17 +66,7 @@ const sortOptions = computed<SortOption[]>(() => [
       <p class="text-body text-muted-foreground">{{ t('promoters.subtitle') }}</p>
     </header>
 
-    <div :class="PANEL_CLASS">
-      <form role="search" @submit.prevent="applySearch">
-        <SearchInput
-          v-model="search"
-          :placeholder="t('promoters.searchPlaceholder')"
-          @change="applySearch"
-          @clear="applySearch"
-        />
-      </form>
-      <ClearAllFilters />
-    </div>
+    <ListFilterBar :placeholder="t('promoters.searchPlaceholder')" />
 
     <p v-if="loading" class="text-body text-muted-foreground">
       {{ t('common.states.loadingPromoters') }}
