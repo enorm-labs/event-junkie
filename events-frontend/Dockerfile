@@ -28,12 +28,13 @@
 #
 # Verify the package, never the digest: #770 was triaged against a digest that had moved while
 # still shipping the vulnerable openssl. This pin must satisfy `libssl3 >= 3.5.8-r0` (#770),
-# `libexpat >= 2.8.5-r0` (#1802) and `libuuid >= 2.42.3-r1` (#1117), checked with
-# `docker run --rm --entrypoint sh <ref> -c 'apk list | grep -E "^libssl3|^libexpat|^libuuid"'`
+# `libexpat >= 2.8.5-r0` (#1802), `libuuid >= 2.42.3-r1` (#1117) and `pcre2 >= 10.49-r0` (#2298),
+# checked with
+# `docker run --rm --entrypoint sh <ref> -c 'apk list | grep -E "^libssl3|^libexpat|^libuuid|^pcre2"'`
 # and `trivy image <ref> --severity CRITICAL,HIGH --ignore-unfixed --ignorefile /dev/null`, both
 # on `--platform linux/amd64`: Alpine builds each architecture separately, which is how #1118
 # verified clean and changed nothing.
-FROM nginxinc/nginx-unprivileged:1.31-alpine@sha256:26b0bf6fbf07297983cb341998d79c831508787de26627dd2a112321b9c3a4af
+FROM nginxinc/nginx-unprivileged:1.31-alpine@sha256:b9241c6e7b8e9a862f129d8d4199ab64b10390949a78bdd5603379b32c844083
 
 ARG VERSION=unspecified
 ARG REVISION=unknown
@@ -44,20 +45,6 @@ LABEL org.opencontainers.image.source="https://github.com/enorm-labs/event-junki
       org.opencontainers.image.licenses="BUSL-1.1" \
       org.opencontainers.image.version="${VERSION}" \
       org.opencontainers.image.revision="${REVISION}"
-
-# A base-image CVE fix that has not arrived upstream (#2298): CVE-2026-103111, an out-of-bounds
-# write in pcre2 on a crafted pattern, is fixed in Alpine 3.24's `pcre2 10.49-r0` on both
-# architectures, but this base still ships 10.48-r0 and the `1.31-alpine` tag resolves to the
-# digest already pinned above — so there is no digest to bump and no Dependabot PR coming.
-# Not waivable either: nginx links libpcre2-8.so.0, so the library is executed, and only our own
-# `location` and `map` regexes ever compile a pattern (docker/nginx.conf, all static).
-#
-# Delete this once the base ships 10.49-r0 or later; an upgrade kept past its purpose hides that
-# the base has caught up. Check with
-# `docker run --rm --entrypoint sh <ref> -c 'apk list --installed | grep -E "^pcre2"'` on the
-# pinned digest. `USER root` because apk needs write access; the final `USER` below is unaffected.
-USER root
-RUN apk upgrade --no-cache pcre2
 
 # Config first, bundle second, so the config layer stays cached.
 COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
