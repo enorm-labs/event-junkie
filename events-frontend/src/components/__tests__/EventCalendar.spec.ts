@@ -1,6 +1,7 @@
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import { flushPromises, mount } from '@vue/test-utils'
+import FullCalendar from '@fullcalendar/vue3'
+import { flushPromises, mount, type VueWrapper } from '@vue/test-utils'
 import EventCalendar from '@/components/EventCalendar.vue'
 import { i18n } from '@/i18n'
 import { todayIso } from '@/lib/format'
@@ -22,6 +23,7 @@ describe('EventCalendar', () => {
   afterEach(() => {
     i18n.global.locale.value = 'en'
     document.body.innerHTML = ''
+    vi.unstubAllGlobals()
   })
 
   it('labels the today button in German on a German page', async () => {
@@ -44,5 +46,82 @@ describe('EventCalendar', () => {
 
     expect(wrapper.findAll('button').map((button) => button.text())).toContain('Today')
     expect(wrapper.text()).toContain('18:00')
+  })
+})
+
+/** A `matchMedia` whose one query starts at `matches` and can be flipped, as a resize would. */
+function stubNarrow(matches: boolean) {
+  const listeners: ((event: { matches: boolean }) => void)[] = []
+  vi.stubGlobal(
+    'matchMedia',
+    vi.fn(() => ({
+      matches,
+      addEventListener: (_: string, listener: (event: { matches: boolean }) => void) =>
+        listeners.push(listener),
+      removeEventListener: () => {},
+    })),
+  )
+  return (next: boolean) => listeners.forEach((listener) => listener({ matches: next }))
+}
+
+function viewType(wrapper: VueWrapper) {
+  return wrapper.findComponent(FullCalendar).vm.getApi().view.type
+}
+
+async function openWeek(wrapper: VueWrapper) {
+  const week = wrapper.findAll('[role="tab"]').find((tab) => tab.text() === 'Week')
+  await week!.trigger('click')
+  await flushPromises()
+}
+
+/** The week shows every event, as a grid from `md` up and as a day list below it (#2693). */
+describe('EventCalendar week view', () => {
+  afterEach(() => {
+    document.body.innerHTML = ''
+    vi.unstubAllGlobals()
+  })
+
+  it('never folds a day of the week grid into "+N more"', async () => {
+    const wrapper = await render('en')
+
+    const views = wrapper.findComponent(FullCalendar).props('options')!.views!
+    expect(views.dayGridWeek!.dayMaxEvents).toBe(false)
+  })
+
+  it('opens the week grid from the Week button on a wide screen', async () => {
+    stubNarrow(false)
+    const wrapper = await render('en')
+
+    await openWeek(wrapper)
+
+    expect(viewType(wrapper)).toBe('dayGridWeek')
+  })
+
+  it('opens the week as a day list from the Week button below md', async () => {
+    stubNarrow(true)
+    const wrapper = await render('en')
+
+    await openWeek(wrapper)
+
+    expect(viewType(wrapper)).toBe('listWeekNarrow')
+    expect(wrapper.findAll('[role="tab"]').map((tab) => tab.text())).toEqual([
+      'Month',
+      'Week',
+      'List',
+    ])
+  })
+
+  it('swaps an open week between grid and list when the width crosses md', async () => {
+    const setNarrow = stubNarrow(false)
+    const wrapper = await render('en')
+    await openWeek(wrapper)
+
+    setNarrow(true)
+    await flushPromises()
+    expect(viewType(wrapper)).toBe('listWeekNarrow')
+
+    setNarrow(false)
+    await flushPromises()
+    expect(viewType(wrapper)).toBe('dayGridWeek')
   })
 })
