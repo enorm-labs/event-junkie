@@ -28,6 +28,7 @@ class EventUpdateKeepsDerivedColumnsTest {
             descriptionAltOrigin = "MACHINE",
             descriptionAltEngine = "deepl",
             descriptionAltSourceHash = "abc123",
+            descriptionAltRefusedHash = "def456",
             descriptionWithheld = true,
             spokenLanguages = listOf("de", "en"),
             subtitleLanguage = "de",
@@ -75,6 +76,7 @@ class EventUpdateKeepsDerivedColumnsTest {
         updated.descriptionAltOrigin.shouldBeNull()
         updated.descriptionAltEngine.shouldBeNull()
         updated.descriptionAltSourceHash.shouldBeNull()
+        updated.descriptionAltRefusedHash.shouldBeNull()
         updated.room shouldBe "Saal"
         updated.endDate shouldBe stored.endDate
     }
@@ -168,6 +170,7 @@ class EventUpdateKeepsDerivedColumnsTest {
                 "descriptionAltOrigin",
                 "descriptionAltEngine",
                 "descriptionAltSourceHash",
+                "descriptionAltRefusedHash",
                 "endDate",
                 "endTime"
             )

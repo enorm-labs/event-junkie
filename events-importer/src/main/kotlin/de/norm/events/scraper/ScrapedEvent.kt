@@ -345,7 +345,8 @@ private fun ScrapedEvent.publisherAlt(
 /**
  * The second-language columns: the venue's own text where it wrote one, else the stored machine
  * translation while the description it was made from is unchanged. The translation is derived after
- * the import commits; rebuilding it as null wiped it and bought it again every night (#1301).
+ * the import commits; rebuilding it as null wiped it and bought it again every night (#1301). A
+ * refusal is kept on the same terms, or the next pass buys it again (#2714).
  */
 private fun EventEntity.withSecondLanguage(
     publisherAlt: Pair<String, DescriptionLanguage>?,
@@ -364,7 +365,8 @@ private fun EventEntity.withSecondLanguage(
         descriptionAltLanguage = translation?.descriptionAltLanguage,
         descriptionAltOrigin = translation?.descriptionAltOrigin,
         descriptionAltEngine = translation?.descriptionAltEngine,
-        descriptionAltSourceHash = translation?.descriptionAltSourceHash
+        descriptionAltSourceHash = translation?.descriptionAltSourceHash,
+        descriptionAltRefusedHash = translation?.descriptionAltRefusedHash
     )
 }
 

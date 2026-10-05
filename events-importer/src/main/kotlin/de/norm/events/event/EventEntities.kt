@@ -38,6 +38,8 @@ data class EventEntity(
     val descriptionAltEngine: String? = null,
     /** SHA-256 of the [description] the alt text was made from. A changed original invalidates it. */
     val descriptionAltSourceHash: String? = null,
+    /** SHA-256 of the [description] the engine last refused to translate. That text is not sent again until it changes (#2714). */
+    val descriptionAltRefusedHash: String? = null,
     /** True when the source had a description and its licence kept it out (#2130); the text itself is never stored. */
     val descriptionWithheld: Boolean = false,
     val eventType: String = EventType.CONCERT.name,

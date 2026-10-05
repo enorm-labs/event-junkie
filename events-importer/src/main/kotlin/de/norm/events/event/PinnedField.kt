@@ -89,7 +89,8 @@ private fun EventEntity.withDescriptionOf(stored: EventEntity): EventEntity =
         descriptionAltLanguage = stored.descriptionAltLanguage,
         descriptionAltOrigin = stored.descriptionAltOrigin,
         descriptionAltEngine = stored.descriptionAltEngine,
-        descriptionAltSourceHash = stored.descriptionAltSourceHash
+        descriptionAltSourceHash = stored.descriptionAltSourceHash,
+        descriptionAltRefusedHash = stored.descriptionAltRefusedHash
     )
 
 /** Thrown when a pin is named by a key no [PinnedField] has. */
