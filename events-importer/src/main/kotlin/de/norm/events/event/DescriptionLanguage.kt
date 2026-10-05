@@ -76,6 +76,19 @@ enum class DescriptionLanguage(
                     )
                 }
 
+        /**
+         * The language with more stop words in [text], however few: a weaker answer than [detect], for
+         * a line too short to call on its own. Null on a tie.
+         */
+        fun leaning(text: String): DescriptionLanguage? {
+            val counts = Counts.of(text)
+            return when {
+                counts.german > counts.english -> GERMAN
+                counts.english > counts.german -> ENGLISH
+                else -> null
+            }
+        }
+
         /** How many words of each kind one text holds. */
         private data class Counts(
             val total: Int,

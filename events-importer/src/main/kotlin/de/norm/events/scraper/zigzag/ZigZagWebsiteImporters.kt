@@ -75,6 +75,7 @@ abstract class AbstractZigZagWebsiteImporter(
         return detail.takeUnless { dropped }?.let {
             event.copy(
                 description = it.description,
+                descriptionAlt = it.descriptionAlt,
                 startTime = it.startTime,
                 doorsTime = it.doorsTime,
                 pricePresale = it.price?.takeIf { _ -> it.ticketUrl != null },

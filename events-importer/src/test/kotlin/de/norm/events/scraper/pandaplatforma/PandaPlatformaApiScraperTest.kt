@@ -4,7 +4,9 @@ import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
+import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldNotContain
 import org.junit.jupiter.api.Test
 import java.math.BigDecimal
@@ -94,5 +96,14 @@ class PandaPlatformaApiScraperTest {
     @Test
     fun `returns no events for a body that is not JSON`() {
         scraper.scrapePage("<html>maintenance</html>").events.shouldBeEmpty()
+    }
+
+    // Russian is neither of the two languages the schema stores, so the text stays as published (#330).
+    @Test
+    fun `stores a Russian and English description whole`() {
+        val sine = event("god-is-a-perfect-sine-d-arcangelo")
+
+        sine.descriptionAlt.shouldBeNull()
+        sine.description.shouldNotBeNull() shouldContain "[EN]"
     }
 }

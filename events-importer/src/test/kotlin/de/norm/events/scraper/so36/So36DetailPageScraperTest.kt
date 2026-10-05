@@ -3,9 +3,12 @@ package de.norm.events.scraper.so36
 import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
 import io.kotest.matchers.collections.shouldHaveSize
+import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
+import io.kotest.matchers.string.shouldNotContain
+import io.kotest.matchers.string.shouldStartWith
 import org.jsoup.Jsoup
 import org.junit.jupiter.api.Test
 import java.math.BigDecimal
@@ -303,5 +306,25 @@ class So36DetailPageScraperTest {
         event.pricePresale shouldBe BigDecimal("24.5")
         event.priceNote shouldBe "Ticket social 24,50 € / Ticket regular 29,50 € / Ticket support 34,50 €"
         event.ticketUrl shouldBe url
+    }
+
+    // The whole text is one paragraph, English first; the pointer says only that German follows (#330).
+    @Test
+    fun `cuts a description in both languages where the German half begins`() {
+        val url = "https://www.so36.com/tickets/x"
+        val event = scraper.scrape(fixture("so36-detail-tiers.html", url), url).shouldNotBeNull()
+
+        val english = event.description.shouldNotBeNull()
+        english shouldStartWith "A queer-feminist double anniversary with panel, live concerts and DJs"
+        english shouldNotContain "Deutsche Version"
+        english shouldNotContain "Doppeljubiläum"
+        event.descriptionAlt.shouldNotBeNull() shouldStartWith "Queer-feministisches Doppeljubiläum mit Panel"
+    }
+
+    @Test
+    fun `stores a one-language description with no second language`() {
+        val event = scraper.scrape(fixture("so36-detail-concert.html", concertUrl), concertUrl).shouldNotBeNull()
+
+        event.descriptionAlt.shouldBeNull()
     }
 }

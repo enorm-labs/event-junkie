@@ -33,6 +33,11 @@ data class ScrapedEvent(
     val subtitle: String? = null,
     /** Longer description or artist biography. */
     val description: String? = null,
+    /**
+     * The venue's own text in the other language, where it wrote both. Stored as the `PUBLISHER`
+     * second language when its language differs from [description]'s (ADR-026 rule 2, #330).
+     */
+    val descriptionAlt: String? = null,
     /** Kind of event as categorized by the source (e.g. "CONCERT", "PARTY"). Null means the source provided no category. */
     val eventType: String? = null,
     /**
@@ -137,13 +142,17 @@ data class ScrapedEvent(
     fun withGapsFrom(fallback: ScrapedEvent): ScrapedEvent =
         withScheduleAndTextGapsFrom(fallback)
             .withTicketAndLineupGapsFrom(fallback)
+            .withDescriptionGapFrom(fallback)
             .copy(typeIsFallback = if (eventType == null) fallback.typeIsFallback else typeIsFallback)
 
-    /** [withGapsFrom] for the text, the date and times, and the links. */
+    /** [withGapsFrom] for the description, which takes its second language with it. */
+    private fun withDescriptionGapFrom(fallback: ScrapedEvent): ScrapedEvent =
+        if (description != null) this else copy(description = fallback.description, descriptionAlt = fallback.descriptionAlt)
+
+    /** [withGapsFrom] for the subtitle, the date and times, and the links. */
     private fun withScheduleAndTextGapsFrom(fallback: ScrapedEvent): ScrapedEvent =
         copy(
             subtitle = subtitle ?: fallback.subtitle,
-            description = description ?: fallback.description,
             eventType = eventType ?: fallback.eventType,
             eventDate = eventDate.takeIf { it != UNRESOLVED_EVENT_DATE } ?: fallback.eventDate,
             doorsTime = doorsTime ?: fallback.doorsTime,
@@ -232,7 +241,7 @@ data class ScrapedEvent(
         val badgeStatus = if (badge == EventStatus.SCHEDULED) parseTitleStatus(title) ?: badge.name else badge.name
         // A "verlegt" badge sits on both ends of a move; which end this row is, only this boundary knows
         // (#1551).
-        val notes = listOfNotNull(statusNote, title, subtitle, description)
+        val notes = listOfNotNull(statusNote, title, subtitle, description, descriptionAlt)
         val relocation = notes.firstNotNullOfOrNull(::parseRelocation)
         val (relocatedStatus, relocatedTo) = resolveRelocation(badgeStatus, relocation, venueSlug)
         // A "verschoben" note sits on both dates of a move too; the row the show moved to takes place (#2206).
@@ -248,10 +257,6 @@ data class ScrapedEvent(
         }
         val storedDescription = if (licences.withholdsDescription()) null else description
         val detected = DescriptionLanguage.detect(storedDescription)
-        // The second-language text is derived after the import commits, not scraped. Rebuilding it as
-        // null made every translated row "changed", wiped the translation and bought it again the same
-        // night, the whole catalogue daily (#1301).
-        val alt = existing?.takeIf { storedDescription != null && it.description == storedDescription }
         // priceCurrency omitted: every scraped venue is in Berlin, and EventEntity defaults to "EUR".
         return EventEntity(
             // `sourceId` is the immutable identity key matching scraped events to persisted rows.
@@ -270,11 +275,6 @@ data class ScrapedEvent(
             // The page tells a reader and a crawler which language the text is in (ADR-026).
             descriptionLanguage = detected?.language?.code,
             descriptionLanguageConfidence = detected?.confidence,
-            descriptionAlt = alt?.descriptionAlt,
-            descriptionAltLanguage = alt?.descriptionAltLanguage,
-            descriptionAltOrigin = alt?.descriptionAltOrigin,
-            descriptionAltEngine = alt?.descriptionAltEngine,
-            descriptionAltSourceHash = alt?.descriptionAltSourceHash,
             // OTHER, not CONCERT, when the source provided no category; then promote an under-classified
             // festival title to FESTIVAL, or recover a reading/exhibition/screening filed under the genre
             // field.
@@ -305,15 +305,68 @@ data class ScrapedEvent(
             // Honour an explicit scraper flag, otherwise derive from prices/note/title.
             free = free || detectFree(pricePresale, priceBoxOffice, priceNote, storedTitle)
         ).withSpokenLanguages(spokenLanguages(storedTitle))
+            .withSecondLanguage(publisherAlt(storedDescription, detected), existing)
     }
 }
 
 /**
- * The languages the venue states for this event. Read from [ScrapedEvent.description] even when the
- * licence withholds it: the language is a fact, not the prose.
+ * The languages the venue states for this event. Read from both halves of the description even when
+ * the licence withholds it: the language is a fact, not the prose.
  */
 private fun ScrapedEvent.spokenLanguages(storedTitle: String): SpokenLanguages =
-    detectSpokenLanguages(storedTitle, subtitle, description, resolvedEventType(), houseLanguage)
+    detectSpokenLanguages(
+        storedTitle,
+        subtitle,
+        listOfNotNull(description, descriptionAlt).joinToString("\n").ifEmpty { null },
+        resolvedEventType(),
+        houseLanguage
+    )
+
+/**
+ * [ScrapedEvent.descriptionAlt] with its language, when it is stored: the description is, and the two
+ * detect as German and English. Otherwise the page would offer one language twice.
+ */
+private fun ScrapedEvent.publisherAlt(
+    storedDescription: String?,
+    detected: DescriptionLanguage.Detection?
+): Pair<String, DescriptionLanguage>? {
+    val text = descriptionAlt?.takeIf { storedDescription != null } ?: return null
+    val read = DescriptionLanguage.detect(text)?.language
+    val language = read?.takeIf { detected != null && it != detected.language }
+    if (language == null) {
+        logger.at(Level.DEBUG) {
+            message = "Second-language text of '$title' not stored: it reads as ${read?.code}, the description as ${detected?.language?.code}"
+            payload = mapOf(LogFields.EVENT_SOURCE_ID to sourceId)
+        }
+    }
+    return language?.let { text to it }
+}
+
+/**
+ * The second-language columns: the venue's own text where it wrote one, else the stored machine
+ * translation while the description it was made from is unchanged. The translation is derived after
+ * the import commits; rebuilding it as null wiped it and bought it again every night (#1301).
+ */
+private fun EventEntity.withSecondLanguage(
+    publisherAlt: Pair<String, DescriptionLanguage>?,
+    existing: EventEntity?
+): EventEntity {
+    if (publisherAlt != null) {
+        return copy(
+            descriptionAlt = publisherAlt.first,
+            descriptionAltLanguage = publisherAlt.second.code,
+            descriptionAltOrigin = PUBLISHER_ORIGIN
+        )
+    }
+    val translation = existing?.takeIf { description != null && it.description == description && it.descriptionAltOrigin != PUBLISHER_ORIGIN }
+    return copy(
+        descriptionAlt = translation?.descriptionAlt,
+        descriptionAltLanguage = translation?.descriptionAltLanguage,
+        descriptionAltOrigin = translation?.descriptionAltOrigin,
+        descriptionAltEngine = translation?.descriptionAltEngine,
+        descriptionAltSourceHash = translation?.descriptionAltSourceHash
+    )
+}
 
 private fun EventEntity.withSpokenLanguages(languages: SpokenLanguages): EventEntity =
     copy(spokenLanguages = languages.spoken, subtitleLanguage = languages.subtitle)

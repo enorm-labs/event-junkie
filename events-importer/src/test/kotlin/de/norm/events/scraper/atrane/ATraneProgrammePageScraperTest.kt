@@ -6,7 +6,11 @@ import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.collections.shouldNotContain
 import io.kotest.matchers.nulls.shouldBeNull
+import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
+import io.kotest.matchers.string.shouldEndWith
+import io.kotest.matchers.string.shouldNotContain
 import io.kotest.matchers.string.shouldStartWith
 import org.jsoup.Jsoup
 import org.junit.jupiter.api.Test
@@ -125,5 +129,37 @@ class ATraneProgrammePageScraperTest {
             </div>
             """.trimIndent()
         ATraneProgrammePageScraper().scrape(Jsoup.parse(html, sourceUrl)).shouldBeEmpty()
+    }
+
+    // The programme writes "Deutsch" and "English" headings into one description (#330).
+    @Test
+    fun `cuts a description in both languages at its headings, with the title lines and the line-up in both`() {
+        val kera = events.single { it.sourceId.contains("mfa-kera-and-black-heritage") }
+
+        val german = kera.description.shouldNotBeNull()
+        val english = kera.descriptionAlt.shouldNotBeNull()
+        german shouldStartWith "MFA KERA AND BLACK HERITAGE\nFEAT: Mike RUSSELL\n«THE AFROSOUL JOURNEY»\nSeid mit dabei"
+        english shouldStartWith "MFA KERA AND BLACK HERITAGE\nFEAT: Mike RUSSELL\n«THE AFROSOUL JOURNEY»\nJoin the group"
+        german shouldEndWith "Charles Sammons – Bass\nFoto Kera©Bernd Leideritz"
+        english shouldEndWith "Charles Sammons – Bass\nFoto Kera©Bernd Leideritz"
+        german shouldNotContain "Join the group"
+        german shouldNotContain "\nEnglish\n"
+    }
+
+    @Test
+    fun `keeps the venue's order, so a text that opens in English stays the description`() {
+        val bresler = events.single { it.sourceId.contains("amir-bresler") }
+
+        bresler.description.shouldNotBeNull() shouldContain "Led by Amir Bresler"
+        bresler.descriptionAlt.shouldNotBeNull() shouldContain "Unter der Leitung von Amir Bresler"
+    }
+
+    // English press quotes inside the German half leave it no single language, so the text stays whole.
+    @Test
+    fun `stores a half that mixes in the other language as published`() {
+        val ruppnig = events.single { it.sourceId.contains("mathias-ruppnigfoam") }
+
+        ruppnig.descriptionAlt.shouldBeNull()
+        ruppnig.description.shouldNotBeNull() shouldContain "ENGLISH:"
     }
 }

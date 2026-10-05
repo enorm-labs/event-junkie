@@ -11,6 +11,7 @@ import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldNotContain
+import io.kotest.matchers.string.shouldStartWith
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.time.Clock
@@ -255,5 +256,16 @@ class InselApiScraperTest {
         parsed shouldHaveSize 1
         parsed[0].title shouldBe "Real Act"
         parsed[0].startTime shouldBe LocalTime.of(20, 0)
+    }
+
+    // "[English below]" points, "// ENGLISH VERSION" cuts (#330).
+    @Test
+    fun `cuts a description at its English heading and drops the pointer from the title line`() {
+        val dead = events.single { it.sourceId == "insel:2026-10-16-aoxotoxoa-ch" }
+
+        val german = dead.description.shouldNotBeNull()
+        german shouldStartWith "Grateful Dead Revival\nAoxoToxoA: Truckin' Cross Germany\nDie US-Amerikanische Band Grateful Dead"
+        german shouldNotContain "English"
+        dead.descriptionAlt.shouldNotBeNull() shouldStartWith "The American band the Grateful Dead was unlike any other"
     }
 }

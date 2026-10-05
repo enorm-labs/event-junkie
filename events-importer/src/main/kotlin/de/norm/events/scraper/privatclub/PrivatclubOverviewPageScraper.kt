@@ -23,6 +23,7 @@ import de.norm.events.scraper.schemaOffers
 import de.norm.events.scraper.schemaTime
 import de.norm.events.scraper.stringOrNull
 import de.norm.events.scraper.textAt
+import de.norm.events.scraper.withBilingualDescriptionSplit
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
@@ -175,7 +176,7 @@ class PrivatclubOverviewPageScraper(
             status = status,
             artists = artists,
             promoters = promoters
-        )
+        ).withBilingualDescriptionSplit()
     }
 
     // -- JSON-LD parsing --------------------------------------------------

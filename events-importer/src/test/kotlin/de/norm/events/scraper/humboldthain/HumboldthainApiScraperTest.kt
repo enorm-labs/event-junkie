@@ -9,6 +9,8 @@ import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
+import io.kotest.matchers.string.shouldEndWith
+import io.kotest.matchers.string.shouldNotContain
 import io.kotest.matchers.string.shouldStartWith
 import org.junit.jupiter.api.Test
 import java.time.Clock
@@ -238,5 +240,32 @@ class HumboldthainApiScraperTest {
 
     private companion object {
         val BERLIN: ZoneId = ZoneId.of("Europe/Berlin")
+    }
+
+    // "EN" opens the English half, and the line-up after it belongs to both (#330).
+    @Test
+    fun `cuts a description at its EN line and gives the line-up to both halves`() {
+        val night = events.single { it.sourceId == "humboldthain:a1e3cc34-5a94-416a-910d-802c0a4dd5ac-2026-04-24" }
+
+        val german = night.description.shouldNotBeNull()
+        val english = night.descriptionAlt.shouldNotBeNull()
+        german shouldStartWith "19:00 Uhr - Open Air"
+        english shouldStartWith "We’ve taken the Humbi concept to its logical conclusion."
+        german shouldEndWith "Moritz Biebl"
+        english shouldEndWith "Moritz Biebl"
+        german shouldNotContain "\nEN\n"
+        german shouldNotContain "Open-air after-hours"
+    }
+
+    @Test
+    fun `cuts a description at its version-above separator and drops both pointers`() {
+        val night = events.single { it.sourceId == "humboldthain:7bfd1477-34f3-49b9-894d-6c262303b0fa-2026-02-20" }
+
+        val english = night.description.shouldNotBeNull()
+        val german = night.descriptionAlt.shouldNotBeNull()
+        english shouldStartWith "The hardest days of this winter are gone"
+        german shouldStartWith "Die härtesten Tage dieses Winters liegen hinter uns"
+        english shouldNotContain "version"
+        german shouldNotContain "version"
     }
 }

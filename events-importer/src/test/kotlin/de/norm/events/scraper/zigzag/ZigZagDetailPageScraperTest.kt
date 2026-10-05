@@ -2,7 +2,9 @@ package de.norm.events.scraper.zigzag
 
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.nulls.shouldBeNull
+import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldEndWith
 import io.kotest.matchers.string.shouldNotContain
 import io.kotest.matchers.string.shouldStartWith
 import org.jsoup.Jsoup
@@ -118,5 +120,26 @@ class ZigZagDetailPageScraperTest {
         detail.startTime.shouldBeNull()
         detail.price.shouldBeNull()
         detail.elsewhere shouldBe false
+    }
+
+    // The page says "(for English please scroll down)" and nothing where the English starts (#330).
+    @Test
+    fun `cuts the blurb where it turns English and drops the pointer`() {
+        val detail = page("zigzag-detail.html")
+
+        val german = detail.description.shouldNotBeNull()
+        german shouldStartWith "Das Roland Satterwhite Quartet wurde 2025 gegründet"
+        german shouldNotContain "scroll down"
+        german shouldNotContain "The Roland Satterwhite Quartet"
+        detail.descriptionAlt.shouldNotBeNull() shouldStartWith "The Roland Satterwhite Quartet was founded in 2025"
+    }
+
+    // "Nicht verpassen!" and the first English line are too short to call; each goes with the language it leans to.
+    @Test
+    fun `gives the lines too short to call to the half they lean to, and the session host to both`() {
+        val detail = page("zigzag-detail-jam.html")
+
+        detail.description.shouldNotBeNull() shouldEndWith "Nicht verpassen!"
+        detail.descriptionAlt.shouldNotBeNull() shouldStartWith "Session Host: Uri Gincel\nHippest session in town!!\nLike every Tuesday"
     }
 }

@@ -7,9 +7,10 @@ wherever the publisher wrote it. Machine translation happens only for a source w
 the page says so. Everything else is served in the language it was written in, marked as such. Titles are never
 translated.**
 
-**Not implemented.** The implementation is Phase 2 work. Issue
-[#330](https://github.com/enorm-labs/event-junkie/issues/330) imports the second language where a source publishes
-one. Issue [#470](https://github.com/enorm-labs/event-junkie/issues/470) translates under a grant. Issue
+**Partly implemented.** [#2701](https://github.com/enorm-labs/event-junkie/pull/2701) splits a description that holds
+both languages at its marker, for ten sources. This builds the item listed below as deliberately deferred. The rest is
+Phase 2 work. Issue [#330](https://github.com/enorm-labs/event-junkie/issues/330) also imports the second language
+where a source publishes it on a separate page. Issue [#470](https://github.com/enorm-labs/event-junkie/issues/470) translates under a grant. Issue
 [#808](https://github.com/enorm-labs/event-junkie/issues/808) is where a grant comes from. Decided in
 [#469](https://github.com/enorm-labs/event-junkie/issues/469).
 

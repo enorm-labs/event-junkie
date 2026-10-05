@@ -1,8 +1,11 @@
 package de.norm.events.scraper.klunkerkranich
 
+import de.norm.events.scraper.splitBilingualDescription
 import io.kotest.matchers.nulls.shouldBeNull
+import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldNotContain
+import io.kotest.matchers.string.shouldStartWith
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.junit.jupiter.api.Test
@@ -112,5 +115,16 @@ class KlunkerkranichDetailPageScraperTest {
         scraper.scrapeDescription(empty, singleTitle).shouldBeNull()
         scraper.scrapePrice(empty) shouldBe (null to null)
         scraper.scrapeImageUrl(empty).shouldBeNull()
+    }
+
+    // The importer cuts the blurb at its "[EN]" line (#330).
+    @Test
+    fun `the blurb cuts at its EN line into a German and an English half`() {
+        val split = splitBilingualDescription(scraper.scrapeDescription(rangePage(), rangeTitle)).shouldNotBeNull()
+
+        split.original shouldStartWith "Ein zweites Mal in 2026"
+        split.original shouldNotContain "[EN]"
+        split.alt shouldStartWith "For the second time in 2026"
+        split.alt shouldNotContain "Ein zweites Mal"
     }
 }

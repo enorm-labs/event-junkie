@@ -20,6 +20,7 @@ import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.labelledClock
 import de.norm.events.scraper.labelledClockPattern
 import de.norm.events.scraper.mapSkippingFailures
+import de.norm.events.scraper.withBilingualDescriptionSplit
 import de.norm.events.slug.SlugGenerator
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jsoup.Jsoup
@@ -180,7 +181,7 @@ class InselApiScraper(
             soldOut = SOLD_OUT_PREFIX.containsMatchIn(rawName) || lines.any { SOLD_OUT_LINE_PATTERN.containsMatchIn(it) },
             promoters = listOfNotNull(promoter(lines)),
             artists = buildArtists(title, supportNames, eventType)
-        )
+        ).withBilingualDescriptionSplit()
     }
 
     /**
