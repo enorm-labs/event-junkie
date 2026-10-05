@@ -85,7 +85,7 @@ jobs:
   dast-k3d:
     name: Active scan against k3d
     runs-on: ubuntu-latest
-    # Measured: flux-up 2 minutes, the full scan 15, the API scan 1, Nuclei 4.
+    # Measured: flux-up 2 minutes, the full scan 15, the API scan 3–7, Nuclei 4.
     timeout-minutes: 75
     if: >-
       (github.event_name == 'schedule' && github.event.schedule == '52 3 * * *')
@@ -130,6 +130,7 @@ jobs:
       # The rehearsal script owns every k3d, helm and kubectl incantation; `down` at the end leaves nothing
       # behind. `flux-verify` asserts what was pulled: a snapshot, from GHCR, one tag, tests passed.
       - name: Bring the chart up through Flux
+        timeout-minutes: 15
         run: |
           scripts/k3d-rehearsal.sh flux-up
           scripts/k3d-rehearsal.sh flux-verify
@@ -172,6 +173,7 @@ jobs:
       # `-e` is what makes a missed floor red; no `-s`, because the short format drops the `Total of N URLs`
       # line the floor reads.
       - name: Full scan through Traefik
+        timeout-minutes: 35
         run: |
           set -euo pipefail
           status=0
@@ -179,7 +181,7 @@ jobs:
             -v "$PWD/build/zap:/zap/wrk:rw" "$ZAP_IMAGE" \
             zap-full-scan.py -t http://host.docker.internal:8080 -j -m 3 -T 40 -I \
               -c rules-k3d-full.tsv -J full.json -r full.html \
-              -z "-config scanner.threadPerHost=2 -config scanner.delayInMs=10 -config scanner.maxScanDurationInMins=30 $HOST_REPLACER" \
+              -z "-config scanner.threadPerHost=2 -config scanner.delayInMs=10 -config scanner.maxScanDurationInMins=30 -config scanner.maxRuleDurationInMins=5 $HOST_REPLACER" \
             | tee build/zap/full.txt || status=$?
           scripts/scan-coverage.sh baseline zap-k3d-full-urls build/zap/full.txt
           scripts/scan-coverage.sh baseline zap-k3d-full-rules build/zap/full.txt
@@ -202,6 +204,7 @@ jobs:
       # hide the other's report.
       - name: API scan against the BFF
         if: ${{ !cancelled() }}
+        timeout-minutes: 15
         run: |
           set -euo pipefail
           status=0
@@ -216,6 +219,7 @@ jobs:
             -v "$PWD/build/zap:/zap/wrk:rw" "$ZAP_IMAGE" \
             zap-api-scan.py -t http://host.docker.internal:18080/v3/api-docs -f openapi -T 40 -I \
               -c rules-k3d-api.tsv -J api.json -r api.html \
+              -z "-config scanner.maxScanDurationInMins=10 -config scanner.maxRuleDurationInMins=3" \
             | tee build/zap/api.txt || status=$?
           scripts/scan-coverage.sh baseline zap-k3d-api-urls build/zap/api.txt
           scripts/scan-coverage.sh baseline zap-k3d-api-rules build/zap/api.txt
@@ -228,6 +232,7 @@ jobs:
       # `.nuclei/waivers-k3d.tsv`, one template id per row with the date and the reason.
       - name: Nuclei through Traefik
         if: ${{ !cancelled() }}
+        timeout-minutes: 10
         run: |
           set -euo pipefail
           status=0
@@ -248,6 +253,13 @@ jobs:
             exit 1
           fi
           exit "$status"
+
+      # A stalled step leaves no trace of whether the BFF restarted, so the pod state is kept before teardown.
+      - name: Record the pod state
+        if: failure()
+        run: |
+          kubectl --context k3d-event-junkie -n event-junkie get pods -o wide || true
+          kubectl --context k3d-event-junkie -n event-junkie logs deploy/event-junkie-bff --all-containers --tail=300 --previous || true
 
       - name: Summarise
         if: always()
@@ -285,6 +297,7 @@ jobs:
 
       - name: Tear the cluster down
         if: always()
+        timeout-minutes: 5
         run: scripts/k3d-rehearsal.sh down
 
   # The browser half of #298, answered on k3d rather than staging for the reason ADR-033 gives: no
