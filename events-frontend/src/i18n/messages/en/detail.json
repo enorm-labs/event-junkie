@@ -4,6 +4,8 @@
     "kind": "Venue",
     "notFound": "That venue isn't in our little black book.",
     "empty": "No upcoming nights here yet. Check back soon.",
+    "type": "Type",
+    "onMap": "On the map",
     "plays": "Mostly plays",
     "hosts": "Hosts",
     "programmeNote": "Plays and hosts: from its events over the past year and ahead.",

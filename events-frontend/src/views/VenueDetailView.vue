@@ -16,6 +16,8 @@ import { useStructuredData } from '@/composables/useStructuredData'
 import { venuePageJsonLd } from '@/lib/structuredData'
 import { descriptionFor } from '@/lib/description'
 import { inCharacterOrder } from '@/lib/venueCharacters'
+import { districtLabel } from '@/lib/districts'
+import { venuePosition } from '@/lib/mapPins'
 import type { Locale } from '@/i18n/locales'
 
 const route = useRoute()
@@ -36,13 +38,17 @@ const { data: pastEvents, run: loadPastEvents } = useEventSearch(() => ({
   sort: ['eventDate,desc'],
 }))
 
-// Composed in script to avoid fragile template whitespace around the comma/space separators.
-const addressLine = computed(() => {
-  const v = venue.value
-  if (!v?.address) return ''
-  const cityLine = [v.postalCode, v.city].filter(Boolean).join(' ')
-  return cityLine ? `${v.address}, ${cityLine}` : v.address
-})
+/** "Holzmarktstr. 25 · Friedrichshain": a part the venue lacks drops out with its separator. */
+const addressLine = computed(() =>
+  [venue.value?.address, districtLabel(venue.value?.district)].filter(Boolean).join(' · '),
+)
+
+/** The map centred on this venue with its pin open; none without a coordinate to centre on. */
+const mapLink = computed(() =>
+  venue.value?.slug && venuePosition(venue.value)
+    ? { path: localePath('/map'), query: { focus: venue.value.slug } }
+    : null,
+)
 
 function reload() {
   loadVenue()
@@ -80,12 +86,17 @@ usePageMeta(() =>
 
 const credit = computed(() => imageCredit(venue.value))
 
-const { formatEventType, formatFamily, formatVenueCharacter, formatVenueFacts } = useFormat()
-// The character tags are left out here: the page lists them below, each with its source.
-const facts = computed(() =>
-  venue.value
-    ? formatVenueFacts({ venueTypes: venue.value.venueTypes, capacity: venue.value.capacity })
-    : '',
+const { formatEventType, formatFamily, formatVenueCharacter, formatVenueFacts, formatVenueType } =
+  useFormat()
+// Only the capacity: the types are the table's first row.
+const capacity = computed(() => formatVenueFacts({ capacity: venue.value?.capacity }))
+
+/** Each type lists every venue of that type, the same shape as the rows under it. */
+const types = computed(() =>
+  (venue.value?.venueTypes ?? []).map((type) => ({
+    label: formatVenueType(type),
+    to: { path: localePath('/venues'), query: { type } },
+  })),
 )
 
 /**
@@ -101,6 +112,7 @@ const characters = computed(() =>
 
 /** What the venue plays and hosts, then what it says about itself: one block of filter pills. */
 const facets = computed(() => [
+  ...(types.value.length ? [{ term: t('detail.venue.type'), items: types.value }] : []),
   ...programme.value,
   ...(characters.value.length
     ? [{ term: t('detail.venue.character'), items: characters.value }]
@@ -173,17 +185,28 @@ const programme = computed(() => {
     :ready="Boolean(venue)"
   >
     <template #meta>
-      <p v-if="addressLine" class="text-body text-muted-foreground">{{ addressLine }}</p>
-      <p v-if="facts" class="text-body text-muted-foreground">{{ facts }}</p>
-      <a
-        v-if="venue?.websiteUrl"
-        :href="venue.websiteUrl"
-        class="text-body text-primary underline-offset-4 hover:underline"
-        rel="noopener noreferrer"
-        target="_blank"
-      >
-        {{ t('common.actions.website') }}
-      </a>
+      <p v-if="addressLine || mapLink" class="text-body text-muted-foreground">
+        {{ addressLine }}
+        <template v-if="addressLine && mapLink">{{ ' · ' }}</template>
+        <RouterLink
+          v-if="mapLink"
+          :to="mapLink"
+          class="text-primary underline-offset-4 hover:underline"
+          data-testid="venue-map-link"
+        >
+          {{ t('detail.venue.onMap') }}
+        </RouterLink>
+      </p>
+      <p v-if="venue?.websiteUrl" class="text-body">
+        <a
+          :href="venue.websiteUrl"
+          class="text-primary underline-offset-4 hover:underline"
+          rel="noopener noreferrer"
+          target="_blank"
+        >
+          {{ t('common.actions.website') }}
+        </a>
+      </p>
     </template>
 
     <p
@@ -195,8 +218,12 @@ const programme = computed(() => {
     </p>
 
     <!-- Every pill here opens a filtered list, which makes it a control (design.instructions.md §1). -->
-    <section v-if="facets.length" class="space-y-3 text-body" data-testid="venue-facets">
-      <dl class="space-y-2">
+    <section
+      v-if="facets.length || capacity"
+      class="space-y-3 text-body"
+      data-testid="venue-facets"
+    >
+      <dl v-if="facets.length" class="space-y-2">
         <div
           v-for="row in facets"
           :key="row.term"
@@ -217,6 +244,7 @@ const programme = computed(() => {
         </div>
       </dl>
       <div class="space-y-0.5 text-meta text-muted-foreground">
+        <p v-if="capacity">{{ capacity }}</p>
         <p v-if="programme.length">{{ t('detail.venue.programmeNote') }}</p>
         <p v-if="characterSources.length" class="break-words">
           {{ t('detail.venue.characterNote') }}:

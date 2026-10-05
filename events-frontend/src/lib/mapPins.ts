@@ -19,6 +19,8 @@ export interface MapPin {
   live?: boolean
   /** Outside the chosen radius: drawn faintly rather than removed, so the map keeps its context. */
   dimmed?: boolean
+  /** A venue drawn with nothing in the range, because a link asked for it: muted, never live. */
+  quiet?: boolean
 }
 
 /** A venue together with the events it has in the requested range. */
@@ -61,17 +63,17 @@ export function venuePin(
   venue: VenueSummary,
   label: string,
   badge?: string,
-  extra: Pick<MapPin, 'live' | 'dimmed'> = {},
+  extra: Pick<MapPin, 'live' | 'dimmed' | 'quiet'> = {},
 ): MapPin | null {
   const position = venuePosition(venue)
   if (!venue.slug || !position) return null
   return { slug: venue.slug, ...position, name: venue.name ?? undefined, label, badge, ...extra }
 }
 
-/** The radii "near" offers, in kilometres: a walk, a short ride, across a district. */
 /** The maps' own query keys. Not filters: the list link and the API never see them. */
-export const MAP_KEYS = ['radius'] as const
+export const MAP_KEYS = ['radius', 'focus'] as const
 
+/** The radii "near" offers, in kilometres: a walk, a short ride, across a district. */
 export const RADII = [1, 2, 5] as const
 export const DEFAULT_RADIUS = 2
 
