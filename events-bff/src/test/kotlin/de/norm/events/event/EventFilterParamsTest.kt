@@ -44,4 +44,13 @@ class EventFilterParamsTest {
         first.venueTypes shouldBe listOf("bar", "club")
         first shouldBe second
     }
+
+    @Test
+    fun `two orders and cases of the same times of day are one filter`() {
+        val first = EventFilterParams(timeOfDay = listOf("late", " Daytime", "LATE", "")).toFilter()
+        val second = EventFilterParams(timeOfDay = listOf("daytime", "late")).toFilter()
+
+        first.timesOfDay shouldBe listOf("daytime", "late")
+        first shouldBe second
+    }
 }

@@ -49,7 +49,9 @@ data class EventFilter(
     val maxPrice: BigDecimal? = null,
     val query: String? = null,
     val excludeSoldOut: Boolean = false,
-    val onlyFree: Boolean = false
+    val onlyFree: Boolean = false,
+    /** Any of these [TimeOfDay] slugs; empty imposes no constraint. [EventFilterParams] normalizes them. */
+    val timesOfDay: List<String> = emptyList()
 )
 
 /** An ordered page of event IDs plus the total count of matches across all pages. */
@@ -260,7 +262,7 @@ class EventSearchRepository(
         return "($notEnded$grace)"
     }
 
-    /** Applies filters on columns of the `event` table and its venue (type, venue, district, venue type). */
+    /** Applies filters on columns of the `event` table and its venue (type, venue, district, venue type, time of night). */
     private fun appendColumnFilters(
         filter: EventFilter,
         conditions: MutableList<String>,
@@ -288,6 +290,9 @@ class EventSearchRepository(
         }
         if (filter.onlyFree) {
             conditions += "e.free = TRUE"
+        }
+        if (filter.timesOfDay.isNotEmpty()) {
+            conditions += filter.timesOfDay.joinToString(" OR ", "(", ")") { TimeOfDay.bySlug(it)?.sql ?: "FALSE" }
         }
     }
 

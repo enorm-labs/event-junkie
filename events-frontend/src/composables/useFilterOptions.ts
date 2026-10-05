@@ -4,15 +4,20 @@ import { useFormat } from '@/composables/useFormat'
 import { DISTRICTS } from '@/lib/districts'
 import { EVENT_TYPES } from '@/lib/eventTypes'
 import { GENRE_FAMILIES } from '@/lib/genreFamilies'
+import { TIMES_OF_DAY } from '@/lib/timesOfDay'
 import { VENUE_CHARACTERS } from '@/lib/venueCharacters'
 import { VENUE_TYPES } from '@/lib/venueTypes'
 
 /** The labelled options of the multi-value filters, shared by the event bar and the venue list. */
 export function useFilterOptions() {
-  const { formatEventType, formatFamily, formatVenueCharacter, formatVenueType } = useFormat()
+  const { formatEventType, formatFamily, formatTimeOfDay, formatVenueCharacter, formatVenueType } =
+    useFormat()
   return {
     eventTypeOptions: computed<FilterOption[]>(() =>
       EVENT_TYPES.map((type) => ({ value: type, label: formatEventType(type) })),
+    ),
+    timeOfDayOptions: computed<FilterOption[]>(() =>
+      TIMES_OF_DAY.map((slot) => ({ value: slot, label: formatTimeOfDay(slot) })),
     ),
     familyOptions: computed<FilterOption[]>(() =>
       GENRE_FAMILIES.map((family) => ({ value: family, label: formatFamily(family) })),

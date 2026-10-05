@@ -96,6 +96,7 @@ const {
   familyOptions,
   districtOptions,
   venueTypeOptions,
+  timeOfDayOptions,
 } = useFilterOptions()
 
 /**
@@ -158,6 +159,7 @@ function toggleFlag(key: 'free' | 'excludeSoldOut') {
 const moreCount = computed(
   () =>
     [
+      queryList('timeOfDay').length,
       queryList('eventType').length,
       queryList('family').length || queryString('genre'),
       queryString('venue'),
@@ -261,12 +263,24 @@ onMounted(() => {
     </div>
 
     <!--
-      A funnel: what, then where, then how much, one line each. Sharing lines, a select that grew
+      A funnel: what kind of night, then where, then how much, one line each. Sharing lines, a select that grew
       when its options arrived re-wrapped the rows under it and moved the grid 44 px (#1830, #2347);
       on its own line it can only grow sideways.
     -->
     <div v-show="moreOpen" id="more-filters" class="flex w-full flex-col items-start gap-3">
       <div :class="SELECT_ROW_CLASS">
+        <MultiSelectFilter
+          :all-label="t('events.filters.allTimes')"
+          :class="SELECT_CLASS"
+          :clear-label="t('events.filters.clearTimes')"
+          :count-label="(n) => t('events.filters.timesSelected', { n })"
+          :hint="t('events.filters.timeHint')"
+          :label="t('events.filters.byTime')"
+          :options="timeOfDayOptions"
+          :selected="queryList('timeOfDay')"
+          @change="applyFilters({ timeOfDay: $event })"
+        />
+
         <MultiSelectFilter
           :all-label="t('events.filters.allTypes')"
           :class="SELECT_CLASS"

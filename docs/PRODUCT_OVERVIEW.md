@@ -40,8 +40,8 @@ lists what that includes and what it excludes.
 **Find events**
 
 - See **Tonight** and **Upcoming** on the home page. A run longer than 7 days moves into an "Also running" block.
-- Filter the events list, the calendar and the map with one filter bar. The filters are date range, event type, venue,
-  venue type, district, genre, price range, free-only and exclude-sold-out.
+- Filter the events list, the calendar and the map with one filter bar. The filters are date range, time of night, event type,
+  venue, venue type, district, genre, price range, free-only and exclude-sold-out.
 - Use the **Tonight**, **This weekend** and **Next 7 days** shortcuts, or **On now** for what runs at this moment.
 - Search from the header with `/` or Ctrl/Cmd+K. The search finds events, venues, artists and promoters as you type.
 - Every search ignores accents, umlaut spellings and spaces, and tolerates typos. `berghian` finds Berghain.

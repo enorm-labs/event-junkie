@@ -30,6 +30,7 @@ export function useEventFilters() {
     const families = queryList('family')
     const districts = queryList('district')
     const venueTypes = queryList('venueType')
+    const timesOfDay = queryList('timeOfDay')
     return {
       q: queryString('q') || undefined,
       eventType: eventTypes.length ? eventTypes : undefined,
@@ -42,6 +43,7 @@ export function useEventFilters() {
       maxPrice: queryString('maxPrice') ? Number(queryString('maxPrice')) : undefined,
       excludeSoldOut: queryString('excludeSoldOut') === 'true' || undefined,
       free: queryString('free') === 'true' || undefined,
+      timeOfDay: timesOfDay.length ? timesOfDay : undefined,
     }
   })
 
