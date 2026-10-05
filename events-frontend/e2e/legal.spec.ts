@@ -45,10 +45,16 @@ test('reaches the venue opt-out route in one click from the footer, on any route
 test('scrolls to the top when opening a legal page from a scrolled position', async ({ page }) => {
   // Without a scrollBehavior a footer link opens the imprint somewhere in its middle.
   await page.goto('/about')
+  await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
   // `window.scrollTo` rather than `mouse.wheel`, which is a no-op on touch-emulating projects, so
-  // the test passed vacuously there.
-  await page.evaluate(() => window.scrollTo(0, 2000))
-  await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(100)
+  // the test passed vacuously there. Scrolled inside the poll: a scroll before the page is tall
+  // enough, or before the router's own scroll to the top, is lost, and webkit lost it.
+  await expect
+    .poll(async () => {
+      await page.evaluate(() => window.scrollTo(0, 2000))
+      return page.evaluate(() => window.scrollY)
+    })
+    .toBeGreaterThan(100)
 
   await page.getByRole('contentinfo').getByRole('link', { name: 'Imprint' }).click()
   await expect(page.getByRole('heading', { level: 1, name: 'Imprint' })).toBeVisible()
