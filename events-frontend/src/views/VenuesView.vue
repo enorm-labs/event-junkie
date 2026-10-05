@@ -6,9 +6,9 @@ import type { VenueSummary } from '@/api/types'
 import { describeError } from '@/api/client'
 import { Button } from '@/components/ui/button'
 import ClearAllFilters from '@/components/ClearAllFilters.vue'
+import ListFilterBar from '@/components/ListFilterBar.vue'
 import MultiSelectFilter from '@/components/MultiSelectFilter.vue'
 import PaginationControls from '@/components/PaginationControls.vue'
-import SearchInput from '@/components/SearchInput.vue'
 import SortControl, { type SortOption } from '@/components/SortControl.vue'
 import VenueCard from '@/components/VenueCard.vue'
 import VenueFeaturesEmpty from '@/components/VenueFeaturesEmpty.vue'
@@ -17,7 +17,6 @@ import { useCompactView } from '@/composables/useCompactView'
 import { useLocalePath } from '@/composables/useLocalePath'
 import { useLocation } from '@/composables/useLocation'
 import { usePagedList } from '@/composables/usePagedList'
-import { useSearchDraft } from '@/composables/useSearchDraft'
 import { useFilterOptions } from '@/composables/useFilterOptions'
 import {
   type FeatureCounts,
@@ -39,9 +38,13 @@ import {
   venuePin,
 } from '@/lib/mapPins'
 import { useI18n } from 'vue-i18n'
-import { CARD_GRID_CLASS, CARD_LIST_CLASS, PANEL_CLASS, RESULTS_BAR_CLASS } from '@/lib/utils'
+import { CARD_GRID_CLASS, CARD_LIST_CLASS, RESULTS_BAR_CLASS } from '@/lib/utils'
 
 const PAGE_SIZE = 24
+
+/** The selects behind "More filters", laid out as `EventFilterBar` lays out its own (#1830). */
+const SELECT_ROW_CLASS = 'grid w-full grid-cols-2 gap-3 sm:flex sm:w-auto sm:flex-wrap'
+const SELECT_CLASS = 'w-full min-w-0 truncate sm:w-auto'
 
 // Loaded only when the map is shown: MapLibre is the heaviest dependency the site has.
 const VenueMap = defineAsyncComponent(() => import('@/components/VenueMap.vue'))
@@ -58,7 +61,11 @@ function queryString(key: string): string {
   return typeof value === 'string' ? value : ''
 }
 
-/** The name order is the API's default and stays out of the URL, as on the promoters list. */
+/**
+ * A–Z stays out of the URL, as on the promoters list, but is sent: without a sort the BFF lists a
+ * search by relevance, and the pressed A–Z would not be what the list shows (#2694).
+ */
+const SORT_NAME = 'name,asc'
 const SORT_UPCOMING = 'upcomingEvents,desc'
 const sort = computed(() => (queryString('sort') === SORT_UPCOMING ? SORT_UPCOMING : ''))
 
@@ -78,7 +85,7 @@ function listParam(key: string): string[] | undefined {
 const params = computed<VenueSearchParams>(() => ({
   q: queryString('q') || undefined,
   district: listParam('district'),
-  sort: sort.value ? [sort.value] : undefined,
+  sort: [sort.value || SORT_NAME],
 
   type: listParam('type'),
   family: listParam('family'),
@@ -89,8 +96,6 @@ const params = computed<VenueSearchParams>(() => ({
 }))
 
 const { data: page, error, loading, run } = useVenueSearch(() => params.value)
-
-const { search, applySearch } = useSearchDraft()
 
 // Paging, the clamp on an out-of-range `?page=`, and the reload on any query change.
 const { currentPage, totalPages, goToPage } = usePagedList(page, run)
@@ -109,6 +114,8 @@ function applyFilters(patch: LocationQueryRaw) {
 /** A filter beyond the name search, so an empty list can name the filters as its cause. */
 const FILTER_KEYS = ['district', 'type', 'character', 'family', 'eventType']
 const hasFilters = computed(() => FILTER_KEYS.some((key) => queryList(key).length))
+/** How many of them are set, for the "More filters" toggle; each counts once, however many values it holds. */
+const moreCount = computed(() => FILTER_KEYS.filter((key) => queryList(key).length).length)
 
 // Features combine with AND (#2670): with two or more chosen, an empty list names them as the cause.
 const features = computed(() => queryList('character'))
@@ -274,87 +281,86 @@ const localePath = useLocalePath()
       </p>
     </header>
 
-    <div :class="PANEL_CLASS">
-      <form role="search" @submit.prevent="applySearch">
-        <SearchInput
-          v-model="search"
-          :placeholder="t('venues.searchPlaceholder')"
-          @change="applySearch"
-          @clear="applySearch"
-        />
-      </form>
-
-      <MultiSelectFilter
-        :all-label="t('venues.allDistricts')"
-        :clear-label="t('venues.clearDistricts')"
-        :count-label="(n) => t('venues.districtsSelected', { n })"
-        :label="t('venues.byDistrict')"
-        :options="districtOptions"
-        :selected="queryList('district')"
-        @change="applyFilters({ district: $event })"
-      />
-
-      <MultiSelectFilter
-        :all-label="t('venues.allTypes')"
-        :clear-label="t('venues.clearTypes')"
-        :count-label="(n) => t('venues.typesSelected', { n })"
-        :label="t('venues.byType')"
-        :options="venueTypeOptions"
-        :selected="queryList('type')"
-        @change="applyFilters({ type: $event })"
-      />
-      <MultiSelectFilter
-        :all-label="t('venues.allCharacters')"
-        :clear-label="t('venues.clearCharacters')"
-        :count-label="(n) => t('venues.charactersSelected', { n })"
-        :counts="featureCounts"
-        :hint="t('venues.characterHint')"
-        :label="t('venues.byCharacter')"
-        :options="venueCharacterOptions"
-        :selected="features"
-        @change="applyFilters({ character: $event })"
-      />
-      <MultiSelectFilter
-        :all-label="t('venues.allGenres')"
-        :clear-label="t('venues.clearFamilies')"
-        :count-label="(n) => t('venues.familiesSelected', { n })"
-        :label="t('venues.byGenre')"
-        :options="familyOptions"
-        :selected="queryList('family')"
-        @change="applyFilters({ family: $event })"
-      />
-      <MultiSelectFilter
-        :all-label="t('venues.allEventTypes')"
-        :clear-label="t('venues.clearEventTypes')"
-        :count-label="(n) => t('venues.eventTypesSelected', { n })"
-        :label="t('venues.byEventType')"
-        :options="hostOptions"
-        :selected="queryList('eventType')"
-        @change="applyFilters({ eventType: $event })"
-      />
-      <ClearAllFilters />
-
-      <div :aria-label="t('venues.view.label')" class="flex gap-2" role="group">
-        <Button
-          :aria-pressed="!showMap"
-          :variant="showMap ? 'outline' : 'default'"
-          size="sm"
-          type="button"
-          @click="setView('list')"
-        >
-          {{ t('venues.view.list') }}
-        </Button>
-        <Button
-          :aria-pressed="showMap"
-          :variant="showMap ? 'default' : 'outline'"
-          size="sm"
-          type="button"
-          @click="setView('map')"
-        >
-          {{ t('venues.view.map') }}
-        </Button>
-      </div>
-    </div>
+    <ListFilterBar :more-count="moreCount" :placeholder="t('venues.searchPlaceholder')">
+      <template #more>
+        <div :class="SELECT_ROW_CLASS">
+          <MultiSelectFilter
+            :all-label="t('venues.allDistricts')"
+            :class="SELECT_CLASS"
+            :clear-label="t('venues.clearDistricts')"
+            :count-label="(n) => t('venues.districtsSelected', { n })"
+            :label="t('venues.byDistrict')"
+            :options="districtOptions"
+            :selected="queryList('district')"
+            @change="applyFilters({ district: $event })"
+          />
+          <MultiSelectFilter
+            :all-label="t('venues.allTypes')"
+            :class="SELECT_CLASS"
+            :clear-label="t('venues.clearTypes')"
+            :count-label="(n) => t('venues.typesSelected', { n })"
+            :label="t('venues.byType')"
+            :options="venueTypeOptions"
+            :selected="queryList('type')"
+            @change="applyFilters({ type: $event })"
+          />
+          <MultiSelectFilter
+            :all-label="t('venues.allCharacters')"
+            :class="SELECT_CLASS"
+            :clear-label="t('venues.clearCharacters')"
+            :count-label="(n) => t('venues.charactersSelected', { n })"
+            :counts="featureCounts"
+            :hint="t('venues.characterHint')"
+            :label="t('venues.byCharacter')"
+            :options="venueCharacterOptions"
+            :selected="features"
+            @change="applyFilters({ character: $event })"
+          />
+          <MultiSelectFilter
+            :all-label="t('venues.allGenres')"
+            :class="SELECT_CLASS"
+            :clear-label="t('venues.clearFamilies')"
+            :count-label="(n) => t('venues.familiesSelected', { n })"
+            :label="t('venues.byGenre')"
+            :options="familyOptions"
+            :selected="queryList('family')"
+            @change="applyFilters({ family: $event })"
+          />
+          <MultiSelectFilter
+            :all-label="t('venues.allEventTypes')"
+            :class="SELECT_CLASS"
+            :clear-label="t('venues.clearEventTypes')"
+            :count-label="(n) => t('venues.eventTypesSelected', { n })"
+            :label="t('venues.byEventType')"
+            :options="hostOptions"
+            :selected="queryList('eventType')"
+            @change="applyFilters({ eventType: $event })"
+          />
+        </div>
+      </template>
+      <template #actions>
+        <div :aria-label="t('venues.view.label')" class="flex gap-2" role="group">
+          <Button
+            :aria-pressed="!showMap"
+            :variant="showMap ? 'outline' : 'default'"
+            size="sm"
+            type="button"
+            @click="setView('list')"
+          >
+            {{ t('venues.view.list') }}
+          </Button>
+          <Button
+            :aria-pressed="showMap"
+            :variant="showMap ? 'default' : 'outline'"
+            size="sm"
+            type="button"
+            @click="setView('map')"
+          >
+            {{ t('venues.view.map') }}
+          </Button>
+        </div>
+      </template>
+    </ListFilterBar>
 
     <template v-if="showMap">
       <p v-if="mapLoading" class="text-body text-muted-foreground">

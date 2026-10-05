@@ -68,4 +68,24 @@ describe('VenueRow', () => {
     expect(counted.text()).toContain('3 upcoming events')
     expect(embedded.text()).not.toContain('upcoming')
   })
+
+  it('puts both counts on a line under the meta line, as the card does (#2694)', () => {
+    const wrapper = mount(VenueRow, {
+      props: { venue: { ...venue, upcomingEventCount: 220, upcomingNext30DaysCount: 12 } },
+      global: { stubs },
+    })
+
+    const lines = wrapper.findAll('p').map((line) => line.text())
+    expect(lines[lines.length - 1]).toBe('12 in the next 30 days · 220 upcoming')
+  })
+
+  it('shows a distance instead of the counts', () => {
+    const wrapper = mount(VenueRow, {
+      props: { venue: { ...venue, upcomingEventCount: 3 }, distance: '1.2 km' },
+      global: { stubs },
+    })
+
+    expect(wrapper.text()).toContain('1.2 km')
+    expect(wrapper.text()).not.toContain('upcoming')
+  })
 })

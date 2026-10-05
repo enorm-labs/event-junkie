@@ -42,10 +42,11 @@
   },
   "upcomingEvents": "Kommende Events",
   "upcomingCount": "Keine anstehenden Events | {count} anstehendes Event | {count} anstehende Events",
+  "upcomingCounts": "{next30} in den nächsten 30 Tagen · {upcoming} anstehend",
   "sort": {
     "label": "Sortieren",
     "name": "A–Z",
-    "upcoming": "Meiste Events",
+    "upcoming": "Am meisten los, nächste 30 Tage",
     "earliest": "Früheste zuerst",
     "latest": "Späteste zuerst"
   },

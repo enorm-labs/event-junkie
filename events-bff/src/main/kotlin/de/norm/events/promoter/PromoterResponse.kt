@@ -129,8 +129,8 @@ data class PromoterDetailResponse(
 }
 
 /**
- * One row of the promoter list page (#1349): what a card shows, and how many of the promoter's
- * events are still to come. No image: the list draws none. The description fields are the detail
+ * One row of the promoter list page (#1349): what a card shows, how many of the promoter's events
+ * are still to come, and how many start in the next 30 days (#2694). No image: the list draws none. The description fields are the detail
  * response's, so the card picks a language the same way the page does.
  */
 @Schema(description = "Promoter list row")
@@ -151,13 +151,18 @@ data class PromoterListItemResponse(
     val descriptionAlt: String?,
     @Schema(description = "Language of `descriptionAlt`: `de` or `en`. Null exactly when `descriptionAlt` is.", example = "de")
     val descriptionAltLanguage: String?,
-    @Schema(description = "Events from today on that credit this promoter", example = "12")
-    val upcomingEventCount: Int
+    @Schema(description = "Events from today on that credit this promoter", example = "220")
+    val upcomingEventCount: Int,
+    @Schema(
+        description = "Events crediting this promoter that start within the next 30 days, Berlin time. The list's `upcomingEvents` sort orders by this count.",
+        example = "12"
+    )
+    val upcomingNext30DaysCount: Int
 ) {
     companion object {
         fun fromEntity(
             entity: PromoterEntity,
-            upcomingEventCount: Int
+            row: PromoterListRow
         ): PromoterListItemResponse =
             PromoterListItemResponse(
                 id = requireNotNull(entity.id) { "Persisted promoter must have an ID" },
@@ -168,7 +173,8 @@ data class PromoterListItemResponse(
                 descriptionLanguage = entity.descriptionLanguage,
                 descriptionAlt = entity.descriptionAlt,
                 descriptionAltLanguage = entity.descriptionAltLanguage,
-                upcomingEventCount = upcomingEventCount
+                upcomingEventCount = row.upcomingEventCount,
+                upcomingNext30DaysCount = row.upcomingNext30DaysCount
             )
     }
 }

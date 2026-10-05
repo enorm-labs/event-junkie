@@ -1,4 +1,5 @@
 import { expect, type Page, type Route, test } from '@playwright/test'
+import { openMoreFilters } from './filter-bar'
 
 /**
  * Venues overview e2e tests with a fully mocked BFF.
@@ -25,8 +26,15 @@ function json(route: Route, body: unknown, status = 200): Promise<void> {
 /** Matches the venue list (`/api/venues?…` or bare `/api/venues`), not `/api/venues/:slug`. */
 const venuesList = /\/api\/venues(\?|$)/
 
-function venue(slug: string, name: string, upcomingEventCount = 0) {
-  return { slug, name, city: 'Berlin', district: 'kreuzberg', upcomingEventCount }
+function venue(slug: string, name: string, upcomingEventCount = 0, upcomingNext30DaysCount = 0) {
+  return {
+    slug,
+    name,
+    city: 'Berlin',
+    district: 'kreuzberg',
+    upcomingEventCount,
+    upcomingNext30DaysCount,
+  }
 }
 
 function pageBody(content: ReturnType<typeof venue>[], page = 0, totalPages = 1) {
@@ -85,6 +93,7 @@ test('filtering by several districts updates the URL query and re-requests', asy
   })
 
   await page.goto('/venues')
+  await openMoreFilters(page)
   await page.getByRole('button', { name: 'Filter by district: All districts' }).click()
   await page.getByRole('checkbox', { name: 'Mitte' }).check()
 
@@ -98,33 +107,37 @@ test('filtering by several districts updates the URL query and re-requests', asy
   await expect(page.getByRole('link', { name: /Astra/ })).toHaveCount(0)
 })
 
-test('sorting by upcoming events puts the sort in the URL, sends it, and shows the counts', async ({
+test('sorting by the next 30 days puts the sort in the URL, sends it, and shows both counts', async ({
   page,
 }) => {
+  const sorts: (string | null)[] = []
   await page.route(venuesList, (route) => {
     const sort = new URL(route.request().url()).searchParams.get('sort')
+    sorts.push(sort)
     json(
       route,
       pageBody(
         sort === 'upcomingEvents,desc'
-          ? [venue('lido', 'Lido', 12), venue('astra', 'Astra', 1)]
-          : [venue('astra', 'Astra', 1), venue('lido', 'Lido', 12)],
+          ? [venue('lido', 'Lido', 40, 12), venue('astra', 'Astra', 220, 1)]
+          : [venue('astra', 'Astra', 220, 1), venue('lido', 'Lido', 40, 12)],
       ),
     )
   })
 
   await page.goto('/venues')
   await expect(page.getByRole('heading', { level: 2 }).first()).toHaveText('Astra')
-  await expect(page.getByText('12 upcoming events')).toBeVisible()
+  await expect(page.getByText('12 in the next 30 days · 40 upcoming')).toBeVisible()
 
   const sort = page.getByRole('group', { name: 'Sort' })
-  await sort.getByRole('button', { name: 'Most upcoming' }).click()
+  await sort.getByRole('button', { name: 'Busiest next 30 days' }).click()
 
   await expect(page).toHaveURL(/\/venues\?sort=upcomingEvents,desc$/)
   await expect(page.getByRole('heading', { level: 2 }).first()).toHaveText('Lido')
 
+  // A–Z stays out of the URL, but the request names it, so a search is not ordered by relevance (#2694).
   await sort.getByRole('button', { name: 'A–Z' }).click()
   await expect(page).toHaveURL(/\/venues$/)
+  expect(sorts.at(-1)).toBe('name,asc')
 })
 
 test('filtering by venue type, genre and event type writes each to the URL and the request', async ({
@@ -137,6 +150,7 @@ test('filtering by venue type, genre and event type writes each to the URL and t
   })
 
   await page.goto('/venues')
+  await openMoreFilters(page)
   await page.getByRole('button', { name: 'Filter by venue type: All venue types' }).click()
   await page.getByRole('checkbox', { name: 'Club' }).check()
   await page.keyboard.press('Escape')
@@ -229,7 +243,7 @@ test('paginates when there is more than one page', async ({ page }) => {
   await page.goto('/venues')
   await expect(page.getByText('Page 1 of 2')).toBeVisible()
 
-  await page.getByRole('button', { name: 'Next' }).click()
+  await page.getByRole('button', { name: 'Next', exact: true }).click()
 
   await expect(page).toHaveURL(/\/venues\?page=1$/)
   await expect(page.getByText('Page 2 of 2')).toBeVisible()

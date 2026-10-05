@@ -2,7 +2,6 @@
 import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import type { VenueListItem, VenueSummary } from '@/api/types'
-import { useI18n } from 'vue-i18n'
 import { districtLabel } from '@/lib/districts'
 import { useFormat } from '@/composables/useFormat'
 import { useLocalePath } from '@/composables/useLocalePath'
@@ -10,10 +9,17 @@ import { useLocalePath } from '@/composables/useLocalePath'
 /** One venue as a line of text, for the compact view — the counterpart to `EventRow`. */
 const props = withDefaults(
   defineProps<{
-    /** The count shows when the venue list sent one and no distance takes its place. */
+    /** The count line shows when the venue list sent one; a distance takes its place. */
     venue: VenueSummary &
       Partial<
-        Pick<VenueListItem, 'upcomingEventCount' | 'venueTypes' | 'characterTags' | 'capacity'>
+        Pick<
+          VenueListItem,
+          | 'upcomingEventCount'
+          | 'upcomingNext30DaysCount'
+          | 'venueTypes'
+          | 'characterTags'
+          | 'capacity'
+        >
       >
     /** Heading level, which belongs to the page rather than to the row — see `EventCard.vue`. */
     as?: 'h2' | 'h3' | 'h4'
@@ -27,14 +33,15 @@ const location = computed(() =>
   [props.venue.address, districtLabel(props.venue.district)].filter(Boolean).join(' · '),
 )
 
-const { formatVenueFacts } = useFormat()
+const { formatVenueFacts, formatUpcoming } = useFormat()
 // One meta line, as on the card: where it is, then what it is.
 const line = computed(() =>
   [location.value || props.venue.city, formatVenueFacts(props.venue)].filter(Boolean).join(' · '),
 )
+// The card's order: the count goes under the facts, where its two numbers have the width.
+const upcoming = computed(() => (props.distance ? '' : formatUpcoming(props.venue)))
 
 const localePath = useLocalePath()
-const { t } = useI18n()
 </script>
 
 <template>
@@ -50,13 +57,10 @@ const { t } = useI18n()
       <span v-if="distance" class="shrink-0 text-meta text-muted-foreground tabular-nums">
         {{ distance }}
       </span>
-      <span
-        v-else-if="venue.upcomingEventCount !== undefined"
-        class="shrink-0 text-meta text-muted-foreground tabular-nums"
-      >
-        {{ t('common.upcomingCount', { count: venue.upcomingEventCount }) }}
-      </span>
     </div>
     <p v-if="line" class="truncate text-meta text-muted-foreground">{{ line }}</p>
+    <p v-if="upcoming" class="truncate text-meta text-muted-foreground tabular-nums">
+      {{ upcoming }}
+    </p>
   </RouterLink>
 </template>

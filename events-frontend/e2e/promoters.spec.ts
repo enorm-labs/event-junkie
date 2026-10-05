@@ -91,7 +91,7 @@ test('searching updates the URL query and re-requests', async ({ page }) => {
   await expect(page.getByRole('link', { name: 'Goodlive' })).toHaveCount(0)
 })
 
-test('sorting by upcoming events puts the sort in the URL and sends it to the API', async ({
+test('sorting by the next 30 days puts the sort in the URL and sends it to the API', async ({
   page,
 }) => {
   await page.route(promotersList, (route) => {
@@ -111,11 +111,11 @@ test('sorting by upcoming events puts the sort in the URL and sends it to the AP
 
   const sort = page.getByRole('group', { name: 'Sort' })
   await expect(sort.getByRole('button', { name: 'A–Z' })).toHaveAttribute('aria-pressed', 'true')
-  await sort.getByRole('button', { name: 'Most upcoming' }).click()
+  await sort.getByRole('button', { name: 'Busiest next 30 days' }).click()
 
   await expect(page).toHaveURL(/\/promoters\?sort=upcomingEvents,desc$/)
   await expect(page.getByRole('heading', { level: 2 }).first()).toHaveText('Trinity Music')
-  await expect(sort.getByRole('button', { name: 'Most upcoming' })).toHaveAttribute(
+  await expect(sort.getByRole('button', { name: 'Busiest next 30 days' })).toHaveAttribute(
     'aria-pressed',
     'true',
   )
@@ -150,7 +150,7 @@ test('paginates when there is more than one page', async ({ page }) => {
   await page.goto('/promoters')
   await expect(page.getByText('Page 1 of 2')).toBeVisible()
 
-  await page.getByRole('button', { name: 'Next' }).click()
+  await page.getByRole('button', { name: 'Next', exact: true }).click()
 
   await expect(page).toHaveURL(/\/promoters\?page=1$/)
   await expect(page.getByText('Page 2 of 2')).toBeVisible()

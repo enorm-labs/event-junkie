@@ -1,6 +1,7 @@
 package de.norm.events.event
 
 import de.norm.events.BaseControllerTest
+import de.norm.events.common.AssumedStartTime
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe

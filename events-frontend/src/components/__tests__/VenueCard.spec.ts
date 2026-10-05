@@ -152,4 +152,26 @@ describe('VenueCard', () => {
     expect(counted.text()).toContain('3 upcoming events')
     expect(embedded.text()).not.toContain('upcoming')
   })
+
+  // #2694: the promoter card keeps the same order.
+  it('reads name, location, facts, then both counts', () => {
+    const wrapper = mount(VenueCard, {
+      props: {
+        venue: {
+          ...venue,
+          venueTypes: ['club'],
+          upcomingEventCount: 220,
+          upcomingNext30DaysCount: 12,
+        },
+      },
+      global: { stubs },
+    })
+
+    expect(wrapper.findAll('h3, p').map((line) => line.text())).toEqual([
+      'Lido',
+      'Cuvrystr. 7 · Kreuzberg',
+      'Club',
+      '12 in the next 30 days · 220 upcoming',
+    ])
+  })
 })

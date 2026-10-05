@@ -23,7 +23,7 @@ Accept: application/json
 GET {{bff-host}}/api/promoters?page=0&size=5&sort=name,desc
 Accept: application/json
 
-### List promoters — most upcoming events first
+### List promoters — most events in the next 30 days first
 GET {{bff-host}}/api/promoters?sort=upcomingEvents,desc
 Accept: application/json
 

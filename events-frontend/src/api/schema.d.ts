@@ -11,7 +11,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List venues with pagination, name search and filters, sorted by name or by upcoming events */
+        /**
+         * List venues with pagination, name search and filters, sorted by name or by events in the next 30 days
+         * @description Sort with `sort=name` (A–Z, case-folded) or `sort=upcomingEvents,desc` (events that start within the next 30 days, Berlin time). A chosen sort applies with a search too. Without a sort, a search lists the closest names first, else A–Z.
+         */
         get: operations["list"];
         put?: never;
         post?: never;
@@ -99,7 +102,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List promoters with pagination and optional name search, sorted by name or by upcoming events */
+        /**
+         * List promoters with pagination and optional name search, sorted by name or by events in the next 30 days
+         * @description Sort with `sort=name` (A–Z, case-folded) or `sort=upcomingEvents,desc` (events that start within the next 30 days, Berlin time). A chosen sort applies with a search too. Without a sort, a search lists the closest names first, else A–Z.
+         */
         get: operations["list_1"];
         put?: never;
         post?: never;
@@ -439,9 +445,15 @@ export interface components {
             /**
              * Format: int32
              * @description Events from today on at this venue
-             * @example 12
+             * @example 220
              */
             upcomingEventCount?: number;
+            /**
+             * Format: int32
+             * @description Events at this venue that start within the next 30 days, Berlin time. The list's `upcomingEvents` sort orders by this count.
+             * @example 12
+             */
+            upcomingNext30DaysCount?: number;
             /**
              * @description What kind of place this is, as venue type slugs, curated by hand. Empty until curated.
              * @example [
@@ -863,9 +875,15 @@ export interface components {
             /**
              * Format: int32
              * @description Events from today on that credit this promoter
-             * @example 12
+             * @example 220
              */
             upcomingEventCount?: number;
+            /**
+             * Format: int32
+             * @description Events crediting this promoter that start within the next 30 days, Berlin time. The list's `upcomingEvents` sort orders by this count.
+             * @example 12
+             */
+            upcomingNext30DaysCount?: number;
         };
         /** @description The first matches of one kind, and how many there are in all */
         SearchGroupArtistSummaryResponse: {

@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import type { PromoterListItem } from '@/api/types'
+import { useFormat } from '@/composables/useFormat'
 import { useLocalePath } from '@/composables/useLocalePath'
 import type { Locale } from '@/i18n/locales'
 import { descriptionFor } from '@/lib/description'
@@ -17,11 +18,16 @@ const props = withDefaults(
   { as: 'h3' },
 )
 
-const { t, locale } = useI18n()
+const { locale } = useI18n()
 const localePath = useLocalePath()
 
 // The same language choice the promoter page makes, so a card never contradicts its page.
 const description = computed(() => descriptionFor(props.promoter, locale.value as Locale))
+
+const { formatUpcoming } = useFormat()
+const upcoming = computed(() =>
+  formatUpcoming({ ...props.promoter, upcomingEventCount: props.promoter.upcomingEventCount ?? 0 }),
+)
 
 /** The site's host, which is what a reader recognises; the scheme and path are noise on a card. */
 const websiteHost = computed(() => {
@@ -46,9 +52,6 @@ const websiteHost = computed(() => {
           {{ promoter.name }}
         </RouterLink>
       </component>
-      <p class="text-body text-muted-foreground">
-        {{ t('common.upcomingCount', { count: promoter.upcomingEventCount ?? 0 }) }}
-      </p>
       <p
         v-if="description"
         :lang="description.lang ?? undefined"
@@ -56,6 +59,7 @@ const websiteHost = computed(() => {
       >
         {{ description.text }}
       </p>
+      <p class="text-body text-muted-foreground">{{ upcoming }}</p>
       <a
         v-if="websiteHost"
         :href="promoter.websiteUrl ?? undefined"
