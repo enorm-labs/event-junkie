@@ -114,5 +114,6 @@ val DISTEL_LIMITATIONS =
         AcceptedLimitation(LimitedAspect.EVENT_TYPE, "the calendar names no format; ensemble Kabarett, guest shows and a talk series share one list"),
         AcceptedLimitation(LimitedAspect.GENRE, "the calendar names no genre"),
         AcceptedLimitation(LimitedAspect.PROMOTERS, "the theatre presents every performance itself"),
+        AcceptedLimitation(LimitedAspect.PER_EVENT_PAGE, "the site has one page per production, shared by all its performances"),
         houseLanguage = SpokenLanguage.GERMAN
     )

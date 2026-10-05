@@ -152,5 +152,6 @@ val BERGHAIN_LIMITATIONS =
         AcceptedLimitation(
             LimitedAspect.GENRE,
             "the Kantine and Halle pages name only the room and have no genre field, and the concerts there vary"
-        )
+        ),
+        AcceptedLimitation(LimitedAspect.PRICE, "some Kantine concert pages print no figure in their tickets block")
     )

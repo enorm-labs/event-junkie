@@ -86,5 +86,6 @@ class HuxleysWebsiteImporter(
 val HUXLEYS_LIMITATIONS =
     VenueLimitations(
         EventSource.HUXLEYS,
-        AcceptedLimitation(LimitedAspect.PRICE, "most shows sell through Eventim and print no price at all — one of eleven sampled pages carried one")
+        AcceptedLimitation(LimitedAspect.PRICE, "most shows sell through Eventim and print no price at all — one of eleven sampled pages carried one"),
+        AcceptedLimitation(LimitedAspect.GENRE, "about half the event pages carry no genre tag, and on those the style appears only in the prose")
     )

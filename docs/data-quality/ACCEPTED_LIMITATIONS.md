@@ -39,6 +39,7 @@ says so.
 | `ASTRA`                | `GENRE`            | the event page carries no genre field                                                                                                            | —     |
 | `BAR_JEDER_VERNUNFT`   | `DOORS_TIME`       | the calendar and the show pages state one Beginn time and never an Einlass                                                                       | —     |
 | `BERGHAIN`             | `GENRE`            | the Kantine and Halle pages name only the room and have no genre field, and the concerts there vary                                              | —     |
+| `BERGHAIN`             | `PRICE`            | some Kantine concert pages print no figure in their tickets block                                                                                | —     |
 | `BADEHAUS`             | `ARTISTS`          | the venue publishes no roster; for a concert the title is taken as the act and a Support: subtitle as the rest                                   | —     |
 | `BADEHAUS`             | `PRICE`            | the venue prints no figure, and where it names money at all it is a donation range the model has no field for, kept verbatim as the note         | —     |
 | `BINUU`                | `EVENT_TYPE`       | the SvelteKit payload carries no category field, and neither does anywhere else on the site                                                      | —     |
@@ -90,6 +91,7 @@ says so.
 | `DISTEL`               | `EVENT_TYPE`       | the calendar names no format; ensemble Kabarett, guest shows and a talk series share one list                                                    | —     |
 | `DISTEL`               | `GENRE`            | the calendar names no genre                                                                                                                      | —     |
 | `DISTEL`               | `PROMOTERS`        | the theatre presents every performance itself                                                                                                    | —     |
+| `DISTEL`               | `PER_EVENT_PAGE`   | the site has one page per production, shared by all its performances                                                                             | —     |
 | `DOWNSTAIRS`           | `DOORS_TIME`       | the shop states one time per performance                                                                                                         | —     |
 | `DOWNSTAIRS`           | `END_TIME`         | the shop gives every performance the same 6 a.m. end                                                                                             | —     |
 | `DOWNSTAIRS`           | `ARTISTS`          | the club's own nights bill a format, and the comedians appear only in prose                                                                      | —     |
@@ -146,6 +148,7 @@ says so.
 | `HUMBOLDTHAIN`         | `SOLD_OUT`         | nothing in the payload marks a night sold out                                                                                                    | —     |
 | `HUMBOLDTHAIN`         | `CANCELLATION`     | nothing in the payload marks a night cancelled or moved                                                                                          | —     |
 | `HUXLEYS`              | `PRICE`            | most shows sell through Eventim and print no price at all — one of eleven sampled pages carried one                                              | —     |
+| `HUXLEYS`              | `GENRE`            | about half the event pages carry no genre tag, and on those the style appears only in the prose                                                  | —     |
 | `INSEL`                | `PRICE`            | the venue names no prices anywhere; only an Eintritt-frei note on the free Sunday matinées                                                       | —     |
 | `INSEL`                | `GENRE`            | the venue publishes no genre                                                                                                                     | —     |
 | `INSEL`                | `START_TIME`       | a night billed with a doors time only, as `Doors 19:00`, names no start, so it stores the doors time and no start                                | —     |
@@ -315,6 +318,8 @@ says so.
 | `SPEAKEAZY`            | `PROMOTERS`        | the venue presents every night itself                                                                                                            | —     |
 | `SUPAMOLLY`            | `PRICE`            | the venue publishes no prices                                                                                                                    | —     |
 | `SUPAMOLLY`            | `TICKET_URL`       | the venue runs no ticket shop                                                                                                                    | —     |
+| `TEMPODROM`            | `PRICE`            | a promoter-sold event has a JSON-LD offer with no price, and its page prints no Preis line                                                       | —     |
+| `TEMPODROM`            | `GENRE`            | the JSON-LD and the event pages carry no genre field                                                                                             | —     |
 | `THE_WALL`             | `DOORS_TIME`       | each producer states one time per show, doors for some and the start for others                                                                  | —     |
 | `THE_WALL`             | `PRICE`            | most shows are pay-what-you-want, and a fixed price appears only in the prose                                                                    | —     |
 | `THE_WALL`             | `TICKET_URL`       | reservations run through the club's own Spotagig pages, which the event page is                                                                  | —     |
@@ -381,4 +386,4 @@ says so.
 
 These publish everything the model stores, as of the last review:
 
-`HEIMATHAFEN`, `MADAME_CLAUDE`, `MATRIX`, `QUASIMODO`, `TEMPODROM`, `THEATER_IM_DELPHI`, `URANIA`, `ZITADELLE`
+`HEIMATHAFEN`, `MADAME_CLAUDE`, `MATRIX`, `QUASIMODO`, `THEATER_IM_DELPHI`, `URANIA`, `ZITADELLE`
