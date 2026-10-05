@@ -183,3 +183,50 @@ describe('EventsView with a date range', () => {
     expect(slugs()).toEqual(['weekender', 'exhibition'])
   })
 })
+
+describe('EventsView sort', () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date(NOW))
+    getMock.mockReset()
+    getMock.mockResolvedValue({ content: [later], page: 0, totalPages: 1, totalElements: 1 })
+  })
+
+  afterEach(() => {
+    wrapper?.unmount()
+    wrapper = undefined
+    vi.useRealTimers()
+  })
+
+  function sortButtons(): string[] {
+    return wrapper!
+      .get('[role="group"]')
+      .findAll('button')
+      .map((button) => button.text())
+  }
+
+  function sentSort(): unknown {
+    return (getMock.mock.lastCall![1].params.query as { sort?: unknown }).sort
+  }
+
+  it('offers newest added beside the date on the upcoming list, and sends it', async () => {
+    await mountAt('/en/events?sort=createdAt,desc')
+
+    expect(sortButtons()).toEqual(['Earliest first', 'Newest added'])
+    expect(sentSort()).toEqual(['createdAt,desc'])
+  })
+
+  it('drops newest added for a range into the past, where ended events show', async () => {
+    await mountAt('/en/events?from=2026-09-01&sort=createdAt,desc')
+
+    expect(sortButtons()).toEqual(['Earliest first', 'Latest first'])
+    expect(sentSort()).toBeUndefined()
+  })
+
+  it('offers no sort on On now', async () => {
+    getMock.mockResolvedValue([later])
+    await mountAt('/en/events?now=1')
+
+    expect(wrapper!.find('[role="group"]').exists()).toBe(false)
+  })
+})

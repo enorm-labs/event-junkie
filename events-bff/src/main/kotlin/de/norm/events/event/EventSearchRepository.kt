@@ -442,7 +442,9 @@ class EventSearchRepository(
                 "eventDate" to "e.event_date",
                 "startTime" to EFFECTIVE_START,
                 "title" to "e.title",
-                "pricePresale" to "e.price_presale"
+                "pricePresale" to "e.price_presale",
+                // When the importer first stored the row, as the feed orders (#2721).
+                "createdAt" to "e.created_at"
             )
 
         /** Stable within-day ordering applied alongside a date sort, so same-day events keep chronological order. */

@@ -49,7 +49,8 @@
     "name": "A–Z",
     "upcoming": "Busiest next 30 days",
     "earliest": "Earliest first",
-    "latest": "Latest first"
+    "latest": "Latest first",
+    "newest": "Newest added"
   },
   "pastEvents": "Past events",
   "pastEventsNote": "Our archive starts when we started watching. Earlier nights never made it into the books.",

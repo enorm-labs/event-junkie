@@ -49,7 +49,8 @@
     "name": "A–Z",
     "upcoming": "Am meisten los, nächste 30 Tage",
     "earliest": "Früheste zuerst",
-    "latest": "Späteste zuerst"
+    "latest": "Späteste zuerst",
+    "newest": "Zuletzt hinzugefügt"
   },
   "pastEvents": "Vergangene Events",
   "pastEventsNote": "Unser Archiv beginnt an dem Tag, an dem wir angefangen haben mitzuschreiben. Was davor lief, steht nicht in den Büchern.",

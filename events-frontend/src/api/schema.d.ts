@@ -190,7 +190,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Search events with optional filters and pagination */
+        /**
+         * Search events with optional filters and pagination
+         * @description Sort with `sort=eventDate` (the default, then the start time), `sort=startTime`, `sort=title`, `sort=pricePresale` or `sort=createdAt,desc` (newest added first, when the importer first stored the event). Without a date range, the list holds only events that have not ended.
+         */
         get: operations["list_3"];
         put?: never;
         post?: never;
