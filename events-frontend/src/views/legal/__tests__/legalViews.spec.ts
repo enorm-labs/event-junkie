@@ -1,6 +1,8 @@
 import { afterEach, describe, expect, it } from 'vitest'
 
 import { mount } from '@vue/test-utils'
+import AboutDe from '@/views/AboutView.de.vue'
+import AboutEn from '@/views/AboutView.en.vue'
 import ForVenuesDe from '@/views/legal/ForVenuesView.de.vue'
 import ForVenuesEn from '@/views/legal/ForVenuesView.en.vue'
 import ImprintDe from '@/views/legal/ImprintView.de.vue'
@@ -357,6 +359,18 @@ for (const locale of ['en', 'de'] as const) {
 }
 
 describe('across both language versions', () => {
+  // Long-form pages read at the prose step; without it their text fell back to the browser's
+  // 16/24 (#2691). LegalPage carries the class for all four legal documents.
+  it('sets the long-form pages on the prose step', () => {
+    for (const component of [PRIVACY.en, PRIVACY.de, AboutEn, AboutDe]) {
+      expect(
+        mount(component as never, { global: { stubs } })
+          .get('main')
+          .classes(),
+      ).toContain('text-prose')
+    }
+  })
+
   it('states which version prevails, on every page that has two', () => {
     // Two language versions with no stated precedence invite the reader to pick whichever suits
     // them. Six places to forget it, which is why LegalPage takes it as a prop.

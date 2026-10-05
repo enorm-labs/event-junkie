@@ -77,7 +77,7 @@ const { compact } = useCompactView()
       <h1 class="text-page font-bold tracking-tight">
         {{ t('detail.notFoundHeading', { kind }) }}
       </h1>
-      <p class="text-muted-foreground">{{ notFoundText }}</p>
+      <p class="text-body text-muted-foreground">{{ notFoundText }}</p>
       <Button as-child variant="outline">
         <RouterLink :to="localePath('/events')">{{ t('common.actions.browseEvents') }}</RouterLink>
       </Button>
