@@ -34,13 +34,16 @@ const { queryString, filters, dateRange, applyFilters } = useEventFilters()
 
 const EARLIEST_FIRST = 'eventDate,asc'
 const LATEST_FIRST = 'eventDate,desc'
+/** When the importer first stored the event, as the feed orders (#2721). */
+const NEWEST_ADDED = 'createdAt,desc'
 
 const onNow = computed(() => queryString('now') === '1')
 
 /**
- * Date is the only order. A range that ends before today is an archive and reads latest first; a
- * range that reaches into the past lets the visitor flip it. Without a lower bound the BFF reads
- * back through every year, so `to` alone reaches the past too (#360).
+ * A range that ends before today is an archive and reads latest first; a range that reaches into
+ * the past lets the visitor flip it. Without a lower bound the BFF reads back through every year,
+ * so `to` alone reaches the past too (#360). Newest added is for a list of what has not ended, so
+ * a range into the past does not offer it.
  */
 const reachesPast = computed(() => {
   if (onNow.value) return false
@@ -51,11 +54,12 @@ const defaultSort = computed(() => {
   const { to } = dateRange.value
   return to && to < todayIso() ? LATEST_FIRST : EARLIEST_FIRST
 })
+const sortValues = computed(() =>
+  reachesPast.value ? [EARLIEST_FIRST, LATEST_FIRST] : [EARLIEST_FIRST, NEWEST_ADDED],
+)
 const sort = computed(() => {
   const requested = queryString('sort')
-  return reachesPast.value && [EARLIEST_FIRST, LATEST_FIRST].includes(requested)
-    ? requested
-    : defaultSort.value
+  return sortValues.value.includes(requested) ? requested : defaultSort.value
 })
 
 // The list owns its dates, so it merges the range in; the BFF defaults to today onwards when
@@ -103,10 +107,14 @@ const localePath = useLocalePath()
 
 const { t, locale } = useI18n()
 
-const sortOptions = computed<SortOption[]>(() => [
-  { value: EARLIEST_FIRST, label: t('common.sort.earliest') },
-  { value: LATEST_FIRST, label: t('common.sort.latest') },
-])
+const SORT_LABELS: Record<string, string> = {
+  [EARLIEST_FIRST]: 'common.sort.earliest',
+  [LATEST_FIRST]: 'common.sort.latest',
+  [NEWEST_ADDED]: 'common.sort.newest',
+}
+const sortOptions = computed<SortOption[]>(() =>
+  sortValues.value.map((value) => ({ value, label: t(SORT_LABELS[value]!) })),
+)
 
 /** The default order stays out of the URL, so a shared link follows its range. */
 function applySort(value: string) {
@@ -179,7 +187,7 @@ const mapLink = computed(() => ({
           </a>
         </div>
         <SortControl
-          v-if="reachesPast"
+          v-if="!onNow"
           :model-value="sort"
           :options="sortOptions"
           @update:model-value="applySort"

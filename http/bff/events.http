@@ -28,6 +28,10 @@ Accept: application/json
 GET {{bff-host}}/api/events?sort=pricePresale,asc
 Accept: application/json
 
+### List events — newest added first
+GET {{bff-host}}/api/events?sort=createdAt,desc
+Accept: application/json
+
 ### Filter by date range
 GET {{bff-host}}/api/events?from=2026-06-19&to=2026-07-15
 Accept: application/json

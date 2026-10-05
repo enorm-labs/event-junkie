@@ -177,7 +177,9 @@ test('links the feed for the filters it shows, without the dates', async ({ page
 
   await page.goto('/events?genre=techno&district=kreuzberg&district=mitte&from=2099-09-01')
   await expect(
-    page.getByRole('link', { name: 'Subscribe to new events matching these filters as an RSS feed' }),
+    page.getByRole('link', {
+      name: 'Subscribe to new events matching these filters as an RSS feed',
+    }),
   ).toHaveAttribute('href', '/feed.xml?locale=en&district=kreuzberg&district=mitte&genre=techno')
 })
 
@@ -425,11 +427,25 @@ test('a past range reads latest first, and the visitor can flip it', async ({ pa
   await expect.poll(() => sorts.at(-1)).toBeNull()
 })
 
-test('the upcoming list offers no sort, because date is the only order', async ({ page }) => {
+test('the upcoming list sorts by date or by newest added', async ({ page }) => {
+  const sorts: (string | null)[] = []
+  page.on('request', (request) => {
+    const url = new URL(request.url())
+    if (url.pathname.endsWith('/api/events')) sorts.push(url.searchParams.get('sort'))
+  })
   await page.goto('/events')
 
   await expect(eventHeading(page, 'Default Event A')).toBeVisible()
-  await expect(page.getByRole('group', { name: 'Sort' })).toHaveCount(0)
+  const sort = page.getByRole('group', { name: 'Sort' })
+  await expect(sort.getByRole('button', { name: 'Earliest first' })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  )
+  await expect(sort.getByRole('button', { name: 'Latest first' })).toHaveCount(0)
+
+  await sort.getByRole('button', { name: 'Newest added' }).click()
+  await expect(page).toHaveURL(/\?sort=createdAt,desc$/)
+  await expect.poll(() => sorts.at(-1)).toBe('createdAt,desc')
 })
 
 test('hides sold-out events when the toggle is pressed', async ({ page }) => {

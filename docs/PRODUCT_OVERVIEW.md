@@ -45,6 +45,7 @@ lists what that includes and what it excludes.
 - Use the **Tonight**, **This weekend** and **Next 7 days** shortcuts, or **On now** for what runs at this moment.
 - Search from the header with `/` or Ctrl/Cmd+K. The search finds events, venues, artists and promoters as you type.
 - Every search ignores accents, umlaut spellings and spaces, and tolerates typos. `berghian` finds Berghain.
+- Sort the events list by date, or by **newest added** to see the events we found most recently.
 - Plan a month ahead in the **calendar**.
 - Find what is **near you** on the map. Pick a position, a 1, 2 or 5 km radius, and get the venues inside it,
   nearest first. The position stays in the browser.

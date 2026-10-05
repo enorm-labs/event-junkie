@@ -6,6 +6,8 @@ import de.norm.events.ClockConfiguration
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
+import org.springframework.r2dbc.core.await
+import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
 
@@ -102,4 +104,42 @@ class EventOrderingControllerTest : BaseControllerTest() {
 
             slugsOf("/events/today", "$[*].slug") shouldBe listOf("weekender")
         }
+
+    @Test
+    fun `GET events sorts newest added first and leaves out an ended event`(): Unit =
+        runBlocking {
+            val venueId = insertVenue("Astra", "astra")
+            val today = LocalDate.now(ClockConfiguration.BERLIN)
+            val soonOld = insertEvent(venueId, "Soon, found long ago", "soon-old", today.plusDays(1))
+            val laterNew = insertEvent(venueId, "Later, found today", "later-new", today.plusDays(20))
+            val endedNewest = insertEvent(venueId, "Ended", "ended", today.minusDays(3))
+            firstStored(soonOld, Instant.parse("2099-01-01T10:00:00Z"))
+            firstStored(laterNew, Instant.parse("2099-01-02T10:00:00Z"))
+            firstStored(endedNewest, Instant.parse("2099-01-03T10:00:00Z"))
+
+            webTestClient
+                .get()
+                .uri("/events?sort=createdAt,desc")
+                .exchange()
+                .expectStatus()
+                .isOk
+                .expectBody()
+                .jsonPath("$.totalElements")
+                .isEqualTo(2)
+                .jsonPath("$.content[0].slug")
+                .isEqualTo("later-new")
+                .jsonPath("$.content[1].slug")
+                .isEqualTo("soon-old")
+        }
+
+    private suspend fun firstStored(
+        eventId: Long,
+        at: Instant
+    ) {
+        databaseClient
+            .sql("UPDATE events.event SET created_at = :at WHERE id = :id")
+            .bind("at", at)
+            .bind("id", eventId)
+            .await()
+    }
 }

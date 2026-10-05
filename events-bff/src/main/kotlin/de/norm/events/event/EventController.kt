@@ -35,7 +35,13 @@ class EventController(
     private val clock: Clock
 ) {
     @GetMapping
-    @Operation(summary = "Search events with optional filters and pagination")
+    @Operation(
+        summary = "Search events with optional filters and pagination",
+        description =
+            "Sort with `sort=eventDate` (the default, then the start time), `sort=startTime`, `sort=title`, `sort=pricePresale` " +
+                "or `sort=createdAt,desc` (newest added first, when the importer first stored the event). Without a date range, " +
+                "the list holds only events that have not ended."
+    )
     suspend fun list(
         @ParameterObject
         range: EventDateRangeParams,
