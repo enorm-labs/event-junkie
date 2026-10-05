@@ -97,15 +97,10 @@ Make it comprehensive, discoverable and pleasant. → **[Phase 2 — Coverage & 
 - A full UX and mobile pass, and the remaining SEO surfaces. The venues map, i18n and l10n, the sitemap, `hreflang`,
   canonical URLs and `schema.org` structured data exist. So do an RSS feed, related events and email links to report
   wrong data.
-- **Server-side head tags for shared links.** Every page serves an empty `<div id="app">`. A scraper that does not run
-  JavaScript shows the generic site title and description for _every_ shared link, event pages included. That covers
-  Slack, WhatsApp, iMessage, Facebook and LinkedIn. Sharing a specific event is a primary way a nightlife product
-  spreads. **[ADR-014](adr/ADR-014_RENDERING_STRATEGY.md)** decides it: **meta injection**, not prerendering. No
-  build-time rendering of any route, because it buys nothing for the pages people share, and daily imports make a
-  detail route stale by construction. The work splits in two. The shared module computing each page's head tags can be
-  built now, and it also closes the missing per-page `og:description`. The transport that rewrites the response waits
-  for ADR-012 to be executed. Full SSR is deferred behind a named trigger, rather than anticipated: Search Console
-  showing detail pages indexed poorly.
+- **Full server-side rendering, only if indexing needs it.** Shared links already preview per page: the `injector`
+  sidecar writes each page's head tags and JSON-LD into the served HTML ([ADR-014](adr/ADR-014_RENDERING_STRATEGY.md)).
+  Full SSR is deferred behind a named trigger, rather than anticipated: Search Console showing detail pages indexed
+  poorly.
 
 ### Phase 3 — Accounts & personalization 👤 _(Expansion stage 1)_
 
