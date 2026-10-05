@@ -21,11 +21,6 @@ data class KnownQuietSource(
 /** The sources known to be quiet, keyed by the `event_source` slug the gauges carry. */
 val KNOWN_QUIET_SOURCES: Map<String, KnownQuietSource> =
     mapOf(
-        "amt" to
-            KnownQuietSource(
-                LocalDate.of(2026, 9, 24),
-                "the venue stopped publishing its own calendar while it kept programming, and announces its nights on Resident Advisor instead (#1677)"
-            ),
         "gart-n" to
             KnownQuietSource(
                 LocalDate.of(2026, 9, 30),
