@@ -39,7 +39,7 @@ const line = computed(() =>
   [location.value || props.venue.city, formatVenueFacts(props.venue)].filter(Boolean).join(' · '),
 )
 // The card's order: the count goes under the facts, where its two numbers have the width.
-const upcoming = computed(() => (props.distance ? '' : formatUpcoming(props.venue)))
+const upcoming = computed(() => (props.distance ? [] : formatUpcoming(props.venue)))
 
 const localePath = useLocalePath()
 </script>
@@ -59,8 +59,11 @@ const localePath = useLocalePath()
       </span>
     </div>
     <p v-if="line" class="truncate text-meta text-muted-foreground">{{ line }}</p>
-    <p v-if="upcoming" class="truncate text-meta text-muted-foreground tabular-nums">
-      {{ upcoming }}
+    <p v-if="upcoming.length" class="text-meta text-muted-foreground tabular-nums">
+      <template v-for="(part, i) in upcoming" :key="part">
+        <template v-if="i">{{ ' ' }}</template>
+        <span class="whitespace-nowrap">{{ i < upcoming.length - 1 ? `${part} ·` : part }}</span>
+      </template>
     </p>
   </RouterLink>
 </template>

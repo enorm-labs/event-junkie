@@ -59,7 +59,12 @@ const websiteHost = computed(() => {
       >
         {{ description.text }}
       </p>
-      <p class="text-body text-muted-foreground">{{ upcoming }}</p>
+      <p class="text-body text-muted-foreground">
+        <template v-for="(part, i) in upcoming" :key="part">
+          <template v-if="i">{{ ' ' }}</template>
+          <span class="whitespace-nowrap">{{ i < upcoming.length - 1 ? `${part} ·` : part }}</span>
+        </template>
+      </p>
       <a
         v-if="websiteHost"
         :href="promoter.websiteUrl ?? undefined"

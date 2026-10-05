@@ -151,15 +151,22 @@ export function useFormat() {
         .join(' · '),
 
     /**
-     * A list tile's count line: "12 in the next 30 days · 220 upcoming" (#2694). The total alone when nothing is
-     * upcoming, or when the response has no 30-day count, as an older BFF sends; `''` when it has no count at all.
+     * A list tile's count line as its parts, ["12 events in the next 30 days", "220 upcoming overall"] (#2737),
+     * which the tile keeps whole so a narrow one breaks between them. The total alone when nothing is upcoming, or
+     * when the response has no 30-day count, as an older BFF sends; `[]` when it has no count at all.
      */
-    formatUpcoming: (item: { upcomingEventCount?: number; upcomingNext30DaysCount?: number }) => {
+    formatUpcoming: (item: {
+      upcomingEventCount?: number
+      upcomingNext30DaysCount?: number
+    }): string[] => {
       const { upcomingEventCount: upcoming, upcomingNext30DaysCount: next30 } = item
-      if (upcoming === undefined) return ''
+      if (upcoming === undefined) return []
       return next30 === undefined || upcoming === 0
-        ? t('common.upcomingCount', { count: upcoming })
-        : t('common.upcomingCounts', { next30, upcoming })
+        ? [t('common.upcomingCount', { count: upcoming })]
+        : [
+            t('common.upcomingNext30', { count: next30 }),
+            t('common.upcomingOverall', { count: upcoming }),
+          ]
     },
 
     /**

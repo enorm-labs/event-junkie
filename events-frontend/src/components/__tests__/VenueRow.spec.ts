@@ -76,7 +76,8 @@ describe('VenueRow', () => {
     })
 
     const lines = wrapper.findAll('p').map((line) => line.text())
-    expect(lines[lines.length - 1]).toBe('12 in the next 30 days · 220 upcoming')
+    expect(lines[lines.length - 1]).toBe('12 events in the next 30 days · 220 upcoming overall')
+    expect(wrapper.findAll('span.whitespace-nowrap')).toHaveLength(2)
   })
 
   it('shows a distance instead of the counts', () => {

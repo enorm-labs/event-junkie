@@ -171,7 +171,9 @@ describe('VenueCard', () => {
       'Lido',
       'Cuvrystr. 7 · Kreuzberg',
       'Club',
-      '12 in the next 30 days · 220 upcoming',
+      '12 events in the next 30 days · 220 upcoming overall',
     ])
+    // #2737: each half stays whole, so a narrow tile breaks at the separator.
+    expect(wrapper.findAll('span.whitespace-nowrap')).toHaveLength(2)
   })
 })
