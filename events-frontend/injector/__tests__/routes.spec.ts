@@ -8,6 +8,7 @@ import { DETAIL_SITEMAPS, INDEXABLE_PATHS } from '@/lib/seo'
 import {
   ENTITY_KINDS,
   matchDetailRoute,
+  matchCalendar,
   matchFeed,
   matchSitemap,
   matchStaticRoute,
@@ -186,5 +187,30 @@ describe('matchFeed', () => {
   it('agrees with the nginx location that sends the feed here', () => {
     const conf = readFileSync(resolve(process.cwd(), 'docker/nginx.conf'), 'utf8')
     expect(conf).toMatch(/location = \/feed\.xml \{\s*proxy_pass http:\/\/127\.0\.0\.1:3000;/)
+  })
+})
+
+describe('matchCalendar', () => {
+  it('returns the query of a calendar request, or an empty one', () => {
+    expect(matchCalendar('/calendar.ics')).toBe('')
+    expect(matchCalendar('/calendar.ics?locale=de&genre=jazz')).toBe('?locale=de&genre=jazz')
+  })
+
+  it('refuses any other path, the feed among them', () => {
+    const paths = [
+      '/calendar',
+      '/calendar.ics/x',
+      '/en/calendar.ics',
+      '/feed.xml',
+      '/api/events/calendar.ics',
+    ]
+    expect(paths.map((path) => [path, matchCalendar(path)])).toEqual(
+      paths.map((path) => [path, null]),
+    )
+  })
+
+  it('agrees with the nginx location that sends the calendar here', () => {
+    const conf = readFileSync(resolve(process.cwd(), 'docker/nginx.conf'), 'utf8')
+    expect(conf).toMatch(/location = \/calendar\.ics \{\s*proxy_pass http:\/\/127\.0\.0\.1:3000;/)
   })
 })

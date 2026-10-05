@@ -8,6 +8,7 @@ import { rewriteHead } from './rewrite.ts'
 import {
   type EntityKind,
   matchDetailRoute,
+  matchCalendar,
   matchFeed,
   matchSitemap,
   matchStaticRoute,
@@ -21,7 +22,8 @@ import { staticPathMeta } from '../src/lib/staticPages.ts'
  * does not know is a 404 and any other failure a 502: nginx's `error_page` then serves the plain
  * shell, with the 404 kept and the 502 turned into 200, so every branch that is not the happy
  * path ends in `fail()`. It also forwards the detail sitemaps from the BFF, which nginx serves at
- * the root (#367), and the RSS feed with its filter query (#368). Nothing about the visitor reaches
+ * the root (#367), and the RSS feed (#368) and the calendar subscription (#2719) with their filter
+ * query. Nothing about the visitor reaches
  * the BFF but that query, and nothing is logged per request. Two
  * in-process caches bound the BFF load: the shell changes only on deploy, and a link shared into
  * a busy group is fetched by every scraper at once.
@@ -41,6 +43,30 @@ const ENTITY_CACHE_LIMIT = 500
 const SITEMAP_TIMEOUT_MS = 10_000
 /** The feed is at most 50 items. nginx's `proxy_read_timeout` for it is 5s. */
 const FEED_TIMEOUT_MS = 4_000
+/** The calendar is at most 500 events. nginx's `proxy_read_timeout` for it is 15s. */
+const CALENDAR_TIMEOUT_MS = 10_000
+
+/** A file a client polls with its filter query: where the BFF renders it, and as what. */
+interface Polled {
+  name: string
+  bffPath: string
+  contentType: string
+  timeoutMs: number
+}
+
+const FEED: Polled = {
+  name: 'feed',
+  bffPath: '/api/events/feed',
+  contentType: 'application/rss+xml',
+  timeoutMs: FEED_TIMEOUT_MS,
+}
+
+const CALENDAR: Polled = {
+  name: 'calendar',
+  bffPath: '/api/events/calendar.ics',
+  contentType: 'text/calendar',
+  timeoutMs: CALENDAR_TIMEOUT_MS,
+}
 /** A shell or an entity larger than this is not ours; refuse it rather than buffer it. */
 const MAX_BODY_BYTES = 1024 * 1024
 
@@ -132,22 +158,23 @@ async function proxySitemap(kind: EntityKind, response: ServerResponse): Promise
 }
 
 /**
- * Streams the BFF's feed for `query` through. A 304 keeps the reader's copy, and a 400 tells the
- * reader which filter is wrong; anything else but a feed is a 502.
+ * Streams the BFF's `polled` file for `query` through. A 304 keeps the client's copy, and a 400
+ * tells the client which filter is wrong; anything else but the file is a 502.
  */
-async function proxyFeed(
+async function proxyPolled(
+  polled: Polled,
   query: string,
   request: IncomingMessage,
   response: ServerResponse,
 ): Promise<void> {
-  const url = `${BFF_URL}/api/events/feed${query}`
+  const url = `${BFF_URL}${polled.bffPath}${query}`
   const ifNoneMatch = request.headers['if-none-match']
   const upstream = await fetch(url, {
     headers: {
-      accept: 'application/rss+xml',
+      accept: polled.contentType,
       ...(ifNoneMatch ? { 'if-none-match': ifNoneMatch } : {}),
     },
-    signal: AbortSignal.timeout(FEED_TIMEOUT_MS),
+    signal: AbortSignal.timeout(polled.timeoutMs),
   }).catch((error: Error) => {
     throw new Fail(`${url}: ${(error.cause as Error | undefined)?.message ?? error.message}`, 502)
   })
@@ -171,7 +198,7 @@ async function proxyFeed(
   }
   if (!upstream.ok || !upstream.body) throw new Fail(`${url} answered ${upstream.status}`, 502)
   response.writeHead(200, {
-    'content-type': 'application/rss+xml',
+    'content-type': polled.contentType,
     ...passed('content-type', 'cache-control', 'etag'),
   })
   await pipeline(Readable.fromWeb(upstream.body as ReadableStream), response)
@@ -194,12 +221,15 @@ async function handle(request: IncomingMessage, response: ServerResponse): Promi
     return
   }
 
-  const feedQuery = matchFeed(url)
-  if (feedQuery !== null) {
+  for (const [polled, query] of [
+    [FEED, matchFeed(url)],
+    [CALENDAR, matchCalendar(url)],
+  ] as const) {
+    if (query === null) continue
     try {
-      await proxyFeed(feedQuery, request, response)
+      await proxyPolled(polled, query, request, response)
     } catch (error) {
-      fail(response, 502, `feed: ${(error as Error).message}`)
+      fail(response, 502, `${polled.name}: ${(error as Error).message}`)
     }
     return
   }

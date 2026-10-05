@@ -26,33 +26,38 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.server.ResponseStatusException
 import org.springframework.web.server.ServerWebExchange
+import java.time.Clock
 import java.time.Duration
+import java.time.LocalDate
 
 /**
- * The RSS feed of new events (#368): the events the importer stored most recently, newest first.
- * It takes the list's filters, so a filtered feed URL is a saved search a reader polls.
+ * The calendar subscription (#2719): the events of the coming days as an iCalendar file a calendar
+ * app polls. It takes the list's filters, so a filtered URL is a saved search, as the RSS feed is.
  */
 @RestController
-@RequestMapping("/api/events/feed")
+@RequestMapping("/api/events/calendar.ics")
 @Tag(name = "Feed", description = "Feeds a reader or a calendar polls: RSS of new events, iCalendar of the coming days, with the list's filters")
-class EventFeedController(
+class EventCalendarController(
     private val eventService: EventService,
     private val metrics: BffMetrics,
     private val cache: ResponseCache,
+    private val clock: Clock,
     @Value("\${app.api.cache.ttl-seconds}") ttlSeconds: Long
 ) {
     /** Set here rather than by the filter, so a `304` keeps it: the filter gives a non-`2xx` answer `no-store`. */
     private val cacheControl = CacheControl.maxAge(Duration.ofSeconds(ttlSeconds)).cachePublic()
 
     @GetMapping
-    @Operation(summary = "Get the newest events as an RSS 2.0 feed, at most 50, leaving out those that are over")
+    @Operation(
+        summary = "Get the events from today for 90 days as an iCalendar (RFC 5545) subscription, at most 500, in the list's order"
+    )
     @ApiResponse(
         responseCode = "200",
-        description = "The feed",
-        content = [Content(mediaType = EventFeedXml.CONTENT_TYPE, schema = Schema(type = "string"))]
+        description = "The calendar",
+        content = [Content(mediaType = EventCalendarIcs.CONTENT_TYPE, schema = Schema(type = "string"))]
     )
-    suspend fun feed(
-        @Parameter(description = "Language of the feed's text and links: en or de.", example = "de")
+    suspend fun calendar(
+        @Parameter(description = "Language of the entries' links and notes: en or de.", example = "de")
         @RequestParam(defaultValue = Site.DEFAULT_LOCALE)
         locale: String,
         @ParameterObject
@@ -64,33 +69,33 @@ class EventFeedController(
             throw ResponseStatusException(HttpStatus.BAD_REQUEST, "'locale' must be one of ${Site.LOCALES.joinToString(", ")}")
         }
         val filter = filters.toFilter()
-        val events = cache.get(FeedKey(filter)) { eventService.newest(filter, MAX_ITEMS) }
-        metrics.recordServed(BffMetrics.ENDPOINT_FEED, events.size)
-        val body = EventFeedXml.render(locale, selfUrl(exchange), events)
-        // A reader polls with If-None-Match; Spring answers 304 for a matching tag.
+        val today = LocalDate.now(clock)
+        val last = today.plusDays(DAYS - 1)
+        val events = cache.get(CalendarKey(filter, today)) { eventService.upcoming(filter, today, last, MAX_EVENTS) }
+        metrics.recordServed(BffMetrics.ENDPOINT_CALENDAR_FEED, events.size)
+        val body = EventCalendarIcs.render(locale, events)
+        // A client polls with If-None-Match; Spring answers 304 for a matching tag.
         return ResponseEntity
             .ok()
             .cacheControl(cacheControl)
             .eTag(WeakETag.of(body))
-            .contentType(MediaType.parseMediaType("${EventFeedXml.CONTENT_TYPE};charset=UTF-8"))
+            .contentType(MediaType.parseMediaType("${EventCalendarIcs.CONTENT_TYPE};charset=UTF-8"))
             .body(body)
     }
 
-    /** The public address of this request: the site's feed path, never the request's host or `/api` path. */
-    private fun selfUrl(exchange: ServerWebExchange): String {
-        val query = exchange.request.uri.rawQuery
-        return "${Site.URL}${Site.FEED_PATH}${if (query == null) "" else "?$query"}"
-    }
-
     private companion object {
-        /** A reader keeps what it has seen, so the cap bounds the document, not what an hourly reader learns. */
-        const val MAX_ITEMS = 50
+        /** Today and the 89 days after it. */
+        const val DAYS = 90L
+
+        /** Bounds the file a client parses on every poll; a busy unfiltered quarter is more. */
+        const val MAX_EVENTS = 500
 
         val PARAMS = QueryParameters.accepting(EventFilterParams::class.java, QueryParameters.named("locale"))
     }
 }
 
-/** The feed's cache key. The locale is not in it: the events are the same, only the rendering differs. */
-private data class FeedKey(
-    val filter: EventFilter
+/** The calendar's cache key. The day is in it, because the window moves with it; the locale is not. */
+private data class CalendarKey(
+    val filter: EventFilter,
+    val today: LocalDate
 )

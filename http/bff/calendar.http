@@ -1,0 +1,30 @@
+### ============================================================
+### BFF: Calendar subscription — iCalendar of the coming days (#2719)
+###
+### Read-only, no auth. The events from today for 90 days, at most
+### 500, in the list's order. Takes the event list's filters, so a
+### filtered URL is a saved search. An unknown parameter is a 400.
+### The public URL is /calendar.ics with the same query; nginx and
+### the injector forward it here.
+### ============================================================
+
+### Everything coming up, in English
+GET {{bff-host}}/api/events/calendar.ics
+Accept: text/calendar
+
+### In German: /de/ links and German estimate notes
+GET {{bff-host}}/api/events/calendar.ics?locale=de
+Accept: text/calendar
+
+### A saved search: jazz in Neukölln
+GET {{bff-host}}/api/events/calendar.ics?genre=jazz&district=neukoelln
+Accept: text/calendar
+
+### One venue's calendar
+GET {{bff-host}}/api/events/calendar.ics?venue=berghain
+Accept: text/calendar
+
+### A client's conditional poll: paste the ETag of a previous answer, expect 304
+GET {{bff-host}}/api/events/calendar.ics
+Accept: text/calendar
+If-None-Match: W/"paste-the-etag-here"

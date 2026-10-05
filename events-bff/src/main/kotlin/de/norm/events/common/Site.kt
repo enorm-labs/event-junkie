@@ -1,7 +1,7 @@
 package de.norm.events.common
 
 /**
- * The public site every absolute URL the API writes points at: the sitemaps and the event feed.
+ * The public site every absolute URL the API writes points at: the sitemaps and the event feeds.
  * A constant, never the request's host, so a preview or an alias does not name itself canonical.
  * Mirrors `SITE_URL` and `LOCALES` in `events-frontend/src/lib/seo.ts`; change both or neither.
  */

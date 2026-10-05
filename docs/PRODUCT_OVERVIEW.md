@@ -76,6 +76,7 @@ lists what that includes and what it excludes.
 - An event with no flyer gets a drawn poster for its genre or type.
 - Every filter lives in the URL, so a filtered view is a link you can share.
 - Subscribe to the **RSS feed** of new events. A filtered feed URL is a saved search with no account.
+- Subscribe a calendar app to the **next 90 days** of events, filtered the same way. New and cancelled events reach the calendar by themselves.
 - The site loads nothing from a third party and does not track you. The map tiles are self-hosted.
 - A venue can opt out on the _For venues_ page.
 
@@ -106,6 +107,7 @@ the first column. It fails in two cases:
 | `/legal/notices`                   | Open-source notices                                                         |
 | `/legal/for-venues`                | The opt-out route for venues                                                |
 | `/feed.xml`                        | RSS feed of newly imported events, with every events-list filter            |
+| `/calendar.ics`                    | iCalendar subscription to the next 90 days, with every events-list filter   |
 | `/robots.txt`                      | Allows search and answer crawlers, refuses AI training crawlers             |
 | `/api/events`                      | Event search with the full filter set, paged and sorted                     |
 | `/api/events/{slug}`               | One event                                                                   |
@@ -113,6 +115,7 @@ the first column. It fails in two cases:
 | `/api/events/today`                | Today's events                                                              |
 | `/api/events/calendar`             | Events in a date range, for the calendar and the map                        |
 | `/api/events/feed`                 | The RSS feed behind `/feed.xml`                                             |
+| `/api/events/calendar.ics`         | The calendar subscription behind `/calendar.ics`                            |
 | `/api/venues`                      | Venue list with its filters                                                 |
 | `/api/venues/{slug}`               | One venue                                                                   |
 | `/api/venues/feature-counts`       | How many venues each character tag leaves                                   |

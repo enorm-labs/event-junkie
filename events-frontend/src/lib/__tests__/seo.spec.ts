@@ -4,6 +4,7 @@ import {
   alternatesFor,
   canonicalUrl,
   DETAIL_SITEMAPS,
+  calendarPath,
   feedPath,
   feedUrl,
   INDEXABLE_PATHS,
@@ -211,6 +212,18 @@ describe('the feed URL', () => {
   it('leaves out what the list leaves out of its URL', () => {
     expect(feedPath('en', { q: '', venue: undefined, excludeSoldOut: false, family: [] })).toBe(
       '/feed.xml?locale=en',
+    )
+  })
+})
+
+describe('the calendar subscription path', () => {
+  it("is site-relative and carries the filter bar's values as the feed does", () => {
+    expect(calendarPath('de')).toBe('/calendar.ics?locale=de')
+    expect(calendarPath('en', { genre: 'jazz', district: ['neukoelln'], free: false })).toBe(
+      '/calendar.ics?locale=en&genre=jazz&district=neukoelln',
+    )
+    expect(calendarPath('en', { timeOfDay: ['evening', 'late'] })).toBe(
+      '/calendar.ics?locale=en&timeOfDay=evening&timeOfDay=late',
     )
   })
 })

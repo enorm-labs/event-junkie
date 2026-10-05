@@ -109,15 +109,19 @@ class EventSearchRepository(
         }
 
     /**
-     * Every matching event ID in default chronological order, unpaged, for the calendar view. Safe
-     * because the caller bounds the range (`EventService.MAX_CALENDAR_DAYS`).
+     * Every matching event ID in default chronological order, unpaged, for the calendar view, or the
+     * first [limit] of them. Safe because the caller bounds the range (`EventService.MAX_CALENDAR_DAYS`).
      */
-    suspend fun searchAll(filter: EventFilter): List<Long> =
+    suspend fun searchAll(
+        filter: EventFilter,
+        limit: Int? = null
+    ): List<Long> =
         TextSearch.strictThenSimilar(filter.query, found = { it.isNotEmpty() }) { bySimilarity ->
             val params = mutableMapOf<String, Any>()
             val where = buildWhereClause(filter, params, bySimilarity)
+            limit?.let { params["limit"] = it }
             databaseClient
-                .sql("SELECT e.id FROM $EVENTS_SCHEMA.event e $where $DEFAULT_ORDER")
+                .sql("SELECT e.id FROM $EVENTS_SCHEMA.event e $where $DEFAULT_ORDER${if (limit == null) "" else " LIMIT :limit"}")
                 .bindAll(params)
                 .bind("seed", tiebreakSeed())
                 .map { row: Readable -> row.requiredEventId() }
