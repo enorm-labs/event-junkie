@@ -90,7 +90,12 @@ const { el: posterEl, focused: posterFocused } = useViewportFocus()
         {{ venue.city }}
       </p>
       <p v-if="facts" class="truncate text-body text-muted-foreground">{{ facts }}</p>
-      <p v-if="upcoming" class="text-body text-muted-foreground">{{ upcoming }}</p>
+      <p v-if="upcoming.length" class="text-body text-muted-foreground">
+        <template v-for="(part, i) in upcoming" :key="part">
+          <template v-if="i">{{ ' ' }}</template>
+          <span class="whitespace-nowrap">{{ i < upcoming.length - 1 ? `${part} ·` : part }}</span>
+        </template>
+      </p>
     </div>
   </RouterLink>
 </template>

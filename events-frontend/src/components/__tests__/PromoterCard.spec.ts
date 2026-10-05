@@ -26,9 +26,10 @@ describe('PromoterCard', () => {
     expect(wrapper.findAll('h3, p, a[target="_blank"]').map((line) => line.text())).toEqual([
       'Goodlive',
       'Concerts and festivals.',
-      '12 in the next 30 days · 220 upcoming',
+      '12 events in the next 30 days · 220 upcoming overall',
       'goodlive.de',
     ])
+    expect(wrapper.findAll('span.whitespace-nowrap')).toHaveLength(2)
   })
 
   it('says so when nothing is upcoming', () => {

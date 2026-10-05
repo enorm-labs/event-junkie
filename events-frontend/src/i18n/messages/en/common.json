@@ -42,7 +42,8 @@
   },
   "upcomingEvents": "Upcoming events",
   "upcomingCount": "No upcoming events | {count} upcoming event | {count} upcoming events",
-  "upcomingCounts": "{next30} in the next 30 days · {upcoming} upcoming",
+  "upcomingNext30": "No events in the next 30 days | {count} event in the next 30 days | {count} events in the next 30 days",
+  "upcomingOverall": "{count} upcoming overall",
   "sort": {
     "label": "Sort",
     "name": "A–Z",

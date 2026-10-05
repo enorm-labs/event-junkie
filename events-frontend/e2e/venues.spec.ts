@@ -126,7 +126,7 @@ test('sorting by the next 30 days puts the sort in the URL, sends it, and shows 
 
   await page.goto('/venues')
   await expect(page.getByRole('heading', { level: 2 }).first()).toHaveText('Astra')
-  await expect(page.getByText('12 in the next 30 days · 40 upcoming')).toBeVisible()
+  await expect(page.getByText('12 events in the next 30 days · 40 upcoming overall')).toBeVisible()
 
   const sort = page.getByRole('group', { name: 'Sort' })
   await sort.getByRole('button', { name: 'Busiest next 30 days' }).click()
