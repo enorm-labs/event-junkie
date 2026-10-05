@@ -179,7 +179,8 @@ test('app shell marks the app as beta and explains what that means', async ({ pa
   await badge.click()
 
   await expect(page).toHaveURL(/\/about#beta$/)
-  await expect(page.getByRole('heading', { name: 'Why it says beta' })).toBeVisible()
+  // In view, not only rendered: About loads after the navigation, so the scroll has to wait (#2689).
+  await expect(page.getByRole('heading', { name: 'Why it says beta' })).toBeInViewport()
 })
 
 test('app shell links to the source repository on GitHub', async ({ page }) => {
