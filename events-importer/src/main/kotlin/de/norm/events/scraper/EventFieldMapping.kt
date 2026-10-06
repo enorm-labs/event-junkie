@@ -273,7 +273,9 @@ fun hasFreeEntryPhrase(text: String?): Boolean = text != null && FREE_ENTRY_PHRA
 /**
  * Whether an event is free. A positive signal is required, since an absent price is unknown,
  * not free: an explicit €0 price, a [hasFreeEntryPhrase] match in the title or price note, or a
- * [FREE_TOKENS] match in the price note. A [TIME_LIMITED_FREE] marker is not a signal.
+ * [FREE_TOKENS] match in the price note. A [TIME_LIMITED_FREE] marker is not a signal. The price
+ * note counts only when no positive price was parsed: beside a price, "free for transgender women"
+ * or "Kinder frei" is a concession for one group, not free entry (#2789).
  */
 fun detectFree(
     pricePresale: BigDecimal? = null,
@@ -283,5 +285,6 @@ fun detectFree(
 ): Boolean {
     val hasZeroPrice = pricePresale?.signum() == 0 || priceBoxOffice?.signum() == 0
     val tokenInNote = priceNote?.replace(TIME_LIMITED_FREE, " ")?.let { FREE_TOKEN_PATTERN.containsMatchIn(it) } ?: false
-    return hasZeroPrice || hasFreeEntryPhrase(title) || hasFreeEntryPhrase(priceNote) || tokenInNote
+    val hasPositivePrice = pricePresale?.signum() == 1 || priceBoxOffice?.signum() == 1
+    return hasZeroPrice || hasFreeEntryPhrase(title) || (!hasPositivePrice && (hasFreeEntryPhrase(priceNote) || tokenInNote))
 }
