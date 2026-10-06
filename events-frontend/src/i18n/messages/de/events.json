@@ -128,7 +128,9 @@
     "RELOCATED": "Verlegt",
     "CANCELLED": "Abgesagt",
     "POSTPONED": "Verschoben",
-    "movedTo": "Verlegt: {venue}"
+    "movedTo": "Verlegt: {venue}",
+    "movedFrom": "vorher {venue}",
+    "postponedNote": "Verschoben: Die Location nennt noch keinen neuen Termin."
   },
   "alsoRunning": {
     "title": "Läuft außerdem"

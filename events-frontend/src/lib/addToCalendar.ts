@@ -6,6 +6,7 @@ import { SITE_URL } from '@/lib/seo'
  * A calendar entry for an event, as an RFC 5545 `.ics` file and as a Google Calendar template
  * link. Both are built in the browser from the data the page already holds: no request, no
  * storage, and nothing loaded from Google — its link is an outbound link like a ticket link.
+ * `EventCalendarIcs.kt` writes the calendar subscription by the same rules: change both or neither.
  */
 
 /**
@@ -39,6 +40,19 @@ export type CalendarEntry = {
   location?: string
   description?: string
   url?: string
+  status?: 'CANCELLED' | 'TENTATIVE'
+  /** Opens the Google link's details, which carry no `STATUS`: a cancelled event says so in words. */
+  googleNote?: string
+}
+
+/** The entry's texts in the page's language, from `events.status.*` and `events.detail.share.*`. */
+export type CalendarTexts = {
+  movedTo: (venue: string) => string
+  movedFrom: (venue: string) => string
+  postponed: string
+  cancelled: string
+  startEstimated: string
+  endEstimated: string
 }
 
 /** Milliseconds Berlin is ahead of UTC at the instant `utcMs`. */
@@ -115,11 +129,75 @@ export function eventCalendarSpan(event: EventDetail): CalendarSpan | null {
   }
 }
 
-/** `Venue, Room, Street 1, City` — whatever of it is known. */
-export function eventLocation(event: EventDetail): string | undefined {
+/** The house a relocated event moved to, when its note names one. */
+export function relocatedTo(event: EventDetail): string | undefined {
+  return (event.status === 'RELOCATED' && event.relocatedTo?.trim()) || undefined
+}
+
+/**
+ * `Venue, Room, Street 1, City` — whatever of it is known. A relocated event names the house it
+ * moved to first, so a calendar does not send the visitor to the old one.
+ */
+export function eventLocation(
+  event: EventDetail,
+  texts: Pick<CalendarTexts, 'movedTo' | 'movedFrom'>,
+): string | undefined {
   const venue = event.venue
-  const parts = [venue?.name, event.room, venue?.address, venue?.city].filter(Boolean)
-  return parts.length ? parts.join(', ') : undefined
+  const movedTo = relocatedTo(event)
+  const parts = movedTo
+    ? [texts.movedTo(movedTo), venue?.name ? texts.movedFrom(venue.name) : '']
+    : [venue?.name, event.room, venue?.address, venue?.city]
+  const known = parts.filter(Boolean)
+  return known.length ? known.join(', ') : undefined
+}
+
+/** The notes that say which of the span's times are our estimate. */
+export function estimateNotes(
+  span: CalendarSpan,
+  texts: Pick<CalendarTexts, 'startEstimated' | 'endEstimated'>,
+): string[] {
+  if (span.allDay) return []
+  return [
+    span.startEstimated ? texts.startEstimated : '',
+    span.endEstimated ? texts.endEstimated : '',
+  ].filter(Boolean)
+}
+
+/**
+ * The calendar entry for an event at `url`, or `null` without a date. A postponed event is
+ * tentative, not cancelled: a client strikes out or hides `CANCELLED`, and the show is not off.
+ */
+export function eventCalendarEntry(
+  event: EventDetail,
+  url: string,
+  texts: CalendarTexts,
+): CalendarEntry | null {
+  const span = eventCalendarSpan(event)
+  if (!event.slug || !event.title || !span) return null
+  const movedTo = relocatedTo(event)
+  const statusNote =
+    event.status === 'POSTPONED'
+      ? texts.postponed
+      : movedTo
+        ? `${texts.movedTo(movedTo)}.`
+        : undefined
+  return {
+    uid: eventUid(event.slug),
+    title: event.title,
+    span,
+    location: eventLocation(event, texts),
+    description: [statusNote, event.subtitle, ...estimateNotes(span, texts), url]
+      .filter(Boolean)
+      .join('\n\n'),
+    url,
+    status:
+      event.status === 'CANCELLED'
+        ? 'CANCELLED'
+        : event.status === 'POSTPONED'
+          ? 'TENTATIVE'
+          : undefined,
+    googleNote: event.status === 'CANCELLED' ? `${texts.cancelled}.` : undefined,
+  }
 }
 
 /** `20261003T210000Z`. */
@@ -193,6 +271,7 @@ export function toIcs(entry: CalendarEntry, now: Date = new Date()): string {
     ...(entry.location ? [`LOCATION:${escapeText(entry.location)}`] : []),
     ...(entry.description ? [`DESCRIPTION:${escapeText(entry.description)}`] : []),
     ...(entry.url ? [`URL:${entry.url}`] : []),
+    ...(entry.status ? [`STATUS:${entry.status}`] : []),
     'END:VEVENT',
     'END:VCALENDAR',
   ]
@@ -213,7 +292,7 @@ export function googleCalendarUrl(entry: CalendarEntry): string {
     ['text', entry.title],
     ['dates', dates],
     ['ctz', 'Europe/Berlin'],
-    ['details', entry.description],
+    ['details', [entry.googleNote, entry.description].filter(Boolean).join('\n\n')],
     ['location', entry.location],
   ]
   const query = params

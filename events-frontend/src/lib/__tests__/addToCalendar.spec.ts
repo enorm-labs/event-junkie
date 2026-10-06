@@ -1,10 +1,13 @@
 import { describe, expect, it } from 'vitest'
 
 import type { EventDetail } from '@/api/types'
+import { i18n } from '@/i18n'
+import type { Locale } from '@/i18n/locales'
 import {
   berlinToUtc,
   DEFAULT_DURATION_HOURS,
   escapeText,
+  eventCalendarEntry,
   eventCalendarSpan,
   eventLocation,
   eventUid,
@@ -12,6 +15,7 @@ import {
   googleCalendarUrl,
   toIcs,
   type CalendarEntry,
+  type CalendarTexts,
 } from '@/lib/addToCalendar'
 
 const event: EventDetail = {
@@ -24,6 +28,38 @@ const event: EventDetail = {
 }
 
 const NOW = new Date('2026-06-01T10:00:00Z')
+const PAGE = 'https://event-junkie.de/en/events/2026-06-12-lido-test-act'
+
+/** The texts the event page passes, from the catalogues. */
+function textsOf(locale: Locale): CalendarTexts {
+  const t = (key: string, named: Record<string, string> = {}) =>
+    i18n.global.t(key, named, { locale })
+  return {
+    movedTo: (venue) => t('events.status.movedTo', { venue }),
+    movedFrom: (venue) => t('events.status.movedFrom', { venue }),
+    postponed: t('events.status.postponedNote'),
+    cancelled: t('events.status.CANCELLED'),
+    startEstimated: t('events.detail.share.startEstimated'),
+    endEstimated: t('events.detail.share.endEstimated'),
+  }
+}
+const EN = textsOf('en')
+const DE = textsOf('de')
+
+/** The value of one property in an `.ics`, unfolded. */
+function icsValue(ics: string, name: string): string | undefined {
+  const line = ics
+    .replace(/\r\n /g, '')
+    .split('\r\n')
+    .find((l) => l.startsWith(`${name}:`))
+  return line?.slice(name.length + 1)
+}
+
+function entryOf(detail: EventDetail, texts: CalendarTexts = EN): CalendarEntry {
+  const entry = eventCalendarEntry(detail, PAGE, texts)
+  if (!entry) throw new Error('no entry')
+  return entry
+}
 
 function entryFor(detail: EventDetail): CalendarEntry {
   const span = eventCalendarSpan(detail)
@@ -126,8 +162,94 @@ describe('eventCalendarSpan', () => {
 
 describe('eventLocation', () => {
   it('joins what is known of the venue and the room', () => {
-    expect(eventLocation({ ...event, room: 'Saal' })).toBe('Lido, Saal, Cuvrystr. 7, Berlin')
-    expect(eventLocation({ ...event, venue: undefined })).toBeUndefined()
+    expect(eventLocation({ ...event, room: 'Saal' }, EN)).toBe('Lido, Saal, Cuvrystr. 7, Berlin')
+    expect(eventLocation({ ...event, venue: undefined }, EN)).toBeUndefined()
+  })
+
+  it('names the house a relocated event moved to, then the old one', () => {
+    const moved: EventDetail = {
+      ...event,
+      room: 'Saal',
+      status: 'RELOCATED',
+      relocatedTo: 'Säälchen',
+    }
+    expect(eventLocation(moved, EN)).toBe('Moved to Säälchen, was Lido')
+    expect(eventLocation(moved, DE)).toBe('Verlegt: Säälchen, vorher Lido')
+  })
+
+  it('keeps the venue of a relocated event that does not say where it went', () => {
+    expect(eventLocation({ ...event, status: 'RELOCATED' }, EN)).toBe('Lido, Cuvrystr. 7, Berlin')
+    expect(eventLocation({ ...event, status: 'RELOCATED', relocatedTo: ' ' }, EN)).toBe(
+      'Lido, Cuvrystr. 7, Berlin',
+    )
+  })
+
+  it('ignores a stale relocation note on an event that is back on', () => {
+    expect(eventLocation({ ...event, relocatedTo: 'Säälchen' }, EN)).toBe(
+      'Lido, Cuvrystr. 7, Berlin',
+    )
+  })
+})
+
+describe('eventCalendarEntry', () => {
+  it('leaves a scheduled event as it was', () => {
+    const entry = entryOf({ ...event, status: 'SCHEDULED', subtitle: 'Live' })
+    expect(entry.location).toBe('Lido, Cuvrystr. 7, Berlin')
+    expect(entry.description).toBe(`Live\n\n${EN.endEstimated}\n\n${PAGE}`)
+    expect(entry.status).toBeUndefined()
+    const ics = toIcs(entry, NOW)
+    expect(ics).not.toContain('STATUS')
+    expect(new URL(googleCalendarUrl(entry)).searchParams.get('details')).toBe(entry.description)
+  })
+
+  it('is null without a date', () => {
+    expect(eventCalendarEntry({ ...event, eventDate: undefined }, PAGE, EN)).toBeNull()
+  })
+
+  // The strings EventCalendarControllerTest asserts for the subscription feed's entry.
+  it('sends a relocated event to the house it moved to, as the subscription feed does', () => {
+    const moved: EventDetail = {
+      ...event,
+      venue: { ...event.venue, name: 'Hole44' },
+      status: 'RELOCATED',
+      relocatedTo: 'Säälchen',
+      subtitle: 'Live',
+    }
+    const ics = toIcs(entryOf(moved), NOW)
+    expect(icsValue(ics, 'LOCATION')).toBe('Moved to Säälchen\\, was Hole44')
+    expect(icsValue(ics, 'DESCRIPTION')).toMatch(/^Moved to Säälchen\.\\n\\nLive/)
+    expect(icsValue(ics, 'STATUS')).toBeUndefined()
+    expect(icsValue(toIcs(entryOf(moved, DE), NOW), 'LOCATION')).toBe(
+      'Verlegt: Säälchen\\, vorher Hole44',
+    )
+
+    const google = new URL(googleCalendarUrl(entryOf(moved))).searchParams
+    expect(google.get('location')).toBe('Moved to Säälchen, was Hole44')
+    expect(google.get('details')).toMatch(/^Moved to Säälchen\.\n\nLive/)
+  })
+
+  it('marks a postponed event tentative and says why', () => {
+    const entry = entryOf({ ...event, status: 'POSTPONED' })
+    const ics = toIcs(entry, NOW)
+    expect(icsValue(ics, 'STATUS')).toBe('TENTATIVE')
+    expect(icsValue(ics, 'DESCRIPTION')).toMatch(/^Postponed: the venue names no new date yet\./)
+    expect(new URL(googleCalendarUrl(entry)).searchParams.get('details')).toMatch(
+      /^Postponed: the venue names no new date yet\./,
+    )
+    expect(entryOf({ ...event, status: 'POSTPONED' }, DE).description).toMatch(
+      /^Verschoben: Die Location nennt noch keinen neuen Termin\./,
+    )
+  })
+
+  it('marks a cancelled event cancelled, and says so in words to Google', () => {
+    const entry = entryOf({ ...event, status: 'CANCELLED' })
+    const ics = toIcs(entry, NOW)
+    expect(icsValue(ics, 'STATUS')).toBe('CANCELLED')
+    expect(icsValue(ics, 'DESCRIPTION')).not.toContain('Cancelled')
+    expect(new URL(googleCalendarUrl(entry)).searchParams.get('details')).toMatch(
+      /^Cancelled\.\n\n/,
+    )
+    expect(entryOf({ ...event, status: 'CANCELLED' }, DE).googleNote).toBe('Abgesagt.')
   })
 })
 
