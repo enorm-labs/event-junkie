@@ -205,7 +205,7 @@ Java comes from SDKMAN (`.sdkmanrc`, `sdk env`); target **Java 25**. Infra, char
 
 Slash commands under `.claude/skills/`, each a one-line `@` pointer into `.github/prompts/`:
 
-- `/afk [<issue>…]` — while the user is away: the named issues, or every `afk-ok` one, to draft PRs, with decisions in each PR and a handover in `temp/`
+- `/afk [<issue>…]` — while the user is away: the named issues, or every `afk-ok` one, to draft PRs, with decisions in each PR and a handover in `temp/`; `/afk merge` then guides the merges one PR at a time
 - `/code-review` — review the current diff
 - `/codebase-audit` — whole-repo review: size, duplication, conventions, simplification
 - `/commit-message` — a commit message from the staged changes
