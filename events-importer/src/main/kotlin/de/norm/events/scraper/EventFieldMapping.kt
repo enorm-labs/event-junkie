@@ -231,14 +231,22 @@ private val ZERO_WIDTH = Regex("""[\u200B-\u200D\uFEFF]""")
 
 /**
  * A free-entry phrase unambiguous enough for any text field: "Eintritt frei", "Eintritt: Frei",
- * "freier Eintritt", "bei freiem Eintritt", "kostenloser Eintritt", "free entry", "free admission", "Admission free".
- * Multi-word, so it cannot collide with a band or festival name, and whole-word, so "Eintritt
+ * "freier Eintritt", "bei freiem Eintritt", "kostenloser Eintritt", "Kostenfreie Tickets", "free
+ * entry", "free admission", "Admission free". Multi-word, so it cannot collide with a band or
+ * festival name or with a bare "kostenfrei (zzgl. Parkeintritt)", and whole-word, so "Eintritt
  * freiwillig" (pay what you want) is not free. [hasFreeEntryPhrase] applies it; a scraper that
  * only drops such a line from a description reads the pattern itself.
  */
 val FREE_ENTRY_PHRASE =
     Regex(
-        """\b(?:eintritt\s*:?\s*frei|freie[mnr]?\s+eintritt|kostenlose[mnr]?\s+eintritt|free\s+(?:entry|admission)|admission\s*:?\s*free)\b""",
+        listOf(
+            """eintritt\s*:?\s*frei""",
+            """freie[mnr]?\s+eintritt""",
+            """kostenlose[mnr]?\s+eintritt""",
+            """kostenfreie[mnr]?\s+(?:eintritt|tickets?|karten)""",
+            """free\s+(?:entry|admission)""",
+            """admission\s*:?\s*free"""
+        ).joinToString("|", prefix = """\b(?:""", postfix = """)\b"""),
         RegexOption.IGNORE_CASE
     )
 

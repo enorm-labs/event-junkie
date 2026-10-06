@@ -16,7 +16,7 @@ import java.time.LocalTime
  * Unit tests for [UraniaEventPageScraper].
  *
  * Parses static snapshots of Urania `/event/<slug>/` pages for deterministic, offline-safe testing
- * without HTTP fetching — one paid, one free, one that states no admission at all.
+ * without HTTP fetching — one paid, one free, one free by e-mail booking, one that states no admission at all.
  */
 class UraniaEventPageScraperTest {
     private val scraper = UraniaEventPageScraper()
@@ -37,6 +37,7 @@ class UraniaEventPageScraperTest {
     private val opening: ScrapedEvent by lazy { scrape("demokratie-vor-der-wahl", "demokratie-vor-der-wahl") }
     private val memory: ScrapedEvent by lazy { scrape("how-context-modulates-memory", "how-context-modulates-memory-in-flies-and-humans") }
     private val pioneers: ScrapedEvent by lazy { scrape("die-pionierinnen", "die-pionierinnen-der-goldenen-1920er-jahre") }
+    private val schoolClass: ScrapedEvent by lazy { scrape("victor-klemperer-tagebuch", "victor-klemperer-tagebuch") }
 
     @Test
     fun `maps a fully populated event page`() {
@@ -78,6 +79,16 @@ class UraniaEventPageScraperTest {
     }
 
     @Test
+    fun `reads a school-class event's free tickets, booked by e-mail`() {
+        // "Kostenfreie Tickets: anmeldung@urania-berlin.de", with no "Eintritt" line and no ticket link.
+        schoolClass.free shouldBe true
+        schoolClass.priceNote shouldBe "Kostenfreie Tickets"
+        schoolClass.pricePresale.shouldBeNull()
+        schoolClass.ticketUrl.shouldBeNull()
+        schoolClass.description!! shouldContain "Kostenfreie Tickets: anmeldung@urania-berlin.de"
+    }
+
+    @Test
     fun `states no price where the venue announces none`() {
         pioneers.pricePresale.shouldBeNull()
         pioneers.priceNote.shouldBeNull()
@@ -102,6 +113,8 @@ class UraniaEventPageScraperTest {
     fun `finds the admission line by its label, not by a euro sign`() {
         admissionLineOf("Foo bar. Eintritt: 8 €, ermäßigt: 5 €. Foto: X") shouldBe "Eintritt: 8 €, ermäßigt: 5 €"
         admissionLineOf("Eintritt frei: Tickets online buchbar") shouldBe "Eintritt frei: Tickets online buchbar"
+        admissionLineOf("Für Schulklassen ab Klassenstufe 9 Kostenfreie Tickets: anmeldung@urania-berlin.de Der Vortrag")
+            .shouldBe("Kostenfreie Tickets")
         admissionLineOf("Ein Abend über Geld.").shouldBeNull()
         admissionLineOf(null).shouldBeNull()
     }

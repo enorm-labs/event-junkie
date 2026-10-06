@@ -108,6 +108,8 @@ class EventFieldMappingTest {
             "Freier Eintritt für Alle",
             "bei freiem Eintritt",
             "kostenloser Eintritt",
+            "Kostenfreie Tickets: anmeldung@urania-berlin.de",
+            "kostenfreier Eintritt",
             "FREE ENTRY",
             "Eintritt frei / Admission free!",
             "free admission"
@@ -121,6 +123,8 @@ class EventFieldMappingTest {
         hasFreeEntryPhrase("Freier Eintritt für Ladies bis 0 Uhr") shouldBe false
         hasFreeEntryPhrase("free entry till 20:00") shouldBe false
         hasFreeEntryPhrase("Eintritt freiwillig, Spende erbeten") shouldBe false
+        // Gärten der Welt: the event costs nothing, the park entry it needs does.
+        hasFreeEntryPhrase("die Veranstaltung ist kostenfrei (zzgl. Parkeintritt)") shouldBe false
         hasFreeEntryPhrase(null) shouldBe false
     }
 
@@ -139,6 +143,8 @@ class EventFieldMappingTest {
         detectFree(priceNote = "Freier Eintritt, Spende erwünscht") shouldBe true
         detectFree(priceNote = "Free entry all night") shouldBe true
         detectFree(title = "Sommerfest — Free Admission") shouldBe true
+        detectFree(priceNote = "Kostenfreie Tickets") shouldBe true
+        detectFree(priceNote = "die Veranstaltung ist kostenfrei (zzgl. Parkeintritt)") shouldBe false
     }
 
     @Test
