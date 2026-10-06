@@ -128,7 +128,9 @@
     "RELOCATED": "Relocated",
     "CANCELLED": "Cancelled",
     "POSTPONED": "Postponed",
-    "movedTo": "Moved to {venue}"
+    "movedTo": "Moved to {venue}",
+    "movedFrom": "was {venue}",
+    "postponedNote": "Postponed: the venue names no new date yet."
   },
   "alsoRunning": {
     "title": "Also running"

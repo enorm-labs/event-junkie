@@ -15,12 +15,12 @@ import {
 } from '@/components/ui/dropdown-menu'
 import type { EventDetail } from '@/api/types'
 import {
-  eventCalendarSpan,
-  eventLocation,
-  eventUid,
+  estimateNotes,
+  eventCalendarEntry,
   googleCalendarUrl,
   toIcs,
   type CalendarEntry,
+  type CalendarTexts,
 } from '@/lib/addToCalendar'
 import { isPastEvent } from '@/lib/format'
 import { canonicalUrl } from '@/lib/seo'
@@ -55,34 +55,26 @@ async function copy(): Promise<void> {
   announce(await copyLink(pageUrl.value))
 }
 
+const calendarTexts = computed((): CalendarTexts => ({
+  movedTo: (venue) => t('events.status.movedTo', { venue }),
+  movedFrom: (venue) => t('events.status.movedFrom', { venue }),
+  postponed: t('events.status.postponedNote'),
+  cancelled: t('events.status.CANCELLED'),
+  startEstimated: t('events.detail.share.startEstimated'),
+  endEstimated: t('events.detail.share.endEstimated'),
+}))
+
 // A cancelled or postponed night, or one that is over, is nothing to put in a calendar.
 const calendarEntry = computed((): CalendarEntry | null => {
   const event = props.event
-  if (!event.slug || !event.title || isPastEvent(event)) return null
-  if (event.status === 'CANCELLED' || event.status === 'POSTPONED') return null
-  const span = eventCalendarSpan(event)
-  if (!span) return null
-  return {
-    uid: eventUid(event.slug),
-    title: event.title,
-    span,
-    location: eventLocation(event),
-    description: [event.subtitle, ...estimateNotes(span), pageUrl.value]
-      .filter(Boolean)
-      .join('\n\n'),
-    url: pageUrl.value,
-  }
+  if (isPastEvent(event) || event.status === 'CANCELLED' || event.status === 'POSTPONED')
+    return null
+  return eventCalendarEntry(event, pageUrl.value, calendarTexts.value)
 })
 
-function estimateNotes(span: CalendarEntry['span']): string[] {
-  if (span.allDay) return []
-  return [
-    span.startEstimated ? t('events.detail.share.startEstimated') : '',
-    span.endEstimated ? t('events.detail.share.endEstimated') : '',
-  ].filter(Boolean)
-}
-
-const notes = computed(() => (calendarEntry.value ? estimateNotes(calendarEntry.value.span) : []))
+const notes = computed(() =>
+  calendarEntry.value ? estimateNotes(calendarEntry.value.span, calendarTexts.value) : [],
+)
 const googleUrl = computed(() =>
   calendarEntry.value ? googleCalendarUrl(calendarEntry.value) : null,
 )
