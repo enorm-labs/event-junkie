@@ -367,6 +367,17 @@ class PromoterNormalizerTest {
         }
     }
 
+    // #2757: Tempodrom credits "B&C Productions GbR"; an "&"-joined initialism is one too.
+    @Test
+    fun `treats capitals joined by an ampersand as an initialism`() {
+        assertSoftly {
+            canonicalPromoterName("B&C Productions GbR") shouldBe "B&C Productions"
+            canonicalPromoterName("B&C GbR") shouldBe "B&C"
+            canonicalPromoterName("A&R Music") shouldBe "A&R Music"
+            canonicalPromoterName("LEASING&RENT OÜ") shouldBe "LEASING&RENT OÜ"
+        }
+    }
+
     @Test
     fun `resolves Lido's Atoc Live credit to the company behind it`() {
         assertSoftly {
