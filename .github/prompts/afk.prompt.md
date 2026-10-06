@@ -1,10 +1,11 @@
 # AFK
 
 Work a queue of issues while the user is away: one draft PR per issue, the decisions written down where the user will review them, and a handover document
-that is current after every PR.
+that is current after every PR. When the user is back, guide them through merging the run's PRs one at a time, in an order that keeps `main` green.
 
 Usage: `/afk 313 412 418` works those issues, in that order. `/afk` alone works every open issue labelled `afk-ok`, oldest first. Append `max <n>` to stop
-after _n_ pull requests, or `until <HH:MM>` to stop starting new issues at that time.
+after _n_ pull requests, or `until <HH:MM>` to stop starting new issues at that time. `/afk merge` starts [the merge guide](#the-merge-guide) on the
+newest handover, without working any issue.
 
 ## Important
 
@@ -16,6 +17,7 @@ after _n_ pull requests, or `until <HH:MM>` to stop starting new issues at that 
 - **Nothing waits for the user.** A question that needs the user goes into the PR and the handover, and the run moves on. The run never ends on a question.
 - **The handover file is the state.** Context is summarized during a long run, and a summary loses detail. After a compaction, read
   `temp/afk-handover-<date>.md` before doing anything else. It says which issues are done, parked and next.
+- **Merging is the user's, and so is auto-merge.** The merge guide proposes the next PR and prepares it; the user merges. See [The merge guide](#the-merge-guide).
 - **Two lanes.** The heavy lane runs one issue at a time, in this checkout: any issue whose gates need Gradle, `scripts/dev-env.sh` or
   `/importer-smoke`. Those share ports, the dev database and the Gradle daemon, and parallel gates flake. The light lane runs up to three issues at once,
   each in its own worktree: docs, scripts, workflows, prompts and frontend. See [Lanes](#lanes).
@@ -50,12 +52,24 @@ after _n_ pull requests, or `until <HH:MM>` to stop starting new issues at that 
     >    `git fetch origin && git checkout -b <type>/<N>-<slug> <base>`; `git checkout main` fails in a worktree. Skip step 7: no approval comes.
     > 2. Implement. Run the `/verify` gates the diff touches (`.github/prompts/verify.prompt.md`), except the Playwright e2e suite: CI runs it.
     >    Run `/importer-smoke` for an importer change. A parity script without an argument fixes files; pass `check`.
+    >     - Run the backend gate as CI does: `./gradlew ktlintCheck detekt detektMain detektTest build -PwarningsAsErrors`. Without the flag, and
+    >       without `detektMain` and `detektTest`, a warning passes locally and fails CI.
+    >     - A migration takes the version in this brief, `V<n>`; the main session numbers them in merge order. A new column on `event`, `venue` or
+    >       `artist` gets a row in `fixtures/events.sql` in the same commit, or the BFF's `FixtureTest` fails on `main` after the merge.
+    >     - The shared dev database may hold this run's other migrations. If Flyway refuses to start, export
+    >       `SPRING_FLYWAY_IGNORE_MIGRATION_PATTERNS='*:missing,*:ignored,*:future' SPRING_FLYWAY_OUT_OF_ORDER=true` before `scripts/dev-env.sh up`.
+    >       Never edit `flyway_schema_history`.
+    >     - Test the edges a reviewer will ask about: a long name or title, an event over midnight or over several days, every `EventStatus`.
     > 3. Open the PR by `.github/prompts/open-pr.prompt.md`, with `--draft`. Add `--base <parent-branch>` if the base is not `origin/main`. Add these
     >    sections after `## What and why`, and delete each one that is empty:
-    >     - `## Decisions I made`: one line each. What I chose, the alternative, how to reverse it.
+    >     - `## Decisions I made`: one line each. What I chose, the alternative, how to reverse it. Where it is a product choice, say how many rows on
+    >       production it touches (the public API answers that).
     >     - `## Open questions`: what the user has to answer before this can merge.
     >     - `## Stacked on`: `#<parent PR>`. Merge that one first.
     > 4. Do not watch the checks. After the PR opens, run `git checkout --detach origin/main` and report the checks as pending.
+    >
+    > Stop after 90 minutes of work: push what holds, open the PR if it builds, and report what is missing. If `git push` over SSH hangs, push over
+    > HTTPS with `git -c credential.helper='!gh auth git-credential' push … https://github.com/<owner>/<repo>.git <branch>`.
     >
     > Decide reversible choices yourself: take the option that changes less, and write it under `## Decisions I made`. If the issue needs something
     > irreversible, a product or legal call, a cluster, or a Privacy & GDPR category from AGENTS.md, park it: open no PR. Leave the branch pushed if it holds
@@ -64,9 +78,14 @@ after _n_ pull requests, or `until <HH:MM>` to stop starting new issues at that 
     > Light lane: you are in your own worktree. First run `ln -s <main checkout>/events-frontend/node_modules events-frontend/node_modules`. Run no
     > Gradle task, no `scripts/dev-env.sh`, no dev server and no Playwright suite. If the work turns out to need one, stop and report "heavy".
     > The exception is `scripts/pr-screenshots.sh`: it serves its own builds on free ports. A change a visitor can see gets its before and after
-    > screenshots on the PR, by `/open-pr` step 6. Do not leave them as an open question.
+    > screenshots on the PR, by `/open-pr` step 6, taken from a build of the branch. When production's API lacks a field the change adds, put a
+    > local proxy in front of it that fills the field, and say so in the PR. Do not leave them as an open question.
     >
-    > Report: PR URL or "parked", the branch and its head sha, the decisions, the open questions, and the reason if parked.
+    > Report: PR URL or "parked", the branch and its head sha, the migration version if any, the files it shares with other PRs of this run, the
+    > decisions, the open questions, and the reason if parked.
+
+    **Before starting a heavy issue that adds a migration, give it the next version** after `origin/main`'s highest and every version this run has
+    handed out, and record it in the handover. The versions then follow the merge order the handover proposes.
 
 5. **After each subagent returns, update the handover**, then start the next issue in that lane. Only the main session writes the handover. Check the
    stop conditions before each start: `max`, `until`, and an empty queue. An issue reported "heavy" goes back into the heavy lane's queue.
@@ -83,12 +102,15 @@ after _n_ pull requests, or `until <HH:MM>` to stop starting new issues at that 
       `gh run rerun <run-id> --failed` and no commit.
     - Red because of the change: one subagent per PR checks out the branch, fixes, amends and pushes with `--force-with-lease`. After two failed fixes,
       the PR goes into the handover as red, under "Needs you". A stacked child goes after its parent.
+    - Red because `main` is red: fix `main` once, in its own PR, and say so under "Needs you". A rerun of the PR's checks reuses the old merge commit
+      and fails again; it needs a rebase after the fix merges.
 
 7. **End the run.**
     - `git checkout --detach origin/main` so the checkout holds no branch of this run. Remove each light-lane worktree with `git worktree remove`; its
       branch is pushed. Stop anything this run started: `scripts/dev-env.sh down`, and every
       background watcher.
-    - Finish the handover's summary, then run `scripts/format-markdown.sh temp/afk-handover-<date>.md`.
+    - Write the handover's **Merge order** (see [The handover](#the-handover)), finish its summary, then run
+      `scripts/format-markdown.sh temp/afk-handover-<date>.md`.
     - Send a push notification: "AFK run done: <n> PRs, <m> parked. Handover: temp/afk-handover-<date>.md".
     - Print the handover as the final message.
 
@@ -137,11 +159,22 @@ The one document the user reads on return. Lead with what needs the user. Rewrit
 1. #<PR> — <the question, answerable in one line>
 2. Parked #<issue> — <what is missing>
 
+## Merge order
+
+Merge in this order. Each group keeps `main` green; within a group the order matters.
+
+1. **CI and tooling**: no product change, no shared files.
+    1. #2501 — <one line: what it does>. Decide: nothing.
+2. **Migrations, V104 → V106**: a version merged out of order makes the later ones fail Flyway; renumber before merging on.
+    1. #2502 (V104) — <what>. Decide: <the product decision, with the recommended answer and its production count>.
+3. **Shared files** (`schema.d.ts`, `EventSearchRepository.kt`): each one after the first needs a rebase and a regenerated `schema.d.ts`.
+    1. #2503 — <what>. Decide: <…>. Rebase after #2502.
+
 ## Pull requests
 
-| Issue | PR    | Checks | Stacked on | Decisions to review |
-| ----- | ----- | ------ | ---------- | ------------------- |
-| #313  | #2501 | green  | —          | 1                   |
+| Issue | PR    | Checks | Migration | Shares files with | Decisions to review |
+| ----- | ----- | ------ | --------- | ----------------- | ------------------- |
+| #313  | #2501 | green  | —         | —                 | 1                   |
 
 ## Parked and skipped
 
@@ -152,6 +185,34 @@ The one document the user reads on return. Lead with what needs the user. Rewrit
 
 - Rebase #2503 onto `main` once #2501 is in.
 ```
+
+## The merge guide
+
+After the run, or on `/afk merge`, walk the user through the **Merge order**, one PR at a time. The user merges; the guide gets each PR ready and tells
+them which one is next. It ends when the run's PRs are merged or closed.
+
+For the next PR in the order:
+
+1. **Say what to decide, with a recommendation.** One short list: the open questions, the decisions a reviewer would question, and the edges the
+   agent may have missed (a long name, an all-day event, a status the change does not mention). Back each with a production count from the public API,
+   or a render at 390 px when it is a layout question. Recommend one answer per item.
+2. **Apply what the user decides** on the PR's branch: amend its one commit, rewrite the commit message and the PR body with it, retake the screenshots
+   from a build of the branch if the change is visible, and run the gates as CI does. A question that needs more than the PR should carry becomes an
+   issue by [`/new-issue`](new-issue.prompt.md), not a longer PR.
+3. **Wait for green, then hand over.** Report the head sha and "mark ready and merge #N". Never mark ready, merge or arm auto-merge yourself.
+
+When the user says a PR merged:
+
+1. **Check `main`'s build before naming the next PR.** Two PRs that each passed can fail together: two branches added to one function crossed a detekt
+   limit, and an importer-only migration failed the BFF's `FixtureTest`, because path-filtered CI never ran it on the PR. A red `main` gets one fix
+   PR, and every open PR waits for it.
+2. **Rebase the next PR onto `main`** when it shares a file with what merged, when its CI ran against a broken `main`, or when GitHub shows a
+   conflict. Test first with `git merge-tree --write-tree origin/main origin/<branch>`. After a rebase that touches the BFF's API, regenerate with
+   `./gradlew :events-bff:test --tests '*OpenApiDocumentTest' && scripts/api-schema-parity.sh` before trusting `check`: a stale
+   `build/openapi/api-docs.json` from another branch reports a false mismatch.
+3. **If the user merged out of order,** fix what that breaks before going on. A later migration version on `main` means renumbering every open PR's
+   lower one: rename the file, amend, and update the PR body. Nothing else in the migration changes.
+4. Keep the handover's **Merge order** current: strike what merged, and add what the order now needs.
 
 ## Notes
 
