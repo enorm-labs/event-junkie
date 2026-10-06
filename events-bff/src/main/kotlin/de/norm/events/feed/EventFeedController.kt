@@ -8,6 +8,7 @@ import de.norm.events.event.BffMetrics
 import de.norm.events.event.EventFilter
 import de.norm.events.event.EventFilterParams
 import de.norm.events.event.EventService
+import de.norm.events.venue.VenueService
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.media.Content
@@ -37,6 +38,7 @@ import java.time.Duration
 @Tag(name = "Feed", description = "Feeds a reader or a calendar polls: RSS of new events, iCalendar of the coming days, with the list's filters")
 class EventFeedController(
     private val eventService: EventService,
+    private val venueService: VenueService,
     private val metrics: BffMetrics,
     private val cache: ResponseCache,
     @Value("\${app.api.cache.ttl-seconds}") ttlSeconds: Long
@@ -66,7 +68,8 @@ class EventFeedController(
         val filter = filters.toFilter()
         val events = cache.get(FeedKey(filter)) { eventService.newest(filter, MAX_ITEMS) }
         metrics.recordServed(BffMetrics.ENDPOINT_FEED, events.size)
-        val body = EventFeedXml.render(locale, selfUrl(exchange), events)
+        val venueName = filter.venueSlug?.let { slug -> cache.get(FeedVenueKey(slug)) { FeedVenueName(venueService.nameOf(slug)) }.name }
+        val body = EventFeedXml.render(locale, selfUrl(exchange), events, filter, venueName)
         // A reader polls with If-None-Match; Spring answers 304 for a matching tag.
         return ResponseEntity
             .ok()
@@ -93,4 +96,14 @@ class EventFeedController(
 /** The feed's cache key. The locale is not in it: the events are the same, only the rendering differs. */
 private data class FeedKey(
     val filter: EventFilter
+)
+
+/** The cache key of a filtered venue's name, which the feed's title shows. */
+private data class FeedVenueKey(
+    val slug: String
+)
+
+/** A venue's name, or null for a slug no venue has: the cache holds no null. */
+private data class FeedVenueName(
+    val name: String?
 )
