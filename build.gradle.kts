@@ -13,14 +13,15 @@ import org.springframework.boot.gradle.tasks.run.BootRun
 // Centralized dependency versions live in `gradle.properties` – change them there to update
 // all subprojects at once.
 
-// Plugins drag an old FreeMarker (Kover) and an old Jackson (Boot, Dependency-Check) onto the plugin
-// classpath, where no BOM reaches; see gradle.properties.
+// Plugins drag an old FreeMarker (Kover), an old Jackson (Boot, Dependency-Check) and an old jsoup
+// (Dependency-Check) onto the plugin classpath, where no BOM reaches; see gradle.properties.
 buildscript {
     dependencies {
         constraints {
             classpath("org.freemarker:freemarker:${property("freemarker.version")}")
             classpath("tools.jackson.core:jackson-databind:${property("jackson-bom.version")}")
             classpath("com.fasterxml.jackson.core:jackson-databind:${property("jackson-buildscript-2.version")}")
+            classpath("org.jsoup:jsoup:${property("jsoup.version")}")
         }
     }
 }
