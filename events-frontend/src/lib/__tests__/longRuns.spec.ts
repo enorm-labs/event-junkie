@@ -1,6 +1,6 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import { foldsOn, isClosing, isLongRun, splitDayList } from '@/lib/longRuns'
+import { foldsOn, isClosing, isLiveNow, isLongRun, splitDayList } from '@/lib/longRuns'
 
 // 3–18 Oct: sixteen days, the Panorama Bar exhibition's shape.
 const exhibition = { slug: 'exhibition', eventDate: '2026-10-03', endDate: '2026-10-18' }
@@ -63,5 +63,19 @@ describe('splitDayList', () => {
 
   it('folds nothing on the opening day', () => {
     expect(splitDayList([exhibition, tonight], '2026-10-03').alsoRunning).toEqual([])
+  })
+})
+
+describe('isLiveNow', () => {
+  afterEach(() => vi.useRealTimers())
+
+  it('is a weekender in its run and a started event, never a run of weeks', () => {
+    // 14:00 in Berlin on Wednesday 7 October.
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-10-07T12:00:00Z'))
+    expect(isLiveNow({ eventDate: '2026-10-06', endDate: '2026-10-08' })).toBe(true)
+    expect(isLiveNow({ ...tonight, startTime: '10:00' })).toBe(true)
+    expect(isLiveNow({ ...tonight, startTime: '20:00' })).toBe(false)
+    expect(isLiveNow(exhibition)).toBe(false)
   })
 })

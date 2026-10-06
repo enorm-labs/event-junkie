@@ -62,7 +62,6 @@
     "moreCount": "More filters ({n})"
   },
   "card": {
-    "liveTonight": "Live tonight",
     "soldOut": "Sold out",
     "free": "Free",
     "past": "Past",
@@ -72,6 +71,7 @@
     "assumedHint": "Not announced, estimated from the event type",
     "runningSince": "Running since {day}",
     "closes": "Closes {day}",
+    "runsUntil": "Until {date}",
     "until": "Until {time}",
     "onNow": "On now"
   },

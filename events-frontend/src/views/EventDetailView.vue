@@ -103,6 +103,7 @@ const {
   eventTimeHint,
   formatEventStatus,
   formatSpokenLanguage,
+  formatRunState,
   formatWeekday,
 } = useFormat()
 // The header has room for the words behind a `~` time, where the card only has a title (#1384).
@@ -148,7 +149,7 @@ function stateItem(e: NonNullable<typeof event.value>): MetaItem | null {
   if (isPast.value) return { text: t('events.card.past') }
   if (isRunning.value) {
     return {
-      text: t('events.card.runningSince', { day: formatWeekday(e.eventDate) }),
+      text: formatRunState(e),
       class: 'text-primary',
     }
   }

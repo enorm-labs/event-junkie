@@ -74,7 +74,7 @@ function handleEventDidMount(arg: MountInfo<EventDisplayInfo>) {
   if (arg.el.classList.contains('fc-event-live')) {
     const label = document.createElement('span')
     label.className = 'sr-only'
-    label.textContent = t('events.card.liveTonight')
+    label.textContent = t('events.card.onNow')
     arg.el.append(label)
   }
 }

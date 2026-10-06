@@ -2,7 +2,7 @@
 // its last days (#2594). It stays findable in the list's "Also running" block. The threshold sits by
 // duration above a club weekend: a 5-day Sisyphos run is that night's main event and stays a card.
 
-import { daysBetween } from './format'
+import { daysBetween, isOnNow, type EventSpan } from './format'
 
 /** A run longer than this many calendar days, `eventDate` to `endDate` inclusive, is a long run. */
 export const LONG_RUN_DAYS = 7
@@ -40,4 +40,13 @@ export function splitDayList<T extends Run>(
   const alsoRunning: T[] = []
   for (const event of events) (foldsOn(event, day) ? alsoRunning : cards).push(event)
   return { cards, alsoRunning }
+}
+
+/**
+ * Whether an event carries the pulsing "live" dot: it is on now (`isOnNow`), and it is not a long
+ * run. An exhibition has been "on" for weeks and states no opening hours, so a dot on it says
+ * nothing; tonight's gig gets one from its start, not from the morning.
+ */
+export function isLiveNow(event: EventSpan): boolean {
+  return isOnNow(event) && !isLongRun(event)
 }

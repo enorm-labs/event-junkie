@@ -454,7 +454,7 @@ shape the venue published. 3:2 is a box the browser fills with `object-cover`, w
 
 ### 5.5 Motion (subtle)
 
-`tw-animate-css` is available. Shipping: a gently **pulsing "live tonight" dot** and a soft card hover-lift, both gated behind
+`tw-animate-css` is available. Shipping: a gently **pulsing "on now" dot** and a soft card hover-lift, both gated behind
 `prefers-reduced-motion: reduce`, which is not optional here.
 
 **The logo does not move, and that is a decision rather than an omission** (§4b, decision C). The old mark's `ej-draw` / `ej-beat` keyframes went with it —
@@ -817,7 +817,7 @@ kept because older sections still use it, not because it still exists.
   grey **thins** the stroke where black would punch a hole, and ink thins. Never applied over letters — distress across a counter closes it.
 - **Knockout** — letters cut out of a solid shape as transparent holes rather than drawn in a second colour. It is why the badge survives small sizes (the eye
   reads the surrounding mass) and why the **favicon** needs a separate build with opaque fills.
-- **Live dot** — a small pulsing accent dot on cards for events happening today, reinforcing liveness. See §5.5; implemented in `EventCard.vue`.
+- **Live dot** — a small pulsing accent dot on cards for events that are on now, reinforcing liveness. See §5.5; implemented in `EventCard.vue`.
 - **Lockup** — a fixed arrangement of brand elements reproduced as one unit, never rearranged or respaced. From letterpress: type and blocks were assembled in a
   metal frame (a _chase_) and **locked up** with expanding wedges so nothing shifted under the press. Two here — the **header lockup** (`BrandLogo.vue`: badge
   or wordmark, never both) and the **club stamp**, which is the full lockup of wordmark plus caption.

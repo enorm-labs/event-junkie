@@ -1,7 +1,8 @@
 import type { EventInput } from '@fullcalendar/vue3'
 
 import type { EventSummary } from '@/api/types'
-import { isPastEvent, isRunningEvent, todayIso } from '@/lib/format'
+import { isPastEvent } from '@/lib/format'
+import { isLiveNow } from '@/lib/longRuns'
 
 /** The ISO date one day after `isoDate`, for FullCalendar's exclusive all-day `end`. */
 function dayAfter(isoDate: string): string {
@@ -31,12 +32,12 @@ export function toCalendarInput(
     start: event.startTime ? `${event.eventDate}T${event.startTime}` : event.eventDate,
     ...(end ? { end } : {}),
     url: localePath(`/events/${event.slug}`),
-    // Paging back a month already returned past events; this is what tells them apart. Today's
-    // get the same "live" mark as EventCard, and a run is live on every day it is on.
+    // Paging back a month already returned past events; this is what tells them apart. An event
+    // on now gets the same "live" mark as EventCard, by the same rule.
     // v7 reads `className` (one string); the v6 `classNames` array is ignored without a warning.
     className: isPastEvent(event)
       ? 'fc-event-past'
-      : event.eventDate === todayIso() || isRunningEvent(event)
+      : isLiveNow(event)
         ? 'fc-event-live'
         : undefined,
     // `venue` backs the calendar's hover tooltip, where the clipped title is spelled out.

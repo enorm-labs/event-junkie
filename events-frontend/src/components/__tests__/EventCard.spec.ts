@@ -157,12 +157,19 @@ describe('EventCard', () => {
     expect(wrapper.get('h3').attributes('title')).toBe('Tonight Show')
   })
 
-  it('marks an event happening today as live', () => {
-    const wrapper = mount(EventCard, {
+  it('marks an event as live once it has started, not from the morning', () => {
+    // The clock is 14:00 in Berlin: a 10:00 start is on, tonight's 20:00 gig is not yet.
+    const started = mount(EventCard, {
+      props: { event: { ...event, eventDate: todayIso(), startTime: '10:00' } },
+      global: { stubs },
+    })
+    expect(started.text()).toContain('On now')
+
+    const tonight = mount(EventCard, {
       props: { event: { ...event, eventDate: todayIso() } },
       global: { stubs },
     })
-    expect(wrapper.text()).toContain('Live tonight')
+    expect(tonight.text()).not.toContain('On now')
   })
 
   it('shows the event type as a readable pill alongside the genres', () => {
@@ -204,13 +211,15 @@ describe('EventCard', () => {
     expect(cancelled.text()).toContain('Cancelled')
     expect(cancelled.text()).not.toContain('Sold out')
 
-    // The status beats "Live tonight" too: a relocated show is not on here.
+    // The status beats the live dot too: a relocated show is not on here.
     const relocated = mount(EventCard, {
-      props: { event: { ...event, status: 'RELOCATED', eventDate: todayIso() } },
+      props: {
+        event: { ...event, status: 'RELOCATED', eventDate: todayIso(), startTime: '10:00' },
+      },
       global: { stubs },
     })
     expect(relocated.text()).toContain('Relocated')
-    expect(relocated.text()).not.toContain('Live tonight')
+    expect(relocated.text()).not.toContain('On now')
 
     // A relocated event that knows where it went says so.
     const moved = mount(EventCard, {
@@ -249,7 +258,7 @@ describe('EventCard', () => {
       props: { event: { ...event, eventDate: '2099-12-31' } },
       global: { stubs },
     })
-    expect(wrapper.text()).not.toContain('Live tonight')
+    expect(wrapper.text()).not.toContain('On now')
   })
 
   it('bleeds the poster to both edges below sm, and keeps the text inset', () => {
@@ -367,7 +376,18 @@ describe('EventCard', () => {
     })
     expect(wrapper.text()).toContain('Running since Fri')
     expect(wrapper.text()).not.toContain('Sold out')
-    expect(wrapper.text()).toContain('Live tonight')
+    expect(wrapper.text()).toContain('On now')
+  })
+
+  it('names the last day of a run of weeks, and gives it no live dot', () => {
+    // The clock is Monday 15 June; a run from 1 June to 1 July is mid-run, weeks from its end.
+    const wrapper = mount(EventCard, {
+      props: { event: { ...event, eventDate: '2026-06-01', endDate: '2026-07-01' } },
+      global: { stubs },
+    })
+    expect(wrapper.text()).toContain('Until Wed 1 Jul')
+    expect(wrapper.text()).not.toContain('Running since')
+    expect(wrapper.text()).not.toContain('On now')
   })
 
   it('says when a run of weeks closes in its last three days', () => {

@@ -82,13 +82,13 @@ const isNarrow = (page: Page) => (page.viewportSize()?.width ?? MD_PX) < MD_PX
 const todayInBerlin = () =>
   new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Berlin' }).format(new Date())
 
-test("marks today's events as live and last month's as past", async ({ page }) => {
-  // One event on today, one on the first visible day, otherwise the same shape, so the class and
-  // the label are proven to come from the date alone.
+test("marks today's started events as live and last month's as past", async ({ page }) => {
+  // One event that started at midnight today, one on the first visible day, otherwise the same
+  // shape, so the class and the label are proven to come from the date alone.
   await page.route(calendarFeed, (route) => {
     const from = new URL(route.request().url()).searchParams.get('from') ?? '2026-07-01'
     return json(route, [
-      { slug: 'tonight-gig', title: 'Tonight Gig', eventDate: todayInBerlin(), startTime: '20:00' },
+      { slug: 'tonight-gig', title: 'Tonight Gig', eventDate: todayInBerlin(), startTime: '00:00' },
       { slug: 'range-gig', title: 'Range Gig', eventDate: from, startTime: '20:00' },
     ])
   })
@@ -99,14 +99,14 @@ test("marks today's events as live and last month's as past", async ({ page }) =
   // screen-reader text `eventDidMount` appends, the same as EventCard's.
   const live = page.getByRole('link', { name: /Tonight Gig/ })
   await expect(live).toHaveClass(/\bfc-event-live\b/)
-  await expect(live).toHaveAccessibleName(/Live tonight/)
+  await expect(live).toHaveAccessibleName(/On now/)
   await expect(live).not.toHaveClass(/\bfc-event-past\b/)
 
   // Whatever the visible window's first day is, last month's is behind today.
   await page.getByRole('button', { name: 'prev' }).click()
   const past = page.getByRole('link', { name: /Range Gig/ })
   await expect(past).toHaveClass(/\bfc-event-past\b/)
-  await expect(past).not.toHaveAccessibleName(/Live tonight/)
+  await expect(past).not.toHaveAccessibleName(/On now/)
 })
 
 test('renders events and opens the event detail on click', async ({ page }) => {

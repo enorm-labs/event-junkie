@@ -59,7 +59,7 @@ const price = computed(() => formatPrice(props.event.pricePresale, props.event.p
           class="absolute inline-flex size-full rounded-full bg-primary opacity-75 motion-safe:animate-ping"
         />
         <span class="relative inline-flex size-2 rounded-full bg-primary" />
-        <span class="sr-only">{{ t('events.card.liveTonight') }}</span>
+        <span class="sr-only">{{ t('events.card.onNow') }}</span>
       </span>
       <component
         :is="as"
