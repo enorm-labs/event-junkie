@@ -280,12 +280,15 @@ class HeimathafenApiScraper(
 
     /**
      * Maps the venue's `events_cat-*` taxonomy slug — inlined on every post by `class_list`, so no
-     * second request — onto an [EventType], falling back to the title without a category.
+     * second request — onto an [EventType], falling back to the title without a category. A
+     * [party tag][PARTY_TAGS] wins over the category: the first category of a karaoke night is
+     * `musik`, which would make it a concert billing its own title (#2788).
      */
     private fun resolveEventType(
         classes: List<String>,
         title: String
     ): String {
+        if (PARTY_TAGS.any { "$TAG_CLASS_PREFIX$it" in classes }) return EventType.PARTY.name
         val category = classes.firstOrNull { it.startsWith(CATEGORY_CLASS_PREFIX) }?.removePrefix(CATEGORY_CLASS_PREFIX)
         return mapEventType(category, CATEGORY_TYPES) ?: mapEventType(title) ?: EventType.OTHER.name
     }
@@ -331,6 +334,9 @@ class HeimathafenApiScraper(
 
         /** Tag slugs WordPress flattened past recognition; the tag's name, by hand. */
         val LOSSY_TAG_SLUGS = mapOf("rb" to "R&B", "rnb" to "R&B", "singer-songwriterin" to "Singer-Songwriter")
+
+        /** Tag slugs that make a post a party whatever its category: a sing-along has no act to bill. */
+        val PARTY_TAGS = setOf("karaoke")
 
         /** `class_list` prefix carrying the venue's own category slug (`events_cat-musik`). */
         const val CATEGORY_CLASS_PREFIX = "events_cat-"

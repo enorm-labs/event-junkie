@@ -514,6 +514,8 @@ private val NON_ARTIST_NAMES: Set<String> =
         "abraxas party",
         // Heimathafen's classical concert format by klassix; only the prose names the performer (#2416).
         "auf takt! das podcast-konzert",
+        // Heimathafen's crowd karaoke format; no act is billed (#2788).
+        "sing dela sing",
         // A Wühlmäuse revue, a ufaFabrik songwriter showcase and a Mikropol hip-hop series, each billed as the act (#2709).
         "der blaue montag",
         "berlin songwood sessions",

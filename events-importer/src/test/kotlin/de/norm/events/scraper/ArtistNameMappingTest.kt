@@ -394,6 +394,8 @@ class ArtistNameMappingTest {
         isNonArtistName("Abraxas Party") shouldBe true
         // Heimathafen's concert format, billed under its own name (#2416).
         isNonArtistName("AUF TAKT! DAS PODCAST-KONZERT") shouldBe true
+        // Heimathafen's karaoke format, billed under its own name (#2788).
+        isNonArtistName("SING DELA SING") shouldBe true
         // A revue, a songwriter showcase and a numbered hip-hop series (#2709).
         isNonArtistName("Der Blaue Montag") shouldBe true
         isNonArtistName("Berlin Songwood Sessions") shouldBe true
