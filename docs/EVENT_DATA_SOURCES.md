@@ -24,8 +24,8 @@ repairing live in the [issue tracker](https://github.com/enorm-labs/event-junkie
 | ----------------------------------- | ------------------------------------------------------------------------------------ | ----: |
 | ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   112 |
 | 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |    38 |
-| ⛔ [Blocked](#-blocked--deferred)   | Website analyzed, but no usable listings (no programme page, JS-only, or too sparse) |   155 |
-| 📣 [Promoters](#-promoters)         | Cross-venue listings; enrich the venues' own events, never add events (ADR-043)      |    10 |
+| ⛔ [Blocked](#-blocked--deferred)   | Website analyzed, but no usable listings (no programme page, JS-only, or too sparse) |   156 |
+| 📣 [Promoters](#-promoters)         | Cross-venue listings; enrich the venues' own events, never add events (ADR-043)      |    11 |
 | ❓ [Unanalyzed](#-not-analyzed-yet) | URL recorded, but the website still needs a first look                               |    11 |
 
 A count is the number of rows in its table. `scripts/sources-parity.sh` checks each count, in CI and in the
@@ -650,6 +650,7 @@ the empty Next.js payload rather than the WAF, and a 403 is not evidence that a 
 | ciao ciao Bar                     | —                                                   | Bar          | No own site; Instagram and RA only                        | Site change / manual entry |
 | JIWAR                             | —                                                   | Other        | No own site; Instagram only                               | Site change / manual entry |
 | Ashawo Cafe                       | —                                                   | Other        | No own site; events on Eventbrite                         | Site change / manual entry |
+| GöRE Comedy                       | https://www.eventbrite.com/cc/gore-shows-4785723/   | Comedy Club  | Eventbrite only; its terms likely forbid scraping         | Eventbrite API token       |
 | SaliGari Bar                      | —                                                   | Bar          | No own site; Facebook only; mostly comedy nights          | Site change / manual entry |
 | 800A Bar & Cabaret                | https://www.800aberlin.com/                         | Bar          | Two dated shows on the home page; the rest on Instagram   | More events                |
 | Tipsy Bear                        | https://www.tipsybearberlin.com/events              | Bar          | Squarespace; one highlight, then weekly bingo and karaoke | More events                |
@@ -697,6 +698,11 @@ Neither role exists in the importer yet. The rows below stay here until it does.
 about 80 places. About half of these places are already imported. Many events are panels, workshops, exhibitions or
 screenings, which are out of scope. Use the programme to find new venues.
 
+**Lachkater** runs stand-up shows at three Berlin places. The Saturday mixed show is at Tiffany Club, which is
+imported. The Tuesday show is at Al Hamra in Prenzlauer Berg, which has no row yet. The open-air show at Luftschloss
+Tempelhofer Feld ended its season on 2026-09-30. The site is a React SPA. Its show dates are hard-coded in the
+JavaScript bundle, and tickets sell through Universe.
+
 | Name                   | URL                                            | Blocker                                           | Unblocked by       |
 | ---------------------- | ---------------------------------------------- | ------------------------------------------------- | ------------------ |
 | Loft                   | https://loft.de/                               | Cross-venue (see note)                            | Enrichment sources |
@@ -709,6 +715,7 @@ screenings, which are out of scope. Use the programme to find new venues.
 | Tag der Clubkultur     | https://tagderclubkultur.berlin/programm/      | Cross-venue; one festival week a year (see note)  | Not importable     |
 | Jazz am Helmholtzplatz | http://www.jazzamhelmholtzplatz.com/           | Cross-venue; venue only in free text              | Enrichment sources |
 | Tränenpalast           | https://traenenpalast.tickettoaster.de/tickets | Talk-show agency; all dates at other venues       | Not importable     |
+| Lachkater              | https://www.lachkater.com/                     | Cross-venue; dates only in the SPA's JS bundle    | Enrichment sources |
 
 ## ❓ Not analyzed yet
 
