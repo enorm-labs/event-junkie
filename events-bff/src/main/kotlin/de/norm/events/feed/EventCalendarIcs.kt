@@ -65,11 +65,16 @@ object EventCalendarIcs {
     private val DATE_STAMP: DateTimeFormatter = DateTimeFormatter.BASIC_ISO_DATE
     private val UID_HOST = Site.URL.substringAfter("://")
 
-    /** The calendar in [locale], one of [Site.LOCALES]: the language of the links and the estimate notes. */
+    /**
+     * The calendar in [locale], one of [Site.LOCALES]: the language of the links and the estimate notes.
+     * [name] is the filters in words, as the site builds them (#2772).
+     */
     fun render(
         locale: String,
-        events: List<CalendarEvent>
+        events: List<CalendarEvent>,
+        name: String? = null
     ): String {
+        val calendarName = escapeText(CalendarName.of(name))
         val lines =
             buildList {
                 add("BEGIN:VCALENDAR")
@@ -77,8 +82,8 @@ object EventCalendarIcs {
                 add("PRODID:-//Event Junkie//Event Junkie//EN")
                 add("CALSCALE:GREGORIAN")
                 add("METHOD:PUBLISH")
-                add("NAME:Event Junkie")
-                add("X-WR-CALNAME:Event Junkie")
+                add("NAME:$calendarName")
+                add("X-WR-CALNAME:$calendarName")
                 add("REFRESH-INTERVAL;VALUE=DURATION:$REFRESH")
                 add("X-PUBLISHED-TTL:$REFRESH")
                 events.forEach { addAll(vevent(locale, it)) }

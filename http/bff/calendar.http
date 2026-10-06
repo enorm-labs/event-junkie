@@ -16,8 +16,8 @@ Accept: text/calendar
 GET {{bff-host}}/api/events/calendar.ics?locale=de
 Accept: text/calendar
 
-### A saved search: jazz in Neukölln
-GET {{bff-host}}/api/events/calendar.ics?genre=jazz&district=neukoelln
+### A saved search: jazz in Neukölln, named "Event Junkie · Jazz · Neukölln" as the site names it
+GET {{bff-host}}/api/events/calendar.ics?genre=jazz&district=neukoelln&name=Jazz%20%C2%B7%20Neuk%C3%B6lln
 Accept: text/calendar
 
 ### One venue's calendar

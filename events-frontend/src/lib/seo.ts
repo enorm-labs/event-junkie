@@ -133,12 +133,20 @@ export const CALENDAR_PATH = '/calendar.ics'
 
 export const CALENDAR_TYPE = 'text/calendar'
 
-/** The site-relative calendar path in `locale`, narrowed by the filter bar's `filters`, as {@link feedPath}. */
+/** Joins the labels of a calendar's name; the BFF cuts a long name at the last whole label. */
+const CALENDAR_NAME_SEPARATOR = ' · '
+
+/**
+ * The site-relative calendar path in `locale`, narrowed by the filter bar's `filters`, as {@link feedPath}.
+ * `labels` name the filters, so each subscription gets its own name in the calendar app (#2772).
+ */
 export function calendarPath(
   locale: Locale,
   filters: Readonly<Record<string, FeedFilterValue>> = {},
+  labels: readonly string[] = [],
 ): string {
-  return filteredPath(CALENDAR_PATH, locale, filters)
+  const name = labels.join(CALENDAR_NAME_SEPARATOR)
+  return filteredPath(CALENDAR_PATH, locale, { ...filters, name })
 }
 
 /** The absolute URL of the feed in `locale`, from {@link SITE_URL} like every other URL here. */

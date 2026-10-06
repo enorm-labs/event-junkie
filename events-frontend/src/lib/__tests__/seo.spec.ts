@@ -227,4 +227,11 @@ describe('the calendar subscription path', () => {
       '/calendar.ics?locale=en&timeOfDay=evening&timeOfDay=late',
     )
   })
+
+  it('carries the filters in words as the name, and no name without filters (#2772)', () => {
+    expect(
+      calendarPath('en', { genre: 'jazz', district: ['neukoelln'] }, ['Jazz', 'Neukölln']),
+    ).toBe('/calendar.ics?locale=en&genre=jazz&district=neukoelln&name=Jazz+%C2%B7+Neuk%C3%B6lln')
+    expect(calendarPath('en', {}, [])).toBe('/calendar.ics?locale=en')
+  })
 })

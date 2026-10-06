@@ -5,6 +5,7 @@
   "resultCount": "{count} event found | {count} events found",
   "filters": {
     "searchPlaceholder": "Search events…",
+    "searchLabel": "“{q}”",
     "earliestDate": "Earliest event date",
     "latestDate": "Latest event date",
     "allTypes": "All types",
