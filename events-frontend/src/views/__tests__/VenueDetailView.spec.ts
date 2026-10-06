@@ -82,10 +82,18 @@ describe('VenueDetailView', () => {
 
     const line = view.get('[data-testid="venue-map-link"]').element.parentElement
     expect(line?.textContent?.replace(/\s+/g, ' ').trim()).toBe(
-      'Holzmarktstr. 25 · Friedrichshain · On the map',
+      'Holzmarktstr. 25 · Friedrichshain · On the map · Directions (opens a maps app or site outside Event Junkie)',
     )
     expect(view.get('[data-testid="venue-map-link"]').attributes('href')).toBe(
       '/en/map?focus=kater',
+    )
+  })
+
+  it('links the address line to a route in a maps app', async () => {
+    const view = await mountVenue(kater)
+
+    expect(view.get('[data-testid="venue-directions-link"]').attributes('href')).toBe(
+      'https://www.openstreetmap.org/directions?to=52.5118,13.4253',
     )
   })
 
@@ -93,13 +101,16 @@ describe('VenueDetailView', () => {
     const view = await mountVenue({ ...kater, district: null })
 
     const line = view.get('[data-testid="venue-map-link"]').element.parentElement
-    expect(line?.textContent?.replace(/\s+/g, ' ').trim()).toBe('Holzmarktstr. 25 · On the map')
+    expect(line?.textContent?.replace(/\s+/g, ' ').trim()).toMatch(
+      /^Holzmarktstr\. 25 · On the map · Directions/,
+    )
   })
 
   it('offers no map link for a venue without a coordinate', async () => {
     const view = await mountVenue({ ...kater, latitude: null, longitude: null })
 
     expect(view.find('[data-testid="venue-map-link"]').exists()).toBe(false)
+    expect(view.find('[data-testid="venue-directions-link"]').exists()).toBe(false)
     expect(view.text()).toContain('Holzmarktstr. 25 · Friedrichshain')
   })
 

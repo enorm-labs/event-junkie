@@ -6,6 +6,8 @@
     "empty": "No upcoming nights here yet. Check back soon.",
     "type": "Type",
     "onMap": "On the map",
+    "directions": "Directions",
+    "directionsLeaves": "(opens a maps app or site outside Event Junkie)",
     "plays": "Mostly plays",
     "hosts": "Hosts",
     "programmeNote": "Plays and hosts: from its events over the past year and ahead.",

@@ -3,6 +3,7 @@ import { computed, onMounted, watch } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import { Button } from '@/components/ui/button'
 import CachedImage from '@/components/CachedImage.vue'
+import DirectionsLink from '@/components/DirectionsLink.vue'
 import EventCard from '@/components/EventCard.vue'
 import EventMetaLine, { type MetaItem } from '@/components/EventMetaLine.vue'
 import EventRow from '@/components/EventRow.vue'
@@ -24,6 +25,7 @@ import { eventPageJsonLd } from '@/lib/structuredData'
 import type { Locale } from '@/i18n/locales'
 import { formatPrice, isPastEvent, isRunningEvent } from '@/lib/format'
 import { runningOrder, type RunningOrderSet } from '@/lib/runningOrder'
+import { venuePosition } from '@/lib/mapPins'
 import { CARD_GRID_CLASS, CARD_LIST_CLASS, cn } from '@/lib/utils'
 import { useFormat } from '@/composables/useFormat'
 import { useLocalePath } from '@/composables/useLocalePath'
@@ -111,6 +113,8 @@ const timeHint = computed(() => (event.value ? eventTimeHint(event.value) : null
 // A fact block beside the venue and the tickets, not a word under the title (#2523).
 const spokenLanguage = computed(() => formatSpokenLanguage(event.value?.spokenLanguages, null))
 const subtitles = computed(() => formatSpokenLanguage(null, event.value?.subtitleLanguage))
+// A venue without a coordinate gets no route (#2767).
+const hasDirections = computed(() => venuePosition(event.value?.venue) !== null)
 const hasTickets = computed(
   () =>
     !!event.value &&
@@ -395,6 +399,7 @@ useStructuredData(() => (event.value ? eventPageJsonLd(event.value, locale.value
             {{ event.venue.address
             }}<template v-if="event.venue.city">, {{ event.venue.city }}</template>
           </p>
+          <p v-if="hasDirections" class="text-body"><DirectionsLink :venue="event.venue" /></p>
         </div>
 
         <div v-if="hasTickets" class="space-y-1">
