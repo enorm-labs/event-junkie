@@ -154,11 +154,36 @@
 ###   Clärchens Ballhaus             — https://claerchensball.haus/programm/
 ###   Coco Boule                     — https://ra.co/clubs/253613
 ###   Containerhafen                 — https://ra.co/clubs/271054
+###   DNA. CLUB                      — https://www.dna-artclub.com/events
 ###   DSTRKT                         — https://www.dstrkt.de/
+###   Else                           — https://ra.co/clubs/79607
+###   FluxBau                        — https://www.fluxfm.de/fluxbau
+###   FOUND                          — https://ra.co/clubs/292292
+###   Funkhaus Berlin                — https://ra.co/clubs/20577
+###   Funkloch                       — https://goout.net/en/funkloch/vzakye/
 ###   Galiläakirche                  — https://galilaea-kirche.de/programm/
+###   Gestrandet                     — https://strandhaus-berlin.de/gestrandet/events
+###   Giri                           — https://giri.berlin/programme/
+###   Golden Flamingo                — https://ra.co/clubs/272183
+###   GöRE Comedy Club               — https://www.eventbrite.com/cc/gore-shows-4785723/
+###   Hafenbar                       — https://www.hafenbar-berlin.de/schlager-party-berlin/
+###   Hamburger Bahnhof              — https://www.smb.museum/veranstaltungen/veranstaltungsreihe/berlin-beats/
+###   Haus der Visionäre             — 
 ###   House of Music Berlin          — https://www.houseofmusic.berlin/
+###   Ikii                           — https://ra.co/clubs/271542
+###   interkosmos                    — https://www.interkosmos.cc/
+###   Ipse                           — https://ra.co/clubs/278777
+###   Jonny Knüppel                  — https://jonnyknueppel.de/
+###   Kallasch&                      — https://kallasch.berlin/programm/
 ###   KAOS Berlin                    — https://kaosberlin.de/veranstaltungen/
+###   Kesselhaus                     — https://www.kesselhaus.net/de/calendar/topics/concerts
+###   Komplex Berlin                 — https://ra.co/clubs/189040
 ###   Konrad Tönz Bar                — http://www.konradtoenzbar.de/#events
+###   Kraftwerk Berlin               — https://kraftwerkberlin.de/de/programm
+###   Kreuzwerk                      — https://kreuzwerk.club/events
+###   Kulturhaus Spandau             — https://kulturhaus-spandau.de/programm/
+###   Kumpelnest 3000                — http://www.kumpelnest3000.com/
+###   Kunstfabrik Schlot             — https://kunstfabrik-schlot.de/programm/
 ###   Kühlspot Social Club           — https://kuehlspot.com/
 ###   L.U.X                          — https://www.lux-berlin.net/
 ###   LabSaal                        — https://labsaal.de/events/
@@ -2507,6 +2532,39 @@ Accept: application/json
 %}
 
 ### ————————————————————————————————————————————————————————————
+### DNA. CLUB (Adalbertstraße 98, Berlin-Kreuzberg — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create DNA. CLUB venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "DNA. CLUB",
+    "address": "Adalbertstraße 98",
+    "city": "Berlin",
+    "postalCode": "10999",
+    "district": "kreuzberg",
+    "latitude": 52.499526,
+    "longitude": 13.417801,
+    "websiteUrl": "https://www.dna-artclub.com/",
+    "description": "A community art club at Kottbusser Tor, opened by the DNA. artist collective founded in 2022, with a 500 m² hall and terrace for dance classes, Thursday jam sessions and club nights.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Der Kunstclub des 2022 gegründeten Kollektivs DNA. liegt am Kottbusser Tor: rund 500 m² Innenfläche und eine Terrasse für Tanzkurse, donnerstägliche Jamsessions, Konzerte und Clubnächte.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["club", "cultural-centre"],
+    "capacity": 500,
+    "programmeUrl": "https://www.dna-artclub.com/events",
+    "reviewedAt": "2026-10-07T09:58:32Z"
+}
+
+> {%
+    client.test("DNA. CLUB venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
 ### Downstairs Comedy Club (Oranienburger Str. 67, Berlin-Mitte)
 ### ————————————————————————————————————————————————————————————
 
@@ -2665,6 +2723,38 @@ Accept: application/json
 > {%
     client.test("Duncker Club import triggered", function () {
         client.assert(response.status === 202, "Expected 202 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
+### Else (An den Treptowers 10, Berlin-Treptow — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create Else venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Else",
+    "address": "An den Treptowers 10",
+    "city": "Berlin",
+    "postalCode": "12435",
+    "district": "treptow",
+    "latitude": 52.494917,
+    "longitude": 13.462296,
+    "websiteUrl": "https://www.else.tv/",
+    "description": "An open-air club beneath the S-Bahn tracks at Treptower Park, right on the Spree, with a house and techno programme.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Ein Open-Air-Club unter der S-Bahn-Trasse am Treptower Park, direkt an der Spree, mit einem Programm aus House und Techno.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["club", "open-air"],
+    "programmeUrl": "https://ra.co/clubs/79607",
+    "reviewedAt": "2026-10-07T09:58:32Z"
+}
+
+> {%
+    client.test("Else venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
     });
 %}
 
@@ -2924,6 +3014,72 @@ Accept: application/json
 %}
 
 ### ————————————————————————————————————————————————————————————
+### FluxBau (Pfuelstraße 5, Berlin-Kreuzberg — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create FluxBau venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "FluxBau",
+    "address": "Pfuelstraße 5",
+    "city": "Berlin",
+    "postalCode": "10997",
+    "district": "kreuzberg",
+    "latitude": 52.502931,
+    "longitude": 13.440417,
+    "websiteUrl": "https://www.fluxfm.de/fluxbau",
+    "description": "The venue of radio station FluxFM, on the Spree at Schlesisches Tor, with a concert hall for about 200 guests, a river terrace, a free Wednesday Bergfest, parties and live concerts.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Der Veranstaltungsort des Radiosenders FluxFM liegt an der Spree beim Schlesischen Tor und bietet einen Konzertsaal für rund 200 Gäste, eine Terrasse am Wasser, Partys und Livekonzerte.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["club", "live-venue", "bar"],
+    "capacity": 200,
+    "programmeUrl": "https://www.fluxfm.de/fluxbau",
+    "reviewedAt": "2026-10-07T09:58:32Z"
+}
+
+> {%
+    client.test("FluxBau venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
+### FOUND (Bessemerstraße 2-14, Berlin-Schöneberg — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create FOUND venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "FOUND",
+    "address": "Bessemerstraße 2-14",
+    "city": "Berlin",
+    "postalCode": "12103",
+    "district": "schoeneberg",
+    "latitude": 52.466927,
+    "longitude": 13.364266,
+    "websiteUrl": "https://foundberlin.com/",
+    "description": "A large club and event space opened in June 2026 in the red-brick former Schultheiss malt factory known as the Malzfabrik, with indoor halls, a garden and covered dancefloors for club nights and concerts.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Ein großer Club, der im Juni 2026 in der backsteinroten Malzfabrik der früheren Schultheiss-Brauerei eröffnete, mit Hallen, Garten und überdachten Tanzflächen für Clubnächte, Open-Air-Partys und Konzerte.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["club", "open-air"],
+    "capacity": 500,
+    "programmeUrl": "https://ra.co/clubs/292292",
+    "reviewedAt": "2026-10-07T09:58:32Z"
+}
+
+> {%
+    client.test("FOUND venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
 ### Frannz Club (Schönhauser Allee 36, Berlin-Prenzlauer Berg — Kulturbrauerei)
 ### ————————————————————————————————————————————————————————————
 
@@ -2983,6 +3139,71 @@ Accept: application/json
 > {%
     client.test("Frannz Club import triggered", function () {
         client.assert(response.status === 202, "Expected 202 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
+### Funkhaus Berlin (Nalepastraße 18, Berlin-Köpenick — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create Funkhaus Berlin venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Funkhaus Berlin",
+    "address": "Nalepastraße 18",
+    "city": "Berlin",
+    "postalCode": "12459",
+    "district": "koepenick",
+    "latitude": 52.480118,
+    "longitude": 13.499949,
+    "websiteUrl": "https://www.funkhaus-berlin.net/",
+    "description": "The former headquarters of East German state radio on the Spree, built 1951–1956 to plans by Franz Ehrlich, whose recording halls and studios now host concerts and festivals and are rented for productions.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Das einstige Funkhaus des DDR-Rundfunks an der Spree in Oberschöneweide, 1951 bis 1956 nach Plänen von Franz Ehrlich errichtet, vermietet heute Säle und Studios und ist Bühne für Konzerte und Festivals.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["live-venue", "cultural-centre"],
+    "capacity": 250,
+    "programmeUrl": "https://ra.co/clubs/20577",
+    "reviewedAt": "2026-10-07T09:58:32Z"
+}
+
+> {%
+    client.test("Funkhaus Berlin venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
+### Funkloch (Wildenbruchstraße 68, Berlin-Neukölln — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create Funkloch venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Funkloch",
+    "address": "Wildenbruchstraße 68",
+    "city": "Berlin",
+    "postalCode": "12045",
+    "district": "neukoelln",
+    "latitude": 52.486319,
+    "longitude": 13.445959,
+    "description": "A Neukölln corner bar with a soundproofed event room and a basement, running jam sessions on weeknights and techno nights at weekends.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Eine Kneipe in Neukölln mit einem schallisolierten Veranstaltungsraum und einem Kellergeschoss, in der unter der Woche Jamsessions und am Wochenende Technonächte laufen.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["bar", "club"],
+    "capacity": 100,
+    "programmeUrl": "https://goout.net/en/funkloch/vzakye/",
+    "reviewedAt": "2026-10-07T09:58:32Z"
+}
+
+> {%
+    client.test("Funkloch venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
     });
 %}
 
@@ -3078,6 +3299,102 @@ Accept: application/json
 > {%
     client.test("gART.n import triggered", function () {
         client.assert(response.status === 202, "Expected 202 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
+### Gestrandet (Rolandufer 4, Berlin-Mitte — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create Gestrandet venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Gestrandet",
+    "address": "Rolandufer 4",
+    "city": "Berlin",
+    "postalCode": "10179",
+    "district": "mitte",
+    "latitude": 52.515104,
+    "longitude": 13.417233,
+    "websiteUrl": "https://strandhaus-berlin.de/gestrandet/",
+    "description": "A sandy beach bar on the Spree at Rolandufer, facing Jannowitzbrücke station and run as one of the Strandhaus locations, with weather-dependent summer open-airs of house, tech house and Latin nights.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Eine Strandbar mit Sand am Rolandufer gegenüber dem Bahnhof Jannowitzbrücke, Teil der Strandhaus-Standorte, mit wetterabhängigen Open-Airs im Sommer zwischen House, Tech House und Salsa- und Bachata-Abenden.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["open-air", "bar"],
+    "programmeUrl": "https://strandhaus-berlin.de/gestrandet/events",
+    "reviewedAt": "2026-10-07T09:58:32Z"
+}
+
+> {%
+    client.test("Gestrandet venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
+### Giri (Hermannstraße 14, Berlin-Neukölln — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create Giri venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Giri",
+    "address": "Hermannstraße 14",
+    "city": "Berlin",
+    "postalCode": "12049",
+    "district": "neukoelln",
+    "latitude": 52.484263,
+    "longitude": 13.424293,
+    "websiteUrl": "https://giri.berlin/",
+    "description": "An independent room on Hermannstraße that calls itself something between club and bar, mixing music, food and community, with mostly donation-entry DJ nights, live jazz dinners and listening sessions midweek.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Ein unabhängiger Raum an der Hermannstraße zwischen Club und Bar, der Musik, Essen und Nachbarschaft verbindet, mit DJ-Abenden meist gegen Spende, Jazzkonzerten mit Abendessen und Listening Sessions unter der Woche.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["bar", "club"],
+    "programmeUrl": "https://giri.berlin/programme/",
+    "reviewedAt": "2026-10-07T09:58:32Z"
+}
+
+> {%
+    client.test("Giri venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
+### Golden Flamingo (Stadtbahnbogen 157, Berlin-Mitte — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create Golden Flamingo venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Golden Flamingo",
+    "address": "Stadtbahnbogen 157",
+    "city": "Berlin",
+    "postalCode": "10178",
+    "district": "mitte",
+    "latitude": 52.522199,
+    "longitude": 13.39883,
+    "websiteUrl": "https://goldenflamingo.de/",
+    "description": "A restaurant and bar in an S-Bahn arch in James-Simon-Park, looking across the Spree to Museum Island, which turns into a dance floor for techno nights by Volume Berlin Records and others.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Restaurant und Bar in einem Stadtbahnbogen im James-Simon-Park mit Blick über die Spree zur Museumsinsel, wo Volume Berlin Records und andere Veranstalter Technonächte ausrichten.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["bar", "club"],
+    "programmeUrl": "https://ra.co/clubs/272183",
+    "reviewedAt": "2026-10-07T09:58:32Z"
+}
+
+> {%
+    client.test("Golden Flamingo venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
     });
 %}
 
@@ -3268,6 +3585,131 @@ Accept: application/json
 > {%
     client.test("Gretchen import triggered", function () {
         client.assert(response.status === 202, "Expected 202 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
+### GöRE Comedy Club (Palisadenstraße 48, Berlin-Friedrichshain — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create GöRE Comedy Club venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "GöRE Comedy Club",
+    "address": "Palisadenstraße 48",
+    "city": "Berlin",
+    "postalCode": "10243",
+    "district": "friedrichshain",
+    "latitude": 52.51827,
+    "longitude": 13.439946,
+    "description": "A comedy club in an old industrial basement on Palisadenstraße near Weberwiese, staging stand-up several nights a week with a rotating line-up from the Berlin scene, plus early \"Frühschicht\" open-mic shows.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Ein Comedyclub in einem alten Industriekeller an der Palisadenstraße nahe Weberwiese, mit Stand-up an mehreren Abenden pro Woche, wechselnden Comedians der Berliner Szene und frühen Open-Mic-Shows namens Frühschicht.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["theatre", "bar", "club"],
+    "programmeUrl": "https://www.eventbrite.com/cc/gore-shows-4785723/",
+    "reviewedAt": "2026-10-07T09:58:32Z"
+}
+
+> {%
+    client.test("GöRE Comedy Club venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
+### Hafenbar (Karl-Liebknecht-Straße 11, Berlin-Mitte — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create Hafenbar venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Hafenbar",
+    "address": "Karl-Liebknecht-Straße 11",
+    "city": "Berlin",
+    "postalCode": "10178",
+    "district": "mitte",
+    "latitude": 52.52181,
+    "longitude": 13.407685,
+    "websiteUrl": "https://www.hafenbar-berlin.de/",
+    "description": "A maritime-themed dance hall that opened in East Berlin in 1967 and moved to Alexanderplatz in 2016, with the Schlager party Stimmen in Aspik every Friday since 1996 and pop and dance classics on Saturdays.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Seit 1967 eine Tanzgaststätte im Seefahrer-Stil, früher in der Chausseestraße und seit 2016 am Alexanderplatz; freitags läuft seit 1996 die Schlagerparty Stimmen in Aspik, samstags Pop und Dance-Klassiker.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["club", "bar"],
+    "programmeUrl": "https://www.hafenbar-berlin.de/schlager-party-berlin/",
+    "reviewedAt": "2026-10-07T09:58:32Z"
+}
+
+> {%
+    client.test("Hafenbar venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
+### Hamburger Bahnhof (Invalidenstraße 50, Berlin-Tiergarten — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create Hamburger Bahnhof venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Hamburger Bahnhof",
+    "address": "Invalidenstraße 50",
+    "city": "Berlin",
+    "postalCode": "10557",
+    "district": "tiergarten",
+    "latitude": 52.525672,
+    "longitude": 13.365925,
+    "websiteUrl": "https://www.smb.museum/museen-einrichtungen/hamburger-bahnhof/home/",
+    "description": "Berlin's national gallery of contemporary art, housed in an 1840s railway terminus in Moabit, whose garden hosts Berlin Beats, a free summer series of twelve evenings with DJ sets and live concerts.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Die Nationalgalerie der Gegenwart sitzt im einzigen erhaltenen spätklassizistischen Kopfbahnhof Berlins; im Sommer bringt die kostenlose Reihe Berlin Beats an zwölf Abenden DJs und Live-Konzerte in den Museumsgarten.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["open-air", "gallery"],
+    "programmeUrl": "https://www.smb.museum/veranstaltungen/veranstaltungsreihe/berlin-beats/",
+    "reviewedAt": "2026-10-07T09:58:32Z"
+}
+
+> {%
+    client.test("Hamburger Bahnhof venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
+### Haus der Visionäre (Eichenstraße 4A, Berlin-Treptow — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create Haus der Visionäre venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Haus der Visionäre",
+    "address": "Eichenstraße 4A",
+    "city": "Berlin",
+    "postalCode": "12435",
+    "district": "treptow",
+    "latitude": 52.496205,
+    "longitude": 13.454185,
+    "description": "A group of glass-roofed halls in a former 1920s bus depot on the Arena Berlin grounds by the Spree, used for electronic club nights, concerts and festivals as well as art exhibitions.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Im ehemaligen Busdepot aus den 1920er Jahren auf dem Gelände der Arena Berlin an der Spree liegen mehrere Hallen unter Glasdächern für elektronische Clubnächte, Konzerte, Festivals und Kunstausstellungen.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["club", "live-venue", "gallery"],
+    "reviewedAt": "2026-10-07T09:58:32Z"
+}
+
+> {%
+    client.test("Haus der Visionäre venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
     });
 %}
 
@@ -3686,6 +4128,134 @@ Accept: application/json
 %}
 
 ### ————————————————————————————————————————————————————————————
+### Ikii (Herrfurthplatz 8, Berlin-Neukölln — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create Ikii venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Ikii",
+    "address": "Herrfurthplatz 8",
+    "city": "Berlin",
+    "postalCode": "12049",
+    "district": "neukoelln",
+    "latitude": 52.476611,
+    "longitude": 13.421429,
+    "websiteUrl": "https://ikiiberlin.com/",
+    "description": "A small listening room on Herrfurthplatz in Neukölln's Schillerkiez, built around a high-fidelity sound system and pouring natural wine and sake, with listening sessions, DJ sets and live performances.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Ein kleiner Hörraum am Herrfurthplatz im Neuköllner Schillerkiez mit hochwertiger Anlage, Naturwein und Sake, in dem Listening Sessions, DJ-Sets und Live-Auftritte stattfinden.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["bar"],
+    "programmeUrl": "https://ra.co/clubs/271542",
+    "reviewedAt": "2026-10-07T09:58:32Z"
+}
+
+> {%
+    client.test("Ikii venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
+### interkosmos (Fanningerstraße 47, Berlin-Lichtenberg — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create interkosmos venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "interkosmos",
+    "address": "Fanningerstraße 47",
+    "city": "Berlin",
+    "postalCode": "10365",
+    "district": "lichtenberg",
+    "latitude": 52.514121,
+    "longitude": 13.498504,
+    "websiteUrl": "https://www.interkosmos.cc/",
+    "description": "A café and bar near Lichtenberg station, run by three partners under the motto café, bar, utopia, hosting author readings in its BuchBar series, comedy nights and poetry evenings.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Café und Bar nahe dem Bahnhof Lichtenberg, von drei Gesellschaftern unter dem Motto „café . bar . utopie“ betrieben, mit Lesungen in der Reihe BuchBar, Comedyabenden und Poesieabenden.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["bar", "cultural-centre"],
+    "programmeUrl": "https://www.interkosmos.cc/",
+    "reviewedAt": "2026-10-07T09:58:32Z"
+}
+
+> {%
+    client.test("interkosmos venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
+### Ipse (Vor dem Schlesischen Tor 2, Berlin-Kreuzberg — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create Ipse venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Ipse",
+    "address": "Vor dem Schlesischen Tor 2a",
+    "city": "Berlin",
+    "postalCode": "10997",
+    "district": "kreuzberg",
+    "latitude": 52.497107,
+    "longitude": 13.449958,
+    "description": "A riverside club by the Spree at Schlesisches Tor, mixing a warehouse room with a waterfront garden, where house and techno DJs play summer open airs and the beer garden hosts open-decks afternoons and markets.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Am Spreeufer nahe dem Schlesischen Tor verbindet dieser Club eine Lagerhalle mit einem Garten am Wasser, mit House- und Techno-Open-Airs im Sommer sowie Open-Decks-Nachmittagen und Märkten im Biergarten.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["club", "open-air"],
+    "capacity": 500,
+    "programmeUrl": "https://ra.co/clubs/278777",
+    "reviewedAt": "2026-10-07T09:58:32Z"
+}
+
+> {%
+    client.test("Ipse venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
+### Jonny Knüppel (Lilli-Henoch-Straße 10, Berlin-Prenzlauer Berg — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create Jonny Knüppel venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Jonny Knüppel",
+    "address": "Lilli-Henoch-Straße 10",
+    "city": "Berlin",
+    "postalCode": "10405",
+    "district": "prenzlauer-berg",
+    "latitude": 52.540874,
+    "longitude": 13.436385,
+    "websiteUrl": "https://jonnyknueppel.de/",
+    "description": "A collective-run club on the former Greifswalder Straße freight yard, part of the diskoBabel site since 2018 after leaving the Lohmühleninsel, with all-night parties, open airs and solidarity nights before the site closes.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Ein von Kollektiven getragener Club auf dem früheren Güterbahnhof Greifswalder Straße, seit 2018 Teil des diskoBabel-Geländes nach dem Aus auf der Lohmühleninsel, mit Partys bis zum Morgen, Open Airs und Solipartys.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["club", "open-air"],
+    "programmeUrl": "https://jonnyknueppel.de/",
+    "reviewedAt": "2026-10-07T09:58:32Z"
+}
+
+> {%
+    client.test("Jonny Knüppel venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
 ### Junction Bar (Gneisenaustr. 18, Berlin-Kreuzberg)
 ### ————————————————————————————————————————————————————————————
 
@@ -3810,6 +4380,38 @@ Accept: application/json
 > {%
     client.test("Kabarett-Theater DISTEL import triggered", function () {
         client.assert(response.status === 202, "Expected 202 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
+### Kallasch& (Unionstraße 2, Berlin-Tiergarten — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create Kallasch& venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Kallasch&",
+    "address": "Unionstraße 2",
+    "city": "Berlin",
+    "postalCode": "10551",
+    "district": "tiergarten",
+    "latitude": 52.532939,
+    "longitude": 13.33656,
+    "websiteUrl": "https://kallasch.berlin/",
+    "description": "A Moabit programme pub opened in 2014 as a neighbourhood bar project out of the Musique Maudite festival, keeping drinks cheap and most events free, with Saturday concerts, a fortnightly jazz series and a monthly poetry slam.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Die Moabiter Programmkneipe entstand 2014 als Barprojekt aus dem Festival Musique Maudite, hält Getränke günstig und die meisten Abende kostenlos und bietet samstags Konzerte, eine Jazzreihe zweimal im Monat und einen monatlichen Poetry Slam.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["bar", "live-venue"],
+    "programmeUrl": "https://kallasch.berlin/programm/",
+    "reviewedAt": "2026-10-07T09:58:32Z"
+}
+
+> {%
+    client.test("Kallasch& venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
     });
 %}
 
@@ -3972,6 +4574,39 @@ Accept: application/json
 %}
 
 ### ————————————————————————————————————————————————————————————
+### Kesselhaus (Knaackstraße 97, Berlin-Prenzlauer Berg — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create Kesselhaus venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Kesselhaus",
+    "address": "Knaackstraße 97",
+    "city": "Berlin",
+    "postalCode": "10435",
+    "district": "prenzlauer-berg",
+    "latitude": 52.540383,
+    "longitude": 13.414097,
+    "websiteUrl": "https://www.kesselhaus.net/",
+    "description": "The former boiler house of the Schultheiss brewery, a listed Schwechten building in the Kulturbrauerei, has been a stage since the early 1990s and today hosts concerts, club nights, festivals, theatre and readings.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Im einstigen Kesselhaus der Schultheiss-Brauerei, einem denkmalgeschützten Schwechten-Bau in der Kulturbrauerei, wird seit Anfang der 1990er gespielt, heute mit Konzerten, Clubreihen, Festivals, Theater und Lesungen.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["live-venue"],
+    "capacity": 776,
+    "programmeUrl": "https://www.kesselhaus.net/de/calendar/topics/concerts",
+    "reviewedAt": "2026-10-07T09:58:32Z"
+}
+
+> {%
+    client.test("Kesselhaus venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
 ### KitKatClub (Köpenicker Str. 76 / Brückenstr. 1, Berlin-Mitte)
 ### ————————————————————————————————————————————————————————————
 
@@ -4098,6 +4733,38 @@ Accept: application/json
 %}
 
 ### ————————————————————————————————————————————————————————————
+### Komplex Berlin (Modersohnstraße 35–45, Berlin-Friedrichshain — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create Komplex Berlin venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Komplex Berlin",
+    "address": "Modersohnstraße 35–45",
+    "city": "Berlin",
+    "postalCode": "10245",
+    "district": "friedrichshain",
+    "latitude": 52.504275,
+    "longitude": 13.458015,
+    "websiteUrl": "https://komplex.berlin/",
+    "description": "An event site in a former Deutsche Bahn repair workshop in Friedrichshain's Rudolfkiez, with high-ceilinged halls and a beer garden, used for electronic music parties, food festivals and seasonal markets.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "In einer früheren Werkstatt der Deutschen Bahn im Friedrichshainer Rudolfkiez liegt dieser Veranstaltungsort mit hohen Hallen und Biergarten, genutzt für elektronische Partys, Food-Festivals und saisonale Märkte.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["club", "open-air"],
+    "programmeUrl": "https://ra.co/clubs/189040",
+    "reviewedAt": "2026-10-07T09:58:32Z"
+}
+
+> {%
+    client.test("Komplex Berlin venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
 ### Konrad Tönz Bar (Falckensteinstraße 30, Berlin-Kreuzberg — not imported, #2766)
 ### ————————————————————————————————————————————————————————————
 
@@ -4125,6 +4792,71 @@ Content-Type: application/json
 
 > {%
     client.test("Konrad Tönz Bar venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
+### Kraftwerk Berlin (Köpenicker Straße 70, Berlin-Mitte — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create Kraftwerk Berlin venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Kraftwerk Berlin",
+    "address": "Köpenicker Straße 70",
+    "city": "Berlin",
+    "postalCode": "10179",
+    "district": "mitte",
+    "latitude": 52.510997,
+    "longitude": 13.419522,
+    "websiteUrl": "https://kraftwerkberlin.de/",
+    "description": "A former 1960s heating plant on Köpenicker Straße, converted from 2005 into concrete halls for up to 2,300 people, hosting festivals such as Berlin Atonal, experimental concerts and Tresor Foundation projects.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Das ehemalige Heizkraftwerk Mitte, zwischen 1960 und 1964 gebaut und seit 2005 umgebaut, bietet auf drei Ebenen Platz für 2.300 Gäste – bei Festivals wie Berlin Atonal, experimentellen Konzerten und Projekten der Tresor Foundation.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["cultural-centre", "live-venue"],
+    "capacity": 2300,
+    "programmeUrl": "https://kraftwerkberlin.de/de/programm",
+    "reviewedAt": "2026-10-07T09:58:32Z"
+}
+
+> {%
+    client.test("Kraftwerk Berlin venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
+### Kreuzwerk (Lobeckstraße 30-35, Berlin-Kreuzberg — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create Kreuzwerk venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Kreuzwerk",
+    "address": "Lobeckstraße 30-35",
+    "city": "Berlin",
+    "postalCode": "10969",
+    "district": "kreuzberg",
+    "latitude": 52.502873,
+    "longitude": 13.407759,
+    "websiteUrl": "https://kreuzwerk.club/",
+    "description": "A Kreuzberg club near Moritzplatz built around queer and FLINTA* voices, with an awareness team and a strict no-photo, no-video floor, hosting techno, house and queer party series such as Power Dance Club.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Ein Club am Moritzplatz, der queere und FLINTA*-Stimmen in den Mittelpunkt stellt: Fotos und Videos sind tabu, ein Awareness-Team ist vor Ort, gefeiert wird bei Techno-, House- und queeren Partyreihen wie tracey.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["club"],
+    "programmeUrl": "https://kreuzwerk.club/events",
+    "reviewedAt": "2026-10-07T09:58:32Z"
+}
+
+> {%
+    client.test("Kreuzwerk venue created", function () {
         client.assert(response.status === 201, "Expected 201 but got " + response.status);
     });
 %}
@@ -4254,6 +4986,102 @@ Accept: application/json
 > {%
     client.test("Kulturhaus Peter Edel import triggered", function () {
         client.assert(response.status === 202, "Expected 202 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
+### Kulturhaus Spandau (Mauerstraße 6, Berlin-Spandau — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create Kulturhaus Spandau venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Kulturhaus Spandau",
+    "address": "Mauerstraße 6",
+    "city": "Berlin",
+    "postalCode": "13597",
+    "district": "spandau",
+    "latitude": 52.535529,
+    "longitude": 13.202268,
+    "websiteUrl": "https://kulturhaus-spandau.de/",
+    "description": "The Spandau district's own arts centre on Mauerstraße, with a theatre hall, gallery and cinema, presenting classical concerts, operetta afternoons and the early-music festival SPAM, partly staged at the Zitadelle.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Das bezirkseigene Kulturhaus in der Spandauer Altstadt vereint Theatersaal, Galerie und Kino und zeigt Klassikkonzerte, Operetten am Nachmittag sowie das Alte-Musik-Festival SPAM, auch auf der Zitadelle.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["cultural-centre", "theatre", "cinema", "gallery"],
+    "programmeUrl": "https://kulturhaus-spandau.de/programm/",
+    "reviewedAt": "2026-10-07T09:58:32Z"
+}
+
+> {%
+    client.test("Kulturhaus Spandau venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
+### Kumpelnest 3000 (Lützowstraße 23, Berlin-Tiergarten — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create Kumpelnest 3000 venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Kumpelnest 3000",
+    "address": "Lützowstraße 23",
+    "city": "Berlin",
+    "postalCode": "10785",
+    "district": "tiergarten",
+    "latitude": 52.503126,
+    "longitude": 13.366423,
+    "websiteUrl": "http://www.kumpelnest3000.com/",
+    "description": "A bar opened in 1987 by artist Mark Ernestus as his art-school thesis, left in the fittings of a former brothel and still a late-night bar today.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Mark Ernestus eröffnete die Bar 1987 als Abschlussarbeit an der Hochschule der Künste in einem kaum veränderten früheren Bordell, bis heute eine Bar für die späten Stunden.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["bar"],
+    "reviewedAt": "2026-10-07T09:58:32Z"
+}
+
+> {%
+    client.test("Kumpelnest 3000 venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
+### Kunstfabrik Schlot (Invalidenstraße 117, Berlin-Mitte — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create Kunstfabrik Schlot venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Kunstfabrik Schlot",
+    "address": "Invalidenstraße 117",
+    "city": "Berlin",
+    "postalCode": "10115",
+    "district": "mitte",
+    "latitude": 52.530321,
+    "longitude": 13.385295,
+    "websiteUrl": "https://kunstfabrik-schlot.de/",
+    "description": "A jazz club founded in 1993 in Prenzlauer Berg and since 2000 in the Edison-Höfe, where German light-bulb mass production began, with around 320 concerts a year across every style of jazz.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Seit 1993 bestehender Jazzclub, zuerst in Prenzlauer Berg, seit 2000 in den Edison-Höfen an der Invalidenstraße, wo in Deutschland die Massenfertigung von Glühbirnen begann, mit rund 320 Konzerten im Jahr.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["live-venue"],
+    "capacity": 150,
+    "programmeUrl": "https://kunstfabrik-schlot.de/programm/",
+    "reviewedAt": "2026-10-07T09:58:32Z"
+}
+
+> {%
+    client.test("Kunstfabrik Schlot venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
     });
 %}
 
