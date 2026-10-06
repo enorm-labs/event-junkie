@@ -42,7 +42,8 @@ import java.time.format.DateTimeParseException
  * Each `.views-row` embeds an **AddToCalendar** widget whose `<var class="atc_*">` values are
  * the machine-readable part. `atc_date_start` is a **UTC** timestamp, converted to
  * `Europe/Berlin`. `atc_description` holds a hand-typed `Datum / Einlass / Beginn / Ende /
- * Eintritt / Tickets` block then the prose — the source for times and price. The row's
+ * Eintritt / Tickets` block then the prose — the source for times, price, and the ticket link
+ * on a row without the `a.link-ticket` button (#2792). The row's
  * `.body-content` renders the same prose in full where `atc_description` holds only its first
  * paragraph, so the description comes from there; a festival names its acts there in one
  * sentence ending `mit: <acts>.` (`Das diesjährige Line-up verspricht musikalische Vielfalt
@@ -119,7 +120,8 @@ class SaalchenOverviewPageScraper {
             imageUrl = row.imgSrcAt(".image img") ?: row.attrAt(".image img", "src")?.let { resolveUrl(baseUrl, it) },
             sourceUrl = sourceUrl,
             sourceId = "${EventSource.SAALCHEN.sourceIdPrefix}$slug",
-            ticketUrl = row.hrefAt("a.link-ticket"),
+            // Rows without the ticket button link the shop from the notice block instead (#2792).
+            ticketUrl = row.hrefAt("a.link-ticket") ?: noticeTicketUrl(row),
             // `.event-category` names a staging format (`Konzert`, `Kultur`, `Kunst`), not a style, so it
             // drives the event type only and is not stored as the genre — Admiralspalast's call. The venue
             // publishes no genre field.
@@ -181,7 +183,7 @@ class SaalchenOverviewPageScraper {
      */
     private fun parseDescription(row: Element): String? =
         (bodyLines(row).ifEmpty { noticeLines(row) })
-            .filterNot { it.substringBefore(':', "").trim().lowercase() in NOTICE_LABELS }
+            .filterNot { it.substringBefore(':', "").trim().lowercase() in NOTICE_LABELS || it.isTicketLine() }
             .joinToString("\n\n")
             .trim()
             .takeIf { it.isNotBlank() }
@@ -208,17 +210,35 @@ class SaalchenOverviewPageScraper {
      * matters: the block is wrapped in a paragraph on most events but bare on others (`Jimmy
      * Sax`, `Main Event`), where a `<p>`-scoped lookup finds nothing.
      */
-    private fun noticeLines(row: Element): List<String> {
+    private fun noticeLines(row: Element): List<String> = noticeLineElements(row).map { it.text().trim() }.filter { it.isNotBlank() }
+
+    /**
+     * The first absolute link on the notice's `Tickets` line — a bare `<a>Tickets</a>` or a
+     * labelled `Tickets: <a>…</a>`. Only that line counts: the prose under the block links
+     * Facebook and promoters, which are not ticket shops. A shortener URL is kept as published.
+     */
+    private fun noticeTicketUrl(row: Element): String? =
+        noticeLineElements(row)
+            .firstOrNull { it.text().trim().isTicketLine() }
+            ?.selectFirst("a[href]")
+            ?.attr("href")
+            ?.trim()
+            ?.takeIf { TICKET_URL_PATTERN.matches(it) }
+
+    /** The AddToCalendar description's lines as parsed fragments, so a line's links survive. */
+    private fun noticeLineElements(row: Element): List<Element> {
         val raw = row.textAt("var.atc_description") ?: return emptyList()
         return Jsoup
             .parse(raw)
             .body()
             .html()
             .split(LINE_BREAK_PATTERN)
-            .map { Jsoup.parse(it).text().trim() }
-            .filter { it.isNotBlank() }
+            .map { Jsoup.parse(it).body() }
     }
 }
+
+/** A notice line naming the ticket shop: `Tickets` alone, or `Tickets: <link>`. */
+private fun String.isTicketLine(): Boolean = equals(TICKETS_LABEL, ignoreCase = true) || startsWith("$TICKETS_LABEL:", ignoreCase = true)
 
 /**
  * An `HH:mm`-ish time out of a hand-typed notice value, in every spelling: `"20:00"`, `"19
@@ -264,6 +284,12 @@ private const val END_LABEL = "ende"
 /** Notice label for the admission price. */
 private const val ENTRANCE_LABEL = "eintritt"
 
+/** Notice label for the ticket shop link. */
+private const val TICKETS_LABEL = "tickets"
+
+/** An absolute web URL, the only kind a notice ticket link is stored as. */
+private val TICKET_URL_PATTERN = Regex("""https?://\S+""", RegexOption.IGNORE_CASE)
+
 /** The `Tagesticket: 13 €` figure of a tiered festival tariff — the day's own price, not a concession. */
 private val DAY_TICKET_PATTERN = Regex("""(?<!\d-)\btagesticket:?\s*(\d+(?:[.,]\d{1,2})?)\s*€""", RegexOption.IGNORE_CASE)
 
@@ -274,7 +300,7 @@ private val LINEUP_SENTENCE = Regex("""line-?up\b[^.:]*\bmit:\s*([^.]+)\.""", Re
  * Every label the venue uses in its AddToCalendar metadata block. A line starting with one is
  * metadata; anything else is the event's own prose.
  */
-private val NOTICE_LABELS = setOf("datum", DOORS_LABEL, START_LABEL, END_LABEL, ENTRANCE_LABEL, "tickets")
+private val NOTICE_LABELS = setOf("datum", DOORS_LABEL, START_LABEL, END_LABEL, ENTRANCE_LABEL, TICKETS_LABEL)
 
 /** Splits the description on `<br>` and on paragraph boundaries. */
 private val LINE_BREAK_PATTERN = Regex("""<br\s*/?>|</p>\s*<p[^>]*>""", RegexOption.IGNORE_CASE)
