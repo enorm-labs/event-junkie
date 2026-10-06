@@ -14,12 +14,7 @@ package de.norm.events.scraper
  * scraper testable against a saved snapshot.
  */
 interface EventImporter {
-    /**
-     * The event source this importer handles.
-     *
-     * Used for dispatch: the [EventImportService] maps each [EventSourceEntity]
-     * to its importer via this property.
-     */
+    /** The event source this importer handles; [EventImportService] dispatches on it. */
     val eventSource: EventSource
 
     /**
@@ -37,18 +32,12 @@ interface EventImporter {
     val fetchesBeyondEntryPage: Boolean get() = false
 
     /**
-     * Imports events from the venue's website.
+     * Imports events from the venue's website: fetches the overview page, parses its listings, and
+     * optionally fetches detail pages for enrichment. [etag] and [lastModified] make the fetch
+     * conditional.
      *
-     * The importer is responsible for:
-     * 1. Fetching the overview page HTML via [HtmlFetcher].
-     * 2. Parsing event listings from the overview page.
-     * 3. Optionally fetching and parsing detail pages for enrichment.
-     * 4. Returning a list of [ScrapedEvent] instances ready for upserting.
-     *
-     * @param etag optional cached ETag for conditional requests.
-     * @param lastModified optional cached Last-Modified for conditional requests.
-     * @return an [ImportResult] with the scraped events and updated cache headers,
-     *   or [ImportResult.NotModified] if the page hasn't changed.
+     * @return an [ImportResult] with the scraped events and fresh cache headers, or
+     *   [ImportResult.NotModified] when the page has not changed.
      */
     suspend fun importEvents(
         url: String,
