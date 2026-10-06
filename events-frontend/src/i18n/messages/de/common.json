@@ -46,10 +46,12 @@
   "upcomingOverall": "insgesamt {count} anstehend",
   "sort": {
     "label": "Sortieren",
-    "name": "A–Z",
+    "date": "Datum",
+    "earliest": "früheste zuerst",
+    "latest": "späteste zuerst",
+    "az": "A–Z",
+    "za": "Z–A",
     "upcoming": "Am meisten los, nächste 30 Tage",
-    "earliest": "Früheste zuerst",
-    "latest": "Späteste zuerst",
     "newest": "Zuletzt hinzugefügt"
   },
   "pastEvents": "Vergangene Events",

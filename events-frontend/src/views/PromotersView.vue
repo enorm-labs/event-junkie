@@ -27,8 +27,12 @@ function queryString(key: string): string {
  * lists a search by relevance (#2694). The count order is `sort=upcomingEvents,desc` (#1349).
  */
 const SORT_NAME = 'name,asc'
+const SORT_NAME_DESC = 'name,desc'
 const SORT_UPCOMING = 'upcomingEvents,desc'
-const sort = computed(() => (queryString('sort') === SORT_UPCOMING ? SORT_UPCOMING : ''))
+const sort = computed(() => {
+  const requested = queryString('sort')
+  return requested === SORT_NAME_DESC || requested === SORT_UPCOMING ? requested : ''
+})
 
 const params = computed<PromoterSearchParams>(() => ({
   q: queryString('q') || undefined,
@@ -54,8 +58,13 @@ function applyFilters(patch: LocationQueryRaw) {
 const { t } = useI18n()
 
 const sortOptions = computed<SortOption[]>(() => [
-  { value: '', label: t('common.sort.name') },
-  { value: SORT_UPCOMING, label: t('common.sort.upcoming') },
+  {
+    directions: [
+      { value: '', ascending: true, label: t('common.sort.az') },
+      { value: SORT_NAME_DESC, ascending: false, label: t('common.sort.za') },
+    ],
+  },
+  { label: t('common.sort.upcoming'), value: SORT_UPCOMING },
 ])
 </script>
 

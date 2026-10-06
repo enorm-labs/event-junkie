@@ -122,11 +122,13 @@ class VenueControllerTest : BaseControllerTest() {
             }
         }
 
+    // #2763: Z–A folds case as A–Z does; under the `C` collation "tipi" would come before "Zenner".
     @Test
-    fun `GET venues honours a whitelisted sort property`(): Unit =
+    fun `GET venues sorts names Z to A case-insensitively`(): Unit =
         runBlocking {
             insertVenue("Astra", "astra")
-            insertVenue("Lido", "lido")
+            insertVenue("tipi am Kanzleramt", "tipi")
+            insertVenue("Zenner", "zenner")
 
             webTestClient
                 .get()
@@ -135,8 +137,8 @@ class VenueControllerTest : BaseControllerTest() {
                 .expectStatus()
                 .isOk
                 .expectBody()
-                .jsonPath("$.content[0].slug")
-                .isEqualTo("lido")
+                .jsonPath("$.content[*].slug")
+                .isEqualTo(listOf("zenner", "tipi", "astra"))
         }
 
     // The collation is `C`; without case-folding "tipi" would sort after "Zenner".

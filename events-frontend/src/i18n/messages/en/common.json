@@ -46,10 +46,12 @@
   "upcomingOverall": "{count} upcoming overall",
   "sort": {
     "label": "Sort",
-    "name": "A–Z",
+    "date": "Date",
+    "earliest": "earliest first",
+    "latest": "latest first",
+    "az": "A–Z",
+    "za": "Z–A",
     "upcoming": "Busiest next 30 days",
-    "earliest": "Earliest first",
-    "latest": "Latest first",
     "newest": "Newest added"
   },
   "pastEvents": "Past events",

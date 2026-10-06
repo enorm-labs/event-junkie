@@ -38,9 +38,10 @@ const stubs = {
 }
 
 let wrapper: VueWrapper | undefined
+let router: ReturnType<typeof createRouter>
 
 async function mountAt(path: string) {
-  const router = createRouter({
+  router = createRouter({
     history: createMemoryHistory(),
     routes: [{ path: '/:locale(en|de)/:rest(.*)', component: Page }],
   })
@@ -234,18 +235,46 @@ describe('EventsView sort', () => {
     return (getMock.mock.lastCall![1].params.query as { sort?: unknown }).sort
   }
 
+  function dateButton() {
+    return wrapper!.get('[role="group"]').findAll('button')[0]!
+  }
+
   it('offers newest added beside the date on the upcoming list, and sends it', async () => {
     await mountAt('/en/events?sort=createdAt,desc')
 
-    expect(sortButtons()).toEqual(['Earliest first', 'Newest added'])
+    expect(sortButtons()).toEqual(['Date', 'Newest added'])
     expect(sentSort()).toEqual(['createdAt,desc'])
   })
 
   it('drops newest added for a range into the past, where ended events show', async () => {
     await mountAt('/en/events?from=2026-09-01&sort=createdAt,desc')
 
-    expect(sortButtons()).toEqual(['Earliest first', 'Latest first'])
+    expect(sortButtons()).toEqual(['Date'])
+    expect(dateButton().attributes('aria-label')).toBe('Date, earliest first')
     expect(sentSort()).toBeUndefined()
+  })
+
+  it('flips the date on a range into the past, and keeps the default out of the URL', async () => {
+    await mountAt('/en/events?from=2026-09-01')
+
+    await dateButton().trigger('click')
+    await flushPromises()
+    expect(router.currentRoute.value.query.sort).toBe('eventDate,desc')
+    expect(sentSort()).toEqual(['eventDate,desc'])
+    expect(dateButton().attributes('aria-label')).toBe('Date, latest first')
+
+    await dateButton().trigger('click')
+    await flushPromises()
+    expect(router.currentRoute.value.query.sort).toBeUndefined()
+  })
+
+  it('reads a range wholly in the past latest first, and earliest first goes into the URL', async () => {
+    await mountAt('/en/events?from=2026-09-01&to=2026-09-30')
+
+    expect(dateButton().attributes('aria-label')).toBe('Date, latest first')
+    await dateButton().trigger('click')
+    await flushPromises()
+    expect(router.currentRoute.value.query.sort).toBe('eventDate,asc')
   })
 
   it('offers no sort on On now', async () => {
