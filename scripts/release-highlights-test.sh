@@ -14,7 +14,10 @@
 set -euo pipefail
 
 case "${1:-}" in
-  -h | --help) awk '/^# Usage:/ { p = 1 } p && !/^#./ { exit } p { sub(/^# ?/, ""); print }' "$0"; exit 0 ;;
+    -h | --help)
+        awk '/^# Usage:/ { p = 1 } p && !/^#./ { exit } p { sub(/^# ?/, ""); print }' "$0"
+        exit 0
+        ;;
 esac
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -25,61 +28,61 @@ trap 'rm -rf "$WORK"' EXIT
 failures=0
 
 fail() {
-  printf '  FAIL  %s\n' "$1" >&2
-  if [ -n "${2:-}" ]; then printf '%s\n' "$2" | sed 's/^/          /' >&2; fi
-  failures=$((failures + 1))
+    printf '  FAIL  %s\n' "$1" >&2
+    if [ -n "${2:-}" ]; then printf '%s\n' "$2" | sed 's/^/          /' >&2; fi
+    failures=$((failures + 1))
 }
 
 pass() {
-  printf '  ok    %s\n' "$1"
+    printf '  ok    %s\n' "$1"
 }
 
 # A fresh repository whose first commit is tagged v1.0.0 — the release every case measures from.
 fresh_repo() {
-  local dir
-  dir="$(mktemp -d "$WORK/repo.XXXXXX")"
-  git -C "$dir" init -q -b main
-  git -C "$dir" config user.name test
-  git -C "$dir" config user.email test@example.invalid
-  git -C "$dir" config commit.gpgsign false
-  git -C "$dir" commit -q --allow-empty -m "chore(release): the release"
-  git -C "$dir" tag v1.0.0
-  printf '%s\n' "$dir"
+    local dir
+    dir="$(mktemp -d "$WORK/repo.XXXXXX")"
+    git -C "$dir" init -q -b main
+    git -C "$dir" config user.name test
+    git -C "$dir" config user.email test@example.invalid
+    git -C "$dir" config commit.gpgsign false
+    git -C "$dir" commit -q --allow-empty -m "chore(release): the release"
+    git -C "$dir" tag v1.0.0
+    printf '%s\n' "$dir"
 }
 
 commit() {
-  local dir="$1" subject="$2" body="${3:-}"
-  if [ -n "$body" ]; then
-    git -C "$dir" commit -q --allow-empty -m "$subject" -m "$body"
-  else
-    git -C "$dir" commit -q --allow-empty -m "$subject"
-  fi
+    local dir="$1" subject="$2" body="${3:-}"
+    if [ -n "$body" ]; then
+        git -C "$dir" commit -q --allow-empty -m "$subject" -m "$body"
+    else
+        git -C "$dir" commit -q --allow-empty -m "$subject"
+    fi
 }
 
 highlights() {
-  local dir="$1"
-  shift
-  VERSION_GIT_ROOT="$dir" "$HIGHLIGHTS_SH" "$@"
+    local dir="$1"
+    shift
+    VERSION_GIT_ROOT="$dir" "$HIGHLIGHTS_SH" "$@"
 }
 
 assert_contains() {
-  local description="$1" expected="$2" actual="$3"
-  case "$actual" in
-    *"$expected"*) pass "$description" ;;
-    *) fail "$description" "expected to contain: $expected
+    local description="$1" expected="$2" actual="$3"
+    case "$actual" in
+        *"$expected"*) pass "$description" ;;
+        *) fail "$description" "expected to contain: $expected
 actual:
 $actual" ;;
-  esac
+    esac
 }
 
 assert_lacks() {
-  local description="$1" unexpected="$2" actual="$3"
-  case "$actual" in
-    *"$unexpected"*) fail "$description" "expected NOT to contain: $unexpected
+    local description="$1" unexpected="$2" actual="$3"
+    case "$actual" in
+        *"$unexpected"*) fail "$description" "expected NOT to contain: $unexpected
 actual:
 $actual" ;;
-    *) pass "$description" ;;
-  esac
+        *) pass "$description" ;;
+    esac
 }
 
 printf 'release-highlights.sh\n'
@@ -142,14 +145,14 @@ commit "$repo" "chore(release): open the next development version at 1.0.1-SNAPS
 commit "$repo" "ci: pin actionlint"
 out="$(highlights "$repo")"
 if [ -z "$out" ]; then
-  pass "a release worth no highlights prints nothing at all"
+    pass "a release worth no highlights prints nothing at all"
 else
-  fail "a release worth no highlights prints nothing at all" "$out"
+    fail "a release worth no highlights prints nothing at all" "$out"
 fi
 
 printf '\n'
 if [ "$failures" -gt 0 ]; then
-  printf '%d assertion(s) failed\n' "$failures" >&2
-  exit 1
+    printf '%d assertion(s) failed\n' "$failures" >&2
+    exit 1
 fi
 printf 'All assertions passed.\n'

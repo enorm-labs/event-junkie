@@ -42,8 +42,8 @@ mode=apply
 ssh_node() { ssh -o ConnectTimeout=10 -o BatchMode=yes -i "$SSH_KEY" "$NODE" "$@"; }
 
 echo "cluster: $CONTEXT ($NODE)"
-ssh_node 'cat > /tmp/ej-streams.py' < apply_streams.py
-ssh_node 'cat > /tmp/ej-streams.json' < streams.json
+ssh_node 'cat > /tmp/ej-streams.py' <apply_streams.py
+ssh_node 'cat > /tmp/ej-streams.json' <streams.json
 # The flux-system copy of the Secret holds O2_BASIC_AUTH_HEADER; ../dashboards/apply.sh says why.
 ssh_node "
     AUTH=\$(sudo k3s kubectl -n flux-system get secret openobserve-credentials -o jsonpath='{.data.O2_BASIC_AUTH_HEADER}' | base64 -d)

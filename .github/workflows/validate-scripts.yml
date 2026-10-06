@@ -1,6 +1,7 @@
 name: Validate Scripts
 
-# ShellCheck over `scripts/`. The pre-commit hook matches this directory, and a hook is advisory:
+# ShellCheck over `scripts/`, and shfmt over every tracked `.sh` but the cloud-init scripts, whose bytes
+# are the nodes' `user_data`. The pre-commit hooks match the same files, and a hook is advisory:
 # `--no-verify`, the web UI and an agent without pre-commit all skip it. This is the gate on `main`.
 #
 # **`cluster-assertions.sh`, `k3d-rehearsal.sh`, `version.sh` and `version-test.sh` are linted
@@ -19,6 +20,8 @@ on:
     branches: [ main ]
     paths:
       - 'scripts/**'
+      - '**.sh'
+      - '.editorconfig'
       - '.github/workflows/validate-scripts.yml'
   pull_request:
     branches: [ main ]
@@ -26,6 +29,8 @@ on:
     # this filter in the same change** — a required check that never runs stays Pending forever.
     paths:
       - 'scripts/**'
+      - '**.sh'
+      - '.editorconfig'
       - '.github/workflows/validate-scripts.yml'
   workflow_dispatch:
 
@@ -39,6 +44,8 @@ env:
   # so Renovate's `customManagers` watch it (ADR-024). **This pin appears in three workflows** and they
   # move together; a drifted pin shows up as two jobs disagreeing about the same file.
   SHELLCHECK_VERSION: v0.11.0
+  # shfmt takes its style from `.editorconfig`, and any formatting flag would make it skip that file.
+  SHFMT_VERSION: v3.14.1
 
 jobs:
   shellcheck:
@@ -58,6 +65,12 @@ jobs:
         run: |
           docker run --rm -v "$PWD:/mnt" -w /mnt \
             "koalaman/shellcheck:${SHELLCHECK_VERSION}" -x scripts/*.sh
+
+      - name: Check formatting with shfmt
+        id: shfmt
+        run: |
+          git ls-files '*.sh' ':!:infra/modules/environment/cloud-init/' \
+            | xargs docker run --rm -v "$PWD:/mnt" -w /mnt "mvdan/shfmt:${SHFMT_VERSION}" -d
 
       # Every file in `scripts/` has a row in `scripts/README.md`, every `scripts/<name>` the tree names
       # exists, and every script answers `--help` before touching a tool — which is why this runs on a
@@ -106,4 +119,14 @@ jobs:
             echo
             echo "Installing the pre-commit hooks (\`pre-commit install\`) runs ShellCheck on every"
             echo "commit, which is why this rarely fires — though the hook uses your local binary."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Explain the shfmt fix
+        if: failure() && steps.shfmt.outcome == 'failure'
+        run: |
+          {
+            echo "## shfmt"
+            echo
+            echo "The diff above is what shfmt ${SHFMT_VERSION} would write. Apply it with \`shfmt -w <file>\`,"
+            echo "or install the hooks (\`pre-commit install\`), which format on every commit."
           } >> "$GITHUB_STEP_SUMMARY"

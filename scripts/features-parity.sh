@@ -22,7 +22,10 @@
 set -euo pipefail
 
 case "${1:-}" in
-    -h | --help) awk '/^# Usage:/ { p = 1 } p && !/^#./ { exit } p { sub(/^# ?/, ""); print }' "$0"; exit 0 ;;
+    -h | --help)
+        awk '/^# Usage:/ { p = 1 } p && !/^#./ { exit } p { sub(/^# ?/, ""); print }' "$0"
+        exit 0
+        ;;
 esac
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -35,14 +38,20 @@ NGINX=events-frontend/docker/nginx.conf
 E2E=events-frontend/e2e
 
 for f in "$DOC" "$ROUTER" "$SCHEMA" "$NGINX"; do
-    [ -f "$f" ] || { echo "$f: missing" >&2; exit 1; }
+    [ -f "$f" ] || {
+        echo "$f: missing" >&2
+        exit 1
+    }
 done
 
 # The first code span of each table row under `## Surfaces`, up to the next `## `.
 # shellcheck disable=SC2016 # the backticks are Markdown code spans, not a substitution
 listed="$(awk '/^## Surfaces/ { s = 1; next } s && /^## / { exit } s && /^\| `/ { print }' "$DOC" |
     sed -n 's/^| `\([^`]*\)`.*/\1/p' | sort -u)"
-[ -n "$listed" ] || { echo "$DOC: no '## Surfaces' table with code spans in its first column" >&2; exit 1; }
+[ -n "$listed" ] || {
+    echo "$DOC: no '## Surfaces' table with code spans in its first column" >&2
+    exit 1
+}
 
 # A child route's `path: 'events/:slug'` becomes `/events/:slug`, and the locale home `path: ''` becomes `/`.
 # The locale shell is a template literal and the catch-all starts with `/`, so the pattern leaves both out.

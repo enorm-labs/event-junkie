@@ -27,11 +27,11 @@ measure() {
     # shellcheck disable=SC2016  # $1 and $2 are awk fields, not shell expansions.
     git ls-files -z \
         '*.kt' '*.kts' '*.ts' '*.tsx' '*.js' '*.mjs' '*.vue' \
-        '*.tf' '*.tfvars' '*.sh' '*.py' '*.yaml' '*.yml' \
-        | tr '\0' '\n' \
-        | grep -vE "$EXCLUDE" \
-        | awk 'NF' \
-        | xargs awk '
+        '*.tf' '*.tfvars' '*.sh' '*.py' '*.yaml' '*.yml' |
+        tr '\0' '\n' |
+        grep -vE "$EXCLUDE" |
+        awk 'NF' |
+        xargs awk '
         function style(f) {
             if (f ~ /\.(kt|kts|ts|tsx|js|mjs|vue)$/) return "slash"
             return "hash"
@@ -84,9 +84,18 @@ report() {
     local top=0 json=0
     while [ $# -gt 0 ]; do
         case "$1" in
-            --top) top="$2"; shift 2 ;;
-            --json) json=1; shift ;;
-            *) echo "unknown option: $1" >&2; exit 2 ;;
+            --top)
+                top="$2"
+                shift 2
+                ;;
+            --json)
+                json=1
+                shift
+                ;;
+            *)
+                echo "unknown option: $1" >&2
+                exit 2
+                ;;
         esac
     done
 
@@ -126,13 +135,19 @@ report() {
 
     if [ "$top" -gt 0 ]; then
         printf '\nWorst %d files by comment lines:\n' "$top"
-        echo "$data" | awk -F'\t' '$2 + $3 > 0 { printf "%6d %6.1f%%  %s\n", $2, 100 * $2 / ($2 + $3), $4 }' \
-            | sort -rn | head -n "$top"
+        echo "$data" | awk -F'\t' '$2 + $3 > 0 { printf "%6d %6.1f%%  %s\n", $2, 100 * $2 / ($2 + $3), $4 }' |
+            sort -rn | head -n "$top"
     fi
 }
 
 case "${1:-report}" in
-    report) shift || true; report "$@" ;;
+    report)
+        shift || true
+        report "$@"
+        ;;
     -h | --help | help) usage ;;
-    *) usage >&2; exit 2 ;;
+    *)
+        usage >&2
+        exit 2
+        ;;
 esac

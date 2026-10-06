@@ -105,6 +105,7 @@ repository. Third-party hook repositories would each need their own pinning.
 | -------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
 | `tofu-fmt`           | any `.tf` / `.tfvars` file. It rewrites in place, so a failure means "re-stage and commit again", not "go and fix something" |
 | `shellcheck-scripts` | any `.sh` under `infra/` or `scripts/`                                                                                       |
+| `shfmt`              | any `.sh` but the cloud-init scripts. Rewrites in place, with the style from `.editorconfig`                                 |
 | `skill-parity`       | anything under `.claude/skills/`, `.claude/commands/`, `.github/prompts/`, or `AGENTS.md`                                    |
 | `rules-parity`       | anything under `.claude/rules/`, `.github/instructions/`, or `AGENTS.md`                                                     |
 | `index-parity`       | anything under `scripts/`. The index in `scripts/README.md`, and every script's `--help`                                     |
@@ -118,7 +119,7 @@ repository. Third-party hook repositories would each need their own pinning.
 All of them are also CI's job, in `validate-infra.yml`, `validate-chart.yml`, `validate-scripts.yml`, `validate-python.yml`,
 `validate-dockerfiles.yml`, `validate-migrations.yml` and `validate-docs.yml`. The hooks move the deterministic half of that
 feedback before the push. Without the tools installed the hooks fail. Install them with
-`brew install opentofu shellcheck helm ruff hadolint` and `pipx install squawk-cli`, or skip them with `git commit --no-verify`
+`brew install opentofu shellcheck shfmt helm ruff hadolint` and `pipx install squawk-cli`, or skip them with `git commit --no-verify`
 on a change that touches none of those paths.
 
 `format-markdown` is the exception to "uses what is already on your machine". It deliberately calls the oxfmt pinned in

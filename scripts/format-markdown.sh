@@ -42,41 +42,44 @@
 set -euo pipefail
 
 case "${1:-}" in
-  -h | --help) awk '/^# Usage:/ { p = 1 } p && !/^#./ { exit } p { sub(/^# ?/, ""); print }' "$0"; exit 0 ;;
+    -h | --help)
+        awk '/^# Usage:/ { p = 1 } p && !/^#./ { exit } p { sub(/^# ?/, ""); print }' "$0"
+        exit 0
+        ;;
 esac
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 OXFMT="$REPO_ROOT/events-frontend/node_modules/.bin/oxfmt"
 
 die() {
-  printf 'format-markdown.sh: %s\n' "$1" >&2
-  exit 1
+    printf 'format-markdown.sh: %s\n' "$1" >&2
+    exit 1
 }
 
 [[ -x "$OXFMT" ]] || die "no oxfmt at $OXFMT — run 'npm ci' in events-frontend/ first"
 
 mode=format
 if [[ ${1:-} == check ]]; then
-  mode=check
-  shift
+    mode=check
+    shift
 fi
 
 ROOT_REAL="$(cd "$REPO_ROOT" && pwd -P)"
 
 targets=()
 if [[ $# -gt 0 ]]; then
-  for f in "$@"; do
-    [[ $f == *.md ]] || continue
-    [[ -f $f ]] || die "$f: no such file (relative to $PWD)"
-    abs="$(cd "$(dirname "$f")" && pwd -P)/$(basename "$f")"
-    [[ $abs == "$ROOT_REAL"/* ]] || die "$f is outside $ROOT_REAL — run that checkout's own scripts/format-markdown.sh"
-    targets+=("${abs#"$ROOT_REAL"/}")
-  done
-  # pre-commit fires the hook on a staged .editorconfig or .oxfmtrc.json too; with no .md among the
-  # filenames there is nothing to do, and an empty argument list would mean "the whole repository".
-  [[ ${#targets[@]} -gt 0 ]] || exit 0
+    for f in "$@"; do
+        [[ $f == *.md ]] || continue
+        [[ -f $f ]] || die "$f: no such file (relative to $PWD)"
+        abs="$(cd "$(dirname "$f")" && pwd -P)/$(basename "$f")"
+        [[ $abs == "$ROOT_REAL"/* ]] || die "$f is outside $ROOT_REAL — run that checkout's own scripts/format-markdown.sh"
+        targets+=("${abs#"$ROOT_REAL"/}")
+    done
+    # pre-commit fires the hook on a staged .editorconfig or .oxfmtrc.json too; with no .md among the
+    # filenames there is nothing to do, and an empty argument list would mean "the whole repository".
+    [[ ${#targets[@]} -gt 0 ]] || exit 0
 else
-  targets=('**/*.md')
+    targets=('**/*.md')
 fi
 
 # With no arguments, the glob is quoted so oxfmt expands it rather than the shell — node_modules and
@@ -84,7 +87,7 @@ fi
 cd "$REPO_ROOT"
 
 if [[ $mode == check ]]; then
-  exec "$OXFMT" --disable-nested-config --check --no-error-on-unmatched-pattern "${targets[@]}"
+    exec "$OXFMT" --disable-nested-config --check --no-error-on-unmatched-pattern "${targets[@]}"
 fi
 
 "$OXFMT" --disable-nested-config --no-error-on-unmatched-pattern "${targets[@]}" >/dev/null

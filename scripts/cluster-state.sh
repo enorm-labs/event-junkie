@@ -39,7 +39,10 @@ while [ $# -gt 0 ]; do
         --out)
             shift
             OUT_DIR="${1:-}"
-            [ -n "$OUT_DIR" ] || { echo "cluster-state: --out needs a directory" >&2; exit 2; }
+            [ -n "$OUT_DIR" ] || {
+                echo "cluster-state: --out needs a directory" >&2
+                exit 2
+            }
             ;;
         *)
             echo "cluster-state: unknown argument '$1'" >&2
@@ -87,11 +90,11 @@ record() {
     # Without --out this still has to read its input. Returning early closes the pipe under the
     # writer, and a `sort` that dies of SIGPIPE takes the run with it under `set -o pipefail`.
     if [ -z "$OUT_DIR" ]; then
-        cat > /dev/null
+        cat >/dev/null
         return 0
     fi
     mkdir -p "$OUT_DIR"
-    cat > "${OUT_DIR}/$1"
+    cat >"${OUT_DIR}/$1"
 }
 
 printf '%s, %s\n' "$ENVIRONMENT" "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
@@ -109,7 +112,7 @@ fi
 section 'Nodes'
 nodes="$("${KUBECTL[@]}" get nodes -o wide --no-headers 2>&1 || true)"
 printf '%s\n' "$nodes" | indent
-record nodes.txt <<< "$nodes"
+record nodes.txt <<<"$nodes"
 if echo "$nodes" | grep -qw Ready; then pass 'the cluster answers and its node is Ready'; else fail 'no Ready node'; fi
 
 section 'Workloads'
@@ -129,18 +132,18 @@ for kind in gitrepositories ocirepositories helmrepositories kustomizations helm
         name="${line%% *}"
         state="${line##* }"
         if [ "$state" = True ]; then pass "$kind $name"; else fail "$kind $name is Ready=$state"; fi
-    done <<< "$("${KUBECTL[@]}" get "$kind" -A \
+    done <<<"$("${KUBECTL[@]}" get "$kind" -A \
         -o jsonpath='{range .items[*]}{.metadata.namespace}/{.metadata.name} {.status.conditions[?(@.type=="Ready")].status}{"\n"}{end}' 2>/dev/null || true)"
 done
 # The HelmRelease lives in flux-system, not in the namespace it deploys into, and `spec.chart` names
 # a range rather than a version. What is actually running is the revision of the last release.
 chart="$("${KUBECTL[@]}" -n flux-system get helmrelease event-junkie -o jsonpath='{.status.history[0].chartVersion}' 2>/dev/null || true)"
 echo "  chart: ${chart:-unknown}"
-record chart.txt <<< "$chart"
+record chart.txt <<<"$chart"
 
 section 'Secrets that nothing in the repository recreates'
 present="$("${KUBECTL[@]}" get secrets -A --no-headers 2>/dev/null | awk '{print $1"/"$2}' | sort)"
-record secrets.txt <<< "$present"
+record secrets.txt <<<"$present"
 for want in $EXPECTED_SECRETS; do
     if echo "$present" | grep -qxF "$want"; then pass "$want"; else fail "$want is missing"; fi
 done
@@ -151,18 +154,18 @@ while read -r ns name; do
     end="$("${KUBECTL[@]}" -n "$ns" get secret "$name" -o jsonpath='{.data.tls\.crt}' 2>/dev/null |
         base64 -d | openssl x509 -noout -enddate 2>/dev/null | cut -d= -f2)"
     if [ -n "$end" ]; then pass "$ns/$name expires $end"; else fail "$ns/$name holds no readable certificate"; fi
-done <<< "$("${KUBECTL[@]}" get secrets -n "$NAMESPACE" --field-selector type=kubernetes.io/tls \
+done <<<"$("${KUBECTL[@]}" get secrets -n "$NAMESPACE" --field-selector type=kubernetes.io/tls \
     -o jsonpath='{range .items[*]}{.metadata.namespace} {.metadata.name}{"\n"}{end}' 2>/dev/null || true)"
 
 section 'Database'
 counts="$("${DB_SSH[@]}" "sudo -u postgres psql -tAX -d events -c \"select (select count(*) from events.event) || ' events, ' || (select count(*) from events.artist) || ' artists, ' || (select count(*) from events.venue) || ' venues, ' || (select count(*) from events.event_source) || ' sources, ' || pg_size_pretty(pg_database_size('events'))\"" 2>/dev/null || true)"
 if [ -n "$counts" ]; then pass "$counts"; else fail 'the database did not answer'; fi
-record database.txt <<< "$counts"
+record database.txt <<<"$counts"
 
 section 'Backups'
 walg="$("${DB_SSH[@]}" 'sudo -u postgres /usr/local/bin/walg check' 2>&1 || true)"
 printf '%s\n' "$walg" | indent
-record backups.txt <<< "$walg"
+record backups.txt <<<"$walg"
 # wal-g writes an INFO line of its own before the verdict, so the check is a line that starts `ok:`
 # rather than the first character of the output.
 if printf '%s\n' "$walg" | grep -q '^ok:'; then
@@ -174,8 +177,8 @@ fi
 # carries 39 from the hour before its wal-g credential was written by hand. What makes a failure
 # current is it being more recent than the last success, which is what this asks.
 archiver="$("${DB_SSH[@]}" "sudo -u postgres psql -tAX -c \"select failed_count || ' ' || coalesce(last_failed_time > last_archived_time, false) || ' ' || coalesce(last_failed_time::text, 'never') from pg_stat_archiver\"" 2>/dev/null || true)"
-record archiver.txt <<< "$archiver"
-read -r failed stale last_failed <<< "$archiver"
+record archiver.txt <<<"$archiver"
+read -r failed stale last_failed <<<"$archiver"
 if [ -z "$failed" ]; then
     fail 'pg_stat_archiver did not answer'
 elif [ "$stale" = t ] || [ "$stale" = true ]; then

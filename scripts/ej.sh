@@ -31,7 +31,10 @@
 set -euo pipefail
 
 case "${1:-}" in
-    -h | --help) awk '/^# Usage:/ { p = 1 } p && !/^#./ { exit } p { sub(/^# ?/, ""); print }' "$0"; exit 0 ;;
+    -h | --help)
+        awk '/^# Usage:/ { p = 1 } p && !/^#./ { exit } p { sub(/^# ?/, ""); print }' "$0"
+        exit 0
+        ;;
 esac
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -51,10 +54,10 @@ die() {
 # --- per-environment facts ---------------------------------------------------------------------
 # Functions rather than associative arrays: macOS ships bash 3.2.
 
-node_of() { case "$1" in staging) echo 10.10.1.1 ;; production) echo 10.10.0.1 ;; esac; }
+node_of() { case "$1" in staging) echo 10.10.1.1 ;; production) echo 10.10.0.1 ;; esac }
 context_of() { echo "event-junkie-$1"; }
-host_of() { case "$1" in staging) echo staging.event-junkie.de ;; production) echo event-junkie.de ;; esac; }
-prefix_of() { case "$1" in staging) echo 1 ;; production) echo 2 ;; esac; }
+host_of() { case "$1" in staging) echo staging.event-junkie.de ;; production) echo event-junkie.de ;; esac }
+prefix_of() { case "$1" in staging) echo 1 ;; production) echo 2 ;; esac }
 
 # forward_spec <env> <name> → "<local-port> <namespace> <service> <remote-port>"
 forward_spec() {
@@ -64,8 +67,10 @@ forward_spec() {
         importer) echo "${p}8081 event-junkie event-junkie-importer 8081" ;;
         bff) echo "${p}8080 event-junkie event-junkie-bff 8080" ;;
         openobserve)
-            if [ "$1" = staging ]; then echo "5080 observability openobserve-openobserve-standalone 5080"
-            else echo "25080 observability openobserve-openobserve-standalone 5080"; fi ;;
+            if [ "$1" = staging ]; then
+                echo "5080 observability openobserve-openobserve-standalone 5080"
+            else echo "25080 observability openobserve-openobserve-standalone 5080"; fi
+            ;;
     esac
 }
 FORWARDS=(importer bff openobserve)
@@ -132,7 +137,8 @@ tunnel_stop() {
 
 hosts_check() {
     local env="$1" host node
-    host="$(host_of "$env")"; node="$(node_of "$env")"
+    host="$(host_of "$env")"
+    node="$(node_of "$env")"
     if grep -qE "^[[:space:]]*${node}[[:space:]]+.*\b${host}\b" /etc/hosts; then
         echo "hosts  $env: $host -> $node"
     elif [ "$env" = production ] && [ -n "$(dig +short +time=2 "$host" A 2>/dev/null)" ]; then
@@ -162,7 +168,7 @@ port_answers() { curl -s -o /dev/null --max-time 2 "http://localhost:$1/" 2>/dev
 forward_start() {
     local env="$1" name="$2" spec port ns svc remote pid
     spec="$(forward_spec "$env" "$name")"
-    read -r port ns svc remote <<< "$spec"
+    read -r port ns svc remote <<<"$spec"
     if pid="$(forward_pid "$env" "$name")"; then
         echo "forward $env/$name: already up on $port (pid $pid)"
         return 0
@@ -176,9 +182,9 @@ forward_start() {
     fi
     mkdir -p "$STATE_DIR"
     kubectl --context "$(context_of "$env")" -n "$ns" port-forward "svc/$svc" "$port:$remote" \
-        > "$(logfile "$env" "$name")" 2>&1 &
+        >"$(logfile "$env" "$name")" 2>&1 &
     pid=$!
-    echo "$pid" > "$(pidfile "$env" "$name")"
+    echo "$pid" >"$(pidfile "$env" "$name")"
     for _ in $(seq 1 10); do
         if port_answers "$port"; then
             echo "forward $env/$name: $(url_of "$env" "$name")"
@@ -209,10 +215,13 @@ forward_stop() {
 
 running_version() {
     local env="$1"
-    tunnel_up "$env" || { echo "(tunnel down)"; return 0; }
+    tunnel_up "$env" || {
+        echo "(tunnel down)"
+        return 0
+    }
     kubectl --context "$(context_of "$env")" --request-timeout=10s -n flux-system \
-        get helmrelease event-junkie -o jsonpath='{.status.history[0].chartVersion}' 2>/dev/null \
-        | sed 's/+.*//' | grep . || echo "(unreachable)"
+        get helmrelease event-junkie -o jsonpath='{.status.history[0].chartVersion}' 2>/dev/null |
+        sed 's/+.*//' | grep . || echo "(unreachable)"
 }
 
 resolvable_versions() {
@@ -244,7 +253,8 @@ write_status_js() {
         for name in "${FORWARDS[@]}"; do
             spec="$(forward_spec "$env" "$name")"
             port="${spec%% *}"
-            up=false; managed=false
+            up=false
+            managed=false
             port_answers "$port" && up=true
             forward_pid "$env" "$name" >/dev/null && managed=true
             forwards+="$name $port $up $managed $(url_of "$env" "$name")"$'\n'
@@ -275,13 +285,14 @@ for rec in sys.stdin.read().split("\x1e"):
     }
 doc = {"generatedAt": os.environ["EJ_GENERATED"], "environments": envs}
 print("window.EJ_STATUS = " + json.dumps(doc, indent=2) + ";")
-' > "$STATUS_JS"
+' >"$STATUS_JS"
 }
 
 # --- verbs --------------------------------------------------------------------------------------
 
 cmd_up() {
-    local env="${1:-}"; check_env "$env"
+    local env="${1:-}"
+    check_env "$env"
     tunnel_start "$env"
     hosts_check "$env" || true
     local name failed=0
@@ -318,7 +329,10 @@ cmd_down() {
 
 cmd_urls() {
     local env name envs=("${ENVS[@]}")
-    [ -n "${1:-}" ] && { check_env "$1"; envs=("$1"); }
+    [ -n "${1:-}" ] && {
+        check_env "$1"
+        envs=("$1")
+    }
     for env in "${envs[@]}"; do
         for name in "${FORWARDS[@]}"; do
             printf '%-11s %-12s %s\n' "$env" "$name" "$(url_of "$env" "$name")"
@@ -342,7 +356,8 @@ cmd_status() {
     done
     for env in "${ENVS[@]}"; do
         for name in "${FORWARDS[@]}"; do
-            spec="$(forward_spec "$env" "$name")"; port="${spec%% *}"
+            spec="$(forward_spec "$env" "$name")"
+            port="${spec%% *}"
             if pid="$(forward_pid "$env" "$name")"; then
                 if port_answers "$port"; then echo "forward $env/$name: up on $port"; else echo "forward $env/$name: pid $pid alive, $port does not answer"; fi
             elif port_answers "$port"; then
@@ -352,8 +367,8 @@ cmd_status() {
     done
     for env in "${ENVS[@]}"; do
         printf 'cluster %-11s ' "$env"
-        kubectl --context "$(context_of "$env")" --request-timeout=10s get nodes --no-headers 2>/dev/null \
-            | awk '{print $1, $2}' | grep . || echo "unreachable"
+        kubectl --context "$(context_of "$env")" --request-timeout=10s get nodes --no-headers 2>/dev/null |
+            awk '{print $1, $2}' | grep . || echo "unreachable"
     done
     echo "not ready:"
     local out any=0
@@ -363,7 +378,10 @@ cmd_status() {
             -A --no-headers \
             -o 'custom-columns=KIND:.kind,NAME:.metadata.name,SUSPEND:.spec.suspend,READY:.status.conditions[?(@.type=="Ready")].status' \
             2>/dev/null | awk -v ctx="$env" '$3 != "true" && ($4 == "False" || $4 == "Unknown") { printf "  %s: %s/%s (%s)\n", ctx, $1, $2, $4 }')
-        if [ -n "$out" ]; then any=1; printf '%s\n' "$out"; fi
+        if [ -n "$out" ]; then
+            any=1
+            printf '%s\n' "$out"
+        fi
     done
     [ "$any" -eq 0 ] && echo "  (nothing)"
     write_status_js
@@ -384,11 +402,26 @@ cmd_versions() {
 }
 
 case "${1:-}" in
-    up) shift; cmd_up "$@" ;;
-    down) shift; cmd_down "$@" ;;
-    status) shift; cmd_status "$@" ;;
-    versions) shift; cmd_versions "$@" ;;
-    urls) shift; cmd_urls "$@" ;;
+    up)
+        shift
+        cmd_up "$@"
+        ;;
+    down)
+        shift
+        cmd_down "$@"
+        ;;
+    status)
+        shift
+        cmd_status "$@"
+        ;;
+    versions)
+        shift
+        cmd_versions "$@"
+        ;;
+    urls)
+        shift
+        cmd_urls "$@"
+        ;;
     "") awk '/^# Usage:/ { p = 1 } p && !/^#./ { exit } p { sub(/^# ?/, ""); print }' "$0" ;;
     *) die "unknown command '$1' — run 'scripts/ej.sh --help'" ;;
 esac

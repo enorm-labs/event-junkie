@@ -21,7 +21,10 @@
 set -euo pipefail
 
 case "${1:-}" in
-    -h | --help) awk '/^# Usage:/ { p = 1 } p && !/^#./ { exit } p { sub(/^# ?/, ""); print }' "$0"; exit 0 ;;
+    -h | --help)
+        awk '/^# Usage:/ { p = 1 } p && !/^#./ { exit } p { sub(/^# ?/, ""); print }' "$0"
+        exit 0
+        ;;
 esac
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -38,7 +41,10 @@ note() {
     problems=1
 }
 
-[ -f "$INDEX" ] || { note "$INDEX does not exist"; exit 1; }
+[ -f "$INDEX" ] || {
+    note "$INDEX does not exist"
+    exit 1
+}
 
 # --- 1. every file in the directory has a row -------------------------------------------------
 #
@@ -54,7 +60,7 @@ while read -r name; do
     else
         note "scripts/$name has no row in $INDEX"
     fi
-done <<< "$files"
+done <<<"$files"
 
 # --- 2. every path the index names exists ---------------------------------------------------------
 #
@@ -70,7 +76,7 @@ while read -r ref; do
         *) path="scripts/$ref" ;;
     esac
     [ -f "$path" ] || note "$INDEX names \`$ref\`, and $path does not exist"
-done <<< "$named"
+done <<<"$named"
 
 # --- 3. every scripts/<name> referenced in the tree exists ----------------------------------------
 #
@@ -80,8 +86,8 @@ done <<< "$named"
 while read -r ref; do
     [ -z "$ref" ] && continue
     [ -f "$ref" ] || note "the tree references $ref, which does not exist — run: git grep -n '$ref'"
-done <<< "$(git ls-files -z | xargs -0 grep -IohsE '(^|[^A-Za-z0-9_/.-])scripts/[A-Za-z0-9_.-]+\.(sh|py)' \
-    | sed -E 's/^[^s]*scripts\//scripts\//' | sort -u)"
+done <<<"$(git ls-files -z | xargs -0 grep -IohsE '(^|[^A-Za-z0-9_/.-])scripts/[A-Za-z0-9_.-]+\.(sh|py)' |
+    sed -E 's/^[^s]*scripts\//scripts\//' | sort -u)"
 
 # --- 4. every script answers --help --------------------------------------------------------------
 #

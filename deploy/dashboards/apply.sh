@@ -113,13 +113,13 @@ elif $check_only; then
 else
     helper=import_dashboard.py
 fi
-ssh_node 'cat > /tmp/ej-helper.py' < "$helper"
+ssh_node 'cat > /tmp/ej-helper.py' <"$helper"
 
 status=0
 for file in "${files[@]}"; do
     echo
     echo "dashboard: $(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["title"])' "$file")  (from $file)"
-    ssh_node 'cat > /tmp/ej-dashboard.json' < "$file"
+    ssh_node 'cat > /tmp/ej-dashboard.json' <"$file"
     if $check_only; then
         # check_panels.py takes no org: it queries Prometheus endpoints, which are org-scoped in the
         # URL the script builds for itself.

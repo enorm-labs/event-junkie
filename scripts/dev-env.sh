@@ -133,9 +133,11 @@ start_service() {
         # --strictPort so a busy port is a hard failure; Vite would otherwise silently take
         # the next free one and leave FRONTEND_HOST pointing at nothing.
         log "Starting frontend → $log_file"
-        (cd "$REPO_ROOT/events-frontend" && nohup npm run dev -- \
-            --port "$(svc_port frontend)" --strictPort >"$log_file" 2>&1 &
-        echo $! >"$pid_file")
+        (
+            cd "$REPO_ROOT/events-frontend" && nohup npm run dev -- \
+                --port "$(svc_port frontend)" --strictPort >"$log_file" 2>&1 &
+            echo $! >"$pid_file"
+        )
     else
         # bootRun's working directory is the module, so Spring's Docker Compose support has to be
         # pointed at the root compose.yaml explicitly; `start_only` leaves Postgres running when
@@ -152,9 +154,11 @@ start_service() {
         else
             log "Starting $svc → $log_file"
         fi
-        (cd "$REPO_ROOT" && nohup ./gradlew ":events-$svc:bootRun" "--args=${props[*]}" \
-            >"$log_file" 2>&1 &
-        echo $! >"$pid_file")
+        (
+            cd "$REPO_ROOT" && nohup ./gradlew ":events-$svc:bootRun" "--args=${props[*]}" \
+                >"$log_file" 2>&1 &
+            echo $! >"$pid_file"
+        )
     fi
 
     local pattern
@@ -313,8 +317,8 @@ cmd_status() {
 # database answers with `relation "events.venue" does not exist`, which reads like a broken fixture.
 cmd_seed_fixture() {
     db_ready || die "Database is not running — run 'dev-env.sh db-reset' first"
-    [[ "$(query "SELECT to_regclass('events.event') IS NOT NULL")" == "t" ]] \
-        || die "No schema yet — run 'dev-env.sh up importer' once so Flyway applies the migrations"
+    [[ "$(query "SELECT to_regclass('events.event') IS NOT NULL")" == "t" ]] ||
+        die "No schema yet — run 'dev-env.sh up importer' once so Flyway applies the migrations"
     log "Loading fixtures/events.sql"
     run_psql -q -f "$REPO_ROOT/fixtures/events.sql"
     log "Loaded: $(query "SELECT count(*) || ' events, ' || (SELECT count(*) FROM venue) || ' venues, ' || (SELECT count(*) FROM artist) || ' artists' FROM event")"

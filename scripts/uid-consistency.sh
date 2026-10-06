@@ -26,7 +26,10 @@
 set -euo pipefail
 
 case "${1:-}" in
-  -h | --help) awk '/^# Usage:/ { p = 1 } p && !/^#./ { exit } p { sub(/^# ?/, ""); print }' "$0"; exit 0 ;;
+    -h | --help)
+        awk '/^# Usage:/ { p = 1 } p && !/^#./ { exit } p { sub(/^# ?/, ""); print }' "$0"
+        exit 0
+        ;;
 esac
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -37,19 +40,19 @@ VALUES="$CHART/values.yaml"
 readonly UID_FLOOR=10000
 
 command -v yq >/dev/null || {
-  printf 'uid-consistency.sh: yq is required but not on PATH\n' >&2
-  exit 1
+    printf 'uid-consistency.sh: yq is required but not on PATH\n' >&2
+    exit 1
 }
 [[ -f "$VALUES" ]] || {
-  printf 'uid-consistency.sh: no values.yaml at %s\n' "$VALUES" >&2
-  exit 1
+    printf 'uid-consistency.sh: no values.yaml at %s\n' "$VALUES" >&2
+    exit 1
 }
 
 failures=0
 
 fail() {
-  printf 'uid-consistency.sh: %s\n' "$1" >&2
-  failures=$((failures + 1))
+    printf 'uid-consistency.sh: %s\n' "$1" >&2
+    failures=$((failures + 1))
 }
 
 # The chart component key, the module directory holding its Dockerfile, and — when it is not
@@ -58,10 +61,10 @@ fail() {
 # this script exists to prevent, one level up. The injector is a second image out of the frontend
 # module (#287); its values key is nested, and `yq` reads a dotted key as the path it is.
 COMPONENTS=(
-  "bff:events-bff"
-  "importer:events-importer"
-  "frontend:events-frontend"
-  "frontend.injector:events-frontend:Dockerfile.injector"
+    "bff:events-bff"
+    "importer:events-importer"
+    "frontend:events-frontend"
+    "frontend.injector:events-frontend:Dockerfile.injector"
 )
 
 # The chart-wide defaults every component falls back to.
@@ -69,68 +72,68 @@ chart_uid="$(yq -N '.security.runAsUser' "$VALUES")"
 chart_gid="$(yq -N '.security.runAsGroup' "$VALUES")"
 
 for pair in "${COMPONENTS[@]}"; do
-  IFS=: read -r component module filename <<<"$pair"
-  filename="${filename:-Dockerfile}"
-  dockerfile="$REPO_ROOT/$module/$filename"
+    IFS=: read -r component module filename <<<"$pair"
+    filename="${filename:-Dockerfile}"
+    dockerfile="$REPO_ROOT/$module/$filename"
 
-  [[ -f "$dockerfile" ]] || {
-    fail "$component: no Dockerfile at $module/$filename"
-    continue
-  }
+    [[ -f "$dockerfile" ]] || {
+        fail "$component: no Dockerfile at $module/$filename"
+        continue
+    }
 
-  # The last `USER` instruction wins in a Dockerfile, so read the last one rather than the first.
-  # Anchored to the start of a line so the paragraphs of commentary above it — which mention `USER`
-  # more than once — cannot match.
-  user_line="$(grep -E '^USER[[:space:]]' "$dockerfile" | tail -1 || true)"
-  [[ -n "$user_line" ]] || {
-    fail "$component: $module/$filename has no USER instruction — it would run as root"
-    continue
-  }
+    # The last `USER` instruction wins in a Dockerfile, so read the last one rather than the first.
+    # Anchored to the start of a line so the paragraphs of commentary above it — which mention `USER`
+    # more than once — cannot match.
+    user_line="$(grep -E '^USER[[:space:]]' "$dockerfile" | tail -1 || true)"
+    [[ -n "$user_line" ]] || {
+        fail "$component: $module/$filename has no USER instruction — it would run as root"
+        continue
+    }
 
-  spec="${user_line#USER }"
-  spec="${spec// /}"
-  image_uid="${spec%%:*}"
-  image_gid="${spec#*:}"
+    spec="${user_line#USER }"
+    spec="${spec// /}"
+    image_uid="${spec%%:*}"
+    image_gid="${spec#*:}"
 
-  [[ "$image_uid" =~ ^[0-9]+$ && "$image_gid" =~ ^[0-9]+$ ]] || {
-    fail "$component: $module/$filename says 'USER $spec'; it must be numeric <uid>:<gid> (a name needs RUN useradd, which these files must not contain)"
-    continue
-  }
+    [[ "$image_uid" =~ ^[0-9]+$ && "$image_gid" =~ ^[0-9]+$ ]] || {
+        fail "$component: $module/$filename says 'USER $spec'; it must be numeric <uid>:<gid> (a name needs RUN useradd, which these files must not contain)"
+        continue
+    }
 
-  # `// ""` rather than `// chart_uid`, so "unset" and "set to the same value" stay distinguishable
-  # in the message below — the frontend's override is deliberately unset and that is worth reading.
-  override_uid="$(yq -N ".${component}.runAsUser // \"\"" "$VALUES")"
-  override_gid="$(yq -N ".${component}.runAsGroup // \"\"" "$VALUES")"
-  effective_uid="${override_uid:-$chart_uid}"
-  effective_gid="${override_gid:-$chart_gid}"
-  source_uid="${override_uid:+${component}.runAsUser}"
-  source_uid="${source_uid:-security.runAsUser}"
+    # `// ""` rather than `// chart_uid`, so "unset" and "set to the same value" stay distinguishable
+    # in the message below — the frontend's override is deliberately unset and that is worth reading.
+    override_uid="$(yq -N ".${component}.runAsUser // \"\"" "$VALUES")"
+    override_gid="$(yq -N ".${component}.runAsGroup // \"\"" "$VALUES")"
+    effective_uid="${override_uid:-$chart_uid}"
+    effective_gid="${override_gid:-$chart_gid}"
+    source_uid="${override_uid:+${component}.runAsUser}"
+    source_uid="${source_uid:-security.runAsUser}"
 
-  if [[ "$effective_uid" != "$image_uid" ]]; then
-    fail "$component: $module/$filename runs as UID $image_uid, but the chart's $source_uid is $effective_uid — the pod would not be able to read its own files"
-  fi
-  if [[ "$effective_gid" != "$image_gid" ]]; then
-    fail "$component: $module/$filename runs as GID $image_gid, but the chart resolves to $effective_gid"
-  fi
+    if [[ "$effective_uid" != "$image_uid" ]]; then
+        fail "$component: $module/$filename runs as UID $image_uid, but the chart's $source_uid is $effective_uid — the pod would not be able to read its own files"
+    fi
+    if [[ "$effective_gid" != "$image_gid" ]]; then
+        fail "$component: $module/$filename runs as GID $image_gid, but the chart resolves to $effective_gid"
+    fi
 
-  if [[ "$image_uid" -le "$UID_FLOOR" || "$image_gid" -le "$UID_FLOOR" ]]; then
-    fail "$component: $module/$filename runs as $image_uid:$image_gid, which is not above $UID_FLOOR (Trivy KSV-0020/KSV-0021, #448) — a UID in the host's own range lands as a real account if a container escapes its namespace"
-  fi
-  if [[ "$effective_uid" -le "$UID_FLOOR" || "$effective_gid" -le "$UID_FLOOR" ]]; then
-    fail "$component: the chart resolves to $effective_uid:$effective_gid, which is not above $UID_FLOOR (Trivy KSV-0020/KSV-0021, #448)"
-  fi
+    if [[ "$image_uid" -le "$UID_FLOOR" || "$image_gid" -le "$UID_FLOOR" ]]; then
+        fail "$component: $module/$filename runs as $image_uid:$image_gid, which is not above $UID_FLOOR (Trivy KSV-0020/KSV-0021, #448) — a UID in the host's own range lands as a real account if a container escapes its namespace"
+    fi
+    if [[ "$effective_uid" -le "$UID_FLOOR" || "$effective_gid" -le "$UID_FLOOR" ]]; then
+        fail "$component: the chart resolves to $effective_uid:$effective_gid, which is not above $UID_FLOOR (Trivy KSV-0020/KSV-0021, #448)"
+    fi
 
-  # Printed whether or not this component failed: what the two sides actually say is the useful
-  # thing to read next to the error, and "they agree, and both are too low" is a real verdict.
-  printf '%-18s %s:%s  (Dockerfile)  %s  %s:%s  (chart, via %s)\n' \
-    "$component" "$image_uid" "$image_gid" \
-    "$([[ "$effective_uid" == "$image_uid" && "$effective_gid" == "$image_gid" ]] && echo '==' || echo '!=')" \
-    "$effective_uid" "$effective_gid" "$source_uid"
+    # Printed whether or not this component failed: what the two sides actually say is the useful
+    # thing to read next to the error, and "they agree, and both are too low" is a real verdict.
+    printf '%-18s %s:%s  (Dockerfile)  %s  %s:%s  (chart, via %s)\n' \
+        "$component" "$image_uid" "$image_gid" \
+        "$([[ "$effective_uid" == "$image_uid" && "$effective_gid" == "$image_gid" ]] && echo '==' || echo '!=')" \
+        "$effective_uid" "$effective_gid" "$source_uid"
 done
 
 if [[ "$failures" -gt 0 ]]; then
-  printf '\nuid-consistency.sh: %d problem(s). The four Dockerfiles and values.yaml must agree.\n' "$failures" >&2
-  exit 1
+    printf '\nuid-consistency.sh: %d problem(s). The four Dockerfiles and values.yaml must agree.\n' "$failures" >&2
+    exit 1
 fi
 
 printf '\nAll four images and the chart agree, and every UID is above %d.\n' "$UID_FLOOR"

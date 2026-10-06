@@ -15,7 +15,10 @@
 set -euo pipefail
 
 case "${1:-}" in
-  -h | --help) awk '/^# Usage:/ { p = 1 } p && !/^#./ { exit } p { sub(/^# ?/, ""); print }' "$0"; exit 0 ;;
+    -h | --help)
+        awk '/^# Usage:/ { p = 1 } p && !/^#./ { exit } p { sub(/^# ?/, ""); print }' "$0"
+        exit 0
+        ;;
 esac
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -26,72 +29,72 @@ trap 'rm -rf "$WORK"' EXIT
 failures=0
 
 fail() {
-  printf '  FAIL  %s\n' "$1" >&2
-  if [[ -n "${2:-}" ]]; then printf '%s\n' "$2" | sed 's/^/          /' >&2; fi
-  failures=$((failures + 1))
+    printf '  FAIL  %s\n' "$1" >&2
+    if [[ -n "${2:-}" ]]; then printf '%s\n' "$2" | sed 's/^/          /' >&2; fi
+    failures=$((failures + 1))
 }
 
 pass() {
-  printf '  ok    %s\n' "$1"
+    printf '  ok    %s\n' "$1"
 }
 
 # A fresh repository with one commit tagged [tag], as the release every case measures from.
 fresh_repo() {
-  local tag="$1" dir
-  dir="$(mktemp -d "$WORK/repo.XXXXXX")"
-  git -C "$dir" init -q -b main
-  git -C "$dir" config user.name test
-  git -C "$dir" config user.email test@example.invalid
-  git -C "$dir" config commit.gpgsign false
-  git -C "$dir" commit -q --allow-empty -m "chore(release): the release"
-  git -C "$dir" tag "$tag"
-  printf '%s\n' "$dir"
+    local tag="$1" dir
+    dir="$(mktemp -d "$WORK/repo.XXXXXX")"
+    git -C "$dir" init -q -b main
+    git -C "$dir" config user.name test
+    git -C "$dir" config user.email test@example.invalid
+    git -C "$dir" config commit.gpgsign false
+    git -C "$dir" commit -q --allow-empty -m "chore(release): the release"
+    git -C "$dir" tag "$tag"
+    printf '%s\n' "$dir"
 }
 
 # An empty commit with [subject] and an optional [body].
 commit() {
-  local dir="$1" subject="$2" body="${3:-}"
-  if [[ -n "$body" ]]; then
-    git -C "$dir" commit -q --allow-empty -m "$subject" -m "$body"
-  else
-    git -C "$dir" commit -q --allow-empty -m "$subject"
-  fi
+    local dir="$1" subject="$2" body="${3:-}"
+    if [[ -n "$body" ]]; then
+        git -C "$dir" commit -q --allow-empty -m "$subject" -m "$body"
+    else
+        git -C "$dir" commit -q --allow-empty -m "$subject"
+    fi
 }
 
 # Runs `deserved` against [dir] with any further arguments, printing the version and swallowing
 # the reasoning.
 deserved() {
-  local dir="$1"
-  shift
-  VERSION_GIT_ROOT="$dir" "$VERSION_SH" deserved "$@" 2>/dev/null
+    local dir="$1"
+    shift
+    VERSION_GIT_ROOT="$dir" "$VERSION_SH" deserved "$@" 2>/dev/null
 }
 
 assert_deserved() {
-  local description="$1" expected="$2" dir="$3"
-  shift 3
-  local actual
-  if ! actual="$(deserved "$dir" "$@")"; then
-    fail "$description" "deserved failed instead of printing $expected"
-    return
-  fi
-  if [[ "$actual" == "$expected" ]]; then
-    pass "$description"
-  else
-    fail "$description" "expected: $expected
+    local description="$1" expected="$2" dir="$3"
+    shift 3
+    local actual
+    if ! actual="$(deserved "$dir" "$@")"; then
+        fail "$description" "deserved failed instead of printing $expected"
+        return
+    fi
+    if [[ "$actual" == "$expected" ]]; then
+        pass "$description"
+    else
+        fail "$description" "expected: $expected
 actual:   $actual"
-  fi
+    fi
 }
 
 assert_refuses() {
-  local description="$1" dir="$2" pattern="$3" output
-  if output="$(VERSION_GIT_ROOT="$dir" "$VERSION_SH" deserved 2>&1)"; then
-    fail "$description" "deserved printed '$output' instead of refusing"
-  elif grep -q "$pattern" <<<"$output"; then
-    pass "$description"
-  else
-    fail "$description" "refused, but not for the expected reason:
+    local description="$1" dir="$2" pattern="$3" output
+    if output="$(VERSION_GIT_ROOT="$dir" "$VERSION_SH" deserved 2>&1)"; then
+        fail "$description" "deserved printed '$output' instead of refusing"
+    elif grep -q "$pattern" <<<"$output"; then
+        pass "$description"
+    else
+        fail "$description" "refused, but not for the expected reason:
 $output"
-  fi
+    fi
 }
 
 # --- Before 1.0.0 ----------------------------------------------------------------------------------
@@ -198,44 +201,44 @@ assert_refuses "a history with no release tag is refused" "$repo" "no release ta
 # --- What compute names a commit, without a file to read ------------------------------------------
 
 compute() {
-  local dir="$1"
-  shift
-  VERSION_GIT_ROOT="$dir" "$VERSION_SH" compute "$@" 2>/dev/null
+    local dir="$1"
+    shift
+    VERSION_GIT_ROOT="$dir" "$VERSION_SH" compute "$@" 2>/dev/null
 }
 
 assert_compute() {
-  local description="$1" expected="$2" dir="$3"
-  shift 3
-  local actual
-  if ! actual="$(compute "$dir" "$@")"; then
-    fail "$description" "compute failed instead of printing $expected"
-    return
-  fi
-  if [[ "$actual" == "$expected" ]]; then
-    pass "$description"
-  else
-    fail "$description" "expected: $expected
+    local description="$1" expected="$2" dir="$3"
+    shift 3
+    local actual
+    if ! actual="$(compute "$dir" "$@")"; then
+        fail "$description" "compute failed instead of printing $expected"
+        return
+    fi
+    if [[ "$actual" == "$expected" ]]; then
+        pass "$description"
+    else
+        fail "$description" "expected: $expected
 actual:   $actual"
-  fi
+    fi
 }
 
 printf '\n'
 repo="$(fresh_repo v0.3.12)"
 assert_compute "at the tagged commit a snapshot is named after the next patch" \
-  0.3.13-snapshot.20260814120000.gabc1234 "$repo" refs/heads/main abc1234cafe 20260814120000
+    0.3.13-snapshot.20260814120000.gabc1234 "$repo" refs/heads/main abc1234cafe 20260814120000
 assert_compute "the tag on HEAD computes its own number" 0.3.12 "$repo" refs/tags/v0.3.12 abc1234cafe
 commit "$repo" "fix: one fix"
 assert_compute "a fix after the tag is a patch snapshot" \
-  0.3.13-snapshot.20260814120000.gabc1234 "$repo" refs/heads/main abc1234cafe 20260814120000
+    0.3.13-snapshot.20260814120000.gabc1234 "$repo" refs/heads/main abc1234cafe 20260814120000
 commit "$repo" "feat(events): one feature"
 assert_compute "a product feat moves the snapshot to the minor, with no file to raise" \
-  0.4.0-snapshot.20260814120000.gabc1234 "$repo" refs/heads/main abc1234cafe 20260814120000
+    0.4.0-snapshot.20260814120000.gabc1234 "$repo" refs/heads/main abc1234cafe 20260814120000
 git -C "$repo" tag v0.4.0
 assert_compute "the tag cut from those commits computes the bare number" 0.4.0 "$repo" refs/tags/v0.4.0 abc1234cafe
 if output="$(compute "$repo" refs/tags/v0.4.1 abc1234cafe 2>&1)"; then
-  fail "a tag that claims another number must be refused" "printed '$output'"
+    fail "a tag that claims another number must be refused" "printed '$output'"
 else
-  pass "a tag that claims another number is refused"
+    pass "a tag that claims another number is refused"
 fi
 
 repo="$(mktemp -d "$WORK/repo.XXXXXX")"
@@ -246,8 +249,8 @@ assert_compute "a history with no release tag builds as 0.0.0-local" 0.0.0-local
 # ---------------------------------------------------------------------------------------------------
 
 if ((failures != 0)); then
-  printf '\n%s\n' "$failures assertion(s) failed." >&2
-  exit 1
+    printf '\n%s\n' "$failures assertion(s) failed." >&2
+    exit 1
 fi
 
 printf '\nAll assertions passed.\n'

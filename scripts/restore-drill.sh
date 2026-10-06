@@ -30,7 +30,6 @@ case "${1:-}" in
         ;;
 esac
 
-
 # The SSH client forwards LC_CTYPE, the node has no matching locale, and every sudo call prints perl
 # warnings otherwise.
 export LC_ALL=C.UTF-8 LANG=C.UTF-8
@@ -55,14 +54,17 @@ START_SCRIPT=/var/lib/postgresql/drill-start.sh
 
 # A guard, not a comment: every rm -rf below goes through this, and the live cluster lives in
 # /var/lib/postgresql/18/main.
-[[ "${DRILL_DIR}" == /var/lib/postgresql/drill ]] || { echo "refusing: unexpected drill directory" >&2; exit 1; }
+[[ "${DRILL_DIR}" == /var/lib/postgresql/drill ]] || {
+    echo "refusing: unexpected drill directory" >&2
+    exit 1
+}
 
 pg() { sudo -u postgres "$@"; }
 live() { pg psql -tAX -d events -c "$1"; }
 scratch() { pg psql -tAX -h /tmp -p 5433 -d events -c "$1"; }
 walg() { pg bash -c 'set -a; . /etc/wal-g/wal-g.env; . /etc/wal-g/credentials.env; set +a; exec "$@"' _ "$@"; }
 banner() { printf '\n=== %s  (%s)\n' "$1" "$(date -u +%Y-%m-%dT%H:%M:%SZ)"; }
-elapsed() { echo "$(( $(date +%s) - $1 ))"; }
+elapsed() { echo "$(($(date +%s) - $1))"; }
 
 # Waits until the WAL segment current before a switch has reached the bucket; otherwise a PITR target
 # in the newest segment is beyond the end of the archive and the restored cluster never promotes.
@@ -213,7 +215,10 @@ echo "backup-fetch: ${FETCH_SECONDS}s, replay and promote: ${REPLAY_SECONDS}s"
 scratch "select (select count(*) from events.event) ev, (select count(*) from events.artist) ar, (select count(*) from events.venue) ve"
 MARKERS="$(scratch "select count(*) from public.restore_drill")"
 echo "marker rows in the restored copy: ${MARKERS}"
-[[ "${MARKERS}" == '2' ]] || { echo "expected both marker rows - the row written after the base backup did not replay" >&2; exit 1; }
+[[ "${MARKERS}" == '2' ]] || {
+    echo "expected both marker rows - the row written after the base backup did not replay" >&2
+    exit 1
+}
 scratch "select id, note, at from public.restore_drill order by id"
 stop_scratch
 
@@ -243,9 +248,15 @@ if [[ "${IN_RECOVERY}" != 'f' ]]; then
 fi
 RECOVERED="$(scratch "select count(*) from public.restore_drill")"
 echo "marker rows recovered by PITR: ${RECOVERED}"
-[[ "${RECOVERED}" == '2' ]] || { echo "PITR did not recover the dropped table" >&2; exit 1; }
+[[ "${RECOVERED}" == '2' ]] || {
+    echo "PITR did not recover the dropped table" >&2
+    exit 1
+}
 STILL_DROPPED="$(live "select count(*) from pg_tables where schemaname = 'public' and tablename = 'restore_drill'")"
-[[ "${STILL_DROPPED}" == '0' ]] || { echo "the live database was modified by the restore" >&2; exit 1; }
+[[ "${STILL_DROPPED}" == '0' ]] || {
+    echo "the live database was modified by the restore" >&2
+    exit 1
+}
 echo 'the live database is still without the table, as it should be'
 
 banner 'Phase 4 - RESTORE_RUNBOOK.md §7, cleanup and proof that archiving is healthy'
@@ -263,6 +274,6 @@ database size            ${DB_SIZE}
 base backup              ${BASE_BACKUP_SECONDS}s
 backup-fetch             ${FETCH_SECONDS}s
 replay and promote       ${REPLAY_SECONDS}s
-restore to serving       $(( FETCH_SECONDS + REPLAY_SECONDS ))s
+restore to serving       $((FETCH_SECONDS + REPLAY_SECONDS))s
 SUMMARY
 echo 'both halves passed'
