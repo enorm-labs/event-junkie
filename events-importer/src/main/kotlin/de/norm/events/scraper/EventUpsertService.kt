@@ -106,10 +106,6 @@ class EventUpsertService(
      * programme, and [removeStaleEvents] never prunes past-dated rows, so re-importing would
      * resurrect them every run. Same-day events are kept, matching the `tomorrow` lower bound used
      * for cleanup. Existing past rows are untouched, simply not re-upserted.
-     *
-     * @param scrapedEvents the raw events from the scraper.
-     * @param eventSourceId the owning [EventSourceEntity]'s id, for logging.
-     * @return the scraped events dated today or later.
      */
     private fun dropPastEvents(
         scrapedEvents: List<ScrapedEvent>,
