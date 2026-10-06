@@ -170,6 +170,19 @@ class EventFieldMappingTest {
     }
 
     @Test
+    fun `detectFree reads a free group beside a positive price as a concession`() {
+        val panke = "Admission is free for transgender women. presale 18€ reduced presale 13€ at the door 23€ supporter 30€"
+        detectFree(BigDecimal("18.00"), BigDecimal("23.00"), panke) shouldBe false
+        detectFree(priceBoxOffice = BigDecimal("10.00"), priceNote = "Kinder frei") shouldBe false
+        detectFree(pricePresale = BigDecimal("8.00"), priceNote = "Eintritt frei für Mitglieder") shouldBe false
+        // Without a parsed price the same note still marks the night free.
+        detectFree(priceNote = panke) shouldBe true
+        // A €0 price or a title phrase stays a signal beside a positive price.
+        detectFree(BigDecimal("0.00"), BigDecimal("10.00")) shouldBe true
+        detectFree(priceBoxOffice = BigDecimal("5.00"), title = "Hoffest — Eintritt frei") shouldBe true
+    }
+
+    @Test
     fun `detectFree is false when nothing is provided`() {
         detectFree() shouldBe false
         detectFree(priceNote = null, title = null) shouldBe false
