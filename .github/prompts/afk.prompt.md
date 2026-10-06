@@ -214,6 +214,10 @@ When the user says a PR merged:
    lower one: rename the file, amend, and update the PR body. Nothing else in the migration changes.
 4. Keep the handover's **Merge order** current: strike what merged, and add what the order now needs.
 
+When the last PR of the order is merged or closed, read `release` from `scripts/daily-check.sh`. If an unreleased commit is a `feat`, `fix` or `perf`,
+offer the cut: `gh workflow run cut-release.yml -f dry_run=true` for the highlights, then `-f dry_run=false`. The user dispatches both; the guide
+dispatches neither. Then point at [`/maintain`](maintain.prompt.md) for the next step.
+
 ## Notes
 
 - **Labelling for a run**: `gh issue edit <n> --add-label afk-ok`. The label means "may be worked unattended", and

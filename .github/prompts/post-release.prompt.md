@@ -39,7 +39,7 @@ work and every other session can be closed once its pull request merges.
 - [ ] production: run scripts/promoter-websites.py --host http://localhost:28081 --apply
 ```
 
-One step per line: `<env>: <verb> <arguments>`. The verbs are:
+One step per line: `<env>: <verb> <arguments>`, or `<env> (<when>): <verb> <arguments>` for a step that is not due at the deployment. The verbs are:
 
 | Verb                                   | Does                                                                                              |
 | -------------------------------------- | ------------------------------------------------------------------------------------------------- |
@@ -60,6 +60,19 @@ stays unreviewed on purpose (`docs/licence-review/README.md` §6), and `--enable
 
 The same four `run` lines again with `production:` and port `28081`. `--enable` refuses while any other source is unreviewed, so a refusal that names a
 new venue means the licence review ran from the wrong checkout.
+
+**When a step is due.** A step with no parenthesis is due once its change runs on the environment. Two forms defer it:
+
+| Form                    | Due                                                             | Write it for                                              |
+| ----------------------- | --------------------------------------------------------------- | --------------------------------------------------------- |
+| `(N days after deploy)` | N days after the change reached that environment                | A check over a window: "over 3 days", "for 7 days after"  |
+| `(from YYYY-MM-DD)`     | On and after that date, in Europe/Berlin                        | A step tied to a calendar date                            |
+| `(dark day <slug>)`     | On a day that source has no event, on the environment's own API | A re-key or forced import that collides with today's rows |
+
+A step not yet due is **waiting until <date>**, not a failure, and gets no comment. For a dark-day step, count the source's events per day for the next
+14 days on that environment (the public API, one day per call, `size=100`) and name the first day with none. The deploy date of a change on production is the date of the first release that contains it
+(`git tag --contains <mergeCommit> --sort=creatordate | head -1`, then `git log -1 --format=%cs <tag>`); on staging it is the merge date, since every merge
+publishes a snapshot. `scripts/daily-check.sh` reports each step's `due` as the date, `deploy+<N>d`, `dark-day:<slug>` or `now`.
 
 A ticked box is done. A box stays unticked when its step failed, and the pull request's comment says why.
 
@@ -83,7 +96,7 @@ gh pr list --state merged --label after-deploy --limit 100 --json number,title,a
 
 For each pull request and environment, `git merge-base --is-ancestor <mergeCommit> <deployed commit>` says whether the change runs there. Not yet deployed
 is **waiting**, not a failure, and goes in the report as such. Read the `## After deploy` lines of the deployed ones, and keep the unticked steps for the
-environments in the arguments.
+environments in the arguments that are due (see [When a step is due](#the-format-a-pull-request-writes)).
 
 ## Step 3 — Run it, per environment
 
@@ -111,5 +124,6 @@ environments in the arguments.
 
 ## Step 5 — The report
 
-One block per environment: the version, the steps run and their outcome, what failed and why, and the pull requests still **waiting** for a release. Then
+One block per environment: the version, the steps run and their outcome, what failed and why, the pull requests still **waiting** for a release, and the steps
+waiting for their date, each with the date. Then
 anything the queue asked for that this command does not do (a release, a merge), for the operator.

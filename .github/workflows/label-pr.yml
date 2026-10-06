@@ -119,7 +119,8 @@ jobs:
             const pendingSteps = Boolean(afterDeploy) && /^\s*- \[ \] /m.test(afterDeploy);
             if (afterDeploy !== undefined && !/^\s*- \[[ xX]\] /m.test(afterDeploy)) {
               core.setFailed('The `## After deploy` section has no step `/post-release` can tick. Write each step as a ' +
-                             '`- [ ] <staging|production|both>: …` line (post-release.prompt.md); the check re-runs on the edit.');
+                             '`- [ ] <staging|production|both>: …` line, optionally `<env> (3 days after deploy): …` (post-release.prompt.md); ' +
+                             'the check re-runs on the edit.');
             }
 
             // Paths and statuses only, paginated because a venue lands with its fixtures.

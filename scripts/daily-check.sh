@@ -170,6 +170,8 @@ unclosed() {
 
 # A merged pull request labelled `after-deploy` keeps its label until `/post-release` ticks every step.
 # `released`: whether the latest release tag contains its merge commit, so production runs it.
+# `due` per step: the date of a `(from YYYY-MM-DD)`, `deploy+<N>d` for `(N days after deploy)`, `dark-day:<slug>`
+# for a `(dark day <slug>)`, else `now`.
 after_deploy() {
     local tag prs number sha
     tag=$(gh release view -R "$REPO" --json tagName -q .tagName 2>/dev/null || true)
@@ -184,7 +186,12 @@ after_deploy() {
             .[] | select(.number == $n) |
             {pr: .number, title, released: $released, release: $tag,
              unticked: [(.body | capture("(?s)## After deploy[^\n]*\n(?<s>.*?)(\n## |$)").s // "")
-                        | split("\n")[] | select(test("^ *- \\[ \\] ")) | .[0:160]]}'
+                        | split("\n")[] | select(test("^ *- \\[ \\] "))
+                        | {step: .[0:160],
+                           due: ((capture("^ *- \\[ \\] [a-z]+ \\(from (?<d>[0-9]{4}-[0-9]{2}-[0-9]{2})\\)") | .d)
+                                 // (capture("^ *- \\[ \\] [a-z]+ \\((?<n>[0-9]+) days? after deploy\\)") | "deploy+" + .n + "d")
+                                 // (capture("^ *- \\[ \\] [a-z]+ \\(dark day (?<s>[a-z0-9-]+)\\)") | "dark-day:" + .s)
+                                 // "now")}]}'
     done | jq -s .
 }
 
