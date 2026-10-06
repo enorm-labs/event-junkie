@@ -45,12 +45,22 @@ data class ScraperProperties(
      * minutes is the `crawler-commons` default. A list-and-detail source at that pace outlasts the
      * staleness timeout after six pages, which is why the WARN names the host.
      */
-    val maxCrawlDelay: Duration = Duration.ofSeconds(DEFAULT_MAX_CRAWL_DELAY_SECONDS)
+    val maxCrawlDelay: Duration = Duration.ofSeconds(DEFAULT_MAX_CRAWL_DELAY_SECONDS),
+    /**
+     * How long a pooled connection may sit idle before it is closed on our side. Under the 30–60 s
+     * keep-alive of nginx and Cloudflare, so we drop a connection before the server does rather than
+     * reuse one it already closed (#2798).
+     */
+    val connectionMaxIdleTime: Duration = Duration.ofSeconds(DEFAULT_CONNECTION_MAX_IDLE_SECONDS),
+    /** How often the pool closes idle connections in the background, not only when one is acquired. */
+    val connectionEvictionInterval: Duration = Duration.ofSeconds(DEFAULT_CONNECTION_EVICTION_SECONDS)
 ) {
     companion object {
         private const val DEFAULT_RESPONSE_TIMEOUT_SECONDS = 30L
         private const val DEFAULT_POLITE_DELAY_MILLIS = 200L
         private const val DEFAULT_ROBOTS_CACHE_TTL_HOURS = 24L
         private const val DEFAULT_MAX_CRAWL_DELAY_SECONDS = 300L
+        private const val DEFAULT_CONNECTION_MAX_IDLE_SECONDS = 20L
+        private const val DEFAULT_CONNECTION_EVICTION_SECONDS = 30L
     }
 }

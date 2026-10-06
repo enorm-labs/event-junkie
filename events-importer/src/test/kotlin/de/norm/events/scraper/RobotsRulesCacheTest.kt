@@ -50,6 +50,7 @@ class RobotsRulesCacheTest {
                 config.scraperBaseWebClient(
                     webClientBuilder = WebClient.builder(),
                     scraperProperties = properties,
+                    connectionProvider = config.scraperConnectionProvider(properties),
                     throttle = config.perHostThrottlingFilter(properties)
                 ),
             scraperProperties = properties,
