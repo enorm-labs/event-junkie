@@ -1,12 +1,14 @@
 package de.norm.events.scraper.barjedervernunft
 
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.alternateLanguageUrl
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldNotContain
+import io.kotest.matchers.string.shouldStartWith
 import org.jsoup.Jsoup
 import org.junit.jupiter.api.Test
 import java.math.BigDecimal
@@ -34,6 +36,16 @@ class BarJederVernunftShowPageScraperTest {
         show.priceNote shouldBe "Ab 19,90 € bis 49,90 €"
         show.pricePresale shouldBe BigDecimal("19.90")
         show.description.shouldNotBeNull() shouldContain "Feelgood-Music at its best"
+    }
+
+    @Test
+    fun `reads the blurb of the German page and of its English version`() {
+        val german = document("barjedervernunft-show-kopfkino-de.html")
+        val english = document("barjedervernunft-show-kopfkino-en.html")
+
+        german.alternateLanguageUrl("en") shouldBe "https://www.bar-jeder-vernunft.de/en/whats-on/programme-overview/sven-ratzke-kopfkino.html"
+        scraper.description(german).shouldNotBeNull() shouldStartWith "Nach seinen grandiosen Shows"
+        scraper.description(english).shouldNotBeNull() shouldStartWith "After his magnificent shows"
     }
 
     @Test
@@ -124,6 +136,15 @@ class BarJederVernunftShowPageScraperTest {
 
         enriched.description shouldBe "Ein Chansonabend..."
     }
+
+    private fun document(fixture: String) =
+        Jsoup.parse(
+            javaClass.classLoader
+                .getResourceAsStream("scraper/barjedervernunft/$fixture")!!
+                .bufferedReader()
+                .readText(),
+            SHOW_URL
+        )
 
     private fun scrapeFixture(fixture: String): BarJederVernunftShow? {
         val html =

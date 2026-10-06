@@ -1,6 +1,7 @@
 package de.norm.events.scraper.delphi
 
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.alternateLanguageUrl
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
@@ -26,6 +27,22 @@ class DelphiProductionPageScraperTest {
                 .readText()
         val sourceUrl = "https://theater-im-delphi.de/programm/?prod=$productionId"
         return scraper.scrape(Jsoup.parse(html, sourceUrl))!!
+    }
+
+    @Test
+    fun `reads the German blurb, the link to the English page and the English blurb`() {
+        val html = { language: String ->
+            javaClass.classLoader
+                .getResourceAsStream("scraper/delphi/delphi-production-532-$language.html")!!
+                .bufferedReader()
+                .readText()
+        }
+        val german = Jsoup.parse(html("de"), "https://theater-im-delphi.de/programm/?prod=532")
+
+        german.alternateLanguageUrl("en") shouldBe "https://theater-im-delphi.de/en/programm/?prod=532"
+        scraper.scrape(german)!!.description!! shouldStartWith "Frauen sollen resilient"
+        val english = Jsoup.parse(html("en"), "https://theater-im-delphi.de/en/programm/?prod=532")
+        scraper.scrape(english)!!.description!! shouldStartWith "Should women be expected"
     }
 
     @Test

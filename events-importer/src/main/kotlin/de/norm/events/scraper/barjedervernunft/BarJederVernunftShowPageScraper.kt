@@ -37,7 +37,7 @@ class BarJederVernunftShowPageScraper {
         // The Preise block stacks regular / reduced / special-performance prices as <br>-separated
         // lines in one <p>; only the first is the regular admission range.
         val priceLine = overviewValue(document, "Preise")?.textLinesAt("p")?.firstOrNull()
-        val description = parseDescription(document)
+        val description = description(document)
 
         if (genre == null && priceLine == null && description == null) {
             logger.warn { "Show page carries no genre, price or description block" }
@@ -74,11 +74,13 @@ class BarJederVernunftShowPageScraper {
     /**
      * The `Überblick` prose paragraphs joined into the show description. Scoped to `#ueberblick`
      * so the later `Mitwirkende` (cast and creative team) and ticketing sections stay out, and to
-     * `.vivomedia-text` so the pull-quote card beside the blurb is not folded in.
+     * `.vivomedia-text` so the pull-quote card beside the blurb is not folded in. The English page
+     * names the section `#at-a-glance`.
      */
-    private fun parseDescription(document: Document): String? =
+    fun description(document: Document): String? =
         document
-            .select("#ueberblick .indent-contentcollection .vivomedia-text p")
+            .select("#ueberblick, #at-a-glance")
+            .select(".indent-contentcollection .vivomedia-text p")
             .map { it.text().trim() }
             .filter { it.isNotBlank() }
             .joinToString("\n")

@@ -181,6 +181,18 @@ The scrapers of the one-field sources cut the description at its marker (`splitB
 becomes the publisher's second language. Each half must read as German or English, so a Russian half stays in the
 whole text.
 
+Five importers also read the page in the other language. They store its event text as the publisher's second language:
+
+- Columbiahalle reads the English listing. This adds one request to each run.
+- Bar jeder Vernunft and Theater im Delphi read the English page of each production. This adds one request for each
+  production.
+- silent green reads the English page of each programme entry. This adds one request for each entry.
+- Orania.Berlin reads the German page of each concert. This adds one request for each concert.
+
+The importer finds the other page through the `hreflang` link of the page that it reads. When that page does not load,
+the run keeps the first language and stores no second language. The upsert stores a second text only when the two
+texts read as German and English. Club OST is not on this list, because none of its events has a description.
+
 | Name                             | Second language | How                                                          | Event text         | Evidence                                                                                                                           |
 | -------------------------------- | --------------- | ------------------------------------------------------------ | ------------------ | ---------------------------------------------------------------------------------------------------------------------------------- |
 | A-Trane                          | Yes             | One field: German, then `English`                            | One field          | https://a-trane.de/                                                                                                                |

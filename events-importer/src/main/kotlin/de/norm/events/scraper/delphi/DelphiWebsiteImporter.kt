@@ -6,6 +6,7 @@ import de.norm.events.scraper.FetchResult
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.ScrapedField
+import de.norm.events.scraper.SecondLanguagePage
 import de.norm.events.scraper.VenueLimitations
 import de.norm.events.scraper.enrichFromSharedPages
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -27,6 +28,10 @@ import org.springframework.stereotype.Component
  * to 15 production pages, one ballet alone owning 8. Per-event fetching would re-request the
  * same page eight times, which the per-host politeness throttle would rightly serialise into a
  * slow, pointless crawl.
+ *
+ * Each production page links its English version (`/en/programm/?prod=<id>`, `hreflang="en"`),
+ * which translates the blurb, so that page is read too for the second language: one more request
+ * per production, not per date.
  *
  * A production page that cannot be fetched or parsed is not fatal: its dates keep the row's teaser
  * and are flagged, so the upsert keeps the text and photo the page stored last time.
@@ -68,7 +73,8 @@ class DelphiWebsiteImporter(
                             events,
                             productionPageScraper::scrape,
                             DelphiProduction::applyTo,
-                            pageOwns = setOf(ScrapedField.IMAGE, ScrapedField.DESCRIPTION)
+                            pageOwns = setOf(ScrapedField.IMAGE, ScrapedField.DESCRIPTION),
+                            secondLanguage = SecondLanguagePage("en") { productionPageScraper.scrape(it)?.description }
                         ),
                     etag = fetchResult.etag,
                     lastModified = fetchResult.lastModified

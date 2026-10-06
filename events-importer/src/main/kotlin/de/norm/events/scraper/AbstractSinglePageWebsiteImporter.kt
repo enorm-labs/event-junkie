@@ -32,6 +32,12 @@ abstract class AbstractSinglePageWebsiteImporter(
     /** Cookies sent with the listing fetch, for a venue that serves its programme only to a request carrying one. */
     protected open val cookies: Map<String, String> = emptyMap()
 
+    /**
+     * The listing in the venue's other language, for a venue that translates the event text there.
+     * The run reads it too and stores its text as the second language (ADR-026 rule 2).
+     */
+    protected open val secondLanguage: SecondLanguageListing? = null
+
     /** A runaway guard on [nextListingPage]; 1 reads the entry page alone. */
     protected open val maxListingPages: Int = 1
 
@@ -42,7 +48,7 @@ abstract class AbstractSinglePageWebsiteImporter(
     ): String? = null
 
     /** A run that reads event pages or later listing pages cannot be skipped on the entry page's validators. */
-    override val fetchesBeyondEntryPage: Boolean get() = enrichFromEventPage != null || maxListingPages > 1
+    override val fetchesBeyondEntryPage: Boolean get() = enrichFromEventPage != null || maxListingPages > 1 || secondLanguage != null
 
     final override suspend fun importEvents(
         url: String,
@@ -58,8 +64,10 @@ abstract class AbstractSinglePageWebsiteImporter(
                 val listing = readListing(fetchResult.document, url)
                 logger.info { "Scraped ${listing.events.size} event(s) from $venueName" }
 
+                val events =
+                    secondLanguage?.let { htmlFetcher.withSecondLanguageListing(listing.events, fetchResult.document, it) } ?: listing.events
                 ImportResult.Success(
-                    events = withEventPages(listing.events),
+                    events = withEventPages(events),
                     etag = fetchResult.etag,
                     lastModified = fetchResult.lastModified,
                     complete = listing.complete

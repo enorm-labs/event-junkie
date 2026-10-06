@@ -5,6 +5,7 @@ import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.LimitedAspect
+import de.norm.events.scraper.SecondLanguagePage
 import de.norm.events.scraper.VenueLimitations
 import de.norm.events.scraper.nextPageUrl
 import org.jsoup.nodes.Document
@@ -21,6 +22,10 @@ import org.springframework.stereotype.Component
  *
  * Entry is free to every concert, so no event has a price or a ticket link.
  *
+ * The site is English first. Each event page links its German version (`hreflang="de-DE"`), which
+ * translates the biography, so that page is read too for the second language: one more request
+ * per concert.
+ *
  * @see <a href="https://orania.berlin/concerts">Orania.Concerts</a>
  */
 @Component
@@ -28,6 +33,8 @@ class OraniaWebsiteImporter(
     htmlFetcher: HtmlFetcher
 ) : AbstractTwoPageWebsiteImporter(htmlFetcher, OraniaOverviewPageScraper()::scrape, OraniaDetailPageScraper()::scrape) {
     override val eventSource: EventSource = EventSource.ORANIA
+
+    override val secondLanguage = SecondLanguagePage("de") { OraniaDetailPageScraper().scrape(it, it.location())?.description }
 
     override fun nextOverviewPage(
         document: Document,
