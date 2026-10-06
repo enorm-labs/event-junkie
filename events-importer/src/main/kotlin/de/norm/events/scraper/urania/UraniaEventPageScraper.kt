@@ -21,7 +21,8 @@ import java.time.LocalTime
  *
  * Restates everything the calendar shows and adds what it cannot: the poster, the full prose,
  * and the admission line at the foot of that prose (`"Eintritt: 8 €, ermäßigt: 5 €,
- * Mitglieder: 3 €"`, or `"Eintritt frei"`).
+ * Mitglieder: 3 €"`, or `"Eintritt frei"`). A school-class event states it at the head of the
+ * prose instead, as `"Kostenfreie Tickets: anmeldung@…"`.
  *
  * The poster is **lazy-loaded**, so its URL is in `data-src` and never `src`. The page opens
  * with an `h2` intro summarising the evening, not repeated in the body, so it is kept at the
@@ -109,5 +110,8 @@ private val DOTTED_DATE = Regex("""\d{1,2}\.\d{1,2}\.\d{4}""")
 /** `"19:30"` inside the same line. */
 private val CLOCK = Regex("""\d{1,2}:\d{2}""")
 
-/** The `"Eintritt …"` sentence at the foot of the prose, ending at the next sentence or line. */
-private val ADMISSION_LINE = Regex("""Eintritt[^.\n]*""", RegexOption.IGNORE_CASE)
+/**
+ * The `"Eintritt …"` sentence at the foot of the prose, ending at the next sentence or line, or
+ * the bare `"Kostenfreie Tickets"` label: `[^.\n]*` would cut the address after it at `urania-berlin.`.
+ */
+private val ADMISSION_LINE = Regex("""Eintritt[^.\n]*|Kostenfreie\s+Tickets?""", RegexOption.IGNORE_CASE)
