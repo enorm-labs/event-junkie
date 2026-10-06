@@ -1,0 +1,9 @@
+# Commits that `git blame` skips, so a line keeps the author of its last real change.
+# GitHub's blame view reads this file by itself. Locally, once per clone:
+#   git config blame.ignoreRevsFile .git-blame-ignore-revs
+#
+# Add only a commit that changes layout and nothing else, by its SHA on `main`. Rebase-merge
+# rewrites the SHA, so the entry goes in after the merge, never in the same pull request.
+
+# ci: format shell scripts with shfmt (#2775)
+2f257784d28a4931566e5d1d073c85855d5e5048

@@ -12,6 +12,7 @@ project's conventions written down, and it is more complete than any other docum
 ```sh
 sdk env                                   # the JDK from .sdkmanrc
 brew install pre-commit && pre-commit install     # gitleaks + formatting hooks, before your first commit
+git config blame.ignoreRevsFile .git-blame-ignore-revs   # blame skips the formatting-only commits
 
 scripts/dev-env.sh up all                 # importer + bff + frontend, each waited on until it answers
 scripts/dev-env.sh seed-fixture           # the fixed dataset, no network — or the two lines below for real data
