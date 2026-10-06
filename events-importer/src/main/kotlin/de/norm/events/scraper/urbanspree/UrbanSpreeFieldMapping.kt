@@ -2,9 +2,12 @@ package de.norm.events.scraper.urbanspree
 
 import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
+import de.norm.events.scraper.DOORS_LABELS
+import de.norm.events.scraper.START_LABELS
 import de.norm.events.scraper.SUPPORT_LABELS
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.isNonArtistName
+import de.norm.events.scraper.labelledClock
 import de.norm.events.scraper.parseEventStatus
 import de.norm.events.scraper.parseTime
 import java.time.LocalDate
@@ -161,6 +164,44 @@ internal fun urbanSpreeHeaderStart(
     val (date, time) = stamp.destructured
     val stampedDate = runCatching { LocalDate.parse(date, HEADER_DATE_FORMAT) }.getOrNull()
     return if (stampedDate == eventDate) parseTime(time) else null
+}
+
+/**
+ * How far into the description a doors and start pair is looked for. It is longer than
+ * [HEADER_SCAN_LENGTH]: Tribute To Nothing's pair follows a 115-character billing line.
+ */
+private const val DOORS_SCAN_LENGTH = 200
+
+/** A clock the label follows, as Otha's blurb prints it: `19.00 Doors`, `20:00 Uhr Beginn`. */
+private fun clockBeforeLabel(labels: String) = Regex("""(?<!\d)(\d{1,2})[.:](\d{2})\s*(?:Uhr\s*)?(?:$labels)(?!\p{L})""", RegexOption.IGNORE_CASE)
+
+private val CLOCK_BEFORE_DOORS = clockBeforeLabel("""doors|einlass""")
+private val CLOCK_BEFORE_START = clockBeforeLabel("""start|beginn""")
+
+private fun Regex.clockIn(text: String): LocalTime? = find(text)?.destructured?.let { (hour, minute) -> parseTime("$hour:$minute") }
+
+/**
+ * The doors and start times a description's opening line states (#2787), or `null`. The line comes
+ * in two forms: label first (`Doors: 20:00 | Start: 21:00`) or clock first (`19.00 Doors 20:00
+ * Start`). The clock-first form is tried first, because in it the label-first reading pairs `Doors`
+ * with the start clock. The pair counts only when doors equals [heroStart] and start is later: a
+ * line quoted for another show does not match this show's hero. A doors line without a start
+ * (`Doors: 20H`) gives no pair.
+ */
+internal fun urbanSpreeDoorsAndStart(
+    description: String?,
+    heroStart: LocalTime?
+): Pair<LocalTime, LocalTime>? {
+    if (description == null || heroStart == null) return null
+    val head = description.take(DOORS_SCAN_LENGTH)
+    val clockFirstDoors = CLOCK_BEFORE_DOORS.clockIn(head)
+    val (doors, start) =
+        if (clockFirstDoors != null) {
+            clockFirstDoors to CLOCK_BEFORE_START.clockIn(head)
+        } else {
+            labelledClock(head, DOORS_LABELS) to labelledClock(head, START_LABELS)
+        }
+    return if (start != null && doors == heroStart && heroStart < start) heroStart to start else null
 }
 
 /**

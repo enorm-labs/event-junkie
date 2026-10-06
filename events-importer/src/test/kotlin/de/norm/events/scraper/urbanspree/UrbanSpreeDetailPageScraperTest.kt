@@ -220,4 +220,33 @@ class UrbanSpreeDetailPageScraperTest {
         // The importer overwrites this with the listing card's machine-readable date.
         event.eventDate shouldBe de.norm.events.scraper.UNRESOLVED_EVENT_DATE
     }
+
+    @Test
+    fun `scrape reads the hero time as doors when the description opens with a clock-first pair`() {
+        val url = "https://www.urbanspree.com/program/concerts/otha-berlin-urban-spree.html"
+        val event = scraper.scrape(fixture("urbanspree-detail-doors-clock-first.html", url), url).shouldNotBeNull()
+
+        event.doorsTime shouldBe LocalTime.of(19, 0)
+        event.startTime shouldBe LocalTime.of(20, 0)
+    }
+
+    @Test
+    fun `scrape reads the hero time as doors when the description opens with a labelled pair`() {
+        val url = "https://www.urbanspree.com/program/concerts/banda-entopica-urban-spree-berlin.html"
+        val event = scraper.scrape(fixture("urbanspree-detail-doors-labelled.html", url), url).shouldNotBeNull()
+
+        event.doorsTime shouldBe LocalTime.of(20, 0)
+        event.startTime shouldBe LocalTime.of(21, 0)
+    }
+
+    @Test
+    fun `scrape keeps the hero time as the start when the pair's doors differ from it`() {
+        val url = "https://www.urbanspree.com/program/concerts/banda-entopica-urban-spree-berlin.html"
+        val document = fixture("urbanspree-detail-doors-labelled.html", url)
+        document.select("#pseudo-card .ct-dates li.infos")[1].text("19:00")
+        val event = scraper.scrape(document, url).shouldNotBeNull()
+
+        event.doorsTime.shouldBeNull()
+        event.startTime shouldBe LocalTime.of(19, 0)
+    }
 }

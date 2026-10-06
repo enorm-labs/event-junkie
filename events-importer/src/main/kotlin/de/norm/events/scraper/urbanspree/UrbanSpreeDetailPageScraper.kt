@@ -31,8 +31,8 @@ import java.util.Locale
  * renders an "upcoming events" slider from the same card markup the overview parses, and an
  * unscoped `li.infos` or `li.price` would pick up a neighbour's date and price. The page's own
  * date is parsed, but [UrbanSpreeWebsiteImporter] prefers the card's `data-dateStart` (ADR-007
- * §"Selector Strategy"). Doors time is not extracted: it appears only inside the description,
- * where an "Einlass: …" line may belong to another show mentioned in the blurb.
+ * §"Selector Strategy"). When the description opens with a doors and start pair whose doors equal
+ * the hero clock, the hero is the doors time ([urbanSpreeDoorsAndStart], #2787).
  *
  * A late club night is the exception on both counts (#1904). Its hero says 23:59
  * ([URBAN_SPREE_LATE_PLACEHOLDER]), the description opens with the real start stamped with the
@@ -84,8 +84,13 @@ class UrbanSpreeDetailPageScraper {
         val description = document.textAt(".rte.tv-content")
         val eventDate = parseHeroDate(hero) ?: UNRESOLVED_EVENT_DATE
         val heroStart = parseTime(hero.dateInfo(index = 1))
+        val doorsAndStart = urbanSpreeDoorsAndStart(description, heroStart)
         val startTime =
-            if (heroStart == URBAN_SPREE_LATE_PLACEHOLDER) urbanSpreeHeaderStart(description, eventDate) ?: heroStart else heroStart
+            when {
+                heroStart == URBAN_SPREE_LATE_PLACEHOLDER -> urbanSpreeHeaderStart(description, eventDate) ?: heroStart
+                doorsAndStart != null -> doorsAndStart.second
+                else -> heroStart
+            }
         val titleArtists = buildArtistsForEventType(title, subtitle = supportNote, eventType = eventType, description = description)
         // A club night filed under Concerts names no act in its title; its DJs are in the running order.
         val djSets = if (titleArtists.isEmpty()) urbanSpreeDjSets(description) else emptyList()
@@ -99,6 +104,7 @@ class UrbanSpreeDetailPageScraper {
             // The overview card's data-dateStart wins during the merge; this is the standalone value.
             eventDate = eventDate,
             startTime = startTime,
+            doorsTime = doorsAndStart?.first,
             imageUrl = normalizeAssetUrl(hero.absUrlAt("img.img-feat-noslider", "src")),
             sourceUrl = sourceUrl,
             sourceId = "${EventSource.URBAN_SPREE.sourceIdPrefix}${urbanSpreeEventSlug(sourceUrl)}",

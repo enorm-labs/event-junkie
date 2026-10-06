@@ -135,6 +135,58 @@ class UrbanSpreeFieldMappingTest {
         urbanSpreeHeaderStart(null, LocalDate.of(2026, 10, 24)).shouldBeNull()
     }
 
+    // --- urbanSpreeDoorsAndStart (#2787) ---
+
+    private val seven = LocalTime.of(19, 0)
+    private val eight = LocalTime.of(20, 0)
+
+    @Test
+    fun `urbanSpreeDoorsAndStart reads a clock-first pair whose doors match the hero`() {
+        urbanSpreeDoorsAndStart("CLUB 20 TOUR 2026 19.00 Doors 20:00 Start Norwegian rave-pop artist Otha", seven) shouldBe (seven to eight)
+    }
+
+    @Test
+    fun `urbanSpreeDoorsAndStart reads a label-first pair in English and German`() {
+        urbanSpreeDoorsAndStart("Banda Entopica 28.11.2026 - Urban Spree Doors: 20:00 | Start: 21:00 Tickets: soon", eight) shouldBe
+            (eight to LocalTime.of(21, 0))
+        urbanSpreeDoorsAndStart("Coilguns Einlass: 19:00 Beginn: 20:00", seven) shouldBe (seven to eight)
+        urbanSpreeDoorsAndStart("NO CIGAR ┇ 7. November 2026 ┇ Urban Spree ┋ Einlass 19h ┋ Beginn 20h", seven) shouldBe (seven to eight)
+        val tribute =
+            "Tribute To Nothing 20 yrs. of „How Many Times Did We Live“ Special Guest: Leaves 23.10.2026, Berlin, Urban Spree " +
+                "Einlass: 19:00 Beginn: 20:00"
+        urbanSpreeDoorsAndStart(tribute, seven) shouldBe (seven to eight)
+        urbanSpreeDoorsAndStart("Unpeople Einlass: 19:30 Uhr | Beginn: 20:30 Uhr", LocalTime.of(19, 30)) shouldBe
+            (LocalTime.of(19, 30) to LocalTime.of(20, 30))
+    }
+
+    @Test
+    fun `urbanSpreeDoorsAndStart ignores a pair whose doors differ from the hero`() {
+        urbanSpreeDoorsAndStart("Doors: 20:00 | Start: 21:00", seven).shouldBeNull()
+        urbanSpreeDoorsAndStart("19.00 Doors 20:00 Start", null).shouldBeNull()
+    }
+
+    @Test
+    fun `urbanSpreeDoorsAndStart ignores a start that is not after the doors`() {
+        urbanSpreeDoorsAndStart("Doors: 23:00 | Start: 00:30", LocalTime.of(23, 0)).shouldBeNull()
+        urbanSpreeDoorsAndStart("Doors: 20:00 | Start: 20:00", eight).shouldBeNull()
+    }
+
+    @Test
+    fun `urbanSpreeDoorsAndStart ignores a doors line without a start`() {
+        urbanSpreeDoorsAndStart("Doors: 20H", eight).shouldBeNull()
+        urbanSpreeDoorsAndStart("Einlass 19h", seven).shouldBeNull()
+        urbanSpreeDoorsAndStart(null, seven).shouldBeNull()
+    }
+
+    @Test
+    fun `urbanSpreeDoorsAndStart looks only at the description's opening`() {
+        val blurb =
+            "A long biography of the band that runs on and on about tours and records and labels and festivals. " +
+                "It goes on about the albums, the members, the hometown and the van that broke down on the motorway. " +
+                "Their last show here: Doors: 20:00 | Start: 21:00"
+        urbanSpreeDoorsAndStart(blurb, eight).shouldBeNull()
+    }
+
     @Test
     fun `urbanSpreeDjSets reads each running-order entry once, in order`() {
         urbanSpreeDjSets(klubnacht) shouldContainExactly listOf("Albert Kraft", "Key Clef", "Daraio")
