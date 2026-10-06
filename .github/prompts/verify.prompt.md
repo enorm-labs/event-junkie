@@ -21,6 +21,7 @@ where a plain local build does not.
 npm run type-check
 npm run check:lint                    # what CI runs: oxlint, then eslint, no --fix; `npm run lint` repairs what it reports
 npm run check:format                  # what CI runs: oxfmt --check src; `npm run format` repairs what it reports
+npm run check:knip                    # unused files, exports and dependencies; knip.jsonc names the exceptions
 npm run test:unit -- --run
 npm run test:e2e -- --project=chromium
 ```
@@ -106,6 +107,10 @@ histories) and `scripts/version-test.sh` (snapshot versions still order — a ve
 | `scripts/apply-licence-review.py`                                                | also `python3 scripts/test_apply_licence_review.py`                                                                                     |
 | `scripts/force-import.py`                                                        | also `python3 scripts/test_force_import.py`                                                                                             |
 | `deploy/`, `events-frontend/index.html`, `events-frontend/scripts/csp.ts`        | `scripts/csp-parity.sh` — the policy is written twice, and the `script-src` hash follows the inline theme script (#846)                 |
+| any Dockerfile                                                                   | hadolint at `HADOLINT_VERSION` (`validate-dockerfiles.yml`), from its Docker image, over every tracked Dockerfile                       |
+| an added migration under `events-importer/.../db/migration/`                     | `uvx --from squawk-cli==<SQUAWK_VERSION> squawk <added files>`; the pin is in `validate-migrations.yml`                                 |
+| any `.md`, `lychee.toml`                                                         | lychee at `LYCHEE_VERSION` (`validate-links.yml`), from its Docker image, `--offline` over `git ls-files '*.md'`                        |
+| `events-admin/`                                                                  | the frontend block from `events-admin/`, without e2e: there is no admin e2e suite                                                       |
 
 ## How to run the skill
 
@@ -117,7 +122,7 @@ histories) and `scripts/version-test.sh` (snapshot versions still order — a ve
 
     ```
     Backend:  ktlintCheck ✓  detekt ×3 ✓  build ✓  koverLog ✓
-    Frontend: type-check ✓  lint ✓  test:unit ✓  e2e ✓
+    Frontend: type-check ✓  lint ✓  format ✓  knip ✓  test:unit ✓  e2e ✓
     Always:   comment-lint ✓  skill ✓  rules ✓  collector ✓  scope ✓  index ✓
     Markdown: format ✓  ste-lint ✓                        (omit when no .md moved)
     Infra:    fmt ✓  validate ×3 ✓  shellcheck ✓  user_data ✓   (omit when infra/ untouched)

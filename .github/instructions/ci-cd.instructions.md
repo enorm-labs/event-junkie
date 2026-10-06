@@ -23,11 +23,11 @@ is the map and the traps.
   test, Kover to the summary and a sticky PR comment, an informational OWASP scan, and `scripts/api-schema-parity.sh check`: the frontend's committed
   `schema.d.ts` against the document `OpenApiDocumentTest` writes (#370), so an API change without the regeneration fails on its own PR, not after merge. Sets `ORG_GRADLE_PROJECT_warningsAsErrors=true`, so a Kotlin warning fails
   here and nowhere else. Also builds both container images for `linux/amd64` and `linux/arm64` with `type=cacheonly` and **never pushes** — it runs on fork PRs.
-  `build-frontend.yml` — `npm ci`, lint, `oxfmt --check src` (so an oxfmt bump that changes the output fails until its PR carries the reformat), build, unit,
-  the frontend image from its own `dist/`, and Playwright e2e as a parallel job inside `mcr.microsoft.com/playwright`, tagged with the lockfile's
+  `build-frontend.yml` — `npm ci`, lint, `oxfmt --check src` (so an oxfmt bump that changes the output fails until its PR carries the reformat), knip,
+  build, unit, the frontend image from its own `dist/`, and Playwright e2e as a parallel job inside `mcr.microsoft.com/playwright`, tagged with the lockfile's
   `@playwright/test` version so no `apt` install runs (#2309). Both build images on PRs only, since `release.yml` builds them on every push to `main`.
-  `build-admin.yml` (#2635) — `events-admin` (ADR-045): `npm ci`, type-check, `check:lint`, `check:format`, unit, `build-only`; no image, no coverage, no
-  e2e, and `release.yml` does not wait for it, because nothing publishes the admin app. All three declare `workflow_dispatch`
+  `build-admin.yml` (#2635) — `events-admin` (ADR-045): `npm ci`, type-check, `check:lint`, `check:format`, `check:knip`, unit, `build-only`; no image, no
+  coverage, no e2e, and `release.yml` does not wait for it, because nothing publishes the admin app. All three declare `workflow_dispatch`
   (`gh workflow run build-backend.yml --ref <branch>`), which ignores the path filters — and only exists for workflows on the default branch, so one added in
   a PR is unusable until it merges.
 - `codeql.yml` — advanced setup, not default setup, because default setup produces no run on a fork PR and the required context sat Pending forever (#581).
@@ -55,6 +55,10 @@ is the map and the traps.
 - `validate-python.yml` — `ruff check` + `ruff format --check` at `RUFF_VERSION` from the pinned image, then the four Python tests (#1189). `validate-scripts.yml`
   — ShellCheck the same way, plus the script test suites (`version-test.sh`, `version-deserved-test.sh`, `release-highlights-test.sh`). `validate-comments.yml`
   — `scripts/comment-lint.sh check`.
+- `validate-dockerfiles.yml` — hadolint over every tracked Dockerfile at `HADOLINT_VERSION`. `validate-migrations.yml` — squawk over the migrations a PR
+  **adds**, never the old ones, which are immutable; `.squawk.toml` says which rules are kept. `validate-links.yml` — lychee over every tracked `.md`,
+  `--offline` on a PR (relative links and anchors), external links weekly; `lychee.toml` holds the exclusions. The weekly run skips
+  `docs/EVENT_DATA_SOURCES.md`: a crawler over a hundred venue sites is automated access ADR-007 does not cover. None of the three is required.
 - `label-pr.yml` — type labels from the Conventional Commits title (`fix(api)!:` → `fix` + `breaking-change`), `importer` from an added `*Importer.kt` under
   `scraper/`, `after-deploy` while the body has an unticked `## After deploy` step (#2380), red when that section has no `- [ ]` step at all. **Required, and red on a `feat` outside a product scope** (`frontend`, `events`, `promoters`, `venues`, `artists`, `importer`, `scraper`,
   `bff`, `images`, `branding`) — a `feat` earns a minor, and `feat(ci)` once did (v0.17.0); `scripts/scope-parity.sh` holds every copy of that list.

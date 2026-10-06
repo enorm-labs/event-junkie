@@ -110,13 +110,16 @@ repository. Third-party hook repositories would each need their own pinning.
 | `index-parity`       | anything under `scripts/`. The index in `scripts/README.md`, and every script's `--help`                                     |
 | `ruff-check`         | any `.py` file, with the root `ruff.toml`. The `ruff` on your `$PATH`; `validate-python.yml` pins the one that decides       |
 | `ruff-format`        | any `.py` file. Rewrites in place, like `format-markdown`                                                                    |
+| `hadolint`           | any Dockerfile. `validate-dockerfiles.yml` pins the version that decides                                                     |
+| `squawk`             | any migration under `events-importer/.../db/migration/`, with the root `.squawk.toml`. `validate-migrations.yml` pins it     |
 | `format-markdown`    | any `.md` file. Also rewrites in place, so the same "re-stage and commit again" applies                                      |
 | `helm-lint`          | anything under `deploy/charts/`. Lints the chart directory, so it takes no filenames                                         |
 
-All of them are also CI's job, in `validate-infra.yml`, `validate-chart.yml`, `validate-scripts.yml`, `validate-python.yml`
-and `validate-docs.yml`. The hooks move the deterministic half of that feedback before the push. Without the tools
-installed the hooks fail. Install them with `brew install opentofu shellcheck helm ruff`, or skip them with
-`git commit --no-verify` on a change that touches none of those paths.
+All of them are also CI's job, in `validate-infra.yml`, `validate-chart.yml`, `validate-scripts.yml`, `validate-python.yml`,
+`validate-dockerfiles.yml`, `validate-migrations.yml` and `validate-docs.yml`. The hooks move the deterministic half of that
+feedback before the push. Without the tools installed the hooks fail. Install them with
+`brew install opentofu shellcheck helm ruff hadolint` and `pipx install squawk-cli`, or skip them with `git commit --no-verify`
+on a change that touches none of those paths.
 
 `format-markdown` is the exception to "uses what is already on your machine". It deliberately calls the oxfmt pinned in
 `events-frontend/package.json`, not one on `$PATH`, so it needs `npm ci` in `events-frontend/` rather than a

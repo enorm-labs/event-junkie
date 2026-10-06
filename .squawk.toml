@@ -1,0 +1,23 @@
+# squawk — read by validate-migrations.yml and the pre-commit hook for every migration a change adds.
+#
+# The rules kept are the ones a running service cannot survive: the importer migrates while the
+# previous BFF still reads, so a rename, a drop or a type change breaks it mid-rollout.
+
+pg_version = "18.0"
+
+# Flyway runs each migration in its own transaction (no `executeInTransaction=false` anywhere).
+assume_in_transaction = true
+
+# Each excluded rule guards a large table under write load. Our largest holds thousands of rows, so a
+# full lock lasts milliseconds. Together they made 153 of the 158 findings on the existing migrations.
+excluded_rules = [
+  # A lock or statement timeout would turn a briefly queued migration into a failed importer start.
+  "require-lock-timeout",
+  "require-statement-timeout",
+  # NOT VALID then VALIDATE only helps across two transactions, and Flyway gives us one.
+  "constraint-missing-not-valid",
+  # CREATE INDEX CONCURRENTLY cannot run inside a transaction.
+  "require-concurrent-index-creation",
+  # The schema uses `integer` for counts and sizes on purpose. None comes near 2^31.
+  "prefer-bigint-over-int",
+]

@@ -37,7 +37,7 @@ LABEL org.opencontainers.image.source="https://github.com/enorm-labs/event-junki
 # The openssl upgrade, for the reason and the deletion condition written out in
 # `events-bff/Dockerfile` (#770). The two images pin the same base, so they carry the same layer
 # and lose it together.
-USER root
+USER 0
 RUN apk upgrade --no-cache libssl3 libcrypto3
 
 WORKDIR /application

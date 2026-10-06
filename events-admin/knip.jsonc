@@ -1,0 +1,13 @@
+{
+  "$schema": "./node_modules/knip/schema-jsonc.json",
+  // vite.config.ts throws outside `--mode staging|production` (ADR-045), so knip must not load it.
+  // It is still parsed as an entry; only running it is skipped.
+  "vite": { "config": [], "entry": ["vite.config.ts"] },
+  "vitest": { "config": [], "entry": ["vitest.config.ts", "src/**/__tests__/*.spec.ts"] },
+  // A constant exported for its doc comment or a test does no harm while the file still uses it.
+  "ignoreExportsUsedInFile": true,
+  "ignoreIssues": {
+    // shadcn-vue components, added whole by `shadcn-vue add`; an unused part stays for the next use.
+    "src/components/ui/**": ["exports", "types"],
+  },
+}

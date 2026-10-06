@@ -106,7 +106,7 @@
     managerFilePatterns: ['/^deploy/clusters/(base|staging|production)/[^/]+\\.yaml$/'],
   },
 
-  // **The thirteen CI tool versions that belong to no ecosystem** — a `HELM_VERSION: v4.2.4` is a string
+  // **The sixteen CI tool versions that belong to no ecosystem** — a `HELM_VERSION: v4.2.4` is a string
   // in YAML, and `github-actions` updates `uses: azure/setup-helm@v5` while having nothing to say
   // about the `version:` handed to it. They rot in silence while the checks using them keep reporting
   // success, which is the failure this whole boundary exists to catch.
@@ -116,7 +116,9 @@
   // and there is nothing beside them to drift out of step. Measured on #1071 — all eight resolve,
   // across all fourteen occurrences; `RUFF_VERSION` joined as the ninth (#1189), `K3D_VERSION` and
   // `ZAP_IMAGE` as the tenth and eleventh (#1421), `NUCLEI_VERSION` and `NUCLEI_TEMPLATES_VERSION` as
-  // the twelfth and thirteenth (#1423) — one binary and one templates release, on different cadences.
+  // the twelfth and thirteenth (#1423) — one binary and one templates release, on different cadences;
+  // `HADOLINT_VERSION`, `SQUAWK_VERSION` and `LYCHEE_VERSION` the last three. `squawk-cli` comes from PyPI
+  // and lychee from Docker Hub, because those are what the workflows run.
   //
   // **`ZAP_IMAGE` is the one pin here that is an image reference with a digest**, `tag@sha256:…`,
   // because dast.yml runs it with `docker run` and a tag on GHCR is mutable. The `docker` datasource
@@ -234,6 +236,28 @@
       datasourceTemplate: 'github-releases',
       extractVersionTemplate: '^v?(?<version>.+)$',
     },
+    {
+      customType: 'regex',
+      managerFilePatterns: ['/^\\.github/workflows/.*\\.ya?ml$/'],
+      matchStrings: ['HADOLINT_VERSION:\\s*(?<currentValue>\\S+)'],
+      depNameTemplate: 'hadolint/hadolint',
+      datasourceTemplate: 'github-releases',
+      extractVersionTemplate: '^v?(?<version>.+)$',
+    },
+    {
+      customType: 'regex',
+      managerFilePatterns: ['/^\\.github/workflows/.*\\.ya?ml$/'],
+      matchStrings: ['SQUAWK_VERSION:\\s*(?<currentValue>\\S+)'],
+      depNameTemplate: 'squawk-cli',
+      datasourceTemplate: 'pypi',
+    },
+    {
+      customType: 'regex',
+      managerFilePatterns: ['/^\\.github/workflows/.*\\.ya?ml$/'],
+      matchStrings: ['LYCHEE_VERSION:\\s*(?<currentValue>\\S+)'],
+      depNameTemplate: 'lycheeverse/lychee',
+      datasourceTemplate: 'docker',
+    },
   ],
 
   packageRules: [
@@ -253,7 +277,7 @@
       enabled: false,
     },
     {
-      description: 'The thirteen CI tool pins, re-enabled by name',
+      description: 'The sixteen CI tool pins, re-enabled by name',
       matchManagers: ['custom.regex'],
       matchDepNames: [
         'helm/helm',
@@ -269,6 +293,9 @@
         'ghcr.io/zaproxy/zaproxy',
         'projectdiscovery/nuclei',
         'projectdiscovery/nuclei-templates',
+        'hadolint/hadolint',
+        'squawk-cli',
+        'lycheeverse/lychee',
       ],
       enabled: true,
     },
