@@ -134,6 +134,28 @@ class CassiopeiaOverviewPageScraperTest {
         events.first().eventDate shouldBe LocalDate.of(2026, 6, 20)
     }
 
+    @Test
+    fun `types a Sonstiges quiz night by its title`() {
+        // The listing is the fallback for a failed detail fetch, so it types the same way (#2791).
+        val html =
+            buildOverviewPage(
+                eventItem(
+                    title = "Quizcarraldo Kneipenquiz",
+                    date = "07",
+                    month = "10",
+                    year = "Oktober 2026",
+                    slug = "quizcarraldo-kneipenquiz-111687594",
+                    category = "Sonstiges",
+                    genre = "Kneipenquiz"
+                )
+            )
+
+        val event = scraper.scrape(Jsoup.parse(html, sourceUrl), sourceUrl).single()
+
+        event.eventType shouldBe "QUIZ"
+        event.artists shouldBe emptyList()
+    }
+
     // -- HTML fixture builders ---
 
     /**
