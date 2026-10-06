@@ -5,6 +5,7 @@ import de.norm.events.scraper.ScrapedEvent
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
+import io.kotest.matchers.collections.shouldNotBeEmpty
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
@@ -107,6 +108,19 @@ class HeimathafenApiScraperTest {
 
         events.single().eventType shouldBe "CONCERT"
         events.single().artists.shouldBeEmpty()
+    }
+
+    // A crowd sing-along whose first category is `musik`; the karaoke tag makes it a party, which bills no act (#2788).
+    @Test
+    fun `types a karaoke post as a party and bills no act whatever its category`() {
+        val singAlong = scraper.scrape(fixture("heimathafen-events-page5.json")).events.filter { it.title == "SING DELA SING" }
+
+        singAlong.shouldNotBeEmpty()
+        singAlong.forEach {
+            it.eventType shouldBe "PARTY"
+            it.artists.shouldBeEmpty()
+            it.genre shouldBe "karaoke"
+        }
     }
 
     @Test
