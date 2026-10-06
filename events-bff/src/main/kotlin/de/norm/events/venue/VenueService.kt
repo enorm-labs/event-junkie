@@ -71,6 +71,10 @@ class VenueService(
         return VenueDetailResponse.fromEntity(entity, image, tags.map { VenueCharacterTagResponse(it.tag, it.sourceUrl) }, imported)
     }
 
+    /** The display name of the venue at [slug], or null when there is none, for naming a filter (#2765). */
+    @Transactional(readOnly = true)
+    suspend fun nameOf(slug: String): String? = venueRepository.findBySlug(slug)?.name
+
     companion object {
         /**
          * What the site draws one of these at, in CSS pixels: a venue card at about 474 px in the

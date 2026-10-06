@@ -149,6 +149,20 @@ class EventFeedControllerTest : BaseControllerTest() {
         }
 
     @Test
+    fun `names the filtered type and the venue's display name in its title, and every filter in its description`(): Unit =
+        runBlocking {
+            insertVenue("Lido Berlin", "lido")
+
+            feed().channel().text("title") shouldBe "Event Junkie — new events"
+            val english = feed("?venue=lido&eventType=concert").channel()
+            english.text("title") shouldBe "Event Junkie — new concerts at Lido Berlin"
+            english.text("description") shouldBe
+                "The events in Berlin that Event Junkie found most recently. Filters: event type: concerts · venue: Lido Berlin."
+            feed("?venue=lido&locale=de").channel().text("title") shouldBe "Event Junkie — neu: Lido Berlin"
+            feed("?venue=nowhere").channel().text("title") shouldBe "Event Junkie — new events (filtered)"
+        }
+
+    @Test
     fun `speaks German when asked, in its links and its dates`(): Unit =
         runBlocking {
             val venueId = insertVenue("Lido", "lido")
