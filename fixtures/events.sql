@@ -215,6 +215,10 @@ WHERE e.source_id = 'fixture-festival';
 -- The running order comes from a page that is not the event's own, so the event page credits it (ADR-036).
 UPDATE events.event SET lineup_source_url = 'https://timetable.example/sommerlaune' WHERE source_id = 'fixture-festival';
 
+-- The engine refused to translate the festival's text, and the hash remembers it, so the next import does not buy the same
+-- refusal (#2714). The page shows the German text alone.
+UPDATE events.event SET description_alt_refused_hash = 'fixture' WHERE source_id = 'fixture-festival';
+
 INSERT INTO events.event_genre_tag (event_id, genre_tag_id)
 SELECT e.id, g.id FROM events.event e, events.genre_tag g WHERE e.source_id = 'fixture-festival' AND g.slug = 'techno';
 
