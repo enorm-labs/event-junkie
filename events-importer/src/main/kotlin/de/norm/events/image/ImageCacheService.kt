@@ -3,6 +3,7 @@ package de.norm.events.image
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.flow.toList
 import org.springframework.stereotype.Service
+import java.net.URI
 import java.time.Clock
 import java.time.Instant
 
@@ -78,6 +79,9 @@ class ImageCacheService(
             }
 
             is ImageFetchResult.Rejected -> {
+                // One line per refusal, bounded by the batch. The host says whose image it is; the
+                // path adds nothing an operator acts on, and the row holds the full URL.
+                logger.warn { "Image refused by ${hostOf(url)}: ${result.reason}" }
                 // The reason is stored so an operator can see *why* an image is missing. Without it
                 // a blank card is indistinguishable from a venue that published no image at all.
                 repository.save(base.copy(failedAt = now, failureReason = result.reason, lastSeenAt = now, updatedAt = now))
@@ -118,6 +122,8 @@ class ImageCacheService(
         }
     }
 }
+
+private fun hostOf(url: String): String = runCatching { URI(url).host }.getOrNull() ?: "an unparseable URL"
 
 /** What one pass did, split the way `UpsertOutcome` splits an import. */
 data class CacheOutcome(

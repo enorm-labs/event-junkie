@@ -1,12 +1,19 @@
 package de.norm.events.image
 
+import ch.qos.logback.classic.Level
+import ch.qos.logback.classic.Logger
+import ch.qos.logback.classic.spi.ILoggingEvent
+import ch.qos.logback.core.read.ListAppender
 import de.norm.events.BaseControllerTest
 import de.norm.events.scraper.ScraperHttpClientConfig
 import de.norm.events.scraper.ScraperProperties
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
+import io.kotest.matchers.collections.shouldNotContain
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldNotContain
+import io.kotest.matchers.string.shouldStartWith
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.future.await
@@ -17,6 +24,7 @@ import okio.Buffer
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.r2dbc.core.await
 import org.springframework.r2dbc.core.awaitSingle
@@ -25,6 +33,9 @@ import software.amazon.awssdk.services.s3.model.CreateBucketRequest
 import java.awt.image.BufferedImage
 import java.io.ByteArrayOutputStream
 import java.time.Clock
+import java.time.Duration
+import java.time.Instant
+import java.time.temporal.ChronoUnit
 import javax.imageio.ImageIO
 
 /**
@@ -228,22 +239,22 @@ class ImageCacheServiceIntegrationTest : BaseControllerTest() {
         }
 
     @Test
-    fun `a 304 leaves the row alone and counts as unchanged`(): Unit =
+    fun `a 304 keeps the bytes, counts as unchanged and is not due again`(): Unit =
         runBlocking {
             val server = MockWebServer().also { it.start() }
             servers += server
             server.enqueue(MockResponse.Builder().code(304).build())
             val url = server.url("/poster.png").toString()
+            // Truncated to what PostgreSQL stores, so the round trip compares equal.
+            val fetchedAt = Instant.now().minus(Duration.ofDays(400)).truncatedTo(ChronoUnit.MICROS)
             repository.save(
                 CachedImageEntity(
                     sourceUrl = url,
                     contentHash = "kept",
                     contentType = "image/png",
                     etag = "\"v1\"",
-                    fetchedAt =
-                        java.time.Instant
-                            .now()
-                            .minusSeconds(60 * 60 * 24 * 400)
+                    fetchedAt = fetchedAt,
+                    lastSeenAt = fetchedAt
                 )
             )
 
@@ -251,8 +262,84 @@ class ImageCacheServiceIntegrationTest : BaseControllerTest() {
 
             outcome.unchanged shouldBe 1
             // The hash must survive a 304, or an unchanged image would lose the object it points at.
-            repository.findBySourceUrl(url)!!.contentHash shouldBe "kept"
+            val row = repository.findBySourceUrl(url)!!
+            row.contentHash shouldBe "kept"
+            row.fetchedAt shouldBe fetchedAt
+            // A 304 moves the refresh clock, so the next pass asks about other images (#2785).
+            dueNow().map { it.sourceUrl } shouldNotContain url
         }
+
+    @Test
+    fun `a success not asked about for the refresh window is due, oldest question first`(): Unit =
+        runBlocking {
+            val now = Instant.now()
+            val older = saveFetched("https://venue.test/older.jpg", lastSeenAt = now.minus(Duration.ofDays(40)))
+            val old = saveFetched("https://venue.test/old.jpg", lastSeenAt = now.minus(Duration.ofDays(31)))
+            // Downloaded long ago, but asked yesterday and answered 304. Not due.
+            saveFetched("https://venue.test/asked.jpg", lastSeenAt = now.minus(Duration.ofDays(1)))
+
+            dueNow().map { it.sourceUrl } shouldBe listOf(older.sourceUrl, old.sourceUrl)
+        }
+
+    @Test
+    fun `a refused image that once downloaded waits out the retry cooldown`(): Unit =
+        runBlocking {
+            // Its old `fetched_at` used to make it due again on the very next pass, so one dead
+            // image was asked for every five minutes.
+            val now = Instant.now()
+            saveFetched("https://venue.test/gone.jpg", lastSeenAt = now.minus(Duration.ofDays(1)), failedAt = now.minus(Duration.ofDays(1)))
+            val cooled =
+                saveFetched("https://venue.test/back.jpg", lastSeenAt = now.minus(Duration.ofDays(8)), failedAt = now.minus(Duration.ofDays(8)))
+
+            dueNow().map { it.sourceUrl } shouldBe listOf(cooled.sourceUrl)
+        }
+
+    @Test
+    fun `each refusal is logged at WARN with the host and the reason`(): Unit =
+        runBlocking {
+            val logger = LoggerFactory.getLogger(ImageCacheService::class.java) as Logger
+            val appender = ListAppender<ILoggingEvent>().apply { start() }
+            logger.addAppender(appender)
+            try {
+                service(ImageProperties(fetchEnabled = true)).refreshBatch()
+            } finally {
+                logger.detachAppender(appender)
+            }
+
+            val warnings = appender.list.filter { it.level == Level.WARN }.map { it.formattedMessage }
+            warnings.size shouldBe 2
+            warnings.forEach {
+                it shouldStartWith "Image refused by venue.test: "
+                // The path is not needed to act on it, and the row holds the full URL.
+                it shouldNotContain "poster"
+            }
+        }
+
+    private suspend fun dueNow(): List<CachedImageEntity> {
+        val properties = ImageProperties()
+        val now = Instant.now()
+        return repository
+            .findDueForRefresh(
+                refreshBefore = now.minus(properties.refreshAfter),
+                retryBefore = now.minus(properties.retryFailedAfter),
+                limit = 100
+            ).toList()
+    }
+
+    private suspend fun saveFetched(
+        url: String,
+        lastSeenAt: Instant,
+        failedAt: Instant? = null
+    ) = repository.save(
+        CachedImageEntity(
+            sourceUrl = url,
+            contentHash = "hash-$url",
+            fetchedAt = lastSeenAt.minus(Duration.ofDays(400)),
+            lastSeenAt = lastSeenAt,
+            failedAt = failedAt,
+            failureReason = failedAt?.let { "HTTP 404" }
+        )
+    )
 
     private fun storingService(): ImageCacheService {
         val properties = ImageProperties(fetchEnabled = true)

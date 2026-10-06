@@ -79,14 +79,19 @@ interface CachedImageRepository : CoroutineCrudRepository<CachedImageEntity, Lon
      * Rows worth asking about again: a success old enough to re-check, or a failure past its cooldown.
      *
      * A deleted row is never a candidate. That is what stops a takedown being undone by the next pass.
+     *
+     * **A success is aged by `last_seen_at`, the last time the host was asked, not by `fetched_at`.**
+     * A `304` moves only the former, so aging by the download left the oldest 200 rows due on every
+     * pass, five minutes apart, and the rows behind them never came up (#2785). The success branch
+     * also skips a failed row, which waits out the retry cooldown even if it once downloaded.
      */
     @Query(
         """
         SELECT * FROM $EVENTS_SCHEMA.cached_image
         WHERE deleted_at IS NULL
-          AND ((fetched_at IS NOT NULL AND fetched_at < :refreshBefore)
+          AND ((fetched_at IS NOT NULL AND failed_at IS NULL AND last_seen_at < :refreshBefore)
             OR (failed_at IS NOT NULL AND failed_at < :retryBefore))
-        ORDER BY COALESCE(fetched_at, failed_at)
+        ORDER BY last_seen_at
         LIMIT :limit
         """
     )

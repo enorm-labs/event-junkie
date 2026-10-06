@@ -26,7 +26,9 @@ data class CachedImageEntity(
     val intrinsicHeight: Int? = null,
     val etag: String? = null,
     val lastModified: String? = null,
+    /** When the bytes were last downloaded. A `304` leaves it alone. */
     val fetchedAt: Instant? = null,
+    /** When the host was last asked, whatever it answered. The refresh clock (#2785). */
     val lastSeenAt: Instant? = null,
     val failedAt: Instant? = null,
     /** With [failedAt] null, the derivative was blank and the site shows no image (see #2669). */
