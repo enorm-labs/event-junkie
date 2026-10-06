@@ -187,12 +187,37 @@
 ###   Kühlspot Social Club           — https://kuehlspot.com/
 ###   L.U.X                          — https://www.lux-berlin.net/
 ###   LabSaal                        — https://labsaal.de/events/
+###   Lauschangriff                  — https://ra.co/clubs/22306
 ###   Little Stage Bar               — https://littlestageclubneukoelln.wordpress.com/
+###   Lokschuppen Berlin             — https://ra.co/clubs/17071
+###   M-BIA                          — http://www.m-bia.de
 ###   Mad Monkey Room                — https://t.rausgegangen.de/tickets/shop/mad-monkey-2
+###   Marmorbar                      — https://www.marmorbar.com/en/event-list
+###   Maschinenhaus                  — https://www.kesselhaus.net/en/calendar
+###   Mein Freund Harvey             — https://www.berlin.de/en/tickets/search/venues/mein-freund-harvey-36688615-0905-494d-9c11-7de870337263/
+###   Mena Berlin                    — https://ra.co/clubs/217616
+###   Minimal Bar                    — https://ra.co/clubs/23370
+###   Mokum                          — https://ra.co/clubs/158661
+###   Mom's Limousine Service        — https://linktr.ee/momslimousineservice
+###   Musikbrauerei                  — https://musikbrauerei.com/events/
+###   Orangerie Neukölln             — https://www.orangerie-nk.de/?lang=de#programm
 ###   ORWOhaus                       — https://www.orwohaus.de/veranstaltungen/
+###   OXI                            — https://ra.co/clubs/184646
+###   Paloma                         — https://www.palomabar.de/programm.php
+###   Passionskirche                 — https://halle-luja.berlin/kommende-events
+###   Pastiche                       — https://pasticheinternational.com/programme-1
 ###   Pfefferberg Haus 13            — https://haus13.pfefferwerk.de/veranstaltungen/
+###   Phantom Bar                    — https://ra.co/clubs/257171
+###   PKH Warehouse                  — https://www.pkh.events/
+###   Prachtwerk                     — https://www.prachtwerkberlin.com/live-music-events
+###   Prince Charles                 — https://ra.co/clubs/52395
+###   Prisma                         — https://ra.co/clubs/233209
 ###   Promenadeneck                  — https://promenaden-eck-berlin.de/
+###   Revier Südost                  — https://www.reviersuedost.de/programm
 ###   Richten25                      — https://richten25.de/events
+###   Rosie's Bar                    — https://ra.co/promoters/181571
+###   RSO.Berlin                     — https://ra.co/clubs/185172
+###   SaliGari Bar                   — https://www.yesticket.org/venue/Saligari-Bar/en/
 ###   Showfenster Theater            — https://www.showfenster-show.de/übersichtskalender
 ###   Slaughterhouse                 — https://slaughterhouse-berlin.de/konzerte/
 ###   Speiches Rock- und Blueskneipe — http://www.rockradio.de/rr_termine_speiche_werbung_termine_raumerstr.php
@@ -5246,6 +5271,39 @@ Accept: application/json
 %}
 
 ### ————————————————————————————————————————————————————————————
+### Lauschangriff (Rigaer Straße 103, Berlin-Friedrichshain — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create Lauschangriff venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Lauschangriff",
+    "address": "Rigaer Straße 103",
+    "city": "Berlin",
+    "postalCode": "10247",
+    "district": "friedrichshain",
+    "latitude": 52.518456,
+    "longitude": 13.455321,
+    "websiteUrl": "http://www.lauschangriff-berlin.de",
+    "description": "An absinthe bar on Rigaer Straße in Friedrichshain, where weekly parties run from reggae and dancehall to drum and bass and techno.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Die Absinthbar in der Friedrichshainer Rigaer Straße lädt jede Woche zu Partys zwischen Reggae, Dancehall, Drum and Bass und Techno.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["bar", "club"],
+    "capacity": 200,
+    "programmeUrl": "https://ra.co/clubs/22306",
+    "reviewedAt": "2026-10-07T12:38:29Z"
+}
+
+> {%
+    client.test("Lauschangriff venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
 ### Lido (Cuvrystr. 7, Berlin-Kreuzberg — on the Spree)
 ### ————————————————————————————————————————————————————————————
 
@@ -5405,6 +5463,70 @@ Accept: application/json
 %}
 
 ### ————————————————————————————————————————————————————————————
+### Lokschuppen Berlin (Revaler Straße 99, Berlin-Friedrichshain — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create Lokschuppen Berlin venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Lokschuppen Berlin",
+    "address": "Revaler Straße 99",
+    "city": "Berlin",
+    "postalCode": "10245",
+    "district": "friedrichshain",
+    "latitude": 52.507464,
+    "longitude": 13.454618,
+    "websiteUrl": "https://lokschuppen-berlin.com/",
+    "description": "The techno club on the RAW grounds in Friedrichshain was long known as Suicide Circus, and now runs house, techno and hard techno nights on an indoor floor and an open-air area.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Lange hieß der Techno-Club auf dem RAW-Gelände in Friedrichshain Suicide Circus; heute laufen dort House-, Techno- und Hardtechno-Nächte auf einem Innenfloor und einer Open-Air-Fläche.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["club", "open-air"],
+    "programmeUrl": "https://ra.co/clubs/17071",
+    "reviewedAt": "2026-10-07T12:38:29Z"
+}
+
+> {%
+    client.test("Lokschuppen Berlin venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
+### M-BIA (Dircksenstraße 123, Berlin-Mitte — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create M-BIA venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "M-BIA",
+    "address": "Dircksenstraße 123",
+    "city": "Berlin",
+    "postalCode": "10178",
+    "district": "mitte",
+    "latitude": 52.523133,
+    "longitude": 13.408078,
+    "websiteUrl": "http://www.m-bia.de",
+    "description": "A club for electronic music on Dircksenstraße in central Mitte, near Alexanderplatz, with weekend nights that run from psytrance and goa to techno, bass and Halloween specials.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Der Club für elektronische Musik liegt in der Dircksenstraße mitten in Berlin-Mitte und füllt die Wochenenden mit Nächten zwischen Goa, Psytrance, Techno und Bass.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["club"],
+    "programmeUrl": "http://www.m-bia.de",
+    "reviewedAt": "2026-10-07T12:38:29Z"
+}
+
+> {%
+    client.test("M-BIA venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
 ### MAAYA (Revaler Str. 99, Berlin-Friedrichshain — RAW-Gelände)
 ### ————————————————————————————————————————————————————————————
 
@@ -5559,6 +5681,72 @@ Accept: application/json
 > {%
     client.test("Madame Claude import triggered", function () {
         client.assert(response.status === 202, "Expected 202 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
+### Marmorbar (Vor dem Schlesischen Tor 3, Berlin-Kreuzberg — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create Marmorbar venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Marmorbar",
+    "address": "Vor dem Schlesischen Tor 3",
+    "city": "Berlin",
+    "postalCode": "10997",
+    "district": "kreuzberg",
+    "latitude": 52.4972,
+    "longitude": 13.449385,
+    "websiteUrl": "https://www.marmorbar.com/en",
+    "description": "A bar and gallery in the brick former wheelhouse of a royal waterways office at the Schlesisches Tor, pairing cocktails with DJ nights, live acts and exhibitions on a Funktion-One sound system.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Bar und Galerie im Backsteinbau des einstigen Steuerhauses einer königlichen Wasserbauinspektion am Schlesischen Tor, mit Cocktails, DJ-Nächten, Live-Auftritten und Ausstellungen über eine Funktion-One-Anlage.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["bar", "gallery", "club"],
+    "capacity": 400,
+    "programmeUrl": "https://www.marmorbar.com/en/event-list",
+    "reviewedAt": "2026-10-07T12:38:29Z"
+}
+
+> {%
+    client.test("Marmorbar venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
+### Maschinenhaus (Knaackstraße 97, Berlin-Prenzlauer Berg — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create Maschinenhaus venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Maschinenhaus",
+    "address": "Knaackstraße 97",
+    "city": "Berlin",
+    "postalCode": "10435",
+    "district": "prenzlauer-berg",
+    "latitude": 52.540383,
+    "longitude": 13.414097,
+    "websiteUrl": "https://www.kesselhaus.net/",
+    "description": "The former machine house of the Schultheiss brewery, now part of the Kulturbrauerei, is the small sister stage of the Kesselhaus, with room for 200 standing for concerts by touring bands and songwriters.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Im einstigen Maschinenhaus der Schultheiss-Brauerei, heute Teil der Kulturbrauerei, liegt die kleine Schwesterbühne des Kesselhauses, auf der bis zu 200 Gäste Konzerte von Bands und Liedermachern erleben.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["live-venue"],
+    "capacity": 200,
+    "programmeUrl": "https://www.kesselhaus.net/en/calendar",
+    "reviewedAt": "2026-10-07T12:38:29Z"
+}
+
+> {%
+    client.test("Maschinenhaus venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
     });
 %}
 
@@ -5819,6 +6007,69 @@ Accept: application/json
 %}
 
 ### ————————————————————————————————————————————————————————————
+### Mein Freund Harvey (Kulmer Straße 20A, Berlin-Schöneberg — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create Mein Freund Harvey venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Mein Freund Harvey",
+    "address": "Kulmer Straße 20A",
+    "city": "Berlin",
+    "postalCode": "10783",
+    "district": "schoeneberg",
+    "latitude": 52.492209,
+    "longitude": 13.363616,
+    "websiteUrl": "https://www.meinfreundharvey.com/",
+    "description": "A retro cocktail bar near Kleistpark styled after the 1930s, where stand-up comedy in English fills the week, from open mics on Tuesdays and Fridays to longer professional sets on Saturdays.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Eine Cocktailbar im Stil der 1930er-Jahre an der Kulmer Straße, deren Bühne der Stand-up-Comedy gehört: dienstags und freitags offene Mikrofone, samstags längere Auftritte erfahrener Comedians, meist auf Englisch.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["bar"],
+    "programmeUrl": "https://www.berlin.de/en/tickets/search/venues/mein-freund-harvey-36688615-0905-494d-9c11-7de870337263/",
+    "reviewedAt": "2026-10-07T12:38:29Z"
+}
+
+> {%
+    client.test("Mein Freund Harvey venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
+### Mena Berlin (Skalitzer Straße 114, Berlin-Kreuzberg — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create Mena Berlin venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Mena Berlin",
+    "address": "Skalitzer Straße 114",
+    "city": "Berlin",
+    "postalCode": "10999",
+    "district": "kreuzberg",
+    "latitude": 52.499312,
+    "longitude": 13.424285,
+    "description": "A bar hidden in a courtyard behind Skalitzer Straße, half bar and half dance floor, where local and international DJs play funky house, techno, trance and disco into the night.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Eine Bar in einem Kreuzberger Hinterhof an der Skalitzer Straße, zur Hälfte Tresen und zur Hälfte Tanzfläche, mit lokalen und internationalen DJs, die House, Techno, Trance und Disco auflegen.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["bar", "club"],
+    "programmeUrl": "https://ra.co/clubs/217616",
+    "reviewedAt": "2026-10-07T12:38:29Z"
+}
+
+> {%
+    client.test("Mena Berlin venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
 ### Metropol (Nollendorfplatz 5, Berlin-Schöneberg)
 ### ————————————————————————————————————————————————————————————
 
@@ -6010,6 +6261,38 @@ Accept: application/json
 %}
 
 ### ————————————————————————————————————————————————————————————
+### Minimal Bar (Rigaer Straße 31, Berlin-Friedrichshain — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create Minimal Bar venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Minimal Bar",
+    "address": "Rigaer Straße 31",
+    "city": "Berlin",
+    "postalCode": "10247",
+    "district": "friedrichshain",
+    "latitude": 52.516426,
+    "longitude": 13.464072,
+    "websiteUrl": "https://birgit.club/minimal",
+    "description": "A bar on Rigaer Straße in northern Friedrichshain with a DJ every night of the week, mostly Berlin residents playing minimal and deep house, and table tennis in the back rooms.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Eine Bar an der Rigaer Straße im nördlichen Friedrichshain, in der jeden Abend ein DJ auflegt, meist Minimal und Deep House von Berliner Künstlern, dazu Tischtennis in den Nebenräumen.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["bar", "club"],
+    "programmeUrl": "https://ra.co/clubs/23370",
+    "reviewedAt": "2026-10-07T12:38:29Z"
+}
+
+> {%
+    client.test("Minimal Bar venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
 ### Modus Berlin (Ritterstr. 26, Berlin-Kreuzberg)
 ### ————————————————————————————————————————————————————————————
 
@@ -6069,6 +6352,69 @@ Accept: application/json
 > {%
     client.test("Modus Berlin import triggered", function () {
         client.assert(response.status === 202, "Expected 202 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
+### Mokum (Danziger Straße 56, Berlin-Prenzlauer Berg — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create Mokum venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Mokum",
+    "address": "Danziger Straße 56",
+    "city": "Berlin",
+    "postalCode": "10435",
+    "district": "prenzlauer-berg",
+    "latitude": 52.539423,
+    "longitude": 13.420879,
+    "description": "A Dutch-run old-school rock bar on Danziger Straße with pool tables and pinball, where DJs play indie, punk and alternative rock from Thursday to Saturday and the floor fills at weekends.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Eine von einem Niederländer geführte Rockkneipe an der Danziger Straße mit Billardtischen und Flippern, in der donnerstags bis samstags DJs Indie, Punk und Alternative Rock auflegen.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["bar"],
+    "programmeUrl": "https://ra.co/clubs/158661",
+    "reviewedAt": "2026-10-07T12:38:29Z"
+}
+
+> {%
+    client.test("Mokum venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
+### Mom's Limousine Service (Georgenstraße 184, Berlin-Mitte — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create Mom's Limousine Service venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Mom's Limousine Service",
+    "address": "Georgenstraße 184",
+    "city": "Berlin",
+    "postalCode": "10117",
+    "district": "mitte",
+    "latitude": 52.520289,
+    "longitude": 13.392823,
+    "websiteUrl": "https://linktr.ee/momslimousineservice",
+    "description": "A red-lit bar, social club and creative space on Georgenstraße in Mitte, where DJs play disco and house strictly from vinyl, with a weekly Wednesday vinyl night and pop-up dinners.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Eine rot beleuchtete Bar in der Georgenstraße in Mitte, die sich als Social Club und Kreativraum versteht, mit Disco und House von Vinyl, einem wöchentlichen Plattenabend am Mittwoch und Pop-up-Dinners.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["bar"],
+    "programmeUrl": "https://linktr.ee/momslimousineservice",
+    "reviewedAt": "2026-10-07T12:38:29Z"
+}
+
+> {%
+    client.test("Mom's Limousine Service venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
     });
 %}
 
@@ -6327,6 +6673,39 @@ Accept: application/json
 %}
 
 ### ————————————————————————————————————————————————————————————
+### Musikbrauerei (Greifswalder Str. 23a, Berlin-Prenzlauer Berg — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create Musikbrauerei venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Musikbrauerei",
+    "address": "Greifswalder Str. 23a",
+    "city": "Berlin",
+    "postalCode": "10405",
+    "district": "prenzlauer-berg",
+    "latitude": 52.531205,
+    "longitude": 13.427823,
+    "websiteUrl": "https://musikbrauerei.com/",
+    "description": "A brick brewery built for the Schneider family from 1892, now home to the UFO Sound Studios, with concerts in its recording hall and columned hall.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Die ehemalige Schneider-Brauerei in Prenzlauer Berg, ab 1892 errichtet, beherbergt heute die UFO Sound Studios und bietet Konzerte und Partys in Aufnahmehalle und Säulenhalle.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["live-venue"],
+    "capacity": 180,
+    "programmeUrl": "https://musikbrauerei.com/events/",
+    "reviewedAt": "2026-10-07T12:38:29Z"
+}
+
+> {%
+    client.test("Musikbrauerei venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
 ### Neue Zukunft (Alt-Stralau 68, Berlin-Friedrichshain — Stralau peninsula)
 ### ————————————————————————————————————————————————————————————
 
@@ -6453,6 +6832,38 @@ Accept: application/json
 %}
 
 ### ————————————————————————————————————————————————————————————
+### Orangerie Neukölln (Schierker Str. 8, Berlin-Neukölln — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create Orangerie Neukölln venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Orangerie Neukölln",
+    "address": "Schierker Str. 8",
+    "city": "Berlin",
+    "postalCode": "12051",
+    "district": "neukoelln",
+    "latitude": 52.470803,
+    "longitude": 13.43686,
+    "websiteUrl": "https://www.orangerie-nk.de/",
+    "description": "A café and bar in the neo-baroque orangery of Körnerpark, a sunken park laid out in a former gravel pit, with live bands on Parkside Sessions nights and free DJ evenings.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "In der neobarocken Orangerie des Körnerparks, 1912 bis 1916 nach Plänen von Reinhold Kiehl entstanden, liegt ein Café mit Bar, das Livebands bei den Parkside Sessions und DJ-Abende bei freiem Eintritt bietet.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["bar"],
+    "programmeUrl": "https://www.orangerie-nk.de/?lang=de#programm",
+    "reviewedAt": "2026-10-07T12:38:29Z"
+}
+
+> {%
+    client.test("Orangerie Neukölln venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
 ### Orania.Berlin (Oranienstr. 40, Berlin-Kreuzberg — the hotel bar's stage)
 ### ————————————————————————————————————————————————————————————
 
@@ -6543,6 +6954,69 @@ Content-Type: application/json
 
 > {%
     client.test("ORWOhaus venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
+### OXI (Wiesenweg 1-4, Berlin-Lichtenberg — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create OXI venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "OXI",
+    "address": "Wiesenweg 1-4",
+    "city": "Berlin",
+    "postalCode": "10365",
+    "district": "lichtenberg",
+    "latitude": 52.507501,
+    "longitude": 13.474984,
+    "description": "A techno and house club open since November 2021 in the brick building that once housed Kosmonaut and Polygon, with two indoor dance floors and an open-air garden, OXI Garten.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Seit November 2021 läuft in dem Backsteinbau am Wiesenweg, wo früher Kosmonaut und Polygon feierten, ein Club für Techno und House mit zwei Floors drinnen und dem Open-Air-Garten OXI Garten.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["club", "open-air"],
+    "programmeUrl": "https://ra.co/clubs/184646",
+    "reviewedAt": "2026-10-07T12:38:29Z"
+}
+
+> {%
+    client.test("OXI venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
+### Paloma (Skalitzer Straße 135, Berlin-Kreuzberg — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create Paloma venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Paloma",
+    "address": "Skalitzer Straße 135",
+    "city": "Berlin",
+    "postalCode": "10999",
+    "district": "kreuzberg",
+    "latitude": 52.499318,
+    "longitude": 13.418987,
+    "websiteUrl": "https://www.palomabar.de/",
+    "description": "A club bar at Kottbusser Tor with a bar and a dance floor and DJ nights from Thursday to Sunday.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Die Clubbar am Kottbusser Tor hat eine Bar und eine Tanzfläche und wird von Donnerstag bis Sonntag mit DJs bespielt.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["bar", "club"],
+    "programmeUrl": "https://www.palomabar.de/programm.php",
+    "reviewedAt": "2026-10-07T12:38:29Z"
+}
+
+> {%
+    client.test("Paloma venue created", function () {
         client.assert(response.status === 201, "Expected 201 but got " + response.status);
     });
 %}
@@ -6739,6 +7213,71 @@ Accept: application/json
 %}
 
 ### ————————————————————————————————————————————————————————————
+### Passionskirche (Marheinekeplatz 1, Berlin-Kreuzberg — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create Passionskirche venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Passionskirche",
+    "address": "Marheinekeplatz 1",
+    "city": "Berlin",
+    "postalCode": "10961",
+    "district": "kreuzberg",
+    "latitude": 52.489493,
+    "longitude": 13.397175,
+    "websiteUrl": "https://halle-luja.berlin/",
+    "description": "A neo-Romanesque brick church on Marheinekeplatz, built 1905 to 1908 to plans by Theodor Astfalck, used for concerts since 1974, today rock, folk, jazz and gospel on a stage in its former altar area.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Die neuromanische Backsteinkirche am Marheinekeplatz, 1905 bis 1908 von Theodor Astfalck erbaut, dient seit 1974 als Konzertort und heute mit umgebautem Altarraum als Konzertsaal für Rock, Folk, Jazz und Gospel, betreut von Halle-Luja Kulturmanagement.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["live-venue"],
+    "capacity": 720,
+    "programmeUrl": "https://halle-luja.berlin/kommende-events",
+    "reviewedAt": "2026-10-07T12:38:29Z"
+}
+
+> {%
+    client.test("Passionskirche venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
+### Pastiche (Weserstraße 46, Berlin-Neukölln — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create Pastiche venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Pastiche",
+    "address": "Weserstraße 46",
+    "city": "Berlin",
+    "postalCode": "12045",
+    "district": "neukoelln",
+    "latitude": 52.484304,
+    "longitude": 13.438327,
+    "websiteUrl": "https://pasticheinternational.com/",
+    "description": "A hi-fi listening room in Neukölln that is also a record shop, day café and record label, hosting curated listening sessions, live sets, workshops, talks, quiz nights and record fairs with DJs.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Ein Hi-Fi-Hörraum an der Weserstraße, zugleich Plattenladen, Tagescafé und Label, mit kuratierten Listening-Sessions, Live-Sets, Workshops, Buchgesprächen, Quizabenden und Plattenbörsen samt DJ-Sets.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["bar", "gallery"],
+    "programmeUrl": "https://pasticheinternational.com/programme-1",
+    "reviewedAt": "2026-10-07T12:38:29Z"
+}
+
+> {%
+    client.test("Pastiche venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
 ### Pfefferberg Haus 13 (Schönhauser Allee 176, Berlin-Prenzlauer Berg — not imported, #2766)
 ### ————————————————————————————————————————————————————————————
 
@@ -6767,6 +7306,164 @@ Content-Type: application/json
 
 > {%
     client.test("Pfefferberg Haus 13 venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
+### Phantom Bar (Torstraße 231, Berlin-Mitte — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create Phantom Bar venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Phantom Bar",
+    "address": "Torstraße 230",
+    "city": "Berlin",
+    "postalCode": "10115",
+    "district": "mitte",
+    "latitude": 52.527102,
+    "longitude": 13.387899,
+    "description": "A bar in an old townhouse on Torstraße, with stucco ceilings, a small dancefloor and a courtyard bar in summer, hosting house and techno DJ nights.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Eine Bar in einem bröckelnden Altbau an der Torstraße, mit Stuckdecken, kleiner Tanzfläche, Hofbar im Sommer, wo DJs House und Techno auflegen.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["club", "bar"],
+    "programmeUrl": "https://ra.co/clubs/257171",
+    "reviewedAt": "2026-10-07T12:38:29Z"
+}
+
+> {%
+    client.test("Phantom Bar venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
+### PKH Warehouse (Dorotheenstraße 30, Berlin-Mitte — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create PKH Warehouse venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "PKH Warehouse",
+    "address": "Dorotheenstraße 30",
+    "city": "Berlin",
+    "postalCode": "10117",
+    "district": "mitte",
+    "latitude": 52.51921,
+    "longitude": 13.390829,
+    "websiteUrl": "https://www.pkh.events/",
+    "description": "A club near Friedrichstraße station that opened in October 2026 across two levels and five areas of one building, running techno, trance and pop nights from 22:00 to 08:00 on weekends.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Ein Club nahe dem Bahnhof Friedrichstraße, im Oktober 2026 eröffnet, mit zwei Ebenen und fünf Bereichen, wo freitags und samstags von 22 bis 8 Uhr Techno-, Trance- und Popnächte laufen.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["club"],
+    "programmeUrl": "https://www.pkh.events/",
+    "reviewedAt": "2026-10-07T12:38:29Z"
+}
+
+> {%
+    client.test("PKH Warehouse venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
+### Prachtwerk (Ganghoferstraße 2, Berlin-Neukölln — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create Prachtwerk venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Prachtwerk",
+    "address": "Ganghoferstraße 2",
+    "city": "Berlin",
+    "postalCode": "12043",
+    "district": "neukoelln",
+    "latitude": 52.47907,
+    "longitude": 13.438857,
+    "websiteUrl": "https://www.prachtwerkberlin.com/",
+    "description": "A live music bar and café in Neukölln that stocks coffee, beer and spirits from Berlin producers and puts on concerts almost every evening, with an open stage on Wednesdays.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Eine Livemusikbar mit Café in Neukölln, die Kaffee, Bier und Spirituosen aus Berliner Herstellung ausschenkt und fast jeden Abend Konzerte bietet, mittwochs mit offener Bühne.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["bar", "live-venue"],
+    "programmeUrl": "https://www.prachtwerkberlin.com/live-music-events",
+    "reviewedAt": "2026-10-07T12:38:29Z"
+}
+
+> {%
+    client.test("Prachtwerk venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
+### Prince Charles (Prinzenstraße 85 B, Berlin-Kreuzberg — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create Prince Charles venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Prince Charles",
+    "address": "Prinzenstraße 85 B",
+    "city": "Berlin",
+    "postalCode": "10969",
+    "district": "kreuzberg",
+    "latitude": 52.503361,
+    "longitude": 13.410277,
+    "websiteUrl": "https://princecharlesberlin.com/",
+    "description": "A club and bar at Moritzplatz built into the former staff swimming pool of the Bechstein piano factory, hosting hip-hop and house parties, concerts and open-mic jam sessions.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Club und Bar am Moritzplatz im ehemaligen Mitarbeiterschwimmbad der Klavierfabrik Bechstein, mit Hip-Hop- und House-Partys, Konzerten und offenen Jam-Sessions.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["club", "bar"],
+    "programmeUrl": "https://ra.co/clubs/52395",
+    "reviewedAt": "2026-10-07T12:38:29Z"
+}
+
+> {%
+    client.test("Prince Charles venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
+### Prisma (Brückenstraße 1, Berlin-Mitte — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create Prisma venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Prisma",
+    "address": "Brückenstraße 1",
+    "city": "Berlin",
+    "postalCode": "10179",
+    "district": "mitte",
+    "latitude": 52.511166,
+    "longitude": 13.416713,
+    "description": "A bar and small club on a half-level inside the KitKatClub building on Brückenstraße, with its own compact dancefloor, DJ nights, afterhours and the weekly Klubkneipe series of house sets and comedy.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Bar und kleiner Club auf einem Halbgeschoss im Gebäude des KitKatClub an der Brückenstraße, mit eigener kleiner Tanzfläche, DJ-Abenden, Afterhours und der Reihe Klubkneipe mit House-Sets und Comedy.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["bar", "club"],
+    "programmeUrl": "https://ra.co/clubs/233209",
+    "reviewedAt": "2026-10-07T12:38:29Z"
+}
+
+> {%
+    client.test("Prisma venue created", function () {
         client.assert(response.status === 201, "Expected 201 but got " + response.status);
     });
 %}
@@ -7125,6 +7822,38 @@ Accept: application/json
 %}
 
 ### ————————————————————————————————————————————————————————————
+### Revier Südost (Schnellerstraße 137, Berlin-Treptow — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create Revier Südost venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Revier Südost",
+    "address": "Schnellerstraße 137",
+    "city": "Berlin",
+    "postalCode": "12439",
+    "district": "treptow",
+    "latitude": 52.459947,
+    "longitude": 13.505291,
+    "websiteUrl": "https://www.reviersuedost.de/",
+    "description": "A cultural site on the grounds of the former Bärenquell brewery in Niederschöneweide, empty for almost 25 years, now hosting a beer garden, markets, concerts, film nights, theatre, workshops and parties.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Kulturgelände auf dem Areal der früheren Bärenquell-Brauerei in Niederschöneweide, das fast 25 Jahre brachlag und heute Biergarten, Märkte, Konzerte, Filmabende, Theater, Workshops und Partys beherbergt.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["cultural-centre", "open-air"],
+    "programmeUrl": "https://www.reviersuedost.de/programm",
+    "reviewedAt": "2026-10-07T12:38:29Z"
+}
+
+> {%
+    client.test("Revier Südost venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
 ### Richten25 (Gerichtstraße 25, Berlin-Wedding — not imported, #2766)
 ### ————————————————————————————————————————————————————————————
 
@@ -7343,6 +8072,101 @@ Accept: application/json
 > {%
     client.test("ROSA import triggered", function () {
         client.assert(response.status === 202, "Expected 202 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
+### Rosie's Bar (Weinbergsweg 1a, Berlin-Mitte — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create Rosie's Bar venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Rosie's Bar",
+    "address": "Weinbergsweg 1a",
+    "city": "Berlin",
+    "postalCode": "10119",
+    "district": "mitte",
+    "latitude": 52.530124,
+    "longitude": 13.401911,
+    "websiteUrl": "https://circus-berlin.de/hostel/eat-and-drink/",
+    "description": "The basement bar of The Circus Hostel at Rosenthaler Platz, pouring the hostel's own craft beer and running karaoke alongside DJ sets and club showcases.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Kellerbar unter dem Circus Hostel am Rosenthaler Platz, mit hauseigenem Craft-Bier vom Hahn, Karaoke, DJ-Sets und Showcases von Clubkollektiven.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["bar"],
+    "programmeUrl": "https://ra.co/promoters/181571",
+    "reviewedAt": "2026-10-07T12:38:29Z"
+}
+
+> {%
+    client.test("Rosie's Bar venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
+### RSO.Berlin (Schnellerstraße 137, Berlin-Treptow — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create RSO.Berlin venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "RSO.Berlin",
+    "address": "Schnellerstraße 137",
+    "city": "Berlin",
+    "postalCode": "12439",
+    "district": "treptow",
+    "latitude": 52.459947,
+    "longitude": 13.505291,
+    "websiteUrl": "https://rso.berlin/",
+    "description": "A techno club opened in 2021 by the former Griessmühle team in the old Bärenquell brewery, with two warehouse floors, an outdoor floor in summer and a custom Kirsch Audio sound system.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Techno-Club, 2021 vom früheren Team der Griessmühle in der alten Bärenquell-Brauerei eröffnet, mit zwei Hallen-Floors, einem sommerlichen Außen-Floor und einer eigens gebauten Kirsch-Audio-Anlage.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["club", "open-air"],
+    "programmeUrl": "https://ra.co/clubs/185172",
+    "reviewedAt": "2026-10-07T12:38:29Z"
+}
+
+> {%
+    client.test("RSO.Berlin venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
+### SaliGari Bar (Simplonstraße 23, Berlin-Friedrichshain — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create SaliGari Bar venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "SaliGari Bar",
+    "address": "Simplonstraße 23",
+    "city": "Berlin",
+    "postalCode": "10245",
+    "district": "friedrichshain",
+    "latitude": 52.508358,
+    "longitude": 13.459251,
+    "description": "A small cocktail bar on Simplonstraße hosting English-language stand-up nights, improv jams and intimate blues and acoustic concerts.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Kleine Cocktailbar in der Simplonstraße mit englischsprachiger Stand-up-Comedy, Improv-Jams und kleinen Blues- und Akustikkonzerten.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["bar"],
+    "programmeUrl": "https://www.yesticket.org/venue/Saligari-Bar/en/",
+    "reviewedAt": "2026-10-07T12:38:29Z"
+}
+
+> {%
+    client.test("SaliGari Bar venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
     });
 %}
 
