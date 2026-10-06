@@ -16,8 +16,8 @@ import de.norm.events.common.foldTypedApostrophes
 // matching would merge distinct promoters.
 //
 // At least one word is always kept, and never a residue nobody would search for: "Records"
-// keeps its word, "36 Concerts" does not collapse to "36", "HB Music" and "MFP Concerts" keep
-// their descriptor and capitals (#1361). A legal form still comes off an initialism ("KKT GmbH"
+// keeps its word, "36 Concerts" does not collapse to "36", "HB Music", "MFP Concerts" and "B&C
+// Productions" keep their descriptor and capitals (#1361, #2757). A legal form still comes off an initialism ("KKT GmbH"
 // is "KKT"). Accepted: a leading descriptor is not stripped, so "Konzertbüro Schoneberg" does
 // not merge with "Schoneberg Konzerte" without a map entry. Artists are not normalized this
 // way; stripping words from band names is unsafe.
@@ -68,8 +68,16 @@ fun canonicalPromoterName(raw: String): String {
 private fun List<String>.isUsableNameWithout(stripped: String): Boolean =
     any { word -> word.any(Char::isLetter) } && !(size == 1 && first().isLoneInitialism() && !stripped.isLegalForm())
 
-/** Up to three capitals and nothing else: "HB", "MFP", "ITD" — an initialism a descriptor belongs to. */
-private fun String.isLoneInitialism(): Boolean = length <= LONE_INITIALISM_MAX_LEN && all(Char::isLetter) && none(Char::isLowerCase)
+/**
+ * Up to three capitals, optionally joined by "&", and nothing else: "HB", "MFP", "B&C" — an
+ * initialism a descriptor belongs to (#2757).
+ */
+private fun String.isLoneInitialism(): Boolean {
+    val parts = split('&')
+    return parts.all { it.isNotEmpty() && it.all(Char::isLetter) } &&
+        parts.sumOf { it.length } <= LONE_INITIALISM_MAX_LEN &&
+        none(Char::isLowerCase)
+}
 
 private const val LONE_INITIALISM_MAX_LEN = 3
 
