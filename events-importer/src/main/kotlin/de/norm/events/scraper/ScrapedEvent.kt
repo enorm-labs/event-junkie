@@ -265,6 +265,8 @@ data class ScrapedEvent(
             id = existing?.id,
             sourceId = existing?.sourceId ?: sourceId,
             createdAt = existing?.createdAt,
+            contentHash = existing?.contentHash,
+            contentChangedAt = existing?.contentChangedAt,
             venueId = venueId,
             room = room,
             eventSourceId = eventSourceId,

@@ -36,7 +36,14 @@ class GaertenDerWeltExhibitionRunUpsertTest {
     private val eventRepository: EventRepository = mockk(relaxed = true)
     private val clock: Clock = Clock.fixed(Instant.parse("2026-10-04T10:00:00Z"), ZoneOffset.UTC)
     private val importer = GaertenDerWeltWebsiteImporter(htmlFetcher)
-    private val upsert = EventUpsertService(eventRepository, mockk<AssociationSyncService>(relaxed = true), clock, PerformerTyping(mockk(), eventRepository))
+    private val upsert =
+        EventUpsertService(
+            eventRepository,
+            mockk<AssociationSyncService>(relaxed = true),
+            clock,
+            PerformerTyping(mockk(), eventRepository),
+            mockk(relaxed = true)
+        )
 
     private val eventSourceId = 1L
     private val runId = "gaerten_der_welt:zwischen-himmel-und-erde-ausstellung"

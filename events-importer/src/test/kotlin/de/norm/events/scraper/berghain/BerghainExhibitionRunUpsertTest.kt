@@ -37,7 +37,14 @@ class BerghainExhibitionRunUpsertTest {
     private val eventRepository: EventRepository = mockk(relaxed = true)
     private val clock: Clock = Clock.fixed(Instant.parse("2026-07-01T12:00:00Z"), ZoneOffset.UTC)
     private val importer = BerghainWebsiteImporter(htmlFetcher, clock)
-    private val upsert = EventUpsertService(eventRepository, mockk<AssociationSyncService>(relaxed = true), clock, PerformerTyping(mockk(), eventRepository))
+    private val upsert =
+        EventUpsertService(
+            eventRepository,
+            mockk<AssociationSyncService>(relaxed = true),
+            clock,
+            PerformerTyping(mockk(), eventRepository),
+            mockk(relaxed = true)
+        )
 
     private val sourceUrl = "https://www.berghain.berlin/de/program/"
     private val eventSourceId = 1L

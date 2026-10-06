@@ -1,5 +1,6 @@
 package de.norm.events.scraper
 
+import de.norm.events.event.EventContentStamp
 import de.norm.events.event.EventEntity
 import de.norm.events.event.EventRepository
 import de.norm.events.event.PinnedField
@@ -29,7 +30,8 @@ class EventUpsertService(
      * hours late and out of step with the BFF (#299).
      */
     private val clock: Clock = Clock.system(BERLIN),
-    private val performerTyping: PerformerTyping
+    private val performerTyping: PerformerTyping,
+    private val contentStamp: EventContentStamp
 ) {
     private val logger = KotlinLogging.logger {}
 
@@ -157,6 +159,9 @@ class EventUpsertService(
             }
 
         val associations = associationSyncService.resolveAndSyncAssociations(savedEvents, scrapedEvents)
+        // After the join tables, so the lineup is hashed as stored (#2768).
+        val contentChanged = contentStamp.restamp(savedEvents)
+        if (contentChanged > 0) logger.info { "Moved the content stamp of $contentChanged event(s) on event source $eventSourceId" }
         val pinsKept = columnPinsKept + associations.pinsKept
         if (pinsKept > 0) logger.info { "Kept $pinsKept pinned field(s) the source would have changed on event source $eventSourceId" }
 

@@ -173,6 +173,8 @@ CREATE TABLE events.event (
     subtitle_language text,
     pinned_fields text[] DEFAULT '{}'::text[] NOT NULL,
     description_alt_refused_hash text,
+    content_hash text,
+    content_changed_at timestamp with time zone,
     CONSTRAINT event_description_alt_complete CHECK ((((description_alt IS NULL) AND (description_alt_language IS NULL) AND (description_alt_origin IS NULL)) OR ((description_alt IS NOT NULL) AND (description_alt_language IS NOT NULL) AND (description_alt_origin IS NOT NULL)))),
     CONSTRAINT event_description_alt_language_valid CHECK (((description_alt_language IS NULL) OR (description_alt_language = ANY (ARRAY['de'::text, 'en'::text])))),
     CONSTRAINT event_description_alt_origin_valid CHECK (((description_alt_origin IS NULL) OR (description_alt_origin = ANY (ARRAY['PUBLISHER'::text, 'MACHINE'::text])))),
