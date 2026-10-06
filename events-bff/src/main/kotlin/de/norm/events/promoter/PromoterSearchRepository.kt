@@ -1,6 +1,7 @@
 package de.norm.events.promoter
 
 import de.norm.events.EVENTS_SCHEMA
+import de.norm.events.common.NameListOrder
 import de.norm.events.common.NextThirtyDays
 import de.norm.events.common.TextSearch
 import de.norm.events.common.countQuery
@@ -38,6 +39,8 @@ data class PromoterListPage(
 class PromoterSearchRepository(
     private val databaseClient: DatabaseClient
 ) {
+    private val order = NameListOrder("p.name", SORT_COLUMNS, TIEBREAKER)
+
     suspend fun search(
         query: String?,
         now: LocalDateTime,
@@ -72,7 +75,7 @@ class PromoterSearchRepository(
             databaseClient
                 .sql(
                     "SELECT p.id, ($UPCOMING_COUNT) AS upcoming, ($NEXT_30_DAYS_COUNT) AS next30 FROM $EVENTS_SCHEMA.promoter p $where " +
-                        "${orderBy(pageable, term, bySimilarity)} LIMIT :limit OFFSET :offset"
+                        "${order.clause(pageable, term, bySimilarity)} LIMIT :limit OFFSET :offset"
                 ).bindTerm(term, bySimilarity)
                 .bindAll(NextThirtyDays.params(now))
                 .bind("today", now.toLocalDate())
@@ -98,23 +101,6 @@ class PromoterSearchRepository(
 
     private fun DatabaseClient.GenericExecuteSpec.bindAll(params: Map<String, Any>): DatabaseClient.GenericExecuteSpec =
         params.entries.fold(this) { spec, (key, value) -> spec.bind(key, value) }
-
-    /**
-     * Whitelists the sort properties to known expressions. Without a sort, a search puts the closest
-     * matches first and the list is by name; a chosen sort, A–Z included, is never reordered by relevance.
-     */
-    private fun orderBy(
-        pageable: Pageable,
-        term: String?,
-        bySimilarity: Boolean
-    ): String {
-        val clauses =
-            pageable.sort.toList().mapNotNull { order ->
-                SORT_COLUMNS[order.property]?.let { column -> "$column ${if (order.isAscending) "ASC" else "DESC"}" }
-            }
-        val rank = TextSearch.rank("p.name", bySimilarity).takeIf { term != null && clauses.isEmpty() }
-        return "ORDER BY ${(listOfNotNull(rank) + clauses + TIEBREAKER).joinToString(", ")}"
-    }
 
     companion object {
         private const val UPCOMING_COUNT =
