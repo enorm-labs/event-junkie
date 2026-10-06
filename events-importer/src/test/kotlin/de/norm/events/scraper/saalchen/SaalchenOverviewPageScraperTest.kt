@@ -41,8 +41,8 @@ class SaalchenOverviewPageScraperTest {
 
     @Test
     fun `keeps only the rows staged at this venue`() {
-        // The calendar carries 13 rows across Säälchen, Holzmarkt 25 and the Marktplatz.
-        events shouldHaveSize 9
+        // The calendar carries 15 rows across Säälchen, Holzmarkt 25 and the Marktplatz.
+        events shouldHaveSize 11
         events.any { it.title == "Jimmy Sax" } shouldBe true
         events.none { it.title.contains("FLOHMARKT") } shouldBe true
         events.none { it.title.contains("BREAKFAST") } shouldBe true
@@ -158,6 +158,51 @@ class SaalchenOverviewPageScraperTest {
         val jimmySax = event("saalchen:jimmy-sax")
         jimmySax.doorsTime shouldBe LocalTime.of(19, 30)
         jimmySax.startTime shouldBe LocalTime.of(20, 30)
+    }
+
+    @Test
+    fun `takes the ticket link from a bare anchor line in the notice when the row has no button`() {
+        // `Eintritt: 28€ + fees<br><a href="https://www.eventim.de/…">Tickets</a>` (#2792).
+        val girli = event("saalchen:girli")
+        girli.ticketUrl shouldBe
+            "https://www.eventim.de/noapp/event/girli-saeaelchen-21624719/" +
+            "?affiliate=SZ3&utm_campaign=SzeneTickets+GmbH&utm_source=SZ3&utm_medium=dp"
+        // The bare `Tickets` anchor line is metadata, not prose; the Facebook link under it is not a shop.
+        girli.description!!.lines().none { it.trim().equals("Tickets", ignoreCase = true) } shouldBe true
+    }
+
+    @Test
+    fun `takes the ticket link from a labelled notice line, shortener kept as published`() {
+        // `<strong>Tickets:</strong> <a href="https://short-url.cc/1D9pB">…</a>` (#2792).
+        event("saalchen:lyapis-trubetskoy-best-new-songs").ticketUrl shouldBe "https://short-url.cc/1D9pB"
+    }
+
+    @Test
+    fun `ignores links outside the notice's Tickets line and relative ticket links`() {
+        fun rowWithNotice(notice: String): ScrapedEvent? {
+            val escaped =
+                notice
+                    .replace("&", "&amp;")
+                    .replace("<", "&lt;")
+                    .replace(">", "&gt;")
+                    .replace("\"", "&quot;")
+            val html =
+                """
+                <div class="views-row"><article class="node-event">
+                  <h2><a href="/veranstaltung/probe"><span>Probe</span></a></h2>
+                  <span class="location">Säälchen</span>
+                  <var class="atc_date_start">2026-11-14 19:00:00</var>
+                  <var class="atc_description">$escaped</var>
+                </article></div>
+                """.trimIndent()
+            return scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl).singleOrNull()
+        }
+
+        rowWithNotice("<p>Einlass: 19:00<br>Facebook:<br><a href=\"https://www.facebook.com/x\">Facebook</a></p>")
+            .shouldNotBeNull()
+            .ticketUrl
+            .shouldBeNull()
+        rowWithNotice("<p>Einlass: 19:00<br>Tickets: <a href=\"/shop\">Shop</a></p>").shouldNotBeNull().ticketUrl.shouldBeNull()
     }
 
     @Test
