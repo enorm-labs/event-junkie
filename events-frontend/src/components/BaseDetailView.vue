@@ -118,22 +118,25 @@ const { compact } = useCompactView()
 
       <slot />
 
-      <section class="space-y-4">
-        <SectionLabel>{{ t('common.upcomingEvents') }}</SectionLabel>
-        <p v-if="eventsLoading" class="text-body text-muted-foreground">
-          {{ t('common.states.loading') }}
-        </p>
-        <p v-else-if="eventsError" class="text-body text-destructive">{{ eventsError }}</p>
-        <p v-else-if="!events?.content?.length" class="text-body text-muted-foreground">
-          {{ emptyText }}
-        </p>
-        <div v-else-if="compact" :class="CARD_LIST_CLASS">
-          <EventRow v-for="event in events.content" :key="event.slug" :event="event" />
-        </div>
-        <div v-else :class="CARD_GRID_CLASS">
-          <EventCard v-for="event in events.content" :key="event.slug" :event="event" />
-        </div>
-      </section>
+      <!-- `upcoming` replaces the list for an entity whose events we do not import (#2766). -->
+      <slot name="upcoming">
+        <section class="space-y-4">
+          <SectionLabel>{{ t('common.upcomingEvents') }}</SectionLabel>
+          <p v-if="eventsLoading" class="text-body text-muted-foreground">
+            {{ t('common.states.loading') }}
+          </p>
+          <p v-else-if="eventsError" class="text-body text-destructive">{{ eventsError }}</p>
+          <p v-else-if="!events?.content?.length" class="text-body text-muted-foreground">
+            {{ emptyText }}
+          </p>
+          <div v-else-if="compact" :class="CARD_LIST_CLASS">
+            <EventRow v-for="event in events.content" :key="event.slug" :event="event" />
+          </div>
+          <div v-else :class="CARD_GRID_CLASS">
+            <EventCard v-for="event in events.content" :key="event.slug" :event="event" />
+          </div>
+        </section>
+      </slot>
 
       <!-- Collapsed and content-gated: history must not bury the forecast, and the depth
            caveat on an empty list would read as an excuse. -->

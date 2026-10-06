@@ -10,7 +10,11 @@
     "hosts": "Hosts",
     "programmeNote": "Plays and hosts: from its events over the past year and ahead.",
     "character": "Features",
-    "characterNote": "Features come from the venue's own pages"
+    "characterNote": "Features come from the venue's own pages",
+    "notImported": "We don't list this venue's events yet.",
+    "programmeOwn": "See the programme on its website",
+    "programmeResidentAdvisor": "See the programme on Resident Advisor",
+    "programmePlatform": "See the programme on {platform}"
   },
   "artist": {
     "kind": "Artist",

@@ -176,4 +176,20 @@ describe('VenueCard', () => {
     // #2737: each half stays whole, so a narrow tile breaks at the separator.
     expect(wrapper.findAll('span.whitespace-nowrap')).toHaveLength(2)
   })
+
+  it('says the programme is elsewhere instead of a count for a venue we do not import', () => {
+    const wrapper = mount(VenueCard, {
+      props: { venue: { ...venue, imported: false, upcomingEventCount: 0 } },
+      global: { stubs },
+    })
+    expect(wrapper.find('[data-testid="venue-not-imported"]').text()).toBe('Programme elsewhere')
+  })
+
+  it('draws no such line for an imported venue', () => {
+    const wrapper = mount(VenueCard, {
+      props: { venue: { ...venue, imported: true } },
+      global: { stubs },
+    })
+    expect(wrapper.find('[data-testid="venue-not-imported"]').exists()).toBe(false)
+  })
 })

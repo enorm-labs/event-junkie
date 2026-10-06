@@ -18,6 +18,8 @@ import { descriptionFor } from '@/lib/description'
 import { inCharacterOrder } from '@/lib/venueCharacters'
 import { districtLabel } from '@/lib/districts'
 import { venuePosition } from '@/lib/mapPins'
+import { programmeLink } from '@/lib/programmeLink'
+import SectionLabel from '@/components/SectionLabel.vue'
 import type { Locale } from '@/i18n/locales'
 
 const route = useRoute()
@@ -85,6 +87,20 @@ usePageMeta(() =>
 )
 
 const credit = computed(() => imageCredit(venue.value))
+
+/** The link to the programme of a venue we do not import, labelled by where it points (#2766). */
+const programmeSite = computed(() => {
+  const href = venue.value?.programmeUrl
+  if (!href) return null
+  const target = programmeLink(href)
+  const label =
+    target.kind === 'resident-advisor'
+      ? t('detail.venue.programmeResidentAdvisor')
+      : target.kind === 'platform'
+        ? t('detail.venue.programmePlatform', { platform: target.platform })
+        : t('detail.venue.programmeOwn')
+  return { href, label }
+})
 
 const { formatEventType, formatFamily, formatVenueCharacter, formatVenueFacts, formatVenueType } =
   useFormat()
@@ -184,6 +200,24 @@ const programme = computed(() => {
     :past-events="pastEvents"
     :ready="Boolean(venue)"
   >
+    <template v-if="venue?.imported === false" #upcoming>
+      <section class="space-y-4" data-testid="venue-not-imported">
+        <SectionLabel>{{ t('common.upcomingEvents') }}</SectionLabel>
+        <p class="text-body text-muted-foreground">{{ t('detail.venue.notImported') }}</p>
+        <p v-if="programmeSite" class="text-body">
+          <a
+            :href="programmeSite.href"
+            class="text-primary underline-offset-4 hover:underline"
+            data-testid="venue-programme-link"
+            rel="noopener noreferrer"
+            target="_blank"
+          >
+            {{ programmeSite.label }}
+          </a>
+        </p>
+      </section>
+    </template>
+
     <template #meta>
       <p v-if="addressLine || mapLink" class="text-body text-muted-foreground">
         {{ addressLine }}

@@ -10,7 +10,11 @@
     "hosts": "Formate",
     "programmeNote": "Vor allem und Formate: aus den Veranstaltungen des letzten Jahres und der kommenden.",
     "character": "Merkmale",
-    "characterNote": "Merkmale stammen von den eigenen Seiten der Location"
+    "characterNote": "Merkmale stammen von den eigenen Seiten der Location",
+    "notImported": "Die Veranstaltungen dieser Location führen wir noch nicht.",
+    "programmeOwn": "Zum Programm auf ihrer Website",
+    "programmeResidentAdvisor": "Zum Programm bei Resident Advisor",
+    "programmePlatform": "Zum Programm bei {platform}"
   },
   "artist": {
     "kind": "Act",

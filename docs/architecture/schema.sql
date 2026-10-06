@@ -608,12 +608,15 @@ CREATE TABLE events.venue (
     programme_families text[] DEFAULT '{}'::text[] NOT NULL,
     programme_event_types text[] DEFAULT '{}'::text[] NOT NULL,
     name_search text GENERATED ALWAYS AS (events.search_text(name)) STORED,
+    programme_url text,
+    reviewed_at timestamp with time zone,
     CONSTRAINT venue_capacity_check CHECK ((capacity > 0)),
     CONSTRAINT venue_description_alt_complete CHECK ((((description_alt IS NULL) AND (description_alt_language IS NULL)) OR ((description_alt IS NOT NULL) AND (description_alt_language IS NOT NULL)))),
     CONSTRAINT venue_description_alt_language_valid CHECK (((description_alt_language IS NULL) OR (description_alt_language = ANY (ARRAY['de'::text, 'en'::text])))),
     CONSTRAINT venue_description_language_valid CHECK (((description_language IS NULL) OR (description_language = ANY (ARRAY['de'::text, 'en'::text])))),
     CONSTRAINT venue_district_valid CHECK (((district IS NULL) OR (district = ANY (ARRAY['charlottenburg'::text, 'friedrichshain'::text, 'hellersdorf'::text, 'hohenschoenhausen'::text, 'koepenick'::text, 'kreuzberg'::text, 'lichtenberg'::text, 'marzahn'::text, 'mitte'::text, 'neukoelln'::text, 'pankow'::text, 'prenzlauer-berg'::text, 'reinickendorf'::text, 'schoeneberg'::text, 'spandau'::text, 'steglitz'::text, 'tempelhof'::text, 'tiergarten'::text, 'treptow'::text, 'wedding'::text, 'weissensee'::text, 'wilmersdorf'::text, 'zehlendorf'::text])))),
-    CONSTRAINT venue_image_attributed CHECK (((image_url IS NULL) OR ((image_attribution IS NOT NULL) AND (image_licence_id IS NOT NULL) AND (image_source_url IS NOT NULL))))
+    CONSTRAINT venue_image_attributed CHECK (((image_url IS NULL) OR ((image_attribution IS NOT NULL) AND (image_licence_id IS NOT NULL) AND (image_source_url IS NOT NULL)))),
+    CONSTRAINT venue_programme_url_http CHECK ((programme_url ~ '^https?://'::text))
 );
 
 --

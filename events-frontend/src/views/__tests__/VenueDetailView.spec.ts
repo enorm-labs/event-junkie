@@ -102,4 +102,31 @@ describe('VenueDetailView', () => {
     expect(view.find('[data-testid="venue-map-link"]').exists()).toBe(false)
     expect(view.text()).toContain('Holzmarktstr. 25 · Friedrichshain')
   })
+
+  it('replaces the empty event list with one line and the programme link for a venue we do not import', async () => {
+    const view = await mountVenue({
+      ...kater,
+      imported: false,
+      programmeUrl: 'https://ra.co/clubs/185172',
+    })
+    const section = view.find('[data-testid="venue-not-imported"]')
+    expect(section.text()).toContain("We don't list this venue's events yet.")
+    const link = view.find('[data-testid="venue-programme-link"]')
+    expect(link.attributes('href')).toBe('https://ra.co/clubs/185172')
+    expect(link.text()).toBe('See the programme on Resident Advisor')
+    expect(link.attributes('rel')).toBe('noopener noreferrer')
+    expect(view.text()).not.toContain('No upcoming nights here yet')
+  })
+
+  it('says only the line when such a venue has no programme online', async () => {
+    const view = await mountVenue({ ...kater, imported: false, programmeUrl: null })
+    expect(view.find('[data-testid="venue-not-imported"]').exists()).toBe(true)
+    expect(view.find('[data-testid="venue-programme-link"]').exists()).toBe(false)
+  })
+
+  it('keeps the event list for an imported venue', async () => {
+    const view = await mountVenue({ ...kater, imported: true })
+    expect(view.find('[data-testid="venue-not-imported"]').exists()).toBe(false)
+    expect(view.text()).toContain('No upcoming nights here yet')
+  })
 })

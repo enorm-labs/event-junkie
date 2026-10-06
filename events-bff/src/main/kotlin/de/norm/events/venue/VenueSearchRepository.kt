@@ -22,7 +22,9 @@ data class VenueFilter(
     val types: List<String> = emptyList(),
     val families: List<String> = emptyList(),
     val eventTypes: List<String> = emptyList(),
-    val characters: List<String> = emptyList()
+    val characters: List<String> = emptyList(),
+    /** `true` only imported venues, `false` only the others, `null` both (#2766). */
+    val imported: Boolean? = null
 ) {
     companion object {
         /** Blank values drop out; the rest are trimmed, de-duplicated and sorted. */
@@ -36,11 +38,15 @@ data class VenueFilter(
     }
 }
 
-/** One venue on a list page: its id, how many of its events are still to come, and how many start in [NextThirtyDays]. */
+/**
+ * One venue on a list page: its id, how many of its events are still to come, how many start in [NextThirtyDays], and whether we
+ * import its events at all.
+ */
 data class VenueListRow(
     val id: Long,
     val upcomingEventCount: Int,
-    val upcomingNext30DaysCount: Int
+    val upcomingNext30DaysCount: Int,
+    val imported: Boolean = true
 )
 
 /** An ordered page of [VenueListRow] plus the total count of matches across all pages. */
@@ -121,7 +127,8 @@ class VenueSearchRepository(
             listOfNotNull(
                 filter.query?.let { TextSearch.predicate("v.name", it, bySimilarity) },
                 "v.district IN (:districts)".takeIf { filter.districts.isNotEmpty() },
-                CHARACTER_FILTER.takeIf { filter.characters.isNotEmpty() }
+                CHARACTER_FILTER.takeIf { filter.characters.isNotEmpty() },
+                filter.imported?.let { if (it) "EXISTS ($HAS_SOURCE)" else "NOT EXISTS ($HAS_SOURCE)" }
             ) +
                 ARRAY_FILTERS.mapNotNull { (column, param, values) ->
                     values(filter).takeIf { it.isNotEmpty() }?.let {
@@ -160,7 +167,8 @@ class VenueSearchRepository(
         val rows =
             databaseClient
                 .sql(
-                    "SELECT v.id, ($UPCOMING_COUNT) AS upcoming, ($NEXT_30_DAYS_COUNT) AS next30 FROM $EVENTS_SCHEMA.venue v $where " +
+                    "SELECT v.id, ($UPCOMING_COUNT) AS upcoming, ($NEXT_30_DAYS_COUNT) AS next30, EXISTS ($HAS_SOURCE) AS imported " +
+                        "FROM $EVENTS_SCHEMA.venue v $where " +
                         "${order.clause(pageable, filter.query, bySimilarity)} LIMIT :limit OFFSET :offset"
                 ).bindAll(params + NextThirtyDays.params(now))
                 .bind("today", now.toLocalDate())
@@ -170,7 +178,8 @@ class VenueSearchRepository(
                     VenueListRow(
                         id = requireNotNull(row.get("id", Long::class.javaObjectType)) { "Venue id projection returned a null id" },
                         upcomingEventCount = row.get("upcoming", Long::class.javaObjectType)?.toInt() ?: 0,
-                        upcomingNext30DaysCount = row.get("next30", Long::class.javaObjectType)?.toInt() ?: 0
+                        upcomingNext30DaysCount = row.get("next30", Long::class.javaObjectType)?.toInt() ?: 0,
+                        imported = row.get("imported", Boolean::class.javaObjectType) ?: true
                     )
                 }.all()
                 .collectList()
@@ -183,6 +192,9 @@ class VenueSearchRepository(
         params.entries.fold(this) { spec, (key, value) -> spec.bind(key, value) }
 
     companion object {
+        /** A venue is imported while an `event_source` row points at it; there is no column for it (#2766). */
+        private const val HAS_SOURCE = "SELECT 1 FROM $EVENTS_SCHEMA.event_source s WHERE s.venue_id = v.id"
+
         private const val UPCOMING_COUNT =
             "SELECT COUNT(*) FROM $EVENTS_SCHEMA.event e WHERE e.venue_id = v.id AND e.event_date >= :today"
 

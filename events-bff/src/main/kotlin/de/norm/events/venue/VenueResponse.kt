@@ -125,7 +125,9 @@ data class VenueListItemResponse(
     @Schema(description = PROGRAMME_EVENT_TYPES_DESCRIPTION, example = "[\"CONCERT\", \"PARTY\"]")
     val programmeEventTypes: List<String>,
     @Schema(description = CHARACTER_TAGS_DESCRIPTION, example = "[\"queer\", \"awareness-team\"]")
-    val characterTags: List<String>
+    val characterTags: List<String>,
+    @Schema(description = IMPORTED_DESCRIPTION, example = "true")
+    val imported: Boolean
 ) {
     companion object {
         fun fromEntity(
@@ -156,7 +158,8 @@ data class VenueListItemResponse(
                 capacity = entity.capacity,
                 programmeFamilies = entity.programmeFamilies,
                 programmeEventTypes = entity.programmeEventTypes,
-                characterTags = characterTags
+                characterTags = characterTags,
+                imported = row.imported
             )
     }
 }
@@ -225,13 +228,23 @@ data class VenueDetailResponse(
     @Schema(description = PROGRAMME_EVENT_TYPES_DESCRIPTION, example = "[\"CONCERT\", \"PARTY\"]")
     val programmeEventTypes: List<String>,
     @Schema(description = "$CHARACTER_TAGS_DESCRIPTION Each carries the URL of the venue's own page that states it.")
-    val characterTags: List<VenueCharacterTagResponse>
+    val characterTags: List<VenueCharacterTagResponse>,
+    @Schema(description = IMPORTED_DESCRIPTION, example = "false")
+    val imported: Boolean,
+    @Schema(
+        description =
+            "Where the venue publishes its programme, for a venue whose events we do not import: its own page, else its Resident Advisor page, " +
+                "else a ticket platform. A plain outbound link. Null for an imported venue, and for one with no programme online.",
+        example = "https://www.example-club.de/programm"
+    )
+    val programmeUrl: String?
 ) {
     companion object {
         fun fromEntity(
             entity: VenueEntity,
             image: ServedImage,
-            characterTags: List<VenueCharacterTagResponse>
+            characterTags: List<VenueCharacterTagResponse>,
+            imported: Boolean
         ): VenueDetailResponse =
             VenueDetailResponse(
                 id = requireNotNull(entity.id) { "Persisted venue must have an ID" },
@@ -259,7 +272,9 @@ data class VenueDetailResponse(
                 capacity = entity.capacity,
                 programmeFamilies = entity.programmeFamilies,
                 programmeEventTypes = entity.programmeEventTypes,
-                characterTags = characterTags
+                characterTags = characterTags,
+                imported = imported,
+                programmeUrl = entity.programmeUrl
             )
     }
 }
@@ -273,6 +288,8 @@ data class VenueCharacterTagResponse(
     val sourceUrl: String
 )
 
+private const val IMPORTED_DESCRIPTION =
+    "Whether we import this venue's events. False for a venue we know but do not import yet: it has no events here, and its page links to its programme."
 private const val VENUE_TYPES_DESCRIPTION = "What kind of place this is, as venue type slugs, curated by hand. Empty until curated."
 private const val CHARACTER_TAGS_DESCRIPTION =
     "What the venue says about itself (its kind of space, its door, its access), as character tag slugs, ordered by slug. Set only where the venue's own page states it."

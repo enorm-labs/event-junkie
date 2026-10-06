@@ -3,7 +3,9 @@ import { flushPromises, mount, type VueWrapper } from '@vue/test-utils'
 import { createMemoryHistory, createRouter } from 'vue-router'
 import { defineComponent, h } from 'vue'
 
-const { getMock } = vi.hoisted(() => ({ getMock: vi.fn<() => Promise<unknown>>() }))
+const { getMock } = vi.hoisted(() => ({
+  getMock: vi.fn<(path: string, init?: unknown) => Promise<unknown>>(),
+}))
 
 vi.mock('@/api/client', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/api/client')>()),
@@ -35,5 +37,26 @@ describe('VenuesView', () => {
     await flushPromises()
 
     expect(wrapper.get('header p').classes()).toContain('text-body')
+  })
+
+  it.each([
+    ['listing=not-imported', false],
+    ['listing=imported', true],
+    ['listing=imported&listing=not-imported', undefined],
+    ['', undefined],
+  ])('sends imported for ?%s as %s', async (query, expected) => {
+    getMock.mockReset()
+    getMock.mockResolvedValue({ content: [], page: { totalElements: 0, totalPages: 0 } })
+    const router = createRouter({
+      history: createMemoryHistory(),
+      routes: [{ path: '/:locale(en|de)/:rest(.*)', component: Page }],
+    })
+    await router.push(`/en/venues${query ? `?${query}` : ''}`)
+    wrapper = mount(VenuesView, { global: { plugins: [router] } })
+    await flushPromises()
+
+    const list = getMock.mock.calls.find(([path]) => path === '/api/venues')
+    const init = list?.[1] as { params: { query: { imported?: boolean } } }
+    expect(init.params.query.imported).toBe(expected)
   })
 })

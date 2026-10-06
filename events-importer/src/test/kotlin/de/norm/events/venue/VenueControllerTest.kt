@@ -8,6 +8,7 @@ import io.kotest.matchers.ints.shouldBeGreaterThanOrEqual
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
 import org.springframework.test.web.reactive.server.expectBody
+import java.time.Instant
 
 class VenueControllerTest : BaseControllerTest() {
     /** Creates a venue via the API and returns the persisted [VenueResponse]. */
@@ -277,6 +278,26 @@ class VenueControllerTest : BaseControllerTest() {
             .isBadRequest
             .expectBody()
             .jsonPath("$.errors[?(@.field == 'capacity')]")
+            .exists()
+    }
+
+    @Test
+    fun `stores a programme link and a review date, and refuses a link that is not http`() {
+        val reviewed = Instant.parse("2026-10-06T18:00:00Z")
+        val created =
+            createVenue(VenueRequestFixtures.astra().copy(programmeUrl = "https://ra.co/clubs/185172", reviewedAt = reviewed))
+        created.programmeUrl shouldBe "https://ra.co/clubs/185172"
+        created.reviewedAt shouldBe reviewed
+
+        webTestClient
+            .post()
+            .uri("/api/admin/venues")
+            .bodyValue(VenueRequestFixtures.astra(name = "Other").copy(programmeUrl = "javascript:alert(1)"))
+            .exchange()
+            .expectStatus()
+            .isBadRequest
+            .expectBody()
+            .jsonPath("$.errors[?(@.field == 'programmeUrl')]")
             .exists()
     }
 

@@ -49,6 +49,8 @@ classDiagram
         Int? capacity
         List programmeFamilies
         List programmeEventTypes
+        String? programmeUrl
+        Instant? reviewedAt
         Instant? createdAt
         Instant? updatedAt
     }
@@ -252,6 +254,8 @@ Represents a physical venue where music events take place (e.g. Astra Kulturhaus
 | `capacity`                 | `INTEGER`      | Yes      | Visitors the largest room holds, as the venue publishes it      | `1500`                                            |
 | `programme_families`       | `TEXT[]`       | No       | `GenreFamily` slugs, derived from the venue's events            | `{rock,punk}`                                     |
 | `programme_event_types`    | `TEXT[]`       | No       | `EventType` names, derived from the venue's events              | `{CONCERT,PARTY}`                                 |
+| `programme_url`            | `TEXT`         | Yes      | Where a venue we do not import publishes its programme          | `https://ra.co/clubs/185172`                      |
+| `reviewed_at`              | `TIMESTAMPTZ`  | Yes      | When a person last confirmed address, coordinates and opening   | `2026-10-06 18:00:00+00`                          |
 | `created_at`               | `TIMESTAMPTZ`  | No       | Record creation timestamp                                       |                                                   |
 | `updated_at`               | `TIMESTAMPTZ`  | No       | Last modification timestamp                                     |                                                   |
 
@@ -260,6 +264,11 @@ Represents a physical venue where music events take place (e.g. Astra Kulturhaus
 when the venue does not publish a figure. `VenueProgrammeStore` writes the two `programme_*` columns after each import of
 the venue, and `VenueProgrammeSweep` writes them for every venue each night. Do not write them by hand: the next pass
 overwrites them.
+
+**A venue without an `event_source` row is one we know but do not import (#2766).** No column says so: the BFF derives
+`imported` from the source rows, so the state changes when an importer lands. Such a venue has no events. Its page links
+to `programme_url`, which is never fetched. A person sets `reviewed_at` through the admin API after confirming the
+venue's facts. An import never sets it. The check for closed venues in #2812 reads it.
 
 The derivation reads the venue's events from 365 days back, plus all future events. Cancelled events do not count. A
 value counts when it is on at least 15 % of those events and on at least 3 of them. The top three values are kept, most
