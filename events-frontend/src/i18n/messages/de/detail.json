@@ -6,6 +6,8 @@
     "empty": "Hier steht noch nichts an. Schau bald wieder vorbei.",
     "type": "Art",
     "onMap": "Auf der Karte",
+    "directions": "Route",
+    "directionsLeaves": "(öffnet eine Karten-App oder -Seite außerhalb von Event Junkie)",
     "plays": "Vor allem",
     "hosts": "Formate",
     "programmeNote": "Vor allem und Formate: aus den Veranstaltungen des letzten Jahres und der kommenden.",

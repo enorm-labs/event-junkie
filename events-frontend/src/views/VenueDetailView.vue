@@ -3,6 +3,7 @@ import { computed, onMounted, watch } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import BaseBadge from '@/components/BaseBadge.vue'
 import BaseDetailView from '@/components/BaseDetailView.vue'
+import DirectionsLink from '@/components/DirectionsLink.vue'
 import { useFormat } from '@/composables/useFormat'
 import { useLocalePath } from '@/composables/useLocalePath'
 import { usePageMeta } from '@/composables/usePageMeta'
@@ -230,6 +231,7 @@ const programme = computed(() => {
         >
           {{ t('detail.venue.onMap') }}
         </RouterLink>
+        <template v-if="mapLink">{{ ' · ' }}<DirectionsLink :venue="venue" /></template>
       </p>
       <p v-if="venue?.websiteUrl" class="text-body">
         <a
