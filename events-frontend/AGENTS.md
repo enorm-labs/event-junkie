@@ -114,7 +114,8 @@ Every page lives under `/<locale>/…`; `src/i18n/locales.ts` is the single list
   `lib/seo.ts`); the footer and the filter bar link it (`feedPath()`, the filter bar's with its filters). Its unfiltered titles mirror `EventFeedXml.kt`,
   which names a filtered feed after its filters (#2765).
 - **The calendar subscription is public at `/calendar.ics?locale=<locale>`** (#2719), routed like the feed to `/api/events/calendar.ics`. The results
-  bar links it as `webcal://` on the current host, with the site-relative `https:` address beside it (`calendarPath()`). `EventCalendarIcs.kt` writes
+  bar links it as `webcal://` on the current host, with the site-relative `https:` address beside it (`calendarPath()`). Its `name` is the filters in words
+  (`useFilterLabels`), which the BFF writes after "Event Junkie" as the calendar's name (#2772). `EventCalendarIcs.kt` writes
   the file by the rules of `lib/addToCalendar.ts`: change both or neither.
 - **The sitemap is the primary `hreflang` carrier.** The `<link>` tags in `lib/seoTags.ts` are script-injected and unreliable for crawlers; the injector
   writes them into served HTML for detail routes only, so an hreflang change that touches only the head tags has not shipped.

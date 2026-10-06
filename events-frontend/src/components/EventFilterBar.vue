@@ -15,9 +15,8 @@ import ClearAllFilters from '@/components/ClearAllFilters.vue'
 import MultiSelectFilter from '@/components/MultiSelectFilter.vue'
 import SearchInput from '@/components/SearchInput.vue'
 import { useEventFilters } from '@/composables/useEventFilters'
-import { useGenres } from '@/composables/useGenres'
+import { activeFamilies as familiesShown, useFilterLists } from '@/composables/useFilterLists'
 import { useSearchDraft } from '@/composables/useSearchDraft'
-import { useAllVenues } from '@/composables/useVenues'
 import { activePresetKey, DATE_PRESETS, type DateRange } from '@/lib/dateRanges'
 import { useFilterOptions } from '@/composables/useFilterOptions'
 import { useI18n } from 'vue-i18n'
@@ -79,8 +78,7 @@ function isPresetActive(key: string): boolean {
   return activePresetKey(shown) === key
 }
 
-const genres = useGenres()
-const venues = useAllVenues()
+const { genres, venues } = useFilterLists()
 
 /**
  * A native select is as wide as its longest option, and the venue list arrives after the first
@@ -99,17 +97,9 @@ const {
   timeOfDayOptions,
 } = useFilterOptions()
 
-/**
- * The families the bar shows as chosen: the URL's, or, for a link from before families existed
- * carrying only `genre=`, the family of that style.
- */
-const activeFamilies = computed(() => {
-  const families = queryList('family')
-  if (families.length) return families
-  const genre = queryString('genre')
-  const family = (genres.data.value ?? []).find((tag) => tag.slug === genre)?.family
-  return family ? [family] : []
-})
+const activeFamilies = computed(() =>
+  familiesShown(queryList('family'), queryString('genre'), genres.data.value ?? []),
+)
 
 /**
  * The styles inside the chosen family, the second level of the genre filter (#363). Offered only

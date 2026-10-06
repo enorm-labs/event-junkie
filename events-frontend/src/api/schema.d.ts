@@ -2228,6 +2228,11 @@ export interface operations {
                  * @example de
                  */
                 locale?: string;
+                /**
+                 * @description The calendar's name after "Event Junkie · ": the filters in words, as the site builds them. Display text only. A name over 120 characters is cut at the last whole label.
+                 * @example Jazz · Neukölln
+                 */
+                name?: string;
                 /** @description Event type filter, e.g. CONCERT (case-insensitive). Repeatable: an event of any given type matches. An unknown type matches nothing. */
                 eventType?: string[];
                 /** @description Venue slug filter — only events at the matching venue. */

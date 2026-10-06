@@ -5,6 +5,7 @@ import de.norm.events.ClockConfiguration
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
+import io.kotest.matchers.ints.shouldBeLessThanOrEqual
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldEndWith
 import io.kotest.matchers.string.shouldNotContain
@@ -29,10 +30,18 @@ class EventCalendarControllerTest : BaseControllerTest() {
 
     private val cacheLifetime = CacheControl.maxAge(Duration.ofSeconds(60)).cachePublic()
 
-    private fun ics(query: String = ""): String =
+    private fun ics(query: String = ""): String = ics("/events/calendar.ics$query", emptyArray())
+
+    /** The calendar named [name], encoded as a URI template variable, as the site's link carries it. */
+    private fun icsNamed(name: String): String = ics("/events/calendar.ics?name={name}", arrayOf(name))
+
+    private fun ics(
+        uri: String,
+        variables: Array<Any>
+    ): String =
         webTestClient
             .get()
-            .uri("/events/calendar.ics$query")
+            .uri(uri, *variables)
             .exchange()
             .expectStatus()
             .isOk
@@ -258,6 +267,47 @@ class EventCalendarControllerTest : BaseControllerTest() {
                 .isNotModified
                 .expectHeader()
                 .cacheControl(cacheLifetime)
+        }
+
+    @Test
+    fun `names the calendar after the filters it was given, escaped, and plain Event Junkie without`() {
+        val named = lines(icsNamed("Jazz · Neukölln"))
+        named shouldContain "NAME:Event Junkie · Jazz · Neukölln"
+        named shouldContain "X-WR-CALNAME:Event Junkie · Jazz · Neukölln"
+
+        lines(icsNamed("Rock, Pop; \"Live\"")) shouldContain "X-WR-CALNAME:Event Junkie · Rock\\, Pop\\; \"Live\""
+        lines(icsNamed("Jazz\nSUMMARY:Injected")) shouldContain "X-WR-CALNAME:Event Junkie · JazzSUMMARY:Injected"
+
+        val plain = lines(ics())
+        plain shouldContain "NAME:Event Junkie"
+        plain shouldContain "X-WR-CALNAME:Event Junkie"
+        lines(icsNamed("  ")) shouldContain "X-WR-CALNAME:Event Junkie"
+    }
+
+    @Test
+    fun `cuts a long name at the last whole label within 120 characters`() {
+        val labels = List(30) { "Label $it" }
+        val name = lines(icsNamed(labels.joinToString(" · "))).single { it.startsWith("X-WR-CALNAME:") }.removePrefix("X-WR-CALNAME:Event Junkie · ")
+
+        name.length shouldBeLessThanOrEqual 120
+        name.split(" · ") shouldBe labels.take(name.split(" · ").size)
+        name shouldEndWith "Label 11"
+
+        val single = lines(icsNamed("x".repeat(300))).single { it.startsWith("X-WR-CALNAME:") }
+        single shouldBe "X-WR-CALNAME:Event Junkie · " + "x".repeat(120)
+    }
+
+    @Test
+    fun `serves each name its own calendar from the one cached list of events`(): Unit =
+        runBlocking {
+            insertEvent(insertVenue("Lido", "lido"), "Night", "night", night)
+
+            val jazz = icsNamed("Jazz")
+            val rock = icsNamed("Rock")
+
+            lines(jazz) shouldContain "X-WR-CALNAME:Event Junkie · Jazz"
+            lines(rock) shouldContain "X-WR-CALNAME:Event Junkie · Rock"
+            vevents(rock).map { it.value("SUMMARY") } shouldContainExactly listOf("Night")
         }
 
     @Test

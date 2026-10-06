@@ -18,6 +18,8 @@ import type { EventPage } from '@/api/types'
 import { useAsync } from '@/composables/useAsync'
 import { type EventSearchParams, fetchOnNowPage, searchEvents } from '@/composables/useEvents'
 import { useEventFilters } from '@/composables/useEventFilters'
+import { useFilterLabels } from '@/composables/useFilterLabels'
+import { provideFilterLists } from '@/composables/useFilterLists'
 import { usePagedList } from '@/composables/usePagedList'
 import { useI18n } from 'vue-i18n'
 import type { Locale } from '@/i18n/locales'
@@ -135,10 +137,13 @@ const feedLabel = computed(() =>
 )
 
 /**
- * The calendar subscription for these filters (#2719). `webcal:` hands it to the calendar app; an app
- * that asks for an address, Google Calendar's among them, takes the `https:` one beside it.
+ * The calendar subscription for these filters (#2719), named after them (#2772). `webcal:` hands it to
+ * the calendar app; an app that asks for an address, Google Calendar's among them, takes the `https:` one.
  */
-const calendarHref = computed(() => calendarPath(locale.value as Locale, filters.value))
+const { filterLabels } = useFilterLabels(provideFilterLists())
+const calendarHref = computed(() =>
+  calendarPath(locale.value as Locale, filters.value, filterLabels(filters.value)),
+)
 const webcalHref = computed(() => `webcal://${window.location.host}${calendarHref.value}`)
 const subscribeLabel = computed(() =>
   Object.values(filters.value).some((value) => value !== undefined)

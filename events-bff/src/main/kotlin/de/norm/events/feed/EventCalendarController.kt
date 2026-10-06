@@ -60,6 +60,14 @@ class EventCalendarController(
         @Parameter(description = "Language of the entries' links and notes: en or de.", example = "de")
         @RequestParam(defaultValue = Site.DEFAULT_LOCALE)
         locale: String,
+        @Parameter(
+            description =
+                "The calendar's name after \"Event Junkie · \": the filters in words, as the site builds them. " +
+                    "Display text only. A name over 120 characters is cut at the last whole label.",
+            example = "Jazz · Neukölln"
+        )
+        @RequestParam(required = false)
+        name: String?,
         @ParameterObject
         filters: EventFilterParams,
         exchange: ServerWebExchange
@@ -73,7 +81,7 @@ class EventCalendarController(
         val last = today.plusDays(DAYS - 1)
         val events = cache.get(CalendarKey(filter, today)) { eventService.upcoming(filter, today, last, MAX_EVENTS) }
         metrics.recordServed(BffMetrics.ENDPOINT_CALENDAR_FEED, events.size)
-        val body = EventCalendarIcs.render(locale, events)
+        val body = EventCalendarIcs.render(locale, events, name)
         // A client polls with If-None-Match; Spring answers 304 for a matching tag.
         return ResponseEntity
             .ok()
@@ -90,11 +98,14 @@ class EventCalendarController(
         /** Bounds the file a client parses on every poll; a busy unfiltered quarter is more. */
         const val MAX_EVENTS = 500
 
-        val PARAMS = QueryParameters.accepting(EventFilterParams::class.java, QueryParameters.named("locale"))
+        val PARAMS = QueryParameters.accepting(EventFilterParams::class.java, QueryParameters.named("locale", "name"))
     }
 }
 
-/** The calendar's cache key. The day is in it, because the window moves with it; the locale is not. */
+/**
+ * The calendar's cache key. The day is in it, because the window moves with it. The locale and the
+ * name are not: the cache holds the events, and both apply when the body is rendered.
+ */
 private data class CalendarKey(
     val filter: EventFilter,
     val today: LocalDate
