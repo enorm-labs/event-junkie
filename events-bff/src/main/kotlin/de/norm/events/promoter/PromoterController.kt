@@ -31,7 +31,7 @@ class PromoterController(
     @Operation(
         summary = "List promoters with pagination and optional name search, sorted by name or by events in the next 30 days",
         description =
-            "Sort with `sort=name` (A–Z, case-folded) or `sort=upcomingEvents,desc` (events that start within the next 30 days, " +
+            "Sort with `sort=name` (A–Z, case-folded), `sort=name,desc` (Z–A) or `sort=upcomingEvents,desc` (events that start within the next 30 days, " +
                 "Berlin time). A chosen sort applies with a search too. Without a sort, a search lists the closest names first, else A–Z."
     )
     suspend fun list(

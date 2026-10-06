@@ -70,11 +70,13 @@ class PromoterControllerTest : BaseControllerTest() {
             }
         }
 
+    // #2763: Z–A folds case as A–Z does; under the `C` collation "kiezklang" would come before "Trinity Music".
     @Test
-    fun `GET promoters honours a whitelisted sort property`(): Unit =
+    fun `GET promoters sorts names Z to A case-insensitively`(): Unit =
         runBlocking {
             insertPromoter("36 Concerts", "36-concerts")
-            insertPromoter("Goodlive", "goodlive")
+            insertPromoter("kiezklang", "kiezklang")
+            insertPromoter("Trinity Music", "trinity-music")
 
             webTestClient
                 .get()
@@ -83,8 +85,8 @@ class PromoterControllerTest : BaseControllerTest() {
                 .expectStatus()
                 .isOk
                 .expectBody()
-                .jsonPath("$.content[0].slug")
-                .isEqualTo("goodlive")
+                .jsonPath("$.content[*].slug")
+                .isEqualTo(listOf("trinity-music", "kiezklang", "36-concerts"))
         }
 
     // #1349: the count is events from today on, and the sort is the next 30 days (#2694); a promoter with only past events sits at 0, and a

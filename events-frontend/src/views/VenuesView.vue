@@ -66,8 +66,12 @@ function queryString(key: string): string {
  * search by relevance, and the pressed A–Z would not be what the list shows (#2694).
  */
 const SORT_NAME = 'name,asc'
+const SORT_NAME_DESC = 'name,desc'
 const SORT_UPCOMING = 'upcomingEvents,desc'
-const sort = computed(() => (queryString('sort') === SORT_UPCOMING ? SORT_UPCOMING : ''))
+const sort = computed(() => {
+  const requested = queryString('sort')
+  return requested === SORT_NAME_DESC || requested === SORT_UPCOMING ? requested : ''
+})
 
 function queryList(key: string): string[] {
   const value = route.query[key]
@@ -198,8 +202,13 @@ const { t, locale } = useI18n()
 const emptyText = computed(() => t(hasFilters.value ? 'venues.emptyFiltered' : 'venues.empty'))
 
 const sortOptions = computed<SortOption[]>(() => [
-  { value: '', label: t('common.sort.name') },
-  { value: SORT_UPCOMING, label: t('common.sort.upcoming') },
+  {
+    directions: [
+      { value: '', ascending: true, label: t('common.sort.az') },
+      { value: SORT_NAME_DESC, ascending: false, label: t('common.sort.za') },
+    ],
+  },
+  { label: t('common.sort.upcoming'), value: SORT_UPCOMING },
 ])
 
 const {

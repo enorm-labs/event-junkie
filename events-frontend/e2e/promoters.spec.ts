@@ -110,7 +110,10 @@ test('sorting by the next 30 days puts the sort in the URL and sends it to the A
   await expect(page.getByRole('heading', { level: 2 }).first()).toHaveText('Goodlive')
 
   const sort = page.getByRole('group', { name: 'Sort' })
-  await expect(sort.getByRole('button', { name: 'A–Z' })).toHaveAttribute('aria-pressed', 'true')
+  await expect(sort.getByRole('button', { name: 'A–Z', exact: true })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  )
   await sort.getByRole('button', { name: 'Busiest next 30 days' }).click()
 
   await expect(page).toHaveURL(/\/promoters\?sort=upcomingEvents,desc$/)
@@ -121,8 +124,16 @@ test('sorting by the next 30 days puts the sort in the URL and sends it to the A
   )
 
   // Back to the name order: the default leaves the URL clean.
-  await sort.getByRole('button', { name: 'A–Z' }).click()
+  await sort.getByRole('button', { name: 'A–Z', exact: true }).click()
   await expect(page).toHaveURL(/\/promoters$/)
+
+  // Pressed again, A–Z flips to Z–A (#2763).
+  await sort.getByRole('button', { name: 'A–Z', exact: true }).click()
+  await expect(page).toHaveURL(/\/promoters\?sort=name,desc$/)
+  await expect(sort.getByRole('button', { name: 'Z–A', exact: true })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  )
 })
 
 test('the empty state offers a way out of the search', async ({ page }) => {

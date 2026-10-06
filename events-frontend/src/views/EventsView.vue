@@ -109,13 +109,22 @@ const localePath = useLocalePath()
 
 const { t, locale } = useI18n()
 
-const SORT_LABELS: Record<string, string> = {
-  [EARLIEST_FIRST]: 'common.sort.earliest',
-  [LATEST_FIRST]: 'common.sort.latest',
-  [NEWEST_ADDED]: 'common.sort.newest',
-}
+/** Date flips only where the range reaches into the past; a list of what is still ahead reads earliest first. */
 const sortOptions = computed<SortOption[]>(() =>
-  sortValues.value.map((value) => ({ value, label: t(SORT_LABELS[value]!) })),
+  reachesPast.value
+    ? [
+        {
+          label: t('common.sort.date'),
+          directions: [
+            { value: EARLIEST_FIRST, ascending: true, label: t('common.sort.earliest') },
+            { value: LATEST_FIRST, ascending: false, label: t('common.sort.latest') },
+          ],
+        },
+      ]
+    : [
+        { label: t('common.sort.date'), value: EARLIEST_FIRST },
+        { label: t('common.sort.newest'), value: NEWEST_ADDED },
+      ],
 )
 
 /** The default order stays out of the URL, so a shared link follows its range. */

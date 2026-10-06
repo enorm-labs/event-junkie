@@ -135,7 +135,7 @@ test('sorting by the next 30 days puts the sort in the URL, sends it, and shows 
   await expect(page.getByRole('heading', { level: 2 }).first()).toHaveText('Lido')
 
   // A–Z stays out of the URL, but the request names it, so a search is not ordered by relevance (#2694).
-  await sort.getByRole('button', { name: 'A–Z' }).click()
+  await sort.getByRole('button', { name: 'A–Z', exact: true }).click()
   await expect(page).toHaveURL(/\/venues$/)
   expect(sorts.at(-1)).toBe('name,asc')
 })

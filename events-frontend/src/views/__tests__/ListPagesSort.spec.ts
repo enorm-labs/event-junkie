@@ -17,6 +17,7 @@ const { default: VenuesView } = await import('@/views/VenuesView.vue')
 const { default: PromotersView } = await import('@/views/PromotersView.vue')
 
 let wrapper: VueWrapper | undefined
+let router: ReturnType<typeof createRouter>
 
 afterEach(() => {
   wrapper?.unmount()
@@ -32,7 +33,7 @@ async function mountAt(view: Component, path: string) {
         : { content: [{ slug: 'x', name: 'X' }], totalElements: 1, totalPages: 1, number: 0 },
     ),
   )
-  const router = createRouter({
+  router = createRouter({
     history: createMemoryHistory(),
     routes: [
       { path: '/:locale(en|de)/:rest(.*)', component: defineComponent({ render: () => h('p') }) },
@@ -59,6 +60,26 @@ describe('the list pages send the order they show', () => {
   ])('%s sends A–Z with a search', async (_, view, path, endpoint) => {
     await mountAt(view, path)
     expect(listSort(endpoint)).toEqual(['name,asc'])
+  })
+
+  it.each([
+    ['Venues', VenuesView, '/en/venues', '/api/venues'],
+    ['Promoters', PromotersView, '/en/promoters', '/api/promoters'],
+  ])('%s flips A–Z to Z–A, and A–Z stays out of the URL', async (_, view, path, endpoint) => {
+    await mountAt(view, path)
+    const name = () => wrapper!.findAll('button').find((b) => /^[AZ]–[AZ]$/.test(b.text()))!
+    expect(name().text()).toBe('A–Z')
+
+    getMock.mockClear()
+    await name().trigger('click')
+    await flushPromises()
+    expect(router.currentRoute.value.query.sort).toBe('name,desc')
+    expect(listSort(endpoint)).toEqual(['name,desc'])
+    expect(name().text()).toBe('Z–A')
+
+    await name().trigger('click')
+    await flushPromises()
+    expect(router.currentRoute.value.query.sort).toBeUndefined()
   })
 
   it('sends the 30-day order when it is chosen', async () => {

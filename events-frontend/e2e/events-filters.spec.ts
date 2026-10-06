@@ -411,15 +411,16 @@ test('a past range reads latest first, and the visitor can flip it', async ({ pa
   await page.goto(`/events?${range}`)
 
   const sort = page.getByRole('group', { name: 'Sort' })
-  await expect(sort.getByRole('button', { name: 'Latest first' })).toHaveAttribute(
+  await expect(sort.getByRole('button', { name: 'Date, latest first' })).toHaveAttribute(
     'aria-pressed',
     'true',
   )
   expect(sorts.at(-1)).toBe('eventDate,desc')
 
-  await sort.getByRole('button', { name: 'Earliest first' }).click()
+  // One Date button: pressing the active order flips its direction (#2763).
+  await sort.getByRole('button', { name: 'Date, latest first' }).click()
   await expect(page).toHaveURL(new RegExp(`\\?${range}&sort=eventDate,asc$`))
-  await expect(sort.getByRole('button', { name: 'Earliest first' })).toHaveAttribute(
+  await expect(sort.getByRole('button', { name: 'Date, earliest first' })).toHaveAttribute(
     'aria-pressed',
     'true',
   )
@@ -437,11 +438,11 @@ test('the upcoming list sorts by date or by newest added', async ({ page }) => {
 
   await expect(eventHeading(page, 'Default Event A')).toBeVisible()
   const sort = page.getByRole('group', { name: 'Sort' })
-  await expect(sort.getByRole('button', { name: 'Earliest first' })).toHaveAttribute(
+  await expect(sort.getByRole('button', { name: 'Date', exact: true })).toHaveAttribute(
     'aria-pressed',
     'true',
   )
-  await expect(sort.getByRole('button', { name: 'Latest first' })).toHaveCount(0)
+  await expect(sort.getByRole('button', { name: /latest first/ })).toHaveCount(0)
 
   await sort.getByRole('button', { name: 'Newest added' }).click()
   await expect(page).toHaveURL(/\?sort=createdAt,desc$/)
