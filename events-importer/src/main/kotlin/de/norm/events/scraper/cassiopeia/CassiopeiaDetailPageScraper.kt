@@ -1,5 +1,6 @@
 package de.norm.events.scraper.cassiopeia
 
+import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.PRESENTED_BY_WORDS
 import de.norm.events.scraper.SUPPORT_LABELS
@@ -10,6 +11,7 @@ import de.norm.events.scraper.hasVisibleWebflowFlag
 import de.norm.events.scraper.headlinersFromTitle
 import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.imgSrcAt
+import de.norm.events.scraper.inferUnmarkedTitleType
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.mapEventType
 import de.norm.events.scraper.parseGermanDate
@@ -71,7 +73,7 @@ class CassiopeiaDetailPageScraper {
 
         val eventSlug = extractEventSlug(sourceUrl, prefix = EVENT_PATH_PREFIX)
         val hasFlags = content.selectFirst(".flag-wrapper") != null
-        val eventType = mapEventType(content.textAt(".subheading.invert.gap"))
+        val eventType = cassiopeiaEventType(content.textAt(".subheading.invert.gap"), title)
         val genreSlot = parseGenre(content)
         val presenter = presenterInGenreSlot(genreSlot)
         val eventDate =
@@ -239,5 +241,16 @@ internal fun presenterInGenreSlot(slot: String?): String? =
         ?.let { PRESENTER_CREDIT.find(it)?.groupValues?.get(1) }
         ?.trim()
         ?.takeIf { it.isNotBlank() }
+
+/**
+ * The type a [category] maps to, with the catch-all `Sonstiges` (OTHER) reclassified by the
+ * title: the venue files its Kneipenquiz nights there and names the format only in the title
+ * (#2791). A cue-less title stays OTHER, and an unmapped category stays `null`, as Astra's
+ * "Other" kind does in [refineConcertVenueType][de.norm.events.scraper.refineConcertVenueType].
+ */
+internal fun cassiopeiaEventType(
+    category: String?,
+    title: String
+): String? = mapEventType(category)?.let { if (it == EventType.OTHER.name) inferUnmarkedTitleType(title) else it }
 
 private val PRESENTER_CREDIT = Regex("""^\s*(?:$PRESENTED_BY_WORDS)\s*:?\s+(.+)$""", RegexOption.IGNORE_CASE)

@@ -10,6 +10,7 @@ import io.kotest.matchers.shouldNotBe
 import org.jsoup.Jsoup
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.CsvSource
 import org.junit.jupiter.params.provider.ValueSource
 
 /**
@@ -163,6 +164,37 @@ class CassiopeiaDetailPageScraperTest {
 
         event shouldNotBe null
         event!!.artists.shouldBeEmpty()
+    }
+
+    @Test
+    fun `types a Sonstiges quiz night by its title and mints no act`() {
+        // Quizcarraldo: category "Sonstiges", genre slot "Kneipenquiz" (#2791).
+        val url = "https://cassiopeia-berlin.de/event/quizcarraldo-kneipenquiz-111687594"
+        val html = buildDetailHtml("Quizcarraldo Kneipenquiz", category = "Sonstiges")
+        val event = scraper.scrape(Jsoup.parse(html, url), url).shouldNotBeNull()
+
+        event.eventType shouldBe "QUIZ"
+        event.artists.shouldBeEmpty()
+    }
+
+    @ParameterizedTest
+    @CsvSource(
+        "Sonstiges, Flohmarkt im Hof, OTHER",
+        "Sonstiges, Quizcarraldo Kneipenquiz, QUIZ",
+        "Konzert, Quiz the Band, CONCERT",
+        "Party, Pub Quiz Afterparty, PARTY"
+    )
+    fun `reclassifies only the catch-all category by title`(
+        category: String,
+        title: String,
+        expected: String
+    ) {
+        cassiopeiaEventType(category, title) shouldBe expected
+    }
+
+    @Test
+    fun `leaves a missing category untyped, whatever the title says`() {
+        cassiopeiaEventType(null, "Quizcarraldo Kneipenquiz").shouldBeNull()
     }
 
     @Test
