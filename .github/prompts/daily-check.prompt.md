@@ -68,8 +68,13 @@ an approval, a decision, a dispatch), **DRAFTED** (a new defect, with an issue d
 - **A still-red run**: `gh run view <id> --log-failed | tail -60`, and name the step that failed. A red agent workflow is usually its tool or its token, not
   the repository. A recovered run is one line.
 - **A new bot issue**: read it. A reminder names its own action. A publish failure is a BLOCKER.
-- **An unanswered report**: read the report comment. Check each finding against the open issues (`gh issue list --state all --search '<words>'`). Draft an
-  issue for each new one. A report with `filed_since` issues has been worked, even without a reply comment: one line with the count.
+- **An unanswered report**: read the report comment. Check each finding against the open issues (`gh issue list --state all --search '<words>'`) and
+  against what production runs now: a fix released since the report is KNOWN, naming the issue. **Re-measure every new finding before drafting it** —
+  the event, the count and the code path, from the production API and the tree. A report is a lead, not evidence: on 2026-10-06 three of eight findings
+  did not hold (a real dress rehearsal, the wrong event, 8 events that were 5). With more than three new findings, one subagent re-measures them and
+  writes the bodies in the `/new-issue` form; read one of them in full before trusting the rest. A finding that does not hold is one line under
+  "Not a defect", with what the page or the code showed. A report with `filed_since` issues has been worked, even without a reply comment: one line with
+  the count.
 - **A new security alert**: one line each. For more than a line, [`/security-report`](security-report.prompt.md) is the read and
   [`/security-triage`](security-triage.prompt.md) the fix. Known open alerts are one line with the count.
 - **The operator's own pull requests**: one line each — waiting for an approval, a red check, or auto-merge armed and green.
@@ -78,8 +83,8 @@ an approval, a decision, a dispatch), **DRAFTED** (a new defect, with an issue d
   naming the issue. An `ej-site-down` whose site still does not answer is a BLOCKER. A firing with no cause is DRAFTED: a false alarm teaches the reader
   of `alerts@` to ignore mail (#1807, #1810).
 - **An unclosed issue**: ACT. Confirm the pull request did the work, then `gh issue close <n> --reason completed` with a comment naming it.
-- **An `after_deploy` entry**: `released: true` is ACT, "run `/post-release`", with its unticked steps; production already runs the change. `released:
-false` is waiting for a release: one line each.
+- **An `after_deploy` entry**: `released: true` with a step whose `due` is `now`, a past date, a `deploy+<N>d` already passed, or a dark day is ACT, "run `/post-release`", with those
+  steps; production already runs the change. A step dated later is waiting until that date, and `released: false` is waiting for a release: one line each.
 - **Unreleased commits**: say whether they hold a product change. When they do, suggest a cut: `gh workflow run cut-release.yml -f dry_run=false`. Never cut.
 
 ## Step 4 — The logs
@@ -108,9 +113,13 @@ Write `temp/daily-check-<YYYY-MM-DD>.md`, then `scripts/format-markdown.sh temp/
 1. **Action list**, most urgent first: every BLOCKER and ACT, one line each, with the link and the one thing to do.
 2. **State**: the tunnel, both clusters' versions, `release_main`, the unreleased commits, and the alerts that fired, one line per rule and cluster.
 3. **Merged**: each pull request merged in Step 5, with its subject.
-4. **Drafts**: each new issue, in the house style of [`/new-issue`](new-issue.prompt.md): title, body, type, labels, milestone.
+4. **Drafts**: each new issue, in the house style of [`/new-issue`](new-issue.prompt.md): title, body, type, labels, milestone, and the `afk-ok` verdict
+   by `/new-issue` step 4 — `afk-ok: yes`, or `afk-ok: no — <the condition that fails>`. Each draft's heading ends in its state, `(unfiled)`; filing
+   one rewrites it to `(filed #N)`. [`/maintain`](maintain.prompt.md) reads that marker.
 5. **Everything else**, one line per signal with its verdict, grouped by the Step 2 keys; the `/log-check` verdicts and a link to its report.
 6. **Not checked**: every key that answered an error, the tunnel if it was down, and the two the command cannot read: the `alerts@` mailbox (Step 1c
    reads what fired, not what was delivered) and the healthchecks.io dashboard ([HEALTHCHECKS.md](../../docs/ops/HEALTHCHECKS.md)).
 
-Then stop. Offer to file the drafts with `/new-issue`, and file none until the operator says which.
+Then stop. Offer to file the drafts with `/new-issue`, and file none until the operator says which. Filing applies each draft's `afk-ok` verdict as the
+label, sets the board fields in one `scripts/issue-board.sh batch`, and rewrites the draft headings to `(filed #N)`. When a report was triaged, one
+comment on its issue says what was filed, what was already fixed, and what did not hold.

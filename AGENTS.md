@@ -215,6 +215,7 @@ Slash commands under `.claude/skills/`, each a one-line `@` pointer into `.githu
 - `/feature-ideas` — features the product and the backlog lack, each checked against the code, all issues and the privacy rules; proposes, files nothing
 - `/importer-smoke` — seed, import, inspect the rows and check for regressions, for one importer
 - `/log-check` — both clusters' logs, Kubernetes events and alerts for the last day, sorted into noise, known, explained and new; drafts issues, files none
+- `/maintain [--dry-run]` — the maintenance loop in one command: reads the state, names the next of `/daily-check`, filing, `/afk`, `/afk merge`, a cut and `/post-release`, and runs the safe ones
 - `/k3d-rehearsal` — the chart and all three images on a local k3d cluster, end to end, then torn down
 - `/improve-test-coverage` — find and fill coverage gaps
 - `/milestone-plan` — a milestone from a list of open issues to an ordered plan
