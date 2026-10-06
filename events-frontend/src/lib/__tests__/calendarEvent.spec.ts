@@ -62,12 +62,26 @@ describe('toCalendarInput', () => {
     expect(run.end).toBe('2026-09-21')
   })
 
-  it('marks a run live on every day it is on, and past once it has closed', () => {
+  it('marks what is on now live, and a run past once it has closed', () => {
+    // 14:00 in Berlin on Friday 25 September.
     vi.useFakeTimers()
     vi.setSystemTime(new Date('2026-09-25T12:00:00Z'))
-    expect(toInput(summary({ endDate: '2026-10-31' })).className).toBe('fc-event-live')
+    expect(toInput(summary({ eventDate: '2026-09-24', endDate: '2026-09-27' })).className).toBe(
+      'fc-event-live',
+    )
     expect(toInput(summary({ endDate: '2026-09-20' })).className).toBe('fc-event-past')
-    expect(toInput(summary({ eventDate: '2026-09-25' })).className).toBe('fc-event-live')
+    expect(toInput(summary({ eventDate: '2026-09-25', startTime: '10:00:00' })).className).toBe(
+      'fc-event-live',
+    )
+    expect(
+      toInput(summary({ eventDate: '2026-09-25', startTime: '20:00:00' })).className,
+    ).toBeUndefined()
     expect(toInput(summary({ eventDate: '2026-09-30' })).className).toBeUndefined()
+  })
+
+  it('gives a run of weeks no live mark', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-09-25T12:00:00Z'))
+    expect(toInput(summary({ endDate: '2026-10-31' })).className).toBeUndefined()
   })
 })

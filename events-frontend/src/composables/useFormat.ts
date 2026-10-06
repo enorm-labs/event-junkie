@@ -7,7 +7,9 @@ import {
   formatTime,
   formatWeekday,
   humaniseEventType,
+  todayIso,
 } from '@/lib/format'
+import { isClosing, isLongRun } from '@/lib/longRuns'
 import { INTL_LOCALES, isLocale } from '@/i18n/locales'
 import { inCharacterOrder } from '@/lib/venueCharacters'
 
@@ -51,8 +53,21 @@ export function useFormat() {
     formatDate: (isoDate?: string | null) =>
       formatDate(isoDate, isLocale(locale.value) ? INTL_LOCALES[locale.value] : 'en-GB'),
 
-    /** `formatWeekday` bound to the active locale — "Fri" / "Fr.", for "running since". */
+    /** `formatWeekday` bound to the active locale — "Fri" / "Fr.". */
     formatWeekday: (isoDate?: string | null) => formatWeekday(isoDate, intlLocale()),
+
+    /**
+     * What a running event says about its run: "Running since Fri" for a weekender, "Until Sun 1 Nov"
+     * for a run of weeks, because "since" a month ago tells nobody anything, and "Closes Sun" in its
+     * last days (#2594).
+     */
+    formatRunState: (event: EventTimes) => {
+      if (isClosing(event, todayIso()))
+        return t('events.card.closes', { day: formatWeekday(event.endDate, intlLocale()) })
+      if (isLongRun(event))
+        return t('events.card.runsUntil', { date: formatShortDate(event.endDate, intlLocale()) })
+      return t('events.card.runningSince', { day: formatWeekday(event.eventDate, intlLocale()) })
+    },
 
     /** `formatShortDate` bound to the active locale — the compact view's date. */
     formatShortDate: (isoDate?: string | null) =>

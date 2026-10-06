@@ -108,13 +108,13 @@ describe('EventRow', () => {
     expect(past.text()).not.toContain('Cancelled')
   })
 
-  it('marks an event happening today as live', () => {
+  it('marks an event as live once it has started', () => {
     const wrapper = mount(EventRow, {
-      props: { event: { ...event, eventDate: todayIso() } },
+      props: { event: { ...event, eventDate: todayIso(), startTime: '00:00' } },
       global: { stubs },
     })
 
-    expect(wrapper.text()).toContain('Live tonight')
+    expect(wrapper.text()).toContain('On now')
   })
 
   it('titles the row h3 by default and honours an overridden level', () => {

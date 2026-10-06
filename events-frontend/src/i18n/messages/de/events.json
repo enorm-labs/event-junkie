@@ -52,7 +52,6 @@
     "moreCount": "Mehr Filter ({n})"
   },
   "card": {
-    "liveTonight": "Heute Abend live",
     "soldOut": "Ausverkauft",
     "free": "Kostenlos",
     "past": "Vorbei",
@@ -62,6 +61,7 @@
     "assumedHint": "Nicht bekannt gegeben, geschätzt nach Veranstaltungsart",
     "runningSince": "Läuft seit {day}",
     "closes": "Endet {day}",
+    "runsUntil": "Bis {date}",
     "until": "Bis {time}",
     "onNow": "Läuft gerade"
   },

@@ -2,8 +2,8 @@ import { computed } from 'vue'
 
 import type { EventSummary } from '@/api/types'
 import { useFormat } from '@/composables/useFormat'
-import { isOnNow, isPastEvent, isRunningEvent, todayIso } from '@/lib/format'
-import { isClosing } from '@/lib/longRuns'
+import { isOnNow, isPastEvent, isRunningEvent } from '@/lib/format'
+import { isLiveNow } from '@/lib/longRuns'
 import { useI18n } from 'vue-i18n'
 
 /**
@@ -13,8 +13,13 @@ import { useI18n } from 'vue-i18n'
  * @param event getter for the event, so the state follows a changing prop.
  */
 export function useEventState(event: () => EventSummary) {
-  const { eventTimeHint, formatEventStatus, formatEventType, formatSpokenLanguage, formatWeekday } =
-    useFormat()
+  const {
+    eventTimeHint,
+    formatEventStatus,
+    formatEventType,
+    formatRunState,
+    formatSpokenLanguage,
+  } = useFormat()
   const { t } = useI18n()
 
   const isPast = computed(() => isPastEvent(event()))
@@ -25,13 +30,9 @@ export function useEventState(event: () => EventSummary) {
   // Set only when the time shown is the BFF's guess (#1384); the tile carries it as a title.
   const timeHint = computed(() => eventTimeHint(event()))
 
-  // An event on today gets a pulsing "live" dot. A running weekender is on today too; a cancelled
-  // or moved one is not live.
-  const isLive = computed(
-    () =>
-      !status.value &&
-      ((Boolean(event().eventDate) && event().eventDate === todayIso()) || isRunning.value),
-  )
+  // An event that has started gets a pulsing "live" dot, a running weekender too; a long run, a
+  // cancelled or a moved one does not.
+  const isLive = computed(() => !status.value && isLiveNow(event()))
 
   // `OTHER` is the importers' catch-all and tells a reader nothing, so it earns no pill.
   const eventType = computed(() =>
@@ -53,17 +54,7 @@ export function useEventState(event: () => EventSummary) {
   const state = computed(() => {
     if (isPast.value) return { label: t('events.card.past'), class: 'text-muted-foreground' }
     if (status.value) return { label: status.value, class: 'text-destructive' }
-    // A run of weeks names its last day instead, because "since" a month ago tells nobody anything (#2594).
-    if (isRunning.value && isClosing(event(), todayIso()))
-      return {
-        label: t('events.card.closes', { day: formatWeekday(event().endDate) }),
-        class: 'text-primary',
-      }
-    if (isRunning.value)
-      return {
-        label: t('events.card.runningSince', { day: formatWeekday(event().eventDate) }),
-        class: 'text-primary',
-      }
+    if (isRunning.value) return { label: formatRunState(event()), class: 'text-primary' }
     if (isOnNow(event())) return { label: t('events.card.onNow'), class: 'text-primary' }
     if (event().soldOut) return { label: t('events.card.soldOut'), class: 'text-destructive' }
     if (event().free) return { label: t('events.card.free'), class: 'text-success' }
