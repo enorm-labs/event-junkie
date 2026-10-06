@@ -67,13 +67,13 @@ fi
 
 # Generated, never hand-edited — the same rule the dashboards keep. Regenerating
 # here means `--check` can never validate a file that differs from the generator.
-python3 gen_alerts.py > alerts.json
+python3 gen_alerts.py >alerts.json
 echo "rules: $(python3 -c 'import json;print(len(json.load(open("alerts.json"))))') (from gen_alerts.py)"
 echo "cluster: $CONTEXT ($NODE)"
 
 ssh_node() { ssh -o ConnectTimeout=10 -o BatchMode=yes -i "$SSH_KEY" "$NODE" "$@"; }
 
-ssh_node 'cat > /tmp/ej-alerts.json' < alerts.json
+ssh_node 'cat > /tmp/ej-alerts.json' <alerts.json
 
 # The credentials live in the flux-system copy of the Secret, NOT the observability
 # one — the observability copy holds only the four keys the chart itself reads.
@@ -83,8 +83,8 @@ ssh_node 'cat > /tmp/ej-alerts.json' < alerts.json
 # check exists to catch. Plain name, not the `ej-` prefix the other files use — it
 # has to be importable, and a module name cannot carry a dash.
 if $diff_only; then
-    ssh_node 'cat > /tmp/alert_objects.py' < alert_objects.py
-    ssh_node 'cat > /tmp/ej-diff-alerts.py' < diff_alerts.py
+    ssh_node 'cat > /tmp/alert_objects.py' <alert_objects.py
+    ssh_node 'cat > /tmp/ej-diff-alerts.py' <diff_alerts.py
     ssh_node "
         AUTH=\$(sudo k3s kubectl -n flux-system get secret openobserve-credentials -o jsonpath='{.data.O2_BASIC_AUTH_HEADER}' | base64 -d)
         SVC=\$(sudo k3s kubectl -n observability get svc openobserve-openobserve-standalone -o jsonpath='{.spec.clusterIP}')
@@ -94,7 +94,7 @@ if $diff_only; then
 fi
 
 if $check_only; then
-    ssh_node 'cat > /tmp/ej-check-alerts.py' < check_alerts.py
+    ssh_node 'cat > /tmp/ej-check-alerts.py' <check_alerts.py
     python3 gen_alerts.py --failure-only | ssh_node 'cat > /tmp/ej-failure-only.txt'
     ssh_node "
         AUTH=\$(sudo k3s kubectl -n flux-system get secret openobserve-credentials -o jsonpath='{.data.O2_BASIC_AUTH_HEADER}' | base64 -d)
@@ -104,8 +104,8 @@ if $check_only; then
     exit $?
 fi
 
-ssh_node 'cat > /tmp/alert_objects.py' < alert_objects.py
-ssh_node 'cat > /tmp/ej-apply-alerts.py' < apply_alerts.py
+ssh_node 'cat > /tmp/alert_objects.py' <alert_objects.py
+ssh_node 'cat > /tmp/ej-apply-alerts.py' <apply_alerts.py
 ssh_node "
     AUTH=\$(sudo k3s kubectl -n flux-system get secret openobserve-credentials -o jsonpath='{.data.O2_BASIC_AUTH_HEADER}' | base64 -d)
     SVC=\$(sudo k3s kubectl -n observability get svc openobserve-openobserve-standalone -o jsonpath='{.spec.clusterIP}')

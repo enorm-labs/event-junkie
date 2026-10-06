@@ -24,7 +24,10 @@
 set -euo pipefail
 
 case "${1:-}" in
-  -h | --help) awk '/^# Usage:/ { p = 1 } p && !/^#./ { exit } p { sub(/^# ?/, ""); print }' "$0"; exit 0 ;;
+    -h | --help)
+        awk '/^# Usage:/ { p = 1 } p && !/^#./ { exit } p { sub(/^# ?/, ""); print }' "$0"
+        exit 0
+        ;;
 esac
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -95,11 +98,11 @@ try {
 EOF
 
 if [[ "$OUT" == "$DEFAULT_OUT" ]]; then
-  today="$(date +%Y-%m-%d)"
-  month="$(LC_ALL=C date +'%B %Y')"
-  # The "Taken" column of each row that names one of the files, and the caption under the README's pictures.
-  sed -E -i.bak "/\`events(-mobile)?-(dark|light)\.png\`/ s/\| [0-9]{4}-[0-9]{2}-[0-9]{2} \|$/| $today |/" "$DEFAULT_OUT/README.md"
-  sed -E -i.bak "s/[A-Z][a-z]+ [0-9]{4}; see <a href=\"\.\/docs\/screenshots\/\">/$month; see <a href=\".\/docs\/screenshots\/\">/" "$REPO_ROOT/README.md"
-  rm -f "$DEFAULT_OUT/README.md.bak" "$REPO_ROOT/README.md.bak"
-  echo "Dates set to $today. Review: git diff --stat docs/screenshots README.md"
+    today="$(date +%Y-%m-%d)"
+    month="$(LC_ALL=C date +'%B %Y')"
+    # The "Taken" column of each row that names one of the files, and the caption under the README's pictures.
+    sed -E -i.bak "/\`events(-mobile)?-(dark|light)\.png\`/ s/\| [0-9]{4}-[0-9]{2}-[0-9]{2} \|$/| $today |/" "$DEFAULT_OUT/README.md"
+    sed -E -i.bak "s/[A-Z][a-z]+ [0-9]{4}; see <a href=\"\.\/docs\/screenshots\/\">/$month; see <a href=\".\/docs\/screenshots\/\">/" "$REPO_ROOT/README.md"
+    rm -f "$DEFAULT_OUT/README.md.bak" "$REPO_ROOT/README.md.bak"
+    echo "Dates set to $today. Review: git diff --stat docs/screenshots README.md"
 fi

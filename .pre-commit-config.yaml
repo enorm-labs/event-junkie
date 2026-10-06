@@ -31,6 +31,17 @@ repos:
         files: ^(infra|scripts)/.*\.sh$
         pass_filenames: true
 
+      # `brew install shfmt`; validate-scripts.yml pins the version that decides. No flags, so the style
+      # comes from `.editorconfig`. Writes in place, like ruff-format. The cloud-init scripts are the
+      # nodes' `user_data`, where a reformat rebuilds a node on the next apply.
+      - id: shfmt
+        name: shfmt
+        entry: shfmt -w
+        language: system
+        files: \.sh$
+        exclude: ^infra/modules/environment/cloud-init/
+        pass_filenames: true
+
       # ruff at whatever version is on $PATH (`brew install ruff`), configured by the root ruff.toml;
       # validate-python.yml pins the version that decides, the same split as ShellCheck. `ruff-format`
       # writes in place, like format-markdown, so a reformatted file lands in the same commit.

@@ -57,8 +57,8 @@ scan() {
     cd "$REPO_ROOT"
     # shellcheck disable=SC2016  # $0 and $1 are awk fields, not shell expansions.
     files | tr '\n' '\0' | xargs -0 awk -v maxblock="$MAX_BLOCK" -v maxheader="$MAX_HEADER_BLOCK" \
-            -v headerby="$HEADER_STARTS_BY" -v maxdens="$MAX_DENSITY" \
-            -v datepolicy="$DATE_IS_POLICY" '
+        -v headerby="$HEADER_STARTS_BY" -v maxdens="$MAX_DENSITY" \
+        -v datepolicy="$DATE_IS_POLICY" '
         function area(f,   a) {
             split(f, a, "/")
             if (a[1] ~ /^(events-core|events-bff|events-importer|events-frontend|detekt-rules|infra|deploy|scripts)$/) return a[1]
@@ -150,14 +150,23 @@ report() {
     local top=0
     while [ $# -gt 0 ]; do
         case "$1" in
-            --top) top="$2"; shift 2 ;;
-            *) echo "unknown option: $1" >&2; exit 2 ;;
+            --top)
+                top="$2"
+                shift 2
+                ;;
+            *)
+                echo "unknown option: $1" >&2
+                exit 2
+                ;;
         esac
     done
 
     local data
     data="$(scan)"
-    if [ -z "$data" ]; then echo "No violations."; return; fi
+    if [ -z "$data" ]; then
+        echo "No violations."
+        return
+    fi
 
     printf '%-18s %s\n' "TYPE" "COUNT"
     echo "$data" | awk -F'\t' '{ n[$3]++ } END { for (t in n) printf "%-18s %5d\n", t, n[t] }' | sort -k2 -rn
@@ -173,7 +182,7 @@ report() {
 check() {
     local violations total
     violations="$(counts)"
-    total="$(awk -F'	' '{ n += $2 } END { print n + 0 }' <<< "$violations")"
+    total="$(awk -F'	' '{ n += $2 } END { print n + 0 }' <<<"$violations")"
 
     if [ "$total" -eq 0 ]; then
         echo "No comment-lint violations."
@@ -184,7 +193,7 @@ check() {
         case "$area" in "") continue ;; esac
         printf '  %-18s %4d
 ' "$area" "$n"
-    done <<< "$violations"
+    done <<<"$violations"
 
     echo
     echo "$total comment-lint violations. See them with: scripts/comment-lint.sh report" >&2
@@ -192,8 +201,14 @@ check() {
 }
 
 case "${1:-report}" in
-    report) shift || true; report "$@" ;;
+    report)
+        shift || true
+        report "$@"
+        ;;
     check) check ;;
     -h | --help | help) usage ;;
-    *) usage >&2; exit 2 ;;
+    *)
+        usage >&2
+        exit 2
+        ;;
 esac

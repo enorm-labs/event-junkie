@@ -65,8 +65,8 @@ counts() {
 
 stats() {
     cd "$REPO_ROOT"
-    files | tr '\n' '\0' | xargs -0 python3 "$SCANNER" --stats \
-        | awk -F'\t' '
+    files | tr '\n' '\0' | xargs -0 python3 "$SCANNER" --stats |
+        awk -F'\t' '
             BEGIN { printf "%-12s %10s %10s %8s\n", "AREA", "SENTENCES", "OVER CAP", "SHARE" }
             { printf "%-12s %10d %10d %7.1f%%\n", $1, $2, $3, $2 ? 100 * $3 / $2 : 0; s += $2; l += $3 }
             END { printf "%-12s %10d %10d %7.1f%%\n", "TOTAL", s, l, s ? 100 * l / s : 0 }'
@@ -115,7 +115,7 @@ update_baseline() {
         echo "# An area with no row here is at zero, which is where all three finished. That is the"
         echo "# goal state, not a missing file: do not run update-baseline to make a red check pass."
         counts
-    } > "$BASELINE"
+    } >"$BASELINE"
     echo "Wrote $BASELINE"
     grep -v '^#' "$BASELINE"
 }
@@ -141,7 +141,7 @@ check() {
         elif [ "$now" -lt "$limit" ]; then
             printf '  %-12s %4d < %-4d  (-%d, update the baseline)\n' "$area" "$now" "$limit" "$((limit - now))"
         fi
-    done < "$BASELINE"
+    done <"$BASELINE"
 
     while IFS=$'\t' read -r area now; do # an absent area is a limit of zero, not an unknown (#733)
         [ -z "${area:-}" ] && continue
@@ -149,7 +149,7 @@ check() {
             printf '  %-12s %4d > 0     (+%d)\n' "$area" "$now" "$now"
             failed=1
         fi
-    done <<< "$current"
+    done <<<"$current"
 
     if [ "$failed" -eq 1 ]; then
         echo

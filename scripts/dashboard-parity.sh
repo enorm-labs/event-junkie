@@ -24,7 +24,10 @@
 set -euo pipefail
 
 case "${1:-}" in
-    -h | --help) awk '/^# Usage:/ { p = 1 } p && !/^#./ { exit } p { sub(/^# ?/, ""); print }' "$0"; exit 0 ;;
+    -h | --help)
+        awk '/^# Usage:/ { p = 1 } p && !/^#./ { exit } p { sub(/^# ?/, ""); print }' "$0"
+        exit 0
+        ;;
 esac
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -44,8 +47,14 @@ BOOKMARKS=docs/event-junkie-bookmarks.html
 CSS=docs/ops/dashboard/dashboard.css
 GENERATED=("$LINKS_JS" "$BOOKMARKS" "$CSS")
 
-command -v python3 >/dev/null || { echo "dashboard-parity.sh: python3 is required" >&2; exit 1; }
-command -v node >/dev/null || { echo "dashboard-parity.sh: node is required" >&2; exit 1; }
+command -v python3 >/dev/null || {
+    echo "dashboard-parity.sh: python3 is required" >&2
+    exit 1
+}
+command -v node >/dev/null || {
+    echo "dashboard-parity.sh: node is required" >&2
+    exit 1
+}
 [ -d events-frontend/node_modules/@tailwindcss/node ] || {
     echo "dashboard-parity.sh: no events-frontend/node_modules/@tailwindcss/node — run 'npm ci' in events-frontend/ first" >&2
     exit 1

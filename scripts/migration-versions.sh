@@ -20,37 +20,43 @@
 set -euo pipefail
 
 case "${1:-}" in
-  -h | --help) awk '/^# Usage:/ { p = 1 } p && !/^#./ { exit } p { sub(/^# ?/, ""); print }' "$0"; exit 0 ;;
+    -h | --help)
+        awk '/^# Usage:/ { p = 1 } p && !/^#./ { exit } p { sub(/^# ?/, ""); print }' "$0"
+        exit 0
+        ;;
 esac
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 DIR="${1:-$REPO_ROOT/events-importer/src/main/resources/db/migration}"
-[[ -d "$DIR" ]] || { echo "migration-versions: no directory $DIR" >&2; exit 2; }
+[[ -d "$DIR" ]] || {
+    echo "migration-versions: no directory $DIR" >&2
+    exit 2
+}
 
 failed=0
 versions=()
 for path in "$DIR"/*; do
-  [[ -e "$path" ]] || continue
-  name="$(basename "$path")"
-  if [[ ! "$name" =~ ^V([0-9]+)__[^_].*\.sql$ ]]; then
-    echo "migration-versions: $name does not match V<digits>__<description>.sql, and Flyway would skip it" >&2
-    failed=1
-    continue
-  fi
-  # 072 and 72 are one version to Flyway, so compare the number, not the text.
-  versions+=("$((10#${BASH_REMATCH[1]})) $name")
+    [[ -e "$path" ]] || continue
+    name="$(basename "$path")"
+    if [[ ! "$name" =~ ^V([0-9]+)__[^_].*\.sql$ ]]; then
+        echo "migration-versions: $name does not match V<digits>__<description>.sql, and Flyway would skip it" >&2
+        failed=1
+        continue
+    fi
+    # 072 and 72 are one version to Flyway, so compare the number, not the text.
+    versions+=("$((10#${BASH_REMATCH[1]})) $name")
 done
 
 duplicates="$(printf '%s\n' "${versions[@]}" | awk '{ count[$1]++; files[$1] = files[$1] " " $2 } END { for (v in count) if (count[v] > 1) print v ":" files[v] }' | sort -n)"
 if [[ -n "$duplicates" ]]; then
-  while IFS= read -r line; do
-    echo "migration-versions: version ${line%%:*} is taken by more than one file:${line#*:}" >&2
-  done <<<"$duplicates"
-  echo "migration-versions: renumber the one that has not reached a cluster; see #2183" >&2
-  failed=1
+    while IFS= read -r line; do
+        echo "migration-versions: version ${line%%:*} is taken by more than one file:${line#*:}" >&2
+    done <<<"$duplicates"
+    echo "migration-versions: renumber the one that has not reached a cluster; see #2183" >&2
+    failed=1
 fi
 
 if [[ "$failed" -eq 0 ]]; then
-  echo "migration-versions: ${#versions[@]} migrations, every version unique"
+    echo "migration-versions: ${#versions[@]} migrations, every version unique"
 fi
 exit "$failed"

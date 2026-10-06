@@ -21,7 +21,10 @@
 set -euo pipefail
 
 case "${1:-}" in
-    -h | --help) awk '/^# Usage:/ { p = 1 } p && !/^#./ { exit } p { sub(/^# ?/, ""); print }' "$0"; exit 0 ;;
+    -h | --help)
+        awk '/^# Usage:/ { p = 1 } p && !/^#./ { exit } p { sub(/^# ?/, ""); print }' "$0"
+        exit 0
+        ;;
 esac
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -67,7 +70,10 @@ for file in \
     .github/instructions/ci-cd.instructions.md \
     docs/ops/RELEASING.md \
     CONTRIBUTING.md; do
-    [ -f "$file" ] || { note "$file: missing"; continue; }
+    [ -f "$file" ] || {
+        note "$file: missing"
+        continue
+    }
     tr -s '[:space:]' ' ' <"$file" | grep -qF "$rendered" ||
         note "$file: does not quote the list as label-pr.yml has it: $rendered"
 done

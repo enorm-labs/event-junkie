@@ -32,7 +32,10 @@
 set -euo pipefail
 
 case "${1:-}" in
-  -h | --help) awk '/^# Usage:/ { p = 1 } p && !/^#./ { exit } p { sub(/^# ?/, ""); print }' "$0"; exit 0 ;;
+    -h | --help)
+        awk '/^# Usage:/ { p = 1 } p && !/^#./ { exit } p { sub(/^# ?/, ""); print }' "$0"
+        exit 0
+        ;;
 esac
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -42,33 +45,34 @@ CSP_TS="$REPO_ROOT/events-frontend/scripts/csp.ts"
 INDEX_HTML="$REPO_ROOT/events-frontend/index.html"
 
 command -v yq >/dev/null || {
-  printf 'csp-parity.sh: yq is required but not on PATH\n' >&2
-  exit 1
+    printf 'csp-parity.sh: yq is required but not on PATH\n' >&2
+    exit 1
 }
 
 for f in "$VALUES" "$CSP_TS" "$INDEX_HTML"; do
-  [[ -f "$f" ]] || {
-    printf 'csp-parity.sh: no such file: %s\n' "$f" >&2
-    exit 1
-  }
+    [[ -f "$f" ]] || {
+        printf 'csp-parity.sh: no such file: %s\n' "$f" >&2
+        exit 1
+    }
 done
 
 failures=0
 
 fail() {
-  printf 'csp-parity.sh: %s\n' "$1" >&2
-  failures=$((failures + 1))
+    printf 'csp-parity.sh: %s\n' "$1" >&2
+    failures=$((failures + 1))
 }
 
 # --- 1. The two directive lists -----------------------------------------------------------------
 
 chart_directives="$(yq -N -r \
-  '.ingress.securityHeaders.contentSecurityPolicy.directives[]' "$VALUES")"
+    '.ingress.securityHeaders.contentSecurityPolicy.directives[]' "$VALUES")"
 
 # The TypeScript is read rather than executed: running it would need a Node with type stripping and
 # a working install, which is a great deal of machinery to compare ten strings. The array is a plain
 # list of double-quoted literals, and the extractor below refuses anything else rather than guessing.
-frontend_directives="$(python3 - "$CSP_TS" <<'PY'
+frontend_directives="$(
+    python3 - "$CSP_TS" <<'PY'
 import re
 import sys
 
@@ -85,23 +89,24 @@ PY
 )"
 
 if [[ "$chart_directives" != "$frontend_directives" ]]; then
-  fail "the two policies differ. values.yaml and events-frontend/scripts/csp.ts must carry the same list:"
-  diff <(printf '%s\n' "$chart_directives") <(printf '%s\n' "$frontend_directives") \
-    --label "$VALUES" --label "$CSP_TS" -u >&2 || true
+    fail "the two policies differ. values.yaml and events-frontend/scripts/csp.ts must carry the same list:"
+    diff <(printf '%s\n' "$chart_directives") <(printf '%s\n' "$frontend_directives") \
+        --label "$VALUES" --label "$CSP_TS" -u >&2 || true
 fi
 
 # `img-src` belongs to neither copy. Asserted rather than assumed, because adding it to the list is
 # the obvious-looking fix for the first person who finds images blocked, and it would pin the header
 # to one deployment's answer.
 if printf '%s\n' "$chart_directives" | grep -q '^img-src'; then
-  fail "values.yaml lists an img-src directive. The template derives it from images.serving.enabled — see the values comment"
+    fail "values.yaml lists an img-src directive. The template derives it from images.serving.enabled — see the values comment"
 fi
 
 # --- 2 and 3. The script hashes -----------------------------------------------------------------
 
 # Every inline `<script>` in the page, hashed the way CSP asks: SHA-256 over the element's exact
 # text content, base64, prefixed. `src=` scripts are excluded — they are covered by `'self'`.
-expected_hashes="$(python3 - "$INDEX_HTML" <<'PY'
+expected_hashes="$(
+    python3 - "$INDEX_HTML" <<'PY'
 import base64
 import hashlib
 import re
@@ -119,27 +124,27 @@ declared_hashes="$(printf '%s\n' "$chart_directives" | grep -o "sha256-[A-Za-z0-
 expected_sorted="$(printf '%s\n' "$expected_hashes" | sort -u)"
 
 while IFS= read -r hash; do
-  [[ -n "$hash" ]] || continue
-  if ! printf '%s\n' "$declared_hashes" | grep -qxF "$hash"; then
-    fail "events-frontend/index.html has an inline script the policy does not allow: $hash — add it to script-src in both copies"
-  fi
+    [[ -n "$hash" ]] || continue
+    if ! printf '%s\n' "$declared_hashes" | grep -qxF "$hash"; then
+        fail "events-frontend/index.html has an inline script the policy does not allow: $hash — add it to script-src in both copies"
+    fi
 done <<<"$expected_sorted"
 
 while IFS= read -r hash; do
-  [[ -n "$hash" ]] || continue
-  if ! printf '%s\n' "$expected_sorted" | grep -qxF "$hash"; then
-    fail "script-src allows $hash, which no inline script in events-frontend/index.html produces — a stale hash permits bytes nobody serves"
-  fi
+    [[ -n "$hash" ]] || continue
+    if ! printf '%s\n' "$expected_sorted" | grep -qxF "$hash"; then
+        fail "script-src allows $hash, which no inline script in events-frontend/index.html produces — a stale hash permits bytes nobody serves"
+    fi
 done <<<"$declared_hashes"
 
 # --- The verdict ---------------------------------------------------------------------------------
 
 if [[ "$failures" -gt 0 ]]; then
-  printf '\ncsp-parity.sh: %d problem(s). The chart, the preview server and index.html must agree.\n' "$failures" >&2
-  exit 1
+    printf '\ncsp-parity.sh: %d problem(s). The chart, the preview server and index.html must agree.\n' "$failures" >&2
+    exit 1
 fi
 
 directive_count="$(printf '%s\n' "$chart_directives" | grep -c . || true)"
 hash_count="$(printf '%s\n' "$expected_sorted" | grep -c . || true)"
 printf 'CSP agrees: %s directives in both copies, %s inline script hash(es) matching index.html.\n' \
-  "$directive_count" "$hash_count"
+    "$directive_count" "$hash_count"

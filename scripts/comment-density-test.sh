@@ -11,7 +11,10 @@
 set -euo pipefail
 
 case "${1:-}" in
-  -h | --help) awk '/^# Usage:/ { p = 1 } p && !/^#./ { exit } p { sub(/^# ?/, ""); print }' "$0"; exit 0 ;;
+    -h | --help)
+        awk '/^# Usage:/ { p = 1 } p && !/^#./ { exit } p { sub(/^# ?/, ""); print }' "$0"
+        exit 0
+        ;;
 esac
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -20,13 +23,13 @@ DENSITY="$REPO_ROOT/scripts/comment-density.sh"
 failures=0
 
 fail() {
-  printf '  FAIL  %s\n' "$1" >&2
-  printf '%s\n' "$2" | sed 's/^/          /' >&2
-  failures=$((failures + 1))
+    printf '  FAIL  %s\n' "$1" >&2
+    printf '%s\n' "$2" | sed 's/^/          /' >&2
+    failures=$((failures + 1))
 }
 
 pass() {
-  printf '  ok    %s\n' "$1"
+    printf '  ok    %s\n' "$1"
 }
 
 WORK="$(mktemp -d)"
@@ -38,37 +41,37 @@ trap 'rm -rf "$WORK"' EXIT
 # `comment-density.sh` resolves its root from its own path and enumerates with `git ls-files`. A
 # file outside either is one it never opens — a test that would pass whatever the awk did.
 counts() {
-  local name="$1" body="$2" dir="$WORK/case"
+    local name="$1" body="$2" dir="$WORK/case"
 
-  rm -rf "$dir"
-  mkdir -p "$dir/scripts"
-  git -C "$dir" init -q
-  git -C "$dir" config user.email t@example.invalid
-  git -C "$dir" config user.name t
+    rm -rf "$dir"
+    mkdir -p "$dir/scripts"
+    git -C "$dir" init -q
+    git -C "$dir" config user.email t@example.invalid
+    git -C "$dir" config user.name t
 
-  printf '%s' "$body" >"$dir/$name"
-  cp "$DENSITY" "$dir/scripts/comment-density.sh"
-  git -C "$dir" add -A
+    printf '%s' "$body" >"$dir/$name"
+    cp "$DENSITY" "$dir/scripts/comment-density.sh"
+    git -C "$dir" add -A
 
-  (cd "$dir" && ./scripts/comment-density.sh report --json) |
-    awk -F'[:,}]' '/"root"/ { gsub(/[^0-9]/, "", $3); gsub(/[^0-9]/, "", $5); print $3, $5 }'
+    (cd "$dir" && ./scripts/comment-density.sh report --json) |
+        awk -F'[:,}]' '/"root"/ { gsub(/[^0-9]/, "", $3); gsub(/[^0-9]/, "", $5); print $3, $5 }'
 }
 
 # assert_counts <description> <expected "comment code"> <filename> <content>
 assert_counts() {
-  local description="$1" expected="$2" actual
-  actual="$(counts "$3" "$4")"
+    local description="$1" expected="$2" actual
+    actual="$(counts "$3" "$4")"
 
-  if [[ "$expected" == "$actual" ]]; then
-    pass "$description"
-  else
-    fail "$description" "expected: $expected
+    if [[ "$expected" == "$actual" ]]; then
+        pass "$description"
+    else
+        fail "$description" "expected: $expected
   actual:   $actual"
-  fi
+    fi
 }
 
 assert_counts 'an HTML comment block ends at --> and the template below it is code' '2 4' fixture.vue \
-  '<template>
+    '<template>
   <!-- why this exists,
        across two lines -->
   <p>one</p>
@@ -77,7 +80,7 @@ assert_counts 'an HTML comment block ends at --> and the template below it is co
 '
 
 assert_counts 'a single-line HTML comment opens no block' '1 4' fixture.vue \
-  '<template>
+    '<template>
   <!-- why this exists -->
   <p>one</p>
   <p>two</p>
@@ -85,7 +88,7 @@ assert_counts 'a single-line HTML comment opens no block' '1 4' fixture.vue \
 '
 
 assert_counts 'a block comment still ends at its own delimiter' '3 2' fixture.ts \
-  '/**
+    '/**
  * Why this exists.
  */
 const a = 1
@@ -93,15 +96,15 @@ export { a }
 '
 
 assert_counts 'an unterminated block comment runs to the end, because it has to' '3 1' fixture.ts \
-  'const a = 1
+    'const a = 1
 /**
  * Why this exists.
 const b = 2
 '
 
 if ((failures > 0)); then
-  printf '\n%d assertion(s) failed.\n' "$failures" >&2
-  exit 1
+    printf '\n%d assertion(s) failed.\n' "$failures" >&2
+    exit 1
 fi
 
 printf '\nAll assertions passed.\n'

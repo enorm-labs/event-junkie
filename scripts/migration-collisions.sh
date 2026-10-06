@@ -24,17 +24,21 @@ DIR='events-importer/src/main/resources/db/migration'
 
 # numbered <tag> <file> — "<tag> <version> <name>" per name Flyway reads; the regex and `10#` are migration-versions.sh's.
 numbered() {
-  local tag="$1" name
-  while IFS= read -r name; do
-    [[ "$name" =~ ^V([0-9]+)__[^_].*\.sql$ ]] || continue
-    echo "$tag $((10#${BASH_REMATCH[1]})) $name"
-  done <"$2"
+    local tag="$1" name
+    while IFS= read -r name; do
+        [[ "$name" =~ ^V([0-9]+)__[^_].*\.sql$ ]] || continue
+        echo "$tag $((10#${BASH_REMATCH[1]})) $name"
+    done <"$2"
 }
 
 # decide <main-names> <pr-names> <taken-names> — prints "<state><TAB><description>", at most 140 characters as the API allows.
 decide() {
-  local verdict
-  verdict="$({ numbered M "$1"; numbered P "$2"; numbered T "$3"; } | awk '
+    local verdict
+    verdict="$({
+        numbered M "$1"
+        numbered P "$2"
+        numbered T "$3"
+    } | awk '
     { if ($2 > max) max = $2 }
     $1 == "M" { main[$2] = main[$2] " " $3; next }
     $1 == "P" { n++; pv[n] = $2; pn[n] = $3 }
@@ -54,25 +58,34 @@ decide() {
       else if (hits == 0) print "success\tNo added version is taken on main"
       else printf "failure\t%s is taken on main by %s%s; renumber to %s or above\n", first, file, (hits > 1 ? " (+" hits - 1 " more)" : ""), free
     }')"
-  echo "${verdict:0:140}"
+    echo "${verdict:0:140}"
 }
 
 case "${1:-}" in
-  -h | --help) awk '/^# Usage:/ { p = 1 } p && !/^#./ { exit } p { sub(/^# ?/, ""); print }' "$0"; exit 0 ;;
-  decide)
-    [[ $# -eq 4 ]] || { echo "migration-collisions: decide takes three files" >&2; exit 2; }
-    decide "$2" "$3" "$4"
-    exit 0
-    ;;
+    -h | --help)
+        awk '/^# Usage:/ { p = 1 } p && !/^#./ { exit } p { sub(/^# ?/, ""); print }' "$0"
+        exit 0
+        ;;
+    decide)
+        [[ $# -eq 4 ]] || {
+            echo "migration-collisions: decide takes three files" >&2
+            exit 2
+        }
+        decide "$2" "$3" "$4"
+        exit 0
+        ;;
 esac
 
 write=0
 if [[ "${1:-}" == "--write" ]]; then
-  write=1
-  shift
+    write=1
+    shift
 fi
 for pr in "$@"; do
-  [[ "$pr" =~ ^[0-9]+$ ]] || { echo "migration-collisions: $pr is not a pull request number" >&2; exit 2; }
+    [[ "$pr" =~ ^[0-9]+$ ]] || {
+        echo "migration-collisions: $pr is not a pull request number" >&2
+        exit 2
+    }
 done
 
 REPO="${GITHUB_REPOSITORY:-$(gh repo view --json nameWithOwner --jq .nameWithOwner)}"
@@ -81,65 +94,71 @@ trap 'rm -rf "$WORK"' EXIT
 
 # api <arg>... — `gh api`, naming the call on stderr when it fails; returns 4 on a 404, 1 otherwise.
 api() {
-  local call="$*"
-  gh api "$@" 2>"$WORK/err" && return 0
-  echo "migration-collisions: gh api ${call%% --jq*} failed: $(<"$WORK/err")" >&2
-  grep -q '(HTTP 404)' "$WORK/err" && return 4
-  return 1
+    local call="$*"
+    gh api "$@" 2>"$WORK/err" && return 0
+    echo "migration-collisions: gh api ${call%% --jq*} failed: $(<"$WORK/err")" >&2
+    grep -q '(HTTP 404)' "$WORK/err" && return 4
+    return 1
 }
 
 api "repos/$REPO/contents/$DIR?ref=main" --jq '.[] | select(.type == "file") | .name' >"$WORK/main" || exit 2
 # An empty listing is a failed read, not a tree without migrations; passing every PR on it would be wrong.
-[[ -s "$WORK/main" ]] || { echo "migration-collisions: no migrations listed on main" >&2; exit 2; }
+[[ -s "$WORK/main" ]] || {
+    echo "migration-collisions: no migrations listed on main" >&2
+    exit 2
+}
 
 # added <pr> — the migration names the PR adds, a renumbering rename included.
 added() {
-  api --paginate "repos/$REPO/pulls/$1/files?per_page=100" \
-    --jq ".[] | select(.status == \"added\" or .status == \"renamed\" or .status == \"copied\") | .filename
+    api --paginate "repos/$REPO/pulls/$1/files?per_page=100" \
+        --jq ".[] | select(.status == \"added\" or .status == \"renamed\" or .status == \"copied\") | .filename
       | select(startswith(\"$DIR/\")) | ltrimstr(\"$DIR/\") | select(contains(\"/\") | not)"
 }
 
 api --paginate "repos/$REPO/pulls?state=open&base=main&per_page=100" --jq '.[] | "\(.number) \(.head.sha)"' >"$WORK/open" || exit 2
 targets=()
 if [[ $# -gt 0 ]]; then
-  for pr in "$@"; do
-    sha="$(api "repos/$REPO/pulls/$pr" --jq .head.sha)" || exit 2
-    targets+=("$pr $sha")
-  done
+    for pr in "$@"; do
+        sha="$(api "repos/$REPO/pulls/$pr" --jq .head.sha)" || exit 2
+        targets+=("$pr $sha")
+    done
 else
-  while IFS= read -r line; do targets+=("$line"); done <"$WORK/open"
+    while IFS= read -r line; do targets+=("$line"); done <"$WORK/open"
 fi
 
 # Every open PR's added versions count toward the next free number, so two renumbered PRs do not meet again.
 : >"$WORK/taken"
 while read -r pr _; do
-  # With no targets, `printf` still prints one empty line; reading `pulls//files` 404'd every push that left no open PR (#2715).
-  [[ -n "$pr" ]] || continue
-  rc=0
-  added "$pr" >"$WORK/pr-$pr" || rc=$?
-  if [[ "$rc" -eq 4 ]]; then
-    echo "#$pr skipped: its file list answered 404, most likely closed since the listing"
-    rm "$WORK/pr-$pr"
-    continue
-  fi
-  [[ "$rc" -eq 0 ]] || exit 2
-  cat "$WORK/pr-$pr" >>"$WORK/taken"
-done < <({ cat "$WORK/open"; printf '%s\n' "${targets[@]}"; } | sort -u -k1,1n)
+    # With no targets, `printf` still prints one empty line; reading `pulls//files` 404'd every push that left no open PR (#2715).
+    [[ -n "$pr" ]] || continue
+    rc=0
+    added "$pr" >"$WORK/pr-$pr" || rc=$?
+    if [[ "$rc" -eq 4 ]]; then
+        echo "#$pr skipped: its file list answered 404, most likely closed since the listing"
+        rm "$WORK/pr-$pr"
+        continue
+    fi
+    [[ "$rc" -eq 0 ]] || exit 2
+    cat "$WORK/pr-$pr" >>"$WORK/taken"
+done < <({
+    cat "$WORK/open"
+    printf '%s\n' "${targets[@]}"
+} | sort -u -k1,1n)
 
 url=''
 [[ -n "${GITHUB_RUN_ID:-}" ]] && url="${GITHUB_SERVER_URL:-https://github.com}/$REPO/actions/runs/$GITHUB_RUN_ID"
 
 collided=0
 for target in "${targets[@]}"; do
-  read -r pr sha <<<"$target"
-  [[ -f "$WORK/pr-$pr" ]] || continue
-  IFS=$'\t' read -r state description < <(decide "$WORK/main" "$WORK/pr-$pr" "$WORK/taken")
-  printf '#%s %s %-7s %s\n' "$pr" "${sha:0:7}" "$state" "$description"
-  [[ "$state" == failure ]] && collided=1
-  if [[ "$write" -eq 1 ]]; then
-    api -X POST "repos/$REPO/statuses/$sha" -f state="$state" -f context="$CONTEXT" \
-      -f description="$description" ${url:+-f target_url="$url"} >/dev/null || exit 2
-  fi
+    read -r pr sha <<<"$target"
+    [[ -f "$WORK/pr-$pr" ]] || continue
+    IFS=$'\t' read -r state description < <(decide "$WORK/main" "$WORK/pr-$pr" "$WORK/taken")
+    printf '#%s %s %-7s %s\n' "$pr" "${sha:0:7}" "$state" "$description"
+    [[ "$state" == failure ]] && collided=1
+    if [[ "$write" -eq 1 ]]; then
+        api -X POST "repos/$REPO/statuses/$sha" -f state="$state" -f context="$CONTEXT" \
+            -f description="$description" ${url:+-f target_url="$url"} >/dev/null || exit 2
+    fi
 done
 
 [[ ${#targets[@]} -gt 0 ]] || echo "migration-collisions: no open pull request against main"

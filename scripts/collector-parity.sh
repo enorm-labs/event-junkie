@@ -31,7 +31,10 @@
 set -euo pipefail
 
 case "${1:-}" in
-    -h | --help) awk '/^# Usage:/ { p = 1 } p && !/^#./ { exit } p { sub(/^# ?/, ""); print }' "$0"; exit 0 ;;
+    -h | --help)
+        awk '/^# Usage:/ { p = 1 } p && !/^#./ { exit } p { sub(/^# ?/, ""); print }' "$0"
+        exit 0
+        ;;
 esac
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -111,12 +114,12 @@ cited_symbols() {
 while read -r name; do
     [ -z "$name" ] && continue
     note "\"$name\" is declared in Kotlin but not lifted in $COLLECTOR — it will never become a column"
-done <<< "$(comm -23 <(declared) <(lifted_flat))"
+done <<<"$(comm -23 <(declared) <(lifted_flat))"
 
 while read -r name; do
     [ -z "$name" ] && continue
     note "\"$name\" is lifted in $COLLECTOR but declared nowhere in Kotlin — a dead rule"
-done <<< "$(comm -13 <(declared) <(lifted_flat))"
+done <<<"$(comm -13 <(declared) <(lifted_flat))"
 
 # One direction only. The table also carries rows for things nothing here writes — `severity`,
 # `logger`, `service_version` — and those rows are correct.
@@ -132,12 +135,12 @@ while read -r name; do
         { split($1, c, ","); for (i in c) if (c[i] == q) found = 1 }
         END { exit found ? 0 : 1 }
     ' || note "$DOC §7 lists \"$name\" but not its lower-case query spelling \"$lower\""
-done <<< "$(declared)"
+done <<<"$(declared)"
 
 while read -r path; do
     [ -z "$path" ] && continue
     [ -e "$path" ] || note "$path is cited by one of the four sources and does not exist"
-done <<< "$(cited_paths)"
+done <<<"$(cited_paths)"
 
 while read -r symbol; do
     [ -z "$symbol" ] && continue
@@ -149,7 +152,7 @@ while read -r symbol; do
     elif [ "$member" != "$symbol" ] && ! grep -qE "(object|class|val|fun) $member\b" "${found[@]}"; then
         note "\"$symbol\" is cited by one of the four sources but $file.kt declares no $member"
     fi
-done <<< "$(cited_symbols)"
+done <<<"$(cited_symbols)"
 
 if [ "$problems" -ne 0 ]; then
     echo >&2

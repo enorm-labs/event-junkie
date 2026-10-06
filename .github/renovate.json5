@@ -106,7 +106,7 @@
     managerFilePatterns: ['/^deploy/clusters/(base|staging|production)/[^/]+\\.yaml$/'],
   },
 
-  // **The sixteen CI tool versions that belong to no ecosystem** — a `HELM_VERSION: v4.2.4` is a string
+  // **The seventeen CI tool versions that belong to no ecosystem** — a `HELM_VERSION: v4.2.4` is a string
   // in YAML, and `github-actions` updates `uses: azure/setup-helm@v5` while having nothing to say
   // about the `version:` handed to it. They rot in silence while the checks using them keep reporting
   // success, which is the failure this whole boundary exists to catch.
@@ -117,8 +117,9 @@
   // across all fourteen occurrences; `RUFF_VERSION` joined as the ninth (#1189), `K3D_VERSION` and
   // `ZAP_IMAGE` as the tenth and eleventh (#1421), `NUCLEI_VERSION` and `NUCLEI_TEMPLATES_VERSION` as
   // the twelfth and thirteenth (#1423) — one binary and one templates release, on different cadences;
-  // `HADOLINT_VERSION`, `SQUAWK_VERSION` and `LYCHEE_VERSION` the last three. `squawk-cli` comes from PyPI
-  // and lychee from Docker Hub, because those are what the workflows run.
+  // `HADOLINT_VERSION`, `SQUAWK_VERSION` and `LYCHEE_VERSION` the next three, and `SHFMT_VERSION` the
+  // seventeenth. `squawk-cli` comes from PyPI and lychee from Docker Hub, because those are what the
+  // workflows run.
   //
   // **`ZAP_IMAGE` is the one pin here that is an image reference with a digest**, `tag@sha256:…`,
   // because dast.yml runs it with `docker run` and a tag on GHCR is mutable. The `docker` datasource
@@ -258,6 +259,14 @@
       depNameTemplate: 'lycheeverse/lychee',
       datasourceTemplate: 'docker',
     },
+    {
+      customType: 'regex',
+      managerFilePatterns: ['/^\\.github/workflows/.*\\.ya?ml$/'],
+      matchStrings: ['SHFMT_VERSION:\\s*(?<currentValue>\\S+)'],
+      depNameTemplate: 'mvdan/sh',
+      datasourceTemplate: 'github-releases',
+      extractVersionTemplate: '^v?(?<version>.+)$',
+    },
   ],
 
   packageRules: [
@@ -277,7 +286,7 @@
       enabled: false,
     },
     {
-      description: 'The sixteen CI tool pins, re-enabled by name',
+      description: 'The seventeen CI tool pins, re-enabled by name',
       matchManagers: ['custom.regex'],
       matchDepNames: [
         'helm/helm',
@@ -296,6 +305,7 @@
         'hadolint/hadolint',
         'squawk-cli',
         'lycheeverse/lychee',
+        'mvdan/sh',
       ],
       enabled: true,
     },

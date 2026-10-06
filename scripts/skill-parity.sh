@@ -20,7 +20,10 @@
 set -euo pipefail
 
 case "${1:-}" in
-    -h | --help) awk '/^# Usage:/ { p = 1 } p && !/^#./ { exit } p { sub(/^# ?/, ""); print }' "$0"; exit 0 ;;
+    -h | --help)
+        awk '/^# Usage:/ { p = 1 } p && !/^#./ { exit } p { sub(/^# ?/, ""); print }' "$0"
+        exit 0
+        ;;
 esac
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -41,12 +44,12 @@ commands="$(names_in .claude/commands)"
 while read -r name; do
     [ -z "$name" ] && continue
     [ -f ".claude/commands/$name.md" ] || note "skill without a command: /$name — add .claude/commands/$name.md"
-done <<< "$skills"
+done <<<"$skills"
 
 while read -r name; do
     [ -z "$name" ] && continue
     [ -f ".claude/skills/$name.md" ] || note "command without a skill: /$name — add .claude/skills/$name.md"
-done <<< "$commands"
+done <<<"$commands"
 
 # A pointer is one `@relative/path` line and nothing else; anything else silently resolves to nothing.
 for pointer in .claude/skills/*.md .claude/commands/*.md; do
@@ -54,7 +57,10 @@ for pointer in .claude/skills/*.md .claude/commands/*.md; do
     target="$(head -1 "$pointer")"
     case "$target" in
         @*) ;;
-        *) note "$pointer does not start with an @ pointer"; continue ;;
+        *)
+            note "$pointer does not start with an @ pointer"
+            continue
+            ;;
     esac
     [ "$lines" = "1" ] || note "$pointer holds $lines non-blank lines; a pointer is exactly one"
     resolved="$(dirname "$pointer")/${target#@}"
@@ -65,14 +71,14 @@ done
 while read -r name; do
     [ -z "$name" ] && continue
     grep -qE "^- \`/${name}[\` ]" AGENTS.md || note "/$name is not listed in AGENTS.md § Project skills"
-done <<< "$skills"
+done <<<"$skills"
 
 # A here-string rather than a pipe: `note` has to reach `problems`, and a pipeline is a subshell.
 listed="$(grep -oE '^- `/[a-z][a-z0-9-]*' AGENTS.md | sed 's/^- `\///' | sort -u)"
 while read -r name; do
     [ -z "$name" ] && continue
     [ -f ".claude/skills/$name.md" ] || note "AGENTS.md lists /$name, which is not a skill"
-done <<< "$listed"
+done <<<"$listed"
 
 # Directory skills are not slash commands, so `-maxdepth 1` above leaves them out; `.github/skills/`
 # carries one resolving symlink each. `-e` follows a link, so a dangling one needs the `-L` beside it.

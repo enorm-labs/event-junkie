@@ -15,7 +15,10 @@
 set -euo pipefail
 
 case "${1:-}" in
-    -h | --help) awk '/^# Usage:/ { p = 1 } p && !/^#./ { exit } p { sub(/^# ?/, ""); print }' "$0"; exit 0 ;;
+    -h | --help)
+        awk '/^# Usage:/ { p = 1 } p && !/^#./ { exit } p { sub(/^# ?/, ""); print }' "$0"
+        exit 0
+        ;;
 esac
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -25,7 +28,10 @@ readonly PIKEPDF_VERSION='10.16.0'
 readonly ZXING_VERSION='3.1.1'
 readonly PILLOW_VERSION='12.3.0'
 
-command -v rsvg-convert > /dev/null || { echo "build-stickers: no rsvg-convert — brew install librsvg" >&2; exit 1; }
+command -v rsvg-convert >/dev/null || {
+    echo "build-stickers: no rsvg-convert — brew install librsvg" >&2
+    exit 1
+}
 
 venv="${repo_root}/.venv-stickers"
 stamp="${venv}/.pinned-${FONTTOOLS_VERSION}-${BROTLI_VERSION}-${SEGNO_VERSION}-${PIKEPDF_VERSION}-${ZXING_VERSION}-${PILLOW_VERSION}"

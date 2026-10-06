@@ -53,8 +53,8 @@ is the map and the traps.
   the branch's lockfile is arbitrary code execution); the App token is minted **below** `npm ci`, with `contents: write` only; the commit author is not
   `renovate[bot]`, so both bots abandon the branch rather than force-push the fix away — at the cost that the bump stops auto-rebasing.
 - `validate-python.yml` — `ruff check` + `ruff format --check` at `RUFF_VERSION` from the pinned image, then the four Python tests (#1189). `validate-scripts.yml`
-  — ShellCheck the same way, plus the script test suites (`version-test.sh`, `version-deserved-test.sh`, `release-highlights-test.sh`). `validate-comments.yml`
-  — `scripts/comment-lint.sh check`.
+  — ShellCheck the same way, shfmt at `SHFMT_VERSION` over every `.sh` but the cloud-init scripts (their bytes are `user_data`), plus the script test
+  suites (`version-test.sh`, `version-deserved-test.sh`, `release-highlights-test.sh`). `validate-comments.yml` — `scripts/comment-lint.sh check`.
 - `validate-dockerfiles.yml` — hadolint over every tracked Dockerfile at `HADOLINT_VERSION`. `validate-migrations.yml` — squawk over the migrations a PR
   **adds**, never the old ones, which are immutable; `.squawk.toml` says which rules are kept. `validate-links.yml` — lychee over every tracked `.md`,
   `--offline` on a PR (relative links and anchors), external links weekly; `lychee.toml` holds the exclusions. The weekly run skips

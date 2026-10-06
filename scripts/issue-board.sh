@@ -37,7 +37,10 @@
 set -euo pipefail
 
 case "${1:-}" in
-    -h | --help) awk '/^# Usage:/ { p = 1 } p && !/^#./ { exit } p { sub(/^# ?/, ""); print }' "$0"; exit 0 ;;
+    -h | --help)
+        awk '/^# Usage:/ { p = 1 } p && !/^#./ { exit } p { sub(/^# ?/, ""); print }' "$0"
+        exit 0
+        ;;
 esac
 
 REPO="${BACKLOG_REPO:-enorm-labs/event-junkie}"
@@ -58,7 +61,10 @@ need jq
 # helpers below take this one payload and print from it.
 PROJECT_PAYLOAD=""
 project_payload() {
-    [[ -n "$PROJECT_PAYLOAD" ]] && { printf '%s' "$PROJECT_PAYLOAD"; return 0; }
+    [[ -n "$PROJECT_PAYLOAD" ]] && {
+        printf '%s' "$PROJECT_PAYLOAD"
+        return 0
+    }
     # shellcheck disable=SC2016
     # `$org` and `$number` are GraphQL variables bound by `-F`, not shell ones.
     PROJECT_PAYLOAD="$(gh api graphql -f query='

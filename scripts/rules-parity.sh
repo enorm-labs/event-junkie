@@ -21,7 +21,10 @@
 set -euo pipefail
 
 case "${1:-}" in
-    -h | --help) awk '/^# Usage:/ { p = 1 } p && !/^#./ { exit } p { sub(/^# ?/, ""); print }' "$0"; exit 0 ;;
+    -h | --help)
+        awk '/^# Usage:/ { p = 1 } p && !/^#./ { exit } p { sub(/^# ?/, ""); print }' "$0"
+        exit 0
+        ;;
 esac
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -70,7 +73,7 @@ while read -r name; do
         [ -z "$glob" ] && continue
         [ -n "$(git ls-files -- ":(glob)$glob" 2>/dev/null)" ] ||
             note "$rule: \"$glob\" matches no tracked file"
-    done <<< "$(claude_globs "$rule")"
+    done <<<"$(claude_globs "$rule")"
 
     # `@path` outside a code span is an import, and imports defeat path scoping.
     if grep -nE '^[[:space:]]*@[A-Za-z0-9_./~-]+[[:space:]]*$' "$rule" >/dev/null; then
@@ -79,7 +82,7 @@ while read -r name; do
 
     grep -q "(.github/instructions/$name.instructions.md)" AGENTS.md ||
         note "$name is not linked from the AGENTS.md rules table"
-done <<< "$names"
+done <<<"$names"
 
 # Nothing in .claude/rules/ may be anything but a symlink into the tree above.
 for link in .claude/rules/*.md; do

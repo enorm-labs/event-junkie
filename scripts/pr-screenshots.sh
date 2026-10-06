@@ -33,7 +33,10 @@
 set -euo pipefail
 
 case "${1:-}" in
-  -h | --help) awk '/^# Usage:/ { p = 1 } p && !/^#./ { exit } p { sub(/^# ?/, ""); print }' "$0"; exit 0 ;;
+    -h | --help)
+        awk '/^# Usage:/ { p = 1 } p && !/^#./ { exit } p { sub(/^# ?/, ""); print }' "$0"
+        exit 0
+        ;;
 esac
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -51,38 +54,77 @@ LABEL=""
 FULL_PAGE="false"
 PATHS=()
 
-die() { echo "pr-screenshots: $*" >&2; exit 1; }
+die() {
+    echo "pr-screenshots: $*" >&2
+    exit 1
+}
 
 while (($#)); do
-  case "$1" in
-    --base) BASE_REF="${2:?--base needs a ref}"; shift 2 ;;
-    --tree) TREE="$(cd "${2:?--tree needs a directory}" && pwd)"; shift 2 ;;
-    --out) OUT="${2:?--out needs a directory}"; shift 2 ;;
-    --widths) WIDTHS="${2:?}"; shift 2 ;;
-    --themes) THEMES="${2:?}"; shift 2 ;;
-    --views) VIEWS="${2:?}"; shift 2 ;;
-    --click) CLICK="${2:?}"; shift 2 ;;
-    --scroll) SCROLL="${2:?}"; shift 2 ;;
-    --focus) FOCUS="${2:?}"; shift 2 ;;
-    --label) LABEL="${2:?}"; shift 2 ;;
-    --full-page) FULL_PAGE="true"; shift ;;
-    -*) die "unknown option $1 (see --help)" ;;
-    /*) PATHS+=("$1"); shift ;;
-    *) die "a path starts with /: $1" ;;
-  esac
+    case "$1" in
+        --base)
+            BASE_REF="${2:?--base needs a ref}"
+            shift 2
+            ;;
+        --tree)
+            TREE="$(cd "${2:?--tree needs a directory}" && pwd)"
+            shift 2
+            ;;
+        --out)
+            OUT="${2:?--out needs a directory}"
+            shift 2
+            ;;
+        --widths)
+            WIDTHS="${2:?}"
+            shift 2
+            ;;
+        --themes)
+            THEMES="${2:?}"
+            shift 2
+            ;;
+        --views)
+            VIEWS="${2:?}"
+            shift 2
+            ;;
+        --click)
+            CLICK="${2:?}"
+            shift 2
+            ;;
+        --scroll)
+            SCROLL="${2:?}"
+            shift 2
+            ;;
+        --focus)
+            FOCUS="${2:?}"
+            shift 2
+            ;;
+        --label)
+            LABEL="${2:?}"
+            shift 2
+            ;;
+        --full-page)
+            FULL_PAGE="true"
+            shift
+            ;;
+        -*) die "unknown option $1 (see --help)" ;;
+        /*)
+            PATHS+=("$1")
+            shift
+            ;;
+        *) die "a path starts with /: $1" ;;
+    esac
 done
 ((${#PATHS[@]})) || die "name at least one path, such as /en/events"
 
 mkdir -p "$OUT"
 OUT="$(cd "$OUT" && pwd)"
 NODE_MODULES="$(cd "$TREE/events-frontend/node_modules" 2>/dev/null && pwd -P)" ||
-  die "$TREE/events-frontend/node_modules is missing; symlink the main checkout's"
+    die "$TREE/events-frontend/node_modules is missing; symlink the main checkout's"
 
 BASE_SHA="$(git -C "$TREE" rev-parse --verify --quiet "$BASE_REF^{commit}")" || die "unknown ref $BASE_REF"
 AFTER_SHA="$(git -C "$TREE" rev-parse HEAD)"
 # A detached checkout of a pull request's branch is named after the remote branch at its commit.
 AFTER_NAME="$(git -C "$TREE" symbolic-ref --quiet --short HEAD ||
-  git -C "$TREE" branch --remotes --points-at HEAD --format='%(refname:lstrip=3)' | grep -v '^HEAD$' | head -1)"
+    git -C "$TREE" branch --remotes --points-at HEAD --format='%(refname:lstrip=3)' | grep -v '^HEAD$' | head -1)"
 [[ -n "$AFTER_NAME" ]] || AFTER_NAME="$(git -C "$TREE" rev-parse --short HEAD)"
 # A dirty tree is not its commit, so its build is never reused.
 AFTER_KEY="$AFTER_SHA"
@@ -92,30 +134,33 @@ PIDS=()
 SERVED=""
 BASE_SRC="$OUT/base-src"
 cleanup() {
-  local pid
-  for pid in "${PIDS[@]}"; do kill "$pid" 2>/dev/null || true; done
-  if [[ -d "$BASE_SRC" ]]; then
-    git -C "$TREE" worktree remove --force "$BASE_SRC" 2>/dev/null || rm -rf "$BASE_SRC"
-    git -C "$TREE" worktree prune
-  fi
+    local pid
+    for pid in "${PIDS[@]}"; do kill "$pid" 2>/dev/null || true; done
+    if [[ -d "$BASE_SRC" ]]; then
+        git -C "$TREE" worktree remove --force "$BASE_SRC" 2>/dev/null || rm -rf "$BASE_SRC"
+        git -C "$TREE" worktree prune
+    fi
 }
 trap cleanup EXIT
 
 # build <source checkout> <dist dir>
 build() {
-  echo "Building $1 into ${2#"$OUT"/}" >&2
-  (cd "$1/events-frontend" && node "$NODE_MODULES/vite/bin/vite.js" build --configLoader native \
-    --outDir "$2" --emptyOutDir --logLevel warn >"$OUT/build.log" 2>&1) ||
-    { tail -30 "$OUT/build.log" >&2; die "the build of $1 failed; full log in $OUT/build.log"; }
+    echo "Building $1 into ${2#"$OUT"/}" >&2
+    (cd "$1/events-frontend" && node "$NODE_MODULES/vite/bin/vite.js" build --configLoader native \
+        --outDir "$2" --emptyOutDir --logLevel warn >"$OUT/build.log" 2>&1) ||
+        {
+            tail -30 "$OUT/build.log" >&2
+            die "the build of $1 failed; full log in $OUT/build.log"
+        }
 }
 
 BEFORE_DIST="$OUT/dist/$BASE_SHA"
 AFTER_DIST="$OUT/dist/$AFTER_KEY"
 if [[ ! -f "$BEFORE_DIST/index.html" ]]; then
-  rm -rf "$BASE_SRC"
-  git -C "$TREE" worktree add --quiet --detach "$BASE_SRC" "$BASE_SHA"
-  ln -s "$NODE_MODULES" "$BASE_SRC/events-frontend/node_modules"
-  build "$BASE_SRC" "$BEFORE_DIST"
+    rm -rf "$BASE_SRC"
+    git -C "$TREE" worktree add --quiet --detach "$BASE_SRC" "$BASE_SHA"
+    ln -s "$NODE_MODULES" "$BASE_SRC/events-frontend/node_modules"
+    build "$BASE_SRC" "$BEFORE_DIST"
 fi
 [[ "$AFTER_KEY" != "$AFTER_SHA" || ! -f "$AFTER_DIST/index.html" ]] && build "$TREE" "$AFTER_DIST"
 
@@ -126,25 +171,31 @@ export default { preview: { proxy: { '/api': target, '^/map/': target } } }
 EOF
 
 free_port() {
-  local port
-  while :; do
-    port="$(node -e 'const s = require("net").createServer().listen(0, "127.0.0.1", () => { console.log(s.address().port); s.close() })')"
-    [[ "$port" != 4173 && "$port" != 5173 && "$port" != 8080 && "$port" != 8081 ]] && { echo "$port"; return; }
-  done
+    local port
+    while :; do
+        port="$(node -e 'const s = require("net").createServer().listen(0, "127.0.0.1", () => { console.log(s.address().port); s.close() })')"
+        [[ "$port" != 4173 && "$port" != 5173 && "$port" != 8080 && "$port" != 8081 ]] && {
+            echo "$port"
+            return
+        }
+    done
 }
 
 # serve <dist dir> <name>; sets SERVED. Not a command substitution: its subshell would lose the PID for cleanup.
 serve() {
-  local port
-  port="$(free_port)"
-  (cd "$OUT" && exec node "$NODE_MODULES/vite/bin/vite.js" preview --config "$OUT/preview.config.mjs" \
-    --outDir "$1" --host 127.0.0.1 --port "$port" --strictPort >"$OUT/preview-$2.log" 2>&1) &
-  PIDS+=("$!")
-  for _ in $(seq 1 50); do
-    curl -fsS -o /dev/null "http://127.0.0.1:$port/" 2>/dev/null && { SERVED="http://127.0.0.1:$port"; return; }
-    sleep 0.2
-  done
-  die "the $2 preview did not answer on $port; see $OUT/preview-$2.log"
+    local port
+    port="$(free_port)"
+    (cd "$OUT" && exec node "$NODE_MODULES/vite/bin/vite.js" preview --config "$OUT/preview.config.mjs" \
+        --outDir "$1" --host 127.0.0.1 --port "$port" --strictPort >"$OUT/preview-$2.log" 2>&1) &
+    PIDS+=("$!")
+    for _ in $(seq 1 50); do
+        curl -fsS -o /dev/null "http://127.0.0.1:$port/" 2>/dev/null && {
+            SERVED="http://127.0.0.1:$port"
+            return
+        }
+        sleep 0.2
+    done
+    die "the $2 preview did not answer on $port; see $OUT/preview-$2.log"
 }
 
 serve "$BEFORE_DIST" before
@@ -156,8 +207,8 @@ echo "Serving before ($BASE_REF) on $BEFORE_URL, after ($AFTER_NAME) on $AFTER_U
 # Node resolves `@playwright/test` from the working directory when the module comes from stdin.
 cd "$TREE/events-frontend"
 OUT="$OUT" BEFORE_URL="$BEFORE_URL" AFTER_URL="$AFTER_URL" PATHS="$(printf '%s\n' "${PATHS[@]}")" \
-  WIDTHS="$WIDTHS" THEMES="$THEMES" VIEWS="$VIEWS" CLICK="$CLICK" SCROLL="$SCROLL" FOCUS="$FOCUS" LABEL="$LABEL" FULL_PAGE="$FULL_PAGE" \
-  BASE_REF="$BASE_REF" AFTER_NAME="$AFTER_NAME" REPO_ROOT="$REPO_ROOT" node --input-type=module - <<'EOF'
+WIDTHS="$WIDTHS" THEMES="$THEMES" VIEWS="$VIEWS" CLICK="$CLICK" SCROLL="$SCROLL" FOCUS="$FOCUS" LABEL="$LABEL" FULL_PAGE="$FULL_PAGE" \
+BASE_REF="$BASE_REF" AFTER_NAME="$AFTER_NAME" REPO_ROOT="$REPO_ROOT" node --input-type=module - <<'EOF'
 import { relative } from 'node:path'
 import { chromium } from '@playwright/test'
 
