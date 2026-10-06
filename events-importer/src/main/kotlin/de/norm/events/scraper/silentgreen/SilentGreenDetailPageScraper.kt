@@ -37,7 +37,7 @@ class SilentGreenDetailPageScraper {
                 startTime = parseLeadingTime(document, ".event-detail-time-begin"),
                 runStart = parseBlockDate(document, ".event-detail-date-begin"),
                 runEnd = parseBlockDate(document, ".event-detail-date-end"),
-                description = parseDescription(document),
+                description = description(document),
                 imageUrl = document.attrAt("meta[property=og:image]", "content")?.takeIf { it.startsWith("http") }
             )
 
@@ -71,19 +71,23 @@ class SilentGreenDetailPageScraper {
 
     /**
      * Joins the prose paragraphs into the description, dropping the `"… präsentiert"` credit line
-     * most bodies open with, since it is already the promoters.
+     * most bodies open with, since it is already the promoters. The English page words it
+     * `"… presents"`.
      */
-    private fun parseDescription(document: Document): String? =
+    fun description(document: Document): String? =
         document
             .select(BODY_TEXT_SELECTOR)
             .map { it.text().trim() }
-            .filter { it.isNotBlank() && silentGreenPresenters(it).isEmpty() }
+            .filter { it.isNotBlank() && silentGreenPresenters(it).isEmpty() && !ENGLISH_CREDIT_LINE.matches(it) }
             .joinToString("\n")
             .takeIf { it.isNotBlank() }
 
     private companion object {
         /** The detail article's prose, scoped so the page's navigation and footer stay out. */
         const val BODY_TEXT_SELECTOR = ".news-detail .ce-bodytext p"
+
+        /** The English page's credit line, `"silent green presents"`. */
+        val ENGLISH_CREDIT_LINE = Regex("""^.{2,80}?\s+presents?$""", RegexOption.IGNORE_CASE)
 
         /** The date inside a date-block cell. */
         val BLOCK_DATE = Regex("""\d{2}\.\d{2}\.\d{4}""")

@@ -1,6 +1,7 @@
 package de.norm.events.scraper.silentgreen
 
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.alternateLanguageUrl
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
@@ -27,6 +28,30 @@ class SilentGreenDetailPageScraperTest {
                 .bufferedReader()
                 .readText()
         return scraper.scrape(Jsoup.parse(html, url))
+    }
+
+    @Test
+    fun `reads the English version's blurb without its credit line`() {
+        val path = "programm/detail/scribblemp3-pres-felisha-ledesma-angelo-harmsworth-francesco-corvi-nocturnerror"
+        val german = parse("silentgreen-detail-ledesma-de.html").shouldNotBeNull()
+        german.description.shouldNotBeNull() shouldStartWith "Felisha Ledesma & Angelo Harmsworth"
+
+        val englishHtml =
+            javaClass.classLoader
+                .getResourceAsStream("scraper/silentgreen/silentgreen-detail-ledesma-en.html")!!
+                .bufferedReader()
+                .readText()
+        val englishUrl = "https://www.silent-green.net/en/programme/detail/${path.substringAfter("programm/detail/")}"
+        val germanHtml =
+            javaClass.classLoader
+                .getResourceAsStream("scraper/silentgreen/silentgreen-detail-ledesma-de.html")!!
+                .bufferedReader()
+                .readText()
+        Jsoup.parse(germanHtml, "https://www.silent-green.net/$path").alternateLanguageUrl("en") shouldBe englishUrl
+        val english = scraper.description(Jsoup.parse(englishHtml, englishUrl)).shouldNotBeNull()
+        english shouldStartWith "Felisha Ledesma & Angelo Harmsworth"
+        english shouldContain "come together in a collaboration"
+        english shouldNotContain "silent green presents"
     }
 
     @Test

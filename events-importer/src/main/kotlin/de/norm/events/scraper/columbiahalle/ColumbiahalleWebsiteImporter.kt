@@ -5,6 +5,7 @@ import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.LimitedAspect
+import de.norm.events.scraper.SecondLanguageListing
 import de.norm.events.scraper.VenueLimitations
 import org.springframework.stereotype.Component
 
@@ -18,6 +19,10 @@ import org.springframework.stereotype.Component
  * [HtmlFetcher] fetches the page conditionally (the site sends neither ETag nor Last-Modified,
  * so every run is a full fetch of one page), [ColumbiahalleOverviewPageScraper] parses it.
  *
+ * The English listing `/events.html` has the same Contao ids and translates a few blurbs, so its
+ * blurbs are read for the second language: one more page per run. Only the blurbs, because its
+ * English month headings and labels would need a second date parser for nothing.
+ *
  * @see ColumbiahalleOverviewPageScraper for the HTML parsing logic.
  * @see <a href="https://www.columbiahalle.berlin/veranstaltungen.html">Columbiahalle Berlin</a>
  */
@@ -27,6 +32,7 @@ class ColumbiahalleWebsiteImporter(
 ) : AbstractSinglePageWebsiteImporter(htmlFetcher, "Columbiahalle", ColumbiahalleOverviewPageScraper()::scrape) {
     override val eventSource: EventSource = EventSource.COLUMBIAHALLE
     override val listsWholeProgramme: Boolean = true
+    override val secondLanguage = SecondLanguageListing("en", ColumbiahalleOverviewPageScraper()::descriptions)
 }
 
 val COLUMBIAHALLE_LIMITATIONS =

@@ -9,6 +9,7 @@ import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.ListingPage
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.ScrapedField
+import de.norm.events.scraper.SecondLanguagePage
 import de.norm.events.scraper.VenueLimitations
 import de.norm.events.scraper.attrAt
 import de.norm.events.scraper.collapseExhibitionRuns
@@ -31,7 +32,9 @@ import org.springframework.stereotype.Component
  * where a per-event fetch would be serialised by the politeness throttle; an exhibition's days
  * then fold into one event ([collapseExhibitionRuns], ADR-029, #337), a festival's stay apart.
  * A failed detail page is not fatal: its days are flagged, so the upsert keeps the fields it
- * stored. Conditional requests are not used: `Cache-Control: private, no-store` with neither
+ * stored. Each detail page links its English version (`/en/programme/detail/…`), which
+ * translates the blurb, so that page is read too for the second language: one more request per
+ * page, not per day. Conditional requests are not used: `Cache-Control: private, no-store` with neither
  * validator, and a 304 on the entry page says nothing about later months.
  *
  * @see SilentGreenMonthPageScraper for the per-month calendar parsing.
@@ -64,8 +67,13 @@ class SilentGreenWebsiteImporter(
         // An exhibition's days share one page, and the page's date block is the run (ADR-029, #337).
         val runs =
             htmlFetcher
-                .enrichFromSharedPages(distinct, detailPageScraper::scrape, SilentGreenEventDetails::applyTo, pageOwns = setOf(ScrapedField.RUN_DATES))
-                .collapseExhibitionRuns { event ->
+                .enrichFromSharedPages(
+                    distinct,
+                    detailPageScraper::scrape,
+                    SilentGreenEventDetails::applyTo,
+                    pageOwns = setOf(ScrapedField.RUN_DATES),
+                    secondLanguage = SecondLanguagePage("en", detailPageScraper::description)
+                ).collapseExhibitionRuns { event ->
                     "${EventSource.SILENT_GREEN.sourceIdPrefix}${silentGreenDetailSlug(event.sourceUrl)}"
                 }
         return ImportResult.Success(events = runs, etag = null, lastModified = null, complete = listing.complete)

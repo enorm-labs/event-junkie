@@ -81,6 +81,15 @@ class ColumbiahalleOverviewPageScraper {
         return events
     }
 
+    /** Each card's blurb by `sourceId`, in whichever language the page is in. */
+    fun descriptions(document: Document): Map<String, String?> =
+        document
+            .select(".mod_eventlist .eventlist_event")
+            .mapNotNull { card -> eventId(card)?.let { "${EventSource.COLUMBIAHALLE.sourceIdPrefix}$it" to card.textAt(".bandinfo") } }
+            .toMap()
+
+    private fun eventId(card: Element): String? = EVENT_ID_PATTERN.find(card.selectFirst("div.event_inhalt")?.id().orEmpty())?.groupValues?.get(1)
+
     /**
      * Parses one `.eventlist_event` card into a [ScrapedEvent], or `null` without the Contao event
      * id, a title, or a resolvable date.
@@ -91,7 +100,7 @@ class ColumbiahalleOverviewPageScraper {
         month: YearMonth?,
         baseUrl: String
     ): ScrapedEvent? {
-        val eventId = EVENT_ID_PATTERN.find(card.selectFirst("div.event_inhalt")?.id().orEmpty())?.groupValues?.get(1)
+        val eventId = eventId(card)
         if (eventId == null) {
             logger.warn { "Event card without a Contao event id, skipping" }
             return null

@@ -56,6 +56,13 @@ abstract class AbstractTwoPageWebsiteImporter(
     protected open val detailPageOwns: Set<ScrapedField> = setOf(ScrapedField.IMAGE)
 
     /**
+     * The detail page in the venue's other language, for a venue that translates the event text
+     * there. Each detail page's version is fetched too, one more request per event, and its text
+     * is stored as the second language (ADR-026 rule 2).
+     */
+    protected open val secondLanguage: SecondLanguagePage? = null
+
+    /**
      * The absolute URL of the listing page after [document], or null when it is the last. Null by
      * default: most listings are one page. A subclass that returns one has its later pages fetched
      * and scraped too, up to [MAX_OVERVIEW_PAGES] (ADR-007 §"Pagination — First Page Only").
@@ -155,11 +162,17 @@ abstract class AbstractTwoPageWebsiteImporter(
         // The scope opens AFTER the fetch, deliberately: the fetch already writes `url` as a
         // payload field, and a line inside both would carry the key twice (#982). Everything
         // inside is the scraper's own parsing, which is what needed the URL and never had it.
-        return withContext(LogContext.forPage(overview.sourceUrl)) {
-            val detail = scrapeDetail(detailDoc, overview.sourceUrl)
-            if (detail != null) fillGapsFromOverview(primary = detail, fallback = overview) else degraded(overview)
-        }
+        val detail = withContext(LogContext.forPage(overview.sourceUrl)) { scrapeDetail(detailDoc, overview.sourceUrl) } ?: return degraded(overview)
+        val merged = fillGapsFromOverview(primary = detail, fallback = overview)
+        // Only beside the detail page's own text: the listing's teaser has no counterpart there.
+        return if (detail.description == null) merged else merged.withDescriptionAlt(secondLanguageText(detailDoc))
     }
+
+    /** The event text of [detailDoc]'s version in [secondLanguage], or null without one. */
+    private suspend fun secondLanguageText(detailDoc: Document): String? =
+        secondLanguage?.let { language ->
+            detailDoc.alternateLanguageUrl(language.hreflang)?.let { htmlFetcher.readSecondLanguagePage(it, language.description) }
+        }
 
     private companion object {
         /** Fetches for a row whose date lives only on its detail page. */

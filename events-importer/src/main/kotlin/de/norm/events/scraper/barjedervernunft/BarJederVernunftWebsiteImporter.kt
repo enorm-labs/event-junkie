@@ -9,6 +9,7 @@ import de.norm.events.scraper.HtmlFetcher
 import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.ScrapedField
+import de.norm.events.scraper.SecondLanguagePage
 import de.norm.events.scraper.VenueLimitations
 import de.norm.events.scraper.enrichFromSharedPages
 import de.norm.events.scraper.scrapeListingPages
@@ -33,6 +34,8 @@ import org.springframework.stereotype.Component
  * calendar cards resolve to 2 show pages. Per-event fetching would re-request the same page
  * 20+ times per import, which the per-host politeness throttle would (rightly) serialise into
  * a slow, pointless crawl.
+ *
+ * Each show page links its English version, which translates the blurb: one more request per show.
  *
  * A show page that cannot be fetched or parsed is not fatal: those dates keep the calendar data
  * and are flagged, so the upsert keeps the genre, price and blurb stored last time.
@@ -85,7 +88,8 @@ class BarJederVernunftWebsiteImporter(
                             showPageScraper::scrape,
                             BarJederVernunftShow::applyTo,
                             // The calendar has no type and a cut teaser; the show page has both (#2505).
-                            pageOwns = setOf(ScrapedField.EVENT_TYPE, ScrapedField.DESCRIPTION)
+                            pageOwns = setOf(ScrapedField.EVENT_TYPE, ScrapedField.DESCRIPTION),
+                            secondLanguage = SecondLanguagePage("en", showPageScraper::description)
                         ),
                     etag = fetchResult.etag,
                     lastModified = fetchResult.lastModified,

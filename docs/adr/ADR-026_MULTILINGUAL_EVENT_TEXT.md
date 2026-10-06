@@ -8,9 +8,10 @@ the page says so. Everything else is served in the language it was written in, m
 translated.**
 
 **Partly implemented.** [#2701](https://github.com/enorm-labs/event-junkie/pull/2701) splits a description that holds
-both languages at its marker, for ten sources. This builds the item listed below as deliberately deferred. The rest is
-Phase 2 work. Issue [#330](https://github.com/enorm-labs/event-junkie/issues/330) also imports the second language
-where a source publishes it on a separate page. Issue [#470](https://github.com/enorm-labs/event-junkie/issues/470) translates under a grant. Issue
+both languages at its marker, for ten sources. This builds the item listed below as deliberately deferred. Five
+importers also read the page that a source publishes in its other language, as
+[EVENT_DATA_SOURCES.md](../EVENT_DATA_SOURCES.md#-second-language) records. The rest is Phase 2 work. Issue
+[#330](https://github.com/enorm-labs/event-junkie/issues/330) holds the sources that remain. Issue [#470](https://github.com/enorm-labs/event-junkie/issues/470) translates under a grant. Issue
 [#808](https://github.com/enorm-labs/event-junkie/issues/808) is where a grant comes from. Decided in
 [#469](https://github.com/enorm-labs/event-junkie/issues/469).
 
