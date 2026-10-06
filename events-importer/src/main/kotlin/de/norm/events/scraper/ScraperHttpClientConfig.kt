@@ -5,6 +5,7 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.http.client.reactive.ReactorClientHttpConnector
 import org.springframework.web.reactive.function.client.WebClient
 import reactor.netty.http.client.HttpClient
+import reactor.netty.resources.ConnectionProvider
 
 /** Bean name of the shared scraper [WebClient]; inject with `@Qualifier(SCRAPER_WEB_CLIENT)`. */
 const val SCRAPER_WEB_CLIENT = "scraperWebClient"
@@ -34,6 +35,9 @@ const val SCRAPER_BASE_WEB_CLIENT = "scraperBaseWebClient"
  */
 internal const val SCRAPER_USER_AGENT = "Mozilla/5.0 (compatible; EventJunkie/1.0; +https://github.com/enorm-labs/event-junkie)"
 
+/** The size of Reactor Netty's global pool, so moving off it changes eviction and nothing else. */
+private const val SCRAPER_POOL_MAX_CONNECTIONS = 500
+
 /**
  * Builds the single [WebClient] instance shared by every outbound scraper request —
  * both the HTML fetches of [HtmlFetcher] and the JSON/API fetches of [ApiClient].
@@ -61,37 +65,53 @@ class ScraperHttpClientConfig {
     @Bean
     fun perHostThrottlingFilter(scraperProperties: ScraperProperties): PerHostThrottlingFilter = PerHostThrottlingFilter(scraperProperties.politeDelayMillis)
 
+    /**
+     * A pool of its own, because the global one has no idle limit. A connection idle past the
+     * server's keep-alive can then be reused after the server closed it (see #2798).
+     */
+    @Bean(destroyMethod = "dispose")
+    fun scraperConnectionProvider(scraperProperties: ScraperProperties): ConnectionProvider =
+        ConnectionProvider
+            .builder("scraper")
+            .maxConnections(SCRAPER_POOL_MAX_CONNECTIONS)
+            .maxIdleTime(scraperProperties.connectionMaxIdleTime)
+            .evictInBackground(scraperProperties.connectionEvictionInterval)
+            .build()
+
     @Bean(SCRAPER_BASE_WEB_CLIENT)
     fun scraperBaseWebClient(
         webClientBuilder: WebClient.Builder,
         scraperProperties: ScraperProperties,
+        connectionProvider: ConnectionProvider,
         throttle: PerHostThrottlingFilter
-    ): WebClient = baseClient(webClientBuilder, scraperProperties).filter(throttle).build()
+    ): WebClient = baseClient(webClientBuilder, scraperProperties, connectionProvider).filter(throttle).build()
 
     @Bean(SCRAPER_WEB_CLIENT)
     fun scraperWebClient(
         webClientBuilder: WebClient.Builder,
         scraperProperties: ScraperProperties,
+        connectionProvider: ConnectionProvider,
         throttle: PerHostThrottlingFilter,
         rulesCache: RobotsRulesCache
     ): WebClient =
-        baseClient(webClientBuilder, scraperProperties)
+        baseClient(webClientBuilder, scraperProperties, connectionProvider)
             // Ordered before the throttle so the robots.txt fetch behind this filter is itself
             // throttled — see RobotsTxtFilter's KDoc.
             .filter(RobotsTxtFilter(rulesCache, scraperProperties.robotsEnforced))
             .filter(throttle)
             .build()
 
-    /** Connector, timeout and `User-Agent` — everything both clients share. */
+    /** Pool, connector, timeout and `User-Agent` — everything both clients share. */
     private fun baseClient(
         webClientBuilder: WebClient.Builder,
-        scraperProperties: ScraperProperties
+        scraperProperties: ScraperProperties,
+        connectionProvider: ConnectionProvider
     ): WebClient.Builder =
         webClientBuilder
             .clientConnector(
                 ReactorClientHttpConnector(
                     HttpClient
-                        .create()
+                        .create(connectionProvider)
                         .followRedirect(true)
                         // Sends `Accept-Encoding` and decodes what comes back. Reactor Netty does
                         // neither by default, and Uber Arena answers `Content-Encoding: gzip` even

@@ -268,6 +268,7 @@ class ImageCacheServiceIntegrationTest : BaseControllerTest() {
                                 org.springframework.web.reactive.function.client.WebClient
                                     .builder(),
                             scraperProperties = scraper,
+                            connectionProvider = config.scraperConnectionProvider(scraper),
                             throttle = config.perHostThrottlingFilter(scraper)
                         ),
                     ioDispatcher = kotlinx.coroutines.Dispatchers.IO,
