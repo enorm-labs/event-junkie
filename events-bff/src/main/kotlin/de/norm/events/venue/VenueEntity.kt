@@ -36,6 +36,7 @@ data class VenueEntity(
     val capacity: Int? = null,
     val programmeFamilies: List<String> = emptyList(),
     val programmeEventTypes: List<String> = emptyList(),
+    val programmeUrl: String? = null,
     val createdAt: Instant? = null,
     val updatedAt: Instant? = null
 )

@@ -25,6 +25,7 @@ const props = withDefaults(
           | 'characterTags'
           | 'capacity'
           | 'programmeFamilies'
+          | 'imported'
         >
       >
     /** Heading level for the card's name — see the same prop on `EventCard.vue` for why. */
@@ -90,7 +91,15 @@ const { el: posterEl, focused: posterFocused } = useViewportFocus()
         {{ venue.city }}
       </p>
       <p v-if="facts" class="truncate text-body text-muted-foreground">{{ facts }}</p>
-      <p v-if="upcoming.length" class="text-body text-muted-foreground">
+      <!-- A venue we do not import has no count; its state is one word in the meta line (#2766). -->
+      <p
+        v-if="venue.imported === false"
+        class="text-body text-muted-foreground"
+        data-testid="venue-not-imported"
+      >
+        {{ t('venues.notImported') }}
+      </p>
+      <p v-else-if="upcoming.length" class="text-body text-muted-foreground">
         <template v-for="(part, i) in upcoming" :key="part">
           <template v-if="i">{{ ' ' }}</template>
           <span class="whitespace-nowrap">{{ i < upcoming.length - 1 ? `${part} ·` : part }}</span>

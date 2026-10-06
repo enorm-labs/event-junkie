@@ -10,6 +10,7 @@ import jakarta.validation.constraints.Pattern
 import jakarta.validation.constraints.Positive
 import jakarta.validation.constraints.Size
 import java.math.BigDecimal
+import java.time.Instant
 
 /**
  * Request body for creating or updating a venue.
@@ -99,5 +100,19 @@ data class VenueRequest(
     val venueTypes: List<VenueType> = emptyList(),
     @field:Positive(message = "Capacity must be positive")
     @Schema(description = "How many visitors the largest room holds, as the venue publishes it", example = "1500")
-    val capacity: Int? = null
+    val capacity: Int? = null,
+    @field:Size(max = 2048, message = "Programme URL must not exceed 2048 characters")
+    @field:Pattern(regexp = "https?://.+", message = "Programme URL must start with http:// or https://")
+    @Schema(
+        description =
+            "Where a visitor finds the programme of a venue we do not import: its own programme page, else its Resident Advisor page, " +
+                "else a ticket platform. Shown as a link, never fetched. Leave it out for an imported venue (#2766).",
+        example = "https://www.example-club.de/programm"
+    )
+    val programmeUrl: String? = null,
+    @Schema(
+        description = "When a person last confirmed the address, coordinates and opening. Null for a row nobody checked. Never set by an import.",
+        example = "2026-10-06T18:00:00Z"
+    )
+    val reviewedAt: Instant? = null
 ) : AttributableImage

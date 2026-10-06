@@ -32,6 +32,18 @@ VALUES
     ('Jazzkeller $& Kreuzberg', 'jazzkeller-kreuzberg', 'Oranienstraße 12', '10999', 'kreuzberg', 52.501000, 13.421000, 'https://jazzkeller.example', 'Small basement stage. Jazz on weekdays, blues at the weekend.', 'en', NULL, NULL,
      '{live-venue,bar}', 60, '{jazz-blues}', '{CONCERT}');
 
+-- A venue we know but do not import (#2766): no event_source row, a programme link, a review date. The three
+-- above each get a source, disabled so no scheduler on a seeded stack ever fetches the example URLs, because
+-- "imported" means a source points at the venue. A real `EventSource` name, so the admin API can read the rows.
+INSERT INTO events.venue (name, slug, address, postal_code, district, latitude, longitude, website_url, venue_types, programme_url, reviewed_at)
+VALUES ('Hinterhof Bar', 'hinterhof-bar', 'Weserstraße 99', '12045', 'neukoelln', 52.487000, 13.432000, 'https://hinterhof.example', '{bar}',
+        'https://hinterhof.example/programm', '2026-10-06 18:00:00+00');
+
+INSERT INTO events.event_source (venue_id, name, slug, url, source_type, enabled)
+SELECT id, name, 'fixture-' || slug, website_url, 'A_TRANE', FALSE
+FROM events.venue
+WHERE slug IN ('kesselhaus-nord', 'salon-zur-wilden-renate-co', 'jazzkeller-kreuzberg');
+
 -- Character tags (#2379): one venue with two, so the list, the detail and the filter each have a row.
 INSERT INTO events.venue_character_tag (venue_id, tag, source_url)
 SELECT v.id, t.tag, t.source_url
@@ -84,7 +96,9 @@ SELECT v.id,
        n = 7,
        n % 5 = 0
 FROM events.venue v
-         CROSS JOIN generate_series(1, 10) AS n;
+         CROSS JOIN generate_series(1, 10) AS n
+-- Only the imported venues: the one we do not import has no events.
+WHERE EXISTS (SELECT 1 FROM events.event_source s WHERE s.venue_id = v.id);
 
 INSERT INTO events.event_genre_tag (event_id, genre_tag_id)
 SELECT e.id, g.id

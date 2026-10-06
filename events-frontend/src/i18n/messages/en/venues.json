@@ -45,5 +45,14 @@
     "unavailable": "Your location could not be found. Search by name or district instead.",
     "resultCount": "{count} venue, nearest first | {count} venues, nearest first",
     "empty": "No venue within this radius. Try a larger one."
+  },
+  "notImported": "Programme elsewhere",
+  "byListing": "Listing",
+  "allListings": "All venues",
+  "clearListings": "Clear listing filter",
+  "listingsSelected": "{n} listings",
+  "listing": {
+    "imported": "Events listed here",
+    "notImported": "Programme elsewhere"
   }
 }

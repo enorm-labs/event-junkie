@@ -53,6 +53,10 @@ data class Venue(
     val programmeFamilies: List<String> = emptyList(),
     /** `EventType` names this venue hosts, most frequent first, derived like [programmeFamilies]. Example: `"CONCERT"` */
     val programmeEventTypes: List<String> = emptyList(),
+    /** Where a visitor finds the programme of a venue we do not import; never fetched. `null` for an imported venue. */
+    val programmeUrl: String? = null,
+    /** When a person last confirmed the address, coordinates and opening. `null` when nobody has. Never set by an import. */
+    val reviewedAt: Instant? = null,
     /** Timestamp when this record was first created. Set by the database. */
     val createdAt: Instant? = null,
     /** Timestamp when this record was last modified. Set by the database. */

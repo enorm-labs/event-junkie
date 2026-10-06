@@ -27,7 +27,12 @@ data class VenueFilterParams(
             "Character tag slug (e.g. queer), as the venue describes itself. Repeatable: only a venue with every given tag matches. " +
                 "An unknown tag matches nothing."
     )
-    val character: List<String>? = null
+    val character: List<String>? = null,
+    @field:Parameter(
+        description =
+            "true lists only the venues whose events we import, false only those we know but do not import yet. Omitted lists both."
+    )
+    val imported: Boolean? = null
 ) {
     /** Event types are upper-cased, so `party` and `PARTY` share a cache entry. */
     fun toFilter(): VenueFilter =
@@ -37,6 +42,7 @@ data class VenueFilterParams(
             types = VenueFilter.normalized(type),
             families = VenueFilter.normalized(family),
             eventTypes = VenueFilter.normalized(eventType?.map { it.uppercase() }),
-            characters = VenueFilter.normalized(character)
+            characters = VenueFilter.normalized(character),
+            imported = imported
         )
 }

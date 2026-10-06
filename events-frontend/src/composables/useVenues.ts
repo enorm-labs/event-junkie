@@ -16,6 +16,8 @@ export interface VenueSearchParams {
   eventType?: string[]
   /** Character tags, as the venue describes itself; a venue must have every one of them. */
   character?: string[]
+  /** True for the venues whose events we import, false for those we only know; absent for both. */
+  imported?: boolean
   page?: number
   size?: number
   /** `name` or `upcomingEvents`, with a direction: `upcomingEvents,desc`. */
@@ -38,12 +40,13 @@ export function useVenueSearch(
 }
 
 /**
- * Every venue, name-sorted, for the events filter dropdown. Page by page: one large `size` is
- * capped at 100, and venue 101 would be missing without a sign (#2246).
+ * Every venue we import, name-sorted, for the events filter dropdown: a venue we do not import has no
+ * events to filter by. Page by page: one large `size` is capped at 100, and venue 101 would be
+ * missing without a sign (#2246).
  */
 export function useAllVenues() {
   return useAsync<VenueListItem[]>(
-    () => fetchAllVenues({}),
+    () => fetchAllVenues({ imported: true }),
     'errors.subject.venues',
     () => '/api/venues?all',
   )

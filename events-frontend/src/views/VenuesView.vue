@@ -2,7 +2,7 @@
 import { LocateFixed, X } from '@lucide/vue'
 import { computed, defineAsyncComponent, ref, shallowRef, useTemplateRef, watch } from 'vue'
 import { type LocationQueryRaw, RouterLink, useRoute, useRouter } from 'vue-router'
-import type { VenueSummary } from '@/api/types'
+import type { VenueListItem } from '@/api/types'
 import { describeError } from '@/api/client'
 import { Button } from '@/components/ui/button'
 import ClearAllFilters from '@/components/ClearAllFilters.vue'
@@ -82,6 +82,17 @@ function listParam(key: string): string[] | undefined {
   return values.length ? values : undefined
 }
 
+/**
+ * The listing filter as the BFF takes it: one of the two options chosen is that side, none or both
+ * is every venue (#2766).
+ */
+const LISTINGS = ['imported', 'not-imported'] as const
+const imported = computed(() => {
+  const chosen = queryList('listing')
+  if (chosen.length !== 1) return undefined
+  return chosen[0] === 'imported' ? true : chosen[0] === 'not-imported' ? false : undefined
+})
+
 const params = computed<VenueSearchParams>(() => ({
   q: queryString('q') || undefined,
   district: listParam('district'),
@@ -91,6 +102,7 @@ const params = computed<VenueSearchParams>(() => ({
   family: listParam('family'),
   eventType: listParam('eventType'),
   character: listParam('character'),
+  imported: imported.value,
   page: queryString('page') ? Number(queryString('page')) : 0,
   size: PAGE_SIZE,
 }))
@@ -112,7 +124,7 @@ function applyFilters(patch: LocationQueryRaw) {
 }
 
 /** A filter beyond the name search, so an empty list can name the filters as its cause. */
-const FILTER_KEYS = ['district', 'type', 'character', 'family', 'eventType']
+const FILTER_KEYS = ['district', 'type', 'character', 'family', 'eventType', 'listing']
 const hasFilters = computed(() => FILTER_KEYS.some((key) => queryList(key).length))
 /** How many of them are set, for the "More filters" toggle; each counts once, however many values it holds. */
 const moreCount = computed(() => FILTER_KEYS.filter((key) => queryList(key).length).length)
@@ -141,6 +153,7 @@ const mapFilters = computed(() => ({
   family: params.value.family,
   eventType: params.value.eventType,
   character: params.value.character,
+  imported: params.value.imported,
 }))
 
 // How many venues each feature leaves (#2671). A failed request, such as a BFF without the
@@ -156,7 +169,7 @@ async function loadFeatureCounts() {
 
 watch(() => JSON.stringify(mapFilters.value), loadFeatureCounts, { immediate: true })
 
-const mapVenues = shallowRef<VenueSummary[]>([])
+const mapVenues = shallowRef<VenueListItem[]>([])
 const mapLoading = ref(false)
 const mapError = ref<string | null>(null)
 const mapUnavailable = ref(false)
@@ -198,6 +211,12 @@ const {
 } = useFilterOptions()
 // OTHER is no type a venue is chosen by; the derivation never stores it.
 const hostOptions = computed(() => eventTypeOptions.value.filter(({ value }) => value !== 'OTHER'))
+const listingOptions = computed(() =>
+  LISTINGS.map((value) => ({
+    value,
+    label: t(value === 'imported' ? 'venues.listing.imported' : 'venues.listing.notImported'),
+  })),
+)
 
 // The same origin as the events map's "near me": a position chosen there is still chosen here.
 const { origin, state: locateState, locate, clear: clearOrigin } = useLocation()
@@ -220,6 +239,8 @@ const pins = computed<MapPin[]>(() =>
     .map((venue) =>
       venuePin(venue, venue.name ?? '', undefined, {
         dimmed: !!near.value && !nearSlugs.value.has(venue.slug),
+        // A venue we do not import has nothing to show here, so its pin is the muted one (#2766).
+        quiet: venue.imported === false,
       }),
     )
     .filter((pin): pin is MapPin => pin !== null),
@@ -335,6 +356,16 @@ const localePath = useLocalePath()
             :options="hostOptions"
             :selected="queryList('eventType')"
             @change="applyFilters({ eventType: $event })"
+          />
+          <MultiSelectFilter
+            :all-label="t('venues.allListings')"
+            :class="SELECT_CLASS"
+            :clear-label="t('venues.clearListings')"
+            :count-label="(n) => t('venues.listingsSelected', { n })"
+            :label="t('venues.byListing')"
+            :options="listingOptions"
+            :selected="queryList('listing')"
+            @change="applyFilters({ listing: $event })"
           />
         </div>
       </template>
@@ -485,7 +516,11 @@ const localePath = useLocalePath()
               <X aria-hidden="true" />
             </Button>
           </div>
+          <p v-if="selectedVenue.imported === false" class="text-body text-muted-foreground">
+            {{ t('venues.notImported') }}
+          </p>
           <RouterLink
+            v-else
             :to="{ path: localePath('/map'), query: { venue: selectedVenue.slug } }"
             class="inline-block text-body text-primary hover:underline"
           >

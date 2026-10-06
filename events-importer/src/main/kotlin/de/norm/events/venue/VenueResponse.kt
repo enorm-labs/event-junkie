@@ -59,6 +59,10 @@ data class VenueResponse(
     val programmeFamilies: List<String>,
     @Schema(description = "Event type names the venue hosts, derived from its events; read-only", example = "[\"CONCERT\", \"PARTY\"]")
     val programmeEventTypes: List<String>,
+    @Schema(description = "Where a visitor finds the programme of a venue we do not import; never fetched", example = "https://www.example-club.de/programm")
+    val programmeUrl: String?,
+    @Schema(description = "When a person last confirmed the address, coordinates and opening; null when nobody has")
+    val reviewedAt: Instant?,
     @Schema(description = "Timestamp when this record was first created")
     val createdAt: Instant?,
     @Schema(description = "Timestamp when this record was last modified")
@@ -89,6 +93,8 @@ data class VenueResponse(
                 capacity = venue.capacity,
                 programmeFamilies = venue.programmeFamilies,
                 programmeEventTypes = venue.programmeEventTypes,
+                programmeUrl = venue.programmeUrl,
+                reviewedAt = venue.reviewedAt,
                 createdAt = venue.createdAt,
                 updatedAt = venue.updatedAt
             )

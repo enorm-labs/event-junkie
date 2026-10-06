@@ -76,7 +76,9 @@ class VenueService(
                 descriptionAlt = request.descriptionAlt,
                 descriptionAltLanguage = request.descriptionAltLanguage,
                 venueTypes = request.venueTypes.distinct().map { it.slug },
-                capacity = request.capacity
+                capacity = request.capacity,
+                programmeUrl = request.programmeUrl,
+                reviewedAt = request.reviewedAt
             )
         val entity = VenueEntity.fromDomain(venue)
         val saved = venueRepository.save(entity)
@@ -124,7 +126,9 @@ class VenueService(
                 descriptionAlt = request.descriptionAlt,
                 descriptionAltLanguage = request.descriptionAltLanguage,
                 venueTypes = request.venueTypes.distinct().map { it.slug },
-                capacity = request.capacity
+                capacity = request.capacity,
+                programmeUrl = request.programmeUrl,
+                reviewedAt = request.reviewedAt
             )
         val saved = venueRepository.save(updated)
         logger.info { "Updated venue '${saved.name}' (id=${saved.id})" }

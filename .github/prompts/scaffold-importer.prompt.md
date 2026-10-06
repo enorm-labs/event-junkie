@@ -107,6 +107,11 @@ the venue publishes one, `capacity`) capturing the id, a
 `Sources (alphabetical)` list at the top as `Name — URL`. The only comments in a block are the two naming the wiring. The import slug is derived from the
 source **name** (`Astra Kulturhaus` → `astra-kulturhaus`).
 
+**The venue may already have a row**, because a venue we know but do not import gets one with a `programmeUrl` (#2766). Search `dev-seed.http` for its
+name first. If the block exists, add no second `POST /api/admin/venues`: the slug would collide, and `scripts/seed-sources.py` matches venues by name. Add
+the source and import requests under the existing block, reuse its capture, and remove its `programmeUrl`. The row on a cluster keeps its value, which the
+site stops showing once the source exists.
+
 **The venue's `description` and `descriptionAlt`** are our own prose, English and German, one sentence each. Take the facts from the venue's own About or
 history page, not from the listing. Open with what sets the venue apart — the building, its history, who programmes it, a house rule such as smoke-free —
 then name its formats plainly. **No hedged tail**: "and the odd concert", "occasional club parties", "gelegentliche Konzerte" fit nearly any club and tell a

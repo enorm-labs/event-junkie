@@ -45,5 +45,14 @@
     "unavailable": "Dein Standort ließ sich nicht bestimmen. Such stattdessen nach Name oder Bezirk.",
     "resultCount": "{count} Location, die nächste zuerst | {count} Locations, die nächste zuerst",
     "empty": "In diesem Umkreis gibt es keine Location. Versuch einen größeren."
+  },
+  "notImported": "Programm extern",
+  "byListing": "Programm",
+  "allListings": "Alle Locations",
+  "clearListings": "Auswahl zurücksetzen",
+  "listingsSelected": "{n} ausgewählt",
+  "listing": {
+    "imported": "Veranstaltungen hier",
+    "notImported": "Programm extern"
   }
 }

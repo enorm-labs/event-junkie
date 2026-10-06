@@ -515,6 +515,11 @@ export interface components {
              *     ]
              */
             characterTags?: string[];
+            /**
+             * @description Whether we import this venue's events. False for a venue we know but do not import yet: it has no events here, and its page links to its programme.
+             * @example true
+             */
+            imported?: boolean;
         };
         /** @description A character tag and the venue's own page that states it */
         VenueCharacterTagResponse: {
@@ -659,6 +664,16 @@ export interface components {
             programmeEventTypes?: string[];
             /** @description What the venue says about itself (its kind of space, its door, its access), as character tag slugs, ordered by slug. Set only where the venue's own page states it. Each carries the URL of the venue's own page that states it. */
             characterTags?: components["schemas"]["VenueCharacterTagResponse"][];
+            /**
+             * @description Whether we import this venue's events. False for a venue we know but do not import yet: it has no events here, and its page links to its programme.
+             * @example false
+             */
+            imported?: boolean;
+            /**
+             * @description Where the venue publishes its programme, for a venue whose events we do not import: its own page, else its Resident Advisor page, else a ticket platform. A plain outbound link. Null for an imported venue, and for one with no programme online.
+             * @example https://www.example-club.de/programm
+             */
+            programmeUrl?: string | null;
         };
         /** @description Compact artist summary */
         ArtistSummaryResponse: {
@@ -1703,6 +1718,8 @@ export interface operations {
                 eventType?: string[];
                 /** @description Character tag slug (e.g. queer), as the venue describes itself. Repeatable: only a venue with every given tag matches. An unknown tag matches nothing. */
                 character?: string[];
+                /** @description true lists only the venues whose events we import, false only those we know but do not import yet. Omitted lists both. */
+                imported?: boolean;
                 /** @description Zero-based page index (0..N) */
                 page?: number;
                 /** @description The size of the page to be returned */
@@ -1768,6 +1785,8 @@ export interface operations {
                 eventType?: string[];
                 /** @description Character tag slug (e.g. queer), as the venue describes itself. Repeatable: only a venue with every given tag matches. An unknown tag matches nothing. */
                 character?: string[];
+                /** @description true lists only the venues whose events we import, false only those we know but do not import yet. Omitted lists both. */
+                imported?: boolean;
             };
             header?: never;
             path?: never;

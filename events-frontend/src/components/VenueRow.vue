@@ -5,6 +5,7 @@ import type { VenueListItem, VenueSummary } from '@/api/types'
 import { districtLabel } from '@/lib/districts'
 import { useFormat } from '@/composables/useFormat'
 import { useLocalePath } from '@/composables/useLocalePath'
+import { useI18n } from 'vue-i18n'
 
 /** One venue as a line of text, for the compact view — the counterpart to `EventRow`. */
 const props = withDefaults(
@@ -19,6 +20,7 @@ const props = withDefaults(
           | 'venueTypes'
           | 'characterTags'
           | 'capacity'
+          | 'imported'
         >
       >
     /** Heading level, which belongs to the page rather than to the row — see `EventCard.vue`. */
@@ -42,6 +44,7 @@ const line = computed(() =>
 const upcoming = computed(() => (props.distance ? [] : formatUpcoming(props.venue)))
 
 const localePath = useLocalePath()
+const { t } = useI18n()
 </script>
 
 <template>
@@ -59,7 +62,14 @@ const localePath = useLocalePath()
       </span>
     </div>
     <p v-if="line" class="truncate text-meta text-muted-foreground">{{ line }}</p>
-    <p v-if="upcoming.length" class="text-meta text-muted-foreground tabular-nums">
+    <p
+      v-if="venue.imported === false && !distance"
+      class="text-meta text-muted-foreground"
+      data-testid="venue-not-imported"
+    >
+      {{ t('venues.notImported') }}
+    </p>
+    <p v-else-if="upcoming.length" class="text-meta text-muted-foreground tabular-nums">
       <template v-for="(part, i) in upcoming" :key="part">
         <template v-if="i">{{ ' ' }}</template>
         <span class="whitespace-nowrap">{{ i < upcoming.length - 1 ? `${part} ·` : part }}</span>
