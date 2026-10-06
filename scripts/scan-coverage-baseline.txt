@@ -26,8 +26,8 @@
 # normal week, a bump that drops the count by 2.5% is one to read before merging.
 flux-clusters-files	38
 flux-clusters-resources	173
-zizmor-ignored	17
-zizmor-suppressed	81
+zizmor-ignored	18
+zizmor-suppressed	89
 zap-k3d-api-rules	118
 zap-k3d-api-urls	40
 zap-k3d-full-rules	140

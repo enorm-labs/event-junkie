@@ -5,7 +5,7 @@ How a commit becomes a running deployment. Two halves that meet at a registry an
 [ADR-016](../adr/ADR-016_GITOPS_DELIVERY.md).
 
 The version scheme itself is in [DEVELOPMENT.md §Versions](../DEVELOPMENT.md#versions-and-cutting-a-release). The platform reasoning is in
-[PLATFORM_SETUP §3–4a](PLATFORM_SETUP.md#3-container-registry--ghcr-not-docker-hub).
+[PLATFORM_SETUP §2–3.1](PLATFORM_SETUP.md#2-container-registry--ghcr-not-docker-hub).
 
 ## The short version
 

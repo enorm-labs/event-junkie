@@ -1,0 +1,38 @@
+# lychee — the link checker validate-links.yml runs over every tracked Markdown file.
+#
+# Pull requests run it `--offline`: relative links and their anchors only, so a renamed heading fails
+# its own PR and no third-party site can turn a check red. The weekly run adds external links.
+
+include_fragments = "full"
+max_retries = 3
+timeout = 30
+
+# A rate limit says the page exists.
+accept = ["200..=299", "429"]
+
+# Symlinks to files linted at their real path, which resolve their relative links from the wrong
+# directory, and vendored skills whose links are upstream's to fix.
+exclude_path = [
+  "^\\.claude/rules/",
+  "^\\.github/skills/",
+  "^\\.claude/skills/(gh|asd-ste100)/",
+]
+
+exclude_loopback = true
+
+exclude = [
+  # Sign-in pages, and pages that answer only a signed-in session.
+  "^https://(accounts|konsoleh)\\.hetzner\\.com/",
+  "^https://github\\.com/enorm-labs/event-junkie/security/",
+  "^https://docs\\.google\\.com/",
+  # Base URLs of an API or a Helm repository, which serve no page at the root.
+  "^https://api\\.hetzner\\.cloud/",
+  "^https://charts\\.(hetzner\\.cloud|openobserve\\.ai)/",
+  # Not on the public internet.
+  "^https://staging\\.event-junkie\\.de",
+  # Refuse or stall any client without a browser fingerprint.
+  "^https://www\\.euipo\\.europa\\.eu/",
+  "^https://www\\.gnu\\.org/",
+  # Its terms forbid automated access.
+  "^https://([a-z]+\\.)?ra\\.co/",
+]

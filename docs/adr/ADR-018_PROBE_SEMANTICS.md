@@ -176,4 +176,4 @@ rather than inheriting it.
 - `deploy/charts/event-junkie/README.md` — the measurement, in the chart's own words
 - [ADR-005](ADR-005_MIGRATIONS_OWNED_BY_IMPORTER.md) (why the BFF starts against a schema it does not own) · [ADR-008](ADR-008_IMPORT_JOB_SCHEDULING.md) ·
   [ADR-012](ADR-012_CLOUD_PLATFORM.md)
-- [Spring Boot — Kubernetes probes](https://docs.spring.io/spring-boot/reference/actuator/endpoints.html#actuator.endpoints.health.kubernetes-probes)
+- [Spring Boot — Kubernetes probes](https://docs.spring.io/spring-boot/reference/actuator/endpoints.html#actuator.endpoints.kubernetes-probes)

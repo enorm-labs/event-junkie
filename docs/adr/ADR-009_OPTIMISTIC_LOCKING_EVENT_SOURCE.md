@@ -92,5 +92,5 @@ propagates, and the scheduler picks the source up on the next tick.
 
 ## References
 
-- [Spring Data R2DBC Optimistic Locking](https://docs.spring.io/spring-data/relational/reference/r2dbc/entity-persistence.html#r2dbc.optimistic-locking)
+- [Spring Data R2DBC Optimistic Locking](https://docs.spring.io/spring-data/relational/reference/r2dbc/entity-persistence.html#r2dbc.entity-persistence.optimistic-locking)
 - ADR-008: Import Job Scheduling (describes the concurrent access patterns)

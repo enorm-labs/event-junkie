@@ -1,0 +1,48 @@
+name: Validate Migrations
+
+# squawk over the Flyway migrations a pull request adds. Only added files: a migration that has run
+# is immutable, because Flyway refuses a changed checksum. `.squawk.toml` says which rules are kept and
+# why. A finding the author accepts gets `-- squawk-ignore <rule>` above the statement, with a reason.
+
+on:
+  pull_request:
+    branches: [ main ]
+    # `paths:` is present because this check is **not** required. **If it is ever made required, delete
+    # this filter in the same change** — a required check that never runs stays Pending forever.
+    paths:
+      - 'events-importer/src/main/resources/db/migration/**'
+      - '.squawk.toml'
+      - '.github/workflows/validate-migrations.yml'
+
+permissions:
+  contents: read
+
+env:
+  # The PyPI wheel carries the binary and runs no install script. A string in YAML, so Renovate's
+  # `customManagers` watch it (ADR-024).
+  SQUAWK_VERSION: 2.67.0
+
+jobs:
+  squawk:
+    name: squawk
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      # Depth 2 reaches the merge commit's first parent, which is the base the PR is diffed against.
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 2
+
+      - name: Run squawk on added migrations
+        run: |
+          mapfile -t files < <(git diff --name-only --diff-filter=A HEAD^1 HEAD -- \
+            'events-importer/src/main/resources/db/migration/*.sql')
+          if [ "${#files[@]}" -eq 0 ]; then
+            echo "No migration added; nothing to lint."
+            exit 0
+          fi
+          printf 'Linting %s\n' "${files[@]}"
+          pipx run --spec "squawk-cli==${SQUAWK_VERSION}" squawk --reporter gcc "${files[@]}"

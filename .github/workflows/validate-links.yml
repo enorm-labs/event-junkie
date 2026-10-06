@@ -1,0 +1,65 @@
+name: Validate Links
+
+# lychee over every tracked Markdown file; `lychee.toml` holds the exclusions and says why.
+#
+# A pull request runs offline: relative links and their anchors, deterministic, no network. The
+# weekly run adds external links, where a red run means a page moved or died since last week.
+#
+# **The weekly run skips docs/EVENT_DATA_SOURCES.md.** It links about a hundred venue sites, and a
+# weekly crawler from CI is automated access the importer's politeness rules (ADR-007) do not cover.
+# The importer finds a dead venue site on its own.
+
+on:
+  pull_request:
+    branches: [ main ]
+    # `paths:` is present because this check is **not** required. **If it is ever made required, delete
+    # this filter in the same change** — a required check that never runs stays Pending forever.
+    paths:
+      - '**.md'
+      - 'lychee.toml'
+      - '.github/workflows/validate-links.yml'
+  schedule:
+    - cron: '17 5 * * 2'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # A string in YAML, so Renovate's `customManagers` watch it (ADR-024).
+  LYCHEE_VERSION: 0.24.2
+
+jobs:
+  lychee:
+    name: lychee
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # GITHUB_TOKEN lifts GitHub's anonymous rate limit for the many github.com links. It reads only
+      # public pages, and a fork PR runs offline, so nothing depends on it.
+      - name: Run lychee
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          OFFLINE: ${{ github.event_name == 'pull_request' }}
+        run: |
+          if [ "$OFFLINE" = "true" ]; then
+            git ls-files '*.md' > "$RUNNER_TEMP/inputs.txt"
+            mode=(--offline)
+          else
+            git ls-files '*.md' | grep -vx 'docs/EVENT_DATA_SOURCES.md' > "$RUNNER_TEMP/inputs.txt"
+            mode=()
+          fi
+          docker run --rm -e GITHUB_TOKEN \
+            -v "$PWD:/input" -v "$RUNNER_TEMP:/inputs:ro" -w /input \
+            "lycheeverse/lychee:${LYCHEE_VERSION}" \
+            "${mode[@]}" --no-progress --files-from /inputs/inputs.txt

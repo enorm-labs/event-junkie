@@ -58,8 +58,8 @@ LABEL org.opencontainers.image.source="https://github.com/enorm-labs/event-junki
 # Delete this once the base ships 3.5.8-r0 or later, by the BOM-override rule: an upgrade kept
 # past its purpose hides that the base has caught up. Check with
 # `docker run --rm --entrypoint sh <ref> -c 'apk list --installed | grep -E "^libssl3"'` on the
-# pinned digest. `USER root` because apk needs write access; the final `USER` below is unaffected.
-USER root
+# pinned digest. `USER 0` (root) because apk needs write access; the final `USER` below is unaffected.
+USER 0
 RUN apk upgrade --no-cache libssl3 libcrypto3
 
 WORKDIR /application

@@ -48,6 +48,23 @@ repos:
         files: \.py$
         pass_filenames: true
 
+      # `brew install hadolint`; validate-dockerfiles.yml pins the version that decides.
+      - id: hadolint
+        name: hadolint
+        entry: hadolint
+        language: system
+        files: (^|/)(Dockerfile(\.[^/]+)?|[^/]+\.Dockerfile)$
+        pass_filenames: true
+
+      # `pipx install squawk-cli`; validate-migrations.yml pins the version that decides. Reads
+      # `.squawk.toml` from the repository root, and sees only the migrations a commit touches.
+      - id: squawk
+        name: squawk
+        entry: squawk
+        language: system
+        files: ^events-importer/src/main/resources/db/migration/.*\.sql$
+        pass_filenames: true
+
       # `.claude/skills/` and `.claude/commands/` are parallel trees of `@` pointers and nothing
       # joins them, so a skill added to one and not the other is silently absent from the other —
       # no error, the command simply is not there. Runs on any of the three copies moving.

@@ -12,6 +12,7 @@ npm run type-check && npm run lint && npm run test:unit && npm run test:e2e   # 
 npm run format                                    # oxfmt; reformatting is intentional, never revert it. CI runs check:format
 npm run generate:api                              # schema.d.ts from a running BFF; § API Communication has the route without one
 npm run test:a11y                                 # the axe/WCAG sweep alone (a filter over test:e2e)
+npm run check:knip                                # unused files, exports, dependencies; knip.jsonc names each exception
 ```
 
 **Four rules that catch most changes:**
