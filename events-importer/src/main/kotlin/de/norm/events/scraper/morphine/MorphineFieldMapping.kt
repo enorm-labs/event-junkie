@@ -69,7 +69,8 @@ internal fun titleBilling(title: String): String {
  * tail off the back, a ` - ` list is split when every segment is short enough to be an act (each
  * may carry a `Live`) and there are three or more of them, a pair whose one segment equals the
  * event [title] is a film or a work beside its performer, and a ` - ` tail that lists members
- * (`PICI - A & B`) or dates a work ([WORK_MARKER]) keeps the head. A pair of names
+ * (`PICI - A & B`), dates a work ([WORK_MARKER]) or is left out of a title that bills the head
+ * (`Maurice Louca & Ayman Asfour - FERA`, #2778) keeps the head. A pair of names
  * (`Alister Spence – Within Without`) stays glued for the sync-time head rule of #302, which knows
  * whether the head is an act. Each name then goes through [stripArtistSuffix]; the caller bills it
  * through `headlinersFromTitle`, whose co-bill split is what a member list must not reach.
@@ -85,6 +86,7 @@ internal fun morphineSetLineActs(
             segments.size == 2 && WORK_MARKER.containsMatchIn(segments[1]) -> segments.take(1)
             segments.size == 2 && isMemberList(segments[0], segments[1]) -> segments.take(1)
             segments.size == 2 && segments.any { it.equals(title, ignoreCase = true) } -> segments
+            segments.size == 2 && billsInTitle(segments[0], title) && !billsInTitle(segments[1], title) -> segments.take(1)
             segments.size >= MIN_DASH_LIST && segments.all { it.split(WHITESPACE).size <= MAX_ACT_WORDS } -> segments
             else -> listOf(framed)
         }
@@ -113,6 +115,17 @@ private fun isMemberList(
     head.split(WHITESPACE).size <= MAX_MEMBER_HEAD_WORDS &&
         !MEMBER_JOIN.containsMatchIn(head) &&
         tail.split(MEMBER_JOIN).count { it.isNotBlank() } >= MIN_MEMBERS
+
+/**
+ * Whether the event [title] bills [name] as whole words, ignoring case. The title is the venue's own
+ * billing of the night, so a dash tail it leaves out beside a head it names is a work, not an act:
+ * `Maurice Louca & Ayman Asfour - FERA` under `BNNT & Radwan Ghazi Moumneh / Maurice Louca & Ayman
+ * Asfour` is an album (#2778).
+ */
+private fun billsInTitle(
+    name: String,
+    title: String
+): Boolean = Regex("""(?<![\p{L}\p{N}])${Regex.escape(name)}(?![\p{L}\p{N}])""", RegexOption.IGNORE_CASE).containsMatchIn(title)
 
 /** `Uncanny Valley presents:` — the frame the venue puts before a guest promoter's bill. */
 private val PRESENTS_FRAME = Regex("""^.{2,60}?\s+(?:$PRESENTS_VERBS|pres\.?)\s*:?\s+""", RegexOption.IGNORE_CASE)

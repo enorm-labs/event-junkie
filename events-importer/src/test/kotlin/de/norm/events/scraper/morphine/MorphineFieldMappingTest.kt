@@ -86,6 +86,21 @@ class MorphineFieldMappingTest {
     }
 
     @Test
+    fun `a dash tail the title leaves out beside a head it bills is a work`() {
+        // #2778: FERA is Maurice Louca's album; the title bills the duo and not the album.
+        val title = "BNNT & Radwan Ghazi Moumneh / Maurice Louca & Ayman Asfour"
+        morphineSetLineActs("Maurice Louca & Ayman Asfour - FERA", title) shouldBe listOf("Maurice Louca & Ayman Asfour")
+        morphineSetLineActs("Maurice Louca & Ayman Asfour – Fera", title.uppercase()) shouldBe listOf("Maurice Louca & Ayman Asfour")
+        // A title that bills both segments keeps the pair for #302's head rule.
+        morphineSetLineActs("Raphael Rogiński – Qırım", "Raphael Rogiński – Qırım - Live Recording") shouldBe
+            listOf("Raphael Rogiński – Qırım")
+        // A head the title names only inside a longer word is not billed there.
+        morphineSetLineActs("Ra - Fera", "Radwan Ghazi Moumneh") shouldBe listOf("Ra - Fera")
+        // A title that bills neither segment decides nothing.
+        morphineSetLineActs("Alister Spence – Within Without", "x") shouldBe listOf("Alister Spence – Within Without")
+    }
+
+    @Test
     fun `a two-word act keeps its own member list, and a co-bill is not one`() {
         // #1710: the same shape as PICI, with a duo whose name is two words.
         morphineSetLineActs("Exoteric Chamber - Gilles Aubry & Marta Zapparoli", "Exoteric Chamber") shouldBe listOf("Exoteric Chamber")
