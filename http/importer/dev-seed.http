@@ -129,12 +129,31 @@
 ###   Zur Klappe           — https://zurklappe.org/events
 ###
 ### Venues without an importer (alphabetical), #2766:
+###   800A Bar & Cabaret             — https://www.800aberlin.com/
 ###   808 Nachtklub Berlin           — https://808.berlin/
+###   8MM Bar                        — https://www.8mmbar.de/program
+###   ://about blank                 — https://aboutblank.li/next
+###   ACUD MACHT NEU                 — https://acudmachtneu.de/programm/
+###   Atemporal                      — https://ra.co/clubs/287058
 ###   ausland                        — https://ausland.berlin/program/all
+###   Backsteinboot                  — https://backsteinboot.org/program-(landing-page)-1
+###   Badenscher Hof                 — https://www.badenscher-hof.de/#Konzerte
 ###   Baiz                           — https://baiz.info/programm
+###   Ballhaus Berlin                — https://ballhaus-berlin.de/de/termine/
 ###   Ballhaus Wedding               — https://www.ballhauswedding.de/veranstaltungen
+###   Bar Neun                       — https://ra.co/clubs/262552
+###   Beate Uwe                      — https://beate-uwe.de/#Programm
+###   Birgit                         — https://ra.co/clubs/104289
 ###   BKA Theater                    — https://www.bka-theater.de/spielplan/
+###   Bohnengold                     — https://ra.co/clubs/13344
+###   Bredouille                     — https://bredouille-bar.de/upcomingevents-bredouille
+###   Bulbul Berlin                  — https://ra.co/clubs/175191
+###   C115                           — https://ra.co/clubs/278803
 ###   Café Köpenick                  — https://hdjk.de/veranstaltungen-events/
+###   ciao ciao Bar                  — https://ra.co/clubs/285073
+###   Clärchens Ballhaus             — https://claerchensball.haus/programm/
+###   Coco Boule                     — https://ra.co/clubs/253613
+###   Containerhafen                 — https://ra.co/clubs/271054
 ###   DSTRKT                         — https://www.dstrkt.de/
 ###   Galiläakirche                  — https://galilaea-kirche.de/programm/
 ###   House of Music Berlin          — https://www.houseofmusic.berlin/
@@ -154,8 +173,46 @@
 ###   Speiches Rock- und Blueskneipe — http://www.rockradio.de/rr_termine_speiche_werbung_termine_raumerstr.php
 ###   Spindler & Klatt               — https://www.spindlerklatt.com/club
 ###   Surprise Club                  — https://surprise-berlin.de/events-programs.php
+###   TIPI am Kanzleramt             — https://www.tipi-am-kanzleramt.de/programm/kalender.html
+###   Volksbühne Berlin              — https://www.volksbuehne-berlin.de/konzerte/
+###   WABE                           — https://www.wabe-berlin.info/vorschau/
+###   Weltwirtschaft                 — https://weltwirtschaft.berlin/
+###   Zebrano-Theater                — https://www.zebrano-theater.de/programm.html
+###   Zimmer 16                      — https://zimmer16.com/
 ###
 ### ============================================================
+
+### ————————————————————————————————————————————————————————————
+### 800A Bar & Cabaret (Stettiner Straße 19, Berlin-Wedding — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create 800A Bar & Cabaret venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "800A Bar & Cabaret",
+    "address": "Stettiner Straße 19",
+    "city": "Berlin",
+    "postalCode": "13357",
+    "district": "wedding",
+    "latitude": 52.553828,
+    "longitude": 13.387417,
+    "websiteUrl": "https://www.800aberlin.com/",
+    "description": "An international performance space in Wedding, open since 2017 and an official Tag der Clubkultur host in 2024, staging burlesque, drag, comedy, theatre, magic, poetry and live music.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Eine internationale Bar mit Kabarettbühne im Wedding, seit 2017 in Betrieb und 2024 offizieller Gastgeber beim Tag der Clubkultur, mit Burlesque, Drag, Comedy, Theater, Zauberei, Lyrik und Livemusik.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["bar", "theatre"],
+    "programmeUrl": "https://www.800aberlin.com/",
+    "reviewedAt": "2026-10-07T08:19:25Z"
+}
+
+> {%
+    client.test("800A Bar & Cabaret venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
 
 ### ————————————————————————————————————————————————————————————
 ### 808 Nachtklub Berlin (Budapester Straße 38-40, Berlin-Charlottenburg — not imported, #2766)
@@ -185,6 +242,70 @@ Content-Type: application/json
 
 > {%
     client.test("808 Nachtklub Berlin venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
+### 8MM Bar (Schönhauser Allee 177b, Berlin-Prenzlauer Berg — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create 8MM Bar venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "8MM Bar",
+    "address": "Schönhauser Allee 177b",
+    "city": "Berlin",
+    "postalCode": "10119",
+    "district": "prenzlauer-berg",
+    "latitude": 52.531331,
+    "longitude": 13.411227,
+    "websiteUrl": "https://www.8mmbar.de/",
+    "description": "A DIY music bar on Schönhauser Allee, founded in 2002 in the punk spirit and majority-owned by long-time staff since 2014, where bands keep all door money; open nightly until 4am.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Die DIY-Musikbar an der Schönhauser Allee entstand 2002 aus der Punk-Szene, gehört seit 2014 mehrheitlich langjährigen Mitarbeitenden und überlässt Bands die gesamten Eintrittseinnahmen; Livekonzerte und Barbetrieb täglich bis 4 Uhr.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["bar", "live-venue"],
+    "programmeUrl": "https://www.8mmbar.de/program",
+    "reviewedAt": "2026-10-07T08:19:25Z"
+}
+
+> {%
+    client.test("8MM Bar venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
+### ://about blank (Markgrafendamm 24c, Berlin-Friedrichshain — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create ://about blank venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "://about blank",
+    "address": "Markgrafendamm 24c",
+    "city": "Berlin",
+    "postalCode": "10245",
+    "district": "friedrichshain",
+    "latitude": 52.502146,
+    "longitude": 13.466118,
+    "websiteUrl": "https://aboutblank.li/",
+    "description": "A collectively run techno club by Ostkreuz, open since 2010 and organised as a cooperative with equal hourly pay, hosting house and techno nights on two floors and a summer garden.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Der Technoclub am Ostkreuz wird seit 2010 von einem Kollektiv als Genossenschaft mit Einheitslohn geführt; zwei Floors für House und Techno, im Sommer der Garten als Sektgarten, dazu regelmäßige Solipartys.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["club", "open-air"],
+    "programmeUrl": "https://aboutblank.li/next",
+    "reviewedAt": "2026-10-07T08:19:25Z"
+}
+
+> {%
+    client.test("://about blank venue created", function () {
         client.assert(response.status === 201, "Expected 201 but got " + response.status);
     });
 %}
@@ -250,6 +371,38 @@ Accept: application/json
 > {%
     client.test("A-Trane import triggered", function () {
         client.assert(response.status === 202, "Expected 202 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
+### ACUD MACHT NEU (Veteranenstraße 21, Berlin-Mitte — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create ACUD MACHT NEU venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "ACUD MACHT NEU",
+    "address": "Veteranenstraße 21",
+    "city": "Berlin",
+    "postalCode": "10119",
+    "district": "mitte",
+    "latitude": 52.53358,
+    "longitude": 13.400951,
+    "websiteUrl": "https://acudmachtneu.de/",
+    "description": "An arts house in a once-abandoned Mitte apartment building that artists opened in 1991, saved from foreclosure in 2014, with club nights, concerts, exhibitions and readings across its club, studio and gallery.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Das Kunsthaus in einem 1991 von Kunstschaffenden bezogenen, zuvor leerstehenden Wohnhaus an der Veteranenstraße entging 2014 der Zwangsversteigerung; Club, Studio und Galerie zeigen Clubnächte, Konzerte, Ausstellungen und Lesungen.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["club", "gallery", "cultural-centre"],
+    "programmeUrl": "https://acudmachtneu.de/programm/",
+    "reviewedAt": "2026-10-07T08:19:25Z"
+}
+
+> {%
+    client.test("ACUD MACHT NEU venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
     });
 %}
 
@@ -697,6 +850,37 @@ Accept: application/json
 %}
 
 ### ————————————————————————————————————————————————————————————
+### Atemporal (Boxhagener Str. 96, Berlin-Friedrichshain — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create Atemporal venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Atemporal",
+    "address": "Boxhagener Str. 96",
+    "city": "Berlin",
+    "postalCode": "10245",
+    "district": "friedrichshain",
+    "latitude": 52.511917,
+    "longitude": 13.462426,
+    "description": "A first-floor listening room in a Friedrichshain building on Boxhagener Straße, with a dedicated hi-fi sound system, hosting listening sessions, live sets, sound installations and art exhibitions.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Ein Hörraum im ersten Stock eines Hauses an der Boxhagener Straße in Friedrichshain, ausgestattet mit einer eigenen Hi-Fi-Anlage, für Listening Sessions, Live-Sets, Klanginstallationen und Kunstausstellungen.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["gallery", "club"],
+    "programmeUrl": "https://ra.co/clubs/287058",
+    "reviewedAt": "2026-10-07T08:19:25Z"
+}
+
+> {%
+    client.test("Atemporal venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
 ### ausland (Lychener Str. 60, Berlin-Prenzlauer Berg — not imported, #2766)
 ### ————————————————————————————————————————————————————————————
 
@@ -724,6 +908,39 @@ Content-Type: application/json
 
 > {%
     client.test("ausland venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
+### Backsteinboot (Eiswerderstraße 18, Gebäude 129 / Aufgang F, Berlin-Spandau — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create Backsteinboot venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Backsteinboot",
+    "address": "Eiswerderstraße 18, Gebäude 129 / Aufgang F",
+    "city": "Berlin",
+    "postalCode": "13585",
+    "district": "spandau",
+    "latitude": 52.547945,
+    "longitude": 13.219709,
+    "websiteUrl": "https://backsteinboot.org/",
+    "description": "An artist-run project space in the former Royal Fireworks Laboratory on Eiswerder island, run by the association Raum für Kunst with 37 studios, hosting club nights, exhibitions, workshops and talks.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Im ehemaligen Königlichen Feuerwerkslaboratorium auf der Insel Eiswerder betreibt der Verein Raum für Kunst Ateliers und einen Projektraum mit Clubnächten, Ausstellungen, Workshops und Gesprächsrunden bei freiem Eintritt oder Spende.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["cultural-centre", "club", "gallery"],
+    "capacity": 700,
+    "programmeUrl": "https://backsteinboot.org/program-(landing-page)-1",
+    "reviewedAt": "2026-10-07T08:19:25Z"
+}
+
+> {%
+    client.test("Backsteinboot venue created", function () {
         client.assert(response.status === 201, "Expected 201 but got " + response.status);
     });
 %}
@@ -793,6 +1010,38 @@ Accept: application/json
 %}
 
 ### ————————————————————————————————————————————————————————————
+### Badenscher Hof (Badensche Straße 29, Berlin-Wilmersdorf — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create Badenscher Hof venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Badenscher Hof",
+    "address": "Badensche Straße 29",
+    "city": "Berlin",
+    "postalCode": "10715",
+    "district": "wilmersdorf",
+    "latitude": 52.48583,
+    "longitude": 13.327505,
+    "websiteUrl": "https://www.badenscher-hof.de/",
+    "description": "A Wilmersdorf jazz pub and restaurant open since 1985, with Cajun cooking, a gallery and a courtyard, presenting live jazz, blues, swing and world music on weekday evenings.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Seit 1985 verbindet diese Jazzkneipe in Wilmersdorf Cajun-Küche, Galerie und Innenhof mit Konzerten an Werktagen, bei denen Jazz, Blues, Swing und Weltmusik auf der Bühne stehen.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["bar", "live-venue"],
+    "programmeUrl": "https://www.badenscher-hof.de/#Konzerte",
+    "reviewedAt": "2026-10-07T08:19:25Z"
+}
+
+> {%
+    client.test("Badenscher Hof venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
 ### Baiz (Schönhauser Allee 26A, Berlin-Prenzlauer Berg — not imported, #2766)
 ### ————————————————————————————————————————————————————————————
 
@@ -820,6 +1069,39 @@ Content-Type: application/json
 
 > {%
     client.test("Baiz venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
+### Ballhaus Berlin (Chausseestraße 102, Berlin-Mitte — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create Ballhaus Berlin venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Ballhaus Berlin",
+    "address": "Chausseestraße 102",
+    "city": "Berlin",
+    "postalCode": "10115",
+    "district": "mitte",
+    "latitude": 52.532154,
+    "longitude": 13.379872,
+    "websiteUrl": "https://ballhaus-berlin.de/",
+    "description": "A ballroom on Chausseestraße, opened in 1905 and run by its current team since 2014, hosting swing and Latin dance nights, live dance bands, burlesque shows and themed balls.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Das 1905 eröffnete Ballhaus an der Chausseestraße, seit 2014 unter heutiger Leitung, mit Swing- und Latin-Tanzabenden, Live-Tanzbands, Burlesque-Shows und Themenbällen.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["club", "live-venue"],
+    "capacity": 500,
+    "programmeUrl": "https://ballhaus-berlin.de/de/termine/",
+    "reviewedAt": "2026-10-07T08:19:25Z"
+}
+
+> {%
+    client.test("Ballhaus Berlin venue created", function () {
         client.assert(response.status === 201, "Expected 201 but got " + response.status);
     });
 %}
@@ -917,6 +1199,70 @@ Accept: application/json
 > {%
     client.test("Bar jeder Vernunft import triggered", function () {
         client.assert(response.status === 202, "Expected 202 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
+### Bar Neun (Pücklerstraße 34, Berlin-Kreuzberg — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create Bar Neun venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Bar Neun",
+    "address": "Pücklerstraße 34",
+    "city": "Berlin",
+    "postalCode": "10997",
+    "district": "kreuzberg",
+    "latitude": 52.502287,
+    "longitude": 13.431102,
+    "websiteUrl": "https://barneun.de",
+    "description": "A basement bar beneath Marktlokal at Markthalle Neun in Kreuzberg, booking experimental live performances and bass-heavy club nights with DJs.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Eine Kellerbar unter dem Marktlokal der Markthalle Neun in Kreuzberg, die experimentelle Live-Musik und basslastige Clubnächte mit DJs zeigt.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["bar", "club"],
+    "programmeUrl": "https://ra.co/clubs/262552",
+    "reviewedAt": "2026-10-07T08:19:25Z"
+}
+
+> {%
+    client.test("Bar Neun venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
+### Beate Uwe (Schillingstraße 31, Berlin-Mitte — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create Beate Uwe venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Beate Uwe",
+    "address": "Schillingstraße 31",
+    "city": "Berlin",
+    "postalCode": "10179",
+    "district": "mitte",
+    "latitude": 52.51744,
+    "longitude": 13.419135,
+    "websiteUrl": "https://beate-uwe.de/",
+    "description": "A small electronic club by Jannowitzbrücke with records covering its ceiling, playing house and techno on Friday and Saturday nights and slow downtempo on Sundays, when rugs go down for \"Beate Barfuß\".",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Kleiner Club für elektronische Musik an der Jannowitzbrücke mit Schallplatten an der Decke: freitags und samstags House und Techno, sonntags bei „Beate Barfuß“ Downtempo auf ausgelegten bunten Teppichen.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["club"],
+    "programmeUrl": "https://beate-uwe.de/#Programm",
+    "reviewedAt": "2026-10-07T08:19:25Z"
+}
+
+> {%
+    client.test("Beate Uwe venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
     });
 %}
 
@@ -1048,6 +1394,38 @@ Accept: application/json
 %}
 
 ### ————————————————————————————————————————————————————————————
+### Birgit (Schleusenufer 3, Berlin-Kreuzberg — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create Birgit venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Birgit",
+    "address": "Schleusenufer 3",
+    "city": "Berlin",
+    "postalCode": "10997",
+    "district": "kreuzberg",
+    "latitude": 52.497641,
+    "longitude": 13.449747,
+    "websiteUrl": "https://www.birgit.club/",
+    "description": "A former taxi repair garage on the canal at Schlesisches Tor, opened in 2015 as a beer garden full of fairground rides, with three dance floors at weekends, a Thursday drag show and live music on Sundays.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Eine ehemalige Taxiwerkstatt am Schleusenufer, seit 2015 Biergarten mit alten Jahrmarktsfahrgeschäften und am Wochenende Club mit drei Tanzflächen, dazu donnerstags eine Dragshow und sonntags Livemusik.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["club", "open-air", "bar"],
+    "programmeUrl": "https://ra.co/clubs/104289",
+    "reviewedAt": "2026-10-07T08:19:25Z"
+}
+
+> {%
+    client.test("Birgit venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
 ### BKA Theater (Mehringdamm 34, Berlin-Kreuzberg — not imported, #2766)
 ### ————————————————————————————————————————————————————————————
 
@@ -1075,6 +1453,133 @@ Content-Type: application/json
 
 > {%
     client.test("BKA Theater venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
+### Bohnengold (Reichenberger Straße 153, Berlin-Kreuzberg — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create Bohnengold venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Bohnengold",
+    "address": "Reichenberger Straße 153",
+    "city": "Berlin",
+    "postalCode": "10999",
+    "district": "kreuzberg",
+    "latitude": 52.497566,
+    "longitude": 13.42426,
+    "description": "A Kreuzberg bar on Reichenberger Straße with a living-room feel, drinks at the front and a dance floor at the back for disco, indie and electronic nights, including a free indie party every Thursday.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Bar in der Reichenberger Straße mit Wohnzimmeratmosphäre: vorne wird ausgeschenkt, hinten getanzt, zu Disco, Indie und Elektro, donnerstags bei der kostenlosen „Indietanzbar“.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["bar", "club"],
+    "programmeUrl": "https://ra.co/clubs/13344",
+    "reviewedAt": "2026-10-07T08:19:25Z"
+}
+
+> {%
+    client.test("Bohnengold venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
+### Bredouille (Georgenstraße, S-Bahnbogen 199, Berlin-Mitte — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create Bredouille venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Bredouille",
+    "address": "Georgenstraße, S-Bahnbogen 199",
+    "city": "Berlin",
+    "postalCode": "10117",
+    "district": "mitte",
+    "latitude": 52.520178,
+    "longitude": 13.391593,
+    "websiteUrl": "https://bredouille-bar.de/",
+    "description": "A cocktail bar in an S-Bahn arch on Georgenstraße, run by two former Torstraße bartenders, with after-work lounges during the week, DJs at weekends and invited collectives and listening sessions.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Cocktailbar in einem S-Bahn-Bogen an der Georgenstraße, geführt von zwei Barleuten aus der Torstraße, mit Afterwork-Lounges unter der Woche, DJ-Abenden am Wochenende und Gastreihen von Kollektiven.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["bar"],
+    "programmeUrl": "https://bredouille-bar.de/upcomingevents-bredouille",
+    "reviewedAt": "2026-10-07T08:19:25Z"
+}
+
+> {%
+    client.test("Bredouille venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
+### Bulbul Berlin (Skalitzer Straße 114, Berlin-Kreuzberg — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create Bulbul Berlin venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Bulbul Berlin",
+    "address": "Skalitzer Straße 114",
+    "city": "Berlin",
+    "postalCode": "10999",
+    "district": "kreuzberg",
+    "latitude": 52.499312,
+    "longitude": 13.424285,
+    "websiteUrl": "https://www.bulbulberlin.de",
+    "description": "A small Kreuzberg club on Skalitzer Straße, open since 2019 in the rooms of the former Farbfernseher, with house, disco, funk and soul from local and visiting DJs from Thursday to Saturday.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Kleiner Club an der Skalitzer Straße, seit 2019 in den Räumen des früheren Farbfernsehers, mit House, Disco, Funk und Soul von Berliner und internationalen DJs, donnerstags bis samstags.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["club", "bar"],
+    "programmeUrl": "https://ra.co/clubs/175191",
+    "reviewedAt": "2026-10-07T08:19:25Z"
+}
+
+> {%
+    client.test("Bulbul Berlin venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
+### C115 (Messedamm 23, Berlin-Charlottenburg — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create C115 venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "C115",
+    "address": "Messedamm 23",
+    "city": "Berlin",
+    "postalCode": "14055",
+    "district": "charlottenburg",
+    "latitude": 52.499326,
+    "longitude": 13.273144,
+    "websiteUrl": "https://www.c115.club/",
+    "description": "A club in the glazed former commentators' booth of the AVUS grandstand above the A115 motorway, open since December 2025 for curated club nights, daytime and listening parties and cultural events.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "In der verglasten früheren Sprecherkanzel der denkmalgeschützten AVUS-Tribüne über der A115 liegt dieser Club, seit Dezember 2025 geöffnet für ausgewählte Clubnächte, Tagespartys, Listening-Sessions und kulturelle Veranstaltungen.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["club"],
+    "programmeUrl": "https://ra.co/clubs/278803",
+    "reviewedAt": "2026-10-07T08:19:25Z"
+}
+
+> {%
+    client.test("C115 venue created", function () {
         client.assert(response.status === 201, "Expected 201 but got " + response.status);
     });
 %}
@@ -1172,6 +1677,37 @@ Accept: application/json
 > {%
     client.test("Cassiopeia import triggered", function () {
         client.assert(response.status === 202, "Expected 202 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
+### ciao ciao Bar (Falckensteinstraße 47/48, Berlin-Kreuzberg — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create ciao ciao Bar venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "ciao ciao Bar",
+    "address": "Falckensteinstraße 47/48",
+    "city": "Berlin",
+    "postalCode": "10997",
+    "district": "kreuzberg",
+    "latitude": 52.500673,
+    "longitude": 13.444776,
+    "description": "A high-ceilinged cocktail bar on Falckensteinstraße in Kreuzberg with a club-grade sound system, a queer-friendly crowd and regular DJ nights and parties listed on Resident Advisor.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Eine Cocktailbar mit hohen Decken und Clubanlage in der Kreuzberger Falckensteinstraße, queerfreundlich und mit regelmäßigen DJ-Abenden und Partys, die auf Resident Advisor angekündigt werden.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["bar"],
+    "programmeUrl": "https://ra.co/clubs/285073",
+    "reviewedAt": "2026-10-07T08:19:25Z"
+}
+
+> {%
+    client.test("ciao ciao Bar venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
     });
 %}
 
@@ -1361,6 +1897,71 @@ Accept: application/json
 > {%
     client.test("Club OST import triggered", function () {
         client.assert(response.status === 202, "Expected 202 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
+### Clärchens Ballhaus (Auguststraße 24/25, Berlin-Mitte — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create Clärchens Ballhaus venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Clärchens Ballhaus",
+    "address": "Auguststraße 24/25",
+    "city": "Berlin",
+    "postalCode": "10117",
+    "district": "mitte",
+    "latitude": 52.526702,
+    "longitude": 13.3969,
+    "websiteUrl": "https://claerchensball.haus/",
+    "description": "A ballroom in Mitte, opened in 1913 and named after co-founder Clara Bühler, where tango, swing and party nights fill the historic mirrored hall upstairs above the Luna D'Oro restaurant.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Seit 1913 wird in diesem Ballhaus in der Auguststraße getanzt, heute im denkmalgeschützten Spiegelsaal im Obergeschoss mit Tango-Milongas, Swing, Tanzkursen, Konzerten und Partys.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["club", "live-venue"],
+    "programmeUrl": "https://claerchensball.haus/programm/",
+    "reviewedAt": "2026-10-07T08:19:25Z"
+}
+
+> {%
+    client.test("Clärchens Ballhaus venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
+### Coco Boule (Prinzenstraße 85 D-F, Berlin-Kreuzberg — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create Coco Boule venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Coco Boule",
+    "address": "Prinzenstraße 85 D-F",
+    "city": "Berlin",
+    "postalCode": "10969",
+    "district": "kreuzberg",
+    "latitude": 52.503449,
+    "longitude": 13.410212,
+    "websiteUrl": "https://cocoboule.com/",
+    "description": "A Bechstein Network venue at Moritzplatz built around a bistro-disco idea, moving from dinner to dancing across three combinable rooms with a Funktion-One sound system and a DJ booth.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Das Bistro-Disco-Konzept des Bechstein Network am Moritzplatz: erst wird gegessen, dann getanzt, in drei verbindbaren Räumen mit Funktion-One-Anlage, DJ-Pult und Straßenterrasse.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["bar", "club"],
+    "capacity": 300,
+    "programmeUrl": "https://ra.co/clubs/253613",
+    "reviewedAt": "2026-10-07T08:19:25Z"
+}
+
+> {%
+    client.test("Coco Boule venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
     });
 %}
 
@@ -1615,6 +2216,38 @@ Accept: application/json
 > {%
     client.test("Comedy Café Berlin import triggered", function () {
         client.assert(response.status === 202, "Expected 202 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
+### Containerhafen (Köpenicker Straße 18-20, Berlin-Kreuzberg — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create Containerhafen venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Containerhafen",
+    "address": "Köpenicker Straße 18-20",
+    "city": "Berlin",
+    "postalCode": "10997",
+    "district": "kreuzberg",
+    "latitude": 52.505923,
+    "longitude": 13.432747,
+    "description": "An open-air club on the Spree bank beside Sage Beach, opened in May 2025 by the team behind the closed club Re:mise, hosting electronic parties of its own and joint events with Sage Beach.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Das Team des geschlossenen Clubs Re:mise betreibt seit Mai 2025 dieses Open-Air-Gelände am Spreeufer neben dem Sage Beach, mit eigenen Partys und gemeinsamen Veranstaltungen mit dem Nachbarn.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["open-air", "club"],
+    "capacity": 500,
+    "programmeUrl": "https://ra.co/clubs/271054",
+    "reviewedAt": "2026-10-07T08:19:25Z"
+}
+
+> {%
+    client.test("Containerhafen venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
     });
 %}
 
@@ -6935,6 +7568,39 @@ Accept: application/json
 %}
 
 ### ————————————————————————————————————————————————————————————
+### TIPI am Kanzleramt (Große Querallee, Berlin-Tiergarten — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create TIPI am Kanzleramt venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "TIPI am Kanzleramt",
+    "address": "Große Querallee",
+    "city": "Berlin",
+    "postalCode": "10557",
+    "district": "tiergarten",
+    "latitude": 52.518449,
+    "longitude": 13.367132,
+    "websiteUrl": "https://www.tipi-am-kanzleramt.de/",
+    "description": "A permanent tent theatre in the Tiergarten between the Chancellery and the Haus der Kulturen der Welt, opened in 2002 as the sister stage of Bar jeder Vernunft, staging cabaret, chanson, musicals and music shows.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Das feste Theaterzelt im Tiergarten zwischen Kanzleramt und Haus der Kulturen der Welt entstand 2002 als Jubiläumszelt der Bar jeder Vernunft und zeigt heute Kabarett, Chanson, Musicals, Varieté und Musikshows.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["theatre", "live-venue"],
+    "capacity": 550,
+    "programmeUrl": "https://www.tipi-am-kanzleramt.de/programm/kalender.html",
+    "reviewedAt": "2026-10-07T08:19:25Z"
+}
+
+> {%
+    client.test("TIPI am Kanzleramt venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
 ### Tresor (Köpenicker Str. 70, Berlin-Mitte — im Heizkraftwerk)
 ### ————————————————————————————————————————————————————————————
 
@@ -7509,6 +8175,104 @@ Accept: application/json
 %}
 
 ### ————————————————————————————————————————————————————————————
+### Volksbühne Berlin (Linienstraße 227, Berlin-Mitte — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create Volksbühne Berlin venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Volksbühne Berlin",
+    "address": "Linienstraße 227",
+    "city": "Berlin",
+    "postalCode": "10178",
+    "district": "mitte",
+    "latitude": 52.526807,
+    "longitude": 13.41187,
+    "websiteUrl": "https://www.volksbuehne-berlin.de/",
+    "description": "A modernist playhouse by architect Oskar Kaufmann on Rosa-Luxemburg-Platz, open since 1914, whose concert series fills its main stage and the Roter Salon alongside its theatre repertoire.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Das 1914 eröffnete Schauspielhaus am Rosa-Luxemburg-Platz nach Plänen von Oskar Kaufmann gilt als erster Berliner Theaterbau der Moderne und bespielt neben dem Theaterrepertoire Große Bühne und Roten Salon mit Konzerten.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["theatre", "live-venue"],
+    "capacity": 800,
+    "programmeUrl": "https://www.volksbuehne-berlin.de/konzerte/",
+    "reviewedAt": "2026-10-07T08:19:25Z"
+}
+
+> {%
+    client.test("Volksbühne Berlin venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
+### WABE (Danziger Straße 101, Berlin-Prenzlauer Berg — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create WABE venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "WABE",
+    "address": "Danziger Straße 101",
+    "city": "Berlin",
+    "postalCode": "10405",
+    "district": "prenzlauer-berg",
+    "latitude": 52.538024,
+    "longitude": 13.430589,
+    "websiteUrl": "https://www.wabe-berlin.info/",
+    "description": "An octagonal hall built in 1986 on the former gasworks site in Ernst-Thälmann-Park, run by the Pankow district as a municipal venue for jazz, pop, blues, theatre and comedy, playing at Schönfließer Straße 7 in Prenzlauer Berg while the hall is renovated.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Der achteckige Bau von 1986 auf dem früheren Gaswerksgelände im Ernst-Thälmann-Park ist eine kommunale Kulturstätte des Bezirks Pankow für Jazz, Pop, Blues, Theater und Comedy und spielt während der Sanierung in der Schönfließer Straße 7 in Prenzlauer Berg.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["live-venue", "cultural-centre"],
+    "programmeUrl": "https://www.wabe-berlin.info/vorschau/",
+    "reviewedAt": "2026-10-07T08:19:25Z"
+}
+
+> {%
+    client.test("WABE venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
+### Weltwirtschaft (John-Foster-Dulles-Allee 10, Berlin-Tiergarten — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create Weltwirtschaft venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Weltwirtschaft",
+    "address": "John-Foster-Dulles-Allee 10",
+    "city": "Berlin",
+    "postalCode": "10557",
+    "district": "tiergarten",
+    "latitude": 52.518905,
+    "longitude": 13.364789,
+    "websiteUrl": "https://weltwirtschaft.berlin/",
+    "description": "The restaurant, beer garden and rooftop kiosk of the Haus der Kulturen der Welt in Tiergarten, hosting DJ nights and small unplugged concerts on its terraces.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Restaurant, Biergarten und Dachkiosk im Haus der Kulturen der Welt im Tiergarten, mit DJ-Abenden und kleinen Unplugged-Konzerten auf den Terrassen.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["bar", "open-air"],
+    "capacity": 300,
+    "programmeUrl": "https://weltwirtschaft.berlin/",
+    "reviewedAt": "2026-10-07T08:19:25Z"
+}
+
+> {%
+    client.test("Weltwirtschaft venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
 ### Wild at Heart (Wiener Str. 20, Berlin-Kreuzberg)
 ### ————————————————————————————————————————————————————————————
 
@@ -7568,6 +8332,39 @@ Accept: application/json
 > {%
     client.test("Wild at Heart import triggered", function () {
         client.assert(response.status === 202, "Expected 202 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
+### Zebrano-Theater (Lenbachstraße 7A, Berlin-Friedrichshain — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create Zebrano-Theater venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Zebrano-Theater",
+    "address": "Lenbachstraße 7A",
+    "city": "Berlin",
+    "postalCode": "10245",
+    "district": "friedrichshain",
+    "latitude": 52.50591,
+    "longitude": 13.466954,
+    "websiteUrl": "https://www.zebrano-theater.de/",
+    "description": "A 65-seat stage near Ostkreuz in a former puppet theatre, run by a volunteer association since 2005 and devoted to literary and musical cabaret, chanson, song recitals, readings and children's theatre.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Die kleine Bühne nahe dem Ostkreuz mit 65 Plätzen in einem einstigen Puppentheater wird seit 2005 ehrenamtlich von einem Verein getragen und zeigt Kabarett, Chanson, Liederabende, Lesebühnen und Kindertheater.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["theatre"],
+    "capacity": 65,
+    "programmeUrl": "https://www.zebrano-theater.de/programm.html",
+    "reviewedAt": "2026-10-07T08:19:25Z"
+}
+
+> {%
+    client.test("Zebrano-Theater venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
     });
 %}
 
@@ -7759,6 +8556,39 @@ Accept: application/json
 > {%
     client.test("Zig Zag Jazz Club import triggered", function () {
         client.assert(response.status === 202, "Expected 202 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
+### Zimmer 16 (Florastraße 16, Berlin-Pankow — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create Zimmer 16 venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Zimmer 16",
+    "address": "Florastraße 16",
+    "city": "Berlin",
+    "postalCode": "13187",
+    "district": "pankow",
+    "latitude": 52.565326,
+    "longitude": 13.401426,
+    "websiteUrl": "https://zimmer16.com/",
+    "description": "A small stage kept going by volunteers in a former neighbourhood cinema in Pankow, operated by the association MIKADO e.V. since 2002, with about 300 concerts, theatre, comedy and film evenings a year.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Die ehrenamtlich betriebene Kleinkunstbühne des Vereins MIKADO e.V. liegt seit 2002 in einem ehemaligen Pankower Kino und zeigt rund 300 Veranstaltungen im Jahr: Konzerte, Theater, Comedy, Film und Kindervorstellungen.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["live-venue", "theatre"],
+    "capacity": 60,
+    "programmeUrl": "https://zimmer16.com/",
+    "reviewedAt": "2026-10-07T08:19:25Z"
+}
+
+> {%
+    client.test("Zimmer 16 venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
     });
 %}
 
