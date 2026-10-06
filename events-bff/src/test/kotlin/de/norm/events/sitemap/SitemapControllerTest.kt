@@ -7,6 +7,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.springframework.http.CacheControl
 import org.springframework.http.MediaType
+import org.springframework.r2dbc.core.await
 import java.time.Duration
 import java.time.LocalDate
 
@@ -45,6 +46,27 @@ class SitemapControllerTest : BaseControllerTest() {
                 "/en/events/tonight",
                 "/de/events/tonight"
             )
+        }
+
+    @Test
+    fun `stamps each event url with when its content changed, and a venue url with nothing`(): Unit =
+        runBlocking {
+            val venueId = insertVenue("Lido", "lido")
+            insertEvent(venueId, "Changed", "changed", today.plusDays(1))
+            insertEvent(venueId, "Unstamped", "unstamped", today.plusDays(2))
+            databaseClient
+                .sql("UPDATE events.event SET content_changed_at = TIMESTAMPTZ '2026-10-06 22:31:40.123456+02' WHERE slug = 'changed'")
+                .await()
+
+            val xml = sitemap("events")
+
+            val urls = xml.split("</url>").filter { "<loc>" in it }
+            assertThat(urls).hasSize(4)
+            assertThat(urls.filter { "/events/changed<" in it }).allSatisfy {
+                assertThat(it).containsPattern("</loc>\\s*<lastmod>2026-10-06T20:31:40Z</lastmod>")
+            }
+            assertThat(urls.filter { "/events/unstamped<" in it }).noneMatch { "<lastmod>" in it }
+            assertThat(sitemap("venues")).doesNotContain("<lastmod>")
         }
 
     @Test

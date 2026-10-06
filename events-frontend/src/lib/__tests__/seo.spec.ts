@@ -123,7 +123,8 @@ describe('the sitemap', () => {
 
   it('claims no lastmod, changefreq or priority', () => {
     // Google ignores the latter two, and a build-stamped lastmod on every page is a confident claim
-    // that happens to be false.
+    // that happens to be false. A static page has no change date to stamp; the event sitemap does
+    // (#2768), and venues, artists and promoters will once they track one.
     expect(sitemapXml()).not.toMatch(/<(lastmod|changefreq|priority)>/)
   })
 })

@@ -191,7 +191,8 @@ export function sitemapIndexXml(): string {
  * including a self-reference; a one-way annotation is ignored.
  *
  * No `lastmod`, `changefreq` or `priority`: Google ignores the latter two, and a `lastmod` stamped
- * with the build date on every page is the untrustworthy signal it discounts.
+ * with the build date on every page is the untrustworthy signal it discounts. Only the BFF's event
+ * sitemap carries `lastmod`, from the moment the event's content changed (#2768).
  */
 export function sitemapXml(): string {
   const entries = LOCALES.flatMap((locale) =>

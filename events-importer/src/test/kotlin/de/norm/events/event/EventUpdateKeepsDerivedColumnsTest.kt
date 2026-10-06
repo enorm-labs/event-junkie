@@ -42,6 +42,8 @@ class EventUpdateKeepsDerivedColumnsTest {
             lineupSourceUrl = "https://timetable.example/stored",
             sourceId = "test:stored",
             pinnedFields = listOf("title"),
+            contentHash = "c0ffee",
+            contentChangedAt = Instant.parse("2026-09-15T10:00:00Z"),
             createdAt = Instant.parse("2026-09-01T10:00:00Z")
         )
 
@@ -157,6 +159,8 @@ class EventUpdateKeepsDerivedColumnsTest {
                 "id",
                 "eventSourceId",
                 "createdAt",
+                "contentHash",
+                "contentChangedAt",
                 "pinnedFields",
                 "room",
                 "relocatedTo",

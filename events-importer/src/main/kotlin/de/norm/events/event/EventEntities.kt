@@ -77,6 +77,10 @@ data class EventEntity(
     val free: Boolean = false,
     /** The fields an operator fixed by hand, by their [PinnedField.key]. The importer keeps each one (ADR-042). */
     val pinnedFields: List<String> = emptyList(),
+    /** SHA-256 of what the event page shows, by [EventContentStamp]. Null until the first import after V116. */
+    val contentHash: String? = null,
+    /** When [contentHash] last changed: the sitemap's `lastmod` (#2768). Unlike [updatedAt], an unchanged re-import keeps it. */
+    val contentChangedAt: Instant? = null,
     @CreatedDate val createdAt: Instant? = null,
     @LastModifiedDate val updatedAt: Instant? = null
 )

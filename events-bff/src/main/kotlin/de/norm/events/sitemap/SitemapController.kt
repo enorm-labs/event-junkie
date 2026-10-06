@@ -33,6 +33,6 @@ class SitemapController(
             // An hour, as the static sitemap has: a crawler reads it a few times a day at most.
             .cacheControl(CacheControl.maxAge(Duration.ofHours(1)).cachePublic())
             .contentType(MediaType.APPLICATION_XML)
-            .body(SitemapXml.render(sitemapKind, repository.slugs(sitemapKind)))
+            .body(SitemapXml.render(sitemapKind, repository.entries(sitemapKind)))
     }
 }
