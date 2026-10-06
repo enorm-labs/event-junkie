@@ -1,6 +1,7 @@
 package de.norm.events.artist
 
 import de.norm.events.EVENTS_SCHEMA
+import de.norm.events.common.NameListOrder
 import de.norm.events.common.TextSearch
 import de.norm.events.common.countQuery
 import io.r2dbc.spi.Readable
@@ -24,6 +25,8 @@ data class ArtistIdPage(
 class ArtistSearchRepository(
     private val databaseClient: DatabaseClient
 ) {
+    private val order = NameListOrder("a.name", SORT_COLUMNS, TIEBREAKER)
+
     suspend fun search(
         term: String?,
         pageable: Pageable,
@@ -49,7 +52,7 @@ class ArtistSearchRepository(
 
         val ids =
             databaseClient
-                .sql("SELECT a.id FROM $EVENTS_SCHEMA.artist a $where ${orderBy(pageable, term, bySimilarity)} LIMIT :limit OFFSET :offset")
+                .sql("SELECT a.id FROM $EVENTS_SCHEMA.artist a $where ${order.clause(pageable, term, bySimilarity)} LIMIT :limit OFFSET :offset")
                 .bindTerm(term, bySimilarity)
                 .bind("limit", pageable.pageSize)
                 .bind("offset", pageable.offset)
@@ -66,23 +69,6 @@ class ArtistSearchRepository(
         bySimilarity: Boolean
     ): DatabaseClient.GenericExecuteSpec =
         if (term == null) this else TextSearch.params(term, bySimilarity).entries.fold(this) { spec, (key, value) -> spec.bind(key, value) }
-
-    /**
-     * Whitelists the sort properties to known expressions. Without a sort, a search puts the closest
-     * matches first and the list is by name; a chosen sort, A–Z included, is never reordered by relevance.
-     */
-    private fun orderBy(
-        pageable: Pageable,
-        term: String?,
-        bySimilarity: Boolean
-    ): String {
-        val clauses =
-            pageable.sort.toList().mapNotNull { order ->
-                SORT_COLUMNS[order.property]?.let { column -> "$column ${if (order.isAscending) "ASC" else "DESC"}" }
-            }
-        val rank = TextSearch.rank("a.name", bySimilarity).takeIf { term != null && clauses.isEmpty() }
-        return "ORDER BY ${(listOfNotNull(rank) + clauses + TIEBREAKER).joinToString(", ")}"
-    }
 
     companion object {
         val SORT_COLUMNS =
