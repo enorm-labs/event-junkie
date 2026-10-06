@@ -112,10 +112,11 @@ class UrbanSpreeWebsiteImporter(
 
     /**
      * Merges a parsed [detail] page over its listing [card]. The detail page owns the untruncated
-     * title, description, promoter and ticket link; the card wins on date and start time
-     * (`data-dateStart`), except its 23:59 placeholder, and on image (the original upload rather than the detail page's
-     * cache-keyed `phpthumbof` thumbnail) (ADR-007 §"Selector Strategy"). Everything else falls
-     * back to the card only where the detail page supplied nothing.
+     * title, description, promoter and ticket link. The card wins on date and start time
+     * (`data-dateStart`), except for its 23:59 placeholder and for a doors time the page read
+     * (#2787). The card also wins on image: the original upload, not the page's cache-keyed
+     * `phpthumbof` thumbnail (ADR-007 §"Selector Strategy"). Every other field falls back to the
+     * card only where the detail page supplied nothing.
      */
     private fun merge(
         detail: ScrapedEvent,
@@ -123,8 +124,16 @@ class UrbanSpreeWebsiteImporter(
     ): ScrapedEvent =
         detail.withGapsFrom(card).copy(
             eventDate = card.eventDate,
-            // The card's 23:59 is a placeholder; the detail page resolves it from the prose when it can (#1904).
-            startTime = if (card.startTime == URBAN_SPREE_LATE_PLACEHOLDER) detail.startTime ?: card.startTime else card.startTime ?: detail.startTime,
+            startTime =
+                when {
+                    // The card's 23:59 is a placeholder; the detail page resolves it from the prose when it can (#1904).
+                    card.startTime == URBAN_SPREE_LATE_PLACEHOLDER -> detail.startTime ?: card.startTime
+
+                    // The card's time is then the doors time, and the page read the start after it.
+                    detail.doorsTime != null -> detail.startTime
+
+                    else -> card.startTime ?: detail.startTime
+                },
             imageUrl = card.imageUrl ?: detail.imageUrl
         )
 

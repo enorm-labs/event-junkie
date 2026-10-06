@@ -251,7 +251,33 @@ class UrbanSpreeWebsiteImporterTest {
             event.startTime shouldBe LocalTime.of(23, 59)
         }
 
+    @Test
+    fun `importEvents stores the card's time as doors when the detail page reads a later start`() =
+        runTest {
+            coEvery { htmlFetcher.fetchDocument(entryUrl) } returns
+                Jsoup.parse(
+                    """<html><head><base href="https://www.urbanspree.com/"></head><body><div id="pdopage">
+                    <a class="card" href="program/concerts/otha-berlin-urban-spree.html" data-dateStart="2026-10-07 19:00:00">
+                    <div class="card-text cat">Concerts</div><div class="card-text title">Otha - Berlin - Urban Spree</div></a>
+                    </div></body></html>""",
+                    entryUrl
+                )
+            coEvery { htmlFetcher.fetchDocument(page2Url) } returns emptyListing(page2Url)
+            coEvery { htmlFetcher.fetchDocument(OTHA_URL) } returns fixture("urbanspree-detail-doors-clock-first.html", OTHA_URL)
+
+            val event =
+                importer
+                    .importEvents(entryUrl)
+                    .shouldBeInstanceOf<ImportResult.Success>()
+                    .events
+                    .single()
+
+            event.doorsTime shouldBe LocalTime.of(19, 0)
+            event.startTime shouldBe LocalTime.of(20, 0)
+        }
+
     private companion object {
+        private const val OTHA_URL = "https://www.urbanspree.com/program/concerts/otha-berlin-urban-spree.html"
         private const val KLUBNACHT_URL = "https://www.urbanspree.com/program/concerts/urban-spree-klubnacht-005.html"
         private const val TWIN_NOIR_URL = "https://www.urbanspree.com/program/concerts/twin-noir-hinfort-urban-spree,-berlin.html"
         private const val SOM_URL = "https://www.urbanspree.com/program/concerts/som-berlin-urban-spree.html"
