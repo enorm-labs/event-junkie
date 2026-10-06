@@ -127,7 +127,67 @@
 ###   Zig Zag Jazz Club    — https://www.zigzag-jazzclub.berlin/programmneu
 ###   Zitadelle            — https://citadel-music-festival.de/events
 ###   Zur Klappe           — https://zurklappe.org/events
+###
+### Venues without an importer (alphabetical), #2766:
+###   808 Nachtklub Berlin           — https://808.berlin/
+###   ausland                        — https://ausland.berlin/program/all
+###   Baiz                           — https://baiz.info/programm
+###   Ballhaus Wedding               — https://www.ballhauswedding.de/veranstaltungen
+###   BKA Theater                    — https://www.bka-theater.de/spielplan/
+###   Café Köpenick                  — https://hdjk.de/veranstaltungen-events/
+###   DSTRKT                         — https://www.dstrkt.de/
+###   Galiläakirche                  — https://galilaea-kirche.de/programm/
+###   House of Music Berlin          — https://www.houseofmusic.berlin/
+###   KAOS Berlin                    — https://kaosberlin.de/veranstaltungen/
+###   Konrad Tönz Bar                — http://www.konradtoenzbar.de/#events
+###   Kühlspot Social Club           — https://kuehlspot.com/
+###   L.U.X                          — https://www.lux-berlin.net/
+###   LabSaal                        — https://labsaal.de/events/
+###   Little Stage Bar               — https://littlestageclubneukoelln.wordpress.com/
+###   Mad Monkey Room                — https://t.rausgegangen.de/tickets/shop/mad-monkey-2
+###   ORWOhaus                       — https://www.orwohaus.de/veranstaltungen/
+###   Pfefferberg Haus 13            — https://haus13.pfefferwerk.de/veranstaltungen/
+###   Promenadeneck                  — https://promenaden-eck-berlin.de/
+###   Richten25                      — https://richten25.de/events
+###   Showfenster Theater            — https://www.showfenster-show.de/übersichtskalender
+###   Slaughterhouse                 — https://slaughterhouse-berlin.de/konzerte/
+###   Speiches Rock- und Blueskneipe — http://www.rockradio.de/rr_termine_speiche_werbung_termine_raumerstr.php
+###   Spindler & Klatt               — https://www.spindlerklatt.com/club
+###   Surprise Club                  — https://surprise-berlin.de/events-programs.php
+###
 ### ============================================================
+
+### ————————————————————————————————————————————————————————————
+### 808 Nachtklub Berlin (Budapester Straße 38-40, Berlin-Charlottenburg — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create 808 Nachtklub Berlin venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "808 Nachtklub Berlin",
+    "address": "Budapester Straße 38-40",
+    "city": "Berlin",
+    "postalCode": "10787",
+    "district": "charlottenburg",
+    "latitude": 52.505432,
+    "longitude": 13.338769,
+    "websiteUrl": "https://808.berlin/",
+    "description": "A nightclub in the Bikini Berlin complex by the Zoo, open on Friday and Saturday nights, with the Heartbreak party every Friday and bookable booths.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Nachtclub im Bikini Berlin am Zoo, freitags und samstags geöffnet, mit der Reihe Heartbreak an jedem Freitag und buchbaren Lounges.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["club"],
+    "programmeUrl": "https://808.berlin/",
+    "reviewedAt": "2026-10-06T20:48:21Z"
+}
+
+> {%
+    client.test("808 Nachtklub Berlin venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
 
 ### ————————————————————————————————————————————————————————————
 ### A-Trane (Bleibtreustr. 1, Berlin-Charlottenburg)
@@ -637,6 +697,38 @@ Accept: application/json
 %}
 
 ### ————————————————————————————————————————————————————————————
+### ausland (Lychener Str. 60, Berlin-Prenzlauer Berg — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create ausland venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "ausland",
+    "address": "Lychener Str. 60",
+    "city": "Berlin",
+    "postalCode": "10437",
+    "district": "prenzlauer-berg",
+    "latitude": 52.544817,
+    "longitude": 13.419621,
+    "websiteUrl": "https://ausland.berlin/",
+    "description": "An independent venue in the basement of the former Lychi 60 squat, open since 2002, for improvised and experimental music, film and performance, with at least half FLINTA people on stage and backstage at every event.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Unabhängiger Ort im Keller des einstigen besetzten Hauses Lychi 60, seit 2002 Adresse für improvisierte und experimentelle Musik, Film und Performance, mit mindestens 50 Prozent FLINTA auf und hinter der Bühne.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["live-venue", "cultural-centre"],
+    "programmeUrl": "https://ausland.berlin/program/all",
+    "reviewedAt": "2026-10-06T20:48:21Z"
+}
+
+> {%
+    client.test("ausland venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
 ### Badehaus (Revaler Str. 99, Berlin-Friedrichshain — RAW-Gelände)
 ### ————————————————————————————————————————————————————————————
 
@@ -697,6 +789,70 @@ Accept: application/json
 > {%
     client.test("Badehaus import triggered", function () {
         client.assert(response.status === 202, "Expected 202 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
+### Baiz (Schönhauser Allee 26A, Berlin-Prenzlauer Berg — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create Baiz venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Baiz",
+    "address": "Schönhauser Allee 26A",
+    "city": "Berlin",
+    "postalCode": "10435",
+    "district": "prenzlauer-berg",
+    "latitude": 52.535916,
+    "longitude": 13.412792,
+    "websiteUrl": "https://www.baiz.info/",
+    "description": "A smokers' pub, so over-18s only, whose name stands for Berlin Informationszentrum, with talks, readings, a monthly poetry slam, quiz nights and the Reformbühne Heim und Welt reading stage every Sunday.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Raucherkneipe mit Einlass ab 18, deren Name für Berlin-Informationszentrum steht: mit Vorträgen, Lesungen, einem monatlichen Poetry Slam, Quizabenden und jeden Sonntag der Lesebühne Reformbühne Heim und Welt.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["bar"],
+    "programmeUrl": "https://baiz.info/programm",
+    "reviewedAt": "2026-10-06T20:48:21Z"
+}
+
+> {%
+    client.test("Baiz venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
+### Ballhaus Wedding (Wriezener Str. 6, Berlin-Wedding — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create Ballhaus Wedding venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Ballhaus Wedding",
+    "address": "Wriezener Str. 6",
+    "city": "Berlin",
+    "postalCode": "13359",
+    "district": "wedding",
+    "latitude": 52.556624,
+    "longitude": 13.388832,
+    "websiteUrl": "https://www.ballhauswedding.de/",
+    "description": "A ballroom finished in 1899 in a Gesundbrunnen back courtyard, with a Babelsberg film-studio parquet that Marlene Dietrich danced on in The Blue Angel, now staging concerts, 1920s dance parties, variety shows and dinner theatre.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Ballsaal von 1899 in einem Hinterhof in Gesundbrunnen, mit einem Parkett aus dem Studio Babelsberg, auf dem Marlene Dietrich im „Blauen Engel“ tanzte, heute Bühne für Konzerte, Zwanzigerjahre-Tanzpartys, Varieté und Dinnertheater.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["live-venue", "theatre"],
+    "programmeUrl": "https://www.ballhauswedding.de/veranstaltungen",
+    "reviewedAt": "2026-10-06T20:48:21Z"
+}
+
+> {%
+    client.test("Ballhaus Wedding venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
     });
 %}
 
@@ -888,6 +1044,70 @@ Accept: application/json
 > {%
     client.test("Bi Nuu import triggered", function () {
         client.assert(response.status === 202, "Expected 202 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
+### BKA Theater (Mehringdamm 34, Berlin-Kreuzberg — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create BKA Theater venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "BKA Theater",
+    "address": "Mehringdamm 34",
+    "city": "Berlin",
+    "postalCode": "10961",
+    "district": "kreuzberg",
+    "latitude": 52.493633,
+    "longitude": 13.3878,
+    "websiteUrl": "https://www.bka-theater.de/",
+    "description": "The Berliner Kabarett Anstalt has played on the fifth floor of a 1913 commercial building on Mehringdamm since 1988, with queer and political entertainment: cabaret, comedy, drag shows, improv theatre, musicals and concerts.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Seit 1988 spielt die Berliner Kabarett Anstalt im fünften Stock eines Geschäftshauses von 1913 am Mehringdamm, mit queerem und politischem Programm aus Kabarett, Comedy, Drag, Impro, Musicals und Konzerten.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["theatre", "live-venue"],
+    "programmeUrl": "https://www.bka-theater.de/spielplan/",
+    "reviewedAt": "2026-10-06T20:48:21Z"
+}
+
+> {%
+    client.test("BKA Theater venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
+### Café Köpenick (Seelenbinderstraße 54, Berlin-Köpenick — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create Café Köpenick venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Café Köpenick",
+    "address": "Seelenbinderstraße 54",
+    "city": "Berlin",
+    "postalCode": "12555",
+    "district": "koepenick",
+    "latitude": 52.455189,
+    "longitude": 13.582856,
+    "websiteUrl": "https://hdjk.de/",
+    "description": "A youth club run by Kreisjugendring Köpenick e.V. that calls itself a place of antifascist youth and culture work, with band concerts, parties, readings, a weekly open jam and rehearsal rooms.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Der vom Kreisjugendring Köpenick e.V. getragene Jugendclub versteht sich als Ort antifaschistischer Jugend- und Kulturarbeit: mit Bandkonzerten, Partys, Lesungen, wöchentlicher Open Jam und Proberäumen.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["club", "live-venue", "cultural-centre"],
+    "programmeUrl": "https://hdjk.de/veranstaltungen-events/",
+    "reviewedAt": "2026-10-06T20:48:21Z"
+}
+
+> {%
+    client.test("Café Köpenick venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
     });
 %}
 
@@ -1720,6 +1940,38 @@ Accept: application/json
 %}
 
 ### ————————————————————————————————————————————————————————————
+### DSTRKT (Storkower Straße 123, Berlin-Prenzlauer Berg — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create DSTRKT venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "DSTRKT",
+    "address": "Storkower Straße 123",
+    "city": "Berlin",
+    "postalCode": "10407",
+    "district": "prenzlauer-berg",
+    "latitude": 52.535395,
+    "longitude": 13.453053,
+    "websiteUrl": "https://www.dstrkt.de/",
+    "description": "An event location on Storkower Straße with a main floor on a Funktion-One sound system, the smaller Werkstatt room, a restaurant hall and a garden, used for club nights and booked events.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Eventlocation an der Storkower Straße mit einem Main Floor samt Funktion-One-Anlage, der kleineren Werkstatt, einem Restaurantsaal und einem Garten – für Clubnächte und gebuchte Veranstaltungen.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["club"],
+    "programmeUrl": "https://www.dstrkt.de/",
+    "reviewedAt": "2026-10-06T20:48:21Z"
+}
+
+> {%
+    client.test("DSTRKT venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
 ### Duncker Club (Dunckerstr. 64, Berlin-Prenzlauer Berg)
 ### ————————————————————————————————————————————————————————————
 
@@ -2098,6 +2350,38 @@ Accept: application/json
 > {%
     client.test("Frannz Club import triggered", function () {
         client.assert(response.status === 202, "Expected 202 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
+### Galiläakirche (Rigaer Straße 9, Berlin-Friedrichshain — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create Galiläakirche venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Galiläakirche",
+    "address": "Rigaer Straße 9",
+    "city": "Berlin",
+    "postalCode": "10247",
+    "district": "friedrichshain",
+    "latitude": 52.517914,
+    "longitude": 13.456113,
+    "websiteUrl": "https://galilaea-kirche.de/",
+    "description": "A brick Gothic Revival church from 1910 on Rigaer Straße that no longer holds services and now serves as an independent stage for concerts, film, theatre and readings.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Die backsteingotische Kirche von 1910 in der Rigaer Straße hält keine Gottesdienste mehr und ist heute ein unabhängiger Ort für Konzerte, Film, Theater und Lesungen.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["live-venue", "cultural-centre"],
+    "programmeUrl": "https://galilaea-kirche.de/programm/",
+    "reviewedAt": "2026-10-06T20:48:21Z"
+}
+
+> {%
+    client.test("Galiläakirche venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
     });
 %}
 
@@ -2609,6 +2893,39 @@ Accept: application/json
 %}
 
 ### ————————————————————————————————————————————————————————————
+### House of Music Berlin (Revaler Str. 99, Berlin-Friedrichshain — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create House of Music Berlin venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "House of Music Berlin",
+    "address": "Revaler Str. 99",
+    "city": "Berlin",
+    "postalCode": "10245",
+    "district": "friedrichshain",
+    "latitude": 52.507464,
+    "longitude": 13.454618,
+    "websiteUrl": "https://www.houseofmusic.berlin/",
+    "description": "A music hub on the RAW grounds that pairs a stage hall with 23 rehearsal rooms and a café-bar, programming album-release concerts, jam sessions and a regular quiz night.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Auf dem RAW-Gelände verbinden sich hier eine Bühnenhalle, 23 Proberäume und ein Café mit Bar; auf dem Programm stehen Releasekonzerte, Jam-Sessions und ein regelmäßiger Quizabend.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["live-venue", "bar"],
+    "capacity": 150,
+    "programmeUrl": "https://www.houseofmusic.berlin/",
+    "reviewedAt": "2026-10-06T20:48:21Z"
+}
+
+> {%
+    client.test("House of Music Berlin venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
 ### Humboldthain Club (Hochstr. 46, Berlin-Wedding)
 ### ————————————————————————————————————————————————————————————
 
@@ -2927,6 +3244,38 @@ Accept: application/json
 %}
 
 ### ————————————————————————————————————————————————————————————
+### KAOS Berlin (Wilhelminenhofstr. 92, Berlin-Köpenick — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create KAOS Berlin venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "KAOS Berlin",
+    "address": "Wilhelminenhofstr. 92",
+    "city": "Berlin",
+    "postalCode": "12459",
+    "district": "koepenick",
+    "latitude": 52.46227,
+    "longitude": 13.509001,
+    "websiteUrl": "https://kaosberlin.de/",
+    "description": "A creative collective in a Spree-side warehouse in Oberschöneweide, founded in 2013 by three friends and now about 100 members strong, with coworking and studios plus evening live gigs, improv comedy and a queer meet-up.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Die Kreative Arbeitsgemeinschaft Oberschöneweide sitzt seit 2013 in einer Lagerhalle an der Spree; rund 100 Mitglieder teilen sich Coworking und Studios, abends gibt es Live-Konzerte, Impro-Comedy und einen queeren Treff.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["cultural-centre", "live-venue"],
+    "programmeUrl": "https://kaosberlin.de/veranstaltungen/",
+    "reviewedAt": "2026-10-06T20:48:21Z"
+}
+
+> {%
+    client.test("KAOS Berlin venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
 ### Kater (Holzmarktstr. 25, Berlin-Friedrichshain — on the Spree at Holzmarkt)
 ### ————————————————————————————————————————————————————————————
 
@@ -3116,6 +3465,38 @@ Accept: application/json
 %}
 
 ### ————————————————————————————————————————————————————————————
+### Konrad Tönz Bar (Falckensteinstraße 30, Berlin-Kreuzberg — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create Konrad Tönz Bar venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Konrad Tönz Bar",
+    "address": "Falckensteinstraße 30",
+    "city": "Berlin",
+    "postalCode": "10997",
+    "district": "kreuzberg",
+    "latitude": 52.497547,
+    "longitude": 13.44158,
+    "websiteUrl": "http://www.konradtoenzbar.de/",
+    "description": "A smokers' bar on Falckensteinstraße, open since December 1996 and named after Aktenzeichen XY presenter Konrad Toenz, where DJs play records from the 1950s to 1970s on portable mono turntables, plus a Sunday jazz night.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Raucherbar in der Falckensteinstraße, seit Dezember 1996 geöffnet und nach dem Aktenzeichen-XY-Moderator Konrad Toenz benannt: DJs legen Platten der 50er bis 70er auf tragbaren Mono-Plattenspielern auf, sonntags gibt es Jazz.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["bar"],
+    "programmeUrl": "http://www.konradtoenzbar.de/#events",
+    "reviewedAt": "2026-10-06T20:48:21Z"
+}
+
+> {%
+    client.test("Konrad Tönz Bar venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
 ### Kulturhaus Insel Berlin (Alt-Treptow 6, Berlin-Treptow — on the Insel der Jugend)
 ### ————————————————————————————————————————————————————————————
 
@@ -3240,6 +3621,103 @@ Accept: application/json
 > {%
     client.test("Kulturhaus Peter Edel import triggered", function () {
         client.assert(response.status === 202, "Expected 202 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
+### Kühlspot Social Club (Lehderstraße 74-79, Berlin-Weißensee — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create Kühlspot Social Club venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Kühlspot Social Club",
+    "address": "Lehderstraße 74-79",
+    "city": "Berlin",
+    "postalCode": "13086",
+    "district": "weissensee",
+    "latitude": 52.550728,
+    "longitude": 13.436287,
+    "websiteUrl": "https://kuehlspot.com/",
+    "description": "A volunteer-run non-profit club in a listed commercial courtyard in Weißensee, presenting free jazz, improvised and contemporary music, performance and dance.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Ehrenamtlich getragener Verein in einem denkmalgeschützten Gewerbehof in Weißensee, der Free Jazz, improvisierte und zeitgenössische Musik, Performance und Tanz zeigt.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["live-venue", "cultural-centre"],
+    "programmeUrl": "https://kuehlspot.com/",
+    "reviewedAt": "2026-10-06T20:48:21Z"
+}
+
+> {%
+    client.test("Kühlspot Social Club venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
+### L.U.X (Schlesische Str. 41, Berlin-Kreuzberg — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create L.U.X venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "L.U.X",
+    "address": "Schlesische Str. 41",
+    "city": "Berlin",
+    "postalCode": "10997",
+    "district": "kreuzberg",
+    "latitude": 52.500417,
+    "longitude": 13.443795,
+    "websiteUrl": "https://www.lux-berlin.net/",
+    "description": "A Kreuzberg bar on Schlesische Straße that has no live music by design: vinyl DJs play, with free entry on many Thursdays.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Bar in der Schlesischen Straße, in der es bewusst keine Livemusik gibt: Hier legen Schallplatten-DJs auf, donnerstags oft bei freiem Eintritt.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["bar", "club"],
+    "programmeUrl": "https://www.lux-berlin.net/",
+    "reviewedAt": "2026-10-06T20:48:21Z"
+}
+
+> {%
+    client.test("L.U.X venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
+### LabSaal (Alt-Lübars 8, Berlin-Reinickendorf — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create LabSaal venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "LabSaal",
+    "address": "Alt-Lübars 8",
+    "city": "Berlin",
+    "postalCode": "13469",
+    "district": "reinickendorf",
+    "latitude": 52.620074,
+    "longitude": 13.356048,
+    "websiteUrl": "https://labsaal.de/",
+    "description": "A late-19th-century dance hall beside the village inn on the Lübars green, run by a non-profit association since the late 1970s, with village discos, Irish and Celtic music, swing evenings and readings.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Der alte Tanzsaal des Lübarser Dorfkrugs am Anger, Ende des 19. Jahrhunderts gebaut und seit den späten 1970ern von einem Verein betrieben: mit Dorfdisco, irischer und keltischer Musik, Swing-Abenden und Lesungen.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["cultural-centre"],
+    "capacity": 200,
+    "programmeUrl": "https://labsaal.de/events/",
+    "reviewedAt": "2026-10-06T20:48:21Z"
+}
+
+> {%
+    client.test("LabSaal venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
     });
 %}
 
@@ -3370,6 +3848,38 @@ Accept: application/json
 %}
 
 ### ————————————————————————————————————————————————————————————
+### Little Stage Bar (Jonasstr. 1, Berlin-Neukölln — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create Little Stage Bar venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Little Stage Bar",
+    "address": "Jonasstr. 1",
+    "city": "Berlin",
+    "postalCode": "12053",
+    "district": "neukoelln",
+    "latitude": 52.472443,
+    "longitude": 13.440754,
+    "websiteUrl": "https://littlestageclubneukoelln.wordpress.com/",
+    "description": "A small Neukölln bar with its own stage at Jonasstraße 1, run by the association Little Stage e.V., with Friday jazz concerts, jam sessions and band nights ranging from metal to world music.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Kleine Neuköllner Bar mit eigener Bühne in der Jonasstraße, getragen vom Verein Little Stage e.V.: freitags Jazz, dazu Jamsessions und Bandabende zwischen Metal und Weltmusik.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["bar", "live-venue"],
+    "programmeUrl": "https://littlestageclubneukoelln.wordpress.com/",
+    "reviewedAt": "2026-10-06T20:48:21Z"
+}
+
+> {%
+    client.test("Little Stage Bar venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
 ### Loge (Kinzigstr. 9, Berlin-Friedrichshain — Kneipenkollektiv)
 ### ————————————————————————————————————————————————————————————
 
@@ -3493,6 +4003,38 @@ Accept: application/json
 > {%
     client.test("MAAYA import triggered", function () {
         client.assert(response.status === 202, "Expected 202 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
+### Mad Monkey Room (Danziger Str. 1, Berlin-Prenzlauer Berg — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create Mad Monkey Room venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Mad Monkey Room",
+    "address": "Danziger Str. 1",
+    "city": "Berlin",
+    "postalCode": "10435",
+    "district": "prenzlauer-berg",
+    "latitude": 52.541152,
+    "longitude": 13.412866,
+    "websiteUrl": "https://mad-monkey.de/",
+    "description": "A stand-up comedy club near Eberswalder Straße, founded in 2017 by siblings Nina and Nico Böhm, with shows every night of the week on two stages: open mics, mixed line-ups, solo shows and specials.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Von den Geschwistern Nina und Nico Böhm 2017 gegründeter Stand-up-Club an der Danziger Straße, der an jedem Abend der Woche spielt – mit Open Mics, Mixed Shows, Soloprogrammen und Specials auf zwei Bühnen.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["theatre"],
+    "programmeUrl": "https://t.rausgegangen.de/tickets/shop/mad-monkey-2",
+    "reviewedAt": "2026-10-06T20:48:21Z"
+}
+
+> {%
+    client.test("Mad Monkey Room venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
     });
 %}
 
@@ -4513,6 +5055,38 @@ Accept: application/json
 %}
 
 ### ————————————————————————————————————————————————————————————
+### ORWOhaus (Frank-Zappa-Straße 19, Berlin-Marzahn — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create ORWOhaus venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "ORWOhaus",
+    "address": "Frank-Zappa-Straße 19",
+    "city": "Berlin",
+    "postalCode": "12681",
+    "district": "marzahn",
+    "latitude": 52.537352,
+    "longitude": 13.530017,
+    "websiteUrl": "https://www.orwohaus.de/",
+    "description": "A seven-storey former ORWO film factory building in Marzahn, bought by its musicians' association in 2005 and run as what it calls Europe's largest self-managed rehearsal complex, with jam sessions, band nights and workshops.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Siebenstöckiges einstiges Produktionsgebäude des Filmherstellers ORWO in Marzahn, das der Musikerverein ORWOhaus e.V. 2005 kaufte – heute Proberaumkomplex mit Jamsessions, Bandabenden im Showroom 104 und Workshops.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["live-venue", "cultural-centre"],
+    "programmeUrl": "https://www.orwohaus.de/veranstaltungen/",
+    "reviewedAt": "2026-10-06T20:48:21Z"
+}
+
+> {%
+    client.test("ORWOhaus venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
 ### PANDA platforma (Knaackstr. 97, Berlin-Prenzlauer Berg — in the Kulturbrauerei's small courtyard)
 ### ————————————————————————————————————————————————————————————
 
@@ -4704,6 +5278,39 @@ Accept: application/json
 %}
 
 ### ————————————————————————————————————————————————————————————
+### Pfefferberg Haus 13 (Schönhauser Allee 176, Berlin-Prenzlauer Berg — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create Pfefferberg Haus 13 venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Pfefferberg Haus 13",
+    "address": "Schönhauser Allee 176",
+    "city": "Berlin",
+    "postalCode": "10119",
+    "district": "prenzlauer-berg",
+    "latitude": 52.532013,
+    "longitude": 13.411098,
+    "websiteUrl": "https://haus13.pfefferwerk.de/",
+    "description": "A 160 m² hall with a fixed stage on the former Pfefferberg brewery site, where trainees of Pfefferwerk Stadtkultur learn event and stage work, hosting rock and metal concerts, book premieres and dance nights.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Ein Saal mit fester Bühne auf dem Gelände der einstigen Brauerei Pfefferberg, in dem Auszubildende der Pfefferwerk Stadtkultur Veranstaltungen umsetzen – mit Rock- und Metalkonzerten, Buchpremieren und Tanzabenden.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["live-venue"],
+    "capacity": 180,
+    "programmeUrl": "https://haus13.pfefferwerk.de/veranstaltungen/",
+    "reviewedAt": "2026-10-06T20:48:21Z"
+}
+
+> {%
+    client.test("Pfefferberg Haus 13 venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
 ### Privatclub (Skalitzer Str. 85-86, Berlin-Kreuzberg)
 ### ————————————————————————————————————————————————————————————
 
@@ -4763,6 +5370,38 @@ Accept: application/json
 > {%
     client.test("Privatclub import triggered", function () {
         client.assert(response.status === 202, "Expected 202 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
+### Promenadeneck (Schillerpromenade 11, Berlin-Neukölln — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create Promenadeneck venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Promenadeneck",
+    "address": "Schillerpromenade 11",
+    "city": "Berlin",
+    "postalCode": "12049",
+    "district": "neukoelln",
+    "latitude": 52.475777,
+    "longitude": 13.422044,
+    "websiteUrl": "https://promenaden-eck-berlin.de/",
+    "description": "A dance bar on Schillerpromenade in Neukölln, open Thursday to Saturday, with queer open decks, music bingo and a monthly pub quiz.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Tanzbar an der Schillerpromenade in Neukölln, donnerstags bis samstags geöffnet – mit Queer Open Decks, Musik-Bingo und einem monatlichen Pub Quiz.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["bar", "club"],
+    "programmeUrl": "https://promenaden-eck-berlin.de/",
+    "reviewedAt": "2026-10-06T20:48:21Z"
+}
+
+> {%
+    client.test("Promenadeneck venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
     });
 %}
 
@@ -5025,6 +5664,38 @@ Accept: application/json
 %}
 
 ### ————————————————————————————————————————————————————————————
+### Richten25 (Gerichtstraße 25, Berlin-Wedding — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create Richten25 venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Richten25",
+    "address": "Gerichtstraße 25",
+    "city": "Berlin",
+    "postalCode": "13347",
+    "district": "wedding",
+    "latitude": 52.544426,
+    "longitude": 13.371936,
+    "websiteUrl": "https://richten25.de/",
+    "description": "A non-profit space for experimental music and art in Wedding, kept going by volunteers of Odamusik e.V., with several concerts a week and curated series on dance improvisation, graphic scores and audiovisual work.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Ehrenamtlich getragener, gemeinnütziger Raum für experimentelle Musik und Kunst im Wedding, betrieben von Odamusik e.V. – mit mehreren Konzerten pro Woche und kuratierten Reihen zu Tanzimprovisation, grafischen Partituren und audiovisueller Kunst.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["live-venue", "cultural-centre"],
+    "programmeUrl": "https://richten25.de/events",
+    "reviewedAt": "2026-10-06T20:48:21Z"
+}
+
+> {%
+    client.test("Richten25 venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
 ### Ritter Butzke (Ritterstr. 26, Berlin-Kreuzberg)
 ### ————————————————————————————————————————————————————————————
 
@@ -5211,6 +5882,165 @@ Accept: application/json
 > {%
     client.test("ROSA import triggered", function () {
         client.assert(response.status === 202, "Expected 202 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
+### Showfenster Theater (Letteallee 94, Berlin-Reinickendorf — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create Showfenster Theater venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Showfenster Theater",
+    "address": "Letteallee 94",
+    "city": "Berlin",
+    "postalCode": "13409",
+    "district": "reinickendorf",
+    "latitude": 52.563464,
+    "longitude": 13.377528,
+    "websiteUrl": "https://www.showfenster-show.de/",
+    "description": "A theatre on Letteallee in Reinickendorf with an old-Berlin interior, staging its own variety show alongside concerts, cabaret, comedy and magic, plus an open stage and a pub quiz.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Theater in der Reinickendorfer Letteallee mit Altberliner Flair: die hauseigene Varieté-Show, Konzerte, Kabarett, Comedy und Zauberei, außerdem eine offene Bühne und ein Kneipenquiz.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["theatre", "live-venue"],
+    "programmeUrl": "https://www.showfenster-show.de/übersichtskalender",
+    "reviewedAt": "2026-10-06T20:48:21Z"
+}
+
+> {%
+    client.test("Showfenster Theater venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
+### Slaughterhouse (Lehrter Str. 35, Berlin-Tiergarten — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create Slaughterhouse venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Slaughterhouse",
+    "address": "Lehrter Str. 35",
+    "city": "Berlin",
+    "postalCode": "10557",
+    "district": "tiergarten",
+    "latitude": 52.534365,
+    "longitude": 13.359689,
+    "websiteUrl": "https://slaughterhouse-berlin.de/",
+    "description": "A volunteer-run club in the courtyard of the Kulturfabrik Moabit, a listed factory from 1911, open since 2000 with concerts by young bands and Factory, the monthly wave and gothic party.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Ein Verein mit Ehrenamtlichen betreibt den Club seit 2000 im Hinterhof der denkmalgeschützten Kulturfabrik Moabit von 1911: Konzerte junger Berliner Bands, dazu monatlich die Wave- und Gothic-Party Factory.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["club", "live-venue"],
+    "programmeUrl": "https://slaughterhouse-berlin.de/konzerte/",
+    "reviewedAt": "2026-10-06T20:48:21Z"
+}
+
+> {%
+    client.test("Slaughterhouse venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
+### Speiches Rock- und Blueskneipe (Raumerstr. 39, Berlin-Prenzlauer Berg — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create Speiches Rock- und Blueskneipe venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Speiches Rock- und Blueskneipe",
+    "address": "Raumerstr. 39",
+    "city": "Berlin",
+    "postalCode": "10437",
+    "district": "prenzlauer-berg",
+    "latitude": 52.54384,
+    "longitude": 13.416477,
+    "description": "Bassist Jörg \"Speiche\" Schütze of the GDR blues band Monokel opened this pub in 1992 in the band's old rehearsal room, with free live blues every weekend, Sunday jazz and a Monday open stage.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Seit 1992 im früheren Proberaum der DDR-Bluesband Monokel, gegründet von ihrem Bassisten Jörg „Speiche“ Schütze: Blues live am Wochenende bei freiem Eintritt, sonntags Oldtime-Jazz, montags offene Bühne.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["bar", "live-venue"],
+    "programmeUrl": "http://www.rockradio.de/rr_termine_speiche_werbung_termine_raumerstr.php",
+    "reviewedAt": "2026-10-06T20:48:21Z"
+}
+
+> {%
+    client.test("Speiches Rock- und Blueskneipe venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
+### Spindler & Klatt (Köpenicker Straße 16/17, Berlin-Kreuzberg — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create Spindler & Klatt venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Spindler & Klatt",
+    "address": "Köpenicker Straße 16/17",
+    "city": "Berlin",
+    "postalCode": "10997",
+    "district": "kreuzberg",
+    "latitude": 52.506063,
+    "longitude": 13.43395,
+    "websiteUrl": "https://www.spindlerklatt.com/",
+    "description": "An event location right on the Spree at the former East-West border, with a riverside terrace, whose club hosts themed party nights such as Ü30, Ü60 and 90s-and-2000s.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Eventlocation direkt an der Spree auf der früheren Ost-West-Grenze, mit einer Terrasse am Fluss: Im Club laufen Themenpartys wie Ü30, Ü60 oder 90er und 2000er.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["club"],
+    "programmeUrl": "https://www.spindlerklatt.com/club",
+    "reviewedAt": "2026-10-06T20:48:21Z"
+}
+
+> {%
+    client.test("Spindler & Klatt venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
+### Surprise Club (Potsdamer Str. 84, Berlin-Tiergarten — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create Surprise Club venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Surprise Club",
+    "address": "Potsdamer Str. 84",
+    "city": "Berlin",
+    "postalCode": "10785",
+    "district": "tiergarten",
+    "latitude": 52.503554,
+    "longitude": 13.365559,
+    "websiteUrl": "https://surprise-berlin.de/",
+    "description": "A nightclub on Potsdamer Straße given over to Black music, with weekend parties for Afrobeats, hip hop, RnB, dancehall and salsa.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Nachtclub an der Potsdamer Straße für Black Music: am Wochenende Partys mit Afrobeats, Hip-Hop, RnB, Dancehall und Salsa.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["club"],
+    "programmeUrl": "https://surprise-berlin.de/events-programs.php",
+    "reviewedAt": "2026-10-06T20:48:21Z"
+}
+
+> {%
+    client.test("Surprise Club venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
     });
 %}
 

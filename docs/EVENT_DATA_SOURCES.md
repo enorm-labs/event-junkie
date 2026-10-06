@@ -300,6 +300,9 @@ whole text.
 
 Analyzed and scrapable — the candidates for the next `/scaffold-importer` runs. **Priority** reflects data richness and effort, not venue importance.
 
+**Most rows here already have a venue page without events** (#2766). The page links to the venue's programme, and
+`/add-venue` creates it. An importer for such a venue reuses the existing row, as `/scaffold-importer` § 6 says.
+
 **A row reaches this table only by being read.** Every entry was confirmed by fetching the raw HTML or JSON and
 reading the events out of it, with no headless browser, per [ADR-007](adr/ADR-007_WEB_SCRAPING_STRATEGY.md). The
 [Unanalyzed](#-not-analyzed-yet) table holds the next candidates to open.
