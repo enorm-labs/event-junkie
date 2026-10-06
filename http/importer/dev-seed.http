@@ -142,6 +142,7 @@
 ###   Ballhaus Berlin                — https://ballhaus-berlin.de/de/termine/
 ###   Ballhaus Wedding               — https://www.ballhauswedding.de/veranstaltungen
 ###   Bar Neun                       — https://ra.co/clubs/262552
+###   Bar Tausend                    — https://tausendberlin.com/lineup/
 ###   Beate Uwe                      — https://beate-uwe.de/#Programm
 ###   Birgit                         — https://ra.co/clubs/104289
 ###   BKA Theater                    — https://www.bka-theater.de/spielplan/
@@ -200,6 +201,7 @@
 ###   Mokum                          — https://ra.co/clubs/158661
 ###   Mom's Limousine Service        — https://linktr.ee/momslimousineservice
 ###   Musikbrauerei                  — https://musikbrauerei.com/events/
+###   Œlgarten                       — https://www.oelgarten.com/en/event-list
 ###   Orangerie Neukölln             — https://www.orangerie-nk.de/?lang=de#programm
 ###   ORWOhaus                       — https://www.orwohaus.de/veranstaltungen/
 ###   OXI                            — https://ra.co/clubs/184646
@@ -218,17 +220,40 @@
 ###   Rosie's Bar                    — https://ra.co/promoters/181571
 ###   RSO.Berlin                     — https://ra.co/clubs/185172
 ###   SaliGari Bar                   — https://www.yesticket.org/venue/Saligari-Bar/en/
+###   Sameheads                      — https://ra.co/clubs/34420
+###   Sensorium                      — https://ra.co/clubs/285963
 ###   Showfenster Theater            — https://www.showfenster-show.de/übersichtskalender
+###   Silverwings                    — https://silverwings.de/program.html
+###   Sisyfass                       — https://ra.co/clubs/159864
 ###   Slaughterhouse                 — https://slaughterhouse-berlin.de/konzerte/
+###   Solar                          — https://solar-berlin.de/event-types/dj/
+###   Soulcat                        — https://soulcat-berlin.com/
 ###   Speiches Rock- und Blueskneipe — http://www.rockradio.de/rr_termine_speiche_werbung_termine_raumerstr.php
 ###   Spindler & Klatt               — https://www.spindlerklatt.com/club
+###   Studio dB                      — https://ra.co/clubs/143430
+###   Studio IIII                    — https://studioiiii.de/index#programme
 ###   Surprise Club                  — https://surprise-berlin.de/events-programs.php
+###   Süss war gestern               — https://ra.co/clubs/11554
+###   Taff Club                      — https://www.taff-club.de/
+###   The Cloud                      — https://thecloud.berlin/events/
+###   The Door                       — https://thedoor.club/events/
 ###   TIPI am Kanzleramt             — https://www.tipi-am-kanzleramt.de/programm/kalender.html
+###   Tipsy Bear                     — https://www.tipsybearberlin.com/events
+###   Torte                          — https://ra.co/clubs/233311
+###   Trompete                       — https://www.trompete-berlin.de/
+###   Unkompress                     — https://ra.co/clubs/210972
+###   Villa Neukölln                 — http://www.villaneukoelln.de/
 ###   Volksbühne Berlin              — https://www.volksbuehne-berlin.de/konzerte/
 ###   WABE                           — https://www.wabe-berlin.info/vorschau/
+###   Weekend                        — https://www.weekendclub.berlin/area/club
 ###   Weltwirtschaft                 — https://weltwirtschaft.berlin/
+###   West Germany                   — https://ra.co/clubs/21423
+###   Wiener Blut                    — https://www.wienerblut.org/event-list
+###   YAAM                           — https://yaam.de/programm/
+###   YSY                            — https://ra.co/clubs/253763
 ###   Zebrano-Theater                — https://www.zebrano-theater.de/programm.html
 ###   Zimmer 16                      — https://zimmer16.com/
+###   Zuckerzauber                   — https://ra.co/clubs/137711
 ###
 ### ============================================================
 
@@ -1280,6 +1305,38 @@ Content-Type: application/json
 
 > {%
     client.test("Bar Neun venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
+### Bar Tausend (Schiffbauerdamm 11, Berlin-Mitte — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create Bar Tausend venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Bar Tausend",
+    "address": "Schiffbauerdamm 11",
+    "city": "Berlin",
+    "postalCode": "10117",
+    "district": "mitte",
+    "latitude": 52.520824,
+    "longitude": 13.384710,
+    "websiteUrl": "https://tausendberlin.com/",
+    "description": "A cocktail bar under the S-Bahn arches at Friedrichstraße, with house and electronica DJs Thursday to Saturday and live sets.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Unter den S-Bahn-Bögen an der Friedrichstraße liegt diese Cocktailbar, mit House- und Electronica-DJs von Donnerstag bis Samstag und Live-Abenden.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["bar"],
+    "programmeUrl": "https://tausendberlin.com/lineup/",
+    "reviewedAt": "2026-10-07T14:21:58Z"
+}
+
+> {%
+    client.test("Bar Tausend venue created", function () {
         client.assert(response.status === 201, "Expected 201 but got " + response.status);
     });
 %}
@@ -6769,6 +6826,39 @@ Accept: application/json
 %}
 
 ### ————————————————————————————————————————————————————————————
+### Œlgarten (Schleusenufer 1, Berlin-Kreuzberg — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create Œlgarten venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Œlgarten",
+    "address": "Schleusenufer 1",
+    "city": "Berlin",
+    "postalCode": "10997",
+    "district": "kreuzberg",
+    "latitude": 52.497313,
+    "longitude": 13.449516,
+    "websiteUrl": "https://www.oelgarten.com/en",
+    "description": "A summer beer and wine garden on Lohmühleninsel, named after the Latin motto ora et labora, with a free Wednesday open-air series of live musicians, from neoclassical strings to Irish folk.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Bier- und Weingarten auf der Lohmühleninsel, dessen Name auf das lateinische „Ora et labora“ zurückgeht, mit einer kostenlosen Open-Air-Reihe am Mittwoch, bei der Live-Musikerinnen und -Musiker von Neoklassik bis Irish Folk spielen.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["open-air", "bar"],
+    "capacity": 400,
+    "programmeUrl": "https://www.oelgarten.com/en/event-list",
+    "reviewedAt": "2026-10-07T14:21:58Z"
+}
+
+> {%
+    client.test("Œlgarten venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
 ### OHM (Köpenicker Str. 70, Berlin-Mitte — im Tresor-Kraftwerk)
 ### ————————————————————————————————————————————————————————————
 
@@ -8171,6 +8261,70 @@ Content-Type: application/json
 %}
 
 ### ————————————————————————————————————————————————————————————
+### Sameheads (Richardstr. 10, Berlin-Neukölln — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create Sameheads venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Sameheads",
+    "address": "Richardstr. 10",
+    "city": "Berlin",
+    "postalCode": "12043",
+    "district": "neukoelln",
+    "latitude": 52.477885,
+    "longitude": 13.439388,
+    "websiteUrl": "https://www.sameheads.com",
+    "description": "A pub with a basement club in a former Neukölln copy shop, run by Nathan Dukes since the Dukes brothers' party collective settled here, with its own record label and house and experimental DJ nights.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Kneipe mit Kellerclub in einem ehemaligen Copyshop in Neukölln, betrieben von Nathan Dukes aus dem Partykollektiv der Dukes-Brüder, mit eigenem Plattenlabel und Clubnächten zwischen House und experimenteller Elektronik.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["bar", "club"],
+    "programmeUrl": "https://ra.co/clubs/34420",
+    "reviewedAt": "2026-10-07T14:21:58Z"
+}
+
+> {%
+    client.test("Sameheads venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
+### Sensorium (Warschauer Platz 18, Berlin-Friedrichshain — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create Sensorium venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Sensorium",
+    "address": "Warschauer Platz 18",
+    "city": "Berlin",
+    "postalCode": "10245",
+    "district": "friedrichshain",
+    "latitude": 52.504693,
+    "longitude": 13.448857,
+    "description": "A techno and house club that took over the former AVA Club at Warschauer Platz in March 2026, after AVA's thirteen years there, and plays through a VOID sound system on Wednesday and weekend nights.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Der Techno- und House-Club übernahm im März 2026 die Räume des AVA Club am Warschauer Platz, der dort dreizehn Jahre lief, und spielt mittwochs und am Wochenende über ein VOID-Soundsystem.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["club"],
+    "capacity": 400,
+    "programmeUrl": "https://ra.co/clubs/285963",
+    "reviewedAt": "2026-10-07T14:21:58Z"
+}
+
+> {%
+    client.test("Sensorium venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
 ### Showfenster Theater (Letteallee 94, Berlin-Reinickendorf — not imported, #2766)
 ### ————————————————————————————————————————————————————————————
 
@@ -8203,6 +8357,69 @@ Content-Type: application/json
 %}
 
 ### ————————————————————————————————————————————————————————————
+### Silverwings (Columbiadamm 10, Berlin-Tempelhof — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create Silverwings venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Silverwings",
+    "address": "Columbiadamm 10",
+    "city": "Berlin",
+    "postalCode": "10965",
+    "district": "tempelhof",
+    "latitude": 52.484018,
+    "longitude": 13.391198,
+    "websiteUrl": "https://silverwings.de",
+    "description": "A club in the listed Tempelhof Airport building, opened by Americans over seventy years ago for GIs and young Berliners and run by Harmen de Keijzer since the 2000s, with concerts and party series.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Der Club im denkmalgeschützten Flughafengebäude Tempelhof entstand vor über siebzig Jahren als amerikanischer Treffpunkt für GIs und junge Berliner und zeigt heute unter Harmen de Keijzer Konzerte und Partyreihen.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["club", "live-venue"],
+    "programmeUrl": "https://silverwings.de/program.html",
+    "reviewedAt": "2026-10-07T14:21:58Z"
+}
+
+> {%
+    client.test("Silverwings venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
+### Sisyfass (Wildenbruchstr. 7, Berlin-Neukölln — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create Sisyfass venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Sisyfass",
+    "address": "Wildenbruchstr. 7",
+    "city": "Berlin",
+    "postalCode": "12045",
+    "district": "neukoelln",
+    "latitude": 52.483028,
+    "longitude": 13.442069,
+    "description": "A Neukölln bar opened in August 2018 by the team behind the Sisyphos club, with Chesterfield sofas, a brick wall and a ball pit, hosting DJs, live jazz and quiz nights.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Die Neuköllner Bar eröffnete das Sisyphos-Team im August 2018, mit Chesterfield-Sofas vor Backsteinwand und einem Bällebad, dazu DJ-Abende, Live-Jazz und Quizrunden.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["bar"],
+    "programmeUrl": "https://ra.co/clubs/159864",
+    "reviewedAt": "2026-10-07T14:21:58Z"
+}
+
+> {%
+    client.test("Sisyfass venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
 ### Slaughterhouse (Lehrter Str. 35, Berlin-Tiergarten — not imported, #2766)
 ### ————————————————————————————————————————————————————————————
 
@@ -8230,6 +8447,71 @@ Content-Type: application/json
 
 > {%
     client.test("Slaughterhouse venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
+### Solar (Stresemannstraße 76, Berlin-Kreuzberg — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create Solar venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Solar",
+    "address": "Stresemannstraße 76",
+    "city": "Berlin",
+    "postalCode": "10963",
+    "district": "kreuzberg",
+    "latitude": 52.504185,
+    "longitude": 13.383835,
+    "websiteUrl": "https://solar-berlin.de/",
+    "description": "A sky bar and restaurant on the 16th and 17th floors of a Kreuzberg high-rise near Anhalter Bahnhof, open since 2005, reached by a glass outside lift, with weekend DJ sessions.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Skybar und Restaurant in der 16. und 17. Etage eines Kreuzberger Hochhauses nahe dem Anhalter Bahnhof, seit 2005 geöffnet, erreichbar über einen gläsernen Außenaufzug, am Wochenende mit DJ-Sessions.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["bar"],
+    "capacity": 300,
+    "programmeUrl": "https://solar-berlin.de/event-types/dj/",
+    "reviewedAt": "2026-10-07T14:21:58Z"
+}
+
+> {%
+    client.test("Solar venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
+### Soulcat (Pannierstraße 53, Berlin-Neukölln — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create Soulcat venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Soulcat",
+    "address": "Pannierstraße 53",
+    "city": "Berlin",
+    "postalCode": "12047",
+    "district": "neukoelln",
+    "latitude": 52.487959,
+    "longitude": 13.431806,
+    "websiteUrl": "https://soulcat-berlin.com/",
+    "description": "A cash-only music bar in Neukölln that plays nothing but 1950s and 1960s records on vinyl, with nightly R&B, soul, blues and rock'n'roll from guest DJs and Werder Bremen matches on screen.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Eine Musikbar in Neukölln, in der ausschließlich Vinyl aus den 50er- und 60er-Jahren läuft: Gast-DJs legen R&B, Soul, Blues und Rock'n'Roll auf, bezahlt wird nur bar, Werder-Spiele laufen live.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["bar"],
+    "programmeUrl": "https://soulcat-berlin.com/",
+    "reviewedAt": "2026-10-07T14:21:58Z"
+}
+
+> {%
+    client.test("Soulcat venue created", function () {
         client.assert(response.status === 201, "Expected 201 but got " + response.status);
     });
 %}
@@ -8293,6 +8575,70 @@ Content-Type: application/json
 
 > {%
     client.test("Spindler & Klatt venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
+### Studio dB (Uferstraße 8-11, Berlin-Wedding — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create Studio dB venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Studio dB",
+    "address": "Uferstraße 8-11",
+    "city": "Berlin",
+    "postalCode": "13357",
+    "district": "wedding",
+    "latitude": 52.551597,
+    "longitude": 13.373947,
+    "websiteUrl": "https://www.studiodb.berlin/",
+    "description": "A 285-square-metre multidisciplinary studio inside the Uferhallen on Uferstraße in Gesundbrunnen, hosting experimental concerts, performances, sound installations and club nights.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Ein multidisziplinärer Raum von 285 Quadratmetern in den Uferhallen an der Uferstraße in Gesundbrunnen, in dem experimentelle Konzerte, Performances, Klanginstallationen und Clubnächte stattfinden.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["club", "cultural-centre"],
+    "programmeUrl": "https://ra.co/clubs/143430",
+    "reviewedAt": "2026-10-07T14:21:58Z"
+}
+
+> {%
+    client.test("Studio dB venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
+### Studio IIII (Potsdamer Straße 96, Berlin-Tiergarten — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create Studio IIII venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Studio IIII",
+    "address": "Potsdamer Straße 96",
+    "city": "Berlin",
+    "postalCode": "10785",
+    "district": "tiergarten",
+    "latitude": 52.502046,
+    "longitude": 13.364462,
+    "websiteUrl": "https://studioiiii.de/",
+    "description": "An art and social club on Potsdamer Straße that runs its own residency for moving-image and light artists, pairing exhibitions and artist talks with live audiovisual acts and DJ nights from Thursday to Saturday.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Ein Kunst- und Social-Club an der Potsdamer Straße mit eigenem Residenzprogramm für Bewegtbild- und Lichtkunst, der Ausstellungen und Künstlergespräche mit audiovisuellen Live-Acts und DJ-Nächten von Donnerstag bis Samstag verbindet.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["club", "bar", "gallery"],
+    "programmeUrl": "https://studioiiii.de/index#programme",
+    "reviewedAt": "2026-10-07T14:21:58Z"
+}
+
+> {%
+    client.test("Studio IIII venue created", function () {
         client.assert(response.status === 201, "Expected 201 but got " + response.status);
     });
 %}
@@ -8963,6 +9309,69 @@ Accept: application/json
 %}
 
 ### ————————————————————————————————————————————————————————————
+### Süss war gestern (Wühlischstraße 43, Berlin-Friedrichshain — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create Süss war gestern venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Süss war gestern",
+    "address": "Wühlischstraße 43",
+    "city": "Berlin",
+    "postalCode": "10245",
+    "district": "friedrichshain",
+    "latitude": 52.508603,
+    "longitude": 13.461099,
+    "description": "A Friedrichshain bar with a 1960s interior and dance nights for electronic music, disco and the 80s and 90s.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Eine Bar in Friedrichshain mit Einrichtung im Stil der 60er-Jahre und Tanzabenden für Electro, Disco und die 80er und 90er.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["bar", "club"],
+    "programmeUrl": "https://ra.co/clubs/11554",
+    "reviewedAt": "2026-10-07T14:21:58Z"
+}
+
+> {%
+    client.test("Süss war gestern venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
+### Taff Club (Pfalzburger Straße 10, Berlin-Wilmersdorf — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create Taff Club venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Taff Club",
+    "address": "Pfalzburger Straße 10",
+    "city": "Berlin",
+    "postalCode": "10719",
+    "district": "wilmersdorf",
+    "latitude": 52.498100,
+    "longitude": 13.322529,
+    "websiteUrl": "https://www.taff-club.de/",
+    "description": "A small club bar on Pfalzburger Straße in Wilmersdorf, a short walk from the Kurfürstendamm, open on Thursday and Saturday nights with special events on Fridays and also hired out for private celebrations.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Eine kleine Clubbar in der Pfalzburger Straße in Wilmersdorf, wenige Minuten vom Kurfürstendamm, donnerstags und samstags bis drei Uhr geöffnet, freitags mit Sonderveranstaltungen und auch für private Feiern buchbar.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["bar", "club"],
+    "programmeUrl": "https://www.taff-club.de/",
+    "reviewedAt": "2026-10-07T14:21:58Z"
+}
+
+> {%
+    client.test("Taff Club venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
 ### Tempodrom (Möckernstr. 10, Berlin-Kreuzberg — am Anhalter Bahnhof)
 ### ————————————————————————————————————————————————————————————
 
@@ -9023,6 +9432,72 @@ Accept: application/json
 > {%
     client.test("Tempodrom import triggered", function () {
         client.assert(response.status === 202, "Expected 202 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
+### The Cloud (Alexanderstraße 7, Berlin-Mitte — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create The Cloud venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "The Cloud",
+    "address": "Alexanderstraße 7",
+    "city": "Berlin",
+    "postalCode": "10178",
+    "district": "mitte",
+    "latitude": 52.523084,
+    "longitude": 13.416583,
+    "websiteUrl": "https://thecloud.berlin/",
+    "description": "A rentable event space at Alexanderplatz with an 8 by 2.5 metre LED wall, hosting galas and private parties as well as weekend club nights and live shows by touring Arabic, African and Russian-language stars.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Eine mietbare Eventlocation am Alexanderplatz mit acht Meter breiter LED-Wand, in der neben Galas und Privatfeiern freitags und samstags Clubnächte und Live-Shows internationaler Stars aus arabischer, afrikanischer und russischsprachiger Musik stattfinden.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["club", "live-venue"],
+    "capacity": 1000,
+    "programmeUrl": "https://thecloud.berlin/events/",
+    "reviewedAt": "2026-10-07T14:21:58Z"
+}
+
+> {%
+    client.test("The Cloud venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
+### The Door (Joachimsthaler Str. 25, Berlin-Charlottenburg — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create The Door venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "The Door",
+    "address": "Joachimsthaler Str. 25",
+    "city": "Berlin",
+    "postalCode": "10719",
+    "district": "charlottenburg",
+    "latitude": 52.500943,
+    "longitude": 13.331123,
+    "websiteUrl": "https://thedoor.club/",
+    "description": "A boutique club a few minutes from Kurfürstendamm, open since 2023, with a Kling & Freitag sound system, a strict door and VIP tables, playing house and Balearic sounds every Friday and Saturday.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Ein Boutique-Club wenige Gehminuten vom Kurfürstendamm, seit 2023 geöffnet, mit Soundsystem von Kling & Freitag, strenger Tür und VIP-Tischen, an dem freitags und samstags House und Balearic laufen.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["club"],
+    "capacity": 160,
+    "programmeUrl": "https://thedoor.club/events/",
+    "reviewedAt": "2026-10-07T14:21:58Z"
+}
+
+> {%
+    client.test("The Door venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
     });
 %}
 
@@ -9253,6 +9728,69 @@ Content-Type: application/json
 %}
 
 ### ————————————————————————————————————————————————————————————
+### Tipsy Bear (Eberswalder Str. 21, Berlin-Prenzlauer Berg — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create Tipsy Bear venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Tipsy Bear",
+    "address": "Eberswalder Str. 21",
+    "city": "Berlin",
+    "postalCode": "10437",
+    "district": "prenzlauer-berg",
+    "latitude": 52.541013,
+    "longitude": 13.410605,
+    "websiteUrl": "https://www.tipsybearberlin.com/",
+    "description": "A community-led queer bar in Prenzlauer Berg, open since 2019 with a zero-tolerance policy on hate, staging drag shows, karaoke and game nights, then DJs from ten on Wednesdays and weekends.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Seit 2019 eine gemeinschaftlich geführte queere Bar in Prenzlauer Berg, die keinerlei Diskriminierung duldet und Dragshows, Karaoke und Spieleabende zeigt, mittwochs und am Wochenende ab 22 Uhr mit DJs.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["bar"],
+    "programmeUrl": "https://www.tipsybearberlin.com/events",
+    "reviewedAt": "2026-10-07T14:21:58Z"
+}
+
+> {%
+    client.test("Tipsy Bear venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
+### Torte (Brusendorfer Str. 12, Berlin-Neukölln — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create Torte venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Torte",
+    "address": "Brusendorfer Str. 12",
+    "city": "Berlin",
+    "postalCode": "12055",
+    "district": "neukoelln",
+    "latitude": 52.473064,
+    "longitude": 13.454652,
+    "description": "A Neukölln cocktail bar in a former cake bakery, built around a 360-degree green granite counter, with homemade drinks from 18:00 and a calendar running from drawing sessions to electronic music release nights.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Eine Cocktailbar in einer ehemaligen Tortenbäckerei in Neukölln, deren Mittelpunkt ein runder Tresen aus grünem Granit ist, mit hausgemachten Drinks ab 18 Uhr sowie Zeichenabenden und Release-Partys elektronischer Musik.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["bar"],
+    "programmeUrl": "https://ra.co/clubs/233311",
+    "reviewedAt": "2026-10-07T14:21:58Z"
+}
+
+> {%
+    client.test("Torte venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
 ### Tresor (Köpenicker Str. 70, Berlin-Mitte — im Heizkraftwerk)
 ### ————————————————————————————————————————————————————————————
 
@@ -9313,6 +9851,38 @@ Accept: application/json
 > {%
     client.test("Tresor import triggered", function () {
         client.assert(response.status === 202, "Expected 202 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
+### Trompete (Lützowplatz 9, Berlin-Tiergarten — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create Trompete venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Trompete",
+    "address": "Lützowplatz 9",
+    "city": "Berlin",
+    "postalCode": "10785",
+    "district": "tiergarten",
+    "latitude": 52.504355,
+    "longitude": 13.353555,
+    "websiteUrl": "https://www.trompete-berlin.de/",
+    "description": "A basement club on Lützowplatz that actor Ben Becker and Tresor co-founder Dimitri Hegemann opened in April 2000, known for its Thursday after-work party and its Saturday club nights.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Ein Kellerclub am Lützowplatz, im April 2000 vom Schauspieler Ben Becker und Tresor-Mitgründer Dimitri Hegemann eröffnet, bekannt für die Afterwork-Party am Donnerstag und Clubnächte am Samstag.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["club", "bar"],
+    "programmeUrl": "https://www.trompete-berlin.de/",
+    "reviewedAt": "2026-10-07T14:21:58Z"
+}
+
+> {%
+    client.test("Trompete venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
     });
 %}
 
@@ -9573,6 +10143,38 @@ Accept: application/json
 %}
 
 ### ————————————————————————————————————————————————————————————
+### Unkompress (Fichtestraße 23, Berlin-Kreuzberg — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create Unkompress venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Unkompress",
+    "address": "Fichtestraße 23",
+    "city": "Berlin",
+    "postalCode": "10967",
+    "district": "kreuzberg",
+    "latitude": 52.489455,
+    "longitude": 13.413672,
+    "websiteUrl": "https://www.unkompress.berlin/",
+    "description": "A vinyl-first listening bar in Kreuzberg, founded by Kevin Rodriguez after Japanese listening rooms, playing whole albums over tube amplification and Klipsch horn speakers, with DJ sessions, label takeovers and live podcast recordings.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Eine 2023 eröffnete Listening-Bar in Kreuzberg nach dem Vorbild japanischer Hörräume, gegründet von Kevin Rodriguez, mit ganzen Vinyl-Alben über Röhrenverstärker und Klipsch-Hornlautsprecher, DJ-Sessions, Label-Takeovers und Live-Podcast-Aufnahmen.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["bar"],
+    "programmeUrl": "https://ra.co/clubs/210972",
+    "reviewedAt": "2026-10-07T14:21:58Z"
+}
+
+> {%
+    client.test("Unkompress venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
 ### Urania (An der Urania 17, Berlin-Schöneberg)
 ### ————————————————————————————————————————————————————————————
 
@@ -9764,6 +10366,37 @@ Accept: application/json
 %}
 
 ### ————————————————————————————————————————————————————————————
+### Villa Neukölln (Hermannstraße 233, Berlin-Neukölln — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create Villa Neukölln venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Villa Neukölln",
+    "address": "Hermannstraße 233",
+    "city": "Berlin",
+    "postalCode": "12049",
+    "district": "neukoelln",
+    "latitude": 52.482064,
+    "longitude": 13.425089,
+    "websiteUrl": "http://www.villaneukoelln.de/",
+    "description": "A café-bar with a curtained stage in a former cinema on a Hermannstraße corner, hosting a live swing dance night every Thursday plus concerts, screenings and readings.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Eine Café-Bar mit Vorhangbühne in einem früheren Kino an einer Ecke der Hermannstraße, mit einer Swing-Tanznacht mit Liveband jeden Donnerstag sowie Konzerten, Filmabenden und Lesungen.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["bar", "live-venue"],
+    "reviewedAt": "2026-10-07T14:21:58Z"
+}
+
+> {%
+    client.test("Villa Neukölln venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
 ### VOID Club (Wiesenweg 5, Berlin-Lichtenberg)
 ### ————————————————————————————————————————————————————————————
 
@@ -9892,6 +10525,38 @@ Content-Type: application/json
 %}
 
 ### ————————————————————————————————————————————————————————————
+### Weekend (Alexanderstraße 7, Berlin-Mitte — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create Weekend venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Weekend",
+    "address": "Alexanderstraße 7",
+    "city": "Berlin",
+    "postalCode": "10178",
+    "district": "mitte",
+    "latitude": 52.523084,
+    "longitude": 13.416583,
+    "websiteUrl": "https://www.weekendclub.berlin/",
+    "description": "A club on the 15th floor of the former Haus des Reisens at Alexanderplatz since 2004, with a rooftop facing the TV tower, house on Fridays and changing Saturday themes.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Ein Club im 15. Stock des früheren Haus des Reisens am Alexanderplatz, seit 2004 in Betrieb, mit Dachterrasse und Blick auf den Fernsehturm, Housemusik am Freitag und wechselnden Samstagen zwischen Techno, Hip-Hop und Reggaeton.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["club", "open-air"],
+    "programmeUrl": "https://www.weekendclub.berlin/area/club",
+    "reviewedAt": "2026-10-07T14:21:58Z"
+}
+
+> {%
+    client.test("Weekend venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
 ### Weltwirtschaft (John-Foster-Dulles-Allee 10, Berlin-Tiergarten — not imported, #2766)
 ### ————————————————————————————————————————————————————————————
 
@@ -9920,6 +10585,69 @@ Content-Type: application/json
 
 > {%
     client.test("Weltwirtschaft venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
+### West Germany (Skalitzer Straße 133, Berlin-Kreuzberg — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create West Germany venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "West Germany",
+    "address": "Skalitzer Straße 133",
+    "city": "Berlin",
+    "postalCode": "10999",
+    "district": "kreuzberg",
+    "latitude": 52.499790,
+    "longitude": 13.420125,
+    "description": "A non-profit DIY space in a disused medical practice inside the Zentrum Kreuzberg block at Kottbusser Tor, hosting independent concerts, club nights, performance art and screenings.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Ein gemeinnütziger DIY-Ort in einer leerstehenden Arztpraxis im Neuen Kreuzberger Zentrum am Kottbusser Tor, der Subkulturen eine Bühne gibt: mit unabhängigen Konzerten, Clubnächten, Performancekunst und Filmvorführungen.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["club", "live-venue", "gallery"],
+    "programmeUrl": "https://ra.co/clubs/21423",
+    "reviewedAt": "2026-10-07T14:21:58Z"
+}
+
+> {%
+    client.test("West Germany venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
+### Wiener Blut (Wiener Straße 14, Berlin-Kreuzberg — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create Wiener Blut venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Wiener Blut",
+    "address": "Wiener Straße 14",
+    "city": "Berlin",
+    "postalCode": "10999",
+    "district": "kreuzberg",
+    "latitude": 52.498050,
+    "longitude": 13.429224,
+    "websiteUrl": "https://www.wienerblut.org/",
+    "description": "A Kreuzberg pub on Wiener Straße where DJs play almost every night, with football on screen, foosball tables, sofa corners and beer benches outside in summer.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Kneipe in der Wiener Straße, in der fast jeden Abend DJs auflegen, mit Fußballübertragungen, Kickertischen, Sofaecken und im Sommer Bierbänken vor der Tür.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["bar"],
+    "programmeUrl": "https://www.wienerblut.org/event-list",
+    "reviewedAt": "2026-10-07T14:21:58Z"
+}
+
+> {%
+    client.test("Wiener Blut venue created", function () {
         client.assert(response.status === 201, "Expected 201 but got " + response.status);
     });
 %}
@@ -9984,6 +10712,72 @@ Accept: application/json
 > {%
     client.test("Wild at Heart import triggered", function () {
         client.assert(response.status === 202, "Expected 202 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
+### YAAM (An der Schillingbrücke 3, Berlin-Friedrichshain — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create YAAM venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "YAAM",
+    "address": "An der Schillingbrücke 3",
+    "city": "Berlin",
+    "postalCode": "10243",
+    "district": "friedrichshain",
+    "latitude": 52.509166,
+    "longitude": 13.430718,
+    "websiteUrl": "https://yaam.de/",
+    "description": "A non-profit socio-cultural project on an 8,000 m² riverside site at Schillingbrücke since 2014, run by Kult e.V., with open-air reggae and hip-hop DJ days, festivals and evening events in its Cool Runnings clubhouse.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Seit 1994 gibt es das vom gemeinnützigen KULT e.V. getragene YAAM, seit 2014 auf einem 8000 m² großen Gelände an der Spree, mit Strand, Reggae- und Hip-Hop-DJs, Open-Air-Events und Abendprogramm im Vereinsheim Cool Runnings.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["open-air", "cultural-centre", "bar"],
+    "capacity": 0,
+    "programmeUrl": "https://yaam.de/programm/",
+    "reviewedAt": "2026-10-07T14:21:58Z"
+}
+
+> {%
+    client.test("YAAM venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
+### YSY (Frankfurter Allee 23, Berlin-Friedrichshain — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create YSY venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "YSY",
+    "address": "Frankfurter Allee 23",
+    "city": "Berlin",
+    "postalCode": "10247",
+    "district": "friedrichshain",
+    "latitude": 52.515921,
+    "longitude": 13.459143,
+    "websiteUrl": "https://www.ysyberlin.de/",
+    "description": "A listening bar in a high-ceilinged historic building near Frankfurter Tor, built around a custom sound system, with record-led bar nights, a weekly Wednesday jazz session, DJ club nights and food pop-ups.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Eine Listening-Bar mit eigens gebauter Anlage in einem Altbau mit hohen Decken an der Frankfurter Allee, mit Plattenabenden, Jazz jeden Mittwoch, DJ-Clubnächten und wechselnden Food-Pop-ups.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["bar"],
+    "capacity": 150,
+    "programmeUrl": "https://ra.co/clubs/253763",
+    "reviewedAt": "2026-10-07T14:21:58Z"
+}
+
+> {%
+    client.test("YSY venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
     });
 %}
 
@@ -10304,6 +11098,37 @@ Accept: application/json
 > {%
     client.test("Zitadelle import triggered", function () {
         client.assert(response.status === 202, "Expected 202 but got " + response.status);
+    });
+%}
+
+### ————————————————————————————————————————————————————————————
+### Zuckerzauber (Markgrafendamm 24c, Berlin-Friedrichshain — not imported, #2766)
+### ————————————————————————————————————————————————————————————
+
+### --- Create Zuckerzauber venue ---
+POST {{importer-host}}/api/admin/venues
+Content-Type: application/json
+
+{
+    "name": "Zuckerzauber",
+    "address": "Markgrafendamm 24c",
+    "city": "Berlin",
+    "postalCode": "10245",
+    "district": "friedrichshain",
+    "latitude": 52.502477,
+    "longitude": 13.466302,
+    "description": "A seasonal sand-floored beach bar beside ://about blank near Ostkreuz, open from May to October, with electronic DJ days, live music, jam sessions and season opening and closing parties.",
+    "descriptionLanguage": "en",
+    "descriptionAlt": "Saisonale Strandbar mit Sandboden am Markgrafendamm, direkt neben dem ://about blank am Ostkreuz, von Mai bis Oktober geöffnet, mit elektronischen DJ-Sets, Livemusik, Jamsessions sowie Partys zum Saisonstart und -ende.",
+    "descriptionAltLanguage": "de",
+    "venueTypes": ["bar", "open-air"],
+    "programmeUrl": "https://ra.co/clubs/137711",
+    "reviewedAt": "2026-10-07T14:21:58Z"
+}
+
+> {%
+    client.test("Zuckerzauber venue created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
     });
 %}
 
