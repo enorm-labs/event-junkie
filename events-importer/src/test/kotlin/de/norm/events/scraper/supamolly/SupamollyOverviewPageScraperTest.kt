@@ -250,6 +250,31 @@ class SupamollyOverviewPageScraperTest {
             stamps.contains("supamolly:202609172359") shouldBe false
             scrape(OCTOBER).map { it.sourceId }.contains("supamolly:202610022359") shouldBe false
         }
+
+        @Test
+        fun `skips a poster row whatever follows the month name`() {
+            val document =
+                Jsoup.parse(
+                    """<table><tr class="event" id="202610082359"><td class="evcont"><div class="even">
+                       <div class="tit"><b>Oktober Supamolly<div class="progln" alt=""> </div></b></div>
+                       <div class="beschr  empty"><div class="lin"><div></div></div></div></div></td></tr></table>""",
+                    baseUrl
+                )
+
+            scraper.scrape(document, baseUrl) shouldBe emptyList()
+        }
+
+        @Test
+        fun `keeps a night named after a month at its real time`() {
+            val document =
+                Jsoup.parse(
+                    """<table><tr class="event" id="202610172130"><td class="evcont">
+                       <div class="even"><div class="tit"><b>Oktober Supamolly</b></div></div></td></tr></table>""",
+                    baseUrl
+                )
+
+            scraper.scrape(document, baseUrl).single().title shouldBe "Oktober Supamolly"
+        }
     }
 
     @Nested

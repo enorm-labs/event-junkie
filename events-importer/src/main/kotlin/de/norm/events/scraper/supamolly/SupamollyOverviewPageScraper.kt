@@ -39,8 +39,9 @@ import java.time.format.DateTimeParseException
  * its act names joined with ", ", so that joined string is the title and the `.even` names the
  * artist list, first billed the headliner. A block with an empty `.tit` is an extra reference
  * link for the act above, not an act, and dropped.
- * - **Monthly programme posters are rows.** A flyer-only row titled "September Programm 2026"
- * ([PROGRAMME_POSTER_TITLE]) announces the printed programme, not an event.
+ * - **Monthly programme posters are rows.** A flyer-only row stamped 23:59 and titled after the month
+ * ("September Programm 2026", "Oktober Supamolly", [PROGRAMME_POSTER_TITLE]) announces the printed
+ * programme, not an event. The wording after the month changes; the 23:59 stamp has not.
  * - **Service notes sit in an act slot.** The weekly "Kuchen & Kaffee" social is billed like an
  * act, its time only in `td.date .uhr`. A programme note ([isProgrammeNote]) stays the title but
  * is never an artist, so [inferUnmarkedTitleType] types the night instead of defaulting to a
@@ -100,7 +101,7 @@ class SupamollyOverviewPageScraper {
             logger.warn { "Supamolly row '$stamp' bills no act, skipping" }
             return null
         }
-        if (PROGRAMME_POSTER_TITLE.matches(rawTitle)) {
+        if (stamp.endsWith(POSTER_STAMP_TIME) && PROGRAMME_POSTER_TITLE.containsMatchIn(rawTitle)) {
             logger.info { "Skipping Supamolly monthly programme poster row '$stamp' ($rawTitle)" }
             return null
         }
@@ -224,16 +225,18 @@ class SupamollyOverviewPageScraper {
         private val STAMP_TIME_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern("HHmm")
 
         /**
-         * A flyer-only row announcing the month's printed programme ("September Programm 2026",
-         * "September Prog 2026"). Anchored to the whole title and keyed on a German month name followed
-         * by `Prog`/`Programm`, so a real event merely mentioning a month is untouched.
+         * A title that opens with a German month name: "September Programm 2026", "Oktober Prog 2026",
+         * "Oktober Supamolly". Only a poster together with [POSTER_STAMP_TIME], so a real night named
+         * after a month keeps its real time and stays an event.
          */
         private val PROGRAMME_POSTER_TITLE =
             Regex(
-                """(?:januar|februar|m(?:ä|ae)rz|april|mai|juni|juli|august|september|oktober|november|dezember)""" +
-                    """\s+prog(?:ramm)?\.?(?:\s+\d{4})?""",
+                """^(?:januar|februar|m(?:ä|ae)rz|april|mai|juni|juli|august|september|oktober|november|dezember)\b""",
                 RegexOption.IGNORE_CASE
             )
+
+        /** The `HHMM` tail of every poster row's stamp; no real event has started at 23:59. */
+        private const val POSTER_STAMP_TIME = "2359"
 
         /** A leading `&` / `+` co-bill conjunction on an act name ("& Support" → "Support"). */
         private val LEADING_CONJUNCTION = Regex("""^\s*[&+]\s*""")
