@@ -35,8 +35,9 @@ const localePath = useLocalePath()
           >Was in Berlin abends auf einer Bühne stattfindet, gehört hierher.</strong
         >
         Nicht nur Livemusik, und ganz sicher nicht nur Techno. Den größten Teil machen Konzerte und
-        Clubnächte aus, dazu Partys, Festivals, Bühnenshows und Kabarett, Lesungen und Spoken Word,
-        Filmvorführungen und Open-Air-Kino, Ausstellungseröffnungen und ab und zu ein Kneipenquiz.
+        Clubnächte aus, danach kommen Stand-up und Kabarett. Dazu Festivals, Bühnenshows, Lesungen
+        und Spoken Word, Filmvorführungen und Open-Air-Kino, Ausstellungen von der Eröffnung bis zum
+        letzten Tag und ab und zu ein Kneipenquiz.
       </p>
       <p class="text-muted-foreground">
         Wenn eine Location selbst sagt, was für ein Abend das ist, übernimmt Event Junkie das. Punk,
@@ -48,9 +49,11 @@ const localePath = useLocalePath()
         Sport, auch in den Arenen, in denen sonst Konzerte laufen: Wegen eines Basketballspiels bist
         du nicht hier, und sobald Sport mit drin ist, gehen die Konzerte darin unter. Führungen,
         Workshops und Yoga-Stunden, also Sachen zum Mitmachen statt zum Zuschauen. Messen und
-        Kongresse. Und, vorerst, klassische Konzerte und Orchester: Ein Orchester mit Dirigent*in
-        und Solist*innen passt nicht in ein Modell, das um Headliner und Support herum gebaut ist.
-        Das ist ein „noch nicht“, und die Frage ist notiert.
+        Kongresse. Kindervorstellungen, etwa das Puppentheater für die Kita am Vormittag.
+        Livestreams, die nur online laufen, denn dafür gibt es keinen Raum, in den du gehen kannst.
+        Und, vorerst, klassische Konzerte und Orchester: Ein Orchester mit Dirigent*in und
+        Solist*innen passt nicht in ein Modell, das um Headliner und Support herum gebaut ist. Das
+        ist ein „noch nicht“, und die Frage ist notiert.
       </p>
     </section>
 
