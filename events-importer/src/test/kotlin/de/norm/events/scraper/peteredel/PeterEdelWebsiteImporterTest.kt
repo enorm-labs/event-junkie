@@ -58,7 +58,8 @@ class PeterEdelWebsiteImporterTest {
             stubListing()
             val result = importer.importEvents(listingUrl)
             result.shouldBeInstanceOf<ImportResult.Success>()
-            result.events shouldHaveSize 39
+            // 39 boxes, less the three children's shows (#2832).
+            result.events shouldHaveSize 36
             result.events.first().eventDate shouldBe LocalDate.of(2026, 8, 20)
             result.events.last().eventDate shouldBe LocalDate.of(2027, 5, 22)
             result.etag shouldBe "\"peteredel-etag\""

@@ -8,6 +8,7 @@ import de.norm.events.scraper.PRESENTED_BY_WORDS
 import de.norm.events.scraper.START_LABELS
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.attrAt
+import de.norm.events.scraper.billsChildrensShow
 import de.norm.events.scraper.buildArtistList
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.extractSupportFromSubtitle
@@ -210,6 +211,10 @@ class PeterEdelOverviewPageScraper {
         }
 
         val subtitle = subtitleOf(main)
+        if (billsChildrensShow(title, subtitle)) {
+            logger.info { "Skipping Peter Edel children's show '$title': out of scope" }
+            return null
+        }
         val info = infoParagraph(main)?.text().orEmpty()
         val (doors, start) = parseTimes(info)
         val note = priceNote(ticketColumn)
@@ -356,13 +361,12 @@ class PeterEdelOverviewPageScraper {
         private const val SOLD_OUT_MARKER = "ausverkauft"
 
         /**
-         * Formats this house names in its own words that the shared classifier misses: children's
-         * theatre and talk show are staged shows, silent-film nights are screenings, tea dance and
+         * Formats this house names in its own words that the shared classifier misses: a talk show
+         * is a staged show, silent-film nights are screenings, tea dance and
          * after-work night are parties. Checked before [inferUnmarkedTitleType], lowercase, first match wins.
          */
         private val VENUE_FORMAT_KEYWORDS: Map<String, String> =
             linkedMapOf(
-                "kindertheater" to EventType.SHOW.name,
                 "talkshow" to EventType.SHOW.name,
                 "stummfilm" to EventType.SCREENING.name,
                 "tanztee" to EventType.PARTY.name,

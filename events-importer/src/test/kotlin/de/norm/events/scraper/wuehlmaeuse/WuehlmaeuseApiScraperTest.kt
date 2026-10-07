@@ -78,4 +78,31 @@ class WuehlmaeuseApiScraperTest {
         broken.tickets.shouldBeEmpty()
         broken.full shouldBe false
     }
+
+    @Test
+    fun `drops a family show for small children`() {
+        fun ticket(
+            act: String,
+            programme: String
+        ) = WuehlmaeuseTicket(
+            act = act,
+            programme = programme,
+            date = LocalDate.of(2026, 12, 22),
+            start = LocalTime.of(14, 0),
+            doors = null,
+            price = BigDecimal("18.00"),
+            eventUrl = "https://wuehlmaeuse.de/veranstaltung/${act.lowercase().replace(' ', '-')}",
+            ticketUrl = "https://wuehlmaeuse.de/shop/",
+            imageUrl = null,
+            cancelled = false
+        )
+
+        scraper
+            .toEvents(
+                listOf(
+                    ticket("Linus Faber", "Die große Familien-Zaubershow für Kinder ab 4 Jahre"),
+                    ticket("Florian Schroeder", "Endlich glücklich")
+                )
+            ).map { it.title } shouldContainExactly listOf("Florian Schroeder")
+    }
 }

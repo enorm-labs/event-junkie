@@ -5,6 +5,7 @@ import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.WpRestPage
+import de.norm.events.scraper.billsChildrensShow
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.decodeHtmlEntities
 import de.norm.events.scraper.parseGermanDate
@@ -77,11 +78,18 @@ class WuehlmaeuseApiScraper {
         return WuehlmaeuseShopPage(products.mapNotNull(::toTicket), postCount = products.size)
     }
 
+    /** A family show for small children (`Familien-Zaubershow für Kinder ab 4 Jahre`), out of scope (#2832). */
+    private fun isChildrensShow(ticket: WuehlmaeuseTicket): Boolean =
+        billsChildrensShow(ticket.act, ticket.programme).also { childrens ->
+            if (childrens) logger.info { "Skipping Wühlmäuse children's show '${ticket.act}' on ${ticket.date}: out of scope" }
+        }
+
     /** One event per performance: the act, programme and time shared by its categories, the lowest price. */
     fun toEvents(tickets: List<WuehlmaeuseTicket>): List<ScrapedEvent> =
         tickets
             .groupBy { Triple(it.eventUrl, it.date, it.start) }
             .values
+            .filterNot { isChildrensShow(it.first()) }
             .map { categories ->
                 val cheapest = categories.minWithOrNull(compareBy(nullsLast()) { it.price }) ?: categories.first()
                 val ticket = categories.first()

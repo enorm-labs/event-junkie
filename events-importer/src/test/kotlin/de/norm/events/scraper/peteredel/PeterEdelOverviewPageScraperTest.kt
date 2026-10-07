@@ -93,7 +93,8 @@ class PeterEdelOverviewPageScraperTest {
 
     @Test
     fun `extracts every event in listing order`() {
-        events shouldHaveSize 39
+        // 39 boxes, less the three children's shows (#2832).
+        events shouldHaveSize 36
         events.first().eventDate shouldBe LocalDate.of(2026, 8, 20)
         events.last().eventDate shouldBe LocalDate.of(2027, 5, 22)
     }
@@ -164,15 +165,25 @@ class PeterEdelOverviewPageScraperTest {
 
     @Test
     fun `strips the cancelled marker from the title and sets the status`() {
-        val cancelled = events.filter { it.status == "CANCELLED" }
-        cancelled shouldHaveSize 2
-        cancelled.map { it.title } shouldContainExactly
-            listOf("Kindertheater: Däumelinchen", "Kindertheater: Die Schneekönigin")
+        // The fixture's two cancelled boxes are children's shows, which are dropped, so the shape is rebuilt here.
+        val cancelled =
+            scraper
+                .scrape(
+                    grid("Oktober 2026", "SO | 04.10.", "<h3><strong>Talkshow: Däumelinchen [Abgesagt!]</strong></h3>", "<h3>Leider abgesagt!</h3>"),
+                    baseUrl
+                ).single()
+        cancelled.status shouldBe "CANCELLED"
+        cancelled.title shouldBe "Talkshow: Däumelinchen"
         // The marker is out of the identity too, so reinstating the show keeps the same row.
-        cancelled.first().sourceId shouldBe "peter_edel:2026-10-04-kindertheater-daumelinchen"
+        cancelled.sourceId shouldBe "peter_edel:2026-10-04-talkshow-daumelinchen"
         // "Leider abgesagt!" is a status, not a pricing note.
-        cancelled.first().priceNote.shouldBeNull()
-        cancelled.first().eventType shouldBe "SHOW"
+        cancelled.priceNote.shouldBeNull()
+    }
+
+    @Test
+    fun `drops the children's shows, which are out of scope`() {
+        // `Kindertheater: Däumelinchen`, `Kindertheater: Die Schneekönigin` and `Kinder-Halloween` (#2832).
+        events.none { it.title.startsWith("Kinder") } shouldBe true
     }
 
     @Test
