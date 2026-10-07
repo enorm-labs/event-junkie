@@ -5,6 +5,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.WHITESPACE
 import de.norm.events.scraper.attrAt
+import de.norm.events.scraper.billsTradeFairOrConference
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.hrefAt
@@ -101,6 +102,10 @@ class DelphiProgrammePageScraper {
         val title = row.textAt("h3.eventTitel")?.let { cleanEventTitle(it) }
         if (title.isNullOrBlank()) {
             logger.warn { "Delphi row for production '$productionId' has no title, skipping" }
+            return null
+        }
+        if (billsTradeFairOrConference(title, null)) {
+            logger.info { "Skipping Delphi conference '$title': out of scope" }
             return null
         }
         val day = row.textAt(".eventHeader h3 big")?.toIntOrNull() ?: return null

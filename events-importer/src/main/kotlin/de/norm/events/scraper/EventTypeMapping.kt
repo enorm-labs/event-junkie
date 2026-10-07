@@ -52,7 +52,7 @@ fun mapEventType(
 }
 
 /** Title keywords marking a non-music variety show (mapped to [EventType.SHOW]). */
-private val SHOW_TITLE_KEYWORDS = listOf("wrestling", "burlesque", "circus")
+private val SHOW_TITLE_KEYWORDS = listOf("wrestling", "burlesque", "circus", "roncalli")
 
 /**
  * An ice show ([EventType.SHOW]): `on ice` as a phrase (Holiday on Ice, #2598), or an `Eisrevue`

@@ -133,12 +133,25 @@ Not modelled and not imported. Arena Berlin is the clearest case. All five of it
 deGUT, BUCHBERLIN, Einstieg Berlin. That is why it sits in _Blocked_ despite being trivially scrapable, and the blocker
 there was never the markup.
 
+Three imported venues mix one into their programme. Each drops it on the words its page uses:
+
+| Venue                | Predicate                                        | Signal                                                     |
+| -------------------- | ------------------------------------------------ | ---------------------------------------------------------- |
+| Uber Eats Music Hall | `billsTradeFairOrConference` (`TradeFair.kt`)    | A `…messe`, `Konferenz`, `Conference`, `Kongress` or `B2B` |
+| Theater im Delphi    | `billsTradeFairOrConference`                     | The same words in the title                                |
+| silent green         | `SilentGreenEventFields.isSilentGreenConference` | `Konferenz` the only category label, or the same words     |
+
+A bare `Messe` is not a fair: SO36 bills a band of that name.
+
 ### 3.4 Classical concerts and orchestras
 
 **Not a taste judgement. A data-model one.** Classical fits the existing `CONCERT` type perfectly well. The shape of
 the data differs: an orchestra or ensemble plus a conductor plus soloists, rather than a headliner with support. The
 `ArtistRole` vocabulary and the genre taxonomy both need a decision before an orchestral house can be imported
 honestly.
+
+An orchestra that accompanies a staged show does not make the show a classical concert. Tempodrom's `Roncalli und
+Deutsches Symphonie-Orchester Berlin` is a circus gala, so it stays as a `SHOW` and bills no artist.
 
 **RBB Sendesaal is the live example.** Its scraping is solved. The ROC calendar is server-rendered and attributes each
 concert to a venue, so `.ConcertListItem-location` is the only filter needed. It sits in _Blocked_ on **scope, not on

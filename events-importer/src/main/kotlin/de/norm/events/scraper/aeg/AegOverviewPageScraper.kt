@@ -5,6 +5,7 @@ import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
 import de.norm.events.scraper.attrAt
+import de.norm.events.scraper.billsTradeFairOrConference
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.cleanEventTitle
 import de.norm.events.scraper.dateCheckedAgainstWeekday
@@ -72,9 +73,14 @@ class AegOverviewPageScraper {
         val (sport, ours) = rows.partition { isSport(it) }
         logger.info { "Found ${ours.size} event row(s) on $eventSource overview, skipping ${sport.size} sport fixture(s)" }
 
-        return ours.mapSkippingFailures(logger, "$eventSource event row") { row ->
-            parseRow(row, baseUrl, eventSource)
-        }
+        return ours
+            .mapSkippingFailures(logger, "$eventSource event row") { row -> parseRow(row, baseUrl, eventSource) }
+            .filterNot { event ->
+                // A job fair or a conference, EVENT_SCOPE.md §3.3 (#2833).
+                billsTradeFairOrConference(event.title, event.subtitle).also { fair ->
+                    if (fair) logger.info { "Skipping $eventSource trade fair or conference '${event.title}': out of scope" }
+                }
+            }
     }
 
     /** Parses one listing row into a [ScrapedEvent], or `null` without a link or title. */
