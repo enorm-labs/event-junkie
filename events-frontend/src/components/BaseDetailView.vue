@@ -68,7 +68,10 @@ const { compact } = useCompactView()
 </script>
 
 <template>
-  <main class="mx-auto max-w-3xl space-y-8 p-4 sm:p-8">
+  <!-- The listings' width, so the page starts where the header does (#2828). The profile keeps the
+       reading measure in a left-aligned column, 704 px as `max-w-3xl` less `sm:p-8` gives an event
+       page, and the events take the width. -->
+  <main class="mx-auto max-w-5xl space-y-8 p-4 sm:p-8">
     <p v-if="loading" class="text-body text-muted-foreground">{{ t('common.states.loading') }}</p>
 
     <div v-else-if="notFound" class="space-y-3">
@@ -86,37 +89,39 @@ const { compact } = useCompactView()
     <p v-else-if="error" class="text-body text-destructive">{{ error }}</p>
 
     <template v-else-if="ready">
-      <!--
-        The same three lengths as the event poster, the same column: 704 px in `max-w-3xl` less
-        `sm:p-8`, the viewport less its padding below that; `sizes` tracks the `<main>` classes. The
+      <div class="max-w-176 space-y-8" data-testid="detail-profile">
+        <!--
+        The same three lengths as the event poster, the same column: 704 px in the profile column,
+        the viewport less its padding below that; `sizes` tracks the column and `<main>`. The
         wrapper carries the border and positions the credit, because `CachedImage` renders a
         `display: contents` <picture>; the image is `block` so no inline descender opens a gap under
         it. `priority` because this is the LCP element (#1207). `max-h-140` is what makes
         `object-cover` do anything: 560 px sits above the tallest landscape image of the 43, so 39
         render unchanged and the 4 taller ones crop to the same weight.
       -->
-      <div v-if="imageUrl" class="relative border border-border">
-        <CachedImage
-          :src="imageUrl"
-          :sources="imageSources"
-          :intrinsic-width="intrinsicWidth"
-          :intrinsic-height="intrinsicHeight"
-          :alt="name ?? ''"
-          priority
-          sizes="(min-width: 768px) 704px, (min-width: 640px) calc(100vw - 4rem), calc(100vw - 2rem)"
-          img-class="block max-h-140 w-full object-cover"
-        />
-        <ImageCreditLine v-if="credit" :credit="credit" overlay />
-      </div>
+        <div v-if="imageUrl" class="relative border border-border">
+          <CachedImage
+            :src="imageUrl"
+            :sources="imageSources"
+            :intrinsic-width="intrinsicWidth"
+            :intrinsic-height="intrinsicHeight"
+            :alt="name ?? ''"
+            priority
+            sizes="(min-width: 768px) 704px, (min-width: 640px) calc(100vw - 4rem), calc(100vw - 2rem)"
+            img-class="block max-h-140 w-full object-cover"
+          />
+          <ImageCreditLine v-if="credit" :credit="credit" overlay />
+        </div>
 
-      <!-- No picture, no placeholder: here the name is the content, and a full-width 3:2 void
+        <!-- No picture, no placeholder: here the name is the content, and a full-width 3:2 void
            would push it off the screen (#811 draws one on a card). -->
-      <header class="space-y-2">
-        <h1 class="text-page font-bold tracking-tight">{{ name }}</h1>
-        <slot name="meta" />
-      </header>
+        <header class="space-y-2">
+          <h1 class="text-page font-bold tracking-tight">{{ name }}</h1>
+          <slot name="meta" />
+        </header>
 
-      <slot />
+        <slot />
+      </div>
 
       <!-- `upcoming` replaces the list for an entity whose events we do not import (#2766). -->
       <slot name="upcoming">

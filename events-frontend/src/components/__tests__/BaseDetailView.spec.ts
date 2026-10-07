@@ -65,6 +65,17 @@ describe('BaseDetailView', () => {
     expect(slugsIn(wrapper, 'details')).toEqual(['last-week'])
   })
 
+  // The page starts where the header does; the profile keeps the reading measure (#2828).
+  it('takes the listings width and keeps the profile at the reading measure, left-aligned', () => {
+    const wrapper = mountWith(page({ slug: 'wanda', eventDate: '2027-04-14' }), page())
+
+    expect(wrapper.get('main').classes()).toEqual(expect.arrayContaining(['mx-auto', 'max-w-5xl']))
+    const profile = wrapper.get('[data-testid="detail-profile"]')
+    expect(profile.classes()).toContain('max-w-176')
+    expect(profile.classes()).not.toContain('mx-auto')
+    expect(profile.find('h1').text()).toBe('Sesh Orka')
+  })
+
   it('hides the past section when every past event is still upcoming', () => {
     const running: EventSummary = {
       slug: 'heidegluhen-35',
