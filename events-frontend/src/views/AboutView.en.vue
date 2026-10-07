@@ -32,8 +32,9 @@ const localePath = useLocalePath()
           >if a Berlin venue puts it on a stage in the evening, it belongs here.</strong
         >
         Not just live music, and definitely not just techno. Concerts and club nights make up most
-        of it, alongside parties, festivals, staged shows and cabaret, readings and spoken word,
-        screenings and open-air cinema, exhibition openings, and the occasional pub quiz.
+        of it, and stand-up and Kabarett come next. Alongside them: festivals, staged shows,
+        readings and spoken word, screenings and open-air cinema, exhibitions from opening to
+        closing day, and the occasional pub quiz.
       </p>
       <p class="text-muted-foreground">
         Where a venue says what kind of night it is, Event Junkie takes its word for it. Punk, jazz,
@@ -44,10 +45,11 @@ const localePath = useLocalePath()
         <strong class="font-medium text-foreground">A few things are left out on purpose.</strong>
         Sport, even at the arenas that also host concerts: a basketball fixture is not what you came
         here for, and letting it in buries the gigs. Guided tours, workshops and yoga sessions,
-        which you take part in instead of going to watch. Trade fairs and conferences. And, for now,
-        classical concerts and orchestras: an orchestra with a conductor and soloists does not fit a
-        model built around a headliner and a support act. That last one is a "not yet", and it is
-        written down as an open question.
+        which you take part in instead of going to watch. Trade fairs and conferences. Children's
+        shows, like a puppet show for a nursery group in the morning. Livestreams that only run
+        online, because there is no room to go to. And, for now, classical concerts and orchestras:
+        an orchestra with a conductor and soloists does not fit a model built around a headliner and
+        a support act. That last one is a "not yet", and it is written down as an open question.
       </p>
     </section>
 
