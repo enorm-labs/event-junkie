@@ -150,6 +150,13 @@ because a verdict can be wrong. A case-only rewrite on an `EXACT` row is a small
 folded names. The de-shouter chose the stored case without evidence. A wrong rewrite changes the display name only, and a
 person corrects it in the admin API. That edit pins the name, and the enrichment keeps a pinned name (ADR-042, #2636).
 
+Amended 2026-10-07 ([#2827](https://github.com/enorm-labs/event-junkie/issues/2827)): a person can set the MBID by hand.
+This is for an `AMBIGUOUS` name that several MusicBrainz artists carry, such as `Wanda`. The admin API takes
+`musicbrainzId` on an artist and stores it as an `EXACT` verdict. The sweep looks up a name again only when it is
+`UNCHECKED` or renamed after the verdict. The verdict is written after the save, so a rename in the same request does not
+queue the name again. A later rename does, and the sweep can then replace the hand-set id. Set the id again after a
+rename.
+
 What is stored per artist in step B: `musicbrainz_id` (nullable), `musicbrainz_match` (`EXACT`, `AMBIGUOUS`, `NONE`,
 `UNCHECKED`), `musicbrainz_checked_at`. Nothing else.
 

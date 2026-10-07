@@ -5,6 +5,7 @@ import de.norm.events.common.PageResponse
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.ints.shouldBeGreaterThanOrEqual
 import io.kotest.matchers.shouldBe
+import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -13,6 +14,9 @@ import org.springframework.test.web.reactive.server.expectBody
 class ArtistControllerTest : BaseControllerTest() {
     @Autowired
     private lateinit var enrichmentStore: ArtistEnrichmentStore
+
+    @Autowired
+    private lateinit var artistRepository: ArtistRepository
 
     /** Creates an artist via the API and returns the persisted [ArtistResponse]. */
     private fun createArtist(request: ArtistRequest = ArtistRequestFixtures.adicts()): ArtistResponse =
@@ -246,6 +250,53 @@ class ArtistControllerTest : BaseControllerTest() {
         edited.descriptionAltAttribution shouldBe null
         edited.descriptionAltLicenceId shouldBe null
         edited.descriptionAltSourceUrl shouldBe null
+
+        deleteArtist(created.id)
+    }
+
+    @Test
+    fun `PUT with a MusicBrainz id stores an EXACT match the sweep keeps, across a rename in the same request`() {
+        val created = createArtist()
+        runBlocking { artistRepository.storeMusicBrainzVerdict(created.id, MusicBrainzMatch.AMBIGUOUS.name, null) }
+        val mbid = "06e3bce0-c612-4a5f-b095-9ffed1e4a656"
+
+        fun put(request: ArtistRequest) =
+            webTestClient
+                .put()
+                .uri("/api/admin/artists/${created.id}")
+                .bodyValue(request)
+                .exchange()
+                .expectStatus()
+                .isOk
+                .expectBody<ArtistResponse>()
+                .returnResult()
+                .responseBody!!
+
+        val pinned = put(ArtistRequestFixtures.adicts().copy(name = "Adicts", musicbrainzId = mbid))
+        pinned.musicbrainzMatch shouldBe MusicBrainzMatch.EXACT
+        pinned.musicbrainzId shouldBe mbid
+        runBlocking {
+            artistRepository.findNeedingMusicBrainzLookup(listOf(created.id)).toList() shouldBe emptyList()
+            artistRepository.findNeedingMusicBrainzEnrichment(listOf(created.id)).toList().map { it.id } shouldBe listOf(created.id)
+        }
+
+        // A PUT without the field leaves the verdict alone.
+        put(ArtistRequestFixtures.adicts().copy(name = "Adicts")).musicbrainzId shouldBe mbid
+
+        deleteArtist(created.id)
+    }
+
+    @Test
+    fun `PUT with a MusicBrainz id that is not a lowercase UUID returns 400`() {
+        val created = createArtist()
+
+        webTestClient
+            .put()
+            .uri("/api/admin/artists/${created.id}")
+            .bodyValue(ArtistRequestFixtures.adicts().copy(musicbrainzId = "06E3BCE0-C612-4A5F-B095-9FFED1E4A656"))
+            .exchange()
+            .expectStatus()
+            .isBadRequest
 
         deleteArtist(created.id)
     }

@@ -4,6 +4,7 @@ import de.norm.events.common.AttributableImage
 import de.norm.events.common.AttributedImage
 import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.constraints.NotBlank
+import jakarta.validation.constraints.Pattern
 import jakarta.validation.constraints.Size
 
 /**
@@ -68,5 +69,16 @@ data class ArtistRequest(
     val residentAdvisorUrl: String? = null,
     @field:Size(max = 2048, message = "Spotify URL must not exceed 2048 characters")
     @Schema(description = "URL of the artist's Spotify page", example = "https://open.spotify.com/artist/5dqOB8KIVGgFxbELxDfJcz")
-    val spotifyUrl: String? = null
+    val spotifyUrl: String? = null,
+    @field:Pattern(regexp = MBID_PATTERN, message = "MusicBrainz id must be a lowercase UUID")
+    @Schema(
+        description =
+            "MusicBrainz artist id (MBID), set by hand for a name MusicBrainz gives several artists. It stores an EXACT match, " +
+                "which the sweep keeps; null leaves the stored verdict as it is",
+        example = "06e3bce0-c612-4a5f-b095-9ffed1e4a656"
+    )
+    val musicbrainzId: String? = null
 ) : AttributableImage
+
+/** A MusicBrainz id as the API writes it: a lowercase UUID. */
+private const val MBID_PATTERN = "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
