@@ -140,4 +140,13 @@ describe('VenueDetailView', () => {
     expect(view.find('[data-testid="venue-not-imported"]').exists()).toBe(false)
     expect(view.text()).toContain('No upcoming nights here yet')
   })
+
+  it('tags the website link as a referral from this site (#2770)', async () => {
+    const view = await mountVenue(kater)
+
+    const website = view.findAll('a').find((link) => link.text() === 'Website')
+    expect(website?.attributes('href')).toBe(
+      'https://katerblau.de/?utm_source=event-junkie.de&utm_medium=referral',
+    )
+  })
 })

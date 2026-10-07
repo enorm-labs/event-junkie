@@ -321,7 +321,7 @@ test.describe('a past event', () => {
     await expect(page.getByText('Machine-translated.', { exact: false })).toBeVisible()
     await expect(page.getByRole('link', { name: 'Original text' })).toHaveAttribute(
       'href',
-      'https://example.test/event',
+      'https://example.test/event?utm_source=event-junkie.de&utm_medium=referral',
     )
   })
 
