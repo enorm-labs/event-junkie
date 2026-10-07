@@ -14,6 +14,14 @@ class UrbanSpreeFieldMappingTest {
     // --- splitUrbanSpreeBilling ---
 
     @Test
+    fun `isUrbanSpreeWorkshop drops the Workshops category and a title that opens with Workshop`() {
+        isUrbanSpreeWorkshop("Workshops", "Risograph Basics") shouldBe true
+        isUrbanSpreeWorkshop("Events", "WORKSHOP by Key Clef - Mental Continuum") shouldBe true
+        isUrbanSpreeWorkshop("Concerts", "The Workshop Band") shouldBe false
+        isUrbanSpreeWorkshop(null, "Workshoppe") shouldBe false
+    }
+
+    @Test
     fun `splitUrbanSpreeBilling peels a piped support-billing note off the headline`() {
         val (headline, note) = splitUrbanSpreeBilling("WISBORG Phantomschmerz Tour - BERLIN | Special Guest: The Fright")
 

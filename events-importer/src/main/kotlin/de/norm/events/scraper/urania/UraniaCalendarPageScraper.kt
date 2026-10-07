@@ -1,5 +1,6 @@
 package de.norm.events.scraper.urania
 
+import de.norm.events.event.EventType
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.attrAt
@@ -83,7 +84,11 @@ class UraniaCalendarPageScraper {
             return null
         }
         val format = item.textAt("h6.o-h6")
-        val eventType = uraniaEventType(format)
+        val eventType = uraniaEventType(format, title)
+        if (eventType == EventType.OTHER.name && isParticipationFormat(format)) {
+            logger.info { "Skipping Urania workshop or guided walk '$title' ($format): out of scope" }
+            return null
+        }
 
         return ScrapedEvent(
             title = title,

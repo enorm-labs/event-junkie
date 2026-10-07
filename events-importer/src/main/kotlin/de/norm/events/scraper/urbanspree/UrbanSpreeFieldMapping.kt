@@ -23,8 +23,8 @@ import java.time.format.DateTimeFormatter
 /**
  * Urban Spree's category labels for [mapEventType][de.norm.events.scraper.mapEventType]: the
  * site pluralises every label ("Concerts", "Exhibitions") and files parts of its programme under
- * its own ("Live Streaming", "Art Fair"). "Workshops" is absent, so it falls through to `null`
- * and the `OTHER` default.
+ * its own ("Live Streaming", "Art Fair"). "Workshops" is absent: the overview drops
+ * those cards first (`isUrbanSpreeWorkshop`).
  */
 internal val URBAN_SPREE_CATEGORY_SYNONYMS: Map<String, String> =
     mapOf(

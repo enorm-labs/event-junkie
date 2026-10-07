@@ -140,4 +140,25 @@ class UraniaCalendarPageScraperTest {
             )
         scraper.scrape(document, baseUrl).shouldBeEmpty()
     }
+
+    @Test
+    fun `drops a workshop or a guided walk, but keeps a quiz the venue files as a workshop`() {
+        fun item(
+            slug: String,
+            title: String,
+            format: String
+        ) = """<div class="c-event-calendar-item"><div class="c-event-calendar-item_time"><span>18:00 Uhr</span></div>
+            <a class="c-event-calendar-item_content" href="https://www.urania.de/event/$slug/">
+            <h3 class="o-h3">$title</h3><h6 class="o-h6">$format</h6></a></div>"""
+        val html =
+            """<div class="c-event-calendar_day js-day" data-day="05-do-11-2026"><div class="c-event-calendar_day_events">""" +
+                item("ernte", "Ernte und Ausblick", "Workshop im Urania-Garten") +
+                item("kiez", "Fair und nachhaltig in Zehlendorf", "Kiezspaziergang") +
+                item("pubquiz", "Das philosophische Pubquiz", "Workshop") +
+                "</div></div>"
+
+        val events = scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl)
+
+        events.map { it.sourceId to it.eventType } shouldBe listOf("urania:pubquiz" to EventType.QUIZ.name)
+    }
 }

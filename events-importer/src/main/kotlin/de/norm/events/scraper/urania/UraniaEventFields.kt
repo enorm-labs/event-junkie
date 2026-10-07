@@ -5,6 +5,7 @@ import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.mapEventType
 import de.norm.events.scraper.parsePriceValue
+import de.norm.events.scraper.refineConcertVenueType
 import de.norm.events.scraper.splitSupportActs
 import java.math.BigDecimal
 
@@ -21,14 +22,24 @@ import java.math.BigDecimal
  * (`Schönheitssalon` is a discussion format), and `OTHER` would bury a talk among the
  * genuinely unclassifiable.
  *
- * Workshops and guided walks are the exception, matched anywhere in the label (`Workshop im
- * Urania-Garten`, `Kiezspaziergang`): their leaders teach or guide rather than speak to an
- * audience, so they are `OTHER` (#1906, #1927).
+ * Workshops and guided walks are the exception ([isParticipationFormat]): their leaders teach or
+ * guide rather than speak to an audience, so they are `OTHER` (#1906, #1927), and the calendar
+ * drops them. A [title] that names an in-scope format types the row instead: the venue files
+ * `Das philosophische Pubquiz` as a `Workshop`, and it is a quiz (#2831).
  */
-internal fun uraniaEventType(format: String?): String =
+internal fun uraniaEventType(
+    format: String?,
+    title: String = ""
+): String =
     mapEventType(format, URANIA_FORMAT_SYNONYMS)
-        ?: EventType.OTHER.name.takeIf { NON_TALK_MARKERS.any { marker -> format.orEmpty().contains(marker, ignoreCase = true) } }
+        ?: refineConcertVenueType(EventType.OTHER.name, title).takeIf { isParticipationFormat(format) }
         ?: EventType.READING.name
+
+/**
+ * Whether a format label names a workshop or a guided walk, anywhere in it (`Workshop im
+ * Urania-Garten`, `Kiezspaziergang`). EVENT_SCOPE.md §3.2 keeps these out.
+ */
+internal fun isParticipationFormat(format: String?): Boolean = PARTICIPATION_MARKERS.any { marker -> format.orEmpty().contains(marker, ignoreCase = true) }
 
 /**
  * The speakers of a talk, from the `"A, B, C und D"` billing line, stored as headliners: the
@@ -83,7 +94,7 @@ private val URANIA_FORMAT_SYNONYMS =
  * Words that mark a workshop or a guided walk in any of the venue's format labels. `führung` is
  * left out: it is also the tail of `Aufführung` and `Einführung`.
  */
-private val NON_TALK_MARKERS = listOf("workshop", "spaziergang", "rundgang")
+private val PARTICIPATION_MARKERS = listOf("workshop", "spaziergang", "rundgang")
 
 /** The label introducing the admission figures, before which any prose is ignored. */
 private const val ADMISSION_LABEL = ":"

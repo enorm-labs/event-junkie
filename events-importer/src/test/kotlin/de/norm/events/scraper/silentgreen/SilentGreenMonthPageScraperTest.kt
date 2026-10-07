@@ -132,7 +132,15 @@ class SilentGreenMonthPageScraperTest {
 
         sommerfest.eventType shouldBe EventType.OTHER.name
         sommerfest.artists.shouldHaveSize(0)
-        september.filter { it.title.startsWith("Historische Führungen") }.all { it.eventType == EventType.OTHER.name } shouldBe true
+    }
+
+    @Test
+    fun `scrape drops the uncategorised guided tours, which are out of scope`() {
+        // The September page lists `Historische Führungen` with no category (#2831).
+        september.none { it.title.startsWith("Historische Führung") } shouldBe true
+        isSilentGreenTour(null, "Historische Führung") shouldBe true
+        isSilentGreenTour("Konzert", "Historische Führung") shouldBe false
+        isSilentGreenTour(null, "Uraufführung: Requiem") shouldBe false
     }
 
     @Test
