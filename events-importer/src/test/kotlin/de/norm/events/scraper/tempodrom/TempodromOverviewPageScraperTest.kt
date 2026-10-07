@@ -135,9 +135,18 @@ class TempodromOverviewPageScraperTest {
     @Test
     fun `derives the headliner from the title, not the placeholder performer`() {
         // `performer.name` is a copy of the event name on all 145 events, so it names no act. Three
-        // of the rest are score concerts (`The Witcher in Concert`), which bill no act (#1829).
-        events.count { it.artists.isNotEmpty() } shouldBe 137
+        // of the rest are score concerts (`The Witcher in Concert`), which bill no act (#1829), and
+        // three are the Roncalli gala with an orchestra, a show (#2833).
+        events.count { it.artists.isNotEmpty() } shouldBe 134
         events.flatMap { it.artists }.all { it.role == "HEADLINER" } shouldBe true
+    }
+
+    @Test
+    fun `types the Roncalli gala with an orchestra as SHOW and bills no artist`() {
+        // A circus gala the Deutsches Symphonie-Orchester accompanies, not an orchestral concert (#2833).
+        val gala = event("roncalli_und_deutsches_symphonie-orchester_berlin_2026-12-31_19")
+        gala.eventType shouldBe "SHOW"
+        gala.artists.shouldBeEmpty()
     }
 
     @Test

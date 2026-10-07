@@ -82,7 +82,8 @@ class AegWebsiteImportersTest {
         runTest {
             val result = musicHallImporter.importEvents(musicHallUrl)
             result.shouldBeInstanceOf<ImportResult.Success>()
-            result.events shouldHaveSize 66
+            // 66 rows, less the job fair (#2833).
+            result.events shouldHaveSize 65
         }
 
     @Test

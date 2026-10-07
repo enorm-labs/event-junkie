@@ -98,6 +98,10 @@ class SilentGreenMonthPageScraper {
             logger.info { "Skipping silent green guided tour '$title' on $sourceUrl: out of scope" }
             return null
         }
+        if (isSilentGreenConference(categories, title, row.textAt("$TITLE_SELECTOR p"))) {
+            logger.info { "Skipping silent green conference '$title' on $sourceUrl: out of scope" }
+            return null
+        }
         val eventType = silentGreenEventType(categories, title)
         val subLine =
             row

@@ -61,8 +61,8 @@ class AegOverviewPageScraperTest {
     }
 
     @Test
-    fun `keeps every music hall row, a venue with no resident team`() {
-        musicHallEvents shouldHaveSize 66
+    fun `keeps every music hall row but the job fair, a venue with no resident team`() {
+        musicHallEvents shouldHaveSize 65
     }
 
     @Test
@@ -101,8 +101,8 @@ class AegOverviewPageScraperTest {
     @Test
     fun `reads the music hall's German month abbreviations where the arena writes a number`() {
         // The one tenant difference in the date group: "Sep. " / "Mär " / "Jun " vs "08.".
-        musicHall("uber_eats_music_hall:sticks-and-stones-2027/2027-06-05-1000").eventDate shouldBe
-            LocalDate.of(2027, 6, 5)
+        musicHall("uber_eats_music_hall:rebellcomedy27/2027-06-12-2000").eventDate shouldBe
+            LocalDate.of(2027, 6, 12)
         musicHall("uber_eats_music_hall:jony/2026-09-15-1900").eventDate shouldBe LocalDate.of(2026, 9, 15)
     }
 
@@ -126,13 +126,10 @@ class AegOverviewPageScraperTest {
     }
 
     @Test
-    fun `states no type for the row the venue filed under no category`() {
-        // Category id 0: a job fair, which is neither a concert nor a staged show. Leaving the
-        // type unstated is truthful — `toEventEntity` settles it as OTHER rather than a concert.
-        val jobFair = musicHall("uber_eats_music_hall:sticks-and-stones-2027/2027-06-05-1000")
-        jobFair.eventType.shouldBeNull()
-        jobFair.title shouldBe "STICKS & STONES - LGBTIQ+ Job - und Karrieremesse"
-        musicHallEvents.count { it.eventType == null } shouldBe 1
+    fun `drops the job fair, a trade fair the venue filed under no category`() {
+        // `STICKS & STONES - LGBTIQ+ Job - und Karrieremesse`, EVENT_SCOPE.md §3.3 (#2833).
+        musicHallEvents.none { it.title.contains("Karrieremesse") } shouldBe true
+        musicHallEvents.count { it.eventType == null } shouldBe 0
     }
 
     @Test
@@ -140,7 +137,7 @@ class AegOverviewPageScraperTest {
         // "ABGESAGT: Ryan Adams" — the only place either venue states a scheduling status.
         val cancelled = musicHallEvents.filter { it.status == EventStatus.CANCELLED.name }
         cancelled.map { it.title } shouldBe listOf("Arena Rave", "Ryan Adams")
-        musicHallEvents.count { it.status == EventStatus.SCHEDULED.name } shouldBe 64
+        musicHallEvents.count { it.status == EventStatus.SCHEDULED.name } shouldBe 63
         arenaEvents.all { it.status == EventStatus.SCHEDULED.name } shouldBe true
     }
 
@@ -212,8 +209,8 @@ class AegOverviewPageScraperTest {
         priceless.map { it.title }.toSet() shouldBe setOf("6K UNITED!")
         priceless shouldHaveSize 3
         priceless.forEach { it.priceNote.shouldBeNull() }
-        // The music hall simply omits the span on its two cancelled dates, the job fair and JONY.
-        musicHallEvents.filter { it.pricePresale == null } shouldHaveSize 4
+        // The music hall simply omits the span on its two cancelled dates and JONY.
+        musicHallEvents.filter { it.pricePresale == null } shouldHaveSize 3
     }
 
     @Test

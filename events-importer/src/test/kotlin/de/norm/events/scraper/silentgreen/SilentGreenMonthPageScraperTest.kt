@@ -119,10 +119,9 @@ class SilentGreenMonthPageScraperTest {
     }
 
     @Test
-    fun `scrape maps the venue's own spoken-word and conference labels`() {
+    fun `scrape maps the venue's own spoken-word labels`() {
         september.first { it.title.startsWith("Buchpremiere GAVDOS") }.eventType shouldBe EventType.READING.name
         september.first { it.title.startsWith("Ilona Hartmann") }.eventType shouldBe EventType.READING.name
-        september.first { it.title.startsWith("Zia Kongress") }.eventType shouldBe EventType.OTHER.name
         august.first { it.title.contains("DEADLY FRUITS") }.eventType shouldBe EventType.READING.name
     }
 
@@ -153,11 +152,20 @@ class SilentGreenMonthPageScraperTest {
     }
 
     @Test
-    fun `scrape keeps a genuine sub-line as the subtitle`() {
-        val congress = september.first { it.title.startsWith("ZEIT WISSEN Kongress") }
+    fun `keeps a genuine sub-line as the subtitle, and a credit line as promoters only`() {
+        // The fixture's one genuine sub-line belongs to a congress, which is dropped (#2833).
+        silentGreenSubtitle("Zukunft. Sicher. Gestalten.") shouldBe "Zukunft. Sicher. Gestalten."
+        silentGreenPresenters("Zukunft. Sicher. Gestalten.").shouldHaveSize(0)
+        silentGreenSubtitle("silent green präsentiert").shouldBeNull()
+    }
 
-        congress.subtitle shouldBe "Zukunft. Sicher. Gestalten."
-        congress.promoters.shouldHaveSize(0)
+    @Test
+    fun `scrape drops the conferences, by their sole Konferenz label or a title that names one`() {
+        // `Zia Kongress` and `ZEIT WISSEN Kongress` carry only `Konferenz`, EVENT_SCOPE.md §3.3 (#2833).
+        september.none { it.title.contains("Kongress") } shouldBe true
+        isSilentGreenConference("Konferenz", "Zia Kongress", null) shouldBe true
+        isSilentGreenConference(null, "Berlin International Tea Conference 2026 – VOICES OF TEA", null) shouldBe true
+        isSilentGreenConference("Panel, Lesung, Festival, Konzert", "Pop-Kultur Festival", null) shouldBe false
     }
 
     @Test

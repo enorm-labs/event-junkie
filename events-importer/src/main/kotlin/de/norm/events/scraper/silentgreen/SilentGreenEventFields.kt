@@ -3,6 +3,7 @@ package de.norm.events.scraper.silentgreen
 import de.norm.events.event.EventType
 import de.norm.events.scraper.PRESENTS_VERBS
 import de.norm.events.scraper.ScrapedArtist
+import de.norm.events.scraper.billsTradeFairOrConference
 import de.norm.events.scraper.buildArtistsForEventType
 import de.norm.events.scraper.inferUnmarkedTitleType
 import de.norm.events.scraper.mapEventType
@@ -44,6 +45,27 @@ internal fun isSilentGreenTour(
 
 /** `Führung`, `Führungen`, `Rundgang` as a word of its own. */
 private val TOUR_TITLE = Regex("""\b(?:führung(?:en)?|rundgang)\b""", RegexOption.IGNORE_CASE)
+
+/**
+ * A conference: `Konferenz` the only category label, or a title or sub-line that names a fair or a
+ * conference (`Berlin International Tea Conference`, `B2B-Forum`). EVENT_SCOPE.md §3.3 keeps it
+ * out (#2833). A night that also carries a concert or a festival label stays.
+ */
+internal fun isSilentGreenConference(
+    categories: String?,
+    title: String,
+    subLine: String?
+): Boolean {
+    val labels =
+        categories
+            ?.split(',')
+            ?.map { it.trim().lowercase() }
+            ?.filter { it.isNotBlank() }
+            .orEmpty()
+    return (labels.isNotEmpty() && labels.all { it == CONFERENCE_LABEL }) || billsTradeFairOrConference(title, subLine)
+}
+
+private const val CONFERENCE_LABEL = "konferenz"
 
 /**
  * The promoters from the credit line under the title (`"silent green präsentiert"`, `"Berlin
