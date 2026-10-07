@@ -14,17 +14,18 @@ import java.time.Instant
  * fix mints the right row and leaves the old one public, with its slug, in the global search.
  * [UncreditedPromoterStore.deleteUncredited] says which rows stay.
  *
- * The guard and the one-day [GRACE] are those of [OrphanArtistSweep], for the same reason: an
- * import resolves a promoter before it links it.
+ * [ImportIdleGuard] holds the pass back while an import runs. The one-day [GRACE] is
+ * [OrphanArtistSweep]'s, for the same reason: an import resolves a promoter before it links it.
  */
 @Service
 @ConditionalOnProperty(name = ["app.scheduling.enabled"], havingValue = "true", matchIfMissing = true)
 class OrphanPromoterSweep(
     private val uncreditedPromoterStore: UncreditedPromoterStore,
-    private val eventSourceRepository: EventSourceRepository,
+    eventSourceRepository: EventSourceRepository,
     private val clock: Clock = Clock.systemUTC()
 ) {
     private val logger = KotlinLogging.logger {}
+    private val idle = ImportIdleGuard(eventSourceRepository, "Orphan promoter sweep", logger)
 
     /** 03:40 UTC, after the orphan artist sweep and before the venue programme sweep. */
     @Scheduled(cron = $$"${app.promoters.orphan-sweep-cron:0 40 3 * * *}")
@@ -38,17 +39,12 @@ class OrphanPromoterSweep(
     }
 
     /** One pass: the slugs deleted, or `null` when an import was running and nothing ran. */
-    suspend fun runOnce(): List<String>? {
-        val running = eventSourceRepository.countByStatus(ImportStatus.RUNNING.name)
-        if (running > 0) {
-            logger.info { "Orphan promoter sweep skipped: $running import(s) running" }
-            return null
+    suspend fun runOnce(): List<String>? =
+        idle.runWhenIdle {
+            val deleted = uncreditedPromoterStore.deleteUncredited(Instant.now(clock).minus(GRACE))
+            logger.info { "Orphan promoter sweep deleted ${deleted.size} promoter(s) no event credits: ${deleted.joinToString()}" }
+            deleted
         }
-        logger.info { "Orphan promoter sweep started" }
-        val deleted = uncreditedPromoterStore.deleteUncredited(Instant.now(clock).minus(GRACE))
-        logger.info { "Orphan promoter sweep deleted ${deleted.size} promoter(s) no event credits: ${deleted.joinToString()}" }
-        return deleted
-    }
 
     private companion object {
         val GRACE: Duration = Duration.ofDays(1)

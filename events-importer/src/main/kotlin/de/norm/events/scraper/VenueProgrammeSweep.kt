@@ -13,16 +13,18 @@ import java.time.LocalDate
  * refreshes its own venue; this pass covers the window moving on, hand-made events and a genre
  * family remap by `GenreFamilyReconciler`.
  *
- * A pass while any import runs does nothing, so it never reads a venue's events mid-upsert.
+ * [ImportIdleGuard] holds the pass back while an import runs, so it never reads a venue's events
+ * mid-upsert.
  */
 @Service
 @ConditionalOnProperty(name = ["app.scheduling.enabled"], havingValue = "true", matchIfMissing = true)
 class VenueProgrammeSweep(
     private val venueProgrammeStore: VenueProgrammeStore,
-    private val eventSourceRepository: EventSourceRepository,
+    eventSourceRepository: EventSourceRepository,
     private val clock: Clock = Clock.systemUTC()
 ) {
     private val logger = KotlinLogging.logger {}
+    private val idle = ImportIdleGuard(eventSourceRepository, "Venue programme sweep", logger)
 
     /** 03:45 UTC, after the orphan artist sweep, while no scheduled import is likely to run. */
     @Scheduled(cron = $$"${app.venues.programme-sweep-cron:0 45 3 * * *}")
@@ -36,15 +38,10 @@ class VenueProgrammeSweep(
     }
 
     /** One pass: the number of venue rows changed, or `null` when an import was running and nothing ran. */
-    suspend fun runOnce(): Long? {
-        val running = eventSourceRepository.countByStatus(ImportStatus.RUNNING.name)
-        if (running > 0) {
-            logger.info { "Venue programme sweep skipped: $running import(s) running" }
-            return null
+    suspend fun runOnce(): Long? =
+        idle.runWhenIdle {
+            val changed = venueProgrammeStore.refreshAll(LocalDate.now(clock).minusDays(VenueProgrammeStore.WINDOW_DAYS), AcceptedLimitations.houseFamilies)
+            logger.info { "Venue programme sweep changed $changed venue(s)" }
+            changed
         }
-        logger.info { "Venue programme sweep started" }
-        val changed = venueProgrammeStore.refreshAll(LocalDate.now(clock).minusDays(VenueProgrammeStore.WINDOW_DAYS), AcceptedLimitations.houseFamilies)
-        logger.info { "Venue programme sweep changed $changed venue(s)" }
-        return changed
-    }
 }
