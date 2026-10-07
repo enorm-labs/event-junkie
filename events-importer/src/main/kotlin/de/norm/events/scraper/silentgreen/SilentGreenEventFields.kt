@@ -18,7 +18,7 @@ import de.norm.events.scraper.mapEventType
  * Ausstellung` and is an exhibition with live sets. So the labels are ranked by
  * [CATEGORY_PRECEDENCE], which also keeps an exhibition or film title out of the artist table:
  * only a `CONCERT` mints headliners ([silentGreenArtists]). No category at all (the Sommerfest,
- * the guided tours, the label market) falls back to [inferUnmarkedTitleType], not the
+ * the label market) falls back to [inferUnmarkedTitleType], not the
  * concert-venue default: this house programmes exhibitions, talks and festivals as readily as
  * gigs.
  */
@@ -31,6 +31,19 @@ internal fun silentGreenEventType(
         ?.mapNotNull { mapEventType(it, SILENT_GREEN_CATEGORIES) }
         ?.minByOrNull { CATEGORY_PRECEDENCE[it] ?: CATEGORY_PRECEDENCE.size }
         ?: inferUnmarkedTitleType(title)
+
+/**
+ * A guided tour of the building: no category, and a title that names a `Führung` or a `Rundgang`
+ * (`Historische Führung`). EVENT_SCOPE.md §3.2 keeps it out (#2831). A word boundary keeps
+ * `Aufführung` and `Einführung` in.
+ */
+internal fun isSilentGreenTour(
+    categories: String?,
+    title: String
+): Boolean = categories.isNullOrBlank() && TOUR_TITLE.containsMatchIn(title)
+
+/** `Führung`, `Führungen`, `Rundgang` as a word of its own. */
+private val TOUR_TITLE = Regex("""\b(?:führung(?:en)?|rundgang)\b""", RegexOption.IGNORE_CASE)
 
 /**
  * The promoters from the credit line under the title (`"silent green präsentiert"`, `"Berlin

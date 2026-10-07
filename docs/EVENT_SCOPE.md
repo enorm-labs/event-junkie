@@ -84,7 +84,7 @@ language gets the house language, if the event has a language type. An explicit 
 
 ## 3. What is deliberately excluded
 
-Five exclusions, each implemented in exactly one place so it can be revisited without archaeology.
+Five exclusions. Each section names the predicates that implement it, so a rule can be revisited without archaeology.
 
 ### 3.1 Sport
 
@@ -112,9 +112,17 @@ is a recurring night (§5).
 
 **Gärten der Welt** set the precedent: 28 of its 41 upcoming rows were park activities. Importing them would have
 swamped the actual programme — the Arena concerts, the open-air cinema, the park festivals. It would present a concert
-venue as a tour operator. One predicate holds the rule:
-[`isProgrammeCategory`](../events-importer/src/main/kotlin/de/norm/events/scraper/gaertenderwelt/GaertenDerWeltFieldMapping.kt).
-That is the line to change to revisit it.
+venue as a tour operator. Each venue that mixes these into its programme has one predicate, on the signal its page gives:
+
+| Venue           | Predicate                                            | Signal                                                          |
+| --------------- | ---------------------------------------------------- | --------------------------------------------------------------- |
+| Gärten der Welt | `GaertenDerWeltFieldMapping.isProgrammeCategory`     | The park's activity categories                                  |
+| Urania          | `UraniaEventFields.isParticipationFormat`            | The format names a `Workshop`, `Spaziergang` or `Rundgang`      |
+| Urban Spree     | `UrbanSpreeOverviewPageScraper.isUrbanSpreeWorkshop` | The `Workshops` category, or a title that opens with `Workshop` |
+| silent green    | `SilentGreenEventFields.isSilentGreenTour`           | No category, and a title that names a `Führung` or `Rundgang`   |
+
+A title that names an in-scope format wins at Urania. `Das philosophische Pubquiz` has the format `Workshop`, and it is a
+quiz. Arcanoa's `Songwriting workshop` stays, because an open stage follows it on the same night.
 
 Note the deliberate asymmetry. A row with **no** category is kept. The park files its one-off evening events under no
 category at all: a games night, a quiz show. Dropping an uncategorised row would lose them.

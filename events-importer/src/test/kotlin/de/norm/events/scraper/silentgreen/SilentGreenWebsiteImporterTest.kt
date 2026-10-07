@@ -80,9 +80,9 @@ class SilentGreenWebsiteImporterTest {
             val result = importer.importEvents(entryUrl)
 
             result.shouldBeInstanceOf<ImportResult.Success>()
-            // 53 August rows + 17 September rows, minus the days that fold into two exhibition runs
+            // 53 August rows + 15 September rows (its 2 guided tours dropped, #2831), minus the days that fold into two exhibition runs
             // (23 → 1 and 11 → 1, ADR-029); October renders an empty calendar and stops the walk.
-            result.events shouldHaveSize 38
+            result.events shouldHaveSize 36
             coVerify(exactly = 1) { htmlFetcher.fetchDocument(entryUrl) }
             coVerify(exactly = 1) { htmlFetcher.fetchDocument(septemberUrl) }
             coVerify(exactly = 1) { htmlFetcher.fetchDocument(octoberUrl) }

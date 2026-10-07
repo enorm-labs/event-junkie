@@ -179,13 +179,32 @@ class UrbanSpreeOverviewPageScraperTest {
     }
 
     @Test
-    fun `scrape leaves an unmapped category to the persistence default`() {
+    fun `scrape drops a workshop card, by its category or by its title`() {
         val html =
             """
             <html><head><base href="https://www.urbanspree.com/"></head><body>
               <div id="pdopage">
                 <a class="card" href="program/workshops/stencil.html" data-dateStart="2026-09-01 18:00:00">
-                  <p class="card-text cat">Workshops</p><p class="card-text title">Stencil Workshop</p>
+                  <p class="card-text cat">Workshops</p><p class="card-text title">Stencil Basics</p>
+                </a>
+                <a class="card" href="program/events/workshop-by-key-clef.html" data-dateStart="2026-10-08 17:00:00">
+                  <p class="card-text cat">Events</p><p class="card-text title">WORKSHOP by Key Clef - Mental Continuum</p>
+                </a>
+              </div>
+            </body></html>
+            """.trimIndent()
+
+        scraper.scrape(Jsoup.parse(html, listingUrl), listingUrl) shouldBe emptyList()
+    }
+
+    @Test
+    fun `scrape leaves an unmapped category to the persistence default`() {
+        val html =
+            """
+            <html><head><base href="https://www.urbanspree.com/"></head><body>
+              <div id="pdopage">
+                <a class="card" href="program/talks/artist-talk.html" data-dateStart="2026-09-01 18:00:00">
+                  <p class="card-text cat">Talks</p><p class="card-text title">Artist Talk</p>
                 </a>
               </div>
             </body></html>

@@ -55,7 +55,7 @@ class UraniaEventPageScraper {
         val body = document.textAt(".c-text-box")
         val admissionLine = admissionLineOf(body)
         val price = uraniaPrice(admissionLine)
-        val eventType = uraniaEventType(format)
+        val eventType = uraniaEventType(format, title)
 
         return ScrapedEvent(
             title = title,

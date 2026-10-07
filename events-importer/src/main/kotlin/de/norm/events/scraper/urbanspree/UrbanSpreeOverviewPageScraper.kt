@@ -77,6 +77,11 @@ class UrbanSpreeOverviewPageScraper {
             logger.warn { "Skipping Urban Spree card $sourceUrl: no title" }
             return null
         }
+        val category = card.textAt(".card-text.cat")
+        if (isUrbanSpreeWorkshop(category, rawTitle)) {
+            logger.info { "Skipping Urban Spree workshop $sourceUrl: out of scope" }
+            return null
+        }
 
         val priceText = card.textAt("li.price")
         val price = parsePriceValue(priceText)
@@ -87,7 +92,7 @@ class UrbanSpreeOverviewPageScraper {
             // The card title is cut in the HTML ("… + Nico Amara…"); the detail page overrides it.
             title = cleanUrbanSpreeTitle(headline),
             subtitle = supportNote,
-            eventType = mapEventType(card.textAt(".card-text.cat"), URBAN_SPREE_CATEGORY_SYNONYMS),
+            eventType = mapEventType(category, URBAN_SPREE_CATEGORY_SYNONYMS),
             eventDate = startsAt.toLocalDate(),
             startTime = startsAt.toLocalTime(),
             imageUrl = normalizeAssetUrl(card.absUrl(IMAGE_ATTR)),
@@ -142,3 +147,15 @@ internal fun urbanSpreeEventSlug(sourceUrl: String): String =
 
 /** Path prefix stripped from a detail URL to leave the `<category>/<slug>` identity. */
 private const val PROGRAM_PATH_PREFIX = "/program/"
+
+/**
+ * A workshop: filed under "Workshops", or titled as one under "Events" (`WORKSHOP by Key Clef - Mental
+ * Continuum`). EVENT_SCOPE.md §3.2 keeps it out (#2831).
+ */
+internal fun isUrbanSpreeWorkshop(
+    category: String?,
+    title: String
+): Boolean = category?.trim().equals("workshops", ignoreCase = true) || WORKSHOP_TITLE.containsMatchIn(title)
+
+/** A title that opens with the word `Workshop`. */
+private val WORKSHOP_TITLE = Regex("""^\s*workshops?\b""", RegexOption.IGNORE_CASE)
