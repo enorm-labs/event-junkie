@@ -87,15 +87,15 @@ version string, not decoration (BRANDING §5.3).
 
 ## 4. Space
 
-| Value              | Where                                    |
-| ------------------ | ---------------------------------------- |
-| `p-4 sm:p-8`       | Every page shell                         |
-| `space-y-6`        | Listings and prose                       |
-| `space-y-8`        | Detail pages                             |
-| `space-y-12`       | Home, the only page with a hero          |
-| `gap-x-8 gap-y-12` | The card grid: 32 px across, 48 px down  |
-| `max-w-3xl`        | Reading measure — detail pages and prose |
-| `max-w-5xl`        | Listings                                 |
+| Value              | Where                                                                                                                  |
+| ------------------ | ---------------------------------------------------------------------------------------------------------------------- |
+| `p-4 sm:p-8`       | Every page shell                                                                                                       |
+| `space-y-6`        | Listings and prose                                                                                                     |
+| `space-y-8`        | Detail pages                                                                                                           |
+| `space-y-12`       | Home, the only page with a hero                                                                                        |
+| `gap-x-8 gap-y-12` | The card grid: 32 px across, 48 px down                                                                                |
+| `max-w-3xl`        | Reading measure — an event page and prose                                                                              |
+| `max-w-5xl`        | Listings, and an artist, venue or promoter page, whose profile keeps the 704 px measure in a left column (`max-w-176`) |
 
 A fourth section rhythm needs a stated reason before it is added (BRANDING §5.7). The grid's two gaps differ on purpose: across parts two posters that each
 have their own edge, down parts one card's last line of text from the next card's poster.
