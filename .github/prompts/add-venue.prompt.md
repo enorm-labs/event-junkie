@@ -41,9 +41,15 @@ A borderline case is a question for the operator, not a call to make.
       on. None at all is allowed: the page then links the website.
     - **Type** as `VenueType` slugs, and **capacity** only where the venue publishes one.
 
-3. **Coordinates**: `python3 scripts/geocode-venues.py "<street> <no>, <postal code> Berlin"`. The key comes from `$GOOGLE_MAPS_API_KEY` or the http-client
-   environment. Take the printed point. **Never fill `district` from the geocoder**: pick it from the address, one of the 23 pre-2001 districts, and flag
-   one that sits on a border.
+3. **Coordinates come from OpenStreetMap; Google only detects.** Google's terms do not let us keep its points on a map that is not Google's, and
+   OpenStreetMap's (ODbL) we may keep (LEGAL.md § 9.3). So a pin from Google Maps, the operator's included, is a hint and never the stored value.
+    - Write the block, then run `python3 scripts/osm-venue-coordinates.py --venue "<name>" --apply`. It asks Nominatim for the street address and
+      writes the point when OpenStreetMap matched the house number, or when a name search finds an object carrying the venue's own website.
+    - Then run `python3 scripts/geocode-venues.py --not-imported --by-name`. Where Google finds the venue's name far from its address, the address
+      is the suspect: put it to the operator.
+    - A venue the script reports as `far`, `missing` or `street-only` goes to the operator with both points. The fix is an OpenStreetMap point
+      read off openstreetmap.org, or a corrected address.
+    - **Never fill `district` from a geocoder**: pick it from the address, one of the 23 pre-2001 districts, and flag one that sits on a border.
 
 4. **Photo, optional.** Only a picture with a stated licence from Wikimedia Commons or Flickr, never one from the venue's site (#808). Propose it as a
    `docs/venue-images/REVIEWED.tsv` row for the operator to mark `CONFIRMED`; `scripts/venue-images.py` writes it after the deploy. No photo is fine: the
