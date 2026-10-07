@@ -175,7 +175,14 @@ def venues_from_seed(path):
         while i < len(lines) and not lines[i].startswith("> {%") and not lines[i].startswith("###"):
             body.append(lines[i])
             i += 1
-        out.append(json.loads("\n".join(body)))
+        handler = []
+        while i < len(lines) and not lines[i].startswith("###"):
+            handler.append(lines[i])
+            i += 1
+        venue = json.loads("\n".join(body))
+        # An imported venue's block captures its id for the event source below it (#2766).
+        venue["_imported"] = any("client.global.set" in h for h in handler)
+        out.append(venue)
     return out
 
 
@@ -591,6 +598,11 @@ def main():
         action="store_true",
         help="Also ask v4 for each venue by name, which catches a borrowed address. Doubles the lookups",
     )
+    p.add_argument(
+        "--not-imported",
+        action="store_true",
+        help="Only the venues without an event source in dev-seed.http, the ones /add-venue writes (#2766)",
+    )
     p.add_argument("--verbose", action="store_true", help="Show the stored pair and Google's address for every row")
     p.add_argument("--no-cache", action="store_true", help="Re-fetch even where a cached response is still fresh")
     p.add_argument("--key", help="The API key, if it is not in the private env file or the environment")
@@ -617,6 +629,9 @@ def main():
     else:
         venues = venues_from_seed(SEED_FILE)
         where = os.path.relpath(SEED_FILE, REPO)
+        if args.not_imported:
+            venues = [v for v in venues if not v["_imported"]]
+            where += ", without an event source"
 
     print(f"{len(venues)} venues from {where}, key from {source}, threshold {args.threshold:.0f} m")
     if args.by_name:

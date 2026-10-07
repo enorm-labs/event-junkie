@@ -61,6 +61,7 @@ Run by CI, by the commit hook, or by `/verify`. Each fails a build.
 | `sources-parity.sh`                                | The counts in EVENT_DATA_SOURCES.md's status table, against the rows of the tables they link to (#2510)                                    | `validate-docs.yml`, hook `sources-parity`, `/verify`                        |
 | `test_apply_licence_review.py`                     | Asserts the translation licence `apply-licence-review.py` derives from the description licence (ADR-027, #2561)                            | `validate-python.yml`, `/verify`                                             |
 | `test_force_import.py`                             | Asserts `force-import.py` reads every page of the source listing and refuses a partial one (#2595)                                         | `validate-python.yml`, `/verify`                                             |
+| `test_osm_venue_coordinates.py`                    | Asserts `osm-venue-coordinates.py` writes only a house-number or website-identity OpenStreetMap point (#2766)                              | `validate-python.yml`, `/verify`                                             |
 | `skill-parity.sh`                                  | Every skill is a command, every command is a skill, and both point somewhere                                                               | `validate-docs.yml`, hook `skill-parity`, `/verify`                          |
 | `ste-lint.sh` + `ste_lint.py` + `ste-baseline.txt` | The sentence rules for `docs/`, against a per-area ceiling that only moves down (#733)                                                     | `validate-docs.yml`, `/verify`, `/write-adr`, `/update-docs`                 |
 | `uid-consistency.sh`                               | The chart and the three images agree about the UID they run as, above the 10000 floor                                                      | `validate-chart.yml`                                                         |
@@ -74,20 +75,21 @@ Run by CI, by the commit hook, or by `/verify`. Each fails a build.
 
 Run by an agent or a developer. No cluster, no tunnel; `k3d-rehearsal.sh` makes its own.
 
-| Script                                    | What it does                                                                                                      | Used by                                                 |
-| ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
-| `dev-env.sh`                              | Local dev environment control: start and stop the stack, seed sources, trigger imports, inspect and diff the data | `/importer-smoke`, `/next-importer`, README.md          |
-| `k3d-rehearsal.sh`                        | The whole stack on a local Kubernetes, proven end to end, then torn down                                          | `/k3d-rehearsal`                                        |
-| `issue-board.sh`                          | Read and set an issue's Status and Priority on the project board — fields, not labels                             | `/start-issue`, `/new-issue`, `/open-pr`, two workflows |
-| `jdk-fetch.sh`                            | Fetch one page with the JVM's HTTP client and the importer's User-Agent, for a host that refuses curl             | `/plausibility-check`                                   |
-| `daily-check.sh`                          | The GitHub half of the start of day as one JSON: red runs, bot issues, unread reports, alerts, open PRs, release  | `/daily-check`                                          |
-| `generate-backlog-snapshot.sh`            | Every open issue rendered into `build/BACKLOG.md`, for grepping instead of a network round trip                   | `/new-issue`, `/next-issue`, `/milestone-plan`          |
-| `geocode-venues.py`                       | Venue addresses to coordinates with the Google Geocoding API, and an audit of the 86 seeded ones (#357)           | `/scaffold-importer`                                    |
-| `map-assets.sh`                           | The self-hosted map: cut Berlin's tiles, fonts and icons, or copy the pinned set (ADR-037)                        | `publish-map-assets.yml`, DEVELOPMENT.md                |
-| `outline-text.sh` + `outline_text.py`     | A string set in a font, printed as an SVG path — brand artwork carries outlined glyphs, never `<text>`            | `docs/branding/`                                        |
-| `build-stickers.sh` + `build_stickers.py` | Launch stickers as CMYK print PDFs, every QR code decoded first                                                   | `docs/branding/stickers/`                               |
-| `readme-screenshots.sh`                   | The README's four screenshots of the events list, desktop and phone in both themes, from production               | `docs/screenshots/`                                     |
-| `pr-screenshots.sh`                       | Before and after screenshots of a pull request's pages, from two builds served on free ports                      | `/open-pr`, `/afk`                                      |
+| Script                                    | What it does                                                                                                          | Used by                                                 |
+| ----------------------------------------- | --------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
+| `dev-env.sh`                              | Local dev environment control: start and stop the stack, seed sources, trigger imports, inspect and diff the data     | `/importer-smoke`, `/next-importer`, README.md          |
+| `k3d-rehearsal.sh`                        | The whole stack on a local Kubernetes, proven end to end, then torn down                                              | `/k3d-rehearsal`                                        |
+| `issue-board.sh`                          | Read and set an issue's Status and Priority on the project board — fields, not labels                                 | `/start-issue`, `/new-issue`, `/open-pr`, two workflows |
+| `jdk-fetch.sh`                            | Fetch one page with the JVM's HTTP client and the importer's User-Agent, for a host that refuses curl                 | `/plausibility-check`                                   |
+| `daily-check.sh`                          | The GitHub half of the start of day as one JSON: red runs, bot issues, unread reports, alerts, open PRs, release      | `/daily-check`                                          |
+| `generate-backlog-snapshot.sh`            | Every open issue rendered into `build/BACKLOG.md`, for grepping instead of a network round trip                       | `/new-issue`, `/next-issue`, `/milestone-plan`          |
+| `geocode-venues.py`                       | Google detector: an address's point, and an audit of the seeded venues; `--not-imported` limits it to #2766's         | `/scaffold-importer`                                    |
+| `osm-venue-coordinates.py`                | Coordinates for the venues we do not import, from OpenStreetMap: the stored source, where Google only detects (#2766) | `/add-venue`                                            |
+| `map-assets.sh`                           | The self-hosted map: cut Berlin's tiles, fonts and icons, or copy the pinned set (ADR-037)                            | `publish-map-assets.yml`, DEVELOPMENT.md                |
+| `outline-text.sh` + `outline_text.py`     | A string set in a font, printed as an SVG path — brand artwork carries outlined glyphs, never `<text>`                | `docs/branding/`                                        |
+| `build-stickers.sh` + `build_stickers.py` | Launch stickers as CMYK print PDFs, every QR code decoded first                                                       | `docs/branding/stickers/`                               |
+| `readme-screenshots.sh`                   | The README's four screenshots of the events list, desktop and phone in both themes, from production                   | `docs/screenshots/`                                     |
+| `pr-screenshots.sh`                       | Before and after screenshots of a pull request's pages, from two builds served on free ports                          | `/open-pr`, `/afk`                                      |
 
 ## Ops
 
