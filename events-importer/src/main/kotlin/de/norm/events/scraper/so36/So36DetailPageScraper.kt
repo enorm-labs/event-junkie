@@ -16,6 +16,7 @@ import de.norm.events.scraper.headlinersFromTitle
 import de.norm.events.scraper.hrefAt
 import de.norm.events.scraper.htmlParagraphText
 import de.norm.events.scraper.isBoxOfficeLabel
+import de.norm.events.scraper.isFestivalTitle
 import de.norm.events.scraper.isNonArtistName
 import de.norm.events.scraper.jsonLdEvents
 import de.norm.events.scraper.labelledClock
@@ -80,6 +81,7 @@ class So36DetailPageScraper {
         val (presale, boxOffice, priceNote) = parsePrices(document)
         val description = parseDescription(document)
         val bilingual = splitBilingualDescription(description?.takeIf(::hasLanguageMarker)?.let { lineBrokenDescription(document) })
+        val eventDate = jsonLd?.schemaDate("startDate")
 
         return ScrapedEvent(
             title = title,
@@ -89,7 +91,7 @@ class So36DetailPageScraper {
             eventType = eventType,
             // The detail JSON-LD carries the authoritative date; sentinel when absent, so the overview's
             // date is used via So36WebsiteImporter.fillGapsFromOverview.
-            eventDate = jsonLd?.schemaDate("startDate") ?: UNRESOLVED_EVENT_DATE,
+            eventDate = eventDate ?: UNRESOLVED_EVENT_DATE,
             doorsTime = doorsTime,
             startTime = startTime,
             imageUrl = parseImageUrl(document),
@@ -101,7 +103,12 @@ class So36DetailPageScraper {
             priceNote = priceNote,
             free = document.isFreeAdmission(),
             status = jsonLd?.schemaStatus() ?: EventStatus.SCHEDULED.name,
-            artists = parseArtists(title, subtitle, eventType),
+            artists =
+                if (eventType == EventType.FESTIVAL.name) {
+                    descriptionRoster(document, festivalDay(document, title, subtitle, eventDate)).map { ScrapedArtist(name = it, role = "HEADLINER") }
+                } else {
+                    parseArtists(title, subtitle, eventType)
+                },
             promoters = listOfNotNull(document.parsePromoter())
         )
     }
@@ -196,8 +203,8 @@ class So36DetailPageScraper {
 
     /**
      * The artist list for concerts: the title is the headliner (unless a placeholder like "TBA"),
-     * then support acts from the subtitle ([parseSupportActs]). Non-concert events (parties, shows)
-     * carry no roster.
+     * then support acts from the subtitle ([parseSupportActs]). A festival bills the acts of its
+     * description ([descriptionRoster]); any other night (parties, shows, readings) carries no roster.
      *
      * The venue names a night and its acts as `"<night> mit <acts>"` ("SADTEMBER mit TAHA, JOHNBOY
      * M.IKARUS"), so the shared billing frame is switched on: the acts after the marker are the
@@ -282,6 +289,7 @@ private const val VENUE_NAME = "SO36"
  * The venue files every ticketed night under `Konzert`, and the subtitle or a title prefix names
  * the real format: a `Punk- und Hardcore-Festival`, a `Tattoo Convention`, a `PANEL:`, a live
  * `Qualitätspodcast`. A support line is never read this way, so `+ Festival Band` stays a concert.
+ * A title that names a festival ([isFestivalTitle]) is one here already, so its roster is read (#2829).
  */
 private fun refineBySubtitle(
     eventType: String,
@@ -289,8 +297,10 @@ private fun refineBySubtitle(
     subtitle: String?
 ): String {
     val line = subtitle?.trimStart().orEmpty()
-    if (eventType != EventType.CONCERT.name || isSupportLine(line)) return eventType
     return when {
+        eventType != EventType.CONCERT.name -> eventType
+        isFestivalTitle(title) -> EventType.FESTIVAL.name
+        isSupportLine(line) -> eventType
         FESTIVAL_WORD.containsMatchIn(line) -> EventType.FESTIVAL.name
         PODCAST_WORD.containsMatchIn(line) -> EventType.SHOW.name
         CONVENTION_WORD.containsMatchIn(line) || PANEL_PREFIX.containsMatchIn(title) -> EventType.OTHER.name

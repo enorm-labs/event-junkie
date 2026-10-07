@@ -222,6 +222,48 @@ class So36DetailPageScraperTest {
     }
 
     @Test
+    fun `bills a festival's bold, origin-tagged acts and not its name or presenters`() {
+        val url = "https://www.so36.com/produkte/92099-tickets-canarias-calling-festival-so36-berlin-am-08-10-2026"
+        val event = scraper.scrape(fixture("so36-detail-festival-lineup.html", url), url).shouldNotBeNull()
+
+        event.eventType shouldBe EventType.FESTIVAL.name
+        event.artists.map { it.name to it.role } shouldBe
+            listOf("PLANLOS X", "DEATH BY HORSE", "BÍFIDOS", "ENRALE", "DURCHFALL").map { it to "HEADLINER" }
+    }
+
+    @Test
+    fun `bills each night of a two-day festival only its own day's acts`() {
+        val day1 = "https://www.so36.com/produkte/93090-tickets-female-fronted-is-not-a-genre-5-so36-berlin-am-22-10-2026"
+        val day2 = "https://www.so36.com/produkte/90007-tickets-female-fronted-is-not-a-genre-5-so36-berlin-am-23-10-2026"
+
+        // Day 1's subtitle says `Tag 1`; day 2's says nothing, so its rank among the run's dates decides.
+        scraper
+            .scrape(fixture("so36-detail-festival-day1.html", day1), day1)
+            .shouldNotBeNull()
+            .artists
+            .map { it.name } shouldBe
+            listOf("THE IRON ROSES", "KILL HER FIRST", "NEVER OBEY AGAIN", "WICK BAMBIX")
+        scraper
+            .scrape(fixture("so36-detail-festival-day2.html", day2), day2)
+            .shouldNotBeNull()
+            .artists
+            .map { it.name } shouldBe
+            listOf("MARCH", "WREX", "LUTHER", "WÜT", "THE RACCOONZ")
+    }
+
+    @Test
+    fun `bills nobody when a festival's day cannot be told or its bold text names no origin`() {
+        fun roster(html: String) = descriptionRoster(Jsoup.parse("""<div class="product_description">$html</div>"""), day = null)
+
+        roster(
+            "<p><u>Live - Day 1:</u></p><p><strong>A</strong> (X)</p><p><strong>B</strong> (Y)</p>" +
+                "<p><u>Live - Day 2:</u></p><p><strong>C</strong> (X)</p><p><strong>D</strong> (Y)</p>"
+        ) shouldBe emptyList()
+        roster("<p>The current line-up features <strong>Jake Burns</strong> and <strong>Ali McMordie</strong>.</p>") shouldBe emptyList()
+        roster("<p><strong>A</strong> (X)</p><p><strong>B (Y)</strong></p>") shouldBe listOf("A", "B")
+    }
+
+    @Test
     fun `reads the free-admission notice as a free night`() {
         // The ticket tab shows "Eintritt frei / Admission free!" where a price category would be (#1686).
         val url = "https://www.so36.com/produkte/92090-tickets-dav-jura-slam-so36-berlin-am-17-11-2026"
