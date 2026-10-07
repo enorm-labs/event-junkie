@@ -18,6 +18,7 @@ import { descriptionFor } from '@/lib/description'
 import { feedbackMailto } from '@/lib/feedback'
 import { CONTROLLER } from '@/lib/legal'
 import { canonicalUrl } from '@/lib/seo'
+import { withReferral } from '@/lib/referral'
 import { usePageMeta } from '@/composables/usePageMeta'
 import { eventPageMeta, notFoundPageMeta, placeholderPageMeta } from '@/lib/pageMeta'
 import { useStructuredData } from '@/composables/useStructuredData'
@@ -287,7 +288,7 @@ useStructuredData(() => (event.value ? eventPageJsonLd(event.value, locale.value
         {{ t('events.detail.machineTranslated') }}
         <a
           v-if="event.sourceUrl"
-          :href="event.sourceUrl"
+          :href="withReferral(event.sourceUrl)"
           class="underline underline-offset-2"
           rel="noopener noreferrer"
           target="_blank"
@@ -450,12 +451,12 @@ useStructuredData(() => (event.value ? eventPageJsonLd(event.value, locale.value
       -->
       <EventShareActions :event="event">
         <Button v-if="event.ticketUrl && !isPast && !event.relocatedTo" as-child>
-          <a :href="event.ticketUrl" rel="noopener noreferrer" target="_blank">{{
+          <a :href="withReferral(event.ticketUrl)" rel="noopener noreferrer" target="_blank">{{
             t('events.detail.buyTickets')
           }}</a>
         </Button>
         <Button v-if="event.sourceUrl" as-child variant="outline">
-          <a :href="event.sourceUrl" rel="noopener noreferrer" target="_blank">{{
+          <a :href="withReferral(event.sourceUrl)" rel="noopener noreferrer" target="_blank">{{
             t('events.detail.eventPage')
           }}</a>
         </Button>

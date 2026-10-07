@@ -21,6 +21,7 @@ import { districtLabel } from '@/lib/districts'
 import { venuePosition } from '@/lib/mapPins'
 import { programmeLink } from '@/lib/programmeLink'
 import SectionLabel from '@/components/SectionLabel.vue'
+import { withReferral } from '@/lib/referral'
 import type { Locale } from '@/i18n/locales'
 
 const route = useRoute()
@@ -235,7 +236,7 @@ const programme = computed(() => {
       </p>
       <p v-if="venue?.websiteUrl" class="text-body">
         <a
-          :href="venue.websiteUrl"
+          :href="withReferral(venue.websiteUrl)"
           class="text-primary underline-offset-4 hover:underline"
           rel="noopener noreferrer"
           target="_blank"
