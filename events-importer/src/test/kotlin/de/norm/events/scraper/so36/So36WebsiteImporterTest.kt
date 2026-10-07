@@ -78,7 +78,8 @@ class So36WebsiteImporterTest {
         runTest {
             val result = importer.importEvents(sourceUrl)
             result.shouldBeInstanceOf<ImportResult.Success>()
-            result.events shouldHaveSize 108
+            // 108 on the overview, less the four `ROLLER KIDZ` children's discos (#2832).
+            result.events shouldHaveSize 104
             result.etag shouldBe "\"so36-etag\""
             result.lastModified shouldBe "Fri, 03 Jul 2026 21:00:00 GMT"
         }

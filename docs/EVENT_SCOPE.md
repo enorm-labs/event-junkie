@@ -142,10 +142,16 @@ scraping**. Answer §5's first question and the importer is a short job.
 holds for a family sing-along on a Saturday afternoon. A show for teenagers with a minimum age, such as "ab 13 Jahre",
 stays in scope.
 
-**ufaFabrik** set the precedent. It prices a children's show per child, per Kita child or per accompanying
-Erzieher\*in, and no evening show carries one of these labels. One predicate holds the rule:
-`UfaFabrikMonthPageScraper.isChildrensShow`. A venue with children's shows and no such price label needs its own
-signal. Decide it in that importer's PR, and record the signal here.
+A children's band on a real stage stays, such as `Deine Freunde` at Tempodrom or `Lichterkinder` at Uber Eats Music
+Hall. Nothing on those pages marks a show for small children, and adults go to these concerts too.
+
+| Venue                       | Predicate                                                      | Signal                                                                                           |
+| --------------------------- | -------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| ufaFabrik                   | `UfaFabrikMonthPageScraper.isChildrensShow`                    | A price per child, per Kita child or per Erzieher\*in                                            |
+| Peter Edel, Wühlmäuse, SO36 | `billsChildrensShow` (`ChildrensShow.kt`), on title + subtitle | `für Kinder`, a `Familien-` show, a `Kinder…` format, an age range (`0-18 Monate`, `ab 4 Jahre`) |
+
+`billsChildrensShow` keeps a band named after children (`Muttis Kinder`) and a show for teenagers (`ab 13 Jahre`). A
+new venue with children's shows calls it when its page uses these words, or gets its own signal. Record it here.
 
 ## 4. What is in scope, and sometimes surprises people
 

@@ -4,9 +4,12 @@ import de.norm.events.scraper.AbstractTwoPageWebsiteImporter
 import de.norm.events.scraper.AcceptedLimitation
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.HtmlFetcher
+import de.norm.events.scraper.ImportResult
 import de.norm.events.scraper.LimitedAspect
 import de.norm.events.scraper.ScrapedField
 import de.norm.events.scraper.VenueLimitations
+import de.norm.events.scraper.billsChildrensShow
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
 
 /**
@@ -28,11 +31,35 @@ import org.springframework.stereotype.Component
 class So36WebsiteImporter(
     htmlFetcher: HtmlFetcher
 ) : AbstractTwoPageWebsiteImporter(htmlFetcher, So36OverviewPageScraper()::scrape, So36DetailPageScraper()::scrape) {
+    private val logger = KotlinLogging.logger {}
+
     /** Only the event page types a night, so a failed page keeps the stored type (#2505). */
     override val detailPageOwns: Set<ScrapedField> = setOf(ScrapedField.IMAGE, ScrapedField.EVENT_TYPE)
 
     override val eventSource: EventSource = EventSource.SO36
     override val listsWholeProgramme: Boolean = true
+
+    /**
+     * Drops a children's show once the detail page has merged in: only its subtitle says so
+     * (`ROLLER KIDZ`, `Rollschuhdisko für Kinder`), and a detail scraper's `null` would fall back to
+     * the overview row instead (#2832).
+     */
+    override suspend fun importEvents(
+        url: String,
+        etag: String?,
+        lastModified: String?
+    ): ImportResult =
+        when (val result = super.importEvents(url, etag, lastModified)) {
+            is ImportResult.Success -> {
+                val (childrens, kept) = result.events.partition { billsChildrensShow(it.title, it.subtitle) }
+                childrens.forEach { logger.info { "Skipping SO36 children's show '${it.title}' on ${it.eventDate}: out of scope" } }
+                result.copy(events = kept)
+            }
+
+            else -> {
+                result
+            }
+        }
 }
 
 val SO36_LIMITATIONS =
