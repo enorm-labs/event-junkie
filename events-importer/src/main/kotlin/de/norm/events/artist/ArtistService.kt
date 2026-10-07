@@ -78,7 +78,7 @@ class ArtistService(
         val entity = ArtistEntity.fromDomain(artist)
         val saved = artistRepository.save(entity)
         logger.info { "Created artist '${saved.name}' with id ${saved.id}" }
-        return ArtistResponse.fromDomain(saved.toDomain())
+        return ArtistResponse.fromDomain(storeHandSetMusicBrainzId(saved, request.musicbrainzId).toDomain())
     }
 
     /**
@@ -138,7 +138,24 @@ class ArtistService(
         val saved = artistRepository.save(updated)
         logger.info { "Updated artist '${saved.name}' (id=${saved.id})" }
         if (pinsName) logger.info { "Pinned the name of artist $id: the MusicBrainz enrichment keeps it" }
-        return ArtistResponse.fromDomain(saved.toDomain())
+        return ArtistResponse.fromDomain(storeHandSetMusicBrainzId(saved, request.musicbrainzId).toDomain())
+    }
+
+    /**
+     * Stores a MusicBrainz id set by hand as an EXACT verdict, for a name MusicBrainz gives several artists (#2827).
+     * A separate write after the save, so its database clock is later than a rename's `name_changed_at`, and the
+     * sweep does not look the name up again. A null [mbid], or the one already stored, changes nothing.
+     */
+    private suspend fun storeHandSetMusicBrainzId(
+        saved: ArtistEntity,
+        mbid: String?
+    ): ArtistEntity {
+        val id = saved.id
+        val alreadyStored = saved.musicbrainzId == mbid && saved.musicbrainzMatch == MusicBrainzMatch.EXACT.name
+        if (mbid == null || id == null || alreadyStored) return saved
+        artistRepository.storeMusicBrainzVerdict(id, MusicBrainzMatch.EXACT.name, mbid)
+        logger.info { "Set the MusicBrainz id of artist $id by hand: $mbid" }
+        return artistRepository.findById(id) ?: throw ArtistNotFoundException(id)
     }
 
     /**

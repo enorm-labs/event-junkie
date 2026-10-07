@@ -111,6 +111,23 @@ Content-Type: application/json
     });
 %}
 
+### Set the MusicBrainz id by hand — for a name MusicBrainz gives several artists; stored as EXACT (ADR-031, #2827)
+PUT {{importer-host}}/api/admin/artists/{{artist_id}}
+Content-Type: application/json
+
+{
+    "name": "THE ADICTS",
+    "musicbrainzId": "42fa05a0-a983-4ed6-90f3-b2d662216bcc"
+}
+
+> {%
+    client.test("the hand-set id is an EXACT match", function () {
+        client.assert(response.status === 200, "Expected 200 but got " + response.status);
+        client.assert(response.body.musicbrainzMatch === "EXACT", "Expected musicbrainzMatch EXACT");
+        client.assert(response.body.musicbrainzId === "42fa05a0-a983-4ed6-90f3-b2d662216bcc", "Expected the hand-set id");
+    });
+%}
+
 ### Remove the name's pin — the next enrichment may write MusicBrainz's letter case again
 DELETE {{importer-host}}/api/admin/artists/{{artist_id}}/pins/name
 
