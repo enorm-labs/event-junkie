@@ -1,5 +1,6 @@
 package de.norm.events.scraper.quasimodo
 
+import de.norm.events.event.EventStatus
 import de.norm.events.event.EventType
 import de.norm.events.scraper.ScrapedEvent
 import de.norm.events.scraper.UNRESOLVED_EVENT_DATE
@@ -48,6 +49,29 @@ class QuasimodoDetailPageScraperTest {
         otisKane.ticketUrl!! shouldStartWith "https://www.eventim.de/"
         otisKane.imageUrl!! shouldStartWith "https://quasimodo.club/wp-content/uploads/"
         otisKane.description!! shouldContain "Los Angeles"
+    }
+
+    @Test
+    fun `reads a cancellation from the page's alert`() {
+        val cancelled = scrape("otis-kane-cancelled", "otis-kane-7410")
+        cancelled.status shouldBe EventStatus.CANCELLED.name
+        cancelled.title shouldBe "Otis Kane"
+    }
+
+    @Test
+    fun `keeps a page without an alert scheduled`() {
+        listOf("otis-kane", "we-love-80s", "disco-inferno", "berlin-beat-invasion").forEach { fixture ->
+            scrape(fixture, "$fixture-1").status shouldBe EventStatus.SCHEDULED.name
+        }
+    }
+
+    @Test
+    fun `ignores a cancellation that only the description mentions`() {
+        val html =
+            """<article class="type-event"><h1>Otis Kane</h1>
+            <div class="panel-collapse description"><p>Die Show vom März war abgesagt.</p></div></article>"""
+        val sourceUrl = "https://quasimodo.club/events/otis-kane-7410"
+        scraper.scrape(Jsoup.parse(html, sourceUrl), sourceUrl)!!.status shouldBe EventStatus.SCHEDULED.name
     }
 
     @Test
