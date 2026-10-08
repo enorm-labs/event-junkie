@@ -155,12 +155,55 @@ class RoadrunnerOverviewPageScraperTest {
 
     @Test
     fun `bills no act for a block with no line-up label, and declares that as a limitation`() {
-        // The title alone bills a band battle (`BOWIE 10`) or a misspelled act with its tour run on (#2369).
-        val unlabelled = october().filter { it.eventDate in setOf(LocalDate.of(2026, 10, 9), LocalDate.of(2026, 11, 11)) }
+        // The title alone is as often a band battle as a misspelled act with its tour run on (#2369).
+        val unlabelled = october().single { it.eventDate == LocalDate.of(2026, 11, 11) }
 
-        unlabelled.map { it.title } shouldBe listOf("BOWIE 10", "PHIL CAMPELL'S BASTARD SONS The Phil Forever Tour")
-        unlabelled.flatMap { it.artists } shouldBe emptyList()
+        unlabelled.title shouldBe "PHIL CAMPELL'S BASTARD SONS The Phil Forever Tour"
+        unlabelled.artists shouldBe emptyList()
         AcceptedLimitations.forSource(EventSource.ROADRUNNER).map { it.aspect } shouldContain LimitedAspect.ARTISTS
+    }
+
+    @Test
+    fun `bills a LINEUP list's dashed acts in order and credits the presenter above the title`() {
+        val bowie = october().single { it.eventDate == LocalDate.of(2026, 10, 9) }
+
+        bowie.title shouldBe "BOWIE 10"
+        bowie.billing() shouldBe
+            listOf("The Sprees", "The Bar Sinister", "Pulsar Mod Club", "Garlands", "Sid Vision", "The Barkind Mad").map { it to "HEADLINER" }
+        bowie.promoters shouldBe listOf("The David Watts Foundation")
+        bowie.description.shouldNotBeNull() shouldNotContain "presents"
+        // The paragraph's note on past line-ups stays readable.
+        bowie.description shouldContain "DIE NERVEN"
+    }
+
+    @Test
+    fun `reads a LINEUP list over paragraphs, keeps a long band name whole and stops at the first undashed line`() {
+        val html =
+            """
+            <html><body>
+              <p class="Stil62">Samstag, 4. Juli:</p>
+              <p class="Stil62"><span class="Stil11">GARAGE BATTLE</span></p>
+              <p>Line-Up: these bands fight it out<br>– …And You Will Know Us by the Trail of Dead<br>- MORE TBA</p>
+              <p>- The Monsters (CH)</p>
+              <p>Come early.</p>
+              <p>- Not An Act</p>
+            </body></html>
+            """.trimIndent()
+
+        val event = scraper.scrape(Jsoup.parse(html, baseUrl), baseUrl).single()
+
+        event.title shouldBe "GARAGE BATTLE"
+        event.billing() shouldBe listOf("…And You Will Know Us by the Trail of Dead" to "HEADLINER", "The Monsters" to "HEADLINER")
+        event.promoters shouldBe emptyList()
+    }
+
+    @Test
+    fun `bills nothing from a LINE-UP whose lines carry no dash`() {
+        // The May page lists a burlesque cast one name per line under `LINE-UP:`.
+        val event = scraper.scrape(programme(), baseUrl).single()
+
+        event.artists shouldBe emptyList()
+        event.promoters shouldBe emptyList()
     }
 
     @Test
