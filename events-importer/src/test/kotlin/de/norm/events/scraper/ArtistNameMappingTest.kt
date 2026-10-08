@@ -540,6 +540,10 @@ class ArtistNameMappingTest {
         isGuestSlotLabel("Secret Line-Up") shouldBe true
         isGuestSlotLabel("Mystery Guest TBA") shouldBe true
         isGuestSlotLabel("Guests tbc.") shouldBe true
+        // KitKatClub puts one word between the two (#2901).
+        isGuestSlotLabel("Secret Music Line up") shouldBe true
+        isNonArtistName("Secret Music Line up") shouldBe true
+        isGuestSlotLabel("Surprise DJ Lineup TBA") shouldBe true
     }
 
     @Test
@@ -549,6 +553,12 @@ class ArtistNameMappingTest {
         isGuestSlotLabel("Special Guest DJ Foo") shouldBe false
         isGuestSlotLabel("Secret Rhythms") shouldBe false
         isGuestSlotLabel("Lineup") shouldBe false
+        // One word at most between `secret` and `line up`, so a longer name is still an act.
+        isGuestSlotLabel("Secret Garden Music Lineup") shouldBe false
+        isGuestSlotLabel("Secret Music") shouldBe false
+        isGuestSlotLabel("Music Line Up") shouldBe false
+        isGuestSlotLabel("Secret Music Line up Orchestra") shouldBe false
+        isNonArtistName("Secret Garden Music Lineup") shouldBe false
         isNonArtistName("Guns N' Roses") shouldBe false
     }
 

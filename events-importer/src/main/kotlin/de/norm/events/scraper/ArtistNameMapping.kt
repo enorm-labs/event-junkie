@@ -718,12 +718,12 @@ fun isDjSetFormatLabel(name: String): Boolean = DJ_SET_LABEL_PATTERN.matches(nam
  * Anchored, so "Special Guest DJ Foo" is untouched; kept to the guest forms, since a standalone
  * "Friends"/"Band" is a plausible act name. OHM bills "+ Secret Lineup" and "+ Secret Guest tab",
  * its spelling of "tba" (#2439); a lineup slot needs the `secret` word, since "Line Up" alone is
- * [MORE_TO_COME_PATTERN]'s.
+ * [MORE_TO_COME_PATTERN]'s. One word may sit between: KitKatClub bills "Secret Music Line up" (#2901).
  */
 private val GUEST_SLOT_PATTERN =
     Regex(
         """\+?\s*(?:(?:(?:secret|surprise|mystery)\s+)?(?:guests?|gäste|gaeste)(?:\s+djs?)?""" +
-            """|(?:secret|surprise|mystery)\s+line[\s-]?up)(?:\s+(?:tba|tbc|tbd|tab)\.*)?""",
+            """|(?:secret|surprise|mystery)\s+(?:\p{L}+\s+)?line[\s-]?up)(?:\s+(?:tba|tbc|tbd|tab)\.*)?""",
         RegexOption.IGNORE_CASE
     )
 
