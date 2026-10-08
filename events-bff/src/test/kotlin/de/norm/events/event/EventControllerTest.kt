@@ -440,6 +440,12 @@ class EventControllerTest : BaseControllerTest() {
             val day = LocalDate.now(ClockConfiguration.BERLIN).plusDays(10)
             insertEvent(venueId, "Weekender", "weekender", day.minusDays(1), endDate = day.plusDays(2))
             insertEvent(venueId, "Night Before", "night-before", day.minusDays(2))
+            // An earlier night that ends on the day before noon is that night's, not the day's (#2923).
+            val eve = day.minusDays(1)
+            insertEvent(venueId, "Afterhour", "afterhour", eve, startTime = LocalTime.of(23, 0), endDate = day, endTime = LocalTime.of(9, 0))
+            insertEvent(venueId, "Day Rave", "day-rave", eve, startTime = LocalTime.of(10, 0), endDate = day, endTime = LocalTime.of(14, 0))
+            insertEvent(venueId, "Open End", "open-end", eve, startTime = LocalTime.of(22, 0), endDate = day)
+            insertEvent(venueId, "Brunch", "brunch", day, startTime = LocalTime.of(10, 0), endDate = day, endTime = LocalTime.of(11, 0))
 
             webTestClient
                 .get()
@@ -449,7 +455,7 @@ class EventControllerTest : BaseControllerTest() {
                 .isOk
                 .expectBody()
                 .jsonPath("$.content[*].slug")
-                .value<List<String>> { it shouldContainExactlyInAnyOrder listOf("weekender") }
+                .value<List<String>> { it shouldContainExactlyInAnyOrder listOf("weekender", "day-rave", "open-end", "brunch") }
 
             webTestClient
                 .get()
@@ -458,8 +464,8 @@ class EventControllerTest : BaseControllerTest() {
                 .expectStatus()
                 .isOk
                 .expectBody()
-                .jsonPath("$.totalElements")
-                .isEqualTo(0)
+                .jsonPath("$.content[*].slug")
+                .value<List<String>> { it shouldContainExactlyInAnyOrder listOf("brunch") }
         }
 
     @Test

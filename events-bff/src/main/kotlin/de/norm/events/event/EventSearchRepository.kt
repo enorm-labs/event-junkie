@@ -29,6 +29,11 @@ data class EventFilter(
      */
     val runningFrom: LocalDate? = null,
     /**
+     * With [runningFrom], an event that started before it must also end on it at or after this time,
+     * or later, so the night before stays with its own day (#2923). Only the list sets it.
+     */
+    val runningCutoff: LocalTime? = null,
+    /**
      * A day the event is on: started by it and not ended before it (ADR-029). Internal, set by the
      * Tonight feed. Wins over [from] and [to].
      */
@@ -57,7 +62,12 @@ data class EventFilter(
     val onlyFree: Boolean = false,
     /** Any of these [TimeOfDay] slugs; empty imposes no constraint. [EventFilterParams] normalizes them. */
     val timesOfDay: List<String> = emptyList()
-)
+) {
+    companion object {
+        /** Before this on its end day, an earlier night is over for the list's `running=true` (#2923). */
+        val RUNNING_CUTOFF: LocalTime = LocalTime.of(12, 0)
+    }
+}
 
 /** An ordered page of event IDs plus the total count of matches across all pages. */
 data class EventIdPage(
@@ -234,7 +244,12 @@ class EventSearchRepository(
             return
         }
         filter.runningFrom?.let {
-            conditions += "$EFFECTIVE_END >= :runningFrom"
+            conditions +=
+                filter.runningCutoff?.let { cutoff ->
+                    params["runningCutoff"] = cutoff
+                    "(e.event_date >= :runningFrom OR $EFFECTIVE_END > :runningFrom OR " +
+                        "($EFFECTIVE_END = :runningFrom AND (e.end_time IS NULL OR e.end_time >= :runningCutoff)))"
+                } ?: "$EFFECTIVE_END >= :runningFrom"
             params["runningFrom"] = it
         } ?: filter.from?.let {
             conditions += "e.event_date >= :from"
