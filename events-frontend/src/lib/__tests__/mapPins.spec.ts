@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import type { EventSummary, VenueSummary } from '@/api/types'
-import { groupByVenue, nearby, radiusFromQuery, venuePin } from '@/lib/mapPins'
+import { groupByVenue, nearby, overlapGroups, radiusFromQuery, venuePin } from '@/lib/mapPins'
 
 const ASTRA: VenueSummary = {
   slug: 'astra',
@@ -88,5 +88,38 @@ describe('radiusFromQuery', () => {
     expect(radiusFromQuery('5')).toBe(5)
     expect(radiusFromQuery('3')).toBe(2)
     expect(radiusFromQuery('')).toBe(2)
+  })
+})
+
+describe('overlapGroups', () => {
+  it('groups points within the radius of the first free one, and leaves the rest alone', () => {
+    const points = [
+      { x: 0, y: 0 },
+      { x: 100, y: 0 },
+      { x: 0, y: 20 },
+      { x: 0, y: 0 },
+    ]
+    expect(overlapGroups(points, 24)).toEqual([[0, 2, 3], [1]])
+  })
+
+  it('measures from the seed, so a chain of near points does not merge across a street', () => {
+    const points = [
+      { x: 0, y: 0 },
+      { x: 20, y: 0 },
+      { x: 40, y: 0 },
+    ]
+    expect(overlapGroups(points, 24)).toEqual([[0, 1], [2]])
+  })
+
+  it('keeps every point on its own when none overlap', () => {
+    expect(
+      overlapGroups(
+        [
+          { x: 0, y: 0 },
+          { x: 30, y: 0 },
+        ],
+        24,
+      ),
+    ).toEqual([[0], [1]])
   })
 })

@@ -49,6 +49,10 @@ export const CARD_GRID_CLASS = 'grid grid-cols-1 gap-x-8 gap-y-12 sm:grid-cols-2
 /** The compact view's list of `EventRow`/`VenueRow` text rows: one column, hairlines between. */
 export const CARD_LIST_CLASS = 'divide-y divide-border border-y border-border'
 
+/** A panel over a map, such as a venue's events or a group marker's venues: the map stays in view. */
+export const MAP_PANEL_CLASS =
+  'absolute inset-x-2 bottom-8 z-20 max-h-56 space-y-2 overflow-y-auto rounded-lg border border-border bg-background/95 p-3 sm:inset-x-auto sm:bottom-3 sm:left-3 sm:max-h-80 sm:w-96'
+
 /**
  * The two filter bars: chrome, not an object (#1240). One hairline rule, no horizontal padding,
  * because the page's own `p-4 sm:p-8` sets that edge.

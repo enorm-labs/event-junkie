@@ -38,7 +38,7 @@ import {
   venuePin,
 } from '@/lib/mapPins'
 import { useI18n } from 'vue-i18n'
-import { CARD_GRID_CLASS, CARD_LIST_CLASS, RESULTS_BAR_CLASS } from '@/lib/utils'
+import { CARD_GRID_CLASS, CARD_LIST_CLASS, MAP_PANEL_CLASS, RESULTS_BAR_CLASS } from '@/lib/utils'
 
 const PAGE_SIZE = 24
 
@@ -250,6 +250,7 @@ const pins = computed<MapPin[]>(() =>
         dimmed: !!near.value && !nearSlugs.value.has(venue.slug),
         // A venue we do not import has nothing to show here, so its pin is the muted one (#2766).
         quiet: venue.imported === false,
+        note: districtLabel(venue.district),
       }),
     )
     .filter((pin): pin is MapPin => pin !== null),
@@ -495,11 +496,7 @@ const localePath = useLocalePath()
       >
         <!-- Over the map, as on the events map: the filters and "near me" above push the map's
              lower edge to the fold, so a panel under it changed nothing in view (#2391). -->
-        <section
-          v-if="selectedVenue"
-          aria-live="polite"
-          class="absolute inset-x-2 bottom-8 z-20 max-h-56 space-y-2 overflow-y-auto rounded-lg border border-border bg-background/95 p-3 sm:inset-x-auto sm:bottom-3 sm:left-3 sm:max-h-80 sm:w-96"
-        >
+        <section v-if="selectedVenue" aria-live="polite" :class="MAP_PANEL_CLASS">
           <div class="flex items-start gap-2">
             <div class="min-w-0 flex-1">
               <h2 class="truncate text-card-title font-bold tracking-tight">

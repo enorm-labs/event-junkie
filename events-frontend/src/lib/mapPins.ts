@@ -21,6 +21,10 @@ export interface MapPin {
   dimmed?: boolean
   /** A venue drawn with nothing in the range, because a link asked for it: muted, never live. */
   quiet?: boolean
+  /** What this pin adds to a group's badge, such as its event count; 1 when absent. */
+  weight?: number
+  /** A second line under the name in a group's list, such as an event count or a district. */
+  note?: string
 }
 
 /** A venue together with the events it has in the requested range. */
@@ -58,12 +62,37 @@ export function groupByVenue(events: readonly EventSummary[]): VenueEvents[] {
   )
 }
 
+/**
+ * Pins that would overlap on screen, as groups of indexes: each group starts at the first free
+ * point and takes every free point within `radius` of it. Seeding in input order keeps the groups
+ * stable, and the view's order (the busiest venue first) picks the seeds.
+ */
+export function overlapGroups(
+  points: readonly { x: number; y: number }[],
+  radius: number,
+): number[][] {
+  const taken = new Set<number>()
+  const groups: number[][] = []
+  points.forEach((seed, i) => {
+    if (taken.has(i)) return
+    const group = [i]
+    taken.add(i)
+    points.forEach((point, j) => {
+      if (taken.has(j) || Math.hypot(point.x - seed.x, point.y - seed.y) > radius) return
+      group.push(j)
+      taken.add(j)
+    })
+    groups.push(group)
+  })
+  return groups
+}
+
 /** A pin for a venue, or null when the venue has no coordinate. */
 export function venuePin(
   venue: VenueSummary,
   label: string,
   badge?: string,
-  extra: Pick<MapPin, 'live' | 'dimmed' | 'quiet'> = {},
+  extra: Pick<MapPin, 'live' | 'dimmed' | 'quiet' | 'weight' | 'note'> = {},
 ): MapPin | null {
   const position = venuePosition(venue)
   if (!venue.slug || !position) return null
