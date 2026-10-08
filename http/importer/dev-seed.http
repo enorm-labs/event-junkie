@@ -112,6 +112,7 @@
 ###   Schokoladen          — https://www.schokoladen-mitte.de/
 ###   silent green         — https://www.silent-green.net/programm
 ###   Sisyphos             — https://www.sisyphos-berlin.net/collections/tickets/products.json
+###   Slaughterhouse       — https://slaughterhouse-berlin.de/konzerte/
 ###   SO36                 — https://www.so36.com/tickets
 ###   Soda Club            — https://www.soda-berlin.de/events
 ###   Sonnenraum           — https://clubdervisionaere.com/programm/
@@ -227,7 +228,6 @@
 ###   Showfenster Theater            — https://www.showfenster-show.de/übersichtskalender
 ###   Silverwings                    — https://silverwings.de/program.html
 ###   Sisyfass                       — https://ra.co/clubs/159864
-###   Slaughterhouse                 — https://slaughterhouse-berlin.de/konzerte/
 ###   Solar                          — https://solar-berlin.de/event-types/dj/
 ###   Speiches Rock- und Blueskneipe — http://www.rockradio.de/rr_termine_speiche_werbung_termine_raumerstr.php
 ###   Spindler & Klatt               — https://www.spindlerklatt.com/club
@@ -8708,7 +8708,7 @@ Content-Type: application/json
 %}
 
 ### ————————————————————————————————————————————————————————————
-### Slaughterhouse (Lehrter Str. 35, Berlin-Tiergarten — not imported, #2766)
+### Slaughterhouse (Lehrter Str. 35, Berlin-Tiergarten)
 ### ————————————————————————————————————————————————————————————
 
 ### --- Create Slaughterhouse venue ---
@@ -8729,13 +8729,45 @@ Content-Type: application/json
     "descriptionAlt": "Ein Verein mit Ehrenamtlichen betreibt den Club seit 2000 im Hinterhof der denkmalgeschützten Kulturfabrik Moabit von 1911: Konzerte junger Berliner Bands, dazu monatlich die Wave- und Gothic-Party Factory.",
     "descriptionAltLanguage": "de",
     "venueTypes": ["club", "live-venue"],
-    "programmeUrl": "https://slaughterhouse-berlin.de/konzerte/",
     "reviewedAt": "2026-10-06T20:48:21Z"
 }
 
 > {%
+    client.global.set("slaughterhouse_venue_id", response.body.id);
     client.test("Slaughterhouse venue created", function () {
         client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Create Slaughterhouse event source ---
+# Links the venue to the SlaughterhouseWebsiteImporter.
+# The sourceType "SLAUGHTERHOUSE" matches EventSource.SLAUGHTERHOUSE.
+POST {{importer-host}}/api/admin/event-sources
+Content-Type: application/json
+
+{
+    "venueId": {{slaughterhouse_venue_id}},
+    "name": "Slaughterhouse",
+    "url": "https://slaughterhouse-berlin.de/konzerte/",
+    "sourceType": "SLAUGHTERHOUSE",
+    "enabled": true,
+    "importIntervalMinutes": 1440,
+    "maxRetries": 3
+}
+
+> {%
+    client.test("Slaughterhouse event source created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Trigger initial Slaughterhouse import ---
+POST {{importer-host}}/api/admin/event-sources/slaughterhouse/import
+Accept: application/json
+
+> {%
+    client.test("Slaughterhouse import triggered", function () {
+        client.assert(response.status === 202, "Expected 202 but got " + response.status);
     });
 %}
 

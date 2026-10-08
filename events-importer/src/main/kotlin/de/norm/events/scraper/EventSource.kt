@@ -297,6 +297,9 @@ enum class EventSource {
     /** Sisyphos Berlin – the sprawling Rummelsburg garden club in a former dog-biscuit factory, running weekend-long techno and house parties. */
     SISYPHOS,
 
+    /** Slaughterhouse Berlin – a volunteer-run club in the courtyard of the Kulturfabrik Moabit, with young bands and the monthly Factory wave party. */
+    SLAUGHTERHOUSE,
+
     /** SO36 Berlin – the Oranienstraße club central to Berlin's punk and new-wave history, today mixing punk, rock, queer parties and club nights. */
     SO36,
 
