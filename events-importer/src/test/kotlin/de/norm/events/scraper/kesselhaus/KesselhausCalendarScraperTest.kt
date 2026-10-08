@@ -83,6 +83,26 @@ class KesselhausCalendarScraperTest {
     }
 
     @Test
+    fun `bills no programme name, and bills the acts a tribute's subtitle lists after mit`() {
+        val events = kesselhaus.scrape(calendar, url)
+
+        events.first { it.title == "41. Berliner Jazztreff" }.artists.shouldBeEmpty()
+        events.first { it.title == "Weihnachtssingen im Kiez" }.artists.shouldBeEmpty()
+        val tribute = events.first { it.title.startsWith("Tribute concert: In memory of Lemmy") }
+        tribute.artists.map { it.name to it.role } shouldBe listOf("Motörblast" to "HEADLINER", "Nitrogods" to "HEADLINER")
+    }
+
+    @Test
+    fun `leaves a festival's subtitle line-up and a named act's mit guest unbilled`() {
+        // Both events are past at the fixture's capture, so the clock goes back to the window's first month.
+        val august = Clock.fixed(Instant.parse("2026-08-01T08:00:00Z"), ZoneId.of("Europe/Berlin"))
+        val events = KesselhausRoom.entries.flatMap { KesselhausCalendarScraper(it, august).scrape(calendar, url) }
+
+        events.first { it.title == "The Sound of Courage - Das Festival" }.artists.shouldBeEmpty()
+        events.first { it.title.startsWith("Dying Phoenix") }.artists.map { it.name } shouldBe listOf("Dying Phoenix")
+    }
+
+    @Test
     fun `steps to the window after the last month shown and stops after an empty one`() {
         kesselhaus.nextPage(calendar, url) shouldBe "https://www.kesselhaus.net/de/calendar?part=2027-03"
         val last = Jsoup.parse(fixture("kesselhaus-calendar-2027-10.html"), "$url?part=2027-10")
