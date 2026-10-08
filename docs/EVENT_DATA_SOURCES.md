@@ -22,8 +22,8 @@ repairing live in the [issue tracker](https://github.com/enorm-labs/event-junkie
 
 | Status                              | Meaning                                                                              | Count |
 | ----------------------------------- | ------------------------------------------------------------------------------------ | ----: |
-| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   115 |
-| 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |    55 |
+| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   116 |
+| 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |    54 |
 | ⛔ [Blocked](#-blocked--deferred)   | Website analyzed, but no usable listings (no programme page, JS-only, or too sparse) |   136 |
 | 📣 [Promoters](#-promoters)         | Cross-venue listings; enrich the venues' own events, never add events (ADR-043)      |    11 |
 | ❓ [Unanalyzed](#-not-analyzed-yet) | URL recorded, but the website still needs a first look                               |    11 |
@@ -114,6 +114,7 @@ schema change.
 | MS Hoppetosse                    | https://hoppetosse.berlin/                                  | Techno Club  | Shares the CdV listing; winter location only              |
 | Neue Zukunft                     | https://neue-zukunft.org/                                   | Club         | Elfsight Event Calendar widget API                        |
 | OHM                              | https://ohmberlin.com/                                      | Techno Club  | Year-less dd/MM; only 1–3 nights listed at a time         |
+| Orangerie Neukölln               | https://www.orangerie-nk.de/                                | Bar          | Static one-pager; JSON-LD ItemList plus cards             |
 | Orania.Berlin                    | https://orania.berlin/concerts                              | Bar          | TYPO3 Calendarize; three pages of ten; always free        |
 | PANDA platforma                  | https://panda-platforma.berlin/veranstaltungen-in-berlin/   | Other        | TEC REST API; series type the night; jazz credits players |
 | Panke Culture                    | https://www.pankeculture.com/programme/                     | Club         | WordPress/Divi; upcoming list only; no event pages        |
@@ -156,7 +157,7 @@ schema change.
 | Zitadelle                        | https://citadel-music-festival.de/events                    | Open Air     | Festival site; WordPress/EM; summer season only           |
 | Zur Klappe                       | https://zurklappe.org/events                                | Techno Club  | Next.js flight payload; no genre or prices                |
 
-114 importer classes cover 115 sources. Only Kantine am Berghain has no class of its own, and it shares the Berghain
+115 importer classes cover 116 sources. Only Kantine am Berghain has no class of its own, and it shares the Berghain
 importer outright. Its rows have their own `sourceId` prefix, `kantine_am_berghain:`. Four other groups share a _listing and parser_ while keeping one thin `@Component` per venue, so
 they do not reduce the count. They are Club der Visionäre with Sonnenraum and MS Hoppetosse, and the three Velomax halls.
 The other two are Kesselhaus with Maschinenhaus, and Uber Arena with the Uber Eats Music Hall.
@@ -177,7 +178,7 @@ test fixtures supply most of the "one field" rows, because a listing page usuall
   that one description holds both languages, with a marker between them.
 - **Evidence** is the page that shows the second language. A _captured page_ is a fixture that the scraper tests read.
 
-45 sources have a second language, 66 have none, and 4 are unknown. Eight translate the event text on a second page.
+46 sources have a second language, 66 have none, and 4 are unknown. Eight translate the event text on a second page.
 Ten put both languages in one field.
 
 The scrapers of the one-field sources cut the description at its marker (`splitBilingualDescription`). The second half
@@ -272,6 +273,7 @@ texts read as German and English. Club OST is not on this list, because none of 
 | MS Hoppetosse                    | No              | —                                                            | —                  |                                                                                                                                    |
 | Neue Zukunft                     | No              | —                                                            | —                  |                                                                                                                                    |
 | OHM                              | No              | —                                                            | —                  |                                                                                                                                    |
+| Orangerie Neukölln               | Yes             | `?lang=en` on the link                                       | Not on the listing | https://www.orangerie-nk.de/?lang=en                                                                                               |
 | Orania.Berlin                    | Yes             | English first; `/de/` path, `hreflang`                       | Translated         | https://orania.berlin/de/konzerte                                                                                                  |
 | PANDA platforma                  | Yes             | One field: Russian, `[EN]`, English                          | One field          | [captured page](../events-importer/src/test/resources/scraper/pandaplatforma/pandaplatforma-events.json)                           |
 | Panke Culture                    | No              | —                                                            | —                  |                                                                                                                                    |
@@ -380,7 +382,6 @@ least as heavily as an RA count when the next batch is prioritised.
 | Kallasch&                      | https://kallasch.berlin/programm/                                        | Bar          | Medium   | WordPress MEC; ?mec-ical-feed=1 iCal; expand RRULEs          |
 | M-BIA                          | https://www.m-bia.de/                                                    | Techno Club  | Low      | WordPress posts; post date is event date; RA links           |
 | Hafenbar Berlin                | https://www.hafenbar-berlin.de                                           | Bar          | Low      | WordPress; 2 weekly party pages, next date only              |
-| Orangerie Neukölln             | https://www.orangerie-nk.de/?lang=de                                     | Bar          | High     | Static site; JSON-LD Event list; no detail pages             |
 | Marmorbar                      | https://www.marmorbar.com/en/event-list                                  | Bar          | Medium   | Wix Events warmup JSON; prices include fees                  |
 | Giri                           | https://giri.berlin/programme/                                           | Bar          | Medium   | WordPress; /programme/?month=; robots bars its JSON          |
 | ACUD MACHT NEU                 | https://acudmachtneu.de/programm/                                        | Club         | Medium   | WordPress; /programm/YYYY/M/ pages; time on detail           |

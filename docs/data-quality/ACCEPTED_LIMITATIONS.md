@@ -241,6 +241,9 @@ says so.
 | `OHM`                  | `PRICE`            | the programme page carries no price                                                                                                              | —     |
 | `OHM`                  | `TICKET_URL`       | the programme page links no ticket shop                                                                                                          | —     |
 | `OHM`                  | `EVENT_TYPE`       | the venue publishes no categories; every night is a DJ programme                                                                                 | —     |
+| `ORANGERIE_NEUKOELLN`  | `PER_EVENT_PAGE`   | the one-pager has no page per event; each night links out to Rausgegangen                                                                        | —     |
+| `ORANGERIE_NEUKOELLN`  | `DOORS_TIME`       | each night states one start time                                                                                                                 | —     |
+| `ORANGERIE_NEUKOELLN`  | `END_TIME`         | the programme prints no closing time                                                                                                             | —     |
 | `ORANIA`               | `DOORS_TIME`       | the venue states one time per concert, which is taken as the start                                                                               | —     |
 | `ORANIA`               | `END_TIME`         | every concert is billed open end                                                                                                                 | —     |
 | `ORANIA`               | `PRICE`            | entry is free to every concert                                                                                                                   | —     |

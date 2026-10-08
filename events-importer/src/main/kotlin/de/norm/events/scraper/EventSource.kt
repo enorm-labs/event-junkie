@@ -228,6 +228,9 @@ enum class EventSource {
     /** OHM Berlin – a small bass and techno club inside the Tresor power-station complex. */
     OHM,
 
+    /** Orangerie Neukölln – the café and bar in the neo-baroque orangery of Körnerpark, with free DJ evenings and live Parkside Sessions. */
+    ORANGERIE_NEUKOELLN,
+
     /** Orania.Berlin – the bar of a Kreuzberg hotel in the 1912 Oranienpalast, with free jazz, piano and soul concerts booked by pianist Matti Klein. */
     ORANIA,
 
