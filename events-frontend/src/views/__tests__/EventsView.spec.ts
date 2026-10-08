@@ -136,16 +136,25 @@ describe('EventsView calendar subscription', () => {
     wrapper = undefined
   })
 
-  it('links the calendar for the filters shown, named after them, as webcal with an https address beside it', async () => {
+  it('offers the calendar for the filters shown in one menu, named after them', async () => {
     await mountAt('/en/events?genre=jazz&district=neukoelln&from=2026-10-10')
 
-    const subscribe = wrapper!.get('[data-testid="calendar-subscribe"]')
-    expect(subscribe.attributes('href')).toBe(
-      `webcal://${window.location.host}/calendar.ics?locale=en&district=neukoelln&genre=jazz&name=jazz+%C2%B7+Neuk%C3%B6lln`,
-    )
-    expect(subscribe.text()).toBe('Subscribe')
-    expect(wrapper!.get('[data-testid="calendar-url"]').attributes('href')).toBe(
+    const menu = wrapper!.getComponent({ name: 'CalendarSubscribeMenu' })
+    expect(menu.props('path')).toBe(
       '/calendar.ics?locale=en&district=neukoelln&genre=jazz&name=jazz+%C2%B7+Neuk%C3%B6lln',
+    )
+    expect(menu.props('name')).toBe('Event Junkie · jazz · Neukölln')
+    const trigger = wrapper!.get('[data-testid="calendar-subscribe"]')
+    expect(trigger.element.tagName).toBe('BUTTON')
+    expect(trigger.text()).toContain('Subscribe to calendar')
+    expect(trigger.attributes('title')).toMatch(/matching these filters/)
+  })
+
+  it('names an unfiltered calendar after the site', async () => {
+    await mountAt('/en/events')
+
+    expect(wrapper!.getComponent({ name: 'CalendarSubscribeMenu' }).props('name')).toBe(
+      'Event Junkie',
     )
   })
 })
