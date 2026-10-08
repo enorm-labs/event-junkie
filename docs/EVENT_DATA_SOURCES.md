@@ -22,8 +22,8 @@ repairing live in the [issue tracker](https://github.com/enorm-labs/event-junkie
 
 | Status                              | Meaning                                                                              | Count |
 | ----------------------------------- | ------------------------------------------------------------------------------------ | ----: |
-| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   121 |
-| 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |    49 |
+| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   122 |
+| 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |    48 |
 | ⛔ [Blocked](#-blocked--deferred)   | Website analyzed, but no usable listings (no programme page, JS-only, or too sparse) |   136 |
 | 📣 [Promoters](#-promoters)         | Cross-venue listings; enrich the venues' own events, never add events (ADR-043)      |    11 |
 | ❓ [Unanalyzed](#-not-analyzed-yet) | URL recorded, but the website still needs a first look                               |    11 |
@@ -122,6 +122,7 @@ schema change.
 | PANDA platforma                  | https://panda-platforma.berlin/veranstaltungen-in-berlin/   | Other        | TEC REST API; series type the night; jazz credits players |
 | Panke Culture                    | https://www.pankeculture.com/programme/                     | Club         | WordPress/Divi; upcoming list only; no event pages        |
 | Parkbühne Wuhlheide              | https://www.wuhlheide.de/programm                           | Open Air     | October CMS; ISO date in URL; seasonal, sold-out          |
+| Pfefferberg Haus 13              | https://haus13.pfefferwerk.de/                              | Concert Hall | Event Organiser; 2 listing pages + event pages            |
 | Privatclub                       | https://privatclub-berlin.de/                               | Club         | Rich detail pages; genre, presale + AK prices             |
 | PUNCH L!NE Club                  | https://punchlineberlin.com/de/tickets                      | Comedy Club  | Next.js flight payload; all dates on one page             |
 | Quasimodo                        | https://quasimodo.club/events                               | Club         | Events-Manager; .club domain; genre tags + prices         |
@@ -162,7 +163,7 @@ schema change.
 | Zitadelle                        | https://citadel-music-festival.de/events                    | Open Air     | Festival site; WordPress/EM; summer season only           |
 | Zur Klappe                       | https://zurklappe.org/events                                | Techno Club  | Next.js flight payload; no genre or prices                |
 
-120 importer classes cover 121 sources. Only Kantine am Berghain has no class of its own, and it shares the Berghain
+121 importer classes cover 122 sources. Only Kantine am Berghain has no class of its own, and it shares the Berghain
 importer outright. Its rows have their own `sourceId` prefix, `kantine_am_berghain:`. Four other groups share a _listing and parser_ while keeping one thin `@Component` per venue, so
 they do not reduce the count. They are Club der Visionäre with Sonnenraum and MS Hoppetosse, and the three Velomax halls.
 The other two are Kesselhaus with Maschinenhaus, and Uber Arena with the Uber Eats Music Hall.
@@ -183,7 +184,7 @@ test fixtures supply most of the "one field" rows, because a listing page usuall
   that one description holds both languages, with a marker between them.
 - **Evidence** is the page that shows the second language. A _captured page_ is a fixture that the scraper tests read.
 
-47 sources have a second language, 70 have none, and 4 are unknown. Eight translate the event text on a second page.
+47 sources have a second language, 71 have none, and 4 are unknown. Eight translate the event text on a second page.
 Ten put both languages in one field.
 
 The scrapers of the one-field sources cut the description at its marker (`splitBilingualDescription`). The second half
@@ -286,6 +287,7 @@ texts read as German and English. Club OST is not on this list, because none of 
 | PANDA platforma                  | Yes             | One field: Russian, `[EN]`, English                          | One field          | [captured page](../events-importer/src/test/resources/scraper/pandaplatforma/pandaplatforma-events.json)                           |
 | Panke Culture                    | No              | —                                                            | —                  |                                                                                                                                    |
 | Parkbühne Wuhlheide              | No              | —                                                            | —                  |                                                                                                                                    |
+| Pfefferberg Haus 13              | No              | —                                                            | —                  |                                                                                                                                    |
 | Privatclub                       | Yes             | One field: `— english version —`                             | One field          | https://privatclub-berlin.de/                                                                                                      |
 | PUNCH L!NE Club                  | Yes             | `/en/` path                                                  | Not on the listing | https://punchlineberlin.com/en/tickets                                                                                             |
 | Quasimodo                        | Yes             | `/en/` path, `hreflang`                                      | Not on the listing | https://quasimodo.club/en/events                                                                                                   |
@@ -348,7 +350,6 @@ least as heavily as an RA count when the next batch is prioritised.
 | ------------------------------ | ------------------------------------------------------------------------ | ------------ | -------- | ------------------------------------------------------------ |
 | KAOS Berlin                    | https://kaosberlin.de/veranstaltungen/                                   | Techno Club  | Low      | TEC REST API; 16 events in 2026, none upcoming on 10-03      |
 | DSTRKT Club Berlin             | https://www.dstrkt.de/                                                   | Club         | Low      | Wix one-pager; 2 dated events, which is the whole programme  |
-| Pfefferberg Haus 13            | https://haus13.pfefferwerk.de/veranstaltungen/                           | Concert Hall | Medium   | Event Organiser iCal; 8 upcoming; talks need a filter        |
 | Slaughterhouse                 | https://slaughterhouse-berlin.de/konzerte/                               | Club         | Medium   | Gutenberg paragraphs; 6 dated entries, unsorted              |
 | Speiches Rock- und Blueskneipe | http://www.rockradio.de/rr_termine_speiche_werbung_termine_raumerstr.php | Bar          | Medium   | Static table in an iframe; ~45 rows; year-less dates         |
 | Alte Münze                     | https://www.alte-muenze-berlin.de/programm/                              | Other        | Low      | TEC REST API; 4 upcoming, mostly workshops; no prices        |
@@ -396,7 +397,7 @@ least as heavily as an RA count when the next batch is prioritised.
 | Backsteinboot                  | https://backsteinboot.org/program-(landing-page)-1                       | Club         | Low      | Cargo; month in HTML; mostly workshops and talks             |
 | Soulcat                        | https://soulcat-berlin.com/                                              | Bar          | Medium   | TEC REST API; skip the "Fussball" rows                       |
 
-**The 9 rows from Pfefferberg Haus 13 to Weltwirtschaft came from the [Clubcommission member list](https://www.clubcommission.de/members/)
+**The 8 rows from Slaughterhouse to Weltwirtschaft came from the [Clubcommission member list](https://www.clubcommission.de/members/)
 on 2026-10-03.** Its 187 members also gave 26 rows in [Blocked](#-blocked--deferred). The rest are party collectives,
 festivals, agencies and associations, or are recorded already.
 
