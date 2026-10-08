@@ -306,6 +306,9 @@ enum class EventSource {
     /** Sonnenraum Berlin – the indoor concert room next to Club der Visionäre, with a resident Monday live-band night. */
     SONNENRAUM,
 
+    /** Soulcat Berlin – a cash-only Neukölln music bar playing 1950s and 1960s soul, R&B and rock'n'roll records, vinyl only, with guest DJs nightly. */
+    SOULCAT,
+
     /** Speakeazy Berlin – a former Schöneberg backyard theatre, now a 70-seat stage and recording studio for folk, rock, jazz and cabaret. */
     SPEAKEAZY,
 

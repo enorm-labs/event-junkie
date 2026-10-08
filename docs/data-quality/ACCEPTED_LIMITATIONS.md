@@ -348,6 +348,11 @@ says so.
 | `SONNENRAUM`           | `PER_EVENT_PAGE`   | the programme page is the source for every night                                                                                                 | —     |
 | `SONNENRAUM`           | `PRICE`            | the programme lists times and the line-up only, never an admission price                                                                         | —     |
 | `SONNENRAUM`           | `IMAGE`            | the programme is text only; the site's only images are its logos                                                                                 | —     |
+| `SOULCAT`              | `DESCRIPTION`      | every event carries a title and times only                                                                                                       | —     |
+| `SOULCAT`              | `IMAGE`            | no event has an image                                                                                                                            | —     |
+| `SOULCAT`              | `PRICE`            | `cost` is empty on every event; only `FREE ENTRY` in a title says anything                                                                       | —     |
+| `SOULCAT`              | `TICKET_URL`       | a bar with no tickets; `website` is empty                                                                                                        | —     |
+| `SOULCAT`              | `ARTISTS`          | the house nights (`Bartenders Choice`) name no DJ                                                                                                | —     |
 | `SPEAKEAZY`            | `DOORS_TIME`       | the listing prints a start and an end time and no doors time                                                                                     | —     |
 | `SPEAKEAZY`            | `TICKET_URL`       | the venue sells at the door and links no ticket shop                                                                                             | —     |
 | `SPEAKEAZY`            | `PRICE_PRESALE`    | the venue prints only the box-office price                                                                                                       | —     |
