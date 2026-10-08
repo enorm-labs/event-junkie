@@ -336,6 +336,11 @@ says so.
 | `SISYPHOS`             | `TICKET_URL`       | the shop sells few nights, and its bot protection answers the importer 429 from a hosting address; we do not disguise the client                 | —     |
 | `SISYPHOS`             | `PRICE_PRESALE`    | the shop sells few nights, and its bot protection answers the importer 429 from a hosting address; we do not disguise the client                 | —     |
 | `SISYPHOS`             | `CANCELLATION`     | neither the calendar nor the shop marks a cancelled night                                                                                        | —     |
+| `SLAUGHTERHOUSE`       | `DOORS_TIME`       | an entry names one time, mostly the start                                                                                                        | —     |
+| `SLAUGHTERHOUSE`       | `END_TIME`         | the page names a start or doors, no end                                                                                                          | —     |
+| `SLAUGHTERHOUSE`       | `PRICE`            | most entries name no price, and none a presale price                                                                                             | —     |
+| `SLAUGHTERHOUSE`       | `GENRE`            | only a party's style line names one                                                                                                              | —     |
+| `SLAUGHTERHOUSE`       | `PER_EVENT_PAGE`   | every night is one entry on the programme page                                                                                                   | —     |
 | `SO36`                 | `PRICE`            | the shop exposes prices only as ticket categories, so a door-only event without an Abendkasse category carries no figure                         | —     |
 | `SO36`                 | `SOLD_OUT`         | the JSON-LD offer reports `SoldOut` for the external shops most events sell through, even when those shops still have tickets, so it is not read | —     |
 | `SO36`                 | `GENRE`            | the shop tags each event only as Konzert, Party or Event, never a genre                                                                          | —     |

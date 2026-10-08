@@ -22,8 +22,8 @@ repairing live in the [issue tracker](https://github.com/enorm-labs/event-junkie
 
 | Status                              | Meaning                                                                              | Count |
 | ----------------------------------- | ------------------------------------------------------------------------------------ | ----: |
-| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   123 |
-| 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |    47 |
+| ✅ [Imported](#-imported)           | Importer implemented and scheduled                                                   |   124 |
+| 🔨 [Ready](#-ready-to-implement)    | Website analyzed, listings are scrapable — these are the next importers to build     |    46 |
 | ⛔ [Blocked](#-blocked--deferred)   | Website analyzed, but no usable listings (no programme page, JS-only, or too sparse) |   136 |
 | 📣 [Promoters](#-promoters)         | Cross-venue listings; enrich the venues' own events, never add events (ADR-043)      |    11 |
 | ❓ [Unanalyzed](#-not-analyzed-yet) | URL recorded, but the website still needs a first look                               |    11 |
@@ -137,6 +137,7 @@ schema change.
 | Schokoladen                      | https://www.schokoladen-mitte.de/                           | Club         | Laravel; anchor-based events; genre inside title          |
 | silent green                     | https://www.silent-green.net/programm                       | Concert Hall | TYPO3 news; month walk; a run listed per open day         |
 | Sisyphos                         | https://www.sisyphos-berlin.net/                            | Techno Club  | Calendar JSON + shop + sisy.fan line-ups (ADR-038)        |
+| Slaughterhouse                   | https://slaughterhouse-berlin.de/konzerte/                  | Club         | Block-editor post; entries between hr rules               |
 | SO36                             | https://www.so36.com/tickets                                | Club         | Cookie wall bypassed via Ticket-Toaster shop              |
 | Soda Club                        | https://www.soda-berlin.de/events                           | Club         | disco2app CMS; `MusicEvent` JSON-LD on details            |
 | Sonnenraum                       | https://clubdervisionaere.com/programm                      | Club         | Shares the CdV listing; Monday live residency             |
@@ -164,7 +165,7 @@ schema change.
 | Zitadelle                        | https://citadel-music-festival.de/events                    | Open Air     | Festival site; WordPress/EM; summer season only           |
 | Zur Klappe                       | https://zurklappe.org/events                                | Techno Club  | Next.js flight payload; no genre or prices                |
 
-122 importer classes cover 123 sources. Only Kantine am Berghain has no class of its own, and it shares the Berghain
+123 importer classes cover 124 sources. Only Kantine am Berghain has no class of its own, and it shares the Berghain
 importer outright. Its rows have their own `sourceId` prefix, `kantine_am_berghain:`. Four other groups share a _listing and parser_ while keeping one thin `@Component` per venue, so
 they do not reduce the count. They are Club der Visionäre with Sonnenraum and MS Hoppetosse, and the three Velomax halls.
 The other two are Kesselhaus with Maschinenhaus, and Uber Arena with the Uber Eats Music Hall.
@@ -185,7 +186,7 @@ test fixtures supply most of the "one field" rows, because a listing page usuall
   that one description holds both languages, with a marker between them.
 - **Evidence** is the page that shows the second language. A _captured page_ is a fixture that the scraper tests read.
 
-47 sources have a second language, 72 have none, and 4 are unknown. Eight translate the event text on a second page.
+47 sources have a second language, 73 have none, and 4 are unknown. Eight translate the event text on a second page.
 Ten put both languages in one field.
 
 The scrapers of the one-field sources cut the description at its marker (`splitBilingualDescription`). The second half
@@ -305,6 +306,7 @@ the upsert stores none.
 | Schokoladen                      | No              | —                                                            | —                  |                                                                                                                                    |
 | silent green                     | Yes             | `/en/` path, `hreflang`                                      | Translated         | https://www.silent-green.net/en/programme                                                                                          |
 | Sisyphos                         | No              | —                                                            | —                  |                                                                                                                                    |
+| Slaughterhouse                   | No              | —                                                            | —                  |                                                                                                                                    |
 | SO36                             | Yes             | One field: `(Deutsche Version unten)`                        | One field          | [captured page](../events-importer/src/test/resources/scraper/so36/so36-detail-tiers.html)                                         |
 | Soda Club                        | No              | `hreflang` `en` redirects to the German page                 | —                  |                                                                                                                                    |
 | Sonnenraum                       | No              | —                                                            | —                  |                                                                                                                                    |
@@ -354,7 +356,6 @@ least as heavily as an RA count when the next batch is prioritised.
 | ------------------------------ | ------------------------------------------------------------------------ | ------------ | -------- | ------------------------------------------------------------ |
 | KAOS Berlin                    | https://kaosberlin.de/veranstaltungen/                                   | Techno Club  | Low      | TEC REST API; 16 events in 2026, none upcoming on 10-03      |
 | DSTRKT Club Berlin             | https://www.dstrkt.de/                                                   | Club         | Low      | Wix one-pager; 2 dated events, which is the whole programme  |
-| Slaughterhouse                 | https://slaughterhouse-berlin.de/konzerte/                               | Club         | Medium   | Gutenberg paragraphs; 6 dated entries, unsorted              |
 | Speiches Rock- und Blueskneipe | http://www.rockradio.de/rr_termine_speiche_werbung_termine_raumerstr.php | Bar          | Medium   | Static table in an iframe; ~45 rows; year-less dates         |
 | Alte Münze                     | https://www.alte-muenze-berlin.de/programm/                              | Other        | Low      | TEC REST API; 4 upcoming, mostly workshops; no prices        |
 | Konrad Tönz                    | http://www.konradtoenzbar.de/                                            | Bar          | Low      | Site-builder text blob; ~13 DJ nights, no per-event markup   |
@@ -400,7 +401,7 @@ least as heavily as an RA count when the next batch is prioritised.
 | Beate Uwe                      | https://beate-uwe.de/                                                    | Club         | Medium   | WordPress/Elementor; homepage list; RA links                 |
 | Backsteinboot                  | https://backsteinboot.org/program-(landing-page)-1                       | Club         | Low      | Cargo; month in HTML; mostly workshops and talks             |
 
-**The 8 rows from Slaughterhouse to Weltwirtschaft came from the [Clubcommission member list](https://www.clubcommission.de/members/)
+**The 7 rows from Soulcat to Weltwirtschaft came from the [Clubcommission member list](https://www.clubcommission.de/members/)
 on 2026-10-03.** Its 187 members also gave 26 rows in [Blocked](#-blocked--deferred). The rest are party collectives,
 festivals, agencies and associations, or are recorded already.
 
