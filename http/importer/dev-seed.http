@@ -25,6 +25,7 @@
 ###   ART Stalker          — https://art-stalker.reservix.de/
 ###   Astra Kulturhaus     — https://www.astra-berlin.de/
 ###   Badehaus             — https://badehaus-berlin.com/events/
+###   Ballhaus Wedding     — https://www.ballhauswedding.de/veranstaltungen
 ###   Bar jeder Vernunft   — https://www.bar-jeder-vernunft.de/de/programm/kalender.html
 ###   Bar Tausend          — https://tausendberlin.com/lineup/
 ###   Berghain             — https://www.berghain.berlin/de/program/
@@ -145,7 +146,6 @@
 ###   Badenscher Hof                 — https://www.badenscher-hof.de/#Konzerte
 ###   Baiz                           — https://baiz.info/programm
 ###   Ballhaus Berlin                — https://ballhaus-berlin.de/de/termine/
-###   Ballhaus Wedding               — https://www.ballhauswedding.de/veranstaltungen
 ###   Bar Neun                       — https://ra.co/clubs/262552
 ###   Beate Uwe                      — https://beate-uwe.de/#Programm
 ###   Birgit                         — https://ra.co/clubs/104289
@@ -1182,7 +1182,7 @@ Content-Type: application/json
 %}
 
 ### ————————————————————————————————————————————————————————————
-### Ballhaus Wedding (Wriezener Str. 6, Berlin-Wedding — not imported, #2766)
+### Ballhaus Wedding (Wriezener Str. 6, Berlin-Wedding)
 ### ————————————————————————————————————————————————————————————
 
 ### --- Create Ballhaus Wedding venue ---
@@ -1203,13 +1203,45 @@ Content-Type: application/json
     "descriptionAlt": "Ballsaal von 1899 in einem Hinterhof in Gesundbrunnen, mit einem Parkett aus dem Studio Babelsberg, auf dem Marlene Dietrich im „Blauen Engel“ tanzte, heute Bühne für Konzerte, Zwanzigerjahre-Tanzpartys, Varieté und Dinnertheater.",
     "descriptionAltLanguage": "de",
     "venueTypes": ["live-venue", "theatre"],
-    "programmeUrl": "https://www.ballhauswedding.de/veranstaltungen",
     "reviewedAt": "2026-10-06T20:48:21Z"
 }
 
 > {%
+    client.global.set("ballhaus_wedding_venue_id", response.body.id);
     client.test("Ballhaus Wedding venue created", function () {
         client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Create Ballhaus Wedding event source ---
+# Links the venue to the BallhausWeddingWebsiteImporter.
+# The sourceType "BALLHAUS_WEDDING" matches EventSource.BALLHAUS_WEDDING.
+POST {{importer-host}}/api/admin/event-sources
+Content-Type: application/json
+
+{
+    "venueId": {{ballhaus_wedding_venue_id}},
+    "name": "Ballhaus Wedding",
+    "url": "https://www.ballhauswedding.de/veranstaltungen",
+    "sourceType": "BALLHAUS_WEDDING",
+    "enabled": true,
+    "importIntervalMinutes": 1440,
+    "maxRetries": 3
+}
+
+> {%
+    client.test("Ballhaus Wedding event source created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Trigger initial Ballhaus Wedding import ---
+POST {{importer-host}}/api/admin/event-sources/ballhaus-wedding/import
+Accept: application/json
+
+> {%
+    client.test("Ballhaus Wedding import triggered", function () {
+        client.assert(response.status === 202, "Expected 202 but got " + response.status);
     });
 %}
 
