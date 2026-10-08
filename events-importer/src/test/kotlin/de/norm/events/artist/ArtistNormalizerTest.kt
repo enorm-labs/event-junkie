@@ -86,6 +86,8 @@ class ArtistNormalizerTest {
             // Possessives and contractions — the apostrophe must not freeze the word in caps.
             canonicalArtistName("MURPHY'S LAW") shouldBe "Murphy's Law"
             canonicalArtistName("FLAMIN' GROOVIES") shouldBe "Flamin' Groovies"
+            // An Irish O' prefix keeps the capital after it (#2914).
+            canonicalArtistName("LISA O'NEILL") shouldBe "Lisa O'Neill"
             // Trailing/leading punctuation, commas and parentheses.
             canonicalArtistName("AGATHA IS DEAD!") shouldBe "Agatha Is Dead!"
             canonicalArtistName("SICKBOYRARI (BLACK KRAY)") shouldBe "Sickboyrari (Black Kray)"

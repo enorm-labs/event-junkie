@@ -59,19 +59,29 @@ private fun String.isShoutedWord(): Boolean =
         none { it.isDigit() || it in STYLISED_CHARS } &&
         uppercase() !in ACRONYMS
 
-/** Uppercases the first letter, lowercases the rest, leaving every non-letter character in place. */
+/**
+ * Uppercases the first letter, lowercases the rest, leaving every non-letter character in place.
+ * The letter after an Irish `O'` prefix stays capital too ("O'NEILL" -> "O'Neill", #2914). Any other
+ * apostrophe lowers what follows: "MURPHY'S" -> "Murphy's", and "D'NICE" -> "D'nice", since stored
+ * `D'` names use both styles.
+ */
 private fun String.titleCaseKeepingPunctuation(): String {
-    var seenLetter = false
+    val letters = StringBuilder()
+    var capitalizeNext = true
     return buildString {
         for (ch in this@titleCaseKeepingPunctuation) {
             when {
+                ch in APOSTROPHES -> append(ch).also { if (letters.toString() == "O") capitalizeNext = true }
                 !ch.isLetter() -> append(ch)
-                !seenLetter -> append(ch.uppercaseChar()).also { seenLetter = true }
+                capitalizeNext -> append(ch.uppercaseChar()).also { capitalizeNext = false }
                 else -> append(ch.lowercaseChar())
             }
+            if (ch.isLetter()) letters.append(ch.uppercaseChar())
         }
     }
 }
+
+private val APOSTROPHES = setOf('\'', '\u2019')
 
 /** Characters that mark a token as a stylised name or dotted initialism, not a plain word ("$ONO$"). */
 private val STYLISED_CHARS = setOf('.', '/', '$')
