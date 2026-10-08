@@ -65,7 +65,7 @@ concurrency:
 env:
   # Pinned by tag **and** digest, because a tag on GHCR is mutable; Renovate reads both from this line
   # (ADR-024). The digest is the multi-arch index.
-  ZAP_IMAGE: ghcr.io/zaproxy/zaproxy:2.17.0@sha256:781a2bdaea47324e7bab583e2263f21d257b0aee61ed51521a5be45f5f5081ef
+  ZAP_IMAGE: ghcr.io/zaproxy/zaproxy:2.17.0@sha256:7aaa659b0d43078febd82e29bad112285c370727e86ab8340444220e17d9f0d2
   # `k3d-rehearsal.sh` needs k3d and flux. Renovate moves every occurrence of FLUX_VERSION in one pull request.
   K3D_VERSION: v5.9.0
   FLUX_VERSION: 2.9.6
