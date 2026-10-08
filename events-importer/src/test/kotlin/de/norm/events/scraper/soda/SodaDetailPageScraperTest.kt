@@ -20,7 +20,8 @@ import java.time.LocalTime
  * paid night sold both online and at the door, an open air sold online only (no
  * "Abendkasse verfügbar" badge), and a free resident night (0 € admission, no ticket
  * shop). Sold-out and title-fallback handling are exercised with minimal inline pages,
- * neither of which the venue was showing when the snapshots were taken.
+ * neither of which the venue was showing when the snapshots were taken. The `-span` snapshots
+ * carry the newer info-box markup (`span.title` for `h4.title`); the parser reads both.
  */
 class SodaDetailPageScraperTest {
     private val scraper = SodaDetailPageScraper()
@@ -115,6 +116,56 @@ class SodaDetailPageScraperTest {
         // Nothing is sold online for this night, so there is no ticket link.
         event.ticketUrl.shouldBeNull()
         event.soldOut shouldBe false
+    }
+
+    @Test
+    fun `reads the admission from a span-rendered info box on a night sold online and at the door`() {
+        val url = "https://www.soda-berlin.de/de/events/famous-friday-09-10-2026"
+        val event = parse("soda-detail-famous-friday-span.html", url).shouldNotBeNull()
+
+        event.eventDate shouldBe LocalDate.of(2026, 10, 9)
+        event.startTime shouldBe LocalTime.of(22, 0)
+        // The JSON-LD offer is a number (15.43) on this page, not a string.
+        event.pricePresale shouldBe BigDecimal("15")
+        event.priceBoxOffice shouldBe BigDecimal("15")
+        event.priceNote shouldBe "online 15,43 € inkl. Gebühren"
+        event.free shouldBe false
+    }
+
+    @Test
+    fun `reads the admission from a span-rendered info box on a door-only night`() {
+        val url = "https://www.soda-berlin.de/de/events/soda-social-club-11-10-2026"
+        val event = parse("soda-detail-social-club-span.html", url).shouldNotBeNull()
+
+        event.title shouldBe "Soda Social Club"
+        event.eventDate shouldBe LocalDate.of(2026, 10, 11)
+        event.startTime shouldBe LocalTime.of(19, 0)
+        // No online offer and an "Abendkasse verfügbar" badge: the 8 € is the door price only.
+        event.priceBoxOffice shouldBe BigDecimal("8")
+        event.pricePresale.shouldBeNull()
+        event.priceNote.shouldBeNull()
+        event.ticketUrl.shouldBeNull()
+        event.free shouldBe false
+    }
+
+    @Test
+    fun `flags a free night from a zero euro span-rendered info box`() {
+        val event =
+            parseHtml(
+                """
+                <html><body><h1 class="title">Salsa Sonntag</h1>
+                <div class="service"><div class="content">
+                  <span class="title h4 w-600"> 0 € </span>
+                  <p class="description b1 color-gray mb--0">Eintritt</p>
+                </div></div>
+                <div class="rn-office-badge">✅ <span>Abendkasse verfügbar</span></div>
+                </body></html>
+                """.trimIndent()
+            ).shouldNotBeNull()
+
+        event.free shouldBe true
+        event.priceBoxOffice shouldBe BigDecimal("0")
+        event.pricePresale.shouldBeNull()
     }
 
     @Test
