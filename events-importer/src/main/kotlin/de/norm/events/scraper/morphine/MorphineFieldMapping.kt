@@ -2,6 +2,7 @@ package de.norm.events.scraper.morphine
 
 import de.norm.events.scraper.DOORS_LABELS
 import de.norm.events.scraper.PRESENTS_VERBS
+import de.norm.events.scraper.WHITESPACE
 import de.norm.events.scraper.dateCheckedAgainstWeekday
 import de.norm.events.scraper.labelledClock
 import de.norm.events.scraper.parseClock
@@ -140,7 +141,6 @@ private val PERFORMS_WITH_TAIL = Regex("""\s+performs\s+(?:with|on)\s+.*$""", Re
 private val WORK_MARKER = Regex("""\((?:19|20)\d{2}\)|\b\d+\s?[’'′]""")
 
 private val DASH = Regex("""\s+[-–—]\s+""")
-private val WHITESPACE = Regex("""\s+""")
 private val MEMBER_JOIN = Regex("""\s*(?:&|,|\band\b|\bund\b)\s*""", RegexOption.IGNORE_CASE)
 
 /** An act billed on a set line is a name, not a sentence: four words plus a `Live`. */

@@ -4,6 +4,7 @@ import de.norm.events.scraper.DOORS_LABELS
 import de.norm.events.scraper.EventSource
 import de.norm.events.scraper.ScrapedArtist
 import de.norm.events.scraper.ScrapedEvent
+import de.norm.events.scraper.WHITESPACE
 import de.norm.events.scraper.headlinersFromTitle
 import de.norm.events.scraper.inferConcertVenueType
 import de.norm.events.scraper.inferYearForWeekday
@@ -376,8 +377,6 @@ class RoadrunnerOverviewPageScraper(
 
         /** The role each [LINEUP_LABEL] bills. A record hop is a rock'n'roll DJ set. */
         private val LINEUP_ROLES = mapOf("live" to HEADLINER, "featuring" to HEADLINER, "support" to SUPPORT, "record hop" to DJ)
-
-        private val WHITESPACE = Regex("""\s+""")
 
         /** The gap after a closing bracket that has more text behind it: the end of an act. */
         private val AFTER_BRACKET = Regex("""(?<=\))\s+(?=\S)""")

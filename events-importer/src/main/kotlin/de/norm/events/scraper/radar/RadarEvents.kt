@@ -1,6 +1,7 @@
 package de.norm.events.scraper.radar
 
 import de.norm.events.event.EventType
+import de.norm.events.scraper.BERLIN
 import de.norm.events.scraper.blankToNull
 import de.norm.events.scraper.htmlParagraphText
 import de.norm.events.scraper.mapSkippingFailures
@@ -9,7 +10,6 @@ import tools.jackson.databind.JsonNode
 import tools.jackson.databind.json.JsonMapper
 import tools.jackson.module.kotlin.kotlinModule
 import java.time.OffsetDateTime
-import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.time.format.DateTimeParseException
 
@@ -19,8 +19,6 @@ import java.time.format.DateTimeParseException
 // proof-of-work wall, which is the operator's refusal of automated clients; the API is outside it.
 
 private val logger = KotlinLogging.logger {}
-
-private val BERLIN: ZoneId = ZoneId.of("Europe/Berlin")
 
 /** The categories that make a row programme: the rest is bars, food, film, meetings and protest. */
 private val PROGRAMME_CATEGORIES = setOf("music/concert", "party")
