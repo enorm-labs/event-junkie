@@ -29,8 +29,9 @@ git checkout main && git pull
 
 A dirty tree means an earlier run left work behind — stop and report instead of sweeping it into this PR.
 
-Read the **🔨 Ready to implement** table. Take the requested venue, or else the topmost row whose `EventSource` enum value does not yet exist in
-`events-importer/src/main/kotlin/de/norm/events/scraper/EventSource.kt` (rows are already priority-sorted; High before Medium before Low).
+Read the **🔨 Ready to implement** table. Take the requested venue, or else the topmost row of the highest priority present (High, then Medium,
+then Low) whose `EventSource` enum value does not yet exist in `events-importer/src/main/kotlin/de/norm/events/scraper/EventSource.kt`. The table is not
+sorted by priority: rows are added in batches, so a Low row can sit above a Medium one.
 
 Two special cases in that table: some rows explicitly **share one importer** with another row (e.g. MS Hoppetosse ↔ Club der Visionaere, Ufo im Velodrom ↔
 Max-Schmeling-Halle via the VELOMAX listing). When you pick one of those, implement the shared importer and move **both** rows in step 6 — as
