@@ -363,6 +363,11 @@ says so.
 | `SPEAKEAZY`            | `PRICE_PRESALE`    | the venue prints only the box-office price                                                                                                       | —     |
 | `SPEAKEAZY`            | `GENRE`            | the listing names no style, only the blurb describes one                                                                                         | —     |
 | `SPEAKEAZY`            | `PROMOTERS`        | the venue presents every night itself                                                                                                            | —     |
+| `SPEICHES`             | `DESCRIPTION`      | each night has one line of text, read as title and subtitle                                                                                      | —     |
+| `SPEICHES`             | `PRICE`            | entry is always free and no price is printed                                                                                                     | —     |
+| `SPEICHES`             | `TICKET_URL`       | a pub with free entry sells no tickets                                                                                                           | —     |
+| `SPEICHES`             | `DOORS_TIME`       | the table prints one time per night                                                                                                              | —     |
+| `SPEICHES`             | `ARTISTS`          | the open stage and the radio broadcasts name no act in a form that can be read                                                                   | —     |
 | `SUPAMOLLY`            | `PRICE`            | the venue publishes no prices                                                                                                                    | —     |
 | `SUPAMOLLY`            | `TICKET_URL`       | the venue runs no ticket shop                                                                                                                    | —     |
 | `TAUSEND`              | `PER_EVENT_PAGE`   | every night points at its anchor on the lineup page                                                                                              | —     |

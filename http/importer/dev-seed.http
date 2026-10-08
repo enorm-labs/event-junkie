@@ -118,6 +118,7 @@
 ###   Sonnenraum           — https://clubdervisionaere.com/programm/
 ###   Soulcat              — https://soulcat-berlin.com/wp-json/tribe/events/v1/events
 ###   Speakeazy            — https://www.speakeazyberlin.de/events
+###   Speiches Rock- und Blueskneipe — http://www.rockradio.de/rr_termine_speiche_werbung_termine_raumerstr.php
 ###   Supamolly            — https://www.supamolly.de/?p=programm
 ###   Tempodrom            — https://www.tempodrom.de/programm-und-tickets/
 ###   The Wall Comedy Club — https://thewallcomedy.com/venues/thewallcomedy/events/
@@ -229,7 +230,6 @@
 ###   Silverwings                    — https://silverwings.de/program.html
 ###   Sisyfass                       — https://ra.co/clubs/159864
 ###   Solar                          — https://solar-berlin.de/event-types/dj/
-###   Speiches Rock- und Blueskneipe — http://www.rockradio.de/rr_termine_speiche_werbung_termine_raumerstr.php
 ###   Spindler & Klatt               — https://www.spindlerklatt.com/club
 ###   Studio dB                      — https://ra.co/clubs/143430
 ###   Studio IIII                    — https://studioiiii.de/index#programme
@@ -8869,7 +8869,7 @@ Accept: application/json
 %}
 
 ### ————————————————————————————————————————————————————————————
-### Speiches Rock- und Blueskneipe (Raumerstr. 39, Berlin-Prenzlauer Berg — not imported, #2766)
+### Speiches Rock- und Blueskneipe (Raumerstr. 39, Berlin-Prenzlauer Berg)
 ### ————————————————————————————————————————————————————————————
 
 ### --- Create Speiches Rock- und Blueskneipe venue ---
@@ -8889,13 +8889,45 @@ Content-Type: application/json
     "descriptionAlt": "Seit 1992 im früheren Proberaum der DDR-Bluesband Monokel, gegründet von ihrem Bassisten Jörg „Speiche“ Schütze: Blues live am Wochenende bei freiem Eintritt, sonntags Oldtime-Jazz, montags offene Bühne.",
     "descriptionAltLanguage": "de",
     "venueTypes": ["bar", "live-venue"],
-    "programmeUrl": "http://www.rockradio.de/rr_termine_speiche_werbung_termine_raumerstr.php",
     "reviewedAt": "2026-10-06T20:48:21Z"
 }
 
 > {%
+    client.global.set("speiches_venue_id", response.body.id);
     client.test("Speiches Rock- und Blueskneipe venue created", function () {
         client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Create Speiches Rock- und Blueskneipe event source ---
+# Links the venue to the SpeichesWebsiteImporter.
+# The sourceType "SPEICHES" matches EventSource.SPEICHES.
+POST {{importer-host}}/api/admin/event-sources
+Content-Type: application/json
+
+{
+    "venueId": {{speiches_venue_id}},
+    "name": "Speiches Rock- und Blueskneipe",
+    "url": "http://www.rockradio.de/rr_termine_speiche_werbung_termine_raumerstr.php",
+    "sourceType": "SPEICHES",
+    "enabled": true,
+    "importIntervalMinutes": 1440,
+    "maxRetries": 3
+}
+
+> {%
+    client.test("Speiches Rock- und Blueskneipe event source created", function () {
+        client.assert(response.status === 201, "Expected 201 but got " + response.status);
+    });
+%}
+
+### --- Trigger initial Speiches Rock- und Blueskneipe import ---
+POST {{importer-host}}/api/admin/event-sources/speiches-rock-und-blueskneipe/import
+Accept: application/json
+
+> {%
+    client.test("Speiches Rock- und Blueskneipe import triggered", function () {
+        client.assert(response.status === 202, "Expected 202 but got " + response.status);
     });
 %}
 
