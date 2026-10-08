@@ -1,9 +1,10 @@
 <script lang="ts" setup>
-import { CalendarSync, Rss } from '@lucide/vue'
+import { Rss } from '@lucide/vue'
 import { computed } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import { Button } from '@/components/ui/button'
 import AlsoRunning from '@/components/AlsoRunning.vue'
+import CalendarSubscribeMenu from '@/components/CalendarSubscribeMenu.vue'
 import ClearAllFilters from '@/components/ClearAllFilters.vue'
 import EventCard from '@/components/EventCard.vue'
 import EventRow from '@/components/EventRow.vue'
@@ -23,7 +24,8 @@ import { provideFilterLists } from '@/composables/useFilterLists'
 import { usePagedList } from '@/composables/usePagedList'
 import { useI18n } from 'vue-i18n'
 import type { Locale } from '@/i18n/locales'
-import { CALENDAR_TYPE, calendarPath, FEED_TYPE, feedPath } from '@/lib/seo'
+import { calendarName, calendarPath, FEED_TYPE, feedPath } from '@/lib/seo'
+import { APP_NAME } from '@/lib/pageMeta'
 import { useLocalePath } from '@/composables/useLocalePath'
 
 const PAGE_SIZE = 20
@@ -145,19 +147,18 @@ const feedLabel = computed(() =>
     : t('events.feedAll'),
 )
 
-/**
- * The calendar subscription for these filters (#2719), named after them (#2772). `webcal:` hands it to
- * the calendar app; an app that asks for an address, Google Calendar's among them, takes the `https:` one.
- */
+/** The calendar subscription for these filters (#2719), named after them (#2772). */
 const { filterLabels } = useFilterLabels(provideFilterLists())
+const calendarLabels = computed(() => filterLabels(filters.value))
 const calendarHref = computed(() =>
-  calendarPath(locale.value as Locale, filters.value, filterLabels(filters.value)),
+  calendarPath(locale.value as Locale, filters.value, calendarLabels.value),
 )
-const webcalHref = computed(() => `webcal://${window.location.host}${calendarHref.value}`)
+// The name the BFF gives the calendar, for Outlook.com, which asks for one.
+const calendarTitle = computed(() => calendarName([APP_NAME, ...calendarLabels.value]))
 const subscribeLabel = computed(() =>
   Object.values(filters.value).some((value) => value !== undefined)
-    ? t('events.subscribeFiltered')
-    : t('events.subscribeAll'),
+    ? t('events.calendar.filtered')
+    : t('events.calendar.all'),
 )
 
 // "Near me" lives on the map, which measures distance on the device (#358); the filters go with it.
@@ -194,13 +195,21 @@ const mapLink = computed(() => ({
     </div>
     <template v-else>
       <div :class="RESULTS_BAR_CLASS">
-        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1 text-body">
-          <p class="text-muted-foreground">
-            {{ t('events.resultCount', { count: page.totalElements }) }}
-          </p>
+        <p class="text-body text-muted-foreground">
+          {{ t('events.resultCount', { count: page.totalElements }) }}
+        </p>
+        <!-- On a phone the links take their own row under the count and the sort control (#2887). -->
+        <div
+          class="order-last flex w-full flex-wrap items-center gap-x-3 gap-y-1 text-body sm:order-none sm:w-auto"
+        >
           <RouterLink :to="mapLink" class="text-primary hover:underline">
             {{ t('events.nearMe') }}
           </RouterLink>
+          <CalendarSubscribeMenu
+            :description="subscribeLabel"
+            :name="calendarTitle"
+            :path="calendarHref"
+          />
           <a
             :aria-label="feedLabel"
             :href="feedHref"
@@ -211,31 +220,10 @@ const mapLink = computed(() => ({
             <Rss aria-hidden="true" class="size-4" />
             {{ t('events.feed') }}
           </a>
-          <span class="inline-flex items-baseline gap-1">
-            <a
-              :aria-label="subscribeLabel"
-              :href="webcalHref"
-              :title="subscribeLabel"
-              class="inline-flex items-center gap-1 self-center text-primary hover:underline"
-              data-testid="calendar-subscribe"
-            >
-              <CalendarSync aria-hidden="true" class="size-4" />
-              {{ t('events.subscribe') }}
-            </a>
-            <a
-              :aria-label="t('events.subscribeUrl')"
-              :href="calendarHref"
-              :title="t('events.subscribeUrl')"
-              :type="CALENDAR_TYPE"
-              class="text-muted-foreground hover:underline"
-              data-testid="calendar-url"
-            >
-              (URL)
-            </a>
-          </span>
         </div>
         <SortControl
           v-if="!onNow"
+          class="ml-auto"
           :model-value="sort"
           :options="sortOptions"
           @update:model-value="applySort"

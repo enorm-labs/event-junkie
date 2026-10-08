@@ -137,13 +137,21 @@
     "title": "Läuft außerdem"
   },
   "nearMe": "In meiner Nähe, auf der Karte",
-  "feed": "Feed",
+  "feed": "RSS",
   "feedAll": "Neue Veranstaltungen als RSS-Feed abonnieren",
   "feedFiltered": "Neue Veranstaltungen mit diesen Filtern als RSS-Feed abonnieren",
-  "subscribe": "Abonnieren",
-  "subscribeAll": "Die Veranstaltungen der nächsten 90 Tage im Kalender abonnieren",
-  "subscribeFiltered": "Die Veranstaltungen mit diesen Filtern für die nächsten 90 Tage im Kalender abonnieren",
-  "subscribeUrl": "Kalenderadresse, für eine App, die nach einer URL fragt",
+  "calendar": {
+    "trigger": "Kalender abonnieren",
+    "triggerShort": "Kalender",
+    "all": "Die Veranstaltungen der nächsten 90 Tage im Kalender abonnieren",
+    "filtered": "Die Veranstaltungen mit diesen Filtern für die nächsten 90 Tage im Kalender abonnieren",
+    "google": "Google Kalender",
+    "app": "Apple Kalender oder Outlook-App",
+    "outlook": "Outlook.com",
+    "copy": "Kalenderadresse kopieren",
+    "copied": "Kalenderadresse kopiert. Füge sie in deiner Kalender-App ein.",
+    "copyFailed": "Die Adresse ließ sich nicht kopieren. Hier ist sie: {url}"
+  },
   "language": {
     "subtitles": "Untertitel: {language}"
   }
