@@ -22,6 +22,10 @@ order:
     python3 scripts/apply-licence-review.py --host <host> --apply --yes  # 2. the verdicts (#283)
     python3 scripts/seed-sources.py        --host <host> --enable --yes  # 3. let them import
 
+A venue that closes for good (ADR-046) keeps its source and stops importing:
+
+    python3 scripts/seed-sources.py --host <host> --disable <slug> --yes
+
 **This never triggers an import.** The file's third request per venue does; it is dropped here.
 Step 3 hands the sources to the scheduler, which picks them up on its next tick.
 
@@ -175,6 +179,35 @@ def enable(args):
     print(f"\nEnabled {ok} of {len(disabled)}. The scheduler picks them up within a minute.")
 
 
+def disable(args):
+    """Stop the scheduler importing the named sources, for a venue that closed (ADR-046).
+
+    The rows and their past events stay; only `enabled` changes. A slug the cluster does not hold is
+    reported and fails the run, because a typo here would leave a closed venue importing.
+    """
+    if args.host != LOCAL_HOST and not args.yes:
+        sys.exit(f"Refusing to write to {args.host} without --yes. It would disable {', '.join(args.disable)}.")
+    failed = []
+    for slug in args.disable:
+        try:
+            got = request(f"{args.host}/api/admin/event-sources/{slug}", method="PATCH", body={"enabled": False})
+        except urllib.error.HTTPError as e:
+            failed.append(f"{slug}: {e.code}")
+            continue
+        except (urllib.error.URLError, OSError) as e:
+            sys.exit(f"Cannot reach the importer at {args.host}: {e}")
+        # Confirmed from the row that came back, not the status code (#814).
+        if got.get("enabled") is False:
+            print(f"  disabled  {slug}")
+        else:
+            failed.append(f"{slug}: still enabled")
+    for f in failed:
+        print(f"  NOT DISABLED {f}")
+    if failed:
+        sys.exit(f"{len(failed)} of {len(args.disable)} source(s) were not disabled.")
+    print(f"\nDisabled {len(args.disable)} of {len(args.disable)}. Their rows and past events stay.")
+
+
 def compare_site(args):
     """Compare the seed file with the public site, and report through the exit code (#1782).
 
@@ -241,6 +274,13 @@ def main():
         "is unreviewed, because that is the order the licence gate depends on.",
     )
     ap.add_argument(
+        "--disable",
+        nargs="+",
+        metavar="SLUG",
+        help="stop importing these sources, for a venue that closed for good (ADR-046). Keeps the "
+        "rows and their past events.",
+    )
+    ap.add_argument(
         "--site",
         help="compare the seed file with the public site at this origin and report through the exit "
         "code: 0 no drift, 1 drift, 2 the comparison could not be made. Reads the public API, "
@@ -258,9 +298,15 @@ def main():
         # Refused rather than ignored: --site names a public origin, and the write flags name a host
         # that is an admin API. A run that quietly dropped one of the two would be reporting on a
         # different target than the one it was given.
-        if args.apply or args.enable:
-            ap.error("--site is read-only and cannot be combined with --apply or --enable")
+        if args.apply or args.enable or args.disable:
+            ap.error("--site is read-only and cannot be combined with --apply, --enable or --disable")
         sys.exit(compare_site(args))
+
+    if args.enable and args.disable:
+        ap.error("--enable and --disable cannot be combined")
+    if args.disable:
+        disable(args)
+        return
 
     if args.enable:
         enable(args)

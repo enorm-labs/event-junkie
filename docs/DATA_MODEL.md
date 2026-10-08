@@ -276,6 +276,8 @@ venue's facts. An import never sets it. The check for closed venues in #2812 rea
 through the admin API or a data migration. From the day after, the BFF venue list leaves the venue out unless the request
 asks for `closed=true`. The page and the past events stay. A PUT without `closedOn` reopens the venue, because the admin
 API has no PATCH.
+An event source on the venue keeps importing until a person disables it with
+`scripts/seed-sources.py --host <host> --disable <slug> --yes`.
 
 The derivation reads the venue's events from 365 days back, plus all future events. Cancelled events do not count. A
 value counts when it is on at least 15 % of those events and on at least 3 of them. The top three values are kept, most
