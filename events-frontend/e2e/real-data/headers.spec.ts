@@ -46,5 +46,9 @@ test('this environment tells crawlers to stay away, by header and by robots.txt'
 
   const robots = await request.get('/robots.txt')
   expect(robots.status()).toBe(200)
-  expect(await robots.text()).toContain('Disallow: /')
+  const body = await robots.text()
+  expect(body).toContain('Disallow: /')
+  // The image's copy disallows the AI training crawlers too, so only its production `Sitemap:`
+  // tells it apart (#2642).
+  expect(body).not.toContain('Sitemap:')
 })

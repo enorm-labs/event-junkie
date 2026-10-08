@@ -524,11 +524,12 @@ cmd_verify() {
 
     local body
     if fetched /robots.txt; then
-        # The image's copy says `Allow: /` and carries a `Sitemap:` line; the mounted one says `Disallow: /`.
-        if printf '%s' "$body" | grep -qE '^Disallow: /$'; then
+        # The image's copy also has `Disallow: /` lines, for the AI training crawlers, so judge the
+        # `User-agent: *` group: `Allow: /` in the image's copy, `Disallow: /` in the mounted one (#2642).
+        if printf '%s\n' "$body" | grep -x -A1 'User-agent: \*' | tail -n 1 | grep -qx 'Disallow: /'; then
             ok "/robots.txt is the mounted disallow-all, not the image's copy"
         else
-            bad "/robots.txt has no 'Disallow: /' — the image's own copy is being served"
+            bad "/robots.txt does not disallow 'User-agent: *' — the image's own copy is being served"
         fi
         if printf '%s' "$body" | grep -qi 'sitemap:'; then
             bad "/robots.txt still names a sitemap, which can only be production's"
