@@ -15,7 +15,9 @@ data class SearchResponse(
     @Schema(description = "Artists, best match first")
     val artists: SearchGroup<ArtistSummaryResponse>,
     @Schema(description = "Promoters, best match first")
-    val promoters: SearchGroup<PromoterListItemResponse>
+    val promoters: SearchGroup<PromoterListItemResponse>,
+    @Schema(description = "Events that are over, latest first. Empty unless the request says `past=true`")
+    val past: SearchGroup<EventSummaryResponse>
 )
 
 @Schema(description = "The first matches of one kind, and how many there are in all")

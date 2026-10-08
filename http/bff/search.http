@@ -3,7 +3,8 @@
 ###
 ### Read-only, no auth. `q` (at least 2 characters) runs each
 ### kind's own name search; `limit` (1–20, default 5) caps each
-### group. Events are upcoming only. Not response-cached.
+### group. Events are upcoming only; `past=true` adds the
+### events that are over, latest first. Not response-cached.
 ### ============================================================
 
 ### Search everything for a venue name
@@ -24,6 +25,16 @@ Accept: application/json
 ### Folded and typo-tolerant: finds ÆDEN and Berghain
 GET {{bff-host}}/api/search?q=berghian&limit=3
 Accept: application/json
+
+### Past events too, as the results page asks
+GET {{bff-host}}/api/search?q=berghain&limit=20&past=true
+Accept: application/json
+
+> {%
+    client.test("past events come back in their own group", function () {
+        client.assert(Array.isArray(response.body.past.items), "Missing group past");
+    });
+%}
 
 ### A one-character term is a 400
 GET {{bff-host}}/api/search?q=b

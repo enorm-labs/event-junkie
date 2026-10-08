@@ -6,13 +6,17 @@ import type { SearchResults } from '@/api/types'
 /** The BFF's own floor: one letter matches most of the catalogue (#2514). */
 export const MIN_SEARCH_LENGTH = 2
 
-/** One request for the four kinds the header search shows; `signal` lets a newer term cancel it. */
+/**
+ * One request for the four kinds the header search shows; `signal` lets a newer term cancel it.
+ * `past` adds a fifth group, the events that are over, which only the results page asks for (#2854).
+ */
 export function fetchSearch(
   q: string,
   limit: number,
-  signal?: AbortSignal,
+  { signal, past = false }: { signal?: AbortSignal; past?: boolean } = {},
 ): Promise<SearchResults> {
-  return unwrap(api.GET('/api/search', { params: { query: { q, limit } }, signal }))
+  const query = past ? { q, limit, past } : { q, limit }
+  return unwrap(api.GET('/api/search', { params: { query }, signal }))
 }
 
 /**
@@ -36,7 +40,7 @@ export function useGlobalSearch(term: Ref<string>, limit = 5, debounceMs = 250) 
     const controller = new AbortController()
     inFlight = controller
     try {
-      results.value = await fetchSearch(q, limit, controller.signal)
+      results.value = await fetchSearch(q, limit, { signal: controller.signal })
       error.value = null
     } catch (e) {
       if (controller.signal.aborted) return

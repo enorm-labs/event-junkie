@@ -33,6 +33,11 @@ data class EventFilter(
      * Tonight feed. Wins over [from] and [to].
      */
     val on: LocalDate? = null,
+    /**
+     * Only rows that are over today: the opposite of the default "not over" rule. Internal, set by
+     * the past group of the search page (#2854). Wins over [from], [to] and [runningFrom].
+     */
+    val over: Boolean = false,
     /** Any of these types; empty imposes no constraint. [EventFilterParams] normalizes them. */
     val eventTypes: List<String> = emptyList(),
     val venueSlug: String? = null,
@@ -205,8 +210,9 @@ class EventSearchRepository(
     /**
      * Applies the date filter. With no range, every event that has not ended (ADR-029). An explicit
      * [EventFilter.from] means "starts on or after", which keeps a running event out of Upcoming
-     * (`from = tomorrow`) while Tonight carries it. [EventFilter.on] is the Tonight case. "Not over"
-     * carries the late-night grace (#299), see [lateNightGrace].
+     * (`from = tomorrow`) while Tonight carries it. [EventFilter.on] is the Tonight case, and
+     * [EventFilter.over] the search page's past group. "Not over" carries the late-night grace (#299),
+     * see [lateNightGrace].
      */
     private fun appendDateRange(
         filter: EventFilter,
@@ -218,9 +224,12 @@ class EventSearchRepository(
             params["on"] = it
             return
         }
-        if (filter.from == null && filter.runningFrom == null && filter.to == null) {
+        val noRange = filter.from == null && filter.runningFrom == null && filter.to == null
+        if (filter.over || noRange) {
             val today = LocalDate.now(clock)
-            conditions += notOverOn(":today", today, params)
+            val notOver = notOverOn(":today", today, params)
+            // Every column the rule reads is non-null or tested with IS NULL, so NOT is its exact complement.
+            conditions += if (filter.over) "NOT ($notOver)" else notOver
             params["today"] = today
             return
         }

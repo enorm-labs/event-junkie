@@ -39,6 +39,9 @@ class SearchController(
         @Parameter(description = "Most items per kind, 1 to $MAX_LIMIT.", example = "5")
         @RequestParam(defaultValue = "$DEFAULT_LIMIT")
         limit: Int,
+        @Parameter(description = "Also return the events that are over, in `past`. Leave it out for type-ahead: it is one more query.")
+        @RequestParam(defaultValue = "false")
+        past: Boolean,
         exchange: ServerWebExchange
     ): SearchResponse {
         PARAMS.rejectUnknownIn(exchange)
@@ -47,7 +50,7 @@ class SearchController(
             throw ResponseStatusException(HttpStatus.BAD_REQUEST, "'q' must have at least $MIN_TERM_LENGTH characters")
         }
         if (limit !in 1..MAX_LIMIT) throw ResponseStatusException(HttpStatus.BAD_REQUEST, "'limit' must be between 1 and $MAX_LIMIT")
-        return searchService.search(term, limit).also {
+        return searchService.search(term, limit, past).also {
             metrics.recordServed(BffMetrics.ENDPOINT_GLOBAL_SEARCH, it.events.items.size)
         }
     }
@@ -58,6 +61,6 @@ class SearchController(
         const val DEFAULT_LIMIT = 5
         const val MAX_LIMIT = 20
 
-        val PARAMS = QueryParameters.accepting(QueryParameters.named("q", "limit"))
+        val PARAMS = QueryParameters.accepting(QueryParameters.named("q", "limit", "past"))
     }
 }

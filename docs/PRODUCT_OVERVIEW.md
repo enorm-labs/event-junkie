@@ -44,6 +44,7 @@ lists what that includes and what it excludes.
   venue, venue type, district, genre, price range, free-only and exclude-sold-out.
 - Use the **Tonight**, **This weekend** and **Next 7 days** shortcuts, or **On now** for what runs at this moment.
 - Search from the header with `/` or Ctrl/Cmd+K. The search finds events, venues, artists and promoters as you type.
+- The full results page also lists past events, latest first, in a last group.
 - Every search ignores accents, umlaut spellings and spaces, and tolerates typos. `berghian` finds Berghain.
 - Sort the events list by date, or by **newest added** to see the events we found most recently.
 - Plan a month ahead in the **calendar**.
