@@ -122,8 +122,10 @@ const closureLine = computed(() => {
   }
 })
 
-// Only the capacity: the types are the table's first row.
+// Only the capacity: the types are the table's first row, and the capacity its last.
 const capacity = computed(() => formatVenueFacts({ capacity: venue.value?.capacity }))
+
+const FACT_TERM_CLASS = 'text-muted-foreground sm:w-24 sm:shrink-0'
 
 /** Each type lists every venue of that type, the same shape as the rows under it. */
 const types = computed(() =>
@@ -285,14 +287,14 @@ const programme = computed(() => {
       class="space-y-3 text-body"
       data-testid="venue-facets"
     >
-      <dl v-if="facets.length" class="space-y-2">
+      <dl class="space-y-2">
         <div
           v-for="row in facets"
           :key="row.term"
           class="space-y-1 sm:flex sm:items-baseline sm:gap-4 sm:space-y-0"
         >
-          <!-- One label width for every row, so the pills start on one line; wide enough for German. -->
-          <dt class="text-muted-foreground sm:w-40 sm:shrink-0">{{ row.term }}</dt>
+          <!-- One label width for every row, so the values start on one line; "Mostly plays" is the widest. -->
+          <dt :class="FACT_TERM_CLASS">{{ row.term }}</dt>
           <dd class="flex flex-wrap gap-2">
             <RouterLink
               v-for="item in row.items"
@@ -304,9 +306,12 @@ const programme = computed(() => {
             </RouterLink>
           </dd>
         </div>
+        <div v-if="capacity" class="space-y-1 sm:flex sm:items-baseline sm:gap-4 sm:space-y-0">
+          <dt :class="FACT_TERM_CLASS">{{ t('detail.venue.capacity') }}</dt>
+          <dd>{{ capacity }}</dd>
+        </div>
       </dl>
       <div class="space-y-0.5 text-meta text-muted-foreground">
-        <p v-if="capacity">{{ capacity }}</p>
         <p v-if="programme.length">{{ t('detail.venue.programmeNote') }}</p>
         <p v-if="characterSources.length" class="break-words">
           {{ t('detail.venue.characterNote') }}:
