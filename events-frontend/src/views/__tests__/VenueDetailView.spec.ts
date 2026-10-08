@@ -69,12 +69,22 @@ describe('VenueDetailView', () => {
     ])
   })
 
-  it('keeps the capacity as plain text in the note under the table', async () => {
+  it('lists the capacity as the last row of the table, as plain text', async () => {
     const view = await mountVenue(kater)
 
-    const facets = view.get('[data-testid="venue-facets"]')
-    expect(facets.text()).toContain('~1,700 people')
-    expect(facets.findAll('a').map((link) => link.text())).not.toContain('~1,700 people')
+    const rows = view.findAll('[data-testid="venue-facets"] dl > div')
+    const last = rows[rows.length - 1]!
+    expect(last.get('dt').text()).toBe('Capacity')
+    expect(last.get('dd').text()).toBe('~1,700 people')
+    expect(last.findAll('a')).toHaveLength(0)
+  })
+
+  it('shows the capacity row on a venue with no other facts', async () => {
+    const view = await mountVenue({ ...kater, venueTypes: [] })
+
+    expect(view.findAll('[data-testid="venue-facets"] dt').map((dt) => dt.text())).toEqual([
+      'Capacity',
+    ])
   })
 
   it('reads the address line as street, district and a link to the venue on the map', async () => {
